@@ -1,25 +1,32 @@
-ASM			= nasm
+##############################
+# Makefile for Lyos library. #
+##############################
+
+ASM		= nasm
+CC		= gcc
+LD		= ld
+AR		= ar
 ASMKFLAGS	= -I ../include/ -I ../include/sys/ -f elf
-CC			= gcc
-CFLAGS		= -I ../include/ -I ../include/sys/ -c -fno-builtin -fno-stack-protector -Wall
-AR			=ar
+CFLAGS		= -I ../include/ -I ../include/sys/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
-LIB		= Lyoscrt.a
-
-LOBJS		=  syscall.o\
+LOBJS		= syscall.o\
 			printf.o vsprintf.o\
-			getpid.o getuid.o stat.o string.o misc.o\
+			string.o misc.o\
 			open.o read.o write.o close.o unlink.o\
 			lseek.o\
-			fork.o exit.o wait.o exec.o kill.o uname.o
+			getpid.o getuid.o stat.o\
+			fork.o exit.o wait.o exec.o kill.o \
+			uname.o
+
+LIB		= lyoscrt.a
 
 everything : reclean $(LIB)
 
-reclean : 
+reclean :
 	rm -f $(LOBJS)
 
-$(LIB) : $(LOBJS)
+$(LIB): $(LOBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 syscall.o : syscall.asm
@@ -54,11 +61,8 @@ unlink.o: unlink.c
 
 getpid.o: getpid.c
 	$(CC) $(CFLAGS) -o $@ $<
-
+	
 getuid.o: getuid.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-syslog.o: syslog.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 fork.o: fork.c
@@ -84,3 +88,5 @@ kill.o: kill.c
 
 uname.o: uname.c
 	$(CC) $(CFLAGS) -o $@ $<
+
+

@@ -1,4 +1,4 @@
-ASM			= nasm
+ASM		= nasm
 ASMBFLAGS	= -I include/
 LYOSBOOT	= boot.bin hdboot.bin loader.bin hdloader.bin
 

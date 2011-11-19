@@ -11,7 +11,7 @@ ASMFLAGS	= -I ../include/ -f elf
 CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -Wall
 LDFLAGS		= -Ttext 0x1000
 DASMFLAGS	= -D
-LIB		= ../lib/Lyoscrt.a
+LIB		= ../lib/lyoscrt.a
 BIN		= sh echo pwd rm touch date cat su uname ls cp
 
 # All Phony Targets
