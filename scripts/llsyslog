@@ -1,0 +1,710 @@
+   19819
+                      
+<2011-06-25 21:27:31>
+         
+digraph filedesc00 {
+	graph [
+		rankdir = "LR"
+	];
+	node [
+		fontsize = "16"
+		shape = "ellipse"
+	];
+	edge [
+	];
+
+	subgraph cluster_0 {
+		"proc0" [
+			label = "<f0>TTY (0) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc1" [
+			label = "<f0>SYS (1) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc2" [
+			label = "<f0>HD (2) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc3" [
+			label = "<f0>FS (3) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF696	"
+			shape = "record"
+		];
+		"proc4" [
+			label = "<f0>MM (4) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc5" [
+			label = "<f0>FD (5) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc6" [
+			label = "<f0>INIT (6) |<f1> state:12(RECEIVING, WAITING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	|<f3> filp[0]: 0	|<f4> filp[1]: 1	"
+			shape = "record"
+		];
+		"proc7" [
+			label = "<f0>TestA (7) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0x1EE0	"
+			shape = "record"
+		];
+		"proc8" [
+			label = "<f0>TestB (8) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0x1EE5	"
+			shape = "record"
+		];
+		"proc9" [
+			label = "<f0>TestC (9) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0x1EEA	"
+			shape = "record"
+		];
+		"proc10" [
+			label = "<f0>INIT_10 (10) |<f1> state:12(RECEIVING, WAITING)|<f2> p_parent:6|<f3> eip:0xF686	|<f3> filp[0]: 2	|<f4> filp[1]: 3	"
+			shape = "record"
+		];
+		"proc11" [
+			label = "<f0>INIT_11 (11) |<f1> state:4(RECEIVING)|<f2> p_parent:6|<f3> eip:0xF686	|<f3> filp[0]: 4	|<f4> filp[1]: 5	"
+			shape = "record"
+		];
+		"proc12" [
+			label = "<f0>INIT_12 (12) |<f1> state:4(RECEIVING)|<f2> p_parent:6|<f3> eip:0xF686	|<f3> filp[0]: 6	|<f4> filp[1]: 7	"
+			shape = "record"
+		];
+		"proc13" [
+			label = "<f0>rm (13) |<f1> state:4(RECEIVING)|<f2> p_parent:10|<f3> eip:0x1826	|<f3> filp[0]: 2	|<f4> filp[1]: 3	"
+			shape = "record"
+		];
+		"proc48" [
+			label = "<f0>ANY |<f1> 	"
+			shape = "record"
+		];
+		label = "procs";
+	}
+
+	subgraph cluster_1 {
+		"filedesc0" [
+			label = "<f0>filedesc 0|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc1" [
+			label = "<f0>filedesc 1|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc2" [
+			label = "<f0>filedesc 2|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:2|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc3" [
+			label = "<f0>filedesc 3|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:2|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc4" [
+			label = "<f0>filedesc 4|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:2	"
+			shape = "record"
+		];
+		"filedesc5" [
+			label = "<f0>filedesc 5|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:2	"
+			shape = "record"
+		];
+		"filedesc6" [
+			label = "<f0>filedesc 6|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:3	"
+			shape = "record"
+		];
+		"filedesc7" [
+			label = "<f0>filedesc 7|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:3	"
+			shape = "record"
+		];
+		label = "filedescs";
+	}
+
+	subgraph cluster_2 {
+		"inode0" [
+			label = "<f0>inode 0|<f1> i_mode:0x4000|<f2> i_size:0x190|<f3> i_start_sect:0x10D|<f4> i_nr_sects:0x800|<f5> i_dev:0x320|<f6> i_cnt:1|<f7> i_num:1	"
+			shape = "record"
+		];
+		"inode1" [
+			label = "<f0>inode 1|<f1> i_mode:0x2000|<f2> i_size:0x0|<f3> i_start_sect:0x400|<f4> i_nr_sects:0x0|<f5> i_dev:0x320|<f6> i_cnt:6|<f7> i_num:2	"
+			shape = "record"
+		];
+		"inode2" [
+			label = "<f0>inode 2|<f1> i_mode:0x2000|<f2> i_size:0x0|<f3> i_start_sect:0x401|<f4> i_nr_sects:0x0|<f5> i_dev:0x320|<f6> i_cnt:2|<f7> i_num:3	"
+			shape = "record"
+		];
+		"inode3" [
+			label = "<f0>inode 3|<f1> i_mode:0x2000|<f2> i_size:0x0|<f3> i_start_sect:0x402|<f4> i_nr_sects:0x0|<f5> i_dev:0x320|<f6> i_cnt:2|<f7> i_num:4	"
+			shape = "record"
+		];
+		label = "inodes";
+	}
+
+	subgraph cluster_3 {
+
+		style=filled;
+
+		color=lightgrey;
+		"sector 0h" [
+			label = "<f0>sect 0h-9D40h	"
+			shape = "record"
+		];
+		label = "sector map (dev size: 9D41h)";
+	}
+
+	subgraph cluster_4 {
+
+		style=filled;
+
+		color=lightgrey;
+		"imap" [
+			label = "<f0>bits| 0h | 1h | 2h | 3h | 4h | 5h | 6h | 7h | 8h | 9h | Ah | Bh | Ch | Dh | Eh | Fh | 10h | 11h | 12h | 13h | 14h | 15h | 16h | 17h | 19h 	"
+			shape = "record"
+		];
+		label = "inode map";
+	}
+
+	subgraph cluster_5 {
+
+		style=filled;
+
+		color=lightgrey;
+		"inodearray6" [
+			label = "<f0> 6|<f2> i_size:0x0|<f3> dev nr: (80h,0h)	"
+			shape = "record"
+		];
+		"inodearray7" [
+			label = "<f0> 7|<f2> i_size:0x15B42|<f3> sect: 801h-1000h	"
+			shape = "record"
+		];
+		"inodearray8" [
+			label = "<f0> 8|<f2> i_size:0x21E5|<f3> sect: 1001h-1800h	"
+			shape = "record"
+		];
+		"inodearray9" [
+			label = "<f0> 9|<f2> i_size:0x218C|<f3> sect: 1801h-2000h	"
+			shape = "record"
+		];
+		"inodearray10" [
+			label = "<f0> 10|<f2> i_size:0x2247|<f3> sect: 2001h-2800h	"
+			shape = "record"
+		];
+		"inodearray11" [
+			label = "<f0> 11|<f2> i_size:0x2464|<f3> sect: 2801h-3000h	"
+			shape = "record"
+		];
+		label = "inode array";
+	}
+
+	subgraph cluster_6 {
+
+		style=filled;
+
+		color=lightgrey;
+		"rootdirent1" [
+			label = "<f0> 1|<f2> /	"
+			shape = "record"
+		];
+	"inodearray1":f0 -> "rootdirent1":f0;
+		"rootdirent2" [
+			label = "<f0> 2|<f2> dev_tty0	"
+			shape = "record"
+		];
+	"inodearray2":f0 -> "rootdirent2":f0;
+		"rootdirent3" [
+			label = "<f0> 3|<f2> dev_tty1	"
+			shape = "record"
+		];
+	"inodearray3":f0 -> "rootdirent3":f0;
+		"rootdirent4" [
+			label = "<f0> 4|<f2> dev_tty2	"
+			shape = "record"
+		];
+	"inodearray4":f0 -> "rootdirent4":f0;
+		"rootdirent5" [
+			label = "<f0> 5|<f2> root	"
+			shape = "record"
+		];
+	"inodearray5":f0 -> "rootdirent5":f0;
+		"rootdirent6" [
+			label = "<f0> 6|<f2> cmd.tar	"
+			shape = "record"
+		];
+	"inodearray6":f0 -> "rootdirent6":f0;
+		"rootdirent7" [
+			label = "<f0> 7|<f2> kernel.bin	"
+			shape = "record"
+		];
+	"inodearray7":f0 -> "rootdirent7":f0;
+		"rootdirent8" [
+			label = "<f0> 8|<f2> echo	"
+			shape = "record"
+		];
+	"inodearray8":f0 -> "rootdirent8":f0;
+		"rootdirent9" [
+			label = "<f0> 9|<f2> pwd	"
+			shape = "record"
+		];
+	"inodearray9":f0 -> "rootdirent9":f0;
+		"rootdirent10" [
+			label = "<f0> 10|<f2> rm	"
+			shape = "record"
+		];
+	"inodearray10":f0 -> "rootdirent10":f0;
+		"rootdirent11" [
+			label = "<f0> 11|<f2> touch	"
+			shape = "record"
+		];
+	"inodearray11":f0 -> "rootdirent11":f0;
+		"rootdirent12" [
+			label = "<f0> 12|<f2> date	"
+			shape = "record"
+		];
+	"inodearray12":f0 -> "rootdirent12":f0;
+		"rootdirent13" [
+			label = "<f0> 13|<f2> cat	"
+			shape = "record"
+		];
+	"inodearray13":f0 -> "rootdirent13":f0;
+		"rootdirent14" [
+			label = "<f0> 14|<f2> su	"
+			shape = "record"
+		];
+	"inodearray14":f0 -> "rootdirent14":f0;
+		"rootdirent15" [
+			label = "<f0> 15|<f2> hdboot.bin	"
+			shape = "record"
+		];
+	"inodearray15":f0 -> "rootdirent15":f0;
+		"rootdirent16" [
+			label = "<f0> 16|<f2> hdloader.bin	"
+			shape = "record"
+		];
+	"inodearray16":f0 -> "rootdirent16":f0;
+		"rootdirent17" [
+			label = "<f0> 17|<f2> a	"
+			shape = "record"
+		];
+	"inodearray17":f0 -> "rootdirent17":f0;
+		"rootdirent18" [
+			label = "<f0> 18|<f2> cp	"
+			shape = "record"
+		];
+	"inodearray18":f0 -> "rootdirent18":f0;
+		"rootdirent19" [
+			label = "<f0> 19|<f2> ls	"
+			shape = "record"
+		];
+	"inodearray19":f0 -> "rootdirent19":f0;
+		"rootdirent20" [
+			label = "<f0> 20|<f2> lyedit	"
+			shape = "record"
+		];
+	"inodearray20":f0 -> "rootdirent20":f0;
+		"rootdirent21" [
+			label = "<f0> 21|<f2> b	"
+			shape = "record"
+		];
+	"inodearray21":f0 -> "rootdirent21":f0;
+		"rootdirent22" [
+			label = "<f0> 22|<f2> uname	"
+			shape = "record"
+		];
+	"inodearray22":f0 -> "rootdirent22":f0;
+		"rootdirent23" [
+			label = "<f0> 23|<f2> sh	"
+			shape = "record"
+		];
+	"inodearray23":f0 -> "rootdirent23":f0;
+		"rootdirent25" [
+			label = "<f0> 25|<f2> d	"
+			shape = "record"
+		];
+	"inodearray25":f0 -> "rootdirent25":f0;
+		label = "root dir";
+	}
+	"proc0":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="0"];
+	"proc1":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="1"];
+	"proc2":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="2"];
+	"proc4":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="3"];
+	"proc5":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="4"];
+	"proc6":f0 -> "proc4":f0 [arrowhead="crow", color="green", label="5"];
+	"proc10":f0 -> "proc4":f0 [arrowhead="crow", color="green", label="6"];
+	"proc11":f0 -> "proc3":f0 [arrowhead="crow", color="green", label="7"];
+	"proc12":f0 -> "proc3":f0 [arrowhead="crow", color="green", label="8"];
+	"proc13":f0 -> "proc3":f0 [arrowhead="crow", color="green", label="9"];
+	"proc6":f0 -> "proc10":f0 [arrowhead="dot", color="ivory3"];
+	"proc6":f0 -> "proc11":f0 [arrowhead="dot", color="ivory3"];
+	"proc6":f0 -> "proc12":f0 [arrowhead="dot", color="ivory3"];
+	"proc10":f0 -> "proc13":f0 [arrowhead="dot", color="ivory3"];
+	"proc6":f3 -> "filedesc0":f3;
+	"proc6":f4 -> "filedesc1":f3;
+	"proc10":f3 -> "filedesc2":f3;
+	"proc10":f4 -> "filedesc3":f3;
+	"proc11":f3 -> "filedesc4":f3;
+	"proc11":f4 -> "filedesc5":f3;
+	"proc12":f3 -> "filedesc6":f3;
+	"proc12":f4 -> "filedesc7":f3;
+	"proc13":f3 -> "filedesc2":f3;
+	"proc13":f4 -> "filedesc3":f3;
+	"filedesc0":f4 -> "inode1":f6;
+	"filedesc1":f4 -> "inode1":f6;
+	"filedesc2":f4 -> "inode1":f6;
+	"filedesc3":f4 -> "inode1":f6;
+	"filedesc4":f4 -> "inode2":f6;
+	"filedesc5":f4 -> "inode2":f6;
+	"filedesc6":f4 -> "inode3":f6;
+	"filedesc7":f4 -> "inode3":f6;
+	"inode0":f7 -> "inodearray1":f0;
+	"inode1":f7 -> "inodearray2":f0;
+	"inode2":f7 -> "inodearray3":f0;
+	"inode3":f7 -> "inodearray4":f0;
+	label = "UNLINK just finished. (pid:13)";
+}
+--separator--
+digraph filedesc01 {
+	graph [
+		rankdir = "LR"
+	];
+	node [
+		fontsize = "16"
+		shape = "ellipse"
+	];
+	edge [
+	];
+
+	subgraph cluster_0 {
+		"proc0" [
+			label = "<f0>TTY (0) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc1" [
+			label = "<f0>SYS (1) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc2" [
+			label = "<f0>HD (2) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc3" [
+			label = "<f0>FS (3) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF696	"
+			shape = "record"
+		];
+		"proc4" [
+			label = "<f0>MM (4) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc5" [
+			label = "<f0>FD (5) |<f1> state:4(RECEIVING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	"
+			shape = "record"
+		];
+		"proc6" [
+			label = "<f0>INIT (6) |<f1> state:12(RECEIVING, WAITING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0xF686	|<f3> filp[0]: 0	|<f4> filp[1]: 1	"
+			shape = "record"
+		];
+		"proc7" [
+			label = "<f0>TestA (7) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0x1EE0	"
+			shape = "record"
+		];
+		"proc8" [
+			label = "<f0>TestB (8) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0x1EE5	"
+			shape = "record"
+		];
+		"proc9" [
+			label = "<f0>TestC (9) |<f1> state:0(RUNNING)|<f2> p_parent:58(NO_TASK)|<f3> eip:0x1EEA	"
+			shape = "record"
+		];
+		"proc10" [
+			label = "<f0>INIT_10 (10) |<f1> state:12(RECEIVING, WAITING)|<f2> p_parent:6|<f3> eip:0xF686	|<f3> filp[0]: 2	|<f4> filp[1]: 3	"
+			shape = "record"
+		];
+		"proc11" [
+			label = "<f0>INIT_11 (11) |<f1> state:4(RECEIVING)|<f2> p_parent:6|<f3> eip:0xF686	|<f3> filp[0]: 4	|<f4> filp[1]: 5	"
+			shape = "record"
+		];
+		"proc12" [
+			label = "<f0>INIT_12 (12) |<f1> state:4(RECEIVING)|<f2> p_parent:6|<f3> eip:0xF686	|<f3> filp[0]: 6	|<f4> filp[1]: 7	"
+			shape = "record"
+		];
+		"proc13" [
+			label = "<f0>rm (13) |<f1> state:4(RECEIVING)|<f2> p_parent:10|<f3> eip:0x1826	|<f3> filp[0]: 2	|<f4> filp[1]: 3	"
+			shape = "record"
+		];
+		"proc48" [
+			label = "<f0>ANY |<f1> 	"
+			shape = "record"
+		];
+		label = "procs";
+	}
+
+	subgraph cluster_1 {
+		"filedesc0" [
+			label = "<f0>filedesc 0|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc1" [
+			label = "<f0>filedesc 1|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc2" [
+			label = "<f0>filedesc 2|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:2|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc3" [
+			label = "<f0>filedesc 3|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:2|<f4> fd_inode:1	"
+			shape = "record"
+		];
+		"filedesc4" [
+			label = "<f0>filedesc 4|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:2	"
+			shape = "record"
+		];
+		"filedesc5" [
+			label = "<f0>filedesc 5|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:2	"
+			shape = "record"
+		];
+		"filedesc6" [
+			label = "<f0>filedesc 6|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:3	"
+			shape = "record"
+		];
+		"filedesc7" [
+			label = "<f0>filedesc 7|<f1> fd_mode:2|<f2> fd_pos:0|<f3> fd_cnt:1|<f4> fd_inode:3	"
+			shape = "record"
+		];
+		label = "filedescs";
+	}
+
+	subgraph cluster_2 {
+		"inode0" [
+			label = "<f0>inode 0|<f1> i_mode:0x4000|<f2> i_size:0x170|<f3> i_start_sect:0x10D|<f4> i_nr_sects:0x800|<f5> i_dev:0x320|<f6> i_cnt:1|<f7> i_num:1	"
+			shape = "record"
+		];
+		"inode1" [
+			label = "<f0>inode 1|<f1> i_mode:0x2000|<f2> i_size:0x0|<f3> i_start_sect:0x400|<f4> i_nr_sects:0x0|<f5> i_dev:0x320|<f6> i_cnt:6|<f7> i_num:2	"
+			shape = "record"
+		];
+		"inode2" [
+			label = "<f0>inode 2|<f1> i_mode:0x2000|<f2> i_size:0x0|<f3> i_start_sect:0x401|<f4> i_nr_sects:0x0|<f5> i_dev:0x320|<f6> i_cnt:2|<f7> i_num:3	"
+			shape = "record"
+		];
+		"inode3" [
+			label = "<f0>inode 3|<f1> i_mode:0x2000|<f2> i_size:0x0|<f3> i_start_sect:0x402|<f4> i_nr_sects:0x0|<f5> i_dev:0x320|<f6> i_cnt:2|<f7> i_num:4	"
+			shape = "record"
+		];
+		label = "inodes";
+	}
+
+	subgraph cluster_3 {
+
+		style=filled;
+
+		color=lightgrey;
+		"sector 6F4h" [
+			label = "<f0>sect 6F4h-9D40h	"
+			shape = "record"
+		];
+		label = "sector map (dev size: 9D41h)";
+	}
+
+	subgraph cluster_4 {
+
+		style=filled;
+
+		color=lightgrey;
+		"imap" [
+			label = "<f0>bits| 0h | 1h | 2h | 3h | 4h | 5h | 6h | 7h | 8h | 9h | Ah | Bh | Ch | Dh | Eh | Fh | 10h | 11h | 12h | 13h | 14h | 15h | 16h | 17h 	"
+			shape = "record"
+		];
+		label = "inode map";
+	}
+
+	subgraph cluster_5 {
+
+		style=filled;
+
+		color=lightgrey;
+		"inodearray1" [
+			label = "<f0> 1|<f2> i_size:0x170|<f3> sect: 1h-800h	"
+			shape = "record"
+		];
+		"inodearray6" [
+			label = "<f0> 6|<f2> i_size:0x0|<f3> dev nr: (80h,0h)	"
+			shape = "record"
+		];
+		"inodearray7" [
+			label = "<f0> 7|<f2> i_size:0x15B42|<f3> sect: 801h-1000h	"
+			shape = "record"
+		];
+		"inodearray8" [
+			label = "<f0> 8|<f2> i_size:0x21E5|<f3> sect: 1001h-1800h	"
+			shape = "record"
+		];
+		"inodearray9" [
+			label = "<f0> 9|<f2> i_size:0x218C|<f3> sect: 1801h-2000h	"
+			shape = "record"
+		];
+		"inodearray10" [
+			label = "<f0> 10|<f2> i_size:0x2247|<f3> sect: 2001h-2800h	"
+			shape = "record"
+		];
+		"inodearray11" [
+			label = "<f0> 11|<f2> i_size:0x2464|<f3> sect: 2801h-3000h	"
+			shape = "record"
+		];
+		label = "inode array";
+	}
+
+	subgraph cluster_6 {
+
+		style=filled;
+
+		color=lightgrey;
+		"rootdirent1" [
+			label = "<f0> 1|<f2> /	"
+			shape = "record"
+		];
+	"inodearray1":f0 -> "rootdirent1":f0;
+		"rootdirent2" [
+			label = "<f0> 2|<f2> dev_tty0	"
+			shape = "record"
+		];
+	"inodearray2":f0 -> "rootdirent2":f0;
+		"rootdirent3" [
+			label = "<f0> 3|<f2> dev_tty1	"
+			shape = "record"
+		];
+	"inodearray3":f0 -> "rootdirent3":f0;
+		"rootdirent4" [
+			label = "<f0> 4|<f2> dev_tty2	"
+			shape = "record"
+		];
+	"inodearray4":f0 -> "rootdirent4":f0;
+		"rootdirent5" [
+			label = "<f0> 5|<f2> root	"
+			shape = "record"
+		];
+	"inodearray5":f0 -> "rootdirent5":f0;
+		"rootdirent6" [
+			label = "<f0> 6|<f2> cmd.tar	"
+			shape = "record"
+		];
+	"inodearray6":f0 -> "rootdirent6":f0;
+		"rootdirent7" [
+			label = "<f0> 7|<f2> kernel.bin	"
+			shape = "record"
+		];
+	"inodearray7":f0 -> "rootdirent7":f0;
+		"rootdirent8" [
+			label = "<f0> 8|<f2> echo	"
+			shape = "record"
+		];
+	"inodearray8":f0 -> "rootdirent8":f0;
+		"rootdirent9" [
+			label = "<f0> 9|<f2> pwd	"
+			shape = "record"
+		];
+	"inodearray9":f0 -> "rootdirent9":f0;
+		"rootdirent10" [
+			label = "<f0> 10|<f2> rm	"
+			shape = "record"
+		];
+	"inodearray10":f0 -> "rootdirent10":f0;
+		"rootdirent11" [
+			label = "<f0> 11|<f2> touch	"
+			shape = "record"
+		];
+	"inodearray11":f0 -> "rootdirent11":f0;
+		"rootdirent12" [
+			label = "<f0> 12|<f2> date	"
+			shape = "record"
+		];
+	"inodearray12":f0 -> "rootdirent12":f0;
+		"rootdirent13" [
+			label = "<f0> 13|<f2> cat	"
+			shape = "record"
+		];
+	"inodearray13":f0 -> "rootdirent13":f0;
+		"rootdirent14" [
+			label = "<f0> 14|<f2> su	"
+			shape = "record"
+		];
+	"inodearray14":f0 -> "rootdirent14":f0;
+		"rootdirent15" [
+			label = "<f0> 15|<f2> hdboot.bin	"
+			shape = "record"
+		];
+	"inodearray15":f0 -> "rootdirent15":f0;
+		"rootdirent16" [
+			label = "<f0> 16|<f2> hdloader.bin	"
+			shape = "record"
+		];
+	"inodearray16":f0 -> "rootdirent16":f0;
+		"rootdirent17" [
+			label = "<f0> 17|<f2> a	"
+			shape = "record"
+		];
+	"inodearray17":f0 -> "rootdirent17":f0;
+		"rootdirent18" [
+			label = "<f0> 18|<f2> cp	"
+			shape = "record"
+		];
+	"inodearray18":f0 -> "rootdirent18":f0;
+		"rootdirent19" [
+			label = "<f0> 19|<f2> ls	"
+			shape = "record"
+		];
+	"inodearray19":f0 -> "rootdirent19":f0;
+		"rootdirent20" [
+			label = "<f0> 20|<f2> lyedit	"
+			shape = "record"
+		];
+	"inodearray20":f0 -> "rootdirent20":f0;
+		"rootdirent21" [
+			label = "<f0> 21|<f2> b	"
+			shape = "record"
+		];
+	"inodearray21":f0 -> "rootdirent21":f0;
+		"rootdirent22" [
+			label = "<f0> 22|<f2> uname	"
+			shape = "record"
+		];
+	"inodearray22":f0 -> "rootdirent22":f0;
+		"rootdirent23" [
+			label = "<f0> 23|<f2> sh	"
+			shape = "record"
+		];
+	"inodearray23":f0 -> "rootdirent23":f0;
+		label = "root dir";
+	}
+	"proc0":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="0"];
+	"proc1":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="1"];
+	"proc2":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="2"];
+	"proc4":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="3"];
+	"proc5":f0 -> "proc48":f0 [arrowhead="crow", color="green", label="4"];
+	"proc6":f0 -> "proc4":f0 [arrowhead="crow", color="green", label="5"];
+	"proc10":f0 -> "proc4":f0 [arrowhead="crow", color="green", label="6"];
+	"proc11":f0 -> "proc3":f0 [arrowhead="crow", color="green", label="7"];
+	"proc12":f0 -> "proc3":f0 [arrowhead="crow", color="green", label="8"];
+	"proc13":f0 -> "proc3":f0 [arrowhead="crow", color="green", label="9"];
+	"proc6":f0 -> "proc10":f0 [arrowhead="dot", color="ivory3"];
+	"proc6":f0 -> "proc11":f0 [arrowhead="dot", color="ivory3"];
+	"proc6":f0 -> "proc12":f0 [arrowhead="dot", color="ivory3"];
+	"proc10":f0 -> "proc13":f0 [arrowhead="dot", color="ivory3"];
+	"proc6":f3 -> "filedesc0":f3;
+	"proc6":f4 -> "filedesc1":f3;
+	"proc10":f3 -> "filedesc2":f3;
+	"proc10":f4 -> "filedesc3":f3;
+	"proc11":f3 -> "filedesc4":f3;
+	"proc11":f4 -> "filedesc5":f3;
+	"proc12":f3 -> "filedesc6":f3;
+	"proc12":f4 -> "filedesc7":f3;
+	"proc13":f3 -> "filedesc2":f3;
+	"proc13":f4 -> "filedesc3":f3;
+	"filedesc0":f4 -> "inode1":f6;
+	"filedesc1":f4 -> "inode1":f6;
+	"filedesc2":f4 -> "inode1":f6;
+	"filedesc3":f4 -> "inode1":f6;
+	"filedesc4":f4 -> "inode2":f6;
+	"filedesc5":f4 -> "inode2":f6;
+	"filedesc6":f4 -> "inode3":f6;
+	"filedesc7":f4 -> "inode3":f6;
+	"inode0":f7 -> "inodearray1":f0;
+	"inode1":f7 -> "inodearray2":f0;
+	"inode2":f7 -> "inodearray3":f0;
+	"inode3":f7 -> "inodearray4":f0;
+	label = "UNLINK just finished. (pid:13)";
+}
+--separator--
+
