@@ -1,0 +1,139 @@
+
+
+==================================================================
+J:\Lyos-0.2.6.2\command\echo
+==================================================================
+
+
+
+------------ ELF Header ---------------
+e_ident              7Fh, "ELF", 1h, 1h, 1h, ...
+e_type                2    Executable file
+e_machine             3    80386
+e_version             1
+e_entry            1090 H    Entry point.
+e_phoff              34 H
+e_shoff            1A68 H
+e_flags               0
+e_ehsize             34 H
+e_phentsize          20 H
+e_phnum               2
+e_shentsize          28 H
+e_shnum               7 H
+e_shstrndx            4 H
+
+------------- Program Header 0 -------------
+
+p_type                1 H    PT_LOAD
+p_offset           1000 H
+p_vaddr            1000 H
+p_paddr            1000 H
+p_filesz            9C8 H
+p_memsz             9C8 H
+p_flags               5 H
+p_align            1000 H
+
+------------- Program Header 1 -------------
+
+p_type         6474E551 H    PT_??PROC
+p_offset              0 H
+p_vaddr               0 H
+p_paddr               0 H
+p_filesz              0 H
+p_memsz               0 H
+p_flags               7 H
+p_align               4 H
+
+------------- Section Header 0 -------------
+
+sh_name               0 H    
+sh_type               0 H    SHT_NULL
+sh_flags              0 H    Unknown
+sh_addr               0 H    Position in Mem.
+sh_offset             0 H    Position in file.
+sh_size               0 H
+sh_link               0 H
+sh_info               0 H
+sh_addralign          0 H
+sh_entsize            0 H
+
+------------- Section Header 1 -------------
+
+sh_name              1B H    .text
+sh_type               1 H    SHT_PROGBITS
+sh_flags              6 H    SHF_ALLOC & SHF_EXECINSTR
+sh_addr            1000 H    Position in Mem.
+sh_offset          1000 H    Position in file.
+sh_size             8D8 H
+sh_link               0 H
+sh_info               0 H
+sh_addralign         10 H
+sh_entsize            0 H
+
+------------- Section Header 2 -------------
+
+sh_name              21 H    .rodata
+sh_type               1 H    SHT_PROGBITS
+sh_flags              2 H    SHF_ALLOC
+sh_addr            18D8 H    Position in Mem.
+sh_offset          18D8 H    Position in file.
+sh_size              F0 H
+sh_link               0 H
+sh_info               0 H
+sh_addralign          4 H
+sh_entsize            0 H
+
+------------- Section Header 3 -------------
+
+sh_name              29 H    .comment
+sh_type               1 H    SHT_PROGBITS
+sh_flags              0 H    Unknown
+sh_addr               0 H    Position in Mem.
+sh_offset          19C8 H    Position in file.
+sh_size              6E H
+sh_link               0 H
+sh_info               0 H
+sh_addralign          1 H
+sh_entsize            0 H
+
+------------- Section Header 4 -------------
+
+sh_name              11 H    .shstrtab
+sh_type               3 H    SHT_STRTAB
+sh_flags              0 H    Unknown
+sh_addr               0 H    Position in Mem.
+sh_offset          1A36 H    Position in file.
+sh_size              32 H
+sh_link               0 H
+sh_info               0 H
+sh_addralign          1 H
+sh_entsize            0 H
+
+------------- Section Header 5 -------------
+
+sh_name               1 H    .symtab
+sh_type               2 H    SHT_SYMTAB
+sh_flags              0 H    Unknown
+sh_addr               0 H    Position in Mem.
+sh_offset          1B80 H    Position in file.
+sh_size             4E0 H
+sh_link               6 H
+sh_info              37 H
+sh_addralign          4 H
+sh_entsize           10 H
+
+------------- Section Header 6 -------------
+
+sh_name               9 H    .strtab
+sh_type               3 H    SHT_STRTAB
+sh_flags              0 H    Unknown
+sh_addr               0 H    Position in Mem.
+sh_offset          2060 H    Position in file.
+sh_size             28F H
+sh_link               0 H
+sh_info               0 H
+sh_addralign          1 H
+sh_entsize            0 H
+
+---------------------------------------
+
