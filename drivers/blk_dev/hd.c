@@ -263,7 +263,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 				port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 				//printl("HDBUF %s\n", hdbuf);
 				//phys_copy(addr, hdbuf, bytes);
-				}
+			}
 			phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
 		else {

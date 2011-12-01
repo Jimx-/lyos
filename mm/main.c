@@ -29,8 +29,8 @@
 #include "proto.h"
 
 PRIVATE int free_mem_size;
-/*PRIVATE int paging_pages;
-PRIVATE unsigned char mem_map[8192] = {0,};*/
+PRIVATE int paging_pages;
+PRIVATE unsigned long * kernel_page_descs;
 
 PUBLIC void do_fork_test();
 
@@ -166,19 +166,53 @@ PRIVATE void init_mm()
 	free_mem_size = memory_size - mem_start;
 	printl("Free memory:%dMB\n", free_mem_size / 1024 / 1024);
 
-	/*paging_pages = memory_size >> 12;
+	paging_pages = memory_size / PAGE_SIZE;
+	printl("%d pages\n", paging_pages);
+}
 
-	int i;
-	
-	for(i=0;i<paging_pages;i++)
-		mem_map[i] = 100;
-	
-	i = mem_start >> 12;
-	int j = (memory_size - mem_start)>>12;
-	printl("%d/%d pages free\n", j, paging_pages);
-	
-	while(j-->0)
-	  mem_map[i++] = 0;*/
+unsigned long get_user_pages(unsigned long len)
+{
+    unsigned long i, j, start;
+    j = 0;
+    for (i = 0; i < (paging_pages * PAGE_SIZE); i++)
+    {
+        if (kernel_page_descs[i] & KERNEL_USER_USED_MASK)  // used?
+        {
+            j = 0;
+        }
+        else
+        {
+            if (j == 0)
+            {
+                start = i;
+            }
+            j++;
+            if (j >= len)
+            {
+                break;
+            }
+        }
+    }
+    if (j == 0)
+    {
+        return 0;
+    }
+    for (i = start; i < (start + j); i++)
+    {
+        kernel_page_descs[i] |= KERNEL_USER_USED_MASK;
+    }
+    return start * PAGE_SIZE;
+}
+
+unsigned long free_user_pages(unsigned long start, unsigned long len)
+{
+    unsigned long i;
+    unsigned long pgstart = start / PAGE_SIZE;
+    for (i = pgstart; i < (pgstart + len); i++)
+    {
+        kernel_page_descs[i] -= kernel_page_descs[i] & KERNEL_USER_USED_MASK;
+    }
+    return 0;
 }
 
 /*****************************************************************************

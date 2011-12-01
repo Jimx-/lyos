@@ -249,7 +249,7 @@ enum msgtype {
 #define	DEV_RD			1
 #define	DEV_FLOPPY		2
 #define	DEV_HD			3
-#define	DEV_CHAR_TTY	4
+#define	DEV_CHAR_TTY		4
 #define	DEV_SCSI		5
 /* make device number from major and minor numbers */
 #define	MAJOR_SHIFT		8

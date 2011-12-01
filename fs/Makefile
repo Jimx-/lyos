@@ -18,6 +18,9 @@ reclean :
 $(FS): $(FSOBJS)
 	$(LD) -r -o $(FS) $(FSOBJS)
 
+#main.o: main.c
+#	$(CC) $(CFLAGS) -o $@ $<
+
 Lyos/lyosfs.o:
 	(cd Lyos; make)
 

@@ -17,7 +17,7 @@
 #define UTS_SYSNAME	"Lyos"		// kernel name
 #define UTS_NODENAME	"localhost"	// network node hostname
 #define UTS_RELEASE	""		// kernel release
-#define UTS_VERSION	"0.2.6.3"	// kernel version
+#define UTS_VERSION	"0.3.0.0"	// kernel version
 #define UTS_MACHINE	"i386"		// machine hardware name
 
 #define SIZE_UTSNAME	45

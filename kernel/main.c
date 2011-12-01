@@ -136,18 +136,7 @@ PUBLIC int kernel_main()
 	current	= proc_table;
 
 	init_clock();
-    init_keyboard();
-
-	/* out_byte(0x3ce, 5);
-	out_byte(0x3cf, 2);
-	out_byte(0x3ce, 8);
-	out_byte(0x3cf, 255);
-	unsigned char * fa = (unsigned char *)0xA0000;
-	fa[800*2 + 10] = 0x0A;*/
-	
-	/*unsigned char * fb = (unsigned char *)0xB8000;
-	fb[79 * 5 + 10] = '*';
-	fb[79 * 5 + 11] = 0x1F; */
+    	init_keyboard();
 
 	restart();
 
@@ -333,11 +322,6 @@ void shell(const char * tty_name)
 
 	close(1);
 	close(0);
-
-
-
-
-
 }
 
 /*****************************************************************************
@@ -354,35 +338,28 @@ void Init()
 	int fd_stdout = open("/dev_tty0", O_RDWR);
 	assert(fd_stdout == 1);	
 
-//	printf("Init() is running ...\n");
+	printf("Init() is running ...\n");
 
 	/* extract `cmd.tar' */
 	untar("/cmd.tar");
 	
-	/*printf("\33[15;2H");
-	printf("\33[3P");
-	printf("\33[30;4H");*/
-	printf("\nBooted in %d.%d s\n", get_ticks() / 100, get_ticks() % 100);
-	printf("\nWelcome to Lyos %s\n", UTS_VERSION);
-	printf("(c)Copyright 2011\n\n");\
-
-/*	int fd = open("/root", O_RDWR);
-	char bufr[4];
-	int n = read(fd, bufr, 4);
-	close(fd);
-	if (bufr[0] = 0){  
-			   printf("\nWriting the user list...\n");
-               char bufw[4] = "root";
-			   fd = open("/root", O_RDWR);
-               n = write(fd, bufw, 4);
-			   close(fd);
-    }
- */
+	printf("\nWelcome to Lyos %s, compiled on %s %s\n", UTS_VERSION, __DATE__, __TIME__);
+	printf("(c)Copyright Jimx 2010-2011\n\n");\
 
 	char * tty_list[] = {"/dev_tty0","/dev_tty1", "/dev_tty2"};
-
 	printf("\n");
 	
+	/* FD Test */
+	/*
+	MESSAGE m;
+	m.type		= DEV_READ;
+	m.DEVICE	= MINOR(1);
+	m.POSITION	= 1;
+	m.CNT = 512;
+	char * buffer[512];
+	m.BUF		= &buffer;
+	send_recv(BOTH, TASK_FD, &m);
+	printf("%s\n", buffer); */
 
 	int i;
 	for (i = 0; i < sizeof(tty_list) / sizeof(tty_list[0]); i++) {

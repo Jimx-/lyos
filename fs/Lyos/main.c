@@ -32,6 +32,13 @@ PRIVATE void mkfs();
 PRIVATE int fs_fork();
 PRIVATE int fs_exit();
 
+#define DEBUG
+#ifdef DEBUG
+#define DEB(x) printl("Lyos FS: "); x
+#else
+#define DEB(x)
+#endif
+
 /*****************************************************************************
  *                                task_fs
  *****************************************************************************/
@@ -41,14 +48,12 @@ PRIVATE int fs_exit();
  *****************************************************************************/
 PUBLIC void task_fs()
 {
+
 	init_fs();
 	init_buffer();
 
-	/*char * c = get_path("/bin/sh");
-	namei(c); */
 	while (1) {
 		send_recv(RECEIVE, ANY, &fs_msg);
-
 		int msgtype = fs_msg.type;
 		int src = fs_msg.source;
 		pcaller = &proc_table[src];
@@ -242,7 +247,7 @@ PRIVATE void mkfs()
 	RD_SECT(ROOT_DEV, 1);
 	psb = (struct super_block *)fsbuf;
 	if (psb->magic == MAGIC_V1){
-		printl("an Lyos filesystem found, need no mkfs\n");
+		printl("a Lyos filesystem found, need no mkfs\n");
 		return;
 	}
 		

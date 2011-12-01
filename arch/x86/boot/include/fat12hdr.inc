@@ -15,7 +15,7 @@
 
 ; Head
 ; ----------------------------------------------------------------------
-BS_OEMName	DB 'Jimandly'	; OEM String, must be 8 bytes
+BS_OEMName	DB 'Jimx    '	; OEM String, must be 8 bytes
 
 BPB_BytsPerSec	DW 512		; bytes per sector
 BPB_SecPerClus	DB 1		; sector per cluster

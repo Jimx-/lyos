@@ -43,8 +43,8 @@ struct proc {
 	u16 ldt_sel;               /* gdt selector giving ldt base and limit */
 	struct descriptor ldts[LDT_SIZE]; /* local descs for code and data */
 
-    int counter;                 /* remained ticks */
-    int priority;
+    	int counter;                 /* remained ticks */
+    	int priority;
 
 	/* u32 pid;                   /\* process id passed in from MM *\/ */
 	char name[16];		   /* name of the process */
@@ -54,7 +54,7 @@ struct proc {
 				    * A proc is runnable if state==0
 				    */
 
-    int signal;
+    	int signal;
 	struct sigaction sigaction[32];
 	unsigned long alarm;
 	long blocked;
@@ -124,6 +124,28 @@ struct task {
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
 #define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
 
+#define PAGE_DIR_BASE	0x100000
+#define PAGE_TBL_BASE	0x101000
+#define PAGE_SIZE	0x1000
+
+/** User paging map **/
+#define USER_KERNEL_STACK 0x0
+#define USER_KERNEL_STACK_TOP 0x4000
+#define USER_STACK 0x4000
+#define USER_STACK_TOP 0x8000
+#define USER_KERNEL_START 0x100000
+#define USER_KERNEL_END 0x200000
+#define USER_ALLOCATED_START 0x200000
+#define USER_ALLOCATED_END 0x300000
+#define USER_CODE_START 0x300000
+#define USER_CODE_END 0x400000
+#define USER_END 0x400000
+/** The allocated user pages' states **/
+#define ALLOC_STATE_UNUSED 0
+#define ALLOC_STATE_USED 1
+/** The kernel paged used sign, an AVL bit of a pte entry **/
+#define KERNEL_USER_USED_MASK 512
+
 /* stacks of tasks */
 #define	STACK_SIZE_DEFAULT	0x4000 /* 16 KB */
 #define STACK_SIZE_TTY		STACK_SIZE_DEFAULT
@@ -136,7 +158,7 @@ struct task {
 #define STACK_SIZE_SCSI		STACK_SIZE_DEFAULT
 #define STACK_SIZE_PCI		STACK_SIZE_DEFAULT
 #define STACK_SIZE_INET		STACK_SIZE_DEFAULT
-//#define STACK_SIZE_LYOS_FS	STACK_SIZE_DEFAULT
+#define STACK_SIZE_LYOS_FS	STACK_SIZE_DEFAULT
 #define STACK_SIZE_INIT		STACK_SIZE_DEFAULT
 #define STACK_SIZE_TESTA	STACK_SIZE_DEFAULT
 #define STACK_SIZE_TESTB	STACK_SIZE_DEFAULT
@@ -152,7 +174,7 @@ struct task {
 				STACK_SIZE_SCSI + \
 				STACK_SIZE_PCI + \
 				STACK_SIZE_INET + \
-/*				STACK_SIZE_LYOS_FS + */	\
+				STACK_SIZE_LYOS_FS + 	\
 				STACK_SIZE_INIT + \
 				STACK_SIZE_TESTA + \
 				STACK_SIZE_TESTB + \
