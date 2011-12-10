@@ -40,14 +40,14 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
-	{task_fs,       STACK_SIZE_FS,    "FS"        },
+	{task_lyos_fs,       STACK_SIZE_FS,    "FS"        },
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{task_fd,       STACK_SIZE_FD,    "FD"        },
 	{task_scsi,     STACK_SIZE_SCSI,  "SCSI"      },
 	{task_pci,      STACK_SIZE_PCI,   "PCI"       },
 	{task_inet,     STACK_SIZE_INET,  "INET"      },
-	/*{task_lyos_fs,  STACK_SIZE_LYOS_FS,"LYOS_FS"  }*/};
+	{task_fs,  STACK_SIZE_LYOS_FS,"LYOS_FS"  }};
 
 PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 	/* entry    stack size     proc name */
@@ -100,6 +100,7 @@ struct dev_drv_map dd_map[] = {
 PUBLIC	int			ROOT_DEV	= MAKE_DEV(DEV_HD, MINOR_BOOT);
 PUBLIC	u8 *		fsbuf		= (u8*)0x600000;
 PUBLIC	const int	FSBUF_SIZE	= 0x100000;
+PUBLIC  struct file_system * 	file_systems;
 
 
 /**

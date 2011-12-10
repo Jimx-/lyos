@@ -44,19 +44,19 @@ PRIVATE void new_dir_entry(struct inode * dir_inode, int inode_nr, char * filena
  * 
  * @return File descriptor if successful, otherwise a negative error code.
  *****************************************************************************/
-PUBLIC int do_open()
+PUBLIC int do_open(MESSAGE * p)
 {
 	int fd = -1;		/* return value */
 
 	char pathname[MAX_PATH];
 
 	/* get parameters from the message */
-	int flags = fs_msg.FLAGS;	/* access mode */
-	int name_len = fs_msg.NAME_LEN;	/* length of filename */
-	int src = fs_msg.source;	/* caller proc nr. */
+	int flags = p->FLAGS;	/* access mode */
+	int name_len = p->NAME_LEN;	/* length of filename */
+	int src = p->source;	/* caller proc nr. */
 	assert(name_len < MAX_PATH);
 	phys_copy((void*)va2la(TASK_FS, pathname),
-		  (void*)va2la(src, fs_msg.PATHNAME),
+		  (void*)va2la(src, p->PATHNAME),
 		  name_len);
 	pathname[name_len] = 0;
 
@@ -230,15 +230,15 @@ PRIVATE struct inode * create_dir(char * path, int flags)
  * 
  * @return File descriptor if successful, otherwise a negative error code. 
  *****************************************************************************/
-PUBLIC int do_mkdir()
+PUBLIC int do_mkdir(MESSAGE * p)
 {
-	int flags = fs_msg.FLAGS;
+	int flags = p->FLAGS;
 	char pathname[MAX_PATH];
-	int src = fs_msg.source;
-	int name_len = fs_msg.NAME_LEN;
+	int src = p->source;
+	int name_len = p->NAME_LEN;
 
 	phys_copy((void*)va2la(TASK_FS, pathname),
-		  (void*)va2la(src, fs_msg.PATHNAME),
+		  (void*)va2la(src, p->PATHNAME),
 		  name_len);	
 
 	struct inode * pin;
@@ -255,9 +255,9 @@ PUBLIC int do_mkdir()
  * 
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int do_close()
+PUBLIC int do_close(MESSAGE * p)
 {
-	int fd = fs_msg.FD;
+	int fd = p->FD;
 	put_inode(pcaller->filp[fd]->fd_inode);
 	if (--pcaller->filp[fd]->fd_cnt == 0)
 		pcaller->filp[fd]->fd_inode = 0;
@@ -278,11 +278,11 @@ PUBLIC int do_close()
  * @return The new offset in bytes from the beginning of the file if successful,
  *         otherwise a negative number.
  *****************************************************************************/
-PUBLIC int do_lseek()
+PUBLIC int do_lseek(MESSAGE * p)
 {
-	int fd = fs_msg.FD;
-	int off = fs_msg.OFFSET;
-	int whence = fs_msg.WHENCE;
+	int fd = p->FD;
+	int off = p->OFFSET;
+	int whence = p->WHENCE;
 
 	int pos = pcaller->filp[fd]->fd_pos;
 	int f_size = pcaller->filp[fd]->fd_inode->i_size;
@@ -316,10 +316,10 @@ PUBLIC int do_lseek()
  * 
  * @return Zero if successful.
  *****************************************************************************/
-PUBLIC int do_chdir()
+PUBLIC int do_chdir(MESSAGE * p)
 {
 	struct inode * ino;
-	char * path = fs_msg.PATHNAME;
+	char * path = p->PATHNAME;
 	char * filename = 0;
 
 	int ret = strip_path(filename, path, &ino);
@@ -342,10 +342,10 @@ PUBLIC int do_chdir()
  * 
  * @return Zero if successful.
  *****************************************************************************/
-PUBLIC int do_chroot()
+PUBLIC int do_chroot(MESSAGE * p)
 {
 	struct inode * ino;
-	char * path = fs_msg.PATHNAME;
+	char * path = p->PATHNAME;
 	char * filename = 0;
 
 	int ret = strip_path(filename, path, &ino);
@@ -552,11 +552,11 @@ PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename)
 	sync_inode(dir_inode);
 }
 
-PUBLIC int do_mount()
+PUBLIC int do_mount(MESSAGE * p)
 {
 	/*
-	int dev = fs_msg.DEVICE;
-	char * dir = fs_msg.PATHNAME;
+	int dev = p->DEVICE;
+	char * dir = p->PATHNAME;
 
 	read_super_block(dev);
 	struct super_block * sb = get_super_block(dev);
@@ -567,7 +567,7 @@ PUBLIC int do_mount()
 	return -ENOSYS;
 }
 
-PUBLIC int do_umount()
+PUBLIC int do_umount(MESSAGE * p)
 {
 	return -ENOSYS;
 }

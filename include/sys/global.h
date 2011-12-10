@@ -74,6 +74,7 @@ EXTERN	MESSAGE			fs_msg;
 EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
+EXTERN  struct file_system * 	file_systems;
 
 /* for test only */
 extern	char *			logbuf;

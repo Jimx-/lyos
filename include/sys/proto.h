@@ -127,7 +127,7 @@ PUBLIC void			sync_inode	(struct inode * p);
 PUBLIC void 			read_super_block(int dev);
 PUBLIC struct super_block *	get_super_block	(int dev);
 
-//PUBLIC void			task_lyos_fs	();
+PUBLIC void			task_lyos_fs	();
 
 /* fs/Lyos/buffer.c */
 PUBLIC void 		bread		(struct buffer_head * bh);
@@ -139,7 +139,7 @@ PUBLIC void 		free_buffer	();
 PUBLIC void		init_buffer	();
 
 /* fs/Lyos/misc.c */
-PUBLIC int			do_stat();
+PUBLIC int			do_stat(MESSAGE * p);
 PUBLIC int			strip_path	(char * filename, const char * pathname,
 					struct inode** ppinode);
 PUBLIC int			search_file(char * path);
@@ -171,23 +171,23 @@ PUBLIC	int	send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC void	inform_int(int task_nr);
 
 /* fs/Lyos/open.c */
-PUBLIC int		do_open();
-PUBLIC int		do_close();
-PUBLIC int		do_lseek();
-PUBLIC int		do_chdir();
-PUBLIC int		do_chroot();
-PUBLIC int 		do_mount();
-PUBLIC int 		do_umount();
-PUBLIC int 		do_mkdir();
+PUBLIC int		do_open(MESSAGE * p);
+PUBLIC int		do_close(MESSAGE * p);
+PUBLIC int		do_lseek(MESSAGE * p);
+PUBLIC int		do_chdir(MESSAGE * p);
+PUBLIC int		do_chroot(MESSAGE * p);
+PUBLIC int 		do_mount(MESSAGE * p);
+PUBLIC int 		do_umount(MESSAGE * p);
+PUBLIC int 		do_mkdir(MESSAGE * p);
 
 /* fs/Lyos/read_write.c */
-PUBLIC int		do_rdwt();
+PUBLIC int		do_rdwt(MESSAGE * p);
 
 /* fs/Lyos/link.c */
-PUBLIC int		do_unlink();
+PUBLIC int		do_unlink(MESSAGE * p);
 
 /* fs/Lyos/misc.c */
-PUBLIC int		do_stat();
+PUBLIC int		do_stat(MESSAGE * p);
 
 /* fs/Lyos/disklog.c */
 PUBLIC int		do_disklog();

@@ -24,17 +24,17 @@
  * 
  * @return  On success, zero is returned. On error, -1 is returned.
  *****************************************************************************/
-PUBLIC int do_stat()
+PUBLIC int do_stat(MESSAGE * p)
 {
 	char pathname[MAX_PATH]; /* parameter from the caller */
 	char filename[MAX_PATH]; /* directory has been stipped */
 
 	/* get parameters from the message */
-	int name_len = fs_msg.NAME_LEN;	/* length of filename */
-	int src = fs_msg.source;	/* caller proc nr. */
+	int name_len = p->NAME_LEN;	/* length of filename */
+	int src = p->source;	/* caller proc nr. */
 	assert(name_len < MAX_PATH);
 	phys_copy((void*)va2la(TASK_FS, pathname),    /* to   */
-		  (void*)va2la(src, fs_msg.PATHNAME), /* from */
+		  (void*)va2la(src, p->PATHNAME), /* from */
 		  name_len);
 	pathname[name_len] = 0;	/* terminate the string */
 
@@ -66,7 +66,7 @@ PUBLIC int do_stat()
 
 	put_inode(pin);
 
-	phys_copy((void*)va2la(src, fs_msg.BUF), /* to   */
+	phys_copy((void*)va2la(src, p->BUF), /* to   */
 		  (void*)va2la(TASK_FS, &s),	 /* from */
 		  sizeof(struct stat));
 

@@ -145,6 +145,28 @@ struct file_operations {
 	//void (*release) (struct file *);
 };
 
+struct file_system {
+	char * name;
+
+	// handlers
+	int (*open) (MESSAGE * p);
+	int (*close) (MESSAGE * p);
+	int (*lseek) (MESSAGE * p);
+	int (*chdir) (MESSAGE * p);
+	int (*chroot) (MESSAGE * p);
+	int (*mount) (MESSAGE * p);
+	int (*umount) (MESSAGE * p);
+	int (*mkdir) (MESSAGE * p);
+	int (*rdwt) (MESSAGE * p);
+	int (*unlink) (MESSAGE * p);
+	int (*stat) (MESSAGE * p);
+	int (*fork) (MESSAGE * p);
+	int (*exit) (MESSAGE * p);
+
+	struct file_system * next;
+	
+};
+
 /**
  * Since all invocations of `rw_sector()' in FS look similar (most of the
  * params are the same), we use this macro to make code more readable.

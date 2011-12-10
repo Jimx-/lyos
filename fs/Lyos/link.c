@@ -39,16 +39,16 @@
  * 
  * @return On success, zero is returned.  On error, -1 is returned.
  *****************************************************************************/
-PUBLIC int do_unlink()
+PUBLIC int do_unlink(MESSAGE * p)
 {
 	char pathname[MAX_PATH];
 
 	/* get parameters from the message */
-	int name_len = fs_msg.NAME_LEN;	/* length of filename */
-	int src = fs_msg.source;	/* caller proc nr. */
+	int name_len = p->NAME_LEN;	/* length of filename */
+	int src = p->source;	/* caller proc nr. */
 	assert(name_len < MAX_PATH);
 	phys_copy((void*)va2la(TASK_FS, pathname),
-		  (void*)va2la(src, fs_msg.PATHNAME),
+		  (void*)va2la(src, p->PATHNAME),
 		  name_len);
 	pathname[name_len] = 0;
 

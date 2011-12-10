@@ -29,28 +29,90 @@
 
 #define DEBUG
 #ifdef DEBUG
-#define DEB(x) printl("FS: "); x
+#define DEB(x) printl("VFS: "); x
 #else
 #define DEB(x)
 #endif
 
 PUBLIC void task_fs()
 {
-/*
-	int fs_nr = TASK_LYOS_FS; 
+	MESSAGE msg;
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &fs_msg);
-		int src = fs_msg.source;
-		DEB(printl("Received a message, from %d\n", src));
-		DEB(printl("Send the message to %d\n", fs_nr));
-		send_recv(BOTH, fs_nr, &fs_msg);
-		DEB(printl("Received message from fs driver.\n"));
+	DEB(printl("VFS is running.\n"));
+	while (1){
+		send_recv(RECEIVE, ANY, &msg);
+		int src = msg.source;
+		int msgtype = msg.type;
 
-		if (fs_msg.type != SUSPEND_PROC) {
-			fs_msg.type = SYSCALL_RET;
-			send_recv(SEND, src, &fs_msg);
+		struct file_system * fs = file_systems;
+
+		switch (msgtype) {
+	 	case FS_REGISTER:
+			register_filesystem(&msg);
+			break;
+		case OPEN:
+			msg.FD = fs->open(&msg);
+			break;
+		case CLOSE:
+			msg.RETVAL = fs->close(&msg);
+			break;
+		case READ:
+		case WRITE:
+			msg.CNT = fs->rdwt(&msg);
+			break;
+		case UNLINK:
+			msg.RETVAL = fs->unlink(&msg);
+			break;
+		case MOUNT:
+			msg.RETVAL = fs->mount(&msg);
+			break;
+		case UMOUNT:
+			msg.RETVAL = fs->umount(&msg);
+			break;
+		case MKDIR:
+			msg.RETVAL = fs->mkdir(&msg);
+			break;
+		case RESUME_PROC:
+			src = msg.PROC_NR;
+			break;
+		case FORK:
+			msg.RETVAL = fs_fork(&msg);
+			break;
+		case EXIT:
+			msg.RETVAL = fs_exit(&msg);
+			break;
+		case LSEEK:
+			msg.OFFSET = fs->lseek(&msg);
+			break;
+		case STAT:
+			msg.RETVAL = fs->stat(&msg);
+			break;
+		case CHROOT:
+			msg.RETVAL = fs->chroot(&msg);
+			break;
+		case CHDIR:
+			msg.RETVAL = fs->chdir(&msg);
+			break; 
+		default:
+			dump_msg("FS::unknown message:", &msg);
+			assert(0);
+			break;
+		}
+
+		/* reply */
+		if (msg.type != SUSPEND_PROC) {
+			msg.type = SYSCALL_RET;
+			send_recv(SEND, src, &msg);
 		}
 	}
-*/
+}
+
+PUBLIC void register_filesystem(MESSAGE * m){
+	struct file_system * fs;
+	memcpy(va2la(TASK_FS, fs), va2la(m->source, m->BUF), sizeof(struct file_system));
+	DEB(printl("Register filesystem: name: %s\n", fs->name));
+	if (file_systems == NULL) {
+		file_systems = fs;
+	}
+
 }

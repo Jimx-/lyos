@@ -48,6 +48,8 @@
 #define	RPL_TASK	SA_RPL1
 #define	RPL_USER	SA_RPL3
 
+#define NULL		(void*)0
+
 #define TRUE			1
 #define FALSE			0
 /* Process */
@@ -154,7 +156,7 @@
 #define TASK_PCI	8
 #define TASK_INET	9
 /*#define TASK_LYOS_FS	10 */
-#define INIT		10
+#define INIT		11
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
@@ -188,7 +190,7 @@ enum msgtype {
 	PROF, PHYS, LOCK, MPX,
 
 	/* FS */
-	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR,
+	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, FS_REGISTER, 
 
 	/* FS & TTY */
 	SUSPEND_PROC, RESUME_PROC,
