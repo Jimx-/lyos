@@ -55,6 +55,13 @@ PRIVATE	struct hd_info	hd_info[1];
 			 dev / NR_PRIM_PER_DRIVE : \
 			 (dev - MINOR_hd1a) / NR_SUB_PER_DRIVE)
 
+//#define HDDEBUG
+#ifdef HDDEBUG
+#define DEB(x) printl("HD: "); x
+#else
+#define DEB(x)
+#endif
+
 struct dev_driver hd_driver = 
 	{ hd_open,
 	  hd_close,
@@ -78,7 +85,7 @@ PUBLIC void task_hd()
 
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
-
+		DEB(printl("Receive a message from %d, type = %d\n", msg.source, msg.type));
 		int src = msg.source;
 
 		switch (msg.type) {
@@ -101,12 +108,15 @@ PUBLIC void task_hd()
 			break;
 
 		default:
-			dump_msg("HD driver::unknown msg", &msg);
+			dump_msg("HD driver: Unknown msg", &msg);
 			spin("FS::main_loop (invalid msg.type)");
 			break;
 		}
 
-		if ((msg.type != DEV_READ) && (msg.type != DEV_WRITE))send_recv(SEND, src, &msg);
+		if ((msg.type != DEV_READ) && (msg.type != DEV_WRITE)) {
+			DEB(printl("Reply to %d.(in main loop)\n", src));
+			send_recv(SEND, src, &msg);
+		}
 	}
 
 }
@@ -276,7 +286,8 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		bytes_left -= SECTOR_SIZE;
 		la += SECTOR_SIZE;
 	}
-	send_recv(SEND, p->PROC_NR, p);
+	DEB(printl("Reply to %d.(in hd_rdwt)\n", p->source));
+	send_recv(SEND, p->source, p);
 	end_request();
 	do_hd_request();
 }				

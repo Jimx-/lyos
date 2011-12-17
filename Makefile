@@ -2,6 +2,11 @@
 # Makefile for Lyos     #
 #########################
 
+VERSION = 0
+PATCHLEVEL = 2
+SUBLEVEL = 30
+EXTRAVERSION =
+
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 				  -e s/arm.*/arm/ -e s/sa110/arm/ \
 				  -e s/s390x/s390/ -e s/parisc64/parisc/ \
@@ -12,6 +17,9 @@ ifeq ($(ARCH),i386)
 endif
 
 export ARCH
+
+KERNELVERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+export KERNELVERSION
 
 # Entry point of Lyos
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
@@ -54,7 +62,7 @@ OBJS		= $(KRNLOBJ) \
 DASMOUTPUT	= kernel.bin.asm
 
 # All Phony Targets
-.PHONY : everything final image clean realclean disasm all buildimg mrproper help
+.PHONY : everything final image clean realclean disasm all buildimg mrproper help lib
 
 # Default starting position
 help :
@@ -63,14 +71,20 @@ help :
 	@echo "make disasm	: dump the kernel into kernel.bin.asm."
 	@echo "make mrproper	: remove all object files."
 
-everything : $(LYOSBOOT) $(LYOSKERNEL)
+everything : genconf $(LYOSBOOT) $(LYOSKERNEL)
 
-all : realclean everything image  lib cmd
+all : realclean everything image lib cmd
 
 image : realclean everything clean buildimg
 
+genconf:
+	$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
+
 cmd :
 	(cd command;make install)
+
+lib :
+	(cd lib; make)
 
 mrproper:
 	find . -name "*.o" -exec rm -fv {} \;

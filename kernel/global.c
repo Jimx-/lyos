@@ -100,8 +100,6 @@ struct dev_drv_map dd_map[] = {
 PUBLIC	int			ROOT_DEV	= MAKE_DEV(DEV_HD, MINOR_BOOT);
 PUBLIC	u8 *		fsbuf		= (u8*)0x600000;
 PUBLIC	const int	FSBUF_SIZE	= 0x100000;
-PUBLIC  struct file_system * 	file_systems;
-
 
 /**
  * 7MB~8MB: buffer for MM

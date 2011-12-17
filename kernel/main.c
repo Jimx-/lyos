@@ -343,7 +343,8 @@ void Init()
 	/* extract `cmd.tar' */
 	untar("/cmd.tar");
 	
-	printf("\nWelcome to Lyos %s, compiled on %s %s\n", UTS_VERSION, __DATE__, __TIME__);
+	printf("\n");
+	printf(LYOS_BANNER);
 	printf("(c)Copyright Jimx 2010-2011\n\n");\
 
 	char * tty_list[] = {"/dev_tty0","/dev_tty1", "/dev_tty2"};

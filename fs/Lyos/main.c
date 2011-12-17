@@ -47,9 +47,8 @@ PRIVATE void register_fs();
  *****************************************************************************/
 PUBLIC void task_lyos_fs()
 {
-
+	printl("Lyos Filesystem v1.0\n");
 	init_fs();
-	init_buffer();
 
 	struct file_system * fs;
 	fs->name = "Lyos FS";
@@ -71,58 +70,60 @@ PUBLIC void task_lyos_fs()
 	reg.BUF = fs;
 	send_recv(BOTH, 10, &reg);
 
+	MESSAGE msg;
+
 	while (1) {
-		send_recv(RECEIVE, ANY, &fs_msg);
-		int msgtype = fs_msg.type;
-		int src = fs_msg.source;
+		send_recv(RECEIVE, ANY, &msg);
+		int msgtype = msg.type;
+		int src = msg.source;
 		pcaller = &proc_table[src];
 
 		switch (msgtype) {
 		case OPEN:
-			fs_msg.FD = do_open(&fs_msg);
+			msg.FD = do_open(&msg);
 			break;
 		case CLOSE:
-			fs_msg.RETVAL = do_close(&fs_msg);
+			msg.RETVAL = do_close(&msg);
 			break;
 		case READ:
 		case WRITE:
-			fs_msg.CNT = do_rdwt(&fs_msg);
+			msg.CNT = do_rdwt(&msg);
 			break;
 		case UNLINK:
-			fs_msg.RETVAL = do_unlink(&fs_msg);
+			msg.RETVAL = do_unlink(&msg);
 			break;
 		case MOUNT:
-			fs_msg.RETVAL = do_mount(&fs_msg);
+			msg.RETVAL = do_mount(&msg);
 			break;
 		case UMOUNT:
-			fs_msg.RETVAL = do_umount(&fs_msg);
+			msg.RETVAL = do_umount(&msg);
 			break;
 		case MKDIR:
-			fs_msg.RETVAL = do_mkdir(&fs_msg);
+			msg.RETVAL = do_mkdir(&msg);
 			break;
 		case RESUME_PROC:
-			src = fs_msg.PROC_NR;
+			src = msg.PROC_NR;
 			break;
 		case FORK:
-			fs_msg.RETVAL = fs_fork(&fs_msg);
+			msg.RETVAL = fs_fork(&msg);
 			break;
 		case EXIT:
-			fs_msg.RETVAL = fs_exit(&fs_msg);
+			msg.RETVAL = fs_exit(&msg);
 			break;
 		case LSEEK:
-			fs_msg.OFFSET = do_lseek(&fs_msg);
+			msg.OFFSET = do_lseek(&msg);
 			break;
 		case STAT:
-			fs_msg.RETVAL = do_stat(&fs_msg);
+			msg.RETVAL = do_stat(&msg);
 			break;
 		case CHROOT:
-			fs_msg.RETVAL = do_chroot(&fs_msg);
+			msg.RETVAL = do_chroot(&msg);
 			break;
 		case CHDIR:
-			fs_msg.RETVAL = do_chdir(&fs_msg);
+			msg.RETVAL = do_chdir(&msg);
 			break; 
 		default:
-			dump_msg("FS::unknown message:", &fs_msg);
+			dump_msg("Lyos FS: unknown message:", &msg);
 			assert(0);
 			break;
 		}
@@ -170,9 +171,9 @@ PUBLIC void task_lyos_fs()
 #endif
 
 		/* reply */
-		if (fs_msg.type != SUSPEND_PROC) {
-			fs_msg.type = SYSCALL_RET;
-			send_recv(SEND, src, &fs_msg);
+		if (msg.type != SUSPEND_PROC) {
+			msg.type = SYSCALL_RET;
+			send_recv(SEND, src, &msg);
 		}
 	}
 }
@@ -279,7 +280,7 @@ PRIVATE void mkfs()
 	driver_msg.DEVICE	= MINOR(ROOT_DEV);
 	driver_msg.REQUEST	= DIOCTL_GET_GEO;
 	driver_msg.BUF		= &geo;
-	driver_msg.PROC_NR	= TASK_FS;
+	driver_msg.PROC_NR	= getpid();
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 

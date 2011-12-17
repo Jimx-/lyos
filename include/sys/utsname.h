@@ -13,12 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "compile.h"	// generate by Makefile
 /* uname */
 #define UTS_SYSNAME	"Lyos"		// kernel name
 #define UTS_NODENAME	"localhost"	// network node hostname
 #define UTS_RELEASE	""		// kernel release
-#define UTS_VERSION	"0.3.0.0"	// kernel version
-#define UTS_MACHINE	"i386"		// machine hardware name
 
 #define SIZE_UTSNAME	45
 
@@ -29,3 +28,5 @@ struct utsname {
 	char version[9];
 	char machine[9];
 };
+
+#define LYOS_BANNER "Lyos version "UTS_VERSION" ("LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"

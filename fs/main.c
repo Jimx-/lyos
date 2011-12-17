@@ -27,31 +27,38 @@
 #include "global.h"
 #include "proto.h"
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x
 #else
 #define DEB(x)
 #endif
 
+PRIVATE void dump_fs(struct file_system * fs);
+
 PUBLIC void task_fs()
 {
-	MESSAGE msg;
 
-	DEB(printl("VFS is running.\n"));
+	init_buffer();
+	printl("VFS: VFS is running.\n");
+
+	MESSAGE msg;
+	struct file_system * fs;
 	while (1){
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
+		pcaller = &proc_table[src];
 		int msgtype = msg.type;
 
-		struct file_system * fs = file_systems;
-
+		fs = file_systems;
 		switch (msgtype) {
 	 	case FS_REGISTER:
 			register_filesystem(&msg);
 			break;
 		case OPEN:
+			printl("Doing open, %d\n", fs->open);
 			msg.FD = fs->open(&msg);
+			printl("Done open, %d\n", fs->open);
 			break;
 		case CLOSE:
 			msg.RETVAL = fs->close(&msg);
@@ -76,10 +83,10 @@ PUBLIC void task_fs()
 			src = msg.PROC_NR;
 			break;
 		case FORK:
-			msg.RETVAL = fs_fork(&msg);
+			msg.RETVAL = fs->fork(&msg);
 			break;
 		case EXIT:
-			msg.RETVAL = fs_exit(&msg);
+			msg.RETVAL = fs->exit(&msg);
 			break;
 		case LSEEK:
 			msg.OFFSET = fs->lseek(&msg);
@@ -94,7 +101,7 @@ PUBLIC void task_fs()
 			msg.RETVAL = fs->chdir(&msg);
 			break; 
 		default:
-			dump_msg("FS::unknown message:", &msg);
+			dump_msg("VFS: Unknown message:", &msg);
 			assert(0);
 			break;
 		}
@@ -107,12 +114,30 @@ PUBLIC void task_fs()
 	}
 }
 
-PUBLIC void register_filesystem(MESSAGE * m){
-	struct file_system * fs;
-	memcpy(va2la(TASK_FS, fs), va2la(m->source, m->BUF), sizeof(struct file_system));
-	DEB(printl("Register filesystem: name: %s\n", fs->name));
-	if (file_systems == NULL) {
-		file_systems = fs;
-	}
 
+PUBLIC void register_filesystem(MESSAGE * m){
+	struct file_system * tmp;
+	memcpy(va2la(TASK_FS, tmp), va2la(m->source, m->BUF), sizeof(struct file_system));
+	printl("VFS: Register filesystem: name: %s\n", tmp->name);
+	if (file_systems == NULL) {
+		file_systems = tmp;
+	}
 }
+
+PRIVATE void dump_fs(struct file_system * fs){
+	printl("%s { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d }\n",
+		fs->name,
+		fs->open,
+		fs->close,
+		fs->lseek,
+		fs->chdir,
+		fs->chroot,
+		fs->mount,
+		fs->umount,
+		fs->mkdir,
+		fs->rdwt,
+		fs->unlink,
+		fs->stat,
+		fs->fork,
+		fs->exit);
+};

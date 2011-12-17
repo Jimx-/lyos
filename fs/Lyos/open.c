@@ -49,11 +49,11 @@ PUBLIC int do_open(MESSAGE * p)
 	int fd = -1;		/* return value */
 
 	char pathname[MAX_PATH];
-
 	/* get parameters from the message */
 	int flags = p->FLAGS;	/* access mode */
 	int name_len = p->NAME_LEN;	/* length of filename */
 	int src = p->source;	/* caller proc nr. */
+
 	assert(name_len < MAX_PATH);
 	phys_copy((void*)va2la(TASK_FS, pathname),
 		  (void*)va2la(src, p->PATHNAME),

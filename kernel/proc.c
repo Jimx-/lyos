@@ -626,7 +626,7 @@ PUBLIC void dumproc(struct proc* p)
 PUBLIC void dump_msg(const char * title, MESSAGE* m)
 {
 	int packed = 0;
-	printl("{%s}<0x%x>{%ssrc:%s(%d),%stype:%d,%s(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
+	printl("\n\n%s<0x%x>{%ssrc:%s(%d),%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
 	       title,
 	       (int)m,
 	       packed ? "" : "\n        ",

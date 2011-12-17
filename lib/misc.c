@@ -181,9 +181,7 @@ PUBLIC void spin(char * func_name)
  *****************************************************************************/
 PUBLIC void assertion_failure(char *exp, char *file, char *base_file, int line)
 {
-//#define NDEBUG
-#ifndef NDEBUG
-	printl("%c  assert(%s) failed: file: %s, base_file: %s, ln%d",
+	printl("%cAssertion %s failed: file: %s, base_file: %s, line: %d",
 	       MAG_CH_ASSERT,
 	       exp, file, base_file, line);
 
@@ -199,5 +197,4 @@ PUBLIC void assertion_failure(char *exp, char *file, char *base_file, int line)
 
 	/* should never arrive here */
         __asm__ __volatile__("ud2");
-#endif
 }

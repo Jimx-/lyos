@@ -74,7 +74,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
 		p->CNT	= len;
 		p->PROC_NR	= src;
 		assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-		send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &fs_msg);
+		send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, p);
 		assert(p->CNT == len);
 
 		return p->CNT;
