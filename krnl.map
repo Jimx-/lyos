@@ -176,7 +176,7 @@ LOAD lib/lyoscrt.a
  *(.iplt)
  .iplt          0x0000000000000000        0x0 kernel/krnl.o
 
-.text           0x0000000000001000     0xe9ad
+.text           0x0000000000001000     0xe91d
  *(.text.unlikely .text.*_unlikely)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
@@ -299,7 +299,7 @@ LOAD lib/lyoscrt.a
                 0x000000000000463e                do_uname
                 0x0000000000004675                do_umask
  *fill*         0x000000000000467f        0x1 90909090
- .text          0x0000000000004680     0x5ac7 fs/fs.o
+ .text          0x0000000000004680     0x5a34 fs/fs.o
                 0x0000000000004680                task_fs
                 0x000000000000488f                register_filesystem
                 0x00000000000049dc                task_lyos_fs
@@ -336,143 +336,143 @@ LOAD lib/lyoscrt.a
                 0x0000000000009c7f                file_read
                 0x0000000000009ca8                file_write
                 0x0000000000009cd4                namei
-                0x0000000000009ee3                find_entry
-                0x000000000000a000                search_file
-                0x000000000000a087                strip_path
- *fill*         0x000000000000a147        0x9 90909090
- .text          0x000000000000a150      0xff8 mm/mm.o
-                0x000000000000a150                page_fault
-                0x000000000000a198                task_mm
-                0x000000000000a43f                get_user_pages
-                0x000000000000a4f3                free_user_pages
-                0x000000000000a545                alloc_mem
-                0x000000000000a5a1                free_mem
-                0x000000000000a5ac                do_fork
-                0x000000000000a8dd                do_exit
-                0x000000000000aab2                do_wait
-                0x000000000000ab70                do_exec
-                0x000000000000ae80                wp_page
-                0x000000000000ae85                no_page
-                0x000000000000ae8c                do_sigaction
-                0x000000000000afe4                do_alarm
-                0x000000000000b0a0                do_kill
-                0x000000000000b119                do_raise
- .text          0x000000000000b148     0x3cf5 drivers/drivers.o
-                0x000000000000b148                task_fd
-                0x000000000000b9ce                fd_handler
-                0x000000000000b9e2                do_fd_request
-                0x000000000000b9e7                init_fd
-                0x000000000000ba54                task_hd
-                0x000000000000bb33                do_hd_request
-                0x000000000000c743                hd_handler
-                0x000000000000c768                task_rd
-                0x000000000000c80b                do_rd_request
-                0x000000000000c933                init_rd
-                0x000000000000c985                rd_load_image
-                0x000000000000cb60                add_request
-                0x000000000000cc08                task_scsi
-                0x000000000000cca0                scsi_handler
-                0x000000000000cca5                do_scsi_request
-                0x000000000000ccaa                init_scsi
-                0x000000000000ccb0                init_screen
-                0x000000000000ce3f                out_char
-                0x000000000000d152                is_current_console
-                0x000000000000d934                select_console
-                0x000000000000d96b                scroll_screen
-                0x000000000000db94                keyboard_handler
-                0x000000000000dbfd                init_keyboard
-                0x000000000000dcb8                keyboard_read
-                0x000000000000e274                task_tty
-                0x000000000000e401                in_process
-                0x000000000000e950                sys_printx
-                0x000000000000eaf6                dump_tty_buf
-                0x000000000000ec58                task_inet
-                0x000000000000ec60                task_pci
-                0x000000000000ed4c                pci_init
-                0x000000000000ed60                dev_driver_task
- *fill*         0x000000000000ee3d        0x3 90909090
- .text          0x000000000000ee40       0x41 lib/syslog.o
-                0x000000000000ee40                syslog
- *fill*         0x000000000000ee81        0xf 90909090
- .text          0x000000000000ee90       0xc7 lib/lyoscrt.a(x86_lib.o)
-                0x000000000000ee90                sendrec
-                0x000000000000eeaa                printx
-                0x000000000000eeb8                reboot
-                0x000000000000eed0                memcpy
-                0x000000000000eeff                memset
-                0x000000000000ef26                strcpy
-                0x000000000000ef3e                strlen
- *fill*         0x000000000000ef57        0x1 90909090
- .text          0x000000000000ef58       0x9a lib/lyoscrt.a(printf.o)
-                0x000000000000ef58                printf
-                0x000000000000efae                printl
- *fill*         0x000000000000eff2        0x2 90909090
- .text          0x000000000000eff4      0x31d lib/lyoscrt.a(vsprintf.o)
-                0x000000000000f05f                vsprintf
-                0x000000000000f2e7                sprintf
- *fill*         0x000000000000f311        0x3 90909090
- .text          0x000000000000f314      0x25d lib/lyoscrt.a(misc.o)
-                0x000000000000f314                send_recv
-                0x000000000000f3c0                memcmp
-                0x000000000000f43a                strcmp
-                0x000000000000f4b1                strcat
-                0x000000000000f510                spin
-                0x000000000000f52b                assertion_failure
- *fill*         0x000000000000f571        0x3 90909090
- .text          0x000000000000f574       0x8a lib/lyoscrt.a(open.o)
-                0x000000000000f574                open
-                0x000000000000f5bb                mkdir
- *fill*         0x000000000000f5fe        0x2 90909090
- .text          0x000000000000f600       0x3f lib/lyoscrt.a(read.o)
-                0x000000000000f600                read
- *fill*         0x000000000000f63f        0x1 90909090
- .text          0x000000000000f640       0x3f lib/lyoscrt.a(write.o)
-                0x000000000000f640                write
- *fill*         0x000000000000f67f        0x1 90909090
- .text          0x000000000000f680       0x33 lib/lyoscrt.a(close.o)
-                0x000000000000f680                close
- *fill*         0x000000000000f6b3        0x1 90909090
- .text          0x000000000000f6b4       0x3f lib/lyoscrt.a(lseek.o)
-                0x000000000000f6b4                lseek
- *fill*         0x000000000000f6f3        0x1 90909090
- .text          0x000000000000f6f4       0x2d lib/lyoscrt.a(getpid.o)
-                0x000000000000f6f4                getpid
- *fill*         0x000000000000f721        0x3 90909090
- .text          0x000000000000f724       0x47 lib/lyoscrt.a(stat.o)
-                0x000000000000f724                stat
- *fill*         0x000000000000f76b        0x1 90909090
- .text          0x000000000000f76c       0x2d lib/lyoscrt.a(fork.o)
-                0x000000000000f76c                fork
- *fill*         0x000000000000f799        0x3 90909090
- .text          0x000000000000f79c       0x44 lib/lyoscrt.a(wait.o)
-                0x000000000000f79c                wait
- .text          0x000000000000f7e0      0x191 lib/lyoscrt.a(exec.o)
-                0x000000000000f7e0                exec
-                0x000000000000f82f                execl
-                0x000000000000f855                execv
- *fill*         0x000000000000f971        0x3 90909090
- .text          0x000000000000f974       0x39 lib/lyoscrt.a(uname.o)
-                0x000000000000f974                uname
+                0x0000000000009d4c                last_dir
+                0x0000000000009ef8                find_entry
+                0x000000000000a015                search_file
+                0x000000000000a028                strip_path
+ *fill*         0x000000000000a0b4        0xc 90909090
+ .text          0x000000000000a0c0      0xff8 mm/mm.o
+                0x000000000000a0c0                page_fault
+                0x000000000000a108                task_mm
+                0x000000000000a3af                get_user_pages
+                0x000000000000a463                free_user_pages
+                0x000000000000a4b5                alloc_mem
+                0x000000000000a511                free_mem
+                0x000000000000a51c                do_fork
+                0x000000000000a84d                do_exit
+                0x000000000000aa22                do_wait
+                0x000000000000aae0                do_exec
+                0x000000000000adf0                wp_page
+                0x000000000000adf5                no_page
+                0x000000000000adfc                do_sigaction
+                0x000000000000af54                do_alarm
+                0x000000000000b010                do_kill
+                0x000000000000b089                do_raise
+ .text          0x000000000000b0b8     0x3cf5 drivers/drivers.o
+                0x000000000000b0b8                task_fd
+                0x000000000000b93e                fd_handler
+                0x000000000000b952                do_fd_request
+                0x000000000000b957                init_fd
+                0x000000000000b9c4                task_hd
+                0x000000000000baa3                do_hd_request
+                0x000000000000c6b3                hd_handler
+                0x000000000000c6d8                task_rd
+                0x000000000000c77b                do_rd_request
+                0x000000000000c8a3                init_rd
+                0x000000000000c8f5                rd_load_image
+                0x000000000000cad0                add_request
+                0x000000000000cb78                task_scsi
+                0x000000000000cc10                scsi_handler
+                0x000000000000cc15                do_scsi_request
+                0x000000000000cc1a                init_scsi
+                0x000000000000cc20                init_screen
+                0x000000000000cdaf                out_char
+                0x000000000000d0c2                is_current_console
+                0x000000000000d8a4                select_console
+                0x000000000000d8db                scroll_screen
+                0x000000000000db04                keyboard_handler
+                0x000000000000db6d                init_keyboard
+                0x000000000000dc28                keyboard_read
+                0x000000000000e1e4                task_tty
+                0x000000000000e371                in_process
+                0x000000000000e8c0                sys_printx
+                0x000000000000ea66                dump_tty_buf
+                0x000000000000ebc8                task_inet
+                0x000000000000ebd0                task_pci
+                0x000000000000ecbc                pci_init
+                0x000000000000ecd0                dev_driver_task
+ *fill*         0x000000000000edad        0x3 90909090
+ .text          0x000000000000edb0       0x41 lib/syslog.o
+                0x000000000000edb0                syslog
+ *fill*         0x000000000000edf1        0xf 90909090
+ .text          0x000000000000ee00       0xc7 lib/lyoscrt.a(x86_lib.o)
+                0x000000000000ee00                sendrec
+                0x000000000000ee1a                printx
+                0x000000000000ee28                reboot
+                0x000000000000ee40                memcpy
+                0x000000000000ee6f                memset
+                0x000000000000ee96                strcpy
+                0x000000000000eeae                strlen
+ *fill*         0x000000000000eec7        0x1 90909090
+ .text          0x000000000000eec8       0x9a lib/lyoscrt.a(printf.o)
+                0x000000000000eec8                printf
+                0x000000000000ef1e                printl
+ *fill*         0x000000000000ef62        0x2 90909090
+ .text          0x000000000000ef64      0x31d lib/lyoscrt.a(vsprintf.o)
+                0x000000000000efcf                vsprintf
+                0x000000000000f257                sprintf
+ *fill*         0x000000000000f281        0x3 90909090
+ .text          0x000000000000f284      0x25d lib/lyoscrt.a(misc.o)
+                0x000000000000f284                send_recv
+                0x000000000000f330                memcmp
+                0x000000000000f3aa                strcmp
+                0x000000000000f421                strcat
+                0x000000000000f480                spin
+                0x000000000000f49b                assertion_failure
+ *fill*         0x000000000000f4e1        0x3 90909090
+ .text          0x000000000000f4e4       0x8a lib/lyoscrt.a(open.o)
+                0x000000000000f4e4                open
+                0x000000000000f52b                mkdir
+ *fill*         0x000000000000f56e        0x2 90909090
+ .text          0x000000000000f570       0x3f lib/lyoscrt.a(read.o)
+                0x000000000000f570                read
+ *fill*         0x000000000000f5af        0x1 90909090
+ .text          0x000000000000f5b0       0x3f lib/lyoscrt.a(write.o)
+                0x000000000000f5b0                write
+ *fill*         0x000000000000f5ef        0x1 90909090
+ .text          0x000000000000f5f0       0x33 lib/lyoscrt.a(close.o)
+                0x000000000000f5f0                close
+ *fill*         0x000000000000f623        0x1 90909090
+ .text          0x000000000000f624       0x3f lib/lyoscrt.a(lseek.o)
+                0x000000000000f624                lseek
+ *fill*         0x000000000000f663        0x1 90909090
+ .text          0x000000000000f664       0x2d lib/lyoscrt.a(getpid.o)
+                0x000000000000f664                getpid
+ *fill*         0x000000000000f691        0x3 90909090
+ .text          0x000000000000f694       0x47 lib/lyoscrt.a(stat.o)
+                0x000000000000f694                stat
+ *fill*         0x000000000000f6db        0x1 90909090
+ .text          0x000000000000f6dc       0x2d lib/lyoscrt.a(fork.o)
+                0x000000000000f6dc                fork
+ *fill*         0x000000000000f709        0x3 90909090
+ .text          0x000000000000f70c       0x44 lib/lyoscrt.a(wait.o)
+                0x000000000000f70c                wait
+ .text          0x000000000000f750      0x191 lib/lyoscrt.a(exec.o)
+                0x000000000000f750                exec
+                0x000000000000f79f                execl
+                0x000000000000f7c5                execv
+ *fill*         0x000000000000f8e1        0x3 90909090
+ .text          0x000000000000f8e4       0x39 lib/lyoscrt.a(uname.o)
+                0x000000000000f8e4                uname
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x000000000000f9ad                PROVIDE (__etext, .)
-                0x000000000000f9ad                PROVIDE (_etext, .)
-                0x000000000000f9ad                PROVIDE (etext, .)
+                0x000000000000f91d                PROVIDE (__etext, .)
+                0x000000000000f91d                PROVIDE (_etext, .)
+                0x000000000000f91d                PROVIDE (etext, .)
 
-.rodata         0x000000000000f9b0     0x184d
+.rodata         0x000000000000f920     0x1819
  *(.rodata .rodata.* .gnu.linkonce.r.*)
- .rodata        0x000000000000f9b0      0x398 kernel/krnl.o
-                0x000000000000fb60                FSBUF_SIZE
-                0x000000000000fb64                MMBUF_SIZE
-                0x000000000000fb68                LOGBUF_SIZE
-                0x000000000000fb6c                LOGDISKBUF_SIZE
- .rodata        0x000000000000fd48      0xcbe fs/fs.o
- *fill*         0x0000000000010a06        0x2 00
- .rodata        0x0000000000010a08      0x12c mm/mm.o
- .rodata        0x0000000000010b34      0x664 drivers/drivers.o
- .rodata        0x0000000000011198       0x65 lib/lyoscrt.a(misc.o)
+ .rodata        0x000000000000f920      0x398 kernel/krnl.o
+                0x000000000000fad0                FSBUF_SIZE
+                0x000000000000fad4                MMBUF_SIZE
+                0x000000000000fad8                LOGBUF_SIZE
+                0x000000000000fadc                LOGDISKBUF_SIZE
+ .rodata        0x000000000000fcb8      0xc8c fs/fs.o
+ .rodata        0x0000000000010944      0x12c mm/mm.o
+ .rodata        0x0000000000010a70      0x664 drivers/drivers.o
+ .rodata        0x00000000000110d4       0x65 lib/lyoscrt.a(misc.o)
 
 .rodata1
  *(.rodata1)
@@ -485,8 +485,8 @@ LOAD lib/lyoscrt.a
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x00000000000111fd                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
-                0x00000000000121fd                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
+                0x0000000000011139                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x0000000000012139                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -501,22 +501,22 @@ LOAD lib/lyoscrt.a
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x00000000000121fd        0x0
-                0x00000000000121fd                PROVIDE (__preinit_array_start, .)
+.preinit_array  0x0000000000012139        0x0
+                0x0000000000012139                PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
-                0x00000000000121fd                PROVIDE (__preinit_array_end, .)
+                0x0000000000012139                PROVIDE (__preinit_array_end, .)
 
-.init_array     0x00000000000121fd        0x0
-                0x00000000000121fd                PROVIDE (__init_array_start, .)
+.init_array     0x0000000000012139        0x0
+                0x0000000000012139                PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*))
  *(.init_array)
-                0x00000000000121fd                PROVIDE (__init_array_end, .)
+                0x0000000000012139                PROVIDE (__init_array_end, .)
 
-.fini_array     0x00000000000121fd        0x0
-                0x00000000000121fd                PROVIDE (__fini_array_start, .)
+.fini_array     0x0000000000012139        0x0
+                0x0000000000012139                PROVIDE (__fini_array_start, .)
  *(SORT(.fini_array.*))
  *(.fini_array)
-                0x00000000000121fd                PROVIDE (__fini_array_end, .)
+                0x0000000000012139                PROVIDE (__fini_array_end, .)
 
 .ctors
  *crtbegin.o(.ctors)
@@ -545,131 +545,131 @@ LOAD lib/lyoscrt.a
 .got
  *(.got)
  *(.igot)
-                0x00000000000121fd                . = DATA_SEGMENT_RELRO_END (., 0xc)
+                0x0000000000012139                . = DATA_SEGMENT_RELRO_END (., 0xc)
 
-.got.plt        0x0000000000012200        0x0
+.got.plt        0x000000000001213c        0x0
  *(.got.plt)
  *(.igot.plt)
  .igot.plt      0x0000000000000000        0x0 kernel/krnl.o
 
-.data           0x0000000000012200      0xa44
+.data           0x0000000000012140      0xa44
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x0000000000012200      0x318 kernel/krnl.o
-                0x0000000000012220                ROOT_DEV
-                0x0000000000012240                task_table
-                0x0000000000012400                user_proc_table
-                0x00000000000124a0                sys_call_table
-                0x00000000000124c0                thisname
-                0x00000000000124ed                dd_map
-                0x0000000000012508                fsbuf
-                0x000000000001250c                mmbuf
-                0x0000000000012510                logbuf
-                0x0000000000012514                logdiskbuf
- .data          0x0000000000012518        0x5 fs/fs.o
-                0x0000000000012518                dot1
-                0x000000000001251a                dot2
- *fill*         0x000000000001251d        0x3 00
- .data          0x0000000000012520        0x0 mm/mm.o
- .data          0x0000000000012520      0x724 drivers/drivers.o
-                0x0000000000012600                floppy_buffer
-                0x0000000000012604                hd_driver
-                0x0000000000012620                keymap
- .data          0x0000000000012c44        0x0 lib/syslog.o
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(printf.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(vsprintf.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(misc.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(open.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(read.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(write.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(close.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(lseek.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(getpid.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(stat.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(fork.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(wait.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(exec.o)
- .data          0x0000000000012c44        0x0 lib/lyoscrt.a(uname.o)
+ .data          0x0000000000012140      0x318 kernel/krnl.o
+                0x0000000000012160                ROOT_DEV
+                0x0000000000012180                task_table
+                0x0000000000012340                user_proc_table
+                0x00000000000123e0                sys_call_table
+                0x0000000000012400                thisname
+                0x000000000001242d                dd_map
+                0x0000000000012448                fsbuf
+                0x000000000001244c                mmbuf
+                0x0000000000012450                logbuf
+                0x0000000000012454                logdiskbuf
+ .data          0x0000000000012458        0x5 fs/fs.o
+                0x0000000000012458                dot1
+                0x000000000001245a                dot2
+ *fill*         0x000000000001245d        0x3 00
+ .data          0x0000000000012460        0x0 mm/mm.o
+ .data          0x0000000000012460      0x724 drivers/drivers.o
+                0x0000000000012540                floppy_buffer
+                0x0000000000012544                hd_driver
+                0x0000000000012560                keymap
+ .data          0x0000000000012b84        0x0 lib/syslog.o
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(printf.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(vsprintf.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(misc.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(open.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(read.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(write.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(close.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(lseek.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(getpid.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(stat.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(fork.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(wait.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(exec.o)
+ .data          0x0000000000012b84        0x0 lib/lyoscrt.a(uname.o)
 
 .data1
  *(.data1)
-                0x0000000000012c44                _edata = .
-                0x0000000000012c44                PROVIDE (edata, .)
-                0x0000000000012c44                __bss_start = .
+                0x0000000000012b84                _edata = .
+                0x0000000000012b84                PROVIDE (edata, .)
+                0x0000000000012b84                __bss_start = .
 
-.bss            0x0000000000012c60    0x49ce4
+.bss            0x0000000000012ba0    0x49ce4
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x0000000000012c60      0x800 kernel/krnl.o
- .bss           0x0000000000013460      0x208 fs/fs.o
- .bss           0x0000000000013668        0xc mm/mm.o
- *fill*         0x0000000000013674        0xc 00
- .bss           0x0000000000013680      0x6f8 drivers/drivers.o
-                0x0000000000013ce0                blk_dev_table
- .bss           0x0000000000013d78        0x0 lib/syslog.o
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(printf.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(vsprintf.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(misc.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(open.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(read.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(write.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(close.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(lseek.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(getpid.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(stat.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(fork.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(wait.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(exec.o)
- .bss           0x0000000000013d78        0x0 lib/lyoscrt.a(uname.o)
+ .bss           0x0000000000012ba0      0x800 kernel/krnl.o
+ .bss           0x00000000000133a0      0x208 fs/fs.o
+ .bss           0x00000000000135a8        0xc mm/mm.o
+ *fill*         0x00000000000135b4        0xc 00
+ .bss           0x00000000000135c0      0x6f8 drivers/drivers.o
+                0x0000000000013c20                blk_dev_table
+ .bss           0x0000000000013cb8        0x0 lib/syslog.o
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(printf.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(vsprintf.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(misc.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(open.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(read.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(write.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(close.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(lseek.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(getpid.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(stat.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(fork.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(wait.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(exec.o)
+ .bss           0x0000000000013cb8        0x0 lib/lyoscrt.a(uname.o)
  *(COMMON)
- *fill*         0x0000000000013d78        0x8 00
- COMMON         0x0000000000013d80    0x48b98 kernel/krnl.o
-                0x0000000000013d80                rd_length
-                0x0000000000013d84                idt_ptr
-                0x0000000000013da0                inode_table
-                0x00000000000148a0                task_stack
-                0x00000000000508a0                errno
-                0x00000000000508a4                mem_start
-                0x00000000000508a8                k_reenter
-                0x00000000000508ac                buffer_base
-                0x00000000000508c0                gdt
-                0x0000000000050cc0                current_console
-                0x0000000000050cc4                pcaller
-                0x0000000000050ce0                tty_table
-                0x00000000000519b4                buffer_length
-                0x00000000000519c0                tss
-                0x0000000000051a40                fs_msg
-                0x0000000000051a70                memory_size
-                0x0000000000051a80                f_desc_table
-                0x0000000000051f80                root_inode
-                0x0000000000051f84                current
-                0x0000000000051f88                disp_pos
-                0x0000000000051fa0                mm_msg
-                0x0000000000051fd0                key_pressed
-                0x0000000000051fe0                buffer_table
-                0x00000000000533f4                gdt_ptr
-                0x00000000000533fc                kernel_addr
-                0x0000000000053400                jiffies
-                0x0000000000053420                idt
-                0x0000000000053c20                super_block
-                0x0000000000053e00                console_table
-                0x0000000000053e80                rd_base
-                0x0000000000053ea0                irq_table
-                0x0000000000053ee0                file_systems
-                0x0000000000053f00                proc_table
-                0x000000000005c914                nr_buffer
- COMMON         0x000000000005c918       0x10 fs/fs.o
-                0x000000000005c918                PARTITION_ENTRY
- COMMON         0x000000000005c928       0x1c drivers/drivers.o
-                0x000000000005c928                reply
-                0x000000000005c92f                selected
-                0x000000000005c930                motor
-                0x000000000005c934                drive_type
-                0x000000000005c944                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x000000000005c944                . = ALIGN (0x4)
-                0x000000000005c944                . = ALIGN (0x4)
-                0x000000000005c944                _end = .
-                0x000000000005c944                PROVIDE (end, .)
-                0x000000000005c944                . = DATA_SEGMENT_END (.)
+ *fill*         0x0000000000013cb8        0x8 00
+ COMMON         0x0000000000013cc0    0x48b98 kernel/krnl.o
+                0x0000000000013cc0                rd_length
+                0x0000000000013cc4                idt_ptr
+                0x0000000000013ce0                inode_table
+                0x00000000000147e0                task_stack
+                0x00000000000507e0                errno
+                0x00000000000507e4                mem_start
+                0x00000000000507e8                k_reenter
+                0x00000000000507ec                buffer_base
+                0x0000000000050800                gdt
+                0x0000000000050c00                current_console
+                0x0000000000050c04                pcaller
+                0x0000000000050c20                tty_table
+                0x00000000000518f4                buffer_length
+                0x0000000000051900                tss
+                0x0000000000051980                fs_msg
+                0x00000000000519b0                memory_size
+                0x00000000000519c0                f_desc_table
+                0x0000000000051ec0                root_inode
+                0x0000000000051ec4                current
+                0x0000000000051ec8                disp_pos
+                0x0000000000051ee0                mm_msg
+                0x0000000000051f10                key_pressed
+                0x0000000000051f20                buffer_table
+                0x0000000000053334                gdt_ptr
+                0x000000000005333c                kernel_addr
+                0x0000000000053340                jiffies
+                0x0000000000053360                idt
+                0x0000000000053b60                super_block
+                0x0000000000053d40                console_table
+                0x0000000000053dc0                rd_base
+                0x0000000000053de0                irq_table
+                0x0000000000053e20                file_systems
+                0x0000000000053e40                proc_table
+                0x000000000005c854                nr_buffer
+ COMMON         0x000000000005c858       0x10 fs/fs.o
+                0x000000000005c858                PARTITION_ENTRY
+ COMMON         0x000000000005c868       0x1c drivers/drivers.o
+                0x000000000005c868                reply
+                0x000000000005c86f                selected
+                0x000000000005c870                motor
+                0x000000000005c874                drive_type
+                0x000000000005c884                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x000000000005c884                . = ALIGN (0x4)
+                0x000000000005c884                . = ALIGN (0x4)
+                0x000000000005c884                _end = .
+                0x000000000005c884                PROVIDE (end, .)
+                0x000000000005c884                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)

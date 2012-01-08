@@ -1,3 +1,88 @@
-		Lyos<http://lyos.googlecode.com>
+	This is Lyos <http://lyos.googlecode.com>
 
+1. WHAT IS LYOS
+===============
+	Lyos is an open source microkernel multitasking operating system, it runs
+	on 32-bit x86-based PCs, it supports IDE harddisk and floppy disk.
+
+	It is distributed under the GNU General Public License.
+
+2. COMPILATION AND INSTALLATION
+===============================
+	
+	a. Download the source
+	----------------------
+		You can get the source with git
+			git clone git://github.com/Jimx-/Lyos.git Lyos
+		or download the bzip file. If you download the bzip file, unpack it
+			tar -jxvf Lyos-0.2.6.31.tar.bz2
+		and unpack the disk image
+			tar -zxvf 80m.img.tar.gz
+
+	b. Compile Lyos
+	---------------
+			cd Lyos
+		build the image
+			make image
+		build the library
+			make lib
+		build command files
+			make cmd
+		then you will get a kernel image and a disk image
+
+	c. Run Lyos on bochs
+	--------------------
+		Get Bochs Emulator at http://bochs.sourceforge.net/,
+		then
+			bochs
+
+	d. Make option
+	--------------
+		* make image
+			build the kernel image.
+		* make lib
+			build a Lyos C Library.
+		* make cmd
+			compile and install the command files to the harddisk image.
+		* make disasm
+			dump the kernel into kernel.bin.asm.
+		* make mrproper
+			remove all object files.
+
+3. DIRECTORIES
+==============
+
+	arch/
+		Architecture specific portions.
+	
+	command/
+		Some basic command like echo and ls.
+
+	driver/
+		Device drivers.
+
+	fs/
+		Filesystem drivers.
+
+	include/
+		Include files.
+
+	kernel/
+		Lyos kernel.
+
+	lib/
+		Lyos C Library.
+
+	mm/
+		Memory management.
+
+	scripts/
+		Some scripts.
+		
+	
+		
+
+
+
+		
 

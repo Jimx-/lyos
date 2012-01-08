@@ -345,7 +345,7 @@ void Init()
 	
 	printf("\n");
 	printf(LYOS_BANNER);
-	printf("(c)Copyright Jimx 2010-2011\n\n");\
+	printf("(c)Copyright Jimx 2010-2012\n\n");\
 
 	char * tty_list[] = {"/dev_tty0","/dev_tty1", "/dev_tty2"};
 	printf("\n");

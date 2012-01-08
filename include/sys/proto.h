@@ -193,9 +193,9 @@ PUBLIC int		do_stat(MESSAGE * p);
 PUBLIC int		do_disklog();
 
 /* fs/Lyos/namei.c */
-PUBLIC int namei(const char * path);
-PUBLIC int 			   find_entry	(struct inode * dir_inode, 
-									const char * file);
+PUBLIC int namei(char * path);
+PUBLIC struct inode *last_dir(char *path, char string[MAX_PATH]);
+PUBLIC int find_entry(struct inode * dir_inode, char filename[MAX_PATH]);
 
 /* mm/forkexit.c */
 PUBLIC int		do_fork();

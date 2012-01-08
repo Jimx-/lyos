@@ -32,8 +32,8 @@
 PUBLIC char dot1[2] = ".";
 PUBLIC char dot2[3] = "..";	
 
-PRIVATE char * get_name(char * old_name, const char * file);
-#define SEARCH_FILE_V1
+PRIVATE char * get_name(char * old_name, char string[MAX_FILENAME_LEN]);
+#define SEARCH_FILE_V2
 
 /**********************************************************************
  * 						namei
@@ -47,43 +47,67 @@ PRIVATE char * get_name(char * old_name, const char * file);
  * @return i_num of path inode if successful, otherwisr zero.
  * 
  * ********************************************************************/
-PUBLIC int namei(const char * path)
+PUBLIC int namei(char * path)
 {
-	int inr;
-	struct inode * pinode;
-	char * dir;
-	char * file;
+	struct inode *ldip, *rip;
+	char string[MAX_FILENAME_LEN];	/* hold 1 path component name here */
 
-	memset(dir, 0, MAX_FILENAME_LEN);
-	memset(file, 0, MAX_FILENAME_LEN);
-
-	if (!current->root) panic("No root inode");
-	if (!current->pwd) panic("No pwd inode");
-	
-	if (*path == '\0') return 0;
-	if (*path == '/')
-		pinode = current->root;
-	else
-		pinode = current->pwd;
-	while(1){
-		file = get_name(path, dir);
-		path = file;
-
-		inr = find_entry(pinode, dir);
-		
-		printl("dir :%s\n", dir);
-		printl("file:%s\n", file);
-		printl("inr :%d\n", inr);
-		
-		if (inr == 0) return 0;
-		
-		pinode = get_inode(pinode->i_dev, inr);
-
-		if (!file) return inr;
-		memset(dir, 0, strlen(dir));
+  	/* First open the path down to the final directory. */
+  	if ( (ldip = last_dir(path, string)) == NULL) {
+		return 0;	/* we couldn't open final directory */
 	}
 
-	return 0;
+  	/* The path consisting only of "/" is a special case, check for it. */
+  	if (string[0] == '\0') return ldip->i_num;
+
+  	int inr = find_entry(ldip, string);
+	rip = get_inode(ldip->i_dev, inr);
+  	put_inode(ldip);
+  	return rip -> i_num;
+}
+
+/*****************************************************************************
+ *				last_dir				     *
+ *****************************************************************************/
+PUBLIC struct inode *last_dir(char *path, char string[MAX_PATH])
+{
+	struct inode *rip;
+	char *new_name;
+	struct inode *new_ip;
+
+  	rip = (*path == '/' ? current->root : current->pwd);
+
+  	if (*path == '\0') {
+		return NULL;
+  	}
+
+	/* Scan the path component by component. */
+	while (TRUE) {
+	/* Extract one component. */
+	if ( (new_name = get_name(path, string)) == (char*) 0) {
+		put_inode(rip);
+		return NULL;
+	}
+	if (*new_name == '\0') {
+		if (rip->i_mode == I_DIRECTORY) {
+			return(rip);	/* normal exit */
+		} else {
+			/* last file of path prefix is not a directory */
+			put_inode(rip);			
+			return NULL;
+		}
+        }
+
+	/* There is more path.  Keep parsing. */
+	int inr = find_entry(rip, string);
+	new_ip = get_inode(rip->i_dev, inr);
+	put_inode(rip);		
+	if (new_ip == NULL) return NULL;
+
+	/* Continue to next */
+	path = new_name;
+	rip = new_ip;
+  }
 }
 
 /*********************************************************************
@@ -98,25 +122,26 @@ PUBLIC int namei(const char * path)
  * 			- dir :"var"											   	
  * 																	   		
  ********************************************************************/ 
-PRIVATE char * get_name(char * old_name, const char * file)
+PRIVATE char * get_name(char * old_name, char string[MAX_FILENAME_LEN])
 {
   int c;
   char *np, *rnp;
 
-  np = file;			/* 'np' points to current position */
+  np = string;			/* 'np' points to current position */
   rnp = old_name;		/* 'rnp' points to unparsed string */
   while ( (c = *rnp) == '/') rnp++;	/* skip leading slashes */
 
   while ( rnp < &old_name[MAX_PATH]  &&  c != '/'   &&  c != '\0') {
-	if (np < &file[MAX_FILENAME_LEN]) *np++ = c;
+	if (np < &string[MAX_FILENAME_LEN]) *np++ = c;
 	c = *++rnp;		/* advance to next character */
   }
 
-  if (c != '/') return 0;
   while (c == '/' && rnp < &old_name[MAX_PATH]) c = *++rnp;
 
+  if (np < &string[MAX_FILENAME_LEN]) *np = '\0';	/* Terminate string */
+
   return(rnp);
- }
+}
  
 /*********************************************************************
  * 						get_path									 *
@@ -160,9 +185,9 @@ PRIVATE char * get_name(char * old_name, const char * file)
  * @see open()
  * @see do_open()
  ********************************************************************/
-PUBLIC int find_entry(struct inode * dir_inode, const char * filename)
+PUBLIC int find_entry(struct inode * dir_inode, char filename[MAX_PATH])
 {
-    int i, j;
+    	int i, j;
 	int dir_blk0_nr = dir_inode->i_start_sect;
 	int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 	int nr_dir_entries =
@@ -174,7 +199,7 @@ PUBLIC int find_entry(struct inode * dir_inode, const char * filename)
 	int m = 0;
 	struct dir_entry * pde;
 
-    if (dir_inode->i_mode != I_DIRECTORY) return 0;
+    	if (dir_inode->i_mode != I_DIRECTORY) return 0;
 
 	for (i = 0; i < nr_dir_blks; i++) {
 		RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
@@ -205,24 +230,51 @@ PUBLIC int find_entry(struct inode * dir_inode, const char * filename)
  *****************************************************************************/
 PUBLIC int search_file(char * path)
 {
-    int ret;
     
 #ifdef SEARCH_FILE_V1
+	int i, j;
+
 	char filename[MAX_PATH];
 	memset(filename, 0, MAX_FILENAME_LEN);
 	struct inode * dir_inode;
 	if (strip_path(filename, path, &dir_inode) != 0)
 		return 0;
 
-	if (filename[0] == 0)
+	if (filename[0] == 0)	/* path: "/" */
 		return dir_inode->i_num;
 
-    ret = find_entry(dir_inode, filename);
+	/**
+	 * Search the dir for the file.
+	 */
+	int dir_blk0_nr = dir_inode->i_start_sect;
+	int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE - 1) / SECTOR_SIZE;
+	int nr_dir_entries =
+	  dir_inode->i_size / DIR_ENTRY_SIZE; /**
+					       * including unused slots
+					       * (the file has been deleted
+					       * but the slot is still there)
+					       */
+	int m = 0;
+	struct dir_entry * pde;
+	for (i = 0; i < nr_dir_blks; i++) {
+		RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
+		pde = (struct dir_entry *)fsbuf;
+		for (j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) {
+			if (memcmp(filename, pde->name, MAX_FILENAME_LEN) == 0)
+				return pde->inode_nr;
+			if (++m > nr_dir_entries)
+				break;
+		}
+		if (m > nr_dir_entries) /* all entries have been iterated */
+			break;
+	}
+
+	/* file not found */
+	return 0;
 #endif
 #ifdef SEARCH_FILE_V2
     return namei(path);
 #endif
-    return ret;
 
 }
 
@@ -260,9 +312,6 @@ PUBLIC int strip_path(char * filename, const char * pathname,
 {
 	const char * s = pathname;
 	char * t = filename;
-       int nr_i;
-
-	*ppinode = root_inode;
 
 	if (s == 0)
 		return -1;
@@ -271,23 +320,16 @@ PUBLIC int strip_path(char * filename, const char * pathname,
 		s++;
 
 	while (*s) {		/* check each character */
-		if (*s == '/'){
-				nr_i = find_entry(*ppinode, filename);
-				//printl("%s num_i:%d\n ", filename, nr_i);
-				
-                if(!nr_i){
-                   put_inode(*ppinode);
-                   //return 0;
-                }
-                *ppinode = get_inode(root_inode->i_dev, nr_i);
-                *t = 0;
-              }
+		if (*s == '/')
+			return -1;
 		*t++ = *s++;
 		/* if filename is too long, just truncate it */
-		//if (t - filename >= MAX_FILENAME_LEN)
-		//	break;
+		if (t - filename >= MAX_FILENAME_LEN)
+			break;
 	}
 	*t = 0;
+
+	*ppinode = root_inode;
 
 	return 0;
 }
