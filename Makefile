@@ -48,7 +48,7 @@ LYOSBOOT	= $(LYOSBOOTDIR)/boot.bin $(LYOSBOOTDIR)/hdboot.bin $(LYOSBOOTDIR)/load
 			$(LYOSBOOTDIR)/hdloader.bin
 LYOSKERNEL	= kernel.bin
 KRNLOBJ		= kernel/krnl.o
-LIB		= lib/lyoscrt.a
+LIB		= lib/liblyos.a
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
@@ -57,7 +57,7 @@ OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
 			$(MMOBJ) \
 			$(DRVOBJ) \
-			lib/syslog.o
+			lib/libc/misc/syslog.o
 
 DASMOUTPUT	= kernel.bin.asm
 
@@ -128,5 +128,5 @@ $(MMOBJ):
 $(DRVOBJ):
 	(cd drivers; make)
 
-lib/syslog.o: lib/syslog.c
+lib/libc/misc/syslog.o: lib/libc/misc/syslog.c
 	$(CC) $(CFLAGS) -o $@ $<

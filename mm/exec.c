@@ -71,6 +71,7 @@ PUBLIC int do_exec()
 	Elf32_Ehdr* elf_hdr = (Elf32_Ehdr*)(mmbuf);
 	int i;
 	if (elf_hdr->e_ident[0] != 0x7f){
+		printl("MM: Invalid executable format.\n");
 		return -1;
 	}
 	for (i = 0; i < elf_hdr->e_phnum; i++) {
