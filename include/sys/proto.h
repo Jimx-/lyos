@@ -30,9 +30,6 @@ PUBLIC void	port_read(u16 port, void* buf, int n);
 PUBLIC void	port_write(u16 port, void* buf, int n);
 PUBLIC void	glitter(int row, int col);
 
-/* string.asm */
-PUBLIC char*	strcpy(char* dst, const char* src);
-
 /* reboot.asm */
 PUBLIC void hard_reboot(void);
 

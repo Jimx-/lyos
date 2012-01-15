@@ -12,22 +12,28 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-#ifndef _CTYPE_H_
-#define _CTYPE_H_
 
-int isalnum(int ch);
-int isalpha(int ch);
-int iscntrl(int ch);
-int isdigit(int ch);
-int isgraph(int ch);
-int islower(int ch);
-int isprint(int ch);
-int ispunct(int ch);
-int isspace(int ch);
-int isupper(int ch);
-int isxdigit(int ch);
+#include "config.h"
+#include "type.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "const.h"
+#include "protect.h"
+#include "string.h"
+#include "fs.h"
+#include "proc.h"
+#include "tty.h"
+#include "console.h"
+#include "global.h"
+#include "keyboard.h"
+#include "proto.h"
 
-int tolower(int ch);
-int toupper(int ch);
-
+#ifndef HAVE_ARCH_STRLEN
+int strlen(const char *str) 
+{ 
+	int len = 0; 
+	while((*str++) != '\0')   
+		len++;   
+	return len; 
+} 
 #endif

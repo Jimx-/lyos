@@ -57,7 +57,7 @@ OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
 			$(MMOBJ) \
 			$(DRVOBJ) \
-			lib/libc/misc/syslog.o
+			lib/misc/syslog.o
 
 DASMOUTPUT	= kernel.bin.asm
 
@@ -67,6 +67,7 @@ DASMOUTPUT	= kernel.bin.asm
 # Default starting position
 help :
 	@echo "make image 	: build the kernel image."
+	@echo "make lib		: build the Lyos C library."
 	@echo "make cmd   	: install the command files to the HD."
 	@echo "make disasm	: dump the kernel into kernel.bin.asm."
 	@echo "make mrproper	: remove all object files."
@@ -128,5 +129,5 @@ $(MMOBJ):
 $(DRVOBJ):
 	(cd drivers; make)
 
-lib/libc/misc/syslog.o: lib/libc/misc/syslog.c
+lib/misc/syslog.o: lib/misc/syslog.c
 	$(CC) $(CFLAGS) -o $@ $<
