@@ -21,6 +21,15 @@ export ARCH
 KERNELVERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 export KERNELVERSION
 
+SRCDIR = $(shell pwd)
+INCDIR = $(SRCDIR)/include
+SYSINCDIR = $(SRCDIR)/include/sys
+LIBDIR = $(SRCDIR)/lib
+ARCHDIR = $(SRCDIR)/arch/$(ARCH)
+ARCHINC = $(ARCHDIR)/include
+ARCHLIB = $(ARCHDIR)/lib
+export SRCDIR INCDIR SYSINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
+
 # Entry point of Lyos
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
 ENTRYPOINT	= 0x1000
@@ -65,12 +74,7 @@ DASMOUTPUT	= kernel.bin.asm
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib
 
 # Default starting position
-help :
-	@echo "make image 	: build the kernel image."
-	@echo "make lib		: build the Lyos C library."
-	@echo "make cmd   	: install the command files to the HD."
-	@echo "make disasm	: dump the kernel into kernel.bin.asm."
-	@echo "make mrproper	: remove all object files."
+kernel : realclean everything clean
 
 everything : genconf $(LYOSBOOT) $(LYOSKERNEL)
 
@@ -107,6 +111,14 @@ buildimg :
 	sudo cp -fv $(LYOSBOOTDIR)/loader.bin /mnt/floppy/
 	sudo cp -fv kernel.bin /mnt/floppy
 	sudo umount /mnt/floppy
+
+help :
+	@echo "make		: build the binary kernel."
+	@echo "make image 	: build the floppy image."
+	@echo "make lib		: build the Lyos C library."
+	@echo "make cmd   	: install the command files to the HD."
+	@echo "make disasm	: dump the kernel into kernel.bin.asm."
+	@echo "make mrproper	: remove all object files."
 
 $(LYOSBOOT):
 	(cd $(LYOSBOOTDIR); make)

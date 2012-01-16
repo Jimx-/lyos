@@ -15,6 +15,7 @@
 
 #include "type.h"
 #include "stdio.h"
+#include "stdarg.h"
 #include "unistd.h"
 #include "const.h"
 #include "protect.h"
@@ -51,7 +52,7 @@ PRIVATE char* i2a(int val, int base, char ** ps)
 /*
  *  为更好地理解此函数的原理，可参考 printf 的注释部分。
  */
-PUBLIC int vsprintf(char *buf, const char *fmt, va_list args)
+PUBLIC int vsprintf(char *buf, const char *fmt, char * args)
 {
 	char*	p;
 

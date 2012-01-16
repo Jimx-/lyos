@@ -48,10 +48,9 @@
 #define	RPL_TASK	SA_RPL1
 #define	RPL_USER	SA_RPL3
 
-#define NULL		(void*)0
-
 #define TRUE			1
 #define FALSE			0
+
 /* Process */
 #define SENDING   0x02	/* set when proc trying to send */
 #define RECEIVING 0x04	/* set when proc trying to recv */

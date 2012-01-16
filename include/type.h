@@ -38,8 +38,6 @@ typedef unsigned short mode_t;
 typedef unsigned short umode_t;
 typedef unsigned short nlink_t;
 
-typedef	char *			va_list;
-
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();
 typedef	void	(*irq_handler)	(int irq);

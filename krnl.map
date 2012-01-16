@@ -2,6 +2,7 @@ Archive member included because of file (symbol)
 
 lib/liblyos.a(x86_lib.o)      kernel/krnl.o (strcpy)
 lib/liblyos.a(io.o)           kernel/krnl.o (lseek)
+lib/liblyos.a(misc.o)         drivers/drivers.o (spin)
 lib/liblyos.a(posix.o)        fs/fs.o (getpid)
 lib/liblyos.a(stdio.o)        kernel/krnl.o (printf)
 lib/liblyos.a(string.o)       kernel/krnl.o (memcmp)
@@ -63,6 +64,8 @@ Discarded input sections
                 0x0000000000000000        0x0 lib/misc/syslog.o
  .note.GNU-stack
                 0x0000000000000000        0x0 lib/liblyos.a(io.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/liblyos.a(misc.o)
  .note.GNU-stack
                 0x0000000000000000        0x0 lib/liblyos.a(posix.o)
  .note.GNU-stack
@@ -146,7 +149,7 @@ LOAD lib/liblyos.a
  *(.iplt)
  .iplt          0x0000000000000000        0x0 kernel/krnl.o
 
-.text           0x0000000000001000     0xec28
+.text           0x0000000000001000     0xebf8
  *(.text.unlikely .text.*_unlikely)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
@@ -384,9 +387,11 @@ LOAD lib/liblyos.a
                 0x000000000000f18c                lseek
                 0x000000000000f1cc                stat
  *fill*         0x000000000000f213        0x1 90909090
- .text          0x000000000000f214      0x501 lib/liblyos.a(posix.o)
+ .text          0x000000000000f214       0xc7 lib/liblyos.a(misc.o)
                 0x000000000000f214                send_recv
                 0x000000000000f2c0                spin
+ *fill*         0x000000000000f2db        0x1 90909090
+ .text          0x000000000000f2dc      0x409 lib/liblyos.a(posix.o)
                 0x000000000000f2dc                getpid
                 0x000000000000f30c                getuid
                 0x000000000000f339                setuid
@@ -395,44 +400,43 @@ LOAD lib/liblyos.a
                 0x000000000000f3dc                geteuid
                 0x000000000000f409                getegid
                 0x000000000000f438                fork
-                0x000000000000f468                exit
-                0x000000000000f498                wait
-                0x000000000000f4dc                exec
-                0x000000000000f52b                execl
-                0x000000000000f551                execv
-                0x000000000000f670                kill
-                0x000000000000f6a9                raise
-                0x000000000000f6dc                uname
- *fill*         0x000000000000f715        0x3 90909090
- .text          0x000000000000f718      0x3b9 lib/liblyos.a(stdio.o)
-                0x000000000000f718                printf
-                0x000000000000f76e                printl
-                0x000000000000f81f                vsprintf
-                0x000000000000faa7                sprintf
- *fill*         0x000000000000fad1        0x3 90909090
- .text          0x000000000000fad4      0x154 lib/liblyos.a(string.o)
-                0x000000000000fad4                memcmp
-                0x000000000000fb50                strcmp
-                0x000000000000fbc8                strcat
+                0x000000000000f468                wait
+                0x000000000000f4ac                exec
+                0x000000000000f4fb                execl
+                0x000000000000f521                execv
+                0x000000000000f640                kill
+                0x000000000000f679                raise
+                0x000000000000f6ac                uname
+ *fill*         0x000000000000f6e5        0x3 90909090
+ .text          0x000000000000f6e8      0x3b9 lib/liblyos.a(stdio.o)
+                0x000000000000f6e8                printf
+                0x000000000000f73e                printl
+                0x000000000000f7ef                vsprintf
+                0x000000000000fa77                sprintf
+ *fill*         0x000000000000faa1        0x3 90909090
+ .text          0x000000000000faa4      0x154 lib/liblyos.a(string.o)
+                0x000000000000faa4                memcmp
+                0x000000000000fb20                strcmp
+                0x000000000000fb98                strcat
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x000000000000fc28                PROVIDE (__etext, .)
-                0x000000000000fc28                PROVIDE (_etext, .)
-                0x000000000000fc28                PROVIDE (etext, .)
+                0x000000000000fbf8                PROVIDE (__etext, .)
+                0x000000000000fbf8                PROVIDE (_etext, .)
+                0x000000000000fbf8                PROVIDE (etext, .)
 
-.rodata         0x000000000000fc28     0x17e5
+.rodata         0x000000000000fbf8     0x17e5
  *(.rodata .rodata.* .gnu.linkonce.r.*)
- .rodata        0x000000000000fc28      0x398 kernel/krnl.o
-                0x000000000000fdd8                FSBUF_SIZE
-                0x000000000000fddc                MMBUF_SIZE
-                0x000000000000fde0                LOGBUF_SIZE
-                0x000000000000fde4                LOGDISKBUF_SIZE
- .rodata        0x000000000000ffc0      0xc88 fs/fs.o
- .rodata        0x0000000000010c48      0x14c mm/mm.o
- .rodata        0x0000000000010d94      0x664 drivers/drivers.o
- .rodata        0x00000000000113f8       0x15 lib/liblyos.a(posix.o)
+ .rodata        0x000000000000fbf8      0x398 kernel/krnl.o
+                0x000000000000fda8                FSBUF_SIZE
+                0x000000000000fdac                MMBUF_SIZE
+                0x000000000000fdb0                LOGBUF_SIZE
+                0x000000000000fdb4                LOGDISKBUF_SIZE
+ .rodata        0x000000000000ff90      0xc88 fs/fs.o
+ .rodata        0x0000000000010c18      0x14c mm/mm.o
+ .rodata        0x0000000000010d64      0x664 drivers/drivers.o
+ .rodata        0x00000000000113c8       0x15 lib/liblyos.a(misc.o)
 
 .rodata1
  *(.rodata1)
@@ -445,8 +449,8 @@ LOAD lib/liblyos.a
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x000000000001140d                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
-                0x000000000001240d                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
+                0x00000000000113dd                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x00000000000123dd                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -461,22 +465,22 @@ LOAD lib/liblyos.a
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x000000000001240d        0x0
-                0x000000000001240d                PROVIDE (__preinit_array_start, .)
+.preinit_array  0x00000000000123dd        0x0
+                0x00000000000123dd                PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
-                0x000000000001240d                PROVIDE (__preinit_array_end, .)
+                0x00000000000123dd                PROVIDE (__preinit_array_end, .)
 
-.init_array     0x000000000001240d        0x0
-                0x000000000001240d                PROVIDE (__init_array_start, .)
+.init_array     0x00000000000123dd        0x0
+                0x00000000000123dd                PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*))
  *(.init_array)
-                0x000000000001240d                PROVIDE (__init_array_end, .)
+                0x00000000000123dd                PROVIDE (__init_array_end, .)
 
-.fini_array     0x000000000001240d        0x0
-                0x000000000001240d                PROVIDE (__fini_array_start, .)
+.fini_array     0x00000000000123dd        0x0
+                0x00000000000123dd                PROVIDE (__fini_array_start, .)
  *(SORT(.fini_array.*))
  *(.fini_array)
-                0x000000000001240d                PROVIDE (__fini_array_end, .)
+                0x00000000000123dd                PROVIDE (__fini_array_end, .)
 
 .ctors
  *crtbegin.o(.ctors)
@@ -505,111 +509,113 @@ LOAD lib/liblyos.a
 .got
  *(.got)
  *(.igot)
-                0x000000000001240d                . = DATA_SEGMENT_RELRO_END (., 0xc)
+                0x00000000000123dd                . = DATA_SEGMENT_RELRO_END (., 0xc)
 
-.got.plt        0x0000000000012410        0x0
+.got.plt        0x00000000000123e0        0x0
  *(.got.plt)
  *(.igot.plt)
  .igot.plt      0x0000000000000000        0x0 kernel/krnl.o
 
-.data           0x0000000000012420      0xa44
+.data           0x00000000000123e0      0xa44
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x0000000000012420      0x318 kernel/krnl.o
-                0x0000000000012440                ROOT_DEV
-                0x0000000000012460                task_table
-                0x0000000000012620                user_proc_table
-                0x00000000000126c0                sys_call_table
-                0x00000000000126e0                thisname
-                0x000000000001270d                dd_map
-                0x0000000000012728                fsbuf
-                0x000000000001272c                mmbuf
-                0x0000000000012730                logbuf
-                0x0000000000012734                logdiskbuf
- .data          0x0000000000012738        0x5 fs/fs.o
-                0x0000000000012738                dot1
-                0x000000000001273a                dot2
- *fill*         0x000000000001273d        0x3 00
- .data          0x0000000000012740        0x0 mm/mm.o
- .data          0x0000000000012740      0x724 drivers/drivers.o
-                0x0000000000012820                floppy_buffer
-                0x0000000000012824                hd_driver
-                0x0000000000012840                keymap
- .data          0x0000000000012e64        0x0 lib/misc/syslog.o
- .data          0x0000000000012e64        0x0 lib/liblyos.a(io.o)
- .data          0x0000000000012e64        0x0 lib/liblyos.a(posix.o)
- .data          0x0000000000012e64        0x0 lib/liblyos.a(stdio.o)
- .data          0x0000000000012e64        0x0 lib/liblyos.a(string.o)
+ .data          0x00000000000123e0      0x318 kernel/krnl.o
+                0x0000000000012400                ROOT_DEV
+                0x0000000000012420                task_table
+                0x00000000000125e0                user_proc_table
+                0x0000000000012680                sys_call_table
+                0x00000000000126a0                thisname
+                0x00000000000126cd                dd_map
+                0x00000000000126e8                fsbuf
+                0x00000000000126ec                mmbuf
+                0x00000000000126f0                logbuf
+                0x00000000000126f4                logdiskbuf
+ .data          0x00000000000126f8        0x5 fs/fs.o
+                0x00000000000126f8                dot1
+                0x00000000000126fa                dot2
+ *fill*         0x00000000000126fd        0x3 00
+ .data          0x0000000000012700        0x0 mm/mm.o
+ .data          0x0000000000012700      0x724 drivers/drivers.o
+                0x00000000000127e0                floppy_buffer
+                0x00000000000127e4                hd_driver
+                0x0000000000012800                keymap
+ .data          0x0000000000012e24        0x0 lib/misc/syslog.o
+ .data          0x0000000000012e24        0x0 lib/liblyos.a(io.o)
+ .data          0x0000000000012e24        0x0 lib/liblyos.a(misc.o)
+ .data          0x0000000000012e24        0x0 lib/liblyos.a(posix.o)
+ .data          0x0000000000012e24        0x0 lib/liblyos.a(stdio.o)
+ .data          0x0000000000012e24        0x0 lib/liblyos.a(string.o)
 
 .data1
  *(.data1)
-                0x0000000000012e64                _edata = .
-                0x0000000000012e64                PROVIDE (edata, .)
-                0x0000000000012e64                __bss_start = .
+                0x0000000000012e24                _edata = .
+                0x0000000000012e24                PROVIDE (edata, .)
+                0x0000000000012e24                __bss_start = .
 
-.bss            0x0000000000012e80    0x49ce4
+.bss            0x0000000000012e40    0x49ce4
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x0000000000012e80      0x800 kernel/krnl.o
- .bss           0x0000000000013680      0x208 fs/fs.o
- .bss           0x0000000000013888        0xc mm/mm.o
- *fill*         0x0000000000013894        0xc 00
- .bss           0x00000000000138a0      0x6f8 drivers/drivers.o
-                0x0000000000013f00                blk_dev_table
- .bss           0x0000000000013f98        0x0 lib/misc/syslog.o
- .bss           0x0000000000013f98        0x0 lib/liblyos.a(io.o)
- .bss           0x0000000000013f98        0x0 lib/liblyos.a(posix.o)
- .bss           0x0000000000013f98        0x0 lib/liblyos.a(stdio.o)
- .bss           0x0000000000013f98        0x0 lib/liblyos.a(string.o)
+ .bss           0x0000000000012e40      0x800 kernel/krnl.o
+ .bss           0x0000000000013640      0x208 fs/fs.o
+ .bss           0x0000000000013848        0xc mm/mm.o
+ *fill*         0x0000000000013854        0xc 00
+ .bss           0x0000000000013860      0x6f8 drivers/drivers.o
+                0x0000000000013ec0                blk_dev_table
+ .bss           0x0000000000013f58        0x0 lib/misc/syslog.o
+ .bss           0x0000000000013f58        0x0 lib/liblyos.a(io.o)
+ .bss           0x0000000000013f58        0x0 lib/liblyos.a(misc.o)
+ .bss           0x0000000000013f58        0x0 lib/liblyos.a(posix.o)
+ .bss           0x0000000000013f58        0x0 lib/liblyos.a(stdio.o)
+ .bss           0x0000000000013f58        0x0 lib/liblyos.a(string.o)
  *(COMMON)
- *fill*         0x0000000000013f98        0x8 00
- COMMON         0x0000000000013fa0    0x48b98 kernel/krnl.o
-                0x0000000000013fa0                rd_length
-                0x0000000000013fa4                idt_ptr
-                0x0000000000013fc0                inode_table
-                0x0000000000014ac0                task_stack
-                0x0000000000050ac0                errno
-                0x0000000000050ac4                mem_start
-                0x0000000000050ac8                k_reenter
-                0x0000000000050acc                buffer_base
-                0x0000000000050ae0                gdt
-                0x0000000000050ee0                current_console
-                0x0000000000050ee4                pcaller
-                0x0000000000050f00                tty_table
-                0x0000000000051bd4                buffer_length
-                0x0000000000051be0                tss
-                0x0000000000051c60                fs_msg
-                0x0000000000051c90                memory_size
-                0x0000000000051ca0                f_desc_table
-                0x00000000000521a0                root_inode
-                0x00000000000521a4                current
-                0x00000000000521a8                disp_pos
-                0x00000000000521c0                mm_msg
-                0x00000000000521f0                key_pressed
-                0x0000000000052200                buffer_table
-                0x0000000000053614                gdt_ptr
-                0x000000000005361c                kernel_addr
-                0x0000000000053620                jiffies
-                0x0000000000053640                idt
-                0x0000000000053e40                super_block
-                0x0000000000054020                console_table
-                0x00000000000540a0                rd_base
-                0x00000000000540c0                irq_table
-                0x0000000000054100                file_systems
-                0x0000000000054120                proc_table
-                0x000000000005cb34                nr_buffer
- COMMON         0x000000000005cb38       0x10 fs/fs.o
-                0x000000000005cb38                PARTITION_ENTRY
- COMMON         0x000000000005cb48       0x1c drivers/drivers.o
-                0x000000000005cb48                reply
-                0x000000000005cb4f                selected
-                0x000000000005cb50                motor
-                0x000000000005cb54                drive_type
-                0x000000000005cb64                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x000000000005cb64                . = ALIGN (0x4)
-                0x000000000005cb64                . = ALIGN (0x4)
-                0x000000000005cb64                _end = .
-                0x000000000005cb64                PROVIDE (end, .)
-                0x000000000005cb64                . = DATA_SEGMENT_END (.)
+ *fill*         0x0000000000013f58        0x8 00
+ COMMON         0x0000000000013f60    0x48b98 kernel/krnl.o
+                0x0000000000013f60                rd_length
+                0x0000000000013f64                idt_ptr
+                0x0000000000013f80                inode_table
+                0x0000000000014a80                task_stack
+                0x0000000000050a80                errno
+                0x0000000000050a84                mem_start
+                0x0000000000050a88                k_reenter
+                0x0000000000050a8c                buffer_base
+                0x0000000000050aa0                gdt
+                0x0000000000050ea0                current_console
+                0x0000000000050ea4                pcaller
+                0x0000000000050ec0                tty_table
+                0x0000000000051b94                buffer_length
+                0x0000000000051ba0                tss
+                0x0000000000051c20                fs_msg
+                0x0000000000051c50                memory_size
+                0x0000000000051c60                f_desc_table
+                0x0000000000052160                root_inode
+                0x0000000000052164                current
+                0x0000000000052168                disp_pos
+                0x0000000000052180                mm_msg
+                0x00000000000521b0                key_pressed
+                0x00000000000521c0                buffer_table
+                0x00000000000535d4                gdt_ptr
+                0x00000000000535dc                kernel_addr
+                0x00000000000535e0                jiffies
+                0x0000000000053600                idt
+                0x0000000000053e00                super_block
+                0x0000000000053fe0                console_table
+                0x0000000000054060                rd_base
+                0x0000000000054080                irq_table
+                0x00000000000540c0                file_systems
+                0x00000000000540e0                proc_table
+                0x000000000005caf4                nr_buffer
+ COMMON         0x000000000005caf8       0x10 fs/fs.o
+                0x000000000005caf8                PARTITION_ENTRY
+ COMMON         0x000000000005cb08       0x1c drivers/drivers.o
+                0x000000000005cb08                reply
+                0x000000000005cb0f                selected
+                0x000000000005cb10                motor
+                0x000000000005cb14                drive_type
+                0x000000000005cb24                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x000000000005cb24                . = ALIGN (0x4)
+                0x000000000005cb24                . = ALIGN (0x4)
+                0x000000000005cb24                _end = .
+                0x000000000005cb24                PROVIDE (end, .)
+                0x000000000005cb24                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)
@@ -639,7 +645,8 @@ LOAD lib/liblyos.a
  .comment       0x0000000000000000       0x2b lib/misc/syslog.o
  .comment       0x000000000000032b       0x3e lib/liblyos.a(x86_lib.o)
  .comment       0x0000000000000000      0x12d lib/liblyos.a(io.o)
- .comment       0x0000000000000000      0x183 lib/liblyos.a(posix.o)
+ .comment       0x0000000000000000       0x2b lib/liblyos.a(misc.o)
+ .comment       0x0000000000000000      0x12d lib/liblyos.a(posix.o)
  .comment       0x0000000000000000       0x56 lib/liblyos.a(stdio.o)
  .comment       0x0000000000000000      0x102 lib/liblyos.a(string.o)
 

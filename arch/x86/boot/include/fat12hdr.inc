@@ -15,7 +15,7 @@
 
 ; Head
 ; ----------------------------------------------------------------------
-BS_OEMName	DB 'Jimx    '	; OEM String, must be 8 bytes
+BS_OEMName	DB 'Jimx&Wxx'	; OEM String, must be 8 bytes
 
 BPB_BytsPerSec	DW 512		; bytes per sector
 BPB_SecPerClus	DB 1		; sector per cluster
@@ -34,7 +34,7 @@ BS_DrvNum	DB 0		; driver number for int 13
 BS_Reserved1	DB 0		; reserved
 BS_BootSig	DB 29h		; boot sign
 BS_VolID	DD 0		; volume ID
-BS_VolLab	DB 'Lyos0.2.6.3'; volume label, must be 11 bytes
+BS_VolLab	DB 'Lyos0.2.3.0'; volume label, must be 11 bytes
 BS_FileSysType	DB 'FAT12   '	; file system type, must be 8 bytes
 ;------------------------------------------------------------------------
 

@@ -58,5 +58,8 @@ struct sigaction {
 	int sa_flags;
 };
 
+int	kill		(int pid,int signo);
+int	raise		(int signo);
+
 #endif /* _SIGNAL_H */
 

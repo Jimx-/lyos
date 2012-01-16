@@ -14,8 +14,10 @@ LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)_lib.o \
 			assert/assert.o \
 			ctype/ctype.o \
 			io/io.o \
+			misc/misc.o \
 			posix/posix.o \
 			stdio/stdio.o \
+			stdlib/stdlib.o \
 			string/string.o
 
 LIB		= liblyos.a
@@ -40,8 +42,14 @@ ctype/ctype.o:
 stdio/stdio.o:
 	(cd stdio; make)
 
+stdlib/stdlib.o:
+	(cd stdlib; make)
+
 io/io.o:
 	(cd io; make)
+
+misc/misc.o:
+	(cd misc; make)
 
 posix/posix.o:
 	(cd posix; make)

@@ -16,6 +16,7 @@
 #include "type.h"
 #include "stdio.h"
 #include "unistd.h"
+#include "assert.h"
 #include "const.h"
 #include "protect.h"
 #include "fs.h"

@@ -15,6 +15,7 @@
     
 #include "type.h"
 #include "stdio.h"
+#include "stddef.h"
 #include "unistd.h"
 #include "const.h"
 #include "protect.h"

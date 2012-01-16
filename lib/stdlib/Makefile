@@ -10,11 +10,9 @@ ASMKFLAGS	= -I ../../include/ -I ../../include/sys/ -f elf
 CFLAGS		= -I ../../include/ -I ../../include/sys/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
-LOBJS		= getpid.o getuid.o \
-			fork.o wait.o exec.o kill.o \
-			uname.o
+LOBJS		= exit.o
 
-LIB		= posix.o
+LIB		= stdlib.o
 
 everything : reclean $(LIB)
 
@@ -24,25 +22,7 @@ reclean :
 $(LIB): $(LOBJS)
 	$(LD) -r -o $(LIB) $(LOBJS)
 
-getpid.o: getpid.c
-	$(CC) $(CFLAGS) -o $@ $<
-	
-getuid.o: getuid.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-fork.o: fork.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-wait.o: wait.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-exec.o: exec.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-kill.o: kill.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-uname.o: uname.c
+exit.o: exit.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 

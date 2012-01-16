@@ -22,23 +22,11 @@
 /* the assert macro */
 #define NDEBUG /* enable/disable assert */
 
-#ifndef NDEBUG
-void assertion_failure(char *exp, char *file, char *base_file, int line);
-#define assert(exp)  if (exp) ; \
-        else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__)
-#else
-#define assert(exp)
-#endif
-
 /* EXTERN */
 #define	EXTERN	extern	/* EXTERN is defined as extern except in global.c */
 
 /* string */
 #define	STR_DEFAULT_LEN	1024
-
-#define O_CREAT		1
-#define O_RDWR		2
-#define O_TRUNC		4
 
 #define SEEK_SET	1
 #define SEEK_CUR	2
@@ -93,7 +81,7 @@ PUBLIC  int     printf(const char *fmt, ...);
 PUBLIC  int     printl(const char *fmt, ...);
 
 /* vsprintf.c */
-PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
+PUBLIC  int     vsprintf(char *buf, const char *fmt, char* args);
 PUBLIC	int	sprintf(char *buf, const char *fmt, ...);
 
 /*--------*/
