@@ -17,7 +17,7 @@
 #define	_STDIO_H_
 
 #include "type.h"
-#include "../include/sys/utsname.h"
+#include "../include/lyos/utsname.h"
 
 /* the assert macro */
 #define NDEBUG /* enable/disable assert */

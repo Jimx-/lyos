@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -I ../../include/ -I ../../include/sys/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS	= -I ../../include/ -I ../../include/lyos/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 LD	= ld
 
 FSOBJS 	= main.o open.o misc.o read_write.o\

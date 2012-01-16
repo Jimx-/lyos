@@ -4,8 +4,8 @@
 ASM		= nasm
 CC		= gcc
 LD		= ld
-ASMKFLAGS	= -I ../../include/ -I ../../include/sys/ -f elf
-CFLAGS		= -I ../../include/ -I ../../include/sys/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I ../../include/ -I ../../include/lyos/ -f elf
+CFLAGS		= -I ../../include/ -I ../../include/lyos/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 CHRDRVOBJS	= console.o keyboard.o tty.o
 CHRDRV		= chr_dev.o

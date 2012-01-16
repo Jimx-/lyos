@@ -15,4 +15,4 @@ CC=$3
   echo \#define LYOS_COMPILE_BY \"`whoami`\"
   echo \#define LYOS_COMPILE_HOST \"`hostname`\"
   echo \#define LYOS_COMPILER \"`$CC -v 2>&1 | tail -n 1`\"
-) > ./include/sys/compile.h
+) > ./include/lyos/compile.h
