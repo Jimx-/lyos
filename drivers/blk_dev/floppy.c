@@ -13,6 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
     
+
 #include "type.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -186,6 +187,16 @@ PRIVATE void recalibrate()
     write_fdc_data(selected + 4);
 }
 
+/*******************************************************
+ *			fd_rdwt
+ *******************************************************/
+/** Read from/write to floppy disk 
+ *
+ * @param p->DEVICE	Which device
+ * @param p->POSITION	Where to read(in byte)
+ * @param p->CNT	How many bytes
+ * @param p->BUF	Where to store the data
+ ********************************************************/
 PRIVATE void fd_rdwt(MESSAGE * p)
 {
 	int read;
@@ -196,7 +207,7 @@ PRIVATE void fd_rdwt(MESSAGE * p)
 	int len = p->CNT;
 	int drive = DRV_OF_DEV(p->DEVICE);
 
-	void * la = (void*)va2la(p->PROC_NR, p->BUF);
+	void * la = (void*)va2la(p->source, p->BUF);
 
     	if (len > (1 * 1024))
     	{

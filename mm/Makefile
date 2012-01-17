@@ -8,7 +8,7 @@ ASMKFLAGS	= -I ../include/ -I ../include/lyos/ -f elf
 CFLAGS		= -I ../include/ -I ../include/lyos/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)_mm.o \
-			main.o forkexit.o exec.o memory.o signal.o
+			main.o forkexit.o exec.o memory.o signal.o alloc.o
 MM		= mm.o
 
 everything : reclean $(MM)
@@ -35,4 +35,7 @@ memory.o: memory.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 signal.o: signal.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+alloc.o: alloc.c
 	$(CC) $(CFLAGS) -o $@ $<

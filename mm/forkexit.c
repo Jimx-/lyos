@@ -30,6 +30,12 @@
 #include "signal.h"
 #include "errno.h"
 
+//#define FE_DEBUG
+#ifdef FE_DEBUG
+#define DEB(x) printl("forkexit: "); x
+#else
+#define DEB(x)
+#endif
 
 PRIVATE void cleanup(struct proc * proc);
 
@@ -107,7 +113,10 @@ PUBLIC int do_fork()
 
 	/* base of child proc, T, D & S segments share the same space,
 	   so we allocate memory just once */
-	int child_base = alloc_mem(child_pid, caller_T_size);
+	/* int child_base = alloc_mem(child_pid, caller_T_size); */
+	DEB(printl("Allocating memory: %d\n", caller_T_size));
+	int child_base = alloc_mem(caller_T_size);
+	DEB(printl("Allocated: base: %d\n", child_base));
 
 	/* child is a copy of the parent */
 	phys_copy((void*)child_base, (void*)caller_T_base, caller_T_size);
@@ -195,7 +204,24 @@ PUBLIC void do_exit(int status)
 	msg2fs.PID = pid;
 	send_recv(BOTH, TASK_FS, &msg2fs);
 
-	free_mem(pid);
+	/* free its memory */
+	struct descriptor * pd = &proc_table[pid].ldts[INDEX_LDT_C];
+	/* base of T-seg, in bytes */
+	int T_base  = reassembly(pd->base_high, 24,
+					pd->base_mid,  16,
+					pd->base_low);
+	/* limit of T-seg, in 1 or 4096 bytes,
+
+	   depending on the G bit of descriptor */
+	int T_limit = reassembly(0, 0,
+					(pd->limit_high_attr2 & 0xF), 16,
+					pd->limit_low);
+	/* size of T-seg, in bytes */
+	int T_size  = ((T_limit + 1) *
+			      ((pd->limit_high_attr2 & (DA_LIMIT_4K >> 8)) ?
+			       4096 : 1));
+	DEB(printl("Freeing memory: base: %d, size: %d\n", T_base, T_size));
+	free_mem(T_base, T_size);
 
 	p->exit_status = status;
 

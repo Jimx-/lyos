@@ -124,6 +124,10 @@ PUBLIC void task_mm()
  *****************************************************************************/
 /**
  * Do some initialization work.
+ *
+ * Memory info is collected from boot_param, then set the buffer and ramdisk
+ * area.
+ *
  * 
  *****************************************************************************/
 PRIVATE void init_mm()
@@ -156,7 +160,6 @@ PRIVATE void init_mm()
 	
 	buffer_base = (unsigned char *)BUFFER_BASE;
 	buffer_length = BUFFER_LENGTH;
-	//init_buffer();
 	
 #ifdef RAMDISK
 	rd_base = (unsigned char *)RAMDISK_BASE;
@@ -169,6 +172,9 @@ PRIVATE void init_mm()
 
 	paging_pages = memory_size / PAGE_SIZE;
 	printl("%d pages\n", paging_pages);
+
+	/* initialize hole table */
+	mem_init(mem_start, free_mem_size);
 }
 
 unsigned long get_user_pages(unsigned long len)
@@ -216,50 +222,3 @@ unsigned long free_user_pages(unsigned long start, unsigned long len)
     return 0;
 }
 
-/*****************************************************************************
- *                                alloc_mem
- *****************************************************************************/
-/**
- * Allocate a memory block for a proc.
- * 
- * @param pid  Which proc the memory is for.
- * @param memsize  How many bytes is needed.
- * 
- * @return  The base of the memory just allocated.
- *****************************************************************************/
-PUBLIC int alloc_mem(int pid, int memsize)
-{
-	assert(pid >= (NR_TASKS + NR_NATIVE_PROCS));
-	if (memsize > PROC_IMAGE_SIZE_DEFAULT) {
-		panic("unsupported memory request: %d. "
-		      "(should be less than %d)",
-		      memsize,
-		      PROC_IMAGE_SIZE_DEFAULT);
-	}
-
-	int base = PROCS_BASE +
-		(pid - (NR_TASKS + NR_NATIVE_PROCS)) * PROC_IMAGE_SIZE_DEFAULT;
-
-	if (base + memsize >= memory_size)
-		panic("memory allocation failed. pid:%d", pid);
-
-	return base;
-}
-
-/*****************************************************************************
- *                                free_mem
- *****************************************************************************/
-/**
- * Free a memory block. Because a memory block is corresponding with a PID, so
- * we don't need to really `free' anything. In another word, a memory block is
- * dedicated to one and only one PID, no matter what proc actually uses this
- * PID.
- * 
- * @param pid  Whose memory is to be freed.
- * 
- * @return  Zero if success.
- *****************************************************************************/
-PUBLIC int free_mem(int pid)
-{
-	return 0;
-}

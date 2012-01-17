@@ -108,6 +108,8 @@ struct task {
 #define FIRST_PROC		proc_table[0]
 #define LAST_PROC		proc_table[NR_TASKS + NR_PROCS - 1]
 
+#define NR_HOLES		((NR_PROCS * 2) + 4)
+
 /**
  * All forked proc will use memory above PROCS_BASE.
  *

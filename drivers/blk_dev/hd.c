@@ -15,7 +15,6 @@
     
 #include "type.h"
 #include "stdio.h"
-#include "unistd.h"
 #include "assert.h"
 #include "const.h"
 #include "protect.h"
@@ -264,17 +263,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		if (p->type == DEV_READ) {
 			interrupt_wait();
 			char * buf;
-			if ((buf = find_buffer(p->DEVICE, pos, bytes_left)))		// if we have loaded this sector, just return it
-			{
-				//phys_copy(hdbuf, buf, bytes);
-				//printl("BUFFER%s\n", hdbuf);
-			}
-			/*else*/{
-				//char * addr = get_buffer(p->DEVICE, pos, bytes_left);
-				port_read(REG_DATA, hdbuf, SECTOR_SIZE);
-				//printl("HDBUF %s\n", hdbuf);
-				//phys_copy(addr, hdbuf, bytes);
-			}
+			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 			phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
 		else {

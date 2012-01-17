@@ -44,6 +44,11 @@ typedef	void	(*irq_handler)	(int irq);
 
 typedef void*	system_call;
 
+struct hole {
+	struct hole * h_next;
+	int h_base;
+	int h_len;
+};
 
 /**
  * MESSAGE mechanism is borrowed from MINIX
