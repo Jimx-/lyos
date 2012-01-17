@@ -16,8 +16,7 @@
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
 
-#include "type.h"
-#include "../include/lyos/utsname.h"
+#include "lyos/type.h"
 
 /* the assert macro */
 #define NDEBUG /* enable/disable assert */
@@ -33,18 +32,6 @@
 #define SEEK_END	3
 
 #define	MAX_PATH	128
-
-/**
- * @struct stat
- * @brief  File status, returned by syscall stat();
- */
-struct stat {
-	int st_dev;		/* major/minor device number */
-	int st_ino;		/* i-node number */
-	int st_mode;		/* file mode, protection bits, etc. */
-	int st_rdev;		/* device ID (if special file) */
-	int st_size;		/* file size */
-};
 
 #define  BCD_TO_DEC(x)      ( (x >> 4) * 10 + (x & 0x0f) )
 

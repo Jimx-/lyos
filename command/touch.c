@@ -15,7 +15,8 @@
 
 #include "stdio.h"
 #include "unistd.h"
-#include "type.h"
+#include "lyos/type.h"
+#include "fcntl.h"
 
 void usage();
 

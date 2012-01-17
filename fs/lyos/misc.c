@@ -1,22 +1,23 @@
 
 /* Lyos' FS */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "keyboard.h"
-#include "proto.h"
-#include "hd.h"
-#include "fs.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/keyboard.h"
+#include "lyos/proto.h"
+#include "lyos/hd.h"
+#include "lyos/fs.h"
+#include "sys/stat.h"
 
 /*****************************************************************************
  *                                do_stat

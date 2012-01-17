@@ -13,23 +13,23 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
-#include "config.h"
+#include "lyos/type.h"
+#include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
 #include "errno.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "keyboard.h"
-#include "proto.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/keyboard.h"
+#include "lyos/proto.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
@@ -93,6 +93,7 @@ PUBLIC int alloc_mem(int memsize)
 	printl("MM: alloc_mem() failed(Out of memory).\n");
   	return(ENOMEM);
 }
+
 
 /*****************************************************************************
  *                                free_mem

@@ -5,8 +5,8 @@
 ASM		= nasm
 CC		= gcc
 LD		= ld
-ASMKFLAGS	= -I ../include/ -I ../include/lyos/ -f elf
-CFLAGS		= -I ../include/ -I ../include/lyos/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I ../include/ -f elf
+CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)_krnl.o start.o main.o\
 			clock.o \

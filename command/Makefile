@@ -24,7 +24,7 @@ install : all clean
 	cp ../arch/x86/boot/hd*.bin ./ -v
 	cp ../kernel.bin ./ -v
 	tar vcf cmd.tar kernel.bin $(BIN) hd*.bin hello.c
-	dd if=cmd.tar of=$(HD) seek=`echo "obase=10;ibase=16;(\`egrep -e '^ROOT_BASE' ../arch/x86/boot/include/load.inc | sed -e 's/.*0x//g'\`+\`egrep -e '#define[[:space:]]*INSTALL_START_SECT' ../include/sys/config.h | sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l cmd.tar | awk -F " " '{print $$5}'` conv=notrunc
+	dd if=cmd.tar of=$(HD) seek=`echo "obase=10;ibase=16;(\`egrep -e '^ROOT_BASE' ../arch/x86/boot/include/load.inc | sed -e 's/.*0x//g'\`+\`egrep -e '#define[[:space:]]*INSTALL_START_SECT' ../include/lyos/config.h | sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l cmd.tar | awk -F " " '{print $$5}'` conv=notrunc
 
 all : realclean everything
 
@@ -42,67 +42,67 @@ kernel.bin :
 start.o : start.asm
 	$(ASM) $(ASMFLAGS) -o $@ $<
 
-sh.o: sh.c ../include/stdio.h ../include/type.h
+sh.o: sh.c ../include/stdio.h ../include/lyos/type.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 sh : sh.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-echo.o: echo.c ../include/type.h ../include/stdio.h
+echo.o: echo.c ../include/lyos/type.h ../include/stdio.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 echo : echo.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-pwd.o: pwd.c ../include/type.h ../include/stdio.h
+pwd.o: pwd.c ../include/lyos/type.h ../include/stdio.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 pwd : pwd.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-rm.o: rm.c ../include/type.h ../include/stdio.h
+rm.o: rm.c ../include/lyos/type.h ../include/stdio.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 rm : rm.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-touch.o: touch.c ../include/type.h ../include/stdio.h
+touch.o: touch.c ../include/lyos/type.h ../include/stdio.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 touch : touch.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-date.o: date.c ../include/type.h ../include/stdio.h ../include/sys/const.h
+date.o: date.c ../include/lyos/type.h ../include/stdio.h ../include/lyos/const.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 date : date.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-cat.o: cat.c ../include/stdio.h ../include/sys/console.h 
+cat.o: cat.c ../include/stdio.h ../include/lyos/console.h 
 	$(CC) $(CFLAGS) -o $@ $<
 
 cat : cat.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-su.o: su.c ../include/stdio.h ../include/type.h 
+su.o: su.c ../include/stdio.h ../include/lyos/type.h 
 	$(CC) $(CFLAGS) -o $@ $<
 
 su : su.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-uname.o: uname.c ../include/stdio.h ../include/type.h
+uname.o: uname.c ../include/stdio.h ../include/lyos/type.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 uname : uname.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
-ls.o: ls.c ../include/stdio.h ../include/type.h ../include/sys/fs.h
+ls.o: ls.c ../include/stdio.h ../include/lyos/type.h ../include/lyos/fs.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 ls : ls.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 	
-cp.o: cp.c ../include/stdio.h ../include/type.h ../include/sys/fs.h ../include/sys/const.h
+cp.o: cp.c ../include/stdio.h ../include/lyos/type.h ../include/lyos/fs.h ../include/lyos/const.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 cp : cp.o start.o $(LIB)

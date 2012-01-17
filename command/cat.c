@@ -1,6 +1,8 @@
 #include "stdio.h"
 #include "unistd.h"
-#include "sys/console.h"
+#include "lyos/console.h"
+#include "fcntl.h"
+#include "sys/stat.h"
 
 int main(int argc, char * argv[]){
 

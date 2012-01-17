@@ -1,8 +1,10 @@
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "../include/sys/fs.h"
-#include "../include/sys/const.h"
+#include "lyos/fs.h"
+#include "lyos/const.h"
+#include "sys/stat.h"
+#include "fcntl.h"
 
 void usage(int status){
 	if (status == 0){

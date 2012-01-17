@@ -13,19 +13,19 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
-#include "fs.h"
-#include "tty.h"
-#include "console.h"
-#include "proc.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
+#include "lyos/fs.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/proc.h"
 #include "string.h"
-#include "global.h"
-#include "proto.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
 
 
 /* 本文件内函数声明 */

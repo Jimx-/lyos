@@ -6,14 +6,15 @@ ASM		= nasm
 CC		= gcc
 LD		= ld
 AR		= ar
-ASMKFLAGS	= -I ../include/ -I ../include/sys/ -I include/ -f elf
-CFLAGS		= -I ../include/ -I ../include/sys/ -I include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I ../include/ -f elf
+CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)_lib.o \
 			assert/assert.o \
 			ctype/ctype.o \
 			io/io.o \
+			malloc/malloc.o \
 			misc/misc.o \
 			posix/posix.o \
 			stdio/stdio.o \
@@ -47,6 +48,9 @@ stdlib/stdlib.o:
 
 io/io.o:
 	(cd io; make)
+
+malloc/malloc.o:
+	(cd malloc; make)
 
 misc/misc.o:
 	(cd misc; make)

@@ -4,8 +4,8 @@
 ASM		= nasm
 CC		= gcc
 LD		= ld
-ASMKFLAGS	= -I ../include/ -I ../include/lyos/ -f elf
-CFLAGS		= -I ../include/ -I ../include/lyos/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I ../include/ -f elf
+CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)_mm.o \
 			main.o forkexit.o exec.o memory.o signal.o alloc.o

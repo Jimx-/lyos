@@ -15,9 +15,9 @@
 
 #include "stdio.h"
 #include "unistd.h"
-#include "type.h"
-#include "sys/const.h"
-#include "time.h"
+#include "lyos/type.h"
+#include "lyos/const.h"
+#include "lyos/time.h"
 
 char * opt;
 int ok;

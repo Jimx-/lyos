@@ -15,20 +15,21 @@
 
 #define GLOBAL_VARIABLES_HERE
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "config.h"
-#include "const.h"
-#include "protect.h"
-#include "fs.h"
-#include "termios.h"
-#include "tty.h"
-#include "console.h"
-#include "proc.h"
-#include "global.h"
-#include "proto.h"
+#include "lyos/config.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
+#include "lyos/fs.h"
+#include "sys/termios.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
 #include "errno.h"
+#include "sys/utsname.h"
 
 
 PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];

@@ -13,9 +13,10 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
+#include "sys/utsname.h"
 
 void usage(int status){
 	if (status == 0){

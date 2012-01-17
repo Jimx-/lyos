@@ -13,9 +13,12 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
+#include "fcntl.h"
+#include "sys/utsname.h"
+#include "sys/wait.h"
 
 int main()
 {

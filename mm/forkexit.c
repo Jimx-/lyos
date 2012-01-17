@@ -13,22 +13,23 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "keyboard.h"
-#include "proto.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/keyboard.h"
+#include "lyos/proto.h"
 #include "signal.h"
 #include "errno.h"
+#include "sys/wait.h"
 
 //#define FE_DEBUG
 #ifdef FE_DEBUG
@@ -59,8 +60,10 @@ PUBLIC int do_fork()
 	int child_pid = i;
 	assert(p == &proc_table[child_pid]);
 	assert(child_pid >= NR_TASKS + NR_NATIVE_PROCS);
-	if (i == NR_TASKS + NR_PROCS) /* no free slot */
-		return -1;
+	if (i == NR_TASKS + NR_PROCS) { /* no free slot */
+		printl("MM: process table is full.\n");
+		return EAGAIN;
+	}
 	assert(i < NR_TASKS + NR_PROCS);
 
 	/* duplicate the process table */
@@ -290,12 +293,28 @@ PRIVATE void cleanup(struct proc * proc)
 PUBLIC void do_wait()
 {
 	int pid = mm_msg.source;
+	int child_pid = mm_msg.PID;
+	/*
+	 * The value of child_pid can be:
+	 * (1) < -1 	meaning waiting for any  child process whose process group ID is
+         *    	equal to the absolute value of child_pid.
+	 * (2) -1 	meaning waiting for any child process.
+	 * (3) 0	meaning wait for any child process whose process group ID is
+         *    	equal to that of the calling process.
+	 *
+	 * (4) > 0  	meaning wait for the child whose process ID is equal to the
+         *     	value of child_pid.
+	 */
+	int options = mm_msg.SIGNR;
 
 	int i;
 	int children = 0;
 	struct proc* p_proc = proc_table;
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p_proc++) {
 		if (p_proc->p_parent == pid) {
+			if (child_pid > 0 && child_pid != proc2pid(p_proc)) continue;
+			if (child_pid < -1 && -child_pid != p_proc->gid) continue;
+			if (child_pid == 0 && p_proc->gid != (proc_table + pid)->gid) continue;
 			children++;
 			if (p_proc->state & HANGING) {
 				cleanup(p_proc);
@@ -306,6 +325,7 @@ PUBLIC void do_wait()
 
 	if (children) {
 		/* has children, but no child is HANGING */
+		if (options & WNOHANG) return;	 /* parent does not want to wait */
 		proc_table[pid].state |= WAITING;
 	}
 	else {
@@ -316,4 +336,5 @@ PUBLIC void do_wait()
 		send_recv(SEND, pid, &msg);
 	}
 }
+
 

@@ -13,21 +13,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
-#include "config.h"
+#include "lyos/type.h"
+#include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "keyboard.h"
-#include "proto.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/keyboard.h"
+#include "lyos/proto.h"
 
 PRIVATE int free_mem_size;
 PRIVATE int paging_pages;
@@ -86,7 +86,7 @@ PUBLIC void task_mm()
 			mm_msg.RETVAL = do_getuid();
 			break;
 		case SETUID:
-            mm_msg.RETVAL = do_setuid();
+            		mm_msg.RETVAL = do_setuid();
 			break;
 		case GETGID:
 			mm_msg.RETVAL = do_getgid();
@@ -105,6 +105,9 @@ PUBLIC void task_mm()
 			break;
 		case ALARM:
 			mm_msg.RETVAL = do_alarm();
+			break;
+		case MALLOC:
+			mm_msg.RETVAL = alloc_mem(mm_msg.CNT);
 			break;
 		default:
 			dump_msg("MM::unknown msg", &mm_msg);

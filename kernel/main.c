@@ -13,21 +13,23 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "proto.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
 #include "fcntl.h"
+#include "sys/wait.h"
+#include "sys/utsname.h"
 
 /*****************************************************************************
  *                               kernel_main
@@ -84,8 +86,7 @@ PUBLIC int kernel_main()
 		else {		/* INIT process */
 			unsigned int k_base;
 			unsigned int k_limit;
-			int ret = get_kernel_map(&k_base, &k_limit);
-			assert(ret == 0);
+			get_kernel_map(&k_base, &k_limit);
 			init_desc(&p->ldts[INDEX_LDT_C],
 				  0, /* bytes before the entry point
 				      * are useless (wasted) for the
@@ -276,7 +277,7 @@ void shell(const char * tty_name)
 	uname(name);
 	while (1) {
 		printf("[root@%s]$", name->nodename);
-		int r = read(0, rdbuf, 70);
+		int r = read(fd_stdin, rdbuf, 70);
 		rdbuf[r] = 0;
 
 		int argc = 0;

@@ -13,21 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include "type.h"
+#include "lyos/type.h"
 #include "stdio.h"
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
-#include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "keyboard.h"
-#include "proto.h"
 
 
 /*****************************************************************************

@@ -13,21 +13,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
-#include "config.h"
+#include "lyos/type.h"
+#include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "proto.h"
-#include "hd.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "lyos/hd.h"
 
 PRIVATE void mkfs();
 PRIVATE void register_fs();
@@ -51,7 +51,7 @@ PUBLIC void task_lyos_fs()
 	printl("Lyos Filesystem v1.0\n");
 	init_fs();
 
-	struct file_system * fs;
+	struct file_system * fs = malloc(sizeof(struct file_system));
 	fs->name = "Lyos FS";
 	fs->open = do_open;
 	fs->close = do_close;
@@ -64,8 +64,8 @@ PUBLIC void task_lyos_fs()
 	fs->rdwt = do_rdwt;
 	fs->unlink = do_unlink;
 	fs->stat = do_stat;
-	fs->fork = do_fork;
-	fs->exit = do_exit;
+	fs->fork = fs_fork;
+	fs->exit = fs_exit;
 	MESSAGE reg;
 	reg.type = FS_REGISTER;
 	reg.BUF = fs;

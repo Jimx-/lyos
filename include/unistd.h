@@ -30,15 +30,11 @@ int 	setgid		(gid_t gid);
 int 	geteuid		(void);
 int 	getegid		(void);
 int	fork		(void);
-int	wait		(int * status);
-#define waitpid wait
 int	exec		(const char * path);
 int	execl		(const char * path, const char *arg, ...);
 int	execv		(const char * path, char * argv[]);
-int	stat		(const char *path, struct stat *buf);
 int	syslog		(const char *fmt, ...);
 int 	mount		(int dev, char * dir);
 int	umount		(void);
-int 	uname		(struct utsname * name);
 
 #endif

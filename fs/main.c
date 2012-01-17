@@ -13,21 +13,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "type.h"
-#include "config.h"
+#include "lyos/type.h"
+#include "lyos/config.h"
 #include "stdio.h"
 #include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
-#include "const.h"
-#include "protect.h"
+#include "lyos/const.h"
+#include "lyos/protect.h"
 #include "string.h"
-#include "fs.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "global.h"
-#include "proto.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -118,7 +118,7 @@ PUBLIC void task_fs()
 
 
 PUBLIC void register_filesystem(MESSAGE * m){
-	struct file_system * tmp;
+	struct file_system * tmp = malloc(sizeof(struct file_system));
 	memcpy(va2la(TASK_FS, tmp), va2la(m->source, m->BUF), sizeof(struct file_system));
 	printl("VFS: Register filesystem: name: %s\n", tmp->name);
 	if (file_systems == NULL) {

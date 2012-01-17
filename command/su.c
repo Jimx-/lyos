@@ -1,6 +1,8 @@
 #include "stdio.h"
 #include "unistd.h"
-#include "type.h"
+#include "lyos/type.h"
+#include "fcntl.h"
+#include "string.h"
 
 int main(int argc, char * argv[]){
 
