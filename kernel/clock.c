@@ -38,7 +38,7 @@
  * @param irq The IRQ nr, unused here.
  *****************************************************************************/
 PUBLIC void clock_handler(int irq)
-{
+{	
 	if (++jiffies >= MAX_TICKS)
 		jiffies = 0;
 

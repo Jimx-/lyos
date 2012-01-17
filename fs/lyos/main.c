@@ -50,27 +50,7 @@ PUBLIC void task_lyos_fs()
 {
 	printl("Lyos Filesystem v1.0\n");
 	init_fs();
-
-	struct file_system * fs = malloc(sizeof(struct file_system));
-	fs->name = "Lyos FS";
-	fs->open = do_open;
-	fs->close = do_close;
-	fs->lseek = do_lseek;
-	fs->chdir = do_chdir;
-	fs->chroot = do_chroot;
-	fs->mount = do_mount;
-	fs->umount = do_umount;
-	fs->mkdir = do_mkdir;
-	fs->rdwt = do_rdwt;
-	fs->unlink = do_unlink;
-	fs->stat = do_stat;
-	fs->fork = fs_fork;
-	fs->exit = fs_exit;
-	MESSAGE reg;
-	reg.type = FS_REGISTER;
-	reg.BUF = fs;
-	send_recv(BOTH, 10, &reg);
-
+	register_fs();
 	MESSAGE msg;
 
 	while (1) {
@@ -242,7 +222,6 @@ PUBLIC void mount_root()
 		proc_table[i].pwd = root_inode;
 	}
 	printl("FS: Mounted root(Lyos filesystem)\n");
-	
 	rd_load_image(ROOT_DEV, 1);
 }
 
@@ -450,7 +429,25 @@ PRIVATE void mkfs()
 }
 
 PRIVATE void register_fs(){
-
+	struct file_system * fs = malloc(sizeof(struct file_system));
+	fs->name = "Lyos FS";
+	fs->open = do_open;
+	fs->close = do_close;
+	fs->lseek = do_lseek;
+	fs->chdir = do_chdir;
+	fs->chroot = do_chroot;
+	fs->mount = do_mount;
+	fs->umount = do_umount;
+	fs->mkdir = do_mkdir;
+	fs->rdwt = do_rdwt;
+	fs->unlink = do_unlink;
+	fs->stat = do_stat;
+	fs->fork = fs_fork;
+	fs->exit = fs_exit;
+	MESSAGE reg;
+	reg.type = FS_REGISTER;
+	reg.BUF = fs;
+	send_recv(BOTH, 10, &reg);
 }
 
 /*****************************************************************************

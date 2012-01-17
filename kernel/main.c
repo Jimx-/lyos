@@ -106,9 +106,9 @@ PUBLIC int kernel_main()
 
 		p->regs.cs = INDEX_LDT_C << 3 |	SA_TIL | rpl;
 		p->regs.ds =
-			p->regs.es =
-			p->regs.fs =
-			p->regs.ss = INDEX_LDT_RW << 3 | SA_TIL | rpl;
+		p->regs.es =
+		p->regs.fs =
+		p->regs.ss = INDEX_LDT_RW << 3 | SA_TIL | rpl;
 		p->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;
 		p->regs.eip	= (u32)t->initial_eip;
 		p->regs.esp	= (u32)stk;
@@ -380,7 +380,7 @@ void Init()
 			assert(0);
 		}
 	}
-	
+
 	while (1) {
 		int s;
 		/* int child = */wait(&s);

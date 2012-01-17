@@ -62,7 +62,7 @@ PUBLIC int do_fork()
 	assert(child_pid >= NR_TASKS + NR_NATIVE_PROCS);
 	if (i == NR_TASKS + NR_PROCS) { /* no free slot */
 		printl("MM: process table is full.\n");
-		return EAGAIN;
+		return -EAGAIN;
 	}
 	assert(i < NR_TASKS + NR_PROCS);
 
@@ -118,11 +118,11 @@ PUBLIC int do_fork()
 	   so we allocate memory just once */
 	/* int child_base = alloc_mem(child_pid, caller_T_size); */
 	DEB(printl("Allocating memory: %d\n", caller_T_size));
-	int child_base = alloc_mem(caller_T_size);
+	int child_base = alloc_mem(caller_D_S_size);
 	DEB(printl("Allocated: base: %d\n", child_base));
 
 	/* child is a copy of the parent */
-	phys_copy((void*)child_base, (void*)caller_T_base, caller_T_size);
+	phys_copy((void*)child_base, (void*)caller_D_S_base, caller_D_S_size);
 
 	/* child's LDT */
 	init_desc(&p->ldts[INDEX_LDT_C],

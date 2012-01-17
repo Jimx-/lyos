@@ -58,9 +58,7 @@ PUBLIC void task_fs()
 			register_filesystem(&msg);
 			break;
 		case OPEN:
-			printl("Doing open, %d\n", fs->open);
 			msg.FD = fs->open(&msg);
-			printl("Done open, %d\n", fs->open);
 			break;
 		case CLOSE:
 			msg.RETVAL = fs->close(&msg);

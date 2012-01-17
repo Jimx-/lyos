@@ -155,7 +155,7 @@ LOAD lib/liblyos.a
  *(.iplt)
  .iplt          0x0000000000000000        0x0 kernel/krnl.o
 
-.text           0x0000000000001000     0xf33e
+.text           0x0000000000001000     0xf31e
  *(.text.unlikely .text.*_unlikely)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
@@ -278,182 +278,182 @@ LOAD lib/liblyos.a
                 0x000000000000463a                do_uname
                 0x0000000000004671                do_umask
  *fill*         0x000000000000467b        0x1 90909090
- .text          0x000000000000467c     0x5b89 fs/fs.o
+ .text          0x000000000000467c     0x5b65 fs/fs.o
                 0x000000000000467c                task_fs
-                0x0000000000004889                register_filesystem
-                0x00000000000049e4                task_lyos_fs
-                0x0000000000004cfc                init_fs
-                0x0000000000004d9d                mount_root
-                0x00000000000057a4                rw_sector
-                0x0000000000005815                read_super_block
-                0x000000000000594d                get_super_block
-                0x0000000000005994                get_inode
-                0x0000000000005b11                put_inode
-                0x0000000000005b25                sync_inode
-                0x0000000000005c4f                fs_fork
-                0x0000000000005ccc                fs_exit
-                0x0000000000005d80                do_open
-                0x000000000000621c                do_mkdir
-                0x00000000000062a6                do_close
-                0x000000000000632a                do_lseek
-                0x00000000000063e7                do_chdir
-                0x000000000000646c                do_chroot
-                0x0000000000006a40                do_mount
-                0x0000000000006a4a                do_umount
-                0x0000000000006a54                do_stat
-                0x0000000000006bf4                do_rdwt
-                0x0000000000006fb0                do_unlink
-                0x0000000000007758                disklog
-                0x0000000000007d34                dump_fd_graph
-                0x0000000000009868                get_buffer
-                0x00000000000098dd                find_buffer
-                0x0000000000009951                sync_buffer
-                0x0000000000009956                do_sync
-                0x000000000000995b                free_buffer
-                0x0000000000009960                init_buffer
-                0x0000000000009a60                file_open
-                0x0000000000009c93                file_read
-                0x0000000000009cbc                file_write
-                0x0000000000009ce8                namei
-                0x0000000000009d60                last_dir
-                0x0000000000009edc                find_entry
-                0x0000000000009ff9                search_file
-                0x000000000000a179                strip_path
- *fill*         0x000000000000a205        0xb 90909090
- .text          0x000000000000a210     0x13c0 mm/mm.o
-                0x000000000000a210                page_fault
-                0x000000000000a258                task_mm
-                0x000000000000a519                get_user_pages
-                0x000000000000a5cd                free_user_pages
-                0x000000000000a620                do_fork
-                0x000000000000a956                do_exit
-                0x000000000000abbb                do_wait
-                0x000000000000ad14                do_exec
-                0x000000000000b030                wp_page
-                0x000000000000b035                no_page
-                0x000000000000b03c                do_sigaction
-                0x000000000000b194                do_alarm
-                0x000000000000b250                do_kill
-                0x000000000000b2c9                do_raise
-                0x000000000000b2f8                mem_init
-                0x000000000000b368                alloc_mem
-                0x000000000000b3fd                free_mem
- .text          0x000000000000b5d0     0x3ccd drivers/drivers.o
-                0x000000000000b5d0                task_fd
-                0x000000000000be55                fd_handler
-                0x000000000000be69                do_fd_request
-                0x000000000000be6e                init_fd
-                0x000000000000bedc                task_hd
-                0x000000000000bfbb                do_hd_request
-                0x000000000000cba5                hd_handler
-                0x000000000000cbcc                task_rd
-                0x000000000000cc6f                do_rd_request
-                0x000000000000cd97                init_rd
-                0x000000000000cde9                rd_load_image
-                0x000000000000cfc4                add_request
-                0x000000000000d06c                task_scsi
-                0x000000000000d104                scsi_handler
-                0x000000000000d109                do_scsi_request
-                0x000000000000d10e                init_scsi
-                0x000000000000d114                init_screen
-                0x000000000000d2a1                out_char
-                0x000000000000d5b4                is_current_console
-                0x000000000000dd96                select_console
-                0x000000000000ddcd                scroll_screen
-                0x000000000000dff4                keyboard_handler
-                0x000000000000e05d                init_keyboard
-                0x000000000000e118                keyboard_read
-                0x000000000000e6d4                task_tty
-                0x000000000000e861                in_process
-                0x000000000000edb0                sys_printx
-                0x000000000000ef56                dump_tty_buf
-                0x000000000000f0b8                task_inet
-                0x000000000000f0c0                task_pci
-                0x000000000000f1ac                pci_init
-                0x000000000000f1c0                dev_driver_task
- *fill*         0x000000000000f29d        0x3 90909090
- .text          0x000000000000f2a0       0x41 lib/misc/syslog.o
-                0x000000000000f2a0                syslog
- *fill*         0x000000000000f2e1        0xf 90909090
- .text          0x000000000000f2f0       0xc7 lib/liblyos.a(x86_lib.o)
-                0x000000000000f2f0                sendrec
-                0x000000000000f30a                printx
-                0x000000000000f318                reboot
-                0x000000000000f330                memcpy
-                0x000000000000f35f                memset
-                0x000000000000f386                strcpy
-                0x000000000000f39e                strlen
- *fill*         0x000000000000f3b7        0x1 90909090
- .text          0x000000000000f3b8      0x28f lib/liblyos.a(io.o)
-                0x000000000000f3b8                open
-                0x000000000000f42b                mkdir
-                0x000000000000f49c                read
-                0x000000000000f4dc                write
-                0x000000000000f51c                close
-                0x000000000000f550                unlink
-                0x000000000000f594                lseek
-                0x000000000000f5d4                stat
- *fill*         0x000000000000f647        0x1 90909090
- .text          0x000000000000f648       0x5f lib/liblyos.a(malloc.o)
-                0x000000000000f648                malloc
- *fill*         0x000000000000f6a7        0x1 90909090
- .text          0x000000000000f6a8       0xc7 lib/liblyos.a(misc.o)
-                0x000000000000f6a8                send_recv
-                0x000000000000f754                spin
- *fill*         0x000000000000f76f        0x1 90909090
- .text          0x000000000000f770      0x675 lib/liblyos.a(posix.o)
-                0x000000000000f770                getpid
-                0x000000000000f7cc                getuid
-                0x000000000000f825                setuid
-                0x000000000000f88c                getgid
-                0x000000000000f8e5                setgid
-                0x000000000000f94c                geteuid
-                0x000000000000f9a5                getegid
-                0x000000000000fa00                fork
-                0x000000000000fa84                wait
-                0x000000000000fad6                waitpid
-                0x000000000000fb28                exec
-                0x000000000000fb77                execl
-                0x000000000000fb9d                execv
-                0x000000000000fcbc                kill
-                0x000000000000fd21                raise
-                0x000000000000fd80                uname
- *fill*         0x000000000000fde5        0x3 90909090
- .text          0x000000000000fde8      0x3b9 lib/liblyos.a(stdio.o)
-                0x000000000000fde8                printf
-                0x000000000000fe3e                printl
-                0x000000000000feef                vsprintf
-                0x0000000000010177                sprintf
- *fill*         0x00000000000101a1        0x3 90909090
- .text          0x00000000000101a4      0x154 lib/liblyos.a(string.o)
-                0x00000000000101a4                memcmp
-                0x0000000000010220                strcmp
-                0x0000000000010298                strcat
- .text          0x00000000000102f8       0x46 lib/liblyos.a(assert.o)
-                0x00000000000102f8                assertion_failure
+                0x000000000000485d                register_filesystem
+                0x00000000000049b8                task_lyos_fs
+                0x0000000000004c13                init_fs
+                0x0000000000004cb4                mount_root
+                0x0000000000005780                rw_sector
+                0x00000000000057f1                read_super_block
+                0x0000000000005929                get_super_block
+                0x0000000000005970                get_inode
+                0x0000000000005aed                put_inode
+                0x0000000000005b01                sync_inode
+                0x0000000000005c2b                fs_fork
+                0x0000000000005ca8                fs_exit
+                0x0000000000005d5c                do_open
+                0x00000000000061f8                do_mkdir
+                0x0000000000006282                do_close
+                0x0000000000006306                do_lseek
+                0x00000000000063c3                do_chdir
+                0x0000000000006448                do_chroot
+                0x0000000000006a1c                do_mount
+                0x0000000000006a26                do_umount
+                0x0000000000006a30                do_stat
+                0x0000000000006bd0                do_rdwt
+                0x0000000000006f8c                do_unlink
+                0x0000000000007734                disklog
+                0x0000000000007d10                dump_fd_graph
+                0x0000000000009844                get_buffer
+                0x00000000000098b9                find_buffer
+                0x000000000000992d                sync_buffer
+                0x0000000000009932                do_sync
+                0x0000000000009937                free_buffer
+                0x000000000000993c                init_buffer
+                0x0000000000009a3c                file_open
+                0x0000000000009c6f                file_read
+                0x0000000000009c98                file_write
+                0x0000000000009cc4                namei
+                0x0000000000009d3c                last_dir
+                0x0000000000009eb8                find_entry
+                0x0000000000009fd5                search_file
+                0x000000000000a155                strip_path
+ *fill*         0x000000000000a1e1        0xf 90909090
+ .text          0x000000000000a1f0     0x13c0 mm/mm.o
+                0x000000000000a1f0                page_fault
+                0x000000000000a238                task_mm
+                0x000000000000a4f9                get_user_pages
+                0x000000000000a5ad                free_user_pages
+                0x000000000000a600                do_fork
+                0x000000000000a936                do_exit
+                0x000000000000ab9b                do_wait
+                0x000000000000acf4                do_exec
+                0x000000000000b010                wp_page
+                0x000000000000b015                no_page
+                0x000000000000b01c                do_sigaction
+                0x000000000000b174                do_alarm
+                0x000000000000b230                do_kill
+                0x000000000000b2a9                do_raise
+                0x000000000000b2d8                mem_init
+                0x000000000000b348                alloc_mem
+                0x000000000000b3dd                free_mem
+ .text          0x000000000000b5b0     0x3ccd drivers/drivers.o
+                0x000000000000b5b0                task_fd
+                0x000000000000be35                fd_handler
+                0x000000000000be49                do_fd_request
+                0x000000000000be4e                init_fd
+                0x000000000000bebc                task_hd
+                0x000000000000bf9b                do_hd_request
+                0x000000000000cb85                hd_handler
+                0x000000000000cbac                task_rd
+                0x000000000000cc4f                do_rd_request
+                0x000000000000cd77                init_rd
+                0x000000000000cdc9                rd_load_image
+                0x000000000000cfa4                add_request
+                0x000000000000d04c                task_scsi
+                0x000000000000d0e4                scsi_handler
+                0x000000000000d0e9                do_scsi_request
+                0x000000000000d0ee                init_scsi
+                0x000000000000d0f4                init_screen
+                0x000000000000d281                out_char
+                0x000000000000d594                is_current_console
+                0x000000000000dd76                select_console
+                0x000000000000ddad                scroll_screen
+                0x000000000000dfd4                keyboard_handler
+                0x000000000000e03d                init_keyboard
+                0x000000000000e0f8                keyboard_read
+                0x000000000000e6b4                task_tty
+                0x000000000000e841                in_process
+                0x000000000000ed90                sys_printx
+                0x000000000000ef36                dump_tty_buf
+                0x000000000000f098                task_inet
+                0x000000000000f0a0                task_pci
+                0x000000000000f18c                pci_init
+                0x000000000000f1a0                dev_driver_task
+ *fill*         0x000000000000f27d        0x3 90909090
+ .text          0x000000000000f280       0x41 lib/misc/syslog.o
+                0x000000000000f280                syslog
+ *fill*         0x000000000000f2c1        0xf 90909090
+ .text          0x000000000000f2d0       0xc7 lib/liblyos.a(x86_lib.o)
+                0x000000000000f2d0                sendrec
+                0x000000000000f2ea                printx
+                0x000000000000f2f8                reboot
+                0x000000000000f310                memcpy
+                0x000000000000f33f                memset
+                0x000000000000f366                strcpy
+                0x000000000000f37e                strlen
+ *fill*         0x000000000000f397        0x1 90909090
+ .text          0x000000000000f398      0x28f lib/liblyos.a(io.o)
+                0x000000000000f398                open
+                0x000000000000f40b                mkdir
+                0x000000000000f47c                read
+                0x000000000000f4bc                write
+                0x000000000000f4fc                close
+                0x000000000000f530                unlink
+                0x000000000000f574                lseek
+                0x000000000000f5b4                stat
+ *fill*         0x000000000000f627        0x1 90909090
+ .text          0x000000000000f628       0x5f lib/liblyos.a(malloc.o)
+                0x000000000000f628                malloc
+ *fill*         0x000000000000f687        0x1 90909090
+ .text          0x000000000000f688       0xc7 lib/liblyos.a(misc.o)
+                0x000000000000f688                send_recv
+                0x000000000000f734                spin
+ *fill*         0x000000000000f74f        0x1 90909090
+ .text          0x000000000000f750      0x675 lib/liblyos.a(posix.o)
+                0x000000000000f750                getpid
+                0x000000000000f7ac                getuid
+                0x000000000000f805                setuid
+                0x000000000000f86c                getgid
+                0x000000000000f8c5                setgid
+                0x000000000000f92c                geteuid
+                0x000000000000f985                getegid
+                0x000000000000f9e0                fork
+                0x000000000000fa64                wait
+                0x000000000000fab6                waitpid
+                0x000000000000fb08                exec
+                0x000000000000fb57                execl
+                0x000000000000fb7d                execv
+                0x000000000000fc9c                kill
+                0x000000000000fd01                raise
+                0x000000000000fd60                uname
+ *fill*         0x000000000000fdc5        0x3 90909090
+ .text          0x000000000000fdc8      0x3b9 lib/liblyos.a(stdio.o)
+                0x000000000000fdc8                printf
+                0x000000000000fe1e                printl
+                0x000000000000fecf                vsprintf
+                0x0000000000010157                sprintf
+ *fill*         0x0000000000010181        0x3 90909090
+ .text          0x0000000000010184      0x154 lib/liblyos.a(string.o)
+                0x0000000000010184                memcmp
+                0x0000000000010200                strcmp
+                0x0000000000010278                strcat
+ .text          0x00000000000102d8       0x46 lib/liblyos.a(assert.o)
+                0x00000000000102d8                assertion_failure
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x000000000001033e                PROVIDE (__etext, .)
-                0x000000000001033e                PROVIDE (_etext, .)
-                0x000000000001033e                PROVIDE (etext, .)
+                0x000000000001031e                PROVIDE (__etext, .)
+                0x000000000001031e                PROVIDE (_etext, .)
+                0x000000000001031e                PROVIDE (etext, .)
 
-.rodata         0x0000000000010340     0x1941
+.rodata         0x0000000000010320     0x1921
  *(.rodata .rodata.* .gnu.linkonce.r.*)
- .rodata        0x0000000000010340      0x398 kernel/krnl.o
-                0x00000000000104f0                FSBUF_SIZE
-                0x00000000000104f4                MMBUF_SIZE
-                0x00000000000104f8                LOGBUF_SIZE
-                0x00000000000104fc                LOGDISKBUF_SIZE
- .rodata        0x00000000000106d8      0xc90 fs/fs.o
- .rodata        0x0000000000011368      0x144 mm/mm.o
- .rodata        0x00000000000114ac      0x664 drivers/drivers.o
- .rodata        0x0000000000011b10       0x3e lib/liblyos.a(io.o)
- .rodata        0x0000000000011b4e       0x21 lib/liblyos.a(malloc.o)
- .rodata        0x0000000000011b6f       0x15 lib/liblyos.a(misc.o)
- .rodata        0x0000000000011b84       0xb0 lib/liblyos.a(posix.o)
- .rodata        0x0000000000011c34       0x4d lib/liblyos.a(assert.o)
+ .rodata        0x0000000000010320      0x398 kernel/krnl.o
+                0x00000000000104d0                FSBUF_SIZE
+                0x00000000000104d4                MMBUF_SIZE
+                0x00000000000104d8                LOGBUF_SIZE
+                0x00000000000104dc                LOGDISKBUF_SIZE
+ .rodata        0x00000000000106b8      0xc70 fs/fs.o
+ .rodata        0x0000000000011328      0x144 mm/mm.o
+ .rodata        0x000000000001146c      0x664 drivers/drivers.o
+ .rodata        0x0000000000011ad0       0x3e lib/liblyos.a(io.o)
+ .rodata        0x0000000000011b0e       0x21 lib/liblyos.a(malloc.o)
+ .rodata        0x0000000000011b2f       0x15 lib/liblyos.a(misc.o)
+ .rodata        0x0000000000011b44       0xb0 lib/liblyos.a(posix.o)
+ .rodata        0x0000000000011bf4       0x4d lib/liblyos.a(assert.o)
 
 .rodata1
  *(.rodata1)
@@ -466,7 +466,7 @@ LOAD lib/liblyos.a
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x0000000000011c81                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x0000000000011c41                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
                 0x0000000000012000                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
 
 .eh_frame

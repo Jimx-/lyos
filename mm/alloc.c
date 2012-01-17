@@ -91,7 +91,7 @@ PUBLIC int alloc_mem(int memsize)
 		hp = hp->h_next;
 	}
 	printl("MM: alloc_mem() failed(Out of memory).\n");
-  	return(ENOMEM);
+  	return(-ENOMEM);
 }
 
 
