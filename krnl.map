@@ -7,7 +7,7 @@ lib/liblyos.a(misc.o)         drivers/drivers.o (spin)
 lib/liblyos.a(posix.o)        fs/fs.o (getpid)
 lib/liblyos.a(stdio.o)        kernel/krnl.o (printf)
 lib/liblyos.a(string.o)       kernel/krnl.o (memcmp)
-lib/liblyos.a(assert.o)       lib/liblyos.a(io.o) (assertion_failure)
+lib/liblyos.a(assert.o)       lib/liblyos.a(malloc.o) (assertion_failure)
 
 Allocating common symbols
 Common symbol       size              file
@@ -155,7 +155,7 @@ LOAD lib/liblyos.a
  *(.iplt)
  .iplt          0x0000000000000000        0x0 kernel/krnl.o
 
-.text           0x0000000000001000     0xf31e
+.text           0x0000000000001000     0xf08e
  *(.text.unlikely .text.*_unlikely)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
@@ -384,76 +384,75 @@ LOAD lib/liblyos.a
                 0x000000000000f366                strcpy
                 0x000000000000f37e                strlen
  *fill*         0x000000000000f397        0x1 90909090
- .text          0x000000000000f398      0x28f lib/liblyos.a(io.o)
+ .text          0x000000000000f398      0x20b lib/liblyos.a(io.o)
                 0x000000000000f398                open
-                0x000000000000f40b                mkdir
-                0x000000000000f47c                read
-                0x000000000000f4bc                write
-                0x000000000000f4fc                close
-                0x000000000000f530                unlink
-                0x000000000000f574                lseek
-                0x000000000000f5b4                stat
- *fill*         0x000000000000f627        0x1 90909090
- .text          0x000000000000f628       0x5f lib/liblyos.a(malloc.o)
-                0x000000000000f628                malloc
- *fill*         0x000000000000f687        0x1 90909090
- .text          0x000000000000f688       0xc7 lib/liblyos.a(misc.o)
-                0x000000000000f688                send_recv
-                0x000000000000f734                spin
- *fill*         0x000000000000f74f        0x1 90909090
- .text          0x000000000000f750      0x675 lib/liblyos.a(posix.o)
-                0x000000000000f750                getpid
-                0x000000000000f7ac                getuid
-                0x000000000000f805                setuid
-                0x000000000000f86c                getgid
-                0x000000000000f8c5                setgid
-                0x000000000000f92c                geteuid
-                0x000000000000f985                getegid
-                0x000000000000f9e0                fork
-                0x000000000000fa64                wait
-                0x000000000000fab6                waitpid
-                0x000000000000fb08                exec
-                0x000000000000fb57                execl
-                0x000000000000fb7d                execv
-                0x000000000000fc9c                kill
-                0x000000000000fd01                raise
-                0x000000000000fd60                uname
- *fill*         0x000000000000fdc5        0x3 90909090
- .text          0x000000000000fdc8      0x3b9 lib/liblyos.a(stdio.o)
-                0x000000000000fdc8                printf
-                0x000000000000fe1e                printl
-                0x000000000000fecf                vsprintf
-                0x0000000000010157                sprintf
- *fill*         0x0000000000010181        0x3 90909090
- .text          0x0000000000010184      0x154 lib/liblyos.a(string.o)
-                0x0000000000010184                memcmp
-                0x0000000000010200                strcmp
-                0x0000000000010278                strcat
- .text          0x00000000000102d8       0x46 lib/liblyos.a(assert.o)
-                0x00000000000102d8                assertion_failure
+                0x000000000000f3df                mkdir
+                0x000000000000f424                read
+                0x000000000000f464                write
+                0x000000000000f4a4                close
+                0x000000000000f4d8                unlink
+                0x000000000000f51c                lseek
+                0x000000000000f55c                stat
+ *fill*         0x000000000000f5a3        0x1 90909090
+ .text          0x000000000000f5a4       0x5f lib/liblyos.a(malloc.o)
+                0x000000000000f5a4                malloc
+ *fill*         0x000000000000f603        0x1 90909090
+ .text          0x000000000000f604       0xc7 lib/liblyos.a(misc.o)
+                0x000000000000f604                send_recv
+                0x000000000000f6b0                spin
+ *fill*         0x000000000000f6cb        0x1 90909090
+ .text          0x000000000000f6cc      0x469 lib/liblyos.a(posix.o)
+                0x000000000000f6cc                getpid
+                0x000000000000f6fc                getuid
+                0x000000000000f729                setuid
+                0x000000000000f764                getgid
+                0x000000000000f791                setgid
+                0x000000000000f7cc                geteuid
+                0x000000000000f7f9                getegid
+                0x000000000000f828                fork
+                0x000000000000f858                wait
+                0x000000000000f8aa                waitpid
+                0x000000000000f8fc                exec
+                0x000000000000f94b                execl
+                0x000000000000f971                execv
+                0x000000000000fa90                kill
+                0x000000000000fac9                raise
+                0x000000000000fafc                uname
+ *fill*         0x000000000000fb35        0x3 90909090
+ .text          0x000000000000fb38      0x3b9 lib/liblyos.a(stdio.o)
+                0x000000000000fb38                printf
+                0x000000000000fb8e                printl
+                0x000000000000fc3f                vsprintf
+                0x000000000000fec7                sprintf
+ *fill*         0x000000000000fef1        0x3 90909090
+ .text          0x000000000000fef4      0x154 lib/liblyos.a(string.o)
+                0x000000000000fef4                memcmp
+                0x000000000000ff70                strcmp
+                0x000000000000ffe8                strcat
+ .text          0x0000000000010048       0x46 lib/liblyos.a(assert.o)
+                0x0000000000010048                assertion_failure
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x000000000001031e                PROVIDE (__etext, .)
-                0x000000000001031e                PROVIDE (_etext, .)
-                0x000000000001031e                PROVIDE (etext, .)
+                0x000000000001008e                PROVIDE (__etext, .)
+                0x000000000001008e                PROVIDE (_etext, .)
+                0x000000000001008e                PROVIDE (etext, .)
 
-.rodata         0x0000000000010320     0x1921
+.rodata         0x0000000000010090     0x1835
  *(.rodata .rodata.* .gnu.linkonce.r.*)
- .rodata        0x0000000000010320      0x398 kernel/krnl.o
-                0x00000000000104d0                FSBUF_SIZE
-                0x00000000000104d4                MMBUF_SIZE
-                0x00000000000104d8                LOGBUF_SIZE
-                0x00000000000104dc                LOGDISKBUF_SIZE
- .rodata        0x00000000000106b8      0xc70 fs/fs.o
- .rodata        0x0000000000011328      0x144 mm/mm.o
- .rodata        0x000000000001146c      0x664 drivers/drivers.o
- .rodata        0x0000000000011ad0       0x3e lib/liblyos.a(io.o)
- .rodata        0x0000000000011b0e       0x21 lib/liblyos.a(malloc.o)
- .rodata        0x0000000000011b2f       0x15 lib/liblyos.a(misc.o)
- .rodata        0x0000000000011b44       0xb0 lib/liblyos.a(posix.o)
- .rodata        0x0000000000011bf4       0x4d lib/liblyos.a(assert.o)
+ .rodata        0x0000000000010090      0x398 kernel/krnl.o
+                0x0000000000010240                FSBUF_SIZE
+                0x0000000000010244                MMBUF_SIZE
+                0x0000000000010248                LOGBUF_SIZE
+                0x000000000001024c                LOGDISKBUF_SIZE
+ .rodata        0x0000000000010428      0xc70 fs/fs.o
+ .rodata        0x0000000000011098      0x144 mm/mm.o
+ .rodata        0x00000000000111dc      0x664 drivers/drivers.o
+ .rodata        0x0000000000011840       0x21 lib/liblyos.a(malloc.o)
+ .rodata        0x0000000000011861       0x15 lib/liblyos.a(misc.o)
+ *fill*         0x0000000000011876        0x2 00
+ .rodata        0x0000000000011878       0x4d lib/liblyos.a(assert.o)
 
 .rodata1
  *(.rodata1)
@@ -466,7 +465,7 @@ LOAD lib/liblyos.a
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x0000000000011c41                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x00000000000118c5                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
                 0x0000000000012000                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
 
 .eh_frame

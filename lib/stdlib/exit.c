@@ -16,6 +16,7 @@
 #include "lyos/type.h"
 #include "lyos/const.h"
 #include "lyos/ipc.h"
+#include "stdio.h"
 #include "assert.h"
 
 /*****************************************************************************
