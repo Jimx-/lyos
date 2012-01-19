@@ -16,6 +16,8 @@ KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)_krnl.o start.o main.o\
 
 KRNL		= krnl.o
 
+LIBSYS		= libsys.a
+
 everything : reclean $(KRNL)
 
 reclean :

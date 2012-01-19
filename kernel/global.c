@@ -98,7 +98,7 @@ struct dev_drv_map dd_map[] = {
 /**
  * 6MB~7MB: buffer for FS
  */
-PUBLIC	int			ROOT_DEV	= MAKE_DEV(DEV_HD, MINOR_BOOT);
+PUBLIC	int			ROOT_DEV	= MAKE_DEV(DEV_HD, MINOR_hd2a);
 PUBLIC	u8 *		fsbuf		= (u8*)0x600000;
 PUBLIC	const int	FSBUF_SIZE	= 0x100000;
 

@@ -354,14 +354,13 @@ void Init()
 	printf("\n");
 	
 	/* FD Test */
-	/*
-	MESSAGE m;
+	/*MESSAGE m;
 	m.type		= DEV_READ;
 	m.DEVICE	= MINOR(1);
-	m.POSITION	= 1;
-	m.CNT = 512;
-	char * buffer[512];
-	m.BUF		= &buffer;
+	m.POSITION	= 1024;
+	m.CNT = 2048;
+	char *buffer;
+	m.BUF = buffer;
 	send_recv(BOTH, TASK_FD, &m);
 	printf("%s\n", buffer); */
 
@@ -369,10 +368,10 @@ void Init()
 	for (i = 0; i < sizeof(tty_list) / sizeof(tty_list[0]); i++) {
 		int pid = fork();
 		if (pid != 0) { /* parent process */
-//			printf("[parent is running, child pid:%d]\n", pid);
+			/* printf("[parent is running, child pid:%d]\n", pid); */
 		}
 		else {	/* child process */
-//			printf("[child is running, pid:%d]\n", getpid());
+			/* printf("[child is running, pid:%d]\n", getpid()); */
 			close(fd_stdin);
 			close(fd_stdout);
 			

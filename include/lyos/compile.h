@@ -4,7 +4,7 @@
 #define UTS_MACHINE "x86"
 #define UTS_VERSION "0.2.30"
 
-#define LYOS_COMPILE_TIME "2012-01-18 14:43:49"
+#define LYOS_COMPILE_TIME "2012-01-19 09:37:57"
 #define LYOS_COMPILE_BY "jimx"
 #define LYOS_COMPILE_HOST "jimx-Compaq"
 #define LYOS_COMPILER "gcc version 4.5.2 (Ubuntu/Linaro 4.5.2-8ubuntu4) "

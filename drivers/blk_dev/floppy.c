@@ -29,7 +29,7 @@
 #include "lyos/fd.h"
 #include "lyos/fdreg.h"
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("Floppy driver: "); \
 		x
@@ -84,7 +84,9 @@ PRIVATE unsigned long read_fdc_data();
 PRIVATE void write_fdc_data(unsigned char data);
 PRIVATE void recalibrate();
 PRIVATE void fd_rdwt(MESSAGE * p);
+PRIVATE void readwrite(int read, unsigned long buf, unsigned long start, unsigned long len);
 PRIVATE void do_DMA(int read, unsigned long buffer, unsigned long len);
+PRIVATE void interrupt_wait();
 PRIVATE void do_fdc_rw(int read, unsigned long start);
 PRIVATE void convert_sector_nr(unsigned long sectornr, unsigned long *sec, unsigned long *track, unsigned long *head);
 PRIVATE struct floppy_struct *find_type(int drive,int code);
@@ -205,15 +207,11 @@ PRIVATE void fd_rdwt(MESSAGE * p)
 
 	int start = p->POSITION;
 	int len = p->CNT;
+	int bytes_left = len;
 	int drive = DRV_OF_DEV(p->DEVICE);
 
 	void * la = (void*)va2la(p->source, p->BUF);
 
-    	if (len > (1 * 1024))
-    	{
-        	printl("Floppy error: length out of range, set to 1k.");
-        	len = 1 * 1024;
-    	}
     	if ((start + len) > DISK_SIZE)
     	{
         	printl("Floppy error: out of disk size.");
@@ -223,24 +221,28 @@ PRIVATE void fd_rdwt(MESSAGE * p)
     	{
      		choose_drive(drive);
     	}
-    	if ((unsigned long)la > 0x100000)
-    	{
-        	if (!read)
-        	{
-            		memcpy((void *)floppy_buffer, la, len);
-        	}
-        	do_DMA(read, (unsigned long)floppy_buffer, len);
-        	do_fdc_rw(read, start);
-        	if (read)
-        	{
-           	 memcpy(la, floppy_buffer, len);
-        	}
-    	}
-    	else
-    	{
-        	do_DMA(read, (unsigned long)la, len);
-        	do_fdc_rw(read, start);
-    	}
+
+	while (bytes_left) {
+		int bytes = min(SECTOR_SIZE, bytes_left);
+		if (read) {
+			readwrite(read, (unsigned long)floppy_buffer, start + len - bytes_left, bytes);
+			interrupt_wait();
+			phys_copy(la, (void*)va2la(TASK_FD, floppy_buffer), bytes);
+		}
+		else {
+			phys_copy((void*)va2la(TASK_FD, floppy_buffer), la, bytes);
+			readwrite(read, (unsigned long)floppy_buffer, start + len - bytes_left, bytes);
+			interrupt_wait();
+		}
+		bytes_left -= SECTOR_SIZE;
+		la += SECTOR_SIZE;
+	}
+}
+
+PRIVATE void readwrite(int read, unsigned long buf, unsigned long start, unsigned long len)
+{
+        do_DMA(read, buf, len);
+        do_fdc_rw(read, start);
 }
 
 #define LOW16(data) (data & 0xFF)
@@ -320,16 +322,17 @@ PRIVATE void fd_identify(void)
 
 PUBLIC void fd_handler(int irq)
 {
+	DEB(printl("FD interrupt \n"));
 	inform_int(TASK_FD);
 }
 
-/*
+
 PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
 	send_recv(RECEIVE, INTERRUPT, &msg);
 }
-* */
+
 
 PUBLIC void do_fd_request()
 {
