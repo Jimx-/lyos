@@ -41,7 +41,8 @@ PUBLIC void	init_desc(struct descriptor * p_desc,
 
 /* klib.c */
 PUBLIC void	get_boot_params(struct boot_params * pbp);
-PUBLIC int	get_kernel_map(unsigned int * b, unsigned int * l);
+PUBLIC int	get_kernel_sections(unsigned int * text_base, unsigned int * text_len, 
+				unsigned int * data_base, unsigned int * data_len);
 PUBLIC void	delay(int time);
 PUBLIC void	disp_int(int input);
 PUBLIC char *	itoa(char * str, int num);
@@ -99,10 +100,12 @@ PUBLIC void 	task_inet();
 
 /* keyboard.c */
 PUBLIC void 	init_keyboard();
+PUBLIC void 	kb_init(TTY * tty);
 PUBLIC void 	keyboard_read(TTY* p_tty);
 
 /* tty.c */
 PUBLIC void 	task_tty();
+PUBLIC void 	handle_events(TTY* tty);
 PUBLIC void 	in_process(TTY* p_tty, u32 key);
 PUBLIC void 	dump_tty_buf();	/* for debug only */
 
@@ -158,7 +161,7 @@ PUBLIC int	alloc_mem(int memsize);
 PUBLIC int	free_mem(int base, int len);
 
 /* console.c */
-PUBLIC void 	out_char(CONSOLE* p_con, char ch);
+PUBLIC void	out_char(TTY* tty, char ch);
 PUBLIC void 	scroll_screen(CONSOLE* p_con, int direction);
 PUBLIC void 	select_console(int nr_console);
 PUBLIC void 	init_screen(TTY* p_tty);

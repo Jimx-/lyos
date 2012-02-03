@@ -39,6 +39,11 @@
 #define	GDT_SIZE	128
 #define	IDT_SIZE	256
 
+#define NR_LOCAL_SEGS	3
+#define T	0
+#define D	1
+#define S	2
+
 /* 权限 */
 #define	PRIVILEGE_KRNL	0
 #define	PRIVILEGE_TASK	1
@@ -147,14 +152,14 @@
 #define TASK_TTY	0
 #define TASK_SYS	1
 #define TASK_HD		2
-#define TASK_LYOS_FS	3
-#define TASK_MM		4
-#define	TASK_RD		5
-#define TASK_FD		6
-#define TASK_SCSI	7
-#define TASK_PCI	8
-#define TASK_INET	9
-#define TASK_FS		10
+#define TASK_FS		3
+#define TASK_LYOS_FS	4
+#define TASK_MM		5
+#define	TASK_RD		6
+#define TASK_FD		7
+#define TASK_SCSI	8
+#define TASK_PCI	9
+#define TASK_INET	10
 #define INIT		11
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
@@ -182,34 +187,34 @@ enum msgtype {
 	 * when hard interrupt occurs, a msg (with type==HARD_INT) will
 	 * be sent to some tasks
 	 */
-	HARD_INT = 1, 
+	HARD_INT = 1, 						/* 1 */
 
 	/* SYS task */
 	GET_TICKS, GET_PID, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
-	PROF, PHYS, LOCK, MPX,
+	PROF, PHYS, LOCK, MPX,					/* 2 ~ 14 */
 
 	/* FS */
-	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, FS_REGISTER, 
-
+	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, FS_REGISTER, VFS_REQUEST,
+								/* 15 ~ 29 */
 	/* FS & TTY */
-	SUSPEND_PROC, RESUME_PROC,
+	SUSPEND_PROC, RESUME_PROC,				/* 30 ~ 31 */
 
 	/* MM */
 	EXEC, WAIT, KILL, ACCT, BRK, SETUID, GETUID, SETGID, GETGID, GETEUID, 
-    GETEGID, ALARM, RAISE, SIGACTION, MALLOC,
+    GETEGID, ALARM, RAISE, SIGACTION, MALLOC,			/* 32 ~ 46 */
 
 	/* FS & MM */
-	FORK, EXIT,
+	FORK, EXIT,						/* 47 ~ 48 */
 
-	/* TTY, SYS, FS, MM, etc */
-	SYSCALL_RET,
+	/* TTY, SYS, FS, MM, etc */		
+	SYSCALL_RET,						/* 49 */
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,
 	DEV_CLOSE,
 	DEV_READ,
 	DEV_WRITE,
-	DEV_IOCTL
+	DEV_IOCTL						/* 2001 ~ 2005 */
 };
 
 /* macros for messages */

@@ -1,4 +1,5 @@
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "lyos/const.h"

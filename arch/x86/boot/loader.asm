@@ -4,14 +4,13 @@ org  0100h
 
 	jmp	LABEL_START		; Start
 
-; 下面是 FAT12 磁盘的头, 之所以包含它是因为下面用到了磁盘的一些信息
 %include	"fat12hdr.inc"
 %include	"load.inc"
 %include	"pm.inc"
 
 
 ; GDT ------------------------------------------------------------------------------------------------------------------------------------------------------------
-;                                                段基址            段界限     , 属性
+;                                                Base            Limit     , Attr
 LABEL_GDT:			Descriptor             0,                    0, 0						; 空描述符
 LABEL_DESC_FLAT_C:		Descriptor             0,              0fffffh, DA_CR  | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
 LABEL_DESC_FLAT_RW:		Descriptor             0,              0fffffh, DA_DRW | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
@@ -19,23 +18,22 @@ LABEL_DESC_VIDEO:		Descriptor	 0B8000h,               0ffffh, DA_DRW            
 ; GDT ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 GdtLen		equ	$ - LABEL_GDT
-GdtPtr		dw	GdtLen - 1				; 段界限
-		dd	LOADER_PHY_ADDR + LABEL_GDT		; 基地址 (让基地址八字节对齐将起到优化速度之效果，目前懒得改)
+GdtPtr		dw	GdtLen - 1				; Limit
+		dd	LOADER_PHY_ADDR + LABEL_GDT		; Base address
 ; The GDT is not a segment itself; instead, it is a data structure in linear address space.
 ; The base linear address and limit of the GDT must be loaded into the GDTR register. -- IA-32 Software Developer’s Manual, Vol.3A
 
 
-; GDT 选择子 ----------------------------------------------------------------------------------
+; GDT Selector ----------------------------------------------------------------------------------
 SelectorFlatC		equ	LABEL_DESC_FLAT_C	- LABEL_GDT
 SelectorFlatRW		equ	LABEL_DESC_FLAT_RW	- LABEL_GDT
 SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT + SA_RPL3
-; GDT 选择子 ----------------------------------------------------------------------------------
 
 
 BaseOfStack	equ	0100h
 
 
-LABEL_START:			; <--- 从这里开始 *************
+LABEL_START:			; <--- start from here *************
 	mov	ax, cs
 	mov	ds, ax
 	mov	es, ax
@@ -43,9 +41,9 @@ LABEL_START:			; <--- 从这里开始 *************
 	mov	sp, BaseOfStack
 
 	mov	dh, 0			; "Loading  "
-	call	DispStrRealMode		; 显示字符串
+	call	DispStrRealMode		; display string
 
-	; 得到内存数
+	; get memory info
 	mov	ebx, 0			; ebx = 后续值, 开始时需为 0
 	mov	di, _MemChkBuf		; es:di 指向一个地址范围描述符结构（Address Range Descriptor Structure）
 .MemChkLoop:
@@ -55,7 +53,7 @@ LABEL_START:			; <--- 从这里开始 *************
 	int	15h			; int 15h
 	jc	.MemChkFail
 	add	di, 20
-	inc	dword [_dwMCRNumber]	; dwMCRNumber = ARDS 的个数
+	inc	dword [_dwMCRNumber]	; dwMCRNumber = number of ARDS 
 	cmp	ebx, 0
 	jne	.MemChkLoop
 	jmp	.MemChkOK

@@ -21,7 +21,7 @@
 /*                          Macros Declaration                          */
 /************************************************************************/
 #define	KB_IN_BYTES	32	/* size of keyboard input buffer */
-#define MAP_COLS	3	/* Number of columns in keymap */
+#define MAP_COLS	4	/* Number of columns in keymap */
 #define NR_SCAN_CODES	0x80	/* Number of scan codes (rows in keymap) */
 
 #define FLAG_BREAK	0x0080		/* Break Code			*/
@@ -37,6 +37,8 @@
 #define MASK_RAW	0x01FF		/* raw key value = code passed to tty & MASK_RAW
 					   the value can be found either in the keymap column 0
 					   or in the list below */
+
+#define ASCII_MASK	0177
 
 /* Special keys */
 #define ESC		(0x01 + FLAG_EXT)	/* Esc		*/

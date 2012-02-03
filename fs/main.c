@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
 #include "stddef.h"
@@ -28,7 +29,7 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-
+#include <elf.h>
 //#define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x
@@ -36,16 +37,32 @@
 #define DEB(x)
 #endif
 
-PRIVATE void dump_fs(struct file_system * fs);
-
 PUBLIC void task_fs()
 {
-
-	init_buffer();
 	printl("VFS: VFS is running.\n");
 
+	MESSAGE m;
 	MESSAGE msg;
-	struct file_system * fs;
+
+	while (1) {
+		send_recv(RECEIVE, ANY, &m);
+
+		if (m.type == RESUME_PROC) {
+			send_recv(SEND, m.PROC_NR, &msg); 
+			continue;
+		}
+		int src = m.source;
+		pcaller = &proc_table[src];
+		int msgtype = m.type;
+
+		msg.type = VFS_REQUEST;
+		msg.BUF = &m;
+		send_recv(BOTH, TASK_LYOS_FS, &msg);
+		if (msg.type != SUSPEND_PROC)
+			send_recv(SEND, src, &msg);
+	}
+
+	/*struct file_system * fs;
 	while (1){
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
@@ -92,6 +109,7 @@ PUBLIC void task_fs()
 			msg.OFFSET = fs->lseek(&msg);
 			break;
 		case STAT:
+		case FSTAT:
 			msg.RETVAL = fs->stat(&msg);
 			break;
 		case CHROOT:
@@ -106,38 +124,10 @@ PUBLIC void task_fs()
 			break;
 		}
 
-		/* reply */
 		if (msg.type != SUSPEND_PROC) {
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 		}
-	}
+	} */
 }
 
-
-PUBLIC void register_filesystem(MESSAGE * m){
-	struct file_system * tmp = malloc(sizeof(struct file_system));
-	memcpy(va2la(TASK_FS, tmp), va2la(m->source, m->BUF), sizeof(struct file_system));
-	printl("VFS: Register filesystem: name: %s\n", tmp->name);
-	if (file_systems == NULL) {
-		file_systems = tmp;
-	}
-}
-
-PRIVATE void dump_fs(struct file_system * fs){
-	printl("%s { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d }\n",
-		fs->name,
-		fs->open,
-		fs->close,
-		fs->lseek,
-		fs->chdir,
-		fs->chroot,
-		fs->mount,
-		fs->umount,
-		fs->mkdir,
-		fs->rdwt,
-		fs->unlink,
-		fs->stat,
-		fs->fork,
-		fs->exit);
-};

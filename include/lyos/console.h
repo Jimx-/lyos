@@ -20,6 +20,7 @@
 /* CONSOLE */
 typedef struct s_console
 {
+	TTY *		con_tty;
 	unsigned int	crtc_start; /* set CRTC start addr reg */
 	unsigned int	orig;	    /* start addr of the console */
 	unsigned int	con_size;   /* how many words does the console have */

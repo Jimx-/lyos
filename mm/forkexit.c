@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
@@ -114,6 +115,7 @@ PUBLIC int do_fork()
 	       (caller_T_limit == caller_D_S_limit) &&
 	       (caller_T_size  == caller_D_S_size ));
 
+	/* TODO: Separate T, D & S segments */
 	/* base of child proc, T, D & S segments share the same space,
 	   so we allocate memory just once */
 	/* int child_base = alloc_mem(child_pid, caller_T_size); */

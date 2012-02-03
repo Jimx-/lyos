@@ -14,9 +14,12 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
+#include "errno.h"
+#include "fcntl.h"
 #include "lyos/const.h"
 #include "lyos/protect.h"
 #include "string.h"
@@ -33,12 +36,23 @@
 #define TTY_FIRST	(tty_table)
 #define TTY_END		(tty_table + NR_CONSOLES)
 
+/* Default termios */
+PRIVATE struct termios termios_defaults = {
+  TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF, TSPEED_DEF, TSPEED_DEF,
+  {
+	TEOF_DEF, TEOL_DEF, TERASE_DEF, TINTR_DEF, TKILL_DEF, TMIN_DEF,
+	TQUIT_DEF, TTIME_DEF, TSUSP_DEF, TSTART_DEF, TSTOP_DEF,
+	TREPRINT_DEF, TLNEXT_DEF, TDISCARD_DEF,
+  },
+};
 
 PRIVATE void	init_tty	(TTY* tty);
 PRIVATE void	tty_dev_read	(TTY* tty);
 PRIVATE void	tty_dev_write	(TTY* tty);
+PRIVATE void 	in_transfer	(TTY* tty);
 PRIVATE void	tty_do_read	(TTY* tty, MESSAGE* msg);
 PRIVATE void	tty_do_write	(TTY* tty, MESSAGE* msg);
+PRIVATE void	tty_echo	(TTY* tty, char c);
 PRIVATE void	put_key		(TTY* tty, u32 key);
 
 
@@ -63,8 +77,7 @@ PUBLIC void task_tty()
 	while (1) {
 		for (tty = TTY_FIRST; tty < TTY_END; tty++) {
 			do {
-				tty_dev_read(tty);
-				tty_dev_write(tty);
+				handle_events(tty);
 			} while (tty->ibuf_cnt);
 		}
 		
@@ -117,6 +130,8 @@ PRIVATE void init_tty(TTY* tty)
 	tty->ibuf_cnt = 0;
 	tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
 
+	tty->tty_termios = termios_defaults;
+
 	init_screen(tty);
 }
 
@@ -132,49 +147,53 @@ PRIVATE void init_tty(TTY* tty)
  *****************************************************************************/
 PUBLIC void in_process(TTY* tty, u32 key)
 {
+	if (tty->tty_termios.c_iflag & ISTRIP) key &= 0x7F;
+
+	if (tty->tty_termios.c_lflag & IEXTEN) {
+		/* Previous character was a character escape? */
+		if (tty->tty_escaped) {
+			tty->tty_escaped = 0;
+			put_key(tty, key);
+			tty_echo(tty, key);
+			return;
+		}
+
+		/* LNEXT (^V) to escape the next character? */
+		if (key == tty->tty_termios.c_cc[VLNEXT]) {
+			tty->tty_escaped = 1;
+			tty_echo(tty, '^');
+			tty_echo(tty, 'V');
+			return;
+		}
+	}
+
+	/* Map CR to LF, ignore CR, or map LF to CR. */
+	if (key == '\r') {
+		if (tty->tty_termios.c_iflag & IGNCR) return;
+		if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
+	} else
+	if (key == '\n') {
+		if (tty->tty_termios.c_iflag & INLCR) key = '\r';
+	}
+
 	if (!(key & FLAG_EXT)) {
 		put_key(tty, key);
+		tty_echo(tty, key);
 	}
 	else {
 		int raw_code = key & MASK_RAW;
 		switch(raw_code) {
 		case ENTER:
 			put_key(tty, '\n');
+			tty_echo(tty, '\n');
 			break;
 		case BACKSPACE:
 			put_key(tty, '\b');
+			if (tty->tty_trans_cnt) tty_echo(tty, '\b');
 			break;
 		case TAB:
 			put_key(tty, '\t');
-			break;
-		case UP:
-			if ((key & FLAG_SHIFT_L) ||
-			    (key & FLAG_SHIFT_R)) {	/* Shift + Up */
-				scroll_screen(tty->console, SCR_DN);
-			}
-			break;
-		case DOWN:
-			if ((key & FLAG_SHIFT_L) ||
-			    (key & FLAG_SHIFT_R)) {	/* Shift + Down */
-				scroll_screen(tty->console, SCR_UP);
-			}
-			break;
-		case F1:
-		case F2:
-		case F3:
-		case F4:
-		case F5:
-		case F6:
-		case F7:
-		case F8:
-		case F9:
-		case F10:
-		case F11:
-		case F12:
-			if ((key & FLAG_ALT_L) ||
-			    (key & FLAG_ALT_R)) {	/* Alt + F1~F12 */
-				select_console(raw_code - F1);
-			}
+			tty_echo(tty, '\t');
 			break;
 		default:
 			break;
@@ -219,8 +238,7 @@ PRIVATE void put_key(TTY* tty, u32 key)
  *****************************************************************************/
 PRIVATE void tty_dev_read(TTY* tty)
 {
-	if (is_current_console(tty->console))
-		keyboard_read(tty);
+	tty->tty_devread(tty);
 }
 
 
@@ -234,6 +252,19 @@ PRIVATE void tty_dev_read(TTY* tty)
  *****************************************************************************/
 PRIVATE void tty_dev_write(TTY* tty)
 {
+	tty->tty_devwrite(tty);
+}
+
+/*****************************************************************************
+ *                                in_transfer
+ *****************************************************************************/
+/**
+ * Transfer chars to the waiting process.
+ * 
+ * @param tty   Ptr to a TTY struct.
+ *****************************************************************************/
+PRIVATE void in_transfer(TTY* tty)
+{
 	while (tty->ibuf_cnt) {
 		char ch = *(tty->ibuf_tail);
 		tty->ibuf_tail++;
@@ -241,34 +272,48 @@ PRIVATE void tty_dev_write(TTY* tty)
 			tty->ibuf_tail = tty->ibuf;
 		tty->ibuf_cnt--;
 
-		if (tty->tty_left_cnt) {
+		if (tty->tty_inleft) {
 			if (ch >= ' ' && ch <= '~') { /* printable */
-				out_char(tty->console, ch);
-				void * p = tty->tty_req_buf +
+				void * p = tty->tty_inbuf +
 					   tty->tty_trans_cnt;
 				phys_copy(p, (void *)va2la(TASK_TTY, &ch), 1);
 				tty->tty_trans_cnt++;
-				tty->tty_left_cnt--;
-			}
-			else if (ch == '\b' && tty->tty_trans_cnt) {
-				out_char(tty->console, ch);
-				tty->tty_trans_cnt--;
-				tty->tty_left_cnt++;
+				tty->tty_inleft--;
 			}
 
-			if (ch == '\n' || tty->tty_left_cnt == 0) {
-				out_char(tty->console, '\n');
+			else if (ch == '\b' && tty->tty_trans_cnt) {
+				tty->tty_trans_cnt--;
+				tty->tty_inleft++;
+			}
+
+			if (ch == '\n' || tty->tty_inleft == 0) {
 				MESSAGE msg;
-				msg.type = RESUME_PROC;
-				msg.PROC_NR = tty->tty_procnr;
+				msg.type = tty->tty_inreply;
+				msg.PROC_NR = tty->tty_inprocnr;
 				msg.CNT = tty->tty_trans_cnt;
-				send_recv(SEND, tty->tty_caller, &msg);
-				tty->tty_left_cnt = 0;
+				send_recv(SEND, tty->tty_incaller, &msg);
+				tty->tty_inleft = 0;
 			}
 		}
 	}
 }
 
+/*****************************************************************************
+ *                                handle_events
+ *****************************************************************************/
+/**
+ * Handle all events pending on a tty.
+ * 
+ * @param tty   Ptr to a TTY struct.
+ *****************************************************************************/
+PUBLIC void handle_events(TTY * tty)
+{
+	do {
+		tty_dev_read(tty);
+		tty_dev_write(tty);
+	} while (tty->tty_events);
+	in_transfer(tty);
+}
 
 /*****************************************************************************
  *                                tty_do_read
@@ -282,20 +327,24 @@ PRIVATE void tty_dev_write(TTY* tty)
  * 
  * @param tty  From which TTY the caller proc wants to read.
  * @param msg  The MESSAGE just received.
+ *
+ * @see documentation/tty/
  *****************************************************************************/
 PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 {
 	/* tell the tty: */
-	tty->tty_caller   = msg->source;  /* who called, usually FS */
-	tty->tty_procnr   = msg->PROC_NR; /* who wants the chars */
-	tty->tty_req_buf  = va2la(tty->tty_procnr,
+	tty->tty_inreply = SYSCALL_RET;
+	tty->tty_incaller   = msg->source;  /* who called, usually FS */
+	tty->tty_inprocnr   = msg->PROC_NR; /* who wants the chars */
+	tty->tty_inbuf  = va2la(tty->tty_inprocnr,
 				  msg->BUF);/* where the chars should be put */
-	tty->tty_left_cnt = msg->CNT; /* how many chars are requested */
+	tty->tty_inleft = msg->CNT; /* how many chars are requested */
 	tty->tty_trans_cnt= 0; /* how many chars have been transferred */
 
 	msg->type = SUSPEND_PROC;
-	msg->CNT = tty->tty_left_cnt;
-	send_recv(SEND, tty->tty_caller, msg);
+	msg->CNT = tty->tty_inleft;
+	send_recv(SEND, tty->tty_incaller, msg);
+	tty->tty_inreply = RESUME_PROC;
 }
 
 
@@ -310,24 +359,43 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
  *****************************************************************************/
 PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 {
-	char buf[TTY_OUT_BUF_LEN];
-	char * p = (char*)va2la(msg->PROC_NR, msg->BUF);
-	int i = msg->CNT;
-	int j;
+	/* tell the tty: */
+	tty->tty_outreply    = SYSCALL_RET;
+	tty->tty_outcaller   = msg->source;  /* who called, usually FS */
+	tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
+	tty->tty_outbuf  = va2la(tty->tty_outprocnr,
+				  msg->BUF);/* where are the chars */
+	tty->tty_outleft = msg->CNT; /* how many chars are requested */
+	tty->tty_outcnt = 0;
 
-	while (i) {
-		int bytes = min(TTY_OUT_BUF_LEN, i);
-		phys_copy(va2la(TASK_TTY, buf), (void*)p, bytes);
-		for (j = 0; j < bytes; j++)
-			out_char(tty->console, buf[j]);
-		i -= bytes;
-		p += bytes;
+	handle_events(tty);
+	if (tty->tty_outleft == 0) return;	/* already done, just return */
+
+	if (msg->FLAGS & O_NONBLOCK) {	/* do not block */	
+		tty->tty_outleft = tty->tty_outcnt = 0;
+		msg->type = tty->tty_outreply;
+		msg->STATUS = tty->tty_outcnt > 0 ? tty->tty_outcnt : EAGAIN;
+		send_recv(SEND, tty->tty_outcaller, msg);
+	} else {	/* block */
+		msg->type = SUSPEND_PROC;
+		msg->CNT = tty->tty_outleft;
+		send_recv(SEND, tty->tty_outcaller, msg);
+		tty->tty_outreply = RESUME_PROC;
 	}
-
-	msg->type = SYSCALL_RET;
-	send_recv(SEND, msg->source, msg);
 }
 
+/*****************************************************************************
+ *                                tty_echo
+ *****************************************************************************/
+/**
+ * Echo the character is echoing is on.
+ *
+ *****************************************************************************/
+PRIVATE void tty_echo(TTY* tty, char c)
+{
+	if (!(tty->tty_termios.c_lflag & ECHO)) return;
+	tty->tty_echo(tty, c);
+}
 
 /*****************************************************************************
  *                                sys_printx
@@ -416,7 +484,7 @@ PUBLIC int sys_printx(int _unused1, int _unused2, char* s, struct proc* p_proc)
 		/* TTY * ptty; */
 		/* for (ptty = TTY_FIRST; ptty < TTY_END; ptty++) */
 		/* 	out_char(ptty->console, ch); /\* output chars to all TTYs *\/ */
-		out_char(TTY_FIRST->console, ch);
+		TTY_FIRST->tty_echo(TTY_FIRST, ch);
 	}
 
 	//__asm__ __volatile__("nop;jmp 1f;ud2;1: nop");
@@ -444,13 +512,13 @@ PUBLIC void dump_tty_buf()
 	printl("tail: %d\n", tty->ibuf_tail - tty->ibuf);
 	printl("cnt: %d\n", tty->ibuf_cnt);
 
-	int pid = tty->tty_caller;
+	int pid = tty->tty_incaller;
 	printl("caller: %s (%d)\n", proc_table[pid].name, pid);
-	pid = tty->tty_procnr;
+	pid = tty->tty_inprocnr;
 	printl("caller: %s (%d)\n", proc_table[pid].name, pid);
 
-	printl("req_buf: %d\n", (int)tty->tty_req_buf);
-	printl("left_cnt: %d\n", tty->tty_left_cnt);
+	printl("inbuf: %d\n", (int)tty->tty_inbuf);
+	printl("left_cnt: %d\n", tty->tty_inleft);
 	printl("trans_cnt: %d\n", tty->tty_trans_cnt);
 
 	printl("--------------------------------\n");

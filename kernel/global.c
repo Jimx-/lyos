@@ -16,6 +16,7 @@
 #define GLOBAL_VARIABLES_HERE
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "lyos/config.h"
@@ -41,6 +42,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
+	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_lyos_fs,  STACK_SIZE_LYOS_FS,"LYOS_FS"  },
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },
@@ -48,7 +50,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_scsi,     STACK_SIZE_SCSI,  "SCSI"      },
 	{task_pci,      STACK_SIZE_PCI,   "PCI"       },
 	{task_inet,     STACK_SIZE_INET,  "INET"      },
-	{task_fs,       STACK_SIZE_FS,    "VFS"       },};
+};
 
 PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 	/* entry    stack size     proc name */

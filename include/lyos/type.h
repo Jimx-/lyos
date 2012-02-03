@@ -24,19 +24,6 @@ typedef	unsigned long long	u64;
 typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;
-typedef	int				bool_t;
-
-typedef int sig_atomic_t;
-typedef unsigned int sigset_t;		/* 32 bits */
-
-typedef int pid_t;
-typedef unsigned short uid_t;
-typedef unsigned short gid_t;
-typedef unsigned short dev_t;
-typedef unsigned short ino_t;
-typedef unsigned short mode_t;
-typedef unsigned short umode_t;
-typedef unsigned short nlink_t;
 
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();
@@ -89,6 +76,13 @@ typedef struct {
 struct boot_params {
 	int		mem_size;	/* memory size */
 	unsigned char *	kernel_file;	/* addr of kernel file */
+};
+
+/* Memory map for local text, stack, data segments. */
+struct mem_map {
+	unsigned int mem_vir;		/* virtual address */
+  	unsigned int mem_phys;		/* physical address */
+  	unsigned int mem_len;		/* length */
 };
 
 

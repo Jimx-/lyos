@@ -24,22 +24,39 @@
 struct s_tty;
 struct s_console;
 
+typedef void(*devfun_t)(struct s_tty *tp);
+typedef void(*devfunarg_t)(struct s_tty *tp, char c);
+
 /* TTY */
 typedef struct s_tty
 {
-	struct termios termios;
 	u32	ibuf[TTY_IN_BYTES];	/* TTY input buffer */
 	u32*	ibuf_head;		/* the next free slot */
 	u32*	ibuf_tail;		/* the val to be processed by TTY */
 	int	ibuf_cnt;		/* how many */
 
-	int	tty_caller;
-	int	tty_procnr;
-	void*	tty_req_buf;
-	int	tty_left_cnt;
+	int	tty_events;
+	int	tty_inreply;
+	int	tty_incaller;
+	int	tty_inprocnr;
+	void*	tty_inbuf;
+	int	tty_inleft;
 	int	tty_trans_cnt;
+	int	tty_outreply;
+	int	tty_outcaller;
+	int	tty_outprocnr;
+	void*	tty_outbuf;
+	int	tty_outleft;
+	int	tty_outcnt;
 
-	struct s_console *	console;
+	struct termios tty_termios;
+
+	int tty_escaped;
+
+	void *	tty_dev;
+	devfun_t tty_devread;
+	devfun_t tty_devwrite;
+	devfunarg_t tty_echo;
 }TTY;
 
 #endif /* _TTY_H_ */

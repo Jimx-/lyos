@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "stdarg.h"
 #include "unistd.h"
@@ -134,6 +135,7 @@ PUBLIC int vsprintf(char *buf, const char *fmt, char * args)
  *======================================================================*/
 int sprintf(char *buf, const char *fmt, ...)
 {
-	va_list arg = (va_list)((char*)(&fmt) + 4);        /* 4 是参数 fmt 所占堆栈中的大小 */
+	va_list arg;
+	va_start(arg, fmt);
 	return vsprintf(buf, fmt, arg);
 }

@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "lyos/const.h"
@@ -100,6 +101,10 @@ PUBLIC void init_keyboard()
 	enable_irq(PS_2_IRQ);
 }
 
+PUBLIC void kb_init(TTY * tty)
+{
+	tty->tty_devread = keyboard_read;
+}
 
 /*****************************************************************************
  *                                keyboard_read
@@ -111,6 +116,8 @@ PUBLIC void init_keyboard()
  *****************************************************************************/
 PUBLIC void keyboard_read(TTY* tty)
 {
+	if (!is_current_console((CONSOLE *)tty->tty_dev)) return;
+
 	u8	scan_code;
 
 	/**
@@ -186,7 +193,7 @@ PUBLIC void keyboard_read(TTY* tty)
 			/* make or break */
 			make = (scan_code & FLAG_BREAK ? 0 : 1);
 			
-			keyrow = &keymap[(scan_code & 0x7F) * MAP_COLS];
+			keyrow = &keymap[(scan_code & 0177) * MAP_COLS];
 
 			column = 0;
 
@@ -200,6 +207,8 @@ PUBLIC void keyboard_read(TTY* tty)
 
 			if (code_with_E0)
 				column = 2;
+
+			if (ctrl_l || ctrl_r) column = 3;
 
 			key = keyrow[column];
 
@@ -320,17 +329,50 @@ PUBLIC void keyboard_read(TTY* tty)
 			}
 			key |= shift_l	? FLAG_SHIFT_L	: 0;
 			key |= shift_r	? FLAG_SHIFT_R	: 0;
-			key |= ctrl_l	? FLAG_CTRL_L	: 0;
-			key |= ctrl_r	? FLAG_CTRL_R	: 0;
+			//key |= ctrl_l	? FLAG_CTRL_L	: 0;
+			//key |= ctrl_r	? FLAG_CTRL_R	: 0;
 			key |= alt_l	? FLAG_ALT_L	: 0;
 			key |= alt_r	? FLAG_ALT_R	: 0;
 			key |= pad	? FLAG_PAD	: 0;
 
+			int raw_code = key & MASK_RAW;
+			switch(raw_code) {
+			case UP:
+				if ((key & FLAG_SHIFT_L) ||
+				    (key & FLAG_SHIFT_R)) {	/* Shift + Up */
+					scroll_screen((CONSOLE *)tty->tty_dev, SCR_DN);
+				}
+				break;
+			case DOWN:
+				if ((key & FLAG_SHIFT_L) ||
+			 	   (key & FLAG_SHIFT_R)) {	/* Shift + Down */
+					scroll_screen((CONSOLE *)tty->tty_dev, SCR_UP);
+				}
+				break;
+			case F1:
+			case F2:
+			case F3:
+			case F4:
+			case F5:
+			case F6:
+			case F7:
+			case F8:
+			case F9:
+			case F10:
+			case F11:
+			case F12:
+				if ((key & FLAG_ALT_L) ||
+				    (key & FLAG_ALT_R)) {	/* Alt + F1~F12 */
+					select_console(raw_code - F1);
+				}
+				break;
+			default:
+				break;
+			}
 			in_process(tty, key);
 		}
 	}
 }
-
 
 /*****************************************************************************
  *                                get_byte_from_kb_buf
@@ -366,7 +408,7 @@ PRIVATE u8 get_byte_from_kb_buf()
  * Wait until the input buffer of 8042 is empty.
  * 
  *****************************************************************************/
-PRIVATE void kb_wait()	/* 等待 8042 的输入缓冲区空 */
+PRIVATE void kb_wait()
 {
 	u8 kb_stat;
 

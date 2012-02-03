@@ -16,6 +16,8 @@
 #ifndef _UNISTD_H_
 #define _UNISTD_H_
 
+#include "sys/types.h"
+
 int	open		(const char *pathname, int flags);
 int	close		(int fd);
 int	read		(int fd, void *buf, int count);

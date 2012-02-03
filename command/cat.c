@@ -1,6 +1,6 @@
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "lyos/console.h"
 #include "fcntl.h"
 #include "sys/stat.h"
 

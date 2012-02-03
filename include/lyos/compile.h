@@ -2,9 +2,9 @@
 #define ARCH x86
 
 #define UTS_MACHINE "x86"
-#define UTS_VERSION "0.2.30"
+#define UTS_VERSION "0.3.0"
 
-#define LYOS_COMPILE_TIME "2012-02-03 14:58:17"
+#define LYOS_COMPILE_TIME "2012-02-03 15:59:04"
 #define LYOS_COMPILE_BY "jimx"
 #define LYOS_COMPILE_HOST "jimx-Compaq"
 #define LYOS_COMPILER "gcc 版本 4.6.1 (Ubuntu/Linaro 4.6.1-9ubuntu3) "

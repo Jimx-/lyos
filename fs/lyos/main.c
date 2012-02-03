@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -50,11 +51,18 @@ PUBLIC void task_lyos_fs()
 {
 	printl("Lyos Filesystem v1.0\n");
 	init_fs();
-	register_fs();
+	init_buffer();
+
+	MESSAGE m;
 	MESSAGE msg;
 
 	while (1) {
-		send_recv(RECEIVE, ANY, &msg);
+		
+		send_recv(RECEIVE, ANY, &m);
+
+		if (m.type != VFS_REQUEST) phys_copy(&msg, &m, sizeof(m));
+		else phys_copy(va2la(getpid(), &msg), va2la(m.source, m.BUF), sizeof(MESSAGE));
+
 		int msgtype = msg.type;
 		int src = msg.source;
 		pcaller = &proc_table[src];
@@ -83,7 +91,8 @@ PUBLIC void task_lyos_fs()
 			msg.RETVAL = do_mkdir(&msg);
 			break;
 		case RESUME_PROC:
-			src = msg.PROC_NR;
+			send_recv(SEND, TASK_FS, &msg);
+			continue;
 			break;
 		case FORK:
 			msg.RETVAL = fs_fork(&msg);
@@ -105,7 +114,7 @@ PUBLIC void task_lyos_fs()
 			break; 
 		default:
 			dump_msg("Lyos FS: unknown message:", &msg);
-			assert(0);
+			panic("unknown message.");
 			break;
 		}
 
@@ -154,7 +163,10 @@ PUBLIC void task_lyos_fs()
 		/* reply */
 		if (msg.type != SUSPEND_PROC) {
 			msg.type = SYSCALL_RET;
-			send_recv(SEND, src, &msg);
+			if (m.type != VFS_REQUEST) send_recv(SEND, src, &msg);
+			else send_recv(SEND, TASK_FS, &msg);
+		} else {
+			send_recv(SEND, TASK_FS, &msg);
 		}
 	}
 }
@@ -426,28 +438,6 @@ PRIVATE void mkfs()
 	sprintf(pde->name, "cmd.tar", i);
 	WR_SECT(ROOT_DEV, sb.n_1st_sect);
 	printl("done.");
-}
-
-PRIVATE void register_fs(){
-	struct file_system * fs = malloc(sizeof(struct file_system));
-	fs->name = "Lyos FS";
-	fs->open = do_open;
-	fs->close = do_close;
-	fs->lseek = do_lseek;
-	fs->chdir = do_chdir;
-	fs->chroot = do_chroot;
-	fs->mount = do_mount;
-	fs->umount = do_umount;
-	fs->mkdir = do_mkdir;
-	fs->rdwt = do_rdwt;
-	fs->unlink = do_unlink;
-	fs->stat = do_stat;
-	fs->fork = fs_fork;
-	fs->exit = fs_exit;
-	MESSAGE reg;
-	reg.type = FS_REGISTER;
-	reg.BUF = fs;
-	send_recv(BOTH, 10, &reg);
 }
 
 /*****************************************************************************

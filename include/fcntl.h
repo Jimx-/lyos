@@ -20,5 +20,7 @@
 #define	O_RDWR		2
 #define	O_TRUNC		4
 
+#define O_NONBLOCK     04000	
+
 #endif
 

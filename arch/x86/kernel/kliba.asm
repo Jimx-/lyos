@@ -45,7 +45,7 @@ disp_str:
 
 	mov	esi, [ebp + 8]	; pszInfo
 	mov	edi, [disp_pos]
-	mov	ah, 0Fh
+	mov	ah, 07h
 .1:
 	lodsb
 	test	al, al

@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
@@ -31,6 +32,7 @@
 /* #define __TTY_DEBUG__ */
 
 /* local routines */
+PRIVATE void 	cons_write(TTY * tty);
 PRIVATE void	set_cursor(unsigned int position);
 PRIVATE void	set_video_start_addr(u32 addr);
 PRIVATE void	parse_escape(CONSOLE * con, char c);
@@ -43,6 +45,47 @@ PRIVATE void	clear_screen(int pos, int len);
 #define bufend(buf)	((buf) + buflen(buf))
 
 /*****************************************************************************
+ *                                cons_write
+ *****************************************************************************/
+/**
+ * Write chars to console.
+ * 
+ * @param tty The TTY struct.
+ *****************************************************************************/
+PRIVATE void cons_write(TTY * tty)
+{
+	char buf[TTY_OUT_BUF_LEN];
+	char * p = tty->tty_outbuf;
+	int i = tty->tty_outleft;
+	int j;
+
+	/* Nothing to write */
+	if (i == 0) return;
+	while (i) {
+		int bytes = min(TTY_OUT_BUF_LEN, i);
+		phys_copy(va2la(TASK_TTY, buf), (void*)p, bytes);
+		for (j = 0; j < bytes; j++)
+		{
+			tty->tty_outcnt++;
+			out_char(tty, buf[j]);
+		}
+		tty->tty_outleft -= bytes;
+		i -= bytes;
+		p += bytes;
+	}
+
+	flush((CONSOLE *)tty->tty_dev);
+
+	if (tty->tty_outleft == 0) {	/* done, reply to caller */
+		MESSAGE msg;
+		msg.type = tty->tty_outreply;
+		msg.PROC_NR = tty->tty_outprocnr;
+		msg.CNT = tty->tty_outcnt;
+		send_recv(SEND, tty->tty_outcaller, &msg); 
+	}
+}
+
+/*****************************************************************************
  *                                init_screen
  *****************************************************************************/
 /**
@@ -53,8 +96,11 @@ PRIVATE void	clear_screen(int pos, int len);
 PUBLIC void init_screen(TTY* tty)
 {
 	int nr_tty = tty - tty_table;
-	tty->console = console_table + nr_tty;
-
+	CONSOLE * con = console_table + nr_tty;
+	con->con_tty = tty;
+	tty->tty_devwrite = cons_write;
+	tty->tty_echo = out_char;
+	kb_init(tty);
 	/* 
 	 * NOTE:
 	 *   variables related to `position' and `size' below are
@@ -62,13 +108,14 @@ PUBLIC void init_screen(TTY* tty)
 	 */
 	int v_mem_size = V_MEM_SIZE >> 1; /* size of Video Memory */
 	int size_per_con = v_mem_size / NR_CONSOLES;
-	tty->console->orig = nr_tty * size_per_con;
-	tty->console->con_size = size_per_con / SCR_WIDTH * SCR_WIDTH;
-	tty->console->cursor = tty->console->crtc_start = tty->console->orig;
-	tty->console->is_full = 0;
+	con->orig = nr_tty * size_per_con;
+	con->con_size = size_per_con / SCR_WIDTH * SCR_WIDTH;
+	con->cursor = con->crtc_start = con->orig;
+	con->is_full = 0;
 
+	tty->tty_dev = con;
 	if (nr_tty == 0) {
-		tty->console->cursor = disp_pos / 2;
+		((CONSOLE *)tty->tty_dev)->cursor = disp_pos / 2;
 		disp_pos = 0;
 	}
 	else {
@@ -79,10 +126,10 @@ PUBLIC void init_screen(TTY* tty)
 
 		const char * p = prompt;
 		for (; *p; p++)
-			out_char(tty->console, *p == '?' ? nr_tty + '0' : *p);
+			out_char(tty, *p == '?' ? nr_tty + '0' : *p);
 	}
 
-	set_cursor(tty->console->cursor);
+	set_cursor(((CONSOLE *)tty->tty_dev)->cursor);
 }
 
 
@@ -95,8 +142,9 @@ PUBLIC void init_screen(TTY* tty)
  * @param con  The console to which the char is printed.
  * @param ch   The char to print.
  *****************************************************************************/
-PUBLIC void out_char(CONSOLE* con, char ch)
+PUBLIC void out_char(TTY* tty, char ch)
 {
+	CONSOLE * con = tty->tty_dev;
 	u8* pch = (u8*)(V_MEM_BASE + con->cursor * 2);
 
 	assert(con->cursor - con->orig < con->con_size);
@@ -114,20 +162,28 @@ PUBLIC void out_char(CONSOLE* con, char ch)
 	}
   
 	switch(ch) {
-	case 007:
+	case 000:
+		return;
+	case 007:		/* beep */
 		//beep();
 		break;
-	case '\n':
-		con->cursor = con->orig + SCR_WIDTH * (cursor_y + 1);
-		break;
-	case '\b':
+	case '\b':		/* backspace */
 		if (con->cursor > con->orig) {
 			con->cursor--;
 			*(pch - 2) = ' ';
 			*(pch - 1) = DEFAULT_CHAR_COLOR;
 		}
 		break;
-	case '\r':
+	case '\n':		/* line feed */
+		if ((con->con_tty->tty_termios.c_oflag & (OPOST|ONLCR))
+						== (OPOST|ONLCR)) {
+			con->cursor = con->orig + SCR_WIDTH * cursor_y;
+		}
+	case 013:		/* CTRL-K */
+	case 014:		/* CTRL-L */
+		con->cursor = con->cursor + SCR_WIDTH;
+		break;
+	case '\r':		/* carriage return */
 		con->cursor = con->orig + SCR_WIDTH * cursor_y;
 		break;
 	case '\t':		/* tab */

@@ -3,20 +3,23 @@
 #########################
 
 VERSION = 0
-PATCHLEVEL = 2
-SUBLEVEL = 30
+PATCHLEVEL = 3
+SUBLEVEL = 0
 EXTRAVERSION =
 
-ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
+SUBARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 				  -e s/arm.*/arm/ -e s/sa110/arm/ \
 				  -e s/s390x/s390/ -e s/parisc64/parisc/ \
 				  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
 				  -e s/sh[234].*/sh/ )
+
+ARCH = $(SUBARCH)
+
 ifeq ($(ARCH),i386)
 	ARCH = x86
 endif
 
-export ARCH
+export SUBARCH ARCH 
 
 KERNELVERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 export KERNELVERSION
@@ -46,6 +49,7 @@ ASMBFLAGS	= -I boot/include/
 ASMKFLAGS	= -I include/ -f elf
 #CFLAGS		= -I include/ -I include/lyos/ -c -fno-builtin -Wall
 CFLAGS		= -I include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -Ttext $(ENTRYPOINT) -Map krnl.map
 DASMFLAGS	= -D
 ARFLAGS		= rcs
@@ -71,7 +75,7 @@ OBJS		= $(KRNLOBJ) \
 DASMOUTPUT	= kernel.bin.asm
 
 # All Phony Targets
-.PHONY : everything final image clean realclean disasm all buildimg mrproper help lib
+.PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
 
 # Default starting position
 kernel : realclean everything clean
@@ -83,7 +87,20 @@ all : realclean everything image lib cmd
 image : realclean everything clean buildimg
 
 genconf:
-	$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
+	@echo "\tGEN\tcompile.h"
+	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
+
+CONFIGIN = $(SRCDIR)/config.in
+CONF = $(SRCDIR)/scripts/config/conf
+MCONF = $(SRCDIR)/scripts/config/mconf
+
+config:
+	@(cd scripts/config; make config)
+	$(CONF) $(CONFIGIN)
+
+menuconfig:
+	@(cd scripts/config; make menuconfig) 
+	$(MCONF) $(CONFIGIN)
 
 cmd :
 	(cd command;make install)
@@ -93,12 +110,15 @@ lib :
 
 mrproper:
 	find . -name "*.o" -exec rm -fv {} \;
+	rm -f $(INCLUDEDIR)/lyos/compile.h
+	rm -f .config .config.old
 
 clean :
-	rm -f $(OBJS) $(LOBJS)
+	rm -f $(OBJS)
 
 realclean :
-	rm -f $(OBJS) $(LOBJS) $(LIB) $(LYOSBOOT) $(LYOSKERNEL)
+	find . -name "*.o" -exec rm -f {} \;
+	rm -f $(LIB) $(LYOSBOOT) $(LYOSKERNEL)
 
 disasm :
 	$(DASM) $(DASMFLAGS) $(LYOSKERNEL) > $(DASMOUTPUT)
@@ -113,12 +133,16 @@ buildimg :
 	sudo umount /mnt/floppy
 
 help :
-	@echo "make		: build the binary kernel."
+	@echo "Make options:"
+	@echo "-----------------------------------------------------------------"
+	@echo "make		: build the kernel image."
 	@echo "make image 	: build the floppy image."
-	@echo "make lib		: build the Lyos C library."
+	@echo "make lib	: build the Lyos C library."
 	@echo "make cmd   	: install the command files to the HD."
 	@echo "make disasm	: dump the kernel into kernel.bin.asm."
-	@echo "make mrproper	: remove all object files."
+	@echo "-----------------------------------------------------------------"
+	@echo "make clean	: remove all object files but keep config files."
+	@echo "make mrproper	: remove all object files and config file."
 
 $(LYOSBOOT):
 	(cd $(LYOSBOOTDIR); make)

@@ -2,7 +2,7 @@ CC	= gcc
 CFLAGS	= -I ../../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 LD	= ld
 
-FSOBJS 	= main.o open.o misc.o read_write.o\
+FSOBJS 	= main.o open.o stat.o read_write.o\
 			link.o \
 			disklog.o buffer.o file.o namei.o
 
@@ -40,4 +40,7 @@ file.o: file.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 namei.o: namei.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+stat.o: stat.c
 	$(CC) $(CFLAGS) -o $@ $<

@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "lyos/const.h"
 #include "lyos/ipc.h"
 #include "stdio.h"
@@ -25,7 +26,7 @@
 /*****************************************************************************
  *                                stat
  *************************************************************************//**
- * 
+ *
  * 
  * @param path 
  * @param buf 
@@ -41,6 +42,32 @@ PUBLIC int stat(const char *path, struct stat *buf)
 	msg.PATHNAME	= (void*)path;
 	msg.BUF		= (void*)buf;
 	msg.NAME_LEN	= strlen(path);
+
+	send_recv(BOTH, TASK_FS, &msg);
+	assert(msg.type == SYSCALL_RET);
+
+	return msg.RETVAL;
+}
+
+/*****************************************************************************
+ *                                fstat
+ *************************************************************************//**
+
+ * 
+ * 
+ * @param fd 
+ * @param stat 
+ * 
+ * @return  On success, zero is returned. On error, -1 is returned.
+ *****************************************************************************/
+PUBLIC int fstat(int fd, struct stat *buf)
+{
+	MESSAGE msg;
+
+	msg.type	= FSTAT;
+
+	msg.FD		= fd;
+	msg.BUF		= (void*)buf;
 
 	send_recv(BOTH, TASK_FS, &msg);
 	assert(msg.type == SYSCALL_RET);

@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
@@ -274,16 +275,11 @@ PRIVATE int deadlock(int src, int dest)
 	while (1) {
 		if (p->state & SENDING) {
 			if (p->sendto == src) {
-				/* print the chain */
 				p = proc_table + dest;
-				printl("=_=%s", p->name);
 				do {
 					assert(p->msg);
 					p = proc_table + p->sendto;
-					printl("->%s", p->name);
 				} while (p != proc_table + src);
-				printl("=_=");
-
 				return 1;
 			}
 			p = proc_table + p->sendto;
@@ -318,7 +314,8 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
 
 	/* check for deadlock here */
 	if (deadlock(proc2pid(sender), dest)) {
-		panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
+		dump_msg("deadlock ", m);
+		panic("deadlock: %s(pid: %d)->%s(pid: %d)", sender->name, proc2pid(sender), p_dest->name, proc2pid(p_dest));
 	}
 
 	if ((p_dest->state & RECEIVING) && /* p_dest is waiting for the msg */
