@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+menu "General setup"
+
+config LOCALVERSION
+	string "Local version - append to kernel release"
+	help
+	  Append an extra string to the end of your kernel version.
+
+endmenu

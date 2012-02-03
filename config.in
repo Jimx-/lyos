@@ -1,0 +1,19 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+mainmenu "Lyos/$SUBARCH $KERNELVERSION Kernel Configuration"
+
+config ARCH
+	string
+	option env="ARCH"
+
+config SUBARCH
+	string
+	option env="SUBARCH"
+
+config KERNELVERSION
+	string
+	option env="KERNELVERSION"
+
+source "arch/$ARCH/config.in"

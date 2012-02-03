@@ -1,0 +1,10 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+menu "Device Drivers"
+
+source "drivers/blk_dev/config.in
+
+endmenu

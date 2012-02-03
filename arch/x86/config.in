@@ -1,0 +1,8 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+source "kernel/config.in"
+
+source "drivers/config.in"
