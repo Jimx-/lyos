@@ -152,11 +152,6 @@ PRIVATE void init_mm()
 		printl("Kernel memory: 0x%x - 0x%x(%dkB)\n",
 					k_base, k_base + k_limit, k_limit/1024);
 	
-	unsigned int tb, tl, db, dl;
-	get_kernel_sections(&tb, &tl, &db, &dl);
-	printl("\t.text section: 0x%x - 0x%x(%d kB), \n"
-		"\t.data section: 0x%x - 0x%x(%d kB)\n", 
-		tb, tb + tl, tl / 1024, db, db + dl, dl / 1024);
 	/* int page_tbl_size = memory_size / 1024;
 	buffer_base = (int)PAGE_TBL_BASE + page_tbl_size + (1024 * 1024);
 	buffer_length = (2 * 1024 * 1024);

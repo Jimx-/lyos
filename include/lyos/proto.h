@@ -41,8 +41,6 @@ PUBLIC void	init_desc(struct descriptor * p_desc,
 
 /* klib.c */
 PUBLIC void	get_boot_params(struct boot_params * pbp);
-PUBLIC int	get_kernel_sections(unsigned int * text_base, unsigned int * text_len, 
-				unsigned int * data_base, unsigned int * data_len);
 PUBLIC void	delay(int time);
 PUBLIC void	disp_int(int input);
 PUBLIC char *	itoa(char * str, int num);

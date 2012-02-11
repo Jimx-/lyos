@@ -135,56 +135,6 @@ PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 	return 0;
 }
 
-/*****************************************************************************
- *                                get_kernel_sections
- *****************************************************************************/
-/**
- * <Ring 0~1> Parse the kernel file, get the memory range of the kernel sections.
- *
- *****************************************************************************/
-PUBLIC int get_kernel_sections(unsigned int * text_base, unsigned int * text_len, 
-				unsigned int * data_base, unsigned int * data_len)
-{
-	struct boot_params bp;
-	get_boot_params(&bp);
-
-	Elf32_Ehdr* elf_header = (Elf32_Ehdr*)(bp.kernel_file);
-
-	/* the kernel file should be in ELF format */
-	if (memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0)
-		return -1;
-
-	unsigned int t = 0;
-	int i;
-
-	*data_len = 0;
-
-	char * strtbl;
-	Elf32_Shdr * section_strtbl = (Elf32_Shdr *)(bp.kernel_file + elf_header->e_shoff) + elf_header->e_shstrndx;
-	strtbl = (char *)(bp.kernel_file + section_strtbl->sh_offset);
-
-	for (i = 0; i < elf_header->e_shnum; i++) {
-		Elf32_Shdr* section_header =
-			(Elf32_Shdr*)(bp.kernel_file +
-				      elf_header->e_shoff +
-				      i * elf_header->e_shentsize);
-		char * section_name = strtbl + section_header->sh_name;
-		if (strcmp(section_name, ".text") == 0) { /* .text section */
-			*text_base = section_header->sh_addr;
-			*text_len = section_header->sh_size;
-		}
-		if (strcmp(section_name, ".data") == 0) { /* .data section */
-			*data_base = section_header->sh_addr;
-			*data_len += section_header->sh_size;
-		}
-		if (strcmp(section_name, ".bss") == 0) { /* bss section */
-			*data_len += section_header->sh_size;
-		}
-	}
-
-	return 0;
-}
-
 /*======================================================================*
                                itoa
  *======================================================================*/

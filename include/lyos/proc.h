@@ -48,8 +48,6 @@ struct proc {
     	int counter;                 /* remained ticks */
     	int priority;
 
-	struct mem_map p_memmap[NR_LOCAL_SEGS];	/* memory map */
-
 	/* u32 pid;                   /\* process id passed in from MM *\/ */
 	char name[16];		   /* name of the process */
 

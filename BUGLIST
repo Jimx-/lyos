@@ -1,0 +1,6 @@
+LIST OF KNOWN BUGS
+------------------
+
+Version 0.3.1 [branch: develop][compiler: gcc-4.6.2]
+[  *] fork()(lib/posix/fork.c) sometimes get FORK instead of SYSCALL_RET.
+[***] Can't find a file though it exists after running few commands.

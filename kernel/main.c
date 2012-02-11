@@ -52,9 +52,6 @@ PUBLIC int kernel_main()
 
 	char * stk = task_stack + STACK_SIZE_TOTAL;
 
-	unsigned int tb, tl, db, dl;
-	get_kernel_sections(&tb, &tl, &db, &dl);
-
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
 			p->state = FREE_SLOT;
@@ -119,13 +116,6 @@ PUBLIC int kernel_main()
 		p->regs.eflags	= eflags;
 
 		p->counter = p->priority = prio;
-
-		p->p_memmap[T].mem_phys = tb;
-		p->p_memmap[T].mem_len  = tl;
-		p->p_memmap[D].mem_phys = db;
-		p->p_memmap[D].mem_len  = dl;
-		p->p_memmap[S].mem_phys = db + dl;
-		p->p_memmap[S].mem_vir  = dl;
 
 		p->state = 0;
 		p->msg = 0;

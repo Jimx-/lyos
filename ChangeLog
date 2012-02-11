@@ -1,3 +1,7 @@
 Version 0.3.0
-- NEW Floppy driver
-- NEW Virtual filesystem(VFS)
+- NEW Floppy driver.
+- NEW Virtual filesystem(VFS).
+
+Version 0.3.1
+- CHG TTY driver uses tty_devread and tty_devwrite to read/write devices instead of calling keyboard_read() and out_char() directly.
+- CHG VFS sends user's request to proper FS drivers.
