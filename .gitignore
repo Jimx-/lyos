@@ -12,3 +12,4 @@ krnl.map
 command
 lib/liblyos.a
 include/lyos/compile.h
+arch/arm/arm-lyos
