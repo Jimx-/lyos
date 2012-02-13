@@ -6,7 +6,7 @@ CFLAGS		= -I ../include/ -I ../include/sys/ -c -fno-builtin -fno-stack-protector
 
 MMOBJS		= page.o
 
-X86MM		= x86_mm.o
+X86MM		= x86-mm.o
 
 everything : reclean $(X86MM)
 

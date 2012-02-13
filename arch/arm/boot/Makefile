@@ -1,26 +1,28 @@
 
 CC	= arm-elf-gcc
 LD	= arm-elf-ld
-OBJCOPY	= arm-elf-objcopy
 
 CFLAGS	= -O2 -g
-ASFLAGS	= -O2 -g
-LDFLAGS	= -Tboot.lds -Ttext 30000000 
+ASMFLAGS	= -O2 -g
+MAKEFLAGS = --no-print-directory
 
-OBJS	= init.o start.o boot.o vector.o
+OBJS	= init.o boot.o vector.o
+ARMBOOT = arm-boot.o
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	@echo -e '\tCC\t$@'
+	@$(CC) $(CFLAGS) -c $<
 .s.o:
-	$(CC) $(ASFLAGS) -c $<
+	@echo -e '\tASM\t$@'
+	@$(CC) $(ASMFLAGS) -c $<
 
 .PHONY: everything clean
 
-everything: clean boot
+everything: clean $(ARMBOOT)
 
-boot:	$(OBJS)
-	$(CC) -static -nostartfiles -nostdlib $(LDFLAGS) $? -o $@ -lgcc
-	$(OBJCOPY) -O binary $@ boot.bin
-
+$(ARMBOOT):	$(OBJS)
+	@echo -e '\tLD\t$@'
+	@$(LD) -r -o $@ $?
+	
 clean:
-	rm *.o boot boot.bin -f
+	@rm *.o $(ARMBOOT) -f

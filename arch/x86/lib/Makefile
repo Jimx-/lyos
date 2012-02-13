@@ -6,7 +6,7 @@ CFLAGS		= -I ../include/ -I ../include/sys/ -c -fno-builtin -fno-stack-protector
 
 LOBJS	= syscall.o string.o
 
-X86LIB		= x86_lib.o
+X86LIB		= x86-lib.o
 
 everything : reclean $(X86LIB)
 

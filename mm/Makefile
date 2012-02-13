@@ -7,7 +7,7 @@ LD		= ld
 ASMKFLAGS	= -I ../include/ -f elf
 CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
-MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)_mm.o \
+MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)-mm.o \
 			main.o forkexit.o exec.o memory.o signal.o alloc.o
 MM		= mm.o
 
@@ -19,7 +19,7 @@ reclean :
 $(MM): $(MMOBJS)
 	$(LD) -r -o $(MM) $(MMOBJS)
 
-../arch/$(ARCH)/mm/$(ARCH)_mm.o:
+../arch/$(ARCH)/mm/$(ARCH)-mm.o:
 	(cd ../arch/$(ARCH)/mm; make)
 
 main.o: main.c

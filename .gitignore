@@ -3,4 +3,12 @@
 80m.img
 *.*~
 *~
-
+80m.img.tar.gz
+a.img
+bochsrc
+bochsrc.bxrc
+kernel.bin
+krnl.map
+command
+lib/liblyos.a
+include/lyos/compile.h

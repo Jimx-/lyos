@@ -10,7 +10,7 @@ ASMKFLAGS	= -I ../include/ -f elf
 CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
-LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)_lib.o \
+LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \
 			assert/assert.o \
 			ctype/ctype.o \
 			io/io.o \
@@ -31,7 +31,7 @@ reclean :
 $(LIB): $(LOBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
-../arch/$(ARCH)/lib/$(ARCH)_lib.o:
+../arch/$(ARCH)/lib/$(ARCH)-lib.o:
 	(cd ../arch/$(ARCH)/lib; make)
  
 assert/assert.o: 

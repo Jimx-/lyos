@@ -10,7 +10,7 @@ ASMKFLAGS	= -I ../include/ -f elf
 CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
-KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)_krnl.o start.o main.o\
+KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)-krnl.o start.o main.o\
 			clock.o \
 			i8259.o global.o protect.o proc.o\
 			systask.o\
@@ -18,11 +18,7 @@ KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)_krnl.o start.o main.o\
 
 KRNL		= krnl.o
 
-LIBSYS		= libsys.a
-ARCHKLIB	= ../arch/$(ARCH)/kernel/$(ARCH)_klib.o
-LIBOBJS		= klib.o $(ARCHKLIB)
-
-everything : reclean $(KRNL) $(LIBSYS)
+everything : reclean $(KRNL)
 
 reclean :
 	rm -f $(KERNELOBJS)
@@ -30,15 +26,7 @@ reclean :
 $(KRNL): $(KERNELOBJS)
 	$(LD) -r -o $(KRNL) $(KERNELOBJS)
 
-$(LIBSYS): $(LIBOBJS)
-	$(AR) $(ARFLAGS) $@ $^
-	rm -rf $(LIBDIR)/$(LIBSYS)
-	mv $(LIBSYS) $(LIBDIR)/$(LIBSYS)
-
-$(ARCHKLIB):
-	(cd $(ARCHDIR)/kernel; make klib)
-
-../arch/$(ARCH)/kernel/$(ARCH)_krnl.o:
+../arch/$(ARCH)/kernel/$(ARCH)-krnl.o:
 	(cd ../arch/$(ARCH)/kernel; make)
 
 start.o: start.c
