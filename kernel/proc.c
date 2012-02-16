@@ -19,7 +19,6 @@
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/const.h"
-#include "lyos/protect.h"
 #include "lyos/tty.h"
 #include "lyos/console.h"
 #include "string.h"

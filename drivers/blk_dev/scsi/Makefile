@@ -4,8 +4,8 @@
 ASM		= nasm
 CC		= gcc
 LD		= ld
-ASMKFLAGS	= -I ../../../include/ -f elf
-CFLAGS		= -I ../../../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
+CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 SCSI		= scsi.o
 

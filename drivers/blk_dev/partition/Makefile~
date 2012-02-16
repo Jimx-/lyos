@@ -1,5 +1,3 @@
-#
-# Makefile for scsi driver.
 
 ASM		= nasm
 CC		= gcc
@@ -7,14 +5,14 @@ LD		= ld
 ASMKFLAGS	= -I ../../../include/ -f elf
 CFLAGS		= -I ../../../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
-SCSI		= scsi.o
+OBJ		= partition.o
 
-everything : reclean $(SCSI)
+everything : reclean $(OBJ)
 
 reclean :
-	rm -f $(SCSI)
+	rm -f $(OBJ)
 
-$(SCSI): scsi.c
+$(OBJ): partition.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 

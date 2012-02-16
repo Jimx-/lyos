@@ -8,12 +8,12 @@ SUBLEVEL = 1
 EXTRAVERSION =
 
 SUBARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
-				  -e s/arm.*/arm/ -e s/sa110/arm/ \
-				  -e s/s390x/s390/ -e s/parisc64/parisc/ \
-				  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
-				  -e s/sh[234].*/sh/ )
+		-e s/arm.*/arm/ -e s/sa110/arm/ \
+		-e s/s390x/s390/ -e s/parisc64/parisc/ \
+		-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+		-e s/sh[234].*/sh/ )
 
-ARCH = $(SUBARCH)
+ARCH ?= $(SUBARCH)
 
 ifeq ($(ARCH),i386)
 	ARCH = x86
@@ -27,11 +27,12 @@ export KERNELVERSION
 SRCDIR = $(shell pwd)
 INCDIR = $(SRCDIR)/include
 SYSINCDIR = $(SRCDIR)/include/sys
-LIBDIR = $(SRCDIR)/lib
+ARCHINCDIR = $(SRCDIR)/arch/$(ARCH)/include
+LIBDIR = $(SRCDIR)/lib/
 ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
-export SRCDIR INCDIR SYSINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
+export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 
 # Entry point of Lyos
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
@@ -46,9 +47,8 @@ DASM		= objdump
 CC		= gcc
 LD		= ld
 ASMBFLAGS	= -I boot/include/
-ASMKFLAGS	= -I include/ -f elf
-#CFLAGS		= -I include/ -I include/lyos/ -c -fno-builtin -Wall
-CFLAGS		= -I include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I $(INCDIR)/ $(ARCHINCDIR)/ -f elf
+CFLAGS		= -I $(INCDIR)/ $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -Ttext $(ENTRYPOINT) -Map krnl.map
 DASMFLAGS	= -D
@@ -87,7 +87,7 @@ all : realclean everything image lib cmd
 image : realclean everything clean buildimg
 
 genconf:
-	@echo "\tGEN\tcompile.h"
+	@echo -e '\tGEN\tcompile.h'
 	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
 
 CONFIGIN = $(SRCDIR)/config.in

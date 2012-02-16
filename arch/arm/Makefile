@@ -19,10 +19,10 @@ $(KERNEL): $(OBJS)
 	@echo -e '\tCC\t$@'
 	@$(CC) -static -nostartfiles -nostdlib $(LDFLAGS) $? -o $@ -lgcc
 
-boot/arm_boot.o:
+boot/arm-boot.o:
 	@(cd boot; make)
 
-kernel/arm_krnl.o:
+kernel/arm-krnl.o:
 	@(cd kernel; make)
 
 run:

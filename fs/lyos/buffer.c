@@ -19,7 +19,6 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "lyos/const.h"
-#include "lyos/protect.h"
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"

@@ -6,8 +6,8 @@ ASM		= nasm
 CC		= gcc
 LD		= ld
 AR		= ar
-ASMKFLAGS	= -I ../../include/ -f elf
-CFLAGS		= -I ../../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
+CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 LOBJS		= _misc.o

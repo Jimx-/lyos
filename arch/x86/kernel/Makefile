@@ -1,10 +1,10 @@
 ASM		= nasm
 CC		= gcc
 LD		= ld
-ASMKFLAGS	= -I ../include/ -I ../include/sys/ -f elf
-CFLAGS		= -I ../include/ -I ../include/sys/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMKFLAGS	=  -I $(INCDIR)/ -I $(ARCHINC)/ -f elf
+CFLAGS		= -I $(INCDIR)/ -I $(ARCHINC)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
-KERNELOBJS	= kernel.o kliba.o reboot.o
+KERNELOBJS	= kernel.o kliba.o reboot.o i8259.o start.o protect.o
 
 X86KRNL		= x86-krnl.o
 
@@ -24,3 +24,13 @@ reboot.o : reboot.asm
 
 kliba.o : kliba.asm
 	$(ASM) $(ASMKFLAGS) -o $@ $<
+
+i8259.o: i8259.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+protect.o: protect.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+start.o: start.c
+	$(CC) $(CFLAGS) -o $@ $<
+

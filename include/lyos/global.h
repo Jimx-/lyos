@@ -19,16 +19,23 @@
 #define	EXTERN
 #endif
 
+#if(ARCH == x86)
+#include "protect.h"
+#endif
+
 EXTERN	int	jiffies;
 
 EXTERN	int	disp_pos;
 
+#if (ARCH == x86)
 EXTERN	u8			gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct descriptor	gdt[GDT_SIZE];
 EXTERN	u8			idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct gate		idt[IDT_SIZE];
 
 EXTERN	u32	k_reenter;
+#endif
+
 EXTERN	int	current_console;
 
 EXTERN	int	key_pressed; /**

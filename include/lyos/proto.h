@@ -33,12 +33,6 @@ PUBLIC void	glitter(int row, int col);
 /* reboot.asm */
 PUBLIC void 	hard_reboot(void);
 
-/* protect.c */
-PUBLIC void	init_prot();
-PUBLIC u32	seg2linear(u16 seg);
-PUBLIC void	init_desc(struct descriptor * p_desc,
-			  u32 base, u32 limit, u16 attribute);
-
 /* klib.c */
 PUBLIC void	get_boot_params(struct boot_params * pbp);
 PUBLIC void	delay(int time);

@@ -21,7 +21,6 @@
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/ipc.h"
-#include "lyos/protect.h"
 #include "lyos/proc.h"
 #include "unistd.h"
 

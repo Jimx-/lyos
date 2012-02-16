@@ -19,7 +19,6 @@
 #include "assert.h"
 #include "lyos/const.h"
 #include "lyos/ipc.h"
-#include "lyos/protect.h"
 #include "lyos/proc.h"
 
 /*****************************************************************************

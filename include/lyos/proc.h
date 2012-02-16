@@ -15,6 +15,10 @@
 
 #include "signal.h"
 
+#if (ARCH == x86)
+#include "protect.h"
+#endif
+
 struct stackframe {	
 	u32	gs;		
 	u32	fs;	

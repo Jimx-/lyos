@@ -167,4 +167,10 @@ struct tss {
 /* seg:off -> linear addr */
 #define makelinear(seg,off) (u32)(((u32)(seg2linear(seg))) + (u32)(off))
 
+/* protect.c */
+PUBLIC void	init_prot();
+PUBLIC u32	seg2linear(u16 seg);
+PUBLIC void	init_desc(struct descriptor * p_desc,
+			  u32 base, u32 limit, u16 attribute);
+
 #endif /* _PROTECT_H_ */

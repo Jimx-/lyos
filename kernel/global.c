@@ -21,7 +21,6 @@
 #include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
-#include "lyos/protect.h"
 #include "lyos/fs.h"
 #include "sys/termios.h"
 #include "lyos/tty.h"

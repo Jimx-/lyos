@@ -6,7 +6,7 @@ CFLAGS	= -O2 -g
 ASMFLAGS= -O2 -g
 MAKEFLAGS = --no-print-directory
 
-OBJS	= cstart.o
+OBJS	= start.o
 ARMKRNL = arm-krnl.o
 
 .c.o:
