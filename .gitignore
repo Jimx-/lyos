@@ -1,15 +1,48 @@
+#
+# SVN directories
+#
 .svn
+
+#
+# Object files
+#
 *.o
-80m.img
+
 *.*~
 *~
+
+#
+# Disk image
+#
+80m.img
 80m.img.tar.gz
 a.img
+
+#
+# Bochsrc
+#
 bochsrc
 bochsrc.bxrc
+
+#
+# Kernel
+#
 kernel.bin
 krnl.map
-command
-lib/liblyos.a
-include/lyos/compile.h
 arch/arm/arm-lyos
+
+#
+# Command files
+#
+command
+
+# 
+# Library
+#
+lib/liblyos.a
+
+#
+# Generated
+#
+include/lyos/compile.h
+scripts/.Config.in.swp
