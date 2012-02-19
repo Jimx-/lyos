@@ -2,12 +2,9 @@
 # Makefile for Lyos library. #
 ##############################
 
-ASM		= nasm
-CC		= gcc
-LD		= ld
 AR		= ar
 ASMKFLAGS	= -I ../../include/ -f elf
-CFLAGS		= -I ../../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 LOBJS		= exit.o
@@ -17,12 +14,14 @@ LIB		= stdlib.o
 everything : reclean $(LIB)
 
 reclean :
-	rm -f $(LOBJS)
+	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)
-	$(LD) -r -o $(LIB) $(LOBJS)
+	@echo -e '\tLD\tlib/stdlib/$@'
+	@$(LD) -r -o $(LIB) $(LOBJS)
 
-exit.o: exit.c
-	$(CC) $(CFLAGS) -o $@ $<
+%.o: %.c
+	@echo -e '\tCC\tlib/stdlib/$@'
+	@$(CC) $(CFLAGS) -o $@ $<
 
 

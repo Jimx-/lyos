@@ -28,8 +28,12 @@ bochsrc.bxrc
 # Kernel
 #
 kernel.bin
-krnl.map
+System.map
 arch/arm/arm-lyos
+boot.bin
+loader.bin
+hdboot.bin
+hdloader.bin
 
 #
 # Command files

@@ -12,23 +12,39 @@
 	
 	a. Download the source
 	----------------------
-		You can get the source with git
+		- You can get the source with git:
+
 			git clone git://github.com/Jimx-/Lyos.git Lyos
-		or download the bzip file. If you download the bzip file, unpack it
-			tar -jxvf Lyos-0.2.6.31.tar.bz2
-		and unpack the disk image
-			tar -zxvf 80m.img.tar.gz
+
+		- If you download the bzip file, unpack it:
+
+			tar -jxvf Lyos-0.3.X.tar.bz2
+
+		- Download the commands and images and extract them to Lyos' directory:
+
+			cd Lyos-0.3.X
+			tar -jxvf lyos-0.3.X-bin.tar.bz2
+			tar -jxvf lyos-0.3.X-cmd.tar.bz2
 
 	b. Compile Lyos
 	---------------
-			cd Lyos
-		build the image
+		- Configure Lyos
+
+			make config
+		or
+			make menuconfig
+
+		- Clean all the object files:
+
+			make mrproper
+
+		- Build the image, library and command files:
+
 			make image
-		build the library
 			make lib
-		build command files
 			make cmd
-		then you will get a kernel image and a disk image
+
+		then you will get a kernel image.
 
 	c. Run Lyos on bochs
 	--------------------
@@ -38,16 +54,28 @@
 
 	d. Make option
 	--------------
+		* make
+			Build the kernel.
+
 		* make image
-			build the kernel image.
+			Build the kernel image.
+
 		* make lib
-			build a Lyos C Library.
+			Build a Lyos C Library.
+
 		* make cmd
-			compile and install the command files to the harddisk image.
+			Compile and install the command files to the harddisk image.
+
 		* make disasm
-			dump the kernel into kernel.bin.asm.
+			Dump the kernel into kernel.bin.asm.
+
 		* make mrproper
-			remove all object files.
+			Remove all object files.
+
+		* make config
+		* make menuconfig
+			Configure Lyos.
+			
 
 3. DIRECTORIES
 ==============

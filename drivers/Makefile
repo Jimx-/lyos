@@ -1,11 +1,8 @@
 #
 # Makefile for Lyos driver.
 
-ASM		= nasm
-CC		= gcc
-LD		= ld
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 DRVOBJS		= blk_dev/blk_dev.o chr_dev/chr_dev.o net/inet.o pci/pci.o driver.o
 DRIVER		= drivers.o
@@ -13,22 +10,24 @@ DRIVER		= drivers.o
 everything : reclean $(DRIVER)
 
 reclean :
-	rm -f $(DRVOBJS)
+	@rm -f $(DRVOBJS)
 
 $(DRIVER): $(DRVOBJS)
-	$(LD) -r -o $(DRIVER) $(DRVOBJS)
+	@echo -e '\tLD\t$@'
+	@$(LD) -r -o $(DRIVER) $(DRVOBJS)
 
 blk_dev/blk_dev.o:
-	(cd blk_dev; make)
+	@(cd blk_dev; make)
 
 chr_dev/chr_dev.o:
-	(cd chr_dev; make)
+	@(cd chr_dev; make)
 
 net/inet.o:
-	(cd net; make)
+	@(cd net; make)
 
 pci/pci.o:
-	(cd pci; make)
+	@(cd pci; make)
 
 driver.o: driver.c
-	$(CC) $(CFLAGS) -o $@ $<
+	@echo -e '\tCC\t$@'
+	@$(CC) $(CFLAGS) -o $@ $<

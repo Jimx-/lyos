@@ -31,13 +31,12 @@ $(CONFBIN):  $(conf-objs)
 
 $(MCONFBIN): $(mconf-objs)
 	@echo "\tCC\t$@"
-	$(CC) $^ $(LOADLIBES) -o $@
+	@$(CC) $^ $(LOADLIBES) -o $@
 
 clean-files	:= zconf.tab.c zconf.lex.c zconf.hash.c $(lxdialog)
 clean-files     += conf mconf 
 
 clean:
-	@echo "\tCLEAN"
 	@rm -f $(clean-files)
 
 %.o: %.c

@@ -232,7 +232,7 @@ void untar(const char * filename)
 			close(fd);
 			return;
 		}
-		printf("    %s %d(bytes)\n", phdr->name, phdr->size);
+		printf("    %s (%d bytes)\n", phdr->name, phdr->size);
 		while (bytes_left) {
 			int iobytes = min(chunk, bytes_left);
 			read(fd, buf,

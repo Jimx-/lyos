@@ -2,12 +2,9 @@
 # Makefile for Lyos library. #
 ##############################
 
-ASM		= nasm
-CC		= gcc
-LD		= ld
 AR		= ar
 ASMKFLAGS	= -I ../include/ -f elf
-CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \
@@ -26,39 +23,40 @@ LIB		= liblyos.a
 everything : reclean $(LIB)
 
 reclean :
-	rm -f $(LOBJS)
+	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)
-	$(AR) $(ARFLAGS) $@ $^
+	@echo -e '\tAR\tlib/$@'
+	@$(AR) $(ARFLAGS) $@ $^
 
 ../arch/$(ARCH)/lib/$(ARCH)-lib.o:
-	(cd ../arch/$(ARCH)/lib; make)
+	@(cd ../arch/$(ARCH)/lib; make)
  
 assert/assert.o: 
-	(cd assert; make)
+	@(cd assert; make)
 
 ctype/ctype.o:
-	(cd ctype; make)
+	@(cd ctype; make)
 
 stdio/stdio.o:
-	(cd stdio; make)
+	@(cd stdio; make)
 
 stdlib/stdlib.o:
-	(cd stdlib; make)
+	@(cd stdlib; make)
 
 io/io.o:
-	(cd io; make)
+	@(cd io; make)
 
 malloc/malloc.o:
-	(cd malloc; make)
+	@(cd malloc; make)
 
 misc/misc.o:
-	(cd misc; make)
+	@(cd misc; make)
 
 posix/posix.o:
-	(cd posix; make)
+	@(cd posix; make)
 
 string/string.o:
-	(cd string; make)
+	@(cd string; make)
 
 

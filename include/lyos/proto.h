@@ -124,15 +124,6 @@ PUBLIC void	task_lyos_fs	();
 PUBLIC int fs_fork(MESSAGE * m);
 PUBLIC int fs_exit(MESSAGE * m);
 
-/* fs/Lyos/buffer.c */
-PUBLIC void 	bread		(struct buffer_head * bh);
-PUBLIC char * 	find_buffer	(int dev, u64 pos, int cnt);
-PUBLIC char * 	get_buffer	(int dev, u64 pos, int cnt);
-PUBLIC void 	sync_buffer	();
-PUBLIC void 	do_sync		();
-PUBLIC void 	free_buffer	();
-PUBLIC void	init_buffer	();
-
 /* fs/Lyos/misc.c */
 PUBLIC int	do_stat(MESSAGE * p);
 PUBLIC int	strip_path	(char * filename, const char * pathname,

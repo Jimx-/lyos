@@ -4,7 +4,7 @@
 
 VERSION = 0
 PATCHLEVEL = 3
-SUBLEVEL = 1
+SUBLEVEL = 2
 EXTRAVERSION =
 
 SUBARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
@@ -24,6 +24,7 @@ export SUBARCH ARCH
 KERNELVERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 export KERNELVERSION
 
+# Directories
 SRCDIR = $(shell pwd)
 INCDIR = $(SRCDIR)/include
 SYSINCDIR = $(SRCDIR)/include/sys
@@ -44,15 +45,17 @@ HD		= 80m.img
 # Programs, flags, etc.
 ASM		= nasm
 DASM		= objdump
-CC		= gcc
+CC		= gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/
 LD		= ld
-ASMBFLAGS	= -I boot/include/
-ASMKFLAGS	= -I $(INCDIR)/ $(ARCHINCDIR)/ -f elf
-CFLAGS		= -I $(INCDIR)/ $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASMBFLAGS	= -I $(ARCHDIR)/boot/include/
+ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
+CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
-LDFLAGS		= -Ttext $(ENTRYPOINT) -Map krnl.map
+LDFLAGS		= -Ttext $(ENTRYPOINT) -Map System.map
 DASMFLAGS	= -D
 ARFLAGS		= rcs
+
+export ASM CC LD
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
@@ -80,11 +83,11 @@ DASMOUTPUT	= kernel.bin.asm
 # Default starting position
 kernel : realclean everything clean
 
+include $(ARCHDIR)/Makefile
+
 everything : genconf $(LYOSBOOT) $(LYOSKERNEL)
 
 all : realclean everything image lib cmd
-
-image : realclean everything clean buildimg
 
 genconf:
 	@echo -e '\tGEN\tcompile.h'
@@ -103,41 +106,33 @@ menuconfig:
 	$(MCONF) $(CONFIGIN)
 
 cmd :
-	(cd command;make install)
+	@(cd command;make install)
 
 lib :
-	(cd lib; make)
+	@(cd lib; make)
 
 mrproper:
-	find . -name "*.o" -exec rm -fv {} \;
-	rm -f $(INCLUDEDIR)/lyos/compile.h
-	rm -f .config .config.old
+	@find . -name "*.o" -exec rm -fv {} \;
+	@rm -f $(INCLUDEDIR)/lyos/compile.h
+	@rm -f .config .config.old
 
 clean :
-	rm -f $(OBJS)
+	@rm -f $(OBJS)
 
 realclean :
-	find . -name "*.o" -exec rm -f {} \;
-	rm -f $(LIB) $(LYOSBOOT) $(LYOSKERNEL)
+	@find . -name "*.o" -exec rm -f {} \;
+	@rm -f $(LIB) $(LYOSBOOT) $(LYOSKERNEL)
 
 disasm :
-	$(DASM) $(DASMFLAGS) $(LYOSKERNEL) > $(DASMOUTPUT)
-
-buildimg :
-	dd if=$(LYOSBOOTDIR)/boot.bin of=$(FD) bs=512 count=1 conv=notrunc
-	dd if=$(LYOSBOOTDIR)/hdboot.bin of=$(HD) seek=`echo "obase=10;ibase=16;\`egrep -e '^ROOT_BASE' $(LYOSBOOTDIR)/include/load.inc | sed -e 's/.*0x//g'\`*200" | bc` bs=1 count=446 conv=notrunc
-	dd if=$(LYOSBOOTDIR)/hdboot.bin of=$(HD) seek=`echo "obase=10;ibase=16;\`egrep -e '^ROOT_BASE' $(LYOSBOOTDIR)/include/load.inc | sed -e 's/.*0x//g'\`*200+1FE" | bc` skip=510 bs=1 count=2 conv=notrunc
-	sudo mount -o loop $(FD) /mnt/floppy/
-	sudo cp -fv $(LYOSBOOTDIR)/loader.bin /mnt/floppy/
-	sudo cp -fv kernel.bin /mnt/floppy
-	sudo umount /mnt/floppy
+	@echo -e '\tDASM\t$(LYOSKERNEL)'
+	@$(DASM) $(DASMFLAGS) $(LYOSKERNEL) > $(DASMOUTPUT)
 
 help :
 	@echo "Make options:"
 	@echo "-----------------------------------------------------------------"
 	@echo "make		: build the kernel image."
 	@echo "make image 	: build the floppy image."
-	@echo "make lib	: build the Lyos C library."
+	@echo "make lib		: build the Lyos C library."
 	@echo "make cmd   	: install the command files to the HD."
 	@echo "make disasm	: dump the kernel into kernel.bin.asm."
 	@echo "-----------------------------------------------------------------"
@@ -145,25 +140,27 @@ help :
 	@echo "make mrproper	: remove all object files and config file."
 
 $(LYOSBOOT):
-	(cd $(LYOSBOOTDIR); make)
+	@(cd $(LYOSBOOTDIR); make)
 
 $(LYOSKERNEL) : $(OBJS) $(LIB)
-	$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
+	@echo -e '\tLD\t$@'
+	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
 
 $(KRNLOBJ):
-	(cd kernel; make)
+	@(cd kernel; make)
 
 $(LIB):
-	(cd lib; make)
+	@(cd lib; make)
 
 $(FSOBJ):
-	(cd fs; make)
+	@(cd fs; make)
 
 $(MMOBJ):
-	(cd mm; make)
+	@(cd mm; make)
 
 $(DRVOBJ):
-	(cd drivers; make)
+	@(cd drivers; make)
 
 lib/misc/syslog.o: lib/misc/syslog.c
-	$(CC) $(CFLAGS) -o $@ $<
+	@echo -e '\tCC\tlib/misc/$@'
+	@$(CC) $(CFLAGS) -o $@ $<

@@ -1,11 +1,8 @@
 #
 # Makefile for the Lyos filesystem.
 
-ASM		= nasm
-CC		= gcc
-LD		= ld
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 FSOBJS		= main.o lyos/lyosfs.o
 FS		= fs.o
@@ -13,14 +10,16 @@ FS		= fs.o
 everything : reclean $(FS)
 
 reclean :
-	rm -f $(FSOBJS)
+	@rm -f $(FSOBJS)
 
 $(FS): $(FSOBJS)
-	$(LD) -r -o $(FS) $(FSOBJS)
+	@echo -e '\tLD\tfs/$@'
+	@$(LD) -r -o $(FS) $(FSOBJS)
 
-main.o: main.c
-	$(CC) $(CFLAGS) -o $@ $<
+%.o: %.c
+	@echo -e '\tCC\tfs/$@'
+	@$(CC) $(CFLAGS) -o $@ $<
 
 lyos/lyosfs.o:
-	(cd lyos; make)
+	@(cd lyos; make)
 

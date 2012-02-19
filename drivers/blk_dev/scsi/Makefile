@@ -1,20 +1,18 @@
 #
-# Makefile for scsi driver.
+# Makefile for scsi driver
 
-ASM		= nasm
-CC		= gcc
-LD		= ld
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 SCSI		= scsi.o
 
 everything : reclean $(SCSI)
 
 reclean :
-	rm -f $(SCSI)
+	@rm -f $(SCSI)
 
 $(SCSI): scsi.c
-	$(CC) $(CFLAGS) -o $@ $<
+	@echo -e '\tCC\tdrivers/blk_dev/scsi/$@'
+	@$(CC) $(CFLAGS) -o $@ $<
 
 
