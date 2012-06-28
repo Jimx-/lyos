@@ -34,6 +34,7 @@ boot.bin
 loader.bin
 hdboot.bin
 hdloader.bin
+lyos
 
 #
 # Command files

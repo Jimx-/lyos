@@ -34,7 +34,7 @@ PUBLIC char dot1[2] = ".";
 PUBLIC char dot2[3] = "..";	
 
 PRIVATE char * get_name(char * old_name, char string[MAX_FILENAME_LEN]);
-#define SEARCH_FILE_V1
+#define SEARCH_FILE_V2
 
 /**********************************************************************
  * 						namei
@@ -205,7 +205,7 @@ PUBLIC int find_entry(struct inode * dir_inode, char filename[MAX_PATH])
 		RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
 		pde = (struct dir_entry *)fsbuf;
 		for (j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) {
-			if (memcmp(filename, pde->name, MAX_FILENAME_LEN) == 0)
+			if (strcmp(filename, pde->name) == 0)
 				return pde->inode_nr;
 			if (++m > nr_dir_entries)
 				break;

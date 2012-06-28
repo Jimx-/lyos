@@ -23,7 +23,7 @@
 		- Download the commands and images and extract them to Lyos' directory:
 
 			cd Lyos-0.3.X
-			tar -jxvf lyos-0.3.X-bin.tar.bz2
+			tar -jxvf lyos-0.3.X-img.tar.bz2
 			tar -jxvf lyos-0.3.X-cmd.tar.bz2
 
 	b. Compile Lyos
@@ -48,7 +48,7 @@
 
 	c. Run Lyos on bochs
 	--------------------
-		Get Bochs Emulator at http://bochs.sourceforge.net/,
+		- Get Bochs Emulator at http://bochs.sourceforge.net/,
 		then
 			bochs
 

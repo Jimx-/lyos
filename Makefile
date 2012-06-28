@@ -59,9 +59,6 @@ export ASM CC LD
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
-LYOSBOOTDIR	= $(LYOSARCHDIR)/boot
-LYOSBOOT	= $(LYOSBOOTDIR)/boot.bin $(LYOSBOOTDIR)/hdboot.bin $(LYOSBOOTDIR)/loader.bin \
-			$(LYOSBOOTDIR)/hdloader.bin
 LYOSKERNEL	= kernel.bin
 KRNLOBJ		= kernel/krnl.o
 LIB		= lib/liblyos.a
@@ -138,9 +135,6 @@ help :
 	@echo "-----------------------------------------------------------------"
 	@echo "make clean	: remove all object files but keep config files."
 	@echo "make mrproper	: remove all object files and config file."
-
-$(LYOSBOOT):
-	@(cd $(LYOSBOOTDIR); make)
 
 $(LYOSKERNEL) : $(OBJS) $(LIB)
 	@echo -e '\tLD\t$@'

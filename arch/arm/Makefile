@@ -9,7 +9,7 @@ MAKEFLAGS = --no-print-directory
 
 OBJS	= boot/arm-boot.o kernel/arm-krnl.o
 
-KERNEL	= arm-lyos
+KERNEL	= lyos
 
 .PHONY: everything clean
 

@@ -1,3 +1,10 @@
+LYOSBOOTDIR	= $(ARCHDIR)/boot
+LYOSBOOT	= $(LYOSBOOTDIR)/boot.bin $(LYOSBOOTDIR)/hdboot.bin $(LYOSBOOTDIR)/loader.bin \
+			$(LYOSBOOTDIR)/hdloader.bin
+
+$(LYOSBOOT):
+	@(cd $(LYOSBOOTDIR); make)
+
 image : kernel buildimg
 
 buildimg :
@@ -7,5 +14,25 @@ buildimg :
 	sudo mount -o loop $(FD) /mnt/floppy/
 	sudo cp -fv $(LYOSBOOTDIR)/loader.bin /mnt/floppy/
 	sudo cp -fv kernel.bin /mnt/floppy
+	sync
 	sudo umount /mnt/floppy
 
+TOOLSDIR = arch/x86/tools
+
+BUILD = $(TOOLSDIR)/build
+build:
+	@rm -f $(BUILD)
+	@make -C $(TOOLSDIR) build
+
+newimage: build
+	@rm -f arch/x86/lyos
+	@echo -e '\tBUILD\tarch/x86/lyos'
+	@$(BUILD) $(LYOSBOOTDIR)/newboot.bin $(LYOSBOOTDIR)/newloader.bin kernel.bin > arch/x86/lyos
+
+newimg :
+	dd if=$(ARCHDIR)/lyos of=$(FD) bs=110000 count=1 conv=notrunc
+
+# WARNING: do not use this
+floppy:
+	dd if=a.img of=/dev/sdb bs=1474560
+	
