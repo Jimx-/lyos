@@ -16,6 +16,7 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
+#define NDEBUG
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"

@@ -31,4 +31,4 @@ struct utsname {
 int 	uname		(struct utsname * name);
 
 #include "lyos/compile.h"	// generate by gencompile.sh
-#define LYOS_BANNER "Lyos version "UTS_VERSION" ("LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"
+#define LYOS_BANNER "Lyos version "UTS_VERSION" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"

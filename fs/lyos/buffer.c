@@ -27,7 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/hd.h"
-#include "lyos/buffer.h"
+#include "buffer.h"
 
 extern int end;
 #define start_buffer (struct buffer_head *)buffer_base

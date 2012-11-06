@@ -18,9 +18,6 @@
 
 #include "lyos/type.h"
 
-/* the assert macro */
-#define NDEBUG /* enable/disable assert */
-
 /* EXTERN */
 #define	EXTERN	extern	/* EXTERN is defined as extern except in global.c */
 

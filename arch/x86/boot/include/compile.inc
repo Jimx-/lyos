@@ -1,0 +1,2 @@
+%define LOADERSECTS 12
+%define KERNELSECTS 204

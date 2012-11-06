@@ -27,13 +27,9 @@ bochsrc.bxrc
 #
 # Kernel
 #
-kernel.bin
+*.bin
 System.map
 arch/arm/arm-lyos
-boot.bin
-loader.bin
-hdboot.bin
-hdloader.bin
 lyos
 
 #
