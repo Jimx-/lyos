@@ -106,7 +106,6 @@ PUBLIC void 	task_sys();
 
 /* fs/main.c */
 /*PUBLIC void	task_fs();*/
-PUBLIC void register_filesystem(MESSAGE * m);
 
 /* fs/Lyos/main.c */
 PUBLIC void	task_fs();

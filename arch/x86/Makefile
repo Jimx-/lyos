@@ -24,13 +24,13 @@ build:
 	@rm -f $(BUILD)
 	@make -C $(TOOLSDIR) build
 
-newimage: build
+newimage: kernel build
 	@rm -f arch/x86/lyos
 	@echo -e '\tBUILD\tarch/x86/lyos'
 	@$(BUILD) $(LYOSBOOTDIR)/newboot.bin $(LYOSBOOTDIR)/newloader.bin kernel.bin > arch/x86/lyos
 
-newimg :
-	dd if=$(ARCHDIR)/lyos of=$(FD) bs=110000 count=1 conv=notrunc
+newimg : newimage
+	dd if=$(ARCHDIR)/lyos of=$(FD) bs=120000 count=1 conv=notrunc
 
 # WARNING: do not use this
 floppy:

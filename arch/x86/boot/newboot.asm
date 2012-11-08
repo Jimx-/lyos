@@ -45,10 +45,28 @@ LABEL_START:
 	mov	ax, LOADER_SEG
 	mov	es, ax			; es <- LOADER_SEG
 	mov	bx, LOADER_OFF		; bx <- LOADER_OFF
-	mov	ax, 2			; ax <- 2nd sector
-	mov	cl, LOADERSECTS		; cl <- how many sectors
-	call	ReadSector
+	mov	ax, 1			; ax <- 2nd sector
 
+LABEL_LOADING_LOADER:
+	push	ax	
+	push	bx		
+	mov	ah, 0Eh			
+	mov	al, '.'		
+	mov	bl, 0Fh	
+	int	10h			
+	pop	bx			
+	pop	ax
+
+	cmp	word [wLoaderSectors], 0	
+	jz	LABEL_LOADED_LOADER		
+	mov	cl, 1		; cl <- how many sectors
+	call	ReadSector
+	inc ax
+	add	bx, [BPB_BytsPerSec]
+	dec word [wLoaderSectors]
+	jmp LABEL_LOADING_LOADER
+
+LABEL_LOADED_LOADER:
 	mov	dh, 1			; "Ready."
 	call	DispStr			;
 
@@ -61,9 +79,7 @@ LABEL_START:
 ;============================================================================
 ;Variables
 ;----------------------------------------------------------------------------
-wRootDirSizeForLoop	dw	RootDirSectors	; Root Directory 占用的扇区数, 在循环中会递减至零.
-wSectorNo		dw	0		; 要读取的扇区号
-bOdd			db	0		; 奇数还是偶数
+wLoaderSectors	dw	LOADERSECTS
 
 ;============================================================================
 ;Strings

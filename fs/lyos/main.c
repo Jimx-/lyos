@@ -30,7 +30,6 @@
 #include "lyos/hd.h"
 
 PRIVATE void mkfs();
-PRIVATE void register_fs();
 
 #define DEBUG
 #ifdef DEBUG

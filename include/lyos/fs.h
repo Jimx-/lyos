@@ -152,6 +152,10 @@ struct file_system {
 	struct file_system * next;
 };
 
+/* register & unregister filesystem */
+int register_filesystem(MESSAGE * m);
+int unregister_filesystem(MESSAGE * m);
+
 /**
  * Since all invocations of `rw_sector()' in FS look similar (most of the
  * params are the same), we use this macro to make code more readable.
