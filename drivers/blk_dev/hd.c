@@ -81,7 +81,7 @@ PUBLIC void task_hd()
 
 	init_hd();
 
-/*	dev_driver_task(&hd_driver);	*/
+	//dev_driver_task(&hd_driver);	
 
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);

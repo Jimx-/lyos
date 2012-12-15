@@ -26,6 +26,8 @@ global	disp_str
 global	disp_color_str
 global	out_byte
 global	in_byte
+global  out_long
+global  in_long
 global	enable_irq
 global	disable_irq
 global	enable_int
@@ -130,6 +132,28 @@ in_byte:
 	mov	edx, [esp + 4]		; port
 	xor	eax, eax
 	in	al, dx
+	nop	; 一点延迟
+	nop
+	ret
+
+; ========================================================================
+;		   void out_long(u16 port, u32 value);
+; ========================================================================
+out_long:
+	mov	edx, [esp + 4]		; port
+	mov	ax, [esp + 4 + 4]	; value
+	out	dx, ax
+	nop	; 一点延迟
+	nop
+	ret
+
+; ========================================================================
+;		   u32 in_byte(u16 port);
+; ========================================================================
+in_long:
+	mov	edx, [esp + 4]		; port
+	xor	eax, eax
+	in	ax, dx
 	nop	; 一点延迟
 	nop
 	ret

@@ -44,7 +44,7 @@ PRIVATE void pci_scan_devices(int bus_nr);
 
 PUBLIC void task_pci()
 {
-	pci_init();
+	//pci_init();
 	while(1){
 	}
 }
@@ -72,6 +72,7 @@ PRIVATE void pci_scan_devices(int bus_nr)
 	int i = 0;
 	for(i = 0; i < 0x100; i++) 
 	{
+        tmp = 0xFFFFFFFF;
 		conf_reg &= 0xFFFF0000;
 		conf_reg += (i << 8);  
 		                             
@@ -79,7 +80,7 @@ PRIVATE void pci_scan_devices(int bus_nr)
 		tmp = in_long(PCI_DATA);
 		if(0xFFFFFFFF == tmp)        
 			continue;
-		printl("A PCI device found.\n");
+		printl("A PCI device found.%d\n", i);
 	}
 	return;
 }

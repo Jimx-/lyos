@@ -11,8 +11,8 @@ org  0100h
 
 
 ; GDT ------------------------------------------------------------------------------------------------------------------------------------------------------------
-;                                                Base            Limit     , Attr
-LABEL_GDT:			Descriptor             0,                    0, 0						; 空描述符
+;                                            Base            Limit     , Attr
+LABEL_GDT:				Descriptor             0,              0, 			0						; 空描述符
 LABEL_DESC_FLAT_C:		Descriptor             0,              0fffffh, DA_CR  | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
 LABEL_DESC_FLAT_RW:		Descriptor             0,              0fffffh, DA_DRW | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
 LABEL_DESC_VIDEO:		Descriptor	 0B8000h,               0ffffh, DA_DRW                         | DA_DPL3	; 显存首地址
@@ -65,14 +65,43 @@ LABEL_START:			; <--- start from here *************
 	; reset floppy
 	xor	ah, ah	; ┓
 	xor	dl, dl	; ┣
-	int	13h	; ┛
+	int	13h		; ┛
 	; load kernel
 	mov	ax, KERNEL_FILE_SEG
 	mov	es, ax			; es <- KERNEL_FILE_SEG
 	mov	bx, KERNEL_FILE_OFF	; bx <- KERNEL_FILE_OFF	于是, es:bx = KERNEL_FILE_SEG:KERNEL_FILE_OFF = KERNEL_FILE_SEG * 10h + KERNEL_FILE_OFF
-	mov	ax, 2 + LOADERSECTS	; ax <- start sector
-	mov	cl, KERNELSECTS
+	mov	ax, 1 + LOADERSECTS	; ax <- start sector
+
+LABEL_LOADING_KERNEL:
+	push	ax	
+	push	bx		
+	mov	ah, 0Eh			
+	mov	al, '.'		
+	mov	bl, 0Fh	
+	int	10h			
+	pop	bx			
+	pop	ax
+
+	cmp	word [wKernelSectors], 0	
+	jz	LABEL_LOADED_KERNEL		
+	mov	cl, 1		; cl <- how many sectors
 	call	ReadSector
+	inc ax
+    dec word [wKernelSectors]
+	add	bx, [BPB_BytsPerSec]
+	jc .1
+	jmp .2
+.1:
+	push	ax			; es += 0x1000  ← es 指向下一个段
+	mov	ax, es
+	add	ax, 1000h
+	mov	es, ax
+	pop	ax
+
+.2:
+	jmp LABEL_LOADING_KERNEL
+
+LABEL_LOADED_KERNEL:
 
 ;	push	ax			; es += 0x1000  ← es 指向下一个段
 ;	mov	ax, es
@@ -149,6 +178,7 @@ LABEL_START:			; <--- start from here *************
 ;变量
 ;----------------------------------------------------------------------------
 wRootDirSizeForLoop	dw	RootDirSectors	; Root Directory 占用的扇区数
+wKernelSectors	dw 	KERNELSECTS
 wSectorNo		dw	0		; 要读取的扇区号
 bOdd			db	0		; 奇数还是偶数
 dwKernelSize		dd	0		; KERNEL.BIN 文件大小

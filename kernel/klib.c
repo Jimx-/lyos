@@ -32,31 +32,6 @@
 
 #include <elf.h>
 
-PUBLIC u16 in_word(u16 port)
-{
-       u16 val;
-       asm volatile("inw %1,%0" : "=a" (val) : "dN" (port));
-       return val;
-}
-
-PUBLIC void out_word(u16 port, u16 val)
-{
-       asm volatile("outw %0,%1" : "=a" (val) : "dN" (port));
-}
-
-PUBLIC u32 in_long(u16 port)
-{
-       u32 val;
-       asm volatile("inl %1,%0" : "=a" (val) : "dN" (port));
-       return val;
-}
-
-PUBLIC void out_long(u16 port, u32 val)
-{
-       asm volatile("outl %0,%1" : "=a" (val) : "dN" (port));
-}
-
-
 /*****************************************************************************
  *                                get_boot_params
  *****************************************************************************/

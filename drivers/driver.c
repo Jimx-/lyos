@@ -32,7 +32,6 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 	MESSAGE msg;
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
-
 		int src = msg.source;
 
 		switch (msg.type) {

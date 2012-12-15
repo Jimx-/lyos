@@ -59,7 +59,7 @@ export ASM CC LD
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
-LYOSKERNEL	= kernel.bin
+LYOSKERNEL	= $(LYOSARCHDIR)/kernel.bin
 KRNLOBJ		= kernel/krnl.o
 LIB		= lib/liblyos.a
 FSOBJ		= fs/fs.o
@@ -82,7 +82,7 @@ kernel : realclean everything clean
 
 include $(ARCHDIR)/Makefile
 
-everything : genconf $(LYOSBOOT) $(LYOSKERNEL)
+everything : genconf $(LYOSKERNEL) $(LYOSBOOT) 
 
 all : realclean everything image lib cmd
 
