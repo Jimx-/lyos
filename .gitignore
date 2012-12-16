@@ -30,7 +30,6 @@ bochsrc.bxrc
 *.bin
 System.map
 arch/arm/arm-lyos
-lyos
 
 #
 # Command files
