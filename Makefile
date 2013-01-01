@@ -78,7 +78,7 @@ DASMOUTPUT	= kernel.bin.asm
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
 
 # Default starting position
-kernel : realclean everything clean
+kernel : everything
 
 include $(ARCHDIR)/Makefile
 
@@ -88,7 +88,7 @@ all : realclean everything image lib cmd
 
 genconf:
 	@echo -e '\tGEN\tcompile.h'
-	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
+	@$(shell sh ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
 
 CONFIGIN = $(SRCDIR)/config.in
 CONF = $(SRCDIR)/scripts/config/conf
