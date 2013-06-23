@@ -136,15 +136,6 @@ struct file_desc {
 	struct file_operations * f_op;
 };
 
-struct file_operations {
-	//int (*lseek) (struct inode *, struct file *, off_t, int);
-	int (*read) (struct file_desc * file, char * buf, int len);
-	int (*write) (struct file_desc * file, char * buf, int len);
-	//int (*ioctl) (struct file *, unsigned int, unsigned int);
-	//int (*open) (struct file *);
-	//void (*release) (struct file *);
-};
-
 struct file_system {
 	char * name;
 	int fs_flags;

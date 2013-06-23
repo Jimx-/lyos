@@ -14,11 +14,11 @@
 ;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; kernel entry point, corresponding with Makefile
-KRNL_ENT_PT_PHY_ADDR	equ	0x1000
+KRNL_ENT_PT_PHY_ADDR equ 0x100400
 
 ;; paging
-PAGE_DIR_BASE		equ	0x100000
-PAGE_TBL_BASE		equ	0x101000
+PAGE_DIR_BASE		equ	0x200000
+PAGE_TBL_BASE		equ	0x201000
 
 ;; where loader is loaded
 LOADER_SEG		equ	0x9000

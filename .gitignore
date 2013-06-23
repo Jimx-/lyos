@@ -19,23 +19,12 @@
 a.img
 
 #
-# Bochsrc
-#
-bochsrc
-bochsrc.bxrc
-
-#
 # Kernel
 #
 *.bin
 System.map
 arch/arm/arm-lyos
 lyos
-
-#
-# Command files
-#
-command
 
 # 
 # Library

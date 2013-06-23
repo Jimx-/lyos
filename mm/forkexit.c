@@ -298,13 +298,13 @@ PUBLIC void do_wait()
 	/*
 	 * The value of child_pid can be:
 	 * (1) < -1 	meaning waiting for any  child process whose process group ID is
-         *    	equal to the absolute value of child_pid.
-	 * (2) -1 	meaning waiting for any child process.
-	 * (3) 0	meaning wait for any child process whose process group ID is
-         *    	equal to that of the calling process.
+     *    			equal to the absolute value of child_pid.
+	 * (2) -1 		meaning waiting for any child process.
+	 * (3) 0		meaning wait for any child process whose process group ID is
+     *    			equal to that of the calling process.
 	 *
 	 * (4) > 0  	meaning wait for the child whose process ID is equal to the
-         *     	value of child_pid.
+     *     			value of child_pid.
 	 */
 	int options = mm_msg.SIGNR;
 

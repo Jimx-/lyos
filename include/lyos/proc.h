@@ -132,8 +132,8 @@ struct task {
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
 #define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
 
-#define PAGE_DIR_BASE	0x100000
-#define PAGE_TBL_BASE	0x101000
+#define PAGE_DIR_BASE	0x200000
+#define PAGE_TBL_BASE	0x201000
 #define PAGE_SIZE	0x1000
 
 /** User paging map **/

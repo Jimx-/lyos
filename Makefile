@@ -37,7 +37,7 @@ export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 
 # Entry point of Lyos
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
-ENTRYPOINT	= 0x1000
+ENTRYPOINT	= 0x100400
 
 FD		= a.img
 HD		= 80m.img
@@ -78,7 +78,7 @@ DASMOUTPUT	= kernel.bin.asm
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
 
 # Default starting position
-kernel : realclean everything clean
+kernel : everything
 
 include $(ARCHDIR)/Makefile
 
