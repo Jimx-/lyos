@@ -37,7 +37,7 @@ export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 
 # Entry point of Lyos
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
-ENTRYPOINT	= 0x100400
+ENTRYPOINT	= 0x1000
 
 FD		= a.img
 HD		= 80m.img

@@ -14,7 +14,7 @@
 ;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; kernel entry point, corresponding with Makefile
-KRNL_ENT_PT_PHY_ADDR equ 0x100400
+KRNL_ENT_PT_PHY_ADDR equ 0x1000
 
 ;; paging
 PAGE_DIR_BASE		equ	0x200000
