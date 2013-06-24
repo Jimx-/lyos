@@ -12,6 +12,12 @@
 *~
 
 #
+# Command files
+#
+command/*
+cmd.tar
+
+#
 # Disk image
 #
 80m.img
@@ -24,6 +30,7 @@ a.img
 *.bin
 System.map
 arch/arm/arm-lyos
+lyos
 
 # 
 # Library

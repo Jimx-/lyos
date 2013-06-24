@@ -187,4 +187,3 @@ struct task {
 				STACK_SIZE_TESTA + \
 				STACK_SIZE_TESTB + \
 				STACK_SIZE_TESTC)
-
