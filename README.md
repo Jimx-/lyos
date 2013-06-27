@@ -73,7 +73,7 @@
 			Remove all object files.
 
 		* make gendisk
-			Generate a disk image.
+			Generate a disk.
 
 		* make config
 		* make menuconfig
