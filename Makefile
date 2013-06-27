@@ -39,7 +39,7 @@ export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
 ENTRYPOINT	= 0x1000
 
-FD		= a.img
+FD		= lyos.img
 HD		= 80m.img
 
 # Programs, flags, etc.
@@ -74,6 +74,12 @@ OBJS		= $(KRNLOBJ) \
 
 DASMOUTPUT	= kernel.bin.asm
 
+COLORDEFAULT= \033[0m
+COLORRED	= \033[1;31m
+COLORGREEN	= \033[1;32m
+COLORYELLOW	= \033[1;33m
+COLORBLUE	= \033[1;34m
+
 # All Phony Targets
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
 
@@ -87,6 +93,7 @@ everything : genconf $(LYOSKERNEL) $(LYOSBOOT)
 all : realclean everything image lib cmd
 
 genconf:
+	@echo -e '$(COLORGREEN)Generating compile.h...$(COLORDEFAULT)'
 	@echo -e '\tGEN\tcompile.h'
 	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
 
@@ -108,12 +115,20 @@ cmd :
 lib :
 	@(cd lib; make)
 
+gendisk:
+	@echo -e '$(COLORBLUE)Generating disk image...$(COLORDEFAULT)'
+	bximage -hd -mode=flat -size=80 80m.img -q
+
 mrproper:
-	@find . -name "*.o" -exec rm -fv {} \;
+	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
+	@find . -name "*.o" -exec rm -f {} \;
+	@echo -e '$(COLORRED)Removing compile.h...$(COLORDEFAULT)'
 	@rm -f $(INCLUDEDIR)/lyos/compile.h
+	@echo -e '$(COLORRED)Removing configure files...$(COLORDEFAULT)'
 	@rm -f .config .config.old
 
 clean :
+	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
 	@rm -f $(OBJS)
 
 realclean :
@@ -121,38 +136,46 @@ realclean :
 	@rm -f $(LIB) $(LYOSBOOT) $(LYOSKERNEL)
 
 disasm :
+	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
 	@echo -e '\tDASM\t$(LYOSKERNEL)'
 	@$(DASM) $(DASMFLAGS) $(LYOSKERNEL) > $(DASMOUTPUT)
 
 help :
 	@echo "Make options:"
 	@echo "-----------------------------------------------------------------"
-	@echo "make		: build the kernel image."
-	@echo "make image 	: build the floppy image."
-	@echo "make lib		: build the Lyos C library."
-	@echo "make cmd   	: install the command files to the HD."
-	@echo "make disasm	: dump the kernel into kernel.bin.asm."
+	@echo "make\t\t: build the kernel image."
+	@echo "make image\t: build the floppy image."
+	@echo "make lib\t: build the Lyos C library."
+	@echo "make cmd\t: install the command files to the HD."
+	@echo "make gendisk\t: generate a disk image."
+	@echo "make disasm\t: dump the kernel into kernel.bin.asm."
 	@echo "-----------------------------------------------------------------"
-	@echo "make clean	: remove all object files but keep config files."
-	@echo "make mrproper	: remove all object files and config file."
+	@echo "make clean\t: remove all object files but keep config files."
+	@echo "make mrproper\t: remove all object files and config file."
 
 $(LYOSKERNEL) : $(OBJS) $(LIB)
 	@echo -e '\tLD\t$@'
 	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
+	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 
 $(KRNLOBJ):
+	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'
 	@(cd kernel; make)
 
 $(LIB):
+	@echo -e '$(COLORGREEN)Compiling the library...$(COLORDEFAULT)'
 	@(cd lib; make)
 
 $(FSOBJ):
+	@echo -e '$(COLORGREEN)Compiling the filesystem server...$(COLORDEFAULT)'
 	@(cd fs; make)
 
 $(MMOBJ):
+	@echo -e '$(COLORGREEN)Compiling the memory management server...$(COLORDEFAULT)'
 	@(cd mm; make)
 
 $(DRVOBJ):
+	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
 	@(cd drivers; make)
 
 lib/misc/syslog.o: lib/misc/syslog.c

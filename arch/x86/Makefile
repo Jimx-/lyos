@@ -8,6 +8,7 @@ $(LYOSBOOT):
 image : kernel buildimg
 
 buildimg :
+	@echo -e '$(COLORBLUE)Generating the kernel image...$(COLORDEFAULT)'
 	dd if=$(LYOSBOOTDIR)/boot.bin of=$(FD) bs=512 count=1 conv=notrunc
 	dd if=$(LYOSBOOTDIR)/hdboot.bin of=$(HD) seek=`echo "obase=10;ibase=16;\`egrep -e '^ROOT_BASE' $(LYOSBOOTDIR)/include/load.inc | sed -e 's/.*0x//g'\`*200" | bc` bs=1 count=446 conv=notrunc
 	dd if=$(LYOSBOOTDIR)/hdboot.bin of=$(HD) seek=`echo "obase=10;ibase=16;\`egrep -e '^ROOT_BASE' $(LYOSBOOTDIR)/include/load.inc | sed -e 's/.*0x//g'\`*200+1FE" | bc` skip=510 bs=1 count=2 conv=notrunc
@@ -34,5 +35,6 @@ newimg : newimage
 
 # WARNING: do not use this
 floppy:
-	dd if=a.img of=/dev/sdb bs=1474560
+	@echo -e '$(COLORBLUE)Writing the kernel image to floppy disk...$(COLORDEFAULT)'
+	@dd if=a.img of=/dev/sdb bs=1474560
 	
