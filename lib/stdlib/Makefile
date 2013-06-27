@@ -11,9 +11,9 @@ LOBJS		= exit.o
 
 LIB		= stdlib.o
 
-everything : reclean $(LIB)
+everything : realclean $(LIB)
 
-reclean :
+realclean :
 	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)

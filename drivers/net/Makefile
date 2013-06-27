@@ -6,9 +6,9 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 INET		= inet.o
 
-everything : reclean $(INET)
+everything : realclean $(INET)
 
-reclean :
+realclean :
 	@rm -f $(INET)
 
 $(INET): inet.c

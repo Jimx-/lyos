@@ -9,9 +9,9 @@ SCSIDRV		= scsi/scsi.o
 BLKDRVOBJS	= floppy.o hd.o ramdisk.o rw_blk.o $(SCSIDRV)
 BLKDRV		= blk_dev.o
 
-everything : reclean $(BLKDRV)
+everything : realclean $(BLKDRV)
 
-reclean :
+realclean :
 	@rm -f $(BLKDRVOBJS)
 
 $(BLKDRV): $(BLKDRVOBJS)

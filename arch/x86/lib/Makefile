@@ -5,9 +5,9 @@ LOBJS	= syscall.o string.o
 
 X86LIB		= x86-lib.o
 
-everything : reclean $(X86LIB)
+everything : realclean $(X86LIB)
 
-reclean :
+realclean :
 	@rm -f $(LOBJS)
 
 $(X86LIB): $(LOBJS)

@@ -20,9 +20,9 @@ LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \
 
 LIB		= liblyos.a
 
-everything : reclean $(LIB)
+everything : realclean $(LIB)
 
-reclean :
+realclean :
 	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)

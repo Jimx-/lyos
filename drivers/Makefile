@@ -7,9 +7,9 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 DRVOBJS		= blk_dev/blk_dev.o chr_dev/chr_dev.o net/inet.o pci/pci.o driver.o
 DRIVER		= drivers.o
 
-everything : reclean $(DRIVER)
+everything : realclean $(DRIVER)
 
-reclean :
+realclean :
 	@rm -f $(DRVOBJS)
 
 $(DRIVER): $(DRVOBJS)

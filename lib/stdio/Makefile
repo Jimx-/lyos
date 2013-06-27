@@ -11,9 +11,9 @@ LOBJS		= printf.o vsprintf.o
 
 LIB		= stdio.o
 
-everything : reclean $(LIB)
+everything : realclean $(LIB)
 
-reclean :
+realclean :
 	rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)

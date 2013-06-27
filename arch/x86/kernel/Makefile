@@ -5,9 +5,9 @@ KERNELOBJS	= kernel.o kliba.o reboot.o i8259.o start.o protect.o
 
 X86KRNL		= x86-krnl.o
 
-everything : reclean $(X86KRNL)
+everything : realclean $(X86KRNL)
 
-reclean :
+realclean :
 	@rm -f $(KERNELOBJS)
 
 $(X86KRNL): $(KERNELOBJS)

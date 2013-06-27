@@ -7,9 +7,9 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 FSOBJS		= main.o super.o lyos/lyosfs.o
 FS			= fs.o
 
-everything : reclean $(FS)
+everything : realclean $(FS)
 
-reclean :
+realclean :
 	@rm -f $(FSOBJS)
 
 $(FS): $(FSOBJS)

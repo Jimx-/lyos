@@ -6,9 +6,9 @@ MMOBJS		= page.o
 
 X86MM		= x86-mm.o
 
-everything : reclean $(X86MM)
+everything : realclean $(X86MM)
 
-reclean :
+realclean :
 	@rm -f $(MMOBJS)
 
 $(X86MM): $(MMOBJS)

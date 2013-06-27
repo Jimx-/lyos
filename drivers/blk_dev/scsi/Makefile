@@ -6,9 +6,9 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 SCSI		= scsi.o
 
-everything : reclean $(SCSI)
+everything : realclean $(SCSI)
 
-reclean :
+realclean :
 	@rm -f $(SCSI)
 
 $(SCSI): scsi.c

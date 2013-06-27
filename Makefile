@@ -78,7 +78,7 @@ DASMOUTPUT	= kernel.bin.asm
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
 
 # Default starting position
-kernel : everything
+kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 

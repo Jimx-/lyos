@@ -11,9 +11,9 @@ LOBJS		= _misc.o
 
 LIB		= misc.o
 
-everything : reclean $(LIB)
+everything : realclean $(LIB)
 
-reclean :
+realclean :
 	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)

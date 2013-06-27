@@ -7,9 +7,9 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 CHRDRVOBJS	= console.o keyboard.o tty.o
 CHRDRV		= chr_dev.o
 
-everything : reclean $(CHRDRV)
+everything : realclean $(CHRDRV)
 
-reclean :
+realclean :
 	@rm -f $(CHRDRVOBJS)
 
 $(CHRDRV): $(CHRDRVOBJS)

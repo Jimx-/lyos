@@ -9,9 +9,9 @@ ARFLAGS		= rcs
 
 OBJ		= malloc.o
 
-everything : reclean $(OBJ)
+everything : realclean $(OBJ)
 
-reclean :
+realclean :
 	@rm -f $(OBJ)
 
 malloc.o: malloc.c

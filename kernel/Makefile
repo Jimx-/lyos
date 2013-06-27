@@ -15,9 +15,9 @@ KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)-krnl.o main.o\
 
 KRNL		= krnl.o
 
-everything : reclean $(KRNL)
+everything : realclean $(KRNL)
 
-reclean :
+realclean :
 	@rm -f $(KERNELOBJS)
 
 $(KRNL): $(KERNELOBJS)

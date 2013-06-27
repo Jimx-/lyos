@@ -8,9 +8,9 @@ MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)-mm.o \
 			main.o forkexit.o exec.o memory.o signal.o alloc.o
 MM		= mm.o
 
-everything : reclean $(MM)
+everything : realclean $(MM)
 
-reclean :
+realclean :
 	@rm -f $(MMOBJS)
 
 $(MM): $(MMOBJS)

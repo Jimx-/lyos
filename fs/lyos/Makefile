@@ -7,11 +7,11 @@ FSOBJS 	= main.o open.o stat.o read_write.o\
 
 LYOSFS	= lyosfs.o
 
-everything : reclean $(LYOSFS)
+everything : realclean $(LYOSFS)
 
-all : reclean $(LYOSFS)
+all : realclean $(LYOSFS)
 
-reclean :
+realclean :
 	@rm -f $(FSOBJS)
 
 $(LYOSFS): $(FSOBJS)

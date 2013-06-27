@@ -4,9 +4,9 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 OBJ		= partition.o
 
-everything : reclean $(OBJ)
+everything : realclean $(OBJ)
 
-reclean :
+realclean :
 	@rm -f $(OBJ)
 
 $(OBJ): partition.c
