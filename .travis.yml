@@ -2,8 +2,5 @@ language: c
 compiler:
   - gcc
 
-before_script:
-  - ./setup_toolchain.sh
-
 script:
-  - make ARCH=x86
+  - ./setup_toolchain.sh
