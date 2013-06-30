@@ -48,3 +48,8 @@ scripts/.Config.in.swp
 toolchain/build
 toolchain/local
 toolchain/sources
+
+#
+# Python files
+#
+*.pyc
