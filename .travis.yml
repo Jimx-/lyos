@@ -1,2 +1,9 @@
 language: c
-script: make
+compiler:
+  - gcc
+
+before_script:
+  - ./setup_toolchain.sh
+
+script:
+  - make ARCH=x86
