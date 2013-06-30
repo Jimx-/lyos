@@ -1,0 +1,86 @@
+diff -rupN origin/config.sub new/config.sub
+--- origin/config.sub	2012-08-06 22:34:27.000000000 +0800
++++ new/config.sub	2013-06-30 10:06:17.782001897 +0800
+@@ -1353,6 +1353,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
++	      | -lyos* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
+--- origin/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
++++ new/gcc/config/lyos.h	2013-06-30 10:08:21.102613413 +0800
+@@ -0,0 +1,15 @@
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS() \
++	do { \
++		builtin_define_std ("lyos"); \
++		builtin_define_std ("unix"); \
++		builtin_assert ("system=lyos"); \
++		builtin_assert ("system=unix"); \
++	} while (0);
++
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
++
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++
+diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
+--- origin/gcc/config.gcc	2013-03-07 06:54:11.000000000 +0800
++++ new/gcc/config.gcc	2013-06-30 10:11:21.931510099 +0800
+@@ -767,6 +767,12 @@ case ${target} in
+     *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
+   esac
+   ;;
++*-*-lyos*)
++  extra_parts="crtbegin.o crtend.o"
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  ;;
+ *-*-elf)
+   # Assume that newlib is being used and so __cxa_atexit is provided.
+   default_use_cxa_atexit=yes
+@@ -1199,6 +1205,11 @@ hppa[12]*-*-hpux11*)
+ 		dwarf2=no
+ 	fi
+ 	;;
++i[34567]86-*-lyos*)
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h lyos.h"
++	tmake_file="${tmake_file} i386/t-i386elf t-svr4 i386/t-crtstuff"
++	use_fixproto=yes
++	;;
+ i[34567]86-*-darwin*)
+ 	need_64bit_isa=yes
+ 	# Baseline choice for a machine that allows m64 support.
+diff -rupN origin/libgcc/config.host new/libgcc/config.host
+--- origin/libgcc/config.host	2013-03-07 01:42:45.000000000 +0800
++++ new/libgcc/config.host	2013-06-30 10:13:14.508068328 +0800
+@@ -646,6 +646,8 @@ x86_64-*-mingw*)
+ i[34567]86-*-interix[3-9]*)
+ 	tmake_file="$tmake_file i386/t-interix i386/t-chkstk"
+ 	;;
++i[34567]86-*-lyos*)
++	;;
+ ia64*-*-elf*)
+ 	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
+ 	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm"
+diff -rupN origin/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
+--- origin/libstdc++-v3/crossconfig.m4	2011-07-18 19:04:18.000000000 +0800
++++ new/libstdc++-v3/crossconfig.m4	2013-06-30 10:15:03.120606913 +0800
+@@ -150,6 +150,12 @@ case "${host}" in
+     GCC_CHECK_TLS
+     AM_ICONV
+     ;;
++  *-lyos*)
++    AC_CHECK_HEADERS([sys/types.h local.h float.h])
++    GLIBCXX_CHECK_BUILTIN_MATH_SUPPORT
++    GLIBCXX_CHECK_COMPLEX_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
+   *-mingw32*)
+     GLIBCXX_CHECK_LINKER_FEATURES
+     GLIBCXX_CHECK_MATH_SUPPORT

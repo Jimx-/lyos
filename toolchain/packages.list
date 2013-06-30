@@ -1,0 +1,7 @@
+[gcc]
+version = 4.7.3
+repo = http://ftp.gnu.org/gnu/gcc/
+
+[binutils]
+version = 2.23.2
+repo = http://ftp.gnu.org/gnu/binutils/

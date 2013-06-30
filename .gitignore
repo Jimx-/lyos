@@ -41,3 +41,10 @@ lib/liblyos.a
 #
 include/lyos/compile.h
 scripts/.Config.in.swp
+
+#
+# Toolchain
+#
+toolchain/build
+toolchain/local
+toolchain/sources
