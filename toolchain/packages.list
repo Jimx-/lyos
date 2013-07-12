@@ -5,3 +5,7 @@ repo = http://ftp.gnu.org/gnu/gcc/
 [binutils]
 version = 2.23.2
 repo = http://ftp.gnu.org/gnu/binutils/
+
+[newlib]
+version = 2.0.0
+repo = ftp://sourceware.org/pub/newlib/

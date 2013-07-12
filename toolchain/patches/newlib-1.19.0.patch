@@ -1,0 +1,90 @@
+diff -rupN origin/config.sub new/config.sub
+--- origin/config.sub	2012-12-08 08:02:34.000000000 +0800
++++ new/config.sub	2013-07-10 22:00:43.479954563 +0800
+@@ -1379,6 +1379,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
++	      | -lyos* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+diff -rupN origin/newlib/configure.host new/newlib/configure.host
+--- origin/newlib/configure.host	2012-12-05 05:43:20.000000000 +0800
++++ new/newlib/configure.host	2013-07-10 22:03:57.984919057 +0800
+@@ -419,6 +419,9 @@ case "${host}" in
+   h8500-*-elf*)
+ 	sys_dir=h8500hms
+ 	;;
++  i[34567]86-*-lyos*)
++	sys_dir=lyos
++	;;
+   i[34567]86-*-rdos*)
+ 	sys_dir=rdos
+ 	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
+@@ -526,6 +529,9 @@ esac
+ # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
+ 
+ case "${host}" in
++  *-*-lyos)
++	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
++	;;
+   *-*-cygwin*)
+ 	test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`
+ 	export cygwin_srcdir
+diff -rupN origin/newlib/libc/include/sys/stat.h new/newlib/libc/include/sys/stat.h
+--- origin/newlib/libc/include/sys/stat.h	2012-08-08 19:04:16.000000000 +0800
++++ new/newlib/libc/include/sys/stat.h	2013-07-10 22:07:34.949994930 +0800
+@@ -150,8 +150,8 @@ int	_EXFUN(mkfifo,( const char *__path,
+ int	_EXFUN(stat,( const char *__path, struct stat *__sbuf ));
+ mode_t	_EXFUN(umask,( mode_t __mask ));
+ 
+-#if defined (__SPU__) || defined(__rtems__) || defined(__CYGWIN__) && !defined(__INSIDE_CYGWIN__)
+ int	_EXFUN(lstat,( const char *__path, struct stat *__buf ));
++#if defined (__SPU__) || defined(__rtems__) || defined(__CYGWIN__) && !defined(__INSIDE_CYGWIN__)
+ int	_EXFUN(mknod,( const char *__path, mode_t __mode, dev_t __dev ));
+ #endif
+ 
+diff -rupN origin/newlib/libc/stdlib/mallocr.c new/newlib/libc/stdlib/mallocr.c
+--- origin/newlib/libc/stdlib/mallocr.c	2010-06-01 03:15:41.000000000 +0800
++++ new/newlib/libc/stdlib/mallocr.c	2013-07-10 22:09:15.454493302 +0800
+@@ -610,7 +610,7 @@ do {
+ */
+ 
+ #ifndef HAVE_MMAP
+-#define HAVE_MMAP 1
++#define HAVE_MMAP 0
+ #endif
+ 
+ /*
+diff -rupN origin/newlib/libc/sys/configure new/newlib/libc/sys/configure
+--- origin/newlib/libc/sys/configure	2012-12-21 05:10:07.000000000 +0800
++++ new/newlib/libc/sys/configure	2013-07-10 22:11:09.511058878 +0800
+@@ -809,6 +809,7 @@ sysvi386
+ sysvnecv70
+ tic80
+ w65
++lyos
+ z8ksim'
+ 
+ # Initialize some variables set by options.
+@@ -11845,6 +11846,8 @@ subdirs="$subdirs a29khif"
+  ;;
+ 	w65) subdirs="$subdirs w65"
+  ;;
++  lyos) subdirs="$subdirs lyos"
++ ;;
+ 	z8ksim) subdirs="$subdirs z8ksim"
+  ;;
+   esac;
+diff -rupN origin/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
+--- origin/newlib/libc/sys/configure.in	2012-02-22 06:34:31.000000000 +0800
++++ new/newlib/libc/sys/configure.in	2013-07-10 22:11:40.183210983 +0800
+@@ -46,6 +46,7 @@ if test -n "${sys_dir}"; then
+ 	sysvnecv70) AC_CONFIG_SUBDIRS(sysvnecv70) ;;
+ 	tic80) AC_CONFIG_SUBDIRS(tic80) ;;
+ 	w65) AC_CONFIG_SUBDIRS(w65) ;;
++	lyos) AC_CONFIG_SUBDIRS(lyos) ;;
+ 	z8ksim) AC_CONFIG_SUBDIRS(z8ksim) ;;
+   esac;
+ fi

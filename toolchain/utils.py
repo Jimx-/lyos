@@ -17,6 +17,13 @@ def mkdir(dirname):
 	if not os.path.exists(dirname):
 		os.mkdir(dirname)
 
+def mkdirp(dirname):
+	if not os.path.exists(dirname):
+		os.system('mkdir -p ' + dirname)
+ 
+def rmdir(dirname):
+	os.system('rm -rf ' + dirname)
+
 def download(name, url, local):
 	print('Downloading ' + name + ' from ' + url + '...')
 
@@ -28,6 +35,15 @@ def download(name, url, local):
 	data = f.read() 
 	with open(local, 'wb') as local_file:     
 		local_file.write(data)
+
+def wget(name, url, local):
+	print('Downloading ' + name + ' from ' + url + '...')
+
+	if os.path.isfile(local):
+		print('Already downloaded.')
+		return
+		
+	os.system('wget ' + url + ' ' + local)
 
 def decompress(tarball, dirname):
 	if os.path.exists(dirname):
@@ -61,9 +77,23 @@ def configure(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + extra_opt)
 
+def configure_native(name, extra_opt=''):
+	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
+	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + SYSROOT + ' ' + 
+					' --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt)
+
 def make(extra_opt=''):
 	os.system('make '+ extra_opt)
 
 def make_and_install():
 	os.system('make')
 	os.system('make install')
+
+def nasm(source, output):
+	os.system('nasm -f elf -o ' + output + ' ' +  source)
+
+def copy(src, dest):
+	os.system('cp ' + src + ' ' + dest)
+
+def copy_dir(src, dest):
+	os.system('cp -r ' + src + ' ' + dest)

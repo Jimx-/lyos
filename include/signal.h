@@ -52,6 +52,9 @@
 #define SIG_DFL		((void (*)(int))0)	/* default signal handling */
 #define SIG_IGN		((void (*)(int))1)	/* ignore signal */
 
+typedef int sig_atomic_t;
+typedef unsigned int sigset_t;      /* 32 bits */
+
 struct sigaction {
 	void (*sa_handler)(int);
 	sigset_t sa_mask;

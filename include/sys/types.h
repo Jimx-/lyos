@@ -20,9 +20,6 @@
 
 typedef	int				bool_t;
 
-typedef int sig_atomic_t;
-typedef unsigned int sigset_t;		/* 32 bits */
-
 typedef int pid_t;
 typedef unsigned long int dev_t;
 typedef unsigned int uid_t;
