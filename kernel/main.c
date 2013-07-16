@@ -245,6 +245,7 @@ void shell(const char * tty_name)
  *****************************************************************************/
 void Init()
 {
+	for(;;);
 	int fd_stdin  = open("/dev_tty0", O_RDWR);
 	assert(fd_stdin  == 0);
 	int fd_stdout = open("/dev_tty0", O_RDWR);
@@ -304,6 +305,21 @@ void Init()
  *======================================================================*/
 void TestA()
 {
+	for(;;);
+	int fd;
+	const char filename[] = "abc";
+	const char bufw[] = "def";
+	char bufr[3];
+	int n;
+	fd=open(filename, O_CREAT|O_RDWR);
+	printf("File created: fd: %d\n", fd);
+	n=write(fd, bufw, strlen(bufw));
+	close(fd);
+	fd=open(filename, O_RDWR);
+	n=read(fd, bufr, 3);
+	bufr[n] =0;
+	printf("%s\n", bufr);
+	close(fd);
 	for(;;);
 }
 

@@ -14,30 +14,23 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
-#include "assert.h"
-#include "lyos/const.h"
-#include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include "lyos/list.h"
 
-/**
-*   register_filesystem - register a new filesystem
-*   @m: Ptr to register message
-*
-*   Adds the file system passed to the list of file systems the kernel
-*/
-
-int register_filesystem(MESSAGE * m) 
+PUBLIC int list_empty(struct list_head * list)
 {
-    return 0;
+    return (list->prev == list->next);
+}
+
+PRIVATE inline void __list_add(struct list_head * new, struct list_head * pre, struct list_head * next)
+{
+    new->prev = pre;
+    pre->next = new;
+    new->next = next;
+    next->prev = new;
+}
+
+PUBLIC inline void list_add(struct list_head * new, struct list_head * head)
+{
+    __list_add(new, head, head->next);
 }
 

@@ -133,6 +133,9 @@ PUBLIC int	search_file(char * path);
 PUBLIC int	disklog(char * logstr); /* for debug */
 PUBLIC void	dump_fd_graph(const char * fmt, ...);
 
+/* fs/ext2/main.c */
+PUBLIC void task_ext2_fs();
+
 /* mm/main.c */
 PUBLIC void	task_mm();
 

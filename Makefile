@@ -119,6 +119,10 @@ gendisk:
 	@echo -e '$(COLORBLUE)Generating disk image...$(COLORDEFAULT)'
 	bximage -hd -mode=flat -size=80 80m.img -q
 
+genext2disk:
+	@echo -e '$(COLORBLUE)Generating ext2 disk image...$(COLORDEFAULT)'
+	genext2fs -B 1024 -d sysroot -q -b 81920 80m.img
+
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
 	@find . -name "*.o" -exec rm -f {} \;

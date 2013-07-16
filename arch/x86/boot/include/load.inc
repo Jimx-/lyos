@@ -17,8 +17,8 @@
 KRNL_ENT_PT_PHY_ADDR equ 0x1000
 
 ;; paging
-PAGE_DIR_BASE		equ	0x200000
-PAGE_TBL_BASE		equ	0x201000
+PAGE_DIR_BASE		equ	0x100000
+PAGE_TBL_BASE		equ	0x101000
 
 ;; where loader is loaded
 LOADER_SEG		equ	0x9000

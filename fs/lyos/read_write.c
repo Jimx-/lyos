@@ -46,7 +46,6 @@ PUBLIC int do_rdwt(MESSAGE * p)
 	int fd = p->FD;	/**< file descriptor. */
 	void * buf = p->BUF;/**< r/w buffer */
 	int len = p->CNT;	/**< r/w bytes */
-
 	int src = p->source;		/* caller proc nr. */
 
 	assert((pcaller->filp[fd] >= &f_desc_table[0]) &&
@@ -55,9 +54,12 @@ PUBLIC int do_rdwt(MESSAGE * p)
 	if (!(pcaller->filp[fd]->fd_mode & O_RDWR))
 		return 0;
 
+	//printl("reading...%d\n", src);
+
 	int pos = pcaller->filp[fd]->fd_pos;
 
 	struct inode * pin = pcaller->filp[fd]->fd_inode;
+	//printl("pos...%d\n", pin->i_start_sect);
 
 	assert(pin >= &inode_table[0] && pin < &inode_table[NR_INODE]);
 

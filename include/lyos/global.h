@@ -58,6 +58,8 @@ EXTERN	int	nr_buffer;
 extern	struct buffer_head * buffer_table[];
 extern	struct utsname	thisname;
 
+extern  int             err_code;
+
 /* MM */
 EXTERN	MESSAGE			mm_msg;
 extern	u8 *			mmbuf;
@@ -75,6 +77,7 @@ EXTERN	int					ROOT_DEV;
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
 EXTERN	struct super_block	super_block[NR_SUPER_BLOCK];
+EXTERN  struct vfs_mount    vmnt_table[NR_VFS_MOUNT];
 extern	u8 *			fsbuf;
 extern	const int		FSBUF_SIZE;
 EXTERN	MESSAGE			fs_msg;

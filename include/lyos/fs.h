@@ -16,6 +16,8 @@
 #ifndef	_FS_H_
 #define	_FS_H_
 
+#include "lyos/ext2_fs.h"
+
 /**
  * @struct dev_drv_map fs.h "include/sys/fs.h"
  * @brief  The Device_nr.\ - Driver_nr.\ MAP.
@@ -30,6 +32,9 @@ struct dev_drv_map {
  */
 #define	MAGIC_V1	0x111
 
+#define FS_LABEL_MAX 15
+
+#define EXT2_SB 	u.ext2_sb
 /**
  * @struct super_block fs.h "include/fs.h"
  * @brief  The 2nd sector of the FS
@@ -52,10 +57,15 @@ struct super_block {
 	u32	dir_ent_inode_off;/**< Offset of `struct dir_entry::inode_nr' */
 	u32	dir_ent_fname_off;/**< Offset of `struct dir_entry::name' */
 
+	u32 block_size;
+
 	/*
 	 * the following item(s) are only present in memory
 	 */
 	int	sb_dev; 	/**< the super block's home device */
+	union {
+		ext2_superblock_t ext2_sb;
+	} u;
 };
 
 /**
@@ -79,16 +89,27 @@ struct super_block {
  * \b NOTE: Remember to change INODE_SIZE if the members are changed
  */
 struct inode {
+	endpoint_t	i_fs_ep;		/**< FS process's pid */
 	u32	i_mode;		/**< Accsess mode */
 	u32	i_size;		/**< File size */
 	u32	i_start_sect;	/**< The first sector of the data */
 	u32	i_nr_sects;	/**< How many sectors the file occupies */
-	u8	_unused[16];	/**< Stuff for alignment */
-
-	/* the following items are only present in memory */
+	uid_t i_uid;
+	gid_t i_gid;
 	int	i_dev;
 	int	i_cnt;		/**< How many procs share this inode  */
 	int	i_num;		/**< inode nr.  */
+
+	struct vfs_mount * i_vmnt;
+};
+
+struct vfs_mount {
+  	int m_fs_ep;			/**< FS process's pid */
+  	int m_dev;			/**< Device number */
+  	unsigned int m_flags;		/**< Mount flags */
+  	struct inode *m_mounted_on;	/**< Mount point */
+  	struct inode *m_root_node;	/**< Root inode */
+  	char m_label[FS_LABEL_MAX];	/**< Label of the file system process */
 };
 
 /**
@@ -133,7 +154,6 @@ struct file_desc {
 	int		fd_pos;		/**< Current position for R/W. */
 	int		fd_cnt;		/**< How many procs share this desc */
 	struct inode*	fd_inode;	/**< Ptr to the i-node */
-	struct file_operations * f_op;
 };
 
 struct file_system {
@@ -146,6 +166,9 @@ struct file_system {
 /* register & unregister filesystem */
 int register_filesystem(MESSAGE * m);
 int unregister_filesystem(MESSAGE * m);
+
+PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt);
+PUBLIC struct vfs_mount * get_free_vfs_mount();
 
 /**
  * Since all invocations of `rw_sector()' in FS look similar (most of the

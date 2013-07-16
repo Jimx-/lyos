@@ -299,7 +299,7 @@ enum msgtype {
 #define	NR_FILE_DESC	64	/* FIXME */
 #define	NR_INODE	64	/* FIXME */
 #define	NR_SUPER_BLOCK	8
-
+#define NR_VFS_MOUNT	16
 
 /* INODE::i_mode (octal, lower 12 bits reserved) */
 #define I_TYPE_MASK     0170000

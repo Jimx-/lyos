@@ -42,7 +42,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
-	{task_lyos_fs,  STACK_SIZE_LYOS_FS,"LYOS_FS"  },
+	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{task_fd,       STACK_SIZE_FD,    "FD"        },
@@ -76,6 +76,8 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 PUBLIC	struct buffer_head * buffer_table[NR_BUFFER];
 PUBLIC struct utsname thisname = {UTS_SYSNAME, UTS_NODENAME, UTS_RELEASE, UTS_VERSION, UTS_MACHINE};
 PUBLIC int errno;
+
+PUBLIC int err_code = 0;
 
 /* FS related below */
 /*****************************************************************************/

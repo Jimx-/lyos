@@ -11,7 +11,7 @@ ASMFLAGS	= -I ../include/ -f elf
 CFLAGS		= -I ../include/ -c -fno-builtin -fno-stack-protector -Wall
 LDFLAGS		= -Ttext 0x1000
 DASMFLAGS	= -D
-LIB		= ../lib/liblyos.a ../usr/lib/libc.a
+LIB		= ../lib/liblyos.a
 BIN		= sh echo pwd rm touch date cat su uname ls cp
 
 # All Phony Targets
@@ -25,7 +25,7 @@ install : all clean
 	@cp ../arch/x86/boot/hd*.bin ./
 	@cp ../arch/x86/kernel.bin ./
 	@tar cf cmd.tar kernel.bin $(BIN) hd*.bin hello.c
-	@dd if=cmd.tar of=$(HD) seek=`echo "obase=10;ibase=16;(\`egrep -e '^ROOT_BASE' ../arch/x86/boot/include/load.inc | sed -e 's/.*0x//g'\`+\`egrep -e '#define[[:space:]]*INSTALL_START_SECT' ../include/lyos/config.h | sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l cmd.tar | awk -F " " '{print $$5}'` conv=notrunc
+	dd if=cmd.tar of=$(HD) seek=`echo "obase=10;ibase=16;(\`egrep -e '^ROOT_BASE' ../arch/x86/boot/include/load.inc | sed -e 's/.*0x//g'\`+\`egrep -e '#define[[:space:]]*INSTALL_START_SECT' ../include/lyos/config.h | sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l cmd.tar | awk -F " " '{print $$5}'` conv=notrunc
 
 all : realclean everything
 

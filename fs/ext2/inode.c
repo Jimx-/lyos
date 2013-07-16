@@ -15,9 +15,7 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/config.h"
 #include "stdio.h"
-#include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/const.h"
@@ -27,17 +25,12 @@
 #include "lyos/tty.h"
 #include "lyos/console.h"
 #include "lyos/global.h"
+#include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include "errno.h"
+#include "fcntl.h"
 
-/**
-*   register_filesystem - register a new filesystem
-*   @m: Ptr to register message
-*
-*   Adds the file system passed to the list of file systems the kernel
-*/
-
-int register_filesystem(MESSAGE * m) 
+PUBLIC struct ext2_inode * ext2_get_inode(int dev, int num)
 {
-    return 0;
-}
 
+}

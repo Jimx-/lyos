@@ -36,9 +36,13 @@
 #define DEB(x)
 #endif
 
+PUBLIC void init_vfs();
+
 PUBLIC void task_fs()
 {
 	printl("VFS: VFS is running.\n");
+
+	init_vfs();
 
 	MESSAGE m;
 	MESSAGE msg;
@@ -54,9 +58,17 @@ PUBLIC void task_fs()
 		pcaller = &proc_table[src];
 		int msgtype = m.type;
 
-		msg.type = VFS_REQUEST;
-		msg.BUF = &m;
-		send_recv(BOTH, TASK_LYOS_FS, &msg);
+		switch (msgtype) {
+		case OPEN:
+			msg.FD = do_vfs_open(&msg);
+			break;
+		default:
+			msg.type = VFS_REQUEST;
+			msg.BUF = &m;
+			send_recv(BOTH, TASK_LYOS_FS, &msg);
+			break;
+		}
+
 		if (msg.type != SUSPEND_PROC)
 			send_recv(SEND, src, &msg);
 	}
@@ -128,5 +140,35 @@ PUBLIC void task_fs()
 			send_recv(SEND, src, &msg);
 		}
 	} */
+}
+
+PUBLIC void init_vfs()
+{
+	int i;
+
+	/* f_desc_table[] */
+	for (i = 0; i < NR_FILE_DESC; i++)
+		memset(&f_desc_table[i], 0, sizeof(struct file_desc));
+
+	/* inode_table[] */
+	for (i = 0; i < NR_INODE; i++)
+		memset(&inode_table[i], 0, sizeof(struct inode));
+
+	/* super_block[] */
+	struct super_block * sb = super_block;
+	for (; sb < &super_block[NR_SUPER_BLOCK]; sb++)
+		sb->sb_dev = NO_DEV;
+
+	/* vfs_mount_table[] */
+	struct  vfs_mount * vmnt = vmnt_table;
+	for (; vmnt < &vmnt_table[NR_VFS_MOUNT]; vmnt++)
+		clear_vfs_mount(vmnt);
+
+	// open root device
+	MESSAGE driver_msg;
+	driver_msg.type = DEV_OPEN;
+	driver_msg.DEVICE = MINOR(ROOT_DEV);
+	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
+	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 }
 

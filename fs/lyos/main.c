@@ -316,18 +316,17 @@ PRIVATE void mkfs()
 	/*       inode map      */
 	/************************/
 	memset(fsbuf, 0, SECTOR_SIZE);
-	for (i = 0; i < (NR_CONSOLES + 4); i++)
+	for (i = 0; i < (NR_CONSOLES + 3); i++)
 		fsbuf[0] |= 1 << i;
 
-	assert(fsbuf[0] == 0x7F);/* 0111 1111 :
-				              *  ||| |||`--- bit 0 : reserved
-				              *  ||| ||`---- bit 1 : the first inode,
-				              *  ||| ||              which indicates `/'
-				              *  ||| |`----- bit 2 : /dev_tty0
-				              *  ||| `------ bit 3 : /dev_tty1
-				              *  ||`-------- bit 4 : /dev_tty2
-				              *  |`--------- bit 5 : /userlist
-				              *  `---------- bit 6 : /cmd.tar
+	assert(fsbuf[0] == 0x3F);/* 011 1111 :
+				              *  || |||`--- bit 0 : reserved
+				              *  || ||`---- bit 1 : the first inode,
+				              *  || ||              which indicates `/'
+				              *  || |`----- bit 2 : /dev_tty0
+				              *  || `------ bit 3 : /dev_tty1
+				              *  |`-------- bit 4 : /dev_tty2
+				              *  `---------- bit 5 : /cmd.tar
 							  */
 	WR_SECT(ROOT_DEV, 2);
 
@@ -388,7 +387,7 @@ PRIVATE void mkfs()
 	pi->i_size = DIR_ENTRY_SIZE * 7; /* 6 files:
 					  * `.',
 					  * `dev_tty0', `dev_tty1', `dev_tty2',
-					  * `userlist', `cmd.tar'
+					  * `cmd.tar'
 					  */
 	pi->i_start_sect = sb.n_1st_sect;
 	pi->i_nr_sects = NR_DEFAULT_FILE_SECTS;
@@ -400,13 +399,8 @@ PRIVATE void mkfs()
 		pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);
 		pi->i_nr_sects = 0;
 	}
-	pi = (struct inode*)(fsbuf + (INODE_SIZE * (NR_CONSOLES + 1)));
-	pi->i_mode = I_DIRECTORY;
-	pi->i_size = 64;
-	pi->i_start_sect = MAKE_DEV(DEV_HD, 1);
-	pi->i_nr_sects = NR_DEFAULT_FILE_SECTS;
 	/* inode of `/cmd.tar' */
-	pi = (struct inode*)(fsbuf + (INODE_SIZE * (NR_CONSOLES + 2)));
+	pi = (struct inode*)(fsbuf + (INODE_SIZE * (NR_CONSOLES + 1)));
 	pi->i_mode = I_REGULAR;
 	pi->i_size = INSTALL_NR_SECTS * SECTOR_SIZE;
 	pi->i_start_sect = INSTALL_START_SECT;
@@ -430,9 +424,6 @@ PRIVATE void mkfs()
 		sprintf(pde->name, "dev_tty%d", i);
 	}
 	(++pde)->inode_nr = NR_CONSOLES + 2;
-	sprintf(pde->name, "bin");
-	WR_SECT(ROOT_DEV, sb.n_1st_sect);
-	(++pde)->inode_nr = NR_CONSOLES + 3;
 	sprintf(pde->name, "cmd.tar");
 	WR_SECT(ROOT_DEV, sb.n_1st_sect);
 	printl("done.\n");
