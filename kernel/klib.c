@@ -29,7 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-
+#include "multiboot.h"
 #include <elf.h>
 
 /*****************************************************************************
@@ -46,20 +46,15 @@
  *****************************************************************************/
 PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 {
-	Elf32_Ehdr* elf_header = (Elf32_Ehdr*)kernel_file;
-
-	/* the kernel file should be in ELF format */
-	if (memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0)
-		return -1;
+	multiboot_elf_section_header_table_t * shdrs = (multiboot_elf_section_header_table_t *)kernel_file;
 
 	*b = ~0;
 	unsigned int t = 0;
 	int i;
-	for (i = 0; i < elf_header->e_shnum; i++) {
+	for (i = 0; i < shdrs->num; i++) {
 		Elf32_Shdr* section_header =
-			(Elf32_Shdr*)(kernel_file +
-				      elf_header->e_shoff +
-				      i * elf_header->e_shentsize);
+			(Elf32_Shdr*)(shdrs->addr +
+				      i * shdrs->size);
 		if (section_header->sh_flags & SHF_ALLOC) {
 			int bottom = section_header->sh_addr;
 			int top = section_header->sh_addr +

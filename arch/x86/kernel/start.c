@@ -57,7 +57,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	mb_flags = mboot->flags;
 	mb_mmap_addr = mboot->mmap_addr;
 	mb_mmap_len = mboot->mmap_length;
-	kernel_file = mboot->u.elf_sec.addr;
+	kernel_file = &(mboot->u.elf_sec);
 }
 
 PUBLIC void init_arch()

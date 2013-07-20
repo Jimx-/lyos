@@ -29,10 +29,13 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "multiboot.h"
+#include <elf.h>
 
 PRIVATE int free_mem_size;
 PRIVATE int paging_pages;
 PRIVATE unsigned long * kernel_page_descs;
+
+PRIVATE void get_kernel_layout(unsigned int * text_len, unsigned int * data_len);
 
 PUBLIC void do_fork_test();
 
@@ -136,15 +139,12 @@ PUBLIC void task_mm()
  *****************************************************************************/
 PRIVATE void init_mm()
 {	
-	printl("Memory:%dMB\n", memory_size / 1024 /1024);
-	
-	unsigned int k_base;
-	unsigned int k_limit;
-	int ret = get_kernel_map(&k_base, &k_limit);
-
+	memory_size = 0;
+	int usable_memsize = 0;
+	int reserved_memsize = 0;
 	if (!(mb_flags & (1 << 6))) panic("Memory map not present!");
 	printl("BIOS-provided physical RAM map:\n");
-	printl("%d\n", mb_mmap_addr);
+	printl("Memory map located at: 0x%x\n", mb_mmap_addr);
 	struct multiboot_mmap_entry * mmap = mb_mmap_addr;
 	while (mmap < mb_mmap_len + mb_mmap_addr) {
 		u64 last_byte = mmap->addr + mmap->len;
@@ -152,15 +152,22 @@ PRIVATE void init_mm()
 			base_l = (u32)(mmap->addr & 0xFFFFFFFF);
 		u32 last_h = (u32)((last_byte & 0xFFFFFFFF00000000) >> 32),
 			last_l = (u32)(last_byte & 0xFFFFFFFF);
-		printl("[mem %d%d-%d%d] %s\n", base_h, base_l, last_h, last_l, 
+		printl("  [mem %08d%08d-%08d%08d] %s\n", base_h, base_l, last_h, last_l, 
 			(mmap->type == MULTIBOOT_MEMORY_AVAILABLE) ? "usable" : "reserved");
+
+		memory_size += mmap->len;
+		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) 
+			usable_memsize += mmap->len;
+		else 
+			reserved_memsize += mmap->len;
 
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
-	if (ret == 0)
-		printl("\n\nKernel memory: 0x%x - 0x%x(%dkB)\n",
-					k_base, k_base + k_limit, k_limit/1024);
+	unsigned int text_len, data_len;
+	get_kernel_layout(&text_len, &data_len);
+
+	printl("Memory:%dMB\n", memory_size / 1024 /1024);
 
 	/* int page_tbl_size = memory_size / 1024;
 	buffer_base = (int)PAGE_TBL_BASE + page_tbl_size + (1024 * 1024);
@@ -182,13 +189,36 @@ PRIVATE void init_mm()
 
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;
-	printl("Free memory:%dMB\n", free_mem_size / 1024 / 1024);
-
-	paging_pages = memory_size / PAGE_SIZE;
-	printl("%d pages\n", paging_pages);
 
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
+}
+
+PRIVATE void get_kernel_layout(unsigned int * text_len, unsigned int * data_len)
+{
+	multiboot_elf_section_header_table_t * shdrs = (multiboot_elf_section_header_table_t *)kernel_file;
+	Elf32_Shdr * strtable = (Elf32_Shdr*)shdrs->addr + shdrs->shndx * shdrs->size;
+
+	Elf32_Shdr* first_section = (Elf32_Shdr*)(shdrs->addr + shdrs->size);
+	Elf32_Ehdr * elf_hdr = (int)first_section - first_section->sh_offset;
+	printl("%d\n", strtable->sh_size);
+
+	char * a = elf_hdr + strtable->sh_offset;
+	printl("%s\n", a);
+
+	printl("Kernel memory layout:\n");
+	int i;
+	for (i = 0; i < shdrs->num; i++) {
+		Elf32_Shdr* section_header =
+			(Elf32_Shdr*)(shdrs->addr +
+				      i * shdrs->size);
+		printl("%s: ", shdrs->addr + strtable + section_header->sh_name);
+		if (section_header->sh_flags & SHF_ALLOC) {
+			int bottom = section_header->sh_addr;
+			int top = section_header->sh_addr +
+				section_header->sh_size;
+		}
+	}
 }
 
 unsigned long get_user_pages(unsigned long len)
