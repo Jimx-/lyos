@@ -67,8 +67,7 @@ DRVOBJ		= drivers/drivers.o
 OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
 			$(MMOBJ) \
-			$(DRVOBJ) \
-			lib/misc/syslog.o
+			$(DRVOBJ) 
 
 DASMOUTPUT	= kernel.bin.asm
 
@@ -179,7 +178,3 @@ $(MMOBJ):
 $(DRVOBJ):
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
 	@(cd drivers; make)
-
-lib/misc/syslog.o: lib/misc/syslog.c
-	@echo -e '\tCC\tlib/misc/$@'
-	@$(CC) $(CFLAGS) -o $@ $<

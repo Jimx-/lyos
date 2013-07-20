@@ -68,10 +68,12 @@ EXTERN  int         mb_flags;
 
 /* MM */
 EXTERN	MESSAGE			mm_msg;
+#define MMBUF_SIZE      0x100000
+EXTERN  u8              _mmbuf[MMBUF_SIZE];
 extern	u8 *			mmbuf;
-extern	const int		MMBUF_SIZE;
-EXTERN	int			memory_size;
-EXTERN  int         kernel_file;
+
+EXTERN	int			        memory_size;
+EXTERN  int                 kernel_file;
 EXTERN	unsigned char *		kernel_addr;
 EXTERN	unsigned char *		buffer_base;
 EXTERN	int					buffer_length;
@@ -85,16 +87,11 @@ EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
 EXTERN	struct super_block	super_block[NR_SUPER_BLOCK];
 EXTERN  struct vfs_mount    vmnt_table[NR_VFS_MOUNT];
+#define FSBUF_SIZE          0x100000
+EXTERN  u8                  _fsbuf[FSBUF_SIZE];
 extern	u8 *			fsbuf;
-extern	const int		FSBUF_SIZE;
 EXTERN	MESSAGE			fs_msg;
 EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
 EXTERN  struct file_system *	file_systems;
-
-/* for test only */
-extern	char *			logbuf;
-extern	const int		LOGBUF_SIZE;
-extern	char *			logdiskbuf;
-extern	const int		LOGDISKBUF_SIZE;

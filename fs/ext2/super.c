@@ -49,7 +49,6 @@ ext2_bgdescriptor_t * bgdescs = 0;
  *****************************************************************************/
 PUBLIC void read_ext2_super_block(int dev)
 {
-    while (1);
     int i;
     MESSAGE driver_msg;
 
