@@ -41,8 +41,8 @@ PRIVATE void	hd_ioctl		(MESSAGE * p);
 PRIVATE void	hd_cmd_out		(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition		(int device, int style);
-//PRIVATE void	print_hdinfo		(struct hd_info * hdi); 
-PRIVATE int	waitfor			(int mask, int val, int timeout);
+PRIVATE void	print_hdinfo		(struct hd_info * hdi); 
+PRIVATE int		waitfor			(int mask, int val, int timeout);
 PRIVATE void	interrupt_wait		();
 PRIVATE	void	hd_identify		(int drive);
 PRIVATE void	print_identify_info	(u16* hdinfo);
@@ -198,7 +198,7 @@ PRIVATE void hd_open(MESSAGE * p)
 
 	if (hd_info[drive].open_cnt++ == 0) {
 		partition(drive * (NR_PART_PER_DRIVE + 1), P_PRIMARY);
-//		print_hdinfo(&hd_info[drive]); 
+		print_hdinfo(&hd_info[drive]); 
 	}
 }
 
@@ -413,12 +413,15 @@ PRIVATE void partition(int device, int style)
 /*  *																			*/
 /*  * @param hdi  Ptr to struct hd_info.										*/
 /*  *****************************************************************************/
-/*PRIVATE void print_hdinfo(struct hd_info * hdi) 
+PRIVATE void print_hdinfo(struct hd_info * hdi) 
  { 
  	int i; 
+ 	printl("Hard disk information:\n");
 	for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) { 
- 		printl("%sPART_%d: base %d(0x%x), size %d(0x%x) (in sector)\n", 
-	       i == 0 ? " " : "     ", 
+		if (hdi->primary[i].size == 0) 
+			continue; 
+ 		printl("%spartition %d: base %d(0x%x), size %d(0x%x) (in sector)\n", 
+	       i == 0 ? "  " : "     ", 
 		       i, 
  		       hdi->primary[i].base, 
 		       hdi->primary[i].base, 
@@ -436,7 +439,7 @@ PRIVATE void partition(int device, int style)
 		       hdi->logical[i].size, 
  		       hdi->logical[i].size); 
  	} 
-} */
+} 
 
 /*****************************************************************************
 / *                                hd_identify								 *

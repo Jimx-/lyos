@@ -35,9 +35,7 @@ ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
 export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 
-# Entry point of Lyos
-# It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
-ENTRYPOINT	= 0x00100000
+LDSCRIPT = $(ARCHDIR)/kernel/lyos.ld
 
 FD		= lyos.img
 HD		= lyos-disk.img
@@ -45,13 +43,13 @@ HD		= lyos-disk.img
 # Programs, flags, etc.
 ASM		= nasm
 DASM		= objdump
-CC		= gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/
+CC		= gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g
 LD		= ld
 ASMBFLAGS	= -I $(ARCHDIR)/boot/include/
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
-LDFLAGS		= -Ttext $(ENTRYPOINT) -Map System.map
+LDFLAGS		= -T $(LDSCRIPT) -Map System.map
 DASMFLAGS	= -D
 ARFLAGS		= rcs
 
