@@ -37,10 +37,10 @@ export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 
 # Entry point of Lyos
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
-ENTRYPOINT	= 0x1000
+ENTRYPOINT	= 0x00100000
 
 FD		= lyos.img
-HD		= 80m.img
+HD		= lyos-disk.img
 
 # Programs, flags, etc.
 ASM		= nasm
@@ -88,7 +88,7 @@ kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : genconf $(LYOSKERNEL) $(LYOSBOOT) 
+everything : genconf $(LYOSKERNEL)
 
 all : realclean everything image lib cmd
 

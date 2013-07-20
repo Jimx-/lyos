@@ -30,6 +30,7 @@
 #include "fcntl.h"
 #include "sys/wait.h"
 #include "sys/utsname.h"
+#include "multiboot.h"
 
 PUBLIC void init_arch();
 

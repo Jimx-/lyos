@@ -34,7 +34,6 @@ PUBLIC void	glitter(int row, int col);
 PUBLIC void 	hard_reboot(void);
 
 /* klib.c */
-PUBLIC void	get_boot_params(struct boot_params * pbp);
 PUBLIC void	delay(int time);
 PUBLIC void	disp_int(int input);
 PUBLIC char *	itoa(char * str, int num);

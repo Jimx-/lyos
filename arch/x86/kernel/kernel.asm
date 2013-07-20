@@ -15,7 +15,6 @@
 
 %include "sconst.inc"
 
-; 导入函数
 extern	cstart
 extern	kernel_main
 extern	exception_handler
@@ -25,7 +24,6 @@ extern	disp_str
 extern	delay
 extern	irq_table
 
-; 导入全局变量
 extern	gdt_ptr
 extern	idt_ptr
 extern	current
@@ -41,11 +39,17 @@ clock_int_msg		db	"^", 0
 
 [SECTION .bss]
 StackSpace		resb	2 * 1024
-StackTop:		; 栈顶
+StackTop:		; stack top
 
-[section .text]	; 代码在此
+[section .text]	; code is here
 
-global _start	; 导出 _start
+; Multiboot Header - We are multiboot compatible!
+MultiBootHeader:
+   dd MAGIC
+   dd FLAGS
+   dd CHECKSUM
+
+global _start	; export _start
 
 global restart
 global sys_call
@@ -84,124 +88,55 @@ global	hwint15
 
 
 _start:
-	; 此时内存看上去是这样的（更详细的内存情况在 LOADER.ASM 中有说明）：
-	;              ┃                                    ┃
-	;              ┃                                    ┃
-	;              ┃                                    ┃
-	;              ┃                 ...                ┃ Not Used
-	;      501000h ┃                                    ┃
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;      500FFFh ┃■■■■■■■■■■■■■■■■■■┃  4GB ram needs 4MB  for page tables: [101000h, 501000h)
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┣■■■■■■■■■■■■■■■■■■┫
-	;      108FFFh ┃■■■■■■■■■■■■■■■■■■┃ 32MB ram needs 32KB for page tables: [101000h, 109000h)
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■Page  Tables■■■■■■┃
-	;              ┃■■■■■(大小由LOADER决定)■■■■┃ PageTblBase
-	;      101000h ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃■■■■Page Directory Table■■■■┃ PageDirBase = 1M
-	;      100000h ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃□□□□ Hardware  Reserved □□□□┃ B8000h ← gs
-	;       9FC00h ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■LOADER.BIN■■■■■■┃ somewhere in LOADER ← esp
-	;       90000h ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■KERNEL.BIN■■■■■■┃
-	;       70000h ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃ 7C00h~7DFFh : BOOT SECTOR, overwritten by the kernel
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;              ┃■■■■■■■■■■■■■■■■■■┃
-	;        1000h ┃■■■■■■■■KERNEL■■■■■■■┃ 1000h ← KERNEL 入口 (KRNL_ENT_PT_PHY_ADDR)
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;         900h ┃Boot Params                         ┃
-	;              ┃                                    ┃
-	;         500h ┃              F  R  E  E            ┃
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃□□□□□□□□□□□□□□□□□□┃
-	;         400h ┃□□□□ROM BIOS parameter area □□┃
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇┃
-	;           0h ┃◇◇◇◇◇◇Int  Vectors◇◇◇◇◇◇┃
-	;              ┗━━━━━━━━━━━━━━━━━━┛ ← cs, ds, es, fs, ss
-	;
-	;
-	; GDT 以及相应的描述符是这样的：
-	;
-	;		              Descriptors               Selectors
-	;              ┏━━━━━━━━━━━━━━━━━━┓
-	;              ┃         Dummy Descriptor           ┃
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃         DESC_FLAT_C    (0～4G)     ┃   8h = cs
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃         DESC_FLAT_RW   (0～4G)     ┃  10h = ds, es, fs, ss
-	;              ┣━━━━━━━━━━━━━━━━━━┫
-	;              ┃         DESC_VIDEO                 ┃  1Bh = gs
-	;              ┗━━━━━━━━━━━━━━━━━━┛
-	;
-	; 注意! 在使用 C 代码的时候一定要保证 ds, es, ss 这几个段寄存器的值是一样的
-	; 因为编译器有可能编译出使用它们的代码, 而编译器默认它们是一样的. 比如串拷贝操作会用到 ds 和 es.
-	;
-	;
-
-
-	; 把 esp 从 LOADER 挪到 KERNEL
-	mov	esp, StackTop	; 堆栈在 bss 段中
+	; set stack
+	mov	esp, StackTop	; stack is in section bss
 
 	mov	dword [disp_pos], 0
 
-	sgdt	[gdt_ptr]	; cstart() 中将会用到 gdt_ptr
-	call	cstart		; 在此函数中改变了gdt_ptr，让它指向新的GDT
-	lgdt	[gdt_ptr]	; 使用新的GDT
+	; Multiboot information
+	push eax          
+   	push ebx    
 
+	call	cstart		; set GDT
+	lgdt	[gdt_ptr]	; load new GDT
 	lidt	[idt_ptr]
 
-	jmp	SELECTOR_KERNEL_CS:csinit
-csinit:		; “这个跳转指令强制使用刚刚初始化的结构”——<<OS:D&I 2nd>> P90.
+	; flush values
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax
 
-	;jmp 0x40:0
-	;ud2
+	jmp SELECTOR_KERNEL_CS:csinit
 
-
+csinit:
 	xor	eax, eax
 	mov	ax, SELECTOR_TSS
 	ltr	ax
 
-	;sti
 	jmp	kernel_main
 
 	;hlt
 
 
-; 中断和异常 -- 硬件中断
+; interrupt and exception - hardware interrupt
 ; ---------------------------------
 %macro	hwint_master	1
 	call	save
 	in	al, INT_M_CTLMASK	; `.
-	or	al, (1 << %1)		;  | 屏蔽当前中断
+	or	al, (1 << %1)		;  | Mask current interrupt
 	out	INT_M_CTLMASK, al	; /
-	mov	al, EOI			; `. 置EOI位
+	mov	al, EOI				; `. set EOI bit
 	out	INT_M_CTL, al		; /
-	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
-	push	%1			; `.
-	call	[irq_table + 4 * %1]	;  | 中断处理程序
-	pop	ecx			; /
+	sti	; enable interrupt
+	push	%1						; `.
+	call	[irq_table + 4 * %1]	;  |interrupt handler
+	pop	ecx							; /
 	cli
 	in	al, INT_M_CTLMASK	; `.
-	and	al, ~(1 << %1)		;  | 恢复接受当前中断
+	and	al, ~(1 << %1)		;  | resume
 	out	INT_M_CTLMASK, al	; /
 	ret
 %endmacro

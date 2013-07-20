@@ -33,35 +33,6 @@
 #include <elf.h>
 
 /*****************************************************************************
- *                                get_boot_params
- *****************************************************************************/
-/**
- * <Ring 0~1> The boot parameters have been saved by LOADER.
- *            We just read them out.
- * 
- * @param pbp  Ptr to the boot params structure
- *****************************************************************************/
-PUBLIC void get_boot_params(struct boot_params * pbp)
-{
-	/**
-	 * Boot params should have been saved at BOOT_PARAM_ADDR.
-	 * @see include/load.inc boot/loader.asm boot/hdloader.asm
-	 */
-	int * p = (int*)BOOT_PARAM_ADDR;
-	assert(p[BI_MAG] == BOOT_PARAM_MAGIC);
-
-	pbp->mem_size = p[BI_MEM_SIZE];
-	pbp->kernel_file = (unsigned char *)(p[BI_KERNEL_FILE]);
-
-	/**
-	 * the kernel file should be a ELF executable,
-	 * check it's magic number
-	 */
-	assert(memcmp(pbp->kernel_file, ELFMAG, SELFMAG) == 0);
-}
-
-
-/*****************************************************************************
  *                                get_kernel_map
  *****************************************************************************/
 /**
@@ -75,10 +46,7 @@ PUBLIC void get_boot_params(struct boot_params * pbp)
  *****************************************************************************/
 PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 {
-	struct boot_params bp;
-	get_boot_params(&bp);
-
-	Elf32_Ehdr* elf_header = (Elf32_Ehdr*)(bp.kernel_file);
+	Elf32_Ehdr* elf_header = (Elf32_Ehdr*)kernel_file;
 
 	/* the kernel file should be in ELF format */
 	if (memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0)
@@ -89,7 +57,7 @@ PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 	int i;
 	for (i = 0; i < elf_header->e_shnum; i++) {
 		Elf32_Shdr* section_header =
-			(Elf32_Shdr*)(bp.kernel_file +
+			(Elf32_Shdr*)(kernel_file +
 				      elf_header->e_shoff +
 				      i * elf_header->e_shentsize);
 		if (section_header->sh_flags & SHF_ALLOC) {

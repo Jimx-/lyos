@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include "multiboot.h"
 
 PRIVATE int free_mem_size;
 PRIVATE int paging_pages;
@@ -134,23 +135,33 @@ PUBLIC void task_mm()
  * 
  *****************************************************************************/
 PRIVATE void init_mm()
-{
-	struct boot_params bp;
-	get_boot_params(&bp);
-
-	memory_size = bp.mem_size;
-	kernel_addr = bp.kernel_file;
-	
+{	
 	printl("Memory:%dMB\n", memory_size / 1024 /1024);
 	
 	unsigned int k_base;
 	unsigned int k_limit;
 	int ret = get_kernel_map(&k_base, &k_limit);
-	
+
+	if (!(mb_flags & (1 << 6))) panic("Memory map not present!");
+	printl("BIOS-provided physical RAM map:\n");
+	printl("%d\n", mb_mmap_addr);
+	struct multiboot_mmap_entry * mmap = mb_mmap_addr;
+	while (mmap < mb_mmap_len + mb_mmap_addr) {
+		u64 last_byte = mmap->addr + mmap->len;
+		u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000) >> 32),
+			base_l = (u32)(mmap->addr & 0xFFFFFFFF);
+		u32 last_h = (u32)((last_byte & 0xFFFFFFFF00000000) >> 32),
+			last_l = (u32)(last_byte & 0xFFFFFFFF);
+		printl("[mem %d%d-%d%d] %s\n", base_h, base_l, last_h, last_l, 
+			(mmap->type == MULTIBOOT_MEMORY_AVAILABLE) ? "usable" : "reserved");
+
+		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
+	}
+
 	if (ret == 0)
-		printl("Kernel memory: 0x%x - 0x%x(%dkB)\n",
+		printl("\n\nKernel memory: 0x%x - 0x%x(%dkB)\n",
 					k_base, k_base + k_limit, k_limit/1024);
-	
+
 	/* int page_tbl_size = memory_size / 1024;
 	buffer_base = (int)PAGE_TBL_BASE + page_tbl_size + (1024 * 1024);
 	buffer_length = (2 * 1024 * 1024);

@@ -26,6 +26,7 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "multiboot.h"
 
 int get_kernel_map(unsigned int * b, unsigned int * l);
 
@@ -33,33 +34,34 @@ int get_kernel_map(unsigned int * b, unsigned int * l);
 /*======================================================================*
                             cstart
  *======================================================================*/
-PUBLIC void cstart()
+PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 {
+	init_desc(&gdt[0], 0, 0, 0);
+	init_desc(&gdt[1], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
+	init_desc(&gdt[2], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
+	init_desc(&gdt[3], 0x0B8000, 0xffff, DA_DRW | DA_DPL3);
 
-	/* 将 LOADER 中的 GDT 复制到新的 GDT 中 */
-	memcpy(	&gdt,				   /* New GDT */
-		(void*)(*((u32*)(&gdt_ptr[2]))),   /* Base  of Old GDT */
-		*((u16*)(&gdt_ptr[0])) + 1	   /* Limit of Old GDT */
-		);
-	/* gdt_ptr[6] 共 6 个字节：0~15:Limit  16~47:Base。用作 sgdt 以及 lgdt 的参数。 */
 	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
-	u32* p_gdt_base  = (u32*)(&gdt_ptr[2]);
+	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
 	*p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
-	*p_gdt_base  = (u32)&gdt;
+	*p_gdt_base = (u32)&gdt;
 
-	/* idt_ptr[6] 共 6 个字节：0~15:Limit  16~47:Base。用作 sidt 以及 lidt 的参数。 */
 	u16* p_idt_limit = (u16*)(&idt_ptr[0]);
 	u32* p_idt_base  = (u32*)(&idt_ptr[2]);
 	*p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
 	*p_idt_base  = (u32)&idt;
 
 	init_prot();
+
+	mb_magic = mboot_magic;
+	mb_flags = mboot->flags;
+	mb_mmap_addr = mboot->mmap_addr;
+	mb_mmap_len = mboot->mmap_length;
+	kernel_file = mboot->u.elf_sec.addr;
 }
 
 PUBLIC void init_arch()
 {
-	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-
 	int i, j, eflags, prio;
         u8  rpl;
         u8  priv; /* privilege */

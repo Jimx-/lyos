@@ -60,11 +60,18 @@ extern	struct utsname	thisname;
 
 extern  int             err_code;
 
+/* Multiboot */
+EXTERN  int         mb_mmap_addr;
+EXTERN  int         mb_mmap_len;
+EXTERN  int         mb_magic;
+EXTERN  int         mb_flags;
+
 /* MM */
 EXTERN	MESSAGE			mm_msg;
 extern	u8 *			mmbuf;
 extern	const int		MMBUF_SIZE;
 EXTERN	int			memory_size;
+EXTERN  int         kernel_file;
 EXTERN	unsigned char *		kernel_addr;
 EXTERN	unsigned char *		buffer_base;
 EXTERN	int					buffer_length;
