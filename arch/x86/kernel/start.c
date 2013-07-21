@@ -58,6 +58,15 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	mb_mmap_addr = mboot->mmap_addr;
 	mb_mmap_len = mboot->mmap_length;
 	kernel_file = &(mboot->u.elf_sec);
+
+	unsigned char * dev_no = &mboot->boot_device;
+
+	int major;
+	if (dev_no[3] == 0x80) major = DEV_HD;
+	else major = DEV_FLOPPY;
+
+	int minor = dev_no[2] + 1;
+	ROOT_DEV = MAKE_DEV(major, minor);
 }
 
 PUBLIC void init_arch()

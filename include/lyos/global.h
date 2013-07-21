@@ -65,6 +65,7 @@ EXTERN  int         mb_mmap_addr;
 EXTERN  int         mb_mmap_len;
 EXTERN  int         mb_magic;
 EXTERN  int         mb_flags;
+EXTERN  unsigned int         mb_boot_device;
 
 /* MM */
 EXTERN	MESSAGE			mm_msg;

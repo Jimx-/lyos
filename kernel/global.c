@@ -98,7 +98,6 @@ struct dev_drv_map dd_map[] = {
 	{TASK_SCSI}			/**< 5 : Scsi disk */
 };
 
-PUBLIC	int			ROOT_DEV	= MAKE_DEV(DEV_HD, MINOR_hd2a);
 PUBLIC	u8 *		fsbuf		= (u8*)&_fsbuf;
 PUBLIC	u8 *		mmbuf		= (u8*)&_mmbuf;
 

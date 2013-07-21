@@ -51,9 +51,18 @@ PRIVATE	u8		hd_status;
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
 PRIVATE	struct hd_info	hd_info[1];
 
-#define	DRV_OF_DEV(dev) (dev <= MAX_PRIM ? \
-			 dev / NR_PRIM_PER_DRIVE : \
-			 (dev - MINOR_hd1a) / NR_SUB_PER_DRIVE)
+/* HD device number */
+/* 
+ * ---------------------------------------------------------
+ * |    12 bits     |   4 bits   |   8 bits   |   8 bits   |
+ * ---------------------------------------------------------
+ * |    DEV_HD      |   unused   |   drive    |   part_no  |
+ * ---------------------------------------------------------
+ */
+#define DRIVE_SHIFT		8
+#define DRIVE_MASK		(0xFF << DRIVE_SHIFT)
+#define PART_NO_MASK	0xFF
+#define	DRV_OF_DEV(dev) (dev & DRIVE_MASK)
 
 //#define HDDEBUG
 #ifdef HDDEBUG
@@ -146,7 +155,6 @@ PUBLIC void do_hd_request()
 PRIVATE void init_hd()
 {
 	int i;
-
 	/* Get the number of drives from the BIOS data area */
 	u8 * pNrDrives = (u8*)(0x475);
 	printl("%d hard drives\n", *pNrDrives);
@@ -197,7 +205,7 @@ PRIVATE void hd_open(MESSAGE * p)
 	hd_identify(drive);
 
 	if (hd_info[drive].open_cnt++ == 0) {
-		partition(drive * (NR_PART_PER_DRIVE + 1), P_PRIMARY);
+		partition(drive << DRIVE_SHIFT, P_PRIMARY);
 		print_hdinfo(&hd_info[drive]); 
 	}
 }
@@ -239,10 +247,10 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 	assert((pos & 0x1FF) == 0);
 
 	u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
-	int logidx = (p->DEVICE - MINOR_hd1a) % NR_SUB_PER_DRIVE;
-	sect_nr += p->DEVICE < MAX_PRIM ?
-		hd_info[drive].primary[p->DEVICE].base :
-		hd_info[drive].logical[logidx].base;
+	int part_no = p->DEVICE & PART_NO_MASK;
+	sect_nr += part_no < NR_PRIM_PER_DRIVE ?
+		hd_info[drive].primary[part_no].base :
+		hd_info[drive].logical[part_no - NR_PRIM_PER_DRIVE].base;
 
 	struct hd_cmd cmd;
 	cmd.features	= 0;
@@ -299,11 +307,11 @@ PRIVATE void hd_ioctl(MESSAGE * p)
 
 	if (p->REQUEST == DIOCTL_GET_GEO) {
 		void * dst = va2la(p->PROC_NR, p->BUF);
+		int part_no = device & PART_NO_MASK;
 		void * src = va2la(TASK_HD,
-				   device < MAX_PRIM ?
-				   &hdi->primary[device] :
-				   &hdi->logical[(device - MINOR_hd1a) %
-						NR_SUB_PER_DRIVE]);
+				   part_no < NR_PRIM_PER_DRIVE ?
+				   &hdi->primary[part_no] :
+				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE]);
 
 		phys_copy(dst, src, sizeof(struct part_info));
 	}
@@ -380,13 +388,18 @@ PRIVATE void partition(int device, int style)
 		assert(nr_prim_parts != 0);
 	}
 	else if (style == P_EXTENDED) {
-		int j = device % NR_PRIM_PER_DRIVE; /* 1~4 */
-		int ext_start_sect = hdi->primary[j].base;
+		int j;
+		/* find first free slot for logical partition */
+		for (j = 0; j < NR_SUB_PER_DRIVE; j++) {
+			if (hdi->logical[j].size == 0) break;
+		}
+		int k = device % NR_PRIM_PER_DRIVE; /* 1~4 */
+		int ext_start_sect = hdi->primary[k].base;
 		int s = ext_start_sect;
-		int nr_1st_sub = (j - 1) * NR_SUB_PER_PART; /* 0/16/32/48 */
+		int nr_1st_sub = j;
 
 		for (i = 0; i < NR_SUB_PER_PART; i++) {
-			int dev_nr = nr_1st_sub + i;/* 0~15/16~31/32~47/48~63 */
+			int dev_nr = nr_1st_sub + i;
 
 			get_part_table(drive, s, part_tbl);
 

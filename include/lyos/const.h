@@ -258,11 +258,12 @@ enum msgtype {
 #define	DEV_CHAR_TTY		4
 #define	DEV_SCSI		5
 /* make device number from major and minor numbers */
-#define	MAJOR_SHIFT		8
+#define	MAJOR_SHIFT		20
+#define MINOR_MASK		((1U << MAJOR_SHIFT) - 1)
 #define	MAKE_DEV(a,b)		((a << MAJOR_SHIFT) | b)
 /* separate major and minor numbers from device number */
-#define	MAJOR(x)		((x >> MAJOR_SHIFT) & 0xFF)
-#define	MINOR(x)		(x & 0xFF)
+#define	MAJOR(x)		((unsigned int)(x >> MAJOR_SHIFT))
+#define	MINOR(x)		((unsigned int)(x & MINOR_MASK))
 
 #define	INVALID_INODE		0
 #define	ROOT_INODE		1
@@ -285,6 +286,7 @@ enum msgtype {
 #define	MAX_SUBPARTITIONS	(NR_SUB_PER_DRIVE * MAX_DRIVES)
 
 /* device numbers of hard disk */
+#define MINOR_hd1 		0x1
 #define	MINOR_hd1a		0x10
 #define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART)
 
