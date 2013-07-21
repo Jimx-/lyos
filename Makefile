@@ -37,7 +37,6 @@ export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
 
 LDSCRIPT = $(ARCHDIR)/kernel/lyos.ld
 
-FD		= lyos.img
 HD		= lyos-disk.img
 
 # Programs, flags, etc.
@@ -112,14 +111,6 @@ cmd :
 lib :
 	@(cd lib; make)
 
-gendisk:
-	@echo -e '$(COLORBLUE)Generating disk image...$(COLORDEFAULT)'
-	bximage -hd -mode=flat -size=80 80m.img -q
-
-genext2disk:
-	@echo -e '$(COLORBLUE)Generating ext2 disk image...$(COLORDEFAULT)'
-	genext2fs -B 1024 -d sysroot -q -b 81920 80m.img
-
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
 	@find . -name "*.o" -exec rm -f {} \;
@@ -145,10 +136,8 @@ help :
 	@echo "Make options:"
 	@echo "-----------------------------------------------------------------"
 	@echo "make\t\t: build the kernel image."
-	@echo "make image\t: build the floppy image."
 	@echo "make lib\t: build the Lyos C library."
 	@echo "make cmd\t: install the command files to the HD."
-	@echo "make gendisk\t: generate a disk image."
 	@echo "make disasm\t: dump the kernel into kernel.bin.asm."
 	@echo "-----------------------------------------------------------------"
 	@echo "make clean\t: remove all object files but keep config files."
