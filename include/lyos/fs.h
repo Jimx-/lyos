@@ -169,6 +169,7 @@ int unregister_filesystem(MESSAGE * m);
 
 PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt);
 PUBLIC struct vfs_mount * get_free_vfs_mount();
+PUBLIC int do_vfs_open(MESSAGE * p);
 
 /**
  * Since all invocations of `rw_sector()' in FS look similar (most of the

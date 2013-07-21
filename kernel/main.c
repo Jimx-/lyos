@@ -345,13 +345,12 @@ void TestC()
  *****************************************************************************/
 PUBLIC void panic(const char *fmt, ...)
 {
-	int i;
 	char buf[256];
 
 	/* 4 is the size of fmt in the stack */
 	va_list arg = (va_list)((char*)&fmt + 4);
 
-	i = vsprintf(buf, fmt, arg);
+	vsprintf(buf, fmt, arg);
 
 	printl("Kernel panic: %s", buf);
 

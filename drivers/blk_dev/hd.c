@@ -32,19 +32,19 @@
 #define	MAJOR_DEV	3
 #include "blk.h"
 
-PRIVATE void	init_hd			();
-PRIVATE void	end_request		();
-PRIVATE void	hd_open			(MESSAGE * p);
-PRIVATE void	hd_close		(MESSAGE * p);
-PRIVATE void	hd_rdwt			(MESSAGE * p);
-PRIVATE void	hd_ioctl		(MESSAGE * p);
-PRIVATE void	hd_cmd_out		(struct hd_cmd* cmd);
+PRIVATE void	init_hd				();
+PRIVATE void	end_request			();
+PRIVATE void	hd_open				(MESSAGE * p);
+PRIVATE void	hd_close			(MESSAGE * p);
+PRIVATE void	hd_rdwt				(MESSAGE * p);
+PRIVATE void	hd_ioctl			(MESSAGE * p);
+PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
-PRIVATE void	partition		(int device, int style);
+PRIVATE void	partition			(int device, int style);
 PRIVATE void	print_hdinfo		(struct hd_info * hdi); 
-PRIVATE int		waitfor			(int mask, int val, int timeout);
+PRIVATE int		waitfor				(int mask, int val, int timeout);
 PRIVATE void	interrupt_wait		();
-PRIVATE	void	hd_identify		(int drive);
+PRIVATE	void	hd_identify			(int drive);
 PRIVATE void	print_identify_info	(u16* hdinfo);
 
 PRIVATE	u8		hd_status;

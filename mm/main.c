@@ -148,7 +148,7 @@ PRIVATE void init_mm()
 	printl("BIOS-provided physical RAM map:\n");
 	printl("Memory map located at: 0x%x\n", mb_mmap_addr);
 	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
-	while (mmap < mb_mmap_len + mb_mmap_addr) {
+	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
 		u64 last_byte = mmap->addr + mmap->len;
 		u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000) >> 32),
 			base_l = (u32)(mmap->addr & 0xFFFFFFFF);
@@ -166,9 +166,9 @@ PRIVATE void init_mm()
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
-	unsigned int text_start = *(&_text), text_end = *(&_etext), text_len = text_end - text_start;
-	unsigned int data_start = *(&_data), data_end = *(&_edata), data_len = data_end - data_start;
-	unsigned int bss_start = *(&_bss), bss_end = *(&_ebss), bss_len = bss_end - bss_start;
+	unsigned int text_start = (unsigned int)*(&_text), text_end = (unsigned int)*(&_etext), text_len = text_end - text_start;
+	unsigned int data_start = (unsigned int)*(&_data), data_end = (unsigned int)*(&_edata), data_len = data_end - data_start;
+	unsigned int bss_start = (unsigned int)*(&_bss), bss_end = (unsigned int)*(&_ebss), bss_len = bss_end - bss_start;
 
 	usable_memsize = usable_memsize - text_len - data_len - bss_len;
 	printl("Memory: %dk/%dk available (%dk kernel code, %dk data, %dk reserved)\n", 

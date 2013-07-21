@@ -57,9 +57,9 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	mb_flags = mboot->flags;
 	mb_mmap_addr = mboot->mmap_addr;
 	mb_mmap_len = mboot->mmap_length;
-	kernel_file = &(mboot->u.elf_sec);
+	kernel_file = (unsigned int)&(mboot->u.elf_sec);
 
-	unsigned char * dev_no = &mboot->boot_device;
+	unsigned char * dev_no = (unsigned char *)&(mboot->boot_device);
 
 	int major;
 	if (dev_no[3] == 0x80) major = DEV_HD;
