@@ -1,3 +1,10 @@
+/**
+ * @file mount.c
+ * @brief VFS mount functionality
+ * @author jimx, develorcer@gmail.com
+ * @version 0.3.2
+ * @date 2013-07-28
+ */
 /*  This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -18,6 +25,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
+#include "stddef.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -29,6 +37,14 @@
 #include "lyos/proto.h"
 #include "errno.h"
 #include "fcntl.h"
+#include "lyos/list.h"
+#include "path.h"
+#include "proto.h"
+#include "global.h"
+
+/* find device number of the given pathname */
+PRIVATE dev_t name2dev(char * pathname);
+PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
 
 PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
 {
@@ -42,14 +58,191 @@ PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
 
 PUBLIC struct vfs_mount * get_free_vfs_mount()
 {
-    struct  vfs_mount * vmnt = vmnt_table;
-    for (; vmnt < &vmnt_table[NR_VFS_MOUNT]; vmnt++)
-    {
-        if (vmnt->m_dev == NO_DEV) {
-            clear_vfs_mount(vmnt);
+    struct  vfs_mount * vmnt = (struct vfs_mount *)alloc_mem(sizeof(struct vfs_mount));
+    if (vmnt == NULL) {
+        err_code = ENOMEM;
+        return NULL;
+    }
+    clear_vfs_mount(vmnt);
+    list_add(&(vmnt->list), &vfs_mount_table);
+
+    return vmnt;
+}
+
+PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev)
+{
+    struct vfs_mount * vmnt;
+    list_for_each_entry(vmnt, &vfs_mount_table, list) {
+        if (vmnt->m_dev == dev) {
             return vmnt;
         }
     }
 
-    return (struct vfs_mount *)0;
+    return NULL;
 }
+
+PUBLIC int do_mount(MESSAGE * p)
+{
+    unsigned long flags = p->MFLAGS;
+    int src = p->source;
+
+    /* find fs endpoint */
+    int label_len = p->MNAMELEN3;
+    char * fs_label = (char *)alloc_mem(label_len + 1);
+    if (!fs_label) return ENOMEM;
+    
+    phys_copy(va2la(getpid(), fs_label), va2la(src, p->MLABEL), label_len);
+    fs_label[label_len] = '\0';
+    int fs_e = get_filesystem_endpoint(fs_label);
+    free_mem((int)fs_label, label_len + 1);
+    if (fs_e == -1) return EINVAL;
+    
+    int source_len = p->MNAMELEN1;
+    int target_len = p->MNAMELEN2;
+
+    char * source = (char *)alloc_mem(source_len + 1);
+    if (!source) return ENOMEM;
+    
+    char * target = (char *)alloc_mem(target_len + 1);
+    if (!target) {
+        return ENOMEM;
+    }           
+
+    phys_copy(va2la(getpid(), source), va2la(src, p->MSOURCE), source_len);
+    phys_copy(va2la(getpid(), target), va2la(src, p->MTARGET), target_len);
+
+    source[source_len] = '\0';
+    target[target_len] = '\0';
+
+    dev_t dev_nr = name2dev(source);
+    if (dev_nr == 0) return err_code;
+
+    int readonly = flags & MS_READONLY;
+    int retval = mount_fs(dev_nr, target, fs_e, readonly);
+
+    free_mem((int)source, source_len + 1);
+    free_mem((int)target, target_len + 1);
+    free_mem((int)fs_label, label_len + 1);
+
+    return retval;
+}
+
+
+PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly)
+{
+    endpoint_t drv_e = dd_map[MAJOR(dev)].driver_nr;
+    if (drv_e == 0) {
+        printl("VFS: mount_fs: no device driver for dev %d\n", dev);
+        return EINVAL;
+    }
+
+    if (find_vfs_mount(dev) != NULL) return EBUSY;
+    struct vfs_mount * new_pvm = get_free_vfs_mount();
+    if (new_pvm == NULL) return ENOMEM;
+
+    int retval = 0;
+    struct inode * pmp = NULL; 
+
+    int is_root = (strcmp(mountpoint, "/") == 0);
+    int mount_root = (is_root && have_root < 2); /* root can be mounted twice */
+
+    if (!mount_root) {
+        /* resolve the mountpoint */
+        pmp = resolve_path(mountpoint, pcaller);
+        if (pmp == NULL) retval = err_code;
+        else if (pmp->i_cnt == 1) retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
+        else retval = EBUSY;
+
+        if (retval) return retval;
+    }
+    
+    new_pvm->m_dev = dev;
+    new_pvm->m_fs_ep = fs_ep;
+
+    if (readonly) new_pvm->m_flags |= VMNT_READONLY;
+    else new_pvm->m_flags &= ~VMNT_READONLY;
+
+    struct lookup_result res;
+    retval = request_readsuper(fs_ep, dev, readonly, is_root, &res);
+    
+    if (retval) return retval;
+
+    struct inode * root_inode = new_inode(dev, res.inode_nr);
+
+    if (!root_inode) return err_code;
+
+    root_inode->i_fs_ep = fs_ep;
+    root_inode->i_mode = res.mode;
+    root_inode->i_gid = res.gid;
+    root_inode->i_uid = res.uid;
+    root_inode->i_size = res.size;
+    root_inode->i_specdev = 0;
+    root_inode->i_cnt = 1;
+    root_inode->i_vmnt = new_pvm;
+
+    if (mount_root) {
+        new_pvm->m_root_node = root_inode;
+        new_pvm->m_mounted_on = NULL;
+        ROOT_DEV = dev;
+
+        /* update all root inodes */
+        struct proc * p = proc_table;
+        int i;
+        for (i = 0; i < NR_TASKS + NR_PROCS; i++, p++) {
+            if (p->state == FREE_SLOT) continue;
+
+            if (p->root) put_inode(p->root);
+            root_inode->i_cnt++;
+            p->root = root_inode;
+
+            if (p->pwd) put_inode(p->pwd);
+            root_inode->i_cnt++;
+            p->pwd = root_inode;
+        }
+
+        have_root++;
+        return 0;
+    }
+
+    new_pvm->m_mounted_on = pmp;
+    new_pvm->m_root_node = root_inode;
+
+    return 0;
+}
+
+
+/**
+ * @brief name2dev Find the device number of the given pathname.
+ *
+ * @param pathname Path to the block/character special file.
+ *
+ * @return The device number of the given pathname.
+ */
+PRIVATE dev_t name2dev(char * pathname)
+{
+   struct inode * pin = resolve_path(pathname, pcaller);
+
+   if (pin == NULL) {
+       return (dev_t)0;
+   }
+
+   dev_t retval = 0;
+   if ((pin->i_mode & I_TYPE) == I_BLOCK_SPECIAL) retval = pin->i_specdev;
+   else err_code = ENOTBLK;
+
+   put_inode(pin);
+   return retval;
+}
+
+PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)
+{
+    MESSAGE m;
+    m.type = FS_MOUNTPOINT;
+    m.REQ_DEV1 = dev;
+    m.REQ_NUM1 = num;
+
+    send_recv(BOTH, fs_ep, &m);
+
+    return m.RET_RETVAL;
+}
+

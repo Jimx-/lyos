@@ -16,8 +16,8 @@
 #ifndef	_FS_H_
 #define	_FS_H_
 
-#include "lyos/ext2_fs.h"
-
+#include "lyos/list.h"
+    
 /**
  * @struct dev_drv_map fs.h "include/sys/fs.h"
  * @brief  The Device_nr.\ - Driver_nr.\ MAP.
@@ -34,7 +34,44 @@ struct dev_drv_map {
 
 #define FS_LABEL_MAX 15
 
-#define EXT2_SB 	u.ext2_sb
+/* VFS/FS error messages */
+#define EENTERMOUNT              (-301)
+#define ELEAVEMOUNT              (-302)
+#define ESYMLINK                 (-303)
+
+/* Message types */
+#define REQ_DEV1    u.m1.m1i1
+#define REQ_NUM1    u.m1.m1i2
+
+#define REQ_DEV3            u.m3.m3i1
+#define REQ_START_INO       u.m3.m3i2
+#define REQ_ROOT_INO        u.m3.m3i3
+#define REQ_NAMELEN         u.m3.m3i4
+#define REQ_FLAGS           u.m3.m3l1
+#define REQ_PATHNAME        u.m3.m3p1
+
+/* for mount */
+#define MSOURCE		u.m4.m4p1
+#define MTARGET		u.m4.m4p2
+#define MLABEL		u.m4.m4p3
+#define MDATA		u.m4.m4p4
+#define MFLAGS		u.m4.m4l1
+#define MNAMELEN1	u.m4.m4i1
+#define MNAMELEN2	u.m4.m4i2
+#define MNAMELEN3	u.m4.m4i3
+
+#define RET_RETVAL          u.m5.m5i1
+#define RET_NUM             u.m5.m5i2
+#define RET_UID             u.m5.m5i3
+#define RET_GID             u.m5.m5i4
+#define RET_FILESIZE        u.m5.m5i5
+#define RET_MODE            u.m5.m5i6
+#define RET_OFFSET          u.m5.m5i7
+#define RET_SPECDEV         u.m5.m5i8
+
+#define MS_READONLY         0x001
+#define RF_READONLY         0x001
+#define RF_ISROOT           0x002
 /**
  * @struct super_block fs.h "include/fs.h"
  * @brief  The 2nd sector of the FS
@@ -63,9 +100,6 @@ struct super_block {
 	 * the following item(s) are only present in memory
 	 */
 	int	sb_dev; 	/**< the super block's home device */
-	union {
-		ext2_superblock_t ext2_sb;
-	} u;
 };
 
 /**
@@ -89,14 +123,16 @@ struct super_block {
  * \b NOTE: Remember to change INODE_SIZE if the members are changed
  */
 struct inode {
+	struct list_head list;
 	endpoint_t	i_fs_ep;		/**< FS process's pid */
 	u32	i_mode;		/**< Accsess mode */
 	u32	i_size;		/**< File size */
 	u32	i_start_sect;	/**< The first sector of the data */
 	u32	i_nr_sects;	/**< How many sectors the file occupies */
-	uid_t i_uid;
+	uid_t i_uid;  /* uid and gid */
 	gid_t i_gid;
-	int	i_dev;
+	dev_t	i_dev;  /**< On which device this inode resides */
+    dev_t i_specdev;  /**< Device number for block/character special file */
 	int	i_cnt;		/**< How many procs share this inode  */
 	int	i_num;		/**< inode nr.  */
 
@@ -104,6 +140,7 @@ struct inode {
 };
 
 struct vfs_mount {
+	struct list_head list;
   	int m_fs_ep;			/**< FS process's pid */
   	int m_dev;			/**< Device number */
   	unsigned int m_flags;		/**< Mount flags */
@@ -111,6 +148,8 @@ struct vfs_mount {
   	struct inode *m_root_node;	/**< Root inode */
   	char m_label[FS_LABEL_MAX];	/**< Label of the file system process */
 };
+
+#define VMNT_READONLY       0x001
 
 /**
  * @def   INODE_SIZE
@@ -157,15 +196,10 @@ struct file_desc {
 };
 
 struct file_system {
+    struct list_head list;
 	char * name;
-	int fs_flags;
-	int fs_pid;
-	struct file_system * next;
+	int fs_ep;
 };
-
-/* register & unregister filesystem */
-int register_filesystem(MESSAGE * m);
-int unregister_filesystem(MESSAGE * m);
 
 PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt);
 PUBLIC struct vfs_mount * get_free_vfs_mount();

@@ -87,7 +87,6 @@ EXTERN	int					ROOT_DEV;
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
 EXTERN	struct super_block	super_block[NR_SUPER_BLOCK];
-EXTERN  struct vfs_mount    vmnt_table[NR_VFS_MOUNT];
 #define FSBUF_SIZE          0x100000
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];
 extern	u8 *			fsbuf;

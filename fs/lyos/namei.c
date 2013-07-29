@@ -30,9 +30,6 @@
 #include "lyos/hd.h"
 #include "lyos/fs.h"
 
-PUBLIC char dot1[2] = ".";
-PUBLIC char dot2[3] = "..";	
-
 PRIVATE char * get_name(char * old_name, char string[MAX_FILENAME_LEN]);
 #define SEARCH_FILE_V1
 

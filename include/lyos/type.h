@@ -42,19 +42,19 @@ struct hole {
 /**
  * MESSAGE mechanism is borrowed from MINIX
  */
-struct mess1 {
+struct mess1 {	/* 16 bytes */
 	int m1i1;
 	int m1i2;
 	int m1i3;
 	int m1i4;
 };
-struct mess2 {
+struct mess2 {	/* 16 bytes */
 	void* m2p1;
 	void* m2p2;
 	void* m2p3;
 	void* m2p4;
 };
-struct mess3 {
+struct mess3 {	/* 40 bytes */
 	int	m3i1;
 	int	m3i2;
 	int	m3i3;
@@ -64,6 +64,21 @@ struct mess3 {
 	void*	m3p1;
 	void*	m3p2;
 };
+struct mess4 {	/* 36 bytes */
+	u64 m4l1;
+	int m4i1, m4i2, m4i3; 
+	void *m4p1, *m4p2, *m4p3, *m4p4; 
+};
+struct mess5 {	/* 32 bytes */
+	int	m5i1;
+	int	m5i2;
+	int	m5i3;
+	int	m5i4;
+	int	m5i5;
+	int	m5i6;
+	int m5i7;
+	int m5i8;
+};
 typedef struct {
 	int source;
 	int type;
@@ -71,14 +86,10 @@ typedef struct {
 		struct mess1 m1;
 		struct mess2 m2;
 		struct mess3 m3;
+		struct mess4 m4;
+		struct mess5 m5;
 	} u;
 } MESSAGE;
-
-/* i have no idea of where to put this struct, so i put it here */
-struct boot_params {
-	int		mem_size;	/* memory size */
-	unsigned char *	kernel_file;	/* addr of kernel file */
-};
 
 /* Memory map for local text, stack, data segments. */
 struct mem_map {

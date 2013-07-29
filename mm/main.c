@@ -37,8 +37,6 @@ PRIVATE unsigned long * kernel_page_descs;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[];
 
-PRIVATE void get_kernel_layout(unsigned int * text_len, unsigned int * data_len);
-
 PUBLIC void do_fork_test();
 
 PRIVATE void init_mm();

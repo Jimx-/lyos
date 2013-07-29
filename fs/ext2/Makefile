@@ -1,7 +1,7 @@
 
 CFLAGS	= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
-FSOBJS 	= main.o super.o
+FSOBJS 	= main.o super.o global.o inode.o protect.o path.o read_write.o
 
 EXT2FS = ext2fs.o
 

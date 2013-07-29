@@ -4,7 +4,8 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
-FSOBJS		= main.o super.o open.o mount.o lyos/lyosfs.o ext2/ext2fs.o
+FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o \
+				 ext2/ext2fs.o
 FS			= fs.o
 
 everything : realclean $(FS)
@@ -19,9 +20,6 @@ $(FS): $(FSOBJS)
 %.o: %.c
 	@echo -e '\tCC\tfs/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
-
-lyos/lyosfs.o:
-	@(cd lyos; make)
 
 ext2/ext2fs.o:
 	@(cd ext2; make)

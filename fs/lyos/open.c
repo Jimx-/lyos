@@ -553,22 +553,7 @@ PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename)
 	sync_inode(dir_inode);
 }
 
-PUBLIC int do_mount(MESSAGE * p)
-{
-	/*
-	int dev = p->DEVICE;
-	char * dir = p->PATHNAME;
-
-	read_super_block(dev);
-	struct super_block * sb = get_super_block(dev);
-
-	struct inode * ino = search_file(dir);
-	*/
-	
-	return -ENOSYS;
-}
-
 PUBLIC int do_umount(MESSAGE * p)
 {
-	return -ENOSYS;
+	return 0;
 }

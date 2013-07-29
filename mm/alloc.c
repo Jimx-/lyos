@@ -52,7 +52,7 @@ PUBLIC void mem_init(int mem_start, int free_mem_size)
   	free_slots = &hole[0];
 
 	/* Free memory */
-	free_mem(mem_start, free_mem_size);	
+	free_mem(mem_start, free_mem_size);
 }
 
 /*****************************************************************************
@@ -60,10 +60,10 @@ PUBLIC void mem_init(int mem_start, int free_mem_size)
  *****************************************************************************/
 /**
  * Allocate a memory block for a proc.
- * 
+ *
  * @param pid  Which proc the memory is for.
  * @param memsize  How many bytes is needed.
- * 
+ *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
 PUBLIC int alloc_mem(int memsize)
@@ -100,10 +100,10 @@ PUBLIC int alloc_mem(int memsize)
  *****************************************************************************/
 /**
  * Free a memory block.
- * 
+ *
  * @param base	Base address of block to free.
  * @param len	Number of bytes to free.
- * 
+ *
  * @return  Zero if success.
  *****************************************************************************/
 PUBLIC int free_mem(int base, int len)
@@ -111,7 +111,7 @@ PUBLIC int free_mem(int base, int len)
 	struct hole *hp, *new_ptr, *prev_ptr;
 
 	if (len == 0) return EINVAL;
-  	if ((new_ptr = free_slots) == NULL) 
+  	if ((new_ptr = free_slots) == NULL)
   		panic("hole table full");
 	new_ptr->h_base = base;
 	new_ptr->h_len = len;
@@ -142,9 +142,9 @@ PUBLIC int free_mem(int base, int len)
 }
 
 /*******************************************************************
- *			delete_hole				
+ *			delete_hole
  *******************************************************************/
-/** 
+/**
  * Remove an entry from the list.
  *
  *******************************************************************/
@@ -163,9 +163,9 @@ PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
 /*******************************************************************
  *			merge_hole
  *******************************************************************/
-/** 
- * Merge contiguous holes.	
- *				
+/**
+ * Merge contiguous holes.
+ *
  *******************************************************************/
 PRIVATE void merge_hole(struct hole * hp)
 {

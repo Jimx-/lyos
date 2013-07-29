@@ -31,6 +31,7 @@ typedef unsigned short umode_t;
 typedef unsigned short nlink_t;
 typedef unsigned long int blkcnt_t;
 typedef unsigned long int blksize_t;
+typedef unsigned int block_t;
 
 
 #endif

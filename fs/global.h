@@ -13,29 +13,27 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "lyos/list.h"
+#ifndef _VFS_GLOBAL_H_
+#define _VFS_GLOBAL_H_
 
-PUBLIC int list_empty(struct list_head * list)
-{
-    return (list->prev == list->next);
-}
+/* EXTERN is extern except for global.c */
+#ifdef _GLOBAL_VARIABLE_HERE_
+#undef EXTERN
+#define EXTERN
+#endif
 
-PRIVATE inline void __list_add(struct list_head * new, struct list_head * pre, struct list_head * next)
-{
-    new->prev = pre;
-    new->next = next;
-    pre->next = new;
-    next->prev = new;
-}
+extern struct list_head filesystem_table;
+/* vfs mount table */
+extern struct list_head vfs_mount_table;
 
-PUBLIC inline void list_add(struct list_head * new, struct list_head * head)
-{
-    __list_add(new, head, head->next);
-}
+/* how many times the root is mounted */
+extern int have_root;
 
-PUBLIC inline void list_del(struct list_head * node)
-{
-    node->prev->next = node->next;
-    node->next->prev = node->prev;
-}
+#define INODE_HASH_LOG2   7    
+#define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)
+#define INODE_HASH_MASK   (((unsigned long)1<<INODE_HASH_LOG2)-1)
+
+/* inode hash table */
+EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
+
+#endif 

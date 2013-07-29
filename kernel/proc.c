@@ -397,6 +397,8 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 	struct proc* prev = 0;
 	int copyok = 0;
 
+	disable_int();
+	
 	assert(proc2pid(who_wanna_recv) != src);
 
 	if ((who_wanna_recv->has_int_msg) &&
@@ -528,12 +530,16 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 		block(who_wanna_recv);
 
+		if (who_wanna_recv->state != RECEIVING) printl("error: proc #%d's state != RECEIVING\n", proc2pid(who_wanna_recv));
 		assert(who_wanna_recv->state == RECEIVING);
 		assert(who_wanna_recv->msg != 0);
 		assert(who_wanna_recv->recvfrom != NO_TASK);
 		assert(who_wanna_recv->sendto == NO_TASK);
+		if (who_wanna_recv->has_int_msg != 0) printl("error: proc #%d's has_int_msg != 0\n", proc2pid(who_wanna_recv));
 		assert(who_wanna_recv->has_int_msg == 0);
 	}
+
+	enable_int();
 
 	return 0;
 }

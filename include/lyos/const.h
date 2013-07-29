@@ -152,9 +152,9 @@
 #define TASK_TTY	0
 #define TASK_SYS	1
 #define TASK_HD		2
-#define TASK_FS		3
-#define TASK_LYOS_FS	4
-#define TASK_MM		5
+#define TASK_MM     3
+#define TASK_FS		4
+#define TASK_LYOS_FS	5
 #define	TASK_RD		6
 #define TASK_FD		7
 #define TASK_SCSI	8
@@ -194,7 +194,7 @@ enum msgtype {
 	PROF, PHYS, LOCK, MPX,					/* 2 ~ 14 */
 
 	/* FS */
-	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, FS_REGISTER, VFS_REQUEST,
+	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, VFS_REQUEST,
 								/* 15 ~ 29 */
 	/* FS & TTY */
 	SUSPEND_PROC, RESUME_PROC,				/* 30 ~ 31 */
@@ -208,6 +208,14 @@ enum msgtype {
 
 	/* TTY, SYS, FS, MM, etc */		
 	SYSCALL_RET,						/* 49 */
+
+	/* message type for fs request */
+	FSREQ_RET = 1001,
+    FS_REGISTER,
+	FS_PUTINODE,					/* 1001 ~ 1003 */
+	FS_LOOKUP,
+    FS_MOUNTPOINT,
+    FS_READSUPER,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,
@@ -235,7 +243,6 @@ enum msgtype {
 #define SIGNR		u.m3.m3i1
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2
-
 
 #define	PID		u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
@@ -304,12 +311,25 @@ enum msgtype {
 #define NR_VFS_MOUNT	16
 
 /* INODE::i_mode (octal, lower 12 bits reserved) */
-#define I_TYPE_MASK     0170000
-#define I_REGULAR       0100000
-#define I_BLOCK_SPECIAL 0060000
-#define I_DIRECTORY     0040000
-#define I_CHAR_SPECIAL  0020000
-#define I_NAMED_PIPE	0010000
+/* Flag bits for i_mode in the inode. */
+#define I_TYPE_MASK		I_TYPE
+#define I_TYPE          0170000	/* this field gives inode type */
+#define I_UNIX_SOCKET	0140000 /* unix domain socket */
+#define I_SYMBOLIC_LINK 0120000	/* file is a symbolic link */
+#define I_REGULAR       0100000	/* regular file, not dir or special */
+#define I_BLOCK_SPECIAL 0060000	/* block special file */
+#define I_DIRECTORY     0040000	/* file is a directory */
+#define I_CHAR_SPECIAL  0020000	/* character special file */
+#define I_NAMED_PIPE    0010000	/* named pipe (FIFO) */
+#define I_SET_UID_BIT   0004000	/* set effective uid_t on exec */
+#define I_SET_GID_BIT   0002000	/* set effective gid_t on exec */
+#define I_SET_STCKY_BIT 0001000	/* sticky bit */ 
+#define ALL_MODES       0007777	/* all bits for user, group and others */
+#define RWX_MODES       0000777	/* mode bits for RWX only */
+#define R_BIT           0000004	/* Rwx protection bit */
+#define W_BIT           0000002	/* rWx protection bit */
+#define X_BIT           0000001	/* rwX protection bit */
+#define I_NOT_ALLOC     0000000	/* this inode is free */
 
 #define	is_special(m)	((((m) & I_TYPE_MASK) == I_BLOCK_SPECIAL) ||	\
 			 (((m) & I_TYPE_MASK) == I_CHAR_SPECIAL))
@@ -317,5 +337,8 @@ enum msgtype {
 #define	NR_DEFAULT_FILE_SECTS	2048 /* 2048 * 512 = 1MB */
 
 #define suser() (current->euid == 0)
+
+/* super user uid */
+#define SU_UID	((uid_t)0)
 
 #endif /* _CONST_H_ */

@@ -20,6 +20,7 @@
 #include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
+#include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -28,8 +29,11 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "path.h"
+#include "global.h"
+#include "proto.h"
 #include <elf.h>
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x
 #else
@@ -46,7 +50,6 @@ PUBLIC void task_fs()
 
 	MESSAGE m;
 	MESSAGE msg;
-
 	while (1) {
 		send_recv(RECEIVE, ANY, &m);
 
@@ -59,8 +62,11 @@ PUBLIC void task_fs()
 		int msgtype = m.type;
 
 		switch (msgtype) {
+        case FS_REGISTER:
+            msg.RETVAL = register_filesystem(&m);
+            break;
 		case OPEN:
-			msg.FD = do_vfs_open(&msg);
+			msg.FD = do_vfs_open(&m);
 			break;
 		default:
 			msg.type = VFS_REQUEST;
@@ -159,16 +165,9 @@ PUBLIC void init_vfs()
 	for (; sb < &super_block[NR_SUPER_BLOCK]; sb++)
 		sb->sb_dev = NO_DEV;
 
-	/* vfs_mount_table[] */
-	struct  vfs_mount * vmnt = vmnt_table;
-	for (; vmnt < &vmnt_table[NR_VFS_MOUNT]; vmnt++)
-		clear_vfs_mount(vmnt);
-
-	// open root device
-	MESSAGE driver_msg;
-	driver_msg.type = DEV_OPEN;
-	driver_msg.DEVICE = MINOR(ROOT_DEV);
-	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
-	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
+    init_inode_table();
+    // mount root
+	mount_fs(ROOT_DEV, "/", TASK_LYOS_FS, 0);
+    printl("VFS: Mounted root\n");
 }
 

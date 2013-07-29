@@ -49,8 +49,8 @@ struct proc {
 	struct descriptor ldts[LDT_SIZE]; /* local descs for code and data */
 #endif
 
-    	int counter;                 /* remained ticks */
-    	int priority;
+    int counter;                 /* remained ticks */
+    int priority;
 
 	/* u32 pid;                   /\* process id passed in from MM *\/ */
 	char name[16];		   /* name of the process */
@@ -60,7 +60,7 @@ struct proc {
 				    * A proc is runnable if state==0
 				    */
 
-    	int signal;
+    int signal;
 	struct sigaction sigaction[32];
 	unsigned long alarm;
 	long blocked;
@@ -91,8 +91,8 @@ struct proc {
 	
 	//u16 used_math;
 
-	struct inode * pwd;
-	struct inode * root;
+	struct inode * pwd;			/* working directory */
+	struct inode * root;		/* root directory */
 
 	int exit_status; /**< for parent */
 

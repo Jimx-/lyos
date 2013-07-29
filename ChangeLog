@@ -9,3 +9,4 @@ Version 0.3.1
 Version 0.3.2
 - NEW Multiboot support.
 - NEW Ext2FS support.
+- CHG Moved some fs-related global variables to VFS and FS drivers.

@@ -13,29 +13,19 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "lyos/list.h"
+#ifndef _PATH_H_
+#define _PATH_H_
 
-PUBLIC int list_empty(struct list_head * list)
-{
-    return (list->prev == list->next);
-}
+struct lookup_result {
+    endpoint_t fs_ep;
+    ino_t inode_nr;
+    int mode;
+    uid_t uid;
+    gid_t gid;
+    int size;
+    dev_t dev;
+    dev_t spec_dev;
+    int offsetp;
+};
 
-PRIVATE inline void __list_add(struct list_head * new, struct list_head * pre, struct list_head * next)
-{
-    new->prev = pre;
-    new->next = next;
-    pre->next = new;
-    next->prev = new;
-}
-
-PUBLIC inline void list_add(struct list_head * new, struct list_head * head)
-{
-    __list_add(new, head, head->next);
-}
-
-PUBLIC inline void list_del(struct list_head * node)
-{
-    node->prev->next = node->next;
-    node->next->prev = node->prev;
-}
+#endif

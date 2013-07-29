@@ -11,8 +11,7 @@ KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)-krnl.o main.o\
 			clock.o \
 			global.o proc.o\
 			systask.o\
-			klib.o sys.o \
-			list.o
+			klib.o sys.o list.o
 
 KRNL		= krnl.o
 

@@ -134,8 +134,8 @@ PUBLIC void rd_load_image(dev_t dev, int offset)
 	char rotator[4] = {'|', '/', '-', '\\'};
 	int rotate = 0;
 	for(i=1;i<=nr_sects;i++){
-		RD_SECT(dev, i);
-		WR_SECT(MAKE_DEV(DEV_RD, 0), i);
+		//RD_SECT(dev, i);
+		//WR_SECT(MAKE_DEV(DEV_RD, 0), i);
 		if (!(i%16)){
 			printl("\b%c", rotator[rotate & 0x03]);
 			rotate++;

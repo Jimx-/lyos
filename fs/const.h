@@ -13,25 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
-#include "lyos/const.h"
-#include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
-#include "lyos/global.h"
-#include "lyos/keyboard.h"
-#include "lyos/proto.h"
-#include "errno.h"
-#include "fcntl.h"
+#ifndef _VFS_CONST_H_
+#define _VFS_CONST_H_
 
-/* Resolve a pathname starts from start */
-struct inode * namei_from(struct inode* start, char * pathname)
-{
-
-}
+#endif

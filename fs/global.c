@@ -13,29 +13,14 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#define _GLOBAL_VARIABLE_HERE_
+
 #include "lyos/type.h"
 #include "lyos/list.h"
+#include "global.h"
 
-PUBLIC int list_empty(struct list_head * list)
-{
-    return (list->prev == list->next);
-}
+PUBLIC DEF_LIST(vfs_mount_table);
+PUBLIC DEF_LIST(filesystem_table);
 
-PRIVATE inline void __list_add(struct list_head * new, struct list_head * pre, struct list_head * next)
-{
-    new->prev = pre;
-    new->next = next;
-    pre->next = new;
-    next->prev = new;
-}
+PUBLIC int have_root = 0;
 
-PUBLIC inline void list_add(struct list_head * new, struct list_head * head)
-{
-    __list_add(new, head, head->next);
-}
-
-PUBLIC inline void list_del(struct list_head * node)
-{
-    node->prev->next = node->next;
-    node->next->prev = node->prev;
-}

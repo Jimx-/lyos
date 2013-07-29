@@ -41,7 +41,7 @@ PUBLIC void clock_handler(int irq)
 {	
 	if (++jiffies >= MAX_TICKS)
 		jiffies = 0;
-
+     
 	if (current->counter)
 		current->counter--;
 
@@ -52,7 +52,7 @@ PUBLIC void clock_handler(int irq)
 		return;
 	}
 
-	if (current->counter > 0) {
+    if (current->counter > 0) {
 		return;
 	}
 
