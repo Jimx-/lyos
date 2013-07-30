@@ -66,7 +66,7 @@ PUBLIC void task_fs()
             msg.RETVAL = register_filesystem(&m);
             break;
 		case OPEN:
-			msg.FD = do_vfs_open(&m);
+			msg.FD = do_open(&m);
 			break;
 		default:
 			msg.type = VFS_REQUEST;
@@ -76,6 +76,7 @@ PUBLIC void task_fs()
 		}
 
 		if (msg.type != SUSPEND_PROC)
+			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 	}
 

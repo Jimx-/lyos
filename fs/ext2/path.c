@@ -113,7 +113,7 @@ PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, 
 
 		if (strcmp(component, "..") == 0) {
 			int r;
-			if ((r = forbidden(pin, X_BIT)) != 0) {
+			if ((r = ext2_forbidden(pin, X_BIT)) != 0) {
 				put_ext2_inode(pin);
 				return r;
 			}
@@ -251,7 +251,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 		mode_t bits = (flag == SD_LOOK_UP ? X_BIT : W_BIT | X_BIT);
 		if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
 			if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
-			else if (check_perm) ret = forbidden(dir_pin, bits);
+			else if (check_perm) ret = ext2_forbidden(dir_pin, bits);
 		}
 	}
 

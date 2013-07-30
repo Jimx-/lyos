@@ -284,7 +284,7 @@ PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num);
 PUBLIC ext2_inode_t * find_ext2_inode(dev_t dev, ino_t num);
 PUBLIC void put_ext2_inode(ext2_inode_t * pin);
 
-PUBLIC int forbidden(ext2_inode_t * pin, int access);
+PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access);
 
 PUBLIC int ext2_lookup(MESSAGE * p);
 PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, int flags, ext2_inode_t ** result, size_t * offsetp);
@@ -293,5 +293,6 @@ PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_
 PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1], ino_t *num, 
 								int flag, int check_perm, int ftype);
 
+PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access);
 PUBLIC block_t read_map(ext2_inode_t * pin, off_t position);
 #endif

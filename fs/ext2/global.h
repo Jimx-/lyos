@@ -40,4 +40,5 @@ EXTERN struct proc * ext2_pcaller;
 /* inode hash table */
 EXTERN struct list_head ext2_inode_table[EXT2_INODE_HASH_SIZE];
 
+
 #endif 

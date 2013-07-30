@@ -30,23 +30,23 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
-#include "ext2_fs.h"
 #include "global.h"
 
-PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access)
+PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access)
 {
     mode_t bits, perm_bits;
     int shift;
 
     bits = pin->i_mode;
-    if (ext2_pcaller->uid == SU_UID) {
+
+    if (fp->uid == SU_UID) {
         if ((bits & I_TYPE) == I_DIRECTORY || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
             perm_bits = R_BIT | W_BIT | X_BIT;
         else
             perm_bits = R_BIT | W_BIT;
     } else {
-        if (ext2_pcaller->uid == pin->i_uid) shift = 6;    /* owner */
-        else if (ext2_pcaller->gid == pin->i_gid) shift = 3;   /* group */
+        if (fp->uid == pin->i_uid) shift = 6;    /* owner */
+        else if (fp->gid == pin->i_gid) shift = 3;   /* group */
         else shift = 0;                 /* other */
         perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT); 
     }
@@ -55,7 +55,7 @@ PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access)
 
     /* check for readonly filesystem */
     if (access & W_BIT) {
-        if (pin->i_sb->sb_readonly) return EROFS;
+        if (pin->i_vmnt->m_flags & VMNT_READONLY) return EROFS;
     }
 
     return 0;

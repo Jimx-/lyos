@@ -16,6 +16,7 @@
 #include "lyos/type.h"
 #include "lyos/const.h"
 #include "lyos/ipc.h"
+#include "errno.h"
 #include "stdio.h"
 #include "assert.h"
 #include "string.h"
@@ -44,7 +45,9 @@ PUBLIC int open(const char *pathname, int flags)
 	send_recv(BOTH, TASK_FS, &msg);
 	assert(msg.type == SYSCALL_RET);
 
-	return msg.FD;
+	if (msg.FD >= 0) return msg.FD;
+	errno = -msg.FD;
+	return -1;
 }
 
 PUBLIC int mkdir(const char *pathname)

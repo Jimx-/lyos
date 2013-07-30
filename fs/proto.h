@@ -28,6 +28,7 @@ PUBLIC void put_inode(struct inode * pin);
 PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp);
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
 PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
+PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access);
 
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
 PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 
@@ -35,4 +36,7 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
 PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
         int readonly, int is_root, struct lookup_result * res);
 
+PUBLIC int do_open(MESSAGE * p);
+
 #endif
+

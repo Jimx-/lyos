@@ -18,6 +18,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
+#include "stddef.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -28,23 +29,37 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "errno.h"
+#include "path.h"
+#include "proto.h"
 #include "fcntl.h"
 
-PUBLIC int do_vfs_open(MESSAGE * p)
+PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
+
+PUBLIC int do_open(MESSAGE * p)
 {
     int fd = -1;        /* return value */
 
-    char pathname[MAX_PATH];
     /* get parameters from the message */
-    int flags = p->FLAGS;   /* access mode */
+    int flags = p->FLAGS;   /* open flags */
     int name_len = p->NAME_LEN; /* length of filename */
     int src = p->source;    /* caller proc nr. */
+    mode_t mode = p->MODE;  /* access mode */
 
-    assert(name_len < MAX_PATH);
+    mode_t bits = mode_map[flags & O_ACCMODE];
+    if (!bits) return -EINVAL;
+
+    int exist = 1;
+
+    char * pathname = (char *)alloc_mem(name_len + 1);
+    if (!pathname) {
+        err_code = -ENOMEM;
+        return -1;
+    }
+
     phys_copy((void*)va2la(TASK_FS, pathname),
           (void*)va2la(src, p->PATHNAME),
           name_len);
-    pathname[name_len] = 0;
+    pathname[name_len] = '\0';
 
     /* find a free slot in PROCESS::filp[] */
     int i;
@@ -63,6 +78,57 @@ PUBLIC int do_vfs_open(MESSAGE * p)
             break;
     if (i >= NR_FILE_DESC)
         panic("f_desc_table[] is full (PID:%d)", proc2pid(pcaller));
+
+    struct inode * pin = NULL;
+
+    if (flags & O_CREAT) {
+        mode = I_REGULAR;
+    } else {
+        pin = resolve_path(pathname, pcaller);
+        if (pin == NULL) return -err_code;
+    }
+
+    struct file_desc * filp = &f_desc_table[i];
+    pcaller->filp[fd] = filp;
+    filp->fd_cnt = 1;
+    filp->fd_pos = 0;
+    filp->fd_inode = pin;
+    filp->fd_mode = flags;
+
+    MESSAGE driver_msg;
+    int retval = 0;
+    if (exist) {
+        if ((retval = forbidden(pcaller, pin, bits)) == 0) {
+            switch (pin->i_mode & I_TYPE) {
+                case I_REGULAR:
+                    if (flags & O_TRUNC) {
+                    }
+                    break;
+                case I_DIRECTORY:   /* directory may not be written */
+                    retval = (bits & W_BIT) ? EISDIR : 0;
+                    break;
+                case I_CHAR_SPECIAL:    /* open char device */
+                    driver_msg.type = DEV_OPEN;
+                    int dev = pin->i_specdev;
+                    driver_msg.DEVICE = MINOR(dev);
+                    send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+                    break;
+                case I_BLOCK_SPECIAL:
+                    break;
+                default:
+                break;
+            }
+        }
+    }
+
+    if (retval != 0) {
+        pcaller->filp[fd] = NULL;
+        filp->fd_cnt = 0;
+        filp->fd_mode = 0;
+        filp->fd_inode = 0;
+        put_inode(pin);
+        return -retval;
+    }
 
     return fd;
 }
