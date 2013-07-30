@@ -21,7 +21,7 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#include "sys/termios.h"
+#include "termios.h"
 #include "lyos/tty.h"
 #include "lyos/console.h"
 #include "lyos/global.h"

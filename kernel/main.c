@@ -30,7 +30,10 @@
 #include "fcntl.h"
 #include "sys/wait.h"
 #include "sys/utsname.h"
+#include "lyos/compile.h"
 #include "multiboot.h"
+
+#define LYOS_BANNER "Lyos version "UTS_VERSION" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"
 
 PUBLIC void init_arch();
 

@@ -180,13 +180,6 @@ PUBLIC int	do_unlink(MESSAGE * p);
 /* fs/Lyos/misc.c */
 PUBLIC int	do_stat(MESSAGE * p);
 
-/* fs/Lyos/disklog.c */
-PUBLIC int	do_disklog();
-
-/* fs/Lyos/namei.c */
-PUBLIC int 	namei(char * path);
-PUBLIC struct inode *last_dir(char *path, char string[MAX_PATH]);
-PUBLIC int 	find_entry(struct inode * dir_inode, char filename[MAX_PATH]);
 
 /* mm/forkexit.c */
 PUBLIC int	do_fork();
@@ -249,3 +242,9 @@ PUBLIC  void    sys_call();             /* int_handler */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char* str);
 PUBLIC	int 	reboot(int flags);
+
+#define	phys_copy	memcpy
+#define	phys_set	memset
+
+PUBLIC  int     printl(const char *fmt, ...);
+

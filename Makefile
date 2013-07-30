@@ -7,7 +7,7 @@ PATCHLEVEL = 3
 SUBLEVEL = 2
 EXTRAVERSION =
 
-SUBARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
+SUBARCH = $(shell uname -m | sed -e s/sun4u/sparc64/ \
 		-e s/arm.*/arm/ -e s/sa110/arm/ \
 		-e s/s390x/s390/ -e s/parisc64/parisc/ \
 		-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
@@ -16,6 +16,10 @@ SUBARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 ARCH ?= $(SUBARCH)
 
 ifeq ($(ARCH),i386)
+	ARCH = x86
+endif
+
+ifeq ($(ARCH),i686)
 	ARCH = x86
 endif
 
@@ -42,13 +46,15 @@ HD		= lyos-disk.img
 # Programs, flags, etc.
 ASM		= nasm
 DASM		= objdump
-CC		= gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g
-LD		= ld
+HOSTCC	= gcc
+HOSTLD	= ld
+CC		= $(SUBARCH)-pc-lyos-gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g
+LD		= $(SUBARCH)-pc-lyos-ld
 ASMBFLAGS	= -I $(ARCHDIR)/boot/include/
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
-LDFLAGS		= -T $(LDSCRIPT) -Map System.map
+LDFLAGS		= -T $(LDSCRIPT) -Map System.map 
 DASMFLAGS	= -D
 ARFLAGS		= rcs
 
@@ -58,7 +64,8 @@ export ASM CC LD
 LYOSARCHDIR	= arch/$(ARCH)
 LYOSKERNEL	= $(LYOSARCHDIR)/kernel.bin
 KRNLOBJ		= kernel/krnl.o
-LIB		= lib/liblyos.a
+LIB			= lib/liblyos.a
+LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a 
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
@@ -125,7 +132,7 @@ clean :
 
 realclean :
 	@find . -name "*.o" -exec rm -f {} \;
-	@rm -f $(LIB) $(LYOSBOOT) $(LYOSKERNEL)
+	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB)
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
@@ -143,7 +150,7 @@ help :
 	@echo "make clean\t: remove all object files but keep config files."
 	@echo "make mrproper\t: remove all object files and config file."
 
-$(LYOSKERNEL) : $(OBJS) $(LIB)
+$(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC) 
 	@echo -e '\tLD\t$@'
 	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'

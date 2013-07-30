@@ -20,10 +20,16 @@
 #define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
 #define	PRIVATE	static	/* PRIVATE x limits the scope of x */
 
+#define EXTERN extern
+
 typedef	unsigned long long	u64;
 typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;
+
+#define __dev_t_defined
+typedef unsigned int        __dev_t;
+typedef unsigned int        block_t;
 
 typedef int 				endpoint_t;
 

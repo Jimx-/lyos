@@ -102,8 +102,8 @@ if __name__ == "__main__":
 	rmdir('binutils')
 	mkdir('binutils')
 	push_dir('binutils')
-	configure_native(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
-	make_and_install()
+	#configure_native(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
+	#make_and_install()
 	pop_dir()
 
 

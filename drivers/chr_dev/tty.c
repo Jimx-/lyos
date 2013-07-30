@@ -29,7 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
-#include "sys/termios.h"
+#include "termios.h"
 
 
 #define TTY_FIRST	(tty_table)

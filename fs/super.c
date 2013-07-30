@@ -107,7 +107,6 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
         res->mode = m.RET_MODE;
         res->size = m.RET_FILESIZE;
     }
-
     return retval;
 }
 

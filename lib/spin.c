@@ -12,15 +12,23 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
-#ifndef _FCNTL_H
-#define _FCNTL_H
 
-#define	O_CREAT		1
-#define	O_RDWR		2
-#define	O_TRUNC		4
+#include "lyos/type.h"
+#include "lyos/const.h"
+#include "lyos/ipc.h"
+#include "stdio.h"
+#include "string.h"
+#include "assert.h"
 
-#define O_NONBLOCK     04000	
+PUBLIC int printl(const char *fmt, ...);
 
-#endif
+/*****************************************************************************
+ *                                spin
+ *****************************************************************************/
+PUBLIC void spin(char * func_name)
+{
+	printl("\nspinning in %s ...\n", func_name);
+	while (1) {}
+}
+
 

@@ -11,28 +11,40 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
 #include "lyos/type.h"
+#include "sys/types.h"
 #include "lyos/const.h"
-#include "lyos/ipc.h"
 #include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
 #include "assert.h"
 
-/*****************************************************************************
- *                                exit
- *************************************************************************//**
- * Terminate the current process.
- * 
- * @param status  The value returned to the parent.
- *****************************************************************************/
-PUBLIC void exit(int status)
-{
-	MESSAGE msg;
-	msg.type	= EXIT;
-	msg.STATUS	= status;
+PUBLIC	int	printx(char* str);
 
-	send_recv(BOTH, TASK_MM, &msg);
-	assert(msg.type == SYSCALL_RET);
+/*****************************************************************************
+ *                                printl
+ *****************************************************************************/
+/**
+ * low level print
+ * 
+ * @param fmt  The format string
+ * 
+ * @return  The number of chars printed.
+ *****************************************************************************/
+PUBLIC int printl(const char *fmt, ...)
+{
+	int i;
+	char buf[STR_DEFAULT_LEN];
+	va_list arg;
+	
+	va_start(arg, fmt);	
+	i = vsprintf(buf, fmt, arg);
+	printx(buf);
+
+	va_end(arg);
+
+	return i;
 }
 

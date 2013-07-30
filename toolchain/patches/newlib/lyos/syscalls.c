@@ -1,3 +1,4 @@
+#include "type.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -7,12 +8,11 @@
 #include <stdio.h>
 
 #include "const.h"
-#include "type.h"
 #include "proc.h"
 
 /* sendrec */
 /* see arch/x86/lib/syscall.asm */
-int sendrec(int function, int src_dest, MESSAGE* msg)
+static int sendrec(int function, int src_dest, MESSAGE* msg)
 {
 	int a;
 	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (1), "b" (function), "c" (src_dest), "d" ((int)msg));
@@ -44,6 +44,7 @@ int send_recv(int function, int src_dest, MESSAGE* msg)
 
 	return ret;
 }
+
 
 extern char **environ;
 
@@ -106,9 +107,9 @@ int execvp(const char *file, char * argv[])
 
 int getpid()
 {
-	MESSAGE msg;
+	volatile MESSAGE msg;
 	msg.type	= GET_PID;
-
+    
 	send_recv(BOTH, TASK_SYS, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
@@ -172,6 +173,11 @@ int wait(int * status)
 
 int isatty(int fd) {
 	return 0;
+}
+
+int uname(struct utsname * name)
+{
+    return 0;
 }
 
 int close(int fd)
@@ -351,3 +357,4 @@ int gettimeofday(struct  timeval*tv,void *tz )
 {
 	return 0;
 }
+

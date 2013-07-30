@@ -167,7 +167,7 @@ PUBLIC void init_vfs()
 
     init_inode_table();
     // mount root
-	mount_fs(ROOT_DEV, "/", TASK_LYOS_FS, 0);
+    mount_fs(ROOT_DEV, "/", TASK_LYOS_FS, 0);
     printl("VFS: Mounted root\n");
 }
 

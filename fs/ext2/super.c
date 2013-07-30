@@ -189,7 +189,6 @@ PRIVATE void bdev_close(dev_t dev)
 PUBLIC int ext2_readsuper(MESSAGE * p)
 {
     dev_t dev = p->REQ_DEV3;
-
     int readonly = (p->REQ_FLAGS & RF_READONLY) ? 1 : 0;
     int is_root = (p->REQ_FLAGS & RF_ISROOT) ? 1 :0;
 

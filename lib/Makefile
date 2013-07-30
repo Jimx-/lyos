@@ -8,15 +8,7 @@ CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \
-			assert/assert.o \
-			ctype/ctype.o \
-			io/io.o \
-			malloc/malloc.o \
-			misc/misc.o \
-			posix/posix.o \
-			stdio/stdio.o \
-			stdlib/stdlib.o \
-			string/string.o
+			printl.o spin.o 
 
 LIB		= liblyos.a
 
@@ -32,31 +24,9 @@ $(LIB): $(LOBJS)
 ../arch/$(ARCH)/lib/$(ARCH)-lib.o:
 	@(cd ../arch/$(ARCH)/lib; make)
  
-assert/assert.o: 
-	@(cd assert; make)
+%.o: %.c
+	@echo -e '\tCC\tlib/$@'
+	@$(CC) $(CFLAGS) -o $@ $<
 
-ctype/ctype.o:
-	@(cd ctype; make)
-
-stdio/stdio.o:
-	@(cd stdio; make)
-
-stdlib/stdlib.o:
-	@(cd stdlib; make)
-
-io/io.o:
-	@(cd io; make)
-
-malloc/malloc.o:
-	@(cd malloc; make)
-
-misc/misc.o:
-	@(cd misc; make)
-
-posix/posix.o:
-	@(cd posix; make)
-
-string/string.o:
-	@(cd string; make)
 
 

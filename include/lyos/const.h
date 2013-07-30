@@ -65,6 +65,7 @@
 			 * (ok to allocated to a new process)
 			 */
 
+#define	STR_DEFAULT_LEN	1024
 /* TTY */
 #define NR_CONSOLES	3	/* consoles */
 

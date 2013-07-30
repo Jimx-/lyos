@@ -22,13 +22,14 @@
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "lyos/fs.h"
-#include "sys/termios.h"
+#include "termios.h"
 #include "lyos/tty.h"
 #include "lyos/console.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "errno.h"
+#include "lyos/compile.h"
 #include "sys/utsname.h"
 
 

@@ -31,6 +31,8 @@
 PRIVATE int read_register(char reg_addr);
 PRIVATE u32 get_rtc_time(struct time *t);
 
+#define  BCD_TO_DEC(x)      ( (x >> 4) * 10 + (x & 0x0f) )
+
 /*****************************************************************************
  *                                task_sys
  *****************************************************************************/
@@ -72,6 +74,7 @@ PUBLIC void task_sys()
 			send_recv(SEND, src, &msg);
 			break;
 		default:
+            printl("systask: unknown message type(%d) from process #%d\n", msg.type, src);
 			panic("unknown msg type");
 			break;
 		}
