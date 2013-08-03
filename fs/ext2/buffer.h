@@ -13,15 +13,23 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#define _GLOBAL_VARIABLE_HERE_
+#ifndef _EXT2_BUFFER_H_
+#define _EXT2_BUFFER_H_
 
-#include "lyos/type.h"
-#include "lyos/list.h"
-#include "global.h"
+struct ext2_buffer {
+    struct list_head list;
+    struct list_head hash;
 
-PUBLIC DEF_LIST(ext2_superblock_table);
-PUBLIC u8* ext2fsbuf = (u8*)&_ext2fsbuf;
+    char *  b_data;
+    dev_t   b_dev;
+    block_t b_block;
+    char    b_dirt;
+    int     b_refcnt;
+    size_t  b_size;
+    int     b_flags;
+};
 
-PUBLIC DEF_LIST(ext2_buffer_freelist);
-PUBLIC struct list_head * ext2_buffer_freelist_tail = &ext2_buffer_freelist;
+typedef struct ext2_buffer ext2_buffer_t;
+
+#endif
 

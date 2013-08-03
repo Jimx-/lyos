@@ -102,11 +102,17 @@ PUBLIC int read_ext2_super_block(int dev)
     }
     DEB(printl("Allocated block group descriptors memory: 0x%x, size: %d bytes\n", pext2sb->sb_bgdescs, bgdesc_blocks * block_size));
 
-    rw_ext2_blocks(DEV_READ, dev, bgdesc_offset, bgdesc_blocks, pext2sb->sb_bgdescs);
+    int i;
+    ext2_buffer_t * pb = NULL;
+    for (i = 0; i < bgdesc_blocks; i++) {
+        if ((pb = ext2_get_buffer(dev, bgdesc_offset + i)) == NULL) return err_code;
+        memcpy((void *)((int)pext2sb->sb_bgdescs + block_size * i), pb->b_data, block_size);
+        ext2_put_buffer(pb);
+    }
 
+//#define EXT2_BGDESCRIPTORS_DEBUG
 #ifdef EXT2_BGDESCRIPTORS_DEBUG
     printl("Block group descriptors:\n");
-    int i;
     for(i = 0; i < nr_groups; i++)
     {
         printl("  Block group #%d\n", i);

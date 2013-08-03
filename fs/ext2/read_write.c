@@ -47,6 +47,7 @@ PUBLIC block_t read_map(ext2_inode_t * pin, off_t position)
     /* triple indirect slots */
     static long triple_ind_s;
     static long out_range_s;
+    ext2_buffer_t * pb = NULL;
 
     if (first_time) {
         addr_in_block = pin->i_sb->sb_block_size / EXT2_BLOCK_ADDRESS_BYTES;
@@ -78,21 +79,22 @@ PUBLIC block_t read_map(ext2_inode_t * pin, off_t position)
         if (block_pos >= triple_ind_s) {
             b = pin->i_block[EXT2_TIND_BLOCK];
             if (b == 0) return b;
-            rw_ext2_blocks(DEV_READ, pin->i_dev, b, 1, ext2fsbuf);
+            pb = ext2_get_buffer(pin->i_dev, b);
             excess = block_pos - triple_ind_s;
             index = excess / addr_in_block2;
-            b = *(ext2fsbuf + sizeof(block_t) * index);    /* num of double ind block */
+            b = *(pb->b_data + sizeof(block_t) * index);    /* num of double ind block */
             excess = excess % addr_in_block2;
+            ext2_put_buffer(pb);
         }
         if (b == 0) return b;
-        rw_ext2_blocks(DEV_READ, pin->i_dev, b, 1, ext2fsbuf);
+        pb = ext2_get_buffer(pin->i_dev, b);
         index = excess / addr_in_block;
-        b = *(ext2fsbuf + sizeof(block_t) * index);    /* num of single ind block */
+        b = *(pb->b_data + sizeof(block_t) * index);    /* num of single ind block */
         index = excess % addr_in_block; /* index into single ind blk */
     }
     if (b == 0) return b;
-    rw_ext2_blocks(DEV_READ, pin->i_dev, b, 1, ext2fsbuf);
-    b = *(ext2fsbuf + sizeof(block_t) * index);
+    pb = ext2_get_buffer(pin->i_dev, b);
+    b = *(pb->b_data + sizeof(block_t) * index);
 
     return b;
 }

@@ -269,15 +269,15 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 			pos = dir_pin->i_last_dpos;
 	}
 
-
+    ext2_buffer_t * pb = NULL;
 	for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
 		b = read_map(dir_pin, pos);
 
-		rw_ext2_blocks(DEV_READ, dir_pin->i_dev, b, 1, ext2fsbuf);
+        if ((pb = ext2_get_buffer(dir_pin->i_dev, b)) == NULL) return err_code;
 		prev_pde = NULL;
 
-		for (pde = (ext2_dir_entry_t*)ext2fsbuf;
-				((char *)pde - (char*)ext2fsbuf) < dir_pin->i_sb->sb_block_size;
+		for (pde = (ext2_dir_entry_t*)pb->b_data;
+				((char *)pde - (char*)pb->b_data) < dir_pin->i_sb->sb_block_size;
 				pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len) ) {
 
 			if (flag != SD_MAKE && pde->d_inode != (ino_t)0) {
@@ -317,7 +317,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 				} else {
 					*num = (ino_t)pde->d_inode;
 				}
-				rw_ext2_blocks(DEV_WRITE, dir_pin->i_dev, b, 1, ext2fsbuf);
+                ext2_put_buffer(pb);
 				return ret;
 			}
 	
@@ -345,7 +345,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 			prev_pde = pde;
 		}
 		if (hit) break;
-		rw_ext2_blocks(DEV_WRITE, dir_pin->i_dev, b, 1, ext2fsbuf);
+        ext2_put_buffer(pb);
 	}
 
 	/* the whole directory has been searched */
@@ -355,6 +355,10 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 
 	dir_pin->i_last_dpos = pos;
   	dir_pin->i_last_dentry_size = required_space;
+
+    if (!hit) {
+        new_slots++;
+    }
 
   	return 0;
 }

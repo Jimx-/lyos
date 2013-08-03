@@ -85,6 +85,7 @@ PUBLIC int do_open(MESSAGE * p)
         mode = I_REGULAR;
     } else {
         pin = resolve_path(pathname, pcaller);
+        printl("open file with inode_nr = %d\n", pin->i_num); 
         if (pin == NULL) return -err_code;
     }
 
