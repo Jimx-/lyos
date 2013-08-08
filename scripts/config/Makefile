@@ -1,6 +1,6 @@
 
 CC 	= gcc
-CFLAGS	= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS = -c
 
 CONFBIN = conf
 MCONFBIN = mconf

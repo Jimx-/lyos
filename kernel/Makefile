@@ -4,7 +4,6 @@
 
 AR		= ar
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINC)/ -f elf
-CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)-krnl.o main.o\

@@ -124,6 +124,11 @@ PRIVATE void update_times(ext2_inode_t * pin)
     pin->i_update = 0;
 }
 
+PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag)
+{
+    return rw_inode(inode, rw_flag);
+}
+
 PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
 {
     dev_t dev = inode->i_dev;

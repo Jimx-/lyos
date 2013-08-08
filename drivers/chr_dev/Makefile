@@ -2,7 +2,6 @@
 # Makefile for the Lyos character device drivers
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 CHRDRVOBJS	= console.o keyboard.o tty.o
 CHRDRV		= chr_dev.o

@@ -26,6 +26,7 @@ typedef	unsigned short		u16;
 typedef	unsigned char		u8;
 
 typedef int 				endpoint_t;
+typedef u32					bitchunk_t;
 
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();

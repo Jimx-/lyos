@@ -1,5 +1,4 @@
 
-CFLAGS	= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 FSOBJS 	= main.o open.o stat.o read_write.o\
 			link.o \

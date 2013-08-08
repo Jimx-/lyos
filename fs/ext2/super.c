@@ -243,3 +243,22 @@ PUBLIC int ext2_readsuper(MESSAGE * p)
     return 0;
 }
 
+PUBLIC int ext2_update_group_desc(ext2_superblock_t * psb, int desc)
+{
+    int block_size = psb->sb_block_size;
+
+    int bgdesc_offset = 1024 / block_size + 1; 
+    int i = (&psb->sb_bgdescs[desc] - &psb->sb_bgdescs[0]) / block_size;
+    bgdesc_offset += i;
+
+    ext2_buffer_t * pb = NULL;
+    if ((pb = ext2_get_buffer(psb->sb_dev, bgdesc_offset)) == NULL) return err_code;
+
+    memcpy(pb->b_data, (void *)((int)psb->sb_bgdescs + block_size * i), block_size);
+    pb->b_dirt = 1;
+    pb->b_flags |= EXT2_BUFFER_WRITE_IMME;
+    ext2_put_buffer(pb);
+
+    return 0;
+}
+

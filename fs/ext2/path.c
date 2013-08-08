@@ -271,7 +271,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 
     ext2_buffer_t * pb = NULL;
 	for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
-		b = read_map(dir_pin, pos);
+		b = ext2_read_map(dir_pin, pos);
 
         if ((pb = ext2_get_buffer(dir_pin->i_dev, b)) == NULL) return err_code;
 		prev_pde = NULL;
@@ -356,9 +356,31 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 	dir_pin->i_last_dpos = pos;
   	dir_pin->i_last_dentry_size = required_space;
 
+    int extended = 0;
     if (!hit) {
         new_slots++;
+        /* no free block, create one */
+        pb = ext2_new_block(dir_pin, dir_pin->i_size);
+        if (!pb) return err_code;
+
+        pde = (ext2_dir_entry_t*)pb->b_data;
+        pde->d_rec_len = dir_pin->i_sb->sb_block_size;
+        extended = 1;
     }
 
-  	return 0;
+    pde->d_name_len = strlen(string);
+    int i;
+    for (i = 0; i < pde->d_name_len && string[i]; i++) pde->d_name[i] = string[i];
+    pde->d_inode = *num;
+
+    pb->b_dirt = 1;
+    ext2_put_buffer(pb);
+    dir_pin->i_update |= CTIME | MTIME;	
+    dir_pin->i_dirt = 1;
+
+    if (new_slots == 1) {
+	    dir_pin->i_size += (off_t) (pde->d_rec_len);
+	    if (extended) ext2_rw_inode(dir_pin, DEV_WRITE);
+    }
+    return 0;
 }

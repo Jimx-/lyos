@@ -26,7 +26,7 @@
 extern struct list_head ext2_superblock_table;
 
 /* buffer */
-#define EXT2FSBUF_SIZE 0x100000
+#define EXT2FSBUF_SIZE 1024
 extern u8 * ext2fsbuf;
 EXTERN u8 _ext2fsbuf[EXT2FSBUF_SIZE];
 
