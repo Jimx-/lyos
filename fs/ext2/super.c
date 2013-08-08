@@ -102,11 +102,17 @@ PUBLIC int read_ext2_super_block(int dev)
     }
     DEB(printl("Allocated block group descriptors memory: 0x%x, size: %d bytes\n", pext2sb->sb_bgdescs, bgdesc_blocks * block_size));
 
-    rw_ext2_blocks(DEV_READ, dev, bgdesc_offset, bgdesc_blocks, pext2sb->sb_bgdescs);
+    int i;
+    ext2_buffer_t * pb = NULL;
+    for (i = 0; i < bgdesc_blocks; i++) {
+        if ((pb = ext2_get_buffer(dev, bgdesc_offset + i)) == NULL) return err_code;
+        memcpy((void *)((int)pext2sb->sb_bgdescs + block_size * i), pb->b_data, block_size);
+        ext2_put_buffer(pb);
+    }
 
+//#define EXT2_BGDESCRIPTORS_DEBUG
 #ifdef EXT2_BGDESCRIPTORS_DEBUG
     printl("Block group descriptors:\n");
-    int i;
     for(i = 0; i < nr_groups; i++)
     {
         printl("  Block group #%d\n", i);
@@ -233,6 +239,25 @@ PUBLIC int ext2_readsuper(MESSAGE * p)
 	p->RET_FILESIZE = pin->i_size;
 	p->RET_MODE = pin->i_mode;
     
+    return 0;
+}
+
+PUBLIC int ext2_update_group_desc(ext2_superblock_t * psb, int desc)
+{
+    int block_size = psb->sb_block_size;
+
+    int bgdesc_offset = 1024 / block_size + 1; 
+    int i = (&psb->sb_bgdescs[desc] - &psb->sb_bgdescs[0]) / block_size;
+    bgdesc_offset += i;
+
+    ext2_buffer_t * pb = NULL;
+    if ((pb = ext2_get_buffer(psb->sb_dev, bgdesc_offset)) == NULL) return err_code;
+
+    memcpy(pb->b_data, (void *)((int)psb->sb_bgdescs + block_size * i), block_size);
+    pb->b_dirt = 1;
+    pb->b_flags |= EXT2_BUFFER_WRITE_IMME;
+    ext2_put_buffer(pb);
+
     return 0;
 }
 

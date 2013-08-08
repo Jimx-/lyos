@@ -26,7 +26,7 @@
 extern struct list_head ext2_superblock_table;
 
 /* buffer */
-#define EXT2FSBUF_SIZE 0x100000
+#define EXT2FSBUF_SIZE 1024
 extern u8 * ext2fsbuf;
 EXTERN u8 _ext2fsbuf[EXT2FSBUF_SIZE];
 
@@ -40,4 +40,11 @@ EXTERN struct proc * ext2_pcaller;
 /* inode hash table */
 EXTERN struct list_head ext2_inode_table[EXT2_INODE_HASH_SIZE];
 
-#endif 
+/* buffer cache */
+#define MAX_BUFFERS              40
+#define EXT2_BUFFER_HASH_SIZE    10
+EXTERN struct list_head ext2_buffer_cache[EXT2_BUFFER_HASH_SIZE];
+extern struct list_head ext2_buffer_freelist, * ext2_buffer_freelist_tail;
+
+#endif
+

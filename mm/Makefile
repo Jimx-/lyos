@@ -2,7 +2,6 @@
 # Makefile for the Lyos memory manager.
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)-mm.o \
 			main.o forkexit.o exec.o memory.o signal.o alloc.o

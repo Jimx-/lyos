@@ -45,20 +45,20 @@ HD		= lyos-disk.img
 
 # Programs, flags, etc.
 ASM		= nasm
-DASM		= objdump
+DASM	= objdump
 HOSTCC	= gcc
 HOSTLD	= ld
 CC		= $(SUBARCH)-pc-lyos-gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g
 LD		= $(SUBARCH)-pc-lyos-ld
 ASMBFLAGS	= -I $(ARCHDIR)/boot/include/
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -T $(LDSCRIPT) -Map System.map 
 DASMFLAGS	= -D
 ARFLAGS		= rcs
 
-export ASM CC LD
+export ASM CC LD CFLAGS
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
@@ -83,6 +83,12 @@ COLORGREEN	= \033[1;32m
 COLORYELLOW	= \033[1;33m
 COLORBLUE	= \033[1;34m
 
+# Import configuration
+ifeq ($(wildcard .config),) 
+else
+	include .config
+endif
+
 # All Phony Targets
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
 
@@ -98,7 +104,7 @@ all : realclean everything image lib cmd
 genconf:
 	@echo -e '$(COLORGREEN)Generating compile.h...$(COLORDEFAULT)'
 	@echo -e '\tGEN\tcompile.h'
-	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC))
+	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC) $(CONFIG_LOCALVERSION))
 
 CONFIGIN = $(SRCDIR)/config.in
 CONF = $(SRCDIR)/scripts/config/conf

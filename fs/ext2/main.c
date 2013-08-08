@@ -83,6 +83,8 @@ PUBLIC void task_ext2_fs()
 		case FS_LOOKUP:
 			m.RET_RETVAL = ext2_lookup(&m);
             break;
+		case FS_PUTINODE:
+			break;
         case FS_MOUNTPOINT:
             m.RET_RETVAL = ext2_mountpoint(&m);
             break;
@@ -143,22 +145,15 @@ PUBLIC void task_ext2_fs()
 			m.type = FSREQ_RET;
 			send_recv(SEND, src, &m);
 		}
+
+        ext2_sync_buffers();
 	}
 }
 
 PUBLIC void init_ext2fs()
 {
 	ext2_init_inode();
-}
-
-PUBLIC void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count, void * buf)
-{
-	if (!block_nr) return;
-
-	ext2_superblock_t * psb = get_ext2_super_block(dev);
-	unsigned long block_size = psb->sb_block_size;
-
-	rw_sector(rw_flag, dev, block_size * block_nr, block_size * block_count, getpid(), buf);
+    ext2_init_buffer_cache();
 }
 
 PRIVATE int ext2_mountpoint(MESSAGE * p)

@@ -113,7 +113,7 @@ PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, 
 
 		if (strcmp(component, "..") == 0) {
 			int r;
-			if ((r = forbidden(pin, X_BIT)) != 0) {
+			if ((r = ext2_forbidden(pin, X_BIT)) != 0) {
 				put_ext2_inode(pin);
 				return r;
 			}
@@ -251,7 +251,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 		mode_t bits = (flag == SD_LOOK_UP ? X_BIT : W_BIT | X_BIT);
 		if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
 			if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
-			else if (check_perm) ret = forbidden(dir_pin, bits);
+			else if (check_perm) ret = ext2_forbidden(dir_pin, bits);
 		}
 	}
 
@@ -269,15 +269,15 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 			pos = dir_pin->i_last_dpos;
 	}
 
-
+    ext2_buffer_t * pb = NULL;
 	for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
-		b = read_map(dir_pin, pos);
+		b = ext2_read_map(dir_pin, pos);
 
-		rw_ext2_blocks(DEV_READ, dir_pin->i_dev, b, 1, ext2fsbuf);
+        if ((pb = ext2_get_buffer(dir_pin->i_dev, b)) == NULL) return err_code;
 		prev_pde = NULL;
 
-		for (pde = (ext2_dir_entry_t*)ext2fsbuf;
-				((char *)pde - (char*)ext2fsbuf) < dir_pin->i_sb->sb_block_size;
+		for (pde = (ext2_dir_entry_t*)pb->b_data;
+				((char *)pde - (char*)pb->b_data) < dir_pin->i_sb->sb_block_size;
 				pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len) ) {
 
 			if (flag != SD_MAKE && pde->d_inode != (ino_t)0) {
@@ -317,7 +317,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 				} else {
 					*num = (ino_t)pde->d_inode;
 				}
-				rw_ext2_blocks(DEV_WRITE, dir_pin->i_dev, b, 1, ext2fsbuf);
+                ext2_put_buffer(pb);
 				return ret;
 			}
 	
@@ -345,7 +345,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 			prev_pde = pde;
 		}
 		if (hit) break;
-		rw_ext2_blocks(DEV_WRITE, dir_pin->i_dev, b, 1, ext2fsbuf);
+        ext2_put_buffer(pb);
 	}
 
 	/* the whole directory has been searched */
@@ -356,5 +356,31 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 	dir_pin->i_last_dpos = pos;
   	dir_pin->i_last_dentry_size = required_space;
 
-  	return 0;
+    int extended = 0;
+    if (!hit) {
+        new_slots++;
+        /* no free block, create one */
+        pb = ext2_new_block(dir_pin, dir_pin->i_size);
+        if (!pb) return err_code;
+
+        pde = (ext2_dir_entry_t*)pb->b_data;
+        pde->d_rec_len = dir_pin->i_sb->sb_block_size;
+        extended = 1;
+    }
+
+    pde->d_name_len = strlen(string);
+    int i;
+    for (i = 0; i < pde->d_name_len && string[i]; i++) pde->d_name[i] = string[i];
+    pde->d_inode = *num;
+
+    pb->b_dirt = 1;
+    ext2_put_buffer(pb);
+    dir_pin->i_update |= CTIME | MTIME;	
+    dir_pin->i_dirt = 1;
+
+    if (new_slots == 1) {
+	    dir_pin->i_size += (off_t) (pde->d_rec_len);
+	    if (extended) ext2_rw_inode(dir_pin, DEV_WRITE);
+    }
+    return 0;
 }

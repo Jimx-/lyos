@@ -1,6 +1,8 @@
 #ifndef _EXT2_FS_H_
 #define _EXT2_FS_H_
 
+#include "buffer.h"
+
 #define EXT2FS_MAGIC 0xEF53
 
 #define EXT2_SUPERBLOCK_SIZE	1024
@@ -83,6 +85,7 @@ struct ext2_superblock {
 	u32 sb_blocksize_bits;
 	u8	sb_is_root;
 	u8  sb_readonly;
+    u8  sb_bgd_dirty;
 } __attribute__ ((packed));
 
 typedef struct ext2_superblock ext2_superblock_t;
@@ -273,18 +276,20 @@ typedef struct ext2_dir_entry ext2_dir_entry_t;
 #define CTIME            004    /* set if ctime field needs updating */
 #define MTIME            010    /* set if mtime field needs updating */
 
+#define EXT2_BUFFER_WRITE_IMME  0x01    /* write the buffer immediately back to the disk */
+
 PUBLIC int read_ext2_super_block(int dev);
 PUBLIC int write_ext2_super_block(int dev);
 PUBLIC ext2_superblock_t * get_ext2_super_block(int dev);
-PUBLIC void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count, void * buf);
 PUBLIC ext2_bgdescriptor_t * get_ext2_group_desc(ext2_superblock_t * psb, unsigned int desc_num);
 
 PUBLIC void ext2_init_inode();
 PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num);
 PUBLIC ext2_inode_t * find_ext2_inode(dev_t dev, ino_t num);
 PUBLIC void put_ext2_inode(ext2_inode_t * pin);
+PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag);
 
-PUBLIC int forbidden(ext2_inode_t * pin, int access);
+PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access);
 
 PUBLIC int ext2_lookup(MESSAGE * p);
 PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, int flags, ext2_inode_t ** result, size_t * offsetp);
@@ -293,5 +298,17 @@ PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_
 PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1], ino_t *num, 
 								int flag, int check_perm, int ftype);
 
-PUBLIC block_t read_map(ext2_inode_t * pin, off_t position);
+PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position);
+
+PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block);
+PUBLIC void ext2_put_buffer(ext2_buffer_t * pb);
+PUBLIC void ext2_sync_buffers();
+PUBLIC int ext2_update_group_desc(ext2_superblock_t * psb, int desc);
+PUBLIC void ext2_init_buffer_cache();
+PUBLIC int ext2_readsuper(MESSAGE * p);
+
+PUBLIC ext2_buffer_t * ext2_new_block(ext2_inode_t * pin, off_t position);
+PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin);
+PUBLIC int ext2_setbit(bitchunk_t * bitmap, int max_bits, off_t startp);
 #endif
+

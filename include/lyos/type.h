@@ -32,6 +32,7 @@ typedef unsigned int        __dev_t;
 typedef unsigned int        block_t;
 
 typedef int 				endpoint_t;
+typedef u32					bitchunk_t;
 
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();

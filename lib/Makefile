@@ -4,7 +4,6 @@
 
 AR		= ar
 ASMKFLAGS	= -I ../include/ -f elf
-CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ARFLAGS		= rcs
 
 LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \

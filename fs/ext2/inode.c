@@ -124,6 +124,11 @@ PRIVATE void update_times(ext2_inode_t * pin)
     pin->i_update = 0;
 }
 
+PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag)
+{
+    return rw_inode(inode, rw_flag);
+}
+
 PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
 {
     dev_t dev = inode->i_dev;
@@ -139,17 +144,20 @@ PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
 
     block_t block_nr = (block_t) bgdesc->inode_table + (offset >> psb->sb_blocksize_bits);
     /* read the inode table */
-    rw_ext2_blocks(DEV_READ, dev, block_nr, 1, ext2fsbuf);
+    ext2_buffer_t * pb = ext2_get_buffer(dev, block_nr);
+    if (!pb) return err_code;
 
     if (rw_flag == DEV_READ) {
-        memcpy(inode, (void*)(ext2fsbuf + offset), EXT2_INODE_SIZE(psb));
-        return 0;
+        memcpy(inode, (void*)(pb->b_data + offset), EXT2_INODE_SIZE(psb));
     } else if (rw_flag == DEV_WRITE) {
         if (inode->i_update) update_times(inode);
-        memcpy((void*)(ext2fsbuf + offset), inode, EXT2_INODE_SIZE(psb));
+        memcpy((void*)(pb->b_data + offset), inode, EXT2_INODE_SIZE(psb));
+        pb->b_dirt = 1;
         /* write back to the device */
-        rw_ext2_blocks(DEV_WRITE, dev, block_nr, 1, ext2fsbuf);
     } else return EINVAL;
+
+    ext2_put_buffer(pb);
 
     return 0;
 }
+

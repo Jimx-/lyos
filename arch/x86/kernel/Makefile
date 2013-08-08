@@ -1,5 +1,4 @@
 ASMKFLAGS	=  -I $(INCDIR)/ -I $(ARCHINC)/ -f elf
-CFLAGS		= -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 
 KERNELOBJS	= kernel.o kliba.o reboot.o i8259.o start.o protect.o
 

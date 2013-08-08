@@ -2,7 +2,6 @@
 CC	= arm-elf-gcc
 LD	= arm-elf-ld
 
-CFLAGS	= -O2 -g
 ASMFLAGS= -O2 -g
 MAKEFLAGS = --no-print-directory
 

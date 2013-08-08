@@ -31,6 +31,7 @@
 #include "sys/wait.h"
 #include "sys/utsname.h"
 #include "lyos/compile.h"
+#include "errno.h"
 #include "multiboot.h"
 
 #define LYOS_BANNER "Lyos version "UTS_VERSION" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"
@@ -309,9 +310,10 @@ void Init()
  *======================================================================*/
 void TestA()
 {
-	for(;;);
 	int fd;
-	const char filename[] = "abc";
+	const char filename[] = "/bin/ar";
+	fd=open(filename, O_RDWR);
+	for(;;);
 	const char bufw[] = "def";
 	char bufr[3];
 	int n;

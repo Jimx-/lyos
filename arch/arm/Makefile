@@ -2,7 +2,6 @@
 CC	= arm-elf-gcc
 LD	= arm-elf-ld
 
-CFLAGS	= -O2 -g
 ASMFLAGS	= -O2 -g
 LDFLAGS	= -Tboot/boot.lds -Ttext 30000000 
 MAKEFLAGS = --no-print-directory

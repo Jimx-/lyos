@@ -17,6 +17,7 @@
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
+#include "stddef.h"
 #include "protect.h"
 #include "lyos/const.h"
 #include "string.h"
@@ -91,14 +92,14 @@ PUBLIC void init_arch()
                         priv	= PRIVILEGE_TASK;
                         rpl     = RPL_TASK;
                         eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
-			prio    = 15;
+			            prio    = 15;
                 }
                 else {                  /* USER PROC */
                         t	= user_proc_table + (i - NR_TASKS);
                         priv	= PRIVILEGE_USER;
                         rpl     = RPL_USER;
                         eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
-			prio    = 5;
+			            prio    = 5;
                 }
 
 		strcpy(p->name, t->name);	/* name of the process */
@@ -153,8 +154,11 @@ PUBLIC void init_arch()
 		p->q_sending = 0;
 		p->next_sending = 0;
 
-		p->pwd = root_inode;
-		p->root = root_inode;
+        p->uid = 0;
+        p->gid = 0;
+
+		p->pwd = NULL;
+		p->root = NULL;
 
 		for (j = 0; j < NR_FILES; j++)
 			p->filp[j] = 0;
