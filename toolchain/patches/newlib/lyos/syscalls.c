@@ -6,9 +6,13 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "const.h"
 #include "proc.h"
+
+/* compiler memory barrier */
+#define cmb() __asm__ __volatile__ ("" ::: "memory")
 
 /* sendrec */
 /* see arch/x86/lib/syscall.asm */
@@ -244,7 +248,7 @@ int lseek(int fd, int offset, int whence)
 
 int open(const char *pathname, int flags, ...)
 {
-	MESSAGE msg;
+	volatile MESSAGE msg;
 
 	msg.type	= OPEN;
 
@@ -252,6 +256,8 @@ int open(const char *pathname, int flags, ...)
 	msg.FLAGS	= flags;
 	msg.NAME_LEN	= strlen(pathname);
 
+	cmb();
+	
 	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
