@@ -120,7 +120,9 @@ PUBLIC void put_ext2_inode(ext2_inode_t * pin)
 
 PRIVATE void update_times(ext2_inode_t * pin)
 {
-    /* TODO: update times */
+    if (pin->i_update & CTIME) pin->i_ctime = now();
+    if (pin->i_update & MTIME) pin->i_mtime = now();
+    if (pin->i_update & ATIME) pin->i_atime = now();
     pin->i_update = 0;
 }
 

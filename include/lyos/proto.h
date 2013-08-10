@@ -229,6 +229,7 @@ PUBLIC int 	do_alarm();
 
 /* lib/misc.c */
 PUBLIC void 	spin(char * func_name);
+PUBLIC u32      now();
 
 /* proc.c */
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);

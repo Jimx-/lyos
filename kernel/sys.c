@@ -134,12 +134,6 @@ PUBLIC int do_setsid()
 	return -ENOSYS;
 }
 
-PUBLIC int do_uname(int src, struct utsname * name)
-{
-	phys_copy(va2la(src, name), &thisname, SIZE_UTSNAME);
-	return 0;
-}
-
 PUBLIC int do_umask()
 {
 	return -ENOSYS;

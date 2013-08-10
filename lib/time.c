@@ -13,11 +13,18 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "compile.h"
+#include <lyos/type.h>
+#include <lyos/const.h>
+#include <lyos/ipc.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
 
-#if (ARCH == x86)
-#define HAVE_ARCH_MEMCPY
-#define HAVE_ARCH_MEMSET
-#define HAVE_ARCH_STRCPY
-#define HAVE_ARCH_STRLEN
-#endif
+PUBLIC u32 now()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    return tv.tv_sec;
+}
+

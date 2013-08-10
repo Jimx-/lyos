@@ -27,9 +27,14 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "lyos/time.h"
+#include "sys/utsname.h"
+#include <sys/time.h>
 
 PRIVATE int read_register(char reg_addr);
 PRIVATE u32 get_rtc_time(struct time *t);
+PRIVATE u32 secs_of_years(int years);
+PRIVATE u32 secs_of_months(int months, int year);
+PRIVATE u32 do_gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #define  BCD_TO_DEC(x)      ( (x >> 4) * 10 + (x & 0x0f) )
 
@@ -44,6 +49,7 @@ PUBLIC void task_sys()
 {
 	MESSAGE msg;
 	struct time t;
+	struct timeval tv;
 
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
@@ -69,8 +75,15 @@ PUBLIC void task_sys()
 			break;
 		case UNAME:
 			msg.type = SYSCALL_RET;
-			//struct utsname * name;
-			msg.RETVAL = do_uname(src, msg.BUF);
+			phys_copy(va2la(src, msg.BUF), va2la(TASK_SYS, &thisname), SIZE_UTSNAME);
+			send_recv(SEND, src, &msg);
+			break;
+		case GET_TIME_OF_DAY:
+			msg.type = SYSCALL_RET;
+			msg.RETVAL = do_gettimeofday(&tv, NULL);
+			phys_copy(va2la(src, msg.BUF),
+				  va2la(TASK_SYS, &tv),
+				  sizeof(tv));
 			send_recv(SEND, src, &msg);
 			break;
 		default:
@@ -128,6 +141,76 @@ PRIVATE int read_register(char reg_addr)
 {
 	out_byte(CLK_ELE, reg_addr);
 	return in_byte(CLK_IO);
+}
+
+PRIVATE u32 secs_of_years(int years) {
+	u32 days = 0;
+	while (years > 1969) {
+		days += 365;
+		if (years % 4 == 0) {
+			if (years % 100 == 0) {
+				if (years % 400 == 0) {
+					days++;
+				}
+			} else {
+				days++;
+			}
+		}
+		years--;
+	}
+	return days * 86400;
+}
+
+PRIVATE u32 secs_of_months(int months, int year) {
+	u32 days = 0;
+	switch(months) {
+		case 11:
+			days += 30;
+		case 10:
+			days += 31;
+		case 9:
+			days += 30;
+		case 8:
+			days += 31;
+		case 7:
+			days += 31;
+		case 6:
+			days += 30;
+		case 5:
+			days += 31;
+		case 4:
+			days += 30;
+		case 3:
+			days += 31;
+		case 2:
+			days += 28;
+			if ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0))) {
+				days++;
+			}
+		case 1:
+			days += 31;
+		default:
+			break;
+	}
+	return days * 86400;
+}
+
+PRIVATE u32 do_gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+	struct time t;
+	int ret;
+	if ((ret = get_rtc_time(&t)) != 0) return ret;
+
+	u32 time = secs_of_years(t.year - 1) + 
+					secs_of_months(t.month - 1, t.year) +
+					(t.day - 1) * 86400 +
+					t.hour * 3600 +
+					t.minute * 60 +
+					t.second;
+
+	tv->tv_sec = time;
+	tv->tv_usec = 0;
+	return 0;
 }
 
 

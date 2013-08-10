@@ -1,10 +1,12 @@
 #include "type.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <utime.h>
 #include <sys/fcntl.h>
 #include <sys/times.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/utsname.h>
 #include <stdio.h>
 #include <assert.h>
 
@@ -111,9 +113,11 @@ int execvp(const char *file, char * argv[])
 
 int getpid()
 {
-	volatile MESSAGE msg;
+	MESSAGE msg;
 	msg.type	= GET_PID;
     
+    cmb();
+
 	send_recv(BOTH, TASK_SYS, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
@@ -248,7 +252,7 @@ int lseek(int fd, int offset, int whence)
 
 int open(const char *pathname, int flags, ...)
 {
-	volatile MESSAGE msg;
+	MESSAGE msg;
 
 	msg.type	= OPEN;
 
@@ -359,8 +363,17 @@ caddr_t sbrk(int nbytes){
 	return (caddr_t)0;
 }
 
-int gettimeofday(struct  timeval*tv,void *tz )
+int gettimeofday(struct timeval* tv, void *tz)
 {
-	return 0;
+	MESSAGE msg;
+
+	msg.type = GET_TIME_OF_DAY;
+	msg.BUF  = (void*)tv;
+
+	cmb();
+
+	send_recv(BOTH, TASK_SYS, &msg);
+	
+	return msg.RETVAL;
 }
 
