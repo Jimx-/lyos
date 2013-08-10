@@ -24,4 +24,3 @@ umount $MOUNT_POINT
 kpartx -d /dev/mapper/hda
 dmsetup remove hda
 losetup -d /dev/$LOOP_DEVICE
-
