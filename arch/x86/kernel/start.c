@@ -28,9 +28,11 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "multiboot.h"
+#include "page.h"
 
 int get_kernel_map(unsigned int * b, unsigned int * l);
 
+extern char _end[];
 
 /*======================================================================*
                             cstart
@@ -68,6 +70,17 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	int minor = dev_no[2] + 1;
 	ROOT_DEV = MAKE_DEV(major, minor);
+
+	memory_size = 0;
+
+	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
+	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
+		memory_size += mmap->len;
+		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
+	}
+
+	initial_pgd = ((int)*(&_end) + 0x1000) & 0xfffff000;	/* 4k align */
+	setup_paging(memory_size, initial_pgd);
 }
 
 PUBLIC void init_arch()

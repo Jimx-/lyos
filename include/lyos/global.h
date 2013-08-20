@@ -21,6 +21,7 @@
 
 #if(ARCH == x86)
 #include "protect.h"
+#include "page.h"
 #endif
 
 EXTERN	int	jiffies;
@@ -34,6 +35,7 @@ EXTERN	u8			idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct gate		idt[IDT_SIZE];
 
 EXTERN	u32	k_reenter;
+EXTERN  pde_t *     initial_pgd;
 #endif
 
 EXTERN	int	current_console;
@@ -73,7 +75,7 @@ EXTERN	MESSAGE			mm_msg;
 EXTERN  u8              _mmbuf[MMBUF_SIZE];
 extern	u8 *			mmbuf;
 
-EXTERN	int			        memory_size;
+EXTERN	unsigned int        memory_size;
 EXTERN  int                 kernel_file;
 EXTERN	unsigned char *		kernel_addr;
 EXTERN	unsigned char *		buffer_base;

@@ -35,7 +35,7 @@ PRIVATE int free_mem_size;
 PRIVATE int paging_pages;
 PRIVATE unsigned long * kernel_page_descs;
 
-extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[];
+extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 
 PUBLIC void do_fork_test();
 
@@ -139,7 +139,6 @@ PUBLIC void task_mm()
  *****************************************************************************/
 PRIVATE void init_mm()
 {	
-	memory_size = 0;
 	int usable_memsize = 0;
 	int reserved_memsize = 0;
 	if (!(mb_flags & (1 << 6))) panic("Memory map not present!");
@@ -155,7 +154,6 @@ PRIVATE void init_mm()
 		printl("  [mem %08x%08x-%08x%08x] %s\n", base_h, base_l, last_h, last_l, 
 			(mmap->type == MULTIBOOT_MEMORY_AVAILABLE) ? "usable" : "reserved");
 
-		memory_size += mmap->len;
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) 
 			usable_memsize += mmap->len;
 		else 
@@ -178,6 +176,7 @@ PRIVATE void init_mm()
 	printl("  .data: 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss:  0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
 
+	printl("Initial page directory at 0x%x\n", initial_pgd);
 	/* int page_tbl_size = memory_size / 1024;
 	buffer_base = (int)PAGE_TBL_BASE + page_tbl_size + (1024 * 1024);
 	buffer_length = (2 * 1024 * 1024);

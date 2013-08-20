@@ -1,0 +1,60 @@
+/*  This file is part of Lyos.
+
+    Lyos is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Lyos is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+
+#include "lyos/type.h"
+#include "page.h"
+
+PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd)
+{
+    pte_t * page_table_start = (pte_t*)(((int)pgd + PGD_SIZE) & 0xfffff000);
+    int nr_page_tables = memory_size / 0x400000 + 1;
+
+    /* initialize page directory */
+    int i, pt = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
+    for (i = 0; i < nr_page_tables; i++, pt += PT_SIZE) {
+        pgd[i] = pt;
+    }
+
+    /* identity paging */
+    int nr_pages = nr_page_tables * 1024;
+    int page = PG_PRESENT | PG_RW | PG_USER;
+
+    for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
+        page_table_start[i] = page;
+    }
+
+    switch_address_space(pgd);
+    enable_paging();
+}
+
+PUBLIC void switch_address_space(pde_t * pgd) {
+    asm volatile ("mov %0, %%cr3":: "r"(pgd));
+}
+
+PUBLIC void enable_paging()
+{
+    int cr0;
+    asm volatile ("mov %%cr0, %0": "=r"(cr0));
+    cr0 |= I386_CR0_PG;
+    asm volatile ("mov %0, %%cr0":: "r"(cr0));
+}
+
+PUBLIC void disable_paging()
+{
+    int cr0;
+    asm volatile ("mov %%cr0, %0": "=r"(cr0));
+    cr0 &= ~I386_CR0_PG;
+    asm volatile ("mov %0, %%cr0":: "r"(cr0));
+}
