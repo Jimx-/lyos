@@ -35,20 +35,22 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd)
         page_table_start[i] = page;
     }
 
+    /* map 0xF0000000 ~ 0xF1000000 to 0x00000000 ~ 0x01000000 */
+    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
+        pgd[i] = pgd[i - KERNEL_VMA / 0x400000];
+    }
+
+    /* unmap first 16M */
+    //for (i = 0; i < 4; i++) {
+    //    pgd[i] = 0;
+    //}
+
+    /* switch to the new page directory */
     switch_address_space(pgd);
-    enable_paging();
 }
 
 PUBLIC void switch_address_space(pde_t * pgd) {
     asm volatile ("mov %0, %%cr3":: "r"(pgd));
-}
-
-PUBLIC void enable_paging()
-{
-    int cr0;
-    asm volatile ("mov %%cr0, %0": "=r"(cr0));
-    cr0 |= I386_CR0_PG;
-    asm volatile ("mov %0, %%cr0":: "r"(cr0));
 }
 
 PUBLIC void disable_paging()

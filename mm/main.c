@@ -29,6 +29,7 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "multiboot.h"
+#include "page.h"
 #include <elf.h>
 
 PRIVATE int free_mem_size;
@@ -144,7 +145,7 @@ PRIVATE void init_mm()
 	if (!(mb_flags & (1 << 6))) panic("Memory map not present!");
 	printl("BIOS-provided physical RAM map:\n");
 	printl("Memory map located at: 0x%x\n", mb_mmap_addr);
-	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
+	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)(mb_mmap_addr);
 	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
 		u64 last_byte = mmap->addr + mmap->len;
 		u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000) >> 32),
@@ -171,24 +172,12 @@ PRIVATE void init_mm()
 						usable_memsize / 1024, memory_size / 1024,
 						text_len / 1024, (data_len + bss_len) / 1024,
 						reserved_memsize / 1024);
-	printl("Kernel memory layout:\n");
+	printl("Virtual kernel memory layout:\n");
 	printl("  .text: 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
 	printl("  .data: 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss:  0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
 
-	printl("Initial page directory at 0x%x\n", initial_pgd);
-	/* int page_tbl_size = memory_size / 1024;
-	buffer_base = (int)PAGE_TBL_BASE + page_tbl_size + (1024 * 1024);
-	buffer_length = (2 * 1024 * 1024);
-	init_buffer();
-	
-	rd_base = buffer_base + buffer_length + (256 * 1024);
-	rd_length = 2 * 1024 * 1024;
-
-	mem_start = rd_base + rd_length + (256 * 1024); */
-	
-	buffer_base = (unsigned char *)BUFFER_BASE;
-	buffer_length = BUFFER_LENGTH;
+	printl("Initial page directory at physical address: 0x%x\n", initial_pgd);
 	
 #ifdef RAMDISK
 	rd_base = (unsigned char *)RAMDISK_BASE;

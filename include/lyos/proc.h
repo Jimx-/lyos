@@ -124,11 +124,11 @@ struct task {
  * @see global.c
  * @see global.h
  */
-#define	BUFFER_BASE		0xA00000 /* 10 MB */
+#define	BUFFER_BASE		0xF00A00000 /* 10 MB */
 #define BUFFER_LENGTH	(1 * 1024 * 1024)	/* 1 MB */
-#define RAMDISK_BASE	0xC00000 /* 12 MB */
+#define RAMDISK_BASE	0xF00C00000 /* 12 MB */
 #define RAMDISK_LENGTH	(2880 * 1024 ) /* 2.88 MB */
-#define	PROCS_BASE		0xF00000 /* 15 MB */
+#define	PROCS_BASE		0x1000000 /* 16 MB */
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
 #define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
 

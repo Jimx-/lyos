@@ -39,6 +39,24 @@ extern char _end[];
  *======================================================================*/
 PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 {
+	memory_size = 0;
+
+	mb_magic = mboot_magic;
+
+	/* grub provides physical address, we want virtual address */
+	mboot = (struct multiboot_info *)((int)mboot + KERNEL_VMA);
+	mb_mmap_addr = mboot->mmap_addr + KERNEL_VMA;
+	mb_mmap_len = mboot->mmap_length;
+
+	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
+	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
+		memory_size += mmap->len;
+		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
+	}
+
+	initial_pgd = (((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000;	/* 4k align */
+	setup_paging(memory_size, initial_pgd);
+
 	init_desc(&gdt[0], 0, 0, 0);
 	init_desc(&gdt[1], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
 	init_desc(&gdt[2], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
@@ -56,13 +74,10 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	init_prot();
 
-	mb_magic = mboot_magic;
 	mb_flags = mboot->flags;
-	mb_mmap_addr = mboot->mmap_addr;
-	mb_mmap_len = mboot->mmap_length;
 	kernel_file = (unsigned int)&(mboot->u.elf_sec);
 
-	unsigned char * dev_no = (unsigned char *)&(mboot->boot_device);
+	unsigned char * dev_no = (unsigned char *)((int)&(mboot->boot_device));
 
 	int major;
 	if (dev_no[3] == 0x80) major = DEV_HD;
@@ -70,17 +85,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	int minor = dev_no[2] + 1;
 	ROOT_DEV = MAKE_DEV(major, minor);
-
-	memory_size = 0;
-
-	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
-	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
-		memory_size += mmap->len;
-		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
-	}
-
-	initial_pgd = ((int)*(&_end) + 0x1000) & 0xfffff000;	/* 4k align */
-	setup_paging(memory_size, initial_pgd);
 }
 
 PUBLIC void init_arch()

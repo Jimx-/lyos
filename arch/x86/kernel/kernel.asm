@@ -34,14 +34,36 @@ extern	sys_call_table
 
 bits 32
 
+global pt0
 [SECTION .data]
+ALIGN 0x1000
+pgd0:
+; 0x00000000
+; pt0 here is the offset instead of the virtual address of pt0,
+; so this can cause bugs
+; TODO: initialize this in runtime or give pt0 a fixed address 
+dd 				pt0 - KERNEL_VMA + 0x007
+dd 				pt0 - KERNEL_VMA + 0x1007
+dd 				pt0 - KERNEL_VMA + 0x2007
+dd 				pt0 - KERNEL_VMA + 0x3007
+times 			956		dd 	0
+; 0xF0000000
+dd 				pt0 - KERNEL_VMA + 0x007
+dd 				pt0 - KERNEL_VMA + 0x1007
+dd 				pt0 - KERNEL_VMA + 0x2007
+dd 				pt0 - KERNEL_VMA + 0x3007
+times			1024 - 960 - 4	 	dd  0
 clock_int_msg		db	"^", 0
 
 [SECTION .bss]
+ALIGN 0x1000
+pt0:
+page_tables		resb 	4 * 4 * 1024
 StackSpace		resb	2 * 1024
 StackTop:		; stack top
 
 [section .text]	; code is here
+ALIGN 4
 
 ; Multiboot Header - We are multiboot compatible!
 MultiBootHeader:
@@ -86,12 +108,32 @@ global	hwint13
 global	hwint14
 global	hwint15
 
+start equ (_start - KERNEL_VMA)
+global start
 
 _start:
+	; setup initial page directory
+	mov ecx, 4096	; 4096 page table entries
+	mov edi, pt0 - KERNEL_VMA	; data segment: pt0 
+	xor eax, eax
+	mov eax, 0x007	; PRESENT | RW | USER
+.1:
+	stosd
+	add	eax, 4096		; 4k per page
+	loop	.1
+
+	mov eax, pgd0 - KERNEL_VMA
+	mov cr3, eax
+
+	mov	eax, cr0
+	or	eax, 80000000h
+	mov	cr0, eax
+
+	lea ecx, [paging_enabled]
+	jmp ecx				; jump!
+paging_enabled:
 	; set stack
 	mov	esp, StackTop	; stack is in section bss
-
-	mov	dword [disp_pos], 0
 
 	; Multiboot information
 	push eax          
@@ -100,6 +142,8 @@ _start:
 	call	cstart		; set GDT
 	lgdt	[gdt_ptr]	; load new GDT
 	lidt	[idt_ptr]
+
+	mov	dword [disp_pos], 0
 
 	; flush values
 	mov ax, 0x10
@@ -118,7 +162,7 @@ csinit:
 
 	jmp	kernel_main
 
-	;hlt
+	hlt
 
 
 ; interrupt and exception - hardware interrupt

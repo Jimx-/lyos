@@ -18,6 +18,7 @@ extern no_page
 
 ;This routine handle int 14(page fault)
 global page_fault
+global enable_paging
 
 page_fault:
 	xchg esp, dword	[eax]
@@ -46,3 +47,15 @@ page_fault:
 	pop dword	[ecx]
 	pop dword	[eax]
 	iret
+
+enable_paging:
+	mov	eax, cr0
+	or	eax, 80000000h
+	mov	cr0, eax
+
+	lea ecx, [paging_enabled]
+	jmp ecx				; jump!
+paging_enabled:
+	nop
+
+	ret

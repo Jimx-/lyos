@@ -48,7 +48,7 @@ ASM		= nasm
 DASM	= objdump
 HOSTCC	= gcc
 HOSTLD	= ld
-CC		= $(SUBARCH)-pc-lyos-gcc -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g
+CC		= $(SUBARCH)-pc-lyos-gcc
 LD		= $(SUBARCH)-pc-lyos-ld
 ASMBFLAGS	= -I $(ARCHDIR)/boot/include/
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
@@ -159,6 +159,9 @@ help :
 $(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC) 
 	@echo -e '\tLD\t$@'
 	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
+	@@echo -e '$(COLORGREEN)Compressing the kernel...$(COLORDEFAULT)'
+	@echo -e '\tGZIP\t$@'
+	@gzip -cfq $(LYOSKERNEL) > $(ARCHDIR)/kernel.gz
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 
 $(KRNLOBJ):
