@@ -38,22 +38,22 @@ Lyos has many standard features:
 
 COMPILATION AND INSTALLATION
 ============================
-	
+
 1. Download the source
 	- You can get the source with git: 
         
         ```git clone git://github.com/Jimx-/lyos.git lyos```
 
-	- If you download the bzip file, unpack it:
+    - If you download the bzip file, unpack it:
 
-		```tar -jxvf lyos-0.3.X.tar.bz2```
+        ```tar -jxvf lyos-0.3.X.tar.bz2```
 
 2. Setup toolchain
-	
-    - Under the lyos' root directory, run:
-    	
+
+	- Under the lyos' root directory, run:
+
         ```sudo bash ./scripts/setup-toolchain.sh```
-        
+
     - Activate the toolchain:
     
     	```source ./scripts/activate-toolchain.sh```
@@ -61,38 +61,37 @@ COMPILATION AND INSTALLATION
 
 	- Remove all the object files:
 
-		```make mrproper```
+        ```make mrproper```
 
-	- Configure Lyos(Optional):
+    - Configure Lyos(Optional):
 
-		```make config```
-		or
-		```make menuconfig```
+        ```make config```
+        or
+        ```make menuconfig```
 
-	- Build the kernel:
+    - Build the kernel:
     
-		```make```
-	
+        ```make```
+
     - When this is finished, you can find the compressed kernel ```lyos.gz``` in ``` arch/<target-arch>/```
 
 4. Create disk image
-	
-    - Create disk image:
-    	
+
+	- Create disk image:
+
         ```sudo bash scripts/setup-disk.sh```
-      
+
 5. Run Lyos
 
 	- Get Bochs Emulator at http://bochs.sourceforge.net
-		
-	- Run bochs:
+
+    - Run bochs:
     
-		```bochs```
+        ```bochs```
         
     - If you want to use qemu instead, run:
-    	
+
         ```kvm -hda lyos-disk.img``` 
-			
-            
+
 
 
