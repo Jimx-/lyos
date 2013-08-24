@@ -44,7 +44,7 @@ echo "Installing sysroot."
 cp -r $SRCDIR/sysroot/* /$MOUNT_POINT/
 
 echo "Installing kernel."
-cp -r $SRCDIR/arch/x86/kernel.bin /$MOUNT_POINT/boot/
+cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
 
 echo "Installing grub."
 grub-install --boot-directory=/$MOUNT_POINT/boot /dev/$LOOP_DEVICE

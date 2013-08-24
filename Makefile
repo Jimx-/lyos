@@ -62,7 +62,8 @@ export ASM CC LD CFLAGS
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
-LYOSKERNEL	= $(LYOSARCHDIR)/kernel.bin
+LYOSKERNEL	= $(LYOSARCHDIR)/lyos.bin
+LYOSZKERNEL = $(LYOSARCHDIR)/lyos.gz
 KRNLOBJ		= kernel/krnl.o
 LIB			= lib/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a 
@@ -75,7 +76,7 @@ OBJS		= $(KRNLOBJ) \
 			$(MMOBJ) \
 			$(DRVOBJ) 
 
-DASMOUTPUT	= kernel.bin.asm
+DASMOUTPUT	= lyos.bin.asm
 
 COLORDEFAULT= \033[0m
 COLORRED	= \033[1;31m
@@ -138,7 +139,7 @@ clean :
 
 realclean :
 	@find . -name "*.o" -exec rm -f {} \;
-	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB)
+	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL)
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
@@ -151,7 +152,7 @@ help :
 	@echo "make\t\t: build the kernel image."
 	@echo "make lib\t: build the Lyos C library."
 	@echo "make cmd\t: install the command files to the HD."
-	@echo "make disasm\t: dump the kernel into kernel.bin.asm."
+	@echo "make disasm\t: dump the kernel into lyos.bin.asm."
 	@echo "-----------------------------------------------------------------"
 	@echo "make clean\t: remove all object files but keep config files."
 	@echo "make mrproper\t: remove all object files and config file."
@@ -161,7 +162,7 @@ $(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC)
 	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
 	@@echo -e '$(COLORGREEN)Compressing the kernel...$(COLORDEFAULT)'
 	@echo -e '\tGZIP\t$@'
-	@gzip -cfq $(LYOSKERNEL) > $(ARCHDIR)/kernel.gz
+	@gzip -cfq $(LYOSKERNEL) > $(LYOSZKERNEL)
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 
 $(KRNLOBJ):

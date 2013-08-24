@@ -19,6 +19,8 @@
 #include "protect.h"
 #endif
 
+#include "page.h"
+
 struct stackframe {	
 	u32	gs;		
 	u32	fs;	
@@ -40,6 +42,12 @@ struct stackframe {
 	u32	ss;	
 };
 
+
+/* struct page_directory */
+struct page_directory {
+	pde_t * phys_addr;
+	pde_t * vir_addr;
+};
 
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
@@ -90,6 +98,7 @@ struct proc {
 	u16 gid,egid,sgid;
 	
 	//u16 used_math;
+	struct page_directory	pgd;
 
 	struct inode * pwd;			/* working directory */
 	struct inode * root;		/* root directory */

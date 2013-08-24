@@ -67,7 +67,7 @@
 			Compile and install the command files to the harddisk image.
 
 		* make disasm
-			Dump the kernel into kernel.bin.asm.
+			Dump the kernel into lyos.bin.asm.
 
 		* make mrproper
 			Remove all object files.

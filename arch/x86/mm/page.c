@@ -47,6 +47,8 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd)
 
     /* switch to the new page directory */
     switch_address_space(pgd);
+    /* reload it */
+    reload_cr3();
 }
 
 PUBLIC void switch_address_space(pde_t * pgd) {

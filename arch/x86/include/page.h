@@ -35,5 +35,6 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd);
 PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();
+PUBLIC void reload_cr3();
 
 #endif

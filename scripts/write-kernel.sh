@@ -27,7 +27,7 @@ kpartx -a /dev/mapper/hda
 mount /dev/mapper/hda1 /$MOUNT_POINT
 
 echo "Installing kernel."
-cp -r $SRCDIR/arch/x86/kernel.bin /$MOUNT_POINT/boot/
+cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
 
 umount $MOUNT_POINT
 kpartx -d /dev/mapper/hda
