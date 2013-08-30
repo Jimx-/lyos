@@ -21,6 +21,19 @@
 typedef unsigned int    pde_t;
 typedef unsigned int    pte_t;
 
+#define I386_VM_DIR_ENTRIES     1024
+
+/* struct page_directory */
+struct page_directory {
+    /* physical address of page dir */
+    pde_t * phys_addr;
+    /* virtual address of page dir */
+    pde_t * vir_addr;
+
+    /* virtual address of all page tables */
+    pte_t * vir_pts[I386_VM_DIR_ENTRIES];
+};
+
 #define PGD_SIZE    0x1000
 #define PT_SIZE     0x1000
 #define PG_SIZE     0x1000
@@ -31,7 +44,7 @@ typedef unsigned int    pte_t;
 
 #define I386_CR0_PG 0x80000000
 
-PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd);
+PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt);
 PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();

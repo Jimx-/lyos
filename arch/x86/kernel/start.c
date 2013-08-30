@@ -33,6 +33,7 @@
 int get_kernel_map(unsigned int * b, unsigned int * l);
 
 extern char _end[];
+extern pde_t pgd0;
 
 /*======================================================================*
                             cstart
@@ -54,8 +55,9 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
-	initial_pgd = (((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000;	/* 4k align */
-	setup_paging(memory_size, initial_pgd);
+	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA); 
+	pte_t * pt = (pte_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);	/* 4k align */
+	setup_paging(memory_size, initial_pgd, pt);
 
 	init_desc(&gdt[0], 0, 0, 0);
 	init_desc(&gdt[1], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);

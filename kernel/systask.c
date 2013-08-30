@@ -15,6 +15,7 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
+#include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
 #include "lyos/const.h"
@@ -29,6 +30,10 @@
 #include "lyos/time.h"
 #include "sys/utsname.h"
 #include <sys/time.h>
+
+#if CONFIG_FIRMWARE_DMI
+    #include "lyos/dmi.h"
+#endif
 
 PRIVATE int read_register(char reg_addr);
 PRIVATE u32 get_rtc_time(struct time *t);
@@ -50,6 +55,14 @@ PUBLIC void task_sys()
 	MESSAGE msg;
 	struct time t;
 	struct timeval tv;
+
+#if CONFIG_FIRMWARE_DMI
+    dmi_init();
+    printl("DMI: %s %s %s\n", 
+    	dmi_get_info(DMI_SYS_VENDOR), dmi_get_info(DMI_PRODUCT_NAME), dmi_get_info(DMI_PRODUCT_VERSION));
+    printl("DMI: BIOS: %s Ver. %s %s\n", 
+    	dmi_get_info(DMI_BIOS_VENDOR), dmi_get_info(DMI_BIOS_VERSION), dmi_get_info(DMI_BIOS_DATE));
+#endif
 
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);

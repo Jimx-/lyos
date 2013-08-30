@@ -34,7 +34,8 @@ extern	sys_call_table
 
 bits 32
 
-global pt0
+global pgd0
+
 [SECTION .data]
 ALIGN 0x1000
 pgd0:
@@ -108,9 +109,6 @@ global	hwint13
 global	hwint14
 global	hwint15
 
-start equ (_start - KERNEL_VMA)
-global start
-
 _start:
 	; setup initial page directory
 	mov ecx, 4096	; 4096 page table entries
@@ -143,7 +141,7 @@ paging_enabled:
 	lgdt	[gdt_ptr]	; load new GDT
 	lidt	[idt_ptr]
 
-	mov	dword [disp_pos], 0
+	mov	dword [disp_pos - KERNEL_VMA], 0
 
 	; flush values
 	mov ax, 0x10

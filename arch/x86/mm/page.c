@@ -16,23 +16,24 @@
 #include "lyos/type.h"
 #include "page.h"
 
-PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd)
+PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
 {
-    pte_t * page_table_start = (pte_t*)(((int)pgd + PGD_SIZE) & 0xfffff000);
+    pte_t * page_table_start = pt;
     int nr_page_tables = memory_size / 0x400000 + 1;
-
-    /* initialize page directory */
-    int i, pt = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
-    for (i = 0; i < nr_page_tables; i++, pt += PT_SIZE) {
-        pgd[i] = pt;
-    }
 
     /* identity paging */
     int nr_pages = nr_page_tables * 1024;
     int page = PG_PRESENT | PG_RW | PG_USER;
 
+    int i;
     for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
         page_table_start[i] = page;
+    }
+
+    /* initialize page directory */
+    int pde = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
+    for (i = 0; i < nr_page_tables; i++, pde += PT_SIZE) {
+        pgd[i] = pde;
     }
 
     /* map 0xF0000000 ~ 0xF1000000 to 0x00000000 ~ 0x01000000 */

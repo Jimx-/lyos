@@ -19,11 +19,13 @@ INT_VECTOR_SYS_CALL equ 0x90
 _NR_printx	    equ 0
 _NR_sendrec	    equ 1
 _NR_reboot		equ 2
+_NR_vircopy		equ 3
 
 ; 导出符号
 global	printx
 global	sendrec
 global	reboot
+global	vircopy
 
 bits 32
 [section .text]
@@ -77,3 +79,16 @@ reboot:
 
 	ret
 
+;====================================================================================
+;                          int vircopy(MESSAGE * m);
+; ====================================================================================
+vircopy:
+	push	edx		; 4 bytes
+
+	mov	eax, _NR_vircopy
+	mov	edx, [esp + 4 + 4]	; m
+	int	INT_VECTOR_SYS_CALL
+
+	pop	edx
+
+	ret

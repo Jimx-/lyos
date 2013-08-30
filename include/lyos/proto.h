@@ -209,7 +209,6 @@ PUBLIC int 	do_brk();
 PUBLIC int 	do_setpgid();
 PUBLIC int 	do_getpgrp();
 PUBLIC int	do_setsid();
-PUBLIC int	do_uname(int src, struct utsname * name);
 PUBLIC int	do_umask();
 
 /* proc.c*/
@@ -234,7 +233,8 @@ PUBLIC u32      now();
 /* proc.c */
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
 PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc);
-PUBLIC	int 	sys_reboot(int _unused1, int _unused2, int flags, struct proc* p);
+PUBLIC	int sys_reboot(int _unused1, int _unused2, int flags, struct proc* p);
+PUBLIC  int sys_vircopy(int _unused1, int _unused2, MESSAGE* m, struct proc* p);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
@@ -242,7 +242,8 @@ PUBLIC  void    sys_call();             /* int_handler */
 /* system call */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char* str);
-PUBLIC	int 	reboot(int flags);
+PUBLIC	int reboot(int flags);
+PUBLIC  int vircopy(MESSAGE * m);
 
 #define	phys_copy	memcpy
 #define	phys_set	memset

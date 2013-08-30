@@ -13,6 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#include "config/autoconf.h"
+    
 /**
  * Some sector are reserved for us (the gods of the os) to copy a tar file
  * there, which will be extracted and used by the OS.
@@ -30,3 +35,5 @@
 #define SET_LOG_SECT_SMAP_AT_STARTUP
 #define MEMSET_LOG_SECTS
 #define	NR_SECTS_FOR_LOG		NR_DEFAULT_FILE_SECTS
+
+#endif

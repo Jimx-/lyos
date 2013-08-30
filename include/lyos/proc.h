@@ -42,13 +42,6 @@ struct stackframe {
 	u32	ss;	
 };
 
-
-/* struct page_directory */
-struct page_directory {
-	pde_t * phys_addr;
-	pde_t * vir_addr;
-};
-
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
 

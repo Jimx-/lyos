@@ -168,7 +168,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	3
+#define NR_SYS_CALL	4
 
 /* ipc */
 #define SEND		1
@@ -249,6 +249,12 @@ enum msgtype {
 #define	PID			u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
+
+/* for vir_copy */
+#define SRC_PID		u.m3.m3i1
+#define SRC_ADDR	u.m3.m3p1
+#define DEST_PID	u.m3.m3i2
+#define DEST_ADDR	u.m3.m3p2
 
 #define NR_BUFFER	1285
 

@@ -146,7 +146,7 @@ void untar(const char * filename)
 			close(fd);
 			return;
 		}
-		printf("    %s (%d bytes)\n", phdr->name, phdr->size);
+		printf("    %s (%d bytes)\n", phdr->name, (int)*phdr->size);
 		while (bytes_left) {
 			int iobytes = min(chunk, bytes_left);
 			read(fd, buf,
@@ -167,7 +167,7 @@ void untar(const char * filename)
 
 	close(fd);
 
-	printf("done.]\n", i);
+	printf("done.]\n");
 }
 
 /*****************************************************************************
@@ -187,10 +187,10 @@ void shell(const char * tty_name)
 
 	char rdbuf[128];
 
-	struct utsname * name = 0;
-	uname(name);
+	struct utsname name;
+	uname(&name);
 	while (1) {
-		printf("[root@%s]$", name->nodename);
+		printf("[root@%s]$", name.nodename);
 		int r = read(fd_stdin, rdbuf, 70);
 		rdbuf[r] = 0;
 

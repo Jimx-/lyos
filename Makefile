@@ -57,8 +57,9 @@ MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -T $(LDSCRIPT) -Map System.map 
 DASMFLAGS	= -D
 ARFLAGS		= rcs
+MAKE 		= make
 
-export ASM CC LD CFLAGS
+export ASM CC LD CFLAGS HOSTCC HOSTLD
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
@@ -84,6 +85,16 @@ COLORGREEN	= \033[1;32m
 COLORYELLOW	= \033[1;33m
 COLORBLUE	= \033[1;34m
 
+CONFIGDIR = $(SRCDIR)/include/config
+CONFIGIN = $(SRCDIR)/config.in
+CONF = $(SRCDIR)/scripts/config/conf
+MCONF = $(SRCDIR)/scripts/config/mconf
+CONFIGINC = $(SRCDIR)/.config
+AUTOCONFINC = $(SRCDIR)/include/config/autoconf.h
+
+KCONFIG_AUTOHEADER = include/config/autoconf.h
+export KCONFIG_AUTOHEADER
+
 # Import configuration
 ifeq ($(wildcard .config),) 
 else
@@ -98,7 +109,7 @@ kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : genconf $(LYOSKERNEL)
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL)
 
 all : realclean everything image lib cmd
 
@@ -107,17 +118,28 @@ genconf:
 	@echo -e '\tGEN\tcompile.h'
 	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC) $(CONFIG_LOCALVERSION))
 
-CONFIGIN = $(SRCDIR)/config.in
-CONF = $(SRCDIR)/scripts/config/conf
-MCONF = $(SRCDIR)/scripts/config/mconf
+$(CONFIGINC):
+	@echo -e '$(COLORYELLOW)Using default configuration$(COLORDEFAULT)'
+	@cp $(ARCHDIR)/configs/$(SUBARCH).conf $(CONFIGINC)
 
-config:
+$(AUTOCONFINC):
+	@$(MAKE) -f Makefile silentoldconfig
+
+config: $(CONFIGIN) $(CONFIGINC)
 	@(cd scripts/config; make config)
 	$(CONF) $(CONFIGIN)
+	@$(MAKE) -f Makefile silentoldconfig
 
-menuconfig:
+menuconfig: $(CONFIGIN) $(CONFIGINC)
 	@(cd scripts/config; make menuconfig) 
 	$(MCONF) $(CONFIGIN)
+	@$(MAKE) -f Makefile silentoldconfig
+
+silentoldconfig:
+	@rm -rf $(CONFIGDIR)
+	@mkdir $(CONFIGDIR)
+	@(cd scripts/config; make config)
+	$(CONF) --silentoldconfig  $(CONFIGIN)
 
 cmd :
 	@(cd command;make install)
@@ -132,6 +154,7 @@ mrproper:
 	@rm -f $(INCLUDEDIR)/lyos/compile.h
 	@echo -e '$(COLORRED)Removing configure files...$(COLORDEFAULT)'
 	@rm -f .config .config.old
+	@rm -rf $(CONFIGDIR)
 
 clean :
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'

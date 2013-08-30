@@ -37,6 +37,7 @@ PRIVATE int paging_pages;
 PRIVATE unsigned long * kernel_page_descs;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
+extern pde_t pgd0;
 
 PUBLIC void do_fork_test();
 
@@ -178,7 +179,7 @@ PRIVATE void init_mm()
 	printl("  .bss:  0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
 
 	printl("Initial page directory at physical address: 0x%x\n", initial_pgd);
-	
+	vir_copy(TASK_MM, initial_pgd, TASK_MM, initial_pgd, 3);
 #ifdef RAMDISK
 	rd_base = (unsigned char *)RAMDISK_BASE;
 	rd_length = RAMDISK_LENGTH;

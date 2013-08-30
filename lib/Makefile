@@ -7,7 +7,7 @@ ASMKFLAGS	= -I ../include/ -f elf
 ARFLAGS		= rcs
 
 LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \
-			printl.o spin.o time.o
+			printl.o spin.o time.o vir_copy.o
 
 LIB		= liblyos.a
 

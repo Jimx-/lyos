@@ -595,7 +595,7 @@ PUBLIC void dumproc(struct proc* p)
 	out_byte(CRTC_ADDR_REG, START_ADDR_L);
 	out_byte(CRTC_DATA_REG, 0);
 
-	sprintf(info, "byte dump of proc_table[%d]:\n", p - proc_table); disp_color_str(info, text_color);
+	sprintf(info, "byte dump of proc_table[%d]:\n", (int)(p - proc_table)); disp_color_str(info, text_color);
 	for (i = 0; i < dumlen; i++) {
 		sprintf(info, "%x.", ((unsigned char *)p)[i]);
 		disp_color_str(info, text_color);

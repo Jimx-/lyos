@@ -1,0 +1,19 @@
+menuconfig FIRMWARE
+	bool "Firmware"
+	default y
+	---help---
+	  Say Y here to get to see options for various different firmware
+	  drivers. This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled;
+	  only do this if you know what you are doing.
+
+if FIRMWARE
+
+config FIRMWARE_DMI
+	bool "Desktop Management Interface support"
+	default y
+	---help---
+	  If you want to enable DMI, say Y.
+
+endif

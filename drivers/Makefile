@@ -3,7 +3,8 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
-DRVOBJS		= blk_dev/blk_dev.o chr_dev/chr_dev.o net/inet.o pci/pci.o driver.o
+DRVOBJS		= blk_dev/blk_dev.o chr_dev/chr_dev.o net/inet.o pci/pci.o \
+				firmware/firmware.o driver.o
 DRIVER		= drivers.o
 
 everything : realclean $(DRIVER)
@@ -26,6 +27,9 @@ net/inet.o:
 
 pci/pci.o:
 	@(cd pci; make)
+
+firmware/firmware.o:
+	@(cd firmware; make)
 
 driver.o: driver.c
 	@echo -e '\tCC\t$@'
