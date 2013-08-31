@@ -37,7 +37,8 @@ LIBDIR = $(SRCDIR)/lib/
 ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
-export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB
+PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
+export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB PATH
 
 LDSCRIPT = $(ARCHDIR)/kernel/lyos.ld
 
@@ -113,10 +114,9 @@ everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL)
 
 all : realclean everything image lib cmd
 
-genconf:
-	@echo -e '$(COLORGREEN)Generating compile.h...$(COLORDEFAULT)'
-	@echo -e '\tGEN\tcompile.h'
-	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC) $(CONFIG_LOCALVERSION))
+setup-toolchain:
+	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
+	@sudo sh ./scripts/setup-toolchain.sh
 
 $(CONFIGINC):
 	@echo -e '$(COLORYELLOW)Using default configuration$(COLORDEFAULT)'
@@ -124,6 +124,11 @@ $(CONFIGINC):
 
 $(AUTOCONFINC):
 	@$(MAKE) -f Makefile silentoldconfig
+
+genconf:
+	@echo -e '$(COLORGREEN)Generating compile.h...$(COLORDEFAULT)'
+	@echo -e '\tGEN\tcompile.h'
+	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC) $(CONFIG_LOCALVERSION))
 
 config: $(CONFIGIN) $(CONFIGINC)
 	@(cd scripts/config; make config)
@@ -164,7 +169,7 @@ realclean :
 	@find . -name "*.o" -exec rm -f {} \;
 	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL)
 
-writekernel:
+write-kernel:
 	@sudo bash scripts/write-kernel.sh
 
 kvm:
