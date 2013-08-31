@@ -250,6 +250,9 @@ void shell(const char * tty_name)
  *****************************************************************************/
 void Init()
 {
+	printl("\n");
+	printl(LYOS_BANNER);
+	printl("(c)Copyright Jimx 2010-2012\n\n");\
 	for(;;);
 	int fd_stdin  = open("/dev_tty0", O_RDWR);
 	assert(fd_stdin  == 0);
@@ -267,17 +270,6 @@ void Init()
 
 	char * tty_list[] = {"/dev_tty0","/dev_tty1", "/dev_tty2"};
 	printf("\n");
-	
-	/* FD Test */
-	/*MESSAGE m;
-	m.type		= DEV_READ;
-	m.DEVICE	= MINOR(1);
-	m.POSITION	= 1024;
-	m.CNT = 2048;
-	char *buffer;
-	m.BUF = buffer;
-	send_recv(BOTH, TASK_FD, &m);
-	printf("%s\n", buffer); */
 
 	int i;
 	for (i = 0; i < sizeof(tty_list) / sizeof(tty_list[0]); i++) {

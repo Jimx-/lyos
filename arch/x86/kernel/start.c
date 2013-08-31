@@ -163,6 +163,9 @@ PUBLIC void init_arch()
 		p->regs.esp	= (u32)stk;
 		p->regs.eflags	= eflags;
 
+		p->pgd.phys_addr = initial_pgd;
+		p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
+
 		p->counter = p->priority = prio;
 
 		p->state = 0;

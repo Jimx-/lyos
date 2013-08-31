@@ -49,6 +49,7 @@ struct proc {
 	u16 ldt_sel;               /* gdt selector giving ldt base and limit */
 	struct descriptor ldts[LDT_SIZE]; /* local descs for code and data */
 #endif
+	struct page_directory	pgd;
 
     int counter;                 /* remained ticks */
     int priority;
@@ -91,7 +92,6 @@ struct proc {
 	u16 gid,egid,sgid;
 	
 	//u16 used_math;
-	struct page_directory	pgd;
 
 	struct inode * pwd;			/* working directory */
 	struct inode * root;		/* root directory */

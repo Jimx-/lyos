@@ -16,6 +16,8 @@
 ; 3.75G - 4G: kernel space
 KERNEL_VMA	equ	0xF0000000
 
+P_LDT_SIZE	equ 2
+
 P_STACKBASE	equ	0
 GSREG		equ	P_STACKBASE
 FSREG		equ	GSREG		+ 4
@@ -37,7 +39,8 @@ ESPREG		equ	EFLAGSREG	+ 4
 SSREG		equ	ESPREG		+ 4
 P_STACKTOP	equ	SSREG		+ 4
 P_LDT_SEL	equ	P_STACKTOP
-P_LDT		equ	P_LDT_SEL	+ 4
+P_LDT		equ	P_LDT_SEL	+ 2
+P_PGD		equ P_LDT + 8 * P_LDT_SIZE
 
 TSS3_S_SP0	equ	4
 

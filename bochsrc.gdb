@@ -35,3 +35,4 @@ keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 
 #pci: enabled=1
 
+gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0

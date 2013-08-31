@@ -164,6 +164,15 @@ realclean :
 	@find . -name "*.o" -exec rm -f {} \;
 	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL)
 
+writekernel:
+	@sudo bash scripts/write-kernel.sh
+
+kvm:
+	@kvm lyos-disk.img
+
+debug:
+	@bochs-gdb -f bochsrc.gdb
+
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
 	@echo -e '\tDASM\t$(LYOSKERNEL)'

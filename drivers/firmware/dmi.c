@@ -163,7 +163,7 @@ PUBLIC char * dmi_get_info(int slot)
 
 PRIVATE void dmi_decode(const struct dmi_header * dh)
 {
-    int i = 0;
+    //int i = 0;
     switch (dh->type) {
         case 0: 
             /* BIOS Information */
@@ -172,7 +172,7 @@ PRIVATE void dmi_decode(const struct dmi_header * dh)
             dmi_save_info(dh, DMI_BIOS_DATE, 3);
             break;
         case 1:         
-            for (i = 0; i < 9; i++) printl("%s\n", get_dmi_string(dh, i));
+            //for (i = 0; i < 9; i++) printl("%s\n", get_dmi_string(dh, i));
             /* System Information */
             dmi_save_info(dh, DMI_SYS_VENDOR, 1);
             dmi_save_info(dh, DMI_PRODUCT_NAME, 2);
