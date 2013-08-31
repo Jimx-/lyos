@@ -47,7 +47,7 @@ COMPILATION AND INSTALLATION
 
 2. Setup toolchain
 	- Under the lyos' root directory, run:
-    ``make setup-toolchain```
+    ```make setup-toolchain```
 
 3. Compile Lyos
     - Remove all the object files:
@@ -56,8 +56,7 @@ COMPILATION AND INSTALLATION
     ```make config```
     or
     ```make menuconfig```
-    - Build the kernel:
-    ```make```
+    - Build the kernel: ```make```
 
 4. Create disk image
 	- Create disk image:
