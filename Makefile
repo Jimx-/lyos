@@ -178,6 +178,9 @@ kvm:
 debug:
 	@bochs-gdb -f bochsrc.gdb
 
+setup-disk:
+	@sudo sh scripts/setup-disk.sh
+
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
 	@echo -e '\tDASM\t$(LYOSKERNEL)'

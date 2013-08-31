@@ -47,31 +47,24 @@ COMPILATION AND INSTALLATION
 
 2. Setup toolchain
 	- Under the lyos' root directory, run:
-    ```sudo bash ./scripts/setup-toolchain.sh```
-    - Activate the toolchain:
-    ```source ./scripts/activate-toolchain.sh```
+    ``make setup-toolchain```
 
 3. Compile Lyos
     - Remove all the object files:
     ```make mrproper```
-    - Configure Lyos(Optional):
+    - Configure Lyos:
     ```make config```
     or
     ```make menuconfig```
     - Build the kernel:
     ```make```
-    - When this is finished, you can find the compressed kernel ```lyos.gz``` in ``` arch/<target-arch>/```
 
 4. Create disk image
 	- Create disk image:
-    ```sudo bash scripts/setup-disk.sh```
+    ```make setup-disk```
 
 5. Run Lyos
 	- Get Bochs Emulator at http://bochs.sourceforge.net
-    - Run bochs:
-    ```bochs```
+    - Run bochs: ```bochs```
     - If you want to use qemu instead, run:
     ```make kvm``` 
-
-
-
