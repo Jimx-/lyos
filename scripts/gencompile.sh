@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export PATH=$PWD/toolchain/local/bin:$PATH
+
 ARCH=$1
 VERSION=$2
 CC=$3

@@ -21,6 +21,9 @@
 #define PCI_CTRL     0xCF8
 #define PCI_DATA     0xCFC
 
+#define PCI_VID      0x0
+#define PCI_DID      0x2
+
 struct pci_bus{
 	u8 number;
 
@@ -38,8 +41,16 @@ struct pci_dev{
 	unsigned char irq;
 };
 
+struct pci_device {
+    int vendor;
+    int device_id;
+    char * name;
+};
+
 struct pci_driver{
 	char * name;
 };
+
+PUBLIC char * pci_dev_name(int vendor, int device_id);
 
 #endif

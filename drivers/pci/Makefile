@@ -4,14 +4,17 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 PCI		= pci.o
+PCIOBJS = main.o pci_table.o
 
 everything : realclean $(PCI)
 
 realclean :
-	@rm -f $(PCI)
+	@rm -f $(PCI) $(PCIOBJS)
 
-$(PCI): pci.c
+$(PCI): $(PCIOBJS)
+	@echo -e '\tLD\tdrivers/pci/$@'
+	@$(LD) -r -o $@ $^
+
+%.o: %.c
 	@echo -e '\tCC\tdrivers/pci/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
-
-

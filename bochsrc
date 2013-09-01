@@ -27,11 +27,10 @@ boot: disk
 # disable the mouse
 mouse: enabled=0
 
-#pci: enabled=1, chipset=i440fx
-#pcidev: vendor=0x1234, device=0x5678
+pci: enabled=1, chipset=i440fx
+pcidev: vendor=0x1234, device=0x5678
 
 # enable key mapping, using US layout as default.
 keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 
-#pci: enabled=1
 
