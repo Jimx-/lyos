@@ -252,7 +252,8 @@ void Init()
 {
 	printl("\n");
 	printl(LYOS_BANNER);
-	printl("(c)Copyright Jimx 2010-2012\n\n");\
+	printl("(c)Copyright Jimx 2010-2012\n\n");
+
 	for(;;);
 	int fd_stdin  = open("/dev_tty0", O_RDWR);
 	assert(fd_stdin  == 0);
@@ -260,6 +261,17 @@ void Init()
 	assert(fd_stdout == 1);	
 
 	printf("Init() is running ...\n");
+
+	/* fd test */
+	char buf[3];
+	MESSAGE m;
+	m.type = DEV_READ;
+	m.DEVICE = MAKE_DEV(2, 0);
+	m.BUF = &buf;
+	m.CNT = 3;
+	m.POSITION = 0;
+	send_recv(BOTH, TASK_FD, &m);
+	printl("%d\n", buf[0]);
 
 	/* extract `cmd.tar' */
 	untar("/cmd.tar");

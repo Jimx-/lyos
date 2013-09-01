@@ -29,10 +29,10 @@
 #include "lyos/fd.h"
 #include "lyos/fdreg.h"
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("Floppy driver: "); \
-		x
+						x
 #else
 #define DEB(x)
 #endif
@@ -42,10 +42,10 @@
 #define READ_STATUS() in_byte(FD_STATUS)
 #define NORMAL_DOR 0xc
 #define GEN_DOR(ena, enb, enc, end, sel) (NORMAL_DOR + \
-(ena ? 0x10 : 0) + \
-(enb ? 0x20 : 0) + \
-(enc ? 0x40 : 0) + \
-(end ? 0x80 : 0) + sel)
+											(ena ? 0x10 : 0) + \
+											(enb ? 0x20 : 0) + \
+											(enc ? 0x40 : 0) + \
+											(end ? 0x80 : 0) + sel)
 #define READY(a) ((a & STATUS_READY) > 0)
 #define FDC2CPU(a) (((a & STATUS_DIR) > 0) && READY(a))
 #define CPU2FDC(a) (((a & STATUS_DIR) == 0) && READY(a))
@@ -117,7 +117,7 @@ PUBLIC void task_fd()
 			DEB(printl("Message DEV_IOCTL received.\n"));
 			break;
 		default:
-			dump_msg("floppy driver: unknown msg", &msg);
+			dump_msg("FD: unknown msg", &msg);
 			spin("FD::main_loop (invalid msg.type)");
 			break;
 		}
@@ -209,15 +209,16 @@ PRIVATE void fd_rdwt(MESSAGE * p)
 
 	void * la = (void*)va2la(p->source, p->BUF);
 
-    	if ((start + len) > DISK_SIZE)
-    	{
-        	printl("Floppy error: out of disk size.");
-        	return;
-    	}
-    	while (drive != selected)
-    	{
-     		choose_drive(drive);
-    	}
+    if ((start + len) > DISK_SIZE)
+    {
+        printl("Floppy error: out of disk size.");
+        return;
+    }
+
+    while (drive != selected)
+    {
+     	choose_drive(drive);
+    }
 
 	while (bytes_left) {
 		int bytes = min(SECTOR_SIZE, bytes_left);
@@ -238,8 +239,8 @@ PRIVATE void fd_rdwt(MESSAGE * p)
 
 PRIVATE void readwrite(int read, unsigned long buf, unsigned long start, unsigned long len)
 {
-        do_DMA(read, buf, len);
-        do_fdc_rw(read, start);
+    do_DMA(read, buf, len);
+    do_fdc_rw(read, start);
 }
 
 #define LOW16(data) (data & 0xFF)
@@ -250,15 +251,15 @@ PRIVATE void readwrite(int read, unsigned long buf, unsigned long start, unsigne
 PRIVATE void do_DMA(int read, unsigned long buffer, unsigned long len)
 {
 	len--;
-    	out_byte(0x0a, 0x06);
+    out_byte(0x0a, 0x06);
    	out_byte(0x0c, (read ? 0x46 : 0x4a));
-    	out_byte(0x0b, (read ? 0x46 : 0x4a));
-    	out_byte(0x04, LOW16(LOW32(buffer)));
-    	out_byte(0x04, HIGH16(LOW32(buffer)));
-    	out_byte(0x81, LOW16(HIGH32(buffer)));
-    	out_byte(0x05, LOW16(len));
-    	out_byte(0x05, HIGH16(len));
-    	out_byte(0x0a, 0x02);
+    out_byte(0x0b, (read ? 0x46 : 0x4a));
+    out_byte(0x04, LOW16(LOW32(buffer)));
+    out_byte(0x04, HIGH16(LOW32(buffer)));
+   	out_byte(0x81, LOW16(HIGH32(buffer)));
+    out_byte(0x05, LOW16(len));
+    out_byte(0x05, HIGH16(len));
+    out_byte(0x0a, 0x02);
 }
 
 PRIVATE void do_fdc_rw(int read, unsigned long start)
@@ -268,17 +269,17 @@ PRIVATE void do_fdc_rw(int read, unsigned long start)
 	write_fdc_data((read?0xe6:0xc5));
 	write_fdc_data(selected + (head<<2));
 	write_fdc_data(track);
-    	write_fdc_data(head);
-    	write_fdc_data(sector);
-    	write_fdc_data(SECTOR_SIZE / 256);
-    	write_fdc_data(SPC);
-    	write_fdc_data(SECTOR_SIZE / 256 + 1);
-    	write_fdc_data(0);
-    	int i;
-    	for (i = 0; i < 7; i++)
-    	{
-        	read_fdc_data();
-    	}
+    write_fdc_data(head);
+    write_fdc_data(sector);
+    write_fdc_data(SECTOR_SIZE / 256);
+    write_fdc_data(SPC);
+    write_fdc_data(SECTOR_SIZE / 256 + 1);
+    write_fdc_data(0);
+    int i;
+    for (i = 0; i < 7; i++)
+    {
+        read_fdc_data();
+    }
 }
 
 PRIVATE void convert_sector_nr(unsigned long sectornr, unsigned long *sec, unsigned long *track, unsigned long *head)

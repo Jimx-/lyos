@@ -104,30 +104,26 @@ PUBLIC void 	task_sys();
 /*PUBLIC void	task_fs();*/
 
 /* fs/Lyos/main.c */
-PUBLIC void	task_fs();
-PUBLIC void	init_fs();
+PUBLIC void	    task_fs();
+PUBLIC void	    init_fs();
 PUBLIC void 	mount_root();
-PUBLIC int	rw_sector	(int io_type, int dev, u64 pos,
+PUBLIC int      rw_sector	(int io_type, int dev, u64 pos,
 						int bytes, int proc_nr, void * buf);
 PUBLIC struct inode *		get_inode	(int dev, int num);
-PUBLIC void	put_inode	(struct inode * pinode);
-PUBLIC void	sync_inode	(struct inode * p);
+PUBLIC void	    put_inode	(struct inode * pinode);
+PUBLIC void	    sync_inode	(struct inode * p);
 PUBLIC void 	read_super_block(int dev);
 PUBLIC struct super_block *	get_super_block	(int dev);
 
-PUBLIC void	task_lyos_fs	();
-PUBLIC int fs_fork(MESSAGE * m);
-PUBLIC int fs_exit(MESSAGE * m);
+PUBLIC void	    task_lyos_fs	();
+PUBLIC int      fs_fork(MESSAGE * m);
+PUBLIC int      fs_exit(MESSAGE * m);
 
 /* fs/Lyos/misc.c */
-PUBLIC int	do_stat(MESSAGE * p);
-PUBLIC int	strip_path	(char * filename, const char * pathname,
-			struct inode** ppinode);
-PUBLIC int	search_file(char * path);
-
-/* fs/Lyos/disklog.c */
-PUBLIC int	disklog(char * logstr); /* for debug */
-PUBLIC void	dump_fd_graph(const char * fmt, ...);
+PUBLIC int	     do_stat(MESSAGE * p);
+PUBLIC int	     strip_path	(char * filename, const char * pathname,
+			             struct inode** ppinode);
+PUBLIC int	     search_file(char * path);
 
 /* fs/ext2/main.c */
 PUBLIC void task_ext2_fs();
@@ -246,4 +242,3 @@ PUBLIC  int vircopy(MESSAGE * m);
 #define	phys_set	memset
 
 PUBLIC  int     printl(const char *fmt, ...);
-

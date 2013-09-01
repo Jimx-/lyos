@@ -9,6 +9,8 @@ megs: 32
 romimage: file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
+floppya: 1_44=a.img, status=inserted
+
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
 # !! Remember to change these if the hd img is changed:
@@ -28,7 +30,7 @@ boot: disk
 mouse: enabled=0
 
 pci: enabled=1, chipset=i440fx
-pcidev: vendor=0x1234, device=0x5678
+#pcidev: vendor=0x1234, device=0x5678
 
 # enable key mapping, using US layout as default.
 keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
