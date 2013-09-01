@@ -255,6 +255,12 @@ struct hd_info
 	struct part_info	logical[NR_SUB_PER_DRIVE];
 };
 
+/* hd request struct */
+struct hd_request {
+	MESSAGE * p;
+	int free;
+	struct hd_request * next;
+};
 
 /***************/
 /* DEFINITIONS */
@@ -264,6 +270,7 @@ struct hd_info
 #define ATA_IDENTIFY		0xEC
 #define ATA_READ		0x20
 #define ATA_WRITE		0x30
+#define NR_HD_REQUESTS	64
 /* for DEVICE register. */
 #define	MAKE_DEVICE_REG(lba,drv,lba_highest) (((lba) << 6) |		\
 					      ((drv) << 4) |		\

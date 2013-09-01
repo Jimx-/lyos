@@ -29,10 +29,8 @@
 #include "lyos/hd.h"
 #include "lyos/driver.h"
 
-#define	MAJOR_DEV	3
-#include "blk.h"
-
 PRIVATE void	init_hd				();
+PRIVATE void	add_request(MESSAGE * m);
 PRIVATE void	end_request			();
 PRIVATE void	hd_open				(MESSAGE * p);
 PRIVATE void	hd_close			(MESSAGE * p);
@@ -50,6 +48,9 @@ PRIVATE void	print_identify_info	(u16* hdinfo);
 PRIVATE	u8		hd_status;
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
 PRIVATE	struct hd_info	hd_info[1];
+
+PRIVATE struct hd_request hd_request_table[NR_HD_REQUESTS];
+PRIVATE struct hd_request * hd_current_request = NULL;
 
 /* HD device number */
 /* 
@@ -93,6 +94,8 @@ PUBLIC void task_hd()
 	//dev_driver_task(&hd_driver);	
 
 	while (1) {
+		/* handle request */
+		do_hd_request();
 		send_recv(RECEIVE, ANY, &msg);
 		DEB(printl("Receive a message from %d, type = %d\n", msg.source, msg.type));
 		int src = msg.source;
@@ -108,7 +111,7 @@ PUBLIC void task_hd()
 
 		case DEV_READ:
 		case DEV_WRITE:
-			add_request(MAJOR_DEV, &msg);
+			add_request(&msg);
 			//hd_rdwt(&msg);
 			break;
 
@@ -130,6 +133,58 @@ PUBLIC void task_hd()
 
 }
 
+/**
+ * <Ring 1> Add a request to the queue.
+ * @param m Ptr to request message.
+ */
+PRIVATE void add_request(MESSAGE * m)
+{
+	struct hd_request * req = 0;
+	struct hd_request * tmp;
+
+	/* avoid racing condition */
+	disable_int();
+
+find_slot:
+	/* reserve some room for reading requests */
+	if (m->type == DEV_READ) {
+		req = hd_request_table + NR_HD_REQUESTS;
+	} else {
+		req = hd_request_table + NR_HD_REQUESTS * 2 / 3;
+	}
+
+	while (--req > hd_request_table) {
+		if (req->free) break;
+	}
+
+	/* no free request slot found, process requests and repeat again */
+	if (req < hd_request_table) {
+		do_hd_request();
+		goto find_slot;
+	}
+
+	req->p = m;
+	req->free = 0;
+	req->next = 0;
+
+	tmp = hd_current_request;
+
+	if(!tmp){
+		hd_current_request = req;
+		/* we are safe, start processing requests */
+		enable_int();
+		//do_hd_request();
+		return;
+	}
+
+	for (;tmp->next;tmp = tmp->next){
+
+	}
+
+	tmp->next = req;
+	enable_int();
+	//do_hd_request();
+}
 
 /*****************************************************************************
  *                                do_hd_request
@@ -140,8 +195,10 @@ PUBLIC void task_hd()
  *****************************************************************************/
 PUBLIC void do_hd_request()
 {
-	if(CURRENT->p){
-		hd_rdwt(CURRENT->p);
+	if (hd_current_request) {
+		if(hd_current_request->p){
+			hd_rdwt(hd_current_request->p);
+		}
 	}
 }
 
@@ -163,8 +220,6 @@ PRIVATE void init_hd()
 	put_irq_handler(AT_WINI_IRQ, hd_handler);
 	enable_irq(CASCADE_IRQ);
 	enable_irq(AT_WINI_IRQ);
-	
-	blk_dev_table[MAJOR_DEV].rq_handle = DEVICE_REQUEST;
 
 	for (i = 0; i < (sizeof(hd_info) / sizeof(hd_info[0])); i++)
 		memset(&hd_info[i], 0, sizeof(hd_info[0]));
@@ -180,10 +235,12 @@ PRIVATE void init_hd()
  *****************************************************************************/
 PRIVATE void end_request()
 {
-	CURRENT->p = 0;
-	if ((CURRENT->next)->p){
-		CURRENT->free = 1;
-		CURRENT = CURRENT->next;
+	DEB(printl("Reply to %d.(in hd_rdwt)\n", hd_current_request->p->source));
+	send_recv(SEND, hd_current_request->p->source, hd_current_request->p);
+	hd_current_request->p = 0;
+	if ((hd_current_request->next)->p){
+		hd_current_request->free = 1;
+		hd_current_request = hd_current_request->next;
 	}
 }
 
@@ -265,12 +322,10 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 	int bytes_left = p->CNT;
 	void * la = (void*)va2la(p->PROC_NR, p->BUF);
 
-
 	while (bytes_left) {
 		int bytes = min(SECTOR_SIZE, bytes_left);
 		if (p->type == DEV_READ) {
 			interrupt_wait();
-			char * buf;
 			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 			phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
@@ -284,8 +339,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		bytes_left -= SECTOR_SIZE;
 		la += SECTOR_SIZE;
 	}
-	DEB(printl("Reply to %d.(in hd_rdwt)\n", p->source));
-	send_recv(SEND, p->source, p);
+	
 	end_request();
 	do_hd_request();
 }				
@@ -471,11 +525,9 @@ PRIVATE void hd_identify(int drive)
 	interrupt_wait();
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 
-//	print_identify_info((u16*)hdbuf);
-
 	u16* hdinfo = (u16*)hdbuf;
 	printl("hd%d: ", drive);
-        print_identify_info(hdinfo);
+    print_identify_info(hdinfo);
 
 	hd_info[drive].primary[0].base = 0;
 	/* Total Nr of User Addressable Sectors */

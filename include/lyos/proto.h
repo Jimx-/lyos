@@ -59,9 +59,6 @@ PUBLIC void 	clock_handler(int irq);
 PUBLIC void 	init_clock();
 PUBLIC void 	milli_delay(int milli_sec);
 
-/* kernel/blk_dev/rw_blk.c */
-PUBLIC void	add_request(dev_t dev, MESSAGE * m);
-
 /* kernel/blk_dev/hd.c */
 PUBLIC void 	task_hd();
 PUBLIC void 	do_hd_request();
