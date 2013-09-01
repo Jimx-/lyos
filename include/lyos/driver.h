@@ -18,13 +18,14 @@
 
 /* The entry points of a device driver */
 struct dev_driver{
+  char * dev_name;
   void (*dev_open)	(MESSAGE * p);
   void (*dev_close)	(MESSAGE * p);
-  void (*dev_rdwt)	(MESSAGE * p);
+  void (*dev_add_request) (MESSAGE * p);
+  void (*dev_do_request) ();
   void (*dev_ioctl)	(MESSAGE * p);
 };
 
 PUBLIC void dev_driver_task(struct dev_driver * dd);
 
 #endif
-

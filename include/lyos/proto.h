@@ -61,7 +61,6 @@ PUBLIC void 	milli_delay(int milli_sec);
 
 /* kernel/blk_dev/hd.c */
 PUBLIC void 	task_hd();
-PUBLIC void 	do_hd_request();
 PUBLIC void 	hd_handler(int irq);
 	
 /* kernel/blk_dev/fd.c */

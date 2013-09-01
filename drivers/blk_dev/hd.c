@@ -30,12 +30,13 @@
 #include "lyos/driver.h"
 
 PRIVATE void	init_hd				();
-PRIVATE void	add_request(MESSAGE * m);
+PRIVATE  void	add_hd_request		(MESSAGE * m);
 PRIVATE void	end_request			();
-PRIVATE void	hd_open				(MESSAGE * p);
-PRIVATE void	hd_close			(MESSAGE * p);
+PRIVATE  void	hd_open				(MESSAGE * p);
+PRIVATE  void	hd_close			(MESSAGE * p);
 PRIVATE void	hd_rdwt				(MESSAGE * p);
-PRIVATE void	hd_ioctl			(MESSAGE * p);
+PRIVATE  void	hd_ioctl			(MESSAGE * p);
+PRIVATE void 	do_hd_request		();
 PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition			(int device, int style);
@@ -73,10 +74,14 @@ PRIVATE struct hd_request * hd_current_request = NULL;
 #endif
 
 struct dev_driver hd_driver = 
-	{ hd_open,
-	  hd_close,
-	  hd_rdwt,
-	  hd_ioctl };
+{
+	"HD",
+	hd_open,
+	hd_close,
+	add_hd_request,
+	do_hd_request, 
+	hd_ioctl 
+};
 
 /*****************************************************************************
  *                                task_hd
@@ -90,11 +95,10 @@ PUBLIC void task_hd()
 	MESSAGE msg;
 
 	init_hd();
+	dev_driver_task(&hd_driver);	
 
-	//dev_driver_task(&hd_driver);	
-
+	/*
 	while (1) {
-		/* handle request */
 		do_hd_request();
 		send_recv(RECEIVE, ANY, &msg);
 		DEB(printl("Receive a message from %d, type = %d\n", msg.source, msg.type));
@@ -111,8 +115,7 @@ PUBLIC void task_hd()
 
 		case DEV_READ:
 		case DEV_WRITE:
-			add_request(&msg);
-			//hd_rdwt(&msg);
+			add_hd_request(&msg);
 			break;
 
 		case DEV_IOCTL:
@@ -129,7 +132,7 @@ PUBLIC void task_hd()
 			DEB(printl("Reply to %d.(in main loop)\n", src));
 			send_recv(SEND, src, &msg);
 		}
-	}
+	} */
 
 }
 
@@ -137,7 +140,7 @@ PUBLIC void task_hd()
  * <Ring 1> Add a request to the queue.
  * @param m Ptr to request message.
  */
-PRIVATE void add_request(MESSAGE * m)
+PRIVATE void add_hd_request(MESSAGE * m)
 {
 	struct hd_request * req = 0;
 	struct hd_request * tmp;
@@ -193,7 +196,7 @@ find_slot:
  * <Ring 1> do the hd's requests.
  *
  *****************************************************************************/
-PUBLIC void do_hd_request()
+PRIVATE void do_hd_request()
 {
 	if (hd_current_request) {
 		if(hd_current_request->p){

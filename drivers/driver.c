@@ -32,6 +32,8 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 {
 	MESSAGE msg;
 	while (1) {
+		/* handle requests */
+		(*dd->dev_do_request)();
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
 
@@ -46,7 +48,7 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 
 		case DEV_READ:
 		case DEV_WRITE:
-			(*dd->dev_rdwt)(&msg);
+			(*dd->dev_add_request)(&msg);
 			break;
 
 		case DEV_IOCTL:
@@ -54,8 +56,8 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 			break;
 
 		default:
-			dump_msg("dev_driver_task::unknown msg", &msg);
-			spin("FS::main_loop (invalid msg.type)");
+			printl("%s: unknown message type\n", dd->dev_name);
+			dump_msg("", &msg);
 			break;
 		}
 
