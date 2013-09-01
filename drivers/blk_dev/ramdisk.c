@@ -27,9 +27,6 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-#define MAJOR_DEV	1
-#include "blk.h"
-
 PRIVATE void rd_rdwt(MESSAGE * p);
 
 PUBLIC void task_rd()
@@ -68,18 +65,18 @@ PUBLIC void task_rd()
 
 PUBLIC void do_rd_request()
 {
-	if(CURRENT->p){
+	/*if(CURRENT->p){
 		rd_rdwt(CURRENT->p);
-	}
+	}*/
 }
 
 PRIVATE void end_request()
 {
-	CURRENT->p = 0;
+	/*CURRENT->p = 0;
 	if ((CURRENT->next)->p){
 		CURRENT->free = 1;
 		CURRENT = CURRENT->next;
-	}
+	}*/
 }
 
 PRIVATE void rd_rdwt(MESSAGE * p)
@@ -89,7 +86,7 @@ PRIVATE void rd_rdwt(MESSAGE * p)
 	int count = p->CNT;
 	
 	if ((char *)(addr + count) > (char *)(rd_base + rd_length)){
-		end_request(MAJOR_DEV);
+	//	end_request(MAJOR_DEV);
 	//	do_rd_request();
 	}
 	if (p->type == DEV_WRITE){
@@ -105,8 +102,6 @@ PRIVATE void rd_rdwt(MESSAGE * p)
 PUBLIC void init_rd()
 {
 	char * c;
-
-	blk_dev_table[MAJOR_DEV].rq_handle = DEVICE_REQUEST;
 
 	c = (char *)rd_base;
 

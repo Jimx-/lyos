@@ -26,9 +26,6 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-#define MAJOR_DEV	5
-#include "../blk.h"
-
 PUBLIC void task_scsi()
 {
 	MESSAGE msg;
@@ -48,7 +45,7 @@ PUBLIC void task_scsi()
 			break;
 		case DEV_READ:
 		case DEV_WRITE:
-			add_request(MAJOR_DEV, &msg);
+			//add_request(MAJOR_DEV, &msg);
 			break;
 		case DEV_IOCTL:
 			break;

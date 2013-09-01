@@ -5,7 +5,7 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 SCSIDRV		= scsi/scsi.o
-BLKDRVOBJS	= floppy.o hd.o ramdisk.o rw_blk.o $(SCSIDRV)
+BLKDRVOBJS	= floppy.o hd.o ramdisk.o $(SCSIDRV)
 BLKDRV		= blk_dev.o
 
 everything : realclean $(BLKDRV)

@@ -37,9 +37,6 @@
 #define DEB(x)
 #endif
 
-#define MAJOR_DEV	2
-#include "blk.h"
-
 #define DRV_OF_DEV(dev) (dev & 0x03)
 #define OUT_DOR(x) out_byte(FD_DOR, x)
 #define READ_STATUS() in_byte(FD_STATUS)
@@ -344,8 +341,6 @@ PUBLIC void init_fd()
 	enable_irq(FLOPPY_IRQ);
 	
 	fd_identify();
-	
-	blk_dev_table[MAJOR_DEV].rq_handle = DEVICE_REQUEST;
 }
 
 PRIVATE int read_cmos(char addr)
