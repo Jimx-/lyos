@@ -14,6 +14,8 @@ SIZE=65536
 MOUNT_POINT=/mnt/lyos-root
 LOOP_DEVICE=loop1
 
+source $SRCDIR/.config
+
 type kpartx >/dev/null 2>&1 || { echo "Trying to install kpartx..."; apt-get install kpartx; }
 
 # Create a 1GiB blank disk image.
@@ -44,7 +46,12 @@ echo "Installing sysroot."
 cp -r $SRCDIR/sysroot/* /$MOUNT_POINT/
 
 echo "Installing kernel."
-cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
+if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
+then
+	cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
+else
+	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
+fi
 
 echo "Installing grub."
 grub-install --boot-directory=/$MOUNT_POINT/boot /dev/$LOOP_DEVICE

@@ -13,6 +13,8 @@ SRCDIR=./
 MOUNT_POINT=/mnt/lyos-root
 LOOP_DEVICE=loop1
 
+source $SRCDIR/.config
+
 # Here's where we need to be root.
 losetup /dev/$LOOP_DEVICE $DISK
 
@@ -27,7 +29,12 @@ kpartx -a /dev/mapper/hda
 mount /dev/mapper/hda1 /$MOUNT_POINT
 
 echo "Installing kernel."
-cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
+if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
+then
+	cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
+else
+	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
+fi
 
 umount $MOUNT_POINT
 kpartx -d /dev/mapper/hda

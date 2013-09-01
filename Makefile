@@ -25,6 +25,12 @@ endif
 
 export SUBARCH ARCH 
 
+# Import configuration
+ifeq ($(wildcard .config),) 
+else
+	include .config
+endif
+
 KERNELVERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 export KERNELVERSION
 
@@ -65,7 +71,12 @@ export ASM CC LD CFLAGS HOSTCC HOSTLD
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
 LYOSKERNEL	= $(LYOSARCHDIR)/lyos.bin
-LYOSZKERNEL = $(LYOSARCHDIR)/lyos.gz
+
+ifeq ($(CONFIG_COMPRESS_GZIP),y)
+	ZIP = gzip
+	LYOSZKERNEL = $(LYOSARCHDIR)/lyos.gz
+endif
+
 KRNLOBJ		= kernel/krnl.o
 LIB			= lib/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a 
@@ -95,12 +106,6 @@ AUTOCONFINC = $(SRCDIR)/include/config/autoconf.h
 
 KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
-
-# Import configuration
-ifeq ($(wildcard .config),) 
-else
-	include .config
-endif
 
 # All Phony Targets
 .PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
@@ -179,7 +184,7 @@ debug:
 	@bochs-gdb -f bochsrc.gdb
 
 setup-disk:
-	@sudo sh scripts/setup-disk.sh
+	@sudo bash scripts/setup-disk.sh
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
@@ -200,9 +205,11 @@ help :
 $(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC) 
 	@echo -e '\tLD\t$@'
 	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
+ifeq ($(CONFIG_COMPRESS_GZIP),y)
 	@@echo -e '$(COLORGREEN)Compressing the kernel...$(COLORDEFAULT)'
-	@echo -e '\tGZIP\t$@'
-	@gzip -cfq $(LYOSKERNEL) > $(LYOSZKERNEL)
+	@echo -e '\tZIP\t$@'
+	@$(ZIP) -cfq $(LYOSKERNEL) > $(LYOSZKERNEL)
+endif
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 
 $(KRNLOBJ):

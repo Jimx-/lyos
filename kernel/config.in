@@ -10,4 +10,21 @@ config LOCALVERSION
 	help
 	  Append an extra string to the end of your kernel version.
 
+choice
+    prompt "Compression algorithm"
+    default COMPRESS_NONE
+    help
+      What compress algorithm will be used to compress the kernel.
+
+config COMPRESS_NONE
+        bool "None"
+        select COMPRESS_TYPE_NONE
+
+config COMPRESS_GZIP
+        bool "Gzip"
+        select COMPRESS_TYPE_GZIP
+
+endchoice
+
 endmenu
+
