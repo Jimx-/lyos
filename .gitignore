@@ -34,7 +34,7 @@ lyos
 # 
 # Library
 #
-lib/liblyos.a
+*.a
 
 #
 # Generated
