@@ -6,7 +6,7 @@ ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 SCSIDRV		= scsi/scsi.o
 BLKDRVOBJS	= floppy.o hd.o ramdisk.o $(SCSIDRV)
-BLKDRV		= blk_dev.o
+BLKDRV		= block.o
 
 everything : realclean $(BLKDRV)
 
@@ -14,11 +14,11 @@ realclean :
 	@rm -f $(BLKDRVOBJS)
 
 $(BLKDRV): $(BLKDRVOBJS)
-	@echo -e '\tLD\tdrivers/blk_dev/$@'
+	@echo -e '\tLD\tdrivers/block/$@'
 	@$(LD) -r -o $(BLKDRV) $(BLKDRVOBJS)
 
 %.o: %.c
-	@echo -e '\tCC\tdrivers/blk_dev/$@'
+	@echo -e '\tCC\tdrivers/block/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
 
 $(SCSIDRV):

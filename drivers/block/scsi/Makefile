@@ -11,7 +11,7 @@ realclean :
 	@rm -f $(SCSI)
 
 $(SCSI): scsi.c
-	@echo -e '\tCC\tdrivers/blk_dev/scsi/$@'
+	@echo -e '\tCC\tdrivers/block/scsi/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
 
 

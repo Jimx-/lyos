@@ -30,12 +30,12 @@
 #include "lyos/driver.h"
 
 PRIVATE void	init_hd				();
-PRIVATE  void	add_hd_request		(MESSAGE * m);
+PRIVATE void	add_hd_request		(MESSAGE * m);
 PRIVATE void	end_request			();
-PRIVATE  void	hd_open				(MESSAGE * p);
-PRIVATE  void	hd_close			(MESSAGE * p);
+PRIVATE void	hd_open				(MESSAGE * p);
+PRIVATE void	hd_close			(MESSAGE * p);
 PRIVATE void	hd_rdwt				(MESSAGE * p);
-PRIVATE  void	hd_ioctl			(MESSAGE * p);
+PRIVATE void	hd_ioctl			(MESSAGE * p);
 PRIVATE void 	do_hd_request		();
 PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);

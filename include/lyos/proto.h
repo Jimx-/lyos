@@ -59,27 +59,27 @@ PUBLIC void 	clock_handler(int irq);
 PUBLIC void 	init_clock();
 PUBLIC void 	milli_delay(int milli_sec);
 
-/* kernel/blk_dev/hd.c */
+/* kernel/block/hd.c */
 PUBLIC void 	task_hd();
 PUBLIC void 	hd_handler(int irq);
 	
-/* kernel/blk_dev/fd.c */
+/* kernel/block/fd.c */
 PUBLIC void 	task_fd();
 PUBLIC void 	init_fd();
 PUBLIC void 	fd_handler(int irq);
 
-/* kernel/blk_dev/rd.c */
+/* kernel/block/rd.c */
 PUBLIC void 	task_rd();
 PUBLIC void 	init_rd();
 PUBLIC void 	rd_load_image(dev_t dev, int offset);
 
-/* kernel/blk_dev/scsi/scsi.c */
+/* kernel/block/scsi/scsi.c */
 PUBLIC void 	task_scsi();
 PUBLIC void 	init_scsi();
 PUBLIC void 	scsi_handler(int irq);
 PUBLIC void 	do_scsi_request();
 
-/* kernel/blk_dev/pci/pci.c */
+/* kernel/block/pci/pci.c */
 PUBLIC void 	task_pci();
 PUBLIC void 	pci_init();
 

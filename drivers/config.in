@@ -5,7 +5,7 @@
 
 menu "Device Drivers"
 
-source "drivers/blk_dev/config.in"
+source "drivers/block/config.in"
 source "drivers/firmware/config.in"
 
 endmenu
