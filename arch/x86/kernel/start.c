@@ -192,13 +192,3 @@ PUBLIC void init_arch()
 
 	current	= proc_table;
 }
-
-PUBLIC u32 in_long(u16 port) {
-	u32 ret;
-	asm volatile ("inl %%dx, %%eax" : "=a" (ret) : "dN" (port));
-	return ret;
-}
-
-PUBLIC void out_long(u16 port, u32 value) {
-	asm volatile ("outl %%eax, %%dx" : : "dN" (port), "a" (value));
-}

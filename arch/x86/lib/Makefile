@@ -1,6 +1,6 @@
 ASMKFLAGS	= -I ../include/ -I ../include/sys/ -f elf
 
-LOBJS	= syscall.o string.o
+LOBJS		= syscall.o ioport.o
 
 X86LIB		= x86-lib.o
 
