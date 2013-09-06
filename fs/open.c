@@ -33,8 +33,22 @@
 #include "proto.h"
 #include "fcntl.h"
 
+#define DEBUG
+#ifdef DEBUG
+#define DEB(x) printl("VFS: "); x
+#else
+#define DEB(x)
+#endif
+
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
 
+PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode);
+
+/**
+ * <Ring 1> Perform the open syscall.
+ * @param  p Ptr to the message.
+ * @return   fd number if success, otherwise a negative error code.
+ */
 PUBLIC int do_open(MESSAGE * p)
 {
     int fd = -1;        /* return value */
@@ -83,6 +97,7 @@ PUBLIC int do_open(MESSAGE * p)
 
     if (flags & O_CREAT) {
         mode = I_REGULAR;
+        /* TODO: create the file */
     } else {
         pin = resolve_path(pathname, pcaller);
         printl("open file with inode_nr = %d\n", pin->i_num); 
@@ -115,6 +130,7 @@ PUBLIC int do_open(MESSAGE * p)
                     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
                     break;
                 case I_BLOCK_SPECIAL:
+                    /* TODO: handle block special file */
                     break;
                 default:
                 break;
@@ -132,4 +148,32 @@ PUBLIC int do_open(MESSAGE * p)
     }
 
     return fd;
+}
+
+/**
+ * <Ring 1> Perform the close syscall.
+ * @param  p Ptr to the message.
+ * @return   Zero if success.
+ */
+PUBLIC int do_close(MESSAGE * p)
+{
+    int fd = p->FD;
+    DEB(printl("Close file (filp[%d] of proc #%d, inode number = %d\n", fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num));
+    put_inode(pcaller->filp[fd]->fd_inode);
+    pcaller->filp[fd]->fd_inode = NULL;
+    pcaller->filp[fd] = NULL;
+
+    return 0;
+}
+
+/**
+ * <Ring 1> Create a new inode.
+ * @param  pathname Pathname.
+ * @param  flags    Open flags.
+ * @param  mode     Mode.
+ * @return          Ptr to the inode.
+ */
+PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode)
+{
+    return NULL;
 }

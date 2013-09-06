@@ -121,7 +121,7 @@ all : realclean everything image lib cmd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
-	@sudo sh ./scripts/setup-toolchain.sh
+	@./scripts/setup-toolchain.sh
 
 $(CONFIGINC):
 	@echo -e '$(COLORYELLOW)Using default configuration$(COLORDEFAULT)'
@@ -178,7 +178,7 @@ write-kernel:
 	@sudo bash scripts/write-kernel.sh
 
 kvm:
-	@kvm lyos-disk.img
+	@qemu-system-i386 lyos-disk.img
 
 debug:
 	@bochs-gdb -f bochsrc.gdb

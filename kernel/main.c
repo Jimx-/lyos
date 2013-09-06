@@ -317,6 +317,7 @@ void TestA()
 	int fd;
 	const char filename[] = "/bin/ar";
 	fd=open(filename, O_RDWR);
+	close(fd);
 	for(;;);
 	const char bufw[] = "def";
 	char bufr[3];

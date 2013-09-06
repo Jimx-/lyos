@@ -33,6 +33,7 @@
 #include "global.h"
 #include "proto.h"
 #include <elf.h>
+  
 #define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x
@@ -42,36 +43,39 @@
 
 PUBLIC void init_vfs();
 
+/**
+ * <Ring 1> Main loop of VFS.
+ */
 PUBLIC void task_fs()
 {
 	printl("VFS: VFS is running.\n");
 
 	init_vfs();
 
-	MESSAGE m;
 	MESSAGE msg;
 	while (1) {
-		send_recv(RECEIVE, ANY, &m);
+		send_recv(RECEIVE, ANY, &msg);
 
-		if (m.type == RESUME_PROC) {
-			send_recv(SEND, m.PROC_NR, &msg); 
-			continue;
-		}
-		int src = m.source;
+		int src = msg.source;
 		pcaller = &proc_table[src];
-		int msgtype = m.type;
+		int msgtype = msg.type;
 
 		switch (msgtype) {
         case FS_REGISTER:
-            msg.RETVAL = register_filesystem(&m);
+            msg.RETVAL = register_filesystem(&msg);
             break;
 		case OPEN:
-			msg.FD = do_open(&m);
+			msg.FD = do_open(&msg);
+			break;
+		case CLOSE:
+			msg.RETVAL = do_close(&msg);
+			break;
+		case RESUME_PROC:
+			src = msg.PROC_NR;
 			break;
 		default:
-			msg.type = VFS_REQUEST;
-			msg.BUF = &m;
-			send_recv(BOTH, TASK_LYOS_FS, &msg);
+			dump_msg("VFS::unknown msg", &msg);
+			assert(0);
 			break;
 		}
 
@@ -79,74 +83,6 @@ PUBLIC void task_fs()
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 	}
-
-	/*struct file_system * fs;
-	while (1){
-		send_recv(RECEIVE, ANY, &msg);
-		int src = msg.source;
-		pcaller = &proc_table[src];
-		int msgtype = msg.type;
-
-		fs = file_systems;
-		switch (msgtype) {
-	 	case FS_REGISTER:
-			register_filesystem(&msg);
-			break;
-		case OPEN:
-			msg.FD = fs->open(&msg);
-			break;
-		case CLOSE:
-			msg.RETVAL = fs->close(&msg);
-			break;
-		case READ:
-		case WRITE:
-			msg.CNT = fs->rdwt(&msg);
-			break;
-		case UNLINK:
-			msg.RETVAL = fs->unlink(&msg);
-			break;
-		case MOUNT:
-			msg.RETVAL = fs->mount(&msg);
-			break;
-		case UMOUNT:
-			msg.RETVAL = fs->umount(&msg);
-			break;
-		case MKDIR:
-			msg.RETVAL = fs->mkdir(&msg);
-			break;
-		case RESUME_PROC:
-			src = msg.PROC_NR;
-			break;
-		case FORK:
-			msg.RETVAL = fs->fork(&msg);
-			break;
-		case EXIT:
-			msg.RETVAL = fs->exit(&msg);
-			break;
-		case LSEEK:
-			msg.OFFSET = fs->lseek(&msg);
-			break;
-		case STAT:
-		case FSTAT:
-			msg.RETVAL = fs->stat(&msg);
-			break;
-		case CHROOT:
-			msg.RETVAL = fs->chroot(&msg);
-			break;
-		case CHDIR:
-			msg.RETVAL = fs->chdir(&msg);
-			break; 
-		default:
-			dump_msg("VFS: Unknown message:", &msg);
-			assert(0);
-			break;
-		}
-
-		if (msg.type != SUSPEND_PROC) {
-			msg.type = SYSCALL_RET;
-			send_recv(SEND, src, &msg);
-		}
-	} */
 }
 
 PUBLIC void init_vfs()
