@@ -17,14 +17,23 @@ choice
       What compress algorithm will be used to compress the kernel.
 
 config COMPRESS_NONE
-        bool "None"
-        select COMPRESS_TYPE_NONE
+    bool "None"
+    select COMPRESS_TYPE_NONE
 
 config COMPRESS_GZIP
-        bool "Gzip"
-        select COMPRESS_TYPE_GZIP
+    bool "Gzip"
+    select COMPRESS_TYPE_GZIP
 
 endchoice
+        
+endmenu
+
+menu "Processor features"
+
+config SMP
+    bool "Symmetric multiprocessing"
+    help
+      Enable support for systems that have more than one processor.
 
 endmenu
 

@@ -29,7 +29,6 @@ cmd.tar
 *.bin
 System.map
 arch/arm/arm-lyos
-lyos
 
 # 
 # Library

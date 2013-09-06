@@ -92,7 +92,7 @@ struct dev_driver hd_driver =
  *****************************************************************************/
 PUBLIC void task_hd()
 {
-	MESSAGE msg;
+	//MESSAGE msg;
 
 	init_hd();
 	dev_driver_task(&hd_driver);	

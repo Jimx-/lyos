@@ -278,4 +278,39 @@ glitter:
 	pop	eax
 	ret
 
+; ========================================================================
+;                  void arch_spinlock_lock(u32 * lock);
+; ========================================================================
+arch_spinlock_lock:
+	mov	eax, [esp + 4]
+	mov	edx, 1
+.2:
+	mov	ecx, 1
+	xchg ecx, [eax]
+	test ecx, ecx
+	je .0
 
+	cmp	edx, 1 << 16
+	je	.1
+	shl	edx, 1
+.1:
+	mov	ecx, edx
+.3:
+	pause
+	sub ecx, 1
+	test ecx, ecx
+	jz .2
+	jmp	.3
+.0:
+	mfence
+	ret
+
+; ========================================================================
+;                  void arch_spinlock_unlock(u32 * lock);
+; ========================================================================
+arch_spinlock_unlock:
+	mov	eax, [esp + 4]
+	mov	ecx, 0
+	xchg [eax], ecx
+	mfence
+	ret

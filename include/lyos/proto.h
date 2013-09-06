@@ -191,7 +191,6 @@ PUBLIC int 	do_stty();
 PUBLIC int 	do_gtty();
 PUBLIC int 	do_rename();
 PUBLIC int 	do_prof();
-PUBLIC int 	do_setgid();
 PUBLIC int 	do_acct();
 PUBLIC int 	do_phys();
 PUBLIC int 	do_lock();

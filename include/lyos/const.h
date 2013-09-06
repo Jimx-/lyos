@@ -57,6 +57,7 @@
 #define FALSE			0
 
 /* Process */
+#define BLOCKED   0x01 	/* set when proc is blocked */
 #define SENDING   0x02	/* set when proc trying to send */
 #define RECEIVING 0x04	/* set when proc trying to recv */
 #define WAITING   0x08	/* set when proc waiting for the child to terminate */
