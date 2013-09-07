@@ -48,7 +48,6 @@ PUBLIC int do_rdwt(MESSAGE * p)
     int src = p->source;
     int len = p->CNT;
 
-    printl("do_rdwt: %d, %d\n", fd, p->type == READ ? 0 : 1);
     if (!filp) return -EBADF;
 
     int position = filp->fd_pos;

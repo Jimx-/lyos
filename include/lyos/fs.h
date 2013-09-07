@@ -61,6 +61,13 @@ struct dev_drv_map {
 #define MNAMELEN2	u.m4.m4i2
 #define MNAMELEN3	u.m4.m4i3
 
+/* for stat */
+#define STDEV		u.m3.m3i1
+#define STINO		u.m3.m3i2
+#define STBUF		u.m3.m3p1
+#define STSRC 		u.m3.m3i3
+#define STRET 		u.m3.m3i4
+
 #define RET_RETVAL          u.m5.m5i1
 #define RET_NUM             u.m5.m5i2
 #define RET_UID             u.m5.m5i3

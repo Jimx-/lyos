@@ -91,6 +91,9 @@ PUBLIC void task_ext2_fs()
         case FS_READSUPER:
             m.RET_RETVAL = ext2_readsuper(&m);
             break;
+        case FS_STAT:
+        	m.STRET = ext2_stat(&m);
+        	break;
 		case OPEN:
 			//msg.FD = do_open(&msg);
 			break;

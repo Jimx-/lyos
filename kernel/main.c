@@ -33,7 +33,7 @@
 #include "lyos/compile.h"
 #include "errno.h"
 #include "multiboot.h"
-
+#include <sys/stat.h>
 #define LYOS_BANNER "Lyos version "UTS_VERSION" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"
 
 PUBLIC void init_arch();
@@ -253,33 +253,21 @@ void Init()
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
-	
-	/*
-	printf("\n");
-	printf(LYOS_BANNER);
-	printf("(c)Copyright Jimx 2010-2012\n\n");
-	*/
-	for(;;);
+
+	struct stat sbuf;
+	stat("/bin/ar", &sbuf);
+	printf("%d\n", sbuf.st_ino);
 
 	printf("Init() is running ...\n");
 
-	/* fd test */
-	char buf[3];
-	MESSAGE m;
-	m.type = DEV_READ;
-	m.DEVICE = MAKE_DEV(2, 0);
-	m.BUF = &buf;
-	m.CNT = 3;
-	m.POSITION = 0;
-	send_recv(BOTH, TASK_FD, &m);
-	printl("%d\n", buf[0]);
+	printf("\n");
+	printf(LYOS_BANNER);
+	printf("(c)Copyright Jimx 2010-2012\n\n");
+
+	for(;;);
 
 	/* extract `cmd.tar' */
 	untar("/cmd.tar");
-	
-	printf("\n");
-	printf(LYOS_BANNER);
-	printf("(c)Copyright Jimx 2010-2012\n\n");\
 
 	char * tty_list[] = {"/dev_tty0","/dev_tty1", "/dev_tty2"};
 	printf("\n");

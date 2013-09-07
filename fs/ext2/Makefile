@@ -1,6 +1,6 @@
 
 FSOBJS 	= main.o super.o global.o inode.o protect.o path.o read_write.o buffer.o \
-			alloc.o
+			alloc.o stat.o
 
 EXT2FS = ext2fs.o
 

@@ -74,6 +74,12 @@ PUBLIC void task_fs()
 		case WRITE:
 			msg.RETVAL = do_rdwt(&msg);
 			break;
+		case STAT:
+			msg.type = do_stat(&msg);
+			break;
+		case FSTAT:
+			msg.RETVAL = do_fstat(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;

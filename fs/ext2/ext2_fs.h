@@ -310,5 +310,8 @@ PUBLIC int ext2_readsuper(MESSAGE * p);
 PUBLIC ext2_buffer_t * ext2_new_block(ext2_inode_t * pin, off_t position);
 PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin);
 PUBLIC int ext2_setbit(bitchunk_t * bitmap, int max_bits, off_t startp);
+
+PUBLIC int ext2_stat(MESSAGE * p);
+
 #endif
 
