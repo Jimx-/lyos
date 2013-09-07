@@ -193,7 +193,7 @@ enum msgtype {
 
 	/* SYS task */
 	GET_TICKS, GET_PID, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
-	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,				/* 2 ~ 14 */
+	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,				/* 2 ~ 15 */
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, VFS_REQUEST,
@@ -274,7 +274,7 @@ enum msgtype {
 #define	DEV_CHAR_TTY		4
 #define	DEV_SCSI		5
 /* make device number from major and minor numbers */
-#define	MAJOR_SHIFT		20
+#define	MAJOR_SHIFT		8
 #define MINOR_MASK		((1U << MAJOR_SHIFT) - 1)
 #define	MAKE_DEV(a,b)		((a << MAJOR_SHIFT) | b)
 /* separate major and minor numbers from device number */

@@ -133,6 +133,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
         new_pin->i_mode = res.mode;
         new_pin->i_size = res.size;
         new_pin->i_fs_ep = res.fs_ep;
+        new_pin->i_specdev = res.spec_dev;
         new_pin->i_vmnt = find_vfs_mount(res.dev);
         if (!new_pin->i_vmnt) panic("VFS: resolve_path: vmnt not found");
         

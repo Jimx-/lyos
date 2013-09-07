@@ -17,10 +17,3 @@ echo "$MAPPER_LINE" | dmsetup create hda
 kpartx -a /dev/mapper/hda
 
 mount /dev/mapper/hda1 /$MOUNT_POINT
-
-debugfs -w /dev/mapper/hda1
-
-umount $MOUNT_POINT
-kpartx -d /dev/mapper/hda
-dmsetup remove hda
-losetup -d /dev/$LOOP_DEVICE

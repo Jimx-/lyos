@@ -65,7 +65,6 @@ if __name__ == "__main__":
 		copy('../../include/lyos/proc.h', newlib_dir + '/newlib/libc/sys/lyos')
 		copy('../../include/signal.h', newlib_dir + '/newlib/libc/sys/lyos')
 		copy('../../arch/x86/include/protect.h', newlib_dir + '/newlib/libc/sys/lyos')
-		print 'Copying'
 		copy('../../arch/x86/include/page.h', newlib_dir + '/newlib/libc/sys/lyos')
 		copy('../patches/newlib/malign.c', newlib_dir + '/newlib/libc/stdlib')
 

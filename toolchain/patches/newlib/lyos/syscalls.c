@@ -60,6 +60,8 @@ void _exit(int status)
 	msg.type	= EXIT;
 	msg.STATUS	= status;
 
+	cmb();
+
 	send_recv(BOTH, TASK_MM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 }
@@ -95,6 +97,8 @@ int execv(const char *path, char * argv[])
 	msg.BUF		= (void*)arg_stack;
 	msg.BUF_LEN	= stack_len;
 
+	cmb();
+
 	send_recv(BOTH, TASK_MM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
@@ -129,6 +133,8 @@ int fork()
 	MESSAGE msg;
 	msg.type = FORK;
 
+	cmb();
+
 	send_recv(BOTH, TASK_MM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 	//assert(msg.RETVAL == 0);
@@ -142,6 +148,8 @@ int kill(int pid,int signo)
 	msg.type	= KILL;
 	msg.PID		= pid;
 	msg.SIGNR	= signo;
+
+	cmb();
 
 	send_recv(BOTH, TASK_MM, &msg);
 	//assert(msg.type == SYSCALL_RET);
@@ -157,6 +165,8 @@ int waitpid(int pid, int * status, int options)
 	msg.PID = pid;
 	msg.SIGNR = options;
 
+	cmb();
+
 	send_recv(BOTH, TASK_MM, &msg);
 
 	*status = msg.STATUS;
@@ -171,6 +181,8 @@ int wait(int * status)
 
 	msg.PID = -1;
 	msg.SIGNR = 0;
+
+	cmb();
 
 	send_recv(BOTH, TASK_MM, &msg);
 
@@ -214,6 +226,8 @@ int unlink(const char * pathname)
 	msg.PATHNAME	= (void*)pathname;
 	msg.NAME_LEN	= strlen(pathname);
 
+	cmb();
+
 	send_recv(BOTH, TASK_FS, &msg);
 
 	return msg.RETVAL;
@@ -247,6 +261,8 @@ int lseek(int fd, int offset, int whence)
 	msg.OFFSET = offset;
 	msg.WHENCE = whence;
 
+	cmb();
+
 	send_recv(BOTH, TASK_FS, &msg);
 
 	return msg.OFFSET;
@@ -278,6 +294,8 @@ int read(int fd, void *buf, int count)
 	msg.BUF  = buf;
 	msg.CNT  = count;
 
+	cmb();
+
 	send_recv(BOTH, TASK_FS, &msg);
 
 	return msg.CNT;
@@ -296,6 +314,8 @@ int stat(const char *path, struct stat *buf)
 	msg.PATHNAME	= (void*)path;
 	msg.BUF		= (void*)buf;
 	msg.NAME_LEN	= strlen(path);
+
+	cmb();
 
 	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
@@ -317,6 +337,8 @@ int fstat(int fd, struct stat *buf)
 	msg.FD		= fd;
 	msg.BUF		= (void*)buf;
 
+	cmb();
+
 	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
@@ -336,6 +358,8 @@ int write(int fd, const void *buf, int count)
 	msg.BUF  = (void*)buf;
 	msg.CNT  = count;
 
+	cmb();
+	
 	send_recv(BOTH, TASK_FS, &msg);
 
 	return msg.CNT;

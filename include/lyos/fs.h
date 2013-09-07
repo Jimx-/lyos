@@ -132,7 +132,7 @@ struct inode {
 	u32	i_nr_sects;	/**< How many sectors the file occupies */
 	uid_t i_uid;  /* uid and gid */
 	gid_t i_gid;
-	dev_t	i_dev;  /**< On which device this inode resides */
+	dev_t i_dev;  /**< On which device this inode resides */
     dev_t i_specdev;  /**< Device number for block/character special file */
 	int	i_cnt;		/**< How many procs share this inode  */
 	int	i_num;		/**< inode nr.  */

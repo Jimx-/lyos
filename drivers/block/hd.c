@@ -53,18 +53,7 @@ PRIVATE	struct hd_info	hd_info[1];
 PRIVATE struct hd_request hd_request_table[NR_HD_REQUESTS];
 PRIVATE struct hd_request * hd_current_request = NULL;
 
-/* HD device number */
-/* 
- * ---------------------------------------------------------
- * |    12 bits     |   4 bits   |   8 bits   |   8 bits   |
- * ---------------------------------------------------------
- * |    DEV_HD      |   unused   |   drive    |   part_no  |
- * ---------------------------------------------------------
- */
-#define DRIVE_SHIFT		8
-#define DRIVE_MASK		(0xFF << DRIVE_SHIFT)
-#define PART_NO_MASK	0xFF
-#define	DRV_OF_DEV(dev) (dev & DRIVE_MASK)
+#define	DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
 
 //#define HDDEBUG
 #ifdef HDDEBUG
@@ -265,7 +254,7 @@ PRIVATE void hd_open(MESSAGE * p)
 	hd_identify(drive);
 
 	if (hd_info[drive].open_cnt++ == 0) {
-		partition(drive << DRIVE_SHIFT, P_PRIMARY);
+		partition(drive * NR_SUB_PER_DRIVE, P_PRIMARY);
 		print_hdinfo(&hd_info[drive]); 
 	}
 }
@@ -307,7 +296,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 	assert((pos & 0x1FF) == 0);
 
 	u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
-	int part_no = p->DEVICE & PART_NO_MASK;
+	int part_no = MINOR(p->DEVICE) % NR_SUB_PER_DRIVE;
 	sect_nr += part_no < NR_PRIM_PER_DRIVE ?
 		hd_info[drive].primary[part_no].base :
 		hd_info[drive].logical[part_no - NR_PRIM_PER_DRIVE].base;
@@ -364,7 +353,7 @@ PRIVATE void hd_ioctl(MESSAGE * p)
 
 	if (p->REQUEST == DIOCTL_GET_GEO) {
 		void * dst = va2la(p->PROC_NR, p->BUF);
-		int part_no = device & PART_NO_MASK;
+		int part_no = MINOR(device);
 		void * src = va2la(TASK_HD,
 				   part_no < NR_PRIM_PER_DRIVE ?
 				   &hdi->primary[part_no] :

@@ -245,7 +245,6 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 	unsigned new_slots = 0;
 	int  required_space = 0;
 	if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
-
 	int ret = 0;
 	if (flag != SD_IS_EMPTY) {
 		mode_t bits = (flag == SD_LOOK_UP ? X_BIT : W_BIT | X_BIT);
@@ -282,10 +281,10 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 
 			if (flag != SD_MAKE && pde->d_inode != (ino_t)0) {
 				if (flag == SD_IS_EMPTY) {
-					if (strcmp(pde->d_name, ".") != 0 &&
-					    strcmp(pde->d_name, "..") != 0) match = 1; /* dir is not empty */
+					if (memcmp(pde->d_name, ".", 1) != 0 &&
+					    memcmp(pde->d_name, "..", 2) != 0) match = 1; /* dir is not empty */
 				} else {
-					if (strcmp(pde->d_name, string) == 0){
+					if (memcmp(pde->d_name, string, pde->d_name_len) == 0){
 						match = 1;
 					}
 				}

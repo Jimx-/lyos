@@ -250,15 +250,16 @@ void shell(const char * tty_name)
  *****************************************************************************/
 void Init()
 {
-	printl("\n");
-	printl(LYOS_BANNER);
-	printl("(c)Copyright Jimx 2010-2012\n\n");
-
+	int fd_stdin  = open("/dev/tty0", O_RDWR);
+	int fd_stdout = open("/dev/tty0", O_RDWR);
+	int fd_stderr = open("/dev/tty0", O_RDWR);
+	
+	/*
+	printf("\n");
+	printf(LYOS_BANNER);
+	printf("(c)Copyright Jimx 2010-2012\n\n");
+	*/
 	for(;;);
-	int fd_stdin  = open("/dev_tty0", O_RDWR);
-	assert(fd_stdin  == 0);
-	int fd_stdout = open("/dev_tty0", O_RDWR);
-	assert(fd_stdout == 1);	
 
 	printf("Init() is running ...\n");
 
@@ -315,7 +316,7 @@ void Init()
 void TestA()
 {
 	int fd;
-	const char filename[] = "/bin/ar";
+	const char filename[] = "/dev/tty0";
 	fd=open(filename, O_RDWR);
 	close(fd);
 	for(;;);

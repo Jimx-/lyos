@@ -70,6 +70,10 @@ PUBLIC void task_fs()
 		case CLOSE:
 			msg.RETVAL = do_close(&msg);
 			break;
+		case READ:
+		case WRITE:
+			msg.RETVAL = do_rdwt(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;
