@@ -248,9 +248,19 @@ int chmod(const char *path, mode_t mode)
 	return 0;
 }
 
-int access(const char *pathname,int mode)
+int access(const char *pathname, int mode)
 {
-	return 0;
+	MESSAGE msg;
+	msg.type   = ACCESS;
+	msg.PATHNAME = pathname;
+	msg.NAME_LEN = strlen(pathname);
+	msg.MODE = mode;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
 }
 
 int lseek(int fd, int offset, int whence)

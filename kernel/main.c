@@ -33,7 +33,7 @@
 #include "lyos/compile.h"
 #include "errno.h"
 #include "multiboot.h"
-#include <sys/stat.h>
+
 #define LYOS_BANNER "Lyos version "UTS_VERSION" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"
 
 PUBLIC void init_arch();
@@ -253,10 +253,6 @@ void Init()
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
-
-	struct stat sbuf;
-	stat("/bin/ar", &sbuf);
-	printf("%d\n", sbuf.st_ino);
 
 	printf("Init() is running ...\n");
 

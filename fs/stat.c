@@ -79,6 +79,7 @@ PUBLIC int do_stat(MESSAGE * p)
     int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num, p->source, p->BUF);
 
     put_inode(pin);
+    free_mem((int)pathname, namelen);
     return retval;
 }
 

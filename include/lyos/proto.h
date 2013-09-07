@@ -120,9 +120,12 @@ PUBLIC int      fs_exit(MESSAGE * m);
 
 /* fs/Lyos/misc.c */
 PUBLIC int	     do_stat(MESSAGE * p);
+PUBLIC int       do_fstat(MESSAGE * p);
 PUBLIC int	     strip_path	(char * filename, const char * pathname,
 			             struct inode** ppinode);
 PUBLIC int	     search_file(char * path);
+
+PUBLIC int       do_access(MESSAGE * p);
 
 /* fs/ext2/main.c */
 PUBLIC void task_ext2_fs();

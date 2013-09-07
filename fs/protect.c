@@ -20,8 +20,8 @@
 #include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
-#include "lyos/const.h"
 #include "errno.h"
+#include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -29,8 +29,34 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "lyos/list.h"
+#include "path.h"
 #include "global.h"
+#include "proto.h"
+
+/**
+ * <Ring 1> Perform the access syscall.
+ * @param  p Ptr to the message.
+ * @return   Zero if success. Otherwise -1.
+ */
+PUBLIC int do_access(MESSAGE * p)
+{
+    int namelen = p->NAME_LEN + 1;
+    char * pathname = (char *)alloc_mem(namelen);
+    if (!pathname) return ENOMEM;
+
+    phys_copy(va2la(getpid(), pathname), va2la(p->source, p->PATHNAME), namelen);
+    pathname[namelen] = 0;
+
+    struct inode * pin = resolve_path(pathname, pcaller);
+    if (!pin) return ENOENT;
+
+    int retval = forbidden(pcaller, pin, p->MODE);
+
+    put_inode(pin);
+    free_mem((int)pathname, namelen);
+
+    return (retval == 0) ? 0 : -1;
+}
 
 PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access)
 {

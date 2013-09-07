@@ -41,6 +41,26 @@
 #define DEB(x)
 #endif
 
+/**
+ * Missing filesystem syscalls:
+ * access
+ * open: not complete yet
+ * link/unlink
+ * chdir/chmod/chown/chroot
+ * creat
+ * dup
+ * fcntl
+ * ioctl
+ * lseek
+ * mkdir/mknod/rmdir
+ * pipe
+ * rename
+ * stime
+ * umask
+ * umount
+ * utime
+ */
+
 PUBLIC void init_vfs();
 
 /**
@@ -79,6 +99,10 @@ PUBLIC void task_fs()
 			break;
 		case FSTAT:
 			msg.RETVAL = do_fstat(&msg);
+			break;
+		case ACCESS:
+			printl("Accessing\n");
+			msg.RETVAL = do_access(&msg);
 			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
