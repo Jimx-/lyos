@@ -28,16 +28,18 @@ typedef struct spinlock {
 #define spinlock_init(lock)
 #define spinlock_lock(lock)
 #define spinlock_unlock(lock)
+#define spinlock_locked(lock)   0
 
 #else
 
-#define spinlock_init(lock) do { (lock)->val = 0; } while(0)
+#define spinlock_init(l) do { (l)->lock = 0; } while(0)
 
 void arch_spinlock_lock(unsigned int * lock);
 void arch_spinlock_unlock(unsigned int * lock);
 
-#define spinlock_lock(lock) arch_spinlock_lock((unsigned int *)lock)
-#define spinlock_unlock(lock) arch_spinlock_unlock((unsigned int *)lock)
+#define spinlock_lock(l) arch_spinlock_lock((unsigned int *)l)
+#define spinlock_unlock(l) arch_spinlock_unlock((unsigned int *)l)
+#define spinlock_locked(l) ((l)->lock != 0)
 
 #endif /* CONFIG_SMP */
 

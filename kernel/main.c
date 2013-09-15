@@ -180,10 +180,13 @@ void untar(const char * filename)
  *****************************************************************************/
 void shell(const char * tty_name)
 {
+	/* Open stdin, stdout and stderr */
 	int fd_stdin  = open(tty_name, O_RDWR);
 	assert(fd_stdin  == 0);
 	int fd_stdout = open(tty_name, O_RDWR);
 	assert(fd_stdout == 1);
+	int fd_stderr = open(tty_name, O_RDWR);
+	assert(fd_stderr == 2);
 
 	char rdbuf[128];
 
@@ -215,13 +218,10 @@ void shell(const char * tty_name)
 		} while(ch);
 		argv[argc] = 0;
 
-
-
-
 		int fd = open(argv[0], O_RDWR);
 		if (fd == -1) {
 			if (rdbuf[0]) {
-				printf("shell:Command not found.\n");
+				printf("shell: Command not found.\n");
 			}
 		}
 		else {
@@ -260,12 +260,11 @@ void Init()
 	printf(LYOS_BANNER);
 	printf("(c)Copyright Jimx 2010-2012\n\n");
 
-	for(;;);
-
 	/* extract `cmd.tar' */
-	untar("/cmd.tar");
+	//untar("/cmd.tar");
 
-	char * tty_list[] = {"/dev_tty0","/dev_tty1", "/dev_tty2"};
+	for (;;);
+	char * tty_list[] = {"/dev/tty0","/dev/tty1", "/dev/tty2"};
 	printf("\n");
 
 	int i;
@@ -278,6 +277,7 @@ void Init()
 			/* printf("[child is running, pid:%d]\n", getpid()); */
 			close(fd_stdin);
 			close(fd_stdout);
+			close(fd_stderr);
 			
 			shell(tty_list[i]);
 			assert(0);

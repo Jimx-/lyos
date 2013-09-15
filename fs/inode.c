@@ -59,6 +59,7 @@ PUBLIC void clear_inode(struct inode * pin)
     pin->i_cnt = 0;
     pin->i_dev = 0;
     pin->i_num = 0;
+    spinlock_init(&(pin->i_lock));
 }
 
 PUBLIC struct inode * new_inode(dev_t dev, ino_t num)
@@ -92,8 +93,11 @@ PUBLIC void put_inode(struct inode * pin)
 {
     if (!pin) return;
 
+    lock_inode(pin);
+
     if (pin->i_cnt > 1) {
         pin->i_cnt--;
+        unlock_inode(pin);
         return;
     }
 
@@ -102,11 +106,22 @@ PUBLIC void put_inode(struct inode * pin)
     int ret;
     if ((ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num)) != 0) {
         err_code = ret;
+        unlock_inode(pin);
         return;
     }
 
     unhash_inode(pin);
     free_mem((int)pin, sizeof(struct inode *));
+}
+
+PUBLIC void lock_inode(struct inode * pin)
+{
+    spinlock_lock(&(pin->i_lock));
+}
+
+PUBLIC void unlock_inode(struct inode * pin)
+{
+    spinlock_unlock(&(pin->i_lock));
 }
         
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num)

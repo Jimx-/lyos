@@ -37,6 +37,8 @@ global	disable_int
 global	port_read
 global	port_write
 global	glitter
+global  arch_spinlock_lock
+global  arch_spinlock_unlock
 
 
 

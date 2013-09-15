@@ -113,9 +113,10 @@ PUBLIC void task_fs()
 			break;
 		}
 
-		if (msg.type != SUSPEND_PROC)
+		if (msg.type != SUSPEND_PROC) {
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
+		}
 	}
 }
 

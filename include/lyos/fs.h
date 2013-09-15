@@ -17,6 +17,7 @@
 #define	_FS_H_
 
 #include "lyos/list.h"
+#include "lyos/spinlock.h"
     
 /**
  * @struct dev_drv_map fs.h "include/sys/fs.h"
@@ -143,6 +144,7 @@ struct inode {
     dev_t i_specdev;  /**< Device number for block/character special file */
 	int	i_cnt;		/**< How many procs share this inode  */
 	int	i_num;		/**< inode nr.  */
+	spinlock_t i_lock;
 
 	struct vfs_mount * i_vmnt;
 };
@@ -155,6 +157,7 @@ struct vfs_mount {
   	struct inode *m_mounted_on;	/**< Mount point */
   	struct inode *m_root_node;	/**< Root inode */
   	char m_label[FS_LABEL_MAX];	/**< Label of the file system process */
+  	spinlock_t m_lock;
 };
 
 #define VMNT_READONLY       0x001

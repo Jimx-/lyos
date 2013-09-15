@@ -136,6 +136,8 @@ PUBLIC void init_arch()
 			unsigned int k_base;
 			unsigned int k_limit;
 			get_kernel_map(&k_base, &k_limit);
+			k_base -= KERNEL_VMA;
+			k_limit -= KERNEL_VMA;
 			init_desc(&p->ldts[INDEX_LDT_C],
 				  0, /* bytes before the entry point
 				      * are useless (wasted) for the

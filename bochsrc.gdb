@@ -6,8 +6,8 @@
 megs: 32
 
 # filename of ROM images
-romimage: file=$BXSHARE/BIOS-bochs-latest
-vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+romimage: file=/usr/local/share/bochs/BIOS-bochs-latest
+vgaromimage: file=/usr/local/share/bochs/VGABIOS-lgpl-latest
 
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
@@ -31,7 +31,7 @@ mouse: enabled=0
 #pcidev: vendor=0x1234, device=0x5678
 
 # enable key mapping, using US layout as default.
-keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
+keyboard_mapping: enabled=1, map=/usr/local/share/bochs/keymaps/x11-pc-us.map
 
 #pci: enabled=1
 

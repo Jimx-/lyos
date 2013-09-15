@@ -31,7 +31,7 @@
 #include "errno.h"
 #include "sys/wait.h"
 
-//#define FE_DEBUG
+#define FE_DEBUG
 #ifdef FE_DEBUG
 #define DEB(x) printl("forkexit: "); x
 #else
@@ -118,9 +118,9 @@ PUBLIC int do_fork()
 	/* base of child proc, T, D & S segments share the same space,
 	   so we allocate memory just once */
 	/* int child_base = alloc_mem(child_pid, caller_T_size); */
-	DEB(printl("Allocating memory: %d\n", caller_T_size));
+	DEB(printl("Allocating memory: %d\n", caller_D_S_size / 1024 / 1024));
 	int child_base = alloc_mem(caller_D_S_size);
-	DEB(printl("Allocated: base: %d\n", child_base));
+	DEB(printl("Allocated: base: 0x%x\n", child_base));
 
 	/* child is a copy of the parent */
 	phys_copy((void*)child_base, (void*)caller_D_S_base, caller_D_S_size);

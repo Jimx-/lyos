@@ -55,6 +55,7 @@ PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
     vmnt->m_mounted_on = 0;
     vmnt->m_root_node = 0;
     vmnt->m_label[0] = '\0';
+    spinlock_init(&(vmnt->m_lock));
 }
 
 PUBLIC struct vfs_mount * get_free_vfs_mount()
@@ -80,6 +81,24 @@ PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev)
     }
 
     return NULL;
+}
+
+/**
+ * Lock the vfs mount.
+ * @param vmnt 
+ */
+PUBLIC void lock_vmnt(struct vfs_mount * vmnt)
+{
+    spinlock_lock(&(vmnt->m_lock));
+}
+
+/**
+ * Unlock the vfs mount.
+ * @param vmnt 
+ */
+PUBLIC void unlock_vmnt(struct vfs_mount * vmnt)
+{
+    spinlock_unlock(&(vmnt->m_lock));
 }
 
 PUBLIC int do_mount(MESSAGE * p)
@@ -141,6 +160,8 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
     struct vfs_mount * new_pvm = get_free_vfs_mount();
     if (new_pvm == NULL) return ENOMEM;
 
+    lock_vmnt(new_pvm);
+
     int retval = 0;
     struct inode * pmp = NULL; 
 
@@ -154,7 +175,10 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
         else if (pmp->i_cnt == 1) retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
         else retval = EBUSY;
 
-        if (retval) return retval;
+        if (retval) {
+            unlock_vmnt(new_pvm);
+            return retval;
+        }
     }
     
     new_pvm->m_dev = dev;
@@ -166,12 +190,16 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
     struct lookup_result res;
     retval = request_readsuper(fs_ep, dev, readonly, is_root, &res);
     
-    if (retval) return retval;
+    if (retval) {
+        unlock_vmnt(new_pvm);
+        return retval;
+    }
 
     struct inode * root_inode = new_inode(dev, res.inode_nr);
 
     if (!root_inode) return err_code;
 
+    lock_inode(root_inode);
     root_inode->i_fs_ep = fs_ep;
     root_inode->i_mode = res.mode;
     root_inode->i_gid = res.gid;
@@ -202,11 +230,16 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
         }
 
         have_root++;
+        unlock_vmnt(new_pvm);
+        unlock_inode(root_inode);
         return 0;
     }
 
     new_pvm->m_mounted_on = pmp;
     new_pvm->m_root_node = root_inode;
+
+    unlock_vmnt(new_pvm);
+    unlock_inode(root_inode);
 
     return 0;
 }

@@ -24,9 +24,13 @@ PUBLIC void init_inode_table();
 PUBLIC struct inode * new_inode(dev_t dev, ino_t num);
 PUBLIC struct inode * find_inode(dev_t dev, ino_t num);
 PUBLIC void put_inode(struct inode * pin);
+PUBLIC void lock_inode(struct inode * pin);
+PUBLIC void unlock_inode(struct inode * pin);
 
 PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp);
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
+PUBLIC void lock_vmnt(struct vfs_mount * vmnt);
+PUBLIC void unlock_vmnt(struct vfs_mount * vmnt);
 PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
 PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access);
 

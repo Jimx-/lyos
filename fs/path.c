@@ -126,6 +126,8 @@ PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
         new_pin = new_inode(res.dev, res.inode_nr);
 
         if (new_pin == NULL) return NULL;
+
+        lock_inode(new_pin);
         new_pin->i_dev = res.dev;
         new_pin->i_num = res.inode_nr;
         new_pin->i_gid = res.gid;
@@ -136,6 +138,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
         new_pin->i_specdev = res.spec_dev;
         new_pin->i_vmnt = find_vfs_mount(res.dev);
         if (!new_pin->i_vmnt) panic("VFS: resolve_path: vmnt not found");
+        unlock_inode(new_pin);
         
         pin = new_pin;
     }
