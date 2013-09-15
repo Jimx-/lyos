@@ -215,11 +215,12 @@ enum msgtype {
 	/* message type for fs request */
 	FSREQ_RET = 1001,
     FS_REGISTER,
-	FS_PUTINODE,					/* 1001 ~ 1007 */
+	FS_PUTINODE,					/* 1001 ~ 1008 */
 	FS_LOOKUP,
     FS_MOUNTPOINT,
     FS_READSUPER,
     FS_STAT,
+    FS_RDWT,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,

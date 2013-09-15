@@ -92,7 +92,7 @@ PUBLIC void task_fs()
 			break;
 		case READ:
 		case WRITE:
-			msg.RETVAL = do_rdwt(&msg);
+			msg.CNT = do_rdwt(&msg);
 			break;
 		case STAT:
 			msg.type = do_stat(&msg);
@@ -101,7 +101,6 @@ PUBLIC void task_fs()
 			msg.RETVAL = do_fstat(&msg);
 			break;
 		case ACCESS:
-			printl("Accessing\n");
 			msg.RETVAL = do_access(&msg);
 			break;
 		case RESUME_PROC:

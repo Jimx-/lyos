@@ -143,9 +143,9 @@ PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
     if (bgdesc == NULL) panic("ext2fs: Can't get block descriptor to read/write inode");
 
     int offset = ((inode->i_num - 1) % psb->sb_inodes_per_group) * EXT2_INODE_SIZE(psb);
-
     block_t block_nr = (block_t) bgdesc->inode_table + (offset >> psb->sb_blocksize_bits);
     /* read the inode table */
+    offset &= (psb->sb_block_size - 1);
     ext2_buffer_t * pb = ext2_get_buffer(dev, block_nr);
     if (!pb) return err_code;
 
@@ -163,3 +163,17 @@ PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
     return 0;
 }
 
+/**
+ * <Ring 1> Print pin's information.
+ * @param pin The inode.
+ */
+PUBLIC void ext2_dump_inode(ext2_inode_t * pin)
+{
+    printl("-------------------------\n");
+    printl("Ext2 Inode #%d @ dev %x\n", pin->i_num, pin->i_dev);
+    printl("  Mode: 0x%x, Size: %d\n", pin->i_mode, pin->i_size);
+    printl("  atime: 0x%x\n  ctime: 0x%x\n  mtime: 0x%x\n", pin->i_atime, pin->i_ctime, pin->i_mtime);
+    printl("  User: %d, Group: %d\n", pin->i_uid, pin->i_gid);
+    printl("  Blocks: %d, Links: %d\n", pin->i_blocks, pin->i_links_count);
+    printl("-------------------------\n");
+}

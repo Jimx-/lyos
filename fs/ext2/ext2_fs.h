@@ -288,6 +288,7 @@ PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num);
 PUBLIC ext2_inode_t * find_ext2_inode(dev_t dev, ino_t num);
 PUBLIC void put_ext2_inode(ext2_inode_t * pin);
 PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag);
+PUBLIC void ext2_dump_inode(ext2_inode_t * pin);
 
 PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access);
 
@@ -299,10 +300,12 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 								int flag, int check_perm, int ftype);
 
 PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position);
+PUBLIC int ext2_rdwt(MESSAGE * p);
 
 PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block);
 PUBLIC void ext2_put_buffer(ext2_buffer_t * pb);
 PUBLIC void ext2_sync_buffers();
+PUBLIC void ext2_zero_buffer(ext2_buffer_t * pb);
 PUBLIC int ext2_update_group_desc(ext2_superblock_t * psb, int desc);
 PUBLIC void ext2_init_buffer_cache();
 PUBLIC int ext2_readsuper(MESSAGE * p);

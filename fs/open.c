@@ -158,7 +158,7 @@ PUBLIC int do_open(MESSAGE * p)
 PUBLIC int do_close(MESSAGE * p)
 {
     int fd = p->FD;
-    DEB(printl("Close file (filp[%d] of proc #%d, inode number = %d\n", fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num));
+    DEB(printl("Close file (filp[%d] of proc #%d, inode number = %d)\n", fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num));
     put_inode(pcaller->filp[fd]->fd_inode);
     pcaller->filp[fd]->fd_inode = NULL;
     pcaller->filp[fd] = NULL;

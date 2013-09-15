@@ -13,11 +13,13 @@ if __name__ == "__main__":
 	download('gcc', GCC_TARBALL_URL, GCC_TARBALL)
 	download('binutils', BINUTILS_TARBALL_URL, BINUTILS_TARBALL)
 	wget('newlib', NEWLIB_TARBALL_URL, NEWLIB_TARBALL)
+	download('nasm', NASM_TARBALL_URL, NASM_TARBALL)
 
 	print('Decompressing source packages...')
 	decompress(GCC_TARBALL, GCC_VERSION)
 	decompress(BINUTILS_TARBALL, BINUTILS_VERSION)
 	decompress(NEWLIB_TARBALL, NEWLIB_VERSION)
+	decompress(NASM_TARBALL, NASM_VERSION)
 
 	print('Patching...')
 	patch(BINUTILS_VERSION)
@@ -88,8 +90,8 @@ if __name__ == "__main__":
 
 	mkdir('newlib')
 	push_dir('newlib')
-	configure(NEWLIB_VERSION)
-	make_and_install()
+	#configure(NEWLIB_VERSION)
+	#make_and_install()
 	pop_dir()
 
 	copy('../binary/crt*.o', PREFIX + '/' + TARGET + '/lib')

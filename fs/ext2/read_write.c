@@ -33,6 +33,141 @@
 #include "ext2_fs.h"
 #include "global.h"
 
+PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int offset, int rw_flag, endpoint_t src, void * buf);
+
+/**
+ * Ext2 read/write syscall.
+ * @param  p Ptr to message.
+ * @return   Zero on success.
+ */
+PUBLIC int ext2_rdwt(MESSAGE * p)
+{
+    dev_t dev = (int)p->RWDEV;
+    ino_t num = p->RWINO;
+    u64 position = p->RWPOS;
+    int src = p->RWSRC;
+    int rw_flag = p->RWFLAG;
+    void * buf = p->RWBUF;
+    int nbytes = p->RWCNT;
+
+    int retval = 0;
+    ext2_inode_t * pin = find_ext2_inode(dev, num);
+    if (!pin) return EINVAL;
+
+    int file_size = pin->i_size;
+    int block_size = pin->i_sb->sb_block_size;
+
+    int bytes_rdwt = 0;
+
+    while (nbytes > 0) {
+        /* split */
+        int offset = (unsigned int)position % block_size;
+        int chunk = min(block_size - offset, nbytes);
+        int eof = 0;
+
+        if (rw_flag == READ) {
+            if (file_size < position) break;
+            if (chunk > file_size - position) { /* EOF reached */
+                eof = 1;
+                chunk = file_size - position;
+            }
+        }
+
+        /* rw */
+        retval = ext2_rw_chunk(pin, position, chunk, offset, rw_flag, src, buf);
+        if (retval) break;
+
+        /* move on */
+        nbytes -= chunk;
+        position += chunk;
+        bytes_rdwt += chunk;
+
+        if (eof) break;
+
+        buf = (void*)((int)buf + chunk);
+    }
+
+    p->RWPOS = position;
+
+    /* update things */
+    int file_type = pin->i_mode & I_TYPE;
+    if (rw_flag == WRITE) {
+        if (file_type == I_REGULAR || file_type == I_DIRECTORY) {
+            if (position > pin->i_size) pin->i_size = position;
+        }
+    }
+
+    if (retval == 0) {
+        if (rw_flag == READ) {
+            pin->i_update = ATIME;
+        } else {
+            pin->i_update = CTIME | MTIME;
+        }
+        pin->i_dirt = 1;
+    }
+
+    p->RWCNT = bytes_rdwt;
+
+    return 0;
+}
+
+/**
+ * Read/write a chunk of data.
+ * @param  pin      The inode to read/write.
+ * @param  position Where to read/write.
+ * @param  chunk    How many bytes to read/write.
+ * @param  offset   In block offset.
+ * @param  rw_flag  Read or write.
+ * @param  src      Who wanna read/write.
+ * @param  buf      Buffer.
+ * @return          Zero on success.
+ */
+PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int offset, int rw_flag, endpoint_t src, void * buf)
+{
+
+    int b = 0;
+    int dev = 0;
+    ext2_buffer_t * bp = NULL;
+
+    b = ext2_read_map(pin, position);
+    dev = pin->i_dev;
+
+    if (b == 0) {
+        if (rw_flag == READ) {
+            /* Reading from a block that doesn't exist. Return empty buffer. */
+            bp = ext2_get_buffer(0, 0);
+            ext2_zero_buffer(bp);
+        } else {
+            /* Writing to a block that doesn't exist. Just create one. */
+            bp = ext2_new_block(pin, position);
+            if (bp == NULL) return err_code;
+        }
+    } else if (rw_flag == READ) {
+        /* Read that block */
+        bp = ext2_get_buffer(dev, b);
+    } else if (rw_flag == WRITE) {
+        /* TODO: Don't read in full block */
+        bp = ext2_get_buffer(dev, b);
+    }
+
+    if (bp == NULL) {
+        panic("ext2fs: ext2_rw_chunk: bp == NULL!");
+    }
+
+    if (rw_flag == READ) {
+        /* copy the data to userspace */
+        phys_copy(va2la(src, buf), va2la(getpid(), (void *)((int)bp->b_data + offset)), chunk);
+    } else {
+        /* copy the data from userspace */
+        phys_copy(va2la(getpid(), (void *)((int)bp->b_data + offset)), va2la(src, buf), chunk);
+        bp->b_dirt = 1;
+    }
+
+    ext2_put_buffer(bp);
+
+    return 0;
+}
+
 /* locate the block number where the position can be found */
 PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
 {

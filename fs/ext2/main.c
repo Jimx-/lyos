@@ -94,6 +94,9 @@ PUBLIC void task_ext2_fs()
         case FS_STAT:
         	m.STRET = ext2_stat(&m);
         	break;
+        case FS_RDWT:
+        	m.RWRET = ext2_rdwt(&m);
+        	break;
 		case OPEN:
 			//msg.FD = do_open(&msg);
 			break;

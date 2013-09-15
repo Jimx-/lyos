@@ -175,6 +175,15 @@ PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t * pb)
 }
 
 /**
+ * Clear the buffer.
+ * @param pb Ptr to the buffer.
+ */
+PUBLIC void ext2_zero_buffer(ext2_buffer_t * pb)
+{
+    memset(pb->b_data, 0, pb->b_size);
+}
+
+/**
  * @brief sync_buffers Synchronize all dirty buffers 
  *
  * @return 

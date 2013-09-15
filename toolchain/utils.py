@@ -77,6 +77,10 @@ def configure(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + extra_opt)
 
+def configure_host(name, extra_opt=''):
+	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
+	os.system(path + ' --build=' + TARGET + ' --prefix=' + SYSROOT + ' ' + extra_opt)
+
 def configure_native(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + SYSROOT + ' ' + 

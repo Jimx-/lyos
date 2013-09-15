@@ -33,6 +33,49 @@
 #include "proto.h"
 #include "fcntl.h"
 
+PRIVATE int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
+    void * buf, int nbytes, u64 * newpos, int * bytes_rdwt);
+
+/**
+ * <Ring 1> Send read/write request.
+ * @param  fs_ep      Endpoint of FS driver.
+ * @param  dev        On which device this file resides.
+ * @param  num        Inode nr.
+ * @param  pos        Where to read/write.
+ * @param  rw_flag    Read or write.
+ * @param  src        Who wanna read/write.
+ * @param  buf        Buffer.
+ * @param  nbytes     How many bytes to read/write.
+ * @param  newpos     [OUT] New position.
+ * @param  bytes_rdwt [OUT] How many bytes read/written. 
+ * @return            Zero on success. Otherwise an error code.
+ */
+PRIVATE int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
+    void * buf, int nbytes, u64 * newpos, int * bytes_rdwt)
+{
+    MESSAGE m;
+    m.type = FS_RDWT;
+    m.RWDEV = dev;
+    m.RWINO = num;
+    m.RWPOS = pos;
+    m.RWFLAG = rw_flag;
+    m.RWSRC = src;
+    m.RWBUF = buf;
+    m.RWCNT = nbytes;
+
+    send_recv(BOTH, fs_ep, &m);
+
+    if (m.type != FSREQ_RET) {
+        printl("VFS: request_readwrite: received invalid message.");
+        return EINVAL;
+    }
+
+    *newpos = m.RWPOS;
+    *bytes_rdwt = m.RWCNT;
+
+    return m.RWRET;
+}
+
 /**
  * <Ring 1> Perform read/wrte syscall.
  * @param  p Ptr to message.
@@ -48,6 +91,9 @@ PUBLIC int do_rdwt(MESSAGE * p)
     int src = p->source;
     int len = p->CNT;
 
+    int bytes_rdwt = 0, retval = 0;
+    u64 newpos;
+
     if (!filp) return -EBADF;
 
     int position = filp->fd_pos;
@@ -58,6 +104,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
     /* if (PIPE) ... */
 
     int file_type = pin->i_mode & I_TYPE;
+
     /* TODO: read/write for block special */
     if (file_type == I_CHAR_SPECIAL) {
         int t = p->type == READ ? DEV_READ : DEV_WRITE;
@@ -79,9 +126,24 @@ PUBLIC int do_rdwt(MESSAGE * p)
         if (rw_flag == READ) {
             if (flags & O_APPEND) position = pin->i_size;
         }
-
-        /* issue the request */
         
+        /* issue the request */
+        int bytes = 0;
+        retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position, rw_flag, src,
+            buf, len, &newpos, &bytes);
+
+        bytes_rdwt += bytes;
+        position = newpos;
     }
-    return 0;
+
+    if (rw_flag == WRITE) {
+        if (position > pin->i_size) pin->i_size = position;
+    }
+
+    filp->fd_pos = position;
+
+    if (!retval) {
+        return bytes_rdwt;
+    }
+    return retval;
 }
