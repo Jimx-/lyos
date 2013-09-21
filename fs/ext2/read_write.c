@@ -238,7 +238,7 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
 {
     block_t b1, b2, b3;
     int index1, index2, index3;
-    char new_ind = 0, new_dbl = 0, new_triple = 0;
+    char new_dbl = 0, new_triple = 0;
     int single = 0, triple = 0;
     unsigned long excess, block_pos;
     static char first_time = 1;
@@ -342,7 +342,6 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
                 pb_dindir->b_dirt = 1;
             }
             pin->i_blocks += pin->i_sb->sb_block_size / 512;
-            new_ind = TRUE;
         }
 
         if (b1 != 0) {

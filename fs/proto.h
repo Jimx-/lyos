@@ -28,6 +28,8 @@ PUBLIC void lock_inode(struct inode * pin);
 PUBLIC void unlock_inode(struct inode * pin);
 
 PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp);
+PUBLIC struct inode * last_dir(char * pathname, struct proc * fp);
+
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
 PUBLIC void lock_vmnt(struct vfs_mount * vmnt);
 PUBLIC void unlock_vmnt(struct vfs_mount * vmnt);

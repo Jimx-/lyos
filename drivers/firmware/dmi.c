@@ -147,6 +147,8 @@ PRIVATE char * get_dmi_string(const struct dmi_header * dh, int index)
             return s;
         }
     }
+
+    return NULL;
 }
 
 PRIVATE void dmi_save_info(const struct dmi_header * dh, int slot, int index)

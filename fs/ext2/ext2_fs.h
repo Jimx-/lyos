@@ -320,5 +320,9 @@ PUBLIC int ext2_stat(MESSAGE * p);
 PUBLIC void ext2_sync_inodes();
 PUBLIC int ext2_sync();
 
+PUBLIC int ext2_create(MESSAGE * p);
+
+PUBLIC int ext2_ftrunc(MESSAGE * p);
+
 #endif
 
