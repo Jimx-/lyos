@@ -156,7 +156,6 @@ PUBLIC void	inform_int(int task_nr);
 PUBLIC int	do_open(MESSAGE * p);
 PUBLIC int	do_close(MESSAGE * p);
 PUBLIC int	do_lseek(MESSAGE * p);
-PUBLIC int	do_chdir(MESSAGE * p);
 PUBLIC int	do_chroot(MESSAGE * p);
 PUBLIC int 	do_mount(MESSAGE * p);
 PUBLIC int 	do_umount(MESSAGE * p);

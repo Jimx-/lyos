@@ -46,8 +46,7 @@
  * access
  * open: not complete yet
  * link/unlink
- * chdir/chmod/chown/chroot
- * dup
+ * chmod/chown/chroot
  * fcntl
  * ioctl
  * mkdir/mknod/rmdir
@@ -108,6 +107,12 @@ PUBLIC void task_fs()
 			break;
 		case DUP:
 			msg.RETVAL = do_dup(&msg);
+			break;
+		case CHDIR:
+			msg.RETVAL = do_chdir(&msg);
+			break;
+		case FCHDIR:
+			msg.RETVAL = do_fchdir(&msg);
 			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;

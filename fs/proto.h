@@ -48,6 +48,8 @@ PUBLIC int do_open(MESSAGE * p);
 PUBLIC int truncate_node(struct inode * pin, int newsize);
 
 PUBLIC int do_dup(MESSAGE * p);
+PUBLIC int do_chdir(MESSAGE * p);
+PUBLIC int do_fchdir(MESSAGE * p);
 
 #endif
 

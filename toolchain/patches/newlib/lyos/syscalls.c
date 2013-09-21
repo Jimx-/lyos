@@ -273,6 +273,35 @@ int dup2(int fd, int fd2)
 	return msg.RETVAL;
 }
 
+int chdir(const char * path)
+{
+	MESSAGE msg;
+	msg.type = CHDIR;
+
+	msg.PATHNAME = path;
+	msg.NAME_LEN = strlen(path);
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
+}
+
+int fchdir(int fd)
+{
+	MESSAGE msg;
+	msg.type = FCHDIR;
+
+	msg.FD = fd;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
+}
+
 int chmod(const char *path, mode_t mode)
 {
 	return 0;
@@ -333,6 +362,11 @@ int open(const char *pathname, int flags, ...)
 	
 	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
+	
+	if (msg.FD < 0) {
+		errno = -msg.FD;
+		return -1;
+	}
 
 	return msg.FD;
 }

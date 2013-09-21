@@ -33,6 +33,12 @@
 #include "proto.h"
 #include "fcntl.h"
 
+PRIVATE int change_directory(struct inode ** ppin, char * pathname, int len);
+PRIVATE int change_node(struct inode ** ppin, struct inode * pin);
+
+/**
+ * <Ring 1> Perform the DUP and DUP2 syscalls.
+ */
 PUBLIC int do_dup(MESSAGE * p)
 {
     int fd = p->FD;
@@ -63,4 +69,76 @@ PUBLIC int do_dup(MESSAGE * p)
     pcaller->filp[newfd] = filp;
 
     return newfd;
+}
+
+/**
+ * <Ring 1> Perform the CHDIR syscall.
+ */
+PUBLIC int do_chdir(MESSAGE * p)
+{
+    return change_directory(&(pcaller->pwd), p->PATHNAME, p->NAME_LEN);
+}
+
+/**
+ * <Ring 1> Perform the FCHDIR syscall.
+ */
+PUBLIC int do_fchdir(MESSAGE * p)
+{
+    struct file_desc * filp = pcaller->filp[p->FD];
+
+    if (!filp) return EINVAL;
+
+    return change_node(&(pcaller->pwd), filp->fd_inode);
+}
+
+/**
+ * <Ring 1> Change the directory.  
+ * @param  ppin     Directory to be change.
+ * @param  string   Pathname.
+ * @param  len      Length of pathname.
+ * @return          Zero on success.
+ */
+PRIVATE int change_directory(struct inode ** ppin, char * string, int len)
+{
+    char pathname[MAX_PATH];
+    if (len > MAX_PATH) return ENAMETOOLONG;
+
+    /* fetch the name */
+    phys_copy(va2la(getpid(), pathname), va2la(proc2pid(pcaller), string), len);
+    pathname[len] = '\0';
+
+    struct inode * pin = resolve_path(pathname, pcaller);
+    if (!pin) return err_code;
+
+    int retval = change_node(ppin, pin);
+
+    put_inode(pin);
+    return retval;
+}
+
+/**
+ * <Ring 1> Change ppin into pin.
+ */
+PRIVATE int change_node(struct inode ** ppin, struct inode * pin)
+{
+    int retval = 0;
+
+    /* nothing to do */
+    if (*ppin == pin) return 0;
+
+    /* must be a directory */
+    if ((pin->i_mode & I_TYPE) != I_DIRECTORY) {
+        retval = ENOTDIR;
+    } else {
+        /* must be searchable */
+        retval = forbidden(pcaller, pin, X_BIT); 
+    }
+
+    if (retval == 0) {
+        put_inode(*ppin);
+        pin->i_cnt++;
+        *ppin = pin;
+    }
+
+    return retval;
 }

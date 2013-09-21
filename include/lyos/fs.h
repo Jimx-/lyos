@@ -33,7 +33,7 @@ struct dev_drv_map {
  */
 #define	MAGIC_V1	0x111
 
-#define	MAX_PATH	128
+#define	MAX_PATH	512
 #define FS_LABEL_MAX 15
 
 /* VFS/FS error messages */
