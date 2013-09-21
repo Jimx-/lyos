@@ -47,7 +47,6 @@
  * open: not complete yet
  * link/unlink
  * chdir/chmod/chown/chroot
- * creat
  * dup
  * fcntl
  * ioctl
