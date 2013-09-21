@@ -42,5 +42,7 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
 
 PUBLIC int do_open(MESSAGE * p);
 
+PUBLIC int truncate_node(struct inode * pin, int newsize);
+
 #endif
 

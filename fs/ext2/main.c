@@ -100,6 +100,12 @@ PUBLIC void task_ext2_fs()
         case FS_CREATE:
         	m.CRRET = ext2_create(&m);
         	break;
+        case FS_FTRUNC:
+        	m.RET_RETVAL = ext2_ftrunc(&m);
+        	break;
+        case FS_SYNC:
+        	m.RET_RETVAL = ext2_sync();
+        	break;
 		case OPEN:
 			//msg.FD = do_open(&msg);
 			break;
@@ -155,7 +161,7 @@ PUBLIC void task_ext2_fs()
 			send_recv(SEND, src, &m);
 		}
 
-        ext2_sync_buffers();
+        ext2_sync();
 	}
 }
 
@@ -186,4 +192,10 @@ PRIVATE int ext2_mountpoint(MESSAGE * p)
 
    return retval;
 }
-    
+
+PUBLIC int ext2_sync()
+{
+	ext2_sync_inodes();
+	ext2_sync_buffers();
+	return 0;
+}

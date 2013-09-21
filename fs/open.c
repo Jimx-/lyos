@@ -125,7 +125,12 @@ PUBLIC int do_open(MESSAGE * p)
         if ((retval = forbidden(pcaller, pin, bits)) == 0) {
             switch (pin->i_mode & I_TYPE) {
                 case I_REGULAR:
+                    /* truncate the inode */
                     if (flags & O_TRUNC) {
+                        if ((retval = forbidden(pcaller, pin, W_BIT)) != 0) {
+                            break;
+                        }
+                        truncate_node(pin, 0);
                     }
                     break;
                 case I_DIRECTORY:   /* directory may not be written */

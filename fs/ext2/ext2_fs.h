@@ -317,5 +317,8 @@ PUBLIC ext2_inode_t * ext2_alloc_inode(ext2_inode_t * parent, mode_t mode);
 
 PUBLIC int ext2_stat(MESSAGE * p);
 
+PUBLIC void ext2_sync_inodes();
+PUBLIC int ext2_sync();
+
 #endif
 

@@ -45,6 +45,7 @@ struct dev_drv_map {
 #define REQ_DEV            	u.m3.m3i1
 #define REQ_NUM				u.m3.m3l2
 #define REQ_START_INO       u.m3.m3i2
+#define REQ_FILESIZE		u.m3.m3i2
 #define REQ_ROOT_INO        u.m3.m3i3
 #define REQ_NAMELEN         u.m3.m3i4
 #define REQ_FLAGS           u.m3.m3l1

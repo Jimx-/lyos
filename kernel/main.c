@@ -254,6 +254,9 @@ void Init()
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
+	int fdn = open("/test8", O_RDWR | O_APPEND);
+	char bufwww[] = "Hello";
+	write(fdn, bufwww, 5);
 	printf("Init() is running ...\n");
 
 	printf("\n");

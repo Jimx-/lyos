@@ -123,7 +123,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
         return p->CNT;
     } else if (file_type == I_REGULAR) {
         /* check for O_APPEND */
-        if (rw_flag == READ) {
+        if (rw_flag == WRITE) {
             if (flags & O_APPEND) position = pin->i_size;
         }
         

@@ -177,3 +177,20 @@ PUBLIC void ext2_dump_inode(ext2_inode_t * pin)
     printl("  Blocks: %d, Links: %d\n", pin->i_blocks, pin->i_links_count);
     printl("-------------------------\n");
 }
+
+/**
+ * <Ring 1> Synchronize all inodes.
+ */
+PUBLIC void ext2_sync_inodes()
+{
+    int i;
+    for (i = 0; i < EXT2_INODE_HASH_SIZE; i++) {
+        ext2_inode_t * pin;
+        list_for_each_entry(pin, &ext2_inode_table[i], list) {
+            if (pin->i_dirt) {
+                DEB(printl("Writing inode #%d at dev 0x%x\n", pin->i_num, pin->i_dev));
+                ext2_rw_inode(pin, DEV_WRITE);
+            }
+        }
+    }
+}
