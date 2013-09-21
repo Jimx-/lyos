@@ -32,6 +32,7 @@
 #include "path.h"
 #include "global.h"
 #include "proto.h"
+#include <sys/stat.h>
 
 /**
  * <Ring 1> Perform the access syscall.
@@ -85,4 +86,16 @@ PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access)
     }
 
     return 0;
+}
+
+/**
+ * <Ring 1> Perform the UMASK syscall.
+ * @param  p Ptr to the message.
+ * @return   Complement of the old mask.
+ */
+PUBLIC mode_t do_umask(MESSAGE * p)
+{
+    mode_t old = ~(pcaller->umask);
+    pcaller->umask = ~((mode_t)p->MODE & RWX_MODES);
+    return old;
 }

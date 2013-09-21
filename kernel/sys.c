@@ -133,8 +133,3 @@ PUBLIC int do_setsid()
 {
 	return -ENOSYS;
 }
-
-PUBLIC int do_umask()
-{
-	return -ENOSYS;
-}

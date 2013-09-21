@@ -195,7 +195,6 @@ PUBLIC int 	do_brk();
 PUBLIC int 	do_setpgid();
 PUBLIC int 	do_getpgrp();
 PUBLIC int	do_setsid();
-PUBLIC int	do_umask();
 
 /* proc.c*/
 PUBLIC int 	do_setuid();

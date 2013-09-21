@@ -239,9 +239,18 @@ int fcntl(int fd, int cmd, ...)
 	return 0;
 }
 
-mode_t umask(mode_t mask )
+mode_t umask(mode_t mask)
 {
-	return 0;
+	MESSAGE msg;
+	msg.type = UMASK;
+
+	msg.MODE = mask;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
 }
 
 int chmod(const char *path, mode_t mode)

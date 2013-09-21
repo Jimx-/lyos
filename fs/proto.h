@@ -35,6 +35,7 @@ PUBLIC void lock_vmnt(struct vfs_mount * vmnt);
 PUBLIC void unlock_vmnt(struct vfs_mount * vmnt);
 PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
 PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access);
+PUBLIC mode_t do_umask(MESSAGE * p);
 
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
 PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 

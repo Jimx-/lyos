@@ -51,12 +51,10 @@
  * dup
  * fcntl
  * ioctl
- * lseek
  * mkdir/mknod/rmdir
  * pipe
  * rename
  * stime
- * umask
  * umount
  * utime
  */
@@ -105,6 +103,9 @@ PUBLIC void task_fs()
 			break;
 		case LSEEK:
 			msg.RETVAL = do_lseek(&msg);
+			break;
+		case UMASK:
+			msg.RETVAL = (int)do_umask(&msg);
 			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
