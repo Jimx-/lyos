@@ -268,3 +268,41 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gi
     res->size = m.CRFILESIZE;
     return m.CRRET;
 }
+
+/**
+ * <Ring 1> Perform the LSEEK syscall.
+ * @param  p Ptr to the message.
+ * @return   Zero on success.
+ */
+PUBLIC int do_lseek(MESSAGE * p)
+{
+    int fd = p->FD;
+    int offset = p->OFFSET;
+    int whence = p->WHENCE;
+
+    struct file_desc * filp = pcaller->filp[fd];
+    if (!filp) return EINVAL;
+
+    u64 pos = 0;
+    switch (whence) {
+        case SEEK_SET:  
+            pos = 0; 
+            break;
+        case SEEK_CUR:
+            pos = filp->fd_pos;
+            break;
+        case SEEK_END:
+            pos = filp->fd_inode->i_size;
+            break;
+    }
+
+    u64 newpos = pos + offset;
+    /* no negative position */
+    if (newpos < 0) return EOVERFLOW;
+    else {
+        filp->fd_pos = newpos;
+        p->OFFSET = newpos;
+    }
+
+    return 0;
+}

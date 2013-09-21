@@ -276,6 +276,12 @@ int lseek(int fd, int offset, int whence)
 
 	send_recv(BOTH, TASK_FS, &msg);
 
+	/* on error */
+	if (msg.RETVAL != 0) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+
 	return msg.OFFSET;
 }
 

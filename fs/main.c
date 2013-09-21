@@ -103,6 +103,9 @@ PUBLIC void task_fs()
 		case ACCESS:
 			msg.RETVAL = do_access(&msg);
 			break;
+		case LSEEK:
+			msg.RETVAL = do_lseek(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;
