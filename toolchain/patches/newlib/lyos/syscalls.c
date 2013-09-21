@@ -9,6 +9,7 @@
 #include <sys/utsname.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdarg.h>
 
 #include "const.h"
 #include "proc.h"
@@ -281,13 +282,18 @@ int lseek(int fd, int offset, int whence)
 int open(const char *pathname, int flags, ...)
 {
 	MESSAGE msg;
+	va_list parg;
 
 	msg.type	= OPEN;
-
+	
 	msg.PATHNAME	= (void*)pathname;
 	msg.FLAGS	= flags;
 	msg.NAME_LEN	= strlen(pathname);
 
+	va_start(parg, flags);
+	msg.MODE = va_arg(parg, mode_t);
+	va_end(parg);
+	
 	cmb();
 	
 	send_recv(BOTH, TASK_FS, &msg);

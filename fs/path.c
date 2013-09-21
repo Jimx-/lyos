@@ -38,7 +38,7 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
 {
     MESSAGE m;
     m.type = FS_LOOKUP;
-    m.REQ_DEV3 = dev;
+    m.REQ_DEV = dev;
     m.REQ_START_INO = start;
     m.REQ_ROOT_INO = root;
     m.REQ_NAMELEN = strlen(pathname);
@@ -148,3 +148,26 @@ PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
     return pin;
 }
 
+/**
+ * Parse the path down to the last directory.
+ * @param  pathname The path to be parsed.
+ * @param  fp       The caller.
+ * @return          Inode of the last directory on success. Otherwise NULL.
+ */
+PUBLIC struct inode * last_dir(char * pathname, struct proc * fp)
+{
+    char * c = pathname + strlen(pathname);
+    while (*c != '/') {
+        c--;
+    }
+    /* cpp */
+    c++;
+    /* Terminate the string */
+    char old_char = *c;
+    *c = '\0';
+
+    struct inode * pin = resolve_path(pathname, fp);
+
+    *c = old_char;
+    return pin;
+}

@@ -142,9 +142,9 @@ PUBLIC void ext2_put_buffer(ext2_buffer_t * pb)
         /* put it to freelist */ 
         list_del(&(pb->hash));
         list_add(&(pb->list), ext2_buffer_freelist_tail);
+        //ext2_buffer_freelist_tail = &(pb->list);
     }
-
-    if (pb->b_flags | EXT2_BUFFER_WRITE_IMME && pb->b_dirt && pb->b_dev != 0) {
+    if (pb->b_flags & EXT2_BUFFER_WRITE_IMME && pb->b_dirt && pb->b_dev != 0) {
         ext2_rw_buffer(DEV_WRITE, pb);
     }
 }
@@ -194,7 +194,7 @@ PUBLIC void ext2_sync_buffers()
     list_for_each_entry(pb, &ext2_buffer_freelist, list) {
         if (pb->b_dirt) {
 #ifdef EXT2_BUFFER_DEBUG
-            printl("Writing block #%d at dev %d\n", pb->b_dev, pb->b_block);
+            printl("Writing block #%d at dev 0x%x\n", pb->b_block, pb->b_dev);
 #endif
             ext2_rw_buffer(DEV_WRITE, pb);
         }

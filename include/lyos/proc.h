@@ -96,6 +96,8 @@ struct proc {
 	struct inode * pwd;			/* working directory */
 	struct inode * root;		/* root directory */
 
+	int umask;
+
 	int exit_status; /**< for parent */
 
 	struct file_desc * filp[NR_FILES];

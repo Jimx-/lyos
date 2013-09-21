@@ -37,6 +37,8 @@
 /* how many bits in a char */
 #define CHAR_BIT        8
 
+PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t * psb, ext2_inode_t * parent, mode_t mode);
+
 PUBLIC int ext2_setbit(bitchunk_t * bitmap, int max_bits, off_t startp)
 {
     int b = -1;
@@ -71,7 +73,6 @@ PUBLIC int ext2_setbit(bitchunk_t * bitmap, int max_bits, off_t startp)
 
     return b; 
 }
-
 
 PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin)
 {
@@ -132,4 +133,89 @@ PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin)
     }
 
     return block;
+}
+
+/**
+ * <Ring 1> Allocate an inode in parent.
+ * @param  parent The parent directory.
+ * @param  mode   Inode mode.
+ * @return        The inode allocated.
+ */
+PUBLIC ext2_inode_t * ext2_alloc_inode(ext2_inode_t * parent, mode_t mode)
+{
+    ext2_superblock_t * psb = parent->i_sb;
+    /* Can't allocate inode on readonly filesystem */
+    if (psb->sb_readonly) {
+        err_code = EROFS;
+        return NULL;
+    }
+
+    ino_t num = ext2_alloc_inode_bit(psb, parent, mode);
+
+    if (num == 0) {
+        err_code = ENOSPC;
+        return NULL;
+    }
+
+    ext2_inode_t * pin = get_ext2_inode(psb->sb_dev, num);
+
+    if (pin) {
+        pin->i_mode = mode;
+        pin->i_links_count = 0;
+        pin->i_dev = parent->i_dev;
+        pin->i_sb = psb;
+    }
+
+    return pin;
+}
+
+/**
+ * Allocate a bit in the inode bitmap.
+ * @param  psb    Ptr to the superblock.
+ * @param  parent The parent directory.
+ * @param  mode   Inode mode.
+ * @return        Inode number.
+ */
+PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t * psb, ext2_inode_t * parent, mode_t mode)
+{
+    /* Can't allocate inode on readonly filesystem */
+    if (psb->sb_readonly) {
+        panic("ext2fs: ext2_alloc_inode_bit: can't allocate inode on readonly filesystem.");
+    }
+
+    ext2_bgdescriptor_t * group = NULL;
+    ext2_bgdescriptor_t * bgdesc = psb->sb_bgdescs;
+    int i;
+    for (i = 0; i < psb->sb_groups_count; i++, bgdesc++) {
+        if (bgdesc->free_inodes_count > 0) {
+            group = bgdesc;
+            break;
+        }
+    }
+
+    /* No space */
+    if (group == NULL) return 0;
+    ext2_buffer_t * pb = ext2_get_buffer(psb->sb_dev, group->inode_bitmap);
+    int bit = ext2_setbit((bitchunk_t*)(pb->b_data), psb->sb_inodes_per_group, 0);
+
+    ino_t num = (group - psb->sb_bgdescs) * psb->sb_inodes_per_group + bit + 1;
+
+    if (num > psb->sb_inodes_count) {
+        panic("ext2fs: ext2_alloc_inode_bit: num > total number of inodes.");
+    }
+    if (num < psb->sb_first_ino) {
+        panic("ext2fs: ext2_alloc_inode_bit: try to allocate reserved inode.");
+    }
+
+    pb->b_dirt = 1;
+    ext2_put_buffer(pb);
+
+    psb->sb_free_inodes_count--;
+    group->free_inodes_count--;
+    
+    /* write back the changes */
+    write_ext2_super_block(psb->sb_dev);
+    ext2_update_group_desc(psb, group - psb->sb_bgdescs);
+
+    return num;
 }

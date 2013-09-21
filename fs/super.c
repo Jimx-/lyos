@@ -92,7 +92,7 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
     if (readonly) m.REQ_FLAGS |= RF_READONLY;
     if (is_root) m.REQ_FLAGS |= RF_ISROOT;
 
-    m.REQ_DEV3 = dev;
+    m.REQ_DEV = dev;
 
     send_recv(BOTH, fs_ep, &m);
     

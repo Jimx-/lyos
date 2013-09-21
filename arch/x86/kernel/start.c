@@ -183,6 +183,7 @@ PUBLIC void init_arch()
 
 		p->pwd = NULL;
 		p->root = NULL;
+		p->umask = ~0;
 
 		for (j = 0; j < NR_FILES; j++)
 			p->filp[j] = 0;

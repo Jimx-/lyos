@@ -42,14 +42,13 @@ struct dev_drv_map {
 #define ESYMLINK                 (-303)
 
 /* Message types */
-#define REQ_DEV1    u.m1.m1i1
-#define REQ_NUM1    u.m1.m1i2
-
-#define REQ_DEV3            u.m3.m3i1
+#define REQ_DEV            	u.m3.m3i1
+#define REQ_NUM				u.m3.m3l2
 #define REQ_START_INO       u.m3.m3i2
 #define REQ_ROOT_INO        u.m3.m3i3
 #define REQ_NAMELEN         u.m3.m3i4
 #define REQ_FLAGS           u.m3.m3l1
+#define REQ_MODE			u.m3.m3l1
 #define REQ_PATHNAME        u.m3.m3p1
 
 /* for mount */
@@ -78,6 +77,17 @@ struct dev_drv_map {
 #define RWBUF		u.m3.m3p1
 #define RWCNT		u.m3.m3i4
 #define RWRET		u.m3.m3l2
+
+/* for create */
+#define CRDEV            	u.m3.m3i1
+#define CRRET 				u.m3.m3i1
+#define CRINO				u.m3.m3i2
+#define CRUID				u.m3.m3i3
+#define CRGID				u.m3.m3i4
+#define CRNAMELEN         	u.m3.m3l1
+#define CRFILESIZE			u.m3.m3l1
+#define CRMODE				u.m3.m3l2
+#define CRPATHNAME        	u.m3.m3p1
 
 #define RET_RETVAL          u.m5.m5i1
 #define RET_NUM             u.m5.m5i2

@@ -272,8 +272,8 @@ PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)
 {
     MESSAGE m;
     m.type = FS_MOUNTPOINT;
-    m.REQ_DEV1 = dev;
-    m.REQ_NUM1 = num;
+    m.REQ_DEV = dev;
+    m.REQ_NUM = num;
     send_recv(BOTH, fs_ep, &m);
 
     return m.RET_RETVAL;

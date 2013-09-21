@@ -97,6 +97,9 @@ PUBLIC void task_ext2_fs()
         case FS_RDWT:
         	m.RWRET = ext2_rdwt(&m);
         	break;
+        case FS_CREATE:
+        	m.CRRET = ext2_create(&m);
+        	break;
 		case OPEN:
 			//msg.FD = do_open(&msg);
 			break;
@@ -164,8 +167,8 @@ PUBLIC void init_ext2fs()
 
 PRIVATE int ext2_mountpoint(MESSAGE * p)
 {
-    dev_t dev = p->REQ_DEV1;
-    ino_t num = p->REQ_NUM1;
+    dev_t dev = p->REQ_DEV;
+    ino_t num = p->REQ_NUM;
 
     ext2_inode_t * pin = get_ext2_inode(dev, num);
 

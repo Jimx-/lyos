@@ -38,7 +38,7 @@ char dot2[2] = "..";
 PUBLIC int ext2_lookup(MESSAGE * p)
 {
 	int src = p->source;
-	int dev = p->REQ_DEV3;
+	int dev = p->REQ_DEV;
 	int start = p->REQ_START_INO;
 	int root = p->REQ_ROOT_INO;
 	int flags = (int)p->REQ_FLAGS;
@@ -257,12 +257,12 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 	pos = 0;
 	if (ret != 0) return ret;
 	
+	/* calculate the required space */
 	if (flag == SD_MAKE) {
 		int len = strlen(string);
-		int  required_space = EXT2_MIN_DIR_ENTRY_SIZE + len;
+		required_space = EXT2_MIN_DIR_ENTRY_SIZE + len;
 		required_space += (required_space & 0x03) == 0 ? 0 :
 			     (EXT2_DIR_ENTRY_ALIGN - (required_space & 0x03));
-
 		if (dir_pin->i_last_dpos < dir_pin->i_size &&
 				dir_pin->i_last_dentry_size <= required_space)
 			pos = dir_pin->i_last_dpos;
@@ -279,12 +279,13 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 				((char *)pde - (char*)pb->b_data) < dir_pin->i_sb->sb_block_size;
 				pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len) ) {
 
+			match = 0;
 			if (flag != SD_MAKE && pde->d_inode != (ino_t)0) {
 				if (flag == SD_IS_EMPTY) {
 					if (memcmp(pde->d_name, ".", 1) != 0 &&
 					    memcmp(pde->d_name, "..", 2) != 0) match = 1; /* dir is not empty */
 				} else {
-					if (memcmp(pde->d_name, string, pde->d_name_len) == 0){
+					if (memcmp(pde->d_name, string, pde->d_name_len) == 0 && pde->d_name_len == strlen(string)){
 						match = 1;
 					}
 				}
@@ -319,7 +320,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
                 ext2_put_buffer(pb);
 				return ret;
 			}
-	
+
 			/* Check for free slot */
 			if (flag == SD_MAKE && pde->d_inode == 0) {
 				/* we found a free slot, check if it has enough space */
@@ -328,16 +329,17 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 					break;
 				}
 			}
+
 			/* Can we shrink dentry? */
 			if (flag == SD_MAKE && required_space <= EXT2_DIR_ENTRY_SHRINK(pde)) {
 				int actual_size = EXT2_DIR_ENTRY_ACTUAL_SIZE(pde);
 				int new_slot_size = pde->d_rec_len;
 				new_slot_size -= actual_size;
 				pde->d_rec_len = actual_size;
-				pde = (ext2_dir_entry_t *)(pde + pde->d_rec_len);
+				pde = (ext2_dir_entry_t *)((int)pde + pde->d_rec_len);
 				pde->d_rec_len = new_slot_size;
 				pde->d_inode = 0;
-				hit = 1;	/* we found a free slot */
+				hit = 1;
 				break;
 			}
 
@@ -366,7 +368,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
         pde->d_rec_len = dir_pin->i_sb->sb_block_size;
         extended = 1;
     }
-
+    
     pde->d_name_len = strlen(string);
     int i;
     for (i = 0; i < pde->d_name_len && string[i]; i++) pde->d_name[i] = string[i];

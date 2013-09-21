@@ -43,6 +43,8 @@
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
 
 PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode);
+PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
+                            char * pathname, mode_t mode, struct lookup_result * res);
 
 /**
  * <Ring 1> Perform the open syscall.
@@ -63,6 +65,7 @@ PUBLIC int do_open(MESSAGE * p)
     if (!bits) return -EINVAL;
 
     int exist = 1;
+    int retval = 0;
 
     char * pathname = (char *)alloc_mem(name_len + 1);
     if (!pathname) {
@@ -96,8 +99,14 @@ PUBLIC int do_open(MESSAGE * p)
     struct inode * pin = NULL;
 
     if (flags & O_CREAT) {
-        mode = I_REGULAR;
-        /* TODO: create the file */
+        mode = I_REGULAR | (mode & ALL_MODES & pcaller->umask);
+        pin = new_node(pathname, flags, mode);
+        retval = err_code;
+        if (retval == 0) exist = 0;
+        else if (retval != EEXIST) {
+            return retval;
+        }
+        exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, pcaller);
         printl("open file with inode_nr = %d\n", pin->i_num); 
@@ -112,7 +121,6 @@ PUBLIC int do_open(MESSAGE * p)
     filp->fd_mode = flags;
 
     MESSAGE driver_msg;
-    int retval = 0;
     if (exist) {
         if ((retval = forbidden(pcaller, pin, bits)) == 0) {
             switch (pin->i_mode & I_TYPE) {
@@ -175,5 +183,83 @@ PUBLIC int do_close(MESSAGE * p)
  */
 PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode)
 {
-    return NULL;
+    struct inode * pin_dir = NULL;
+
+    struct lookup_result res;
+
+    if ((pin_dir = last_dir(pathname, pcaller)) == NULL) return NULL;
+
+    lock_inode(pin_dir);
+    lock_vmnt(pin_dir->i_vmnt);
+    int retval = 0;
+    struct inode * pin = resolve_path(pathname, pcaller);
+
+    /* no such entry, create one */
+    if (pin == NULL && err_code == ENOENT) {
+        if ((retval = forbidden(pcaller, pin_dir, W_BIT | X_BIT)) == 0) {
+            retval = request_create(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
+                pcaller->uid, pcaller->gid, pathname, mode, &res);
+        }
+        if (retval != 0) {
+            err_code = retval;
+            unlock_inode(pin_dir);
+            unlock_vmnt(pin_dir->i_vmnt);
+            put_inode(pin_dir);
+            return NULL;
+        }
+    } else {
+        err_code = EEXIST;
+        return NULL;
+    }
+
+    pin = new_inode(pin_dir->i_dev, res.inode_nr);
+    pin->i_fs_ep = pin_dir->i_fs_ep;
+    pin->i_size = res.size;
+    pin->i_mode = res.mode;
+    pin->i_uid = res.uid;
+    pin->i_gid = res.gid;
+    pin->i_vmnt = pin_dir->i_vmnt;
+    pin->i_cnt = 1;
+
+    unlock_inode(pin_dir);
+    unlock_vmnt(pin_dir->i_vmnt);
+    put_inode(pin_dir);
+    return pin;
+}
+
+/**
+ * <Ring 1> Issue the create request.
+ * @param  fs_ep    Filesystem endpoint.    
+ * @param  dev      Device number.
+ * @param  num      Inode number.
+ * @param  uid      UID of the caller.
+ * @param  gid      GID of the caller.
+ * @param  pathname The pathname.
+ * @param  mode     Inode mode.
+ * @param  res      Result.
+ * @return          Zero on success.
+ */
+PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
+                            char * pathname, mode_t mode, struct lookup_result * res)
+{
+    MESSAGE m;
+
+    m.type = FS_CREATE;
+    m.CRDEV = (int)dev;
+    m.CRINO = (int)num;
+    m.CRUID = (int)uid;
+    m.CRGID = (int)gid;
+    m.CRPATHNAME = pathname;
+    m.CRNAMELEN = strlen(pathname);
+    m.CRMODE = (int)mode;
+
+    send_recv(BOTH, fs_ep, &m);
+
+    res->fs_ep = fs_ep;
+    res->inode_nr = m.CRINO;
+    res->mode = m.CRMODE;;
+    res->uid = m.CRUID;
+    res->gid = m.CRGID;
+    res->size = m.CRFILESIZE;
+    return m.CRRET;
 }

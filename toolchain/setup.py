@@ -90,8 +90,8 @@ if __name__ == "__main__":
 
 	mkdir('newlib')
 	push_dir('newlib')
-	#configure(NEWLIB_VERSION)
-	#make_and_install()
+	configure(NEWLIB_VERSION)
+	make_and_install()
 	pop_dir()
 
 	copy('../binary/crt*.o', PREFIX + '/' + TARGET + '/lib')
