@@ -253,6 +253,26 @@ mode_t umask(mode_t mask)
 	return msg.RETVAL;
 }
 
+int dup(int fd)
+{
+	return dup2(fd, -1);
+}
+
+int dup2(int fd, int fd2)
+{
+	MESSAGE msg;
+	msg.type = DUP;
+
+	msg.FD = fd;
+	msg.NEWFD = fd2;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
+}
+
 int chmod(const char *path, mode_t mode)
 {
 	return 0;

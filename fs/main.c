@@ -106,6 +106,9 @@ PUBLIC void task_fs()
 		case UMASK:
 			msg.RETVAL = (int)do_umask(&msg);
 			break;
+		case DUP:
+			msg.RETVAL = do_dup(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;

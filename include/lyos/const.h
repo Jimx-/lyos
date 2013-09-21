@@ -197,7 +197,7 @@ enum msgtype {
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
-	CHROOT, CHDIR, ACCESS, UMASK,
+	CHROOT, CHDIR, ACCESS, UMASK, DUP,
 								/* 15 ~ 29 */
 	/* FS & TTY */
 	SUSPEND_PROC, RESUME_PROC,				/* 30 ~ 31 */
@@ -234,7 +234,8 @@ enum msgtype {
 };
 
 /* macros for messages */
-#define	FD		u.m3.m3i1
+#define	FD			u.m3.m3i1
+#define NEWFD		u.m3.m3i2
 #define	PATHNAME	u.m3.m3p1
 #define	FLAGS		u.m3.m3i1
 #define	NAME_LEN	u.m3.m3i2

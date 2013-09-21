@@ -47,5 +47,7 @@ PUBLIC int do_open(MESSAGE * p);
 
 PUBLIC int truncate_node(struct inode * pin, int newsize);
 
+PUBLIC int do_dup(MESSAGE * p);
+
 #endif
 
