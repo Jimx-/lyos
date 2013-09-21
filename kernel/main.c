@@ -255,10 +255,15 @@ void Init()
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
 	printf("Init() is running ...\n");
-
+	
 	printf("\n");
 	printf(LYOS_BANNER);
 	printf("(c)Copyright Jimx 2010-2012\n\n");
+
+	int motd = open("/etc/motd", O_RDWR);
+	char motd_buf[128];
+	read(motd, motd_buf, 128);
+	printf("\n%s\n", motd_buf);
 
 	/* extract `cmd.tar' */
 	//untar("/cmd.tar");
