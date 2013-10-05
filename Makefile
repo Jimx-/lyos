@@ -178,7 +178,7 @@ write-kernel:
 	@sudo bash scripts/write-kernel.sh
 
 kvm:
-	@qemu-system-i386 lyos-disk.img
+	@qemu-system-i386 lyos-disk.img -m 1024
 
 debug:
 	@bochs-gdb -f bochsrc.gdb

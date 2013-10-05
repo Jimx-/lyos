@@ -14,9 +14,9 @@ realclean :
 	@rm -f $(LIBDRVOBJS)
 
 $(LIBDRIVER): $(LIBDRVOBJS)
-	@echo -e '\tAR\tdrivers/libdriver/$@'
+	@echo -e '\tAR\tlib/libdriver/$@'
 	@$(AR) $(ARFLAGS) $@ $^
 
 %.o: %.c
-	@echo -e '\tCC\tdrivers/libdriver/$@'
+	@echo -e '\tCC\tlib/libdriver/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
