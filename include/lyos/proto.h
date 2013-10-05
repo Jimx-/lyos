@@ -131,9 +131,18 @@ PUBLIC void	task_mm();
 
 /* mm/alloc.c */
 PUBLIC void	mem_init(int mem_start, int free_mem_size);
+PUBLIC void vmem_init(int mem_start, int free_mem_size);
 /* PUBLIC int	alloc_mem(int pid, int memsize); */
 PUBLIC int	alloc_mem(int memsize);
 PUBLIC int	free_mem(int base, int len);
+PUBLIC int alloc_pages(int nr_pages);
+
+PUBLIC int  alloc_vmem(int memsize);
+PUBLIC int alloc_vmpages(int nr_pages);
+PUBLIC int  free_vmem(int base, int len);
+
+PUBLIC int map_page(struct page_directory * pgd, void * phys_addr, void * vir_addr);
+PUBLIC int pgd_new(struct page_directory * pgd);
 
 /* console.c */
 PUBLIC void	out_char(TTY* tty, char ch);
@@ -144,13 +153,15 @@ PUBLIC int  	is_current_console(CONSOLE* p_con);
 
 /* proc.c */
 PUBLIC	void	schedule();
-PUBLIC	void*	va2la(int pid, void* va);
-PUBLIC	int	ldt_seg_linear(struct proc* p, int idx);
+PUBLIC	void*	va2la(int pid, void * va);
+PUBLIC  void*   la2pa(int pid, void * la);
+PUBLIC  void*   va2pa(int pid, void * va);
+PUBLIC	int	    ldt_seg_linear(struct proc* p, int idx);
 PUBLIC	void	reset_msg(MESSAGE* p);
 PUBLIC	void	dump_msg(const char * title, MESSAGE* m);
 PUBLIC	void	dump_proc(struct proc * p);
-PUBLIC	int	send_recv(int function, int src_dest, MESSAGE* msg);
-PUBLIC void	inform_int(int task_nr);
+PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
+PUBLIC  void	inform_int(int task_nr);
 
 /* fs/Lyos/open.c */
 PUBLIC int	do_open(MESSAGE * p);

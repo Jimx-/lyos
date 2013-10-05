@@ -34,13 +34,20 @@ struct page_directory {
     pte_t * vir_pts[I386_VM_DIR_ENTRIES];
 };
 
+/* size of a directory */
 #define PGD_SIZE    0x1000
+/* size of a page table */
 #define PT_SIZE     0x1000
+/* size of a physical page */
 #define PG_SIZE     0x1000
+/* size of the memory that a page table maps */
+#define PT_MEMSIZE  PG_SIZE * 1024
 
 #define PG_PRESENT  0x001 
 #define PG_RW       0x002
 #define PG_USER     0x004
+
+#define PAGE_ALIGN  0x1000
 
 #define I386_CR0_PG 0x80000000
 

@@ -14,12 +14,29 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "stddef.h"
+#include "protect.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
 #include "page.h"
 
+PRIVATE int map_kernel(pde_t * pgd);
+
+/* <Ring 0> */
 PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
 {
     pte_t * page_table_start = pt;
-    int nr_page_tables = memory_size / 0x400000 + 1;
+    /* full 4G memory */
+    int nr_page_tables = 1024;
 
     /* identity paging */
     int nr_pages = nr_page_tables * 1024;
@@ -52,14 +69,50 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
     reload_cr3();
 }
 
+/* <Ring 0> */
 PUBLIC void switch_address_space(pde_t * pgd) {
     asm volatile ("mov %0, %%cr3":: "r"(pgd));
 }
 
+/* <Ring 0> */
 PUBLIC void disable_paging()
 {
     int cr0;
     asm volatile ("mov %%cr0, %0": "=r"(cr0));
     cr0 &= ~I386_CR0_PG;
     asm volatile ("mov %0, %%cr0":: "r"(cr0));
+}
+
+/* <Ring 1> */
+PUBLIC int pgd_new(struct page_directory * pgd)
+{
+    /* map the directory so that we can write it */
+    pde_t * pg_dir = (pde_t *)alloc_vmem(PGD_SIZE);
+    pgd->phys_addr = va2pa(getpid(), pg_dir);
+    pgd->vir_addr = pg_dir;
+
+    int i;
+    /* zero it */
+    for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
+        pg_dir[i] = 0;
+    }
+
+    map_kernel(pg_dir);
+    return 0;
+}
+
+/**
+ * <Ring 1> Map the kernel.
+ * @param  pgd The page directory.
+ * @return     Zero on success.
+ */
+PRIVATE int map_kernel(pde_t * pgd)
+{
+    int i;
+
+    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
+        pgd[i] = initial_pgd[i];
+        pgd[i - KERNEL_VMA / 0x400000] = initial_pgd[i - KERNEL_VMA / 0x400000];
+    }
+    return 0;
 }

@@ -189,6 +189,7 @@ PRIVATE void init_mm()
 
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
+	vmem_init(mem_start + KERNEL_VMA, (unsigned int)(4 * 1024 * 1024 * 1024 - mem_start - KERNEL_VMA));
 }
 
 unsigned long get_user_pages(unsigned long len)

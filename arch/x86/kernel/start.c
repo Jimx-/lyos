@@ -34,6 +34,7 @@ int get_kernel_map(unsigned int * b, unsigned int * l);
 
 extern char _end[];
 extern pde_t pgd0;
+PRIVATE pde_t * user_pgd = NULL;
 
 /*======================================================================*
                             cstart
@@ -55,14 +56,23 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
-	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA); 
-	pte_t * pt = (pte_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);	/* 4k align */
+	/* setup kernel page table */
+	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
+	pte_t * pt = (pte_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000) + 0x1000;	/* 4k align */
 	setup_paging(memory_size, initial_pgd, pt);
+
+	/* setup user page table */
+	user_pgd = (pde_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);
+	int i;
+	for (i = 0; i < 4; i++) {
+        user_pgd[i] = initial_pgd[i];
+        user_pgd[i + KERNEL_VMA / 0x400000] = initial_pgd[i + KERNEL_VMA / 0x400000];
+    }
 
 	init_desc(&gdt[0], 0, 0, 0);
 	init_desc(&gdt[1], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
 	init_desc(&gdt[2], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
-	init_desc(&gdt[3], 0x0B8000, 0xffff, DA_DRW | DA_DPL3);
+	init_desc(&gdt[3], 0x0B8000 + KERNEL_VMA, 0xffff, DA_DRW | DA_32 | DA_DPL3);
 
 	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
 	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
@@ -131,13 +141,15 @@ PUBLIC void init_arch()
 			/* change the DPLs */
 			p->ldts[INDEX_LDT_C].attr1  = DA_C   | priv << 5;
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
+
+			/* use kernel page table */
+			p->pgd.phys_addr = initial_pgd;
+			p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
 		}
 		else {		/* INIT process */
 			unsigned int k_base;
 			unsigned int k_limit;
 			get_kernel_map(&k_base, &k_limit);
-			k_base -= KERNEL_VMA;
-			k_limit -= KERNEL_VMA;
 			init_desc(&p->ldts[INDEX_LDT_C],
 				  0, /* bytes before the entry point
 				      * are useless (wasted) for the
@@ -153,6 +165,9 @@ PUBLIC void init_arch()
 				      */
 				  (k_base + k_limit) >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
+			
+			p->pgd.phys_addr = user_pgd;
+			p->pgd.vir_addr = user_pgd + KERNEL_VMA;
 		}
 
 		p->regs.cs = INDEX_LDT_C << 3 |	SA_TIL | rpl;
@@ -164,9 +179,6 @@ PUBLIC void init_arch()
 		p->regs.eip	= (u32)t->initial_eip;
 		p->regs.esp	= (u32)stk;
 		p->regs.eflags	= eflags;
-
-		p->pgd.phys_addr = initial_pgd;
-		p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
 
 		p->counter = p->priority = prio;
 

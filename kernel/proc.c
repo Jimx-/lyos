@@ -209,6 +209,44 @@ PUBLIC void* va2la(int pid, void* va)
 }
 
 /*****************************************************************************
+ *				  la2pa
+ *****************************************************************************/
+/**
+ * <Ring 0~1> Linear addr --> physical addr.
+ * 
+ * @param pid  PID of the proc whose address is to be calculated.
+ * @param la   Linear address.
+ * 
+ * @return The physical address for the given linear address.
+ *****************************************************************************/
+PUBLIC void * la2pa(int pid, void * la)
+{
+	struct proc* p = &proc_table[pid];
+
+    unsigned long pgd_index = (unsigned long)la >> 22 & 0x03FF;
+    unsigned long pt_index = (unsigned long)la >> 12 & 0x03FF;
+
+    pte_t * pt = p->pgd.vir_pts[pgd_index];
+    return (void*)(pt[pt_index] & 0xFFFFF000);
+}
+
+/*****************************************************************************
+ *				  va2pa
+ *****************************************************************************/
+/**
+ * <Ring 0~1> Virtual addr --> physical addr.
+ * 
+ * @param pid  PID of the proc whose address is to be calculated.
+ * @param va   Virtual address.
+ * 
+ * @return The physical address for the given virtual address.
+ *****************************************************************************/
+PUBLIC void * va2pa(int pid, void * va)
+{
+	return la2pa(pid, va2la(pid, va));
+}
+
+/*****************************************************************************
  *                                reset_msg
  *****************************************************************************/
 /**

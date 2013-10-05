@@ -77,69 +77,79 @@ PUBLIC int do_fork()
 	/* duplicate the process: T, D & S */
 	struct descriptor * ppd;
 
-	/* Text segment */
-	ppd = &proc_table[pid].ldts[INDEX_LDT_C];
-	/* base of T-seg, in bytes */
-	int caller_T_base  = reassembly(ppd->base_high, 24,
+	if (pgd_new(&(p->pgd)) != 0) {
+		printl("MM: fork: can't create new page directory.\n");
+		return -ENOMEM;
+	}
+
+	if (1) {
+
+	} else {
+	
+		/* Text segment */
+		ppd = &proc_table[pid].ldts[INDEX_LDT_C];
+		/* base of T-seg, in bytes */
+		int caller_T_base  = reassembly(ppd->base_high, 24,
 					ppd->base_mid,  16,
 					ppd->base_low);
-	/* limit of T-seg, in 1 or 4096 bytes,
-	   depending on the G bit of descriptor */
-	int caller_T_limit = reassembly(0, 0,
+		/* limit of T-seg, in 1 or 4096 bytes,
+	   		depending on the G bit of descriptor */
+		int caller_T_limit = reassembly(0, 0,
 					(ppd->limit_high_attr2 & 0xF), 16,
 					ppd->limit_low);
-	/* size of T-seg, in bytes */
-	int caller_T_size  = ((caller_T_limit + 1) *
+		/* size of T-seg, in bytes */
+		int caller_T_size  = ((caller_T_limit + 1) *
 			      ((ppd->limit_high_attr2 & (DA_LIMIT_4K >> 8)) ?
 			       4096 : 1));
 
-	/* Data & Stack segments */
-	ppd = &proc_table[pid].ldts[INDEX_LDT_RW];
-	/* base of D&S-seg, in bytes */
-	int caller_D_S_base  = reassembly(ppd->base_high, 24,
+		/* Data & Stack segments */
+		ppd = &proc_table[pid].ldts[INDEX_LDT_RW];
+		/* base of D&S-seg, in bytes */
+		int caller_D_S_base  = reassembly(ppd->base_high, 24,
 					  ppd->base_mid,  16,
 					  ppd->base_low);
-	/* limit of D&S-seg, in 1 or 4096 bytes,
-	   depending on the G bit of descriptor */
-	int caller_D_S_limit = reassembly((ppd->limit_high_attr2 & 0xF), 16,
+		/* limit of D&S-seg, in 1 or 4096 bytes,
+		   depending on the G bit of descriptor */
+		int caller_D_S_limit = reassembly((ppd->limit_high_attr2 & 0xF), 16,
 					  0, 0,
 					  ppd->limit_low);
-	/* size of D&S-seg, in bytes */
-	int caller_D_S_size  = ((caller_T_limit + 1) *
+		/* size of D&S-seg, in bytes */
+		int caller_D_S_size  = ((caller_T_limit + 1) *
 				((ppd->limit_high_attr2 & (DA_LIMIT_4K >> 8)) ?
 				 4096 : 1));
 
-	/* we don't separate T, D & S segments, so we have: */
-	assert((caller_T_base  == caller_D_S_base ) &&
+		/* we don't separate T, D & S segments, so we have: */
+		assert((caller_T_base  == caller_D_S_base ) &&
 	       (caller_T_limit == caller_D_S_limit) &&
 	       (caller_T_size  == caller_D_S_size ));
 
-	/* TODO: Separate T, D & S segments */
-	/* base of child proc, T, D & S segments share the same space,
-	   so we allocate memory just once */
-	/* int child_base = alloc_mem(child_pid, caller_T_size); */
-	DEB(printl("Allocating memory: %d\n", caller_D_S_size / 1024 / 1024));
-	int child_base = alloc_mem(caller_D_S_size);
-	DEB(printl("Allocated: base: 0x%x\n", child_base));
+		/* TODO: Separate T, D & S segments */
+		/* base of child proc, T, D & S segments share the same space,
+	   		so we allocate memory just once */
+		/* int child_base = alloc_mem(child_pid, caller_T_size); */
+		DEB(printl("Allocating memory: %d\n", caller_D_S_size / 1024 / 1024));
+		int child_base = alloc_mem(caller_D_S_size);
+		DEB(printl("Allocated: base: 0x%x\n", child_base));
 
-	/* child is a copy of the parent */
-	phys_copy((void*)child_base, (void*)caller_D_S_base, caller_D_S_size);
+		/* child is a copy of the parent */
+		phys_copy((void*)child_base, (void*)caller_D_S_base, caller_D_S_size);	
 
-	/* child's LDT */
-	init_desc(&p->ldts[INDEX_LDT_C],
+		/* child's LDT */
+		init_desc(&p->ldts[INDEX_LDT_C],
 		  child_base,
 		  (PROC_IMAGE_SIZE_DEFAULT - 1) >> LIMIT_4K_SHIFT,
 		  DA_LIMIT_4K | DA_32 | DA_C | PRIVILEGE_USER << 5);
-	init_desc(&p->ldts[INDEX_LDT_RW],
+		init_desc(&p->ldts[INDEX_LDT_RW],
 		  child_base,
 		  (PROC_IMAGE_SIZE_DEFAULT - 1) >> LIMIT_4K_SHIFT,
 		  DA_LIMIT_4K | DA_32 | DA_DRW | PRIVILEGE_USER << 5);
+	}
 
 	/* tell FS, see fs_fork() */
 	MESSAGE msg2fs;
 	msg2fs.type = FORK;
 	msg2fs.PID = child_pid;
-	send_recv(BOTH, TASK_FS, &msg2fs);
+	//send_recv(BOTH, TASK_FS, &msg2fs);
 
 	/* child PID will be returned to the parent proc */
 	mm_msg.PID = child_pid;

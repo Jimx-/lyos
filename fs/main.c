@@ -91,7 +91,7 @@ PUBLIC void task_fs()
 			msg.CNT = do_rdwt(&msg);
 			break;
 		case STAT:
-			msg.type = do_stat(&msg);
+			msg.RETVAL = do_stat(&msg);
 			break;
 		case FSTAT:
 			msg.RETVAL = do_fstat(&msg);

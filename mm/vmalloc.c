@@ -13,6 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+/**
+ * Like alloc.c, however, vmalloc.c provides functions that allocate virtual memory in kernel
+ * address space.
+ */
+
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "lyos/config.h"
@@ -39,7 +44,7 @@ PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
 PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp);
 PRIVATE void merge_hole(struct hole * hp);
 
-PUBLIC void mem_init(int mem_start, int free_mem_size)
+PUBLIC void vmem_init(int mem_start, int free_mem_size)
 {
 	struct hole *hp;
 
@@ -53,11 +58,11 @@ PUBLIC void mem_init(int mem_start, int free_mem_size)
   	free_slots = &hole[0];
 
 	/* Free memory */
-	free_mem(mem_start, free_mem_size);
+	free_vmem(mem_start, free_mem_size);
 }
 
 /*****************************************************************************
- *                                alloc_mem
+ *                                alloc_vmem
  *****************************************************************************/
 /**
  * Allocate a memory block for a proc.
@@ -67,41 +72,32 @@ PUBLIC void mem_init(int mem_start, int free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC int alloc_mem(int memsize)
+PUBLIC int alloc_vmem(int memsize)
 {
- 	struct hole *hp, *prev_ptr;
-	int old_base;
+	int pages = memsize / PG_SIZE;
+	if (memsize % PG_SIZE != 0)
+		pages++;
 
-    prev_ptr = NULL;
-	hp = hole_head;
-	
-	while (hp != NULL) {
-		if (hp->h_len >= memsize) {
-			/* We found a hole that is big enough.  Use it. */
-			old_base = hp->h_base;
-			hp->h_base += memsize;
-			hp->h_len -= memsize;
+	/* allocate physical memory */
+    int phys_pages = alloc_pages(pages);
+ 	int vir_pages = alloc_vmpages(pages);
+ 	int retval = vir_pages;
 
-			/* Delete the hole if used up completely. */
-			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
+ 	/* map */
+ 	int i;
+ 	for (i = 0; i < pages; i++, phys_pages += PG_SIZE, vir_pages += PG_SIZE) {
+ 		map_page(&(current->pgd), (void *)phys_pages, (void *)vir_pages);
+ 	}
 
-			/* Return the start address of the acquired block. */
-			return(old_base);
-		}
-
-		prev_ptr = hp;
-		hp = hp->h_next;
-	}
-	printl("MM: alloc_mem() failed.(Out of memory)\n");
-  	return(-ENOMEM);
+ 	return retval;
 }
 
 /**
- * Allocate physical pages.
+ * Allocate virtual memory pages.
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-PUBLIC int alloc_pages(int nr_pages)
+PUBLIC int alloc_vmpages(int nr_pages)
 {
 	int memsize = nr_pages * PG_SIZE;
  	struct hole *hp, *prev_ptr;
@@ -133,12 +129,12 @@ PUBLIC int alloc_pages(int nr_pages)
 		prev_ptr = hp;
 		hp = hp->h_next;
 	}
-	printl("MM: alloc_pages() failed.(Out of memory)\n");
+	printl("MM: alloc_vmpages() failed.(Out of virtual memory space)\n");
   	return(-ENOMEM);
 }
 
 /*****************************************************************************
- *                                free_mem
+ *                                free_vmem
  *****************************************************************************/
 /**
  * Free a memory block.
@@ -148,7 +144,7 @@ PUBLIC int alloc_pages(int nr_pages)
  *
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC int free_mem(int base, int len)
+PUBLIC int free_vmem(int base, int len)
 {
 	struct hole *hp, *new_ptr, *prev_ptr;
 

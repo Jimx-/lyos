@@ -229,8 +229,7 @@ PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
     }
     if (b == 0) return b;
     pb = ext2_get_buffer(pin->i_dev, b);
-    b = *(pb->b_data + sizeof(block_t) * index);
-
+    b = *(block_t *)(pb->b_data + sizeof(block_t) * index);
     return b;
 }
 

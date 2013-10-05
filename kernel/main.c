@@ -255,10 +255,12 @@ void Init()
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
 	printf("Init() is running ...\n");
-	
+
 	printf("\n");
 	printf(LYOS_BANNER);
 	printf("(c)Copyright Jimx 2010-2012\n\n");
+	execv("/sbin/init", "");
+	//fork();
 
 	int motd = open("/etc/motd", O_RDWR);
 	char motd_buf[128];

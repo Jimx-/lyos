@@ -22,6 +22,7 @@ global enable_paging
 global reload_cr3
 
 page_fault:
+	hlt
 	xchg esp, dword	[eax]
 	push dword	[ecx]
 	push dword	[edx]

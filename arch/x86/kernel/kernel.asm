@@ -31,7 +31,6 @@ extern	tss
 extern	disp_pos
 extern	k_reenter
 extern	sys_call_table
-
 bits 32
 
 global pgd0
@@ -374,23 +373,23 @@ save:
 ;                                 sys_call
 ; =============================================================================
 sys_call:
-        call    save
+    call    save
 
-        sti
+    sti
 	push	esi
 
 	push	dword [current]
 	push	edx
 	push	ecx
 	push	ebx
-        call    [sys_call_table + eax * 4]
+    call    [sys_call_table + eax * 4]
 	add	esp, 4 * 4
 
 	pop	esi
-        mov     [esi + EAXREG - P_STACKBASE], eax
-        cli
+    mov     [esi + EAXREG - P_STACKBASE], eax
+    cli
 
-        ret
+    ret
 
 
 ; ====================================================================================
