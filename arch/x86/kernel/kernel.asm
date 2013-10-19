@@ -90,6 +90,7 @@ global	inval_tss
 global	segment_not_present
 global	stack_exception
 global	general_protection
+global 	page_fault
 global	copr_error
 global	hwint00
 global	hwint01
@@ -323,15 +324,22 @@ stack_exception:
 general_protection:
 	push	13		; vector_no	= D
 	jmp	exception
+page_fault:
+	push 	14 		; vector no = E
+	jmp exception
 copr_error:
 	push	0xFFFFFFFF	; no err code
 	push	16		; vector_no	= 10h
 	jmp	exception
 
 exception:
+	; go back to kernel address space
+	mov eax, pgd0 - KERNEL_VMA
+	mov cr3, eax
+
 	call	exception_handler
 	add	esp, 4*2	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
-	hlt
+	iret
 
 ; =============================================================================
 ;                                   save

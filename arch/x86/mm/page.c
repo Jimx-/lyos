@@ -31,7 +31,9 @@
 
 PRIVATE int map_kernel(pde_t * pgd);
 
-/* <Ring 0> */
+/**
+ * <Ring 0> Setup identity paging for kernel
+ */
 PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
 {
     pte_t * page_table_start = pt;
@@ -57,11 +59,6 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
     for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
         pgd[i] = pgd[i - KERNEL_VMA / 0x400000];
     }
-
-    /* unmap first 16M */
-    //for (i = 0; i < 4; i++) {
-    //    pgd[i] = 0;
-    //}
 
     /* switch to the new page directory */
     switch_address_space(pgd);
@@ -111,7 +108,6 @@ PRIVATE int map_kernel(pde_t * pgd)
     int i;
 
     for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
-        pgd[i] = initial_pgd[i];
         pgd[i - KERNEL_VMA / 0x400000] = initial_pgd[i - KERNEL_VMA / 0x400000];
     }
     return 0;

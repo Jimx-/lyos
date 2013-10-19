@@ -65,7 +65,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	user_pgd = (pde_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);
 	int i;
 	for (i = 0; i < 4; i++) {
-        user_pgd[i] = initial_pgd[i];
         user_pgd[i + KERNEL_VMA / 0x400000] = initial_pgd[i + KERNEL_VMA / 0x400000];
     }
 
@@ -166,6 +165,8 @@ PUBLIC void init_arch()
 				  (k_base + k_limit) >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
 			
+			//p->pgd.phys_addr = initial_pgd;
+			//p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
 			p->pgd.phys_addr = user_pgd;
 			p->pgd.vir_addr = user_pgd + KERNEL_VMA;
 		}

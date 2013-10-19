@@ -253,7 +253,7 @@ void Init()
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
-
+	
 	printf("Init() is running ...\n");
 
 	printf("\n");
