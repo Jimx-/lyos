@@ -89,8 +89,12 @@ PUBLIC int do_exec()
 		&data_paddr, &data_vaddr, &data_filelen, &data_memlen,
 		&entry_point, &text_offset, &data_offset);
 
+	if (retval) return retval;
+
 	proc_new(p, (void *)text_vaddr, text_memlen, (void *)data_vaddr, data_memlen);
 
+	phys_copy(va2pa(src, (void *)text_vaddr), va2pa(getpid(), (void *)((int)mmbuf + text_offset)), text_filelen);
+	phys_copy(va2pa(src, (void *)data_vaddr), va2pa(getpid(), (void *)((int)mmbuf + data_offset)), data_filelen);
 	/* setup the arg stack */
 	/*int orig_stack_len = mm_msg.BUF_LEN;
 	char stackcopy[PROC_ORIGIN_STACK];
@@ -117,12 +121,11 @@ PUBLIC int do_exec()
 	proc_table[src].regs.eax = (u32)orig_stack; 
 	*/
 	/* setup eip & esp */
-	/*proc_table[src].regs.eip = elf_hdr->e_entry; *//* @see _start.asm */
-	/*
-	proc_table[src].regs.esp = PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK;
+	proc_table[src].regs.eip = entry_point; /* @see _start.asm */
+	//proc_table[src].regs.esp = VM_STACK_TOP;
 
 	strcpy(proc_table[src].name, pathname);
-	*/
+	
 	return 0;
 }
 

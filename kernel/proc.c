@@ -227,7 +227,7 @@ PUBLIC void * la2pa(int pid, void * la)
     unsigned long pt_index = (unsigned long)la >> 12 & 0x03FF;
 
     pte_t * pt = p->pgd.vir_pts[pgd_index];
-    return (void*)(pt[pt_index] & 0xFFFFF000);
+    return (void*)((pt[pt_index] & 0xFFFFF000) + ((int)la & 0xFFF));
 }
 
 /*****************************************************************************

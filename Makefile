@@ -83,11 +83,12 @@ LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
+LYOSINIT	= init/init
 
 OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
 			$(MMOBJ) \
-			$(DRVOBJ) 
+			$(DRVOBJ)
 
 DASMOUTPUT	= lyos.bin.asm
 
@@ -115,7 +116,7 @@ kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL)
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL) $(LYOSINIT)
 
 all : realclean everything image lib cmd
 
@@ -159,7 +160,7 @@ lib :
 
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
-	@find . -name "*.o" -exec rm -f {} \;
+	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
 	@echo -e '$(COLORRED)Removing compile.h...$(COLORDEFAULT)'
 	@rm -f $(INCLUDEDIR)/lyos/compile.h
 	@echo -e '$(COLORRED)Removing configure files...$(COLORDEFAULT)'
@@ -171,11 +172,11 @@ clean :
 	@rm -f $(OBJS)
 
 realclean :
-	@find . -name "*.o" -exec rm -f {} \;
-	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL)
+	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
+	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL) $(LYOSINIT)
 
-write-kernel:
-	@sudo bash scripts/write-kernel.sh
+update-disk:
+	@sudo bash scripts/update-disk.sh
 
 kvm:
 	@qemu-system-i386 lyos-disk.img -m 1024
@@ -231,3 +232,7 @@ $(MMOBJ):
 $(DRVOBJ):
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
 	@(cd drivers; make)
+
+$(LYOSINIT):
+	@echo -e '$(COLORGREEN)Compiling init...$(COLORDEFAULT)'
+	@(cd init; make)
