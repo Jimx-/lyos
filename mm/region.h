@@ -36,7 +36,7 @@ struct vir_region {
 
     void * vir_addr;
     int length;
-    struct list_head phys;  /*<- physical memory blocks */
+    struct list_head phys_blocks;  /*<- physical memory blocks */
 
     int flags;
 };

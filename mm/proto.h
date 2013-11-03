@@ -11,25 +11,17 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "sys/types.h"
-#include "lyos/const.h"
-#include "lyos/proc.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
-#include "lyos/proto.h"
+#ifndef _MM_PROTO_H_
+#define _MM_PROTO_H_
 
-PUBLIC int vir_copy(int src_pid, void * src, int dest_pid, void * dest, int len)
-{
-    MESSAGE m;
+PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length);
 
-    m.SRC_PID = src_pid;
-    m.SRC_ADDR = src;
-    m.DEST_PID = dest_pid;
-    m.DEST_ADDR = dest;
-    m.BUF_LEN = len;
+PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length);
+PUBLIC int region_alloc_phys(struct vir_region * rp);
+PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp);
 
-    return vircopy(&m);
-}
+PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * data_vaddr, int data_memlen);
+
+#endif

@@ -89,9 +89,14 @@ PUBLIC int pgd_new(struct page_directory * pgd)
     pgd->vir_addr = pg_dir;
 
     int i;
+
     /* zero it */
     for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
         pg_dir[i] = 0;
+    }
+
+    for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
+        pgd->vir_pts[i] = NULL;
     }
 
     map_kernel(pg_dir);

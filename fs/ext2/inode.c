@@ -34,7 +34,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-#define INODE_DEBUG
+//#define INODE_DEBUG
 #ifdef INODE_DEBUG
 #define DEB(x) printl("ext2fs: "); x
 #else

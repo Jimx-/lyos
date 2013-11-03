@@ -34,7 +34,7 @@
 #include "global.h"
 #include "buffer.h"
 
-#define EXT2_BUFFER_DEBUG
+//#define EXT2_BUFFER_DEBUG
 
 PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb);
 PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count, void * buf);

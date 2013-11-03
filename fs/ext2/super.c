@@ -33,7 +33,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-#define DEBUG
+//#define DEBUG
 #if defined(DEBUG)
 #define DEB(x) printl("ext2fs: "); x
 #else

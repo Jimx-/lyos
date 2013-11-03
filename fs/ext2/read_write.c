@@ -33,7 +33,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int offset, int rw_flag, endpoint_t src, void * buf);
+PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, endpoint_t src, void * buf);
 
 /**
  * Ext2 read/write syscall.
@@ -74,7 +74,7 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
         }
 
         /* rw */
-        retval = ext2_rw_chunk(pin, position, chunk, offset, rw_flag, src, buf);
+        retval = ext2_rw_chunk(pin, position, chunk, nbytes, offset, rw_flag, src, buf);
         if (retval) break;
 
         /* move on */
@@ -116,13 +116,14 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
  * @param  pin      The inode to read/write.
  * @param  position Where to read/write.
  * @param  chunk    How many bytes to read/write.
+ * @param  left     Max number of bytes wanted.
  * @param  offset   In block offset.
  * @param  rw_flag  Read or write.
  * @param  src      Who wanna read/write.
  * @param  buf      Buffer.
  * @return          Zero on success.
  */
-PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int offset, int rw_flag, endpoint_t src, void * buf)
+PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, endpoint_t src, void * buf)
 {
 
     int b = 0;

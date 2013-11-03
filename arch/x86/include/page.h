@@ -16,7 +16,8 @@
 #ifndef _PAGE_H_
 #define _PAGE_H_
 
-#define KERNEL_VMA  0xF0000000
+#define KERNEL_VMA      0xF0000000
+#define VM_STACK_TOP    KERNEL_VMA
 
 typedef unsigned int    pde_t;
 typedef unsigned int    pte_t;
@@ -55,6 +56,8 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt);
 PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();
+PUBLIC int read_cr2();
+PUBLIC int read_cr3();
 PUBLIC void reload_cr3();
 
 #endif

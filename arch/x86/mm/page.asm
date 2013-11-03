@@ -16,8 +16,9 @@
 extern wp_page
 extern no_page
 
-;This routine handle int 14(page fault)
 global enable_paging
+global read_cr2
+global read_cr3
 global reload_cr3
 
 enable_paging:
@@ -30,6 +31,20 @@ enable_paging:
 paging_enabled:
 	nop
 
+	ret
+
+read_cr2:
+    push ebp
+    mov ebp, esp
+    mov	eax, cr2
+    pop ebp
+	ret
+
+read_cr3:
+    push ebp
+    mov ebp, esp
+    mov	eax, cr3
+    pop ebp
 	ret
 
 reload_cr3:

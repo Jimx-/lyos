@@ -18,6 +18,7 @@
 #include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
+#include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -27,6 +28,8 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+
+#define MEMORY_DEBUG    1
 
 /**
  * <Ring 1> Map a physical page.
@@ -40,7 +43,38 @@ PUBLIC int map_page(struct page_directory * pgd, void * phys_addr, void * vir_ad
     unsigned long pt_index = (unsigned long)vir_addr >> 12 & 0x03FF;
 
     pte_t * pt = pgd->vir_pts[pgd_index];
+
+    /* page table not present */
+    if (pt == NULL) {
+        pt = (pte_t *)alloc_vmem(PT_SIZE);
+        if (pt == NULL) {
+            printl("MM: map_page: failed to allocate memory for new page table\n");
+            return ENOMEM;
+        }
+
+#if MEMORY_DEBUG
+        printl("MM: map_page: allocated new page table\n");
+#endif
+
+        pgd->vir_addr[pgd_index] = (int)va2pa(getpid(), pt) | PG_PRESENT | PG_RW | PG_USER;
+        pgd->vir_pts[pgd_index] = pt;
+    }
+
     pt[pt_index] = ((int)phys_addr & 0xFFFFF000) | PG_PRESENT | PG_RW | PG_USER;
+
+    return 0;
+}
+
+PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length)
+{
+    while (1) {
+        map_page(pgd, phys_addr, vir_addr);
+
+        length -= PG_SIZE;
+        phys_addr += PG_SIZE;
+        vir_addr += PG_SIZE;
+        if (length <= 0) break;
+    }
 
     return 0;
 }

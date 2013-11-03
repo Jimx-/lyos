@@ -144,6 +144,10 @@ PUBLIC void init_arch()
 			/* use kernel page table */
 			p->pgd.phys_addr = initial_pgd;
 			p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
+
+			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
+				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
+			}			
 		}
 		else {		/* INIT process */
 			unsigned int k_base;
@@ -154,7 +158,7 @@ PUBLIC void init_arch()
 				      * are useless (wasted) for the
 				      * INIT process, doesn't matter
 				      */
-				  (k_base + k_limit) >> LIMIT_4K_SHIFT,
+				  VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
 
 			init_desc(&p->ldts[INDEX_LDT_RW],
@@ -162,13 +166,12 @@ PUBLIC void init_arch()
 				      * are useless (wasted) for the
 				      * INIT process, doesn't matter
 				      */
-				  (k_base + k_limit) >> LIMIT_4K_SHIFT,
+				  VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
 			
-			//p->pgd.phys_addr = initial_pgd;
-			//p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
 			p->pgd.phys_addr = user_pgd;
-			p->pgd.vir_addr = user_pgd + KERNEL_VMA;
+			//FIXME: should be p->pgd.vir_addr = user_pgd + KERNEL_VMA;
+			p->pgd.vir_addr = user_pgd;
 		}
 
 		p->regs.cs = INDEX_LDT_C << 3 |	SA_TIL | rpl;

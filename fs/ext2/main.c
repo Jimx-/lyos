@@ -36,7 +36,7 @@
 
 #define DEBUG
 #ifdef DEBUG
-#define DEB(x) printl("Ext2 FS: "); x
+#define DEB(x) printl("ext2fs: "); x
 #else
 #define DEB(x)
 #endif

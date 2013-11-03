@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "signal.h"
+#include <lyos/list.h>
 
 #if (ARCH == x86)
 #include "protect.h"
@@ -49,6 +50,7 @@ struct proc {
 	u16 ldt_sel;               /* gdt selector giving ldt base and limit */
 	struct descriptor ldts[LDT_SIZE]; /* local descs for code and data */
 #endif
+
 	struct page_directory	pgd;
 
     int counter;                 /* remained ticks */
@@ -97,6 +99,8 @@ struct proc {
 	struct inode * root;		/* root directory */
 
 	int umask;
+
+	struct list_head mem_regions;
 
 	int exit_status; /**< for parent */
 

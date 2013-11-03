@@ -31,6 +31,8 @@
 #include <elf.h>
 #include "fcntl.h"
 #include "sys/stat.h"
+#include "proto.h"
+#include "region.h"
 
 #define EXEC_DEBUG 1
 
@@ -57,6 +59,7 @@ PUBLIC int do_exec()
 	/* get parameters from the message */
 	int name_len = mm_msg.NAME_LEN;	/* length of filename */
 	int src = mm_msg.source;	/* caller proc nr. */
+	struct proc * p = proc_table + src;
 	assert(name_len < MAX_PATH);
 
 	char pathname[MAX_PATH];
@@ -86,9 +89,10 @@ PUBLIC int do_exec()
 		&data_paddr, &data_vaddr, &data_filelen, &data_memlen,
 		&entry_point, &text_offset, &data_offset);
 
-	for (;;);
+	proc_new(p, (void *)text_vaddr, text_memlen, (void *)data_vaddr, data_memlen);
+
 	/* setup the arg stack */
-	int orig_stack_len = mm_msg.BUF_LEN;
+	/*int orig_stack_len = mm_msg.BUF_LEN;
 	char stackcopy[PROC_ORIGIN_STACK];
 	phys_copy((void*)va2la(TASK_MM, stackcopy),
 		  (void*)va2la(src, mm_msg.BUF),
@@ -99,8 +103,8 @@ PUBLIC int do_exec()
 	int delta = (int)orig_stack - (int)mm_msg.BUF;
 
 	int argc = 0;
-	if (orig_stack_len) {	/* has args */
-		char **q = (char**)stackcopy;
+	if (orig_stack_len) {	*//* has args */
+	/*	char **q = (char**)stackcopy;
 		for (; *q != 0; q++,argc++)
 			*q += delta;
 	}
@@ -109,15 +113,16 @@ PUBLIC int do_exec()
 		  (void*)va2la(TASK_MM, stackcopy),
 		  orig_stack_len);
 
-	proc_table[src].regs.ecx = argc; /* argc */
-	proc_table[src].regs.eax = (u32)orig_stack; /* argv */
-
+	proc_table[src].regs.ecx = argc; 
+	proc_table[src].regs.eax = (u32)orig_stack; 
+	*/
 	/* setup eip & esp */
-	proc_table[src].regs.eip = elf_hdr->e_entry; /* @see _start.asm */
+	/*proc_table[src].regs.eip = elf_hdr->e_entry; *//* @see _start.asm */
+	/*
 	proc_table[src].regs.esp = PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK;
 
 	strcpy(proc_table[src].name, pathname);
-
+	*/
 	return 0;
 }
 
@@ -174,5 +179,32 @@ PRIVATE int read_elf_header(Elf32_Ehdr* elf_hdr,
 	printl("Initial PC: 0x%x\n", *entry_point);
 #endif
 
+	return 0;
+}
+
+/**
+ * <Ring 1> Create process with text and data segments.
+ * @param  text_vaddr  Text base.
+ * @param  text_memlen Text length.
+ * @param  data_vaddr  Data base.
+ * @param  data_memlen Data length.
+ * @return             Zero on success.
+ */
+PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * data_vaddr, int data_memlen)
+{
+	/* create memory region */
+	struct vir_region * text_region = region_new(p, text_vaddr, text_memlen);
+	list_add(&(text_region->list), &(p->mem_regions));
+	struct vir_region * data_region = region_new(p, data_vaddr, data_memlen);
+	list_add(&(data_region->list), &(p->mem_regions));
+
+	/* allocate physical memory */
+	region_alloc_phys(text_region);
+	region_alloc_phys(data_region);
+
+	/* map the region in p's address space */
+	region_map_phys(p, text_region);
+	region_map_phys(p, data_region);
+	
 	return 0;
 }

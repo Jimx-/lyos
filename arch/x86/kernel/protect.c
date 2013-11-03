@@ -28,7 +28,6 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-
 /* 本文件内函数声明 */
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
 
@@ -67,6 +66,7 @@ void	hwint13();
 void	hwint14();
 void	hwint15();
 
+PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags);
 
 /*======================================================================*
                             init_prot
@@ -246,6 +246,45 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
 	p_desc->base_high	= (base >> 24) & 0x0FF;		/* 段基址 3		(1 字节) */
 }
 
+/**
+ * <Ring 0> Handle page fault.
+ */
+PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
+{
+	int i;
+	int pos = disp_pos;
+	int text_color = 0x74;
+	
+	for (i = 0; i < 80; i++)
+		disp_str(" ");
+	
+	disp_pos = pos;
+
+	if (err_code & PG_PRESENT) {
+		disp_color_str("\nProtection violation ", text_color);
+	} else {
+		disp_color_str("\nPage not present ", text_color);
+	}
+
+	if (err_code & PG_RW) {
+		disp_color_str("caused by write access ", text_color);
+	} else {
+		disp_color_str("caused by read access ", text_color);
+	}
+
+	if (err_code & PG_USER) {
+		disp_color_str("in user mode", text_color);
+	} else {
+		disp_color_str("in supervisor mode", text_color);
+	}
+
+	int pfla = read_cr2();
+	disp_color_str("\nCR2(PFLA): ", text_color);
+	disp_int(pfla);
+	disp_color_str(" CR3: ", text_color);
+	disp_int(read_cr3());
+}
+
 /*======================================================================*
                             exception_handler
  *----------------------------------------------------------------------*
@@ -297,10 +336,18 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 	disp_int(eip);
 	disp_color_str(" PID: ", text_color);
 	disp_int(proc2pid(current));
+	disp_color_str("(", text_color);
+	disp_color_str(current->name, text_color);
+	disp_color_str(") ", text_color);
 
 	if(err_code != 0xFFFFFFFF){
 		disp_color_str(" Error code: ", text_color);
 		disp_int(err_code);
+	}
+
+	/* PF */
+	if (vec_no == 14) {
+		page_fault_handler(err_code, eip, cs, eflags);
 	}
 }
 
