@@ -92,7 +92,7 @@ PUBLIC void task_mm()
 			mm_msg.RETVAL = do_getuid();
 			break;
 		case SETUID:
-            		mm_msg.RETVAL = do_setuid();
+            mm_msg.RETVAL = do_setuid();
 			break;
 		case GETGID:
 			mm_msg.RETVAL = do_getgid();
