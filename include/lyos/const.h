@@ -204,13 +204,13 @@ enum msgtype {
 
 	/* MM */
 	EXEC, WAIT, KILL, ACCT, BRK, SETUID, GETUID, SETGID, GETGID, GETEUID, 
-    GETEGID, ALARM, RAISE, SIGACTION, MALLOC,			/* 32 ~ 46 */
+    GETEGID, ALARM, RAISE, SIGACTION, MALLOC, DATACOPY,		/* 32 ~ 47 */
 
 	/* FS & MM */
-	FORK, EXIT,						/* 47 ~ 48 */
+	FORK, EXIT,						/* 48 ~ 49 */
 
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 49 */
+	SYSCALL_RET,						/* 50 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,
@@ -258,11 +258,13 @@ enum msgtype {
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
 
-/* for vir_copy */
+/* for data_copy */
 #define SRC_PID		u.m3.m3i1
 #define SRC_ADDR	u.m3.m3p1
+#define SRC_SEG		u.m3.m3l1
 #define DEST_PID	u.m3.m3i2
 #define DEST_ADDR	u.m3.m3p2
+#define DEST_SEG	u.m3.m3l2
 
 #define NR_BUFFER	1285
 

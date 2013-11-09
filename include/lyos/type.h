@@ -86,6 +86,7 @@ struct mess5 {	/* 32 bytes */
 	int m5i7;
 	int m5i8;
 };
+
 typedef struct {
 	int source;
 	int type;

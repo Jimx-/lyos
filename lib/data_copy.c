@@ -13,21 +13,34 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "lyos/const.h"
-#include "stdio.h"
-#include "string.h"
-#include "assert.h"
-
-PUBLIC int printl(const char *fmt, ...);
+#include <lyos/type.h>
+#include <lyos/const.h>
+#include <lyos/ipc.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
 
 /*****************************************************************************
- *                                spin
+ *                                data_copy
  *****************************************************************************/
-PUBLIC void spin(char * func_name)
+PUBLIC int data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
+    endpoint_t src_pid, int src_seg, void * src_addr, int len)
 {
-	printl("\nspinning in %s ...\n", func_name);
-	while (1) {}
+	MESSAGE m;
+
+    m.type = DATACOPY;
+    
+    m.SRC_PID = src_pid;
+    m.SRC_SEG = (long)src_seg;
+    m.SRC_ADDR = src_addr;
+
+    m.DEST_PID = dest_pid;
+    m.DEST_SEG = (long)dest_seg;
+    m.DEST_ADDR = dest_addr;
+
+    m.BUF_LEN = len;
+
+    send_recv(BOTH, TASK_MM, &m);
+
+    return m.RETVAL;
 }
-
-

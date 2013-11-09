@@ -72,9 +72,9 @@ PUBLIC int do_open(MESSAGE * p)
         err_code = -ENOMEM;
         return -1;
     }
-
-    phys_copy((void*)va2la(TASK_FS, pathname),
-          (void*)va2la(src, p->PATHNAME),
+    
+    phys_copy((void*)va2pa(TASK_FS, pathname),
+          (void*)va2pa(src, p->PATHNAME),
           name_len);
     pathname[name_len] = '\0';
 

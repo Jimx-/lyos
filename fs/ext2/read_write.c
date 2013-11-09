@@ -157,10 +157,10 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left,
 
     if (rw_flag == READ) {
         /* copy the data to userspace */
-        phys_copy(va2la(src, buf), va2la(getpid(), (void *)((int)bp->b_data + offset)), chunk);
+        phys_copy(va2pa(src, buf), va2pa(getpid(), (void *)((int)bp->b_data + offset)), chunk);
     } else {
         /* copy the data from userspace */
-        phys_copy(va2la(getpid(), (void *)((int)bp->b_data + offset)), va2la(src, buf), chunk);
+        phys_copy(va2pa(getpid(), (void *)((int)bp->b_data + offset)), va2pa(src, buf), chunk);
         bp->b_dirt = 1;
     }
 

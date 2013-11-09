@@ -29,7 +29,7 @@
 #include "lyos/proto.h"
 #include "page.h"
 
-PRIVATE int map_kernel(pde_t * pgd);
+PRIVATE int map_kernel(struct page_directory * pgd);
 
 /**
  * <Ring 0> Setup identity paging for kernel
@@ -108,12 +108,13 @@ PUBLIC int pgd_new(struct page_directory * pgd)
  * @param  pgd The page directory.
  * @return     Zero on success.
  */
-PRIVATE int map_kernel(pde_t * pgd)
+PRIVATE int map_kernel(struct page_directory * pgd)
 {
     int i;
 
     for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
-        pgd[i - KERNEL_VMA / 0x400000] = initial_pgd[i - KERNEL_VMA / 0x400000];
+        pgd->vir_addr[KERNEL_VMA / 0x400000] = initial_pgd[i - KERNEL_VMA / 0x400000];
+        pgd->vir_pts[i] = (initial_pgd[i - KERNEL_VMA / 0x400000] + KERNEL_VMA) & 0xfffff000;
     }
     return 0;
 }

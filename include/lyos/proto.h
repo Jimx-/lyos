@@ -220,10 +220,15 @@ PUBLIC int 	do_sigaction();
 PUBLIC int 	do_raise();
 PUBLIC int 	do_alarm();
 
+PUBLIC int  do_datacopy();
+
 
 /* lib/misc.c */
 PUBLIC void 	spin(char * func_name);
 PUBLIC u32      now();
+
+PUBLIC int  data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
+    endpoint_t src_pid, int src_seg, void * src_addr, int len);
 
 /* proc.c */
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);

@@ -33,8 +33,6 @@
 #include <elf.h>
 
 PRIVATE int free_mem_size;
-PRIVATE int paging_pages;
-PRIVATE unsigned long * kernel_page_descs;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
@@ -115,6 +113,9 @@ PUBLIC void task_mm()
 		case MALLOC:
 			mm_msg.RETVAL = alloc_mem(mm_msg.CNT);
 			break;
+		case DATACOPY:
+			mm_msg.RETVAL = do_datacopy();
+			break;
 		default:
 			dump_msg("MM::unknown msg", &mm_msg);
 			assert(0);
@@ -191,49 +192,3 @@ PRIVATE void init_mm()
 	mem_init(mem_start, free_mem_size);
 	vmem_init(mem_start + KERNEL_VMA, (unsigned int)(4 * 1024 * 1024 * 1024 - mem_start - KERNEL_VMA));
 }
-
-unsigned long get_user_pages(unsigned long len)
-{
-    unsigned long i, j, start;
-    j = 0;
-    for (i = 0; i < (paging_pages * PAGE_SIZE); i++)
-    {
-        if (kernel_page_descs[i] & KERNEL_USER_USED_MASK)  // used?
-        {
-            j = 0;
-        }
-        else
-        {
-            if (j == 0)
-            {
-                start = i;
-            }
-            j++;
-            if (j >= len)
-            {
-                break;
-            }
-        }
-    }
-    if (j == 0)
-    {
-        return 0;
-    }
-    for (i = start; i < (start + j); i++)
-    {
-        kernel_page_descs[i] |= KERNEL_USER_USED_MASK;
-    }
-    return start * PAGE_SIZE;
-}
-
-unsigned long free_user_pages(unsigned long start, unsigned long len)
-{
-    unsigned long i;
-    unsigned long pgstart = start / PAGE_SIZE;
-    for (i = pgstart; i < (pgstart + len); i++)
-    {
-        kernel_page_descs[i] -= kernel_page_descs[i] & KERNEL_USER_USED_MASK;
-    }
-    return 0;
-}
-

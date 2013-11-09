@@ -111,7 +111,7 @@ PUBLIC int do_mount(MESSAGE * p)
     char * fs_label = (char *)alloc_mem(label_len + 1);
     if (!fs_label) return ENOMEM;
     
-    phys_copy(va2la(getpid(), fs_label), va2la(src, p->MLABEL), label_len);
+    phys_copy(va2pa(getpid(), fs_label), va2pa(src, p->MLABEL), label_len);
     fs_label[label_len] = '\0';
     int fs_e = get_filesystem_endpoint(fs_label);
     free_mem((int)fs_label, label_len + 1);
@@ -128,8 +128,8 @@ PUBLIC int do_mount(MESSAGE * p)
         return ENOMEM;
     }           
 
-    phys_copy(va2la(getpid(), source), va2la(src, p->MSOURCE), source_len);
-    phys_copy(va2la(getpid(), target), va2la(src, p->MTARGET), target_len);
+    phys_copy(va2pa(getpid(), source), va2pa(src, p->MSOURCE), source_len);
+    phys_copy(va2pa(getpid(), target), va2pa(src, p->MTARGET), target_len);
 
     source[source_len] = '\0';
     target[target_len] = '\0';

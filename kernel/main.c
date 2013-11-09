@@ -250,6 +250,8 @@ void shell(const char * tty_name)
  *****************************************************************************/
 void Init()
 {
+	execv("/sbin/init", "");
+	
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
@@ -259,18 +261,12 @@ void Init()
 	printf("\n");
 	printf(LYOS_BANNER);
 	printf("(c)Copyright Jimx 2010-2012\n\n");
-	execv("/sbin/init", "");
-	//fork();
 
 	int motd = open("/etc/motd", O_RDWR);
 	char motd_buf[128];
 	read(motd, motd_buf, 128);
 	printf("\n%s\n", motd_buf);
 
-	/* extract `cmd.tar' */
-	//untar("/cmd.tar");
-
-	for (;;);
 	char * tty_list[] = {"/dev/tty0","/dev/tty1", "/dev/tty2"};
 	printf("\n");
 

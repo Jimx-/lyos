@@ -70,7 +70,7 @@ PUBLIC int do_stat(MESSAGE * p)
     char * pathname = (char *)alloc_mem(namelen);
     if (!pathname) return ENOMEM;
 
-    phys_copy(va2la(getpid(), pathname), va2la(p->source, p->PATHNAME), namelen);
+    phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
     pathname[namelen] = 0;
 
     struct inode * pin = resolve_path(pathname, pcaller);

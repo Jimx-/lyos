@@ -172,6 +172,10 @@ PUBLIC void init_arch()
 			p->pgd.phys_addr = user_pgd;
 			//FIXME: should be p->pgd.vir_addr = user_pgd + KERNEL_VMA;
 			p->pgd.vir_addr = user_pgd;
+
+			for (j = KERNEL_VMA / 0x400000; j < KERNEL_VMA / 0x400000 + 4; j++) {
+				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
+			}
 		}
 
 		p->regs.cs = INDEX_LDT_C << 3 |	SA_TIL | rpl;
