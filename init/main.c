@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 int main()
 {
@@ -9,6 +10,7 @@ int main()
 
 	char hello[] = "Hello world!\n";
 	write(1, hello, strlen(hello));
+	//printf("Hello world\n");
 	while (1) {
 		int s;
 		wait(&s);
