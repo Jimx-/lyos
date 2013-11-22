@@ -20,6 +20,8 @@
 #include <string.h>
 #include <assert.h>
 
+PUBLIC int datacopy(MESSAGE * m);
+
 /*****************************************************************************
  *                                data_copy
  *****************************************************************************/
@@ -27,8 +29,6 @@ PUBLIC int data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
     endpoint_t src_pid, int src_seg, void * src_addr, int len)
 {
 	MESSAGE m;
-
-    m.type = DATACOPY;
     
     m.SRC_PID = src_pid;
     m.SRC_SEG = (long)src_seg;
@@ -40,7 +40,7 @@ PUBLIC int data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
 
     m.BUF_LEN = len;
 
-    send_recv(BOTH, TASK_MM, &m);
+    datacopy(&m);
 
     return m.RETVAL;
 }

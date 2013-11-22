@@ -58,7 +58,8 @@ PUBLIC int ext2_create(MESSAGE * p)
         return ENAMETOOLONG;
     }
 
-    phys_copy(va2pa(getpid(), &pathname), va2pa(src, p->CRPATHNAME), len);
+    data_copy(getpid(), D, pathname, src, D, p->CRPATHNAME, len);
+    //phys_copy(va2pa(getpid(), &pathname), va2pa(src, p->CRPATHNAME), len);
     pathname[len] = '\0';
 
     ext2_inode_t * pin_dir = get_ext2_inode(dev, num);

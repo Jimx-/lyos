@@ -169,7 +169,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	3
+#define NR_SYS_CALL	4
 
 /* ipc */
 #define SEND		1
@@ -204,7 +204,7 @@ enum msgtype {
 
 	/* MM */
 	EXEC, WAIT, KILL, ACCT, BRK, SETUID, GETUID, SETGID, GETGID, GETEUID, 
-    GETEGID, ALARM, RAISE, SIGACTION, MALLOC, DATACOPY,		/* 32 ~ 47 */
+    GETEGID, ALARM, RAISE, SIGACTION,		/* 32 ~ 47 */
 
 	/* FS & MM */
 	FORK, EXIT,						/* 48 ~ 49 */

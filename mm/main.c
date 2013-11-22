@@ -110,12 +110,6 @@ PUBLIC void task_mm()
 		case ALARM:
 			mm_msg.RETVAL = do_alarm();
 			break;
-		case MALLOC:
-			mm_msg.RETVAL = alloc_mem(mm_msg.CNT);
-			break;
-		case DATACOPY:
-			mm_msg.RETVAL = do_datacopy();
-			break;
 		default:
 			dump_msg("MM::unknown msg", &mm_msg);
 			assert(0);

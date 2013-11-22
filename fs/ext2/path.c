@@ -50,7 +50,8 @@ PUBLIC int ext2_lookup(MESSAGE * p)
 	char * pathname = (char *)alloc_mem(name_len + 1);
 	if (pathname == NULL) return ENOMEM;
 
-	phys_copy(va2pa(getpid(), pathname), va2pa(src, p->REQ_PATHNAME), name_len);
+	data_copy(getpid(), D, pathname, src, D, p->REQ_PATHNAME, name_len);
+	//phys_copy(va2pa(getpid(), pathname), va2pa(src, p->REQ_PATHNAME), name_len);
 	pathname[name_len] = '\0';
 
 	int retval = ext2_parse_path(dev, start, root, pathname, flags, &pin, &offsetp);

@@ -219,10 +219,6 @@ PUBLIC int	do_nice();
 PUBLIC int 	do_sigaction();
 PUBLIC int 	do_raise();
 PUBLIC int 	do_alarm();
-
-PUBLIC int  do_datacopy();
-
-
 /* lib/misc.c */
 PUBLIC void 	spin(char * func_name);
 PUBLIC u32      now();
@@ -234,6 +230,7 @@ PUBLIC int  data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
 PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc);
 PUBLIC	int sys_reboot(int _unused1, int _unused2, int flags, struct proc* p);
+PUBLIC  int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
@@ -242,6 +239,7 @@ PUBLIC  void    sys_call();             /* int_handler */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char* str);
 PUBLIC	int reboot(int flags);
+PUBLIC  int datacopy(MESSAGE * m);
 
 #define	phys_copy	memcpy
 #define	phys_set	memset

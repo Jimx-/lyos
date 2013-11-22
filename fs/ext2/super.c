@@ -89,9 +89,8 @@ PUBLIC int read_ext2_super_block(int dev)
     int block_size = pext2sb->sb_block_size;
 
     int nr_groups = pext2sb->sb_groups_count;
-    int inodes_per_group = pext2sb->sb_inodes_count / nr_groups;
     DEB(printl("Total block groups: %d\n", nr_groups));
-    DEB(printl("Inodes per groups: %d\n", inodes_per_group));
+    DEB(printl("Inodes per groups: %d\n", pext2sb->sb_inodes_count / nr_groups));
     int bgdesc_blocks = sizeof(ext2_bgdescriptor_t) * nr_groups / block_size + 1;
     int bgdesc_offset = 1024 / block_size + 1;
 

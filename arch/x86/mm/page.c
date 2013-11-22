@@ -99,7 +99,7 @@ PUBLIC int pgd_new(struct page_directory * pgd)
         pgd->vir_pts[i] = NULL;
     }
 
-    map_kernel(pg_dir);
+    map_kernel(pgd);
     return 0;
 }
 
@@ -114,7 +114,37 @@ PRIVATE int map_kernel(struct page_directory * pgd)
 
     for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
         pgd->vir_addr[KERNEL_VMA / 0x400000] = initial_pgd[i - KERNEL_VMA / 0x400000];
-        pgd->vir_pts[i] = (initial_pgd[i - KERNEL_VMA / 0x400000] + KERNEL_VMA) & 0xfffff000;
+        pgd->vir_pts[i] = (pte_t *)((initial_pgd[i - KERNEL_VMA / 0x400000] + KERNEL_VMA) & 0xfffff000);
     }
+    return 0;
+}
+
+PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc)
+{
+    /* back to kernel space */
+    switch_address_space(initial_pgd);
+    reload_cr3();
+
+    MESSAGE msg;
+    phys_copy(&msg, va2pa(proc2pid(current), m), sizeof(MESSAGE));
+
+    void * src_addr = msg.SRC_ADDR;
+    int src_seg = (int)msg.SRC_SEG;
+    endpoint_t src_pid = msg.SRC_PID;
+
+    void * dest_addr = msg.DEST_ADDR;
+    int dest_seg = (int)msg.DEST_SEG;
+    endpoint_t dest_pid = msg.DEST_PID;
+
+    int len = msg.BUF_LEN;
+
+    void * src_pa = (void *)va2pa(src_pid, src_addr);
+    void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
+
+    phys_copy(dest_pa, src_pa, len);
+
+    msg.RETVAL = 0;
+    phys_copy(va2pa(proc2pid(current), m), &msg, sizeof(MESSAGE));
+
     return 0;
 }

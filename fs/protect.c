@@ -45,7 +45,8 @@ PUBLIC int do_access(MESSAGE * p)
     char * pathname = (char *)alloc_mem(namelen);
     if (!pathname) return ENOMEM;
 
-    phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
+    data_copy(getpid(), D, pathname, p->source, D, p->PATHNAME, namelen);
+    //phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
     pathname[namelen] = 0;
 
     struct inode * pin = resolve_path(pathname, pcaller);

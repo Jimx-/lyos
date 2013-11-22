@@ -47,7 +47,8 @@ PUBLIC int register_filesystem(MESSAGE * p)
 
     if (!fs_name) return ENOMEM;
 
-    phys_copy(va2pa(getpid(), fs_name), va2pa(p->source, p->PATHNAME), name_len);
+    data_copy(getpid(), D, fs_name, p->source, D, p->PATHNAME, name_len);
+    //phys_copy(va2pa(getpid(), fs_name), va2pa(p->source, p->PATHNAME), name_len);
 
     fs_name[name_len] = '\0';
 

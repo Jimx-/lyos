@@ -78,23 +78,3 @@ PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_
 
     return 0;
 }
-
-PUBLIC int do_datacopy()
-{
-    void * src_addr = mm_msg.SRC_ADDR;
-    int src_seg = (int)mm_msg.SRC_SEG;
-    endpoint_t src_pid = mm_msg.SRC_PID;
-
-    void * dest_addr = mm_msg.DEST_ADDR;
-    int dest_seg = (int)mm_msg.DEST_SEG;
-    endpoint_t dest_pid = mm_msg.DEST_PID;
-
-    int len = mm_msg.BUF_LEN;
-
-    void * src_pa = (void *)va2pa(src_pid, src_addr);
-    void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
-
-    phys_copy(dest_pa, src_pa, len);
-
-    return 0;
-}
