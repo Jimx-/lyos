@@ -1,6 +1,6 @@
 LYOS GALLERY
 ===========
------------------------------
+
 * Early Lyos booting screen
 ![earlylyosbooting][1]
 
