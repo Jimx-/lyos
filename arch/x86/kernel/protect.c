@@ -283,6 +283,15 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	disp_int(pfla);
 	disp_color_str(" CR3: ", text_color);
 	disp_int(read_cr3());
+
+	/* block the process */
+	//current->state = RESCUING;
+
+	/* inform MM */
+	//MESSAGE msg;
+	//msg.type = FAULT;
+
+	//msg_send(current, TASK_MM, &msg);
 }
 
 /*======================================================================*

@@ -92,6 +92,8 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     pregion->phys_addr = paddr;
     pregion->length = len;
 
+    rp->length = len;
+    
     list_add(&(pregion->list), &(rp->phys_blocks));
 
 #if REGION_DEBUG

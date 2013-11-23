@@ -101,6 +101,7 @@ struct proc {
 	int umask;
 
 	struct list_head mem_regions;
+	int brk;
 
 	int exit_status; /**< for parent */
 

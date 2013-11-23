@@ -30,7 +30,7 @@
 
 PRIVATE void block(struct proc* p);
 PRIVATE void unblock(struct proc* p);
-PRIVATE int  msg_send(struct proc* current, int des, MESSAGE* m);
+PUBLIC int  msg_send(struct proc* current, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
@@ -342,7 +342,7 @@ PRIVATE int deadlock(int src, int dest)
  * 
  * @return Zero if success.
  *****************************************************************************/
-PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
+PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 {
 	struct proc* sender = current;
 	struct proc* p_dest = proc_table + dest; /* proc dest */
@@ -361,9 +361,10 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
 		assert(p_dest->msg);
 		assert(m);
 
-		phys_copy(va2la(dest, p_dest->msg),
+		vir_copy(dest, D, p_dest->msg, proc2pid(sender), D, m, sizeof(MESSAGE));
+		/*phys_copy(va2la(dest, p_dest->msg),
 			  va2la(proc2pid(sender), m),
-			  sizeof(MESSAGE));
+			  sizeof(MESSAGE)); */
 		p_dest->msg = 0;
 		p_dest->state &= ~RECEIVING; /* p_dest has received the msg */
 		p_dest->recvfrom = NO_TASK;
@@ -450,8 +451,9 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		msg.source = INTERRUPT;
 		msg.type = HARD_INT;
 		assert(m);
-		phys_copy(va2la(proc2pid(who_wanna_recv), m), &msg,
-			  sizeof(MESSAGE));
+		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(current), D, &msg, sizeof(MESSAGE));
+		/*phys_copy(va2la(proc2pid(who_wanna_recv), m), &msg,
+			  sizeof(MESSAGE)); */
 
 		who_wanna_recv->has_int_msg = 0;
 
@@ -544,9 +546,10 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(m);
 		assert(from->msg);
 		/* copy the message */
-		phys_copy(va2la(proc2pid(who_wanna_recv), m),
+		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(from), D, from->msg, sizeof(MESSAGE));
+		/*phys_copy(va2la(proc2pid(who_wanna_recv), m),
 			  va2la(proc2pid(from), from->msg),
-			  sizeof(MESSAGE));
+			  sizeof(MESSAGE)); */
 
 		from->msg = 0;
 		from->sendto = NO_TASK;

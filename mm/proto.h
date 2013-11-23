@@ -24,4 +24,6 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp);
 
 PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * data_vaddr, int data_memlen);
 
+PUBLIC int do_sbrk();
+
 #endif

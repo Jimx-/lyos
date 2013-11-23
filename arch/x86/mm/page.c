@@ -138,13 +138,29 @@ PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p
 
     int len = msg.BUF_LEN;
 
+    vir_copy(dest_pid, dest_seg, dest_addr, src_pid, src_seg, src_addr, len);
+
+    msg.RETVAL = 0;
+    phys_copy(va2pa(proc2pid(current), m), &msg, sizeof(MESSAGE));
+
+    return 0;
+}
+
+PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
+                        endpoint_t src_pid, int src_seg, void * src_addr, int len)
+{
+    pte_t * old_pgd = (pte_t *)read_cr3();
+
+    switch_address_space(initial_pgd);
+    reload_cr3();
+
     void * src_pa = (void *)va2pa(src_pid, src_addr);
     void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
 
     phys_copy(dest_pa, src_pa, len);
 
-    msg.RETVAL = 0;
-    phys_copy(va2pa(proc2pid(current), m), &msg, sizeof(MESSAGE));
+    switch_address_space(old_pgd);
+    reload_cr3();
 
     return 0;
 }

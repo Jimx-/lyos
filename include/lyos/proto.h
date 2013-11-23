@@ -225,6 +225,8 @@ PUBLIC u32      now();
 
 PUBLIC int  data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
     endpoint_t src_pid, int src_seg, void * src_addr, int len);
+PUBLIC int  vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
+                        endpoint_t src_pid, int src_seg, void * src_addr, int len);
 
 /* proc.c */
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);

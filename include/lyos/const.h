@@ -62,6 +62,7 @@
 #define RECEIVING 0x04	/* set when proc trying to recv */
 #define WAITING   0x08	/* set when proc waiting for the child to terminate */
 #define HANGING   0x10	/* set when proc exits without being waited by parent */
+#define RESCUING  0x20  /* set when proc is being rescued */
 #define FREE_SLOT 0x20	/* set when proc table entry is not used
 			 * (ok to allocated to a new process)
 			 */
@@ -190,27 +191,32 @@ enum msgtype {
 	 * be sent to some tasks
 	 */
 	HARD_INT = 1, 						/* 1 */
+	/* 
+	 * when exception occurs, a msg (with type==FAULT) will
+	 * be sent to some tasks
+	 */
+	FAULT,								/* 2 */
 
 	/* SYS task */
 	GET_TICKS, GET_PID, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
-	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,				/* 2 ~ 15 */
+	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,				/* 3 ~ 16 */
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
 	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP,
-								/* 15 ~ 29 */
+								/* 16 ~ 30 */
 	/* FS & TTY */
-	SUSPEND_PROC, RESUME_PROC,				/* 30 ~ 31 */
+	SUSPEND_PROC, RESUME_PROC,				/* 31 ~ 32 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, BRK, SETUID, GETUID, SETGID, GETGID, GETEUID, 
-    GETEGID, ALARM, RAISE, SIGACTION,		/* 32 ~ 47 */
+	EXEC, WAIT, KILL, ACCT, SBRK, SETUID, GETUID, SETGID, GETGID, GETEUID, 
+    GETEGID, ALARM, RAISE, SIGACTION,		/* 33 ~ 48 */
 
 	/* FS & MM */
-	FORK, EXIT,						/* 48 ~ 49 */
+	FORK, EXIT,						/* 49 ~ 50 */
 
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 50 */
+	SYSCALL_RET,						/* 51 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,

@@ -362,7 +362,7 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 	tty->tty_outreply    = SYSCALL_RET;
 	tty->tty_outcaller   = msg->source;  /* who called, usually FS */
 	tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
-	tty->tty_outbuf  = va2la(tty->tty_outprocnr,
+	tty->tty_outbuf  = va2pa(tty->tty_outprocnr,
 				  msg->BUF);/* where are the chars */
 	tty->tty_outleft = msg->CNT; /* how many chars are requested */
 	tty->tty_outcnt = 0;

@@ -80,8 +80,8 @@ PUBLIC void task_mm()
 		case RAISE:
 			mm_msg.RETVAL = do_raise();
 			break;
-		case BRK:
-			mm_msg.RETVAL = do_brk();
+		case SBRK:
+			mm_msg.RETVAL = do_sbrk();
 			break;
 		case ACCT:
 			mm_msg.RETVAL = do_acct();

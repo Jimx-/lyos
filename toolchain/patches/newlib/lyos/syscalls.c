@@ -448,8 +448,17 @@ int chown(const char *path, uid_t owner, gid_t group)
 	return 0;
 }
 
-caddr_t sbrk(int nbytes){
-	return (caddr_t)0;
+caddr_t sbrk(int nbytes)
+{
+	MESSAGE msg;
+	msg.type = SBRK;
+	msg.CNT  = nbytes;
+
+	cmb();
+	
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return (caddr_t)msg.RETVAL;
 }
 
 int gettimeofday(struct timeval* tv, void *tz)

@@ -195,7 +195,8 @@ PRIVATE int read_elf_header(Elf32_Ehdr* elf_hdr,
  */
 PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * data_vaddr, int data_memlen)
 {
-	/* create memory region */
+	/* create memory regions */
+	INIT_LIST_HEAD(&(p->mem_regions));
 	struct vir_region * text_region = region_new(p, text_vaddr, text_memlen);
 	list_add(&(text_region->list), &(p->mem_regions));
 	struct vir_region * data_region = region_new(p, data_vaddr, data_memlen);
@@ -209,5 +210,7 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 	region_map_phys(p, text_region);
 	region_map_phys(p, data_region);
 	
+	p->brk = data_vaddr + data_memlen + 1;
+
 	return 0;
 }
