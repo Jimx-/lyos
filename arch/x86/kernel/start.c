@@ -35,6 +35,7 @@ int get_kernel_map(unsigned int * b, unsigned int * l);
 extern char _end[];
 extern pde_t pgd0;
 PRIVATE pde_t * user_pgd = NULL;
+PRIVATE int first_pgd = 0;
 
 /*======================================================================*
                             cstart
@@ -58,14 +59,17 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	/* setup kernel page table */
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
-	pte_t * pt = (pte_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000) + 0x1000;	/* 4k align */
+	first_pgd = ((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);
+	pte_t * pt = (pte_t*)(first_pgd + (NR_TASKS + NR_NATIVE_PROCS) * 0x1000);	/* 4k align */
 	setup_paging(memory_size, initial_pgd, pt);
 
 	/* setup user page table */
-	user_pgd = (pde_t*)((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);
-	int i;
-	for (i = 0; i < 4; i++) {
-        user_pgd[i + KERNEL_VMA / 0x400000] = initial_pgd[i + KERNEL_VMA / 0x400000];
+	int i, j;
+	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
+		user_pgd = (pde_t*)(first_pgd + i * 0x1000);
+		for (j = 0; j < 4; j++) {
+        	user_pgd[j + KERNEL_VMA / 0x400000] = initial_pgd[j + KERNEL_VMA / 0x400000];
+    	}
     }
 
 	init_desc(&gdt[0], 0, 0, 0);
@@ -115,7 +119,7 @@ PUBLIC void init_arch()
 			continue;
 		}
 
-	        if (i < NR_TASKS) {     /* TASK */
+	    	if (i < NR_TASKS) {     /* TASK */
                         t	= task_table + i;
                         priv	= PRIVILEGE_TASK;
                         rpl     = RPL_TASK;
@@ -142,8 +146,13 @@ PUBLIC void init_arch()
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
 
 			/* use kernel page table */
-			p->pgd.phys_addr = initial_pgd;
-			p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
+			/*if (strcmp(t->name, "VFS") == 0) {
+				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
+				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
+			} else { */
+				p->pgd.phys_addr = initial_pgd;
+				p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
+			/*}*/
 
 			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
 				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
@@ -154,24 +163,18 @@ PUBLIC void init_arch()
 			unsigned int k_limit;
 			get_kernel_map(&k_base, &k_limit);
 			init_desc(&p->ldts[INDEX_LDT_C],
-				  0, /* bytes before the entry point
-				      * are useless (wasted) for the
-				      * INIT process, doesn't matter
-				      */
-				  VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
 
 			init_desc(&p->ldts[INDEX_LDT_RW],
-				  0, /* bytes before the entry point
-				      * are useless (wasted) for the
-				      * INIT process, doesn't matter
-				      */
-				  VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
 			
-			p->pgd.phys_addr = user_pgd;
+			//p->pgd.phys_addr = user_pgd;
+			//p->pgd.vir_addr = user_pgd;
+			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 			//FIXME: should be p->pgd.vir_addr = user_pgd + KERNEL_VMA;
-			p->pgd.vir_addr = user_pgd;
+			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 
 			for (j = KERNEL_VMA / 0x400000; j < KERNEL_VMA / 0x400000 + 4; j++) {
 				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
