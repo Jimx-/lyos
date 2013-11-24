@@ -67,7 +67,7 @@ PUBLIC void task_fs()
 	printl("VFS: VFS is running.\n");
 
 	init_vfs();
-
+	
 	MESSAGE msg;
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);

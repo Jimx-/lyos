@@ -25,6 +25,7 @@ struct phys_region {
     struct list_head list;
 
     void * phys_addr;
+    void * vir_addr;
     int length;
 };
 

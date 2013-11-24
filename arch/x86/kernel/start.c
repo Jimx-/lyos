@@ -208,6 +208,9 @@ PUBLIC void init_arch()
 		p->root = NULL;
 		p->umask = ~0;
 
+		INIT_LIST_HEAD(&(p->mem_regions));
+		p->brk = 0;
+
 		for (j = 0; j < NR_FILES; j++)
 			p->filp[j] = 0;
 

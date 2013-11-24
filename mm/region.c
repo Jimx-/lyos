@@ -41,7 +41,7 @@
  * @param  vir_length Virtual memory length.
  * @return            The memory region created.
  */
-PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length)
+PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length, int flags)
 {
     struct vir_region * region = (struct vir_region *)alloc_vmem(sizeof(struct vir_region));
 
@@ -52,6 +52,7 @@ PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir
     if (region) {
         region->vir_addr = vir_base;
         region->length = vir_length;
+        region->flags = flags;
         INIT_LIST_HEAD(&(region->phys_blocks));
     }
     
@@ -64,9 +65,16 @@ PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir
 PUBLIC int region_alloc_phys(struct vir_region * rp)
 {
     int base = (int)rp->vir_addr;
-    int len = rp->length;
+    int len = rp->length, allocated_len = 0;
     int alignment = 0;
 
+    struct phys_region * pr = NULL;
+    list_for_each_entry(pr, &(rp->phys_blocks), list) {
+        len -= pr->length;
+        allocated_len += pr->length;
+    }
+
+    base += allocated_len;
     if (base % PG_SIZE != 0) {
         alignment = base - (base / PG_SIZE) * PG_SIZE;
         base -= alignment;
@@ -74,7 +82,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     }
 
     alignment = 0;
-    int end = base + len;
+    int end = base + allocated_len + len;
     if (end % PG_SIZE != 0) 
     {
         alignment = ((end / PG_SIZE) + 1) * PG_SIZE - end;
@@ -90,14 +98,15 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     if (!pregion) return ENOMEM;
     
     pregion->phys_addr = paddr;
+    pregion->vir_addr = base;
     pregion->length = len;
 
-    rp->length = len;
-    
+    rp->length = allocated_len + len;
+
     list_add(&(pregion->list), &(rp->phys_blocks));
 
 #if REGION_DEBUG
-    printl("MM: region_alloc_phys: allocated physical memory for text segment: v: 0x%x ~ 0x%x(%x bytes), phys_base: 0x%x\n", base, end, len, paddr);
+    printl("MM: region_alloc_phys: allocated physical memory for region: v: 0x%x ~ 0x%x(%x bytes), phys_base: 0x%x\n", base, end, len, paddr);
 #endif
 
     return 0;
@@ -110,22 +119,34 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
 {
     struct phys_region * pregion = NULL;
     void * phys_base = NULL;
-    int len = 0;
+    int len = 0, len_to_map = rp->length;
 
     if (list_empty(&(rp->phys_blocks))) return ENOMEM;
     
     list_for_each_entry(pregion, &(rp->phys_blocks), list) {
         phys_base = pregion->phys_addr;
         len = pregion->length;
-    }
-    
-    void * vir_base = (void *)(((int)rp->vir_addr / PG_SIZE) * PG_SIZE);
-    map_memory(&(mp->pgd), phys_base, vir_base, len);
-
+        len_to_map -= len;
+        map_memory(&(mp->pgd), phys_base, pregion->vir_addr, len);
 #if REGION_DEBUG
-    printl("MM: region_map_phys: map physical memory region(0x%x - 0x%x) to virtual memory region(0x%x, 0x%x)\n", 
-                (int)phys_base, (int)phys_base + len, (int)vir_base, (int)vir_base + len);
+        printl("MM: region_map_phys: map physical memory region(0x%x - 0x%x) to virtual memory region(0x%x, 0x%x)\n", 
+                (int)phys_base, (int)phys_base + len, (int)pregion->vir_addr, (int)pregion->vir_addr + len);
 #endif
+    }
+
+    if (len_to_map > 0) {
+        printl("No enough physical memory\n");
+        return ENOMEM;
+    }
 
     return 0;
+}
+
+/**
+ * <Ring 1> Extend memory region.
+ */
+PUBLIC int region_extend(struct vir_region * rp, int increment)
+{
+    rp->length += increment;
+    return region_alloc_phys(rp);
 }

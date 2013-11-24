@@ -30,6 +30,8 @@
 #include "signal.h"
 #include "errno.h"
 #include "sys/wait.h"
+#include "region.h"
+#include "const.h"
 
 #define FE_DEBUG
 #ifdef FE_DEBUG
@@ -69,6 +71,7 @@ PUBLIC int do_fork()
 	/* duplicate the process table */
 	int pid = mm_msg.source;
 	u16 child_ldt_sel = p->ldt_sel;
+	struct proc * parent = proc_table + pid;
 	*p = proc_table[pid];
 	p->ldt_sel = child_ldt_sel;
 	p->p_parent = pid;
@@ -82,7 +85,26 @@ PUBLIC int do_fork()
 		return -ENOMEM;
 	}
 
-	
+	INIT_LIST_HEAD(&(p->mem_regions));
+	printl("%x %x\n", &(p->mem_regions), p->mem_regions.prev);
+
+	/* copy regions */
+	struct vir_region * vr;
+    list_for_each_entry(vr, &(parent->mem_regions), list) {
+       	/*if (vr->flags & RF_SHARABLE) {
+       		vr->flags |= RF_SHARED;
+       		list_add(&(vr->list), &(p->mem_regions));
+       		region_map_phys(p, vr);
+       	} else {*/
+       		struct vir_region * new_region = region_new(p, vr->vir_addr, vr->length, vr->flags);
+       		list_add(&(new_region->list), &(p->mem_regions));
+       		region_alloc_phys(new_region);
+       		region_map_phys(p, new_region);
+
+       		data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
+       	/*}*/
+    }
+
 	if (1) {
 
 	} else {

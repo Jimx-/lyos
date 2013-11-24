@@ -33,7 +33,8 @@
 #include "sys/stat.h"
 #include "proto.h"
 #include "region.h"
-
+#include "const.h"
+    
 #define EXEC_DEBUG 1
 
 PRIVATE int read_elf_header(Elf32_Ehdr* elf_hdr, 
@@ -197,9 +198,9 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 {
 	/* create memory regions */
 	INIT_LIST_HEAD(&(p->mem_regions));
-	struct vir_region * text_region = region_new(p, text_vaddr, text_memlen);
+	struct vir_region * text_region = region_new(p, text_vaddr, text_memlen, RF_SHARABLE);
 	list_add(&(text_region->list), &(p->mem_regions));
-	struct vir_region * data_region = region_new(p, data_vaddr, data_memlen);
+	struct vir_region * data_region = region_new(p, data_vaddr, data_memlen, RF_NORMAL);
 	list_add(&(data_region->list), &(p->mem_regions));
 
 	/* allocate physical memory */

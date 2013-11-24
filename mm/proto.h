@@ -18,7 +18,7 @@
 
 PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length);
 
-PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length);
+PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length, int flags);
 PUBLIC int region_alloc_phys(struct vir_region * rp);
 PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp);
 

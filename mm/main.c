@@ -31,6 +31,7 @@
 #include "multiboot.h"
 #include "page.h"
 #include <elf.h>
+#include "region.h"
 
 PRIVATE int free_mem_size;
 
@@ -185,4 +186,16 @@ PRIVATE void init_mm()
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
 	vmem_init(mem_start + KERNEL_VMA, (unsigned int)(4 * 1024 * 1024 * 1024 - mem_start - KERNEL_VMA));
+
+	/* setup memory region for tasks so they can malloc */
+	int region_size = NR_TASKS * sizeof(struct vir_region);
+	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size);
+	struct proc * p = proc_table;
+	int i;
+	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
+		INIT_LIST_HEAD(&(rp->phys_blocks));
+		rp->vir_addr = 0;
+		rp->length = 0;
+		list_add(&(rp->list), &(p->mem_regions));
+    }
 }

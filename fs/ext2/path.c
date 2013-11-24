@@ -47,15 +47,13 @@ PUBLIC int ext2_lookup(MESSAGE * p)
     size_t offsetp = 0;
 	ext2_inode_t * pin = NULL;
 
-	char * pathname = (char *)alloc_mem(name_len + 1);
-	if (pathname == NULL) return ENOMEM;
+	char pathname[MAX_PATH];
 
 	data_copy(getpid(), D, pathname, src, D, p->REQ_PATHNAME, name_len);
 	//phys_copy(va2pa(getpid(), pathname), va2pa(src, p->REQ_PATHNAME), name_len);
 	pathname[name_len] = '\0';
 
 	int retval = ext2_parse_path(dev, start, root, pathname, flags, &pin, &offsetp);
-	free_mem((int)pathname, name_len + 1);
 
 	/* report error and offset position */
 	if (retval == ELEAVEMOUNT || retval == EENTERMOUNT) {
