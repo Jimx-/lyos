@@ -27,6 +27,8 @@ struct phys_region {
     void * phys_addr;
     void * vir_addr;
     int length;
+
+    int flags;
 };
 
 /**

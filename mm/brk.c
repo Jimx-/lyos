@@ -41,7 +41,6 @@ PUBLIC int do_sbrk()
     int src = mm_msg.source;
     int count = mm_msg.CNT;
     struct proc * p = proc_table + src;
-
     if (count == 0) return p->brk;
     
     int retval = 1;
@@ -73,6 +72,5 @@ PUBLIC int do_sbrk()
         p->brk += count;
         return retval;
     }
-
     return -1;
 }

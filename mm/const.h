@@ -19,5 +19,6 @@
 #define RF_NORMAL   0x0
 #define RF_SHARABLE 0x1
 #define RF_SHARED   0x2
+#define RF_MAPPED   0x4
 
 #endif /* _MM_CONST_H_ */

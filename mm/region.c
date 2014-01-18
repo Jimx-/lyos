@@ -31,8 +31,9 @@
 #include "errno.h"
 #include "proto.h"
 #include "region.h"
+#include "const.h"
 
-#define REGION_DEBUG 1
+//#define REGION_DEBUG 1
 
 /**
  * <Ring 1> Create new virtual memory region.
@@ -124,9 +125,11 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
     if (list_empty(&(rp->phys_blocks))) return ENOMEM;
     
     list_for_each_entry(pregion, &(rp->phys_blocks), list) {
-        phys_base = pregion->phys_addr;
         len = pregion->length;
         len_to_map -= len;
+        if (pregion->flags & RF_MAPPED) continue;
+        phys_base = pregion->phys_addr;
+        pregion->flags |= RF_MAPPED;
         map_memory(&(mp->pgd), phys_base, pregion->vir_addr, len);
 #if REGION_DEBUG
         printl("MM: region_map_phys: map physical memory region(0x%x - 0x%x) to virtual memory region(0x%x, 0x%x)\n", 
@@ -135,7 +138,7 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
     }
 
     if (len_to_map > 0) {
-        printl("No enough physical memory\n");
+        printl("MM: region_map_phys: No enough physical memory\n");
         return ENOMEM;
     }
 
