@@ -36,6 +36,7 @@ else
 	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
 fi
 
+cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
 cp init/init /$MOUNT_POINT/sbin/ 
 
 umount $MOUNT_POINT

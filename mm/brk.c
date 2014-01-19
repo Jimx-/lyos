@@ -46,7 +46,7 @@ PUBLIC int do_sbrk()
     int retval = 1;
     struct vir_region * vr;
     list_for_each_entry(vr, &(p->mem_regions), list) {
-        if (p->brk >= vr->vir_addr && p->brk <= vr->vir_addr + vr->length) {
+        if (p->brk >= (int)(vr->vir_addr) && p->brk <= (int)(vr->vir_addr) + vr->length) {
             retval = 0;
             break;
         }
@@ -57,12 +57,12 @@ PUBLIC int do_sbrk()
     }
 
     /* enough space */
-    if (p->brk + count < vr->vir_addr + vr->length) {
+    if (p->brk + count < (int)(vr->vir_addr) + vr->length) {
         retval = p->brk;
         p->brk += count;
         return retval;
     } else {
-        retval = region_extend(vr, p->brk + count - (int)vr->vir_addr - vr->length);
+        retval = region_extend(vr, p->brk + count - (int)(vr->vir_addr) - vr->length);
         if (retval) {
             errno = retval;
             return -1;

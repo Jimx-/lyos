@@ -5,7 +5,7 @@ ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 				read_write.o stat.o link.o misc.o\
-				ext2/ext2fs.o
+				ext2/ext2fs.o initfs/initfs.o
 
 FS			= fs.o
 
@@ -25,3 +25,5 @@ $(FS): $(FSOBJS)
 ext2/ext2fs.o:
 	@(cd ext2; make)
 
+initfs/initfs.o:
+	@(cd initfs; make)

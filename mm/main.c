@@ -32,6 +32,7 @@
 #include "page.h"
 #include <elf.h>
 #include "region.h"
+#include "proto.h"
 
 PRIVATE int free_mem_size;
 
@@ -175,10 +176,8 @@ PRIVATE void init_mm()
 	printl("  .bss:  0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
 
 	printl("Initial page directory at physical address: 0x%x\n", initial_pgd);
-#ifdef RAMDISK
-	rd_base = (unsigned char *)RAMDISK_BASE;
-	rd_length = RAMDISK_LENGTH;
-#endif
+
+	printl("%d Module loaded\n", mb_mod_count);
 
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;
@@ -193,10 +192,22 @@ PRIVATE void init_mm()
 	struct proc * p = proc_table;
 	int i;
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
-		INIT_LIST_HEAD(&(rp->phys_blocks));
-		rp->vir_addr = 0x1000;
-		p->brk = 0x1000;
-		rp->length = 0;
-		list_add(&(rp->list), &(p->mem_regions));
+		if (i != TASK_RD) {
+			INIT_LIST_HEAD(&(rp->phys_blocks));
+			rp->vir_addr = 0x1000;
+			p->brk = 0x1000;
+			rp->length = 0;
+			list_add(&(rp->list), &(p->mem_regions));
+		} else {
+			struct multiboot_mod_list * initrd_mod = (struct multiboot_mod_list *)mb_mod_addr;
+			INIT_LIST_HEAD(&(rp->phys_blocks));
+			rp->vir_addr = initrd_mod->mod_start;
+			p->brk = initrd_mod->mod_end;
+			rp->length = initrd_mod->mod_end - initrd_mod->mod_start;
+			list_add(&(rp->list), &(p->mem_regions));
+			map_memory(&(p->pgd), (void *)(initrd_mod->mod_start), (void *)(initrd_mod->mod_start), initrd_mod->mod_end - initrd_mod->mod_start);
+			rd_base = (unsigned char*)(initrd_mod->mod_start);
+			rd_length = initrd_mod->mod_end - initrd_mod->mod_start;
+		}
     }
 }

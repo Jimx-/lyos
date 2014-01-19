@@ -51,6 +51,9 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	mb_mmap_addr = mboot->mmap_addr + KERNEL_VMA;
 	mb_mmap_len = mboot->mmap_length;
 
+	mb_mod_count = mboot->mods_count;
+	mb_mod_addr = mboot->mods_addr;
+
 	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
 	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
 		memory_size += mmap->len;

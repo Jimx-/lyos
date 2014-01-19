@@ -84,6 +84,7 @@ FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
 LYOSINIT	= init/init
+LYOSINITRD	= $(ARCHDIR)/initrd.tar
 
 OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
@@ -116,7 +117,7 @@ kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL) $(LYOSINIT)
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL) $(LYOSINIT) initrd
 
 all : realclean everything image lib cmd
 
@@ -173,7 +174,7 @@ clean :
 
 realclean :
 	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
-	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL) $(LYOSINIT)
+	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL) $(LYOSINIT) $(LYOSINITRD)
 
 update-disk:
 	@sudo bash scripts/update-disk.sh
@@ -186,6 +187,10 @@ debug:
 
 setup-disk:
 	@sudo bash scripts/setup-disk.sh
+
+initrd:
+	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
+	@tar -cvf $(LYOSINITRD) $(LYOSINIT)
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'

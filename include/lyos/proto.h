@@ -71,7 +71,6 @@ PUBLIC void 	fd_handler(int irq);
 /* kernel/block/rd.c */
 PUBLIC void 	task_rd();
 PUBLIC void 	init_rd();
-PUBLIC void 	rd_load_image(dev_t dev, int offset);
 
 /* kernel/block/scsi/scsi.c */
 PUBLIC void 	task_scsi();

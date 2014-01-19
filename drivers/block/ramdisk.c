@@ -27,6 +27,17 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
+#define MAX_RAMDISKS	8
+
+struct ramdisk_dev {
+	unsigned char * start;
+	int length;
+
+	int rdonly;
+};
+
+struct ramdisk_dev ramdisks[MAX_RAMDISKS];
+
 PRIVATE void rd_rdwt(MESSAGE * p);
 
 PUBLIC void task_rd()
@@ -48,7 +59,6 @@ PUBLIC void task_rd()
 			break;
 		case DEV_READ:
 		case DEV_WRITE:
-			/* add_request(MAJOR_DEV, &msg); */
 			rd_rdwt(&msg);
 			break;
 		case DEV_IOCTL:
@@ -63,80 +73,33 @@ PUBLIC void task_rd()
 	}
 }
 
-PUBLIC void do_rd_request()
-{
-	/*if(CURRENT->p){
-		rd_rdwt(CURRENT->p);
-	}*/
-}
-
-PRIVATE void end_request()
-{
-	/*CURRENT->p = 0;
-	if ((CURRENT->next)->p){
-		CURRENT->free = 1;
-		CURRENT = CURRENT->next;
-	}*/
-}
-
 PRIVATE void rd_rdwt(MESSAGE * p)
 {
 	u64 pos = p->POSITION;
-	char * addr = (char *)(rd_base + pos);
 	int count = p->CNT;
+	int dev = MINOR(p->DEVICE);
+	struct ramdisk_dev * ramdisk = ramdisks + dev;
+	char * addr = ramdisk->start + pos;
 	
-	if ((char *)(addr + count) > (char *)(rd_base + rd_length)){
-	//	end_request(MAJOR_DEV);
-	//	do_rd_request();
+	if (pos > ramdisk->length){
+		p->CNT = 0;
+		return;
 	}
+
 	if (p->type == DEV_WRITE){
-		phys_copy(addr, (void*)va2la(p->PROC_NR, p->BUF), count);
+		data_copy(getpid(), D, addr, p->source, D, p->BUF, count);
 	}else if(p->type == DEV_READ){
-		phys_copy((void*)va2la(p->PROC_NR, p->BUF), addr, count); 
+		data_copy(p->source, D, p->BUF, getpid(), D, addr, count);
 	}
-	//send_recv(SEND, p->PROC_NR, p);
-	//end_request(MAJOR_DEV);
-	//do_rd_request();
 }
 
 PUBLIC void init_rd()
 {
-	char * c;
+	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", rd_length, rd_length / 1024, rd_base);
+	struct ramdisk_dev * initrd = ramdisks;
 
-	c = (char *)rd_base;
-
-	printl("RAMDISK: %d bytes(%d kB), base: 0x%x\n", rd_length, rd_length / 1024, rd_base);
+	initrd->start = rd_base;
+	initrd->length = rd_length;
+	initrd->rdonly = 1;
 }
 
-PUBLIC void rd_load_image(dev_t dev, int offset)
-{
-	RD_SECT(dev, offset);
-	struct super_block * sb = (struct super_block *)fsbuf;
-	
-	if(sb->magic == MAGIC_V1){
-		printl("RAMDISK: Lyos filesystem found at sector %d\n", offset);
-	}
-	else return;
-	
-	int nr_sects = sb->nr_sects;
-	if(nr_sects * 512 > rd_length){
-		printl("RAMDISK: image too big! (%d/%d sectors)\n", nr_sects, rd_length / 512);
-		return;
-	}
-	
-	printl("Loading %d bytes into ramdisk...", nr_sects * 512);
-	int i;
-	char rotator[4] = {'|', '/', '-', '\\'};
-	int rotate = 0;
-	for(i=1;i<=nr_sects;i++){
-		//RD_SECT(dev, i);
-		//WR_SECT(MAKE_DEV(DEV_RD, 0), i);
-		if (!(i%16)){
-			printl("\b%c", rotator[rotate & 0x03]);
-			rotate++;
-		}
-	}
-	printl("done.\n");
-	ROOT_DEV = MAKE_DEV(DEV_RD, 0);
-	return;
-}

@@ -32,6 +32,7 @@
 #include "sys/wait.h"
 #include "region.h"
 #include "const.h"
+#include "proto.h"
 
 #define FE_DEBUG
 #ifdef FE_DEBUG

@@ -65,6 +65,8 @@ extern  int             err_code;
 /* Multiboot */
 EXTERN  int         mb_mmap_addr;
 EXTERN  int         mb_mmap_len;
+EXTERN  int         mb_mod_count;
+EXTERN  int         mb_mod_addr;
 EXTERN  int         mb_magic;
 EXTERN  int         mb_flags;
 

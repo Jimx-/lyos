@@ -99,7 +99,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     if (!pregion) return ENOMEM;
     
     pregion->phys_addr = paddr;
-    pregion->vir_addr = base;
+    pregion->vir_addr = (void*)base;
     pregion->length = len;
 
     rp->length = allocated_len + len;

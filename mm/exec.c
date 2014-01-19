@@ -211,7 +211,7 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 	region_map_phys(p, text_region);
 	region_map_phys(p, data_region);
 	
-	p->brk = data_vaddr + data_memlen + 1;
+	p->brk = (int)(data_vaddr) + data_memlen + 1;
 
 	return 0;
 }

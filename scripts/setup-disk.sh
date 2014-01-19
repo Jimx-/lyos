@@ -48,10 +48,12 @@ cp -r $SRCDIR/sysroot/* /$MOUNT_POINT/
 echo "Installing kernel..."
 if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
 then
-	cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
+	cp $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
 else
-	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
+	cp $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
 fi
+
+cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
 
 echo "Creating devices..."
 debugfs -f ./scripts/create-dev.conf -w /dev/mapper/hda1
