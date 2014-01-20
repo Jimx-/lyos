@@ -190,7 +190,10 @@ setup-disk:
 
 initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
-	@tar -cvf $(LYOSINITRD) $(LYOSINIT)
+	@cp init/init ramdisk/sbin/init
+	@touch ramdisk/.root
+	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init)
+	@rm ramdisk/.root
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'

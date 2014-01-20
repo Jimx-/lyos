@@ -31,60 +31,11 @@
 #include "lyos/proto.h"
 #include "lyos/hd.h"
 #include "lyos/list.h"
-#include "proto.h"
-#include "tar.h"
 
-PUBLIC void task_initfs()
+/**
+ * <Ring 1> Read/Write init device
+ */
+PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length, void * buf)
 {
-	printl("initfs: InitFS driver is running\n");
-
-	MESSAGE m;
-
-	int reply;
-
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
-
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-
-		switch (msgtype) {
-		case FS_LOOKUP:
-			m.RET_RETVAL = initfs_lookup(&m);
-            break;
-		case FS_PUTINODE:
-			break;
-        /*
-        case FS_MOUNTPOINT:
-            break; */
-        case FS_READSUPER:
-            m.RET_RETVAL = initfs_readsuper(&m);
-            break;
-        case FS_STAT:
-        	m.STRET = initfs_stat(&m);
-        	break;
-        case FS_RDWT:
-        	m.RWRET = initfs_rdwt(&m);
-        	break;
-        /*
-        case FS_CREATE:
-        	break;
-        case FS_FTRUNC:
-        	break;
-        */
-        case FS_SYNC:
-            break;
-		default:
-			dump_msg("initfs: unknown message:", &m);
-            while (1);
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
+	rw_sector(rw_flag, dev, position, length, getpid(), buf);
 }

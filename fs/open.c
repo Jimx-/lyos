@@ -72,7 +72,7 @@ PUBLIC int do_open(MESSAGE * p)
         err_code = -ENOMEM;
         return -1;
     }
-    
+        
     data_copy(TASK_FS, D, pathname, src, D, p->PATHNAME, name_len);
     /*phys_copy((void*)va2pa(TASK_FS, pathname),
           (void*)va2pa(src, p->PATHNAME),

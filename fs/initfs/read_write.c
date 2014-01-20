@@ -32,59 +32,29 @@
 #include "lyos/hd.h"
 #include "lyos/list.h"
 #include "proto.h"
+#include "global.h"
 #include "tar.h"
 
-PUBLIC void task_initfs()
+PUBLIC int initfs_rdwt(MESSAGE * p)
 {
-	printl("initfs: InitFS driver is running\n");
+    dev_t dev = (int)p->RWDEV;
+    ino_t num = p->RWINO;
+    u64 position = p->RWPOS;
+    int src = p->RWSRC;
+    int rw_flag = p->RWFLAG;
+    void * buf = p->RWBUF;
+    int nbytes = p->RWCNT;
 
-	MESSAGE m;
+    char header[512];
+    initfs_rw_dev(DEV_READ, dev, initfs_headers[num], 512, header);
+    struct posix_tar_header * phdr = (struct posix_tar_header *)header;
 
-	int reply;
+    if (phdr->size < nbytes + position) nbytes = phdr->size - position;
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
+    rw_sector((rw_flag == READ) ? DEV_READ : DEV_WRITE, dev, initfs_headers[num] + 512 + position, nbytes, src, buf);
+    
+    p->RWPOS = position + nbytes;
+    p->RWCNT = nbytes;
 
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-
-		switch (msgtype) {
-		case FS_LOOKUP:
-			m.RET_RETVAL = initfs_lookup(&m);
-            break;
-		case FS_PUTINODE:
-			break;
-        /*
-        case FS_MOUNTPOINT:
-            break; */
-        case FS_READSUPER:
-            m.RET_RETVAL = initfs_readsuper(&m);
-            break;
-        case FS_STAT:
-        	m.STRET = initfs_stat(&m);
-        	break;
-        case FS_RDWT:
-        	m.RWRET = initfs_rdwt(&m);
-        	break;
-        /*
-        case FS_CREATE:
-        	break;
-        case FS_FTRUNC:
-        	break;
-        */
-        case FS_SYNC:
-            break;
-		default:
-			dump_msg("initfs: unknown message:", &m);
-            while (1);
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
+    return 0;
 }

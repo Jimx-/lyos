@@ -13,9 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#define _GLOBAL_VARIABLE_HERE_
 
-#include "config/autoconf.h"
-
-#endif
+#include "lyos/type.h"
+#include "lyos/list.h"
+#include "global.h"

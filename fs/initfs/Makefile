@@ -1,5 +1,5 @@
 
-FSOBJS 	= main.o
+FSOBJS 	= main.o buffer.o super.o path.o global.o utils.o stat.o read_write.o
 
 INITFS = initfs.o
 

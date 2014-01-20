@@ -125,6 +125,9 @@ PUBLIC int       do_access(MESSAGE * p);
 /* fs/ext2/main.c */
 PUBLIC void task_ext2_fs();
 
+/* fs/initfs/main.c */
+PUBLIC void task_initfs();
+
 /* mm/main.c */
 PUBLIC void	task_mm();
 

@@ -32,59 +32,45 @@
 #include "lyos/hd.h"
 #include "lyos/list.h"
 #include "proto.h"
+#include "global.h"
 #include "tar.h"
 
-PUBLIC void task_initfs()
+PUBLIC int initfs_lookup(MESSAGE * p)
 {
-	printl("initfs: InitFS driver is running\n");
+	int src = p->source;
+	int dev = p->REQ_DEV;
+	int start = p->REQ_START_INO;
+	int root = p->REQ_ROOT_INO;
+	int flags = (int)p->REQ_FLAGS;
+	int name_len = p->REQ_NAMELEN;
 
-	MESSAGE m;
+	char string[TAR_MAX_PATH];
 
-	int reply;
+	data_copy(getpid(), D, string, src, D, p->REQ_PATHNAME, name_len);
+	string[name_len] = '\0';
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
+	char * pathname = string; 
+	while (*pathname == '/') {
+		pathname++;
+	}
 
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-
-		switch (msgtype) {
-		case FS_LOOKUP:
-			m.RET_RETVAL = initfs_lookup(&m);
-            break;
-		case FS_PUTINODE:
-			break;
-        /*
-        case FS_MOUNTPOINT:
-            break; */
-        case FS_READSUPER:
-            m.RET_RETVAL = initfs_readsuper(&m);
-            break;
-        case FS_STAT:
-        	m.STRET = initfs_stat(&m);
-        	break;
-        case FS_RDWT:
-        	m.RWRET = initfs_rdwt(&m);
-        	break;
-        /*
-        case FS_CREATE:
-        	break;
-        case FS_FTRUNC:
-        	break;
-        */
-        case FS_SYNC:
-            break;
-		default:
-			dump_msg("initfs: unknown message:", &m);
-            while (1);
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
+	int i;
+	char filename[TAR_MAX_PATH];
+	for (i = 0; i < initfs_headers_count; i++) {
+		initfs_rw_dev(DEV_READ, dev, initfs_headers[i], TAR_MAX_PATH, filename);
+		if (strcmp(filename, pathname) == 0) {
+			char header[512];
+			initfs_rw_dev(DEV_READ, dev, initfs_headers[i], 512, header);
+			struct posix_tar_header * phdr = (struct posix_tar_header*)header;
+			p->RET_NUM = i;
+			p->RET_UID = initfs_get8(phdr->uid);
+			p->RET_GID = initfs_get8(phdr->gid);
+			p->RET_FILESIZE = initfs_getsize(phdr->size);
+			p->RET_MODE = initfs_getmode(phdr);
+    		p->RET_SPECDEV = 0;
+    		return 0;
 		}
 	}
+
+	return ENOENT;
 }

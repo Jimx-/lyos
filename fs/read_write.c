@@ -134,6 +134,8 @@ PUBLIC int do_rdwt(MESSAGE * p)
 
         bytes_rdwt += bytes;
         position = newpos;
+    } else {
+        printl("VFS: do_rdwt: unknown file type: %x\n", file_type);
     }
 
     if (rw_flag == WRITE) {

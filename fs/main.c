@@ -148,8 +148,9 @@ PUBLIC void init_vfs()
 		sb->sb_dev = NO_DEV;
 
     init_inode_table();
-    // mount root
-    mount_fs(ROOT_DEV, "/", TASK_LYOS_FS, 0);
-    printl("VFS: Mounted root\n");
-}
 
+    int initrd_dev = MAKE_DEV(DEV_RD, 0);
+    // mount root
+    mount_fs(initrd_dev, "/", TASK_INITFS, 0);
+    printl("VFS: Mounted init ramdisk\n");
+}

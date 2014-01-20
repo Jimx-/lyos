@@ -13,9 +13,18 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _INITFS_GLOBAL_H_
+#define _INITFS_GLOBAL_H_
 
-#include "config/autoconf.h"
+#include "const.h"
+
+/* EXTERN is extern except for global.c */
+#ifdef _GLOBAL_VARIABLE_HERE_
+#undef EXTERN
+#define EXTERN
+#endif
+
+EXTERN int initfs_headers_count;
+EXTERN int initfs_headers[MAX_HEADERS];
 
 #endif

@@ -117,7 +117,7 @@ struct task {
 #define proc2pid(x) (x - proc_table)
 
 /* Number of tasks & processes */
-#define NR_TASKS		11
+#define NR_TASKS		12
 #define NR_PROCS		32
 #define NR_NATIVE_PROCS		4
 #define FIRST_PROC		proc_table[0]
@@ -133,10 +133,6 @@ struct task {
  * @see global.c
  * @see global.h
  */
-#define	BUFFER_BASE		0xF00A00000 /* 10 MB */
-#define BUFFER_LENGTH	(1 * 1024 * 1024)	/* 1 MB */
-#define RAMDISK_BASE	0xF00C00000 /* 12 MB */
-#define RAMDISK_LENGTH	(2880 * 1024 ) /* 2.88 MB */
 #define	PROCS_BASE		0x1000000 /* 16 MB */
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
 #define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
@@ -176,6 +172,7 @@ struct task {
 #define STACK_SIZE_PCI		STACK_SIZE_DEFAULT
 #define STACK_SIZE_INET		STACK_SIZE_DEFAULT
 #define STACK_SIZE_EXT2_FS	STACK_SIZE_DEFAULT
+#define STACK_SIZE_INITFS	STACK_SIZE_DEFAULT
 #define STACK_SIZE_INIT		STACK_SIZE_DEFAULT
 #define STACK_SIZE_TESTA	STACK_SIZE_DEFAULT
 #define STACK_SIZE_TESTB	STACK_SIZE_DEFAULT

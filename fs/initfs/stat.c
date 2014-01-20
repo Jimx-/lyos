@@ -32,59 +32,42 @@
 #include "lyos/hd.h"
 #include "lyos/list.h"
 #include "proto.h"
+#include "global.h"
 #include "tar.h"
+#include <sys/stat.h>
 
-PUBLIC void task_initfs()
+PUBLIC int initfs_stat(MESSAGE * p)
 {
-	printl("initfs: InitFS driver is running\n");
+    dev_t dev = (dev_t)p->STDEV;
+    ino_t num = (ino_t)p->STINO;
+    int src = p->STSRC;
+    char * buf = p->STBUF;
 
-	MESSAGE m;
+    struct stat sbuf;
+    memset(&sbuf, 0, sizeof(struct stat));
 
-	int reply;
+    char header[512];
+    initfs_rw_dev(DEV_READ, dev, initfs_headers[num], 512, header);
+    struct posix_tar_header * phdr = (struct posix_tar_header *)header;
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
+    /* fill in the information */
+    sbuf.st_dev = dev;
+    sbuf.st_ino = num;
+    sbuf.st_mode = initfs_getmode(phdr);
+    sbuf.st_nlink = 0;
+    sbuf.st_uid = initfs_get8(phdr->uid);
+    sbuf.st_gid = initfs_get8(phdr->gid);
+    sbuf.st_rdev = 0;
+    sbuf.st_size = initfs_getsize(phdr->size);
+    sbuf.st_atime = 0;
+    sbuf.st_mtime = 0;
+    sbuf.st_ctime = 0;
+    sbuf.st_blksize = 0;
+    sbuf.st_blocks = 0;
 
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
+    /* copy the information */
+    data_copy(src, D, buf, getpid(), D, &sbuf, sizeof(struct stat));
+    //phys_copy(va2pa(src, buf), va2pa(getpid(), &sbuf), sizeof(struct stat));
 
-		switch (msgtype) {
-		case FS_LOOKUP:
-			m.RET_RETVAL = initfs_lookup(&m);
-            break;
-		case FS_PUTINODE:
-			break;
-        /*
-        case FS_MOUNTPOINT:
-            break; */
-        case FS_READSUPER:
-            m.RET_RETVAL = initfs_readsuper(&m);
-            break;
-        case FS_STAT:
-        	m.STRET = initfs_stat(&m);
-        	break;
-        case FS_RDWT:
-        	m.RWRET = initfs_rdwt(&m);
-        	break;
-        /*
-        case FS_CREATE:
-        	break;
-        case FS_FTRUNC:
-        	break;
-        */
-        case FS_SYNC:
-            break;
-		default:
-			dump_msg("initfs: unknown message:", &m);
-            while (1);
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
+    return 0;
 }

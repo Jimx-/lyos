@@ -13,9 +13,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _INITFS_PROTO_H_
+#define _INITFS_PROTO_H_
 
-#include "config/autoconf.h"
+#include "tar.h"
+
+PUBLIC void initfs_rw_ramdisk(int rw_flag, int dev, int position, int length, void * buf);
+
+PUBLIC int initfs_readsuper(MESSAGE * p);
+
+PUBLIC int initfs_lookup(MESSAGE * p);
+
+PUBLIC unsigned int initfs_getsize(const char *in);
+PUBLIC unsigned int initfs_get8(const char *in);
+PUBLIC unsigned int initfs_getmode(struct posix_tar_header * phdr);
+
+PUBLIC int initfs_stat(MESSAGE * p);
 
 #endif

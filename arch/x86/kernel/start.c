@@ -52,7 +52,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	mb_mmap_len = mboot->mmap_length;
 
 	mb_mod_count = mboot->mods_count;
-	mb_mod_addr = mboot->mods_addr;
 
 	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
 	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
@@ -60,9 +59,13 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
+	multiboot_module_t * initrd_mod = (multiboot_module_t *)mboot->mods_addr;
+	mb_mod_addr = mboot->mods_addr + KERNEL_VMA;
+	int pgd_start = (unsigned)initrd_mod->mod_end;
+
 	/* setup kernel page table */
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
-	first_pgd = ((((int)*(&_end) - KERNEL_VMA) + 0x1000) & 0xfffff000);
+	first_pgd = (pgd_start + 0x1000) & 0xfffff000;
 	pte_t * pt = (pte_t*)(first_pgd + (NR_TASKS + NR_NATIVE_PROCS) * 0x1000);	/* 4k align */
 	setup_paging(memory_size, initial_pgd, pt);
 

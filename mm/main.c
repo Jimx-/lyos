@@ -175,7 +175,7 @@ PRIVATE void init_mm()
 	printl("  .data: 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss:  0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
 
-	printl("Initial page directory at physical address: 0x%x\n", initial_pgd);
+	printl("Kernel page directory at physical address: 0x%x\n", initial_pgd);
 
 	printl("%d Module loaded\n", mb_mod_count);
 
@@ -199,14 +199,17 @@ PRIVATE void init_mm()
 			rp->length = 0;
 			list_add(&(rp->list), &(p->mem_regions));
 		} else {
-			struct multiboot_mod_list * initrd_mod = (struct multiboot_mod_list *)mb_mod_addr;
+			multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
+			if (initrd_mod->pad) {
+				printl("MM: Invalid initrd module parameter(pad is not zero)");
+			}
 			INIT_LIST_HEAD(&(rp->phys_blocks));
-			rp->vir_addr = initrd_mod->mod_start;
+			rp->vir_addr = (void *)((unsigned)initrd_mod->mod_start);
 			p->brk = initrd_mod->mod_end;
 			rp->length = initrd_mod->mod_end - initrd_mod->mod_start;
 			list_add(&(rp->list), &(p->mem_regions));
 			map_memory(&(p->pgd), (void *)(initrd_mod->mod_start), (void *)(initrd_mod->mod_start), initrd_mod->mod_end - initrd_mod->mod_start);
-			rd_base = (unsigned char*)(initrd_mod->mod_start);
+			rd_base = (unsigned char*)(initrd_mod->mod_start + KERNEL_VMA);
 			rd_length = initrd_mod->mod_end - initrd_mod->mod_start;
 		}
     }

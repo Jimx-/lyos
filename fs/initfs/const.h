@@ -13,9 +13,10 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _INITFS_CONST_H_
+#define _INITFS_CONST_H_
 
-#include "config/autoconf.h"
+#define TAR_MAX_PATH    100
+#define MAX_HEADERS     100
 
 #endif

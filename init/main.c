@@ -9,7 +9,7 @@ int main()
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	char * string = malloc(4096);
+	//char * string = malloc(4096);
 	printf("Hello world!\n");
 
 	//int i = fork();

@@ -157,13 +157,14 @@
 #define TASK_HD		2
 #define TASK_MM     3
 #define TASK_FS		4
-#define TASK_LYOS_FS	5
-#define	TASK_RD		6
-#define TASK_FD		7
-#define TASK_SCSI	8
-#define TASK_PCI	9
-#define TASK_INET	10
-#define INIT		11
+#define TASK_INITFS	5
+#define TASK_LYOS_FS	6
+#define	TASK_RD		7
+#define TASK_FD		8
+#define TASK_SCSI	9
+#define TASK_PCI	10
+#define TASK_INET	11
+#define INIT		12
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
