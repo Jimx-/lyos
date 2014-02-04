@@ -192,6 +192,7 @@ initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
 	@cp init/init ramdisk/sbin/init
 	@touch ramdisk/.root
+	@(cd scripts ; bash create-ramdisk-dev.sh)
 	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init dev/*)
 	@rm ramdisk/.root
 
