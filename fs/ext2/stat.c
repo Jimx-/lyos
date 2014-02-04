@@ -85,7 +85,6 @@ PUBLIC int ext2_stat(MESSAGE * p)
     ino_t num = (ino_t)p->STINO;
     int src = p->STSRC;
     char * buf = p->STBUF;
-
     /* find the inode */
     ext2_inode_t * pin = get_ext2_inode(dev, num);
     if (!pin) return EINVAL;

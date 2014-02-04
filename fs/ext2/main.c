@@ -57,7 +57,6 @@ PRIVATE int ext2_mountpoint(MESSAGE * p);
 PUBLIC void task_ext2_fs()
 {
 	printl("ext2fs: Ext2 filesystem driver is running\n");
-
 	init_ext2fs();
 
 	MESSAGE m;
@@ -105,50 +104,6 @@ PUBLIC void task_ext2_fs()
         case FS_SYNC:
         	m.RET_RETVAL = ext2_sync();
         	break;
-		case OPEN:
-			//msg.FD = do_open(&msg);
-			break;
-		case CLOSE:
-			//msg.RETVAL = do_close(&msg);
-			break;
-		case READ:
-		case WRITE:
-			//msg.CNT = do_rdwt(&msg);
-			break;
-		case UNLINK:
-			//msg.RETVAL = do_unlink(&msg);
-			break;
-		case MOUNT:
-			//msg.RETVAL = do_mount(&msg);
-			break;
-		case UMOUNT:
-			//msg.RETVAL = do_umount(&msg);
-			break;
-		case MKDIR:
-			//msg.RETVAL = do_mkdir(&msg);
-			break;
-		case RESUME_PROC:
-			//send_recv(SEND, TASK_FS, &msg);
-			continue;
-			break;
-		case FORK:
-			//msg.RETVAL = fs_fork(&msg);
-			break;
-		case EXIT:
-			//msg.RETVAL = fs_exit(&msg);
-			break;
-		case LSEEK:
-			//msg.OFFSET = do_lseek(&msg);
-			break;
-		case STAT:
-			//msg.RETVAL = do_stat(&msg);
-			break;
-		case CHROOT:
-			//msg.RETVAL = do_chroot(&msg);
-			break;
-		case CHDIR:
-			//msg.RETVAL = do_chdir(&msg);
-			break; 
 		default:
 			dump_msg("ext2: unknown message:", &m);
 			break;

@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
 
@@ -11,8 +12,15 @@ int main()
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	//char * string = malloc(4096);
-	printf("Hello world!\n");
+	/* read the file */
+	int fd_motd = open("/etc/motd", O_RDWR);
+	if (fd_motd != -1) {
+		char * motd = (char*)malloc(128);
+		read(fd_motd, motd, 128);
+		close(fd_motd);
+		printf("\n\n%s\n\n", motd);
+		free(motd);
+	}
 
 	//int i = fork();
 	//if (i) {
