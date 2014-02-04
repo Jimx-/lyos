@@ -43,8 +43,6 @@
 
 /**
  * Missing filesystem syscalls:
- * access
- * open: not complete yet
  * link/unlink
  * chmod/chown/chroot
  * fcntl
@@ -113,6 +111,9 @@ PUBLIC void task_fs()
 			break;
 		case FCHDIR:
 			msg.RETVAL = do_fchdir(&msg);
+			break;
+		case MOUNT:
+			msg.RETVAL = do_mount(&msg);
 			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;

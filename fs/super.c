@@ -53,7 +53,7 @@ PUBLIC int register_filesystem(MESSAGE * p)
     fs_name[name_len] = '\0';
 
     add_filesystem(fs_name, p->source);
-    printl("VFS: Registered %s filesystem(pid: %d)\n", fs_name, p->source);
+    printl("VFS: %s filesystem registered(pid: %d)\n", fs_name, p->source);
 
     return 0;
 }

@@ -67,7 +67,9 @@ PUBLIC int initfs_lookup(MESSAGE * p)
 			p->RET_GID = initfs_get8(phdr->gid);
 			p->RET_FILESIZE = initfs_getsize(phdr->size);
 			p->RET_MODE = initfs_getmode(phdr);
-    		p->RET_SPECDEV = 0;
+			int major = initfs_get8(phdr->devmajor);
+			int minor = initfs_get8(phdr->devminor);
+    		p->RET_SPECDEV = MAKE_DEV(major, minor);
     		return 0;
 		}
 	}

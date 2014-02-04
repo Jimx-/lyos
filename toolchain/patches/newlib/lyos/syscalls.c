@@ -285,6 +285,29 @@ int chmod(const char *path, mode_t mode)
 	return 0;
 }
 
+int mount(const char *source, const char *target,
+          const char *filesystemtype, unsigned long mountflags,
+          const void *data)
+{
+	MESSAGE msg;
+	msg.type = MOUNT;
+
+	msg.MFLAGS = mountflags;
+	msg.MNAMELEN1 = strlen(source);
+	msg.MNAMELEN2 = strlen(target);
+	msg.MNAMELEN3 = strlen(filesystemtype);
+	msg.MSOURCE = source;
+	msg.MTARGET = target;
+	msg.MLABEL = filesystemtype;
+	msg.MDATA = data;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
+}
+
 int access(const char *pathname, int mode)
 {
 	MESSAGE msg;

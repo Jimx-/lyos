@@ -57,7 +57,9 @@ PUBLIC int initfs_stat(MESSAGE * p)
     sbuf.st_nlink = 0;
     sbuf.st_uid = initfs_get8(phdr->uid);
     sbuf.st_gid = initfs_get8(phdr->gid);
-    sbuf.st_rdev = 0;
+    int major = initfs_get8(phdr->devmajor);
+    int minor = initfs_get8(phdr->devminor);
+    sbuf.st_rdev = MAKE_DEV(major, minor);
     sbuf.st_size = initfs_getsize(phdr->size);
     sbuf.st_atime = 0;
     sbuf.st_mtime = 0;

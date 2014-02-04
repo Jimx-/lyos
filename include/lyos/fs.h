@@ -52,16 +52,6 @@ struct dev_drv_map {
 #define REQ_MODE			u.m3.m3l1
 #define REQ_PATHNAME        u.m3.m3p1
 
-/* for mount */
-#define MSOURCE		u.m4.m4p1
-#define MTARGET		u.m4.m4p2
-#define MLABEL		u.m4.m4p3
-#define MDATA		u.m4.m4p4
-#define MFLAGS		u.m4.m4l1
-#define MNAMELEN1	u.m4.m4i1
-#define MNAMELEN2	u.m4.m4i2
-#define MNAMELEN3	u.m4.m4i3
-
 /* for stat */
 #define STDEV		u.m3.m3i1
 #define STINO		u.m3.m3i2

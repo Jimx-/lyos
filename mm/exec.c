@@ -72,7 +72,6 @@ PUBLIC int do_exec()
 	/* get the file size */
 	struct stat s;
 	int ret = stat(pathname, &s);
-	printl("done.%d\n", s.st_size);
 	if (ret != 0) {
 		printl("MM::do_exec()::stat() returns error. %s(error code: %d)\n", pathname, ret);
 		return -1;

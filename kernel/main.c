@@ -302,11 +302,11 @@ void Init()
  *======================================================================*/
 void TestA()
 {
+	for(;;);
 	int fd;
 	const char filename[] = "/dev/tty0";
 	fd=open(filename, O_RDWR);
 	close(fd);
-	for(;;);
 	const char bufw[] = "def";
 	char bufr[3];
 	int n;

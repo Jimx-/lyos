@@ -66,8 +66,7 @@ PUBLIC void task_ext2_fs()
     m.type = FS_REGISTER;
     m.PATHNAME = "ext2";
     m.NAME_LEN = strlen(m.PATHNAME);
-    /* FIXME: This will cause a deadlock */
-    // send_recv(BOTH, TASK_FS, &m);
+    send_recv(BOTH, TASK_FS, &m);
 
 	int reply;
 

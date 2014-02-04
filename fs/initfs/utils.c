@@ -63,7 +63,18 @@ PUBLIC unsigned int initfs_get8(const char *in)
 
 PUBLIC unsigned int initfs_getmode(struct posix_tar_header * phdr)
 {
-    if (phdr->typeflag == '0') return I_REGULAR;
+    unsigned int mode;
+    switch (phdr->typeflag) {
+        case '0': 
+        case '\0':
+            mode = I_REGULAR;
+            break;
+        case '4':
+            mode = I_BLOCK_SPECIAL;
+            break;
+        default:
+            break;
+    }
 
-    return 0;
+    return mode;
 }
