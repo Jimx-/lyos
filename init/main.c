@@ -7,12 +7,13 @@
 
 int main()
 {
+	char * c = 0;
+	*c = '0';
 	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	/* read the file */
 	int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(128);
