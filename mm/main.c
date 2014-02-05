@@ -191,7 +191,7 @@ PRIVATE void init_mm()
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
 		if (i != TASK_RD) {
 			INIT_LIST_HEAD(&(rp->phys_blocks));
-			rp->vir_addr = 0x1000;
+			rp->vir_addr = (void*)0x1000;
 			p->brk = 0x1000;
 			rp->length = 0;
 			list_add(&(rp->list), &(p->mem_regions));

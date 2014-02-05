@@ -31,6 +31,7 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "region.h"
+#include "proto.h"
 
 /**
  * <Ring 1> Perform the SBRK syscall.

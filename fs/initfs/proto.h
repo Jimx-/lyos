@@ -18,7 +18,7 @@
 
 #include "tar.h"
 
-PUBLIC void initfs_rw_ramdisk(int rw_flag, int dev, int position, int length, void * buf);
+PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length, void * buf);
 
 PUBLIC int initfs_readsuper(MESSAGE * p);
 
@@ -29,5 +29,7 @@ PUBLIC unsigned int initfs_get8(const char *in);
 PUBLIC unsigned int initfs_getmode(struct posix_tar_header * phdr);
 
 PUBLIC int initfs_stat(MESSAGE * p);
+
+PUBLIC int initfs_rdwt(MESSAGE * p);
 
 #endif

@@ -39,9 +39,6 @@ PUBLIC int initfs_lookup(MESSAGE * p)
 {
 	int src = p->source;
 	int dev = p->REQ_DEV;
-	int start = p->REQ_START_INO;
-	int root = p->REQ_ROOT_INO;
-	int flags = (int)p->REQ_FLAGS;
 	int name_len = p->REQ_NAMELEN;
 
 	char string[TAR_MAX_PATH];

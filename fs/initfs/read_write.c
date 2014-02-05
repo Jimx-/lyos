@@ -49,7 +49,7 @@ PUBLIC int initfs_rdwt(MESSAGE * p)
     initfs_rw_dev(DEV_READ, dev, initfs_headers[num], 512, header);
     struct posix_tar_header * phdr = (struct posix_tar_header *)header;
 
-    if (phdr->size < nbytes + position) nbytes = phdr->size - position;
+    if ((int)(phdr->size) < nbytes + position) nbytes = (int)(phdr->size) - position;
 
     rw_sector((rw_flag == READ) ? DEV_READ : DEV_WRITE, dev, initfs_headers[num] + 512 + position, nbytes, src, buf);
     

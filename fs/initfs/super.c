@@ -36,7 +36,6 @@
 #include "tar.h"
 
 PRIVATE void bdev_open(dev_t dev);
-PRIVATE void bdev_close(dev_t dev);
 
 PUBLIC int initfs_readsuper(MESSAGE * p)
 {
@@ -83,12 +82,3 @@ PRIVATE void bdev_open(dev_t dev)
     assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 }
-
-PRIVATE void bdev_close(dev_t dev)
-{
-    MESSAGE driver_msg;
-    driver_msg.type = DEV_CLOSE;
-    driver_msg.DEVICE = MINOR(dev);
-    assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-    send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
-} 
