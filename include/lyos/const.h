@@ -171,7 +171,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	4
+#define NR_SYS_CALL	3
 
 /* ipc */
 #define SEND		1

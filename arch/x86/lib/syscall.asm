@@ -18,13 +18,11 @@
 INT_VECTOR_SYS_CALL equ 0x90
 _NR_printx	    equ 0
 _NR_sendrec	    equ 1
-_NR_reboot		equ 2
-_NR_datacopy	equ 3
+_NR_datacopy	equ 2
 
 ; 导出符号
 global	printx
 global	sendrec
-global	reboot
 global	datacopy
 
 bits 32
@@ -59,20 +57,6 @@ printx:
 
 	mov	eax, _NR_printx
 	mov	edx, [esp + 4 + 4]	; s
-	int	INT_VECTOR_SYS_CALL
-
-	pop	edx
-
-	ret
-
-;====================================================================================
-;                          void reboot(int flags);
-; ====================================================================================
-reboot:
-	push	edx		; 4 bytes
-
-	mov	eax, _NR_reboot
-	mov	edx, [esp + 4 + 4]	; flags
 	int	INT_VECTOR_SYS_CALL
 
 	pop	edx

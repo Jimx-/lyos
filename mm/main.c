@@ -85,9 +85,6 @@ PUBLIC void task_mm()
 		case SBRK:
 			mm_msg.RETVAL = do_sbrk();
 			break;
-		case ACCT:
-			mm_msg.RETVAL = do_acct();
-			break;
 		case GETUID:
 			mm_msg.RETVAL = do_getuid();
 			break;

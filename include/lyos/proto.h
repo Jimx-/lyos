@@ -30,9 +30,6 @@ PUBLIC void	port_read(u16 port, void* buf, int n);
 PUBLIC void	port_write(u16 port, void* buf, int n);
 PUBLIC void	glitter(int row, int col);
 
-/* reboot.asm */
-PUBLIC void 	hard_reboot(void);
-
 /* klib.c */
 PUBLIC void	delay(int time);
 PUBLIC void	disp_int(int input);
@@ -113,7 +110,6 @@ PUBLIC void	    sync_inode	(struct inode * p);
 PUBLIC void 	read_super_block(int dev);
 PUBLIC struct super_block *	get_super_block	(int dev);
 
-PUBLIC void	    task_lyos_fs	();
 PUBLIC int      fs_fork(MESSAGE * m);
 PUBLIC int      fs_exit(MESSAGE * m);
 
@@ -190,23 +186,7 @@ PUBLIC int	do_kill();
 PUBLIC int	do_exec();
 
 /* sys.c */
-PUBLIC int 	do_ftime();
-PUBLIC int 	do_mknod();
-PUBLIC int 	do_break();
-PUBLIC int 	do_ptrace();
-PUBLIC int 	do_stty();
-PUBLIC int 	do_gtty();
-PUBLIC int 	do_rename();
-PUBLIC int 	do_prof();
-PUBLIC int 	do_acct();
-PUBLIC int 	do_phys();
-PUBLIC int 	do_lock();
-PUBLIC int	do_mpx();
-PUBLIC int	do_ulimit();
 PUBLIC int 	do_brk();
-PUBLIC int 	do_setpgid();
-PUBLIC int 	do_getpgrp();
-PUBLIC int	do_setsid();
 
 /* proc.c*/
 PUBLIC int 	do_setuid();
@@ -233,7 +213,6 @@ PUBLIC int  vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
 /* proc.c */
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
 PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc);
-PUBLIC	int sys_reboot(int _unused1, int _unused2, int flags, struct proc* p);
 PUBLIC  int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
@@ -242,7 +221,6 @@ PUBLIC  void    sys_call();             /* int_handler */
 /* system call */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char* str);
-PUBLIC	int reboot(int flags);
 PUBLIC  int datacopy(MESSAGE * m);
 
 #define	phys_copy	memcpy
