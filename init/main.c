@@ -7,6 +7,7 @@
 
 int main()
 {
+	int i = 1/0;
 	char * c = 0;
 	*c = '0';
 	mount("/dev/hd1a", "/", "ext2", 0, NULL);
