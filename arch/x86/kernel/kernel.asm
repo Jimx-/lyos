@@ -352,10 +352,6 @@ exception:
 
 	call save
 
-	; go back to kernel address space
-	;mov eax, pgd0 - KERNEL_VMA
-	;mov cr3, eax
-
 	push dword [old_eflags]
 	push dword [old_cs]
 	push dword [old_eip]

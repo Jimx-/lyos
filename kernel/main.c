@@ -250,22 +250,14 @@ void shell(const char * tty_name)
  *****************************************************************************/
 void Init()
 {
-	execv("/sbin/init", "");
-	
-	int fd_stdin  = open("/dev/tty0", O_RDWR);
-	int fd_stdout = open("/dev/tty0", O_RDWR);
-	int fd_stderr = open("/dev/tty0", O_RDWR);
-	
-	printf("Init() is running ...\n");
+	printl("Init() is running ...\n");
 
-	printf("\n");
-	printf(LYOS_BANNER);
-	printf("(c)Copyright Jimx 2010-2012\n\n");
+	printl("\n");
+	printl(LYOS_BANNER);
+	printl("(c)Copyright Jimx 2010-2013\n\n");
 
-	int motd = open("/etc/motd", O_RDWR);
-	char motd_buf[128];
-	read(motd, motd_buf, 128);
-	printf("\n%s\n", motd_buf);
+	char * argv[] = {"hello", "abc", (char *)0};
+	execv("/sbin/init", argv);
 
 	char * tty_list[] = {"/dev/tty0","/dev/tty1", "/dev/tty2"};
 	printf("\n");

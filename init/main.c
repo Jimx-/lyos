@@ -5,16 +5,13 @@
 #include <string.h>
 #include <sys/mount.h>
 
-int main()
+int main(int argc, char * argv[])
 {
-	int i = 1/0;
-	char * c = 0;
-	*c = '0';
 	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
-
+	printf("%s\n", argv[0]);
 	int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(128);

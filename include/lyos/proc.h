@@ -135,7 +135,7 @@ struct task {
  */
 #define	PROCS_BASE		0x1000000 /* 16 MB */
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
-#define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
+#define	PROC_ORIGIN_STACK	0x1000    /*  4 KB */
 
 #define PAGE_DIR_BASE	0x200000
 #define PAGE_TBL_BASE	0x201000

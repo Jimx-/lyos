@@ -94,36 +94,39 @@ PUBLIC int do_exec()
 
 	proc_new(p, (void *)text_vaddr, text_memlen, (void *)data_vaddr, data_memlen);
 
-	phys_copy(va2pa(src, (void *)text_vaddr), va2pa(getpid(), (void *)((int)mmbuf + text_offset)), text_filelen);
-	phys_copy(va2pa(src, (void *)data_vaddr), va2pa(getpid(), (void *)((int)mmbuf + data_offset)), data_filelen);
-	/* setup the arg stack */
-	/*int orig_stack_len = mm_msg.BUF_LEN;
+	data_copy(src, D, (void *)text_vaddr, getpid(), D, (void *)((int)mmbuf + text_offset), text_filelen);
+	data_copy(src, D, (void *)data_vaddr, getpid(), D, (void *)((int)mmbuf + data_offset), data_filelen);
+
+	int orig_stack_len = mm_msg.BUF_LEN;
 	char stackcopy[PROC_ORIGIN_STACK];
-	phys_copy((void*)va2la(TASK_MM, stackcopy),
-		  (void*)va2la(src, mm_msg.BUF),
+	data_copy(TASK_MM, D, stackcopy,
+		  src, D, mm_msg.BUF,
 		  orig_stack_len);
 
-	u8 * orig_stack = (u8*)(PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK);
+	u8 * orig_stack = (u8*)(VM_STACK_TOP - orig_stack_len);
 
 	int delta = (int)orig_stack - (int)mm_msg.BUF;
 
 	int argc = 0;
-	if (orig_stack_len) {	*//* has args */
-	/*	char **q = (char**)stackcopy;
-		for (; *q != 0; q++,argc++)
+	u8 * envp = orig_stack;
+	if (orig_stack_len) {	/* has args */
+		char **q = (char**)stackcopy;
+		for (; *q != 0; q++, argc++)
+			*q += delta;
+		q++;
+		envp += (int)q - (int)stackcopy;
+		for (; *q != 0; q++)
 			*q += delta;
 	}
 
-	phys_copy((void*)va2la(src, orig_stack),
-		  (void*)va2la(TASK_MM, stackcopy),
-		  orig_stack_len);
+	data_copy(src, D, orig_stack, TASK_MM, D, stackcopy, orig_stack_len);
 
-	proc_table[src].regs.ecx = argc; 
-	proc_table[src].regs.eax = (u32)orig_stack; 
-	*/
+	proc_table[src].regs.ecx = (u32)envp; 
+	proc_table[src].regs.edx = (u32)orig_stack; 
+	proc_table[src].regs.eax = argc;
 	/* setup eip & esp */
 	proc_table[src].regs.eip = entry_point; /* @see _start.asm */
-	//proc_table[src].regs.esp = VM_STACK_TOP;
+	proc_table[src].regs.esp = (u32)orig_stack;
 
 	strcpy(proc_table[src].name, pathname);
 	
@@ -202,6 +205,14 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 	list_add(&(text_region->list), &(p->mem_regions));
 	struct vir_region * data_region = region_new(p, data_vaddr, data_memlen, RF_NORMAL);
 	list_add(&(data_region->list), &(p->mem_regions));
+	struct vir_region * stack_region = region_new(p, VM_STACK_TOP - PROC_ORIGIN_STACK, PROC_ORIGIN_STACK, RF_NORMAL);
+	list_add(&(stack_region->list), &(p->mem_regions));
+	region_alloc_phys(stack_region);
+	region_map_phys(p, stack_region);
+
+	/* stack guard, see @const.h */
+	struct vir_region * stack_guard_region = region_new(p, VM_STACK_TOP - PROC_ORIGIN_STACK - STACK_GUARD_LEN, STACK_GUARD_LEN, RF_GUARD);
+	list_add(&(stack_guard_region->list), &(p->mem_regions));
 
 	/* allocate physical memory */
 	region_alloc_phys(text_region);

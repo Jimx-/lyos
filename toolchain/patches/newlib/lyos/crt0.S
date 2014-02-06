@@ -22,8 +22,9 @@
 .section .text
 
 _start:
-	push	%eax
-	push	%ecx
+	push	%ecx	# environ
+	push 	%edx	# argv
+	push	%eax	# argc
 	call	main
 	# need not clean up the stack here
 
