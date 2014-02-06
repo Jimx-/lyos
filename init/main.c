@@ -21,15 +21,16 @@ int main(int argc, char * argv[])
 		free(motd);
 	}
 
-	//int i = fork();
-	//if (i) {
-		//printf("parent\n");
+	//int i = 1;
+	int i = fork();
+	if (i) {
+		printf("Parent\n");
 		while (1) {
 			int s;
 			wait(&s);
 		}
-	//} else {
-		//printf("child\n");
-	//	while(1);
-	//}
+	} else {
+		printf("Child\n");
+		while(1);
+	}
 }

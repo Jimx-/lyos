@@ -142,6 +142,8 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
         return ENOMEM;
     }
 
+    rp->flags |= RF_MAPPED;
+
     return 0;
 }
 

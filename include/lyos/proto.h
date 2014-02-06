@@ -110,7 +110,6 @@ PUBLIC void	    sync_inode	(struct inode * p);
 PUBLIC void 	read_super_block(int dev);
 PUBLIC struct super_block *	get_super_block	(int dev);
 
-PUBLIC int      fs_fork(MESSAGE * m);
 PUBLIC int      fs_exit(MESSAGE * m);
 
 /* fs/Lyos/misc.c */

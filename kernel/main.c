@@ -88,6 +88,7 @@ void Init()
 	printl(LYOS_BANNER);
 	printl("(c)Copyright Jimx 2010-2013\n\n");
 	
+	/* Here we go! */
 	exit(execv("/sbin/init", NULL));
 }
 

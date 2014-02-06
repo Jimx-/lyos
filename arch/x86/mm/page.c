@@ -85,6 +85,7 @@ PUBLIC int pgd_new(struct page_directory * pgd)
 {
     /* map the directory so that we can write it */
     pde_t * pg_dir = (pde_t *)alloc_vmem(PGD_SIZE);
+
     pgd->phys_addr = va2pa(getpid(), pg_dir);
     pgd->vir_addr = pg_dir;
 
@@ -113,7 +114,7 @@ PRIVATE int map_kernel(struct page_directory * pgd)
     int i;
 
     for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
-        pgd->vir_addr[KERNEL_VMA / 0x400000] = initial_pgd[i - KERNEL_VMA / 0x400000];
+        pgd->vir_addr[i] = initial_pgd[i - KERNEL_VMA / 0x400000];
         pgd->vir_pts[i] = (pte_t *)((initial_pgd[i - KERNEL_VMA / 0x400000] + KERNEL_VMA) & 0xfffff000);
     }
     return 0;

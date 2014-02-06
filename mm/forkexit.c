@@ -78,16 +78,12 @@ PUBLIC int do_fork()
 	p->p_parent = pid;
 	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
 
-	/* duplicate the process: T, D & S */
-	struct descriptor * ppd;
-
 	if (pgd_new(&(p->pgd)) != 0) {
 		printl("MM: fork: can't create new page directory.\n");
 		return -ENOMEM;
 	}
 
 	INIT_LIST_HEAD(&(p->mem_regions));
-	printl("%x %x\n", &(p->mem_regions), p->mem_regions.prev);
 
 	/* copy regions */
 	struct vir_region * vr;
@@ -99,81 +95,28 @@ PUBLIC int do_fork()
        	} else {*/
        		struct vir_region * new_region = region_new(p, vr->vir_addr, vr->length, vr->flags);
        		list_add(&(new_region->list), &(p->mem_regions));
-       		region_alloc_phys(new_region);
-       		region_map_phys(p, new_region);
+       		if (vr->flags & RF_MAPPED) {
+       			region_alloc_phys(new_region);
+       			region_map_phys(p, new_region);
 
-       		data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
+       			data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
+       		}
        	/*}*/
     }
 
-	if (1) {
+    init_desc(&p->ldts[INDEX_LDT_C],
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
 
-	} else {
-	
-		/* Text segment */
-		ppd = &proc_table[pid].ldts[INDEX_LDT_C];
-		/* base of T-seg, in bytes */
-		int caller_T_base  = reassembly(ppd->base_high, 24,
-					ppd->base_mid,  16,
-					ppd->base_low);
-		/* limit of T-seg, in 1 or 4096 bytes,
-	   		depending on the G bit of descriptor */
-		int caller_T_limit = reassembly(0, 0,
-					(ppd->limit_high_attr2 & 0xF), 16,
-					ppd->limit_low);
-		/* size of T-seg, in bytes */
-		int caller_T_size  = ((caller_T_limit + 1) *
-			      ((ppd->limit_high_attr2 & (DA_LIMIT_4K >> 8)) ?
-			       4096 : 1));
-
-		/* Data & Stack segments */
-		ppd = &proc_table[pid].ldts[INDEX_LDT_RW];
-		/* base of D&S-seg, in bytes */
-		int caller_D_S_base  = reassembly(ppd->base_high, 24,
-					  ppd->base_mid,  16,
-					  ppd->base_low);
-		/* limit of D&S-seg, in 1 or 4096 bytes,
-		   depending on the G bit of descriptor */
-		int caller_D_S_limit = reassembly((ppd->limit_high_attr2 & 0xF), 16,
-					  0, 0,
-					  ppd->limit_low);
-		/* size of D&S-seg, in bytes */
-		int caller_D_S_size  = ((caller_T_limit + 1) *
-				((ppd->limit_high_attr2 & (DA_LIMIT_4K >> 8)) ?
-				 4096 : 1));
-
-		/* we don't separate T, D & S segments, so we have: */
-		assert((caller_T_base  == caller_D_S_base ) &&
-	       (caller_T_limit == caller_D_S_limit) &&
-	       (caller_T_size  == caller_D_S_size ));
-
-		/* TODO: Separate T, D & S segments */
-		/* base of child proc, T, D & S segments share the same space,
-	   		so we allocate memory just once */
-		/* int child_base = alloc_mem(child_pid, caller_T_size); */
-		DEB(printl("Allocating memory: %d\n", caller_D_S_size / 1024 / 1024));
-		int child_base = alloc_mem(caller_D_S_size);
-		DEB(printl("Allocated: base: 0x%x\n", child_base));
-
-		/* child is a copy of the parent */
-		phys_copy((void*)child_base, (void*)caller_D_S_base, caller_D_S_size);	
-
-		/* child's LDT */
-		init_desc(&p->ldts[INDEX_LDT_C],
-		  child_base,
-		  (PROC_IMAGE_SIZE_DEFAULT - 1) >> LIMIT_4K_SHIFT,
-		  DA_LIMIT_4K | DA_32 | DA_C | PRIVILEGE_USER << 5);
-		init_desc(&p->ldts[INDEX_LDT_RW],
-		  child_base,
-		  (PROC_IMAGE_SIZE_DEFAULT - 1) >> LIMIT_4K_SHIFT,
-		  DA_LIMIT_4K | DA_32 | DA_DRW | PRIVILEGE_USER << 5);
-	}
+	init_desc(&p->ldts[INDEX_LDT_RW],
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
 
 	/* tell FS, see fs_fork() */
 	MESSAGE msg2fs;
 	msg2fs.type = FORK;
 	msg2fs.PID = child_pid;
-	//send_recv(BOTH, TASK_FS, &msg2fs);
+	send_recv(BOTH, TASK_FS, &msg2fs);
 
 	/* child PID will be returned to the parent proc */
 	mm_msg.PID = child_pid;
@@ -241,25 +184,6 @@ PUBLIC void do_exit(int status)
 	msg2fs.type = EXIT;
 	msg2fs.PID = pid;
 	send_recv(BOTH, TASK_FS, &msg2fs);
-
-	/* free its memory */
-	struct descriptor * pd = &proc_table[pid].ldts[INDEX_LDT_C];
-	/* base of T-seg, in bytes */
-	int T_base  = reassembly(pd->base_high, 24,
-					pd->base_mid,  16,
-					pd->base_low);
-	/* limit of T-seg, in 1 or 4096 bytes,
-
-	   depending on the G bit of descriptor */
-	int T_limit = reassembly(0, 0,
-					(pd->limit_high_attr2 & 0xF), 16,
-					pd->limit_low);
-	/* size of T-seg, in bytes */
-	int T_size  = ((T_limit + 1) *
-			      ((pd->limit_high_attr2 & (DA_LIMIT_4K >> 8)) ?
-			       4096 : 1));
-	DEB(printl("Freeing memory: base: %d, size: %d\n", T_base, T_size));
-	free_mem(T_base, T_size);
 
 	p->exit_status = status;
 

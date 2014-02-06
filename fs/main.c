@@ -55,7 +55,10 @@
  * utime
  */
 
+
 PUBLIC void init_vfs();
+
+PRIVATE int fs_fork(MESSAGE * p);
 
 /**
  * <Ring 1> Main loop of VFS.
@@ -115,6 +118,9 @@ PUBLIC void task_fs()
 		case MOUNT:
 			msg.RETVAL = do_mount(&msg);
 			break;
+		case FORK:
+			msg.RETVAL = fs_fork(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;
@@ -154,4 +160,18 @@ PUBLIC void init_vfs()
     // mount root
     mount_fs(initrd_dev, "/", TASK_INITFS, 0);
     printl("VFS: Mounted init ramdisk\n");
+}
+
+PRIVATE int fs_fork(MESSAGE * p)
+{
+	int i;
+	struct proc * child = &proc_table[p->PID];
+	for (i = 0; i < NR_FILES; i++) {
+		if (child->filp[i]) {
+			child->filp[i]->fd_cnt++;
+			child->filp[i]->fd_inode->i_cnt++;
+		}
+	}
+
+	return 0;
 }

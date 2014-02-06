@@ -441,4 +441,3 @@ restart_reenter:
 	popad
 	add	esp, 4
 	iretd
-
