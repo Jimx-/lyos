@@ -59,6 +59,11 @@ clock_int_msg		db	"^", 0
 ALIGN 0x1000
 pt0:
 page_tables		resb 	4 * 4 * 1024
+ex_number		resb 	4
+trap_errno 		resb 	4
+old_eip 		resb 	4
+old_cs 			resb 	4
+old_eflags 		resb 	4
 StackSpace		resb	2 * 1024
 StackTop:		; stack top
 
@@ -333,13 +338,32 @@ copr_error:
 	jmp	exception
 
 exception:
-	; go back to kernel address space
-	mov eax, pgd0 - KERNEL_VMA
-	mov cr3, eax
+	pop dword [ex_number]
+	pop dword [trap_errno]
 
+	push eax
+	mov eax, [esp + 4]
+	mov dword [old_eip], eax
+	mov eax, [esp + 4 + 4]
+	mov dword [old_cs], eax
+	mov eax, [esp + 4 + 4 + 4]
+	mov dword [old_eflags], eax
+	pop eax
+
+	call save
+
+	; go back to kernel address space
+	;mov eax, pgd0 - KERNEL_VMA
+	;mov cr3, eax
+
+	push dword [old_eflags]
+	push dword [old_cs]
+	push dword [old_eip]
+	push dword [trap_errno]
+	push dword [ex_number]
 	call	exception_handler
-	add	esp, 4*2	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
-	iret
+	add	esp, 5 * 4	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
+	ret
 
 ; =============================================================================
 ;                                   save

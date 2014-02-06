@@ -109,6 +109,10 @@ PUBLIC void task_mm()
 		case ALARM:
 			mm_msg.RETVAL = do_alarm();
 			break;
+		case FAULT:
+			printl("Fault!\n");
+			reply = 0;
+			break;
 		default:
 			dump_msg("MM::unknown msg", &mm_msg);
 			assert(0);

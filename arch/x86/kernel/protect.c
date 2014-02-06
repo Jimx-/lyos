@@ -282,16 +282,17 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	disp_color_str("\nCR2(PFLA): ", text_color);
 	disp_int(pfla);
 	disp_color_str(" CR3: ", text_color);
-	disp_int(read_cr3());
+	disp_int(read_cr3()); 
 
 	/* block the process */
-	//current->state = RESCUING;
+	current->state = RESCUING;
+	schedule();
 
-	/* inform MM */
-	//MESSAGE msg;
-	//msg.type = FAULT;
+	/* inform MM to handle this page fault */
+	MESSAGE msg;
+	msg.type = FAULT;
 
-	//msg_send(current, TASK_MM, &msg);
+	msg_send(current, TASK_MM, &msg);
 }
 
 /*======================================================================*
@@ -352,7 +353,7 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 	if(err_code != 0xFFFFFFFF){
 		disp_color_str(" Error code: ", text_color);
 		disp_int(err_code);
-	}
+	} 
 
 	/* PF */
 	if (vec_no == 14) {

@@ -7,8 +7,8 @@
 
 int main()
 {
-	//char * c = 0;
-	//*c = '0';
+	char * c = 0;
+	*c = '0';
 	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
