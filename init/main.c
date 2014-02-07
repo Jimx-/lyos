@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 
 int main(int argc, char * argv[])
 {
@@ -27,7 +29,6 @@ int main(int argc, char * argv[])
 		while (1) {
 			int s;
 			wait(&s);
-			printf("exit %d\n", s);
 		}
 	} else {
 		printf("Child\n");

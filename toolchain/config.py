@@ -29,3 +29,13 @@ NASM_VERSION = 'nasm-' + packs.get('nasm', 'version')
 NASM_REPO = packs.get('nasm', 'repo')
 NASM_TARBALL = NASM_VERSION + '.tar.gz'
 NASM_TARBALL_URL = NASM_REPO + packs.get('nasm', 'version') + '/' + NASM_TARBALL
+
+COREUTILS_VERSION = 'coreutils-' + packs.get('coreutils', 'version')
+COREUTILS_REPO = packs.get('coreutils', 'repo')
+COREUTILS_TARBALL = COREUTILS_VERSION + '.tar.gz'
+COREUTILS_TARBALL_URL = COREUTILS_REPO + COREUTILS_TARBALL
+
+DASH_VERSION = 'dash-' + packs.get('dash', 'version')
+DASH_REPO = packs.get('dash', 'repo')
+DASH_TARBALL = DASH_VERSION + '.tar.gz'
+DASH_TARBALL_URL = DASH_REPO + DASH_TARBALL

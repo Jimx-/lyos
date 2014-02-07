@@ -1,0 +1,12 @@
+diff -pruN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2011-08-28 15:36:41.000000000 +0800
++++ new/build-aux/config.sub	2014-02-07 15:42:40.939040031 +0800
+@@ -1350,7 +1350,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -lyos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)

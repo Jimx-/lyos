@@ -191,9 +191,10 @@ setup-disk:
 initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
 	@cp init/init ramdisk/sbin/init
+	@cp sysroot/etc/fstab ramdisk/etc
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)
-	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init dev/* > /dev/null)
+	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init dev/* etc/* > /dev/null)
 	@rm ramdisk/.root
 
 disasm :

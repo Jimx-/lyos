@@ -55,6 +55,8 @@ def decompress(tarball, dirname):
 		opener, mode = tarfile.open, 'r:gz'
 	elif tarball.endswith('.tar.bz2') or tarball.endswith('.tbz'):
 		opener, mode = tarfile.open, 'r:bz2'
+	elif tarball.endswith('.tar.xz') or tarball.endswith('.txz'):
+		opener, mode = tarfile.open, 'r:xz'
 	else: 
 		raise ValueError, "Could not extract `%s` as no appropriate extractor is found" % tarball
 
@@ -79,7 +81,7 @@ def configure(name, extra_opt=''):
 
 def configure_host(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --build=' + TARGET + ' --prefix=' + SYSROOT + ' ' + extra_opt)
+	os.system(path + ' --host=' + TARGET + ' --prefix=' + SYSROOT + ' ' + extra_opt)
 
 def configure_native(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
