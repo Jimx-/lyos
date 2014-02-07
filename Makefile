@@ -3,8 +3,8 @@
 #########################
 
 VERSION = 0
-PATCHLEVEL = 3
-SUBLEVEL = 2
+PATCHLEVEL = 4
+SUBLEVEL = 0
 EXTRAVERSION =
 
 SUBARCH = $(shell uname -m | sed -e s/sun4u/sparc64/ \
