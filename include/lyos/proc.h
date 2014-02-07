@@ -186,5 +186,4 @@ struct task {
 				STACK_SIZE_PCI + \
 				STACK_SIZE_INET + \
 				STACK_SIZE_EXT2_FS + 	\
-				STACK_SIZE_INIT + \
-				STACK_SIZE_DEFAULT)
+				STACK_SIZE_INIT)

@@ -79,7 +79,7 @@ PRIVATE void rd_rdwt(MESSAGE * p)
 	int count = p->CNT;
 	int dev = MINOR(p->DEVICE);
 	struct ramdisk_dev * ramdisk = ramdisks + dev;
-	char * addr = ramdisk->start + pos;
+	char * addr = ramdisk->start + (int)pos;
 	
 	if (pos > ramdisk->length){
 		p->CNT = 0;

@@ -101,17 +101,17 @@ PUBLIC int do_fork()
 
        			data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
        		}
-       	/*}*/
+       	//}
     }
 
-    init_desc(&p->ldts[INDEX_LDT_C],
+    /*init_desc(&p->ldts[INDEX_LDT_C],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
 
 	init_desc(&p->ldts[INDEX_LDT_RW],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
-
+	*/
 	/* tell FS, see fs_fork() */
 	MESSAGE msg2fs;
 	msg2fs.type = FORK;

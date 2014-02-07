@@ -21,7 +21,6 @@ int main(int argc, char * argv[])
 		free(motd);
 	}
 
-	//int i = 1;
 	int i = fork();
 	if (i) {
 		printf("Parent\n");

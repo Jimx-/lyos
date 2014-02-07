@@ -439,5 +439,5 @@ restart_reenter:
 	pop	es
 	pop	ds
 	popad
-	add	esp, 4
+	add esp, 4
 	iretd

@@ -5,15 +5,17 @@
 # how much memory the emulated machine will have
 megs: 32
 
+display_library: sdl
+
 # filename of ROM images
 romimage: file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
-floppya: 1_44=a.img, status=inserted
-
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
-ata0-master: type=disk, path="lyos-disk.img", mode=flat, cylinders=520, heads=16, spt=63
+ata0-master: type=disk, path="lyos-disk.img", mode=flat, cylinders=2080, heads=16, spt=63
+
+
 
 # choose the boot disk.
 boot: disk
@@ -24,10 +26,8 @@ boot: disk
 # disable the mouse
 mouse: enabled=0
 
-pci: enabled=1, chipset=i440fx
-#pcidev: vendor=0x1234, device=0x5678
 
 # enable key mapping, using US layout as default.
-keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
+#keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 
 
