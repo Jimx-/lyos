@@ -59,6 +59,7 @@
 PUBLIC void init_vfs();
 
 PRIVATE int fs_fork(MESSAGE * p);
+PRIVATE int fs_exit(MESSAGE * m);
 
 /**
  * <Ring 1> Main loop of VFS.
@@ -121,6 +122,9 @@ PUBLIC void task_fs()
 		case FORK:
 			msg.RETVAL = fs_fork(&msg);
 			break;
+		case EXIT:
+			msg.RETVAL = fs_exit(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;
@@ -162,6 +166,7 @@ PUBLIC void init_vfs()
     printl("VFS: Mounted init ramdisk\n");
 }
 
+/* Perform fs part of fork/exit */
 PRIVATE int fs_fork(MESSAGE * p)
 {
 	int i;
@@ -173,5 +178,21 @@ PRIVATE int fs_fork(MESSAGE * p)
 		}
 	}
 
+	return 0;
+}
+
+PRIVATE int fs_exit(MESSAGE * m)
+{
+	int i;
+	struct proc * p = &proc_table[m->PID];
+	for (i = 0; i < NR_FILES; i++) {
+		if (p->filp[i]) {
+			p->filp[i]->fd_inode->i_cnt--;
+			if (--p->filp[i]->fd_cnt == 0) {
+				p->filp[i]->fd_inode = 0;
+			}
+			p->filp[i] = 0;
+		}
+	}
 	return 0;
 }

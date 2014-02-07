@@ -104,14 +104,14 @@ PUBLIC int do_fork()
        	//}
     }
 
-    /*init_desc(&p->ldts[INDEX_LDT_C],
+    init_desc(&p->ldts[INDEX_LDT_C],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
 
 	init_desc(&p->ldts[INDEX_LDT_RW],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
-	*/
+	
 	/* tell FS, see fs_fork() */
 	MESSAGE msg2fs;
 	msg2fs.type = FORK;
@@ -184,6 +184,17 @@ PUBLIC void do_exit(int status)
 	msg2fs.type = EXIT;
 	msg2fs.PID = pid;
 	send_recv(BOTH, TASK_FS, &msg2fs);
+	
+	/* free memory */
+	struct vir_region * vr;
+    list_for_each_entry(vr, &(p->mem_regions), list) {
+    	if (&(vr->list) != &(p->mem_regions) && &(vr->list) != p->mem_regions.next)
+       		region_free(list_entry(vr->list.prev, struct vir_region, list));
+    }
+    region_free(list_entry(vr->list.prev, struct vir_region, list));
+    INIT_LIST_HEAD(&(p->mem_regions));
+
+    pgd_free(&(p->pgd));
 
 	p->exit_status = status;
 
@@ -206,7 +217,6 @@ PUBLIC void do_exit(int status)
 			}
 		}
 	}
-
 }
 
 /*****************************************************************************
@@ -255,7 +265,7 @@ PUBLIC void do_wait()
 	int child_pid = mm_msg.PID;
 	/*
 	 * The value of child_pid can be:
-	 * (1) < -1 	meaning waiting for any  child process whose process group ID is
+	 * (1) < -1 	meaning waiting for any child process whose process group ID is
      *    			equal to the absolute value of child_pid.
 	 * (2) -1 		meaning waiting for any child process.
 	 * (3) 0		meaning wait for any child process whose process group ID is

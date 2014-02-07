@@ -104,6 +104,23 @@ PUBLIC int pgd_new(struct page_directory * pgd)
     return 0;
 }
 
+/* <Ring 1> */
+PUBLIC int pgd_free(struct page_directory * pgd)
+{
+    int i;
+    
+    free_vmem((int)(pgd->vir_addr), PGD_SIZE);
+
+    for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
+        if (pgd->vir_pts[i]) {
+            free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
+        }
+        pgd->vir_pts[i] = NULL;
+    }
+
+    return 0;
+}
+
 /**
  * <Ring 1> Map the kernel.
  * @param  pgd The page directory.

@@ -27,9 +27,12 @@ int main(int argc, char * argv[])
 		while (1) {
 			int s;
 			wait(&s);
+			printf("exit %d\n", s);
 		}
 	} else {
 		printf("Child\n");
-		while(1);
+		//while(1);
 	}
+
+	return 0;
 }

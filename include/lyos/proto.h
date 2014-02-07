@@ -110,8 +110,6 @@ PUBLIC void	    sync_inode	(struct inode * p);
 PUBLIC void 	read_super_block(int dev);
 PUBLIC struct super_block *	get_super_block	(int dev);
 
-PUBLIC int      fs_exit(MESSAGE * m);
-
 /* fs/Lyos/misc.c */
 PUBLIC int	     do_stat(MESSAGE * p);
 PUBLIC int       do_fstat(MESSAGE * p);
@@ -140,6 +138,7 @@ PUBLIC int  free_vmem(int base, int len);
 
 PUBLIC int map_page(struct page_directory * pgd, void * phys_addr, void * vir_addr);
 PUBLIC int pgd_new(struct page_directory * pgd);
+PUBLIC int pgd_free(struct page_directory * pgd);
 
 /* console.c */
 PUBLIC void	out_char(TTY* tty, char ch);

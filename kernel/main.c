@@ -89,7 +89,7 @@ void Init()
 	printl("(c)Copyright Jimx 2010-2013\n\n");
 	
 	/* Here we go! */
-	exit(execv("/sbin/init", NULL));
+	_exit(execv("/sbin/init", NULL));
 }
 
 /*****************************************************************************

@@ -205,13 +205,13 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 	list_add(&(text_region->list), &(p->mem_regions));
 	struct vir_region * data_region = region_new(p, data_vaddr, data_memlen, RF_NORMAL);
 	list_add(&(data_region->list), &(p->mem_regions));
-	struct vir_region * stack_region = region_new(p, VM_STACK_TOP - PROC_ORIGIN_STACK, PROC_ORIGIN_STACK, RF_NORMAL);
+	struct vir_region * stack_region = region_new(p, (void*)(VM_STACK_TOP - PROC_ORIGIN_STACK), PROC_ORIGIN_STACK, RF_NORMAL);
 	list_add(&(stack_region->list), &(p->mem_regions));
 	region_alloc_phys(stack_region);
 	region_map_phys(p, stack_region);
 
 	/* stack guard, see @const.h */
-	struct vir_region * stack_guard_region = region_new(p, VM_STACK_TOP - PROC_ORIGIN_STACK - STACK_GUARD_LEN, STACK_GUARD_LEN, RF_GUARD);
+	struct vir_region * stack_guard_region = region_new(p, (void*)(VM_STACK_TOP - PROC_ORIGIN_STACK - STACK_GUARD_LEN), STACK_GUARD_LEN, RF_GUARD);
 	list_add(&(stack_guard_region->list), &(p->mem_regions));
 
 	/* allocate physical memory */

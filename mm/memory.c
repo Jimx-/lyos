@@ -78,3 +78,16 @@ PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_
 
     return 0;
 }
+
+PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length)
+{
+    while (1) {
+        map_page(pgd, NULL, vir_addr);
+
+        length -= PG_SIZE;
+        vir_addr += PG_SIZE;
+        if (length <= 0) break;
+    }
+
+    return 0;
+}

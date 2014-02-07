@@ -148,10 +148,48 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
 }
 
 /**
+ * <Ring 1> Unmap the physical memory of virtual region rp. 
+ */
+PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp)
+{
+    unmap_memory(&(mp->pgd), rp->vir_addr, rp->length);
+
+    rp->flags &= ~RF_MAPPED;
+
+    return 0;
+}
+
+/**
  * <Ring 1> Extend memory region.
  */
 PUBLIC int region_extend(struct vir_region * rp, int increment)
 {
     rp->length += increment;
     return region_alloc_phys(rp);
+}
+
+PUBLIC int region_free(struct vir_region * rp)
+{
+    struct phys_region * pregion = NULL;
+
+    if (!list_empty(&(rp->phys_blocks))) {
+    
+        list_for_each_entry(pregion, &(rp->phys_blocks), list) {
+            if (&(pregion->list) != &(rp->phys_blocks) && &(pregion->list) != rp->phys_blocks.next) {
+                free_vmem((int)list_entry(pregion->list.prev, struct phys_region, list), sizeof(struct phys_region));
+            }
+#if REGION_DEBUG
+            free_mem((int)pregion->phys_addr, pregion->length);
+            printl("MM: region_free: freed physical memory region(0x%x - 0x%x) \n", 
+                (int)pregion->phys_addr, (int)pregion->phys_addr + pregion->length);
+#endif
+        }
+        /* The last one */
+        free_vmem((int)list_entry(pregion->list.prev, struct phys_region, list), sizeof(struct phys_region));
+    }
+
+    free_vmem((int)rp, sizeof(struct vir_region));
+    rp = NULL;
+
+    return 0;
 }
