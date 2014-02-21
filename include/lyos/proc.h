@@ -133,31 +133,8 @@ struct task {
  * @see global.c
  * @see global.h
  */
-#define	PROCS_BASE		0x1000000 /* 16 MB */
-#define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
-#define	PROC_ORIGIN_STACK	0x1000    /*  4 KB */
-
-#define PAGE_DIR_BASE	0x200000
-#define PAGE_TBL_BASE	0x201000
-#define PAGE_SIZE	0x1000
-
-/** User paging map **/
-#define USER_KERNEL_STACK 0x0
-#define USER_KERNEL_STACK_TOP 0x4000
-#define USER_STACK 0x4000
-#define USER_STACK_TOP 0x8000
-#define USER_KERNEL_START 0x100000
-#define USER_KERNEL_END 0x200000
-#define USER_ALLOCATED_START 0x200000
-#define USER_ALLOCATED_END 0x300000
-#define USER_CODE_START 0x300000
-#define USER_CODE_END 0x400000
-#define USER_END 0x400000
-/** The allocated user pages' states **/
-#define ALLOC_STATE_UNUSED 0
-#define ALLOC_STATE_USED 1
-/** The kernel paged used sign, an AVL bit of a pte entry **/
-#define KERNEL_USER_USED_MASK 512
+//#define	PROCS_BASE		0x1000000 /* 16 MB */
+#define	PROC_ORIGIN_STACK	0x2000    /*  4 KB */
 
 /* stacks of tasks */
 #define	STACK_SIZE_DEFAULT	0x4000 /* 16 KB */

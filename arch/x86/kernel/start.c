@@ -67,13 +67,19 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
 	first_pgd = (pgd_start + 0x1000) & 0xfffff000;
 	pte_t * pt = (pte_t*)(first_pgd + (NR_TASKS + NR_NATIVE_PROCS) * 0x1000);	/* 4k align */
-	setup_paging(memory_size, initial_pgd, pt);
-
+	PROCS_BASE = (int)(pt + 1024 * 1024) & 0xfffff000;
+    kernel_pts = PROCS_BASE / PT_MEMSIZE;
+    if (PROCS_BASE % PT_MEMSIZE != 0) {
+    	kernel_pts++;
+    	PROCS_BASE = kernel_pts * PT_MEMSIZE;
+    }
+	setup_paging(memory_size, initial_pgd, pt, kernel_pts);
+	
 	/* setup user page table */
 	int i, j;
 	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
 		user_pgd = (pde_t*)(first_pgd + i * 0x1000);
-		for (j = 0; j < 4; j++) {
+		for (j = 0; j < kernel_pts; j++) {
         	user_pgd[j + KERNEL_VMA / 0x400000] = initial_pgd[j + KERNEL_VMA / 0x400000];
     	}
     }

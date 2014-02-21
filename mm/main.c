@@ -171,6 +171,7 @@ PRIVATE void init_mm()
 						usable_memsize / 1024, memory_size / 1024,
 						text_len / 1024, (data_len + bss_len) / 1024,
 						reserved_memsize / 1024);
+	printl("Physical process memory base: 0x%x\n", PROCS_BASE);
 	printl("Virtual kernel memory layout:\n");
 	printl("  .text: 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
 	printl("  .data: 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);

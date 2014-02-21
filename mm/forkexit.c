@@ -185,17 +185,8 @@ PUBLIC void do_exit(int status)
 	msg2fs.PID = pid;
 	send_recv(BOTH, TASK_FS, &msg2fs);
 	
-	/* free memory */
-	struct vir_region * vr;
-    list_for_each_entry(vr, &(p->mem_regions), list) {
-    	if (&(vr->list) != &(p->mem_regions) && &(vr->list) != p->mem_regions.next)
-       		region_free(list_entry(vr->list.prev, struct vir_region, list));
-    }
-    region_free(list_entry(vr->list.prev, struct vir_region, list));
-    INIT_LIST_HEAD(&(p->mem_regions));
-
-    pgd_free(&(p->pgd));
-
+	proc_free(p);
+	
 	p->exit_status = status;
 
 	if (proc_table[parent_pid].state & WAITING) { /* parent is waiting */
@@ -306,4 +297,16 @@ PUBLIC void do_wait()
 	}
 }
 
+PUBLIC int proc_free(struct proc * p)
+{
+	/* free memory */
+	struct vir_region * vr;
+    list_for_each_entry(vr, &(p->mem_regions), list) {
+    	if (&(vr->list) != &(p->mem_regions) && &(vr->list) != p->mem_regions.next)
+       		region_free(list_entry(vr->list.prev, struct vir_region, list));
+    }
+    region_free(list_entry(vr->list.prev, struct vir_region, list));
+    INIT_LIST_HEAD(&(p->mem_regions));
 
+    pgd_clear(&(p->pgd));
+}

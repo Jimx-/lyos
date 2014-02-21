@@ -138,7 +138,7 @@ PUBLIC int  free_vmem(int base, int len);
 
 PUBLIC int map_page(struct page_directory * pgd, void * phys_addr, void * vir_addr);
 PUBLIC int pgd_new(struct page_directory * pgd);
-PUBLIC int pgd_free(struct page_directory * pgd);
+PUBLIC int pgd_clear(struct page_directory * pgd);
 
 /* console.c */
 PUBLIC void	out_char(TTY* tty, char ch);

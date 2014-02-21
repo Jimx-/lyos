@@ -42,7 +42,7 @@ struct page_directory {
 /* size of a physical page */
 #define PG_SIZE     0x1000
 /* size of the memory that a page table maps */
-#define PT_MEMSIZE  PG_SIZE * 1024
+#define PT_MEMSIZE  (PG_SIZE * 1024)
 
 #define PG_PRESENT  0x001 
 #define PG_RW       0x002
@@ -52,7 +52,7 @@ struct page_directory {
 
 #define I386_CR0_PG 0x80000000
 
-PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt);
+PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int kpts);
 PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();

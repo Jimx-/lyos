@@ -38,6 +38,7 @@ fi
 
 cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
 cp init/init /$MOUNT_POINT/sbin/ 
+cp sysroot/usr/bin/* /$MOUNT_POINT/usr/bin/*
 
 umount $MOUNT_POINT
 kpartx -d /dev/mapper/hda

@@ -34,7 +34,7 @@ PRIVATE int map_kernel(struct page_directory * pgd);
 /**
  * <Ring 0> Setup identity paging for kernel
  */
-PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
+PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int kpts)
 {
     pte_t * page_table_start = pt;
     /* full 4G memory */
@@ -56,7 +56,7 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt)
     }
 
     /* map 0xF0000000 ~ 0xF1000000 to 0x00000000 ~ 0x01000000 */
-    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
+    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + kpts; i++) {
         pgd[i] = pgd[i - KERNEL_VMA / 0x400000];
     }
 
@@ -105,13 +105,14 @@ PUBLIC int pgd_new(struct page_directory * pgd)
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_free(struct page_directory * pgd)
+PUBLIC int pgd_clear(struct page_directory * pgd)
 {
     int i;
     
-    free_vmem((int)(pgd->vir_addr), PGD_SIZE);
+    //free_vmem((int)(pgd->vir_addr), PGD_SIZE);
 
     for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
+        if (i >= KERNEL_VMA / 0x400000 && i < KERNEL_VMA / 0x400000 + kernel_pts) continue;  /* never unmap kernel */
         if (pgd->vir_pts[i]) {
             free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
         }
@@ -130,7 +131,7 @@ PRIVATE int map_kernel(struct page_directory * pgd)
 {
     int i;
 
-    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + 4; i++) {
+    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + kernel_pts; i++) {
         pgd->vir_addr[i] = initial_pgd[i - KERNEL_VMA / 0x400000];
         pgd->vir_pts[i] = (pte_t *)((initial_pgd[i - KERNEL_VMA / 0x400000] + KERNEL_VMA) & 0xfffff000);
     }

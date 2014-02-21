@@ -51,18 +51,14 @@ LDSCRIPT = $(ARCHDIR)/kernel/lyos.ld
 HD		= lyos-disk.img
 
 # Programs, flags, etc.
-ASM		= nasm
-DASM	= objdump
 HOSTCC	= gcc
 HOSTLD	= ld
+AS 		= $(SUBARCH)-pc-lyos-as
 CC		= $(SUBARCH)-pc-lyos-gcc
 LD		= $(SUBARCH)-pc-lyos-ld
-ASMBFLAGS	= -I $(ARCHDIR)/boot/include/
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -T $(LDSCRIPT) -Map System.map 
-DASMFLAGS	= -D
 ARFLAGS		= rcs
 MAKE 		= make
 
@@ -177,6 +173,7 @@ realclean :
 	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL) $(LYOSINIT) $(LYOSINITRD)
 
 update-disk:
+	@(cd userspace; make)
 	@sudo bash scripts/update-disk.sh
 
 kvm:
@@ -186,6 +183,7 @@ debug:
 	@bochs-gdb -f bochsrc.gdb
 
 setup-disk:
+	@(cd userspace; make)
 	@sudo bash scripts/setup-disk.sh
 
 initrd:

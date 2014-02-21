@@ -64,9 +64,7 @@ PUBLIC int do_exec()
 	assert(name_len < MAX_PATH);
 
 	char pathname[MAX_PATH];
-	phys_copy((void*)va2la(TASK_MM, pathname),
-		  (void*)va2la(src, mm_msg.PATHNAME),
-		  name_len);
+	data_copy(TASK_MM, D, pathname, src, D, mm_msg.PATHNAME, name_len);
 	pathname[name_len] = 0;	/* terminate the string */
 
 	/* get the file size */
@@ -130,6 +128,7 @@ PUBLIC int do_exec()
 
 	strcpy(proc_table[src].name, pathname);
 	
+	//p->state = 0;
 	return 0;
 }
 
@@ -199,6 +198,9 @@ PRIVATE int read_elf_header(Elf32_Ehdr* elf_hdr,
  */
 PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * data_vaddr, int data_memlen)
 {
+	if (!list_empty(&(p->mem_regions))) {
+		proc_free(p);
+	}
 	/* create memory regions */
 	INIT_LIST_HEAD(&(p->mem_regions));
 	struct vir_region * text_region = region_new(p, text_vaddr, text_memlen, RF_SHARABLE);
@@ -207,8 +209,6 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 	list_add(&(data_region->list), &(p->mem_regions));
 	struct vir_region * stack_region = region_new(p, (void*)(VM_STACK_TOP - PROC_ORIGIN_STACK), PROC_ORIGIN_STACK, RF_NORMAL);
 	list_add(&(stack_region->list), &(p->mem_regions));
-	region_alloc_phys(stack_region);
-	region_map_phys(p, stack_region);
 
 	/* stack guard, see @const.h */
 	struct vir_region * stack_guard_region = region_new(p, (void*)(VM_STACK_TOP - PROC_ORIGIN_STACK - STACK_GUARD_LEN), STACK_GUARD_LEN, RF_GUARD);
@@ -217,10 +217,12 @@ PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * 
 	/* allocate physical memory */
 	region_alloc_phys(text_region);
 	region_alloc_phys(data_region);
+	region_alloc_phys(stack_region);
 
 	/* map the region in p's address space */
 	region_map_phys(p, text_region);
 	region_map_phys(p, data_region);
+	region_map_phys(p, stack_region);
 	
 	p->brk = (int)(data_vaddr) + data_memlen + 1;
 

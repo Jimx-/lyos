@@ -76,13 +76,13 @@ EXTERN	MESSAGE			mm_msg;
 EXTERN  u8              _mmbuf[MMBUF_SIZE];
 extern	u8 *			mmbuf;
 
+EXTERN  unsigned int        PROCS_BASE;
+EXTERN  int                 kernel_pts;
 EXTERN	unsigned int        memory_size;
 EXTERN  int                 kernel_file;
 EXTERN	unsigned char *		kernel_addr;
-EXTERN	unsigned char *		buffer_base;
-EXTERN	int					buffer_length;
-EXTERN	unsigned char *		rd_base;
-EXTERN	int					rd_length;
+EXTERN  unsigned char *     rd_base;
+EXTERN  int                 rd_length;
 EXTERN	int 				mem_start;
 
 /* FS */

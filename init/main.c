@@ -7,6 +7,8 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
+#define GETTY "/usr/bin/getty"
+
 int main(int argc, char * argv[])
 {
 	mount("/dev/hd1a", "/", "ext2", 0, NULL);
@@ -23,6 +25,7 @@ int main(int argc, char * argv[])
 		free(motd);
 	}
 
+	char * ttylist[] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i = fork();
 	if (i) {
 		printf("Parent\n");
@@ -31,8 +34,15 @@ int main(int argc, char * argv[])
 			wait(&s);
 		}
 	} else {
-		printf("Child\n");
-		//while(1);
+		close(fd_stdin);
+		close(fd_stdout);
+		close(fd_stderr);
+		
+		char * argv[2];
+		argv[0] = GETTY;
+		argv[1] = ttylist[0];
+		//execv(GETTY, argv);
+		while(1);
 	}
 
 	return 0;
