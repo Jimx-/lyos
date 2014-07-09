@@ -40,10 +40,10 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	/* entry        stack size        task name */
 	/* -----        ----------        --------- */
 	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
+	{task_mm,       STACK_SIZE_MM,    "MM"        },
+	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
-    {task_mm,       STACK_SIZE_MM,    "MM"        },
-	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_initfs,	STACK_SIZE_INITFS,"INITFS"	  },
 	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },

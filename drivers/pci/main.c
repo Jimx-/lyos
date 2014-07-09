@@ -97,5 +97,6 @@ PRIVATE void pci_scan_devices(int bus_nr)
 			
 		}
 	}
+
 	return;
 }

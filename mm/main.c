@@ -83,6 +83,7 @@ PUBLIC void task_mm()
 			mm_msg.RETVAL = do_raise();
 			break;
 		case SBRK:
+			printl("Sbrking\n");
 			mm_msg.RETVAL = do_sbrk();
 			break;
 		case GETUID:

@@ -24,7 +24,7 @@ int main(int argc, char * argv[])
 		printf("\n\n%s\n\n", motd);
 		free(motd);
 	}
-
+	while(1);
 	char * ttylist[] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i = fork();
 	if (i) {
@@ -41,7 +41,7 @@ int main(int argc, char * argv[])
 		char * argv[2];
 		argv[0] = GETTY;
 		argv[1] = ttylist[0];
-		//execv(GETTY, argv);
+		execv(GETTY, argv);
 		while(1);
 	}
 
