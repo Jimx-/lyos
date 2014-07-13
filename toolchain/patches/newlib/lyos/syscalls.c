@@ -131,6 +131,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 	msg.NAME_LEN	= strlen(name);
 	msg.BUF		= (void*)arg_stack;
 	msg.BUF_LEN	= stack_len;
+	msg.TARGET = getpid();
 
 	cmb();
 

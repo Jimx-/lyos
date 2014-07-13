@@ -43,6 +43,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
+	{task_devman,   STACK_SIZE_DEVMAN,"DEVMAN"	  },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
 	{task_initfs,	STACK_SIZE_INITFS,"INITFS"	  },
 	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },

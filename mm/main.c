@@ -83,7 +83,6 @@ PUBLIC void task_mm()
 			mm_msg.RETVAL = do_raise();
 			break;
 		case SBRK:
-			printl("Sbrking\n");
 			mm_msg.RETVAL = do_sbrk();
 			break;
 		case GETUID:
@@ -110,8 +109,12 @@ PUBLIC void task_mm()
 		case ALARM:
 			mm_msg.RETVAL = do_alarm();
 			break;
+		case SERVICE_UP:
+			printl("Bringing up service\n");
+			mm_msg.RETVAL = do_service_up();
+			break;
 		case FAULT:
-			printl("Fault!\n");
+			do_handle_fault();
 			reply = 0;
 			break;
 		default:

@@ -32,6 +32,7 @@
 #include "lyos/proto.h"
 #include "region.h"
 #include "proto.h"
+#include "const.h"
 
 /**
  * <Ring 1> Perform the SBRK syscall.

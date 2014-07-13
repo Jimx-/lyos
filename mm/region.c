@@ -171,6 +171,39 @@ PUBLIC int region_extend(struct vir_region * rp, int increment)
     return region_alloc_phys(rp);
 }
 
+/**
+ * <Ring 1> Extend stack.
+ */
+PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
+{
+    /* make sure it's page-aligned */
+    if (increment % PG_SIZE != 0) {
+        increment += ((increment / PG_SIZE) + 1) * PG_SIZE;
+    }
+
+    rp->length += increment;
+    rp->vir_addr = (void*)((int)(rp->vir_addr) - increment);
+
+    void * paddr = (void *)alloc_pages(increment / PG_SIZE);
+    if (!paddr) return ENOMEM;
+
+    struct phys_region * pregion = (struct phys_region *)alloc_vmem(sizeof(struct phys_region));
+
+    if (!pregion) return ENOMEM;
+    
+    pregion->phys_addr = paddr;
+    pregion->vir_addr = rp->vir_addr;
+    pregion->length = increment;
+
+    list_add(&(pregion->list), &(rp->phys_blocks));
+
+#if REGION_DEBUG
+    printl("MM: region_extend_stack: extended stack by 0x%x bytes", increment);
+#endif
+
+    return 0;
+}
+
 PUBLIC int region_free(struct vir_region * rp)
 {
     struct phys_region * pregion = NULL;

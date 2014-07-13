@@ -156,15 +156,16 @@
 #define TASK_MM     1
 #define TASK_FS		2
 #define TASK_SYS	3
-#define TASK_HD		4
-#define TASK_INITFS	5
-#define TASK_LYOS_FS	6
-#define	TASK_RD		7
-#define TASK_FD		8
-#define TASK_SCSI	9
-#define TASK_PCI	10
-#define TASK_INET	11
-#define INIT		12
+#define TASK_DEVMAN	4
+#define TASK_HD		5
+#define TASK_INITFS	6
+#define TASK_LYOS_FS	7
+#define	TASK_RD		8
+#define TASK_FD		9
+#define TASK_SCSI	10
+#define TASK_PCI	11
+#define TASK_INET	12
+#define INIT		13
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
@@ -216,8 +217,11 @@ enum msgtype {
 	/* FS & MM */
 	FORK, EXIT,						/* 49 ~ 50 */
 
+	/* SERVMAN */
+	SERVICE_UP, SERVICE_DOWN,		/* 51 ~ 52 */
+
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 51 */
+	SYSCALL_RET,						/* 53 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,
@@ -260,6 +264,7 @@ enum msgtype {
 #define SIGNR		u.m3.m3i1
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2
+#define TARGET		u.m3.m3i4
 
 #define	PID			u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
@@ -282,6 +287,11 @@ enum msgtype {
 #define MNAMELEN1	u.m4.m4i1
 #define MNAMELEN2	u.m4.m4i2
 #define MNAMELEN3	u.m4.m4i3
+
+/* for fault */
+#define FAULT_NR	u.m3.m3i1
+#define FAULT_ADDR	u.m3.m3i2
+#define FAULT_PROC	u.m3.m3i3
 
 #define NR_BUFFER	1285
 

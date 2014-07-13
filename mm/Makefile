@@ -4,7 +4,8 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 MMOBJS 		= ../arch/$(ARCH)/mm/$(ARCH)-mm.o \
-			main.o forkexit.o exec.o memory.o signal.o alloc.o region.o vmalloc.o brk.o
+			main.o forkexit.o exec.o memory.o signal.o alloc.o region.o vmalloc.o brk.o \
+			service.o fault.o
 MM		= mm.o
 
 everything : realclean $(MM)

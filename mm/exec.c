@@ -60,7 +60,8 @@ PUBLIC int do_exec()
 	/* get parameters from the message */
 	int name_len = mm_msg.NAME_LEN;	/* length of filename */
 	int src = mm_msg.source;	/* caller proc nr. */
-	struct proc * p = proc_table + src;
+	int target = mm_msg.TARGET;
+	struct proc * p = proc_table + target;
 	assert(name_len < MAX_PATH);
 
 	char pathname[MAX_PATH];
@@ -92,8 +93,8 @@ PUBLIC int do_exec()
 
 	proc_new(p, (void *)text_vaddr, text_memlen, (void *)data_vaddr, data_memlen);
 
-	data_copy(src, D, (void *)text_vaddr, getpid(), D, (void *)((int)mmbuf + text_offset), text_filelen);
-	data_copy(src, D, (void *)data_vaddr, getpid(), D, (void *)((int)mmbuf + data_offset), data_filelen);
+	data_copy(target, D, (void *)text_vaddr, getpid(), D, (void *)((int)mmbuf + text_offset), text_filelen);
+	data_copy(target, D, (void *)data_vaddr, getpid(), D, (void *)((int)mmbuf + data_offset), data_filelen);
 
 	int orig_stack_len = mm_msg.BUF_LEN;
 	char stackcopy[PROC_ORIGIN_STACK];
@@ -117,16 +118,16 @@ PUBLIC int do_exec()
 			*q += delta;
 	}
 
-	data_copy(src, D, orig_stack, TASK_MM, D, stackcopy, orig_stack_len);
+	data_copy(target, D, orig_stack, TASK_MM, D, stackcopy, orig_stack_len);
 
-	proc_table[src].regs.ecx = (u32)envp; 
-	proc_table[src].regs.edx = (u32)orig_stack; 
-	proc_table[src].regs.eax = argc;
+	proc_table[target].regs.ecx = (u32)envp; 
+	proc_table[target].regs.edx = (u32)orig_stack; 
+	proc_table[target].regs.eax = argc;
 	/* setup eip & esp */
-	proc_table[src].regs.eip = entry_point; /* @see _start.asm */
-	proc_table[src].regs.esp = (u32)orig_stack;
+	proc_table[target].regs.eip = entry_point; /* @see _start.asm */
+	proc_table[target].regs.esp = (u32)orig_stack;
 
-	strcpy(proc_table[src].name, pathname);
+	strcpy(proc_table[target].name, pathname);
 	
 	//p->state = 0;
 	return 0;

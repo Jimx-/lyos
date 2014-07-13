@@ -4,7 +4,7 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 LIBS 		= $(LIBDIR)/libdriver/libdriver.a
-DRVOBJS		= block/block.o char/char.o net/inet.o pci/pci.o \
+DRVOBJS		= block/block.o char/char.o net/inet.o pci/pci.o devman/devman.o \
 				firmware/firmware.o $(LIBS)
 DRIVER		= drivers.o
 
@@ -28,6 +28,9 @@ net/inet.o: $(LIBS)
 
 pci/pci.o: $(LIBS)
 	@(cd pci; make)
+
+devman/devman.o: $(LIBS)
+	@(cd devman; make)
 
 firmware/firmware.o: $(LIBS)
 	@(cd firmware; make)

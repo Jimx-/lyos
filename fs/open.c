@@ -110,7 +110,7 @@ PUBLIC int do_open(MESSAGE * p)
         exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, pcaller);
-        printl("open file with inode_nr = %d\n", pin->i_num); 
+        DEB(printl("open file with inode_nr = %d\n", pin->i_num)); 
         if (pin == NULL) return -err_code;
     }
 
