@@ -50,6 +50,7 @@ PUBLIC void do_handle_fault()
 
     int extend = 0;
     struct vir_region * vr, * stack = NULL;
+    int handled = 0;
     list_for_each_entry(vr, &(p->mem_regions), list) {
         if ((int)(vr->vir_addr) + vr->length == VM_STACK_TOP) {
             stack = vr;
@@ -63,6 +64,7 @@ PUBLIC void do_handle_fault()
             if (pfla > (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
 #ifdef FAULT_DEBUG
                 printl("MM: page fault caused by not enough stack space, extending\n");
+#endif
                 if (!stack) { 
                     extend = 1; 
                 } else {
@@ -70,10 +72,11 @@ PUBLIC void do_handle_fault()
                     region_map_phys(p, stack);
                 }
                 vr->vir_addr = (void*)((int)vr->vir_addr - STACK_GUARD_LEN);
-#endif
+                handled = 1;
             }
         }
     }
 
-    p->state = 0;
+    /* resume */
+    if (handled) p->state = 0;
 }

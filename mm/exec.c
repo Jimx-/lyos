@@ -91,16 +91,17 @@ PUBLIC int do_exec()
 
 	if (retval) return retval;
 
-	proc_new(p, (void *)text_vaddr, text_memlen, (void *)data_vaddr, data_memlen);
-
-	data_copy(target, D, (void *)text_vaddr, getpid(), D, (void *)((int)mmbuf + text_offset), text_filelen);
-	data_copy(target, D, (void *)data_vaddr, getpid(), D, (void *)((int)mmbuf + data_offset), data_filelen);
-
+	/* copy everything we need before we free the old process */
 	int orig_stack_len = mm_msg.BUF_LEN;
 	char stackcopy[PROC_ORIGIN_STACK];
 	data_copy(TASK_MM, D, stackcopy,
 		  src, D, mm_msg.BUF,
 		  orig_stack_len);
+
+	proc_new(p, (void *)text_vaddr, text_memlen, (void *)data_vaddr, data_memlen);
+
+	data_copy(target, D, (void *)text_vaddr, getpid(), D, (void *)((int)mmbuf + text_offset), text_filelen);
+	data_copy(target, D, (void *)data_vaddr, getpid(), D, (void *)((int)mmbuf + data_offset), data_filelen);
 
 	u8 * orig_stack = (u8*)(VM_STACK_TOP - orig_stack_len);
 
@@ -110,8 +111,9 @@ PUBLIC int do_exec()
 	u8 * envp = orig_stack;
 	if (orig_stack_len) {	/* has args */
 		char **q = (char**)stackcopy;
-		for (; *q != 0; q++, argc++)
+		for (; *q != 0; q++, argc++) {
 			*q += delta;
+		}
 		q++;
 		envp += (int)q - (int)stackcopy;
 		for (; *q != 0; q++)

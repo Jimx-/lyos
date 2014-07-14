@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 
 #define GETTY "/usr/bin/getty"
+#define NR_TTY	3
 
 int main(int argc, char * argv[])
 {
@@ -25,24 +26,28 @@ int main(int argc, char * argv[])
 		free(motd);
 	}
 
-	char * ttylist[] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
-	int i = fork();
-	if (i) {
-		printf("Parent\n");
-		while (1) {
-			int s;
-			wait(&s);
-		}
-	} else {
-		close(fd_stdin);
-		close(fd_stdout);
-		close(fd_stderr);
+	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
+	int i;
+	for (i = 0; i < NR_TTY; i++) {
+		int pid = fork();
+		if (pid) {
+			printf("Parent\n");
+
+		} else {
+			close(fd_stdin);
+			close(fd_stdout);
+			close(fd_stderr);
 		
-		char * argv[2];
-		argv[0] = GETTY;
-		argv[1] = ttylist[0];
-		execv(GETTY, argv);
-		while(1);
+			char * argv[2];
+			argv[0] = GETTY;
+			argv[1] = ttylist[i];
+			_exit(execv(GETTY, argv));
+		}
+	}
+
+	while (1) {
+		int s;
+		wait(&s);
 	}
 
 	return 0;

@@ -28,6 +28,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
+//#define PROTECT_DEBUG
+
 /* 本文件内函数声明 */
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
 
@@ -255,6 +257,9 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	int pos = disp_pos;
 	int text_color = 0x74;
 	
+	int pfla = read_cr2();
+
+#ifdef PROTECT_DEBUG
 	for (i = 0; i < 80; i++)
 		disp_str(" ");
 	
@@ -278,11 +283,11 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 		disp_color_str("in supervisor mode", text_color);
 	}
 
-	int pfla = read_cr2();
 	disp_color_str("\nCR2(PFLA): ", text_color);
 	disp_int(pfla);
 	disp_color_str(" CR3: ", text_color);
 	disp_int(read_cr3()); 
+#endif
 
 	/* inform MM to handle this page fault */
 	MESSAGE msg;

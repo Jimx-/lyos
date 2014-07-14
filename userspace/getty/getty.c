@@ -7,11 +7,10 @@
 
 int main(int argc, char * argv[]) 
 {
-	int fd_stdin  = open("/dev/tty0", O_RDWR);
-	int fd_stdout = open("/dev/tty0", O_RDWR);
-	int fd_stderr = open("/dev/tty0", O_RDWR);
+	int fd_stdin  = open(argv[1], O_RDWR);
+	int fd_stdout = open(argv[1], O_RDWR);
+	int fd_stderr = open(argv[1], O_RDWR);
 
-	char * a = (char*)malloc(1024);
 	printf("getty\n");
 	return 0;
 }
