@@ -3,10 +3,10 @@
 ##############################
 
 AR		= ar
-ASMKFLAGS	= -I ../include/ -f elf
+ASMKFLAGS	= -I ../../include/ -f elf
 ARFLAGS		= rcs
 
-LOBJS		= ../arch/$(ARCH)/lib/$(ARCH)-lib.o \
+LOBJS		= ../../arch/$(ARCH)/lib/$(ARCH)-lib.o \
 			printl.o spin.o time.o data_copy.o
 
 LIB		= liblyos.a
@@ -17,14 +17,14 @@ realclean :
 	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)
-	@echo -e '\tAR\tlib/$@'
+	@echo -e '\tAR\tlib/liblyos/$@'
 	@$(AR) $(ARFLAGS) $@ $^
 
-../arch/$(ARCH)/lib/$(ARCH)-lib.o:
-	@(cd ../arch/$(ARCH)/lib; make)
+../../arch/$(ARCH)/lib/$(ARCH)-lib.o:
+	@(cd ../../arch/$(ARCH)/lib; make)
  
 %.o: %.c
-	@echo -e '\tCC\tlib/$@'
+	@echo -e '\tCC\tlib/liblyos/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
 
 

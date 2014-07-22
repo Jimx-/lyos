@@ -121,7 +121,7 @@ PUBLIC void init_screen(TTY* tty)
 		/* 
 		 * `?' in this string will be replaced with 0, 1, 2, ...
 		 */
-		const char prompt[] = "[tty #?]\n\nWelcome to Lyos \n\n";
+		const char prompt[] = "[tty #?]\n";
 
 		const char * p = prompt;
 		for (; *p; p++)

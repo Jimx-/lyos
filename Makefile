@@ -74,7 +74,7 @@ ifeq ($(CONFIG_COMPRESS_GZIP),y)
 endif
 
 KRNLOBJ		= kernel/krnl.o
-LIB			= lib/liblyos.a
+LIB			= lib/liblyos/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a 
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
@@ -153,7 +153,7 @@ cmd :
 	@(cd command;make install)
 
 lib :
-	@(cd lib; make)
+	@(cd lib/liblyos; make)
 
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
@@ -227,7 +227,7 @@ $(KRNLOBJ):
 
 $(LIB):
 	@echo -e '$(COLORGREEN)Compiling the library...$(COLORDEFAULT)'
-	@(cd lib; make)
+	@(cd lib/liblyos; make)
 
 $(FSOBJ):
 	@echo -e '$(COLORGREEN)Compiling the filesystem server...$(COLORDEFAULT)'

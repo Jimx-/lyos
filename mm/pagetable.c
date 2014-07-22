@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include "proto.h"
 
 //#define PAGETABLE_DEBUG    1
 
@@ -45,7 +46,7 @@ PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags)
 
     int i;
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        pt[i] = NULL;
+        pt[i] = 0;
     }
 
     pgd->vir_addr[pde] = (int)va2pa(getpid(), pt) | flags | PG_PRESENT | PG_RW | PG_USER;
