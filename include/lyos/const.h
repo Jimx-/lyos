@@ -293,6 +293,7 @@ enum msgtype {
 #define FAULT_ADDR	u.m3.m3i2
 #define FAULT_PROC	u.m3.m3i3
 #define FAULT_ERRCODE u.m3.m3i4
+#define FAULT_STATE	u.m3.m3l1
 
 #define NR_BUFFER	1285
 

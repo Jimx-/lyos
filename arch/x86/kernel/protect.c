@@ -296,6 +296,7 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	msg.FAULT_ADDR = pfla;
 	msg.FAULT_PROC = proc2pid(current);
 	msg.FAULT_ERRCODE = err_code;
+	msg.FAULT_STATE = current->state;
 
 	msg_send(current, TASK_MM, &msg);
 
@@ -311,12 +312,6 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
  *======================================================================*/
 PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags)
 {
-	/* PF: don't print anything */
-	if (vec_no == 14) {
-		page_fault_handler(err_code, eip, cs, eflags);
-		return;
-	}
-
 	int i, j;
 	int text_color = 0x74; /* 灰底红字 */
 	char err_description[][64] = {	"#DE Divide Error",
@@ -341,6 +336,7 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 					"#XF SIMD Floating-Point Exception"
 				};
 
+#ifdef PROTECT_DEBUG
 	/* clear screen */
 	disp_pos = console_table[0].crtc_start * 2;
 	for (i = 0; i < 5; i++) {
@@ -369,5 +365,11 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 		disp_color_str(" Error code: ", text_color);
 		disp_int(err_code);
 	} 
+#endif
+
+	if (vec_no == 14) {
+		page_fault_handler(err_code, eip, cs, eflags);
+		return;
+	}
 }
 

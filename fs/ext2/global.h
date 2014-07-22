@@ -38,7 +38,10 @@ EXTERN struct proc * ext2_pcaller;
 #define EXT2_INODE_HASH_MASK   (((unsigned long)1<<EXT2_INODE_HASH_LOG2)-1)
 
 /* inode hash table */
+#define EXT2_NR_INODES   512
 EXTERN struct list_head ext2_inode_table[EXT2_INODE_HASH_SIZE];
+EXTERN ext2_inode_t ext2_inode_buffer[EXT2_NR_INODES];
+EXTERN struct list_head ext2_unused_inode_list;
 
 /* buffer cache */
 #define MAX_BUFFERS              40

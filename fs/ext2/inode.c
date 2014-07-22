@@ -41,6 +41,9 @@
 #define DEB(x)
 #endif
 
+
+PRIVATE ext2_inode_t * ext2_alloc_unused_inode();
+PRIVATE void ext2_release_inode(ext2_inode_t * pin);
 PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag);
 
 PUBLIC void ext2_init_inode()
@@ -49,6 +52,26 @@ PUBLIC void ext2_init_inode()
     for (i = 0; i < EXT2_INODE_HASH_SIZE; i++) {
         INIT_LIST_HEAD(&ext2_inode_table[i]);
     }
+
+    INIT_LIST_HEAD(&ext2_unused_inode_list);
+    for (i = 0; i < EXT2_NR_INODES; i++) {
+        list_add(&(ext2_inode_buffer[i].list), &ext2_unused_inode_list);
+    }
+}
+
+PRIVATE ext2_inode_t * ext2_alloc_unused_inode()
+{
+    if (list_empty(&ext2_unused_inode_list)) panic("ext2: inode table full.");
+
+    ext2_inode_t * ret = list_entry((&ext2_unused_inode_list)->next, ext2_inode_t, list);
+    list_del(&(ret->list));
+
+    return ret;
+}
+
+PRIVATE void ext2_release_inode(ext2_inode_t * pin)
+{
+    list_add(&(pin->list), &ext2_unused_inode_list);
 }
 
 PRIVATE void ext2_addhash_inode(ext2_inode_t * inode)
@@ -77,7 +100,7 @@ PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num)
     }
 
     /* not found. allocate one */
-    inode = (ext2_inode_t *)alloc_mem(sizeof(ext2_inode_t));
+    inode = ext2_alloc_unused_inode();
     assert(inode != NULL);
     DEB(printl("Allocated inode at 0x%x\n", (unsigned int)inode));
 
@@ -114,7 +137,7 @@ PUBLIC void put_ext2_inode(ext2_inode_t * pin)
     if ((--pin->i_count) == 0) {
         if (pin->i_dirt == INO_DIRTY) rw_inode(pin, DEV_WRITE);
         ext2_unhash_inode(pin);
-        free_mem((int)pin, sizeof(ext2_inode_t));
+        ext2_release_inode(pin);
     }
 }
 

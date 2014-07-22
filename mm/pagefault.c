@@ -47,6 +47,7 @@ PUBLIC void do_handle_fault()
     int pfla = mm_msg.FAULT_ADDR;
     struct proc * p = proc_table + mm_msg.FAULT_PROC;
     int err_code = mm_msg.FAULT_ERRCODE;
+    int resume_state = mm_msg.FAULT_STATE;
 
     if (ARCH_PF_PROT(err_code)) {
         printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
@@ -85,7 +86,7 @@ PUBLIC void do_handle_fault()
 
     /* resume */
     if (handled) 
-        p->state = 0;
+        p->state = resume_state;
     else
         send_sig(SIGSEGV, p); 
 }

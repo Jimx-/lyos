@@ -16,8 +16,25 @@
 #define _GLOBAL_VARIABLE_HERE_
 
 #include "lyos/type.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/keyboard.h"
+#include "lyos/proto.h"
+#include "errno.h"
+#include "fcntl.h"
 #include "lyos/list.h"
+#include "ext2_fs.h"
 #include "global.h"
+
 
 PUBLIC DEF_LIST(ext2_superblock_table);
 PUBLIC u8* ext2fsbuf = (u8*)&_ext2fsbuf;

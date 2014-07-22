@@ -73,7 +73,7 @@ PUBLIC void task_fs()
 	MESSAGE msg;
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
-
+		//printl("fs in\n");
 		int src = msg.source;
 		pcaller = &proc_table[src];
 		int msgtype = msg.type;
@@ -136,8 +136,10 @@ PUBLIC void task_fs()
 
 		if (msg.type != SUSPEND_PROC) {
 			msg.type = SYSCALL_RET;
+			//printl("fs send\n");
 			send_recv(SEND, src, &msg);
 		}
+		//printl("fs out\n");
 	}
 }
 
@@ -177,6 +179,9 @@ PRIVATE int fs_fork(MESSAGE * p)
 			child->filp[i]->fd_inode->i_cnt++;
 		}
 	}
+
+	if (child->root) child->root->i_cnt++;
+	if (child->pwd) child->pwd->i_cnt++;
 
 	return 0;
 }

@@ -98,7 +98,9 @@ PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, 
 			*result = pin;
 			*offsetp = cp - pathname;
 
-			if (pin->i_mountpoint) return EENTERMOUNT;
+			if (pin->i_mountpoint) {
+				return EENTERMOUNT;
+			}
 
 			return 0;
 		}

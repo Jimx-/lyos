@@ -172,7 +172,8 @@ PUBLIC int do_open(MESSAGE * p)
 PUBLIC int do_close(MESSAGE * p)
 {
     int fd = p->FD;
-    DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d)\n", fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num));
+    DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", 
+            fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num, pcaller->filp[fd]->fd_cnt, pcaller->filp[fd]->fd_inode->i_cnt));
     put_inode(pcaller->filp[fd]->fd_inode);
     if (--pcaller->filp[fd]->fd_cnt == 0)
         pcaller->filp[fd]->fd_inode = NULL;
