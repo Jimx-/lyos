@@ -30,11 +30,12 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include <signal.h>
 #include "region.h"
 #include "proto.h"
 #include "const.h"
 
-#define FAULT_DEBUG
+#define PAGEFAULT_DEBUG
 
 PUBLIC void do_handle_fault()
 {
@@ -45,8 +46,13 @@ PUBLIC void do_handle_fault()
 
     int pfla = mm_msg.FAULT_ADDR;
     struct proc * p = proc_table + mm_msg.FAULT_PROC;
+    int err_code = mm_msg.FAULT_ERRCODE;
 
-    printl("MM: page fault PFLA: 0x%x, proc: %d\n", pfla, proc2pid(p));
+    if (ARCH_PF_PROT(err_code)) {
+        printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
+    } else if (ARCH_PF_NOPAGE(err_code)) {
+        printl("MM: pagefault: %d not present address %x\n", proc2pid(p), pfla);
+    }
 
     int extend = 0;
     struct vir_region * vr, * stack = NULL;
@@ -62,7 +68,7 @@ PUBLIC void do_handle_fault()
         if (vr->flags & RF_GUARD) {
             /* pfla is in stack guard area: extend stack */
             if (pfla > (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
-#ifdef FAULT_DEBUG
+#ifdef PAGEFAULT_DEBUG
                 printl("MM: page fault caused by not enough stack space, extending\n");
 #endif
                 if (!stack) { 
@@ -78,5 +84,8 @@ PUBLIC void do_handle_fault()
     }
 
     /* resume */
-    if (handled) p->state = 0;
+    if (handled) 
+        p->state = 0;
+    else
+        send_sig(SIGSEGV, p); 
 }

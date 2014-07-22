@@ -16,8 +16,13 @@
 #ifndef _MM_PROTO_H_
 #define _MM_PROTO_H_
 
+PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags);
+PUBLIC int pt_mappage(struct page_directory * pgd, void * phys_addr, void * vir_addr, u32 flags);
 PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length);
 PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length);
+PUBLIC int pgd_new(struct page_directory * pgd);
+PUBLIC int pgd_mapkernel(struct page_directory * pgd);
+PUBLIC int pgd_clear(struct page_directory * pgd);
 
 PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length, int flags);
 PUBLIC int region_alloc_phys(struct vir_region * rp);
@@ -35,5 +40,7 @@ PUBLIC int do_sbrk();
 PUBLIC int do_service_up();
 
 PUBLIC void do_handle_fault();
+
+PUBLIC int send_sig(int sig, struct proc * p);
 
 #endif

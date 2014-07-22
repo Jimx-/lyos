@@ -295,6 +295,7 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	msg.FAULT_NR = 14;
 	msg.FAULT_ADDR = pfla;
 	msg.FAULT_PROC = proc2pid(current);
+	msg.FAULT_ERRCODE = err_code;
 
 	msg_send(current, TASK_MM, &msg);
 

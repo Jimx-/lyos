@@ -17,14 +17,14 @@ int main(int argc, char * argv[])
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	int fd_motd = open("/etc/motd", O_RDWR);
+	/*int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(128);
 		read(fd_motd, motd, 128);
 		close(fd_motd);
 		printf("\n\n%s\n\n", motd);
 		free(motd);
-	}
+	}*/
 
 	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;

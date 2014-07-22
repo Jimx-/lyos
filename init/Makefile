@@ -11,5 +11,5 @@ realclean :
 
 $(INIT): main.c
 	@echo -e '\tCC\tinit/$@'
-	@$(CC) -o $@ $< -O2 -Xlinker -Map -Xlinker init.map
+	@$(CC) -o $@ $< -Xlinker -Map -Xlinker init.map
 	@cp $(INIT) $(SRCDIR)/sysroot/sbin/

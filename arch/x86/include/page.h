@@ -24,6 +24,8 @@ typedef unsigned int    pte_t;
 
 #define I386_VM_DIR_ENTRIES     1024
 
+#define I386_VM_ADDR_MASK       0xfffff000
+
 /* struct page_directory */
 struct page_directory {
     /* physical address of page dir */
@@ -52,6 +54,9 @@ struct page_directory {
 
 #define I386_CR0_PG 0x80000000
 
+#define I386_PF_PROT(x)         ((x) & PG_PRESENT)
+#define I386_PF_NOPAGE(x)       (!I386_PF_PROT(x))
+
 PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int kpts);
 PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
@@ -59,5 +64,13 @@ PUBLIC void disable_paging();
 PUBLIC int read_cr2();
 PUBLIC int read_cr3();
 PUBLIC void reload_cr3();
+
+#define ARCH_VM_DIR_ENTRIES     I386_VM_DIR_ENTRIES
+#define ARCH_VM_ADDR_MASK       I386_VM_ADDR_MASK
+#define ARCH_PF_PROT(x)         I386_PF_PROT(x)
+#define ARCH_PF_NOPAGE(x)       I386_PF_NOPAGE(x)
+
+#define ARCH_PDE(x)     ((unsigned long)(x) >> 22 & 0x03FF)
+#define ARCH_PTE(x)     ((unsigned long)(x) >> 12 & 0x03FF)
 
 #endif

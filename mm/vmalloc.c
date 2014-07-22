@@ -36,6 +36,7 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "page.h"
+#include "proto.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
@@ -86,7 +87,7 @@ PUBLIC int alloc_vmem(int memsize)
  	/* map */
  	int i;
  	for (i = 0; i < pages; i++, phys_pages += PG_SIZE, vir_pages += PG_SIZE) {
- 		map_page(&(current->pgd), (void *)phys_pages, (void *)vir_pages);
+ 		pt_mappage(&(current->pgd), (void *)phys_pages, (void *)vir_pages, PG_PRESENT | PG_RW | PG_USER);
  	}
 
  	return retval;

@@ -29,8 +29,6 @@
 #include "lyos/proto.h"
 #include "page.h"
 
-PRIVATE int map_kernel(struct page_directory * pgd);
-
 /**
  * <Ring 0> Setup identity paging for kernel
  */
@@ -78,64 +76,6 @@ PUBLIC void disable_paging()
     asm volatile ("mov %%cr0, %0": "=r"(cr0));
     cr0 &= ~I386_CR0_PG;
     asm volatile ("mov %0, %%cr0":: "r"(cr0));
-}
-
-/* <Ring 1> */
-PUBLIC int pgd_new(struct page_directory * pgd)
-{
-    /* map the directory so that we can write it */
-    pde_t * pg_dir = (pde_t *)alloc_vmem(PGD_SIZE);
-
-    pgd->phys_addr = va2pa(getpid(), pg_dir);
-    pgd->vir_addr = pg_dir;
-
-    int i;
-
-    /* zero it */
-    for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-        pg_dir[i] = 0;
-    }
-
-    for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-        pgd->vir_pts[i] = NULL;
-    }
-
-    map_kernel(pgd);
-    return 0;
-}
-
-/* <Ring 1> */
-PUBLIC int pgd_clear(struct page_directory * pgd)
-{
-    int i;
-    
-    //free_vmem((int)(pgd->vir_addr), PGD_SIZE);
-
-    for (i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-        if (i >= KERNEL_VMA / 0x400000 && i < KERNEL_VMA / 0x400000 + kernel_pts) continue;  /* never unmap kernel */
-        if (pgd->vir_pts[i]) {
-            free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
-        }
-        pgd->vir_pts[i] = NULL;
-    }
-
-    return 0;
-}
-
-/**
- * <Ring 1> Map the kernel.
- * @param  pgd The page directory.
- * @return     Zero on success.
- */
-PRIVATE int map_kernel(struct page_directory * pgd)
-{
-    int i;
-
-    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + kernel_pts; i++) {
-        pgd->vir_addr[i] = initial_pgd[i - KERNEL_VMA / 0x400000];
-        pgd->vir_pts[i] = (pte_t *)((initial_pgd[i - KERNEL_VMA / 0x400000] + KERNEL_VMA) & 0xfffff000);
-    }
-    return 0;
 }
 
 PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc)

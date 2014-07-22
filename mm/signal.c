@@ -27,8 +27,6 @@
 #include "lyos/proto.h"
 #include "signal.h"
 #include "errno.h"
-
-PRIVATE int send_sig(int sig,struct proc * p);
  
 /*************************************************************************************
  * 						do_sigaction												 *
@@ -92,14 +90,14 @@ PUBLIC int do_sigaction()
  *  Send a signal to the process given by p.
  *
  *****************************************************************************/
- PRIVATE int send_sig(int sig,struct proc * p)
+PUBLIC int send_sig(int sig, struct proc * p)
 {
 	if (!p || sig<1 || sig>32)
 		return -EINVAL;
 
-		/* send the signal */
-		p->signal |= (1<<(sig-1));
-		return 0;
+	/* send the signal */
+	p->signal |= (1<<(sig-1));
+	return 0;
 }
 
 /*****************************************************************************
