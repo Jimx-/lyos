@@ -122,9 +122,11 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
     void * phys_base = NULL;
     int len = 0, len_to_map = rp->length;
 
+#if REGION_DEBUG
     printl("MM: region_map_phys: mapping virtual memory region(0x%x, 0x%x)\n", 
                 (int)rp->vir_addr, (int)rp->vir_addr + rp->length);
-
+#endif
+    
     if (list_empty(&(rp->phys_blocks))) return ENOMEM;
     
     list_for_each_entry(pregion, &(rp->phys_blocks), list) {

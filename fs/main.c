@@ -171,10 +171,8 @@ PRIVATE int fs_fork(MESSAGE * p)
 {
 	int i;
 	struct proc * child = &proc_table[p->PID];
-	printl("Forking for %d\n", p->PID);
 	for (i = 0; i < NR_FILES; i++) {
 		if (child->filp[i]) {
-			printl("%d(%d) ", child->filp[i]->fd_inode->i_num, child->filp[i]->fd_inode->i_cnt);
 			child->filp[i]->fd_cnt++;
 			child->filp[i]->fd_inode->i_cnt++;
 		}

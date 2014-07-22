@@ -110,7 +110,7 @@ PUBLIC int do_open(MESSAGE * p)
         exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, pcaller);
-        DEB(printl("open file with inode_nr = %d\n", pin->i_num)); 
+        DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, pcaller->name)); 
         if (pin == NULL) return -err_code;
     }
 
@@ -174,7 +174,8 @@ PUBLIC int do_close(MESSAGE * p)
     int fd = p->FD;
     DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d)\n", fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num));
     put_inode(pcaller->filp[fd]->fd_inode);
-    pcaller->filp[fd]->fd_inode = NULL;
+    if (--pcaller->filp[fd]->fd_cnt == 0)
+        pcaller->filp[fd]->fd_inode = NULL;
     pcaller->filp[fd] = NULL;
 
     return 0;
