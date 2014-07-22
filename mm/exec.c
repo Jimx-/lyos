@@ -130,8 +130,7 @@ PUBLIC int do_exec()
 	proc_table[target].regs.esp = (u32)orig_stack;
 
 	strcpy(proc_table[target].name, pathname);
-	
-	//p->state = 0;
+
 	return 0;
 }
 

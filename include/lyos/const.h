@@ -63,7 +63,7 @@
 #define WAITING   0x08	/* set when proc waiting for the child to terminate */
 #define HANGING   0x10	/* set when proc exits without being waited by parent */
 #define RESCUING  0x20  /* set when proc is being rescued */
-#define FREE_SLOT 0x20	/* set when proc table entry is not used
+#define FREE_SLOT 0x40	/* set when proc table entry is not used
 			 * (ok to allocated to a new process)
 			 */
 
