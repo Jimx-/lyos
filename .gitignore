@@ -20,15 +20,20 @@ cmd.tar
 #
 # Disk image
 #
-80m.img
-80m.img.tar.gz
+lyos-disk.img
 
 #
 # Kernel
 #
 *.bin
 System.map
-arch/arm/arm-lyos
+arch/*/lyos
+lyos.gz
+
+#
+# Initrd 
+#
+initrd.tar
 
 # 
 # Library
@@ -40,6 +45,7 @@ arch/arm/arm-lyos
 #
 include/lyos/compile.h
 scripts/.Config.in.swp
+include/config
 
 #
 # Toolchain
