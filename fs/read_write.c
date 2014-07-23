@@ -33,9 +33,6 @@
 #include "proto.h"
 #include "fcntl.h"
 
-PRIVATE int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
-    void * buf, int nbytes, u64 * newpos, int * bytes_rdwt);
-
 /**
  * <Ring 1> Send read/write request.
  * @param  fs_ep      Endpoint of FS driver.
@@ -50,7 +47,7 @@ PRIVATE int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, i
  * @param  bytes_rdwt [OUT] How many bytes read/written. 
  * @return            Zero on success. Otherwise an error code.
  */
-PRIVATE int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
+PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
     void * buf, int nbytes, u64 * newpos, int * bytes_rdwt)
 {
     MESSAGE m;

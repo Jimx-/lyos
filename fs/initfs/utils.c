@@ -76,5 +76,7 @@ PUBLIC unsigned int initfs_getmode(struct posix_tar_header * phdr)
             break;
     }
 
+    mode |= initfs_get8(phdr->mode);
+    
     return mode;
 }

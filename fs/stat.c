@@ -34,8 +34,6 @@
 #include "fcntl.h"
 #include <sys/stat.h>
 
-PRIVATE int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * buf);
-
 /**
  * <Ring 1> Issue the stat request.
  * @param  fs_ep Endpoint of FS driver.
@@ -44,7 +42,7 @@ PRIVATE int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char *
  * @param  buf   Buffer.
  * @return       Zero on success.
  */
-PRIVATE int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * buf)
+PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * buf)
 {
     MESSAGE m;
 

@@ -135,7 +135,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
 	return msg.RETVAL;

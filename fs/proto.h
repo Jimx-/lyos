@@ -51,5 +51,13 @@ PUBLIC int do_dup(MESSAGE * p);
 PUBLIC int do_chdir(MESSAGE * p);
 PUBLIC int do_fchdir(MESSAGE * p);
 
+PUBLIC int do_fs_exec(MESSAGE * msg);
+
+PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * buf);
+
+PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
+    void * buf, int nbytes, u64 * newpos, int * bytes_rdwt);
+
+
 #endif
 
