@@ -43,4 +43,6 @@ PUBLIC void do_handle_fault();
 
 PUBLIC int send_sig(int sig, struct proc * p);
 
+PUBLIC int do_getsetid();
+
 #endif

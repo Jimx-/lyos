@@ -90,8 +90,8 @@ struct proc {
 	int p_parent; /**< pid of parent process */
 
 	/* user id,group id etc. */
-	u16 uid,euid,suid;
-	u16 gid,egid,sgid;
+	u16 uid, euid, suid;
+	u16 gid, egid, sgid;
 	
 	//u16 used_math;
 

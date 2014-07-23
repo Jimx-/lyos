@@ -183,6 +183,13 @@
 #define MAG_CH_PANIC	'\002'
 #define MAG_CH_ASSERT	'\003'
 
+#define GS_GETUID	0
+#define GS_SETUID	1
+#define GS_GETGID	2
+#define GS_SETGID	3
+#define GS_GETEUID	4
+#define GS_GETEGID	5
+
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -211,8 +218,7 @@ enum msgtype {
 	SUSPEND_PROC, RESUME_PROC,				/* 31 ~ 32 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, SETUID, GETUID, SETGID, GETGID, GETEUID, 
-    GETEGID, ALARM, RAISE, SIGACTION,		/* 33 ~ 48 */
+	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, RAISE, SIGACTION,		/* 33 ~ 48 */
 
 	/* FS & MM */
 	FORK, EXIT,						/* 49 ~ 50 */
@@ -253,6 +259,7 @@ enum msgtype {
 #define	BUF_LEN		u.m3.m3i3
 #define MODE		u.m3.m3i4
 #define	CNT			u.m3.m3i2
+#define NEWID		u.m3.m3i1
 #define	REQUEST		u.m3.m3i2
 #define	PROC_NR		u.m3.m3i3
 #define	DEVICE		u.m3.m3i4

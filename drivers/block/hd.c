@@ -81,12 +81,12 @@ struct dev_driver hd_driver =
  *****************************************************************************/
 PUBLIC void task_hd()
 {
-	//MESSAGE msg;
+	MESSAGE msg;
 
 	init_hd();
-	dev_driver_task(&hd_driver);	
+	//dev_driver_task(&hd_driver);	
 
-	/*
+	
 	while (1) {
 		do_hd_request();
 		send_recv(RECEIVE, ANY, &msg);
@@ -121,7 +121,7 @@ PUBLIC void task_hd()
 			DEB(printl("Reply to %d.(in main loop)\n", src));
 			send_recv(SEND, src, &msg);
 		}
-	} */
+	} 
 
 }
 

@@ -3,9 +3,10 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
+LIBS		= $(LIBDIR)/libdriver/libdriver.a
 FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 				read_write.o stat.o link.o misc.o\
-				ext2/ext2fs.o initfs/initfs.o
+				ext2/ext2fs.o initfs/initfs.o $(LIBS)
 
 FS			= fs.o
 
@@ -27,3 +28,7 @@ ext2/ext2fs.o:
 
 initfs/initfs.o:
 	@(cd initfs; make)
+
+$(LIBDIR)/libdriver/libdriver.a:
+	@(cd $(LIBDIR)/libdriver; make)
+	

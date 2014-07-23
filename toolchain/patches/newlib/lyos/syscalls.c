@@ -548,3 +548,88 @@ int gettimeofday(struct timeval* tv, void *tz)
 	return msg.RETVAL;
 }
 
+int getuid()
+{
+	MESSAGE msg;
+
+	msg.type = GETSETID;
+	msg.REQUEST = GS_GETUID;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return msg.RETVAL;
+}
+
+int setuid(uid_t uid)
+{
+	MESSAGE msg;
+
+	msg.type = GETSETID;
+	msg.REQUEST = GS_SETUID;
+	msg.NEWID = uid;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return msg.RETVAL;
+}
+
+int getgid()
+{
+	MESSAGE msg;
+
+	msg.type = GETSETID;
+	msg.REQUEST = GS_GETGID;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return msg.RETVAL;
+}
+
+int setgid(gid_t gid)
+{
+	MESSAGE msg;
+
+	msg.type = GETSETID;
+	msg.REQUEST = GS_SETGID;
+	msg.NEWID = gid;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return msg.RETVAL;
+}
+
+int geteuid()
+{
+	MESSAGE msg;
+
+	msg.type = GETSETID;
+	msg.REQUEST = GS_GETEUID;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return msg.RETVAL;
+}
+
+int getegid()
+{
+	MESSAGE msg;
+
+	msg.type = GETSETID;
+	msg.REQUEST = GS_GETEGID;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
+
+	return msg.RETVAL;
+}

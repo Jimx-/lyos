@@ -41,9 +41,6 @@ PUBLIC void 	restart();
 /* main.c */
 PUBLIC void 	Init();
 PUBLIC int  	get_ticks();
-PUBLIC void 	TestA();
-PUBLIC void 	TestB();
-PUBLIC void 	TestC();
 PUBLIC void 	panic(const char *fmt, ...);
 
 /* i8259.c */
@@ -185,15 +182,6 @@ PUBLIC int	do_exec();
 
 /* sys.c */
 PUBLIC int 	do_brk();
-
-/* proc.c*/
-PUBLIC int 	do_setuid();
-PUBLIC int	do_getuid();
-PUBLIC int	do_geteuid();
-PUBLIC int	do_getegid();
-PUBLIC int	do_setgid();
-PUBLIC int	do_getgid();
-PUBLIC int	do_nice();
 
 /* signal.h */
 PUBLIC int 	do_sigaction();
