@@ -58,7 +58,7 @@ PUBLIC int register_filesystem(MESSAGE * p)
 
     list_add(&(pfs->list), &filesystem_table);
 
-    printl("VFS: %s filesystem registered, enpoint: %d\n", pfs->name, p->source);
+    printl("VFS: %s filesystem registered, endpoint: %d\n", pfs->name, p->source);
 
     return 0;
 }
