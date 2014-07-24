@@ -30,13 +30,10 @@
 #include "lyos/driver.h"
 
 PRIVATE void	init_hd				();
-PRIVATE void	add_hd_request		(MESSAGE * m);
-PRIVATE void	end_request			();
 PRIVATE void	hd_open				(MESSAGE * p);
 PRIVATE void	hd_close			(MESSAGE * p);
 PRIVATE void	hd_rdwt				(MESSAGE * p);
 PRIVATE void	hd_ioctl			(MESSAGE * p);
-PRIVATE void 	do_hd_request		();
 PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition			(int device, int style);
@@ -49,9 +46,6 @@ PRIVATE void	print_identify_info	(u16* hdinfo);
 PRIVATE	u8		hd_status;
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
 PRIVATE	struct hd_info	hd_info[1];
-
-PRIVATE struct hd_request hd_request_table[NR_HD_REQUESTS];
-PRIVATE struct hd_request * hd_current_request = NULL;
 
 #define	DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
 
@@ -67,8 +61,8 @@ struct dev_driver hd_driver =
 	"HD",
 	hd_open,
 	hd_close,
-	add_hd_request,
-	do_hd_request, 
+	hd_rdwt,
+	hd_rdwt, 
 	hd_ioctl 
 };
 
@@ -84,10 +78,10 @@ PUBLIC void task_hd()
 	MESSAGE msg;
 
 	init_hd();
-	//dev_driver_task(&hd_driver);	
+	dev_driver_task(&hd_driver);	
 
 	
-	while (1) {
+	/*while (1) {
 		send_recv(RECEIVE, ANY, &msg);
 		DEB(printl("Receive a message from %d, type = %d\n", msg.source, msg.type));
 		int src = msg.source;
@@ -117,77 +111,8 @@ PUBLIC void task_hd()
 		}
 
 		send_recv(SEND, src, &msg);
-	} 
+	} */
 
-}
-
-/**
- * <Ring 1> Add a request to the queue.
- * @param m Ptr to request message.
- */
-PRIVATE void add_hd_request(MESSAGE * m)
-{
-	struct hd_request * req = 0;
-	struct hd_request * tmp;
-
-	/* avoid racing condition */
-	disable_int();
-
-find_slot:
-	/* reserve some room for reading requests */
-	if (m->type == DEV_READ) {
-		req = hd_request_table + NR_HD_REQUESTS;
-	} else {
-		req = hd_request_table + NR_HD_REQUESTS * 2 / 3;
-	}
-
-	while (--req > hd_request_table) {
-		if (req->free) break;
-	}
-
-	/* no free request slot found, process requests and repeat again */
-	if (req < hd_request_table) {
-		do_hd_request();
-		goto find_slot;
-	}
-
-	req->p = m;
-	req->free = 0;
-	req->next = 0;
-
-	tmp = hd_current_request;
-
-	if(!tmp){
-		hd_current_request = req;
-		/* we are safe, start processing requests */
-		enable_int();
-		//do_hd_request();
-		return;
-	}
-
-	for (;tmp->next;tmp = tmp->next){
-
-	}
-
-	tmp->next = req;
-	enable_int();
-	//do_hd_request();
-}
-
-/*****************************************************************************
- *                                do_hd_request
- *****************************************************************************/
-/**
- * <Ring 1> do the hd's requests.
- *
- *****************************************************************************/
-PRIVATE void do_hd_request()
-{
-	if (hd_current_request) {
-		if(hd_current_request->p){
-			hd_rdwt(hd_current_request->p);
-		}
-	}
 }
 
 /*****************************************************************************
@@ -212,24 +137,6 @@ PRIVATE void init_hd()
 	for (i = 0; i < (sizeof(hd_info) / sizeof(hd_info[0])); i++)
 		memset(&hd_info[i], 0, sizeof(hd_info[0]));
 	hd_info[0].open_cnt = 0;
-}
-
-/*****************************************************************************
- *                                end_request
- *****************************************************************************/
-/**
- * <Ring 1>
- *
- *****************************************************************************/
-PRIVATE void end_request()
-{
-	DEB(printl("Reply to %d.(in hd_rdwt)\n", hd_current_request->p->source));
-	send_recv(SEND, hd_current_request->p->source, hd_current_request->p);
-	hd_current_request->p = 0;
-	if ((hd_current_request->next)->p){
-		hd_current_request->free = 1;
-		hd_current_request = hd_current_request->next;
-	}
 }
 
 /*****************************************************************************

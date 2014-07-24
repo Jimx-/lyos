@@ -32,8 +32,6 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 {
 	MESSAGE msg;
 	while (1) {
-		/* handle requests */
-		(*dd->dev_do_request)();
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
 
@@ -47,8 +45,11 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 			break;
 
 		case DEV_READ:
+			(*dd->dev_read)(&msg);
+			break;
+
 		case DEV_WRITE:
-			(*dd->dev_add_request)(&msg);
+			(*dd->dev_write)(&msg);
 			break;
 
 		case DEV_IOCTL:
@@ -61,7 +62,7 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 			break;
 		}
 
-		if ((msg.type != DEV_READ) && (msg.type != DEV_WRITE))send_recv(SEND, src, &msg);
+		send_recv(SEND, src, &msg);
 	}
 }
 

@@ -21,8 +21,8 @@ struct dev_driver{
   char * dev_name;
   void (*dev_open)	(MESSAGE * p);
   void (*dev_close)	(MESSAGE * p);
-  void (*dev_add_request) (MESSAGE * p);
-  void (*dev_do_request) ();
+  void (*dev_read)  (MESSAGE * p);
+  void (*dev_write) (MESSAGE * p);
   void (*dev_ioctl)	(MESSAGE * p);
 };
 
