@@ -159,7 +159,7 @@
 #define TASK_DEVMAN	4
 #define TASK_HD		5
 #define TASK_INITFS	6
-#define TASK_LYOS_FS	7
+#define TASK_EXT2_FS	7
 #define	TASK_RD		8
 #define TASK_FD		9
 #define TASK_SCSI	10

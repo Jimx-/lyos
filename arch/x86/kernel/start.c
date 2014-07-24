@@ -159,11 +159,13 @@ PUBLIC void init_arch()
 			p->ldts[INDEX_LDT_C].attr1  = DA_C   | priv << 5;
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
 
-			/* use kernel page table */
-			if (strcmp(t->name, "VFS") == 0) {
+			if ((strcmp(t->name, "VFS") == 0) || (strcmp(t->name, "INITFS") == 0) ||
+				(strcmp(t->name, "INET") == 0) || (strcmp(t->name, "SCSI") == 0) ||
+				(strcmp(t->name, "RD") == 0)) {
 				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
-			} else { 
+			} else {
+				/* use kernel page table */ 
 				p->pgd.phys_addr = initial_pgd;
 				p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
 			}
@@ -190,8 +192,8 @@ PUBLIC void init_arch()
 			//FIXME: should be p->pgd.vir_addr = user_pgd + KERNEL_VMA;
 			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 
-			for (j = KERNEL_VMA / 0x400000; j < KERNEL_VMA / 0x400000 + 4; j++) {
-				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
+			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + 4; j++) {
+				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
 			}
 		}
 
