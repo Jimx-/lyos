@@ -219,7 +219,7 @@ struct file_desc {
 
 struct file_system {
     struct list_head list;
-	char * name;
+	char name[FS_LABEL_MAX];
 	int fs_ep;
 };
 

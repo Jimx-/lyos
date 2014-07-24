@@ -22,6 +22,7 @@
 #include "assert.h"
 #include <sys/mman.h>
 #include <lyos/ipc.h>
+#include <string.h>
 
 PUBLIC void * mmap_for(endpoint_t forwhom,
     void *addr, size_t len, int prot, int flags, int fd, off_t offset)

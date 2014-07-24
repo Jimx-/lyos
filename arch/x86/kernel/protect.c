@@ -28,7 +28,9 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-#define PROTECT_DEBUG
+//#define PROTECT_DEBUG
+
+PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m);
 
 /* 本文件内函数声明 */
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
@@ -253,13 +255,12 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
  */
 PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 {
+	int pfla = read_cr2();
+#ifdef PROTECT_DEBUG
 	int i;
 	int pos = disp_pos;
 	int text_color = 0x74;
-	
-	int pfla = read_cr2();
 
-#ifdef PROTECT_DEBUG
 	for (i = 0; i < 80; i++)
 		disp_str(" ");
 	
@@ -312,6 +313,7 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
  *======================================================================*/
 PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags)
 {
+#ifdef PROTECT_DEBUG
 	int i, j;
 	int text_color = 0x74; /* 灰底红字 */
 	char err_description[][64] = {	"#DE Divide Error",
@@ -336,7 +338,6 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 					"#XF SIMD Floating-Point Exception"
 				};
 
-#ifdef PROTECT_DEBUG
 	/* clear screen */
 	disp_pos = console_table[0].crtc_start * 2;
 	for (i = 0; i < 5; i++) {

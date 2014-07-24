@@ -33,8 +33,8 @@
 #include "proto.h"
 #include "fcntl.h"
 
-#define DEBUG
-#ifdef DEBUG
+#define OPEN_DEBUG
+#ifdef OPEN_DEBUG
 #define DEB(x) printl("VFS: "); x
 #else
 #define DEB(x)
@@ -67,9 +67,9 @@ PUBLIC int do_open(MESSAGE * p)
     int exist = 1;
     int retval = 0;
 
-    char * pathname = (char *)alloc_mem(name_len + 1);
-    if (!pathname) {
-        err_code = -ENOMEM;
+    char pathname[MAX_PATH];
+    if (name_len > MAX_PATH) {
+        err_code = -ENAMETOOLONG;
         return -1;
     }
         
@@ -110,8 +110,9 @@ PUBLIC int do_open(MESSAGE * p)
         exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, pcaller);
-        DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, pcaller->name)); 
         if (pin == NULL) return -err_code;
+
+        DEB(printl("VFS: open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, pcaller->name)); 
     }
 
     struct file_desc * filp = &f_desc_table[i];

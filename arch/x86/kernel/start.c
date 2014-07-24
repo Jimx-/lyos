@@ -78,8 +78,8 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	/* setup user page table */
 	int i, j;
 	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
-		user_pgd = (pde_t*)(first_pgd + i * PGD_SIZE);
-		for (j = 0; j < kernel_pts; j++) {
+		user_pgd = (pde_t*)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
+		for (j = 0; j < kernel_pts; j++) { 
         	user_pgd[j + ARCH_PDE(KERNEL_VMA)] = initial_pgd[j + ARCH_PDE(KERNEL_VMA)];
     	}
     }
@@ -160,16 +160,16 @@ PUBLIC void init_arch()
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
 
 			/* use kernel page table */
-			/*if (strcmp(t->name, "VFS") == 0) {
+			if (strcmp(t->name, "VFS") == 0) {
 				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
-			} else {*/ 
+			} else { 
 				p->pgd.phys_addr = initial_pgd;
 				p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
-			//}
+			}
 
 			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
-				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
+				if (p->pgd.phys_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
 			}			
 		}
 		else {		/* INIT process */

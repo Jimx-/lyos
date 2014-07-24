@@ -42,8 +42,8 @@
 PUBLIC int do_access(MESSAGE * p)
 {
     int namelen = p->NAME_LEN + 1;
-    char * pathname = (char *)alloc_mem(namelen);
-    if (!pathname) return ENOMEM;
+    char pathname[MAX_PATH];
+    if (namelen > MAX_PATH) return ENAMETOOLONG;
 
     data_copy(getpid(), D, pathname, p->source, D, p->PATHNAME, namelen);
     //phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
@@ -55,7 +55,6 @@ PUBLIC int do_access(MESSAGE * p)
     int retval = forbidden(pcaller, pin, p->MODE);
 
     put_inode(pin);
-    free_mem((int)pathname, namelen);
 
     return (retval == 0) ? 0 : -1;
 }

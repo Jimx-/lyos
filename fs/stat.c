@@ -65,8 +65,8 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * 
 PUBLIC int do_stat(MESSAGE * p)
 {
     int namelen = p->NAME_LEN + 1;
-    char * pathname = (char *)alloc_mem(namelen);
-    if (!pathname) return ENOMEM;
+    char pathname[MAX_PATH];
+    if (namelen > MAX_PATH) return ENAMETOOLONG;
 
     data_copy(getpid(), D, pathname, p->source, D, p->PATHNAME, namelen);
     //phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
@@ -78,7 +78,6 @@ PUBLIC int do_stat(MESSAGE * p)
     int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num, p->source, p->BUF);
 
     put_inode(pin);
-    free_mem((int)pathname, namelen);
     return retval;
 }
 
@@ -93,6 +92,8 @@ PUBLIC int do_fstat(MESSAGE * p)
     char * buf = p->BUF;
     int src = p->source;
 
+    if (pcaller->filp[fd] == NULL) return EINVAL;
+    
     /* Issue the request */
     int retval = request_stat(pcaller->filp[fd]->fd_inode->i_fs_ep, 
         pcaller->filp[fd]->fd_inode->i_dev, pcaller->filp[fd]->fd_inode->i_num, src, buf);

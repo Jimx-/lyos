@@ -66,6 +66,7 @@ PUBLIC int read_ext2_super_block(int dev)
 
     ext2_superblock_t * pext2sb = (ext2_superblock_t *)alloc_mem(sizeof(ext2_superblock_t));
     if (!pext2sb) return ENOMEM;
+    
     DEB(printl("Allocated super block at 0x%x\n", (unsigned int)pext2sb));
     memcpy((void*)pext2sb,
                 ext2fsbuf,

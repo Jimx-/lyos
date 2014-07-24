@@ -60,7 +60,7 @@ PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
 
 PUBLIC struct vfs_mount * get_free_vfs_mount()
 {
-    struct  vfs_mount * vmnt = (struct vfs_mount *)alloc_mem(sizeof(struct vfs_mount));
+    struct  vfs_mount * vmnt = (struct vfs_mount *)sbrk(sizeof(struct vfs_mount));
     if (vmnt == NULL) {
         err_code = ENOMEM;
         return NULL;
@@ -108,26 +108,25 @@ PUBLIC int do_mount(MESSAGE * p)
 
     /* find fs endpoint */
     int label_len = p->MNAMELEN3;
-    char * fs_label = (char *)alloc_mem(label_len + 1);
-    if (!fs_label) return ENOMEM;
+    char fs_label[FS_LABEL_MAX];
+    if (label_len > FS_LABEL_MAX) return ENAMETOOLONG;
     
     data_copy(getpid(), D, fs_label, src, D, p->MLABEL, label_len);
     //phys_copy(va2pa(getpid(), fs_label), va2pa(src, p->MLABEL), label_len);
     fs_label[label_len] = '\0';
+
     int fs_e = get_filesystem_endpoint(fs_label);
-    free_mem((int)fs_label, label_len + 1);
+
     if (fs_e == -1) return EINVAL;
     
     int source_len = p->MNAMELEN1;
     int target_len = p->MNAMELEN2;
 
-    char * source = (char *)alloc_mem(source_len + 1);
-    if (!source) return ENOMEM;
+    char source[MAX_PATH];
+    if (source_len > MAX_PATH) return ENAMETOOLONG;
     
-    char * target = (char *)alloc_mem(target_len + 1);
-    if (!target) {
-        return ENOMEM;
-    }           
+    char target[MAX_PATH];
+    if (target_len > MAX_PATH) return ENAMETOOLONG;       
 
     data_copy(getpid(), D, source, src, D, p->MSOURCE, source_len);
     data_copy(getpid(), D, target, src, D, p->MTARGET, target_len);
@@ -144,10 +143,6 @@ PUBLIC int do_mount(MESSAGE * p)
 
     int readonly = flags & MS_READONLY;
     int retval = mount_fs(dev_nr, target, fs_e, readonly);
-
-    free_mem((int)source, source_len + 1);
-    free_mem((int)target, target_len + 1);
-    free_mem((int)fs_label, label_len + 1);
 
     return retval;
 }
@@ -185,7 +180,7 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
             return retval;
         }
     }
-    
+
     new_pvm->m_dev = dev;
     new_pvm->m_fs_ep = fs_ep;
 

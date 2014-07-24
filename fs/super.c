@@ -43,33 +43,23 @@
 PUBLIC int register_filesystem(MESSAGE * p)
 {
     int name_len = p->NAME_LEN;
-    char * fs_name = (char *)alloc_mem(name_len + 1);
 
-    if (!fs_name) return ENOMEM;
-
-    data_copy(getpid(), D, fs_name, p->source, D, p->PATHNAME, name_len);
+    if (name_len > FS_LABEL_MAX) return ENAMETOOLONG;
+    
     //phys_copy(va2pa(getpid(), fs_name), va2pa(p->source, p->PATHNAME), name_len);
 
-    fs_name[name_len] = '\0';
-
-    add_filesystem(fs_name, p->source);
-    printl("VFS: %s filesystem registered(pid: %d)\n", fs_name, p->source);
-
-    return 0;
-}
-
-PUBLIC int add_filesystem(char * name, endpoint_t fs_ep)
-{
-    struct file_system * pfs = (struct file_system *)alloc_mem(sizeof(struct file_system));
-
+    struct file_system * pfs = (struct file_system *)sbrk(sizeof(struct file_system));
     if (!pfs) {
         return ENOMEM;
     }
 
-    pfs->name = name;
-    pfs->fs_ep = fs_ep;
+    data_copy(getpid(), D, pfs->name, p->source, D, p->PATHNAME, name_len);
+    pfs->fs_ep = p->source;
 
     list_add(&(pfs->list), &filesystem_table);
+
+    printl("VFS: %s filesystem registered, enpoint: %d\n", pfs->name, p->source);
+
     return 0;
 }
 

@@ -75,8 +75,6 @@ struct dev_driver hd_driver =
  *****************************************************************************/
 PUBLIC void task_hd()
 {
-	MESSAGE msg;
-
 	init_hd();
 	dev_driver_task(&hd_driver);	
 
@@ -127,7 +125,7 @@ PRIVATE void init_hd()
 	int i;
 	/* Get the number of drives from the BIOS data area */
 	u8 * pNrDrives = (u8*)(0x475);
-	printl("%d hard drives\n", *pNrDrives);
+	printl("hd: %d hard drives\n", *pNrDrives);
 	assert(*pNrDrives);
 
 	put_irq_handler(AT_WINI_IRQ, hd_handler);
@@ -222,17 +220,19 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		if (p->type == DEV_READ) {
 			interrupt_wait();
 			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
-			//data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, hdbuf, bytes);
-			phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
+			data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, hdbuf, bytes);
+			//phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
 		else {
 			if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
 				panic("hd writing error.");
 
-			port_write(REG_DATA, la, bytes);
+			data_copy(TASK_HD, D, hdbuf, p->PROC_NR, D, p->BUF, bytes);
+			port_write(REG_DATA, hdbuf, bytes);
 			interrupt_wait();
 		}
 		bytes_left -= SECTOR_SIZE;
+		p->BUF += SECTOR_SIZE;
 		la += SECTOR_SIZE;
 	}
 	
@@ -256,17 +256,17 @@ PRIVATE void hd_ioctl(MESSAGE * p)
 	struct hd_info * hdi = &hd_info[drive];
 
 	if (p->REQUEST == DIOCTL_GET_GEO) {
-		void * dst = va2la(p->PROC_NR, p->BUF);
+		//void * dst = va2la(p->PROC_NR, p->BUF);
 		int part_no = MINOR(device);
-		void * src = va2la(TASK_HD,
+		/*void * src = va2la(TASK_HD,
 				   part_no < NR_PRIM_PER_DRIVE ?
 				   &hdi->primary[part_no] :
-				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE]);
+				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE]); */
 
-		//data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, part_no < NR_PRIM_PER_DRIVE ?
-		//		   &hdi->primary[part_no] :
-		//		   &hdi->logical[part_no - NR_PRIM_PER_DRIVE], sizeof(struct part_info));
-		phys_copy(dst, src, sizeof(struct part_info));
+		data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, part_no < NR_PRIM_PER_DRIVE ?
+				   &hdi->primary[part_no] :
+				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE], sizeof(struct part_info));
+		//phys_copy(dst, src, sizeof(struct part_info));
 	}
 	else {
 		assert(0);
