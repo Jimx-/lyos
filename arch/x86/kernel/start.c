@@ -160,7 +160,8 @@ PUBLIC void init_arch()
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
 
 			if ((strcmp(t->name, "VFS") == 0) || (strcmp(t->name, "INITFS") == 0) ||
-				(strcmp(t->name, "INET") == 0) || (strcmp(t->name, "SCSI") == 0)) {
+				(strcmp(t->name, "INET") == 0) || (strcmp(t->name, "SCSI") == 0) ||
+				(strcmp(t->name, "EXT2_FS") == 0)) {
 				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 			} else {

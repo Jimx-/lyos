@@ -26,6 +26,7 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <errno.h>
 
 #define MAX_RAMDISKS	8
 
@@ -36,9 +37,10 @@ struct ramdisk_dev {
 	int rdonly;
 };
 
-struct ramdisk_dev ramdisks[MAX_RAMDISKS];
+PRIVATE struct ramdisk_dev ramdisks[MAX_RAMDISKS];
 
-PRIVATE void rd_rdwt(MESSAGE * p);
+PRIVATE void init_rd();
+PRIVATE int rd_rdwt(MESSAGE * p);
 
 PUBLIC void task_rd()
 {
@@ -59,13 +61,13 @@ PUBLIC void task_rd()
 			break;
 		case DEV_READ:
 		case DEV_WRITE:
-			rd_rdwt(&msg);
+			msg.RETVAL = rd_rdwt(&msg);
 			break;
 		case DEV_IOCTL:
 			break;
 		default:
 			dump_msg("ramdisk driver: unknown msg", &msg);
-			spin("FS::main_loop (invalid msg.type)");
+			spin("ramdisk::main_loop (invalid msg.type)");
 			break;
 		}
 
@@ -73,7 +75,7 @@ PUBLIC void task_rd()
 	}
 }
 
-PRIVATE void rd_rdwt(MESSAGE * p)
+PRIVATE int rd_rdwt(MESSAGE * p)
 {
 	u64 pos = p->POSITION;
 	int count = p->CNT;
@@ -83,17 +85,20 @@ PRIVATE void rd_rdwt(MESSAGE * p)
 	
 	if (pos > ramdisk->length){
 		p->CNT = 0;
-		return;
+		return 0;
 	}
 
-	if (p->type == DEV_WRITE){
+	if (p->type == DEV_WRITE) {
+		if (ramdisk->rdonly) return EROFS;
 		data_copy(getpid(), D, addr, p->PROC_NR, D, p->BUF, count);
 	}else if(p->type == DEV_READ){
 		data_copy(p->PROC_NR, D, p->BUF, getpid(), D, addr, count);
 	}
+
+	return 0;
 }
 
-PUBLIC void init_rd()
+PRIVATE void init_rd()
 {
 	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", rd_length, rd_length / 1024, rd_base);
 	struct ramdisk_dev * initrd = ramdisks;

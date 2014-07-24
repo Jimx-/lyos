@@ -64,7 +64,7 @@ PUBLIC int read_ext2_super_block(int dev)
     assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
-    ext2_superblock_t * pext2sb = (ext2_superblock_t *)alloc_mem(sizeof(ext2_superblock_t));
+    ext2_superblock_t * pext2sb = (ext2_superblock_t *)sbrk(sizeof(ext2_superblock_t));
     if (!pext2sb) return ENOMEM;
     
     DEB(printl("Allocated super block at 0x%x\n", (unsigned int)pext2sb));
@@ -75,7 +75,7 @@ PUBLIC int read_ext2_super_block(int dev)
     DEB(printl("File system information:\n"));
     DEB(printl("  Magic: 0x%x\n", pext2sb->sb_magic));
     if (pext2sb->sb_magic != EXT2FS_MAGIC) {
-        free_mem((int)pext2sb, sizeof(ext2_superblock_t));
+        //free_mem((int)pext2sb, sizeof(ext2_superblock_t));
         return EINVAL;
     }
     DEB(printl("  Inodes: %d\n", pext2sb->sb_inodes_count));
@@ -95,9 +95,9 @@ PUBLIC int read_ext2_super_block(int dev)
     int bgdesc_blocks = sizeof(ext2_bgdescriptor_t) * nr_groups / block_size + 1;
     int bgdesc_offset = 1024 / block_size + 1;
 
-    pext2sb->sb_bgdescs = (ext2_bgdescriptor_t*)alloc_mem(bgdesc_blocks * block_size);
+    pext2sb->sb_bgdescs = (ext2_bgdescriptor_t*)sbrk(bgdesc_blocks * block_size);
     if (!(pext2sb->sb_bgdescs)) {
-        free_mem((int)pext2sb, sizeof(ext2_superblock_t));
+        //free_mem((int)pext2sb, sizeof(ext2_superblock_t));
         return ENOMEM;
     }
     DEB(printl("Allocated block group descriptors memory: 0x%x, size: %d bytes\n", pext2sb->sb_bgdescs, bgdesc_blocks * block_size));

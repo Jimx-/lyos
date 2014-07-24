@@ -33,7 +33,7 @@
 #include "region.h"
 #include "const.h"
 
-#define REGION_DEBUG 1
+//#define REGION_DEBUG 1
 
 /**
  * <Ring 1> Create new virtual memory region.
