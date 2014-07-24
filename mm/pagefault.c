@@ -52,7 +52,7 @@ PUBLIC void do_handle_fault()
     if (ARCH_PF_PROT(err_code)) {
         printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
     } else if (ARCH_PF_NOPAGE(err_code)) {
-        printl("MM: pagefault: %d not present address %x\n", proc2pid(p), pfla);
+        printl("MM: pagefault: %d bad address %x\n", proc2pid(p), pfla);
     }
 
     int extend = 0;

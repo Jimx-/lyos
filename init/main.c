@@ -36,15 +36,16 @@ int main(int argc, char * argv[])
 			printf("Parent\n");
 
 		} else {
-			/*close(fd_stdin);
+			while(1);
+			close(fd_stdin);
 			close(fd_stdout);
 			close(fd_stderr);
 		
 			char * argv[2];
 			argv[0] = GETTY;
 			argv[1] = ttylist[i];
-			_exit(execv(GETTY, argv));*/
-			printf("Child%d\n", pid);
+			_exit(execv(GETTY, argv));
+			/*printf("Child%d\n", pid);*/
 			while(1);
 		}
 	}

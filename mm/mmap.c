@@ -73,7 +73,10 @@ PUBLIC int do_mmap()
     if ((fd == -1) || (flags & MAP_ANONYMOUS)) {
         if (fd != -1) return EINVAL;
 
-        if (!(vr = mmap_region(p, addr, flags, len, RF_NORMAL))) return ENOMEM;
+        int vr_flags = RF_NORMAL;
+
+        if (flags & MAP_GROWSDOWN) vr_flags |= RF_GROWSDOWN;
+        if (!(vr = mmap_region(p, addr, flags, len, vr_flags))) return ENOMEM;
         list_add(&(vr->list), &(p->mem_regions));
     }
 
