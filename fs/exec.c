@@ -258,7 +258,6 @@ PUBLIC int do_exec(MESSAGE * msg)
     proc_table[src].regs.esp = (u32)orig_stack;
 
     proc_table[src].brk = execi.args.brk;
-
     strcpy(proc_table[src].name, pathname);
 
     return 0;
