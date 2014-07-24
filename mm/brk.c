@@ -44,12 +44,11 @@ PUBLIC int do_sbrk()
     int count = mm_msg.CNT;
     struct proc * p = proc_table + src;
     if (count == 0) return p->brk;
-    printl("Sbrking %d\n", count);
+    
     int retval = 1;
     struct vir_region * vr;
     list_for_each_entry(vr, &(p->mem_regions), list) {
         if (p->brk >= (int)(vr->vir_addr) && p->brk <= (int)(vr->vir_addr) + vr->length) {
-            printl("%x ~ %x\n", vr->vir_addr, (int)(vr->vir_addr) + vr->length);
             retval = 0;
             break;
         }
@@ -65,7 +64,9 @@ PUBLIC int do_sbrk()
         p->brk += count;
         return retval;
     } else {
-        retval = region_extend(vr, p->brk + count - (int)(vr->vir_addr) - vr->length);
+        int increment = p->brk + count - (int)(vr->vir_addr) - vr->length;
+        if (increment == 0) increment = PG_SIZE;    /* brk is at the boundary, prealloc some space */
+        retval = region_extend(vr, increment);
         if (retval) {
             errno = retval;
             return -1;
@@ -73,7 +74,6 @@ PUBLIC int do_sbrk()
         region_map_phys(p, vr);
         retval = p->brk;
         p->brk += count;
-        printl("%x\n", retval);
         return retval;
     }
     return -1;

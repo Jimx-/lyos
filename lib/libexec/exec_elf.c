@@ -96,7 +96,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         memsize = phdr->p_memsz;
 
 #ifdef ELF_DEBUG
-        printl("segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x}, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
+        printl("segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x }, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
 #endif
 
         /* align */
@@ -108,7 +108,6 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 
         roundup(memsize, PG_SIZE);
         roundup(fsize, PG_SIZE);
-
         if ((phdr->p_flags & PF_X) != 0)
             execi->text_size = memsize;
         else {
@@ -152,7 +151,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     }
 
     /* allocate stack */
-    if (execi->allocmem(execi, execi->stack_top - execi->stack_size, execi->stack_size) != 0) {
+    if (execi->allocstack(execi, execi->stack_top - execi->stack_size, execi->stack_size) != 0) {
         if (execi->clearproc) execi->clearproc(execi);
         return ENOMEM;
     }

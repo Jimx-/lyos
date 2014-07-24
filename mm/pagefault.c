@@ -56,30 +56,29 @@ PUBLIC void do_handle_fault()
     }
 
     int extend = 0;
-    struct vir_region * vr, * stack = NULL;
+    struct vir_region * vr;
     int handled = 0;
+    int gd_base;
     list_for_each_entry(vr, &(p->mem_regions), list) {
-        if ((int)(vr->vir_addr) + vr->length == VM_STACK_TOP) {
-            stack = vr;
-            if (extend) {
-                region_extend_stack(vr, STACK_GUARD_LEN);
-                region_map_phys(p, vr);
-            }
-        }
         if (vr->flags & RF_GUARD) {
             /* pfla is in stack guard area: extend stack */
             if (pfla > (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
 #ifdef PAGEFAULT_DEBUG
                 printl("MM: page fault caused by not enough stack space, extending\n");
 #endif
-                if (!stack) { 
-                    extend = 1; 
-                } else {
-                    region_extend_stack(stack, STACK_GUARD_LEN);
-                    region_map_phys(p, stack);
-                }
-                vr->vir_addr = (void*)((int)vr->vir_addr - STACK_GUARD_LEN);
+                gd_base = (int)(vr->vir_addr) + vr->length;
+                extend = 1;
+                vr->vir_addr = (void*)((int)vr->vir_addr - GROWSDOWN_GUARD_LEN);
                 handled = 1;
+            }
+        }
+    }
+
+    if (extend) {
+        list_for_each_entry(vr, &(p->mem_regions), list) {
+            if ((vr->flags & RF_GROWSDOWN) && (gd_base == (int)vr->vir_addr)) {
+                region_extend_stack(vr, GROWSDOWN_GUARD_LEN);
+                region_map_phys(p, vr);
             }
         }
     }

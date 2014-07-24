@@ -213,6 +213,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     execi.args.memmap = request_vfs_mmap;
 
     execi.args.allocmem = libexec_allocmem;
+    execi.args.allocstack = libexec_allocstack;
     execi.args.copymem = read_segment;
     execi.args.clearproc = libexec_clearproc;
     execi.args.clearmem = libexec_clearmem;
@@ -256,7 +257,6 @@ PUBLIC int do_exec(MESSAGE * msg)
     proc_table[src].regs.eip = execi.args.entry_point; /* @see _start.asm */
     proc_table[src].regs.esp = (u32)orig_stack;
 
-    printl("%x\n", execi.args.brk);
     proc_table[src].brk = execi.args.brk;
 
     strcpy(proc_table[src].name, pathname);

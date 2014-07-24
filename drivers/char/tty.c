@@ -454,18 +454,18 @@ PUBLIC int sys_printx(int _unused1, int _unused2, char* s, struct proc* p_proc)
 	 * if it fails in a USER PROC, it'll return like any normal syscall
 	 * does.
 	 */
+	 /*
 	if ((*p == MAG_CH_PANIC) ||
 	    (*p == MAG_CH_ASSERT && current < &proc_table[NR_TASKS])) {
 		disable_int();
 		char * v = (char*)V_MEM_BASE;
-		const char * q = p + 1; /* +1: skip the magic char */
+		const char * q = p + 1; 
 
 		while (v < (char*)(V_MEM_BASE + V_MEM_SIZE)) {
 			*v++ = *q++;
 			*v++ = RED_CHAR;
 			if (!*q) {
 				while (((int)v - V_MEM_BASE) % (SCR_WIDTH * 16)) {
-					/* *v++ = ' '; */
 					v++;
 					*v++ = GRAY_CHAR;
 				}
@@ -474,7 +474,7 @@ PUBLIC int sys_printx(int _unused1, int _unused2, char* s, struct proc* p_proc)
 		}
 
 		__asm__ __volatile__("hlt");
-	}
+	}*/
 
 	while ((ch = *p++) != 0) {
 		if (ch == MAG_CH_PANIC || ch == MAG_CH_ASSERT)

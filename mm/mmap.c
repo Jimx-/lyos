@@ -46,6 +46,12 @@ PRIVATE struct vir_region * mmap_region(struct proc * p, int addr,
             return NULL;
         region_alloc_phys(vr);
         region_map_phys(p, vr);
+
+        if (addr && (mmap_flags & MAP_GROWSDOWN)) {
+            /* create a growsdown guard region */
+            struct vir_region * guard_region = region_new(p, (void*)(addr - GROWSDOWN_GUARD_LEN), GROWSDOWN_GUARD_LEN, RF_GUARD);
+            list_add(&(guard_region->list), &(p->mem_regions));
+        }
     }
 
     return vr;
@@ -64,7 +70,7 @@ PUBLIC int do_mmap()
 
     if (len < 0) return EINVAL;
 
-    if ((fd == -1) || (flags & MAP_ANON)) {
+    if ((fd == -1) || (flags & MAP_ANONYMOUS)) {
         if (fd != -1) return EINVAL;
 
         if (!(vr = mmap_region(p, addr, flags, len, RF_NORMAL))) return ENOMEM;

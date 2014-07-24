@@ -157,7 +157,16 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
  */
 PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp)
 {
+    struct phys_region * pregion = NULL;
+
+    /* not mapped */
+    if (!(rp->flags & RF_MAPPED)) return 0;
+
     unmap_memory(&(mp->pgd), rp->vir_addr, rp->length);
+
+    list_for_each_entry(pregion, &(rp->phys_blocks), list) {
+        pregion->flags &= ~RF_MAPPED;
+    }
 
     rp->flags &= ~RF_MAPPED;
 
@@ -169,6 +178,10 @@ PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp)
  */
 PUBLIC int region_extend(struct vir_region * rp, int increment)
 {
+    if (increment % PG_SIZE != 0) {
+        increment += PG_SIZE - (increment % PG_SIZE);
+    }
+
     rp->length += increment;
     return region_alloc_phys(rp);
 }
@@ -180,7 +193,7 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
 {
     /* make sure it's page-aligned */
     if (increment % PG_SIZE != 0) {
-        increment += ((increment / PG_SIZE) + 1) * PG_SIZE;
+        increment += PG_SIZE - (increment % PG_SIZE);
     }
 
     rp->length += increment;

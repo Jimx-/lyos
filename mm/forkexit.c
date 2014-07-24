@@ -303,6 +303,7 @@ PUBLIC int proc_free(struct proc * p)
 	struct vir_region * vr;
     list_for_each_entry(vr, &(p->mem_regions), list) {
     	if (&(vr->list) != &(p->mem_regions) && &(vr->list) != p->mem_regions.next)
+    		//region_unmap_phys(p, vr);
        		region_free(list_entry(vr->list.prev, struct vir_region, list));
     }
     region_free(list_entry(vr->list.prev, struct vir_region, list));

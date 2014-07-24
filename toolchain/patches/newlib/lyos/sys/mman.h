@@ -15,10 +15,12 @@
 
 /*
  * Mapping type
- */
-#define MAP_ANON	0x0004  /* anonymous memory */
+ */	
+#define MAP_ANONYMOUS	0x0004  /* anonymous memory */
+#define MAP_ANON 		MAP_ANONYMOUS	
 
 #define MAP_FIXED	0x0008
+#define MAP_GROWSDOWN	0x0010
 
 /*
  * Error indicator returned by mmap(2)

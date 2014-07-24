@@ -21,12 +21,13 @@
  * when there is a page fault caused by access to this guard area,
  * stack size will be enlarged.
  */
-#define STACK_GUARD_LEN     0x1000
+#define GROWSDOWN_GUARD_LEN     0x1000
 
 #define RF_NORMAL   0x0
 #define RF_SHARABLE 0x1
 #define RF_SHARED   0x2
 #define RF_MAPPED   0x4
 #define RF_GUARD    0x8
+#define RF_GROWSDOWN 0x10
 
 #endif /* _MM_CONST_H_ */

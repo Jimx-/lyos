@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
 	printf("Hello world\n");
-	while(1);
+
 	/*int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(128);
@@ -28,7 +28,7 @@ int main(int argc, char * argv[])
 		free(motd);
 	}*/
 
-	/*char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
+	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;
 	for (i = 0; i < NR_TTY; i++) {
 		int pid = fork();
@@ -36,14 +36,16 @@ int main(int argc, char * argv[])
 			printf("Parent\n");
 
 		} else {
-			close(fd_stdin);
+			/*close(fd_stdin);
 			close(fd_stdout);
 			close(fd_stderr);
 		
 			char * argv[2];
 			argv[0] = GETTY;
 			argv[1] = ttylist[i];
-			_exit(execv(GETTY, argv));
+			_exit(execv(GETTY, argv));*/
+			printf("Child%d\n", pid);
+			while(1);
 		}
 	}
 
@@ -51,6 +53,6 @@ int main(int argc, char * argv[])
 		int s;
 		wait(&s);
 	}
-	*/
+
 	return 0;
 }
