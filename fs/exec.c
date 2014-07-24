@@ -17,6 +17,7 @@
 #include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
+#include <fcntl.h>
 #include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
@@ -36,6 +37,7 @@
 #include "page.h"
 #include <elf.h>
 #include "libexec.h"
+#include <sys/mman.h>
 
 struct vfs_exec_info {
     struct exec_info args;
@@ -43,6 +45,7 @@ struct vfs_exec_info {
     struct inode * pin;
     struct vfs_mount * vmnt;
     struct stat sbuf;
+    int mmfd;
 };
 
 struct exec_loader {
@@ -57,6 +60,8 @@ PRIVATE struct exec_loader exec_loaders[] = {
 PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct proc * fp);
 PRIVATE int read_header(struct vfs_exec_info * execi);
 PRIVATE int is_script(struct vfs_exec_info * execi);
+PRIVATE int request_vfs_mmap(struct exec_info *execi,
+    int vaddr, int len, int foffset, int protflags);
 
 /* open the executable and fill in exec info */
 PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct proc * fp)
@@ -100,10 +105,37 @@ PRIVATE int read_header(struct vfs_exec_info * execi)
         0, READ, TASK_FS, buf, execi->args.header_len, &newpos, &bytes_rdwt);
 }
 
+/* read segment */
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+{
+    u64 newpos; 
+    int bytes_rdwt;
+
+    struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
+    struct inode * pin = vexeci->pin;
+
+    if (offset + len > pin->i_size) return EIO;
+
+    return request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, 
+        (u64)offset, READ, execi->proc_e, (char *)vaddr, len, &newpos, &bytes_rdwt);
+}
+
 /* if there is #!, Not implemented */
 PRIVATE int is_script(struct vfs_exec_info * execi)
 {
     return 0;
+}
+
+/* issue a vfs_mmap request */
+PRIVATE int request_vfs_mmap(struct exec_info *execi,
+    int vaddr, int len, int foffset, int protflags)
+{
+    struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
+    struct inode * pin = vexeci->pin;
+
+    int flags = 0;
+
+    return vfs_mmap(execi->proc_e, foffset, len, pin->i_dev, pin->i_num, vexeci->mmfd, vaddr, flags);
 }
 
 /**
@@ -122,6 +154,8 @@ PUBLIC int do_fs_exec(MESSAGE * msg)
     int src = msg->source;    /* caller proc nr. */
     struct proc * p = proc_table + src;
 
+    int i;
+
     memset(&execi, 0, sizeof(execi));
 
     /* stack info */
@@ -133,8 +167,8 @@ PUBLIC int do_fs_exec(MESSAGE * msg)
     if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
 
     char stackcopy[PROC_ORIGIN_STACK];
-    data_copy(TASK_MM, D, stackcopy,
-          src, D, mm_msg.BUF,
+    data_copy(getpid(), D, stackcopy,
+          src, D, msg->BUF,
           orig_stack_len);
 
     /* copy prog name */
@@ -143,23 +177,87 @@ PUBLIC int do_fs_exec(MESSAGE * msg)
     pathname[name_len] = 0; /* terminate the string */
 
     retval = get_exec_inode(&execi, pathname, p);
-    printl("%d\n", retval);
     if (retval) return retval;
 
     if (is_script(&execi)) {
 
     }
 
+    /* find an fd for MM */
+    struct proc * mm_task = proc_table + TASK_MM;
+    /* find a free slot in PROCESS::filp[] */
+    int fd = -1;
+    for (i = 0; i < NR_FILES; i++) {
+        if (mm_task->filp[i] == 0) {
+            fd = i;
+            break;
+        }
+    }
+    if (fd < 0)
+        panic("VFS: do_exec(): MM's filp[] is full");
+
+    for (i = 0; i < NR_FILE_DESC; i++)
+        if (f_desc_table[i].fd_inode == 0)
+            break;
+    if (i >= NR_FILE_DESC)
+        panic("f_desc_table[] is full.");
+
+    struct file_desc * filp = &f_desc_table[i];
+    mm_task->filp[fd] = filp;
+    filp->fd_cnt = 1;
+    filp->fd_pos = 0;
+    filp->fd_inode = execi.pin;
+    filp->fd_mode = O_RDONLY;
+    execi.mmfd = fd;
+    execi.args.memmap = request_vfs_mmap;
+
+    execi.args.allocmem = libexec_allocmem;
+    execi.args.copymem = read_segment;
+    execi.args.clearproc = libexec_clearproc;
+    execi.args.clearmem = libexec_clearmem;
+    execi.args.callback_data = (void *)&execi;
+
     execi.args.proc_e = src;
     execi.args.filesize = execi.pin->i_size;
 
-    int i;
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi.args);
-        /* load successfully */
-        if (!retval) break;
+        if (!retval) break;  /* loaded successfully */
     }
 
-    while(1);
+    if (retval) return retval;
 
+    /* relocate stack pointers */
+    char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
+
+    int delta = (int)orig_stack - (int)msg->BUF;
+
+    int argc = 0;
+    char * envp = orig_stack;
+
+    if (orig_stack_len) {  
+        char **q = (char**)stackcopy;
+        for (; *q != 0; q++, argc++) {
+            *q += delta;
+        }
+        q++;
+        envp += (int)q - (int)stackcopy;
+        for (; *q != 0; q++)
+            *q += delta;
+    } 
+
+    data_copy(src, D, orig_stack, TASK_FS, D, stackcopy, orig_stack_len);
+
+    proc_table[src].regs.ecx = (u32)envp; 
+    proc_table[src].regs.edx = (u32)orig_stack;
+    proc_table[src].regs.eax = argc;
+    /* setup eip & esp */
+    proc_table[src].regs.eip = execi.args.entry_point; /* @see _start.asm */
+    proc_table[src].regs.esp = (u32)orig_stack;
+
+    proc_table[src].brk = execi.args.brk;
+
+    strcpy(proc_table[src].name, pathname);
+
+    return 0;
 }

@@ -126,6 +126,8 @@ PUBLIC void init_arch()
 	char * stk = task_stack + STACK_SIZE_TOTAL;
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
+		INIT_LIST_HEAD(&(p->mem_regions));
+		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
 			p->state = FREE_SLOT;
 			continue;
@@ -220,7 +222,6 @@ PUBLIC void init_arch()
 		p->root = NULL;
 		p->umask = ~0;
 
-		INIT_LIST_HEAD(&(p->mem_regions));
 		p->brk = 0;
 
 		for (j = 0; j < NR_FILES; j++)

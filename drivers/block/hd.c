@@ -88,7 +88,6 @@ PUBLIC void task_hd()
 
 	
 	while (1) {
-		do_hd_request();
 		send_recv(RECEIVE, ANY, &msg);
 		DEB(printl("Receive a message from %d, type = %d\n", msg.source, msg.type));
 		int src = msg.source;
@@ -104,7 +103,7 @@ PUBLIC void task_hd()
 
 		case DEV_READ:
 		case DEV_WRITE:
-			add_hd_request(&msg);
+			hd_rdwt(&msg);
 			break;
 
 		case DEV_IOCTL:
@@ -117,10 +116,7 @@ PUBLIC void task_hd()
 			break;
 		}
 
-		if ((msg.type != DEV_READ) && (msg.type != DEV_WRITE)) {
-			DEB(printl("Reply to %d.(in main loop)\n", src));
-			send_recv(SEND, src, &msg);
-		}
+		send_recv(SEND, src, &msg);
 	} 
 
 }
@@ -319,6 +315,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		if (p->type == DEV_READ) {
 			interrupt_wait();
 			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
+			//data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, hdbuf, bytes);
 			phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
 		else {
@@ -332,8 +329,8 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		la += SECTOR_SIZE;
 	}
 	
-	end_request();
-	do_hd_request();
+	//end_request();
+	//do_hd_request();
 }				
 
 /*****************************************************************************
@@ -359,6 +356,9 @@ PRIVATE void hd_ioctl(MESSAGE * p)
 				   &hdi->primary[part_no] :
 				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE]);
 
+		//data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, part_no < NR_PRIM_PER_DRIVE ?
+		//		   &hdi->primary[part_no] :
+		//		   &hdi->logical[part_no - NR_PRIM_PER_DRIVE], sizeof(struct part_info));
 		phys_copy(dst, src, sizeof(struct part_info));
 	}
 	else {

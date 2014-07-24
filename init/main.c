@@ -17,6 +17,8 @@ int main(int argc, char * argv[])
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
+	//printf("Hello world");
+	while(1);
 	/*int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(128);
@@ -26,7 +28,7 @@ int main(int argc, char * argv[])
 		free(motd);
 	}*/
 
-	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
+	/*char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;
 	for (i = 0; i < NR_TTY; i++) {
 		int pid = fork();
@@ -49,6 +51,6 @@ int main(int argc, char * argv[])
 		int s;
 		wait(&s);
 	}
-
+	*/
 	return 0;
 }

@@ -28,7 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-//#define PROTECT_DEBUG
+#define PROTECT_DEBUG
 
 /* 本文件内函数声明 */
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);

@@ -44,5 +44,8 @@ PUBLIC void do_handle_fault();
 PUBLIC int send_sig(int sig, struct proc * p);
 
 PUBLIC int do_getsetid();
+PUBLIC int do_procctl();
+
+PUBLIC int do_mmap();
 
 #endif

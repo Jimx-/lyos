@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "signal.h"
+#include "page.h"
 
 PRIVATE void block(struct proc* p);
 PRIVATE void unblock(struct proc* p);
@@ -223,8 +224,8 @@ PUBLIC void * la2pa(int pid, void * la)
 {
 	struct proc* p = &proc_table[pid];
 
-    unsigned long pgd_index = (unsigned long)la >> 22 & 0x03FF;
-    unsigned long pt_index = (unsigned long)la >> 12 & 0x03FF;
+    unsigned long pgd_index = ARCH_PDE(la);
+    unsigned long pt_index = ARCH_PTE(la);
 
     pte_t * pt = p->pgd.vir_pts[pgd_index];
     return (void*)((pt[pt_index] & 0xFFFFF000) + ((int)la & 0xFFF));

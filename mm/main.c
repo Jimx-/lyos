@@ -94,6 +94,12 @@ PUBLIC void task_mm()
 		case ALARM:
 			mm_msg.RETVAL = do_alarm();
 			break;
+		case MMAP:
+			mm_msg.RETVAL = do_mmap();
+			break;
+		case PROCCTL:
+			mm_msg.RETVAL = do_procctl();
+			break;
 		case SERVICE_UP:
 			printl("Bringing up service\n");
 			mm_msg.RETVAL = do_service_up();

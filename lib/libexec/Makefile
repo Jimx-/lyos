@@ -2,7 +2,7 @@
 # Makefile for libexec.
 #
 
-LIBEXECOBJS		= exec_elf.o
+LIBEXECOBJS		= exec_elf.o exec_general.o
 LIBEXEC 		= libexec.a
 ARFLAGS			= rcs
 

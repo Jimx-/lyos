@@ -32,6 +32,7 @@
 #include "lyos/proto.h"
 #include "proto.h"
 #include "const.h"
+#include "lyos/vm.h"
 
 PUBLIC int do_getsetid()
 {
@@ -59,6 +60,26 @@ PUBLIC int do_getsetid()
         case GS_GETEGID:
             retval = current->egid;
             break; 
+    }
+
+    return retval;
+}
+
+PUBLIC int do_procctl()
+{
+    endpoint_t who = mm_msg.PCTL_WHO;
+    int param = mm_msg.PCTL_PARAM;
+    int retval = 0;
+
+    struct proc * p = proc_table + who;
+
+    switch (param) {
+        case PCTL_CLEARPROC:
+            if (!list_empty(&(p->mem_regions))) retval = proc_free(p);
+            break;
+        default:
+            retval = EINVAL;
+            break;
     }
 
     return retval;

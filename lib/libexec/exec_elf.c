@@ -29,6 +29,18 @@
 #include "lyos/proto.h"
 #include <elf.h>
 #include "libexec.h"
+#include "page.h"
+#include "lyos/vm.h"
+#include <sys/mman.h>
+
+#define ELF_DEBUG
+
+#define roundup(x, a)  do {\
+                        if ((x) % (a) != 0) {   \
+                            int _al = (x) % (a); \
+                            (x) = (x) + (a) - _al;    \
+                        }   \
+                    } while(0)
 
 PRIVATE int elf_check_header(Elf32_Ehdr * elf_hdr);
 PRIVATE int elf_unpack(char * hdr, Elf32_Ehdr ** elf_hdr, Elf32_Phdr ** prog_hdr);
@@ -56,8 +68,93 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     Elf32_Ehdr * elf_hdr;
     Elf32_Phdr * prog_hdr;
 
+    if ((retval = elf_check_header((Elf32_Ehdr *)execi->header)) != 0) return retval;
+    
     if ((retval = elf_unpack(execi->header, &elf_hdr, &prog_hdr)) != 0) return retval;
 
-    
+    if (execi->clearproc) execi->clearproc(execi);
+
+    int i;
+    /* load every segment */
+    for (i = 0; i < elf_hdr->e_phnum; i++) {
+        Elf32_Phdr * phdr = &prog_hdr[i];
+        off_t foffset;
+        int vaddr;
+        size_t fsize, memsize;
+        int mmap_prot = PROT_READ;
+
+        if (phdr->p_flags & PF_W) mmap_prot |= PROT_WRITE;
+
+        if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0) continue;    /* ignore */
+
+        foffset = phdr->p_offset;
+        fsize = phdr->p_filesz;
+        vaddr = phdr->p_vaddr;
+        memsize = phdr->p_memsz;
+
+        /* align */
+        int alignment = vaddr % PG_SIZE;
+        foffset -= alignment;
+        vaddr -= alignment;
+        fsize += alignment;
+        memsize += alignment;
+
+#ifdef ELF_DEBUG
+        printl("segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x}, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
+#endif
+
+        roundup(memsize, PG_SIZE);
+        roundup(fsize, PG_SIZE);
+
+        if ((phdr->p_flags & PF_X) != 0)
+            execi->text_size = memsize;
+        else {
+            execi->data_size = memsize;
+            execi->brk = vaddr + memsize;
+        }
+
+        if (0 /* execi->memmap(...) == 0 */) {
+
+        } else {
+            if (execi->allocmem(execi, vaddr, memsize) != 0) {
+                if (execi->clearproc) execi->clearproc(execi);
+                return ENOMEM;
+            }
+
+            if (execi->copymem(execi, phdr->p_offset, vaddr, phdr->p_filesz) != 0) {
+                if (execi->clearproc) execi->clearproc(execi);
+                return ENOMEM;
+            }
+
+            /* clear remaining memory */
+            int zero_len = phdr->p_vaddr - vaddr;
+            if (zero_len) {
+#ifdef ELF_DEBUG
+                printl("libexec: clear memory 0x%x - 0x%x\n", vaddr, vaddr + zero_len);
+#endif
+                execi->clearmem(execi, vaddr, zero_len);
+            }
+
+            int fileend = phdr->p_vaddr + phdr->p_filesz;
+            int memend = vaddr + memsize;
+            zero_len = memend - fileend;
+            if (zero_len) {
+#ifdef ELF_DEBUG
+                printl("libexec: clear memory 0x%x - 0x%x\n", fileend, fileend + zero_len);
+#endif
+                execi->clearmem(execi, fileend, zero_len);
+            }
+        }
+    }
+
+    /* allocate stack */
+    if (execi->allocmem(execi, execi->stack_top - execi->stack_size, execi->stack_size) != 0) {
+        if (execi->clearproc) execi->clearproc(execi);
+        return ENOMEM;
+    }
+    execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
+
+    execi->entry_point = elf_hdr->e_entry;
+
     return 0;
 }

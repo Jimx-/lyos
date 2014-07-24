@@ -87,9 +87,9 @@ PRIVATE void rd_rdwt(MESSAGE * p)
 	}
 
 	if (p->type == DEV_WRITE){
-		data_copy(getpid(), D, addr, p->source, D, p->BUF, count);
+		data_copy(getpid(), D, addr, p->PROC_NR, D, p->BUF, count);
 	}else if(p->type == DEV_READ){
-		data_copy(p->source, D, p->BUF, getpid(), D, addr, count);
+		data_copy(p->PROC_NR, D, p->BUF, getpid(), D, addr, count);
 	}
 }
 

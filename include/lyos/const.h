@@ -218,7 +218,7 @@ enum msgtype {
 	SUSPEND_PROC, RESUME_PROC,				/* 31 ~ 32 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, RAISE, SIGACTION,		/* 33 ~ 48 */
+	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, RAISE, SIGACTION, PROCCTL, MMAP,	/* 33 ~ 48 */
 
 	/* FS & MM */
 	FORK, EXIT,						/* 49 ~ 50 */
@@ -241,6 +241,7 @@ enum msgtype {
     FS_CREATE,
     FS_FTRUNC,
     FS_SYNC,
+    FS_MMAP,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,

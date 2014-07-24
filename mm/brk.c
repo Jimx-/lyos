@@ -44,7 +44,7 @@ PUBLIC int do_sbrk()
     int count = mm_msg.CNT;
     struct proc * p = proc_table + src;
     if (count == 0) return p->brk;
-    
+
     int retval = 1;
     struct vir_region * vr;
     list_for_each_entry(vr, &(p->mem_regions), list) {

@@ -76,7 +76,7 @@ struct mess4 {	/* 36 bytes */
 	int m4i1, m4i2, m4i3; 
 	void *m4p1, *m4p2, *m4p3, *m4p4; 
 };
-struct mess5 {	/* 32 bytes */
+struct mess5 {	/* 40 bytes */
 	int	m5i1;
 	int	m5i2;
 	int	m5i3;
@@ -85,6 +85,8 @@ struct mess5 {	/* 32 bytes */
 	int	m5i6;
 	int m5i7;
 	int m5i8;
+	int m5i9;
+	int m5i10;
 };
 
 typedef struct {
