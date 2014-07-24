@@ -123,7 +123,7 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
 /* if there is #!, Not implemented */
 PRIVATE int is_script(struct vfs_exec_info * execi)
 {
-    return 0;
+    return ((execi->args.header[0] == '#') && (execi->args.header[1] == '!'));
 }
 
 /* issue a vfs_mmap request */
@@ -143,7 +143,7 @@ PRIVATE int request_vfs_mmap(struct exec_info *execi,
  * @param  msg Ptr to the message.
  * @return     Zero on success.
  */
-PUBLIC int do_fs_exec(MESSAGE * msg)
+PUBLIC int do_exec(MESSAGE * msg)
 {
     int retval;
 
@@ -180,7 +180,8 @@ PUBLIC int do_fs_exec(MESSAGE * msg)
     if (retval) return retval;
 
     if (is_script(&execi)) {
-
+        printl("Is a script!\n");
+        while(1);
     }
 
     /* find an fd for MM */

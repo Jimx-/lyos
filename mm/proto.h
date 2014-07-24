@@ -32,7 +32,6 @@ PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_free(struct vir_region * rp);
 
-PUBLIC int proc_new(struct proc * p, void * text_vaddr, int text_memlen, void * data_vaddr, int data_memlen);
 PUBLIC int proc_free(struct proc * p);
 
 PUBLIC int do_sbrk();

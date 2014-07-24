@@ -122,7 +122,7 @@ PUBLIC void task_fs()
 			msg.RETVAL = fs_fork(&msg);
 			break;
 		case EXEC:
-			msg.RETVAL = do_fs_exec(&msg);
+			msg.RETVAL = do_exec(&msg);
 			break;
 		case EXIT:
 			msg.RETVAL = fs_exit(&msg);

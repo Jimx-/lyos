@@ -177,9 +177,6 @@ PUBLIC void	do_exit(int status);
 PUBLIC void	do_wait();
 PUBLIC int	do_kill();
 
-/* mm/exec.c */
-PUBLIC int	do_exec();
-
 /* sys.c */
 PUBLIC int 	do_brk();
 
