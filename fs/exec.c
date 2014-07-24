@@ -255,6 +255,7 @@ PUBLIC int do_fs_exec(MESSAGE * msg)
     proc_table[src].regs.eip = execi.args.entry_point; /* @see _start.asm */
     proc_table[src].regs.esp = (u32)orig_stack;
 
+    printl("%x\n", execi.args.brk);
     proc_table[src].brk = execi.args.brk;
 
     strcpy(proc_table[src].name, pathname);

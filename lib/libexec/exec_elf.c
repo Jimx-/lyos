@@ -37,8 +37,7 @@
 
 #define roundup(x, a)  do {\
                         if ((x) % (a) != 0) {   \
-                            int _al = (x) % (a); \
-                            (x) = (x) + (a) - _al;    \
+                            (x) = (x) + (a) - ((x) % (a));    \
                         }   \
                     } while(0)
 
@@ -87,10 +86,18 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 
         if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0) continue;    /* ignore */
 
+        if((phdr->p_vaddr % PG_SIZE) != (phdr->p_offset % PG_SIZE)) {
+            printl("libexec: unaligned ELF program?\n");
+        }
+
         foffset = phdr->p_offset;
         fsize = phdr->p_filesz;
         vaddr = phdr->p_vaddr;
         memsize = phdr->p_memsz;
+
+#ifdef ELF_DEBUG
+        printl("segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x}, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
+#endif
 
         /* align */
         int alignment = vaddr % PG_SIZE;
@@ -99,10 +106,6 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         fsize += alignment;
         memsize += alignment;
 
-#ifdef ELF_DEBUG
-        printl("segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x}, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
-#endif
-
         roundup(memsize, PG_SIZE);
         roundup(fsize, PG_SIZE);
 
@@ -110,7 +113,8 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             execi->text_size = memsize;
         else {
             execi->data_size = memsize;
-            execi->brk = vaddr + memsize;
+            execi->brk = phdr->p_vaddr + phdr->p_memsz + 1;
+            roundup(execi->brk, sizeof(int));
         }
 
         if (0 /* execi->memmap(...) == 0 */) {
@@ -121,7 +125,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
                 return ENOMEM;
             }
 
-            if (execi->copymem(execi, phdr->p_offset, vaddr, phdr->p_filesz) != 0) {
+            if (execi->copymem(execi, foffset, vaddr, fsize) != 0) {
                 if (execi->clearproc) execi->clearproc(execi);
                 return ENOMEM;
             }

@@ -17,7 +17,7 @@ int main(int argc, char * argv[])
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	//printf("Hello world");
+	printf("Hello world");
 	while(1);
 	/*int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
