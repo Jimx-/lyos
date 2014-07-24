@@ -37,23 +37,23 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 
 		switch (msg.type) {
 		case DEV_OPEN:
-			(*dd->dev_open)(&msg);
+			msg.RETVAL = (*dd->dev_open)(&msg);
 			break;
 
 		case DEV_CLOSE:
-			(*dd->dev_close)(&msg);
+			msg.RETVAL = (*dd->dev_close)(&msg);
 			break;
 
 		case DEV_READ:
-			(*dd->dev_read)(&msg);
+			msg.RETVAL = (*dd->dev_read)(&msg);
 			break;
 
 		case DEV_WRITE:
-			(*dd->dev_write)(&msg);
+			msg.RETVAL = (*dd->dev_write)(&msg);
 			break;
 
 		case DEV_IOCTL:
-			(*dd->dev_ioctl)(&msg);
+			msg.RETVAL = (*dd->dev_ioctl)(&msg);
 			break;
 
 		default:
@@ -95,6 +95,6 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
 	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
-	return 0;
+	return driver_msg.RETVAL;
 }
 

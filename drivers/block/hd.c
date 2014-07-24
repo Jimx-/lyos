@@ -30,10 +30,10 @@
 #include "lyos/driver.h"
 
 PRIVATE void	init_hd				();
-PRIVATE void	hd_open				(MESSAGE * p);
-PRIVATE void	hd_close			(MESSAGE * p);
-PRIVATE void	hd_rdwt				(MESSAGE * p);
-PRIVATE void	hd_ioctl			(MESSAGE * p);
+PRIVATE int 	hd_open				(MESSAGE * p);
+PRIVATE int 	hd_close			(MESSAGE * p);
+PRIVATE int 	hd_rdwt				(MESSAGE * p);
+PRIVATE int 	hd_ioctl			(MESSAGE * p);
 PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition			(int device, int style);
@@ -147,7 +147,7 @@ PRIVATE void init_hd()
  * 
  * @param device The device to be opened.
  *****************************************************************************/
-PRIVATE void hd_open(MESSAGE * p)
+PRIVATE int hd_open(MESSAGE * p)
 {
 	int drive = DRV_OF_DEV(p->DEVICE);
 	assert(drive == 0);	/* only one drive */
@@ -158,6 +158,8 @@ PRIVATE void hd_open(MESSAGE * p)
 		partition(drive * NR_SUB_PER_DRIVE, P_PRIMARY);
 		print_hdinfo(&hd_info[drive]); 
 	}
+
+	return 0;
 }
 
 /*****************************************************************************
@@ -168,12 +170,14 @@ PRIVATE void hd_open(MESSAGE * p)
  * 
  * @param device The device to be opened.
  *****************************************************************************/
-PRIVATE void hd_close(MESSAGE * p)
+PRIVATE int hd_close(MESSAGE * p)
 {
 	int drive = DRV_OF_DEV(p->DEVICE);
 	assert(drive == 0);	/* only one drive */
 
 	hd_info[drive].open_cnt--;
+
+	return 0;
 }
 
 /*****************************************************************************
@@ -184,7 +188,7 @@ PRIVATE void hd_close(MESSAGE * p)
  * 
  * @param p Message ptr.
  *****************************************************************************/
-PRIVATE void hd_rdwt(MESSAGE * p)
+PRIVATE int hd_rdwt(MESSAGE * p)
 {
 	int drive = DRV_OF_DEV(p->DEVICE);
 			
@@ -236,6 +240,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 		la += SECTOR_SIZE;
 	}
 	
+	return 0;
 	//end_request();
 	//do_hd_request();
 }				
@@ -248,7 +253,7 @@ PRIVATE void hd_rdwt(MESSAGE * p)
  * 
  * @param p  Ptr to the MESSAGE.
  *****************************************************************************/
-PRIVATE void hd_ioctl(MESSAGE * p)
+PRIVATE int hd_ioctl(MESSAGE * p)
 {
 	int device = p->DEVICE;
 	int drive = DRV_OF_DEV(device);
@@ -271,6 +276,8 @@ PRIVATE void hd_ioctl(MESSAGE * p)
 	else {
 		assert(0);
 	}
+
+	return 0;
 }
 
 /*****************************************************************************

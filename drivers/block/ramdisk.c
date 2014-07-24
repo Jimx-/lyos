@@ -26,12 +26,13 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/driver.h>
 #include <errno.h>
 
 #define MAX_RAMDISKS	8
 
 struct ramdisk_dev {
-	unsigned char * start;
+	char * start;
 	int length;
 
 	int rdonly;
@@ -40,15 +41,30 @@ struct ramdisk_dev {
 PRIVATE struct ramdisk_dev ramdisks[MAX_RAMDISKS];
 
 PRIVATE void init_rd();
+PRIVATE int rd_open(MESSAGE * p);
+PRIVATE int rd_close(MESSAGE * p);
 PRIVATE int rd_rdwt(MESSAGE * p);
+PRIVATE int rd_ioctl(MESSAGE * p);
+
+struct dev_driver rd_driver = 
+{
+	"ramdisk",
+	rd_open,
+	rd_close,
+	rd_rdwt,
+	rd_rdwt, 
+	rd_ioctl 
+};
 
 PUBLIC void task_rd()
 {
-	MESSAGE msg;
+	//MESSAGE msg;
 
 	while(!rd_base || !rd_length);
 	init_rd();
 
+	dev_driver_task(&rd_driver);
+	/*
 	while (1) {
 	
 		send_recv(RECEIVE, ANY, &msg);
@@ -72,7 +88,17 @@ PUBLIC void task_rd()
 		}
 
 		send_recv(SEND, src, &msg);
-	}
+	}*/
+}
+
+PRIVATE int rd_open(MESSAGE * p)
+{
+	return 0;
+}
+
+PRIVATE int rd_close(MESSAGE * p)
+{
+	return 0;
 }
 
 PRIVATE int rd_rdwt(MESSAGE * p)
@@ -95,6 +121,11 @@ PRIVATE int rd_rdwt(MESSAGE * p)
 		data_copy(p->PROC_NR, D, p->BUF, getpid(), D, addr, count);
 	}
 
+	return 0;
+}
+
+PRIVATE int rd_ioctl(MESSAGE * p)
+{
 	return 0;
 }
 

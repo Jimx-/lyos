@@ -19,11 +19,11 @@
 /* The entry points of a device driver */
 struct dev_driver{
   char * dev_name;
-  void (*dev_open)	(MESSAGE * p);
-  void (*dev_close)	(MESSAGE * p);
-  void (*dev_read)  (MESSAGE * p);
-  void (*dev_write) (MESSAGE * p);
-  void (*dev_ioctl)	(MESSAGE * p);
+  int (*dev_open)	(MESSAGE * p);
+  int (*dev_close)	(MESSAGE * p);
+  int (*dev_read)  (MESSAGE * p);
+  int (*dev_write) (MESSAGE * p);
+  int (*dev_ioctl)	(MESSAGE * p);
 };
 
 PUBLIC void dev_driver_task(struct dev_driver * dd);
