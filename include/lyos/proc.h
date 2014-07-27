@@ -134,7 +134,7 @@ struct task {
  * @see global.h
  */
 //#define	PROCS_BASE		0x1000000 /* 16 MB */
-#define	PROC_ORIGIN_STACK	0x6000    /*  4 KB */
+#define	PROC_ORIGIN_STACK	0x8000    /*  4 KB */
 
 /* stacks of tasks */
 #define	STACK_SIZE_DEFAULT	0x4000 /* 16 KB */

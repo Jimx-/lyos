@@ -101,6 +101,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     pregion->phys_addr = paddr;
     pregion->vir_addr = (void*)base;
     pregion->length = len;
+    pregion->flags = RF_NORMAL;
 
     rp->length = allocated_len + len;
 
@@ -127,7 +128,10 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
                 (int)rp->vir_addr, (int)rp->vir_addr + rp->length);
 #endif
     
-    if (list_empty(&(rp->phys_blocks))) return ENOMEM;
+    if (list_empty(&(rp->phys_blocks))) { 
+        printl("MM: region_map_phys: Physical memory block empty\n");
+        return ENOMEM;
+    }
     
     list_for_each_entry(pregion, &(rp->phys_blocks), list) {
         len = pregion->length;
@@ -143,7 +147,7 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
     }
 
     if (len_to_map > 0) {
-        printl("MM: region_map_phys: No enough physical memory\n");
+        printl("MM: region_map_phys: Not enough physical memory\n");
         return ENOMEM;
     }
 
@@ -209,6 +213,7 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
     pregion->phys_addr = paddr;
     pregion->vir_addr = rp->vir_addr;
     pregion->length = increment;
+    pregion->flags = RF_NORMAL;
 
     list_add(&(pregion->list), &(rp->phys_blocks));
 
@@ -229,8 +234,8 @@ PUBLIC int region_free(struct vir_region * rp)
             if (&(pregion->list) != &(rp->phys_blocks) && &(pregion->list) != rp->phys_blocks.next) {
                 free_vmem((int)list_entry(pregion->list.prev, struct phys_region, list), sizeof(struct phys_region));
             }
-#if REGION_DEBUG
             free_mem((int)pregion->phys_addr, pregion->length);
+#if REGION_DEBUG
             printl("MM: region_free: freed physical memory region(0x%x - 0x%x) \n", 
                 (int)pregion->phys_addr, (int)pregion->phys_addr + pregion->length);
 #endif

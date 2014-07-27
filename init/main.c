@@ -36,7 +36,6 @@ int main(int argc, char * argv[])
 			printf("Parent\n");
 
 		} else {
-			while(1);
 			close(fd_stdin);
 			close(fd_stdout);
 			close(fd_stderr);

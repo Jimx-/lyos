@@ -132,7 +132,8 @@ PUBLIC void task_fs()
 			break;
 		default:
 			dump_msg("VFS::unknown msg", &msg);
-			assert(0);
+			//assert(0);
+			while(1);
 			break;
 		}
 

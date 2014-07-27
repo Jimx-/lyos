@@ -68,7 +68,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     Elf32_Phdr * prog_hdr;
 
     if ((retval = elf_check_header((Elf32_Ehdr *)execi->header)) != 0) return retval;
-    
+
     if ((retval = elf_unpack(execi->header, &elf_hdr, &prog_hdr)) != 0) return retval;
 
     if (execi->clearproc) execi->clearproc(execi);

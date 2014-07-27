@@ -259,6 +259,9 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     proc_table[src].brk = execi.args.brk;
     strcpy(proc_table[src].name, pathname);
-    
+
+    /* set state to RECEIVING so we can send reply to the process */
+    proc_table[src].state = RECEIVING;
+
     return 0;
 }

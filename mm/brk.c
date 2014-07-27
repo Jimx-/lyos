@@ -34,6 +34,8 @@
 #include "proto.h"
 #include "const.h"
 
+//#define SBRK_DEBUG
+
 /**
  * <Ring 1> Perform the SBRK syscall.
  * @return Program brk or -1 on error.
@@ -59,13 +61,16 @@ PUBLIC int do_sbrk()
     }
 
     /* enough space */
-    if (p->brk + count < (int)(vr->vir_addr) + vr->length) {
+    if (p->brk + count <= (int)(vr->vir_addr) + vr->length) {
         retval = p->brk;
         p->brk += count;
+#ifdef SBRK_DEBUG
+        printl("MM: sbrk: proc #%d brk is now 0x%x\n", src, retval);
+#endif
         return retval;
     } else {
         int increment = p->brk + count - (int)(vr->vir_addr) - vr->length;
-        if (increment == 0) increment = PG_SIZE;    /* brk is at the boundary, prealloc some space */
+        /*if (increment == 0) increment = PG_SIZE;   */ /* brk is at the boundary, prealloc some space */
         retval = region_extend(vr, increment);
         if (retval) {
             errno = retval;
@@ -74,6 +79,9 @@ PUBLIC int do_sbrk()
         region_map_phys(p, vr);
         retval = p->brk;
         p->brk += count;
+#ifdef SBRK_DEBUG
+        printl("MM: sbrk: proc #%d brk is now 0x%x(extended)\n", src, retval);
+#endif
         return retval;
     }
     return -1;

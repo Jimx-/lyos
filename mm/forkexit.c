@@ -301,15 +301,21 @@ PUBLIC int proc_free(struct proc * p)
 {
 	/* free memory */
 	struct vir_region * vr;
-    list_for_each_entry(vr, &(p->mem_regions), list) {
-    	if (&(vr->list) != &(p->mem_regions) && &(vr->list) != p->mem_regions.next)
-    		region_unmap_phys(p, vr);
-       		region_free(list_entry(vr->list.prev, struct vir_region, list));
-    }
-    region_free(list_entry(vr->list.prev, struct vir_region, list));
-    INIT_LIST_HEAD(&(p->mem_regions));
 
+    if (!list_empty(&(p->mem_regions))) {
+	    list_for_each_entry(vr, &(p->mem_regions), list) {
+    		if ((&(vr->list) != &(p->mem_regions)) && (&(vr->list) != p->mem_regions.next)) {
+    			region_unmap_phys(p, list_entry(vr->list.prev, struct vir_region, list));
+       			region_free(list_entry(vr->list.prev, struct vir_region, list));
+       		}
+    	}
+    }
+    region_unmap_phys(p, list_entry(vr->list.prev, struct vir_region, list));
+    region_free(list_entry(vr->list.prev, struct vir_region, list)); 
+    INIT_LIST_HEAD(&(p->mem_regions));
     pgd_clear(&(p->pgd));
+
+    p->state = FREE_SLOT;
 
     return 0;
 }

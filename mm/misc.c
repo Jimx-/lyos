@@ -75,7 +75,8 @@ PUBLIC int do_procctl()
 
     switch (param) {
         case PCTL_CLEARPROC:
-            if (!list_empty(&(p->mem_regions))) retval = proc_free(p);
+            if (mm_msg.source != TASK_FS) retval = EPERM;
+            else if (!list_empty(&(p->mem_regions))) retval = proc_free(p);
             break;
         default:
             retval = EINVAL;
