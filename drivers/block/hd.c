@@ -237,14 +237,12 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 			interrupt_wait();
 		}
 		bytes_left -= SECTOR_SIZE;
-		buf += SECTOR_SIZE;
 		printl("copy to %x\n", buf);
+		buf += SECTOR_SIZE;
 		la += SECTOR_SIZE;
 	}
 	printl("request finished\n");
 	return 0;
-	//end_request();
-	//do_hd_request();
 }				
 
 /*****************************************************************************
@@ -573,4 +571,3 @@ PUBLIC void hd_handler(int irq)
 
 	inform_int(TASK_HD);
 }
-

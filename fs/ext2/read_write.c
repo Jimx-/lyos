@@ -74,6 +74,7 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
         }
 
         /* rw */
+        printl("Ext2 rwing%d %x\n", src, buf);
         retval = ext2_rw_chunk(pin, position, chunk, nbytes, offset, rw_flag, src, buf);
         if (retval) break;
 
