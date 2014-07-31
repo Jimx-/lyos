@@ -19,15 +19,19 @@ int main(int argc, char * argv[])
 
 	printf("Hello world\n");
 
-	/*int fd_motd = open("/etc/motd", O_RDWR);
+	int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
-		char * motd = (char*)malloc(128);
-		read(fd_motd, motd, 128);
+		char * motd = (char*)malloc(2987);
+		int rd_cnt = 1024;
+		read(fd_motd, motd, rd_cnt);
 		close(fd_motd);
-		printf("\n\n%s\n\n", motd);
+		int cnt = 0, j;
+		for (j = 0; j < rd_cnt; j ++) if (motd[j] == 0) cnt ++;
+		motd[rd_cnt] = '\0';
+		printf("%d\n\n%s\n\n", cnt,motd);
 		free(motd);
-	}*/
-
+	}
+	while(1);
 	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;
 	for (i = 0; i < NR_TTY; i++) {

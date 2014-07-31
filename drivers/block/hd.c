@@ -237,11 +237,9 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 			interrupt_wait();
 		}
 		bytes_left -= SECTOR_SIZE;
-		printl("copy to %x\n", buf);
 		buf += SECTOR_SIZE;
 		la += SECTOR_SIZE;
 	}
-	printl("request finished\n");
 	return 0;
 }				
 

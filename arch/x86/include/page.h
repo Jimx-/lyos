@@ -73,4 +73,6 @@ PUBLIC void reload_cr3();
 #define ARCH_PDE(x)     ((unsigned long)(x) >> 22 & 0x03FF)
 #define ARCH_PTE(x)     ((unsigned long)(x) >> 12 & 0x03FF)
 
+#define ARCH_VM_ADDRESS(pde, pte, offset)   (pde * PT_MEMSIZE + pte * PG_SIZE + offset)
+
 #endif

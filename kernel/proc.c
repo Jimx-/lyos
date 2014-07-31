@@ -72,39 +72,6 @@ PUBLIC void schedule()
 	}
 }
 
-PUBLIC int do_setuid()
-{
-	current->uid = mm_msg.REQUEST;
-	return 0;
-}
-
-PUBLIC int do_getuid()
-{
-	return current->uid;
-}
-
-PUBLIC int do_setgid()
-{
-	current->gid = mm_msg.REQUEST;
-	return 0;
-}
-
-PUBLIC int do_getgid()
-{
-	return current->gid;
-}
-
-PUBLIC int do_geteuid()
-{
-	return current->euid;
-}
-
-PUBLIC int do_getegid()
-{
-	return current->egid;
-}
-
-
 PUBLIC int do_nice()
 {
 	if (current->priority - mm_msg.REQUEST > 0)
