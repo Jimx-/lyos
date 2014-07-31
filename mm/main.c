@@ -178,7 +178,7 @@ PRIVATE void init_mm()
 
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
-	vmem_init(mem_start + KERNEL_VMA, (unsigned int)(4 * 1024 * 1024 * 1024 - mem_start - KERNEL_VMA));
+	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
 
 	/* setup memory region for tasks so they can malloc */
 	int region_size = NR_TASKS * sizeof(struct vir_region);

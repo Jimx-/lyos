@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
 	int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(2987);
-		int rd_cnt = 1024;
+		int rd_cnt = 2987;
 		read(fd_motd, motd, rd_cnt);
 		close(fd_motd);
 		int cnt = 0, j;
@@ -48,8 +48,6 @@ int main(int argc, char * argv[])
 			argv[0] = GETTY;
 			argv[1] = ttylist[i];
 			_exit(execv(GETTY, argv));
-			/*printf("Child%d\n", pid);*/
-			while(1);
 		}
 	}
 

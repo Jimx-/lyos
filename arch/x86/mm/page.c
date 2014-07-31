@@ -48,7 +48,7 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int 
         page_table_start[i] = page;
     }
 
-    int nr_free_page_tables = nr_page_tables - (KERNEL_VMA / PT_MEMSIZE) - kpts;
+    int nr_free_page_tables = nr_page_tables - (VMALLOC_START / PT_MEMSIZE);
     int free_page_start = nr_free_page_tables * 1024;
     for (i = free_page_start; i < nr_pages; i++) page_table_start[i] = 0;
 
@@ -58,9 +58,9 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int 
         pgd[i] = pde;
     }
 
-    /* map 0xC0000000 ~ 0xF1000000 to 0x00000000 ~ 0x01000000 */
-    for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + kpts; i++) {
-        pgd[i] = pgd[i - KERNEL_VMA / 0x400000];
+    /* map 0xC0000000 ~ 0xF0000000 to 0x00000000 ~ 0x30000000  */
+    for (i = ARCH_PDE(KERNEL_VMA); i < ARCH_PDE(VMALLOC_START); i++) {
+        pgd[i] = pgd[i - ARCH_PDE(KERNEL_VMA)];
     }
 
     /* switch to the new page directory */
@@ -85,8 +85,9 @@ PUBLIC void disable_paging()
 
 PRIVATE void * find_free_pages(struct page_directory * pgd, int nr_pages, void * start, void * end)
 {
-    if (start == NULL) start = (void *)PG_SIZE; /* starts from the second pde by default */
-    if (end == NULL) end = (void *)VM_STACK_TOP;
+    /* default value */
+    if (start == NULL) start = (void *)FIXMAP_START;
+    if (end == NULL) end = (void *)FIXMAP_END;
 
     int start_pde = ARCH_PDE((int)start);
     int end_pde = ARCH_PDE((int)end);
@@ -155,7 +156,6 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
 {
     pte_t * old_pgd = (pte_t *)read_cr3();
     struct page_directory * kernel_pgd = &(proc_table[TASK_MM].pgd);
-    pde_t * kernel_pd = (pde_t *)((int)initial_pgd + KERNEL_VMA);
 
     switch_address_space(initial_pgd);
     reload_cr3();
@@ -173,7 +173,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
     }
 
     int dest_pages = dest_len / PG_SIZE;
-    u32 dest_vaddr = (u32)find_free_pages(kernel_pgd, dest_pages, (void*)((u32)KERNEL_VMA + (u32)PROCS_BASE), (void*)0xffffffff);
+    u32 dest_vaddr = (u32)find_free_pages(kernel_pgd, dest_pages, (void*)FIXMAP_START, (void*)FIXMAP_END);
     if (dest_addr == NULL) return ENOMEM;
 
     int i;
@@ -184,8 +184,11 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
         unsigned long pgd_index = ARCH_PDE(_dest_vaddr);
         unsigned long pt_index = ARCH_PTE(_dest_vaddr);
 
-        pte_t * pt = (pte_t *)((u32)(kernel_pd[pgd_index] & ARCH_VM_ADDR_MASK) + KERNEL_VMA);
-        pt[pt_index] = ((u32)la2pa(dest_pid, _dest_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
+        if (dest_pages > 1) {
+            //printl("%x -> %x\n",_dest_vaddr, (u32)la2pa(dest_pid, (void *)_dest_la));
+        }
+        pte_t * pt = kernel_pgd->vir_pts[pgd_index];
+        pt[pt_index] = ((u32)la2pa(dest_pid, (void *)_dest_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
     }
 
     /* map in source address */
@@ -201,7 +204,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
     }
 
     u32 src_pages = src_len / PG_SIZE;
-    u32 src_vaddr = (u32)find_free_pages(kernel_pgd, src_pages, (void*)((u32)KERNEL_VMA + (u32)PROCS_BASE), (void*)0xffffffff);
+    u32 src_vaddr = (u32)find_free_pages(kernel_pgd, src_pages, (void*)FIXMAP_START, (void*)FIXMAP_END);
     if (src_addr == NULL) return ENOMEM;
 
     u32 _src_vaddr = src_vaddr;
@@ -211,18 +214,17 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
         unsigned long pgd_index = ARCH_PDE(_src_vaddr);
         unsigned long pt_index = ARCH_PTE(_src_vaddr);
 
-        pte_t * pt = (pte_t *)((u32)(kernel_pd[pgd_index] & ARCH_VM_ADDR_MASK) + KERNEL_VMA);
-        pt[pt_index] = ((u32)la2pa(src_pid, _src_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
+        pte_t * pt = kernel_pgd->vir_pts[pgd_index];
+        pt[pt_index] = ((u32)la2pa(src_pid, (void *)_src_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
     }
 
     void * src_pa = (void *)va2pa(src_pid, src_addr);
     void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
 
     //phys_copy(dest_pa, src_pa, len);
-    phys_copy(dest_vaddr + dest_offset, src_vaddr + src_offset, len);
+    phys_copy((void *)(dest_vaddr + dest_offset), (void *)(src_vaddr + src_offset), len);
     if (dest_pages > 1) {
-        printl("%x -> %x(%x->%x)\n", va2pa(TASK_MM, src_vaddr + src_offset), va2pa(TASK_MM, dest_vaddr + dest_offset), src_vaddr, dest_vaddr);
-        printl("%x -> %x(%x->%x)\n", src_pa, dest_pa, src_vaddr, dest_vaddr);
+        //printl("%x -> %x(%x->%x), pid:(%d -> %d)\n", va2pa(TASK_MM, src_vaddr + src_offset), va2pa(TASK_MM, dest_vaddr + dest_offset), src_vaddr, dest_vaddr, src_pid, dest_pid);
     }
     /* unmap */
     _dest_vaddr = dest_vaddr;
@@ -232,7 +234,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
         unsigned long pgd_index = ARCH_PDE(_dest_vaddr);
         unsigned long pt_index = ARCH_PTE(_dest_vaddr);
 
-        pte_t * pt = (pte_t *)((u32)(kernel_pd[pgd_index] & ARCH_VM_ADDR_MASK) + KERNEL_VMA);
+        pte_t * pt = kernel_pgd->vir_pts[pgd_index];
         pt[pt_index] = 0;
     }
 
@@ -243,7 +245,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
         unsigned long pgd_index = ARCH_PDE(_src_vaddr);
         unsigned long pt_index = ARCH_PTE(_src_vaddr);
 
-        pte_t * pt = (pte_t *)((u32)(kernel_pd[pgd_index] & ARCH_VM_ADDR_MASK) + KERNEL_VMA);
+        pte_t * pt = kernel_pgd->vir_pts[pgd_index];
         pt[pt_index] = 0;
     }
 
