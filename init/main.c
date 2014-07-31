@@ -17,9 +17,9 @@ int main(int argc, char * argv[])
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	printf("Hello world\n");
+	//printf("Hello world\n");
 
-	int fd_motd = open("/etc/motd", O_RDWR);
+	/*int fd_motd = open("/etc/motd", O_RDWR);
 	if (fd_motd != -1) {
 		char * motd = (char*)malloc(2987);
 		int rd_cnt = 2987;
@@ -31,7 +31,7 @@ int main(int argc, char * argv[])
 		printf("%d\n\n%s\n\n", cnt,motd);
 		free(motd);
 	}
-	while(1);
+	while(1);*/
 	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;
 	for (i = 0; i < NR_TTY; i++) {

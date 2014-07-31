@@ -319,7 +319,8 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 
 	/* check for deadlock here */
 	if (deadlock(proc2pid(sender), dest)) {
-		dump_msg("deadlock ", m);
+		dump_msg("deadlock sender", m);
+		dump_msg("deadlock receiver", p_dest->msg);
 		panic("deadlock: %s(pid: %d)->%s(pid: %d)", sender->name, proc2pid(sender), p_dest->name, proc2pid(p_dest));
 	}
 

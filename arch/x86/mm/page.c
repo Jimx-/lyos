@@ -128,25 +128,17 @@ PRIVATE void * find_free_pages(struct page_directory * pgd, int nr_pages, void *
 
 PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc)
 {
-    /* back to kernel space */
-    switch_address_space(initial_pgd);
-    reload_cr3();
+    void * src_addr = m->SRC_ADDR;
+    int src_seg = (int)m->SRC_SEG;
+    endpoint_t src_pid = m->SRC_PID;
 
-    MESSAGE msg;
-    phys_copy(&msg, va2pa(proc2pid(current), m), sizeof(MESSAGE));
+    void * dest_addr = m->DEST_ADDR;
+    int dest_seg = (int)m->DEST_SEG;
+    endpoint_t dest_pid = m->DEST_PID;
 
-    void * src_addr = msg.SRC_ADDR;
-    int src_seg = (int)msg.SRC_SEG;
-    endpoint_t src_pid = msg.SRC_PID;
+    int len = m->BUF_LEN;
 
-    void * dest_addr = msg.DEST_ADDR;
-    int dest_seg = (int)msg.DEST_SEG;
-    endpoint_t dest_pid = msg.DEST_PID;
-
-    int len = msg.BUF_LEN;
-
-    msg.RETVAL = vir_copy(dest_pid, dest_seg, dest_addr, src_pid, src_seg, src_addr, len);
-    phys_copy(va2pa(proc2pid(current), m), &msg, sizeof(MESSAGE));
+    m->RETVAL = vir_copy(dest_pid, dest_seg, dest_addr, src_pid, src_seg, src_addr, len);
 
     return 0;
 }

@@ -33,7 +33,7 @@
 #include "lyos/vm.h"
 #include <sys/mman.h>
 
-#define ELF_DEBUG
+//#define ELF_DEBUG
 
 #define roundup(x, a)  do {\
                         if ((x) % (a) != 0) {   \
