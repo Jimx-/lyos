@@ -58,7 +58,7 @@ CC		= $(SUBARCH)-pc-lyos-gcc
 LD		= $(SUBARCH)-pc-lyos-ld
 CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
-LDFLAGS		= -T $(LDSCRIPT) -Map System.map 
+LDFLAGS		= -T $(LDSCRIPT) -Map System.map
 ARFLAGS		= rcs
 MAKE 		= make
 

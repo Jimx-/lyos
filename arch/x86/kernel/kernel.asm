@@ -46,13 +46,13 @@ dd 				pt0 - KERNEL_VMA + 0x007
 dd 				pt0 - KERNEL_VMA + 0x1007
 dd 				pt0 - KERNEL_VMA + 0x2007
 dd 				pt0 - KERNEL_VMA + 0x3007
-times 			956		dd 	0
-; 0xF0000000
+times 			KERNEL_PDE - 4		dd 	0
+; 0xC0000000
 dd 				pt0 - KERNEL_VMA + 0x007
 dd 				pt0 - KERNEL_VMA + 0x1007
 dd 				pt0 - KERNEL_VMA + 0x2007
 dd 				pt0 - KERNEL_VMA + 0x3007
-times			1024 - 960 - 4	 	dd  0
+times			1024 - KERNEL_PDE - 4	 	dd  0
 clock_int_msg		db	"^", 0
 
 [SECTION .bss]

@@ -58,7 +58,7 @@ PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int 
         pgd[i] = pde;
     }
 
-    /* map 0xF0000000 ~ 0xF1000000 to 0x00000000 ~ 0x01000000 */
+    /* map 0xC0000000 ~ 0xF1000000 to 0x00000000 ~ 0x01000000 */
     for (i = KERNEL_VMA / 0x400000; i < KERNEL_VMA / 0x400000 + kpts; i++) {
         pgd[i] = pgd[i - KERNEL_VMA / 0x400000];
     }

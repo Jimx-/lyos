@@ -13,8 +13,9 @@
 ;    You should have received a copy of the GNU General Public License
 ;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>.
 
-; 3.75G - 4G: kernel space
-KERNEL_VMA	equ	0xF0000000
+; 3G - 4G: kernel space
+KERNEL_VMA	equ	0xC0000000
+KERNEL_PDE	equ KERNEL_VMA >> 22
 
 P_LDT_SIZE	equ 2
 

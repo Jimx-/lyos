@@ -16,7 +16,7 @@
 #ifndef _PAGE_H_
 #define _PAGE_H_
 
-#define KERNEL_VMA      0xF0000000
+#define KERNEL_VMA      0xC0000000
 #define VM_STACK_TOP    KERNEL_VMA
 
 typedef unsigned int    pde_t;
