@@ -226,7 +226,15 @@ int isatty(int fd) {
 
 int uname(struct utsname * name)
 {
-    return 0;
+	MESSAGE msg;
+	msg.type = UNAME;
+	msg.BUF = (void *)name;
+
+	cmb();
+
+	send_recv(BOTH, TASK_SYS, &msg);
+
+    return msg.RETVAL;
 }
 
 int close(int fd)
@@ -632,4 +640,46 @@ int getegid()
 	send_recv(BOTH, TASK_MM, &msg);
 
 	return msg.RETVAL;
+}
+
+int gethostname(char *name, size_t len)
+{
+	MESSAGE msg;
+
+	msg.type = GETSETHOSTNAME;
+	msg.REQUEST = GS_GETHOSTNAME;
+	msg.BUF = name;
+	msg.BUF_LEN = len;
+
+	cmb();
+
+	send_recv(BOTH, TASK_SYS, &msg);
+
+	if (msg.RETVAL) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+
+	return 0;
+}
+
+int sethostname(const char *name, size_t len)
+{
+	MESSAGE msg;
+
+	msg.type = GETSETHOSTNAME;
+	msg.REQUEST = GS_SETHOSTNAME;
+	msg.BUF = name;
+	msg.BUF_LEN = len;
+
+	cmb();
+
+	send_recv(BOTH, TASK_SYS, &msg);
+
+	if (msg.RETVAL) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+
+	return 0;
 }

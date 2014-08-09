@@ -192,8 +192,7 @@ initrd:
 	@cp sysroot/etc/fstab ramdisk/etc
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)
-	@(cp -f sysroot/usr/bin/getty ramdisk/bin/getty)
-	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init sbin/init.sh dev/* bin/getty etc/* > /dev/null)
+	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init sbin/init.sh dev/* etc/* > /dev/null)
 	@rm ramdisk/.root
 
 disasm :

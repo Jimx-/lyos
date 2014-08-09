@@ -117,16 +117,16 @@ PUBLIC void init_screen(TTY* tty)
 		((CONSOLE *)tty->tty_dev)->cursor = disp_pos / 2;
 		disp_pos = 0;
 	}
-	else {
+	/*else {*/
 		/* 
 		 * `?' in this string will be replaced with 0, 1, 2, ...
 		 */
-		const char prompt[] = "[tty #?]\n";
+	/*	const char prompt[] = "[tty #?]\n";
 
 		const char * p = prompt;
 		for (; *p; p++)
 			out_char(tty, *p == '?' ? nr_tty + '0' : *p);
-	}
+	}*/
 
 	set_cursor(((CONSOLE *)tty->tty_dev)->cursor);
 }

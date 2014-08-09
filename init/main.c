@@ -10,6 +10,8 @@
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	3
 
+#define DEFAULT_HOSTNAME	"lyos-pc"
+
 int main(int argc, char * argv[])
 {
 	mount("/dev/hd1a", "/", "ext2", 0, NULL);
@@ -17,27 +19,23 @@ int main(int argc, char * argv[])
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
 
-	//printf("Hello world\n");
-
-	/*int fd_motd = open("/etc/motd", O_RDWR);
-	if (fd_motd != -1) {
-		char * motd = (char*)malloc(2987);
-		int rd_cnt = 2987;
-		read(fd_motd, motd, rd_cnt);
-		close(fd_motd);
-		int cnt = 0, j;
-		for (j = 0; j < rd_cnt; j ++) if (motd[j] == 0) cnt ++;
-		motd[rd_cnt] = '\0';
-		printf("%d\n\n%s\n\n", cnt,motd);
-		free(motd);
+	/* set hostname */
+	int fd_hostname = open("/etc/hostname", O_RDONLY);
+	if (fd_hostname == -1) {
+		sethostname(DEFAULT_HOSTNAME, strlen(DEFAULT_HOSTNAME));
+	} else {
+		char hostname[256];
+		memset(hostname, 0, sizeof(hostname));
+		int len = read(fd_hostname, hostname, sizeof(hostname));
+		sethostname(hostname, len);
+		close(fd_hostname);
 	}
-	while(1);*/
+
 	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;
 	for (i = 0; i < NR_TTY; i++) {
 		int pid = fork();
 		if (pid) {
-			printf("Parent\n");
 
 		} else {
 			close(fd_stdin);

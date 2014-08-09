@@ -112,7 +112,7 @@ PUBLIC int do_open(MESSAGE * p)
         pin = resolve_path(pathname, pcaller);
         if (pin == NULL) return -err_code;
 
-        DEB(printl("VFS: open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, pcaller->name)); 
+        DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, pcaller->name)); 
     }
 
     struct file_desc * filp = &f_desc_table[i];

@@ -72,7 +72,6 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 												   sys_datacopy};
 												   
 PUBLIC	struct buffer_head * buffer_table[NR_BUFFER];
-PUBLIC struct utsname thisname = {UTS_SYSNAME, UTS_NODENAME, UTS_RELEASE, UTS_VERSION, UTS_MACHINE};
 PUBLIC int errno;
 
 PUBLIC int err_code = 0;

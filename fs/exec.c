@@ -262,6 +262,5 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     /* set state to RECEIVING so we can send reply to the process */
     proc_table[src].state = RECEIVING;
-
     return 0;
 }

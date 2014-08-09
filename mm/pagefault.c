@@ -84,8 +84,9 @@ PUBLIC void do_handle_fault()
     }
 
     /* resume */
-    if (handled) 
+    if (handled) {
         p->state = resume_state;
+    }
     else
         send_sig(SIGSEGV, p); 
 }

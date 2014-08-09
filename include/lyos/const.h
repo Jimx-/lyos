@@ -190,6 +190,9 @@
 #define GS_GETEUID	4
 #define GS_GETEGID	5
 
+#define GS_GETHOSTNAME	0
+#define GS_SETHOSTNAME	1
+
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -208,26 +211,26 @@ enum msgtype {
 
 	/* SYS task */
 	GET_TICKS, GET_PID, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
-	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,				/* 3 ~ 16 */
+	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,	GETSETHOSTNAME,			/* 3 ~ 17 */
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
 	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP,
-								/* 17 ~ 33 */
+								/* 18 ~ 34 */
 	/* FS & TTY */
-	SUSPEND_PROC, RESUME_PROC,				/* 34 ~ 35 */
+	SUSPEND_PROC, RESUME_PROC,				/* 35 ~ 36 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, RAISE, SIGACTION, PROCCTL, MMAP,	/* 36 ~ 46 */
+	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, RAISE, SIGACTION, PROCCTL, MMAP,	/* 37 ~ 47 */
 
 	/* FS & MM */
-	FORK, EXIT,						/* 47 ~ 48 */
+	FORK, EXIT,						/* 48 ~ 49 */
 
 	/* SERVMAN */
-	SERVICE_UP, SERVICE_DOWN,		/* 49 ~ 50 */
+	SERVICE_UP, SERVICE_DOWN,		/* 50 ~ 51 */
 
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 51 */
+	SYSCALL_RET,						/* 52 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,

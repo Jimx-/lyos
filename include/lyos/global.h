@@ -58,7 +58,6 @@ extern	TTY		tty_table[];
 extern  CONSOLE		console_table[];
 EXTERN	int	nr_buffer;
 extern	struct buffer_head * buffer_table[];
-extern	struct utsname	thisname;
 
 extern  int             err_code;
 

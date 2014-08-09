@@ -13,11 +13,13 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "lyos/compile.h"
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -35,11 +37,17 @@
     #include "lyos/dmi.h"
 #endif
 
+#define MAX_HOSTNAME_LEN	256
+PRIVATE char hostname[MAX_HOSTNAME_LEN];
+PRIVATE struct utsname uname_buf;
+
 PRIVATE int read_register(char reg_addr);
 PRIVATE u32 get_rtc_time(struct time *t);
 PRIVATE u32 secs_of_years(int years);
 PRIVATE u32 secs_of_months(int months, int year);
 PRIVATE u32 do_gettimeofday(struct timeval *tv, struct timezone *tz);
+PRIVATE int prepare_uname_buf(struct utsname * buf);
+PRIVATE int do_getsethostname(MESSAGE * p);
 
 #define  BCD_TO_DEC(x)      ( (x >> 4) * 10 + (x & 0x0f) )
 
@@ -56,6 +64,8 @@ PUBLIC void task_sys()
 	struct time t;
 	struct timeval tv;
 
+	prepare_uname_buf(&uname_buf);
+
 #if CONFIG_FIRMWARE_DMI
     dmi_init();
     printl("DMI: %s %s %s\n", 
@@ -71,39 +81,32 @@ PUBLIC void task_sys()
 		switch (msg.type) {
 		case GET_TICKS:
 			msg.RETVAL = jiffies;
-			send_recv(SEND, src, &msg);
 			break;
 		case GET_PID:
-			msg.type = SYSCALL_RET;
 			msg.PID = src;
-			send_recv(SEND, src, &msg);
 			break;
 		case GET_RTC_TIME:
-			msg.type = SYSCALL_RET;
 			get_rtc_time(&t);
-			phys_copy(va2la(src, msg.BUF),
-				  va2la(TASK_SYS, &t),
-				  sizeof(t));
-			send_recv(SEND, src, &msg);
+			data_copy(src, D, msg.BUF, TASK_SYS, D, &t, sizeof(t));
 			break;
 		case UNAME:
-			msg.type = SYSCALL_RET;
-			phys_copy(va2la(src, msg.BUF), va2la(TASK_SYS, &thisname), SIZE_UTSNAME);
-			send_recv(SEND, src, &msg);
+			msg.RETVAL = data_copy(src, D, msg.BUF, TASK_SYS, D, &uname_buf, sizeof(struct utsname));
 			break;
 		case GET_TIME_OF_DAY:
-			msg.type = SYSCALL_RET;
 			msg.RETVAL = do_gettimeofday(&tv, NULL);
-			phys_copy(va2la(src, msg.BUF),
-				  va2la(TASK_SYS, &tv),
-				  sizeof(tv));
-			send_recv(SEND, src, &msg);
+			data_copy(src, D, msg.BUF, TASK_SYS, D, &tv, sizeof(tv));
+			break;
+		case GETSETHOSTNAME:
+			msg.RETVAL = do_getsethostname(&msg);
 			break;
 		default:
             printl("systask: unknown message type(%d) from process #%d\n", msg.type, src);
 			panic("unknown msg type");
 			break;
 		}
+
+		msg.type = SYSCALL_RET;
+		send_recv(SEND, src, &msg);
 	}
 }
 
@@ -226,5 +229,37 @@ PRIVATE u32 do_gettimeofday(struct timeval *tv, struct timezone *tz)
 	return 0;
 }
 
+PRIVATE int prepare_uname_buf(struct utsname * buf)
+{
+	memset(buf, 0, sizeof(struct utsname));
+	memset(hostname, 0, sizeof(hostname));
 
+	strcpy(buf->sysname, "Lyos");
+	strcpy(buf->version, UTS_VERSION);
+	strcpy(buf->machine, UTS_MACHINE);
 
+	return 0;
+}
+
+PRIVATE int do_getsethostname(MESSAGE * p)
+{
+	int src = p->source;
+	struct proc * who = proc_table + src;
+
+	if (p->BUF_LEN < 0) return EINVAL;
+
+	if (p->REQUEST == GS_GETHOSTNAME) {
+		data_copy(src, D, p->BUF, TASK_SYS, D, hostname, p->BUF_LEN);
+		if (strlen(hostname) > p->BUF_LEN) return ENAMETOOLONG;
+	} else if (p->REQUEST == GS_SETHOSTNAME) {
+		if (who->uid != SU_UID) return EPERM;
+		if (p->BUF_LEN > sizeof(hostname)) return EINVAL;
+		memset(hostname, 0, sizeof(hostname));
+		data_copy(TASK_SYS, D, hostname, src, D, p->BUF, p->BUF_LEN);
+		hostname[p->BUF_LEN] = '\0';
+		memcpy(uname_buf.nodename, hostname, _UTSNAME_NODENAME_LENGTH);
+		uname_buf.nodename[_UTSNAME_NODENAME_LENGTH] = '\0';
+	}
+
+	return 0;
+}

@@ -300,7 +300,7 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	msg.FAULT_STATE = current->state;
 
 	msg_send(current, TASK_MM, &msg);
-
+	
 	/* block the process */
 	current->state = RESCUING;
 	schedule();
