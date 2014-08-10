@@ -48,7 +48,6 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
 	{task_initfs,	STACK_SIZE_INITFS,"INITFS"	  },
 	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
-	{task_fd,       STACK_SIZE_FD,    "FD"        },
 	{task_pci,      STACK_SIZE_PCI,   "PCI"       },
 	{task_inet,     STACK_SIZE_INET,  "INET"      },
 };
@@ -87,7 +86,7 @@ struct dev_drv_map dd_map[] = {
 	   ----------		---------------- */
 	{INVALID_DRIVER},	/**< 0 : Unused */
 	{TASK_RD},			/**< 1 : Ramdisk */
-	{TASK_FD},			/**< 2 : Floppy */
+	{INVALID_DRIVER},	/**< 2 : Floppy */
 	{TASK_HD},			/**< 3 : Hard disk */
 	{TASK_TTY},			/**< 4 : TTY */
 	{INVALID_DRIVER}	/**< 5 : Scsi disk */

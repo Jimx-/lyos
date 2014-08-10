@@ -124,7 +124,7 @@ PRIVATE void init_hd()
 {
 	int i;
 	/* Get the number of drives from the BIOS data area */
-	u8 * pNrDrives = (u8*)(0x475);
+	u8 * pNrDrives = (u8*)(0x475 + KERNEL_VMA);
 	printl("hd: %d hard drives\n", *pNrDrives);
 	assert(*pNrDrives);
 

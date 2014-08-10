@@ -158,15 +158,13 @@ PUBLIC void init_arch()
 			p->ldts[INDEX_LDT_C].attr1  = DA_C   | priv << 5;
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
 
-			if ((strcmp(t->name, "VFS") == 0) || (strcmp(t->name, "INITFS") == 0) ||
-				(strcmp(t->name, "INET") == 0) ||
-				(strcmp(t->name, "EXT2_FS") == 0) || (strcmp(t->name, "TTY") == 0)) {
-				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
-				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
-			} else {
+			if (i == TASK_MM) {
 				/* use kernel page table */ 
 				p->pgd.phys_addr = initial_pgd;
 				p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
+			} else {
+				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
+				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 			}
 
 			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {

@@ -28,7 +28,7 @@
 #include "lyos/proto.h"
 #include "lyos/dmi.h"
 
-#define ROM_BASE 0xF0000
+#define ROM_BASE 0xF0000 + KERNEL_VMA
 #define ROM_SIZE 0x10000
 
 static int dmi_available = 0;
@@ -93,7 +93,7 @@ PRIVATE int dmi_present(const char * buf)
             }
         }
 
-        dmi_table((char*)dmi_base, dmi_len, dmi_num);
+        dmi_table((char*)(dmi_base + KERNEL_VMA), dmi_len, dmi_num);
         
 
         return 1;
@@ -155,7 +155,7 @@ PRIVATE void dmi_save_info(const struct dmi_header * dh, int slot, int index)
 {
     char * s = get_dmi_string(dh, index);
 
-    dmi_info[slot] = s + KERNEL_VMA;
+    dmi_info[slot] = s;
 }
 
 PUBLIC char * dmi_get_info(int slot)

@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/driver.h>
+#include "multiboot.h"
 #include <errno.h>
 
 #define MAX_RAMDISKS	8
@@ -60,7 +61,6 @@ PUBLIC void task_rd()
 {
 	//MESSAGE msg;
 
-	while(!rd_base || !rd_length);
 	init_rd();
 
 	dev_driver_task(&rd_driver);
@@ -131,11 +131,17 @@ PRIVATE int rd_ioctl(MESSAGE * p)
 
 PRIVATE void init_rd()
 {
-	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", rd_length, rd_length / 1024, rd_base);
+	multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
+	if (initrd_mod->pad) {
+		printl("RAMDISK: invalid initrd module parameter(pad is not zero)");
+	}
+
 	struct ramdisk_dev * initrd = ramdisks;
 
-	initrd->start = rd_base;
-	initrd->length = rd_length;
+	initrd->start = (char*)(initrd_mod->mod_start + KERNEL_VMA);
+	initrd->length = initrd_mod->mod_end - initrd_mod->mod_start;
 	initrd->rdonly = 1;
+
+	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", initrd->length, initrd->length / 1024, initrd->start);
 }
 

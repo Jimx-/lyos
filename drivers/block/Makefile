@@ -4,7 +4,7 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
-BLKDRVOBJS	= floppy.o hd.o ramdisk.o
+BLKDRVOBJS	= hd.o ramdisk.o
 BLKDRV		= block.o
 
 everything : realclean $(BLKDRV)

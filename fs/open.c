@@ -33,7 +33,7 @@
 #include "proto.h"
 #include "fcntl.h"
 
-#define OPEN_DEBUG
+//#define OPEN_DEBUG
 #ifdef OPEN_DEBUG
 #define DEB(x) printl("VFS: "); x
 #else

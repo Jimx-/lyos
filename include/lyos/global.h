@@ -78,8 +78,6 @@ EXTERN  int                 kernel_pts;
 EXTERN	unsigned int        memory_size;
 EXTERN  int                 kernel_file;
 EXTERN	unsigned char *		kernel_addr;
-EXTERN  unsigned char *     rd_base;
-EXTERN  int                 rd_length;
 EXTERN	int 				mem_start;
 
 /* FS */
@@ -88,8 +86,8 @@ EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
 #define FSBUF_SIZE          0x100000
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];
-extern	u8 *			fsbuf;
-EXTERN	MESSAGE			fs_msg;
+extern	u8 *			    fsbuf;
+EXTERN	MESSAGE			    fs_msg;
 EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];

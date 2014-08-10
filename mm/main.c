@@ -186,25 +186,11 @@ PRIVATE void init_mm()
 	struct proc * p = proc_table;
 	int i;
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
-		if (i != TASK_RD) {
-			INIT_LIST_HEAD(&(rp->phys_blocks));
-			rp->vir_addr = (void*)0x1000;
-			p->brk = 0x1000;
-			rp->length = 0;
-			list_add(&(rp->list), &(p->mem_regions));
-		} else {
-			multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
-			if (initrd_mod->pad) {
-				printl("MM: Invalid initrd module parameter(pad is not zero)");
-			}
-			INIT_LIST_HEAD(&(rp->phys_blocks));
-			rp->vir_addr = (void *)((unsigned)initrd_mod->mod_start);
-			p->brk = initrd_mod->mod_end;
-			rp->length = initrd_mod->mod_end - initrd_mod->mod_start;
-			list_add(&(rp->list), &(p->mem_regions));
-			map_memory(&(p->pgd), (void *)(initrd_mod->mod_start), (void *)(initrd_mod->mod_start), initrd_mod->mod_end - initrd_mod->mod_start);
-			rd_base = (unsigned char*)(initrd_mod->mod_start + KERNEL_VMA);
-			rd_length = initrd_mod->mod_end - initrd_mod->mod_start;
-		}
+		/* prepare heap */
+		INIT_LIST_HEAD(&(rp->phys_blocks));
+		rp->vir_addr = (void*)0x1000;
+		p->brk = 0x1000;
+		rp->length = 0;
+		list_add(&(rp->list), &(p->mem_regions));
     }
 }
