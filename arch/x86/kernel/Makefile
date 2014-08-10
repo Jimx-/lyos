@@ -1,6 +1,6 @@
 ASMKFLAGS	=  -I $(INCDIR)/ -I $(ARCHINC)/ -f elf
 
-KERNELOBJS	= kernel.o kliba.o reboot.o i8259.o start.o protect.o
+KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o
 
 X86KRNL		= x86-krnl.o
 

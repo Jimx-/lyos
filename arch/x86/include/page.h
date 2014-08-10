@@ -61,7 +61,7 @@ struct page_directory {
 #define I386_PF_PROT(x)         ((x) & PG_PRESENT)
 #define I386_PF_NOPAGE(x)       (!I386_PF_PROT(x))
 
-PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int kpts);
+PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts);
 PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();

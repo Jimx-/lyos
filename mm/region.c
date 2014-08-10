@@ -218,7 +218,7 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
     list_add(&(pregion->list), &(rp->phys_blocks));
 
 #if REGION_DEBUG
-    printl("MM: region_extend_stack: extended stack by 0x%x bytes", increment);
+    printl("MM: region_extend_stack: extended stack by 0x%x bytes\n", increment);
 #endif
 
     return 0;

@@ -8,6 +8,9 @@
 #include <sys/stat.h>
 
 #define ISSUE_LEN	256
+#define NAME_LEN	30
+
+#define LOGIN "/usr/bin/login"
 
 void print_banner(char * ttyname);
 
@@ -19,8 +22,16 @@ int main(int argc, char * argv[])
 	
 	print_banner(argv[1]);
 
+	char name[NAME_LEN];
+	int len = read(0, name, NAME_LEN);
+	name[len] = '\0';
 
+	char * login_argv[2];
+	login_argv[0] = LOGIN;
+	login_argv[1] = name;
+	execv(LOGIN, login_argv);
 
+	printf("getty: can't exec!\n");
 	while(1);
 }
 

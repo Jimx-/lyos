@@ -275,7 +275,7 @@ PRIVATE void in_transfer(TTY* tty)
 			if (ch >= ' ' && ch <= '~') { /* printable */
 				void * p = tty->tty_inbuf +
 					   tty->tty_trans_cnt;
-				phys_copy(p, (void *)va2la(TASK_TTY, &ch), 1);
+				data_copy(tty->tty_inprocnr, D, p, TASK_TTY, D, &ch, 1);
 				tty->tty_trans_cnt++;
 				tty->tty_inleft--;
 			}
@@ -335,8 +335,7 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 	tty->tty_inreply = SYSCALL_RET;
 	tty->tty_incaller   = msg->source;  /* who called, usually FS */
 	tty->tty_inprocnr   = msg->PROC_NR; /* who wants the chars */
-	tty->tty_inbuf  = va2la(tty->tty_inprocnr,
-				  msg->BUF);/* where the chars should be put */
+	tty->tty_inbuf  = msg->BUF;/* where the chars should be put */
 	tty->tty_inleft = msg->CNT; /* how many chars are requested */
 	tty->tty_trans_cnt= 0; /* how many chars have been transferred */
 
@@ -362,8 +361,7 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 	tty->tty_outreply    = SYSCALL_RET;
 	tty->tty_outcaller   = msg->source;  /* who called, usually FS */
 	tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
-	tty->tty_outbuf  = va2pa(tty->tty_outprocnr,
-				  msg->BUF);/* where are the chars */
+	tty->tty_outbuf  = msg->BUF;/* where are the chars */
 	tty->tty_outleft = msg->CNT; /* how many chars are requested */
 	tty->tty_outcnt = 0;
 

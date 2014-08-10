@@ -4,8 +4,7 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
-SCSIDRV		= scsi/scsi.o
-BLKDRVOBJS	= floppy.o hd.o ramdisk.o $(SCSIDRV)
+BLKDRVOBJS	= floppy.o hd.o ramdisk.o
 BLKDRV		= block.o
 
 everything : realclean $(BLKDRV)
@@ -20,6 +19,3 @@ $(BLKDRV): $(BLKDRVOBJS)
 %.o: %.c
 	@echo -e '\tCC\tdrivers/block/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
-
-$(SCSIDRV):
-	@(cd scsi; make)

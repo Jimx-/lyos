@@ -33,7 +33,7 @@
 /**
  * <Ring 0> Setup identity paging for kernel
  */
-PUBLIC void setup_paging(unsigned int memory_size, pde_t * pgd, pte_t * pt, int kpts)
+PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 {
     pte_t * page_table_start = pt;
     /* full 4G memory */
@@ -210,8 +210,8 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
         pt[pt_index] = ((u32)la2pa(src_pid, (void *)_src_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
     }
 
-    void * src_pa = (void *)va2pa(src_pid, src_addr);
-    void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
+    //void * src_pa = (void *)va2pa(src_pid, src_addr);
+    //void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
 
     //phys_copy(dest_pa, src_pa, len);
     phys_copy((void *)(dest_vaddr + dest_offset), (void *)(src_vaddr + src_offset), len);

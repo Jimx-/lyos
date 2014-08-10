@@ -157,15 +157,14 @@
 #define TASK_FS		2
 #define TASK_SYS	3
 #define TASK_DEVMAN	4
-#define TASK_HD		5
-#define TASK_INITFS	6
-#define TASK_EXT2_FS	7
-#define	TASK_RD		8
+#define	TASK_RD		5
+#define TASK_HD		6
+#define TASK_INITFS	7
+#define TASK_EXT2_FS	8
 #define TASK_FD		9
-#define TASK_SCSI	10
-#define TASK_PCI	11
-#define TASK_INET	12
-#define INIT		13
+#define TASK_PCI	10
+#define TASK_INET	11
+#define INIT		12
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
@@ -321,7 +320,6 @@ enum msgtype {
 #define	DEV_FLOPPY		2
 #define	DEV_HD			3
 #define	DEV_CHAR_TTY		4
-#define	DEV_SCSI		5
 /* make device number from major and minor numbers */
 #define	MAJOR_SHIFT		8
 #define MINOR_MASK		((1U << MAJOR_SHIFT) - 1)
@@ -358,14 +356,12 @@ enum msgtype {
 #define	P_PRIMARY	0
 #define	P_EXTENDED	1
 
-#define LYOS_PART	0x91	/* Lyos' partition */
 #define NO_PART		0x00	/* unused entry */
 #define EXT_PART	0x05	/* extended partition */
 
 #define	NR_FILES	64
 #define	NR_FILE_DESC	64	/* FIXME */
 #define	NR_INODE	64	/* FIXME */
-#define	NR_SUPER_BLOCK	8
 #define NR_VFS_MOUNT	16
 
 /* INODE::i_mode (octal, lower 12 bits reserved) */

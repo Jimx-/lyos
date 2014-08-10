@@ -27,12 +27,6 @@ struct dev_drv_map {
 	int driver_nr; /**< The proc nr.\ of the device driver. */
 };
 
-/**
- * @def   MAGIC_V1
- * @brief Magic number of FS v1.0
- */
-#define	MAGIC_V1	0x111
-
 #define	MAX_PATH	512
 #define FS_LABEL_MAX 15
 
@@ -92,44 +86,6 @@ struct dev_drv_map {
 #define MS_READONLY         0x001
 #define RF_READONLY         0x001
 #define RF_ISROOT           0x002
-/**
- * @struct super_block fs.h "include/fs.h"
- * @brief  The 2nd sector of the FS
- *
- * Remember to change SUPER_BLOCK_SIZE if the members are changed.
- */
-struct super_block {
-	u32	magic;		  /**< Magic number */
-	u32	nr_inodes;	  /**< How many inodes */
-	u32	nr_sects;	  /**< How many sectors */
-	u32	nr_imap_sects;	  /**< How many inode-map sectors */
-	u32	nr_smap_sects;	  /**< How many sector-map sectors */
-	u32	n_1st_sect;	  /**< Number of the 1st data sector */
-	u32	nr_inode_sects;   /**< How many inode sectors */
-	u32	root_inode;       /**< Inode nr of root directory */
-	u32	inode_size;       /**< INODE_SIZE */
-	u32	inode_isize_off;  /**< Offset of `struct inode::i_size' */
-	u32	inode_start_off;  /**< Offset of `struct inode::i_start_sect' */
-	u32	dir_ent_size;     /**< DIR_ENTRY_SIZE */
-	u32	dir_ent_inode_off;/**< Offset of `struct dir_entry::inode_nr' */
-	u32	dir_ent_fname_off;/**< Offset of `struct dir_entry::name' */
-
-	u32 block_size;
-
-	/*
-	 * the following item(s) are only present in memory
-	 */
-	int	sb_dev; 	/**< the super block's home device */
-};
-
-/**
- * @def   SUPER_BLOCK_SIZE
- * @brief The size of super block \b in \b the \b device.
- *
- * Note that this is the size of the struct in the device, \b NOT in memory.
- * The size in memory is larger because of some more members.
- */
-#define	SUPER_BLOCK_SIZE	56
 
 /**
  * @struct inode
@@ -188,23 +144,6 @@ struct vfs_mount {
  * @see   dir_entry
  */
 #define	MAX_FILENAME_LEN	12
-
-/**
- * @struct dir_entry
- * @brief  Directory Entry
- */
-struct dir_entry {
-	int	inode_nr;		/**< inode nr. */
-	char	name[MAX_FILENAME_LEN];	/**< Filename */
-};
-
-/**
- * @def   DIR_ENTRY_SIZE
- * @brief The size of directory entry in the device.
- *
- * It is as same as the size in memory.
- */
-#define	DIR_ENTRY_SIZE	sizeof(struct dir_entry)
 
 /**
  * @struct file_desc

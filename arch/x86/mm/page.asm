@@ -12,9 +12,6 @@
 ;
 ;    You should have received a copy of the GNU General Public License
 ;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
-extern wp_page
-extern no_page
 
 global enable_paging
 global read_cr2

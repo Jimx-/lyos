@@ -44,12 +44,11 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
 	{task_devman,   STACK_SIZE_DEVMAN,"DEVMAN"	  },
+	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
 	{task_initfs,	STACK_SIZE_INITFS,"INITFS"	  },
 	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
-	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{task_fd,       STACK_SIZE_FD,    "FD"        },
-	{task_scsi,     STACK_SIZE_SCSI,  "SCSI"      },
 	{task_pci,      STACK_SIZE_PCI,   "PCI"       },
 	{task_inet,     STACK_SIZE_INET,  "INET"      },
 };
@@ -71,7 +70,6 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 						       					   sys_sendrec,
 												   sys_datacopy};
 												   
-PUBLIC	struct buffer_head * buffer_table[NR_BUFFER];
 PUBLIC int errno;
 
 PUBLIC int err_code = 0;
@@ -92,7 +90,7 @@ struct dev_drv_map dd_map[] = {
 	{TASK_FD},			/**< 2 : Floppy */
 	{TASK_HD},			/**< 3 : Hard disk */
 	{TASK_TTY},			/**< 4 : TTY */
-	{TASK_SCSI}			/**< 5 : Scsi disk */
+	{INVALID_DRIVER}	/**< 5 : Scsi disk */
 };
 
 PUBLIC	u8 *		fsbuf		= (u8*)&_fsbuf;

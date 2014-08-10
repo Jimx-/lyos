@@ -56,8 +56,6 @@ extern  struct task	user_proc_table[];
 extern	irq_handler	irq_table[];
 extern	TTY		tty_table[];
 extern  CONSOLE		console_table[];
-EXTERN	int	nr_buffer;
-extern	struct buffer_head * buffer_table[];
 
 extern  int             err_code;
 
@@ -88,7 +86,6 @@ EXTERN	int 				mem_start;
 EXTERN	int					ROOT_DEV;
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
-EXTERN	struct super_block	super_block[NR_SUPER_BLOCK];
 #define FSBUF_SIZE          0x100000
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];
 extern	u8 *			fsbuf;
@@ -96,4 +93,3 @@ EXTERN	MESSAGE			fs_msg;
 EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
-EXTERN  struct file_system *	file_systems;

@@ -155,11 +155,6 @@ PUBLIC void init_vfs()
 	for (i = 0; i < NR_INODE; i++)
 		memset(&inode_table[i], 0, sizeof(struct inode));
 
-	/* super_block[] */
-	struct super_block * sb = super_block;
-	for (; sb < &super_block[NR_SUPER_BLOCK]; sb++)
-		sb->sb_dev = NO_DEV;
-
     init_inode_table();
 
     int initrd_dev = MAKE_DEV(DEV_RD, 0);

@@ -21,7 +21,7 @@
  * when there is a page fault caused by access to this guard area,
  * stack size will be enlarged.
  */
-#define GROWSDOWN_GUARD_LEN     0x1000
+#define GROWSDOWN_GUARD_LEN     0x8000
 
 #define RF_NORMAL   0x0
 #define RF_SHARABLE 0x1

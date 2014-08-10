@@ -30,8 +30,6 @@
 #include "multiboot.h"
 #include "page.h"
 
-int get_kernel_map(unsigned int * b, unsigned int * l);
-
 extern char _end[];
 extern pde_t pgd0;
 PRIVATE pde_t * user_pgd = NULL;
@@ -73,8 +71,10 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     	kernel_pts++;
     	PROCS_BASE = kernel_pts * PT_MEMSIZE;
     }
-	setup_paging(memory_size, initial_pgd, pt, kernel_pts);
+	setup_paging(initial_pgd, pt, kernel_pts);
 	
+	/* initial_pgd --> physical initial pgd */
+
 	/* setup user page table */
 	int i, j;
 	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
@@ -117,8 +117,8 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 PUBLIC void init_arch()
 {
 	int i, j, eflags, prio;
-        u8  rpl;
-        u8  priv; /* privilege */
+    u8  rpl;
+    u8  priv; /* privilege */
 
 	struct task * t;
 	struct proc * p = proc_table;
@@ -133,20 +133,19 @@ PUBLIC void init_arch()
 			continue;
 		}
 
-	    	if (i < NR_TASKS) {     /* TASK */
-                        t	= task_table + i;
-                        priv	= PRIVILEGE_TASK;
-                        rpl     = RPL_TASK;
-                        eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
-			            prio    = 15;
-                }
-                else {                  /* USER PROC */
-                        t	= user_proc_table + (i - NR_TASKS);
-                        priv	= PRIVILEGE_USER;
-                        rpl     = RPL_USER;
-                        eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
-			            prio    = 5;
-                }
+	    if (i < NR_TASKS) {     /* TASK */
+            t	= task_table + i;
+            priv	= PRIVILEGE_TASK;
+            rpl     = RPL_TASK;
+            eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
+			prio    = 15;
+        } else {                  /* USER PROC */
+            t	= user_proc_table + (i - NR_TASKS);
+            priv	= PRIVILEGE_USER;
+            rpl     = RPL_USER;
+            eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
+			prio    = 5;
+        }
 
 		strcpy(p->name, t->name);	/* name of the process */
 		p->p_parent = NO_TASK;
@@ -160,8 +159,8 @@ PUBLIC void init_arch()
 			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
 
 			if ((strcmp(t->name, "VFS") == 0) || (strcmp(t->name, "INITFS") == 0) ||
-				(strcmp(t->name, "INET") == 0) || (strcmp(t->name, "SCSI") == 0) ||
-				(strcmp(t->name, "EXT2_FS") == 0)) {
+				(strcmp(t->name, "INET") == 0) ||
+				(strcmp(t->name, "EXT2_FS") == 0) || (strcmp(t->name, "TTY") == 0)) {
 				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 			} else {
@@ -171,13 +170,9 @@ PUBLIC void init_arch()
 			}
 
 			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
-				if (p->pgd.phys_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & 0xfffff000);
+				if (p->pgd.vir_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)((p->pgd.vir_addr[j] + KERNEL_VMA) & 0xfffff000);
 			}			
-		}
-		else {		/* INIT process */
-			unsigned int k_base;
-			unsigned int k_limit;
-			get_kernel_map(&k_base, &k_limit);
+		} else {		/* INIT process */
 			init_desc(&p->ldts[INDEX_LDT_C],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
@@ -186,14 +181,11 @@ PUBLIC void init_arch()
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
 			
-			//p->pgd.phys_addr = user_pgd;
-			//p->pgd.vir_addr = user_pgd;
 			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
-			//FIXME: should be p->pgd.vir_addr = user_pgd + KERNEL_VMA;
-			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
+			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 
 			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + 4; j++) {
-				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.phys_addr[j] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.vir_addr[j] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
 			}
 		}
 
