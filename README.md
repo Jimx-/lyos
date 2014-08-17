@@ -49,7 +49,7 @@ COMPILATION AND INSTALLATION
 
 2. Setup toolchain
 	- Under the lyos' root directory, run:
-    ``\./scripts/setup-toolchain.sh``
+    ``./scripts/setup-toolchain.sh``
 
 3. Compile Lyos
     - Remove all the object files:
