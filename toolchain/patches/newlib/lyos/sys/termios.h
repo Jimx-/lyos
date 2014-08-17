@@ -186,4 +186,6 @@ struct termios {
 #define	TLNEXT_DEF	'\26'	/* ^V */
 #define	TDISCARD_DEF	'\17'	/* ^O */
 
+int tcgetattr(int fd, struct termios * tio);
+
 #endif

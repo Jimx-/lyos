@@ -1,5 +1,7 @@
 This is Lyos <http://lyos.googlecode.com>
 
+![loginprompt][1]
+
 WHAT IS LYOS
 ============
 	
@@ -67,3 +69,5 @@ COMPILATION AND INSTALLATION
     - Run bochs: ```bochs```
     - If you want to use qemu instead, run:
     ```make kvm``` 
+
+  [1]: http://jimx.1x.net/images/screenshot-3.png

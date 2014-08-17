@@ -91,6 +91,9 @@ PUBLIC void task_fs()
 		case WRITE:
 			msg.CNT = do_rdwt(&msg);
 			break;
+		case IOCTL:
+			msg.RETVAL = do_ioctl(&msg);
+			break;
 		case STAT:
 			msg.RETVAL = do_stat(&msg);
 			break;

@@ -20,6 +20,7 @@
 #include "assert.h"
 #include "errno.h"
 #include "fcntl.h"
+#include <sys/ioctl.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -51,6 +52,7 @@ PRIVATE void	tty_dev_write	(TTY* tty);
 PRIVATE void 	in_transfer	(TTY* tty);
 PRIVATE void	tty_do_read	(TTY* tty, MESSAGE* msg);
 PRIVATE void	tty_do_write	(TTY* tty, MESSAGE* msg);
+PRIVATE void 	tty_do_ioctl(TTY* tty, MESSAGE* msg);
 PRIVATE void	tty_echo	(TTY* tty, char c);
 PRIVATE void	put_key		(TTY* tty, u32 key);
 
@@ -98,6 +100,9 @@ PUBLIC void task_tty()
 			break;
 		case DEV_WRITE:
 			tty_do_write(ptty, &msg);
+			break;
+		case DEV_IOCTL:
+			tty_do_ioctl(ptty, &msg);
 			break;
 		case HARD_INT:
 			/**
@@ -379,6 +384,37 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 		send_recv(SEND, tty->tty_outcaller, msg);
 		tty->tty_outreply = RESUME_PROC;
 	}
+}
+
+/*****************************************************************************
+ *                                tty_do_ioctl
+ *****************************************************************************/
+/**
+ * Invoked when task TTY receives DEV_IOCTL message.
+ * 
+ * @param tty  To which TTY the calller proc is bound.
+ * @param msg  The MESSAGE.
+ *****************************************************************************/
+PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
+{
+	int retval = SYSCALL_RET;
+
+	switch (msg->REQUEST) {
+	case TCGETS:
+		data_copy(msg->PROC_NR, D, msg->BUF, getpid(), D, &(tty->tty_termios), sizeof(struct termios));
+		break;
+	case TCSETSW:
+    case TCSETSF:
+    //case TCDRAIN:
+    case TCSETS:
+    	data_copy(getpid(), D, &(tty->tty_termios), msg->PROC_NR, D, msg->BUF, sizeof(struct termios));
+    	break;
+	default:
+		break;
+	}
+
+	msg->type = retval;
+	send_recv(SEND, msg->source, msg);
 }
 
 /*****************************************************************************

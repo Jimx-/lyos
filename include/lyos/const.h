@@ -213,22 +213,21 @@ enum msgtype {
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
-	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP,
-								/* 18 ~ 34 */
+	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP, IOCTL,	/* 18 ~ 35 */
 	/* FS & TTY */
-	SUSPEND_PROC, RESUME_PROC,				/* 35 ~ 36 */
+	SUSPEND_PROC, RESUME_PROC,				/* 36 ~ 37 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 37 ~ 46 */
+	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 38 ~ 47 */
 
 	/* FS & MM */
-	FORK, EXIT,					/* 47 ~ 58 */
+	FORK, EXIT,					/* 48 ~ 49 */
 
 	/* SERVMAN */
-	SERVICE_UP, SERVICE_DOWN,		/* 49 ~ 50 */
+	SERVICE_UP, SERVICE_DOWN,		/* 50 ~ 51 */
 
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 51 */
+	SYSCALL_RET,						/* 52 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,

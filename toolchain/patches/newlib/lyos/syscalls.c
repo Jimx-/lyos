@@ -6,7 +6,9 @@
 #include <sys/times.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 #include <sys/utsname.h>
+#include <sys/termios.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -462,6 +464,21 @@ int read(int fd, void *buf, int count)
 	return msg.CNT;
 }
 
+int ioctl(int fd, int request, void * data)
+{
+	MESSAGE msg;
+	msg.type = IOCTL;
+	msg.FD = fd;
+	msg.REQUEST = request;
+	msg.BUF = data;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
+}
+
 int creat(const char *path, mode_t mode) {
 	return open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
 }
@@ -699,4 +716,21 @@ int sethostname(const char *name, size_t len)
 	}
 
 	return 0;
+}
+
+int tcgetattr(int fd, struct termios * tio) {
+	return ioctl(fd, TCGETS, tio);
+}
+
+int tcsetattr(int fd, int actions, struct termios * tio) {
+	switch (actions) {
+		case TCSANOW:
+			return ioctl(fd, TCSETS, tio);
+		case TCSADRAIN:
+			return ioctl(fd, TCSETSW, tio);
+		case TCSAFLUSH:
+			return ioctl(fd, TCSETSF, tio);
+		default:
+			return 0;
+	}
 }
