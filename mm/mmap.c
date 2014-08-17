@@ -65,6 +65,7 @@ PUBLIC int do_mmap()
     struct proc * p = proc_table + who;
     int flags = mm_msg.MMAP_FLAGS;
     int fd = mm_msg.MMAP_FD;
+    int prot = mm_msg.MMAP_PROT;
 
     struct vir_region * vr = NULL;
 
@@ -74,6 +75,8 @@ PUBLIC int do_mmap()
         if (fd != -1) return EINVAL;
 
         int vr_flags = RF_NORMAL;
+
+        if (prot & PROT_WRITE) vr_flags |= RF_WRITABLE;
 
         if (flags & MAP_GROWSDOWN) vr_flags |= RF_GROWSDOWN;
         if (!(vr = mmap_region(p, addr, flags, len, vr_flags))) return ENOMEM;

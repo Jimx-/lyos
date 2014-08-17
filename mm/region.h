@@ -24,8 +24,10 @@
 struct phys_frame {
     void * phys_addr;
 
-    u16 refcnt;
-    u16 flags;
+    u32 refcnt;
+    u32 flags;
+
+    struct phys_frame * share;
 };
 
 /**

@@ -145,7 +145,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
         void * paddr = (void *)alloc_pages(1);
         if (!paddr) return ENOMEM;
-        frame->flags = RF_NORMAL;
+        frame->flags = RF_NORMAL | (rp->flags & RF_WRITABLE);
         frame->phys_addr = paddr; 
         frame->refcnt = 1;
     }
@@ -172,12 +172,14 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
 
     for (i = 0; len > 0; len -= PG_SIZE, base += PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
-        if (frame->phys_addr == NULL || frame->flags & RF_MAPPED) continue;
+        if (frame->phys_addr == NULL) continue;
 #if REGION_DEBUG
         printl("MM: region_map_phys: mapping page(0x%x -> 0x%x)\n", 
                 base, frame->phys_addr);
 #endif
-        pt_mappage(&(mp->pgd), frame->phys_addr, (void*)base, PG_PRESENT | PG_RW | PG_USER);
+        int flags = PG_PRESENT | PG_USER;
+        if (rp->flags & RF_WRITABLE) flags |= PG_RW;
+        pt_mappage(&(mp->pgd), frame->phys_addr, (void*)base, flags);
         frame->flags |= RF_MAPPED;
     }
 
@@ -208,6 +210,27 @@ PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp)
 
     return 0;
 }
+
+/**
+ * <Ring 1> Make virtual region rp write-protected. 
+ */
+PUBLIC int region_wp(struct proc * mp, struct vir_region * rp)
+{
+    pt_wp_memory(&(mp->pgd), rp->vir_addr, rp->length);
+/*
+    struct phys_region * pregion = &(rp->phys_block);
+    int i;
+
+    for (i = 0; i < rp->length / PG_SIZE; i++) {
+        struct phys_frame * frame = phys_region_get(pregion, i);
+        frame->flags |= ~RF_WRITEPROTECTED;
+    }
+
+    rp->flags &= ~RF_MAPPED;
+*/
+    return 0;
+}
+
 
 /**
  * <Ring 1> Extend memory region.
@@ -252,9 +275,33 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
     return retval;
 }
 
+PUBLIC int region_share(struct vir_region * dest, struct vir_region * src)
+{
+    int i;
+
+    dest->vir_addr = src->vir_addr;
+    dest->length = src->length;
+    dest->flags = src->flags;
+
+    struct phys_region * pregion = &(src->phys_block);
+    for (i = 0; i < src->length / PG_SIZE; i++) {
+        struct phys_frame * frame = phys_region_get(pregion, i);
+        if (frame->refcnt) frame->refcnt++;
+        frame->flags |= RF_SHARED;
+    }
+
+    phys_region_free(&(dest->phys_block));
+
+    dest->phys_block.capacity = pregion->capacity;
+    dest->phys_block.frames = pregion->frames;
+
+    return 0;
+}
+
 PUBLIC int region_free(struct vir_region * rp)
 {
     struct phys_region * pregion = &(rp->phys_block);
+    int free_frames = 1;
     int i;
     for (i = 0; i < rp->length / PG_SIZE; i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
@@ -262,10 +309,12 @@ PUBLIC int region_free(struct vir_region * rp)
 
         if (frame->refcnt <= 0) {
             if (frame->phys_addr) free_mem((int)(frame->phys_addr), PG_SIZE);
+        } else {
+            free_frames = 0;
         }
     }
 
-    free_vmem((int)(pregion->frames), pregion->capacity * sizeof(struct phys_frame));
+    if (free_frames) phys_region_free(pregion);
     free_vmem((int)rp, sizeof(struct vir_region));
     rp = NULL;
 

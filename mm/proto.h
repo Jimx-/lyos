@@ -29,6 +29,10 @@ PUBLIC int  free_vmem(int base, int len);
 
 PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags);
 PUBLIC int pt_mappage(struct page_directory * pgd, void * phys_addr, void * vir_addr, u32 flags);
+PUBLIC int pt_wppage(struct page_directory * pgd, void * vir_addr);
+PUBLIC int pt_unwppage(struct page_directory * pgd, void * vir_addr);
+PUBLIC int pt_wp_memory(struct page_directory * pgd, void * vir_addr, int length);
+PUBLIC int pt_unwp_memory(struct page_directory * pgd, void * vir_addr, int length);
 PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length);
 PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length);
 PUBLIC int pgd_new(struct page_directory * pgd);
@@ -42,6 +46,7 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp);
 PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
+PUBLIC int region_share(struct vir_region * dest, struct vir_region * src);
 PUBLIC int region_free(struct vir_region * rp);
 
 PUBLIC int proc_free(struct proc * p);

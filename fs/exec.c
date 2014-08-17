@@ -214,6 +214,7 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     execi.args.allocmem = libexec_allocmem;
     execi.args.allocstack = libexec_allocstack;
+    execi.args.alloctext = libexec_alloctext;
     execi.args.copymem = read_segment;
     execi.args.clearproc = libexec_clearproc;
     execi.args.clearmem = libexec_clearmem;

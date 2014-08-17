@@ -88,20 +88,20 @@ PUBLIC int do_fork()
 	/* copy regions */
 	struct vir_region * vr;
     list_for_each_entry(vr, &(parent->mem_regions), list) {
-       	/*if (vr->flags & RF_SHARABLE) {
-       		vr->flags |= RF_SHARED;
-       		list_add(&(vr->list), &(p->mem_regions));
-       		region_map_phys(p, vr);
-       	} else {*/
-       		struct vir_region * new_region = region_new(p, vr->vir_addr, vr->length, vr->flags);
-       		list_add(&(new_region->list), &(p->mem_regions));
-       		if (vr->flags & RF_MAPPED) {
-       			region_alloc_phys(new_region);
-       			region_map_phys(p, new_region);
+    	struct vir_region * new_region = region_new(p, vr->vir_addr, vr->length, vr->flags);
+       	list_add(&(new_region->list), &(p->mem_regions));
+       	
+       	if (!(vr->flags & RF_MAPPED)) continue;
 
-       			data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
-       		}
-       	//}
+       	if (vr->flags & RF_WRITABLE) {
+       		region_alloc_phys(new_region);
+       		region_map_phys(p, new_region);
+
+       		data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
+       	} else {	/* can be shared */
+       		region_share(new_region, vr);
+       		region_map_phys(p, new_region);
+       	}
     }
 
     init_desc(&p->ldts[INDEX_LDT_C],

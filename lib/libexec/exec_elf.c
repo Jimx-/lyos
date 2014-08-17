@@ -33,7 +33,7 @@
 #include "lyos/vm.h"
 #include <sys/mman.h>
 
-#define ELF_DEBUG
+//#define ELF_DEBUG
 
 #define roundup(x, a)  do {\
                         if ((x) % (a) != 0) {   \
@@ -119,9 +119,16 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         if (0 /* execi->memmap(...) == 0 */) {
 
         } else {
-            if (execi->allocmem(execi, vaddr, memsize) != 0) {
-                if (execi->clearproc) execi->clearproc(execi);
-                return ENOMEM;
+            if (phdr->p_flags & PF_W) {
+                if (execi->allocmem(execi, vaddr, memsize) != 0) {
+                    if (execi->clearproc) execi->clearproc(execi);
+                    return ENOMEM;
+                }
+            } else {
+                if (execi->alloctext(execi, vaddr, memsize) != 0) {
+                    if (execi->clearproc) execi->clearproc(execi);
+                    return ENOMEM;
+                }                
             }
 
             if (execi->copymem(execi, foffset, vaddr, fsize) != 0) {

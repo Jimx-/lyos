@@ -50,7 +50,7 @@ PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags)
         pt[i] = 0;
     }
 
-    pgd->vir_addr[pde] = (int)va2pa(getpid(), pt) | flags | PG_PRESENT | PG_RW | PG_USER;
+    pgd->vir_addr[pde] = (int)va2pa(getpid(), pt) | flags;
     pgd->vir_pts[pde] = pt;
 
     return 0;
@@ -82,6 +82,38 @@ PUBLIC int pt_mappage(struct page_directory * pgd, void * phys_addr, void * vir_
     return 0;
 }
 
+/**
+ * <Ring 1> Make a physical page write-protected.
+ * @param  vir_addr  Virtual address.
+ * @return           Zero on success.
+ */
+PUBLIC int pt_wppage(struct page_directory * pgd, void * vir_addr)
+{
+    unsigned long pgd_index = ARCH_PDE(vir_addr);
+    unsigned long pt_index = ARCH_PTE(vir_addr);
+
+    pte_t * pt = pgd->vir_pts[pgd_index];
+    if (pt) pt[pt_index] &= ~PG_RW;
+
+    return 0;
+}
+
+/**
+ * <Ring 1> Make a physical page read-write.
+ * @param  vir_addr  Virtual address.
+ * @return           Zero on success.
+ */
+PUBLIC int pt_unwppage(struct page_directory * pgd, void * vir_addr)
+{
+    unsigned long pgd_index = ARCH_PDE(vir_addr);
+    unsigned long pt_index = ARCH_PTE(vir_addr);
+
+    pte_t * pt = pgd->vir_pts[pgd_index];
+    if (pt) pt[pt_index] |= PG_RW;
+
+    return 0;
+}
+
 PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length)
 {
     /* sanity check */
@@ -101,6 +133,40 @@ PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_
     return 0;
 }
 
+PUBLIC int pt_wp_memory(struct page_directory * pgd, void * vir_addr, int length)
+{
+    /* sanity check */
+    if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (length % PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
+    
+    while (1) {
+        pt_wppage(pgd, vir_addr);
+
+        length -= PG_SIZE;
+        vir_addr += PG_SIZE;
+        if (length <= 0) break;
+    }
+
+    return 0;
+}
+
+PUBLIC int pt_unwp_memory(struct page_directory * pgd, void * vir_addr, int length)
+{
+    /* sanity check */
+    if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (length % PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
+    
+    while (1) {
+        pt_unwppage(pgd, vir_addr);
+
+        length -= PG_SIZE;
+        vir_addr += PG_SIZE;
+        if (length <= 0) break;
+    }
+
+    return 0;
+}
+
 PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length)
 {
     /* sanity check */
@@ -108,7 +174,7 @@ PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length
     if (length % PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
 
     while (1) {
-        pt_mappage(pgd, NULL, vir_addr, PG_PRESENT | PG_RW | PG_USER);
+        pt_mappage(pgd, NULL, vir_addr, 0);
 
         length -= PG_SIZE;
         vir_addr += PG_SIZE;

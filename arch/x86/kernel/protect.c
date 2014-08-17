@@ -28,7 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-#define PROTECT_DEBUG
+//#define PROTECT_DEBUG
 
 PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m);
 

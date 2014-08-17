@@ -130,10 +130,6 @@ PUBLIC int do_mount(MESSAGE * p)
 
     data_copy(getpid(), D, source, src, D, p->MSOURCE, source_len);
     data_copy(getpid(), D, target, src, D, p->MTARGET, target_len);
-    /*
-    phys_copy(va2pa(getpid(), source), va2pa(src, p->MSOURCE), source_len);
-    phys_copy(va2pa(getpid(), target), va2pa(src, p->MTARGET), target_len);
-    */
 
     source[source_len] = '\0';
     target[target_len] = '\0';
@@ -229,6 +225,7 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
             p->pwd = root_inode;
         }
 
+        printl("VFS: dev #%d is mounted on /\n", dev);
         have_root++;
         unlock_vmnt(new_pvm);
         unlock_inode(root_inode);
