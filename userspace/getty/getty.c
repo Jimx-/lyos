@@ -26,9 +26,8 @@ int main(int argc, char * argv[])
 	int len = read(0, name, NAME_LEN);
 	name[len] = '\0';
 
-	char * login_argv[2];
-	login_argv[0] = LOGIN;
-	login_argv[1] = name;
+	char * login_argv[] = {LOGIN, name, NULL};
+
 	execv(LOGIN, login_argv);
 
 	printf("getty: can't exec!\n");

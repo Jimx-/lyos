@@ -14,7 +14,7 @@
 
 int main(int argc, char * argv[])
 {
-	mount("/dev/hd1a", "/", "ext2", 0, NULL);
+	//mount("/dev/hd1a", "/", "ext2", 0, NULL);
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
@@ -42,9 +42,7 @@ int main(int argc, char * argv[])
 			close(fd_stdout);
 			close(fd_stderr);
 		
-			char * argv[2];
-			argv[0] = GETTY;
-			argv[1] = ttylist[i];
+			char * argv[] = {GETTY, ttylist[i], NULL};
 			_exit(execv(GETTY, argv));
 		}
 	}

@@ -51,16 +51,10 @@ PUBLIC void do_handle_fault()
 
     int handled = 0;
 
+    if (ARCH_PF_PROT(err_code)) {
 #ifdef PAGEFAULT_DEBUG
-    if (ARCH_PF_PROT(err_code)) {
         printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
-    } else if (ARCH_PF_NOPAGE(err_code)) {
-        printl("MM: pagefault: %d bad address %x\n", proc2pid(p), pfla);
-    }
 #endif
-
-    if (ARCH_PF_PROT(err_code)) {
-        printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
 
         struct vir_region * vr;
         int found = 0;
@@ -77,7 +71,9 @@ PUBLIC void do_handle_fault()
             int fault_frame = (pfla - vr->vir_addr) / PG_SIZE;*/
         }
     } else if (ARCH_PF_NOPAGE(err_code)) {
+#ifdef PAGEFAULT_DEBUG
         printl("MM: pagefault: %d bad address %x\n", proc2pid(p), pfla);
+#endif
 
         int extend = 0;
         struct vir_region * vr;
