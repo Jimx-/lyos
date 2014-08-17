@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <signal.h>
 
 #include "const.h"
 #include "proc.h"
@@ -75,7 +76,7 @@ int execv(const char *path, char * argv[])
 int execve(const char *name, char * argv[], char * const envp[]) 
 {
 	char **p = argv, **q = NULL;
-	char arg_stack[PROC_ORIGIN_STACK];
+	char arg_stack[PROC_ORIGIN_STACK / 2];
 	int stack_len = 0;
 
 	/* arg_stack layout */
@@ -182,6 +183,22 @@ int kill(int pid,int signo)
 
 	send_recv(BOTH, TASK_MM, &msg);
 	//assert(msg.type == SYSCALL_RET);
+
+	return msg.RETVAL;
+}
+
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	MESSAGE msg;
+
+	msg.type = SIGACTION;
+	msg.NEWSA = act;
+	msg.OLDSA = oldact;
+	msg.SIGNR = signum;
+
+	cmb();
+
+	send_recv(BOTH, TASK_MM, &msg);
 
 	return msg.RETVAL;
 }

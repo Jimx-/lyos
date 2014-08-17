@@ -34,7 +34,8 @@
 #include "proto.h"
 #include "global.h"
 #include "tar.h"
-
+#include "lyos/driver.h"
+    
 PUBLIC int initfs_rdwt(MESSAGE * p)
 {
     dev_t dev = (int)p->RWDEV;

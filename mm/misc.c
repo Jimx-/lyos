@@ -30,6 +30,7 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include "region.h"
 #include "proto.h"
 #include "const.h"
 #include "lyos/vm.h"

@@ -19,16 +19,22 @@
 #include <lyos/list.h>
 
 /**
+ * Physical frame
+ */
+struct phys_frame {
+    void * phys_addr;
+
+    u16 refcnt;
+    u16 flags;
+};
+
+/**
  * Physical memory region
  */
 struct phys_region {
-    struct list_head list;
+    struct phys_frame * frames;
 
-    void * phys_addr;
-    void * vir_addr;
-    int length;
-
-    int flags;
+    int capacity;
 };
 
 /**
@@ -39,7 +45,7 @@ struct vir_region {
 
     void * vir_addr;
     int length;
-    struct list_head phys_blocks;  /*<- physical memory blocks */
+    struct phys_region phys_block;  /*<- physical memory block */
 
     int flags;
 };

@@ -65,12 +65,6 @@ PUBLIC void 	fd_handler(int irq);
 /* kernel/block/rd.c */
 PUBLIC void 	task_rd();
 
-/* kernel/block/scsi/scsi.c */
-PUBLIC void 	task_scsi();
-PUBLIC void 	init_scsi();
-PUBLIC void 	scsi_handler(int irq);
-PUBLIC void 	do_scsi_request();
-
 /* kernel/block/pci/pci.c */
 PUBLIC void 	task_pci();
 PUBLIC void 	pci_init();
@@ -81,37 +75,16 @@ PUBLIC void     task_devman();
 
 /* keyboard.c */
 PUBLIC void 	init_keyboard();
-PUBLIC void 	kb_init(TTY * tty);
-PUBLIC void 	keyboard_read(TTY* p_tty);
 
 /* tty.c */
 PUBLIC void 	task_tty();
-PUBLIC void 	handle_events(TTY* tty);
-PUBLIC void 	in_process(TTY* p_tty, u32 key);
-PUBLIC void 	dump_tty_buf();	/* for debug only */
 
 /* systask.c */
 PUBLIC void 	task_sys();
 
-/* fs/main.c */
-/*PUBLIC void	task_fs();*/
-
-/* fs/Lyos/main.c */
+/* fs/lyos/main.c */
 PUBLIC void	    task_fs();
 PUBLIC void	    init_fs();
-PUBLIC void 	mount_root();
-PUBLIC int      rw_sector	(int io_type, int dev, u64 pos,
-						int bytes, int proc_nr, void * buf);
-PUBLIC struct inode *		get_inode	(int dev, int num);
-PUBLIC void	    put_inode	(struct inode * pinode);
-PUBLIC void	    sync_inode	(struct inode * p);
-PUBLIC void 	read_super_block(int dev);
-PUBLIC struct super_block *	get_super_block	(int dev);
-
-/* fs/Lyos/misc.c */
-PUBLIC int	     do_stat(MESSAGE * p);
-PUBLIC int       do_fstat(MESSAGE * p);
-PUBLIC int       do_access(MESSAGE * p);
 
 /* fs/ext2/main.c */
 PUBLIC void task_ext2_fs();
@@ -121,27 +94,6 @@ PUBLIC void task_initfs();
 
 /* mm/main.c */
 PUBLIC void	task_mm();
-
-/* mm/alloc.c */
-PUBLIC void	mem_init(int mem_start, int free_mem_size);
-PUBLIC void vmem_init(int mem_start, int free_mem_size);
-/* PUBLIC int	alloc_mem(int pid, int memsize); */
-PUBLIC int	alloc_mem(int memsize);
-PUBLIC int	free_mem(int base, int len);
-PUBLIC int alloc_pages(int nr_pages);
-
-PUBLIC int  alloc_vmem(int memsize);
-PUBLIC int alloc_vmpages(int nr_pages);
-PUBLIC int  free_vmem(int base, int len);
-
-PUBLIC int map_page(struct page_directory * pgd, void * phys_addr, void * vir_addr);
-
-/* console.c */
-PUBLIC void	out_char(TTY* tty, char ch);
-PUBLIC void 	scroll_screen(CONSOLE* p_con, int direction);
-PUBLIC void 	select_console(int nr_console);
-PUBLIC void 	init_screen(TTY* p_tty);
-PUBLIC int  	is_current_console(CONSOLE* p_con);
 
 /* proc.c */
 PUBLIC	void	schedule();
@@ -155,34 +107,6 @@ PUBLIC	void	dump_proc(struct proc * p);
 PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC  void	inform_int(int task_nr);
 
-/* fs/Lyos/open.c */
-PUBLIC int	do_open(MESSAGE * p);
-PUBLIC int	do_close(MESSAGE * p);
-PUBLIC int	do_lseek(MESSAGE * p);
-PUBLIC int	do_chroot(MESSAGE * p);
-PUBLIC int 	do_mount(MESSAGE * p);
-PUBLIC int 	do_umount(MESSAGE * p);
-PUBLIC int 	do_mkdir(MESSAGE * p);
-
-/* fs/Lyos/read_write.c */
-PUBLIC int	do_rdwt(MESSAGE * p);
-
-/* fs/Lyos/link.c */
-PUBLIC int	do_unlink(MESSAGE * p);
-
-/* mm/forkexit.c */
-PUBLIC int	do_fork();
-PUBLIC void	do_exit(int status);
-PUBLIC void	do_wait();
-PUBLIC int	do_kill();
-
-/* sys.c */
-PUBLIC int 	do_brk();
-
-/* signal.h */
-PUBLIC int 	do_sigaction();
-PUBLIC int 	do_raise();
-PUBLIC int 	do_alarm();
 /* lib/misc.c */
 PUBLIC void 	spin(char * func_name);
 PUBLIC u32      now();

@@ -27,6 +27,7 @@
 #include "lyos/keyboard.h"
 #include "lyos/keymap.h"
 #include "lyos/proto.h"
+#include "proto.h"
 
 PRIVATE	struct kb_inbuf	kb_in;
 PRIVATE	int		code_with_E0;

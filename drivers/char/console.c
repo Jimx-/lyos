@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include "proto.h"
 
 /* #define __TTY_DEBUG__ */
 

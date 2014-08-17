@@ -31,7 +31,8 @@
 #include "lyos/proto.h"
 #include "lyos/hd.h"
 #include "lyos/list.h"
-
+#include "lyos/driver.h"
+    
 /**
  * <Ring 1> Read/Write init device
  */

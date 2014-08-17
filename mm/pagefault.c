@@ -49,11 +49,13 @@ PUBLIC void do_handle_fault()
     int err_code = mm_msg.FAULT_ERRCODE;
     int resume_state = mm_msg.FAULT_STATE;
 
+#ifdef PAGEFAULT_DEBUG
     if (ARCH_PF_PROT(err_code)) {
         printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
     } else if (ARCH_PF_NOPAGE(err_code)) {
         printl("MM: pagefault: %d bad address %x\n", proc2pid(p), pfla);
     }
+#endif
 
     int extend = 0;
     struct vir_region * vr;
@@ -62,14 +64,14 @@ PUBLIC void do_handle_fault()
     list_for_each_entry(vr, &(p->mem_regions), list) {
         if (vr->flags & RF_GUARD) {
             /* pfla is in stack guard area: extend stack */
-            if (pfla > (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
+            if (pfla >= (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
 #ifdef PAGEFAULT_DEBUG
                 printl("MM: page fault caused by not enough stack space, extending\n");
 #endif
                 gd_base = (int)(vr->vir_addr) + vr->length;
-                extend = 1;
                 vr->vir_addr = (void*)((int)vr->vir_addr - GROWSDOWN_GUARD_LEN);
                 handled = 1;
+                extend = 1;
             }
         }
     }
@@ -77,7 +79,7 @@ PUBLIC void do_handle_fault()
     if (extend) {
         list_for_each_entry(vr, &(p->mem_regions), list) {
             if ((vr->flags & RF_GROWSDOWN) && (gd_base == (int)vr->vir_addr)) {
-                region_extend_stack(vr, GROWSDOWN_GUARD_LEN);
+                if (region_extend_stack(vr, GROWSDOWN_GUARD_LEN) != 0) handled = 0;
                 region_map_phys(p, vr);
             }
         }
@@ -87,6 +89,12 @@ PUBLIC void do_handle_fault()
     if (handled) {
         p->state = resume_state;
     }
-    else
+    else {
+        if (ARCH_PF_PROT(err_code)) {
+            printl("MM: SIGSEGV %d protected address %x\n", proc2pid(p), pfla);
+        } else if (ARCH_PF_NOPAGE(err_code)) {
+            printl("MM: SIGSEGV %d bad address %x\n", proc2pid(p), pfla);
+        }
         send_sig(SIGSEGV, p); 
+    }
 }

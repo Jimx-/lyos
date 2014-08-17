@@ -31,6 +31,8 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "page.h"
+#include "region.h"
+#include "proto.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
 PRIVATE struct hole *hole_head;	/* pointer to first hole */

@@ -33,7 +33,7 @@
 #include "lyos/vm.h"
 #include <sys/mman.h>
 
-//#define ELF_DEBUG
+#define ELF_DEBUG
 
 #define roundup(x, a)  do {\
                         if ((x) % (a) != 0) {   \
@@ -96,7 +96,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         memsize = phdr->p_memsz;
 
 #ifdef ELF_DEBUG
-        printl("segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x }, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
+        printl("libexec: segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x }, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
 #endif
 
         /* align */

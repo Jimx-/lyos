@@ -219,16 +219,16 @@ enum msgtype {
 	SUSPEND_PROC, RESUME_PROC,				/* 35 ~ 36 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, RAISE, SIGACTION, PROCCTL, MMAP,	/* 37 ~ 47 */
+	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 37 ~ 46 */
 
 	/* FS & MM */
-	FORK, EXIT,						/* 48 ~ 49 */
+	FORK, EXIT,					/* 47 ~ 58 */
 
 	/* SERVMAN */
-	SERVICE_UP, SERVICE_DOWN,		/* 50 ~ 51 */
+	SERVICE_UP, SERVICE_DOWN,		/* 49 ~ 50 */
 
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 52 */
+	SYSCALL_RET,						/* 51 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,

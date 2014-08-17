@@ -44,19 +44,17 @@ PUBLIC int do_sigaction()
 	
 	int signum = mm_msg.SIGNR;
 
+	if (signum == SIGKILL) return 0;
 	if (signum < 1 || signum > 32) return -EINVAL;
-	if (signum == SIGKILL || signum == SIGSTOP) return -EINVAL;
 
+	/* save the old action */
 	save = &current->sigaction[signum];
-	if((struct sigaction *)old_action)
-		phys_copy(va2la(mm_msg.source, old_action),
-				  va2la(TASK_MM, save),
-				  sizeof(struct sigaction));
+	if(old_action) {
+		data_copy(mm_msg.source, D, old_action, TASK_MM, D, save, sizeof(struct sigaction));
+	}
 	
 	if (!mm_msg.NEWSA) return 0;
-	phys_copy(va2la(TASK_MM, &new_sa),
-			  va2la(mm_msg.source, mm_msg.NEWSA),
-			  sizeof(struct sigaction));
+	data_copy(TASK_MM, D, &new_sa, mm_msg.source, D, mm_msg.NEWSA, sizeof(struct sigaction));
 			  
 	current->sigaction[signum].sa_handler = new_sa.sa_handler;
 	current->sigaction[signum].sa_mask = new_sa.sa_mask;
@@ -119,17 +117,10 @@ PUBLIC int do_kill()
 	if (pid == -1){
 	    p_dest = proc_table + NR_PROCS;
         while (--p_dest > &FIRST_PROC)
-		send_sig(sig,p_dest);
+		send_sig(sig, p_dest);
         return 0;
 	}
 
-	ret = send_sig(sig,p_dest);
+	ret = send_sig(sig, p_dest);
 	return ret;
-}
-
-PUBLIC int do_raise()
-{
-	int sig = mm_msg.SIGNR;
-	
-	return send_sig(sig, proc_table + getpid());
 }

@@ -27,5 +27,7 @@ struct dev_driver{
 };
 
 PUBLIC void dev_driver_task(struct dev_driver * dd);
+PUBLIC int  rw_sector (int io_type, int dev, u64 pos,
+            int bytes, int proc_nr, void * buf);
 
 #endif

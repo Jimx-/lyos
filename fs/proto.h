@@ -25,6 +25,7 @@ PUBLIC struct inode * find_inode(dev_t dev, ino_t num);
 PUBLIC void put_inode(struct inode * pin);
 PUBLIC void lock_inode(struct inode * pin);
 PUBLIC void unlock_inode(struct inode * pin);
+PUBLIC void sync_inode  (struct inode * p);
 
 PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp);
 PUBLIC struct inode * last_dir(char * pathname, struct proc * fp);
@@ -43,6 +44,18 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
         int readonly, int is_root, struct lookup_result * res);
 
 PUBLIC int do_open(MESSAGE * p);
+PUBLIC int  do_close(MESSAGE * p);
+PUBLIC int  do_lseek(MESSAGE * p);
+PUBLIC int  do_chroot(MESSAGE * p);
+PUBLIC int  do_mount(MESSAGE * p);
+PUBLIC int  do_umount(MESSAGE * p);
+PUBLIC int  do_mkdir(MESSAGE * p);
+
+/* fs/Lyos/read_write.c */
+PUBLIC int  do_rdwt(MESSAGE * p);
+
+/* fs/Lyos/link.c */
+PUBLIC int  do_unlink(MESSAGE * p);
 
 PUBLIC int truncate_node(struct inode * pin, int newsize);
 
@@ -56,6 +69,10 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * 
 
 PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
     void * buf, int nbytes, u64 * newpos, int * bytes_rdwt);
+
+PUBLIC int       do_stat(MESSAGE * p);
+PUBLIC int       do_fstat(MESSAGE * p);
+PUBLIC int       do_access(MESSAGE * p);
 
 
 #endif

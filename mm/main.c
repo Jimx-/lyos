@@ -19,6 +19,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -34,12 +35,12 @@
 #include "region.h"
 #include "proto.h"
 
+PRIVATE endpoint_t recv_from_whom = ANY;
+
 PRIVATE int free_mem_size;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
-
-PUBLIC void do_fork_test();
 
 PRIVATE void init_mm();
 
@@ -55,7 +56,7 @@ PUBLIC void task_mm()
 	init_mm();
 
 	while (1) {
-		send_recv(RECEIVE, ANY, &mm_msg);
+		send_recv(RECEIVE, recv_from_whom, &mm_msg);
 		int src = mm_msg.source;
 		int reply = 1;
 
@@ -76,9 +77,6 @@ PUBLIC void task_mm()
 		case KILL:
 			mm_msg.RETVAL = do_kill();
 			break; 
-		case RAISE:
-			mm_msg.RETVAL = do_raise();
-			break;
 		case SBRK:
 			mm_msg.RETVAL = do_sbrk();
 			break;
@@ -164,14 +162,22 @@ PRIVATE void init_mm()
 						text_len / 1024, (data_len + bss_len) / 1024,
 						reserved_memsize / 1024);
 	printl("Physical process memory base: 0x%x\n", PROCS_BASE);
+	
+	u32 lowmem = VMALLOC_START - KERNEL_VMA;
 	printl("Virtual kernel memory layout:\n");
-	printl("  .text: 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
-	printl("  .data: 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
-	printl("  .bss:  0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
+	printl("  .text   : 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
+	printl("  .data   : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
+	printl("  .bss    : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
+	printl("  lowmem  : 0x%08x - 0x%08x  (%dkB)\n", KERNEL_VMA, VMALLOC_START, lowmem / 1024);
+	printl("  vmalloc : 0x%08x - 0x%08x  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
+	printl("  fixmap  : 0x%08x - 0x%08x  (%dkB)\n", FIXMAP_START, FIXMAP_END, (FIXMAP_END - FIXMAP_START) / 1024);
 
-	printl("Kernel page directory at physical address: 0x%x\n", initial_pgd);
+	printl("MM: %dMB HIGHMEM available\n", (memory_size - lowmem) / 1024 / 1024);
+	printl("MM: %dMB LOWMEM available\n", lowmem / 1024 / 1024);
 
-	printl("%d Module loaded\n", mb_mod_count);
+	printl("MM: Kernel page directory at physical address: 0x%x\n", initial_pgd);
+
+	printl("MM: %d Module loaded\n", mb_mod_count);
 
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;
@@ -181,13 +187,13 @@ PRIVATE void init_mm()
 	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
 
 	/* setup memory region for tasks so they can malloc */
-	int region_size = NR_TASKS * sizeof(struct vir_region);
+	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size);
 	struct proc * p = proc_table;
 	int i;
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
+		phys_region_init(&(rp->phys_block), 1);
 		/* prepare heap */
-		INIT_LIST_HEAD(&(rp->phys_blocks));
 		rp->vir_addr = (void*)0x1000;
 		p->brk = 0x1000;
 		rp->length = 0;
