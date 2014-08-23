@@ -35,8 +35,6 @@
 #include "region.h"
 #include "proto.h"
 
-PRIVATE endpoint_t recv_from_whom = ANY;
-
 PRIVATE int free_mem_size;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
@@ -56,7 +54,7 @@ PUBLIC void task_mm()
 	init_mm();
 
 	while (1) {
-		send_recv(RECEIVE, recv_from_whom, &mm_msg);
+		send_recv(RECEIVE, ANY, &mm_msg);
 		int src = mm_msg.source;
 		int reply = 1;
 
@@ -94,10 +92,6 @@ PUBLIC void task_mm()
 			break;
 		case PROCCTL:
 			mm_msg.RETVAL = do_procctl();
-			break;
-		case SERVICE_UP:
-			printl("Bringing up service\n");
-			mm_msg.RETVAL = do_service_up();
 			break;
 		case FAULT:
 			do_handle_fault();

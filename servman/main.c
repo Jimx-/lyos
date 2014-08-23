@@ -1,5 +1,5 @@
 /*  
-    (c)Copyright 2011 Jimx
+    (c)Copyright 2014 Jimx
     
     This file is part of Lyos.
 
@@ -18,9 +18,11 @@
     
 #include "lyos/type.h"
 #include "sys/types.h"
+#include "lyos/config.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "lyos/config.h"
+#include "assert.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -28,28 +30,40 @@
 #include "lyos/tty.h"
 #include "lyos/console.h"
 #include "lyos/global.h"
+#include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include "proto.h"
 
-#define DEBUG
+PRIVATE void servman_init();
 
-#ifdef DEBUG
-#define PRINTL(x) printl(x)
-#else
-#define PRINTL(x)
-#endif
-
-PRIVATE void devman_init();
-
-PUBLIC int main()
+PUBLIC void task_servman()
 {
-	devman_init();
-	while(1){
-	}
+    servman_init();
 
-    return 0;
+    while(1){
+        MESSAGE msg;
+
+        send_recv(RECEIVE, ANY, &msg);
+        int src = msg.source;
+
+        int msgtype = msg.type;
+
+        switch (msgtype) {
+        case SERVICE_UP:
+            msg.RETVAL = do_service_up(&msg);
+            break;
+        default:
+            dump_msg("servman::unknown msg", &msg);
+            assert(0);
+            break;
+        }
+
+        msg.type = SYSCALL_RET;
+        send_recv(SEND, src, &msg);
+    }
 }
 
-PRIVATE void devman_init()
+PRIVATE void servman_init()
 {
-	printl("devman: device manager is running.\n");
+    printl("servman: service manager is running.\n");
 }

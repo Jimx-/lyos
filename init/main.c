@@ -14,7 +14,7 @@
 
 int main(int argc, char * argv[])
 {
-	//mount("/dev/hd1a", "/", "ext2", 0, NULL);
+	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 	int fd_stdin  = open("/dev/tty0", O_RDWR);
 	int fd_stdout = open("/dev/tty0", O_RDWR);
 	int fd_stderr = open("/dev/tty0", O_RDWR);
@@ -22,11 +22,13 @@ int main(int argc, char * argv[])
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
 	if (fd_hostname == -1) {
+		printf("Setting hostname to %s\n", DEFAULT_HOSTNAME);
 		sethostname(DEFAULT_HOSTNAME, strlen(DEFAULT_HOSTNAME));
 	} else {
 		char hostname[256];
 		memset(hostname, 0, sizeof(hostname));
 		int len = read(fd_hostname, hostname, sizeof(hostname));
+		printf("Setting hostname to %s\n", hostname);
 		sethostname(hostname, len);
 		close(fd_hostname);
 	}

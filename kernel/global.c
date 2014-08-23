@@ -41,9 +41,9 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	/* -----        ----------        --------- */
 	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
+	{task_servman,   STACK_SIZE_SERVMAN,"SERVMAN" },
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
-	{task_devman,   STACK_SIZE_DEVMAN,"DEVMAN"	  },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
 	{task_initfs,	STACK_SIZE_INITFS,"INITFS"	  },

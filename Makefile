@@ -79,13 +79,15 @@ LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
+SERVMANOBJ  = servman/servman.o
 LYOSINIT	= init/init
 LYOSINITRD	= $(ARCHDIR)/initrd.tar
 
 OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
 			$(MMOBJ) \
-			$(DRVOBJ)
+			$(DRVOBJ) \
+			$(SERVMANOBJ)
 
 DASMOUTPUT	= lyos.bin.asm
 
@@ -177,7 +179,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 lyos-disk.img -m 1024
+	@qemu-system-i386 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
 
 debug:
 	@bochs-gdb -f bochsrc.gdb
@@ -242,6 +244,10 @@ $(MMOBJ):
 $(DRVOBJ):
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
 	@(cd drivers; make)
+
+$(SERVMANOBJ):
+	@echo -e '$(COLORGREEN)Compiling service manager...$(COLORDEFAULT)'
+	@(cd servman; make)
 
 $(LYOSINIT):
 	@echo -e '$(COLORGREEN)Compiling init...$(COLORDEFAULT)'

@@ -140,6 +140,7 @@ PUBLIC int do_mount(MESSAGE * p)
     int readonly = flags & MS_READONLY;
     int retval = mount_fs(dev_nr, target, fs_e, readonly);
 
+    if (retval == 0) printl("VFS: %s is %s mounted on %s\n", source, readonly ? "read-only" : "read-write", target);
     return retval;
 }
 
@@ -225,7 +226,6 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
             p->pwd = root_inode;
         }
 
-        printl("VFS: dev #%d is mounted on /\n", dev);
         have_root++;
         unlock_vmnt(new_pvm);
         unlock_inode(root_inode);

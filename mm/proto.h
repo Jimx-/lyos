@@ -63,8 +63,6 @@ PUBLIC int  do_sigaction();
 PUBLIC int  do_raise();
 PUBLIC int  do_alarm();
 
-PUBLIC int do_service_up();
-
 PUBLIC void do_handle_fault();
 
 PUBLIC int send_sig(int sig, struct proc * p);

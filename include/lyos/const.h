@@ -154,9 +154,9 @@
 #define INTERRUPT	-10
 #define TASK_TTY	0
 #define TASK_MM     1
-#define TASK_FS		2
-#define TASK_SYS	3
-#define TASK_DEVMAN	4
+#define TASK_SERVMAN 2
+#define TASK_FS		3
+#define TASK_SYS	4
 #define	TASK_RD		5
 #define TASK_HD		6
 #define TASK_INITFS	7

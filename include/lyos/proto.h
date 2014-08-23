@@ -95,6 +95,9 @@ PUBLIC void task_initfs();
 /* mm/main.c */
 PUBLIC void	task_mm();
 
+/* servman/servman.c */
+PUBLIC void task_servman();
+
 /* proc.c */
 PUBLIC	void	schedule();
 PUBLIC	void*	va2la(int pid, void * va);
