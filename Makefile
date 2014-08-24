@@ -190,13 +190,13 @@ setup-disk:
 
 initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
-	@cp init/init ramdisk/sbin/init
-	@cp sysroot/etc/fstab ramdisk/etc
+	@cp sysroot/sbin/* ramdisk/sbin/
+	@cp sysroot/etc/* ramdisk/etc/
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)
 	@(cd userspace; make)
 	@(cp sysroot/usr/bin/* ramdisk/usr/bin/)
-	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/init usr/bin/* dev/* etc/* > /dev/null)
+	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/* usr/bin/* dev/* etc/* > /dev/null)
 	@rm ramdisk/.root
 
 disasm :

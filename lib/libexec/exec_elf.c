@@ -78,7 +78,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     for (i = 0; i < elf_hdr->e_phnum; i++) {
         Elf32_Phdr * phdr = &prog_hdr[i];
         off_t foffset;
-        int vaddr;
+        u32 vaddr;
         size_t fsize, memsize;
         int mmap_prot = PROT_READ;
 
@@ -100,7 +100,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 #endif
 
         /* align */
-        int alignment = vaddr % PG_SIZE;
+        u32 alignment = vaddr % PG_SIZE;
         foffset -= alignment;
         vaddr -= alignment;
         fsize += alignment;
@@ -145,8 +145,8 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
                 execi->clearmem(execi, vaddr, zero_len);
             }
 
-            int fileend = phdr->p_vaddr + phdr->p_filesz;
-            int memend = vaddr + memsize;
+            u32 fileend = phdr->p_vaddr + phdr->p_filesz;
+            u32 memend = vaddr + memsize;
             zero_len = memend - fileend;
             if (zero_len) {
 #ifdef ELF_DEBUG

@@ -250,6 +250,29 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
 	p_desc->base_high	= (base >> 24) & 0x0FF;		/* 段基址 3		(1 字节) */
 }
 
+PUBLIC int sys_privctl(int whom, int request, void * data, struct proc* p)
+{
+	struct proc * target = proc_table + whom;
+	u8 new_attr1;
+
+	switch (request) {
+	case PRIVCTL_SET_TASK:
+		init_desc(&target->ldts[INDEX_LDT_C],
+                  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+                  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
+
+    	init_desc(&target->ldts[INDEX_LDT_RW],
+                  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+                  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
+
+    	break;
+    default:
+    	break;
+	}
+
+	return 0;
+}
+
 /**
  * <Ring 0> Handle page fault.
  */

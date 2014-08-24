@@ -12,7 +12,7 @@ DRIVER		= drivers.o
 everything : realclean $(DRIVER) $(DEVMAN)
 
 realclean :
-	@rm -f $(DRVOBJS)
+	@rm -f $(DRVOBJS) $(DEVMAN)
 
 $(DRIVER): $(DRVOBJS)
 	@echo -e '\tLD\t$@'

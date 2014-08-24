@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <sys/dirent.h>
 
 #include "const.h"
 #include "proc.h"
@@ -541,6 +542,21 @@ int write(int fd, const void *buf, int count)
 	send_recv(BOTH, TASK_FS, &msg);
 
 	return msg.CNT;
+}
+
+DIR * opendir (const char * dirname)
+{
+	return NULL;
+}
+
+int closedir (DIR * dir)
+{
+	return 0;
+}
+
+struct dirent * readdir (DIR * dirp)
+{
+	return NULL;
 }
 
 char *getwd(char *buf)

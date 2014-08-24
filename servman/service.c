@@ -19,9 +19,11 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
+#include "assert.h"
 #include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
+#include "errno.h"
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -31,18 +33,44 @@
 #include "lyos/proto.h"
 #include "proto.h"
 
+PUBLIC int check_permission(endpoint_t caller, int request)
+{
+    struct proc * p = proc_table + caller;
+    if (p->euid != SU_UID) return EPERM;
+
+    return 0;
+}
+
 PUBLIC int do_service_up(MESSAGE * msg)
 {
     /* get parameters from the message */
     int name_len = msg->NAME_LEN; /* length of filename */
     int src = msg->source;    /* caller proc nr. */
 
+    if (check_permission(src, SERVICE_UP) != 0) return EPERM;
+
     /* copy prog name */
     char pathname[MAX_PATH];
     data_copy(getpid(), D, pathname, src, D, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
-    printl("%s\n", pathname);
+    struct proc * p;
+
+    int child_pid = fork();
+    if (child_pid) {
+        /* block the child */
+        p = proc_table + child_pid;
+        p->state = BLOCKED;    
+    } else {
+        while (1);
+    }
+
+    int retval = serv_exec(child_pid, pathname);
+    if (retval) return retval;
+
+    privctl(child_pid, PRIVCTL_SET_TASK, NULL);
+
+    p->state = 0;
 
     return 0;
 }

@@ -19,11 +19,13 @@ INT_VECTOR_SYS_CALL equ 0x90
 _NR_printx	    equ 0
 _NR_sendrec	    equ 1
 _NR_datacopy	equ 2
+_NR_privctl		equ 3
 
 ; 导出符号
 global	printx
 global	sendrec
 global	datacopy
+global	privctl
 
 bits 32
 [section .text]
@@ -74,5 +76,25 @@ datacopy:
 	int	INT_VECTOR_SYS_CALL
 
 	pop	edx
+
+	ret
+
+; ====================================================================================
+;                  privctl(int whom, int request, void* data);
+; ====================================================================================
+privctl:
+	push	ebx		; .
+	push	ecx		;  > 12 bytes
+	push	edx		; /
+
+	mov	eax, _NR_privctl
+	mov	ebx, [esp + 12 +  4]
+	mov	ecx, [esp + 12 +  8]
+	mov	edx, [esp + 12 + 12]
+	int	INT_VECTOR_SYS_CALL
+
+	pop	edx
+	pop	ecx
+	pop	ebx
 
 	ret

@@ -30,14 +30,6 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-#define DEBUG
-
-#ifdef DEBUG
-#define PRINTL(x) printl(x)
-#else
-#define PRINTL(x)
-#endif
-
 PRIVATE void devman_init();
 
 PUBLIC int main()

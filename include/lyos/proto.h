@@ -125,6 +125,7 @@ PUBLIC int service_up(const char *name, char * argv[], char * const envp[]);
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
 PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc);
 PUBLIC  int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_privctl(int whom, int request, void * data, struct proc* p);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
@@ -133,6 +134,7 @@ PUBLIC  void    sys_call();             /* int_handler */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char* str);
 PUBLIC  int datacopy(MESSAGE * m);
+PUBLIC  int privctl(int whom, int request, void * data);
 
 #define	phys_copy	memcpy
 #define	phys_set	memset

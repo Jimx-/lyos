@@ -88,12 +88,13 @@ void Init()
 	printl(LYOS_BANNER);
 	printl("(c)Copyright Jimx 2010-2013\n\n");
 
-	char * name = "/sbin/devman";
+/*#define DEVMAN_PATH "/sbin/devman"
+
 	MESSAGE msg;
 	msg.type = SERVICE_UP;
-	msg.PATHNAME	= (void*)name;
-	msg.NAME_LEN	= strlen(name);
-	send_recv(BOTH, TASK_SERVMAN, &msg);
+	msg.PATHNAME	= (void*)DEVMAN_PATH;
+	msg.NAME_LEN	= strlen(DEVMAN_PATH);
+	send_recv(BOTH, TASK_SERVMAN, &msg);*/
 
 	/* Here we go! */
 	_exit(execv("/sbin/init", NULL));

@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	push_dir('sources')
 
 	print('Downloading source packages...')
-	download('coreutils', DASH_TARBALL_URL, DASH_TARBALL)
+	download('dash', DASH_TARBALL_URL, DASH_TARBALL)
 
 	print('Decompressing source packages...')
 	decompress(DASH_TARBALL, DASH_VERSION)
@@ -28,9 +28,9 @@ if __name__ == "__main__":
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
-	mkdir('coreutils')
-	push_dir('coreutils')
-	configure_native(DASH_VERSION, ' --disable-nls')
+	mkdir('dash')
+	push_dir('dash')
+	#configure_host(DASH_VERSION)
 	make_and_install()
 	pop_dir()
 
