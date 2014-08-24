@@ -35,7 +35,7 @@ int main(int argc, char * argv[])
 
 	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
 	int i;
-	for (i = 0; i < NR_TTY; i++) {
+	for (i = 0; i < 3; i++) {
 		int pid = fork();
 		if (pid) {
 			//printf("Parent\n");

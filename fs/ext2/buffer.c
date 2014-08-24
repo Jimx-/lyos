@@ -128,7 +128,6 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
 
     ext2_rw_buffer(DEV_READ, pb);
     list_add(&(pb->hash), &ext2_buffer_cache[hash]);
-
     return pb;
 }
 

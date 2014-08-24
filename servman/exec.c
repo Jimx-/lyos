@@ -19,6 +19,7 @@
 #include "stdio.h"
 #include <fcntl.h>
 #include "stddef.h"
+#include "stdlib.h"
 #include "unistd.h"
 #include "assert.h"
 #include "errno.h"
@@ -49,14 +50,13 @@ PRIVATE struct exec_loader exec_loaders[] = {
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
-    data_copy(execi->proc_e, D, vaddr, TASK_SERVMAN, D, (void *)((int)(execi->header) + offset), len);
+    data_copy(execi->proc_e, D, (void *)vaddr, TASK_SERVMAN, D, (void *)((int)(execi->header) + offset), len);
     
     return 0;
 }
 
 PUBLIC int serv_exec(endpoint_t target, char * pathname)
 {
-    struct proc * p = proc_table + target;
     int i;
 
     int exec_fd = open(pathname, O_RDONLY);

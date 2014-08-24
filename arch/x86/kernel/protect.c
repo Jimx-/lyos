@@ -253,7 +253,6 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
 PUBLIC int sys_privctl(int whom, int request, void * data, struct proc* p)
 {
 	struct proc * target = proc_table + whom;
-	u8 new_attr1;
 
 	switch (request) {
 	case PRIVCTL_SET_TASK:
