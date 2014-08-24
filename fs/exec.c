@@ -155,7 +155,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     struct proc * p = proc_table + src;
 
     /** wait for process to get ready, this is because 
-     *  send_recv(BOTH) will be transform into a msg_send
+     *  send_recv(BOTH) will be transformed into a msg_send
      *  following by a msg_receive, if we wipe out the image
      *  before msg_receive is called, we cannot send
      *  the message back to the process */
