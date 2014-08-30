@@ -30,22 +30,21 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-PRIVATE void devman_init();
+PRIVATE void procfs_init();
 PRIVATE int register_filesystem();
 
 PUBLIC int main()
 {
-	devman_init();
-    
+	procfs_init();
 	while(1){
 	}
 
     return 0;
 }
 
-PRIVATE void devman_init()
+PRIVATE void procfs_init()
 {
-	printl("devman: Device manager is running.\n");
+	printl("procfs: procfs is running.\n");
 
     register_filesystem();
 }
@@ -56,7 +55,7 @@ PRIVATE int register_filesystem()
 
     /* register the filesystem */
     m.type = FS_REGISTER;
-    m.PATHNAME = "devfs";
+    m.PATHNAME = "procfs";
     m.NAME_LEN = strlen(m.PATHNAME);
     send_recv(BOTH, TASK_FS, &m);
 }

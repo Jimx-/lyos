@@ -75,10 +75,12 @@ int execv(const char *path, char * argv[])
 	return execve(path, argv, NULL);
 }
 
+#define ARG_MAX	0x40000
+
 int execve(const char *name, char * argv[], char * const envp[]) 
 {
 	char **p = argv, **q = NULL;
-	char arg_stack[PROC_ORIGIN_STACK / 2];
+	char arg_stack[ARG_MAX / 2];
 	int stack_len = 0;
 
 	/* arg_stack layout */
@@ -219,7 +221,7 @@ int waitpid(int pid, int * status, int options)
 
 	*status = msg.STATUS;
 
-	return (msg.PID == NO_TASK ? -1 : msg.PID);
+	return msg.PID;
 }
 
 int wait(int * status)
@@ -236,7 +238,7 @@ int wait(int * status)
 
 	*status = msg.STATUS;
 
-	return (msg.PID == NO_TASK ? -1 : msg.PID);
+	return msg.PID;
 }
 
 int isatty(int fd) {

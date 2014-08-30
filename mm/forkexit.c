@@ -292,7 +292,7 @@ PUBLIC void do_wait()
 		/* no child at all */
 		MESSAGE msg;
 		msg.type = SYSCALL_RET;
-		msg.PID = NO_TASK;
+		msg.PID = -1;
 		send_recv(SEND, pid, &msg);
 	}
 }

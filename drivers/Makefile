@@ -32,8 +32,7 @@ pci/pci.o: $(LIBS)
 
 $(DEVMAN):
 	@(cd devman; make)
-	@(cp $(DEVMAN) ../sysroot/sbin/)
-	@(cp $(DEVMAN) ../sysroot/boot/)
+	@(cp -f $(DEVMAN) ../sysroot/sbin/)
 
 firmware/firmware.o: $(LIBS)
 	@(cd firmware; make)
