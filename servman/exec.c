@@ -111,3 +111,44 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
 
     return 0;
 }
+
+PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
+{
+    int i, retval;
+
+    struct exec_info execi;
+    memset(&execi, 0, sizeof(execi));
+
+    /* stack info */
+    execi.stack_top = VM_STACK_TOP;
+    execi.stack_size = PROC_ORIGIN_STACK;
+
+    /* header */
+    execi.header = mod_base;
+    execi.header_len = mod_len;
+
+    execi.allocmem = libexec_allocmem;
+    execi.allocstack = libexec_allocstack;
+    execi.alloctext = libexec_alloctext;
+    execi.copymem = read_segment;
+    execi.clearproc = libexec_clearproc;
+    execi.clearmem = libexec_clearmem;
+
+    execi.proc_e = target;
+    execi.filesize = mod_len;
+
+    for (i = 0; exec_loaders[i].loader != NULL; i++) {
+        retval = (*exec_loaders[i].loader)(&execi);
+        if (!retval) break;  /* loaded successfully */
+    }
+
+    if (retval) return retval;
+
+    /* setup eip & esp */
+    proc_table[target].regs.eip = execi.entry_point; /* @see _start.asm */
+    proc_table[target].regs.esp = (u32)VM_STACK_TOP;
+
+    proc_table[target].brk = execi.brk;
+
+    return 0;
+}

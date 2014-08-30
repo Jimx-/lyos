@@ -66,7 +66,7 @@ PRIVATE int fs_exit(MESSAGE * m);
  */
 PUBLIC void task_fs()
 {
-	printl("VFS: virtual filesystem is running.\n");
+	printl("VFS: Virtual filesystem is running.\n");
 
 	init_vfs();
 	

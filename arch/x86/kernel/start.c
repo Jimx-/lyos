@@ -57,9 +57,10 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
-	multiboot_module_t * initrd_mod = (multiboot_module_t *)mboot->mods_addr;
 	mb_mod_addr = mboot->mods_addr + KERNEL_VMA;
-	int pgd_start = (unsigned)initrd_mod->mod_end;
+	multiboot_module_t * last_mod = (multiboot_module_t *)mboot->mods_addr;
+	last_mod += mb_mod_count - 1;
+	int pgd_start = (unsigned)last_mod->mod_end;
 
 	/* setup kernel page table */
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
@@ -151,12 +152,24 @@ PUBLIC void init_arch()
 		p->p_parent = NO_TASK;
 
 		if (strcmp(t->name, "INIT") != 0) {
-			p->ldts[INDEX_LDT_C]  = gdt[SELECTOR_KERNEL_CS >> 3];
-			p->ldts[INDEX_LDT_RW] = gdt[SELECTOR_KERNEL_DS >> 3];
+			/* this process will be loaded by servman */
+			if (t->initial_eip == NULL) {
+				init_desc(&p->ldts[INDEX_LDT_C],
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
 
-			/* change the DPLs */
-			p->ldts[INDEX_LDT_C].attr1  = DA_C   | priv << 5;
-			p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
+				init_desc(&p->ldts[INDEX_LDT_RW],
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
+			} else {
+
+				p->ldts[INDEX_LDT_C]  = gdt[SELECTOR_KERNEL_CS >> 3];
+				p->ldts[INDEX_LDT_RW] = gdt[SELECTOR_KERNEL_DS >> 3];
+
+				/* change the DPLs */
+				p->ldts[INDEX_LDT_C].attr1  = DA_C   | priv << 5;
+				p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
+			}
 
 			if (i == TASK_MM) {
 				/* use kernel page table */ 
@@ -199,7 +212,9 @@ PUBLIC void init_arch()
 
 		p->counter = p->priority = prio;
 
-		p->state = 0;
+		if (t->initial_eip == NULL) p->state = BLOCKED;
+		else p->state = 0;
+
 		p->msg = 0;
 		p->recvfrom = NO_TASK;
 		p->sendto = NO_TASK;

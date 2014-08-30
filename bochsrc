@@ -3,7 +3,7 @@
 ###############################################################
 
 # how much memory the emulated machine will have
-megs: 32
+megs: 1024
 
 display_library: sdl
 

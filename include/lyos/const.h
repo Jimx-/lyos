@@ -104,7 +104,7 @@
 #define	START_ADDR_L	0xD	/* reg index of video mem start addr (LSB) */
 #define	CURSOR_H	0xE	/* reg index of cursor position (MSB) */
 #define	CURSOR_L	0xF	/* reg index of cursor position (LSB) */
-#define	V_MEM_BASE	0xB8000	+ KERNEL_VMA /* base of color video memory */
+#define	V_MEM_BASE	(0xB8000	+ KERNEL_VMA) /* base of color video memory */
 #define	V_MEM_SIZE	0x8000	/* 32K: B8000H -> BFFFFH */
 
 /* CMOS */
@@ -155,15 +155,16 @@
 #define TASK_TTY	0
 #define TASK_MM     1
 #define TASK_SERVMAN 2
-#define TASK_FS		3
-#define TASK_SYS	4
-#define	TASK_RD		5
-#define TASK_HD		6
-#define TASK_INITFS	7
-#define TASK_EXT2_FS	8
-#define TASK_PCI	9
-#define TASK_INET	10
-#define INIT		11
+#define TASK_DEVMAN	3
+#define TASK_FS		4
+#define TASK_SYS	5
+#define	TASK_RD		6
+#define TASK_HD		7
+#define TASK_INITFS	8
+#define TASK_EXT2_FS	9
+#define TASK_PCI	10
+#define TASK_INET	11
+#define INIT		12
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
@@ -181,15 +182,15 @@
 #define MAG_CH_PANIC	'\002'
 #define MAG_CH_ASSERT	'\003'
 
-#define GS_GETUID	0
-#define GS_SETUID	1
-#define GS_GETGID	2
-#define GS_SETGID	3
-#define GS_GETEUID	4
-#define GS_GETEGID	5
+#define GS_GETUID	1
+#define GS_SETUID	2
+#define GS_GETGID	3
+#define GS_SETGID	4
+#define GS_GETEUID	5
+#define GS_GETEGID	6
 
-#define GS_GETHOSTNAME	0
-#define GS_SETHOSTNAME	1
+#define GS_GETHOSTNAME	1
+#define GS_SETHOSTNAME	2
 
 #define PRIVCTL_SET_TASK 1
 

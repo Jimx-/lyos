@@ -16,7 +16,6 @@
 #include <sys/dirent.h>
 
 #include "const.h"
-#include "proc.h"
 
 /* compiler memory barrier */
 #define cmb() __asm__ __volatile__ ("" ::: "memory")

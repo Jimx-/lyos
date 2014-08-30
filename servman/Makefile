@@ -3,7 +3,7 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
-SERVMANOBJS 		= main.o service.o exec.o
+SERVMANOBJS 		= main.o service.o exec.o module.o
 SERVMAN		= servman.o
 
 everything : realclean $(SERVMAN)

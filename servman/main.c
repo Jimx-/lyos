@@ -65,5 +65,7 @@ PUBLIC void task_servman()
 
 PRIVATE void servman_init()
 {
-    printl("servman: service manager is running.\n");
+    printl("servman: Service manager is running.\n");
+
+    spawn_boot_modules();
 }

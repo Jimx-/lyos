@@ -171,8 +171,6 @@ PRIVATE void init_mm()
 
 	printl("MM: Kernel page directory at physical address: 0x%x\n", initial_pgd);
 
-	printl("MM: %d Module loaded\n", mb_mod_count);
-
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;
 

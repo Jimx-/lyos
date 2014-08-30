@@ -31,6 +31,7 @@
 #include "lyos/proto.h"
 
 PRIVATE void devman_init();
+PRIVATE int register_filesystem();
 
 PUBLIC int main()
 {
@@ -44,4 +45,17 @@ PUBLIC int main()
 PRIVATE void devman_init()
 {
 	printl("devman: device manager is running.\n");
+
+    register_filesystem();
+}
+
+PRIVATE int register_filesystem()
+{
+    MESSAGE m;
+
+    /* register the filesystem */
+    m.type = FS_REGISTER;
+    m.PATHNAME = "devfs";
+    m.NAME_LEN = strlen(m.PATHNAME);
+    send_recv(BOTH, TASK_FS, &m);
 }

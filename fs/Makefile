@@ -8,12 +8,14 @@ FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 				read_write.o stat.o link.o misc.o exec.o device.o \
 				ext2/ext2fs.o initfs/initfs.o $(LIBS)
 
+PROCFS		= procfs/procfs
+
 FS			= fs.o
 
-everything : realclean $(FS)
+everything : realclean $(FS) $(PROCFS)
 
 realclean :
-	@rm -f $(FSOBJS)
+	@rm -f $(FSOBJS) $(PROCFS)
 
 $(FS): $(FSOBJS)
 	@echo -e '\tLD\tfs/$@'
@@ -28,6 +30,10 @@ ext2/ext2fs.o:
 
 initfs/initfs.o:
 	@(cd initfs; make)
+
+$(PROCFS):
+	@(cd procfs; make)
+	@(cp $(PROCFS) ../sysroot/sbin/)
 
 $(LIBDIR)/libexec/libexec.a:
 	@(cd $(LIBDIR)/libexec; make)
