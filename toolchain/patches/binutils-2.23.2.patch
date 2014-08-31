@@ -1,7 +1,18 @@
 diff -rupN origin/bfd/config.bfd new/bfd/config.bfd
 --- origin/bfd/config.bfd	2012-09-04 22:14:59.000000000 +0800
-+++ new/bfd/config.bfd	2013-06-30 08:39:32.788191698 +0800
-@@ -526,6 +526,9 @@ case "${targ}" in
++++ new/bfd/config.bfd	2014-08-31 12:06:44.322102420 +0800
+@@ -313,6 +313,10 @@ case "${targ}" in
+     targ_defvec=bfd_elf32_littlearm_vec
+     targ_selvecs=bfd_elf32_bigarm_vec
+     ;;
++  arm-*-lyos*)
++    targ_defvec=bfd_elf32_littlearm_vec
++    targ_selvecs=bfd_elf32_bigarm_vec
++    ;;
+   arm-*-elf | arm-*-freebsd* | arm*-*-linux-* | arm*-*-conix* | \
+   arm*-*-uclinux* | arm-*-kfreebsd*-gnu | \
+   arm*-*-eabi* )
+@@ -526,6 +530,9 @@ case "${targ}" in
      targ_defvec=bfd_elf32_i386_vec
      targ64_selvecs="bfd_elf64_x86_64_vec bfd_elf64_l1om_vec bfd_elf64_k1om_vec"
      ;;
@@ -13,7 +24,7 @@ diff -rupN origin/bfd/config.bfd new/bfd/config.bfd
      targ_selvecs="go32stubbedcoff_vec i386aout_vec"
 diff -rupN origin/config.sub new/config.sub
 --- origin/config.sub	2012-04-25 23:53:25.000000000 +0800
-+++ new/config.sub	2013-06-30 08:38:20.903835313 +0800
++++ new/config.sub	2014-08-31 11:08:19.236721643 +0800
 @@ -1368,6 +1368,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -24,8 +35,16 @@ diff -rupN origin/config.sub new/config.sub
  		;;
 diff -rupN origin/gas/configure.tgt new/gas/configure.tgt
 --- origin/gas/configure.tgt	2012-09-04 20:53:45.000000000 +0800
-+++ new/gas/configure.tgt	2013-06-30 08:41:01.916633688 +0800
-@@ -248,6 +248,7 @@ case ${generic_target} in
++++ new/gas/configure.tgt	2014-08-31 12:07:57.782466689 +0800
+@@ -117,6 +117,7 @@ case ${generic_target} in
+   arm-*-eabi*)				fmt=elf em=armeabi ;;
+   arm-*-symbianelf*)			fmt=elf em=symbian ;;
+   arm-*-kaos*)				fmt=elf ;;
++  arm-*-lyos*)       fmt=elf ;;
+   arm-*-conix*)				fmt=elf ;;
+   arm-*-linux*aout*)			fmt=aout em=linux ;;
+   arm-*-linux-*eabi*)			fmt=elf  em=armlinuxeabi ;;
+@@ -248,6 +249,7 @@ case ${generic_target} in
    i386-*-chaos)				fmt=elf ;;
    i386-*-rdos*)				fmt=elf ;;
    i386-*-darwin*)			fmt=macho ;;
@@ -35,8 +54,16 @@ diff -rupN origin/gas/configure.tgt new/gas/configure.tgt
  
 diff -rupN origin/ld/configure.tgt new/ld/configure.tgt
 --- origin/ld/configure.tgt	2012-09-04 20:53:47.000000000 +0800
-+++ new/ld/configure.tgt	2013-06-30 08:42:04.452943795 +0800
-@@ -281,6 +281,7 @@ x86_64-*-freebsd* | x86_64-*-kfreebsd*-g
++++ new/ld/configure.tgt	2014-08-31 12:10:04.235093738 +0800
+@@ -78,6 +78,7 @@ arm-*-elf | arm*-*-eabi*)
+ 	  		targ_emul=armelf ;;
+ arm*-*-symbianelf*)     targ_emul=armsymbian;;
+ arm-*-kaos*)		targ_emul=armelf ;;
++i[3-7]86-*-lyos*)	targ_emul=lyos_arm ;;
+ arm9e-*-elf)		targ_emul=armelf ;;
+ arm*b-*-linux-*eabi*)	targ_emul=armelfb_linux_eabi
+ 			targ_extra_emuls=armelf_linux_eabi
+@@ -281,6 +282,7 @@ x86_64-*-freebsd* | x86_64-*-kfreebsd*-g
  i[3-7]86-*-sysv*)	targ_emul=i386coff ;;
  i[3-7]86-*-ptx*)	targ_emul=i386coff ;;
  i[3-7]86-*-mach*)	targ_emul=i386mach ;;
@@ -44,9 +71,32 @@ diff -rupN origin/ld/configure.tgt new/ld/configure.tgt
  i[3-7]86-*-gnu*)	targ_emul=elf_i386 ;;
  i[3-7]86-*-msdos*)	targ_emul=i386msdos; targ_extra_emuls=i386aout ;;
  i[3-7]86-*-moss*)	targ_emul=i386moss; targ_extra_emuls=i386msdos ;;
+diff -rupN origin/ld/emulparams/arm_lyos.sh new/ld/emulparams/arm_lyos.sh
+--- origin/ld/emulparams/arm_lyos.sh	1970-01-01 08:00:00.000000000 +0800
++++ new/ld/emulparams/arm_lyos.sh	2014-08-31 12:12:24.903791276 +0800
+@@ -0,0 +1,19 @@
++SCRIPT_NAME=elf
++OUTPUT_FORMAT="elf32-littlearm"
++BIG_OUTPUT_FORMAT="elf32-bigarm"
++LITTLE_OUTPUT_FORMAT="elf32-littlearm"
++NO_RELA_RELOCS=yes
++TEXT_START_ADDR=0x8000
++MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
++COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
++ARCH=arm
++MACHINE=
++ENTRY=_start
++EMBEDDED=yes
++
++TEMPLATE_NAME=elf32
++GENERATE_SHLIB_SCRIPT=yes
++GENERATE_PIE_SCRIPT=yes
++NO_SMALL_DATA=yes
++SEPARATE_GOTPLT=12
++IREL_IN_PLT=
 diff -rupN origin/ld/emulparams/lyos_i386.sh new/ld/emulparams/lyos_i386.sh
 --- origin/ld/emulparams/lyos_i386.sh	1970-01-01 08:00:00.000000000 +0800
-+++ new/ld/emulparams/lyos_i386.sh	2013-06-30 08:48:28.930850319 +0800
++++ new/ld/emulparams/lyos_i386.sh	2014-08-31 11:08:19.236721643 +0800
 @@ -0,0 +1,16 @@
 +SCRIPT_NAME=elf
 +ELFSIZE=32
@@ -66,22 +116,26 @@ diff -rupN origin/ld/emulparams/lyos_i386.sh new/ld/emulparams/lyos_i386.sh
 +IREL_IN_PLT=
 diff -rupN origin/ld/Makefile.in new/ld/Makefile.in
 --- origin/ld/Makefile.in	2013-03-25 16:06:23.000000000 +0800
-+++ new/ld/Makefile.in	2013-06-30 08:46:07.030146679 +0800
-@@ -567,6 +567,7 @@ ALL_EMULATION_SOURCES = \
++++ new/ld/Makefile.in	2014-08-31 12:15:17.540647341 +0800
+@@ -567,6 +567,8 @@ ALL_EMULATION_SOURCES = \
  	eelf32xc16xs.c \
  	eelf32xstormy16.c \
  	eelf32xtensa.c \
 +	elyos_i386.c \
++	elyos_arm.c \
  	eelf_i386.c \
  	eelf_i386_be.c \
  	eelf_i386_chaos.c \
-@@ -2682,6 +2683,9 @@ eelf32xtensa.c: $(srcdir)/emulparams/elf
+@@ -2682,6 +2684,12 @@ eelf32xtensa.c: $(srcdir)/emulparams/elf
    $(BFDDIR)/elf-bfd.h $(BFDDIR)/libbfd.h $(INCDIR)/elf/xtensa.h \
    $(srcdir)/scripttempl/elfxtensa.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf32xtensa "$(tdir_elf32xtensa)"
 +elyos_i386.c: $(srcdir)/emulparams/lyos_i386.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 +	${GENSCRIPTS} lyos_i386 "$(tdir_lyos_i386)"
++elyos_arm.c: $(srcdir)/emulparams/lyos_arm.sh \
++  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} lyos_arm "$(tdir_lyos_arm)"
  eelf_i386.c: $(srcdir)/emulparams/elf_i386.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  	${GENSCRIPTS} elf_i386 "$(tdir_elf_i386)"

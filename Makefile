@@ -53,9 +53,9 @@ HD		= lyos-disk.img
 # Programs, flags, etc.
 HOSTCC	= gcc
 HOSTLD	= ld
-AS 		= $(SUBARCH)-pc-lyos-as
-CC		= $(SUBARCH)-pc-lyos-gcc
-LD		= $(SUBARCH)-pc-lyos-ld
+AS 		= $(SUBARCH)-elf-lyos-as
+CC		= $(SUBARCH)-elf-lyos-gcc
+LD		= $(SUBARCH)-elf-lyos-ld
 CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -T $(LDSCRIPT) -Map System.map
@@ -75,7 +75,7 @@ endif
 
 KRNLOBJ		= kernel/krnl.o
 LIB			= lib/liblyos/liblyos.a
-LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-pc-lyos/lib/libc.a 
+LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
