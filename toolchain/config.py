@@ -5,7 +5,10 @@ ROOT_DIR = os.getcwd()
 PREFIX = os.sep.join([ROOT_DIR, 'local'])
 PREFIX_BIN = os.sep.join([PREFIX, 'bin'])
 SYSROOT = ROOT_DIR + '/../sysroot'
-TARGET = os.environ["ARCH"] + '-elf-lyos'
+try:
+	TARGET = os.environ["ARCH"] + '-elf-lyos'
+except:
+	TARGET = 'i686-elf-lyos'
 
 packs = ConfigParser.ConfigParser()
 packs.read('packages.list')

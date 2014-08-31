@@ -17,7 +17,7 @@
 #define _VFS_GLOBAL_H_
 
 /* EXTERN is extern except for global.c */
-#ifdef _GLOBAL_VARIABLE_HERE_
+#ifdef _VFS_GLOBAL_VARIABLE_HERE_
 #undef EXTERN
 #define EXTERN
 #endif

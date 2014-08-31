@@ -229,8 +229,11 @@ enum msgtype {
 	/* SERVMAN */
 	SERVICE_UP, SERVICE_DOWN,		/* 50 ~ 51 */
 
+	/* DEVMAN */
+	ANNOUNCE_DEVICE, GET_DRIVER,	/* 52 ~ 53 */
+
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 52 */
+	SYSCALL_RET,						/* 54 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,

@@ -19,7 +19,7 @@
 #include "const.h"
 
 /* EXTERN is extern except for global.c */
-#ifdef _GLOBAL_VARIABLE_HERE_
+#ifdef _INITFS_GLOBAL_VARIABLE_HERE_
 #undef EXTERN
 #define EXTERN
 #endif

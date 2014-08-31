@@ -13,7 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#define _GLOBAL_VARIABLE_HERE_
+#define _EXT2_GLOBAL_VARIABLE_HERE_
 
 #include "lyos/type.h"
 #include "sys/types.h"

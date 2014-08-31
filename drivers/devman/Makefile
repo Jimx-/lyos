@@ -4,7 +4,7 @@
 DEVMANCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
 
 DEVMAN		= devman
-DEVMANOBJS = main.c
+DEVMANOBJS = main.c ddmap.c global.c
 LIBS 		= $(LIBDIR)/liblyos/liblyos.a
 
 everything : realclean $(DEVMAN)

@@ -83,11 +83,15 @@ SERVMANOBJ  = servman/servman.o
 LYOSINIT	= init/init
 LYOSINITRD	= $(ARCHDIR)/initrd.tar
 
+ifeq ($(ARCH),x86)
 OBJS		= $(KRNLOBJ) \
 			$(FSOBJ) \
 			$(MMOBJ) \
 			$(DRVOBJ) \
 			$(SERVMANOBJ)
+else
+OBJS = $(KRNLOBJ)
+endif
 
 DASMOUTPUT	= lyos.bin.asm
 

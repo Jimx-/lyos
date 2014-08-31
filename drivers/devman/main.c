@@ -23,12 +23,8 @@
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
+#include "proto.h"
 #include "lyos/proc.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 
 PRIVATE void devman_init();
 PRIVATE int register_filesystem();
@@ -37,8 +33,23 @@ PUBLIC int main()
 {
 	devman_init();
     
-	while(1){
-	}
+    MESSAGE msg;
+    
+    while (1) {
+        send_recv(RECEIVE, ANY, &msg);
+        int src = msg.source;
+
+        switch (msg.type) {
+        case ANNOUNCE_DEVICE:
+            msg.RETVAL = do_announce_driver(&msg);
+            break;
+        default:
+            printl("devman: unknown message type\n");
+            break;
+        }
+
+        send_recv(SEND, src, &msg);
+    }
 
     return 0;
 }
@@ -46,6 +57,8 @@ PUBLIC int main()
 PRIVATE void devman_init()
 {
 	printl("devman: Device manager is running.\n");
+
+    init_dd_map();
 
     register_filesystem();
 }

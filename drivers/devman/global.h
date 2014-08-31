@@ -13,14 +13,16 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#define _VFS_GLOBAL_VARIABLE_HERE_
+#ifndef _DEVMAN_GLOBAL_H_
+#define _DEVMAN_GLOBAL_H_
 
-#include "lyos/type.h"
-#include "lyos/list.h"
-#include "global.h"
+/* EXTERN is extern except for global.c */
+#ifdef _DEVMAN_GLOBAL_VARIABLE_HERE_
+#undef EXTERN
+#define EXTERN
+#endif
 
-PUBLIC DEF_LIST(vfs_mount_table);
-PUBLIC DEF_LIST(filesystem_table);
+/* ddmap */
+EXTERN struct list_head dd_map[MAJOR_MAX];
 
-PUBLIC int have_root = 0;
-
+#endif 

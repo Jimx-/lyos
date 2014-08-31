@@ -13,14 +13,10 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#define _VFS_GLOBAL_VARIABLE_HERE_
+#ifndef _DEVMAN_PROTO_H_
+#define _DEVMAN_PROTO_H_
 
-#include "lyos/type.h"
-#include "lyos/list.h"
-#include "global.h"
+PUBLIC void init_dd_map();
+PUBLIC int do_announce_driver(MESSAGE * m);
 
-PUBLIC DEF_LIST(vfs_mount_table);
-PUBLIC DEF_LIST(filesystem_table);
-
-PUBLIC int have_root = 0;
-
+#endif

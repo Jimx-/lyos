@@ -16,18 +16,34 @@
 #ifndef _DRIVER_H_
 #define _DRIVER_H_
 
+#define DT_BLOCKDEV    1
+#define DT_CHARDEV     2
+
+#define MAJOR_MAX       64
+
 /* The entry points of a device driver */
 struct dev_driver{
-  char * dev_name;
-  int (*dev_open)	(MESSAGE * p);
-  int (*dev_close)	(MESSAGE * p);
-  int (*dev_read)  (MESSAGE * p);
-  int (*dev_write) (MESSAGE * p);
-  int (*dev_ioctl)	(MESSAGE * p);
+    char * dev_name;
+    int (*dev_open) (MESSAGE * p);
+    int (*dev_close)  (MESSAGE * p);
+    int (*dev_read)  (MESSAGE * p);
+    int (*dev_write) (MESSAGE * p);
+    int (*dev_ioctl)  (MESSAGE * p);
+};
+
+struct dev_driver_map{
+    struct list_head list;
+
+    dev_t minor;
+    int type;
+
+    endpoint_t drv_ep;
 };
 
 PUBLIC void dev_driver_task(struct dev_driver * dd);
 PUBLIC int  rw_sector (int io_type, int dev, u64 pos,
             int bytes, int proc_nr, void * buf);
+PUBLIC int announce_blockdev(char * name, dev_t dev);
+PUBLIC int announce_chardev(char * name, dev_t dev);
 
 #endif

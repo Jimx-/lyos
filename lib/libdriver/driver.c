@@ -66,6 +66,38 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 	}
 }
 
+PUBLIC int announce_blockdev(char * name, dev_t dev)
+{
+	MESSAGE msg;
+
+	msg.type = ANNOUNCE_DEVICE;
+	msg.BUF = name;
+	msg.NAME_LEN = strlen(name);
+	msg.PROC_NR = getpid();
+	msg.DEVICE = dev;
+	msg.FLAGS = DT_BLOCKDEV;
+
+	send_recv(BOTH, TASK_DEVMAN, &msg);
+
+	return msg.RETVAL;
+}
+
+PUBLIC int announce_chardev(char * name, dev_t dev)
+{
+	MESSAGE msg;
+
+	msg.type = ANNOUNCE_DEVICE;
+	msg.BUF = name;
+	msg.NAME_LEN = strlen(name);
+	msg.PROC_NR = getpid();
+	msg.DEVICE = dev;
+	msg.FLAGS = DT_CHARDEV;
+
+	send_recv(BOTH, TASK_DEVMAN, &msg);
+
+	return msg.RETVAL;
+}
+
 /*****************************************************************************
  *                                rw_sector
  *****************************************************************************/

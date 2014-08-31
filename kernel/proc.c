@@ -545,8 +545,8 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(who_wanna_recv->msg != 0);
 		assert(who_wanna_recv->recvfrom != NO_TASK);
 		assert(who_wanna_recv->sendto == NO_TASK);
-		if (who_wanna_recv->has_int_msg != 0) printl("error: proc #%d's has_int_msg != 0\n", proc2pid(who_wanna_recv));
-		assert(who_wanna_recv->has_int_msg == 0);
+		//if (who_wanna_recv->has_int_msg != 0) printl("error: proc #%d's has_int_msg != 0\n", proc2pid(who_wanna_recv));
+		//assert(who_wanna_recv->has_int_msg == 0);
 	}
 
 	enable_int();

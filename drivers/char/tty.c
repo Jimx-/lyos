@@ -32,6 +32,7 @@
 #include "lyos/proto.h"
 #include "termios.h"
 #include "proto.h"
+#include <lyos/driver.h>
 
 #define TTY_FIRST	(tty_table)
 #define TTY_END		(tty_table + NR_CONSOLES)
@@ -137,6 +138,11 @@ PRIVATE void init_tty(TTY* tty)
 	tty->tty_termios = termios_defaults;
 
 	init_screen(tty);
+
+	/* announce the device */
+	char * name = "tty?";
+	name[3] = '0' + (tty - TTY_FIRST);
+	announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST)));
 }
 
 
