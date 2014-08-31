@@ -3,10 +3,9 @@
 ##############################
 
 AR		= ar
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINC)/ -f elf
 ARFLAGS		= rcs
 
-KERNELOBJS	= ../arch/$(ARCH)/kernel/$(ARCH)-krnl.o main.o\
+KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			clock.o \
 			global.o proc.o \
 			systask.o\
@@ -23,8 +22,8 @@ $(KRNL): $(KERNELOBJS)
 	@echo -e '\tLD\tkernel/$@'
 	@$(LD) -r -o $(KRNL) $(KERNELOBJS)
 
-../arch/$(ARCH)/kernel/$(ARCH)-krnl.o:
-	@(cd ../arch/$(ARCH)/kernel; make)
+arch/$(ARCH)/arch-kernel.o:
+	@(cd arch/$(ARCH); make)
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/$@'

@@ -37,8 +37,8 @@ if __name__ == "__main__":
 	# binutils
 	mkdir('binutils')
 	push_dir('binutils')
-	#configure(BINUTILS_VERSION)
-	#make_and_install()
+	configure(BINUTILS_VERSION)
+	make_and_install()
 	pop_dir()	# binutils
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 	make('all-target-libgcc')
 	make('install-target-libgcc')
 	pop_dir()	# gcc
-	exit()
+
 	# newlib
 	newlib_dir = '../sources/' + NEWLIB_VERSION
 

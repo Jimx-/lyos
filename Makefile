@@ -38,7 +38,7 @@ export KERNELVERSION
 SRCDIR = $(shell pwd)
 INCDIR = $(SRCDIR)/include
 SYSINCDIR = $(SRCDIR)/include/sys
-ARCHINCDIR = $(SRCDIR)/arch/$(ARCH)/include
+ARCHINCDIR = $(SRCDIR)/include/arch/$(ARCH)
 LIBDIR = $(SRCDIR)/lib/
 ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
@@ -46,7 +46,7 @@ ARCHLIB = $(ARCHDIR)/lib
 PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
 export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR ARCHINC ARCHLIB PATH
 
-LDSCRIPT = $(ARCHDIR)/kernel/lyos.ld
+LDSCRIPT = kernel/arch/$(ARCH)/lyos.ld
 
 HD		= lyos-disk.img
 

@@ -12,12 +12,6 @@
 *~
 
 #
-# Command files
-#
-command/*
-cmd.tar
-
-#
 # Disk image
 #
 lyos-disk.img
@@ -34,6 +28,8 @@ lyos.gz
 # Initrd 
 #
 initrd.tar
+ramdisk/etc
+ramdisk/sbin
 
 # 
 # Library
@@ -61,3 +57,16 @@ toolchain/sources
 
 *.swp
 
+sysroot/bin/
+sysroot/i686-elf-lyos/
+sysroot/include/
+sysroot/lib/
+sysroot/sbin/
+sysroot/share/
+sysroot/usr/
+
+init/init
+init/init.map
+
+drivers/devman/devman
+fs/procfs/procfs
