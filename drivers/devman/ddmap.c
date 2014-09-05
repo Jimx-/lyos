@@ -64,8 +64,8 @@ PUBLIC int do_announce_driver(MESSAGE * m)
     data_copy(getpid(), D, name, m->source, D, m->BUF, m->NAME_LEN);
     name[m->NAME_LEN] = '\0';
 
-    //printl("devman: Registering driver #%d for /dev/%s (%c%d,%d)\n", drv_ep, name, type == DT_BLOCKDEV ? 'b' : 'c', 
-    //                major, minor);
+    printl("DEVMAN: Registering driver #%d for /dev/%s (%c%d,%d)\n", drv_ep, name, type == DT_BLOCKDEV ? 'b' : 'c', 
+                    major, minor);
 
     int retval = map_driver(dev, type, drv_ep);
     if (retval) return retval;

@@ -30,7 +30,7 @@
 #include "multiboot.h"
 #include <errno.h>
 
-#define MAX_RAMDISKS	8
+#define MAX_RAMDISKS	CONFIG_BLK_DEV_RAM_COUNT
 
 struct ramdisk_dev {
 	char * start;
@@ -40,6 +40,7 @@ struct ramdisk_dev {
 };
 
 PRIVATE struct ramdisk_dev ramdisks[MAX_RAMDISKS];
+PRIVATE struct ramdisk_dev initramdisk;
 
 PRIVATE void init_rd();
 PRIVATE int rd_open(MESSAGE * p);
@@ -106,7 +107,11 @@ PRIVATE int rd_rdwt(MESSAGE * p)
 	u64 pos = p->POSITION;
 	int count = p->CNT;
 	int dev = MINOR(p->DEVICE);
-	struct ramdisk_dev * ramdisk = ramdisks + dev;
+
+    struct ramdisk_dev * ramdisk; 
+    if (dev == MINOR_INITRD) ramdisk = &initramdisk;
+    else ramdisk = ramdisks + dev;
+
 	char * addr = ramdisk->start + (int)pos;
 	
 	if (pos > ramdisk->length){
@@ -136,12 +141,10 @@ PRIVATE void init_rd()
 		printl("RAMDISK: invalid initrd module parameter(pad is not zero)");
 	}
 
-	struct ramdisk_dev * initrd = ramdisks;
+	initramdisk.start = (char*)(initrd_mod->mod_start + KERNEL_VMA);
+	initramdisk.length = initrd_mod->mod_end - initrd_mod->mod_start;
+	initramdisk.rdonly = 1;
 
-	initrd->start = (char*)(initrd_mod->mod_start + KERNEL_VMA);
-	initrd->length = initrd_mod->mod_end - initrd_mod->mod_start;
-	initrd->rdonly = 1;
-
-	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", initrd->length, initrd->length / 1024, initrd->start);
+	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", initramdisk.length, initramdisk.length / 1024, initramdisk.start);
 }
 

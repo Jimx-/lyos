@@ -335,6 +335,8 @@ enum msgtype {
 #define	INVALID_INODE		0
 #define	ROOT_INODE		1
 
+#define MINOR_INITRD    120
+
 #define	MAX_DRIVES		2
 #define	NR_PART_PER_DRIVE	4
 #define	NR_SUB_PER_PART		16

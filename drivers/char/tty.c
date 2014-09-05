@@ -140,8 +140,8 @@ PRIVATE void init_tty(TTY* tty)
 	init_screen(tty);
 
 	/* announce the device */
-	char * name = "tty?";
-	name[3] = '0' + (tty - TTY_FIRST);
+	char name[6];
+	sprintf(name, "tty%d", (int)(tty - TTY_FIRST));
 	announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST)));
 }
 

@@ -21,4 +21,10 @@ config BLK_DEV_FD
 	  If you want to use the floppy disk drive(s) of your PC,
 	  say Y.
 
+config BLK_DEV_RAM_COUNT
+	int "Default number of RAM disks"
+	default "8"
+	help
+	  The default value is 8 RAM disks.
+
 endif

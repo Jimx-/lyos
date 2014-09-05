@@ -44,7 +44,7 @@ PUBLIC int main()
             msg.RETVAL = do_announce_driver(&msg);
             break;
         default:
-            printl("devman: unknown message type\n");
+            printl("DEVMAN: unknown message type\n");
             break;
         }
 
@@ -56,7 +56,7 @@ PUBLIC int main()
 
 PRIVATE void devman_init()
 {
-	printl("devman: Device manager is running.\n");
+	printl("DEVMAN: Device manager is running.\n");
 
     init_dd_map();
 
