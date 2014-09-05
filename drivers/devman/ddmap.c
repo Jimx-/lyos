@@ -37,7 +37,7 @@ PUBLIC void init_dd_map()
     }
 }
 
-PRIVATE int map_driver(dev_t dev, int type, endpoint_t drv_ep)
+PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep)
 {
     struct dev_driver_map * map = (struct dev_driver_map *)malloc(sizeof(struct dev_driver_map));
     if (map == NULL) return ENOMEM;
@@ -72,3 +72,21 @@ PUBLIC int do_announce_driver(MESSAGE * m)
 
     return 0;
 }
+
+PUBLIC int do_get_driver(MESSAGE * m)
+{
+    dev_t dev = m->DEVICE;
+    dev_t major = MAJOR(dev), minor = MINOR(dev);
+    int type = m->FLAGS;
+
+    struct dev_driver_map * map;
+    list_for_each_entry(map, &dd_map[major], list) {
+        if (map->minor == minor && map->type == type) {
+            m->PID = map->drv_ep;
+            return 0;
+        }
+    }
+
+    return ENXIO;
+}
+

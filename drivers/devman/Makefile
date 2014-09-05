@@ -4,7 +4,7 @@
 DEVMANCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
 
 DEVMAN		= devman
-DEVMANOBJS = main.c ddmap.c global.c
+DEVMANOBJS = main.o ddmap.o global.o
 LIBS 		= $(LIBDIR)/liblyos/liblyos.a
 
 everything : realclean $(DEVMAN)
@@ -16,5 +16,10 @@ $(DEVMAN): $(DEVMANOBJS) $(LIBS)
 	@echo -e '\tLD\tdrivers/devman/$@'
 	@$(CC) $(DEVMANCFLAGS) -o $@ $^
 
+%.o: %.c
+	@echo -e '\tCC\tdrivers/devman/$@'
+	@$(CC) $(DEVMANCFLAGS) -c $<
+
 $(LIBDIR)/liblyos/liblyos.a:
 	@(cd $(LIBDIR)/liblyos; make)
+

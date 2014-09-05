@@ -25,6 +25,7 @@
 #include "string.h"
 #include "proto.h"
 #include "lyos/proc.h"
+#include "lyos/driver.h"
 
 PRIVATE void devman_init();
 PRIVATE int register_filesystem();
@@ -43,6 +44,9 @@ PUBLIC int main()
         case ANNOUNCE_DEVICE:
             msg.RETVAL = do_announce_driver(&msg);
             break;
+        case GET_DRIVER:
+            msg.RETVAL = do_get_driver(&msg);
+            break;
         default:
             printl("DEVMAN: unknown message type\n");
             break;
@@ -59,6 +63,9 @@ PRIVATE void devman_init()
 	printl("DEVMAN: Device manager is running.\n");
 
     init_dd_map();
+
+    /* Map init ramdisk */
+    map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
 
     register_filesystem();
 }

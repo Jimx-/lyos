@@ -18,5 +18,7 @@
 
 PUBLIC void init_dd_map();
 PUBLIC int do_announce_driver(MESSAGE * m);
+PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep);
+PUBLIC int do_get_driver(MESSAGE * m);
 
 #endif
