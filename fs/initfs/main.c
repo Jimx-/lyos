@@ -34,7 +34,7 @@
 #include "proto.h"
 #include "tar.h"
 
-PUBLIC void task_initfs()
+PUBLIC int main()
 {
 	printl("initfs: InitFS driver is running\n");
 
@@ -76,8 +76,7 @@ PUBLIC void task_initfs()
         case FS_SYNC:
             break;
 		default:
-			dump_msg("initfs: unknown message:", &m);
-            while (1);
+			printl("initfs: unknown message\n");
 			break;
 		}
 
@@ -87,4 +86,7 @@ PUBLIC void task_initfs()
 			send_recv(SEND, src, &m);
 		}
 	}
+
+    return 0;
 }
+

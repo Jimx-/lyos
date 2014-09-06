@@ -58,7 +58,6 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 
 		default:
 			printl("%s: unknown message type\n", dd->dev_name);
-			dump_msg("", &msg);
 			break;
 		}
 
@@ -98,6 +97,32 @@ PUBLIC int announce_chardev(char * name, dev_t dev)
 	return msg.RETVAL;
 }
 
+PUBLIC endpoint_t get_blockdev_driver(dev_t dev)
+{
+    MESSAGE msg;
+
+    msg.type = GET_DRIVER;
+    msg.DEVICE = dev;
+    msg.FLAGS = DT_BLOCKDEV;
+
+    send_recv(BOTH, TASK_DEVMAN, &msg);
+
+    return (msg.RETVAL != 0) ? -msg.RETVAL : msg.PID;
+}
+
+PUBLIC endpoint_t get_chardev_driver(dev_t dev)
+{
+    MESSAGE msg;
+
+    msg.type = GET_DRIVER;
+    msg.DEVICE = dev;
+    msg.FLAGS = DT_CHARDEV;
+
+    send_recv(BOTH, TASK_DEVMAN, &msg);
+
+    return (msg.RETVAL != 0) ? -msg.RETVAL : msg.PID;
+}
+
 /*****************************************************************************
  *                                rw_sector
  *****************************************************************************/
@@ -117,6 +142,8 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 		     void* buf)
 {
 	MESSAGE driver_msg;
+    endpoint_t driver_nr = get_blockdev_driver(dev);
+    if (driver_nr < 0) return -driver_nr;
 
 	driver_msg.type		= io_type;
 	driver_msg.DEVICE	= MINOR(dev);
@@ -124,8 +151,8 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 	driver_msg.BUF		= buf;
 	driver_msg.CNT		= bytes;
 	driver_msg.PROC_NR	= proc_nr;
-	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+
+	send_recv(BOTH, driver_nr, &driver_msg);
 
 	return driver_msg.RETVAL;
 }

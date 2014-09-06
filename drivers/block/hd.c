@@ -42,6 +42,7 @@ PRIVATE int		waitfor				(int mask, int val, int timeout);
 PRIVATE void	interrupt_wait		();
 PRIVATE	void	hd_identify			(int drive);
 PRIVATE void	print_identify_info	(u16* hdinfo);
+PRIVATE void 	register_hd(struct hd_info * hdi);
 
 PRIVATE	u8		hd_status;
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
@@ -135,6 +136,16 @@ PRIVATE void init_hd()
 	for (i = 0; i < (sizeof(hd_info) / sizeof(hd_info[0])); i++)
 		memset(&hd_info[i], 0, sizeof(hd_info[0]));
 	hd_info[0].open_cnt = 0;
+
+	for (i = 0; i < *pNrDrives; i++) {
+		hd_identify(i);
+
+		if (hd_info[i].open_cnt++ == 0) {
+			partition(i * NR_SUB_PER_DRIVE, P_PRIMARY);
+			print_hdinfo(&hd_info[i]);
+			register_hd(&hd_info[i]);
+		}
+	}
 }
 
 /*****************************************************************************
@@ -152,12 +163,7 @@ PRIVATE int hd_open(MESSAGE * p)
 	int drive = DRV_OF_DEV(p->DEVICE);
 	assert(drive == 0);	/* only one drive */
 
-	hd_identify(drive);
-
-	if (hd_info[drive].open_cnt++ == 0) {
-		partition(drive * NR_SUB_PER_DRIVE, P_PRIMARY);
-		print_hdinfo(&hd_info[drive]); 
-	}
+	hd_info[drive].open_cnt++;
 
 	return 0;
 }
@@ -409,6 +415,35 @@ PRIVATE void print_hdinfo(struct hd_info * hdi)
 		       hdi->logical[i].base, 
 		       hdi->logical[i].size, 
  		       hdi->logical[i].size); 
+ 	} 
+} 
+
+/*****************************************************************************  */
+/*                                register_hd									*/
+/*****************************************************************************  */
+PRIVATE void register_hd(struct hd_info * hdi) 
+ { 
+ 	int i, drive = (hdi - hd_info) + 1; 
+	for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) { 
+		if (hdi->primary[i].size == 0) 
+			continue; 
+		char name[6];
+		memset(name, 0, sizeof(name));
+
+		if (i == 0) sprintf(name, "hd%d", drive);
+		else sprintf(name, "hd%d%c", drive, 'a' + i - 1);
+
+		announce_blockdev(name, MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + i));
+	} 
+	for (i = 0; i < NR_SUB_PER_DRIVE; i++) { 
+		if (hdi->logical[i].size == 0) 
+			continue; 
+		char name[6];
+		memset(name, 0, sizeof(name));
+
+		sprintf(name, "hd%d%c", drive, 'a' + i + NR_PRIM_PER_DRIVE - 1);
+
+		announce_blockdev(name, MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + NR_PRIM_PER_DRIVE + i));
  	} 
 } 
 

@@ -327,7 +327,7 @@ enum msgtype {
 /* make device number from major and minor numbers */
 #define	MAJOR_SHIFT		8
 #define MINOR_MASK		((1U << MAJOR_SHIFT) - 1)
-#define	MAKE_DEV(a,b)		((a << MAJOR_SHIFT) | b)
+#define	MAKE_DEV(a,b)		(((a) << MAJOR_SHIFT) | (b))
 /* separate major and minor numbers from device number */
 #define	MAJOR(x)		((unsigned int)(x >> MAJOR_SHIFT))
 #define	MINOR(x)		((unsigned int)(x & MINOR_MASK))

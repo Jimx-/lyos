@@ -86,7 +86,6 @@ PUBLIC int do_get_driver(MESSAGE * m)
             return 0;
         }
     }
-
     return ENXIO;
 }
 

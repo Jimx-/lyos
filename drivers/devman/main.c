@@ -67,7 +67,7 @@ PRIVATE void devman_init()
     /* Map init ramdisk */
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
 
-    register_filesystem();
+    //register_filesystem();
 }
 
 PRIVATE int register_filesystem()

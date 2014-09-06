@@ -69,9 +69,6 @@ EXTERN  int         mb_flags;
 
 /* MM */
 EXTERN	MESSAGE			mm_msg;
-#define MMBUF_SIZE      0x100000
-EXTERN  u8              _mmbuf[MMBUF_SIZE];
-extern	u8 *			mmbuf;
 
 EXTERN  unsigned int        PROCS_BASE;
 EXTERN  int                 kernel_pts;

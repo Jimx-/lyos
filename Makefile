@@ -121,7 +121,7 @@ include $(ARCHDIR)/Makefile
 
 everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL) $(LYOSINIT) initrd
 
-all : realclean everything image lib cmd
+all : realclean everything image
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -155,9 +155,6 @@ silentoldconfig:
 	@(cd scripts/config; make config)
 	$(CONF) --silentoldconfig  $(CONFIGIN)
 
-cmd :
-	@(cd command;make install)
-
 lib :
 	@(cd lib/liblyos; make)
 
@@ -176,6 +173,7 @@ clean :
 
 realclean :
 	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
+	@find . -path ./toolchain -prune -o -name "*.a" -exec rm -f {} \;
 	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL) $(LYOSINIT) $(LYOSINITRD)
 
 update-disk:

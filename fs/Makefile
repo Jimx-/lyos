@@ -6,16 +6,17 @@ ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 LIBS		= $(LIBDIR)/libexec/libexec.a
 FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 				read_write.o stat.o link.o misc.o exec.o device.o \
-				ext2/ext2fs.o initfs/initfs.o $(LIBS)
+				ext2/ext2fs.o $(LIBS)
 
+INITFS		= initfs/initfs
 PROCFS		= procfs/procfs
 
 FS			= fs.o
 
-everything : realclean $(FS) $(PROCFS)
+everything : realclean $(FS) $(INITFS) $(PROCFS)
 
 realclean :
-	@rm -f $(FSOBJS) $(PROCFS)
+	@rm -f $(FSOBJS) $(INITFS) $(PROCFS)
 
 $(FS): $(FSOBJS)
 	@echo -e '\tLD\tfs/$@'
@@ -28,8 +29,9 @@ $(FS): $(FSOBJS)
 ext2/ext2fs.o:
 	@(cd ext2; make)
 
-initfs/initfs.o:
+$(INITFS):
 	@(cd initfs; make)
+	@(cp -f $(INITFS) ../sysroot/sbin/)
 
 $(PROCFS):
 	@(cd procfs; make)

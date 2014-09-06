@@ -41,6 +41,7 @@ struct boot_module {
 
 PRIVATE struct boot_module boot_modules[] = {
     { TASK_DEVMAN, "DEVMAN" },
+    { TASK_INITFS, "INITFS" },
     { -1, NULL }
 };
 

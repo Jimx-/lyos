@@ -10,7 +10,7 @@ LIBS 		= $(LIBDIR)/liblyos/liblyos.a
 everything : realclean $(DEVMAN)
 
 realclean :
-	@rm -f $(DEVMAN)
+	@rm -f $(DEVMAN) $(DEVMANOBJS)
 
 $(DEVMAN): $(DEVMANOBJS) $(LIBS)
 	@echo -e '\tLD\tdrivers/devman/$@'

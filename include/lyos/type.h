@@ -101,12 +101,4 @@ typedef struct {
 	} u;
 } MESSAGE;
 
-/* Memory map for local text, stack, data segments. */
-struct mem_map {
-	unsigned int mem_vir;		/* virtual address */
-  	unsigned int mem_phys;		/* physical address */
-  	unsigned int mem_len;		/* length */
-};
-
-
 #endif /* _TYPE_H_ */

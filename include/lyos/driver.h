@@ -45,5 +45,8 @@ PUBLIC int  rw_sector (int io_type, int dev, u64 pos,
             int bytes, int proc_nr, void * buf);
 PUBLIC int announce_blockdev(char * name, dev_t dev);
 PUBLIC int announce_chardev(char * name, dev_t dev);
+PUBLIC endpoint_t get_blockdev_driver(dev_t dev);
+PUBLIC endpoint_t get_chardev_driver(dev_t dev);
 
 #endif
+

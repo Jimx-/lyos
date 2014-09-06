@@ -47,7 +47,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
-	{task_initfs,	STACK_SIZE_INITFS,"INITFS"	  },
+	{NULL,	        0,                "INITFS"	  },
 	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
 	{task_pci,      STACK_SIZE_PCI,   "PCI"       },
 	{task_inet,     STACK_SIZE_INET,  "INET"      },
@@ -95,6 +95,5 @@ struct dev_drv_map dd_map[] = {
 };
 
 PUBLIC	u8 *		fsbuf		= (u8*)&_fsbuf;
-PUBLIC	u8 *		mmbuf		= (u8*)&_mmbuf;
 
 

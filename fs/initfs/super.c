@@ -35,14 +35,9 @@
 #include "global.h"
 #include "tar.h"
 
-PRIVATE void bdev_open(dev_t dev);
-
 PUBLIC int initfs_readsuper(MESSAGE * p)
 {
     dev_t dev = p->REQ_DEV;
-
-    /* open the device where this superblock resides on */
-    bdev_open(dev);
 
     char buf[512];
     int i, position = 0;
@@ -74,11 +69,3 @@ PUBLIC int initfs_readsuper(MESSAGE * p)
     return 0;
 }
 
-PRIVATE void bdev_open(dev_t dev)
-{
-    MESSAGE driver_msg;
-    driver_msg.type = DEV_OPEN;
-    driver_msg.DEVICE = MINOR(dev);
-    assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-    send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
-}
