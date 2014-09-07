@@ -165,6 +165,6 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
 
     execi->entry_point = elf_hdr->e_entry;
-    printl("Elf loaded\n");
+
     return 0;
 }

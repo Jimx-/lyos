@@ -45,12 +45,9 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
     int i;
     for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
-        page_table_start[i] = page;
+        if (i < FIXMAP_START / PG_SIZE) page_table_start[i] = page;
+        else page_table_start[i] = 0;
     }
-
-    int nr_free_page_tables = nr_page_tables - (VMALLOC_START / PT_MEMSIZE);
-    int free_page_start = nr_free_page_tables * 1024;
-    for (i = free_page_start; i < nr_pages; i++) page_table_start[i] = 0;
 
     /* initialize page directory */
     int pde = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
@@ -59,7 +56,7 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
     }
 
     /* map 0xC0000000 ~ 0xF0000000 to 0x00000000 ~ 0x30000000  */
-    for (i = ARCH_PDE(KERNEL_VMA); i < ARCH_PDE(VMALLOC_START); i++) {
+    for (i = ARCH_PDE(KERNEL_VMA); i < ARCH_PDE(KERNEL_VMA) + kpts; i++) {
         pgd[i] = pgd[i - ARCH_PDE(KERNEL_VMA)];
     }
 

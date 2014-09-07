@@ -28,7 +28,7 @@
 #include "lyos/proto.h"
 #include "lyos/dmi.h"
 
-#define ROM_BASE 0xF0000 + KERNEL_VMA
+#define ROM_BASE (0xF0000 + KERNEL_VMA)
 #define ROM_SIZE 0x10000
 
 static int dmi_available = 0;

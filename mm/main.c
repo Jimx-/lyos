@@ -157,17 +157,12 @@ PRIVATE void init_mm()
 						reserved_memsize / 1024);
 	printl("Physical process memory base: 0x%x\n", PROCS_BASE);
 	
-	u32 lowmem = VMALLOC_START - KERNEL_VMA;
 	printl("Virtual kernel memory layout:\n");
 	printl("  .text   : 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
 	printl("  .data   : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss    : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
-	printl("  lowmem  : 0x%08x - 0x%08x  (%dkB)\n", KERNEL_VMA, VMALLOC_START, lowmem / 1024);
 	printl("  vmalloc : 0x%08x - 0x%08x  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
 	printl("  fixmap  : 0x%08x - 0x%08x  (%dkB)\n", FIXMAP_START, FIXMAP_END, (FIXMAP_END - FIXMAP_START) / 1024);
-
-	printl("MM: %dMB HIGHMEM available\n", (memory_size - lowmem) / 1024 / 1024);
-	printl("MM: %dMB LOWMEM available\n", lowmem / 1024 / 1024);
 
 	printl("MM: Kernel page directory at physical address: 0x%x\n", initial_pgd);
 

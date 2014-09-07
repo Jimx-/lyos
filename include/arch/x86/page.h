@@ -17,7 +17,7 @@
 #define _PAGE_H_
 
 #define KERNEL_VMA      0xc0000000
-#define VMALLOC_START   0xf0000000
+#define VMALLOC_START   (0xf0000000 + PROCS_BASE)
 #define VMALLOC_END     0xf7c00000
 #define FIXMAP_START    VMALLOC_END
 #define FIXMAP_END      0xffffe000

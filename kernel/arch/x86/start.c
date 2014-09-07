@@ -195,7 +195,7 @@ PUBLIC void init_arch()
 			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 
-			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + 4; j++) {
+			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + kernel_pts; j++) {
 				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.vir_addr[j] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
 			}
 		}

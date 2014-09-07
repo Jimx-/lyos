@@ -218,7 +218,7 @@ PUBLIC int pgd_mapkernel(struct page_directory * pgd)
     int i;
     int kernel_pde = ARCH_PDE(KERNEL_VMA);
 
-    for (i = 0; i < ARCH_PDE(VMALLOC_START) - kernel_pde; i++) {
+    for (i = 0; i < kernel_pts; i++) {
         pgd->vir_addr[kernel_pde + i] = initial_pgd[i];
         pgd->vir_pts[kernel_pde + i] = (pte_t *)((initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
     }
@@ -231,7 +231,7 @@ PUBLIC int pgd_clear(struct page_directory * pgd)
     int i;
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        if (i >= ARCH_PDE(KERNEL_VMA) && i < ARCH_PDE(VMALLOC_START)) continue;  /* never unmap kernel */
+        if (i >= ARCH_PDE(KERNEL_VMA) && i < ARCH_PDE(KERNEL_VMA) + kernel_pts) continue;  /* never unmap kernel */
         if (pgd->vir_pts[i]) {
             free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
         }
