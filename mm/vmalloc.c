@@ -112,7 +112,6 @@ PUBLIC int alloc_vmpages(int nr_pages)
 		int alignment = 0;
 		if (hp->h_base % PAGE_ALIGN != 0)
 			alignment = PAGE_ALIGN - (hp->h_base % PAGE_ALIGN);
-
 		if (hp->h_len >= memsize + alignment) {
 			/* We found a hole that is big enough.  Use it. */
 			old_base = hp->h_base + alignment;

@@ -81,7 +81,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
 		user_pgd = (pde_t*)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 		for (j = 0; j < kernel_pts; j++) { 
-        	user_pgd[j + ARCH_PDE(KERNEL_VMA)] = initial_pgd[j + ARCH_PDE(KERNEL_VMA)];
+        	user_pgd[j + ARCH_PDE(KERNEL_VMA)] = initial_pgd[j];
     	}
     }
 
@@ -174,7 +174,7 @@ PUBLIC void init_arch()
 			if (i == TASK_MM) {
 				/* use kernel page table */ 
 				p->pgd.phys_addr = initial_pgd;
-				p->pgd.vir_addr = initial_pgd + KERNEL_VMA;
+				p->pgd.vir_addr = (pde_t *)((int)initial_pgd + KERNEL_VMA);
 			} else {
 				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);

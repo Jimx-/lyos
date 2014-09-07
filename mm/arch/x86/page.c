@@ -45,8 +45,8 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
     int i;
     for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
-        if (i < FIXMAP_START / PG_SIZE) page_table_start[i] = page;
-        else page_table_start[i] = 0;
+        if (i >= FIXMAP_START / PG_SIZE && i < FIXMAP_END / PG_SIZE) page_table_start[i] = 0;
+        else page_table_start[i] = page;
     }
 
     /* initialize page directory */
@@ -55,9 +55,9 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
         pgd[i] = pde;
     }
 
-    /* map 0xC0000000 ~ 0xF0000000 to 0x00000000 ~ 0x30000000  */
-    for (i = ARCH_PDE(KERNEL_VMA); i < ARCH_PDE(KERNEL_VMA) + kpts; i++) {
-        pgd[i] = pgd[i - ARCH_PDE(KERNEL_VMA)];
+    /* map the kernel */
+    for (i = 0; i < kpts; i++) {
+        pgd[i + ARCH_PDE(KERNEL_VMA)] = pgd[i];
     }
 
     /* switch to the new page directory */
@@ -86,8 +86,8 @@ PRIVATE void * find_free_pages(struct page_directory * pgd, int nr_pages, void *
     if (start == NULL) start = (void *)FIXMAP_START;
     if (end == NULL) end = (void *)FIXMAP_END;
 
-    int start_pde = ARCH_PDE((int)start);
-    int end_pde = ARCH_PDE((int)end);
+    unsigned int start_pde = ARCH_PDE((unsigned int)start);
+    unsigned int end_pde = ARCH_PDE((unsigned int)end);
 
     int i, j;
     int allocated_pages = 0;

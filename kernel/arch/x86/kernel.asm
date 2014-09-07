@@ -47,7 +47,7 @@ dd 				pt0 - KERNEL_VMA + 0x1007
 dd 				pt0 - KERNEL_VMA + 0x2007
 dd 				pt0 - KERNEL_VMA + 0x3007
 times 			KERNEL_PDE - 4		dd 	0
-; 0xC0000000
+; 0xF0000000
 dd 				pt0 - KERNEL_VMA + 0x007
 dd 				pt0 - KERNEL_VMA + 0x1007
 dd 				pt0 - KERNEL_VMA + 0x2007
