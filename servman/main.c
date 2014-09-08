@@ -53,7 +53,7 @@ PUBLIC void task_servman()
             msg.RETVAL = do_service_up(&msg);
             break;
         default:
-            dump_msg("servman::unknown msg", &msg);
+            dump_msg("SERVMAN::unknown msg", &msg);
             assert(0);
             break;
         }
@@ -65,7 +65,8 @@ PUBLIC void task_servman()
 
 PRIVATE void servman_init()
 {
-    printl("servman: Service manager is running.\n");
+    printl("SERVMAN: Service manager is running.\n");
 
+    serv_prepare_module_stack();
     spawn_boot_modules();
 }

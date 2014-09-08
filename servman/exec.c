@@ -37,6 +37,9 @@
 #include <elf.h>
 #include "libexec.h"
 #include <sys/mman.h>
+#include <multiboot.h>
+
+#define MAX_MODULE_PARAMS   64
 
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
@@ -46,6 +49,12 @@ PRIVATE struct exec_loader exec_loaders[] = {
     { libexec_load_elf },
     { NULL },
 };
+
+PRIVATE int module_argc;
+PRIVATE char module_stack[PROC_ORIGIN_STACK];
+PRIVATE char * module_stp;
+PRIVATE char * module_envp;
+PRIVATE int module_stack_len;
 
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
@@ -112,6 +121,60 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
     return 0;
 }
 
+PUBLIC int serv_prepare_module_stack()
+{
+    char arg[STR_DEFAULT_LEN];
+    char * argv[MAX_MODULE_PARAMS];
+    char * stacktop = module_stack + PROC_ORIGIN_STACK, ** arg_list;
+    int delta = (int)stacktop - VM_STACK_TOP;
+    int i;
+
+#define CLEAR_ARG() memset(arg, 0, sizeof(arg))
+#define COPY_STRING(str) do { \
+                                stacktop--;    \
+                                stacktop -= strlen(str);   \
+                                strcpy(stacktop, str); \
+                                argv[module_argc] = stacktop - delta; \
+                                module_argc++;  \
+                            } while (0)
+
+    module_argc = 0;
+
+    /* initrd_base and initrd_len */
+    multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
+    char * initrd_base = (char*)(initrd_mod->mod_start + KERNEL_VMA);
+    unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
+
+    CLEAR_ARG();
+    sprintf(arg, "%x", (unsigned int)initrd_base);
+    COPY_STRING(arg);
+    COPY_STRING("--initrd_base");
+
+    CLEAR_ARG();
+    sprintf(arg, "%u", initrd_len);
+    COPY_STRING(arg);
+    COPY_STRING("--initrd_len");
+
+    arg_list = (char **)stacktop;
+    /* env list end */
+    arg_list--;
+    *arg_list = NULL;
+    module_envp = (char*)arg_list - delta;
+    /* arg list end */
+    arg_list--;
+    *arg_list = NULL;
+
+    for (i = 0; i < module_argc; i++) {
+        arg_list--;
+        *arg_list = argv[i];
+    }
+
+    module_stp = (char*)arg_list;
+    module_stack_len = (int)module_stack + PROC_ORIGIN_STACK - (int)arg_list;
+
+    return 0;
+}
+
 PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
 {
     int i, retval;
@@ -144,9 +207,16 @@ PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
 
     if (retval) return retval;
 
+    char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
+    data_copy(target, D, orig_stack, TASK_SERVMAN, D, module_stp, module_stack_len);
+
+    proc_table[target].regs.ecx = (u32)module_envp; 
+    proc_table[target].regs.edx = (u32)orig_stack;
+    proc_table[target].regs.eax = module_argc;
+
     /* setup eip & esp */
     proc_table[target].regs.eip = execi.entry_point; /* @see _start.asm */
-    proc_table[target].regs.esp = (u32)VM_STACK_TOP;
+    proc_table[target].regs.esp = (u32)VM_STACK_TOP - module_stack_len;
 
     proc_table[target].brk = execi.brk;
 

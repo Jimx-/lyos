@@ -80,7 +80,7 @@ int execv(const char *path, char * argv[])
 int execve(const char *name, char * argv[], char * const envp[]) 
 {
 	char **p = argv, **q = NULL;
-	char arg_stack[ARG_MAX / 2];
+	char arg_stack[ARG_MAX];
 	int stack_len = 0;
 
 	/* arg_stack layout */

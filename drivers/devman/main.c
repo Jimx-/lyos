@@ -30,12 +30,12 @@
 PRIVATE void devman_init();
 PRIVATE int register_filesystem();
 
-PUBLIC int main()
+PUBLIC int main(int argc, char * argv[])
 {
 	devman_init();
     
     MESSAGE msg;
-    
+
     while (1) {
         send_recv(RECEIVE, ANY, &msg);
         int src = msg.source;

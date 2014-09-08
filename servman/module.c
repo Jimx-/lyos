@@ -56,12 +56,12 @@ PUBLIC int spawn_boot_modules()
 
     for (bm = boot_modules; bm->name != NULL; bm++, mb_mod++) {
         if (mb_mod->pad) {
-            printl("servman: Invalid boot module parameter(pad is not zero)");
+            printl("SERVMAN: Invalid boot module parameter(pad is not zero)");
         }
 
         char * mod_base = (char*)(mb_mod->mod_start + KERNEL_VMA);
         int mod_len = mb_mod->mod_end - mb_mod->mod_start;
-        printl("servman: Spawning boot module %s, base: 0x%x, len: %d bytes\n", bm->name, mod_base, mod_len);
+        printl("SERVMAN: Spawning boot module %s, base: 0x%x, len: %d bytes\n", bm->name, mod_base, mod_len);
         
         retval = serv_spawn_module(bm->ep, mod_base, mod_len);
         if (retval) return retval;
