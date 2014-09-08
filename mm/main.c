@@ -175,10 +175,11 @@ PRIVATE void init_mm()
 
 	/* setup memory region for tasks so they can malloc */
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
-	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size);
+	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
 	struct proc * p = proc_table;
 	int i;
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
+		if (p->state == BLOCKED) continue;
 		phys_region_init(&(rp->phys_block), 1);
 		/* prepare heap */
 		rp->vir_addr = (void*)0x1000;

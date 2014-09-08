@@ -207,6 +207,7 @@ PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
 
     if (retval) return retval;
 
+    /* copy the stack */
     char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
     data_copy(target, D, orig_stack, TASK_SERVMAN, D, module_stp, module_stack_len);
 

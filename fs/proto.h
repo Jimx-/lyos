@@ -16,7 +16,8 @@
 #ifndef _VFS_PROTO_H_
 #define _VFS_PROTO_H_
 
-PUBLIC int register_filesystem(MESSAGE * p);
+PUBLIC int do_register_filesystem(MESSAGE * p);
+PUBLIC int add_filesystem(endpoint_t fs_ep, char * name);
 PUBLIC endpoint_t get_filesystem_endpoint(char * name);
 
 PUBLIC void init_inode_table();

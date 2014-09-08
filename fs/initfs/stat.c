@@ -60,7 +60,8 @@ PUBLIC int initfs_stat(MESSAGE * p)
     int major = initfs_get8(phdr->devmajor);
     int minor = initfs_get8(phdr->devminor);
     sbuf.st_rdev = MAKE_DEV(major, minor);
-    sbuf.st_size = initfs_getsize(phdr->size);
+    sbuf.st_size = (off_t)initfs_getsize(phdr->size);
+
     sbuf.st_atime = 0;
     sbuf.st_mtime = 0;
     sbuf.st_ctime = 0;

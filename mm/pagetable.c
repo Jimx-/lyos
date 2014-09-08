@@ -220,7 +220,7 @@ PUBLIC int pgd_mapkernel(struct page_directory * pgd)
 
     for (i = 0; i < kernel_pts; i++) {
         pgd->vir_addr[kernel_pde + i] = initial_pgd[i];
-        pgd->vir_pts[kernel_pde + i] = (pte_t *)((initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+        pgd->vir_pts[kernel_pde + i] = (pte_t *)(((int)initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
     }
     return 0;
 }

@@ -79,7 +79,7 @@ PUBLIC void task_fs()
 
 		switch (msgtype) {
         case FS_REGISTER:
-            msg.RETVAL = register_filesystem(&msg);
+            msg.RETVAL = do_register_filesystem(&msg);
             break;
 		case OPEN:
 			msg.FD = do_open(&msg);
@@ -164,6 +164,9 @@ PUBLIC void init_vfs()
     // mount root
     mount_fs(initrd_dev, "/", TASK_INITFS, 0);
     printl("VFS: Mounted init ramdisk\n");
+
+    add_filesystem(TASK_INITFS, "initfs");
+    add_filesystem(TASK_DEVMAN, "sysfs");
 }
 
 /* Perform fs part of fork/exit */

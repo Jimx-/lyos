@@ -27,8 +27,8 @@ typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;
 
-#define __dev_t_defined
-typedef unsigned int        __dev_t;
+//#define __dev_t_defined
+//typedef unsigned int        __dev_t;
 typedef unsigned int        block_t;
 
 typedef int 				endpoint_t;

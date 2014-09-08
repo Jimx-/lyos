@@ -193,6 +193,7 @@ setup-disk:
 initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
 	@cp sysroot/sbin/init ramdisk/sbin/
+	@cp sysroot/sbin/procfs ramdisk/sbin/
 	@cp sysroot/etc/fstab ramdisk/etc/
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)

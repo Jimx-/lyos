@@ -181,7 +181,7 @@ PUBLIC void init_arch()
 			}
 
 			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
-				if (p->pgd.vir_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)((p->pgd.vir_addr[j] + KERNEL_VMA) & 0xfffff000);
+				if (p->pgd.vir_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)(((int)(p->pgd.vir_addr[j]) + KERNEL_VMA) & 0xfffff000);
 			}			
 		} else {		/* INIT process */
 			init_desc(&p->ldts[INDEX_LDT_C],
@@ -196,7 +196,7 @@ PUBLIC void init_arch()
 			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 
 			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + kernel_pts; j++) {
-				p->pgd.vir_pts[j] = (pte_t *)((p->pgd.vir_addr[j] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+				p->pgd.vir_pts[j] = (pte_t *)(((int)(p->pgd.vir_addr[j]) + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
 			}
 		}
 
