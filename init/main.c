@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	3

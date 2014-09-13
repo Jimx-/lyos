@@ -16,6 +16,8 @@
 #ifndef _IPC_H_
 #define _IPC_H_
 
+#define SUSPEND -1000
+    
 int send_recv(int function, int src_dest, MESSAGE* msg);
 int sendrec(int function, int src_dest, MESSAGE* p_msg);
 

@@ -164,9 +164,6 @@ PUBLIC void init_vfs()
     // mount root
     mount_fs(initrd_dev, "/", TASK_INITFS, 0);
     printl("VFS: Mounted init ramdisk\n");
-
-    add_filesystem(TASK_INITFS, "initfs");
-    add_filesystem(TASK_DEVMAN, "sysfs");
 }
 
 /* Perform fs part of fork/exit */

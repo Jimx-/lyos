@@ -113,6 +113,6 @@ PUBLIC void do_handle_fault()
         } else if (ARCH_PF_NOPAGE(err_code)) {
             printl("MM: SIGSEGV %d bad address %x\n", proc2pid(p), pfla);
         }
-        send_sig(SIGSEGV, p); 
+        send_sig(p, SIGSEGV); 
     }
 }

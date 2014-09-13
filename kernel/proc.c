@@ -50,7 +50,7 @@ PUBLIC void schedule()
 	/* check alarm */
 	for (p = &FIRST_PROC; p <= &LAST_PROC; p++) {
 		if (p->alarm && p->alarm < jiffies) {
-			p->signal |= (1 << (SIGALRM - 1));
+			p->sig_pending |= (1 << (SIGALRM - 1));
 			p->alarm = 0;
 		}
 	}

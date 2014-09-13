@@ -29,6 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "multiboot.h"
 #include "page.h"
 #include <elf.h>
@@ -74,6 +75,7 @@ PUBLIC void task_mm()
 			break;
 		case KILL:
 			mm_msg.RETVAL = do_kill();
+			if (mm_msg.RETVAL == SUSPEND) reply = 0;
 			break; 
 		case SBRK:
 			mm_msg.RETVAL = do_sbrk();

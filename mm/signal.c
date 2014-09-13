@@ -25,9 +25,14 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "signal.h"
 #include "errno.h"
+#include "region.h"
+#include "proto.h"
  
+ PRIVATE void sig_proc(struct proc * p_dest, int signo);
+
 /*************************************************************************************
  * 						do_sigaction												 *
  * ***********************************************************************************/
@@ -88,13 +93,8 @@ PUBLIC int do_sigaction()
  *  Send a signal to the process given by p.
  *
  *****************************************************************************/
-PUBLIC int send_sig(int sig, struct proc * p)
+PUBLIC int send_sig(struct proc * p, int sig)
 {
-	if (!p || sig<1 || sig>32)
-		return -EINVAL;
-
-	/* send the signal */
-	p->signal |= (1<<(sig-1));
 	return 0;
 }
 
@@ -111,16 +111,57 @@ PUBLIC int do_kill()
 {
 	int sig = mm_msg.SIGNR;
 	int pid = mm_msg.PID;
-	struct proc* p_dest = proc_table + pid;
-	int ret; 
 	
-	if (pid == -1){
-	    p_dest = proc_table + NR_PROCS;
-        while (--p_dest > &FIRST_PROC)
-		send_sig(sig, p_dest);
-        return 0;
+	return kill_sig(mm_msg.source, pid, sig);
+}
+
+PUBLIC int kill_sig(pid_t source, pid_t dest, int signo)
+{
+	struct proc * p_src = proc_table + source;
+	int errcode = ESRCH;
+	int count = 0;
+
+	if (signo < 0 || signo >= NSIG) return EINVAL;
+
+	if (dest == INIT && signo == SIGKILL) return EINVAL;	/* attempt to kill INIT */
+
+	struct proc* p_dest = proc_table + NR_PROCS;
+    
+    while (--p_dest > &FIRST_PROC) {
+    	if (p_dest->state == FREE_SLOT) continue;
+
+    	if (dest > 0 && dest != proc2pid(p_dest)) continue;
+    	if (dest == -1 && dest <= INIT) continue;
+
+    	/* check permission */
+    	if (p_src->euid != SU_UID &&
+    			p_src->uid != p_dest->uid &&
+    			p_src->euid != p_dest->euid &&
+    			p_src->uid != p_dest->euid &&
+    			p_src->euid != p_dest->uid) {
+    		errcode = EPERM;
+    		continue;
+    	}
+
+    	count++;
+
+		sig_proc(p_dest, signo);
+
+		if (dest > 0) break;
 	}
 
-	ret = send_sig(sig, p_dest);
-	return ret;
+	/* the process has killed itself and thus no longer waiting */
+	if (p_src->state != RECEIVING) return SUSPEND;
+
+	if (count > 0) return 0;
+	else return errcode;
+}
+
+PRIVATE void sig_proc(struct proc * p_dest, int signo)
+{
+	if (p_dest->state == FREE_SLOT || p_dest->state & HANGING) {
+		panic("MM: signal sent to HANGING process");
+	}
+
+	if (!send_sig(p_dest, signo)) return;
 }

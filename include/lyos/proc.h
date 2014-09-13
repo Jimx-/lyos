@@ -13,7 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "signal.h"
+#include <signal.h>
 #include <lyos/list.h>
 
 #if (ARCH == x86)
@@ -64,8 +64,9 @@ struct proc {
 				    * A proc is runnable if state==0
 				    */
 
-    int signal;
-	struct sigaction sigaction[32];
+    sigset_t sig_pending;	/* signals to be handled */
+	sigset_t sig_mask;
+	struct sigaction sigaction[NSIG];
 	unsigned long alarm;
 	long blocked;
     
