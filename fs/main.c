@@ -160,6 +160,8 @@ PUBLIC void init_vfs()
 
     init_inode_table();
 
+    add_filesystem(TASK_SYSFS, "sysfs");
+
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root
     mount_fs(initrd_dev, "/", TASK_INITFS, 0);

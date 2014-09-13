@@ -159,12 +159,13 @@
 #define TASK_FS		4
 #define TASK_SYS	5
 #define	TASK_RD		6
-#define TASK_HD		7
-#define TASK_INITFS	8
-#define TASK_EXT2_FS	9
-#define TASK_PCI	10
-#define TASK_INET	11
-#define INIT		12
+#define TASK_INITFS	7
+#define TASK_SYSFS	8
+#define TASK_HD		9
+#define TASK_EXT2_FS	10
+#define TASK_PCI	11
+#define TASK_INET	12
+#define INIT		13
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 

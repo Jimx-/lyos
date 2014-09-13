@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/dirent.h>
+#include <sys/resource.h>
 
 #include "const.h"
 
@@ -164,6 +165,26 @@ int getpid()
 	return msg.PID;
 }
 
+pid_t getppid(void)
+{
+	return INIT;
+}
+
+pid_t getpgid(pid_t pid)
+{
+	return INIT;
+}
+
+int setpgid(pid_t pid, pid_t pgid)
+{
+	return 0;
+}
+
+pid_t getpgrp(void)
+{
+	return INIT;
+}
+
 int fork()
 {
 	MESSAGE msg;
@@ -207,6 +228,21 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 	return msg.RETVAL;
 }
 
+sighandler_t signal(int signum, sighandler_t handler)
+{
+	return handler;
+}
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+{
+	return 0;
+}
+
+int sigsuspend(const sigset_t *mask)
+{
+	return 0;
+}
+
 int waitpid(int pid, int * status, int options)
 {
 	MESSAGE msg;
@@ -224,6 +260,11 @@ int waitpid(int pid, int * status, int options)
 	return msg.PID;
 }
 
+pid_t wait3(int *status, int options, struct rusage *rusage)
+{
+	return waitpid(-1, status, options);
+}
+
 int wait(int * status)
 {
 	MESSAGE msg;
@@ -239,6 +280,11 @@ int wait(int * status)
 	*status = msg.STATUS;
 
 	return msg.PID;
+}
+
+int getgroups(int size, gid_t list[])
+{
+	return 0;
 }
 
 int isatty(int fd) {
@@ -750,4 +796,27 @@ int tcsetattr(int fd, int actions, struct termios * tio) {
 		default:
 			return 0;
 	}
+}
+
+int tcsetpgrp(int fd, pid_t pgrp)
+{
+	return 0;
+}
+
+pid_t tcgetpgrp(int fd)
+{
+	return 0;
+}
+
+char *getcwd(char *buf, size_t size)
+{
+	if (buf == NULL) buf = (char *)malloc(size);
+	if (buf == NULL) return NULL;
+	strcpy(buf, "/home");
+	return buf;
+}
+
+int pipe(int pipefd[2])
+{
+
 }

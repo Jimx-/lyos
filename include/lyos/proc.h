@@ -118,7 +118,7 @@ struct task {
 #define proc2pid(x) (x - proc_table)
 
 /* Number of tasks & processes */
-#define NR_TASKS		12
+#define NR_TASKS		13
 #define NR_PROCS		32
 #define NR_NATIVE_PROCS		1
 #define FIRST_PROC		proc_table[0]

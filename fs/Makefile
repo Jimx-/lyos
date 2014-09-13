@@ -10,13 +10,14 @@ FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 
 INITFS		= initfs/initfs
 PROCFS		= procfs/procfs
+SYSFS		= sysfs/sysfs
 
 FS			= fs.o
 
-everything : realclean $(FS) $(INITFS) $(PROCFS)
+everything : realclean $(FS) $(INITFS) $(PROCFS) $(SYSFS)
 
 realclean :
-	@rm -f $(FSOBJS) $(INITFS) $(PROCFS)
+	@rm -f $(FSOBJS) $(INITFS) $(PROCFS) $(SYSFS)
 
 $(FS): $(FSOBJS)
 	@echo -e '\tLD\tfs/$@'
@@ -36,6 +37,10 @@ $(INITFS):
 $(PROCFS):
 	@(cd procfs; make)
 	@(cp $(PROCFS) ../sysroot/sbin/)
+
+$(SYSFS):
+	@(cd sysfs; make)
+	@(cp $(SYSFS) ../sysroot/sbin/)
 
 $(LIBDIR)/libexec/libexec.a:
 	@(cd $(LIBDIR)/libexec; make)
