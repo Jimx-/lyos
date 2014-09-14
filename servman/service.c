@@ -32,6 +32,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "proto.h"
+#include "const.h"
+#include "libsysfs.h"
 
 PUBLIC int check_permission(endpoint_t caller, int request)
 {
@@ -73,4 +75,12 @@ PUBLIC int do_service_up(MESSAGE * msg)
     p->state = 0;
 
     return 0;
+}
+
+PUBLIC int announce_service(char * name, endpoint_t serv_ep)
+{
+    char label[MAX_PATH];
+    sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
+    /* publish the endpoint */
+    return sysfs_publish_u32(label, serv_ep, SF_PRIV_RETRIEVE);
 }

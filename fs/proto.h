@@ -76,6 +76,7 @@ PUBLIC int       do_fstat(MESSAGE * p);
 PUBLIC int       do_access(MESSAGE * p);
 
 PUBLIC int do_ioctl(MESSAGE * p);
+PUBLIC int do_fcntl(MESSAGE * p);
 
 #endif
 

@@ -217,24 +217,24 @@ enum msgtype {
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
-	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP, IOCTL,	/* 18 ~ 35 */
+	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP, IOCTL, FCNTL,	/* 18 ~ 36 */
 	/* FS & TTY */
-	SUSPEND_PROC, RESUME_PROC,				/* 36 ~ 37 */
+	SUSPEND_PROC, RESUME_PROC,				/* 37 ~ 38 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 38 ~ 47 */
+	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 39 ~ 48 */
 
 	/* FS & MM */
-	FORK, EXIT,					/* 48 ~ 49 */
+	FORK, EXIT,					/* 49 ~ 50 */
 
 	/* SERVMAN */
-	SERVICE_UP, SERVICE_DOWN,		/* 50 ~ 51 */
+	SERVICE_UP, SERVICE_DOWN,		/* 51 ~ 52 */
 
 	/* DEVMAN */
-	ANNOUNCE_DEVICE, GET_DRIVER,	/* 52 ~ 53 */
+	ANNOUNCE_DEVICE, GET_DRIVER,	/* 53 ~ 54 */
 
 	/* TTY, SYS, FS, MM, etc */		
-	SYSCALL_RET,						/* 54 */
+	SYSCALL_RET,						/* 55 */
 
 	/* message type for fs request */
 	FSREQ_RET = 1001,
@@ -255,7 +255,10 @@ enum msgtype {
 	DEV_CLOSE,
 	DEV_READ,
 	DEV_WRITE,
-	DEV_IOCTL						/* 2001 ~ 2005 */
+	DEV_IOCTL,						/* 2001 ~ 2005 */
+
+	/* message for sysfs */
+	SYSFS_PUBLISH = 2100,				/* 2100 */
 };
 
 /* macros for messages */

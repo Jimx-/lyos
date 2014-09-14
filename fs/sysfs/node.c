@@ -31,38 +31,39 @@
 #include "lyos/proto.h"
 #include "lyos/hd.h"
 #include "lyos/list.h"
+#include "libsysfs.h"
+#include "node.h"
+#include "global.h"
 
-PUBLIC int main()
+PRIVATE int node_num;
+
+PUBLIC void init_node()
 {
-	printl("sysfs: SysFS driver is running\n");
-
-	MESSAGE m;
-
-	int reply;
-
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
-
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-
-		switch (msgtype) {
-		case SYSFS_PUBLISH:
-			printl("Publish\n");
-			break;
-		default:
-			printl("sysfs: unknown message\n");
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
-
-    return 0;
+    node_num = 0;
+    INIT_LIST_HEAD(&(root_node->children));
 }
 
+PUBLIC sysfs_node_t sysfs_new_node(char * name, int flags, int type)
+{
+    sysfs_node_t * node = (sysfs_node_t *)malloc(sizeof(sysfs_node_t));
+    if (node == NULL) return NULL;
+
+    INIT_LIST_HEAD(&(node->children));
+    strcpy(node->name, name);
+    node->flags = flags;
+    node->type = type;
+
+    return node;
+}
+
+PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name)
+{
+    sysfs_node_t * node;
+    list_for_each_entry(node, &(parent->children), list) {
+        if (strcmp(node->name, name) == 0) {
+            return node;
+        }
+    }
+
+    return NULL;
+}

@@ -288,7 +288,9 @@ int getgroups(int size, gid_t list[])
 }
 
 int isatty(int fd) {
-	return 0;
+	struct termios t;
+
+	return (tcgetattr(fd, &t) != -1);
 }
 
 int uname(struct utsname * name)
@@ -339,7 +341,34 @@ int unlink(const char * pathname)
 
 int fcntl(int fd, int cmd, ...)
 {
-	return 0;
+	MESSAGE msg;
+	msg.type   = FCNTL;
+
+	msg.FD	= fd;
+	msg.REQUEST	= cmd;
+
+	va_list argp;
+
+ 	va_start(argp, cmd);
+
+	msg.BUF_LEN = 0;
+
+	switch(cmd) {
+	case F_DUPFD:
+	case F_SETFD:
+	case F_SETFL:
+		msg.BUF_LEN = va_arg(argp, int);
+		break;
+  	}
+
+	va_end(argp);
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	if (msg.RETVAL < 0) errno = -msg.RETVAL;
+	return msg.RETVAL < 0 ? -1 : msg.RETVAL;
 }
 
 mode_t umask(mode_t mask)
@@ -524,7 +553,8 @@ int ioctl(int fd, int request, void * data)
 
 	send_recv(BOTH, TASK_FS, &msg);
 
-	return msg.RETVAL;
+	if (msg.RETVAL != 0) errno = msg.RETVAL;
+	return msg.RETVAL == 0 ? 0 : -1;
 }
 
 int creat(const char *path, mode_t mode) {

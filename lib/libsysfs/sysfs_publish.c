@@ -15,54 +15,43 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/config.h"
-#include "errno.h"
 #include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
 #include "assert.h"
+#include "unistd.h"
+#include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
-#include "lyos/hd.h"
-#include "lyos/list.h"
+#include <lyos/ipc.h>
+#include "libsysfs.h"
 
-PUBLIC int main()
+PUBLIC int sysfs_publish_domain(char * key, int flags)
 {
-	printl("sysfs: SysFS driver is running\n");
+    MESSAGE msg;
 
-	MESSAGE m;
+    msg.type = SYSFS_PUBLISH;
 
-	int reply;
+    msg.PATHNAME = key;
+    msg.NAME_LEN = strlen(key);
+    msg.FLAGS = flags;
+    msg.MODE = ET_DOMAIN;
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
+    send_recv(BOTH, TASK_SYSFS, &msg);
 
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-
-		switch (msgtype) {
-		case SYSFS_PUBLISH:
-			printl("Publish\n");
-			break;
-		default:
-			printl("sysfs: unknown message\n");
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
-
-    return 0;
+    return msg.RETVAL;
 }
 
+PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags)
+{
+    MESSAGE msg;
+
+    msg.type = SYSFS_PUBLISH;
+
+    msg.PATHNAME = key;
+    msg.NAME_LEN = strlen(key);
+    msg.FLAGS = flags;
+    msg.u.m3.m3i3 = value;
+
+    send_recv(BOTH, TASK_SYSFS, &msg);
+
+    return msg.RETVAL;
+}

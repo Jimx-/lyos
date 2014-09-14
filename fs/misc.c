@@ -36,6 +36,40 @@
 PRIVATE int change_directory(struct inode ** ppin, char * pathname, int len);
 PRIVATE int change_node(struct inode ** ppin, struct inode * pin);
 
+PUBLIC int do_fcntl(MESSAGE * p)
+{
+    int fd = p->FD;
+    int request = p->REQUEST;
+    int argx = p->BUF_LEN;
+
+    if (fd < 0 || fd >= NR_FILES) return -EINVAL;
+
+    struct file_desc * filp = pcaller->filp[fd];
+    int i, newfd;
+    switch(request) {
+        case F_DUPFD:
+            if (argx < 0 || argx >= NR_FILES) return -EINVAL;
+            newfd = -1;
+            for (i = argx; i < NR_FILES; i++) {
+                if (pcaller->filp[i] == 0) {
+                    newfd = i;
+                    break;
+                }
+            }
+            if ((newfd < 0) || (newfd >= NR_FILES))
+                panic("filp[] is full (PID:%d)", proc2pid(pcaller));
+            filp->fd_cnt++;
+            pcaller->filp[newfd] = filp;
+            return newfd;
+        case F_SETFD:
+            return 0;
+        default:
+            break;
+    }
+
+    return 0;
+}
+
 /**
  * <Ring 1> Perform the DUP and DUP2 syscalls.
  */

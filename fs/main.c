@@ -109,6 +109,9 @@ PUBLIC void task_fs()
 		case UMASK:
 			msg.RETVAL = (int)do_umask(&msg);
 			break;
+		case FCNTL:
+			msg.RETVAL = do_fcntl(&msg);
+			break;
 		case DUP:
 			msg.RETVAL = do_dup(&msg);
 			break;

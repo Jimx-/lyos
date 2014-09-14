@@ -40,9 +40,9 @@ struct boot_module {
 };
 
 PRIVATE struct boot_module boot_modules[] = {
-    { TASK_DEVMAN, "DEVMAN" },
-    { TASK_INITFS, "INITFS" },
-    { TASK_SYSFS, "SYSFS" },
+    { TASK_SYSFS, "sysfs" },
+    { TASK_DEVMAN, "devman" },
+    { TASK_INITFS, "initfs" },
     { -1, NULL }
 };
 
@@ -66,6 +66,8 @@ PUBLIC int spawn_boot_modules()
         
         retval = serv_spawn_module(bm->ep, mod_base, mod_len);
         if (retval) return retval;
+
+        if (bm->ep != TASK_SYSFS) announce_service(bm->name, bm->ep);
 
         /* YOU ARE GO */
         proc_table[bm->ep].state = 0;

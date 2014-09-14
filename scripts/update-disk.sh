@@ -41,6 +41,7 @@ cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 cp -f sysroot/sbin/* /$MOUNT_POINT/sbin/ 
 cp -f sysroot/usr/bin/* /$MOUNT_POINT/usr/bin/
 cp -f sysroot/etc/* /$MOUNT_POINT/etc/
+cp -f sysroot/bin/dash /$MOUNT_POINT/bin/
 
 umount $MOUNT_POINT
 kpartx -d /dev/mapper/hda

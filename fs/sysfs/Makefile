@@ -1,6 +1,6 @@
 SYSFSCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
 
-FSOBJS 	= main.o
+FSOBJS 	= main.o global.o
 LIBS	= $(LIBDIR)/liblyos/liblyos.a $(LIBDIR)/libdriver/libdriver.a
 
 SYSFS = sysfs
