@@ -38,6 +38,8 @@ EXTERN	u32	k_reenter;
 EXTERN  pde_t *     initial_pgd;
 #endif
 
+extern  int booting_cpu;
+
 EXTERN	int	current_console;
 
 EXTERN	int	key_pressed; /**
@@ -46,7 +48,11 @@ EXTERN	int	key_pressed; /**
 			      * a key is pressed
 			      */
 
+#if CONFIG_SMP
+EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
+#else
 EXTERN	struct tss	tss;
+#endif
 EXTERN	struct proc*	current;
 
 extern	char		task_stack[];

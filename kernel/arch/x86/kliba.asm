@@ -39,8 +39,13 @@ global	port_write
 global	glitter
 global  arch_spinlock_lock
 global  arch_spinlock_unlock
-
-
+global  x86_lgdt
+global  x86_lidt
+global	x86_load_ds
+global	x86_load_es
+global	x86_load_fs
+global	x86_load_gs
+global	x86_load_ss
 
 ; ========================================================================
 ;		   void disp_str(char * info);
@@ -51,7 +56,7 @@ disp_str:
 
 	mov	esi, [ebp + 8]	; pszInfo
 	mov	edi, [disp_pos]
-	mov	ah, 07h
+	mov	ah, 0Fh
 .1:
 	lodsb
 	test	al, al
@@ -316,3 +321,60 @@ arch_spinlock_unlock:
 	xchg [eax], ecx
 	mfence
 	ret
+
+x86_lgdt:
+	push ebp
+	mov ebp, esp
+	mov eax, [ebp + 4 + 4]
+
+	lgdt [eax]
+	
+	pop ebp
+	ret
+
+x86_lidt:
+	push ebp
+	mov ebp, esp
+	mov eax, [ebp + 4 + 4]
+
+	lidt [eax]
+	
+	pop ebp
+	ret
+
+x86_ltr:
+	push ebp
+	mov ebp, esp
+
+	ltr [ebp + 4 + 4]
+	
+	pop ebp
+	ret
+
+%macro  load_from_ax	1
+	push ebp
+	mov ebp, esp
+	xor eax, eax
+	mov eax, [ebp + 4 + 4]
+
+	mov %1, ax
+	jmp .0
+.0:
+	pop ebp
+	ret
+%endmacro
+
+x86_load_ds:
+	load_from_ax	ds
+
+x86_load_es:
+	load_from_ax	es
+
+x86_load_fs:
+	load_from_ax	fs
+
+x86_load_gs:
+	load_from_ax	gs
+
+x86_load_ss:
+	load_from_ax	ss

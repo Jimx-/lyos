@@ -47,7 +47,6 @@ PUBLIC void init_arch();
  *****************************************************************************/
 PUBLIC int kernel_main()
 {
-
 	init_arch();
 
 	jiffies = 0;

@@ -172,5 +172,15 @@ PUBLIC void	init_prot();
 PUBLIC u32	seg2linear(u16 seg);
 PUBLIC void	init_desc(struct descriptor * p_desc,
 			  u32 base, u32 limit, u16 attribute);
+PUBLIC void load_prot_selectors();
+PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
+
+PUBLIC void x86_lgdt(u8 * p_gdt);
+PUBLIC void x86_lidt(u8 * p_idt);
+PUBLIC void x86_load_ds(u32 ds);
+PUBLIC void x86_load_es(u32 ds);
+PUBLIC void x86_load_fs(u32 ds);
+PUBLIC void x86_load_gs(u32 ds);
+PUBLIC void x86_load_ss(u32 ds);
 
 #endif /* _PROTECT_H_ */

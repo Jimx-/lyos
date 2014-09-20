@@ -32,6 +32,7 @@
 #include "lyos/compile.h"
 #include "sys/utsname.h"
 
+PUBLIC  int booting_cpu = 0;
 
 PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];
 

@@ -34,6 +34,7 @@ extern	sys_call_table
 bits 32
 
 global pgd0
+global StackTop
 
 [SECTION .data]
 ALIGN 0x1000
@@ -142,23 +143,10 @@ paging_enabled:
 	push eax          
    	push ebx    
 
-	call	cstart		; set GDT
-	lgdt	[gdt_ptr]	; load new GDT
-	lidt	[idt_ptr]
+	call	cstart
 
 	mov	dword [disp_pos - KERNEL_VMA], 0
 
-	; flush values
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov ss, ax
-
-	jmp SELECTOR_KERNEL_CS:csinit
-
-csinit:
 	xor	eax, eax
 	mov	ax, SELECTOR_TSS
 	ltr	ax

@@ -35,5 +35,12 @@ config SMP
     help
       Enable support for systems that have more than one processor.
 
+config SMP_MAX_CPUS
+    int "Max number of CPUs"
+    depends on SMP
+    default "2"
+    help
+      The default value is 2 CPUs.
+
 endmenu
 

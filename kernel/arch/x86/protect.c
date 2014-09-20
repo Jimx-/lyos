@@ -28,6 +28,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
+extern u32 StackTop;
+
 //#define PROTECT_DEBUG
 
 PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m);
@@ -72,6 +74,8 @@ void	hwint15();
 
 PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags);
 
+PRIVATE void init_idt();
+
 /*======================================================================*
                             init_prot
  *----------------------------------------------------------------------*
@@ -81,6 +85,40 @@ PUBLIC void init_prot()
 {
 	init_8259A();
 
+	init_idt();
+
+	init_tss(0, StackTop);
+
+	/* Fill the LDT descriptors of each proc in GDT  */
+	int i;
+	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
+		memset(&proc_table[i], 0, sizeof(struct proc));
+
+		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
+		assert(INDEX_LDT_FIRST + i < GDT_SIZE);
+		init_desc(&gdt[INDEX_LDT_FIRST + i],
+			  makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
+			  LDT_SIZE * sizeof(struct descriptor) - 1,
+			  DA_LDT);
+	}
+
+	load_prot_selectors();
+}
+
+PUBLIC void load_prot_selectors()
+{
+	x86_lgdt((u8*)&gdt_ptr);
+	x86_lidt((u8*)&idt_ptr);
+
+	x86_load_ds(SELECTOR_KERNEL_DS);
+	x86_load_es(SELECTOR_KERNEL_DS);
+	x86_load_fs(SELECTOR_KERNEL_DS);
+	x86_load_gs(SELECTOR_KERNEL_DS);
+	x86_load_ss(SELECTOR_KERNEL_DS);
+}
+
+PRIVATE void init_idt()
+{
 	/* 全部初始化成中断门(没有陷阱门) */
 	init_idt_desc(INT_VECTOR_DIVIDE,	DA_386IGate,
 		      divide_error - KERNEL_VMA,		PRIVILEGE_KRNL);
@@ -180,30 +218,7 @@ PUBLIC void init_prot()
 
 	init_idt_desc(INT_VECTOR_SYS_CALL,	DA_386IGate,
 		      sys_call,			PRIVILEGE_USER);
-
-	/* Fill the TSS descriptor in GDT */
-	memset(&tss, 0, sizeof(tss));
-	tss.ss0	= SELECTOR_KERNEL_DS;
-	init_desc(&gdt[INDEX_TSS],
-		  makelinear(SELECTOR_KERNEL_DS, &tss),
-		  sizeof(tss) - 1,
-		  DA_386TSS);
-	tss.iobase = sizeof(tss); /* No IO permission bitmap */
-
-	/* Fill the LDT descriptors of each proc in GDT  */
-	int i;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
-		memset(&proc_table[i], 0, sizeof(struct proc));
-
-		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
-		assert(INDEX_LDT_FIRST + i < GDT_SIZE);
-		init_desc(&gdt[INDEX_LDT_FIRST + i],
-			  makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
-			  LDT_SIZE * sizeof(struct descriptor) - 1,
-			  DA_LDT);
-	}
 }
-
 
 /*======================================================================*
                              init_idt_desc
@@ -221,6 +236,25 @@ PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handle
 	p_gate->offset_high	= (base >> 16) & 0xFFFF;
 }
 
+PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
+{
+	struct tss * t = &tss[cpu];
+
+	/* Fill the TSS descriptor in GDT */
+	memset(t, 0, sizeof(struct tss));
+	t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
+	t->cs = SELECTOR_KERNEL_CS;
+	init_desc(&gdt[INDEX_TSS],
+		  makelinear(SELECTOR_KERNEL_DS, t),
+		  sizeof(struct tss) - 1,
+		  DA_386TSS);
+	t->iobase = sizeof(struct tss); /* No IO permission bitmap */
+
+	/* set cpuid */
+	*((u32*)(kernel_stack + sizeof(u32))) = cpu;
+
+	return 0;
+}
 
 /*======================================================================*
                            seg2phys
