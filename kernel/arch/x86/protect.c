@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "arch_const.h"
+#include "arch_proto.h"
 
 extern u32 StackTop;
 
@@ -244,7 +245,7 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 	t->iobase = sizeof(struct tss); /* No IO permission bitmap */
 
 	/* set cpuid */
-	*((u32*)(kernel_stack + sizeof(u32))) = cpu;
+	*((u32*)(t->esp0 + sizeof(u32))) = cpu;
 
 	return SELECTOR_TSS(cpu);
 }

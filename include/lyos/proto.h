@@ -40,6 +40,7 @@ PUBLIC char *	itoa(char * str, int num);
 PUBLIC void 	restart();
 
 /* main.c */
+PUBLIC void     finish_bsp_booting();
 PUBLIC void 	Init();
 PUBLIC int  	get_ticks();
 PUBLIC void 	panic(const char *fmt, ...);

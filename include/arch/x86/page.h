@@ -20,7 +20,7 @@
 #define VMALLOC_START   (KERNEL_VMA + PROCS_BASE)
 #define VMALLOC_END     0xf7c00000
 #define FIXMAP_START    VMALLOC_END
-#define FIXMAP_END      0xffffe000
+#define FIXMAP_END      0xfec00000
 #define VM_STACK_TOP    KERNEL_VMA
 
 typedef unsigned int    pde_t;

@@ -37,7 +37,6 @@
 #define LYOS_BANNER "Lyos version "UTS_RELEASE" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER") "UTS_VERSION"\n"
 
 PUBLIC void init_arch();
-PRIVATE void finish_bsp_booting();
 
 /*****************************************************************************
  *                               kernel_main
@@ -58,13 +57,15 @@ PUBLIC int kernel_main()
 
 #ifdef CONFIG_SMP
     smp_init();
+    /* failed to init smp */
+    finish_bsp_booting();
 #endif
 
 	finish_bsp_booting();
 	while(1){}
 }
 
-PRIVATE void finish_bsp_booting()
+PUBLIC void finish_bsp_booting()
 {
 	restart();
 }

@@ -47,6 +47,7 @@ global	x86_load_es
 global	x86_load_fs
 global	x86_load_gs
 global	x86_load_ss
+global 	switch_k_stack
 
 ; ========================================================================
 ;		   void disp_color_str(char * info, int color);
@@ -350,3 +351,16 @@ x86_load_gs:
 
 x86_load_ss:
 	load_from_ax	ss
+
+read_ebp:
+	mov eax, ebp
+	ret
+	
+switch_k_stack:
+	mov eax, [esp + 4 + 4]
+	mov ecx, [esp + 4]
+	xor ebp, ebp
+	mov esp, ecx
+	jmp eax
+.0:
+	jmp .0

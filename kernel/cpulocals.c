@@ -13,13 +13,26 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_CONST_H_
-#define _ARCH_CONST_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/config.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "lyos/cpulocals.h"
 
-#define X86_STACK_TOP_RESERVED  (2 * sizeof(reg_t))
-#define K_STACK_SIZE    PG_SIZE
-extern u32 k_stacks_start, k_stacks_end;
-#define get_k_stack_top(cpu)    ((void *)(((char*)(k_stacks_start)) \
-                    + 2 * ((cpu) + 1) * K_STACK_SIZE + KERNEL_VMA))
-
+struct CPULOCAL_STRUCT 
+#ifdef CONFIG_SMP
+CPULOCAL_STRUCT[CONFIG_SMP_MAX_CPUS];
+#else
+CPULOCAL_STRUCT;
 #endif

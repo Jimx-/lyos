@@ -41,6 +41,8 @@ EXTERN  pde_t *     initial_pgd;
 extern  int booting_cpu;
 EXTERN  int ncpus;
 
+EXTERN  u32 lapic_addr;
+
 EXTERN	int	current_console;
 
 EXTERN	int	key_pressed; /**

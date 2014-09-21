@@ -13,13 +13,29 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_CONST_H_
-#define _ARCH_CONST_H_
+#ifndef _ARCH_PROTO_H_
+#define _ARCH_PROTO_H_
 
-#define X86_STACK_TOP_RESERVED  (2 * sizeof(reg_t))
-#define K_STACK_SIZE    PG_SIZE
-extern u32 k_stacks_start, k_stacks_end;
-#define get_k_stack_top(cpu)    ((void *)(((char*)(k_stacks_start)) \
-                    + 2 * ((cpu) + 1) * K_STACK_SIZE + KERNEL_VMA))
+PUBLIC void x86_lgdt(u8 * p_gdt);
+PUBLIC void x86_lidt(u8 * p_idt);
+PUBLIC void x86_lldt(u32 ldt);
+PUBLIC void x86_ltr(u32 tss);
+PUBLIC void x86_load_ds(u32 ds);
+PUBLIC void x86_load_es(u32 ds);
+PUBLIC void x86_load_fs(u32 ds);
+PUBLIC void x86_load_gs(u32 ds);
+PUBLIC void x86_load_ss(u32 ds);
+
+PUBLIC void switch_k_stack(char * esp, void * cont);
+
+PUBLIC reg_t read_ebp();
+
+#ifndef __GNUC__
+/* call a function to read the stack fram pointer (%ebp) */
+#define get_stack_frame(__X)    ((reg_t)read_ebp())
+#else
+/* read %ebp directly */
+#define get_stack_frame(__X)    ((reg_t)__builtin_frame_address(0))
+#endif
 
 #endif

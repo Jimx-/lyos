@@ -58,7 +58,7 @@ CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
 CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
-LDFLAGS		= -T $(LDSCRIPT) -Map System.map
+LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 ARFLAGS		= rcs
 MAKE 		= make
 
@@ -182,7 +182,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 8 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
+	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
 
 debug:
 	@bochs-gdb -f bochsrc.gdb

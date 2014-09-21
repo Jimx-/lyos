@@ -28,3 +28,9 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "apic.h"
+#include "apic.h"
+
+PUBLIC u32 apicid()
+{
+    return lapic_read(LAPIC_ID);
+}

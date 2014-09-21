@@ -182,14 +182,4 @@ PUBLIC void	init_desc(struct descriptor * p_desc,
 PUBLIC void load_prot_selectors();
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
 
-PUBLIC void x86_lgdt(u8 * p_gdt);
-PUBLIC void x86_lidt(u8 * p_idt);
-PUBLIC void x86_lldt(u32 ldt);
-PUBLIC void x86_ltr(u32 tss);
-PUBLIC void x86_load_ds(u32 ds);
-PUBLIC void x86_load_es(u32 ds);
-PUBLIC void x86_load_fs(u32 ds);
-PUBLIC void x86_load_gs(u32 ds);
-PUBLIC void x86_load_ss(u32 ds);
-
 #endif /* _PROTECT_H_ */

@@ -53,6 +53,7 @@ else
 	cp $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
 fi
 
+cp $SRCDIR/arch/x86/System.map /$MOUNT_POINT/boot
 cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
 
 echo "Creating devices..."

@@ -37,6 +37,7 @@ else
 fi
 
 cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
+cp $SRCDIR/arch/x86/System.map /$MOUNT_POINT/boot
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 cp -f sysroot/sbin/* /$MOUNT_POINT/sbin/ 
 cp -f sysroot/usr/bin/* /$MOUNT_POINT/usr/bin/

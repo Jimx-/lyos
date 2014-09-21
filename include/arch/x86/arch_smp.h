@@ -16,4 +16,7 @@
 #ifndef	_ARCH_SMP_H_
 #define	_ARCH_SMP_H_
 
+#define cpuid   (((u32 *)(((u32)get_stack_frame() + (K_STACK_SIZE - 1)) \
+                        & ~(K_STACK_SIZE - 1)))[-1])
+
 #endif

@@ -28,11 +28,19 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "acpi.h"
+#include "apic.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#include "arch_smp.h"
 
 PRIVATE u8 apicid2cpuid[255];
 PUBLIC u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
+PRIVATE u32 bsp_cpu_id, bsp_lapic_id;
+
 PRIVATE int discover_cpus();
+PRIVATE void init_tss_all();
+PRIVATE void smp_start_aps();
 
 PUBLIC void smp_init()
 {
@@ -40,6 +48,24 @@ PUBLIC void smp_init()
         ncpus = 1;
     }
 
+    init_tss_all();
+
+    lapic_addr = LOCAL_APIC_DEF_ADDR;
+
+    bsp_lapic_id = apicid();
+    bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
+
+    switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -
+            X86_STACK_TOP_RESERVED, smp_start_aps);
+}
+
+PRIVATE void init_tss_all()
+{
+    unsigned cpu;
+
+
+    for(cpu = 0; cpu < ncpus ; cpu++)
+        init_tss(cpu, (u32)get_k_stack_top(cpu)); 
 }
 
 PRIVATE int discover_cpus()
@@ -49,9 +75,14 @@ PRIVATE int discover_cpus()
     while (ncpus < CONFIG_SMP_MAX_CPUS && (cpu = acpi_get_lapic_next())) {
         apicid2cpuid[cpu->apic_id] = ncpus;
         cpuid2apicid[ncpus] = cpu->apic_id;
-        disp_str("CPU %3d local APIC id 0x%03x\n", ncpus, cpu->apic_id);
+        disp_str("CPU %3d local APIC id 0x%03x %s\n", ncpus, cpu->apic_id, ncpus == 0 ? "(bsp)" : "");
         ncpus++;
     }
 
     return ncpus;
+}
+
+PRIVATE void smp_start_aps()
+{
+    finish_bsp_booting();
 }
