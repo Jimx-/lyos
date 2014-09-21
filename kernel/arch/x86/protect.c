@@ -27,8 +27,11 @@
 #include "string.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "archconst.h"
 
 extern u32 StackTop;
+
+PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
 //#define PROTECT_DEBUG
 
@@ -97,7 +100,7 @@ PUBLIC void load_prot_selectors()
 	x86_lgdt((u8*)&gdt_ptr);
 	x86_lidt((u8*)&idt_ptr);
 	x86_lldt(SELECTOR_LDT);
-	x86_ltr(SELECTOR_TSS);
+	x86_ltr(SELECTOR_TSS(booting_cpu));
 
 	x86_load_ds(SELECTOR_KERNEL_DS);
 	x86_load_es(SELECTOR_KERNEL_DS);
@@ -233,7 +236,8 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 	memset(t, 0, sizeof(struct tss));
 	t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
 	t->cs = SELECTOR_KERNEL_CS;
-	init_desc(&gdt[INDEX_TSS],
+	percpu_kstack[cpu] = t->esp0 = kernel_stack - X86_STACK_TOP_RESERVED;
+	init_desc(&gdt[INDEX_TSS(cpu)],
 		  makelinear(SELECTOR_KERNEL_DS, t),
 		  sizeof(struct tss) - 1,
 		  DA_386TSS);
@@ -242,7 +246,7 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 	/* set cpuid */
 	*((u32*)(kernel_stack + sizeof(u32))) = cpu;
 
-	return 0;
+	return SELECTOR_TSS(cpu);
 }
 
 /*======================================================================*
