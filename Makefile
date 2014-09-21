@@ -137,7 +137,8 @@ $(AUTOCONFINC):
 genconf:
 	@echo -e '$(COLORGREEN)Generating compile.h...$(COLORDEFAULT)'
 	@echo -e '\tGEN\tcompile.h'
-	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC) $(CONFIG_LOCALVERSION))
+	@sh ./scripts/genversion.sh
+	@$(shell ./scripts/gencompile.sh $(ARCH) $(KERNELVERSION) $(CC) $(CONFIG_LOCALVERSION) $(CONFIG_SMP))
 
 config: $(CONFIGIN) $(CONFIGINC)
 	@(cd scripts/config; make config)

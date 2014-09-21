@@ -34,7 +34,7 @@
 #include "errno.h"
 #include "multiboot.h"
 
-#define LYOS_BANNER "Lyos version "UTS_VERSION" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER"), compiled on "LYOS_COMPILE_TIME". \n"
+#define LYOS_BANNER "Lyos version "UTS_RELEASE" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER") "UTS_VERSION"\n"
 
 PUBLIC void init_arch();
 
@@ -47,6 +47,7 @@ PUBLIC void init_arch();
  *****************************************************************************/
 PUBLIC int kernel_main()
 {
+	disp_str(LYOS_BANNER);
 	init_arch();
 
 	jiffies = 0;
@@ -82,10 +83,6 @@ PUBLIC int get_ticks()
 void Init()
 {
 	printl("Init() is running ...\n");
-
-	printl("\n");
-	printl(LYOS_BANNER);
-	printl("(c)Copyright Jimx 2010-2013\n\n");
 
 /*#define PROCFS_PATH	"/sbin/procfs"
 	MESSAGE msg;

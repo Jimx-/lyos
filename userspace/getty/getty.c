@@ -45,7 +45,7 @@ void print_banner(char * ttyname)
 	int issue_fd = open("/etc/issue", O_RDONLY);
 
 	if (issue_fd == -1) {
-		printf("%s version %s %s %s\n\n%s login: ", utsname.sysname, utsname.version, utsname.nodename, ttyname, utsname.nodename);
+		printf("%s version %s %s %s\n\n%s login: ", utsname.sysname, utsname.release, utsname.nodename, ttyname, utsname.nodename);
 	} else {
 		char issue[ISSUE_LEN];
 		int bytes = read(issue_fd, issue, sizeof(issue));
@@ -64,6 +64,9 @@ void print_banner(char * ttyname)
 					break;
 				case 'l':
 					printf("%s", ttyname);
+					break;
+				case 'r':
+					printf("%s", utsname.release);
 					break;
 				default:
 					break;

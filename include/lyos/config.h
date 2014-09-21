@@ -18,4 +18,8 @@
 
 #include "config/autoconf.h"
 
+#ifndef CONFIG_SMP_MAX_CPUS
+#define CONFIG_SMP_MAX_CPUS 1
+#endif
+    
 #endif

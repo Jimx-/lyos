@@ -48,11 +48,8 @@ EXTERN	int	key_pressed; /**
 			      * a key is pressed
 			      */
 
-#if CONFIG_SMP
 EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
-#else
-EXTERN	struct tss	tss;
-#endif
+
 EXTERN	struct proc*	current;
 
 extern	char		task_stack[];
@@ -94,3 +91,6 @@ EXTERN	MESSAGE			    fs_msg;
 EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
+
+/* VIDEO */
+EXTERN  char * video_mem;

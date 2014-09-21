@@ -1,5 +1,5 @@
 
-KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o
+KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o dispstr.o
 
 ARCHKERNEL		= arch-kernel.o
 

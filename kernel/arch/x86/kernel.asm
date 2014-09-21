@@ -71,11 +71,29 @@ StackTop:		; stack top
 [section .text]	; code is here
 ALIGN 4
 
+global mb_video_mode
+global mb_video_width
+global mb_video_height
+global mb_video_depth
+
 ; Multiboot Header - We are multiboot compatible!
 MultiBootHeader:
-   dd MAGIC
-   dd FLAGS
-   dd CHECKSUM
+	dd MAGIC
+	dd FLAGS
+	dd CHECKSUM
+	dd 0
+	dd 0
+	dd 0
+	dd 0 
+	dd 0
+mb_video_mode:
+	dd 0
+mb_video_width:
+	dd 0
+mb_video_height:
+	dd 0
+mb_video_depth:
+	dd 0
 
 global _start	; export _start
 
@@ -144,8 +162,6 @@ paging_enabled:
    	push ebx    
 
 	call	cstart
-
-	mov	dword [disp_pos - KERNEL_VMA], 0
 
 	jmp	kernel_main
 

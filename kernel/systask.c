@@ -65,7 +65,6 @@ PUBLIC void task_sys()
 	struct timeval tv;
 
 	prepare_uname_buf(&uname_buf);
-
 #if CONFIG_FIRMWARE_DMI
     dmi_init();
     printl("DMI: %s %s %s\n", 
@@ -237,6 +236,7 @@ PRIVATE int prepare_uname_buf(struct utsname * buf)
 	strcpy(buf->sysname, "Lyos");
 	strcpy(buf->version, UTS_VERSION);
 	strcpy(buf->machine, UTS_MACHINE);
+	strcpy(buf->release, UTS_RELEASE);
 
 	return 0;
 }
@@ -258,7 +258,7 @@ PRIVATE int do_getsethostname(MESSAGE * p)
 		data_copy(TASK_SYS, D, hostname, src, D, p->BUF, p->BUF_LEN);
 		hostname[p->BUF_LEN] = '\0';
 		memcpy(uname_buf.nodename, hostname, _UTSNAME_NODENAME_LENGTH);
-		uname_buf.nodename[_UTSNAME_NODENAME_LENGTH] = '\0';
+		uname_buf.nodename[_UTSNAME_NODENAME_LENGTH - 1] = '\0';
 	}
 
 	return 0;
