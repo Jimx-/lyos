@@ -35,6 +35,8 @@ bits 32
 
 global pgd0
 global StackTop
+global k_stack_start
+global k_stack_end
 
 [SECTION .data]
 ALIGN 0x1000
@@ -65,8 +67,12 @@ trap_errno 		resb 	4
 old_eip 		resb 	4
 old_cs 			resb 	4
 old_eflags 		resb 	4
-StackSpace		resb	2 * 1024
+StackSpace		resb	K_STACK_SIZE
 StackTop:		; stack top
+k_stack_start:
+KStackSpace		resb 	2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
+k_stack_end:
+	
 
 [section .text]	; code is here
 ALIGN 4

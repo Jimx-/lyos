@@ -39,6 +39,7 @@ EXTERN  pde_t *     initial_pgd;
 #endif
 
 extern  int booting_cpu;
+EXTERN  int ncpus;
 
 EXTERN	int	current_console;
 

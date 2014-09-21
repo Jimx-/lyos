@@ -182,7 +182,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
+	@qemu-system-i386 -smp 8 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
 
 debug:
 	@bochs-gdb -f bochsrc.gdb

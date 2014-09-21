@@ -27,7 +27,7 @@
 #include "string.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "archconst.h"
+#include "arch_const.h"
 
 extern u32 StackTop;
 

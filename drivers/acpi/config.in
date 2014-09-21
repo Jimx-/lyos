@@ -1,0 +1,8 @@
+menuconfig ACPI
+	bool "ACPI (Advanced Configuration and Power Interface) Support"
+	default y
+	help
+	  Advanced Configuration and Power Interface (ACPI) support
+
+if ACPI
+endif

@@ -13,9 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCHCONST_H_
-#define _ARCHCONST_H_
+#ifndef	_ARCH_SMP_H_
+#define	_ARCH_SMP_H_
 
-#define X86_STACK_TOP_RESERVED  (2 * sizeof(reg_t))
-    
 #endif

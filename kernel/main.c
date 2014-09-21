@@ -37,6 +37,7 @@
 #define LYOS_BANNER "Lyos version "UTS_RELEASE" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER") "UTS_VERSION"\n"
 
 PUBLIC void init_arch();
+PRIVATE void finish_bsp_booting();
 
 /*****************************************************************************
  *                               kernel_main
@@ -55,11 +56,18 @@ PUBLIC int kernel_main()
 	init_clock();
     init_keyboard();
 
-	restart();
+#ifdef CONFIG_SMP
+    smp_init();
+#endif
 
+	finish_bsp_booting();
 	while(1){}
 }
 
+PRIVATE void finish_bsp_booting()
+{
+	restart();
+}
 
 /*****************************************************************************
  *                                get_ticks
@@ -83,13 +91,6 @@ PUBLIC int get_ticks()
 void Init()
 {
 	printl("Init() is running ...\n");
-
-/*#define PROCFS_PATH	"/sbin/procfs"
-	MESSAGE msg;
-	msg.type = SERVICE_UP;
-	msg.PATHNAME	= (void*)PROCFS_PATH;
-	msg.NAME_LEN	= strlen(PROCFS_PATH);
-	send_recv(BOTH, TASK_SERVMAN, &msg);	*/
 
 	/* Here we go! */
 	_exit(execv("/sbin/init", NULL));

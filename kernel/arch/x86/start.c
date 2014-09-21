@@ -29,6 +29,7 @@
 #include "lyos/proto.h"
 #include "multiboot.h"
 #include "page.h"
+#include "acpi.h"
 
 extern char _end[];
 extern pde_t pgd0;
@@ -141,6 +142,8 @@ PUBLIC void init_arch()
 	struct proc * p = proc_table;
 
 	char * stk = task_stack + STACK_SIZE_TOTAL;
+
+	acpi_init();
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
 		INIT_LIST_HEAD(&(p->mem_regions));

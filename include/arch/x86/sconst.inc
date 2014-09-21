@@ -56,6 +56,9 @@ EOI		equ	0x20
 SELECTOR_FLAT_C		equ		0x08		;
 SELECTOR_KERNEL_CS	equ		SELECTOR_FLAT_C
 
+K_STACK_SIZE	equ	0x1000
+CONFIG_SMP_MAX_CPUS	equ	8
+
 ; Multiboot stuffs
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO   equ  1<<1                   ; provide memory map

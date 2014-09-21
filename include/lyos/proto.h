@@ -44,6 +44,9 @@ PUBLIC void 	Init();
 PUBLIC int  	get_ticks();
 PUBLIC void 	panic(const char *fmt, ...);
 
+/* smp.c */
+PUBLIC void     smp_init();
+
 /* i8259.c */
 PUBLIC void 	init_8259A();
 PUBLIC void 	put_irq_handler(int irq, irq_handler handler);
