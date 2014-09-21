@@ -89,19 +89,6 @@ PUBLIC void init_prot()
 
 	init_tss(0, StackTop);
 
-	/* Fill the LDT descriptors of each proc in GDT  */
-	int i;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
-		memset(&proc_table[i], 0, sizeof(struct proc));
-
-		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
-		assert(INDEX_LDT_FIRST + i < GDT_SIZE);
-		init_desc(&gdt[INDEX_LDT_FIRST + i],
-			  makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
-			  LDT_SIZE * sizeof(struct descriptor) - 1,
-			  DA_LDT);
-	}
-
 	load_prot_selectors();
 }
 
@@ -109,6 +96,8 @@ PUBLIC void load_prot_selectors()
 {
 	x86_lgdt((u8*)&gdt_ptr);
 	x86_lidt((u8*)&idt_ptr);
+	x86_lldt(SELECTOR_LDT_FIRST);
+	x86_ltr(SELECTOR_TSS);
 
 	x86_load_ds(SELECTOR_KERNEL_DS);
 	x86_load_es(SELECTOR_KERNEL_DS);
@@ -242,8 +231,9 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 
 	/* Fill the TSS descriptor in GDT */
 	memset(t, 0, sizeof(struct tss));
-	t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
-	t->cs = SELECTOR_KERNEL_CS;
+	//t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
+	//t->cs = SELECTOR_KERNEL_CS;
+	 t->ss0	= SELECTOR_KERNEL_DS;
 	init_desc(&gdt[INDEX_TSS],
 		  makelinear(SELECTOR_KERNEL_DS, t),
 		  sizeof(struct tss) - 1,

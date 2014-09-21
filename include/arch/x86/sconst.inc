@@ -54,7 +54,6 @@ EOI		equ	0x20
 
 ;These selector must be the same as `protect.h'
 SELECTOR_FLAT_C		equ		0x08		;
-SELECTOR_TSS		equ		0x20		;
 SELECTOR_KERNEL_CS	equ		SELECTOR_FLAT_C
 
 ; Multiboot stuffs

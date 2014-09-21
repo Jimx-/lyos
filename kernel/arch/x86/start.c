@@ -86,9 +86,23 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     }
 
 	init_desc(&gdt[0], 0, 0, 0);
-	init_desc(&gdt[1], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
-	init_desc(&gdt[2], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
-	init_desc(&gdt[3], 0x0B8000 + KERNEL_VMA, 0xffff, DA_DRW | DA_32 | DA_DPL3);
+	init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
+	init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
+	//init_desc(&gdt[3], 0x0B8000 + KERNEL_VMA, 0xffff, DA_DRW | DA_32 | DA_DPL3);
+	init_desc(&gdt[INDEX_TASK_C],
+				  0, 0xfffff,
+				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
+	init_desc(&gdt[INDEX_TASK_RW],
+				  0, 0xfffff,
+				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
+	init_desc(&gdt[INDEX_USER_C],
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_USER_RW],
+				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
+				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_LDT_FIRST],
+				  0, 0, DA_LDT);
 
 	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
 	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
@@ -120,6 +134,7 @@ PUBLIC void init_arch()
 	int i, j, eflags, prio;
     u8  rpl;
     u8  priv; /* privilege */
+    u32 codeseg, dataseg;
 
 	struct task * t;
 	struct proc * p = proc_table;
@@ -138,12 +153,16 @@ PUBLIC void init_arch()
             t	= task_table + i;
             priv	= PRIVILEGE_TASK;
             rpl     = RPL_TASK;
+            codeseg = SELECTOR_TASK_CS;
+            dataseg = SELECTOR_TASK_DS;
             eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
 			prio    = 15;
         } else {                  /* USER PROC */
             t	= user_proc_table + (i - NR_TASKS);
             priv	= PRIVILEGE_USER;
             rpl     = RPL_USER;
+            codeseg = SELECTOR_USER_CS;
+            dataseg = SELECTOR_USER_DS;
             eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
 			prio    = 5;
         }
@@ -161,6 +180,7 @@ PUBLIC void init_arch()
 				init_desc(&p->ldts[INDEX_LDT_RW],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
+
 			} else {
 
 				p->ldts[INDEX_LDT_C]  = gdt[SELECTOR_KERNEL_CS >> 3];
@@ -182,13 +202,14 @@ PUBLIC void init_arch()
 
 			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
 				if (p->pgd.vir_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)(((int)(p->pgd.vir_addr[j]) + KERNEL_VMA) & 0xfffff000);
-			}			
+			}	
+
 		} else {		/* INIT process */
 			init_desc(&p->ldts[INDEX_LDT_C],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
 
-			init_desc(&p->ldts[INDEX_LDT_RW],
+				init_desc(&p->ldts[INDEX_LDT_RW],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
 			
@@ -200,12 +221,13 @@ PUBLIC void init_arch()
 			}
 		}
 
-		p->regs.cs = INDEX_LDT_C << 3 |	SA_TIL | rpl;
+		p->regs.cs = codeseg | rpl;
 		p->regs.ds =
 		p->regs.es =
 		p->regs.fs =
-		p->regs.ss = INDEX_LDT_RW << 3 | SA_TIL | rpl;
-		p->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;
+		p->regs.gs =
+		p->regs.ss = dataseg | rpl;
+
 		p->regs.eip	= (u32)t->initial_eip;
 		p->regs.esp	= (u32)stk;
 		p->regs.eflags	= eflags;

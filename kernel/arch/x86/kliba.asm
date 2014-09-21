@@ -41,6 +41,8 @@ global  arch_spinlock_lock
 global  arch_spinlock_unlock
 global  x86_lgdt
 global  x86_lidt
+global  x86_lldt
+global 	x86_ltr
 global	x86_load_ds
 global	x86_load_es
 global	x86_load_fs
@@ -338,6 +340,15 @@ x86_lidt:
 	mov eax, [ebp + 4 + 4]
 
 	lidt [eax]
+	
+	pop ebp
+	ret
+
+x86_lldt:
+	push ebp
+	mov ebp, esp
+
+	lldt [ebp + 4 + 4]
 	
 	pop ebp
 	ret

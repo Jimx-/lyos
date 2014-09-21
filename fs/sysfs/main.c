@@ -49,7 +49,6 @@ PUBLIC int main()
 
 		switch (msgtype) {
 		case SYSFS_PUBLISH:
-			printl("Publish\n");
 			break;
 		default:
 			printl("sysfs: unknown message\n");

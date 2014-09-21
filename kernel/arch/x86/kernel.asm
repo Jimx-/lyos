@@ -147,10 +147,6 @@ paging_enabled:
 
 	mov	dword [disp_pos - KERNEL_VMA], 0
 
-	xor	eax, eax
-	mov	ax, SELECTOR_TSS
-	ltr	ax
-
 	jmp	kernel_main
 
 	hlt
@@ -417,7 +413,6 @@ restart:
 	mov eax, [esp + P_PGD]
 	mov cr3, eax
 	; switch ldt
-	lldt	[esp + P_LDT_SEL] 
 	lea	eax, [esp + P_STACKTOP]
 	mov	dword [tss + TSS3_S_SP0], eax
 restart_reenter:
