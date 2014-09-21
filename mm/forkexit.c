@@ -71,10 +71,8 @@ PUBLIC int do_fork()
 
 	/* duplicate the process table */
 	int pid = mm_msg.source;
-	u16 child_ldt_sel = p->ldt_sel;
 	struct proc * parent = proc_table + pid;
 	*p = proc_table[pid];
-	p->ldt_sel = child_ldt_sel;
 	p->p_parent = pid;
 	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
 
@@ -103,14 +101,6 @@ PUBLIC int do_fork()
        		region_map_phys(p, new_region);
        	}
     }
-
-    init_desc(&p->ldts[INDEX_LDT_C],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
-
-	init_desc(&p->ldts[INDEX_LDT_RW],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
 	
 	/* tell FS, see fs_fork() */
 	MESSAGE msg2fs;

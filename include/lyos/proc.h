@@ -45,12 +45,6 @@ struct stackframe {
 
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
-
-#if (ARCH == x86)
-	u16 ldt_sel;               /* gdt selector giving ldt base and limit */
-	struct descriptor ldts[LDT_SIZE]; /* local descs for code and data */
-#endif
-
 	struct page_directory	pgd;
 
     int counter;                 /* remained ticks */

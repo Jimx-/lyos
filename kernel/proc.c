@@ -133,25 +133,6 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
 }
 
 /*****************************************************************************
- *				  ldt_seg_linear
- *****************************************************************************/
-/**
- * <Ring 0~1> Calculate the linear address of a certain segment of a given
- * proc.
- * 
- * @param p   Whose (the proc ptr).
- * @param idx Which (one proc has more than one segments).
- * 
- * @return  The required linear address.
- *****************************************************************************/
-PUBLIC int ldt_seg_linear(struct proc* p, int idx)
-{
-	struct descriptor * d = &p->ldts[idx];
-
-	return d->base_high << 24 | d->base_mid << 16 | d->base_low;
-}
-
-/*****************************************************************************
  *				  va2la
  *****************************************************************************/
 /**
@@ -164,16 +145,7 @@ PUBLIC int ldt_seg_linear(struct proc* p, int idx)
  *****************************************************************************/
 PUBLIC void* va2la(int pid, void* va)
 {
-	struct proc* p = &proc_table[pid];
-
-	u32 seg_base = ldt_seg_linear(p, INDEX_LDT_RW);
-	u32 la = seg_base + (u32)va;
-
-	if (pid < NR_TASKS + NR_NATIVE_PROCS) {
-		assert(la == (u32)va);
-	}
-
-	return (void*)la;
+	return va;
 }
 
 /*****************************************************************************
@@ -618,7 +590,6 @@ PUBLIC void dumproc(struct proc* p)
 	sprintf(info, "NO_TASK: 0x%x.\n", NO_TASK); disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 
-	sprintf(info, "ldt_sel: 0x%x.  ", p->ldt_sel); disp_color_str(info, text_color);
 	sprintf(info, "counter: 0x%x.  ", p->counter); disp_color_str(info, text_color);
 	sprintf(info, "priority: 0x%x.  ", p->priority); disp_color_str(info, text_color); 
 

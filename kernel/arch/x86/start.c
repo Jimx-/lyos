@@ -101,7 +101,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	init_desc(&gdt[INDEX_USER_RW],
 				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
-	init_desc(&gdt[INDEX_LDT_FIRST],
+	init_desc(&gdt[INDEX_LDT],
 				  0, 0, DA_LDT);
 
 	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
@@ -132,8 +132,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 PUBLIC void init_arch()
 {
 	int i, j, eflags, prio;
-    u8  rpl;
-    u8  priv; /* privilege */
     u32 codeseg, dataseg;
 
 	struct task * t;
@@ -151,18 +149,14 @@ PUBLIC void init_arch()
 
 	    if (i < NR_TASKS) {     /* TASK */
             t	= task_table + i;
-            priv	= PRIVILEGE_TASK;
-            rpl     = RPL_TASK;
-            codeseg = SELECTOR_TASK_CS;
-            dataseg = SELECTOR_TASK_DS;
+            codeseg = SELECTOR_TASK_CS | RPL_TASK;
+            dataseg = SELECTOR_TASK_DS | RPL_TASK;
             eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
 			prio    = 15;
         } else {                  /* USER PROC */
             t	= user_proc_table + (i - NR_TASKS);
-            priv	= PRIVILEGE_USER;
-            rpl     = RPL_USER;
-            codeseg = SELECTOR_USER_CS;
-            dataseg = SELECTOR_USER_DS;
+            codeseg = SELECTOR_USER_CS | RPL_USER;
+            dataseg = SELECTOR_USER_DS | RPL_USER;
             eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
 			prio    = 5;
         }
@@ -171,25 +165,6 @@ PUBLIC void init_arch()
 		p->p_parent = NO_TASK;
 
 		if (strcmp(t->name, "INIT") != 0) {
-			/* this process will be loaded by servman */
-			if (t->initial_eip == NULL) {
-				init_desc(&p->ldts[INDEX_LDT_C],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
-
-				init_desc(&p->ldts[INDEX_LDT_RW],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
-
-			} else {
-
-				p->ldts[INDEX_LDT_C]  = gdt[SELECTOR_KERNEL_CS >> 3];
-				p->ldts[INDEX_LDT_RW] = gdt[SELECTOR_KERNEL_DS >> 3];
-
-				/* change the DPLs */
-				p->ldts[INDEX_LDT_C].attr1  = DA_C   | priv << 5;
-				p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
-			}
 
 			if (i == TASK_MM) {
 				/* use kernel page table */ 
@@ -205,14 +180,6 @@ PUBLIC void init_arch()
 			}	
 
 		} else {		/* INIT process */
-			init_desc(&p->ldts[INDEX_LDT_C],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_C | priv << 5);
-
-				init_desc(&p->ldts[INDEX_LDT_RW],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
-			
 			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 
@@ -221,12 +188,12 @@ PUBLIC void init_arch()
 			}
 		}
 
-		p->regs.cs = codeseg | rpl;
+		p->regs.cs = codeseg;
 		p->regs.ds =
 		p->regs.es =
 		p->regs.fs =
 		p->regs.gs =
-		p->regs.ss = dataseg | rpl;
+		p->regs.ss = dataseg;
 
 		p->regs.eip	= (u32)t->initial_eip;
 		p->regs.esp	= (u32)stk;

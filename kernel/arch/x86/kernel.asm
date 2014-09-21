@@ -412,7 +412,6 @@ restart:
 	; switch address space
 	mov eax, [esp + P_PGD]
 	mov cr3, eax
-	; switch ldt
 	lea	eax, [esp + P_STACKTOP]
 	mov	dword [tss + TSS3_S_SP0], eax
 restart_reenter:

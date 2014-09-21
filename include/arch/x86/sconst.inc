@@ -41,7 +41,7 @@ SSREG		equ	ESPREG		+ 4
 P_STACKTOP	equ	SSREG		+ 4
 P_LDT_SEL	equ	P_STACKTOP
 P_LDT		equ	P_LDT_SEL	+ 2
-P_PGD		equ P_LDT + 8 * P_LDT_SIZE
+P_PGD		equ P_STACKTOP
 
 TSS3_S_SP0	equ	4
 

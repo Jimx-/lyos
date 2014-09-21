@@ -96,7 +96,7 @@ PUBLIC void load_prot_selectors()
 {
 	x86_lgdt((u8*)&gdt_ptr);
 	x86_lidt((u8*)&idt_ptr);
-	x86_lldt(SELECTOR_LDT_FIRST);
+	x86_lldt(SELECTOR_LDT);
 	x86_ltr(SELECTOR_TSS);
 
 	x86_load_ds(SELECTOR_KERNEL_DS);
@@ -231,9 +231,8 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 
 	/* Fill the TSS descriptor in GDT */
 	memset(t, 0, sizeof(struct tss));
-	//t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
-	//t->cs = SELECTOR_KERNEL_CS;
-	 t->ss0	= SELECTOR_KERNEL_DS;
+	t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
+	t->cs = SELECTOR_KERNEL_CS;
 	init_desc(&gdt[INDEX_TSS],
 		  makelinear(SELECTOR_KERNEL_DS, t),
 		  sizeof(struct tss) - 1,
@@ -280,14 +279,12 @@ PUBLIC int sys_privctl(int whom, int request, void * data, struct proc* p)
 
 	switch (request) {
 	case PRIVCTL_SET_TASK:
-		init_desc(&target->ldts[INDEX_LDT_C],
-                  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-                  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
-
-    	init_desc(&target->ldts[INDEX_LDT_RW],
-                  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-                  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
-
+		target->regs.cs = SELECTOR_TASK_CS | RPL_TASK;
+		target->regs.ds =
+		target->regs.es =
+		target->regs.fs =
+		target->regs.gs =
+		target->regs.ss = SELECTOR_TASK_DS | RPL_TASK;
     	break;
     default:
     	break;

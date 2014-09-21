@@ -83,8 +83,9 @@ struct tss {
 #define INDEX_TASK_RW		4
 #define INDEX_USER_C		5
 #define INDEX_USER_RW		6
-#define	INDEX_TSS			7
-#define	INDEX_LDT_FIRST		8
+#define	INDEX_LDT 			7
+#define	INDEX_TSS			8
+
 /* selector */
 #define SEG_SELECTOR(i)		(i * 8)
 #define	SELECTOR_DUMMY		   0
@@ -94,8 +95,8 @@ struct tss {
 #define SELECTOR_TASK_RW	SEG_SELECTOR(INDEX_TASK_RW)
 #define	SELECTOR_USER_C		SEG_SELECTOR(INDEX_USER_C)
 #define SELECTOR_USER_RW	SEG_SELECTOR(INDEX_USER_RW)
+#define SELECTOR_LDT 		SEG_SELECTOR(INDEX_LDT)
 #define	SELECTOR_TSS		SEG_SELECTOR(INDEX_TSS)
-#define SELECTOR_LDT_FIRST	SEG_SELECTOR(INDEX_LDT_FIRST)
 
 #define	SELECTOR_KERNEL_CS	SELECTOR_KERNEL_C
 #define	SELECTOR_KERNEL_DS	SELECTOR_KERNEL_RW
@@ -103,12 +104,6 @@ struct tss {
 #define	SELECTOR_TASK_DS	SELECTOR_TASK_RW
 #define	SELECTOR_USER_CS	SELECTOR_USER_C
 #define	SELECTOR_USER_DS	SELECTOR_USER_RW
-#define	SELECTOR_KERNEL_GS	SELECTOR_VIDEO
-
-#define LDT_SIZE		2
-/* descriptor indices in LDT */
-#define INDEX_LDT_C             0
-#define INDEX_LDT_RW            1
 
 /* 描述符类型值说明 */
 #define	DA_32			0x4000	/* 32 位段				*/
