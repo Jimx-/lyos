@@ -37,7 +37,7 @@ PUBLIC void	disp_int(int input);
 PUBLIC char *	itoa(char * str, int num);
 
 /* kernel.asm */
-PUBLIC void 	restart();
+PUBLIC void 	restore_user_context(struct proc * p);
 
 /* main.c */
 PUBLIC void     finish_bsp_booting();
@@ -105,6 +105,7 @@ PUBLIC void task_servman();
 
 /* proc.c */
 PUBLIC	void	schedule();
+PUBLIC  void    switch_to_user();
 PUBLIC	void*	va2la(int pid, void * va);
 PUBLIC  void*   la2pa(int pid, void * la);
 PUBLIC  void*   va2pa(int pid, void * va);

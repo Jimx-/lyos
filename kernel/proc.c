@@ -28,6 +28,12 @@
 #include "lyos/proto.h"
 #include "signal.h"
 #include "page.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+#endif
+#include "lyos/cpulocals.h"
 
 PRIVATE void block(struct proc* p);
 PRIVATE void unblock(struct proc* p);
@@ -72,14 +78,17 @@ PUBLIC void schedule()
 	}
 }
 
-PUBLIC int do_nice()
+/**
+ * <Ring 0> Switch back to user space.
+ */
+PUBLIC void switch_to_user()
 {
-	if (current->priority - mm_msg.REQUEST > 0)
-		current -= mm_msg.REQUEST;
-	else
-		return 1;
-	return 0;
-} 
+	struct proc * p = current;
+
+	get_cpulocal_var(proc_ptr) = p;
+
+	restore_user_context(p);
+}
 
 /*****************************************************************************
  *                                sys_sendrec

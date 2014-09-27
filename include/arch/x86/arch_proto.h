@@ -38,4 +38,6 @@ PUBLIC reg_t read_ebp();
 #define get_stack_frame(__X)    ((reg_t)__builtin_frame_address(0))
 #endif
 
+PUBLIC struct proc * arch_switch_to_user();
+
 #endif

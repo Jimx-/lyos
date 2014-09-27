@@ -66,3 +66,20 @@ FLAGS     equ  MODULEALIGN | MEMINFO ; this is the Multiboot 'flag' field
 MAGIC       equ   0x1BADB002           ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required 
 
+%macro	SAVE_GP_REGS		1
+	mov [%1 + EAXREG], eax
+	mov [%1 + ECXREG], ecx
+	mov [%1 + EDXREG], edx
+	mov [%1 + EBXREG], ebx
+	mov [%1 + ESIREG], esi
+	mov [%1 + EDIREG], edi
+%endmacro
+
+%macro	RESTORE_GP_REGS		1
+	mov eax, [%1 + EAXREG]
+	mov ecx, [%1 + ECXREG]
+	mov edx, [%1 + EDXREG]
+	mov ebx, [%1 + EBXREG]
+	mov esi, [%1 + ESIREG]
+	mov edi, [%1 + EDIREG]
+%endmacro

@@ -17,6 +17,7 @@
 
 extern	cstart
 extern	kernel_main
+extern  switch_to_user
 extern	exception_handler
 extern	spurious_irq
 extern	clock_handler
@@ -103,7 +104,7 @@ mb_video_depth:
 
 global _start	; export _start
 
-global restart
+global restore_user_context
 global sys_call
 
 global	divide_error
@@ -371,11 +372,11 @@ exception:
 ;                                   save
 ; =============================================================================
 save:
-        pushad          ; `.
-        push    ds      ;  |
-        push    es      ;  | 保存原寄存器值
-        push    fs      ;  |
-        push    gs      ; /
+    pushad          ; `.
+    push    ds      ;  |
+    push    es      ;  | 保存原寄存器值
+    push    fs      ;  |
+    push    gs      ; /
 
 	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
 	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
@@ -389,59 +390,86 @@ save:
 
 	mov	edx, esi	; 恢复 edx
 
-        mov     esi, esp                    ;esi = 进程表起始地址
+    mov     esi, esp                    ;esi = 进程表起始地址
 
-        inc     dword [k_reenter]           ;k_reenter++;
-        cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
-        jne     .1                          ;{
-        mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
-        push    restart                     ;  push restart
-        jmp     [esi + RETADR - P_STACKBASE];  return;
+    inc     dword [k_reenter]           ;k_reenter++;
+    cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
+    jne     .1                          ;{
+    mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
+    push    switch_to_user              ;  push restart
+    jmp     [esi + RETADR - P_STACKBASE];  return;
 .1:                                         ;} else { 已经在内核栈，不需要再切换
-        push    restart_reenter             ;  push restart_reenter
-        jmp     [esi + RETADR - P_STACKBASE];  return;
+    push    restore_user_context_reenter;  push restart_reenter
+    jmp     [esi + RETADR - P_STACKBASE];  return;
                                             ;}
 
+; =============================================================================
+;                                   save_sys_call
+; =============================================================================
+save_sys_call:
+    pushad          ; `.
+    push    ds      ;  |
+    push    es      ;  | 保存原寄存器值
+    push    fs      ;  |
+    push    gs      ; /
+
+	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
+				;（没用栈，而是用了另一个寄存器 esi）
+	mov	dx, ss
+	mov	ds, dx
+	mov	es, dx
+	mov	fs, dx
+
+	mov	edx, esi	; 恢复 edx
+
+    mov     esi, esp                    ;esi = 进程表起始地址
+
+    inc     dword [k_reenter]           ;k_reenter++;
+    cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
+    jne     .1                          ;{
+    mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
+.1:                                         ;} else { 已经在内核栈，不需要再切换
+    jmp     [esi + RETADR - P_STACKBASE]; return
 
 ; =============================================================================
 ;                                 sys_call
 ; =============================================================================
 sys_call:
-    call    save
+    call    save_sys_call
 
     sti
-	push	esi
 
-	push	dword [current]
+	push	esi
 	push	edx
 	push	ecx
 	push	ebx
     call    [sys_call_table + eax * 4]
-	add	esp, 4 * 4
+	add	esp, 4 * 3 		; esp <- esi(proc ptr)
 
-	pop	esi
+	pop esi
     mov     [esi + EAXREG - P_STACKBASE], eax
     cli
 
-    ret
-
+    jmp switch_to_user
 
 ; ====================================================================================
-;                                   restart
+;                                   restore_user_context
 ; ====================================================================================
-restart:
-	mov	esp, [current]
+restore_user_context:
+	mov	esp, [esp + 4]
 	; switch address space
 	mov eax, [esp + P_PGD]
 	mov cr3, eax
 	lea	eax, [esp + P_STACKTOP]
 	mov	dword [tss + TSS3_S_SP0], eax
-restart_reenter:
+restore_user_context_reenter:
+	mov ebp, esp
 	dec	dword [k_reenter]
-	pop	gs
-	pop	fs
-	pop	es
-	pop	ds
-	popad
-	add esp, 4
+	mov gs, [ebp + GSREG]
+	mov fs, [ebp + FSREG]
+	mov es, [ebp + ESREG]
+	mov ds, [ebp + DSREG]
+	RESTORE_GP_REGS  ebp
+	mov ebp, [ebp + EBPREG]
+	add esp, EIPREG
 	iretd

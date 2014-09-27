@@ -67,7 +67,7 @@ PUBLIC int kernel_main()
 
 PUBLIC void finish_bsp_booting()
 {
-	restart();
+	switch_to_user();
 }
 
 /*****************************************************************************
