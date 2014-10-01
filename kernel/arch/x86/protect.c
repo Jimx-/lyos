@@ -235,7 +235,7 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 
 	/* Fill the TSS descriptor in GDT */
 	memset(t, 0, sizeof(struct tss));
-	t->ds = t->es = t->fs = t->gs = t->ss0	= SELECTOR_KERNEL_DS;
+	t->ss0	= SELECTOR_KERNEL_DS;
 	t->cs = SELECTOR_KERNEL_CS;
 	percpu_kstack[cpu] = t->esp0 = kernel_stack - X86_STACK_TOP_RESERVED;
 	init_desc(&gdt[INDEX_TSS(cpu)],

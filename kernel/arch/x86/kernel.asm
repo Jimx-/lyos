@@ -63,17 +63,16 @@ clock_int_msg		db	"^", 0
 ALIGN 0x1000
 pt0:
 page_tables		resb 	4 * 4 * 1024
-ex_number		resb 	4
-trap_errno 		resb 	4
-old_eip 		resb 	4
-old_cs 			resb 	4
-old_eflags 		resb 	4
 StackSpace		resb	K_STACK_SIZE
 StackTop:		; stack top
 k_stacks_start:
 KStacksSpace		resb 	2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
 k_stacks_end:
-	
+ex_number		resb 	4
+trap_errno 		resb 	4
+old_eip 		resb 	4
+old_cs 			resb 	4
+old_eflags 		resb 	4
 
 [section .text]	; code is here
 ALIGN 4
@@ -178,6 +177,8 @@ paging_enabled:
 ; interrupt and exception - hardware interrupt
 ; ---------------------------------
 %macro	hwint_master	1
+	cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
+	je .1
 	call	save
 	in	al, INT_M_CTLMASK	; `.
 	or	al, (1 << %1)		;  | Mask current interrupt
@@ -193,6 +194,25 @@ paging_enabled:
 	and	al, ~(1 << %1)		;  | resume
 	out	INT_M_CTLMASK, al	; /
 	ret
+.1:
+	pushad
+	in	al, INT_S_CTLMASK	; `.
+	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
+	out	INT_S_CTLMASK, al	; /
+	mov	al, EOI			; `. 置EOI位(master)
+	out	INT_M_CTL, al		; /
+	nop				; `. 置EOI位(slave)
+	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
+	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
+	push	%1			; `.
+	call	[irq_table + 4 * %1]	;  | 中断处理程序
+	pop	ecx			; /
+	cli
+	in	al, INT_S_CTLMASK	; `.
+	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
+	out	INT_S_CTLMASK, al	; /
+	popad
+	iret
 %endmacro
 
 
@@ -230,6 +250,8 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 
 ; ---------------------------------
 %macro	hwint_slave	1
+	cmp dword [esp + 4], SELECTOR_KERNEL_CS
+	je .1
 	call	save
 	in	al, INT_S_CTLMASK	; `.
 	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
@@ -247,6 +269,25 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
 	out	INT_S_CTLMASK, al	; /
 	ret
+.1:
+	pushad
+	in	al, INT_S_CTLMASK	; `.
+	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
+	out	INT_S_CTLMASK, al	; /
+	mov	al, EOI			; `. 置EOI位(master)
+	out	INT_M_CTL, al		; /
+	nop				; `. 置EOI位(slave)
+	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
+	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
+	push	%1			; `.
+	call	[irq_table + 4 * %1]	;  | 中断处理程序
+	pop	ecx			; /
+	cli
+	in	al, INT_S_CTLMASK	; `.
+	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
+	out	INT_S_CTLMASK, al	; /
+	popad
+	iret
 %endmacro
 ; ---------------------------------
 
@@ -372,12 +413,34 @@ exception:
 ;                                   save
 ; =============================================================================
 save:
-	
-    pushad          ; `.
-    push    ds      ;  |
-    push    es      ;  | 保存原寄存器值
-    push    fs      ;  |
-    push    gs      ; /
+	push ebp
+	mov ebp, [esp + 20 + 4 + 4]
+	SAVE_GP_REGS	ebp
+	pop esi
+
+	mov [ebp + EBPREG], esi
+	mov [ebp + KERNELESPREG], esp
+	mov [ebp + DSREG], ds
+	mov [ebp + ESREG], es
+	mov [ebp + FSREG], fs
+	mov [ebp + GSREG], gs
+    
+    mov esi, [esp + 4]
+    mov [ebp + EIPREG], esi 
+    mov esi, [esp + 8]
+    mov [ebp + CSREG], esi 
+    mov esi, [esp + 12]
+    mov [ebp + EFLAGSREG], esi 
+    mov esi, [esp + 16]
+    mov [ebp + ESPREG], esi 
+    mov esi, [esp + 20]
+    mov [ebp + SSREG], esi 
+
+    ;pushad          ; `.
+    ;push    ds      ;  |
+    ;push    es      ;  | 保存原寄存器值
+    ;push    fs      ;  |
+    ;push    gs      ; /
 
 	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
 	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
@@ -391,28 +454,51 @@ save:
 
 	mov	edx, esi	; 恢复 edx
 
-    mov     esi, esp                    ;esi = 进程表起始地址
+    mov     esi, ebp                    ;esi = 进程表起始地址
 
-    inc     dword [k_reenter]           ;k_reenter++;
-    cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
-    jne     .1                          ;{
-    mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
+    inc     dword [k_reenter]           ;k_reenter++;                        ;{
+    ;mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
     push    switch_to_user              ;  push restart
-    jmp     [esi + RETADR - P_STACKBASE];  return;
+    jmp     [esp + 4];  return;
 .1:                                         ;} else { 已经在内核栈，不需要再切换
     push    restore_user_context_reenter;  push restart_reenter
-    jmp     [esi + RETADR - P_STACKBASE];  return;
+    jmp     [esp + 4];  return;
                                             ;}
 
 ; =============================================================================
 ;                                   save_sys_call
 ; =============================================================================
 save_sys_call:
-    pushad          ; `.
-    push    ds      ;  |
-    push    es      ;  | 保存原寄存器值
-    push    fs      ;  |
-    push    gs      ; /
+	push ebp
+	mov ebp, [esp + 20 + 4 + 4]
+	SAVE_GP_REGS	ebp
+	pop esi
+	mov [ebp + EBPREG], esi
+	mov [ebp + KERNELESPREG], esp
+	mov [ebp + DSREG], ds
+	mov [ebp + ESREG], es
+	mov [ebp + FSREG], fs
+	mov [ebp + GSREG], gs
+
+	mov esi, [esp + 4]
+    mov [ebp + EIPREG], esi 
+    mov esi, [esp + 8]
+    mov [ebp + CSREG], esi 
+    mov esi, [esp + 12]
+    mov [ebp + EFLAGSREG], esi 
+    mov esi, [esp + 16]
+    mov [ebp + ESPREG], esi 
+    mov esi, [esp + 20]
+    mov [ebp + SSREG], esi 
+
+    ;pushad          ; `.
+    ;push    ds      ;  |
+    ;push    es      ;  | 保存原寄存器值
+    ;push    fs      ;  |
+    ;push    gs      ; /
+
+	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
+	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
 
 	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
 				;（没用栈，而是用了另一个寄存器 esi）
@@ -421,16 +507,11 @@ save_sys_call:
 	mov	es, dx
 	mov	fs, dx
 
-	mov	edx, esi	; 恢复 edx
-
-    mov     esi, esp                    ;esi = 进程表起始地址
+	mov	edx, esi	; 恢复 edx              
+	mov esi, ebp 	;esi = 进程表起始地址
 
     inc     dword [k_reenter]           ;k_reenter++;
-    cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
-    jne     .1                          ;{
-    mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
-.1:                                         ;} else { 已经在内核栈，不需要再切换
-    jmp     [esi + RETADR - P_STACKBASE]; return
+    ret
 
 ; =============================================================================
 ;                                 sys_call
@@ -458,18 +539,20 @@ sys_call:
 ; ====================================================================================
 restore_user_context:
 	mov	esp, [esp + 4]
+    cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
+    jne     restore_user_context_reenter
 	; switch address space
 	mov eax, [esp + P_PGD]
 	mov cr3, eax
-	lea	eax, [esp + P_STACKTOP]
-	mov	dword [tss + TSS3_S_SP0], eax
+	;lea	eax, [esp + P_STACKTOP]
+	;mov	dword [tss + TSS3_S_SP0], eax
 restore_user_context_reenter:
 	mov ebp, esp
 	dec	dword [k_reenter]
-	mov gs, [ebp + GSREG]
-	mov fs, [ebp + FSREG]
-	mov es, [ebp + ESREG]
 	mov ds, [ebp + DSREG]
+	mov es, [ebp + ESREG]
+	mov fs, [ebp + FSREG]
+	mov gs, [ebp + GSREG]
 	RESTORE_GP_REGS  ebp
 	mov ebp, [ebp + EBPREG]
 	add esp, EIPREG
