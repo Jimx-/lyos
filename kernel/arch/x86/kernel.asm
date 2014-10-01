@@ -386,35 +386,35 @@ copr_error:
 	jmp	exception
 
 exception:
-	pop dword [ex_number]
-	pop dword [trap_errno]
+	cmp dword [esp + 4], SELECTOR_KERNEL_CS
+	je exception_in_kernel
 
-	push eax
-	mov eax, [esp + 4]
-	mov dword [old_eip], eax
-	mov eax, [esp + 4 + 4]
-	mov dword [old_cs], eax
-	mov eax, [esp + 4 + 4 + 4]
-	mov dword [old_eflags], eax
-	pop eax
+	call save_exception
 
-	call save
-
-	push dword [old_eflags]
-	push dword [old_cs]
-	push dword [old_eip]
-	push dword [trap_errno]
-	push dword [ex_number]
+	push esp 	; exception stack frame
+	push 0 		; not in kernel
 	call	exception_handler
-	add	esp, 5 * 4	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
-	ret
+	
+	jmp switch_to_user
+	
+exception_in_kernel:
+	pushad
+	mov eax, esp
+	add eax, 8 * 4 	; 8 registers
 
-; =============================================================================
-;                                   save
-; =============================================================================
-save:
+	push eax 	; exception stack frame
+	push 1 		; in kernel
+	call exception_handler
+	add esp, 8
+	popad
+
+	add esp, 8 	; err_code and vec_no
+
+	iretd
+
+%macro	SAVE_CONTEXT	1
 	push ebp
-	mov ebp, [esp + 20 + 4 + 4]
+	mov ebp, [esp + 20 + 4 + %1]
 	SAVE_GP_REGS	ebp
 	pop esi
 
@@ -425,16 +425,16 @@ save:
 	mov [ebp + FSREG], fs
 	mov [ebp + GSREG], gs
     
-    mov esi, [esp + 4]
+    mov esi, [esp + %1]
     mov [ebp + EIPREG], esi 
-    mov esi, [esp + 8]
+    mov esi, [esp + %1 + 4]
     mov [ebp + CSREG], esi 
-    mov esi, [esp + 12]
+    mov esi, [esp + %1 + 8]
     mov [ebp + EFLAGSREG], esi 
-    mov esi, [esp + 16]
+    mov esi, [esp + %1 + 12]
     mov [ebp + ESPREG], esi 
-    mov esi, [esp + 20]
-    mov [ebp + SSREG], esi 
+    mov esi, [esp + %1 + 16]
+    mov [ebp + SSREG], esi
 
 	mov	esi, edx
 	mov	dx, ss
@@ -448,6 +448,19 @@ save:
 
     inc     dword [k_reenter]
     ret
+%endmacro
+
+; =============================================================================
+;                                   save
+; =============================================================================
+save:
+	SAVE_CONTEXT	4
+
+; =============================================================================
+;                              save_exception
+; =============================================================================
+save_exception:
+	SAVE_CONTEXT	12
 
 ; =============================================================================
 ;                                 sys_call

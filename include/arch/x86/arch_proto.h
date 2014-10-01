@@ -40,4 +40,12 @@ PUBLIC reg_t read_ebp();
 
 PUBLIC struct proc * arch_switch_to_user();
 
+struct exception_frame {
+    reg_t   vec_no;     /* which interrupt vector was triggered */
+    reg_t   err_code;    /* zero if no exception does not push err code */
+    reg_t   eip;
+    reg_t   cs;
+    reg_t   eflags;
+};
+
 #endif

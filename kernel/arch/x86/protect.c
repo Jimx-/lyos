@@ -76,7 +76,7 @@ void	hwint13();
 void	hwint14();
 void	hwint15();
 
-PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags);
+PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame);
 
 PRIVATE void init_idt();
 
@@ -301,7 +301,7 @@ PUBLIC int sys_privctl(int whom, int request, void * data, struct proc* p)
 /**
  * <Ring 0> Handle page fault.
  */
-PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
+PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 {
 	int pfla = read_cr2();
 #ifdef PROTECT_DEBUG
@@ -341,10 +341,10 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
 	/* inform MM to handle this page fault */
 	MESSAGE msg;
 	msg.type = FAULT;
-	msg.FAULT_NR = 14;
+	msg.FAULT_NR = frame->vec_no;
 	msg.FAULT_ADDR = pfla;
 	msg.FAULT_PROC = proc2pid(current);
-	msg.FAULT_ERRCODE = err_code;
+	msg.FAULT_ERRCODE = frame->err_code;
 	msg.FAULT_STATE = current->state;
 
 	msg_send(current, TASK_MM, &msg);
@@ -359,7 +359,7 @@ PRIVATE void page_fault_handler(int err_code, int eip, int cs, int eflags)
  *----------------------------------------------------------------------*
  异常处理
  *======================================================================*/
-PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags)
+PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 {
 #ifdef PROTECT_DEBUG
 	int i, j;
@@ -416,8 +416,12 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 	} 
 #endif
 
-	if (vec_no == 14) {
-		page_fault_handler(err_code, eip, cs, eflags);
+	if (in_kernel) {
+		panic("unhandled exception in kernel");
+	}
+
+	if (frame->vec_no == 14) {
+		page_fault_handler(in_kernel, frame);
 		return;
 	}
 }
