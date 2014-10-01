@@ -183,17 +183,17 @@ paging_enabled:
 	in	al, INT_M_CTLMASK	; `.
 	or	al, (1 << %1)		;  | Mask current interrupt
 	out	INT_M_CTLMASK, al	; /
-	mov	al, EOI				; `. set EOI bit
+	mov	al, EOI				; `. Set EOI bit
 	out	INT_M_CTL, al		; /
 	sti	; enable interrupt
 	push	%1						; `.
-	call	[irq_table + 4 * %1]	;  |interrupt handler
+	call	[irq_table + 4 * %1]	;  | Call the interrupt handler
 	pop	ecx							; /
 	cli
 	in	al, INT_M_CTLMASK	; `.
-	and	al, ~(1 << %1)		;  | resume
+	and	al, ~(1 << %1)		;  | Resume
 	out	INT_M_CTLMASK, al	; /
-	ret
+	jmp switch_to_user
 .1:
 	pushad
 	in	al, INT_S_CTLMASK	; `.
@@ -268,7 +268,7 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 	in	al, INT_S_CTLMASK	; `.
 	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
 	out	INT_S_CTLMASK, al	; /
-	ret
+	jmp switch_to_user
 .1:
 	pushad
 	in	al, INT_S_CTLMASK	; `.
@@ -436,17 +436,7 @@ save:
     mov esi, [esp + 20]
     mov [ebp + SSREG], esi 
 
-    ;pushad          ; `.
-    ;push    ds      ;  |
-    ;push    es      ;  | 保存原寄存器值
-    ;push    fs      ;  |
-    ;push    gs      ; /
-
-	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
-	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
-
-	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
-				;（没用栈，而是用了另一个寄存器 esi）
+	mov	esi, edx
 	mov	dx, ss
 	mov	ds, dx
 	mov	es, dx
@@ -456,68 +446,14 @@ save:
 
     mov     esi, ebp                    ;esi = 进程表起始地址
 
-    inc     dword [k_reenter]           ;k_reenter++;                        ;{
-    ;mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
-    push    switch_to_user              ;  push restart
-    jmp     [esp + 4];  return;
-.1:                                         ;} else { 已经在内核栈，不需要再切换
-    push    restore_user_context_reenter;  push restart_reenter
-    jmp     [esp + 4];  return;
-                                            ;}
-
-; =============================================================================
-;                                   save_sys_call
-; =============================================================================
-save_sys_call:
-	push ebp
-	mov ebp, [esp + 20 + 4 + 4]
-	SAVE_GP_REGS	ebp
-	pop esi
-	mov [ebp + EBPREG], esi
-	mov [ebp + KERNELESPREG], esp
-	mov [ebp + DSREG], ds
-	mov [ebp + ESREG], es
-	mov [ebp + FSREG], fs
-	mov [ebp + GSREG], gs
-
-	mov esi, [esp + 4]
-    mov [ebp + EIPREG], esi 
-    mov esi, [esp + 8]
-    mov [ebp + CSREG], esi 
-    mov esi, [esp + 12]
-    mov [ebp + EFLAGSREG], esi 
-    mov esi, [esp + 16]
-    mov [ebp + ESPREG], esi 
-    mov esi, [esp + 20]
-    mov [ebp + SSREG], esi 
-
-    ;pushad          ; `.
-    ;push    ds      ;  |
-    ;push    es      ;  | 保存原寄存器值
-    ;push    fs      ;  |
-    ;push    gs      ; /
-
-	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
-	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
-
-	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
-				;（没用栈，而是用了另一个寄存器 esi）
-	mov	dx, ss
-	mov	ds, dx
-	mov	es, dx
-	mov	fs, dx
-
-	mov	edx, esi	; 恢复 edx              
-	mov esi, ebp 	;esi = 进程表起始地址
-
-    inc     dword [k_reenter]           ;k_reenter++;
+    inc     dword [k_reenter]
     ret
 
 ; =============================================================================
 ;                                 sys_call
 ; =============================================================================
 sys_call:
-    call    save_sys_call
+    call    save
 
     sti
 
@@ -538,22 +474,18 @@ sys_call:
 ;                                   restore_user_context
 ; ====================================================================================
 restore_user_context:
-	mov	esp, [esp + 4]
-    cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
-    jne     restore_user_context_reenter
-	; switch address space
-	mov eax, [esp + P_PGD]
-	mov cr3, eax
-	;lea	eax, [esp + P_STACKTOP]
-	;mov	dword [tss + TSS3_S_SP0], eax
-restore_user_context_reenter:
-	mov ebp, esp
+	mov	ebp, [esp + 4]
 	dec	dword [k_reenter]
+	
+	; restore all registers
 	mov ds, [ebp + DSREG]
 	mov es, [ebp + ESREG]
 	mov fs, [ebp + FSREG]
 	mov gs, [ebp + GSREG]
 	RESTORE_GP_REGS  ebp
+	mov esp, ebp
 	mov ebp, [ebp + EBPREG]
+
+	; esp <- stack for iretd
 	add esp, EIPREG
 	iretd

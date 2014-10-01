@@ -87,7 +87,9 @@ PUBLIC void switch_to_user()
 
 	get_cpulocal_var(proc_ptr) = p;
 	
-	arch_switch_to_user();
+	switch_address_space(p->pgd.phys_addr);
+
+	p = arch_switch_to_user();
 
 	restore_user_context(p);
 }
