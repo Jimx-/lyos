@@ -64,8 +64,9 @@ PRIVATE void init_tss_all()
     unsigned cpu;
 
 
-    for(cpu = 0; cpu < ncpus ; cpu++)
+    for(cpu = 0; cpu < ncpus ; cpu++) {
         init_tss(cpu, (u32)get_k_stack_top(cpu)); 
+    }
 }
 
 PRIVATE int discover_cpus()

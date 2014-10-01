@@ -86,6 +86,8 @@ PUBLIC void switch_to_user()
 	struct proc * p = current;
 
 	get_cpulocal_var(proc_ptr) = p;
+	
+	arch_switch_to_user();
 
 	restore_user_context(p);
 }

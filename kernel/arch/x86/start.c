@@ -30,11 +30,13 @@
 #include "multiboot.h"
 #include "page.h"
 #include "acpi.h"
+#include "arch_const.h"
 
 extern char _end[];
 extern pde_t pgd0;
 PRIVATE pde_t * user_pgd = NULL;
 PRIVATE int first_pgd = 0;
+PUBLIC void * k_stacks;
 
 /*======================================================================*
                             cstart
@@ -131,6 +133,8 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	disp_pos = 0;
 	video_mem = (char *)V_MEM_BASE;
+
+	k_stacks = &k_stacks_start;
 }
 
 PUBLIC void init_arch()
