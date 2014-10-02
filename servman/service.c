@@ -62,7 +62,7 @@ PUBLIC int do_service_up(MESSAGE * msg)
     if (child_pid) {
         /* block the child */
         p = proc_table + child_pid;
-        p->state = BLOCKED;    
+        p->state = PST_BOOTINHIBIT;    
     } else {
         while (1);
     }

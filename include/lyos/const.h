@@ -56,17 +56,6 @@
 #define TRUE			1
 #define FALSE			0
 
-/* Process */
-#define BLOCKED   0x01 	/* set when proc is blocked */
-#define SENDING   0x02	/* set when proc trying to send */
-#define RECEIVING 0x04	/* set when proc trying to recv */
-#define WAITING   0x08	/* set when proc waiting for the child to terminate */
-#define HANGING   0x10	/* set when proc exits without being waited by parent */
-#define RESCUING  0x20  /* set when proc is being rescued */
-#define FREE_SLOT 0x40	/* set when proc table entry is not used
-			 * (ok to allocated to a new process)
-			 */
-
 #define	STR_DEFAULT_LEN	1024
 /* TTY */
 #define NR_CONSOLES	3	/* consoles */

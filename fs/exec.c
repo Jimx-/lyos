@@ -159,7 +159,7 @@ PUBLIC int do_exec(MESSAGE * msg)
      *  following by a msg_receive, if we wipe out the image
      *  before msg_receive is called, we cannot send
      *  the message back to the process */
-    while (p->state != RECEIVING) {}
+    while (p->state != PST_RECEIVING) {}
 
     int i;
 
@@ -269,7 +269,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     strcpy(proc_table[src].name, pathname);
 
     /* set state to RECEIVING so we can send reply to the process */
-    proc_table[src].state = RECEIVING;
+    proc_table[src].state = PST_RECEIVING;
 
     return 0;
 }

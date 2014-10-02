@@ -44,6 +44,7 @@
  * @param b   Memory base of kernel.
  * @param l   Memory limit of kernel.
  *****************************************************************************/
+#if 0
 PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 {
 	multiboot_elf_section_header_table_t * shdrs = (multiboot_elf_section_header_table_t *)kernel_file;
@@ -71,6 +72,7 @@ PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 
 	return 0;
 }
+#endif
 
 /*======================================================================*
                                itoa

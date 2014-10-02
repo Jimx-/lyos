@@ -128,7 +128,7 @@ PUBLIC int kill_sig(pid_t source, pid_t dest, int signo)
 	struct proc* p_dest = proc_table + NR_PROCS;
     
     while (--p_dest > &FIRST_PROC) {
-    	if (p_dest->state == FREE_SLOT) continue;
+    	if (p_dest->state == PST_FREE_SLOT) continue;
 
     	if (dest > 0 && dest != proc2pid(p_dest)) continue;
     	if (dest == -1 && dest <= INIT) continue;
@@ -151,7 +151,7 @@ PUBLIC int kill_sig(pid_t source, pid_t dest, int signo)
 	}
 
 	/* the process has killed itself and thus no longer waiting */
-	if (p_src->state != RECEIVING) return SUSPEND;
+	if (p_src->state != PST_RECEIVING) return SUSPEND;
 
 	if (count > 0) return 0;
 	else return errcode;
@@ -159,7 +159,7 @@ PUBLIC int kill_sig(pid_t source, pid_t dest, int signo)
 
 PRIVATE void sig_proc(struct proc * p_dest, int signo)
 {
-	if (p_dest->state == FREE_SLOT || p_dest->state & HANGING) {
+	if (p_dest->state == PST_FREE_SLOT || p_dest->state & PST_HANGING) {
 		panic("MM: signal sent to HANGING process");
 	}
 

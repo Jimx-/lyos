@@ -127,25 +127,23 @@ PRIVATE void init_mm()
 {	
 	int usable_memsize = 0;
 	int reserved_memsize = 0;
-	if (!(mb_flags & (1 << 6))) panic("Memory map not present!");
+	int i;
+
 	printl("BIOS-provided physical RAM map:\n");
-	printl("Memory map located at: 0x%x\n", mb_mmap_addr);
-	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)(mb_mmap_addr);
-	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
+	struct kinfo_mmap_entry * mmap;
+	for (i = 0, mmap = kinfo.memmaps; i < kinfo.memmaps_count; i++, mmap++) {
 		u64 last_byte = mmap->addr + mmap->len;
 		u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000L) >> 32),
 			base_l = (u32)(mmap->addr & 0xFFFFFFFF);
 		u32 last_h = (u32)((last_byte & 0xFFFFFFFF00000000L) >> 32),
 			last_l = (u32)(last_byte & 0xFFFFFFFF);
 		printl("  [mem %08x%08x-%08x%08x] %s\n", base_h, base_l, last_h, last_l, 
-			(mmap->type == MULTIBOOT_MEMORY_AVAILABLE) ? "usable" : "reserved");
+			(mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");
 
-		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) 
+		if (mmap->type == KINFO_MEMORY_AVAILABLE) 
 			usable_memsize += mmap->len;
 		else 
 			reserved_memsize += mmap->len;
-
-		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
 	unsigned int text_start = (unsigned int)*(&_text), text_end = (unsigned int)*(&_etext), text_len = text_end - text_start;
@@ -179,9 +177,8 @@ PRIVATE void init_mm()
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
 	struct proc * p = proc_table;
-	int i;
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
-		if (p->state == BLOCKED) continue;
+		if (p->state == PST_BOOTINHIBIT) continue;
 		phys_region_init(&(rp->phys_block), 1);
 		/* prepare heap */
 		rp->vir_addr = (void*)0x1000;

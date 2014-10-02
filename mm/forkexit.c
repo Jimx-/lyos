@@ -57,7 +57,7 @@ PUBLIC int do_fork()
 	struct proc* p = proc_table;
 	int i;
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++)
-		if (p->state == FREE_SLOT)
+		if (p->state == PST_FREE_SLOT)
 			break;
 
 	int child_pid = i;
@@ -179,21 +179,21 @@ PUBLIC void do_exit(int status)
 	
 	p->exit_status = status;
 
-	if (proc_table[parent_pid].state & WAITING) { /* parent is waiting */
-		proc_table[parent_pid].state &= ~WAITING;
+	if (proc_table[parent_pid].state & PST_WAITING) { /* parent is waiting */
+		proc_table[parent_pid].state &= ~PST_WAITING;
 		cleanup(&proc_table[pid]);
 	}
 	else { /* parent is not waiting */
-		proc_table[pid].state |= HANGING;
+		proc_table[pid].state |= PST_HANGING;
 	}
 
 	/* if the proc has any child, make INIT the new parent */
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
 		if (proc_table[i].p_parent == pid) { /* is a child */
 			proc_table[i].p_parent = INIT;
-			if ((proc_table[INIT].state & WAITING) &&
-			    (proc_table[i].state & HANGING)) {
-				proc_table[INIT].state &= ~WAITING;
+			if ((proc_table[INIT].state & PST_WAITING) &&
+			    (proc_table[i].state & PST_HANGING)) {
+				proc_table[INIT].state &= ~PST_WAITING;
 				cleanup(&proc_table[i]);
 			}
 		}
@@ -218,7 +218,7 @@ PRIVATE void cleanup(struct proc * proc)
 	msg2parent.STATUS = proc->exit_status;
 	send_recv(SEND, proc->p_parent, &msg2parent);
 
-	proc->state = FREE_SLOT;
+	proc->state = PST_FREE_SLOT;
 }
 
 /*****************************************************************************
@@ -266,7 +266,7 @@ PUBLIC void do_wait()
 			if (child_pid < -1 && -child_pid != p_proc->gid) continue;
 			if (child_pid == 0 && p_proc->gid != (proc_table + pid)->gid) continue;
 			children++;
-			if (p_proc->state & HANGING) {
+			if (p_proc->state & PST_HANGING) {
 				cleanup(p_proc);
 				return;
 			}
@@ -276,7 +276,7 @@ PUBLIC void do_wait()
 	if (children) {
 		/* has children, but no child is HANGING */
 		if (options & WNOHANG) return;	 /* parent does not want to wait */
-		proc_table[pid].state |= WAITING;
+		proc_table[pid].state |= PST_WAITING;
 	}
 	else {
 		/* no child at all */
@@ -305,7 +305,7 @@ PUBLIC int proc_free(struct proc * p)
     INIT_LIST_HEAD(&(p->mem_regions));
     pgd_clear(&(p->pgd));
 
-    p->state = FREE_SLOT;
+    p->state = PST_FREE_SLOT;
 
     return 0;
 }

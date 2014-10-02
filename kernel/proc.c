@@ -263,7 +263,7 @@ PRIVATE int deadlock(int src, int dest)
 {
 	struct proc* p = proc_table + dest;
 	while (1) {
-		if (p->state & SENDING) {
+		if (p->state & PST_SENDING) {
 			if (p->sendto == src) {
 				p = proc_table + dest;
 				do {
@@ -309,7 +309,7 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 		panic("deadlock: %s(pid: %d)->%s(pid: %d)", sender->name, proc2pid(sender), p_dest->name, proc2pid(p_dest));
 	}
 
-	if ((p_dest->state & RECEIVING) && /* p_dest is waiting for the msg */
+	if ((p_dest->state & PST_RECEIVING) && /* p_dest is waiting for the msg */
 	    (p_dest->recvfrom == proc2pid(sender) ||
 	     p_dest->recvfrom == ANY)) {
 		assert(p_dest->msg);
@@ -320,7 +320,7 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 			  va2la(proc2pid(sender), m),
 			  sizeof(MESSAGE)); */
 		p_dest->msg = 0;
-		p_dest->state &= ~RECEIVING; /* p_dest has received the msg */
+		p_dest->state &= ~PST_RECEIVING; /* p_dest has received the msg */
 		p_dest->recvfrom = NO_TASK;
 		unblock(p_dest);
 
@@ -334,8 +334,8 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 		assert(sender->sendto == NO_TASK);
 	}
 	else { /* p_dest is not waiting for the msg */
-		sender->state |= SENDING;
-		assert(sender->state == SENDING);
+		sender->state |= PST_SENDING;
+		assert(sender->state == PST_SENDING);
 		sender->sendto = dest;
 		sender->msg = m;
 
@@ -354,7 +354,7 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 
 		block(sender);
 
-		assert(sender->state == SENDING);
+		assert(sender->state == PST_SENDING);
 		assert(sender->msg != 0);
 		assert(sender->recvfrom == NO_TASK);
 		assert(sender->sendto == dest);
@@ -435,7 +435,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 			assert(who_wanna_recv->recvfrom == NO_TASK);
 			assert(who_wanna_recv->sendto == NO_TASK);
 			assert(who_wanna_recv->q_sending != 0);
-			assert(from->state == SENDING);
+			assert(from->state == PST_SENDING);
 			assert(from->msg != 0);
 			assert(from->recvfrom == NO_TASK);
 			assert(from->sendto == proc2pid(who_wanna_recv));
@@ -447,7 +447,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 		from = &proc_table[src];
 
-		if ((from->state & SENDING) &&
+		if ((from->state & PST_SENDING) &&
 		    (from->sendto == proc2pid(who_wanna_recv))) {
 			/* Perfect, src is sending a message to
 			 * who_wanna_recv.
@@ -459,7 +459,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 				    * queue, so the queue must not be NULL
 				    */
 			while (p) {
-				assert(from->state & SENDING);
+				assert(from->state & PST_SENDING);
 				if (proc2pid(p) == src) { /* if p is the one */
 					from = p;
 					break;
@@ -473,7 +473,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 			assert(who_wanna_recv->recvfrom == NO_TASK);
 			assert(who_wanna_recv->sendto == NO_TASK);
 			assert(who_wanna_recv->q_sending != 0);
-			assert(from->state == SENDING);
+			assert(from->state == PST_SENDING);
 			assert(from->msg != 0);
 			assert(from->recvfrom == NO_TASK);
 			assert(from->sendto == proc2pid(who_wanna_recv));
@@ -507,14 +507,14 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 		from->msg = 0;
 		from->sendto = NO_TASK;
-		from->state &= ~SENDING;
+		from->state &= ~PST_SENDING;
 		unblock(from);
 	}
 	else {  /* nobody's sending any msg */
 		/* Set state so that who_wanna_recv will not
 		 * be scheduled until it is unblocked.
 		 */
-		who_wanna_recv->state |= RECEIVING;
+		who_wanna_recv->state |= PST_RECEIVING;
 
 		who_wanna_recv->msg = m;
 
@@ -525,8 +525,8 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 		block(who_wanna_recv);
 
-		if (who_wanna_recv->state != RECEIVING) printl("error: proc #%d's state != RECEIVING\n", proc2pid(who_wanna_recv));
-		assert(who_wanna_recv->state == RECEIVING);
+		if (who_wanna_recv->state != PST_RECEIVING) printl("error: proc #%d's state != PST_RECEIVING\n", proc2pid(who_wanna_recv));
+		assert(who_wanna_recv->state == PST_RECEIVING);
 		assert(who_wanna_recv->msg != 0);
 		assert(who_wanna_recv->recvfrom != NO_TASK);
 		assert(who_wanna_recv->sendto == NO_TASK);
@@ -553,13 +553,13 @@ PUBLIC void inform_int(int task_nr)
 
 
 
-	if ((p->state & RECEIVING) && /* dest is waiting for the msg */
+	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == INTERRUPT) || (p->recvfrom == ANY))) {
 		p->msg->source = INTERRUPT;
 		p->msg->type = HARD_INT;
 		p->msg = 0;
 		p->has_int_msg = 0;
-		p->state &= ~RECEIVING; /* dest has received the msg */
+		p->state &= ~PST_RECEIVING; /* dest has received the msg */
 		p->recvfrom = NO_TASK;
 		assert(p->state == 0);
 		unblock(p);

@@ -68,38 +68,15 @@ StackTop:		; stack top
 k_stacks_start:
 KStacksSpace		resb 	2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
 k_stacks_end:
-ex_number		resb 	4
-trap_errno 		resb 	4
-old_eip 		resb 	4
-old_cs 			resb 	4
-old_eflags 		resb 	4
 
 [section .text]	; code is here
 ALIGN 4
-
-global mb_video_mode
-global mb_video_width
-global mb_video_height
-global mb_video_depth
 
 ; Multiboot Header - We are multiboot compatible!
 MultiBootHeader:
 	dd MAGIC
 	dd FLAGS
 	dd CHECKSUM
-	dd 0
-	dd 0
-	dd 0
-	dd 0 
-	dd 0
-mb_video_mode:
-	dd 0
-mb_video_width:
-	dd 0
-mb_video_height:
-	dd 0
-mb_video_depth:
-	dd 0
 
 global _start	; export _start
 
@@ -171,7 +148,7 @@ paging_enabled:
 
 	jmp	kernel_main
 
-	hlt
+	hlt 	; should never arrive here
 
 
 ; interrupt and exception - hardware interrupt

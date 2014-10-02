@@ -44,18 +44,26 @@ PUBLIC void * k_stacks;
 PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 {
 	memory_size = 0;
+	memset(&kinfo, 0, sizeof(kinfo_t));
 
 	mb_magic = mboot_magic;
+
+	int mb_mmap_addr, mb_mmap_len;
 
 	/* grub provides physical address, we want virtual address */
 	mboot = (struct multiboot_info *)((int)mboot + KERNEL_VMA);
 	mb_mmap_addr = mboot->mmap_addr + KERNEL_VMA;
 	mb_mmap_len = mboot->mmap_length;
 
-	mb_mod_count = mboot->mods_count;
+	kinfo.mods_count = mb_mod_count = mboot->mods_count;
 
+	kinfo.memmaps_count = -1;
 	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
 	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
+		kinfo.memmaps_count++;
+		kinfo.memmaps[kinfo.memmaps_count].addr = mmap->addr;
+		kinfo.memmaps[kinfo.memmaps_count].len = mmap->len;
+		kinfo.memmaps[kinfo.memmaps_count].type = mmap->type;
 		memory_size += mmap->len;
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
@@ -67,9 +75,9 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	/* setup kernel page table */
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
-	first_pgd = (pgd_start + 0x1000) & 0xfffff000;
+	first_pgd = (pgd_start + 0x1000) & ARCH_VM_ADDR_MASK;
 	pte_t * pt = (pte_t*)(first_pgd + (NR_TASKS + NR_NATIVE_PROCS) * 0x1000);	/* 4k align */
-	PROCS_BASE = (int)(pt + 1024 * 1024) & 0xfffff000;
+	PROCS_BASE = (int)(pt + 1024 * 1024) & ARCH_VM_ADDR_MASK;
     kernel_pts = PROCS_BASE / PT_MEMSIZE;
     if (PROCS_BASE % PT_MEMSIZE != 0) {
     	kernel_pts++;
@@ -91,21 +99,11 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	init_desc(&gdt[0], 0, 0, 0);
 	init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
 	init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
-	//init_desc(&gdt[3], 0x0B8000 + KERNEL_VMA, 0xffff, DA_DRW | DA_32 | DA_DPL3);
-	init_desc(&gdt[INDEX_TASK_C],
-				  0, 0xfffff,
-				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
-	init_desc(&gdt[INDEX_TASK_RW],
-				  0, 0xfffff,
-				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
-	init_desc(&gdt[INDEX_USER_C],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
-	init_desc(&gdt[INDEX_USER_RW],
-				  0, VM_STACK_TOP >> LIMIT_4K_SHIFT,
-				  DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
-	init_desc(&gdt[INDEX_LDT],
-				  0, 0, DA_LDT);
+	init_desc(&gdt[INDEX_TASK_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
+	init_desc(&gdt[INDEX_TASK_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
+	init_desc(&gdt[INDEX_USER_C], 0, VM_STACK_TOP >> LIMIT_4K_SHIFT, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_USER_RW], 0, VM_STACK_TOP >> LIMIT_4K_SHIFT, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
 
 	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
 	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
@@ -120,7 +118,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	init_prot();
 
 	mb_flags = mboot->flags;
-	kernel_file = (unsigned int)&(mboot->u.elf_sec);
 
 	unsigned char * dev_no = (unsigned char *)((int)&(mboot->boot_device));
 
@@ -153,7 +150,7 @@ PUBLIC void init_arch()
 		INIT_LIST_HEAD(&(p->mem_regions));
 		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
-			p->state = FREE_SLOT;
+			p->state = PST_FREE_SLOT;
 			continue;
 		}
 
@@ -211,7 +208,7 @@ PUBLIC void init_arch()
 
 		p->counter = p->priority = prio;
 
-		if (t->initial_eip == NULL) p->state = BLOCKED;
+		if (t->initial_eip == NULL) p->state = PST_BOOTINHIBIT;
 		else p->state = 0;
 
 		p->msg = 0;

@@ -215,7 +215,7 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
         struct proc * p = proc_table;
         int i;
         for (i = 0; i < NR_TASKS + NR_PROCS; i++, p++) {
-            if (p->state == FREE_SLOT) continue;
+            if (p->state == PST_FREE_SLOT) continue;
 
             if (p->root) put_inode(p->root);
             root_inode->i_cnt++;

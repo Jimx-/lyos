@@ -350,7 +350,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	msg_send(current, TASK_MM, &msg);
 	
 	/* block the process */
-	current->state = RESCUING;
+	current->state = PST_RESCUING;
 	schedule();
 }
 

@@ -24,6 +24,8 @@
 #include "page.h"
 #endif
 
+#include <lyos/param.h>
+
 EXTERN	int	jiffies;
 
 EXTERN	int	disp_pos;
@@ -66,8 +68,7 @@ extern  CONSOLE		console_table[];
 extern  int             err_code;
 
 /* Multiboot */
-EXTERN  int         mb_mmap_addr;
-EXTERN  int         mb_mmap_len;
+EXTERN  kinfo_t     kinfo;
 EXTERN  int         mb_mod_count;
 EXTERN  int         mb_mod_addr;
 EXTERN  int         mb_magic;
@@ -79,8 +80,6 @@ EXTERN	MESSAGE			mm_msg;
 EXTERN  unsigned int        PROCS_BASE;
 EXTERN  int                 kernel_pts;
 EXTERN	unsigned int        memory_size;
-EXTERN  int                 kernel_file;
-EXTERN	unsigned char *		kernel_addr;
 EXTERN	int 				mem_start;
 
 /* FS */

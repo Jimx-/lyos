@@ -16,6 +16,17 @@
 #include <signal.h>
 #include <lyos/list.h>
 
+/* Process */
+#define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
+#define PST_SENDING   0x02	/* set when proc trying to send */
+#define PST_RECEIVING 0x04	/* set when proc trying to recv */
+#define PST_WAITING   0x08	/* set when proc waiting for the child to terminate */
+#define PST_HANGING   0x10	/* set when proc exits without being waited by parent */
+#define PST_RESCUING  0x20  /* set when proc is being rescued */
+#define PST_FREE_SLOT 0x40	/* set when proc table entry is not used
+			 * (ok to allocated to a new process)
+			 */
+
 #if (ARCH == x86)
 #include "protect.h"
 #endif

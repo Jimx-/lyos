@@ -39,27 +39,28 @@ PUBLIC int do_getsetid()
 {
     int retval;
     int id = mm_msg.NEWID;
+    struct proc * p = proc_table + mm_msg.source;
 
     switch (mm_msg.REQUEST) {
         case GS_GETUID:
-            retval = current->uid;
+            retval = p->uid;
             break;
         case GS_SETUID:
             retval = 0;
-            current->uid = id;
+            p->uid = id;
             break;
         case GS_GETGID:
-            retval = current->gid;
+            retval = p->gid;
             break;
         case GS_SETGID:
             retval = 0;
-            current->gid = id;
+            p->gid = id;
             break;
         case GS_GETEUID:
-            retval = current->euid;
+            retval = p->euid;
             break;
         case GS_GETEGID:
-            retval = current->egid;
+            retval = p->egid;
             break; 
     }
 
