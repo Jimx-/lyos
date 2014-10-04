@@ -154,8 +154,7 @@
 #define TASK_HD		9
 #define TASK_EXT2_FS	10
 #define TASK_PCI	11
-#define TASK_INET	12
-#define INIT		13
+#define INIT		12
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define SELF	(-0x8ace)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)

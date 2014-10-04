@@ -53,7 +53,6 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{task_hd,       STACK_SIZE_HD,    "HD"        },
 	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
 	{task_pci,      STACK_SIZE_PCI,   "PCI"       },
-	{task_inet,     STACK_SIZE_INET,  "INET"      },
 };
 
 PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
