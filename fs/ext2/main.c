@@ -82,6 +82,7 @@ PUBLIC void task_ext2_fs()
 			m.RET_RETVAL = ext2_lookup(&m);
             break;
 		case FS_PUTINODE:
+            m.RET_RETVAL = ext2_putinode(&m);
 			break;
         case FS_MOUNTPOINT:
             m.RET_RETVAL = ext2_mountpoint(&m);

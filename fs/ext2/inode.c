@@ -141,6 +141,17 @@ PUBLIC void put_ext2_inode(ext2_inode_t * pin)
     }
 }
 
+PUBLIC int ext2_putinode(MESSAGE * p)
+{
+    dev_t dev = p->REQ_DEV;
+    ino_t num = p->REQ_NUM;
+
+    ext2_inode_t * pin = get_ext2_inode(dev, num);
+    put_ext2_inode(pin);
+
+    return 0;
+}
+
 PRIVATE void update_times(ext2_inode_t * pin)
 {
     if (pin->i_update & CTIME) pin->i_ctime = now();

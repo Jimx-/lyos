@@ -287,6 +287,7 @@ PUBLIC void ext2_init_inode();
 PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num);
 PUBLIC ext2_inode_t * find_ext2_inode(dev_t dev, ino_t num);
 PUBLIC void put_ext2_inode(ext2_inode_t * pin);
+PUBLIC int ext2_putinode(MESSAGE * p);
 PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag);
 PUBLIC void ext2_dump_inode(ext2_inode_t * pin);
 

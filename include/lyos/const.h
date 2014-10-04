@@ -140,24 +140,24 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
-#define KERNEL 		-15
-#define INTERRUPT	-10
-#define TASK_MM     0
-#define TASK_SERVMAN 1
-#define TASK_DEVMAN	2
-#define TASK_FS		3
-#define TASK_SYS	4
-#define TASK_TTY	5
-#define	TASK_RD		6
-#define TASK_INITFS	7
-#define TASK_SYSFS	8
-#define TASK_HD		9
+#define KERNEL 			-15
+#define INTERRUPT		-10
+#define TASK_MM     	0
+#define TASK_SERVMAN 	1
+#define TASK_DEVMAN		2
+#define TASK_FS			3
+#define TASK_SYS		4
+#define TASK_TTY		5
+#define	TASK_RD			6
+#define TASK_INITFS		7
+#define TASK_SYSFS		8
+#define TASK_HD			9
 #define TASK_EXT2_FS	10
-#define TASK_PCI	11
-#define INIT		12
-#define ANY		(NR_TASKS + NR_PROCS + 10)
-#define SELF	(-0x8ace)
-#define NO_TASK		(NR_TASKS + NR_PROCS + 20)
+#define TASK_PCI		11
+#define INIT			12
+#define ANY				(NR_TASKS + NR_PROCS + 10)
+#define SELF			(-0x8ace)
+#define NO_TASK			(NR_TASKS + NR_PROCS + 20)
 
 #define	MAX_TICKS	0x7FFFABCD
 
