@@ -41,12 +41,12 @@ PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];
 PUBLIC	struct task	task_table[NR_TASKS] = {
 	/* entry        stack size        task name */
 	/* -----        ----------        --------- */
-	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
 	{task_servman,   STACK_SIZE_SERVMAN,"SERVMAN" },
 	{NULL,			0,				  "DEVMAN"    },
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
+	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
 	{task_rd,       STACK_SIZE_RD,    "RD"        },
 	{NULL,	        0,                "INITFS"	  },
 	{NULL, 			0, 				  "SYSFS"	  },
