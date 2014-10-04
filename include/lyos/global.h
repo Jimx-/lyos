@@ -28,8 +28,6 @@
 
 EXTERN	int	jiffies;
 
-EXTERN	int	disp_pos;
-
 #if (ARCH == x86)
 EXTERN	u8			        gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct descriptor	gdt[GDT_SIZE];
@@ -91,9 +89,6 @@ EXTERN	MESSAGE			    fs_msg;
 EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
-
-/* VIDEO */
-EXTERN  char * video_mem;
 
 /* KERNEL LOG */
 EXTERN struct kern_log kern_log;

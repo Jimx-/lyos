@@ -115,19 +115,8 @@ PUBLIC void init_screen(TTY* tty)
 
 	tty->tty_dev = con;
 	if (nr_tty == 0) {
-		((CONSOLE *)tty->tty_dev)->cursor = disp_pos / 2;
-		disp_pos = 0;
+		((CONSOLE *)tty->tty_dev)->cursor = 0;
 	}
-	/*else {*/
-		/* 
-		 * `?' in this string will be replaced with 0, 1, 2, ...
-		 */
-	/*	const char prompt[] = "[tty #?]\n";
-
-		const char * p = prompt;
-		for (; *p; p++)
-			out_char(tty, *p == '?' ? nr_tty + '0' : *p);
-	}*/
 
 	set_cursor(((CONSOLE *)tty->tty_dev)->cursor);
 }

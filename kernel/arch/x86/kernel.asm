@@ -29,7 +29,6 @@ extern	gdt_ptr
 extern	idt_ptr
 extern	current
 extern	tss
-extern	disp_pos
 extern	sys_call_table
 bits 32
 

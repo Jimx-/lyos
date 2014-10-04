@@ -130,9 +130,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	int minor = dev_no[2] + 1;
 	ROOT_DEV = MAKE_DEV(major, minor);
 
-	disp_pos = 0;
-	video_mem = (char *)V_MEM_BASE;
-
 	k_stacks = &k_stacks_start;
 
 	memset(&kern_log, 0, sizeof(struct kern_log));
