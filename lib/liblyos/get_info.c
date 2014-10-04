@@ -11,22 +11,22 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#ifndef _INITFS_GLOBAL_H_
-#define _INITFS_GLOBAL_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/vm.h"
+#include "lyos/ipc.h"
+#include <lyos/param.h>
 
-#include "const.h"
+PUBLIC  int getinfo(int request, void* buf);
 
-/* EXTERN is extern except for global.c */
-#ifdef _INITFS_GLOBAL_VARIABLE_HERE_
-#undef EXTERN
-#define EXTERN
-#endif
-
-EXTERN int initfs_headers_count;
-EXTERN int initfs_headers[MAX_HEADERS];
-
-EXTERN endpoint_t this_ep;
-
-#endif
+PUBLIC int get_kinfo(kinfo_t * kinfo)
+{
+	return getinfo(GETINFO_KINFO, kinfo);
+}

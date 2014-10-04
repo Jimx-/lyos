@@ -24,6 +24,8 @@ extern struct CPULOCAL_STRUCT {
 	struct proc idle_proc;
 
 	volatile u8 cpu_is_idle;
+
+	int fpu_present;
 	
 #ifdef CONFIG_SMP
 } CPULOCAL_STRUCT[CONFIG_SMP_MAX_CPUS];

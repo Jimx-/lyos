@@ -21,7 +21,6 @@ PUBLIC u16  	in_word(u16 port);
 PUBLIC void 	out_long(u16 port, u32 val);
 PUBLIC u32  	in_long(u16 port);
 PUBLIC void disp_char(const char c);
-PUBLIC int	disp_str(const char *fmt, ...);
 PUBLIC void	disp_color_str(char * info, int color);
 PUBLIC void	disable_irq(int irq);
 PUBLIC void	enable_irq(int irq);
@@ -44,6 +43,9 @@ PUBLIC void     finish_bsp_booting();
 PUBLIC void 	Init();
 PUBLIC int  	get_ticks();
 PUBLIC void 	panic(const char *fmt, ...);
+
+/* system.c */
+PUBLIC void     fpu_init();
 
 /* smp.c */
 PUBLIC void     smp_init();
@@ -115,6 +117,7 @@ PUBLIC	void	dump_msg(const char * title, MESSAGE* m);
 PUBLIC	void	dump_proc(struct proc * p);
 PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC  void	inform_int(int task_nr);
+PUBLIC  void    inform_kernel_log(int task_nr);
 
 /* lib/misc.c */
 PUBLIC void 	spin(char * func_name);
@@ -132,6 +135,7 @@ PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
 PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc);
 PUBLIC  int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_privctl(int whom, int request, void * data, struct proc* p);
+PUBLIC  int sys_getinfo(int _unused1, int request, void* buf, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
@@ -141,8 +145,11 @@ PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char* str);
 PUBLIC  int datacopy(MESSAGE * m);
 PUBLIC  int privctl(int whom, int request, void * data);
+PUBLIC  int getinfo(int request, void* buf);
 
 #define	phys_copy	memcpy
 #define	phys_set	memset
 
+PUBLIC  int     printk(const char *fmt, ...);
 PUBLIC  int     printl(const char *fmt, ...);
+PUBLIC  int     get_kinfo(kinfo_t * kinfo);

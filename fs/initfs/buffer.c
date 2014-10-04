@@ -32,11 +32,12 @@
 #include "lyos/hd.h"
 #include "lyos/list.h"
 #include "lyos/driver.h"
+#include "global.h"
     
 /**
  * <Ring 1> Read/Write init device
  */
 PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length, void * buf)
 {
-	rw_sector(rw_flag, dev, position, length, getpid(), buf);
+	rw_sector(rw_flag, dev, position, length, this_ep, buf);
 }

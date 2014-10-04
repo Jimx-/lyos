@@ -76,7 +76,7 @@ PRIVATE void cons_write(TTY * tty)
 
 	flush((CONSOLE *)tty->tty_dev);
 
-	if (tty->tty_outleft == 0) {	/* done, reply to caller */
+	if (tty->tty_outleft == 0 && tty->tty_outcaller != KERNEL) {	/* done, reply to caller */
 		MESSAGE msg;
 		msg.type = tty->tty_outreply;
 		msg.PROC_NR = tty->tty_outprocnr;

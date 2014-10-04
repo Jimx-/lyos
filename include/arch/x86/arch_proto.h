@@ -48,4 +48,6 @@ struct exception_frame {
     reg_t   eflags;
 };
 
+PUBLIC void fninit();
+
 #endif

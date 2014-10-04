@@ -33,6 +33,10 @@
 #include "termios.h"
 #include "proto.h"
 #include <lyos/driver.h>
+#include <lyos/param.h>
+#include <lyos/log.h>
+    
+PRIVATE kinfo_t	_kinfo;
 
 #define TTY_FIRST	(tty_table)
 #define TTY_END		(tty_table + NR_CONSOLES)
@@ -54,6 +58,7 @@ PRIVATE void 	in_transfer	(TTY* tty);
 PRIVATE void	tty_do_read	(TTY* tty, MESSAGE* msg);
 PRIVATE void	tty_do_write	(TTY* tty, MESSAGE* msg);
 PRIVATE void 	tty_do_ioctl(TTY* tty, MESSAGE* msg);
+PRIVATE void 	tty_do_kern_log();
 PRIVATE void	tty_echo	(TTY* tty, char c);
 PRIVATE void	put_key		(TTY* tty, u32 key);
 
@@ -69,6 +74,7 @@ PUBLIC void task_tty()
 	TTY *	tty;
 	MESSAGE msg;
 
+	get_kinfo(&_kinfo);
 	init_keyboard();
 
 	for (tty = TTY_FIRST; tty < TTY_END; tty++)
@@ -112,6 +118,9 @@ PUBLIC void task_tty()
 			 */
 			key_pressed = 0;
 			continue;
+		case KERN_LOG:
+			tty_do_kern_log();
+			break;
 		default:
 			dump_msg("TTY::unknown msg", &msg);
 			break;
@@ -424,6 +433,42 @@ PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
 }
 
 /*****************************************************************************
+ *                                tty_do_kern_log
+ *****************************************************************************/
+/**
+ * Invoked when task TTY receives KERN_LOG message.
+ * 
+ *****************************************************************************/
+PRIVATE void tty_do_kern_log()
+{
+	static int prev_next = 0;
+	static char kernel_log_copy[KERN_LOG_SIZE];
+	struct kern_log * klog = _kinfo.kern_log;
+	int next = klog->next;
+	TTY * tty;
+
+	size_t bytes = ((next + KERN_LOG_SIZE) - prev_next) % KERN_LOG_SIZE, copy;
+	if (bytes > 0) {
+		copy = min(bytes, KERN_LOG_SIZE - prev_next);
+		memcpy(kernel_log_copy, &klog->buf[prev_next], copy);
+		if (bytes > copy) memcpy(&kernel_log_copy[copy], klog->buf, bytes - copy);
+		
+		tty = TTY_FIRST;
+		/* tell the tty: */
+		tty->tty_outreply    = SYSCALL_RET;
+		tty->tty_outcaller   = KERNEL;  /* who called, usually FS */
+		tty->tty_outprocnr   = TASK_TTY; /* who wants to output the chars */
+		tty->tty_outbuf  = kernel_log_copy;/* where are the chars */
+		tty->tty_outleft = bytes; /* how many chars are requested */
+		tty->tty_outcnt = 0;
+
+		handle_events(tty);
+	}
+
+	prev_next = next;
+}
+
+/*****************************************************************************
  *                                tty_echo
  *****************************************************************************/
 /**
@@ -434,80 +479,6 @@ PRIVATE void tty_echo(TTY* tty, char c)
 {
 	if (!(tty->tty_termios.c_lflag & ECHO)) return;
 	tty->tty_echo(tty, c);
-}
-
-/*****************************************************************************
- *                                sys_printx
- *****************************************************************************/
-/**
- * System calls accept four parameters. `printx' needs only two, so it wastes
- * the other two.
- *
- * @note `printx' accepts only one parameter -- `char* s', the other one --
- * `struct proc * proc' -- is pushed by kernel.asm::sys_call so that the
- * kernel can easily know who invoked the system call.
- *
- * @note s[0] (the first char of param s) is a magic char. if it equals
- * MAG_CH_PANIC, then this syscall was invoked by `panic()', which means
- * something goes really wrong and the system is to be halted; if it equals
- * MAG_CH_ASSERT, then this syscall was invoked by `assert()', which means
- * an assertion failure has occured. @see kernel/main lib/misc.c.
- * 
- * @param _unused1  Ignored.
- * @param _unused2  Ignored.
- * @param s         The string to be printed.
- * @param p_proc    Caller proc.
- * 
- * @return  Zero if success.
- *****************************************************************************/
-PUBLIC int sys_printx(int _unused1, int _unused2, char* s, struct proc* p_proc)
-{
-	const char * p;
-	char ch;
-
-	p = s;
-
-	/**
-	 * @note if assertion fails in any TASK, the system will be halted;
-	 * if it fails in a USER PROC, it'll return like any normal syscall
-	 * does.
-	 */
-	 /*
-	if ((*p == MAG_CH_PANIC) ||
-	    (*p == MAG_CH_ASSERT && current < &proc_table[NR_TASKS])) {
-		disable_int();
-		char * v = (char*)V_MEM_BASE;
-		const char * q = p + 1; 
-
-		while (v < (char*)(V_MEM_BASE + V_MEM_SIZE)) {
-			*v++ = *q++;
-			*v++ = RED_CHAR;
-			if (!*q) {
-				while (((int)v - V_MEM_BASE) % (SCR_WIDTH * 16)) {
-					v++;
-					*v++ = GRAY_CHAR;
-				}
-				q = p + 1;
-			}
-		}
-
-		__asm__ __volatile__("hlt");
-	}*/
-
-	while ((ch = *p++) != 0) {
-		if (ch == MAG_CH_PANIC || ch == MAG_CH_ASSERT)
-			continue; /* skip the magic char */
-
-		/* TTY * ptty; */
-		/* for (ptty = TTY_FIRST; ptty < TTY_END; ptty++) */
-		/* 	out_char(ptty->console, ch); /\* output chars to all TTYs *\/ */
-		TTY_FIRST->tty_echo(TTY_FIRST, ch);
-	}
-
-	//__asm__ __volatile__("nop;jmp 1f;ud2;1: nop");
-	//__asm__ __volatile__("nop;cli;1: jmp 1b;ud2;nop");
-
-	return 0;
 }
 
 /*****************************************************************************

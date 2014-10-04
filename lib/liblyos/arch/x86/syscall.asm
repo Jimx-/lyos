@@ -20,12 +20,14 @@ _NR_printx	    equ 0
 _NR_sendrec	    equ 1
 _NR_datacopy	equ 2
 _NR_privctl		equ 3
+_NR_getinfo 	equ 4
 
 ; 导出符号
 global	printx
 global	sendrec
 global	datacopy
 global	privctl
+global	getinfo
 
 bits 32
 [section .text]
@@ -96,5 +98,22 @@ privctl:
 	pop	edx
 	pop	ecx
 	pop	ebx
+
+	ret
+
+; ====================================================================================
+;                  getinfo(int request, void* buf);
+; ====================================================================================
+getinfo:
+	push	ecx		;  > 8 bytes
+	push	edx		; /
+
+	mov	eax, _NR_getinfo
+	mov	ecx, [esp + 8 +  4]
+	mov	edx, [esp + 8 +  8]
+	int	INT_VECTOR_SYS_CALL
+
+	pop	edx
+	pop	ecx
 
 	ret

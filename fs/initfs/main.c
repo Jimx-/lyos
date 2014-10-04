@@ -33,10 +33,13 @@
 #include "lyos/list.h"
 #include "proto.h"
 #include "tar.h"
+#include "global.h"
 
 PUBLIC int main()
 {
 	printl("initfs: InitFS driver is running\n");
+
+    this_ep = getpid(); /* get our endpoint */
 
 	MESSAGE m;
 

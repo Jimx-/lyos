@@ -29,6 +29,8 @@
 #include "lyos/proto.h"
 #include "arch_const.h"
 #include "arch_proto.h"
+#include "arch_smp.h"
+#include <lyos/cpulocals.h>
 
 extern u32 StackTop;
 
@@ -304,53 +306,44 @@ PUBLIC int sys_privctl(int whom, int request, void * data, struct proc* p)
 PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 {
 	int pfla = read_cr2();
+
 #ifdef PROTECT_DEBUG
-	int i;
-	int pos = disp_pos;
-	int text_color = 0x74;
-
-	for (i = 0; i < 80; i++)
-		disp_str(" ");
-	
-	disp_pos = pos;
-
-	if (err_code & PG_PRESENT) {
-		disp_color_str("\nProtection violation ", text_color);
+	if (frame->err_code & PG_PRESENT) {
+		printk("  Protection violation ");
 	} else {
-		disp_color_str("\nPage not present ", text_color);
+		printk("  Page not present ");
 	}
 
-	if (err_code & PG_RW) {
-		disp_color_str("caused by write access ", text_color);
+	if (frame->err_code & PG_RW) {
+		printk("caused by write access ");
 	} else {
-		disp_color_str("caused by read access ", text_color);
+		printk("caused by read access ");
 	}
 
-	if (err_code & PG_USER) {
-		disp_color_str("in user mode", text_color);
+	if (frame->err_code & PG_USER) {
+		printk("in user mode");
 	} else {
-		disp_color_str("in supervisor mode", text_color);
+		printk("in supervisor mode");
 	}
 
-	disp_color_str("\nCR2(PFLA): ", text_color);
-	disp_int(pfla);
-	disp_color_str(" CR3: ", text_color);
-	disp_int(read_cr3()); 
+	printk("\n  CR2(PFLA): 0x%x, CR3: 0x%x\n", pfla, read_cr3());
 #endif
+
+	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
 
 	/* inform MM to handle this page fault */
 	MESSAGE msg;
 	msg.type = FAULT;
 	msg.FAULT_NR = frame->vec_no;
 	msg.FAULT_ADDR = pfla;
-	msg.FAULT_PROC = proc2pid(current);
+	msg.FAULT_PROC = proc2pid(fault_proc);
 	msg.FAULT_ERRCODE = frame->err_code;
-	msg.FAULT_STATE = current->state;
+	msg.FAULT_STATE = fault_proc->state;
 
-	msg_send(current, TASK_MM, &msg);
+	msg_send(fault_proc, TASK_MM, &msg);
 	
 	/* block the process */
-	current->state = PST_RESCUING;
+	fault_proc->state = PST_RESCUING;
 	schedule();
 }
 
@@ -362,8 +355,6 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 {
 #ifdef PROTECT_DEBUG
-	int i, j;
-	int text_color = 0x74; /* 灰底红字 */
 	char err_description[][64] = {	"#DE Divide Error",
 					"#DB RESERVED",
 					"—  NMI Interrupt",
@@ -386,34 +377,14 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 					"#XF SIMD Floating-Point Exception"
 				};
 
-	/* clear screen */
-	disp_pos = console_table[0].crtc_start * 2;
-	for (i = 0; i < 5; i++) {
-		for (j = 0; j < 80; j++)
-			disp_str(" ");
-		disp_str("\n");
-	}
-	
-	disp_pos = console_table[0].crtc_start * 2;
-	disp_color_str("\nException: ", text_color);
-	disp_color_str(err_description[vec_no], text_color);
-	disp_color_str("\n", text_color);
-	disp_color_str("EFLAGS: ", text_color);
-	disp_int(eflags);
-	disp_color_str(" CS: ", text_color);
-	disp_int(cs);
-	disp_color_str(" EIP: ", text_color);
-	disp_int(eip);
-	disp_color_str(" PID: ", text_color);
-	disp_int(proc2pid(current));
-	disp_color_str("(", text_color);
-	disp_color_str(current->name, text_color);
-	disp_color_str(") ", text_color);
+	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
+	printk("Exception: %s on CPU %d\n", err_description[frame->vec_no], cpuid);
+	printk("  EFLAGS: %d, CS: %d, EIP: 0x%x, PID: %d(%s)", frame->eflags, frame->cs, frame->eip,
+		proc2pid(fault_proc), fault_proc->name);
 
 	if(err_code != 0xFFFFFFFF){
-		disp_color_str(" Error code: ", text_color);
-		disp_int(err_code);
-	} 
+		printk(", Error code: %d\n", frame->err_code);
+	} else printk("\n");
 #endif
 
 	if (in_kernel) {

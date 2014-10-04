@@ -96,3 +96,6 @@ extern	struct dev_drv_map	dd_map[];
 
 /* VIDEO */
 EXTERN  char * video_mem;
+
+/* KERNEL LOG */
+EXTERN struct kern_log kern_log;

@@ -52,7 +52,7 @@ PUBLIC void acpi_init()
     int s, i;
 
     if (!acpi_find_rsdp()) {
-        disp_str("ACPI: RSDP not found!\n");
+        printk("ACPI: RSDP not found!\n");
         return;
     }
 
@@ -70,7 +70,7 @@ PUBLIC void acpi_init()
             sdt_trans[i].signature[j] = hdr.signature[j];
         sdt_trans[i].signature[ACPI_SDT_SIGNATURE_LEN] = '\0';
         sdt_trans[i].length = hdr.length;
-        disp_str("ACPI: %s %08x %05x (v0%d %.6s %.8s %08x)\n", sdt_trans[i].signature, rsdt.data[i], sdt_trans[i].length,
+        printk("ACPI: %s %08x %05x (v0%d %.6s %.8s %08x)\n", sdt_trans[i].signature, rsdt.data[i], sdt_trans[i].length,
                 hdr.revision, hdr.oemid, hdr.oem_table_id, hdr.oem_revision);
     }
 }
@@ -115,19 +115,19 @@ PRIVATE int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header * sdt_hdr,
     memcpy(sdt_hdr, (void *)addr, sizeof(struct acpi_sdt_header));
 
     if (acpi_check_signature(sdt_hdr->signature, name)) {
-        disp_str("ACPI: %s signature doesn't match!\n", name);
+        printk("ACPI: %s signature doesn't match!\n", name);
         return -1;
     }
 
     if (size < sdt_hdr->length) {
-        printf("ACPI: buffer too small for %s\n", name);
+        printk("ACPI: buffer too small for %s\n", name);
         return -1;
     }
 
     memcpy(sdt_hdr, (void *)addr, size);
 
     if (!acpi_checksum((char *)sdt_hdr, sdt_hdr->length)) {
-        printf("ACPI: %s checksum does not match\n", name);
+        printk("ACPI: %s checksum does not match\n", name);
         return -1;
     }
 

@@ -127,11 +127,11 @@ PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p
 {
     void * src_addr = m->SRC_ADDR;
     int src_seg = (int)m->SRC_SEG;
-    endpoint_t src_pid = m->SRC_PID;
+    endpoint_t src_pid = m->SRC_PID == SELF ? proc2pid(p_proc) : m->SRC_PID;
 
     void * dest_addr = m->DEST_ADDR;
     int dest_seg = (int)m->DEST_SEG;
-    endpoint_t dest_pid = m->DEST_PID;
+    endpoint_t dest_pid = m->DEST_PID == SELF ? proc2pid(p_proc) : m->DEST_PID;
 
     int len = m->BUF_LEN;
 

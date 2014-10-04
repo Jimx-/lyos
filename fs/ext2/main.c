@@ -121,6 +121,8 @@ PUBLIC void task_ext2_fs()
 
 PUBLIC void init_ext2fs()
 {
+    ext2_ep = getpid();
+    
 	ext2_init_inode();
     ext2_init_buffer_cache();
 }

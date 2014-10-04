@@ -49,5 +49,7 @@ EXTERN struct list_head ext2_unused_inode_list;
 EXTERN struct list_head ext2_buffer_cache[EXT2_BUFFER_HASH_SIZE];
 extern struct list_head ext2_buffer_freelist, * ext2_buffer_freelist_tail;
 
+EXTERN endpoint_t ext2_ep;
+
 #endif
 

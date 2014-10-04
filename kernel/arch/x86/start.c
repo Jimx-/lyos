@@ -31,6 +31,7 @@
 #include "page.h"
 #include "acpi.h"
 #include "arch_const.h"
+#include <lyos/log.h>
 
 extern char _end[];
 extern pde_t pgd0;
@@ -46,6 +47,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	memory_size = 0;
 	memset(&kinfo, 0, sizeof(kinfo_t));
 
+	kinfo.magic = KINFO_MAGIC;
 	mb_magic = mboot_magic;
 
 	int mb_mmap_addr, mb_mmap_len;
@@ -132,6 +134,10 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	video_mem = (char *)V_MEM_BASE;
 
 	k_stacks = &k_stacks_start;
+
+	memset(&kern_log, 0, sizeof(struct kern_log));
+	kinfo.kern_log = &kern_log;
+	spinlock_init(&kern_log.lock);
 }
 
 PUBLIC void init_arch()
@@ -214,7 +220,7 @@ PUBLIC void init_arch()
 		p->msg = 0;
 		p->recvfrom = NO_TASK;
 		p->sendto = NO_TASK;
-		p->has_int_msg = 0;
+		p->special_msg = 0;
 		p->q_sending = 0;
 		p->next_sending = 0;
 

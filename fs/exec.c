@@ -174,13 +174,13 @@ PUBLIC int do_exec(MESSAGE * msg)
     if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
 
     char stackcopy[PROC_ORIGIN_STACK];
-    data_copy(getpid(), D, stackcopy,
+    data_copy(SELF, D, stackcopy,
           src, D, msg->BUF,
           orig_stack_len);
 
     /* copy prog name */
     char pathname[MAX_PATH];
-    data_copy(getpid(), D, pathname, src, D, msg->PATHNAME, name_len);
+    data_copy(SELF, D, pathname, src, D, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
     retval = get_exec_inode(&execi, pathname, p);

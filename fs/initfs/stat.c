@@ -69,8 +69,7 @@ PUBLIC int initfs_stat(MESSAGE * p)
     sbuf.st_blocks = 0;
 
     /* copy the information */
-    data_copy(src, D, buf, getpid(), D, &sbuf, sizeof(struct stat));
-    //phys_copy(va2pa(src, buf), va2pa(getpid(), &sbuf), sizeof(struct stat));
+    data_copy(src, D, buf, SELF, D, &sbuf, sizeof(struct stat));
 
     return 0;
 }

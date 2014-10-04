@@ -60,7 +60,7 @@ PUBLIC int read_ext2_super_block(int dev)
     driver_msg.BUF      = ext2fsbuf;
     // size 1024 bytes
     driver_msg.CNT      = SECTOR_SIZE * 2;
-    driver_msg.PROC_NR  = getpid();
+    driver_msg.PROC_NR  = ext2_ep;
     assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
@@ -140,7 +140,7 @@ PUBLIC int write_ext2_super_block(int dev)
     driver_msg.BUF      = ext2fsbuf;
     // size 1024 bytes
     driver_msg.CNT      = SECTOR_SIZE * 2;
-    driver_msg.PROC_NR  = getpid();
+    driver_msg.PROC_NR  = ext2_ep;
     assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 

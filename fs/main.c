@@ -33,7 +33,7 @@
 #include "global.h"
 #include "proto.h"
 #include <elf.h>
-  
+#include "lyos/param.h"
 #define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x

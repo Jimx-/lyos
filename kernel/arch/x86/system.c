@@ -16,56 +16,50 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
-#include "stdarg.h"
 #include "unistd.h"
-#include "assert.h"
+#include "stddef.h"
 #include "protect.h"
 #include "lyos/const.h"
+#include "string.h"
 #include "lyos/fs.h"
+#include "lyos/proc.h"
 #include "lyos/tty.h"
 #include "lyos/console.h"
-#include "lyos/proc.h"
-#include "string.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+#endif
+#include "lyos/cpulocals.h"
 
-PRIVATE void put_char(const char c)
+/**
+ * <Ring 0> Switch back to user.
+ */
+PUBLIC struct proc * arch_switch_to_user()
 {
-    video_mem[disp_pos++] = c;
-    video_mem[disp_pos++] = 0x07;   /* grey on black */
+    char * stack;
+    struct proc * p;
+
+#ifdef CONFIG_SMP
+    stack = (char *)tss[cpuid].esp0;
+#else
+    stack = (char *)tss[0].esp0;
+#endif
+
+    p = get_cpulocal_var(proc_ptr);
+    /* save the proc ptr on the stack */
+    *((reg_t *)stack) = (reg_t)p;
+
+    return p;
 }
 
-PUBLIC void disp_char(const char c)
+/**
+ * <Ring 0> Initialize FPU.
+ */
+PUBLIC void fpu_init()
 {
-    if (c == '\n') {
-        int space = SCR_WIDTH - ((disp_pos / 2) % SCR_WIDTH), i;
-        for (i = 0; i < space; i++) 
-            put_char(' ');
-        return;
-    }
-
-    put_char(c);
+    fninit();
 }
 
-PRIVATE void put_str(const char * str)
-{
-    while (*str)  {
-        disp_char(*str);
-        str++;
-    }
-}
-
-PUBLIC int disp_str(const char * fmt, ...)
-{
-    int i;
-    char buf[256];
-    va_list arg;
-    
-    va_start(arg, fmt); 
-    i = vsprintf(buf, fmt, arg);
-    put_str(buf);
-
-    va_end(arg);
-
-    return i;
-}

@@ -109,31 +109,6 @@ PUBLIC char * itoa(char * str, int num)/* 数字前面的 0 不被显示出来, 
 	return str;
 }
 
-
-/*======================================================================*
-                               disp_int
- *======================================================================*/
-PUBLIC void disp_int(int input)
-{
-	char output[16];
-	itoa(output, input);
-	disp_str(output);
-}
-
-/*======================================================================*
-                               printk
- *======================================================================*/
-PUBLIC int printk(const char *fmt, ...)
-{
-	int i;
-	char buf[STR_DEFAULT_LEN];
-
-	va_list arg = (va_list)((char*)(&fmt) + 4);
-	i = vsprintf(buf, fmt, arg);
-	disp_str(buf);
-	return i;
-}
-
 /*======================================================================*
                                delay
  *======================================================================*/
@@ -146,4 +121,26 @@ PUBLIC void delay(int time)
 			for(j=0;j<10000;j++){}
 		}
 	}
+}
+
+/*======================================================================*
+                               sys_getinfo
+ *======================================================================*/
+PUBLIC int sys_getinfo(int _unused1, int request, void* buf, struct proc * p_proc)
+{
+	void * addr = NULL;
+	size_t size = 0;
+
+	switch (request) {
+	case GETINFO_KINFO:
+		addr = &kinfo;
+		size = sizeof(kinfo_t);
+		break;
+	default:
+		printl("kernel: unknown getinfo request");
+	}
+
+	if (addr) memcpy(buf, addr, size);
+
+	return 0;
 }

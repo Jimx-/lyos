@@ -140,6 +140,7 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
+#define KERNEL 		-15
 #define INTERRUPT	-10
 #define TASK_TTY	0
 #define TASK_MM     1
@@ -156,22 +157,20 @@
 #define TASK_INET	12
 #define INIT		13
 #define ANY		(NR_TASKS + NR_PROCS + 10)
+#define SELF	(-0x8ace)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	4
+#define NR_SYS_CALL	5
 
 /* ipc */
 #define SEND		1
 #define RECEIVE		2
 #define BOTH		3	/* BOTH = (SEND | RECEIVE) */
 
-/* magic chars used by `printx' */
-#define MAG_CH_PANIC	'\002'
-#define MAG_CH_ASSERT	'\003'
-
+/* get/set id requests */
 #define GS_GETUID	1
 #define GS_SETUID	2
 #define GS_GETGID	3
@@ -182,7 +181,15 @@
 #define GS_GETHOSTNAME	1
 #define GS_SETHOSTNAME	2
 
+/* privilege control requests */
 #define PRIVCTL_SET_TASK 1
+
+/* getinfo requests */
+#define GETINFO_KINFO	1
+
+/* special message flags */
+#define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
+#define MSG_KERNLOG 	0x2  	/* the process has a kernellog message */
 
 /**
  * @enum msgtype
@@ -199,6 +206,10 @@ enum msgtype {
 	 * be sent to some tasks
 	 */
 	FAULT,								/* 2 */
+	/* when kernel wants to output kernel messages, a msg (with type==KERNLOG) will
+	 * be sent to some tasks(tty, log, etc.)
+	 */
+	KERN_LOG,							/* 3 */
 
 	/* SYS task */
 	GET_TICKS, GET_PID, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
@@ -277,7 +288,7 @@ enum msgtype {
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
 
-/* for data_copy */
+/* macros for data_copy */
 #define SRC_PID		u.m3.m3i1
 #define SRC_ADDR	u.m3.m3p1
 #define SRC_SEG		u.m3.m3l1
@@ -285,7 +296,7 @@ enum msgtype {
 #define DEST_ADDR	u.m3.m3p2
 #define DEST_SEG	u.m3.m3l2
 
-/* for mount */
+/* macros for mount */
 #define MSOURCE		u.m4.m4p1
 #define MTARGET		u.m4.m4p2
 #define MLABEL		u.m4.m4p3
@@ -295,15 +306,14 @@ enum msgtype {
 #define MNAMELEN2	u.m4.m4i2
 #define MNAMELEN3	u.m4.m4i3
 
-/* for fault */
+/* macros for fault */
 #define FAULT_NR	u.m3.m3i1
 #define FAULT_ADDR	u.m3.m3i2
 #define FAULT_PROC	u.m3.m3i3
 #define FAULT_ERRCODE u.m3.m3i4
 #define FAULT_STATE	u.m3.m3l1
 
-#define NR_BUFFER	1285
-
+/* ioctl requests */
 #define	DIOCTL_GET_GEO	1
 
 /* Hard Drive */

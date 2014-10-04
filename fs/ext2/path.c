@@ -33,7 +33,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-char dot2[2] = "..";
+PRIVATE char dot2[2] = "..";
 
 PUBLIC int ext2_lookup(MESSAGE * p)
 {
@@ -49,8 +49,7 @@ PUBLIC int ext2_lookup(MESSAGE * p)
 
 	char pathname[MAX_PATH];
 
-	data_copy(getpid(), D, pathname, src, D, p->REQ_PATHNAME, name_len);
-	//phys_copy(va2pa(getpid(), pathname), va2pa(src, p->REQ_PATHNAME), name_len);
+	data_copy(SELF, D, pathname, src, D, p->REQ_PATHNAME, name_len);
 	pathname[name_len] = '\0';
 
 	int retval = ext2_parse_path(dev, start, root, pathname, flags, &pin, &offsetp);

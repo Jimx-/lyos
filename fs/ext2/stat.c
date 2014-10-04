@@ -68,8 +68,7 @@ PRIVATE int ext2_stat_inode(ext2_inode_t * pin, int src, char * buf)
     sbuf.st_blocks = pin->i_blocks;
 
     /* copy the information */
-    data_copy(src, D, buf, getpid(), D, &sbuf, sizeof(struct stat));
-    //phys_copy(va2pa(src, buf), va2pa(getpid(), &sbuf), sizeof(struct stat));
+    data_copy(src, D, buf, SELF, D, &sbuf, sizeof(struct stat));
 
     return 0;
 }

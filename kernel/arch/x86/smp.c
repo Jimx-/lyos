@@ -76,7 +76,7 @@ PRIVATE int discover_cpus()
     while (ncpus < CONFIG_SMP_MAX_CPUS && (cpu = acpi_get_lapic_next())) {
         apicid2cpuid[cpu->apic_id] = ncpus;
         cpuid2apicid[ncpus] = cpu->apic_id;
-        disp_str("CPU %3d local APIC id 0x%03x %s\n", ncpus, cpu->apic_id, ncpus == 0 ? "(bsp)" : "");
+        printk("CPU %3d local APIC id 0x%03x %s\n", ncpus, cpu->apic_id, ncpus == 0 ? "(bsp)" : "");
         ncpus++;
     }
 

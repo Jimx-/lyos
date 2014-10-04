@@ -156,7 +156,7 @@ PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
 	ext2_superblock_t * psb = get_ext2_super_block(dev);
 	unsigned long block_size = psb->sb_block_size;
 
-	rw_sector(rw_flag, dev, block_size * block_nr, block_size * block_count, getpid(), buf);
+	rw_sector(rw_flag, dev, block_size * block_nr, block_size * block_count, ext2_ep, buf);
 }
 
 PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t * pb)

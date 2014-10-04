@@ -31,6 +31,7 @@
 #include "errno.h"
 #include "lyos/compile.h"
 #include "sys/utsname.h"
+#include <lyos/log.h>
 
 PUBLIC  int booting_cpu = 0;
 
@@ -71,7 +72,8 @@ PUBLIC	irq_handler	irq_table[NR_IRQ];
 PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 						       					   sys_sendrec,
 												   sys_datacopy,
-												   sys_privctl};
+												   sys_privctl,
+												   sys_getinfo};
 												   
 PUBLIC int errno;
 

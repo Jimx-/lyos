@@ -59,7 +59,7 @@ struct proc {
 	int recvfrom;
 	int sendto;
 
-	int has_int_msg;           /**
+	int special_msg;           /**
 				    * nonzero if an INTERRUPT occurred when
 				    * the task is not ready to deal with it.
 				    */

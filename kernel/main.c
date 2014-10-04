@@ -47,7 +47,7 @@ PUBLIC void init_arch();
  *****************************************************************************/
 PUBLIC int kernel_main()
 {
-	disp_str(LYOS_BANNER);
+	printk(LYOS_BANNER);
 	init_arch();
 
 	jiffies = 0;
@@ -67,6 +67,8 @@ PUBLIC int kernel_main()
 
 PUBLIC void finish_bsp_booting()
 {
+	fpu_init();
+	
 	switch_to_user();
 }
 

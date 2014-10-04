@@ -394,32 +394,38 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 	
 	assert(proc2pid(who_wanna_recv) != src);
 
-	if ((who_wanna_recv->has_int_msg) &&
-	    ((src == ANY) || (src == INTERRUPT))) {
+	if ((who_wanna_recv->special_msg) &&
+	    ((src == ANY) || (src == INTERRUPT) || (src == KERNEL))) {
 		/* There is an interrupt needs who_wanna_recv's handling and
 		 * who_wanna_recv is ready to handle it.
 		 */
 
 		MESSAGE msg;
 		reset_msg(&msg);
-		msg.source = INTERRUPT;
-		msg.type = HARD_INT;
+
+		if ((who_wanna_recv->special_msg & MSG_INTERRUPT) && (src != KERNEL)) {
+			msg.source = INTERRUPT;
+			msg.type = HARD_INT;
+			who_wanna_recv->special_msg &= ~MSG_INTERRUPT;
+		} else if ((who_wanna_recv->special_msg & MSG_KERNLOG) && (src != INTERRUPT)) {
+			msg.source = KERNEL;
+			msg.type = KERN_LOG;
+			who_wanna_recv->special_msg &= ~MSG_KERNLOG;
+		} else {
+			goto normal_msg;
+		}
+
 		assert(m);
 		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(current), D, &msg, sizeof(MESSAGE));
-		/*phys_copy(va2la(proc2pid(who_wanna_recv), m), &msg,
-			  sizeof(MESSAGE)); */
-
-		who_wanna_recv->has_int_msg = 0;
 
 		assert(who_wanna_recv->state == 0);
 		assert(who_wanna_recv->msg == 0);
 		assert(who_wanna_recv->sendto == NO_TASK);
-		assert(who_wanna_recv->has_int_msg == 0);
 
 		return 0;
 	}
 
-
+normal_msg:
 	/* Arrives here if no interrupt for who_wanna_recv. */
 	if (src == ANY) {
 		/* who_wanna_recv is ready to receive messages from
@@ -551,14 +557,12 @@ PUBLIC void inform_int(int task_nr)
 {
 	struct proc* p = proc_table + task_nr;
 
-
-
 	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == INTERRUPT) || (p->recvfrom == ANY))) {
 		p->msg->source = INTERRUPT;
 		p->msg->type = HARD_INT;
 		p->msg = 0;
-		p->has_int_msg = 0;
+		p->special_msg &= ~MSG_INTERRUPT;
 		p->state &= ~PST_RECEIVING; /* dest has received the msg */
 		p->recvfrom = NO_TASK;
 		assert(p->state == 0);
@@ -570,7 +574,40 @@ PUBLIC void inform_int(int task_nr)
 		assert(p->sendto == NO_TASK);
 	}
 	else {
-		p->has_int_msg = 1;
+		p->special_msg |= MSG_INTERRUPT;
+	}
+}
+
+/*****************************************************************************
+ *                                inform_int
+ *****************************************************************************/
+/**
+ * <Ring 0> Inform a proc that kernel wants to log.
+ * 
+ * @param task_nr  The task which will be informed.
+ *****************************************************************************/
+PUBLIC void inform_kernel_log(int task_nr)
+{
+	struct proc* p = proc_table + task_nr;
+
+	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
+	    ((p->recvfrom == KERNEL) || (p->recvfrom == ANY))) {
+		p->msg->source = KERNEL;
+		p->msg->type = KERN_LOG;
+		p->msg = 0;
+		p->special_msg &= ~MSG_KERNLOG;
+		p->state &= ~PST_RECEIVING; /* dest has received the msg */
+		p->recvfrom = NO_TASK;
+		assert(p->state == 0);
+		unblock(p);
+
+		assert(p->state == 0);
+		assert(p->msg == 0);
+		assert(p->recvfrom == NO_TASK);
+		assert(p->sendto == NO_TASK);
+	}
+	else {
+		p->special_msg |= MSG_KERNLOG;
 	}
 }
 
@@ -579,30 +616,7 @@ PUBLIC void inform_int(int task_nr)
  *****************************************************************************/
 PUBLIC void dumproc(struct proc* p)
 {
-	char info[STR_DEFAULT_LEN];
-	int i;
-	int text_color = MAKE_COLOR(GREEN, RED);
-
-	int dumlen = sizeof(struct proc);
-
-	out_byte(CRTC_ADDR_REG, START_ADDR_H);
-	out_byte(CRTC_DATA_REG, 0);
-	out_byte(CRTC_ADDR_REG, START_ADDR_L);
-	out_byte(CRTC_DATA_REG, 0);
-
-	sprintf(info, "byte dump of proc_table[%d]:\n", (int)(p - proc_table)); disp_color_str(info, text_color);
-	for (i = 0; i < dumlen; i++) {
-		sprintf(info, "%x.", ((unsigned char *)p)[i]);
-		disp_color_str(info, text_color);
-	}
-
-	/* printl("^^"); */
-
-	disp_color_str("\n\n", text_color);
-	sprintf(info, "ANY: 0x%x.\n", ANY); disp_color_str(info, text_color);
-	sprintf(info, "NO_TASK: 0x%x.\n", NO_TASK); disp_color_str(info, text_color);
-	disp_color_str("\n", text_color);
-
+#if 0
 	sprintf(info, "counter: 0x%x.  ", p->counter); disp_color_str(info, text_color);
 	sprintf(info, "priority: 0x%x.  ", p->priority); disp_color_str(info, text_color); 
 
@@ -613,7 +627,8 @@ PUBLIC void dumproc(struct proc* p)
 	sprintf(info, "sendto: 0x%x.  ", p->sendto); disp_color_str(info, text_color);
 
 	disp_color_str("\n", text_color);
-	sprintf(info, "has_int_msg: 0x%x.  ", p->has_int_msg); disp_color_str(info, text_color);
+	sprintf(info, "special_msg: 0x%x.  ", p->special_msg); disp_color_str(info, text_color);
+#endif
 }
 
 
@@ -623,7 +638,7 @@ PUBLIC void dumproc(struct proc* p)
 PUBLIC void dump_msg(const char * title, MESSAGE* m)
 {
 	int packed = 0;
-	printl("\n\n%s<0x%x>{%ssrc:%s(%d),%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
+	printk("\n\n%s<0x%x>{%ssrc:%s(%d),%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
 	       title,
 	       (int)m,
 	       packed ? "" : "\n        ",

@@ -13,20 +13,33 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _INITFS_GLOBAL_H_
-#define _INITFS_GLOBAL_H_
+#ifndef _PARAM_H_
+#define _PARAM_H_
 
-#include "const.h"
+#define KINFO_MAGIC     0x4B494E
 
-/* EXTERN is extern except for global.c */
-#ifdef _INITFS_GLOBAL_VARIABLE_HERE_
-#undef EXTERN
-#define EXTERN
-#endif
+#define KINFO_CMDLINE_LENGTH	1024
+#define KINFO_MAXMEMMAP 		40
 
-EXTERN int initfs_headers_count;
-EXTERN int initfs_headers[MAX_HEADERS];
+struct kinfo_mmap_entry {
+	u64 addr;
+	u64 len;
+	#define KINFO_MEMORY_AVAILABLE              1
+	#define KINFO_MEMORY_RESERVED               2
+	u32 type;
+};
+     
+typedef struct kinfo {
+    int magic;
 
-EXTERN endpoint_t this_ep;
+	int memmaps_count;
+	struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
+
+	int mods_count;
+
+	char cmdline[KINFO_CMDLINE_LENGTH];
+
+    struct kern_log * kern_log;
+} kinfo_t;
 
 #endif
