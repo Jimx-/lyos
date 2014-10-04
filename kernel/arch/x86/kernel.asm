@@ -30,7 +30,6 @@ extern	idt_ptr
 extern	current
 extern	tss
 extern	disp_pos
-extern	k_reenter
 extern	sys_call_table
 bits 32
 
@@ -423,7 +422,6 @@ exception_in_kernel:
 
     mov     esi, ebp                    ;esi = 进程表起始地址
 
-    inc     dword [k_reenter]
     ret
 %endmacro
 
@@ -465,7 +463,6 @@ sys_call:
 ; ====================================================================================
 restore_user_context:
 	mov	ebp, [esp + 4]
-	dec	dword [k_reenter]
 	
 	; restore all registers
 	mov ds, [ebp + DSREG]

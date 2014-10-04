@@ -239,7 +239,5 @@ PUBLIC void init_arch()
 		stk -= t->stacksize;
 	}
 
-	k_reenter = 0;
-
 	current	= proc_table;
 }
