@@ -83,6 +83,8 @@ PUBLIC void schedule()
  */
 PUBLIC void switch_to_user()
 {
+	if (current->counter <= 0) schedule();
+
 	struct proc * p = current;
 
 	get_cpulocal_var(proc_ptr) = p;

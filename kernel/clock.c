@@ -47,17 +47,6 @@ PUBLIC void clock_handler(int irq)
 
 	if (key_pressed)
 		inform_int(TASK_TTY);
-
-	if (k_reenter != 0) {
-		return;
-	}
-
-    if (current->counter > 0) {
-		return;
-	}
-
-	schedule();
-
 }
 
 /*****************************************************************************
