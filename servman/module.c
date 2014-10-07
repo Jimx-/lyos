@@ -70,7 +70,7 @@ PUBLIC int spawn_boot_modules()
         if (bm->ep != TASK_SYSFS) announce_service(bm->name, bm->ep);
 
         /* YOU ARE GO */
-        proc_table[bm->ep].state = 0;
+        vmctl(VMCTL_BOOTINHIBIT_CLEAR, bm->ep);
     }
 
     return 0;

@@ -21,6 +21,7 @@ _NR_sendrec	    equ 1
 _NR_datacopy	equ 2
 _NR_privctl		equ 3
 _NR_getinfo 	equ 4
+_NR_vmctl		equ 5
 
 ; 导出符号
 global	printx
@@ -28,6 +29,7 @@ global	sendrec
 global	datacopy
 global	privctl
 global	getinfo
+global  vmctl
 
 bits 32
 [section .text]
@@ -109,6 +111,23 @@ getinfo:
 	push	edx		; /
 
 	mov	eax, _NR_getinfo
+	mov	ecx, [esp + 8 +  4]
+	mov	edx, [esp + 8 +  8]
+	int	INT_VECTOR_SYS_CALL
+
+	pop	edx
+	pop	ecx
+
+	ret
+
+; ====================================================================================
+;                  vmctl(int request, int param);
+; ====================================================================================
+vmctl:
+	push	ecx		;  > 8 bytes
+	push	edx		; /
+
+	mov	eax, _NR_vmctl
 	mov	ecx, [esp + 8 +  4]
 	mov	edx, [esp + 8 +  8]
 	int	INT_VECTOR_SYS_CALL

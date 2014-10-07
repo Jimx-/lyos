@@ -211,8 +211,12 @@ PUBLIC void init_arch()
 
 		p->counter = p->priority = prio;
 
-		if (t->initial_eip == NULL) p->state = PST_BOOTINHIBIT;
-		else p->state = 0;
+		p->state = 0;
+
+		if (t->initial_eip == NULL) 
+			PST_SET(p, PST_BOOTINHIBIT);	/* process is to be loaded by SERVMAN */
+		else if (i != TASK_MM && i != INIT) 
+			PST_SET(p, PST_MMINHIBIT);		/* process is not ready until MM allows it to run */
 
 		p->msg = 0;
 		p->recvfrom = NO_TASK;

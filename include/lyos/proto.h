@@ -136,6 +136,7 @@ PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc)
 PUBLIC  int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_privctl(int whom, int request, void * data, struct proc* p);
 PUBLIC  int sys_getinfo(int _unused1, int request, void* buf, struct proc * p_proc);
+PUBLIC  int sys_vmctl(int _unused1, int request, int param, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
@@ -146,6 +147,7 @@ PUBLIC	int	printx(char* str);
 PUBLIC  int datacopy(MESSAGE * m);
 PUBLIC  int privctl(int whom, int request, void * data);
 PUBLIC  int getinfo(int request, void* buf);
+PUBLIC  int vmctl(int request, int param);
 
 #define	phys_copy	memcpy
 #define	phys_set	memset

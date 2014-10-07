@@ -178,12 +178,13 @@ PRIVATE void init_mm()
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
 	struct proc * p = proc_table;
 	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
-		if (p->state == PST_BOOTINHIBIT) continue;
+		if (PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) continue;
 		phys_region_init(&(rp->phys_block), 1);
 		/* prepare heap */
 		rp->vir_addr = (void*)0x1000;
 		p->brk = 0x1000;
 		rp->length = 0;
 		list_add(&(rp->list), &(p->mem_regions));
+		vmctl(VMCTL_MMINHIBIT_CLEAR, i);
     }
 }

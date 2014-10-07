@@ -162,7 +162,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	5
+#define NR_SYS_CALL	6
 
 /* ipc */
 #define SEND		1
@@ -185,6 +185,10 @@
 
 /* getinfo requests */
 #define GETINFO_KINFO	1
+
+/* vmctl request */
+#define VMCTL_BOOTINHIBIT_CLEAR	1
+#define VMCTL_MMINHIBIT_CLEAR	2
 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
