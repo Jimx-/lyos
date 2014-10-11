@@ -58,7 +58,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 	/* entry    stack size     proc name */
 	/* -----    ----------     --------- */
-	{Init,   STACK_SIZE_INIT,  "INIT" }
+	{NULL,   	0,				"INIT" }
 };
 
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];

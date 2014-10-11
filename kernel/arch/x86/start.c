@@ -98,13 +98,14 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     	}
     }
 
+    /* setup gdt */
 	init_desc(&gdt[0], 0, 0, 0);
 	init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
 	init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
 	init_desc(&gdt[INDEX_TASK_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
 	init_desc(&gdt[INDEX_TASK_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
-	init_desc(&gdt[INDEX_USER_C], 0, VM_STACK_TOP >> LIMIT_4K_SHIFT, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
-	init_desc(&gdt[INDEX_USER_RW], 0, VM_STACK_TOP >> LIMIT_4K_SHIFT, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_USER_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
 	init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
 
 	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);

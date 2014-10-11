@@ -78,15 +78,30 @@ PUBLIC void schedule()
 	}
 }
 
+PUBLIC void init_proc()
+{
+	/* prepare idle process struct */
+	int i;
+	for (i = 0; i < CONFIG_SMP_MAX_CPUS; i++) {
+		struct proc * p = get_cpu_var_ptr(i, idle_proc);
+		p->state |= PST_STOPPED;
+		sprintf(p->name, "idle%d", i);
+	}
+}
+
 /**
  * <Ring 0> Switch back to user space.
  */
 PUBLIC void switch_to_user()
 {
-	if (current->counter <= 0) schedule();
-
 	struct proc * p = current;
 
+reschedule:
+	if (current->counter <= 0) schedule();
+
+no_schedule:
+	
+	if (proc_table[INIT].regs.ds != 51) printk("Fault!\n");
 	get_cpulocal_var(proc_ptr) = p;
 	
 	switch_address_space(p->pgd.phys_addr);

@@ -40,7 +40,6 @@ PUBLIC void 	restore_user_context(struct proc * p);
 
 /* main.c */
 PUBLIC void     finish_bsp_booting();
-PUBLIC void 	Init();
 PUBLIC int  	get_ticks();
 PUBLIC void 	panic(const char *fmt, ...);
 
@@ -107,6 +106,7 @@ PUBLIC void task_servman();
 
 /* proc.c */
 PUBLIC	void	schedule();
+PUBLIC  void    init_proc();
 PUBLIC  void    switch_to_user();
 PUBLIC	void*	va2la(int pid, void * va);
 PUBLIC  void*   la2pa(int pid, void * la);

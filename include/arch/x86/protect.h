@@ -142,6 +142,15 @@ struct tss {
 #define	SA_TIG		0
 #define	SA_TIL		4
 
+/* 权限 */
+#define	PRIVILEGE_KRNL	0
+#define	PRIVILEGE_TASK	1
+#define	PRIVILEGE_USER	3
+/* RPL */
+#define	RPL_KRNL	SA_RPL0
+#define	RPL_TASK	SA_RPL1
+#define	RPL_USER	SA_RPL3
+
 /* 中断向量 */
 #define	INT_VECTOR_DIVIDE		0x0
 #define	INT_VECTOR_DEBUG		0x1

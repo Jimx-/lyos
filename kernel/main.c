@@ -49,7 +49,8 @@ PUBLIC int kernel_main()
 {
 	printk(LYOS_BANNER);
 	init_arch();
-
+	init_proc();
+	
 	jiffies = 0;
 
 	init_clock();
@@ -82,21 +83,6 @@ PUBLIC int get_ticks()
 	msg.type = GET_TICKS;
 	send_recv(BOTH, TASK_SYS, &msg);
 	return msg.RETVAL;
-}
-
-/*****************************************************************************
- *                                Init
- *****************************************************************************/
-/**
- * The hen.
- * 
- *****************************************************************************/
-void Init()
-{
-	printl("Init() is running ...\n");
-
-	/* Here we go! */
-	_exit(execv("/sbin/init", NULL));
 }
 
 /*****************************************************************************

@@ -57,6 +57,7 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
     /* map the kernel */
     for (i = 0; i < kpts; i++) {
+        pgd[i] &= ~PG_USER;     /* not accessible to user */
         pgd[i + ARCH_PDE(KERNEL_VMA)] = pgd[i];
     }
 

@@ -15,6 +15,8 @@
 
 #include <signal.h>
 #include <lyos/list.h>
+#include "stackframe.h"
+#include "page.h"
 
 /* Process State */
 #define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
@@ -24,7 +26,8 @@
 #define PST_HANGING   0x10	/* set when proc exits without being waited by parent */
 #define PST_RESCUING  0x20  /* set when proc is being rescued */
 #define PST_MMINHIBIT 0x40  /* this proc is not runnable until MM has prepared mem regions for it */
-#define PST_FREE_SLOT 0x80	/* set when proc table entry is not used
+#define PST_STOPPED   0x80 	/* set when proc is stopped */
+#define PST_FREE_SLOT 0x100	/* set when proc table entry is not used
 			 * (ok to allocated to a new process)
 			 */
 
@@ -35,13 +38,6 @@
 #define PST_UNSET(proc, pst)  do { \
 			 					(proc)->state &= ~(pst); \
 							} while(0)
-
-#if (ARCH == x86)
-#include "protect.h"
-#endif
-
-#include "stackframe.h"
-#include "page.h"
 
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
@@ -57,6 +53,7 @@ struct proc {
 				    * process flags.
 				    * A proc is runnable if state==0
 				    */
+	int cpu;
 
     sigset_t sig_pending;	/* signals to be handled */
 	sigset_t sig_mask;

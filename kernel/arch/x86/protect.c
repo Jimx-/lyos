@@ -36,7 +36,7 @@ extern u32 StackTop;
 
 PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
-//#define PROTECT_DEBUG
+#define PROTECT_DEBUG
 
 PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m);
 
