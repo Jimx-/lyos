@@ -175,11 +175,8 @@
 #define PRIVCTL_SET_TASK 1
 
 /* getinfo requests */
-#define GETINFO_KINFO	1
-
-/* vmctl request */
-#define VMCTL_BOOTINHIBIT_CLEAR	1
-#define VMCTL_MMINHIBIT_CLEAR	2
+#define GETINFO_SYSINFO	1
+#define GETINFO_KINFO	2
 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */

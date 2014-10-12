@@ -63,9 +63,6 @@ if __name__ == "__main__":
 		copy_dir('../patches/newlib/lyos', newlib_dir + '/newlib/libc/sys/lyos')
 		copy('../../include/lyos/type.h', newlib_dir + '/newlib/libc/sys/lyos')
 		copy('../../include/lyos/const.h', newlib_dir + '/newlib/libc/sys/lyos')
-		#copy('../../include/lyos/proc.h', newlib_dir + '/newlib/libc/sys/lyos')
-		#copy('../../arch/x86/include/protect.h', newlib_dir + '/newlib/libc/sys/lyos')
-		#copy('../../arch/x86/include/page.h', newlib_dir + '/newlib/libc/sys/lyos')
 		copy('../patches/newlib/malign.c', newlib_dir + '/newlib/libc/stdlib')
 		mkdir(newlib_dir + '/newlib/libc/sys/lyos/lyos')
 		copy('../../include/lyos/list.h', newlib_dir + '/newlib/libc/sys/lyos/lyos')
@@ -80,21 +77,11 @@ if __name__ == "__main__":
 	pop_dir()
 	pop_dir()
 
-	mkdir('../binary')
-	push_dir('../binary')
-	nasm('../patches/newlib/lyos/crti.asm', 'crti.o')
-	nasm('../patches/newlib/lyos/crtn.asm', 'crtn.o')
-	nasm('../patches/newlib/lyos/crtbegin.asm', 'crtbegin.o')
-	nasm('../patches/newlib/lyos/crtend.asm', 'crtend.o')
-	pop_dir()
-
 	mkdir('newlib')
 	push_dir('newlib')
 	configure(NEWLIB_VERSION)
 	make_and_install()
 	pop_dir()
-
-	copy('../binary/crt*.o', PREFIX + '/' + TARGET + '/lib')
 
 	push_dir('gcc')
 	make('all-target-libstdc++-v3')

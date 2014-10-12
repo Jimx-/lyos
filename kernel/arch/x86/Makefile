@@ -1,6 +1,6 @@
 
 KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o smp.o apic.o acpi.o \
-				system.o
+				system.o gate.o
 
 ARCHKERNEL		= arch-kernel.o
 

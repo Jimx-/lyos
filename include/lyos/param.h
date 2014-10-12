@@ -42,4 +42,15 @@ typedef struct kinfo {
     struct kern_log * kern_log;
 } kinfo_t;
 
+typedef int (*syscall_gate_t)(int syscall_nr, int arg0, int arg1, int arg2);
+
+struct sysinfo {
+#define SYSINFO_MAGIC   0x534946
+    int magic;
+    
+    syscall_gate_t syscall_gate;
+
+    kinfo_t * kinfo;
+};
+
 #endif

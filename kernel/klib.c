@@ -136,8 +136,10 @@ PUBLIC int sys_getinfo(int _unused1, int request, void* buf, struct proc * p_pro
 		addr = &kinfo;
 		size = sizeof(kinfo_t);
 		break;
+	case GETINFO_SYSINFO:
+		return (int)sysinfo_user;
 	default:
-		printl("kernel: unknown getinfo request");
+		printk("kernel: unknown getinfo request");
 	}
 
 	if (addr) memcpy(buf, addr, size);

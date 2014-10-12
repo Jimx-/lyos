@@ -63,8 +63,11 @@ extern  CONSOLE		console_table[];
 
 extern  int             err_code;
 
+extern struct sysinfo sysinfo;
+EXTERN struct sysinfo * sysinfo_user;
+
 /* Multiboot */
-EXTERN  kinfo_t     kinfo;
+extern  kinfo_t     kinfo;
 EXTERN  int         mb_mod_count;
 EXTERN  int         mb_mod_addr;
 EXTERN  int         mb_magic;
@@ -91,4 +94,4 @@ EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
 
 /* KERNEL LOG */
-EXTERN struct kern_log kern_log;
+extern struct kern_log kern_log;

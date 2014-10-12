@@ -40,6 +40,11 @@ PUBLIC reg_t read_ebp();
 
 PUBLIC struct proc * arch_switch_to_user();
 
+PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags);
+PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr);
+
+int syscall_softint(int syscall_nr, int arg0, int arg1, int arg2);
+
 struct exception_frame {
     reg_t   vec_no;     /* which interrupt vector was triggered */
     reg_t   err_code;    /* zero if no exception does not push err code */

@@ -30,6 +30,7 @@
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include <lyos/vm.h>
 #include "multiboot.h"
 #include "page.h"
 #include <elf.h>
@@ -172,6 +173,7 @@ PRIVATE void init_mm()
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
 	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
+	pt_kern_mapping_init();
 
 	/* setup memory region for tasks so they can malloc */
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;

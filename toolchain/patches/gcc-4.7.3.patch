@@ -1,6 +1,6 @@
 diff -rupN origin/config.sub new/config.sub
 --- origin/config.sub	2012-08-06 22:34:27.000000000 +0800
-+++ new/config.sub	2014-08-31 11:08:19.272721815 +0800
++++ new/config.sub	2014-10-12 10:29:05.007217045 +0800
 @@ -1353,6 +1353,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -11,7 +11,7 @@ diff -rupN origin/config.sub new/config.sub
  		;;
 diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
 --- origin/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2014-08-31 11:08:19.272721815 +0800
++++ new/gcc/config/lyos.h	2014-10-12 10:29:05.011217056 +0800
 @@ -0,0 +1,15 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -30,13 +30,12 @@ diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
 +
 diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
 --- origin/gcc/config.gcc	2013-03-07 06:54:11.000000000 +0800
-+++ new/gcc/config.gcc	2014-08-31 12:30:51.165276935 +0800
-@@ -767,6 +767,12 @@ case ${target} in
++++ new/gcc/config.gcc	2014-10-12 10:31:44.104005930 +0800
+@@ -767,6 +767,11 @@ case ${target} in
      *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
    esac
    ;;
 +*-*-lyos*)
-+  extra_parts="crtbegin.o crtend.o"
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
@@ -44,7 +43,7 @@ diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
  *-*-elf)
    # Assume that newlib is being used and so __cxa_atexit is provided.
    default_use_cxa_atexit=yes
-@@ -930,6 +936,10 @@ arm*-*-eabi* | arm*-*-symbianelf* | arm*
+@@ -930,6 +935,10 @@ arm*-*-eabi* | arm*-*-symbianelf* | arm*
  	esac
  	tm_file="${tm_file} arm/aout.h arm/arm.h"
  	;;
@@ -55,7 +54,7 @@ diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
  arm*-*-elf)
  	tm_file="dbxelf.h elfos.h newlib-stdint.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
  	tmake_file="arm/t-arm arm/t-arm-elf"
-@@ -1199,6 +1209,11 @@ hppa[12]*-*-hpux11*)
+@@ -1199,6 +1208,11 @@ hppa[12]*-*-hpux11*)
  		dwarf2=no
  	fi
  	;;
@@ -69,28 +68,31 @@ diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
  	# Baseline choice for a machine that allows m64 support.
 diff -rupN origin/libgcc/config.host new/libgcc/config.host
 --- origin/libgcc/config.host	2013-03-07 01:42:45.000000000 +0800
-+++ new/libgcc/config.host	2014-08-31 12:32:23.501734799 +0800
-@@ -382,6 +382,8 @@ arm*-*-elf)
++++ new/libgcc/config.host	2014-10-12 10:30:51.607745638 +0800
+@@ -382,6 +382,9 @@ arm*-*-elf)
  arm*-wince-pe*)
  	tmake_file="$tmake_file arm/t-arm arm/t-wince-pe"
  	;;
 +arm-*-lyos*)
++	extra_parts="crtbegin.o crtend.o"
 +	;;
  avr-*-rtems*)
  	tmake_file="$tmake_file avr/t-avr avr/t-rtems t-fpbit"
  	tm_file="$tm_file avr/avr-lib.h"
-@@ -646,6 +648,8 @@ x86_64-*-mingw*)
+@@ -646,6 +649,10 @@ x86_64-*-mingw*)
  i[34567]86-*-interix[3-9]*)
  	tmake_file="$tmake_file i386/t-interix i386/t-chkstk"
  	;;
 +i[34567]86-*-lyos*)
++ tmake_file="$tmake_file i386/t-i386elf t-svr4 i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	extra_parts="crtbegin.o crtend.o"
 +	;;
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm"
 diff -rupN origin/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
 --- origin/libstdc++-v3/crossconfig.m4	2011-07-18 19:04:18.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2014-08-31 11:08:19.468722787 +0800
++++ new/libstdc++-v3/crossconfig.m4	2014-10-12 10:29:05.031217144 +0800
 @@ -150,6 +150,12 @@ case "${host}" in
      GCC_CHECK_TLS
      AM_ICONV

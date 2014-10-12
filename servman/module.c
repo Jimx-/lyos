@@ -31,6 +31,7 @@
 #include "lyos/console.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/vm.h>
 #include "proto.h"
 #include <multiboot.h>
 

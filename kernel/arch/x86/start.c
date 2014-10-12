@@ -133,6 +133,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	k_stacks = &k_stacks_start;
 
+	sysinfo_user = NULL;
 	memset(&kern_log, 0, sizeof(struct kern_log));
 	kinfo.kern_log = &kern_log;
 	spinlock_init(&kern_log.lock);
@@ -194,6 +195,7 @@ PUBLIC void init_arch()
 			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 
+			memset(&(p->pgd.vir_pts), 0, sizeof(p->pgd.vir_pts));
 			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + kernel_pts; j++) {
 				p->pgd.vir_pts[j] = (pte_t *)(((int)(p->pgd.vir_addr[j]) + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
 			}

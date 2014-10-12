@@ -25,6 +25,9 @@ _start:
 	push	%ecx	# environ
 	push 	%edx	# argv
 	push	%eax	# argc
+
+	call	__lyos_init
+	
 	call	main
 	# don't need to clean up the stack here
 

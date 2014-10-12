@@ -28,8 +28,18 @@
 #include "lyos/global.h"
 #include "lyos/keyboard.h"
 #include "lyos/proto.h"
+#include <lyos/vm.h>
 #include "region.h"
 #include "proto.h"
+
+#define MAX_KERN_MAPPINGS   10
+struct kern_mapping {
+    void * phys_addr;
+    void * vir_addr;
+    int len;
+    int flags;
+} kern_mappings[MAX_KERN_MAPPINGS];
+PRIVATE int nr_kern_mappings = 0;
 
 //#define PAGETABLE_DEBUG    1
 
@@ -50,7 +60,7 @@ PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags)
         pt[i] = 0;
     }
 
-    pgd->vir_addr[pde] = (int)va2pa(getpid(), pt) | flags;
+    pgd->vir_addr[pde] = (int)va2pa(TASK_MM, pt) | flags;
     pgd->vir_pts[pde] = pt;
 
     return 0;
@@ -114,19 +124,19 @@ PUBLIC int pt_unwppage(struct page_directory * pgd, void * vir_addr)
     return 0;
 }
 
-PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length)
+PUBLIC int pt_writemap(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length, int flags)
 {
     /* sanity check */
-    if ((int)phys_addr % PG_SIZE != 0) printl("MM: map_memory: phys_addr is not page-aligned!\n");
-    if ((int)vir_addr % PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
-    if (length % PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
+    if ((int)phys_addr % PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
+    if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
+    if (length % PG_SIZE != 0) printl("MM: pt_writemap: length is not page-aligned!\n");
     
     while (1) {
-        pt_mappage(pgd, phys_addr, vir_addr, PG_PRESENT | PG_RW | PG_USER);
+        pt_mappage(pgd, phys_addr, vir_addr, flags);
 
         length -= PG_SIZE;
-        phys_addr += PG_SIZE;
-        vir_addr += PG_SIZE;
+        phys_addr = (void *)((int)phys_addr + PG_SIZE);
+        vir_addr = (void *)((int)vir_addr + PG_SIZE);
         if (length <= 0) break;
     }
 
@@ -143,7 +153,7 @@ PUBLIC int pt_wp_memory(struct page_directory * pgd, void * vir_addr, int length
         pt_wppage(pgd, vir_addr);
 
         length -= PG_SIZE;
-        vir_addr += PG_SIZE;
+        vir_addr = (void *)((int)vir_addr + PG_SIZE);
         if (length <= 0) break;
     }
 
@@ -160,28 +170,52 @@ PUBLIC int pt_unwp_memory(struct page_directory * pgd, void * vir_addr, int leng
         pt_unwppage(pgd, vir_addr);
 
         length -= PG_SIZE;
-        vir_addr += PG_SIZE;
+        vir_addr = (void *)((int)vir_addr + PG_SIZE);
         if (length <= 0) break;
     }
 
     return 0;
 }
 
-PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length)
+/**
+ * <Ring 3> Initial kernel mappings.
+ */
+PUBLIC void pt_kern_mapping_init()
 {
-    /* sanity check */
-    if ((int)vir_addr % PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
-    if (length % PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
+    int rindex = 0;
+    caddr_t addr;
+    int len, flags, i;
+    struct kern_mapping * kmapping = kern_mappings;
 
-    while (1) {
-        pt_mappage(pgd, NULL, vir_addr, 0);
+    while (!vmctl_get_kern_mapping(rindex, &addr, &len, &flags)) {
+        if (rindex > MAX_KERN_MAPPINGS) panic("MM: too many kernel mappings");
 
-        length -= PG_SIZE;
-        vir_addr += PG_SIZE;
-        if (length <= 0) break;
+        /* fill in mapping information */
+        kmapping->phys_addr = addr;
+        kmapping->len = len;
+
+        kmapping->flags = PG_PRESENT;
+        if (flags & KMF_USER) kmapping->flags |= PG_USER;
+        if (flags & KMF_WRITE) kmapping->flags |= PG_RW;
+        else kmapping->flags |= PG_RO;
+
+        /* where this region will be mapped */
+        kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / PG_SIZE);
+        if (kmapping->vir_addr == NULL) panic("MM: cannot allocate memory for kernel mappings");
+
+        if (vmctl_reply_kern_mapping(rindex, kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
+
+        nr_kern_mappings++;
+        kmapping++;
+        rindex++;
     }
 
-    return 0;
+    struct proc * p = proc_table;
+    for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++, p++) {
+        pgd_mapkernel(&p->pgd);
+    }
+
+    printl("MM: %d kernel mappings\n", nr_kern_mappings);
 }
 
 /* <Ring 1> */
@@ -222,6 +256,11 @@ PUBLIC int pgd_mapkernel(struct page_directory * pgd)
         pgd->vir_addr[kernel_pde + i] = initial_pgd[i];
         pgd->vir_pts[kernel_pde + i] = (pte_t *)(((int)initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
     }
+
+    for (i = 0; i < nr_kern_mappings; i++) {
+        pt_writemap(pgd, kern_mappings[i].phys_addr, kern_mappings[i].vir_addr, kern_mappings[i].len, kern_mappings[i].flags);
+    }
+
     return 0;
 }
 
@@ -236,6 +275,23 @@ PUBLIC int pgd_clear(struct page_directory * pgd)
             free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
         }
         pgd->vir_pts[i] = NULL;
+    }
+
+    return 0;
+}
+
+PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length)
+{
+    /* sanity check */
+    if ((int)vir_addr % PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
+    if (length % PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
+
+    while (1) {
+        pt_mappage(pgd, NULL, vir_addr, 0);
+
+        length -= PG_SIZE;
+        vir_addr += PG_SIZE;
+        if (length <= 0) break;
     }
 
     return 0;

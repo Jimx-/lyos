@@ -50,7 +50,8 @@ struct page_directory {
 /* size of the memory that a page table maps */
 #define PT_MEMSIZE  (PG_SIZE * 1024)
 
-#define PG_PRESENT  0x001 
+#define PG_PRESENT  0x001
+#define PG_RO       0x000 
 #define PG_RW       0x002
 #define PG_USER     0x004
 

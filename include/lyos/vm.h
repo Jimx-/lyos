@@ -21,6 +21,27 @@
 
 #define PCTL_CLEARPROC   1 
 
+/* vmctl request */
+#define VMCTL_BOOTINHIBIT_CLEAR 1
+#define VMCTL_MMINHIBIT_CLEAR   2
+#define VMCTL_GET_KERN_MAPPING  3
+#define VMCTL_REPLY_KERN_MAPPING 4
+
+#define VMCTL_GET_KM_INDEX   u.m3.m3i1
+#define VMCTL_GET_KM_RETVAL  u.m3.m3i1
+#define VMCTL_GET_KM_ADDR    u.m3.m3p1
+#define VMCTL_GET_KM_LEN     u.m3.m3i2
+#define VMCTL_GET_KM_FLAGS   u.m3.m3i3
+
+#define VMCTL_REPLY_KM_INDEX   u.m3.m3i1
+#define VMCTL_REPLY_KM_RETVAL  u.m3.m3i1
+#define VMCTL_REPLY_KM_ADDR    u.m3.m3p1
+
+#define KMF_WRITE      0x1
+#define KMF_USER       0x2
+
 PUBLIC int procctl(endpoint_t who, int param);
+PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags);
+PUBLIC int vmctl_reply_kern_mapping(int index, void * vir_addr);
 
 #endif

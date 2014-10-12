@@ -34,7 +34,8 @@
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
 #endif
-#include "lyos/cpulocals.h"
+#include <lyos/cpulocals.h>
+#include <lyos/vm.h>
 
 /**
  * <Ring 0> Perform the VMCTL syscall.
@@ -42,6 +43,7 @@
 PUBLIC int sys_vmctl(int _unused1, int request, int param, struct proc * p)
 {
     struct proc * target = proc_table + param;
+    MESSAGE * m = (MESSAGE *)param;
 
     switch (request) {
     case VMCTL_BOOTINHIBIT_CLEAR:
@@ -50,7 +52,18 @@ PUBLIC int sys_vmctl(int _unused1, int request, int param, struct proc * p)
     case VMCTL_MMINHIBIT_CLEAR:
         PST_UNSET(target, PST_MMINHIBIT);
         break;
+    case VMCTL_GET_KERN_MAPPING:
+        m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(m->VMCTL_GET_KM_INDEX, 
+                                    (caddr_t*)&m->VMCTL_GET_KM_ADDR,
+                                    &m->VMCTL_GET_KM_LEN,
+                                    &m->VMCTL_GET_KM_FLAGS); 
+        break;
+    case VMCTL_REPLY_KERN_MAPPING:
+        m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(m->VMCTL_REPLY_KM_INDEX,
+                                    m->VMCTL_REPLY_KM_ADDR);
+        break;
     default:
+        printk("kernel: invalid vmctl request\n");
         return EINVAL;
     }
 
