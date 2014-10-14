@@ -176,7 +176,6 @@
 
 /* getinfo requests */
 #define GETINFO_SYSINFO	1
-#define GETINFO_KINFO	2
 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */

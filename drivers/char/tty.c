@@ -35,8 +35,8 @@
 #include <lyos/driver.h>
 #include <lyos/param.h>
 #include <lyos/log.h>
-    
-PRIVATE kinfo_t	_kinfo;
+
+PRIVATE struct sysinfo * _sysinfo;
 
 #define TTY_FIRST	(tty_table)
 #define TTY_END		(tty_table + NR_CONSOLES)
@@ -74,7 +74,8 @@ PUBLIC void task_tty()
 	TTY *	tty;
 	MESSAGE msg;
 
-	get_kinfo(&_kinfo);
+	get_sysinfo(&_sysinfo);
+
 	init_keyboard();
 
 	for (tty = TTY_FIRST; tty < TTY_END; tty++)
@@ -443,7 +444,7 @@ PRIVATE void tty_do_kern_log()
 {
 	static int prev_next = 0;
 	static char kernel_log_copy[KERN_LOG_SIZE];
-	struct kern_log * klog = _kinfo.kern_log;
+	struct kern_log * klog = _sysinfo->kern_log;
 	int next = klog->next;
 	TTY * tty;
 

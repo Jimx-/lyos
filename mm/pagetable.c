@@ -178,7 +178,7 @@ PUBLIC int pt_unwp_memory(struct page_directory * pgd, void * vir_addr, int leng
 }
 
 /**
- * <Ring 3> Initial kernel mappings.
+ * <Ring 1> Initial kernel mappings.
  */
 PUBLIC void pt_kern_mapping_init()
 {

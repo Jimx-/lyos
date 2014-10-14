@@ -51,6 +51,7 @@ struct sysinfo {
     syscall_gate_t syscall_gate;
 
     kinfo_t * kinfo;
+    struct kern_log * kern_log;
 };
 
 #endif

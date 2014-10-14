@@ -21,8 +21,9 @@ int syscall_gate_intr(int syscall_nr, int arg0, int arg1, int arg2)
 static struct sysinfo * get_sysinfo()
 {
 	int a;
-	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (4), "c" (GETINFO_SYSINFO), "d" (0));
-	return (struct sysinfo *)a;
+	struct sysinfo * sysinfo;
+	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (4), "c" (GETINFO_SYSINFO), "d" (&sysinfo));
+	return a == 0 ? sysinfo : (struct sysinfo*)0;
 }
 
 void __lyos_init()

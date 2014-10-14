@@ -86,7 +86,7 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 }
 
 /**
- * <Ring 0> Set kernel mapping information.
+ * <Ring 0> Set kernel mapping information according to MM's parameter.
  */
 PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 {
@@ -101,6 +101,7 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         sysinfo.magic = SYSINFO_MAGIC;
         sysinfo_user = (struct sysinfo *)USER_PTR(&sysinfo);
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
+        sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
     } else if (index == KM_GATE) {
         start = gate_start;
         sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_softint);

@@ -26,7 +26,7 @@
 
 PUBLIC  int getinfo(int request, void* buf);
 
-PUBLIC int get_kinfo(kinfo_t * kinfo)
+PUBLIC int get_sysinfo(struct sysinfo ** sysinfo)
 {
-	return getinfo(GETINFO_KINFO, kinfo);
+	return getinfo(GETINFO_SYSINFO, sysinfo);
 }

@@ -130,14 +130,13 @@ PUBLIC int sys_getinfo(int _unused1, int request, void* buf, struct proc * p_pro
 {
 	void * addr = NULL;
 	size_t size = 0;
+	struct sysinfo ** psi;
 
 	switch (request) {
-	case GETINFO_KINFO:
-		addr = &kinfo;
-		size = sizeof(kinfo_t);
-		break;
 	case GETINFO_SYSINFO:
-		return (int)sysinfo_user;
+		psi = (struct sysinfo **)buf;
+		*psi = sysinfo_user;
+		break;
 	default:
 		printk("kernel: unknown getinfo request");
 	}
