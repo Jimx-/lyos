@@ -18,6 +18,11 @@
 
 #include "const.h"
 
+typedef int (*syscall_gate_t)(int syscall_nr, int arg0, int arg1, int arg2);
+int syscall_gate_intr(int syscall_nr, int arg0, int arg1, int arg2);
+
+extern syscall_gate_t _syscall_gate;
+
 /* compiler memory barrier */
 #define cmb() __asm__ __volatile__ ("" ::: "memory")
 
@@ -25,9 +30,11 @@
 /* see arch/x86/lib/syscall.asm */
 static int sendrec(int function, int src_dest, MESSAGE* msg)
 {
-	int a;
+	if (_syscall_gate == NULL) return syscall_gate_intr(1, function, src_dest, (int)msg);
+	else return _syscall_gate(1, function, src_dest, (int)msg);
+	/*int a;
 	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (1), "b" (function), "c" (src_dest), "d" ((int)msg));
-	return a;
+	return a; */
 }
 
 int send_recv(int function, int src_dest, MESSAGE* msg)

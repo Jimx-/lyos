@@ -2,7 +2,7 @@
 
 typedef int (*syscall_gate_t)(int syscall_nr, int arg0, int arg1, int arg2);
 
-syscall_gate_t _syscall_gate;
+syscall_gate_t _syscall_gate = (syscall_gate_t)0;
 
 struct sysinfo {
 #define SYSINFO_MAGIC   0x534946
