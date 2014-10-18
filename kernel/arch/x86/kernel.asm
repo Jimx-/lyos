@@ -445,11 +445,9 @@ sys_call:
     sti
 
 	push	esi
-	push	edx
-	push	ecx
 	push	ebx
     call    [sys_call_table + eax * 4]
-	add	esp, 4 * 3 		; esp <- esi(proc ptr)
+	add	esp, 4 		; esp <- esi(proc ptr)
 
 	pop esi
     mov     [esi + EAXREG - P_STACKBASE], eax

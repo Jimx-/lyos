@@ -126,7 +126,7 @@ PUBLIC void delay(int time)
 /*======================================================================*
                                sys_getinfo
  *======================================================================*/
-PUBLIC int sys_getinfo(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
 {
 	int request = m->REQUEST;
 	void * buf = m->BUF;

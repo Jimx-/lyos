@@ -124,7 +124,7 @@ PRIVATE void * find_free_pages(struct page_directory * pgd, int nr_pages, void *
     return NULL;
 }
 
-PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
 {
     void * src_addr = m->SRC_ADDR;
     int src_seg = (int)m->SRC_SEG;

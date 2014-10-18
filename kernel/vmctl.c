@@ -40,7 +40,7 @@
 /**
  * <Ring 0> Perform the VMCTL syscall.
  */
-PUBLIC int sys_vmctl(int _unused1, int _unused2, MESSAGE * m, struct proc * p)
+PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
 {
     int param = m->FLAGS, request = m->REQUEST;
     struct proc * target = proc_table + param;

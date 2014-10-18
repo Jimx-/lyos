@@ -18,8 +18,8 @@
 
 #include "const.h"
 
-typedef int (*syscall_gate_t)(int syscall_nr, int arg0, int arg1, int arg2);
-int syscall_gate_intr(int syscall_nr, int arg0, int arg1, int arg2);
+typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
+int syscall_gate_intr(int syscall_nr, MESSAGE * m);
 
 extern syscall_gate_t _syscall_gate;
 
@@ -28,7 +28,8 @@ extern syscall_gate_t _syscall_gate;
 
 int syscall_entry(int syscall_nr, MESSAGE * m)
 {
-	return syscall_gate_intr(syscall_nr, 0, 0, (int)m);
+	if (_syscall_gate) return _syscall_gate(syscall_nr, m);
+	return syscall_gate_intr(syscall_nr, m);
 }
 
 /* sendrec */
@@ -41,8 +42,7 @@ static int sendrec(int function, int src_dest, MESSAGE* msg)
 	m.SR_SRCDEST = src_dest;
 	m.SR_MSG = msg;
 
-	if (_syscall_gate == NULL) return syscall_gate_intr(NR_SENDREC, 0, 0, (int)&m);
-	else return _syscall_gate(NR_SENDREC, 0, 0, (int)&m);
+	return syscall_entry(NR_SENDREC, &m);
 }
 
 int send_recv(int function, int src_dest, MESSAGE* msg)
@@ -54,7 +54,6 @@ int send_recv(int function, int src_dest, MESSAGE* msg)
 
 	return sendrec(function, src_dest, msg);
 }
-
 
 extern char **environ;
 

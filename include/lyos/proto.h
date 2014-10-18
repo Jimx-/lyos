@@ -131,12 +131,12 @@ PUBLIC int  vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
 PUBLIC int service_up(const char *name, char * argv[], char * const envp[]);
 
 /* proc.c */
-PUBLIC  int sys_sendrec(int _unused1, int _unused2, MESSAGE* m, struct proc* p);
-PUBLIC	int	sys_printx(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
-PUBLIC  int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
-PUBLIC  int sys_privctl(int _unused1, int _unused2, MESSAGE * m, struct proc* p);
-PUBLIC  int sys_getinfo(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
-PUBLIC  int sys_vmctl(int _unused1, int _unused2, MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_sendrec(MESSAGE* m, struct proc* p);
+PUBLIC	int	sys_printx(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_datacopy(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_privctl(MESSAGE * m, struct proc* p);
+PUBLIC  int sys_getinfo(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_vmctl(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

@@ -1,7 +1,7 @@
 #include "type.h"
 #include "const.h"
 
-typedef int (*syscall_gate_t)(int syscall_nr, int arg0, int arg1, int arg2);
+typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
 
 syscall_gate_t _syscall_gate = (syscall_gate_t)0;
 
@@ -9,19 +9,18 @@ struct sysinfo {
 #define SYSINFO_MAGIC   0x534946
     int magic;
     
-    int (*syscall_gate)(int syscall_nr, int arg0, int arg1, int arg2);
+    syscall_gate_t syscall_gate;
 };
 
-int syscall_gate_intr(int syscall_nr, int arg0, int arg1, int arg2)
+int syscall_gate_intr(int syscall_nr, MESSAGE * m)
 {
 	int a;
-	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (syscall_nr), "b" (arg0), "c" (arg1), "d" (arg2));
+	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (syscall_nr), "b" (m));
 	return a;
 }
 
 static struct sysinfo * get_sysinfo()
 {
-	int a;
 	struct sysinfo * sysinfo;
 	MESSAGE m;
 
@@ -30,8 +29,7 @@ static struct sysinfo * get_sysinfo()
 	
 	__asm__ __volatile__ ("" ::: "memory");
 
-	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (4), "c" (0), "d" ((int)&m));
-	return a == 0 ? sysinfo : (struct sysinfo*)0;
+	return (syscall_gate_intr(NR_GETINFO, &m) == 0) ? sysinfo : (struct sysinfo*)0;
 }
 
 void __lyos_init()

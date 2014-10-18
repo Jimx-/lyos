@@ -125,7 +125,7 @@ no_schedule:
  * 
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int sys_sendrec(int _unused1, int _unused2, MESSAGE* m, struct proc* p)
+PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 {
 	int function = m->SR_FUNCTION;
 	int src_dest = m->SR_SRCDEST;

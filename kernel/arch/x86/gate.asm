@@ -23,17 +23,11 @@ global syscall_int
 
 syscall_int:
 	push ebx
-	push ecx
-	push edx
 
-	mov eax, [esp + 12 + 4]		; syscall_nr
-	mov	ebx, [esp + 12 + 8]		; arg0
-	mov	ecx, [esp + 12 + 12]	; arg1
-	mov	edx, [esp + 12 + 16]	; arg2
+	mov eax, [esp + 4 + 4]		; syscall_nr
+	mov	ebx, [esp + 4 + 8]		; m
 	int	INT_VECTOR_SYS_CALL
 
-	pop	edx
-	pop	ecx
 	pop	ebx
 
 	ret
