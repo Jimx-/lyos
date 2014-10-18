@@ -17,11 +17,11 @@
 
 INT_VECTOR_SYS_CALL equ 0x90
 
-[SECTION .gate]
+[SECTION .usermapped]
 
-global syscall_softint
+global syscall_int
 
-syscall_softint:
+syscall_int:
 	push ebx
 	push ecx
 	push edx

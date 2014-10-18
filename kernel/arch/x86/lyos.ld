@@ -30,17 +30,10 @@ SECTIONS{
     }
 
     . = ALIGN(4096);
-    .sysinfo : AT(ADDR(.sysinfo) - 0xF0000000) { 
-        _sysinfo = .;    
-            *(.sysinfo)
-        . = ALIGN(4096); _esysinfo = .; 
-    }
-
-    . = ALIGN(4096);
-    .gate : AT(ADDR(.gate) - 0xF0000000) { 
-        _gate = .;    
-            *(.gate)
-        . = ALIGN(4096); _egate = .; 
+    .usermapped : AT(ADDR(.usermapped) - 0xF0000000) { 
+        _usermapped = .;    
+            *(.usermapped)
+        . = ALIGN(4096); _eusermapped = .; 
     }
 
     _end = .;

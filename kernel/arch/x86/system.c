@@ -57,11 +57,10 @@ PUBLIC struct proc * arch_switch_to_user()
     return p;
 }
 
-#define KM_SYSINFO  0
-#define KM_GATE     1
-#define KM_LAST     KM_GATE
+#define KM_USERMAPPED  0
+#define KM_LAST     KM_USERMAPPED
 
-extern char _sysinfo[], _esysinfo[], _gate[], _egate[];
+extern char _usermapped[], _eusermapped[];
 
 /**
  * <Ring 0> Get kernel mapping information.
@@ -70,15 +69,9 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 {
     if (index > KM_LAST) return 1;
     
-    if (index == KM_SYSINFO) {
-        *addr = (caddr_t)((char *)*(&_sysinfo) - KERNEL_VMA);
-        *len = (char *)*(&_esysinfo) - (char *)*(&_sysinfo);
-        *flags = KMF_USER;
-    }
-
-    if (index == KM_GATE) {
-        *addr = (caddr_t)((char *)*(&_gate) - KERNEL_VMA);
-        *len = (char *)*(&_egate) - (char *)*(&_gate);
+    if (index == KM_USERMAPPED) {
+        *addr = (caddr_t)((char *)*(&_usermapped) - KERNEL_VMA);
+        *len = (char *)*(&_eusermapped) - (char *)*(&_usermapped);
         *flags = KMF_USER;
     }
 
@@ -90,21 +83,17 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
  */
 PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 {
-    char * sysinfo_start = (char *)*(&_sysinfo);
-    char * gate_start = (char *)*(&_gate);
+    char * usermapped_start = (char *)*(&_usermapped);
     char * start = NULL;
 
-#define USER_PTR(x) (((char *)(x) - start) + (char *)vir_addr)
+#define USER_PTR(x) (((char *)(x) - usermapped_start) + (char *)vir_addr)
 
-    if (index == KM_SYSINFO) {
-        start = sysinfo_start;
+    if (index == KM_USERMAPPED) {
         sysinfo.magic = SYSINFO_MAGIC;
         sysinfo_user = (struct sysinfo *)USER_PTR(&sysinfo);
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
         sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
-    } else if (index == KM_GATE) {
-        start = gate_start;
-        sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_softint);
+        sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
     }
 
     return 0;

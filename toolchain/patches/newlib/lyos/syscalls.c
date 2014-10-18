@@ -32,9 +32,6 @@ static int sendrec(int function, int src_dest, MESSAGE* msg)
 {
 	if (_syscall_gate == NULL) return syscall_gate_intr(1, function, src_dest, (int)msg);
 	else return _syscall_gate(1, function, src_dest, (int)msg);
-	/*int a;
-	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (1), "b" (function), "c" (src_dest), "d" ((int)msg));
-	return a; */
 }
 
 int send_recv(int function, int src_dest, MESSAGE* msg)

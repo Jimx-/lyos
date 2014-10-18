@@ -205,6 +205,9 @@ PUBLIC void pt_kern_mapping_init()
 
         if (vmctl_reply_kern_mapping(rindex, kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
 
+        printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n", 
+                rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
+
         nr_kern_mappings++;
         kmapping++;
         rindex++;

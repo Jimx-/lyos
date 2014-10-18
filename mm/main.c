@@ -165,7 +165,7 @@ PRIVATE void init_mm()
 	printl("  vmalloc : 0x%08x - 0x%08x  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
 	printl("  fixmap  : 0x%08x - 0x%08x  (%dkB)\n", FIXMAP_START, FIXMAP_END, (FIXMAP_END - FIXMAP_START) / 1024);
 	
-	printl("MM: Kernel page directory at physical address: 0x%x\n", initial_pgd);
+	printl("MM: kernel page directory at physical address: 0x%x\n", initial_pgd);
 
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;
