@@ -40,10 +40,11 @@
 /**
  * <Ring 0> Perform the VMCTL syscall.
  */
-PUBLIC int sys_vmctl(int _unused1, int request, int param, struct proc * p)
+PUBLIC int sys_vmctl(int _unused1, int _unused2, MESSAGE * m, struct proc * p)
 {
+    int param = m->FLAGS, request = m->REQUEST;
     struct proc * target = proc_table + param;
-    MESSAGE * m = (MESSAGE *)param;
+    MESSAGE * msg = (MESSAGE *)param;
 
     switch (request) {
     case VMCTL_BOOTINHIBIT_CLEAR:
@@ -53,14 +54,14 @@ PUBLIC int sys_vmctl(int _unused1, int request, int param, struct proc * p)
         PST_UNSET(target, PST_MMINHIBIT);
         break;
     case VMCTL_GET_KERN_MAPPING:
-        m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(m->VMCTL_GET_KM_INDEX, 
-                                    (caddr_t*)&m->VMCTL_GET_KM_ADDR,
-                                    &m->VMCTL_GET_KM_LEN,
-                                    &m->VMCTL_GET_KM_FLAGS); 
+        msg->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(msg->VMCTL_GET_KM_INDEX, 
+                                    (caddr_t*)&msg->VMCTL_GET_KM_ADDR,
+                                    &msg->VMCTL_GET_KM_LEN,
+                                    &msg->VMCTL_GET_KM_FLAGS); 
         break;
     case VMCTL_REPLY_KERN_MAPPING:
-        m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(m->VMCTL_REPLY_KM_INDEX,
-                                    m->VMCTL_REPLY_KM_ADDR);
+        msg->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(msg->VMCTL_REPLY_KM_INDEX,
+                                    msg->VMCTL_REPLY_KM_ADDR);
         break;
     default:
         printk("kernel: invalid vmctl request\n");

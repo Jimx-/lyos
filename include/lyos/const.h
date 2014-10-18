@@ -154,6 +154,9 @@
 
 /* system call */
 #define NR_SYS_CALL	6
+#define NR_PRIVCTL	3
+#define NR_GETINFO	4
+#define NR_VMCTL	5
 
 /* ipc */
 #define SEND		1
@@ -277,6 +280,11 @@ enum msgtype {
 #define	PID			u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
+
+/* macros for sendrec */
+#define SR_FUNCTION u.m3.m3i1
+#define SR_SRCDEST	u.m3.m3i2
+#define SR_MSG		u.m3.m3p1
 
 /* macros for data_copy */
 #define SRC_PID		u.m3.m3i1

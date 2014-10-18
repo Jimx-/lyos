@@ -61,9 +61,9 @@ PRIVATE void kputs(char * s);
  * 
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC int sys_printx(int _unused1, int _unused2, char* s, struct proc* p_proc)
+PUBLIC int sys_printx(int _unused1, int _unused2, MESSAGE * m, struct proc* p_proc)
 {
-	kputs(s);
+	kputs(m->BUF);
 
 	return 0;
 }

@@ -25,44 +25,22 @@ _NR_vmctl		equ 5
 
 ; 导出符号
 global	printx
-global	sendrec
 global	datacopy
-global	privctl
-global	getinfo
-global  vmctl
+global	_privctl
+global	_getinfo
+global  _vmctl
 
 bits 32
 [section .text]
 
 ; ====================================================================================
-;                  sendrec(int function, int src_dest, MESSAGE* msg);
-; ====================================================================================
-; Never call sendrec() directly, call send_recv() instead.
-sendrec:
-	push	ebx		; .
-	push	ecx		;  > 12 bytes
-	push	edx		; /
-
-	mov	eax, _NR_sendrec
-	mov	ebx, [esp + 12 +  4]	; function
-	mov	ecx, [esp + 12 +  8]	; src_dest
-	mov	edx, [esp + 12 + 12]	; msg
-	int	INT_VECTOR_SYS_CALL
-
-	pop	edx
-	pop	ecx
-	pop	ebx
-
-	ret
-
-; ====================================================================================
-;                          void printx(char* s);
+;                          void printx(MESSAGE * m);
 ; ====================================================================================
 printx:
 	push	edx		; 4 bytes
 
 	mov	eax, _NR_printx
-	mov	edx, [esp + 4 + 4]	; s
+	mov	edx, [esp + 4 + 4]	; m
 	int	INT_VECTOR_SYS_CALL
 
 	pop	edx
@@ -84,46 +62,37 @@ datacopy:
 	ret
 
 ; ====================================================================================
-;                  privctl(int whom, int request, void* data);
+;                  _privctl(int whom, int request, void* data);
 ; ====================================================================================
-privctl:
-	push	ebx		; .
-	push	ecx		;  > 12 bytes
+_privctl:
 	push	edx		; /
 
 	mov	eax, _NR_privctl
-	mov	ebx, [esp + 12 +  4]
-	mov	ecx, [esp + 12 +  8]
-	mov	edx, [esp + 12 + 12]
+	mov edx, [esp + 4 + 4]
 	int	INT_VECTOR_SYS_CALL
 
 	pop	edx
-	pop	ecx
-	pop	ebx
 
 	ret
 
 ; ====================================================================================
 ;                  getinfo(int request, void* buf);
 ; ====================================================================================
-getinfo:
-	push	ecx		;  > 8 bytes
+_getinfo:
 	push	edx		; /
 
 	mov	eax, _NR_getinfo
-	mov	ecx, [esp + 8 +  4]
-	mov	edx, [esp + 8 +  8]
+	mov	ecx, [esp + 4 +  4]
 	int	INT_VECTOR_SYS_CALL
 
 	pop	edx
-	pop	ecx
 
 	ret
 
 ; ====================================================================================
 ;                  vmctl(int request, int param);
 ; ====================================================================================
-vmctl:
+_vmctl:
 	push	ecx		;  > 8 bytes
 	push	edx		; /
 

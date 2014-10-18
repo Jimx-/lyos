@@ -280,8 +280,11 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
 	p_desc->base_high	= (base >> 24) & 0x0FF;		/* 段基址 3		(1 字节) */
 }
 
-PUBLIC int sys_privctl(int whom, int request, void * data, struct proc* p)
+PUBLIC int sys_privctl(int _unused1, int _unused2, MESSAGE * m, struct proc* p)
 {
+	endpoint_t whom = m->PROC_NR;
+	int request = m->REQUEST;
+	
 	struct proc * target = proc_table + whom;
 
 	switch (request) {

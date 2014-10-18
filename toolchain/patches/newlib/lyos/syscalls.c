@@ -26,12 +26,23 @@ extern syscall_gate_t _syscall_gate;
 /* compiler memory barrier */
 #define cmb() __asm__ __volatile__ ("" ::: "memory")
 
+int syscall_entry(int syscall_nr, MESSAGE * m)
+{
+	return syscall_gate_intr(syscall_nr, 0, 0, (int)m);
+}
+
 /* sendrec */
 /* see arch/x86/lib/syscall.asm */
 static int sendrec(int function, int src_dest, MESSAGE* msg)
 {
-	if (_syscall_gate == NULL) return syscall_gate_intr(1, function, src_dest, (int)msg);
-	else return _syscall_gate(1, function, src_dest, (int)msg);
+	MESSAGE m;
+	memset(&m, 0, sizeof(m));
+	m.SR_FUNCTION = function;
+	m.SR_SRCDEST = src_dest;
+	m.SR_MSG = msg;
+
+	if (_syscall_gate == NULL) return syscall_gate_intr(1, 0, 0, (int)&m);
+	else return _syscall_gate(1, 0, 0, (int)&m);
 }
 
 int send_recv(int function, int src_dest, MESSAGE* msg)

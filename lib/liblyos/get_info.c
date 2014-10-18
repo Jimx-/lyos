@@ -24,7 +24,16 @@
 #include "lyos/ipc.h"
 #include <lyos/param.h>
 
-PUBLIC  int getinfo(int request, void* buf);
+int syscall_entry(int syscall_nr, MESSAGE * m);
+
+PUBLIC int getinfo(int request, void* buf)
+{
+    MESSAGE m;
+    m.REQUEST = request;
+    m.BUF = buf;
+
+    return syscall_entry(NR_GETINFO, &m);
+}
 
 PUBLIC int get_sysinfo(struct sysinfo ** sysinfo)
 {

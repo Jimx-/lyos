@@ -125,15 +125,19 @@ no_schedule:
  * 
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
+PUBLIC int sys_sendrec(int _unused1, int _unused2, MESSAGE* m, struct proc* p)
 {
+	int function = m->SR_FUNCTION;
+	int src_dest = m->SR_SRCDEST;
+	MESSAGE * msg = (MESSAGE *)m->SR_MSG;
+
 	assert((src_dest >= 0 && src_dest < NR_TASKS + NR_PROCS) ||
 	       src_dest == ANY ||
 	       src_dest == INTERRUPT);
 
 	int ret = 0;
 	int caller = proc2pid(p);
-	MESSAGE* mla = (MESSAGE*)va2la(caller, m);
+	MESSAGE* mla = (MESSAGE*)va2la(caller, msg);
 	mla->source = caller;
 
 	assert(mla->source != src_dest);
@@ -142,11 +146,11 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
 		case BOTH:
 			/* fall through */
 		case SEND:
-			ret = msg_send(p, src_dest, m);
+			ret = msg_send(p, src_dest, msg);
 			if (ret != 0 || function == SEND) break;
 			/* fall through for BOTH */
 		case RECEIVE:
-			ret = msg_receive(p, src_dest, m);
+			ret = msg_receive(p, src_dest, msg);
 			break;
 		default:
 			panic("{sys_sendrec} invalid function: "

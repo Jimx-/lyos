@@ -25,37 +25,14 @@
 
 int syscall_entry(int syscall_nr, MESSAGE * m);
 
-PUBLIC  int vmctl(int request, int param)
+PUBLIC int _privctl(MESSAGE * m);
+
+PUBLIC  int privctl(int whom, int request, void * data)
 {
     MESSAGE m;
-
+    m.PROC_NR = whom;
     m.REQUEST = request;
-    m.FLAGS = param;
+    m.BUF = data;
 
-    return syscall_entry(NR_VMCTL, &m);
-}
-
-PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
-{
-    MESSAGE m;
-    m.VMCTL_GET_KM_INDEX = index;
-    vmctl(VMCTL_GET_KERN_MAPPING, (int)&m);
-
-    *addr = m.VMCTL_GET_KM_ADDR;
-    *len = m.VMCTL_GET_KM_LEN;
-    *flags = m.VMCTL_GET_KM_FLAGS;
-
-    return m.VMCTL_GET_KM_RETVAL;
-}
-
-PUBLIC int vmctl_reply_kern_mapping(int index, void * vir_addr)
-{
-    MESSAGE m;
-    
-    m.VMCTL_REPLY_KM_INDEX = index;
-    m.VMCTL_REPLY_KM_ADDR = vir_addr;
-
-    vmctl(VMCTL_REPLY_KERN_MAPPING, (int)&m);
-
-    return m.VMCTL_REPLY_KM_RETVAL;
+    return syscall_entry(NR_PRIVCTL, &m);
 }

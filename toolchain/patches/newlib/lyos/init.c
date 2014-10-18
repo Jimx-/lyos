@@ -1,3 +1,4 @@
+#include "type.h"
 #include "const.h"
 
 typedef int (*syscall_gate_t)(int syscall_nr, int arg0, int arg1, int arg2);
@@ -22,7 +23,14 @@ static struct sysinfo * get_sysinfo()
 {
 	int a;
 	struct sysinfo * sysinfo;
-	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (4), "c" (GETINFO_SYSINFO), "d" (&sysinfo));
+	MESSAGE m;
+
+	m.REQUEST = GETINFO_SYSINFO;
+	m.BUF = &sysinfo;
+	
+	__asm__ __volatile__ ("" ::: "memory");
+
+	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (4), "c" (0), "d" ((int)&m));
 	return a == 0 ? sysinfo : (struct sysinfo*)0;
 }
 

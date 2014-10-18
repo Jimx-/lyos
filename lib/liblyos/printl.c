@@ -20,8 +20,9 @@
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
+#include <string.h>
 
-PUBLIC	int	printx(char* str);
+PUBLIC	int	printx(MESSAGE * m);
 
 /*****************************************************************************
  *                                printl
@@ -38,10 +39,14 @@ PUBLIC int printl(const char *fmt, ...)
 	int i;
 	char buf[STR_DEFAULT_LEN];
 	va_list arg;
-	
+	MESSAGE m;
+    memset(&m, 0, sizeof(m));
+
 	va_start(arg, fmt);	
 	i = vsprintf(buf, fmt, arg);
-	printx(buf);
+    
+    m.BUF = buf;
+	printx(&m);
 
 	va_end(arg);
 
