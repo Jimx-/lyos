@@ -305,7 +305,5 @@ PUBLIC int proc_free(struct proc * p)
     INIT_LIST_HEAD(&(p->mem_regions));
     pgd_clear(&(p->pgd));
 
-    p->state = PST_FREE_SLOT;
-
     return 0;
 }

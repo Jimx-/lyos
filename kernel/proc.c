@@ -18,6 +18,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "lyos/tty.h"
 #include "lyos/console.h"
@@ -37,8 +38,8 @@
 
 PRIVATE void block(struct proc* p);
 PRIVATE void unblock(struct proc* p);
-PUBLIC int  msg_send(struct proc* current, int des, MESSAGE* m);
-PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
+PUBLIC int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
+PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
 /*****************************************************************************
@@ -137,28 +138,23 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
 
 	assert(mla->source != src_dest);
 
-	/**
-	 * Actually we have the third message type: BOTH. However, it is not
-	 * allowed to be passed to the kernel directly. Kernel doesn't know
-	 * it at all. It is transformed into a SEND followed by a RECEIVE
-	 * by `send_recv()'.
-	 */
-	if (function == SEND) {
-		ret = msg_send(p, src_dest, m);
-		if (ret != 0)
-			return ret;
-	}
-	else if (function == RECEIVE) {
-		ret = msg_receive(p, src_dest, m);
-		if (ret != 0)
-			return ret;
-	}
-	else {
-		panic("{sys_sendrec} invalid function: "
-		      "%d (SEND:%d, RECEIVE:%d).", function, SEND, RECEIVE);
+	switch (function) {
+		case BOTH:
+			/* fall through */
+		case SEND:
+			ret = msg_send(p, src_dest, m);
+			if (ret != 0 || function == SEND) break;
+			/* fall through for BOTH */
+		case RECEIVE:
+			ret = msg_receive(p, src_dest, m);
+			break;
+		default:
+			panic("{sys_sendrec} invalid function: "
+		      "%d (SEND:%d, RECEIVE:%d, BOTH: %d).", function, SEND, RECEIVE, BOTH);
+			break;
 	}
 
-	return 0;
+	return ret;
 }
 
 /*****************************************************************************
@@ -257,7 +253,7 @@ PRIVATE void block(struct proc* p)
  *****************************************************************************/
 PRIVATE void unblock(struct proc* p)
 {
-	assert(p->state == 0);
+
 }
 
 /*****************************************************************************
@@ -283,7 +279,6 @@ PRIVATE int deadlock(int src, int dest)
 			if (p->sendto == src) {
 				p = proc_table + dest;
 				do {
-					assert(p->msg);
 					p = proc_table + p->sendto;
 				} while (p != proc_table + src);
 				return 1;
@@ -305,55 +300,42 @@ PRIVATE int deadlock(int src, int dest)
  * the message, copy the message to it and unblock dest. Otherwise the caller
  * will be blocked and appended to the dest's sending queue.
  * 
- * @param current  The caller, the sender.
+ * @param p_to_send  The caller, the sender.
  * @param dest     To whom the message is sent.
  * @param m        The message.
  * 
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
+PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 {
-	struct proc* sender = current;
+	struct proc* sender = p_to_send;
 	struct proc* p_dest = proc_table + dest; /* proc dest */
-
-	assert(proc2pid(sender) != dest);
 
 	/* check for deadlock here */
 	if (deadlock(proc2pid(sender), dest)) {
 		dump_msg("deadlock sender", m);
-		dump_msg("deadlock receiver", p_dest->msg);
-		panic("deadlock: %s(pid: %d)->%s(pid: %d)", sender->name, proc2pid(sender), p_dest->name, proc2pid(p_dest));
+		dump_msg("deadlock receiver", p_dest->send_msg);
+		//panic("deadlock: %s(pid: %d)->%s(pid: %d)", sender->name, proc2pid(sender), p_dest->name, proc2pid(p_dest));
+		return EDEADLK;
 	}
 
 	if ((p_dest->state & PST_RECEIVING) && /* p_dest is waiting for the msg */
 	    (p_dest->recvfrom == proc2pid(sender) ||
 	     p_dest->recvfrom == ANY)) {
-		assert(p_dest->msg);
-		assert(m);
 
-		vir_copy(dest, D, p_dest->msg, proc2pid(sender), D, m, sizeof(MESSAGE));
+		vir_copy(dest, D, p_dest->recv_msg, proc2pid(sender), D, m, sizeof(MESSAGE));
 		/*phys_copy(va2la(dest, p_dest->msg),
 			  va2la(proc2pid(sender), m),
 			  sizeof(MESSAGE)); */
-		p_dest->msg = 0;
-		p_dest->state &= ~PST_RECEIVING; /* p_dest has received the msg */
+		p_dest->recv_msg = 0;
+		PST_UNSET(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
 		unblock(p_dest);
-
-		assert(p_dest->state == 0);
-		assert(p_dest->msg == 0);
-		assert(p_dest->recvfrom == NO_TASK);
-		assert(p_dest->sendto == NO_TASK);
-		assert(sender->state == 0);
-		assert(sender->msg == 0);
-		assert(sender->recvfrom == NO_TASK);
-		assert(sender->sendto == NO_TASK);
 	}
 	else { /* p_dest is not waiting for the msg */
-		sender->state |= PST_SENDING;
-		assert(sender->state == PST_SENDING);
+		PST_SET(sender, PST_SENDING);
 		sender->sendto = dest;
-		sender->msg = m;
+		sender->send_msg = m;
 
 		/* append to the sending queue */
 		struct proc * p;
@@ -369,11 +351,6 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
 		sender->next_sending = 0;
 
 		block(sender);
-
-		assert(sender->state == PST_SENDING);
-		assert(sender->msg != 0);
-		assert(sender->recvfrom == NO_TASK);
-		assert(sender->sendto == dest);
 	}
 
 	return 0;
@@ -388,15 +365,15 @@ PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m)
  * the message, copy the message from it and unblock src. Otherwise the caller
  * will be blocked.
  * 
- * @param current The caller, the proc who wanna receive.
+ * @param p_to_recv The caller, the proc who wanna receive.
  * @param src     From whom the message will be received.
  * @param m       The message ptr to accept the message.
  * 
  * @return  Zero if success.
  *****************************************************************************/
-PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
+PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 {
-	struct proc* who_wanna_recv = current; /**
+	struct proc* who_wanna_recv = p_to_recv; /**
 						  * This name is a little bit
 						  * wierd, but it makes me
 						  * think clearly, so I keep
@@ -406,9 +383,10 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 	struct proc* prev = 0;
 	int copyok = 0;
 
-	disable_int();
-	
-	assert(proc2pid(who_wanna_recv) != src);
+	/* PST_SENDING is set means that the process failed to send a 
+	 * message in sendrec(BOTH), simply block it.
+	 */
+	if (PST_IS_SET(who_wanna_recv, PST_SENDING)) goto no_msg;
 
 	if ((who_wanna_recv->special_msg) &&
 	    ((src == ANY) || (src == INTERRUPT) || (src == KERNEL))) {
@@ -432,11 +410,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		}
 
 		assert(m);
-		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(current), D, &msg, sizeof(MESSAGE));
-
-		assert(who_wanna_recv->state == 0);
-		assert(who_wanna_recv->msg == 0);
-		assert(who_wanna_recv->sendto == NO_TASK);
+		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(p_to_recv), D, &msg, sizeof(MESSAGE));
 
 		return 0;
 	}
@@ -451,16 +425,6 @@ normal_msg:
 		if (who_wanna_recv->q_sending) {
 			from = who_wanna_recv->q_sending;
 			copyok = 1;
-
-			assert(who_wanna_recv->state == 0);
-			assert(who_wanna_recv->msg == 0);
-			assert(who_wanna_recv->recvfrom == NO_TASK);
-			assert(who_wanna_recv->sendto == NO_TASK);
-			assert(who_wanna_recv->q_sending != 0);
-			assert(from->state == PST_SENDING);
-			assert(from->msg != 0);
-			assert(from->recvfrom == NO_TASK);
-			assert(from->sendto == proc2pid(who_wanna_recv));
 		}
 	}
 	else {
@@ -469,7 +433,7 @@ normal_msg:
 		 */
 		from = &proc_table[src];
 
-		if ((from->state & PST_SENDING) &&
+		if ((PST_IS_SET(from, PST_SENDING)) &&
 		    (from->sendto == proc2pid(who_wanna_recv))) {
 			/* Perfect, src is sending a message to
 			 * who_wanna_recv.
@@ -489,16 +453,6 @@ normal_msg:
 				prev = p;
 				p = p->next_sending;
 			}
-
-			assert(who_wanna_recv->state == 0);
-			assert(who_wanna_recv->msg == 0);
-			assert(who_wanna_recv->recvfrom == NO_TASK);
-			assert(who_wanna_recv->sendto == NO_TASK);
-			assert(who_wanna_recv->q_sending != 0);
-			assert(from->state == PST_SENDING);
-			assert(from->msg != 0);
-			assert(from->recvfrom == NO_TASK);
-			assert(from->sendto == proc2pid(who_wanna_recv));
 		}
 	}
 
@@ -520,43 +474,30 @@ normal_msg:
 		}
 
 		assert(m);
-		assert(from->msg);
 		/* copy the message */
-		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(from), D, from->msg, sizeof(MESSAGE));
+		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(from), D, from->send_msg, sizeof(MESSAGE));
 		/*phys_copy(va2la(proc2pid(who_wanna_recv), m),
 			  va2la(proc2pid(from), from->msg),
 			  sizeof(MESSAGE)); */
 
-		from->msg = 0;
+		from->send_msg = 0;
 		from->sendto = NO_TASK;
-		from->state &= ~PST_SENDING;
-		unblock(from);
-	}
-	else {  /* nobody's sending any msg */
-		/* Set state so that who_wanna_recv will not
-		 * be scheduled until it is unblocked.
-		 */
-		who_wanna_recv->state |= PST_RECEIVING;
+		PST_UNSET(from, PST_SENDING);
 
-		who_wanna_recv->msg = m;
-
-		if (src == ANY)
-			who_wanna_recv->recvfrom = ANY;
-		else
-			who_wanna_recv->recvfrom = proc2pid(from);
-
-		block(who_wanna_recv);
-
-		if (who_wanna_recv->state != PST_RECEIVING) printl("error: proc #%d's state != PST_RECEIVING\n", proc2pid(who_wanna_recv));
-		assert(who_wanna_recv->state == PST_RECEIVING);
-		assert(who_wanna_recv->msg != 0);
-		assert(who_wanna_recv->recvfrom != NO_TASK);
-		assert(who_wanna_recv->sendto == NO_TASK);
-		//if (who_wanna_recv->has_int_msg != 0) printl("error: proc #%d's has_int_msg != 0\n", proc2pid(who_wanna_recv));
-		//assert(who_wanna_recv->has_int_msg == 0);
+		return 0;
 	}
 
-	enable_int();
+no_msg:
+	/* nobody's sending any msg */
+	/* Set state so that who_wanna_recv will not
+	* be scheduled until it is unblocked.
+	*/
+	PST_SET(who_wanna_recv, PST_RECEIVING);
+
+	who_wanna_recv->recv_msg = m;
+	who_wanna_recv->recvfrom = src;
+
+	block(who_wanna_recv);
 
 	return 0;
 }
@@ -575,19 +516,12 @@ PUBLIC void inform_int(int task_nr)
 
 	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == INTERRUPT) || (p->recvfrom == ANY))) {
-		p->msg->source = INTERRUPT;
-		p->msg->type = HARD_INT;
-		p->msg = 0;
+		p->recv_msg->source = INTERRUPT;
+		p->recv_msg->type = HARD_INT;
+		p->recv_msg = 0;
 		p->special_msg &= ~MSG_INTERRUPT;
-		p->state &= ~PST_RECEIVING; /* dest has received the msg */
+		PST_UNSET(p, PST_RECEIVING);
 		p->recvfrom = NO_TASK;
-		assert(p->state == 0);
-		unblock(p);
-
-		assert(p->state == 0);
-		assert(p->msg == 0);
-		assert(p->recvfrom == NO_TASK);
-		assert(p->sendto == NO_TASK);
 	}
 	else {
 		p->special_msg |= MSG_INTERRUPT;
@@ -608,19 +542,12 @@ PUBLIC void inform_kernel_log(int task_nr)
 
 	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == KERNEL) || (p->recvfrom == ANY))) {
-		p->msg->source = KERNEL;
-		p->msg->type = KERN_LOG;
-		p->msg = 0;
+		p->recv_msg->source = KERNEL;
+		p->recv_msg->type = KERN_LOG;
+		p->recv_msg = 0;
 		p->special_msg &= ~MSG_KERNLOG;
-		p->state &= ~PST_RECEIVING; /* dest has received the msg */
+		PST_UNSET(p, PST_RECEIVING);
 		p->recvfrom = NO_TASK;
-		assert(p->state == 0);
-		unblock(p);
-
-		assert(p->state == 0);
-		assert(p->msg == 0);
-		assert(p->recvfrom == NO_TASK);
-		assert(p->sendto == NO_TASK);
 	}
 	else {
 		p->special_msg |= MSG_KERNLOG;

@@ -221,7 +221,8 @@ PUBLIC void init_arch()
 		else if (i != TASK_MM && i != INIT) 
 			PST_SET(p, PST_MMINHIBIT);		/* process is not ready until MM allows it to run */
 
-		p->msg = 0;
+		p->send_msg = 0;
+		p->recv_msg = 0;
 		p->recvfrom = NO_TASK;
 		p->sendto = NO_TASK;
 		p->special_msg = 0;

@@ -38,7 +38,7 @@ PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
 #define PROTECT_DEBUG
 
-PUBLIC int msg_send(struct proc* current, int dest, MESSAGE* m);
+PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m);
 
 /* 本文件内函数声明 */
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);

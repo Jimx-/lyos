@@ -41,23 +41,7 @@ int send_recv(int function, int src_dest, MESSAGE* msg)
 	if (function == RECEIVE)
 		memset(msg, 0, sizeof(MESSAGE));
 
-	switch (function) {
-	case BOTH:
-		ret = sendrec(SEND, src_dest, msg);
-		if (ret == 0)
-			ret = sendrec(RECEIVE, src_dest, msg);
-		break;
-	case SEND:
-	case RECEIVE:
-		ret = sendrec(function, src_dest, msg);
-		break;
-	default:
-		//assert((function == BOTH) ||
-		//       (function == SEND) || (function == RECEIVE));
-		break;
-	}
-
-	return ret;
+	return sendrec(function, src_dest, msg);
 }
 
 

@@ -153,14 +153,6 @@ PUBLIC int do_exec(MESSAGE * msg)
     int name_len = msg->NAME_LEN; /* length of filename */
     int src = msg->source;    /* caller proc nr. */
     struct proc * p = proc_table + src;
-
-    /** wait for process to get ready, this is because 
-     *  send_recv(BOTH) will be transformed into a msg_send
-     *  following by a msg_receive, if we wipe out the image
-     *  before msg_receive is called, we cannot send
-     *  the message back to the process */
-    while (p->state != PST_RECEIVING) {}
-
     int i;
 
     memset(&execi, 0, sizeof(execi));
@@ -267,9 +259,6 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     proc_table[src].brk = execi.args.brk;
     strcpy(proc_table[src].name, pathname);
-
-    /* set state to RECEIVING so we can send reply to the process */
-    proc_table[src].state = PST_RECEIVING;
 
     return 0;
 }

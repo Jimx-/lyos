@@ -61,7 +61,8 @@ struct proc {
 	unsigned long alarm;
 	long blocked;
     
-	MESSAGE * msg;
+	MESSAGE * send_msg;
+	MESSAGE * recv_msg;
 	int recvfrom;
 	int sendto;
 
