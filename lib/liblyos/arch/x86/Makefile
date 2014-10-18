@@ -1,4 +1,4 @@
-LOBJS		= syscall.o ioport.o
+LOBJS		= ioport.o
 
 ARCHLIB		= arch-lib.o
 

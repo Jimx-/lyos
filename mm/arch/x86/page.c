@@ -136,9 +136,7 @@ PUBLIC int sys_datacopy(int _unused1, int _unused2, MESSAGE * m, struct proc * p
 
     int len = m->BUF_LEN;
 
-    m->RETVAL = vir_copy(dest_pid, dest_seg, dest_addr, src_pid, src_seg, src_addr, len);
-
-    return 0;
+    return vir_copy(dest_pid, dest_seg, dest_addr, src_pid, src_seg, src_addr, len);
 }
 
 PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,

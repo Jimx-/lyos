@@ -22,7 +22,16 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC	int	printx(MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE * m);
+
+PUBLIC	int	printx(char * s)
+{
+    MESSAGE m;
+    memset(&m, 0, sizeof(m));
+    m.BUF = s;
+
+    return syscall_entry(NR_PRINTX, &m);
+}
 
 /*****************************************************************************
  *                                printl
@@ -39,14 +48,10 @@ PUBLIC int printl(const char *fmt, ...)
 	int i;
 	char buf[STR_DEFAULT_LEN];
 	va_list arg;
-	MESSAGE m;
-    memset(&m, 0, sizeof(m));
 
 	va_start(arg, fmt);	
 	i = vsprintf(buf, fmt, arg);
-    
-    m.BUF = buf;
-	printx(&m);
+	printx(buf);
 
 	va_end(arg);
 

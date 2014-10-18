@@ -41,8 +41,8 @@ static int sendrec(int function, int src_dest, MESSAGE* msg)
 	m.SR_SRCDEST = src_dest;
 	m.SR_MSG = msg;
 
-	if (_syscall_gate == NULL) return syscall_gate_intr(1, 0, 0, (int)&m);
-	else return _syscall_gate(1, 0, 0, (int)&m);
+	if (_syscall_gate == NULL) return syscall_gate_intr(NR_SENDREC, 0, 0, (int)&m);
+	else return _syscall_gate(NR_SENDREC, 0, 0, (int)&m);
 }
 
 int send_recv(int function, int src_dest, MESSAGE* msg)

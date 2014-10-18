@@ -154,6 +154,9 @@
 
 /* system call */
 #define NR_SYS_CALL	6
+#define NR_PRINTX	0
+#define NR_SENDREC	1
+#define NR_DATACOPY	2
 #define NR_PRIVCTL	3
 #define NR_GETINFO	4
 #define NR_VMCTL	5

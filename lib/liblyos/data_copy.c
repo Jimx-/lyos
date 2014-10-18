@@ -20,7 +20,7 @@
 #include <string.h>
 #include <assert.h>
 
-PUBLIC int datacopy(MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE * m);
 
 /*****************************************************************************
  *                                data_copy
@@ -40,7 +40,5 @@ PUBLIC int data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
 
     m.BUF_LEN = len;
 
-    datacopy(&m);
-
-    return m.RETVAL;
+    return syscall_entry(NR_DATACOPY, &m);
 }

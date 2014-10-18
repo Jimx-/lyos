@@ -143,8 +143,7 @@ PUBLIC  void    sys_call();             /* int_handler */
 
 /* system call */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
-PUBLIC	int	printx(MESSAGE * m);
-PUBLIC  int datacopy(MESSAGE * m);
+PUBLIC	int	printx(char * s);
 PUBLIC  int privctl(int whom, int request, void * data);
 PUBLIC  int getinfo(int request, void* buf);
 PUBLIC  int vmctl(int request, int param);
