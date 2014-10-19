@@ -23,4 +23,9 @@ extern u32 k_stacks_start, k_stacks_end;
 #define get_k_stack_top(cpu)    ((void *)(((char*)(k_stacks)) \
                     + 2 * ((cpu) + 1) * K_STACK_SIZE))
 
+/* kernel trap style */
+#define KTS_NONE        0
+#define KTS_INT         1
+#define KTS_SYSENTER    2
+
 #endif

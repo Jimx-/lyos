@@ -78,7 +78,7 @@ MultiBootHeader:
 
 global _start	; export _start
 
-global restore_user_context
+global restore_user_context_int
 global sys_call
 
 global	divide_error
@@ -387,7 +387,7 @@ exception_in_kernel:
 
 	iretd
 
-%macro	SAVE_CONTEXT	1
+%macro	SAVE_CONTEXT	2
 	push ebp
 	mov ebp, [esp + 20 + 4 + %1]
 	SAVE_GP_REGS	ebp
@@ -411,6 +411,8 @@ exception_in_kernel:
     mov esi, [esp + %1 + 16]
     mov [ebp + SSREG], esi
 
+    mov dword [ebp + P_TRAPSTYLE], %2
+
 	mov	esi, edx
 	mov	dx, ss
 	mov	ds, dx
@@ -428,13 +430,13 @@ exception_in_kernel:
 ;                                   save
 ; =============================================================================
 save:
-	SAVE_CONTEXT	4
+	SAVE_CONTEXT	4, KTS_INT
 
 ; =============================================================================
 ;                              save_exception
 ; =============================================================================
 save_exception:
-	SAVE_CONTEXT	12
+	SAVE_CONTEXT	12, KTS_INT
 
 ; =============================================================================
 ;                                 sys_call
@@ -458,7 +460,7 @@ sys_call:
 ; ====================================================================================
 ;                                   restore_user_context
 ; ====================================================================================
-restore_user_context:
+restore_user_context_int:
 	mov	ebp, [esp + 4]
 	
 	; restore all registers

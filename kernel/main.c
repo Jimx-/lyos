@@ -69,7 +69,6 @@ PUBLIC int kernel_main()
 PUBLIC void finish_bsp_booting()
 {
 	fpu_init();
-	
 	switch_to_user();
 }
 
@@ -97,8 +96,10 @@ PUBLIC void panic(const char *fmt, ...)
 
 	vsprintf(buf, fmt, arg);
 
-	printl("Kernel panic: %s", buf);
+	direct_cls();
+	direct_print("Kernel panic: %s", buf);
 
+	while(1);
 	/* should never arrive here */
 	__asm__ __volatile__("ud2");
 }

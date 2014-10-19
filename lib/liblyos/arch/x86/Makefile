@@ -1,4 +1,4 @@
-LOBJS		= ioport.o
+LOBJS		= ioport.o cpufeature.o cpuid.o
 
 ARCHLIB		= arch-lib.o
 
@@ -8,10 +8,14 @@ realclean :
 	@rm -f $(LOBJS)
 
 $(ARCHLIB): $(LOBJS)
-	@echo -e '\tLD\tlib/arch/x86/$@'
+	@echo -e '\tLD\tlib/liblyos/arch/x86/$@'
 	@$(LD) -r -o $(ARCHLIB) $(LOBJS)
 
 %.o : %.asm
-	@echo -e '\tASM\tlib/arch/x86/$@'
+	@echo -e '\tASM\tlib/liblyos/arch/x86/$@'
 	@$(ASM) $(ASMKFLAGS) -o $@ $<
+
+%.o: %.c
+	@echo -e '\tCC\tlib/liblyos/arch/x86/$@'
+	@$(CC) $(CFLAGS) -o $@ $<
 

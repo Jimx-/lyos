@@ -211,6 +211,7 @@ PUBLIC void init_arch()
 		p->regs.eip	= (u32)t->initial_eip;
 		p->regs.esp	= (u32)stk;
 		p->regs.eflags	= eflags;
+		p->trap_style = KTS_INT;
 
 		p->counter = p->priority = prio;
 
@@ -218,7 +219,7 @@ PUBLIC void init_arch()
 
 		if (t->initial_eip == NULL) 
 			PST_SET(p, PST_BOOTINHIBIT);	/* process is to be loaded by SERVMAN */
-		else if (i != TASK_MM && i != INIT) 
+		else if (i != TASK_MM) 
 			PST_SET(p, PST_MMINHIBIT);		/* process is not ready until MM allows it to run */
 
 		p->send_msg = 0;

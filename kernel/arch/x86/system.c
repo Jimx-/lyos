@@ -57,6 +57,27 @@ PUBLIC struct proc * arch_switch_to_user()
     return p;
 }
 
+/**
+ * <Ring 0> Restore user context according to proc's kernel trap type.
+ * 
+ * @param proc Which proc to restore.
+ */
+PUBLIC void restore_user_context(struct proc * p)
+{
+    int trap_style = p->trap_style;
+    p->trap_style = KTS_NONE;
+
+    switch (trap_style) {
+    case KTS_NONE:
+        panic("no trap type recorded");
+    case KTS_INT:
+        restore_user_context_int(p);
+        break;
+    default:
+        panic("unknown trap type recorded");
+    }
+}
+
 #define KM_USERMAPPED  0
 #define KM_LAST     KM_USERMAPPED
 
@@ -84,7 +105,6 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 {
     char * usermapped_start = (char *)*(&_usermapped);
-    char * start = NULL;
 
 #define USER_PTR(x) (((char *)(x) - usermapped_start) + (char *)vir_addr)
 

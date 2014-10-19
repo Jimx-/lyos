@@ -36,7 +36,8 @@ PUBLIC void	disp_int(int input);
 PUBLIC char *	itoa(char * str, int num);
 
 /* kernel.asm */
-PUBLIC void 	restore_user_context(struct proc * p);
+PUBLIC void     restore_user_context(struct proc * p);
+PUBLIC void 	restore_user_context_int(struct proc * p);
 
 /* main.c */
 PUBLIC void     finish_bsp_booting();
@@ -119,16 +120,20 @@ PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC  void	inform_int(int task_nr);
 PUBLIC  void    inform_kernel_log(int task_nr);
 
+/* direct_tty.c */
+PUBLIC  int     direct_print(const char * fmt, ...);
+PUBLIC  void    direct_cls();
+
 /* lib/misc.c */
 PUBLIC void 	spin(char * func_name);
 PUBLIC u32      now();
 
-PUBLIC int  data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
+PUBLIC int      data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
     endpoint_t src_pid, int src_seg, void * src_addr, int len);
-PUBLIC int  vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
+PUBLIC int      vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
                         endpoint_t src_pid, int src_seg, void * src_addr, int len);
 
-PUBLIC int service_up(const char *name, char * argv[], char * const envp[]);
+PUBLIC int      service_up(const char *name, char * argv[], char * const envp[]);
 
 /* proc.c */
 PUBLIC  int sys_sendrec(MESSAGE* m, struct proc* p);

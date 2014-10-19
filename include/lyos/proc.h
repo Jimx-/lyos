@@ -41,6 +41,7 @@
 
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
+	int trap_style;
 	struct page_directory	pgd;
 
     int counter;                 /* remained ticks */

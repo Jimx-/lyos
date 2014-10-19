@@ -38,10 +38,7 @@ CSREG		equ	EIPREG		+ 4
 EFLAGSREG	equ	CSREG		+ 4
 ESPREG		equ	EFLAGSREG	+ 4
 SSREG		equ	ESPREG		+ 4
-P_STACKTOP	equ	SSREG		+ 4
-P_PGD		equ P_STACKTOP
-
-TSS3_S_SP0	equ	4
+P_TRAPSTYLE	equ	SSREG		+ 4
 
 INT_M_CTL	equ	0x20	; I/O port for interrupt controller         <Master>
 INT_M_CTLMASK	equ	0x21	; setting bits in this port disables ints   <Master>
@@ -56,6 +53,11 @@ SELECTOR_KERNEL_CS	equ		SELECTOR_FLAT_C
 
 K_STACK_SIZE	equ	0x1000
 CONFIG_SMP_MAX_CPUS	equ	8
+
+; Kernel trap style
+KTS_NONE		equ 0
+KTS_INT			equ 1
+KTS_SYSENTER 	equ 2
 
 ; Multiboot stuffs
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries

@@ -102,7 +102,6 @@ reschedule:
 
 no_schedule:
 	
-	if (proc_table[INIT].regs.ds != 51) printk("Fault!\n");
 	get_cpulocal_var(proc_ptr) = p;
 	
 	switch_address_space(p->pgd.phys_addr);

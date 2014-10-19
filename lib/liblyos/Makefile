@@ -25,6 +25,3 @@ arch/$(ARCH)/arch-lib.o:
 %.o: %.c
 	@echo -e '\tCC\tlib/liblyos/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
-
-
-
