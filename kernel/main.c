@@ -80,6 +80,12 @@ PUBLIC void finish_bsp_booting()
 	/* proc_ptr should point to somewhere */
 	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
 
+	int i;
+	/* enqueue runnable process */
+	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
+		PST_UNSET(&proc_table[i], PST_STOPPED);
+	}
+
 	switch_to_user();
 }
 

@@ -40,6 +40,7 @@ PRIVATE struct proc * pick_proc();
 PUBLIC int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
+PRIVATE void proc_no_time(struct proc * p);
 
 /*****************************************************************************
  *                                pick_proc
@@ -78,7 +79,9 @@ PUBLIC void init_proc()
 	struct proc * p = proc_table;
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++) {
-
+		if (i < NR_TASKS + NR_NATIVE_PROCS) {
+			PST_SET(p, PST_STOPPED);
+		}
 	}
 
 	/* prepare idle process struct */
@@ -103,10 +106,12 @@ reschedule:
 	p = pick_proc();
 
 no_schedule:
-	
-	if (p->counter <= 0) goto reschedule;
 
 	get_cpulocal_var(proc_ptr) = p;
+
+	if (p->counter <= 0) goto reschedule;
+	//if (p->counter <= 0) proc_no_time(p);
+	if (!proc_is_runnable(p)) goto reschedule;
 
 	switch_address_space(p->pgd.phys_addr);
 
@@ -618,4 +623,12 @@ PUBLIC void dequeue_proc(register struct proc * p)
     	}
       	prev_xp = *xpp;
   	}
+}
+
+/**
+ * <Ring 0> Called when a process has run out its counter.
+ */
+PRIVATE void proc_no_time(struct proc * p)
+{
+	p->counter = p->quantum_ms;
 }
