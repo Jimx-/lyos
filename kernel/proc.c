@@ -571,3 +571,51 @@ PUBLIC void dump_msg(const char * title, MESSAGE* m)
 		);
 }
 
+/**
+ * <Ring 0> Insert a process into scheduling queue.
+ */
+PUBLIC void enqueue_proc(register struct proc * p)
+{
+	int prio = p->priority;
+	struct proc ** rq_head, ** rq_tail;
+
+	rq_head = get_cpu_var(p->cpu, run_queue_head);
+  	rq_tail = get_cpu_var(p->cpu, run_queue_tail);
+
+  	if (!rq_head[prio]) {
+  		rq_head[prio] = rq_tail[prio] = p;
+  		p->next_ready = NULL;
+  	} else {
+  		rq_tail[prio]->next_ready = p;
+  		rq_tail[prio] = p;
+  		p->next_ready = NULL;
+  	}
+}
+
+/**
+ * <Ring 0> Remove a process from scheduling queue.
+ */
+PUBLIC void dequeue_proc(register struct proc * p)
+{
+	int q = p->priority;	
+  	struct proc ** xpp;
+  	struct proc * prev_xp;
+
+  	struct proc ** rq_tail;
+
+  	rq_tail = get_cpu_var(p->cpu, run_queue_tail);
+
+  	prev_xp = NULL;				
+  	for (xpp = get_cpu_var_ptr(p->cpu, run_queue_head[q]); *xpp;
+		  	xpp = &(*xpp)->next_ready) {
+      	if (*xpp == p) {
+          	*xpp = (*xpp)->next_ready;
+          	if (p == rq_tail[q]) {
+              	rq_tail[q] = prev_xp;
+	  		}
+
+        	break;
+    	}
+      	prev_xp = *xpp;
+  	}
+}

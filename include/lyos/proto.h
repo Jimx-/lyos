@@ -118,6 +118,8 @@ PUBLIC	void	dump_proc(struct proc * p);
 PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC  void	inform_int(int task_nr);
 PUBLIC  void    inform_kernel_log(int task_nr);
+PUBLIC  void    enqueue_proc(register struct proc * p);
+PUBLIC  void    dequeue_proc(register struct proc * p);
 
 /* direct_tty.c */
 PUBLIC  int     direct_print(const char * fmt, ...);

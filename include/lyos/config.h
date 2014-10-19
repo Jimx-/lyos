@@ -21,5 +21,14 @@
 #ifndef CONFIG_SMP_MAX_CPUS
 #define CONFIG_SMP_MAX_CPUS 1
 #endif
-    
+
+#define NR_SCHED_QUEUES     16
+#define MIN_USER_PRIO       (NR_SCHED_QUEUES - 1)   /* min user priority */
+#define MAX_USER_PRIO       0                       /* max user priority */
+#define USER_PRIO           ((MIN_USER_PRIO - MAX_USER_PRIO) / 2 + MAX_USER_PRIO)   /* default user priority */
+#define TASK_PRIO           (USER_PRIO / 2)   /* default task priority */
+
+#define USER_QUANTUM        15
+#define TASK_QUANTUM        15
+
 #endif

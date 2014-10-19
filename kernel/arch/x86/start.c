@@ -167,15 +167,15 @@ PUBLIC void init_arch()
             codeseg = SELECTOR_TASK_CS | RPL_TASK;
             dataseg = SELECTOR_TASK_DS | RPL_TASK;
             eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
-			prio    = 15;
-			quantum = 15;
+			prio    = TASK_PRIO;
+			quantum = TASK_QUANTUM;
         } else {                  /* USER PROC */
             t	= user_proc_table + (i - NR_TASKS);
             codeseg = SELECTOR_USER_CS | RPL_USER;
             dataseg = SELECTOR_USER_DS | RPL_USER;
             eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
-			prio    = 5;
-			quantum = 5;
+			prio    = USER_PRIO;
+			quantum = USER_QUANTUM;
         }
 
 		strcpy(p->name, t->name);	/* name of the process */

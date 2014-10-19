@@ -41,12 +41,18 @@
 #define PST_IS_SET(proc, pst) ((proc)->state & pst)
 #define PST_SET(proc, pst)  do { \
 			 					lock_proc(proc);	\
+			 					int prev_pst = (proc)->state; \
 			 					(proc)->state |= (pst); \
+			 					if (pst_is_runnable(prev_pst) && !proc_is_runnable(proc))	\
+			 						dequeue_proc(proc);	\
 			 					unlock_proc(proc);	\
 							} while(0)
 #define PST_UNSET(proc, pst)  do { \
 								lock_proc(proc);	\
+								int prev_pst = (proc)->state; \
 			 					(proc)->state &= ~(pst); \
+			 					if (!pst_is_runnable(prev_pst) && proc_is_runnable(proc))	\
+			 						enqueue_proc(proc);	\
 			 					unlock_proc(proc);	\
 							} while(0)
 
@@ -60,6 +66,8 @@ struct proc {
 	int priority;
     int counter;                 /* remained ticks */
     int quantum_ms;
+
+    struct proc * next_ready;
 
 	/* u32 pid;                   /\* process id passed in from MM *\/ */
 	char name[16];		   /* name of the process */
