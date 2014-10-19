@@ -37,6 +37,7 @@
 #include "lyos/cpulocals.h"
 
 PRIVATE struct proc * pick_proc();
+PRIVATE void idle();
 PUBLIC int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
@@ -51,26 +52,19 @@ PRIVATE void proc_no_time(struct proc * p);
  *****************************************************************************/
 PRIVATE struct proc * pick_proc()
 {
-	struct proc * p, * p_ready;
-	int		greatest_counter = 0;
+  	register struct proc *p;
+  	struct proc ** rq_head;
+  	int q;
 
-	while (!greatest_counter) {
-		for (p = &FIRST_PROC; p <= &LAST_PROC; p++) {
-			if (p->state == 0) {
-				if (p->counter > greatest_counter) {
-					greatest_counter = p->counter;
-					p_ready = p;
-				}
-			}
+  	rq_head = get_cpulocal_var(run_queue_head);
+  	for (q = 0; q < NR_SCHED_QUEUES; q++) {	
+		if(!(p = rq_head[q])) {
+			continue;
 		}
-
-		if (!greatest_counter)
-			for (p = &FIRST_PROC; p <= &LAST_PROC; p++)
-				if (p->state == 0)
-					p->counter = p->quantum_ms;
-	}
-
-	return p_ready;
+		return p;
+  	}
+  	
+  	return NULL;
 }
 
 PUBLIC void init_proc()
@@ -103,14 +97,13 @@ PUBLIC void switch_to_user()
 	if (proc_is_runnable(p)) goto no_schedule;
 
 reschedule:
-	p = pick_proc();
+	while (!(p = pick_proc())) idle();
 
 no_schedule:
 
 	get_cpulocal_var(proc_ptr) = p;
 
-	if (p->counter <= 0) goto reschedule;
-	//if (p->counter <= 0) proc_no_time(p);
+	if (p->counter <= 0) proc_no_time(p);
 	if (!proc_is_runnable(p)) goto reschedule;
 
 	switch_address_space(p->pgd.phys_addr);
@@ -118,6 +111,28 @@ no_schedule:
 	p = arch_switch_to_user();
 
 	restore_user_context(p);
+}
+
+PRIVATE void switch_address_space_idle()
+{
+#if CONFIG_SMP
+	switch_address_space(proc_table[TASK_MM].pgd.phys_addr);
+#endif
+}
+
+/**
+ * <Ring 0> Called when there is no work to do. Halt the CPU.
+ */
+PRIVATE void idle()
+{
+	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+	switch_address_space_idle();
+
+#if CONFIG_SMP
+	get_cpulocal_var(cpu_is_idle) = 1;
+#endif
+
+	halt_cpu();
 }
 
 /*****************************************************************************

@@ -49,6 +49,7 @@ global	x86_load_ss
 global 	switch_k_stack
 global  fninit
 global  ia32_write_msr
+global  halt_cpu
 
 ; ========================================================================
 ;                  void port_read(u16 port, void* buf, int n);
@@ -342,4 +343,9 @@ ia32_write_msr:
 	wrmsr
 
 	pop ebp
+	ret
+
+halt_cpu:
+	sti
+	hlt
 	ret

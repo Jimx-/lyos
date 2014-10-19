@@ -59,4 +59,6 @@ PUBLIC void fninit();
 
 PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
+PUBLIC void halt_cpu();
+
 #endif

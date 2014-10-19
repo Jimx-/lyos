@@ -133,3 +133,12 @@ PUBLIC void fpu_init()
     fninit();
 }
 
+PUBLIC void idle_stop()
+{
+#if CONFIG_SMP
+    int cpu = cpuid;
+#endif
+
+    int is_idle = get_cpu_var(cpu, cpu_is_idle);
+    get_cpu_var(cpu, cpu_is_idle) = 0;
+}

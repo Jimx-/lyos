@@ -20,6 +20,7 @@ extern	kernel_main
 extern  switch_to_user
 extern	exception_handler
 extern	spurious_irq
+extern  idle_stop
 extern	clock_handler
 extern	disp_str
 extern	delay
@@ -172,6 +173,7 @@ paging_enabled:
 	jmp switch_to_user
 .1:
 	pushad
+	call idle_stop
 	in	al, INT_S_CTLMASK	; `.
 	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
 	out	INT_S_CTLMASK, al	; /
@@ -247,6 +249,7 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 	jmp switch_to_user
 .1:
 	pushad
+	call idle_stop
 	in	al, INT_S_CTLMASK	; `.
 	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
 	out	INT_S_CTLMASK, al	; /

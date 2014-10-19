@@ -46,8 +46,12 @@ PRIVATE void pci_scan_devices(int bus_nr);
 
 PUBLIC void task_pci()
 {
+	MESSAGE msg;
+
 	pci_init();
+	
 	while(1){
+        send_recv(RECEIVE, ANY, &msg);
 	}
 }
 
