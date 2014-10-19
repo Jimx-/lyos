@@ -72,10 +72,6 @@ PUBLIC void 	fd_handler(int irq);
 /* kernel/block/rd.c */
 PUBLIC void 	task_rd();
 
-/* kernel/block/pci/pci.c */
-PUBLIC void 	task_pci();
-PUBLIC void 	pci_init();
-
 PUBLIC void 	task_inet();
 
 PUBLIC void     task_devman();

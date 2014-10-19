@@ -41,10 +41,11 @@
 
 extern struct pci_device pci_device_table[];
 
+PUBLIC void pci_init();
 PRIVATE int pci_bus_probe();
 PRIVATE void pci_scan_devices(int bus_nr);
 
-PUBLIC void task_pci()
+PUBLIC int main()
 {
 	MESSAGE msg;
 
@@ -53,6 +54,8 @@ PUBLIC void task_pci()
 	while(1){
         send_recv(RECEIVE, ANY, &msg);
 	}
+
+	return 0;
 }
 
 PUBLIC void pci_init()

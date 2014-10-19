@@ -1,20 +1,25 @@
 #
 # Makefile for pci driver.
 
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
+PCICFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
 
-PCI		= pci.o
+PCI		= pci
 PCIOBJS = main.o pci_table.o
+
+LIBS	= $(LIBDIR)/liblyos/liblyos.a
 
 everything : realclean $(PCI)
 
 realclean :
 	@rm -f $(PCI) $(PCIOBJS)
 
-$(PCI): $(PCIOBJS)
-	@echo -e '\tLD\tdrivers/pci/$@'
-	@$(LD) -r -o $@ $^
+$(PCI): $(PCIOBJS) $(LIBS)
+	@echo -e '\tCC\tdrivers/pci/$@'
+	@$(CC) $(PCICFLAGS) -o $@ $^
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/pci/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(PCICFLAGS) -c $<
+
+$(LIBDIR)/liblyos/liblyos.a:
+	@(cd $(LIBDIR)/liblyos; make)
