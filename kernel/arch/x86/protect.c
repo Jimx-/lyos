@@ -355,12 +355,11 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	msg.FAULT_ADDR = pfla;
 	msg.FAULT_PROC = proc2pid(fault_proc);
 	msg.FAULT_ERRCODE = frame->err_code;
-	msg.FAULT_STATE = fault_proc->state;
 
 	msg_send(fault_proc, TASK_MM, &msg);
 	
 	/* block the process */
-	PST_SET(fault_proc, PST_RESCUING);
+	PST_SET(fault_proc, PST_PAGEFAULT);
 }
 
 /*======================================================================*

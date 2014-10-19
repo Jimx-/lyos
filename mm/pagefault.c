@@ -34,6 +34,7 @@
 #include "region.h"
 #include "proto.h"
 #include "const.h"
+#include <lyos/vm.h>
 
 #define PAGEFAULT_DEBUG
 
@@ -47,7 +48,6 @@ PUBLIC void do_handle_fault()
     int pfla = mm_msg.FAULT_ADDR;
     struct proc * p = proc_table + mm_msg.FAULT_PROC;
     int err_code = mm_msg.FAULT_ERRCODE;
-    int resume_state = mm_msg.FAULT_STATE;
 
     int handled = 0;
 
@@ -105,7 +105,7 @@ PUBLIC void do_handle_fault()
 
     /* resume */
     if (handled) {
-        p->state = resume_state;
+        vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC);
     }
     else {
         if (ARCH_PF_PROT(err_code)) {

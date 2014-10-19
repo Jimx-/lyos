@@ -312,7 +312,6 @@ enum msgtype {
 #define FAULT_ADDR	u.m3.m3i2
 #define FAULT_PROC	u.m3.m3i3
 #define FAULT_ERRCODE u.m3.m3i4
-#define FAULT_STATE	u.m3.m3l1
 
 /* ioctl requests */
 #define	DIOCTL_GET_GEO	1

@@ -63,6 +63,9 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
         msg->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(msg->VMCTL_REPLY_KM_INDEX,
                                     msg->VMCTL_REPLY_KM_ADDR);
         break;
+    case VMCTL_PAGEFAULT_CLEAR:
+        PST_UNSET(target, PST_PAGEFAULT);
+        break;
     default:
         printk("kernel: invalid vmctl request\n");
         return EINVAL;

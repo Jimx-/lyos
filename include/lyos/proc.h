@@ -25,7 +25,7 @@
 #define PST_RECEIVING 0x04	/* set when proc trying to recv */
 #define PST_WAITING   0x08	/* set when proc waiting for the child to terminate */
 #define PST_HANGING   0x10	/* set when proc exits without being waited by parent */
-#define PST_RESCUING  0x20  /* set when proc is being rescued */
+#define PST_PAGEFAULT 0x20  /* set when proc has encounted a page fault */
 #define PST_MMINHIBIT 0x40  /* this proc is not runnable until MM has prepared mem regions for it */
 #define PST_STOPPED   0x80 	/* set when proc is stopped */
 #define PST_FREE_SLOT 0x100	/* set when proc table entry is not used
