@@ -17,6 +17,7 @@
 #include <lyos/list.h>
 #include "stackframe.h"
 #include "page.h"
+#include <lyos/spinlock.h>
 
 /* Process State */
 #define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
@@ -31,20 +32,30 @@
 			 * (ok to allocated to a new process)
 			 */
 
+#define lock_proc(proc) spinlock_lock(&((proc)->lock))
+#define unlock_proc(proc) spinlock_unlock(&((proc)->lock))
+
 #define pst_is_runnable(pst) ((pst) == 0)
 #define proc_is_runnable(proc) (pst_is_runnable((proc)->state))
+
 #define PST_IS_SET(proc, pst) ((proc)->state & pst)
 #define PST_SET(proc, pst)  do { \
+			 					lock_proc(proc);	\
 			 					(proc)->state |= (pst); \
+			 					unlock_proc(proc);	\
 							} while(0)
 #define PST_UNSET(proc, pst)  do { \
+								lock_proc(proc);	\
 			 					(proc)->state &= ~(pst); \
+			 					unlock_proc(proc);	\
 							} while(0)
 
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
 	int trap_style;
 	struct page_directory	pgd;
+
+	spinlock_t lock;
 
     int counter;                 /* remained ticks */
     int priority;

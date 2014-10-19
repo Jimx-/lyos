@@ -36,30 +36,23 @@
 #endif
 #include "lyos/cpulocals.h"
 
+PRIVATE struct proc * pick_proc();
 PUBLIC int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
 /*****************************************************************************
- *                                schedule
+ *                                pick_proc
  *****************************************************************************/
 /**
  * <Ring 0> Choose one proc to run.
  * 
  *****************************************************************************/
-PUBLIC struct proc * schedule()
+PRIVATE struct proc * pick_proc()
 {
 	struct proc * p, * p_ready;
 	int		greatest_counter = 0;
 
-	/* check alarm */
-	for (p = &FIRST_PROC; p <= &LAST_PROC; p++) {
-		if (p->alarm && p->alarm < jiffies) {
-			p->sig_pending |= (1 << (SIGALRM - 1));
-			p->alarm = 0;
-		}
-	}
-			
 	while (!greatest_counter) {
 		for (p = &FIRST_PROC; p <= &LAST_PROC; p++) {
 			if (p->state == 0) {
@@ -81,8 +74,15 @@ PUBLIC struct proc * schedule()
 
 PUBLIC void init_proc()
 {
-	/* prepare idle process struct */
 	int i;
+	struct proc * p = proc_table;
+
+	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++) {
+
+	}
+
+	/* prepare idle process struct */
+	
 	for (i = 0; i < CONFIG_SMP_MAX_CPUS; i++) {
 		struct proc * p = get_cpu_var_ptr(i, idle_proc);
 		p->state |= PST_STOPPED;
@@ -100,8 +100,8 @@ PUBLIC void switch_to_user()
 	if (proc_is_runnable(p)) goto no_schedule;
 
 reschedule:
-	p = schedule();
-	
+	p = pick_proc();
+
 no_schedule:
 	
 	if (p->counter <= 0) goto reschedule;

@@ -32,6 +32,7 @@
 #include "acpi.h"
 #include "arch_const.h"
 #include <lyos/log.h>
+#include <lyos/spinlock.h>
 
 extern char _end[];
 extern pde_t pgd0;
@@ -152,6 +153,8 @@ PUBLIC void init_arch()
 	acpi_init();
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
+		spinlock_init(&p->lock);
+		
 		INIT_LIST_HEAD(&(p->mem_regions));
 		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
