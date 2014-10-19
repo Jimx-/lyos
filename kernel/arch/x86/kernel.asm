@@ -80,6 +80,7 @@ global _start	; export _start
 
 global restore_user_context_int
 global sys_call
+global sys_call_sysenter
 
 global	divide_error
 global	single_step_exception
@@ -456,6 +457,12 @@ sys_call:
     cli
 
     jmp switch_to_user
+
+; =============================================================================
+;                            sys_call_sysenter
+; =============================================================================
+sys_call_sysenter:
+	ret
 
 ; ====================================================================================
 ;                                   restore_user_context

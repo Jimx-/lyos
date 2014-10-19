@@ -36,6 +36,8 @@
 #include <lyos/param.h>
 #include <lyos/vm.h>
 
+extern int syscall_style;
+
 /**
  * <Ring 0> Switch back to user.
  */
@@ -113,6 +115,10 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         sysinfo_user = (struct sysinfo *)USER_PTR(&sysinfo);
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
         sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
+
+        if (syscall_style & SST_INTEL_SYSENTER) {
+            printk("kernel: selecting intel SYSENTER syscall style\n");
+        }
         sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
     }
 

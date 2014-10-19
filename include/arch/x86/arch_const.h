@@ -28,4 +28,13 @@ extern u32 k_stacks_start, k_stacks_end;
 #define KTS_INT         1
 #define KTS_SYSENTER    2
 
+/* syscall style */
+#define SST_INTEL_SYSENTER  1
+#define SST_AMD_SYSCALL     2
+
+/* MSRs */
+#define INTEL_MSR_SYSENTER_CS         0x174
+#define INTEL_MSR_SYSENTER_ESP        0x175
+#define INTEL_MSR_SYSENTER_EIP        0x176
+
 #endif

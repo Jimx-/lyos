@@ -48,6 +48,7 @@ global	x86_load_gs
 global	x86_load_ss
 global 	switch_k_stack
 global  fninit
+global  ia32_write_msr
 
 ; ========================================================================
 ;                  void port_read(u16 port, void* buf, int n);
@@ -331,3 +332,14 @@ fninit:
 	fninit
 	ret
 	
+ia32_write_msr:
+	push ebp
+	mov ebp, esp
+
+	mov edx, [ebp + 12]
+	mov eax, [ebp + 16]
+	mov ecx, [ebp + 8]
+	wrmsr
+
+	pop ebp
+	ret

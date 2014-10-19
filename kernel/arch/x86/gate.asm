@@ -31,3 +31,10 @@ syscall_int:
 	pop	ebx
 
 	ret
+
+syscall_sysenter:
+	push ebp
+	mov ebp, esp
+
+	pop ebp
+	ret

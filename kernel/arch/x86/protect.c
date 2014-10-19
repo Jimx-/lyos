@@ -31,10 +31,13 @@
 #include "arch_proto.h"
 #include "arch_smp.h"
 #include <lyos/cpulocals.h>
+#include <lyos/cpufeature.h>
 
 extern u32 StackTop;
 
 PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
+
+PUBLIC int syscall_style = 0; 
 
 #define PROTECT_DEBUG
 
@@ -89,6 +92,11 @@ PRIVATE void init_idt();
  *======================================================================*/
 PUBLIC void init_prot()
 {
+	if(_cpufeature(_CPUF_I386_SYSENTER))
+		syscall_style |= SST_INTEL_SYSENTER;
+  	if(_cpufeature(_CPUF_I386_SYSCALL))
+		syscall_style |= SST_AMD_SYSCALL;
+
 	init_8259A();
 
 	init_idt();
@@ -248,6 +256,12 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 
 	/* set cpuid */
 	*((u32*)(t->esp0 + sizeof(u32))) = cpu;
+
+	if (syscall_style & SST_INTEL_SYSENTER) {
+		ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, SELECTOR_KERNEL_CS);
+  		ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, t->esp0);
+  		ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);	
+	}
 
 	return SELECTOR_TSS(cpu);
 }

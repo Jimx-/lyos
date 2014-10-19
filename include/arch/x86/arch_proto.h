@@ -43,7 +43,9 @@ PUBLIC struct proc * arch_switch_to_user();
 PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags);
 PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr);
 
-int syscall_int(int syscall_nr, MESSAGE * m);
+PUBLIC void sys_call_sysenter();
+
+PUBLIC int syscall_int(int syscall_nr, MESSAGE * m);
 
 struct exception_frame {
     reg_t   vec_no;     /* which interrupt vector was triggered */
@@ -54,5 +56,7 @@ struct exception_frame {
 };
 
 PUBLIC void fninit();
+
+PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
 #endif
