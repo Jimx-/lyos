@@ -33,6 +33,12 @@
 #include "lyos/compile.h"
 #include "errno.h"
 #include "multiboot.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+#endif
+#include "lyos/cpulocals.h"
 
 #define LYOS_BANNER "Lyos version "UTS_RELEASE" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER") "UTS_VERSION"\n"
 
@@ -63,12 +69,17 @@ PUBLIC int kernel_main()
 #endif
 
 	finish_bsp_booting();
+	
 	while(1){}
 }
 
 PUBLIC void finish_bsp_booting()
 {
 	fpu_init();
+
+	/* proc_ptr should point to somewhere */
+	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+
 	switch_to_user();
 }
 

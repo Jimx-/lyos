@@ -106,7 +106,6 @@ PUBLIC void	task_mm();
 PUBLIC void task_servman();
 
 /* proc.c */
-PUBLIC	void	schedule();
 PUBLIC  void    init_proc();
 PUBLIC  void    switch_to_user();
 PUBLIC	void*	va2la(int pid, void * va);

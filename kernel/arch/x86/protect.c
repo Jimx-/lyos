@@ -360,8 +360,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	msg_send(fault_proc, TASK_MM, &msg);
 	
 	/* block the process */
-	fault_proc->state = PST_RESCUING;
-	schedule();
+	PST_SET(fault_proc, PST_RESCUING);
 }
 
 /*======================================================================*

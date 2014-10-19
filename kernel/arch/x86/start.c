@@ -244,6 +244,4 @@ PUBLIC void init_arch()
 
 		stk -= t->stacksize;
 	}
-
-	current	= proc_table;
 }

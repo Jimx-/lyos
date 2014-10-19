@@ -36,8 +36,6 @@
 #endif
 #include "lyos/cpulocals.h"
 
-PRIVATE void block(struct proc* p);
-PRIVATE void unblock(struct proc* p);
 PUBLIC int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
@@ -49,9 +47,9 @@ PRIVATE int  deadlock(int src, int dest);
  * <Ring 0> Choose one proc to run.
  * 
  *****************************************************************************/
-PUBLIC void schedule()
+PUBLIC struct proc * schedule()
 {
-	struct proc*	p;
+	struct proc * p, * p_ready;
 	int		greatest_counter = 0;
 
 	/* check alarm */
@@ -67,7 +65,7 @@ PUBLIC void schedule()
 			if (p->state == 0) {
 				if (p->counter > greatest_counter) {
 					greatest_counter = p->counter;
-					current = p;
+					p_ready = p;
 				}
 			}
 		}
@@ -77,6 +75,8 @@ PUBLIC void schedule()
 				if (p->state == 0)
 					p->counter = p->priority;
 	}
+
+	return p_ready;
 }
 
 PUBLIC void init_proc()
@@ -95,15 +95,19 @@ PUBLIC void init_proc()
  */
 PUBLIC void switch_to_user()
 {
-	struct proc * p = current;
+	struct proc * p = get_cpulocal_var(proc_ptr);
+
+	if (proc_is_runnable(p)) goto no_schedule;
 
 reschedule:
-	if (current->counter <= 0) schedule();
-
+	p = schedule();
+	
 no_schedule:
 	
+	if (p->counter <= 0) goto reschedule;
+
 	get_cpulocal_var(proc_ptr) = p;
-	
+
 	switch_address_space(p->pgd.phys_addr);
 
 	p = arch_switch_to_user();
@@ -228,38 +232,6 @@ PUBLIC void reset_msg(MESSAGE* p)
 }
 
 /*****************************************************************************
- *                                block
- *****************************************************************************/
-/**
- * <Ring 0> This routine is called after `state' has been set (!= 0), it
- * calls `schedule()' to choose another proc as the `proc_ready'.
- *
- * @attention This routine does not change `state'. Make sure the `state'
- * of the proc to be blocked has been set properly.
- * 
- * @param p The proc to be blocked.
- *****************************************************************************/
-PRIVATE void block(struct proc* p)
-{
-	assert(p->state);
-	schedule();
-}
-
-/*****************************************************************************
- *                                unblock
- *****************************************************************************/
-/**
- * <Ring 0> This is a dummy routine. It does nothing actually. When it is
- * called, the `state' should have been cleared (== 0).
- * 
- * @param p The unblocked proc.
- *****************************************************************************/
-PRIVATE void unblock(struct proc* p)
-{
-
-}
-
-/*****************************************************************************
  *                                deadlock
  *****************************************************************************/
 /**
@@ -333,7 +305,6 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 		p_dest->recv_msg = 0;
 		PST_UNSET(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
-		unblock(p_dest);
 	}
 	else { /* p_dest is not waiting for the msg */
 		PST_SET(sender, PST_SENDING);
@@ -352,8 +323,6 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 			p_dest->q_sending = sender;
 		}
 		sender->next_sending = 0;
-
-		block(sender);
 	}
 
 	return 0;
@@ -499,8 +468,6 @@ no_msg:
 
 	who_wanna_recv->recv_msg = m;
 	who_wanna_recv->recvfrom = src;
-
-	block(who_wanna_recv);
 
 	return 0;
 }

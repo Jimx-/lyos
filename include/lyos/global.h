@@ -51,8 +51,6 @@ EXTERN	int	key_pressed; /**
 
 EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
 
-EXTERN	struct proc*	current;
-
 extern	char		task_stack[];
 extern	struct proc	proc_table[];
 extern  struct task	task_table[];

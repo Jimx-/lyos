@@ -43,6 +43,7 @@
   * *********************************************************************************/
 PUBLIC int do_sigaction()
 {
+	struct proc * p = proc_table + mm_msg.source;
 	struct sigaction new_sa;
 	struct sigaction * save;
 	struct sigaction * old_action = mm_msg.OLDSA;
@@ -53,7 +54,7 @@ PUBLIC int do_sigaction()
 	if (signum < 1 || signum > 32) return -EINVAL;
 
 	/* save the old action */
-	save = &current->sigaction[signum];
+	save = &p->sigaction[signum];
 	if(old_action) {
 		data_copy(mm_msg.source, D, old_action, TASK_MM, D, save, sizeof(struct sigaction));
 	}
@@ -61,9 +62,9 @@ PUBLIC int do_sigaction()
 	if (!mm_msg.NEWSA) return 0;
 	data_copy(TASK_MM, D, &new_sa, mm_msg.source, D, mm_msg.NEWSA, sizeof(struct sigaction));
 			  
-	current->sigaction[signum].sa_handler = new_sa.sa_handler;
-	current->sigaction[signum].sa_mask = new_sa.sa_mask;
-	current->sigaction[signum].sa_flags = new_sa.sa_flags;
+	p->sigaction[signum].sa_handler = new_sa.sa_handler;
+	p->sigaction[signum].sa_mask = new_sa.sa_mask;
+	p->sigaction[signum].sa_flags = new_sa.sa_flags;
 			  
 	return 0;
 }
@@ -77,12 +78,13 @@ PUBLIC int do_sigaction()
  *****************************************************************************/
  PUBLIC int do_alarm()
 {
+	struct proc * p = proc_table + mm_msg.source;
 	int seconds = mm_msg.SECONDS;
-	int old = current->alarm;
+	int old = p->alarm;
 
 	if (old)
 		old = (old - jiffies) / 100;
-	current->alarm = (seconds>0)?(jiffies+100*seconds):0;
+	p->alarm = (seconds>0)?(jiffies+100*seconds):0;
 	return (old);
 }
 

@@ -31,6 +31,8 @@
 			 * (ok to allocated to a new process)
 			 */
 
+#define pst_is_runnable(pst) ((pst) == 0)
+#define proc_is_runnable(proc) (pst_is_runnable((proc)->state))
 #define PST_IS_SET(proc, pst) ((proc)->state & pst)
 #define PST_SET(proc, pst)  do { \
 			 					(proc)->state |= (pst); \
