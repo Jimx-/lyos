@@ -57,8 +57,9 @@ struct proc {
 
 	spinlock_t lock;
 
+	int priority;
     int counter;                 /* remained ticks */
-    int priority;
+    int quantum_ms;
 
 	/* u32 pid;                   /\* process id passed in from MM *\/ */
 	char name[16];		   /* name of the process */

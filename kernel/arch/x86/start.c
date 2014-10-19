@@ -142,7 +142,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 PUBLIC void init_arch()
 {
-	int i, j, eflags, prio;
+	int i, j, eflags, prio, quantum;
     u32 codeseg, dataseg;
 
 	struct task * t;
@@ -154,7 +154,7 @@ PUBLIC void init_arch()
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
 		spinlock_init(&p->lock);
-		
+
 		INIT_LIST_HEAD(&(p->mem_regions));
 		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
@@ -168,12 +168,14 @@ PUBLIC void init_arch()
             dataseg = SELECTOR_TASK_DS | RPL_TASK;
             eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
 			prio    = 15;
+			quantum = 15;
         } else {                  /* USER PROC */
             t	= user_proc_table + (i - NR_TASKS);
             codeseg = SELECTOR_USER_CS | RPL_USER;
             dataseg = SELECTOR_USER_DS | RPL_USER;
             eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
 			prio    = 5;
+			quantum = 5;
         }
 
 		strcpy(p->name, t->name);	/* name of the process */
@@ -216,7 +218,8 @@ PUBLIC void init_arch()
 		p->regs.eflags	= eflags;
 		p->trap_style = KTS_INT;
 
-		p->counter = p->priority = prio;
+		p->counter = p->quantum_ms = quantum;
+		p->priority = prio;
 
 		p->state = 0;
 

@@ -66,7 +66,7 @@ PRIVATE struct proc * pick_proc()
 		if (!greatest_counter)
 			for (p = &FIRST_PROC; p <= &LAST_PROC; p++)
 				if (p->state == 0)
-					p->counter = p->priority;
+					p->counter = p->quantum_ms;
 	}
 
 	return p_ready;
