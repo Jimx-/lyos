@@ -37,6 +37,7 @@
 #include "region.h"
 #include "proto.h"
 #include "const.h"
+#include "global.h"
 
 PRIVATE int free_mem_size;
 
@@ -141,15 +142,19 @@ PRIVATE void init_mm()
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
 	struct proc * p = proc_table;
-	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
-		if (PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) continue;
-		phys_region_init(&(rp->phys_block), 1);
-		/* prepare heap */
-		rp->vir_addr = (void*)0x1000;
-		p->brk = 0x1000;
-		rp->length = 0;
-		rp->flags = RF_WRITABLE;
-		list_add(&(rp->list), &(p->mem_regions));
+	struct mmproc * mmp = mmproc_table;
+	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++, rp++, p++, mmp++) {
+		INIT_LIST_HEAD(&(mmp->mem_regions));
+		mmp->flags = MMPF_INUSE;
+		if (!(PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) && (i != INIT)) {
+			phys_region_init(&(rp->phys_block), 1);
+			/* prepare heap */
+			rp->vir_addr = (void*)0x1000;
+			p->brk = 0x1000;
+			rp->length = 0;
+			rp->flags = RF_WRITABLE;
+			list_add(&(rp->list), &(mmp->mem_regions));
+		}
 		vmctl(VMCTL_MMINHIBIT_CLEAR, i);
     }
 }

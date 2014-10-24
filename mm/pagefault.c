@@ -35,6 +35,7 @@
 #include "proto.h"
 #include "const.h"
 #include <lyos/vm.h>
+#include "global.h"
 
 #define PAGEFAULT_DEBUG
 
@@ -47,6 +48,7 @@ PUBLIC void do_handle_fault()
 
     int pfla = mm_msg.FAULT_ADDR;
     struct proc * p = proc_table + mm_msg.FAULT_PROC;
+    struct mmproc * mmp = mmproc_table + mm_msg.FAULT_PROC;
     int err_code = mm_msg.FAULT_ERRCODE;
 
     int handled = 0;
@@ -58,7 +60,7 @@ PUBLIC void do_handle_fault()
 
         struct vir_region * vr;
         int found = 0;
-        list_for_each_entry(vr, &(p->mem_regions), list) {
+        list_for_each_entry(vr, &(mmp->mem_regions), list) {
             if (pfla >= (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
                 found = 1;
                 break;
@@ -78,7 +80,7 @@ PUBLIC void do_handle_fault()
         int extend = 0;
         struct vir_region * vr;
         int gd_base;
-        list_for_each_entry(vr, &(p->mem_regions), list) {
+        list_for_each_entry(vr, &(mmp->mem_regions), list) {
             if (vr->flags & RF_GUARD) {
                 /* pfla is in stack guard area: extend stack */
                 if (pfla >= (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
@@ -94,7 +96,7 @@ PUBLIC void do_handle_fault()
         }
 
         if (extend) {
-            list_for_each_entry(vr, &(p->mem_regions), list) {
+            list_for_each_entry(vr, &(mmp->mem_regions), list) {
                 if ((vr->flags & RF_GROWSDOWN) && (gd_base == (int)vr->vir_addr)) {
                     if (region_extend_stack(vr, GROWSDOWN_GUARD_LEN) != 0) handled = 0;
                     region_map_phys(p, vr);

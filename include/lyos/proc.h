@@ -58,8 +58,8 @@
 
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
-	int trap_style;
-	struct page_directory	pgd;
+	struct segframe seg;
+	pgdir_t	pgd;
 
 	spinlock_t lock;
 
@@ -76,7 +76,7 @@ struct proc {
 				    * process flags.
 				    * A proc is runnable if state==0
 				    */
-	int cpu;
+	int cpu;			/* on which cpu this proc runs */
 
     sigset_t sig_pending;	/* signals to be handled */
 	sigset_t sig_mask;
@@ -109,14 +109,11 @@ struct proc {
 	u16 uid, euid, suid;
 	u16 gid, egid, sgid;
 	
-	//u16 used_math;
-
 	struct inode * pwd;			/* working directory */
 	struct inode * root;		/* root directory */
 
 	int umask;
 
-	struct list_head mem_regions;
 	int brk;
 
 	int exit_status; /**< for parent */
@@ -132,10 +129,6 @@ struct task {
 
 #define proc2pid(x) (x - proc_table)
 
-/* Number of tasks & processes */
-#define NR_TASKS		11
-#define NR_PROCS		32
-#define NR_NATIVE_PROCS		1
 #define FIRST_PROC		proc_table[0]
 #define LAST_PROC		proc_table[NR_TASKS + NR_PROCS - 1]
 

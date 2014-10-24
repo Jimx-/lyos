@@ -56,7 +56,7 @@ PUBLIC void pt_init()
     pt_kern_mapping_init();
 }
 
-PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags)
+PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 {
     pte_t * pt = (pte_t *)alloc_vmem(PT_SIZE);
     if (pt == NULL) {
@@ -85,7 +85,7 @@ PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_mappage(struct page_directory * pgd, void * phys_addr, void * vir_addr, u32 flags)
+PUBLIC int pt_mappage(pgdir_t * pgd, void * phys_addr, void * vir_addr, u32 flags)
 {
     unsigned long pgd_index = ARCH_PDE(vir_addr);
     unsigned long pt_index = ARCH_PTE(vir_addr);
@@ -110,7 +110,7 @@ PUBLIC int pt_mappage(struct page_directory * pgd, void * phys_addr, void * vir_
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_wppage(struct page_directory * pgd, void * vir_addr)
+PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
 {
     unsigned long pgd_index = ARCH_PDE(vir_addr);
     unsigned long pt_index = ARCH_PTE(vir_addr);
@@ -126,7 +126,7 @@ PUBLIC int pt_wppage(struct page_directory * pgd, void * vir_addr)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_unwppage(struct page_directory * pgd, void * vir_addr)
+PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
 {
     unsigned long pgd_index = ARCH_PDE(vir_addr);
     unsigned long pt_index = ARCH_PTE(vir_addr);
@@ -137,7 +137,7 @@ PUBLIC int pt_unwppage(struct page_directory * pgd, void * vir_addr)
     return 0;
 }
 
-PUBLIC int pt_writemap(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length, int flags)
+PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length, int flags)
 {
     /* sanity check */
     if ((int)phys_addr % PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
@@ -156,7 +156,7 @@ PUBLIC int pt_writemap(struct page_directory * pgd, void * phys_addr, void * vir
     return 0;
 }
 
-PUBLIC int pt_wp_memory(struct page_directory * pgd, void * vir_addr, int length)
+PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
     if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
@@ -173,7 +173,7 @@ PUBLIC int pt_wp_memory(struct page_directory * pgd, void * vir_addr, int length
     return 0;
 }
 
-PUBLIC int pt_unwp_memory(struct page_directory * pgd, void * vir_addr, int length)
+PUBLIC int pt_unwp_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
     if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
@@ -235,7 +235,7 @@ PUBLIC void pt_kern_mapping_init()
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_new(struct page_directory * pgd)
+PUBLIC int pgd_new(pgdir_t * pgd)
 {
     /* map the directory so that we can write it */
     pde_t * pg_dir = (pde_t *)alloc_vmem(PGD_SIZE);
@@ -263,9 +263,9 @@ PUBLIC int pgd_new(struct page_directory * pgd)
  * @param  pgd The page directory.
  * @return     Zero on success.
  */
-PUBLIC int pgd_mapkernel(struct page_directory * pgd)
+PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 {
-    int i = 0;
+    int i;
     int kernel_pde = ARCH_PDE(KERNEL_VMA);
     unsigned int addr = 0, mapped = 0, kern_size = kernel_pts * ARCH_BIG_PAGE_SIZE;
 
@@ -276,7 +276,6 @@ PUBLIC int pgd_mapkernel(struct page_directory * pgd)
         addr += ARCH_BIG_PAGE_SIZE;
         mapped += ARCH_BIG_PAGE_SIZE;
         kernel_pde++;
-        i++;
     }
 
     for (i = 0; i < nr_kern_mappings; i++) {
@@ -287,7 +286,7 @@ PUBLIC int pgd_mapkernel(struct page_directory * pgd)
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_clear(struct page_directory * pgd)
+PUBLIC int pgd_clear(pgdir_t * pgd)
 {
     int i;
 
@@ -302,7 +301,7 @@ PUBLIC int pgd_clear(struct page_directory * pgd)
     return 0;
 }
 
-PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length)
+PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
     if ((int)vir_addr % PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");

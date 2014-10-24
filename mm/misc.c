@@ -34,6 +34,7 @@
 #include "proto.h"
 #include "const.h"
 #include "lyos/vm.h"
+#include "global.h"
 
 PUBLIC int do_getsetid()
 {
@@ -74,11 +75,12 @@ PUBLIC int do_procctl()
     int retval = 0;
 
     struct proc * p = proc_table + who;
+    struct mmproc * mmp = mmproc_table + who;
 
     switch (param) {
         case PCTL_CLEARPROC:
             if (mm_msg.source != TASK_FS) retval = EPERM;
-            else if (!list_empty(&(p->mem_regions))) retval = proc_free(p);
+            else if (!list_empty(&(mmp->mem_regions))) retval = proc_free(p);
             break;
         default:
             retval = EINVAL;

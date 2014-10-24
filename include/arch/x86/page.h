@@ -31,7 +31,7 @@ typedef unsigned int    pte_t;
 #define I386_VM_ADDR_MASK       0xfffff000
 
 /* struct page_directory */
-struct page_directory {
+typedef struct {
     /* physical address of page dir */
     pde_t * phys_addr;
     /* virtual address of page dir */
@@ -39,7 +39,7 @@ struct page_directory {
 
     /* virtual address of all page tables */
     pte_t * vir_pts[I386_VM_DIR_ENTRIES];
-};
+} pgdir_t;
 
 /* size of a directory */
 #define PGD_SIZE    0x1000

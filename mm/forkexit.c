@@ -33,6 +33,7 @@
 #include "region.h"
 #include "const.h"
 #include "proto.h"
+#include "global.h"
 
 #define FE_DEBUG
 #ifdef FE_DEBUG
@@ -55,8 +56,9 @@ PUBLIC int do_fork()
 {
 	/* find a free slot in proc_table */
 	struct proc* p = proc_table;
+	struct mmproc * mmp = mmproc_table;
 	int i;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++)
+	for (i = 0; i < NR_TASKS + NR_PROCS; i++, p++, mmp++)
 		if (p->state == PST_FREE_SLOT)
 			break;
 
@@ -72,7 +74,9 @@ PUBLIC int do_fork()
 	/* duplicate the process table */
 	int pid = mm_msg.source;
 	struct proc * parent = proc_table + pid;
+	struct mmproc * mmparent = mmproc_table + pid;
 	*p = proc_table[pid];
+	*mmp = mmproc_table[pid];
 	p->p_parent = pid;
 	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
 
@@ -81,13 +85,13 @@ PUBLIC int do_fork()
 		return -ENOMEM;
 	}
 
-	INIT_LIST_HEAD(&(p->mem_regions));
+	INIT_LIST_HEAD(&(mmp->mem_regions));
 
 	/* copy regions */
 	struct vir_region * vr;
-    list_for_each_entry(vr, &(parent->mem_regions), list) {
+    list_for_each_entry(vr, &(mmparent->mem_regions), list) {
     	struct vir_region * new_region = region_new(p, vr->vir_addr, vr->length, vr->flags);
-       	list_add(&(new_region->list), &(p->mem_regions));
+       	list_add(&(new_region->list), &(mmp->mem_regions));
        	
        	if (!(vr->flags & RF_MAPPED)) continue;
 
@@ -180,11 +184,11 @@ PUBLIC void do_exit(int status)
 	p->exit_status = status;
 
 	if (proc_table[parent_pid].state & PST_WAITING) { /* parent is waiting */
-		proc_table[parent_pid].state &= ~PST_WAITING;
+		PST_UNSET(&proc_table[parent_pid], PST_WAITING);
 		cleanup(&proc_table[pid]);
 	}
 	else { /* parent is not waiting */
-		proc_table[pid].state |= PST_HANGING;
+		PST_SET(&proc_table[parent_pid], PST_HANGING);
 	}
 
 	/* if the proc has any child, make INIT the new parent */
@@ -193,7 +197,7 @@ PUBLIC void do_exit(int status)
 			proc_table[i].p_parent = INIT;
 			if ((proc_table[INIT].state & PST_WAITING) &&
 			    (proc_table[i].state & PST_HANGING)) {
-				proc_table[INIT].state &= ~PST_WAITING;
+				PST_UNSET(&proc_table[INIT], PST_WAITING);
 				cleanup(&proc_table[i]);
 			}
 		}
@@ -217,8 +221,7 @@ PRIVATE void cleanup(struct proc * proc)
 	msg2parent.PID = proc2pid(proc);
 	msg2parent.STATUS = proc->exit_status;
 	send_recv(SEND, proc->p_parent, &msg2parent);
-
-	proc->state = PST_FREE_SLOT;
+	PST_SET(proc, PST_FREE_SLOT);
 }
 
 /*****************************************************************************
@@ -291,10 +294,11 @@ PUBLIC int proc_free(struct proc * p)
 {
 	/* free memory */
 	struct vir_region * vr;
+	struct mmproc * mmp = mmproc_table + (p - proc_table);
 
-    if (!list_empty(&(p->mem_regions))) {
-	    list_for_each_entry(vr, &(p->mem_regions), list) {
-    		if ((&(vr->list) != &(p->mem_regions)) && (&(vr->list) != p->mem_regions.next)) {
+    if (!list_empty(&(mmp->mem_regions))) {
+	    list_for_each_entry(vr, &(mmp->mem_regions), list) {
+    		if ((&(vr->list) != &(mmp->mem_regions)) && (&(vr->list) != mmp->mem_regions.next)) {
     			region_unmap_phys(p, list_entry(vr->list.prev, struct vir_region, list));
        			region_free(list_entry(vr->list.prev, struct vir_region, list));
        		}
@@ -302,7 +306,7 @@ PUBLIC int proc_free(struct proc * p)
     }
     region_unmap_phys(p, list_entry(vr->list.prev, struct vir_region, list));
     region_free(list_entry(vr->list.prev, struct vir_region, list)); 
-    INIT_LIST_HEAD(&(p->mem_regions));
+    INIT_LIST_HEAD(&(mmp->mem_regions));
     pgd_clear(&(p->pgd));
 
     return 0;

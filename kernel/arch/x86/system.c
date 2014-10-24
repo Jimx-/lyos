@@ -66,8 +66,8 @@ PUBLIC struct proc * arch_switch_to_user()
  */
 PUBLIC void restore_user_context(struct proc * p)
 {
-    int trap_style = p->trap_style;
-    p->trap_style = KTS_NONE;
+    int trap_style = p->seg.trap_style;
+    p->seg.trap_style = KTS_NONE;
 
     switch (trap_style) {
     case KTS_NONE:

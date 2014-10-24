@@ -99,26 +99,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     	}
     }
 
-    /* setup gdt */
-	init_desc(&gdt[0], 0, 0, 0);
-	init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
-	init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
-	init_desc(&gdt[INDEX_TASK_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
-	init_desc(&gdt[INDEX_TASK_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
-	init_desc(&gdt[INDEX_USER_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
-	init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
-	init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
-
-	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
-	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
-	*p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
-	*p_gdt_base = (u32)&gdt;
-
-	u16* p_idt_limit = (u16*)(&idt_ptr[0]);
-	u32* p_idt_base  = (u32*)(&idt_ptr[2]);
-	*p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
-	*p_idt_base  = (u32)&idt;
-
 	init_prot();
 
 	mb_flags = mboot->flags;
@@ -154,8 +134,6 @@ PUBLIC void init_arch()
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
 		spinlock_init(&p->lock);
-
-		INIT_LIST_HEAD(&(p->mem_regions));
 		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
 			p->state = PST_FREE_SLOT;
@@ -216,7 +194,7 @@ PUBLIC void init_arch()
 		p->regs.eip	= (u32)t->initial_eip;
 		p->regs.esp	= (u32)stk;
 		p->regs.eflags	= eflags;
-		p->trap_style = KTS_INT;
+		p->seg.trap_style = KTS_INT;
 
 		p->counter = p->quantum_ms = quantum;
 		p->priority = prio;
@@ -225,7 +203,7 @@ PUBLIC void init_arch()
 
 		if (t->initial_eip == NULL) 
 			PST_SET(p, PST_BOOTINHIBIT);	/* process is to be loaded by SERVMAN */
-		else if (i != TASK_MM) 
+		if (i != TASK_MM) 
 			PST_SET(p, PST_MMINHIBIT);		/* process is not ready until MM allows it to run */
 
 		p->send_msg = 0;
@@ -243,7 +221,7 @@ PUBLIC void init_arch()
 		p->root = NULL;
 		p->umask = ~0;
 
-		p->brk = 0;
+		//p->brk = 0;
 
 		for (j = 0; j < NR_FILES; j++)
 			p->filp[j] = 0;

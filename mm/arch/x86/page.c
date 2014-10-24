@@ -30,7 +30,7 @@
 #include "page.h"
 #include <errno.h>
 
-PRIVATE void * find_free_pages(struct page_directory * pgd, int nr_pages, void * start, void * end)
+PRIVATE void * find_free_pages(pgdir_t * pgd, int nr_pages, void * start, void * end)
 {
     /* default value */
     if (start == NULL) start = (void *)FIXMAP_START;
@@ -92,7 +92,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
                         endpoint_t src_pid, int src_seg, void * src_addr, int len)
 {
     pte_t * old_pgd = (pte_t *)read_cr3();
-    struct page_directory * kernel_pgd = &(proc_table[TASK_MM].pgd);
+    pgdir_t * kernel_pgd = &(proc_table[TASK_MM].pgd);
 
     switch_address_space(initial_pgd);
     reload_cr3();

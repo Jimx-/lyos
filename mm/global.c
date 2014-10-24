@@ -13,37 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_STACKFRAME_H_
-#define	_STACKFRAME_H_
+#define _MM_GLOBAL_VARIABLE_HERE_
 
-typedef u32 reg_t;
+#include "lyos/config.h"
+#include "lyos/type.h"
+#include "lyos/list.h"
+#include "global.h"
 
-struct stackframe { 
-    reg_t gs;     
-    reg_t fs; 
-    reg_t es; 
-    reg_t ds; 
-    reg_t edi;    
-    reg_t esi;    
-    reg_t ebp;    
-    reg_t kernel_esp; 
-    reg_t ebx;    
-    reg_t edx;    
-    reg_t ecx;    
-    reg_t eax;    
-    reg_t retaddr;
-    reg_t eip;    
-    reg_t cs; 
-    reg_t eflags; 
-    reg_t esp;    
-    reg_t ss; 
-};
-
-
-struct segframe {
-    int trap_style;
-    u32 cr3_phys;
-    u32 * cr3_vir;
-};
-
-#endif
+PUBLIC  struct mmproc mmproc_table[NR_TASKS + NR_PROCS];

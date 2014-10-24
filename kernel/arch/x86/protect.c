@@ -97,6 +97,26 @@ PUBLIC void init_prot()
   	if(_cpufeature(_CPUF_I386_SYSCALL))
 		syscall_style |= SST_AMD_SYSCALL;
 
+    /* setup gdt */
+	init_desc(&gdt[0], 0, 0, 0);
+	init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
+	init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
+	init_desc(&gdt[INDEX_TASK_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
+	init_desc(&gdt[INDEX_TASK_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
+	init_desc(&gdt[INDEX_USER_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
+	init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
+
+	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
+	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
+	*p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
+	*p_gdt_base = (u32)&gdt;
+
+	u16* p_idt_limit = (u16*)(&idt_ptr[0]);
+	u32* p_idt_base  = (u32*)(&idt_ptr[2]);
+	*p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
+	*p_idt_base  = (u32)&idt;
+	
 	init_8259A();
 
 	init_idt();

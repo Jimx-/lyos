@@ -33,6 +33,7 @@
 #include "region.h"
 #include "proto.h"
 #include "const.h"
+#include "global.h"
 
 //#define SBRK_DEBUG
 
@@ -45,11 +46,12 @@ PUBLIC int do_sbrk()
     int src = mm_msg.source;
     int count = mm_msg.CNT;
     struct proc * p = proc_table + src;
+    struct mmproc * mmp = mmproc_table + src;
     if (count == 0) return p->brk;
     
     int retval = 1;
     struct vir_region * vr;
-    list_for_each_entry(vr, &(p->mem_regions), list) {
+    list_for_each_entry(vr, &(mmp->mem_regions), list) {
         if (p->brk >= (int)(vr->vir_addr) && p->brk <= (int)(vr->vir_addr) + vr->length) {
             retval = 0;
             break;

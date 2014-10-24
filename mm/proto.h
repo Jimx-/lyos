@@ -16,6 +16,8 @@
 #ifndef _MM_PROTO_H_
 #define _MM_PROTO_H_
 
+#include "mmproc.h"
+    
 PUBLIC void mem_init(int mem_start, int free_mem_size);
 PUBLIC void vmem_init(int mem_start, int free_mem_size);
 /* PUBLIC int   alloc_mem(int pid, int memsize); */
@@ -27,19 +29,20 @@ PUBLIC int  alloc_vmem(int memsize);
 PUBLIC int alloc_vmpages(int nr_pages);
 PUBLIC int  free_vmem(int base, int len);
 
-PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags);
-PUBLIC int pt_mappage(struct page_directory * pgd, void * phys_addr, void * vir_addr, u32 flags);
-PUBLIC int pt_wppage(struct page_directory * pgd, void * vir_addr);
-PUBLIC int pt_unwppage(struct page_directory * pgd, void * vir_addr);
-PUBLIC int pt_writemap(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length, int flags);
-PUBLIC int pt_wp_memory(struct page_directory * pgd, void * vir_addr, int length);
-PUBLIC int pt_unwp_memory(struct page_directory * pgd, void * vir_addr, int length);
+PUBLIC void pt_init();
+PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags);
+PUBLIC int pt_mappage(pgdir_t * pgd, void * phys_addr, void * vir_addr, u32 flags);
+PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr);
+PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr);
+PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length, int flags);
+PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length);
+PUBLIC int pt_unwp_memory(pgdir_t * pgd, void * vir_addr, int length);
 PUBLIC void pt_kern_mapping_init();
-PUBLIC int map_memory(struct page_directory * pgd, void * phys_addr, void * vir_addr, int length);
-PUBLIC int unmap_memory(struct page_directory * pgd, void * vir_addr, int length);
-PUBLIC int pgd_new(struct page_directory * pgd);
-PUBLIC int pgd_mapkernel(struct page_directory * pgd);
-PUBLIC int pgd_clear(struct page_directory * pgd);
+PUBLIC int map_memory(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length);
+PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length);
+PUBLIC int pgd_new(pgdir_t * pgd);
+PUBLIC int pgd_mapkernel(pgdir_t * pgd);
+PUBLIC int pgd_clear(pgdir_t * pgd);
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);
 PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length, int flags);
