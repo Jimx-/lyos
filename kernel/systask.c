@@ -33,10 +33,6 @@
 #include "sys/utsname.h"
 #include <sys/time.h>
 
-#if CONFIG_FIRMWARE_DMI
-    #include "lyos/dmi.h"
-#endif
-
 #define MAX_HOSTNAME_LEN	256
 PRIVATE char hostname[MAX_HOSTNAME_LEN];
 PRIVATE struct utsname uname_buf;
@@ -65,13 +61,6 @@ PUBLIC void task_sys()
 	struct timeval tv;
 
 	prepare_uname_buf(&uname_buf);
-#if CONFIG_FIRMWARE_DMI
-    dmi_init();
-    printl("DMI: %s %s %s\n", 
-    	dmi_get_info(DMI_SYS_VENDOR), dmi_get_info(DMI_PRODUCT_NAME), dmi_get_info(DMI_PRODUCT_VERSION));
-    printl("DMI: BIOS: %s Ver. %s %s\n", 
-    	dmi_get_info(DMI_BIOS_VENDOR), dmi_get_info(DMI_BIOS_VERSION), dmi_get_info(DMI_BIOS_DATE));
-#endif
 
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);

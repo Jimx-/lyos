@@ -50,6 +50,14 @@ global 	switch_k_stack
 global  fninit
 global  ia32_write_msr
 global  halt_cpu
+;global 	enable_paging
+global  read_cr0
+global  write_cr0
+global 	read_cr2
+global 	read_cr3
+global	read_cr4
+global 	write_cr4
+global 	reload_cr3
 
 ; ========================================================================
 ;                  void port_read(u16 port, void* buf, int n);
@@ -301,6 +309,19 @@ x86_ltr:
 	ret
 %endmacro
 
+%macro  load_from_eax	1
+	push ebp
+	mov ebp, esp
+	xor eax, eax
+	mov eax, [ebp + 4 + 4]
+
+	mov %1, eax
+	jmp .0
+.0:
+	pop ebp
+	ret
+%endmacro
+
 x86_load_ds:
 	load_from_ax	ds
 
@@ -348,4 +369,58 @@ ia32_write_msr:
 halt_cpu:
 	sti
 	hlt
+	ret
+
+enable_paging:
+	mov	eax, cr0
+	or	eax, 80000000h
+	mov	cr0, eax
+
+	lea ecx, [paging_enabled]
+	jmp ecx				; jump!
+paging_enabled:
+	nop
+
+	ret
+
+read_cr0:
+    push ebp
+    mov ebp, esp
+    mov	eax, cr0
+    pop ebp
+	ret
+
+write_cr0:
+	load_from_eax	cr0
+
+read_cr2:
+    push ebp
+    mov ebp, esp
+    mov	eax, cr2
+    pop ebp
+	ret
+
+read_cr3:
+    push ebp
+    mov ebp, esp
+    mov	eax, cr3
+    pop ebp
+	ret
+
+read_cr4:
+    push ebp
+    mov ebp, esp
+    mov	eax, cr4
+    pop ebp
+	ret
+
+write_cr4:
+	load_from_eax	cr4
+
+reload_cr3:
+	push ebp
+	mov ebp, esp
+	mov eax, cr3
+	mov cr3, eax
+	pop ebp
 	ret

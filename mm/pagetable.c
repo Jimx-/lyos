@@ -31,6 +31,7 @@
 #include <lyos/vm.h>
 #include "region.h"
 #include "proto.h"
+#include <lyos/cpufeature.h>
 
 #define MAX_KERN_MAPPINGS   10
 struct kern_mapping {
@@ -41,7 +42,19 @@ struct kern_mapping {
 } kern_mappings[MAX_KERN_MAPPINGS];
 PRIVATE int nr_kern_mappings = 0;
 
+PRIVATE int global_bit = 0;
+
 //#define PAGETABLE_DEBUG    1
+
+PUBLIC void pt_init()
+{
+#if (ARCH == x86)
+    if (_cpufeature(_CPUF_I386_PGE))
+        global_bit = ARCH_PG_GLOBAL;
+#endif
+
+    pt_kern_mapping_init();
+}
 
 PUBLIC int pt_create(struct page_directory * pgd, int pde, u32 flags)
 {
@@ -252,12 +265,18 @@ PUBLIC int pgd_new(struct page_directory * pgd)
  */
 PUBLIC int pgd_mapkernel(struct page_directory * pgd)
 {
-    int i;
+    int i = 0;
     int kernel_pde = ARCH_PDE(KERNEL_VMA);
+    unsigned int addr = 0, mapped = 0, kern_size = kernel_pts * ARCH_BIG_PAGE_SIZE;
 
-    for (i = 0; i < kernel_pts; i++) {
-        pgd->vir_addr[kernel_pde + i] = initial_pgd[i];
-        pgd->vir_pts[kernel_pde + i] = (pte_t *)(((int)initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+    while (mapped < kern_size) {
+        pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit;
+        //pgd->vir_pts[kernel_pde] = (pte_t *)(((int)initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+        
+        addr += ARCH_BIG_PAGE_SIZE;
+        mapped += ARCH_BIG_PAGE_SIZE;
+        kernel_pde++;
+        i++;
     }
 
     for (i = 0; i < nr_kern_mappings; i++) {
@@ -273,7 +292,7 @@ PUBLIC int pgd_clear(struct page_directory * pgd)
     int i;
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        if (i >= ARCH_PDE(KERNEL_VMA) && i < ARCH_PDE(KERNEL_VMA) + kernel_pts) continue;  /* never unmap kernel */
+        //if (i >= ARCH_PDE(KERNEL_VMA) && i < ARCH_PDE(KERNEL_VMA) + kernel_pts) continue;  /* never unmap kernel */
         if (pgd->vir_pts[i]) {
             free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
         }

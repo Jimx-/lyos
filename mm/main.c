@@ -36,6 +36,7 @@
 #include <elf.h>
 #include "region.h"
 #include "proto.h"
+#include "const.h"
 
 PRIVATE int free_mem_size;
 
@@ -43,6 +44,7 @@ extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
 
 PRIVATE void init_mm();
+PRIVATE void print_memmap();
 
 /*****************************************************************************
  *                                task_mm
@@ -125,7 +127,35 @@ PUBLIC void task_mm()
  * 
  *****************************************************************************/
 PRIVATE void init_mm()
-{	
+{
+	int i;
+	
+	print_memmap();
+
+	/* initialize hole table */
+	mem_init(mem_start, free_mem_size);
+	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
+	pt_init();
+
+	/* setup memory region for tasks so they can malloc */
+	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
+	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
+	struct proc * p = proc_table;
+	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
+		if (PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) continue;
+		phys_region_init(&(rp->phys_block), 1);
+		/* prepare heap */
+		rp->vir_addr = (void*)0x1000;
+		p->brk = 0x1000;
+		rp->length = 0;
+		rp->flags = RF_WRITABLE;
+		list_add(&(rp->list), &(p->mem_regions));
+		vmctl(VMCTL_MMINHIBIT_CLEAR, i);
+    }
+}
+
+PRIVATE void print_memmap()
+{
 	int usable_memsize = 0;
 	int reserved_memsize = 0;
 	int i;
@@ -169,24 +199,4 @@ PRIVATE void init_mm()
 
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;
-
-	/* initialize hole table */
-	mem_init(mem_start, free_mem_size);
-	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
-	pt_kern_mapping_init();
-
-	/* setup memory region for tasks so they can malloc */
-	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
-	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
-	struct proc * p = proc_table;
-	for (i = 0; i < NR_TASKS; i++, rp++, p++) {
-		if (PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) continue;
-		phys_region_init(&(rp->phys_block), 1);
-		/* prepare heap */
-		rp->vir_addr = (void*)0x1000;
-		p->brk = 0x1000;
-		rp->length = 0;
-		list_add(&(rp->list), &(p->mem_regions));
-		vmctl(VMCTL_MMINHIBIT_CLEAR, i);
-    }
 }

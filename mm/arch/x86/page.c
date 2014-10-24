@@ -30,57 +30,6 @@
 #include "page.h"
 #include <errno.h>
 
-/**
- * <Ring 0> Setup identity paging for kernel
- */
-PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
-{
-    pte_t * page_table_start = pt;
-    /* full 4G memory */
-    int nr_page_tables = 1024;
-
-    /* identity paging */
-    int nr_pages = nr_page_tables * 1024;
-    int page = PG_PRESENT | PG_RW | PG_USER;
-
-    int i;
-    for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
-        if (i >= FIXMAP_START / PG_SIZE && i < FIXMAP_END / PG_SIZE) page_table_start[i] = 0;
-        else page_table_start[i] = page;
-    }
-
-    /* initialize page directory */
-    int pde = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
-    for (i = 0; i < nr_page_tables; i++, pde += PT_SIZE) {
-        pgd[i] = pde;
-    }
-
-    /* map the kernel */
-    for (i = 0; i < kpts; i++) {
-        pgd[i] &= ~PG_USER;     /* not accessible to user */
-        pgd[i + ARCH_PDE(KERNEL_VMA)] = pgd[i];
-    }
-
-    /* switch to the new page directory */
-    switch_address_space(pgd);
-    /* reload it */
-    reload_cr3();
-}
-
-/* <Ring 0> */
-PUBLIC void switch_address_space(pde_t * pgd) {
-    asm volatile ("mov %0, %%cr3":: "r"(pgd));
-}
-
-/* <Ring 0> */
-PUBLIC void disable_paging()
-{
-    int cr0;
-    asm volatile ("mov %%cr0, %0": "=r"(cr0));
-    cr0 &= ~I386_CR0_PG;
-    asm volatile ("mov %0, %%cr0":: "r"(cr0));
-}
-
 PRIVATE void * find_free_pages(struct page_directory * pgd, int nr_pages, void * start, void * end)
 {
     /* default value */

@@ -21,10 +21,15 @@ PUBLIC void x86_lidt(u8 * p_idt);
 PUBLIC void x86_lldt(u32 ldt);
 PUBLIC void x86_ltr(u32 tss);
 PUBLIC void x86_load_ds(u32 ds);
-PUBLIC void x86_load_es(u32 ds);
-PUBLIC void x86_load_fs(u32 ds);
-PUBLIC void x86_load_gs(u32 ds);
-PUBLIC void x86_load_ss(u32 ds);
+PUBLIC void x86_load_es(u32 es);
+PUBLIC void x86_load_fs(u32 fs);
+PUBLIC void x86_load_gs(u32 gs);
+PUBLIC void x86_load_ss(u32 ss);
+
+PUBLIC u32 read_cr0();
+PUBLIC void write_cr0(u32 cr0);
+PUBLIC u32 read_cr4();
+PUBLIC void write_cr4(u32 cr4);
 
 PUBLIC void switch_k_stack(char * esp, void * cont);
 

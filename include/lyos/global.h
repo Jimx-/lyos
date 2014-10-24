@@ -34,12 +34,11 @@ EXTERN	struct descriptor	gdt[GDT_SIZE];
 EXTERN	u8			        idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct gate		    idt[IDT_SIZE];
 EXTERN  pde_t *             initial_pgd;
+EXTERN  unsigned int        lapic_addr;
 #endif
 
 extern  int booting_cpu;
 EXTERN  int ncpus;
-
-EXTERN  u32 lapic_addr;
 
 EXTERN	int	current_console;
 

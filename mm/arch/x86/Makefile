@@ -1,5 +1,5 @@
 
-MMOBJS		= page.o _page.o
+MMOBJS		= page.o
 
 ARCHMM		= arch-mm.o
 
@@ -11,10 +11,6 @@ realclean :
 $(ARCHMM): $(MMOBJS)
 	@echo -e '\tLD\tmm/arch/x86/$@'
 	@$(LD) -r -o $(ARCHMM) $(MMOBJS)
-
-_page.o : page.asm
-	@echo -e '\tASM\tmm/arch/x86/$@'
-	@$(ASM) $(ASMKFLAGS) -o $@ $<
 
 page.o : page.c
 	@echo -e '\tCC\tmm/arch/x86/$@'
