@@ -30,10 +30,7 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
 #include "lyos/global.h"
-#include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #define __LINUX_ERRNO_EXTENSIONS__   /* we want ENOTBLK */
 #include "errno.h"

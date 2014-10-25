@@ -21,15 +21,15 @@
 #include "assert.h"
 #include "protect.h"
 #include "lyos/const.h"
-#include "lyos/fs.h"
-#include "lyos/tty.h"
-#include "lyos/console.h"
 #include "lyos/proc.h"
 #include "string.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
 PRIVATE int disp_pos = 0;
+
+#define SCR_WIDTH 80
+#define SCR_SIZE (80 * 25)
 
 PRIVATE void put_char(const char c)
 {
