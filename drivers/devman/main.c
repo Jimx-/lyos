@@ -29,7 +29,6 @@
 #include <lyos/ipc.h>
 
 PRIVATE void devman_init();
-PRIVATE int register_filesystem();
 
 PUBLIC int main(int argc, char * argv[])
 {
@@ -70,7 +69,7 @@ PRIVATE void devman_init()
 
     //register_filesystem();
 }
-
+#if 0
 PRIVATE int register_filesystem()
 {
     MESSAGE m;
@@ -80,4 +79,7 @@ PRIVATE int register_filesystem()
     m.PATHNAME = "devfs";
     m.NAME_LEN = strlen(m.PATHNAME);
     send_recv(BOTH, TASK_FS, &m);
+
+    return 0;
 }
+#endif

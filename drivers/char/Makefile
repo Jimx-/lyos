@@ -1,9 +1,9 @@
 #
 # Makefile for the Lyos character device drivers
 
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
+TTY = tty/tty.o
 
-CHRDRVOBJS	= console.o keyboard.o tty.o
+CHRDRVOBJS	= $(TTY)
 CHRDRV		= char.o
 
 everything : realclean $(CHRDRV)
@@ -19,3 +19,5 @@ $(CHRDRV): $(CHRDRVOBJS)
 	@echo -e '\tCC\tdrivers/char/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
 
+$(TTY):
+	@(cd tty; make)
