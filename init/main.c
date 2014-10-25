@@ -22,10 +22,7 @@ int main(int argc, char * argv[])
 
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
-	if (fd_hostname == -1) {
-		printf("Setting hostname to %s\n", DEFAULT_HOSTNAME);
-		sethostname(DEFAULT_HOSTNAME, strlen(DEFAULT_HOSTNAME));
-	} else {
+	if (fd_hostname != -1) {
 		char hostname[256];
 		memset(hostname, 0, sizeof(hostname));
 		int len = read(fd_hostname, hostname, sizeof(hostname));

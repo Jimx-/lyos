@@ -6,7 +6,8 @@ ARCH=$1
 RELEASE=$2
 CC=$3
 LOCAL_VERSION=$4
-SMP=$5
+LOCAL_VERSION_AUTO=$5
+SMP=$6
 
 if [ -r $PWD/.version ]; then
     VERSION=`cat .version`
@@ -17,6 +18,13 @@ fi
 
 if [ -n "$LOCAL_VERSION" ] ; then
     VERSION="$VERSION-$LOCAL_VERSION"
+fi
+
+if [ "$LOCAL_VERSION_AUTO" = "y" ]; then
+    HEAD=`git rev-parse --verify --short HEAD 2>/dev/null`
+    if [ -n $HEAD ]; then
+        VERSION="$VERSION-g$HEAD"
+    fi
 fi
 
 if [ "$SMP" = "y" ]; then

@@ -10,6 +10,12 @@ config LOCALVERSION
 	help
 	  Append an extra string to the end of your kernel version.
 
+config LOCALVERSION_AUTO
+    bool "Automatically append version information to the version string"
+    default y
+    help
+      Append git version information to the value set in CONFIG_LOCALVERSION.
+
 choice
     prompt "Compression algorithm"
     default COMPRESS_NONE
@@ -26,6 +32,12 @@ config COMPRESS_GZIP
 
 endchoice
         
+config DEFAULT_HOSTNAME
+    string "Default hostname"
+    default "(none)"
+    help
+      The default system hostname.
+
 config LOG_BUF_SHIFT
     int "Kernel log buffer size (16 => 64KB, 17 => 128KB)"
     range 12 21

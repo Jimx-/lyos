@@ -217,11 +217,13 @@ PRIVATE int prepare_uname_buf(struct utsname * buf)
 {
 	memset(buf, 0, sizeof(struct utsname));
 	memset(hostname, 0, sizeof(hostname));
+	sprintf(hostname, "%s", CONFIG_DEFAULT_HOSTNAME);
 
 	strcpy(buf->sysname, "Lyos");
 	strcpy(buf->version, UTS_VERSION);
 	strcpy(buf->machine, UTS_MACHINE);
 	strcpy(buf->release, UTS_RELEASE);
+	sprintf(buf->nodename, "%s", CONFIG_DEFAULT_HOSTNAME);
 
 	return 0;
 }
