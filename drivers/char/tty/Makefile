@@ -2,7 +2,7 @@
 # Makefile for the Lyos tty driver.
 
 TTYOBJS 		= arch/$(ARCH)/arch-tty.o \
-			_tty.o
+			_tty.o global.o
 TTY		= tty.o
 
 CFLAGS += -I$(CURDIR)

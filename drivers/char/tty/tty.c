@@ -35,6 +35,7 @@
 #include <lyos/driver.h>
 #include <lyos/param.h>
 #include <lyos/log.h>
+#include "global.h"
 
 PRIVATE struct sysinfo * _sysinfo;
 
