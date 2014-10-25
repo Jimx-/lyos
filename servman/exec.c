@@ -59,7 +59,7 @@ PRIVATE int module_stack_len;
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
-    data_copy(execi->proc_e, D, (void *)vaddr, TASK_SERVMAN, D, (void *)((int)(execi->header) + offset), len);
+    data_copy(execi->proc_e, (void *)vaddr, SELF, (void *)((int)(execi->header) + offset), len);
     
     return 0;
 }
@@ -209,7 +209,7 @@ PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
 
     /* copy the stack */
     char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
-    data_copy(target, D, orig_stack, TASK_SERVMAN, D, module_stp, module_stack_len);
+    data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
 
     proc_table[target].regs.ecx = (u32)module_envp; 
     proc_table[target].regs.edx = (u32)orig_stack;

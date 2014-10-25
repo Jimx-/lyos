@@ -75,14 +75,14 @@ PUBLIC void task_sys()
 			break;
 		case GET_RTC_TIME:
 			get_rtc_time(&t);
-			data_copy(src, D, msg.BUF, TASK_SYS, D, &t, sizeof(t));
+			data_copy(src, msg.BUF, TASK_SYS, &t, sizeof(t));
 			break;
 		case UNAME:
-			msg.RETVAL = data_copy(src, D, msg.BUF, TASK_SYS, D, &uname_buf, sizeof(struct utsname));
+			msg.RETVAL = data_copy(src, msg.BUF, TASK_SYS, &uname_buf, sizeof(struct utsname));
 			break;
 		case GET_TIME_OF_DAY:
 			msg.RETVAL = do_gettimeofday(&tv, NULL);
-			data_copy(src, D, msg.BUF, TASK_SYS, D, &tv, sizeof(tv));
+			data_copy(src, msg.BUF, TASK_SYS, &tv, sizeof(tv));
 			break;
 		case GETSETHOSTNAME:
 			msg.RETVAL = do_getsethostname(&msg);
@@ -238,13 +238,13 @@ PRIVATE int do_getsethostname(MESSAGE * p)
 	if (p->BUF_LEN < 0) return EINVAL;
 
 	if (p->REQUEST == GS_GETHOSTNAME) {
-		data_copy(src, D, p->BUF, TASK_SYS, D, hostname, p->BUF_LEN);
+		data_copy(src, p->BUF, TASK_SYS, hostname, p->BUF_LEN);
 		if (strlen(hostname) > p->BUF_LEN) return ENAMETOOLONG;
 	} else if (p->REQUEST == GS_SETHOSTNAME) {
 		if (who->uid != SU_UID) return EPERM;
 		if (p->BUF_LEN > sizeof(hostname)) return EINVAL;
 		memset(hostname, 0, sizeof(hostname));
-		data_copy(TASK_SYS, D, hostname, src, D, p->BUF, p->BUF_LEN);
+		data_copy(TASK_SYS, hostname, src, p->BUF, p->BUF_LEN);
 		hostname[p->BUF_LEN] = '\0';
 		memcpy(uname_buf.nodename, hostname, _UTSNAME_NODENAME_LENGTH);
 		uname_buf.nodename[_UTSNAME_NODENAME_LENGTH - 1] = '\0';

@@ -63,7 +63,7 @@ PRIVATE void cons_write(TTY * tty)
 	if (i == 0) return;
 	while (i) {
 		int bytes = min(TTY_OUT_BUF_LEN, i);
-		data_copy(TASK_TTY, D, buf, tty->tty_outprocnr, D, p, bytes);
+		data_copy(TASK_TTY, buf, tty->tty_outprocnr, p, bytes);
 		for (j = 0; j < bytes; j++)
 		{
 			tty->tty_outcnt++;

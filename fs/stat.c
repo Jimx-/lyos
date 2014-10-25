@@ -68,7 +68,7 @@ PUBLIC int do_stat(MESSAGE * p)
     char pathname[MAX_PATH];
     if (namelen > MAX_PATH) return ENAMETOOLONG;
 
-    data_copy(SELF, D, pathname, p->source, D, p->PATHNAME, namelen);
+    data_copy(SELF, pathname, p->source, p->PATHNAME, namelen);
     pathname[namelen] = 0;
 
     struct inode * pin = resolve_path(pathname, pcaller);

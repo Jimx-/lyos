@@ -48,7 +48,7 @@ PUBLIC int do_sbrk()
     struct proc * p = proc_table + src;
     struct mmproc * mmp = mmproc_table + src;
     if (count == 0) return p->brk;
-    
+
     int retval = 1;
     struct vir_region * vr;
     list_for_each_entry(vr, &(mmp->mem_regions), list) {

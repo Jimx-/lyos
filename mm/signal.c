@@ -56,11 +56,11 @@ PUBLIC int do_sigaction()
 	/* save the old action */
 	save = &p->sigaction[signum];
 	if(old_action) {
-		data_copy(mm_msg.source, D, old_action, TASK_MM, D, save, sizeof(struct sigaction));
+		data_copy(mm_msg.source, old_action, TASK_MM, save, sizeof(struct sigaction));
 	}
 	
 	if (!mm_msg.NEWSA) return 0;
-	data_copy(TASK_MM, D, &new_sa, mm_msg.source, D, mm_msg.NEWSA, sizeof(struct sigaction));
+	data_copy(TASK_MM, &new_sa, mm_msg.source, mm_msg.NEWSA, sizeof(struct sigaction));
 			  
 	p->sigaction[signum].sa_handler = new_sa.sa_handler;
 	p->sigaction[signum].sa_mask = new_sa.sa_mask;

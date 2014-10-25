@@ -230,14 +230,14 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 		if (p->type == DEV_READ) {
 			interrupt_wait();
 			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
-			data_copy(p->PROC_NR, D, (void*)buf, TASK_HD, D, hdbuf, bytes);
+			data_copy(p->PROC_NR, (void*)buf, TASK_HD, hdbuf, bytes);
 			//phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
 		else {
 			if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
 				panic("hd writing error.");
 
-			data_copy(TASK_HD, D, hdbuf, p->PROC_NR, D, (void*)buf, bytes);
+			data_copy(TASK_HD, hdbuf, p->PROC_NR, (void*)buf, bytes);
 			port_write(REG_DATA, hdbuf, bytes);
 			interrupt_wait();
 		}
@@ -271,7 +271,7 @@ PRIVATE int hd_ioctl(MESSAGE * p)
 				   &hdi->primary[part_no] :
 				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE]); */
 
-		data_copy(p->PROC_NR, D, p->BUF, TASK_HD, D, part_no < NR_PRIM_PER_DRIVE ?
+		data_copy(p->PROC_NR, p->BUF, TASK_HD, part_no < NR_PRIM_PER_DRIVE ?
 				   &hdi->primary[part_no] :
 				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE], sizeof(struct part_info));
 		//phys_copy(dst, src, sizeof(struct part_info));

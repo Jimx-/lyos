@@ -25,12 +25,12 @@
 
 int syscall_entry(int syscall_nr, MESSAGE * m);
 
-PUBLIC  int vmctl(int request, int param)
+PUBLIC int vmctl(int request, endpoint_t who)
 {
     MESSAGE m;
 
-    m.REQUEST = request;
-    m.FLAGS = param;
+    m.VMCTL_REQUEST = request;
+    m.VMCTL_WHO = who;
 
     return syscall_entry(NR_VMCTL, &m);
 }
@@ -38,8 +38,10 @@ PUBLIC  int vmctl(int request, int param)
 PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
 {
     MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_GET_KERN_MAPPING;
     m.VMCTL_GET_KM_INDEX = index;
-    vmctl(VMCTL_GET_KERN_MAPPING, (int)&m);
+    syscall_entry(NR_VMCTL, &m);
 
     *addr = m.VMCTL_GET_KM_ADDR;
     *len = m.VMCTL_GET_KM_LEN;
@@ -52,10 +54,38 @@ PUBLIC int vmctl_reply_kern_mapping(int index, void * vir_addr)
 {
     MESSAGE m;
     
+    m.VMCTL_REQUEST = VMCTL_REPLY_KERN_MAPPING;
     m.VMCTL_REPLY_KM_INDEX = index;
     m.VMCTL_REPLY_KM_ADDR = vir_addr;
 
-    vmctl(VMCTL_REPLY_KERN_MAPPING, (int)&m);
+    syscall_entry(NR_VMCTL, &m);
 
     return m.VMCTL_REPLY_KM_RETVAL;
+}
+
+PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned * pdbr)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_GETPDBR;
+    m.VMCTL_WHO = who;
+
+    int retval = syscall_entry(NR_VMCTL, &m);
+    if (retval) return retval;
+
+    *pdbr = m.VMCTL_VALUE;
+
+    return 0;
+}
+
+PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_vir)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_SET_ADDRESS_SPACE;
+    m.VMCTL_WHO = who;
+    m.VMCTL_PHYS_ADDR = pgd_phys;
+    m.VMCTL_VIR_ADDR = pgd_vir;
+
+    return syscall_entry(NR_VMCTL, &m);
 }

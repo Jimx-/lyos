@@ -106,7 +106,7 @@ no_schedule:
 	if (p->counter <= 0) proc_no_time(p);
 	if (!proc_is_runnable(p)) goto reschedule;
 
-	switch_address_space(p->pgd.phys_addr);
+	switch_address_space(p);
 
 	p = arch_switch_to_user();
 
@@ -116,7 +116,7 @@ no_schedule:
 PRIVATE void switch_address_space_idle()
 {
 #if CONFIG_SMP
-	switch_address_space(proc_table[TASK_MM].pgd.phys_addr);
+	switch_address_space(&proc_table[TASK_MM]);
 #endif
 }
 
@@ -318,10 +318,8 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 	    (p_dest->recvfrom == proc2pid(sender) ||
 	     p_dest->recvfrom == ANY)) {
 
-		vir_copy(dest, D, p_dest->recv_msg, proc2pid(sender), D, m, sizeof(MESSAGE));
-		/*phys_copy(va2la(dest, p_dest->msg),
-			  va2la(proc2pid(sender), m),
-			  sizeof(MESSAGE)); */
+		vir_copy(dest, p_dest->recv_msg, proc2pid(sender), m, sizeof(MESSAGE));
+
 		p_dest->recv_msg = 0;
 		PST_UNSET(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
@@ -402,7 +400,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		}
 
 		assert(m);
-		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(p_to_recv), D, &msg, sizeof(MESSAGE));
+		vir_copy(proc2pid(who_wanna_recv), m, proc2pid(p_to_recv), &msg, sizeof(MESSAGE));
 
 		return 0;
 	}
@@ -467,10 +465,7 @@ normal_msg:
 
 		assert(m);
 		/* copy the message */
-		vir_copy(proc2pid(who_wanna_recv), D, m, proc2pid(from), D, from->send_msg, sizeof(MESSAGE));
-		/*phys_copy(va2la(proc2pid(who_wanna_recv), m),
-			  va2la(proc2pid(from), from->msg),
-			  sizeof(MESSAGE)); */
+		vir_copy(proc2pid(who_wanna_recv), m, proc2pid(from), from->send_msg, sizeof(MESSAGE));
 
 		from->send_msg = 0;
 		from->sendto = NO_TASK;

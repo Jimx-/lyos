@@ -99,7 +99,7 @@ PUBLIC int do_fork()
        		region_alloc_phys(new_region);
        		region_map_phys(p, new_region);
 
-       		data_copy(child_pid, D, new_region->vir_addr, pid, D, vr->vir_addr, vr->length);
+       		data_copy(child_pid, new_region->vir_addr, pid, vr->vir_addr, vr->length);
        	} else {	/* can be shared */
        		region_share(new_region, vr);
        		region_map_phys(p, new_region);

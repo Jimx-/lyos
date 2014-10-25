@@ -111,7 +111,7 @@ PUBLIC int do_mount(MESSAGE * p)
     char fs_label[FS_LABEL_MAX];
     if (label_len > FS_LABEL_MAX) return ENAMETOOLONG;
     
-    data_copy(SELF, D, fs_label, src, D, p->MLABEL, label_len);
+    data_copy(SELF, fs_label, src, p->MLABEL, label_len);
     fs_label[label_len] = '\0';
 
     int fs_e = get_filesystem_endpoint(fs_label);
@@ -127,8 +127,8 @@ PUBLIC int do_mount(MESSAGE * p)
     char target[MAX_PATH];
     if (target_len > MAX_PATH) return ENAMETOOLONG;       
 
-    data_copy(SELF, D, source, src, D, p->MSOURCE, source_len);
-    data_copy(SELF, D, target, src, D, p->MTARGET, target_len);
+    data_copy(SELF, source, src, p->MSOURCE, source_len);
+    data_copy(SELF, target, src, p->MTARGET, target_len);
 
     source[source_len] = '\0';
     target[target_len] = '\0';

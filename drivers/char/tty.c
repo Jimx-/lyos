@@ -296,7 +296,7 @@ PRIVATE void in_transfer(TTY* tty)
 			if (ch >= ' ' && ch <= '~') { /* printable */
 				void * p = tty->tty_inbuf +
 					   tty->tty_trans_cnt;
-				data_copy(tty->tty_inprocnr, D, p, TASK_TTY, D, &ch, 1);
+				data_copy(tty->tty_inprocnr, p, TASK_TTY, &ch, 1);
 				tty->tty_trans_cnt++;
 				tty->tty_inleft--;
 			}
@@ -417,13 +417,13 @@ PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
 
 	switch (msg->REQUEST) {
 	case TCGETS:
-		data_copy(msg->PROC_NR, D, msg->BUF, getpid(), D, &(tty->tty_termios), sizeof(struct termios));
+		data_copy(msg->PROC_NR, msg->BUF, getpid(), &(tty->tty_termios), sizeof(struct termios));
 		break;
 	case TCSETSW:
     case TCSETSF:
     //case TCDRAIN:
     case TCSETS:
-    	data_copy(getpid(), D, &(tty->tty_termios), msg->PROC_NR, D, msg->BUF, sizeof(struct termios));
+    	data_copy(getpid(), &(tty->tty_termios), msg->PROC_NR, msg->BUF, sizeof(struct termios));
     	break;
 	default:
 		break;

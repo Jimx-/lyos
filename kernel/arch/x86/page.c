@@ -64,15 +64,16 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
     }
 
     /* switch to the new page directory */
-    switch_address_space(pgd);
+    write_cr3((u32)pgd);
     /* reload it */
     reload_cr3();
     enable_paging();
 }
 
 /* <Ring 0> */
-PUBLIC void switch_address_space(pde_t * pgd) {
-    asm volatile ("mov %0, %%cr3":: "r"(pgd));
+PUBLIC void switch_address_space(struct proc * p) {
+    write_cr3((u32) p->pgd.phys_addr);
+    //asm volatile ("mov %0, %%cr3":: "r"(pgd));
 }
 
 PUBLIC void enable_paging()

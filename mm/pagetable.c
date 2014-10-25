@@ -32,6 +32,7 @@
 #include "region.h"
 #include "proto.h"
 #include <lyos/cpufeature.h>
+#include "global.h"
 
 #define MAX_KERN_MAPPINGS   10
 struct kern_mapping {
@@ -42,18 +43,45 @@ struct kern_mapping {
 } kern_mappings[MAX_KERN_MAPPINGS];
 PRIVATE int nr_kern_mappings = 0;
 
+#if (ARCH == x86)
 PRIVATE int global_bit = 0;
+#endif
 
+struct mmproc * mmprocess = &mmproc_table[TASK_MM];
 //#define PAGETABLE_DEBUG    1
 
 PUBLIC void pt_init()
 {
+    int i;
+
 #if (ARCH == x86)
     if (_cpufeature(_CPUF_I386_PGE))
         global_bit = ARCH_PG_GLOBAL;
 #endif
 
     pt_kern_mapping_init();
+
+    /* prepare page directory for MM */
+    pgdir_t * mypgd = &mmprocess->pgd;
+    if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
+    
+    unsigned int mypdbr = 0;
+    static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
+    if (vmctl_getpdbr(SELF, &mypdbr)) panic("MM: failed to get page directory base register");
+    /* kernel has done identity mapping for the bootstrap page dir we are using, so this is ok */
+    memcpy(&currentpagedir, (void *)mypdbr, ARCH_PGD_SIZE); 
+
+    for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
+        pde_t entry = currentpagedir[i];
+
+        if (entry & ARCH_PG_BIGPAGE) continue;
+
+        mypgd->vir_addr[i] = entry;
+        mypgd->vir_pts[i] = (pte_t *)((entry + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+    }
+
+    /* using the new page dir */
+    pgd_bind(mmprocess, mypgd);
 }
 
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
@@ -240,7 +268,7 @@ PUBLIC int pgd_new(pgdir_t * pgd)
     /* map the directory so that we can write it */
     pde_t * pg_dir = (pde_t *)alloc_vmem(PGD_SIZE);
 
-    pgd->phys_addr = va2pa(getpid(), pg_dir);
+    pgd->phys_addr = va2pa(TASK_MM, pg_dir);
     pgd->vir_addr = pg_dir;
 
     int i;
@@ -299,6 +327,11 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
     }
 
     return 0;
+}
+
+PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
+{
+    vmctl_set_address_space(mmproc2ep(who), pgd->phys_addr, pgd->vir_addr);
 }
 
 PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)

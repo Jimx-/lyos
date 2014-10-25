@@ -49,7 +49,7 @@ PUBLIC int ext2_lookup(MESSAGE * p)
 
 	char pathname[MAX_PATH];
 
-	data_copy(SELF, D, pathname, src, D, p->REQ_PATHNAME, name_len);
+	data_copy(SELF, pathname, src, p->REQ_PATHNAME, name_len);
 	pathname[name_len] = '\0';
 
 	int retval = ext2_parse_path(dev, start, root, pathname, flags, &pin, &offsetp);

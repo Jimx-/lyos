@@ -55,6 +55,7 @@ global  read_cr0
 global  write_cr0
 global 	read_cr2
 global 	read_cr3
+global  write_cr3
 global	read_cr4
 global 	write_cr4
 global 	reload_cr3
@@ -406,6 +407,9 @@ read_cr3:
     mov	eax, cr3
     pop ebp
 	ret
+
+write_cr3:
+	load_from_eax	cr3
 
 read_cr4:
     push ebp

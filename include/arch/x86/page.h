@@ -73,7 +73,6 @@ typedef struct {
 #define I386_PF_NOPAGE(x)       (!I386_PF_PROT(x))
 
 PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts);
-PUBLIC void switch_address_space(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();
 PUBLIC int read_cr2();
@@ -95,6 +94,7 @@ PUBLIC void reload_cr3();
 
 #define ARCH_VM_ADDRESS(pde, pte, offset)   (pde * PT_MEMSIZE + pte * PG_SIZE + offset)
 
+#define ARCH_PGD_SIZE        PGD_SIZE
 #define ARCH_BIG_PAGE_SIZE   PG_BIG_SIZE
 
 #endif

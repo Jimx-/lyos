@@ -43,7 +43,7 @@ PUBLIC int initfs_lookup(MESSAGE * p)
 
 	char string[TAR_MAX_PATH];
 
-	data_copy(SELF, D, string, src, D, p->REQ_PATHNAME, name_len);
+	data_copy(SELF, string, src, p->REQ_PATHNAME, name_len);
 	string[name_len] = '\0';
 
 	char * pathname = string; 

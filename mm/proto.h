@@ -42,6 +42,7 @@ PUBLIC int map_memory(pgdir_t * pgd, void * phys_addr, void * vir_addr, int leng
 PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length);
 PUBLIC int pgd_new(pgdir_t * pgd);
 PUBLIC int pgd_mapkernel(pgdir_t * pgd);
+PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
 PUBLIC int pgd_clear(pgdir_t * pgd);
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);

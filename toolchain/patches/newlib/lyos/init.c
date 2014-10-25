@@ -1,6 +1,10 @@
 #include "type.h"
 #include "const.h"
 
+extern char _end[];
+
+char * _brksize = (char *)0;
+
 typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
 
 syscall_gate_t _syscall_gate = (syscall_gate_t)0;
@@ -41,4 +45,6 @@ void __lyos_init()
 	if (si->magic == SYSINFO_MAGIC) {
 		_syscall_gate = si->syscall_gate;
 	}
+
+	_brksize = (char *)*(&_end);
 }

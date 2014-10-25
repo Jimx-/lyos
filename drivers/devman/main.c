@@ -26,6 +26,7 @@
 #include "proto.h"
 #include "lyos/proc.h"
 #include "lyos/driver.h"
+#include <lyos/ipc.h>
 
 PRIVATE void devman_init();
 PRIVATE int register_filesystem();

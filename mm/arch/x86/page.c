@@ -76,25 +76,23 @@ PRIVATE void * find_free_pages(pgdir_t * pgd, int nr_pages, void * start, void *
 PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
 {
     void * src_addr = m->SRC_ADDR;
-    int src_seg = (int)m->SRC_SEG;
     endpoint_t src_pid = m->SRC_PID == SELF ? proc2pid(p_proc) : m->SRC_PID;
 
     void * dest_addr = m->DEST_ADDR;
-    int dest_seg = (int)m->DEST_SEG;
     endpoint_t dest_pid = m->DEST_PID == SELF ? proc2pid(p_proc) : m->DEST_PID;
 
     int len = m->BUF_LEN;
 
-    return vir_copy(dest_pid, dest_seg, dest_addr, src_pid, src_seg, src_addr, len);
+    return vir_copy(dest_pid, dest_addr, src_pid, src_addr, len);
 }
 
-PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
-                        endpoint_t src_pid, int src_seg, void * src_addr, int len)
+PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
+                        endpoint_t src_pid, void * src_addr, int len)
 {
     pte_t * old_pgd = (pte_t *)read_cr3();
     pgdir_t * kernel_pgd = &(proc_table[TASK_MM].pgd);
 
-    switch_address_space(initial_pgd);
+    write_cr3(initial_pgd);
     reload_cr3();
 
     /* map in dest address */
@@ -186,7 +184,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
         pt[pt_index] = 0;
     }
 
-    switch_address_space(old_pgd);
+    write_cr3((u32)old_pgd);
     reload_cr3();
 
     return 0;

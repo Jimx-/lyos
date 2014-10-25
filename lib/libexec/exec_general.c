@@ -71,7 +71,7 @@ PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len)
 
     while (len > 0) {
         int copy_len = min(len, _ZERO_BUF_LEN);
-        data_copy(execi->proc_e, D, (void*)vaddr, self_ep, D, zerobuf, copy_len);
+        data_copy(execi->proc_e, (void*)vaddr, self_ep, zerobuf, copy_len);
         vaddr += copy_len;
         len -= copy_len;
     }

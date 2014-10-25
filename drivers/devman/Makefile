@@ -1,7 +1,7 @@
 #
 # Makefile for device manager.
 
-DEVMANCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
+DEVMANCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -Wall
 
 DEVMAN		= devman
 DEVMANOBJS = main.o ddmap.o global.o

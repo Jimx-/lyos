@@ -61,7 +61,7 @@ PUBLIC int do_announce_driver(MESSAGE * m)
 
     char * name = (char *)malloc(m->NAME_LEN + 1);
     if (name == NULL) return ENOMEM;
-    data_copy(getpid(), D, name, m->source, D, m->BUF, m->NAME_LEN);
+    data_copy(getpid(), name, m->source, m->BUF, m->NAME_LEN);
     name[m->NAME_LEN] = '\0';
 
     printl("DEVMAN: Registering driver #%d for /dev/%s (%c%d,%d)\n", drv_ep, name, type == DT_BLOCKDEV ? 'b' : 'c', 

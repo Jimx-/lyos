@@ -48,7 +48,7 @@ PUBLIC int do_register_filesystem(MESSAGE * p)
     char name[FS_LABEL_MAX];
     name[name_len] = '\0';
 
-    data_copy(TASK_FS, D, name, p->source, D, p->PATHNAME, name_len);
+    data_copy(TASK_FS, name, p->source, p->PATHNAME, name_len);
 
     return add_filesystem(p->source, name);
 }

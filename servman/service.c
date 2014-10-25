@@ -53,7 +53,7 @@ PUBLIC int do_service_up(MESSAGE * msg)
 
     /* copy prog name */
     char pathname[MAX_PATH];
-    data_copy(getpid(), D, pathname, src, D, msg->PATHNAME, name_len);
+    data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
     struct proc * p;

@@ -28,6 +28,7 @@ PUBLIC void x86_load_ss(u32 ss);
 
 PUBLIC u32 read_cr0();
 PUBLIC void write_cr0(u32 cr0);
+PUBLIC void write_cr3(u32 cr3);
 PUBLIC u32 read_cr4();
 PUBLIC void write_cr4(u32 cr4);
 
@@ -47,6 +48,7 @@ PUBLIC struct proc * arch_switch_to_user();
 
 PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags);
 PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr);
+PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p);
 
 PUBLIC void sys_call_sysenter();
 

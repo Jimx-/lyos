@@ -138,7 +138,7 @@ PRIVATE int change_directory(struct inode ** ppin, char * string, int len)
     if (len > MAX_PATH) return ENAMETOOLONG;
 
     /* fetch the name */
-    data_copy(getpid(), D, pathname, proc2pid(pcaller), D, string, len);
+    data_copy(getpid(), pathname, proc2pid(pcaller), string, len);
     //phys_copy(va2pa(getpid(), pathname), va2pa(proc2pid(pcaller), string), len);
     pathname[len] = '\0';
 

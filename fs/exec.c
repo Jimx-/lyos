@@ -166,13 +166,13 @@ PUBLIC int do_exec(MESSAGE * msg)
     if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
 
     char stackcopy[PROC_ORIGIN_STACK];
-    data_copy(SELF, D, stackcopy,
-          src, D, msg->BUF,
+    data_copy(SELF, stackcopy,
+          src, msg->BUF,
           orig_stack_len);
 
     /* copy prog name */
     char pathname[MAX_PATH];
-    data_copy(SELF, D, pathname, src, D, msg->PATHNAME, name_len);
+    data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
     retval = get_exec_inode(&execi, pathname, p);
@@ -248,7 +248,7 @@ PUBLIC int do_exec(MESSAGE * msg)
             *q += delta;
     } 
 
-    data_copy(src, D, orig_stack, TASK_FS, D, stackcopy, orig_stack_len);
+    data_copy(src, orig_stack, TASK_FS, stackcopy, orig_stack_len);
 
     proc_table[src].regs.ecx = (u32)envp; 
     proc_table[src].regs.edx = (u32)orig_stack;

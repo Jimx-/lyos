@@ -30,4 +30,6 @@ struct mmproc {
 
 #define MMPF_INUSE  0x01
 
+#define mmproc2ep(mmp) ((mmp) - mmproc_table)
+
 #endif

@@ -42,9 +42,8 @@
  */
 PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
 {
-    int param = m->FLAGS, request = m->REQUEST;
-    struct proc * target = proc_table + param;
-    MESSAGE * msg = (MESSAGE *)param;
+    int who = m->VMCTL_WHO, request = m->VMCTL_REQUEST;
+    struct proc * target = (who == SELF) ? p : proc_table + who;
 
     switch (request) {
     case VMCTL_BOOTINHIBIT_CLEAR:
@@ -54,22 +53,19 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
         PST_UNSET(target, PST_MMINHIBIT);
         break;
     case VMCTL_GET_KERN_MAPPING:
-        msg->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(msg->VMCTL_GET_KM_INDEX, 
-                                    (caddr_t*)&msg->VMCTL_GET_KM_ADDR,
-                                    &msg->VMCTL_GET_KM_LEN,
-                                    &msg->VMCTL_GET_KM_FLAGS); 
+        m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(m->VMCTL_GET_KM_INDEX, 
+                                    (caddr_t*)&m->VMCTL_GET_KM_ADDR,
+                                    &m->VMCTL_GET_KM_LEN,
+                                    &m->VMCTL_GET_KM_FLAGS); 
         break;
     case VMCTL_REPLY_KERN_MAPPING:
-        msg->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(msg->VMCTL_REPLY_KM_INDEX,
-                                    msg->VMCTL_REPLY_KM_ADDR);
+        m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(m->VMCTL_REPLY_KM_INDEX,
+                                    m->VMCTL_REPLY_KM_ADDR);
         break;
     case VMCTL_PAGEFAULT_CLEAR:
         PST_UNSET(target, PST_PAGEFAULT);
         break;
-    default:
-        printk("kernel: invalid vmctl request\n");
-        return EINVAL;
     }
 
-    return 0;
+    return arch_vmctl(m, target);
 }

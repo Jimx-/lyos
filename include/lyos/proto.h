@@ -16,12 +16,10 @@
 /* kliba.asm */
 PUBLIC void	out_byte(u16 port, u8 value);
 PUBLIC u8	in_byte(u16 port);
-PUBLIC void 	out_word(u16 port, u16 val);
-PUBLIC u16  	in_word(u16 port);
-PUBLIC void 	out_long(u16 port, u32 val);
-PUBLIC u32  	in_long(u16 port);
-PUBLIC void disp_char(const char c);
-PUBLIC void	disp_color_str(char * info, int color);
+PUBLIC void out_word(u16 port, u16 val);
+PUBLIC u16  in_word(u16 port);
+PUBLIC void out_long(u16 port, u32 val);
+PUBLIC u32  in_long(u16 port);
 PUBLIC void	disable_irq(int irq);
 PUBLIC void	enable_irq(int irq);
 PUBLIC void	disable_int();
@@ -29,6 +27,8 @@ PUBLIC void	enable_int();
 PUBLIC void	port_read(u16 port, void* buf, int n);
 PUBLIC void	port_write(u16 port, void* buf, int n);
 PUBLIC void	glitter(int row, int col);
+
+PUBLIC void switch_address_space(struct proc * p);
 
 /* klib.c */
 PUBLIC void	delay(int time);
@@ -122,13 +122,12 @@ PUBLIC  int     direct_print(const char * fmt, ...);
 PUBLIC  void    direct_cls();
 
 /* lib/misc.c */
-PUBLIC void 	spin(char * func_name);
 PUBLIC u32      now();
 
-PUBLIC int      data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
-    endpoint_t src_pid, int src_seg, void * src_addr, int len);
-PUBLIC int      vir_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr,
-                        endpoint_t src_pid, int src_seg, void * src_addr, int len);
+PUBLIC int      data_copy(endpoint_t dest_pid, void * dest_addr, 
+    endpoint_t src_pid, void * src_addr, int len);
+PUBLIC int      vir_copy(endpoint_t dest_pid, void * dest_addr,
+                        endpoint_t src_pid, void * src_addr, int len);
 
 PUBLIC int      service_up(const char *name, char * argv[], char * const envp[]);
 
@@ -148,7 +147,7 @@ PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char * s);
 PUBLIC  int privctl(int whom, int request, void * data);
 PUBLIC  int getinfo(int request, void* buf);
-PUBLIC  int vmctl(int request, int param);
+PUBLIC  int vmctl(int request, endpoint_t who);
 
 #define	phys_copy	memcpy
 #define	phys_set	memset

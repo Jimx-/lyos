@@ -69,7 +69,7 @@ PUBLIC int initfs_stat(MESSAGE * p)
     sbuf.st_blocks = 0;
 
     /* copy the information */
-    data_copy(src, D, buf, SELF, D, &sbuf, sizeof(struct stat));
+    data_copy(src, buf, SELF, &sbuf, sizeof(struct stat));
 
     return 0;
 }

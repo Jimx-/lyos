@@ -25,17 +25,15 @@ int syscall_entry(int syscall_nr, MESSAGE * m);
 /*****************************************************************************
  *                                data_copy
  *****************************************************************************/
-PUBLIC int data_copy(endpoint_t dest_pid, int dest_seg, void * dest_addr, 
-    endpoint_t src_pid, int src_seg, void * src_addr, int len)
+PUBLIC int data_copy(endpoint_t dest_pid, void * dest_addr, 
+    endpoint_t src_pid, void * src_addr, int len)
 {
 	MESSAGE m;
     
     m.SRC_PID = src_pid;
-    m.SRC_SEG = (long)src_seg;
     m.SRC_ADDR = src_addr;
 
     m.DEST_PID = dest_pid;
-    m.DEST_SEG = (long)dest_seg;
     m.DEST_ADDR = dest_addr;
 
     m.BUF_LEN = len;
