@@ -32,7 +32,8 @@
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
-
+#include "global.h"
+    
 /**
  * <Ring 1> Send read/write request.
  * @param  fs_ep      Endpoint of FS driver.

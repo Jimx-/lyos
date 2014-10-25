@@ -32,6 +32,7 @@
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
+#include "global.h"
 
 //#define OPEN_DEBUG
 #ifdef OPEN_DEBUG

@@ -103,15 +103,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	mb_flags = mboot->flags;
 
-	unsigned char * dev_no = (unsigned char *)((int)&(mboot->boot_device));
-
-	int major;
-	if (dev_no[3] == 0x80) major = DEV_HD;
-	else major = DEV_FLOPPY;
-
-	int minor = dev_no[2] + 1;
-	ROOT_DEV = MAKE_DEV(major, minor);
-
 	k_stacks = &k_stacks_start;
 
 	sysinfo_user = NULL;

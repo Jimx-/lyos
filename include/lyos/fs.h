@@ -27,6 +27,8 @@ struct dev_drv_map {
 	int driver_nr; /**< The proc nr.\ of the device driver. */
 };
 
+extern  struct dev_drv_map  dd_map[];
+
 #define	MAX_PATH	512
 #define FS_LABEL_MAX 15
 

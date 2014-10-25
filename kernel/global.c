@@ -75,25 +75,5 @@ PUBLIC int errno;
 
 PUBLIC int err_code = 0;
 
-/* FS related below */
-/*****************************************************************************/
-/**
- * For dd_map[k],
- * `k' is the device nr.\ dd_map[k].driver_nr is the driver nr.
- *
- * Remeber to modify include/const.h if the order is changed.
- *****************************************************************************/
-struct dev_drv_map dd_map[] = {
-	/* driver nr.		major device nr.
-	   ----------		---------------- */
-	{INVALID_DRIVER},	/**< 0 : Unused */
-	{TASK_RD},			/**< 1 : Ramdisk */
-	{INVALID_DRIVER},	/**< 2 : Floppy */
-	{TASK_HD},			/**< 3 : Hard disk */
-	{TASK_TTY},			/**< 4 : TTY */
-	{INVALID_DRIVER}	/**< 5 : Scsi disk */
-};
-
-PUBLIC	u8 *		fsbuf		= (u8*)&_fsbuf;
 
 

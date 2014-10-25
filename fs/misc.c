@@ -32,6 +32,7 @@
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
+#include "global.h"
 
 PRIVATE int change_directory(struct inode ** ppin, char * pathname, int len);
 PRIVATE int change_node(struct inode ** ppin, struct inode * pin);

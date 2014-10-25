@@ -22,6 +22,17 @@
 #define EXTERN
 #endif
 
+/* FS */
+EXTERN  int                 ROOT_DEV;
+EXTERN  struct file_desc    f_desc_table[NR_FILE_DESC];
+EXTERN  struct inode        inode_table[NR_INODE];
+#define FSBUF_SIZE          0x100000
+EXTERN  u8                  _fsbuf[FSBUF_SIZE];
+extern  u8 *                fsbuf;
+EXTERN  MESSAGE             fs_msg;
+EXTERN  struct proc *       pcaller;
+EXTERN  struct inode *      root_inode;
+
 extern struct list_head filesystem_table;
 /* vfs mount table */
 extern struct list_head vfs_mount_table;

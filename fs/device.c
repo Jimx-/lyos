@@ -31,7 +31,8 @@
 #include "errno.h"
 #include "path.h"
 #include "proto.h"
-
+#include "global.h"
+    
 PUBLIC int do_ioctl(MESSAGE * p)
 {
     int fd = p->FD;

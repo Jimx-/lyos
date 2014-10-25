@@ -40,8 +40,6 @@ EXTERN  unsigned int        lapic_addr;
 extern  int booting_cpu;
 EXTERN  int ncpus;
 
-EXTERN	int	current_console;
-
 EXTERN	int	key_pressed; /**
 			      * used for clock_handler
 			      * to wake up TASK_TTY when
@@ -75,18 +73,6 @@ EXTERN  unsigned int        PROCS_BASE;
 EXTERN  int                 kernel_pts;
 EXTERN	unsigned int        memory_size;
 EXTERN	int 				mem_start;
-
-/* FS */
-EXTERN	int					ROOT_DEV;
-EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
-EXTERN	struct inode		inode_table[NR_INODE];
-#define FSBUF_SIZE          0x100000
-EXTERN  u8                  _fsbuf[FSBUF_SIZE];
-extern	u8 *			    fsbuf;
-EXTERN	MESSAGE			    fs_msg;
-EXTERN	struct proc *		pcaller;
-EXTERN	struct inode *		root_inode;
-extern	struct dev_drv_map	dd_map[];
 
 /* KERNEL LOG */
 extern struct kern_log kern_log;
