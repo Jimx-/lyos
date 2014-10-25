@@ -13,18 +13,18 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef _TTY_GLOBAL_H_
+#define _TTY_GLOBAL_H_
 
-#include <lyos/spinlock.h>
-
-#define KERN_LOG_SIZE	(1 << CONFIG_LOG_BUF_SHIFT)
-
-struct kern_log {
-	char buf[KERN_LOG_SIZE];
-	int size, next;
-
-	spinlock_t lock;
-};
-
+/* EXTERN is extern except for global.c */
+#ifdef _TTY_GLOBAL_VARIABLE_HERE_
+#undef EXTERN
+#define EXTERN
 #endif
+
+EXTERN  int current_console;
+
+extern  TTY     tty_table[];
+extern  CONSOLE     console_table[];
+
+#endif 

@@ -56,11 +56,15 @@ HOSTLD	= ld
 AS 		= $(SUBARCH)-elf-lyos-as
 CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
-CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -g -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 ARFLAGS		= rcs
 MAKE 		= make
+
+ifeq ($(CONFIG_DEBUG_INFO),y)
+	CFLAGS += -g
+endif
 
 export ASM CC LD CFLAGS HOSTCC HOSTLD
 

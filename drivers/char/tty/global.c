@@ -13,18 +13,15 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#define _TTY_GLOBAL_VARIABLE_HERE_
 
-#include <lyos/spinlock.h>
+#include "lyos/config.h"
+#include "lyos/type.h"
+#include "lyos/list.h"
+#include "lyos/tty.h"
+#include "lyos/console.h"
+#include <lyos/const.h>
+#include "global.h"
 
-#define KERN_LOG_SIZE	(1 << CONFIG_LOG_BUF_SHIFT)
-
-struct kern_log {
-	char buf[KERN_LOG_SIZE];
-	int size, next;
-
-	spinlock_t lock;
-};
-
-#endif
+PUBLIC  TTY     tty_table[NR_CONSOLES];
+PUBLIC  CONSOLE     console_table[NR_CONSOLES];
