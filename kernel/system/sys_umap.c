@@ -13,15 +13,35 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#define _TTY_GLOBAL_VARIABLE_HERE_
-
-#include "lyos/config.h"
 #include "lyos/type.h"
-#include "lyos/list.h"
-#include "tty.h"
-#include "console.h"
-#include <lyos/const.h>
-#include "global.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "assert.h"
+#include <errno.h>
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "signal.h"
+#include "page.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+#endif
+#include <lyos/cpulocals.h>
+#include <lyos/vm.h>
 
-PUBLIC  TTY     tty_table[NR_CONSOLES];
-PUBLIC  CONSOLE     console_table[NR_CONSOLES];
+PUBLIC int sys_umap(MESSAGE * m, struct proc* p)
+{
+    endpoint_t ep = m->UMAP_WHO;
+    vir_bytes srcaddr = (vir_bytes)m->UMAP_SRCADDR;
+
+    if (ep == SELF) ep = proc2pid(p);
+    
+    m->UMAP_DSTADDR = va2pa(ep, (void *)srcaddr);
+
+    return 0;
+}

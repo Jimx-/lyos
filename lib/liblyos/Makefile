@@ -6,7 +6,7 @@ AR		= ar
 ARFLAGS		= rcs
 
 LOBJS		= arch/$(ARCH)/arch-lib.o \
-			printl.o spin.o time.o data_copy.o procctl.o mmap.o list.o get_info.o vmctl.o privctl.o
+			printl.o spin.o time.o data_copy.o procctl.o mmap.o list.o get_info.o vmctl.o privctl.o umap.o
 
 LIB		= liblyos.a
 

@@ -11,17 +11,30 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#define _TTY_GLOBAL_VARIABLE_HERE_
-
-#include "lyos/config.h"
 #include "lyos/type.h"
-#include "lyos/list.h"
-#include "tty.h"
-#include "console.h"
-#include <lyos/const.h>
-#include "global.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/vm.h"
+#include "lyos/ipc.h"
 
-PUBLIC  TTY     tty_table[NR_CONSOLES];
-PUBLIC  CONSOLE     console_table[NR_CONSOLES];
+int syscall_entry(int syscall_nr, MESSAGE * m);
+
+PUBLIC int umap(endpoint_t ep, void * vir_addr, phys_bytes * phys_addr)
+{
+    MESSAGE m;
+    m.UMAP_WHO = ep;
+    m.UMAP_SRCADDR = vir_addr;
+
+    int ret = syscall_entry(NR_UMAP, &m);
+    if (ret) return ret;
+
+    *phys_addr = (phys_bytes)m.UMAP_DSTADDR;
+
+    return 0;
+}

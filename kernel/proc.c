@@ -182,63 +182,6 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 }
 
 /*****************************************************************************
- *				  va2la
- *****************************************************************************/
-/**
- * <Ring 0~1> Virtual addr --> Linear addr.
- * 
- * @param pid  PID of the proc whose address is to be calculated.
- * @param va   Virtual address.
- * 
- * @return The linear address for the given virtual address.
- *****************************************************************************/
-PUBLIC void* va2la(int pid, void* va)
-{
-	return va;
-}
-
-/*****************************************************************************
- *				  la2pa
- *****************************************************************************/
-/**
- * <Ring 0~1> Linear addr --> physical addr.
- * 
- * @param pid  PID of the proc whose address is to be calculated.
- * @param la   Linear address.
- * 
- * @return The physical address for the given linear address.
- *****************************************************************************/
-PUBLIC void * la2pa(int pid, void * la)
-{
-	struct proc* p = &proc_table[pid];
-
-    unsigned long pgd_index = ARCH_PDE(la);
-    unsigned long pt_index = ARCH_PTE(la);
-
-    /*pde_t * pgd_phys = p->pgd.phys_addr;
-    if (pgd_phys == NULL) pgd_phys = (pde_t *)(p->seg.cr3_phys);
-    pde_t * pgd_vir = ((unsigned int)pgd_phys + KERNEL_VMA);*/
-    pte_t * pt = p->pgd.vir_pts[pgd_index];
-    return (void*)((pt[pt_index] & 0xFFFFF000) + ((int)la & 0xFFF));
-}
-
-/*****************************************************************************
- *				  va2pa
- *****************************************************************************/
-/**
- * <Ring 0~1> Virtual addr --> physical addr.
- * 
- * @param pid  PID of the proc whose address is to be calculated.
- * @param va   Virtual address.
- * 
- * @return The physical address for the given virtual address.
- *****************************************************************************/
-PUBLIC void * va2pa(int pid, void * va)
-{
-	return la2pa(pid, va2la(pid, va));
-}
-
-/*****************************************************************************
  *                                reset_msg
  *****************************************************************************/
 /**

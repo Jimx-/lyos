@@ -77,6 +77,21 @@ PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
 	if (memsize % PG_SIZE != 0)
 		pages++;
 
+	/* using bootstrap pages */
+	if (!pt_init_done) {
+		int i, j;
+		for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
+			if (!bootstrap_pages[i].used) break;
+		}
+		*phys_addr = bootstrap_pages[i].phys_addr;
+		int ret = bootstrap_pages[i].vir_addr;
+		for (j = i; j < i + pages; j++) {
+			bootstrap_pages[j].used = 1;
+		}
+
+		return ret;
+	}
+
 	/* allocate physical memory */
     int phys_pages = alloc_pages(pages);
  	int vir_pages = alloc_vmpages(pages);
@@ -85,12 +100,8 @@ PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
  	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
  	pt_writemap(&(proc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW);
- 	/* map */
- 	/*int i;
- 	for (i = 0; i < pages; i++, phys_pages += PG_SIZE, vir_pages += PG_SIZE) {
- 		pt_mappage(&(proc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, PG_PRESENT | PG_RW);
- 	}*/
-
+ 	pt_writemap(&(mmproc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW);
+ 	
  	return retval;
 }
 

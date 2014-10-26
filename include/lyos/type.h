@@ -28,6 +28,7 @@ typedef	unsigned short		u16;
 typedef	unsigned char		u8;
 
 typedef unsigned int 		phys_bytes;
+typedef unsigned int 		vir_bytes;
 //#define __dev_t_defined
 //typedef unsigned int        __dev_t;
 typedef unsigned int        block_t;

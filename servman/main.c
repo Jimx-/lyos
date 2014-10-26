@@ -27,7 +27,6 @@
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
-#include "lyos/keyboard.h"
 #include "lyos/proto.h"
 #include "proto.h"
 

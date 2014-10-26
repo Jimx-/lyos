@@ -31,7 +31,7 @@
 #include "global.h"
 
 #define MAX_KERN_MAPPINGS   10
-struct kern_mapping {
+PRIVATE struct kern_mapping {
     void * phys_addr;
     void * vir_addr;
     int len;
@@ -43,12 +43,26 @@ PRIVATE int nr_kern_mappings = 0;
 PRIVATE int global_bit = 0;
 #endif
 
-struct mmproc * mmprocess = &mmproc_table[TASK_MM];
+PRIVATE struct mmproc * mmprocess = &mmproc_table[TASK_MM];
 //#define PAGETABLE_DEBUG    1
+
+/* before MM has set up page table for its own, we use these pages in page allocation */
+PRIVATE char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES] 
+        __attribute__((aligned(ARCH_PG_SIZE)));
 
 PUBLIC void pt_init()
 {
     int i;
+
+    vir_bytes bootstrap_pages_mem = (vir_bytes)static_bootstrap_pages;
+    for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
+        void * v = (void *)(bootstrap_pages_mem + i * ARCH_PG_SIZE);
+        phys_bytes bootstrap_phys_addr;
+        if (umap(SELF, v, &bootstrap_phys_addr)) panic("MM: can't get phys addr for bootstrap page");
+        bootstrap_pages[i].phys_addr = bootstrap_phys_addr;
+        bootstrap_pages[i].vir_addr = (vir_bytes)v;
+        bootstrap_pages[i].used = 0;
+    }
 
 #if (ARCH == x86)
     if (_cpufeature(_CPUF_I386_PGE))
@@ -78,6 +92,8 @@ PUBLIC void pt_init()
 
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
+
+    pt_init_done = 1;
 }
 
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
@@ -298,7 +314,7 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     while (mapped < kern_size) {
         pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit;
         //pgd->vir_pts[kernel_pde] = (pte_t *)(((int)initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
-        
+
         addr += ARCH_BIG_PAGE_SIZE;
         mapped += ARCH_BIG_PAGE_SIZE;
         kernel_pde++;

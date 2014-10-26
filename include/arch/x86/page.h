@@ -29,6 +29,9 @@ typedef unsigned int    pte_t;
 #define I386_VM_DIR_ENTRIES     1024
 
 #define I386_VM_ADDR_MASK       0xfffff000
+#define I386_VM_OFFSET_MASK     (~I386_VM_ADDR_MASK)
+#define I386_VM_ADDR_MASK_BIG   0xffc00000
+#define I386_VM_OFFSET_MASK_BIG (~I386_VM_ADDR_MASK_BIG)
 
 /* struct page_directory */
 typedef struct {
@@ -86,6 +89,9 @@ PUBLIC void reload_cr3();
 
 #define ARCH_VM_DIR_ENTRIES     I386_VM_DIR_ENTRIES
 #define ARCH_VM_ADDR_MASK       I386_VM_ADDR_MASK
+#define ARCH_VM_OFFSET_MASK     I386_VM_OFFSET_MASK
+#define ARCH_VM_ADDR_MASK_BIG   I386_VM_ADDR_MASK_BIG
+#define ARCH_VM_OFFSET_MASK_BIG I386_VM_OFFSET_MASK_BIG
 #define ARCH_PF_PROT(x)         I386_PF_PROT(x)
 #define ARCH_PF_NOPAGE(x)       I386_PF_NOPAGE(x)
 

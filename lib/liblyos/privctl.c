@@ -25,8 +25,6 @@
 
 int syscall_entry(int syscall_nr, MESSAGE * m);
 
-PUBLIC int _privctl(MESSAGE * m);
-
 PUBLIC  int privctl(int whom, int request, void * data)
 {
     MESSAGE m;

@@ -26,4 +26,13 @@
 
 extern struct mmproc mmproc_table[];
 
+#define STATIC_BOOTSTRAP_PAGES  20
+EXTERN struct {
+    int used;
+    phys_bytes phys_addr;
+    vir_bytes vir_addr;
+} bootstrap_pages[STATIC_BOOTSTRAP_PAGES];
+
+extern int pt_init_done; 
+
 #endif 
