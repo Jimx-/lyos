@@ -1,0 +1,21 @@
+##############################
+# Makefile for Lyos kernel.  #
+##############################
+
+SYSOBJS	= sys_printx.o sys_datacopy.o sys_getinfo.o sys_privctl.o sys_vmctl.o
+
+SYSTEM		= system.o
+
+everything : realclean $(SYSTEM)
+
+realclean :
+	@rm -f $(SYSOBJS)
+
+$(SYSTEM): $(SYSOBJS)
+	@echo -e '\tLD\tkernel/system/$@'
+	@$(LD) -r -o $(SYSTEM) $(SYSOBJS)
+
+%.o: %.c
+	@echo -e '\tCC\tkernel/system/$@'
+	@$(CC) $(CFLAGS) -o $@ $<
+

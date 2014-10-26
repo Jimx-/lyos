@@ -7,8 +7,8 @@ ARFLAGS		= rcs
 
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			clock.o global.o proc.o systask.o\
-			klib.o cpulocals.o log.o vmctl.o \
-			sysinfo.o
+			klib.o cpulocals.o \
+			sysinfo.o system/system.o
 
 KRNL		= krnl.o
 
@@ -27,4 +27,7 @@ arch/$(ARCH)/arch-kernel.o:
 %.o: %.c
 	@echo -e '\tCC\tkernel/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
+
+system/system.o:
+	@(cd system; make)
 

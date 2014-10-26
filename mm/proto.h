@@ -25,7 +25,7 @@ PUBLIC int  alloc_mem(int memsize);
 PUBLIC int  free_mem(int base, int len);
 PUBLIC int alloc_pages(int nr_pages);
 
-PUBLIC int  alloc_vmem(int memsize);
+PUBLIC int  alloc_vmem(phys_bytes * phys_addr, int memsize);
 PUBLIC int alloc_vmpages(int nr_pages);
 PUBLIC int  free_vmem(int base, int len);
 

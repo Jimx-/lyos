@@ -34,6 +34,7 @@
 #include "page.h"
 #include "region.h"
 #include "proto.h"
+#include "global.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
@@ -70,7 +71,7 @@ PUBLIC void vmem_init(int mem_start, int free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC int alloc_vmem(int memsize)
+PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
 {
 	int pages = memsize / PG_SIZE;
 	if (memsize % PG_SIZE != 0)
@@ -81,11 +82,14 @@ PUBLIC int alloc_vmem(int memsize)
  	int vir_pages = alloc_vmpages(pages);
  	int retval = vir_pages;
 
+ 	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
+
+ 	pt_writemap(&(proc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW);
  	/* map */
- 	int i;
+ 	/*int i;
  	for (i = 0; i < pages; i++, phys_pages += PG_SIZE, vir_pages += PG_SIZE) {
  		pt_mappage(&(proc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, PG_PRESENT | PG_RW);
- 	}
+ 	}*/
 
  	return retval;
 }

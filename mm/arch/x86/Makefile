@@ -1,5 +1,5 @@
 
-MMOBJS		= page.o
+MMOBJS		= 
 
 ARCHMM		= arch-mm.o
 

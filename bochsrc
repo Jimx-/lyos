@@ -13,7 +13,7 @@ vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
-ata0-master: type=disk, path="lyos-disk.img", mode=flat, cylinders=2080, heads=16, spt=63
+ata0-master: type=disk, path="lyos-disk.img", mode=flat, cylinders=520, heads=16, spt=63
 
 
 

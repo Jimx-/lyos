@@ -53,7 +53,7 @@ PUBLIC int phys_region_init(struct phys_region * rp, int capacity)
 
     if (rp->capacity != 0) phys_region_free(rp);
 
-    rp->frames = (struct phys_frame *)alloc_vmem(alloc_size);
+    rp->frames = (struct phys_frame *)alloc_vmem(NULL, alloc_size);
     if (rp->frames == NULL) return ENOMEM;
     memset(rp->frames, 0, alloc_size);
     rp->capacity = capacity;
@@ -69,7 +69,7 @@ PRIVATE int phys_region_realloc(struct phys_region * rp, int new_capacity)
         new_capacity = alloc_size / sizeof(struct phys_frame);
     }
 
-    struct phys_frame * new_frames = (struct phys_frame *)alloc_vmem(alloc_size);
+    struct phys_frame * new_frames = (struct phys_frame *)alloc_vmem(NULL, alloc_size);
     if (new_frames == NULL) return ENOMEM;
 
     memcpy(new_frames, rp->frames, rp->capacity * sizeof(struct phys_frame));
@@ -109,7 +109,7 @@ PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
  */
 PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length, int flags)
 {
-    struct vir_region * region = (struct vir_region *)alloc_vmem(sizeof(struct vir_region));
+    struct vir_region * region = (struct vir_region *)alloc_vmem(NULL, sizeof(struct vir_region));
 
 #if REGION_DEBUG
     printl("MM: region_new: allocated memory for virtual region at 0x%x\n", (int)region);

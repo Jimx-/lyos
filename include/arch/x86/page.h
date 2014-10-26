@@ -95,6 +95,7 @@ PUBLIC void reload_cr3();
 #define ARCH_VM_ADDRESS(pde, pte, offset)   (pde * PT_MEMSIZE + pte * PG_SIZE + offset)
 
 #define ARCH_PGD_SIZE        PGD_SIZE
+#define ARCH_PG_SIZE         PG_SIZE
 #define ARCH_BIG_PAGE_SIZE   PG_BIG_SIZE
 
 #endif

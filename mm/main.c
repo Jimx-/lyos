@@ -40,6 +40,8 @@ PRIVATE int free_mem_size;
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
 
+PUBLIC void __lyos_init();
+
 PRIVATE void init_mm();
 PRIVATE void print_memmap();
 
@@ -134,9 +136,11 @@ PRIVATE void init_mm()
 	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
 	pt_init();
 
+	__lyos_init();
+
 	/* setup memory region for tasks so they can malloc */
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
-	struct vir_region * rp = (struct vir_region *)alloc_vmem(region_size * 2);
+	struct vir_region * rp = (struct vir_region *)alloc_vmem(NULL, region_size * 2);
 	struct proc * p = proc_table;
 	struct mmproc * mmp = mmproc_table;
 	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++, rp++, p++, mmp++) {

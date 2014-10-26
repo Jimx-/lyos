@@ -119,28 +119,3 @@ PUBLIC void delay(int time)
 		}
 	}
 }
-
-/*======================================================================*
-                               sys_getinfo
- *======================================================================*/
-PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
-{
-	int request = m->REQUEST;
-	void * buf = m->BUF;
-	void * addr = NULL;
-	size_t size = 0;
-	struct sysinfo ** psi;
-
-	switch (request) {
-	case GETINFO_SYSINFO:
-		psi = (struct sysinfo **)buf;
-		*psi = sysinfo_user;
-		break;
-	default:
-		printk("kernel: unknown getinfo request");
-	}
-
-	if (addr) memcpy(buf, addr, size);
-
-	return 0;
-}

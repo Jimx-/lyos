@@ -82,7 +82,8 @@ PUBLIC void pt_init()
 
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 {
-    pte_t * pt = (pte_t *)alloc_vmem(PT_SIZE);
+    phys_bytes pt_phys;
+    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, PT_SIZE);
     if (pt == NULL) {
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
@@ -97,7 +98,7 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
         pt[i] = 0;
     }
 
-    pgd->vir_addr[pde] = (int)va2pa(TASK_MM, pt) | flags;
+    pgd->vir_addr[pde] = pt_phys | flags;
     pgd->vir_pts[pde] = pt;
 
     return 0;
@@ -261,10 +262,11 @@ PUBLIC void pt_kern_mapping_init()
 /* <Ring 1> */
 PUBLIC int pgd_new(pgdir_t * pgd)
 {
+    phys_bytes pgd_phys;
     /* map the directory so that we can write it */
-    pde_t * pg_dir = (pde_t *)alloc_vmem(PGD_SIZE);
+    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, PGD_SIZE);
 
-    pgd->phys_addr = va2pa(TASK_MM, pg_dir);
+    pgd->phys_addr = pgd_phys;
     pgd->vir_addr = pg_dir;
 
     int i;

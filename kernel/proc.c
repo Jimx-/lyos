@@ -215,6 +215,9 @@ PUBLIC void * la2pa(int pid, void * la)
     unsigned long pgd_index = ARCH_PDE(la);
     unsigned long pt_index = ARCH_PTE(la);
 
+    /*pde_t * pgd_phys = p->pgd.phys_addr;
+    if (pgd_phys == NULL) pgd_phys = (pde_t *)(p->seg.cr3_phys);
+    pde_t * pgd_vir = ((unsigned int)pgd_phys + KERNEL_VMA);*/
     pte_t * pt = p->pgd.vir_pts[pgd_index];
     return (void*)((pt[pt_index] & 0xFFFFF000) + ((int)la & 0xFFF));
 }

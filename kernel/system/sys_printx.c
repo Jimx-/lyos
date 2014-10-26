@@ -27,7 +27,6 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "termios.h"
 #include <lyos/log.h>
 
 PRIVATE void kputc(char c);
