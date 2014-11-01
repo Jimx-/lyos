@@ -24,7 +24,7 @@
 #include "lyos/proto.h"
 #include <lyos/log.h>
 
-struct sysinfo sysinfo __attribute__  ((section(".usermapped"))); 
+PUBLIC struct sysinfo sysinfo __attribute__  ((section(".usermapped"))); 
 
-kinfo_t     kinfo __attribute__  ((section(".usermapped")));
-struct 	kern_log kern_log __attribute__  ((section(".usermapped")));
+PUBLIC kinfo_t     kinfo __attribute__  ((section(".usermapped")));
+PUBLIC struct 	kern_log kern_log __attribute__  ((section(".usermapped")));

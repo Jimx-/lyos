@@ -56,6 +56,21 @@ PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 	{NULL,   	0,				"INIT" }
 };
 
+PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
+	{TASK_MM, 		"MM"		},
+	{TASK_SERVMAN, 	"SERVMAN"	},
+	{TASK_DEVMAN,	"DEVMAN"	},
+	{TASK_FS, 		"VFS"		},
+	{TASK_SYS, 		"SYS"		},
+	{TASK_TTY,		"TTY"		},
+	{TASK_RD, 		"RD"		},
+	{TASK_INITFS, 	"INITFS"	},
+	{TASK_SYSFS,	"SYSFS"		},
+	{TASK_HD,		"HD"		},
+	{TASK_EXT2_FS,	"EXT2"		},
+	{INIT,			"INIT"		},
+};
+
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
 PUBLIC	irq_handler	irq_table[NR_IRQ];

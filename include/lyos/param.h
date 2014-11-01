@@ -39,7 +39,9 @@ typedef struct kinfo {
 
 	char cmdline[KINFO_CMDLINE_LENGTH];
 
-    struct kern_log * kern_log;
+    unsigned int kernel_start_pde, kernel_end_pde;
+
+    struct boot_proc boot_procs[NR_BOOT_PROCS];
 } kinfo_t;
 
 typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);

@@ -83,6 +83,9 @@ PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
 		for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
 			if (!bootstrap_pages[i].used) break;
 		}
+
+		if (i + pages > STATIC_BOOTSTRAP_PAGES) return 0;
+
 		*phys_addr = bootstrap_pages[i].phys_addr;
 		int ret = bootstrap_pages[i].vir_addr;
 		for (j = i; j < i + pages; j++) {

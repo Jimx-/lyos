@@ -25,6 +25,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <errno.h>
 
 /*======================================================================*
                                sys_getinfo
@@ -42,8 +43,12 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
         psi = (struct sysinfo **)buf;
         *psi = sysinfo_user;
         break;
+    case GETINFO_KINFO:
+        addr = (void *)&kinfo;
+        size = sizeof(kinfo_t);
+        break;
     default:
-        printk("kernel: unknown getinfo request");
+        return EINVAL;
     }
 
     if (addr) memcpy(buf, addr, size);

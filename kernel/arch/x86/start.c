@@ -83,6 +83,8 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     	kernel_pts++;
     	PROCS_BASE = kernel_pts * PT_MEMSIZE;
     }
+    kinfo.kernel_start_pde = ARCH_PDE(KERNEL_VMA);
+	kinfo.kernel_end_pde = ARCH_PDE(KERNEL_VMA) + kernel_pts;
 	setup_paging(initial_pgd, pt, kernel_pts);
 	
 	/* initial_pgd --> physical initial pgd */
@@ -104,7 +106,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	sysinfo_user = NULL;
 	memset(&kern_log, 0, sizeof(struct kern_log));
-	kinfo.kern_log = &kern_log;
 	spinlock_init(&kern_log.lock);
 }
 

@@ -156,3 +156,4 @@ PUBLIC  int vmctl(int request, endpoint_t who);
 PUBLIC  int     printk(const char *fmt, ...);
 PUBLIC  int     printl(const char *fmt, ...);
 PUBLIC  int     get_sysinfo(struct sysinfo ** sysinfo);
+PUBLIC  int     get_kinfo(kinfo_t * kinfo);

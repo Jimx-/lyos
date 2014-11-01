@@ -13,23 +13,13 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _MM_CONST_H_
-#define _MM_CONST_H_
-    
-/* stack guard */
-/**
- * when there is a page fault caused by access to this guard area,
- * stack size will be enlarged.
- */
-#define GROWSDOWN_GUARD_LEN     0x8000
+#ifndef _ENDPOINT_H_
+#define _ENDPOINT_H_
 
-#define RF_NORMAL   0x0
-#define RF_WRITABLE 0x1
-#define RF_SHARED   0x2
-#define RF_MAPPED   0x4
-#define RF_GUARD    0x8
-#define RF_GROWSDOWN 0x10
+#define ENDPOINT_GENERATION_SHIFT   10
+#define ENDPOINT_GENERATION_SIZE    (1 << ENDPOINT_GENERATION_SHIFT)
 
-#define MAX_PAGEDIR_PDES    5
- 
-#endif /* _MM_CONST_H_ */
+#define make_endpoint(gen, p) ((gen << ENDPOINT_GENERATION_SHIFT) + p)
+#define endpoint_slot(ep) (ep % ENDPOINT_GENERATION_SIZE)
+
+#endif

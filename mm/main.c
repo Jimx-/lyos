@@ -43,6 +43,8 @@ extern pde_t pgd0;
 PUBLIC void __lyos_init();
 
 PRIVATE void init_mm();
+PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint);
+PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp);
 PRIVATE void print_memmap();
 
 /*****************************************************************************
@@ -102,8 +104,7 @@ PUBLIC void task_mm()
 			reply = 0;
 			break;
 		default:
-			dump_msg("MM::unknown msg", &mm_msg);
-			assert(0);
+			mm_msg.RETVAL = ENOSYS;
 			break;
 		}
 
@@ -129,23 +130,33 @@ PRIVATE void init_mm()
 {
 	int i;
 	
+	get_kinfo(&kernel_info);
 	print_memmap();
 
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
-	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
+	vmem_init(VMALLOC_START + (MAX_PAGEDIR_PDES * ARCH_BIG_PAGE_SIZE), 
+		VMALLOC_END - VMALLOC_START - (MAX_PAGEDIR_PDES * ARCH_BIG_PAGE_SIZE));
 	pt_init();
 
 	__lyos_init();
+	init_mmproc(TASK_MM);
 
 	/* setup memory region for tasks so they can malloc */
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(NULL, region_size * 2);
 	struct proc * p = proc_table;
-	struct mmproc * mmp = mmproc_table;
-	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++, rp++, p++, mmp++) {
+	struct boot_proc * bp;
+	for (bp = &kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++, rp++, p++) {
+		struct mmproc * mmp = init_mmproc(bp->endpoint);
+		mmp->slot = i;
 		INIT_LIST_HEAD(&(mmp->mem_regions));
 		mmp->flags = MMPF_INUSE;
+
+		if (bp->proc_nr == TASK_MM) continue;
+
+		spawn_bootproc(mmp, bp);
+
 		if (!(PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) && (i != INIT)) {
 			phys_region_init(&(rp->phys_block), 1);
 			/* prepare heap */
@@ -159,6 +170,29 @@ PRIVATE void init_mm()
     }
 }
 
+PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
+{
+	struct mmproc * mmp;
+	struct boot_proc * bp;
+	for (bp = &kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++) {
+		if (bp->endpoint == endpoint) {
+			mmp = &mmproc_table[bp->proc_nr];
+			mmp->flags = MMPF_INUSE;
+			mmp->endpoint = endpoint;
+
+			return mmp;
+		}
+	}
+	panic("MM: no mmproc");
+	return NULL;
+}
+
+PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
+{
+	if (pgd_new(&(mmp->pgd))) panic("MM: spawn_bootproc: pgd_new failed");
+	//if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
+}
+
 PRIVATE void print_memmap()
 {
 	int usable_memsize = 0;
@@ -167,7 +201,7 @@ PRIVATE void print_memmap()
 
 	printl("BIOS-provided physical RAM map:\n");
 	struct kinfo_mmap_entry * mmap;
-	for (i = 0, mmap = kinfo.memmaps; i < kinfo.memmaps_count; i++, mmap++) {
+	for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count; i++, mmap++) {
 		u64 last_byte = mmap->addr + mmap->len;
 		u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000L) >> 32),
 			base_l = (u32)(mmap->addr & 0xFFFFFFFF);

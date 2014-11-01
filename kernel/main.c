@@ -59,6 +59,15 @@ PUBLIC int kernel_main()
 	init_clock();
     init_keyboard();
 
+    int i;
+    struct boot_proc * bp = &boot_procs;
+    for (i = 0; i < NR_BOOT_PROCS; i++, bp++) {
+    	struct proc * p = proc_addr(bp->proc_nr);
+    	bp->endpoint = p->endpoint;
+    }
+
+    memcpy(&kinfo.boot_procs, boot_procs, sizeof(kinfo.boot_procs));
+
 #ifdef CONFIG_SMP
     smp_init();
     /* failed to init smp */

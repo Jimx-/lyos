@@ -103,4 +103,12 @@ typedef struct {
 	} u;
 } MESSAGE;
 
+struct boot_proc {
+	int proc_nr;
+	char name[16];
+	endpoint_t endpoint;
+	phys_bytes base;
+	phys_bytes len;
+};
+
 #endif /* _TYPE_H_ */

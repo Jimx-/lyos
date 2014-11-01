@@ -16,6 +16,7 @@
 #ifndef _MM_GLOBAL_H_
 #define _MM_GLOBAL_H_
 
+#include <lyos/param.h>
 #include "mmproc.h"
 
 /* EXTERN is extern except for global.c */
@@ -34,5 +35,7 @@ EXTERN struct {
 } bootstrap_pages[STATIC_BOOTSTRAP_PAGES];
 
 extern int pt_init_done; 
+
+EXTERN kinfo_t kernel_info;
 
 #endif 

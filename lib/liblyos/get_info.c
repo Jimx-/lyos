@@ -22,6 +22,7 @@
 #include "assert.h"
 #include "lyos/vm.h"
 #include "lyos/ipc.h"
+#include <lyos/config.h>
 #include <lyos/param.h>
 
 int syscall_entry(int syscall_nr, MESSAGE * m);
@@ -38,4 +39,9 @@ PUBLIC int getinfo(int request, void* buf)
 PUBLIC int get_sysinfo(struct sysinfo ** sysinfo)
 {
 	return getinfo(GETINFO_SYSINFO, sysinfo);
+}
+
+PUBLIC int get_kinfo(kinfo_t * kinfo)
+{
+    return getinfo(GETINFO_KINFO, kinfo);
 }

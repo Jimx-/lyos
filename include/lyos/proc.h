@@ -18,6 +18,7 @@
 #include "stackframe.h"
 #include "page.h"
 #include <lyos/spinlock.h>
+#include <lyos/endpoint.h>
 
 /* Process State */
 #define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
@@ -32,6 +33,8 @@
 			 * (ok to allocated to a new process)
 			 */
 
+#define proc_addr(n)	(&proc_table[n])
+			 
 #define lock_proc(proc) spinlock_lock(&((proc)->lock))
 #define unlock_proc(proc) spinlock_unlock(&((proc)->lock))
 
@@ -56,6 +59,8 @@
 			 					unlock_proc(proc);	\
 							} while(0)
 
+#define PROC_NAME_LEN	16
+
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
 	struct segframe seg;
@@ -69,8 +74,8 @@ struct proc {
 
     struct proc * next_ready;
 
-	/* u32 pid;                   /\* process id passed in from MM *\/ */
-	char name[16];		   /* name of the process */
+	endpoint_t endpoint;
+	char name[PROC_NAME_LEN];		   /* name of the process */
 
 	int state;              /**
 				    * process flags.
