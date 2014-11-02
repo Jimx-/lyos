@@ -135,8 +135,9 @@ PRIVATE void init_mm()
 
 	/* initialize hole table */
 	mem_init(mem_start, free_mem_size);
-	vmem_init(VMALLOC_START + (MAX_PAGEDIR_PDES * ARCH_BIG_PAGE_SIZE), 
-		VMALLOC_END - VMALLOC_START - (MAX_PAGEDIR_PDES * ARCH_BIG_PAGE_SIZE));
+	vir_bytes vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
+	vmem_init(vmalloc_start, 
+		VMALLOC_END - vmalloc_start);
 	pt_init();
 
 	__lyos_init();
@@ -199,7 +200,7 @@ PRIVATE void print_memmap()
 	int reserved_memsize = 0;
 	int i;
 
-	printl("BIOS-provided physical RAM map:\n");
+	printl("Kernel-provided physical RAM map:\n");
 	struct kinfo_mmap_entry * mmap;
 	for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count; i++, mmap++) {
 		u64 last_byte = mmap->addr + mmap->len;
@@ -225,16 +226,15 @@ PRIVATE void print_memmap()
 						usable_memsize / 1024, memory_size / 1024,
 						text_len / 1024, (data_len + bss_len) / 1024,
 						reserved_memsize / 1024);
-	printl("Physical process memory base: 0x%x\n", PROCS_BASE);
 	
+	vir_bytes vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
+
 	printl("Virtual kernel memory layout:\n");
 	printl("  .text   : 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
 	printl("  .data   : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss    : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
-	printl("  vmalloc : 0x%08x - 0x%08x  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
+	printl("  vmalloc : 0x%08x - 0x%08x  (%dkB)\n", vmalloc_start, VMALLOC_END, (VMALLOC_END - vmalloc_start) / 1024);
 	printl("  fixmap  : 0x%08x - 0x%08x  (%dkB)\n", FIXMAP_START, FIXMAP_END, (FIXMAP_END - FIXMAP_START) / 1024);
-	
-	printl("MM: kernel page directory at physical address: 0x%x\n", initial_pgd);
 
 	mem_start = PROCS_BASE;
 	free_mem_size = memory_size - mem_start;

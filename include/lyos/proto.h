@@ -50,6 +50,9 @@ PUBLIC void     fpu_init();
 /* smp.c */
 PUBLIC void     smp_init();
 
+/* memory.c */
+PUBLIC void     init_memory();
+
 /* i8259.c */
 PUBLIC void 	init_8259A();
 PUBLIC void 	put_irq_handler(int irq, irq_handler handler);

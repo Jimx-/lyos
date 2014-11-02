@@ -17,7 +17,6 @@
 #define _PAGE_H_
 
 #define KERNEL_VMA      0xf0000000
-#define VMALLOC_START   (KERNEL_VMA + PROCS_BASE)
 #define VMALLOC_END     0xf7c00000
 #define FIXMAP_START    VMALLOC_END
 #define FIXMAP_END      0xfec00000
@@ -85,6 +84,7 @@ PUBLIC void reload_cr3();
 #define ARCH_PG_PRESENT         PG_PRESENT
 #define ARCH_PG_RW              PG_RW
 #define ARCH_PG_BIGPAGE         PG_BIGPAGE
+#define ARCH_PG_USER            PG_USER
 #define ARCH_PG_GLOBAL          PG_GLOBAL
 
 #define ARCH_VM_DIR_ENTRIES     I386_VM_DIR_ENTRIES

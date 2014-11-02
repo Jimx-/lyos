@@ -54,6 +54,8 @@ PUBLIC int kernel_main()
 	init_arch();
 	init_proc();
 	
+	init_memory();
+	
 	jiffies = 0;
 
 	init_clock();

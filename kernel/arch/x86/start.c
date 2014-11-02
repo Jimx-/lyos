@@ -152,13 +152,12 @@ PUBLIC void init_arch()
 
 			if (i == TASK_MM) {
 				/* use kernel page table */ 
-				p->pgd.phys_addr = initial_pgd;
-				p->pgd.vir_addr = (pde_t *)((int)initial_pgd + KERNEL_VMA);
 
 				p->seg.cr3_phys = (u32)initial_pgd;
 				p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
 			} else {
 				p->seg.cr3_phys =0;
+				p->seg.cr3_vir = 0;
 				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 			}
@@ -169,6 +168,7 @@ PUBLIC void init_arch()
 
 		} else {		/* INIT process */
 			p->seg.cr3_phys =0;
+			p->seg.cr3_vir = 0;
 			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
 			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 

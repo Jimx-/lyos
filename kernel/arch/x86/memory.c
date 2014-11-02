@@ -36,6 +36,65 @@
 
 extern int syscall_style;
 
+/* temporary mappings */
+#define MAX_TEMPPDES    2
+#define TEMPPDE_SRC     0
+#define TEMPPDE_DST     1
+PRIVATE u32 temppdes[MAX_TEMPPDES];
+
+PUBLIC void init_memory()
+{
+    int i;
+    for (i = 0; i < MAX_TEMPPDES; i++) {
+        temppdes[i] = kinfo.kernel_end_pde++;
+    }
+}
+
+/* Temporarily map la in p's address space in kernel address space */
+PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * len, int index)
+{
+    /* the process is already in current page table */
+    if (p == get_cpulocal_var(proc_ptr)) return la;
+
+    pde_t pdeval;
+    u32 pde = temppdes[index];
+    if (p) {
+        if (p->seg.cr3_vir) pdeval = p->seg.cr3_vir[ARCH_PDE(la)];
+        else pdeval = p->pgd.vir_addr[ARCH_PDE(la)];
+    } else {    /* physical address */
+        pdeval = (la & ARCH_VM_ADDR_MASK_BIG) | 
+            ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW;
+    }
+
+    if (get_cpulocal_var(proc_ptr)->seg.cr3_vir) get_cpulocal_var(proc_ptr)->seg.cr3_vir[pde] = pdeval;
+    else get_cpulocal_var(proc_ptr)->pgd.vir_addr[pde] = pdeval;
+
+    off_t offset = la & ARCH_VM_OFFSET_MASK_BIG;
+    *len = min(*len, ARCH_BIG_PAGE_SIZE - offset);
+
+    return pde * ARCH_BIG_PAGE_SIZE + offset; 
+}
+
+PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
+        struct proc * p_src, phys_bytes src_la, vir_bytes len)
+{
+    while (len > 0) {
+        vir_bytes chunk = len;
+        phys_bytes src_mapped, dest_mapped;
+
+        src_mapped = create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC);
+        dest_mapped = create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST);
+
+        phys_copy(dest_mapped, src_mapped, chunk);
+
+        len -= chunk;
+        src_la += chunk;
+        dest_la += chunk;
+    }
+
+    return 0;
+}
+
 PRIVATE void * find_free_pages(pde_t * pgd_phys, int nr_pages, void * start, void * end)
 {
     /* default value */
@@ -84,6 +143,11 @@ PRIVATE u32 get_phys32(phys_bytes phys_addr)
 {
     u32 v;
 
+    /*if (la_la_copy(get_cpulocal_var(proc_ptr), &v, NULL, phys_addr, sizeof(v))) {
+        panic("get_phys32: la_la_copy failed");
+    }
+
+    return v;*/
     u32 old_cr3 = read_cr3();
     write_cr3((u32)initial_pgd);
     reload_cr3();
@@ -258,6 +322,11 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
 PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
                         endpoint_t src_pid, void * src_addr, int len)
 {
+    /*struct proc * p_src = proc_addr(src_pid);
+    struct proc * p_dest = proc_addr(dest_pid);
+
+    return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
+*/
     u32 old_cr3 = read_cr3();
     pde_t * initial_pgd_vir = (pde_t *)((u32)initial_pgd + KERNEL_VMA);
 
