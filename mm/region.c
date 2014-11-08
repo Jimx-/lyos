@@ -155,7 +155,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
 /**
  * <Ring 1> Map the physical memory of virtual region rp. 
  */
-PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
+PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
 {
 #if REGION_DEBUG
     printl("MM: region_map_phys: mapping virtual memory region(0x%x - 0x%x)\n", 
@@ -175,7 +175,7 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
 #endif
         int flags = PG_PRESENT | PG_USER;
         if (rp->flags & RF_WRITABLE) flags |= PG_RW;
-        pt_mappage(&(mp->pgd), frame->phys_addr, (void*)base, flags);
+        pt_mappage(&(mmp->pgd), frame->phys_addr, (void*)base, flags);
         frame->flags |= RF_MAPPED;
     }
 
@@ -187,12 +187,12 @@ PUBLIC int region_map_phys(struct proc * mp, struct vir_region * rp)
 /**
  * <Ring 1> Unmap the physical memory of virtual region rp. 
  */
-PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp)
+PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
 {
     /* not mapped */
     if (!(rp->flags & RF_MAPPED)) return 0;
 
-    unmap_memory(&(mp->pgd), rp->vir_addr, rp->length);
+    unmap_memory(&(mmp->pgd), rp->vir_addr, rp->length);
 
     struct phys_region * pregion = &(rp->phys_block);
     int i;
@@ -210,9 +210,9 @@ PUBLIC int region_unmap_phys(struct proc * mp, struct vir_region * rp)
 /**
  * <Ring 1> Make virtual region rp write-protected. 
  */
-PUBLIC int region_wp(struct proc * mp, struct vir_region * rp)
+PUBLIC int region_wp(struct mmproc * mmp, struct vir_region * rp)
 {
-    pt_wp_memory(&(mp->pgd), rp->vir_addr, rp->length);
+    pt_wp_memory(&(mmp->pgd), rp->vir_addr, rp->length);
 /*
     struct phys_region * pregion = &(rp->phys_block);
     int i;

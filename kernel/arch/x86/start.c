@@ -156,26 +156,12 @@ PUBLIC void init_arch()
 				p->seg.cr3_phys = (u32)initial_pgd;
 				p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
 			} else {
-				p->seg.cr3_phys =0;
+				p->seg.cr3_phys = 0;
 				p->seg.cr3_vir = 0;
-				p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
-				p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
 			}
-
-			for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
-				if (p->pgd.vir_addr[j] != 0) p->pgd.vir_pts[j] = (pte_t *)(((int)(p->pgd.vir_addr[j]) + KERNEL_VMA) & 0xfffff000);
-			}	
-
 		} else {		/* INIT process */
 			p->seg.cr3_phys =0;
 			p->seg.cr3_vir = 0;
-			p->pgd.phys_addr = (pte_t *)(first_pgd + i * PGD_SIZE);
-			p->pgd.vir_addr = (pte_t *)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
-
-			memset(&(p->pgd.vir_pts), 0, sizeof(p->pgd.vir_pts));
-			for (j = ARCH_PDE(KERNEL_VMA); j < ARCH_PDE(KERNEL_VMA) + kernel_pts; j++) {
-				p->pgd.vir_pts[j] = (pte_t *)(((int)(p->pgd.vir_addr[j]) + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
-			}
 		}
 
 		p->regs.cs = codeseg;

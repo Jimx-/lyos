@@ -69,8 +69,7 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
 /* <Ring 0> */
 PUBLIC void switch_address_space(struct proc * p) {
-    if (p->seg.cr3_phys) write_cr3(p->seg.cr3_phys);
-    else write_cr3((u32) p->pgd.phys_addr);
+    write_cr3(p->seg.cr3_phys);
     //asm volatile ("mov %0, %%cr3":: "r"(pgd));
 }
 

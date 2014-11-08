@@ -191,7 +191,7 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
 PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 {
 	if (pgd_new(&(mmp->pgd))) panic("MM: spawn_bootproc: pgd_new failed");
-	//if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
+	if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
 }
 
 PRIVATE void print_memmap()

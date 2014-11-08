@@ -43,7 +43,7 @@ PRIVATE struct vir_region * mmap_region(struct proc * p, int addr,
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
         region_alloc_phys(vr);
-        region_map_phys(p, vr);
+        region_map_phys(mmp, vr);
 
         if (addr && (mmap_flags & MAP_GROWSDOWN)) {
             /* create a growsdown guard region */

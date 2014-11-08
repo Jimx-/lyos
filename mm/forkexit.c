@@ -73,13 +73,18 @@ PUBLIC int do_fork()
 	struct mmproc * mmparent = mmproc_table + pid;
 	*p = proc_table[pid];
 	*mmp = mmproc_table[pid];
+	mmp->slot = child_pid;
+	mmp->endpoint = child_pid;
+	mmp->flags &= MMPF_INUSE;
 	p->p_parent = pid;
 	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
 
-	if (pgd_new(&(p->pgd)) != 0) {
+	if (pgd_new(&(mmp->pgd)) != 0) {
 		printl("MM: fork: can't create new page directory.\n");
 		return -ENOMEM;
 	}
+
+	if (pgd_bind(mmp, &mmp->pgd)) panic("MM: fork: cannot bind new pgdir");
 
 	INIT_LIST_HEAD(&(mmp->mem_regions));
 
@@ -93,15 +98,15 @@ PUBLIC int do_fork()
 
        	if (vr->flags & RF_WRITABLE) {
        		region_alloc_phys(new_region);
-       		region_map_phys(p, new_region);
+       		region_map_phys(mmp, new_region);
 
        		data_copy(child_pid, new_region->vir_addr, pid, vr->vir_addr, vr->length);
        	} else {	/* can be shared */
        		region_share(new_region, vr);
-       		region_map_phys(p, new_region);
+       		region_map_phys(mmp, new_region);
        	}
     }
-	
+
 	/* tell FS, see fs_fork() */
 	MESSAGE msg2fs;
 	msg2fs.type = FORK;
@@ -295,15 +300,15 @@ PUBLIC int proc_free(struct proc * p)
     if (!list_empty(&(mmp->mem_regions))) {
 	    list_for_each_entry(vr, &(mmp->mem_regions), list) {
     		if ((&(vr->list) != &(mmp->mem_regions)) && (&(vr->list) != mmp->mem_regions.next)) {
-    			region_unmap_phys(p, list_entry(vr->list.prev, struct vir_region, list));
+    			region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
        			region_free(list_entry(vr->list.prev, struct vir_region, list));
        		}
     	}
     }
-    region_unmap_phys(p, list_entry(vr->list.prev, struct vir_region, list));
+    region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
     region_free(list_entry(vr->list.prev, struct vir_region, list)); 
     INIT_LIST_HEAD(&(mmp->mem_regions));
-    pgd_clear(&(p->pgd));
+    pgd_clear(&(mmp->pgd));
 
     return 0;
 }

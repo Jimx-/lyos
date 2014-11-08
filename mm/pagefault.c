@@ -95,7 +95,7 @@ PUBLIC void do_handle_fault()
             list_for_each_entry(vr, &(mmp->mem_regions), list) {
                 if ((vr->flags & RF_GROWSDOWN) && (gd_base == (int)vr->vir_addr)) {
                     if (region_extend_stack(vr, GROWSDOWN_GUARD_LEN) != 0) handled = 0;
-                    region_map_phys(p, vr);
+                    region_map_phys(mmp, vr);
                 }
             }
         }

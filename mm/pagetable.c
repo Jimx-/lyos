@@ -260,7 +260,7 @@ PUBLIC void pt_kern_mapping_init()
 {
     int rindex = 0;
     caddr_t addr;
-    int len, flags, i;
+    int len, flags;
     struct kern_mapping * kmapping = kern_mappings;
 
     while (!vmctl_get_kern_mapping(rindex, &addr, &len, &flags)) {
@@ -287,11 +287,6 @@ PUBLIC void pt_kern_mapping_init()
         nr_kern_mappings++;
         kmapping++;
         rindex++;
-    }
-
-    struct proc * p = proc_table;
-    for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++, p++) {
-        pgd_mapkernel(&p->pgd);
     }
 
     printl("MM: %d kernel mappings\n", nr_kern_mappings);

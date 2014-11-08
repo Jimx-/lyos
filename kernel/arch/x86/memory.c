@@ -59,15 +59,13 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * 
     pde_t pdeval;
     u32 pde = temppdes[index];
     if (p) {
-        if (p->seg.cr3_vir) pdeval = p->seg.cr3_vir[ARCH_PDE(la)];
-        else pdeval = p->pgd.vir_addr[ARCH_PDE(la)];
+        pdeval = p->seg.cr3_vir[ARCH_PDE(la)];
     } else {    /* physical address */
         pdeval = (la & ARCH_VM_ADDR_MASK_BIG) | 
             ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW;
     }
 
-    if (get_cpulocal_var(proc_ptr)->seg.cr3_vir) get_cpulocal_var(proc_ptr)->seg.cr3_vir[pde] = pdeval;
-    else get_cpulocal_var(proc_ptr)->pgd.vir_addr[pde] = pdeval;
+    get_cpulocal_var(proc_ptr)->seg.cr3_vir[pde] = pdeval;
 
     off_t offset = la & ARCH_VM_OFFSET_MASK_BIG;
     *len = min(*len, ARCH_BIG_PAGE_SIZE - offset);
@@ -211,10 +209,10 @@ PUBLIC void * la2pa(int pid, void * la)
 
     //pte_t * pt = p->pgd.vir_pts[pgd_index];
     //return (void*)((pt[pt_index] & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
-    if (pgd_phys == NULL) {
+    /*if (pgd_phys == NULL) {
         pte_t * pt = p->pgd.vir_pts[pgd_index];
         return (void*)((pt[pt_index] & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
-    } else {
+    } else*/ {
         pde_t pde_v = (pde_t)get_phys32((phys_bytes)(pgd_phys + pgd_index));
 
         if (pde_v & ARCH_PG_BIGPAGE) {

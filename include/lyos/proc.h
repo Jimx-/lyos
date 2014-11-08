@@ -64,7 +64,6 @@
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
 	struct segframe seg;
-	pgdir_t	pgd;
 
 	spinlock_t lock;
 

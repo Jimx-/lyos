@@ -30,7 +30,7 @@ typedef unsigned int    pte_t;
 #define I386_VM_ADDR_MASK       0xfffff000
 #define I386_VM_OFFSET_MASK     (~I386_VM_ADDR_MASK)
 #define I386_VM_ADDR_MASK_BIG   0xffc00000
-#define I386_VM_OFFSET_MASK_BIG (~I386_VM_ADDR_MASK_BIG)
+#define I386_VM_OFFSET_MASK_BIG 0x003fffff
 
 /* struct page_directory */
 typedef struct {

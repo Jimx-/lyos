@@ -74,7 +74,7 @@ PUBLIC int do_sbrk()
             errno = retval;
             return -1;
         }
-        region_map_phys(p, vr);
+        region_map_phys(mmp, vr);
         retval = p->brk;
         p->brk += count;
 #ifdef SBRK_DEBUG
