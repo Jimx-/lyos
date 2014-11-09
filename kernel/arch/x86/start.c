@@ -33,8 +33,6 @@
 
 extern char _end[];
 extern pde_t pgd0;
-PRIVATE pde_t * user_pgd = NULL;
-PRIVATE int first_pgd = 0;
 PUBLIC void * k_stacks;
 
 /*======================================================================*
@@ -71,12 +69,12 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	mb_mod_addr = mboot->mods_addr + KERNEL_VMA;
 	multiboot_module_t * last_mod = (multiboot_module_t *)mboot->mods_addr;
 	last_mod += mb_mod_count - 1;
+
 	int pgd_start = (unsigned)last_mod->mod_end;
 
 	/* setup kernel page table */
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
-	first_pgd = (pgd_start + 0x1000) & ARCH_VM_ADDR_MASK;
-	pte_t * pt = (pte_t*)(first_pgd + (NR_TASKS + NR_NATIVE_PROCS) * 0x1000);	/* 4k align */
+	pte_t * pt = (pte_t*)((pgd_start + 0x1000) & ARCH_VM_ADDR_MASK);	/* 4k align */
 	PROCS_BASE = (int)(pt + 1024 * 1024) & ARCH_VM_ADDR_MASK;
     kernel_pts = PROCS_BASE / PT_MEMSIZE;
     if (PROCS_BASE % PT_MEMSIZE != 0) {
@@ -88,15 +86,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	setup_paging(initial_pgd, pt, kernel_pts);
 	
 	/* initial_pgd --> physical initial pgd */
-
-	/* setup user page table */
-	int i, j;
-	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
-		user_pgd = (pde_t*)(first_pgd + i * PGD_SIZE + KERNEL_VMA);
-		for (j = 0; j < kernel_pts; j++) { 
-        	user_pgd[j + ARCH_PDE(KERNEL_VMA)] = initial_pgd[j];
-    	}
-    }
 
 	init_prot();
 
@@ -148,20 +137,11 @@ PUBLIC void init_arch()
 		strcpy(p->name, t->name);	/* name of the process */
 		p->p_parent = NO_TASK;
 
-		if (strcmp(t->name, "INIT") != 0) {
+		if (i == TASK_MM) {
+			/* use kernel page table */ 
 
-			if (i == TASK_MM) {
-				/* use kernel page table */ 
-
-				p->seg.cr3_phys = (u32)initial_pgd;
-				p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
-			} else {
-				p->seg.cr3_phys = 0;
-				p->seg.cr3_vir = 0;
-			}
-		} else {		/* INIT process */
-			p->seg.cr3_phys =0;
-			p->seg.cr3_vir = 0;
+			p->seg.cr3_phys = (u32)initial_pgd;
+			p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
 		}
 
 		p->regs.cs = codeseg;

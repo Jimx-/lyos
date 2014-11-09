@@ -107,7 +107,7 @@ PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
  * @param  vir_length Virtual memory length.
  * @return            The memory region created.
  */
-PUBLIC struct vir_region * region_new(struct proc * mp, void * vir_base, int vir_length, int flags)
+PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags)
 {
     struct vir_region * region = (struct vir_region *)alloc_vmem(NULL, sizeof(struct vir_region));
 

@@ -148,7 +148,7 @@ PRIVATE void init_mm()
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(NULL, region_size * 2);
 	struct proc * p = proc_table;
 	struct boot_proc * bp;
-	for (bp = &kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++, rp++, p++) {
+	for (bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++, rp++, p++) {
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
 		mmp->slot = i;
 		INIT_LIST_HEAD(&(mmp->mem_regions));
@@ -175,7 +175,7 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
 {
 	struct mmproc * mmp;
 	struct boot_proc * bp;
-	for (bp = &kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++) {
+	for (bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++) {
 		if (bp->endpoint == endpoint) {
 			mmp = &mmproc_table[bp->proc_nr];
 			mmp->flags = MMPF_INUSE;

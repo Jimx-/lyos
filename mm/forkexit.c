@@ -91,7 +91,7 @@ PUBLIC int do_fork()
 	/* copy regions */
 	struct vir_region * vr;
     list_for_each_entry(vr, &(mmparent->mem_regions), list) {
-    	struct vir_region * new_region = region_new(p, vr->vir_addr, vr->length, vr->flags);
+    	struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
        	list_add(&(new_region->list), &(mmp->mem_regions));
        	
        	if (!(vr->flags & RF_MAPPED)) continue;

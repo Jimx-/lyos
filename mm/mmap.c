@@ -39,7 +39,7 @@ PRIVATE struct vir_region * mmap_region(struct proc * p, int addr,
     struct mmproc * mmp = mmproc_table + (p - proc_table);
     struct vir_region * vr = NULL;
     if (addr || (mmap_flags & MAP_FIXED)) {
-        vr = region_new(p, (void *)addr, len, vrflags);
+        vr = region_new((void *)addr, len, vrflags);
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
         region_alloc_phys(vr);
@@ -47,7 +47,7 @@ PRIVATE struct vir_region * mmap_region(struct proc * p, int addr,
 
         if (addr && (mmap_flags & MAP_GROWSDOWN)) {
             /* create a growsdown guard region */
-            struct vir_region * guard_region = region_new(p, (void*)(addr - GROWSDOWN_GUARD_LEN), GROWSDOWN_GUARD_LEN, RF_GUARD);
+            struct vir_region * guard_region = region_new((void*)(addr - GROWSDOWN_GUARD_LEN), GROWSDOWN_GUARD_LEN, RF_GUARD);
             list_add(&(guard_region->list), &(mmp->mem_regions));
         }
     }

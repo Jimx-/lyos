@@ -62,7 +62,7 @@ PUBLIC int kernel_main()
     init_keyboard();
 
     int i;
-    struct boot_proc * bp = &boot_procs;
+    struct boot_proc * bp = boot_procs;
     for (i = 0; i < NR_BOOT_PROCS; i++, bp++) {
     	struct proc * p = proc_addr(bp->proc_nr);
     	bp->endpoint = p->endpoint;

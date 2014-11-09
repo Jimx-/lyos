@@ -90,5 +90,5 @@ PUBLIC void idle_stop()
 #endif
 
     int is_idle = get_cpu_var(cpu, cpu_is_idle);
-    get_cpu_var(cpu, cpu_is_idle) = 0;
+    if (is_idle) get_cpu_var(cpu, cpu_is_idle) = 0;
 }
