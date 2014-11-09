@@ -55,7 +55,7 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_share(struct vir_region * dest, struct vir_region * src);
 PUBLIC int region_free(struct vir_region * rp);
 
-PUBLIC int proc_free(struct proc * p);
+PUBLIC int proc_free(struct mmproc * p);
 
 PUBLIC int do_sbrk();
 /* mm/forkexit.c */

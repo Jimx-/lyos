@@ -173,6 +173,7 @@ PUBLIC void do_exit(int status)
 	int pid = mm_msg.source; /* PID of caller */
 	int parent_pid = proc_table[pid].p_parent;
 	struct proc * p = &proc_table[pid];
+	struct mmproc * mmp = &mmproc_table[pid];
 
 	/* tell FS, see fs_exit() */
 	MESSAGE msg2fs;
@@ -180,7 +181,7 @@ PUBLIC void do_exit(int status)
 	msg2fs.PID = pid;
 	send_recv(BOTH, TASK_FS, &msg2fs);
 	
-	proc_free(p);
+	proc_free(mmp);
 	
 	p->exit_status = status;
 
@@ -291,11 +292,10 @@ PUBLIC void do_wait()
 	}
 }
 
-PUBLIC int proc_free(struct proc * p)
+PUBLIC int proc_free(struct mmproc * mmp)
 {
 	/* free memory */
 	struct vir_region * vr;
-	struct mmproc * mmp = mmproc_table + (p - proc_table);
 
     if (!list_empty(&(mmp->mem_regions))) {
 	    list_for_each_entry(vr, &(mmp->mem_regions), list) {

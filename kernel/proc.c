@@ -70,6 +70,8 @@ PUBLIC void init_proc()
 	struct proc * p = proc_table;
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++) {
+		spinlock_init(&p->lock);
+		
 		if (i < NR_BOOT_PROCS) {
 			p->endpoint = make_endpoint(0, i);	/* generation 0 */
 			PST_SET(p, PST_STOPPED);

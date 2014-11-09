@@ -18,6 +18,7 @@
 #include "stdio.h"
 #include "assert.h"
 #include "unistd.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
@@ -54,7 +55,7 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 			break;
 
 		default:
-			printl("%s: unknown message type\n", dd->dev_name);
+			msg.RETVAL = ENOSYS;
 			break;
 		}
 

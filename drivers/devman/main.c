@@ -27,6 +27,7 @@
 #include "lyos/proc.h"
 #include "lyos/driver.h"
 #include <lyos/ipc.h>
+#include <lyos/sysutils.h>
 
 PRIVATE void devman_init();
 

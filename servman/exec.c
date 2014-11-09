@@ -144,14 +144,12 @@ PUBLIC int serv_prepare_module_stack()
     unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
 
     CLEAR_ARG();
-    sprintf(arg, "%x", (unsigned int)initrd_base);
+    sprintf(arg, "initrd_base=0x%x", (unsigned int)initrd_base);
     COPY_STRING(arg);
-    COPY_STRING("--initrd_base");
 
     CLEAR_ARG();
-    sprintf(arg, "%u", initrd_len);
+    sprintf(arg, "initrd_len=%u", initrd_len);
     COPY_STRING(arg);
-    COPY_STRING("--initrd_len");
 
     arg_list = (char **)stacktop;
     /* env list end */

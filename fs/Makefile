@@ -32,15 +32,15 @@ ext2/ext2fs.o:
 
 $(INITFS):
 	@(cd initfs; make)
-	@(cp -f $(INITFS) ../sysroot/sbin/)
+	@(cp -f $(INITFS) $(BINDIR)/sbin/)
 
 $(PROCFS):
 	@(cd procfs; make)
-	@(cp $(PROCFS) ../sysroot/sbin/)
+	@(cp $(PROCFS) $(BINDIR)/sbin/)
 
 $(SYSFS):
 	@(cd sysfs; make)
-	@(cp $(SYSFS) ../sysroot/sbin/)
+	@(cp $(SYSFS) $(BINDIR)/sbin/)
 
 $(LIBDIR)/libexec/libexec.a:
 	@(cd $(LIBDIR)/libexec; make)

@@ -111,7 +111,6 @@ PUBLIC void init_arch()
 	acpi_init();
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
-		spinlock_init(&p->lock);
 		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
 			p->state = PST_FREE_SLOT;

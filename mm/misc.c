@@ -70,13 +70,12 @@ PUBLIC int do_procctl()
     int param = mm_msg.PCTL_PARAM;
     int retval = 0;
 
-    struct proc * p = proc_table + who;
     struct mmproc * mmp = mmproc_table + who;
 
     switch (param) {
         case PCTL_CLEARPROC:
             if (mm_msg.source != TASK_FS) retval = EPERM;
-            else if (!list_empty(&(mmp->mem_regions))) retval = proc_free(p);
+            else if (!list_empty(&(mmp->mem_regions))) retval = proc_free(mmp);
             break;
         default:
             retval = EINVAL;

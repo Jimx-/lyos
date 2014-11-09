@@ -26,6 +26,7 @@
 #include <lyos/driver.h>
 #include "multiboot.h"
 #include <errno.h>
+#include <lyos/sysutils.h>
 
 #define MAX_RAMDISKS	CONFIG_BLK_DEV_RAM_COUNT
 
@@ -39,7 +40,7 @@ struct ramdisk_dev {
 PRIVATE struct ramdisk_dev ramdisks[MAX_RAMDISKS];
 PRIVATE struct ramdisk_dev initramdisk;
 
-PRIVATE void init_rd();
+PRIVATE void init_rd(int argc, char * argv[]);
 PRIVATE int rd_open(MESSAGE * p);
 PRIVATE int rd_close(MESSAGE * p);
 PRIVATE int rd_rdwt(MESSAGE * p);
@@ -55,38 +56,14 @@ struct dev_driver rd_driver =
 	rd_ioctl 
 };
 
-PUBLIC void task_rd()
+PUBLIC int main(int argc, char * argv[])
 {
-	//MESSAGE msg;
-
-	init_rd();
+	env_setargs(argc, argv);
+	init_rd(argc, argv);
 
 	dev_driver_task(&rd_driver);
-	/*
-	while (1) {
-	
-		send_recv(RECEIVE, ANY, &msg);
 
-		int src = msg.source;
-		switch (msg.type){
-		case DEV_OPEN:
-			break;
-		case DEV_CLOSE:
-			break;
-		case DEV_READ:
-		case DEV_WRITE:
-			msg.RETVAL = rd_rdwt(&msg);
-			break;
-		case DEV_IOCTL:
-			break;
-		default:
-			dump_msg("ramdisk driver: unknown msg", &msg);
-			spin("ramdisk::main_loop (invalid msg.type)");
-			break;
-		}
-
-		send_recv(SEND, src, &msg);
-	}*/
+	return 0;
 }
 
 PRIVATE int rd_open(MESSAGE * p)
@@ -131,17 +108,16 @@ PRIVATE int rd_ioctl(MESSAGE * p)
 	return 0;
 }
 
-PRIVATE void init_rd()
+PRIVATE void init_rd(int argc, char * argv[])
 {
-	multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
-	if (initrd_mod->pad) {
-		printl("RAMDISK: invalid initrd module parameter(pad is not zero)");
-	}
+    long base, len;
+    env_get_long("initrd_base", &base, "u", 0, -1, -1);
+    env_get_long("initrd_len", &len, "d", 0, -1, -1);
 
-	initramdisk.start = (char*)(initrd_mod->mod_start + KERNEL_VMA);
-	initramdisk.length = initrd_mod->mod_end - initrd_mod->mod_start;
+	initramdisk.start = (char *)base;
+	initramdisk.length = len;
 	initramdisk.rdonly = 1;
 
-	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", initramdisk.length, initramdisk.length / 1024, initramdisk.start);
+	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", len, len / 1024, base);
 }
 
