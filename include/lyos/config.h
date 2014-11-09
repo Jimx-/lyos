@@ -37,4 +37,6 @@
 #define USER_QUANTUM        15
 #define TASK_QUANTUM        15
 
+#define VPORTIO_BUF_SIZE     256
+
 #endif

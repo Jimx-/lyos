@@ -532,17 +532,31 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 	if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT))
 		panic("hd error.");
 
+	pb_pair_t cmd_pairs[8];
 	/* Activate the Interrupt Enable (nIEN) bit */
-	portio_outb(REG_DEV_CTRL, 0);
+	pv_set(cmd_pairs[0], REG_DEV_CTRL, 0);
 	/* Load required parameters in the Command Block Registers */
-	portio_outb(REG_FEATURES, cmd->features);
+	pv_set(cmd_pairs[1], REG_FEATURES, cmd->features);
+	pv_set(cmd_pairs[2], REG_NSECTOR, cmd->count);
+	pv_set(cmd_pairs[3], REG_LBA_LOW, cmd->lba_low);
+	pv_set(cmd_pairs[4], REG_LBA_MID, cmd->lba_mid);
+	pv_set(cmd_pairs[5], REG_LBA_HIGH, cmd->lba_high);
+	pv_set(cmd_pairs[6], REG_DEVICE, cmd->device);
+	/* Write the command code to the Command Register */
+	pv_set(cmd_pairs[7], REG_CMD, cmd->command);
+	portio_voutb(cmd_pairs, 8);
+
+	/* Activate the Interrupt Enable (nIEN) bit */
+	//portio_outb(REG_DEV_CTRL, 0);
+	/* Load required parameters in the Command Block Registers */
+	/*portio_outb(REG_FEATURES, cmd->features);
 	portio_outb(REG_NSECTOR,  cmd->count);
 	portio_outb(REG_LBA_LOW,  cmd->lba_low);
 	portio_outb(REG_LBA_MID,  cmd->lba_mid);
 	portio_outb(REG_LBA_HIGH, cmd->lba_high);
-	portio_outb(REG_DEVICE,   cmd->device);
+	portio_outb(REG_DEVICE,   cmd->device); */
 	/* Write the command code to the Command Register */
-	portio_outb(REG_CMD,     cmd->command);
+	//portio_outb(REG_CMD,     cmd->command);
 }
 
 /*****************************************************************************

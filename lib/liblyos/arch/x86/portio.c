@@ -42,3 +42,13 @@ PUBLIC int portio_out(int port, u32 value, int type)
 
     return syscall_entry(NR_PORTIO, &m);
 }
+
+PUBLIC int portio_voutb(pb_pair_t * pairs, int nr_ports)
+{
+    MESSAGE m;
+    m.PIO_REQUEST = PIO_OUT | PIO_BYTE;
+    m.PIO_VECSIZE = nr_ports;
+    m.PIO_BUF = pairs;
+
+    return syscall_entry(NR_VPORTIO, &m);
+}
