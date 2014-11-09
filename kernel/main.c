@@ -36,6 +36,7 @@
 #include "arch_smp.h"
 #endif
 #include "lyos/cpulocals.h"
+#include <lyos/log.h>
 
 #define LYOS_BANNER "Lyos version "UTS_RELEASE" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER") "UTS_VERSION"\n"
 

@@ -63,8 +63,8 @@ PUBLIC void pci_init()
 PRIVATE int pci_bus_probe() 
 {
 	unsigned long init = 0x80000000;
-	out_long(PCI_CTRL, init);
-	init = in_long(PCI_DATA);
+	//out_long(PCI_CTRL, init);
+	//init = in_long(PCI_DATA);
 	if(init == 0xFFFFFFFF)   
 		return 0;
 	return 1;
@@ -74,8 +74,9 @@ PRIVATE u16 pci_read_word(u32 bus, u32 slot, u32 func, u16 offset)
 {
 	u32 address = (u32)((bus << 16) | (slot << 11) |
 			(func << 8) | (offset & 0xFC) | ((u32)0x80000000));
-	out_long(PCI_CTRL, address);
-	return (u16)((in_long(PCI_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
+	return 0;
+	//out_long(PCI_CTRL, address);
+	//return (u16)((in_long(PCI_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
 PRIVATE void pci_scan_devices(int bus_nr)

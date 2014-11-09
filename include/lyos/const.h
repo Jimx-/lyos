@@ -152,7 +152,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	7
+#define NR_SYS_CALL	8
 #define NR_PRINTX	0
 #define NR_SENDREC	1
 #define NR_DATACOPY	2
@@ -160,6 +160,7 @@
 #define NR_GETINFO	4
 #define NR_VMCTL	5
 #define NR_UMAP		6
+#define NR_PORTIO	7
 
 /* ipc */
 #define SEND		1

@@ -1,0 +1,44 @@
+/*  This file is part of Lyos.
+
+    Lyos is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Lyos is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
+
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include <lyos/ipc.h>
+#include <lyos/portio.h>
+
+int syscall_entry(int syscall_nr, MESSAGE * m);
+
+PUBLIC int portio_in(int port, u32 * value, int type)
+{
+    MESSAGE m;
+    m.PIO_REQUEST = PIO_IN | type;
+    m.PIO_PORT = port;
+
+    int retval = syscall_entry(NR_PORTIO, &m);
+    *value = m.PIO_VALUE;
+
+    return retval;
+}
+
+PUBLIC int portio_out(int port, u32 value, int type)
+{
+    MESSAGE m;
+    m.PIO_REQUEST = PIO_OUT | type;
+    m.PIO_PORT = port;
+    m.PIO_VALUE = value;
+
+    return syscall_entry(NR_PORTIO, &m);
+}

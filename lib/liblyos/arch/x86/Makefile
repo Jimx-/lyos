@@ -1,4 +1,4 @@
-LOBJS		= ioport.o cpufeature.o cpuid.o
+LOBJS		= cpufeature.o cpuid.o portio.o
 
 ARCHLIB		= arch-lib.o
 

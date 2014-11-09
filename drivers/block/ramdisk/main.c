@@ -95,9 +95,9 @@ PRIVATE int rd_rdwt(MESSAGE * p)
 
 	if (p->type == DEV_WRITE) {
 		if (ramdisk->rdonly) return EROFS;
-		data_copy(getpid(), addr, p->PROC_NR, p->BUF, count);
+		data_copy(SELF, addr, p->PROC_NR, p->BUF, count);
 	}else if(p->type == DEV_READ){
-		data_copy(p->PROC_NR, p->BUF, getpid(), addr, count);
+		data_copy(p->PROC_NR, p->BUF, SELF, addr, count);
 	}
 
 	return 0;

@@ -81,7 +81,8 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 												   sys_privctl,
 												   sys_getinfo,
 												   sys_vmctl,
-												   sys_umap};
+												   sys_umap,
+												   sys_portio};
 												   
 PUBLIC int errno;
 

@@ -24,6 +24,7 @@
 #include "lyos/proto.h"
 #include "lyos/hd.h"
 #include "lyos/driver.h"
+#include <lyos/portio.h>
 
 PRIVATE void	init_hd				();
 PRIVATE int 	hd_open				(MESSAGE * p);
@@ -532,16 +533,16 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 		panic("hd error.");
 
 	/* Activate the Interrupt Enable (nIEN) bit */
-	out_byte(REG_DEV_CTRL, 0);
+	portio_outb(REG_DEV_CTRL, 0);
 	/* Load required parameters in the Command Block Registers */
-	out_byte(REG_FEATURES, cmd->features);
-	out_byte(REG_NSECTOR,  cmd->count);
-	out_byte(REG_LBA_LOW,  cmd->lba_low);
-	out_byte(REG_LBA_MID,  cmd->lba_mid);
-	out_byte(REG_LBA_HIGH, cmd->lba_high);
-	out_byte(REG_DEVICE,   cmd->device);
+	portio_outb(REG_FEATURES, cmd->features);
+	portio_outb(REG_NSECTOR,  cmd->count);
+	portio_outb(REG_LBA_LOW,  cmd->lba_low);
+	portio_outb(REG_LBA_MID,  cmd->lba_mid);
+	portio_outb(REG_LBA_HIGH, cmd->lba_high);
+	portio_outb(REG_DEVICE,   cmd->device);
 	/* Write the command code to the Command Register */
-	out_byte(REG_CMD,     cmd->command);
+	portio_outb(REG_CMD,     cmd->command);
 }
 
 /*****************************************************************************
@@ -573,9 +574,12 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 {
 	int t = get_ticks();
 
-	while(((get_ticks() - t) * 1000 / HZ) < timeout)
-		if ((in_byte(REG_STATUS) & mask) == val)
+	while(((get_ticks() - t) * 1000 / HZ) < timeout) {
+		u8 status;
+		portio_inb(REG_STATUS, &status);
+		if ((status & mask) == val)
 			return 1;
+	}
 
 	return 0;
 }

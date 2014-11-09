@@ -142,6 +142,7 @@ PUBLIC  int sys_privctl(MESSAGE * m, struct proc* p);
 PUBLIC  int sys_getinfo(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_vmctl(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_umap(MESSAGE * m, struct proc* p);
+PUBLIC  int sys_portio(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

@@ -2,7 +2,8 @@
 # Makefile for Lyos kernel.  #
 ##############################
 
-SYSOBJS	= sys_printx.o sys_datacopy.o sys_getinfo.o sys_privctl.o sys_vmctl.o sys_umap.o
+SYSOBJS	= sys_printx.o sys_datacopy.o sys_getinfo.o sys_privctl.o sys_vmctl.o sys_umap.o \
+			sys_portio.o
 
 SYSTEM		= system.o
 

@@ -26,10 +26,18 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-PRIVATE int disp_pos = 0;
+PRIVATE int disp_pos = 0, print_line = 0;
 
+#define SCR_HEIGHT 25
 #define SCR_WIDTH 80
 #define SCR_SIZE (80 * 25)
+
+PRIVATE char get_char(int line, int col) 
+{
+    int offset = line * SCR_WIDTH * 2 + col * 2;
+    char * video_mem = (char *)V_MEM_BASE; 
+    return video_mem[offset];
+}
 
 PRIVATE void put_char(const char c)
 {
@@ -38,16 +46,45 @@ PRIVATE void put_char(const char c)
     video_mem[disp_pos++] = 0x07;   /* grey on black */
 }
 
+PRIVATE void put_char_at(const char c, int line, int col)
+{
+    int offset = line * SCR_WIDTH * 2 + col * 2;
+    char * video_mem = (char *)V_MEM_BASE; 
+    video_mem[offset++] = c;
+    video_mem[offset] = 0x07;   /* grey on black */
+}
+
+PRIVATE void scroll_up(int lines) 
+{
+    int i, j;
+    for (i = 0; i < SCR_HEIGHT; i++ ) {
+        for (j = 0; j < SCR_WIDTH; j++ ) {
+            char c = 0;
+            if(i < SCR_HEIGHT - lines)
+                c = get_char(i + lines, j);
+            put_char_at(c, i, j);
+        }
+    }
+    print_line -= lines;
+}
+
 PUBLIC void disp_char(const char c)
 {
+    while (print_line >= SCR_HEIGHT)
+        scroll_up(1);
+
     if (c == '\n') {
         int space = SCR_WIDTH - ((disp_pos / 2) % SCR_WIDTH), i;
         for (i = 0; i < space; i++) 
             put_char(' ');
+        print_line++;
         return;
     }
 
     put_char(c);
+
+    while (print_line >= SCR_HEIGHT)
+        scroll_up(1);
 }
 
 PRIVATE void put_str(const char * str)
@@ -84,6 +121,7 @@ PUBLIC void direct_cls()
     }
 
     disp_pos = 0;
+    print_line = 0;
 
     out_byte(CRTC_ADDR_REG, START_ADDR_H);
     out_byte(CRTC_DATA_REG, 0);
