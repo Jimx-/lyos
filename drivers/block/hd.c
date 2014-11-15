@@ -40,10 +40,13 @@ PRIVATE void	interrupt_wait		();
 PRIVATE	void	hd_identify			(int drive);
 PRIVATE void	print_identify_info	(u16* hdinfo);
 PRIVATE void 	register_hd(struct hd_info * hdi);
+PUBLIC 	int 	hd_handler(irq_hook_t * hook);
 
 PRIVATE	u8		hd_status;
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
 PRIVATE	struct hd_info	hd_info[1];
+
+PRIVATE irq_hook_t hd_hook;
 
 #define	DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
 
@@ -126,7 +129,7 @@ PRIVATE void init_hd()
 	printl("hd: %d hard drives\n", *pNrDrives);
 	assert(*pNrDrives);
 
-	put_irq_handler(AT_WINI_IRQ, hd_handler);
+	put_irq_handler(AT_WINI_IRQ, &hd_hook, hd_handler);
 	enable_irq(CASCADE_IRQ);
 	enable_irq(AT_WINI_IRQ);
 
@@ -606,7 +609,7 @@ PRIVATE int waitfor(int mask, int val, int timeout)
  * 
  * @param irq  IRQ nr of the disk interrupt.
  *****************************************************************************/
-PUBLIC void hd_handler(int irq)
+PUBLIC int hd_handler(irq_hook_t * hook)
 {
 	/*
 	 * Interrupts are cleared when the host
@@ -617,4 +620,6 @@ PUBLIC void hd_handler(int irq)
 	hd_status = in_byte(REG_STATUS);
 
 	inform_int(TASK_HD);
+
+	return 1;
 }

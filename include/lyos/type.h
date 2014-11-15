@@ -38,7 +38,15 @@ typedef u32					bitchunk_t;
 
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();
-typedef	void	(*irq_handler)	(int irq);
+
+typedef struct irq_hook{
+    int irq;
+    int id;
+    int (*handler)(struct irq_hook *);
+    struct irq_hook * next;
+} irq_hook_t;
+
+typedef	int 	(*irq_handler_t)	(irq_hook_t * irq_hook);
 
 typedef void*	system_call;
 

@@ -73,8 +73,6 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
-PUBLIC	irq_handler	irq_table[NR_IRQ];
-
 PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 						       					   sys_sendrec,
 												   sys_datacopy,

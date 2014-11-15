@@ -68,4 +68,6 @@ PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
 PUBLIC void halt_cpu();
 
+PUBLIC int put_local_timer_handler(irq_handler_t handler);
+
 #endif

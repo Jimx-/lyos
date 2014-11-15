@@ -55,17 +55,17 @@ PUBLIC void     init_memory();
 
 /* i8259.c */
 PUBLIC void 	init_8259A();
-PUBLIC void 	put_irq_handler(int irq, irq_handler handler);
-PUBLIC void 	spurious_irq(int irq);
+
+/* interrupt.c */
+PUBLIC void     irq_handle(int irq);
+PUBLIC void     put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler);
 
 /* clock.c */
-PUBLIC void 	clock_handler(int irq);
 PUBLIC void 	init_clock();
 PUBLIC void 	milli_delay(int milli_sec);
 
 /* kernel/block/hd.c */
 PUBLIC void 	task_hd();
-PUBLIC void 	hd_handler(int irq);
 	
 /* kernel/block/fd.c */
 PUBLIC void 	task_fd();

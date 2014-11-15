@@ -41,12 +41,12 @@ PRIVATE	int		caps_lock;	/* Caps Lock		*/
 PRIVATE	int		num_lock;	/* Num Lock		*/
 PRIVATE	int		scroll_lock;	/* Scroll Lock		*/
 PRIVATE	int		column;
+PRIVATE irq_hook_t kb_hook;
 
 PRIVATE u8	get_byte_from_kb_buf();
 PRIVATE void	set_leds();
 PRIVATE void	kb_wait();
 PRIVATE void	kb_ack();
-
 
 /*****************************************************************************
  *                                keyboard_handler
@@ -56,7 +56,7 @@ PRIVATE void	kb_ack();
  * 
  * @param irq The IRQ corresponding to the keyboard, unused here.
  *****************************************************************************/
-PUBLIC void keyboard_handler(int irq)
+PUBLIC int keyboard_handler(irq_hook_t * hook)
 {
 	u8 scan_code = in_byte(KB_DATA);
 
@@ -69,6 +69,8 @@ PUBLIC void keyboard_handler(int irq)
 	}
 
 	key_pressed = 1;
+
+	return 1;
 }
 
 
@@ -96,7 +98,7 @@ PUBLIC void init_keyboard()
 
 	set_leds();
 
-	put_irq_handler(KEYBOARD_IRQ, keyboard_handler);
+	put_irq_handler(KEYBOARD_IRQ, &kb_hook, keyboard_handler);
 	enable_irq(KEYBOARD_IRQ);
 	enable_irq(PS_2_IRQ);
 }

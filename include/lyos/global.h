@@ -52,7 +52,6 @@ extern	char		task_stack[];
 extern	struct proc	proc_table[];
 extern  struct task	task_table[];
 extern  struct task	user_proc_table[];
-extern	irq_handler	irq_table[];
 extern  struct boot_proc boot_procs[];
 
 extern  int             err_code;

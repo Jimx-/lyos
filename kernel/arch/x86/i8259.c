@@ -22,7 +22,13 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/interrupt.h>
 
+/* 8259A interrupt controller ports. */
+#define	INT_M_CTL	0x20	/* I/O port for interrupt controller         <Master> */
+#define	INT_M_CTLMASK	0x21	/* setting bits in this port disables ints   <Master> */
+#define	INT_S_CTL	0xA0	/* I/O port for second interrupt controller  <Slave>  */
+#define	INT_S_CTLMASK	0xA1	/* setting bits in this port disables ints   <Slave>  */
 
 /*======================================================================*
                             init_8259A
@@ -40,26 +46,24 @@ PUBLIC void init_8259A()
 
 	out_byte(INT_M_CTLMASK,	0xFF);	/* Master 8259, OCW1. */
 	out_byte(INT_S_CTLMASK,	0xFF);	/* Slave  8259, OCW1. */
-
-	int i;
-	for (i = 0; i < NR_IRQ; i++) {
-		irq_table[i] = spurious_irq;
-	}
 }
 
-/*======================================================================*
-                           spurious_irq
- *======================================================================*/
-PUBLIC void spurious_irq(int irq)
+PUBLIC void i8259_mask(int irq)
 {
-	printk("spurious_irq: %d\n", irq);
+	u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;
+	out_byte(ctl_mask, in_byte(ctl_mask) | (1 << (irq & 0x7)));
 }
 
-/*======================================================================*
-                           put_irq_handler
- *======================================================================*/
-PUBLIC void put_irq_handler(int irq, irq_handler handler)
+PUBLIC void i8259_unmask(int irq)
 {
-	disable_irq(irq);
-	irq_table[irq] = handler;
+	u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;
+	out_byte(ctl_mask, in_byte(ctl_mask) & ~(1 << (irq & 0x7)));
+}
+
+PUBLIC void i8259_eoi(int irq)
+{
+	if (irq < 8)
+		i8259_eoi_master();
+	else 
+		i8259_eoi_slave();
 }

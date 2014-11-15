@@ -18,6 +18,7 @@
 extern	cstart
 extern	kernel_main
 extern  switch_to_user
+extern  irq_handle
 extern	exception_handler
 extern	spurious_irq
 extern  idle_stop
@@ -56,7 +57,6 @@ dd 				pt0 - KERNEL_VMA + 0x1007
 dd 				pt0 - KERNEL_VMA + 0x2007
 dd 				pt0 - KERNEL_VMA + 0x3007
 times			1024 - KERNEL_PDE - 4	 	dd  0
-clock_int_msg		db	"^", 0
 
 [SECTION .bss]
 ALIGN 0x1000
@@ -157,38 +157,16 @@ paging_enabled:
 	cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
 	je .1
 	call	save
-	in	al, INT_M_CTLMASK	; `.
-	or	al, (1 << %1)		;  | Mask current interrupt
-	out	INT_M_CTLMASK, al	; /
-	mov	al, EOI				; `. Set EOI bit
-	out	INT_M_CTL, al		; /
-	sti	; enable interrupt
 	push	%1						; `.
-	call	[irq_table + 4 * %1]	;  | Call the interrupt handler
+	call	irq_handle	;  | Call the interrupt handler
 	pop	ecx							; /
-	cli
-	in	al, INT_M_CTLMASK	; `.
-	and	al, ~(1 << %1)		;  | Resume
-	out	INT_M_CTLMASK, al	; /
 	jmp switch_to_user
 .1:
 	pushad
 	call idle_stop
-	in	al, INT_S_CTLMASK	; `.
-	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
-	out	INT_S_CTLMASK, al	; /
-	mov	al, EOI			; `. 置EOI位(master)
-	out	INT_M_CTL, al		; /
-	nop				; `. 置EOI位(slave)
-	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
-	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
 	push	%1			; `.
-	call	[irq_table + 4 * %1]	;  | 中断处理程序
+	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
-	cli
-	in	al, INT_S_CTLMASK	; `.
-	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
-	out	INT_S_CTLMASK, al	; /
 	popad
 	iret
 %endmacro
@@ -231,40 +209,16 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 	cmp dword [esp + 4], SELECTOR_KERNEL_CS
 	je .1
 	call	save
-	in	al, INT_S_CTLMASK	; `.
-	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
-	out	INT_S_CTLMASK, al	; /
-	mov	al, EOI			; `. 置EOI位(master)
-	out	INT_M_CTL, al		; /
-	nop				; `. 置EOI位(slave)
-	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
-	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
 	push	%1			; `.
-	call	[irq_table + 4 * %1]	;  | 中断处理程序
+	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
-	cli
-	in	al, INT_S_CTLMASK	; `.
-	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
-	out	INT_S_CTLMASK, al	; /
 	jmp switch_to_user
 .1:
 	pushad
 	call idle_stop
-	in	al, INT_S_CTLMASK	; `.
-	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
-	out	INT_S_CTLMASK, al	; /
-	mov	al, EOI			; `. 置EOI位(master)
-	out	INT_M_CTL, al		; /
-	nop				; `. 置EOI位(slave)
-	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
-	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
 	push	%1			; `.
-	call	[irq_table + 4 * %1]	;  | 中断处理程序
+	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
-	cli
-	in	al, INT_S_CTLMASK	; `.
-	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
-	out	INT_S_CTLMASK, al	; /
 	popad
 	iret
 %endmacro

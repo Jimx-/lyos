@@ -59,6 +59,8 @@ global  write_cr3
 global	read_cr4
 global 	write_cr4
 global 	reload_cr3
+global  i8259_eoi_master
+global  i8259_eoi_slave
 
 ; ========================================================================
 ;		   void out_byte(u16 port, u8 value);
@@ -494,3 +496,16 @@ reload_cr3:
 	mov cr3, eax
 	pop ebp
 	ret
+
+i8259_eoi_master:
+	mov	al, EOI				; `. Set EOI bit
+	out	INT_M_CTL, al		; /
+	ret
+
+i8259_eoi_slave:
+	mov	al, EOI			; `. 置EOI位(master)
+	out	INT_M_CTL, al		; /
+	nop				; `. 置EOI位(slave)
+	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
+	ret
+	
