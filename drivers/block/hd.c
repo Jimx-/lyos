@@ -24,7 +24,9 @@
 #include "lyos/proto.h"
 #include "lyos/hd.h"
 #include "lyos/driver.h"
+#include <errno.h>
 #include <lyos/portio.h>
+#include <lyos/interrupt.h>
 
 PRIVATE void	init_hd				();
 PRIVATE int 	hd_open				(MESSAGE * p);
@@ -40,13 +42,10 @@ PRIVATE void	interrupt_wait		();
 PRIVATE	void	hd_identify			(int drive);
 PRIVATE void	print_identify_info	(u16* hdinfo);
 PRIVATE void 	register_hd(struct hd_info * hdi);
-PUBLIC 	int 	hd_handler(irq_hook_t * hook);
 
 PRIVATE	u8		hd_status;
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
 PRIVATE	struct hd_info	hd_info[1];
-
-PRIVATE irq_hook_t hd_hook;
 
 #define	DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
 
@@ -129,10 +128,10 @@ PRIVATE void init_hd()
 	printl("hd: %d hard drives\n", *pNrDrives);
 	assert(*pNrDrives);
 
-	put_irq_handler(AT_WINI_IRQ, &hd_hook, hd_handler);
-	enable_irq(CASCADE_IRQ);
-	enable_irq(AT_WINI_IRQ);
-
+	int hook_id;
+	irq_setpolicy(AT_WINI_IRQ, IRQ_REENABLE, &hook_id);
+	irq_enable(&hook_id);
+	
 	for (i = 0; i < (sizeof(hd_info) / sizeof(hd_info[0])); i++)
 		memset(&hd_info[i], 0, sizeof(hd_info[0]));
 	hd_info[0].open_cnt = 0;
@@ -232,7 +231,6 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 			interrupt_wait();
 			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 			data_copy(p->PROC_NR, (void*)buf, TASK_HD, hdbuf, bytes);
-			//phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
 		}
 		else {
 			if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
@@ -265,20 +263,14 @@ PRIVATE int hd_ioctl(MESSAGE * p)
 	struct hd_info * hdi = &hd_info[drive];
 
 	if (p->REQUEST == DIOCTL_GET_GEO) {
-		//void * dst = va2la(p->PROC_NR, p->BUF);
 		int part_no = MINOR(device);
-		/*void * src = va2la(TASK_HD,
-				   part_no < NR_PRIM_PER_DRIVE ?
-				   &hdi->primary[part_no] :
-				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE]); */
 
 		data_copy(p->PROC_NR, p->BUF, TASK_HD, part_no < NR_PRIM_PER_DRIVE ?
 				   &hdi->primary[part_no] :
 				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE], sizeof(struct part_info));
-		//phys_copy(dst, src, sizeof(struct part_info));
 	}
 	else {
-		assert(0);
+		return EINVAL;
 	}
 
 	return 0;
@@ -573,6 +565,8 @@ PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
 	send_recv(RECEIVE, INTERRUPT, &msg);
+
+	hd_status = in_byte(REG_STATUS);
 }
 
 /*****************************************************************************
@@ -599,27 +593,4 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 	}
 
 	return 0;
-}
-
-/*****************************************************************************
- *                                hd_handler
- *****************************************************************************/
-/**
- * <Ring 0> Interrupt handler.
- * 
- * @param irq  IRQ nr of the disk interrupt.
- *****************************************************************************/
-PUBLIC int hd_handler(irq_hook_t * hook)
-{
-	/*
-	 * Interrupts are cleared when the host
-	 *   - reads the Status Register,
-	 *   - issues a reset, or
-	 *   - writes to the Command Register.
-	 */
-	hd_status = in_byte(REG_STATUS);
-
-	inform_int(TASK_HD);
-
-	return 1;
 }

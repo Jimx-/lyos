@@ -36,6 +36,14 @@
 
 PRIVATE irq_hook_t * irq_handlers[NR_IRQ] = {0};
 
+PUBLIC void init_irq()
+{
+    int i;
+    for (i = 0; i < NR_IRQ_HOOKS; i++) {
+        irq_hooks[i].proc_ep = NO_TASK;
+    }
+}
+
 PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
 {
     if (irq < 0 || irq >= NR_IRQ) panic("invalid irq %d", irq);
@@ -78,4 +86,15 @@ PUBLIC void irq_handle(int irq)
     hwint_unmask(irq);
 
     hwint_ack(irq);
+}
+
+PUBLIC void enable_irq(irq_hook_t * hook)
+{
+    hwint_unmask(hook->irq);
+}
+
+PUBLIC int disable_irq(irq_hook_t * hook)
+{
+    hwint_mask(hook->irq);
+    return 1;
 }

@@ -288,8 +288,6 @@ PUBLIC void pt_kern_mapping_init()
         kmapping++;
         rindex++;
     }
-
-    printl("MM: %d kernel mappings\n", nr_kern_mappings);
 }
 
 /* <Ring 1> */

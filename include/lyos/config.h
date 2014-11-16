@@ -39,4 +39,10 @@
 
 #define VPORTIO_BUF_SIZE     256
 
+#if CONFIG_X86_LOCAL_APIC
+#define NR_IRQ_HOOKS        64
+#else
+#define NR_IRQ_HOOKS        16
+#endif
+    
 #endif

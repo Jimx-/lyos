@@ -99,8 +99,7 @@ PUBLIC void init_keyboard()
 	set_leds();
 
 	put_irq_handler(KEYBOARD_IRQ, &kb_hook, keyboard_handler);
-	enable_irq(KEYBOARD_IRQ);
-	enable_irq(PS_2_IRQ);
+	enable_irq(&kb_hook);
 }
 
 PUBLIC void kb_init(TTY * tty)

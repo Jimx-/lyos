@@ -12,3 +12,27 @@ menu "Power management and ACPI options"
 source "drivers/acpi/config.in"
 
 endmenu
+
+menu "Processor type and features"
+
+config X86_LOCAL_APIC
+	def_bool y
+	depends on SMP
+
+config X86_IO_APIC
+	def_bool y
+	depends on SMP
+
+config SMP
+    bool "Symmetric multiprocessing"
+    help
+      Enable support for systems that have more than one processor.
+
+config SMP_MAX_CPUS
+    int "Max number of CPUs"
+    depends on SMP
+    default "8"
+    help
+      The default value is 8 CPUs.
+
+endmenu

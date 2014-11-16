@@ -54,22 +54,6 @@ config LOG_BUF_SHIFT
             
 endmenu
 
-menu "Processor features"
-
-config SMP
-    bool "Symmetric multiprocessing"
-    help
-      Enable support for systems that have more than one processor.
-
-config SMP_MAX_CPUS
-    int "Max number of CPUs"
-    depends on SMP
-    default "8"
-    help
-      The default value is 8 CPUs.
-
-endmenu
-
 menu "Kernel hacking"
 
 config DEBUG_KERNEL

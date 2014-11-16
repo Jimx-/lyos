@@ -56,6 +56,7 @@ PUBLIC int kernel_main()
 	init_proc();
 	
 	init_memory();
+	init_irq();
 	
 	jiffies = 0;
 

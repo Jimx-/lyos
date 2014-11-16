@@ -54,7 +54,9 @@ extern  struct task	task_table[];
 extern  struct task	user_proc_table[];
 extern  struct boot_proc boot_procs[];
 
-extern  int             err_code;
+extern  irq_hook_t  irq_hooks[];
+
+extern  int         err_code;
 
 extern struct sysinfo sysinfo;
 EXTERN struct sysinfo * sysinfo_user;

@@ -20,8 +20,6 @@ PUBLIC void out_word(u16 port, u16 val);
 PUBLIC u16  in_word(u16 port);
 PUBLIC void out_long(u16 port, u32 val);
 PUBLIC u32  in_long(u16 port);
-PUBLIC void	disable_irq(int irq);
-PUBLIC void	enable_irq(int irq);
 PUBLIC void	disable_int();
 PUBLIC void	enable_int();
 PUBLIC void	port_read(u16 port, void* buf, int n);
@@ -57,8 +55,11 @@ PUBLIC void     init_memory();
 PUBLIC void 	init_8259A();
 
 /* interrupt.c */
+PUBLIC void     init_irq();
 PUBLIC void     irq_handle(int irq);
 PUBLIC void     put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler);
+PUBLIC int      disable_irq(irq_hook_t * hook);
+PUBLIC void     enable_irq(irq_hook_t * hook);
 
 /* clock.c */
 PUBLIC void 	init_clock();
@@ -144,6 +145,7 @@ PUBLIC  int sys_vmctl(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_umap(MESSAGE * m, struct proc* p);
 PUBLIC  int sys_portio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_vportio(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_irqctl(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
