@@ -28,6 +28,7 @@
 #include "lyos/driver.h"
 #include "global.h"
 #include <stdlib.h>
+#include <lyos/sysutils.h>
 
 PUBLIC void init_dd_map()
 {

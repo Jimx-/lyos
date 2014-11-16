@@ -3,7 +3,7 @@
 #
 
 LIBSYSFSOBJS		= sysfs_publish.o
-LIBSYSFS 		= libsysfs.a
+LIBSYSFS 		= $(LIBOUTDIR)/libsysfs.a
 ARFLAGS			= rcs
 
 everything : realclean $(LIBSYSFS)
@@ -12,7 +12,7 @@ realclean :
 	@rm -f $(LIBSYSFSOBJS)
 
 $(LIBSYSFS): $(LIBSYSFSOBJS)
-	@echo -e '\tAR\tlib/libsysfs/$@'
+	@echo -e '\tAR\t$@'
 	@$(AR) $(ARFLAGS) $@ $^
 
 %.o: %.c

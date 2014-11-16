@@ -44,8 +44,9 @@ ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
 BINDIR ?= $(SRCDIR)/sysroot
+LIBOUTDIR = $(BINDIR)/lib
 PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
-export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR BINDIR ARCHINC ARCHLIB PATH
+export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR BINDIR LIBOUTDIR ARCHINC ARCHLIB PATH
 
 LDSCRIPT = kernel/arch/$(ARCH)/lyos.ld
 
@@ -57,7 +58,8 @@ HOSTLD	= ld
 AS 		= $(SUBARCH)-elf-lyos-as
 CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
-CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+SERVERCFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory
 LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 ARFLAGS		= rcs
@@ -65,9 +67,10 @@ MAKE 		= make
 
 ifeq ($(CONFIG_DEBUG_INFO),y)
 	CFLAGS += -g
+	SERVERCFLAGS += -g
 endif
 
-export ASM CC LD CFLAGS HOSTCC HOSTLD
+export ASM CC LD CFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
 # This Program
 LYOSARCHDIR	= arch/$(ARCH)
@@ -79,7 +82,7 @@ ifeq ($(CONFIG_COMPRESS_GZIP),y)
 endif
 
 KRNLOBJ		= kernel/krnl.o
-LIB			= lib/liblyos/liblyos.a
+LIB			= $(LIBOUTDIR)/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
 FSOBJ		= fs/fs.o
 MMOBJ		= mm/mm.o
@@ -117,14 +120,15 @@ KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
 
 # All Phony Targets
-.PHONY : everything final image clean realclean disasm all buildimg mrproper help lib config menuconfig
+.PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig
+	setup-toolchain libraries mrproper
 
 # Default starting position
 kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf $(LYOSKERNEL) $(LYOSINIT) initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf libraries $(LYOSKERNEL) $(LYOSINIT) initrd
 
 all : realclean everything image
 
@@ -161,8 +165,14 @@ silentoldconfig:
 	@(cd scripts/config; make config)
 	$(CONF) --silentoldconfig  $(CONFIGIN)
 
-lib :
-	@(cd lib/liblyos; make)
+clean :
+	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
+	@rm -f $(OBJS)
+
+realclean :
+	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
+	@find . -path ./toolchain -prune -o -name "*.a" -exec rm -f {} \;
+	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINIT) $(LYOSINITRD)
 
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
@@ -173,24 +183,12 @@ mrproper:
 	@rm -f .config .config.old
 	@rm -rf $(CONFIGDIR)
 
-clean :
-	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
-	@rm -f $(OBJS)
-
-realclean :
-	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
-	@find . -path ./toolchain -prune -o -name "*.a" -exec rm -f {} \;
-	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LIB) $(LYOSZKERNEL) $(LYOSINIT) $(LYOSINITRD)
-
 update-disk:
 	@(cd userspace; make)
 	@sudo bash scripts/update-disk.sh
 
 kvm:
 	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
-
-debug:
-	@bochs-gdb -f bochsrc.gdb
 
 setup-disk:
 	@(cd userspace; make)
@@ -216,12 +214,14 @@ help :
 	@echo "Make options:"
 	@echo "-----------------------------------------------------------------"
 	@echo "make\t\t: build the kernel image."
-	@echo "make lib\t: build the Lyos C library."
-	@echo "make cmd\t: install the command files to the HD."
 	@echo "make disasm\t: dump the kernel into lyos.bin.asm."
 	@echo "-----------------------------------------------------------------"
 	@echo "make clean\t: remove all object files but keep config files."
-	@echo "make mrproper\t: remove all object files and config file."
+	@echo "make realclean\t: remove all object files and config file."
+
+libraries:
+	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
+	@(cd lib; make)
 
 $(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC) 
 	@echo -e '\tLD\t$@'

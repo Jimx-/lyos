@@ -28,6 +28,8 @@ char ** env_argv = NULL;
 
 #define ENV_BUF_SIZE	32
 
+PUBLIC void panic(const char *fmt, ...);
+
 PUBLIC void env_setargs(int argc, char * argv[])
 {
 	env_argc = argc;

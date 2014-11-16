@@ -6,4 +6,4 @@ Version 0.3.1 [branch: develop][compiler: gcc-4.6.2]
 [***][FIXED] Can't find a file though it exists after running few commands.
 
 Version 0.4.1 [branch: smp]
-[***]		 Infinte loop in schedule when there is no process runnable.
+[***][FIXED] Infinte loop in schedule when there is no process runnable.

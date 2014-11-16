@@ -37,10 +37,10 @@ PUBLIC int arch_privctl(MESSAGE * m, struct proc* p);
 
 PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
 {
-	endpoint_t whom = m->PROC_NR;
+	//endpoint_t whom = m->PROC_NR;
 	int request = m->REQUEST;
 	
-	struct proc * target = proc_table + whom;
+	//struct proc * target = proc_table + whom;
 
 	switch (request) {
     default:

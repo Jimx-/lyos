@@ -1,7 +1,6 @@
-RAMDISKCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/  -Wall
 
 RDOBJS 	= main.o
-LIBS	= $(LIBDIR)/liblyos/liblyos.a $(LIBDIR)/libdriver/libdriver.a
+LIBS	= -llyos -ldriver
 
 RAMDISK = ramdisk
 
@@ -12,17 +11,10 @@ all : realclean $(RAMDISK)
 realclean :
 	@rm -f $(RAMDISK) $(RDOBJS)
 
-$(RAMDISK): $(RDOBJS) $(LIBS)
+$(RAMDISK): $(RDOBJS)
 	@echo -e '\tLD\tdrivers/block/ramdisk/$@'
-	@$(CC) $(RAMDISKCFLAGS) -o $@ $^
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/block/ramdisk/$@'
-	@$(CC) $(RAMDISKCFLAGS) -c $<
-
-$(LIBDIR)/liblyos/liblyos.a:
-	@(cd $(LIBDIR)/liblyos; make)
-
-$(LIBDIR)/libdriver/libdriver.a:
-	@(cd $(LIBDIR)/libdriver; make)
-
+	@$(CC) $(SERVERCFLAGS) -c $<

@@ -29,7 +29,7 @@
 #include "lyos/proto.h"
 
 PRIVATE void procfs_init();
-PRIVATE int register_filesystem();
+PRIVATE void register_filesystem();
 
 PUBLIC int main()
 {
@@ -47,7 +47,7 @@ PRIVATE void procfs_init()
     register_filesystem();
 }
 
-PRIVATE int register_filesystem()
+PRIVATE void register_filesystem()
 {
     MESSAGE m;
 

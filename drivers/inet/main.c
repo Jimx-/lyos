@@ -35,8 +35,10 @@
 #define PRINTL(x)
 #endif
 
-PUBLIC void main()
+PUBLIC int main()
 {
 	while(1){
 	}
+
+    return 0;
 }

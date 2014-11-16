@@ -3,7 +3,7 @@
 #
 
 LIBEXECOBJS		= exec_elf.o exec_general.o
-LIBEXEC 		= libexec.a
+LIBEXEC 		= $(LIBOUTDIR)/libexec.a
 ARFLAGS			= rcs
 
 everything : realclean $(LIBEXEC)
@@ -12,7 +12,7 @@ realclean :
 	@rm -f $(LIBEXECOBJS)
 
 $(LIBEXEC): $(LIBEXECOBJS)
-	@echo -e '\tAR\tlib/libexec/$@'
+	@echo -e '\tAR\t$@'
 	@$(AR) $(ARFLAGS) $@ $^
 
 %.o: %.c

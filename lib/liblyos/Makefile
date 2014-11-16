@@ -9,15 +9,17 @@ LOBJS		= arch/$(ARCH)/arch-lib.o \
 			printl.o spin.o time.o data_copy.o procctl.o mmap.o list.o get_info.o \
 			vmctl.o privctl.o umap.o env.o panic.o irqctl.o
 
-LIB		= liblyos.a
+LIB		= $(LIBOUTDIR)/liblyos.a
 
+.PHONY: everything realclean 
+	
 everything : realclean $(LIB)
 
 realclean :
 	@rm -f $(LOBJS)
 
 $(LIB): $(LOBJS)
-	@echo -e '\tAR\tlib/liblyos/$@'
+	@echo -e '\tAR\t$@'
 	@$(AR) $(ARFLAGS) $@ $^
 
 arch/$(ARCH)/arch-lib.o:

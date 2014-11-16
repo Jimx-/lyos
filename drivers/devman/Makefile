@@ -1,25 +1,21 @@
 #
 # Makefile for device manager.
 
-DEVMANCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -Wall
-
 DEVMAN		= devman
 DEVMANOBJS = main.o ddmap.o global.o
-LIBS 		= $(LIBDIR)/liblyos/liblyos.a
+LIBS 		= -llyos
 
 everything : realclean $(DEVMAN)
 
 realclean :
 	@rm -f $(DEVMAN) $(DEVMANOBJS)
 
-$(DEVMAN): $(DEVMANOBJS) $(LIBS)
+$(DEVMAN): $(DEVMANOBJS)
 	@echo -e '\tLD\tdrivers/devman/$@'
-	@$(CC) $(DEVMANCFLAGS) -o $@ $^
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/devman/$@'
-	@$(CC) $(DEVMANCFLAGS) -c $<
+	@$(CC) $(SERVERCFLAGS) -c $<
 
-$(LIBDIR)/liblyos/liblyos.a:
-	@(cd $(LIBDIR)/liblyos; make)
 

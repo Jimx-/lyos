@@ -69,7 +69,6 @@ PUBLIC int do_fork()
 
 	/* duplicate the process table */
 	int pid = mm_msg.source;
-	struct proc * parent = proc_table + pid;
 	struct mmproc * mmparent = mmproc_table + pid;
 	*p = proc_table[pid];
 	*mmp = mmproc_table[pid];

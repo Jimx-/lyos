@@ -326,8 +326,8 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
 PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
                         endpoint_t src_pid, void * src_addr, int len)
 {
-    struct proc * p_src = proc_addr(src_pid);
-    struct proc * p_dest = proc_addr(dest_pid);
+    //struct proc * p_src = proc_addr(src_pid);
+    //struct proc * p_dest = proc_addr(dest_pid);
 
     //return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
 

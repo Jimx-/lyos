@@ -1,24 +1,20 @@
 #
 # Makefile for inet driver.
-INETCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
 
 INETOBJS 	= main.o
 INET		= inet
 
-LIBS	= $(LIBDIR)/liblyos/liblyos.a
+LIBS	= -llyos
 
 everything : realclean $(INET)
 
 realclean :
 	@rm -f $(INET) $(INETOBJS)
 
-$(INET): $(INETOBJS) $(LIBS)
+$(INET): $(INETOBJS)
 	@echo -e '\tCC\tdrivers/inet/$@'
-	@$(CC) $(INETCFLAGS) -o $@ $^
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/inet/$@'
-	@$(CC) $(INETCFLAGS) -c $<
-
-$(LIBDIR)/liblyos/liblyos.a:
-	@(cd $(LIBDIR)/liblyos; make)
+	@$(CC) $(SERVERCFLAGS) -c $<

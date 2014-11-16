@@ -1,9 +1,7 @@
-ATACFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/  -Wall
 
+ATA 	= ata
 ATAOBJS 	= main.o
-LIBS	= $(LIBDIR)/liblyos/liblyos.a $(LIBDIR)/libdriver/libdriver.a
-
-ATA = ata
+LIBS	= -llyos -ldriver
 
 everything : realclean $(ATA)
 
@@ -12,17 +10,10 @@ all : realclean $(ATA)
 realclean :
 	@rm -f $(ATA) $(ATAOBJS)
 
-$(ATA): $(ATAOBJS) $(LIBS)
+$(ATA): $(ATAOBJS)
 	@echo -e '\tLD\tdrivers/block/ata/$@'
-	@$(CC) $(ATACFLAGS) -o $@ $^
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/block/ata/$@'
-	@$(CC) $(ATACFLAGS) -c $<
-
-$(LIBDIR)/liblyos/liblyos.a:
-	@(cd $(LIBDIR)/liblyos; make)
-
-$(LIBDIR)/libdriver/libdriver.a:
-	@(cd $(LIBDIR)/libdriver; make)
-
+	@$(CC) $(SERVERCFLAGS) -c $<

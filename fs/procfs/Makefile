@@ -1,20 +1,21 @@
 #
 # Makefile for procfs.
 
-PROCFSCFLAGS		= -I $(INCDIR)/ -I $(ARCHINCDIR)/
-
 PROCFS		= procfs
-PROCFSOBJS = main.c
-LIBS 		= $(LIBDIR)/liblyos/liblyos.a
+PROCFSOBJS = main.o
+LIBS 		= -llyos
+
+.PHONY: everything realclean
 
 everything : realclean $(PROCFS)
 
 realclean :
 	@rm -f $(PROCFS)
 
-$(PROCFS): $(PROCFSOBJS) $(LIBS)
+$(PROCFS): $(PROCFSOBJS)
 	@echo -e '\tLD\tfs/procfs/$@'
-	@$(CC) $(PROCFSCFLAGS) -o $@ $^
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
-$(LIBDIR)/liblyos/liblyos.a:
-	@(cd $(LIBDIR)/liblyos; make)
+%.o: %.c
+	@echo -e '\tCC\tfs/procfs/$@'
+	@$(CC) $(SERVERCFLAGS) -c $<

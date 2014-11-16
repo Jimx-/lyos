@@ -21,10 +21,12 @@
 PUBLIC  int     printl(const char *fmt, ...);
 PUBLIC  int     get_sysinfo(struct sysinfo ** sysinfo);
 PUBLIC  int     get_kinfo(kinfo_t * kinfo);
+PUBLIC  int     data_copy(endpoint_t dest_pid, void * dest_addr, 
+    endpoint_t src_pid, void * src_addr, int len);
 
 /* env.c */
-PUBLIC void env_setargs(int argc, char * argv[]);
-PUBLIC int env_get_param(const char * key, char * value, int max_len);
-PUBLIC int env_get_long(char * key, long * value, const char * fmt, int field, long min, long max);
+PUBLIC void     env_setargs(int argc, char * argv[]);
+PUBLIC int      env_get_param(const char * key, char * value, int max_len);
+PUBLIC int      env_get_long(char * key, long * value, const char * fmt, int field, long min, long max);
 
 #endif

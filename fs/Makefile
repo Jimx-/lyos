@@ -1,12 +1,10 @@
 #
 # Makefile for the Lyos filesystem.
 
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-
-LIBS		= $(LIBDIR)/libexec/libexec.a
+LIBS		= $(LIBOUTDIR)/libexec.a
 FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 				read_write.o stat.o link.o misc.o exec.o device.o \
-				ext2/ext2fs.o $(LIBS)
+				ext2/ext2fs.o
 
 INITFS		= initfs/initfs
 PROCFS		= procfs/procfs
@@ -21,7 +19,7 @@ realclean :
 
 $(FS): $(FSOBJS)
 	@echo -e '\tLD\tfs/$@'
-	@$(LD) -r -o $(FS) $(FSOBJS)
+	@$(LD) -r -o $(FS) $(FSOBJS) $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tfs/$@'
@@ -41,6 +39,3 @@ $(PROCFS):
 $(SYSFS):
 	@(cd sysfs; make)
 	@(cp $(SYSFS) $(BINDIR)/sbin/)
-
-$(LIBDIR)/libexec/libexec.a:
-	@(cd $(LIBDIR)/libexec; make)

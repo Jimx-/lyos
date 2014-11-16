@@ -1,11 +1,8 @@
 #
 # Makefile for Lyos driver.
 
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-
-LIBS 		= $(LIBDIR)/libdriver/libdriver.a
-DRVOBJS		= char/char.o \
-				firmware/firmware.o $(LIBS)
+LIBS 		= $(LIBOUTDIR)/libdriver.a
+DRVOBJS		= char/char.o firmware/firmware.o 
 DEVMAN 		= devman/devman
 INET 		= inet/inet
 PCI 		= pci/pci
@@ -23,7 +20,7 @@ block:
 
 $(DRIVER): $(DRVOBJS)
 	@echo -e '\tLD\t$@'
-	@$(LD) -r -o $(DRIVER) $(DRVOBJS)
+	@$(LD) -r -o $(DRIVER) $(DRVOBJS) $(LIBS)
 
 char/char.o: $(LIBS)
 	@(cd char; make)
