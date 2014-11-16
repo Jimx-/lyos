@@ -42,7 +42,7 @@ struct dev_drv_map dd_map[] = {
     {INVALID_DRIVER},   /**< 0 : Unused */
     {TASK_RD},          /**< 1 : Ramdisk */
     {INVALID_DRIVER},   /**< 2 : Floppy */
-    {TASK_HD},          /**< 3 : Hard disk */
+    {INVALID_DRIVER},   /**< 3 : Hard disk */
     {TASK_TTY},         /**< 4 : TTY */
     {INVALID_DRIVER}    /**< 5 : Scsi disk */
 };

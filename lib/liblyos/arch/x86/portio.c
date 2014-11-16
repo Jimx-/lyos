@@ -52,3 +52,25 @@ PUBLIC int portio_voutb(pb_pair_t * pairs, int nr_ports)
 
     return syscall_entry(NR_VPORTIO, &m);
 }
+
+PUBLIC int portio_sin(int port, void * buf, int len)
+{
+    MESSAGE m;
+    m.PIO_REQUEST = PIO_IN;
+    m.PIO_BUF = buf;
+    m.PIO_BUFLEN = len;
+    m.PIO_PORT = port;
+
+    return syscall_entry(NR_SPORTIO, &m);
+}
+
+PUBLIC int portio_sout(int port, void * buf, int len)
+{
+    MESSAGE m;
+    m.PIO_REQUEST = PIO_OUT;
+    m.PIO_BUF = buf;
+    m.PIO_BUFLEN = len;
+    m.PIO_PORT = port;
+
+    return syscall_entry(NR_SPORTIO, &m);
+}

@@ -136,9 +136,8 @@
 #define	TASK_RD			6
 #define TASK_INITFS		7
 #define TASK_SYSFS		8
-#define TASK_HD			9
-#define TASK_EXT2_FS	10
-#define INIT			11
+#define TASK_EXT2_FS	9
+#define INIT			10
 #define ANY				(NR_TASKS + NR_PROCS + 10)
 #define SELF			(-0x8ace)
 #define NO_TASK			(NR_TASKS + NR_PROCS + 20)
@@ -146,7 +145,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	10
+#define NR_SYS_CALL	11
 #define NR_PRINTX	0
 #define NR_SENDREC	1
 #define NR_DATACOPY	2
@@ -156,7 +155,8 @@
 #define NR_UMAP		6
 #define NR_PORTIO	7
 #define NR_VPORTIO	8
-#define NR_IRQCTL	9
+#define NR_SPORTIO	9
+#define NR_IRQCTL	10
 
 /* ipc */
 #define SEND		1

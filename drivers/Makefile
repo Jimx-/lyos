@@ -4,24 +4,26 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 LIBS 		= $(LIBDIR)/libdriver/libdriver.a
-DRVOBJS		= block/block.o char/char.o \
+DRVOBJS		= char/char.o \
 				firmware/firmware.o $(LIBS)
 DEVMAN 		= devman/devman
 INET 		= inet/inet
 PCI 		= pci/pci
 DRIVER		= drivers.o
 
-everything : realclean $(DRIVER) $(DEVMAN) $(INET) $(PCI)
+.PHONY: everything realclean block 
+	
+everything : realclean block $(DRIVER) $(DEVMAN) $(INET) $(PCI)
 
 realclean :
 	@rm -f $(DRIVER) $(DRVOBJS) $(DEVMAN) $(INET) $(PCI)
 
+block:
+	@(cd block; make)
+
 $(DRIVER): $(DRVOBJS)
 	@echo -e '\tLD\t$@'
 	@$(LD) -r -o $(DRIVER) $(DRVOBJS)
-
-block/block.o: $(LIBS)
-	@(cd block; make)
 
 char/char.o: $(LIBS)
 	@(cd char; make)

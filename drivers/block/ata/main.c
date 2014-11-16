@@ -73,7 +73,7 @@ struct dev_driver hd_driver =
  * Main loop of HD driver.
  * 
  *****************************************************************************/
-PUBLIC void task_hd()
+PUBLIC int main()
 {
 	init_hd();
 	dev_driver_task(&hd_driver);	
@@ -110,7 +110,7 @@ PUBLIC void task_hd()
 
 		send_recv(SEND, src, &msg);
 	} */
-
+	return 0;
 }
 
 /*****************************************************************************
@@ -125,7 +125,7 @@ PRIVATE void init_hd()
 	int i;
 	/* Get the number of drives from the BIOS data area */
 	u8 * pNrDrives = (u8*)(0x475 + KERNEL_VMA);
-	printl("hd: %d hard drives\n", *pNrDrives);
+	printl("ata: %d hard drives\n", *pNrDrives);
 	assert(*pNrDrives);
 
 	int hook_id;
@@ -222,22 +222,22 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 	hd_cmd_out(&cmd);
 
 	int bytes_left = p->CNT;
-	void * la = (void*)va2la(p->PROC_NR, p->BUF);
+	void * la = p->BUF;
 	int buf = (int)p->BUF;
 
 	while (bytes_left) {
 		int bytes = min(SECTOR_SIZE, bytes_left);
 		if (p->type == DEV_READ) {
 			interrupt_wait();
-			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
-			data_copy(p->PROC_NR, (void*)buf, TASK_HD, hdbuf, bytes);
+			portio_sin(REG_DATA, hdbuf, SECTOR_SIZE);
+			data_copy(p->PROC_NR, (void*)buf, SELF, hdbuf, bytes);
 		}
 		else {
 			if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
 				panic("hd writing error.");
 
-			data_copy(TASK_HD, hdbuf, p->PROC_NR, (void*)buf, bytes);
-			port_write(REG_DATA, hdbuf, bytes);
+			data_copy(SELF, hdbuf, p->PROC_NR, (void*)buf, bytes);
+			portio_sout(REG_DATA, hdbuf, bytes);
 			interrupt_wait();
 		}
 		bytes_left -= SECTOR_SIZE;
@@ -265,7 +265,7 @@ PRIVATE int hd_ioctl(MESSAGE * p)
 	if (p->REQUEST == DIOCTL_GET_GEO) {
 		int part_no = MINOR(device);
 
-		data_copy(p->PROC_NR, p->BUF, TASK_HD, part_no < NR_PRIM_PER_DRIVE ?
+		data_copy(p->PROC_NR, p->BUF, SELF, part_no < NR_PRIM_PER_DRIVE ?
 				   &hdi->primary[part_no] :
 				   &hdi->logical[part_no - NR_PRIM_PER_DRIVE], sizeof(struct part_info));
 	}
@@ -301,7 +301,7 @@ PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
 	hd_cmd_out(&cmd);
 	interrupt_wait();
 
-	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
+	portio_sin(REG_DATA, hdbuf, SECTOR_SIZE);
 	memcpy(entry,
 	       hdbuf + PARTITION_TABLE_OFFSET,
 	       sizeof(struct part_ent) * NR_PART_PER_DRIVE);
@@ -454,10 +454,10 @@ PRIVATE void hd_identify(int drive)
 	cmd.command = ATA_IDENTIFY;
 	hd_cmd_out(&cmd);
 	interrupt_wait();
-	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
+	portio_sin(REG_DATA, hdbuf, SECTOR_SIZE);
 
 	u16* hdinfo = (u16*)hdbuf;
-	printl("hd%d: ", drive);
+	printl("ata: hd%d: ", drive);
     print_identify_info(hdinfo);
 
 	hd_info[drive].primary[0].base = 0;
@@ -566,7 +566,19 @@ PRIVATE void interrupt_wait()
 	MESSAGE msg;
 	send_recv(RECEIVE, INTERRUPT, &msg);
 
-	hd_status = in_byte(REG_STATUS);
+	portio_inb(REG_STATUS, &hd_status);
+}
+
+/*****************************************************************************
+ *                                get_ticks
+ *****************************************************************************/
+PRIVATE int get_ticks()
+{
+	MESSAGE msg;
+
+	msg.type = GET_TICKS;
+	send_recv(BOTH, TASK_SYS, &msg);
+	return msg.RETVAL;
 }
 
 /*****************************************************************************

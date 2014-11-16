@@ -39,7 +39,6 @@ PUBLIC void 	restore_user_context_int(struct proc * p);
 
 /* main.c */
 PUBLIC void     finish_bsp_booting();
-PUBLIC int  	get_ticks();
 PUBLIC void 	panic(const char *fmt, ...);
 
 /* system.c */
@@ -145,6 +144,7 @@ PUBLIC  int sys_vmctl(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_umap(MESSAGE * m, struct proc* p);
 PUBLIC  int sys_portio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_vportio(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_sportio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_irqctl(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */

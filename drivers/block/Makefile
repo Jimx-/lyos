@@ -4,24 +4,18 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
-BLKDRVOBJS	= hd.o
-BLKDRV		= block.o
-
 RAMDISK		= ramdisk/ramdisk
+ATA = ata/ata
 
-everything : realclean $(BLKDRV) $(RAMDISK)
+everything : realclean $(RAMDISK) $(ATA)
 
 realclean :
-	@rm -f $(BLKDRVOBJS) $(RAMDISK)
-
-$(BLKDRV): $(BLKDRVOBJS)
-	@echo -e '\tLD\tdrivers/block/$@'
-	@$(LD) -r -o $(BLKDRV) $(BLKDRVOBJS)
-
-%.o: %.c
-	@echo -e '\tCC\tdrivers/block/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@rm -f $(RAMDISK) $(ATA)
 
 $(RAMDISK):
 	@(cd ramdisk; make)
 	@(cp $(RAMDISK) $(BINDIR)/sbin)
+
+$(ATA):
+	@(cd ata; make)
+	@(cp $(ATA) $(BINDIR)/sbin)
