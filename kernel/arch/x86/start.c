@@ -35,6 +35,8 @@ extern char _end[];
 extern pde_t pgd0;
 PUBLIC void * k_stacks;
 
+PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
+
 /*======================================================================*
                             cstart
  *======================================================================*/
@@ -96,6 +98,30 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	sysinfo_user = NULL;
 	memset(&kern_log, 0, sizeof(struct kern_log));
 	spinlock_init(&kern_log.lock);
+
+	static char cmdline[KINFO_CMDLINE_LEN];
+	if (mb_flags & MULTIBOOT_INFO_CMDLINE) {
+		static char var[KINFO_CMDLINE_LEN];
+		static char value[KINFO_CMDLINE_LEN];
+
+		memcpy(cmdline, (void *)mboot->cmdline, KINFO_CMDLINE_LEN);
+		char * p = cmdline;
+		while (*p) {
+			int var_i = 0;
+			int value_i = 0;
+			while (*p == ' ') p++;
+			if (!*p) break;
+			while (*p && *p != '=' && *p != ' ' && var_i < KINFO_CMDLINE_LEN - 1) 
+				var[var_i++] = *p++ ;
+			var[var_i] = 0;
+			if (*p++ != '=') continue;
+			while (*p && *p != ' ' && value_i < KINFO_CMDLINE_LEN - 1) 
+				value[value_i++] = *p++ ;
+			value[value_i] = 0;
+			
+			kinfo_set_param(kinfo.cmdline, var, value);
+		}
+	}
 }
 
 PUBLIC void init_arch()
@@ -187,4 +213,38 @@ PUBLIC void init_arch()
 
 		stk -= t->stacksize;
 	}
+}
+
+PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
+{
+	char *p = buf;
+	char *bufend = buf + KINFO_CMDLINE_LEN;
+	char *q;
+	int namelen = strlen(name);
+	int valuelen = strlen(value);
+
+	while (*p) {
+		if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
+			q = p;
+			while (*q) q++;
+			for (q++; q < bufend; q++, p++)
+				*p = *q;
+			break;
+		}
+		while (*p++);
+		p++;
+	}
+	
+	for (p = buf; p < bufend && (*p || *(p + 1)); p++);
+	if (p > buf) p++;
+	
+	if (p + namelen + valuelen + 3 > bufend)
+		return -1;
+	
+	strcpy(p, name);
+	p[namelen] = '=';
+	strcpy(p + namelen + 1, value);
+	p[namelen + valuelen + 1] = 0;
+	p[namelen + valuelen + 2] = 0;
+	return 0;
 }

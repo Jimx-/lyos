@@ -16,6 +16,7 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "assert.h"
 #include "errno.h"
@@ -35,9 +36,11 @@
 #include <lyos/driver.h>
 #include <lyos/param.h>
 #include <lyos/log.h>
+#include <lyos/sysutils.h>
 #include "global.h"
 
 PRIVATE struct sysinfo * _sysinfo;
+PRIVATE dev_t cons_minor = CONS_MINOR + 1;
 
 #define TTY_FIRST	(tty_table)
 #define TTY_END		(tty_table + NR_CONSOLES)
@@ -53,6 +56,8 @@ PRIVATE struct termios termios_defaults = {
 };
 
 PRIVATE void	init_tty	(TTY* tty);
+PRIVATE TTY * 	minor2tty	(dev_t minor);
+PRIVATE void 	set_console_line(char val[CONS_ARG]);
 PRIVATE void	tty_dev_read	(TTY* tty);
 PRIVATE void	tty_dev_write	(TTY* tty);
 PRIVATE void 	in_transfer	(TTY* tty);
@@ -77,6 +82,11 @@ PUBLIC void task_tty()
 
 	get_sysinfo(&_sysinfo);
 
+	char val[CONS_ARG];
+	if (env_get_param("console", val, CONS_ARG) == 0) {
+		set_console_line(val);
+	}
+
 	init_keyboard();
 
 	for (tty = TTY_FIRST; tty < TTY_END; tty++)
@@ -96,11 +106,10 @@ PUBLIC void task_tty()
 		int src = msg.source;
 		assert(src != TASK_TTY);
 
-		TTY* ptty = &tty_table[msg.DEVICE];
+		TTY* ptty = minor2tty(msg.DEVICE);
 
 		switch (msg.type) {
 		case DEV_OPEN:
-			reset_msg(&msg);
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 			break;
@@ -124,7 +133,9 @@ PUBLIC void task_tty()
 			tty_do_kern_log();
 			break;
 		default:
-			dump_msg("TTY::unknown msg", &msg);
+			msg.type = SYSCALL_RET;
+			msg.RETVAL = ENOSYS;
+			send_recv(SEND, src, &msg);
 			break;
 		}
 	}
@@ -156,6 +167,33 @@ PRIVATE void init_tty(TTY* tty)
 	announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST)));
 }
 
+
+PRIVATE TTY * minor2tty(dev_t minor)
+{
+	TTY * ptty = NULL;
+
+	if (minor == CONS_MINOR || minor == LOG_MINOR) minor = cons_minor;
+
+	if (minor - CONS_MINOR - 1 < NR_CONSOLES) ptty = &tty_table[minor - CONS_MINOR - 1];
+
+	return ptty;
+}
+
+PRIVATE void set_console_line(char val[CONS_ARG])
+{
+	if (!strncmp(val, "console", CONS_ARG - 1)) cons_minor = CONS_MINOR;
+
+	char * pv = val;
+	if (!strncmp(pv, "tty", 3)) {
+		pv += 3;
+		if (*pv == 'S') {	/* Serial */
+			return;
+		} else if (*pv >= '0' && *pv <= '9') {
+			int minor = atoi(pv);
+			if (minor <= NR_CONSOLES) cons_minor = minor;
+		}
+	}
+}
 
 /*****************************************************************************
  *                                in_process
@@ -455,10 +493,10 @@ PRIVATE void tty_do_kern_log()
 		memcpy(kernel_log_copy, &klog->buf[prev_next], copy);
 		if (bytes > copy) memcpy(&kernel_log_copy[copy], klog->buf, bytes - copy);
 		
-		tty = TTY_FIRST;
+		tty = minor2tty(cons_minor);
 		/* tell the tty: */
 		tty->tty_outreply    = SYSCALL_RET;
-		tty->tty_outcaller   = KERNEL;  /* who called, usually FS */
+		tty->tty_outcaller   = KERNEL;
 		tty->tty_outprocnr   = TASK_TTY; /* who wants to output the chars */
 		tty->tty_outbuf  = kernel_log_copy;/* where are the chars */
 		tty->tty_outleft = bytes; /* how many chars are requested */
@@ -482,37 +520,3 @@ PRIVATE void tty_echo(TTY* tty, char c)
 	if (!(tty->tty_termios.c_lflag & ECHO)) return;
 	tty->tty_echo(tty, c);
 }
-
-/*****************************************************************************
- *                                dump_tty_buf
- *****************************************************************************/
-/**
- * For debug only.
- * 
- *****************************************************************************/
-PUBLIC void dump_tty_buf()
-{
-	TTY * tty = &tty_table[1];
-
-	static char sep[] = "--------------------------------\n";
-
-	printl(sep);
-
-	printl("head: %d\n", tty->ibuf_head - tty->ibuf);
-	printl("tail: %d\n", tty->ibuf_tail - tty->ibuf);
-	printl("cnt: %d\n", tty->ibuf_cnt);
-
-	int pid = tty->tty_incaller;
-	printl("caller: %s (%d)\n", proc_table[pid].name, pid);
-	pid = tty->tty_inprocnr;
-	printl("caller: %s (%d)\n", proc_table[pid].name, pid);
-
-	printl("inbuf: %d\n", (int)tty->tty_inbuf);
-	printl("left_cnt: %d\n", tty->tty_inleft);
-	printl("trans_cnt: %d\n", tty->tty_trans_cnt);
-
-	printl("--------------------------------\n");
-
-	strcpy(sep, "\n");
-}
-

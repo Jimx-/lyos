@@ -21,6 +21,13 @@
 #define TTY_IN_BYTES		256	/* tty input queue size */
 #define TTY_OUT_BUF_LEN		2	/* tty output buffer size */
 
+/* minor device nr */
+#define CONS_MINOR		0
+#define LOG_MINOR		15
+#define SERIAL_MINOR	16
+
+#define CONS_ARG		20
+    
 struct s_tty;
 struct s_console;
 

@@ -47,6 +47,10 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
         addr = (void *)&kinfo;
         size = sizeof(kinfo_t);
         break;
+    case GETINFO_CMDLINE:
+        addr = (void *)&kinfo.cmdline;
+        size = sizeof(kinfo.cmdline);
+        break;
     default:
         return EINVAL;
     }

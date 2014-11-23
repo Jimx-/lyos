@@ -7,6 +7,9 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <lyos/type.h>
+#include <lyos/const.h>
+#include <lyos/ipc.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	3
@@ -15,9 +18,9 @@
 
 int main(int argc, char * argv[])
 {
-	int fd_stdin  = open("/dev/tty0", O_RDWR);
-	int fd_stdout = open("/dev/tty0", O_RDWR);
-	int fd_stderr = open("/dev/tty0", O_RDWR);
+	int fd_stdin  = open("/dev/tty1", O_RDWR);
+	int fd_stdout = open("/dev/tty1", O_RDWR);
+	int fd_stderr = open("/dev/tty1", O_RDWR);
 
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
@@ -30,7 +33,7 @@ int main(int argc, char * argv[])
 		close(fd_hostname);
 	}
 
-	char * ttylist[NR_TTY] = {"/dev/tty0", "/dev/tty1", "/dev/tty2"};
+	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3"};
 	int i;
 	for (i = 0; i < 3; i++) {
 		int pid = fork();

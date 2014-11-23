@@ -29,4 +29,6 @@ PUBLIC void     env_setargs(int argc, char * argv[]);
 PUBLIC int      env_get_param(const char * key, char * value, int max_len);
 PUBLIC int      env_get_long(char * key, long * value, const char * fmt, int field, long min, long max);
 
+PUBLIC int      syscall_entry(int syscall_nr, MESSAGE * m);
+
 #endif

@@ -18,7 +18,7 @@
 
 #define KINFO_MAGIC     0x4B494E
 
-#define KINFO_CMDLINE_LENGTH	1024
+#define KINFO_CMDLINE_LEN	1024
 #define KINFO_MAXMEMMAP 		40
 
 struct kinfo_mmap_entry {
@@ -37,7 +37,7 @@ typedef struct kinfo {
 
 	int mods_count;
 
-	char cmdline[KINFO_CMDLINE_LENGTH];
+	char cmdline[KINFO_CMDLINE_LEN];
 
     unsigned int kernel_start_pde, kernel_end_pde;
 

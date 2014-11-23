@@ -57,7 +57,7 @@ PRIVATE void print_memmap();
 PUBLIC void task_mm()
 {
 	init_mm();
-
+	
 	while (1) {
 		send_recv(RECEIVE, ANY, &mm_msg);
 		int src = mm_msg.source;

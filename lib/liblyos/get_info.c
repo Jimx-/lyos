@@ -24,14 +24,14 @@
 #include "lyos/ipc.h"
 #include <lyos/config.h>
 #include <lyos/param.h>
-
-int syscall_entry(int syscall_nr, MESSAGE * m);
+#include <lyos/sysutils.h>
 
 PUBLIC int getinfo(int request, void* buf)
 {
     MESSAGE m;
     m.REQUEST = request;
     m.BUF = buf;
+    m.BUF_LEN = 0;
 
     return syscall_entry(NR_GETINFO, &m);
 }

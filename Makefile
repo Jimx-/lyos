@@ -197,6 +197,7 @@ setup-disk:
 initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
 	@cp sysroot/sbin/init ramdisk/sbin/
+	@cp sysroot/sbin/ata ramdisk/sbin/
 	@cp sysroot/usr/bin/getty ramdisk/usr/bin/getty
 	@cp sysroot/usr/bin/login ramdisk/usr/bin/login
 	@touch ramdisk/.root

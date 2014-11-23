@@ -16,6 +16,9 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "lyos/const.h"
+#include <lyos/config.h>
+#include <lyos/param.h>
+#include <lyos/sysutils.h>
 #include "stdio.h"
 #include "stdarg.h"
 #include "unistd.h"
@@ -36,8 +39,24 @@ PUBLIC void env_setargs(int argc, char * argv[])
 	env_argv = argv;
 } 
 
+PRIVATE char * get_value(const char * param, const char * key)
+{
+	char * envp = (char *)param;
+	const char * name = key;
+
+	for (; *envp != 0;) {
+		for (name = key; *name != 0 && *name == *envp; name++, envp++);
+		if (*name == '\0' && *envp == '=') return envp + 1;
+		while (envp++ != 0);
+	}
+
+	return NULL;
+}
+
 PUBLIC int env_get_param(const char * key, char * value, int max_len)
 {
+	static char kernel_cmdline[KINFO_CMDLINE_LEN];
+
 	if (key == NULL) return EINVAL;
 
 	int key_len = strlen(key);
@@ -54,7 +73,21 @@ PUBLIC int env_get_param(const char * key, char * value, int max_len)
 		return 0;
 	}
 
-	return ESRCH;
+	MESSAGE m;
+    m.REQUEST = GETINFO_CMDLINE;
+    m.BUF = kernel_cmdline;
+    m.BUF_LEN = sizeof(kernel_cmdline);
+
+    int retval = syscall_entry(NR_GETINFO, &m);
+    if (retval) return retval;
+
+    char * key_value = get_value(kernel_cmdline, key);
+    if (key_value == NULL) return ESRCH;
+
+    if (strlen(key_value) > max_len) return E2BIG;
+    strcpy(value, key_value);
+
+	return 0;
 }
 
 PUBLIC void env_panic(char * key)
