@@ -33,8 +33,6 @@
 #define FALSE			0
 
 #define	STR_DEFAULT_LEN	1024
-/* TTY */
-#define NR_CONSOLES	3	/* consoles */
 
 /* 8253/8254 PIT (Programmable Interval Timer) */
 #define TIMER0         0x40 /* I/O port for timer channel 0 */

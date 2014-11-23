@@ -71,7 +71,7 @@ PUBLIC void task_ext2_fs()
 
 		int msgtype = m.type;
 		int src = m.source;
-		ext2_pcaller = &proc_table[src];
+		ext2_pcaller = proc_addr(ENPOINT_P(src));
 		reply = 1;
 
 		switch (msgtype) {

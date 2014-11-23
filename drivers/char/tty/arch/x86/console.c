@@ -101,7 +101,7 @@ PUBLIC void init_screen(TTY* tty)
 	con->con_tty = tty;
 	tty->tty_devwrite = cons_write;
 	tty->tty_echo = out_char;
-	kb_init(tty);
+	
 	/* 
 	 * NOTE:
 	 *   variables related to `position' and `size' below are

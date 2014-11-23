@@ -20,6 +20,6 @@
 #define ENDPOINT_GENERATION_SIZE    (1 << ENDPOINT_GENERATION_SHIFT)
 
 #define make_endpoint(gen, p) ((gen << ENDPOINT_GENERATION_SHIFT) + p)
-#define endpoint_slot(ep) (ep % ENDPOINT_GENERATION_SIZE)
+#define ENDPOINT_P(ep) (ep % ENDPOINT_GENERATION_SIZE)
 
 #endif

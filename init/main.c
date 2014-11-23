@@ -14,8 +14,6 @@
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	3
 
-#define DEFAULT_HOSTNAME	"lyos-pc"
-
 int main(int argc, char * argv[])
 {
 	int fd_stdin  = open("/dev/tty1", O_RDWR);

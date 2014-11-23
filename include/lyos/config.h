@@ -44,5 +44,8 @@
 #else
 #define NR_IRQ_HOOKS        16
 #endif
+
+/* TTY */
+#define NR_CONSOLES 6   /* consoles */
     
 #endif

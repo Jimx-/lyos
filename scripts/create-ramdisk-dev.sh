@@ -13,7 +13,9 @@ sudo mknod console c 4 0
 sudo mknod tty1 c 4 1
 sudo mknod tty2 c 4 2
 sudo mknod tty3 c 4 3
-
+sudo mknod tty4 c 4 4
+sudo mknod tty5 c 4 5
+sudo mknod tty6 c 4 6
 
 popd > /dev/null
 

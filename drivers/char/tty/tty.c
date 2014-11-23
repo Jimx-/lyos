@@ -55,7 +55,7 @@ PRIVATE struct termios termios_defaults = {
   },
 };
 
-PRIVATE void	init_tty	(TTY* tty);
+PRIVATE void	init_tty	();
 PRIVATE TTY * 	minor2tty	(dev_t minor);
 PRIVATE void 	set_console_line(char val[CONS_ARG]);
 PRIVATE void	tty_dev_read	(TTY* tty);
@@ -80,19 +80,7 @@ PUBLIC void task_tty()
 	TTY *	tty;
 	MESSAGE msg;
 
-	get_sysinfo(&_sysinfo);
-
-	char val[CONS_ARG];
-	if (env_get_param("console", val, CONS_ARG) == 0) {
-		set_console_line(val);
-	}
-
-	init_keyboard();
-
-	for (tty = TTY_FIRST; tty < TTY_END; tty++)
-		init_tty(tty);
-
-	select_console(0);
+	init_tty();
 
 	while (1) {
 		for (tty = TTY_FIRST; tty < TTY_END; tty++) {
@@ -150,21 +138,40 @@ PUBLIC void task_tty()
  *   -# the input buffer
  *   -# the corresponding console
  * 
- * @param tty  TTY stands for teletype, a cool ancient magic thing.
  *****************************************************************************/
-PRIVATE void init_tty(TTY* tty)
+PRIVATE void init_tty()
 {
-	tty->ibuf_cnt = 0;
-	tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
+	TTY * tty;
+	int i;
 
-	tty->tty_termios = termios_defaults;
+	get_sysinfo(&_sysinfo);
 
-	init_screen(tty);
+	char val[CONS_ARG];
+	if (env_get_param("console", val, CONS_ARG) == 0) {
+		set_console_line(val);
+	}
 
-	/* announce the device */
-	char name[6];
-	sprintf(name, "tty%d", (int)(tty - TTY_FIRST));
-	announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST)));
+	init_keyboard();
+
+	for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
+
+		tty->ibuf_cnt = 0;
+		tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
+
+		tty->tty_termios = termios_defaults;
+
+		if (i < NR_CONSOLES) {
+			init_screen(tty);
+			kb_init(tty);
+
+			/* announce the device */
+			char name[6];
+			sprintf(name, "tty%d", (int)(tty - TTY_FIRST + 1));
+			announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST + 1)));
+		}
+	}
+
+	select_console(0);
 }
 
 
