@@ -37,14 +37,14 @@ PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access)
     int shift;
 
     bits = pin->i_mode;
-    if (ext2_pcaller->uid == SU_UID) {
+    if (ext2_caller_uid == SU_UID) {
         if ((bits & I_TYPE) == I_DIRECTORY || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
             perm_bits = R_BIT | W_BIT | X_BIT;
         else
             perm_bits = R_BIT | W_BIT;
     } else {
-        if (ext2_pcaller->uid == pin->i_uid) shift = 6;    /* owner */
-        else if (ext2_pcaller->gid == pin->i_gid) shift = 3;   /* group */
+        if (ext2_caller_uid == pin->i_uid) shift = 6;    /* owner */
+        else if (ext2_caller_gid == pin->i_gid) shift = 3;   /* group */
         else shift = 0;                 /* other */
         perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT); 
     }

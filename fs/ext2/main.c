@@ -51,7 +51,7 @@ PRIVATE int ext2_mountpoint(MESSAGE * p);
  * <Ring 1> The main loop of TASK Ext2 FS.
  * 
  *****************************************************************************/
-PUBLIC void task_ext2_fs()
+PUBLIC int main()
 {
 	printl("ext2fs: Ext2 filesystem driver is running\n");
 	init_ext2fs();
@@ -71,7 +71,6 @@ PUBLIC void task_ext2_fs()
 
 		int msgtype = m.type;
 		int src = m.source;
-		ext2_pcaller = proc_addr(ENPOINT_P(src));
 		reply = 1;
 
 		switch (msgtype) {
@@ -103,7 +102,7 @@ PUBLIC void task_ext2_fs()
         	m.RET_RETVAL = ext2_sync();
         	break;
 		default:
-			dump_msg("ext2: unknown message:", &m);
+			m.RET_RETVAL = ENOSYS;
 			break;
 		}
 
@@ -115,6 +114,8 @@ PUBLIC void task_ext2_fs()
 
         ext2_sync();
 	}
+
+    return 0;
 }
 
 PUBLIC void init_ext2fs()
@@ -123,6 +124,8 @@ PUBLIC void init_ext2fs()
     
 	ext2_init_inode();
     ext2_init_buffer_cache();
+
+    err_code = 0;
 }
 
 PRIVATE int ext2_mountpoint(MESSAGE * p)

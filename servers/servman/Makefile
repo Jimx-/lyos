@@ -1,7 +1,7 @@
 #
 # Makefile for the Lyos memory manager.
 
-SERVMANOBJS 		= main.o service.o exec.o module.o
+SERVMANOBJS = main.o service.o exec.o module.o
 LIBS 		= $(LIBOUTDIR)/libsysfs.a
 SERVMAN		= servman.o
 
@@ -11,9 +11,9 @@ realclean :
 	@rm -f $(SERVMANOBJS) $(SERVMAN)
 
 $(SERVMAN): $(SERVMANOBJS)
-	@echo -e '\tLD\tservman/$@'
+	@echo -e '\tLD\tservers/servman/$@'
 	@$(LD) -r -o $(SERVMAN) $(SERVMANOBJS) $(LIBS)
 
 %.o: %.c
-	@echo -e '\tCC\tservman/$@'
+	@echo -e '\tCC\tservers/servman/$@'
 	@$(CC) $(CFLAGS) -o $@ $<

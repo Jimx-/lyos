@@ -43,10 +43,11 @@ LIBDIR = $(SRCDIR)/lib/
 ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
+DESTDIR	?= $(SRCDIR)/sysroot
 BINDIR ?= $(SRCDIR)/sysroot
 LIBOUTDIR = $(BINDIR)/lib
 PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
-export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR BINDIR LIBOUTDIR ARCHINC ARCHLIB PATH
+export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR DESTDIR BINDIR LIBOUTDIR ARCHINC ARCHLIB PATH
 
 LDSCRIPT = kernel/arch/$(ARCH)/lyos.ld
 
@@ -84,22 +85,13 @@ endif
 KRNLOBJ		= kernel/krnl.o
 LIB			= $(LIBOUTDIR)/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
-FSOBJ		= fs/fs.o
-MMOBJ		= mm/mm.o
 DRVOBJ		= drivers/drivers.o
-SERVMANOBJ  = servman/servman.o
-LYOSINIT	= init/init
+SERVERSOBJ	= servers/servers.o
 LYOSINITRD	= $(ARCHDIR)/initrd.tar
 
-ifeq ($(ARCH),x86)
 OBJS		= $(KRNLOBJ) \
-			$(FSOBJ) \
-			$(MMOBJ) \
 			$(DRVOBJ) \
-			$(SERVMANOBJ)
-else
-OBJS = $(KRNLOBJ)
-endif
+			$(SERVERSOBJ)
 
 DASMOUTPUT	= lyos.bin.asm
 
@@ -120,15 +112,15 @@ KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
 
 # All Phony Targets
-.PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig
-	setup-toolchain libraries mrproper
+.PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig \
+	setup-toolchain libraries mrproper fs
 
 # Default starting position
 kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf libraries $(LYOSKERNEL) $(LYOSINIT) initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf libraries $(LYOSKERNEL) fs initrd
 
 all : realclean everything image
 
@@ -242,21 +234,17 @@ $(LIB):
 	@echo -e '$(COLORGREEN)Compiling the library...$(COLORDEFAULT)'
 	@(cd lib/liblyos; make)
 
-$(FSOBJ):
+fs:
 	@echo -e '$(COLORGREEN)Compiling the filesystem server...$(COLORDEFAULT)'
 	@(cd fs; make)
-
-$(MMOBJ):
-	@echo -e '$(COLORGREEN)Compiling the memory management server...$(COLORDEFAULT)'
-	@(cd mm; make)
 
 $(DRVOBJ):
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
 	@(cd drivers; make)
 
-$(SERVMANOBJ):
-	@echo -e '$(COLORGREEN)Compiling service manager...$(COLORDEFAULT)'
-	@(cd servman; make)
+$(SERVERSOBJ):
+	@echo -e '$(COLORGREEN)Compiling servers...$(COLORDEFAULT)'
+	@(cd servers; make)
 
 $(LYOSINIT):
 	@echo -e '$(COLORGREEN)Compiling init...$(COLORDEFAULT)'

@@ -433,6 +433,21 @@ no_msg:
 	return 0;
 }
 
+/**
+ * @brief Verify if an endpoint number is valid and convert it to proc nr.
+ * 
+ * @param ep Endpoint number.
+ * @param proc_nr [out] Ptr to proc nr.
+ * 
+ * @return Non-zero if the endpoint number is valid.
+ */
+PUBLIC int verify_endpt(endpoint_t ep, int * proc_nr)
+{
+	*proc_nr = ENDPOINT_P(ep);
+
+	return 1;
+}
+
 /*****************************************************************************
  *                                inform_int
  *****************************************************************************/

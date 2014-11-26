@@ -72,13 +72,6 @@ PUBLIC void 	task_fd();
 PUBLIC void 	init_fd();
 PUBLIC void 	fd_handler(int irq);
 
-/* kernel/block/rd.c */
-PUBLIC void 	task_rd();
-
-PUBLIC void 	task_inet();
-
-PUBLIC void     task_devman();
-
 /* keyboard.c */
 PUBLIC void 	init_keyboard();
 
@@ -92,12 +85,6 @@ PUBLIC void 	task_sys();
 PUBLIC void	    task_fs();
 PUBLIC void	    init_fs();
 
-/* fs/ext2/main.c */
-PUBLIC void task_ext2_fs();
-
-/* fs/initfs/main.c */
-PUBLIC void task_initfs();
-
 /* mm/main.c */
 PUBLIC void	task_mm();
 
@@ -107,6 +94,7 @@ PUBLIC void task_servman();
 /* proc.c */
 PUBLIC  void    init_proc();
 PUBLIC  void    switch_to_user();
+PUBLIC  int     verify_endpt(endpoint_t ep, int * proc_nr);
 PUBLIC	void*	va2la(int pid, void * va);
 PUBLIC  void*   la2pa(int pid, void * la);
 PUBLIC  void*   va2pa(int pid, void * va);

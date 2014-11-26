@@ -46,7 +46,6 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{NULL,       	0,				  "RD"        },
 	{NULL,	        0,                "INITFS"	  },
 	{NULL, 			0, 				  "SYSFS"	  },
-	{task_ext2_fs,  STACK_SIZE_EXT2_FS,"EXT2_FS"  },
 };
 
 PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
@@ -65,7 +64,6 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 	{TASK_RD, 		"RD"		},
 	{TASK_INITFS, 	"INITFS"	},
 	{TASK_SYSFS,	"SYSFS"		},
-	{TASK_EXT2_FS,	"EXT2"		},
 	{INIT,			"INIT"		},
 };
 

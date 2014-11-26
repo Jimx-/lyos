@@ -11,11 +11,11 @@ realclean :
 	@rm -f $(DEVMAN) $(DEVMANOBJS)
 
 $(DEVMAN): $(DEVMANOBJS)
-	@echo -e '\tLD\tdrivers/devman/$@'
+	@echo -e '\tLD\tservers/devman/$@'
 	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
-	@echo -e '\tCC\tdrivers/devman/$@'
+	@echo -e '\tCC\tservers/devman/$@'
 	@$(CC) $(SERVERCFLAGS) -c $<
 
 

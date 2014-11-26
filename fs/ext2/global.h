@@ -22,6 +22,8 @@
 #define EXTERN
 #endif
 
+EXTERN int err_code;
+
 /* super block table */
 extern struct list_head ext2_superblock_table;
 
@@ -30,8 +32,6 @@ extern struct list_head ext2_superblock_table;
 extern u8 * ext2fsbuf;
 EXTERN u8 _ext2fsbuf[EXT2FSBUF_SIZE];
 
-/* avoid naming collision */
-EXTERN struct proc * ext2_pcaller;
 EXTERN uid_t ext2_caller_uid;
 EXTERN gid_t ext2_caller_gid;
 

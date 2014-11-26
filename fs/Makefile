@@ -1,41 +1,27 @@
 #
-# Makefile for the Lyos filesystem.
-
-LIBS		= $(LIBOUTDIR)/libexec.a
-FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
-				read_write.o stat.o link.o misc.o exec.o device.o \
-				ext2/ext2fs.o
+# Makefile for the Lyos filesystems.
 
 INITFS		= initfs/initfs
 PROCFS		= procfs/procfs
 SYSFS		= sysfs/sysfs
+EXT2FS 		= ext2/ext2fs
 
-FS			= fs.o
-
-everything : realclean $(FS) $(INITFS) $(PROCFS) $(SYSFS)
+everything : realclean $(INITFS) $(PROCFS) $(SYSFS)
 
 realclean :
-	@rm -f $(FSOBJS) $(INITFS) $(PROCFS) $(SYSFS)
+	@rm -f $(INITFS) $(PROCFS) $(SYSFS) $(EXT2FS)
 
-$(FS): $(FSOBJS)
-	@echo -e '\tLD\tfs/$@'
-	@$(LD) -r -o $(FS) $(FSOBJS) $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tfs/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
-
-ext2/ext2fs.o:
+$(EXT2FS):
 	@(cd ext2; make)
 
 $(INITFS):
 	@(cd initfs; make)
-	@(cp -f $(INITFS) $(BINDIR)/sbin/)
+	@(cp -f $(INITFS) $(DESTDIR)/sbin/)
 
 $(PROCFS):
 	@(cd procfs; make)
-	@(cp $(PROCFS) $(BINDIR)/sbin/)
+	@(cp $(PROCFS) $(DESTDIR)/sbin/)
 
 $(SYSFS):
 	@(cd sysfs; make)
-	@(cp $(SYSFS) $(BINDIR)/sbin/)
+	@(cp $(SYSFS) $(DESTDIR)/sbin/)

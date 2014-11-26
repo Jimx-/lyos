@@ -13,13 +13,13 @@ realclean :
 	@rm -f $(MMOBJS)
 
 $(MM): $(MMOBJS)
-	@echo -e '\tLD\tmm/$@'
+	@echo -e '\tLD\tservers/mm/$@'
 	@$(LD) -r -o $(MM) $(MMOBJS)
 
 arch/$(ARCH)/arch-mm.o:
 	@(cd arch/$(ARCH)/; make)
 
 %.o: %.c
-	@echo -e '\tCC\tmm/$@'
+	@echo -e '\tCC\tservers/mm/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
 

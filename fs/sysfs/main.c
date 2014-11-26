@@ -31,7 +31,7 @@
 
 PUBLIC int main()
 {
-	printl("sysfs: SysFS driver is running\n");
+	printl("sysfs: SysFS is running\n");
 
 	MESSAGE m;
 
