@@ -65,7 +65,7 @@ void _exit(int status)
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 }
 
@@ -247,11 +247,11 @@ int waitpid(int pid, int * status, int options)
 	msg.type   = WAIT;
 
 	msg.PID = pid;
-	msg.SIGNR = options;
+	msg.OPTIONS = options;
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	*status = msg.STATUS;
 
@@ -269,11 +269,11 @@ int wait(int * status)
 	msg.type   = WAIT;
 
 	msg.PID = -1;
-	msg.SIGNR = 0;
+	msg.OPTIONS = 0;
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	*status = msg.STATUS;
 

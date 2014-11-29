@@ -128,7 +128,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	11
+#define NR_SYS_CALL	13
 #define NR_PRINTX	0
 #define NR_SENDREC	1
 #define NR_DATACOPY	2
@@ -140,6 +140,8 @@
 #define NR_VPORTIO	8
 #define NR_SPORTIO	9
 #define NR_IRQCTL	10
+#define NR_FORK		11
+#define NR_CLEAR	12
 
 /* ipc */
 #define SEND		1
@@ -265,6 +267,7 @@ enum msgtype {
 #define	WHENCE		u.m3.m3i3
 #define SECONDS		u.m3.m3i1
 #define SIGNR		u.m3.m3i1
+#define OPTIONS		u.m3.m3i1
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2
 #define TARGET		u.m3.m3i4

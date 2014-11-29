@@ -158,9 +158,5 @@ PUBLIC int kill_sig(pid_t source, pid_t dest, int signo)
 
 PRIVATE void sig_proc(struct proc * p_dest, int signo)
 {
-	if (p_dest->state == PST_FREE_SLOT || p_dest->state & PST_HANGING) {
-		panic("MM: signal sent to HANGING process");
-	}
-
 	if (!send_sig(p_dest, signo)) return;
 }

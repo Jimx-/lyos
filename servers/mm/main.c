@@ -58,7 +58,7 @@ PUBLIC void task_mm()
 {
 	init_mm();
 	
-	while (1) {
+	while (TRUE) {
 		send_recv(RECEIVE, ANY, &mm_msg);
 		int src = mm_msg.source;
 		int reply = 1;
@@ -68,14 +68,6 @@ PUBLIC void task_mm()
 		switch (msgtype) {
 		case PM_MM_FORK:
 			mm_msg.RETVAL = do_fork();
-			break;
-		case EXIT:
-			do_exit(mm_msg.STATUS);
-			reply = 0;
-			break;
-		case WAIT:
-			do_wait();
-			reply = 0;
 			break;
 		case KILL:
 			mm_msg.RETVAL = do_kill();

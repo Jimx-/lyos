@@ -47,12 +47,21 @@ PUBLIC int main(int argc, char * argv[])
         case FORK:
             msg.RETVAL = do_fork(&msg);
             break;
+        case WAIT:
+            msg.RETVAL = do_wait(&msg);
+            break;
+        case EXIT:
+            msg.RETVAL = do_exit(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;
         }
 
-        send_recv(SEND, src, &msg);
+        if (msg.RETVAL != SUSPEND) {
+            msg.type = SYSCALL_RET;
+            send_recv(SEND, src, &msg);
+        }
     }
 
     return 0;

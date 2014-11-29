@@ -24,8 +24,6 @@
 #define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
 #define PST_SENDING   0x02	/* set when proc trying to send */
 #define PST_RECEIVING 0x04	/* set when proc trying to recv */
-#define PST_WAITING   0x08	/* set when proc waiting for the child to terminate */
-#define PST_HANGING   0x10	/* set when proc exits without being waited by parent */
 #define PST_PAGEFAULT 0x20  /* set when proc has encounted a page fault */
 #define PST_MMINHIBIT 0x40  /* this proc is not runnable until MM has prepared mem regions for it */
 #define PST_STOPPED   0x80 	/* set when proc is stopped */
@@ -46,6 +44,14 @@
 			 					lock_proc(proc);	\
 			 					int prev_pst = (proc)->state; \
 			 					(proc)->state |= (pst); \
+			 					if (pst_is_runnable(prev_pst) && !proc_is_runnable(proc))	\
+			 						dequeue_proc(proc);	\
+			 					unlock_proc(proc);	\
+							} while(0)
+#define PST_SETFLAGS(proc, flags)  do { \
+			 					lock_proc(proc);	\
+			 					int prev_pst = (proc)->state; \
+			 					(proc)->state = (flags); \
 			 					if (pst_is_runnable(prev_pst) && !proc_is_runnable(proc))	\
 			 						dequeue_proc(proc);	\
 			 					unlock_proc(proc);	\
@@ -119,8 +125,6 @@ struct proc {
 	int umask;
 
 	int brk;
-
-	int exit_status; /**< for parent */
 
 	struct file_desc * filp[NR_FILES];
 };

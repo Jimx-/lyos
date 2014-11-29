@@ -17,5 +17,10 @@
 #define _PM_PROTO_H_
 
 PUBLIC pid_t find_free_pid();
+PUBLIC int pm_verify_endpt(endpoint_t ep, int * proc_nr);
+
+PUBLIC int do_fork(MESSAGE * p);
+PUBLIC int do_wait(MESSAGE * p);
+PUBLIC int do_exit(MESSAGE * p);
 
 #endif

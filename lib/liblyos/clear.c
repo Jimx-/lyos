@@ -11,25 +11,26 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#ifndef _PM_MMPROC_H_
-#define _PM_MMPROC_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/vm.h"
+#include "lyos/ipc.h"
+#include <lyos/config.h>
+#include <lyos/param.h>
+#include <lyos/sysutils.h>
+
+PUBLIC int kernel_clear(endpoint_t ep)
+{
+    MESSAGE m;
     
-/* Information of a process used in PM */
-struct pmproc {
-    int flags;
-    
-    pid_t pid;
+    m.ENDPOINT = ep;
 
-    endpoint_t endpoint;
-    endpoint_t parent;
-
-    int exit_status;
-};
-
-#define PMPF_INUSE      0x01
-#define PMPF_WAITING    0x02
-#define PMPF_HANGING    0x04
-
-#endif
+    return syscall_entry(NR_CLEAR, &m);
+}

@@ -1,7 +1,4 @@
-/*  
-    (c)Copyright 2011 Jimx
-    
-    This file is part of Lyos.
+/*  This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,47 +12,42 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "lyos/config.h"
+#include "stddef.h"
+#include "protect.h"
 #include "lyos/const.h"
 #include "string.h"
-#include <errno.h>
 #include "lyos/proc.h"
-#include <lyos/ipc.h>
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "page.h"
+#include <errno.h>
+#include "arch_proto.h"
 #include <lyos/sysutils.h>
-#include "global.h"
-#include "const.h"
 
-/**
- * @brief Find an unused pid.
- * @return The free pid found.
- */
-PUBLIC pid_t find_free_pid()
+PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
 {
-    pid_t pid = INIT_PID + 1;
-    int used = 0;
+    endpoint_t parent_ep = m->ENDPOINT;
+    int child_slot = m->PROC_NR, parent_slot, retval;
 
-    do {
-        struct pmproc * pmp;
-        used = 0;
-        pid = pid < NR_PIDS ? pid + 1 : INIT_PID + 1;
-        for (pmp = &pmproc_table[0]; pmp < &pmproc_table[NR_PROCS + NR_TASKS]; pmp++) {
-            if (pmp->pid == pid) {
-                used = 1;
-                break;
-            }            
-        }
-    } while (used);
+    endpoint_t child_ep = child_slot;
 
-    return pid;
-}
+    if (!verify_endpt(parent_ep, &parent_slot)) return EINVAL;
 
-PUBLIC int pm_verify_endpt(endpoint_t ep, int * proc_nr)
-{
-    *proc_nr = ENDPOINT_P(ep);
+    struct proc * parent = proc_addr(parent_slot), * child = proc_addr(child_slot);
+
+    *child = *parent;
+    sprintf(child->name, "%s_%d", parent->name, child_ep);
+    child->endpoint = child_ep;
+    child->p_parent = parent_ep;
+
+    if (m->FLAGS & KF_MMINHIBIT) PST_SET(child, PST_MMINHIBIT);
+
+    m->ENDPOINT = child_ep;
+
     return 0;
 }

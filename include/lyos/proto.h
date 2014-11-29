@@ -134,6 +134,8 @@ PUBLIC  int sys_portio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_vportio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_sportio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_irqctl(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_fork(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_clear(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
