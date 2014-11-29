@@ -111,15 +111,16 @@
 #define KERNEL 			-15
 #define INTERRUPT		-10
 #define TASK_MM     	0
-#define TASK_SERVMAN 	1
-#define TASK_DEVMAN		2
-#define TASK_FS			3
-#define TASK_SYS		4
-#define TASK_TTY		5
-#define	TASK_RD			6
-#define TASK_INITFS		7
-#define TASK_SYSFS		8
-#define INIT			9
+#define TASK_PM			1
+#define TASK_SERVMAN 	2
+#define TASK_DEVMAN		3
+#define TASK_FS			4
+#define TASK_SYS		5
+#define TASK_TTY		6
+#define	TASK_RD			7
+#define TASK_INITFS		8
+#define TASK_SYSFS		9
+#define INIT			10
 #define ANY				(NR_TASKS + NR_PROCS + 10)
 #define SELF			(-0x8ace)
 #define NO_TASK			(NR_TASKS + NR_PROCS + 20)
@@ -160,10 +161,11 @@
 #define PRIVCTL_SET_TASK 1
 
 /* getinfo requests */
-#define GETINFO_SYSINFO	1
-#define GETINFO_KINFO	2
-#define GETINFO_CMDLINE	3
-
+#define GETINFO_SYSINFO		1
+#define GETINFO_KINFO		2
+#define GETINFO_CMDLINE		3
+#define GETINFO_BOOTPROCS 	4
+				 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
 #define MSG_KERNLOG 	0x2  	/* the process has a kernellog message */
@@ -227,6 +229,11 @@ enum msgtype {
     FS_SYNC,
     FS_MMAP,
 
+    /* message type for pm calls */
+    PM_VFS_INIT = 1501,			/* 1501 */
+    PM_MM_FORK,
+    PM_VFS_FORK,
+
 	/* message type for drivers */
 	DEV_OPEN = 2001,
 	DEV_CLOSE,
@@ -250,6 +257,7 @@ enum msgtype {
 #define NEWID		u.m3.m3i1
 #define	REQUEST		u.m3.m3i2
 #define	PROC_NR		u.m3.m3i3
+#define ENDPOINT	u.m3.m3i4
 #define	DEVICE		u.m3.m3i4
 #define	POSITION	u.m3.m3l1
 #define	BUF			u.m3.m3p2

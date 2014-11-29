@@ -34,6 +34,7 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
 {
     int request = m->REQUEST;
     void * buf = m->BUF;
+    size_t buf_len = m->BUF_LEN;
     void * addr = NULL;
     size_t size = 0;
     struct sysinfo ** psi;
@@ -51,10 +52,15 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
         addr = (void *)&kinfo.cmdline;
         size = sizeof(kinfo.cmdline);
         break;
+    case GETINFO_BOOTPROCS:
+        addr = (void *)&kinfo.boot_procs;
+        size = sizeof(kinfo.boot_procs);
+        break;
     default:
         return EINVAL;
     }
 
+    if (buf_len > 0 && buf_len > size) return E2BIG;
     if (addr) memcpy(buf, addr, size);
 
     return 0;

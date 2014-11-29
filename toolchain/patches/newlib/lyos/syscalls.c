@@ -190,7 +190,7 @@ int fork()
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.PID;
 }

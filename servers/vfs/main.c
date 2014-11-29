@@ -44,7 +44,6 @@
  * link/unlink
  * chmod/chown/chroot
  * fcntl
- * ioctl
  * mkdir/mknod/rmdir
  * pipe
  * rename
@@ -122,7 +121,7 @@ PUBLIC void task_fs()
 		case MOUNT:
 			msg.RETVAL = do_mount(&msg);
 			break;
-		case FORK:
+		case PM_VFS_FORK:
 			msg.RETVAL = fs_fork(&msg);
 			break;
 		case EXEC:

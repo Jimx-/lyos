@@ -66,7 +66,7 @@ PUBLIC void task_mm()
 		int msgtype = mm_msg.type;
 
 		switch (msgtype) {
-		case FORK:
+		case PM_MM_FORK:
 			mm_msg.RETVAL = do_fork();
 			break;
 		case EXIT:
@@ -147,6 +147,7 @@ PRIVATE void init_mm()
 	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
 	struct vir_region * rp = (struct vir_region *)alloc_vmem(NULL, region_size * 2);
 	struct proc * p = proc_table;
+	
 	struct boot_proc * bp;
 	for (bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++, rp++, p++) {
 		struct mmproc * mmp = init_mmproc(bp->endpoint);

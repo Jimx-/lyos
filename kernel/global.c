@@ -38,6 +38,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	/* entry        stack size        task name */
 	/* -----        ----------        --------- */
 	{task_mm,       STACK_SIZE_MM,    "MM"        },
+	{NULL,			0,				  "PM"		  },
 	{task_servman,   STACK_SIZE_SERVMAN,"SERVMAN" },
 	{NULL,			0,				  "DEVMAN"    },
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
@@ -56,6 +57,7 @@ PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 	{TASK_MM, 		"MM"		},
+	{TASK_PM,		"PM"		},
 	{TASK_SERVMAN, 	"SERVMAN"	},
 	{TASK_DEVMAN,	"DEVMAN"	},
 	{TASK_FS, 		"VFS"		},

@@ -4,7 +4,7 @@
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
 MMOBJS 		= main.o forkexit.o pagetable.o signal.o alloc.o region.o vmalloc.o brk.o \
-			pagefault.o misc.o mmap.o global.o
+			pagefault.o misc.o mmap.o global.o utils.o
 MM		= mm.o
 
 everything : realclean $(MM)

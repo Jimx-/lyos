@@ -5,14 +5,15 @@
 SERVOBJS	= mm/mm.o servman/servman.o vfs/vfs.o
 INIT		= init/init
 DEVMAN		= devman/devman
+PM			= pm/pm
 SERVERS		= servers.o
 
 .PHONY: everything realclean
 	
-everything : realclean $(SERVERS) $(INIT) $(DEVMAN)
+everything : realclean $(SERVERS) $(INIT) $(DEVMAN) $(PM)
 
 realclean :
-	@rm -f $(SERVERS) $(SERVOBJS) $(INIT) $(DEVMAN)
+	@rm -f $(SERVERS) $(SERVOBJS) $(INIT) $(DEVMAN) $(PM)
 
 $(SERVERS): $(SERVOBJS)
 	@echo -e '\tLD\tservers/$@'
@@ -34,3 +35,7 @@ $(INIT):
 $(DEVMAN):
 	@(cd devman; make)
 	@cp -f $(DEVMAN) $(DESTDIR)/sbin
+
+$(PM):
+	@(cd pm; make)
+	@cp -f $(PM) $(DESTDIR)/sbin

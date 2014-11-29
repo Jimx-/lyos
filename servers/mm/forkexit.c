@@ -44,39 +44,31 @@ PRIVATE void cleanup(struct proc * proc);
  *                                do_fork
  *****************************************************************************/
 /**
- * Perform the fork() syscall.
+ * Perform the memory part of fork() syscall.
  * 
  * @return  Zero if success, otherwise -1.
  *****************************************************************************/
 PUBLIC int do_fork()
 {
+	endpoint_t parent_ep = mm_msg.ENDPOINT;
+	int child_slot = mm_msg.PROC_NR;
+	endpoint_t child_ep;
 	/* find a free slot in proc_table */
-	struct proc* p = proc_table;
-	struct mmproc * mmp = mmproc_table;
-	int i;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++, p++, mmp++)
-		if (p->state == PST_FREE_SLOT)
-			break;
-
-	int child_pid = i;
-	assert(p == &proc_table[child_pid]);
-	assert(child_pid >= NR_TASKS + NR_NATIVE_PROCS);
-	if (i == NR_TASKS + NR_PROCS) { /* no free slot */
-		printl("MM: process table is full.\n");
-		return -EAGAIN;
-	}
-	assert(i < NR_TASKS + NR_PROCS);
+	struct proc* p = &proc_table[child_slot];
+	struct mmproc * mmp = &mmproc_table[child_slot];
 
 	/* duplicate the process table */
-	int pid = mm_msg.source;
-	struct mmproc * mmparent = mmproc_table + pid;
-	*p = proc_table[pid];
-	*mmp = mmproc_table[pid];
-	mmp->slot = child_pid;
-	mmp->endpoint = child_pid;
+	int parent_slot, retval;
+	if ((retval = mm_verify_endpt(parent_ep, &parent_slot)) != 0) return retval;
+	struct mmproc * mmparent = mmproc_table + parent_slot;
+	*p = proc_table[parent_slot];
+	*mmp = mmproc_table[parent_slot];
+	mmp->slot = child_slot;
+	mmp->endpoint = child_slot;
+	child_ep = child_slot;
 	mmp->flags &= MMPF_INUSE;
-	p->p_parent = pid;
-	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
+	p->p_parent = parent_ep;
+	sprintf(p->name, "%s_%d", proc_table[child_slot].name, child_ep);
 
 	if (pgd_new(&(mmp->pgd)) != 0) {
 		printl("MM: fork: can't create new page directory.\n");
@@ -99,28 +91,15 @@ PUBLIC int do_fork()
        		region_alloc_phys(new_region);
        		region_map_phys(mmp, new_region);
 
-       		data_copy(child_pid, new_region->vir_addr, pid, vr->vir_addr, vr->length);
+       		data_copy(child_ep, new_region->vir_addr, parent_ep, vr->vir_addr, vr->length);
        	} else {	/* can be shared */
        		region_share(new_region, vr);
        		region_map_phys(mmp, new_region);
        	}
     }
 
-	/* tell FS, see fs_fork() */
-	MESSAGE msg2fs;
-	msg2fs.type = FORK;
-	msg2fs.PID = child_pid;
-	send_recv(BOTH, TASK_FS, &msg2fs);
-
 	/* child PID will be returned to the parent proc */
-	mm_msg.PID = child_pid;
-
-	/* birth of the child */
-	MESSAGE m;
-	m.type = SYSCALL_RET;
-	m.RETVAL = 0;
-	m.PID = 0;
-	send_recv(SEND, child_pid, &m);
+	mm_msg.ENDPOINT = mmp->endpoint;
 
 	return 0;
 }

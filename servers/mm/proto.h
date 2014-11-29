@@ -17,7 +17,9 @@
 #define _MM_PROTO_H_
 
 #include "mmproc.h"
-    
+
+PUBLIC int mm_verify_endpt(endpoint_t ep, int * proc_nr);
+
 PUBLIC void mem_init(int mem_start, int free_mem_size);
 PUBLIC void vmem_init(int mem_start, int free_mem_size);
 /* PUBLIC int   alloc_mem(int pid, int memsize); */

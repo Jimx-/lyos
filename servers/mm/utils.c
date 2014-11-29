@@ -11,42 +11,28 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/const.h"
+#include "lyos/config.h"
 #include "stdio.h"
-#include "stdarg.h"
 #include "unistd.h"
+#include "stddef.h"
+#include "errno.h"
 #include "assert.h"
-#include "lyos/vm.h"
-#include "lyos/ipc.h"
-#include <lyos/config.h>
-#include <lyos/param.h>
-#include <lyos/sysutils.h>
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "page.h"
+#include "region.h"
+#include "proto.h"
+#include "global.h"
 
-PUBLIC int getinfo(int request, void* buf)
+PUBLIC int mm_verify_endpt(endpoint_t ep, int * proc_nr)
 {
-    MESSAGE m;
-    m.REQUEST = request;
-    m.BUF = buf;
-    m.BUF_LEN = 0;
-
-    return syscall_entry(NR_GETINFO, &m);
-}
-
-PUBLIC int get_sysinfo(struct sysinfo ** sysinfo)
-{
-	return getinfo(GETINFO_SYSINFO, sysinfo);
-}
-
-PUBLIC int get_kinfo(kinfo_t * kinfo)
-{
-    return getinfo(GETINFO_KINFO, kinfo);
-}
-
-PUBLIC int get_bootprocs(struct boot_proc * bp)
-{
-    return getinfo(GETINFO_BOOTPROCS, bp);
+    *proc_nr = ENDPOINT_P(ep);
+    return 0;
 }

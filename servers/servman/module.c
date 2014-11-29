@@ -39,6 +39,7 @@ struct boot_module {
 
 PRIVATE struct boot_module boot_modules[] = {
     { TASK_SYSFS, "sysfs" },
+    { TASK_PM, "pm" },
     { TASK_DEVMAN, "devman" },
     { TASK_INITFS, "initfs" },
     { TASK_RD, "ramdisk" },
