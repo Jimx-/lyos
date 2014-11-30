@@ -109,7 +109,8 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
 
     if (retval) return retval;
 
-    proc_table[target].brk = execi.brk;
+    struct proc * ptg = endpt_proc(target);
+    ptg->brk = execi.brk;
 
     struct ps_strings ps;
     ps.ps_nargvstr = 0;
@@ -207,7 +208,8 @@ PUBLIC int serv_spawn_module(endpoint_t target, char * name, char * mod_base, u3
     char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
     data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
 
-    proc_table[target].brk = execi.brk;
+    struct proc * ptg = endpt_proc(target);
+    ptg->brk = execi.brk;
 
     struct ps_strings ps;
     ps.ps_nargvstr = module_argc;

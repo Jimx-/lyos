@@ -35,7 +35,7 @@
 
 PUBLIC int check_permission(endpoint_t caller, int request)
 {
-    struct proc * p = proc_table + caller;
+    struct proc * p = endpt_proc(caller);
     if (p->euid != SU_UID) return EPERM;
 
     return 0;

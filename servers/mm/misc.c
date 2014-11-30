@@ -36,7 +36,7 @@ PUBLIC int do_getsetid()
 {
     int retval;
     int id = mm_msg.NEWID;
-    struct proc * p = proc_table + mm_msg.source;
+    struct proc * p = endpt_proc(mm_msg.source);
 
     switch (mm_msg.REQUEST) {
         case GS_GETUID:

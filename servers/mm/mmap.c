@@ -33,10 +33,9 @@
 #include <sys/mman.h>
 #include "global.h"
 
-PRIVATE struct vir_region * mmap_region(struct proc * p, int addr,
+PRIVATE struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     int mmap_flags, size_t len, int vrflags)
 {
-    struct mmproc * mmp = mmproc_table + (p - proc_table);
     struct vir_region * vr = NULL;
     if (addr || (mmap_flags & MAP_FIXED)) {
         vr = region_new((void *)addr, len, vrflags);
@@ -60,7 +59,6 @@ PUBLIC int do_mmap()
     endpoint_t who = mm_msg.MMAP_WHO < 0 ? mm_msg.source : mm_msg.MMAP_WHO;
     int addr = mm_msg.MMAP_VADDR;
     size_t len = mm_msg.MMAP_LEN;
-    struct proc * p = proc_table + who;
     struct mmproc * mmp = mmproc_table + who;
     int flags = mm_msg.MMAP_FLAGS;
     int fd = mm_msg.MMAP_FD;
@@ -78,7 +76,7 @@ PUBLIC int do_mmap()
         if (prot & PROT_WRITE) vr_flags |= RF_WRITABLE;
 
         if (flags & MAP_GROWSDOWN) vr_flags |= RF_GROWSDOWN;
-        if (!(vr = mmap_region(p, addr, flags, len, vr_flags))) return ENOMEM;
+        if (!(vr = mmap_region(mmp, addr, flags, len, vr_flags))) return ENOMEM;
         list_add(&(vr->list), &(mmp->mem_regions));
     }
 

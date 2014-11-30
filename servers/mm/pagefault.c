@@ -43,7 +43,6 @@ PUBLIC void do_handle_fault()
     }
 
     int pfla = mm_msg.FAULT_ADDR;
-    struct proc * p = proc_table + mm_msg.FAULT_PROC;
     struct mmproc * mmp = mmproc_table + mm_msg.FAULT_PROC;
     int err_code = mm_msg.FAULT_ERRCODE;
 
@@ -51,7 +50,7 @@ PUBLIC void do_handle_fault()
 
     if (ARCH_PF_PROT(err_code)) {
 #ifdef PAGEFAULT_DEBUG
-        printl("MM: pagefault: %d protected address %x\n", proc2pid(p), pfla);
+        printl("MM: pagefault: %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
 #endif
 
         struct vir_region * vr;
@@ -70,7 +69,7 @@ PUBLIC void do_handle_fault()
         }
     } else if (ARCH_PF_NOPAGE(err_code)) {
 #ifdef PAGEFAULT_DEBUG
-        printl("MM: pagefault: %d bad address %x\n", proc2pid(p), pfla);
+        printl("MM: pagefault: %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
 #endif
 
         int extend = 0;
@@ -107,10 +106,10 @@ PUBLIC void do_handle_fault()
     }
     else {
         if (ARCH_PF_PROT(err_code)) {
-            printl("MM: SIGSEGV %d protected address %x\n", proc2pid(p), pfla);
+            printl("MM: SIGSEGV %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
         } else if (ARCH_PF_NOPAGE(err_code)) {
-            printl("MM: SIGSEGV %d bad address %x\n", proc2pid(p), pfla);
+            printl("MM: SIGSEGV %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
         }
-        send_sig(p, SIGSEGV); 
+        //send_sig(p, SIGSEGV); 
     }
 }

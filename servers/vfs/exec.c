@@ -150,7 +150,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     /* get parameters from the message */
     int name_len = msg->NAME_LEN; /* length of filename */
     int src = msg->source;    /* caller proc nr. */
-    struct proc * p = proc_table + src;
+    struct proc * p = endpt_proc(src);
     int i;
 
     memset(&execi, 0, sizeof(execi));
@@ -182,7 +182,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     }
 
     /* find an fd for MM */
-    struct proc * mm_task = proc_table + TASK_MM;
+    struct proc * mm_task = endpt_proc(TASK_MM);
     /* find a free slot in PROCESS::filp[] */
     int fd = -1;
     for (i = 0; i < NR_FILES; i++) {
