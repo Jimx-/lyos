@@ -36,3 +36,12 @@ PUBLIC int mm_verify_endpt(endpoint_t ep, int * proc_nr)
     *proc_nr = ENDPOINT_P(ep);
     return 0;
 }
+
+PUBLIC struct mmproc * endpt_mmproc(endpoint_t ep)
+{
+    int proc_nr;
+    int r = mm_verify_endpt(ep, &proc_nr);
+    if (r) return NULL;
+
+    return &mmproc_table[proc_nr];
+}

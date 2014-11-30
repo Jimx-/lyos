@@ -43,7 +43,7 @@ PUBLIC void do_handle_fault()
     }
 
     int pfla = mm_msg.FAULT_ADDR;
-    struct mmproc * mmp = mmproc_table + mm_msg.FAULT_PROC;
+    struct mmproc * mmp = endpt_mmproc(mm_msg.FAULT_PROC);
     int err_code = mm_msg.FAULT_ERRCODE;
 
     int handled = 0;

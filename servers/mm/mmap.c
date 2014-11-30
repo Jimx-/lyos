@@ -59,7 +59,7 @@ PUBLIC int do_mmap()
     endpoint_t who = mm_msg.MMAP_WHO < 0 ? mm_msg.source : mm_msg.MMAP_WHO;
     int addr = mm_msg.MMAP_VADDR;
     size_t len = mm_msg.MMAP_LEN;
-    struct mmproc * mmp = mmproc_table + who;
+    struct mmproc * mmp = endpt_mmproc(who);
     int flags = mm_msg.MMAP_FLAGS;
     int fd = mm_msg.MMAP_FD;
     int prot = mm_msg.MMAP_PROT;

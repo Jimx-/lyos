@@ -35,9 +35,7 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     int child_slot = m->PROC_NR, parent_slot, retval;
 
     int gen = ENDPOINT_G(parent_ep) + 1;
-    //printk("G%d, E%d, N%d\n", gen, make_endpoint(gen, child_slot), ENDPOINT_P(make_endpoint(gen, child_slot)));
-    //endpoint_t child_ep = make_endpoint(gen, child_slot);
-    endpoint_t child_ep = child_slot;
+    endpoint_t child_ep = make_endpoint(gen, child_slot);
 
     if (!verify_endpt(parent_ep, &parent_slot)) return EINVAL;
 

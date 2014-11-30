@@ -19,6 +19,7 @@
 #include "mmproc.h"
 
 PUBLIC int mm_verify_endpt(endpoint_t ep, int * proc_nr);
+PUBLIC struct mmproc * endpt_mmproc(endpoint_t ep);
 
 PUBLIC void mem_init(int mem_start, int free_mem_size);
 PUBLIC void vmem_init(int mem_start, int free_mem_size);

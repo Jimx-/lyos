@@ -70,7 +70,8 @@ PUBLIC int do_procctl()
     int param = mm_msg.PCTL_PARAM;
     int retval = 0;
 
-    struct mmproc * mmp = mmproc_table + who;
+    struct mmproc * mmp = endpt_mmproc(who);
+    if (!mmp) return EINVAL;
 
     switch (param) {
         case PCTL_CLEARPROC:

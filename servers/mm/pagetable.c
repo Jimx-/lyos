@@ -380,7 +380,7 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     /* calculate the vir addr of the pgdir visible to the kernel */
     vir_bytes vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PG_SIZE;
 
-    return vmctl_set_address_space(mmproc2ep(who), pgd->phys_addr, (void *)vir_addr);
+    return vmctl_set_address_space(who->endpoint, pgd->phys_addr, (void *)vir_addr);
 }
 
 PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)

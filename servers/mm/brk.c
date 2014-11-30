@@ -42,7 +42,7 @@ PUBLIC int do_sbrk()
     int src = mm_msg.source;
     int count = mm_msg.CNT;
     struct proc * p = endpt_proc(src);
-    struct mmproc * mmp = mmproc_table + src;
+    struct mmproc * mmp = endpt_mmproc(src);
     if (count == 0) return p->brk;
 
     int retval = 1;
