@@ -71,7 +71,7 @@ PUBLIC void task_fs()
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
-		pcaller = &proc_table[src];
+		pcaller = endpt_proc(src);
 		int msgtype = msg.type;
 
 		switch (msgtype) {
@@ -172,7 +172,7 @@ PUBLIC void init_vfs()
 PRIVATE int fs_fork(MESSAGE * p)
 {
 	int i;
-	struct proc * child = &proc_table[p->PID];
+	struct proc * child = endpt_proc(p->ENDPOINT);
 	for (i = 0; i < NR_FILES; i++) {
 		if (child->filp[i]) {
 			child->filp[i]->fd_cnt++;
@@ -189,7 +189,7 @@ PRIVATE int fs_fork(MESSAGE * p)
 PRIVATE int fs_exit(MESSAGE * m)
 {
 	int i;
-	struct proc * p = &proc_table[m->PID];
+	struct proc * p = endpt_proc(m->ENDPOINT);
 	for (i = 0; i < NR_FILES; i++) {
 		if (p->filp[i]) {
 			p->filp[i]->fd_inode->i_cnt--;

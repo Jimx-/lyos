@@ -76,7 +76,7 @@ PUBLIC int do_fork(MESSAGE * p)
     /* tell FS, see fs_fork() */
     MESSAGE msg2fs;
     msg2fs.type = PM_VFS_FORK;
-    msg2fs.PID = child_slot;
+    msg2fs.ENDPOINT = child_slot;
     send_recv(BOTH, TASK_FS, &msg2fs);
 
     /* birth of the child */
@@ -148,7 +148,7 @@ PUBLIC int do_exit(MESSAGE * p)
     /* tell FS, see fs_exit() */
     MESSAGE msg2fs;
     msg2fs.type = EXIT;
-    msg2fs.PID = src;
+    msg2fs.ENDPOINT = src;
     send_recv(BOTH, TASK_FS, &msg2fs);
     
     procctl(src, PCTL_CLEARPROC);
