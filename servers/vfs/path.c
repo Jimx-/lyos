@@ -77,7 +77,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
 {
     /* start inode: root or pwd */
     if (!fp->root || !fp->pwd) {
-        printl("VFS: resolve_path: process #%d has no root or working directory\n", proc2pid(fp));
+        printl("VFS: resolve_path: process #%d has no root or working directory\n", fp->endpoint);
         err_code = ENOENT;
         return NULL;
     }

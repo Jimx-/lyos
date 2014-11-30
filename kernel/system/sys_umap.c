@@ -39,7 +39,7 @@ PUBLIC int sys_umap(MESSAGE * m, struct proc* p)
     endpoint_t ep = m->UMAP_WHO;
     vir_bytes srcaddr = (vir_bytes)m->UMAP_SRCADDR;
 
-    if (ep == SELF) ep = proc2pid(p);
+    if (ep == SELF) ep = p->endpoint;
     
     m->UMAP_DSTADDR = va2pa(ep, (void *)srcaddr);
 

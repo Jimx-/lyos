@@ -55,7 +55,7 @@ PUBLIC int do_fcntl(MESSAGE * p)
                 }
             }
             if ((newfd < 0) || (newfd >= NR_FILES))
-                panic("filp[] is full (PID:%d)", proc2pid(pcaller));
+                panic("filp[] is full (PID:%d)", pcaller->endpoint);
             filp->fd_cnt++;
             pcaller->filp[newfd] = filp;
             return newfd;
@@ -88,7 +88,7 @@ PUBLIC int do_dup(MESSAGE * p)
             }
         }
         if ((newfd < 0) || (newfd >= NR_FILES))
-            panic("filp[] is full (PID:%d)", proc2pid(pcaller));
+            panic("filp[] is full (PID:%d)", pcaller->endpoint);
     }
 
     if (pcaller->filp[newfd] != 0) {
@@ -136,7 +136,7 @@ PRIVATE int change_directory(struct inode ** ppin, char * string, int len)
     if (len > MAX_PATH) return ENAMETOOLONG;
 
     /* fetch the name */
-    data_copy(getpid(), pathname, proc2pid(pcaller), string, len);
+    data_copy(getpid(), pathname, pcaller->endpoint, string, len);
     //phys_copy(va2pa(getpid(), pathname), va2pa(proc2pid(pcaller), string), len);
     pathname[len] = '\0';
 

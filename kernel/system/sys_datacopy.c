@@ -31,12 +31,12 @@
 PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
 {
     void * src_addr = m->SRC_ADDR;
-    endpoint_t src_pid = m->SRC_PID == SELF ? proc2pid(p_proc) : m->SRC_PID;
+    endpoint_t src_ep = m->SRC_PID == SELF ? p_proc->endpoint : m->SRC_PID;
 
     void * dest_addr = m->DEST_ADDR;
-    endpoint_t dest_pid = m->DEST_PID == SELF ? proc2pid(p_proc) : m->DEST_PID;
+    endpoint_t dest_ep = m->DEST_PID == SELF ? p_proc->endpoint : m->DEST_PID;
 
     int len = m->BUF_LEN;
 
-    return vir_copy(dest_pid, dest_addr, src_pid, src_addr, len);
+    return vir_copy(dest_ep, dest_addr, src_ep, src_addr, len);
 }

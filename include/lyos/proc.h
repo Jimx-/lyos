@@ -31,7 +31,7 @@
 			 * (ok to allocated to a new process)
 			 */
 
-#define proc_addr(n)	(&proc_table[n])
+#define proc_addr(n)	(&proc_table[(n) + NR_KERNTASKS])
 			 
 #define lock_proc(proc) spinlock_lock(&((proc)->lock))
 #define unlock_proc(proc) spinlock_unlock(&((proc)->lock))
@@ -134,8 +134,6 @@ struct task {
 	int	stacksize;
 	char	name[32];
 };
-
-#define proc2pid(x) (x - proc_table)
 
 #define FIRST_PROC		proc_table[0]
 #define LAST_PROC		proc_table[NR_TASKS + NR_PROCS - 1]

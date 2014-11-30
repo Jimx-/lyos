@@ -19,7 +19,7 @@
 #define ENDPOINT_GENERATION_SHIFT   10
 #define ENDPOINT_GENERATION_SIZE    (1 << ENDPOINT_GENERATION_SHIFT)
 
-#define make_endpoint(gen, p) ((gen << ENDPOINT_GENERATION_SHIFT) + p)
-#define ENDPOINT_P(ep) (ep % ENDPOINT_GENERATION_SIZE)
+#define make_endpoint(gen, p) ((gen << ENDPOINT_GENERATION_SHIFT) + (p))
+#define ENDPOINT_P(ep) ((((ep) + NR_KERNTASKS) % ENDPOINT_GENERATION_SIZE) - NR_KERNTASKS)
 
 #endif

@@ -69,7 +69,7 @@ PUBLIC void init_proc()
 	int i;
 	struct proc * p = proc_table;
 
-	for (i = -NR_SYSTASKS; i < NR_TASKS + NR_PROCS; i++,p++) {
+	for (i = -NR_KERNTASKS; i < NR_TASKS + NR_PROCS; i++,p++) {
 		spinlock_init(&p->lock);
 		
 		if (i < NR_BOOT_PROCS) {

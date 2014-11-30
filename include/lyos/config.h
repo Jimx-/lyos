@@ -23,11 +23,11 @@
 #endif
 
 /* Number of tasks & processes */
-#define NR_SYSTASKS     0
+#define NR_KERNTASKS    0
 #define NR_TASKS        10
 #define NR_PROCS        32
 #define NR_NATIVE_PROCS     1
-#define NR_BOOT_PROCS   (NR_TASKS + NR_NATIVE_PROCS)
+#define NR_BOOT_PROCS   (NR_KERNTASKS + NR_TASKS + NR_NATIVE_PROCS)
     
 #define NR_SCHED_QUEUES     16
 #define MIN_USER_PRIO       (NR_SCHED_QUEUES - 1)   /* min user priority */

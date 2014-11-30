@@ -86,14 +86,14 @@ PUBLIC int do_open(MESSAGE * p)
         }
     }
     if ((fd < 0) || (fd >= NR_FILES))
-        panic("filp[] is full (PID:%d)", proc2pid(pcaller));
+        panic("filp[] is full (PID:%d)", pcaller->endpoint);
 
     /* find a free slot in f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++)
         if (f_desc_table[i].fd_inode == 0)
             break;
     if (i >= NR_FILE_DESC)
-        panic("f_desc_table[] is full (PID:%d)", proc2pid(pcaller));
+        panic("f_desc_table[] is full (PID:%d)", pcaller->endpoint);
 
     struct inode * pin = NULL;
 
@@ -176,7 +176,7 @@ PUBLIC int do_close(MESSAGE * p)
     if (pcaller->filp[fd]->fd_inode == NULL) return EBADF;
 
     DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", 
-            fd, proc2pid(pcaller), pcaller->filp[fd]->fd_inode->i_num, pcaller->filp[fd]->fd_cnt, pcaller->filp[fd]->fd_inode->i_cnt));
+            fd, pcaller->endpoint, pcaller->filp[fd]->fd_inode->i_num, pcaller->filp[fd]->fd_cnt, pcaller->filp[fd]->fd_inode->i_cnt));
     put_inode(pcaller->filp[fd]->fd_inode);
     if (--pcaller->filp[fd]->fd_cnt == 0)
         pcaller->filp[fd]->fd_inode = NULL;

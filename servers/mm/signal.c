@@ -129,7 +129,7 @@ PUBLIC int kill_sig(pid_t source, pid_t dest, int signo)
     while (--p_dest > &FIRST_PROC) {
     	if (p_dest->state == PST_FREE_SLOT) continue;
 
-    	if (dest > 0 && dest != proc2pid(p_dest)) continue;
+    	if (dest > 0 && dest != p_dest->endpoint) continue;
     	if (dest == -1 && dest <= INIT) continue;
 
     	/* check permission */
