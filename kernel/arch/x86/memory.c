@@ -187,7 +187,7 @@ PRIVATE u32 get_phys32(phys_bytes phys_addr)
  * 
  * @return The linear address for the given virtual address.
  *****************************************************************************/
-PUBLIC void* va2la(int pid, void* va)
+PUBLIC void* va2la(endpoint_t ep, void* va)
 {
     return va;
 }
@@ -203,9 +203,11 @@ PUBLIC void* va2la(int pid, void* va)
  * 
  * @return The physical address for the given linear address.
  *****************************************************************************/
-PUBLIC void * la2pa(int pid, void * la)
+PUBLIC void * la2pa(endpoint_t ep, void * la)
 {
-    struct proc* p = &proc_table[pid];
+    int slot;
+    if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
+    struct proc* p = proc_addr(slot);
 
     phys_bytes phys_addr = 0;
     unsigned long pgd_index = ARCH_PDE(la);
@@ -244,9 +246,9 @@ PUBLIC void * la2pa(int pid, void * la)
  * 
  * @return The physical address for the given virtual address.
  *****************************************************************************/
-PUBLIC void * va2pa(int pid, void * va)
+PUBLIC void * va2pa(endpoint_t ep, void * va)
 {
-    return la2pa(pid, va2la(pid, va));
+    return la2pa(ep, va2la(ep, va));
 }
 
 #define KM_USERMAPPED  0
@@ -299,7 +301,7 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
     p->seg.cr3_phys = (u32)cr3;
     p->seg.cr3_vir = (u32 *)cr3_v;
 
-    if (proc2pid(p) == TASK_MM) {
+    if (p->endpoint == TASK_MM) {
         write_cr3((u32)cr3);
         reload_cr3();
     }
@@ -323,8 +325,8 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
     return EINVAL;
 }
 
-PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
-                        endpoint_t src_pid, void * src_addr, int len)
+PUBLIC int vir_copy(endpoint_t dest_ep, void * dest_addr,
+                        endpoint_t src_ep, void * src_addr, int len)
 {
     //struct proc * p_src = proc_addr(src_pid);
     //struct proc * p_dest = proc_addr(dest_pid);
@@ -340,7 +342,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
     reload_cr3();
 
     /* map in dest address */
-    u32 dest_la = (u32)va2la(dest_pid, dest_addr);
+    u32 dest_la = (u32)va2la(dest_ep, dest_addr);
     u32 dest_offset = dest_la % PG_SIZE, dest_len = len;
     if (dest_offset != 0) {
         dest_la -= dest_offset;
@@ -364,11 +366,11 @@ PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
         unsigned long pt_index = ARCH_PTE(_dest_vaddr);
 
         pte_t * pt = PGD_ENTRY(pgd_index);
-        pt[pt_index] = ((u32)la2pa(dest_pid, (void *)_dest_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
+        pt[pt_index] = ((u32)la2pa(dest_ep, (void *)_dest_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
     }
 
     /* map in source address */
-    u32 src_la = (u32)va2la(src_pid, src_addr);
+    u32 src_la = (u32)va2la(src_ep, src_addr);
     u32 src_offset = src_la % PG_SIZE, src_len = len;
     if (src_offset != 0) {
         src_la -= src_offset;
@@ -391,7 +393,7 @@ PUBLIC int vir_copy(endpoint_t dest_pid, void * dest_addr,
         unsigned long pt_index = ARCH_PTE(_src_vaddr);
 
         pte_t * pt = PGD_ENTRY(pgd_index);
-        pt[pt_index] = ((u32)la2pa(src_pid, (void *)_src_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
+        pt[pt_index] = ((u32)la2pa(src_ep, (void *)_src_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
     }
 
     //void * src_pa = (void *)va2pa(src_pid, src_addr);

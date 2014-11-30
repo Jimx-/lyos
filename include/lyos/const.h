@@ -128,7 +128,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	13
+#define NR_SYS_CALL	14
 #define NR_PRINTX	0
 #define NR_SENDREC	1
 #define NR_DATACOPY	2
@@ -142,6 +142,7 @@
 #define NR_IRQCTL	10
 #define NR_FORK		11
 #define NR_CLEAR	12
+#define NR_EXEC		13
 
 /* ipc */
 #define SEND		1

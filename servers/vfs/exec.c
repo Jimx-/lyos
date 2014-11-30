@@ -248,15 +248,14 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     data_copy(src, orig_stack, TASK_FS, stackcopy, orig_stack_len);
 
-    proc_table[src].regs.ecx = (u32)envp; 
-    proc_table[src].regs.edx = (u32)orig_stack;
-    proc_table[src].regs.eax = argc;
-    /* setup eip & esp */
-    proc_table[src].regs.eip = execi.args.entry_point; /* @see _start.asm */
-    proc_table[src].regs.esp = (u32)orig_stack;
+    struct proc * psrc = endpt_proc(src);
+    if (!psrc) return EINVAL;
+    psrc->brk = execi.args.brk;
 
-    proc_table[src].brk = execi.args.brk;
-    strcpy(proc_table[src].name, pathname);
+    struct ps_strings ps;
+    ps.ps_nargvstr = argc;
+    ps.ps_argvstr = orig_stack;
+    ps.ps_envstr = envp;
 
-    return 0;
+    return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
 }

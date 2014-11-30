@@ -22,6 +22,7 @@
 #include "lyos/const.h"
 #include "lyos/proc.h"
 #include "string.h"
+#include <errno.h>
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "arch_const.h"
@@ -316,7 +317,8 @@ PUBLIC int arch_privctl(MESSAGE * m, struct proc* p)
 	endpoint_t whom = m->PROC_NR;
 	int request = m->REQUEST;
 	
-	struct proc * target = proc_table + whom;
+	struct proc * target = endpt_proc(whom);
+	if (!target) return EINVAL;
 
 	switch (request) {
 	case PRIVCTL_SET_TASK:
@@ -370,7 +372,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	msg.type = FAULT;
 	msg.FAULT_NR = frame->vec_no;
 	msg.FAULT_ADDR = pfla;
-	msg.FAULT_PROC = proc2pid(fault_proc);
+	msg.FAULT_PROC = fault_proc->endpoint;
 	msg.FAULT_ERRCODE = frame->err_code;
 
 	msg_send(fault_proc, TASK_MM, &msg);
@@ -412,7 +414,7 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
 	printk("Exception: %s on CPU %d\n", err_description[frame->vec_no], cpuid);
 	printk("  EFLAGS: %d, CS: %d, EIP: 0x%x, PID: %d(%s)", frame->eflags, frame->cs, frame->eip,
-		proc2pid(fault_proc), fault_proc->name);
+		fault_proc->endpoint, fault_proc->name);
 
 	if(err_code != 0xFFFFFFFF){
 		printk(", Error code: %d\n", frame->err_code);

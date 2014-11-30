@@ -116,7 +116,7 @@ no_schedule:
 PRIVATE void switch_address_space_idle()
 {
 #if CONFIG_SMP
-	switch_address_space(&proc_table[TASK_MM]);
+	switch_address_space(proc_addr(TASK_MM));
 #endif
 }
 
@@ -154,14 +154,12 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 	int src_dest = m->SR_SRCDEST;
 	MESSAGE * msg = (MESSAGE *)m->SR_MSG;
 
-	assert((src_dest >= 0 && src_dest < NR_TASKS + NR_PROCS) ||
-	       src_dest == ANY ||
-	       src_dest == INTERRUPT);
-
 	int ret = 0;
-	int caller = proc2pid(p);
-	MESSAGE* mla = (MESSAGE*)va2la(caller, msg);
+	int caller = p->endpoint;
+	MESSAGE * mla = (MESSAGE * )va2la(caller, msg);
 	mla->source = caller;
+
+	if (!verify_endpt(src_dest, NULL)) return EINVAL;
 
 	assert(mla->source != src_dest);
 
@@ -197,6 +195,14 @@ PUBLIC void reset_msg(MESSAGE* p)
 	memset(p, 0, sizeof(MESSAGE));
 }
 
+PUBLIC struct proc * endpt_proc(endpoint_t ep)
+{
+	int n;
+	if (!verify_endpt(ep, &n)) return NULL;
+
+	return proc_addr(n);
+}
+
 /*****************************************************************************
  *                                deadlock
  *****************************************************************************/
@@ -212,19 +218,20 @@ PUBLIC void reset_msg(MESSAGE* p)
  * 
  * @return Zero if success.
  *****************************************************************************/
-PRIVATE int deadlock(int src, int dest)
+PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
 {
-	struct proc* p = proc_table + dest;
-	while (1) {
+	struct proc * p = endpt_proc(dest);
+
+	while (TRUE) {
 		if (p->state & PST_SENDING) {
 			if (p->sendto == src) {
-				p = proc_table + dest;
+				p = endpt_proc(dest);
 				do {
-					p = proc_table + p->sendto;
-				} while (p != proc_table + src);
+					p = endpt_proc(p->sendto);
+				} while (p != endpt_proc(src));
 				return 1;
 			}
-			p = proc_table + p->sendto;
+			p = endpt_proc(p->sendto);
 		}
 		else {
 			break;
@@ -249,22 +256,22 @@ PRIVATE int deadlock(int src, int dest)
  *****************************************************************************/
 PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 {
-	struct proc* sender = p_to_send;
-	struct proc* p_dest = proc_table + dest; /* proc dest */
+	struct proc * sender = p_to_send;
+	struct proc * p_dest = endpt_proc(dest); /* proc dest */
+	if (p_dest == NULL) return EINVAL;
 
 	/* check for deadlock here */
-	if (deadlock(proc2pid(sender), dest)) {
+	if (deadlock(sender->endpoint, dest)) {
 		dump_msg("deadlock sender", m);
 		dump_msg("deadlock receiver", p_dest->send_msg);
-		//panic("deadlock: %s(pid: %d)->%s(pid: %d)", sender->name, proc2pid(sender), p_dest->name, proc2pid(p_dest));
 		return EDEADLK;
 	}
 
-	if ((p_dest->state & PST_RECEIVING) && /* p_dest is waiting for the msg */
-	    (p_dest->recvfrom == proc2pid(sender) ||
+	if (PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
+	    (p_dest->recvfrom == sender->endpoint ||
 	     p_dest->recvfrom == ANY)) {
 
-		vir_copy(dest, p_dest->recv_msg, proc2pid(sender), m, sizeof(MESSAGE));
+		vir_copy(dest, p_dest->recv_msg, sender->endpoint, m, sizeof(MESSAGE));
 
 		p_dest->recv_msg = 0;
 		PST_UNSET(p_dest, PST_RECEIVING);
@@ -315,8 +322,8 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 						  * think clearly, so I keep
 						  * it.
 						  */
-	struct proc* from = 0; /* from which the message will be fetched */
-	struct proc* prev = 0;
+	struct proc* from = NULL; /* from which the message will be fetched */
+	struct proc* prev = NULL;
 	int copyok = 0;
 
 	/* PST_SENDING is set means that the process failed to send a 
@@ -346,7 +353,8 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		}
 
 		assert(m);
-		vir_copy(proc2pid(who_wanna_recv), m, proc2pid(p_to_recv), &msg, sizeof(MESSAGE));
+		memcpy(m, &msg, sizeof(MESSAGE));
+		//vir_copy(who_wanna_recv->endpoint, m, p_to_recv->endpoint, &msg, sizeof(MESSAGE));
 
 		return 0;
 	}
@@ -367,10 +375,11 @@ normal_msg:
 		/* who_wanna_recv wants to receive a message from
 		 * a certain proc: src.
 		 */
-		from = &proc_table[src];
+		from = endpt_proc(src);
+		if (from == NULL) return EINVAL;
 
 		if ((PST_IS_SET(from, PST_SENDING)) &&
-		    (from->sendto == proc2pid(who_wanna_recv))) {
+		    (from->sendto == who_wanna_recv->endpoint)) {
 			/* Perfect, src is sending a message to
 			 * who_wanna_recv.
 			 */
@@ -381,8 +390,7 @@ normal_msg:
 				    * queue, so the queue must not be NULL
 				    */
 			while (p) {
-				assert(from->state & PST_SENDING);
-				if (proc2pid(p) == src) { /* if p is the one */
+				if (p->endpoint == src) { /* if p is the one */
 					from = p;
 					break;
 				}
@@ -411,7 +419,7 @@ normal_msg:
 
 		assert(m);
 		/* copy the message */
-		vir_copy(proc2pid(who_wanna_recv), m, proc2pid(from), from->send_msg, sizeof(MESSAGE));
+		vir_copy(who_wanna_recv->endpoint, m, from->endpoint, from->send_msg, sizeof(MESSAGE));
 
 		from->send_msg = 0;
 		from->sendto = NO_TASK;
@@ -443,7 +451,7 @@ no_msg:
  */
 PUBLIC int verify_endpt(endpoint_t ep, int * proc_nr)
 {
-	*proc_nr = ENDPOINT_P(ep);
+	if (proc_nr) *proc_nr = ENDPOINT_P(ep);
 
 	return 1;
 }
@@ -456,11 +464,12 @@ PUBLIC int verify_endpt(endpoint_t ep, int * proc_nr)
  * 
  * @param task_nr  The task which will be informed.
  *****************************************************************************/
-PUBLIC void inform_int(int task_nr)
+PUBLIC void inform_int(endpoint_t ep)
 {
-	struct proc* p = proc_table + task_nr;
+	struct proc* p = endpt_proc(ep);
+	if (p == NULL) return;
 
-	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
+	if (PST_IS_SET(p, PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == INTERRUPT) || (p->recvfrom == ANY))) {
 		p->recv_msg->source = INTERRUPT;
 		p->recv_msg->type = HARD_INT;
@@ -482,9 +491,10 @@ PUBLIC void inform_int(int task_nr)
  * 
  * @param task_nr  The task which will be informed.
  *****************************************************************************/
-PUBLIC void inform_kernel_log(int task_nr)
+PUBLIC void inform_kernel_log(endpoint_t ep)
 {
-	struct proc* p = proc_table + task_nr;
+	struct proc* p = endpt_proc(ep);
+	if (p == NULL) return;
 
 	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == KERNEL) || (p->recvfrom == ANY))) {
@@ -527,11 +537,10 @@ PUBLIC void dumproc(struct proc* p)
 PUBLIC void dump_msg(const char * title, MESSAGE* m)
 {
 	int packed = 0;
-	printk("\n\n%s<0x%x>{%ssrc:%s(%d),%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
+	printk("\n\n%s<0x%x>{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
 	       title,
 	       (int)m,
 	       packed ? "" : "\n        ",
-	       proc_table[m->source].name,
 	       m->source,
 	       packed ? " " : "\n        ",
 	       m->type,

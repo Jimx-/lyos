@@ -64,14 +64,6 @@ PUBLIC void     enable_irq(irq_hook_t * hook);
 PUBLIC void 	init_clock();
 PUBLIC void 	milli_delay(int milli_sec);
 
-/* kernel/block/hd.c */
-PUBLIC void 	task_hd();
-	
-/* kernel/block/fd.c */
-PUBLIC void 	task_fd();
-PUBLIC void 	init_fd();
-PUBLIC void 	fd_handler(int irq);
-
 /* keyboard.c */
 PUBLIC void 	init_keyboard();
 
@@ -95,9 +87,10 @@ PUBLIC void task_servman();
 PUBLIC  void    init_proc();
 PUBLIC  void    switch_to_user();
 PUBLIC  int     verify_endpt(endpoint_t ep, int * proc_nr);
-PUBLIC	void*	va2la(int pid, void * va);
-PUBLIC  void*   la2pa(int pid, void * la);
-PUBLIC  void*   va2pa(int pid, void * va);
+PUBLIC  struct proc * endpt_proc(endpoint_t ep);
+PUBLIC	void*	va2la(endpoint_t ep, void * va);
+PUBLIC  void*   la2pa(endpoint_t ep, void * la);
+PUBLIC  void*   va2pa(endpoint_t ep, void * va);
 PUBLIC	int	    ldt_seg_linear(struct proc* p, int idx);
 PUBLIC	void	reset_msg(MESSAGE* p);
 PUBLIC	void	dump_msg(const char * title, MESSAGE* m);
@@ -136,6 +129,7 @@ PUBLIC  int sys_sportio(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_irqctl(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_fork(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_clear(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_exec(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

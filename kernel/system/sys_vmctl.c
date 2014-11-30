@@ -40,13 +40,15 @@
 PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
 {
     int who = m->VMCTL_WHO, request = m->VMCTL_REQUEST;
-    struct proc * target = (who == SELF) ? p : proc_table + who;
+    struct proc * target = (who == SELF) ? p : endpt_proc(who);
 
     switch (request) {
     case VMCTL_BOOTINHIBIT_CLEAR:
+        if (!target) return EINVAL;
         PST_UNSET(target, PST_BOOTINHIBIT);
         break;
     case VMCTL_MMINHIBIT_CLEAR:
+        if (!target) return EINVAL;
         PST_UNSET(target, PST_MMINHIBIT);
         break;
     case VMCTL_GET_KERN_MAPPING:
@@ -60,9 +62,11 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
                                     m->VMCTL_REPLY_KM_ADDR);
         break;
     case VMCTL_PAGEFAULT_CLEAR:
+        if (!target) return EINVAL;
         PST_UNSET(target, PST_PAGEFAULT);
         break;
     }
 
+    if (!target) return EINVAL;
     return arch_vmctl(m, target);
 }

@@ -85,7 +85,8 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
 												   sys_sportio,
 												   sys_irqctl,
 												   sys_fork,
-												   sys_clear};
+												   sys_clear,
+												   sys_exec};
 												   
 PUBLIC int errno;
 

@@ -231,7 +231,6 @@ PRIVATE int prepare_uname_buf(struct utsname * buf)
 PRIVATE int do_getsethostname(MESSAGE * p)
 {
 	int src = p->source;
-	struct proc * who = proc_table + src;
 
 	if (p->BUF_LEN < 0) return EINVAL;
 
@@ -239,7 +238,6 @@ PRIVATE int do_getsethostname(MESSAGE * p)
 		data_copy(src, p->BUF, TASK_SYS, hostname, p->BUF_LEN);
 		if (strlen(hostname) > p->BUF_LEN) return ENAMETOOLONG;
 	} else if (p->REQUEST == GS_SETHOSTNAME) {
-		if (who->uid != SU_UID) return EPERM;
 		if (p->BUF_LEN > sizeof(hostname)) return EINVAL;
 		memset(hostname, 0, sizeof(hostname));
 		data_copy(TASK_SYS, hostname, src, p->BUF, p->BUF_LEN);

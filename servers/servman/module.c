@@ -62,7 +62,7 @@ PUBLIC int spawn_boot_modules()
         int mod_len = mb_mod->mod_end - mb_mod->mod_start;
         printl("SERVMAN: spawning boot module %s, base: 0x%x, len: %d bytes\n", bm->name, mod_base, mod_len);
         
-        retval = serv_spawn_module(bm->ep, mod_base, mod_len);
+        retval = serv_spawn_module(bm->ep, bm->name, mod_base, mod_len);
         if (retval) return retval;
 
         if (bm->ep != TASK_SYSFS) announce_service(bm->name, bm->ep);

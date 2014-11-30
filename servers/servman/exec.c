@@ -109,14 +109,14 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
 
     if (retval) return retval;
 
-    /* setup eip & esp */
-    proc_table[target].regs.eip = execi.entry_point; /* @see _start.asm */
-    proc_table[target].regs.esp = (u32)VM_STACK_TOP;
-
     proc_table[target].brk = execi.brk;
-    strcpy(proc_table[target].name, pathname);
 
-    return 0;
+    struct ps_strings ps;
+    ps.ps_nargvstr = 0;
+    ps.ps_argvstr = NULL;
+    ps.ps_envstr = NULL;
+
+    return kernel_exec(target, (void *)VM_STACK_TOP, pathname, execi.entry_point, &ps);
 }
 
 PUBLIC int serv_prepare_module_stack()
@@ -171,7 +171,7 @@ PUBLIC int serv_prepare_module_stack()
     return 0;
 }
 
-PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
+PUBLIC int serv_spawn_module(endpoint_t target, char * name, char * mod_base, u32 mod_len)
 {
     int i, retval;
 
@@ -207,15 +207,12 @@ PUBLIC int serv_spawn_module(endpoint_t target, char * mod_base, u32 mod_len)
     char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
     data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
 
-    proc_table[target].regs.ecx = (u32)module_envp; 
-    proc_table[target].regs.edx = (u32)orig_stack;
-    proc_table[target].regs.eax = module_argc;
-
-    /* setup eip & esp */
-    proc_table[target].regs.eip = execi.entry_point; /* @see _start.asm */
-    proc_table[target].regs.esp = (u32)VM_STACK_TOP - module_stack_len;
-
     proc_table[target].brk = execi.brk;
 
-    return 0;
+    struct ps_strings ps;
+    ps.ps_nargvstr = module_argc;
+    ps.ps_argvstr = orig_stack;
+    ps.ps_envstr = module_envp;
+
+    return kernel_exec(target, VM_STACK_TOP - module_stack_len, name, execi.entry_point, &ps);
 }

@@ -39,4 +39,11 @@ PUBLIC int      kernel_fork(endpoint_t parent_ep, int child_proc, endpoint_t * c
 
 PUBLIC int      kernel_clear(endpoint_t ep);
 
+#define KEXEC_ENDPOINT  u.m4.m4i1
+#define KEXEC_SP        u.m4.m4p1
+#define KEXEC_NAME      u.m4.m4p2
+#define KEXEC_IP        u.m4.m4p3
+#define KEXEC_PSSTR     u.m4.m4p4
+PUBLIC int      kernel_exec(endpoint_t ep, void * sp, char * name, void * ip, struct ps_strings * ps);
+
 #endif

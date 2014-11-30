@@ -92,3 +92,16 @@ PUBLIC void idle_stop()
     int is_idle = get_cpu_var(cpu, cpu_is_idle);
     if (is_idle) get_cpu_var(cpu, cpu_is_idle) = 0;
 }
+
+PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)
+{
+    memcpy(p->name, name, PROC_NAME_LEN);
+
+    p->regs.esp = (reg_t)sp;
+    p->regs.eip = (reg_t)ip;
+    p->regs.eax = ps->ps_nargvstr;
+    p->regs.edx = (reg_t)ps->ps_argvstr;
+    p->regs.ecx = (reg_t)ps->ps_envstr;
+
+    return 0;
+}
