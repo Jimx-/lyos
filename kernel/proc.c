@@ -68,6 +68,7 @@ PUBLIC void init_proc()
 {
 	int i;
 	struct proc * p = proc_table;
+	struct priv * priv;
 
 	for (i = -NR_KERNTASKS; i < NR_TASKS + NR_PROCS; i++,p++) {
 		spinlock_init(&p->lock);
@@ -76,6 +77,12 @@ PUBLIC void init_proc()
 			p->endpoint = make_endpoint(0, i);	/* generation 0 */
 			PST_SET(p, PST_STOPPED);
 		}
+	}
+
+	int id = 0;
+	for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
+		priv->proc_nr = NO_TASK;
+		priv->id = id++;
 	}
 
 	/* prepare idle process struct */

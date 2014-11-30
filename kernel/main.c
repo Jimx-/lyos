@@ -68,6 +68,25 @@ PUBLIC int kernel_main()
     for (i = 0; i < NR_BOOT_PROCS; i++, bp++) {
     	struct proc * p = proc_addr(bp->proc_nr);
     	bp->endpoint = p->endpoint;
+
+    	int allowed_calls;
+    	if (is_kerntaske(bp->endpoint) || bp->endpoint == TASK_MM || bp->endpoint == TASK_SERVMAN) {
+    		/* assign priv structure */
+    		set_priv(p, static_priv_id(bp->endpoint));
+
+    		if (bp->endpoint == TASK_MM) {
+    			allowed_calls = TASK_CALLS;
+    		} if (bp->endpoint == TASK_SERVMAN) {
+    			allowed_calls = TASK_CALLS;
+    		} else {
+    			allowed_calls = KERNTASK_CALLS;
+    		}
+    	}
+
+    	int j;
+    	for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
+    		p->priv->allowed_syscalls[j] = (allowed_calls == ALL_CALLS_ALLOWED) ? (~0) : 0;
+    	}
     }
 
     memcpy(&kinfo.boot_procs, boot_procs, sizeof(kinfo.boot_procs));

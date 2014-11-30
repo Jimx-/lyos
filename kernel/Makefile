@@ -8,7 +8,7 @@ ARFLAGS		= rcs
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			clock.o global.o proc.o systask.o\
 			klib.o cpulocals.o \
-			sysinfo.o system/system.o interrupt.o
+			sysinfo.o system/system.o interrupt.o system.o
 
 KRNL		= krnl.o
 

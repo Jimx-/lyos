@@ -141,7 +141,10 @@ PRIVATE void init_mm()
 	struct proc * p = proc_table;
 	
 	struct boot_proc * bp;
+	i = -NR_KERNTASKS;
 	for (bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++, rp++, p++) {
+		if (bp->proc_nr < 0) continue;
+
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
 		mmp->slot = i;
 		INIT_LIST_HEAD(&(mmp->mem_regions));

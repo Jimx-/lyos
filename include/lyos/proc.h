@@ -13,6 +13,9 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef _PROC_H_
+#define _PROC_H_
+
 #include <signal.h>
 #include <lyos/list.h>
 #include "stackframe.h"
@@ -32,7 +35,8 @@
 			 */
 
 #define proc_addr(n)	(&proc_table[(n) + NR_KERNTASKS])
-			 
+#define is_kerntaske(e)	(e < 0)
+
 #define lock_proc(proc) spinlock_lock(&((proc)->lock))
 #define unlock_proc(proc) spinlock_unlock(&((proc)->lock))
 
@@ -79,6 +83,7 @@ struct proc {
 
     struct proc * next_ready;
 
+    struct priv * priv;
 	endpoint_t endpoint;
 	char name[PROC_NAME_LEN];		   /* name of the process */
 
@@ -169,3 +174,5 @@ struct task {
 				STACK_SIZE_MM + \
 				STACK_SIZE_RD + \
 				STACK_SIZE_INIT)
+
+#endif

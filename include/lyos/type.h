@@ -35,10 +35,12 @@ typedef unsigned int        block_t;
 
 typedef int 				endpoint_t;
 typedef u32					bitchunk_t;
+#define BITCHUNKS(bit)		(((bit)+ sizeof(bitchunk_t) - 1) / sizeof(bitchunk_t))
 
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();
 
+typedef unsigned long irq_id_t;
 typedef unsigned long irq_hook_id_t;
 typedef unsigned long irq_policy_t;
 typedef struct irq_hook{
@@ -53,7 +55,7 @@ typedef struct irq_hook{
 
 typedef	int 	(*irq_handler_t)	(irq_hook_t * irq_hook);
 
-typedef void*	system_call;
+typedef void*	system_call_t;
 
 struct hole {
 	struct hole * h_next;

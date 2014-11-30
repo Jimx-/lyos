@@ -25,6 +25,7 @@
 #endif
 
 #include <lyos/param.h>
+#include <lyos/priv.h>
 
 EXTERN	int	jiffies;
 
@@ -50,9 +51,12 @@ EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
 
 extern	char		task_stack[];
 extern	struct proc	proc_table[];
+extern  struct priv priv_table[];
 extern  struct task	task_table[];
 extern  struct task	user_proc_table[];
 extern  struct boot_proc boot_procs[];
+
+extern system_call_t sys_call_table[NR_SYS_CALLS];
 
 extern  irq_hook_t  irq_hooks[];
 

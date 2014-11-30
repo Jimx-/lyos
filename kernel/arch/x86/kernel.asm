@@ -31,7 +31,7 @@ extern	gdt_ptr
 extern	idt_ptr
 extern	current
 extern	tss
-extern	sys_call_table
+extern 	dispatch_sys_call
 bits 32
 
 global pgd0
@@ -406,8 +406,9 @@ sys_call:
 
 	push	esi
 	push	ebx
-    call    [sys_call_table + eax * 4]
-	add	esp, 4 		; esp <- esi(proc ptr)
+	push 	eax
+    call    dispatch_sys_call
+	add	esp, 8 		; esp <- esi(proc ptr)
 
 	pop esi
     mov     [esi + EAXREG - P_STACKBASE], eax

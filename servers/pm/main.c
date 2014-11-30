@@ -81,6 +81,8 @@ PRIVATE void pm_init()
 
     struct boot_proc * bp;
     for (bp = boot_procs; bp < &boot_procs[NR_BOOT_PROCS]; bp++) {
+        if (bp->proc_nr < 0) continue;
+        
         procs_in_use++;
 
         pmp = &pmproc_table[bp->proc_nr];

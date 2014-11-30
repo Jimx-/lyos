@@ -136,7 +136,9 @@ PUBLIC void init_arch()
 
 	acpi_init();
 
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
+	for (i = -NR_KERNTASKS; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
+		
+		if (i < 0) continue;
 		
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
 			p->state = PST_FREE_SLOT;

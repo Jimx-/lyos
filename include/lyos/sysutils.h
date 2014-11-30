@@ -18,6 +18,8 @@
 
 #include <lyos/param.h>
     
+#define SYS_CALL_MASK_SIZE  BITCHUNKS(NR_SYS_CALL)
+    
 PUBLIC  int     printl(const char *fmt, ...);
 PUBLIC  int     get_sysinfo(struct sysinfo ** sysinfo);
 PUBLIC  int     get_kinfo(kinfo_t * kinfo);

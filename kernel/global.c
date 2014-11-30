@@ -31,7 +31,8 @@
 
 PUBLIC  int booting_cpu = 0;
 
-PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];
+PUBLIC	struct proc proc_table[NR_KERNTASKS + NR_TASKS + NR_PROCS];
+PUBLIC  struct priv priv_table[NR_PRIVPROCS];
 
 /* 注意下面的 TASK 的顺序要与 const.h 中对应 */
 PUBLIC	struct task	task_table[NR_TASKS] = {
@@ -56,6 +57,7 @@ PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 };
 
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
+	{INTERRUPT,		"interrupt"	},
 	{TASK_MM, 		"MM"		},
 	{TASK_PM,		"PM"		},
 	{TASK_SERVMAN, 	"SERVMAN"	},
@@ -73,7 +75,7 @@ PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
 PUBLIC  irq_hook_t	irq_hooks[NR_IRQ_HOOKS];
 
-PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
+PUBLIC	system_call_t	sys_call_table[NR_SYS_CALLS] = {sys_printx,
 						       					   sys_sendrec,
 												   sys_datacopy,
 												   sys_privctl,

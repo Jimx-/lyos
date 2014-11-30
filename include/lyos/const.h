@@ -109,7 +109,7 @@
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
 #define KERNEL 			-15
-#define INTERRUPT		-10
+#define INTERRUPT		-1
 #define TASK_MM     	0
 #define TASK_PM			1
 #define TASK_SERVMAN 	2
@@ -128,7 +128,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALL	14
+#define NR_SYS_CALLS	14
 #define NR_PRINTX	0
 #define NR_SENDREC	1
 #define NR_DATACOPY	2

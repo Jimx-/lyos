@@ -105,6 +105,9 @@ PUBLIC  void    dequeue_proc(register struct proc * p);
 PUBLIC  int     direct_print(const char * fmt, ...);
 PUBLIC  void    direct_cls();
 
+/* system.c */
+PUBLIC  int     set_priv(struct proc * p, int id);
+
 /* lib/misc.c */
 PUBLIC u32      now();
 
