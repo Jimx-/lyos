@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include "page.h"
 #include <elf.h>
-#include "libexec.h"
+#include "libexec/libexec.h"
 #include <sys/mman.h>
 
 struct vfs_exec_info {

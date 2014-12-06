@@ -161,7 +161,9 @@
 #define GS_SETHOSTNAME	2
 
 /* privilege control requests */
-#define PRIVCTL_SET_TASK 1
+#define PRIVCTL_SET_TASK 	1
+#define PRIVCTL_SET_PRIV	2
+#define PRIVCTL_ALLOW		3
 
 /* getinfo requests */
 #define GETINFO_SYSINFO		1

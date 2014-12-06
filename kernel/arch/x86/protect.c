@@ -314,7 +314,7 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
 
 PUBLIC int arch_privctl(MESSAGE * m, struct proc* p)
 {
-	endpoint_t whom = m->PROC_NR;
+	endpoint_t whom = m->ENDPOINT;
 	int request = m->REQUEST;
 	
 	struct proc * target = endpt_proc(whom);

@@ -26,7 +26,7 @@
 #define NR_KERNTASKS    1
 #define NR_TASKS        10
 #define NR_PROCS        256
-#define NR_PRIVPROCS    64
+#define NR_PRIV_PROCS   64
 #define NR_NATIVE_PROCS     1
 #define NR_BOOT_PROCS   (NR_KERNTASKS + NR_TASKS + NR_NATIVE_PROCS)
     

@@ -38,11 +38,11 @@ struct boot_module {
 };
 
 PRIVATE struct boot_module boot_modules[] = {
-    { TASK_SYSFS, "sysfs" },
     { TASK_PM, "pm" },
     { TASK_DEVMAN, "devman" },
-    { TASK_INITFS, "initfs" },
     { TASK_RD, "ramdisk" },
+    { TASK_INITFS, "initfs" },
+    { TASK_SYSFS, "sysfs" },
     { INIT, "init"}, 
     { -1, NULL }
 };
@@ -65,7 +65,7 @@ PUBLIC int spawn_boot_modules()
         retval = serv_spawn_module(bm->ep, bm->name, mod_base, mod_len);
         if (retval) return retval;
 
-        if (bm->ep != TASK_SYSFS) announce_service(bm->name, bm->ep);
+        //if (bm->ep != TASK_SYSFS) announce_service(bm->name, bm->ep);
 
         /* YOU ARE GO */
         vmctl(VMCTL_BOOTINHIBIT_CLEAR, bm->ep);

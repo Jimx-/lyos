@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 #include "page.h"
 #include <elf.h>
-#include "libexec.h"
+#include "libexec/libexec.h"
 #include <sys/mman.h>
 #include <multiboot.h>
 
@@ -47,12 +47,6 @@ PRIVATE struct exec_loader exec_loaders[] = {
     { libexec_load_elf },
     { NULL },
 };
-
-PRIVATE int module_argc;
-PRIVATE char module_stack[PROC_ORIGIN_STACK];
-PRIVATE char * module_stp;
-PRIVATE char * module_envp;
-PRIVATE int module_stack_len;
 
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
@@ -120,6 +114,14 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
     return kernel_exec(target, (void *)VM_STACK_TOP, pathname, execi.entry_point, &ps);
 }
 
+
+#if 0
+PRIVATE int module_argc;
+PRIVATE char module_stack[PROC_ORIGIN_STACK];
+PRIVATE char * module_stp;
+PRIVATE char * module_envp;
+PRIVATE int module_stack_len;
+
 PUBLIC int serv_prepare_module_stack()
 {
     char arg[STR_DEFAULT_LEN];
@@ -144,13 +146,13 @@ PUBLIC int serv_prepare_module_stack()
     char * initrd_base = (char*)(initrd_mod->mod_start + KERNEL_VMA);
     unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
 
-    CLEAR_ARG();
-    sprintf(arg, "initrd_base=0x%x", (unsigned int)initrd_base);
-    COPY_STRING(arg);
+    //CLEAR_ARG();
+    //sprintf(arg, "initrd_base=0x%x", (unsigned int)initrd_base);
+    //COPY_STRING(arg);
 
-    CLEAR_ARG();
-    sprintf(arg, "initrd_len=%u", initrd_len);
-    COPY_STRING(arg);
+    //CLEAR_ARG();
+    //sprintf(arg, "initrd_len=%u", initrd_len);
+    //COPY_STRING(arg);
 
     arg_list = (char **)stacktop;
     /* env list end */
@@ -171,6 +173,8 @@ PUBLIC int serv_prepare_module_stack()
 
     return 0;
 }
+
+#endif
 
 PUBLIC int serv_spawn_module(endpoint_t target, char * name, char * mod_base, u32 mod_len)
 {
@@ -205,16 +209,16 @@ PUBLIC int serv_spawn_module(endpoint_t target, char * name, char * mod_base, u3
     if (retval) return retval;
 
     /* copy the stack */
-    char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
-    data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
+    //char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
+    //data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
 
     struct proc * ptg = endpt_proc(target);
     ptg->brk = execi.brk;
 
     struct ps_strings ps;
-    ps.ps_nargvstr = module_argc;
-    ps.ps_argvstr = orig_stack;
-    ps.ps_envstr = module_envp;
+    ps.ps_nargvstr = 0;
+    //ps.ps_argvstr = orig_stack;
+    //ps.ps_envstr = module_envp;
 
-    return kernel_exec(target, VM_STACK_TOP - module_stack_len, name, execi.entry_point, &ps);
+    return kernel_exec(target, VM_STACK_TOP, name, execi.entry_point, &ps);
 }

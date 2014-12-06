@@ -11,26 +11,21 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "sys/types.h"
-#include "lyos/const.h"
-#include "stdio.h"
-#include "stdarg.h"
-#include "unistd.h"
-#include "assert.h"
-#include "lyos/vm.h"
-#include "lyos/ipc.h"
+#ifndef _SERVMAN_GLOBAL_H_
+#define _SERVMAN_GLOBAL_H_
 
-int syscall_entry(int syscall_nr, MESSAGE * m);
+#include "type.h"
 
-PUBLIC int privctl(endpoint_t whom, int request, void * data)
-{
-    MESSAGE m;
-    m.ENDPOINT = whom;
-    m.REQUEST = request;
-    m.BUF = data;
+/* EXTERN is extern except for global.c */
+#ifdef _SERVMAN_GLOBAL_VARIABLE_HERE_
+#undef EXTERN
+#define EXTERN
+#endif
 
-    return syscall_entry(NR_PRIVCTL, &m);
-}
+extern struct sproc sproc_table[];
+
+extern struct boot_priv boot_priv_table[];
+
+#endif 

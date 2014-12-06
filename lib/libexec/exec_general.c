@@ -65,11 +65,9 @@ PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len)
     char zerobuf[_ZERO_BUF_LEN];
     memset(zerobuf, 0, sizeof(zerobuf));
 
-    endpoint_t self_ep = getpid();
-
     while (len > 0) {
         int copy_len = min(len, _ZERO_BUF_LEN);
-        data_copy(execi->proc_e, (void*)vaddr, self_ep, zerobuf, copy_len);
+        data_copy(execi->proc_e, (void*)vaddr, SELF, zerobuf, copy_len);
         vaddr += copy_len;
         len -= copy_len;
     }

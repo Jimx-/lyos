@@ -47,7 +47,7 @@ PRIVATE char * get_value(const char * param, const char * key)
 	for (; *envp != 0;) {
 		for (name = key; *name != 0 && *name == *envp; name++, envp++);
 		if (*name == '\0' && *envp == '=') return envp + 1;
-		while (envp++ != 0);
+		while (*envp++ != 0);
 	}
 
 	return NULL;
@@ -106,7 +106,6 @@ PUBLIC int env_get_long(char * key, long * value, const char * fmt, int field, l
 	unsigned long uparam;
 
 	if ((retval = env_get_param(key, val_buf, ENV_BUF_SIZE)) != 0) return retval;
-
 	char * pv = val_buf, * end;
 	int i = 0;
 

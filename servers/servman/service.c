@@ -31,7 +31,7 @@
 #include "lyos/proto.h"
 #include "proto.h"
 #include "const.h"
-#include "libsysfs.h"
+#include "libsysfs/libsysfs.h"
 
 PUBLIC int check_permission(endpoint_t caller, int request)
 {

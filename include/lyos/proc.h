@@ -27,6 +27,7 @@
 #define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
 #define PST_SENDING   0x02	/* set when proc trying to send */
 #define PST_RECEIVING 0x04	/* set when proc trying to recv */
+#define PST_NO_PRIV	  0x08  /* this proc has no priv structure */
 #define PST_PAGEFAULT 0x20  /* set when proc has encounted a page fault */
 #define PST_MMINHIBIT 0x40  /* this proc is not runnable until MM has prepared mem regions for it */
 #define PST_STOPPED   0x80 	/* set when proc is stopped */

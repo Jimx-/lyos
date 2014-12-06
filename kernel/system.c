@@ -31,42 +31,41 @@
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
 #endif
-#include <lyos/cpulocals.h>
+#include "lyos/cpulocals.h"
 
-PUBLIC int arch_privctl(MESSAGE * m, struct proc* p);
+typedef int (*sys_call_handler_t)(MESSAGE * m, struct proc * p_proc);
 
-PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
+PUBLIC int set_priv(struct proc * p, int id)
 {
-	endpoint_t whom = m->ENDPOINT;
-	int request = m->REQUEST;
-    int priv_id;
-    struct priv priv;
-    int r;
-	
-	struct proc * target = endpt_proc(whom);
-    if (!target) return EINVAL;
-
-	switch (request) {
-    case PRIVCTL_SET_PRIV:
-        if (!PST_IS_SET(target, PST_NO_PRIV)) return EPERM;
-
-        priv_id = PRIV_ID_NULL;
-        if (m->BUF) {
-            memcpy(&priv, m->BUF, sizeof(struct priv));
-
-            if (!(priv.flags & PRF_DYN_ID)) priv_id = priv.id;
+    struct priv * priv;
+    if (id == PRIV_ID_NULL) {
+        for (priv = &FIRST_DYN_PRIV; priv < &LAST_DYN_PRIV; priv++) {
+            if (priv->proc_nr == NO_TASK) break;
         }
+        if (priv >= &LAST_DYN_PRIV) return ENOSPC;
+    } else {
+        if (id < 0 || id > NR_BOOT_PROCS) return EINVAL;
+        if (priv_table[id].proc_nr != NO_TASK) return EBUSY;
+        priv = &priv_table[id];
+    }
+    p->priv = priv;
+    priv->proc_nr = ENDPOINT_P(p->endpoint);
 
-        if ((r = set_priv(target, priv_id)) != 0) return r;
+    return 0;
+}
 
-        return 0;
-    case PRIVCTL_ALLOW:
-        PST_UNSET(target, PST_NO_PRIV);
+PUBLIC int dispatch_sys_call(int call_nr, MESSAGE * m, struct proc * p_proc)
+{
+    int retval;
+    
+    if (call_nr > NR_SYS_CALLS || call_nr < 0) return EINVAL;
 
-        return 0;
-    default:
-    	break;
-	}
+    if (sys_call_table[call_nr]) {
+        sys_call_handler_t handler = sys_call_table[call_nr];
+        retval = handler(m, p_proc);
+    } else {
+        return EINVAL;
+    }
 
-	return arch_privctl(m, p);
+    return retval;
 }

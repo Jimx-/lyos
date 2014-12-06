@@ -18,7 +18,6 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "lyos/list.h"
-#include "libsysfs.h"
+#include "libsysfs/libsysfs.h"
 #include "node.h"
 #include "global.h"
-    

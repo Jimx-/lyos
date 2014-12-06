@@ -32,7 +32,7 @@
 PUBLIC  int booting_cpu = 0;
 
 PUBLIC	struct proc proc_table[NR_KERNTASKS + NR_TASKS + NR_PROCS];
-PUBLIC  struct priv priv_table[NR_PRIVPROCS];
+PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
 
 /* 注意下面的 TASK 的顺序要与 const.h 中对应 */
 PUBLIC	struct task	task_table[NR_TASKS] = {
