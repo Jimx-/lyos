@@ -2,28 +2,26 @@
 # Makefile for the Lyos tty driver.
 
 TTYOBJS 		= arch/$(ARCH)/arch-tty.o \
-			_tty.o global.o
-TTY		= tty.o
+			tty.o global.o
+TTY		= tty
+LIBS	= -llyos -ldriver
 
 CFLAGS += -I$(CURDIR)
+SERVERCFLAGS += -I$(CURDIR)
 
 everything : realclean $(TTY)
 
 realclean :
-	@rm -f $(TTYOBJS)
+	@rm -f $(TTYOBJS) $(TTY)
 
 $(TTY): $(TTYOBJS)
 	@echo -e '\tLD\tdrivers/char/tty/$@'
-	@$(LD) -r -o $(TTY) $(TTYOBJS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 arch/$(ARCH)/arch-tty.o:
 	@(cd arch/$(ARCH)/; make)
 
-_tty.o: tty.c
-	@echo -e '\tCC\tdrivers/char/tty/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
-
 %.o: %.c
 	@echo -e '\tCC\tdrivers/char/tty/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(SERVERCFLAGS) -c $<
 

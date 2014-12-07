@@ -2,6 +2,7 @@
 ARCHTTYOBJS		= console.o keyboard.o
 
 ARCHTTY		= arch-tty.o
+LIBS		= -llyos
 
 everything : realclean $(ARCHTTY)
 

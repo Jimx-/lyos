@@ -44,7 +44,7 @@ PUBLIC	struct task	task_table[NR_TASKS] = {
 	{NULL,			0,				  "DEVMAN"    },
 	{task_fs,       STACK_SIZE_FS,    "VFS"       },
 	{task_sys,      STACK_SIZE_SYS,   "SYS"       },
-	{task_tty,      STACK_SIZE_TTY,   "TTY"       },
+	{NULL,      	0,   			  "TTY"       },
 	{NULL,       	0,				  "RD"        },
 	{NULL,	        0,                "INITFS"	  },
 	{NULL, 			0, 				  "SYSFS"	  },

@@ -40,6 +40,7 @@ struct boot_module {
 PRIVATE struct boot_module boot_modules[] = {
     { TASK_PM, "pm" },
     { TASK_DEVMAN, "devman" },
+    { TASK_TTY, "tty" },
     { TASK_RD, "ramdisk" },
     { TASK_INITFS, "initfs" },
     { TASK_SYSFS, "sysfs" },
@@ -60,7 +61,7 @@ PUBLIC int spawn_boot_modules()
 
         char * mod_base = (char*)(mb_mod->mod_start + KERNEL_VMA);
         int mod_len = mb_mod->mod_end - mb_mod->mod_start;
-        printl("SERVMAN: spawning boot module %s, base: 0x%x, len: %d bytes\n", bm->name, mod_base, mod_len);
+        //printl("SERVMAN: spawning boot module %s, base: 0x%x, len: %d bytes\n", bm->name, mod_base, mod_len);
         
         retval = serv_spawn_module(bm->ep, bm->name, mod_base, mod_len);
         if (retval) return retval;

@@ -75,7 +75,7 @@ PRIVATE void	put_key		(TTY* tty, u32 key);
 /**
  * <Ring 1> Main loop of task TTY.
  *****************************************************************************/
-PUBLIC void task_tty()
+PUBLIC int main()
 {
 	TTY *	tty;
 	MESSAGE msg;
@@ -131,6 +131,8 @@ PUBLIC void task_tty()
 			break;
 		}
 	}
+
+	return 0;
 }
 
 
