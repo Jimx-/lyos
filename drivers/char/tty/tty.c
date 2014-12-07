@@ -94,6 +94,19 @@ PUBLIC void task_tty()
 		int src = msg.source;
 		assert(src != TASK_TTY);
 
+		/* notify */
+		if (msg.type == NOTIFY_MSG) {
+			switch (msg.source) {
+			case KERNEL:
+				tty_do_kern_log();
+				break;
+			case INTERRUPT:
+				key_pressed = 0;
+				break;
+			}
+			continue;
+		}
+
 		TTY* ptty = minor2tty(msg.DEVICE);
 
 		switch (msg.type) {
@@ -109,16 +122,6 @@ PUBLIC void task_tty()
 			break;
 		case DEV_IOCTL:
 			tty_do_ioctl(ptty, &msg);
-			break;
-		case HARD_INT:
-			/**
-			 * waked up by clock_handler -- a key was just pressed
-			 * @see clock_handler() inform_int()
-			 */
-			key_pressed = 0;
-			continue;
-		case KERN_LOG:
-			tty_do_kern_log();
 			break;
 		default:
 			msg.type = SYSCALL_RET;
@@ -172,6 +175,9 @@ PRIVATE void init_tty()
 	}
 
 	select_console(0);
+
+	/* start to handle kernel logging request */
+	kernlog_register();
 }
 
 

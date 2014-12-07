@@ -75,6 +75,18 @@ PRIVATE void servman_init()
         sp->priv.id = static_priv_id(ENDPOINT_P(bpriv->endpoint));
         sp->priv.flags = bpriv->flags;
 
+        /* syscall mask */
+        int j;
+        if (sp->priv.flags == TASK_FLAGS) {
+            for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
+                sp->priv.allowed_syscalls[j] = ~0;
+            } 
+        } else if (sp->priv.flags == USER_FLAGS) {
+            for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
+                sp->priv.allowed_syscalls[j] = 0;
+            } 
+        }
+
         /* set privilege */
         if (bpriv->endpoint != TASK_MM && bpriv->endpoint != TASK_SERVMAN) {
             int r;

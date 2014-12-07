@@ -19,8 +19,12 @@
 #include <lyos/param.h>
     
 #define SYS_CALL_MASK_SIZE  BITCHUNKS(NR_SYS_CALL)
-    
+
+#define PRX_OUTPUT      1
+#define PRX_REGISTER    2
 PUBLIC  int     printl(const char *fmt, ...);
+PUBLIC  int     kernlog_register();
+
 PUBLIC  int     get_sysinfo(struct sysinfo ** sysinfo);
 PUBLIC  int     get_kinfo(kinfo_t * kinfo);
 PUBLIC  int     get_bootprocs(struct boot_proc * bp);

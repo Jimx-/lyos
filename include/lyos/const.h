@@ -108,7 +108,7 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
-#define KERNEL 			-15
+#define KERNEL 			-2
 #define INTERRUPT		-1
 #define TASK_MM     	0
 #define TASK_PM			1
@@ -184,7 +184,7 @@ enum msgtype {
 	 * when hard interrupt occurs, a msg (with type==HARD_INT) will
 	 * be sent to some tasks
 	 */
-	HARD_INT = 1, 						/* 1 */
+	NOTIFY_MSG = 1, 						/* 1 */
 	/* 
 	 * when exception occurs, a msg (with type==FAULT) will
 	 * be sent to some tasks
@@ -274,7 +274,7 @@ enum msgtype {
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2
 #define TARGET		u.m3.m3i4
-
+#define INTERRUPTS 	u.m3.m3l1
 #define	PID			u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1

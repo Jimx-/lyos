@@ -91,7 +91,7 @@ PUBLIC  struct proc * endpt_proc(endpoint_t ep);
 PUBLIC	void*	va2la(endpoint_t ep, void * va);
 PUBLIC  void*   la2pa(endpoint_t ep, void * la);
 PUBLIC  void*   va2pa(endpoint_t ep, void * va);
-PUBLIC	int	    ldt_seg_linear(struct proc* p, int idx);
+PUBLIC  int     msg_notify(struct proc * p_to_send, endpoint_t dest);
 PUBLIC	void	reset_msg(MESSAGE* p);
 PUBLIC	void	dump_msg(const char * title, MESSAGE* m);
 PUBLIC	void	dump_proc(struct proc * p);

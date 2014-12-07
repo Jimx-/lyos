@@ -24,7 +24,10 @@ struct priv {
 
     bitchunk_t allowed_syscalls[BITCHUNKS(NR_SYS_CALLS)];
 
+    priv_map_t notify_pending;
     irq_id_t int_pending;
+
+    int kernlog_request;
 };
 
 #define FIRST_PRIV          priv_table[0]
@@ -34,6 +37,7 @@ struct priv {
 #define FIRST_DYN_PRIV      LAST_STATIC_PRIV
 #define LAST_DYN_PRIV       LAST_PRIV
 
+#define priv_addr(n)        (&priv_table[n])
 #define static_priv_id(n)   ((n) + NR_KERNTASKS)
 
 #define PRIV_ID_NULL        (-1)

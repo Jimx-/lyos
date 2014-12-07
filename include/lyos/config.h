@@ -23,7 +23,7 @@
 #endif
 
 /* Number of tasks & processes */
-#define NR_KERNTASKS    1
+#define NR_KERNTASKS    2
 #define NR_TASKS        10
 #define NR_PROCS        256
 #define NR_PRIV_PROCS   64

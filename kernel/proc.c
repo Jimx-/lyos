@@ -35,8 +35,11 @@
 
 PRIVATE struct proc * pick_proc();
 PRIVATE void idle();
-PUBLIC int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
+PUBLIC 	int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
+PRIVATE int  has_pending_notify(struct proc * p, endpoint_t src);
+PRIVATE void unset_notify_pending(struct proc * p, int id);
+PRIVATE void set_notify_msg(struct proc * sender, MESSAGE * m, endpoint_t src);
 PRIVATE int  deadlock(int src, int dest);
 PRIVATE void proc_no_time(struct proc * p);
 
@@ -81,6 +84,7 @@ PUBLIC void init_proc()
 
 	int id = 0;
 	for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
+		memset(priv, 0, sizeof(struct priv));
 		priv->proc_nr = NO_TASK;
 		priv->id = id++;
 	}
@@ -181,8 +185,7 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 			ret = msg_receive(p, src_dest, msg);
 			break;
 		default:
-			panic("{sys_sendrec} invalid function: "
-		      "%d (SEND:%d, RECEIVE:%d, BOTH: %d).", function, SEND, RECEIVE, BOTH);
+			ret = EINVAL;
 			break;
 	}
 
@@ -274,7 +277,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 		return EDEADLK;
 	}
 
-	if (PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
+	if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
 	    (p_dest->recvfrom == sender->endpoint ||
 	     p_dest->recvfrom == ANY)) {
 
@@ -338,6 +341,25 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 	 */
 	if (PST_IS_SET(who_wanna_recv, PST_SENDING)) goto no_msg;
 
+	/* check pending notifications */
+	int notify_id;
+	if ((notify_id = has_pending_notify(who_wanna_recv, src)) != PRIV_ID_NULL) {
+		MESSAGE msg;
+		reset_msg(&msg);
+		int proc_nr = priv_addr(notify_id)->proc_nr;
+		struct proc * notifier = proc_addr(proc_nr);
+		set_notify_msg(notifier, &msg, notifier->endpoint);
+
+		unset_notify_pending(who_wanna_recv, notify_id);
+		memcpy(who_wanna_recv->recv_msg, &msg, sizeof(MESSAGE));
+
+		who_wanna_recv->recv_msg = NULL;
+		PST_UNSET(who_wanna_recv, PST_RECEIVING);
+		who_wanna_recv->recvfrom = NO_TASK;
+
+		return 0;
+	}
+
 	if ((who_wanna_recv->special_msg) &&
 	    ((src == ANY) || (src == INTERRUPT) || (src == KERNEL))) {
 		/* There is an interrupt needs who_wanna_recv's handling and
@@ -349,11 +371,11 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 		if ((who_wanna_recv->special_msg & MSG_INTERRUPT) && (src != KERNEL)) {
 			msg.source = INTERRUPT;
-			msg.type = HARD_INT;
+			msg.type = NOTIFY_MSG;
 			who_wanna_recv->special_msg &= ~MSG_INTERRUPT;
 		} else if ((who_wanna_recv->special_msg & MSG_KERNLOG) && (src != INTERRUPT)) {
 			msg.source = KERNEL;
-			msg.type = KERN_LOG;
+			msg.type = NOTIFY_MSG;
 			who_wanna_recv->special_msg &= ~MSG_KERNLOG;
 		} else {
 			goto normal_msg;
@@ -448,6 +470,79 @@ no_msg:
 	return 0;
 }
 
+PRIVATE int has_pending_notify(struct proc * p, endpoint_t src)
+{
+	priv_map_t notify_pending = p->priv->notify_pending;
+	int i;
+
+	if (src != ANY) {
+		struct proc * sender = endpt_proc(src);
+		if (!sender) return PRIV_ID_NULL;
+
+		if (notify_pending & (1 << sender->priv->id)) return sender->priv->id; 
+	}
+
+	if (notify_pending == 0) return PRIV_ID_NULL;
+	for (i = 0; i < NR_PRIV_PROCS; i++) {
+		if (notify_pending & (1 << i)) return i;
+	}
+
+	return PRIV_ID_NULL;
+}
+
+PRIVATE void unset_notify_pending(struct proc * p, int id)
+{
+	p->priv->notify_pending &= ~(1 << id);
+}
+
+PRIVATE void set_notify_msg(struct proc * sender, MESSAGE * m, endpoint_t src)
+{
+	memset(m, 0, sizeof(MESSAGE));
+	m->source = src;
+	m->type = NOTIFY_MSG;
+	switch (src) {
+	case INTERRUPT:
+		m->INTERRUPTS = sender->priv->int_pending;
+		sender->priv->int_pending = 0;
+		break;
+	default:
+		break;
+	}
+}
+
+/**
+ * @brief Send a notification to the dest proc.
+ * 
+ * @param p_to_send	Who wants to send the notification.
+ * @param dest The dest proc.
+ * 
+ * @return Zero on success, otherwise errcode.
+ */
+PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
+{
+	struct proc * p_dest = endpt_proc(dest);
+	if (!p_dest) return EINVAL;
+
+	if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
+	    (p_dest->recvfrom == p_to_send->endpoint ||
+	     p_dest->recvfrom == ANY)) {
+		
+		MESSAGE m;
+		set_notify_msg(p_to_send, &m, p_to_send->endpoint);
+		//vir_copy(dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
+		memcpy(p_dest->recv_msg, &m, sizeof(MESSAGE));
+		p_dest->recv_msg = NULL;
+		PST_UNSET(p_dest, PST_RECEIVING);
+		p_dest->recvfrom = NO_TASK;
+
+		return 0;
+	}
+
+	/* p_dest is not waiting for this notification, set pending bit */
+	p_dest->priv->notify_pending |= (1 << p_to_send->priv->id);
+	return 0;
+}
+
 /**
  * @brief Verify if an endpoint number is valid and convert it to proc nr.
  * 
@@ -479,7 +574,7 @@ PUBLIC void inform_int(endpoint_t ep)
 	if (PST_IS_SET(p, PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == INTERRUPT) || (p->recvfrom == ANY))) {
 		p->recv_msg->source = INTERRUPT;
-		p->recv_msg->type = HARD_INT;
+		p->recv_msg->type = NOTIFY_MSG;
 		p->recv_msg = 0;
 		p->special_msg &= ~MSG_INTERRUPT;
 		PST_UNSET(p, PST_RECEIVING);
@@ -506,7 +601,7 @@ PUBLIC void inform_kernel_log(endpoint_t ep)
 	if ((p->state & PST_RECEIVING) && /* dest is waiting for the msg */
 	    ((p->recvfrom == KERNEL) || (p->recvfrom == ANY))) {
 		p->recv_msg->source = KERNEL;
-		p->recv_msg->type = KERN_LOG;
+		p->recv_msg->type = NOTIFY_MSG;
 		p->recv_msg = 0;
 		p->special_msg &= ~MSG_KERNLOG;
 		PST_UNSET(p, PST_RECEIVING);

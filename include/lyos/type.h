@@ -34,6 +34,8 @@ typedef unsigned int 		vir_bytes;
 typedef unsigned int        block_t;
 
 typedef int 				endpoint_t;
+typedef unsigned long 		priv_map_t;
+
 typedef u32					bitchunk_t;
 #define BITCHUNKS(bit)		(((bit)+ sizeof(bitchunk_t) - 1) / sizeof(bitchunk_t))
 

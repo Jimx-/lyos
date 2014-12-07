@@ -13,6 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <lyos/config.h>
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
@@ -28,6 +29,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/log.h>
+#include <lyos/sysutils.h>
+#include <lyos/priv.h>
 
 PRIVATE void kputc(char c);
 PRIVATE void kputs(char * s);
@@ -58,7 +61,14 @@ PRIVATE void kputs(char * s);
  *****************************************************************************/
 PUBLIC int sys_printx(MESSAGE * m, struct proc* p_proc)
 {
-	kputs(m->BUF);
+	switch (m->REQUEST) {
+	case PRX_OUTPUT:
+		kputs(m->BUF);
+		break;
+	case PRX_REGISTER:
+		p_proc->priv->kernlog_request = TRUE;
+		break;
+	}
 
 	return 0;
 }
@@ -72,8 +82,14 @@ PRIVATE void kputc(char c)
 		kern_log.buf[kern_log.next] = c;
 		if (kern_log.size < sizeof(kern_log.buf)) kern_log.size++;
 		kern_log.next = (kern_log.next + 1) % KERN_LOG_SIZE;
-	} else {	/* infrom output process */
-		inform_kernel_log(TASK_TTY);
+	} else {	/* inform output process */
+		struct priv * priv;
+		for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
+			if (priv->proc_nr != NO_TASK && priv->kernlog_request) 
+				msg_notify(proc_addr(KERNEL), proc_addr(priv->proc_nr)->endpoint);
+				//inform_kernel_log(proc_addr(priv->proc_nr)->endpoint);
+		}
+		//inform_kernel_log(TASK_TTY);
 	}
 }
 

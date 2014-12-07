@@ -61,7 +61,6 @@ PUBLIC int kernel_main()
 	jiffies = 0;
 
 	init_clock();
-    init_keyboard();
 
     int i;
     struct boot_proc * bp = boot_procs;
@@ -95,13 +94,12 @@ PUBLIC int kernel_main()
 
 #ifdef CONFIG_SMP
     smp_init();
-    /* failed to init smp */
-    finish_bsp_booting();
 #endif
 
+    /* failed to init smp */
 	finish_bsp_booting();
 	
-	while(1){}
+	while(TRUE){}
 }
 
 PUBLIC void finish_bsp_booting()

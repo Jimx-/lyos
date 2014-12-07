@@ -13,6 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
+
+#include <lyos/config.h>
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "lyos/const.h"
@@ -21,6 +23,7 @@
 #include "unistd.h"
 #include "assert.h"
 #include <string.h>
+#include <lyos/sysutils.h>
 
 int syscall_entry(int syscall_nr, MESSAGE * m);
 
@@ -28,7 +31,17 @@ PUBLIC	int	printx(char * s)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(m));
+    m.REQUEST = PRX_OUTPUT;
     m.BUF = s;
+
+    return syscall_entry(NR_PRINTX, &m);
+}
+
+PUBLIC int kernlog_register()
+{
+    MESSAGE m;
+    memset(&m, 0, sizeof(m));
+    m.REQUEST = PRX_REGISTER;
 
     return syscall_entry(NR_PRINTX, &m);
 }

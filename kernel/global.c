@@ -57,6 +57,7 @@ PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
 };
 
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
+	{KERNEL,		"kernel"	},
 	{INTERRUPT,		"interrupt"	},
 	{TASK_MM, 		"MM"		},
 	{TASK_PM,		"PM"		},

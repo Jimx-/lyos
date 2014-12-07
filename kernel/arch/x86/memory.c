@@ -205,6 +205,8 @@ PUBLIC void* va2la(endpoint_t ep, void* va)
  *****************************************************************************/
 PUBLIC void * la2pa(endpoint_t ep, void * la)
 {
+    if (is_kerntaske(ep)) return la;
+
     int slot;
     if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
     struct proc* p = proc_addr(slot);
@@ -215,24 +217,17 @@ PUBLIC void * la2pa(endpoint_t ep, void * la)
 
     pde_t * pgd_phys = (pde_t *)(p->seg.cr3_phys);
 
-    //pte_t * pt = p->pgd.vir_pts[pgd_index];
-    //return (void*)((pt[pt_index] & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
-    /*if (pgd_phys == NULL) {
-        pte_t * pt = p->pgd.vir_pts[pgd_index];
-        return (void*)((pt[pt_index] & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
-    } else*/ {
-        pde_t pde_v = (pde_t)get_phys32((phys_bytes)(pgd_phys + pgd_index));
+    pde_t pde_v = (pde_t)get_phys32((phys_bytes)(pgd_phys + pgd_index));
 
-        if (pde_v & ARCH_PG_BIGPAGE) {
-            phys_addr = pde_v & ARCH_VM_ADDR_MASK_BIG;
-            phys_addr += (phys_bytes)la & ARCH_VM_OFFSET_MASK_BIG;
-            return (void *)phys_addr;
-        }
-
-        pte_t * pt_entries = (pte_t *)(pde_v & ARCH_VM_ADDR_MASK);
-        pte_t pte_v = (pte_t)get_phys32((phys_bytes)(pt_entries + pt_index));
-        return (void*)((pte_v & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
+    if (pde_v & ARCH_PG_BIGPAGE) {
+        phys_addr = pde_v & ARCH_VM_ADDR_MASK_BIG;
+        phys_addr += (phys_bytes)la & ARCH_VM_OFFSET_MASK_BIG;
+        return (void *)phys_addr;
     }
+
+    pte_t * pt_entries = (pte_t *)(pde_v & ARCH_VM_ADDR_MASK);
+    pte_t pte_v = (pte_t)get_phys32((phys_bytes)(pt_entries + pt_index));
+    return (void*)((pte_v & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
 }
 
 /*****************************************************************************
