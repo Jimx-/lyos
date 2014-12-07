@@ -207,7 +207,6 @@ PUBLIC void init_arch()
 		p->recv_msg = 0;
 		p->recvfrom = NO_TASK;
 		p->sendto = NO_TASK;
-		p->special_msg = 0;
 		p->q_sending = 0;
 		p->next_sending = 0;
 

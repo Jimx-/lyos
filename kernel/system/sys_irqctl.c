@@ -82,7 +82,11 @@ PUBLIC int sys_irqctl(MESSAGE * m, struct proc * p_proc)
 
 PRIVATE int generic_irq_handler(irq_hook_t * hook)
 {
-    inform_int(hook->proc_ep);
+    struct proc * p = endpt_proc(hook->proc_ep);
+    if (!p) panic("invalid interrupt handler: %d", hook->proc_ep);
+
+    p->priv->int_pending |= (1 << hook->notify_id);
+    msg_notify(proc_addr(INTERRUPT), hook->proc_ep);
 
     return hook->irq_policy & IRQ_REENABLE;
 }

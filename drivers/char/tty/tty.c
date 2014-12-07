@@ -101,7 +101,8 @@ PUBLIC void task_tty()
 				tty_do_kern_log();
 				break;
 			case INTERRUPT:
-				key_pressed = 0;
+				if (msg.INTERRUPTS & kb_irq_set)
+					keyboard_interrupt(&msg);
 				break;
 			}
 			continue;

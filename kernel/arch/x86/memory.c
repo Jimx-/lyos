@@ -205,7 +205,7 @@ PUBLIC void* va2la(endpoint_t ep, void* va)
  *****************************************************************************/
 PUBLIC void * la2pa(endpoint_t ep, void * la)
 {
-    if (is_kerntaske(ep)) return la;
+    if (is_kerntaske(ep)) return (void *)((int)la - KERNEL_VMA);
 
     int slot;
     if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
@@ -323,8 +323,9 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
 PUBLIC int vir_copy(endpoint_t dest_ep, void * dest_addr,
                         endpoint_t src_ep, void * src_addr, int len)
 {
-    //struct proc * p_src = proc_addr(src_pid);
-    //struct proc * p_dest = proc_addr(dest_pid);
+    //struct proc * p_src = endpt_proc(src_ep);
+    //struct proc * p_dest = endpt_proc(dest_ep);
+    //if (p_src == NULL || p_dest == NULL) return EINVAL;
 
     //return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
 

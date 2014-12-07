@@ -41,12 +41,6 @@ EXTERN  unsigned int        lapic_addr;
 extern  int booting_cpu;
 EXTERN  int ncpus;
 
-EXTERN	int	key_pressed; /**
-			      * used for clock_handler
-			      * to wake up TASK_TTY when
-			      * a key is pressed
-			      */
-
 EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
 
 extern	char		task_stack[];

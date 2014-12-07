@@ -105,11 +105,6 @@ struct proc {
 	int recvfrom;
 	int sendto;
 
-	int special_msg;           /**
-				    * nonzero if an INTERRUPT occurred when
-				    * the task is not ready to deal with it.
-				    */
-
 	struct proc * q_sending;   /**
 				    * queue of procs sending messages to
 				    * this proc

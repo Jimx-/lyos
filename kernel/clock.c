@@ -47,9 +47,6 @@ PUBLIC int clock_handler(irq_hook_t * hook)
 	if (p->counter)
 		p->counter--;
 
-	if (key_pressed)
-		inform_int(TASK_TTY);
-
     return 1;
 }
 

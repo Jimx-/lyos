@@ -27,6 +27,7 @@
 #include "keyboard.h"
 #include "keymap.h"
 #include "lyos/proto.h"
+#include <lyos/interrupt.h>
 #include "proto.h"
 
 PRIVATE	struct kb_inbuf	kb_in;
@@ -42,6 +43,8 @@ PRIVATE	int		num_lock;	/* Num Lock		*/
 PRIVATE	int		scroll_lock;	/* Scroll Lock		*/
 PRIVATE	int		column;
 PRIVATE irq_hook_t kb_hook;
+PUBLIC 	irq_id_t	kb_irq_set;
+PRIVATE irq_hook_id_t	kb_hook_id; 
 
 PRIVATE u8	get_byte_from_kb_buf();
 PRIVATE void	set_leds();
@@ -56,7 +59,7 @@ PRIVATE void	kb_ack();
  * 
  * @param irq The IRQ corresponding to the keyboard, unused here.
  *****************************************************************************/
-PUBLIC int keyboard_handler(irq_hook_t * hook)
+PUBLIC int keyboard_interrupt(MESSAGE * m)
 {
 	u8 scan_code = in_byte(KB_DATA);
 
@@ -67,8 +70,6 @@ PUBLIC int keyboard_handler(irq_hook_t * hook)
 			kb_in.p_head = kb_in.buf;
 		kb_in.count++;
 	}
-
-	key_pressed = 1;
 
 	return 1;
 }
@@ -98,8 +99,11 @@ PUBLIC void init_keyboard()
 
 	set_leds();
 
-	put_irq_handler(KEYBOARD_IRQ, &kb_hook, keyboard_handler);
-	enable_irq(&kb_hook);
+	kb_irq_set = 1 << KEYBOARD_IRQ;
+	kb_hook_id = KEYBOARD_IRQ;
+
+	irq_setpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &kb_hook_id);
+	irq_enable(&kb_hook_id);
 }
 
 PUBLIC void kb_init(TTY * tty)
