@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "keyboard.h"
 #include "lyos/proto.h"
+#include <lyos/portio.h>
 #include "proto.h"
 #include "global.h"
 
@@ -259,12 +260,12 @@ PUBLIC int is_current_console(CONSOLE* con)
  *****************************************************************************/
 PRIVATE void set_cursor(unsigned int position)
 {
-	disable_int();
-	out_byte(CRTC_ADDR_REG, CURSOR_H);
-	out_byte(CRTC_DATA_REG, (position >> 8) & 0xFF);
-	out_byte(CRTC_ADDR_REG, CURSOR_L);
-	out_byte(CRTC_DATA_REG, position & 0xFF);
-	enable_int();
+	pb_pair_t pv_pairs[4];
+	pv_set(pv_pairs[0], CRTC_ADDR_REG, CURSOR_H);
+	pv_set(pv_pairs[1], CRTC_DATA_REG, (position >> 8) & 0xFF);
+	pv_set(pv_pairs[2], CRTC_ADDR_REG, CURSOR_L);
+	pv_set(pv_pairs[3], CRTC_DATA_REG, position & 0xFF);
+	portio_voutb(pv_pairs, 4);
 }
 
 
@@ -278,18 +279,18 @@ PRIVATE void set_cursor(unsigned int position)
  *****************************************************************************/
 PRIVATE void set_video_start_addr(u32 addr)
 {
-	disable_int();
-	out_byte(CRTC_ADDR_REG, START_ADDR_H);
-	out_byte(CRTC_DATA_REG, (addr >> 8) & 0xFF);
-	out_byte(CRTC_ADDR_REG, START_ADDR_L);
-	out_byte(CRTC_DATA_REG, addr & 0xFF);
-	enable_int();
+	pb_pair_t pv_pairs[4];
+	pv_set(pv_pairs[0], CRTC_ADDR_REG, START_ADDR_H);
+	pv_set(pv_pairs[1], CRTC_DATA_REG, (addr >> 8) & 0xFF);
+	pv_set(pv_pairs[2], CRTC_ADDR_REG, START_ADDR_L);
+	pv_set(pv_pairs[3], CRTC_DATA_REG, addr & 0xFF);
+	portio_voutb(pv_pairs, 4);
 }
 
 /*****************************************************************************
  *                     parse_escape
  *****************************************************************************/
-PRIVATE void	parse_escape(CONSOLE * con, char c)
+PRIVATE void parse_escape(CONSOLE * con, char c)
 {
 
 	switch (con->c_esc_state){
@@ -606,8 +607,6 @@ PRIVATE void flush(CONSOLE* con)
  *****************************************************************************/
 PRIVATE	void w_copy(unsigned int dst, const unsigned int src, int size)
 {
-	phys_copy((void*)(V_MEM_BASE + (dst << 1)),
-		  (void*)(V_MEM_BASE + (src << 1)),
-		  size << 1);
+	data_copy(KERNEL, (void*)(V_MEM_BASE + (dst << 1)), KERNEL, (void*)(V_MEM_BASE + (src << 1)), size << 1);
 }
 

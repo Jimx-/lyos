@@ -109,10 +109,10 @@ PUBLIC  int     set_priv(struct proc * p, int id);
 /* lib/misc.c */
 PUBLIC u32      now();
 
-PUBLIC int      data_copy(endpoint_t dest_pid, void * dest_addr, 
-    endpoint_t src_pid, void * src_addr, int len);
-PUBLIC int      vir_copy(endpoint_t dest_pid, void * dest_addr,
-                        endpoint_t src_pid, void * src_addr, int len);
+PUBLIC int      data_copy(endpoint_t dest_ep, void * dest_addr, 
+    endpoint_t src_ep, void * src_addr, int len);
+PUBLIC int      vir_copy(endpoint_t dest_ep, void * dest_addr,
+                        endpoint_t src_ep, void * src_addr, int len);
 
 PUBLIC int      service_up(const char *name, char * argv[], char * const envp[]);
 

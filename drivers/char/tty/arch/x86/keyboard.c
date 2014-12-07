@@ -28,6 +28,7 @@
 #include "keymap.h"
 #include "lyos/proto.h"
 #include <lyos/interrupt.h>
+#include <lyos/portio.h>
 #include "proto.h"
 
 PRIVATE	struct kb_inbuf	kb_in;
@@ -61,7 +62,8 @@ PRIVATE void	kb_ack();
  *****************************************************************************/
 PUBLIC int keyboard_interrupt(MESSAGE * m)
 {
-	u8 scan_code = in_byte(KB_DATA);
+	u8 scan_code;
+	portio_inb(KB_DATA, &scan_code);
 
 	if (kb_in.count < KB_IN_BYTES) {
 		*(kb_in.p_head) = scan_code;
@@ -393,14 +395,12 @@ PRIVATE u8 get_byte_from_kb_buf()
 
 	while (kb_in.count <= 0) {} /* wait for a byte to arrive */
 
-	disable_int();		/* for synchronization */
 	scan_code = *(kb_in.p_tail);
 	kb_in.p_tail++;
 	if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES) {
 		kb_in.p_tail = kb_in.buf;
 	}
 	kb_in.count--;
-	enable_int();		/* for synchronization */
 
 	return scan_code;
 }
@@ -418,7 +418,7 @@ PRIVATE void kb_wait()
 	u8 kb_stat;
 
 	do {
-		kb_stat = in_byte(KB_CMD);
+		portio_inb(KB_CMD, &kb_stat);
 	} while (kb_stat & 0x02);
 }
 
@@ -435,7 +435,7 @@ PRIVATE void kb_ack()
 	u8 kb_read;
 
 	do {
-		kb_read = in_byte(KB_DATA);
+		portio_inb(KB_DATA, &kb_read);
 	} while (kb_read != KB_ACK);
 }
 
@@ -452,11 +452,11 @@ PRIVATE void set_leds()
 	u8 leds = (caps_lock << 2) | (num_lock << 1) | scroll_lock;
 
 	kb_wait();
-	out_byte(KB_DATA, LED_CODE);
+	portio_outb(KB_DATA, LED_CODE);
 	kb_ack();
 
 	kb_wait();
-	out_byte(KB_DATA, leds);
+	portio_outb(KB_DATA, leds);
 	kb_ack();
 }
 
