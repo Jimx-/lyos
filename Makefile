@@ -85,12 +85,10 @@ endif
 KRNLOBJ		= kernel/krnl.o
 LIB			= $(LIBOUTDIR)/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
-DRVOBJ		= drivers/drivers.o
 SERVERSOBJ	= servers/servers.o
 LYOSINITRD	= $(ARCHDIR)/initrd.tar
 
 OBJS		= $(KRNLOBJ) \
-			$(DRVOBJ) \
 			$(SERVERSOBJ)
 
 DASMOUTPUT	= lyos.bin.asm
@@ -113,14 +111,14 @@ export KCONFIG_AUTOHEADER
 
 # All Phony Targets
 .PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries mrproper fs
+	setup-toolchain libraries mrproper fs drivers
 
 # Default starting position
 kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf libraries $(LYOSKERNEL) fs initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf libraries $(LYOSKERNEL) fs drivers initrd
 
 all : realclean everything image
 
@@ -238,7 +236,7 @@ fs:
 	@echo -e '$(COLORGREEN)Compiling the filesystem server...$(COLORDEFAULT)'
 	@(cd fs; make)
 
-$(DRVOBJ):
+drivers:
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
 	@(cd drivers; make)
 
