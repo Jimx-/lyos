@@ -46,4 +46,42 @@ struct segframe {
     u32 * cr3_vir;
 };
 
+struct sigcontext {
+    int gs;
+    int fs;
+    int es;
+    int ds;
+    int edi;
+    int esi;
+    int ebp;
+    int ebx;
+    int edx;
+    int ecx;
+    int eax;
+    int eip;
+    int cs;
+    int eflags;
+    int esp;
+    int ss;
+
+    int onstack;
+    int __mask13;
+
+    int trapno;
+    int err;
+
+    sigset_t mask;
+    int trap_style;
+};
+
+struct sigframe {
+    int retaddr_sigreturn;
+    int signum;
+    int code;
+    struct sigcontext *scp;
+    int retaddr;
+    struct sigcontext *scp_sigreturn;
+    struct sigcontext sc;   /* actual saved context */
+};
+
 #endif

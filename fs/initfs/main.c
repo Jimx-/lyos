@@ -36,7 +36,7 @@ PUBLIC int main()
 {
 	printl("initfs: InitFS driver is running\n");
 
-    this_ep = getpid(); /* get our endpoint */
+    this_ep = get_endpoint(); /* get our endpoint */
 
 	MESSAGE m;
 

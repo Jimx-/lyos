@@ -128,7 +128,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALLS	14
+#define NR_SYS_CALLS	16
 #define NR_PRINTX	0
 #define NR_SENDREC	1
 #define NR_DATACOPY	2
@@ -143,6 +143,8 @@
 #define NR_FORK		11
 #define NR_CLEAR	12
 #define NR_EXEC		13
+#define NR_SIGSEND	14
+#define NR_SIGRETURN	15
 
 /* ipc */
 #define SEND		1
@@ -156,6 +158,8 @@
 #define GS_SETGID	4
 #define GS_GETEUID	5
 #define GS_GETEGID	6
+#define GS_GETEP	7
+#define GS_GETPID	8
 
 #define GS_GETHOSTNAME	1
 #define GS_SETHOSTNAME	2
@@ -190,13 +194,9 @@ enum msgtype {
 	 * be sent to some tasks
 	 */
 	FAULT,								/* 2 */
-	/* when kernel wants to output kernel messages, a msg (with type==KERNLOG) will
-	 * be sent to some tasks(tty, log, etc.)
-	 */
-	KERN_LOG,							/* 3 */
 
 	/* SYS task */
-	GET_TICKS, GET_PID, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
+	GET_TICKS, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,
 	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,	GETSETHOSTNAME,			/* 4 ~ 18 */
 
 	/* FS */
@@ -238,6 +238,7 @@ enum msgtype {
     PM_VFS_INIT = 1501,			/* 1501 */
     PM_MM_FORK,
     PM_VFS_FORK,
+    PM_SIGRETURN,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,
@@ -273,6 +274,7 @@ enum msgtype {
 #define OPTIONS		u.m3.m3i1
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2
+#define SIGRET		u.m3.m3l1
 #define TARGET		u.m3.m3i4
 #define INTERRUPTS 	u.m3.m3l1
 #define	PID			u.m3.m3i2

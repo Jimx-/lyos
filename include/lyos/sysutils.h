@@ -52,4 +52,6 @@ PUBLIC int      kernel_clear(endpoint_t ep);
 #define KEXEC_PSSTR     u.m4.m4p4
 PUBLIC int      kernel_exec(endpoint_t ep, void * sp, char * name, void * ip, struct ps_strings * ps);
 
+PUBLIC int      kernel_sigsend(endpoint_t ep, struct siginfo * si);
+
 #endif

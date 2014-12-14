@@ -64,12 +64,6 @@ PUBLIC void     enable_irq(irq_hook_t * hook);
 PUBLIC void 	init_clock();
 PUBLIC void 	milli_delay(int milli_sec);
 
-/* keyboard.c */
-PUBLIC void 	init_keyboard();
-
-/* tty.c */
-PUBLIC void 	task_tty();
-
 /* systask.c */
 PUBLIC void 	task_sys();
 
@@ -109,6 +103,8 @@ PUBLIC  int     set_priv(struct proc * p, int id);
 /* lib/misc.c */
 PUBLIC u32      now();
 
+PUBLIC endpoint_t get_endpoint();
+
 PUBLIC int      data_copy(endpoint_t dest_ep, void * dest_addr, 
     endpoint_t src_ep, void * src_addr, int len);
 PUBLIC int      vir_copy(endpoint_t dest_ep, void * dest_addr,
@@ -131,6 +127,8 @@ PUBLIC  int sys_irqctl(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_fork(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_clear(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_exec(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_sigsend(MESSAGE * m, struct proc* p);
+PUBLIC  int sys_sigreturn(MESSAGE * m, struct proc* p);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

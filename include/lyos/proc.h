@@ -93,12 +93,6 @@ struct proc {
 				    * A proc is runnable if state==0
 				    */
 	int cpu;			/* on which cpu this proc runs */
-
-    sigset_t sig_pending;	/* signals to be handled */
-	sigset_t sig_mask;
-	struct sigaction sigaction[NSIG];
-	unsigned long alarm;
-	long blocked;
     
 	MESSAGE * send_msg;
 	MESSAGE * recv_msg;

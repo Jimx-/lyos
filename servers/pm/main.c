@@ -53,6 +53,18 @@ PUBLIC int main(int argc, char * argv[])
         case EXIT:
             msg.RETVAL = do_exit(&msg);
             break;
+        case SIGACTION:
+            msg.RETVAL = do_sigaction(&msg);
+            break;
+        case KILL:
+            msg.RETVAL = do_kill(&msg);
+            break;
+        case GETSETID:
+            msg.RETVAL = do_getsetid(&msg);
+            break;
+        case PM_SIGRETURN:
+            msg.RETVAL = do_sigreturn(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

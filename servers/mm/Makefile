@@ -3,7 +3,7 @@
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 
-MMOBJS 		= main.o fork.o pagetable.o signal.o alloc.o region.o vmalloc.o brk.o \
+MMOBJS 		= main.o fork.o pagetable.o alloc.o region.o vmalloc.o brk.o \
 			pagefault.o misc.o mmap.o global.o utils.o
 MM		= mm.o
 

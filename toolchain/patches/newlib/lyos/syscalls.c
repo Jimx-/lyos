@@ -135,7 +135,6 @@ int execve(const char *name, char * argv[], char * const envp[])
 	msg.NAME_LEN	= strlen(name);
 	msg.BUF		= (void*)arg_stack;
 	msg.BUF_LEN	= stack_len;
-	msg.TARGET = getpid();
 
 	cmb();
 
@@ -150,14 +149,28 @@ int execvp(const char *file, char * argv[])
 	return execv(file, argv);
 }
 
-int getpid()
+endpoint_t get_endpoint()
 {
 	MESSAGE msg;
-	msg.type	= GET_PID;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_GETEP;
     
     cmb();
 
-	send_recv(BOTH, TASK_SYS, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
+
+	return msg.ENDPOINT;
+}
+
+int getpid()
+{
+	MESSAGE msg;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_GETPID;
+    
+    cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
 	return msg.PID;
@@ -204,13 +217,29 @@ int kill(int pid,int signo)
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
 	return msg.RETVAL;
 }
 
-int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+void __sigreturn();
+
+void sigreturn(void * scp)
+{
+	MESSAGE msg;
+
+	msg.type = PM_SIGRETURN;
+	msg.BUF = scp;
+
+	cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+
+	return msg.RETVAL;
+} 
+
+int sigaction(int signum, const struct sigaction * act, struct sigaction * oldact)
 {
 	MESSAGE msg;
 
@@ -218,10 +247,11 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 	msg.NEWSA = act;
 	msg.OLDSA = oldact;
 	msg.SIGNR = signum;
+	msg.SIGRET = (int)__sigreturn;
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }

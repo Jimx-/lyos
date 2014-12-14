@@ -69,21 +69,11 @@ PUBLIC void task_mm()
 		case PM_MM_FORK:
 			mm_msg.RETVAL = do_fork();
 			break;
-		case KILL:
-			mm_msg.RETVAL = do_kill();
-			if (mm_msg.RETVAL == SUSPEND) reply = 0;
-			break; 
 		case SBRK:
 			mm_msg.RETVAL = do_sbrk();
 			break;
 		case GETSETID:
 			mm_msg.RETVAL = do_getsetid();
-			break;
-		case SIGACTION:
-			mm_msg.RETVAL = do_sigaction();
-			break;
-		case ALARM:
-			mm_msg.RETVAL = do_alarm();
 			break;
 		case MMAP:
 			mm_msg.RETVAL = do_mmap();

@@ -18,9 +18,13 @@
 
 PUBLIC pid_t find_free_pid();
 PUBLIC int pm_verify_endpt(endpoint_t ep, int * proc_nr);
+PUBLIC struct pmproc * pm_endpt_proc(endpoint_t ep);
 
 PUBLIC int do_fork(MESSAGE * p);
 PUBLIC int do_wait(MESSAGE * p);
 PUBLIC int do_exit(MESSAGE * p);
+PUBLIC int do_sigaction(MESSAGE * p);
+PUBLIC int do_kill(MESSAGE * p);
+PUBLIC int do_getsetid(MESSAGE * p);
 
 #endif

@@ -137,4 +137,12 @@ struct ps_strings {
 	int	ps_nenvstr;	/* the number of environment strings */
 };
 
+struct siginfo {
+	int mask;
+	int signo;
+	vir_bytes sig_handler;
+	vir_bytes sig_return;
+	vir_bytes stackptr;
+};
+
 #endif /* _TYPE_H_ */

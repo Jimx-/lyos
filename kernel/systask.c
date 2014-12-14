@@ -66,9 +66,6 @@ PUBLIC void task_sys()
 		case GET_TICKS:
 			msg.RETVAL = jiffies;
 			break;
-		case GET_PID:
-			msg.PID = src;
-			break;
 		case GET_RTC_TIME:
 			get_rtc_time(&t);
 			data_copy(src, msg.BUF, TASK_SYS, &t, sizeof(t));

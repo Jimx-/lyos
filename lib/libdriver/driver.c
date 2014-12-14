@@ -70,7 +70,7 @@ PUBLIC int announce_blockdev(char * name, dev_t dev)
 	msg.type = ANNOUNCE_DEVICE;
 	msg.BUF = name;
 	msg.NAME_LEN = strlen(name);
-	msg.PROC_NR = getpid();
+	msg.PROC_NR = get_endpoint();
 	msg.DEVICE = dev;
 	msg.FLAGS = DT_BLOCKDEV;
 
@@ -86,7 +86,7 @@ PUBLIC int announce_chardev(char * name, dev_t dev)
 	msg.type = ANNOUNCE_DEVICE;
 	msg.BUF = name;
 	msg.NAME_LEN = strlen(name);
-	msg.PROC_NR = getpid();
+	msg.PROC_NR = get_endpoint();
 	msg.DEVICE = dev;
 	msg.FLAGS = DT_CHARDEV;
 

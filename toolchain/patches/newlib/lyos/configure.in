@@ -3,6 +3,15 @@ AC_INIT([newlib], [NEWLIB_VERSION])
 AC_CONFIG_SRCDIR([crt0.S])
 AC_CONFIG_SRCDIR([crti.S])
 AC_CONFIG_SRCDIR([crtn.S])
+
+if test -n "${machine_dir}"; then
+  case ${machine_dir} in
+	arm) AC_CONFIG_SUBDIRS(machine/arm) ;;
+	i386) AC_CONFIG_SUBDIRS(machine/i386) ;;
+	x86_64) AC_CONFIG_SUBDIRS(machine/x86_64) ;;
+  esac;
+fi
+
 AC_CONFIG_AUX_DIR(../../../..)
 NEWLIB_CONFIGURE(../../..)
 AC_CONFIG_FILES([Makefile])

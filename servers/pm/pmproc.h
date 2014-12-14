@@ -16,6 +16,8 @@
 #ifndef _PM_MMPROC_H_
 #define _PM_MMPROC_H_
     
+#include <signal.h>
+    
 /* Information of a process used in PM */
 struct pmproc {
     int flags;
@@ -24,6 +26,14 @@ struct pmproc {
 
     endpoint_t endpoint;
     endpoint_t parent;
+
+    sigset_t sig_pending;   /* signals to be handled */
+    sigset_t sig_mask;
+    struct sigaction sigaction[NSIG];
+    vir_bytes sigreturn_f;
+
+    uid_t uid, euid, suid;
+    gid_t gid, egid, sgid;
 
     int exit_status;
 };

@@ -248,7 +248,6 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 				tty->tty_escaped = 0;
 				put_key(tty, key);
 				tty_echo(tty, key);
-				return;
 			}
 			
 			/* LNEXT (^V) to escape the next character? */
@@ -256,7 +255,6 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 				tty->tty_escaped = 1;
 				tty_echo(tty, '^');
 				tty_echo(tty, 'V');
-				return;
 			}
 		}
 

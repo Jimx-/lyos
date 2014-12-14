@@ -120,7 +120,7 @@ PUBLIC int main()
 
 PUBLIC void init_ext2fs()
 {
-    ext2_ep = getpid();
+    ext2_ep = get_endpoint();
     
 	ext2_init_inode();
     ext2_init_buffer_cache();

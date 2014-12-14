@@ -19,7 +19,7 @@ int main(int argc, char * argv[])
 	int fd_stdin  = open("/dev/tty1", O_RDWR);
 	int fd_stdout = open("/dev/tty1", O_RDWR);
 	int fd_stderr = open("/dev/tty1", O_RDWR);
-
+	
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
 	if (fd_hostname != -1) {

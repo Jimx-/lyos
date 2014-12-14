@@ -59,3 +59,10 @@ PUBLIC int pm_verify_endpt(endpoint_t ep, int * proc_nr)
     *proc_nr = ENDPOINT_P(ep);
     return 0;
 }
+
+PUBLIC struct pmproc * pm_endpt_proc(endpoint_t ep)
+{
+    int proc_nr;
+    if (pm_verify_endpt(ep, &proc_nr) == 0) return &pmproc_table[proc_nr];
+    return NULL;
+}
