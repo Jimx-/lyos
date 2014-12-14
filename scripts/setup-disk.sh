@@ -43,18 +43,9 @@ mkfs.ext2 /dev/mapper/hda1
 mount /dev/mapper/hda1 /$MOUNT_POINT
 
 echo "Installing sysroot..."
-cp -r $SRCDIR/sysroot/* /$MOUNT_POINT/
-
-echo "Installing kernel..."
-if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
-then
-	cp $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
-else
-	cp $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
-fi
-
-cp $SRCDIR/arch/x86/System.map /$MOUNT_POINT/boot
-cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
+cp -rf $SRCDIR/sysroot/* /$MOUNT_POINT/
+cp -rf $SRCDIR/obj/destdir.x86/* /$MOUNT_POINT/
+sync
 
 echo "Creating devices..."
 debugfs -f ./scripts/create-dev.conf -w /dev/mapper/hda1

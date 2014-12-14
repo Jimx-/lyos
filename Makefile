@@ -43,9 +43,9 @@ LIBDIR = $(SRCDIR)/lib/
 ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
-DESTDIR	?= $(SRCDIR)/sysroot
-BINDIR ?= $(SRCDIR)/sysroot
-LIBOUTDIR = $(BINDIR)/lib
+OBJDIR ?= $(SRCDIR)/obj
+DESTDIR	?= $(OBJDIR)/destdir.$(ARCH)
+LIBOUTDIR = $(DESTDIR)/lib
 PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
 export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR DESTDIR BINDIR LIBOUTDIR ARCHINC ARCHLIB PATH
 
@@ -111,14 +111,14 @@ export KCONFIG_AUTOHEADER
 
 # All Phony Targets
 .PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries mrproper fs drivers
+	setup-toolchain libraries mrproper fs drivers objdirs
 
 # Default starting position
 kernel : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf libraries $(LYOSKERNEL) fs drivers initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries $(LYOSKERNEL) fs drivers initrd
 
 all : realclean everything image
 
@@ -178,23 +178,24 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024
+	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio
 
-setup-disk:
+disk-image:
 	@(cd userspace; make)
 	@sudo bash scripts/setup-disk.sh
 
 initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
-	@cp sysroot/sbin/init ramdisk/sbin/
-	@cp sysroot/sbin/ata ramdisk/sbin/
-	@cp sysroot/usr/bin/getty ramdisk/usr/bin/getty
-	@cp sysroot/usr/bin/login ramdisk/usr/bin/login
+	@(cd userspace; make)
+	@cp $(DESTDIR)/sbin/init ramdisk/sbin/
+	@cp $(DESTDIR)/sbin/ata ramdisk/sbin/
+	@cp $(DESTDIR)/usr/bin/getty ramdisk/usr/bin/getty
+	@cp $(DESTDIR)/usr/bin/login ramdisk/usr/bin/login
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)
-	@(cd userspace; make)
 	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/* dev/* etc/* usr/bin/* > /dev/null)
 	@rm ramdisk/.root
+	@cp -f $(LYOSINITRD) $(DESTDIR)/boot/
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
@@ -210,6 +211,16 @@ help :
 	@echo "make clean\t: remove all object files but keep config files."
 	@echo "make realclean\t: remove all object files and config file."
 
+objdirs:
+	@(mkdir -p $(OBJDIR))
+	@(mkdir -p $(DESTDIR))
+	@(mkdir -p $(DESTDIR)/bin)
+	@(mkdir -p $(DESTDIR)/boot)
+	@(mkdir -p $(DESTDIR)/lib)
+	@(mkdir -p $(DESTDIR)/sbin)
+	@(mkdir -p $(DESTDIR)/usr/bin)
+	@(mkdir -p $(DESTDIR)/usr/sbin)
+
 libraries:
 	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
 	@(cd lib; make)
@@ -217,10 +228,12 @@ libraries:
 $(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC) 
 	@echo -e '\tLD\t$@'
 	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
+	@cp -f $(LYOSKERNEL) $(DESTDIR)/boot/
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
 	@@echo -e '$(COLORGREEN)Compressing the kernel...$(COLORDEFAULT)'
 	@echo -e '\tZIP\t$@'
 	@$(ZIP) -cfq $(LYOSKERNEL) > $(LYOSZKERNEL)
+	@cp -f $(LYOSZKERNEL) $(DESTDIR)/boot/
 endif
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 

@@ -23,5 +23,5 @@
 #include <lyos/const.h>
 #include "global.h"
 
-PUBLIC  TTY     tty_table[NR_CONSOLES];
+PUBLIC  TTY     tty_table[NR_CONSOLES + NR_SERIALS];
 PUBLIC  CONSOLE     console_table[NR_CONSOLES];

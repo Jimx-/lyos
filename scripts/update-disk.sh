@@ -36,13 +36,11 @@ else
 	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
 fi
 
-cp $SRCDIR/arch/x86/initrd.tar /$MOUNT_POINT/boot
-cp $SRCDIR/arch/x86/System.map /$MOUNT_POINT/boot
+cp -rf obj/destdir.x86/boot/* /$MOUNT_POINT/boot/
+cp -rf obj/destdir.x86/sbin/* /$MOUNT_POINT/sbin/ 
+cp -rf obj/destdir.x86/usr/bin/* /$MOUNT_POINT/usr/bin/
+cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
-cp -f sysroot/sbin/* /$MOUNT_POINT/sbin/ 
-cp -f sysroot/usr/bin/* /$MOUNT_POINT/usr/bin/
-cp -f sysroot/etc/* /$MOUNT_POINT/etc/
-cp -f sysroot/bin/dash /$MOUNT_POINT/bin/
 
 umount $MOUNT_POINT
 kpartx -d /dev/mapper/hda

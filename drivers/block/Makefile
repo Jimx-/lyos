@@ -14,8 +14,8 @@ realclean :
 
 $(RAMDISK):
 	@(cd ramdisk; make)
-	@(cp $(RAMDISK) $(BINDIR)/sbin)
+	@(cp $(RAMDISK) $(DESTDIR)/sbin)
 
 $(ATA):
 	@(cd ata; make)
-	@(cp $(ATA) $(BINDIR)/sbin)
+	@(cp $(ATA) $(DESTDIR)/sbin)

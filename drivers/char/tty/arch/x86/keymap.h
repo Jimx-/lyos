@@ -21,7 +21,7 @@
 #ifndef	_KEYMAP_H_
 #define	_KEYMAP_H_
 
-
+#define C(ch) ((ch) & 0x1F)
 /* Keymap for US MF-2 keyboard. */
 
 u32 keymap[NR_SCAN_CODES * MAP_COLS] = {
@@ -42,8 +42,8 @@ u32 keymap[NR_SCAN_CODES * MAP_COLS] = {
 /* 0x0B - '0'		*/	'0',		')',		0,		0,
 /* 0x0C - '-'		*/	'-',		'_',		0,		0,
 /* 0x0D - '='		*/	'=',		'+',		0,		0,
-/* 0x0E - BS		*/	BACKSPACE,	BACKSPACE,	0,		0,
-/* 0x0F - TAB		*/	TAB,		TAB,		0,		0,
+/* 0x0E - BS		*/	C('H'),	   C('H'),	0,		0,
+/* 0x0F - TAB		*/	C('I'),	   C('I'),		0,		0,
 /* 0x10 - 'q'		*/	'q',		'Q',		0,		0,
 /* 0x11 - 'w'		*/	'w',		'W',		0,		0,
 /* 0x12 - 'e'		*/	'e',		'E',		0,		0,
@@ -56,7 +56,7 @@ u32 keymap[NR_SCAN_CODES * MAP_COLS] = {
 /* 0x19 - 'p'		*/	'p',		'P',		0,		0,
 /* 0x1A - '['		*/	'[',		'{',		0,		0,
 /* 0x1B - ']'		*/	']',		'}',		0,		0,
-/* 0x1C - CR/LF		*/	ENTER,		ENTER,		PAD_ENTER,	0,
+/* 0x1C - CR/LF		*/	C('M'),		C('M'),		PAD_ENTER,	0,
 /* 0x1D - l. Ctrl	*/	CTRL_L,		CTRL_L,		CTRL_R,		0,
 /* 0x1E - 'a'		*/	'a',		'A',		0,		0,
 /* 0x1F - 's'		*/	's',		'S',		0,		0,

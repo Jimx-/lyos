@@ -20,7 +20,7 @@ PUBLIC void     kb_init(TTY * tty);
 PUBLIC void     keyboard_read(TTY* p_tty);
 PUBLIC int      keyboard_interrupt(MESSAGE * m);
 PUBLIC void     handle_events(TTY* tty);
-PUBLIC void     in_process(TTY* p_tty, u32 key);
+PUBLIC int      in_process(TTY* p_tty, char * buf, int count);
 PUBLIC void     dump_tty_buf(); /* for debug only */
 
 PUBLIC void     out_char(TTY* tty, char ch);
@@ -28,6 +28,8 @@ PUBLIC void     scroll_screen(CONSOLE* p_con, int direction);
 PUBLIC void     select_console(int nr_console);
 PUBLIC void     init_screen(TTY* p_tty);
 PUBLIC int      is_current_console(CONSOLE* p_con);
+
+PUBLIC int      rs_interrupt(MESSAGE * m);
 
 #endif /* _CHAR_PROTO_H_ */
     

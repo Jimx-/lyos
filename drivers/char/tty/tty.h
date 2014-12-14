@@ -66,4 +66,7 @@ typedef struct s_tty
 	devfunarg_t tty_echo;
 }TTY;
 
+#define buflen(buf)	(sizeof(buf) / sizeof((buf)[0]))
+#define bufend(buf)	((buf) + buflen(buf))
+
 #endif /* _TTY_H_ */

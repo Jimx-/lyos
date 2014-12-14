@@ -43,7 +43,7 @@ PRIVATE struct sysinfo * _sysinfo;
 PRIVATE dev_t cons_minor = CONS_MINOR + 1;
 
 #define TTY_FIRST	(tty_table)
-#define TTY_END		(tty_table + NR_CONSOLES)
+#define TTY_END		(tty_table + NR_CONSOLES + NR_SERIALS)
 
 /* Default termios */
 PRIVATE struct termios termios_defaults = {
@@ -103,6 +103,8 @@ PUBLIC int main()
 			case INTERRUPT:
 				if (msg.INTERRUPTS & kb_irq_set)
 					keyboard_interrupt(&msg);
+				else if (msg.INTERRUPTS & rs_irq_set)
+					rs_interrupt(&msg);
 				break;
 			}
 			continue;
@@ -166,7 +168,7 @@ PRIVATE void init_tty()
 
 		tty->tty_termios = termios_defaults;
 
-		if (i < NR_CONSOLES) {
+		if (i < NR_CONSOLES) {	/* consoles */
 			init_screen(tty);
 			kb_init(tty);
 
@@ -174,6 +176,12 @@ PRIVATE void init_tty()
 			char name[6];
 			sprintf(name, "tty%d", (int)(tty - TTY_FIRST + 1));
 			announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST + 1)));
+		} else {	/* serial ports */
+			init_rs(tty);
+
+			char name[6];
+			sprintf(name, "ttyS%d", i - NR_CONSOLES);
+			announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, i - NR_CONSOLES + SERIAL_MINOR));
 		}
 	}
 
@@ -191,6 +199,7 @@ PRIVATE TTY * minor2tty(dev_t minor)
 	if (minor == CONS_MINOR || minor == LOG_MINOR) minor = cons_minor;
 
 	if (minor - CONS_MINOR - 1 < NR_CONSOLES) ptty = &tty_table[minor - CONS_MINOR - 1];
+	else if (minor - SERIAL_MINOR < NR_SERIALS) ptty = &tty_table[NR_CONSOLES + minor - SERIAL_MINOR];
 
 	return ptty;
 }
@@ -202,9 +211,13 @@ PRIVATE void set_console_line(char val[CONS_ARG])
 	char * pv = val;
 	if (!strncmp(pv, "tty", 3)) {
 		pv += 3;
-		if (*pv == 'S') {	/* Serial */
-			return;
-		} else if (*pv >= '0' && *pv <= '9') {
+		if (*pv == 'S') {	/* serial */
+			pv++;
+			if (*pv >= '0' && *pv <= '9') {
+				int minor = atoi(pv);
+				if (minor <= NR_SERIALS) cons_minor = minor + SERIAL_MINOR;
+			}
+		} else if (*pv >= '0' && *pv <= '9') {	/* console */
 			int minor = atoi(pv);
 			if (minor <= NR_CONSOLES) cons_minor = minor;
 		}
@@ -220,60 +233,48 @@ PRIVATE void set_console_line(char val[CONS_ARG])
  * @param tty  The key press is for whom.
  * @param key  The integer key with metadata.
  *****************************************************************************/
-PUBLIC void in_process(TTY* tty, u32 key)
+PUBLIC int in_process(TTY* tty, char * buf, int count)
 {
-	if (tty->tty_termios.c_iflag & ISTRIP) key &= 0x7F;
+	int cnt, key;
 
-	if (tty->tty_termios.c_lflag & IEXTEN) {
-		/* Previous character was a character escape? */
-		if (tty->tty_escaped) {
-			tty->tty_escaped = 0;
-			put_key(tty, key);
-			tty_echo(tty, key);
-			return;
+	for (cnt = 0; cnt < count; cnt++) {
+		
+		key = *buf++ & 0xFF;
+
+		if (tty->tty_termios.c_iflag & ISTRIP) key &= 0x7F;
+
+		if (tty->tty_termios.c_lflag & IEXTEN) {
+			/* Previous character was a character escape? */
+			if (tty->tty_escaped) {
+				tty->tty_escaped = 0;
+				put_key(tty, key);
+				tty_echo(tty, key);
+				return;
+			}
+
+			/* LNEXT (^V) to escape the next character? */
+			if (key == tty->tty_termios.c_cc[VLNEXT]) {
+				tty->tty_escaped = 1;
+				tty_echo(tty, '^');
+				tty_echo(tty, 'V');
+				return;
+			}
 		}
 
-		/* LNEXT (^V) to escape the next character? */
-		if (key == tty->tty_termios.c_cc[VLNEXT]) {
-			tty->tty_escaped = 1;
-			tty_echo(tty, '^');
-			tty_echo(tty, 'V');
-			return;
+		/* Map CR to LF, ignore CR, or map LF to CR. */
+		if (key == '\r') {
+			if (tty->tty_termios.c_iflag & IGNCR) return;
+			if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
+		} else
+		if (key == '\n') {
+			if (tty->tty_termios.c_iflag & INLCR) key = '\r';
 		}
-	}
 
-	/* Map CR to LF, ignore CR, or map LF to CR. */
-	if (key == '\r') {
-		if (tty->tty_termios.c_iflag & IGNCR) return;
-		if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
-	} else
-	if (key == '\n') {
-		if (tty->tty_termios.c_iflag & INLCR) key = '\r';
-	}
-
-	if (!(key & FLAG_EXT)) {
 		put_key(tty, key);
 		tty_echo(tty, key);
 	}
-	else {
-		int raw_code = key & MASK_RAW;
-		switch(raw_code) {
-		case ENTER:
-			put_key(tty, '\n');
-			tty_echo(tty, '\n');
-			break;
-		case BACKSPACE:
-			put_key(tty, '\b');
-			if (tty->tty_trans_cnt) tty_echo(tty, '\b');
-			break;
-		case TAB:
-			put_key(tty, '\t');
-			tty_echo(tty, '\t');
-			break;
-		default:
-			break;
-		}
-	}
+
+	return cnt;
 }
 
 
@@ -313,7 +314,7 @@ PRIVATE void put_key(TTY* tty, u32 key)
  *****************************************************************************/
 PRIVATE void tty_dev_read(TTY* tty)
 {
-	tty->tty_devread(tty);
+	if (tty->tty_devread) tty->tty_devread(tty);
 }
 
 
@@ -327,7 +328,7 @@ PRIVATE void tty_dev_read(TTY* tty)
  *****************************************************************************/
 PRIVATE void tty_dev_write(TTY* tty)
 {
-	tty->tty_devwrite(tty);
+	if (tty->tty_devwrite) tty->tty_devwrite(tty);
 }
 
 /*****************************************************************************

@@ -59,6 +59,8 @@ typedef	int 	(*irq_handler_t)	(irq_hook_t * irq_hook);
 
 typedef void*	system_call_t;
 
+typedef u16 port_t;
+
 struct hole {
 	struct hole * h_next;
 	int h_base;

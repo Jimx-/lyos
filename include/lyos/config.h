@@ -49,5 +49,5 @@
 
 /* TTY */
 #define NR_CONSOLES 6   /* consoles */
-    
+#define NR_SERIALS  3   /* serial ports */
 #endif

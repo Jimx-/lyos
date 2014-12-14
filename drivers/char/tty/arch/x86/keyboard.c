@@ -43,9 +43,8 @@ PRIVATE	int		caps_lock;	/* Caps Lock		*/
 PRIVATE	int		num_lock;	/* Num Lock		*/
 PRIVATE	int		scroll_lock;	/* Scroll Lock		*/
 PRIVATE	int		column;
-PRIVATE irq_hook_t kb_hook;
 PUBLIC 	irq_id_t	kb_irq_set;
-PRIVATE irq_hook_id_t	kb_hook_id; 
+PRIVATE int		kb_hook_id; 
 
 PRIVATE u8	get_byte_from_kb_buf();
 PRIVATE void	set_leds();
@@ -376,7 +375,8 @@ PUBLIC void keyboard_read(TTY* tty)
 			default:
 				break;
 			}
-			in_process(tty, key);
+			char rawchar = key;
+			in_process(tty, &rawchar, 1);
 		}
 	}
 }

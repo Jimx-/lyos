@@ -20,8 +20,8 @@ char:
 
 $(PCI):
 	@(cd pci; make)
-	@(cp -f $(PCI) ../sysroot/sbin/)
+	@(cp -f $(PCI) $(DESTDIR)/sbin)
 
 $(INET):
 	@(cd inet; make)
-	@(cp -f $(INET) ../sysroot/usr/sbin/)
+	@(cp -f $(INET) $(DESTDIR)/usr/sbin/)
