@@ -49,9 +49,8 @@ PRIVATE dev_t cons_minor = CONS_MINOR + 1;
 PRIVATE struct termios termios_defaults = {
   TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF, TSPEED_DEF, TSPEED_DEF,
   {
-	TEOF_DEF, TEOL_DEF, TERASE_DEF, TINTR_DEF, TKILL_DEF, TMIN_DEF,
-	TQUIT_DEF, TTIME_DEF, TSUSP_DEF, TSTART_DEF, TSTOP_DEF,
-	TREPRINT_DEF, TLNEXT_DEF, TDISCARD_DEF,
+	TINTR_DEF, TQUIT_DEF, TERASE_DEF, TKILL_DEF, TEOF_DEF, TTIME_DEF, TMIN_DEF,
+	0, TSTART_DEF, TSTOP_DEF, TSUSP_DEF, TEOL_DEF, TREPRINT_DEF,  TDISCARD_DEF, 0, TLNEXT_DEF,
   },
 };
 
@@ -251,7 +250,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 				tty_echo(tty, key);
 				return;
 			}
-
+			
 			/* LNEXT (^V) to escape the next character? */
 			if (key == tty->tty_termios.c_cc[VLNEXT]) {
 				tty->tty_escaped = 1;

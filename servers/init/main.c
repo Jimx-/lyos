@@ -12,7 +12,7 @@
 #include <lyos/ipc.h>
 
 #define GETTY "/usr/bin/getty"
-#define NR_TTY	3
+#define NR_TTY	4
 
 int main(int argc, char * argv[])
 {
@@ -31,9 +31,9 @@ int main(int argc, char * argv[])
 		close(fd_hostname);
 	}
 
-	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/ttyS0"};
+	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/ttyS0"};
 	int i;
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < NR_TTY; i++) {
 		int pid = fork();
 		if (pid) {
 			//printf("Parent\n");

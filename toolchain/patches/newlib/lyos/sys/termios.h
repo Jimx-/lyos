@@ -171,20 +171,21 @@ struct termios {
 #define TLOCAL_DEF	(ISIG | IEXTEN | ICANON | ECHO | ECHOE)
 #define TSPEED_DEF	B9600
 
-#define TEOF_DEF	'\4'	/* ^D */
+#define _CTRL(x)	(x & 0x1f)
+#define TEOF_DEF	_CTRL('d')	/* ^D */
 #define TEOL_DEF	0xFF
-#define TERASE_DEF	'\10'	/* ^H */
-#define TINTR_DEF	'\3'	/* ^C */
-#define TKILL_DEF	'\25'	/* ^U */
+#define TERASE_DEF	_CTRL('h')	/* ^H */
+#define TINTR_DEF	_CTRL('c')	/* ^C */
+#define TKILL_DEF	_CTRL('u')	/* ^U */
 #define TMIN_DEF	1
-#define TQUIT_DEF	'\34'	/* ^\ */
-#define TSTART_DEF	'\21'	/* ^Q */
-#define TSTOP_DEF	'\23'	/* ^S */
-#define TSUSP_DEF	'\32'	/* ^Z */
+#define TQUIT_DEF	_CTRL('\\')	/* ^\ */
+#define TSTART_DEF	_CTRL('q')	/* ^Q */
+#define TSTOP_DEF	_CTRL('s')	/* ^S */
+#define TSUSP_DEF	_CTRL('z')	/* ^Z */
 #define TTIME_DEF	0
-#define	TREPRINT_DEF	'\22'	/* ^R */
-#define	TLNEXT_DEF	'\26'	/* ^V */
-#define	TDISCARD_DEF	'\17'	/* ^O */
+#define	TREPRINT_DEF	_CTRL('r')	/* ^R */
+#define	TLNEXT_DEF	_CTRL('v')	/* ^V */
+#define	TDISCARD_DEF	_CTRL('o')	/* ^O */
 
 int tcgetattr(int fd, struct termios * tio);
 
