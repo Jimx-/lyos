@@ -67,17 +67,8 @@ PUBLIC void do_exit(int status);
 PUBLIC void do_wait();
 PUBLIC int  do_kill();
 
-/* signal.h */
-PUBLIC int  do_sigaction();
-PUBLIC int  do_raise();
-PUBLIC int  do_alarm();
-
 PUBLIC void do_handle_fault();
 
-PUBLIC  int kill_sig(pid_t source, pid_t dest, int signo);
-PUBLIC int send_sig(struct proc * p, int signo);
-
-PUBLIC int do_getsetid();
 PUBLIC int do_procctl();
 
 PUBLIC int do_mmap();

@@ -208,18 +208,17 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
         ROOT_DEV = dev;
 
         /* update all root inodes */
-        struct proc * p = proc_table;
+        struct fproc * fp = fproc_table;
         int i;
-        for (i = 0; i < NR_TASKS + NR_PROCS; i++, p++) {
-            if (p->state == PST_FREE_SLOT) continue;
+        for (i = 0; i < NR_TASKS + NR_PROCS; i++, fp++) {
 
-            if (p->root) put_inode(p->root);
+            if (fp->root) put_inode(fp->root);
             root_inode->i_cnt++;
-            p->root = root_inode;
+            fp->root = root_inode;
 
-            if (p->pwd) put_inode(p->pwd);
+            if (fp->pwd) put_inode(fp->pwd);
             root_inode->i_cnt++;
-            p->pwd = root_inode;
+            fp->pwd = root_inode;
         }
 
         have_root++;

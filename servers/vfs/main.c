@@ -32,6 +32,8 @@
 #include "proto.h"
 #include <elf.h>
 #include "lyos/param.h"
+#include "global.h"
+
 #define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x
@@ -71,7 +73,7 @@ PUBLIC void task_fs()
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
-		pcaller = endpt_proc(src);
+		pcaller = vfs_endpt_proc(src);
 		int msgtype = msg.type;
 
 		switch (msgtype) {
@@ -160,6 +162,32 @@ PUBLIC void init_vfs()
 
     init_inode_table();
 
+    /* initialize system procs */
+    MESSAGE pm_msg;
+    struct fproc * pfp;
+    do {
+    	send_recv(RECEIVE, TASK_PM, &pm_msg);
+
+    	if (pm_msg.type != PM_VFS_INIT) panic("bad msg type from pm");
+
+    	if (pm_msg.ENDPOINT == NO_TASK) break;
+
+    	pfp = &fproc_table[pm_msg.PROC_NR];
+    	pfp->endpoint = pm_msg.ENDPOINT;
+    	pfp->pid = pm_msg.PID;
+    	pfp->realuid = pfp->effuid = SU_UID;
+    	pfp->realgid = pfp->effgid = (gid_t)0;
+    	pfp->pwd = NULL;
+		pfp->root = NULL;
+		pfp->umask = ~0;
+
+		for (i = 0; i < NR_FILES; i++)
+			pfp->filp[i] = 0;
+    } while(TRUE);
+    
+    pm_msg.RETVAL = 0;
+    send_recv(SEND, TASK_PM, &pm_msg);
+
     add_filesystem(TASK_SYSFS, "sysfs");
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
@@ -172,7 +200,7 @@ PUBLIC void init_vfs()
 PRIVATE int fs_fork(MESSAGE * p)
 {
 	int i;
-	struct proc * child = endpt_proc(p->ENDPOINT);
+	struct fproc * child = vfs_endpt_proc(p->ENDPOINT);
 	for (i = 0; i < NR_FILES; i++) {
 		if (child->filp[i]) {
 			child->filp[i]->fd_cnt++;
@@ -189,7 +217,7 @@ PRIVATE int fs_fork(MESSAGE * p)
 PRIVATE int fs_exit(MESSAGE * m)
 {
 	int i;
-	struct proc * p = endpt_proc(m->ENDPOINT);
+	struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
 	for (i = 0; i < NR_FILES; i++) {
 		if (p->filp[i]) {
 			p->filp[i]->fd_inode->i_cnt--;

@@ -34,6 +34,19 @@
 PRIVATE int change_directory(struct inode ** ppin, char * pathname, int len);
 PRIVATE int change_node(struct inode ** ppin, struct inode * pin);
 
+PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr)
+{
+    *proc_nr = ENDPOINT_P(ep);
+    return 0;
+}
+
+PUBLIC struct fproc * vfs_endpt_proc(endpoint_t ep)
+{
+    int proc_nr;
+    if (vfs_verify_endpt(ep, &proc_nr) == 0) return &fproc_table[proc_nr];
+    return NULL;
+}
+
 PUBLIC int do_fcntl(MESSAGE * p)
 {
     int fd = p->FD;

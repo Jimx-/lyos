@@ -72,9 +72,6 @@ PUBLIC void task_mm()
 		case SBRK:
 			mm_msg.RETVAL = do_sbrk();
 			break;
-		case GETSETID:
-			mm_msg.RETVAL = do_getsetid();
-			break;
 		case MMAP:
 			mm_msg.RETVAL = do_mmap();
 			break;

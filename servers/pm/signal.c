@@ -121,11 +121,11 @@ PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo)
         if (dest == -1 && dest <= INIT) continue;
 
         /* check permission */
-        if (pmp->euid != SU_UID &&
-                pmp->uid != p_dest->uid &&
-                pmp->euid != p_dest->euid &&
-                pmp->uid != p_dest->euid &&
-                pmp->euid != p_dest->uid) {
+        if (pmp->effuid != SU_UID &&
+                pmp->realuid != p_dest->realuid &&
+                pmp->effuid != p_dest->effuid &&
+                pmp->realuid != p_dest->effuid &&
+                pmp->effuid != p_dest->realuid) {
             errcode = EPERM;
             continue;
         }

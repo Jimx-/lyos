@@ -173,6 +173,7 @@ PUBLIC int do_close(MESSAGE * p)
     int fd = p->FD;
     
     if (fd < 0 || fd >= NR_FILES) return EBADF;
+    if (pcaller->filp[fd] == NULL) return EBADF;
     if (pcaller->filp[fd]->fd_inode == NULL) return EBADF;
 
     DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", 
@@ -209,7 +210,7 @@ PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode)
     if (pin == NULL && err_code == ENOENT) {
         if ((retval = forbidden(pcaller, pin_dir, W_BIT | X_BIT)) == 0) {
             retval = request_create(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
-                pcaller->uid, pcaller->gid, pathname, mode, &res);
+                pcaller->realuid, pcaller->realgid, pathname, mode, &res);
         }
         if (retval != 0) {
             err_code = retval;

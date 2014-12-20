@@ -210,18 +210,6 @@ PUBLIC void init_arch()
 		p->q_sending = 0;
 		p->next_sending = 0;
 
-        p->uid = 0;
-        p->gid = 0;
-
-		p->pwd = NULL;
-		p->root = NULL;
-		p->umask = ~0;
-
-		//p->brk = 0;
-
-		for (j = 0; j < NR_FILES; j++)
-			p->filp[j] = 0;
-
 		stk -= t->stacksize;
 	}
 }

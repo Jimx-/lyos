@@ -110,18 +110,7 @@ struct proc {
 
 	int p_parent; /**< pid of parent process */
 
-	/* user id,group id etc. */
-	u16 uid, euid, suid;
-	u16 gid, egid, sgid;
-	
-	struct inode * pwd;			/* working directory */
-	struct inode * root;		/* root directory */
-
-	int umask;
-
 	int brk;
-
-	struct file_desc * filp[NR_FILES];
 };
 
 struct task {

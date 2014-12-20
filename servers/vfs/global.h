@@ -21,6 +21,8 @@
 #undef EXTERN
 #define EXTERN
 #endif
+    
+#include "fproc.h"
 
 /* FS */
 EXTERN  int                 ROOT_DEV;
@@ -30,7 +32,7 @@ EXTERN  struct inode        inode_table[NR_INODE];
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];
 extern  u8 *                fsbuf;
 EXTERN  MESSAGE             fs_msg;
-EXTERN  struct proc *       pcaller;
+EXTERN  struct fproc *      pcaller;
 EXTERN  struct inode *      root_inode;
 
 extern struct list_head filesystem_table;

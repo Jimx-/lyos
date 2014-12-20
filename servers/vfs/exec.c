@@ -55,14 +55,14 @@ PRIVATE struct exec_loader exec_loaders[] = {
     { NULL },
 };
 
-PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct proc * fp);
+PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct fproc * fp);
 PRIVATE int read_header(struct vfs_exec_info * execi);
 PRIVATE int is_script(struct vfs_exec_info * execi);
 PRIVATE int request_vfs_mmap(struct exec_info *execi,
     int vaddr, int len, int foffset, int protflags);
 
 /* open the executable and fill in exec info */
-PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct proc * fp)
+PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct fproc * fp)
 {
     int retval;
 
@@ -150,7 +150,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     /* get parameters from the message */
     int name_len = msg->NAME_LEN; /* length of filename */
     int src = msg->source;    /* caller proc nr. */
-    struct proc * p = endpt_proc(src);
+    struct fproc * fp = vfs_endpt_proc(src);
     int i;
 
     memset(&execi, 0, sizeof(execi));
@@ -173,7 +173,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
-    retval = get_exec_inode(&execi, pathname, p);
+    retval = get_exec_inode(&execi, pathname, fp);
     if (retval) return retval;
 
     if (is_script(&execi)) {
@@ -182,7 +182,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     }
 
     /* find an fd for MM */
-    struct proc * mm_task = endpt_proc(TASK_MM);
+    struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
     /* find a free slot in PROCESS::filp[] */
     int fd = -1;
     for (i = 0; i < NR_FILES; i++) {

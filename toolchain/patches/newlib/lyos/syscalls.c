@@ -720,7 +720,7 @@ int getuid()
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }
@@ -735,7 +735,7 @@ int setuid(uid_t uid)
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }
@@ -749,7 +749,7 @@ int getgid()
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }
@@ -764,7 +764,7 @@ int setgid(gid_t gid)
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }
@@ -778,7 +778,7 @@ int geteuid()
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }
@@ -792,7 +792,7 @@ int getegid()
 
 	cmb();
 
-	send_recv(BOTH, TASK_MM, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 
 	return msg.RETVAL;
 }

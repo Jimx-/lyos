@@ -239,6 +239,7 @@ enum msgtype {
     PM_MM_FORK,
     PM_VFS_FORK,
     PM_SIGRETURN,
+    PM_VFS_GETSETID,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,
@@ -261,6 +262,10 @@ enum msgtype {
 #define MODE		u.m3.m3i4
 #define	CNT			u.m3.m3i2
 #define NEWID		u.m3.m3i1
+#define UID 		u.m3.m3i1
+#define EUID 		u.m3.m3i2
+#define GID 		u.m3.m3i1
+#define EGID 		u.m3.m3i2
 #define	REQUEST		u.m3.m3i2
 #define	PROC_NR		u.m3.m3i3
 #define ENDPOINT	u.m3.m3i4

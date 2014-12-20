@@ -16,6 +16,9 @@
 #ifndef _VFS_PROTO_H_
 #define _VFS_PROTO_H_
 
+PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr);
+PUBLIC struct fproc * vfs_endpt_proc(endpoint_t ep);
+
 PUBLIC int do_register_filesystem(MESSAGE * p);
 PUBLIC int add_filesystem(endpoint_t fs_ep, char * name);
 PUBLIC endpoint_t get_filesystem_endpoint(char * name);
@@ -28,14 +31,14 @@ PUBLIC void lock_inode(struct inode * pin);
 PUBLIC void unlock_inode(struct inode * pin);
 PUBLIC void sync_inode  (struct inode * p);
 
-PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp);
-PUBLIC struct inode * last_dir(char * pathname, struct proc * fp);
+PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp);
+PUBLIC struct inode * last_dir(char * pathname, struct fproc * fp);
 
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
 PUBLIC void lock_vmnt(struct vfs_mount * vmnt);
 PUBLIC void unlock_vmnt(struct vfs_mount * vmnt);
 PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
-PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access);
+PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access);
 PUBLIC mode_t do_umask(MESSAGE * p);
 
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);

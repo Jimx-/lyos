@@ -29,6 +29,7 @@
 #include "fcntl.h"
 #include "path.h"
 #include "proto.h"
+#include "global.h"
 
 PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 
                 ino_t start, ino_t root, struct lookup_result * ret)
@@ -73,7 +74,7 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
 }
 
 /* Resolve a pathname */
-PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
+PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp)
 {
     /* start inode: root or pwd */
     if (!fp->root || !fp->pwd) {
@@ -151,7 +152,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct proc * fp)
  * @param  fp       The caller.
  * @return          Inode of the last directory on success. Otherwise NULL.
  */
-PUBLIC struct inode * last_dir(char * pathname, struct proc * fp)
+PUBLIC struct inode * last_dir(char * pathname, struct fproc * fp)
 {
     char * c = pathname + strlen(pathname);
     while (*c != '/') {

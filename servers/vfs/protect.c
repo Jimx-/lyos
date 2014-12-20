@@ -57,21 +57,21 @@ PUBLIC int do_access(MESSAGE * p)
     return (retval == 0) ? 0 : -1;
 }
 
-PUBLIC int forbidden(struct proc * fp, struct inode * pin, int access)
+PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access)
 {
     mode_t bits, perm_bits;
     int shift;
 
     bits = pin->i_mode;
 
-    if (fp->uid == SU_UID) {
+    if (fp->realuid == SU_UID) {
         if ((bits & I_TYPE) == I_DIRECTORY || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
             perm_bits = R_BIT | W_BIT | X_BIT;
         else
             perm_bits = R_BIT | W_BIT;
     } else {
-        if (fp->uid == pin->i_uid) shift = 6;    /* owner */
-        else if (fp->gid == pin->i_gid) shift = 3;   /* group */
+        if (fp->realuid == pin->i_uid) shift = 6;    /* owner */
+        else if (fp->realgid == pin->i_gid) shift = 3;   /* group */
         else shift = 0;                 /* other */
         perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT); 
     }

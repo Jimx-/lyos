@@ -32,37 +32,6 @@
 #include "lyos/vm.h"
 #include "global.h"
 
-PUBLIC int do_getsetid()
-{
-    int retval;
-    int id = mm_msg.NEWID;
-    struct proc * p = endpt_proc(mm_msg.source);
-
-    switch (mm_msg.REQUEST) {
-        case GS_GETUID:
-            retval = p->uid;
-            break;
-        case GS_SETUID:
-            retval = 0;
-            p->uid = id;
-            break;
-        case GS_GETGID:
-            retval = p->gid;
-            break;
-        case GS_SETGID:
-            retval = 0;
-            p->gid = id;
-            break;
-        case GS_GETEUID:
-            retval = p->euid;
-            break;
-        case GS_GETEGID:
-            retval = p->egid;
-            break; 
-    }
-
-    return retval;
-}
 
 PUBLIC int do_procctl()
 {

@@ -13,33 +13,24 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _PM_MMPROC_H_
-#define _PM_MMPROC_H_
-    
-#include <signal.h>
-    
-/* Information of a process used in PM */
-struct pmproc {
+#ifndef _VFS_FPROC_H_
+#define _VFS_FPROC_H_
+
+EXTERN struct fproc {
     int flags;
-    
-    pid_t pid;
-
-    endpoint_t endpoint;
-    endpoint_t parent;
-
-    sigset_t sig_pending;   /* signals to be handled */
-    sigset_t sig_mask;
-    struct sigaction sigaction[NSIG];
-    vir_bytes sigreturn_f;
 
     uid_t realuid, effuid, suid;
     gid_t realgid, effgid, sgid;
 
-    int exit_status;
-};
+    pid_t pid;
+    endpoint_t endpoint;
 
-#define PMPF_INUSE      0x01
-#define PMPF_WAITING    0x02
-#define PMPF_HANGING    0x04
+    struct inode * pwd;         /* working directory */
+    struct inode * root;        /* root directory */
 
-#endif
+    int umask;
+
+    struct file_desc * filp[NR_FILES];
+} fproc_table[NR_TASKS + NR_PROCS];
+
+#endif  /* _VFS_FPROC_H_ */

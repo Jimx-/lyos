@@ -113,11 +113,15 @@ PRIVATE void pm_init()
         pmp->flags |= PMPF_INUSE;
         pmp->endpoint = bp->endpoint;
 
-        /*
         vfs_msg.type = PM_VFS_INIT;
         vfs_msg.PROC_NR = bp->proc_nr;
-        vfs_msg.PID = bp->pid;
+        vfs_msg.PID = pmp->pid;
         vfs_msg.ENDPOINT = bp->endpoint;
-        send_recv(BOTH, TASK_FS, &vfs_msg); */
+        send_recv(SEND, TASK_FS, &vfs_msg);
     }
+
+    vfs_msg.type = PM_VFS_INIT;
+    vfs_msg.ENDPOINT = NO_TASK;
+    send_recv(BOTH, TASK_FS, &vfs_msg);
+    if (vfs_msg.RETVAL != 0) panic("pm_init: bad reply from vfs");
 }
