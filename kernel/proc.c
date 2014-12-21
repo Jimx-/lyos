@@ -72,14 +72,45 @@ PUBLIC void init_proc()
 	int i;
 	struct proc * p = proc_table;
 	struct priv * priv;
+	int prio, quantum;
 
 	for (i = -NR_KERNTASKS; i < NR_TASKS + NR_PROCS; i++,p++) {
 		spinlock_init(&p->lock);
 		
-		if (i < NR_BOOT_PROCS) {
-			p->endpoint = make_endpoint(0, i);	/* generation 0 */
-			PST_SET(p, PST_STOPPED);
+		if (i >= (NR_BOOT_PROCS - NR_KERNTASKS)) {
+			p->state = PST_FREE_SLOT;
+			continue;
 		}
+
+		if (i == INIT) {
+			prio    = USER_PRIO;
+			quantum = USER_QUANTUM;
+		} else {
+			prio    = TASK_PRIO;
+			quantum = TASK_QUANTUM;
+		}
+
+		p->counter = p->quantum_ms = quantum;
+		p->priority = prio;
+
+		p->p_parent = NO_TASK;
+		p->endpoint = make_endpoint(0, i);	/* generation 0 */
+
+		p->send_msg = 0;
+		p->recv_msg = 0;
+		p->recvfrom = NO_TASK;
+		p->sendto = NO_TASK;
+		p->q_sending = 0;
+		p->next_sending = 0;
+
+		p->state = 0;
+
+		if (i != TASK_MM) {
+			PST_SET(p, PST_BOOTINHIBIT);
+			PST_SET(p, PST_MMINHIBIT);		/* process is not ready until MM allows it to run */
+		}
+
+		PST_SET(p, PST_STOPPED);
 	}
 
 	int id = 0;

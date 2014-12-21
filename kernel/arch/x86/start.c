@@ -158,29 +158,19 @@ PUBLIC void init_arch()
 		
 		if (i < 0) continue;
 		
-		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
-			p->state = PST_FREE_SLOT;
-			continue;
-		}
-
 	    if (i < NR_TASKS) {     /* TASK */
             t	= task_table + i;
             codeseg = SELECTOR_TASK_CS | RPL_TASK;
             dataseg = SELECTOR_TASK_DS | RPL_TASK;
             eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
-			prio    = TASK_PRIO;
-			quantum = TASK_QUANTUM;
         } else {                  /* USER PROC */
             t	= user_proc_table + (i - NR_TASKS);
             codeseg = SELECTOR_USER_CS | RPL_USER;
             dataseg = SELECTOR_USER_DS | RPL_USER;
             eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
-			prio    = USER_PRIO;
-			quantum = USER_QUANTUM;
         }
 
 		strcpy(p->name, t->name);	/* name of the process */
-		p->p_parent = NO_TASK;
 
 		if (i == TASK_MM) {
 			/* use kernel page table */ 
@@ -200,23 +190,6 @@ PUBLIC void init_arch()
 		p->regs.esp	= (u32)stk;
 		p->regs.eflags	= eflags;
 		p->seg.trap_style = KTS_INT;
-
-		p->counter = p->quantum_ms = quantum;
-		p->priority = prio;
-
-		p->state = 0;
-
-		if (t->initial_eip == NULL) 
-			PST_SET(p, PST_BOOTINHIBIT);	/* process is to be loaded by SERVMAN */
-		if (i != TASK_MM) 
-			PST_SET(p, PST_MMINHIBIT);		/* process is not ready until MM allows it to run */
-
-		p->send_msg = 0;
-		p->recv_msg = 0;
-		p->recvfrom = NO_TASK;
-		p->sendto = NO_TASK;
-		p->q_sending = 0;
-		p->next_sending = 0;
 
 		stk -= t->stacksize;
 	}
