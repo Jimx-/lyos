@@ -54,6 +54,45 @@ PUBLIC struct proc * arch_switch_to_user()
     return p;
 }
 
+PUBLIC int arch_reset_proc(struct proc * p)
+{
+    u32 codeseg, dataseg;
+
+    if (p->endpoint == TASK_MM || p->endpoint == TASK_TTY) {     /* TASK */
+        codeseg = SELECTOR_TASK_CS | RPL_TASK;
+        dataseg = SELECTOR_TASK_DS | RPL_TASK;
+    } else {                  /* USER PROC */
+        codeseg = SELECTOR_USER_CS | RPL_USER;
+        dataseg = SELECTOR_USER_DS | RPL_USER;
+    }
+
+    p->regs.eip = 0;
+    p->regs.esp = 0;
+
+    if (p->endpoint == TASK_MM) {
+        /* use kernel page table */ 
+
+        p->seg.cr3_phys = (u32)initial_pgd;
+        p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
+
+        strcpy(p->name, "MM");  /* name of the process */
+        p->regs.eip = (u32)task_mm;
+        p->regs.esp = (u32)task_stack;
+    } 
+    
+    p->regs.cs = codeseg;
+    p->regs.ds =
+    p->regs.es =
+    p->regs.fs =
+    p->regs.gs =
+    p->regs.ss = dataseg;
+
+    p->regs.eflags  = 0x202;    /* IF=1, bit 2 is always 1 */
+    p->seg.trap_style = KTS_INT;
+
+    return 0;
+}
+
 /**
  * <Ring 0> Restore user context according to proc's kernel trap type.
  * 

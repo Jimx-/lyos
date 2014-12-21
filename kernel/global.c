@@ -34,28 +34,6 @@ PUBLIC  int booting_cpu = 0;
 PUBLIC	struct proc proc_table[NR_KERNTASKS + NR_TASKS + NR_PROCS];
 PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
 
-/* 注意下面的 TASK 的顺序要与 const.h 中对应 */
-PUBLIC	struct task	task_table[NR_TASKS] = {
-	/* entry        stack size        task name */
-	/* -----        ----------        --------- */
-	{task_mm,       STACK_SIZE_MM,    "MM"        },
-	{NULL,			0,				  "PM"		  },
-	{NULL,		    0,				  "SERVMAN"   },
-	{NULL,			0,				  "DEVMAN"    },
-	{NULL,       	0,    			  "VFS"       },
-	{NULL,      	0,   			  "SYS"       },
-	{NULL,      	0,   			  "TTY"       },
-	{NULL,       	0,				  "RD"        },
-	{NULL,	        0,                "INITFS"	  },
-	{NULL, 			0, 				  "SYSFS"	  },
-};
-
-PUBLIC	struct task	user_proc_table[NR_NATIVE_PROCS] = {
-	/* entry    stack size     proc name */
-	/* -----    ----------     --------- */
-	{NULL,   	0,				"INIT" }
-};
-
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 	{KERNEL,		"kernel"	},
 	{INTERRUPT,		"interrupt"	},

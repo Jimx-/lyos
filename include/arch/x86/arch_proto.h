@@ -45,6 +45,7 @@ PUBLIC reg_t read_ebp();
 #endif
 
 PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name);
+PUBLIC int arch_reset_proc(struct proc * p);
 
 PUBLIC struct proc * arch_switch_to_user();
 

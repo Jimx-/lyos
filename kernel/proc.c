@@ -111,6 +111,8 @@ PUBLIC void init_proc()
 		}
 
 		PST_SET(p, PST_STOPPED);
+
+		arch_reset_proc(p);
 	}
 
 	int id = 0;

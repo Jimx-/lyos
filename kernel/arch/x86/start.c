@@ -144,55 +144,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 PUBLIC void init_arch()
 {
-	int i, j, eflags, prio, quantum;
-    u32 codeseg, dataseg;
-
-	struct task * t;
-	struct proc * p = proc_table;
-
-	char * stk = task_stack + STACK_SIZE_TOTAL;
-
 	acpi_init();
-
-	for (i = -NR_KERNTASKS; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
-		
-		if (i < 0) continue;
-		
-	    if (i < NR_TASKS) {     /* TASK */
-            t	= task_table + i;
-            codeseg = SELECTOR_TASK_CS | RPL_TASK;
-            dataseg = SELECTOR_TASK_DS | RPL_TASK;
-            eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
-        } else {                  /* USER PROC */
-            t	= user_proc_table + (i - NR_TASKS);
-            codeseg = SELECTOR_USER_CS | RPL_USER;
-            dataseg = SELECTOR_USER_DS | RPL_USER;
-            eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
-        }
-
-		strcpy(p->name, t->name);	/* name of the process */
-
-		if (i == TASK_MM) {
-			/* use kernel page table */ 
-
-			p->seg.cr3_phys = (u32)initial_pgd;
-			p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
-		}
-
-		p->regs.cs = codeseg;
-		p->regs.ds =
-		p->regs.es =
-		p->regs.fs =
-		p->regs.gs =
-		p->regs.ss = dataseg;
-
-		p->regs.eip	= (u32)t->initial_eip;
-		p->regs.esp	= (u32)stk;
-		p->regs.eflags	= eflags;
-		p->seg.trap_style = KTS_INT;
-
-		stk -= t->stacksize;
-	}
 }
 
 PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
