@@ -69,8 +69,8 @@ PUBLIC void task_mm()
 		case PM_MM_FORK:
 			mm_msg.RETVAL = do_fork();
 			break;
-		case SBRK:
-			mm_msg.RETVAL = do_sbrk();
+		case BRK:
+			mm_msg.RETVAL = do_brk();
 			break;
 		case MMAP:
 			mm_msg.RETVAL = do_mmap();

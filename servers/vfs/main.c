@@ -63,7 +63,7 @@ PRIVATE int fs_exit(MESSAGE * m);
 /**
  * <Ring 1> Main loop of VFS.
  */
-PUBLIC void task_fs()
+PUBLIC int main()
 {
 	printl("VFS: Virtual filesystem is running.\n");
 
@@ -136,8 +136,7 @@ PUBLIC void task_fs()
 			src = msg.PROC_NR;
 			break;
 		default:
-			dump_msg("VFS::unknown msg", &msg);
-			assert(0);
+			msg.RETVAL = ENOSYS;
 			break;
 		}
 
@@ -146,6 +145,8 @@ PUBLIC void task_fs()
 			send_recv(SEND, src, &msg);
 		}
 	}
+
+	return 0;
 }
 
 PUBLIC void init_vfs()

@@ -111,7 +111,7 @@ export KCONFIG_AUTOHEADER
 
 # All Phony Targets
 .PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries mrproper fs drivers objdirs
+	setup-toolchain libraries mrproper fs drivers objdirs kvm kvm-debug
 
 # Default starting position
 kernel : realclean everything
@@ -179,6 +179,9 @@ update-disk:
 
 kvm:
 	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio
+
+kvm-debug:
+	@qemu-system-i386 -S -s -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio
 
 disk-image:
 	@(cd userspace; make)

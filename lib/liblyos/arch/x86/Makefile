@@ -1,4 +1,4 @@
-LOBJS		= cpufeature.o cpuid.o portio.o
+LOBJS		= cpufeature.o cpuid.o portio.o spinlock.o
 
 ARCHLIB		= arch-lib.o
 

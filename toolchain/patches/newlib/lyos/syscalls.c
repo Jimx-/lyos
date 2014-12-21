@@ -23,6 +23,8 @@ int syscall_gate_intr(int syscall_nr, MESSAGE * m);
 
 extern syscall_gate_t _syscall_gate;
 
+extern char * _brksize;
+
 /* compiler memory barrier */
 #define cmb() __asm__ __volatile__ ("" ::: "memory")
 
@@ -684,17 +686,33 @@ int chown(const char *path, uid_t owner, gid_t group)
 	return 0;
 }
 
-caddr_t sbrk(int nbytes)
+int brk(void * addr)
 {
 	MESSAGE msg;
-	msg.type = SBRK;
-	msg.CNT  = nbytes;
+	msg.type = BRK;
+	msg.ADDR = addr;
 
 	cmb();
-	
+
 	send_recv(BOTH, TASK_MM, &msg);
 
-	return (caddr_t)msg.RETVAL;
+	if (msg.RETVAL != 0) {
+		errno = msg.RETVAL;
+		return -1; 
+	}
+
+	_brksize = addr;
+
+	return 0;
+}
+
+caddr_t sbrk(int nbytes)
+{
+	char *oldsize = _brksize, *newsize = _brksize + nbytes;
+
+	if ((nbytes < 0 && newsize > oldsize) || (nbytes > 0 && newsize < oldsize)) return (caddr_t)(-1);
+	if (brk(newsize) == 0) return (caddr_t)oldsize;
+	else return (caddr_t)(-1);
 }
 
 int gettimeofday(struct timeval* tv, void *tz)

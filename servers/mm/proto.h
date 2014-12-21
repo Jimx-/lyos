@@ -53,6 +53,7 @@ PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags
 PUBLIC int region_alloc_phys(struct vir_region * rp);
 PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp);
 PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp);
+PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_share(struct vir_region * dest, struct vir_region * src);
@@ -60,12 +61,8 @@ PUBLIC int region_free(struct vir_region * rp);
 
 PUBLIC int proc_free(struct mmproc * p);
 
-PUBLIC int do_sbrk();
 /* mm/forkexit.c */
 PUBLIC int  do_fork();
-PUBLIC void do_exit(int status);
-PUBLIC void do_wait();
-PUBLIC int  do_kill();
 
 PUBLIC void do_handle_fault();
 

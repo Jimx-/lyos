@@ -1,11 +1,10 @@
 #
 # Makefile for the Lyos filesystem.
 
-LIBS		= $(LIBOUTDIR)/libexec.a
+VFS 		= vfs
 FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
 				read_write.o stat.o link.o misc.o exec.o device.o
-
-VFS			= vfs.o
+LIBS 		= -lexec -llyos
 
 everything : realclean $(VFS)
 
@@ -14,8 +13,8 @@ realclean :
 
 $(VFS): $(FSOBJS)
 	@echo -e '\tLD\tservers/vfs/$@'
-	@$(LD) -r -o $(VFS) $(FSOBJS) $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tservers/vfs/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(SERVERCFLAGS) -c $<

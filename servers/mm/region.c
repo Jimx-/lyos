@@ -228,6 +228,35 @@ PUBLIC int region_wp(struct mmproc * mmp, struct vir_region * rp)
 }
 
 
+PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr)
+{
+    unsigned offset = ~0;
+    struct vir_region * vr, * rb = NULL;
+    list_for_each_entry(vr, &(mmp->mem_regions), list) {
+        /* need no extend */
+        if (addr >= (int)(vr->vir_addr) && addr <= (int)(vr->vir_addr) + vr->length) {
+            return 0;
+        }
+
+        if (addr < (char *)vr->vir_addr) continue;
+        unsigned roff = addr - (char *)vr->vir_addr;
+        if (roff < offset) {
+            offset = roff;
+            rb = vr;
+        }
+    }
+
+    if (!rb) return EINVAL;
+
+    unsigned increment = addr - (char *)rb->vir_addr - rb->length;
+    int retval = 0;
+    if ((retval = region_extend(rb, increment)) != 0) return retval;
+
+    region_map_phys(mmp, rb);
+
+    return 0;
+}
+
 /**
  * <Ring 1> Extend memory region.
  */

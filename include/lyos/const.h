@@ -206,7 +206,7 @@ enum msgtype {
 	SUSPEND_PROC, RESUME_PROC,				/* 38 ~ 39 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, SBRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 40 ~ 49 */
+	EXEC, WAIT, KILL, ACCT, BRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 40 ~ 49 */
 
 	/* FS & MM */
 	FORK, EXIT,					/* 50 ~ 51 */
@@ -271,6 +271,7 @@ enum msgtype {
 #define ENDPOINT	u.m3.m3i4
 #define	DEVICE		u.m3.m3i4
 #define	POSITION	u.m3.m3l1
+#define ADDR 		u.m3.m3p2
 #define	BUF			u.m3.m3p2
 #define	OFFSET		u.m3.m3i2
 #define	WHENCE		u.m3.m3i3

@@ -33,54 +33,14 @@
 
 //#define SBRK_DEBUG
 
-/**
- * <Ring 1> Perform the SBRK syscall.
- * @return Program brk or -1 on error.
- */
-PUBLIC int do_sbrk()
+PUBLIC int do_brk()
 {
-    int src = mm_msg.source;
-    int count = mm_msg.CNT;
-    struct proc * p = endpt_proc(src);
+    endpoint_t src = mm_msg.source;
     struct mmproc * mmp = endpt_mmproc(src);
-    if (count == 0) return p->brk;
+    if (!mmp) return EINVAL;
 
-    int retval = 1;
-    struct vir_region * vr;
-    list_for_each_entry(vr, &(mmp->mem_regions), list) {
-        if (p->brk >= (int)(vr->vir_addr) && p->brk <= (int)(vr->vir_addr) + vr->length) {
-            retval = 0;
-            break;
-        }
-    }
+    void * addr = mm_msg.ADDR;
 
-    if (retval) {
-        panic("MM: do_sbrk: unable to find data segment for proc #%d", src);
-    }
-
-    /* enough space */
-    if (p->brk + count <= (int)(vr->vir_addr) + vr->length) {
-        retval = p->brk;
-        p->brk += count;
-#ifdef SBRK_DEBUG
-        printl("MM: sbrk: proc #%d brk is now 0x%x\n", src, retval);
-#endif
-        return retval;
-    } else {
-        int increment = p->brk + count - (int)(vr->vir_addr) - vr->length;
-        /*if (increment == 0) increment = PG_SIZE;   */ /* brk is at the boundary, prealloc some space */
-        retval = region_extend(vr, increment);
-        if (retval) {
-            errno = retval;
-            return -1;
-        }
-        region_map_phys(mmp, vr);
-        retval = p->brk;
-        p->brk += count;
-#ifdef SBRK_DEBUG
-        printl("MM: sbrk: proc #%d brk is now 0x%x(extended)\n", src, retval);
-#endif
-        return retval;
-    }
-    return -1;
+    if (region_extend_up_to(mmp, addr) == 0) return 0;
+    return ENOMEM;
 }

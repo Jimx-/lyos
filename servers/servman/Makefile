@@ -2,7 +2,7 @@
 # Makefile for the Lyos memory manager.
 
 SERVMANOBJS = main.o service.o exec.o module.o global.o
-LIBS 		= $(LIBOUTDIR)/libsysfs.a
+LIBS 		= $(LIBOUTDIR)/libsysfs.a $(LIBOUTDIR)/libexec.a
 SERVMAN		= servman.o 
 
 everything : realclean $(SERVMAN)

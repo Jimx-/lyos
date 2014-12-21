@@ -163,7 +163,8 @@ PUBLIC int do_exec(MESSAGE * msg)
     int orig_stack_len = msg->BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
 
-    char stackcopy[PROC_ORIGIN_STACK];
+    static char stackcopy[PROC_ORIGIN_STACK];
+    memset(stackcopy, 0, sizeof(stackcopy));
     data_copy(SELF, stackcopy,
           src, msg->BUF,
           orig_stack_len);
@@ -247,10 +248,6 @@ PUBLIC int do_exec(MESSAGE * msg)
     } 
 
     data_copy(src, orig_stack, TASK_FS, stackcopy, orig_stack_len);
-
-    struct proc * psrc = endpt_proc(src);
-    if (!psrc) return EINVAL;
-    psrc->brk = execi.args.brk;
 
     struct ps_strings ps;
     ps.ps_nargvstr = argc;

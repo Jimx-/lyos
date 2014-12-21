@@ -2,18 +2,19 @@
 # Makefile for Lyos servers
 #
 
-SERVOBJS	= mm/mm.o servman/servman.o vfs/vfs.o
+SERVOBJS	= mm/mm.o servman/servman.o
 INIT		= init/init
 DEVMAN		= devman/devman
+VFS 		= vfs/vfs
 PM			= pm/pm
 SERVERS		= servers.o
 
 .PHONY: everything realclean
 	
-everything : realclean $(SERVERS) $(INIT) $(DEVMAN) $(PM)
+everything : realclean $(SERVERS) $(INIT) $(DEVMAN) $(PM) $(VFS)
 
 realclean :
-	@rm -f $(SERVERS) $(SERVOBJS) $(INIT) $(DEVMAN) $(PM)
+	@rm -f $(SERVERS) $(SERVOBJS) $(INIT) $(DEVMAN) $(PM) $(VFS)
 
 $(SERVERS): $(SERVOBJS)
 	@echo -e '\tLD\tservers/$@'
@@ -25,8 +26,9 @@ mm/mm.o:
 servman/servman.o:
 	@(cd servman; make)
 
-vfs/vfs.o:
+$(VFS):
 	@(cd vfs; make)
+	@cp -f $(VFS) $(DESTDIR)/sbin
 
 $(INIT):
 	@(cd init; make)

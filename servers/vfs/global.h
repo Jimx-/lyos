@@ -35,6 +35,8 @@ EXTERN  MESSAGE             fs_msg;
 EXTERN  struct fproc *      pcaller;
 EXTERN  struct inode *      root_inode;
 
+EXTERN  int                 err_code;
+
 extern struct list_head filesystem_table;
 /* vfs mount table */
 extern struct list_head vfs_mount_table;
