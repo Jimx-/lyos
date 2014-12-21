@@ -40,7 +40,7 @@ typedef struct kinfo {
 	int memmaps_count;
 	struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
 
-    struct kinfo_module modules[NR_BOOT_PROCS - NR_KERNTASKS];
+    struct kinfo_module modules[NR_BOOT_PROCS - NR_TASKS];
 	int mods_count;
 
 	char cmdline[KINFO_CMDLINE_LEN];

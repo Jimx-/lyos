@@ -35,7 +35,7 @@
 			 * (ok to allocated to a new process)
 			 */
 
-#define proc_addr(n)	(&proc_table[(n) + NR_KERNTASKS])
+#define proc_addr(n)	(&proc_table[(n) + NR_TASKS])
 #define is_kerntaske(e)	(e < 0)
 
 #define lock_proc(proc) spinlock_lock(&((proc)->lock))

@@ -38,7 +38,7 @@ struct priv {
 #define LAST_DYN_PRIV       LAST_PRIV
 
 #define priv_addr(n)        (&priv_table[n])
-#define static_priv_id(n)   ((n) + NR_KERNTASKS)
+#define static_priv_id(n)   ((n) + NR_TASKS)
 
 #define PRIV_ID_NULL        (-1)
 

@@ -45,10 +45,10 @@ PUBLIC int do_fork(MESSAGE * p)
     int child_slot = 0, n = 0;
     endpoint_t parent_ep = p->source, child_ep;
 
-    if (procs_in_use >= NR_PROCS + NR_TASKS) return EAGAIN; /* proc table full */
+    if (procs_in_use >= NR_PROCS) return EAGAIN; /* proc table full */
 
     do {
-        child_slot = (child_slot + 1) % (NR_PROCS + NR_TASKS);
+        child_slot = (child_slot + 1) % (NR_PROCS);
         n++;
     } while((pmproc_table[child_slot].flags & PMPF_INUSE) && n <= NR_PROCS);
 
@@ -165,7 +165,7 @@ PUBLIC int do_exit(MESSAGE * p)
 
     struct pmproc * pi = pmproc_table;
     /* if the proc has any child, make INIT the new parent */
-    for (i = 0; i < NR_TASKS + NR_PROCS; i++, pi++) {
+    for (i = 0; i < NR_PROCS; i++, pi++) {
         if (pi->parent == src) { /* is a child */
             pi->parent = INIT;
             if ((pmproc_table[INIT].flags & PMPF_WAITING) &&
@@ -245,7 +245,7 @@ PUBLIC int do_wait(MESSAGE * p)
     int i;
     int children = 0;
     struct pmproc * pmp = pmproc_table;
-    for (i = 0; i < NR_TASKS + NR_PROCS; i++, pmp++) {
+    for (i = 0; i < NR_PROCS; i++, pmp++) {
         if (pmp->parent == parent_ep) {
             if (child_pid > 0 && child_pid != pmp->pid) continue;
             //if (child_pid < -1 && -child_pid != p_proc->gid) continue;

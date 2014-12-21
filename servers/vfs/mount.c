@@ -210,7 +210,7 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
         /* update all root inodes */
         struct fproc * fp = fproc_table;
         int i;
-        for (i = 0; i < NR_TASKS + NR_PROCS; i++, fp++) {
+        for (i = 0; i < NR_PROCS; i++, fp++) {
 
             if (fp->root) put_inode(fp->root);
             root_inode->i_cnt++;

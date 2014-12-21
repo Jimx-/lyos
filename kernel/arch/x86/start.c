@@ -136,7 +136,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	/* set module information */
 	int i;
 	multiboot_module_t * bootmod = initrd_mod + 1;
-	for (i = 0; i < NR_BOOT_PROCS - NR_KERNTASKS; i++, bootmod++) {
+	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++, bootmod++) {
 		kinfo.modules[i].start_addr = (phys_bytes)bootmod->mod_start;
 		kinfo.modules[i].end_addr = (phys_bytes)bootmod->mod_end;
 	}

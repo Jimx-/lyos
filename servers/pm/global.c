@@ -21,4 +21,4 @@
 #include "lyos/list.h"
 #include "global.h"
 
-PUBLIC  struct pmproc pmproc_table[NR_TASKS + NR_PROCS];
+PUBLIC  struct pmproc pmproc_table[NR_PROCS];

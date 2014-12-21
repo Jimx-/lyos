@@ -31,6 +31,6 @@ EXTERN struct fproc {
     int umask;
 
     struct file_desc * filp[NR_FILES];
-} fproc_table[NR_TASKS + NR_PROCS];
+} fproc_table[NR_PROCS];
 
 #endif  /* _VFS_FPROC_H_ */

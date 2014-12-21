@@ -69,8 +69,8 @@ PUBLIC int kernel_main()
     	bp->endpoint = p->endpoint;
 
         /* set module info */
-        if (i > NR_KERNTASKS) {
-            struct kinfo_module * mb_mod = &kinfo.modules[i - NR_KERNTASKS];
+        if (i > NR_TASKS) {
+            struct kinfo_module * mb_mod = &kinfo.modules[i - NR_TASKS];
             bp->base = mb_mod->start_addr;
             bp->len = mb_mod->end_addr - mb_mod->start_addr;
         }
@@ -118,7 +118,7 @@ PUBLIC void finish_bsp_booting()
 
 	int i;
 	/* enqueue runnable process */
-	for (i = 0; i < NR_TASKS + NR_NATIVE_PROCS; i++) {
+	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
 		PST_UNSET(proc_addr(i), PST_STOPPED);
 	}
 

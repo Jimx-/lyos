@@ -31,7 +31,7 @@
 
 PUBLIC  int booting_cpu = 0;
 
-PUBLIC	struct proc proc_table[NR_KERNTASKS + NR_TASKS + NR_PROCS];
+PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];
 PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
 
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {

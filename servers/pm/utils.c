@@ -43,7 +43,7 @@ PUBLIC pid_t find_free_pid()
         struct pmproc * pmp;
         used = 0;
         pid = pid < NR_PIDS ? pid + 1 : INIT_PID + 1;
-        for (pmp = &pmproc_table[0]; pmp < &pmproc_table[NR_PROCS + NR_TASKS]; pmp++) {
+        for (pmp = &pmproc_table[0]; pmp < &pmproc_table[NR_PROCS]; pmp++) {
             if (pmp->pid == pid) {
                 used = 1;
                 break;

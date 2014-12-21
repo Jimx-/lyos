@@ -121,9 +121,9 @@
 #define TASK_INITFS		8
 #define TASK_SYSFS		9
 #define INIT			10
-#define ANY				(NR_TASKS + NR_PROCS + 10)
+#define ANY				(NR_PROCS + 10)
 #define SELF			(-0x8ace)
-#define NO_TASK			(NR_TASKS + NR_PROCS + 20)
+#define NO_TASK			(NR_PROCS + 20)
 
 #define	MAX_TICKS	0x7FFFABCD
 

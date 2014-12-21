@@ -74,10 +74,10 @@ PUBLIC void init_proc()
 	struct priv * priv;
 	int prio, quantum;
 
-	for (i = -NR_KERNTASKS; i < NR_TASKS + NR_PROCS; i++,p++) {
+	for (i = -NR_TASKS; i < NR_PROCS; i++,p++) {
 		spinlock_init(&p->lock);
 		
-		if (i >= (NR_BOOT_PROCS - NR_KERNTASKS)) {
+		if (i >= (NR_BOOT_PROCS - NR_TASKS)) {
 			p->state = PST_FREE_SLOT;
 			continue;
 		}

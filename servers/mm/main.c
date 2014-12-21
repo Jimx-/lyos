@@ -127,7 +127,7 @@ PRIVATE void init_mm()
 	init_mmproc(TASK_MM);
 
 	struct boot_proc * bp;
-	for (i = -NR_KERNTASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
+	for (i = -NR_TASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
 		if (bp->proc_nr < 0) continue;
 
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
