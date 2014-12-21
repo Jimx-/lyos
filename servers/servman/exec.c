@@ -103,9 +103,6 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
 
     if (retval) return retval;
 
-    struct proc * ptg = endpt_proc(target);
-    ptg->brk = execi.brk;
-
     struct ps_strings ps;
     ps.ps_nargvstr = 0;
     ps.ps_argvstr = NULL;
@@ -175,50 +172,3 @@ PUBLIC int serv_prepare_module_stack()
 }
 
 #endif
-
-PUBLIC int serv_spawn_module(endpoint_t target, char * name, char * mod_base, u32 mod_len)
-{
-    int i, retval;
-
-    struct exec_info execi;
-    memset(&execi, 0, sizeof(execi));
-
-    /* stack info */
-    execi.stack_top = VM_STACK_TOP;
-    execi.stack_size = PROC_ORIGIN_STACK;
-
-    /* header */
-    execi.header = mod_base;
-    execi.header_len = mod_len;
-
-    execi.allocmem = libexec_allocmem;
-    execi.allocstack = libexec_allocstack;
-    execi.alloctext = libexec_alloctext;
-    execi.copymem = read_segment;
-    execi.clearproc = libexec_clearproc;
-    execi.clearmem = libexec_clearmem;
-
-    execi.proc_e = target;
-    execi.filesize = mod_len;
-
-    for (i = 0; exec_loaders[i].loader != NULL; i++) {
-        retval = (*exec_loaders[i].loader)(&execi);
-        if (!retval) break;  /* loaded successfully */
-    }
-
-    if (retval) return retval;
-
-    /* copy the stack */
-    //char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
-    //data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
-
-    struct proc * ptg = endpt_proc(target);
-    ptg->brk = execi.brk;
-
-    struct ps_strings ps;
-    ps.ps_nargvstr = 0;
-    //ps.ps_argvstr = orig_stack;
-    //ps.ps_envstr = module_envp;
-
-    return kernel_exec(target, VM_STACK_TOP, name, execi.entry_point, &ps);
-}

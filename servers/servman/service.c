@@ -35,7 +35,7 @@
 
 PUBLIC int check_permission(endpoint_t caller, int request)
 {
-    struct proc * p = endpt_proc(caller);
+    //struct proc * p = endpt_proc(caller);
     //if (p->euid != SU_UID) return EPERM;
 
     return 0;
@@ -54,13 +54,11 @@ PUBLIC int do_service_up(MESSAGE * msg)
     data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
-    struct proc * p;
-
     int child_pid = fork();
     if (child_pid) {
         /* block the child */
-        p = proc_table + child_pid;
-        p->state = PST_BOOTINHIBIT;    
+        //p = proc_table + child_pid;
+        //p->state = PST_BOOTINHIBIT;    
     } else {
         while (1);
     }
@@ -69,8 +67,6 @@ PUBLIC int do_service_up(MESSAGE * msg)
     if (retval) return retval;
 
     privctl(child_pid, PRIVCTL_SET_TASK, NULL);
-
-    p->state = 0;
 
     return 0;
 }

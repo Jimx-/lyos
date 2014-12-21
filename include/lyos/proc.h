@@ -109,8 +109,6 @@ struct proc {
 				    */
 
 	int p_parent; /**< pid of parent process */
-
-	int brk;
 };
 
 struct task {
@@ -137,14 +135,8 @@ struct task {
 
 /* stacks of tasks */
 #define	STACK_SIZE_DEFAULT	0x80000 /* 32 KB */
-#define STACK_SIZE_SYS		STACK_SIZE_DEFAULT
-#define STACK_SIZE_FS		STACK_SIZE_DEFAULT
-#define STACK_SIZE_SERVMAN	STACK_SIZE_DEFAULT
 #define STACK_SIZE_MM		STACK_SIZE_DEFAULT
 
-#define STACK_SIZE_TOTAL	(STACK_SIZE_SYS + \
-				STACK_SIZE_FS + \
-				STACK_SIZE_SERVMAN + \
-				STACK_SIZE_MM)
+#define STACK_SIZE_TOTAL	(STACK_SIZE_MM)
 
 #endif

@@ -64,10 +64,15 @@ PUBLIC int proc_free(struct mmproc * p);
 /* mm/forkexit.c */
 PUBLIC int  do_fork();
 
+/* mm/brk.c */
+PUBLIC int  do_brk();
+
 PUBLIC void do_handle_fault();
 
 PUBLIC int do_procctl();
 
+PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
+    int mmap_flags, size_t len, int vrflags);
 PUBLIC int do_mmap();
 
 #endif

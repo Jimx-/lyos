@@ -33,7 +33,7 @@
 #include <sys/mman.h>
 #include "global.h"
 
-PRIVATE struct vir_region * mmap_region(struct mmproc * mmp, int addr,
+PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     int mmap_flags, size_t len, int vrflags)
 {
     struct vir_region * vr = NULL;

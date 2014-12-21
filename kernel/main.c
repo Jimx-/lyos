@@ -68,6 +68,13 @@ PUBLIC int kernel_main()
     	struct proc * p = proc_addr(bp->proc_nr);
     	bp->endpoint = p->endpoint;
 
+        /* set module info */
+        if (i > NR_KERNTASKS) {
+            struct kinfo_module * mb_mod = &kinfo.modules[i - NR_KERNTASKS];
+            bp->base = mb_mod->start_addr;
+            bp->len = mb_mod->end_addr - mb_mod->start_addr;
+        }
+
     	if (is_kerntaske(bp->endpoint) || bp->endpoint == TASK_MM || bp->endpoint == TASK_SERVMAN) {
     		/* assign priv structure */
     		set_priv(p, static_priv_id(bp->endpoint));

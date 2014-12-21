@@ -29,12 +29,18 @@ struct kinfo_mmap_entry {
 	u32 type;
 };
      
+struct kinfo_module {
+    phys_bytes start_addr;
+    phys_bytes end_addr;
+};
+
 typedef struct kinfo {
     int magic;
 
 	int memmaps_count;
 	struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
 
+    struct kinfo_module modules[NR_BOOT_PROCS - NR_KERNTASKS];
 	int mods_count;
 
 	char cmdline[KINFO_CMDLINE_LEN];

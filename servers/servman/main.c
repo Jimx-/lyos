@@ -33,11 +33,11 @@
 
 PRIVATE void servman_init();
 
-PUBLIC void task_servman()
+PUBLIC int main()
 {
     servman_init();
 
-    while(1){
+    while (TRUE) {
         MESSAGE msg;
 
         send_recv(RECEIVE, ANY, &msg);
@@ -50,21 +50,20 @@ PUBLIC void task_servman()
             msg.RETVAL = do_service_up(&msg);
             break;
         default:
-            dump_msg("SERVMAN::unknown msg", &msg);
-            assert(0);
+            msg.RETVAL = ENOSYS;
             break;
         }
 
         msg.type = SYSCALL_RET;
         send_recv(SEND, src, &msg);
     }
+
+    return 0;
 }
 
 PRIVATE void servman_init()
 {
     printl("SERVMAN: service manager is running.\n");
-
-    spawn_boot_modules();
 
     int i;
     /* prepare priv structure for all priv procs */

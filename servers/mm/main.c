@@ -27,6 +27,9 @@
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
 #include <lyos/vm.h>
+#include <lyos/fs.h>
+#include <sys/mman.h>
+#include "libexec/libexec.h"
 #include "multiboot.h"
 #include "page.h"
 #include <elf.h>
@@ -120,16 +123,11 @@ PRIVATE void init_mm()
 	pt_init();
 
 	__lyos_init();
+
 	init_mmproc(TASK_MM);
 
-	/* setup memory region for tasks so they can malloc */
-	int region_size = NR_TASKS * sizeof(struct vir_region) * 2;
-	struct vir_region * rp = (struct vir_region *)alloc_vmem(NULL, region_size * 2);
-	struct proc * p = proc_table;
-	
 	struct boot_proc * bp;
-	i = -NR_KERNTASKS;
-	for (bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++, rp++, p++) {
+	for (i = -NR_KERNTASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
 		if (bp->proc_nr < 0) continue;
 
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
@@ -141,15 +139,6 @@ PRIVATE void init_mm()
 
 		spawn_bootproc(mmp, bp);
 
-		if (!(PST_IS_SET(p, PST_BOOTINHIBIT) || i == TASK_MM) && (i != INIT)) {
-			phys_region_init(&(rp->phys_block), 1);
-			/* prepare heap */
-			rp->vir_addr = (void*)0x1000;
-			p->brk = 0x1000;
-			rp->length = 0;
-			rp->flags = RF_WRITABLE;
-			list_add(&(rp->list), &(mmp->mem_regions));
-		}
 		vmctl(VMCTL_MMINHIBIT_CLEAR, i);
     }
 }
@@ -167,14 +156,102 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
 			return mmp;
 		}
 	}
-	panic("MM: no mmproc");
+	panic("no mmproc");
 	return NULL;
+}
+
+struct mm_exec_info {
+	struct exec_info execi;
+	struct boot_proc * bp;
+	struct mmproc * mmp;
+};
+
+PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
+{
+	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
+	struct vir_region * vr = NULL;
+
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
+    list_add(&(vr->list), &(mmexeci->mmp->mem_regions));
+
+    return 0;
+}
+
+PRIVATE int mm_alloctext(struct exec_info * execi, int vaddr, size_t len)
+{
+	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
+	struct vir_region * vr = NULL;
+
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_NORMAL))) return ENOMEM;
+    list_add(&(vr->list), &(mmexeci->mmp->mem_regions));
+
+    return 0;
+}
+
+PRIVATE int mm_allocstack(struct exec_info * execi, int vaddr, size_t len)
+{
+	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
+	struct vir_region * vr = NULL;
+
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_GROWSDOWN, len, RF_WRITABLE))) return ENOMEM;
+    list_add(&(vr->list), &(mmexeci->mmp->mem_regions));
+
+    return 0;
+}
+
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+{
+    if (offset + len > execi->header_len) return ENOEXEC;
+    data_copy(execi->proc_e, (void *)vaddr, SELF, (void *)((int)(execi->header) + offset), len);
+    
+    return 0;
 }
 
 PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 {
 	if (pgd_new(&(mmp->pgd))) panic("MM: spawn_bootproc: pgd_new failed");
 	if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
+
+	struct mm_exec_info mmexeci;
+	struct exec_info * execi = &mmexeci.execi;
+    memset(&mmexeci, 0, sizeof(mmexeci));
+
+    mmexeci.mmp = mmp;
+    mmexeci.bp = bp;
+
+    /* stack info */
+    execi->stack_top = VM_STACK_TOP;
+    execi->stack_size = PROC_ORIGIN_STACK;
+
+    /* header */
+    execi->header = bp->base;
+    execi->header_len = bp->len;
+
+    execi->allocmem = mm_allocmem;
+    execi->allocstack = mm_allocstack;
+    execi->alloctext = mm_alloctext;
+    execi->copymem = read_segment;
+    execi->clearproc = NULL;
+    execi->clearmem = libexec_clearmem;
+    execi->callback_data = &mmexeci;
+
+    execi->proc_e = bp->endpoint;
+    execi->filesize = bp->len;
+
+    if (libexec_load_elf(execi) != 0) panic("can't load boot proc #%d", bp->endpoint);
+
+    /* copy the stack */
+    //char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
+    //data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
+
+    struct ps_strings ps;
+    ps.ps_nargvstr = 0;
+    //ps.ps_argvstr = orig_stack;
+    //ps.ps_envstr = module_envp;
+
+    if (kernel_exec(bp->endpoint, VM_STACK_TOP, bp->name, execi->entry_point, &ps) != 0) panic("kernel exec failed");
+
+    vmctl(VMCTL_BOOTINHIBIT_CLEAR, bp->endpoint);
 }
 
 PRIVATE void print_memmap()
