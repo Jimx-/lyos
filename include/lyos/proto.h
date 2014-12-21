@@ -64,13 +64,6 @@ PUBLIC void     enable_irq(irq_hook_t * hook);
 PUBLIC void 	init_clock();
 PUBLIC void 	milli_delay(int milli_sec);
 
-/* systask.c */
-PUBLIC void 	task_sys();
-
-/* fs/lyos/main.c */
-PUBLIC void	    task_fs();
-PUBLIC void	    init_fs();
-
 /* mm/main.c */
 PUBLIC void	task_mm();
 

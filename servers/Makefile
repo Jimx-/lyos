@@ -7,14 +7,15 @@ INIT		= init/init
 DEVMAN		= devman/devman
 VFS 		= vfs/vfs
 PM			= pm/pm
+SYSTASK		= systask/systask
 SERVERS		= servers.o
 
 .PHONY: everything realclean
 	
-everything : realclean $(SERVERS) $(INIT) $(DEVMAN) $(PM) $(VFS)
+everything : realclean $(SERVERS) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK)
 
 realclean :
-	@rm -f $(SERVERS) $(SERVOBJS) $(INIT) $(DEVMAN) $(PM) $(VFS)
+	@rm -f $(SERVERS) $(SERVOBJS) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK)
 
 $(SERVERS): $(SERVOBJS)
 	@echo -e '\tLD\tservers/$@'
@@ -41,3 +42,7 @@ $(DEVMAN):
 $(PM):
 	@(cd pm; make)
 	@cp -f $(PM) $(DESTDIR)/sbin
+
+$(SYSTASK):
+	@(cd systask; make)
+	@cp -f $(SYSTASK) $(DESTDIR)/sbin
