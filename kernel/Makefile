@@ -5,21 +5,27 @@
 AR		= ar
 ARFLAGS		= rcs
 
+LDSCRIPT = arch/$(ARCH)/lyos.ld
+LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
+
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			clock.o global.o proc.o \
 			klib.o cpulocals.o \
 			sysinfo.o system/system.o interrupt.o system.o
+LIB			= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
+LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
 
-KRNL		= krnl.o
+KRNL		= $(ARCHDIR)/lyos.bin
 
 everything : realclean $(KRNL)
 
 realclean :
-	@rm -f $(KERNELOBJS)
+	@rm -f $(KRNL) $(KERNELOBJS)
 
-$(KRNL): $(KERNELOBJS)
-	@echo -e '\tLD\tkernel/$@'
-	@$(LD) -r -o $(KRNL) $(KERNELOBJS)
+$(KRNL): $(KERNELOBJS) $(LIB) $(LIBC)
+	@echo -e '\tLD\t$@'
+	@$(LD) $(LDFLAGS) -o $(KRNL) $^
+	@cp -f $(KRNL) $(DESTDIR)/boot/
 
 arch/$(ARCH)/arch-kernel.o:
 	@(cd arch/$(ARCH); make)

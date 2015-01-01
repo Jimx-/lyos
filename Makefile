@@ -49,8 +49,6 @@ LIBOUTDIR = $(DESTDIR)/lib
 PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
 export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR DESTDIR BINDIR LIBOUTDIR ARCHINC ARCHLIB PATH
 
-LDSCRIPT = kernel/arch/$(ARCH)/lyos.ld
-
 HD		= lyos-disk.img
 
 # Programs, flags, etc.
@@ -62,7 +60,6 @@ LD		= $(SUBARCH)-elf-lyos-ld
 CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 SERVERCFLAGS	= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory
-LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 ARFLAGS		= rcs
 MAKE 		= make
 
@@ -73,20 +70,13 @@ endif
 
 export ASM CC LD CFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
-# This Program
-LYOSARCHDIR	= arch/$(ARCH)
-LYOSKERNEL	= $(LYOSARCHDIR)/lyos.bin
-
+LYOSKERNEL = $(ARCHDIR)/lyos.bin
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
 	ZIP = gzip
-	LYOSZKERNEL = $(LYOSARCHDIR)/lyos.gz
+	LYOSZKERNEL = $(ARCHDIR)/lyos.gz
 endif
 
-KRNLOBJ		= kernel/krnl.o
-LIB			= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
-LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
 LYOSINITRD	= $(ARCHDIR)/initrd.tar
-OBJS		= $(KRNLOBJ)
 
 DASMOUTPUT	= lyos.bin.asm
 
@@ -115,7 +105,7 @@ all : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries $(LYOSKERNEL) fs drivers servers initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries kernel fs drivers servers initrd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -223,21 +213,16 @@ libraries:
 	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
 	@(cd lib; make)
 
-$(LYOSKERNEL) : $(OBJS) $(LIB) $(LIBC) 
-	@echo -e '\tLD\t$@'
-	@$(LD) $(LDFLAGS) -o $(LYOSKERNEL) $^
-	@cp -f $(LYOSKERNEL) $(DESTDIR)/boot/
+kernel:
+	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'
+	@(cd kernel; make)
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
 	@@echo -e '$(COLORGREEN)Compressing the kernel...$(COLORDEFAULT)'
-	@echo -e '\tZIP\t$@'
+	@echo -e '\tZIP\t$(LYOSZKERNEL)'
 	@$(ZIP) -cfq $(LYOSKERNEL) > $(LYOSZKERNEL)
 	@cp -f $(LYOSZKERNEL) $(DESTDIR)/boot/
 endif
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
-
-$(KRNLOBJ):
-	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'
-	@(cd kernel; make)
 
 $(LIB):
 	@echo -e '$(COLORGREEN)Compiling the library...$(COLORDEFAULT)'
