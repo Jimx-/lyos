@@ -49,8 +49,7 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
     int i;
     for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
-        if (i >= FIXMAP_START / PG_SIZE && i < FIXMAP_END / PG_SIZE) page_table_start[i] = 0;
-        else page_table_start[i] = page;
+        page_table_start[i] = page;
     }
 
     /* initialize page directory */
