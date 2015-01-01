@@ -31,7 +31,7 @@
 #include <lyos/log.h>
 #include <lyos/spinlock.h>
 
-extern char _end[];
+extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
 PUBLIC void * k_stacks;
 
@@ -42,7 +42,7 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
  *======================================================================*/
 PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 {
-	memory_size = 0;
+	kinfo.memory_size = 0;
 	memset(&kinfo, 0, sizeof(kinfo_t));
 
 	kinfo.magic = KINFO_MAGIC;
@@ -64,7 +64,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		kinfo.memmaps[kinfo.memmaps_count].addr = mmap->addr;
 		kinfo.memmaps[kinfo.memmaps_count].len = mmap->len;
 		kinfo.memmaps[kinfo.memmaps_count].type = mmap->type;
-		memory_size += mmap->len;
+		kinfo.memory_size += mmap->len;
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
@@ -140,6 +140,16 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		kinfo.modules[i].start_addr = (phys_bytes)bootmod->mod_start;
 		kinfo.modules[i].end_addr = (phys_bytes)bootmod->mod_end;
 	}
+
+	/* kernel memory layout */
+	kinfo.kernel_text_start = (vir_bytes)*(&_text);
+	kinfo.kernel_data_start = (vir_bytes)*(&_data);
+	kinfo.kernel_bss_start = (vir_bytes)*(&_bss);
+	kinfo.kernel_text_end = (vir_bytes)*(&_etext);
+	kinfo.kernel_data_end = (vir_bytes)*(&_edata);
+	kinfo.kernel_bss_end = (vir_bytes)*(&_ebss);
+
+	kinfo.procs_base = PROCS_BASE;
 }
 
 PUBLIC void init_arch()

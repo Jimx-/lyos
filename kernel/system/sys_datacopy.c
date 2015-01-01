@@ -31,10 +31,10 @@
 PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
 {
     void * src_addr = m->SRC_ADDR;
-    endpoint_t src_ep = m->SRC_PID == SELF ? p_proc->endpoint : m->SRC_PID;
+    endpoint_t src_ep = m->SRC_EP == SELF ? p_proc->endpoint : m->SRC_EP;
 
     void * dest_addr = m->DEST_ADDR;
-    endpoint_t dest_ep = m->DEST_PID == SELF ? p_proc->endpoint : m->DEST_PID;
+    endpoint_t dest_ep = m->DEST_EP == SELF ? p_proc->endpoint : m->DEST_EP;
 
     int len = m->BUF_LEN;
 

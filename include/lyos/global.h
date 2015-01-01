@@ -69,8 +69,6 @@ EXTERN	MESSAGE			mm_msg;
 
 EXTERN  unsigned int        PROCS_BASE;
 EXTERN  int                 kernel_pts;
-EXTERN	unsigned int        memory_size;
-EXTERN	int 				mem_start;
 
 /* KERNEL LOG */
 extern struct kern_log kern_log;

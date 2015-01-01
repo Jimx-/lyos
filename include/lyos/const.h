@@ -293,10 +293,10 @@ enum msgtype {
 #define SR_MSG		u.m3.m3p1
 
 /* macros for data_copy */
-#define SRC_PID		u.m3.m3i1
+#define SRC_EP		u.m3.m3i1
 #define SRC_ADDR	u.m3.m3p1
 #define SRC_SEG		u.m3.m3l1
-#define DEST_PID	u.m3.m3i2
+#define DEST_EP		u.m3.m3i2
 #define DEST_ADDR	u.m3.m3p2
 #define DEST_SEG	u.m3.m3l2
 

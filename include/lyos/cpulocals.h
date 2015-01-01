@@ -21,6 +21,7 @@
 
 extern struct CPULOCAL_STRUCT {
 	struct proc * proc_ptr;
+	struct proc * pt_proc;	/* proc whose page table is loaded */
 	struct proc idle_proc;
 
 	/* run queue */

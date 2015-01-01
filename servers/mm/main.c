@@ -40,9 +40,6 @@
 
 PRIVATE int free_mem_size;
 
-extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
-extern pde_t pgd0;
-
 PUBLIC void __lyos_init();
 
 PRIVATE void init_mm();
@@ -182,7 +179,7 @@ PRIVATE int mm_alloctext(struct exec_info * execi, int vaddr, size_t len)
 	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
 	struct vir_region * vr = NULL;
 
-	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_NORMAL))) return ENOMEM;
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
     list_add(&(vr->list), &(mmexeci->mmp->mem_regions));
 
     return 0;
@@ -212,6 +209,8 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 	if (pgd_new(&(mmp->pgd))) panic("MM: spawn_bootproc: pgd_new failed");
 	if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
 
+	bp->base += KERNEL_VMA;
+	
 	struct mm_exec_info mmexeci;
 	struct exec_info * execi = &mmexeci.execi;
     memset(&mmexeci, 0, sizeof(mmexeci));
@@ -260,6 +259,8 @@ PRIVATE void print_memmap()
 	int reserved_memsize = 0;
 	int i;
 
+	memory_size = kernel_info.memory_size;
+
 	printl("Kernel-provided physical RAM map:\n");
 	struct kinfo_mmap_entry * mmap;
 	for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count; i++, mmap++) {
@@ -277,25 +278,21 @@ PRIVATE void print_memmap()
 			reserved_memsize += mmap->len;
 	}
 
-	unsigned int text_start = (unsigned int)*(&_text), text_end = (unsigned int)*(&_etext), text_len = text_end - text_start;
-	unsigned int data_start = (unsigned int)*(&_data), data_end = (unsigned int)*(&_edata), data_len = data_end - data_start;
-	unsigned int bss_start = (unsigned int)*(&_bss), bss_end = (unsigned int)*(&_ebss), bss_len = bss_end - bss_start;
+	vir_bytes text_start = kernel_info.kernel_text_start, text_end = kernel_info.kernel_text_end, text_len = text_end - text_start;
+	vir_bytes data_start = kernel_info.kernel_data_start, data_end = kernel_info.kernel_data_end, data_len = data_end - data_start;
+	vir_bytes bss_start = kernel_info.kernel_bss_start, bss_end = kernel_info.kernel_bss_end, bss_len = bss_end - bss_start;
 
 	usable_memsize = usable_memsize - text_len - data_len - bss_len;
 	printl("Memory: %dk/%dk available (%dk kernel code, %dk data, %dk reserved)\n", 
 						usable_memsize / 1024, memory_size / 1024,
 						text_len / 1024, (data_len + bss_len) / 1024,
 						reserved_memsize / 1024);
-	
-	vir_bytes vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
 
 	printl("Virtual kernel memory layout:\n");
 	printl("  .text   : 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
 	printl("  .data   : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss    : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
-	printl("  vmalloc : 0x%08x - 0x%08x  (%dkB)\n", vmalloc_start, VMALLOC_END, (VMALLOC_END - vmalloc_start) / 1024);
-	printl("  fixmap  : 0x%08x - 0x%08x  (%dkB)\n", FIXMAP_START, FIXMAP_END, (FIXMAP_END - FIXMAP_START) / 1024);
 
-	mem_start = PROCS_BASE;
+	mem_start = kernel_info.procs_base;
 	free_mem_size = memory_size - mem_start;
 }

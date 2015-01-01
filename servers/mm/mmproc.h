@@ -27,7 +27,6 @@ struct mmproc {
 
     endpoint_t endpoint;
     int slot;
-    unsigned int brk;
 };
 
 #define MMPF_INUSE  0x01

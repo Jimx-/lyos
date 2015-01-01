@@ -48,25 +48,28 @@ PUBLIC void init_memory()
     for (i = 0; i < MAX_TEMPPDES; i++) {
         temppdes[i] = kinfo.kernel_end_pde++;
     }
+    get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 }
 
 /* Temporarily map la in p's address space in kernel address space */
 PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * len, int index, int * changed)
 {
     /* the process is already in current page table */
-    if (p == get_cpulocal_var(proc_ptr)) return la;
+    if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint))) return la;
 
     pde_t pdeval;
     u32 pde = temppdes[index];
     if (p) {
+        if (!p->seg.cr3_vir) panic("create_temp_map: proc cr3_vir not set");
         pdeval = p->seg.cr3_vir[ARCH_PDE(la)];
     } else {    /* physical address */
         pdeval = (la & ARCH_VM_ADDR_MASK_BIG) | 
             ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW;
     }
 
-    if (get_cpulocal_var(proc_ptr)->seg.cr3_vir[pde] != pdeval) {
-        get_cpulocal_var(proc_ptr)->seg.cr3_vir[pde] = pdeval;
+    if (!get_cpulocal_var(pt_proc)->seg.cr3_vir) panic("create_temp_map: pt_proc cr3_vir not set");
+    if (get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] != pdeval) {
+        get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] = pdeval;
         *changed = 1;
     }
 
@@ -79,6 +82,9 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * 
 PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         struct proc * p_src, phys_bytes src_la, vir_bytes len)
 {
+    if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
+    if (read_cr3() != get_cpulocal_var(pt_proc)->seg.cr3_phys) panic("bad pt_proc cr3 value");
+
     while (len > 0) {
         vir_bytes chunk = len;
         phys_bytes src_mapped, dest_mapped;
@@ -99,80 +105,15 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
     return 0;
 }
 
-PRIVATE void * find_free_pages(pde_t * pgd_phys, int nr_pages, void * start, void * end)
-{
-    /* default value */
-    if (start == NULL) start = (void *)FIXMAP_START;
-    if (end == NULL) end = (void *)FIXMAP_END;
-
-    unsigned int start_pde = ARCH_PDE((unsigned int)start);
-    unsigned int end_pde = ARCH_PDE((unsigned int)end);
-
-    int i, j;
-    pde_t * vir_pts = (pde_t *)((u32)pgd_phys + KERNEL_VMA);
-    int allocated_pages = 0;
-    void * retaddr = NULL;
-    for (i = start_pde; i < end_pde; i++) {
-        pte_t * pt_entries = (pte_t *)(((pde_t)vir_pts[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
-        /* the pde is empty, we have I386_VM_DIR_ENTRIES free pages */
-        if (pt_entries == NULL) {
-            nr_pages -= I386_VM_DIR_ENTRIES;
-            allocated_pages += I386_VM_DIR_ENTRIES;
-            if (retaddr == NULL) retaddr = (void *)ARCH_VM_ADDRESS(i, 0, 0);
-            if (nr_pages <= 0) {
-                return retaddr;
-            }
-            continue;
-        }
-
-        for (j = 0; j < I386_VM_DIR_ENTRIES; j++) {
-            if (pt_entries[j] != 0) {
-                nr_pages += allocated_pages;
-                retaddr = NULL;
-                allocated_pages = 0;
-            } else {
-                nr_pages--;
-                allocated_pages++;
-                if (!retaddr) retaddr = (void *)ARCH_VM_ADDRESS(i, j, 0);
-            }
-
-            if (nr_pages <= 0) return retaddr;
-        }
-    }
-
-    return NULL;
-}
-
 PRIVATE u32 get_phys32(phys_bytes phys_addr)
 {
+    u32 old_cr3 = read_cr3();
     u32 v;
 
-    //if (la_la_copy(get_cpulocal_var(proc_ptr), &v, NULL, phys_addr, sizeof(v))) {
-    //    panic("get_phys32: la_la_copy failed");
-    //}
+    if (la_la_copy(proc_addr(KERNEL), &v, NULL, phys_addr, sizeof(v))) {
+        panic("get_phys32: la_la_copy failed");
+    }
 
-    //return v;
-    u32 old_cr3 = read_cr3();
-    write_cr3((u32)initial_pgd);
-    reload_cr3();
-
-    u32 temp_addr = (u32)find_free_pages(initial_pgd, 1, (void*)FIXMAP_START, (void*)FIXMAP_END);
-    pde_t * initial_pgd_vir = (pde_t *)((u32)initial_pgd + KERNEL_VMA);
-
-    unsigned long pgd_index = ARCH_PDE(temp_addr);
-    unsigned long pt_index = ARCH_PTE(temp_addr);
-
-    pte_t * pt = (pte_t *)(((pde_t)initial_pgd_vir[pgd_index] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
-    pt[pt_index] = ((u32)phys_addr & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
-
-    temp_addr += phys_addr & ARCH_VM_OFFSET_MASK;
-    memcpy(&v, (void *)temp_addr, sizeof(v));
-
-    pt[pt_index] = 0;
-
-    write_cr3(old_cr3);
-    reload_cr3();
-    
     return v;
 }
 
@@ -299,6 +240,7 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
     if (p->endpoint == TASK_MM) {
         write_cr3((u32)cr3);
         reload_cr3();
+        get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
     }
 
     PST_UNSET(p, PST_MMINHIBIT);
@@ -323,106 +265,9 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
 PUBLIC int vir_copy(endpoint_t dest_ep, void * dest_addr,
                         endpoint_t src_ep, void * src_addr, int len)
 {
-    //struct proc * p_src = endpt_proc(src_ep);
-    //struct proc * p_dest = endpt_proc(dest_ep);
-    //if (p_src == NULL || p_dest == NULL) return EINVAL;
+    struct proc * p_src = endpt_proc(src_ep);
+    struct proc * p_dest = endpt_proc(dest_ep);
+    if (p_src == NULL || p_dest == NULL) return EINVAL;
 
-    //return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
-
-    u32 old_cr3 = read_cr3();
-    pde_t * initial_pgd_vir = (pde_t *)((u32)initial_pgd + KERNEL_VMA);
-
-#define PGD_ENTRY(i) (pte_t *)(((pde_t)initial_pgd_vir[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK)
-
-    write_cr3((u32)initial_pgd);
-    reload_cr3();
-
-    /* map in dest address */
-    u32 dest_la = (u32)va2la(dest_ep, dest_addr);
-    u32 dest_offset = dest_la % PG_SIZE, dest_len = len;
-    if (dest_offset != 0) {
-        dest_la -= dest_offset;
-        dest_len += dest_offset;
-    }
-
-    if (dest_len % PG_SIZE != 0) {
-        dest_len += PG_SIZE - (dest_len % PG_SIZE);
-    }
-
-    int dest_pages = dest_len / PG_SIZE;
-    u32 dest_vaddr = (u32)find_free_pages(initial_pgd, dest_pages, (void*)FIXMAP_START, (void*)FIXMAP_END);
-    if (dest_addr == NULL) return ENOMEM;
-
-    int i;
-    u32 _dest_vaddr = dest_vaddr;
-    u32 _dest_la = dest_la;
-    for (i = 0; i < dest_pages; i++, _dest_la += PG_SIZE, _dest_vaddr += PG_SIZE)
-    {
-        unsigned long pgd_index = ARCH_PDE(_dest_vaddr);
-        unsigned long pt_index = ARCH_PTE(_dest_vaddr);
-
-        pte_t * pt = PGD_ENTRY(pgd_index);
-        pt[pt_index] = ((u32)la2pa(dest_ep, (void *)_dest_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
-    }
-
-    /* map in source address */
-    u32 src_la = (u32)va2la(src_ep, src_addr);
-    u32 src_offset = src_la % PG_SIZE, src_len = len;
-    if (src_offset != 0) {
-        src_la -= src_offset;
-        src_len += src_offset;
-    }
-
-    if (src_len % PG_SIZE != 0) {
-        src_len += PG_SIZE - (src_len % PG_SIZE);
-    }
-
-    u32 src_pages = src_len / PG_SIZE;
-    u32 src_vaddr = (u32)find_free_pages(initial_pgd, src_pages, (void*)FIXMAP_START, (void*)FIXMAP_END);
-    if (src_addr == NULL) return ENOMEM;
-
-    u32 _src_vaddr = src_vaddr;
-    u32 _src_la = src_la;
-    for (i = 0; i < src_pages; i++, _src_la += PG_SIZE, _src_vaddr += PG_SIZE)
-    {
-        unsigned long pgd_index = ARCH_PDE(_src_vaddr);
-        unsigned long pt_index = ARCH_PTE(_src_vaddr);
-
-        pte_t * pt = PGD_ENTRY(pgd_index);
-        pt[pt_index] = ((u32)la2pa(src_ep, (void *)_src_la) & ARCH_VM_ADDR_MASK) | PG_PRESENT | PG_RW | PG_USER;
-    }
-
-    //void * src_pa = (void *)va2pa(src_pid, src_addr);
-    //void * dest_pa = (void *)va2pa(dest_pid, dest_addr);
-
-    //phys_copy(dest_pa, src_pa, len);
-    phys_copy((void *)(dest_vaddr + dest_offset), (void *)(src_vaddr + src_offset), len);
-
-    /* unmap */
-    _dest_vaddr = dest_vaddr;
-    _dest_la = dest_la;
-    for (i = 0; i < dest_pages; i++, _dest_la += PG_SIZE, _dest_vaddr += PG_SIZE)
-    {
-        unsigned long pgd_index = ARCH_PDE(_dest_vaddr);
-        unsigned long pt_index = ARCH_PTE(_dest_vaddr);
-
-        pte_t * pt = PGD_ENTRY(pgd_index);
-        pt[pt_index] = 0;
-    }
-
-    _src_vaddr = src_vaddr;
-    _src_la = src_la;
-    for (i = 0; i < src_pages; i++, _src_la += PG_SIZE, _src_vaddr += PG_SIZE)
-    {
-        unsigned long pgd_index = ARCH_PDE(_src_vaddr);
-        unsigned long pt_index = ARCH_PTE(_src_vaddr);
-
-        pte_t * pt = PGD_ENTRY(pgd_index);
-        pt[pt_index] = 0;
-    }
-
-    write_cr3(old_cr3);
-    reload_cr3();
-
-    return 0;
+    return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
 }

@@ -84,11 +84,11 @@ PUBLIC void pt_init()
         pdm->pde_no = end_pde++;
         phys_bytes phys_addr;
 
-        if ((pdm->entries = (pte_t *)alloc_vmem(&phys_addr, 1)) == NULL) 
+        if ((pdm->entries = (pte_t *)alloc_vmem(&phys_addr, ARCH_PG_SIZE)) == NULL) 
             panic("MM: no memory for pagedir mappings");
         
         pdm->phys_addr = phys_addr;
-        pdm->val = phys_addr | ARCH_PG_PRESENT | ARCH_PG_RW;
+        pdm->val = (phys_addr & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW;
     }
 
     pt_kern_mapping_init();
@@ -111,7 +111,8 @@ PUBLIC void pt_init()
         mypgd->vir_addr[i] = entry;
         mypgd->vir_pts[i] = (pte_t *)((entry + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
     }
-
+    /* remap the kernel */
+    pgd_mapkernel(mypgd);
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
 
@@ -328,7 +329,6 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 
     while (mapped < kern_size) {
         pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit;
-        //pgd->vir_pts[kernel_pde] = (pte_t *)(((int)initial_pgd[i] + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
 
         addr += ARCH_BIG_PAGE_SIZE;
         mapped += ARCH_BIG_PAGE_SIZE;
@@ -375,6 +375,7 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     pdm_slot = slot % slots_per_pdm;
 
     phys_bytes phys = (phys_bytes)pgd->phys_addr & ARCH_VM_ADDR_MASK;
+    //pdm->entries[pdm_slot] = 0;
     pdm->entries[pdm_slot] = phys | ARCH_PG_PRESENT | ARCH_PG_RW;
 
     /* calculate the vir addr of the pgdir visible to the kernel */

@@ -30,10 +30,10 @@ PUBLIC int data_copy(endpoint_t dest_pid, void * dest_addr,
 {
 	MESSAGE m;
     
-    m.SRC_PID = src_pid;
+    m.SRC_EP = src_pid;
     m.SRC_ADDR = src_addr;
 
-    m.DEST_PID = dest_pid;
+    m.DEST_EP = dest_pid;
     m.DEST_ADDR = dest_addr;
 
     m.BUF_LEN = len;

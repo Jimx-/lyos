@@ -37,6 +37,7 @@ struct kinfo_module {
 typedef struct kinfo {
     int magic;
 
+    vir_bytes memory_size;
 	int memmaps_count;
 	struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
 
@@ -46,6 +47,10 @@ typedef struct kinfo {
 	char cmdline[KINFO_CMDLINE_LEN];
 
     unsigned int kernel_start_pde, kernel_end_pde;
+    vir_bytes kernel_text_start, kernel_text_end;
+    vir_bytes kernel_data_start, kernel_data_end;
+    vir_bytes kernel_bss_start, kernel_bss_end;
+    vir_bytes procs_base;
 
     struct boot_proc boot_procs[NR_BOOT_PROCS];
 } kinfo_t;

@@ -38,4 +38,7 @@ extern int pt_init_done;
 
 EXTERN kinfo_t kernel_info;
 
+EXTERN  unsigned int        memory_size;
+EXTERN  int                 mem_start;
+
 #endif 

@@ -27,6 +27,11 @@
 #include "page.h"
 #include <errno.h>
 #include "arch_proto.h"
+#include "arch_const.h"
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+#endif
+#include "lyos/cpulocals.h"
 #include <lyos/cpufeature.h>
 
 /**
@@ -69,6 +74,7 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
 /* <Ring 0> */
 PUBLIC void switch_address_space(struct proc * p) {
+    get_cpulocal_var(pt_proc) = p;
     write_cr3(p->seg.cr3_phys);
     //asm volatile ("mov %0, %%cr3":: "r"(pgd));
 }
