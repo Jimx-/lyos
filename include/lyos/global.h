@@ -67,8 +67,5 @@ EXTERN  int         mb_flags;
 /* MM */
 EXTERN	MESSAGE			mm_msg;
 
-EXTERN  unsigned int        PROCS_BASE;
-EXTERN  int                 kernel_pts;
-
 /* KERNEL LOG */
 extern struct kern_log kern_log;

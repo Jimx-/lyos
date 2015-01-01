@@ -37,37 +37,36 @@
 /**
  * <Ring 0> Setup identity paging for kernel
  */
-PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
+PUBLIC void pg_identity(pde_t * pgd)
 {
-    pte_t * page_table_start = pt;
-    /* full 4G memory */
-    int nr_page_tables = 1024;
-
-    /* identity paging */
-    int nr_pages = nr_page_tables * 1024;
-    int page = PG_PRESENT | PG_RW | PG_USER;
-
     int i;
-    for (i = 0; i < nr_pages; i++, page += PG_SIZE) {
-        page_table_start[i] = page;
-    }
-
     phys_bytes phys;
     int flags = PG_PRESENT | PG_RW | PG_USER | ARCH_PG_BIGPAGE;
     /* initialize page directory */
-    int pde = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
-    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++, pde += PT_SIZE) {
+    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         phys = i * ARCH_BIG_PAGE_SIZE;
         pgd[i] = phys | flags;
     }
+}
 
-    /* map the kernel */
-    for (i = 0; i < kpts; i++) {
-        pgd[i] &= ~PG_USER;     /* not accessible to user */
-        pgd[i + ARCH_PDE(KERNEL_VMA)] = pgd[i];
+PUBLIC pde_t pg_mapkernel(pde_t * pgd)
+{
+    phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;
+    phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys;
+    int pde = ARCH_PDE(KERNEL_VMA);
+    
+    while (mapped < kern_len) {
+        pgd[pde] = kern_phys | PG_PRESENT | PG_RW | ARCH_PG_BIGPAGE;
+        mapped += ARCH_BIG_PAGE_SIZE;
+        kern_phys += ARCH_BIG_PAGE_SIZE;
+        pde++;
     }
 
-    /* switch to the new page directory */
+    return pde;
+}
+
+PUBLIC void pg_load(pde_t * pgd)
+{
     write_cr3((u32)pgd);
     enable_paging();
 }

@@ -293,6 +293,6 @@ PRIVATE void print_memmap()
 	printl("  .data   : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
 	printl("  .bss    : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
 
-	mem_start = kernel_info.procs_base;
+	mem_start = kernel_info.kernel_end_phys;
 	free_mem_size = memory_size - mem_start;
 }

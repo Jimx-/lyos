@@ -72,7 +72,9 @@ typedef struct {
 #define I386_PF_PROT(x)         ((x) & PG_PRESENT)
 #define I386_PF_NOPAGE(x)       (!I386_PF_PROT(x))
 
-PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts);
+PUBLIC void pg_identity(pde_t * pgd);
+PUBLIC pde_t pg_mapkernel(pde_t * pgd);
+PUBLIC void pg_load(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();
 PUBLIC int read_cr2();

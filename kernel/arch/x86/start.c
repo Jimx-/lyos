@@ -72,20 +72,23 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	multiboot_module_t * last_mod = (multiboot_module_t *)mboot->mods_addr;
 	last_mod += mb_mod_count - 1;
 
-	int pgd_start = (unsigned)last_mod->mod_end;
+	phys_bytes mod_ends = (phys_bytes)last_mod->mod_end;
 
 	/* setup kernel page table */
 	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
-	pte_t * pt = (pte_t*)((pgd_start + 0x1000) & ARCH_VM_ADDR_MASK);	/* 4k align */
-	PROCS_BASE = (int)(pt + 1024 * 1024) & ARCH_VM_ADDR_MASK;
-    kernel_pts = PROCS_BASE / PT_MEMSIZE;
-    if (PROCS_BASE % PT_MEMSIZE != 0) {
+	phys_bytes procs_base = mod_ends & ARCH_VM_ADDR_MASK;
+    int kernel_pts = procs_base / PT_MEMSIZE;
+    if (procs_base % PT_MEMSIZE != 0) {
     	kernel_pts++;
-    	PROCS_BASE = kernel_pts * PT_MEMSIZE;
+    	procs_base = kernel_pts * PT_MEMSIZE;
     }
     kinfo.kernel_start_pde = ARCH_PDE(KERNEL_VMA);
-	kinfo.kernel_end_pde = ARCH_PDE(KERNEL_VMA) + kernel_pts;
-	setup_paging(initial_pgd, pt, kernel_pts);
+	kinfo.kernel_start_phys = 0;
+	kinfo.kernel_end_phys = procs_base; 
+
+	pg_identity(initial_pgd);
+	kinfo.kernel_end_pde = pg_mapkernel(initial_pgd);
+	pg_load(initial_pgd);
 	
 	/* initial_pgd --> physical initial pgd */
 
@@ -148,8 +151,6 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	kinfo.kernel_text_end = (vir_bytes)*(&_etext);
 	kinfo.kernel_data_end = (vir_bytes)*(&_edata);
 	kinfo.kernel_bss_end = (vir_bytes)*(&_ebss);
-
-	kinfo.procs_base = PROCS_BASE;
 }
 
 PUBLIC void init_arch()

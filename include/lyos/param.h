@@ -50,7 +50,8 @@ typedef struct kinfo {
     vir_bytes kernel_text_start, kernel_text_end;
     vir_bytes kernel_data_start, kernel_data_end;
     vir_bytes kernel_bss_start, kernel_bss_end;
-    vir_bytes procs_base;
+
+    phys_bytes kernel_start_phys, kernel_end_phys;
 
     struct boot_proc boot_procs[NR_BOOT_PROCS];
 } kinfo_t;
