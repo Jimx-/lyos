@@ -64,8 +64,5 @@ EXTERN  int         mb_mod_addr;
 EXTERN  int         mb_magic;
 EXTERN  int         mb_flags;
 
-/* MM */
-EXTERN	MESSAGE			mm_msg;
-
 /* KERNEL LOG */
 extern struct kern_log kern_log;

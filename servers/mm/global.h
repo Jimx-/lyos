@@ -41,4 +41,6 @@ EXTERN kinfo_t kernel_info;
 EXTERN  unsigned int        memory_size;
 EXTERN  int                 mem_start;
 
+EXTERN  MESSAGE         mm_msg;
+
 #endif 

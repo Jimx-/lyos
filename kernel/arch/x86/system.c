@@ -79,8 +79,6 @@ PUBLIC int arch_reset_proc(struct proc * p)
         p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
 
         strcpy(p->name, "MM");  /* name of the process */
-        p->regs.eip = (u32)task_mm;
-        p->regs.esp = (u32)task_stack;
     } 
     
     p->regs.cs = codeseg;
@@ -199,5 +197,8 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         if (libexec_load_elf(&execi) != 0) panic("can't load MM");
 
         strcpy(p->name, bp->name);
+
+        p->regs.eip = (u32)execi.entry_point;
+        p->regs.esp = (u32)VM_STACK_TOP;
     }
 }

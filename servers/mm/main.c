@@ -54,7 +54,7 @@ PRIVATE void print_memmap();
  * <Ring 1> The main loop of TASK MM.
  * 
  *****************************************************************************/
-PUBLIC void task_mm()
+PUBLIC int main()
 {
 	init_mm();
 	
@@ -92,6 +92,8 @@ PUBLIC void task_mm()
 			send_recv(SEND, src, &mm_msg);
 		}
 	}
+
+	return 0;
 }
 
 /*****************************************************************************
