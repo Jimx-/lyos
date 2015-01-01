@@ -58,7 +58,7 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
     int pde = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++, pde += PT_SIZE) {
         phys = i * ARCH_BIG_PAGE_SIZE;
-        pgd[i] = pde;
+        pgd[i] = phys | flags;
     }
 
     /* map the kernel */

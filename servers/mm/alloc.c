@@ -118,7 +118,7 @@ PUBLIC int alloc_pages(int nr_pages)
 			old_base = hp->h_base + alignment;
 			hp->h_base += memsize + alignment;
 			hp->h_len -= (memsize + alignment);
-			if (prev_ptr->h_base + prev_ptr->h_len == old_base)
+			if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
 				prev_ptr->h_len += alignment;
 
 			/* Delete the hole if used up completely. */

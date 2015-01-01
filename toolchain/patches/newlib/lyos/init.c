@@ -42,7 +42,7 @@ void __lyos_init()
 
 	struct sysinfo * si = get_sysinfo();
 
-	if (si->magic == SYSINFO_MAGIC) {
+	if (si && si->magic == SYSINFO_MAGIC) {
 		_syscall_gate = si->syscall_gate;
 	}
 
