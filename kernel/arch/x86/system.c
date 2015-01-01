@@ -19,11 +19,13 @@
 #include "unistd.h"
 #include "stddef.h"
 #include "protect.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "lyos/fs.h"
 #include "arch_const.h"
 #include "arch_proto.h"
 #ifdef CONFIG_SMP
@@ -32,6 +34,7 @@
 #include "lyos/cpulocals.h"
 #include <lyos/param.h>
 #include <lyos/vm.h>
+#include "libexec/libexec.h"
 
 /**
  * <Ring 0> Switch back to user.
@@ -143,4 +146,58 @@ PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strin
     p->regs.ecx = (reg_t)ps->ps_envstr;
 
     return 0;
+}
+
+PRIVATE int kernel_clearmem(struct exec_info * execi, int vaddr, size_t len)
+{
+    memset((void *)vaddr, 0, len);
+    return 0;
+}
+
+PRIVATE int kernel_allocmem(struct exec_info * execi, int vaddr, size_t len)
+{
+    pg_map(0, vaddr, vaddr + len, &kinfo);
+    reload_cr3();
+    memset((void *)vaddr, 0, len);
+
+    return 0;
+}
+
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+{
+    if (offset + len > execi->header_len) return ENOEXEC;
+    memcpy((void *)vaddr, (void *)((int)(execi->header) + offset), len);
+
+    return 0;
+}
+
+PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
+{
+    struct kinfo_module * mod = &kinfo.modules[bp->proc_nr];
+
+    /* make MM run */
+    if (bp->proc_nr == TASK_MM) {
+        struct exec_info execi;
+        memset(&execi, 0, sizeof(execi));
+
+        execi.stack_top = VM_STACK_TOP;
+        execi.stack_size = PROC_ORIGIN_STACK;
+
+        /* header */
+        execi.header = bp->base;
+        execi.header_len = bp->len;
+
+        execi.allocmem = kernel_allocmem;
+        execi.allocstack = kernel_allocmem;
+        execi.copymem = read_segment;
+        execi.clearproc = NULL;
+        execi.clearmem = kernel_clearmem;
+        
+        execi.proc_e = bp->endpoint;
+        execi.filesize = bp->len;
+
+        if (libexec_load_elf(&execi) != 0) panic("can't load MM");
+
+        strcpy(p->name, bp->name);
+    }
 }

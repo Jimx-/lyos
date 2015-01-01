@@ -101,13 +101,12 @@ PUBLIC void pt_init()
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
     if (vmctl_getpdbr(SELF, &mypdbr)) panic("MM: failed to get page directory base register");
     /* kernel has done identity mapping for the bootstrap page dir we are using, so this is ok */
-    memcpy(&currentpagedir, (void *)mypdbr, ARCH_PGD_SIZE); 
+    data_copy(SELF, &currentpagedir, KERNEL, (void *)mypdbr, ARCH_PGD_SIZE); 
 
     for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         pde_t entry = currentpagedir[i];
 
         if (entry & ARCH_PG_BIGPAGE) continue;
-
         mypgd->vir_addr[i] = entry;
         mypgd->vir_pts[i] = (pte_t *)((entry + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
     }

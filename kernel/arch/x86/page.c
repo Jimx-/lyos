@@ -34,6 +34,83 @@
 #include "lyos/cpulocals.h"
 #include <lyos/cpufeature.h>
 
+PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end)
+{
+    int i;
+
+    for (i = 0; i < pk->memmaps_count; i++) {
+        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+        u64 mmap_end = entry->addr + entry->len;
+        if (start >= entry->addr && end <= mmap_end) {
+            entry->addr = end;
+            entry->len = mmap_end - entry->addr;
+        }
+    }
+}
+
+PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
+{
+    int i;
+
+    for (i = pk->memmaps_count - 1; i >= 0; i--) {
+        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+
+        if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
+        
+        if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= ARCH_PG_SIZE)) {
+            entry->addr += ARCH_PG_SIZE;
+            entry->len -= ARCH_PG_SIZE;
+
+            return entry->addr - ARCH_PG_SIZE;
+        }
+    }
+
+    return 0;
+}
+
+PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
+{
+    pte_t * ret;
+#define PG_PAGETABLES 6
+    static pte_t pagetables[PG_PAGETABLES][1024]  __attribute__((aligned(ARCH_PG_SIZE)));
+    static int pt_inuse = 0;
+
+    if(pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
+
+    ret = pagetables[pt_inuse++];
+    *ph = (phys_bytes)ret - KERNEL_VMA;
+
+    return ret;
+}
+
+PUBLIC void pg_map(phys_bytes phys_addr, vir_bytes vir_addr, vir_bytes vir_end, kinfo_t * pk)
+{
+    pte_t * pt;
+    pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + KERNEL_VMA); 
+    if (phys_addr % PG_SIZE) phys_addr = (phys_addr / PG_SIZE) * PG_SIZE;
+    if (vir_addr % PG_SIZE) vir_addr = (vir_addr / PG_SIZE) * PG_SIZE;
+
+    while (vir_addr < vir_end) {
+        phys_bytes phys = phys_addr;
+        if (phys == 0) phys = pg_alloc_page(pk);
+
+        int pde = ARCH_PDE(vir_addr);
+        int pte = ARCH_PTE(vir_addr);
+
+        if (pgd[pde] & ARCH_PG_BIGPAGE) {
+            phys_bytes pt_ph;
+            pt = pg_alloc_pt(&pt_ph);
+            pgd[pde] = (pt_ph & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
+        } else {
+            pt = (pte_t *)((phys_bytes)pgd[pde] & ARCH_VM_ADDR_MASK + KERNEL_VMA);
+        }
+
+        pt[pte] = (phys & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
+        vir_addr += ARCH_PG_SIZE;
+        if (phys_addr != 0) phys_addr += ARCH_PG_SIZE;
+    }
+}
+
 /**
  * <Ring 0> Setup identity paging for kernel
  */

@@ -113,7 +113,6 @@ PRIVATE void init_mm()
 	print_memmap();
 
 	/* initialize hole table */
-	mem_init(mem_start, free_mem_size);
 	vir_bytes vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
 	vmem_init(vmalloc_start, 
 		VMALLOC_END - vmalloc_start);
@@ -174,17 +173,6 @@ PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int mm_alloctext(struct exec_info * execi, int vaddr, size_t len)
-{
-	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
-	struct vir_region * vr = NULL;
-
-	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
-    list_add(&(vr->list), &(mmexeci->mmp->mem_regions));
-
-    return 0;
-}
-
 PRIVATE int mm_allocstack(struct exec_info * execi, int vaddr, size_t len)
 {
 	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
@@ -228,7 +216,6 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 
     execi->allocmem = mm_allocmem;
     execi->allocstack = mm_allocstack;
-    execi->alloctext = mm_alloctext;
     execi->copymem = read_segment;
     execi->clearproc = NULL;
     execi->clearmem = libexec_clearmem;
@@ -258,6 +245,7 @@ PRIVATE void print_memmap()
 	int usable_memsize = 0;
 	int reserved_memsize = 0;
 	int i;
+	int first = 1;
 
 	memory_size = kernel_info.memory_size;
 
@@ -272,8 +260,15 @@ PRIVATE void print_memmap()
 		printl("  [mem %08x%08x-%08x%08x] %s\n", base_h, base_l, last_h, last_l, 
 			(mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");
 
-		if (mmap->type == KINFO_MEMORY_AVAILABLE) 
+		if (mmap->type == KINFO_MEMORY_AVAILABLE) {
 			usable_memsize += mmap->len;
+			if (first) {
+				mem_init(mmap->addr, mmap->len);
+				first = 0;
+			} else {
+				free_mem(mmap->addr, mmap->len);
+			}
+		}
 		else 
 			reserved_memsize += mmap->len;
 	}

@@ -88,7 +88,6 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
 
     execi.allocmem = libexec_allocmem;
     execi.allocstack = libexec_allocstack;
-    execi.alloctext = libexec_alloctext;
     execi.copymem = read_segment;
     execi.clearproc = libexec_clearproc;
     execi.clearmem = libexec_clearmem;

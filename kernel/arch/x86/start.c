@@ -151,6 +151,9 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	kinfo.kernel_text_end = (vir_bytes)*(&_etext);
 	kinfo.kernel_data_end = (vir_bytes)*(&_edata);
 	kinfo.kernel_bss_end = (vir_bytes)*(&_ebss);
+
+	cut_memmap(&kinfo, 0, PG_SIZE);
+	cut_memmap(&kinfo, 0x100000, kinfo.kernel_end_phys);
 }
 
 PUBLIC void init_arch()

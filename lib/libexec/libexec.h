@@ -22,7 +22,6 @@ struct exec_info {
 	size_t filesize;
 	
 	libexec_allocator_t allocmem;
-	libexec_allocator_t alloctext;
 	libexec_allocator_t allocstack;
 	libexec_copymem_t copymem;
 	libexec_clearmem_t clearmem;
