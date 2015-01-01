@@ -107,17 +107,15 @@ KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
 
 # All Phony Targets
-.PHONY : everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries mrproper fs drivers servers objdirs kvm kvm-debug
+.PHONY : all everything final image clean realclean disasm all buildimg help lib config menuconfig \
+	setup-toolchain libraries mrproper kernel fs drivers servers objdirs kvm kvm-debug
 
 # Default starting position
-kernel : realclean everything
+all : realclean everything
 
 include $(ARCHDIR)/Makefile
 
 everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries $(LYOSKERNEL) fs drivers servers initrd
-
-all : realclean everything image
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -159,7 +157,7 @@ clean :
 realclean :
 	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
 	@find . -path ./toolchain -prune -o -name "*.a" -exec rm -f {} \;
-	@rm -f $(LYOSBOOT) $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINIT) $(LYOSINITRD)
+	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
@@ -256,7 +254,3 @@ drivers:
 servers:
 	@echo -e '$(COLORGREEN)Compiling servers...$(COLORDEFAULT)'
 	@(cd servers; make)
-
-$(LYOSINIT):
-	@echo -e '$(COLORGREEN)Compiling init...$(COLORDEFAULT)'
-	@(cd init; make)
