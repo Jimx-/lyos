@@ -17,6 +17,12 @@
 KERNEL_VMA	equ	0xF0000000
 KERNEL_PDE	equ KERNEL_VMA >> 22
 
+I386_CR0_WP     equ 0x00010000  ; Enable write-protection.
+I386_CR0_PG     equ 0x80000000  ; Enable paging.
+I386_CR4_PSE    equ 0x00000010  ; Page size extensions.
+I386_CR4_PAE    equ 0x00000020  ; Physical addr extens.
+I386_CR4_MCE    equ 0x00000040  ; Machine check enable.
+
 P_LDT_SIZE	equ 2
 
 P_STACKBASE	equ	0

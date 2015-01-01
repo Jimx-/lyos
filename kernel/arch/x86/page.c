@@ -52,9 +52,12 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
         page_table_start[i] = page;
     }
 
+    phys_bytes phys;
+    int flags = PG_PRESENT | PG_RW | PG_USER | ARCH_PG_BIGPAGE;
     /* initialize page directory */
     int pde = (int)page_table_start | PG_PRESENT | PG_RW | PG_USER;
-    for (i = 0; i < nr_page_tables; i++, pde += PT_SIZE) {
+    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++, pde += PT_SIZE) {
+        phys = i * ARCH_BIG_PAGE_SIZE;
         pgd[i] = pde;
     }
 
@@ -66,8 +69,6 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 
     /* switch to the new page directory */
     write_cr3((u32)pgd);
-    /* reload it */
-    reload_cr3();
     enable_paging();
 }
 
@@ -75,34 +76,20 @@ PUBLIC void setup_paging(pde_t * pgd, pte_t * pt, int kpts)
 PUBLIC void switch_address_space(struct proc * p) {
     get_cpulocal_var(pt_proc) = p;
     write_cr3(p->seg.cr3_phys);
-    //asm volatile ("mov %0, %%cr3":: "r"(pgd));
 }
 
 PUBLIC void enable_paging()
 {
-    u32 cr0, cr4;
+    u32 cr4;
     int pge_supported;
 
     pge_supported = _cpufeature(_CPUF_I386_PGE);
 
-    cr0 = read_cr0();
-    cr4 = read_cr4();
-
-    write_cr4(cr4 & ~(I386_CR4_PGE | I386_CR4_PSE));
-    cr4 = read_cr4();
-
-    /* enable PSE */
-    cr4 |= I386_CR4_PSE;
-    write_cr4(cr4);
-
-    cr0 |= I386_CR0_PG;
-    write_cr0(cr0);
-    cr0 |= I386_CR0_WP;
-    write_cr0(cr0);
-
-    if (pge_supported) cr4 |= I386_CR4_PGE;
-
-    write_cr4(cr4);
+    if (pge_supported) {
+        cr4 = read_cr4();
+        cr4 |= I386_CR4_PGE;
+        write_cr4(cr4);
+    }
 }
 
 /* <Ring 0> */

@@ -43,25 +43,20 @@ global k_stacks_end
 ALIGN 0x1000
 pgd0:
 ; 0x00000000
-; pt0 here is the offset instead of the virtual address of pt0,
-; so this can cause bugs
-; TODO: initialize this in runtime or give pt0 a fixed address 
-dd 				pt0 - KERNEL_VMA + 0x007
-dd 				pt0 - KERNEL_VMA + 0x1007
-dd 				pt0 - KERNEL_VMA + 0x2007
-dd 				pt0 - KERNEL_VMA + 0x3007
+dd 				0x00000087	; 0 ~ 4M, 0x87 = PG_PRESENT | PG_USER | PG_RW | PG_BIGPAGE
+dd 				0x00400087	; 4M ~ 8M
+dd 				0x00800087	; 8M ~ 12M
+dd 				0x00c00087	; 12M ~ 16M	
 times 			KERNEL_PDE - 4		dd 	0
-; 0xF0000000
-dd 				pt0 - KERNEL_VMA + 0x007
-dd 				pt0 - KERNEL_VMA + 0x1007
-dd 				pt0 - KERNEL_VMA + 0x2007
-dd 				pt0 - KERNEL_VMA + 0x3007
+; 0xf0000000
+dd 				0x00000087
+dd 				0x00400087
+dd 				0x00800087
+dd 				0x00c00087
 times			1024 - KERNEL_PDE - 4	 	dd  0
 
 [SECTION .bss]
 ALIGN 0x1000
-pt0:
-page_tables		resb 	4 * 4 * 1024
 StackSpace		resb	K_STACK_SIZE
 StackTop:		; stack top
 k_stacks_start:
@@ -116,22 +111,17 @@ global	hwint13
 global	hwint14
 global	hwint15
 
-_start:
-	; setup initial page directory
-	mov ecx, 4096	; 4096 page table entries
-	mov edi, pt0 - KERNEL_VMA	; data segment: pt0 
-	xor eax, eax
-	mov eax, 0x007	; PRESENT | RW | USER
-.1:
-	stosd
-	add	eax, 4096		; 4k per page
-	loop	.1
+_start:				; entry point
+	mov eax, cr4
+	or  eax, I386_CR4_PSE	; enable big page
+	mov cr4, eax
 
 	mov eax, pgd0 - KERNEL_VMA
 	mov cr3, eax
 
 	mov	eax, cr0
-	or	eax, 80000000h
+	or	eax, I386_CR0_PG
+	or  eax, I386_CR0_WP
 	mov	cr0, eax
 
 	lea ecx, [paging_enabled]
