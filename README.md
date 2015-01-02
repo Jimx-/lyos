@@ -15,14 +15,14 @@ FEATURES
 Lyos has many standard features:
 
 * Microkernel
-	
     - Kernel only handles message passing, interrupts and task scheduling, other things like reading/writing files, memory managing and device operations are handled by servers.
+    - Servers are single executables(not modules) that are loaded by kernel at boot time,
+    running in user privilege level and their own address space.
 
 
 * Multitasking
 
 * TTYs
-
 	- Multi-TTY support
     
 * Interprocess Communication
