@@ -153,6 +153,27 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
 }
 
 /**
+ * <Ring 1> Set physical memory for rp.
+ */
+PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr)
+{
+    struct phys_region * pregion = &(rp->phys_block);
+    int len = rp->length;
+    int i;
+
+    for (i = 0; len > 0; len -= PG_SIZE, i++) {
+        struct phys_frame * frame = phys_region_get(pregion, i);
+        if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
+        frame->flags = RF_NORMAL | (rp->flags & RF_WRITABLE);
+        frame->phys_addr = (void *)phys_addr; 
+        frame->refcnt = 1;
+        phys_addr += ARCH_PG_SIZE;
+    }
+
+    return 0;
+}
+
+/**
  * <Ring 1> Map the physical memory of virtual region rp. 
  */
 PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
@@ -182,6 +203,23 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
     rp->flags |= RF_MAPPED;
 
     return 0;
+}
+
+PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp, 
+                vir_bytes minv, vir_bytes maxv, vir_bytes len, int flags)
+{
+    struct vir_region * vr;
+    int pages = len / ARCH_PG_SIZE;
+    if (len % ARCH_PG_SIZE) pages++;
+
+    vir_bytes vaddr = pgd_find_free_pages(&mmp->pgd, pages, minv, maxv);
+    if (vaddr == 0) return NULL;
+
+    if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
+
+    list_add(&vr->list, &mmp->mem_regions);
+
+    return vr;
 }
 
 /**

@@ -83,3 +83,38 @@ PUBLIC int do_mmap()
     mm_msg.MMAP_RETADDR = (int)vr->vir_addr;
     return 0;
 }
+
+PRIVATE int map_perm_check(endpoint_t source, endpoint_t target, phys_bytes phys_addr, phys_bytes len)
+{
+    if (source == TASK_TTY) return 0;
+    return EPERM;
+}
+
+PUBLIC int do_map_phys()
+{
+    endpoint_t who = mm_msg.ENDPOINT == SELF ? mm_msg.source : mm_msg.ENDPOINT;
+    phys_bytes phys_addr = (phys_bytes)mm_msg.ADDR;
+    phys_bytes len = mm_msg.BUF_LEN;
+    struct mmproc * mmp = endpt_mmproc(who);
+    int retval = 0;
+
+    if (!mmp) return EINVAL;
+
+    if ((retval = map_perm_check(mm_msg.source, who, phys_addr, len)) != 0) return retval;
+
+    /* align */
+    off_t offset = phys_addr % ARCH_PG_SIZE;
+    phys_addr -= offset;
+    len += offset;
+    if (len % ARCH_PG_SIZE) len += ARCH_PG_SIZE - (len % ARCH_PG_SIZE);
+
+    struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE);
+    if (!vr) return ENOMEM;
+
+    region_set_phys(vr, phys_addr);
+    region_map_phys(mmp, vr);
+
+    mm_msg.ADDR = (void *)((vir_bytes)vr->vir_addr + offset);
+
+    return 0;
+}

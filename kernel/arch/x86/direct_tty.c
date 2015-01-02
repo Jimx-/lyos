@@ -28,6 +28,8 @@
 
 PRIVATE int disp_pos = 0, print_line = 0;
 
+#define V_MEM_BASE  (0xB8000    + KERNEL_VMA)
+
 #define SCR_HEIGHT 25
 #define SCR_WIDTH 80
 #define SCR_SIZE (80 * 25)

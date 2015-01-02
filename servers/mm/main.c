@@ -78,6 +78,9 @@ PUBLIC int main()
 		case PROCCTL:
 			mm_msg.RETVAL = do_procctl();
 			break;
+		case MM_MAP_PHYS:
+			mm_msg.RETVAL = do_map_phys();
+			break;
 		case FAULT:
 			do_handle_fault();
 			reply = 0;

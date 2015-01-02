@@ -380,6 +380,45 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     return vmctl_set_address_space(who->endpoint, pgd->phys_addr, (void *)vir_addr);
 }
 
+PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv, vir_bytes maxv)
+{
+    unsigned int start_pde = ARCH_PDE(minv);
+    unsigned int end_pde = ARCH_PDE(maxv);
+
+    int i, j;
+    int allocated_pages = 0;
+    vir_bytes retaddr = 0;
+    for (i = start_pde; i < end_pde; i++) {
+        pte_t * pt_entries = pgd->vir_pts[i];
+        /* the pde is empty, we have I386_VM_DIR_ENTRIES free pages */
+        if (pt_entries == NULL) {
+            nr_pages -= ARCH_VM_DIR_ENTRIES;
+            allocated_pages += ARCH_VM_DIR_ENTRIES;
+            if (retaddr == 0) retaddr = ARCH_VM_ADDRESS(i, 0, 0);
+            if (nr_pages <= 0) {
+                return retaddr;
+            }
+            continue;
+        }
+
+        for (j = 0; j < ARCH_VM_DIR_ENTRIES; j++) {
+            if (pt_entries[j] != 0) {
+                nr_pages += allocated_pages;
+                retaddr = 0;
+                allocated_pages = 0;
+            } else {
+                nr_pages--;
+                allocated_pages++;
+                if (!retaddr) retaddr = ARCH_VM_ADDRESS(i, j, 0);
+            }
+
+            if (nr_pages <= 0) return retaddr;
+        }
+    }
+
+    return 0;
+}
+
 PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */

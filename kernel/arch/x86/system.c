@@ -61,7 +61,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
 {
     u32 codeseg, dataseg;
 
-    if (p->endpoint == TASK_TTY) {     /* TASK */
+    if (0) {     /* TASK */
         codeseg = SELECTOR_TASK_CS | RPL_TASK;
         dataseg = SELECTOR_TASK_DS | RPL_TASK;
     } else {                  /* USER PROC */

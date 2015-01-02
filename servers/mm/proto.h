@@ -47,12 +47,16 @@ PUBLIC int pgd_new(pgdir_t * pgd);
 PUBLIC int pgd_mapkernel(pgdir_t * pgd);
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
 PUBLIC int pgd_clear(pgdir_t * pgd);
+PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv, vir_bytes maxv);
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);
 PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags);
 PUBLIC int region_alloc_phys(struct vir_region * rp);
 PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp);
+PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr);
 PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp);
+PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp, 
+                vir_bytes minv, vir_bytes maxv, vir_bytes len, int flags);
 PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);

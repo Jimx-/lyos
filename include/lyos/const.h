@@ -61,8 +61,7 @@
 #define	START_ADDR_L	0xD	/* reg index of video mem start addr (LSB) */
 #define	CURSOR_H	0xE	/* reg index of cursor position (MSB) */
 #define	CURSOR_L	0xF	/* reg index of cursor position (LSB) */
-#define	V_MEM_BASE	(0xB8000	+ KERNEL_VMA) /* base of color video memory */
-#define	V_MEM_SIZE	0x8000	/* 32K: B8000H -> BFFFFH */
+
 
 /* CMOS */
 #define CLK_ELE		0x70	/* CMOS RAM address register port (write only)
@@ -234,6 +233,9 @@ enum msgtype {
     FS_SYNC,
     FS_MMAP,
 
+    /* message type for mm calls */
+    MM_MAP_PHYS = 1201,
+    
     /* message type for pm calls */
     PM_VFS_INIT = 1501,			/* 1501 */
     PM_MM_FORK,

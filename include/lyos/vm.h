@@ -59,5 +59,6 @@ PUBLIC int vmctl_reply_kern_mapping(int index, void * vir_addr);
 PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned * pdbr);
 PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_vir);
 PUBLIC int umap(endpoint_t ep, void * vir_addr, phys_bytes * phys_addr);
+PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len);
 
 #endif

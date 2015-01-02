@@ -28,8 +28,15 @@
 #include "keyboard.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
+#include <lyos/vm.h>
+#include <sys/mman.h>
 #include "proto.h"
 #include "global.h"
+
+#define	V_MEM_BASE	0xB8000 /* base of color video memory */
+#define	V_MEM_SIZE	0x8000	/* 32K: B8000H -> BFFFFH */
+
+char * console_mem = NULL;
 
 /* #define __TTY_DEBUG__ */
 
@@ -103,6 +110,11 @@ PUBLIC void init_screen(TTY* tty)
 	tty->tty_devwrite = cons_write;
 	tty->tty_echo = out_char;
 	
+	if (!console_mem) {
+		console_mem = mm_map_phys(SELF, V_MEM_BASE, V_MEM_SIZE);
+		if (console_mem == MAP_FAILED) panic("can't map console memory");
+	}
+
 	/* 
 	 * NOTE:
 	 *   variables related to `position' and `size' below are
@@ -136,7 +148,7 @@ PUBLIC void init_screen(TTY* tty)
 PUBLIC void out_char(TTY* tty, char ch)
 {
 	CONSOLE * con = tty->tty_dev;
-	u8* pch = (u8*)(V_MEM_BASE + con->cursor * 2);
+	u8* pch = (u8*)(console_mem + con->cursor * 2);
 
 	assert(con->cursor - con->orig < con->con_size);
 
@@ -225,7 +237,7 @@ PUBLIC void out_char(TTY* tty, char ch)
  *****************************************************************************/
 PRIVATE void clear_screen(int pos, int len)
 {
-	u8 * pch = (u8*)(V_MEM_BASE + pos * 2);
+	u8 * pch = (u8*)(console_mem + pos * 2);
 	while (--len >= 0) {
 		*pch++ = ' ';
 		*pch++ = DEFAULT_CHAR_COLOR;
@@ -581,7 +593,7 @@ PRIVATE void flush(CONSOLE* con)
 #ifdef __TTY_DEBUG__
 	int lineno = 0;
 	for (lineno = 0; lineno < con->con_size / SCR_WIDTH; lineno++) {
-		u8 * pch = (u8*)(V_MEM_BASE +
+		u8 * pch = (u8*)(console_mem +
 				   (con->orig + (lineno + 1) * SCR_WIDTH) * 2
 				   - 4);
 		*pch++ = lineno / 10 + '0';
@@ -607,6 +619,6 @@ PRIVATE void flush(CONSOLE* con)
  *****************************************************************************/
 PRIVATE	void w_copy(unsigned int dst, const unsigned int src, int size)
 {
-	data_copy(KERNEL, (void*)(V_MEM_BASE + (dst << 1)), KERNEL, (void*)(V_MEM_BASE + (src << 1)), size << 1);
+	data_copy(KERNEL, (void*)(console_mem + (dst << 1)), KERNEL, (void*)(console_mem + (src << 1)), size << 1);
 }
 
