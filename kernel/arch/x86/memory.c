@@ -191,6 +191,7 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
 #define KM_LAST     KM_USERMAPPED
 
 extern char _usermapped[], _eusermapped[];
+PUBLIC vir_bytes usermapped_offset;
 
 /**
  * <Ring 0> Get kernel mapping information.
@@ -218,6 +219,7 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 #define USER_PTR(x) (((char *)(x) - usermapped_start) + (char *)vir_addr)
 
     if (index == KM_USERMAPPED) {
+        usermapped_offset = (char *)vir_addr - usermapped_start;
         sysinfo.magic = SYSINFO_MAGIC;
         sysinfo_user = (struct sysinfo *)USER_PTR(&sysinfo);
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
@@ -225,8 +227,10 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 
         if (syscall_style & SST_INTEL_SYSENTER) {
             printk("kernel: selecting intel SYSENTER syscall style\n");
-        }
-        sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
+            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_sysenter);
+        } else {
+            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
+        }   
     }
 
     return 0;

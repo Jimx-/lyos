@@ -15,20 +15,26 @@
 
 %include "sconst.inc"
 
+ALIGN 4
+
 INT_VECTOR_SYS_CALL equ 0x90
 
 [SECTION .usermapped]
 
 global syscall_int
+global syscall_sysenter
 
 syscall_int:
-	push ebx
+	push ebp
+	mov ebp, esp
 
-	mov eax, [esp + 4 + 4]		; syscall_nr
-	mov	ebx, [esp + 4 + 8]		; m
+	push ebx
+	mov eax, [esp + 8 + 4]		; syscall_nr
+	mov	ebx, [esp + 8 + 8]		; m
 	int	INT_VECTOR_SYS_CALL
 
 	pop	ebx
+	pop ebp
 
 	ret
 
@@ -36,5 +42,19 @@ syscall_sysenter:
 	push ebp
 	mov ebp, esp
 
+	push ebx
+	push ecx
+	push edx
+
+	mov eax, [esp + 16 + 4]		; syscall_nr
+	mov	ebx, [esp + 16 + 8]		; m
+	mov ecx, esp
+	mov edx, .1
+
+	sysenter
+.1:
+	pop edx
+	pop ecx
+	pop ebx
 	pop ebp
 	ret

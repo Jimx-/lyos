@@ -82,5 +82,8 @@ PRIVATE int discover_cpus()
 
 PRIVATE void smp_start_aps()
 {
+    /* set up SYSENTER support */
+    init_tss(cpuid, (u32)get_k_stack_top(cpuid));
+
     finish_bsp_booting();
 }

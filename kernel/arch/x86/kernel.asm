@@ -32,6 +32,7 @@ extern	idt_ptr
 extern	current
 extern	tss
 extern 	dispatch_sys_call
+extern  usermapped_offset
 bits 32
 
 global pgd0
@@ -75,6 +76,7 @@ MultiBootHeader:
 global _start	; export _start
 
 global restore_user_context_int
+global restore_user_context_sysenter
 global sys_call
 global sys_call_sysenter
 
@@ -410,10 +412,30 @@ sys_call:
 ;                            sys_call_sysenter
 ; =============================================================================
 sys_call_sysenter:
-	ret
+	mov 	ebp, [esp]	; get proc addr
+	mov 	dword [ebp + P_TRAPSTYLE], KTS_SYSENTER
+
+	add 	edx, dword [usermapped_offset]	; edx now points to return address in usermapped area
+	mov 	[ebp + EIPREG], edx
+    mov 	[ebp + ESPREG], ecx
+    pushf
+    pop 	edx
+    mov 	[ebp + EFLAGSREG], edx 
+
+    push 	ebp
+    push	ebx
+	push 	eax
+    call    dispatch_sys_call
+	add		esp, 8 		; esp <- esi(proc ptr)
+	pop 	ebp
+
+	mov 	[ebp + EAXREG], eax
+
+	push 	ebp
+	jmp 	switch_to_user
 
 ; ====================================================================================
-;                                   restore_user_context
+;                                   restore_user_context_int
 ; ====================================================================================
 restore_user_context_int:
 	mov	ebp, [esp + 4]
@@ -430,3 +452,21 @@ restore_user_context_int:
 	; esp <- stack for iretd
 	add esp, EIPREG
 	iretd
+
+; ====================================================================================
+;                                   restore_user_context_sysenter
+; ====================================================================================
+restore_user_context_sysenter:
+	mov ebp, [esp + 4]	; get proc addr
+	mov ax, SELECTOR_USER_DS
+	mov ds, ax
+
+	mov edx, [ebp + EIPREG]
+	mov ecx, [ebp + ESPREG]
+	mov eax, [ebp + EAXREG]
+	mov edi, [ebp + EFLAGSREG]
+	push edi
+	popf
+
+	sti
+	sysexit		; go back to user

@@ -97,6 +97,9 @@ PUBLIC void restore_user_context(struct proc * p)
     case KTS_INT:
         restore_user_context_int(p);
         break;
+    case KTS_SYSENTER:
+        restore_user_context_sysenter(p);
+        break;
     default:
         panic("unknown trap type recorded");
     }
@@ -129,7 +132,8 @@ PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strin
     p->regs.eax = ps->ps_nargvstr;
     p->regs.edx = (reg_t)ps->ps_argvstr;
     p->regs.ecx = (reg_t)ps->ps_envstr;
-
+    p->seg.trap_style = KTS_INT;
+    
     return 0;
 }
 

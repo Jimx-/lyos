@@ -56,6 +56,7 @@ EOI		equ	0x20
 ;These selector must be the same as `protect.h'
 SELECTOR_FLAT_C		equ		0x08		;
 SELECTOR_KERNEL_CS	equ		SELECTOR_FLAT_C
+SELECTOR_USER_DS	equ		0x20
 
 K_STACK_SIZE	equ	0x1000
 CONFIG_SMP_MAX_CPUS	equ	8
