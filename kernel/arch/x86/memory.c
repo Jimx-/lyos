@@ -265,9 +265,10 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
 PUBLIC int vir_copy(endpoint_t dest_ep, void * dest_addr,
                         endpoint_t src_ep, void * src_addr, int len)
 {
-    struct proc * p_src = endpt_proc(src_ep);
-    struct proc * p_dest = endpt_proc(dest_ep);
-    if (p_src == NULL || p_dest == NULL) return EINVAL;
+    struct proc * p_src = src_ep == NO_TASK ? NULL : endpt_proc(src_ep);
+    struct proc * p_dest = dest_ep == NO_TASK ? NULL : endpt_proc(dest_ep);
+    if ((src_ep != NO_TASK && p_src == NULL)
+         || (dest_ep != NO_TASK && p_dest == NULL)) return EINVAL;
 
     return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
 }

@@ -102,7 +102,7 @@ PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
 
  	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
- 	pt_writemap(&(mmproc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW);
+ 	pt_writemap(&(mmproc_table[TASK_MM].pgd), (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW | PG_USER);
  	
  	return retval;
 }

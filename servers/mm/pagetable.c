@@ -101,7 +101,7 @@ PUBLIC void pt_init()
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
     if (vmctl_getpdbr(SELF, &mypdbr)) panic("MM: failed to get page directory base register");
     /* kernel has done identity mapping for the bootstrap page dir we are using, so this is ok */
-    data_copy(SELF, &currentpagedir, KERNEL, (void *)mypdbr, ARCH_PGD_SIZE); 
+    data_copy(SELF, &currentpagedir, NO_TASK, (void *)mypdbr, ARCH_PGD_SIZE); 
 
     for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         pde_t entry = currentpagedir[i];
@@ -110,8 +110,7 @@ PUBLIC void pt_init()
         mypgd->vir_addr[i] = entry;
         mypgd->vir_pts[i] = (pte_t *)((entry + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
     }
-    /* remap the kernel */
-    pgd_mapkernel(mypgd);
+
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
 
@@ -353,7 +352,6 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
     int i;
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        //if (i >= ARCH_PDE(KERNEL_VMA) && i < ARCH_PDE(KERNEL_VMA) + kernel_pts) continue;  /* never unmap kernel */
         if (pgd->vir_pts[i]) {
             free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
         }
@@ -374,7 +372,6 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     pdm_slot = slot % slots_per_pdm;
 
     phys_bytes phys = (phys_bytes)pgd->phys_addr & ARCH_VM_ADDR_MASK;
-    //pdm->entries[pdm_slot] = 0;
     pdm->entries[pdm_slot] = phys | ARCH_PG_PRESENT | ARCH_PG_RW;
 
     /* calculate the vir addr of the pgdir visible to the kernel */

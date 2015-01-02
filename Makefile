@@ -213,7 +213,7 @@ libraries:
 	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
 	@(cd lib; make)
 
-kernel:
+kernel: libraries
 	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'
 	@(cd kernel; make)
 ifeq ($(CONFIG_COMPRESS_GZIP),y)

@@ -188,8 +188,9 @@ PRIVATE int mm_allocstack(struct exec_info * execi, int vaddr, size_t len)
 
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
-    if (offset + len > execi->header_len) return ENOEXEC;
-    data_copy(execi->proc_e, (void *)vaddr, SELF, (void *)((int)(execi->header) + offset), len);
+	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
+    if (offset + len > mmexeci->bp->len) return ENOEXEC;
+    data_copy(execi->proc_e, (void *)vaddr, NO_TASK, (void *)((int)(mmexeci->bp->base) + offset), len);
     
     return 0;
 }
@@ -198,11 +199,10 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 {
 	if (pgd_new(&(mmp->pgd))) panic("MM: spawn_bootproc: pgd_new failed");
 	if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
-
-	bp->base += KERNEL_VMA;
 	
 	struct mm_exec_info mmexeci;
 	struct exec_info * execi = &mmexeci.execi;
+	char header[ARCH_PG_SIZE];
     memset(&mmexeci, 0, sizeof(mmexeci));
 
     mmexeci.mmp = mmp;
@@ -213,8 +213,9 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     execi->stack_size = PROC_ORIGIN_STACK;
 
     /* header */
-    execi->header = bp->base;
-    execi->header_len = bp->len;
+    data_copy(SELF, header, NO_TASK, bp->base, sizeof(header));
+    execi->header = header;
+    execi->header_len = sizeof(header);
 
     execi->allocmem = mm_allocmem;
     execi->allocstack = mm_allocstack;

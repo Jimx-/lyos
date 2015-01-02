@@ -61,7 +61,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
 {
     u32 codeseg, dataseg;
 
-    if (p->endpoint == TASK_MM || p->endpoint == TASK_TTY) {     /* TASK */
+    if (p->endpoint == TASK_TTY) {     /* TASK */
         codeseg = SELECTOR_TASK_CS | RPL_TASK;
         dataseg = SELECTOR_TASK_DS | RPL_TASK;
     } else {                  /* USER PROC */
@@ -73,12 +73,9 @@ PUBLIC int arch_reset_proc(struct proc * p)
     p->regs.esp = 0;
 
     if (p->endpoint == TASK_MM) {
-        /* use kernel page table */ 
-
+        /* use bootstrap page table */ 
         p->seg.cr3_phys = (u32)initial_pgd;
         p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
-
-        strcpy(p->name, "MM");  /* name of the process */
     } 
     
     p->regs.cs = codeseg;
