@@ -59,16 +59,6 @@ PUBLIC struct proc * arch_switch_to_user()
 
 PUBLIC int arch_reset_proc(struct proc * p)
 {
-    u32 codeseg, dataseg;
-
-    if (0) {     /* TASK */
-        codeseg = SELECTOR_TASK_CS | RPL_TASK;
-        dataseg = SELECTOR_TASK_DS | RPL_TASK;
-    } else {                  /* USER PROC */
-        codeseg = SELECTOR_USER_CS | RPL_USER;
-        dataseg = SELECTOR_USER_DS | RPL_USER;
-    }
-
     p->regs.eip = 0;
     p->regs.esp = 0;
 
@@ -78,12 +68,12 @@ PUBLIC int arch_reset_proc(struct proc * p)
         p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
     } 
     
-    p->regs.cs = codeseg;
+    p->regs.cs = SELECTOR_USER_CS | RPL_USER;
     p->regs.ds =
     p->regs.es =
     p->regs.fs =
     p->regs.gs =
-    p->regs.ss = dataseg;
+    p->regs.ss = SELECTOR_USER_DS | RPL_USER;
 
     p->regs.eflags  = 0x202;    /* IF=1, bit 2 is always 1 */
     p->seg.trap_style = KTS_INT;

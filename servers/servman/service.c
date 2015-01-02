@@ -66,8 +66,6 @@ PUBLIC int do_service_up(MESSAGE * msg)
     int retval = serv_exec(child_pid, pathname);
     if (retval) return retval;
 
-    privctl(child_pid, PRIVCTL_SET_TASK, NULL);
-
     return 0;
 }
 

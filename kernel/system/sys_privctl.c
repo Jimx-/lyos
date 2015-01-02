@@ -68,5 +68,5 @@ PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
     	break;
 	}
 
-	return arch_privctl(m, p);
+	return EINVAL;
 }

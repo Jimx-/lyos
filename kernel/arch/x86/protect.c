@@ -99,8 +99,6 @@ PUBLIC void init_prot()
 	init_desc(&gdt[0], 0, 0, 0);
 	init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR  | DA_32 | DA_LIMIT_4K);
 	init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW  | DA_32 | DA_LIMIT_4K);
-	init_desc(&gdt[INDEX_TASK_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_TASK << 5);
-	init_desc(&gdt[INDEX_TASK_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_TASK << 5);
 	init_desc(&gdt[INDEX_USER_C], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
 	init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff, DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
 	init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
@@ -310,30 +308,6 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
 	p_desc->limit_high_attr2= ((limit >> 16) & 0x0F) |
 				  ((attribute >> 8) & 0xF0);	/* 段界限 2 + 属性 2 */
 	p_desc->base_high	= (base >> 24) & 0x0FF;		/* 段基址 3		(1 字节) */
-}
-
-PUBLIC int arch_privctl(MESSAGE * m, struct proc* p)
-{
-	endpoint_t whom = m->ENDPOINT;
-	int request = m->REQUEST;
-	
-	struct proc * target = endpt_proc(whom);
-	if (!target) return EINVAL;
-
-	switch (request) {
-	case PRIVCTL_SET_TASK:
-		target->regs.cs = SELECTOR_TASK_CS | RPL_TASK;
-		target->regs.ds =
-		target->regs.es =
-		target->regs.fs =
-		target->regs.gs =
-		target->regs.ss = SELECTOR_TASK_DS | RPL_TASK;
-    	break;
-    default:
-    	break;
-	}
-
-	return 0;
 }
 
 /**
