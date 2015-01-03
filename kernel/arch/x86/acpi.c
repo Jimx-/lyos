@@ -216,3 +216,24 @@ PUBLIC struct acpi_madt_lapic * acpi_get_lapic_next()
 
     return ret;
 }
+
+PUBLIC struct acpi_madt_ioapic * acpi_get_ioapic_next()
+{
+    static unsigned idx = 0;
+    static struct acpi_madt_hdr * madt_hdr;
+
+    struct acpi_madt_ioapic * ret;
+
+    if (idx == 0) {
+        madt_hdr = (struct acpi_madt_hdr *)acpi_get_table_base("APIC");
+        if (madt_hdr == NULL)
+            return NULL;
+    }
+
+    ret = (struct acpi_madt_ioapic *)
+        acpi_madt_get_typed_item(madt_hdr, ACPI_MADT_TYPE_IOAPIC, idx);
+    if (ret)
+        idx++;
+
+    return ret;
+}

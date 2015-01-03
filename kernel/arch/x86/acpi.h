@@ -58,9 +58,18 @@ struct acpi_madt_lapic {
     u32   flags;
 };
 
+struct acpi_madt_ioapic {
+    struct acpi_madt_item_hdr hdr;
+    u8    id;
+    u8    __reserved;
+    u32   address;
+    u32   global_int_base;
+};
+
 #define MAX_RSDT    35
 
 PUBLIC void acpi_init();
 PUBLIC struct acpi_madt_lapic * acpi_get_lapic_next();
+PUBLIC struct acpi_madt_ioapic * acpi_get_ioapic_next();
 
 #endif

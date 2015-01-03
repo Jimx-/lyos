@@ -32,6 +32,13 @@
 #define APIC_ERROR_INT_VECTOR		0xfe
 #define APIC_SPURIOUS_INT_VECTOR	0xff
 
+#define IOAPIC_ID				0x0
+#define IOAPIC_VERSION			0x1
+#define IOAPIC_ARB				0x2
+#define IOAPIC_REDIR_TABLE		0x10
+
+#define MAX_IOAPICS		32
+
 #define lapic_read(what)	(*((volatile u32 *)((what))))
 #define lapic_write(what, data)	do {			\
 									(*((volatile u32 *)((what)))) = data;		\
@@ -40,5 +47,16 @@
 
 PUBLIC u32 apicid();
 PUBLIC int lapic_enable(unsigned cpu);
+PUBLIC int detect_ioapics();
+
+struct io_apic {
+	unsigned	id;
+	char		version;
+	vir_bytes	addr;
+	phys_bytes	phys_addr;
+	vir_bytes	vir_addr;
+	unsigned	pins;
+	unsigned	gsi_base;
+};
 
 #endif

@@ -24,7 +24,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "apic.h"
+#include "acpi.h"
 #include "apic.h"
 #include "arch_proto.h"
 #include "arch_const.h"
@@ -108,9 +108,27 @@ PRIVATE u64 tsc0, tsc1;
 PRIVATE u32 lapic_tctr0, lapic_tctr1;
 PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 
+PUBLIC struct io_apic io_apics[MAX_IOAPICS];
+PUBLIC u32 nr_ioapics;
+
 PUBLIC u32 apicid()
 {
     return lapic_read(LAPIC_ID);
+}
+
+#define IOAPIC_IOREGSEL 0x0
+#define IOAPIC_IOWIN    0x10
+
+PRIVATE u32 ioapic_read(u32 ioa_base, u32 reg)
+{
+    *((volatile u32 *)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
+    return *(volatile u32 *)(ioa_base + IOAPIC_IOWIN);
+}
+
+PRIVATE void ioapic_write(u32 ioa_base, u8 reg, u32 val)
+{
+    *((volatile u32 *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
+    *((volatile u32 *)(ioa_base + IOAPIC_IOWIN)) = val;
 }
 
 PRIVATE int calibrate_handler(irq_hook_t * hook)
@@ -240,4 +258,32 @@ PUBLIC int lapic_enable(unsigned cpu)
     apic_calibrate(cpu);
 
     return 1;
+}
+
+PUBLIC int detect_ioapics()
+{
+    int n = 0;
+    struct acpi_madt_ioapic * acpi_ioa;
+
+    while (n < MAX_IOAPICS) {
+        acpi_ioa = acpi_get_ioapic_next();
+        if (acpi_ioa == NULL) break;
+
+        io_apics[n].id = acpi_ioa->id;
+        io_apics[n].addr = acpi_ioa->address;
+        io_apics[n].phys_addr = (phys_bytes)acpi_ioa->address;
+        io_apics[n].gsi_base = acpi_ioa->global_int_base;
+        io_apics[n].pins = ((ioapic_read(io_apics[n].addr,
+                IOAPIC_VERSION) & 0xff0000) >> 16) + 1; 
+        io_apics[n].version = ioapic_read(io_apics[n].addr,
+                IOAPIC_VERSION) & 0x0000ff;
+        printk("IOAPIC[%d]: apic_id %d, version %d, address 0x%x, GSI %d-%d\n", 
+            n, io_apics[n].id, io_apics[n].version, io_apics[n].addr, io_apics[n].gsi_base, io_apics[n].pins - 1);
+
+        n++;
+    }
+
+    nr_ioapics = n;
+
+    return nr_ioapics;
 }

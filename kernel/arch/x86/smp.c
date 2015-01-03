@@ -56,6 +56,10 @@ PUBLIC void smp_init()
         panic("unable to initialize bsp lapic");
     }
 
+    if (!detect_ioapics()) {
+        panic("no ioapic detected");
+    }
+    
     switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -
             X86_STACK_TOP_RESERVED, smp_start_aps);
 }
