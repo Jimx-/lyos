@@ -121,6 +121,7 @@ PUBLIC void pg_identity(pde_t * pgd)
     int flags = PG_PRESENT | PG_RW | PG_USER | ARCH_PG_BIGPAGE;
     /* initialize page directory */
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
+        if (i >= kinfo.kernel_start_pde && i < kinfo.kernel_end_pde) continue;  /* don't touch kernel */
         phys = i * ARCH_BIG_PAGE_SIZE;
         pgd[i] = phys | flags;
     }

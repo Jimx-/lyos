@@ -24,7 +24,9 @@ PUBLIC void	disable_int();
 PUBLIC void	enable_int();
 PUBLIC void	port_read(u16 port, void* buf, int n);
 PUBLIC void	port_write(u16 port, void* buf, int n);
-PUBLIC void	glitter(int row, int col);
+
+PUBLIC void read_tsc(unsigned long *high, unsigned long *low);
+PUBLIC void read_tsc_64(u64 * v);
 
 PUBLIC void switch_address_space(struct proc * p);
 
@@ -62,14 +64,7 @@ PUBLIC int      disable_irq(irq_hook_t * hook);
 PUBLIC void     enable_irq(irq_hook_t * hook);
 
 /* clock.c */
-PUBLIC void 	init_clock();
-PUBLIC void 	milli_delay(int milli_sec);
-
-/* mm/main.c */
-PUBLIC void	task_mm();
-
-/* servman/servman.c */
-PUBLIC void task_servman();
+PUBLIC int   	init_bsp_timer(int freq);
 
 /* proc.c */
 PUBLIC  void    init_proc();

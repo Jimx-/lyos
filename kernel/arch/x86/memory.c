@@ -33,7 +33,8 @@
 #include <lyos/param.h>
 #include <lyos/vm.h>
 #include <errno.h>
-
+#include "apic.h"
+    
 extern int syscall_style;
 
 /* temporary mappings */
@@ -187,8 +188,9 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
     return la2pa(ep, va2la(ep, va));
 }
 
-#define KM_USERMAPPED  0
-#define KM_LAST     KM_USERMAPPED
+#define KM_USERMAPPED   0
+#define KM_LAPIC        1
+#define KM_LAST         KM_LAPIC
 
 extern char _usermapped[], _eusermapped[];
 PUBLIC vir_bytes usermapped_offset;
@@ -204,7 +206,17 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
         *addr = (caddr_t)((char *)*(&_usermapped) - KERNEL_VMA);
         *len = (char *)*(&_eusermapped) - (char *)*(&_usermapped);
         *flags = KMF_USER;
+        return 0;
+    } 
+#if CONFIG_X86_LOCAL_APIC
+    if (index == KM_LAPIC) {
+        if (!lapic_addr) return EINVAL;
+        *addr = lapic_addr;
+        *len = 4 << 10;
+        *flags = KMF_WRITE;
+        return 0;
     }
+#endif
 
     return 0;
 }
@@ -230,8 +242,16 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
             sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_sysenter);
         } else {
             sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
-        }   
+        }
+        return 0;   
     }
+#if CONFIG_X86_LOCAL_APIC
+    if (index == KM_LAPIC) {
+        lapic_vaddr = (vir_bytes)vir_addr;
+        lapic_eoi_addr = LAPIC_EOI;
+        return 0;
+    }
+#endif
 
     return 0;
 }
@@ -245,6 +265,8 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
         write_cr3((u32)cr3);
         reload_cr3();
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+        /* using virtual address now */
+        lapic_addr = lapic_vaddr;
     }
 
     PST_UNSET(p, PST_MMINHIBIT);

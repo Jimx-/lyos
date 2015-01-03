@@ -71,6 +71,24 @@ PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
     hwint_unmask(irq);
 }
 
+PUBLIC void rm_irq_handler(irq_hook_t * hook)
+{
+    int irq = hook->irq;
+    int id = hook->id;
+
+    irq_hook_t ** line = &irq_handlers[irq];
+    while (*line != NULL) {
+        if ((*line)->id == id) {
+            (*line) = (*line)->next;
+        } else 
+            line = &(*line)->next;
+    }
+
+    if (irq_handlers[irq] == NULL) {
+        hwint_mask(irq);
+    }
+}
+
 PUBLIC void irq_handle(int irq)
 {
     irq_hook_t * hook = irq_handlers[irq];

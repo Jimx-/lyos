@@ -50,38 +50,10 @@ PUBLIC int clock_handler(irq_hook_t * hook)
     return 1;
 }
 
-PUBLIC int get_ticks();
-
-/*****************************************************************************
- *                                milli_delay
- *****************************************************************************/
-/**
- * <Ring 1~3> Delay for a specified amount of time.
- * 
- * @param milli_sec How many milliseconds to delay.
- *****************************************************************************/
-PUBLIC void milli_delay(int milli_sec)
+PUBLIC int init_bsp_timer(int freq)
 {
-    int t = get_ticks();
+    if (init_local_timer(freq)) return -1;
+    if (put_local_timer_handler(clock_handler)) return -1;
 
-    while(((get_ticks() - t) * 1000 / HZ) < milli_sec) {}
+    return 0;
 }
-
-/*****************************************************************************
- *                                init_clock
- *****************************************************************************/
-/**
- * <Ring 0> Initialize 8253/8254 PIT (Programmable Interval Timer).
- * 
- *****************************************************************************/
-PUBLIC void init_clock()
-{
-    /* 初始化 8253 PIT */
-    out_byte(TIMER_MODE, RATE_GENERATOR);
-    out_byte(TIMER0, (u8) (TIMER_FREQ/HZ) );
-    out_byte(TIMER0, (u8) ((TIMER_FREQ/HZ) >> 8));
-
-    put_local_timer_handler(clock_handler);
-}
-
-

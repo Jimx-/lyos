@@ -36,6 +36,7 @@ extern pde_t pgd0;
 PUBLIC void * k_stacks;
 
 PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
+PRIVATE char * env_get(const char *name);
 
 /*======================================================================*
                             cstart
@@ -83,6 +84,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     	procs_base = kernel_pts * PT_MEMSIZE;
     }
     kinfo.kernel_start_pde = ARCH_PDE(KERNEL_VMA);
+	kinfo.kernel_end_pde = ARCH_PDE(KERNEL_VMA) + kernel_pts;
 	kinfo.kernel_start_phys = 0;
 	kinfo.kernel_end_phys = procs_base; 
 
@@ -154,6 +156,29 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	cut_memmap(&kinfo, 0, PG_SIZE);
 	cut_memmap(&kinfo, 0x100000, kinfo.kernel_end_phys);
+
+	char * hz_value = env_get("hz");
+	if (hz_value) system_hz = atoi(hz_value);
+	if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
+}
+
+PRIVATE char * get_value(const char * param, const char * key)
+{
+	char * envp = (char *)param;
+	const char * name = key;
+
+	for (; *envp != 0;) {
+		for (name = key; *name != 0 && *name == *envp; name++, envp++);
+		if (*name == '\0' && *envp == '=') return envp + 1;
+		while (*envp++ != 0);
+	}
+
+	return NULL;
+}
+
+PRIVATE char * env_get(const char *name)
+{
+	return get_value(kinfo.cmdline, name);
 }
 
 PUBLIC void init_arch()

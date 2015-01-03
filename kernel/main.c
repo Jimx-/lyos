@@ -60,8 +60,6 @@ PUBLIC int kernel_main()
 	
 	jiffies = 0;
 
-	init_clock();
-
     int i;
     struct boot_proc * bp = boot_procs;
     for (i = 0; i < NR_BOOT_PROCS; i++, bp++) {
@@ -113,6 +111,8 @@ PUBLIC int kernel_main()
 
 PUBLIC void finish_bsp_booting()
 {
+    if (init_bsp_timer(system_hz) != 0) panic("unable to init bsp timer");
+
 	fpu_init();
 
 	/* proc_ptr should point to somewhere */

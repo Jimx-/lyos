@@ -24,8 +24,49 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+#endif
+#include "lyos/cpulocals.h"
 
 PRIVATE irq_hook_t timer_irq_hook;
+
+/*****************************************************************************
+ *                                init_clock
+ *****************************************************************************/
+/**
+ * <Ring 0> Initialize 8253/8254 PIT (Programmable Interval Timer).
+ * 
+ *****************************************************************************/
+PUBLIC int init_8253_timer(int freq)
+{
+    /* 初始化 8253 PIT */
+    out_byte(TIMER_MODE, RATE_GENERATOR);
+    out_byte(TIMER0, (u8) (TIMER_FREQ/freq) );
+    out_byte(TIMER0, (u8) ((TIMER_FREQ/freq) >> 8));
+
+    return 0;
+}
+
+PUBLIC void stop_8253_timer()
+{
+    out_byte(TIMER_MODE, 0x36);
+    out_byte(TIMER0, 0);
+    out_byte(TIMER0, 0);
+}
+
+PUBLIC int init_local_timer(int freq)
+{
+#if CONFIG_X86_LOCAL_APIC
+    if (lapic_addr) {
+        unsigned cpu = cpuid;
+
+    }
+#endif
+    init_8253_timer(freq);
+}
 
 PUBLIC int put_local_timer_handler(irq_handler_t handler)
 {

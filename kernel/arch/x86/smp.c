@@ -52,6 +52,10 @@ PUBLIC void smp_init()
     bsp_lapic_id = apicid();
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
 
+    if (!lapic_enable(bsp_cpu_id)) {
+        panic("unable to initialize bsp lapic");
+    }
+
     switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -
             X86_STACK_TOP_RESERVED, smp_start_aps);
 }

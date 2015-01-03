@@ -35,11 +35,14 @@ EXTERN	struct descriptor	gdt[GDT_SIZE];
 EXTERN	u8			        idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct gate		    idt[IDT_SIZE];
 EXTERN  pde_t *             initial_pgd;
-EXTERN  unsigned int        lapic_addr;
+EXTERN  phys_bytes          lapic_addr;
+EXTERN  vir_bytes           lapic_vaddr;
+EXTERN  vir_bytes           lapic_eoi_addr;
 #endif
 
 extern  int booting_cpu;
 EXTERN  int ncpus;
+EXTERN  u64 cpu_hz[CONFIG_SMP_MAX_CPUS];
 
 EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
 
@@ -47,6 +50,8 @@ extern	char		task_stack[];
 extern	struct proc	proc_table[];
 extern  struct priv priv_table[];
 extern  struct boot_proc boot_procs[];
+
+EXTERN  int system_hz;
 
 extern system_call_t sys_call_table[NR_SYS_CALLS];
 

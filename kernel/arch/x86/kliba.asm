@@ -36,6 +36,7 @@ global  x86_lgdt
 global  x86_lidt
 global  x86_lldt
 global 	x86_ltr
+global  x86_load_kerncs
 global	x86_load_ds
 global	x86_load_es
 global	x86_load_fs
@@ -43,9 +44,9 @@ global	x86_load_gs
 global	x86_load_ss
 global 	switch_k_stack
 global  fninit
+global  ia32_read_msr
 global  ia32_write_msr
 global  halt_cpu
-;global 	enable_paging
 global  read_cr0
 global  write_cr0
 global 	read_cr2
@@ -199,6 +200,15 @@ x86_ltr:
 	pop ebp
 	ret
 
+x86_load_kerncs:
+	push ebp
+	mov ebp, esp
+	mov eax, [ebp + 8]
+	jmp SELECTOR_KERNEL_CS:newcs
+newcs:
+	pop ebp
+	ret
+
 %macro  load_from_ax	1
 	push ebp
 	mov ebp, esp
@@ -257,6 +267,20 @@ fninit:
 	fninit
 	ret
 	
+ia32_read_msr:
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	rdmsr
+	mov ecx, [ebp + 12]
+	mov [ecx], edx
+	mov ecx, [ebp + 16]
+	mov [ecx], eax
+
+	pop ebp
+	ret
+
 ia32_write_msr:
 	push ebp
 	mov ebp, esp

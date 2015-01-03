@@ -1,5 +1,4 @@
 
-
 COMMANDS 	= $(DESTDIR)/usr/bin/getty $(DESTDIR)/usr/bin/login
 
 everything : realclean $(COMMANDS)

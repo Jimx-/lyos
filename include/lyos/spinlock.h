@@ -25,6 +25,7 @@ typedef struct spinlock {
 /* Single CPU */
 #ifndef CONFIG_SMP
 
+#define DEF_SPINLOCK(l)
 #define spinlock_init(lock)
 #define spinlock_lock(lock)
 #define spinlock_unlock(lock)
@@ -32,6 +33,7 @@ typedef struct spinlock {
 
 #else
 
+#define DEF_SPINLOCK(l)  spinlock_t l = { 0 }
 #define spinlock_init(l) do { (l)->lock = 0; } while(0)
 
 void arch_spinlock_lock(unsigned int * lock);

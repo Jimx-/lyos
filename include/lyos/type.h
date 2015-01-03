@@ -23,6 +23,10 @@
 #define EXTERN extern
 
 typedef	unsigned long long	u64;
+PRIVATE inline u64 make64(unsigned long hi, unsigned long lo)
+{
+    return ((u64)hi << 32) | (u64)lo;
+}
 typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;

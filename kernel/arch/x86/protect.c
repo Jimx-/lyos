@@ -129,6 +129,7 @@ PUBLIC void load_prot_selectors()
 	x86_lldt(SELECTOR_LDT);
 	x86_ltr(SELECTOR_TSS(booting_cpu));
 
+	x86_load_kerncs();
 	x86_load_ds(SELECTOR_KERNEL_DS);
 	x86_load_es(SELECTOR_KERNEL_DS);
 	x86_load_fs(SELECTOR_KERNEL_DS);

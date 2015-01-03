@@ -20,6 +20,7 @@ PUBLIC void x86_lgdt(u8 * p_gdt);
 PUBLIC void x86_lidt(u8 * p_idt);
 PUBLIC void x86_lldt(u32 ldt);
 PUBLIC void x86_ltr(u32 tss);
+PUBLIC void x86_load_kerncs();
 PUBLIC void x86_load_ds(u32 ds);
 PUBLIC void x86_load_es(u32 es);
 PUBLIC void x86_load_fs(u32 fs);
@@ -31,6 +32,9 @@ PUBLIC void write_cr0(u32 cr0);
 PUBLIC void write_cr3(u32 cr3);
 PUBLIC u32 read_cr4();
 PUBLIC void write_cr4(u32 cr4);
+
+PUBLIC int init_8253_timer(int freq);
+PUBLIC void stop_8253_timer();
 
 PUBLIC void switch_k_stack(char * esp, void * cont);
 
@@ -68,10 +72,12 @@ struct exception_frame {
 
 PUBLIC void fninit();
 
+PUBLIC void ia32_read_msr(u32 reg, u32 * hi, u32 * lo);
 PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
 PUBLIC void halt_cpu();
 
+PUBLIC int init_local_timer(int freq);
 PUBLIC int put_local_timer_handler(irq_handler_t handler);
 
 #endif

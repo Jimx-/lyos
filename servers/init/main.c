@@ -12,7 +12,7 @@
 #include <lyos/ipc.h>
 
 #define GETTY "/usr/bin/getty"
-#define NR_TTY	1
+#define NR_TTY	4
 
 int main(int argc, char * argv[])
 {
