@@ -25,6 +25,7 @@ PUBLIC void i8259_unmask(int irq);
 PUBLIC void i8259_eoi();
 PUBLIC void i8259_eoi_master();
 PUBLIC void i8259_eoi_slave();
+PUBLIC void disable_8259A();
 
 #define hwint_mask(irq) i8259_mask(irq)
 #define hwint_unmask(irq) i8259_unmask(irq)

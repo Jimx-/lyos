@@ -42,7 +42,7 @@ PUBLIC int syscall_style = 0;
 PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m);
 
 /* 本文件内函数声明 */
-PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
+PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
 
 
 /* 中断处理函数 */
@@ -81,7 +81,7 @@ void	hwint15();
 
 PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame);
 
-PRIVATE void init_idt();
+PUBLIC void init_idt();
 
 /*======================================================================*
                             init_prot
@@ -117,7 +117,7 @@ PUBLIC void init_prot()
 
 	init_idt();
 
-	init_tss(0, StackTop);
+	init_tss(0, &StackTop);
 
 	load_prot_selectors();
 }
@@ -137,7 +137,7 @@ PUBLIC void load_prot_selectors()
 	x86_load_ss(SELECTOR_KERNEL_DS);
 }
 
-PRIVATE void init_idt()
+PUBLIC void init_idt()
 {
 	/* 全部初始化成中断门(没有陷阱门) */
 	init_idt_desc(INT_VECTOR_DIVIDE,	DA_386IGate,
@@ -256,6 +256,11 @@ PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handle
 	p_gate->offset_high	= (base >> 16) & 0xFFFF;
 }
 
+PUBLIC void reload_idt() 
+{
+	x86_lidt((u8*)&idt_ptr);
+}
+
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 {
 	struct tss * t = &tss[cpu];
@@ -277,7 +282,7 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 	if (syscall_style & SST_INTEL_SYSENTER) {
 		ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, SELECTOR_KERNEL_CS);
   		ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, t->esp0);
-  		ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);	
+  		ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);
 	}
 
 	return SELECTOR_TSS(cpu);

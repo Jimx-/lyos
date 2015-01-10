@@ -24,6 +24,7 @@ boot: disk
 # disable the mouse
 mouse: enabled=0
 
+com1: enabled=1, mode=file, dev=serout
 
 # enable key mapping, using US layout as default.
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map

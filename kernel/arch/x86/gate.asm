@@ -42,19 +42,25 @@ syscall_sysenter:
 	push ebp
 	mov ebp, esp
 
+	push ebp
 	push ebx
 	push ecx
 	push edx
+	push esi
+	push edi
 
-	mov eax, [esp + 16 + 4]		; syscall_nr
-	mov	ebx, [esp + 16 + 8]		; m
+	mov eax, [esp + 28 + 4]		; syscall_nr
+	mov	ebx, [esp + 28 + 8]		; m
 	mov ecx, esp
 	mov edx, .1
 
 	sysenter
 .1:
+	pop edi
+	pop esi
 	pop edx
 	pop ecx
 	pop ebx
+	pop ebp
 	pop ebp
 	ret

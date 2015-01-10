@@ -3,19 +3,16 @@
 ###############################################################
 
 # how much memory the emulated machine will have
-megs: 32
+megs: 1024
+
+display_library: sdl
 
 # filename of ROM images
-romimage: file=/usr/local/share/bochs/BIOS-bochs-latest
-vgaromimage: file=/usr/local/share/bochs/VGABIOS-lgpl-latest
+romimage: file=$BXSHARE/BIOS-bochs-latest
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
-# !! Remember to change these if the hd img is changed:
-#    1. include/sys/config.h::MINOR_BOOT
-#    2. boot/include/load.inc::ROOT_BASE
-#    3. Makefile::HD
-#    4. commands/Makefile::HD
 ata0-master: type=disk, path="lyos-disk.img", mode=flat, cylinders=520, heads=16, spt=63
 
 # choose the boot disk.
@@ -27,12 +24,10 @@ boot: disk
 # disable the mouse
 mouse: enabled=0
 
-#pci: enabled=1, chipset=i440fx
-#pcidev: vendor=0x1234, device=0x5678
+com1: enabled=1, mode=file, dev=serout
 
 # enable key mapping, using US layout as default.
-keyboard_mapping: enabled=1, map=/usr/local/share/bochs/keymaps/x11-pc-us.map
+#keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 
-#pci: enabled=1
 
 gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0

@@ -38,6 +38,7 @@ EXTERN  pde_t *             initial_pgd;
 EXTERN  phys_bytes          lapic_addr;
 EXTERN  vir_bytes           lapic_vaddr;
 EXTERN  vir_bytes           lapic_eoi_addr;
+EXTERN  u32                 bsp_cpu_id, bsp_lapic_id;
 #endif
 
 extern  int booting_cpu;

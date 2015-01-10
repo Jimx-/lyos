@@ -48,6 +48,7 @@
 PUBLIC u32 apicid();
 PUBLIC int lapic_enable(unsigned cpu);
 PUBLIC int detect_ioapics();
+PUBLIC int ioapic_enable();
 
 struct io_apic {
 	unsigned	id;

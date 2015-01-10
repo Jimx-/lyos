@@ -33,8 +33,6 @@
 PRIVATE u8 apicid2cpuid[255];
 PUBLIC u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
-PRIVATE u32 bsp_cpu_id, bsp_lapic_id;
-
 PRIVATE int discover_cpus();
 PRIVATE void init_tss_all();
 PRIVATE void smp_start_aps();
@@ -45,12 +43,14 @@ PUBLIC void smp_init()
         ncpus = 1;
     }
 
-    init_tss_all();
+    //init_tss_all();
 
     lapic_addr = LOCAL_APIC_DEF_ADDR;
 
     bsp_lapic_id = apicid();
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
+
+    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
 
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");
@@ -60,6 +60,11 @@ PUBLIC void smp_init()
         panic("no ioapic detected");
     }
     
+    ioapic_enable();
+
+    apic_init_idt(0);
+    reload_idt();
+
     switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -
             X86_STACK_TOP_RESERVED, smp_start_aps);
 }
@@ -67,7 +72,6 @@ PUBLIC void smp_init()
 PRIVATE void init_tss_all()
 {
     unsigned cpu;
-
 
     for(cpu = 0; cpu < ncpus ; cpu++) {
         init_tss(cpu, (u32)get_k_stack_top(cpu)); 
@@ -91,7 +95,7 @@ PRIVATE int discover_cpus()
 PRIVATE void smp_start_aps()
 {
     /* set up SYSENTER support */
-    init_tss(cpuid, (u32)get_k_stack_top(cpuid));
+    //init_tss(cpuid, (u32)get_k_stack_top(cpuid));
 
     finish_bsp_booting();
 }

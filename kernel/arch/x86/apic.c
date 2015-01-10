@@ -31,6 +31,7 @@
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
 #endif
+#include "hwint.h"
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/spinlock.h>
@@ -110,6 +111,8 @@ PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 
 PUBLIC struct io_apic io_apics[MAX_IOAPICS];
 PUBLIC u32 nr_ioapics;
+
+PRIVATE u8 ioapic_enabled = 0;
 
 PUBLIC u32 apicid()
 {
@@ -260,6 +263,17 @@ PUBLIC int lapic_enable(unsigned cpu)
     return 1;
 }
 
+PUBLIC int ioapic_enable()
+{
+    disable_8259A();
+
+    out_byte(0x22, 0x70);
+    out_byte(0x23, 0x01);
+
+    ioapic_enabled = 1;
+    return 1;
+}
+
 PUBLIC int detect_ioapics()
 {
     int n = 0;
@@ -278,7 +292,7 @@ PUBLIC int detect_ioapics()
         io_apics[n].version = ioapic_read(io_apics[n].addr,
                 IOAPIC_VERSION) & 0x0000ff;
         printk("IOAPIC[%d]: apic_id %d, version %d, address 0x%x, GSI %d-%d\n", 
-            n, io_apics[n].id, io_apics[n].version, io_apics[n].addr, io_apics[n].gsi_base, io_apics[n].pins - 1);
+            n, io_apics[n].id, io_apics[n].version, io_apics[n].addr, io_apics[n].gsi_base, io_apics[n].gsi_base + io_apics[n].pins - 1);
 
         n++;
     }
@@ -286,4 +300,150 @@ PUBLIC int detect_ioapics()
     nr_ioapics = n;
 
     return nr_ioapics;
+}
+
+PUBLIC void apic_hwint00();
+PUBLIC void apic_hwint01();
+PUBLIC void apic_hwint02();
+PUBLIC void apic_hwint03();
+PUBLIC void apic_hwint04();
+PUBLIC void apic_hwint05();
+PUBLIC void apic_hwint06();
+PUBLIC void apic_hwint07();
+PUBLIC void apic_hwint08();
+PUBLIC void apic_hwint09();
+PUBLIC void apic_hwint10();
+PUBLIC void apic_hwint11();
+PUBLIC void apic_hwint12();
+PUBLIC void apic_hwint13();
+PUBLIC void apic_hwint14();
+PUBLIC void apic_hwint15();
+PUBLIC void apic_hwint16();
+PUBLIC void apic_hwint17();
+PUBLIC void apic_hwint18();
+PUBLIC void apic_hwint19();
+PUBLIC void apic_hwint20();
+PUBLIC void apic_hwint21();
+PUBLIC void apic_hwint22();
+PUBLIC void apic_hwint23();
+PUBLIC void apic_hwint24();
+PUBLIC void apic_hwint25();
+PUBLIC void apic_hwint26();
+PUBLIC void apic_hwint27();
+PUBLIC void apic_hwint28();
+PUBLIC void apic_hwint29();
+PUBLIC void apic_hwint30();
+PUBLIC void apic_hwint31();
+PUBLIC void apic_hwint32();
+PUBLIC void apic_hwint33();
+PUBLIC void apic_hwint34();
+PUBLIC void apic_hwint35();
+PUBLIC void apic_hwint36();
+PUBLIC void apic_hwint37();
+PUBLIC void apic_hwint38();
+PUBLIC void apic_hwint39();
+PUBLIC void apic_hwint40();
+PUBLIC void apic_hwint41();
+PUBLIC void apic_hwint42();
+PUBLIC void apic_hwint43();
+PUBLIC void apic_hwint44();
+PUBLIC void apic_hwint45();
+PUBLIC void apic_hwint46();
+PUBLIC void apic_hwint47();
+PUBLIC void apic_hwint48();
+PUBLIC void apic_hwint49();
+PUBLIC void apic_hwint50();
+PUBLIC void apic_hwint51();
+PUBLIC void apic_hwint52();
+PUBLIC void apic_hwint53();
+PUBLIC void apic_hwint54();
+PUBLIC void apic_hwint55();
+PUBLIC void apic_hwint56();
+PUBLIC void apic_hwint57();
+PUBLIC void apic_hwint58();
+PUBLIC void apic_hwint59();
+PUBLIC void apic_hwint60();
+PUBLIC void apic_hwint61();
+PUBLIC void apic_hwint62();
+PUBLIC void apic_hwint63();
+PUBLIC void apic_timer_int_handler();
+
+PUBLIC void apic_init_idt(int reset)
+{
+    if (reset) {
+        init_idt();
+        return;
+    }
+
+    init_idt_desc(INT_VECTOR_IRQ0 + 0, DA_386IGate, apic_hwint00, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 1, DA_386IGate, apic_hwint01, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 2, DA_386IGate, apic_hwint02, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 3, DA_386IGate, apic_hwint03, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 4, DA_386IGate, apic_hwint04, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 5, DA_386IGate, apic_hwint05, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 6, DA_386IGate, apic_hwint06, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 7, DA_386IGate, apic_hwint07, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 8, DA_386IGate, apic_hwint08, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 9, DA_386IGate, apic_hwint09, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 10, DA_386IGate, apic_hwint10, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 11, DA_386IGate, apic_hwint11, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 12, DA_386IGate, apic_hwint12, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 13, DA_386IGate, apic_hwint13, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 14, DA_386IGate, apic_hwint14, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 15, DA_386IGate, apic_hwint15, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 16, DA_386IGate, apic_hwint16, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 17, DA_386IGate, apic_hwint17, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 18, DA_386IGate, apic_hwint18, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 19, DA_386IGate, apic_hwint19, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 20, DA_386IGate, apic_hwint20, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 21, DA_386IGate, apic_hwint21, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 22, DA_386IGate, apic_hwint22, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 23, DA_386IGate, apic_hwint23, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 24, DA_386IGate, apic_hwint24, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 25, DA_386IGate, apic_hwint25, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 26, DA_386IGate, apic_hwint26, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 27, DA_386IGate, apic_hwint27, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 28, DA_386IGate, apic_hwint28, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 29, DA_386IGate, apic_hwint29, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 30, DA_386IGate, apic_hwint30, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 31, DA_386IGate, apic_hwint31, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 32, DA_386IGate, apic_hwint32, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 33, DA_386IGate, apic_hwint33, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 34, DA_386IGate, apic_hwint34, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 35, DA_386IGate, apic_hwint35, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 36, DA_386IGate, apic_hwint36, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 37, DA_386IGate, apic_hwint37, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 38, DA_386IGate, apic_hwint38, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 39, DA_386IGate, apic_hwint39, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 40, DA_386IGate, apic_hwint40, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 41, DA_386IGate, apic_hwint41, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 42, DA_386IGate, apic_hwint42, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 43, DA_386IGate, apic_hwint43, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 44, DA_386IGate, apic_hwint44, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 45, DA_386IGate, apic_hwint45, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 46, DA_386IGate, apic_hwint46, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 47, DA_386IGate, apic_hwint47, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 48, DA_386IGate, apic_hwint48, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 49, DA_386IGate, apic_hwint49, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 50, DA_386IGate, apic_hwint50, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 51, DA_386IGate, apic_hwint51, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 52, DA_386IGate, apic_hwint52, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 53, DA_386IGate, apic_hwint53, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 54, DA_386IGate, apic_hwint54, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 55, DA_386IGate, apic_hwint55, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 56, DA_386IGate, apic_hwint56, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 57, DA_386IGate, apic_hwint57, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 58, DA_386IGate, apic_hwint58, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 59, DA_386IGate, apic_hwint59, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 60, DA_386IGate, apic_hwint60, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 61, DA_386IGate, apic_hwint61, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 62, DA_386IGate, apic_hwint62, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_IRQ0 + 63, DA_386IGate, apic_hwint63, PRIVILEGE_KRNL);
+    init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate,
+              sys_call,         PRIVILEGE_USER);
+
+    if (apicid() == bsp_lapic_id) {
+        init_idt_desc(APIC_TIMER_INT_VECTOR,  DA_386IGate,
+              apic_timer_int_handler,         PRIVILEGE_USER);
+    }
 }

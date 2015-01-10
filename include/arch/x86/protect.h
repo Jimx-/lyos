@@ -186,5 +186,9 @@ PUBLIC void	init_desc(struct descriptor * p_desc,
 			  u32 base, u32 limit, u16 attribute);
 PUBLIC void load_prot_selectors();
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
+PUBLIC void init_idt();
+PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
+
+PUBLIC void reload_idt();
 
 #endif /* _PROTECT_H_ */

@@ -48,6 +48,13 @@ PUBLIC void init_8259A()
 	out_byte(INT_S_CTLMASK,	0xFF);	/* Slave  8259, OCW1. */
 }
 
+PUBLIC void disable_8259A()
+{
+	out_byte(INT_S_CTLMASK,	0xFF);
+	out_byte(INT_M_CTLMASK,	0xFF);
+	in_byte(INT_M_CTLMASK);
+}
+
 PUBLIC void i8259_mask(int irq)
 {
 	u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;

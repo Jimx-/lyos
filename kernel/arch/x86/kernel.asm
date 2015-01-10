@@ -80,6 +80,7 @@ global restore_user_context_sysenter
 global sys_call
 global sys_call_sysenter
 
+global  save
 global	divide_error
 global	single_step_exception
 global	nmi

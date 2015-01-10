@@ -239,7 +239,7 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 
         if (syscall_style & SST_INTEL_SYSENTER) {
             printk("kernel: selecting intel SYSENTER syscall style\n");
-            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_sysenter);
+            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
         } else {
             sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
         }
