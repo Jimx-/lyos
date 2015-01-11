@@ -9,13 +9,14 @@ SERVMAN 	= servman/servman
 VFS 		= vfs/vfs
 PM			= pm/pm
 SYSTASK		= systask/systask
+SCHED		= sched/sched
 
 .PHONY: everything realclean
 	
-everything : realclean $(MM) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK) $(SERVMAN)
+everything : realclean $(MM) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK) $(SERVMAN) $(SCHED)
 
 realclean :
-	@rm -f $(MM) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK)	$(SERVMAN)
+	@rm -f $(MM) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK) $(SERVMAN) $(SCHED)
 
 $(MM):
 	@(cd mm; make)
@@ -44,3 +45,8 @@ $(SYSTASK):
 $(SERVMAN):
 	@(cd servman; make)
 	@cp -f $(SERVMAN) $(DESTDIR)/sbin
+
+$(SCHED):
+	@(cd sched; make)
+	@cp -f $(SCHED) $(DESTDIR)/sbin
+	
