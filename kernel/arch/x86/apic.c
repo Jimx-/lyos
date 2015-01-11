@@ -105,6 +105,8 @@ DEF_SPINLOCK(calibrate_lock);
 PRIVATE u32 probe_ticks;
 #define PROBE_TICKS (system_hz / 10)
 
+extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
+
 PRIVATE u64 tsc0, tsc1;
 PRIVATE u32 lapic_tctr0, lapic_tctr1;
 PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
@@ -132,6 +134,12 @@ PRIVATE void ioapic_write(u32 ioa_base, u8 reg, u32 val)
 {
     *((volatile u32 *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
     *((volatile u32 *)(ioa_base + IOAPIC_IOWIN)) = val;
+}
+
+PRIVATE u32 lapic_errstatus()
+{
+    lapic_write(LAPIC_ESR, 0);
+    return lapic_read(LAPIC_ESR);
 }
 
 PRIVATE int calibrate_handler(irq_hook_t * hook)
@@ -261,6 +269,30 @@ PUBLIC int lapic_enable(unsigned cpu)
     apic_calibrate(cpu);
 
     return 1;
+}
+
+PUBLIC void lapic_set_timer_one_shot(const u32 usec)
+{
+    u32 lvtt;
+    u32 ticks_per_us;
+    const u8 cpu = cpuid;
+
+    ticks_per_us = lapic_bus_freq[cpu] / 1000000;
+
+    lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
+
+    lvtt = APIC_TDCR_1;
+    lapic_write(LAPIC_TIMER_DCR, lvtt);
+
+    lvtt = APIC_TIMER_INT_VECTOR;
+    lapic_write(LAPIC_LVTTR, lvtt);
+}
+
+PUBLIC void lapic_microsec_sleep(unsigned usec)
+{
+    lapic_set_timer_one_shot(usec);
+    while (lapic_read(LAPIC_TIMER_CCR))
+        arch_pause();
 }
 
 PUBLIC int ioapic_enable()
@@ -447,3 +479,101 @@ PUBLIC void apic_init_idt(int reset)
               apic_timer_int_handler,         PRIVILEGE_USER);
     }
 }
+
+#if CONFIG_SMP
+
+PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
+{
+    int timeout;
+    u32 errstatus = 0;
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        u32 val;
+        
+        lapic_errstatus();
+
+        val = lapic_read(LAPIC_ICR2) & 0xFFFFFF;
+        val |= cpuid2apicid[cpu] << 24;
+        lapic_write(LAPIC_ICR2, val);
+
+        val = lapic_read(LAPIC_ICR1) & 0xFFF32000;
+        val |= APIC_ICR_LEVEL_ASSERT |APIC_ICR_DM_STARTUP;
+        val |= (((u32)trampoline >> 12) & 0xff);
+        lapic_write(LAPIC_ICR1, val);
+
+        timeout = 1000;
+
+        lapic_microsec_sleep (200);
+        errstatus = 0;
+
+        while ((lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) &&
+                !errstatus) {
+            errstatus = lapic_errstatus();
+            timeout--;
+            if (!timeout) break;
+        }
+
+        if (errstatus)
+            return -1;
+    }
+
+    return 0;
+}
+
+int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline) 
+{
+    u32 errstatus = 0;
+    int timeout;
+
+    lapic_errstatus();
+
+    lapic_write(LAPIC_ICR2, (lapic_read (LAPIC_ICR2) & 0xFFFFFF) |
+                    (cpuid2apicid[cpu] << 24));
+    lapic_write(LAPIC_ICR1, (lapic_read (LAPIC_ICR1) & 0xFFF32000) |
+        APIC_ICR_DM_INIT | APIC_ICR_TM_LEVEL | APIC_ICR_LEVEL_ASSERT);
+
+    timeout = 1000;
+
+    lapic_microsec_sleep(200);
+
+    errstatus = 0;
+
+    while ((lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) && !errstatus) {
+        errstatus = lapic_errstatus();
+        timeout--;
+        if (!timeout) break;
+    }
+
+    if (errstatus) 
+        return -1;
+
+    lapic_errstatus();
+
+    lapic_write(LAPIC_ICR2, (lapic_read (LAPIC_ICR2) & 0xFFFFFF) |
+                    (cpuid2apicid[cpu] << 24));
+    lapic_write(LAPIC_ICR1, (lapic_read (LAPIC_ICR1) & 0xFFF32000) |
+        APIC_ICR_DEST_ALL | APIC_ICR_TM_LEVEL);
+
+    timeout = 1000;
+    errstatus = 0;
+
+    lapic_microsec_sleep(200);
+
+    while ((lapic_read(LAPIC_ICR1)&APIC_ICR_DELIVERY_PENDING) && !errstatus) {
+        errstatus = lapic_errstatus();
+        timeout--;
+        if(!timeout) break;
+    }
+
+    if (errstatus) 
+        return -1;
+
+    lapic_errstatus();
+
+    /* BSP DELAY(10mSec) */
+    lapic_microsec_sleep(10000);
+
+    return 0;
+}
+#endif

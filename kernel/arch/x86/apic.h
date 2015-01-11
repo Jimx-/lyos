@@ -47,6 +47,11 @@
 
 PUBLIC u32 apicid();
 PUBLIC int lapic_enable(unsigned cpu);
+#if CONFIG_SMP
+PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);
+PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline);
+#endif
+PUBLIC void lapic_set_timer_one_shot(const u32 usec);
 PUBLIC int detect_ioapics();
 PUBLIC int ioapic_enable();
 

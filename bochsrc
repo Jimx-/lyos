@@ -29,4 +29,4 @@ com1: enabled=1, mode=file, dev=serout
 # enable key mapping, using US layout as default.
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 
-
+cpu: count=2, ips=20000000

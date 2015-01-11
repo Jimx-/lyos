@@ -68,6 +68,26 @@ PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
     return 0;
 }
 
+PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size)
+{
+    int i;
+
+    for (i = 0; i < pk->memmaps_count; i++) {
+        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+
+        if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
+        
+        if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= size)) {
+            entry->addr += size;
+            entry->len -= size;
+
+            return entry->addr - size;
+        }
+    }
+
+    return 0;
+}
+
 PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
 {
     pte_t * ret;

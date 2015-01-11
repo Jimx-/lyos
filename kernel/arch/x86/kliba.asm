@@ -57,6 +57,7 @@ global 	write_cr4
 global 	reload_cr3
 global  i8259_eoi_master
 global  i8259_eoi_slave
+global  arch_pause
 
 ; ========================================================================
 ;		   void out_byte(u16 port, u8 value);
@@ -365,5 +366,9 @@ i8259_eoi_slave:
 	out	INT_M_CTL, al		; /
 	nop				; `. 置EOI位(slave)
 	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
+	ret
+
+arch_pause:
+	pause
 	ret
 	

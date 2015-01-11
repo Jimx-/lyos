@@ -22,6 +22,7 @@ I386_CR0_PG     equ 0x80000000  ; Enable paging.
 I386_CR4_PSE    equ 0x00000010  ; Page size extensions.
 I386_CR4_PAE    equ 0x00000020  ; Physical addr extens.
 I386_CR4_MCE    equ 0x00000040  ; Machine check enable.
+I386_CR4_PGE    equ 0x00000080  ; Global page flag enable
 
 P_LDT_SIZE	equ 2
 
@@ -56,6 +57,7 @@ EOI		equ	0x20
 ;These selector must be the same as `protect.h'
 SELECTOR_FLAT_C		equ		0x08		;
 SELECTOR_KERNEL_CS	equ		SELECTOR_FLAT_C
+SELECTOR_KERNEL_DS	equ		0x10
 SELECTOR_USER_DS	equ		0x20
 
 K_STACK_SIZE	equ	0x1000

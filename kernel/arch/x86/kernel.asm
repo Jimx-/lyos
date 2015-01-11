@@ -26,6 +26,8 @@ extern	clock_handler
 extern	disp_str
 extern	delay
 extern	irq_table
+extern  load_prot_selectors
+extern  smp_boot_ap
 
 extern	gdt_ptr
 extern	idt_ptr
@@ -39,6 +41,8 @@ global pgd0
 global StackTop
 global k_stacks_start
 global k_stacks_end
+
+global trampoline_32
 
 [SECTION .data]
 ALIGN 0x1000
@@ -471,3 +475,12 @@ restore_user_context_sysenter:
 
 	sti
 	sysexit		; go back to user
+
+trampoline_32:
+	mov ax, SELECTOR_KERNEL_DS
+	mov ds, ax
+	mov ss, ax
+	mov esp, StackTop - 4
+
+	jmp smp_boot_ap
+	hlt

@@ -29,28 +29,68 @@
 #include "arch_const.h"
 #include "arch_proto.h"
 #include "arch_smp.h"
+#include <lyos/cpulocals.h>
+
+/* trampoline parameters */
+extern volatile u32 __ap_id, __ap_pgd;
+extern volatile u8 __ap_gdt[6], __ap_idt[6];    /* 0~15:Limit  16~47:Base */
+extern u32 __ap_gdt_table, __ap_idt_table;
+extern void * __trampoline_end;
+phys_bytes trampoline_base;
 
 PRIVATE u8 apicid2cpuid[255];
 PUBLIC u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
+
+PRIVATE u32 ap_ready;
 
 PRIVATE int discover_cpus();
 PRIVATE void init_tss_all();
 PRIVATE void smp_start_aps();
 
+PUBLIC void trampoline();
+
+#define AP_LIN_ADDR(addr) (phys_bytes)((u32)addr - (u32)&trampoline + trampoline_base)
+
+PRIVATE void copy_trampoline()
+{
+    phys_bytes tramp_size, tramp_start = (phys_bytes)&trampoline;
+
+    tramp_size = (phys_bytes)&__trampoline_end - tramp_start;
+    
+    trampoline_base = pg_alloc_lowest(&kinfo, tramp_size);
+
+    /* copy GDT and IDT */
+    memcpy(&__ap_gdt_table, gdt, sizeof(gdt));
+    memcpy(&__ap_idt_table, idt, sizeof(idt));
+
+    /* Set up descriptors */
+    u16* gdt_limit = (u16*)(&__ap_gdt[0]);
+    u32* gdt_base = (u32*)(&__ap_gdt[2]);
+    *gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
+    *gdt_base = AP_LIN_ADDR(&__ap_gdt_table);
+
+    u16* idt_limit = (u16*)(&__ap_idt[0]);
+    u32* idt_base = (u32*)(&__ap_idt[2]);
+    *idt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
+    *idt_base = AP_LIN_ADDR(&__ap_idt_table);
+
+    memcpy((void *)trampoline_base, trampoline, tramp_size);
+}
+
 PUBLIC void smp_init()
 {
+    ncpus = 0;
+
     if (!discover_cpus()) {
         ncpus = 1;
     }
 
-    //init_tss_all();
+    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
 
     lapic_addr = LOCAL_APIC_DEF_ADDR;
 
     bsp_lapic_id = apicid();
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
-
-    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
 
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");
@@ -94,8 +134,73 @@ PRIVATE int discover_cpus()
 
 PRIVATE void smp_start_aps()
 {
-    /* set up SYSENTER support */
-    //init_tss(cpuid, (u32)get_k_stack_top(cpuid));
+    u32 reset_vector;
+
+    memcpy(&reset_vector, (void *)0x467, sizeof(u32));
+
+    /* set CMOS system shutdown mode */
+    out_byte(CLK_ELE, 0xF);
+    out_byte(CLK_IO, 0xA);
+
+    __ap_pgd = get_cpulocal_var(pt_proc)->seg.cr3_phys;
+
+    /* set up AP boot code */
+    copy_trampoline();
+
+    phys_bytes __ap_id_phys = AP_LIN_ADDR(&__ap_id);
+    memcpy((void *)0x467, &trampoline_base, sizeof(u32));
+
+    int i;
+    for (i = 0; i < ncpus; i++) {
+        ap_ready = -1;
+        if (apicid() == cpuid2apicid[i] && bsp_lapic_id == apicid()) continue;
+
+        __ap_id = booting_cpu = i;
+        memcpy(__ap_id_phys, &__ap_id, sizeof(u32));
+
+        /* INIT-SIPI-SIPI sequence */
+        cmb();
+        if (apic_send_init_ipi(i, trampoline_base) ||
+                apic_send_startup_ipi(i, trampoline_base)) {
+            printk("smp: cannot boot CPU %d\n", i);
+            continue;
+        }
+
+        lapic_set_timer_one_shot(5000000);
+
+        while (lapic_read(LAPIC_TIMER_CCR)) {
+            if (ap_ready == i) {
+                lapic_set_timer_one_shot(0);
+                break;
+            }
+        }
+        if (ap_ready == -1) {
+            printk("smp: CPU %d didn't boot\n", i);
+        }
+    }
+
+    memcpy((void *)0x467, &reset_vector, sizeof(u32));
+    out_byte(CLK_ELE, 0xF);
+    out_byte(CLK_IO, 0);
 
     finish_bsp_booting();
+}
+
+PRIVATE void ap_finish_booting()
+{
+    ap_ready = cpuid;
+
+    printk("smp: CPU %d is up\n", cpuid);
+    
+    lapic_enable(cpuid);
+
+    while (1);
+}
+
+PUBLIC void smp_boot_ap()
+{
+    init_tss(__ap_id, (u32)get_k_stack_top(__ap_id)); 
+    load_prot_selectors();
+    switch_k_stack((char *)get_k_stack_top(__ap_id) -
+            X86_STACK_TOP_RESERVED, ap_finish_booting);
 }

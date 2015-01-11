@@ -44,7 +44,7 @@ PUBLIC int clock_handler(irq_hook_t * hook)
 		jiffies = 0;
     
     struct proc * p = get_cpulocal_var(proc_ptr);
-	if (p->counter)
+	if (p && p->counter)
 		p->counter--;
 
     return 1;
