@@ -34,6 +34,12 @@ PUBLIC  int booting_cpu = 0;
 PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];
 PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
 
+/* when this is modified, modify 
+ *	- NR_BOOT_PROCS in config.h
+ *	- TASK_XXX in const.h
+ *	- boot_priv_table in servman
+ * also
+ */
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 	{KERNEL,		"kernel"	},
 	{INTERRUPT,		"interrupt"	},
@@ -41,6 +47,7 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 	{TASK_PM,		"PM"		},
 	{TASK_SERVMAN, 	"SERVMAN"	},
 	{TASK_DEVMAN,	"DEVMAN"	},
+	{TASK_SCHED, 	"SCHED"		},
 	{TASK_FS, 		"VFS"		},
 	{TASK_SYS, 		"SYS"		},
 	{TASK_TTY,		"TTY"		},

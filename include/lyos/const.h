@@ -114,13 +114,14 @@
 #define TASK_PM			1
 #define TASK_SERVMAN 	2
 #define TASK_DEVMAN		3
-#define TASK_FS			4
-#define TASK_SYS		5
-#define TASK_TTY		6
-#define	TASK_RD			7
-#define TASK_INITFS		8
-#define TASK_SYSFS		9
-#define INIT			10
+#define TASK_SCHED		4
+#define TASK_FS			5
+#define TASK_SYS		6
+#define TASK_TTY		7
+#define	TASK_RD			8
+#define TASK_INITFS		9
+#define TASK_SYSFS		10
+#define INIT			11
 #define ANY				(NR_PROCS + 10)
 #define SELF			(-0x8ace)
 #define NO_TASK			(NR_PROCS + 20)

@@ -29,6 +29,7 @@ PUBLIC struct boot_priv boot_priv_table[] = {
     {TASK_PM,       "PM"        , TASK_FLAGS },
     {TASK_SERVMAN,  "SERVMAN"   , TASK_FLAGS },
     {TASK_DEVMAN,   "DEVMAN"    , TASK_FLAGS },
+    {TASK_SCHED,    "SCHED"     , TASK_FLAGS },
     {TASK_FS,       "VFS"       , TASK_FLAGS },
     {TASK_SYS,      "SYS"       , TASK_FLAGS },
     {TASK_TTY,      "TTY"       , TASK_FLAGS },
