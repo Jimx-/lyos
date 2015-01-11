@@ -96,7 +96,7 @@ PUBLIC void init_proc()
 		p->p_parent = NO_TASK;
 		p->endpoint = make_endpoint(0, i);	/* generation 0 */
 
-		p->send_msg = 0;
+		reset_msg(&p->send_msg);
 		p->recv_msg = 0;
 		p->recvfrom = NO_TASK;
 		p->sendto = NO_TASK;
@@ -306,7 +306,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 	/* check for deadlock here */
 	if (deadlock(sender->endpoint, dest)) {
 		dump_msg("deadlock sender", m);
-		dump_msg("deadlock receiver", p_dest->send_msg);
+		dump_msg("deadlock receiver", &p_dest->send_msg);
 		return EDEADLK;
 	}
 
@@ -323,7 +323,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 	else { /* p_dest is not waiting for the msg */
 		PST_SET(sender, PST_SENDING);
 		sender->sendto = dest;
-		sender->send_msg = m;
+		memcpy(&sender->send_msg, m, sizeof(MESSAGE));
 
 		/* append to the sending queue */
 		struct proc * p;
@@ -393,7 +393,6 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		return 0;
 	}
 
-normal_msg:
 	/* Arrives here if no interrupt for who_wanna_recv. */
 	if (src == ANY) {
 		/* who_wanna_recv is ready to receive messages from
@@ -453,9 +452,9 @@ normal_msg:
 
 		assert(m);
 		/* copy the message */
-		vir_copy(who_wanna_recv->endpoint, m, from->endpoint, from->send_msg, sizeof(MESSAGE));
+		memcpy(m, &from->send_msg, sizeof(MESSAGE));
 
-		from->send_msg = 0;
+		reset_msg(&from->send_msg);
 		from->sendto = NO_TASK;
 		PST_UNSET(from, PST_SENDING);
 

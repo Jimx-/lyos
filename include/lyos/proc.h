@@ -94,7 +94,7 @@ struct proc {
 				    */
 	int cpu;			/* on which cpu this proc runs */
     
-	MESSAGE * send_msg;
+	MESSAGE send_msg;
 	MESSAGE * recv_msg;
 	int recvfrom;
 	int sendto;
