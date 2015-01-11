@@ -89,7 +89,7 @@ PUBLIC void disp_char(const char c)
         scroll_up(1);
 }
 
-PRIVATE void put_str(const char * str)
+PUBLIC void direct_put_str(const char * str)
 {
     while (*str)  {
         disp_char(*str);
@@ -105,7 +105,7 @@ PUBLIC int direct_print(const char * fmt, ...)
     
     va_start(arg, fmt); 
     i = vsprintf(buf, fmt, arg);
-    put_str(buf);
+    direct_put_str(buf);
 
     va_end(arg);
 

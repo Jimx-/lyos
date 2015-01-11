@@ -85,7 +85,7 @@ PUBLIC void smp_init()
         ncpus = 1;
     }
 
-    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
+    init_tss_all(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
 
     lapic_addr = LOCAL_APIC_DEF_ADDR;
 
@@ -183,6 +183,8 @@ PRIVATE void smp_start_aps()
     out_byte(CLK_ELE, 0xF);
     out_byte(CLK_IO, 0);
 
+    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
+
     finish_bsp_booting();
 }
 
@@ -190,17 +192,22 @@ PRIVATE void ap_finish_booting()
 {
     ap_ready = cpuid;
 
+    init_tss(cpuid, (u32)get_k_stack_top(cpuid)); 
+
     printk("smp: CPU %d is up\n", cpuid);
     
     lapic_enable(cpuid);
+    fpu_init();
 
-    while (1);
+    if (init_ap_timer(system_hz) != 0) panic("smp: cannot init timer for CPU %d", cpuid);
+
+    get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+    
+    switch_to_user();
 }
 
 PUBLIC void smp_boot_ap()
 {
-    init_tss(__ap_id, (u32)get_k_stack_top(__ap_id)); 
-    load_prot_selectors();
     switch_k_stack((char *)get_k_stack_top(__ap_id) -
             X86_STACK_TOP_RESERVED, ap_finish_booting);
 }

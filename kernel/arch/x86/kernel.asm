@@ -482,5 +482,6 @@ trampoline_32:
 	mov ss, ax
 	mov esp, StackTop - 4
 
+	call load_prot_selectors
 	jmp smp_boot_ap
 	hlt

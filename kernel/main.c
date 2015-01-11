@@ -106,7 +106,7 @@ PUBLIC int kernel_main()
     /* failed to init smp */
 	finish_bsp_booting();
 	
-	while(TRUE){}
+	while(TRUE) {}
 }
 
 PUBLIC void finish_bsp_booting()
@@ -152,7 +152,9 @@ PUBLIC void panic(const char *fmt, ...)
 	vsprintf(buf, fmt, arg);
 
 	direct_cls();
-	direct_print("Kernel panic: %s", buf);
+    kern_log.buf[kern_log.size] = 0;
+    direct_put_str(kern_log.buf);
+	direct_print("\nKernel panic: %s", buf);
 
 	while(1);
 	/* should never arrive here */

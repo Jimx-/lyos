@@ -65,6 +65,7 @@ PUBLIC void     enable_irq(irq_hook_t * hook);
 
 /* clock.c */
 PUBLIC int   	init_bsp_timer(int freq);
+PUBLIC int      init_ap_timer(int freq);
 
 /* proc.c */
 PUBLIC  void    init_proc();
@@ -83,6 +84,7 @@ PUBLIC  void    enqueue_proc(register struct proc * p);
 PUBLIC  void    dequeue_proc(register struct proc * p);
 
 /* direct_tty.c */
+PUBLIC  void    direct_put_str(const char * str);
 PUBLIC  int     direct_print(const char * fmt, ...);
 PUBLIC  void    direct_cls();
 

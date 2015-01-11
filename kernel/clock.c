@@ -57,3 +57,10 @@ PUBLIC int init_bsp_timer(int freq)
 
     return 0;
 }
+
+PUBLIC int init_ap_timer(int freq)
+{
+    if (init_local_timer(freq)) return -1;
+
+    return 0;
+}
