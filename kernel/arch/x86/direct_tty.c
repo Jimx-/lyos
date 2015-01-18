@@ -68,6 +68,7 @@ PRIVATE void scroll_up(int lines)
         }
     }
     print_line -= lines;
+    disp_pos -= lines * SCR_WIDTH * 2;
 }
 
 PUBLIC void disp_char(const char c)
@@ -84,6 +85,7 @@ PUBLIC void disp_char(const char c)
     }
 
     put_char(c);
+    if ((disp_pos / 2 + 1) % SCR_WIDTH == 0) print_line++;
 
     while (print_line >= SCR_HEIGHT)
         scroll_up(1);

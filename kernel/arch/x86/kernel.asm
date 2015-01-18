@@ -399,8 +399,6 @@ save_exception:
 sys_call:
     call    save
 
-    sti
-
 	push	esi
 	push	ebx
 	push 	eax
@@ -409,8 +407,7 @@ sys_call:
 
 	pop esi
     mov     [esi + EAXREG - P_STACKBASE], eax
-    cli
-
+    
     jmp switch_to_user
 
 ; =============================================================================

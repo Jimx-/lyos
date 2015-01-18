@@ -248,7 +248,6 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 #if CONFIG_X86_LOCAL_APIC
     if (index == KM_LAPIC) {
         lapic_vaddr = (vir_bytes)vir_addr;
-        lapic_eoi_addr = LAPIC_EOI;
         return 0;
     }
 #endif
@@ -267,6 +266,7 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
         /* using virtual address now */
         lapic_addr = lapic_vaddr;
+        lapic_eoi_addr = LAPIC_EOI;
     }
 
     PST_UNSET(p, PST_MMINHIBIT);
