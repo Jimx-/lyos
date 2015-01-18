@@ -68,6 +68,7 @@ PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
     hook->irq = irq;
     *line = hook;
 
+    hwint_used(irq);
     hwint_unmask(irq);
 }
 
@@ -85,6 +86,7 @@ PUBLIC void rm_irq_handler(irq_hook_t * hook)
     }
 
     if (irq_handlers[irq] == NULL) {
+        hwint_not_used(irq);
         hwint_mask(irq);
     }
 }

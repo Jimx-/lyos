@@ -16,21 +16,39 @@
 #ifndef	_HWINT_H_
 #define	_HWINT_H_
 
-#if 0
-#else
-
 /* i8259 PIC */
 PUBLIC void i8259_mask(int irq);
 PUBLIC void i8259_unmask(int irq);
 PUBLIC void i8259_eoi();
 PUBLIC void i8259_eoi_master();
 PUBLIC void i8259_eoi_slave();
-PUBLIC void disable_8259A();
+
+#if CONFIG_X86_IO_APIC
+
+PUBLIC void ioapic_mask(int irq);
+PUBLIC void ioapic_unmask(int irq);
+PUBLIC void ioapic_eoi(int irq);
+PUBLIC void ioapic_set_irq(int irq);
+PUBLIC void ioapic_unset_irq(int irq);
+
+extern u8 ioapic_enabled;
+
+#define hwint_mask(irq) ioapic_mask(irq)
+#define hwint_unmask(irq) ioapic_unmask(irq)
+#define hwint_ack(irq) ioapic_eoi(irq)
+#define hwint_used(irq) do { if (ioapic_enabled) ioapic_set_irq(irq); } while (0)
+#define hwint_not_used(irq) do { if (ioapic_enabled) ioapic_unset_irq(irq); } while (0)
+
+#else
 
 #define hwint_mask(irq) i8259_mask(irq)
 #define hwint_unmask(irq) i8259_unmask(irq)
 #define hwint_ack(irq) i8259_eoi(irq)
+#define hwint_used(irq)
+#define hwint_not_used(irq)
 
 #endif
+
+PUBLIC void disable_8259A();
 
 #endif

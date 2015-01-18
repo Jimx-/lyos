@@ -34,7 +34,7 @@
 #include <lyos/vm.h>
 #include <errno.h>
 #include "apic.h"
-    
+
 extern int syscall_style;
 
 /* temporary mappings */
@@ -190,16 +190,33 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
 
 #define KM_USERMAPPED   0
 #define KM_LAPIC        1
-#define KM_LAST         KM_LAPIC
+#define KM_IOAPIC_FIRST 2
 
 extern char _usermapped[], _eusermapped[];
 PUBLIC vir_bytes usermapped_offset;
+
+PRIVATE int KM_LAST = -1;
+PRIVATE int KM_IOAPIC_END = -1;
+
+extern u8 ioapic_enabled;
+extern int nr_ioapics;
+extern struct io_apic io_apics[MAX_IOAPICS];
 
 /**
  * <Ring 0> Get kernel mapping information.
  */
 PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
 {
+    static int first = 1;
+
+    if (first) {
+        if (ioapic_enabled) {
+            KM_IOAPIC_END = KM_IOAPIC_FIRST + nr_ioapics - 1;
+            KM_LAST = KM_IOAPIC_END;
+        }
+        first = 0;
+    }
+
     if (index > KM_LAST) return 1;
     
     if (index == KM_USERMAPPED) {
@@ -212,6 +229,14 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
     if (index == KM_LAPIC) {
         if (!lapic_addr) return EINVAL;
         *addr = lapic_addr;
+        *len = 4 << 10;
+        *flags = KMF_WRITE;
+        return 0;
+    }
+#endif
+#if CONFIG_X86_IO_APIC
+    if (ioapic_enabled && index >= KM_IOAPIC_FIRST && index <= KM_IOAPIC_END) {
+        *addr = io_apics[index - KM_IOAPIC_FIRST].phys_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
@@ -251,6 +276,13 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         return 0;
     }
 #endif
+#if CONFIG_X86_IO_APIC
+    if (index >= KM_IOAPIC_FIRST && index <= KM_IOAPIC_END) {
+        io_apics[index - KM_IOAPIC_FIRST].vir_addr = (vir_bytes)vir_addr;
+        return 0;
+    }
+#endif
+
 
     return 0;
 }
@@ -267,6 +299,10 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
         /* using virtual address now */
         lapic_addr = lapic_vaddr;
         lapic_eoi_addr = LAPIC_EOI;
+        int i;
+        for (i = 0; i < nr_ioapics; i++) {
+            io_apics[i].addr = io_apics[i].vir_addr;
+        }
     }
 
     PST_UNSET(p, PST_MMINHIBIT);

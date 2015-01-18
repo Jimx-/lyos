@@ -114,7 +114,21 @@ PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 PUBLIC struct io_apic io_apics[MAX_IOAPICS];
 PUBLIC u32 nr_ioapics;
 
-PRIVATE u8 ioapic_enabled = 0;
+struct irq;
+typedef void (* eoi_method_t)(struct irq *);
+
+struct irq {
+    struct io_apic *    ioa;
+    unsigned        pin;
+    unsigned        vector;
+    eoi_method_t        eoi;
+#define IOAPIC_IRQ_STATE_MASKED 0x1
+    unsigned        state;
+};
+
+PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
+
+PUBLIC u8 ioapic_enabled = 0;
 
 PUBLIC u32 apicid()
 {
@@ -134,6 +148,31 @@ PRIVATE void ioapic_write(u32 ioa_base, u8 reg, u32 val)
 {
     *((volatile u32 *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
     *((volatile u32 *)(ioa_base + IOAPIC_IOWIN)) = val;
+}
+
+PRIVATE void ioapic_redirt_entry_write(void * ioapic_addr,
+                    int entry,
+                    u32 hi,
+                    u32 lo)
+{
+    ioapic_write((u32)ioapic_addr, (u8) (IOAPIC_REDIR_TABLE + entry * 2 + 1), hi);
+    ioapic_write((u32)ioapic_addr, (u8) (IOAPIC_REDIR_TABLE + entry * 2), lo);
+}
+
+PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
+{
+    u32 lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
+
+    lo &= ~APIC_ICR_INT_MASK;
+    ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
+}
+
+PRIVATE void ioapic_disable_pin(vir_bytes ioapic_addr, int pin)
+{
+    u32 lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
+
+    lo |= APIC_ICR_INT_MASK;
+    ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
 }
 
 PRIVATE u32 lapic_errstatus()
@@ -304,6 +343,119 @@ PUBLIC int ioapic_enable()
 
     ioapic_enabled = 1;
     return 1;
+}
+
+PRIVATE void ioapic_enable_irq(int irq)
+{
+    if(!(io_apic_irq[irq].ioa)) return;
+
+    ioapic_enable_pin(io_apic_irq[irq].ioa->addr, io_apic_irq[irq].pin);
+    io_apic_irq[irq].state &= ~IOAPIC_IRQ_STATE_MASKED;
+}
+
+PRIVATE void ioapic_disable_irq(int irq)
+{
+    if(!(io_apic_irq[irq].ioa)) return;
+
+    ioapic_disable_pin(io_apic_irq[irq].ioa->addr, io_apic_irq[irq].pin);
+    io_apic_irq[irq].state |= IOAPIC_IRQ_STATE_MASKED;
+}
+
+PUBLIC void ioapic_mask(int irq)
+{
+    if (ioapic_enabled)
+        ioapic_disable_irq(irq);
+    else
+        i8259_mask(irq);
+}
+
+PUBLIC void ioapic_unmask(int irq)
+{
+    if (ioapic_enabled)
+        ioapic_enable_irq(irq);
+    else
+        i8259_unmask(irq);
+}
+
+PUBLIC void ioapic_eoi(int irq)
+{
+    if (ioapic_enabled) {
+        io_apic_irq[irq].eoi(&io_apic_irq[irq]);
+    } else {
+        i8259_eoi(irq);
+    }
+}
+
+PRIVATE void ioapic_eoi_edge(struct irq * irq)
+{
+    apic_eoi();
+}
+
+PRIVATE void ioapic_eoi_level(struct irq * irq)
+{
+    apic_eoi();
+}
+
+PRIVATE eoi_method_t set_eoi_method(int irq)
+{
+    return irq < 16 ? ioapic_eoi_edge : ioapic_eoi_level;
+}
+
+PRIVATE void set_irq_redir_low(int irq, u32 * low)
+{
+    u32 val = 0;
+
+    val &= ~(APIC_ICR_VECTOR | APIC_ICR_INT_MASK |
+            APIC_ICR_TRIGGER | APIC_ICR_INT_POLARITY);
+
+    if (irq < 16) {
+        /* ISA */
+        val &= ~APIC_ICR_INT_POLARITY;
+        val &= ~APIC_ICR_TRIGGER;
+    }
+    else {
+        /* PCI */
+        val |= APIC_ICR_INT_POLARITY;
+        val |= APIC_ICR_TRIGGER;
+    }
+
+    val |= io_apic_irq[irq].vector;
+
+    *low = val;
+}
+
+PUBLIC void ioapic_set_irq(int irq)
+{
+    /* shared irq */
+    if (io_apic_irq[irq].ioa && io_apic_irq[irq].eoi)
+        return;
+
+    int ioa;
+
+    for (ioa = 0; ioa < nr_ioapics; ioa++) {
+        if (io_apics[ioa].gsi_base <= irq &&
+                io_apics[ioa].gsi_base +
+                io_apics[ioa].pins > irq) {
+            u32 hi_32, low_32;
+
+            io_apic_irq[irq].ioa = &io_apics[ioa];
+            io_apic_irq[irq].pin = irq - io_apics[ioa].gsi_base;
+            io_apic_irq[irq].eoi = set_eoi_method(irq);
+            io_apic_irq[irq].vector = INT_VECTOR_IRQ0 + irq;
+
+            set_irq_redir_low(irq, &low_32);
+            hi_32 = bsp_lapic_id << 24;
+            ioapic_redirt_entry_write((void *)io_apics[ioa].addr,
+                    io_apic_irq[irq].pin, hi_32, low_32);
+        }
+    }
+}
+
+PUBLIC void ioapic_unset_irq(int irq)
+{
+    ioapic_disable_irq(irq);
+    io_apic_irq[irq].ioa = NULL;
+    io_apic_irq[irq].eoi = NULL;
 }
 
 PUBLIC int detect_ioapics()

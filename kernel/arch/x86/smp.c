@@ -202,7 +202,7 @@ PRIVATE void ap_finish_booting()
     if (init_ap_timer(system_hz) != 0) panic("smp: cannot init timer for CPU %d", cpuid);
 
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
-    
+
     switch_to_user();
 }
 

@@ -154,7 +154,7 @@ PUBLIC void panic(const char *fmt, ...)
 	direct_cls();
     kern_log.buf[kern_log.size] = 0;
     direct_put_str(kern_log.buf);
-	direct_print("\nKernel panic: %s", buf);
+	direct_print("\nKernel panic on CPU %d: %s", cpuid, buf);
 
 	while(1);
 	/* should never arrive here */

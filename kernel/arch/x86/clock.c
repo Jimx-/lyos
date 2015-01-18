@@ -62,19 +62,26 @@ PUBLIC int init_local_timer(int freq)
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
         unsigned cpu = cpuid;
-
-    }
+        stop_8253_timer();
+    } else 
 #endif
-    init_8253_timer(freq);
+    {
+        init_8253_timer(freq);
+    }
+
+    return 0;
 }
 
 PUBLIC int put_local_timer_handler(irq_handler_t handler)
 {
-#if 0
-    /* APIC */
-#else
-    put_irq_handler(CLOCK_IRQ, &timer_irq_hook, handler);
+#if CONFIG_X86_LOCAL_APIC
+    if (lapic_addr) {
+
+    } else
 #endif
+    {
+        put_irq_handler(CLOCK_IRQ, &timer_irq_hook, handler);
+    }
 
     return 0;
 }
