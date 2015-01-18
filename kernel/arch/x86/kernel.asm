@@ -316,7 +316,7 @@ copr_error:
 	jmp	exception
 
 exception:
-	cmp dword [esp + 4], SELECTOR_KERNEL_CS
+	cmp dword [esp + 12], SELECTOR_KERNEL_CS
 	je exception_in_kernel
 
 	call save_exception
@@ -407,7 +407,7 @@ sys_call:
 
 	pop esi
     mov     [esi + EAXREG - P_STACKBASE], eax
-    
+
     jmp switch_to_user
 
 ; =============================================================================
