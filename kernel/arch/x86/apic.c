@@ -128,6 +128,9 @@ struct irq {
 
 PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
 
+/* ISA IRQ -> Global system interrupt */
+PRIVATE u32 isa_irq_to_gsi[NR_IRQS_LEGACY] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
 PUBLIC u8 ioapic_enabled = 0;
 
 PUBLIC u32 apicid()
@@ -224,7 +227,7 @@ PRIVATE int apic_calibrate(unsigned cpu)
     lvtt |= APIC_LVTT_MASK;
     lapic_write(LAPIC_LVTTR, lvtt);
 
-    put_irq_handler(CLOCK_IRQ, &calibrate_hook, calibrate_handler);
+    put_irq_handler(isa_irq_to_gsi[CLOCK_IRQ], &calibrate_hook, calibrate_handler);
     init_8253_timer(system_hz);
 
     enable_int();
@@ -348,8 +351,21 @@ PUBLIC void lapic_microsec_sleep(unsigned usec)
         arch_pause();
 }
 
+PRIVATE void ioapic_init_legacy_irqs()
+{
+    struct acpi_madt_int_src * acpi_int_src;
+
+    while (acpi_int_src = acpi_get_int_src_next()) {
+        isa_irq_to_gsi[acpi_int_src->bus_int] = acpi_int_src->global_int;
+        printk("ACPI: IRQ%d used by override\n", 
+            acpi_int_src->bus_int);
+    }
+}
+
 PUBLIC int ioapic_enable()
 {
+    ioapic_init_legacy_irqs();
+
     disable_8259A();
 
     out_byte(0x22, 0x70);
@@ -500,6 +516,9 @@ PUBLIC int detect_ioapics()
     return nr_ioapics;
 }
 
+PUBLIC void apic_spurious_int_handler() {}
+PUBLIC void apic_error_int_handler() {}
+
 PUBLIC void apic_hwint00();
 PUBLIC void apic_hwint01();
 PUBLIC void apic_hwint02();
@@ -565,6 +584,8 @@ PUBLIC void apic_hwint61();
 PUBLIC void apic_hwint62();
 PUBLIC void apic_hwint63();
 PUBLIC void apic_timer_int_handler();
+PUBLIC void apic_spurious_intr();
+PUBLIC void apic_error_intr();
 
 PUBLIC void apic_init_idt(int reset)
 {
@@ -637,14 +658,23 @@ PUBLIC void apic_init_idt(int reset)
     init_idt_desc(INT_VECTOR_IRQ0 + 61, DA_386IGate, apic_hwint61, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ0 + 62, DA_386IGate, apic_hwint62, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ0 + 63, DA_386IGate, apic_hwint63, PRIVILEGE_KRNL);
+    init_idt_desc(APIC_SPURIOUS_INT_VECTOR, DA_386IGate, apic_spurious_intr, PRIVILEGE_KRNL);
+    init_idt_desc(APIC_ERROR_INT_VECTOR, DA_386IGate, apic_error_intr, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate,
               sys_call,         PRIVILEGE_USER);
 
-    //if (apicid() == bsp_lapic_id) {
+    u32 val;
+    val = lapic_read(LAPIC_LVTER);
+    val |= APIC_ERROR_INT_VECTOR;
+    val &= ~ APIC_ICR_INT_MASK;
+    lapic_write(LAPIC_LVTER, val);
+    lapic_read(LAPIC_LVTER);
+
+    if (apicid() == bsp_lapic_id) {
         printk("APIC: initiating LAPIC timer handler\n");
         init_idt_desc(APIC_TIMER_INT_VECTOR,  DA_386IGate,
               apic_timer_int_handler,         PRIVILEGE_KRNL);
-    //}
+    }
 }
 
 #if CONFIG_SMP

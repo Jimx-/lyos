@@ -37,10 +37,11 @@ extern u32 k_stacks_start, k_stacks_end;
 #define INTEL_MSR_SYSENTER_ESP        0x175
 #define INTEL_MSR_SYSENTER_EIP        0x176
 
+#define NR_IRQS_LEGACY  16
 #if CONFIG_X86_IO_APIC
 #define NR_IRQ_VECTORS        64
 #else
-#define NR_IRQ_VECTORS        16
+#define NR_IRQ_VECTORS        NR_IRQS_LEGACY
 #endif
 
 #endif

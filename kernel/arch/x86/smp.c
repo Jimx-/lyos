@@ -195,13 +195,14 @@ PRIVATE void ap_finish_booting()
     init_tss(cpuid, (u32)get_k_stack_top(cpuid)); 
 
     printk("smp: CPU %d is up\n", cpuid);
+
+    get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+    get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
     
     lapic_enable(cpuid);
     fpu_init();
 
     if (init_ap_timer(system_hz) != 0) panic("smp: cannot init timer for CPU %d", cpuid);
-
-    get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
 
     switch_to_user();
 }

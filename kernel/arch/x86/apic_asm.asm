@@ -69,6 +69,8 @@ global  apic_hwint61
 global  apic_hwint62
 global  apic_hwint63
 global  apic_timer_int_handler
+global  apic_spurious_intr
+global  apic_error_intr
 
 extern  save
 extern  switch_to_user
@@ -76,6 +78,8 @@ extern  irq_handle
 extern  idle_stop
 extern  lapic_eoi_addr
 extern 	clock_handler
+extern  apic_spurious_int_handler
+extern  apic_error_int_handler
 
 ; interrupt and exception - hardware interrupt
 ; ---------------------------------
@@ -115,9 +119,15 @@ cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered i
 	iret
 %endmacro
 
-ALIGN16
+ALIGN   16
 apic_timer_int_handler:
 	lapic_int	clock_handler
+ALIGN   16
+apic_spurious_intr:
+	lapic_int	apic_spurious_int_handler
+ALIGN   16
+apic_error_intr:
+	lapic_int	apic_error_int_handler
 
 ALIGN	16
 apic_hwint00:
