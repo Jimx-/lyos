@@ -154,6 +154,8 @@ no_schedule:
 
 	p = arch_switch_to_user();
 
+	restart_local_timer();
+
 	restore_user_context(p);
 }
 
@@ -175,6 +177,11 @@ PRIVATE void idle()
 #if CONFIG_SMP
 	get_cpulocal_var(cpu_is_idle) = 1;
 #endif
+
+	if (cpuid == bsp_cpu_id)
+		restart_local_timer();
+	else 
+		stop_local_timer();
 
 	halt_cpu();
 }

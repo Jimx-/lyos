@@ -30,6 +30,7 @@
 #include "arch_smp.h"
 #endif
 #include "lyos/cpulocals.h"
+#include "apic.h"
 
 PRIVATE irq_hook_t timer_irq_hook;
 
@@ -62,7 +63,7 @@ PUBLIC int init_local_timer(int freq)
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
         unsigned cpu = cpuid;
-        stop_8253_timer();
+        lapic_set_timer_one_shot(1000000 / system_hz);
     } else 
 #endif
     {
@@ -70,6 +71,28 @@ PUBLIC int init_local_timer(int freq)
     }
 
     return 0;
+}
+
+PUBLIC void restart_local_timer()
+{
+#if CONFIG_X86_LOCAL_APIC
+    if (lapic_addr) {
+        lapic_restart_timer();
+    }
+#endif
+}
+
+PUBLIC void stop_local_timer()
+{
+#if CONFIG_X86_LOCAL_APIC
+    if (lapic_addr) {
+        lapic_stop_timer();
+        apic_eoi();
+    } else
+#endif
+    {
+        stop_8253_timer();
+    }
 }
 
 PUBLIC int put_local_timer_handler(irq_handler_t handler)

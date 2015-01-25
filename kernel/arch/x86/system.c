@@ -120,7 +120,9 @@ PUBLIC void idle_stop()
 #endif
 
     int is_idle = get_cpu_var(cpu, cpu_is_idle);
-    if (is_idle) get_cpu_var(cpu, cpu_is_idle) = 0;
+    get_cpu_var(cpu, cpu_is_idle) = 0;
+
+    if (is_idle) restart_local_timer();
 }
 
 PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)

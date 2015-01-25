@@ -33,7 +33,9 @@
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/interrupt.h>
+#include <lyos/spinlock.h>
 
+PRIVATE spinlock_t irq_handlers_lock;
 PRIVATE irq_hook_t * irq_handlers[NR_IRQ] = {0};
 
 PUBLIC void init_irq()
@@ -42,17 +44,22 @@ PUBLIC void init_irq()
     for (i = 0; i < NR_IRQ_HOOKS; i++) {
         irq_hooks[i].proc_ep = NO_TASK;
     }
+    spinlock_init(&irq_handlers_lock);
 }
 
 PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
 {
     if (irq < 0 || irq >= NR_IRQ) panic("invalid irq %d", irq);
-     
+ 
+    spinlock_lock(&irq_handlers_lock);    
     irq_hook_t ** line = &irq_handlers[irq];
 
     int used_ids = 0;
     while (*line != NULL) {
-        if (hook == *line) return;
+        if (hook == *line) {
+            spinlock_unlock(&irq_handlers_lock);
+            return;
+        }
         used_ids |= (*line)->id;
         line = &(*line)->next;
     }
@@ -70,6 +77,8 @@ PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
 
     hwint_used(irq);
     hwint_unmask(irq);
+
+    spinlock_unlock(&irq_handlers_lock);
 }
 
 PUBLIC void rm_irq_handler(irq_hook_t * hook)
@@ -77,6 +86,7 @@ PUBLIC void rm_irq_handler(irq_hook_t * hook)
     int irq = hook->irq;
     int id = hook->id;
 
+    spinlock_lock(&irq_handlers_lock);
     irq_hook_t ** line = &irq_handlers[irq];
     while (*line != NULL) {
         if ((*line)->id == id) {
@@ -86,13 +96,16 @@ PUBLIC void rm_irq_handler(irq_hook_t * hook)
     }
 
     if (irq_handlers[irq] == NULL) {
-        hwint_not_used(irq);
         hwint_mask(irq);
+        hwint_not_used(irq);
     }
+
+    spinlock_unlock(&irq_handlers_lock);
 }
 
 PUBLIC void irq_handle(int irq)
 {
+    spinlock_lock(&irq_handlers_lock);
     irq_hook_t * hook = irq_handlers[irq];
 
     hwint_mask(irq);
@@ -106,6 +119,7 @@ PUBLIC void irq_handle(int irq)
     hwint_unmask(irq);
 
     hwint_ack(irq);
+    spinlock_unlock(&irq_handlers_lock);
 }
 
 PUBLIC void enable_irq(irq_hook_t * hook)

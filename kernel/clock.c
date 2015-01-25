@@ -40,8 +40,10 @@
  *****************************************************************************/
 PUBLIC int clock_handler(irq_hook_t * hook)
 {	
-	if (++jiffies >= MAX_TICKS)
-		jiffies = 0;
+    if (cpuid == bsp_cpu_id) {
+	   if (++jiffies >= MAX_TICKS)
+		  jiffies = 0;
+    }
     
     struct proc * p = get_cpulocal_var(proc_ptr);
 	if (p && p->counter)

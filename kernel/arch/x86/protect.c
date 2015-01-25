@@ -401,12 +401,12 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 	} else printk("\n");
 #endif
 
-	if (frame->vec_no == 14) {
-		page_fault_handler(in_kernel, frame);
-	}
-		if (in_kernel) {
+	if (in_kernel) {
 		panic("unhandled exception in kernel");
 	}
 
+	if (frame->vec_no == 14) {
+		page_fault_handler(in_kernel, frame);
+	}
 }
 

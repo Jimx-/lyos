@@ -208,7 +208,6 @@ PRIVATE int apic_calibrate(unsigned cpu)
     irq_hook_t calibrate_hook;
 
     spinlock_lock(&calibrate_lock);
-
     probe_ticks = 0;
 
     val = 0xffffffff;
@@ -325,6 +324,21 @@ PUBLIC void lapic_set_timer_one_shot(const u32 usec)
 
     lvtt = APIC_TIMER_INT_VECTOR;
     lapic_write(LAPIC_LVTTR, lvtt);
+}
+
+PUBLIC void lapic_restart_timer()
+{
+    if (lapic_read(LAPIC_TIMER_CCR) == 0)
+        lapic_set_timer_one_shot(1000000/system_hz);
+}
+
+PUBLIC void lapic_stop_timer()
+{
+    u32 lvtt;
+    lvtt = lapic_read(LAPIC_LVTTR);
+    lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
+    lapic_write(LAPIC_TIMER_ICR, 0);
+    lapic_write(LAPIC_TIMER_CCR, 0);
 }
 
 PUBLIC void lapic_microsec_sleep(unsigned usec)
