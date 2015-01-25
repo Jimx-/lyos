@@ -34,6 +34,7 @@
 #include <lyos/vm.h>
 #include <errno.h>
 #include "apic.h"
+#include <lyos/smp.h>
 
 extern int syscall_style;
 
@@ -293,6 +294,8 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
     p->seg.cr3_vir = (u32 *)cr3_v;
 
     if (p->endpoint == TASK_MM) {
+        wait_for_aps_to_finish_booting();
+
         write_cr3((u32)cr3);
         reload_cr3();
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);

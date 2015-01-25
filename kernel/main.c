@@ -34,6 +34,7 @@
 #include "arch_proto.h"
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
+#include <lyos/smp.h>
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/log.h>
@@ -124,6 +125,10 @@ PUBLIC void finish_bsp_booting()
 		PST_UNSET(proc_addr(i), PST_STOPPED);
 	}
 
+#if CONFIG_SMP
+    set_cpu_flag(cpuid, CPU_IS_READY);
+#endif
+    
 	switch_to_user();
 }
 

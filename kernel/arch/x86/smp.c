@@ -30,6 +30,7 @@
 #include "arch_proto.h"
 #include "arch_smp.h"
 #include <lyos/cpulocals.h>
+#include <lyos/smp.h>
 
 /* trampoline parameters */
 extern volatile u32 __ap_id, __ap_pgd;
@@ -170,6 +171,7 @@ PRIVATE void smp_start_aps()
 
         while (lapic_read(LAPIC_TIMER_CCR)) {
             if (ap_ready == i) {
+                set_cpu_flag(i, CPU_IS_READY);
                 lapic_set_timer_one_shot(0);
                 break;
             }
@@ -198,11 +200,13 @@ PRIVATE void ap_finish_booting()
 
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
-    
+
     lapic_enable(cpuid);
     fpu_init();
 
     if (init_ap_timer(system_hz) != 0) panic("smp: cannot init timer for CPU %d", cpuid);
+
+    ap_finished_booting();
 
     switch_to_user();
 }

@@ -105,14 +105,6 @@ PUBLIC void restore_user_context(struct proc * p)
     }
 }
 
-/**
- * <Ring 0> Initialize FPU.
- */
-PUBLIC void fpu_init()
-{
-    fninit();
-}
-
 PUBLIC void idle_stop()
 {
 #if CONFIG_SMP

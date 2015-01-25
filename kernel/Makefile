@@ -11,7 +11,7 @@ LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			clock.o global.o proc.o \
 			klib.o cpulocals.o \
-			sysinfo.o system/system.o interrupt.o system.o
+			sysinfo.o system/system.o interrupt.o system.o smp.o
 LIB			= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
 LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
 

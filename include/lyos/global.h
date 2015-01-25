@@ -42,6 +42,7 @@ EXTERN  u32                 bsp_cpu_id, bsp_lapic_id;
 #endif
 
 extern  int booting_cpu;
+extern  int booted_aps;
 EXTERN  int ncpus;
 EXTERN  u64 cpu_hz[CONFIG_SMP_MAX_CPUS];
 
