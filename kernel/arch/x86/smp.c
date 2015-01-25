@@ -102,7 +102,7 @@ PUBLIC void smp_init()
     
     ioapic_enable();
 
-    apic_init_idt(1);
+    apic_init_idt(0);
     reload_idt();
 
     switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -

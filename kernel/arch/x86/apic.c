@@ -640,10 +640,11 @@ PUBLIC void apic_init_idt(int reset)
     init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate,
               sys_call,         PRIVILEGE_USER);
 
-    if (apicid() == bsp_lapic_id) {
+    //if (apicid() == bsp_lapic_id) {
+        printk("APIC: initiating LAPIC timer handler\n");
         init_idt_desc(APIC_TIMER_INT_VECTOR,  DA_386IGate,
-              apic_timer_int_handler,         PRIVILEGE_USER);
-    }
+              apic_timer_int_handler,         PRIVILEGE_KRNL);
+    //}
 }
 
 #if CONFIG_SMP
