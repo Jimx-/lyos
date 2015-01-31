@@ -672,4 +672,6 @@ PUBLIC void dequeue_proc(register struct proc * p)
 PRIVATE void proc_no_time(struct proc * p)
 {
 	p->counter = p->quantum_ms;
+	PST_SET(p, PST_NO_QUANTUM);
+	PST_UNSET(p, PST_NO_QUANTUM);
 }

@@ -104,13 +104,8 @@
 #define IA32_APIC_BASE_ENABLE_BIT   11
 
 DEF_SPINLOCK(calibrate_lock);
-PRIVATE u32 probe_ticks;
-#define PROBE_TICKS (system_hz / 10)
-
 extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
-PRIVATE u64 tsc0, tsc1;
-PRIVATE u32 lapic_tctr0, lapic_tctr1;
 PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 
 PUBLIC struct io_apic io_apics[MAX_IOAPICS];
@@ -186,36 +181,16 @@ PRIVATE u32 lapic_errstatus()
     return lapic_read(LAPIC_ESR);
 }
 
-PRIVATE int calibrate_handler(irq_hook_t * hook)
-{
-    u32 tcrt;
-    u64 tsc;
-
-    probe_ticks++;
-    read_tsc_64(&tsc);
-    tcrt = lapic_read(LAPIC_TIMER_CCR);
-
-    if (probe_ticks == 1) {
-        lapic_tctr0 = tcrt;
-        tsc0 = tsc;
-    } else if (probe_ticks == PROBE_TICKS) {
-        lapic_tctr1 = tcrt;
-        tsc1 = tsc;
-        stop_8253_timer();
-    }
-
-    return 1;
-}
-
 #define CAL_MS      100
 #define CAL_LATCH   (TIMER_FREQ / (1000 / CAL_MS))
 PRIVATE int apic_calibrate(unsigned cpu)
 {
     u32 val, lvtt;
     irq_hook_t calibrate_hook;
+    u64 tsc0, tsc1;
+    u32 lapic_tctr0, lapic_tctr1;
 
     spinlock_lock(&calibrate_lock);
-    probe_ticks = 0;
 
     val = 0xffffffff;
     lapic_write(LAPIC_TIMER_ICR, val);
