@@ -258,3 +258,8 @@ PUBLIC struct acpi_madt_int_src * acpi_get_int_src_next()
 
     return ret;
 }
+
+PUBLIC struct acpi_hpet * acpi_get_hpet()
+{
+    return (struct acpi_hpet *)acpi_get_table_base("HPET");
+}

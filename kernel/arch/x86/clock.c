@@ -31,8 +31,19 @@
 #endif
 #include "lyos/cpulocals.h"
 #include "apic.h"
+#include "acpi.h"
+#include "tsc.h"
 
 PRIVATE irq_hook_t timer_irq_hook;
+
+PUBLIC int arch_init_time()
+{
+    init_hpet();
+    
+    init_tsc();
+
+    return 0;
+}
 
 /*****************************************************************************
  *                                init_clock

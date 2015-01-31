@@ -295,7 +295,8 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
 
     if (p->endpoint == TASK_MM) {
         wait_for_aps_to_finish_booting();
-
+        cmb();
+        
         write_cr3((u32)cr3);
         reload_cr3();
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);

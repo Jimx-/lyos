@@ -64,6 +64,8 @@ PUBLIC int      disable_irq(irq_hook_t * hook);
 PUBLIC void     enable_irq(irq_hook_t * hook);
 
 /* clock.c */
+PUBLIC int      arch_init_time();
+PUBLIC int      init_time();
 PUBLIC int   	init_bsp_timer(int freq);
 PUBLIC int      init_ap_timer(int freq);
 

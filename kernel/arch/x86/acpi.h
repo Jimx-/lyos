@@ -28,6 +28,14 @@ struct acpi_sdt_header {
     u32     creator_revision;
 };
 
+struct acpi_generic_address {
+    u8 address_space_id;
+    u8 register_bit_width;
+    u8 register_bit_offset;
+    u8 access_size;
+    u64 address;
+};
+
 struct acpi_madt_hdr {
     struct acpi_sdt_header  hdr;
     u32           local_apic_address;
@@ -74,11 +82,22 @@ struct acpi_madt_int_src {
     u16   mps_flags;
 };
 
+struct acpi_hpet {
+    struct acpi_sdt_header  hdr;
+    u32 block_id;
+    struct acpi_generic_address address;
+    u8 hpet_number;
+    u16 minimum_tick;
+    u8 page_protection;
+};
+
 #define MAX_RSDT    35
 
 PUBLIC void acpi_init();
 PUBLIC struct acpi_madt_lapic * acpi_get_lapic_next();
 PUBLIC struct acpi_madt_ioapic * acpi_get_ioapic_next();
 PUBLIC struct acpi_madt_int_src * acpi_get_int_src_next();
+
+PUBLIC struct acpi_hpet * acpi_get_hpet();
 
 #endif

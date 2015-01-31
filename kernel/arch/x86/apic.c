@@ -35,6 +35,8 @@
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/spinlock.h>
+#include "hpet.h"
+#include "div64.h"
 
 #define APIC_ENABLE     0x100
 #define APIC_FOCUS_DISABLED (1 << 9)
@@ -205,6 +207,8 @@ PRIVATE int calibrate_handler(irq_hook_t * hook)
     return 1;
 }
 
+#define CAL_MS      100
+#define CAL_LATCH   (TIMER_FREQ / (1000 / CAL_MS))
 PRIVATE int apic_calibrate(unsigned cpu)
 {
     u32 val, lvtt;
@@ -227,22 +231,44 @@ PRIVATE int apic_calibrate(unsigned cpu)
     lvtt |= APIC_LVTT_MASK;
     lapic_write(LAPIC_LVTTR, lvtt);
 
-    put_irq_handler(isa_irq_to_gsi[CLOCK_IRQ], &calibrate_hook, calibrate_handler);
-    init_8253_timer(system_hz);
+    u32 cal_ms = CAL_MS;
+    u32 cal_latch = CAL_LATCH;
+    u64 hpet0, hpet1, hpet = is_hpet_enabled();
 
-    enable_int();
-    while (probe_ticks < PROBE_TICKS) enable_int();
-    disable_int();
+    out_byte(0x61, (in_byte(0x61) & 0x02) | 0x01);
+    
+    out_byte(TIMER_MODE, 0xb0);
+    out_byte(TIMER2, cal_latch & 0xff);
+    out_byte(TIMER2, (u8)(cal_latch >> 8));
 
-    rm_irq_handler(&calibrate_hook);
+    if (hpet) hpet0 = hpet_read(HPET_COUNTER);
+    read_tsc_64(&tsc0);
+    lapic_tctr0 = lapic_read(LAPIC_TIMER_CCR);
+    while ((in_byte(0x61) & 0x20) == 0) { }
+    if (hpet) hpet1 = hpet_read(HPET_COUNTER);
+    read_tsc_64(&tsc1);
+    lapic_tctr1 = lapic_read(LAPIC_TIMER_CCR);
 
-    u32 tsc_delta = tsc1 - tsc0;
-    u32 cpu_freq = (tsc_delta / (PROBE_TICKS - 1)) * make64(0, system_hz);
+    stop_8253_timer();
+
+    if (hpet) {
+        u64 hpet_delta = hpet1 - hpet0;
+        u64 hpet_ms = ((u64)hpet_delta * hpet_read(HPET_PERIOD));
+        do_div(hpet_ms, 1000000);
+        do_div(hpet_ms, 1000000);
+        cal_ms = (u32)hpet_ms;
+    }
+
+    u64 tsc_delta = tsc1 - tsc0;
+    u64 cpu_freq = tsc_delta * 1000;
+    do_div(cpu_freq, cal_ms);
     cpu_hz[cpuid] = cpu_freq;
-    printk("APIC: detected %d MHz processor\n", cpu_freq / 1000000);
+    u64 cpu_mhz = cpu_freq;
+    do_div(cpu_mhz, 1000000);
+    printk("APIC: detected %d MHz processor\n", cpu_mhz);
 
     u32 lapic_delta = lapic_tctr0 - lapic_tctr1;
-    lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
+    lapic_bus_freq[cpuid] = lapic_delta * 1000 / cal_ms;
 
     spinlock_unlock(&calibrate_lock);
 
@@ -357,8 +383,7 @@ PRIVATE void ioapic_init_legacy_irqs()
 
     while (acpi_int_src = acpi_get_int_src_next()) {
         isa_irq_to_gsi[acpi_int_src->bus_int] = acpi_int_src->global_int;
-        printk("ACPI: IRQ%d used by override\n", 
-            acpi_int_src->bus_int);
+        printk("ACPI: IRQ%d used by override\n", acpi_int_src->bus_int);
     }
 }
 
@@ -474,7 +499,7 @@ PUBLIC void ioapic_set_irq(int irq)
             io_apic_irq[irq].vector = INT_VECTOR_IRQ0 + irq;
 
             set_irq_redir_low(irq, &low_32);
-            hi_32 = bsp_lapic_id << 24;
+            hi_32 = cpuid << 24;
             ioapic_redirt_entry_write((void *)io_apics[ioa].addr,
                     io_apic_irq[irq].pin, hi_32, low_32);
         }

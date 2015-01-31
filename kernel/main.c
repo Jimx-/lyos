@@ -60,6 +60,7 @@ PUBLIC int kernel_main()
 	init_irq();
 	
 	jiffies = 0;
+    init_time();
 
     int i;
     struct boot_proc * bp = boot_procs;

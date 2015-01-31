@@ -92,7 +92,7 @@ PUBLIC void smp_init()
 
     bsp_lapic_id = apicid();
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
-
+    
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");
     }

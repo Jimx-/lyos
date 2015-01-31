@@ -44,11 +44,8 @@ PUBLIC void wait_for_aps_to_finish_booting()
 
     if (n != ncpus) printk("smp: only %d out of %d cpus booted\n", n, ncpus);
 
-    enable_int();
-    while (booted_aps != (n - 1)) {
+    while (booted_aps != (n - 1)) 
         arch_pause();
-    }
-    disable_int();
 }
 
 PUBLIC void ap_finished_booting()
