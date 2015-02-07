@@ -21,9 +21,9 @@ do
                 ARCH=${OPTARG}
                 ;;
              ?)
-            echo "unkonw argument"
-        exit 1
-        ;;
+                echo "unkonw argument"
+                exit 1
+                ;;
         esac
 done
 

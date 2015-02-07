@@ -3,8 +3,5 @@ AC_INIT([newlib], [NEWLIB_VERSION])
 
 AC_CONFIG_AUX_DIR(../../../..)
 NEWLIB_CONFIGURE(../../..)
-
-AC_CONFIG_SUBDIRS(machine)
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -7,6 +7,8 @@ char * _brksize = (char *)0;
 
 typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
 
+int syscall_gate_intr(int syscall_nr, MESSAGE * m);
+
 syscall_gate_t _syscall_gate = (syscall_gate_t)0;
 
 struct sysinfo {
@@ -15,13 +17,6 @@ struct sysinfo {
     
     syscall_gate_t syscall_gate;
 };
-
-int syscall_gate_intr(int syscall_nr, MESSAGE * m)
-{
-	int a;
-	__asm__ __volatile__("int $0x90" : "=a" (a) : "0" (syscall_nr), "b" (m));
-	return a;
-}
 
 static struct sysinfo * get_sysinfo()
 {
