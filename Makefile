@@ -23,6 +23,10 @@ ifeq ($(ARCH),i686)
 	ARCH = x86
 endif
 
+ifeq ($(ARCH),arm)
+	SUBARCH = arm
+endif
+
 export SUBARCH ARCH 
 
 # Import configuration
@@ -58,6 +62,7 @@ AS 		= $(SUBARCH)-elf-lyos-as
 CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
 CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+ASFLAGS = -I $(INCDIR)/
 SERVERCFLAGS	= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory
 ARFLAGS		= rcs
@@ -68,7 +73,7 @@ ifeq ($(CONFIG_DEBUG_INFO),y)
 	SERVERCFLAGS += -g
 endif
 
-export ASM CC LD CFLAGS HOSTCC HOSTLD SERVERCFLAGS
+export AS ASM CC LD CFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
 LYOSKERNEL = $(ARCHDIR)/lyos.bin
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
@@ -163,7 +168,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio
+	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD),$(DESTDIR)/sbin/mm,$(DESTDIR)/sbin/pm,$(DESTDIR)/sbin/servman,$(DESTDIR)/sbin/devman,$(DESTDIR)/sbin/sched,$(DESTDIR)/sbin/vfs,$(DESTDIR)/sbin/systask,$(DESTDIR)/sbin/tty,$(DESTDIR)/sbin/ramdisk,$(DESTDIR)/sbin/initfs,$(DESTDIR)/sbin/sysfs,$(DESTDIR)/sbin/init" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
 
 kvm-debug:
 	@qemu-system-i386 -S -s -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio

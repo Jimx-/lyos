@@ -19,7 +19,7 @@
 #define	EXTERN
 #endif
 
-#if(ARCH == x86)
+#ifdef __i386__
 #include "protect.h"
 #include "page.h"
 #endif
@@ -29,7 +29,7 @@
 
 EXTERN	int	jiffies;
 
-#if (ARCH == x86)
+#ifdef __i386__
 EXTERN	u8			        gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct descriptor	gdt[GDT_SIZE];
 EXTERN	u8			        idt_ptr[6];	/* 0~15:Limit  16~47:Base */
@@ -39,14 +39,13 @@ EXTERN  phys_bytes          lapic_addr;
 EXTERN  vir_bytes           lapic_vaddr;
 EXTERN  vir_bytes           lapic_eoi_addr;
 EXTERN  u32                 bsp_cpu_id, bsp_lapic_id;
+EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 #endif
 
 extern  int booting_cpu;
 extern  int booted_aps;
 EXTERN  int ncpus;
 EXTERN  u64 cpu_hz[CONFIG_SMP_MAX_CPUS];
-
-EXTERN  struct tss  tss[CONFIG_SMP_MAX_CPUS];
 
 extern	char		task_stack[];
 extern	struct proc	proc_table[];

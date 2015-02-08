@@ -1,6 +1,6 @@
 diff -rupN origin/config.sub new/config.sub
 --- origin/config.sub	2012-12-08 08:02:34.000000000 +0800
-+++ new/config.sub	2013-07-10 22:00:43.479954563 +0800
++++ new/config.sub	2015-02-08 18:29:44.119187761 +0800
 @@ -1379,6 +1379,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -11,8 +11,18 @@ diff -rupN origin/config.sub new/config.sub
  		;;
 diff -rupN origin/newlib/configure.host new/newlib/configure.host
 --- origin/newlib/configure.host	2012-12-05 05:43:20.000000000 +0800
-+++ new/newlib/configure.host	2013-07-10 22:03:57.984919057 +0800
-@@ -419,6 +419,9 @@ case "${host}" in
++++ new/newlib/configure.host	2015-02-08 18:30:40.443467058 +0800
+@@ -372,6 +372,9 @@ case "${host}" in
+   arc-*-*)
+ 	sys_dir=arc
+ 	;;
++  arm-*-lyos*)
++	sys_dir=lyos
++	;;
+   arm*-*-*)
+ 	sys_dir=arm
+ 	if [ "x${newlib_may_supply_syscalls}" = "xno" ] ; then
+@@ -419,6 +422,9 @@ case "${host}" in
    h8500-*-elf*)
  	sys_dir=h8500hms
  	;;
@@ -22,7 +32,7 @@ diff -rupN origin/newlib/configure.host new/newlib/configure.host
    i[34567]86-*-rdos*)
  	sys_dir=rdos
  	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
-@@ -526,6 +529,9 @@ esac
+@@ -526,6 +532,9 @@ esac
  # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
  
  case "${host}" in
@@ -34,7 +44,7 @@ diff -rupN origin/newlib/configure.host new/newlib/configure.host
  	export cygwin_srcdir
 diff -rupN origin/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
 --- origin/newlib/libc/sys/configure.in	2012-02-22 06:34:31.000000000 +0800
-+++ new/newlib/libc/sys/configure.in	2013-07-10 22:11:40.183210983 +0800
++++ new/newlib/libc/sys/configure.in	2015-02-08 18:29:44.119187761 +0800
 @@ -46,6 +46,7 @@ if test -n "${sys_dir}"; then
  	sysvnecv70) AC_CONFIG_SUBDIRS(sysvnecv70) ;;
  	tic80) AC_CONFIG_SUBDIRS(tic80) ;;

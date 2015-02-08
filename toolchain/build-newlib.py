@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 	print('Patching...')
 	patch(NEWLIB_VERSION)
-
+	
 	pop_dir()	# sources
 
 	mkdir('build')
