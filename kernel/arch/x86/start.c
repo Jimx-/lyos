@@ -138,13 +138,23 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	sprintf(initrd_param_buf, "%u", (unsigned int)initrd_len);
 	kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
 
-	/* set module information */
-	int i;
-	multiboot_module_t * bootmod = initrd_mod + 1;
-	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++, bootmod++) {
-		kinfo.modules[i].start_addr = (phys_bytes)bootmod->mod_start;
-		kinfo.modules[i].end_addr = (phys_bytes)bootmod->mod_end;
-	}
+#define SET_MODULE(nr, name) do { \
+	extern char _binary_##name##_start[], _binary_##name##_end[]; \
+	kinfo.modules[nr].start_addr = (vir_bytes)*(&_binary_##name##_start) - KERNEL_VMA; \
+	kinfo.modules[nr].end_addr = (vir_bytes)*(&_binary_##name##_end) - KERNEL_VMA; } while(0)
+
+	SET_MODULE(TASK_MM, mm);
+	SET_MODULE(TASK_PM, pm);
+	SET_MODULE(TASK_SERVMAN, servman);
+	SET_MODULE(TASK_DEVMAN, devman);
+	SET_MODULE(TASK_SCHED, sched);
+	SET_MODULE(TASK_FS, vfs);
+	SET_MODULE(TASK_SYS, systask);
+	SET_MODULE(TASK_TTY, tty);
+	SET_MODULE(TASK_RD, ramdisk);
+	SET_MODULE(TASK_INITFS, initfs);
+	SET_MODULE(TASK_SYSFS, sysfs);
+	SET_MODULE(INIT, init);
 
 	/* kernel memory layout */
 	kinfo.kernel_text_start = (vir_bytes)*(&_text);

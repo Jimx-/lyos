@@ -2,9 +2,16 @@
 
 .global _start	/* entry point */
 
+.extern cstart
+.extern kernel_main
+
 _start:
 	ldr	sp, =StackTop
-	bx cstart
+	mov fp, #0
+	bl cstart
+
+	ldr r2, =kernel_main
+	bx r2
 
 hang:
 	b hang

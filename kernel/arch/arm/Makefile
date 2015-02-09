@@ -1,5 +1,5 @@
 
-KERNELOBJS	= kernel.o
+KERNELOBJS	= kernel.o start.o
 
 ARCHKERNEL		= arch-kernel.o
 

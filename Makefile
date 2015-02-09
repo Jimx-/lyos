@@ -61,6 +61,7 @@ HOSTLD	= ld
 AS 		= $(SUBARCH)-elf-lyos-as
 CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
+OBJCOPY = $(SUBARCH)-elf-lyos-objcopy
 CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ASFLAGS = -I $(INCDIR)/
 SERVERCFLAGS	= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
@@ -73,7 +74,7 @@ ifeq ($(CONFIG_DEBUG_INFO),y)
 	SERVERCFLAGS += -g
 endif
 
-export AS ASM CC LD CFLAGS HOSTCC HOSTLD SERVERCFLAGS
+export AS ASM CC LD OBJCOPY CFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
 LYOSKERNEL = $(ARCHDIR)/lyos.bin
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
@@ -110,7 +111,7 @@ all : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries kernel fs drivers servers initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries fs drivers servers kernel initrd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -168,7 +169,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD),$(DESTDIR)/sbin/mm,$(DESTDIR)/sbin/pm,$(DESTDIR)/sbin/servman,$(DESTDIR)/sbin/devman,$(DESTDIR)/sbin/sched,$(DESTDIR)/sbin/vfs,$(DESTDIR)/sbin/systask,$(DESTDIR)/sbin/tty,$(DESTDIR)/sbin/ramdisk,$(DESTDIR)/sbin/initfs,$(DESTDIR)/sbin/sysfs,$(DESTDIR)/sbin/init" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
+	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
 
 kvm-debug:
 	@qemu-system-i386 -S -s -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio
@@ -228,10 +229,6 @@ ifeq ($(CONFIG_COMPRESS_GZIP),y)
 	@cp -f $(LYOSZKERNEL) $(DESTDIR)/boot/
 endif
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
-
-$(LIB):
-	@echo -e '$(COLORGREEN)Compiling the library...$(COLORDEFAULT)'
-	@(cd lib/liblyos; make)
 
 fs:
 	@echo -e '$(COLORGREEN)Compiling the filesystem server...$(COLORDEFAULT)'

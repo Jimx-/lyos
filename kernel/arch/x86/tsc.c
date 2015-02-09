@@ -35,8 +35,22 @@
 #include "acpi.h"
 #include "hpet.h"
 #include "div64.h"
+#include <lyos/clocksource.h>
 
 PUBLIC u32 tsc_khz;
+
+PRIVATE u64 tsc_read(struct clocksource * cs)
+{
+    u64 tsc;
+    read_tsc_64(&tsc);
+    return tsc;
+}
+
+PRIVATE struct clocksource tsc_clocksource = {
+    .name = "tsc",
+    .rating = 300,
+    .read = read_tsc_64,
+};
 
 PRIVATE u32 calibrate_tsc();
 PRIVATE u32 pit_calibrate_tsc();

@@ -36,7 +36,7 @@ PUBLIC int sys_sigreturn(MESSAGE * m, struct proc* p)
 
     vir_copy(KERNEL, &sc, p_dest->endpoint, m->BUF, sizeof(sc));
 
-#if(ARCH == x86)
+#ifdef __i386__
     p_dest->regs.gs = sc.gs;
     p_dest->regs.fs = sc.fs;
     p_dest->regs.es = sc.es;

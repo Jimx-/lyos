@@ -1,0 +1,23 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+source "kernel/config.in"
+
+
+menu "Processor type and features"
+
+config SMP
+    bool "Symmetric multiprocessing"
+    help
+      Enable support for systems that have more than one processor.
+
+config SMP_MAX_CPUS
+    int "Max number of CPUs"
+    depends on SMP
+    default "8"
+    help
+      The default value is 8 CPUs.
+
+endmenu

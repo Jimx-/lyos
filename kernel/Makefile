@@ -5,7 +5,7 @@
 AR		= ar
 ARFLAGS		= rcs
 
-LDSCRIPT = arch/$(ARCH)/lyos.ld
+LDSCRIPT = arch/$(ARCH)/lyos.lds
 LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\

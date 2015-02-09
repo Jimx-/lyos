@@ -28,6 +28,18 @@
 #include "arch_smp.h"
 #endif
 #include "lyos/cpulocals.h"
+#include <lyos/clocksource.h>
+
+PRIVATE u64 read_jiffies(struct clocksource * cs)
+{
+    return jiffies;
+}
+
+PRIVATE struct clocksource jiffies_clocksource = {
+    .name = "jiffies",
+    .rating = 1,
+    .read = read_jiffies,
+};
 
 /*****************************************************************************
  *                                clock_handler
@@ -40,10 +52,14 @@
  *****************************************************************************/
 PUBLIC int clock_handler(irq_hook_t * hook)
 {	
+#if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
+#endif
 	   if (++jiffies >= MAX_TICKS)
 		  jiffies = 0;
+#if CONFIG_SMP
     }
+#endif
     
     struct proc * p = get_cpulocal_var(proc_ptr);
 	if (p && p->counter)

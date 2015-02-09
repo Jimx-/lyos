@@ -1,7 +1,17 @@
 
-KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o smp.o apic.o acpi.o \
+KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o apic.o acpi.o \
 				system.o gate.o direct_tty.o page.o memory.o clock.o sys_sportio.o \
-				apic_asm.o trampoline.o fpu.o hpet.o tsc.o
+				apic_asm.o fpu.o hpet.o tsc.o bootmods/bootmods.o
+
+# Import configuration
+ifeq ($(wildcard $(SRCDIR)/.config),) 
+else
+	include $(SRCDIR)/.config
+endif
+
+ifeq ($(CONFIG_SMP),y)
+	KERNELOBJS += smp.o trampoline.o trampoline_32.o
+endif
 
 ARCHKERNEL		= arch-kernel.o
 
@@ -21,3 +31,6 @@ $(ARCHKERNEL): $(KERNELOBJS)
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/x86/$@'
 	@$(CC) $(CFLAGS) -o $@ $<
+
+bootmods/bootmods.o:
+	@(cd bootmods; make)

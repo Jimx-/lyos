@@ -42,8 +42,6 @@ global StackTop
 global k_stacks_start
 global k_stacks_end
 
-global trampoline_32
-
 [SECTION .data]
 ALIGN 0x1000
 pgd0:
@@ -472,13 +470,3 @@ restore_user_context_sysenter:
 
 	sti
 	sysexit		; go back to user
-
-trampoline_32:
-	mov ax, SELECTOR_KERNEL_DS
-	mov ds, ax
-	mov ss, ax
-	mov esp, StackTop - 4
-
-	call load_prot_selectors
-	jmp smp_boot_ap
-	hlt

@@ -18,7 +18,6 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"

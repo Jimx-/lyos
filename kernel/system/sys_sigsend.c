@@ -35,15 +35,17 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     if (!p_dest) return EINVAL;
 
     vir_copy(KERNEL, &si, p->endpoint, m->BUF, sizeof(si));
+#ifdef __i386__
     si.stackptr = p_dest->regs.esp;
-
+#endif
+    
     struct sigframe sf, * sfp;
     sfp = (struct sigframe *)si.stackptr - 1;
     memset(&sf, 0, sizeof(sf));
     sf.scp = &sfp->sc;
     sf.scp_sigreturn = &sfp->sc;
 
-#if(ARCH == x86)
+#ifdef __i386__
     sf.sc.gs = p_dest->regs.gs;
     sf.sc.fs = p_dest->regs.fs;
     sf.sc.es = p_dest->regs.es;
@@ -70,7 +72,7 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
 
     vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
 
-#if (ARCH == x86)
+#ifdef __i386__
     p_dest->regs.esp = sfp;
     p_dest->regs.eip = si.sig_handler;
 #endif
