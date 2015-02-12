@@ -28,6 +28,7 @@ extern	delay
 extern	irq_table
 extern  load_prot_selectors
 extern  smp_boot_ap
+extern  stop_context
 
 extern	gdt_ptr
 extern	idt_ptr
@@ -152,6 +153,9 @@ paging_enabled:
 	cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
 	je .1
 	call	save
+	push 	esi
+	call 	stop_context
+	pop 	esi
 	push	%1						; `.
 	call	irq_handle	;  | Call the interrupt handler
 	pop	ecx							; /
@@ -204,6 +208,9 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 	cmp dword [esp + 4], SELECTOR_KERNEL_CS
 	je .1
 	call	save
+	push 	esi
+	call 	stop_context
+	pop 	esi
 	push	%1			; `.
 	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
@@ -318,6 +325,9 @@ exception:
 	je exception_in_kernel
 
 	call save_exception
+	push 	esi
+	call 	stop_context
+	pop 	esi
 
 	push esp 	; exception stack frame
 	push 0 		; not in kernel
@@ -397,13 +407,18 @@ save_exception:
 sys_call:
     call    save
 
-	push	esi
-	push	ebx
-	push 	eax
-    call    dispatch_sys_call
-	add	esp, 8 		; esp <- esi(proc ptr)
+	push	esi	; proc ptr
+	push	ebx	; message ptr
+	push 	eax ; call nr
 
-	pop esi
+	push 	esi
+	call    stop_context
+	pop 	esi
+
+    call    dispatch_sys_call
+	add		esp, 8 		; esp <- esi(proc ptr)
+
+	pop 	esi
     mov     [esi + EAXREG - P_STACKBASE], eax
 
     jmp switch_to_user

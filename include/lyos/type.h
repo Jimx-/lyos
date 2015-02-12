@@ -27,6 +27,15 @@ PRIVATE inline u64 make64(unsigned long hi, unsigned long lo)
 {
     return ((u64)hi << 32) | (u64)lo;
 }
+PRIVATE inline unsigned long ex64lo(u64 i)
+{
+	return (unsigned long)i;
+}
+
+PRIVATE inline unsigned long ex64hi(u64 i)
+{
+	return (unsigned long)(i>>32);
+}
 typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;

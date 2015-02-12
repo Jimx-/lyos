@@ -30,14 +30,30 @@
 #include "arch_smp.h"
 #endif
 #include "lyos/cpulocals.h"
+#include <lyos/time.h>
+#include <lyos/clocksource.h>
 #include "apic.h"
 #include "acpi.h"
 #include "hpet.h"
+#include "div64.h"
 
-PRIVATE vir_bytes   hpet_addr;
-PRIVATE vir_bytes   hpet_vaddr;
+PUBLIC vir_bytes   hpet_addr;
+PUBLIC vir_bytes   hpet_vaddr;
 
 PRIVATE u8 hpet_enabled = 0;
+PRIVATE u64 hpet_freq;
+
+PRIVATE u64 read_hpet(struct clocksource * cs)
+{
+    return hpet_readl(HPET_COUNTER);
+}
+
+PRIVATE struct clocksource hpet_clocksource = {
+    .name = "hpet",
+    .rating = 250,
+    .read = read_hpet,
+    .mask = 0xffffffffffffffff,
+};
 
 PUBLIC int init_hpet()
 {
@@ -52,6 +68,13 @@ PUBLIC int init_hpet()
     conf |= HPET_CFG_ENABLE;
     hpet_write(HPET_CFG, conf);
 
+    u32 hpet_period = hpet_read(HPET_PERIOD);
+    u64 freq;
+    freq = FSEC_PER_SEC;
+    do_div(freq, hpet_period);
+    hpet_freq = freq;
+
+    register_clocksource_hz(&hpet_clocksource, (u32)hpet_freq);
     hpet_enabled = 1;
 
     return hpet_enabled;
@@ -65,6 +88,11 @@ PUBLIC u8 is_hpet_enabled()
 PUBLIC u32 hpet_read(u32 a)
 {
     return *(u32 *)(hpet_addr + a);
+}
+
+PUBLIC u64 hpet_readl(u32 a)
+{
+    return *(u64 *)(hpet_addr + a);
 }
 
 PUBLIC u32 hpet_write(u32 a, u32 v)

@@ -58,8 +58,6 @@ PUBLIC int kernel_main()
 
 	init_memory();
 	init_irq();
-	
-	jiffies = 0;
     init_time();
 
     int i;

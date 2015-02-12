@@ -73,6 +73,7 @@ global  apic_spurious_intr
 global  apic_error_intr
 
 extern  save
+extern  stop_context
 extern  switch_to_user
 extern  irq_handle
 extern  idle_stop
@@ -87,6 +88,9 @@ extern  apic_error_int_handler
 	cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
 	je .1
 	call	save
+	push 	esi
+	call 	stop_context
+	pop 	esi
 	push	%1						; `.
 	call	irq_handle	;  | Call the interrupt handler
 	pop	ecx							; /
@@ -105,6 +109,9 @@ extern  apic_error_int_handler
 cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
 	je .1
 	call	save
+	push 	esi
+	call 	stop_context
+	pop 	esi
 	call	%1
 	mov eax, dword [lapic_eoi_addr]
 	mov dword [eax], 0

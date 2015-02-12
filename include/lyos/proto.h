@@ -68,6 +68,7 @@ PUBLIC int      arch_init_time();
 PUBLIC int      init_time();
 PUBLIC int   	init_bsp_timer(int freq);
 PUBLIC int      init_ap_timer(int freq);
+PUBLIC void     stop_context(struct proc * p);
 
 /* proc.c */
 PUBLIC  void    init_proc();

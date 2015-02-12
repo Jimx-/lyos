@@ -80,9 +80,10 @@ struct proc {
 	spinlock_t lock;
 
 	int priority;
-    int counter;                 /* remained ticks */
+    u64 counter_ns;                 /* remained ticks */
     int quantum_ms;
-
+    u64 cycles;
+    
     struct proc * next_ready;
 
     struct priv * priv;

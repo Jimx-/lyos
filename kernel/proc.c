@@ -32,7 +32,8 @@
 #include "arch_smp.h"
 #endif
 #include "lyos/cpulocals.h"
-
+#include <lyos/time.h>
+    
 PRIVATE struct proc * pick_proc();
 PRIVATE void idle();
 PUBLIC 	int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
@@ -90,7 +91,8 @@ PUBLIC void init_proc()
 			quantum = TASK_QUANTUM;
 		}
 
-		p->counter = p->quantum_ms = quantum;
+		p->quantum_ms = quantum;
+		p->counter_ns = p->quantum_ms * NSEC_PER_MSEC;
 		p->priority = prio;
 
 		p->p_parent = NO_TASK;
@@ -147,12 +149,13 @@ no_schedule:
 
 	get_cpulocal_var(proc_ptr) = p;
 
-	if (p->counter <= 0) proc_no_time(p);
+	if (p->counter_ns <= 0) proc_no_time(p);
 	if (!proc_is_runnable(p)) goto reschedule;
 
 	switch_address_space(p);
 
 	p = arch_switch_to_user();
+	stop_context(proc_addr(KERNEL));
 
 	restart_local_timer();
 
@@ -185,6 +188,8 @@ PRIVATE void idle()
 	restart_local_timer();
 #endif
 
+	stop_context(proc_addr(KERNEL));
+	
 	halt_cpu();
 }
 
@@ -673,7 +678,7 @@ PUBLIC void dequeue_proc(register struct proc * p)
  */
 PRIVATE void proc_no_time(struct proc * p)
 {
-	p->counter = p->quantum_ms;
+	p->counter_ns = p->quantum_ms * NSEC_PER_MSEC;
 	PST_SET(p, PST_NO_QUANTUM);
 	PST_UNSET(p, PST_NO_QUANTUM);
 }

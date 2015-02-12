@@ -198,11 +198,12 @@ PUBLIC vir_bytes usermapped_offset;
 
 PRIVATE int KM_LAST = -1;
 PRIVATE int KM_IOAPIC_END = -1;
+PRIVATE int KM_HPET = -1;
 
 extern u8 ioapic_enabled;
 extern int nr_ioapics;
 extern struct io_apic io_apics[MAX_IOAPICS];
-
+extern vir_bytes hpet_addr, hpet_vaddr;
 /**
  * <Ring 0> Get kernel mapping information.
  */
@@ -213,7 +214,9 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
     if (first) {
         if (ioapic_enabled) {
             KM_IOAPIC_END = KM_IOAPIC_FIRST + nr_ioapics - 1;
-            KM_LAST = KM_IOAPIC_END;
+            if (hpet_addr) KM_HPET = KM_IOAPIC_END + 1;
+            else KM_HPET = KM_IOAPIC_END;
+            KM_LAST = KM_HPET;
         }
         first = 0;
     }
@@ -243,6 +246,12 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
         return 0;
     }
 #endif
+    if (hpet_addr && index == KM_HPET) {
+        *addr = hpet_addr;
+        *len = 4 << 10;
+        *flags = KMF_WRITE;
+        return 0;
+    }
 
     return 0;
 }
@@ -283,6 +292,9 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         return 0;
     }
 #endif
+    if (index == KM_HPET) {
+        hpet_vaddr = (vir_bytes)vir_addr;
+    }
 
 
     return 0;
@@ -309,6 +321,7 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
         for (i = 0; i < nr_ioapics; i++) {
             io_apics[i].addr = io_apics[i].vir_addr;
         }
+        hpet_addr = hpet_vaddr;
     }
 
     PST_UNSET(p, PST_MMINHIBIT);

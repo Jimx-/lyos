@@ -29,16 +29,25 @@
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/clocksource.h>
+#include <lyos/time.h>
+#include "div64.h"
+
+extern spinlock_t clocksource_lock;
 
 PRIVATE u64 read_jiffies(struct clocksource * cs)
 {
     return jiffies;
 }
 
+#define NSEC_PER_JIFFY  (NSEC_PER_SEC/DEFAULT_HZ)
+#define JIFFY_SHIFT     8
 PRIVATE struct clocksource jiffies_clocksource = {
     .name = "jiffies",
     .rating = 1,
     .read = read_jiffies,
+    .mask = 0xffffffff,
+    .mul = NSEC_PER_JIFFY << JIFFY_SHIFT,
+    .shift = JIFFY_SHIFT,
 };
 
 /*****************************************************************************
@@ -60,18 +69,18 @@ PUBLIC int clock_handler(irq_hook_t * hook)
 #if CONFIG_SMP
     }
 #endif
-    
-    struct proc * p = get_cpulocal_var(proc_ptr);
-	if (p && p->counter)
-		p->counter--;
 
     return 1;
 }
 
 PUBLIC int init_time()
 {
+    jiffies = 0;
+
+    init_clocksource();
     arch_init_time();
-    
+    register_clocksource(&jiffies_clocksource);
+
     return 0;
 }
 
@@ -88,4 +97,30 @@ PUBLIC int init_ap_timer(int freq)
     if (init_local_timer(freq)) return -1;
 
     return 0;
+}
+
+PUBLIC void stop_context(struct proc * p)
+{
+    spinlock_lock(&clocksource_lock);
+    u64 * ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
+
+    if (!curr_clocksource) return;
+    u64 cycle = curr_clocksource->read(curr_clocksource);
+    u64 delta = cycle - *ctx_switch_clock;
+    p->cycles += delta;
+
+    u64 nsec = clocksource_cyc2ns(curr_clocksource, delta);
+
+    if (p->endpoint >= 0) {
+        if (ex64hi(nsec) < ex64hi(p->counter_ns) ||
+                (ex64hi(nsec) == ex64hi(p->counter_ns) &&
+                 ex64lo(nsec) < ex64lo(p->counter_ns)))
+            p->counter_ns = p->counter_ns - nsec;
+        else {
+            p->counter_ns = 0;
+        }
+    }
+
+    *ctx_switch_clock = cycle;
+    spinlock_unlock(&clocksource_lock);
 }

@@ -50,14 +50,25 @@ PRIVATE struct clocksource tsc_clocksource = {
     .name = "tsc",
     .rating = 300,
     .read = read_tsc_64,
+    .mask = 0xffffffffffffffff,
 };
 
 PRIVATE u32 calibrate_tsc();
 PRIVATE u32 pit_calibrate_tsc();
 
+PRIVATE void init_tsc_clocksource()
+{
+    /* TSC is not an ideal clocksource on SMP systems */
+#if CONFIG_SMP
+    tsc_clocksource.rating = 0;
+#endif
+    register_clocksource_khz(&tsc_clocksource, tsc_khz);
+}
+
 PUBLIC void init_tsc()
 {
     tsc_khz = calibrate_tsc();
+    init_tsc_clocksource();
 }
 
 #if 0

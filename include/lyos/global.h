@@ -28,6 +28,7 @@
 #include <lyos/priv.h>
 
 EXTERN	int	jiffies;
+extern  struct clocksource * curr_clocksource;
 
 #ifdef __i386__
 EXTERN	u8			        gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
