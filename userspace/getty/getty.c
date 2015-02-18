@@ -10,7 +10,7 @@
 #define ISSUE_LEN	256
 #define NAME_LEN	30
 
-#define LOGIN "/usr/bin/login"
+#define LOGIN "/bin/dash"
 
 void print_banner(char * ttyname);
 
@@ -26,7 +26,7 @@ int main(int argc, char * argv[])
 	int len = read(0, name, NAME_LEN);
 	name[len] = '\0';
 
-	char * login_argv[] = {LOGIN, name, NULL};
+	char * login_argv[] = {"-i", NULL};
 
 	execv(LOGIN, login_argv);
 

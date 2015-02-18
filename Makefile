@@ -172,7 +172,7 @@ kvm:
 	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
 
 kvm-debug:
-	@qemu-system-i386 -S -s -smp 2 -net nic,model=rtl8139 -net user lyos-disk.img -m 1024 -serial stdio
+	@qemu-system-i386 -s -S -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
 
 disk-image:
 	@(cd userspace; make)
@@ -185,9 +185,10 @@ initrd:
 	@cp $(DESTDIR)/sbin/ata ramdisk/sbin/
 	@cp $(DESTDIR)/usr/bin/getty ramdisk/usr/bin/getty
 	@cp $(DESTDIR)/usr/bin/login ramdisk/usr/bin/login
+	@cp sysroot/bin/dash ramdisk/bin/
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)
-	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root sbin/* dev/* etc/* usr/bin/* > /dev/null)
+	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root bin/* sbin/* dev/* etc/* usr/bin/* > /dev/null)
 	@rm ramdisk/.root
 	@cp -f $(LYOSINITRD) $(DESTDIR)/boot/
 

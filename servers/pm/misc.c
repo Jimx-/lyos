@@ -62,7 +62,10 @@ PUBLIC int do_getsetid(MESSAGE * p)
     case GS_GETEGID:
         retval = pmp->effgid;
         break; 
-
+    case GS_GETPGRP:
+        p->PID = pmp->procgrp;
+        break;
+        
     case GS_SETUID:
         uid = p->NEWID;
 

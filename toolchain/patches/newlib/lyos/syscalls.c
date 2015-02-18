@@ -180,22 +180,34 @@ int getpid()
 
 pid_t getppid(void)
 {
+	printf("getppid: not implemented\n");
 	return INIT;
 }
 
 pid_t getpgid(pid_t pid)
 {
+	printf("getpgid: not implemented\n");
 	return INIT;
 }
 
 int setpgid(pid_t pid, pid_t pgid)
 {
+	printf("setpgid: not implemented\n");
 	return 0;
 }
 
 pid_t getpgrp(void)
 {
-	return INIT;
+	MESSAGE msg;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_GETPGRP;
+    
+    cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+	//assert(msg.type == SYSCALL_RET);
+
+	return msg.PID;
 }
 
 int fork()
@@ -260,16 +272,19 @@ int sigaction(int signum, const struct sigaction * act, struct sigaction * oldac
 
 sighandler_t signal(int signum, sighandler_t handler)
 {
+	printf("signal: not implemented\n");
 	return handler;
 }
 
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
+	printf("sigprocmask: not implemented\n");
 	return 0;
 }
 
 int sigsuspend(const sigset_t *mask)
 {
+	printf("sigsuspend: not implemented\n");
 	return 0;
 }
 
@@ -314,6 +329,7 @@ int wait(int * status)
 
 int getgroups(int size, gid_t list[])
 {
+	printf("getgroups: not implemented\n");
 	return 0;
 }
 
@@ -351,6 +367,7 @@ int close(int fd)
 
 int link(char *old, char *new)
 {
+	printf("link: not implemented\n");
 	return 0;
 }
 
@@ -466,6 +483,7 @@ int fchdir(int fd)
 
 int chmod(const char *path, mode_t mode)
 {
+	printf("chmod: not implemented\n");
 	return 0;
 }
 
@@ -611,6 +629,7 @@ int stat(const char *path, struct stat *buf)
 
 int rmdir(const char *path )
 {
+	printf("rmdir: not implemented\n");
 	return 0;
 }	
 
@@ -653,36 +672,44 @@ int write(int fd, const void *buf, int count)
 
 DIR * opendir (const char * dirname)
 {
+	printf("opendir: not implemented\n");
 	return NULL;
 }
 
 int closedir (DIR * dir)
 {
+	printf("closedir: not implemented\n");
 	return 0;
 }
 
 struct dirent * readdir (DIR * dirp)
 {
+	printf("readdir: not implemented\n");
 	return NULL;
 }
 
 char *getwd(char *buf)
 {
-	return (char*)0;
+	printf("getwd: not implemented\n");
+	strcpy(buf, "/");
+	return "/";
 }
 
 long pathconf(const char *path, int name)
 {
+	printf("pathconf: not implemented\n");
 	return 0;
 }
 
 int utime(const char *filename, const struct utimbuf *times)
 {
+	printf("utime: not implemented\n");
 	return 0;
 }
 
 int chown(const char *path, uid_t owner, gid_t group)
 {
+	printf("chown: not implemented\n");
 	return 0;
 }
 
@@ -876,23 +903,26 @@ int tcsetattr(int fd, int actions, struct termios * tio) {
 
 int tcsetpgrp(int fd, pid_t pgrp)
 {
+	printf("tcsetpgrp: not implemented\n");
 	return 0;
 }
 
 pid_t tcgetpgrp(int fd)
 {
+	printf("tcgetpgrp: not implemented\n");
 	return 0;
 }
 
 char *getcwd(char *buf, size_t size)
 {
+	printf("getcwd: not implemented\n");
 	if (buf == NULL) buf = (char *)malloc(size);
 	if (buf == NULL) return NULL;
-	strcpy(buf, "/home");
+	strcpy(buf, "/");
 	return buf;
 }
 
 int pipe(int pipefd[2])
 {
-
+	printf("pipe: not implemented\n");
 }

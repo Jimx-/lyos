@@ -89,6 +89,9 @@ PRIVATE int send_sig(struct pmproc * p_dest, int signo)
     struct siginfo si;
     int retval;
 
+    if (p_dest->sigaction[signo].sa_handler == SIG_IGN || 
+            p_dest->sigaction[signo].sa_handler == SIG_DFL) return 0;
+        
     si.signo = signo;
     si.sig_handler = p_dest->sigaction[signo].sa_handler;
     si.sig_return = p_dest->sigreturn_f;

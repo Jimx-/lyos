@@ -262,8 +262,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 		if (key == '\r') {
 			if (tty->tty_termios.c_iflag & IGNCR) return;
 			if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
-		} else
-		if (key == '\n') {
+		} else if (key == '\n') {
 			if (tty->tty_termios.c_iflag & INLCR) key = '\r';
 		}
 
@@ -359,7 +358,11 @@ PRIVATE void in_transfer(TTY* tty)
 				tty->tty_inleft++;
 			}
 
-			if (ch == '\n' || tty->tty_inleft == 0) {
+			if (ch == '\n') {
+				if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
+			}
+			
+			if (tty->tty_inleft == 0) {
 				MESSAGE msg;
 				msg.type = tty->tty_inreply;
 				msg.PROC_NR = tty->tty_inprocnr;

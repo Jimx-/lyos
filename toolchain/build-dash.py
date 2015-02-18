@@ -15,8 +15,6 @@ if __name__ == "__main__":
 	print('Decompressing source packages...')
 	decompress(DASH_TARBALL, DASH_VERSION)
 
-	patch(DASH_VERSION)
-
 	pop_dir()	# sources
 
 	mkdir('build')

@@ -34,6 +34,7 @@ struct pmproc {
 
     uid_t realuid, effuid, suid;
     gid_t realgid, effgid, sgid;
+    pid_t procgrp;
 
     int exit_status;
 };
