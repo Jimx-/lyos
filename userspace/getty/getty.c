@@ -28,7 +28,7 @@ int main(int argc, char * argv[])
 
 	char * login_argv[] = {"-i", NULL};
 
-	execv(LOGIN, login_argv);
+	execv(LOGIN, NULL);
 
 	printf("getty: can't exec!\n");
 	while(1);

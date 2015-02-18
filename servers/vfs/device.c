@@ -36,7 +36,7 @@ PUBLIC int do_ioctl(MESSAGE * p)
     struct file_desc * filp = pcaller->filp[fd];
     struct inode * pin = filp->fd_inode;
 
-    if (pin == NULL) return EBADF;
+    if (pin == NULL || filp == NULL) return EBADF;
 
     int file_type = pin->i_mode & I_TYPE;
     if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL) return ENOTTY;

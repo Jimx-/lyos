@@ -359,7 +359,12 @@ PRIVATE void in_transfer(TTY* tty)
 			}
 
 			if (ch == '\n') {
+				void * p = tty->tty_inbuf +
+					   tty->tty_trans_cnt;
+				data_copy(tty->tty_inprocnr, p, TASK_TTY, &ch, 1);
 				if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
+				else tty->tty_inleft--;
+				tty->tty_trans_cnt++;
 			}
 			
 			if (tty->tty_inleft == 0) {
