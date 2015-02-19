@@ -184,7 +184,7 @@ initrd:
 	@cp $(DESTDIR)/sbin/init ramdisk/sbin/
 	@cp $(DESTDIR)/usr/bin/getty ramdisk/usr/bin/getty
 	@cp $(DESTDIR)/usr/bin/login ramdisk/usr/bin/login
-	@cp sysroot/bin/sh ramdisk/bin/
+	@cp $(DESTDIR)/bin/sh ramdisk/bin/
 	@cp sysroot/etc/* ramdisk/etc/
 	@touch ramdisk/.root
 	@(cd scripts ; bash create-ramdisk-dev.sh)

@@ -4,9 +4,10 @@ import ConfigParser
 ROOT_DIR = os.getcwd() 
 PREFIX = os.sep.join([ROOT_DIR, 'local'])
 PREFIX_BIN = os.sep.join([PREFIX, 'bin'])
-SYSROOT = ROOT_DIR + '/../sysroot'
+DESTDIR = ROOT_DIR + '/../obj/destdir.' + os.environ["ARCH"] + '/'
+SYSROOT = DESTDIR
 try:
-	TARGET = os.environ["ARCH"] + '-elf-lyos'
+	TARGET = os.environ["SUBARCH"] + '-elf-lyos'
 except:
 	TARGET = 'i686-elf-lyos'
 
