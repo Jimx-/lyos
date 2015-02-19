@@ -179,18 +179,7 @@ disk-image:
 	@sudo bash scripts/setup-disk.sh
 
 initrd:
-	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
-	@(cd userspace; make)
-	@cp $(DESTDIR)/sbin/init ramdisk/sbin/
-	@cp $(DESTDIR)/usr/bin/getty ramdisk/usr/bin/getty
-	@cp $(DESTDIR)/usr/bin/login ramdisk/usr/bin/login
-	@cp $(DESTDIR)/bin/sh ramdisk/bin/
-	@cp sysroot/etc/* ramdisk/etc/
-	@touch ramdisk/.root
-	@(cd scripts ; bash create-ramdisk-dev.sh)
-	@(cd ramdisk ; tar -cvf $(LYOSINITRD) .root bin/* sbin/* dev/* etc/* usr/bin/* > /dev/null)
-	@rm ramdisk/.root
-	@cp -f $(LYOSINITRD) $(DESTDIR)/boot/
+	@(cd ramdisk; make)
 
 disasm :
 	@echo -e '$(COLORBLUE)Disassembling the kernel...$(COLORDEFAULT)'
