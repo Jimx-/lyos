@@ -23,7 +23,7 @@ getpwnam (name)
   FILE *fp;
   char buf[1024];
 
-  if ((fp = fopen ("/etc/master.passwd", "r")) == NULL)
+  if ((fp = fopen ("/etc/passwd", "r")) == NULL)
     {
       return NULL;
     }
@@ -57,7 +57,7 @@ getpwuid (uid_t uid)
   FILE *fp;
   char buf[1024];
 
-  if ((fp = fopen ("/etc/master.passwd", "r")) == NULL)
+  if ((fp = fopen ("/etc/passwd", "r")) == NULL)
     {
       return NULL;
     }
@@ -116,7 +116,7 @@ setpwent ()
   if (passwd_fp != NULL)
     fclose (passwd_fp);
 
-  passwd_fp = fopen ("/etc/master.passwd", "r");
+  passwd_fp = fopen ("/etc/passwd", "r");
 }
 
 void

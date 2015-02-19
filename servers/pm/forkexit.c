@@ -32,7 +32,7 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE void cleanup(struct pmproc * pmp);
+PRIVATE void check_parent(struct pmproc * pmp, int try_cleanup);
 
 /**
  * @brief Perform the fork() syscall.
@@ -77,6 +77,8 @@ PUBLIC int do_fork(MESSAGE * p)
     MESSAGE msg2fs;
     msg2fs.type = PM_VFS_FORK;
     msg2fs.ENDPOINT = child_slot;
+    msg2fs.PENDPOINT = parent_ep;
+    msg2fs.PID = pmp->pid;
     send_recv(BOTH, TASK_FS, &msg2fs);
 
     /* birth of the child */
@@ -155,13 +157,7 @@ PUBLIC int do_exit(MESSAGE * p)
     
     pmp->exit_status = status;
 
-    if (parent->flags & PMPF_WAITING) { /* parent is waiting */
-        parent->flags &= ~PMPF_WAITING;
-        cleanup(pmp);
-    }
-    else { /* parent is not waiting */
-        pmp->flags |= PMPF_HANGING;
-    }
+    check_parent(pmp, 1);
 
     struct pmproc * pi = pmproc_table;
     /* if the proc has any child, make INIT the new parent */
@@ -170,8 +166,7 @@ PUBLIC int do_exit(MESSAGE * p)
             pi->parent = INIT;
             if ((pmproc_table[INIT].flags & PMPF_WAITING) &&
                 (pi->flags & PMPF_HANGING)) {
-                pmproc_table[INIT].flags &= ~PMPF_WAITING;
-                cleanup(pi);
+                check_parent(pi, 1);
             }
         }
     }
@@ -195,12 +190,46 @@ PRIVATE void cleanup(struct pmproc * pmp)
     procs_in_use--;
     pmp->pid = 0;
     pmp->flags = 0;
+}
+
+PRIVATE void tell_parent(struct pmproc * pmp)
+{
+    int retval;
+    endpoint_t parent_ep = pmp->parent;
+    int parent_slot;
+    if ((retval = pm_verify_endpt(parent_ep, &parent_slot)) != 0) return;
+    struct pmproc * parent = &pmproc_table[parent_slot];
+    parent->flags &= ~PMPF_WAITING;
 
     MESSAGE msg2parent;
     msg2parent.type = SYSCALL_RET;
     msg2parent.PID = pmp->pid;
     msg2parent.STATUS = pmp->exit_status;
     send_recv(SEND, pmp->parent, &msg2parent);
+
+}
+
+PRIVATE int waiting_for(struct pmproc * parent, struct pmproc * child)
+{
+    return (parent->flags & PMPF_WAITING) && (parent->wait_pid == -1 || parent->wait_pid == child->pid);
+
+}
+
+PRIVATE void check_parent(struct pmproc * pmp, int try_cleanup)
+{
+    int retval;
+    endpoint_t parent_ep = pmp->parent;
+    int parent_slot;
+    if ((retval = pm_verify_endpt(parent_ep, &parent_slot)) != 0) return;
+    struct pmproc * parent = &pmproc_table[parent_slot];
+
+    if (waiting_for(parent, pmp)) {
+        tell_parent(pmp);
+        if (try_cleanup) cleanup(pmp);
+    } else {
+        pmp->flags |= PMPF_HANGING;
+        sig_proc(parent, SIGCHLD);
+    }
 }
 
 /*****************************************************************************
@@ -252,7 +281,7 @@ PUBLIC int do_wait(MESSAGE * p)
             //if (child_pid == 0 && p_proc->gid != (proc_table + pid)->gid) continue;
             children++;
             if (pmp->flags & PMPF_HANGING) {
-                cleanup(pmp);
+                check_parent(pmp, 1);
                 return SUSPEND;
             }
         }
@@ -262,9 +291,9 @@ PUBLIC int do_wait(MESSAGE * p)
         /* has children, but no child is HANGING */
         if (options & WNOHANG) return 0;   /* parent does not want to wait */
         parent->flags |= PMPF_WAITING;
+        parent->wait_pid = child_pid;
         return SUSPEND;
-    }
-    else {
+    } else {
         /* no child at all */
         p->PID = -1;
         return ECHILD;

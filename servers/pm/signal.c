@@ -33,9 +33,10 @@
 #include "global.h"
  
 PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo);
+PRIVATE void check_pending(struct pmproc * pmp);
 
- PUBLIC int do_sigaction(MESSAGE * p)
- {
+PUBLIC int do_sigaction(MESSAGE * p)
+{
     struct pmproc * pmp = pm_endpt_proc(p->source);
     struct sigaction new_sa;
     struct sigaction * save;
@@ -57,13 +58,80 @@ PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo);
     if (!p->NEWSA) return 0;
     data_copy(SELF, &new_sa, p->source, p->NEWSA, sizeof(struct sigaction));
               
+    if (new_sa.sa_handler == SIG_IGN) {
+        sigaddset(&pmp->sig_ignore, signum);
+        sigdelset(&pmp->sig_pending, signum);
+        sigdelset(&pmp->sig_catch, signum);
+    } else if (new_sa.sa_handler == SIG_DFL) {
+        sigdelset(&pmp->sig_ignore, signum);
+        sigdelset(&pmp->sig_catch, signum);        
+    } else {
+        sigdelset(&pmp->sig_ignore, signum);
+        sigaddset(&pmp->sig_catch, signum);
+    }
+
     pmp->sigaction[signum].sa_handler = new_sa.sa_handler;
+    sigdelset(&new_sa.sa_mask, SIGKILL);
+    sigdelset(&new_sa.sa_mask, SIGSTOP);
     pmp->sigaction[signum].sa_mask = new_sa.sa_mask;
     pmp->sigaction[signum].sa_flags = new_sa.sa_flags;
     pmp->sigreturn_f = (vir_bytes)p->SIGRET;
               
     return 0;
- }
+}
+
+PUBLIC int do_sigprocmask(MESSAGE * p)
+{
+    struct pmproc * pmp = pm_endpt_proc(p->source);
+    if (pmp == NULL) return EINVAL;
+
+    sigset_t set;
+    int i;
+
+    set = p->MASK;
+    p->MASK = pmp->sig_mask;
+
+    switch (p->HOW) {
+        case SIG_BLOCK:
+            sigdelset(&set, SIGKILL);
+            sigdelset(&set, SIGSTOP);
+            for (i = 1; i < NSIG; i++) {
+                if (sigismember(&set, i))
+                sigaddset(&pmp->sig_mask, i);
+            }
+            break;
+        case SIG_UNBLOCK:
+            for (i = 1; i < NSIG; i++) {
+            if (sigismember(&set, i))
+                sigdelset(&pmp->sig_mask, i);
+            }
+            check_pending(pmp);
+            break;
+        case SIG_SETMASK:
+            sigdelset(&set, SIGKILL);
+            sigdelset(&set, SIGSTOP);
+            pmp->sig_mask = set;
+            break;
+        default:
+            return EINVAL;
+    }
+    return 0;
+}
+
+PUBLIC int do_sigsuspend(MESSAGE * p)
+{
+    struct pmproc * pmp = pm_endpt_proc(p->source);
+    if (pmp == NULL) return EINVAL;
+
+    pmp->sig_mask_saved = pmp->sig_mask;
+    pmp->sig_mask = p->MASK;
+    sigdelset(&pmp->sig_mask, SIGKILL);
+    sigdelset(&pmp->sig_mask, SIGSTOP);
+    pmp->flags &= PMPF_SIGSUSPENDED;
+
+    check_pending(pmp);
+    return SUSPEND;
+}
 
 /*****************************************************************************
  *                                do_kill
@@ -88,22 +156,61 @@ PRIVATE int send_sig(struct pmproc * p_dest, int signo)
 {
     struct siginfo si;
     int retval;
-
-    if (p_dest->sigaction[signo].sa_handler == SIG_IGN || 
-            p_dest->sigaction[signo].sa_handler == SIG_DFL) return 0;
         
     si.signo = signo;
     si.sig_handler = p_dest->sigaction[signo].sa_handler;
     si.sig_return = p_dest->sigreturn_f;
 
+    /*if (p_dest->sigaction[signo].sa_flags & SA_NODEFER) 
+        sigdelset(&p_dest->sig_mask, signo);
+    else 
+        sigaddset(&p_dest->sig_mask, signo);*/
+
+    int i;
+    for (i = 0; i < NSIG; i++) {
+        if (sigismember(&p_dest->sigaction[signo].sa_mask, i))
+            sigaddset(&p_dest->sig_mask, i);
+    }
+
+    /*if (p_dest->sigaction[signo].sa_flags & SA_RESETHAND) {
+        sigdelset(&p_dest->sig_catch, signo);
+        p_dest->sigaction[signo].sa_handler = SIG_DFL;
+    }*/
+
     retval = kernel_sigsend(p_dest->endpoint, &si);
+
+    /* unblock the proc if it's suspended */
+    if (p_dest->flags & PMPF_SIGSUSPENDED) {
+        p_dest->flags &= ~PMPF_SIGSUSPENDED;
+
+        MESSAGE msg;
+        msg.type = SYSCALL_RET;
+        msg.RETVAL = EINTR;
+        send_recv(SEND, p_dest->endpoint, &msg);
+    }
 
     return retval;
 }
 
-PRIVATE void sig_proc(struct pmproc * p_dest, int signo)
+PUBLIC void sig_proc(struct pmproc * p_dest, int signo)
 {
-    send_sig(p_dest, signo);
+    int bad_ignore = sigismember(&noign_set, signo) && (
+        sigismember(&p_dest->sig_ignore, signo) ||
+        sigismember(&p_dest->sig_mask, signo));
+
+    /* the signal is ignored */
+    if (!bad_ignore && sigismember(&p_dest->sig_ignore, signo)) return;
+    /* the signal is blocked */
+    if (!bad_ignore && sigismember(&p_dest->sig_mask, signo)) {
+        sigaddset(&p_dest->sig_pending, signo);
+        return;
+    }
+
+    if (!bad_ignore && sigismember(&p_dest->sig_catch, signo)) {
+        if (send_sig(p_dest, signo) == 0) return;
+    } else if (!bad_ignore && sigismember(&ign_set, signo)) {
+        return;
+    }
 }
 
 PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo)
@@ -154,4 +261,16 @@ PUBLIC int do_sigreturn(MESSAGE * p)
     retval = kernel_sigreturn(p->source, p->BUF);
 
     return retval;
+}
+
+PRIVATE void check_pending(struct pmproc * pmp)
+{
+    int i;
+
+    for (i = 0; i < NSIG; i++) {
+        if (sigismember(&pmp->sig_pending, i) && !sigismember(&pmp->sig_mask, i)) {
+            sigdelset(&pmp->sig_pending, i);
+            sig_proc(pmp, i);
+        }
+    }
 }

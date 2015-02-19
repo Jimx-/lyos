@@ -56,6 +56,12 @@ PUBLIC int main(int argc, char * argv[])
         case SIGACTION:
             msg.RETVAL = do_sigaction(&msg);
             break;
+        case SIGSUSPEND:
+            msg.RETVAL = do_sigsuspend(&msg);
+            break;
+        case SIGPROCMASK:
+            msg.RETVAL = do_sigprocmask(&msg);
+            break;
         case KILL:
             msg.RETVAL = do_kill(&msg);
             break;
@@ -86,7 +92,24 @@ PRIVATE void pm_init()
     struct pmproc * pmp;
     MESSAGE vfs_msg;
 
-	printl("PM: process manager is running.\n");
+    printl("PM: process manager is running.\n");
+
+    /* signal sets */
+    static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
+                SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
+    static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
+    static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
+                SIGBUS, SIGSEGV };
+    char * sig_ptr;
+    sigemptyset(&core_set);
+    for (sig_ptr = core_sigs; sig_ptr < core_sigs+sizeof(core_sigs); sig_ptr++)
+        sigaddset(&core_set, *sig_ptr);
+    sigemptyset(&ign_set);
+    for (sig_ptr = ign_sigs; sig_ptr < ign_sigs+sizeof(ign_sigs); sig_ptr++)
+        sigaddset(&ign_set, *sig_ptr);
+    sigemptyset(&noign_set);
+    for (sig_ptr = noign_sigs; sig_ptr < noign_sigs+sizeof(noign_sigs); sig_ptr++)
+        sigaddset(&noign_set, *sig_ptr);
 
     if ((retval = get_bootprocs(boot_procs)) != 0) panic("cannot get boot procs from kernel");
     procs_in_use = 0;
@@ -109,6 +132,11 @@ PRIVATE void pm_init()
 
             pmp->pid = find_free_pid();
         }
+
+        sigemptyset(&pmp->sig_mask);
+        sigemptyset(&pmp->sig_ignore);
+        sigemptyset(&pmp->sig_pending);
+        sigemptyset(&pmp->sig_catch);
 
         pmp->flags |= PMPF_INUSE;
         pmp->endpoint = bp->endpoint;

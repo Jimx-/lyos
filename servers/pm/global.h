@@ -29,4 +29,6 @@ extern struct pmproc pmproc_table[];
 
 EXTERN int procs_in_use;
 
+EXTERN sigset_t core_set, ign_set, noign_set;
+ 
 #endif 

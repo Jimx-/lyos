@@ -27,8 +27,13 @@ struct pmproc {
     endpoint_t endpoint;
     endpoint_t parent;
 
+    endpoint_t wait_pid;
+
     sigset_t sig_pending;   /* signals to be handled */
     sigset_t sig_mask;
+    sigset_t sig_mask_saved;
+    sigset_t sig_ignore;
+    sigset_t sig_catch;
     struct sigaction sigaction[NSIG];
     vir_bytes sigreturn_f;
 
@@ -42,5 +47,6 @@ struct pmproc {
 #define PMPF_INUSE      0x01
 #define PMPF_WAITING    0x02
 #define PMPF_HANGING    0x04
+#define PMPF_SIGSUSPENDED   0x08
 
 #endif

@@ -56,6 +56,9 @@ int main(int argc, char * argv[])
 
 		prompt = "Password: ";
 		p = getpass(prompt);
+		printf("\n");
+
+		ok = 1;
 
 		if (pwd == NULL) {
 			ok = 0;
@@ -79,13 +82,15 @@ check:
     	free(motd);
     }
 
+    char * shell_argv[] = {pwd->pw_shell, NULL};
+    int r = execv(pwd->pw_shell, shell_argv);
+    
 	setuid(pwd->pw_uid);
 	setgid(pwd->pw_gid);
 
 	if (chdir(pwd->pw_dir) != 0) {
 		printf("No home directory %s!\n", pwd->pw_dir);
 	}
-	//check_pass(argv[1], password);
 
 	while(1);
 }

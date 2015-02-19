@@ -205,10 +205,11 @@ enum msgtype {
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
 	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP, IOCTL, FCNTL,	/* 17 ~ 35 */
 	/* FS & TTY */
-	SUSPEND_PROC, RESUME_PROC,				/* 38 ~ 39 */
+	SUSPEND_PROC, RESUME_PROC,				/* 36 ~ 37 */
 
 	/* MM */
-	EXEC, WAIT, KILL, ACCT, BRK, GETSETID, ALARM, SIGACTION, PROCCTL, MMAP,	/* 40 ~ 49 */
+	EXEC, WAIT, KILL, ACCT, BRK, GETSETID, ALARM, SIGACTION, SIGPROCMASK, SIGSUSPEND,
+	PROCCTL, MMAP,	/* 38 ~ 49 */
 
 	/* FS & MM */
 	FORK, EXIT,					/* 50 ~ 51 */
@@ -273,6 +274,7 @@ enum msgtype {
 #define EGID 		u.m3.m3i2
 #define	REQUEST		u.m3.m3i2
 #define	PROC_NR		u.m3.m3i3
+#define PENDPOINT	u.m3.m3i3
 #define ENDPOINT	u.m3.m3i4
 #define	DEVICE		u.m3.m3i4
 #define	POSITION	u.m3.m3l1
@@ -282,6 +284,8 @@ enum msgtype {
 #define	WHENCE		u.m3.m3i3
 #define SECONDS		u.m3.m3i1
 #define SIGNR		u.m3.m3i1
+#define MASK 		u.m3.m3i1
+#define HOW			u.m3.m3i2
 #define OPTIONS		u.m3.m3i1
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2

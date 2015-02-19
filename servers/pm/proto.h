@@ -26,5 +26,7 @@ PUBLIC int do_exit(MESSAGE * p);
 PUBLIC int do_sigaction(MESSAGE * p);
 PUBLIC int do_kill(MESSAGE * p);
 PUBLIC int do_getsetid(MESSAGE * p);
+PUBLIC int do_sigprocmask(MESSAGE * p);
+PUBLIC int do_sigsuspend(MESSAGE * p);
 
 #endif

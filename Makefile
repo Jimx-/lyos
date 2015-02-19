@@ -182,7 +182,6 @@ initrd:
 	@echo -e '$(COLORGREEN)Making initrd...$(COLORDEFAULT)'
 	@(cd userspace; make)
 	@cp $(DESTDIR)/sbin/init ramdisk/sbin/
-	@cp $(DESTDIR)/sbin/ata ramdisk/sbin/
 	@cp $(DESTDIR)/usr/bin/getty ramdisk/usr/bin/getty
 	@cp $(DESTDIR)/usr/bin/login ramdisk/usr/bin/login
 	@cp sysroot/bin/sh ramdisk/bin/

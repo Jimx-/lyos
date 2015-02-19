@@ -202,6 +202,12 @@ PRIVATE int fs_fork(MESSAGE * p)
 {
 	int i;
 	struct fproc * child = vfs_endpt_proc(p->ENDPOINT);
+	struct fproc * parent = vfs_endpt_proc(p->PENDPOINT);
+	if (child == NULL || parent == NULL) return EINVAL;
+	
+	*child = *parent;
+	child->pid = p->PID;
+
 	for (i = 0; i < NR_FILES; i++) {
 		if (child->filp[i]) {
 			child->filp[i]->fd_cnt++;

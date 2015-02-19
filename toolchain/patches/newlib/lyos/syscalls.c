@@ -272,19 +272,54 @@ int sigaction(int signum, const struct sigaction * act, struct sigaction * oldac
 
 sighandler_t signal(int signum, sighandler_t handler)
 {
-	printf("signal: not implemented\n");
-	return handler;
+	struct sigaction sa, osa;
+
+	sa.sa_handler = handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	if (sigaction(signum, &sa, &osa) < 0)
+		return (SIG_ERR);
+	
+	return osa.sa_handler;
 }
 
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
-	printf("sigprocmask: not implemented\n");
+	MESSAGE msg;
+	msg.type   = SIGPROCMASK;
+
+	msg.MASK = *set;
+
+	cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+
+	if (msg.RETVAL != 0) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+
+	*oldset = msg.MASK;
+
 	return 0;
 }
 
 int sigsuspend(const sigset_t *mask)
 {
-	printf("sigsuspend: not implemented\n");
+	MESSAGE msg;
+	msg.type   = SIGSUSPEND;
+
+	msg.MASK = *mask;
+
+	cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+
+	if (msg.RETVAL != 0) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+
 	return 0;
 }
 
