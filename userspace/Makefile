@@ -9,7 +9,7 @@ realclean :
 	@rm -f $(COMMANDS)
 
 $(DESTDIR)/usr/bin/getty : getty/getty.c
-	@$(CC) -g -o $@ $<
+	@$(CC) -o $@ $<
 
 $(DESTDIR)/usr/bin/login : login/login.c
-	@$(CC) -o $@ $<
+	@$(CC) -o $@ $< $(DESTDIR)/lib/libcrypt.a

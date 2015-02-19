@@ -11,7 +11,7 @@ diff -rupN origin/config.sub new/config.sub
  		;;
 diff -rupN origin/newlib/configure.host new/newlib/configure.host
 --- origin/newlib/configure.host	2012-12-05 05:43:20.000000000 +0800
-+++ new/newlib/configure.host	2015-02-18 16:11:14.172984536 +0800
++++ new/newlib/configure.host	2015-02-19 12:37:55.720620131 +0800
 @@ -372,6 +372,9 @@ case "${host}" in
    arc-*-*)
  	sys_dir=arc
@@ -22,17 +22,18 @@ diff -rupN origin/newlib/configure.host new/newlib/configure.host
    arm*-*-*)
  	sys_dir=arm
  	if [ "x${newlib_may_supply_syscalls}" = "xno" ] ; then
-@@ -419,6 +422,9 @@ case "${host}" in
+@@ -419,6 +422,10 @@ case "${host}" in
    h8500-*-elf*)
  	sys_dir=h8500hms
  	;;
 +  i[34567]86-*-lyos*)
 +	sys_dir=lyos
++	newlib_cflags="${newlib_cflags} -D_NO_GETPWENT"
 +	;;
    i[34567]86-*-rdos*)
  	sys_dir=rdos
  	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
-@@ -526,6 +532,9 @@ esac
+@@ -526,6 +533,9 @@ esac
  # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
  
  case "${host}" in

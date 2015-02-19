@@ -1,0 +1,2 @@
+root::0:0::0:0:Administrator:/root:/bin/sh
+jimx::1000:1000:Jimx,,,:/home/jimx:/bin/sh

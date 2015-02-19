@@ -6,29 +6,87 @@
 #include <errno.h>
 #include <sys/utsname.h>
 #include <sys/termios.h>
+#include <sys/stat.h>
+#include <limits.h>
+#include <pwd.h>
 
-#define PASSWORD_LEN	512
+#define NAME_LEN	30
 
+char * getloginname()
+{
+	struct utsname utsname;
+	uname(&utsname);
+
+	printf("\n%s login: ", utsname.nodename);
+
+	static char name[NAME_LEN];
+	fgets(name, NAME_LEN, stdin);
+	name[strlen(name) - 1] = '\0';
+
+	return name;
+}
+				
 int main(int argc, char * argv[]) 
 {
-	printf("Password: ");
-	fflush(stdout);
-	
-	struct termios old_tio, new_tio;
-	tcgetattr(STDIN_FILENO, &old_tio);
-	new_tio = old_tio;
-	new_tio.c_lflag &= (~ECHO);
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_tio);
+	int ask = 0;
+	char * username, * p, * prompt;
+	struct passwd * pwd;
 
-	char password[PASSWORD_LEN];
+	if (*argv) {
+		username = *argv;
+	} else {
+		ask = 1;
+	}
 
-	int len = read(STDIN_FILENO, password, PASSWORD_LEN);
-	password[len] = '\0';
-	
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_tio);
-	printf("\n\n");
+	for (;; ask = 1) {
+		int ok = 0;
 
+		if (ask) {
+			username = getloginname();
+		}
+
+		pwd = getpwnam(username);
+
+		if (pwd) {
+			if (pwd->pw_passwd[0] == '\0') {
+				ok = 1;
+				goto check;
+			}
+		}
+
+		prompt = "Password: ";
+		p = getpass(prompt);
+
+		if (pwd == NULL) {
+			ok = 0;
+			goto check;
+		}
+
+check:
+		if (pwd && ok) break;
+
+		printf("Login incorrect\n");
+	}
+
+	struct stat sbuf;
+    if (stat("/etc/motd", &sbuf) == 0) {
+    	char * motd = malloc(sbuf.st_size + 1);
+    	int fd = open("/etc/motd", O_RDONLY);
+    	read(fd, motd, sbuf.st_size);
+    	motd[sbuf.st_size] = '\0';
+    	printf("%s\n", motd);
+    	close(fd);
+    	free(motd);
+    }
+
+	setuid(pwd->pw_uid);
+	setgid(pwd->pw_gid);
+
+	if (chdir(pwd->pw_dir) != 0) {
+		printf("No home directory %s!\n", pwd->pw_dir);
+	}
 	//check_pass(argv[1], password);
 
 	while(1);
 }
+

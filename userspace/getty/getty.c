@@ -10,25 +10,21 @@
 #define ISSUE_LEN	256
 #define NAME_LEN	30
 
-#define LOGIN "/bin/dash"
+#define LOGIN "/usr/bin/login"
 
 void print_banner(char * ttyname);
 
 int main(int argc, char * argv[]) 
-{
-	int fd_stdin  = open(argv[1], O_RDWR);
-	int fd_stdout = open(argv[1], O_RDWR);
-	int fd_stderr = open(argv[1], O_RDWR);
-	
+{	
 	print_banner(argv[1]);
 
 	char name[NAME_LEN];
-	int len = read(0, name, NAME_LEN);
-	name[len] = '\0';
+	fgets(name, NAME_LEN, stdin);
+	name[strlen(name) - 1] = '\0';
 
-	char * login_argv[] = {"-i", NULL};
+	char * login_argv[] = {name, NULL};
 
-	execv(LOGIN, NULL);
+	execv(LOGIN, login_argv);
 
 	printf("getty: can't exec!\n");
 	while(1);

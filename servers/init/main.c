@@ -41,6 +41,10 @@ int main(int argc, char * argv[])
 			close(fd_stdin);
 			close(fd_stdout);
 			close(fd_stderr);
+
+			open(ttylist[i], O_RDWR);
+			open(ttylist[i], O_RDWR);
+			open(ttylist[i], O_RDWR);
 		
 			char * argv[] = {GETTY, ttylist[i], NULL};
 			_exit(execv(GETTY, argv));

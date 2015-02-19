@@ -7,14 +7,14 @@ SUBDIRS = machine .
 noinst_LIBRARIES = lib.a
 
 if MAY_SUPPLY_SYSCALLS
-extra_objs = $(lpfx)syscalls.o init.o
+extra_objs = $(lpfx)syscalls.o $(lpfx)init.o
 else
 extra_objs =
 endif
 
 SUBLIBS = machine/lib.a
 
-lib_a_SOURCES = syscalls.c init.c
+lib_a_SOURCES = syscalls.c init.c getpass.c getpwent.c
 lib_a_LIBADD = $(extra_objs) machine/lib.a
 lib_a_DEPENDENCIES = $(extra_objs) machine/lib.a
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)

@@ -32,4 +32,6 @@ if __name__ == "__main__":
 	make_and_install()
 	pop_dir()
 
+	copy(SYSROOT + '/bin/dash', SYSROOT + '/bin/sh')
+
 	pop_dir()	# build
