@@ -124,7 +124,9 @@ PRIVATE void init_hd()
 {
 	int i;
 	/* Get the number of drives from the BIOS data area */
-	u8 * pNrDrives = (u8*)(0x475 + KERNEL_VMA);
+	u8 nr_drives;
+	data_copy(SELF, &nr_drives, KERNEL, (u8*)(0x475 + KERNEL_VMA), sizeof(u8));
+	u8 * pNrDrives = &nr_drives;
 	printl("ata: %d hard drives\n", *pNrDrives);
 	assert(*pNrDrives);
 
@@ -196,7 +198,7 @@ PRIVATE int hd_close(MESSAGE * p)
 PRIVATE int hd_rdwt(MESSAGE * p)
 {
 	int drive = DRV_OF_DEV(p->DEVICE);
-			
+
 	u64 pos = p->POSITION;
 	assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
 
@@ -597,7 +599,7 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 {
 	int t = get_ticks();
 
-	while(((get_ticks() - t) * 1000 / HZ) < timeout) {
+	while(TRUE) {
 		u8 status;
 		portio_inb(REG_STATUS, &status);
 		if ((status & mask) == val)

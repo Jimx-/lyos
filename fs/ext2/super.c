@@ -31,7 +31,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-//#define DEBUG
+#define DEBUG
 #if defined(DEBUG)
 #define DEB(x) printl("ext2fs: "); x
 #else
@@ -59,8 +59,9 @@ PUBLIC int read_ext2_super_block(int dev)
     // size 1024 bytes
     driver_msg.CNT      = SECTOR_SIZE * 2;
     driver_msg.PROC_NR  = ext2_ep;
-    assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-    send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+    printl("Sending\n");
+    endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+    send_recv(BOTH, driver_ep, &driver_msg);
 
     ext2_superblock_t * pext2sb = (ext2_superblock_t *)sbrk(sizeof(ext2_superblock_t));
     if (!pext2sb) return ENOMEM;
@@ -139,8 +140,8 @@ PUBLIC int write_ext2_super_block(int dev)
     // size 1024 bytes
     driver_msg.CNT      = SECTOR_SIZE * 2;
     driver_msg.PROC_NR  = ext2_ep;
-    assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-    send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+    endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+    send_recv(BOTH, driver_ep, &driver_msg);
 
     return 0;
 }
@@ -170,8 +171,8 @@ PRIVATE void bdev_open(dev_t dev)
     MESSAGE driver_msg;
 	driver_msg.type = DEV_OPEN;
 	driver_msg.DEVICE = MINOR(dev);
-	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+    endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+	send_recv(BOTH, driver_ep, &driver_msg);
 }
 
 PRIVATE void bdev_close(dev_t dev)
@@ -179,8 +180,8 @@ PRIVATE void bdev_close(dev_t dev)
     MESSAGE driver_msg;
 	driver_msg.type = DEV_CLOSE;
 	driver_msg.DEVICE = MINOR(dev);
-	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+	endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+    send_recv(BOTH, driver_ep, &driver_msg);
 }
 
 /**

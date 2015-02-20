@@ -134,6 +134,7 @@ PUBLIC int do_mount(MESSAGE * p)
     if (dev_nr == 0) return err_code;
 
     int readonly = flags & MS_READONLY;
+    printl("Mount %d on %s(%d)\n", dev_nr, target, fs_e);
     int retval = mount_fs(dev_nr, target, fs_e, readonly);
 
     if (retval == 0) printl("VFS: %s is %s mounted on %s\n", source, readonly ? "read-only" : "read-write", target);

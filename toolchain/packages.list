@@ -21,3 +21,11 @@ repo = ftp://ftp.gnu.org/gnu/coreutils/
 [dash]
 version = 0.5.8
 repo = http://gondor.apana.org.au/~herbert/dash/files/
+
+[nano]
+version = 2.2.6
+repo = http://www.nano-editor.org/dist/v2.2/
+
+[ncurses]
+version = 5.9
+repo = http://ftp.gnu.org/pub/gnu/ncurses/

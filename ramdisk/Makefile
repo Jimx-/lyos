@@ -14,6 +14,8 @@ realclean :
 $(INITRD):
 	@(cd ../userspace; make)
 	@cp $(DESTDIR)/sbin/init sbin/
+	@cp $(DESTDIR)/sbin/ext2fs sbin/
+	@cp $(DESTDIR)/sbin/ata sbin/
 	@cp $(DESTDIR)/usr/bin/getty usr/bin/getty
 	@cp $(DESTDIR)/usr/bin/login usr/bin/login
 	@cp $(DESTDIR)/bin/sh bin/

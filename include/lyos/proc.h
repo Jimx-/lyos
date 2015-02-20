@@ -36,6 +36,7 @@
 			 * (ok to allocated to a new process)
 			 */
 
+#define proc_slot(n)	((n) + NR_TASKS)
 #define proc_addr(n)	(&proc_table[(n) + NR_TASKS])
 #define is_kerntaske(e)	(e < 0)
 

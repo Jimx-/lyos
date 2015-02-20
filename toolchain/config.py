@@ -43,3 +43,13 @@ DASH_VERSION = 'dash-' + packs.get('dash', 'version')
 DASH_REPO = packs.get('dash', 'repo')
 DASH_TARBALL = DASH_VERSION + '.tar.gz'
 DASH_TARBALL_URL = DASH_REPO + DASH_TARBALL
+
+NANO_VERSION = 'nano-' + packs.get('nano', 'version')
+NANO_REPO = packs.get('nano', 'repo')
+NANO_TARBALL = NANO_VERSION + '.tar.gz'
+NANO_TARBALL_URL = NANO_REPO + NANO_TARBALL
+
+NCURSES_VERSION = 'ncurses-' + packs.get('ncurses', 'version')
+NCURSES_REPO = packs.get('ncurses', 'repo')
+NCURSES_TARBALL = NCURSES_VERSION + '.tar.gz'
+NCURSES_TARBALL_URL = NCURSES_REPO + NCURSES_TARBALL

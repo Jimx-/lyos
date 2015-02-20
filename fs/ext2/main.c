@@ -72,7 +72,7 @@ PUBLIC int main()
 		int msgtype = m.type;
 		int src = m.source;
 		reply = 1;
-
+        printl("Ext2 receive %d\n", m.type);
 		switch (msgtype) {
 		case FS_LOOKUP:
 			m.RET_RETVAL = ext2_lookup(&m);

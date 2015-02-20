@@ -573,7 +573,15 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
  */
 PUBLIC int verify_endpt(endpoint_t ep, int * proc_nr)
 {
-	if (proc_nr) *proc_nr = ENDPOINT_P(ep);
+	if (ep < -NR_TASKS) return 0;
+	if (ep == NO_TASK || ep == ANY || ep == SELF) return 1;
+
+	int n = ENDPOINT_P(ep);
+	int slot = proc_slot(n);
+
+	if (slot < 0 || slot > NR_PROCS) return 0;
+
+	if (proc_nr) *proc_nr = n;
 
 	return 1;
 }

@@ -16,6 +16,17 @@
 
 int main(int argc, char * argv[])
 {
+	int pida = fork();
+	if (pida) {
+	} else {
+		execv("/sbin/ata", NULL);
+	}
+	pida = fork();
+	if (pida) {
+	} else {
+		execv("/sbin/ext2fs", NULL);
+	}
+
 	int fd_stdin  = open("/dev/tty1", O_RDWR);
 	int fd_stdout = open("/dev/tty1", O_RDWR);
 	int fd_stderr = open("/dev/tty1", O_RDWR);
@@ -30,6 +41,8 @@ int main(int argc, char * argv[])
 		sethostname(hostname, len);
 		close(fd_hostname);
 	}
+
+	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 
 	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/ttyS0"};
 	int i;
