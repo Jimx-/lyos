@@ -28,6 +28,7 @@ int main(int argc, char * argv[])
 		char * rc_args[] = {"/bin/sh", "/etc/rc", NULL};
 		execv("/bin/sh", rc_args);
 	}
+	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);

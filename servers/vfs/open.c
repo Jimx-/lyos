@@ -72,9 +72,6 @@ PUBLIC int do_open(MESSAGE * p)
     }
         
     data_copy(TASK_FS, pathname, src, p->PATHNAME, name_len);
-    /*phys_copy((void*)va2pa(TASK_FS, pathname),
-          (void*)va2pa(src, p->PATHNAME),
-          name_len);*/
     pathname[name_len] = '\0';
 
     /* find a free slot in PROCESS::filp[] */

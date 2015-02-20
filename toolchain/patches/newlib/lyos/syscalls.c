@@ -180,19 +180,19 @@ int getpid()
 
 pid_t getppid(void)
 {
-	printf("getppid: not implemented\n");
+	//printf("getppid: not implemented\n");
 	return INIT;
 }
 
 pid_t getpgid(pid_t pid)
 {
-	printf("getpgid: not implemented\n");
+	//printf("getpgid: not implemented\n");
 	return INIT;
 }
 
 int setpgid(pid_t pid, pid_t pgid)
 {
-	printf("setpgid: not implemented\n");
+	//printf("setpgid: not implemented\n");
 	return 0;
 }
 
@@ -364,7 +364,7 @@ int wait(int * status)
 
 int getgroups(int size, gid_t list[])
 {
-	printf("getgroups: not implemented\n");
+	//printf("getgroups: not implemented\n");
 	return 0;
 }
 
@@ -402,7 +402,7 @@ int close(int fd)
 
 int link(char *old, char *new)
 {
-	printf("link: not implemented\n");
+	//printf("link: not implemented\n");
 	return 0;
 }
 
@@ -518,7 +518,7 @@ int fchdir(int fd)
 
 int chmod(const char *path, mode_t mode)
 {
-	printf("chmod: not implemented\n");
+	//printf("chmod: not implemented\n");
 	return 0;
 }
 
@@ -707,25 +707,25 @@ int write(int fd, const void *buf, int count)
 
 DIR * opendir (const char * dirname)
 {
-	printf("opendir: not implemented\n");
+	//printf("opendir: not implemented\n");
 	return NULL;
 }
 
 int closedir (DIR * dir)
 {
-	printf("closedir: not implemented\n");
+	//printf("closedir: not implemented\n");
 	return 0;
 }
 
 struct dirent * readdir (DIR * dirp)
 {
-	printf("readdir: not implemented\n");
+	//printf("readdir: not implemented\n");
 	return NULL;
 }
 
 char *getwd(char *buf)
 {
-	printf("getwd: not implemented\n");
+	//printf("getwd: not implemented\n");
 	strcpy(buf, "/");
 	return "/";
 }
@@ -938,19 +938,19 @@ int tcsetattr(int fd, int actions, struct termios * tio) {
 
 int tcsetpgrp(int fd, pid_t pgrp)
 {
-	printf("tcsetpgrp: not implemented\n");
+	//printf("tcsetpgrp: not implemented\n");
 	return 0;
 }
 
 pid_t tcgetpgrp(int fd)
 {
-	printf("tcgetpgrp: not implemented\n");
+	//printf("tcgetpgrp: not implemented\n");
 	return 0;
 }
 
 char *getcwd(char *buf, size_t size)
 {
-	printf("getcwd: not implemented\n");
+	//printf("getcwd: not implemented\n");
 	if (buf == NULL) buf = (char *)malloc(size);
 	if (buf == NULL) return NULL;
 	strcpy(buf, "/");
@@ -959,5 +959,5 @@ char *getcwd(char *buf, size_t size)
 
 int pipe(int pipefd[2])
 {
-	printf("pipe: not implemented\n");
+	//printf("pipe: not implemented\n");
 }

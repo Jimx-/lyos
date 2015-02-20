@@ -134,8 +134,7 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left,
     if (b == 0) {
         if (rw_flag == READ) {
             /* Reading from a block that doesn't exist. Return empty buffer. */
-            bp = ext2_get_buffer(0, 0);
-            ext2_zero_buffer(bp);
+            bp = NULL;
         } else {
             /* Writing to a block that doesn't exist. Just create one. */
             bp = ext2_new_block(pin, position);
@@ -149,20 +148,20 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left,
         bp = ext2_get_buffer(dev, b);
     }
 
-    if (bp == NULL) {
+    if (bp == NULL && b != 0) {
         panic("ext2fs: ext2_rw_chunk: bp == NULL!");
     }
 
     if (rw_flag == READ) {
         /* copy the data to userspace */
-        data_copy(src, buf, SELF, (void *)((int)bp->b_data + offset), chunk);
+        if (b != 0) data_copy(src, buf, SELF, (void *)((int)bp->b_data + offset), chunk);
     } else {
         /* copy the data from userspace */
         data_copy(SELF, (void *)((int)bp->b_data + offset), src, buf, chunk);
         bp->b_dirt = 1;
     }
 
-    ext2_put_buffer(bp);
+    if (bp != NULL) ext2_put_buffer(bp);
 
     return 0;
 }
@@ -216,15 +215,16 @@ PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
             pb = ext2_get_buffer(pin->i_dev, b);
             excess = block_pos - triple_ind_s;
             index = excess / addr_in_block2;
-            b = *(pb->b_data + sizeof(block_t) * index);    /* num of double ind block */
+            b = *(block_t *)(pb->b_data + sizeof(block_t) * index);    /* num of double ind block */
             excess = excess % addr_in_block2;
             ext2_put_buffer(pb);
         }
         if (b == 0) return b;
         pb = ext2_get_buffer(pin->i_dev, b);
         index = excess / addr_in_block;
-        b = *(pb->b_data + sizeof(block_t) * index);    /* num of single ind block */
+        b = *(block_t *)(pb->b_data + sizeof(block_t) * index);    /* num of single ind block */
         index = excess % addr_in_block; /* index into single ind blk */
+        ext2_put_buffer(pb);
     }
     if (b == 0) return b;
     pb = ext2_get_buffer(pin->i_dev, b);
