@@ -40,7 +40,7 @@
 
 #define BLOCK2SECTOR(blk_size, blk_nr) (blk_nr * (blk_size))
 
-PUBLIC void init_ext2fs();
+PUBLIC int init_ext2fs();
 
 PRIVATE int ext2_mountpoint(MESSAGE * p);
 
@@ -53,8 +53,8 @@ PRIVATE int ext2_mountpoint(MESSAGE * p);
  *****************************************************************************/
 PUBLIC int main()
 {
-	printl("ext2fs: Ext2 filesystem driver is running\n");
-	init_ext2fs();
+    serv_register_init_fresh_callback(init_ext2fs);
+    serv_init();
 
 	MESSAGE m;
 
@@ -72,7 +72,6 @@ PUBLIC int main()
 		int msgtype = m.type;
 		int src = m.source;
 		reply = 1;
-        printl("Ext2 receive %d\n", m.type);
 		switch (msgtype) {
 		case FS_LOOKUP:
 			m.RET_RETVAL = ext2_lookup(&m);
@@ -118,14 +117,17 @@ PUBLIC int main()
     return 0;
 }
 
-PUBLIC void init_ext2fs()
+PUBLIC int init_ext2fs()
 {
+    printl("ext2fs: Ext2 filesystem driver is running\n");
     ext2_ep = get_endpoint();
     
 	ext2_init_inode();
     ext2_init_buffer_cache();
 
     err_code = 0;
+
+    return 0;
 }
 
 PRIVATE int ext2_mountpoint(MESSAGE * p)

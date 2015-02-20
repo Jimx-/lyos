@@ -28,6 +28,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "proto.h"
 #include "global.h"
 
@@ -49,13 +50,18 @@ PUBLIC int main()
         case SERVICE_UP:
             msg.RETVAL = do_service_up(&msg);
             break;
+        case SERVICE_INIT_REPLY:
+            msg.RETVAL = do_service_init_reply(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;
         }
 
-        msg.type = SYSCALL_RET;
-        send_recv(SEND, src, &msg);
+        if (msg.RETVAL != SUSPEND) {
+            msg.type = SYSCALL_RET;
+            send_recv(SEND, src, &msg);
+        }
     }
 
     return 0;
@@ -71,6 +77,7 @@ PRIVATE void servman_init()
         struct boot_priv * bpriv = &boot_priv_table[i];
         struct sproc * sp = &sproc_table[i];
 
+        sp->flags |= SPF_INUSE;
         sp->priv.id = static_priv_id(ENDPOINT_P(bpriv->endpoint));
         sp->priv.flags = bpriv->flags;
 

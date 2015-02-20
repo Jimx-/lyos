@@ -71,6 +71,9 @@ PUBLIC int main(int argc, char * argv[])
         case PM_SIGRETURN:
             msg.RETVAL = do_sigreturn(&msg);
             break;
+        case PM_GETPROCEP: 
+            msg.RETVAL = do_getprocep(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

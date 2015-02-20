@@ -109,3 +109,19 @@ PUBLIC int do_getsetid(MESSAGE * p)
 
     return retval;
 }
+
+PUBLIC int do_getprocep(MESSAGE * p)
+{
+    pid_t pid = p->PID;
+    int i;
+
+    struct pmproc * pmp = pmproc_table;
+    for (i = 0; i < NR_PROCS; i++, pmp++) {
+        if (pmp->pid == pid) {
+            p->ENDPOINT = pmp->endpoint;
+            return 0;
+        }
+    }
+
+    return ESRCH;
+}

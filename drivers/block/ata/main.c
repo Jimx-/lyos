@@ -27,8 +27,9 @@
 #include <errno.h>
 #include <lyos/portio.h>
 #include <lyos/interrupt.h>
+#include <lyos/service.h>
 
-PRIVATE void	init_hd				();
+PRIVATE int		init_hd				();
 PRIVATE int 	hd_open				(MESSAGE * p);
 PRIVATE int 	hd_close			(MESSAGE * p);
 PRIVATE int 	hd_rdwt				(MESSAGE * p);
@@ -75,7 +76,9 @@ struct dev_driver hd_driver =
  *****************************************************************************/
 PUBLIC int main()
 {
-	init_hd();
+	serv_register_init_fresh_callback(init_hd);
+	serv_init();
+
 	dev_driver_task(&hd_driver);	
 
 	
@@ -120,7 +123,7 @@ PUBLIC int main()
  * <Ring 1> Check hard drive, set IRQ handler, enable IRQ and initialize data
  *          structures.
  *****************************************************************************/
-PRIVATE void init_hd()
+PRIVATE int init_hd()
 {
 	int i;
 	/* Get the number of drives from the BIOS data area */
@@ -147,6 +150,8 @@ PRIVATE void init_hd()
 			register_hd(&hd_info[i]);
 		}
 	}
+
+	return 0;
 }
 
 /*****************************************************************************

@@ -62,6 +62,7 @@ PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access)
     mode_t bits, perm_bits;
     int shift;
 
+    if (pin == NULL) return ENOENT;
     bits = pin->i_mode;
 
     if (fp->realuid == SU_UID) {

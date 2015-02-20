@@ -16,21 +16,19 @@
 
 int main(int argc, char * argv[])
 {
+	int fd_stdin  = open("/dev/console", O_RDWR);
+	int fd_stdout = open("/dev/console", O_RDWR);
+	int fd_stderr = open("/dev/console", O_RDWR);
+	
 	int pida = fork();
 	if (pida) {
+		int status;
+		wait3(&status, 0, NULL);
 	} else {
-		execv("/sbin/ata", NULL);
-	}
-	pida = fork();
-	if (pida) {
-	} else {
-		execv("/sbin/ext2fs", NULL);
+		char * rc_args[] = {"/bin/sh", "/etc/rc", NULL};
+		execv("/bin/sh", rc_args);
 	}
 
-	int fd_stdin  = open("/dev/tty1", O_RDWR);
-	int fd_stdout = open("/dev/tty1", O_RDWR);
-	int fd_stderr = open("/dev/tty1", O_RDWR);
-	
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
 	if (fd_hostname != -1) {
@@ -41,8 +39,6 @@ int main(int argc, char * argv[])
 		sethostname(hostname, len);
 		close(fd_hostname);
 	}
-
-	mount("/dev/hd1a", "/", "ext2", 0, NULL);
 
 	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/ttyS0"};
 	int i;

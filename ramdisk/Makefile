@@ -12,13 +12,14 @@ realclean :
 	@rm -f $(INITRD)
 
 $(INITRD):
-	@(cd ../userspace; make)
+	@(cd ../utils; make)
 	@cp $(DESTDIR)/sbin/init sbin/
 	@cp $(DESTDIR)/sbin/ext2fs sbin/
 	@cp $(DESTDIR)/sbin/ata sbin/
-	@cp $(DESTDIR)/usr/bin/getty usr/bin/getty
-	@cp $(DESTDIR)/usr/bin/login usr/bin/login
+	@cp $(DESTDIR)/usr/bin/getty usr/bin/
+	@cp $(DESTDIR)/usr/bin/login usr/bin/
 	@cp $(DESTDIR)/bin/sh bin/
+	@cp $(DESTDIR)/bin/service bin/
 	@cp ../sysroot/etc/* etc/
 	@touch .root
 	@(cd ../scripts ; bash create-ramdisk-dev.sh)

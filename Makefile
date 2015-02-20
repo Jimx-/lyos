@@ -165,7 +165,7 @@ mrproper:
 	@rm -rf $(CONFIGDIR)
 
 update-disk:
-	@(cd userspace; make)
+	@(cd utils; make)
 	@sudo bash scripts/update-disk.sh
 
 kvm:
@@ -175,7 +175,7 @@ kvm-debug:
 	@qemu-system-i386 -s -S -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
 
 disk-image:
-	@(cd userspace; make)
+	@(cd utils; make)
 	@sudo bash scripts/setup-disk.sh
 
 initrd:

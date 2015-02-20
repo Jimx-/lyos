@@ -94,7 +94,7 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
     ext2_buffer_t * pb = NULL;
 
     if (nr_buffers < MAX_BUFFERS || list_empty(&ext2_buffer_freelist)) {     /* just allocate one */
-        pb = (ext2_buffer_t *)sbrk(sizeof(ext2_buffer_t ));
+        pb = (ext2_buffer_t *)malloc(sizeof(ext2_buffer_t ));
         if (!pb) REPORT_ERROR_AND_RETURN(ENOMEM);
 
         pb->b_dev = dev;
@@ -104,15 +104,15 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
         pb->b_size = block_size;
 
         /* allocate data area */
-        pb->b_data = (char *)sbrk(block_size);
+        pb->b_data = (char *)malloc(block_size);
         if (!pb->b_data) REPORT_ERROR_AND_RETURN(ENOMEM);
     } else {                            /* find a buffer in the freelist */
         pb = (ext2_buffer_t *)(ext2_buffer_freelist.next);          /* pick the first one */
         if (pb->b_dirt) ext2_rw_buffer(DEV_WRITE, pb);   /* write back to disk to make it clear */
         if (pb->b_size != block_size) { /* realloc */
-            //free_mem((int)pb->b_data, pb->b_size);
+            free(pb->b_data);
             pb->b_size = block_size;
-            pb->b_data = (char *)sbrk(pb->b_size);
+            pb->b_data = (char *)malloc(pb->b_size);
             if (!pb->b_data) REPORT_ERROR_AND_RETURN(ENOMEM);
         }
             
@@ -178,6 +178,7 @@ PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t * pb)
  */
 PUBLIC void ext2_zero_buffer(ext2_buffer_t * pb)
 {
+    if (pb == NULL || pb->b_data == NULL) return;
     memset(pb->b_data, 0, pb->b_size);
 }
 

@@ -11,22 +11,31 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#ifndef _SERVMAN_GLOBAL_H_
-#define _SERVMAN_GLOBAL_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
+#include <lyos/ipc.h>
+#include <string.h>
 
-#include "type.h"
+PUBLIC int get_procep(pid_t pid, endpoint_t * ep)
+{
+    MESSAGE m;
 
-/* EXTERN is extern except for global.c */
-#ifdef _SERVMAN_GLOBAL_VARIABLE_HERE_
-#undef EXTERN
-#define EXTERN
-#endif
+    memset(&m, 0, sizeof(MESSAGE));
 
-extern struct sproc sproc_table[];
-extern struct sproc * sproc_ptr[];
+    m.type = PM_GETPROCEP;
+    m.PID = pid;
 
-extern struct boot_priv boot_priv_table[];
+    send_recv(BOTH, TASK_PM, &m);
 
-#endif 
+    if (m.RETVAL) return m.RETVAL;
+    
+    if (ep) *ep = m.ENDPOINT;
+    return 0;
+}

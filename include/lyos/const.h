@@ -181,6 +181,8 @@
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
 #define MSG_KERNLOG 	0x2  	/* the process has a kernellog message */
 
+#define VFS_REQ_BASE	 1001
+#define SERVMAN_REQ_BASE 2201
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -214,9 +216,6 @@ enum msgtype {
 	/* FS & MM */
 	FORK, EXIT,					/* 50 ~ 51 */
 
-	/* SERVMAN */
-	SERVICE_UP, SERVICE_DOWN,		/* 52 ~ 53 */
-
 	/* DEVMAN */
 	ANNOUNCE_DEVICE, GET_DRIVER,	/* 54 ~ 55 */
 
@@ -246,6 +245,7 @@ enum msgtype {
     PM_VFS_FORK,
     PM_SIGRETURN,
     PM_VFS_GETSETID,
+    PM_GETPROCEP,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,
@@ -256,6 +256,10 @@ enum msgtype {
 
 	/* message for sysfs */
 	SYSFS_PUBLISH = 2100,				/* 2100 */
+
+	/* SERVMAN */
+	SERVICE_UP = SERVMAN_REQ_BASE, SERVICE_DOWN,
+	SERVICE_INIT, SERVICE_INIT_REPLY,
 };
 
 /* macros for messages */

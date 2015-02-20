@@ -54,4 +54,6 @@ PUBLIC int      kernel_exec(endpoint_t ep, void * sp, char * name, void * ip, st
 
 PUBLIC int      kernel_sigsend(endpoint_t ep, struct siginfo * si);
 
+PUBLIC int      get_procep(pid_t pid, endpoint_t * ep);
+
 #endif

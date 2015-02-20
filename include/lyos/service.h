@@ -13,36 +13,19 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _SERVMAN_TYPE_H_
-#define _SERVMAN_TYPE_H_
+#ifndef _SERVICE_H_
+#define _SERVICE_H_
 
-#include <lyos/priv.h>
-#include <lyos/proc.h>
-#include <lyos/service.h>
-#include "const.h"
-
-struct sproc {
-    int flags;
-	endpoint_t endpoint;
-    pid_t pid;
-	struct priv priv;	/* privilege structure */
-
-    char cmdline[CMDLINE_MAX];
-    char cmd_args[CMDLINE_MAX];
-    char * argv[ARGV_MAX];
-    int argc;
-
-    char * exec;
-    int exec_len;
-
-    endpoint_t caller_e;
-    int caller_request;
+struct service_up_req {
+    char * cmdline;
+    int cmdlen;
 };
 
-struct boot_priv {
-	endpoint_t endpoint;
-	char name[PROC_NAME_LEN];
-	int flags;
-};
+#define SERVICE_INIT_FRESH 0x1
+
+typedef int (*serv_init_fresh_callback_t)();
+
+PUBLIC void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb);
+PUBLIC int serv_init();
 
 #endif

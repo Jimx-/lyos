@@ -8,6 +8,32 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+SUBARCH=$(uname -m | sed -e s/sun4u/sparc64/ \
+		-e s/arm.*/arm/ -e s/sa110/arm/ \
+		-e s/s390x/s390/ -e s/parisc64/parisc/ \
+		-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+		-e s/sh[234].*/sh/ )
+ARCH=$SUBARCH
+
+while getopts "m:" arg
+do
+        case $arg in
+             m)
+                ARCH=${OPTARG}
+                ;;
+             ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+done
+
+if [ $ARCH = "i686" ]; then
+	ARCH=x86
+fi
+
+export SUBARCH=$SUBARCH ARCH=$ARCH
+
 DISK=lyos-disk.img
 SRCDIR=./
 MOUNT_POINT=/mnt/lyos-root
@@ -36,9 +62,10 @@ else
 	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
 fi
 
-cp -rf obj/destdir.x86/boot/* /$MOUNT_POINT/boot/
-cp -rf obj/destdir.x86/sbin/* /$MOUNT_POINT/sbin/ 
-cp -rf obj/destdir.x86/usr/bin/* /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
+cp -rf obj/destdir.$ARCH/bin/service /$MOUNT_POINT/bin/service 
+cp -rf obj/destdir.$ARCH/sbin/* /$MOUNT_POINT/sbin/ 
+cp -rf obj/destdir.$ARCH/usr/bin/* /$MOUNT_POINT/usr/bin/
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 

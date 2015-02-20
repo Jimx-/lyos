@@ -76,7 +76,8 @@ PUBLIC int kernel_main()
     	if (is_kerntaske(bp->endpoint) || bp->endpoint == TASK_MM || bp->endpoint == TASK_SERVMAN) {
     		/* assign priv structure */
     		set_priv(p, static_priv_id(bp->endpoint));
-
+            p->priv->flags |= PRF_PRIV_PROC;
+            
             int allowed_calls;
     		if (bp->endpoint == TASK_MM) {
     			allowed_calls = TASK_CALLS;

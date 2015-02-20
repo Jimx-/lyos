@@ -1,7 +1,7 @@
 #
 # Makefile for the Lyos memory manager.
 
-SERVMANOBJS = main.o service.o exec.o global.o
+SERVMANOBJS = main.o service.o exec.o global.o utils.o
 LIBS 		= -lsysfs -lexec -llyos
 SERVMAN		= servman
 

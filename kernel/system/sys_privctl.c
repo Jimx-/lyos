@@ -35,6 +35,8 @@
 
 PUBLIC int arch_privctl(MESSAGE * m, struct proc* p);
 
+PRIVATE int update_priv(struct proc * p, struct priv * priv);
+
 PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
 {
 	endpoint_t whom = m->ENDPOINT;
@@ -59,6 +61,10 @@ PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
 
         if ((r = set_priv(target, priv_id)) != 0) return r;
 
+        if (m->BUF) {
+            if ((r = update_priv(target, &priv)) != 0) return r;
+        }
+
         return 0;
     case PRIVCTL_ALLOW:
         PST_UNSET(target, PST_NO_PRIV);
@@ -69,4 +75,10 @@ PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
 	}
 
 	return EINVAL;
+}
+
+PRIVATE int update_priv(struct proc * p, struct priv * priv)
+{
+    p->priv->flags = priv->flags;
+    return 0;
 }

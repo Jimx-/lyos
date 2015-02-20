@@ -56,24 +56,10 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
     return 0;
 }
 
-PUBLIC int serv_exec(endpoint_t target, char * pathname)
+PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progname)
 {
     int i;
-
-    int exec_fd = open(pathname, O_RDONLY);
-    if (exec_fd == -1) return ENOENT;
-
-    struct stat sbuf;
-    int retval = fstat(exec_fd, &sbuf);
-    if (retval) return retval;
-
-    char * buf = (char*)malloc(sbuf.st_size);
-    if (buf == NULL) return ENOMEM;
-
-    int n_read = read(exec_fd, buf, sbuf.st_size);
-    if (n_read != sbuf.st_size) return ENOEXEC;
-
-    close(exec_fd);
+    int retval;
 
     struct exec_info execi;
     memset(&execi, 0, sizeof(execi));
@@ -83,8 +69,8 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
     execi.stack_size = PROC_ORIGIN_STACK;
 
     /* header */
-    execi.header = buf;
-    execi.header_len = sbuf.st_size;
+    execi.header = exec;
+    execi.header_len = exec_len;
 
     execi.allocmem = libexec_allocmem;
     execi.allocstack = libexec_allocstack;
@@ -93,7 +79,7 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
     execi.clearmem = libexec_clearmem;
 
     execi.proc_e = target;
-    execi.filesize = sbuf.st_size;
+    execi.filesize = exec_len;
 
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi);
@@ -107,7 +93,7 @@ PUBLIC int serv_exec(endpoint_t target, char * pathname)
     ps.ps_argvstr = NULL;
     ps.ps_envstr = NULL;
 
-    return kernel_exec(target, (void *)VM_STACK_TOP, pathname, execi.entry_point, &ps);
+    return kernel_exec(target, (void *)VM_STACK_TOP, progname, execi.entry_point, &ps);
 }
 
 

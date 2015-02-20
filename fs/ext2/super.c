@@ -31,7 +31,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-#define DEBUG
+//#define DEBUG
 #if defined(DEBUG)
 #define DEB(x) printl("ext2fs: "); x
 #else
@@ -59,11 +59,11 @@ PUBLIC int read_ext2_super_block(int dev)
     // size 1024 bytes
     driver_msg.CNT      = SECTOR_SIZE * 2;
     driver_msg.PROC_NR  = ext2_ep;
-    printl("Sending\n");
-    endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
-    send_recv(BOTH, driver_ep, &driver_msg);
+    endpoint_t driver_ep = get_blockdev_driver(dev);
+    int retval;
+    if ((retval == send_recv(BOTH, driver_ep, &driver_msg)) != 0) return retval;
 
-    ext2_superblock_t * pext2sb = (ext2_superblock_t *)sbrk(sizeof(ext2_superblock_t));
+    ext2_superblock_t * pext2sb = (ext2_superblock_t *)malloc(sizeof(ext2_superblock_t));
     if (!pext2sb) return ENOMEM;
     
     DEB(printl("Allocated super block at 0x%x\n", (unsigned int)pext2sb));
@@ -74,7 +74,7 @@ PUBLIC int read_ext2_super_block(int dev)
     DEB(printl("File system information:\n"));
     DEB(printl("  Magic: 0x%x\n", pext2sb->sb_magic));
     if (pext2sb->sb_magic != EXT2FS_MAGIC) {
-        //free_mem((int)pext2sb, sizeof(ext2_superblock_t));
+        free(pext2sb);
         return EINVAL;
     }
     DEB(printl("  Inodes: %d\n", pext2sb->sb_inodes_count));
@@ -94,9 +94,9 @@ PUBLIC int read_ext2_super_block(int dev)
     int bgdesc_blocks = sizeof(ext2_bgdescriptor_t) * nr_groups / block_size + 1;
     int bgdesc_offset = 1024 / block_size + 1;
 
-    pext2sb->sb_bgdescs = (ext2_bgdescriptor_t*)sbrk(bgdesc_blocks * block_size);
+    pext2sb->sb_bgdescs = (ext2_bgdescriptor_t*)malloc(bgdesc_blocks * block_size);
     if (!(pext2sb->sb_bgdescs)) {
-        //free_mem((int)pext2sb, sizeof(ext2_superblock_t));
+        free(pext2sb);
         return ENOMEM;
     }
     DEB(printl("Allocated block group descriptors memory: 0x%x, size: %d bytes\n", pext2sb->sb_bgdescs, bgdesc_blocks * block_size));
@@ -140,7 +140,7 @@ PUBLIC int write_ext2_super_block(int dev)
     // size 1024 bytes
     driver_msg.CNT      = SECTOR_SIZE * 2;
     driver_msg.PROC_NR  = ext2_ep;
-    endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+    endpoint_t driver_ep = get_blockdev_driver(dev);
     send_recv(BOTH, driver_ep, &driver_msg);
 
     return 0;
@@ -171,7 +171,7 @@ PRIVATE void bdev_open(dev_t dev)
     MESSAGE driver_msg;
 	driver_msg.type = DEV_OPEN;
 	driver_msg.DEVICE = MINOR(dev);
-    endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+    endpoint_t driver_ep = get_blockdev_driver(dev);
 	send_recv(BOTH, driver_ep, &driver_msg);
 }
 
@@ -180,7 +180,7 @@ PRIVATE void bdev_close(dev_t dev)
     MESSAGE driver_msg;
 	driver_msg.type = DEV_CLOSE;
 	driver_msg.DEVICE = MINOR(dev);
-	endpoint_t driver_ep = get_blockdev_driver(MAJOR(dev));
+	endpoint_t driver_ep = get_blockdev_driver(dev);
     send_recv(BOTH, driver_ep, &driver_msg);
 }
 

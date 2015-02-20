@@ -89,6 +89,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
     int bytes_rdwt = 0, retval = 0;
     u64 newpos;
 
+    if (fd < 0) return -EBADF;
     if (!filp) return -EBADF;
 
     int position = filp->fd_pos;
@@ -97,7 +98,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
 
     /* TODO: pipe goes here */
     /* if (PIPE) ... */
-
+    if (pin == NULL) return -ENOENT;
     int file_type = pin->i_mode & I_TYPE;
 
     /* TODO: read/write for block special */
