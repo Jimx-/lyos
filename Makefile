@@ -151,13 +151,13 @@ clean :
 	@rm -f $(OBJS)
 
 realclean :
-	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
-	@find . -path ./toolchain -prune -o -name "*.a" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj \) -prune -prune -o -name "*.o" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj \) -prune -o -name "*.a" -exec rm -f {} \;
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
-	@find . -path ./toolchain -prune -o -name "*.o" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj \) -prune -path ./obj -prune -o -name "*.o" -exec rm -f {} \;
 	@echo -e '$(COLORRED)Removing compile.h...$(COLORDEFAULT)'
 	@rm -f $(INCLUDEDIR)/lyos/compile.h
 	@echo -e '$(COLORRED)Removing configure files...$(COLORDEFAULT)'

@@ -11,7 +11,7 @@ realclean :
 	@rm -f $(SERVICE) $(SERVICEOBJS)
 
 $(SERVICE): $(SERVICEOBJS)
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ -Xlinker -Map -Xlinker a.map
+	@$(CC) $(SERVERCFLAGS) -o $@ $^
 
 %.o: %.c
 	@$(CC) $(SERVERCFLAGS) -c $<

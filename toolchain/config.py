@@ -4,6 +4,7 @@ import ConfigParser
 ROOT_DIR = os.getcwd() 
 PREFIX = os.sep.join([ROOT_DIR, 'local'])
 PREFIX_BIN = os.sep.join([PREFIX, 'bin'])
+CROSSPREFIX = '/usr'
 DESTDIR = ROOT_DIR + '/../obj/destdir.' + os.environ["ARCH"] + '/'
 SYSROOT = DESTDIR
 try:

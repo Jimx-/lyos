@@ -64,7 +64,7 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
         printl("ext2: warning: buffer operation failed(d%d, b%d, e%d)\n", dev, block, e); \
         err_code = e; return NULL;  \
     } while (0)
-    //printl("%d %d\n", dev, block);
+
     if (!dev) REPORT_ERROR_AND_RETURN(EINVAL);
 
     block_t hash = block % EXT2_BUFFER_HASH_SIZE;

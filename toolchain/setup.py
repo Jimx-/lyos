@@ -38,20 +38,32 @@ if __name__ == "__main__":
 	# binutils
 	mkdir('binutils')
 	push_dir('binutils')
-	configure(BINUTILS_VERSION)
-	make_and_install()
+	os.environ["PKG_CONFIG_LIBDIR"] = ""
+	#configure(BINUTILS_VERSION)
+	#make_and_install()
 	pop_dir()	# binutils
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
 	mkdir('gcc')
 	push_dir('gcc')
-	configure(GCC_VERSION ,'--disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+	os.environ["PKG_CONFIG_LIBDIR"] = ""
+	configure(GCC_VERSION ,' --with-build-sysroot=' + SYSROOT + ' --with-native-system-header-dir=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
 	make('all-gcc')
 	make('install-gcc')
 	make('all-target-libgcc')
 	make('install-target-libgcc')
 	pop_dir()	# gcc
+
+	push_dir('gcc')
+	make('all-target-libstdc++-v3')
+	make('install-target-libstdc++-v3')
+	pop_dir()
+	exit()
+
+	os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
+	os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
+	os.environ["TOOLCHAIN"] = SYSROOT + '/usr'
 
 	# newlib
 	newlib_dir = '../sources/' + NEWLIB_VERSION
@@ -80,23 +92,34 @@ if __name__ == "__main__":
 
 	mkdir('newlib')
 	push_dir('newlib')
-	configure(NEWLIB_VERSION)
-	make_and_install()
+	configure_cross(NEWLIB_VERSION)
+	os.system("sed 's/prefix}\/" + TARGET + "/prefix}/' Makefile > Makefile.bak")
+	copy("Makefile.bak", "Makefile")
+	make()
+	make(' DESTDIR=' + SYSROOT + ' install')
+	copy(TARGET + '/newlib/libc/sys/lyos/crt*.o', SYSROOT + CROSSPREFIX + '/lib/')
 	pop_dir()
 
 	push_dir('gcc')
-	make('all-target-libstdc++-v3')
-	make('install-target-libstdc++-v3')
+	#make('all-target-libstdc++-v3')
+	#make('install-target-libstdc++-v3')
 	pop_dir()
 
 	# Pass 2
-	rmdir('binutils')
-	mkdir('binutils')
-	push_dir('binutils')
-	configure_native(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
-	make_and_install()
+	mkdir('binutils-native')
+	push_dir('binutils-native')
+	#configure_native(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
+	#make_and_install()
 	pop_dir()
 
+	mkdir('gcc-native')
+	push_dir('gcc-native')
+	#configure_native(GCC_VERSION, '--disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+	#make('all-gcc')
+	#make('install-gcc')
+	#make('all-target-libgcc')
+	#make('install-target-libgcc')
+	pop_dir()	# gcc-native
 
 	pop_dir()	# build
 	

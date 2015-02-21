@@ -14,7 +14,7 @@ KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			sysinfo.o system/system.o interrupt.o system.o smp.o \
 			clocksource.o
 LIB			= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
-LIBC		= $(SRCDIR)/toolchain/local/$(SUBARCH)-elf-lyos/lib/libc.a 
+LIBC		= $(DESTDIR)/usr/lib/libc.a 
 
 KRNL		= $(ARCHDIR)/lyos.bin
 

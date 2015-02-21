@@ -96,13 +96,13 @@ PUBLIC int do_open(MESSAGE * p)
 
     if (flags & O_CREAT) {
         mode = I_REGULAR | (mode & ALL_MODES & pcaller->umask);
+        err_code = 0;
         pin = new_node(pathname, flags, mode);
         retval = err_code;
         if (retval == 0) exist = 0;
         else if (retval != EEXIST) {
-            return retval;
-        }
-        exist = !(flags & O_EXCL);
+            return -retval;
+        } else exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, pcaller);
         if (pin == NULL) return -err_code;
@@ -216,6 +216,7 @@ PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode)
             put_inode(pin_dir);
             return NULL;
         }
+        err_code = 0;
     } else {
         err_code = EEXIST;
         return NULL;

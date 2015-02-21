@@ -77,7 +77,11 @@ def patch(name):
 
 def configure(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + extra_opt)
+	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + ' --with-sysroot=' + SYSROOT + extra_opt)
+
+def configure_cross(name, extra_opt=''):
+	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
+	os.system(path + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + extra_opt)
 
 def configure_host(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
