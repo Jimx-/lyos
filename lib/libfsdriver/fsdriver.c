@@ -30,5 +30,56 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
     int retval = fsdriver_register(fsd);
     if (retval != 0) return retval;
 
+    int reply;
+
+    MESSAGE m;
+    while (TRUE) {
+        send_recv(RECEIVE, ANY, &m);
+
+        int msgtype = m.type;
+        int src = m.source;
+        reply = 1;
+        switch (msgtype) {
+        case FS_LOOKUP:
+            m.RET_RETVAL = fsdriver_lookup(fsd, &m);
+            break;
+        case FS_PUTINODE:
+            m.RET_RETVAL = fsdriver_putinode(fsd, &m);
+            break;
+        case FS_MOUNTPOINT:
+            m.RET_RETVAL = fsdriver_mountpoint(fsd, &m);
+            break;
+        case FS_READSUPER:
+            m.RET_RETVAL = fsdriver_readsuper(fsd, &m);
+            break;
+        case FS_STAT:
+            m.STRET = fsdriver_stat(fsd, &m);
+            break;
+        case FS_RDWT:
+            m.RWRET = fsdriver_readwrite(fsd, &m);
+            break;
+        case FS_CREATE:
+            m.CRRET = fsdriver_create(fsd, &m);
+            break;
+        case FS_FTRUNC:
+            m.RET_RETVAL = fsdriver_ftrunc(fsd, &m);
+            break;
+        case FS_SYNC:
+            m.RET_RETVAL = fsdriver_sync(fsd, &m);
+            break;
+        default:
+            m.RET_RETVAL = ENOSYS;
+            break;
+        }
+
+        /* reply */
+        if (reply) {
+            m.type = FSREQ_RET;
+            send_recv(SEND, src, &m);
+        }
+
+        fsd->fs_sync();
+    }
+
     return 0;
 }

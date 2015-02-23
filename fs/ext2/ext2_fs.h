@@ -294,7 +294,7 @@ PUBLIC void ext2_dump_inode(ext2_inode_t * pin);
 
 PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access);
 
-PUBLIC int ext2_lookup(MESSAGE * p);
+PUBLIC int ext2_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int flags, off_t * offset, struct fsdriver_node * fn);
 PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, int flags, ext2_inode_t ** result, size_t * offsetp);
 PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1],
 								int check_perm);
@@ -302,7 +302,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 								int flag, int check_perm, int ftype);
 
 PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position);
-PUBLIC int ext2_rdwt(MESSAGE * p);
+PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count);
 
 PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block);
 PUBLIC void ext2_put_buffer(ext2_buffer_t * pb);

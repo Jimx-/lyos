@@ -17,7 +17,7 @@
 #define _LIBFSDRIVER_H_
 
 struct fsdriver_node {
-    dev_t fn_dev;
+    dev_t fn_device;
     ino_t fn_num;
     uid_t fn_uid;
     gid_t fn_gid;
@@ -34,8 +34,11 @@ struct fsdriver {
     char * name;
 
     int (*fs_readsuper)(dev_t dev, int flags, struct fsdriver_node * node);
+    int (*fs_mountpoint)(dev_t dev, ino_t num);
     int (*fs_putinode)(dev_t dev, ino_t num);
+    int (*fs_lookup)(dev_t dev, char * pathname, ino_t start, ino_t root, int flags, off_t * offset, struct fsdriver_node * fn);
     int (*fs_create)(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn);
+    int (*fs_readwrite)(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count);
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data  * data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
     int (*fs_sync)();
@@ -48,7 +51,9 @@ PUBLIC int fsdriver_copyout(struct fsdriver_data * data, size_t offset, void * b
 
 PUBLIC int fsdriver_register(struct fsdriver * fsd);
 PUBLIC int fsdriver_readsuper(struct fsdriver * fsd, MESSAGE * m);
+PUBLIC int fsdriver_mountpoint(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_putinode(struct fsdriver * fsd, MESSAGE * m);
+PUBLIC int fsdriver_readwrite(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m);

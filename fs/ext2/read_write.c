@@ -31,22 +31,18 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, endpoint_t src, void * buf);
+PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, struct fsdriver_data * data, off_t data_offset);
 
 /**
  * Ext2 read/write syscall.
  * @param  p Ptr to message.
  * @return   Zero on success.
  */
-PUBLIC int ext2_rdwt(MESSAGE * p)
+PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count)
 {
-    dev_t dev = (int)p->RWDEV;
-    ino_t num = p->RWINO;
-    u64 position = p->RWPOS;
-    int src = p->RWSRC;
-    int rw_flag = p->RWFLAG;
-    void * buf = p->RWBUF;
-    int nbytes = p->RWCNT;
+    u64 position = *rwpos;
+    int nbytes = *count;
+    off_t data_offset = 0;
 
     int retval = 0;
     ext2_inode_t * pin = find_ext2_inode(dev, num);
@@ -72,7 +68,7 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
         }
 
         /* rw */
-        retval = ext2_rw_chunk(pin, position, chunk, nbytes, offset, rw_flag, src, buf);
+        retval = ext2_rw_chunk(pin, position, chunk, nbytes, offset, rw_flag, data, data_offset);
         if (retval) break;
 
         /* move on */
@@ -82,10 +78,10 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
 
         if (eof) break;
 
-        buf = (void*)((int)buf + chunk);
+        data_offset += chunk;
     }
 
-    p->RWPOS = position;
+    *rwpos = position;
 
     /* update things */
     int file_type = pin->i_mode & I_TYPE;
@@ -104,7 +100,7 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
         pin->i_dirt = 1;
     }
 
-    p->RWCNT = bytes_rdwt;
+    *count = bytes_rdwt;
 
     return 0;
 }
@@ -121,7 +117,7 @@ PUBLIC int ext2_rdwt(MESSAGE * p)
  * @param  buf      Buffer.
  * @return          Zero on success.
  */
-PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, endpoint_t src, void * buf)
+PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, struct fsdriver_data * data, off_t data_offset)
 {
 
     int b = 0;
@@ -154,10 +150,10 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left,
 
     if (rw_flag == READ) {
         /* copy the data to userspace */
-        if (b != 0) data_copy(src, buf, SELF, (void *)((int)bp->b_data + offset), chunk);
+        if (b != 0) fsdriver_copyout(data, data_offset, (void *)((int)bp->b_data + offset), chunk);
     } else {
         /* copy the data from userspace */
-        data_copy(SELF, (void *)((int)bp->b_data + offset), src, buf, chunk);
+        fsdriver_copyin(data, data_offset, (void *)((int)bp->b_data + offset), chunk);
         bp->b_dirt = 1;
     }
 

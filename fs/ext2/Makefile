@@ -1,7 +1,7 @@
 
 FSOBJS 	= main.o super.o global.o inode.o protect.o path.o read_write.o buffer.o \
 			alloc.o stat.o open.o link.o
-LIBS	= -llyos -ldriver -lfsdriver
+LIBS	=  -lfsdriver -llyos -ldriver
 
 EXT2FS = ext2fs
 

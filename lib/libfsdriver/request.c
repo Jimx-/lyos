@@ -55,6 +55,45 @@ PUBLIC int fsdriver_readsuper(struct fsdriver * fsd, MESSAGE * m)
     return retval;
 }
 
+PUBLIC int fsdriver_mountpoint(struct fsdriver * fsd, MESSAGE * m)
+{
+    dev_t dev = m->REQ_DEV;
+    ino_t num = m->REQ_NUM;
+
+    return fsd->fs_mountpoint(dev, num);
+}
+
+PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
+{
+    int src = m->source;
+    int dev = m->REQ_DEV;
+    int start = m->REQ_START_INO;
+    int root = m->REQ_ROOT_INO;
+    int flags = (int)m->REQ_FLAGS;
+    int name_len = m->REQ_NAMELEN;
+    off_t offset;
+    struct fsdriver_node fn;
+
+    char pathname[PATH_MAX];
+    if (name_len > PATH_MAX - 1) return ENAMETOOLONG;
+
+    data_copy(SELF, pathname, src, m->REQ_PATHNAME, name_len);
+    pathname[name_len] = '\0';
+
+    int retval = fsd->fs_lookup(dev, pathname, start, root, flags, &offset, &fn);
+    if (retval) return retval;
+
+    m->RET_OFFSET = offset;
+    m->RET_NUM = fn.fn_num;
+    m->RET_UID = fn.fn_uid;
+    m->RET_GID = fn.fn_gid;
+    m->RET_FILESIZE = fn.fn_size;
+    m->RET_MODE = fn.fn_mode;
+    m->RET_SPECDEV = fn.fn_device;
+
+    return 0;
+}
+
 PUBLIC int fsdriver_putinode(struct fsdriver * fsd, MESSAGE * m)
 {
     dev_t dev = m->REQ_DEV;
@@ -100,6 +139,29 @@ PUBLIC int fsdriver_create(struct fsdriver * fsd, MESSAGE * m)
     return retval;
 }
 
+PUBLIC int fsdriver_readwrite(struct fsdriver * fsd, MESSAGE * m)
+{
+    dev_t dev = (int)m->RWDEV;
+    ino_t num = m->RWINO;
+    u64 rwpos = m->RWPOS;
+    int src = m->RWSRC;
+    int rw_flag = m->RWFLAG;
+    void * buf = m->RWBUF;
+    int nbytes = m->RWCNT;
+
+    struct fsdriver_data data;
+    data.src = src;
+    data.buf = buf;
+
+    int retval = fsd->fs_readwrite(dev, num, rw_flag, &data, &rwpos, &nbytes);
+    if (retval) return retval;
+    
+    m->RWPOS = rwpos;
+    m->RWCNT = nbytes;
+
+    return 0;
+}
+
 PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m)
 {
     dev_t dev = (dev_t)m->STDEV;
@@ -114,7 +176,7 @@ PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m)
 PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m)
 {
     dev_t dev = (dev_t)m->REQ_DEV;
-    ino_t num = (ino_t)m->REQ_INO;
+    ino_t num = (ino_t)m->REQ_NUM;
     off_t start_pos = m->REQ_STARTPOS;
     off_t end_pos = m->REQ_ENDPOS;
 

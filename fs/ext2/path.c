@@ -33,28 +33,16 @@
 
 PRIVATE char dot2[2] = "..";
 
-PUBLIC int ext2_lookup(MESSAGE * p)
+PUBLIC int ext2_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int flags, off_t * offset, struct fsdriver_node * fn)
 {
-	int src = p->source;
-	int dev = p->REQ_DEV;
-	int start = p->REQ_START_INO;
-	int root = p->REQ_ROOT_INO;
-	int flags = (int)p->REQ_FLAGS;
-	int name_len = p->REQ_NAMELEN;
-
     size_t offsetp = 0;
 	ext2_inode_t * pin = NULL;
-
-	char pathname[MAX_PATH];
-
-	data_copy(SELF, pathname, src, p->REQ_PATHNAME, name_len);
-	pathname[name_len] = '\0';
 
 	int retval = ext2_parse_path(dev, start, root, pathname, flags, &pin, &offsetp);
 
 	/* report error and offset position */
 	if (retval == ELEAVEMOUNT || retval == EENTERMOUNT) {
-		p->RET_OFFSET = offsetp;
+		*offset = offsetp;
 		if (retval == EENTERMOUNT) put_ext2_inode(pin);
 		return retval;
 	}
@@ -62,12 +50,12 @@ PUBLIC int ext2_lookup(MESSAGE * p)
 	if (retval) return retval;
 
 	/* fill result */
-	p->RET_NUM = pin->i_num;
-	p->RET_UID = pin->i_uid;
-	p->RET_GID = pin->i_gid;
-	p->RET_FILESIZE = pin->i_size;
-	p->RET_MODE = pin->i_mode;
-    p->RET_SPECDEV = pin->i_block[0];
+	fn->fn_num = pin->i_num;
+	fn->fn_uid = pin->i_uid;
+	fn->fn_gid = pin->i_gid;
+	fn->fn_size = pin->i_size;
+	fn->fn_mode = pin->i_mode;
+    fn->fn_device = pin->i_block[0];
 
 	return 0;
 }

@@ -49,8 +49,11 @@ struct fsdriver ext2fsdriver = {
     .name = "ext2",
 
     .fs_readsuper = ext2_readsuper,
+    .fs_mountpoint = ext2_mountpoint,
     .fs_putinode = ext2_putinode,
+    .fs_lookup = ext2_lookup,
     .fs_create = ext2_create,
+    .fs_readwrite = ext2_rdwt,
     .fs_stat = ext2_stat,
     .fs_ftrunc = ext2_ftrunc,
     .fs_sync = ext2_sync,
@@ -68,60 +71,7 @@ PUBLIC int main()
     serv_register_init_fresh_callback(init_ext2fs);
     serv_init();
 
-	fsdriver_start(&ext2fsdriver);
-
-	int reply;
-
-    MESSAGE m;
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
-
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-		switch (msgtype) {
-		case FS_LOOKUP:
-			m.RET_RETVAL = ext2_lookup(&m);
-            break;
-		case FS_PUTINODE:
-            m.RET_RETVAL = fsdriver_putinode(&ext2fsdriver, &m);
-			break;
-        case FS_MOUNTPOINT:
-            m.RET_RETVAL = ext2_mountpoint(&m);
-            break;
-        case FS_READSUPER:
-            m.RET_RETVAL = fsdriver_readsuper(&ext2fsdriver, &m);
-            break;
-        case FS_STAT:
-        	m.STRET = fsdriver_stat(&ext2fsdriver, &m);
-        	break;
-        case FS_RDWT:
-        	m.RWRET = ext2_rdwt(&m);
-        	break;
-        case FS_CREATE:
-        	m.CRRET = fsdriver_create(&ext2fsdriver, &m);
-        	break;
-        case FS_FTRUNC:
-        	m.RET_RETVAL = fs_ftrunc(&ext2fsdriver, &m);
-        	break;
-        case FS_SYNC:
-        	m.RET_RETVAL = fs_sync(&ext2fsdriver, &m);
-        	break;
-		default:
-			m.RET_RETVAL = ENOSYS;
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-
-        ext2_sync();
-	}
-
-    return 0;
+	return fsdriver_start(&ext2fsdriver);
 }
 
 PUBLIC int init_ext2fs()
