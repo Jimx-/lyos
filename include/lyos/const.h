@@ -205,7 +205,7 @@ enum msgtype {
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, MOUNT, UMOUNT, MKDIR, 
-	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP, IOCTL, FCNTL,	/* 17 ~ 35 */
+	CHROOT, CHDIR, FCHDIR, ACCESS, UMASK, DUP, IOCTL, FCNTL, CHMOD, FCHMOD,	/* 17 ~ 35 */
 	/* FS & TTY */
 	SUSPEND_PROC, RESUME_PROC,				/* 36 ~ 37 */
 
@@ -235,6 +235,7 @@ enum msgtype {
     FS_FTRUNC,
     FS_SYNC,
     FS_MMAP,
+    FS_CHMOD,
 
     /* message type for mm calls */
     MM_MAP_PHYS = 1201,

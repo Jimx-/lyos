@@ -58,9 +58,12 @@ if __name__ == "__main__":
 
 	mkdir('newlib')
 	push_dir('newlib')
-	configure(NEWLIB_VERSION)
-	make_and_install()
+	configure_cross(NEWLIB_VERSION)
+	os.system("sed 's/prefix}\/" + TARGET + "/prefix}/' Makefile > Makefile.bak")
+	copy("Makefile.bak", "Makefile")
+	make()
+	make(' DESTDIR=' + SYSROOT + ' install')
+	copy(TARGET + '/newlib/libc/sys/lyos/crt*.o', SYSROOT + CROSSPREFIX + '/lib/')
 	pop_dir()
-
 
 	pop_dir()	# build

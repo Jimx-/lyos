@@ -518,8 +518,31 @@ int fchdir(int fd)
 
 int chmod(const char *path, mode_t mode)
 {
-	//printf("chmod: not implemented\n");
-	return 0;
+	MESSAGE msg;
+	msg.type = CHMOD;
+
+	msg.PATHNAME = path;
+	msg.NAME_LEN = strlen(path);
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
+}
+
+int fchmod(int fd, mode_t mode)
+{
+	MESSAGE msg;
+	msg.type = FCHMOD;
+
+	msg.FD = fd;
+
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
 }
 
 int mount(const char *source, const char *target,

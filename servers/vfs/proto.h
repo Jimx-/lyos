@@ -74,9 +74,10 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * 
 PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
     void * buf, int nbytes, u64 * newpos, int * bytes_rdwt);
 
-PUBLIC int       do_stat(MESSAGE * p);
-PUBLIC int       do_fstat(MESSAGE * p);
-PUBLIC int       do_access(MESSAGE * p);
+PUBLIC int do_stat(MESSAGE * p);
+PUBLIC int do_fstat(MESSAGE * p);
+PUBLIC int do_access(MESSAGE * p);
+PUBLIC int do_chmod(int type, MESSAGE * p);
 
 PUBLIC int do_ioctl(MESSAGE * p);
 PUBLIC int do_fcntl(MESSAGE * p);

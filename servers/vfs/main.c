@@ -123,6 +123,10 @@ PUBLIC int main()
 		case MOUNT:
 			msg.RETVAL = do_mount(&msg);
 			break;
+		case CHMOD:
+		case FCHMOD:
+			msg.RETVAL = do_chmod(msgtype, &msg);
+			break;
 		case PM_VFS_FORK:
 			msg.RETVAL = fs_fork(&msg);
 			break;

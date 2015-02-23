@@ -98,3 +98,53 @@ PUBLIC mode_t do_umask(MESSAGE * p)
     pcaller->umask = ~((mode_t)p->MODE & RWX_MODES);
     return old;
 }
+
+PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, mode_t * result)
+{
+    MESSAGE m;
+    m.type = FS_CHMOD;
+    m.REQ_DEV = dev;
+    m.REQ_NUM = num;
+    m.REQ_MODE = mode;
+
+    send_recv(BOTH, fs_ep, &m);
+
+    *result = (mode_t)m.RET_MODE;
+
+    return m.RET_RETVAL;
+}
+
+PUBLIC int do_chmod(int type, MESSAGE * p)
+{
+    struct inode * pin;
+
+    if (type == CHMOD) {
+        char pathname[MAX_PATH];
+        if (p->NAME_LEN > MAX_PATH) return ENAMETOOLONG;
+
+        /* fetch the name */
+        data_copy(SELF, pathname, pcaller->endpoint, p->PATHNAME, p->NAME_LEN);
+        pathname[p->NAME_LEN] = '\0';
+
+        pin = resolve_path(pathname, pcaller);
+    } else if (type == FCHMOD) {
+        struct file_desc * filp = pcaller->filp[p->FD];
+        if (!filp) return EBADF;
+
+        pin = filp->fd_inode;
+    }
+
+    if (!pin) return ENOENT;
+
+    if (pin->i_uid != pcaller->effuid && pcaller->effuid != SU_UID) return EPERM;
+    if (pin->i_vmnt->m_flags & VMNT_READONLY) return EROFS;
+
+    mode_t result;
+    int retval = request_chmod(pin->i_fs_ep, pin->i_dev, pin->i_num, p->MODE, &result);
+
+    if (retval == 0) pin->i_mode = result;
+
+    put_inode(pin);
+
+    return 0;
+}

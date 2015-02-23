@@ -150,7 +150,6 @@ PRIVATE int change_directory(struct inode ** ppin, char * string, int len)
 
     /* fetch the name */
     data_copy(SELF, pathname, pcaller->endpoint, string, len);
-    //phys_copy(va2pa(getpid(), pathname), va2pa(proc2pid(pcaller), string), len);
     pathname[len] = '\0';
 
     struct inode * pin = resolve_path(pathname, pcaller);
