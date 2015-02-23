@@ -27,6 +27,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -147,4 +148,34 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
     put_inode(pin);
 
     return 0;
+}
+
+PUBLIC int fs_getsetid(MESSAGE * p)
+{
+    if (p->source != TASK_PM) return EPERM;
+
+    struct fproc * fp = vfs_endpt_proc(p->ENDPOINT);
+    int retval = 0;
+
+    if (fp == NULL) retval = EINVAL;
+    else {
+        switch (p->REQUEST) {
+        case GS_SETUID:
+            fp->realuid = p->UID;
+            fp->effuid = p->EUID;
+            break;
+        case GS_SETGID:
+            fp->realgid = p->GID;
+            fp->effgid = p->EGID;
+            break;
+        default:
+            retval = EINVAL;
+            break;
+        }
+    }
+
+    p->type = PM_VFS_GETSETID_REPLY;
+    send_recv(SEND, TASK_PM, p);
+
+    return SUSPEND;
 }

@@ -29,7 +29,7 @@ if __name__ == "__main__":
 	mkdir('dash')
 	push_dir('dash')
 	#configure_host(DASH_VERSION)
-	make_and_install()
+	make_and_install_to_destdir()
 	pop_dir()
 
 	copy(SYSROOT + '/bin/dash', SYSROOT + '/bin/sh')

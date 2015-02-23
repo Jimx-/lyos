@@ -31,7 +31,7 @@
 #include "fcntl.h"
 #include "global.h"
 
-PRIVATE int change_directory(struct inode ** ppin, char * pathname, int len);
+PRIVATE int change_directory(struct inode ** ppin, endpoint_t src, char * pathname, int len);
 PRIVATE int change_node(struct inode ** ppin, struct inode * pin);
 
 PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr)
@@ -121,7 +121,7 @@ PUBLIC int do_dup(MESSAGE * p)
  */
 PUBLIC int do_chdir(MESSAGE * p)
 {
-    return change_directory(&(pcaller->pwd), p->PATHNAME, p->NAME_LEN);
+    return change_directory(&(pcaller->pwd), p->source, p->PATHNAME, p->NAME_LEN);
 }
 
 /**
@@ -143,13 +143,13 @@ PUBLIC int do_fchdir(MESSAGE * p)
  * @param  len      Length of pathname.
  * @return          Zero on success.
  */
-PRIVATE int change_directory(struct inode ** ppin, char * string, int len)
+PRIVATE int change_directory(struct inode ** ppin, endpoint_t src, char * string, int len)
 {
     char pathname[MAX_PATH];
     if (len > MAX_PATH) return ENAMETOOLONG;
 
     /* fetch the name */
-    data_copy(SELF, pathname, pcaller->endpoint, string, len);
+    data_copy(SELF, pathname, src, string, len);
     pathname[len] = '\0';
 
     struct inode * pin = resolve_path(pathname, pcaller);

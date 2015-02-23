@@ -74,6 +74,9 @@ PUBLIC int main(int argc, char * argv[])
         case PM_GETPROCEP: 
             msg.RETVAL = do_getprocep(&msg);
             break;
+        case PM_VFS_GETSETID_REPLY:
+            src = msg.ENDPOINT;
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

@@ -247,6 +247,7 @@ enum msgtype {
     PM_SIGRETURN,
     PM_VFS_GETSETID,
     PM_GETPROCEP,
+    PM_VFS_GETSETID_REPLY,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,

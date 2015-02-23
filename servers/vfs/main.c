@@ -27,6 +27,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -130,6 +131,9 @@ PUBLIC int main()
 		case PM_VFS_FORK:
 			msg.RETVAL = fs_fork(&msg);
 			break;
+		case PM_VFS_GETSETID:
+			msg.RETVAL = fs_getsetid(&msg);
+			break;
 		case EXEC:
 			msg.RETVAL = do_exec(&msg);
 			break;
@@ -144,7 +148,7 @@ PUBLIC int main()
 			break;
 		}
 
-		if (msg.type != SUSPEND_PROC) {
+		if (msg.type != SUSPEND_PROC && msg.RETVAL != SUSPEND) {
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 		}

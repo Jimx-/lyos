@@ -81,16 +81,19 @@ check:
     	close(fd);
     	free(motd);
     }
-
-    char * shell_argv[] = {pwd->pw_shell, NULL};
-    int r = execv(pwd->pw_shell, shell_argv);
     
 	setuid(pwd->pw_uid);
 	setgid(pwd->pw_gid);
 
 	if (chdir(pwd->pw_dir) != 0) {
 		printf("No home directory %s!\n", pwd->pw_dir);
+		if (chdir("/") != 0)
+			exit(EXIT_FAILURE);
+		pwd->pw_dir = "/";
 	}
+
+	char * shell_argv[] = {pwd->pw_shell, NULL};
+    int r = execv(pwd->pw_shell, shell_argv);
 
 	while(1);
 }
