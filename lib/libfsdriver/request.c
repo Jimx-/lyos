@@ -183,6 +183,20 @@ PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m)
     return fsd->fs_ftrunc(dev, num, start_pos, end_pos);
 }
 
+PUBLIC int fsdriver_chmod(struct fsdriver * fsd, MESSAGE * m)
+{
+    dev_t dev = (dev_t)m->REQ_DEV;
+    ino_t num = (ino_t)m->REQ_NUM;
+    mode_t mode = m->REQ_MODE;
+
+    int retval = fsd->fs_chmod(dev, num, &mode); 
+    if (retval) return retval;
+
+    m->RET_MODE = mode;
+
+    return 0; 
+}
+
 PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m)
 {
     return fsd->fs_sync();

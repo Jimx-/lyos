@@ -325,6 +325,7 @@ PUBLIC int ext2_sync();
 PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn);
 
 PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
+PUBLIC int ext2_chmod(dev_t dev, ino_t num, mode_t * mode);
 
 #endif
 

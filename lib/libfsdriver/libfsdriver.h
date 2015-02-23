@@ -41,6 +41,7 @@ struct fsdriver {
     int (*fs_readwrite)(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count);
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data  * data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
+    int (*fs_chmod)(dev_t dev, ino_t num, mode_t * mode);
     int (*fs_sync)();
 };
 
@@ -56,6 +57,7 @@ PUBLIC int fsdriver_putinode(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_readwrite(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m);
+PUBLIC int fsdriver_chmod(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m);
 
 #endif
