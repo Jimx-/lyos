@@ -15,28 +15,22 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/config.h"
 #include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
 #include "assert.h"
-#include "lyos/const.h"
+#include "unistd.h"
 #include "errno.h"
+#include "lyos/const.h"
+#include <lyos/fs.h>
 #include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
-#include "lyos/list.h"
-#include "ext2_fs.h"
-#include "global.h"
+#include <lyos/ipc.h>
+#include "libfsdriver/libfsdriver.h"
 
-/**
- * <Ring 1> Perform the FTRUNC syscall.
- * @param  p Ptr to the message.
- * @return   Zero on success.
- */
-PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos)
+PUBLIC int fsdriver_copyin(struct fsdriver_data * data, size_t offset, void * buf, size_t len)
 {
-    return 0;
+    return data_copy(SELF, buf, data->src, (void *)((unsigned int)data->buf + offset), len);
+}
+
+PUBLIC int fsdriver_copyout(struct fsdriver_data * data, size_t offset, void * buf, size_t len)
+{
+    return data_copy(data->src, (void *)((unsigned int)data->buf + offset), SELF, buf, len);
 }

@@ -47,7 +47,7 @@
  * 
  * @param dev  From which device the super block comes.
  *****************************************************************************/
-PUBLIC int read_ext2_super_block(int dev)
+PUBLIC int read_ext2_super_block(dev_t dev)
 {
     MESSAGE driver_msg;
 
@@ -61,7 +61,7 @@ PUBLIC int read_ext2_super_block(int dev)
     driver_msg.PROC_NR  = ext2_ep;
     endpoint_t driver_ep = get_blockdev_driver(dev);
     int retval;
-    if ((retval == send_recv(BOTH, driver_ep, &driver_msg)) != 0) return retval;
+    if ((retval = send_recv(BOTH, driver_ep, &driver_msg)) != 0) return retval;
 
     ext2_superblock_t * pext2sb = (ext2_superblock_t *)malloc(sizeof(ext2_superblock_t));
     if (!pext2sb) return ENOMEM;
@@ -124,7 +124,7 @@ PUBLIC int read_ext2_super_block(int dev)
     return 0;
 }
 
-PUBLIC int write_ext2_super_block(int dev)
+PUBLIC int write_ext2_super_block(dev_t dev)
 {
     ext2_superblock_t * psb = get_ext2_super_block(dev);
     if (!psb) return EINVAL;
@@ -146,14 +146,14 @@ PUBLIC int write_ext2_super_block(int dev)
     return 0;
 }
 
-PUBLIC ext2_superblock_t * get_ext2_super_block(int dev)
+PUBLIC ext2_superblock_t * get_ext2_super_block(dev_t dev)
 {
     ext2_superblock_t * psb;
     list_for_each_entry(psb, &ext2_superblock_table, list) {
         if (psb->sb_dev == dev) return psb;
     }
     printl("ext2fs: Cannot find super block on dev = %d\n", dev);
-    return (ext2_superblock_t *)0;
+    return NULL;
 }
 
 PUBLIC ext2_bgdescriptor_t * get_ext2_group_desc(ext2_superblock_t * psb, unsigned int desc_num)
@@ -191,11 +191,10 @@ PRIVATE void bdev_close(dev_t dev)
  *
  * @return Zero if successful
  */
-PUBLIC int ext2_readsuper(MESSAGE * p)
+PUBLIC int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node * node)
 {
-    dev_t dev = p->REQ_DEV;
-    int readonly = (p->REQ_FLAGS & RF_READONLY) ? 1 : 0;
-    int is_root = (p->REQ_FLAGS & RF_ISROOT) ? 1 :0;
+    int readonly = (flags & RF_READONLY) ? 1 : 0;
+    int is_root = (flags & RF_ISROOT) ? 1 :0;
 
     /* open the device where this superblock resides on */
     bdev_open(dev);
@@ -232,11 +231,11 @@ PUBLIC int ext2_readsuper(MESSAGE * p)
     }
 
     /* fill result */
-	p->RET_NUM = pin->i_num;
-	p->RET_UID = pin->i_uid;
-	p->RET_GID = pin->i_gid;
-	p->RET_FILESIZE = pin->i_size;
-	p->RET_MODE = pin->i_mode;
+	node->fn_num = pin->i_num;
+	node->fn_uid = pin->i_uid;
+	node->fn_gid = pin->i_gid;
+	node->fn_size = pin->i_size;
+    node->fn_mode = pin->i_mode;
     
     return 0;
 }

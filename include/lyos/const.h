@@ -348,8 +348,8 @@ enum msgtype {
 #define MINOR_MASK		((1U << MAJOR_SHIFT) - 1)
 #define	MAKE_DEV(a,b)		(((a) << MAJOR_SHIFT) | (b))
 /* separate major and minor numbers from device number */
-#define	MAJOR(x)		((unsigned int)(x >> MAJOR_SHIFT))
-#define	MINOR(x)		((unsigned int)(x & MINOR_MASK))
+#define	MAJOR(x)		((dev_t)(x >> MAJOR_SHIFT))
+#define	MINOR(x)		((dev_t)(x & MINOR_MASK))
 
 #define	INVALID_INODE		0
 #define	ROOT_INODE		1

@@ -38,44 +38,25 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
  * @param p Ptr to the message.
  * @return  Zero on success.
  */
-PUBLIC int ext2_create(MESSAGE * p)
+PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn)
 {
-    mode_t mode = (mode_t)(p->CRMODE);
-    uid_t uid = (uid_t)(p->CRUID);
-    gid_t gid = (gid_t)(p->CRGID);
-    int src = p->source;
-
-    dev_t dev = p->CRDEV;
-    ino_t num = (ino_t)(p->CRINO);
-
-    char pathname[EXT2_NAME_LEN + 1];
-    int len = p->CRNAMELEN;
-
-    /* error: name too long */
-    if (len > EXT2_NAME_LEN + 1) {
-        return ENAMETOOLONG;
-    }
-
-    data_copy(SELF, pathname, src, p->CRPATHNAME, len);
-    pathname[len] = '\0';
-
-    ext2_inode_t * pin_dir = get_ext2_inode(dev, num);
+    ext2_inode_t * pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;
 
-    ext2_inode_t * pin = ext2_new_inode(pin_dir, pathname, mode, 0, uid, gid);
+    ext2_inode_t * pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
     int retval = err_code;
 
-    if (retval) {
-        put_ext2_inode(pin);
+    if (pin == NULL) {
+        //put_ext2_inode(pin);
         put_ext2_inode(pin_dir);
         return retval;
     } 
 
-    p->CRINO = pin->i_num;
-    p->CRMODE = pin->i_mode;
-    p->CRFILESIZE = pin->i_size;
-    p->CRUID = pin->i_uid;
-    p->CRGID = pin->i_gid;
+    fn->fn_num = pin->i_num;
+    fn->fn_mode = pin->i_mode;
+    fn->fn_size = pin->i_size;
+    fn->fn_uid = pin->i_uid;
+    fn->fn_gid = pin->i_gid;
 
     put_ext2_inode(pin_dir);
     return 0;

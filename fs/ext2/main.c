@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include "libfsdriver/libfsdriver.h"
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -44,6 +45,17 @@ PUBLIC int init_ext2fs();
 
 PRIVATE int ext2_mountpoint(MESSAGE * p);
 
+struct fsdriver ext2fsdriver = {
+    .name = "ext2",
+
+    .fs_readsuper = ext2_readsuper,
+    .fs_putinode = ext2_putinode,
+    .fs_create = ext2_create,
+    .fs_stat = ext2_stat,
+    .fs_ftrunc = ext2_ftrunc,
+    .fs_sync = ext2_sync,
+};
+
 /*****************************************************************************
  *                                task_ext2_fs
  *****************************************************************************/
@@ -56,16 +68,11 @@ PUBLIC int main()
     serv_register_init_fresh_callback(init_ext2fs);
     serv_init();
 
-	MESSAGE m;
-
-    /* register the filesystem */
-    m.type = FS_REGISTER;
-    m.PATHNAME = "ext2";
-    m.NAME_LEN = strlen(m.PATHNAME);
-    send_recv(BOTH, TASK_FS, &m);
+	fsdriver_start(&ext2fsdriver);
 
 	int reply;
 
+    MESSAGE m;
 	while (1) {
 		send_recv(RECEIVE, ANY, &m);
 
@@ -77,28 +84,28 @@ PUBLIC int main()
 			m.RET_RETVAL = ext2_lookup(&m);
             break;
 		case FS_PUTINODE:
-            m.RET_RETVAL = ext2_putinode(&m);
+            m.RET_RETVAL = fsdriver_putinode(&ext2fsdriver, &m);
 			break;
         case FS_MOUNTPOINT:
             m.RET_RETVAL = ext2_mountpoint(&m);
             break;
         case FS_READSUPER:
-            m.RET_RETVAL = ext2_readsuper(&m);
+            m.RET_RETVAL = fsdriver_readsuper(&ext2fsdriver, &m);
             break;
         case FS_STAT:
-        	m.STRET = ext2_stat(&m);
+        	m.STRET = fsdriver_stat(&ext2fsdriver, &m);
         	break;
         case FS_RDWT:
         	m.RWRET = ext2_rdwt(&m);
         	break;
         case FS_CREATE:
-        	m.CRRET = ext2_create(&m);
+        	m.CRRET = fsdriver_create(&ext2fsdriver, &m);
         	break;
         case FS_FTRUNC:
-        	m.RET_RETVAL = ext2_ftrunc(&m);
+        	m.RET_RETVAL = fs_ftrunc(&ext2fsdriver, &m);
         	break;
         case FS_SYNC:
-        	m.RET_RETVAL = ext2_sync();
+        	m.RET_RETVAL = fs_sync(&ext2fsdriver, &m);
         	break;
 		default:
 			m.RET_RETVAL = ENOSYS;

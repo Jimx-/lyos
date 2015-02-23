@@ -47,6 +47,8 @@ extern  struct dev_drv_map  dd_map[];
 #define REQ_FLAGS           u.m3.m3l1
 #define REQ_MODE			u.m3.m3l1
 #define REQ_PATHNAME        u.m3.m3p1
+#define REQ_STARTPOS		u.m3.m3i3
+#define REQ_ENDPOS			u.m3.m3i4
 
 /* for stat */
 #define STDEV		u.m3.m3i1

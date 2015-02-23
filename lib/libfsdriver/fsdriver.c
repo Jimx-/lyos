@@ -15,28 +15,20 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/config.h"
 #include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
 #include "assert.h"
-#include "lyos/const.h"
+#include "unistd.h"
 #include "errno.h"
+#include "lyos/const.h"
+#include <lyos/fs.h>
 #include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
-#include "lyos/list.h"
-#include "ext2_fs.h"
-#include "global.h"
+#include <lyos/ipc.h>
+#include "libfsdriver/libfsdriver.h"
 
-/**
- * <Ring 1> Perform the FTRUNC syscall.
- * @param  p Ptr to the message.
- * @return   Zero on success.
- */
-PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos)
+PUBLIC int fsdriver_start(struct fsdriver * fsd)
 {
+    int retval = fsdriver_register(fsd);
+    if (retval != 0) return retval;
+
     return 0;
 }

@@ -85,12 +85,12 @@ def configure_cross(name, extra_opt=''):
 
 def configure_host(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --host=' + TARGET + ' --prefix=' + SYSROOT + ' ' + extra_opt)
+	os.system(path + ' --host=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + extra_opt)
 
 def configure_native(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + SYSROOT + ' ' + 
-					' --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt)
+	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + 
+					' --with-sysroot=' + SYSROOT + ' --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt)
 
 def make(extra_opt=''):
 	os.system('make '+ extra_opt)
@@ -98,6 +98,10 @@ def make(extra_opt=''):
 def make_and_install():
 	os.system('make')
 	os.system('make install')
+
+def make_and_install_to_destdir():
+	os.system('make')
+	os.system('make DESTDIR=' + SYSROOT + ' install')
 
 def nasm(source, output):
 	os.system('nasm -f elf -o ' + output + ' ' +  source)

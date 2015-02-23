@@ -2,6 +2,7 @@
 #define _EXT2_FS_H_
 
 #include "buffer.h"
+#include "libfsdriver/libfsdriver.h"
 
 #define EXT2FS_MAGIC 0xEF53
 
@@ -278,16 +279,16 @@ typedef struct ext2_dir_entry ext2_dir_entry_t;
 
 #define EXT2_BUFFER_WRITE_IMME  0x01    /* write the buffer immediately back to the disk */
 
-PUBLIC int read_ext2_super_block(int dev);
-PUBLIC int write_ext2_super_block(int dev);
-PUBLIC ext2_superblock_t * get_ext2_super_block(int dev);
+PUBLIC int read_ext2_super_block(dev_t dev);
+PUBLIC int write_ext2_super_block(dev_t dev);
+PUBLIC ext2_superblock_t * get_ext2_super_block(dev_t dev);
 PUBLIC ext2_bgdescriptor_t * get_ext2_group_desc(ext2_superblock_t * psb, unsigned int desc_num);
 
 PUBLIC void ext2_init_inode();
 PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num);
 PUBLIC ext2_inode_t * find_ext2_inode(dev_t dev, ino_t num);
 PUBLIC void put_ext2_inode(ext2_inode_t * pin);
-PUBLIC int ext2_putinode(MESSAGE * p);
+PUBLIC int ext2_putinode(dev_t dev, ino_t num);
 PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag);
 PUBLIC void ext2_dump_inode(ext2_inode_t * pin);
 
@@ -309,21 +310,21 @@ PUBLIC void ext2_sync_buffers();
 PUBLIC void ext2_zero_buffer(ext2_buffer_t * pb);
 PUBLIC int ext2_update_group_desc(ext2_superblock_t * psb, int desc);
 PUBLIC void ext2_init_buffer_cache();
-PUBLIC int ext2_readsuper(MESSAGE * p);
+PUBLIC int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node * node);
 
 PUBLIC ext2_buffer_t * ext2_new_block(ext2_inode_t * pin, off_t position);
 PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin);
 PUBLIC int ext2_setbit(bitchunk_t * bitmap, int max_bits, off_t startp);
 PUBLIC ext2_inode_t * ext2_alloc_inode(ext2_inode_t * parent, mode_t mode);
 
-PUBLIC int ext2_stat(MESSAGE * p);
+PUBLIC int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data * data);
 
 PUBLIC void ext2_sync_inodes();
 PUBLIC int ext2_sync();
 
-PUBLIC int ext2_create(MESSAGE * p);
+PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn);
 
-PUBLIC int ext2_ftrunc(MESSAGE * p);
+PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
 
 #endif
 

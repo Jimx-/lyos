@@ -12,6 +12,10 @@ try:
 except:
 	TARGET = 'i686-elf-lyos'
 
+os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
+os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
+os.environ["TOOLCHAIN"] = SYSROOT + '/usr'
+
 packs = ConfigParser.ConfigParser()
 packs.read('packages.list')
 

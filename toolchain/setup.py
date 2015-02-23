@@ -55,12 +55,6 @@ if __name__ == "__main__":
 	make('install-target-libgcc')
 	pop_dir()	# gcc
 
-	push_dir('gcc')
-	make('all-target-libstdc++-v3')
-	make('install-target-libstdc++-v3')
-	pop_dir()
-	exit()
-
 	os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
 	os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
 	os.environ["TOOLCHAIN"] = SYSROOT + '/usr'

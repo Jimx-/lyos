@@ -32,7 +32,7 @@
 #include "global.h"
 #include <sys/stat.h>
 
-PRIVATE int ext2_stat_inode(ext2_inode_t * pin, int src, char * buf);
+PRIVATE int ext2_stat_inode(ext2_inode_t * pin, struct fsdriver_data * data);
 
 /**
  * Stat an inode.
@@ -41,7 +41,7 @@ PRIVATE int ext2_stat_inode(ext2_inode_t * pin, int src, char * buf);
  * @param  buf Buffer.
  * @return     Zero on success.
  */
-PRIVATE int ext2_stat_inode(ext2_inode_t * pin, int src, char * buf)
+PRIVATE int ext2_stat_inode(ext2_inode_t * pin, struct fsdriver_data * data)
 {
     struct stat sbuf;
 
@@ -66,7 +66,7 @@ PRIVATE int ext2_stat_inode(ext2_inode_t * pin, int src, char * buf)
     sbuf.st_blocks = pin->i_blocks;
 
     /* copy the information */
-    data_copy(src, buf, SELF, &sbuf, sizeof(struct stat));
+    fsdriver_copyout(data, 0, &sbuf, sizeof(struct stat));
 
     return 0;
 }
@@ -76,16 +76,11 @@ PRIVATE int ext2_stat_inode(ext2_inode_t * pin, int src, char * buf)
  * @param  p Ptr to the message.
  * @return   Zero on success.
  */
-PUBLIC int ext2_stat(MESSAGE * p)
+PUBLIC int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data * data)
 {
-    dev_t dev = (dev_t)p->STDEV;
-    ino_t num = (ino_t)p->STINO;
-    int src = p->STSRC;
-    char * buf = p->STBUF;
     /* find the inode */
     ext2_inode_t * pin = get_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
-    ext2_stat_inode(pin, src, buf);
-    return 0;
+    return ext2_stat_inode(pin, data);
 }
