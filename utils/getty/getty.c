@@ -16,7 +16,7 @@ void print_banner(char * ttyname);
 
 int main(int argc, char * argv[]) 
 {	
-	print_banner(argv[1]);
+	print_banner(ttyname(0));
 
 	char name[NAME_LEN];
 	fgets(name, NAME_LEN, stdin);

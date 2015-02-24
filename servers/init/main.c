@@ -56,7 +56,7 @@ int main(int argc, char * argv[])
 			open(ttylist[i], O_RDWR);
 			open(ttylist[i], O_RDWR);
 		
-			char * argv[] = {GETTY, ttylist[i], NULL};
+			char * argv[] = {GETTY, NULL};
 			_exit(execv(GETTY, argv));
 		}
 	}
