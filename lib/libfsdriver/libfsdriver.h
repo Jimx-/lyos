@@ -30,6 +30,15 @@ struct fsdriver_data {
     void * buf;
 };
 
+struct fsdriver_dentry_list {
+    struct fsdriver_data * data;
+    size_t data_size;
+    off_t data_offset;
+    char * buf;
+    size_t buf_size;
+    off_t buf_offset;
+};
+
 struct fsdriver {
     char * name;
 
@@ -42,6 +51,7 @@ struct fsdriver {
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data  * data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t * mode);
+    int (*fs_getdents)(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * position, size_t * count);
     int (*fs_sync)();
 };
 
@@ -49,6 +59,12 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd);
 
 PUBLIC int fsdriver_copyin(struct fsdriver_data * data, size_t offset, void * buf, size_t len);
 PUBLIC int fsdriver_copyout(struct fsdriver_data * data, size_t offset, void * buf, size_t len);
+
+PUBLIC int fsdriver_dentry_list_init(struct fsdriver_dentry_list * list, struct fsdriver_data * data, 
+                        size_t data_size, char * buf, size_t buf_size);
+PUBLIC int fsdriver_dentry_list_add(struct fsdriver_dentry_list * list , ino_t num, char * name,
+                size_t name_len, int type);
+PUBLIC int fsdriver_dentry_list_finish(struct fsdriver_dentry_list * list);
 
 PUBLIC int fsdriver_register(struct fsdriver * fsd);
 PUBLIC int fsdriver_readsuper(struct fsdriver * fsd, MESSAGE * m);

@@ -25,6 +25,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <sys/stat.h>
 #include "errno.h"
 #include "path.h"
 #include "proto.h"
@@ -143,5 +144,45 @@ PUBLIC int do_rdwt(MESSAGE * p)
     if (!retval) {
         return bytes_rdwt;
     }
+    return retval;
+}
+
+PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 position,
+                                    endpoint_t src, void * buf, size_t nbytes, u64 * newpos)
+{
+    MESSAGE m;
+    m.type = FS_GETDENTS;
+    m.RWDEV = dev;
+    m.RWINO = num;
+    m.RWPOS = position;
+    m.RWSRC = src;
+    m.RWBUF = buf;
+    m.RWCNT = nbytes;
+
+    send_recv(BOTH, fs_ep, &m);
+
+    if (m.RET_RETVAL == 0) { 
+        *newpos = m.RWPOS;
+        return m.RWCNT;
+    }
+
+    return -m.RET_RETVAL;
+}
+
+PUBLIC int do_getdents(MESSAGE * p)
+{
+    int fd = p->FD;
+    struct file_desc * filp = pcaller->filp[fd];
+
+    if (!filp) return EBADF;
+
+    if (!(filp->fd_inode->i_mode & R_BIT)) return EBADF;
+    if (!S_ISDIR(filp->fd_inode->i_mode)) return EBADF;
+
+    u64 newpos;
+    int retval = request_getdents(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev, 
+                filp->fd_inode->i_num, filp->fd_pos, p->source, p->BUF, p->CNT, &newpos);
+    if (retval > 0) filp->fd_pos = newpos;
+
     return retval;
 }

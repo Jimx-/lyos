@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/dirent.h>
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -377,3 +378,90 @@ PUBLIC ext2_buffer_t * ext2_new_block(ext2_inode_t * pin, off_t position)
     return ext2_get_buffer(pin->i_dev, b);
 }
 
+PRIVATE int dirent_type(ext2_dir_entry_t * dp)
+{
+    switch (dp->d_file_type) {
+    case EXT2_FT_REG_FILE:
+        return DT_REG;
+    case EXT2_FT_DIR:
+        return DT_DIR;
+    case EXT2_FT_SYMLINK:
+        return DT_LNK;
+    case EXT2_FT_BLKDEV:
+        return DT_BLK;
+    case EXT2_FT_CHRDEV:
+        return DT_CHR;
+    case EXT2_FT_FIFO:
+        return DT_FIFO;
+    default:
+        return DT_UNKNOWN;
+    }
+}
+
+PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * ppos, size_t * count)
+{
+#define GETDENTS_BUFSIZE (sizeof(struct dirent) + EXT2_NAME_LEN + 1)
+#define GETDENTS_ENTRIES    8
+    static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
+
+    int retval = 0;
+    int done = 0;
+    off_t pos = *ppos;
+
+    ext2_inode_t * pin = find_ext2_inode(dev, num);
+    if (!pin) return EINVAL;
+
+    size_t block_size = pin->i_sb->sb_block_size;
+    off_t block_off = pos % block_size; /* offset in block */
+    off_t block_pos = pos - block_off; /* block position */
+
+    off_t newpos = pin->i_size;
+
+    struct fsdriver_dentry_list list;
+    fsdriver_dentry_list_init(&list, data, *count, getdents_buf, sizeof(getdents_buf));
+
+    for (; block_pos < pin->i_size; block_pos += block_size) {
+        block_t b = ext2_read_map(pin, block_pos);
+        ext2_buffer_t * pb = ext2_get_buffer(pin->i_dev, b);
+        if (pb == NULL) panic("hole in directory\n");
+
+        ext2_dir_entry_t * dp = (ext2_dir_entry_t *)pb->b_data;
+
+        off_t cur_pos = block_pos;
+        for (; cur_pos + dp->d_rec_len <= pos && 
+            (char*)EXT2_NEXT_DIR_ENTRY(dp) - (char*)pb->b_data < block_size;
+            dp = EXT2_NEXT_DIR_ENTRY(dp)) {
+            cur_pos += dp->d_rec_len;
+        }
+        for (; (char*)dp - (char*)pb->b_data < block_size; 
+            dp = EXT2_NEXT_DIR_ENTRY(dp)) {
+            if (dp->d_inode == 0) continue;
+            
+            off_t ent_pos = block_pos + ((char *)dp - (char*)pb->b_data);
+
+            int retval = fsdriver_dentry_list_add(&list, dp->d_inode, dp->d_name,
+                dp->d_name_len, dirent_type(dp));
+            
+            if (retval <= 0) {
+                newpos = ent_pos;
+                done = 1;
+                break;
+            }
+        }
+
+        ext2_put_buffer(pb);
+        if (done) break;
+    }   
+
+    int bytes = fsdriver_dentry_list_finish(&list);
+    if (bytes < 0) retval = -bytes;
+    else *count = bytes;
+
+    *ppos = newpos;
+    pin->i_update |= ATIME;
+    pin->i_dirt = 1;
+
+    put_ext2_inode(pin);
+    
+    return retval;
+}

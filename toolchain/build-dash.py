@@ -28,10 +28,11 @@ if __name__ == "__main__":
 
 	mkdir('dash')
 	push_dir('dash')
-	#configure_host(DASH_VERSION)
+	configure_host(DASH_VERSION)
+	os.system("sed -i '/# define _GNU_SOURCE 1/d' config.h")
 	make_and_install_to_destdir()
 	pop_dir()
 
-	copy(SYSROOT + '/bin/dash', SYSROOT + '/bin/sh')
+	copy(SYSROOT + '/usr/bin/dash', SYSROOT + '/bin/sh')
 
 	pop_dir()	# build

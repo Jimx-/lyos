@@ -14,7 +14,7 @@ realclean :
 
 $(EXT2FS): $(FSOBJS)
 	@echo -e '\tLD\tfs/ext2/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) -Xlinker -Ttext -Xlinker 0x30000000
 	
 %.o: %.c
 	@echo -e '\tCC\tfs/ext2/$@'

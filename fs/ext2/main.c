@@ -57,6 +57,7 @@ struct fsdriver ext2fsdriver = {
     .fs_stat = ext2_stat,
     .fs_ftrunc = ext2_ftrunc,
     .fs_chmod = ext2_chmod,
+    .fs_getdents = ext2_getdents,
     .fs_sync = ext2_sync,
 };
 

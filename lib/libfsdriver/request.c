@@ -43,6 +43,9 @@ PUBLIC int fsdriver_readsuper(struct fsdriver * fsd, MESSAGE * m)
 {
     struct fsdriver_node fn;
     dev_t dev = m->REQ_DEV;
+
+    if (fsd->fs_readsuper == NULL) return ENOSYS;
+
     int retval = fsd->fs_readsuper(dev, m->REQ_FLAGS, &fn);
     if (retval) return retval;
 
@@ -59,6 +62,8 @@ PUBLIC int fsdriver_mountpoint(struct fsdriver * fsd, MESSAGE * m)
 {
     dev_t dev = m->REQ_DEV;
     ino_t num = m->REQ_NUM;
+
+    if (fsd->fs_mountpoint == NULL) return ENOSYS;
 
     return fsd->fs_mountpoint(dev, num);
 }
@@ -80,6 +85,8 @@ PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
     data_copy(SELF, pathname, src, m->REQ_PATHNAME, name_len);
     pathname[name_len] = '\0';
 
+    if (fsd->fs_lookup == NULL) return ENOSYS;
+
     int retval = fsd->fs_lookup(dev, pathname, start, root, flags, &offset, &fn);
     if (retval) return retval;
 
@@ -99,6 +106,8 @@ PUBLIC int fsdriver_putinode(struct fsdriver * fsd, MESSAGE * m)
     dev_t dev = m->REQ_DEV;
     ino_t num = m->REQ_NUM;
 
+    if (fsd->fs_putinode == NULL) return ENOSYS;
+
     return fsd->fs_putinode(dev, num);
 }
 
@@ -111,6 +120,8 @@ PUBLIC int fsdriver_create(struct fsdriver * fsd, MESSAGE * m)
 
     dev_t dev = m->CRDEV;
     ino_t num = (ino_t)(m->CRINO);
+
+    if (fsd->fs_create == NULL) return ENOSYS;
 
     struct fsdriver_node fn;
     memset(&fn, 0, sizeof(fn));
@@ -149,6 +160,8 @@ PUBLIC int fsdriver_readwrite(struct fsdriver * fsd, MESSAGE * m)
     void * buf = m->RWBUF;
     int nbytes = m->RWCNT;
 
+    if (fsd->fs_readwrite == NULL) return ENOSYS;
+
     struct fsdriver_data data;
     data.src = src;
     data.buf = buf;
@@ -170,6 +183,8 @@ PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m)
     data.src = m->STSRC;
     data.buf = m->STBUF;
 
+    if (fsd->fs_stat == NULL) return ENOSYS;
+
     return fsd->fs_stat(dev, num, &data);
 }
 
@@ -180,6 +195,8 @@ PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m)
     off_t start_pos = m->REQ_STARTPOS;
     off_t end_pos = m->REQ_ENDPOS;
 
+    if (fsd->fs_ftrunc == NULL) return ENOSYS;
+
     return fsd->fs_ftrunc(dev, num, start_pos, end_pos);
 }
 
@@ -189,6 +206,8 @@ PUBLIC int fsdriver_chmod(struct fsdriver * fsd, MESSAGE * m)
     ino_t num = (ino_t)m->REQ_NUM;
     mode_t mode = m->REQ_MODE;
 
+    if (fsd->fs_chmod == NULL) return ENOSYS;
+
     int retval = fsd->fs_chmod(dev, num, &mode); 
     if (retval) return retval;
 
@@ -197,7 +216,29 @@ PUBLIC int fsdriver_chmod(struct fsdriver * fsd, MESSAGE * m)
     return 0; 
 }
 
+PUBLIC int fsdriver_getdents(struct fsdriver * fsd, MESSAGE * m)
+{
+    dev_t dev = m->RWDEV;
+    ino_t num = m->RWINO;
+    u64 position = m->RWPOS;
+    size_t nbytes = m->RWCNT;
+    struct fsdriver_data data;
+    data.src = m->RWSRC;
+    data.buf = m->RWBUF;
+
+    if (fsd->fs_getdents == NULL) return ENOSYS;
+
+    int retval = fsd->fs_getdents(dev, num, &data, &position, &nbytes); 
+    if (retval) return retval;
+    
+    m->RWPOS = position;
+    m->RWCNT = nbytes;
+
+    return 0;  
+}
+
 PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m)
 {
+    if (fsd->fs_sync == NULL) return ENOSYS;
     return fsd->fs_sync();
 }

@@ -128,6 +128,9 @@ PUBLIC int main()
 		case FCHMOD:
 			msg.RETVAL = do_chmod(msgtype, &msg);
 			break;
+		case GETDENTS:
+			msg.RETVAL = do_getdents(&msg);
+			break;
 		case PM_VFS_FORK:
 			msg.RETVAL = fs_fork(&msg);
 			break;

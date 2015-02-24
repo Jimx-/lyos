@@ -256,6 +256,17 @@ struct ext2_dir_entry {
 
 typedef struct ext2_dir_entry ext2_dir_entry_t;
 
+#define EXT2_FT_UNKNOWN         0
+#define EXT2_FT_REG_FILE        1
+#define EXT2_FT_DIR             2
+#define EXT2_FT_CHRDEV          3
+#define EXT2_FT_BLKDEV          4
+#define EXT2_FT_FIFO            5
+#define EXT2_FT_SOCK            6
+#define EXT2_FT_SYMLINK         7
+
+#define EXT2_NEXT_DIR_ENTRY(entry)	(ext2_dir_entry_t*)((char *)entry + entry->d_rec_len)
+
 #define EXT2_COMPAT_DIR_PREALLOC        0x0001
 #define EXT2_COMPAT_IMAGIC_INODES       0x0002
 #define EXT2_COMPAT_HAS_JOURNAL         0x0004
@@ -303,6 +314,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 
 PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position);
 PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count);
+PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * ppos, size_t * count);
 
 PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block);
 PUBLIC void ext2_put_buffer(ext2_buffer_t * pb);

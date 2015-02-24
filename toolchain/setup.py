@@ -48,13 +48,13 @@ if __name__ == "__main__":
 	mkdir('gcc')
 	push_dir('gcc')
 	os.environ["PKG_CONFIG_LIBDIR"] = ""
-	configure(GCC_VERSION ,' --with-build-sysroot=' + SYSROOT + ' --with-native-system-header-dir=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+	configure(GCC_VERSION ,' --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
 	make('all-gcc')
 	make('install-gcc')
 	make('all-target-libgcc')
 	make('install-target-libgcc')
 	pop_dir()	# gcc
-
+	exit()
 	os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
 	os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
 	os.environ["TOOLCHAIN"] = SYSROOT + '/usr'

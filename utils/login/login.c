@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <paths.h>
 #include <sys/utsname.h>
 #include <sys/termios.h>
 #include <sys/stat.h>
+#include <sys/dirent.h>
 #include <limits.h>
 #include <pwd.h>
 
@@ -31,6 +33,14 @@ int main(int argc, char * argv[])
 	int ask = 0;
 	char * username, * p, * prompt;
 	struct passwd * pwd;
+
+	DIR * dirp = opendir("/bin");
+	struct dirent * dp = readdir(dirp);
+	do {
+		printf("%s\n", dp->d_name);
+		dp = readdir(dirp);
+	} while(dp);
+	closedir(dirp);
 
 	if (*argv) {
 		username = *argv;
@@ -92,9 +102,15 @@ check:
 		pwd->pw_dir = "/";
 	}
 
-	char * shell_argv[] = {pwd->pw_shell, NULL};
-    int r = execv(pwd->pw_shell, shell_argv);
+	setenv("HOME", pwd->pw_dir, 1);
+	setenv("SHELL", pwd->pw_shell, 1);
+	setenv("USER", pwd->pw_name, 1);
 
-	while(1);
+	if (*pwd->pw_shell == '\0') {
+		pwd->pw_shell = _PATH_BSHELL;
+	}
+
+	char * shell_argv[] = {pwd->pw_shell, NULL};
+    exit(execv(pwd->pw_shell, shell_argv));
 }
 

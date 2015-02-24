@@ -728,22 +728,83 @@ int write(int fd, const void *buf, int count)
 	return msg.CNT;
 }
 
-DIR * opendir (const char * dirname)
+int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
 {
-	//printf("opendir: not implemented\n");
-	return NULL;
+	MESSAGE msg;
+	msg.type = GETDENTS;
+	msg.FD   = fd;
+	msg.BUF  = (void*)dirp;
+	msg.CNT  = count;
+
+	cmb();
+	
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
 }
 
-int closedir (DIR * dir)
+#define DIRBLKSIZ	1024
+DIR * opendir(const char * name)
 {
-	//printf("closedir: not implemented\n");
-	return 0;
+	int fd = open(name, O_RDONLY);
+	if (fd == -1) return NULL;
+
+	struct stat sbuf;
+	if (fstat(fd, &sbuf)) {
+		errno = ENOTDIR;
+		close(fd);
+		return NULL;
+	}
+	if (!S_ISDIR(sbuf.st_mode)) {
+		errno = ENOTDIR;
+		close(fd);
+		return NULL;
+	}
+
+	DIR * dir = (DIR *)malloc(sizeof(DIR));
+	if (!dir) {
+		close(fd);
+		return NULL;
+	}
+
+	dir->len = DIRBLKSIZ;
+	dir->buf = malloc(dir->len);
+	if (!dir->buf) {
+		close(fd);
+		return NULL;
+	}
+	dir->loc = 0;
+	dir->fd = fd;
+
+	return dir;
 }
 
-struct dirent * readdir (DIR * dirp)
+struct dirent * readdir(DIR * dirp)
 {
-	//printf("readdir: not implemented\n");
-	return NULL;
+	struct dirent * dp;
+	
+	if (!dirp) return NULL;
+
+	if (dirp->loc >= dirp->size) dirp->loc = 0;
+	if (dirp->loc == 0) {
+		if ((dirp->size = getdents(dirp->fd, dirp->buf, dirp->len)) <= 0) return NULL;
+	}
+
+	dp = (struct dirent *)((char *)dirp->buf + dirp->loc);
+	if (dp->d_reclen >= dirp->len - dirp->loc + 1) return NULL;
+	dirp->loc += dp->d_reclen;
+
+	return dp;
+}
+
+int closedir(DIR * dirp)
+{
+	int fd = dirp->fd;
+
+	free(dirp->buf);
+	free(dirp);
+
+	return close(fd);
 }
 
 char *getwd(char *buf)

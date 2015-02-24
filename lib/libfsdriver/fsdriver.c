@@ -67,6 +67,9 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
         case FS_CHMOD:
             m.RET_RETVAL = fsdriver_chmod(fsd, &m);
             break;
+        case FS_GETDENTS:
+            m.RET_RETVAL = fsdriver_getdents(fsd, &m);
+            break;
         case FS_SYNC:
             m.RET_RETVAL = fsdriver_sync(fsd, &m);
             break;
