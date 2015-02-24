@@ -39,7 +39,8 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
         int msgtype = m.type;
         int src = m.source;
         reply = 1;
-        switch (msgtype) {
+
+        switch(msgtype) {
         case FS_LOOKUP:
             m.RET_RETVAL = fsdriver_lookup(fsd, &m);
             break;

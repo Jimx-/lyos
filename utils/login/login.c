@@ -102,7 +102,7 @@ check:
 		pwd->pw_shell = _PATH_BSHELL;
 	}
 
-	char * shell_argv[] = {pwd->pw_shell, NULL};
+	char * shell_argv[] = {pwd->pw_shell, "-l", NULL};
     exit(execv(pwd->pw_shell, shell_argv));
 }
 

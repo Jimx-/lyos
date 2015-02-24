@@ -108,6 +108,8 @@ PUBLIC void put_inode(struct inode * pin)
     }
 
     unhash_inode(pin);
+    
+    unlock_inode(pin);
 }
 
 PUBLIC void lock_inode(struct inode * pin)
