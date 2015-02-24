@@ -34,14 +34,6 @@ int main(int argc, char * argv[])
 	char * username, * p, * prompt;
 	struct passwd * pwd;
 
-	DIR * dirp = opendir("/bin");
-	struct dirent * dp = readdir(dirp);
-	do {
-		printf("%s\n", dp->d_name);
-		dp = readdir(dirp);
-	} while(dp);
-	closedir(dirp);
-
 	if (*argv) {
 		username = *argv;
 	} else {

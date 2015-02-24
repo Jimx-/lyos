@@ -151,7 +151,7 @@ clean :
 	@rm -f $(OBJS)
 
 realclean :
-	@find . \( -path ./toolchain -o -path ./obj \) -prune -prune -o -name "*.o" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj \) -prune -o -name "*.o" -exec rm -f {} \;
 	@find . \( -path ./toolchain -o -path ./obj \) -prune -o -name "*.a" -exec rm -f {} \;
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 

@@ -9,6 +9,7 @@
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <sys/termios.h>
+#include <sys/syslimits.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -809,9 +810,8 @@ int closedir(DIR * dirp)
 
 char *getwd(char *buf)
 {
-	//printf("getwd: not implemented\n");
-	strcpy(buf, "/");
-	return "/";
+	if (getcwd(buf, PATH_MAX) != 0) return NULL;
+	return buf;
 }
 
 long pathconf(const char *path, int name)
@@ -1032,16 +1032,12 @@ pid_t tcgetpgrp(int fd)
 	return 0;
 }
 
-char *getcwd(char *buf, size_t size)
-{
-	//printf("getcwd: not implemented\n");
-	if (buf == NULL) buf = (char *)malloc(size);
-	if (buf == NULL) return NULL;
-	strcpy(buf, "/");
-	return buf;
-}
-
 int pipe(int pipefd[2])
 {
 	//printf("pipe: not implemented\n");
+}
+
+int __dirfd(DIR *dirp)
+{
+	return dirp->fd;
 }
