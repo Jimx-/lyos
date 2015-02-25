@@ -30,8 +30,8 @@ if __name__ == "__main__":
 
 	mkdir('coreutils')
 	push_dir('coreutils')
-	configure_native(COREUTILS_VERSION, ' --disable-nls')
-	make_and_install()
+	#configure_host(COREUTILS_VERSION, ' --disable-nls')
+	make_and_install_to_destdir()
 	pop_dir()
 
 	pop_dir()	# build

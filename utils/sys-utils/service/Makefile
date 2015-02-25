@@ -1,8 +1,5 @@
-#
-# Makefile for the Lyos memory manager.
 
-
-SERVICE			= service
+SERVICE			= $(DESTDIR)/bin/service
 SERVICEOBJS 	= main.o
 
 everything : realclean $(SERVICE)

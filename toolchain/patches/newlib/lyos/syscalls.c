@@ -1041,3 +1041,8 @@ int __dirfd(DIR *dirp)
 {
 	return dirp->fd;
 }
+
+int fsync(int fd)
+{
+	return 0;
+}

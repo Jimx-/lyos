@@ -43,6 +43,32 @@ diff -rupN origin/newlib/configure.host new/newlib/configure.host
    *-*-cygwin*)
  	test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`
  	export cygwin_srcdir
+diff -rupN origin/newlib/libc/include/mntent.h new/newlib/libc/include/mntent.h
+--- origin/newlib/libc/include/mntent.h	1970-01-01 08:00:00.000000000 +0800
++++ new/newlib/libc/include/mntent.h	2015-02-24 20:30:07.062823618 +0800
+@@ -0,0 +1,22 @@
++#ifndef _MNTENT_H_
++#define _MNTENT_H_
++
++#define _PATH_MNTTAB "/etc/fstab"
++#define _PATH_MOUNTED "/etc/mtab"
++
++struct mntent {
++	char    *mnt_fsname;    /* name of mounted file system */
++	char    *mnt_dir;       /* file system path prefix */
++	char    *mnt_type;      /* mount type (see mntent.h) */
++	char    *mnt_opts;      /* mount options (see mntent.h) */
++	int     mnt_freq;       /* dump frequency in days */
++	int     mnt_passno;     /* pass number on parallel fsck */
++};
++
++FILE *setmntent(const char *filename, const char *type);
++struct mntent *getmntent(FILE *stream);
++int addmntent(FILE *stream, const struct mntent *mnt);
++int endmntent(FILE *streamp);
++char *hasmntopt(const struct mntent *mnt, const char *opt);
++
++#endif
 diff -rupN origin/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
 --- origin/newlib/libc/machine/i386/setjmp.S	2012-03-10 04:26:36.000000000 +0800
 +++ new/newlib/libc/machine/i386/setjmp.S	2015-02-18 16:12:20.577313814 +0800

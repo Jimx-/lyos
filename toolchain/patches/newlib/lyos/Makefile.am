@@ -14,7 +14,8 @@ endif
 
 SUBLIBS = machine/lib.a
 
-lib_a_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c ttyname.c
+lib_a_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c ttyname.c \
+							 mntent.c
 lib_a_LIBADD = $(extra_objs) machine/lib.a
 lib_a_DEPENDENCIES = $(extra_objs) machine/lib.a
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)

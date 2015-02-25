@@ -1,20 +1,14 @@
 
-COMMANDS 	= $(DESTDIR)/usr/bin/getty $(DESTDIR)/usr/bin/login \
-				$(DESTDIR)/bin/service
+.PHONY: everything login-utils sys-utils
 
-everything : realclean $(COMMANDS)
+everything : realclean login-utils sys-utils
 
-all : realclean $(COMMANDS)
+realclean:
+	@(cd sys-utils; make realclean)
+	@(cd login-utils; make realclean)
 
-realclean :
-	@rm -f $(COMMANDS)
+sys-utils:
+	@(cd sys-utils; make)
 
-$(DESTDIR)/usr/bin/getty: getty/getty.c
-	@$(CC) -o $@ $<
-
-$(DESTDIR)/usr/bin/login: login/login.c
-	@$(CC) -o $@ $<
-
-$(DESTDIR)/bin/service:
-	@(cd service; make)
-	@(cp service/service $@)
+login-utils:
+	@(cd login-utils; make)
