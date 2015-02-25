@@ -20,6 +20,7 @@ $(INITRD):
 	@cp $(DESTDIR)/usr/bin/login usr/bin/
 	@cp $(DESTDIR)/bin/sh bin/
 	@cp $(DESTDIR)/bin/service bin/
+	@cp $(DESTDIR)/bin/mount bin/
 	@cp ../sysroot/etc/* etc/
 	@touch .root
 	@(cd ../scripts ; bash create-ramdisk-dev.sh)

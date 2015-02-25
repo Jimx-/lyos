@@ -1,14 +1,63 @@
 #include <stdio.h>
+#include <string.h>
 #include <mntent.h>
+
+#define BUFLEN	1024
 
 FILE *setmntent(const char *filename, const char *type)
 {
 	return fopen(filename, type);
 }
 
-struct mntent *getmntent(FILE *stream)
+struct mntent *getmntent_r(FILE *fp, struct mntent *mntbuf, char *buf,
+		int buflen)
 {
+	char *line = NULL, *saveptr = NULL;
+	const char *sep = " \t\n";
 
+	if (!fp || !mntbuf || !buf)
+		return NULL;
+
+	while ((line = fgets(buf, buflen, fp)) != NULL) {
+		if (buf[0] == '#' || buf[0] == '\n')
+			continue;
+		break;
+	}
+
+	if (!line)
+		return NULL;
+
+	mntbuf->mnt_fsname = strtok_r(buf, sep, &saveptr);
+	if (!mntbuf->mnt_fsname)
+		return NULL;
+
+	mntbuf->mnt_dir = strtok_r(NULL, sep, &saveptr);
+	if (!mntbuf->mnt_fsname)
+		return NULL;
+
+	mntbuf->mnt_type = strtok_r(NULL, sep, &saveptr);
+	if (!mntbuf->mnt_type)
+		return NULL;
+
+	mntbuf->mnt_opts = strtok_r(NULL, sep, &saveptr);
+	if (!mntbuf->mnt_opts)
+		mntbuf->mnt_opts = "";
+
+	line = strtok_r(NULL, sep, &saveptr);
+	mntbuf->mnt_freq = !line ? 0 : atoi(line);
+
+	line = strtok_r(NULL, sep, &saveptr);
+	mntbuf->mnt_passno = !line ? 0 : atoi(line);
+
+	return mntbuf;
+}
+
+struct mntent *getmntent(FILE *f)
+{
+	static char buf[BUFLEN];
+	static struct mntent mnt;
+
+	return getmntent_r(f, &mnt, buf, sizeof(buf));
 }
 
 int addmntent(FILE *stream, const struct mntent *mnt)
