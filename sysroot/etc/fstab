@@ -1,1 +1,2 @@
-/dev/hd1a      /      ext2   defaults  1 1
+/dev/hd1a		/		ext2	defaults	1	1
+none			/sys	sysfs	defaults	1	1

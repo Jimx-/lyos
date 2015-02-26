@@ -1,18 +1,18 @@
 #ifndef _LIBSYSFS_H_
 #define _LIBSYSFS_H_
 
-#define SF_ENTRY_LABEL_MAX	32
-
-/* entry types */
-#define ET_U32		1
-#define ET_DOMAIN	2
-#define ET_STRING	3
-#define ET_DEVNO	4
-#define ET_DYNAMIC	5
-#define ET_LINK		6
-
 /* privilege */
-#define SF_PRIV_RETRIEVE	1
+#define SF_PRIV_RETRIEVE	0x1
+#define SF_PRIV_OVERWRITE	0x2
+#define SF_PRIV_DELETE		0x4
+#define SF_TYPE_DOMAIN		0x10
+#define SF_TYPE_U32			0x20
+#define SF_TYPE_DEVNO		0x40
+#define SF_TYPE_DYNAMIC		0x80
+#define SF_TYPE_LINK		0x100
+
+#define SF_PRIV_MASK		0xF
+#define SF_TYPE_MASK		0xFF0
 
 PUBLIC int sysfs_publish_domain(char * key, int flags);
 PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags);

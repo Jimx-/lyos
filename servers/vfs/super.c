@@ -53,7 +53,7 @@ PUBLIC int do_register_filesystem(MESSAGE * p)
 
 PUBLIC int add_filesystem(endpoint_t fs_ep, char * name)
 {
-    struct file_system * pfs = (struct file_system *)sbrk(sizeof(struct file_system));
+    struct file_system * pfs = (struct file_system *)malloc(sizeof(struct file_system));
     if (!pfs) {
         return ENOMEM;
     }

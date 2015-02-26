@@ -75,7 +75,8 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
             m.RET_RETVAL = fsdriver_sync(fsd, &m);
             break;
         default:
-            m.RET_RETVAL = ENOSYS;
+            if (fsd->fs_other) m.RET_RETVAL = fsd->fs_other(&m);
+            else m.RET_RETVAL = ENOSYS;
             break;
         }
 
@@ -85,7 +86,7 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
             send_recv(SEND, src, &m);
         }
 
-        fsd->fs_sync();
+        if (fsd->fs_sync) fsd->fs_sync();
     }
 
     return 0;

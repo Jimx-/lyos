@@ -19,7 +19,7 @@
 struct lookup_result {
     endpoint_t fs_ep;
     ino_t inode_nr;
-    int mode;
+    mode_t mode;
     uid_t uid;
     gid_t gid;
     int size;

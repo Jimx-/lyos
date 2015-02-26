@@ -53,6 +53,8 @@ struct fsdriver {
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t * mode);
     int (*fs_getdents)(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * position, size_t * count);
     int (*fs_sync)();
+
+    int (*fs_other)(MESSAGE * m);
 };
 
 PUBLIC int fsdriver_start(struct fsdriver * fsd);

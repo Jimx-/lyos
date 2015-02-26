@@ -28,37 +28,48 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/stat.h>
+#include "libmemfs/libmemfs.h"
+
+PRIVATE int sysfs_init();
+PRIVATE int sysfs_message_hook(MESSAGE * m);
+
+struct memfs_hooks fs_hooks = {
+    .init_hook = sysfs_init,
+    .message_hook = sysfs_message_hook,
+};
 
 PUBLIC int main()
 {
 	printl("sysfs: SysFS is running\n");
 
-	MESSAGE m;
+    struct memfs_stat root_stat;
+    root_stat.st_mode = (I_DIRECTORY | 0555);
+    root_stat.st_uid = SU_UID;
+    root_stat.st_gid = 0;
 
-	int reply;
+    return memfs_start("sysfs", &fs_hooks, &root_stat);
+}
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
-
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
-
-		switch (msgtype) {
-		case SYSFS_PUBLISH:
-			break;
-		default:
-			printl("sysfs: unknown message\n");
-			break;
-		}
-
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
-
+PRIVATE int sysfs_init()
+{
+    init_node();
+    lookup_node_by_name("service.vfs.endpoint");
     return 0;
 }
 
+PRIVATE int sysfs_message_hook(MESSAGE * m)
+{
+    int msgtype = m->type;
+    int retval = 0;
+
+    switch (msgtype) {
+    case SYSFS_PUBLISH:
+        retval = do_publish(m); 
+        break;
+    default:
+        return ENOSYS;
+    }
+
+    return retval;
+}

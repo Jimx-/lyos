@@ -88,10 +88,11 @@ PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
     if (fsd->fs_lookup == NULL) return ENOSYS;
 
     int retval = fsd->fs_lookup(dev, pathname, start, root, flags, &offset, &fn);
-    if (retval) return retval;
 
     m->RET_OFFSET = offset;
     m->RET_NUM = fn.fn_num;
+    if (retval) return retval;
+
     m->RET_UID = fn.fn_uid;
     m->RET_GID = fn.fn_gid;
     m->RET_FILESIZE = fn.fn_size;

@@ -200,8 +200,6 @@ PUBLIC void init_vfs()
     pm_msg.RETVAL = 0;
     send_recv(SEND, TASK_PM, &pm_msg);
 
-    add_filesystem(TASK_SYSFS, "sysfs");
-
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root
     mount_fs(initrd_dev, "/", TASK_INITFS, 0);

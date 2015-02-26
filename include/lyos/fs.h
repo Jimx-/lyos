@@ -18,7 +18,9 @@
 
 #include "lyos/list.h"
 #include "lyos/spinlock.h"
-    
+   
+#define MAJOR_NONE		0
+#define NR_NONEDEVS		64 
 /**
  * @struct dev_drv_map fs.h "include/sys/fs.h"
  * @brief  The Device_nr.\ - Driver_nr.\ MAP.

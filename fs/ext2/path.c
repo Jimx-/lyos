@@ -43,7 +43,10 @@ PUBLIC int ext2_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int 
 	/* report error and offset position */
 	if (retval == ELEAVEMOUNT || retval == EENTERMOUNT) {
 		*offset = offsetp;
-		if (retval == EENTERMOUNT) put_ext2_inode(pin);
+		if (retval == EENTERMOUNT) {
+			fn->fn_num = pin->i_num;
+			put_ext2_inode(pin);
+		}
 		return retval;
 	}
 

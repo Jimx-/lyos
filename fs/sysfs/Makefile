@@ -1,6 +1,6 @@
 
-FSOBJS 	= main.o global.o
-LIBS	= -llyos -ldriver
+FSOBJS 	= main.o global.o node.o publish.o
+LIBS	= -lmemfs -lfsdriver -llyos -ldriver
 
 SYSFS = sysfs
 

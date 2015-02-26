@@ -43,7 +43,7 @@
 
 PUBLIC int init_ext2fs();
 
-PRIVATE int ext2_mountpoint(MESSAGE * p);
+PRIVATE int ext2_mountpoint(dev_t dev, ino_t num);
 
 struct fsdriver ext2fsdriver = {
     .name = "ext2",
@@ -89,11 +89,8 @@ PUBLIC int init_ext2fs()
     return 0;
 }
 
-PRIVATE int ext2_mountpoint(MESSAGE * p)
+PRIVATE int ext2_mountpoint(dev_t dev, ino_t num)
 {
-    dev_t dev = p->REQ_DEV;
-    ino_t num = p->REQ_NUM;
-
     ext2_inode_t * pin = get_ext2_inode(dev, num);
 
     if (pin == NULL) return EINVAL;
@@ -104,9 +101,8 @@ PRIVATE int ext2_mountpoint(MESSAGE * p)
     mode_t bits = pin->i_mode & I_TYPE;
     if (bits == I_BLOCK_SPECIAL || bits == I_CHAR_SPECIAL) retval =  ENOTDIR;
 
-   put_ext2_inode(pin);
-
    if (!retval) pin->i_mountpoint = 1;
+   put_ext2_inode(pin);
 
    return retval;
 }

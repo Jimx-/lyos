@@ -42,6 +42,8 @@
 
 /* find device number of the given pathname */
 PRIVATE dev_t name2dev(char * pathname);
+PRIVATE dev_t get_none_dev();
+PRIVATE int is_none_dev(dev_t dev);
 PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
 
 PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
@@ -124,29 +126,37 @@ PUBLIC int do_mount(MESSAGE * p)
     char target[MAX_PATH];
     if (target_len > MAX_PATH) return ENAMETOOLONG;       
 
-    data_copy(SELF, source, src, p->MSOURCE, source_len);
+    dev_t dev_nr;
+    if (source_len > 0) {
+        data_copy(SELF, source, src, p->MSOURCE, source_len);
+        source[source_len] = '\0';
+
+        dev_nr = name2dev(source);
+        if (dev_nr == 0) return err_code;
+    } else {
+        dev_nr = get_none_dev();
+        if (dev_nr == 0) return err_code;
+    }
+
     data_copy(SELF, target, src, p->MTARGET, target_len);
-
-    source[source_len] = '\0';
     target[target_len] = '\0';
-
-    dev_t dev_nr = name2dev(source);
-    if (dev_nr == 0) return err_code;
 
     int readonly = flags & MS_READONLY;
     int retval = mount_fs(dev_nr, target, fs_e, readonly);
 
-    if (retval == 0) printl("VFS: %s is %s mounted on %s\n", source, readonly ? "read-only" : "read-write", target);
+    if (retval == 0 && (strcmp(target, "/") == 0)) printl("VFS: %s is %s mounted on %s\n", source, readonly ? "read-only" : "read-write", target);
     return retval;
 }
 
 
 PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly)
 {
-    endpoint_t drv_e = dd_map[MAJOR(dev)].driver_nr;
-    if (drv_e == 0) {
-        printl("VFS: mount_fs: no device driver for dev %d\n", dev);
-        return EINVAL;
+    if (!is_none_dev(dev)) {
+        endpoint_t drv_e = dd_map[MAJOR(dev)].driver_nr;
+        if (drv_e == 0) {
+            printl("VFS: mount_fs: no device driver for dev %d\n", dev);
+            return EINVAL;
+        }
     }
 
     if (find_vfs_mount(dev) != NULL) return EBUSY;
@@ -258,6 +268,20 @@ PRIVATE dev_t name2dev(char * pathname)
 
    put_inode(pin);
    return retval;
+}
+
+PRIVATE int is_none_dev(dev_t dev)
+{
+    return (MAJOR(dev) == MAJOR_NONE) && (MINOR(dev) < NR_NONEDEVS);
+}
+
+PRIVATE dev_t get_none_dev()
+{
+    static int none_dev = 1;
+
+    if (none_dev < NR_NONEDEVS) return MAKE_DEV(MAJOR_NONE, none_dev++);
+
+    return 0;
 }
 
 PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)

@@ -43,6 +43,7 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
     m.REQ_PATHNAME = pathname;
     m.REQ_FLAGS = 0;
 
+    memset(ret, 0, sizeof(struct lookup_result));
     send_recv(BOTH, fs_e, &m);
 
     int retval = m.RET_RETVAL;
@@ -116,8 +117,47 @@ PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp)
     
     /* TODO: deal with EENTERMOUNT and ELEAVEMOUNT */
     while (ret == EENTERMOUNT || ret == ELEAVEMOUNT) {
-        if (ret == EENTERMOUNT) break;
-        else if (ret == ELEAVEMOUNT) break;
+        int path_offset = res.offsetp;
+        int left_len = strlen(&pathname[path_offset]);
+        memmove(pathname, &pathname[path_offset], left_len);
+        pathname[left_len] = '\0';
+
+        struct inode * dir_pin = NULL;
+        if (ret == EENTERMOUNT) {
+            list_for_each_entry(vmnt, &vfs_mount_table, list) {
+                if (vmnt->m_dev != 0 && vmnt->m_mounted_on != NULL) {
+                    if (vmnt->m_mounted_on->i_num == res.inode_nr && 
+                        vmnt->m_mounted_on->i_fs_ep == res.fs_ep) {
+                        dir_pin = vmnt->m_root_node;
+                        break;
+                    }
+                }
+            }
+
+            if (dir_pin == NULL) {
+                err_code = EIO;
+                return NULL;
+            }
+        }
+
+        endpoint_t fs_e = dir_pin->i_fs_ep;
+        ino_t dir_num = dir_pin->i_num;
+
+        if (dir_pin->i_dev == fp->root->i_dev) root_ino = fp->root->i_num;
+        else root_ino = 0;
+
+        vmnt = find_vfs_mount(dir_pin->i_dev);
+        if (!vmnt) {
+            err_code = EIO;
+            return NULL;
+        }
+
+        ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino, &res);
+
+        if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
+            err_code = ret;
+            return NULL;
+        }
     }
 
     if ((pin = find_inode(res.dev, res.inode_nr)) == NULL) { /* not found */

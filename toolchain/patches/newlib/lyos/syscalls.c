@@ -554,7 +554,8 @@ int mount(const char *source, const char *target,
 	msg.type = MOUNT;
 
 	msg.MFLAGS = mountflags;
-	msg.MNAMELEN1 = strlen(source);
+	if (source == NULL)  msg.MNAMELEN1 = 0;
+	else msg.MNAMELEN1 = strlen(source);
 	msg.MNAMELEN2 = strlen(target);
 	msg.MNAMELEN3 = strlen(filesystemtype);
 	msg.MSOURCE = source;

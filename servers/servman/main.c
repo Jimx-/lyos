@@ -29,6 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include "libsysfs/libsysfs.h"
 #include "proto.h"
 #include "global.h"
 
@@ -102,4 +103,6 @@ PRIVATE void servman_init()
 
         sp->endpoint = bpriv->endpoint;
     }
+
+    sysfs_publish_domain("services", SF_PRIV_OVERWRITE);
 }

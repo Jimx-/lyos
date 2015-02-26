@@ -32,8 +32,7 @@ PUBLIC int sysfs_publish_domain(char * key, int flags)
 
     msg.PATHNAME = key;
     msg.NAME_LEN = strlen(key);
-    msg.FLAGS = flags;
-    msg.MODE = ET_DOMAIN;
+    msg.FLAGS = flags | SF_TYPE_DOMAIN;
 
     send_recv(BOTH, TASK_SYSFS, &msg);
 
@@ -48,7 +47,7 @@ PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags)
 
     msg.PATHNAME = key;
     msg.NAME_LEN = strlen(key);
-    msg.FLAGS = flags;
+    msg.FLAGS = flags | SF_TYPE_U32;
     msg.u.m3.m3i3 = value;
 
     send_recv(BOTH, TASK_SYSFS, &msg);

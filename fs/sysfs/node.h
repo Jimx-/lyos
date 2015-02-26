@@ -16,19 +16,29 @@
 #ifndef _SYSFS_NODE_H_
 #define _SYSFS_NODE_H_
 
-typedef struct {
+#include <sys/syslimits.h>
+#include "libmemfs/libmemfs.h"
+
+#define NODE_TYPE(node) (node->flags & SF_TYPE_MASK)
+
+struct sysfs_node;
+
+typedef struct sysfs_node {
     struct list_head list;
     struct list_head children;
 
-    char name[SF_ENTRY_LABEL_MAX];
-    int type;
+    char name[NAME_MAX];
     int flags;
 
+    struct sysfs_node * parent;
+    
     union {
         char * str;
         u32 u32v;
         dev_t devno;
     } u;
+
+    struct memfs_inode * inode;
 } sysfs_node_t;
 
 #endif /* _SYSFS_NODE_H_ */
