@@ -87,7 +87,6 @@ PUBLIC sysfs_node_t * lookup_node_by_name(char * name)
     sysfs_node_t * dir_pn = &root_node;
     
     char component[NAME_MAX];
-
     char * end;
 
     while (*name != '\0') {
@@ -124,7 +123,8 @@ PUBLIC sysfs_node_t * create_node(char * name, int flags)
     char * end = name + strlen(name);
 
     while (*end != '.' && end > name) end--;
-    *end++ = '\0';
+    if (name == end) name = "\0";
+    else *end++ = '\0';
 
     sysfs_node_t * dir_pn = lookup_node_by_name(name);
     if (!dir_pn) {

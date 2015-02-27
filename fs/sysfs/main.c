@@ -35,13 +35,12 @@ PRIVATE int sysfs_init();
 PRIVATE int sysfs_message_hook(MESSAGE * m);
 
 struct memfs_hooks fs_hooks = {
-    .init_hook = sysfs_init,
     .message_hook = sysfs_message_hook,
 };
 
 PUBLIC int main()
 {
-	printl("sysfs: SysFS is running\n");
+    sysfs_init();
 
     struct memfs_stat root_stat;
     root_stat.st_mode = (I_DIRECTORY | 0555);
@@ -53,8 +52,10 @@ PUBLIC int main()
 
 PRIVATE int sysfs_init()
 {
+    printl("sysfs: SysFS is running\n");
+
     init_node();
-    lookup_node_by_name("service.vfs.endpoint");
+
     return 0;
 }
 
