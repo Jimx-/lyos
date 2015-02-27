@@ -30,7 +30,7 @@ extern struct memfs_hooks fs_hooks;
 
 PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_stat * root_stat);
 PUBLIC int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node * node);
-PUBLIC int memfs_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int flags, off_t * offset, struct fsdriver_node * fn);
+PUBLIC int memfs_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint);
 
 PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, struct memfs_stat * stat, cbdata_t data);
 #endif

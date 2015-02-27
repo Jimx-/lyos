@@ -51,6 +51,7 @@ extern  struct dev_drv_map  dd_map[];
 #define REQ_PATHNAME        u.m3.m3p1
 #define REQ_STARTPOS		u.m3.m3i3
 #define REQ_ENDPOS			u.m3.m3i4
+#define REQ_UCRED			u.m3.m3p2
 
 /* for stat */
 #define STDEV		u.m3.m3i1
@@ -190,4 +191,12 @@ PUBLIC int do_vfs_open(MESSAGE * p);
 				       fsbuf);
 
 	
+/* User credential info */
+struct vfs_ucred {
+	uid_t uid;
+	gid_t gid;
+};
+
+#define _POSIX_SYMLOOP_MAX	8
+
 #endif /* _FS_H_ */

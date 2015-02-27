@@ -32,9 +32,6 @@ extern struct list_head ext2_superblock_table;
 extern u8 * ext2fsbuf;
 EXTERN u8 _ext2fsbuf[EXT2FSBUF_SIZE];
 
-EXTERN uid_t ext2_caller_uid;
-EXTERN gid_t ext2_caller_gid;
-
 #define EXT2_INODE_HASH_LOG2   7
 #define EXT2_INODE_HASH_SIZE   ((unsigned long)1<<EXT2_INODE_HASH_LOG2)
 #define EXT2_INODE_HASH_MASK   (((unsigned long)1<<EXT2_INODE_HASH_LOG2)-1)

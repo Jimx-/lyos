@@ -43,7 +43,7 @@ PUBLIC mode_t do_umask(MESSAGE * p);
 
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
 PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 
-                ino_t start, ino_t root, struct lookup_result * ret);
+                ino_t start, ino_t root, struct fproc * fp, struct lookup_result * ret);
 PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
         int readonly, int is_root, struct lookup_result * res);
 

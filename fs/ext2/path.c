@@ -33,24 +33,15 @@
 
 PRIVATE char dot2[2] = "..";
 
-PUBLIC int ext2_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int flags, off_t * offset, struct fsdriver_node * fn)
+PUBLIC int ext2_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint)
 {
-    size_t offsetp = 0;
-	ext2_inode_t * pin = NULL;
+	ext2_inode_t * dir_pin = find_ext2_inode(dev, start);
+	if (!dir_pin) return ENOENT;
 
-	int retval = ext2_parse_path(dev, start, root, pathname, flags, &pin, &offsetp);
+	err_code = 0;
 
-	/* report error and offset position */
-	if (retval == ELEAVEMOUNT || retval == EENTERMOUNT) {
-		*offset = offsetp;
-		if (retval == EENTERMOUNT) {
-			fn->fn_num = pin->i_num;
-			put_ext2_inode(pin);
-		}
-		return retval;
-	}
-
-	if (retval) return retval;
+	ext2_inode_t * pin = ext2_advance(dir_pin, name);
+	if (!pin) return err_code;
 
 	/* fill result */
 	fn->fn_num = pin->i_num;
@@ -59,95 +50,13 @@ PUBLIC int ext2_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int 
 	fn->fn_size = pin->i_size;
 	fn->fn_mode = pin->i_mode;
     fn->fn_device = pin->i_block[0];
+    *is_mountpoint = pin->i_mountpoint;
 
 	return 0;
 }
 
-PRIVATE char * ext2_get_name(char * pathname, char string[EXT2_NAME_LEN + 1]);
-
-PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, int flags, ext2_inode_t ** result, size_t * offsetp)
-{
-	ext2_inode_t * pin, * dir_pin;
-	char * cp, * next;
-	char component[EXT2_NAME_LEN + 1];
-	int leaving_mount;
-
-	cp = pathname;
-
-	if (!(pin = find_ext2_inode(dev, start))) return ENOENT;
-
-	if (pin->i_links_count == 0) return ENOENT;
-
-	leaving_mount = pin->i_mountpoint;
-	++pin->i_count;
-	/* scan */
-	while (1) {
-		if (cp[0] == '\0') {
-			*result = pin;
-			*offsetp = cp - pathname;
-
-			if (pin->i_mountpoint) {
-				return EENTERMOUNT;
-			}
-
-			return 0;
-		}
-
-		while (cp[0] == '/') cp++;
-
-		if (!(next = ext2_get_name(cp, component))) {
-			put_ext2_inode(pin);
-			return err_code;
-		}
-
-		if (strcmp(component, "..") == 0) {
-			int r;
-			if ((r = ext2_forbidden(pin, X_BIT)) != 0) {
-				put_ext2_inode(pin);
-				return r;
-			}
-
-			/* ignore */
-			if (pin->i_num == root) {
-				cp = next;
-				continue;
-			}
-
-			/* climb up to top fs */
-			if (pin->i_num == EXT2_ROOT_INODE && !pin->i_sb->sb_is_root) {
-				put_ext2_inode(pin);
-				*offsetp = cp - pathname;
-				return ELEAVEMOUNT;
-			}
-		}
-
-		/* enter a child fs */
-		if (!leaving_mount && pin->i_mountpoint) {
-			*result = pin;
-			*offsetp = cp - pathname;
-			return EENTERMOUNT;
-		}
-
-		dir_pin = pin;
-		pin = ext2_advance(dir_pin, leaving_mount ? dot2 : component, 1);
-		if ((err_code == EENTERMOUNT) || (err_code == ELEAVEMOUNT)) err_code = 0;
-
-		if (err_code) {
-			put_ext2_inode(dir_pin);
-			return err_code;
-		}
-
-		leaving_mount = 0;
-
-		/* next component */
-		put_ext2_inode(dir_pin);
-		cp = next;
-	}
-}
-
 /* find component in dir_pin */
-PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1],
-								int check_perm)
+PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1])
 {
 	ino_t num;
 	ext2_inode_t * pin;
@@ -161,9 +70,13 @@ PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_
   	/* Check for NULL. */
   	if (!dir_pin) return NULL;
 
+  	if (dir_pin->i_links_count == 0) {
+  		err_code = ENOENT;
+  		return NULL;
+  	}
+
   	/* If 'string' is not present in the directory, return error. */
- 	if ((err_code = ext2_search_dir(dir_pin, string, &num, SD_LOOK_UP,
-			      check_perm, 0)) != 0) {
+ 	if ((err_code = ext2_search_dir(dir_pin, string, &num, SD_LOOK_UP, 0)) != 0) {
 		return NULL;
   	}
 
@@ -172,50 +85,7 @@ PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_
 		return NULL;
   	}
 
-  	if (pin->i_num == EXT2_ROOT_INODE) {
-	  	if (dir_pin->i_num == EXT2_ROOT_INODE) {
-		  	if (string[1] == '.') {
-			  	if (!pin->i_sb->sb_is_root) {
-				  	/* Climbing up mountpoint */
-				  	err_code = ELEAVEMOUNT;
-			  	}
-		  	}
-	  	}
-  	}
-
-  	if (pin->i_mountpoint) {
-	  	/* Mountpoint encountered, report it */
-	  	err_code = EENTERMOUNT;
-  	}
-
   	return pin;
-}
-
-PRIVATE char * ext2_get_name(char * pathname, char string[EXT2_NAME_LEN + 1])
-{
-	size_t len;
-	char * cp, * end;
-
-	cp = pathname;
-	end = cp;
-
-	while(end[0] != '\0' && end[0] != '/') end++;
-
-	len = (size_t)(end - cp);
-
-	if (len > EXT2_NAME_LEN) {
-		err_code = ENAMETOOLONG;
-		return NULL;
-	}
-
-	if (len == 0) {
-		strcpy(string, ".");
-	} else {
-		memcpy(string, cp, len);
-		string[len] = '\0';
-	}
-
-	return end;
 }
 
 /* search file named string in dir_pin */
@@ -224,7 +94,7 @@ PRIVATE char * ext2_get_name(char * pathname, char string[EXT2_NAME_LEN + 1])
  * if flag == SD_LOOK_UP, look it up and return it inode num 
  * if flag == SD_IS_EMPTY, check whether this directory is empty */
 PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1], ino_t *num, 
-								int flag, int check_perm, int ftype)
+								int flag, int ftype)
 {
 	ext2_dir_entry_t * pde, * prev_pde;
 	off_t pos;
@@ -239,7 +109,6 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 		mode_t bits = (flag == SD_LOOK_UP ? X_BIT : W_BIT | X_BIT);
 		if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
 			if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
-			else if (check_perm) ret = ext2_forbidden(dir_pin, bits);
 		}
 	}
 

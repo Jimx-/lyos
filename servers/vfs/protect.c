@@ -157,9 +157,10 @@ PUBLIC int fs_getsetid(MESSAGE * p)
     struct fproc * fp = vfs_endpt_proc(p->ENDPOINT);
     int retval = 0;
 
-    if (fp == NULL) retval = EINVAL;
+    if (fp == NULL) 
+        retval = EINVAL;
     else {
-        switch (p->REQUEST) {
+        switch (p->u.m3.m3i3) {
         case GS_SETUID:
             fp->realuid = p->UID;
             fp->effuid = p->EUID;

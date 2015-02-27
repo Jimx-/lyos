@@ -32,9 +32,14 @@
 #include "global.h"
 
 PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 
-                ino_t start, ino_t root, struct lookup_result * ret)
+                ino_t start, ino_t root, struct fproc * fp, struct lookup_result * ret)
 {
     MESSAGE m;
+
+    struct vfs_ucred ucred;
+    ucred.uid = fp->effuid;
+    ucred.gid = fp->effgid;
+
     m.type = FS_LOOKUP;
     m.REQ_DEV = dev;
     m.REQ_START_INO = start;
@@ -42,6 +47,7 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
     m.REQ_NAMELEN = strlen(pathname);
     m.REQ_PATHNAME = pathname;
     m.REQ_FLAGS = 0;
+    m.REQ_UCRED = &ucred;
 
     memset(ret, 0, sizeof(struct lookup_result));
     send_recv(BOTH, fs_e, &m);
@@ -109,7 +115,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp)
 
     if (fp->root->i_dev == fp->pwd->i_dev) root_ino = fp->root->i_num;
 
-    int ret = request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, &res);
+    int ret = request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, fp, &res);
     if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
         err_code = ret;
         return NULL;
@@ -138,6 +144,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp)
                 err_code = EIO;
                 return NULL;
             }
+        } else if (ret == ELEAVEMOUNT) {
         }
 
         endpoint_t fs_e = dir_pin->i_fs_ep;
@@ -152,7 +159,7 @@ PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp)
             return NULL;
         }
 
-        ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino, &res);
+        ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino, fp, &res);
 
         if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
             err_code = ret;

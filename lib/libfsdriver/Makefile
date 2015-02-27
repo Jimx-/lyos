@@ -2,7 +2,7 @@
 # Makefile for libfsdriver.
 #
 
-LIBFSDOBJS		= request.o fsdriver.o utils.o dentry.o
+LIBFSDOBJS		= request.o fsdriver.o utils.o dentry.o lookup.o
 LIBFSD 		= $(LIBOUTDIR)/libfsdriver.a
 ARFLAGS			= rcs
 

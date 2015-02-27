@@ -279,6 +279,9 @@ typedef struct ext2_dir_entry ext2_dir_entry_t;
 
 #define EXT2_ERROR_FS           0x002
 
+#define EXT2_MAX_FAST_SYMLINK_LENGTH \
+	( sizeof(((ext2_inode_t *)0)->i_block[0]) * EXT2_N_BLOCKS )
+
 /* hash-indexed directory */
 #define EXT2_INDEX_FL			0x00001000
 /* Top of directory hierarchies*/
@@ -303,14 +306,11 @@ PUBLIC int ext2_putinode(dev_t dev, ino_t num);
 PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag);
 PUBLIC void ext2_dump_inode(ext2_inode_t * pin);
 
-PUBLIC int ext2_forbidden(ext2_inode_t * pin, int access);
-
-PUBLIC int ext2_lookup(dev_t dev, char * pathname, ino_t start, ino_t root, int flags, off_t * offset, struct fsdriver_node * fn);
+PUBLIC int ext2_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint);
 PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char * pathname, int flags, ext2_inode_t ** result, size_t * offsetp);
-PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1],
-								int check_perm);
+PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1]);
 PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1], ino_t *num, 
-								int flag, int check_perm, int ftype);
+								int flag, int ftype);
 
 PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position);
 PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count);
@@ -336,6 +336,7 @@ PUBLIC int ext2_sync();
 
 PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn);
 
+PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data * data, size_t * bytes);
 PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
 PUBLIC int ext2_chmod(dev_t dev, ino_t num, mode_t * mode);
 

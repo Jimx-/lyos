@@ -150,9 +150,11 @@ PUBLIC sysfs_node_t * create_node(char * name, int flags)
 PRIVATE void stat_node(struct memfs_stat * stat, sysfs_node_t * node)
 {
     int file_type = 0;
+    mode_t bits;
 
     switch (NODE_TYPE(node)) {
     case SF_TYPE_DOMAIN:
+        bits = 0755;
         file_type = I_DIRECTORY;
         break;
     default:
@@ -160,7 +162,9 @@ PRIVATE void stat_node(struct memfs_stat * stat, sysfs_node_t * node)
         break;
     }
 
-    stat->st_mode = file_type;
+    stat->st_mode = (file_type | bits);
+    stat->st_uid = SU_UID;
+    stat->st_gid = 0;
 }
 
 PUBLIC int add_node(sysfs_node_t * parent, sysfs_node_t * child)

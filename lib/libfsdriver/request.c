@@ -68,40 +68,6 @@ PUBLIC int fsdriver_mountpoint(struct fsdriver * fsd, MESSAGE * m)
     return fsd->fs_mountpoint(dev, num);
 }
 
-PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
-{
-    int src = m->source;
-    int dev = m->REQ_DEV;
-    int start = m->REQ_START_INO;
-    int root = m->REQ_ROOT_INO;
-    int flags = (int)m->REQ_FLAGS;
-    int name_len = m->REQ_NAMELEN;
-    off_t offset;
-    struct fsdriver_node fn;
-
-    char pathname[PATH_MAX];
-    if (name_len > PATH_MAX - 1) return ENAMETOOLONG;
-
-    data_copy(SELF, pathname, src, m->REQ_PATHNAME, name_len);
-    pathname[name_len] = '\0';
-
-    if (fsd->fs_lookup == NULL) return ENOSYS;
-
-    int retval = fsd->fs_lookup(dev, pathname, start, root, flags, &offset, &fn);
-
-    m->RET_OFFSET = offset;
-    m->RET_NUM = fn.fn_num;
-    if (retval) return retval;
-
-    m->RET_UID = fn.fn_uid;
-    m->RET_GID = fn.fn_gid;
-    m->RET_FILESIZE = fn.fn_size;
-    m->RET_MODE = fn.fn_mode;
-    m->RET_SPECDEV = fn.fn_device;
-
-    return 0;
-}
-
 PUBLIC int fsdriver_putinode(struct fsdriver * fsd, MESSAGE * m)
 {
     dev_t dev = m->REQ_DEV;

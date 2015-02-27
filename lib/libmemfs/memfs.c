@@ -31,6 +31,7 @@ PRIVATE int memfs_other(MESSAGE * m);
 
 struct fsdriver fsd = {
     .name = NULL,
+    .root_num = 0,
 
     .fs_readsuper = memfs_readsuper,
     .fs_lookup = memfs_lookup,

@@ -216,6 +216,7 @@ PRIVATE int fs_fork(MESSAGE * p)
 	
 	*child = *parent;
 	child->pid = p->PID;
+	child->endpoint = p->ENDPOINT;
 
 	for (i = 0; i < NR_FILES; i++) {
 		if (child->filp[i]) {

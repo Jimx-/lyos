@@ -74,7 +74,7 @@ PUBLIC int do_getsetid(MESSAGE * p)
         pmp->realuid = pmp->effuid = uid;
 
         m.type = PM_VFS_GETSETID;
-        m.REQUEST = GS_SETUID;
+        m.u.m3.m3i3 = GS_SETUID;
         m.ENDPOINT = p->source;
         m.UID = pmp->realuid;
         m.EUID = pmp->effuid;
@@ -89,7 +89,7 @@ PUBLIC int do_getsetid(MESSAGE * p)
         pmp->realgid = pmp->effgid = gid;
 
         m.type = PM_VFS_GETSETID;
-        m.REQUEST = GS_SETGID;
+        m.u.m3.m3i3 = GS_SETGID;
         m.ENDPOINT = p->source;
         m.GID = pmp->realgid;
         m.EGID = pmp->effgid;

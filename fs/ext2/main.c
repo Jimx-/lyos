@@ -47,6 +47,7 @@ PRIVATE int ext2_mountpoint(dev_t dev, ino_t num);
 
 struct fsdriver ext2fsdriver = {
     .name = "ext2",
+    .root_num = EXT2_ROOT_INODE,
 
     .fs_readsuper = ext2_readsuper,
     .fs_mountpoint = ext2_mountpoint,
@@ -54,6 +55,7 @@ struct fsdriver ext2fsdriver = {
     .fs_lookup = ext2_lookup,
     .fs_create = ext2_create,
     .fs_readwrite = ext2_rdwt,
+    .fs_rdlink = ext2_rdlink,
     .fs_stat = ext2_stat,
     .fs_ftrunc = ext2_ftrunc,
     .fs_chmod = ext2_chmod,
