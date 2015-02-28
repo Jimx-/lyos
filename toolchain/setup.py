@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
 	# Build source packages
 	push_dir('build')
-	
+
 	# Pass 1
 	# binutils
 	mkdir('binutils')
@@ -102,17 +102,21 @@ if __name__ == "__main__":
 	# Pass 2
 	mkdir('binutils-native')
 	push_dir('binutils-native')
-	#configure_native(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
-	#make_and_install()
+	configure_host(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
+	make_and_install_to_destdir()
 	pop_dir()
 
 	mkdir('gcc-native')
 	push_dir('gcc-native')
-	#configure_native(GCC_VERSION, '--disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
-	#make('all-gcc')
-	#make('install-gcc')
-	#make('all-target-libgcc')
-	#make('install-target-libgcc')
+	make('distclean')
+	configure_host(GCC_VERSION, '--disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+	make('DESTDIR=' + SYSROOT + ' all-gcc')
+	make('DESTDIR=' + SYSROOT + ' install-gcc')
+	make('DESTDIR=' + SYSROOT + ' all-target-libgcc')
+	make('DESTDIR=' + SYSROOT + ' install-target-libgcc')
+	os.system('touch ' + SYSROOT + '/usr/include/fenv.h')
+	make('DESTDIR=' + SYSROOT + ' all-target-libstdc++-v3')
+	make('DESTDIR=' + SYSROOT + ' install-target-libstdc++-v3')
 	pop_dir()	# gcc-native
 
 	pop_dir()	# build

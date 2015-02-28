@@ -38,9 +38,4 @@
 #define MMAP_PROT	u.m5.m5i9
 #define MMAP_RETADDR u.m5.m5i10
 
-PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
-    dev_t dev, ino_t ino, int fd, int vaddr, int flags);
-PUBLIC void * mmap_for(endpoint_t forwhom,
-	void *addr, size_t len, int prot, int flags, int fd, off_t offset);
-
 #endif

@@ -35,7 +35,7 @@
 #include "lyos/param.h"
 #include "global.h"
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define DEB(x) printl("VFS: "); x
 #else

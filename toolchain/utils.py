@@ -86,7 +86,7 @@ def configure_cross(name, extra_opt=''):
 def configure_host(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --host=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + extra_opt)
-
+	
 def configure_native(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + 

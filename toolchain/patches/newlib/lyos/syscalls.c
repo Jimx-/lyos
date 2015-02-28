@@ -401,6 +401,11 @@ int close(int fd)
 	return msg.RETVAL;
 }
 
+int mkdir(const char *pathname, mode_t mode)
+{
+	return 0;
+}
+
 int link(char *old, char *new)
 {
 	//printf("link: not implemented\n");
@@ -1046,4 +1051,19 @@ int __dirfd(DIR *dirp)
 int fsync(int fd)
 {
 	return 0;
+}
+
+unsigned int alarm(unsigned int seconds)
+{
+	return 0;
+}
+
+unsigned int sleep(unsigned int seconds)
+{
+	return 0;
+}
+
+long sysconf(int name)
+{
+
 }

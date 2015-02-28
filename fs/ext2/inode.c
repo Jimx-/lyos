@@ -178,10 +178,10 @@ PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
     if (!pb) return err_code;
 
     if (rw_flag == DEV_READ) {
-        memcpy(inode, (void*)(pb->b_data + offset), EXT2_INODE_SIZE(psb));
+        memcpy(inode, (void*)(pb->b_data + offset), EXT2_GOOD_OLD_INODE_SIZE);
     } else if (rw_flag == DEV_WRITE) {
         if (inode->i_update) update_times(inode);
-        memcpy((void*)(pb->b_data + offset), inode, EXT2_INODE_SIZE(psb));
+        memcpy((void*)(pb->b_data + offset), inode, EXT2_GOOD_OLD_INODE_SIZE);
         pb->b_dirt = 1;
         /* write back to the device */
     } else return EINVAL;

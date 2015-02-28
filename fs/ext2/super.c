@@ -54,10 +54,10 @@ PUBLIC int read_ext2_super_block(dev_t dev)
     driver_msg.type     = DEV_READ;
     driver_msg.DEVICE   = MINOR(dev);
     // byte offset 1024
-    driver_msg.POSITION = SECTOR_SIZE * 2;
+    driver_msg.POSITION = 1024;
     driver_msg.BUF      = ext2fsbuf;
     // size 1024 bytes
-    driver_msg.CNT      = SECTOR_SIZE * 2;
+    driver_msg.CNT      = EXT2_SUPERBLOCK_SIZE;
     driver_msg.PROC_NR  = ext2_ep;
     endpoint_t driver_ep = get_blockdev_driver(dev);
     int retval;
@@ -129,16 +129,14 @@ PUBLIC int write_ext2_super_block(dev_t dev)
     ext2_superblock_t * psb = get_ext2_super_block(dev);
     if (!psb) return EINVAL;
 
-    memcpy(ext2fsbuf, psb, SECTOR_SIZE * 2);
-
     MESSAGE driver_msg;
     driver_msg.type     = DEV_WRITE;
     driver_msg.DEVICE   = MINOR(dev);
     // byte offset 1024
-    driver_msg.POSITION = SECTOR_SIZE * 2;
-    driver_msg.BUF      = ext2fsbuf;
+    driver_msg.POSITION = 1024;
+    driver_msg.BUF      = psb;
     // size 1024 bytes
-    driver_msg.CNT      = SECTOR_SIZE * 2;
+    driver_msg.CNT      = EXT2_SUPERBLOCK_SIZE;
     driver_msg.PROC_NR  = ext2_ep;
     endpoint_t driver_ep = get_blockdev_driver(dev);
     send_recv(BOTH, driver_ep, &driver_msg);

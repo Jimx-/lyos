@@ -229,14 +229,13 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 	hd_cmd_out(&cmd);
 
 	int bytes_left = p->CNT;
-	void * la = p->BUF;
 	int buf = (int)p->BUF;
 
 	while (bytes_left) {
 		int bytes = min(SECTOR_SIZE, bytes_left);
 		if (p->type == DEV_READ) {
 			interrupt_wait();
-			portio_sin(REG_DATA, hdbuf, SECTOR_SIZE);
+			portio_sin(REG_DATA, hdbuf, bytes);
 			data_copy(p->PROC_NR, (void*)buf, SELF, hdbuf, bytes);
 		}
 		else {
@@ -247,9 +246,8 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 			portio_sout(REG_DATA, hdbuf, bytes);
 			interrupt_wait();
 		}
-		bytes_left -= SECTOR_SIZE;
-		buf += SECTOR_SIZE;
-		la += SECTOR_SIZE;
+		bytes_left -= bytes;
+		buf += bytes;
 	}
 	return 0;
 }				

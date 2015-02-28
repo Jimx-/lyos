@@ -10,7 +10,7 @@ fi
 
 DISK=lyos-disk.img
 SRCDIR=./
-SIZE=65536
+SIZE=262144
 MOUNT_POINT=/mnt/lyos-root
 LOOP_DEVICE=loop1
 
