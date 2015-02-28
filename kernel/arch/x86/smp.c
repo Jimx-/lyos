@@ -44,6 +44,8 @@ PUBLIC u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
 PRIVATE u32 ap_ready;
 
+PRIVATE int smp_commenced = 0;
+
 PRIVATE int discover_cpus();
 PRIVATE void init_tss_all();
 PRIVATE void smp_start_aps();
@@ -208,6 +210,11 @@ PRIVATE void ap_finish_booting()
 
     ap_finished_booting();
 
+    /* wait for MM is ready */
+    while (!smp_commenced) ;
+    /* flush TLB */
+    switch_address_space(proc_addr(TASK_MM));
+
     switch_to_user();
 }
 
@@ -215,4 +222,9 @@ PUBLIC void smp_boot_ap()
 {
     switch_k_stack((char *)get_k_stack_top(__ap_id) -
             X86_STACK_TOP_RESERVED, ap_finish_booting);
+}
+
+PUBLIC void smp_commence()
+{
+    smp_commenced = 1;
 }

@@ -54,6 +54,7 @@ PUBLIC int kernel_main()
 {
 	printk(LYOS_BANNER);
 	init_arch();
+    init_sched();
 	init_proc();
 
 	init_memory();

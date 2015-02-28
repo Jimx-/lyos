@@ -34,7 +34,9 @@
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
     
-PRIVATE struct proc * pick_proc();
+PUBLIC struct proc * pick_proc();
+PUBLIC void proc_no_time(struct proc * p);
+
 PRIVATE void idle();
 PUBLIC 	int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
@@ -42,31 +44,6 @@ PRIVATE int  has_pending_notify(struct proc * p, endpoint_t src);
 PRIVATE void unset_notify_pending(struct proc * p, int id);
 PRIVATE void set_notify_msg(struct proc * sender, MESSAGE * m, endpoint_t src);
 PRIVATE int  deadlock(int src, int dest);
-PRIVATE void proc_no_time(struct proc * p);
-
-/*****************************************************************************
- *                                pick_proc
- *****************************************************************************/
-/**
- * <Ring 0> Choose one proc to run.
- * 
- *****************************************************************************/
-PRIVATE struct proc * pick_proc()
-{
-  	register struct proc *p;
-  	struct proc ** rq_head;
-  	int q;
-
-  	rq_head = get_cpulocal_var(run_queue_head);
-  	for (q = 0; q < NR_SCHED_QUEUES; q++) {	
-		if(!(p = rq_head[q])) {
-			continue;
-		}
-		return p;
-  	}
-  	
-  	return NULL;
-}
 
 PUBLIC void init_proc()
 {
@@ -77,6 +54,7 @@ PUBLIC void init_proc()
 
 	for (i = -NR_TASKS; i < NR_PROCS; i++,p++) {
 		spinlock_init(&p->lock);
+		INIT_LIST_HEAD(&p->run_list);
 		
 		if (i >= (NR_BOOT_PROCS - NR_TASKS)) {
 			p->state = PST_FREE_SLOT;
@@ -113,6 +91,9 @@ PUBLIC void init_proc()
 		}
 
 		PST_SET(p, PST_STOPPED);
+
+		p->sched_policy = SCHED_NORMAL;
+		proc_no_time(p);
 
 		arch_reset_proc(p);
 	}
@@ -180,10 +161,12 @@ PRIVATE void idle()
 #if CONFIG_SMP
 	get_cpulocal_var(cpu_is_idle) = 1;
 
-	if (cpuid == bsp_cpu_id)
+	restart_local_timer();
+	/*if (cpuid == bsp_cpu_id)
 		restart_local_timer();
-	else 
-		stop_local_timer();
+	else
+		stop_local_timer();*/
+
 #else
 	restart_local_timer();
 #endif
@@ -632,61 +615,3 @@ PUBLIC void dump_msg(const char * title, MESSAGE* m)
 		);
 }
 
-/**
- * <Ring 0> Insert a process into scheduling queue.
- */
-PUBLIC void enqueue_proc(register struct proc * p)
-{
-	int prio = p->priority;
-	struct proc ** rq_head, ** rq_tail;
-
-	rq_head = get_cpu_var(p->cpu, run_queue_head);
-  	rq_tail = get_cpu_var(p->cpu, run_queue_tail);
-
-  	if (!rq_head[prio]) {
-  		rq_head[prio] = rq_tail[prio] = p;
-  		p->next_ready = NULL;
-  	} else {
-  		rq_tail[prio]->next_ready = p;
-  		rq_tail[prio] = p;
-  		p->next_ready = NULL;
-  	}
-}
-
-/**
- * <Ring 0> Remove a process from scheduling queue.
- */
-PUBLIC void dequeue_proc(register struct proc * p)
-{
-	int q = p->priority;	
-  	struct proc ** xpp;
-  	struct proc * prev_xp;
-
-  	struct proc ** rq_tail;
-
-  	rq_tail = get_cpu_var(p->cpu, run_queue_tail);
-
-  	prev_xp = NULL;				
-  	for (xpp = get_cpu_var_ptr(p->cpu, run_queue_head[q]); *xpp;
-		  	xpp = &(*xpp)->next_ready) {
-      	if (*xpp == p) {
-          	*xpp = (*xpp)->next_ready;
-          	if (p == rq_tail[q]) {
-              	rq_tail[q] = prev_xp;
-	  		}
-
-        	break;
-    	}
-      	prev_xp = *xpp;
-  	}
-}
-
-/**
- * <Ring 0> Called when a process has run out its counter.
- */
-PRIVATE void proc_no_time(struct proc * p)
-{
-	p->counter_ns = p->quantum_ms * NSEC_PER_MSEC;
-	PST_SET(p, PST_NO_QUANTUM);
-	PST_UNSET(p, PST_NO_QUANTUM);
-}

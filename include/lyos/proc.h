@@ -74,6 +74,20 @@
 
 #define PROC_NAME_LEN	16
 
+/* scheduling policy */
+#define SCHED_RUNTIME	1
+#define SCHED_ISO 		2
+#define SCHED_NORMAL	3
+#define SCHED_IDLEPRIO	4
+
+#define SCHED_RUNTIME_QUEUES	100
+#define SCHED_QUEUES			103
+#define SCHED_QUEUE_ISO			(SCHED_RUNTIME_QUEUES - 2 + SCHED_ISO)
+#define SCHED_QUEUE_NORMAL		(SCHED_RUNTIME_QUEUES - 2 + SCHED_NORMAL)
+#define SCHED_QUEUE_IDLEPRIO	(SCHED_RUNTIME_QUEUES - 2 + SCHED_IDLEPRIO)
+
+#define RR_INTERVAL_DEFAULT		6
+
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
 	struct segframe seg;
@@ -85,7 +99,9 @@ struct proc {
     int quantum_ms;
     u64 cycles;
     
-    struct proc * next_ready;
+    int sched_policy;
+    u64 deadline;
+    struct list_head run_list;
 
     struct priv * priv;
 	endpoint_t endpoint;
@@ -114,11 +130,11 @@ struct proc {
 	int p_parent; /**< pid of parent process */
 };
 
-struct task {
-	task_f	initial_eip;
-	int	stacksize;
-	char	name[32];
-};
+extern struct list_head sched_queues[SCHED_QUEUES];
+extern spinlock_t sched_queues_lock;
+extern bitchunk_t sched_queue_bitmap[];
+
+extern u32 rr_interval_ms;
 
 #define FIRST_PROC		proc_table[0]
 #define LAST_PROC		proc_table[NR_TASKS + NR_PROCS - 1]

@@ -322,6 +322,8 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
             io_apics[i].addr = io_apics[i].vir_addr;
         }
         hpet_addr = hpet_vaddr;
+
+        smp_commence();
     }
 
     PST_UNSET(p, PST_MMINHIBIT);

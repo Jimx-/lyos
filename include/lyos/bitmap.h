@@ -13,32 +13,17 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "lyos/list.h"
+#ifndef _BITMAP_H_
+#define _BITMAP_H_
 
-PUBLIC int list_empty(struct list_head * list)
-{
-    return (list->next == list);
-}
+#define CHAR_BITS           8
+#define BITCHUNK_BITS       (sizeof(bitchunk_t) * CHAR_BITS)
+#define BITCHUNKS(bits)      (((bits)+BITCHUNK_BITS-1)/BITCHUNK_BITS)
 
-PRIVATE inline void __list_add(struct list_head * new, struct list_head * pre, struct list_head * next)
-{
-    new->prev = pre;
-    new->next = next;
-    pre->next = new;
-    next->prev = new;
-}
+#define MAP_CHUNK(map,bit) (map)[((bit)/BITCHUNK_BITS)]
+#define CHUNK_OFFSET(bit) ((bit)%BITCHUNK_BITS)
+#define GET_BIT(map,bit) ( MAP_CHUNK(map,bit) & (1 << CHUNK_OFFSET(bit) ))
+#define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) ))
+#define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) ))
 
-PUBLIC inline void list_add(struct list_head * new, struct list_head * head)
-{
-    __list_add(new, head, head->next);
-}
-
-PUBLIC inline void list_del(struct list_head * node)
-{
-    node->prev->next = node->next;
-    node->next->prev = node->prev;
-
-    node->prev = node;
-    node->next = node;
-}
+#endif
