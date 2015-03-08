@@ -67,9 +67,6 @@ PUBLIC int do_service_up(MESSAGE * msg)
     retval = start_service(psp);
     if (retval) return retval;
 
-    retval = run_service(psp, SERVICE_INIT_FRESH);
-    if (retval) return retval;
-
     psp->flags |= SPF_LATEREPLY;
     psp->caller_e = src;
     psp->caller_request = SERVICE_UP;
@@ -102,6 +99,14 @@ PUBLIC int start_service(struct sproc * sp)
 {
     int retval = create_service(sp);
     if (retval) return retval;
+
+    retval = publish_service(sp);
+    if (retval) return retval;
+
+    retval = run_service(sp, SERVICE_INIT_FRESH);
+    if (retval) return retval;
+
+    return 0;
 }
 
 PUBLIC int create_service(struct sproc * sp)
@@ -160,10 +165,16 @@ PUBLIC int init_service(struct sproc * sp, int init_type)
     return 0;
 }
 
-PUBLIC int announce_service(char * name, endpoint_t serv_ep)
+PUBLIC int publish_service(struct sproc * sp)
 {
     char label[MAX_PATH];
-    sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
-    /* publish the endpoint */
-    return sysfs_publish_u32(label, serv_ep, SF_PRIV_RETRIEVE);
+
+    char * name = strrchr(sp->argv[0], '/');
+    if (!name) name = sp->argv[0];
+    else name++;
+    sprintf(label, SYSFS_SERVICE_DOMAIN_LABEL, name);
+    int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+
+    /*return sysfs_publish_u32(label, serv_ep, SF_PRIV_RETRIEVE); */
+    return retval;
 }

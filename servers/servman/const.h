@@ -8,6 +8,7 @@
 #define SPF_INITIALIZING	0x2
 #define SPF_LATEREPLY		0x4
 
-#define SYSFS_SERVICE_ENDPOINT_LABEL "services.%s.endpoint"
+#define SYSFS_SERVICE_DOMAIN_LABEL "services.%s"
+#define SYSFS_SERVICE_ENDPOINT_LABEL SYSFS_SERVICE_DOMAIN_LABEL ".endpoint"
 
 #endif /* _SERVMAN_CONST_H_ */
