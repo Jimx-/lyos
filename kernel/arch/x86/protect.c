@@ -39,8 +39,6 @@ PUBLIC int syscall_style = 0;
 
 #define PROTECT_DEBUG
 
-PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m);
-
 /* 本文件内函数声明 */
 PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
 
@@ -355,7 +353,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	msg.FAULT_PROC = fault_proc->endpoint;
 	msg.FAULT_ERRCODE = frame->err_code;
 
-	msg_send(fault_proc, TASK_MM, &msg);
+	msg_send(fault_proc, TASK_MM, &msg, IPCF_FROMKERNEL);
 	
 	/* block the process */
 	PST_SET(fault_proc, PST_PAGEFAULT);

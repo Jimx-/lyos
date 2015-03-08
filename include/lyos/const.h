@@ -149,9 +149,13 @@
 #define NR_SIGRETURN	15
 
 /* ipc */
-#define SEND		1
-#define RECEIVE		2
-#define BOTH		3	/* BOTH = (SEND | RECEIVE) */
+#define SEND			1
+#define RECEIVE			2
+#define BOTH			3	/* BOTH = (SEND | RECEIVE) */
+#define SEND_NONBLOCK	4
+
+#define IPCF_FROMKERNEL	0x1
+#define IPCF_NONBLOCK	0x2
 
 /* get/set id requests */
 #define GS_GETUID	1

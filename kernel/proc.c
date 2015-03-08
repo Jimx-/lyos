@@ -38,7 +38,6 @@ PUBLIC struct proc * pick_proc();
 PUBLIC void proc_no_time(struct proc * p);
 
 PRIVATE void idle();
-PUBLIC 	int  msg_send(struct proc* p_to_send, int des, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
 PRIVATE int  has_pending_notify(struct proc * p, endpoint_t src);
 PRIVATE void unset_notify_pending(struct proc * p, int id);
@@ -137,6 +136,9 @@ no_schedule:
 
 	p = arch_switch_to_user();
 
+	/*p->last_cpu = p->cpu;
+	p->cpu = cpuid;*/
+
 	stop_context(proc_addr(KERNEL));
 
 	restart_local_timer();
@@ -197,6 +199,7 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 	MESSAGE * msg = (MESSAGE *)m->SR_MSG;
 
 	int ret = 0;
+	int flags = 0;
 	int caller = p->endpoint;
 	MESSAGE * mla = (MESSAGE * )va2la(caller, msg);
 	mla->source = caller;
@@ -209,11 +212,14 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 		case BOTH:
 			/* fall through */
 		case SEND:
-			ret = msg_send(p, src_dest, msg);
+			ret = msg_send(p, src_dest, msg, flags);
 			if (ret != 0 || function == SEND) break;
 			/* fall through for BOTH */
 		case RECEIVE:
 			ret = msg_receive(p, src_dest, msg);
+			break;
+		case SEND_NONBLOCK:
+			ret = msg_send(p, src_dest, msg, flags | IPCF_NONBLOCK);
 			break;
 		default:
 			ret = EINVAL;
@@ -295,7 +301,7 @@ PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
  * 
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
+PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 {
 	struct proc * sender = p_to_send;
 	struct proc * p_dest = endpt_proc(dest); /* proc dest */
@@ -319,6 +325,8 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m)
 		p_dest->recvfrom = NO_TASK;
 	}
 	else { /* p_dest is not waiting for the msg */
+		if (flags & IPCF_NONBLOCK) return EBUSY;
+		
 		PST_SET(sender, PST_SENDING);
 		sender->sendto = dest;
 		memcpy(&sender->send_msg, m, sizeof(MESSAGE));

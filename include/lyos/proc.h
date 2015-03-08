@@ -112,6 +112,7 @@ struct proc {
 				    * A proc is runnable if state==0
 				    */
 	int cpu;			/* on which cpu this proc runs */
+	int last_cpu;
     
 	MESSAGE send_msg;
 	MESSAGE * recv_msg;
