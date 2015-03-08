@@ -35,6 +35,7 @@
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/spinlock.h>
+#include <lyos/time.h>
 #include "hpet.h"
 #include "div64.h"
 
@@ -190,14 +191,14 @@ PRIVATE u32 hpet_ref_ms(u64 hpet1, u64 hpet2)
     if (hpet2 < hpet1)
         hpet2 += 0x100000000ULL;
     hpet2 -= hpet1;
-    u64 hpet_ms = ((u64)hpet2 * hpet_read(HPET_PERIOD));
+    u64 hpet_ms = ((u64)hpet2 * hpet_readl(HPET_PERIOD));
     do_div(hpet_ms, 1000000);
     do_div(hpet_ms, 1000000);
 
     return (u32)hpet_ms;
 }
 
-#define CAL_MS      100
+#define CAL_MS      50
 #define CAL_LATCH   (TIMER_FREQ / (1000 / CAL_MS))
 PRIVATE int apic_calibrate(unsigned cpu)
 {
@@ -224,25 +225,35 @@ PRIVATE int apic_calibrate(unsigned cpu)
 
     u32 cal_ms = CAL_MS;
     u32 cal_latch = CAL_LATCH;
-    u64 hpet0, hpet1, hpet = is_hpet_enabled();
+    u64 hpet0, hpet1, hpet_expect;
+    u32 hpet = is_hpet_enabled();
 
-    out_byte(0x61, (in_byte(0x61) & 0x02) | 0x01);
-    
-    out_byte(TIMER_MODE, 0xb0);
-    out_byte(TIMER2, cal_latch & 0xff);
-    out_byte(TIMER2, (u8)(cal_latch >> 8));
-
-    if (hpet) hpet0 = hpet_read(HPET_COUNTER);
     read_tsc_64(&tsc0);
     lapic_tctr0 = lapic_read(LAPIC_TIMER_CCR);
 
-    while ((in_byte(0x61) & 0x20) == 0) { }
+    if (hpet) {
+        hpet0 = hpet_readl(HPET_COUNTER);
+        hpet_expect = CAL_MS * FSEC_PER_SEC;
+        do_div(hpet_expect, 1000);
+        do_div(hpet_expect, hpet_readl(HPET_PERIOD));
+        hpet_expect += hpet0;
+        
+        while (hpet_readl(HPET_COUNTER) < hpet_expect) { }
+    } else {
+
+        out_byte(0x61, (in_byte(0x61) & 0x02) | 0x01);
     
-    if (hpet) hpet1 = hpet_read(HPET_COUNTER);
+        out_byte(TIMER_MODE, 0xb0);
+        out_byte(TIMER2, cal_latch & 0xff);
+        out_byte(TIMER2, (u8)(cal_latch >> 8));
+
+        while ((in_byte(0x61) & 0x20) == 0) { }
+        stop_8253_timer();
+    } 
+
+    if (hpet) hpet1 = hpet_readl(HPET_COUNTER);
     read_tsc_64(&tsc1);
     lapic_tctr1 = lapic_read(LAPIC_TIMER_CCR);
-
-    stop_8253_timer();
 
     if (hpet) cal_ms = hpet_ref_ms(hpet0, hpet1);
 
