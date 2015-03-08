@@ -45,7 +45,7 @@ PUBLIC int main()
         }
 
         msg.type = SYSCALL_RET;
-        send_recv(SEND, src, &msg);
+        send_recv(SEND_NONBLOCK, src, &msg);
     }
 
     return 0;

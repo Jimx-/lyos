@@ -61,7 +61,7 @@ PUBLIC int main()
 
         if (msg.RETVAL != SUSPEND) {
             msg.type = SYSCALL_RET;
-            send_recv(SEND, src, &msg);
+            send_recv(SEND_NONBLOCK, src, &msg);
         }
     }
 

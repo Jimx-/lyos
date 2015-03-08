@@ -92,7 +92,7 @@ PUBLIC int main()
 
 		if (reply) {
 			mm_msg.type = SYSCALL_RET;
-			send_recv(SEND, src, &mm_msg);
+			send_recv(SEND_NONBLOCK, src, &mm_msg);
 		}
 	}
 

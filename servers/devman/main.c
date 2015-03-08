@@ -53,7 +53,7 @@ PUBLIC int main(int argc, char * argv[])
             break;
         }
 
-        send_recv(SEND, src, &msg);
+        send_recv(SEND_NONBLOCK, src, &msg);
     }
 
     return 0;
