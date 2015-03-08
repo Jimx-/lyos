@@ -166,6 +166,7 @@ paging_enabled:
 	push	%1			; `.
 	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
+	CLEAR_IF	dword [esp + 40]
 	popad
 	iret
 %endmacro
@@ -221,6 +222,7 @@ hwint07:		; Interrupt routine for irq 7 (printer)
 	push	%1			; `.
 	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
+	CLEAR_IF	dword [esp + 40]
 	popad
 	iret
 %endmacro

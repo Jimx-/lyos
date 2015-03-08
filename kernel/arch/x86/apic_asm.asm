@@ -101,6 +101,7 @@ extern  apic_error_int_handler
 	push	%1			; `.
 	call	irq_handle	;  | 中断处理程序
 	pop	ecx			; /
+	CLEAR_IF	dword [esp + 40]
 	popad
 	iret
 %endmacro
@@ -122,6 +123,7 @@ cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered i
 	call	%1
 	mov eax, dword [lapic_eoi_addr]
 	mov dword [eax], 0
+	CLEAR_IF	dword [esp + 40]
 	popad
 	iret
 %endmacro

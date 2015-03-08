@@ -136,6 +136,7 @@ no_schedule:
 	switch_address_space(p);
 
 	p = arch_switch_to_user();
+
 	stop_context(proc_addr(KERNEL));
 
 	restart_local_timer();

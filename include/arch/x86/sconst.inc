@@ -92,3 +92,9 @@ CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
 	mov esi, [%1 + ESIREG]
 	mov edi, [%1 + EDIREG]
 %endmacro
+
+%macro CLEAR_IF				1
+	mov eax, %1
+	and eax, 0xFFFFFDFF
+	mov %1, eax
+%endmacro

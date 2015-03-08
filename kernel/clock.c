@@ -60,7 +60,7 @@ PRIVATE struct clocksource jiffies_clocksource = {
  * @param irq The IRQ nr, unused here.
  *****************************************************************************/
 PUBLIC int clock_handler(irq_hook_t * hook)
-{	
+{
 #if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
 #endif
