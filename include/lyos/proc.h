@@ -47,29 +47,38 @@
 #define proc_is_runnable(proc) (pst_is_runnable((proc)->state))
 
 #define PST_IS_SET(proc, pst) ((proc)->state & pst)
-#define PST_SET(proc, pst)  do { \
-			 					lock_proc(proc);	\
+#define PST_SET_LOCKED(proc, pst)  do { \
 			 					int prev_pst = (proc)->state; \
 			 					(proc)->state |= (pst); \
 			 					if (pst_is_runnable(prev_pst) && !proc_is_runnable(proc))	\
 			 						dequeue_proc(proc);	\
-			 					unlock_proc(proc);	\
 							} while(0)
-#define PST_SETFLAGS(proc, flags)  do { \
-			 					lock_proc(proc);	\
+#define PST_SET(proc, pst) do { \
+								lock_proc(proc);	\
+								PST_SET_LOCKED(proc, pst); \
+								unlock_proc(proc);	\
+							} while(0)
+#define PST_SETFLAGS_LOCKED(proc, flags)  do { \
 			 					int prev_pst = (proc)->state; \
 			 					(proc)->state = (flags); \
 			 					if (pst_is_runnable(prev_pst) && !proc_is_runnable(proc))	\
 			 						dequeue_proc(proc);	\
-			 					unlock_proc(proc);	\
 							} while(0)
-#define PST_UNSET(proc, pst)  do { \
+#define PST_SETFLAGS(proc, flags)  do { \
 								lock_proc(proc);	\
+								PST_SETFLAGS_LOCKED(proc, flags); \
+								unlock_proc(proc);	\
+							} while(0)
+#define PST_UNSET_LOCKED(proc, pst)  do { \
 								int prev_pst = (proc)->state; \
 			 					(proc)->state &= ~(pst); \
 			 					if (!pst_is_runnable(prev_pst) && proc_is_runnable(proc))	\
 			 						enqueue_proc(proc);	\
-			 					unlock_proc(proc);	\
+							} while(0)
+#define PST_UNSET(proc, pst) do { \
+								lock_proc(proc);	\
+								PST_UNSET_LOCKED(proc, pst); \
+								unlock_proc(proc);	\
 							} while(0)
 
 #define PROC_NAME_LEN	16

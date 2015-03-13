@@ -136,8 +136,8 @@ no_schedule:
 
 	p = arch_switch_to_user();
 
-	/*p->last_cpu = p->cpu;
-	p->cpu = cpuid;*/
+	p->last_cpu = p->cpu;
+	p->cpu = cpuid;
 
 	stop_context(proc_addr(KERNEL));
 
@@ -164,11 +164,11 @@ PRIVATE void idle()
 #if CONFIG_SMP
 	get_cpulocal_var(cpu_is_idle) = 1;
 
-	restart_local_timer();
-	/*if (cpuid == bsp_cpu_id)
+	//restart_local_timer();
+	if (cpuid == bsp_cpu_id)
 		restart_local_timer();
 	else
-		stop_local_timer();*/
+		stop_local_timer();
 
 #else
 	restart_local_timer();
@@ -306,12 +306,17 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 	struct proc * sender = p_to_send;
 	struct proc * p_dest = endpt_proc(dest); /* proc dest */
 	if (p_dest == NULL) return EINVAL;
+	int retval = 0;
+
+	lock_proc(sender);
+	lock_proc(p_dest);
 
 	/* check for deadlock here */
 	if (deadlock(sender->endpoint, dest)) {
 		dump_msg("deadlock sender", m);
 		dump_msg("deadlock receiver", &p_dest->send_msg);
-		return EDEADLK;
+		retval = EDEADLK;
+		goto out;
 	}
 
 	if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
@@ -321,13 +326,16 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 		vir_copy(dest, p_dest->recv_msg, sender->endpoint, m, sizeof(MESSAGE));
 
 		p_dest->recv_msg = 0;
-		PST_UNSET(p_dest, PST_RECEIVING);
+		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
 	}
 	else { /* p_dest is not waiting for the msg */
-		if (flags & IPCF_NONBLOCK) return EBUSY;
+		if (flags & IPCF_NONBLOCK) {
+			retval = EBUSY;
+			goto out;
+		}
 		
-		PST_SET(sender, PST_SENDING);
+		PST_SET_LOCKED(sender, PST_SENDING);
 		sender->sendto = dest;
 		memcpy(&sender->send_msg, m, sizeof(MESSAGE));
 
@@ -345,7 +353,11 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 		sender->next_sending = 0;
 	}
 
-	return 0;
+out:
+	unlock_proc(sender);
+	unlock_proc(p_dest);
+
+	return retval;
 }
 
 /*****************************************************************************
@@ -373,7 +385,9 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 	struct proc* from = NULL; /* from which the message will be fetched */
 	struct proc* prev = NULL;
 	int copyok = 0;
+	int retval = 0;
 
+	lock_proc(who_wanna_recv);
 	/* PST_SENDING is set means that the process failed to send a 
 	 * message in sendrec(BOTH), simply block it.
 	 */
@@ -393,10 +407,10 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		memcpy(m, &msg, sizeof(MESSAGE));
 
 		who_wanna_recv->recv_msg = NULL;
-		PST_UNSET(who_wanna_recv, PST_RECEIVING);
+		PST_UNSET_LOCKED(who_wanna_recv, PST_RECEIVING);
 		who_wanna_recv->recvfrom = NO_TASK;
 
-		return 0;
+		goto out;
 	}
 
 	/* Arrives here if no interrupt for who_wanna_recv. */
@@ -407,6 +421,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		 */
 		if (who_wanna_recv->q_sending) {
 			from = who_wanna_recv->q_sending;
+			lock_proc(from);
 			copyok = 1;
 		}
 	}
@@ -415,7 +430,10 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		 * a certain proc: src.
 		 */
 		from = endpt_proc(src);
-		if (from == NULL) return EINVAL;
+		if (from == NULL) {
+			retval = EINVAL;
+			goto out;
+		}
 
 		if ((PST_IS_SET(from, PST_SENDING)) &&
 		    (from->sendto == who_wanna_recv->endpoint)) {
@@ -436,6 +454,8 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 				prev = p;
 				p = p->next_sending;
 			}
+
+			lock_proc(from);
 		}
 	}
 
@@ -462,9 +482,11 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 		reset_msg(&from->send_msg);
 		from->sendto = NO_TASK;
-		PST_UNSET(from, PST_SENDING);
+		PST_UNSET_LOCKED(from, PST_SENDING);
 
-		return 0;
+		unlock_proc(from);
+
+		goto out;
 	}
 
 no_msg:
@@ -472,12 +494,15 @@ no_msg:
 	/* Set state so that who_wanna_recv will not
 	* be scheduled until it is unblocked.
 	*/
-	PST_SET(who_wanna_recv, PST_RECEIVING);
+	PST_SET_LOCKED(who_wanna_recv, PST_RECEIVING);
 
 	who_wanna_recv->recv_msg = m;
 	who_wanna_recv->recvfrom = src;
 
-	return 0;
+out:
+	unlock_proc(who_wanna_recv);
+
+	return retval;
 }
 
 PRIVATE int has_pending_notify(struct proc * p, endpoint_t src)
@@ -535,6 +560,8 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 	struct proc * p_dest = endpt_proc(dest);
 	if (!p_dest) return EINVAL;
 
+	lock_proc(p_dest);
+
 	if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
 	    (p_dest->recvfrom == p_to_send->endpoint ||
 	     p_dest->recvfrom == ANY)) {
@@ -544,14 +571,16 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 		vir_copy(dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
 
 		p_dest->recv_msg = NULL;
-		PST_UNSET(p_dest, PST_RECEIVING);
+		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
 
+		unlock_proc(p_dest);
 		return 0;
 	}
 
 	/* p_dest is not waiting for this notification, set pending bit */
 	p_dest->priv->notify_pending |= (1 << p_to_send->priv->id);
+	unlock_proc(p_dest);
 	return 0;
 }
 
