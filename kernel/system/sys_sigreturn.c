@@ -36,6 +36,8 @@ PUBLIC int sys_sigreturn(MESSAGE * m, struct proc* p)
 
     vir_copy(KERNEL, &sc, p_dest->endpoint, m->BUF, sizeof(sc));
 
+    lock_proc(p_dest);
+
 #ifdef __i386__
     p_dest->regs.gs = sc.gs;
     p_dest->regs.fs = sc.fs;
@@ -56,6 +58,8 @@ PUBLIC int sys_sigreturn(MESSAGE * m, struct proc* p)
 
     p_dest->seg.trap_style = sc.trap_style;
 #endif
+
+    unlock_proc(p_dest);
 
     return 0;
 }

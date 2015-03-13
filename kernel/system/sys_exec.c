@@ -33,11 +33,14 @@ PUBLIC int sys_exec(MESSAGE * m, struct proc * p_proc)
     struct proc * p = endpt_proc(m->KEXEC_ENDPOINT);
     if (!p) return EINVAL;
 
+    lock_proc(p);
+
     char name[PROC_NAME_LEN];
     memcpy(name, m->KEXEC_NAME, sizeof(name));
     name[sizeof(name) - 1] = '\0';
 
     arch_init_proc(p, m->KEXEC_SP, m->KEXEC_IP, m->KEXEC_PSSTR, m->KEXEC_NAME);
 
+    unlock_proc(p);
     return 0;
 }

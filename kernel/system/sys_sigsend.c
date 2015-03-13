@@ -35,6 +35,9 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     if (!p_dest) return EINVAL;
 
     vir_copy(KERNEL, &si, p->endpoint, m->BUF, sizeof(si));
+    
+    lock_proc(p_dest);
+
 #ifdef __i386__
     si.stackptr = p_dest->regs.esp;
 #endif
@@ -76,6 +79,8 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     p_dest->regs.esp = sfp;
     p_dest->regs.eip = si.sig_handler;
 #endif
+
+    unlock_proc(p_dest);
     
     return 0;
 }

@@ -40,6 +40,8 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
 
     struct proc * parent = proc_addr(parent_slot), * child = proc_addr(child_slot);
 
+    lock_proc(parent);
+
     *child = *parent;
     sprintf(child->name, "%s_%d", parent->name, child_ep);
     child->endpoint = child_ep;
@@ -48,12 +50,14 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     /* child of priv prov, reset its priv structure and block it */
     if (child->priv->flags & PRF_PRIV_PROC) {
         child->priv = NULL;
-        PST_SET(child, PST_NO_PRIV);
+        PST_SET_LOCKED(child, PST_NO_PRIV);
     }
 
-    if (m->FLAGS & KF_MMINHIBIT) PST_SET(child, PST_MMINHIBIT);
+    if (m->FLAGS & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
 
     m->ENDPOINT = child_ep;
+    unlock_proc(parent);
+    unlock_proc(child);
 
     return 0;
 }
