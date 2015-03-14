@@ -97,7 +97,11 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
 
         if (changed) reload_cr3();
 
-        phys_copy((void *)dest_mapped, (void *)src_mapped, chunk);
+        phys_bytes fault_addr = phys_copy((void *)dest_mapped, (void *)src_mapped, chunk);
+
+        if (fault_addr) {
+            return EFAULT;
+        }
 
         len -= chunk;
         src_la += chunk;

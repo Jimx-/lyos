@@ -164,12 +164,12 @@ PRIVATE void idle()
 #if CONFIG_SMP
 	get_cpulocal_var(cpu_is_idle) = 1;
 
-	//restart_local_timer();
-	if (cpuid == bsp_cpu_id)
+	restart_local_timer();
+	/*if (cpuid == bsp_cpu_id)
 		restart_local_timer();
 	else
 		stop_local_timer();
-
+	*/
 #else
 	restart_local_timer();
 #endif
@@ -323,7 +323,8 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 	    (p_dest->recvfrom == sender->endpoint ||
 	     p_dest->recvfrom == ANY)) {
 
-		vir_copy(dest, p_dest->recv_msg, sender->endpoint, m, sizeof(MESSAGE));
+		retval = vir_copy(dest, p_dest->recv_msg, sender->endpoint, m, sizeof(MESSAGE));
+		if (retval != 0) goto out;
 
 		p_dest->recv_msg = 0;
 		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
@@ -337,7 +338,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 		
 		PST_SET_LOCKED(sender, PST_SENDING);
 		sender->sendto = dest;
-		memcpy(&sender->send_msg, m, sizeof(MESSAGE));
+		retval = vir_copy(KERNEL, &sender->send_msg, KERNEL, m, sizeof(MESSAGE));
 
 		/* append to the sending queue */
 		struct proc * p;
@@ -404,7 +405,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		set_notify_msg(who_wanna_recv, &msg, notifier->endpoint);
 
 		unset_notify_pending(who_wanna_recv, notify_id);
-		memcpy(m, &msg, sizeof(MESSAGE));
+		retval = vir_copy(KERNEL, m, KERNEL, &msg, sizeof(MESSAGE));
 
 		who_wanna_recv->recv_msg = NULL;
 		PST_UNSET_LOCKED(who_wanna_recv, PST_RECEIVING);
@@ -478,7 +479,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 		assert(m);
 		/* copy the message */
-		memcpy(m, &from->send_msg, sizeof(MESSAGE));
+		retval = vir_copy(KERNEL, m, KERNEL, &from->send_msg, sizeof(MESSAGE));
 
 		reset_msg(&from->send_msg);
 		from->sendto = NO_TASK;
@@ -559,6 +560,7 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 {
 	struct proc * p_dest = endpt_proc(dest);
 	if (!p_dest) return EINVAL;
+	int retval = 0;
 
 	lock_proc(p_dest);
 
@@ -568,14 +570,14 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 		
 		MESSAGE m;
 		set_notify_msg(p_dest, &m, p_to_send->endpoint);
-		vir_copy(dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
+		retval = vir_copy(dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
 
 		p_dest->recv_msg = NULL;
 		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
 
 		unlock_proc(p_dest);
-		return 0;
+		return retval;
 	}
 
 	/* p_dest is not waiting for this notification, set pending bit */

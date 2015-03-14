@@ -77,6 +77,8 @@ void	hwint13();
 void	hwint14();
 void	hwint15();
 
+PUBLIC void phys_copy_fault();
+PUBLIC void phys_copy_fault_in_kernel();
 PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame);
 
 PUBLIC void init_idt();
@@ -342,8 +344,28 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 
 	printk("\n  CR2(PFLA): 0x%x, CR3: 0x%x\n", pfla, read_cr3());
 #endif
-
 	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
+
+	int in_phys_copy = (frame->eip > (vir_bytes)phys_copy) &&
+						(frame->eip < (vir_bytes)phys_copy_fault);
+	int in_phys_set = 0;	/* not implemented */
+
+	if ((in_kernel || is_kerntaske(fault_proc->endpoint)) && (in_phys_copy || in_phys_set)) {
+		if (in_kernel) {
+			if (in_phys_copy) {
+				frame->eip = phys_copy_fault_in_kernel;
+			}
+		} else {
+			fault_proc->regs.eip = phys_copy_fault;
+			fault_proc->regs.eax = pfla;
+		}
+
+		return;
+	}
+
+	if (in_kernel) {
+		panic("unhandled page fault in kernel");
+	}
 
 	/* inform MM to handle this page fault */
 	MESSAGE msg;
@@ -399,12 +421,13 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 	} else printk("\n");
 #endif
 
-	if (in_kernel) {
-		panic("unhandled exception in kernel");
-	}
-
 	if (frame->vec_no == 14) {
 		page_fault_handler(in_kernel, frame);
+		return;
+	}
+
+	if (in_kernel) {
+		panic("unhandled exception in kernel");
 	}
 }
 

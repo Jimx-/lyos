@@ -58,6 +58,9 @@ global 	reload_cr3
 global  i8259_eoi_master
 global  i8259_eoi_slave
 global  arch_pause
+global  phys_copy
+global  phys_copy_fault
+global  phys_copy_fault_in_kernel
 
 ; ========================================================================
 ;		   void out_byte(u16 port, u8 value);
@@ -372,3 +375,47 @@ arch_pause:
 	pause
 	ret
 	
+phys_copy:
+	push	ebp
+	mov		ebp, esp
+
+	cld
+	push	esi
+	push	edi
+
+	mov		esi, [ebp + 12]
+	mov 	edi, [ebp + 8]
+	mov 	eax, [ebp + 16]
+
+	cmp		eax, 10
+	jb		pc_small
+	; align
+	mov		ecx, esi
+	neg		ecx
+	and		ecx, 3
+	sub		eax, ecx
+
+	rep movsb
+	mov		ecx, eax
+	shr		ecx, 2	; count of dwords
+
+	rep movsd
+	and		eax, 3
+pc_small:
+	xchg	ecx, eax
+
+	rep movsb
+
+	mov		eax, 0
+; kernel sends us here on fault
+phys_copy_fault:
+	pop		edi
+	pop		esi
+	pop		ebp
+	ret
+phys_copy_fault_in_kernel:
+	pop		edi
+	pop		esi
+	pop		ebp
+	mov		eax, cr2
+	ret
