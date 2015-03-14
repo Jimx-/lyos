@@ -79,9 +79,12 @@ void	hwint15();
 
 PUBLIC void phys_copy_fault();
 PUBLIC void phys_copy_fault_in_kernel();
+PUBLIC void copy_user_message_end();
+PUBLIC void copy_user_message_fault();
 PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame);
 
 PUBLIC void init_idt();
+
 
 /*======================================================================*
                             init_prot
@@ -420,6 +423,16 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 		printk(", Error code: %d\n", frame->err_code);
 	} else printk("\n");
 #endif
+
+	if (in_kernel) {
+		if (frame->eip >= (vir_bytes)copy_user_message && 
+			frame->eip <= (vir_bytes)copy_user_message_end) {
+			if (frame->vec_no == 14 || frame->vec_no == 13) {	/* #PF or #GP */
+				frame->eip = copy_user_message_fault;
+				return;
+			}
+		} else panic("copy user messsage failed unexpectedly");
+	}
 
 	if (frame->vec_no == 14) {
 		page_fault_handler(in_kernel, frame);

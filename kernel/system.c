@@ -54,18 +54,24 @@ PUBLIC int set_priv(struct proc * p, int id)
     return 0;
 }
 
-PUBLIC int dispatch_sys_call(int call_nr, MESSAGE * m, struct proc * p_proc)
+PUBLIC int dispatch_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
 {
     int retval;
-    
+    MESSAGE msg;
+
     if (call_nr > NR_SYS_CALLS || call_nr < 0) return EINVAL;
+
+    if (copy_user_message(&msg, m_user) != 0) return EFAULT;
+    msg.source = p_proc->endpoint;
 
     if (sys_call_table[call_nr]) {
         sys_call_handler_t handler = sys_call_table[call_nr];
-        retval = handler(m, p_proc);
+        retval = handler(&msg, p_proc);
     } else {
         return EINVAL;
     }
+
+   if (copy_user_message(m_user, &msg) != 0) return EFAULT;
 
     return retval;
 }

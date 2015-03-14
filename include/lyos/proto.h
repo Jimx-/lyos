@@ -139,6 +139,7 @@ PUBLIC  int getinfo(int request, void* buf);
 PUBLIC  int vmctl(int request, endpoint_t who);
 
 PUBLIC  phys_bytes phys_copy(phys_bytes dest, phys_bytes src, phys_bytes len);
+PUBLIC  int     copy_user_message(MESSAGE * dest, MESSAGE * src);
 #define	phys_set	memset
 
 PUBLIC  int     printk(const char *fmt, ...);

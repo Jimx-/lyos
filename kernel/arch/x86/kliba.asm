@@ -61,6 +61,9 @@ global  arch_pause
 global  phys_copy
 global  phys_copy_fault
 global  phys_copy_fault_in_kernel
+global  copy_user_message
+global  copy_user_message_end
+global  copy_user_message_fault
 
 ; ========================================================================
 ;		   void out_byte(u16 port, u8 value);
@@ -418,4 +421,41 @@ phys_copy_fault_in_kernel:
 	pop		esi
 	pop		ebp
 	mov		eax, cr2
+	ret
+
+; copy a user message of 48 bytes
+copy_user_message:
+	mov 	ecx, [esp + 8]	; src
+	mov 	edx, [esp + 4]	; dest
+
+	mov 	eax, [ecx + 0*4]
+	mov 	[edx + 0*4], eax
+	mov 	eax, [ecx + 1*4]
+	mov 	[edx + 1*4], eax
+	mov 	eax, [ecx + 2*4]
+	mov 	[edx + 2*4], eax
+	mov 	eax, [ecx + 3*4]
+	mov 	[edx + 3*4], eax
+	mov 	eax, [ecx + 4*4]
+	mov 	[edx + 4*4], eax
+	mov 	eax, [ecx + 5*4]
+	mov 	[edx + 5*4], eax
+	mov 	eax, [ecx + 6*4]
+	mov 	[edx + 6*4], eax
+	mov 	eax, [ecx + 7*4]
+	mov 	[edx + 7*4], eax
+	mov 	eax, [ecx + 8*4]
+	mov 	[edx + 8*4], eax
+	mov 	eax, [ecx + 9*4]
+	mov 	[edx + 9*4], eax
+	mov 	eax, [ecx + 10*4]
+	mov 	[edx + 10*4], eax
+	mov 	eax, [ecx + 11*4]
+	mov 	[edx + 11*4], eax
+copy_user_message_end:
+	mov 	eax, 0
+	ret
+; kernel send us here on fault
+copy_user_message_fault:
+	mov 	eax, 1
 	ret
