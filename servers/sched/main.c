@@ -29,7 +29,7 @@
 PUBLIC int main()
 {
     printl("SCHED: Userspace scheduler is running.\n");
-
+    kernel_kill(TASK_SCHED, 1);
     while (TRUE) {
         MESSAGE msg;
 

@@ -75,3 +75,32 @@ PUBLIC int dispatch_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc
 
     return retval;
 }
+
+PUBLIC int send_sig(endpoint_t ep, int signo)
+{
+    struct proc * p = endpt_proc(ep);
+    if (!p) return EINVAL;
+
+    struct priv * priv = p->priv;
+    if (!priv) return ENOENT;
+
+    sigaddset(&priv->sig_pending, signo);
+    msg_notify(proc_addr(SYSTEM), p->endpoint);
+
+    return 0;
+}
+
+PUBLIC void ksig_proc(endpoint_t ep, int signo)
+{
+    struct proc * p = endpt_proc(ep);
+    if (!p) return;
+
+    if (!sigismember(&p->sig_pending, signo)) {
+        sigaddset(&p->sig_pending, signo);
+
+        if (!PST_IS_SET(p, PST_SIGNALED)) {
+            PST_SET(p, PST_SIGNALED | PST_SIG_PENDING);
+            if (send_sig(TASK_PM, SIGKSIG) != 0) panic("sig_proc: send_sig failed");
+        }
+    }
+}

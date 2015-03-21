@@ -109,6 +109,7 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
+#define SYSTEM 			-3
 #define KERNEL 			-2
 #define INTERRUPT		-1
 #define TASK_MM     	0
@@ -130,23 +131,29 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALLS	16
-#define NR_PRINTX	0
-#define NR_SENDREC	1
-#define NR_DATACOPY	2
-#define NR_PRIVCTL	3
-#define NR_GETINFO	4
-#define NR_VMCTL	5
-#define NR_UMAP		6
-#define NR_PORTIO	7
-#define NR_VPORTIO	8
-#define NR_SPORTIO	9
-#define NR_IRQCTL	10
-#define NR_FORK		11
-#define NR_CLEAR	12
-#define NR_EXEC		13
-#define NR_SIGSEND	14
+#define NR_SYS_CALLS	19
+#define NR_PRINTX		0
+#define NR_SENDREC		1
+#define NR_DATACOPY		2
+#define NR_PRIVCTL		3
+#define NR_GETINFO		4
+#define NR_VMCTL		5
+#define NR_UMAP			6
+#define NR_PORTIO		7
+#define NR_VPORTIO		8
+#define NR_SPORTIO		9
+#define NR_IRQCTL		10
+#define NR_FORK			11
+#define NR_CLEAR		12
+#define NR_EXEC			13
+#define NR_SIGSEND		14
 #define NR_SIGRETURN	15
+#define NR_KILL			16
+#define NR_GETKSIG		17
+#define NR_ENDKSIG		18
+
+/* kernel signals */
+#define SIGKSIG		SIGUSR1
 
 /* ipc */
 #define SEND			1
@@ -288,6 +295,7 @@ enum msgtype {
 #define	WHENCE		u.m3.m3i3
 #define SECONDS		u.m3.m3i1
 #define SIGNR		u.m3.m3i1
+#define SIGSET	 	u.m3.m3i1
 #define MASK 		u.m3.m3i1
 #define HOW			u.m3.m3i2
 #define OPTIONS		u.m3.m3i1

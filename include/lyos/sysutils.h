@@ -16,6 +16,7 @@
 #ifndef _SYSUTILS_H_
 #define _SYSUTILS_H_
 
+#include <signal.h>
 #include <lyos/param.h>
     
 #define SYS_CALL_MASK_SIZE  BITCHUNKS(NR_SYS_CALL)
@@ -53,7 +54,11 @@ PUBLIC int      kernel_clear(endpoint_t ep);
 PUBLIC int      kernel_exec(endpoint_t ep, void * sp, char * name, void * ip, struct ps_strings * ps);
 
 PUBLIC int      kernel_sigsend(endpoint_t ep, struct siginfo * si);
+PUBLIC int      kernel_kill(endpoint_t ep, int signo);
 
 PUBLIC int      get_procep(pid_t pid, endpoint_t * ep);
+
+PUBLIC int      get_ksig(endpoint_t * ep, sigset_t * set);
+PUBLIC int      end_ksig(endpoint_t ep);
 
 #endif

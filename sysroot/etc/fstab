@@ -1,2 +1,3 @@
 /dev/hd1a		/		ext2	defaults	1	1
 none			/sys	sysfs	defaults	1	1
+none			/proc	proc	defaults	1	1

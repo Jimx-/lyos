@@ -274,3 +274,19 @@ PRIVATE void check_pending(struct pmproc * pmp)
         }
     }
 }
+
+PUBLIC int process_ksig(endpoint_t target, int signo)
+{
+    struct pmproc * pmp = pm_endpt_proc(target);
+    if (!pmp) return EINVAL;
+
+    if (!(pmp->flags & PMPF_INUSE)) return EINVAL;
+
+    pid_t pid = pmp->pid;
+
+    kill_sig(pmp, pid, signo);
+
+    if (!(pmp->flags & PMPF_INUSE)) return EINVAL;
+
+    return 0;
+}

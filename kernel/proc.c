@@ -102,6 +102,8 @@ PUBLIC void init_proc()
 		memset(priv, 0, sizeof(struct priv));
 		priv->proc_nr = NO_TASK;
 		priv->id = id++;
+
+		sigemptyset(&priv->sig_pending);
 	}
 
 	/* prepare idle process struct */
@@ -136,8 +138,10 @@ no_schedule:
 
 	p = arch_switch_to_user();
 
+#if CONFIG_SMP
 	p->last_cpu = p->cpu;
 	p->cpu = cpuid;
+#endif
 
 	stop_context(proc_addr(KERNEL));
 
@@ -164,12 +168,12 @@ PRIVATE void idle()
 #if CONFIG_SMP
 	get_cpulocal_var(cpu_is_idle) = 1;
 
-	restart_local_timer();
-	/*if (cpuid == bsp_cpu_id)
+	//restart_local_timer();
+	if (cpuid == bsp_cpu_id)
 		restart_local_timer();
 	else
 		stop_local_timer();
-	*/
+	
 #else
 	restart_local_timer();
 #endif
@@ -542,6 +546,10 @@ PRIVATE void set_notify_msg(struct proc * dest, MESSAGE * m, endpoint_t src)
 	case INTERRUPT:
 		m->INTERRUPTS = dest->priv->int_pending;
 		dest->priv->int_pending = 0;
+		break;
+	case SYSTEM:
+		m->SIGSET = dest->priv->sig_pending;
+		sigemptyset(&dest->priv->sig_pending);
 		break;
 	default:
 		break;

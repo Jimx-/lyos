@@ -32,6 +32,7 @@
 #include "const.h"
 
 PRIVATE void pm_init();
+PRIVATE void process_system_notify(MESSAGE * m);
 
 PUBLIC int main(int argc, char * argv[])
 {
@@ -44,6 +45,10 @@ PUBLIC int main(int argc, char * argv[])
         int src = msg.source;
 
         switch (msg.type) {
+        case NOTIFY_MSG:
+            if (src == SYSTEM) 
+                process_system_notify(&msg);
+            break;
         case FORK:
             msg.RETVAL = do_fork(&msg);
             break;
@@ -158,4 +163,30 @@ PRIVATE void pm_init()
     vfs_msg.ENDPOINT = NO_TASK;
     send_recv(BOTH, TASK_FS, &vfs_msg);
     if (vfs_msg.RETVAL != 0) panic("pm_init: bad reply from vfs");
+}
+
+PRIVATE void process_system_notify(MESSAGE * m)
+{
+    sigset_t sigset = m->SIGSET;
+
+    if (sigismember(&sigset, SIGKSIG)) {
+        endpoint_t target;
+        sigset_t sigset;
+        int retval;
+
+        while (TRUE) {
+            get_ksig(&target, &sigset);
+
+            if (target == NO_TASK) break;
+        
+            int signo;
+            for (signo = 0; signo < NSIG; signo++) {
+                if (sigismember(&sigset, signo)) {
+                    retval = process_ksig(target, signo);
+                }
+            }
+
+            if (retval == 0) end_ksig(target);
+        }
+    }
 }

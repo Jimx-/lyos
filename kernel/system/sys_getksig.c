@@ -1,7 +1,4 @@
-/*  
-    (c)Copyright 2011 Jimx
-    
-    This file is part of Lyos.
+/*  This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,42 +12,36 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "lyos/config.h"
+#include "stddef.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include <lyos/service.h>
-#include "libmemfs/libmemfs.h"
+#include "page.h"
+#include <errno.h>
+#include "arch_proto.h"
+#include <lyos/sysutils.h>
 
-PRIVATE int init_procfs();
-
-struct memfs_hooks fs_hooks = {
-};
-
-PUBLIC int main()
+PUBLIC int sys_getksig(MESSAGE * m, struct proc * p_proc)
 {
-    serv_register_init_fresh_callback(init_procfs);
-    serv_init();
+    struct proc * p;
 
-	struct memfs_stat root_stat;
-    root_stat.st_mode = (I_DIRECTORY | 0555);
-    root_stat.st_uid = SU_UID;
-    root_stat.st_gid = 0;
+    for (p = proc_table + NR_TASKS; p < proc_table + NR_PROCS; p++) {
+        if (PST_IS_SET(p, PST_SIGNALED)) {
+            m->ENDPOINT = p->endpoint;
+            m->SIGSET = p->sig_pending;
+            sigemptyset(&p->sig_pending);
+            PST_UNSET(p, PST_SIGNALED);
+            return 0;
+        }
+    }
 
-    return memfs_start("proc", &fs_hooks, &root_stat);
-}
-
-PRIVATE int init_procfs()
-{
-	printl("procfs: procfs is running.\n");
-
+    m->ENDPOINT = NO_TASK;
     return 0;
 }

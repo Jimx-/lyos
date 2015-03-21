@@ -13,22 +13,29 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _PM_PROTO_H_
-#define _PM_PROTO_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "stddef.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "page.h"
+#include <errno.h>
+#include "arch_proto.h"
+#include <lyos/sysutils.h>
 
-PUBLIC pid_t find_free_pid();
-PUBLIC int pm_verify_endpt(endpoint_t ep, int * proc_nr);
-PUBLIC struct pmproc * pm_endpt_proc(endpoint_t ep);
+PUBLIC int sys_endksig(MESSAGE * m, struct proc * p_proc)
+{
+    struct proc * p = endpt_proc(m->ENDPOINT);
+    if (!p) return EINVAL;
 
-PUBLIC int do_fork(MESSAGE * p);
-PUBLIC int do_wait(MESSAGE * p);
-PUBLIC int do_exit(MESSAGE * p);
-PUBLIC int do_sigaction(MESSAGE * p);
-PUBLIC int do_kill(MESSAGE * p);
-PUBLIC int do_getsetid(MESSAGE * p);
-PUBLIC int do_sigprocmask(MESSAGE * p);
-PUBLIC int do_sigsuspend(MESSAGE * p);
+    if (!PST_IS_SET(p, PST_SIG_PENDING)) return EINVAL;
 
-PUBLIC int process_ksig(endpoint_t target, int signo);
+    if (!PST_IS_SET(p, PST_SIGNALED)) PST_UNSET(p, PST_SIG_PENDING);
 
-#endif
+    return 0;
+}

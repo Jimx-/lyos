@@ -41,6 +41,7 @@ PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
  * also
  */
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
+	{SYSTEM, 		"system" 	},
 	{KERNEL,		"kernel"	},
 	{INTERRUPT,		"interrupt"	},
 	{TASK_MM, 		"MM"		},
@@ -76,7 +77,10 @@ PUBLIC	system_call_t	sys_call_table[NR_SYS_CALLS] = {sys_printx,
 												   sys_clear,
 												   sys_exec,
 												   sys_sigsend,
-												   sys_sigreturn};
+												   sys_sigreturn,
+												   sys_kill,
+												   sys_getksig,
+												   sys_endksig};
 												   
 PUBLIC int errno;
 

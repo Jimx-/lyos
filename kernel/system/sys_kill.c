@@ -13,22 +13,31 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _PM_PROTO_H_
-#define _PM_PROTO_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "stddef.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include "page.h"
+#include <errno.h>
+#include "arch_proto.h"
+#include <lyos/sysutils.h>
 
-PUBLIC pid_t find_free_pid();
-PUBLIC int pm_verify_endpt(endpoint_t ep, int * proc_nr);
-PUBLIC struct pmproc * pm_endpt_proc(endpoint_t ep);
+PUBLIC int sys_kill(MESSAGE * m, struct proc * p_proc)
+{
+    endpoint_t target = m->ENDPOINT;
+    int signo = m->SIGNR;
 
-PUBLIC int do_fork(MESSAGE * p);
-PUBLIC int do_wait(MESSAGE * p);
-PUBLIC int do_exit(MESSAGE * p);
-PUBLIC int do_sigaction(MESSAGE * p);
-PUBLIC int do_kill(MESSAGE * p);
-PUBLIC int do_getsetid(MESSAGE * p);
-PUBLIC int do_sigprocmask(MESSAGE * p);
-PUBLIC int do_sigsuspend(MESSAGE * p);
+    if (signo > NSIG) return EINVAL;
+    if (!verify_endpt(target, NULL)) return EINVAL;
+    if (is_kerntaske(target)) return EPERM;
 
-PUBLIC int process_ksig(endpoint_t target, int signo);
+    ksig_proc(target, signo);
 
-#endif
+    return 0;
+}

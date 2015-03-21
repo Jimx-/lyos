@@ -16,6 +16,8 @@
 #ifndef _PRIV_H_
 #define _PRIV_H_
 
+#include <signal.h>
+    
 /* Process privilege structure */
 struct priv {
     int proc_nr;
@@ -26,6 +28,7 @@ struct priv {
 
     priv_map_t notify_pending;
     irq_id_t int_pending;
+    sigset_t sig_pending;
 
     int kernlog_request;
 };

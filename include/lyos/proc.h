@@ -24,17 +24,19 @@
 #include <lyos/endpoint.h>
 
 /* Process State */
-#define PST_BOOTINHIBIT   0x01 	/* this proc is not runnable until SERVMAN has made it */
-#define PST_SENDING   0x02	/* set when proc trying to send */
-#define PST_RECEIVING 0x04	/* set when proc trying to recv */
-#define PST_NO_PRIV	  0x08  /* this proc has no priv structure */
-#define PST_NO_QUANTUM 0x10 /* set when proc has run out of quantum */
-#define PST_PAGEFAULT 0x20  /* set when proc has encounted a page fault */
-#define PST_MMINHIBIT 0x40  /* this proc is not runnable until MM has prepared mem regions for it */
-#define PST_STOPPED   0x80 	/* set when proc is stopped */
-#define PST_FREE_SLOT 0x100	/* set when proc table entry is not used
+#define PST_BOOTINHIBIT   	0x01 	/* this proc is not runnable until SERVMAN has made it */
+#define PST_SENDING   		0x02	/* set when proc trying to send */
+#define PST_RECEIVING 		0x04	/* set when proc trying to recv */
+#define PST_NO_PRIV	  		0x08  /* this proc has no priv structure */
+#define PST_NO_QUANTUM		0x10 /* set when proc has run out of quantum */
+#define PST_PAGEFAULT 		0x20  /* set when proc has encounted a page fault */
+#define PST_MMINHIBIT 		0x40  /* this proc is not runnable until MM has prepared mem regions for it */
+#define PST_STOPPED   		0x80 	/* set when proc is stopped */
+#define PST_FREE_SLOT 		0x100	/* set when proc table entry is not used
 			 * (ok to allocated to a new process)
 			 */
+#define PST_SIGNALED  		0x200	/* set when proc is signaled */
+#define PST_SIG_PENDING 	0x400	/* set when proc has a pending signal */
 
 #define proc_slot(n)	((n) + NR_TASKS)
 #define proc_addr(n)	(&proc_table[(n) + NR_TASKS])
@@ -120,9 +122,11 @@ struct proc {
 				    * process flags.
 				    * A proc is runnable if state==0
 				    */
+#if CONFIG_SMP
 	int cpu;			/* on which cpu this proc runs */
 	int last_cpu;
-    
+#endif
+	
 	MESSAGE send_msg;
 	MESSAGE * recv_msg;
 	int recvfrom;
@@ -138,6 +142,8 @@ struct proc {
 				    */
 
 	int p_parent; /**< pid of parent process */
+
+	sigset_t sig_pending;
 };
 
 extern struct list_head sched_queues[SCHED_QUEUES];

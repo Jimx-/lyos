@@ -97,6 +97,7 @@ PUBLIC  void    direct_cls();
 
 /* system.c */
 PUBLIC  int     set_priv(struct proc * p, int id);
+PUBLIC  void    ksig_proc(endpoint_t ep, int signo);
 
 /* lib/misc.c */
 PUBLIC u32      now();
@@ -127,6 +128,9 @@ PUBLIC  int sys_clear(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_exec(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_sigsend(MESSAGE * m, struct proc* p);
 PUBLIC  int sys_sigreturn(MESSAGE * m, struct proc* p);
+PUBLIC  int sys_kill(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_getksig(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_endksig(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

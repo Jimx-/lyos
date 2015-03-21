@@ -132,8 +132,12 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
 
 PUBLIC void ext2_put_buffer(ext2_buffer_t * pb)
 {
+    if (!pb) return;
+
     if (pb->b_refcnt < 1) {
-        printl("ext2fs: ext2_put_buffer: try to free freed buffer");
+        printl("ext2fs: ext2_put_buffer: try to free freed buffer\n");
+        list_del(&(pb->hash));
+        free(pb);
         return;
     }
 
