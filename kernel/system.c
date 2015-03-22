@@ -33,7 +33,42 @@
 #endif
 #include "lyos/cpulocals.h"
 
-typedef int (*sys_call_handler_t)(MESSAGE * m, struct proc * p_proc);
+PRIVATE  sys_call_handler_t  sys_call_table[NR_SYS_CALLS];
+
+PRIVATE int sys_nosys(MESSAGE * m, struct proc * p_proc)
+{
+    return ENOSYS;
+}
+
+PUBLIC void init_system()
+{
+    int i;
+    for (i = 0; i < NR_SYS_CALLS; i++) {
+        sys_call_table[i] = sys_nosys;
+    }
+
+    sys_call_table[NR_PRINTX] = sys_printx;
+    sys_call_table[NR_SENDREC] = sys_sendrec;
+    sys_call_table[NR_DATACOPY] = sys_datacopy;
+    sys_call_table[NR_PRIVCTL] = sys_privctl;
+    sys_call_table[NR_GETINFO] = sys_getinfo;
+    sys_call_table[NR_VMCTL] = sys_vmctl;
+    sys_call_table[NR_UMAP] = sys_umap;
+    sys_call_table[NR_PORTIO] = sys_portio;
+    sys_call_table[NR_VPORTIO] = sys_vportio;
+#ifdef __i386__
+    sys_call_table[NR_SPORTIO] = sys_sportio;
+#endif
+    sys_call_table[NR_IRQCTL] = sys_irqctl;
+    sys_call_table[NR_FORK] = sys_fork;
+    sys_call_table[NR_CLEAR] = sys_clear;
+    sys_call_table[NR_EXEC] = sys_exec;
+    sys_call_table[NR_SIGSEND] = sys_sigsend;
+    sys_call_table[NR_SIGRETURN] = sys_sigreturn;
+    sys_call_table[NR_KILL] = sys_kill;
+    sys_call_table[NR_GETKSIG] = sys_getksig;
+    sys_call_table[NR_ENDKSIG] = sys_endksig;
+}
 
 PUBLIC int set_priv(struct proc * p, int id)
 {

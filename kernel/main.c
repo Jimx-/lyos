@@ -56,7 +56,7 @@ PUBLIC int kernel_main()
 	init_arch();
     init_sched();
 	init_proc();
-
+    init_system();
 	init_memory();
 	init_irq();
     init_time();

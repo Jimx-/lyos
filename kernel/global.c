@@ -61,26 +61,6 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
 PUBLIC  irq_hook_t	irq_hooks[NR_IRQ_HOOKS];
-
-PUBLIC	system_call_t	sys_call_table[NR_SYS_CALLS] = {sys_printx,
-						       					   sys_sendrec,
-												   sys_datacopy,
-												   sys_privctl,
-												   sys_getinfo,
-												   sys_vmctl,
-												   sys_umap,
-												   sys_portio,
-												   sys_vportio,
-												   sys_sportio,
-												   sys_irqctl,
-												   sys_fork,
-												   sys_clear,
-												   sys_exec,
-												   sys_sigsend,
-												   sys_sigreturn,
-												   sys_kill,
-												   sys_getksig,
-												   sys_endksig};
 												   
 PUBLIC int errno;
 

@@ -70,8 +70,6 @@ typedef struct irq_hook{
 
 typedef	int 	(*irq_handler_t)	(irq_hook_t * irq_hook);
 
-typedef void*	system_call_t;
-
 typedef u16 port_t;
 
 struct hole {
@@ -134,6 +132,9 @@ typedef struct {
 		struct mess5 m5;
 	} u;
 } MESSAGE;
+
+struct proc;
+typedef int (*sys_call_handler_t)(MESSAGE * m, struct proc * p_proc);
 
 struct boot_proc {
 	int proc_nr;

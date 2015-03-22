@@ -55,8 +55,6 @@ extern  struct boot_proc boot_procs[];
 
 EXTERN  int system_hz;
 
-extern system_call_t sys_call_table[NR_SYS_CALLS];
-
 extern  irq_hook_t  irq_hooks[];
 
 extern  int         err_code;
