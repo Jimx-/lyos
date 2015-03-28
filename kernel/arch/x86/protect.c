@@ -95,7 +95,7 @@ PUBLIC void init_prot()
 {
 	if(_cpufeature(_CPUF_I386_SYSENTER))
 		syscall_style |= SST_INTEL_SYSENTER;
-  	if(_cpufeature(_CPUF_I386_SYSCALL))
+  	if(_cpufeature(_CPUF_I386_SYSCALL)) 
 		syscall_style |= SST_AMD_SYSCALL;
 
     /* setup gdt */
@@ -264,6 +264,15 @@ PUBLIC void reload_idt()
 	x86_lidt((u8*)&idt_ptr);
 }
 
+PUBLIC void sys_call_syscall_cpu0();
+PUBLIC void sys_call_syscall_cpu1();
+PUBLIC void sys_call_syscall_cpu2();
+PUBLIC void sys_call_syscall_cpu3();
+PUBLIC void sys_call_syscall_cpu4();
+PUBLIC void sys_call_syscall_cpu5();
+PUBLIC void sys_call_syscall_cpu6();
+PUBLIC void sys_call_syscall_cpu7();
+
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 {
 	struct tss * t = &tss[cpu];
@@ -284,8 +293,31 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 
 	if (syscall_style & SST_INTEL_SYSENTER) {
 		ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, SELECTOR_KERNEL_CS);
-  		ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, t->esp0);
-  		ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);
+		ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, t->esp0);
+		ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);
+	}
+
+	if (syscall_style & SST_AMD_SYSCALL) {
+		u32 msr_lo, msr_hi;
+
+		/* enable SYSCALL in EFER */
+		ia32_read_msr(AMD_MSR_EFER, &msr_hi, &msr_lo);
+		msr_lo |= AMD_EFER_SCE;
+		ia32_write_msr(AMD_MSR_EFER, msr_hi, msr_lo);
+
+#define set_star(forcpu) if (forcpu == cpu) { \
+							ia32_write_msr(AMD_MSR_STAR,					\
+							((u32)SELECTOR_USER_CS << 16) | (u32)SELECTOR_KERNEL_CS, \
+							(u32)sys_call_syscall_cpu ## forcpu); }
+
+		set_star(0);
+		set_star(1);
+		set_star(2);
+		set_star(3);
+		set_star(4);
+		set_star(5);
+		set_star(6);
+		set_star(7);
 	}
 
 	return SELECTOR_TSS(cpu);

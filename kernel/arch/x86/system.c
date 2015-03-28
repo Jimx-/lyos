@@ -100,6 +100,9 @@ PUBLIC void restore_user_context(struct proc * p)
     case KTS_SYSENTER:
         restore_user_context_sysenter(p);
         break;
+    case KTS_SYSCALL:
+        restore_user_context_syscall(p);
+        break;
     default:
         panic("unknown trap type recorded");
     }

@@ -276,9 +276,12 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
         sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
 
-        if (syscall_style & SST_INTEL_SYSENTER) {
+        if (syscall_style & SST_AMD_SYSCALL) {
+            printk("kernel: selecting AMD SYSCALL syscall style\n");
+            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_syscall);
+        } else if (syscall_style & SST_INTEL_SYSENTER) {
             printk("kernel: selecting intel SYSENTER syscall style\n");
-            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
+            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_sysenter);
         } else {
             sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
         }

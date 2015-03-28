@@ -65,6 +65,7 @@ PUBLIC void sys_call_sysenter();
 
 PUBLIC int syscall_int(int syscall_nr, MESSAGE * m);
 PUBLIC int syscall_sysenter(int syscall_nr, MESSAGE * m);
+PUBLIC int syscall_syscall(int syscall_nr, MESSAGE * m);
 
 struct exception_frame {
     reg_t   vec_no;     /* which interrupt vector was triggered */

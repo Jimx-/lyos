@@ -23,6 +23,7 @@ INT_VECTOR_SYS_CALL equ 0x90
 
 global syscall_int
 global syscall_sysenter
+global syscall_syscall
 
 syscall_int:
 	push ebp
@@ -56,6 +57,31 @@ syscall_sysenter:
 
 	sysenter
 .1:
+	pop edi
+	pop esi
+	pop edx
+	pop ecx
+	pop ebx
+	pop ebp
+	pop ebp
+	ret
+
+syscall_syscall:
+	push ebp
+	mov ebp, esp
+
+	push ebp
+	push ebx
+	push ecx
+	push edx
+	push esi
+	push edi
+
+	mov eax, [esp + 28 + 4]		; syscall_nr
+	mov	ebx, [esp + 28 + 8]		; m
+
+	syscall
+
 	pop edi
 	pop esi
 	pop edx

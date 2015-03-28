@@ -27,6 +27,7 @@ extern u32 k_stacks_start, k_stacks_end;
 #define KTS_NONE        0
 #define KTS_INT         1
 #define KTS_SYSENTER    2
+#define KTS_SYSCALL     3
 
 /* syscall style */
 #define SST_INTEL_SYSENTER  1
@@ -36,6 +37,10 @@ extern u32 k_stacks_start, k_stacks_end;
 #define INTEL_MSR_SYSENTER_CS         0x174
 #define INTEL_MSR_SYSENTER_ESP        0x175
 #define INTEL_MSR_SYSENTER_EIP        0x176
+
+#define AMD_EFER_SCE        (1L << 0)   /* SYSCALL/SYSRET enabled */
+#define AMD_MSR_EFER        0xC0000080  /* extended features msr */
+#define AMD_MSR_STAR        0xC0000081  /* SYSCALL params msr */
 
 #define NR_IRQS_LEGACY  16
 #if CONFIG_X86_IO_APIC

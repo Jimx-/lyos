@@ -36,6 +36,7 @@ extern	current
 extern	tss
 extern 	dispatch_sys_call
 extern  usermapped_offset
+extern  percpu_kstack
 bits 32
 
 global pgd0
@@ -80,6 +81,7 @@ global _start	; export _start
 
 global restore_user_context_int
 global restore_user_context_sysenter
+global restore_user_context_syscall
 global sys_call
 global sys_call_sysenter
 
@@ -433,8 +435,21 @@ sys_call_sysenter:
 	mov 	dword [ebp + P_TRAPSTYLE], KTS_SYSENTER
 
 	add 	edx, dword [usermapped_offset]	; edx now points to return address in usermapped area
+sys_call_sysenter_common:
 	mov 	[ebp + EIPREG], edx
     mov 	[ebp + ESPREG], ecx
+
+    mov 	[ebp + DSREG], ds
+	mov 	[ebp + ESREG], es
+	mov 	[ebp + FSREG], fs
+	mov 	[ebp + GSREG], gs
+
+	mov		dx, ss
+	mov 	ds, dx
+	mov 	es, dx
+	mov 	fs, dx
+	mov 	gs, dx
+
     pushf
     pop 	edx
     mov 	[ebp + EFLAGSREG], edx 
@@ -442,6 +457,11 @@ sys_call_sysenter:
     push 	ebp
     push	ebx
 	push 	eax
+
+	push 	ebp
+	call 	stop_context
+	pop 	ebp
+
     call    dispatch_sys_call
 	add		esp, 8 		; esp <- esi(proc ptr)
 	pop 	ebp
@@ -450,6 +470,26 @@ sys_call_sysenter:
 
 	push 	ebp
 	jmp 	switch_to_user
+
+%macro	SYS_CALL_SYSCALL_PER_CPU	1
+global sys_call_syscall_cpu%1
+sys_call_syscall_cpu%1:
+	mov 	edx, ecx 		; return address
+	mov 	ecx, dword [percpu_kstack + 4 * %1]
+	mov 	ebp, [ecx]
+	mov 	dword [ebp + P_TRAPSTYLE], KTS_SYSCALL
+	xchg	ecx, esp
+	jmp 	sys_call_sysenter_common
+%endmacro
+
+SYS_CALL_SYSCALL_PER_CPU	0
+SYS_CALL_SYSCALL_PER_CPU	1
+SYS_CALL_SYSCALL_PER_CPU	2
+SYS_CALL_SYSCALL_PER_CPU	3
+SYS_CALL_SYSCALL_PER_CPU	4
+SYS_CALL_SYSCALL_PER_CPU	5
+SYS_CALL_SYSCALL_PER_CPU	6
+SYS_CALL_SYSCALL_PER_CPU	7
 
 ; ====================================================================================
 ;                                   restore_user_context_int
@@ -475,8 +515,10 @@ restore_user_context_int:
 ; ====================================================================================
 restore_user_context_sysenter:
 	mov ebp, [esp + 4]	; get proc addr
-	mov ax, SELECTOR_USER_DS
-	mov ds, ax
+	mov ds, [ebp + DSREG]
+	mov es, [ebp + ESREG]
+	mov fs, [ebp + FSREG]
+	mov gs, [ebp + GSREG]
 
 	mov edx, [ebp + EIPREG]
 	mov ecx, [ebp + ESPREG]
@@ -487,3 +529,17 @@ restore_user_context_sysenter:
 
 	sti
 	sysexit		; go back to user
+
+restore_user_context_syscall:
+	mov ebp, [esp + 4]	; get proc addr
+	
+	mov edi, [ebp + EFLAGSREG]
+	push edi
+	popf
+
+	mov ecx, [ebp + EIPREG]
+	mov esp, [ebp + ESPREG]
+	mov eax, [ebp + EAXREG]
+
+	sysret
+	

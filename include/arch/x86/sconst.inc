@@ -67,6 +67,7 @@ CONFIG_SMP_MAX_CPUS	equ	8
 KTS_NONE		equ 0
 KTS_INT			equ 1
 KTS_SYSENTER 	equ 2
+KTS_SYSCALL 	equ 3
 
 ; Multiboot stuffs
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries

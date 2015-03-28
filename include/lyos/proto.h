@@ -39,6 +39,7 @@ PUBLIC char *	itoa(char * str, int num);
 PUBLIC void     restore_user_context(struct proc * p);
 PUBLIC void 	restore_user_context_int(struct proc * p);
 PUBLIC void     restore_user_context_sysenter(struct proc * p);
+PUBLIC void     restore_user_context_syscall(struct proc * p);
 
 /* main.c */
 PUBLIC void     finish_bsp_booting();
