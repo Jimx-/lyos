@@ -201,7 +201,13 @@ PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp)
  */
 PUBLIC struct inode * last_dir(char * pathname, struct fproc * fp)
 {
-    char * c = pathname + strlen(pathname);
+    char * c = strrchr(pathname, '/');
+    if (c == NULL) {
+        return fp->pwd;
+    }
+
+    c = pathname + strlen(pathname);
+
     while (*c != '/') {
         c--;
     }

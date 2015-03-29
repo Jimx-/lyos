@@ -77,15 +77,9 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
         err_code = ENOENT;
         return NULL;
     }
-
-    char * lastc = pathname;
-    while (*lastc != '/') {
-        lastc--;
-    }
-    lastc++;
-
+    
     /* try to get the last component */
-    ext2_inode_t * pin = ext2_advance(pin_dir, lastc);
+    ext2_inode_t * pin = ext2_advance(pin_dir, pathname);
     
     if (pin == NULL && err_code == ENOENT) {
         pin = ext2_alloc_inode(pin_dir, mode);
@@ -102,7 +96,7 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
     ext2_rw_inode(pin, DEV_WRITE);
 
     /* create the directory entry */
-    int retval = ext2_search_dir(pin_dir, lastc, &pin->i_num, SD_MAKE,
+    int retval = ext2_search_dir(pin_dir, pathname, &pin->i_num, SD_MAKE,
               pin->i_mode & I_TYPE);
 
     if (retval != 0) {

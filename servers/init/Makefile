@@ -11,4 +11,4 @@ realclean :
 
 $(INIT): main.c
 	@echo -e '\tCC\tservers/init/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $<
+	@$(CC) $(SERVERCFLAGS) -o $@ $< -Xlinker -Ttext -Xlinker 0x30000000

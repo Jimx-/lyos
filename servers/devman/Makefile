@@ -12,7 +12,7 @@ realclean :
 
 $(DEVMAN): $(DEVMANOBJS)
 	@echo -e '\tLD\tservers/devman/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
 
 %.o: %.c
 	@echo -e '\tCC\tservers/devman/$@'

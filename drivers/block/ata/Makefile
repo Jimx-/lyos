@@ -12,7 +12,7 @@ realclean :
 
 $(ATA): $(ATAOBJS)
 	@echo -e '\tLD\tdrivers/block/ata/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/block/ata/$@'
