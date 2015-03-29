@@ -39,8 +39,8 @@ if __name__ == "__main__":
 	mkdir('binutils')
 	push_dir('binutils')
 	os.environ["PKG_CONFIG_LIBDIR"] = ""
-	#configure(BINUTILS_VERSION)
-	#make_and_install()
+	configure(BINUTILS_VERSION)
+	make_and_install()
 	pop_dir()	# binutils
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
@@ -95,8 +95,8 @@ if __name__ == "__main__":
 	pop_dir()
 
 	push_dir('gcc')
-	#make('all-target-libstdc++-v3')
-	#make('install-target-libstdc++-v3')
+	make('all-target-libstdc++-v3')
+	make('install-target-libstdc++-v3')
 	pop_dir()
 
 	# Pass 2
