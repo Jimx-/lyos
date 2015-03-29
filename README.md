@@ -1,12 +1,12 @@
-This is Lyos <http://lyos.googlecode.com>
+This is lyos <https://github.com/Jimx-/lyos>
 
-![loginprompt][1]
+![cmdprompt][1]
 
 WHAT IS LYOS
 ============
-	
+    
 Lyos is an open source microkernel multitasking operating system, it runs
-on 32-bit x86-based PCs, it supports IDE harddisk and floppy disk.
+on 32-bit x86-based PCs.
 
 It is distributed under the GNU General Public License.
 
@@ -16,58 +16,39 @@ Lyos has many standard features:
 
 * Microkernel
     - Kernel only handles message passing, interrupts and task scheduling, other things like reading/writing files, memory managing and device operations are handled by servers.
-    - Servers are single executables(not modules) that are loaded by kernel at boot time,
-    running in user privilege level and their own address space.
-
-
+    - Servers are single executables(not modules) that are loaded by kernel at boot time, running in user privilege level and their own address space.
 * Multitasking
-
-* TTYs
-	- Multi-TTY support
-    
+    - BFS scheduler 
+* Symmetric multiprocessing
+* ELF loading
 * Interprocess Communication
-
-* Device drivers
-	- Hard disk drive support
-    - Ramdisk support
-    - Floppy(under development)
-    
+    - Servers and user programs communicate using fixed length message(40 bytes)
+    - Interrupts are converted into messages and sent to userspace servers
+    - Unix signals
 * Virtual file system
-	- Ext2 filesystem support(under development)
-    
+    - Ext2 filesystem support(under development)
+    - procfs, sysfs...
 * Memory management
-
+    - Virtual memory based
+    - Higher half kernel
+* Userspace
+    - Newlib
+    - Dash, GNU Binutils, gcc...
 
 COMPILATION AND INSTALLATION
 ============================
 
-1. Download the source
-	- You can get the source with git: 
-    ```git clone git://github.com/Jimx-/lyos.git lyos```
-    - If you download the bzip file, unpack it:
-    ```tar -jxvf lyos-0.3.X.tar.bz2```
+1. Get the source ```git clone git://github.com/Jimx-/lyos.git```
 
-2. Setup toolchain
-	- Under the lyos' root directory, run:
-    ``./scripts/setup-toolchain.sh``
+2. Setup toolchain, run ``./scripts/setup-toolchain.sh``
+3. Compile Lyos, run
+    
+    ```make mrproper
+    make menuconfig
+    make```
 
-3. Compile Lyos
-    - Remove all the object files:
-    ```make mrproper```
-    - Configure Lyos:
-    ```make config```
-    or
-    ```make menuconfig```
-    - Build the kernel: ```make```
+4. Create disk image, run```make setup-disk```
 
-4. Create disk image
-	- Create disk image:
-    ```make setup-disk```
+5. Run Lyos with QEMU, run ```make kvm``` 
 
-5. Run Lyos
-	- Get Bochs Emulator at http://bochs.sourceforge.net
-    - Run bochs: ```bochs```
-    - If you want to use qemu instead, run:
-    ```make kvm``` 
-
-  [1]: http://jimx.1x.net/images/screenshot-3.png
+  [1]: http://jimx.1x.net/images/screenshot-6.png

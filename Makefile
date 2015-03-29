@@ -169,7 +169,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
+	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
 
 kvm-debug:
 	@qemu-system-i386 -s -S -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio
