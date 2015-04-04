@@ -122,6 +122,7 @@ PRIVATE void init_mm()
 	vmem_init(vmalloc_start, 
 		VMALLOC_END - vmalloc_start);
 	pt_init();
+	slabs_init();
 
 	__lyos_init();
 

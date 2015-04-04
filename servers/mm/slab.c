@@ -1,0 +1,166 @@
+/*  This file is part of Lyos.
+
+    Lyos is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Lyos is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/config.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "stddef.h"
+#include "errno.h"
+#include "assert.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include <lyos/bitmap.h>
+#include <signal.h>
+#include "region.h"
+#include "proto.h"
+#include "const.h"
+#include <lyos/vm.h>
+#include "global.h"
+
+#define SLABSIZE    200
+#define MINSIZE     8
+#define MAXSIZE     (SLABSIZE + MINSIZE - 1)
+
+struct slabdata;
+
+struct slabheader {
+    struct list_head list;
+    bitchunk_t used_mask[BITCHUNKS(ARCH_PG_SIZE / MINSIZE)];
+    u16 freeguess;
+    u16 used; 
+    phys_bytes phys;
+    struct slabdata * data;
+};
+
+#define DATABYTES   (ARCH_PG_SIZE - sizeof(struct slabheader))
+
+struct slabdata {
+    u8 data[DATABYTES];
+    struct slabheader header;
+};
+
+PRIVATE struct list_head slabs[SLABSIZE];
+
+#define SLAB_INDEX(bytes) (bytes - MINSIZE)
+
+PUBLIC void slabs_init()
+{
+    int i;
+    for (i = 0; i < SLABSIZE; i++) {
+        INIT_LIST_HEAD(&slabs[i]);
+    }
+}
+
+PRIVATE struct slabdata * alloc_slabdata()
+{
+    phys_bytes phys;
+    struct slabdata * sd = (struct slabdata *)alloc_vmem(&phys, ARCH_PG_SIZE);
+    if (!sd) return NULL;
+
+    memset(&sd->header.used_mask, 0, sizeof(sd->header.used_mask));
+    sd->header.used = 0;
+    sd->header.freeguess = 0;
+    INIT_LIST_HEAD(&(sd->header.list));
+    sd->header.phys = phys;
+    sd->header.data = sd;
+
+    return sd;
+}
+
+PUBLIC void * slaballoc(int bytes)
+{
+    if (bytes > MAXSIZE) return NULL;
+
+    struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
+    struct slabdata * sd;
+    struct slabheader * header;
+
+    /* no slab ? */
+    if (list_empty(slab)) {
+        sd = alloc_slabdata();
+        if (!sd) return NULL;
+
+        list_add(&sd->header.list, slab);
+    } 
+
+    int i;
+    int max_objs = DATABYTES / bytes;
+    /* try to find a slab with enough space */
+    list_for_each_entry(header, slab, list) {
+        if (header->used == max_objs) continue;
+
+        for (i = header->freeguess; i < max_objs; i++) {
+            if (!GET_BIT(header->used_mask, i)) {
+                sd = header->data;
+                SET_BIT(header->used_mask, i);
+                header->freeguess = i + 1;
+                header->used++;
+
+                return (void *)&sd->data[i * bytes];
+            }
+        }
+    }
+
+    /* no space left, allocate new */
+    sd = alloc_slabdata();
+    if (!sd) return NULL;
+
+    header = &sd->header;
+    list_add(&header->list, slab);
+
+    for (i = header->freeguess; i < max_objs; i++) {
+        if (!GET_BIT(header->used_mask, i)) {
+            SET_BIT(header->used_mask, i);
+            header->freeguess = i + 1;
+            header->used++;
+
+            return (void *)&sd->data[i * bytes];
+        }
+    }
+
+    return NULL;
+}
+
+PUBLIC void slabfree(void * mem, int bytes)
+{
+    if (bytes > MAXSIZE) return;
+
+    struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
+    struct slabdata * sd;
+    struct slabheader * header;
+
+    /* no slab ? */
+    if (list_empty(slab)) return;
+
+    int max_objs = DATABYTES / bytes;
+    /* find the slab that contains this obj */
+    list_for_each_entry(header, slab, list) {
+        if (header->used == 0) continue;
+        sd = header->data;
+
+        if (((vir_bytes)mem >= (vir_bytes)&sd->data) &&
+         ((vir_bytes)mem < (vir_bytes)(&sd->data + DATABYTES))) {
+            int i = ((vir_bytes)mem - (vir_bytes)&sd->data) / bytes;
+            UNSET_BIT(header->used_mask, i);
+            header->used--;
+            header->freeguess = i;
+        }
+    }
+}

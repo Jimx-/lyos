@@ -4,7 +4,7 @@
 
 MM			= mm
 MMOBJS 		= main.o fork.o pagetable.o alloc.o region.o vmalloc.o brk.o \
-			pagefault.o misc.o mmap.o global.o utils.o
+			pagefault.o misc.o mmap.o global.o utils.o slab.o
 LIBS 		= -lexec -llyos 
 
 everything : realclean $(MM)
@@ -14,7 +14,7 @@ realclean :
 
 $(MM): $(MMOBJS)
 	@echo -e '\tLD\tservers/mm/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 arch/$(ARCH)/arch-mm.o:
 	@(cd arch/$(ARCH)/; make)

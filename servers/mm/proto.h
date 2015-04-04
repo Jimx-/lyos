@@ -32,6 +32,10 @@ PUBLIC int  alloc_vmem(phys_bytes * phys_addr, int memsize);
 PUBLIC int alloc_vmpages(int nr_pages);
 PUBLIC int  free_vmem(int base, int len);
 
+PUBLIC void slabs_init();
+PUBLIC void * slaballoc(int bytes);
+PUBLIC void slabfree(void * mem, int bytes);
+
 PUBLIC void pt_init();
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags);
 PUBLIC int pt_mappage(pgdir_t * pgd, void * phys_addr, void * vir_addr, u32 flags);
