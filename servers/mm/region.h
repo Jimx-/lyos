@@ -24,8 +24,8 @@
 struct phys_frame {
     void * phys_addr;
 
-    u32 refcnt;
-    u32 flags;
+    u8 refcnt;
+    u8 flags;
 
     struct phys_frame * share;
 };
@@ -34,7 +34,7 @@ struct phys_frame {
  * Physical memory region
  */
 struct phys_region {
-    struct phys_frame * frames;
+    struct phys_frame ** frames;
 
     int capacity;
 };

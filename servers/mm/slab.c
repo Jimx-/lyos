@@ -83,10 +83,13 @@ PRIVATE struct slabdata * alloc_slabdata()
 
     return sd;
 }
-
+void mark(){}
 PUBLIC void * slaballoc(int bytes)
 {
-    if (bytes > MAXSIZE) return NULL;
+    if (bytes > MAXSIZE) {
+        printl("mm: slaballoc: too big(%d bytes)\n", bytes);
+        return NULL;
+    }
 
     struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
     struct slabdata * sd;
@@ -116,8 +119,19 @@ PUBLIC void * slaballoc(int bytes)
                 return (void *)&sd->data[i * bytes];
             }
         }
-    }
 
+        for (i = 0; i < header->freeguess; i++) {
+            if (!GET_BIT(header->used_mask, i)) {
+                sd = header->data;
+                SET_BIT(header->used_mask, i);
+                header->freeguess = i + 1;
+                header->used++;
+
+                return (void *)&sd->data[i * bytes];
+            }
+        }
+    }
+mark();
     /* no space left, allocate new */
     sd = alloc_slabdata();
     if (!sd) return NULL;
@@ -125,7 +139,7 @@ PUBLIC void * slaballoc(int bytes)
     header = &sd->header;
     list_add(&header->list, slab);
 
-    for (i = header->freeguess; i < max_objs; i++) {
+    for (i = 0; i < max_objs; i++) {
         if (!GET_BIT(header->used_mask, i)) {
             SET_BIT(header->used_mask, i);
             header->freeguess = i + 1;
@@ -156,11 +170,12 @@ PUBLIC void slabfree(void * mem, int bytes)
         sd = header->data;
 
         if (((vir_bytes)mem >= (vir_bytes)&sd->data) &&
-         ((vir_bytes)mem < (vir_bytes)(&sd->data + DATABYTES))) {
+         ((vir_bytes)mem < (vir_bytes)&sd->data + DATABYTES)) {
             int i = ((vir_bytes)mem - (vir_bytes)&sd->data) / bytes;
             UNSET_BIT(header->used_mask, i);
             header->used--;
             header->freeguess = i;
+            return;
         }
     }
 }

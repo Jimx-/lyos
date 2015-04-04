@@ -39,21 +39,26 @@
  */
 PRIVATE void phys_region_free(struct phys_region * rp)
 {
-    free_vmem((int)(rp->frames), rp->capacity * sizeof(struct phys_frame));
+    int i;
+    for (i = 0; i < rp->capacity; i++) {
+        if (rp->frames[i] != NULL) SLABFREE(rp->frames[i]);
+    }
+
+    free_vmem((int)(rp->frames), rp->capacity * sizeof(struct phys_frame *));
     rp->capacity = 0;
 }
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity)
 {
-    int alloc_size = capacity * sizeof(struct phys_frame);
+    int alloc_size = capacity * sizeof(struct phys_frame *);
     if (alloc_size % PG_SIZE != 0) {
         alloc_size = (alloc_size / PG_SIZE + 1) * PG_SIZE;
-        capacity = alloc_size / sizeof(struct phys_frame);
+        capacity = alloc_size / sizeof(struct phys_frame *);
     }
 
     if (rp->capacity != 0) phys_region_free(rp);
 
-    rp->frames = (struct phys_frame *)alloc_vmem(NULL, alloc_size);
+    rp->frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size);
     if (rp->frames == NULL) return ENOMEM;
     memset(rp->frames, 0, alloc_size);
     rp->capacity = capacity;
@@ -63,17 +68,17 @@ PUBLIC int phys_region_init(struct phys_region * rp, int capacity)
 
 PRIVATE int phys_region_realloc(struct phys_region * rp, int new_capacity)
 {
-    int alloc_size = new_capacity * sizeof(struct phys_frame);
+    int alloc_size = new_capacity * sizeof(struct phys_frame *);
     if (alloc_size % PG_SIZE != 0) {
         alloc_size = (alloc_size / PG_SIZE + 1) * PG_SIZE;
-        new_capacity = alloc_size / sizeof(struct phys_frame);
+        new_capacity = alloc_size / sizeof(struct phys_frame *);
     }
 
-    struct phys_frame * new_frames = (struct phys_frame *)alloc_vmem(NULL, alloc_size);
+    struct phys_frame * new_frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size);
     if (new_frames == NULL) return ENOMEM;
 
-    memcpy(new_frames, rp->frames, rp->capacity * sizeof(struct phys_frame));
-    free_vmem((int)(rp->frames), rp->capacity * sizeof(struct phys_frame));
+    memcpy(new_frames, rp->frames, rp->capacity * sizeof(struct phys_frame *));
+    free_vmem((int)(rp->frames), rp->capacity * sizeof(struct phys_frame *));
     rp->frames = new_frames;
     rp->capacity = new_capacity;
 
@@ -88,16 +93,26 @@ PRIVATE int phys_region_extend_up_to(struct phys_region * rp, int new_capacity)
 
 PRIVATE int phys_region_right_shift(struct phys_region * rp, int new_start)
 {
-    struct phys_frame * start = &(rp->frames[new_start]);
-    memmove(start, rp->frames, (rp->capacity - new_start) * sizeof(struct phys_frame));
-    memset(rp->frames, 0, new_start * sizeof(struct phys_frame));
+    struct phys_frame ** start = &(rp->frames[new_start]);
+    memmove(start, rp->frames, (rp->capacity - new_start) * sizeof(struct phys_frame *));
+    memset(rp->frames, 0, new_start * sizeof(struct phys_frame *));
 
     return 0;
 }
 
 PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
 {
-    return &(rp->frames[i]);
+    struct phys_frame * pf = rp->frames[i];
+    
+    if (pf == NULL) {
+        SLABALLOC(pf);
+        if (!pf) return NULL;
+
+        memset(pf, 0, sizeof(*pf));
+        rp->frames[i] = pf;
+    }
+
+    return pf;
 }
 
 /**
@@ -109,7 +124,10 @@ PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
  */
 PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags)
 {
-    struct vir_region * region = (struct vir_region *)alloc_vmem(NULL, sizeof(struct vir_region));
+    struct vir_region * region;
+
+    SLABALLOC(region);
+    if (!region) return NULL;
 
 #if REGION_DEBUG
     printl("MM: region_new: allocated memory for virtual region at 0x%x\n", (int)region);
@@ -378,8 +396,7 @@ PUBLIC int region_free(struct vir_region * rp)
     }
 
     if (free_frames) phys_region_free(pregion);
-    free_vmem((int)rp, sizeof(struct vir_region));
-    rp = NULL;
+    SLABFREE(rp);
 
     return 0;
 }

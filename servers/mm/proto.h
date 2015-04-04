@@ -35,6 +35,8 @@ PUBLIC int  free_vmem(int base, int len);
 PUBLIC void slabs_init();
 PUBLIC void * slaballoc(int bytes);
 PUBLIC void slabfree(void * mem, int bytes);
+#define SLABALLOC(p) do { p = slaballoc(sizeof(*p)); } while(0)
+#define SLABFREE(p) do { slabfree(p, sizeof(*p)); p = NULL; } while(0)
 
 PUBLIC void pt_init();
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags);
