@@ -65,6 +65,7 @@ PRIVATE void	tty_do_write	(TTY* tty, MESSAGE* msg);
 PRIVATE void 	tty_do_ioctl(TTY* tty, MESSAGE* msg);
 PRIVATE void 	tty_do_kern_log();
 PRIVATE void	tty_echo	(TTY* tty, char c);
+PRIVATE void	tty_sigproc (TTY * tty, int signo);
 PRIVATE void	put_key		(TTY* tty, u32 key);
 
 
@@ -276,6 +277,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 			}
 
 			if (signo > 0) {
+				tty_sigproc(tty, signo);
 				continue;
 			}
 		}
@@ -561,4 +563,20 @@ PRIVATE void tty_echo(TTY* tty, char c)
 {
 	if (!(tty->tty_termios.c_lflag & ECHO)) return;
 	tty->tty_echo(tty, c);
+}
+
+/*****************************************************************************
+ *                                tty_sigproc
+ *****************************************************************************/
+/**
+ * Send a signal to control proc.
+ *
+ *****************************************************************************/
+PRIVATE void tty_sigproc(TTY * tty, int signo)
+{
+	endpoint_t ep;
+	if (get_procep(tty->tty_pgrp, &ep) != 0) return;
+
+	int retval;
+	if ((retval = kernel_kill(ep, signo)) != 0) panic("unable to send signal(%d)", retval);
 }

@@ -181,20 +181,78 @@ int getpid()
 
 pid_t getppid(void)
 {
-	//printf("getppid: not implemented\n");
-	return INIT;
+	MESSAGE msg;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_GETPPID;
+    
+    cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+	//assert(msg.type == SYSCALL_RET);
+
+	return msg.PID;
 }
 
 pid_t getpgid(pid_t pid)
 {
-	//printf("getpgid: not implemented\n");
-	return INIT;
+	MESSAGE msg;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_GETPGID;
+	msg.PID 	= pid;
+    
+    cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+	//assert(msg.type == SYSCALL_RET);
+
+	return msg.PID;
+}
+
+pid_t setsid(void)
+{
+	MESSAGE msg;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_SETSID;
+
+    cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+
+	return msg.PID;
 }
 
 int setpgid(pid_t pid, pid_t pgid)
 {
-	//printf("setpgid: not implemented\n");
-	return 0;
+	pid_t _pid, _pgid, cpid;
+
+	_pid = pid;
+	_pgid = pgid;
+
+	/* Who are we? */
+	cpid = getpid();
+
+	/* if zero, means current process. */
+	if (_pid == 0) {
+		_pid = cpid;
+	}
+
+	/* if zero, means given pid. */
+	if (_pgid == 0) {
+		_pgid = _pid;
+	}
+
+	/* right now we only support the equivalent of setsid(), which is
+	 * setpgid(0,0) */
+	if ((_pid != cpid) || (_pgid != cpid)) {
+	    errno = EINVAL;
+	    return -1;
+	}
+
+	if (setsid() == cpid) {
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 pid_t getpgrp(void)
@@ -1028,7 +1086,8 @@ int tcsetattr(int fd, int actions, struct termios * tio) {
 
 int tcsetpgrp(int fd, pid_t pgrp)
 {
-	return ioctl(fd, TIOCSPGRP, &pgrp);
+	pid_t s = pgrp;
+	return ioctl(fd, TIOCSPGRP, &s);
 }
 
 pid_t tcgetpgrp(int fd)

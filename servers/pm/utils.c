@@ -44,7 +44,7 @@ PUBLIC pid_t find_free_pid()
         used = 0;
         pid = pid < NR_PIDS ? pid + 1 : INIT_PID + 1;
         for (pmp = &pmproc_table[0]; pmp < &pmproc_table[NR_PROCS]; pmp++) {
-            if (pmp->pid == pid) {
+            if (pmp->pid == pid || pmp->procgrp == pid) {
                 used = 1;
                 break;
             }            

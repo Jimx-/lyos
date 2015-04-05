@@ -34,7 +34,7 @@
 PUBLIC int do_getsetid(MESSAGE * p)
 {
     int retval = 0;
-    struct pmproc * pmp = pm_endpt_proc(p->source);
+    struct pmproc * pmp = pm_endpt_proc(p->source), * pmpi;
     if (!pmp) return EINVAL;
     uid_t uid;
     gid_t gid;
@@ -50,6 +50,12 @@ PUBLIC int do_getsetid(MESSAGE * p)
     case GS_GETPID:
         p->PID = pmp->pid;
         break;
+    case GS_GETPPID:
+        pmpi = pm_endpt_proc(pmp->parent);
+        if (pmpi == NULL) panic("proc invalid parent");
+
+        p->PID = pmpi->pid;
+        break; 
     case GS_GETUID:
         retval = pmp->realuid;
         break;
@@ -64,6 +70,21 @@ PUBLIC int do_getsetid(MESSAGE * p)
         break; 
     case GS_GETPGRP:
         p->PID = pmp->procgrp;
+        break;
+    case GS_GETPGID:
+        if (p->PID == 0) {
+            p->PID = pmp->procgrp;
+            break;
+        }
+
+        retval = ESRCH;
+        for (pmpi = &pmproc_table[0]; pmpi < &pmproc_table[NR_PROCS]; pmpi++) {
+            if (pmpi->pid == p->PID) {
+                p->PID = pmpi->procgrp;
+                retval = 0;
+                break;
+            }
+        }
         break;
         
     case GS_SETUID:
@@ -97,6 +118,17 @@ PUBLIC int do_getsetid(MESSAGE * p)
         tell_vfs = 1;
         break;
 
+    case GS_SETSID:
+        if (pmp->procgrp == pmp->pid) {
+            m.PID = -1;
+            retval = EPERM;
+            break;
+        }
+
+        pmp->procgrp = pmp->pid;
+        m.PID = pmp->procgrp;
+
+        break;
     default:
         retval = EINVAL;
         break;

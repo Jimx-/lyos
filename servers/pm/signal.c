@@ -229,6 +229,8 @@ PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo)
 
         if (dest > 0 && dest != p_dest->pid) continue;
         if (dest == -1 && dest <= INIT) continue;
+        if (dest == 0 && p_dest->procgrp != pmp->procgrp) continue;
+        if (dest < -1 && p_dest->procgrp != -dest) continue;
 
         /* check permission */
         if (pmp->effuid != SU_UID &&
@@ -283,6 +285,14 @@ PUBLIC int process_ksig(endpoint_t target, int signo)
     if (!(pmp->flags & PMPF_INUSE)) return EINVAL;
 
     pid_t pid = pmp->pid;
+
+    switch (signo) {
+    case SIGINT:
+        pid = 0;
+        break;
+    default:
+        break;
+    }
 
     kill_sig(pmp, pid, signo);
 

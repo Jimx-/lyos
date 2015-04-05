@@ -135,7 +135,7 @@ PRIVATE void pm_init()
         pmp->flags = 0;
         if (bp->proc_nr == INIT) {
             pmp->parent = INIT;
-            pmp->pid = INIT_PID;
+            pmp->pid = pmp->procgrp = INIT_PID;
         } else {
             if (bp->proc_nr == TASK_SERVMAN)
                 pmp->parent = INIT;
