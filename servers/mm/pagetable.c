@@ -221,14 +221,14 @@ PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int len
 PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
-    if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if ((vir_bytes)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
     if (length % PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
     
     while (1) {
         pt_wppage(pgd, vir_addr);
 
         length -= PG_SIZE;
-        vir_addr = (void *)((int)vir_addr + PG_SIZE);
+        vir_addr = (void *)((vir_bytes)vir_addr + PG_SIZE);
         if (length <= 0) break;
     }
 

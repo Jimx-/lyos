@@ -463,7 +463,8 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 				frame->eip = copy_user_message_fault;
 				return;
 			}
-		} else panic("copy user messsage failed unexpectedly");
+			else panic("copy user messsage failed unexpectedly");
+		}
 	}
 
 	if (frame->vec_no == 14) {

@@ -45,6 +45,8 @@ struct phys_region {
 struct vir_region {
     struct list_head list;
 
+    struct mmproc * parent;
+    
     void * vir_addr;
     int length;
     struct phys_region phys_block;  /*<- physical memory block */

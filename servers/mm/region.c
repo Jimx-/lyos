@@ -41,7 +41,9 @@ PRIVATE void phys_region_free(struct phys_region * rp)
 {
     int i;
     for (i = 0; i < rp->capacity; i++) {
-        if (rp->frames[i] != NULL) SLABFREE(rp->frames[i]);
+        if (rp->frames[i] != NULL) {
+            if (rp->frames[i]->refcnt <= 0) SLABFREE(rp->frames[i]);
+        }
     }
 
     free_vmem((int)(rp->frames), rp->capacity * sizeof(struct phys_frame *));
@@ -111,6 +113,13 @@ PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
         memset(pf, 0, sizeof(*pf));
         rp->frames[i] = pf;
     }
+
+    return pf;
+}
+
+PRIVATE struct phys_frame * phys_region_set(struct phys_region * rp, int i, struct phys_frame * pf)
+{
+    rp->frames[i] = pf;
 
     return pf;
 }
@@ -269,17 +278,15 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
 PUBLIC int region_wp(struct mmproc * mmp, struct vir_region * rp)
 {
     pt_wp_memory(&(mmp->pgd), rp->vir_addr, rp->length);
-/*
+
     struct phys_region * pregion = &(rp->phys_block);
     int i;
 
     for (i = 0; i < rp->length / PG_SIZE; i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
-        frame->flags |= ~RF_WRITEPROTECTED;
+        frame->flags &= ~RF_WRITABLE;
     }
 
-    rp->flags &= ~RF_MAPPED;
-*/
     return 0;
 }
 
@@ -356,7 +363,8 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
     return retval;
 }
 
-PUBLIC int region_share(struct vir_region * dest, struct vir_region * src)
+PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
+                            struct mmproc * p_src, struct vir_region * src)
 {
     int i;
 
@@ -365,16 +373,18 @@ PUBLIC int region_share(struct vir_region * dest, struct vir_region * src)
     dest->flags = src->flags;
 
     struct phys_region * pregion = &(src->phys_block);
+    phys_region_init(&dest->phys_block, src->length / ARCH_PG_SIZE);
     for (i = 0; i < src->length / PG_SIZE; i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
-        if (frame->refcnt) frame->refcnt++;
-        frame->flags |= RF_SHARED;
+        if (frame->refcnt) {
+            frame->refcnt++;
+            frame->flags |= RF_SHARED;
+            phys_region_set(&dest->phys_block, i, frame);
+        }
     }
 
-    phys_region_free(&(dest->phys_block));
-
-    dest->phys_block.capacity = pregion->capacity;
-    dest->phys_block.frames = pregion->frames;
+    region_wp(p_src, src);
+    region_wp(p_dest, dest);
 
     return 0;
 }
@@ -382,20 +392,16 @@ PUBLIC int region_share(struct vir_region * dest, struct vir_region * src)
 PUBLIC int region_free(struct vir_region * rp)
 {
     struct phys_region * pregion = &(rp->phys_block);
-    int free_frames = 1;
+
     int i;
     for (i = 0; i < rp->length / PG_SIZE; i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
         if (frame->refcnt) frame->refcnt--;
 
-        if (frame->refcnt <= 0) {
-            if (frame->phys_addr) free_mem((int)(frame->phys_addr), PG_SIZE);
-        } else {
-            free_frames = 0;
-        }
+        if (frame->phys_addr) free_mem((int)(frame->phys_addr), PG_SIZE);
     }
 
-    if (free_frames) phys_region_free(pregion);
+    phys_region_free(pregion);
     SLABFREE(rp);
 
     return 0;

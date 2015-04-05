@@ -66,7 +66,8 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
 PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
-PUBLIC int region_share(struct vir_region * dest, struct vir_region * src);
+PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
+                            struct mmproc * p_src, struct vir_region * src);
 PUBLIC int region_free(struct vir_region * rp);
 
 PUBLIC int proc_free(struct mmproc * p);

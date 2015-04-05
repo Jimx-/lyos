@@ -82,7 +82,7 @@ PUBLIC int do_fork()
 
        		data_copy(child_ep, new_region->vir_addr, parent_ep, vr->vir_addr, vr->length);
        	} else {	/* can be shared */
-       		region_share(new_region, vr);
+       		region_share(mmp, new_region, mmparent, vr);
        		region_map_phys(mmp, new_region);
        	}
     }
