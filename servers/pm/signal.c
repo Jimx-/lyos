@@ -211,6 +211,8 @@ PUBLIC void sig_proc(struct pmproc * p_dest, int signo)
     } else if (!bad_ignore && sigismember(&ign_set, signo)) {
         return;
     }
+
+    exit_proc(p_dest, 0);
 }
 
 PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo)

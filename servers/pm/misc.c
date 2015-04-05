@@ -39,9 +39,9 @@ PUBLIC int do_getsetid(MESSAGE * p)
     uid_t uid;
     gid_t gid;
     int tell_vfs = 0;
-    MESSAGE m;
+    MESSAGE msg2fs;
 
-    memset(&m, 0, sizeof(MESSAGE));
+    memset(&msg2fs, 0, sizeof(MESSAGE));
 
     switch (p->REQUEST) {
     case GS_GETEP:
@@ -94,11 +94,11 @@ PUBLIC int do_getsetid(MESSAGE * p)
         
         pmp->realuid = pmp->effuid = uid;
 
-        m.type = PM_VFS_GETSETID;
-        m.u.m3.m3i3 = GS_SETUID;
-        m.ENDPOINT = p->source;
-        m.UID = pmp->realuid;
-        m.EUID = pmp->effuid;
+        msg2fs.type = PM_VFS_GETSETID;
+        msg2fs.u.m3.m3i3 = GS_SETUID;
+        msg2fs.ENDPOINT = p->source;
+        msg2fs.UID = pmp->realuid;
+        msg2fs.EUID = pmp->effuid;
 
         tell_vfs = 1;
         break;
@@ -109,24 +109,24 @@ PUBLIC int do_getsetid(MESSAGE * p)
         
         pmp->realgid = pmp->effgid = gid;
 
-        m.type = PM_VFS_GETSETID;
-        m.u.m3.m3i3 = GS_SETGID;
-        m.ENDPOINT = p->source;
-        m.GID = pmp->realgid;
-        m.EGID = pmp->effgid;
+        msg2fs.type = PM_VFS_GETSETID;
+        msg2fs.u.m3.m3i3 = GS_SETGID;
+        msg2fs.ENDPOINT = p->source;
+        msg2fs.GID = pmp->realgid;
+        msg2fs.EGID = pmp->effgid;
 
         tell_vfs = 1;
         break;
 
     case GS_SETSID:
         if (pmp->procgrp == pmp->pid) {
-            m.PID = -1;
+            p->PID = -1;
             retval = EPERM;
             break;
         }
 
         pmp->procgrp = pmp->pid;
-        m.PID = pmp->procgrp;
+        p->PID = pmp->procgrp;
 
         break;
     default:
@@ -135,7 +135,7 @@ PUBLIC int do_getsetid(MESSAGE * p)
     }
 
     if (tell_vfs) {
-        send_recv(SEND, TASK_FS, &m);
+        send_recv(SEND, TASK_FS, &msg2fs);
         return SUSPEND;
     }
 

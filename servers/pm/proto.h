@@ -29,6 +29,8 @@ PUBLIC int do_getsetid(MESSAGE * p);
 PUBLIC int do_sigprocmask(MESSAGE * p);
 PUBLIC int do_sigsuspend(MESSAGE * p);
 
+PUBLIC void exit_proc(struct pmproc * pmp, int status);
+
 PUBLIC int process_ksig(endpoint_t target, int signo);
 
 #endif

@@ -344,14 +344,12 @@ PUBLIC void keyboard_read(TTY* tty)
 			int raw_code = key & MASK_RAW;
 			switch(raw_code) {
 			case UP:
-				if ((key & FLAG_SHIFT_L) ||
-				    (key & FLAG_SHIFT_R)) {	/* Shift + Up */
+				if (shift_l || shift_r) {	/* Shift + Up */
 					scroll_screen((CONSOLE *)tty->tty_dev, SCR_DN);
 				}
 				break;
 			case DOWN:
-				if ((key & FLAG_SHIFT_L) ||
-			 	   (key & FLAG_SHIFT_R)) {	/* Shift + Down */
+				if (shift_l || shift_r) {	/* Shift + Down */
 					scroll_screen((CONSOLE *)tty->tty_dev, SCR_UP);
 				}
 				break;

@@ -249,6 +249,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 				tty->tty_escaped = 0;
 				put_key(tty, key);
 				tty_echo(tty, key);
+				continue;
 			}
 			
 			/* LNEXT (^V) to escape the next character? */
@@ -256,6 +257,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 				tty->tty_escaped = 1;
 				tty_echo(tty, '^');
 				tty_echo(tty, 'V');
+				continue;
 			}
 		}
 
@@ -266,7 +268,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 		} else if (key == '\n') {
 			if (tty->tty_termios.c_iflag & INLCR) key = '\r';
 		}
-
+		
 		if (tty->tty_termios.c_lflag & ISIG) {
 			int signo = 0;
 
@@ -274,6 +276,10 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 				signo = SIGINT;
 				tty_echo(tty, '^');
 				tty_echo(tty, 'C');
+			} else if (key == tty->tty_termios.c_cc[VQUIT]) {
+				signo = SIGQUIT;
+				tty_echo(tty, '^');
+				tty_echo(tty, '\\');
 			}
 
 			if (signo > 0) {

@@ -44,6 +44,8 @@ PUBLIC int do_fork(MESSAGE * p)
 {
     int child_slot = 0, n = 0;
     endpoint_t parent_ep = p->source, child_ep;
+    struct pmproc * pm_parent = pm_endpt_proc(parent_ep);
+    if (!pm_parent) return EINVAL;
 
     if (procs_in_use >= NR_PROCS) return EAGAIN; /* proc table full */
 
@@ -64,6 +66,7 @@ PUBLIC int do_fork(MESSAGE * p)
     child_ep = msg2mm.ENDPOINT;
 
     struct pmproc * pmp = &pmproc_table[child_slot];
+    *pmp = *pm_parent;
     pmp->flags = PMPF_INUSE;
     procs_in_use++;
 
@@ -137,23 +140,30 @@ PUBLIC int do_exit(MESSAGE * p)
     int i;
     endpoint_t src = p->source;
     int status = p->STATUS;
-    int retval, src_slot, parent_slot;
+    
+    int retval, src_slot;
     if ((retval = pm_verify_endpt(src, &src_slot)) != 0) return retval;
     struct pmproc * pmp = &pmproc_table[src_slot];
 
-    int parent_ep = pmp->parent;
-    if ((retval = pm_verify_endpt(parent_ep, &parent_slot)) != 0) return retval;
-    struct pmproc * parent = &pmproc_table[parent_slot];
+    exit_proc(pmp, status);
 
-    kernel_clear(src);
+    return SUSPEND;
+}
+
+PUBLIC void exit_proc(struct pmproc * pmp, int status)
+{
+    int i, parent_slot;
+    endpoint_t ep = pmp->endpoint;
+
+    kernel_clear(ep);
 
     /* tell FS, see fs_exit() */
     MESSAGE msg2fs;
     msg2fs.type = EXIT;
-    msg2fs.ENDPOINT = src;
+    msg2fs.ENDPOINT = ep;
     send_recv(BOTH, TASK_FS, &msg2fs);
     
-    procctl(src, PCTL_CLEARPROC);
+    procctl(ep, PCTL_CLEARPROC);
     
     pmp->exit_status = status;
 
@@ -162,7 +172,7 @@ PUBLIC int do_exit(MESSAGE * p)
     struct pmproc * pi = pmproc_table;
     /* if the proc has any child, make INIT the new parent */
     for (i = 0; i < NR_PROCS; i++, pi++) {
-        if (pi->parent == src) { /* is a child */
+        if (pi->parent == ep) { /* is a child */
             pi->parent = INIT;
             if ((pmproc_table[INIT].flags & PMPF_WAITING) &&
                 (pi->flags & PMPF_HANGING)) {
@@ -170,8 +180,6 @@ PUBLIC int do_exit(MESSAGE * p)
             }
         }
     }
-
-    return SUSPEND;
 }
 
 /*****************************************************************************

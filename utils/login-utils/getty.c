@@ -24,6 +24,9 @@ int main(int argc, char * argv[])
 
 	char * login_argv[] = {name, NULL};
 
+	pid_t pgrp = setsid();
+	tcsetpgrp(0, pgrp);
+
 	execv(LOGIN, login_argv);
 
 	printf("getty: can't exec!\n");

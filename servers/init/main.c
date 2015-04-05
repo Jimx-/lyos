@@ -19,7 +19,7 @@ int main(int argc, char * argv[])
 	int fd_stdin  = open("/dev/console", O_RDWR);
 	int fd_stdout = open("/dev/console", O_RDWR);
 	int fd_stderr = open("/dev/console", O_RDWR);
-	
+
 	int pida = fork();
 	if (pida) {
 		int status;
@@ -54,7 +54,7 @@ int main(int argc, char * argv[])
 			open(ttylist[i], O_RDWR);
 			open(ttylist[i], O_RDWR);
 			open(ttylist[i], O_RDWR);
-		
+
 			char * argv[] = {GETTY, NULL};
 			_exit(execv(GETTY, argv));
 		}
