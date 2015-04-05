@@ -34,9 +34,11 @@
 #include <lyos/vm.h>
 #include "global.h"
 
+#define OBJ_ALIGN   4
+
 #define SLABSIZE    200
 #define MINSIZE     8
-#define MAXSIZE     (SLABSIZE + MINSIZE - 1)
+#define MAXSIZE     ((SLABSIZE - 1 + MINSIZE / OBJ_ALIGN) * OBJ_ALIGN)
 
 struct slabdata;
 
@@ -58,7 +60,7 @@ struct slabdata {
 
 PRIVATE struct list_head slabs[SLABSIZE];
 
-#define SLAB_INDEX(bytes) (bytes - MINSIZE)
+#define SLAB_INDEX(bytes) (roundup(bytes, OBJ_ALIGN) - (MINSIZE / OBJ_ALIGN))
 
 PUBLIC void slabs_init()
 {
@@ -83,17 +85,19 @@ PRIVATE struct slabdata * alloc_slabdata()
 
     return sd;
 }
-void mark(){}
+
 PUBLIC void * slaballoc(int bytes)
 {
-    if (bytes > MAXSIZE) {
-        printl("mm: slaballoc: too big(%d bytes)\n", bytes);
+    if (bytes > MAXSIZE || bytes < MINSIZE) {
+        printl("mm: slaballoc: invalid size(%d bytes)\n", bytes);
         return NULL;
     }
 
     struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
     struct slabdata * sd;
     struct slabheader * header;
+
+    bytes = roundup(bytes, OBJ_ALIGN);
 
     /* no slab ? */
     if (list_empty(slab)) {
@@ -131,7 +135,7 @@ PUBLIC void * slaballoc(int bytes)
             }
         }
     }
-mark();
+
     /* no space left, allocate new */
     sd = alloc_slabdata();
     if (!sd) return NULL;
@@ -154,11 +158,15 @@ mark();
 
 PUBLIC void slabfree(void * mem, int bytes)
 {
-    if (bytes > MAXSIZE) return;
+    if (bytes > MAXSIZE || bytes < MINSIZE) {
+        return;
+    }
 
     struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
     struct slabdata * sd;
     struct slabheader * header;
+
+    bytes = roundup(bytes, OBJ_ALIGN);
 
     /* no slab ? */
     if (list_empty(slab)) return;

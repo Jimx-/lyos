@@ -20,7 +20,7 @@
 #define	max(a,b)	((a) > (b) ? (a) : (b))
 #define	min(a,b)	((a) < (b) ? (a) : (b))
 
-#define roundup(x, align) ((x + align) - (x % align))
+#define roundup(x, align) ((x % align == 0) ? x : ((x + align) - (x % align)))
 #define rounddown(x, align) (x - (x % align))
 
 /* GDT 和 IDT 中描述符的个数 */
