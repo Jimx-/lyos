@@ -17,6 +17,7 @@
 #define _PRIV_H_
 
 #include <signal.h>
+#include <lyos/bitmap.h>
     
 /* Process privilege structure */
 struct priv {

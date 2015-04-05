@@ -17,6 +17,7 @@
 #define _TTY_H_
 
 #include "termios.h"
+#include <sys/types.h>
 
 #define TTY_IN_BYTES		256	/* tty input queue size */
 #define TTY_OUT_BUF_LEN		2	/* tty output buffer size */
@@ -55,6 +56,7 @@ typedef struct s_tty
 	void*	tty_outbuf;
 	int	tty_outleft;
 	int	tty_outcnt;
+	pid_t tty_pgrp;
 
 	struct termios tty_termios;
 

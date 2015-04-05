@@ -266,6 +266,20 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 			if (tty->tty_termios.c_iflag & INLCR) key = '\r';
 		}
 
+		if (tty->tty_termios.c_lflag & ISIG) {
+			int signo = 0;
+
+			if (key == tty->tty_termios.c_cc[VINTR]) {
+				signo = SIGINT;
+				tty_echo(tty, '^');
+				tty_echo(tty, 'C');
+			}
+
+			if (signo > 0) {
+				continue;
+			}
+		}
+
 		put_key(tty, key);
 		tty_echo(tty, key);
 	}
@@ -485,6 +499,12 @@ PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
     //case TCDRAIN:
     case TCSETS:
     	data_copy(SELF, &(tty->tty_termios), msg->PROC_NR, msg->BUF, sizeof(struct termios));
+    	break;
+    case TIOCGPGRP:
+    	data_copy(msg->PROC_NR, msg->BUF, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
+    	break;
+    case TIOCSPGRP:
+    	data_copy(SELF, &tty->tty_pgrp, msg->PROC_NR, msg->BUF, sizeof(tty->tty_pgrp));
     	break;
 	default:
 		break;

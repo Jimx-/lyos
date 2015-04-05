@@ -50,7 +50,6 @@ typedef int 				endpoint_t;
 typedef unsigned long 		priv_map_t;
 
 typedef u32					bitchunk_t;
-#include <lyos/bitmap.h>
 
 typedef	void	(*int_handler)	();
 typedef	void	(*task_f)	();

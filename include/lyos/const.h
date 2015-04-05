@@ -286,6 +286,8 @@ enum msgtype {
 #define EUID 		u.m3.m3i2
 #define GID 		u.m3.m3i1
 #define EGID 		u.m3.m3i2
+#define NEWUID		u.m3.m3i1
+#define NEWGID		u.m3.m3i2
 #define	REQUEST		u.m3.m3i2
 #define	PROC_NR		u.m3.m3i3
 #define PENDPOINT	u.m3.m3i3

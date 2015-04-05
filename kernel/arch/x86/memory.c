@@ -53,6 +53,16 @@ PUBLIC void init_memory()
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 }
 
+PRIVATE void clear_memcahce()
+{
+    int i;
+    for (i = 0; i < MAX_TEMPPDES; i++) {
+        struct proc * p = get_cpulocal_var(pt_proc);
+        int pde = temppdes[i];
+        p->seg.cr3_vir[pde] = 0;
+    }
+}
+
 /* Temporarily map la in p's address space in kernel address space */
 PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * len, int index, int * changed)
 {
@@ -107,6 +117,8 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         src_la += chunk;
         dest_la += chunk;
     }
+
+    clear_memcahce();
 
     return 0;
 }

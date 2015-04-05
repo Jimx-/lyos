@@ -1028,14 +1028,22 @@ int tcsetattr(int fd, int actions, struct termios * tio) {
 
 int tcsetpgrp(int fd, pid_t pgrp)
 {
-	//printf("tcsetpgrp: not implemented\n");
-	return 0;
+	return ioctl(fd, TIOCSPGRP, &pgrp);
 }
 
 pid_t tcgetpgrp(int fd)
 {
-	//printf("tcgetpgrp: not implemented\n");
-	return 0;
+	pid_t pgrp;
+
+	int retval = ioctl(fd, TIOCGPGRP, &pgrp);
+
+	if (retval == 0) 
+		return pgrp;
+	else {
+		errno = retval;
+	}
+
+	return -1;
 }
 
 int pipe(int pipefd[2])
@@ -1066,4 +1074,9 @@ unsigned int sleep(unsigned int seconds)
 long sysconf(int name)
 {
 
+}
+
+clock_t times(struct tms *buf)
+{
+	
 }
