@@ -22,6 +22,11 @@
 #define TTY_IN_BYTES		256	/* tty input queue size */
 #define TTY_OUT_BUF_LEN		2	/* tty output buffer size */
 
+#define IN_CHAR       		0x00FF	/* low 8 bits */
+
+#define TAB_SIZE           8	/* distance between tab stops */
+#define TAB_MASK           7	/* mask to compute a tab stop position */
+
 /* minor device nr */
 #define CONS_MINOR		0
 #define LOG_MINOR		15

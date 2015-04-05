@@ -255,8 +255,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 			/* LNEXT (^V) to escape the next character? */
 			if (key == tty->tty_termios.c_cc[VLNEXT]) {
 				tty->tty_escaped = 1;
-				tty_echo(tty, '^');
-				tty_echo(tty, 'V');
+				tty_echo(tty, key);
 				continue;
 			}
 		}
@@ -274,15 +273,12 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 
 			if (key == tty->tty_termios.c_cc[VINTR]) {
 				signo = SIGINT;
-				tty_echo(tty, '^');
-				tty_echo(tty, 'C');
 			} else if (key == tty->tty_termios.c_cc[VQUIT]) {
 				signo = SIGQUIT;
-				tty_echo(tty, '^');
-				tty_echo(tty, '\\');
 			}
 
 			if (signo > 0) {
+				tty_echo(tty, key);
 				tty_sigproc(tty, signo);
 				continue;
 			}
@@ -568,7 +564,29 @@ PRIVATE void tty_do_kern_log()
 PRIVATE void tty_echo(TTY* tty, char c)
 {
 	if (!(tty->tty_termios.c_lflag & ECHO)) return;
-	tty->tty_echo(tty, c);
+
+	int len;
+	if ((c & IN_CHAR) < ' ') {
+		switch (c & (IN_CHAR)) {
+		case '\t':
+			len = 0;
+			do {
+				tty->tty_echo(tty, ' ');
+				len++;
+			} while (len < TAB_SIZE);
+			break;
+		case '\n':
+		case '\r':
+			tty->tty_echo(tty, c);
+			break;
+		default:
+			tty->tty_echo(tty, '^');
+			tty->tty_echo(tty, '@' + (c & IN_CHAR));
+			break;
+		}
+	} else {
+		tty->tty_echo(tty, c);
+	}
 }
 
 /*****************************************************************************
