@@ -27,6 +27,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/pci.h"
+#include <lyos/portio.h>
+#include <lyos/service.h>
 
 #define DEBUG
 
@@ -38,34 +40,39 @@
 
 extern struct pci_device pci_device_table[];
 
-PUBLIC void pci_init();
+PRIVATE int pci_init();
 PRIVATE int pci_bus_probe();
 PRIVATE void pci_scan_devices(int bus_nr);
 
 PUBLIC int main()
 {
-	MESSAGE msg;
+	serv_register_init_fresh_callback(pci_init);
+	serv_init();
 
-	pci_init();
+	MESSAGE msg;
 	
-	while(1){
+	while(TRUE) {
         send_recv(RECEIVE, ANY, &msg);
 	}
 
 	return 0;
 }
 
-PUBLIC void pci_init()
+PRIVATE int pci_init()
 {
 	pci_scan_devices(0);
+
+	return 0;
 }
 
 PRIVATE int pci_bus_probe() 
 {
 	unsigned long init = 0x80000000;
-	//out_long(PCI_CTRL, init);
-	//init = in_long(PCI_DATA);
-	if(init == 0xFFFFFFFF)   
+
+	portio_outl(PCI_CTRL, init);
+	portio_inl(PCI_DATA, &init);
+	
+	if(init == 0xFFFFFFFF)
 		return 0;
 	return 1;
 }
@@ -74,9 +81,13 @@ PRIVATE u16 pci_read_word(u32 bus, u32 slot, u32 func, u16 offset)
 {
 	u32 address = (u32)((bus << 16) | (slot << 11) |
 			(func << 8) | (offset & 0xFC) | ((u32)0x80000000));
-	return 0;
-	//out_long(PCI_CTRL, address);
-	//return (u16)((in_long(PCI_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
+
+	portio_outl(PCI_CTRL, address);
+	
+	u32 v;
+	portio_inl(PCI_DATA, &v);
+
+	return (u16)((v >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
 PRIVATE void pci_scan_devices(int bus_nr)
@@ -95,9 +106,9 @@ PRIVATE void pci_scan_devices(int bus_nr)
 
 			char * name = pci_dev_name(vendor, device);
 			if (name) {
-				printl("PCI: %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus_nr, i, func, vendor, device, name);
+				printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus_nr, i, func, vendor, device, name);
 			} else {
-				printl("PCI: %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus_nr, i, func, vendor, device);
+				printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus_nr, i, func, vendor, device);
 			}
 			
 		}

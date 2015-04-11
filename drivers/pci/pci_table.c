@@ -94,6 +94,7 @@ struct pci_device pci_device_table[] =
 	{ 0x110A, 0x0005, "Siemens Nixdorf Tulip Cntlr., Power Management" },
 	{ 0x1186, 0x1300, "D-Link RTL8139" },
 	{ 0x1186, 0x4300, "D-Link Gigabit adapter" },
+	{ 0x1234, 0x1111, "Bochs VBE Extension" },
 	{ 0x1259, 0xc107, "Allied Telesyn International Gigabit Ethernet Adapter" },
 	{ 0x125D, 0x1969, "ESS ES1969 Solo-1 Audiodrive" },
 	{ 0x1274, 0x1371, "Ensoniq ES1371 [AudioPCI-97]" },

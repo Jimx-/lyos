@@ -76,6 +76,15 @@ MultiBootHeader:
 	dd MAGIC
 	dd FLAGS
 	dd CHECKSUM
+	dd 0
+	dd 0
+	dd 0
+	dd 0
+	dd 0
+	dd 0
+	dd 0
+	dd 0
+	dd 32
 
 global _start	; export _start
 

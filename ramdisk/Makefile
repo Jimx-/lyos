@@ -17,6 +17,7 @@ $(INITRD):
 	@cp $(DESTDIR)/sbin/ext2fs sbin/
 	@cp $(DESTDIR)/sbin/ata sbin/
 	@cp $(DESTDIR)/sbin/procfs sbin/
+	@cp $(DESTDIR)/sbin/pci sbin/
 	@cp $(DESTDIR)/usr/bin/getty usr/bin/
 	@cp $(DESTDIR)/usr/bin/login usr/bin/
 	@cp $(DESTDIR)/bin/sh bin/

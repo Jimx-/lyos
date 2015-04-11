@@ -170,6 +170,9 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	char * hz_value = env_get("hz");
 	if (hz_value) system_hz = atoi(hz_value);
 	if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
+
+	if (mb_flags & MULTIBOOT_INFO_VIDEO_INFO) {
+	}
 }
 
 PRIVATE char * get_value(const char * param, const char * key)
