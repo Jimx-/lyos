@@ -26,23 +26,30 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "lyos/pci.h"
 #include <lyos/portio.h>
 #include <lyos/service.h>
 
-#define DEBUG
+#include <pci.h>
+#include "pci.h"
 
-#ifdef DEBUG
-#define PRINTL(x) printl(x)
+#define PCI_DEBUG
+
+#ifdef PCI_DEBUG
+#define DBGPRINT(x) printl(x)
 #else
-#define PRINTL(x)
+#define DBGPRINT(x)
 #endif
 
-extern struct pci_device pci_device_table[];
+PUBLIC struct pcibus pcibus[NR_PCIBUS];
+PRIVATE int nr_pcibus = 0;
+
+PUBLIC struct pcidev pcidev[NR_PCIDEV];
+PRIVATE int nr_pcidev = 0;
 
 PRIVATE int pci_init();
-PRIVATE int pci_bus_probe();
-PRIVATE void pci_scan_devices(int bus_nr);
+PRIVATE void pci_intel_init();
+PRIVATE void pci_probe_bus(int busind);
+PRIVATE u16 pci_read_attr_u16(int devind, int port);
 
 PUBLIC int main()
 {
@@ -58,51 +65,100 @@ PUBLIC int main()
 	return 0;
 }
 
+PRIVATE int get_busind(int busnr)
+{
+	int i;
+	for (i = 0; i < nr_pcibus; i++) {
+		if (pcibus[i].busnr == busnr) return i;
+	}
+
+	panic("get_busind failed\n");
+}
+
+PRIVATE u16 pci_read_attr_u8(int devind, int port)
+{
+	int busnr = pcidev[devind].busnr;
+	int busind = get_busind(busnr);
+	return pcibus[busind].rreg_u8(busind, devind, port);
+}
+
+PRIVATE u16 pci_read_attr_u16(int devind, int port)
+{
+	int busnr = pcidev[devind].busnr;
+	int busind = get_busind(busnr);
+	return pcibus[busind].rreg_u16(busind, devind, port);
+}
+
 PRIVATE int pci_init()
 {
-	pci_scan_devices(0);
+	pci_intel_init();
 
 	return 0;
 }
 
-PRIVATE int pci_bus_probe() 
+PRIVATE void pci_intel_init()
 {
-	unsigned long init = 0x80000000;
-
-	portio_outl(PCI_CTRL, init);
-	portio_inl(PCI_DATA, &init);
+	u32 bus, dev, func;
 	
-	if(init == 0xFFFFFFFF)
-		return 0;
-	return 1;
+	bus = 0;
+	dev = 0;
+	func = 0;
+
+	u16 vendor = pcii_read_u16(bus, dev, func, PCI_VID);
+	u16 device = pcii_read_u16(bus, dev, func, PCI_DID);
+
+	if (vendor == 0xffff && device == 0xffff) return;
+
+	if (nr_pcibus >= NR_PCIBUS) return;
+
+	int busind = nr_pcibus++;
+	pcibus[busind].busnr = 0;
+	pcibus[busind].rreg_u8 = pcii_rreg_u8;
+	pcibus[busind].rreg_u16 = pcii_rreg_u16;
+
+	char * name = pci_dev_name(vendor, device);
+	if (name) {
+		printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus, dev, func, vendor, device, name);
+	} else {
+		printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus, dev, func, vendor, device);
+	}
+
+	pci_probe_bus(busind);
 }
 
-PRIVATE u16 pci_read_word(u32 bus, u32 slot, u32 func, u16 offset) 
+PRIVATE void pci_probe_bus(int busind)
 {
-	u32 address = (u32)((bus << 16) | (slot << 11) |
-			(func << 8) | (offset & 0xFC) | ((u32)0x80000000));
+	u8 bus_nr = pcibus[busind].busnr;
 
-	portio_outl(PCI_CTRL, address);
-	
-	u32 v;
-	portio_inl(PCI_DATA, &v);
-
-	return (u16)((v >> ((offset & 2) * 8)) & 0xFFFF);
-}
-
-PRIVATE void pci_scan_devices(int bus_nr)
-{
-	printl("PCI: Scanning PCI devices...\n");
+	int devind = nr_pcidev;
 
 	int i = 0, func = 0;
 	for(i = 0; i < 32; i++) 
 	{
 		for (func = 0; func < 8; func++) {
-			u16 vendor = pci_read_word(bus_nr, i, func, 0);
-			u16 device = pci_read_word(bus_nr, i, func, 2);
+			pcidev[devind].busnr = bus_nr;
+			pcidev[devind].dev = i;
+			pcidev[devind].func = func;
+
+			u16 vendor = pci_read_attr_u16(devind, PCI_VID);
+			u16 device = pci_read_attr_u16(devind, PCI_DID);
 		                     
-			if(vendor == 0xFFFF)        
+			if(vendor == 0xffff) {
+				if (func == 0) break;
+
 				continue;
+			}
+			
+			u8 baseclass = pci_read_attr_u8(devind, PCI_BCR);
+			u8 subclass = pci_read_attr_u8(devind, PCI_SCR);
+
+			devind = nr_pcidev;
+			nr_pcidev++;
+
+			pcidev[devind].vid = vendor;
+			pcidev[devind].did = device;
+			pcidev[devind].baseclass = baseclass;
+			pcidev[devind].subclass = subclass;
 
 			char * name = pci_dev_name(vendor, device);
 			if (name) {
@@ -110,9 +166,6 @@ PRIVATE void pci_scan_devices(int bus_nr)
 			} else {
 				printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus_nr, i, func, vendor, device);
 			}
-			
 		}
 	}
-
-	return;
 }

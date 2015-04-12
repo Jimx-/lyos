@@ -48,4 +48,9 @@
 /* TTY */
 #define NR_CONSOLES 6   /* consoles */
 #define NR_SERIALS  3   /* serial ports */
+
+/* PCI */
+#define NR_PCIBUS   4
+#define NR_PCIDEV   50
+    
 #endif

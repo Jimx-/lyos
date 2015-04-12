@@ -26,7 +26,9 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "lyos/pci.h"
+
+#include <pci.h>
+#include "pci.h"
 
 /* device table from Minix */
 struct pci_device pci_device_table[] =
