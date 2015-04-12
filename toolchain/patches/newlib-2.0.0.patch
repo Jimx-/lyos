@@ -43,6 +43,26 @@ diff -rupN origin/newlib/configure.host new/newlib/configure.host
    *-*-cygwin*)
  	test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`
  	export cygwin_srcdir
+diff -rupN origin/newlib/libc/include/err.h new/newlib/libc/include/err.h
+--- origin/newlib/libc/include/err.h	1970-01-01 08:00:00.000000000 +0800
++++ new/newlib/libc/include/err.h	2015-04-12 14:16:47.271253864 +0800
+@@ -0,0 +1,16 @@
++#ifndef _ERR_H_
++#define _ERR_H_
++
++#include <stdarg.h>
++
++void err(int eval, const char *fmt, ...);
++void errx(int eval, const char *fmt, ...);
++void warn(const char *fmt, ...);
++void warnx(const char *fmt, ...);
++
++void verr(int eval, const char *fmt, va_list args);
++void verrx(int eval, const char *fmt, va_list args);
++void vwarn(const char *fmt, va_list args);
++void vwarnx(const char *fmt, va_list args);
++
++#endif
 diff -rupN origin/newlib/libc/include/mntent.h new/newlib/libc/include/mntent.h
 --- origin/newlib/libc/include/mntent.h	1970-01-01 08:00:00.000000000 +0800
 +++ new/newlib/libc/include/mntent.h	2015-02-24 20:30:07.062823618 +0800

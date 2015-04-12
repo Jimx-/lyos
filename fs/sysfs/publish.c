@@ -45,7 +45,10 @@ PUBLIC int do_publish(MESSAGE * m)
     data_copy(SELF, name, src, m->PATHNAME, len);
     name[len] = '\0';
 
-    create_node(name, flags);
+    sysfs_node_t * node = create_node(name, flags);
+    if (!node) return errno;
+
+    
 
     return 0;
 }
