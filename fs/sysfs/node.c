@@ -158,6 +158,7 @@ PRIVATE void stat_node(struct memfs_stat * stat, sysfs_node_t * node)
         file_type = I_DIRECTORY;
         break;
     default:
+        bits = 0644;
         file_type = I_REGULAR;
         break;
     }

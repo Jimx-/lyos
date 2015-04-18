@@ -157,7 +157,8 @@
 
 /* kernel signals */
 #define SIGKSIG		SIGUSR1
-
+#define SIGKMEM		SIGUSR2
+				 
 /* ipc */
 #define SEND			1
 #define RECEIVE			2

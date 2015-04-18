@@ -77,6 +77,11 @@ struct hole {
 	int h_len;
 };
 
+struct vir_addr {
+	vir_bytes addr;
+	endpoint_t proc_ep;
+};
+
 /**
  * MESSAGE mechanism is borrowed from MINIX
  */

@@ -14,7 +14,7 @@ everything : realclean $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRI
 				$(LIBMEMFS)
 
 realclean :
-	@rm -f $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS)
+	@rm -f $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS) \
 
 $(LIBDRIVER): 
 	@(cd libdriver; make)
@@ -33,4 +33,3 @@ $(LIBFSDRIVER):
 	
 $(LIBMEMFS):
 	@(cd libmemfs; make)
-	

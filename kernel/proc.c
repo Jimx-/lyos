@@ -327,7 +327,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 	    (p_dest->recvfrom == sender->endpoint ||
 	     p_dest->recvfrom == ANY)) {
 
-		retval = vir_copy(dest, p_dest->recv_msg, sender->endpoint, m, sizeof(MESSAGE));
+		retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, sender->endpoint, m, sizeof(MESSAGE));
 		if (retval != 0) goto out;
 
 		p_dest->recv_msg = 0;
@@ -342,7 +342,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 		
 		PST_SET_LOCKED(sender, PST_SENDING);
 		sender->sendto = dest;
-		retval = vir_copy(KERNEL, &sender->send_msg, KERNEL, m, sizeof(MESSAGE));
+		retval = data_vir_copy_check(p_to_send, KERNEL, &sender->send_msg, KERNEL, m, sizeof(MESSAGE));
 
 		/* append to the sending queue */
 		struct proc * p;
@@ -409,7 +409,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		set_notify_msg(who_wanna_recv, &msg, notifier->endpoint);
 
 		unset_notify_pending(who_wanna_recv, notify_id);
-		retval = vir_copy(KERNEL, m, KERNEL, &msg, sizeof(MESSAGE));
+		retval = data_vir_copy_check(who_wanna_recv, KERNEL, m, KERNEL, &msg, sizeof(MESSAGE));
 
 		who_wanna_recv->recv_msg = NULL;
 		PST_UNSET_LOCKED(who_wanna_recv, PST_RECEIVING);
@@ -483,7 +483,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 		assert(m);
 		/* copy the message */
-		retval = vir_copy(KERNEL, m, KERNEL, &from->send_msg, sizeof(MESSAGE));
+		retval = data_vir_copy_check(who_wanna_recv, KERNEL, m, KERNEL, &from->send_msg, sizeof(MESSAGE));
 
 		reset_msg(&from->send_msg);
 		from->sendto = NO_TASK;
@@ -578,7 +578,7 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 		
 		MESSAGE m;
 		set_notify_msg(p_dest, &m, p_to_send->endpoint);
-		retval = vir_copy(dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
+		retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
 
 		p_dest->recv_msg = NULL;
 		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);

@@ -34,7 +34,7 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     struct proc * p_dest = endpt_proc(m->ENDPOINT);
     if (!p_dest) return EINVAL;
 
-    vir_copy(KERNEL, &si, p->endpoint, m->BUF, sizeof(si));
+    data_vir_copy(KERNEL, &si, p->endpoint, m->BUF, sizeof(si));
     
     lock_proc(p_dest);
 
@@ -73,7 +73,7 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
 #endif
     sf.sc.mask = si.mask;
 
-    vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
+    data_vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
 
 #ifdef __i386__
     p_dest->regs.esp = sfp;

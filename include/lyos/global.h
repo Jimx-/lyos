@@ -53,6 +53,8 @@ extern	struct proc	proc_table[];
 extern  struct priv priv_table[];
 extern  struct boot_proc boot_procs[];
 
+EXTERN  struct proc *   mmrequest;  /* first proc in mm request queue */
+
 EXTERN  int system_hz;
 
 extern  irq_hook_t  irq_hooks[];

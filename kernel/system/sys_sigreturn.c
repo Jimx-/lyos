@@ -34,7 +34,7 @@ PUBLIC int sys_sigreturn(MESSAGE * m, struct proc* p)
     struct proc * p_dest = endpt_proc(m->ENDPOINT);
     if (!p_dest) return EINVAL;
 
-    vir_copy(KERNEL, &sc, p_dest->endpoint, m->BUF, sizeof(sc));
+    data_vir_copy(KERNEL, &sc, p_dest->endpoint, m->BUF, sizeof(sc));
 
     lock_proc(p_dest);
 

@@ -44,6 +44,11 @@ extern int syscall_style;
 #define TEMPPDE_DST     1
 PRIVATE u32 temppdes[MAX_TEMPPDES];
 
+#define _SRC_           0
+#define _DEST_          1
+#define EFAULT_SRC      1
+#define EFAULT_DEST     2
+
 PUBLIC void init_memory()
 {
     int i;
@@ -53,7 +58,7 @@ PUBLIC void init_memory()
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 }
 
-PRIVATE void clear_memcahce()
+PUBLIC void clear_memcache()
 {
     int i;
     for (i = 0; i < MAX_TEMPPDES; i++) {
@@ -110,6 +115,10 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         phys_bytes fault_addr = phys_copy((void *)dest_mapped, (void *)src_mapped, chunk);
 
         if (fault_addr) {
+            if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk) 
+                return EFAULT_SRC;
+            if (fault_addr >= dest_mapped && fault_addr < dest_mapped + chunk) 
+                return EFAULT_DEST;
             return EFAULT;
         }
 
@@ -117,8 +126,6 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         src_la += chunk;
         dest_la += chunk;
     }
-
-    clear_memcahce();
 
     return 0;
 }
@@ -364,13 +371,86 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
     return EINVAL;
 }
 
-PUBLIC int vir_copy(endpoint_t dest_ep, void * dest_addr,
-                        endpoint_t src_ep, void * src_addr, int len)
+PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, vir_bytes laddr, vir_bytes bytes, int write)
 {
-    struct proc * p_src = src_ep == NO_TASK ? NULL : endpt_proc(src_ep);
-    struct proc * p_dest = dest_ep == NO_TASK ? NULL : endpt_proc(dest_ep);
-    if ((src_ep != NO_TASK && p_src == NULL)
-         || (dest_ep != NO_TASK && p_dest == NULL)) return EINVAL;
+    PST_SET_LOCKED(caller, PST_MMREQUEST);
 
-    return la_la_copy(p_dest, (phys_bytes)dest_addr, p_src, (phys_bytes)src_addr, len);
+    caller->mm_request.req_type = MMREQ_CHECK;
+    caller->mm_request.target = target;
+    caller->mm_request.params.check.start = laddr;
+    caller->mm_request.params.check.len = bytes;
+    caller->mm_request.params.check.write = write;
+
+    caller->mm_request.next_request = mmrequest;
+    mmrequest = caller;
+    if (!caller->mm_request.next_request) {
+        if (send_sig(TASK_MM, SIGKMEM) != 0) panic("mm_suspend: send_sig failed");
+    }
+}
+
+PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct vir_addr * src_addr,
+                                vir_bytes bytes, int check)
+{
+    struct vir_addr * vir_addrs[2];
+    struct proc * procs[2];
+
+    if (bytes < 0) return EINVAL;
+
+    vir_addrs[_SRC_] = src_addr;
+    vir_addrs[_DEST_] = dest_addr;
+
+    int i;
+    for (i = _SRC_; i <= _DEST_; i++) {
+        endpoint_t proc_ep = vir_addrs[i]->proc_ep;
+
+        procs[i] = proc_ep == NO_TASK ? NULL : endpt_proc(proc_ep);
+
+        if (proc_ep != NO_TASK && procs[i] == NULL) return ESRCH;
+    }
+
+    int retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr, 
+                procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
+
+    if (retval) {
+        if (retval == EFAULT) return EFAULT;
+
+        if (retval != EFAULT_SRC && retval != EFAULT_DEST) panic("vir_copy: la_la_copy failed");
+        
+        if (!check || !caller) return retval;
+
+        int write;
+        vir_bytes fault_la;
+        endpoint_t target;
+        if (retval == EFAULT_SRC) {
+            target = vir_addrs[_SRC_]->proc_ep;
+            fault_la = vir_addrs[_SRC_]->addr;
+            write = 0;
+        } else if (retval == EFAULT_DEST) {
+            target = vir_addrs[_DEST_]->proc_ep;
+            fault_la = vir_addrs[_DEST_]->addr;
+            write = 1;
+        }
+
+        mm_suspend(caller, target, fault_la, bytes, write);
+        return MMSUSPEND;
+    }
+
+    return 0;
+}
+
+PUBLIC int _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_addr,
+                        endpoint_t src_ep, void * src_addr, int len, int check)
+{
+    struct vir_addr src, dest;
+
+    src.addr = src_addr;
+    src.proc_ep = src_ep;
+
+    dest.addr = dest_addr;
+    dest.proc_ep = dest_ep;
+
+    if (check) 
+        return vir_copy_check(caller, &dest, &src, len);
+    else 
+        return vir_copy(&dest, &src, len);
 }

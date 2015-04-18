@@ -175,6 +175,8 @@ PUBLIC int publish_service(struct sproc * sp)
     sprintf(label, SYSFS_SERVICE_DOMAIN_LABEL, name);
     int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
-    /*return sysfs_publish_u32(label, serv_ep, SF_PRIV_RETRIEVE); */
+    sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
+    retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE); 
+
     return retval;
 }

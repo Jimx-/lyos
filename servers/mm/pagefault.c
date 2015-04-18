@@ -42,7 +42,7 @@ PUBLIC void do_handle_fault()
         return;
     }
 
-    int pfla = mm_msg.FAULT_ADDR;
+    vir_bytes pfla = mm_msg.FAULT_ADDR;
     struct mmproc * mmp = endpt_mmproc(mm_msg.FAULT_PROC);
     int err_code = mm_msg.FAULT_ERRCODE;
 
@@ -111,5 +111,60 @@ PUBLIC void do_handle_fault()
             printl("MM: SIGSEGV %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
         }
         //send_sig(p, SIGSEGV); 
+    }
+}
+
+PRIVATE int handle_memory(struct mmproc * mmp, vir_bytes start, vir_bytes len, int wrflag, endpoint_t caller)
+{
+    struct vir_region * vr;
+
+    if (start % ARCH_PG_SIZE) {
+        len += start % ARCH_PG_SIZE;
+        start -= start % ARCH_PG_SIZE;
+    }
+
+    while (len > 0) {
+        if (!(vr = region_lookup(mmp, start))) {
+            return EFAULT;
+        } else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
+
+        vir_bytes offset = start - (vir_bytes)vr->vir_addr;
+        vir_bytes sublen = len;
+
+        if (offset + sublen > vr->length) {
+            sublen = vr->length - offset;
+        }
+
+        int retval = region_handle_memory(mmp, vr, offset, sublen, wrflag);
+        if (retval) return retval;
+
+        len -= sublen;
+        start += sublen;
+    }
+
+    return 0;
+}
+
+PUBLIC void do_mmrequest()
+{
+    endpoint_t target, caller;
+    vir_bytes start, len;
+    int flags;
+    struct mmproc * mmp;
+
+    while (TRUE) {
+        int type = vmctl_get_mmrequest(&target, &start, &len, 
+                        &flags, &caller);
+
+        switch (type) {
+        case MMREQ_CHECK:
+            mmp = endpt_mmproc(target);
+            if (!mmp) return;
+
+            handle_memory(mmp, start, len, flags, caller);
+            break;
+        default:
+            return;
+        }
     }
 }

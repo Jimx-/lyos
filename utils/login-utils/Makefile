@@ -9,7 +9,7 @@ realclean :
 	@rm -f $(LOGINCMDS)
 
 $(DESTDIR)/usr/bin/getty: getty.c
-	@$(CC) -o $@ $<
+	@$(CC) -o $@ $< 
 
 $(DESTDIR)/usr/bin/login: login.c
 	@$(CC) -o $@ $<

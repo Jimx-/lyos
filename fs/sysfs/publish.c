@@ -31,7 +31,9 @@
 #include <sys/stat.h>
 #include "libsysfs/libsysfs.h"
 #include "libmemfs/libmemfs.h"
-
+#include "node.h"
+#include "global.h"
+    
 PUBLIC int do_publish(MESSAGE * m)
 {
     endpoint_t src = m->source;
@@ -48,7 +50,9 @@ PUBLIC int do_publish(MESSAGE * m)
     sysfs_node_t * node = create_node(name, flags);
     if (!node) return errno;
 
-    
+    if (flags & SF_TYPE_U32) {
+        node->u.u32v = m->u.m3.m3i3;
+    }
 
     return 0;
 }

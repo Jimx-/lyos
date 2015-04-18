@@ -47,6 +47,8 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint);
 PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp);
 PRIVATE void print_memmap();
 
+PRIVATE void process_system_notify();
+
 /*****************************************************************************
  *                                task_mm
  *****************************************************************************/
@@ -66,6 +68,10 @@ PUBLIC int main()
 		int msgtype = mm_msg.type;
 
 		switch (msgtype) {
+		case NOTIFY_MSG:
+            if (src == SYSTEM) 
+                process_system_notify();
+            break;
 		case PM_MM_FORK:
 			mm_msg.RETVAL = do_fork();
 			break;
@@ -297,4 +303,15 @@ PRIVATE void print_memmap()
 
 	mem_start = kernel_info.kernel_end_phys;
 	free_mem_size = memory_size - mem_start;
+}
+
+PRIVATE void process_system_notify()
+{
+	sigset_t sigset = mm_msg.SIGSET;
+
+    if (sigismember(&sigset, SIGKMEM)) {
+    	do_mmrequest();
+    }
+
+    vmctl(VMCTL_CLEAR_MEMCACHE, SELF);
 }

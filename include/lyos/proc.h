@@ -37,6 +37,7 @@
 			 */
 #define PST_SIGNALED  		0x200	/* set when proc is signaled */
 #define PST_SIG_PENDING 	0x400	/* set when proc has a pending signal */
+#define PST_MMREQUEST		0x800 	/* set when proc issued an mm request */
 
 #define proc_slot(n)	((n) + NR_TASKS)
 #define proc_addr(n)	(&proc_table[(n) + NR_TASKS])
@@ -144,6 +145,22 @@ struct proc {
 	int p_parent; /**< pid of parent process */
 
 	sigset_t sig_pending;
+
+	struct {
+		struct proc * next_request;
+
+		endpoint_t target;
+
+		int req_type;
+		struct {
+			struct {
+				vir_bytes start, len;
+				int write;
+			} check;
+		} params;
+
+		int result;
+	} mm_request;
 };
 
 extern struct list_head sched_queues[SCHED_QUEUES];

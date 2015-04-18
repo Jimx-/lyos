@@ -1,5 +1,5 @@
 
-CMDS = $(DESTDIR)/bin/cat $(DESTDIR)/bin/ls
+CMDS = $(DESTDIR)/bin/cat
 
 everything : realclean $(CMDS)
 
@@ -11,5 +11,3 @@ realclean :
 $(DESTDIR)/bin/cat: cat.c
 	@$(CC) -o $@ $<
 
-$(DESTDIR)/bin/ls:
-	@(cd ls; make)

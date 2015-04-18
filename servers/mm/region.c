@@ -279,17 +279,32 @@ PUBLIC int region_wp(struct mmproc * mmp, struct vir_region * rp)
 {
     pt_wp_memory(&(mmp->pgd), rp->vir_addr, rp->length);
 
-    struct phys_region * pregion = &(rp->phys_block);
-    int i;
+    return 0;
+}
 
-    for (i = 0; i < rp->length / PG_SIZE; i++) {
-        struct phys_frame * frame = phys_region_get(pregion, i);
-        frame->flags &= ~RF_WRITABLE;
-    }
+PUBLIC int region_wp_page(struct mmproc * mmp, struct vir_region * rp, vir_bytes offset)
+{
+    pt_wp_memory(&(mmp->pgd), (vir_bytes)rp->vir_addr + offset, ARCH_PG_SIZE);
 
     return 0;
 }
 
+/**
+ * <Ring 1> Make virtual region rp unwrite-protected. 
+ */
+PUBLIC int region_unwp(struct mmproc * mmp, struct vir_region * rp)
+{
+    pt_unwp_memory(&(mmp->pgd), rp->vir_addr, rp->length);
+
+    return 0;
+}
+
+PUBLIC int region_unwp_page(struct mmproc * mmp, struct vir_region * rp, vir_bytes offset)
+{
+    pt_unwp_memory(&(mmp->pgd), (vir_bytes)rp->vir_addr + offset, ARCH_PG_SIZE);
+
+    return 0;
+}
 
 PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr)
 {
@@ -387,6 +402,77 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
     region_wp(p_dest, dest);
 
     return 0;
+}
+
+PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
+{
+    struct vir_region * vr;
+
+    list_for_each_entry(vr, &(mmp->mem_regions), list) {
+        if (addr >= (vir_bytes)(vr->vir_addr) && addr < (vir_bytes)(vr->vir_addr) + vr->length) {
+            return vr;
+        }
+    }
+
+    return NULL;
+}
+
+PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr, 
+        vir_bytes offset, vir_bytes len, int wrflag)
+{
+    vir_bytes end = offset + len;
+    vir_bytes off;
+    int retval;
+
+    for (off = offset; off < end; off += ARCH_PG_SIZE) {
+        if ((retval = region_handle_pf(mmp, vr, off, wrflag)) != 0) {
+           return retval; 
+        } 
+    }
+
+    return 0;
+}
+
+PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr, 
+        vir_bytes offset, int wrflag)
+{
+    struct phys_region * pregion = &vr->phys_block;
+    struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+
+    if (wrflag && frame->flags & RF_SHARED) {
+        /* writing to write-protected page */
+        if (frame->refcnt == 1) {
+            frame->flags &= ~RF_SHARED;
+            region_unwp_page(mmp, vr, offset);
+            return 0;
+        } else {
+            return region_cow(mmp, vr, offset);
+        }
+    }
+    return 0;
+}
+
+PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes offset)
+{
+    struct phys_region * pregion = &vr->phys_block;
+    struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+
+    frame->refcnt--;
+    
+    struct phys_frame * new_frame;
+    SLABALLOC(new_frame);
+    if (!new_frame) return ENOMEM;
+    memset(new_frame, 0, sizeof(*new_frame));
+
+    new_frame->flags = frame->flags;
+    phys_region_set(pregion, offset / ARCH_PG_SIZE, new_frame);
+
+    int retval = region_alloc_phys(vr);
+    if (retval) return retval;
+
+    region_map_phys(mmp, vr);
+
+    return data_copy(mmp->endpoint, (void *)((vir_bytes)vr->vir_addr + offset), NO_TASK, (void *)frame->phys_addr, ARCH_PG_SIZE); 
 }
 
 PUBLIC int region_free(struct vir_region * rp)

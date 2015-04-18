@@ -87,4 +87,6 @@ PUBLIC int put_local_timer_handler(irq_handler_t handler);
 
 PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size);
 
+PUBLIC void clear_memcache();
+
 #endif

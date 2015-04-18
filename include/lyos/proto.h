@@ -108,8 +108,15 @@ PUBLIC endpoint_t get_endpoint();
 
 PUBLIC int      data_copy(endpoint_t dest_ep, void * dest_addr, 
     endpoint_t src_ep, void * src_addr, int len);
-PUBLIC int      vir_copy(endpoint_t dest_ep, void * dest_addr,
-                        endpoint_t src_ep, void * src_addr, int len);
+PUBLIC int      _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct vir_addr * src_addr,
+                                vir_bytes bytes, int check);
+PUBLIC int      _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_addr,
+                        endpoint_t src_ep, void * src_addr, int len, int check);
+#define vir_copy(dest, src, bytes) _vir_copy(NULL, dest, src, bytes, 0)
+#define vir_copy_check(caller, dest, src, bytes) _vir_copy(caller, dest, src, bytes, 1)
+#define data_vir_copy(dest_ep, dest_addr, src_ep, src_addr, len) _data_vir_copy(NULL, dest_ep, dest_addr, src_ep, src_addr, len, 0)
+#define data_vir_copy_check(caller, dest_ep, dest_addr, src_ep, src_addr, len) \
+                _data_vir_copy(caller, dest_ep, dest_addr, src_ep, src_addr, len, 1)
 
 PUBLIC int      service_up(const char *name, char * argv[], char * const envp[]);
 

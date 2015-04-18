@@ -41,6 +41,7 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
 {
     int who = m->VMCTL_WHO, request = m->VMCTL_REQUEST;
     struct proc * target = (who == SELF) ? p : endpt_proc(who);
+    int type;
 
     switch (request) {
     case VMCTL_BOOTINHIBIT_CLEAR:
@@ -65,6 +66,29 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
         if (!target) return EINVAL;
         PST_UNSET(target, PST_PAGEFAULT);
         break;
+    case VMCTL_CLEAR_MEMCACHE:
+        clear_memcache();
+        break;
+    case VMCTL_GET_MMREQ:
+        if (!mmrequest) return ESRCH;
+
+        switch (mmrequest->mm_request.req_type) {
+        case MMREQ_CHECK:
+            m->VMCTL_MMREQ_TARGET = mmrequest->mm_request.target;
+            m->VMCTL_MMREQ_ADDR = mmrequest->mm_request.params.check.start;
+            m->VMCTL_MMREQ_LEN = mmrequest->mm_request.params.check.len;
+            m->VMCTL_MMREQ_FLAGS = mmrequest->mm_request.params.check.write;
+            m->VMCTL_MMREQ_CALLER = mmrequest->endpoint;
+            break;
+        default:
+            panic("wrong mm request type");
+        }
+
+        mmrequest->mm_request.result = MMSUSPEND;
+        type = mmrequest->mm_request.req_type;
+        mmrequest = mmrequest->mm_request.next_request;
+
+        return type;
     }
 
     if (!target) return EINVAL;

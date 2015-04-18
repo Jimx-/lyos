@@ -89,3 +89,21 @@ PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_v
 
     return syscall_entry(NR_VMCTL, &m);
 }
+
+PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
+                        int * flags, endpoint_t * caller)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_GET_MMREQ;
+
+    int retval = syscall_entry(NR_VMCTL, &m);
+
+    *target = m.VMCTL_MMREQ_TARGET;
+    *start = m.VMCTL_MMREQ_ADDR;
+    *len = m.VMCTL_MMREQ_LEN;
+    *flags = m.VMCTL_MMREQ_FLAGS;
+    *caller = m.VMCTL_MMREQ_CALLER;
+
+    return retval;
+}

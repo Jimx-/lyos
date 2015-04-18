@@ -16,6 +16,8 @@
 #ifndef	_VM_H_
 #define	_VM_H_
 
+#define MMSUSPEND   -1001
+
 #define PCTL_WHO    u.m3.m3i1
 #define PCTL_PARAM  u.m3.m3i2
 
@@ -29,6 +31,8 @@
 #define VMCTL_PAGEFAULT_CLEAR   5
 #define VMCTL_GETPDBR           6
 #define VMCTL_SET_ADDRESS_SPACE 7
+#define VMCTL_CLEAR_MEMCACHE    8
+#define VMCTL_GET_MMREQ         9
 
 #define VMCTL_GET_KM_INDEX   u.m3.m3i2
 #define VMCTL_GET_KM_RETVAL  u.m3.m3i2
@@ -46,6 +50,13 @@
 #define VMCTL_PHYS_ADDR u.m3.m3p1
 #define VMCTL_VIR_ADDR  u.m3.m3p2
 
+#define VMCTL_MMREQ_TARGET  u.m3.m3i1
+#define VMCTL_MMREQ_ADDR    u.m3.m3p1
+#define VMCTL_MMREQ_LEN     u.m3.m3i2
+#define VMCTL_MMREQ_FLAGS   u.m3.m3i3
+#define VMCTL_MMREQ_CALLER  u.m3.m3i4
+#define MMREQ_CHECK     1
+
 #define UMAP_WHO        u.m3.m3i1
 #define UMAP_SRCADDR    u.m3.m3p1
 #define UMAP_DSTADDR    u.m3.m3p2
@@ -60,5 +71,7 @@ PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned * pdbr);
 PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_vir);
 PUBLIC int umap(endpoint_t ep, void * vir_addr, phys_bytes * phys_addr);
 PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len);
+PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
+                        int * flags, endpoint_t * caller);
 
 #endif
