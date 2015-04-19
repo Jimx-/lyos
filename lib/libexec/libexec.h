@@ -22,7 +22,7 @@ struct exec_info {
 	size_t filesize;
 	
 	libexec_allocator_t allocmem;
-	libexec_allocator_t allocstack;
+	libexec_allocator_t allocmem_prealloc;
 	libexec_copymem_t copymem;
 	libexec_clearmem_t clearmem;
 	libexec_clearproc_t clearproc;
@@ -40,8 +40,7 @@ struct exec_info {
 };
 
 PUBLIC int libexec_allocmem(struct exec_info * execi, int vaddr, size_t len);
-PUBLIC int libexec_alloctext(struct exec_info * execi, int vaddr, size_t len);
-PUBLIC int libexec_allocstack(struct exec_info * execi, int vaddr, size_t len);
+PUBLIC int libexec_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len);
 PUBLIC int libexec_clearproc(struct exec_info * execi);
 PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len);
 

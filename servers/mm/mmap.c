@@ -41,13 +41,10 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
         vr = region_new((void *)addr, len, vrflags);
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
-        region_alloc_phys(vr);
-        region_map_phys(mmp, vr);
 
-        if (addr && (mmap_flags & MAP_GROWSDOWN)) {
-            /* create a growsdown guard region */
-            struct vir_region * guard_region = region_new((void*)(addr - GROWSDOWN_GUARD_LEN), GROWSDOWN_GUARD_LEN, RF_GUARD);
-            list_add(&(guard_region->list), &(mmp->mem_regions));
+        if (!(mmap_flags & MAP_PREALLOC)) {
+            region_alloc_phys(vr);
+            region_map_phys(mmp, vr);
         }
     }
 
@@ -75,7 +72,6 @@ PUBLIC int do_mmap()
 
         if (prot & PROT_WRITE) vr_flags |= RF_WRITABLE;
 
-        if (flags & MAP_GROWSDOWN) vr_flags |= RF_GROWSDOWN;
         if (!(vr = mmap_region(mmp, addr, flags, len, vr_flags))) return ENOMEM;
         list_add(&(vr->list), &(mmp->mem_regions));
     }

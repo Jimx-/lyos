@@ -71,6 +71,7 @@ typedef struct {
 
 #define I386_PF_PROT(x)         ((x) & PG_PRESENT)
 #define I386_PF_NOPAGE(x)       (!I386_PF_PROT(x))
+#define I386_PF_WRITE(x)        ((x) & PG_RW)
 
 PUBLIC void pg_identity(pde_t * pgd);
 PUBLIC pde_t pg_mapkernel(pde_t * pgd);
@@ -94,6 +95,7 @@ PUBLIC void reload_cr3();
 #define ARCH_VM_OFFSET_MASK_BIG I386_VM_OFFSET_MASK_BIG
 #define ARCH_PF_PROT(x)         I386_PF_PROT(x)
 #define ARCH_PF_NOPAGE(x)       I386_PF_NOPAGE(x)
+#define ARCH_PF_WRITE(x)        I386_PF_WRITE(x)
 
 #define ARCH_PDE(x)     ((unsigned long)(x) >> 22 & 0x03FF)
 #define ARCH_PTE(x)     ((unsigned long)(x) >> 12 & 0x03FF)

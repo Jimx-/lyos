@@ -20,7 +20,7 @@
 #define MAP_ANON 		MAP_ANONYMOUS	
 
 #define MAP_FIXED	0x0008
-#define MAP_GROWSDOWN	0x0010
+#define MAP_PREALLOC	0x0020
 
 /*
  * Error indicator returned by mmap(2)

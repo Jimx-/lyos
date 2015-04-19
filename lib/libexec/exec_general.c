@@ -39,10 +39,10 @@ PUBLIC int libexec_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PUBLIC int libexec_allocstack(struct exec_info * execi, int vaddr, size_t len)
+PUBLIC int libexec_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len)
 {
     if(mmap_for(execi->proc_e, (void*)vaddr, len,
-        PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_FIXED|MAP_GROWSDOWN, -1, 0) == MAP_FAILED) {
+        PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_FIXED|MAP_PREALLOC, -1, 0) == MAP_FAILED) {
         return ENOMEM;
     }
 

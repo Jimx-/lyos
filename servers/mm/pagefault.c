@@ -45,62 +45,51 @@ PUBLIC void do_handle_fault()
     vir_bytes pfla = mm_msg.FAULT_ADDR;
     struct mmproc * mmp = endpt_mmproc(mm_msg.FAULT_PROC);
     int err_code = mm_msg.FAULT_ERRCODE;
-
+    int wrflag = ARCH_PF_WRITE(err_code);
     int handled = 0;
 
-    if (ARCH_PF_PROT(err_code)) {
-#ifdef PAGEFAULT_DEBUG
-        printl("MM: pagefault: %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
-#endif
+    pfla = rounddown(pfla, ARCH_PG_SIZE);
 
-        pfla = rounddown(pfla, ARCH_PG_SIZE);
-        struct vir_region * vr;
-        if (vr = region_lookup(mmp, pfla)) { 
-            if (region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1) == 0) handled = 1;
-        }
-    } else if (ARCH_PF_NOPAGE(err_code)) {
-#ifdef PAGEFAULT_DEBUG
-        printl("MM: pagefault: %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
-#endif
+    struct vir_region * vr;
+    vr = region_lookup(mmp, pfla);
 
-        int extend = 0;
-        struct vir_region * vr;
-        int gd_base;
-        list_for_each_entry(vr, &(mmp->mem_regions), list) {
-            if (vr->flags & RF_GUARD) {
-                /* pfla is in stack guard area: extend stack */
-                if (pfla >= (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
-#ifdef PAGEFAULT_DEBUG
-                    printl("MM: page fault caused by not enough stack space, extending\n");
-#endif
-                    gd_base = (int)(vr->vir_addr) + vr->length;
-                    vr->vir_addr = (void*)((int)vr->vir_addr - GROWSDOWN_GUARD_LEN);
-                    handled = 1;
-                    extend = 1;
-                }
-            }
-        }
-
-        if (extend) {
-            list_for_each_entry(vr, &(mmp->mem_regions), list) {
-                if ((vr->flags & RF_GROWSDOWN) && (gd_base == (int)vr->vir_addr)) {
-                    if (region_extend_stack(vr, GROWSDOWN_GUARD_LEN) != 0) handled = 0;
-                    region_map_phys(mmp, vr);
-                }
-            }
-        }
-    }
-
-    /* resume */
-    if (handled) {
-        vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC);
-    } else {
+    if (!vr) {
         if (ARCH_PF_PROT(err_code)) {
             printl("MM: SIGSEGV %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
         } else if (ARCH_PF_NOPAGE(err_code)) {
             printl("MM: SIGSEGV %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
         }
-        //send_sig(p, SIGSEGV); 
+
+        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+    }
+
+    if (!(vr->flags & RF_WRITABLE) && wrflag) {
+        printl("MM: SIGSEGV %d ro address %x\n", mm_msg.FAULT_PROC, pfla);
+
+        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+    }
+        
+    if (region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1) == 0) handled = 1;
+
+
+#ifdef PAGEFAULT_DEBUG
+    if (ARCH_PF_PROT(err_code)) {
+        printl("MM: pagefault: %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
+    } else if (ARCH_PF_NOPAGE(err_code)) {
+        printl("MM: pagefault: %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
+    }
+#endif
+
+    vmctl(VMCTL_CLEAR_MEMCACHE, SELF);
+
+    /* resume */
+    if (handled) {
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+    } else {
+        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
     }
 }
 

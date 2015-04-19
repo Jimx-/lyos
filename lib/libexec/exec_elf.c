@@ -149,7 +149,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     }
 
     /* allocate stack */
-    if (execi->allocstack(execi, execi->stack_top - execi->stack_size, execi->stack_size) != 0) {
+    if (execi->allocmem_prealloc(execi, execi->stack_top - execi->stack_size, execi->stack_size) != 0) {
         if (execi->clearproc) execi->clearproc(execi);
         return ENOMEM;
     }

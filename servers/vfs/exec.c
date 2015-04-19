@@ -211,7 +211,7 @@ PUBLIC int do_exec(MESSAGE * msg)
     execi.args.memmap = request_vfs_mmap;
 
     execi.args.allocmem = libexec_allocmem;
-    execi.args.allocstack = libexec_allocstack;
+    execi.args.allocmem_prealloc = libexec_allocmem_prealloc;
     execi.args.copymem = read_segment;
     execi.args.clearproc = libexec_clearproc;
     execi.args.clearmem = libexec_clearmem;

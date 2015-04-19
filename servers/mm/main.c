@@ -185,12 +185,12 @@ PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int mm_allocstack(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len)
 {
 	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
 	struct vir_region * vr = NULL;
 
-	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_GROWSDOWN, len, RF_WRITABLE))) return ENOMEM;
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_PREALLOC, len, RF_WRITABLE))) return ENOMEM;
     list_add(&(vr->list), &(mmexeci->mmp->mem_regions));
 
     return 0;
@@ -228,7 +228,7 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     execi->header_len = sizeof(header);
 
     execi->allocmem = mm_allocmem;
-    execi->allocstack = mm_allocstack;
+    execi->allocmem_prealloc = mm_allocmem;
     execi->copymem = read_segment;
     execi->clearproc = NULL;
     execi->clearmem = libexec_clearmem;

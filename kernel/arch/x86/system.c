@@ -174,7 +174,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.header_len = bp->len;
 
         execi.allocmem = kernel_allocmem;
-        execi.allocstack = kernel_allocmem;
+        execi.allocmem_prealloc = kernel_allocmem;
         execi.copymem = read_segment;
         execi.clearproc = NULL;
         execi.clearmem = kernel_clearmem;
