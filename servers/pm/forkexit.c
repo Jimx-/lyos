@@ -284,9 +284,13 @@ PUBLIC int do_wait(MESSAGE * p)
     struct pmproc * pmp = pmproc_table;
     for (i = 0; i < NR_PROCS; i++, pmp++) {
         if (pmp->parent == parent_ep) {
+            if ((pmp->flags & PMPF_INUSE) == 0) continue;
+
+            /* select the right ones */
             if (child_pid > 0 && child_pid != pmp->pid) continue;
-            //if (child_pid < -1 && -child_pid != p_proc->gid) continue;
-            //if (child_pid == 0 && p_proc->gid != (proc_table + pid)->gid) continue;
+            if (child_pid < -1 && -child_pid != pmp->procgrp) continue;
+            if (child_pid == 0 && parent->procgrp != pmp->procgrp) continue;
+
             children++;
             if (pmp->flags & PMPF_HANGING) {
                 check_parent(pmp, 1);

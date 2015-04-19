@@ -89,4 +89,6 @@ PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size);
 
 PUBLIC void clear_memcache();
 
+PUBLIC void arch_set_syscall_result(struct proc * p, int result);
+
 #endif

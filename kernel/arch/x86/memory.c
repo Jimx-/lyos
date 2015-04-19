@@ -371,11 +371,12 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
     return EINVAL;
 }
 
-PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, vir_bytes laddr, vir_bytes bytes, int write)
+PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, vir_bytes laddr, vir_bytes bytes, int write, int type)
 {
     PST_SET_LOCKED(caller, PST_MMREQUEST);
 
     caller->mm_request.req_type = MMREQ_CHECK;
+    caller->mm_request.type = type;
     caller->mm_request.target = target;
     caller->mm_request.params.check.start = laddr;
     caller->mm_request.params.check.len = bytes;
@@ -431,7 +432,7 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
             write = 1;
         }
 
-        mm_suspend(caller, target, fault_la, bytes, write);
+        mm_suspend(caller, target, fault_la, bytes, write, MMREQ_TYPE_SYSCALL);
         return MMSUSPEND;
     }
 

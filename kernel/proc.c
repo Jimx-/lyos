@@ -83,6 +83,7 @@ PUBLIC void init_proc()
 		p->next_sending = 0;
 
 		p->state = 0;
+		p->flags = 0;
 
 		if (i != TASK_MM) {
 			PST_SET(p, PST_BOOTINHIBIT);
@@ -113,6 +114,8 @@ PUBLIC void init_proc()
 		p->state |= PST_STOPPED;
 		sprintf(p->name, "idle%d", i);
 	}
+
+	mmrequest = NULL;
 }
 
 /**
@@ -127,14 +130,18 @@ PUBLIC void switch_to_user()
 reschedule:
 	while (!(p = pick_proc())) idle();
 
+	switch_address_space(p);
+
 no_schedule:
 
 	get_cpulocal_var(proc_ptr) = p;
 
+	if (p->flags & PF_RESUME_SYSCALL) {
+		resume_sys_call(p);
+	}
+
 	if (p->counter_ns <= 0) proc_no_time(p);
 	if (!proc_is_runnable(p)) goto reschedule;
-
-	switch_address_space(p);
 
 	p = arch_switch_to_user();
 
@@ -343,6 +350,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 		PST_SET_LOCKED(sender, PST_SENDING);
 		sender->sendto = dest;
 		retval = data_vir_copy_check(p_to_send, KERNEL, &sender->send_msg, KERNEL, m, sizeof(MESSAGE));
+		if (retval != 0) goto out;
 
 		/* append to the sending queue */
 		struct proc * p;
@@ -410,6 +418,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 		unset_notify_pending(who_wanna_recv, notify_id);
 		retval = data_vir_copy_check(who_wanna_recv, KERNEL, m, KERNEL, &msg, sizeof(MESSAGE));
+		if (retval != 0) goto out;
 
 		who_wanna_recv->recv_msg = NULL;
 		PST_UNSET_LOCKED(who_wanna_recv, PST_RECEIVING);
@@ -484,6 +493,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		assert(m);
 		/* copy the message */
 		retval = data_vir_copy_check(who_wanna_recv, KERNEL, m, KERNEL, &from->send_msg, sizeof(MESSAGE));
+		if (retval != 0) goto out;
 
 		reset_msg(&from->send_msg);
 		from->sendto = NO_TASK;
@@ -579,6 +589,10 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 		MESSAGE m;
 		set_notify_msg(p_dest, &m, p_to_send->endpoint);
 		retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
+		if (retval != 0) {
+			unlock_proc(p_dest);
+			return retval;
+		}
 
 		p_dest->recv_msg = NULL;
 		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);

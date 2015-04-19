@@ -39,6 +39,8 @@
 #define PST_SIG_PENDING 	0x400	/* set when proc has a pending signal */
 #define PST_MMREQUEST		0x800 	/* set when proc issued an mm request */
 
+#define PF_RESUME_SYSCALL	0x001	/* set when we have to resume syscall execution */
+
 #define proc_slot(n)	((n) + NR_TASKS)
 #define proc_addr(n)	(&proc_table[(n) + NR_TASKS])
 #define is_kerntaske(e)	(e < 0)
@@ -123,6 +125,7 @@ struct proc {
 				    * process flags.
 				    * A proc is runnable if state==0
 				    */
+	int flags;
 #if CONFIG_SMP
 	int cpu;			/* on which cpu this proc runs */
 	int last_cpu;
@@ -130,6 +133,7 @@ struct proc {
 	
 	MESSAGE send_msg;
 	MESSAGE * recv_msg;
+	MESSAGE * syscall_msg;
 	int recvfrom;
 	int sendto;
 
@@ -151,7 +155,10 @@ struct proc {
 
 		endpoint_t target;
 
+		MESSAGE saved_reqmsg;
+
 		int req_type;
+		int type;
 		struct {
 			struct {
 				vir_bytes start, len;

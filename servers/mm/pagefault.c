@@ -33,7 +33,7 @@
 #include <lyos/vm.h>
 #include "global.h"
 
-#define PAGEFAULT_DEBUG
+//#define PAGEFAULT_DEBUG
 
 PUBLIC void do_handle_fault()
 {
@@ -53,19 +53,10 @@ PUBLIC void do_handle_fault()
         printl("MM: pagefault: %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
 #endif
 
+        pfla = rounddown(pfla, ARCH_PG_SIZE);
         struct vir_region * vr;
-        int found = 0;
-        list_for_each_entry(vr, &(mmp->mem_regions), list) {
-            if (pfla >= (int)(vr->vir_addr) && pfla < (int)(vr->vir_addr) + vr->length) {
-                found = 1;
-                break;
-            }
-        }
-
-        if (found) {
-            /*struct phys_region * pregion = &(vr->phys_block);
-
-            int fault_frame = (pfla - vr->vir_addr) / PG_SIZE;*/
+        if (vr = region_lookup(mmp, pfla)) { 
+            if (region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1) == 0) handled = 1;
         }
     } else if (ARCH_PF_NOPAGE(err_code)) {
 #ifdef PAGEFAULT_DEBUG
@@ -103,8 +94,7 @@ PUBLIC void do_handle_fault()
     /* resume */
     if (handled) {
         vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC);
-    }
-    else {
+    } else {
         if (ARCH_PF_PROT(err_code)) {
             printl("MM: SIGSEGV %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
         } else if (ARCH_PF_NOPAGE(err_code)) {
@@ -151,6 +141,7 @@ PUBLIC void do_mmrequest()
     vir_bytes start, len;
     int flags;
     struct mmproc * mmp;
+    int result;
 
     while (TRUE) {
         int type = vmctl_get_mmrequest(&target, &start, &len, 
@@ -160,11 +151,16 @@ PUBLIC void do_mmrequest()
         case MMREQ_CHECK:
             mmp = endpt_mmproc(target);
             if (!mmp) return;
-
-            handle_memory(mmp, start, len, flags, caller);
+#ifdef PAGEFAULT_DEBUG
+            printl("MM: mm request: %d address %x\n", target, start);
+#endif
+            result = handle_memory(mmp, start, len, flags, caller);
             break;
         default:
             return;
         }
+
+        result = vmctl_reply_mmreq(caller, result);
+        if (result) panic("reply mm request failed: %d", result);
     }
 }

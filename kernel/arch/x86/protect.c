@@ -37,7 +37,7 @@ PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
 PUBLIC int syscall_style = 0; 
 
-#define PROTECT_DEBUG
+//#define PROTECT_DEBUG
 
 /* 本文件内函数声明 */
 PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);

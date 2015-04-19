@@ -81,15 +81,15 @@ PUBLIC int do_fork()
                region_map_phys(mmp, new_region);
 
                data_copy(child_ep, new_region->vir_addr, parent_ep, vr->vir_addr, vr->length);
-           } else {*/    /* can be shared */
+           } else {  */  /* can be shared */
                region_share(mmp, new_region, mmparent, vr);
                region_map_phys(mmp, new_region);
-           /*}*/
+           //}
     }
 
     /* child PID will be returned to the parent proc */
     mm_msg.ENDPOINT = mmp->endpoint;
-
+    
     return 0;
 }
 

@@ -32,6 +32,7 @@
 #include "arch_smp.h"
 #endif
 #include "lyos/cpulocals.h"
+#include <lyos/vm.h>
 
 PRIVATE  sys_call_handler_t  sys_call_table[NR_SYS_CALLS];
 
@@ -89,25 +90,63 @@ PUBLIC int set_priv(struct proc * p, int id)
     return 0;
 }
 
-PUBLIC int dispatch_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
+PRIVATE int finish_sys_call(struct proc * p_proc, MESSAGE * msg, int result)
+{
+    if (result == MMSUSPEND) {
+        p_proc->mm_request.saved_reqmsg = *msg;
+        p_proc->flags |= PF_RESUME_SYSCALL;
+    } else {
+        if (copy_user_message(p_proc->syscall_msg, msg) != 0) return EFAULT;
+    }
+
+    arch_set_syscall_result(p_proc, result);
+    
+    return result;
+}
+
+PRIVATE int dispatch_sys_call(int call_nr, MESSAGE * msg, struct proc * p_proc)
 {
     int retval;
-    MESSAGE msg;
-
-    if (call_nr > NR_SYS_CALLS || call_nr < 0) return EINVAL;
-
-    if (copy_user_message(&msg, m_user) != 0) return EFAULT;
-    msg.source = p_proc->endpoint;
-
+    
     if (sys_call_table[call_nr]) {
         sys_call_handler_t handler = sys_call_table[call_nr];
-        retval = handler(&msg, p_proc);
+        retval = handler(msg, p_proc);
     } else {
         return EINVAL;
     }
 
-   if (copy_user_message(m_user, &msg) != 0) return EFAULT;
+    return retval;
+}
 
+PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
+{
+    MESSAGE msg;
+
+    if (call_nr > NR_SYS_CALLS || call_nr < 0) return EINVAL;
+
+    p_proc->syscall_msg = m_user;
+
+    if (copy_user_message(&msg, m_user) != 0) {
+        ksig_proc(p_proc->endpoint, SIGSEGV);
+    }
+
+    msg.source = p_proc->endpoint;
+    msg.type = call_nr;
+
+    int retval = dispatch_sys_call(call_nr, &msg, p_proc);
+
+    retval = finish_sys_call(p_proc, &msg, retval);
+
+    return retval;
+}
+
+PUBLIC int resume_sys_call(struct proc * p)
+{
+    int retval = dispatch_sys_call(p->mm_request.saved_reqmsg.type, &p->mm_request.saved_reqmsg, p);
+
+    p->flags &= ~PF_RESUME_SYSCALL;
+
+    retval = finish_sys_call(p, &p->mm_request.saved_reqmsg, retval);
     return retval;
 }
 

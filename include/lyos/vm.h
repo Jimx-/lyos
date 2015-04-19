@@ -33,6 +33,7 @@
 #define VMCTL_SET_ADDRESS_SPACE 7
 #define VMCTL_CLEAR_MEMCACHE    8
 #define VMCTL_GET_MMREQ         9
+#define VMCTL_REPLY_MMREQ       10
 
 #define VMCTL_GET_KM_INDEX   u.m3.m3i2
 #define VMCTL_GET_KM_RETVAL  u.m3.m3i2
@@ -55,6 +56,7 @@
 #define VMCTL_MMREQ_LEN     u.m3.m3i2
 #define VMCTL_MMREQ_FLAGS   u.m3.m3i3
 #define VMCTL_MMREQ_CALLER  u.m3.m3i4
+#define MMREQ_TYPE_SYSCALL  1
 #define MMREQ_CHECK     1
 
 #define UMAP_WHO        u.m3.m3i1
@@ -73,5 +75,6 @@ PUBLIC int umap(endpoint_t ep, void * vir_addr, phys_bytes * phys_addr);
 PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len);
 PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
                         int * flags, endpoint_t * caller);
+PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result);
 
 #endif

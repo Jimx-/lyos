@@ -34,7 +34,7 @@ extern	gdt_ptr
 extern	idt_ptr
 extern	current
 extern	tss
-extern 	dispatch_sys_call
+extern 	handle_sys_call
 extern  usermapped_offset
 extern  percpu_kstack
 bits 32
@@ -428,7 +428,7 @@ sys_call:
 	call    stop_context
 	pop 	esi
 
-    call    dispatch_sys_call
+    call    handle_sys_call
 	add		esp, 8 		; esp <- esi(proc ptr)
 
 	pop 	esi
@@ -471,7 +471,7 @@ sys_call_sysenter_common:
 	call 	stop_context
 	pop 	ebp
 
-    call    dispatch_sys_call
+    call    handle_sys_call
 	add		esp, 8 		; esp <- esi(proc ptr)
 	pop 	ebp
 

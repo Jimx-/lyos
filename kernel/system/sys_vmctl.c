@@ -47,28 +47,28 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
     case VMCTL_BOOTINHIBIT_CLEAR:
         if (!target) return EINVAL;
         PST_UNSET(target, PST_BOOTINHIBIT);
-        break;
+        return 0;
     case VMCTL_MMINHIBIT_CLEAR:
         if (!target) return EINVAL;
         PST_UNSET(target, PST_MMINHIBIT);
-        break;
+        return 0;
     case VMCTL_GET_KERN_MAPPING:
         m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(m->VMCTL_GET_KM_INDEX, 
                                     (caddr_t*)&m->VMCTL_GET_KM_ADDR,
                                     &m->VMCTL_GET_KM_LEN,
                                     &m->VMCTL_GET_KM_FLAGS); 
-        break;
+        return 0;
     case VMCTL_REPLY_KERN_MAPPING:
         m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(m->VMCTL_REPLY_KM_INDEX,
                                     m->VMCTL_REPLY_KM_ADDR);
-        break;
+        return 0;
     case VMCTL_PAGEFAULT_CLEAR:
         if (!target) return EINVAL;
         PST_UNSET(target, PST_PAGEFAULT);
-        break;
+        return 0;
     case VMCTL_CLEAR_MEMCACHE:
         clear_memcache();
-        break;
+        return 0;
     case VMCTL_GET_MMREQ:
         if (!mmrequest) return ESRCH;
 
@@ -89,6 +89,24 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
         mmrequest = mmrequest->mm_request.next_request;
 
         return type;
+    case VMCTL_REPLY_MMREQ:
+        if (!target) return EINVAL;
+
+        target->mm_request.result = m->VMCTL_VALUE;
+
+        switch (target->mm_request.type) {
+        case MMREQ_TYPE_SYSCALL:
+            target->flags |= PF_RESUME_SYSCALL;
+            break;
+        default:
+            panic("wrong mm request type: %d", target->mm_request.type);
+            break;
+        }
+
+        PST_UNSET(target, PST_MMREQUEST);
+        return 0;
+    default:
+        break;
     }
 
     if (!target) return EINVAL;

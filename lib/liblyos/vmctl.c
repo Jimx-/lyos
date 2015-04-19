@@ -107,3 +107,14 @@ PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes
 
     return retval;
 }
+
+PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_REPLY_MMREQ;
+    m.VMCTL_WHO = who;
+    m.VMCTL_VALUE = result;
+
+    return syscall_entry(NR_VMCTL, &m);
+}

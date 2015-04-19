@@ -98,6 +98,7 @@ PUBLIC  void    direct_cls();
 
 /* system.c */
 PUBLIC  void    init_system();
+PUBLIC  int     resume_sys_call(struct proc * p);
 PUBLIC  int     set_priv(struct proc * p, int id);
 PUBLIC  void    ksig_proc(endpoint_t ep, int signo);
 

@@ -45,5 +45,5 @@ PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
 
     int len = m->BUF_LEN;
 
-    return vir_copy(&dest, &src, len);
+    return vir_copy_check(p_proc, &dest, &src, len);
 }

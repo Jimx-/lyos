@@ -190,3 +190,8 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         p->regs.esp = (u32)VM_STACK_TOP;
     }
 }
+
+PUBLIC void arch_set_syscall_result(struct proc * p, int result)
+{
+    p->regs.eax = (u32)result;
+}
