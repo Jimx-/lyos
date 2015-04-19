@@ -10,4 +10,3 @@ realclean :
 
 $(DESTDIR)/bin/cat: cat.c
 	@$(CC) -o $@ $<
-

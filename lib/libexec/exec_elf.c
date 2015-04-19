@@ -153,7 +153,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         if (execi->clearproc) execi->clearproc(execi);
         return ENOMEM;
     }
-    execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
+    //execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
 
     execi->entry_point = elf_hdr->e_entry;
 
