@@ -66,6 +66,7 @@ PRIVATE void 	tty_do_ioctl(TTY* tty, MESSAGE* msg);
 PRIVATE void 	tty_do_kern_log();
 PRIVATE void	tty_echo	(TTY* tty, char c);
 PRIVATE void	tty_sigproc (TTY * tty, int signo);
+PRIVATE void 	erase		(TTY * tty);
 PRIVATE void	put_key		(TTY* tty, u32 key);
 
 
@@ -84,9 +85,7 @@ PUBLIC int main()
 
 	while (1) {
 		for (tty = TTY_FIRST; tty < TTY_END; tty++) {
-			do {
-				handle_events(tty);
-			} while (tty->ibuf_cnt);
+			handle_events(tty);
 		}
 		
 		send_recv(RECEIVE, ANY, &msg);
@@ -163,9 +162,11 @@ PRIVATE void init_tty()
 
 	for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
 
-		tty->ibuf_cnt = 0;
+		tty->ibuf_cnt = tty->tty_eotcnt = 0;
 		tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
 
+		tty->tty_min = 1;
+		
 		tty->tty_termios = termios_defaults;
 
 		if (i < NR_CONSOLES) {	/* consoles */
@@ -237,8 +238,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 {
 	int cnt, key;
 
-	for (cnt = 0; cnt < count; cnt++) {
-		
+	for (cnt = 0; cnt < count; cnt++) {	
 		key = *buf++ & 0xFF;
 
 		if (tty->tty_termios.c_iflag & ISTRIP) key &= 0x7F;
@@ -268,6 +268,20 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 			if (tty->tty_termios.c_iflag & INLCR) key = '\r';
 		}
 		
+		if (tty->tty_termios.c_lflag & ICANON) {
+			if (key == tty->tty_termios.c_cc[VERASE]) {
+				erase(tty);
+				if (!(tty->tty_termios.c_lflag & ECHOE)) {
+					tty_echo(tty, key);
+				}
+				continue;
+			}
+
+			if (key == '\n') key |= IN_EOT;
+
+			if (key == tty->tty_termios.c_cc[VEOL]) key |= IN_EOT;
+		}
+
 		if (tty->tty_termios.c_lflag & ISIG) {
 			int signo = 0;
 
@@ -286,6 +300,8 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 
 		put_key(tty, key);
 		tty_echo(tty, key);
+
+		if (key & IN_EOT) tty->tty_eotcnt++;
 	}
 
 	return cnt;
@@ -355,45 +371,49 @@ PRIVATE void tty_dev_write(TTY* tty)
  *****************************************************************************/
 PRIVATE void in_transfer(TTY* tty)
 {
-	while (tty->ibuf_cnt) {
+	char buf[64], *bp;
+
+	if (tty->tty_inleft == 0 || tty->tty_eotcnt < tty->tty_min) return;
+
+	bp = buf;
+	while (tty->tty_inleft > 0 && tty->tty_eotcnt > 0) {
 		char ch = *(tty->ibuf_tail);
 		tty->ibuf_tail++;
 		if (tty->ibuf_tail == tty->ibuf + TTY_IN_BYTES)
 			tty->ibuf_tail = tty->ibuf;
 		tty->ibuf_cnt--;
 
-		if (tty->tty_inleft) {
-			if (ch >= ' ' && ch <= '~') { /* printable */
-				void * p = tty->tty_inbuf +
+		*bp = ch & IN_CHAR;
+		tty->tty_inleft--;
+		if (++bp == buf + sizeof(buf)) {	/* buffer full */
+			void * p = tty->tty_inbuf +
 					   tty->tty_trans_cnt;
-				data_copy(tty->tty_inprocnr, p, TASK_TTY, &ch, 1);
-				tty->tty_trans_cnt++;
-				tty->tty_inleft--;
-			}
-
-			else if (ch == '\b' && tty->tty_trans_cnt) {
-				tty->tty_trans_cnt--;
-				tty->tty_inleft++;
-			}
-
-			if (ch == '\n') {
-				void * p = tty->tty_inbuf +
-					   tty->tty_trans_cnt;
-				data_copy(tty->tty_inprocnr, p, TASK_TTY, &ch, 1);
-				if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
-				else tty->tty_inleft--;
-				tty->tty_trans_cnt++;
-			}
-			
-			if (tty->tty_inleft == 0) {
-				MESSAGE msg;
-				msg.type = tty->tty_inreply;
-				msg.PROC_NR = tty->tty_inprocnr;
-				msg.CNT = tty->tty_trans_cnt;
-				send_recv(SEND, tty->tty_incaller, &msg);
-				tty->tty_inleft = 0;
-			}
+			data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, sizeof(buf));
+			tty->tty_trans_cnt += sizeof(buf);
+			bp = buf;
 		}
+
+		if (ch == '\n') {
+			tty->tty_eotcnt--;
+			if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
+		}
+	}
+
+	if (bp > buf) {
+		int count = bp - buf;
+		void * p = tty->tty_inbuf +
+					   tty->tty_trans_cnt;
+		data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, count);
+		tty->tty_trans_cnt += count;
+	}
+
+	if (tty->tty_inleft == 0) {
+		MESSAGE msg;
+		msg.type = tty->tty_inreply;
+		msg.PROC_NR = tty->tty_inprocnr;
+		msg.CNT = tty->tty_trans_cnt;
+		send_recv(SEND, tty->tty_incaller, &msg);
+		tty->tty_inleft = 0;
 	}
 }
 
@@ -552,6 +572,29 @@ PRIVATE void tty_do_kern_log()
 	}
 
 	prev_next = next;
+}
+
+/*****************************************************************************
+ *                                erase
+ *****************************************************************************/
+/**
+ * Erase last character.
+ *
+ *****************************************************************************/
+PRIVATE void erase(TTY * tty)
+{
+	if (tty->ibuf_cnt == 0) return;
+
+	u32 * head = tty->ibuf_head;
+	if (head == tty->ibuf)
+			head = tty->ibuf + TTY_IN_BYTES;
+	head--;
+	tty->ibuf_head = head;
+	tty->ibuf_cnt--;
+
+	if (tty->tty_termios.c_lflag & ECHOE) {
+		tty->tty_echo(tty, '\b');
+	}
 }
 
 /*****************************************************************************

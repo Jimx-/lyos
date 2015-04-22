@@ -140,7 +140,6 @@ PUBLIC void do_mmrequest()
         case MMREQ_CHECK:
             mmp = endpt_mmproc(target);
             if (!mmp) return;
-            printl("MM: mm request: %d address %x\n", target, start);
 #ifdef PAGEFAULT_DEBUG
             printl("MM: mm request: %d address %x\n", target, start);
 #endif
