@@ -16,9 +16,26 @@
 #ifndef _SERVICE_H_
 #define _SERVICE_H_
 
+#define NR_PCI_CLASS    4
+
+struct service_pci_class {
+    unsigned classid;
+    unsigned mask;
+};
+
 struct service_up_req {
     char * cmdline;
     int cmdlen;
+
+    int nr_pci_class;
+    struct service_pci_class pci_class[NR_PCI_CLASS];
+};
+
+struct pci_acl {
+    endpoint_t endpoint;
+    
+    int nr_pci_class;
+    struct service_pci_class pci_class[NR_PCI_CLASS];
 };
 
 #define SERVICE_INIT_FRESH 0x1

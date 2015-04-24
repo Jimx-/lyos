@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <lyos/const.h>
 #include <lyos/type.h>
@@ -9,11 +10,16 @@
 #include <lyos/service.h>
 
 char * req_path = NULL;
+char * config_path = NULL;
+
+#define ARG_CONFIG	'--config'
 
 static char * requests[] = {
 	"up",
 	NULL
 };
+
+int parse_config(char * progname, char * path, struct service_up_req * up_req);
 
 static void die(char * name, char * reason)
 {
@@ -26,7 +32,7 @@ static void print_usage(char * name, char * reason)
 	fprintf(stderr, "Error: %s\n", reason);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "    %s up <server>\n", name);
+	fprintf(stderr, "    %s up <server> [%s <path>]\n", name, ARG_CONFIG);
 	fprintf(stderr, "\n");
 }
 
@@ -65,6 +71,13 @@ static int parse_cmd(int argc, char * argv[])
 	struct stat stat_buf;
 	if (stat(req_path, &stat_buf) != 0) die(argv[0], "binary stat failed");
 
+	index++;
+	for (; index < argc; index++) {
+		if (!strcmp(argv[index], ARG_CONFIG)) {
+			config_path = argv[++index];
+		}
+	}
+
 	return req_nr;
 }
 
@@ -73,11 +86,24 @@ int main(int argc, char * argv[])
 	int request = parse_cmd(argc, argv);
 	
 	MESSAGE msg;
+	char * progname;
 	struct service_up_req up_req;
+	char config_dfl[PATH_MAX];
 	memset(&msg, 0, sizeof(msg));
 	msg.type = request;
 	switch (request) {
 	case SERVICE_UP:
+		progname = strrchr(req_path, '/');
+		if (progname == NULL) die(argv[0], "absolute path required");
+		progname++;
+
+		if (!config_path) {
+			sprintf(config_dfl, "/etc/system/%s.conf", progname);
+			config_path = config_dfl;
+			
+			if (parse_config(progname, config_path, &up_req) != 0) errx(1, "cannot parse config");
+		}
+
 		up_req.cmdline = req_path;
 		up_req.cmdlen = strlen(req_path);
 		msg.BUF = &up_req;

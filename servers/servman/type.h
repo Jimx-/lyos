@@ -37,6 +37,8 @@ struct sproc {
 
     endpoint_t caller_e;
     int caller_request;
+
+    struct pci_acl pci_acl;
 };
 
 struct boot_priv {

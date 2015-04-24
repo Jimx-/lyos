@@ -23,7 +23,7 @@ $(INITRD):
 	@cp $(DESTDIR)/bin/sh bin/
 	@cp $(DESTDIR)/bin/service bin/
 	@cp $(DESTDIR)/bin/mount bin/
-	@cp ../sysroot/etc/* etc/
+	@cp -rf ../sysroot/etc/* etc/
 	@touch .root
 	@(cd ../scripts ; bash create-ramdisk-dev.sh)
 	@tar -cvf $(INITRD) .root bin/* sbin/* dev/* etc/* usr/bin/* > /dev/null

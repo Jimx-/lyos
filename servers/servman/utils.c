@@ -39,6 +39,16 @@ PUBLIC int init_sproc(struct sproc * sp, struct service_up_req * up_req, endpoin
 {
     sp->priv.flags = TASK_FLAGS;
 
+    if (up_req->nr_pci_class > NR_PCI_CLASS) return EINVAL;
+    if (up_req->nr_pci_class > 0) {
+        sp->pci_acl.nr_pci_class = up_req->nr_pci_class;
+        int i;
+        for (i = 0; i < sp->pci_acl.nr_pci_class; i++) {
+            sp->pci_acl.pci_class[i].classid = up_req->pci_class[i].classid;
+            sp->pci_acl.pci_class[i].mask = up_req->pci_class[i].mask;
+        }
+    }
+
     set_sproc(sp, up_req, source);
     return 0;
 }
