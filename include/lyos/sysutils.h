@@ -61,4 +61,7 @@ PUBLIC int      get_procep(pid_t pid, endpoint_t * ep);
 PUBLIC int      get_ksig(endpoint_t * ep, sigset_t * set);
 PUBLIC int      end_ksig(endpoint_t ep);
 
+PUBLIC int      pci_first_dev(int * devind, u16 * vid, u16 * did);
+PUBLIC int      pci_next_dev(int * devind, u16 * vid, u16 * did);
+
 #endif

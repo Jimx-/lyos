@@ -26,6 +26,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/service.h>
 
 #include <pci.h>
 #include "pci.h"

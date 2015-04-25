@@ -8,7 +8,8 @@ ARFLAGS		= rcs
 LOBJS		= arch/$(ARCH)/arch-lib.o \
 			printl.o spin.o time.o data_copy.o procctl.o mmap.o get_info.o \
 			vmctl.o privctl.o umap.o env.o panic.o irqctl.o fork.o clear.o exec.o signal.o \
-			map_phys.o read_tsc_64.o get_procep.o serv_init.o kill.o ksig.o
+			map_phys.o read_tsc_64.o get_procep.o serv_init.o kill.o ksig.o \
+			pci_set_acl.o pci_get_dev.o
 
 LIB		= $(LIBOUTDIR)/liblyos.a
 

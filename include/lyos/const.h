@@ -199,8 +199,9 @@
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
 #define MSG_KERNLOG 	0x2  	/* the process has a kernellog message */
 
-#define VFS_REQ_BASE	 1001
-#define SERVMAN_REQ_BASE 2201
+#define VFS_REQ_BASE	 	1001
+#define SERVMAN_REQ_BASE 	2201
+#define PCI_REQ_BASE 		2301
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -270,10 +271,15 @@ enum msgtype {
 
 	/* message for sysfs */
 	SYSFS_PUBLISH = 2100,				/* 2100 */
+	SYSFS_RETRIEVE = 2101,
 
 	/* SERVMAN */
 	SERVICE_UP = SERVMAN_REQ_BASE, SERVICE_DOWN,
 	SERVICE_INIT, SERVICE_INIT_REPLY,
+
+	PCI_SET_ACL = PCI_REQ_BASE,
+	PCI_FIRST_DEV,
+	PCI_NEXT_DEV,
 };
 
 /* macros for messages */

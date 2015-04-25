@@ -33,6 +33,7 @@ struct service_up_req {
 
 struct pci_acl {
     endpoint_t endpoint;
+    unsigned inuse;
     
     int nr_pci_class;
     struct service_pci_class pci_class[NR_PCI_CLASS];
@@ -44,5 +45,7 @@ typedef int (*serv_init_fresh_callback_t)();
 
 PUBLIC void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb);
 PUBLIC int serv_init();
+
+PUBLIC int pci_set_acl(struct pci_acl * pci_acl);
 
 #endif

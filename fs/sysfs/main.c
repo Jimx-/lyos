@@ -68,6 +68,9 @@ PRIVATE int sysfs_message_hook(MESSAGE * m)
     case SYSFS_PUBLISH:
         retval = do_publish(m); 
         break;
+    case SYSFS_RETRIEVE:
+        retval = do_retrieve(m);
+        break;
     default:
         return ENOSYS;
     }

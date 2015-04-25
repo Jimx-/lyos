@@ -2,7 +2,7 @@
 # Makefile for pci driver.
 
 PCI		= pci
-PCIOBJS = main.o pci_table.o pci_intel.o
+PCIOBJS = main.o pci.o pci_table.o pci_intel.o
 
 LIBS	= -llyos
 

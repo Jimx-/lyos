@@ -23,11 +23,13 @@
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
+#include <errno.h>
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/service.h>
+#include <lyos/ipc.h>
 
 #include <pci.h>
 #include "pci.h"
@@ -40,16 +42,13 @@
 #define DBGPRINT(x)
 #endif
 
-PUBLIC struct pcibus pcibus[NR_PCIBUS];
-PRIVATE int nr_pcibus = 0;
+PUBLIC int pci_init();
 
-PUBLIC struct pcidev pcidev[NR_PCIDEV];
-PRIVATE int nr_pcidev = 0;
+PUBLIC struct pci_acl pci_acl[NR_PRIV_PROCS];
 
-PRIVATE int pci_init();
-PRIVATE void pci_intel_init();
-PRIVATE void pci_probe_bus(int busind);
-PRIVATE u16 pci_read_attr_u16(int devind, int port);
+PRIVATE int do_set_acl(MESSAGE * m);
+PRIVATE int do_first_dev(MESSAGE * m);
+PRIVATE int do_next_dev(MESSAGE * m);
 
 PUBLIC int main()
 {
@@ -57,115 +56,104 @@ PUBLIC int main()
 	serv_init();
 
 	MESSAGE msg;
-	
-	while(TRUE) {
+
+	while (TRUE) {
+        MESSAGE msg;
+
         send_recv(RECEIVE, ANY, &msg);
-	}
+        int src = msg.source;
+
+        int msgtype = msg.type;
+
+        switch (msgtype) {
+	    case PCI_SET_ACL:
+	    	msg.RETVAL = do_set_acl(&msg);
+	    	break;
+        case PCI_FIRST_DEV:
+            msg.RETVAL = do_first_dev(&msg);
+            break;
+        case PCI_NEXT_DEV:
+            msg.RETVAL = do_next_dev(&msg);
+            break;
+        default:
+            msg.RETVAL = ENOSYS;
+            break;
+        }
+
+        if (msg.RETVAL != SUSPEND) {
+            msg.type = SYSCALL_RET;
+            send_recv(SEND_NONBLOCK, src, &msg);
+        }
+    }
 
 	return 0;
 }
 
-PRIVATE int get_busind(int busnr)
+PRIVATE int do_set_acl(MESSAGE * m)
 {
-	int i;
-	for (i = 0; i < nr_pcibus; i++) {
-		if (pcibus[i].busnr == busnr) return i;
-	}
+    int i;
 
-	panic("get_busind failed\n");
+    if (m->source != TASK_SERVMAN) return EPERM;
+
+    for (i = 0; i < NR_PRIV_PROCS; i++) {
+        if (!pci_acl[i].inuse) break;
+    }
+
+    if (i >= NR_PRIV_PROCS) return ENOMEM;
+
+    int retval = data_copy(SELF, &pci_acl[i], m->source, m->BUF, sizeof(struct pci_acl));
+    
+    if (retval) return retval;
+
+    pci_acl[i].inuse = 1;
+    return 0;
 }
 
-PRIVATE u16 pci_read_attr_u8(int devind, int port)
+PRIVATE struct pci_acl * get_acl(endpoint_t ep)
 {
-	int busnr = pcidev[devind].busnr;
-	int busind = get_busind(busnr);
-	return pcibus[busind].rreg_u8(busind, devind, port);
+    int i;
+    for (i = 0; i < NR_PRIV_PROCS; i++) {
+        if (!pci_acl[i].inuse) continue;
+
+        if (pci_acl[i].endpoint == ep) return &pci_acl[i];
+    }
+
+    return NULL;
 }
 
-PRIVATE u16 pci_read_attr_u16(int devind, int port)
+PRIVATE int do_first_dev(MESSAGE * m)
 {
-	int busnr = pcidev[devind].busnr;
-	int busind = get_busind(busnr);
-	return pcibus[busind].rreg_u16(busind, devind, port);
+    struct pci_acl * acl = get_acl(m->source);
+
+    int devind;
+    u16 vid, did;
+
+    int retval = _pci_first_dev(acl, &devind, &vid, &did);
+
+    if (retval) return retval;
+
+    m->u.m3.m3i2 = devind;
+    m->u.m3.m3i3 = vid;
+    m->u.m3.m3i4 = did;
+
+    return 0;
 }
 
-PRIVATE int pci_init()
+PRIVATE int do_next_dev(MESSAGE * m)
 {
-	pci_intel_init();
+    struct pci_acl * acl = get_acl(m->source);
 
-	return 0;
-}
+    int devind = m->u.m3.m3i2;
 
-PRIVATE void pci_intel_init()
-{
-	u32 bus, dev, func;
-	
-	bus = 0;
-	dev = 0;
-	func = 0;
+    u16 vid, did;
 
-	u16 vendor = pcii_read_u16(bus, dev, func, PCI_VID);
-	u16 device = pcii_read_u16(bus, dev, func, PCI_DID);
+    int retval = _pci_next_dev(acl, &devind, &vid, &did);
 
-	if (vendor == 0xffff && device == 0xffff) return;
+    if (retval) return retval;
 
-	if (nr_pcibus >= NR_PCIBUS) return;
+    m->u.m3.m3i2 = devind;
+    m->u.m3.m3i3 = vid;
+    m->u.m3.m3i4 = did;
 
-	int busind = nr_pcibus++;
-	pcibus[busind].busnr = 0;
-	pcibus[busind].rreg_u8 = pcii_rreg_u8;
-	pcibus[busind].rreg_u16 = pcii_rreg_u16;
-
-	char * name = pci_dev_name(vendor, device);
-	if (name) {
-		printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus, dev, func, vendor, device, name);
-	} else {
-		printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus, dev, func, vendor, device);
-	}
-
-	pci_probe_bus(busind);
-}
-
-PRIVATE void pci_probe_bus(int busind)
-{
-	u8 bus_nr = pcibus[busind].busnr;
-
-	int devind = nr_pcidev;
-
-	int i = 0, func = 0;
-	for(i = 0; i < 32; i++) 
-	{
-		for (func = 0; func < 8; func++) {
-			pcidev[devind].busnr = bus_nr;
-			pcidev[devind].dev = i;
-			pcidev[devind].func = func;
-
-			u16 vendor = pci_read_attr_u16(devind, PCI_VID);
-			u16 device = pci_read_attr_u16(devind, PCI_DID);
-		                     
-			if(vendor == 0xffff) {
-				if (func == 0) break;
-
-				continue;
-			}
-			
-			u8 baseclass = pci_read_attr_u8(devind, PCI_BCR);
-			u8 subclass = pci_read_attr_u8(devind, PCI_SCR);
-
-			devind = nr_pcidev;
-			nr_pcidev++;
-
-			pcidev[devind].vid = vendor;
-			pcidev[devind].did = device;
-			pcidev[devind].baseclass = baseclass;
-			pcidev[devind].subclass = subclass;
-
-			char * name = pci_dev_name(vendor, device);
-			if (name) {
-				printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus_nr, i, func, vendor, device, name);
-			} else {
-				printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus_nr, i, func, vendor, device);
-			}
-		}
-	}
+    return 0;
 }

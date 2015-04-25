@@ -2,7 +2,7 @@
 # Makefile for libsysfs.
 #
 
-LIBSYSFSOBJS		= sysfs_publish.o
+LIBSYSFSOBJS		= sysfs_publish.o sysfs_retrieve.o
 LIBSYSFS 		= $(LIBOUTDIR)/libsysfs.a
 ARFLAGS			= rcs
 

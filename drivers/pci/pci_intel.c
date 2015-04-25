@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
+#include <lyos/service.h>
 
 #include <pci.h>
 #include "pci.h"
@@ -37,7 +38,7 @@ PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset)
     u8 v;
 
     portio_outl(PCII_CTRL, PCII_SELREG(bus, slot, func, offset));
-    portio_inb(PCI_DATA, &v);
+    portio_inb(PCI_DATA + (offset & 3), &v);
 
     return v;
 }
@@ -52,7 +53,7 @@ PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
     return (u16)((v >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-PUBLIC u16 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
+PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u8(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
 }

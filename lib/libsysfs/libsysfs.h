@@ -17,4 +17,6 @@
 PUBLIC int sysfs_publish_domain(char * key, int flags);
 PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags);
 
+PUBLIC int sysfs_retrieve_u32(char * key, u32 * value);
+
 #endif /* _LIBSYSFS_H_ */

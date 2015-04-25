@@ -28,7 +28,11 @@ PUBLIC int portio_in(int port, u32 * value, int type)
     m.PIO_PORT = port;
 
     int retval = syscall_entry(NR_PORTIO, &m);
-    *value = m.PIO_VALUE;
+
+    if (type == PIO_BYTE) 
+        *(u8*)value = (u8)m.PIO_VALUE;
+    else
+        *value = m.PIO_VALUE;
 
     return retval;
 }

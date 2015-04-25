@@ -178,5 +178,10 @@ PUBLIC int publish_service(struct sproc * sp)
     sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
     retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE); 
 
+    sp->pci_acl.endpoint = sp->endpoint;
+    if (sp->pci_acl.nr_pci_class > 0) {
+        pci_set_acl(&sp->pci_acl);
+    }
+
     return retval;
 }

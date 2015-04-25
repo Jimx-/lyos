@@ -23,6 +23,7 @@
 
 #define PCI_VID      0x0     /* Vendor ID */
 #define PCI_DID      0x2     /* Device ID */
+#define PCI_PIFR     0x09    /* Prog. Interface Register */
 #define PCI_SCR      0x0A    /* Sub-Class Register */
 #define PCI_BCR      0x0B    /* Base-Class Register */
 

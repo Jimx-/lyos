@@ -15,44 +15,28 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/config.h"
-#include "errno.h"
 #include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
 #include "assert.h"
+#include "unistd.h"
+#include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
-#include "lyos/list.h"
-#include <sys/stat.h>
-#include "libsysfs/libsysfs.h"
-#include "libmemfs/libmemfs.h"
-#include "node.h"
-#include "global.h"
-    
-PUBLIC int do_publish(MESSAGE * m)
+#include <lyos/ipc.h>
+#include "libsysfs.h"
+
+PUBLIC int sysfs_retrieve_u32(char * key, u32 * value)
 {
-    endpoint_t src = m->source;
-    int len = m->NAME_LEN;
-    int flags = m->FLAGS;
+    MESSAGE msg;
 
-    char name[PATH_MAX];
-    if (len > PATH_MAX) return ENAMETOOLONG;
+    msg.type = SYSFS_RETRIEVE;
 
-    /* fetch the name */
-    data_copy(SELF, name, src, m->PATHNAME, len);
-    name[len] = '\0';
+    msg.PATHNAME = key;
+    msg.NAME_LEN = strlen(key);
+    msg.FLAGS = SF_TYPE_U32;
 
-    sysfs_node_t * node = create_node(name, flags);
-    if (!node) return errno;
+    send_recv(BOTH, TASK_SYSFS, &msg);
 
-    if (flags & SF_TYPE_U32) {
-        node->u.u32v = m->u.m3.m3i3;
-    }
-
-    return 0;
+    if (value) *value = msg.u.m3.m3i3;
+    
+    return msg.RETVAL;
 }
