@@ -49,6 +49,8 @@ PUBLIC struct pci_acl pci_acl[NR_PRIV_PROCS];
 PRIVATE int do_set_acl(MESSAGE * m);
 PRIVATE int do_first_dev(MESSAGE * m);
 PRIVATE int do_next_dev(MESSAGE * m);
+PRIVATE int do_attr_r8(MESSAGE * m);
+PRIVATE int do_attr_r32(MESSAGE * m);
 
 PUBLIC int main()
 {
@@ -74,6 +76,12 @@ PUBLIC int main()
             break;
         case PCI_NEXT_DEV:
             msg.RETVAL = do_next_dev(&msg);
+            break;
+        case PCI_ATTR_R8:
+            msg.RETVAL = do_attr_r8(&msg);
+            break;
+        case PCI_ATTR_R32:
+            msg.RETVAL = do_attr_r32(&msg);
             break;
         default:
             msg.RETVAL = ENOSYS;
@@ -157,3 +165,28 @@ PRIVATE int do_next_dev(MESSAGE * m)
 
     return 0;
 }
+
+PRIVATE int do_attr_r8(MESSAGE * m)
+{
+    struct pci_acl * acl = get_acl(m->source);
+
+    int devind = m->u.m3.m3i2;
+    u16 offset = (u16)m->u.m3.m3i3;
+
+    m->u.m3.m3i2 = pci_read_attr_u8(devind, offset);
+
+    return 0;
+}
+
+PRIVATE int do_attr_r32(MESSAGE * m)
+{
+    struct pci_acl * acl = get_acl(m->source);
+
+    int devind = m->u.m3.m3i2;
+    u16 offset = (u16)m->u.m3.m3i3;
+
+    m->u.m3.m3i2 = pci_read_attr_u32(devind, offset);
+
+    return 0;
+}
+

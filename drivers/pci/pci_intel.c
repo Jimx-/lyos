@@ -53,6 +53,16 @@ PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
     return (u16)((v >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
+PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset) 
+{
+    u32 v;
+
+    portio_outl(PCII_CTRL, PCII_SELREG(bus, slot, func, offset));
+    portio_inl(PCI_DATA, &v);
+
+    return v;
+}
+
 PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u8(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
@@ -61,4 +71,9 @@ PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
 PUBLIC u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u16(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
+}
+
+PUBLIC u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port)
+{
+    return pcii_read_u32(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
 }

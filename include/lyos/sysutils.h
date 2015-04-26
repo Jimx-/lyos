@@ -63,5 +63,7 @@ PUBLIC int      end_ksig(endpoint_t ep);
 
 PUBLIC int      pci_first_dev(int * devind, u16 * vid, u16 * did);
 PUBLIC int      pci_next_dev(int * devind, u16 * vid, u16 * did);
+PUBLIC u8       pci_attr_r8(int devind, u16 port);
+PUBLIC u32      pci_attr_r32(int devind, u16 port);
 
 #endif

@@ -108,6 +108,7 @@
 #define	PRINTER_IRQ		7
 #define PS_2_IRQ		12
 #define	AT_WINI_IRQ		14	/* at winchester */
+#define AT_WINI_1_IRQ	15
 
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
@@ -280,6 +281,8 @@ enum msgtype {
 	PCI_SET_ACL = PCI_REQ_BASE,
 	PCI_FIRST_DEV,
 	PCI_NEXT_DEV,
+	PCI_ATTR_R8,
+	PCI_ATTR_R32,
 };
 
 /* macros for messages */
@@ -379,7 +382,7 @@ enum msgtype {
 
 #define MINOR_INITRD    120
 
-#define	MAX_DRIVES		2
+#define	MAX_DRIVES		4
 #define	NR_PART_PER_DRIVE	4
 #define	NR_SUB_PER_PART		16
 #define	NR_SUB_PER_DRIVE	(NR_SUB_PER_PART * NR_PART_PER_DRIVE)

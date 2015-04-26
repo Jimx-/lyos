@@ -36,6 +36,7 @@ struct pcibus{
 
     u8 (*rreg_u8)(int busind, int devind, int port);
     u16 (*rreg_u16)(int busind, int devind, int port);
+    u32 (*rreg_u32)(int busind, int devind, int port);
 };
 
 struct pci_device {
@@ -52,9 +53,15 @@ PUBLIC char * pci_dev_name(int vendor, int device_id);
 
 PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset) ;
 PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset);
+PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset);
 PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port);
 PUBLIC u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port);
+PUBLIC u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port);
 
 PUBLIC int _pci_first_dev(struct pci_acl * acl, int * devind, u16 * vid, u16 * did);
+
+PUBLIC u8 pci_read_attr_u8(int devind, int port);
+PUBLIC u16 pci_read_attr_u16(int devind, int port);
+PUBLIC u32 pci_read_attr_u32(int devind, int port);
 
 #endif
