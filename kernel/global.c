@@ -55,6 +55,9 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
 	{TASK_RD, 		"RD"		},
 	{TASK_INITFS, 	"INITFS"	},
 	{TASK_SYSFS,	"SYSFS"		},
+#ifdef __i386__
+	{TASK_PCI,		"PCI"		},
+#endif
 	{INIT,			"INIT"		},
 };
 

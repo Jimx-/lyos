@@ -127,7 +127,12 @@
 #define	TASK_RD			8
 #define TASK_INITFS		9
 #define TASK_SYSFS		10
-#define INIT			11
+#ifdef __i386__
+#define TASK_PCI		11
+#define INIT			12
+#else
+#define INIT 			11
+#endif
 #define ANY				(NR_PROCS + 10)
 #define SELF			(-0x8ace)
 #define NO_TASK			(NR_PROCS + 20)

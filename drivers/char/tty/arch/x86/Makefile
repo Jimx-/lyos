@@ -1,5 +1,5 @@
 
-ARCHTTYOBJS		= console.o keyboard.o rs232.o
+ARCHTTYOBJS		= console.o keyboard.o rs232.o vgacon.o fbcon.o fbcon_bochs.o
 
 ARCHTTY		= arch-tty.o
 LIBS		= -llyos

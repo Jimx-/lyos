@@ -25,9 +25,9 @@
 #include <lyos/ipc.h>
 #include "libsysfs/libsysfs.h"
 
-extern endpoint_t __pci_endpoint;
+extern endpoint_t __pci_endpoint = TASK_PCI;
 
-PUBLIC int pci_first_dev(int * devind, u16 * vid, u16 * did)
+PUBLIC u8 pci_attr_r8(int devind, u16 port)
 {
     u32 v;
     int retval;
@@ -41,18 +41,16 @@ PUBLIC int pci_first_dev(int * devind, u16 * vid, u16 * did)
 
     MESSAGE msg;
     
-    msg.type = PCI_FIRST_DEV;
+    msg.type = PCI_ATTR_R8;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
 
     send_recv(BOTH, TASK_PCI, &msg);
 
-    *devind = msg.u.m3.m3i2;
-    *vid = msg.u.m3.m3i3;
-    *did = msg.u.m3.m3i4;
-
-    return msg.RETVAL;
+    return (u8)msg.u.m3.m3i2;
 }
 
-PUBLIC int pci_next_dev(int * devind, u16 * vid, u16 * did)
+PUBLIC u32 pci_attr_r32(int devind, u16 port)
 {
     u32 v;
     int retval;
@@ -66,14 +64,11 @@ PUBLIC int pci_next_dev(int * devind, u16 * vid, u16 * did)
 
     MESSAGE msg;
     
-    msg.type = PCI_NEXT_DEV;
-    msg.u.m3.m3i2 = *devind;
-    
+    msg.type = PCI_ATTR_R32;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
+
     send_recv(BOTH, TASK_PCI, &msg);
 
-    *devind = msg.u.m3.m3i2;
-    *vid = msg.u.m3.m3i3;
-    *did = msg.u.m3.m3i4;
-
-    return msg.RETVAL;
+    return msg.u.m3.m3i2;
 }

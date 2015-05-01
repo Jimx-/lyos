@@ -54,8 +54,9 @@ PRIVATE int do_attr_r32(MESSAGE * m);
 
 PUBLIC int main()
 {
-	serv_register_init_fresh_callback(pci_init);
-	serv_init();
+	//serv_register_init_fresh_callback(pci_init);
+	//serv_init();
+    pci_init();
 
 	MESSAGE msg;
 

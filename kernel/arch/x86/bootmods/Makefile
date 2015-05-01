@@ -3,7 +3,7 @@
 ####################################
 
 BOOTMODSOBJS	= mm.o pm.o servman.o devman.o sched.o vfs.o systask.o tty.o ramdisk.o \
-					initfs.o sysfs.o init.o
+					initfs.o sysfs.o pci.o init.o
 
 BOOTMODS		= bootmods.o
 
@@ -81,6 +81,12 @@ sysfs.o: $(DESTDIR)/sbin/sysfs
 	@cp $< ./
 	@$(OBJCOPY) -I binary -O elf32-i386 -B i386 sysfs $@
 	@rm ./sysfs
+
+pci.o: $(DESTDIR)/sbin/pci
+	@echo -e '\tOBJCOPY\tkernel/bootmods/$@'
+	@cp $< ./
+	@$(OBJCOPY) -I binary -O elf32-i386 -B i386 pci $@
+	@rm ./pci
 
 init.o: $(DESTDIR)/sbin/init
 	@echo -e '\tOBJCOPY\tkernel/bootmods/$@'

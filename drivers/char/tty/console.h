@@ -25,12 +25,17 @@ typedef struct s_console
 	unsigned int	orig;	    /* start addr of the console */
 	unsigned int	con_size;   /* how many words does the console have */
 	unsigned int	cursor;
+
+	unsigned int 	scr_height;	/* screen height in characters */
+	unsigned int 	scr_width;  /* screen width in characters */
 	
 	char 			c_esc_state;		/* 0=normal, 1=ESC, 2=ESC[ */
 	char 			c_esc_intro;		/* Distinguishing character following ESC */
 	int *			c_esc_paramp;		/* pointer to current escape parameter */
 	int 			c_esc_params[MAX_ESC_PARAMS];	/* list of escape parameters */
 	int				is_full;
+
+	void 		(*outchar)(struct s_console * con, char ch);
 }CONSOLE;
 
 /* Color */
@@ -54,10 +59,16 @@ typedef struct s_console
 #define SCR_SIZE		(80 * 25)
 #define SCR_WIDTH		 80
 
+#define FONT_HEIGHT	16
+#define FONT_WIDTH	8
+
 #define TAB_SIZE	8
 #define TAB_MASK	7
 #define DEFAULT_CHAR_COLOR	(MAKE_COLOR(BLACK, WHITE))
 #define GRAY_CHAR		(MAKE_COLOR(BLACK, BLACK) | BRIGHT)
 #define RED_CHAR		(MAKE_COLOR(BLUE, RED) | BRIGHT)
+
+PUBLIC void vga_outchar(CONSOLE * con, char ch);
+PUBLIC void fbcon_init_con(CONSOLE * con);
 
 #endif /* _CONSOLE_H_ */
