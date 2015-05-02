@@ -21,13 +21,18 @@
 typedef struct s_console
 {
 	TTY *		con_tty;
-	unsigned int	crtc_start; /* set CRTC start addr reg */
-	unsigned int	orig;	    /* start addr of the console */
-	unsigned int	con_size;   /* how many words does the console have */
+	unsigned int	visible_origin; /* set CRTC start addr reg */
+	unsigned int	origin;	    	/* start addr of the console */
+	unsigned int 	scr_end;
+	unsigned int	con_size;  		/* how many words does the console have */
+
+	unsigned short* screenbuf;
+	unsigned int 	screenbuf_size;
 	unsigned int	cursor;
 
-	unsigned int 	scr_height;	/* screen height in characters */
-	unsigned int 	scr_width;  /* screen width in characters */
+	unsigned int 	row_size;	/* bytes per row */
+	unsigned int 	rows;	/* screen height in characters */
+	unsigned int 	cols;  	/* screen width in characters */
 	
 	char 			c_esc_state;		/* 0=normal, 1=ESC, 2=ESC[ */
 	char 			c_esc_intro;		/* Distinguishing character following ESC */
@@ -36,6 +41,7 @@ typedef struct s_console
 	int				is_full;
 
 	void 		(*outchar)(struct s_console * con, char ch);
+	void 		(*flush)(struct s_console * con);
 }CONSOLE;
 
 /* Color */
@@ -68,7 +74,7 @@ typedef struct s_console
 #define GRAY_CHAR		(MAKE_COLOR(BLACK, BLACK) | BRIGHT)
 #define RED_CHAR		(MAKE_COLOR(BLUE, RED) | BRIGHT)
 
-PUBLIC void vga_outchar(CONSOLE * con, char ch);
+PUBLIC void vgacon_init_con(CONSOLE * con);
 PUBLIC void fbcon_init_con(CONSOLE * con);
 
 #endif /* _CONSOLE_H_ */

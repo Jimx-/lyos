@@ -42,8 +42,6 @@ PUBLIC char * console_mem = NULL;
 
 /* local routines */
 PRIVATE void 	cons_write(TTY * tty);
-PRIVATE void	set_cursor(unsigned int position);
-PRIVATE void	set_video_start_addr(u32 addr);
 PRIVATE void	parse_escape(CONSOLE * con, char c);
 PRIVATE void 	do_escape(CONSOLE * con, char c);
 PRIVATE void	flush(CONSOLE* con);
@@ -130,26 +128,30 @@ PUBLIC void init_screen(TTY* tty)
 	 if (1) {
 		int v_mem_size = V_MEM_SIZE >> 1; /* size of Video Memory */
 		int size_per_con = v_mem_size / NR_CONSOLES;
-		con->orig = nr_tty * size_per_con;
-		con->scr_width = SCR_WIDTH;
-		con->scr_height = SCR_SIZE / SCR_WIDTH;
-		con->con_size = size_per_con / con->scr_width * con->scr_width;
-		con->cursor = con->crtc_start = con->orig;
+		con->origin = nr_tty * size_per_con;
+		con->cols = SCR_WIDTH;
+		con->rows = SCR_SIZE / SCR_WIDTH;
+		con->con_size = size_per_con / con->cols * con->cols;
+		con->cursor = con->visible_origin = con->origin;
+		con->scr_end = con->origin + SCR_SIZE;
 		con->is_full = 0;
-
-		con->outchar = vga_outchar;
 	}
 
 	if (using_fb) {
 		fbcon_init_con(con);
+	} else {
+		vgacon_init_con(con);
 	}
+
+	con->row_size = con->cols << 1;
+	con->screenbuf_size = con->rows * con->row_size;
 
 	tty->tty_dev = con;
 	if (nr_tty == 0) {
 		((CONSOLE *)tty->tty_dev)->cursor = 0;
 	}
 
-	set_cursor(((CONSOLE *)tty->tty_dev)->cursor);
+	flush((CONSOLE*)tty->tty_dev);
 }
 
 
@@ -165,16 +167,15 @@ PUBLIC void init_screen(TTY* tty)
 PUBLIC void out_char(TTY* tty, char ch)
 {
 	CONSOLE * con = tty->tty_dev;
-	u8* pch = (u8*)(console_mem + con->cursor * 2);
 
-	assert(con->cursor - con->orig < con->con_size);
+	assert(con->cursor - con->origin < con->con_size);
 
 	/*
 	 * calculate the coordinate of cursor in current console (not in
 	 * current screen)
 	 */
-	int cursor_x = (con->cursor - con->orig) % con->scr_width;
-	int cursor_y = (con->cursor - con->orig) / con->scr_width;
+	int cursor_x = (con->cursor - con->origin) % con->cols;
+	int cursor_y = (con->cursor - con->origin) / con->cols;
 
 	if (con->c_esc_state > 0) {	/* check for escape sequences */
 		parse_escape(con, ch);
@@ -188,7 +189,7 @@ PUBLIC void out_char(TTY* tty, char ch)
 		//beep();
 		break;
 	case '\b':		/* backspace */
-		if (con->cursor > con->orig) {
+		if (con->cursor > con->origin) {
 			if (con->outchar) con->outchar(con, ch);
 			con->cursor--;
 		}
@@ -196,17 +197,17 @@ PUBLIC void out_char(TTY* tty, char ch)
 	case '\n':		/* line feed */
 		if ((con->con_tty->tty_termios.c_oflag & (OPOST|ONLCR))
 						== (OPOST|ONLCR)) {
-			con->cursor = con->orig + con->scr_width * cursor_y;
+			con->cursor = con->origin + con->cols * cursor_y;
 		}
 	case 013:		/* CTRL-K */
 	case 014:		/* CTRL-L */
-		con->cursor = con->cursor + con->scr_width;
+		con->cursor = con->cursor + con->cols;
 		break;
 	case '\r':		/* carriage return */
-		con->cursor = con->orig + con->scr_width * cursor_y;
+		con->cursor = con->origin + con->cols * cursor_y;
 		break;
 	case '\t':		/* tab */
-		con->cursor = con->orig + con->scr_width * cursor_y + ((cursor_x + TAB_SIZE) & ~TAB_MASK);
+		con->cursor = con->origin + con->cols * cursor_y + ((cursor_x + TAB_SIZE) & ~TAB_MASK);
 		break;
 	case 033:		/* ESC - start of an escape sequence */
 		con->c_esc_state = 1;
@@ -217,25 +218,26 @@ PUBLIC void out_char(TTY* tty, char ch)
 		break;
 	}
 
-	if (con->cursor - con->orig >= con->con_size) {
-		cursor_x = (con->cursor - con->orig) % con->scr_width;
-		cursor_y = (con->cursor - con->orig) / con->scr_width;
-		int cp_orig = con->orig + (cursor_y + 1) * con->scr_width - SCR_SIZE;
-		w_copy(con->orig, cp_orig, SCR_SIZE - con->scr_width);
-		con->crtc_start = con->orig;
-		con->cursor = con->orig + (SCR_SIZE - con->scr_width) + cursor_x;
-		clear_screen(con->cursor, con->scr_width);
+	if (con->cursor - con->origin >= con->con_size) {
+		cursor_x = (con->cursor - con->origin) % con->cols;
+		cursor_y = (con->cursor - con->origin) / con->cols;
+		int cp_origin = con->origin + (cursor_y + 1) * con->cols - SCR_SIZE;
+		w_copy(con->origin, cp_origin, SCR_SIZE - con->cols);
+		con->visible_origin = con->origin;
+		con->scr_end = con->origin + SCR_SIZE;
+		con->cursor = con->origin + (SCR_SIZE - con->cols) + cursor_x;
+		clear_screen(con->cursor, con->cols);
 		if (!con->is_full)
 			con->is_full = 1;
 	}
 
-	assert(con->cursor - con->orig < con->con_size);
+	assert(con->cursor - con->origin < con->con_size);
 
-	while (con->cursor >= con->crtc_start + SCR_SIZE ||
-	       con->cursor < con->crtc_start) {
+	while (con->cursor >= con->scr_end ||
+	       con->cursor < con->visible_origin) {
 		scroll_screen(con, SCR_UP);
 
-		clear_screen(con->cursor, con->scr_width);
+		clear_screen(con->cursor, con->cols);
 	}
 
 	flush(con);
@@ -275,44 +277,6 @@ PUBLIC int is_current_console(CONSOLE* con)
 	return (con == &console_table[current_console]);
 }
 
-
-/*****************************************************************************
- *                                set_cursor
- *****************************************************************************/
-/**
- * Display the cursor by setting CRTC (6845 compatible) registers.
- * 
- * @param position  Position of the cursor based on the beginning of the video
- *                  memory. Note that it counts in WORDs, not in BYTEs.
- *****************************************************************************/
-PRIVATE void set_cursor(unsigned int position)
-{
-	pb_pair_t pv_pairs[4];
-	pv_set(pv_pairs[0], CRTC_ADDR_REG, CURSOR_H);
-	pv_set(pv_pairs[1], CRTC_DATA_REG, (position >> 8) & 0xFF);
-	pv_set(pv_pairs[2], CRTC_ADDR_REG, CURSOR_L);
-	pv_set(pv_pairs[3], CRTC_DATA_REG, position & 0xFF);
-	portio_voutb(pv_pairs, 4);
-}
-
-
-/*****************************************************************************
- *                                set_video_start_addr
- *****************************************************************************/
-/**
- * Routine for hardware screen scrolling.
- * 
- * @param addr  Offset in the video memory.
- *****************************************************************************/
-PRIVATE void set_video_start_addr(u32 addr)
-{
-	pb_pair_t pv_pairs[4];
-	pv_set(pv_pairs[0], CRTC_ADDR_REG, START_ADDR_H);
-	pv_set(pv_pairs[1], CRTC_DATA_REG, (addr >> 8) & 0xFF);
-	pv_set(pv_pairs[2], CRTC_ADDR_REG, START_ADDR_L);
-	pv_set(pv_pairs[3], CRTC_DATA_REG, addr & 0xFF);
-	portio_voutb(pv_pairs, 4);
-}
 
 /*****************************************************************************
  *                     parse_escape
@@ -364,8 +328,8 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 	unsigned src, dst, count;
 	//int *paramp;
 	
-	int cursor_x = (con->cursor - con->orig) % con->scr_width;
-	int cursor_y = (con->cursor - con->orig) / con->scr_width;
+	int cursor_x = (con->cursor - con->origin) % con->cols;
+	int cursor_y = (con->cursor - con->origin) / con->cols;
 
 	flush(con);
 
@@ -375,7 +339,7 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 			if (cursor_y == 0) {
 				scroll_screen(con, SCR_DN);
 			} else {
-				con->cursor = con->orig + con->scr_width * (cursor_y - 1);
+				con->cursor = con->origin + con->cols * (cursor_y - 1);
 			}
 			flush(con);
 			break;
@@ -387,54 +351,54 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 		switch (c) {
 	    case 'A':		/* ESC [nA moves up n lines */
 			n = (value == 0 ? 1 : value);
-			con->cursor = con->orig + con->scr_width * (cursor_y - n);
+			con->cursor = con->origin + con->cols * (cursor_y - n);
 			flush(con);
 			break;
 		case 'B':		/* ESC [nB moves down n lines */
 			n = (value == 0 ? 1 : value);
-			con->cursor = con->orig + con->scr_width * (cursor_y + n);
+			con->cursor = con->origin + con->cols * (cursor_y + n);
 			flush(con);
 			break;
 	    case 'C':		/* ESC [nC moves right n spaces */
 			n = (value == 0 ? 1 : value);
-			con->cursor = con->orig + con->scr_width * cursor_y + cursor_x + n;
+			con->cursor = con->origin + con->cols * cursor_y + cursor_x + n;
 			flush(con);
 			break;
 		case 'D':		/* ESC [nD moves left n spaces */
 			n = (value == 0 ? 1 : value);
-			con->cursor = con->orig + con->scr_width * cursor_y + cursor_x - n;
+			con->cursor = con->origin + con->cols * cursor_y + cursor_x - n;
 			flush(con);
 			break;
 		case 'H':		/* ESC [m;nH" moves cursor to (m,n) */
 			m = con->c_esc_params[0] - 1;
 			n = con->c_esc_params[1] - 1;
-			con->cursor = con->orig + con->scr_width * m + n;
+			con->cursor = con->origin + con->cols * m + n;
 			flush(con);
 		break;
 	    case 'J':		/* ESC [sJ clears in display */
 		switch (value) {
 		    case 0:	/* Clear from cursor to end of screen */
-			count = SCR_SIZE - (con->cursor - con->orig);
+			count = SCR_SIZE - (con->cursor - con->origin);
 			dst = con->cursor;
 			break;
 		    case 1:	/* Clear from start of screen to cursor */
-			count = con->cursor - con->orig;
-			dst = con->orig;
+			count = con->cursor - con->origin;
+			dst = con->origin;
 			break;
 		    case 2:	/* Clear entire screen */
 			count = SCR_SIZE;
-			dst = con->orig;
+			dst = con->origin;
 			break;
 		    default:	/* Do nothing */
 			count = 0;
-			dst = con->orig;
+			dst = con->origin;
 		}
 		clear_screen(dst, count);
 		break;
 	    case 'K':		/* ESC [sK clears line from cursor */
 		switch (value) {
 		    case 0:	/* Clear from cursor to end of line */
-			count = con->scr_width - cursor_x;
+			count = con->cols - cursor_x;
 			dst = con->cursor;
 			break;
 		    case 1:	/* Clear from beginning of line to cursor */
@@ -442,7 +406,7 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 			dst = con->cursor - cursor_x;
 			break;
 		    case 2:	/* Clear entire line */
-			count = con->scr_width;
+			count = con->cols;
 			dst = con->cursor - cursor_x;
 			break;
 		    default:	/* Do nothing */
@@ -457,9 +421,9 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 		if (n > (25 - cursor_y))
 			n = 25 - cursor_y;
 
-		src = con->orig + cursor_y * con->scr_width;
-		dst = src + n * con->scr_width;
-		count = n * con->scr_width;
+		src = con->origin + cursor_y * con->cols;
+		dst = src + n * con->cols;
+		count = n * con->cols;
 		w_copy(dst, src, count);
 		clear_screen(src, count);
 		break;
@@ -469,33 +433,33 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 		if (n > (25 - cursor_y))
 			n = 25 - cursor_y;
 
-		dst = con->orig + cursor_y * con->scr_width;
-		src = dst + n * con->scr_width;
-		count = (25 - cursor_y - n) * con->scr_width;
+		dst = con->origin + cursor_y * con->cols;
+		src = dst + n * con->cols;
+		count = (25 - cursor_y - n) * con->cols;
 		w_copy(dst, src, count);
-		clear_screen(dst + count, n * con->scr_width);
+		clear_screen(dst + count, n * con->cols);
 		break;
 	    case '@':		/* ESC [n@ inserts n chars at cursor */
 		n = value;
 		if (n < 1) n = 1;
-		if (n > (con->scr_width - cursor_x))
-			n = con->scr_width - cursor_x;
+		if (n > (con->cols - cursor_x))
+			n = con->cols - cursor_x;
 
 		src = con->cursor;
 		dst = src + n;
-		count = con->scr_width - cursor_x - n;
+		count = con->cols - cursor_x - n;
 		w_copy(dst, src, count);
 		clear_screen(src, n);
 		break;
 	    case 'P':		/* ESC [nP deletes n chars at cursor */
 		n = value;
 		if (n < 1) n = 1;
-		if (n > (con->scr_width - cursor_x))
-			n = con->scr_width - cursor_x;
+		if (n > (con->cols - cursor_x))
+			n = con->cols - cursor_x;
 
 		dst = con->cursor;
 		src = dst + n;
-		count = con->scr_width - cursor_x - n;
+		count = con->cols - cursor_x - n;
 		w_copy(dst, src, count);
 		clear_screen(dst + count, n);
 		break;
@@ -542,43 +506,52 @@ PUBLIC void select_console(int nr_console)
 PUBLIC void scroll_screen(CONSOLE* con, int dir)
 {
 	/*
-	 * variables below are all in-console-offsets (based on con->orig)
+	 * variables below are all in-console-offsets (based on con->origin)
 	 */
 	int oldest; /* addr of the oldest available line in the console */
 	int newest; /* .... .. ... latest ......... .... .. ... ....... */
 	int scr_top;/* position of the top of current screen */
+	int scr_end;/* position of the bottom of current screen */
 
-	newest = (con->cursor - con->orig) / con->scr_width * con->scr_width;
-	oldest = con->is_full ? (newest + con->scr_width) % con->con_size : 0;
-	scr_top = con->crtc_start - con->orig;
+	newest = (con->cursor - con->origin) / con->cols * con->cols;
+	oldest = con->is_full ? (newest + con->cols) % con->con_size : 0;
+	scr_top = con->visible_origin - con->origin;
+	scr_end = con->scr_end - con->origin;
 
 	if (dir == SCR_DN) {
 		if (!con->is_full && scr_top > 0) {
-			con->crtc_start -= con->scr_width;
+			con->visible_origin -= con->cols;
+			con->scr_end -= con->cols;
 		}
 		else if (con->is_full && scr_top != oldest) {
-			if (con->cursor - con->orig >= con->con_size - SCR_SIZE) {
-				if (con->crtc_start != con->orig)
-					con->crtc_start -= con->scr_width;
+			if (con->cursor - con->origin >= con->con_size - SCR_SIZE) {
+				if (con->visible_origin != con->origin)
+					con->visible_origin -= con->cols;
 			}
-			else if (con->crtc_start == con->orig) {
+			else if (con->visible_origin == con->origin) {
 				scr_top = con->con_size - SCR_SIZE;
-				con->crtc_start = con->orig + scr_top;
+				con->visible_origin = con->origin + scr_top;
 			}
 			else {
-				con->crtc_start -= con->scr_width;
+				con->visible_origin -= con->cols;
 			}
 		}
 	}
 	else if (dir == SCR_UP) {
-		if (!con->is_full && newest >= scr_top + SCR_SIZE) {
-			con->crtc_start += con->scr_width;
+		if (!con->is_full && newest >= scr_end) {
+			con->visible_origin += con->cols;
+			con->scr_end += con->cols;
 		}
-		else if (con->is_full && scr_top + SCR_SIZE - con->scr_width != newest) {
-			if (scr_top + SCR_SIZE == con->con_size)
-				con->crtc_start = con->orig;
-			else
-				con->crtc_start += con->scr_width;
+		else if (con->is_full && scr_end - con->cols != newest) {
+			if (scr_end == con->con_size) {
+				int scr_size = scr_end - scr_top;
+				con->visible_origin = con->origin;
+				con->scr_end = con->visible_origin + scr_size;
+			}
+			else {
+				con->visible_origin += con->cols;
+				con->scr_end += con->cols;
+			}
 		}
 	}
 	else {
@@ -600,16 +573,15 @@ PUBLIC void scroll_screen(CONSOLE* con, int dir)
  *****************************************************************************/
 PRIVATE void flush(CONSOLE* con)
 {
-	if (is_current_console(con)) {
-		set_cursor(con->cursor);
-		set_video_start_addr(con->crtc_start);
+	if (is_current_console(con) && con->flush) {
+		con->flush(con);
 	}
 
 #ifdef __TTY_DEBUG__
 	int lineno = 0;
-	for (lineno = 0; lineno < con->con_size / con->scr_width; lineno++) {
+	for (lineno = 0; lineno < con->con_size / con->cols; lineno++) {
 		u8 * pch = (u8*)(console_mem +
-				   (con->orig + (lineno + 1) * con->scr_width) * 2
+				   (con->origin + (lineno + 1) * con->cols) * 2
 				   - 4);
 		*pch++ = lineno / 10 + '0';
 		*pch++ = RED_CHAR;

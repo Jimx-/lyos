@@ -41,6 +41,8 @@
 
 int fb_scr_width, fb_scr_height;
 
+PRIVATE void fbcon_outchar(CONSOLE * con, char ch);
+
 PUBLIC int fbcon_init()
 {
     int devind;
@@ -94,20 +96,32 @@ PRIVATE void print_char(int x, int y, char ch, int color)
     }
 }
 
-PRIVATE void fbcon_outchar(CONSOLE * con, char ch);
-
 PUBLIC void fbcon_init_con(CONSOLE * con)
 {
-    con->scr_width = fb_scr_width;
-    con->scr_height = fb_scr_height;
+    con->cols = fb_scr_width;
+    con->rows = fb_scr_height;
+
+    /*on->origin = fb_mem_base;
+    con->visible_origin = con->cursor = con->origin;
+    con->scr_end = con->origin + fb_scr_width * fb_scr_height;
+    con->con_size = fb_scr_width * fb_scr_height;*/
 
     con->outchar = fbcon_outchar;
+    con->flush = NULL;
 }
 
 PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
 {
     int line, col;
-    line = con->cursor / con->scr_width;
-    col = con->cursor % con->scr_width;
+    int cursor = con->cursor;
+
+    if (ch == '\b') {
+        cursor--;
+        ch = '\0';
+    }
+
+    line = cursor / con->cols;
+    col = cursor % con->cols;
+
     print_char(col * FONT_WIDTH, line * FONT_HEIGHT, ch, 0xffffffff);
 }

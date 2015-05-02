@@ -33,7 +33,16 @@
 #include "proto.h"
 #include "global.h"
 
-PUBLIC void vga_outchar(CONSOLE * con, char ch)
+PRIVATE void vga_outchar(CONSOLE * con, char ch);
+PRIVATE void vga_flush(CONSOLE * con);
+
+PUBLIC void vgacon_init_con(CONSOLE * con)
+{
+    con->outchar = vga_outchar;
+    con->flush = vga_flush;
+}
+
+PRIVATE void vga_outchar(CONSOLE * con, char ch)
 {
     u8* pch = (u8*)(console_mem + con->cursor * 2);
 
@@ -47,4 +56,48 @@ PUBLIC void vga_outchar(CONSOLE * con, char ch)
         *pch++ = DEFAULT_CHAR_COLOR;
         break;
     }
+}
+
+/*****************************************************************************
+ *                                set_cursor
+ *****************************************************************************/
+/**
+ * Display the cursor by setting CRTC (6845 compatible) registers.
+ * 
+ * @param position  Position of the cursor based on the beginning of the video
+ *                  memory. Note that it counts in WORDs, not in BYTEs.
+ *****************************************************************************/
+PRIVATE void set_cursor(unsigned int position)
+{
+    pb_pair_t pv_pairs[4];
+    pv_set(pv_pairs[0], CRTC_ADDR_REG, CURSOR_H);
+    pv_set(pv_pairs[1], CRTC_DATA_REG, (position >> 8) & 0xFF);
+    pv_set(pv_pairs[2], CRTC_ADDR_REG, CURSOR_L);
+    pv_set(pv_pairs[3], CRTC_DATA_REG, position & 0xFF);
+    portio_voutb(pv_pairs, 4);
+}
+
+
+/*****************************************************************************
+ *                                set_video_start_addr
+ *****************************************************************************/
+/**
+ * Routine for hardware screen scrolling.
+ * 
+ * @param addr  Offset in the video memory.
+ *****************************************************************************/
+PRIVATE void set_video_start_addr(u32 addr)
+{
+    pb_pair_t pv_pairs[4];
+    pv_set(pv_pairs[0], CRTC_ADDR_REG, START_ADDR_H);
+    pv_set(pv_pairs[1], CRTC_DATA_REG, (addr >> 8) & 0xFF);
+    pv_set(pv_pairs[2], CRTC_ADDR_REG, START_ADDR_L);
+    pv_set(pv_pairs[3], CRTC_DATA_REG, addr & 0xFF);
+    portio_voutb(pv_pairs, 4);
+}
+
+PRIVATE void vga_flush(CONSOLE * con)
+{
+    set_cursor(con->cursor);
+    set_video_start_addr(con->visible_origin);
 }
