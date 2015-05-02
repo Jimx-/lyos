@@ -33,11 +33,23 @@
 #include "proto.h"
 #include "global.h"
 
+#define V_MEM_BASE  0xB8000 /* base of color video memory */
+#define V_MEM_SIZE  0x8000  /* 32K: B8000H -> BFFFFH */
+
 PRIVATE void vga_outchar(CONSOLE * con, char ch);
 PRIVATE void vga_flush(CONSOLE * con);
 
 PUBLIC void vgacon_init_con(CONSOLE * con)
 {
+    int v_mem_size = V_MEM_SIZE >> 1; /* size of Video Memory */
+    int size_per_con = v_mem_size / NR_CONSOLES;
+    con->origin = (con - console_table) * size_per_con;
+    con->cols = SCR_WIDTH;
+    con->rows = SCR_SIZE / SCR_WIDTH;
+    con->con_size = size_per_con / con->cols * con->cols;
+    con->cursor = con->visible_origin = con->origin;
+    con->scr_end = con->origin + SCR_SIZE;
+
     con->outchar = vga_outchar;
     con->flush = vga_flush;
 }

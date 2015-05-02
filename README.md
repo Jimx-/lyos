@@ -1,6 +1,6 @@
 This is lyos <https://github.com/Jimx-/lyos>
 
-![cmdprompt][1]
+![fbcon][1]
 
 WHAT IS LYOS 简介
 ===============
@@ -67,5 +67,5 @@ COMPILATION AND INSTALLATION 编译与安装
 
 5. Run Lyos with QEMU, run ```make kvm``` 
 
-  [1]: http://jimx.1x.net/images/screenshot-6.png
+  [1]: http://jimx.1x.net/images/screenshot-7.png
   

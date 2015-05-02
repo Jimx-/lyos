@@ -42,6 +42,7 @@
 int fb_scr_width, fb_scr_height;
 
 PRIVATE void fbcon_outchar(CONSOLE * con, char ch);
+PRIVATE void fbcon_flush(CONSOLE * con);
 
 PUBLIC int fbcon_init()
 {
@@ -101,13 +102,13 @@ PUBLIC void fbcon_init_con(CONSOLE * con)
     con->cols = fb_scr_width;
     con->rows = fb_scr_height;
 
-    /*on->origin = fb_mem_base;
+    con->origin = 0;
     con->visible_origin = con->cursor = con->origin;
     con->scr_end = con->origin + fb_scr_width * fb_scr_height;
-    con->con_size = fb_scr_width * fb_scr_height;*/
+    con->con_size = fb_scr_width * fb_scr_height * 2;   /* * 2: extra space for scrolling */
 
     con->outchar = fbcon_outchar;
-    con->flush = NULL;
+    con->flush = fbcon_flush;
 }
 
 PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
@@ -124,4 +125,26 @@ PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
     col = cursor % con->cols;
 
     print_char(col * FONT_WIDTH, line * FONT_HEIGHT, ch, 0xffffffff);
+}
+
+PRIVATE void fbcon_flush(CONSOLE * con)
+{
+    if (con->visible_origin != con->origin) {
+        u32 delta = con->visible_origin - con->origin;
+
+        u32 visible_origin = con->visible_origin;
+        int line = visible_origin / con->cols;
+        int col = visible_origin % con->cols;
+        u32 offset = line * FONT_HEIGHT * x_resolution + col * FONT_WIDTH;
+        
+        u32* base = (char*)fb_mem_base;
+        u32* new_base = base + offset;
+        memmove(base, new_base, (x_resolution * y_resolution - offset) * sizeof(u32));
+        new_base = base + (x_resolution * y_resolution - offset);
+        memset(new_base, 0, offset * sizeof(u32));
+
+        con->visible_origin -= delta;
+        con->scr_end -= delta;
+        con->cursor -= delta;
+    }
 }

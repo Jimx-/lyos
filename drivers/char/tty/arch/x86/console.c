@@ -126,15 +126,7 @@ PUBLIC void init_screen(TTY* tty)
 	 *   in WORDs, but not in BYTEs.
 	 */
 	 if (1) {
-		int v_mem_size = V_MEM_SIZE >> 1; /* size of Video Memory */
-		int size_per_con = v_mem_size / NR_CONSOLES;
-		con->origin = nr_tty * size_per_con;
-		con->cols = SCR_WIDTH;
-		con->rows = SCR_SIZE / SCR_WIDTH;
-		con->con_size = size_per_con / con->cols * con->cols;
-		con->cursor = con->visible_origin = con->origin;
-		con->scr_end = con->origin + SCR_SIZE;
-		con->is_full = 0;
+		
 	}
 
 	if (using_fb) {
@@ -145,6 +137,7 @@ PUBLIC void init_screen(TTY* tty)
 
 	con->row_size = con->cols << 1;
 	con->screenbuf_size = con->rows * con->row_size;
+	con->is_full = 0;
 
 	tty->tty_dev = con;
 	if (nr_tty == 0) {

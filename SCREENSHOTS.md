@@ -15,8 +15,12 @@ LYOS GALLERY
 * Login prompt
 ![loginprompt][4]
 
+* Framebuffer Console
+![fbcon][5]
+
 
   [1]: http://jimx.1x.net/images/screenshot-0.png
   [2]: http://jimx.1x.net/images/screenshot-1.png
   [3]: http://jimx.1x.net/images/screenshot-2.png
   [4]: http://jimx.1x.net/images/screenshot-3.png
+  [5]: http://jimx.1x.net/images/screenshot-7.png
