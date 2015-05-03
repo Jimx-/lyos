@@ -35,6 +35,8 @@ struct fsdriver fsd = {
 
     .fs_readsuper = memfs_readsuper,
     .fs_lookup = memfs_lookup,
+    .fs_stat = memfs_stat,
+    .fs_readwrite = memfs_readwrite,
     .fs_other = memfs_other,
 };
 
@@ -45,6 +47,8 @@ PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_sta
     if (!hooks) return EINVAL;
     memcpy(&fs_hooks, hooks, sizeof(fs_hooks));
     
+    if (memfs_init_buf()) return ENOMEM;
+
     memfs_init_inode();
 
     root_inode.i_num = 0;

@@ -147,8 +147,8 @@ PRIVATE int init_hd()
 
 	int devind;
 	u16 vid, did;
-	int retval = pci_first_dev(&devind, &vid, &did);
 
+	int retval = pci_first_dev(&devind, &vid, &did);
 	while (retval == 0) {
 		u8 baseclass, subclass, interface;
 

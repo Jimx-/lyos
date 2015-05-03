@@ -30,53 +30,23 @@
 #include "lyos/list.h"
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
+#include <libsysfs/libsysfs.h>
 #include "node.h"
 #include "proto.h"
-    
-PRIVATE int sysfs_init();
-PRIVATE int sysfs_message_hook(MESSAGE * m);
 
-struct memfs_hooks fs_hooks = {
-    .message_hook = sysfs_message_hook,
-    .read_hook = sysfs_read_hook,
-};
-
-PUBLIC int main()
+PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
+        off_t offset, cbdata_t data)
 {
-    sysfs_init();
+    init_buf(ptr, count, offset);
 
-    struct memfs_stat root_stat;
-    root_stat.st_mode = (I_DIRECTORY | 0555);
-    root_stat.st_uid = SU_UID;
-    root_stat.st_gid = 0;
+    sysfs_node_t* node = (sysfs_node_t*)data;
 
-    return memfs_start("sysfs", &fs_hooks, &root_stat);
-}
-
-PRIVATE int sysfs_init()
-{
-    printl("sysfs: SysFS is running\n");
-
-    init_node();
-
-    return 0;
-}
-
-PRIVATE int sysfs_message_hook(MESSAGE * m)
-{
-    int msgtype = m->type;
-    int retval = 0;
-
-    switch (msgtype) {
-    case SYSFS_PUBLISH:
-        retval = do_publish(m); 
-        break;
-    case SYSFS_RETRIEVE:
-        retval = do_retrieve(m);
-        break;
-    default:
-        return ENOSYS;
+    switch (NODE_TYPE(node)) {
+    case SF_TYPE_U32:
+        buf_printf("%d", node->u.u32v);
     }
 
-    return retval;
+    buf_printf("\n");
+    
+    return buf_used();
 }

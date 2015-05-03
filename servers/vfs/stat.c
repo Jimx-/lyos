@@ -90,7 +90,7 @@ PUBLIC int do_fstat(MESSAGE * p)
     int src = p->source;
 
     if (pcaller->filp[fd] == NULL) return EINVAL;
-    
+
     /* Issue the request */
     int retval = request_stat(pcaller->filp[fd]->fd_inode->i_fs_ep, 
         pcaller->filp[fd]->fd_inode->i_dev, pcaller->filp[fd]->fd_inode->i_num, src, buf);

@@ -13,20 +13,18 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _SYSFS_PROTO_H_
-#define _SYSFS_PROTO_H_
+#include <lyos/type.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <lyos/fs.h>
+#include <lyos/const.h>
+#include "libmemfs/libmemfs.h"
 
-PUBLIC void init_node();
-PUBLIC sysfs_node_t * new_node(char * name, int flags, int type);
-PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name);
-PUBLIC sysfs_node_t * lookup_node_by_name(char * name);
-PUBLIC sysfs_node_t * create_node(char * name, int flags);
-
-PUBLIC void init_buf(char* ptr, size_t len, off_t off);
-PUBLIC void buf_printf(char * fmt, ...);
-PUBLIC size_t buf_used();
-
-PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data);
-
-#endif
+PUBLIC int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data  * data)
+{
+    
+}
