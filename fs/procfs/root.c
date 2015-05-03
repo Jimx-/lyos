@@ -29,15 +29,18 @@
 #include "lyos/proto.h"
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
+#include <sys/utsname.h>
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
 #include "type.h"
 #include "proto.h"
 
 PRIVATE void root_cmdline();
+PRIVATE void root_version();
 
 PUBLIC struct procfs_file root_files[] = {
     { "cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline },
+    { "version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version },
     { NULL, 0, NULL },
 };
 
@@ -59,4 +62,12 @@ PRIVATE void root_cmdline()
     }
 
     buf_printf("%s\n", kernel_cmdline);
+}
+
+PRIVATE void root_version()
+{
+    struct utsname utsname;
+    uname(&utsname);
+
+    buf_printf("%s version %s %s\n", utsname.sysname, utsname.release, utsname.version);
 }
