@@ -28,6 +28,7 @@
 #include "lyos/driver.h"
 #include <lyos/ipc.h>
 #include <lyos/sysutils.h>
+#include <libsysfs/libsysfs.h>
 
 PRIVATE void devman_init();
 
@@ -68,6 +69,7 @@ PRIVATE void devman_init()
     /* Map init ramdisk */
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
 
+    //sysfs_publish_domain("devices", SF_PRIV_DELETE);
     //register_filesystem();
 }
 #if 0

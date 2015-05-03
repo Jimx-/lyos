@@ -92,6 +92,8 @@ PRIVATE void print_char(int x, int y, char ch, int color)
         for (j = 0; j < FONT_WIDTH; j++) {
             if (font[i] & (1 << (8-j))) {
                 set_pixel(x+j, y+i, color);
+            } else {
+                set_pixel(x+j, y+i, 0);
             }
         }
     }

@@ -3,7 +3,7 @@
 
 DEVMAN		= devman
 DEVMANOBJS = main.o ddmap.o global.o
-LIBS 		= -llyos
+LIBS 		= -llyos -lsysfs
 
 everything : realclean $(DEVMAN)
 
