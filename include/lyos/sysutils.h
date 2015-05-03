@@ -29,6 +29,8 @@ PUBLIC  int     kernlog_register();
 PUBLIC  int     get_sysinfo(struct sysinfo ** sysinfo);
 PUBLIC  int     get_kinfo(kinfo_t * kinfo);
 PUBLIC  int     get_bootprocs(struct boot_proc * bp);
+PUBLIC  int     get_kernel_cmdline(char * buf, int buflen);
+
 PUBLIC  int     data_copy(endpoint_t dest_pid, void * dest_addr, 
     endpoint_t src_pid, void * src_addr, int len);
 

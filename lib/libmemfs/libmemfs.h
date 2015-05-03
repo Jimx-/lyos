@@ -21,6 +21,8 @@
 
 #include "inode.h"
 
+#define NO_INDEX  -1
+
 struct memfs_hooks {
     int (*init_hook)();
     int (*message_hook)(MESSAGE * m);
@@ -44,5 +46,7 @@ PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag, struct fsdriver_da
 PUBLIC int memfs_init_buf();
 PUBLIC int memfs_free_buf();
 
-PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, struct memfs_stat * stat, cbdata_t data);
+#define memfs_node_index(node) ((node)->i_index)
+
+PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, int index, struct memfs_stat * stat, cbdata_t data);
 #endif

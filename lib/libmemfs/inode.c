@@ -98,7 +98,7 @@ PUBLIC void memfs_set_inode_stat(struct memfs_inode * pin, struct memfs_stat * s
     memcpy(&pin->i_stat, stat, sizeof(struct memfs_stat));
 }
 
-PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, struct memfs_stat * stat, cbdata_t data)
+PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, int index, struct memfs_stat * stat, cbdata_t data)
 {
     ino_t new_num = allocate_inode_num();
 
@@ -106,8 +106,11 @@ PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * 
     if (!pin) return NULL;
 
     list_add(&pin->i_list, &parent->i_children);
-    pin->data = data;
+
     memfs_set_inode_stat(pin, stat);
 
+    pin->i_index = index;
+    pin->data = data;
+    
     return pin;
 }

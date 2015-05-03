@@ -31,15 +31,16 @@ struct memfs_stat {
 
 struct memfs_inode {
     ino_t i_num;
+    int i_index;
     char i_name[NAME_MAX];
-    
+
     struct memfs_stat i_stat;
     cbdata_t data;
 
     struct list_head i_hash;
     struct list_head i_list;
     struct list_head i_children;
-};
+} __attribute__((packed));
 
 #define MEMFS_INODE_HASH_LOG2   7
 #define MEMFS_INODE_HASH_SIZE   ((unsigned long)1<<MEMFS_INODE_HASH_LOG2)

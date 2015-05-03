@@ -173,7 +173,7 @@ PUBLIC int add_node(sysfs_node_t * parent, sysfs_node_t * child)
     struct memfs_stat stat;
     stat_node(&stat, child);
     
-    struct memfs_inode * pin = memfs_add_inode(parent->inode, child->name, &stat, child);
+    struct memfs_inode * pin = memfs_add_inode(parent->inode, child->name, NO_INDEX, &stat, child);
     if (!pin) return ENOMEM; 
 
     list_add(&child->list, &parent->children);

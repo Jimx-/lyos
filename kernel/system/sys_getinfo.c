@@ -60,7 +60,7 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
         return EINVAL;
     }
 
-    if (buf_len > 0 && buf_len > size) return E2BIG;
+    if (buf_len > 0 && buf_len < size) return E2BIG;
     if (addr) memcpy(buf, addr, size);
 
     return 0;

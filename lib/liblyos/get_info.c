@@ -50,3 +50,13 @@ PUBLIC int get_bootprocs(struct boot_proc * bp)
 {
     return getinfo(GETINFO_BOOTPROCS, bp);
 }
+
+PUBLIC int get_kernel_cmdline(char * buf, int buflen)
+{
+    MESSAGE m;
+    m.REQUEST = GETINFO_CMDLINE;
+    m.BUF = buf;
+    m.BUF_LEN = buflen;
+
+    return syscall_entry(NR_GETINFO, &m);
+}

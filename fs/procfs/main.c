@@ -29,10 +29,15 @@
 #include "lyos/proto.h"
 #include <lyos/service.h>
 #include "libmemfs/libmemfs.h"
+#include "global.h"
+#include "proto.h"
 
 PRIVATE int init_procfs();
+PRIVATE int procfs_init_hook();
 
 struct memfs_hooks fs_hooks = {
+    .init_hook = procfs_init_hook,
+    .read_hook = procfs_read_hook,
 };
 
 PUBLIC int main()
@@ -52,5 +57,36 @@ PRIVATE int init_procfs()
 {
 	printl("procfs: procfs is running.\n");
 
+    return 0;
+}
+
+PRIVATE void build_root(struct memfs_inode * root)
+{
+    struct memfs_stat stat;
+
+    stat.st_uid = SU_UID;
+    stat.st_gid = 0;
+    stat.st_size = 0;
+
+    struct procfs_file * fp;
+    for (fp = root_files; fp->name != NULL; fp++) {
+        stat.st_mode = fp->mode;
+
+        struct memfs_inode * pin = memfs_add_inode(root, fp->name, NO_INDEX, &stat, fp->data);
+        if (pin == NULL) return;
+    }
+}
+
+PRIVATE int procfs_init_hook()
+{
+    static int first = 1;
+
+    if (first) {
+        struct memfs_inode * root = memfs_get_root_inode();
+
+        build_root(root);
+
+        first = 0;
+    }
     return 0;
 }
