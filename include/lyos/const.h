@@ -208,6 +208,8 @@
 #define VFS_REQ_BASE	 	1001
 #define SERVMAN_REQ_BASE 	2201
 #define PCI_REQ_BASE 		2301
+#define INPUT_REQ_BASE		2401
+
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -288,6 +290,9 @@ enum msgtype {
 	PCI_NEXT_DEV,
 	PCI_ATTR_R8,
 	PCI_ATTR_R32,
+
+	/* INPUT */
+	INPUT_SEND_EVENT = INPUT_REQ_BASE,
 };
 
 /* macros for messages */

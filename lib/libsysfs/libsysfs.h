@@ -14,6 +14,9 @@
 #define SF_PRIV_MASK		0xF
 #define SF_TYPE_MASK		0xFF0
 
+#define SYSFS_SERVICE_DOMAIN_LABEL "services.%s"
+#define SYSFS_SERVICE_ENDPOINT_LABEL SYSFS_SERVICE_DOMAIN_LABEL ".endpoint"
+
 PUBLIC int sysfs_publish_domain(char * key, int flags);
 PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags);
 

@@ -5,9 +5,9 @@ LIBS 		= $(LIBOUTDIR)/libdriver.a
 INET 		= inet/inet
 PCI 		= pci/pci
 
-.PHONY: everything realclean block char
+.PHONY: everything realclean block char hid
 	
-everything : realclean block char $(INET) $(PCI)
+everything : realclean block char hid $(INET) $(PCI)
 
 realclean :
 	@rm -f $(INET) $(PCI)
@@ -17,6 +17,9 @@ block:
 
 char:
 	@(cd char; make)
+
+hid:
+	@(cd hid; make)
 
 $(PCI):
 	@(cd pci; make)

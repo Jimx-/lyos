@@ -36,6 +36,8 @@ PRIVATE inline unsigned long ex64hi(u64 i)
 {
 	return (unsigned long)(i>>32);
 }
+
+typedef int 				s32;
 typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;
