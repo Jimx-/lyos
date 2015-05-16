@@ -22,6 +22,7 @@ PUBLIC int      keyboard_interrupt(MESSAGE * m);
 PUBLIC void     handle_events(TTY* tty);
 PUBLIC int      in_process(TTY* p_tty, char * buf, int count);
 PUBLIC void     dump_tty_buf(); /* for debug only */
+PUBLIC void     do_input(MESSAGE* msg);
 
 PUBLIC void     out_char(TTY* tty, char ch);
 PUBLIC void     scroll_screen(CONSOLE* p_con, int direction);

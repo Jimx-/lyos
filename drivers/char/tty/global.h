@@ -27,7 +27,6 @@ EXTERN  int current_console;
 extern  TTY     tty_table[];
 extern  CONSOLE     console_table[];
 
-extern  irq_id_t kb_irq_set;
 extern  irq_id_t rs_irq_set;
 
 extern  char *      console_mem;

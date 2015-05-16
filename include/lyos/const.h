@@ -293,6 +293,8 @@ enum msgtype {
 
 	/* INPUT */
 	INPUT_SEND_EVENT = INPUT_REQ_BASE,
+	INPUT_TTY_UP,
+	INPUT_TTY_EVENT,
 };
 
 /* macros for messages */

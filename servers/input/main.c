@@ -66,10 +66,25 @@ PUBLIC int main()
 
 PRIVATE int init_input()
 {
+    /* tell TTY that we're up */
+    MESSAGE msg;
+    msg.type = INPUT_TTY_UP;
+
+    send_recv(SEND, TASK_TTY, &msg);
+
     return 0;
 }
 
 PRIVATE int input_event(MESSAGE* msg)
 {
+    MESSAGE msg2tty;
+
+    msg2tty.type = INPUT_TTY_EVENT;
+    msg2tty.IEV_TYPE = msg->IEV_TYPE;
+    msg2tty.IEV_CODE = msg->IEV_CODE;
+    msg2tty.IEV_VALUE = msg->IEV_VALUE;
+
+    send_recv(SEND, TASK_TTY, &msg2tty);
+
     return 0;
 }

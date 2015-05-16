@@ -100,9 +100,7 @@ PUBLIC int main()
 				tty_do_kern_log();
 				break;
 			case INTERRUPT:
-				if (msg.INTERRUPTS & kb_irq_set)
-					keyboard_interrupt(&msg);
-				else if (msg.INTERRUPTS & rs_irq_set)
+				if (msg.INTERRUPTS & rs_irq_set)
 					rs_interrupt(&msg);
 				break;
 			}
@@ -124,6 +122,10 @@ PUBLIC int main()
 			break;
 		case DEV_IOCTL:
 			tty_do_ioctl(ptty, &msg);
+			break;
+		case INPUT_TTY_UP:
+		case INPUT_TTY_EVENT:
+			do_input(&msg);
 			break;
 		default:
 			msg.type = SYSCALL_RET;
