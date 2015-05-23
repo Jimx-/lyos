@@ -47,6 +47,7 @@ PUBLIC void 	panic(const char *fmt, ...);
 
 /* system.c */
 PUBLIC void     fpu_init();
+PUBLIC void     identify_cpu();
 
 /* smp.c */
 PUBLIC void     smp_init();

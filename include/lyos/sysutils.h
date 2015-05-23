@@ -30,6 +30,7 @@ PUBLIC  int     get_sysinfo(struct sysinfo ** sysinfo);
 PUBLIC  int     get_kinfo(kinfo_t * kinfo);
 PUBLIC  int     get_bootprocs(struct boot_proc * bp);
 PUBLIC  int     get_kernel_cmdline(char * buf, int buflen);
+PUBLIC  int     get_machine(struct machine* machine);
 
 PUBLIC  int     data_copy(endpoint_t dest_pid, void * dest_addr, 
     endpoint_t src_pid, void * src_addr, int len);
@@ -69,6 +70,8 @@ PUBLIC u8       pci_attr_r8(int devind, u16 port);
 PUBLIC u32      pci_attr_r32(int devind, u16 port);
 
 PUBLIC int      get_system_hz();
+#define BOOT_TICKS      u.m3.m3l1
+#define IDLE_TICKS      u.m3.m3l2
 PUBLIC int      get_ticks(clock_t* ticks, clock_t* idle_ticks);
 
 #endif

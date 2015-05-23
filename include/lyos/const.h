@@ -203,6 +203,8 @@
 #define GETINFO_CMDLINE		3
 #define GETINFO_BOOTPROCS 	4
 #define GETINFO_HZ			5
+#define GETINFO_MACHINE		6
+#define GETINFO_CPUINFO		7
 				 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */

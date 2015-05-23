@@ -25,6 +25,7 @@
 #include <lyos/config.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
+#include "arch_type.h"
 
 PUBLIC int getinfo(int request, void* buf)
 {
@@ -69,4 +70,14 @@ PUBLIC int get_kernel_cmdline(char * buf, int buflen)
     m.BUF_LEN = buflen;
 
     return syscall_entry(NR_GETINFO, &m);
+}
+
+PUBLIC int get_machine(struct machine* machine)
+{
+    return getinfo(GETINFO_MACHINE, machine);
+}
+
+PUBLIC int get_cpuinfo(struct cpuinfo * cpuinfo)
+{
+    return getinfo(GETINFO_CPUINFO, cpuinfo);
 }

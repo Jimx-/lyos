@@ -13,6 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
+#include <lyos/config.h>
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "lyos/const.h"
@@ -22,7 +23,7 @@
 #include "assert.h"
 #include <lyos/ipc.h>
 #include <string.h>
-#include <lyos/time.h>
+#include <lyos/sysutils.h>
 
 PUBLIC int get_ticks(clock_t* ticks, clock_t* idle_ticks)
 {

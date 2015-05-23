@@ -2,7 +2,7 @@
 # Makefile for procfs.
 
 PROCFS		= procfs
-PROCFSOBJS = main.o root.o buffer.o file.o
+PROCFSOBJS = main.o root.o buffer.o file.o cpuinfo.o
 LIBS 		= -lmemfs -lfsdriver -llyos
 
 .PHONY: everything realclean

@@ -38,6 +38,7 @@
 #include <lyos/time.h>
 #include "hpet.h"
 #include "div64.h"
+#include "arch_type.h"
 
 #if !CONFIG_SMP
 #define cpuid 0
@@ -110,6 +111,8 @@
 
 DEF_SPINLOCK(calibrate_lock);
 extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
+
+extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
 PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 
@@ -264,6 +267,7 @@ PRIVATE int apic_calibrate(unsigned cpu)
     u64 cpu_mhz = cpu_freq;
     do_div(cpu_mhz, 1000000);
     printk("APIC: detected %d MHz processor\n", cpu_mhz);
+    cpu_info[cpuid].freq_mhz = cpu_mhz;
 
     u32 lapic_delta = lapic_tctr0 - lapic_tctr1;
     lapic_bus_freq[cpuid] = lapic_delta * (1000 / cal_ms);

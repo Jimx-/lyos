@@ -26,6 +26,9 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <errno.h>
+#include "arch_type.h"
+
+extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
 /*======================================================================*
                                sys_getinfo
@@ -59,6 +62,14 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
     case GETINFO_HZ:
         m->RETVAL = system_hz;
         return 0;
+    case GETINFO_MACHINE:
+        addr = (void *)&machine;
+        size = sizeof(machine);
+        break;
+    case GETINFO_CPUINFO:
+        addr = (void *)&cpu_info;
+        size = sizeof(cpu_info);
+        break;
     default:
         return EINVAL;
     }

@@ -174,6 +174,8 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	if (mb_flags & MULTIBOOT_INFO_VIDEO_INFO) {
 	}
+
+	machine.cpu_count = 1;
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

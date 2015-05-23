@@ -88,6 +88,8 @@ PUBLIC void smp_init()
         ncpus = 1;
     }
 
+    machine.cpu_count = ncpus;
+
     init_tss_all(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
 
     lapic_addr = LOCAL_APIC_DEF_ADDR;
@@ -200,6 +202,8 @@ PRIVATE void ap_finish_booting()
 
     printk("smp: CPU %d is up\n", cpuid);
 
+    identify_cpu();
+    
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 

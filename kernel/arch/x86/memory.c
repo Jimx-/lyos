@@ -294,6 +294,7 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         sysinfo_user = (struct sysinfo *)USER_PTR(&sysinfo);
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
         sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
+        sysinfo.machine = (struct machine*)USER_PTR(&machine);
 
         if (syscall_style & SST_AMD_SYSCALL) {
             printk("kernel: selecting AMD SYSCALL syscall style\n");

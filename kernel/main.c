@@ -113,6 +113,8 @@ PUBLIC int kernel_main()
 
 PUBLIC void finish_bsp_booting()
 {
+    identify_cpu();
+    
     if (init_bsp_timer(system_hz) != 0) panic("unable to init bsp timer");
 
 	fpu_init();

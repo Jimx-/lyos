@@ -35,6 +35,9 @@
 #include <lyos/param.h>
 #include <lyos/vm.h>
 #include "libexec/libexec.h"
+#include "arch_type.h"
+
+PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
 /**
  * <Ring 0> Switch back to user.
@@ -194,4 +197,41 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
 PUBLIC void arch_set_syscall_result(struct proc * p, int result)
 {
     p->regs.eax = (u32)result;
+}
+
+/*****************************************************************************
+ *                                identify_cpu
+ *****************************************************************************/
+/**
+ * <Ring 0> Identify a cpu.
+ *
+ *****************************************************************************/
+PUBLIC void identify_cpu()
+{
+    u32 eax, ebx, ecx, edx;
+    u32 cpu = cpuid;
+
+    eax = 0;
+    _cpuid(&eax, &ebx, &ecx, &edx);
+
+    if (ebx == INTEL_CPUID_EBX && ecx == INTEL_CPUID_ECX && edx == INTEL_CPUID_EDX) {
+        cpu_info[cpu].vendor = CPU_VENDOR_INTEL;
+    } else if (ebx == AMD_CPUID_EBX && ecx == AMD_CPUID_ECX && edx == AMD_CPUID_EDX) {
+        cpu_info[cpu].vendor = CPU_VENDOR_AMD;
+    } else cpu_info[cpu].vendor = CPU_VENDOR_UNKNOWN;
+
+    if (eax == 0) return;
+
+    eax = 1;
+    _cpuid(&eax, &ebx, &ecx, &edx);
+
+    cpu_info[cpu].family = (eax >> 8) & 0xf;
+    if (cpu_info[cpu].family == 0xf)
+        cpu_info[cpu].family += (eax >> 20) & 0xff;
+    cpu_info[cpu].model = (eax >> 4) & 0xf;
+    if (cpu_info[cpu].model == 0xf || cpu_info[cpu].model == 0x6)
+        cpu_info[cpu].model += ((eax >> 16) & 0xf) << 4 ;
+    cpu_info[cpu].stepping = eax & 0xf;
+    cpu_info[cpu].flags[0] = ecx;
+    cpu_info[cpu].flags[1] = edx;
 }

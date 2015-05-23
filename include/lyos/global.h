@@ -73,3 +73,5 @@ EXTERN  int         mb_flags;
 
 /* KERNEL LOG */
 extern struct kern_log kern_log;
+
+extern struct machine machine;

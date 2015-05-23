@@ -49,4 +49,16 @@ extern u32 k_stacks_start, k_stacks_end;
 #define NR_IRQ_VECTORS        NR_IRQS_LEGACY
 #endif
 
+#define INTEL_CPUID_EBX 0x756e6547 /* ASCII value of "Genu" */
+#define INTEL_CPUID_EDX 0x49656e69 /* ASCII value of "ineI" */
+#define INTEL_CPUID_ECX 0x6c65746e /* ASCII value of "ntel" */
+
+#define AMD_CPUID_EBX   0x68747541 /* ASCII value of "Auth" */
+#define AMD_CPUID_EDX   0x69746e65 /* ASCII value of "enti" */
+#define AMD_CPUID_ECX   0x444d4163 /* ASCII value of "cAMD" */
+
+#define CPU_VENDOR_INTEL    1
+#define CPU_VENDOR_AMD      2
+#define CPU_VENDOR_UNKNOWN  0xff
+
 #endif

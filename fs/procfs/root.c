@@ -32,18 +32,19 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <libmemfs/libmemfs.h>
-#include "div64.h"
 #include "type.h"
 #include "proto.h"
 
 PRIVATE void root_cmdline();
 PRIVATE void root_version();
 PRIVATE void root_uptime();
+PUBLIC void root_cpuinfo();
 
 PUBLIC struct procfs_file root_files[] = {
     { "cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline },
     { "version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version },
     { "uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime },
+    { "cpuinfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo },
     { NULL, 0, NULL },
 };
 

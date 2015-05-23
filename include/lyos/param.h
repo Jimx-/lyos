@@ -58,6 +58,10 @@ typedef struct kinfo {
 
 typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
 
+struct machine {
+    u32 cpu_count;
+};
+
 struct sysinfo {
 #define SYSINFO_MAGIC   0x534946
     int magic;
@@ -66,6 +70,7 @@ struct sysinfo {
 
     kinfo_t * kinfo;
     struct kern_log * kern_log;
+    struct machine * machine;
 };
 
 #endif
