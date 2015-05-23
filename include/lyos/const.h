@@ -113,6 +113,7 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
+#define CLOCK 			-4
 #define SYSTEM 			-3
 #define KERNEL 			-2
 #define INTERRUPT		-1
@@ -140,7 +141,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALLS	19
+#define NR_SYS_CALLS	20
 #define NR_PRINTX		0
 #define NR_SENDREC		1
 #define NR_DATACOPY		2
@@ -160,6 +161,7 @@
 #define NR_KILL			16
 #define NR_GETKSIG		17
 #define NR_ENDKSIG		18
+#define NR_TIMES		19
 
 /* kernel signals */
 #define SIGKSIG		SIGUSR1
@@ -200,6 +202,7 @@
 #define GETINFO_KINFO		2
 #define GETINFO_CMDLINE		3
 #define GETINFO_BOOTPROCS 	4
+#define GETINFO_HZ			5
 				 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
@@ -295,6 +298,7 @@ enum msgtype {
 	INPUT_SEND_EVENT = INPUT_REQ_BASE,
 	INPUT_TTY_UP,
 	INPUT_TTY_EVENT,
+	INPUT_SETLEDS,
 };
 
 /* macros for messages */

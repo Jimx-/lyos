@@ -34,6 +34,17 @@
 
 extern spinlock_t clocksource_lock;
 
+PUBLIC clock_t idle_ticks = 0;
+
+/*****************************************************************************
+ *                                read_jiffies
+ *****************************************************************************/
+/**
+ * <Ring 0> Reads jiffies.
+ * 
+ * @param clocksource The jiffies clocksource.
+ * @return The jiffies.
+ *****************************************************************************/
 PRIVATE u64 read_jiffies(struct clocksource * cs)
 {
     return jiffies;
@@ -70,9 +81,18 @@ PUBLIC int clock_handler(irq_hook_t * hook)
     }
 #endif
 
+    if (get_cpulocal_var(proc_ptr) == get_cpulocal_var_ptr(idle_proc)) idle_ticks++;
+
     return 1;
 }
 
+/*****************************************************************************
+ *                                init_time
+ *****************************************************************************/
+/**
+ * <Ring 0> This routine initializes time subsystem.
+ * 
+ *****************************************************************************/
 PUBLIC int init_time()
 {
     jiffies = 0;
@@ -84,6 +104,14 @@ PUBLIC int init_time()
     return 0;
 }
 
+/*****************************************************************************
+ *                                init_bsp_timer
+ *****************************************************************************/
+/**
+ * <Ring 0> This routine initializes timer for BSP.
+ * 
+ * @param freq Timer frequency.
+ *****************************************************************************/
 PUBLIC int init_bsp_timer(int freq)
 {
     if (init_local_timer(freq)) return -1;
@@ -92,6 +120,14 @@ PUBLIC int init_bsp_timer(int freq)
     return 0;
 }
 
+/*****************************************************************************
+ *                                init_ap_timer
+ *****************************************************************************/
+/**
+ * <Ring 0> This routine initializes timer for APs.
+ * 
+ * @param freq Timer frequency.
+ *****************************************************************************/
 PUBLIC int init_ap_timer(int freq)
 {
     if (init_local_timer(freq)) return -1;
@@ -99,6 +135,14 @@ PUBLIC int init_ap_timer(int freq)
     return 0;
 }
 
+/*****************************************************************************
+ *                                stop_context
+ *****************************************************************************/
+/**
+ * <Ring 0> This routine performs context switching.
+ * 
+ * @param p Stop context for whom.
+ *****************************************************************************/
 PUBLIC void stop_context(struct proc * p)
 {
     spinlock_lock(&clocksource_lock);

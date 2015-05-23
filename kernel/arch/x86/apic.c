@@ -266,7 +266,7 @@ PRIVATE int apic_calibrate(unsigned cpu)
     printk("APIC: detected %d MHz processor\n", cpu_mhz);
 
     u32 lapic_delta = lapic_tctr0 - lapic_tctr1;
-    lapic_bus_freq[cpuid] = lapic_delta * 1000 / cal_ms;
+    lapic_bus_freq[cpuid] = lapic_delta * (1000 / cal_ms);
 
     spinlock_unlock(&calibrate_lock);
 

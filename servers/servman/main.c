@@ -86,11 +86,11 @@ PRIVATE void servman_init()
         int j;
         if (sp->priv.flags == TASK_FLAGS) {
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
-                sp->priv.allowed_syscalls[j] = ~0;
+                sp->priv.syscall_mask[j] = ~0;
             } 
         } else if (sp->priv.flags == USER_FLAGS) {
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
-                sp->priv.allowed_syscalls[j] = 0;
+                sp->priv.syscall_mask[j] = 0;
             } 
         }
 

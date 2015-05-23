@@ -41,6 +41,7 @@ PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
  * also
  */
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
+	{CLOCK,			"clock"		},
 	{SYSTEM, 		"system" 	},
 	{KERNEL,		"kernel"	},
 	{INTERRUPT,		"interrupt"	},

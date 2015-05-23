@@ -38,6 +38,13 @@
 PRIVATE spinlock_t irq_handlers_lock;
 PRIVATE irq_hook_t * irq_handlers[NR_IRQ] = {0};
 
+/*****************************************************************************
+ *                                init_irq
+ *****************************************************************************/
+/**
+ * <Ring 0> Initializes IRQ subsystem.
+ * 
+ *****************************************************************************/
 PUBLIC void init_irq()
 {
     int i;
@@ -47,6 +54,13 @@ PUBLIC void init_irq()
     spinlock_init(&irq_handlers_lock);
 }
 
+/*****************************************************************************
+ *                                put_irq_handler
+ *****************************************************************************/
+/**
+ * <Ring 0> Register an IRQ handler.
+ * 
+ *****************************************************************************/
 PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
 {
     if (irq < 0 || irq >= NR_IRQ) panic("invalid irq %d", irq);

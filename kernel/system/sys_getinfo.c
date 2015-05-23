@@ -56,6 +56,9 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
         addr = (void *)&kinfo.boot_procs;
         size = sizeof(kinfo.boot_procs);
         break;
+    case GETINFO_HZ:
+        m->RETVAL = system_hz;
+        return 0;
     default:
         return EINVAL;
     }

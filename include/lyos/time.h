@@ -25,6 +25,9 @@ struct time {
 	u32 second;
 };
 
+#define BOOT_TICKS      u.m3.m3l1
+#define IDLE_TICKS      u.m3.m3l2
+
 #define MSEC_PER_SEC    1000L
 #define USEC_PER_MSEC   1000L
 #define NSEC_PER_USEC   1000L

@@ -23,7 +23,7 @@
 #endif
 
 /* Number of tasks & processes */
-#define NR_TASKS        3
+#define NR_TASKS        4
 #if __i386__
 #define NR_BOOT_PROCS   (NR_TASKS + 13)
 #else

@@ -31,16 +31,19 @@
 #include <lyos/sysutils.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
-#include "libmemfs/libmemfs.h"
+#include <libmemfs/libmemfs.h>
+#include "div64.h"
 #include "type.h"
 #include "proto.h"
 
 PRIVATE void root_cmdline();
 PRIVATE void root_version();
+PRIVATE void root_uptime();
 
 PUBLIC struct procfs_file root_files[] = {
     { "cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline },
     { "version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version },
+    { "uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime },
     { NULL, 0, NULL },
 };
 
@@ -70,4 +73,15 @@ PRIVATE void root_version()
     uname(&utsname);
 
     buf_printf("%s version %s %s\n", utsname.sysname, utsname.release, utsname.version);
+}
+
+PRIVATE void root_uptime()
+{
+    clock_t ticks, idle_ticks;
+    int hz = get_system_hz();
+
+    get_ticks(&ticks, &idle_ticks);
+
+    buf_printf("%ld.%0.2ld ", ticks / hz, ticks % hz);
+    buf_printf("%ld.%0.2ld\n", idle_ticks / hz, idle_ticks % hz);
 }

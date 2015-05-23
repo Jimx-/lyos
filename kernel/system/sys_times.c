@@ -13,17 +13,27 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/type.h>
-#include <lyos/const.h>
-#include <lyos/ipc.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/time.h>
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "stddef.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include <errno.h>
+#include "arch_proto.h"
+#include <lyos/sysutils.h>
+#include <lyos/time.h>
 
-PUBLIC u32 now()
+extern clock_t idle_ticks;
+
+PUBLIC int sys_times(MESSAGE * m, struct proc * p_proc)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    m->BOOT_TICKS = jiffies;
+    m->IDLE_TICKS = idle_ticks;
 
-    return tv.tv_sec;
+    return 0;
 }

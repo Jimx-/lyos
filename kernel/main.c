@@ -90,7 +90,7 @@ PUBLIC int kernel_main()
 
             int j;
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
-                p->priv->allowed_syscalls[j] = (allowed_calls == ALL_CALLS_ALLOWED) ? (~0) : 0;
+                p->priv->syscall_mask[j] = (allowed_calls == ALL_CALLS_ALLOWED) ? (~0) : 0;
             }
     	} else {
             p->state |= PST_NO_PRIV;

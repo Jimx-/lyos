@@ -11,19 +11,28 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include <lyos/type.h>
-#include <lyos/const.h>
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
 #include <lyos/ipc.h>
-#include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
+#include <lyos/time.h>
 
-PUBLIC u32 now()
+PUBLIC int get_ticks(clock_t* ticks, clock_t* idle_ticks)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    MESSAGE m;
 
-    return tv.tv_sec;
+    memset(&m, 0, sizeof(MESSAGE));
+    int retval = syscall_entry(NR_TIMES, &m);
+
+    if (ticks) *ticks = m.BOOT_TICKS;
+    if (idle_ticks) *idle_ticks = m.IDLE_TICKS;
+    
+    return retval;
 }
