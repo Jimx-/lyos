@@ -2,7 +2,7 @@
 # Makefile for libdriver.
 #
 
-LIBDRVOBJS		= driver.o
+LIBDRVOBJS		= driver.o bdev.o
 LIBDRIVER		= $(LIBOUTDIR)/libdriver.a
 ARFLAGS			= rcs
 

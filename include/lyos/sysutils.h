@@ -74,4 +74,7 @@ PUBLIC int      get_system_hz();
 #define IDLE_TICKS      u.m3.m3l2
 PUBLIC int      get_ticks(clock_t* ticks, clock_t* idle_ticks);
 
+#define EXP_TIME        u.m3.m3l1
+#define ABS_TIME        u.m3.m3i2
+
 #endif

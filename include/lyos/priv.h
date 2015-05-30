@@ -18,6 +18,7 @@
 
 #include <signal.h>
 #include <lyos/bitmap.h>
+#include <lyos/timer.h>
     
 /* Process privilege structure */
 struct priv {
@@ -32,6 +33,8 @@ struct priv {
     sigset_t sig_pending;
 
     int kernlog_request;
+
+    struct sys_timer timer;
 };
 
 #define FIRST_PRIV          priv_table[0]

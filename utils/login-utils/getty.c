@@ -14,9 +14,32 @@
 
 void print_banner(char * ttyname);
 
-int main(int argc, char * argv[]) 
+typedef struct
+{
+  unsigned a_type;		/* Entry type */
+  union
+    {
+      unsigned a_val;		/* Integer value */
+      /* We use to have pointer elements added here.  We cannot do that,
+	 though, since it does not work when using 32-bit definitions
+	 on 64-bit platforms and vice versa.  */
+    } a_un;
+} Elf32_auxv_t;
+
+int main(int argc, char * argv[], char* envp[]) 
 {	
 	print_banner(ttyname(0));
+
+        Elf32_auxv_t *auxv;
+        while(*envp++ != NULL); 
+        for (auxv = (Elf32_auxv_t *)envp; auxv->a_type != 0; auxv++)
+        {
+                if( auxv->a_type == 31)
+                        printf("AT_EXECFN is: %s\n", (char*)auxv->a_un.a_val);
+                if( auxv->a_type == 15)
+                        printf("AT_PLATFORM is: %s\n", (char*)auxv->a_un.a_val);
+        }
+
 
 	char name[NAME_LEN];
 	fgets(name, NAME_LEN, stdin);

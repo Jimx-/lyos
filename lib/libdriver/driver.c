@@ -120,38 +120,3 @@ PUBLIC endpoint_t get_chardev_driver(dev_t dev)
 
     return (msg.RETVAL != 0) ? -msg.RETVAL : msg.PID;
 }
-
-/*****************************************************************************
- *                                rw_sector
- *****************************************************************************/
-/**
- * <Ring 1> R/W a sector via messaging with the corresponding driver.
- * 
- * @param io_type  DEV_READ or DEV_WRITE
- * @param dev      device nr
- * @param pos      Byte offset from/to where to r/w.
- * @param bytes    r/w count in bytes.
- * @param proc_nr  To whom the buffer belongs.
- * @param buf      r/w buffer.
- * 
- * @return Zero if success.
- *****************************************************************************/
-PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
-		     void* buf)
-{
-	MESSAGE driver_msg;
-    endpoint_t driver_nr = get_blockdev_driver(dev);
-    if (driver_nr < 0) return -driver_nr;
-
-	driver_msg.type		= io_type;
-	driver_msg.DEVICE	= MINOR(dev);
-	driver_msg.POSITION	= pos;
-	driver_msg.BUF		= buf;
-	driver_msg.CNT		= bytes;
-	driver_msg.PROC_NR	= proc_nr;
-
-	send_recv(BOTH, driver_nr, &driver_msg);
-
-	return driver_msg.RETVAL;
-}
-

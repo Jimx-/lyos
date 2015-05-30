@@ -16,8 +16,9 @@
 #ifndef _DRIVER_H_
 #define _DRIVER_H_
 
-#define DT_BLOCKDEV    1
-#define DT_CHARDEV     2
+#define NR_DEVICES      135
+#define DT_BLOCKDEV     1
+#define DT_CHARDEV      2
 
 #define MAJOR_MAX       64
 
@@ -41,12 +42,14 @@ struct dev_driver_map{
 };
 
 PUBLIC void dev_driver_task(struct dev_driver * dd);
-PUBLIC int  rw_sector (int io_type, int dev, u64 pos,
-            int bytes, int proc_nr, void * buf);
 PUBLIC int announce_blockdev(char * name, dev_t dev);
 PUBLIC int announce_chardev(char * name, dev_t dev);
 PUBLIC endpoint_t get_blockdev_driver(dev_t dev);
 PUBLIC endpoint_t get_chardev_driver(dev_t dev);
+
+PUBLIC int bdev_driver(dev_t dev);
+PUBLIC int bdev_readwrite(int io_type, int dev, u64 pos,
+            int bytes, int proc_nr, void * buf);
 
 #endif
 

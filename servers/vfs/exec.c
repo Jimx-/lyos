@@ -14,6 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lyos/type.h"
+#include <lyos/compile.h>
 #include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
@@ -34,6 +35,7 @@
 #include <sys/stat.h>
 #include "page.h"
 #include <elf.h>
+#include <lyos/sysutils.h>
 #include "libexec/libexec.h"
 #include <sys/mman.h>
 
@@ -46,12 +48,15 @@ struct vfs_exec_info {
     int mmfd;
 };
 
+typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
+PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
+    stack_hook_t setup_stack;
 };
 
 PRIVATE struct exec_loader exec_loaders[] = {
-    { libexec_load_elf },
+    { libexec_load_elf, setup_stack_elf32 },
     { NULL },
 };
 
@@ -72,6 +77,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct
         execi->pin = NULL;
     }
 
+    memcpy(execi->prog_name, pathname, MAX_PATH);
     memcpy(execi->args.prog_name, pathname, MAX_PATH);
 
     if ((execi->pin = resolve_path(pathname, pcaller)) == NULL) return err_code;
@@ -136,11 +142,16 @@ PRIVATE int request_vfs_mmap(struct exec_info *execi,
     return vfs_mmap(execi->proc_e, foffset, len, pin->i_dev, pin->i_num, vexeci->mmfd, vaddr, flags);
 }
 
+/*****************************************************************************
+ *                            do_exec
+ *****************************************************************************/
 /**
- * <Ring 1> Perform the EXEC syscall.
+ * <Ring 3> Perform the EXEC syscall.
+ * 
  * @param  msg Ptr to the message.
  * @return     Zero on success.
- */
+ * 
+ *****************************************************************************/
 PUBLIC int do_exec(MESSAGE * msg)
 {
     int retval;
@@ -158,6 +169,12 @@ PUBLIC int do_exec(MESSAGE * msg)
     /* stack info */
     execi.args.stack_top = VM_STACK_TOP;
     execi.args.stack_size = PROC_ORIGIN_STACK;
+
+    /* uid & gid */
+    execi.args.new_uid = fp->realuid;
+    execi.args.new_gid = fp->realgid;
+    execi.args.new_euid = fp->effuid;
+    execi.args.new_egid = fp->effgid;
 
     /* copy everything we need before we free the old process */
     int orig_stack_len = msg->BUF_LEN;
@@ -220,17 +237,20 @@ PUBLIC int do_exec(MESSAGE * msg)
     execi.args.proc_e = src;
     execi.args.filesize = execi.pin->i_size;
 
-    for (i = 0; exec_loaders[i].loader != NULL; i++) {
-        retval = (*exec_loaders[i].loader)(&execi.args);
-        if (!retval) break;  /* loaded successfully */
-    }
-
-    if (retval) return retval;
-
     /* relocate stack pointers */
     char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
 
     int delta = (int)orig_stack - (int)msg->BUF;
+
+    for (i = 0; exec_loaders[i].loader != NULL; i++) {
+        retval = (*exec_loaders[i].loader)(&execi.args);
+        if (!retval) {
+            if (exec_loaders[i].setup_stack) retval = (*exec_loaders[i].setup_stack)(&execi, stackcopy, (size_t*)&orig_stack_len, (vir_bytes*)&orig_stack);
+            break;  /* loaded successfully */
+        }
+    }
+
+    if (retval) return retval;
 
     int argc = 0;
     char * envp = orig_stack;
@@ -254,4 +274,90 @@ PUBLIC int do_exec(MESSAGE * msg)
     ps.ps_envstr = envp;
 
     return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
+}
+
+/*****************************************************************************
+ *                        setup_stack_elf32
+ *****************************************************************************/
+/**                   
+ * <Ring 3> Setup auxiliary vectors.
+ * 
+ * @param vfs_exec_info Ptr to exec info.
+ * @param stack Stack pointer.
+ * @param stack_size Size of stack.
+ * @param vsp Virtual stack pointer in caller's address space.
+ * 
+ * @return Zero on success.
+ *****************************************************************************/
+PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp)
+{
+    char** arg_str;
+    if (*stack_size) {  
+        arg_str = (char**)stack;
+        for (; *arg_str != 0; arg_str++) ;
+        arg_str++;
+        for (; *arg_str != 0; arg_str++) ;
+        arg_str++;
+    }
+
+    size_t strings_len = stack + *stack_size - (char*)arg_str;
+
+    static char auxv_buf[PROC_ORIGIN_STACK];
+    memset(auxv_buf, 0, sizeof(auxv_buf));
+
+    Elf32_auxv_t* auxv = (Elf32_auxv_t*) auxv_buf;
+    Elf32_auxv_t* auxv_end = (Elf32_auxv_t*) (auxv_buf + sizeof(auxv_buf));
+#define AUXV_ENT(vec, type, val) \
+    if (vec < auxv_end) { \
+        vec->a_type = type; \
+        vec->a_un.a_val = val; \
+        vec++; \
+    } else { \
+        vec--; \
+        vec->a_type = AT_NULL; \
+        vec->a_un.a_val = 0; \
+        vec++; \
+    }
+
+    AUXV_ENT(auxv, AT_ENTRY, execi->args.entry_point);
+    AUXV_ENT(auxv, AT_UID, execi->args.new_uid);
+    AUXV_ENT(auxv, AT_GID, execi->args.new_gid);
+    AUXV_ENT(auxv, AT_EUID, execi->args.new_euid);
+    AUXV_ENT(auxv, AT_EGID, execi->args.new_egid);
+    AUXV_ENT(auxv, AT_PAGESZ, PG_SIZE);
+    AUXV_ENT(auxv, AT_CLKTCK, get_system_hz());
+
+    Elf32_auxv_t* auxv_execfn = auxv;
+    AUXV_ENT(auxv, AT_EXECFN, NULL);
+    AUXV_ENT(auxv, AT_PLATFORM, NULL);
+    AUXV_ENT(auxv, AT_NULL, 0);
+
+    size_t name_len = strlen(execi->prog_name) + 1 + strlen(LYOS_PLATFORM) + 1;
+    char* userp = NULL;
+    /* add AT_EXECFN and AT_PLATFORM if there is enough space */
+    if ((vir_bytes)auxv_end - (vir_bytes)auxv > name_len) {
+        strcpy((char*)auxv, execi->prog_name);
+        strcpy((char*)auxv + strlen(execi->prog_name) + 1, LYOS_PLATFORM);
+        auxv_end = (Elf32_auxv_t*)((vir_bytes)auxv + name_len); 
+        auxv_end = (Elf32_auxv_t*)roundup((u32)auxv_end, sizeof(int));
+        userp = (vir_bytes)auxv - (vir_bytes)auxv_buf;
+        userp += *vsp + (vir_bytes)arg_str - (vir_bytes)stack; 
+    }
+
+    size_t auxv_len = (vir_bytes)auxv_end - (vir_bytes)auxv_buf;
+    if (userp) {
+        userp -= auxv_len;
+        AUXV_ENT(auxv_execfn, AT_EXECFN, userp);
+        AUXV_ENT(auxv_execfn, AT_PLATFORM, userp + strlen(execi->prog_name) + 1);
+    } else {
+        /* AT_EXECFN and AT_PLATFORM not present */
+        AUXV_ENT(auxv_execfn, AT_NULL, 0);
+    }
+    memmove((char*)arg_str + auxv_len, (char*)arg_str, strings_len);
+    memcpy((char*)arg_str, auxv_buf, auxv_len);
+
+    *stack_size = *stack_size + auxv_len;
+    *vsp = *vsp - auxv_len;
+
+    return 0;
 }

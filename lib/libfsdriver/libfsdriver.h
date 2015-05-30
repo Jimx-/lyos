@@ -54,6 +54,7 @@ struct fsdriver {
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t * mode);
     int (*fs_getdents)(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * position, size_t * count);
+    int (*fs_driver)(dev_t dev);
     int (*fs_sync)();
 
     int (*fs_other)(MESSAGE * m);
@@ -79,5 +80,7 @@ PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_chmod(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m);
+
+PUBLIC int fsdriver_driver(dev_t dev);
 
 #endif

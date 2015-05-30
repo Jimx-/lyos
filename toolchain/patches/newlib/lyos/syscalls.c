@@ -1067,6 +1067,29 @@ int sethostname(const char *name, size_t len)
 	return 0;
 }
 
+/* termios */
+speed_t cfgetispeed(const struct termios * tio) 
+{
+    return tio->c_ispeed;
+}
+
+speed_t cfgetospeed(const struct termios * tio) 
+{
+    return tio->c_ospeed;
+}
+
+int cfsetispeed(struct termios * tio, speed_t speed) 
+{
+    tio->c_ispeed = speed;
+    return 0;
+}
+
+int cfsetospeed(struct termios * tio, speed_t speed) 
+{
+	tio->c_ospeed = speed;
+    return 0;
+}
+
 int tcgetattr(int fd, struct termios * tio) {
 	return ioctl(fd, TCGETS, tio);
 }

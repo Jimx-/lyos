@@ -3,11 +3,12 @@
 export PATH=$PWD/toolchain/local/bin:$PATH
 
 ARCH=$1
-RELEASE=$2
-CC=$3
-LOCAL_VERSION=$4
-LOCAL_VERSION_AUTO=$5
-SMP=$6
+SUBARCH=$2
+RELEASE=$3
+CC=$4
+LOCAL_VERSION=$5
+LOCAL_VERSION_AUTO=$6
+SMP=$7
 
 if [ -r $PWD/.version ]; then
     VERSION=`cat .version`
@@ -46,4 +47,5 @@ VERSION="$VERSION $TIMESTAMP"
   echo \#define LYOS_COMPILE_HOST \"`hostname`\"
   echo \#define LYOS_COMPILER \"`$CC -v 2>&1 | tail -n 1`\"
   echo \#define LYOS_LOCAL_VERSION \"$LOCAL_VERSION\"
+  echo \#define LYOS_PLATFORM \"$SUBARCH\"
 ) > ./include/lyos/compile.h

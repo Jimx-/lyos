@@ -39,6 +39,9 @@ PUBLIC int initfs_readsuper(MESSAGE * p)
     char buf[512];
     int i, position = 0;
     initfs_headers_count = 0;
+
+    bdev_driver(dev);
+    
     for (i = 0;;i++)
     {
         initfs_rw_dev(DEV_READ, dev, position, 512, buf);

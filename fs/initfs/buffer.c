@@ -36,5 +36,5 @@
  */
 PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length, void * buf)
 {
-	rw_sector(rw_flag, dev, position, length, this_ep, buf);
+	bdev_readwrite(rw_flag, dev, position, length, this_ep, buf);
 }

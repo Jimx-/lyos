@@ -24,6 +24,7 @@
 #include "string.h"
 #include <lyos/ipc.h>
 #include <sys/syslimits.h>
+#include <lyos/driver.h>
 #include "libfsdriver/libfsdriver.h"
 
 PUBLIC int fsdriver_register(struct fsdriver * fsd)
@@ -45,6 +46,8 @@ PUBLIC int fsdriver_readsuper(struct fsdriver * fsd, MESSAGE * m)
     dev_t dev = m->REQ_DEV;
 
     if (fsd->fs_readsuper == NULL) return ENOSYS;
+
+    if (fsd->fs_driver) fsd->fs_driver(dev);
 
     int retval = fsd->fs_readsuper(dev, m->REQ_FLAGS, &fn);
     if (retval) return retval;
@@ -208,4 +211,9 @@ PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m)
 {
     if (fsd->fs_sync == NULL) return ENOSYS;
     return fsd->fs_sync();
+}
+
+PUBLIC int fsdriver_driver(dev_t dev)
+{
+    return bdev_driver(dev);
 }
