@@ -48,5 +48,6 @@ PUBLIC int libexec_clearproc(struct exec_info * execi);
 PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len);
 
 PUBLIC int libexec_load_elf(struct exec_info * execi);
+PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen);
 
 #endif /* _LIBEXEC_H_ */

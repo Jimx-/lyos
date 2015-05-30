@@ -59,6 +59,33 @@ PRIVATE int elf_unpack(char * hdr, Elf32_Ehdr ** elf_hdr, Elf32_Phdr ** prog_hdr
 	return 0;
 }
 
+PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen)
+{
+    Elf32_Ehdr* elf_hdr;
+    Elf32_Phdr* prog_hdr;
+
+    if (elf_unpack(hdr, &elf_hdr, &prog_hdr)) return 0;
+
+    int i;
+    for (i = 0; i < elf_hdr->e_phnum; i++) {
+        switch (prog_hdr[i].p_type) {
+        case PT_INTERP:
+            if(!interp) return 1;
+            if(prog_hdr[i].p_filesz >= maxlen)
+                return -1;
+            if(prog_hdr[i].p_offset + prog_hdr[i].p_filesz >= hdr_len)
+                return -1;
+            memcpy(interp, hdr + prog_hdr[i].p_offset, prog_hdr[i].p_filesz);
+            interp[prog_hdr[i].p_filesz] = '\0';
+            return 1;
+        default:
+            continue;
+        }
+    }
+
+    return 0;
+}
+
 PUBLIC int libexec_load_elf(struct exec_info * execi)
 {
     int retval;

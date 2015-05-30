@@ -76,7 +76,7 @@ PUBLIC int main()
 		int src = msg.source;
 		pcaller = vfs_endpt_proc(src);
 		int msgtype = msg.type;
-		
+
 		switch (msgtype) {
         case FS_REGISTER:
             msg.RETVAL = do_register_filesystem(&msg);

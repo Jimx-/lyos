@@ -55,6 +55,8 @@ struct exec_loader {
     stack_hook_t setup_stack;
 };
 
+PUBLIC int libexec_load_elf_dbg(struct exec_info * execi);
+
 PRIVATE struct exec_loader exec_loaders[] = {
     { libexec_load_elf, setup_stack_elf32 },
     { NULL },
@@ -118,7 +120,10 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
     struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
     struct inode * pin = vexeci->pin;
 
-    if (offset + len > pin->i_size) return EIO;
+    if (offset + len > pin->i_size){
+        len = pin->i_size - offset;
+        //return EIO;
+    }
 
     return request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, 
         (u64)offset, READ, execi->proc_e, (char *)vaddr, len, &newpos, &bytes_rdwt);
@@ -197,6 +202,11 @@ PUBLIC int do_exec(MESSAGE * msg)
     if (is_script(&execi)) {
         printl("Is a script!\n");
         while(1);
+    }
+
+    char interp[MAX_PATH];
+    if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp, sizeof(interp)) > 0) {
+        printl("%s\n", interp);
     }
 
     /* find an fd for MM */
