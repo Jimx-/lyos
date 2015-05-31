@@ -29,7 +29,7 @@ if [ $ARCH = "i686" ]; then
 fi
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
+export BUILD_BASH=1
 
-pushd toolchain > /dev/null
-python build-bash.py
+pushd setup.py
 popd > /dev/null

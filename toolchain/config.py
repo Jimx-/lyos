@@ -34,11 +34,6 @@ NEWLIB_REPO = packs.get('newlib', 'repo')
 NEWLIB_TARBALL = NEWLIB_VERSION + '.tar.gz'
 NEWLIB_TARBALL_URL = NEWLIB_REPO + NEWLIB_TARBALL
 
-NASM_VERSION = 'nasm-' + packs.get('nasm', 'version')
-NASM_REPO = packs.get('nasm', 'repo')
-NASM_TARBALL = NASM_VERSION + '.tar.gz'
-NASM_TARBALL_URL = NASM_REPO + packs.get('nasm', 'version') + '/' + NASM_TARBALL
-
 COREUTILS_VERSION = 'coreutils-' + packs.get('coreutils', 'version')
 COREUTILS_REPO = packs.get('coreutils', 'repo')
 COREUTILS_TARBALL = COREUTILS_VERSION + '.tar.gz'

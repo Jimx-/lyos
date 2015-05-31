@@ -23,10 +23,10 @@ def mkdir(dirname):
 
 def mkdirp(dirname):
 	if not os.path.exists(dirname):
-		os.system('mkdir -p ' + dirname)
+		os.system('mkdir -p ' + dirname) and cmd_error()
  
 def rmdir(dirname):
-	os.system('rm -rf ' + dirname)
+	os.system('rm -rf ' + dirname) and cmd_error()
 
 def download(name, url, local):
 	print('Downloading ' + name + ' from ' + url + '...')
@@ -47,7 +47,7 @@ def wget(name, url, local):
 		print('Already downloaded.')
 		return
 		
-	os.system('wget ' + url + ' ' + local)
+	os.system('wget ' + url + ' ' + local) and cmd_error()
 
 def decompress(tarball, dirname):
 	if os.path.exists(dirname):
@@ -74,44 +74,44 @@ def patch(name):
 	if os.path.isfile('.patched'):
 		pop_dir()
 		return
-	os.system('patch -p1 < ../../patches/' + name + '.patch')
+	os.system('patch -p1 < ../../patches/' + name + '.patch') and cmd_error()
 	patched = open('.patched', 'w')
 	patched.close()
 	pop_dir()
 
 def configure(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + ' --with-sysroot=' + SYSROOT + extra_opt)
+	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + ' --with-sysroot=' + SYSROOT + extra_opt) and cmd_error()
 
 def configure_cross(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + extra_opt)
+	os.system(path + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + extra_opt) and cmd_error()
 
 def configure_host(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --host=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + extra_opt)
+	os.system(path + ' --host=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + extra_opt) and cmd_error()
 	
 def configure_native(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + 
-					' --with-sysroot=' + SYSROOT + ' --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt)
+					' --with-sysroot=' + SYSROOT + ' --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt) and cmd_error()
 
 def make(extra_opt=''):
-	os.system('make '+ extra_opt)
+	os.system('make '+ extra_opt) and cmd_error()
 
 def make_and_install():
-	os.system('make')
-	os.system('make install')
+	os.system('make') and cmd_error()
+	os.system('make install') and cmd_error()
 
 def make_and_install_to_destdir():
-	os.system('make')
-	os.system('make DESTDIR=' + SYSROOT + ' install')
+	os.system('make') and cmd_error()
+	os.system('make DESTDIR=' + SYSROOT + ' install') and cmd_error()
 
 def nasm(source, output):
-	os.system('nasm -f elf -o ' + output + ' ' +  source)
+	os.system('nasm -f elf -o ' + output + ' ' +  source) and cmd_error()
 
 def copy(src, dest):
-	os.system('cp ' + src + ' ' + dest)
+	os.system('cp ' + src + ' ' + dest) and cmd_error()
 
 def copy_dir(src, dest):
-	os.system('cp -r ' + src + ' ' + dest)
+	os.system('cp -r ' + src + ' ' + dest) and cmd_error()

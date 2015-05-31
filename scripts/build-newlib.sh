@@ -30,6 +30,8 @@ fi
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
 
+export BUILD_NEWLIB=1
+
 pushd toolchain > /dev/null
-python build-newlib.py
+python setup.py
 popd > /dev/null

@@ -10,10 +10,6 @@ repo = http://ftp.gnu.org/gnu/binutils/
 version = 2.0.0
 repo = ftp://sourceware.org/pub/newlib/
 
-[nasm]
-version = 2.10.09
-repo = http://www.nasm.us/pub/nasm/releasebuilds/
-
 [coreutils]
 version = 8.13
 repo = ftp://ftp.gnu.org/gnu/coreutils/

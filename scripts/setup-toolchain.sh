@@ -33,6 +33,8 @@ fi
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
 
+export BUILD_BINUTILS=1 BUILD_GCC=1 BUILD_NEWLIB=1 BUILD_BINUTILS_NATIVE=1 BUILD_GCC_NATIVE=1
+
 pushd toolchain > /dev/null
 python setup.py
 popd > /dev/null

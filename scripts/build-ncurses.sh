@@ -30,7 +30,8 @@ if [ $ARCH = "i686" ]; then
 fi
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
+export BUILD_NCURSES=1
 
 pushd toolchain > /dev/null
-python build-ncurses.py
+python setup.py
 popd > /dev/null
