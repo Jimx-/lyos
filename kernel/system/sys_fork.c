@@ -43,7 +43,7 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     lock_proc(parent);
 
     *child = *parent;
-    sprintf(child->name, "%s_%d", parent->name, child_ep);
+    snprintf(child->name, sizeof(child->name), "%s_%d", parent->name, child_ep);
     child->endpoint = child_ep;
     child->p_parent = parent_ep;
 

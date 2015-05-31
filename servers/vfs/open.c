@@ -58,7 +58,7 @@ PUBLIC int do_open(MESSAGE * p)
     int name_len = p->NAME_LEN; /* length of filename */
     int src = p->source;    /* caller proc nr. */
     mode_t mode = p->MODE;  /* access mode */
-
+    
     mode_t bits = mode_map[flags & O_ACCMODE];
     if (!bits) return -EINVAL;
 
