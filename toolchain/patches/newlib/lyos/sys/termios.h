@@ -113,7 +113,9 @@ struct termios {
 #define CSTOPB	0000100
 #define CREAD	0000200
 #define CPARENB	0000400
+#define PARENB	CPARENB
 #define CPARODD	0001000
+#define PARODD	CPARODD
 #define HUPCL	0002000
 #define CLOCAL	0004000
 #define CIBAUD	03600000		/* input baud rate (not used) */

@@ -56,6 +56,7 @@ PUBLIC int do_fcntl(MESSAGE * p)
     if (fd < 0 || fd >= NR_FILES) return -EINVAL;
 
     struct file_desc * filp = pcaller->filp[fd];
+    if (!filp) return EBADF;
     int i, newfd;
     switch(request) {
         case F_DUPFD:
@@ -73,6 +74,9 @@ PUBLIC int do_fcntl(MESSAGE * p)
             pcaller->filp[newfd] = filp;
             return newfd;
         case F_SETFD:
+            return 0;
+        case F_SETFL:
+            filp->fd_mode = argx;
             return 0;
         default:
             break;

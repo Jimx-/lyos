@@ -29,3 +29,7 @@ repo = http://www.nano-editor.org/dist/v2.2/
 [ncurses]
 version = 5.9
 repo = http://ftp.gnu.org/pub/gnu/ncurses/
+
+[bash]
+version = 4.3
+repo = http://ftp.gnu.org/gnu/bash/

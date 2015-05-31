@@ -128,7 +128,9 @@ PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
     p_proc->syscall_msg = m_user;
 
     if (copy_user_message(&msg, m_user) != 0) {
+        printk("kernel: copy message failed!(SIGSEGV #%d 0x%x)\n", p_proc->endpoint, m_user);
         ksig_proc(p_proc->endpoint, SIGSEGV);
+        return EFAULT;
     }
 
     msg.source = p_proc->endpoint;

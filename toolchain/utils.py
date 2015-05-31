@@ -5,6 +5,10 @@ from config import *
 
 pushed_dir = [os.getcwd()]
 
+def cmd_error():
+	print "Build error - exit"
+	exit()
+
 def push_dir(dirname):
 	pushed_dir.append(os.path.abspath(dirname))
 	os.chdir(dirname)
@@ -33,7 +37,7 @@ def download(name, url, local):
 
 	f = urllib2.urlopen(url)
 	data = f.read() 
-	with open(local, 'wb') as local_file:     
+	with open(local, 'wb') as local_file:
 		local_file.write(data)
 
 def wget(name, url, local):

@@ -1,0 +1,11 @@
+TERM=ansi
+export TERM
+
+if [[ $EUID -ne 0 ]]; then
+  PS1="$ "
+else
+  PS1="# "
+fi
+
+PS1="\u@\h:\w\a $PS1"
+export PS1

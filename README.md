@@ -1,6 +1,6 @@
 This is lyos <https://github.com/Jimx-/lyos>
 
-![fbcon][1]
+![procfs][1]
 
 WHAT IS LYOS 简介
 ===============
@@ -33,7 +33,7 @@ Lyos has many standard features:
     - Higher half kernel
 * Userspace
     - Newlib
-    - Dash, GNU Binutils, gcc...
+    - Dash, GNU Binutils, gcc, GNU Bash...
 
 Lyos具有的功能：
 
@@ -50,7 +50,7 @@ Lyos具有的功能：
     - 基于虚拟内存
 * 用户空间
     - Newlib
-    - Dash, GNU Binutils, gcc等
+    - Dash, GNU Binutils, gcc, GNU Bash等
 
 COMPILATION AND INSTALLATION 编译与安装
 ======================================
@@ -67,5 +67,5 @@ COMPILATION AND INSTALLATION 编译与安装
 
 5. Run Lyos with QEMU, run ```make kvm``` 
 
-  [1]: http://jimx.1x.net/images/screenshot-7.png
+  [1]: http://jimx.1x.net/images/screenshot-8.png
   

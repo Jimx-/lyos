@@ -10,10 +10,10 @@ if __name__ == "__main__":
 	push_dir('sources')
 
 	print('Downloading source packages...')
-	download('dash', DASH_TARBALL_URL, DASH_TARBALL)
+	download('ncurses', NCURSES_TARBALL_URL, NCURSES_TARBALL)
 
 	print('Decompressing source packages...')
-	decompress(DASH_TARBALL, DASH_VERSION)
+	decompress(NCURSES_TARBALL, NCURSES_VERSION)
 
 	pop_dir()	# sources
 
@@ -26,13 +26,12 @@ if __name__ == "__main__":
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
-	mkdir('dash')
-	push_dir('dash')
-	configure_host(DASH_VERSION)
-	os.system("sed -i '/# define _GNU_SOURCE 1/d' config.h")
+	rmdir('ncurses')
+	mkdir('ncurses')
+	push_dir('ncurses')
+	configure_host(NCURSES_VERSION, ' --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests')
 	make_and_install_to_destdir()
 	pop_dir()
 
-	copy(SYSROOT + '/usr/bin/dash', SYSROOT + '/bin/sh')
 
 	pop_dir()	# build

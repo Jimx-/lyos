@@ -91,6 +91,8 @@ PUBLIC int do_sigprocmask(MESSAGE * p)
     set = p->MASK;
     p->MASK = pmp->sig_mask;
 
+    if (!set) return 0;
+
     switch (p->HOW) {
         case SIG_BLOCK:
             sigdelset(&set, SIGKILL);

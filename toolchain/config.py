@@ -58,3 +58,8 @@ NCURSES_VERSION = 'ncurses-' + packs.get('ncurses', 'version')
 NCURSES_REPO = packs.get('ncurses', 'repo')
 NCURSES_TARBALL = NCURSES_VERSION + '.tar.gz'
 NCURSES_TARBALL_URL = NCURSES_REPO + NCURSES_TARBALL
+
+BASH_VERSION = 'bash-' + packs.get('bash', 'version')
+BASH_REPO = packs.get('bash', 'repo')
+BASH_TARBALL = BASH_VERSION + '.tar.gz'
+BASH_TARBALL_URL = BASH_REPO + BASH_TARBALL

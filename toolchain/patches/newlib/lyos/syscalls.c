@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <sys/dirent.h>
 #include <sys/resource.h>
+#include <grp.h>
 
 #include "const.h"
 
@@ -347,7 +348,8 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 	MESSAGE msg;
 	msg.type   = SIGPROCMASK;
 
-	msg.MASK = *set;
+	if (set) msg.MASK = *set;
+	else set = 0;
 
 	cmb();
 
@@ -358,7 +360,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 		return -1;
 	}
 
-	*oldset = msg.MASK;
+	if (oldset) *oldset = msg.MASK;
 
 	return 0;
 }
@@ -462,6 +464,11 @@ int close(int fd)
 int mkdir(const char *pathname, mode_t mode)
 {
 	return 0;
+}
+
+int mknod(const char *pathname, mode_t mode, dev_t dev)
+{
+	return ENOSYS;
 }
 
 int link(char *old, char *new)
@@ -1128,9 +1135,14 @@ pid_t tcgetpgrp(int fd)
 	return -1;
 }
 
+int tcflow(int fd, int action)
+{
+	return 0;
+}
+
 int pipe(int pipefd[2])
 {
-	//printf("pipe: not implemented\n");
+	printf("pipe: not implemented\n");
 }
 
 int __dirfd(DIR *dirp)
@@ -1155,10 +1167,30 @@ unsigned int sleep(unsigned int seconds)
 
 long sysconf(int name)
 {
-
+	return 0;
 }
 
 clock_t times(struct tms *buf)
 {
-	
+	return 0;
+}
+
+int getrusage(int who, struct rusage *usage)
+{
+	return 0;
+}
+
+struct group *getgrent(void)
+{
+	return NULL;
+}
+
+void setgrent(void)
+{
+
+}
+
+void endgrent(void)
+{
+
 }

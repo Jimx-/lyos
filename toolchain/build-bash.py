@@ -10,10 +10,10 @@ if __name__ == "__main__":
 	push_dir('sources')
 
 	print('Downloading source packages...')
-	download('dash', DASH_TARBALL_URL, DASH_TARBALL)
+	download('bash', BASH_TARBALL_URL, BASH_TARBALL)
 
 	print('Decompressing source packages...')
-	decompress(DASH_TARBALL, DASH_VERSION)
+	decompress(BASH_TARBALL, BASH_VERSION)
 
 	pop_dir()	# sources
 
@@ -26,13 +26,13 @@ if __name__ == "__main__":
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
-	mkdir('dash')
-	push_dir('dash')
-	configure_host(DASH_VERSION)
-	os.system("sed -i '/# define _GNU_SOURCE 1/d' config.h")
+	mkdir('bash')
+	push_dir('bash')
+	configure_host('bash-4.3', '--enable-static-link --without-bash-malloc --disable-nls')
 	make_and_install_to_destdir()
-	pop_dir()
 
-	copy(SYSROOT + '/usr/bin/dash', SYSROOT + '/bin/sh')
+	copy(SYSROOT + '/usr/bin/bash', SYSROOT + '/bin/bash')
+
+	pop_dir()
 
 	pop_dir()	# build
