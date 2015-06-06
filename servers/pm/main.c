@@ -73,6 +73,9 @@ PUBLIC int main(int argc, char * argv[])
         case GETSETID:
             msg.RETVAL = do_getsetid(&msg);
             break;
+        case PTRACE:
+            msg.RETVAL = do_ptrace(&msg);
+            break;
         case PM_SIGRETURN:
             msg.RETVAL = do_sigreturn(&msg);
             break;
@@ -81,6 +84,9 @@ PUBLIC int main(int argc, char * argv[])
             break;
         case PM_VFS_GETSETID_REPLY:
             src = msg.ENDPOINT;
+            break;
+        case PM_EXEC:
+            msg.RETVAL = do_pm_exec(&msg);
             break;
         default:
             msg.RETVAL = ENOSYS;
@@ -148,9 +154,11 @@ PRIVATE void pm_init()
         sigemptyset(&pmp->sig_ignore);
         sigemptyset(&pmp->sig_pending);
         sigemptyset(&pmp->sig_catch);
+        sigemptyset(&pmp->sig_trace);
 
         pmp->flags |= PMPF_INUSE;
         pmp->endpoint = bp->endpoint;
+        pmp->tracer = NO_TASK;
 
         vfs_msg.type = PM_VFS_INIT;
         vfs_msg.PROC_NR = bp->proc_nr;

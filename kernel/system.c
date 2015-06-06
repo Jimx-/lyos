@@ -70,6 +70,7 @@ PUBLIC void init_system()
     sys_call_table[NR_GETKSIG] = sys_getksig;
     sys_call_table[NR_ENDKSIG] = sys_endksig;
     sys_call_table[NR_TIMES] = sys_times;
+    sys_call_table[NR_TRACE] = sys_trace;
 }
 
 PUBLIC int set_priv(struct proc * p, int id)
@@ -135,6 +136,17 @@ PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
 
     msg.source = p_proc->endpoint;
     msg.type = call_nr;
+
+    /* syscall enter stop */
+    if (p_proc->flags & PF_TRACE_SYSCALL) {
+        /* restart the call later */
+        p_proc->mm_request.saved_reqmsg = msg;
+        p_proc->flags |= PF_RESUME_SYSCALL;
+        p_proc->flags &= ~PF_TRACE_SYSCALL;
+        ksig_proc(p_proc->endpoint, SIGTRAP);
+
+        return 0;
+    }
 
     int retval = dispatch_sys_call(call_nr, &msg, p_proc);
 

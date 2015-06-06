@@ -145,6 +145,7 @@ PUBLIC int do_exit(MESSAGE * p)
     if ((retval = pm_verify_endpt(src, &src_slot)) != 0) return retval;
     struct pmproc * pmp = &pmproc_table[src_slot];
 
+    status = W_EXITCODE(status, 0);
     exit_proc(pmp, status);
 
     return SUSPEND;
@@ -217,7 +218,7 @@ PRIVATE void tell_parent(struct pmproc * pmp)
 
 }
 
-PRIVATE int waiting_for(struct pmproc * parent, struct pmproc * child)
+PUBLIC int waiting_for(struct pmproc * parent, struct pmproc * child)
 {
     return (parent->flags & PMPF_WAITING) && (parent->wait_pid == -1 || parent->wait_pid == child->pid);
 
@@ -283,7 +284,7 @@ PUBLIC int do_wait(MESSAGE * p)
     int children = 0;
     struct pmproc * pmp = pmproc_table;
     for (i = 0; i < NR_PROCS; i++, pmp++) {
-        if (pmp->parent == parent_ep) {
+        if (pmp->parent == parent_ep || pmp->tracer == parent_ep) {
             if ((pmp->flags & PMPF_INUSE) == 0) continue;
 
             /* select the right ones */
@@ -292,6 +293,26 @@ PUBLIC int do_wait(MESSAGE * p)
             if (child_pid == 0 && parent->procgrp != pmp->procgrp) continue;
 
             children++;
+            if (pmp->tracer == parent_ep) {
+                MESSAGE msg2tracer;
+
+                if (pmp->flags & PMPF_TRACED) {
+                    int i;
+                    for (i = 1; i < NSIG; i++) {
+                        if (sigismember(&pmp->sig_trace, i)) {
+                            sigdelset(&pmp->sig_trace, i);
+
+                            msg2tracer.type = SYSCALL_RET;
+                            msg2tracer.PID = pmp->pid;
+                            msg2tracer.STATUS = W_STOPCODE(i);
+                            send_recv(SEND, parent_ep, &msg2tracer);
+                        }
+                    }
+
+                    return SUSPEND;
+                }
+            }
+
             if (pmp->flags & PMPF_HANGING) {
                 check_parent(pmp, 1);
                 return SUSPEND;

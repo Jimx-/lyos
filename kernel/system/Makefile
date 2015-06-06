@@ -5,7 +5,7 @@
 SYSOBJS	= sys_printx.o sys_datacopy.o sys_getinfo.o sys_privctl.o sys_vmctl.o sys_umap.o \
 			sys_portio.o sys_vportio.o sys_irqctl.o sys_fork.o sys_clear.o sys_exec.o \
 			sys_sigsend.o sys_sigreturn.o sys_kill.o sys_getksig.o sys_endksig.o \
-			sys_times.o
+			sys_times.o sys_trace.o
 
 SYSTEM		= system.o
 

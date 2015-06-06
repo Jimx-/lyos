@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <sys/dirent.h>
 #include <sys/resource.h>
+#include <sys/ptrace.h>
 #include <grp.h>
 
 #include "const.h"
@@ -1193,4 +1194,26 @@ void setgrent(void)
 void endgrent(void)
 {
 
+}
+
+long ptrace(int request, pid_t pid, void *addr, void *data)
+{
+	MESSAGE msg;
+
+	msg.type = PTRACE;
+	msg.PTRACE_REQ = request;
+	msg.PTRACE_PID = pid;
+	msg.PTRACE_ADDR = addr;
+	msg.PTRACE_DATA = data;
+
+	cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+
+	if (msg.RETVAL != 0) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+
+	return msg.PTRACE_RET;
 }

@@ -1,0 +1,53 @@
+/*  This file is part of Lyos.
+
+    Lyos is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Lyos is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    
+#include <lyos/config.h>
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/proc.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include <lyos/ipc.h>
+#include <signal.h>
+#include <errno.h>
+#include <lyos/trace.h>
+
+PUBLIC int sys_trace(MESSAGE * m, struct proc * p_proc)
+{
+    struct proc * target = endpt_proc(m->TRACE_ENDPOINT);
+    if (!target) return ESRCH;
+
+    switch (m->TRACE_REQ) {
+    case TRACE_STOP:
+        PST_SET(target, PST_TRACED);
+        target->flags &= ~PF_TRACE_SYSCALL;
+        return 0;
+    case TRACE_SYSCALL:
+        target->flags |= PF_TRACE_SYSCALL;
+        PST_UNSET(target, PST_TRACED);
+        return 0;
+    case TRACE_CONT:
+        PST_UNSET(target, PST_TRACED);
+        return 0;
+    default:
+        return EINVAL;
+    }
+
+    return 0;
+}

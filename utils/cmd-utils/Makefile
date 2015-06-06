@@ -1,5 +1,5 @@
 
-CMDS = $(DESTDIR)/bin/cat
+CMDS = $(DESTDIR)/bin/cat $(DESTDIR)/usr/bin/strace
 
 everything : realclean $(CMDS)
 
@@ -9,4 +9,7 @@ realclean :
 	@rm -f $(CMDS)
 
 $(DESTDIR)/bin/cat: cat.c
+	@$(CC) -o $@ $<
+
+$(DESTDIR)/usr/bin/strace: strace.c
 	@$(CC) -o $@ $<

@@ -278,6 +278,11 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     data_copy(src, orig_stack, TASK_FS, stackcopy, orig_stack_len);
 
+    MESSAGE msg2pm;
+    msg2pm.type = PM_EXEC;
+    msg2pm.ENDPOINT = src;
+    send_recv(BOTH, TASK_PM, &msg2pm);
+
     struct ps_strings ps;
     ps.ps_nargvstr = argc;
     ps.ps_argvstr = orig_stack;

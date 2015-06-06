@@ -143,6 +143,7 @@ PUBLIC  int sys_kill(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_getksig(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_endksig(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_times(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_trace(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

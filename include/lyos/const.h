@@ -141,7 +141,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALLS	20
+#define NR_SYS_CALLS	21
 #define NR_PRINTX		0
 #define NR_SENDREC		1
 #define NR_DATACOPY		2
@@ -162,6 +162,7 @@
 #define NR_GETKSIG		17
 #define NR_ENDKSIG		18
 #define NR_TIMES		19
+#define NR_TRACE		20
 
 /* kernel signals */
 #define SIGKSIG		SIGUSR1
@@ -274,6 +275,7 @@ enum msgtype {
     PM_VFS_GETSETID,
     PM_GETPROCEP,
     PM_VFS_GETSETID_REPLY,
+    PM_EXEC,
 
 	/* message type for drivers */
 	DEV_OPEN = 2001,

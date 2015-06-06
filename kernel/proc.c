@@ -138,6 +138,13 @@ no_schedule:
 
 	if (p->flags & PF_RESUME_SYSCALL) {
 		resume_sys_call(p);
+
+		/* syscall leave stop */
+		if (p->flags & PF_TRACE_SYSCALL) {
+			p->flags &= ~PF_TRACE_SYSCALL;
+
+			ksig_proc(p->endpoint, SIGTRAP);
+		}
 	}
 
 	if (p->counter_ns <= 0) proc_no_time(p);

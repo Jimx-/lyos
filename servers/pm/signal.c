@@ -194,8 +194,17 @@ PRIVATE int send_sig(struct pmproc * p_dest, int signo)
     return retval;
 }
 
-PUBLIC void sig_proc(struct pmproc * p_dest, int signo)
+PUBLIC void sig_proc(struct pmproc * p_dest, int signo, int trace)
 {
+    /* signal the tracer first */
+    if (trace && p_dest->tracer != NO_TASK && signo != SIGKILL) {
+        sigaddset(&p_dest->sig_trace, signo);
+
+        if (!(p_dest->flags & PMPF_TRACED)) trace_signal(p_dest, signo);
+
+        return;
+    }
+
     int bad_ignore = sigismember(&noign_set, signo) && (
         sigismember(&p_dest->sig_ignore, signo) ||
         sigismember(&p_dest->sig_mask, signo));
@@ -248,7 +257,7 @@ PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo)
 
         count++;
 
-        sig_proc(p_dest, signo);
+        sig_proc(p_dest, signo, TRUE);
 
         if (dest > 0) break;
     }
@@ -276,7 +285,7 @@ PRIVATE void check_pending(struct pmproc * pmp)
     for (i = 0; i < NSIG; i++) {
         if (sigismember(&pmp->sig_pending, i) && !sigismember(&pmp->sig_mask, i)) {
             sigdelset(&pmp->sig_pending, i);
-            sig_proc(pmp, i);
+            sig_proc(pmp, i, FALSE);
         }
     }
 }

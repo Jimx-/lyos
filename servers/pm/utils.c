@@ -66,3 +66,14 @@ PUBLIC struct pmproc * pm_endpt_proc(endpoint_t ep)
     if (pm_verify_endpt(ep, &proc_nr) == 0) return &pmproc_table[proc_nr];
     return NULL;
 }
+
+PUBLIC struct pmproc* pm_pid_proc(pid_t pid)
+{
+    int i;
+    struct pmproc* pmp = pmproc_table;
+    for (i = 0; i < NR_PROCS; i++, pmp++) {
+        if  (pmp->pid == pid) return pmp;
+    }
+
+    return NULL;
+}

@@ -63,11 +63,11 @@ else
 fi
 
 cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
-cp -rf obj/destdir.$ARCH/bin/service /$MOUNT_POINT/bin/service 
-cp -rf obj/destdir.$ARCH/bin/cat /$MOUNT_POINT/bin/cat
-cp -rf obj/destdir.$ARCH/sbin/pci /$MOUNT_POINT/sbin/ 
-cp -rf obj/destdir.$ARCH/usr/bin/bash /$MOUNT_POINT/usr/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
+#cp -rf obj/destdir.$ARCH/bin/service /$MOUNT_POINT/bin/service 
+#cp -rf obj/destdir.$ARCH/bin/cat /$MOUNT_POINT/bin/cat
+#cp -rf obj/destdir.$ARCH/sbin/pci /$MOUNT_POINT/sbin/ 
+cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
+#cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 
