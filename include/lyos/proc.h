@@ -42,7 +42,8 @@
 
 #define PF_RESUME_SYSCALL	0x001	/* set when we have to resume syscall execution */
 #define PF_TRACE_SYSCALL	0x002	/* syscall tracing */
-			 
+#define PF_LEAVE_SYSCALL	0x004	/* syscall tracing: leaving syscall */
+
 #define proc_slot(n)	((n) + NR_TASKS)
 #define proc_addr(n)	(&proc_table[(n) + NR_TASKS])
 #define is_kerntaske(e)	(e < 0)

@@ -45,7 +45,7 @@ static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
     return 0;
 }
 
-static char* copy_string(pid_t pid, char* string, int len)
+static void print_path(pid_t pid, char* string, int len)
 {
     char* buf = malloc(len + 5);
     if (!buf) return NULL;
@@ -62,25 +62,28 @@ static char* copy_string(pid_t pid, char* string, int len)
     }
 
     buf[len] = '\0';
-    return buf;
+
+    printf("\"%s\"", buf);
+
+    free(buf);
 }
 
-#define DEFAULT_BUF_LEN 32
-static char* copy_char_buf(pid_t pid, char* cb, int len, int* truncated)
+static char* print_str(pid_t pid, char* str, int len)
 {
-    *truncated = 0;
+#define DEFAULT_BUF_LEN 32
+    int truncated = 0;
     if (len > DEFAULT_BUF_LEN) {
-        *truncated = 1;
+        truncated = 1;
         len = DEFAULT_BUF_LEN;
     }
 
     char* buf = malloc(len + 1);
     if (!buf) return NULL;
 
-    long* src = cb;
+    long* src = str;
     long* dest = buf;
 
-    while (src < cb + len) {
+    while (src < str + len) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
         if (data == -1) return -1;
         *dest = data;
@@ -89,30 +92,54 @@ static char* copy_char_buf(pid_t pid, char* cb, int len, int* truncated)
     }
 
     buf[len] = '\0';
-    return buf;
+    
+    printf("\"%s\"%s", buf, truncated ? "..." : "");
+
+    free(buf);
+}
+
+static void print_msg(MESSAGE* m)
+{
+    int packed = 0;
+    printf("{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",
+           packed ? "" : "\n        ",
+           m->source,
+           packed ? " " : "\n        ",
+           m->type,
+           packed ? " " : "\n        ",
+           m->u.m3.m3i1,
+           m->u.m3.m3i2,
+           m->u.m3.m3i3,
+           m->u.m3.m3i4,
+           (int)m->u.m3.m3p1,
+           (int)m->u.m3.m3p2,
+           packed ? "" : "\n",
+           packed ? "" : "\n"/* , */
+        );
 }
 
 static void trace_open_in(pid_t child, MESSAGE* msg)
 {
-    char* name = copy_string(child, msg->PATHNAME, msg->NAME_LEN);
-    printf("open(\"%s\", %d)", name, msg->FLAGS);
-    free(name);
+    printf("open(");
+    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    printf(", %d)", msg->FLAGS);
 }
 
 static void trace_write_in(pid_t child, MESSAGE* msg)
 {
-    int t;
-    char* buf = copy_char_buf(child, msg->BUF, msg->CNT, &t);
-    printf("write(%d, \"%s\"%s, %d)", msg->FD, buf, t?"...":"", msg->CNT);
-    free(buf);
+    printf("write(%d, ", msg->FD);
+    print_str(child, msg->BUF, msg->CNT);
+    printf(", %d)", msg->CNT);
 }
 
+static int recorded_sendrec_type;
 static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
 {
     MESSAGE msg;
     copy_message_from(child, req_msg->SR_MSG, &msg);
 
     int type = msg.type;
+    recorded_sendrec_type = type;
     switch (type) {
     case OPEN:
         trace_open_in(child, &msg);
@@ -143,8 +170,9 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     MESSAGE msg;
     copy_message_from(child, req_msg->SR_MSG, &msg);
 
-    int type = msg.type;
+    int type = recorded_sendrec_type;
     int retval = 0;
+    int base = 10;
 
     switch (type) {
     case OPEN:
@@ -160,7 +188,14 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
         retval = msg.RETVAL;
         break;
     }
-    printf(" = %d\n", retval);
+    switch (base) {
+    case 10:
+        printf(" = %d\n", retval);
+        break;
+    case 16:
+        printf(" = 0x%x\n", retval);
+        break;
+    }
 }
 
 #define EBX         8

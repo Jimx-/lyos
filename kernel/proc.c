@@ -139,12 +139,16 @@ no_schedule:
 	if (p->flags & PF_RESUME_SYSCALL) {
 		resume_sys_call(p);
 
-		/* syscall leave stop */
-		if (p->flags & PF_TRACE_SYSCALL) {
-			p->flags &= ~PF_TRACE_SYSCALL;
+		/* actually leave the syscall */
+		if (p->flags & PF_TRACE_SYSCALL) p->flags |= PF_LEAVE_SYSCALL;
+	}
 
-			ksig_proc(p->endpoint, SIGTRAP);
-		}
+	/* syscall leave stop */
+	if ((p->flags & PF_LEAVE_SYSCALL) && (p->flags & PF_TRACE_SYSCALL) &&
+			proc_is_runnable(p)) {
+		p->flags &= ~(PF_TRACE_SYSCALL | PF_LEAVE_SYSCALL);
+
+		ksig_proc(p->endpoint, SIGTRAP);
 	}
 
 	if (p->counter_ns <= 0) proc_no_time(p);
