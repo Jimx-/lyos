@@ -418,7 +418,7 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
 
         if (retval != EFAULT_SRC && retval != EFAULT_DEST) panic("vir_copy: la_la_copy failed");
         
-        if (!check || !caller) return retval;
+        if (!check || !caller) return EFAULT;
 
         int write;
         vir_bytes fault_la;

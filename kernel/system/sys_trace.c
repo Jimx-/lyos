@@ -32,6 +32,12 @@ PUBLIC int sys_trace(MESSAGE * m, struct proc * p_proc)
 {
     struct proc * target = endpt_proc(m->TRACE_ENDPOINT);
     if (!target) return ESRCH;
+    off_t offset = (off_t)m->TRACE_ADDR;
+    void * addr = m->TRACE_ADDR;
+    long data;
+    int retval;
+
+    struct vir_addr src, dest;
 
     switch (m->TRACE_REQ) {
     case TRACE_STOP:
@@ -45,6 +51,25 @@ PUBLIC int sys_trace(MESSAGE * m, struct proc * p_proc)
     case TRACE_CONT:
         PST_UNSET(target, PST_TRACED);
         return 0;
+    case TRACE_PEEKTEXT:
+    case TRACE_PEEKDATA:    /* we don't separate text and data segments, so these 
+                                two are equivalent */
+        src.addr = (vir_bytes)addr;
+        src.proc_ep = target->endpoint;
+        dest.addr = (vir_bytes)&data;
+        dest.proc_ep = KERNEL;
+
+        retval = vir_copy(&dest, &src, sizeof(data));
+        if (retval != 0) return EFAULT;
+
+        m->TRACE_RET = data;
+        break;
+    case TRACE_PEEKUSER:
+        if ((offset & (sizeof(long) - 1)) != 0) return EFAULT;
+        if (offset <= sizeof(struct proc) - sizeof(long)) {
+            m->TRACE_RET = *(long*)((char*)target + offset);
+        }
+        break;
     default:
         return EINVAL;
     }

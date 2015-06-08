@@ -33,6 +33,7 @@ extern char * _brksize;
 
 int syscall_entry(int syscall_nr, MESSAGE * m)
 {
+	m.type = syscall_nr;
 	if (_syscall_gate) return _syscall_gate(syscall_nr, m);
 	return syscall_gate_intr(syscall_nr, m);
 }

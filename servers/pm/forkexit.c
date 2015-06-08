@@ -165,7 +165,7 @@ PUBLIC void exit_proc(struct pmproc * pmp, int status)
     send_recv(BOTH, TASK_FS, &msg2fs);
     
     procctl(ep, PCTL_CLEARPROC);
-    
+
     pmp->exit_status = status;
 
     check_parent(pmp, 1);
@@ -214,7 +214,7 @@ PRIVATE void tell_parent(struct pmproc * pmp)
     msg2parent.type = SYSCALL_RET;
     msg2parent.PID = pmp->pid;
     msg2parent.STATUS = pmp->exit_status;
-    send_recv(SEND, pmp->parent, &msg2parent);
+    send_recv(SEND_NONBLOCK, pmp->parent, &msg2parent);
 
 }
 
@@ -231,7 +231,6 @@ PRIVATE void check_parent(struct pmproc * pmp, int try_cleanup)
     int parent_slot;
     if ((retval = pm_verify_endpt(parent_ep, &parent_slot)) != 0) return;
     struct pmproc * parent = &pmproc_table[parent_slot];
-
     if (waiting_for(parent, pmp)) {
         tell_parent(pmp);
         if (try_cleanup) cleanup(pmp);
@@ -305,15 +304,16 @@ PUBLIC int do_wait(MESSAGE * p)
                             msg2tracer.type = SYSCALL_RET;
                             msg2tracer.PID = pmp->pid;
                             msg2tracer.STATUS = W_STOPCODE(i);
-                            send_recv(SEND, parent_ep, &msg2tracer);
+                            send_recv(SEND_NONBLOCK, parent_ep, &msg2tracer);
+                            return SUSPEND;
                         }
                     }
-
-                    return SUSPEND;
                 }
             }
 
             if (pmp->flags & PMPF_HANGING) {
+                parent->flags |= PMPF_WAITING;
+                parent->wait_pid = child_pid;
                 check_parent(pmp, 1);
                 return SUSPEND;
             }

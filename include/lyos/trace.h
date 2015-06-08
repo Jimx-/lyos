@@ -20,11 +20,14 @@
 #define TRACE_ENDPOINT  u.m3.m3i3
 #define TRACE_ADDR      u.m3.m3p1
 #define TRACE_DATA      u.m3.m3p2
-#define TRACE_RET       u.m3.m3l1
+#define TRACE_RET       u.m3.m3i3
 
 /* parameter for sys_trace */
 #define TRACE_STOP      1
 #define TRACE_SYSCALL   2
 #define TRACE_CONT      3
-    
+#define TRACE_PEEKTEXT  4
+#define TRACE_PEEKDATA  5
+#define TRACE_PEEKUSER  6
+
 #endif

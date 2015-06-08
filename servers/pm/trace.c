@@ -46,7 +46,7 @@ PUBLIC int do_ptrace(MESSAGE * m)
     void* data = m->PTRACE_DATA;
 
     struct pmproc* target;
-    int sys_trace_req;
+    int trace_req;
 
     switch (request) {
     case PTRACE_TRACEME:
@@ -82,18 +82,28 @@ PUBLIC int do_ptrace(MESSAGE * m)
 
     switch(request) {
     case PTRACE_SYSCALL:
-        sys_trace_req = TRACE_SYSCALL;
+        trace_req = TRACE_SYSCALL;
         break;
     case PTRACE_CONT:
-        sys_trace_req = TRACE_CONT;
+        trace_req = TRACE_CONT;
+        break;
+    case PTRACE_PEEKTEXT:
+        trace_req = TRACE_PEEKTEXT;
+        break;
+    case PTRACE_PEEKDATA:
+        trace_req = TRACE_PEEKDATA;
+        break;
+    case PTRACE_PEEKUSER:
+        trace_req = TRACE_PEEKUSER;
         break;
     }
 
-    int retval = kernel_trace(sys_trace_req, target->endpoint, addr, data);
+    long trace_data;
+    int retval = kernel_trace(trace_req, target->endpoint, addr, &trace_data);
     if (retval) return retval;
 
-    m->PTRACE_RET = 0;
-    return 0;
+    m->PTRACE_RET = trace_data;
+    return retval;
 }
 
 PUBLIC void trace_signal(struct pmproc* p_dest, int signo)
@@ -113,6 +123,6 @@ PUBLIC void trace_signal(struct pmproc* p_dest, int signo)
         msg2parent.type = SYSCALL_RET;
         msg2parent.PID = p_dest->pid;
         msg2parent.STATUS = W_STOPCODE(signo);
-        send_recv(SEND, p_dest->parent, &msg2parent);
+        send_recv(SEND_NONBLOCK, p_dest->parent, &msg2parent);
     }
 }

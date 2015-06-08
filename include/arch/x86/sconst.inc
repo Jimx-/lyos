@@ -45,7 +45,8 @@ CSREG		equ	EIPREG		+ 4
 EFLAGSREG	equ	CSREG		+ 4
 ESPREG		equ	EFLAGSREG	+ 4
 SSREG		equ	ESPREG		+ 4
-P_TRAPSTYLE	equ	SSREG		+ 4
+P_ORIGEAX	equ	SSREG		+ 4
+P_TRAPSTYLE	equ	P_ORIGEAX	+ 4
 
 INT_M_CTL	equ	0x20	; I/O port for interrupt controller         <Master>
 INT_M_CTLMASK	equ	0x21	; setting bits in this port disables ints   <Master>
@@ -78,6 +79,7 @@ CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
 
 %macro	SAVE_GP_REGS		1
 	mov [%1 + EAXREG], eax
+	mov [%1 + P_ORIGEAX], eax
 	mov [%1 + ECXREG], ecx
 	mov [%1 + EDXREG], edx
 	mov [%1 + EBXREG], ebx

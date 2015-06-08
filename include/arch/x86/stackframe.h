@@ -36,7 +36,8 @@ struct stackframe {
     reg_t cs; 
     reg_t eflags; 
     reg_t esp;    
-    reg_t ss; 
+    reg_t ss;
+    reg_t orig_eax;
 };
 
 

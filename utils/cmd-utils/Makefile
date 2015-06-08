@@ -12,4 +12,4 @@ $(DESTDIR)/bin/cat: cat.c
 	@$(CC) -o $@ $<
 
 $(DESTDIR)/usr/bin/strace: strace.c
-	@$(CC) -o $@ $<
+	@$(CC) -I$(INCDIR) -o $@ $<

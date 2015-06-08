@@ -447,6 +447,8 @@ sys_call_sysenter:
 sys_call_sysenter_common:
 	mov 	[ebp + EIPREG], edx
     mov 	[ebp + ESPREG], ecx
+    mov 	[ebp + P_ORIGEAX], eax
+    mov 	[ebp + EBXREG], ebx
 
     mov 	[ebp + DSREG], ds
 	mov 	[ebp + ESREG], es

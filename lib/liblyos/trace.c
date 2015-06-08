@@ -29,5 +29,8 @@ PUBLIC int kernel_trace(int request, endpoint_t endpoint, void* addr, void* data
     msg.TRACE_ADDR = addr;
     msg.TRACE_DATA = data;
 
-    return syscall_entry(NR_TRACE, &msg);
+    int retval = syscall_entry(NR_TRACE, &msg);
+    if (data) *(long*)data = msg.TRACE_RET;
+
+    return retval;
 }

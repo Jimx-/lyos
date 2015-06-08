@@ -23,6 +23,7 @@ static struct sysinfo * get_sysinfo()
 	struct sysinfo * sysinfo;
 	MESSAGE m;
 
+	m.type = NR_GETINFO;
 	m.REQUEST = GETINFO_SYSINFO;
 	m.BUF = &sysinfo;
 	
