@@ -67,12 +67,15 @@ typedef struct s_console
 
 #define FONT_HEIGHT	16
 #define FONT_WIDTH	8
+#define CURSOR_HEIGHT	3
 
 #define TAB_SIZE	8
 #define TAB_MASK	7
 #define DEFAULT_CHAR_COLOR	(MAKE_COLOR(BLACK, WHITE))
 #define GRAY_CHAR		(MAKE_COLOR(BLACK, BLACK) | BRIGHT)
 #define RED_CHAR		(MAKE_COLOR(BLUE, RED) | BRIGHT)
+
+#define CURSOR_BLINK_RATE	2	/* cursor blink rate (hz) */
 
 PUBLIC void vgacon_init_con(CONSOLE * con);
 PUBLIC void fbcon_init_con(CONSOLE * con);

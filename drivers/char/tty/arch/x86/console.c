@@ -108,6 +108,8 @@ PUBLIC void init_screen(TTY* tty)
 	tty->tty_devwrite = cons_write;
 	tty->tty_echo = out_char;
 
+	current_console = 0;
+	
 	int using_fb = 0;
 	static int first = 0;
 	if (!first) {

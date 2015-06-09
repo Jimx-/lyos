@@ -32,6 +32,10 @@ struct list_head {
 #define list_entry(ptr, type, member) ({          \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
         (type *)( (char *)__mptr - offsetof(type,member) );})
+#define list_first_entry(ptr, type, member) \
+       list_entry((ptr)->next, type, member)
+#define list_next_entry(pos, member) \
+        list_entry((pos)->member.next, typeof(*(pos)), member)
 
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
@@ -47,6 +51,11 @@ PRIVATE inline void list_del(struct list_head * node);
         for (pos = list_entry((head)->next, typeof(*pos), member);      \
              prefetch(pos->member.next), &(pos->member) != (head);        \
              pos = list_entry(pos->member.next, typeof(*pos), member))
+#define list_for_each_entry_safe(pos, n, head, member)                  \
+        for (pos = list_first_entry(head, typeof(*pos), member),        \
+                n = list_next_entry(pos, member);                       \
+             &pos->member != (head);                                    \
+             pos = n, n = list_next_entry(n, member))
 
 PRIVATE inline int list_empty(struct list_head * list)
 {

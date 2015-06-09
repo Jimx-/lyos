@@ -22,6 +22,7 @@
 #include <lyos/timer.h>
 
 PRIVATE DEF_LIST(_timer_list);
+PRIVATE DEF_LIST(_timer_list_expiring);
 PRIVATE int expiring = 0;
 
 PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
@@ -35,7 +36,7 @@ PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
     }
 
     list_for_each_entry(tp, list, list) {
-        if (tp->expire_time > timer->expire_time) break;
+        if (tp->expire_time >= timer->expire_time) break;
         prev = tp;
     }    
 
@@ -48,17 +49,13 @@ PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
 
 PUBLIC void timer_expire(struct list_head* list, clock_t timestamp)
 {
-    struct timer_list* tp;
-    struct timer_list* prev = NULL;
-    list_for_each_entry(tp, list, list) {
-        if (prev) timer_remove(prev);
+    struct timer_list* tp, * n;
+    list_for_each_entry_safe(tp, n, list, list) {
         if (tp->expire_time <= timestamp) {
+            timer_remove(tp);
             (*tp->callback)(tp);
-            prev = tp;
         }
     }    
-
-    if (prev) timer_remove(prev);
 }
 
 PUBLIC void timer_remove(struct timer_list* timer)
@@ -82,7 +79,8 @@ PUBLIC void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t 
     if (list_empty(&_timer_list)) prev_timeout = TIMER_UNSET;
     else prev_timeout = list_entry(_timer_list.next, struct timer_list, list)->expire_time;
         
-    timer_add(&_timer_list, timer);
+    if (expiring) list_add(&timer->list, &_timer_list_expiring);
+    else timer_add(&_timer_list, timer);
 
     if (list_empty(&_timer_list)) next_timeout = TIMER_UNSET;
     else next_timeout = list_entry(_timer_list.next, struct timer_list, list)->expire_time;
@@ -97,6 +95,12 @@ PUBLIC void expire_timer(clock_t timestamp)
     expiring = 1;
     timer_expire(&_timer_list, timestamp);
     expiring = 0;
+
+    struct timer_list* tp, * n;
+    list_for_each_entry_safe(tp, n, &_timer_list_expiring, list) {
+        list_del(&tp->list);
+        timer_add(&_timer_list, tp);
+    }  
 
     clock_t next_timeout;
     if (list_empty(&_timer_list)) next_timeout = TIMER_UNSET;

@@ -16,7 +16,7 @@ realclean :
 
 $(TTY): $(TTYOBJS)
 	@echo -e '\tLD\tdrivers/char/tty/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) -Xlinker -Ttext -Xlinker 0x60000000
 
 arch/$(ARCH)/arch-tty.o:
 	@(cd arch/$(ARCH)/; make)

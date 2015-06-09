@@ -37,6 +37,7 @@
 #include <lyos/param.h>
 #include <lyos/log.h>
 #include <lyos/sysutils.h>
+#include <lyos/timer.h>
 #include "global.h"
 
 PRIVATE struct sysinfo * _sysinfo;
@@ -102,6 +103,9 @@ PUBLIC int main()
 			case INTERRUPT:
 				if (msg.INTERRUPTS & rs_irq_set)
 					rs_interrupt(&msg);
+				break;
+			case CLOCK:
+				expire_timer(msg.TIMESTAMP);
 				break;
 			}
 			continue;
@@ -649,3 +653,4 @@ PRIVATE void tty_sigproc(TTY * tty, int signo)
 	int retval;
 	if ((retval = kernel_kill(ep, signo)) != 0) panic("unable to send signal(%d)", retval);
 }
+

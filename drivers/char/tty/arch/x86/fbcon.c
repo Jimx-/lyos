@@ -29,6 +29,7 @@
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/vm.h>
+#include <lyos/timer.h>
 #include <sys/mman.h>
 #include "proto.h"
 #include "global.h"
@@ -40,9 +41,13 @@
 #define YRES_DEFAULT    768
 
 int fb_scr_width, fb_scr_height;
+PRIVATE int cursor_state = 0;
 
 PRIVATE void fbcon_outchar(CONSOLE * con, char ch);
 PRIVATE void fbcon_flush(CONSOLE * con);
+PRIVATE void update_cursor(struct timer_list* tp);
+
+PRIVATE struct timer_list cursor_timer;
 
 PUBLIC int fbcon_init()
 {
@@ -90,7 +95,21 @@ PRIVATE void print_char(int x, int y, char ch, int color)
     int i, j;
     for (i = 0; i < FONT_HEIGHT; i++) {
         for (j = 0; j < FONT_WIDTH; j++) {
-            if (font[i] & (1 << (8-j))) {
+            if (font[i] & (1 << (FONT_WIDTH-j))) {
+                set_pixel(x+j, y+i, color);
+            } else {
+                set_pixel(x+j, y+i, 0);
+            }
+        }
+    }
+}
+
+PRIVATE void print_cursor(int x, int y, int color)
+{
+    int i, j;
+    for (i = 0; i < FONT_HEIGHT; i++) {
+        for (j = 0; j < FONT_WIDTH; j++) {
+            if (i > FONT_HEIGHT-CURSOR_HEIGHT) {
                 set_pixel(x+j, y+i, color);
             } else {
                 set_pixel(x+j, y+i, 0);
@@ -111,6 +130,8 @@ PUBLIC void fbcon_init_con(CONSOLE * con)
 
     con->outchar = fbcon_outchar;
     con->flush = fbcon_flush;
+
+    update_cursor(&cursor_timer);
 }
 
 PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
@@ -149,4 +170,21 @@ PRIVATE void fbcon_flush(CONSOLE * con)
         con->scr_end -= delta;
         con->cursor -= delta;
     }
+}
+
+PRIVATE void update_cursor(struct timer_list* tp)
+{
+    clock_t ticks = get_system_hz() / CURSOR_BLINK_RATE;
+    cursor_state = ~cursor_state;
+
+    int line, col;
+    CONSOLE* con = &console_table[current_console];
+    int cursor = con->cursor;
+
+    line = cursor / con->cols;
+    col = cursor % con->cols;
+
+    print_cursor(col * FONT_WIDTH, line * FONT_HEIGHT, cursor_state);
+
+    set_timer(tp, ticks, update_cursor, 0);
 }
