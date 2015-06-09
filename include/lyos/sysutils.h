@@ -76,6 +76,8 @@ PUBLIC int      get_ticks(clock_t* ticks, clock_t* idle_ticks);
 
 #define EXP_TIME        u.m3.m3l1
 #define ABS_TIME        u.m3.m3i2
+#define TIME_LEFT       u.m3.m3l1
+PUBLIC clock_t kernel_alarm(clock_t expire_time, int abs_time);
 
 PUBLIC int      kernel_trace(int request, endpoint_t endpoint, void* addr, void* data);
 

@@ -141,7 +141,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALLS	21
+#define NR_SYS_CALLS	22
 #define NR_PRINTX		0
 #define NR_SENDREC		1
 #define NR_DATACOPY		2
@@ -163,6 +163,7 @@
 #define NR_ENDKSIG		18
 #define NR_TIMES		19
 #define NR_TRACE		20
+#define NR_ALARM 		21
 
 /* kernel signals */
 #define SIGKSIG		SIGUSR1
@@ -345,6 +346,7 @@ enum msgtype {
 #define	PID			u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
+#define TIMESTAMP	u.m3.m3l1
 
 /* macros for sendrec */
 #define SR_FUNCTION u.m3.m3i1

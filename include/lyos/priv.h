@@ -34,7 +34,7 @@ struct priv {
 
     int kernlog_request;
 
-    struct sys_timer timer;
+    struct timer_list timer;
 };
 
 #define FIRST_PRIV          priv_table[0]

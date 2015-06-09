@@ -37,7 +37,7 @@ PRIVATE void process_system_notify(MESSAGE * m);
 PUBLIC int main(int argc, char * argv[])
 {
 	pm_init();
-    
+
     MESSAGE msg;
 
     while (TRUE) {

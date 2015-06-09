@@ -296,7 +296,8 @@ static void do_trace(pid_t child, int s)
 
         ptrace(PTRACE_SYSCALL, child, 0, 0);
 
-        wait(&status);
+        int waitchild = wait(&status);
+        if (waitchild != child) continue;
         if (WIFEXITED(status)) break;
 
         int stopsig = WSTOPSIG(status);

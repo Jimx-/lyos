@@ -103,6 +103,7 @@ PUBLIC void init_proc()
 		memset(priv, 0, sizeof(struct priv));
 		priv->proc_nr = NO_TASK;
 		priv->id = id++;
+		priv->timer.expire_time = TIMER_UNSET;
 
 		sigemptyset(&priv->sig_pending);
 	}
@@ -571,6 +572,9 @@ PRIVATE void set_notify_msg(struct proc * dest, MESSAGE * m, endpoint_t src)
 	case SYSTEM:
 		m->SIGSET = dest->priv->sig_pending;
 		sigemptyset(&dest->priv->sig_pending);
+		break;
+	case CLOCK:
+		m->TIMESTAMP = jiffies;
 		break;
 	default:
 		break;

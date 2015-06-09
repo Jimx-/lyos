@@ -71,6 +71,7 @@ PUBLIC void init_system()
     sys_call_table[NR_ENDKSIG] = sys_endksig;
     sys_call_table[NR_TIMES] = sys_times;
     sys_call_table[NR_TRACE] = sys_trace;
+    sys_call_table[NR_ALARM] = sys_alarm;
 }
 
 PUBLIC int set_priv(struct proc * p, int id)

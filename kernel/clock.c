@@ -36,6 +36,10 @@ extern spinlock_t clocksource_lock;
 
 PUBLIC clock_t idle_ticks = 0;
 
+DEF_LIST(timer_list);
+PUBLIC spinlock_t timers_lock;
+PUBLIC clock_t next_timeout = TIMER_UNSET;
+
 /*****************************************************************************
  *                                read_jiffies
  *****************************************************************************/
@@ -83,6 +87,19 @@ PUBLIC int clock_handler(irq_hook_t * hook)
 
     if (get_cpulocal_var(proc_ptr) == get_cpulocal_var_ptr(idle_proc)) idle_ticks++;
 
+#if CONFIG_SMP
+    if (cpuid == bsp_cpu_id) {
+#endif
+        /* timer expired */
+        if (jiffies >= next_timeout && next_timeout != TIMER_UNSET) {
+            timer_expire(&timer_list, jiffies);
+            if (list_empty(&timer_list)) next_timeout = TIMER_UNSET;
+            else next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+        }
+#if CONFIG_SMP
+    }
+#endif
+
     return 1;
 }
 
@@ -100,6 +117,7 @@ PUBLIC int init_time()
     init_clocksource();
     arch_init_time();
     register_clocksource(&jiffies_clocksource);
+    spinlock_init(&timers_lock);
 
     return 0;
 }
@@ -167,4 +185,25 @@ PUBLIC void stop_context(struct proc * p)
 
     *ctx_switch_clock = cycle;
     spinlock_unlock(&clocksource_lock);
+}
+
+PUBLIC void set_sys_timer(struct timer_list* timer)
+{
+    spinlock_lock(&timers_lock);
+
+    timer_add(&timer_list, timer);
+    next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+
+    spinlock_unlock(&timers_lock);
+}
+
+PUBLIC void reset_sys_timer(struct timer_list* timer)
+{
+    spinlock_lock(&timers_lock);
+
+    timer_remove(timer);
+    if (list_empty(&timer_list)) next_timeout = TIMER_UNSET;
+    else next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+
+    spinlock_unlock(&timers_lock);
 }
