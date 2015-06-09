@@ -154,7 +154,7 @@ if __name__ == "__main__":
 	if BUILD_BASH is not None:
 		mkdir('bash')
 		push_dir('bash')
-		configure_host('bash-4.3', '--enable-static-link --without-bash-malloc --disable-nls')
+		configure_native('bash-4.3', '--enable-static-link --without-bash-malloc --disable-nls')
 		make_and_install_to_destdir()
 
 		copy(SYSROOT + '/usr/bin/bash', SYSROOT + '/bin/bash')

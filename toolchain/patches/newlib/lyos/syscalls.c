@@ -33,7 +33,7 @@ extern char * _brksize;
 
 int syscall_entry(int syscall_nr, MESSAGE * m)
 {
-	m.type = syscall_nr;
+	m->type = syscall_nr;
 	if (_syscall_gate) return _syscall_gate(syscall_nr, m);
 	return syscall_gate_intr(syscall_nr, m);
 }
@@ -697,7 +697,7 @@ int open(const char *pathname, int flags, ...)
 	
 	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
-	
+
 	if (msg.FD < 0) {
 		errno = -msg.FD;
 		return -1;
@@ -756,6 +756,11 @@ int stat(const char *path, struct stat *buf)
 	send_recv(BOTH, TASK_FS, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
+	if (msg.RETVAL > 0) {
+		errno = msg.RETVAL;
+		return -1;
+	}
+	
 	return msg.RETVAL;
 }
 

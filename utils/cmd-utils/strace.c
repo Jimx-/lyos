@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     argv++;
     if(child == 0) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        execve(argv[0], argv, NULL);
+        exit(execve(argv[0], argv, NULL));
     }
     else {
         int status;
@@ -98,6 +98,12 @@ static char* print_str(pid_t pid, char* str, int len)
     free(buf);
 }
 
+static void print_err(int err)
+{
+    printf("%d %s", err, strerror(err));
+}
+
+/*
 static void print_msg(MESSAGE* m)
 {
     int packed = 0;
@@ -114,9 +120,10 @@ static void print_msg(MESSAGE* m)
            (int)m->u.m3.m3p1,
            (int)m->u.m3.m3p2,
            packed ? "" : "\n",
-           packed ? "" : "\n"/* , */
+           packed ? "" : "\n"
         );
 }
+*/
 
 static void trace_open_in(pid_t child, MESSAGE* msg)
 {
@@ -130,6 +137,20 @@ static void trace_write_in(pid_t child, MESSAGE* msg)
     printf("write(%d, ", msg->FD);
     print_str(child, msg->BUF, msg->CNT);
     printf(", %d)", msg->CNT);
+}
+
+static void trace_exec_in(pid_t child, MESSAGE* msg)
+{
+    printf("execve(");
+    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    printf(", 0x%x)", msg->BUF);
+}
+
+static void trace_stat_in(pid_t child, MESSAGE* msg)
+{
+    printf("stat(");
+    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    printf(", 0x%x)", msg->BUF);
 }
 
 static int recorded_sendrec_type;
@@ -153,14 +174,23 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
     case WRITE:
         trace_write_in(child, &msg);
         break;
+    case STAT:
+        trace_stat_in(child, &msg);
+        break;
     case FSTAT:
         printf("fstat(%d, 0x%x)", msg.FD, msg.BUF);
+        break;
+    case EXEC:
+        trace_exec_in(child, &msg);
         break;
     case BRK:
         printf("brk(0x%x)", msg.ADDR);
         break;
     case EXIT:
         printf("exit(%d) = ?\n", msg.STATUS);   /* exit has no return value */
+        break;
+    default:
+        printf("syscall(%d)", type);
         break;
     }
 }
@@ -173,29 +203,47 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     int type = recorded_sendrec_type;
     int retval = 0;
     int base = 10;
+    int err = 0;
 
     switch (type) {
     case OPEN:
         retval = msg.FD;
+        if (retval < 0) {
+            err = -retval;
+            retval = -1;
+        }
         break;
     case READ:
     case WRITE:
         retval = msg.CNT;
         break;
-    case CLOSE:
+    case STAT:
     case FSTAT:
+        retval = msg.RETVAL;
+        if (retval > 0) {
+            err = retval;
+            retval = -1;
+        }
+    case CLOSE:
     case BRK:
         retval = msg.RETVAL;
         break;
     }
+
     switch (base) {
     case 10:
-        printf(" = %d\n", retval);
+        printf(" = %d ", retval);
         break;
     case 16:
-        printf(" = 0x%x\n", retval);
+        printf(" = 0x%x ", retval);
         break;
     }
+
+    if (err != 0) {
+        print_err(err);
+    }
+
+    printf("\n");
 }
 
 #define EBX         8

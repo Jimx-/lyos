@@ -31,5 +31,6 @@ fi
 export SUBARCH=$SUBARCH ARCH=$ARCH
 export BUILD_BASH=1
 
-pushd setup.py
+pushd toolchain > /dev/null
+python setup.py
 popd > /dev/null
