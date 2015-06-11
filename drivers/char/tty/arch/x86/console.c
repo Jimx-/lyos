@@ -137,6 +137,7 @@ PUBLIC void init_screen(TTY* tty)
 	con->row_size = con->cols << 1;
 	con->screenbuf_size = con->rows * con->row_size;
 	con->is_full = 0;
+	con->default_color = con->color = DEFAULT_CHAR_COLOR;
 
 	tty->tty_dev = con;
 	if (nr_tty == 0) {
@@ -278,36 +279,36 @@ PRIVATE void parse_escape(CONSOLE * con, char c)
 
 	switch (con->c_esc_state){
 		case 1:
-		con->c_esc_intro = '\0';
-		con->c_esc_paramp = bufend(con->c_esc_params);
-		do {
-			*--con->c_esc_paramp = 0;
-		} while (con->c_esc_paramp > con->c_esc_params);
-		switch (c) {
-			case '[':	/* Control Sequence Introducer */
-				con->c_esc_intro = c;
-				con->c_esc_state = 2;
-				break;
-			case 'M':	/* Reverse Index */
-				do_escape(con, c);
-				break;
-			default:
-				con->c_esc_state = 0;
-		}
-		break;
+			con->c_esc_intro = '\0';
+			con->c_esc_paramp = bufend(con->c_esc_params);
+			do {
+				*--con->c_esc_paramp = 0;
+			} while (con->c_esc_paramp > con->c_esc_params);
+			switch (c) {
+				case '[':	/* Control Sequence Introducer */
+					con->c_esc_intro = c;
+					con->c_esc_state = 2;
+					break;
+				case 'M':	/* Reverse Index */
+					do_escape(con, c);
+					break;
+				default:
+					con->c_esc_state = 0;
+			}
+			break;
 
 		case 2:
-		if (c >= '0' && c <= '9') {
-			if (con->c_esc_paramp < bufend(con->c_esc_params))
-				*con->c_esc_paramp = *con->c_esc_paramp * 10 + (c-'0');
-		} else
-		if (c == ';') {
-			if (con->c_esc_paramp < bufend(con->c_esc_params))
-				con->c_esc_paramp++;
-		} else {
-			do_escape(con, c);
-		}
-		break;
+			if (c >= '0' && c <= '9') {
+				if (con->c_esc_paramp < bufend(con->c_esc_params))
+					*con->c_esc_paramp = *con->c_esc_paramp * 10 + (c-'0');
+			} else
+			if (c == ';') {
+				if (con->c_esc_paramp < bufend(con->c_esc_params))
+					con->c_esc_paramp++;
+			} else {
+				do_escape(con, c);
+			}
+			break;
 	}
 }
 
@@ -316,7 +317,7 @@ PRIVATE void parse_escape(CONSOLE * con, char c)
  *****************************************************************************/
 PRIVATE void do_escape(CONSOLE * con, char c)
 {
-	int value, m, n;
+	int value, m, n, i, bg_color, fg_color;
 	unsigned src, dst, count;
 	//int *paramp;
 	
@@ -431,6 +432,20 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 		w_copy(dst, src, count);
 		clear_screen(dst + count, n * con->cols);
 		break;
+		case 'm':		/* Esc [Value;...;Valuem sets graphics mode */
+			bg_color = BG_COLOR(con->color);
+			fg_color = FG_COLOR(con->color);
+			for (i = 0; i <= con->c_esc_paramp - con->c_esc_params; i++) {
+				value = con->c_esc_params[i];
+
+				if (value >= 30 && value <= 37) {	/* 30 ~ 37: foreground colors */
+					fg_color = value - 30;
+				} else if (value >= 40 && value <= 47) {	/* 40 ~ 47: foreground colors */
+					bg_color = value - 40;
+				}
+			}
+			con->color = MAKE_COLOR(bg_color, fg_color);
+			break;
 	    case '@':		/* ESC [n@ inserts n chars at cursor */
 		n = value;
 		if (n < 1) n = 1;

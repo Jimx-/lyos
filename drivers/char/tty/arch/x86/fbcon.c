@@ -89,30 +89,55 @@ PRIVATE void set_pixel(int x, int y, int val)
     *pixel = val;
 }
 
-PRIVATE void print_char(int x, int y, char ch, int color)
+#define RGB_RED     0xff0000
+#define RGB_GREEN   0x00ff00
+#define RGB_BLUE    0x0000ff
+PRIVATE void color_to_rgb(u8 color, int* fg, int* bg)
 {
+    int fg_color = FG_COLOR(color), bg_color = BG_COLOR(color);
+    *fg = *bg = 0;
+
+    if (fg_color & RED) *fg |= RGB_RED;
+    if (fg_color & GREEN) *fg |= RGB_GREEN;
+    if (fg_color & BLUE) *fg |= RGB_BLUE;
+
+    if (bg_color & RED) *bg |= RGB_RED;
+    if (bg_color & GREEN) *bg |= RGB_GREEN;
+    if (bg_color & BLUE) *bg |= RGB_BLUE;
+}
+
+PRIVATE void print_char(int x, int y, char ch, u8 color)
+{
+    int fg_color, bg_color;
     u8 * font = number_font[ch];
     int i, j;
+
+    color_to_rgb(color, &fg_color, &bg_color);
+
     for (i = 0; i < FONT_HEIGHT; i++) {
         for (j = 0; j < FONT_WIDTH; j++) {
             if (font[i] & (1 << (FONT_WIDTH-j))) {
-                set_pixel(x+j, y+i, color);
+                set_pixel(x+j, y+i, fg_color);
             } else {
-                set_pixel(x+j, y+i, 0);
+                set_pixel(x+j, y+i, bg_color);
             }
         }
     }
 }
 
-PRIVATE void print_cursor(int x, int y, int color)
+PRIVATE void print_cursor(int x, int y, u8 color)
 {
+    int fg_color, bg_color;
     int i, j;
+    
+    color_to_rgb(color, &fg_color, &bg_color);
+
     for (i = 0; i < FONT_HEIGHT; i++) {
         for (j = 0; j < FONT_WIDTH; j++) {
             if (i > FONT_HEIGHT-CURSOR_HEIGHT) {
-                set_pixel(x+j, y+i, color);
+                set_pixel(x+j, y+i, fg_color);
             } else {
-                set_pixel(x+j, y+i, 0);
+                set_pixel(x+j, y+i, bg_color);
             }
         }
     }
@@ -147,7 +172,7 @@ PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
     line = cursor / con->cols;
     col = cursor % con->cols;
 
-    print_char(col * FONT_WIDTH, line * FONT_HEIGHT, ch, 0xffffffff);
+    print_char(col * FONT_WIDTH, line * FONT_HEIGHT, ch, con->color);
 }
 
 PRIVATE void fbcon_flush(CONSOLE * con)
@@ -184,7 +209,8 @@ PRIVATE void update_cursor(struct timer_list* tp)
     line = cursor / con->cols;
     col = cursor % con->cols;
 
-    print_cursor(col * FONT_WIDTH, line * FONT_HEIGHT, cursor_state);
+    print_cursor(col * FONT_WIDTH, line * FONT_HEIGHT, 
+        cursor_state ? con->color : MAKE_COLOR(BG_COLOR(con->color), BG_COLOR(con->color)));
 
     set_timer(tp, ticks, update_cursor, 0);
 }

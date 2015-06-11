@@ -7,5 +7,5 @@ else
   PS1="# "
 fi
 
-PS1="\u@\h:\w\a $PS1"
+PS1="\033[32m\u@\h\033[37m:\033[34m\w\a $PS1\033[37m"
 export PS1
