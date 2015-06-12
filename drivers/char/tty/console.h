@@ -36,6 +36,7 @@ typedef struct s_console
 	unsigned int 	cols;  	/* screen width in characters */
 
 	/* attributes */
+	unsigned char 	attributes;
 	unsigned char 	color;
 	unsigned char 	default_color;
 	
@@ -49,6 +50,11 @@ typedef struct s_console
 	void 			(*outchar)(struct s_console * con, char ch);
 	void 			(*flush)(struct s_console * con);
 }CONSOLE;
+
+/* Attributes */
+#define BOLD		0x1
+#define UNDERSCORE	0x2
+#define BLINK 		0x4
 
 /* Color */
 /*

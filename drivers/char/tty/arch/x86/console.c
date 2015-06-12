@@ -440,8 +440,19 @@ PRIVATE void do_escape(CONSOLE * con, char c)
 
 				if (value >= 30 && value <= 37) {	/* 30 ~ 37: foreground colors */
 					fg_color = value - 30;
-				} else if (value >= 40 && value <= 47) {	/* 40 ~ 47: foreground colors */
+				} else if (value >= 40 && value <= 47) {	/* 40 ~ 47: background colors */
 					bg_color = value - 40;
+				} else {
+					switch (value) {
+					case 0:
+						bg_color = BG_COLOR(con->default_color);
+						fg_color = FG_COLOR(con->default_color);
+						con->attributes = 0;
+						break;
+					case 1:
+						con->attributes |= BOLD;
+						break;
+					}
 				}
 			}
 			con->color = MAKE_COLOR(bg_color, fg_color);
