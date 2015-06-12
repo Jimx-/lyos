@@ -139,12 +139,12 @@ int execve(const char *name, char * argv[], char * const envp[])
 	msg.type	= EXEC;
 	msg.PATHNAME	= (void*)name;
 	msg.NAME_LEN	= strlen(name);
-	msg.BUF		= (void*)arg_stack;
-	msg.BUF_LEN	= stack_len;
+	msg.BUF			= (void*)arg_stack;
+	msg.BUF_LEN		= stack_len;
 
 	cmb();
 
-	send_recv(BOTH, TASK_FS, &msg);
+	send_recv(BOTH, TASK_PM, &msg);
 	//assert(msg.type == SYSCALL_RET);
 
 	return msg.RETVAL;

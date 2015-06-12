@@ -31,11 +31,23 @@
 #include "global.h"
 #include "proto.h"
 
-PUBLIC int do_pm_exec(MESSAGE* m)
+PUBLIC int do_exec(MESSAGE* m)
 {
-    endpoint_t ep = m->ENDPOINT;
+    endpoint_t ep = m->source;
     struct pmproc* pmp = pm_endpt_proc(ep);
     if (!pmp) return EINVAL;
+
+    MESSAGE msg;
+    msg.type        = PM_VFS_EXEC;
+    msg.PATHNAME    = m->PATHNAME;
+    msg.NAME_LEN    = m->NAME_LEN;
+    msg.BUF         = m->BUF;
+    msg.BUF_LEN     = m->BUF_LEN;
+    msg.ENDPOINT    = ep;
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL) return msg.RETVAL;
 
     /* tell tracer */
     if (pmp->tracer != NO_TASK) {

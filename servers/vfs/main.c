@@ -137,8 +137,8 @@ PUBLIC int main()
 		case PM_VFS_GETSETID:
 			msg.RETVAL = fs_getsetid(&msg);
 			break;
-		case EXEC:
-			msg.RETVAL = do_exec(&msg);
+		case PM_VFS_EXEC:
+			msg.RETVAL = fs_exec(&msg);
 			break;
 		case EXIT:
 			msg.RETVAL = fs_exit(&msg);

@@ -85,8 +85,8 @@ PUBLIC int main(int argc, char * argv[])
         case PM_VFS_GETSETID_REPLY:
             src = msg.ENDPOINT;
             break;
-        case PM_EXEC:
-            msg.RETVAL = do_pm_exec(&msg);
+        case EXEC:
+            msg.RETVAL = do_exec(&msg);
             break;
         default:
             msg.RETVAL = ENOSYS;

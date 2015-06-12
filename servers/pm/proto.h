@@ -30,7 +30,7 @@ PUBLIC int do_getsetid(MESSAGE * p);
 PUBLIC int do_sigprocmask(MESSAGE * p);
 PUBLIC int do_sigsuspend(MESSAGE * p);
 PUBLIC int do_ptrace(MESSAGE * m);
-PUBLIC int do_pm_exec(MESSAGE * m);
+PUBLIC int do_exec(MESSAGE * m);
 
 PUBLIC int waiting_for(struct pmproc* parent, struct pmproc * child);
 PUBLIC void exit_proc(struct pmproc* pmp, int status);

@@ -157,7 +157,7 @@ PRIVATE int request_vfs_mmap(struct exec_info *execi,
  * @return     Zero on success.
  * 
  *****************************************************************************/
-PUBLIC int do_exec(MESSAGE * msg)
+PUBLIC int fs_exec(MESSAGE * msg)
 {
     int retval;
 
@@ -165,7 +165,7 @@ PUBLIC int do_exec(MESSAGE * msg)
 
     /* get parameters from the message */
     int name_len = msg->NAME_LEN; /* length of filename */
-    int src = msg->source;    /* caller proc nr. */
+    int src = msg->ENDPOINT;    /* caller proc nr. */
     struct fproc * fp = vfs_endpt_proc(src);
     int i;
 
@@ -277,11 +277,6 @@ PUBLIC int do_exec(MESSAGE * msg)
     } 
 
     data_copy(src, orig_stack, TASK_FS, stackcopy, orig_stack_len);
-
-    MESSAGE msg2pm;
-    msg2pm.type = PM_EXEC;
-    msg2pm.ENDPOINT = src;
-    send_recv(BOTH, TASK_PM, &msg2pm);
 
     struct ps_strings ps;
     ps.ps_nargvstr = argc;
