@@ -19,6 +19,7 @@ do
         case $arg in
              m)
                 ARCH=${OPTARG}
+                SUBARCH=${OPTARG}
                 ;;
              ?)
                 echo "unkonw argument"

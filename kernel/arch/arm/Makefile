@@ -1,5 +1,6 @@
 
-KERNELOBJS	= kernel.o start.o
+KERNELOBJS	= kernel.o start.o system.o memory.o fpu.o direct_tty.o clock.o \
+				page.o kliba.o
 
 ARCHKERNEL		= arch-kernel.o
 

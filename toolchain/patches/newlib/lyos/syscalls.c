@@ -10,6 +10,7 @@
 #include <sys/utsname.h>
 #include <sys/termios.h>
 #include <sys/syslimits.h>
+#include <sys/mman.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -1222,4 +1223,25 @@ long ptrace(int request, pid_t pid, void *addr, void *data)
 	}
 
 	return msg.PTRACE_RET;
+}
+
+void * mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+    MESSAGE m;
+
+    memset(&m, 0, sizeof(MESSAGE));
+
+    m.type = MMAP;
+    m.MMAP_WHO = SELF;
+    m.MMAP_VADDR = (int)addr;
+    m.MMAP_LEN = len;
+    m.MMAP_PROT = prot;
+    m.MMAP_FLAGS = flags;
+    m.MMAP_FD = fd;
+    m.MMAP_OFFSET = offset;
+
+    send_recv(BOTH, TASK_MM, &m);
+
+    if (m.RETVAL) return MAP_FAILED;
+    else return (void *)m.MMAP_RETADDR;
 }

@@ -16,7 +16,8 @@ KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 LIB			= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
 LIBC		= $(DESTDIR)/usr/lib/libc.a 
 
-KRNL		= $(ARCHDIR)/lyos.bin
+KRNL		= $(ARCHDIR)/lyos.elf
+KRNLBIN		= $(ARCHDIR)/lyos.bin
 
 everything : realclean $(KRNL)
 
@@ -26,7 +27,8 @@ realclean :
 $(KRNL): $(KERNELOBJS) $(LIB) $(LIBC)
 	@echo -e '\tLD\t$@'
 	@$(LD) $(LDFLAGS) -o $(KRNL) $^
-	@cp -f $(KRNL) $(DESTDIR)/boot/
+	@$(OBJCOPY) $(KRNL) -O binary $(KRNLBIN)
+	@cp -f $(KRNL) $(KRNLBIN) $(DESTDIR)/boot/
 
 arch/$(ARCH)/arch-kernel.o:
 	@(cd arch/$(ARCH); make)

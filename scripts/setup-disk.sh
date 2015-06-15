@@ -2,7 +2,7 @@
 
 if [[ $EUID -ne 0 ]]; then
     echo -e "\033[1;31mYou're going to need to run this as root\033[0m" 1>&2
-    echo "Additionally, verify that /dev/loop4 is available and that" 1>&2
+    echo "Additionally, verify that /dev/loop1 is available and that" 1>&2
     echo "/mnt is available for mounting; otherwise, modify the script" 1>&2
     echo "to use alternative loop devices or mount points as needed." 1>&2
     exit 1

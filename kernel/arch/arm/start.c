@@ -31,3 +31,8 @@ PUBLIC void cstart()
 {
 
 }
+
+PUBLIC void init_arch()
+{
+    
+}

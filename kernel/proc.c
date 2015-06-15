@@ -224,7 +224,7 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 	int ret = 0;
 	int flags = 0;
 	int caller = p->endpoint;
-	MESSAGE * mla = (MESSAGE * )va2la(caller, msg);
+	MESSAGE * mla = (MESSAGE * )msg;
 	mla->source = caller;
 
 	if (!verify_endpt(src_dest, NULL)) return EINVAL;

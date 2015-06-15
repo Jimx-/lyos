@@ -25,7 +25,7 @@
 #include <lyos/ipc.h>
 #include "libsysfs/libsysfs.h"
 
-extern endpoint_t __pci_endpoint = TASK_PCI;
+extern endpoint_t __pci_endpoint;
 
 PUBLIC u8 pci_attr_r8(int devind, u16 port)
 {
@@ -45,7 +45,11 @@ PUBLIC u8 pci_attr_r8(int devind, u16 port)
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
+#ifdef __i386__
     send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
 
     return (u8)msg.u.m3.m3i2;
 }
@@ -68,7 +72,11 @@ PUBLIC u32 pci_attr_r32(int devind, u16 port)
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
+#ifdef __i386__
     send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
 
     return msg.u.m3.m3i2;
 }

@@ -63,8 +63,8 @@ if __name__ == "__main__":
 		mkdir('binutils')
 		push_dir('binutils')
 		os.environ["PKG_CONFIG_LIBDIR"] = ""
-		configure(BINUTILS_VERSION)
-		make_and_install()
+		#configure(BINUTILS_VERSION)
+		#make_and_install()
 		pop_dir()	# binutils
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 		mkdir('gcc')
 		push_dir('gcc')
 		os.environ["PKG_CONFIG_LIBDIR"] = ""
-		configure(GCC_VERSION ,' --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+		configure(GCC_VERSION, ' --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
 		make('all-gcc')
 		make('install-gcc')
 		make('all-target-libgcc')

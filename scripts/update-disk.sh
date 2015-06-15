@@ -59,7 +59,7 @@ if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
 then
 	cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
 else
-	cp -r $SRCDIR/arch/x86/lyos.bin /$MOUNT_POINT/boot/
+	cp -r $SRCDIR/arch/x86/lyos.elf /$MOUNT_POINT/boot/
 fi
 
 cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/

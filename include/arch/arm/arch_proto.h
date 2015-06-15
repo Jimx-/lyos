@@ -16,4 +16,14 @@
 #ifndef _ARCH_PROTO_H_
 #define _ARCH_PROTO_H_
 
+/* in/out functions */
+#define out_long(a, b) *((volatile unsigned int *)(a)) = (b)
+#define in_long(a) (*((volatile unsigned int *)(a)))
+#define out_word(a, b) *((volatile unsigned int *)(a)) = ((b) | ((b) << 16))
+#define in_word(a) ((*((volatile unsigned int *)(a))) & 0xffff)
+#define out_byte(a, b) *((volatile unsigned char *)(a)) = (b)
+#define in_byte(a) (*((volatile unsigned char *)(a)))
+
+PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
+
 #endif

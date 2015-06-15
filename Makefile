@@ -76,7 +76,7 @@ endif
 
 export AS ASM CC LD OBJCOPY CFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
-LYOSKERNEL = $(ARCHDIR)/lyos.bin
+LYOSKERNEL = $(ARCHDIR)/lyos.elf
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
 	ZIP = gzip
 	LYOSZKERNEL = $(ARCHDIR)/lyos.gz
@@ -84,7 +84,7 @@ endif
 
 LYOSINITRD	= $(ARCHDIR)/initrd.tar
 
-DASMOUTPUT	= lyos.bin.asm
+DASMOUTPUT	= lyos.elf.asm
 
 COLORDEFAULT= \033[0m
 COLORRED	= \033[1;31m
@@ -212,7 +212,7 @@ libraries:
 	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
 	@(cd lib; make)
 
-kernel: libraries
+kernel: 
 	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'
 	@(cd kernel; make)
 ifeq ($(CONFIG_COMPRESS_GZIP),y)

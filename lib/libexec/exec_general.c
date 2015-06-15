@@ -27,7 +27,7 @@
 #include "lyos/proto.h"
 #include "libexec.h"
 #include "lyos/vm.h"
-#include <sys/mman.h>
+#include "sys/mman.h"
 
 PUBLIC int libexec_allocmem(struct exec_info * execi, int vaddr, size_t len)
 {

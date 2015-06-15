@@ -25,7 +25,12 @@
 #include <lyos/ipc.h>
 #include "libsysfs/libsysfs.h"
 
-PUBLIC endpoint_t __pci_endpoint = TASK_PCI;
+PUBLIC endpoint_t __pci_endpoint = 
+#ifdef __i386__
+    TASK_PCI;
+#else
+    NO_TASK;
+#endif
 
 PUBLIC int pci_set_acl(struct pci_acl * pci_acl)
 {
@@ -44,7 +49,11 @@ PUBLIC int pci_set_acl(struct pci_acl * pci_acl)
     msg.type = PCI_SET_ACL;
     msg.BUF = pci_acl;
 
+#ifdef __i386__
     send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
 
     return msg.RETVAL;
 }

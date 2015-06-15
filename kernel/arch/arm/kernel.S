@@ -1,11 +1,12 @@
-.text
+.section .text
 
-.global _start	/* entry point */
+.global _lyos_start	/* entry point */
+.global restore_user_context
 
 .extern cstart
 .extern kernel_main
 
-_start:
+_lyos_start:
 	ldr	sp, =StackTop
 	mov fp, #0
 	bl cstart
@@ -16,7 +17,10 @@ _start:
 hang:
 	b hang
 
-.data
+restore_user_context:
+	bx 	lr
+
+.section .data
 StackSpace:
 	.space 4096
 StackTop:

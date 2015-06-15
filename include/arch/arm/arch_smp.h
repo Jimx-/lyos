@@ -16,5 +16,10 @@
 #ifndef	_ARCH_SMP_H_
 #define	_ARCH_SMP_H_
 
+#if CONFIG_SMP
+#else
+#define cpuid   0
+#endif
+
 #endif
     

@@ -43,7 +43,11 @@ PUBLIC int pci_first_dev(int * devind, u16 * vid, u16 * did)
     
     msg.type = PCI_FIRST_DEV;
 
+#ifdef __i386__
     send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
 
     *devind = msg.u.m3.m3i2;
     *vid = msg.u.m3.m3i3;
@@ -69,7 +73,11 @@ PUBLIC int pci_next_dev(int * devind, u16 * vid, u16 * did)
     msg.type = PCI_NEXT_DEV;
     msg.u.m3.m3i2 = *devind;
     
+#ifdef __i386__
     send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
 
     *devind = msg.u.m3.m3i2;
     *vid = msg.u.m3.m3i3;
