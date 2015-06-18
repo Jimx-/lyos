@@ -169,7 +169,7 @@ update-disk:
 	@sudo bash scripts/update-disk.sh
 
 kvm:
-	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -vga std -sdl
+	@qemu-system-i386 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -vga std -sdl -enable-kvm
 
 kvm-disk:
 	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -sdl -vga std

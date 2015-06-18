@@ -63,8 +63,8 @@ if __name__ == "__main__":
 		mkdir('binutils')
 		push_dir('binutils')
 		os.environ["PKG_CONFIG_LIBDIR"] = ""
-		#configure(BINUTILS_VERSION)
-		#make_and_install()
+		configure(BINUTILS_VERSION)
+		make_and_install()
 		pop_dir()	# binutils
 
 	os.environ["PATH"] += os.pathsep + PREFIX_BIN
@@ -83,10 +83,10 @@ if __name__ == "__main__":
 	os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
 	os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
 	os.environ["TOOLCHAIN"] = SYSROOT + '/usr'
+	os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
 	# newlib
 	if BUILD_NEWLIB is not None:
-		os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
 		# newlib
 		newlib_dir = '../sources/' + NEWLIB_VERSION
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 	if BUILD_BASH is not None:
 		mkdir('bash')
 		push_dir('bash')
-		configure_native('bash-4.3', '--enable-static-link --without-bash-malloc --disable-nls')
+		#configure_native('bash-4.3', '--enable-static-link --without-bash-malloc --disable-nls')
 		make_and_install_to_destdir()
 
 		copy(SYSROOT + '/usr/bin/bash', SYSROOT + '/bin/bash')

@@ -33,6 +33,17 @@ PUBLIC void dev_driver_task(struct dev_driver * dd)
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
 
+		if (msg.type == NOTIFY_MSG) {
+			switch (msg.source) {
+			case INTERRUPT:
+				break;
+			case CLOCK:
+				expire_timer(msg.TIMESTAMP);
+				break;
+			}
+			continue;
+		}
+
 		switch (msg.type) {
 		case DEV_OPEN:
 			msg.RETVAL = (*dd->dev_open)(&msg);

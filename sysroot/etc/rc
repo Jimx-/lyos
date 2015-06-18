@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo "Starting system services..."
+service up /sbin/ata
+service up /sbin/ext2fs
+service up /sbin/procfs
+service up /sbin/input
+service up /sbin/keyboard
+
+mount -a

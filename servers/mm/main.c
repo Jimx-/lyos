@@ -237,6 +237,11 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     execi->proc_e = bp->endpoint;
     execi->filesize = bp->len;
 
+    char interp[MAX_PATH];
+    if (elf_is_dynamic(execi->header, execi->header_len, interp, sizeof(interp)) > 0) {
+        printl("%s\n", interp);
+    }
+
     if (libexec_load_elf(execi) != 0) panic("can't load boot proc #%d", bp->endpoint);
 
     /* copy the stack */

@@ -1,6 +1,6 @@
 
 FSOBJS 	= main.o global.o node.o utils.o buffer.o file.o
-LIBS	= -lmemfs -lfsdriver -llyos -ldriver
+LIBS	= -lmemfs -lfsdriver -ldriver -llyos
 
 SYSFS = sysfs
 

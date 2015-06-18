@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <lyos/const.h>
 #include <lyos/type.h>
