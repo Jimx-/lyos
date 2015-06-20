@@ -66,7 +66,7 @@ PRIVATE int sysfs_message_hook(MESSAGE * m)
 {
     int msgtype = m->type;
     int retval = 0;
-
+    
     switch (msgtype) {
     case SYSFS_PUBLISH:
         retval = do_publish(m); 

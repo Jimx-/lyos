@@ -26,8 +26,6 @@ struct phys_frame {
 
     u8 refcnt;
     u8 flags;
-
-    struct phys_frame * share;
 };
 
 /**

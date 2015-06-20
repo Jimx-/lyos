@@ -33,13 +33,17 @@
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
+#include <lyos/ipc.h>
     
 PUBLIC struct proc * pick_proc();
 PUBLIC void proc_no_time(struct proc * p);
 
 PRIVATE void idle();
 PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
+PRIVATE int receive_async(struct proc* p);
+PRIVATE int receive_async_from(struct proc* p, struct proc* sender);
 PRIVATE int  has_pending_notify(struct proc * p, endpoint_t src);
+PRIVATE int  has_pending_async(struct proc * p, endpoint_t src);
 PRIVATE void unset_notify_pending(struct proc * p, int id);
 PRIVATE void set_notify_msg(struct proc * sender, MESSAGE * m, endpoint_t src);
 PRIVATE int  deadlock(int src, int dest);
@@ -106,6 +110,8 @@ PUBLIC void init_proc()
 		priv->timer.expire_time = TIMER_UNSET;
 
 		sigemptyset(&priv->sig_pending);
+		priv->notify_pending = 0;
+		priv->async_pending = 0;
 	}
 
 	/* prepare idle process struct */
@@ -220,16 +226,20 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 	int function = m->SR_FUNCTION;
 	int src_dest = m->SR_SRCDEST;
 	MESSAGE * msg = (MESSAGE *)m->SR_MSG;
+	async_message_t* async_msg = (async_message_t*) m->SR_TABLE;
+	size_t msg_len = m->SR_LEN;
 
 	int ret = 0;
 	int flags = 0;
 	int caller = p->endpoint;
 	MESSAGE * mla = (MESSAGE * )msg;
-	mla->source = caller;
+	
+	if (function != SEND_ASYNC) {
+		mla->source = caller;
+		if (!verify_endpt(src_dest, NULL)) return EINVAL;
 
-	if (!verify_endpt(src_dest, NULL)) return EINVAL;
-
-	assert(mla->source != src_dest);
+		if (mla->source == src_dest) return EINVAL;
+	}
 
 	switch (function) {
 		case BOTH:
@@ -243,6 +253,9 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 			break;
 		case SEND_NONBLOCK:
 			ret = msg_send(p, src_dest, msg, flags | IPCF_NONBLOCK);
+			break;
+		case SEND_ASYNC:
+			ret = msg_senda(p, async_msg, msg_len);
 			break;
 		default:
 			ret = EINVAL;
@@ -352,8 +365,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 		p_dest->recv_msg = 0;
 		PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
 		p_dest->recvfrom = NO_TASK;
-	}
-	else { /* p_dest is not waiting for the msg */
+	} else { /* p_dest is not waiting for the msg */
 		if (flags & IPCF_NONBLOCK) {
 			retval = EBUSY;
 			goto out;
@@ -438,6 +450,22 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 		goto out;
 	}
+
+	/* check for async messages */
+	int async_id;
+	if ((async_id = has_pending_async(who_wanna_recv, src)) != PRIV_ID_NULL) {
+		int proc_nr = priv_addr(async_id)->proc_nr;
+		struct proc * async_sender = proc_addr(proc_nr);
+		
+		who_wanna_recv->recv_msg = m;
+
+		if (src == ANY) retval = receive_async(who_wanna_recv);
+		else retval = receive_async_from(who_wanna_recv, async_sender);
+
+		if (retval == 0) goto out;
+		else who_wanna_recv->recv_msg = NULL;
+	}
+
 
 	/* Arrives here if no interrupt for who_wanna_recv. */
 	if (src == ANY) {
@@ -532,6 +560,109 @@ out:
 	return retval;
 }
 
+PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
+{
+	struct priv* priv = sender->priv;
+	if (!(priv->flags & PRF_PRIV_PROC)) {	/* only privilege processes can send async messages */
+        return EPERM;
+    }
+
+    lock_proc(sender);
+    p->priv->async_pending &= ~(1 << priv->id);
+
+    int i, retval = ESRCH, flags, done = TRUE;
+    endpoint_t dest;
+    async_message_t amsg;
+    /* process all async messages */
+    for (i = 0; i < priv->async_len; i++) {
+    	if (data_vir_copy(KERNEL, &amsg, sender->endpoint, (void*)((vir_bytes)priv->async_table + i * sizeof(amsg)), sizeof(amsg)) != 0) {
+    		retval = EFAULT;
+    		goto async_error;
+    	}
+
+    	flags = amsg.flags;
+    	dest = amsg.dest;
+
+    	if (!flags) continue;
+    	if (flags & ASMF_DONE) continue;
+
+    	done = FALSE;
+    	if (dest != p->endpoint) continue;
+
+    	MESSAGE tmp;
+    	data_vir_copy_check(p, KERNEL, &tmp, sender->endpoint, amsg.msg, sizeof(MESSAGE));
+		retval = data_vir_copy_check(p, KERNEL, p->recv_msg, sender->endpoint, amsg.msg, sizeof(MESSAGE));
+		if (retval != 0) {
+			goto async_error;
+		}
+
+		p->recv_msg = 0;
+		PST_UNSET_LOCKED(p, PST_RECEIVING);
+		p->recvfrom = NO_TASK;
+
+		amsg.result = retval;
+		amsg.flags |= ASMF_DONE;
+
+		if (data_vir_copy(sender->endpoint, (void*)((vir_bytes)priv->async_table + i * sizeof(amsg)), KERNEL, &amsg, sizeof(amsg)) != 0) {
+			retval = EFAULT;
+    		goto async_error;
+    	}
+
+    	break;
+    }
+
+    if (done) {
+    	priv->async_table = NULL;
+    	priv->async_len = 0;
+    } else {	/* make kernel rescan the table next time the receiver try to receive and set priv->async_table properly */
+    	p->priv->async_pending |= (1 << priv->id);
+    }
+
+async_error:
+	unlock_proc(sender);
+    return retval;
+}
+
+PRIVATE int receive_async(struct proc* p)
+{
+	int retval;
+	priv_map_t async_pending = p->priv->async_pending;
+	struct priv* priv;
+	
+	for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
+		if (priv->proc_nr == NO_TASK) continue;
+		if (!(async_pending & (1 << priv->id))) continue;
+
+		struct proc* src = proc_addr(priv->proc_nr);
+
+		if ((retval = receive_async_from(p, src)) == 0) return 0;
+	}
+
+	return ESRCH;
+}
+
+PRIVATE int has_pending_async(struct proc * p, endpoint_t src)
+{
+	priv_map_t async_pending = p->priv->async_pending;
+	int i;
+
+	if (async_pending == 0) return PRIV_ID_NULL;
+
+	if (src != ANY) {
+		struct proc * sender = endpt_proc(src);
+		if (!sender) return PRIV_ID_NULL;
+
+		if (async_pending & (1 << sender->priv->id)) return sender->priv->id; 
+		else return PRIV_ID_NULL;
+	}
+
+	for (i = 0; i < NR_PRIV_PROCS; i++) {
+		if (async_pending & (1 << i)) return i;
+	}
+
+	return PRIV_ID_NULL;
+}
+
 PRIVATE int has_pending_notify(struct proc * p, endpoint_t src)
 {
 	priv_map_t notify_pending = p->priv->notify_pending;
@@ -581,6 +712,9 @@ PRIVATE void set_notify_msg(struct proc * dest, MESSAGE * m, endpoint_t src)
 	}
 }
 
+/*****************************************************************************
+ *                                msg_notify
+ *****************************************************************************/
 /**
  * @brief Send a notification to the dest proc.
  * 
@@ -623,6 +757,9 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
 	return 0;
 }
 
+/*****************************************************************************
+ *                                verify_endpt
+ *****************************************************************************/
 /**
  * @brief Verify if an endpoint number is valid and convert it to proc nr.
  * 
@@ -692,3 +829,99 @@ PUBLIC void dump_msg(const char * title, MESSAGE* m)
 		);
 }
 
+/*****************************************************************************
+ *                                msg_senda
+ *****************************************************************************/
+/**
+ * <Ring 0> Send asynchronous messages.
+ * 
+ * @param p_to_send  The caller, the sender.
+ * @param table 	 The table containing all async messages to be sent.
+ * @param len        How many messages to be sent.
+ * 
+ * @return Zero if success.
+ *****************************************************************************/
+PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
+{
+    struct priv* priv = p_to_send->priv;
+    if (!(priv->flags & PRF_PRIV_PROC)) {	/* only privilege processes can send async messages */
+        return EPERM;
+    }
+
+    /* clear async message table */
+    priv->async_table = NULL;
+    priv->async_len = 0;
+
+    if (len == 0) return 0;
+
+    lock_proc(p_to_send);
+
+    int i, retval, flags, done = TRUE;
+    endpoint_t dest;
+    async_message_t amsg;
+    struct proc* p_dest;
+    /* process all async messages */
+    for (i = 0; i < len; i++) {
+    	retval = data_vir_copy(KERNEL, &amsg, KERNEL, (void*)((vir_bytes)table + i * sizeof(amsg)), sizeof(amsg));
+    	if (retval) goto async_error;
+
+    	flags = amsg.flags;
+    	dest = amsg.dest;
+
+    	if (dest == p_to_send->endpoint) {
+    		retval = EINVAL;
+    		goto async_error;
+    	}
+
+    	if (!flags) continue;
+    	if (flags & ASMF_DONE) continue;
+
+    	p_dest = endpt_proc(dest);
+    	if (!p_dest) {
+    		retval = EINVAL;
+    		goto async_error;
+    	}
+
+    	lock_proc(p_dest);
+
+    	if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
+	    	(p_dest->recvfrom == p_to_send->endpoint ||
+	     	p_dest->recvfrom == ANY)) {
+			retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, p_to_send->endpoint, amsg.msg, sizeof(MESSAGE));
+			if (retval != 0) {
+				unlock_proc(p_dest);
+				goto async_error;
+			}
+
+			p_dest->recv_msg = 0;
+			PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
+			p_dest->recvfrom = NO_TASK;
+		} else {	/* tell dest that it has a pending async message */
+			p_dest->priv->async_pending |= (1 << priv->id);
+			done = FALSE;
+			unlock_proc(p_dest);
+			continue;
+		}
+
+		amsg.result = retval;
+		amsg.flags |= ASMF_DONE;
+
+		retval = data_vir_copy(KERNEL, (void*)((vir_bytes)table + i * sizeof(amsg)), KERNEL, &amsg, sizeof(amsg));
+    	if (retval) goto async_error;
+
+    	unlock_proc(p_dest);
+    	continue;
+async_error:
+		printk("kernel: msg_senda failed(%d)\n", retval);
+    }
+
+    /* save the table if not done */
+    if (!done) {
+    	priv->async_table = table;
+    	priv->async_len = len;
+    }
+
+    unlock_proc(p_to_send);
+
+    return 0;
+}

@@ -68,21 +68,4 @@ PRIVATE void devman_init()
 
     /* Map init ramdisk */
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
-
-    //sysfs_publish_domain("devices", SF_PRIV_DELETE);
-    //register_filesystem();
 }
-#if 0
-PRIVATE int register_filesystem()
-{
-    MESSAGE m;
-
-    /* register the filesystem */
-    m.type = FS_REGISTER;
-    m.PATHNAME = "devfs";
-    m.NAME_LEN = strlen(m.PATHNAME);
-    send_recv(BOTH, TASK_FS, &m);
-
-    return 0;
-}
-#endif

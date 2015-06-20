@@ -10,7 +10,7 @@ LOBJS		= arch/$(ARCH)/arch-lib.o \
 			vmctl.o privctl.o umap.o env.o panic.o irqctl.o fork.o clear.o exec.o signal.o \
 			map_phys.o read_tsc_64.o get_procep.o serv_init.o kill.o ksig.o \
 			pci_set_acl.o pci_get_dev.o pci_attr.o get_ticks.o trace.o timer.o \
-			alarm.o
+			alarm.o send_async.o asyncsend.o
 
 LIB		= $(LIBOUTDIR)/liblyos.a
 

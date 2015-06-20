@@ -174,6 +174,7 @@
 #define RECEIVE			2
 #define BOTH			3	/* BOTH = (SEND | RECEIVE) */
 #define SEND_NONBLOCK	4
+#define SEND_ASYNC		5
 
 #define IPCF_FROMKERNEL	0x1
 #define IPCF_NONBLOCK	0x2
@@ -352,6 +353,8 @@ enum msgtype {
 #define SR_FUNCTION u.m3.m3i1
 #define SR_SRCDEST	u.m3.m3i2
 #define SR_MSG		u.m3.m3p1
+#define SR_TABLE	u.m3.m3p1
+#define SR_LEN 		u.m3.m3i2
 
 /* macros for data_copy */
 #define SRC_EP		u.m3.m3i1

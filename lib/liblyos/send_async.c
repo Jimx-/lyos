@@ -11,28 +11,24 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
+    along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#ifndef _IPC_H_
-#define _IPC_H_
+#include "lyos/type.h"
+#include "sys/types.h"
+#include "lyos/const.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/ipc.h"
 
-#include <sys/types.h>
+PUBLIC int send_async(async_message_t* table, size_t len)
+{
+	MESSAGE m;
+	memset(&m, 0, sizeof(m));
+	m.SR_FUNCTION = SEND_ASYNC;
+	m.SR_TABLE = table;
+	m.SR_LEN = len;
 
-#define SUSPEND -1000
-
-#define ASMF_USED   0x1
-#define ASMF_DONE   0x2
-typedef struct {
-    endpoint_t dest;
-    MESSAGE* msg;
-    int flags;
-    int result;
-} async_message_t;
-
-int send_recv(int function, int src_dest, MESSAGE* msg);
-int sendrec(int function, int src_dest, MESSAGE* p_msg);
-int send_async(async_message_t* table, size_t len);
-
-int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags);
-
-#endif
+	return syscall_entry(NR_SENDREC, &m);
+}

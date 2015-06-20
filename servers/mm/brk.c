@@ -31,8 +31,6 @@
 #include "const.h"
 #include "global.h"
 
-//#define SBRK_DEBUG
-
 PUBLIC int do_brk()
 {
     endpoint_t src = mm_msg.source;
