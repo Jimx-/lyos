@@ -1,0 +1,23 @@
+
+# Import configuration
+ifeq ($(wildcard $(SRCDIR)/.config),) 
+else
+	include $(SRCDIR)/.config
+endif
+
+obj-$(CONFIG_MACH_OMAP3_BEAGLE) += omap3_beagle.o
+
+OMAP2 = mach-omap2.o
+
+everything : realclean $(OMAP2)
+
+realclean :
+	@rm -f $(OMAP2) $(obj-y)
+
+$(OMAP2): $(obj-y)
+	@echo -e '\tLD\tkernel/arch/arm/mach-omap2/$@'
+	@$(LD) -r -o $(OMAP2) $(obj-y)
+
+%.o: %.c
+	@echo -e '\tCC\tkernel/arch/arm/mach-omap2/$@'
+	@$(CC) $(CFLAGS) -o $@ $<

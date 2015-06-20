@@ -27,9 +27,75 @@
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 PUBLIC void * k_stacks;
 
-PUBLIC void cstart()
-{
+PRIVATE char * env_get(const char *name);
+PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
 
+PUBLIC void cstart(int argc, char* argv[]);
+
+PUBLIC void cstart(int argc, char* argv[])
+{
+    char* a = 0x49020000;
+    *a = 'o';
+    while(1);
+    memset(kinfo.cmdline, 0, sizeof(kinfo.cmdline));
+    int i;
+    for (i = 1; i < argc; i++) {
+        char* arg = argv[i];
+        direct_print("%s\n", arg);
+    }
+}
+
+PRIVATE char * get_value(const char * param, const char * key)
+{
+    char * envp = (char *)param;
+    const char * name = key;
+
+    for (; *envp != 0;) {
+        for (name = key; *name != 0 && *name == *envp; name++, envp++);
+        if (*name == '\0' && *envp == '=') return envp + 1;
+        while (*envp++ != 0);
+    }
+
+    return NULL;
+}
+
+PRIVATE char * env_get(const char *name)
+{
+    return get_value(kinfo.cmdline, name);
+}
+
+PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
+{
+    char *p = buf;
+    char *bufend = buf + KINFO_CMDLINE_LEN;
+    char *q;
+    int namelen = strlen(name);
+    int valuelen = strlen(value);
+
+    while (*p) {
+        if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
+            q = p;
+            while (*q) q++;
+            for (q++; q < bufend; q++, p++)
+                *p = *q;
+            break;
+        }
+        while (*p++);
+        p++;
+    }
+    
+    for (p = buf; p < bufend && (*p || *(p + 1)); p++);
+    if (p > buf) p++;
+    
+    if (p + namelen + valuelen + 3 > bufend)
+        return -1;
+    
+    strcpy(p, name);
+    p[namelen] = '=';
+    strcpy(p + namelen + 1, value);
+    p[namelen + valuelen + 1] = 0;
+    p[namelen + valuelen + 2] = 0;
+    return 0;
 }
 
 PUBLIC void init_arch()
