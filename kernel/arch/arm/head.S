@@ -7,10 +7,6 @@
 .extern kernel_main
 
 _lyos_start:
-	ldr r5, =0x49020000
-	mov r6, #'1'
-	strb r6, [r5]
-
 	ldr	sp, =UnpagedStackTop	/* Initial stack */
 	mov fp, #0
 
@@ -18,12 +14,8 @@ _lyos_start:
 	bl setup_paging
 	pop {r0-r2}
 
-	ldr r5, =0x49020000
-	mov r6, #'2'
-	strb r6, [r5]
-
 	ldr r3, =_paging_enabled
-	bx r3
+	mov pc, r3
 
 _failed:
 	b _failed
@@ -35,9 +27,6 @@ UnpagedStackTop:
 
 .section .text
 _paging_enabled:
-ldr r5, =0x49020000;
-    mov r6, #'3'
-    strb r6, [r5]
 	ldr sp, =StackTop
 	bl 	cstart
 

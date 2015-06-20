@@ -35,7 +35,7 @@ PUBLIC void cstart(int argc, char* argv[]);
 PUBLIC void cstart(int argc, char* argv[])
 {
     char* a = 0x49020000;
-    *a = 'o';
+    *a = 'c';
     while(1);
     memset(kinfo.cmdline, 0, sizeof(kinfo.cmdline));
     int i;

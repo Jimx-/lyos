@@ -35,9 +35,10 @@
 
 extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE;
 
-PRIVATE phys_bytes kern_vir_base = (phys_bytes) &_VIR_BASE;
-PRIVATE phys_bytes kern_phys_base = (phys_bytes) &_PHYS_BASE;
-PRIVATE phys_bytes kern_size = (phys_bytes) &_KERN_SIZE;
+/* paging utilities */
+PRIVATE phys_bytes kern_vir_base __attribute__ ((__section__(".unpaged_data"))) = (phys_bytes) &_VIR_BASE;
+PRIVATE phys_bytes kern_phys_base __attribute__ ((__section__(".unpaged_data"))) = (phys_bytes) &_PHYS_BASE;
+PRIVATE phys_bytes kern_size __attribute__ ((__section__(".unpaged_data"))) = (phys_bytes) &_KERN_SIZE;
 
 PRIVATE pde_t initial_pgd[ARCH_VM_DIR_ENTRIES] __attribute__ ((__section__(".unpaged_data"))) __attribute__((aligned(16384)));
 
@@ -100,7 +101,7 @@ PUBLIC pde_t pg_mapkernel(pde_t * pgd)
     phys_bytes mapped_size = 0, kern_phys = kern_phys_base;
 
     pde = kern_vir_base / ARM_SECTION_SIZE;
-    while(mapped_size < kern_size) {
+    while (mapped_size < kern_size) {
         pgd[pde] = (kern_phys & ARM_VM_SECTION_MASK) 
             | ARM_VM_SECTION
             | ARM_VM_SECTION_SUPER
@@ -121,6 +122,7 @@ PUBLIC void pg_load(pde_t * pgd)
             : : [bar] "r" (bar));
 }
 
-PUBLIC void switch_address_space(struct proc * p) {
+PUBLIC void switch_address_space(struct proc * p) 
+{
 
 }
