@@ -23,6 +23,15 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "arch.h"
+
+extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE;
+extern char _arch_init_start, _arch_init_end;
+
+/* paging utilities */
+PRIVATE phys_bytes kern_vir_base = (phys_bytes) &_VIR_BASE;
+PRIVATE phys_bytes kern_phys_base = (phys_bytes) &_PHYS_BASE;
+PRIVATE phys_bytes kern_size = (phys_bytes) &_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 PUBLIC void * k_stacks;
@@ -30,19 +39,47 @@ PUBLIC void * k_stacks;
 PRIVATE char * env_get(const char *name);
 PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
 
-PUBLIC void cstart(int argc, char* argv[]);
-
-PUBLIC void cstart(int argc, char* argv[])
+PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 {
-    char* a = 0x49020000;
-    *a = 'c';
-    while(1);
+    /*
     memset(kinfo.cmdline, 0, sizeof(kinfo.cmdline));
     int i;
     for (i = 1; i < argc; i++) {
-        char* arg = argv[i];
-        direct_print("%s\n", arg);
+        \/* copy argument into kinfo cmdline buffer *\/
+        char* name = argv[i];
+        char* value = strchr(name, '=');
+        if (!value) continue;
+
+        *value = '\0';
+        value++;
+        kinfo_set_param(kinfo.cmdline, name, value);
+    }*/
+
+    kinfo.kernel_start_pde = ARCH_PDE(kern_vir_base);
+    kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_size);
+    kinfo.kernel_start_phys = kern_phys_base;
+    kinfo.kernel_end_phys = kern_phys_base + kern_size; 
+
+    /* kernel memory layout */
+    kinfo.kernel_text_start = (vir_bytes)*(&_text);
+    kinfo.kernel_data_start = (vir_bytes)*(&_data);
+    kinfo.kernel_bss_start = (vir_bytes)*(&_bss);
+    kinfo.kernel_text_end = (vir_bytes)*(&_etext);
+    kinfo.kernel_data_end = (vir_bytes)*(&_edata);
+    kinfo.kernel_bss_end = (vir_bytes)*(&_ebss);
+
+    char * hz_value = env_get("hz");
+    if (hz_value) system_hz = atoi(hz_value);
+    if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
+
+    struct machine_desc* mach = (struct machine_desc*) &_arch_init_start;
+    for (; mach < (struct machine_desc*) &_arch_init_end; mach++) {
+        if (mach->id == mach_type) break;
     }
+    if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported");
+    direct_print("Mach type: %s\n", mach->name);
+    
+    while(1);
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

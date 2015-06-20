@@ -18,6 +18,8 @@ UBOOT=./scripts/download/u-boot.img
 
 source $SRCDIR/.config
 
+apt-get install u-boot-tools
+
 # Create a 1GiB blank disk image.
 #dd if=/dev/zero of=$IMG bs=4096 count=$SIZE
 
@@ -40,6 +42,8 @@ if [ ! -f $UBOOT ];
 then
    wget http://downloads.angstrom-distribution.org/demo/beagleboard/u-boot-beagleboard.img -O $UBOOT
 fi
+
+mkimage -A arm -O linux -T multi -C none -a 0x80200000 -e 0x80200000 -n 'Lyos/arm' -d  obj/destdir.arm/boot/lyos.bin obj/destdir.arm/boot/lyos.ub
 
 cp $MLO $UBOOT ./scripts/uEnv.txt $MOUNT_POINT
 cp -rf obj/destdir.arm/boot/* $MOUNT_POINT

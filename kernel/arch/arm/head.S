@@ -7,13 +7,14 @@
 .extern kernel_main
 
 _lyos_start:
-	ldr	sp, =UnpagedStackTop	/* Initial stack */
+	ldr	sp, =UnpagedStackTop	/* initial stack */
 	mov fp, #0
 
 	push {r0-r2}
 	bl setup_paging
 	pop {r0-r2}
 
+	/* jump to higher kernel */
 	ldr r3, =_paging_enabled
 	mov pc, r3
 

@@ -48,4 +48,6 @@ typedef unsigned int    pte_t;
 
 #define ARCH_PG_SIZE            PG_SIZE
 
+#define ARCH_PDE(x)     ((unsigned long)(x) / ARM_SECTION_SIZE)
+
 #endif

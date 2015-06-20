@@ -16,6 +16,6 @@
 #ifndef _ARCH_MACH_TYPE_H_
 #define _ARCH_MACH_TYPE_H_
 
-#define MACH_TYPE_OMAP3_BEAGLE   0x1
+#define MACH_TYPE_OMAP3_BEAGLE   1546
 
 #endif
