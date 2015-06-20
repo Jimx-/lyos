@@ -27,17 +27,31 @@
 
 PUBLIC void disp_char(const char c)
 {
-
+    char* a = 0x49020000;
+    *a = c;
 }
 
 PUBLIC void direct_put_str(const char * str)
 {
-
+    while (*str)  {
+        disp_char(*str);
+        str++;
+    }
 }
 
 PUBLIC int direct_print(const char * fmt, ...)
 {
-    return 0;
+    int i;
+    char buf[256];
+    va_list arg;
+    
+    va_start(arg, fmt); 
+    i = vsprintf(buf, fmt, arg);
+    direct_put_str(buf);
+
+    va_end(arg);
+
+    return i;
 }
 
 PUBLIC void direct_cls()

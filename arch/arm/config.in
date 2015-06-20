@@ -21,3 +21,24 @@ config SMP_MAX_CPUS
       The default value is 8 CPUs.
 
 endmenu
+
+menu "System type"
+
+choice
+	prompt "ARM system type"
+	default ARCH_MULTIPLATFORM
+
+config ARCH_MULTIPLATFORM
+	bool "Allow multiple platforms to be selected"
+
+config ARCH_OMAP
+	bool "TI OMAP"
+	help
+	  Support for TI's OMAP platform (OMAP1/2/3/4).
+
+endchoice
+
+source "kernel/arch/arm/plat-omap/config.in"
+source "kernel/arch/arm/mach-omap2/config.in"
+
+endmenu

@@ -1,0 +1,23 @@
+if ARCH_OMAP
+
+menu "TI OMAP Common Features"
+
+choice
+	prompt "OMAP System Type"
+	default ARCH_OMAP2PLUS
+
+config ARCH_OMAP1
+	bool "TI OMAP1"
+	help
+	  "Systems based on omap7xx, omap15xx or omap16xx"
+
+config ARCH_OMAP2PLUS
+	bool "TI OMAP2/3/4"
+	help
+	  "Systems based on OMAP2, OMAP3, OMAP4 or OMAP5"
+
+endchoice
+
+endmenu
+
+endif

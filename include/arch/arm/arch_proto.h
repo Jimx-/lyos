@@ -26,4 +26,51 @@
 
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
 
+/* Data memory barrier */
+static inline void dmb(void)
+{
+    asm volatile("dmb" : : : "memory");
+}
+
+/* Data synchronization barrier */
+static inline void dsb(void)
+{
+    asm volatile("dsb" : : : "memory");
+}
+
+/* Instruction synchronization barrier */
+static inline void isb(void)
+{
+    asm volatile("isb" : : : "memory");
+}
+
+static inline void barrier(void)
+{
+    dsb();
+    isb();
+}
+
+static inline void refresh_tlb(void)
+{
+    dsb();
+
+    asm volatile("mcr p15, 0, %[zero], c8, c7, 0 @ TLBIALL\n\t" : : [zero] "r" (0));
+    asm volatile("mcr p15, 0, %[zero], c7, c5, 0" : : [zero] "r" (0));
+    asm volatile("mcr p15, 0, %[zero], c7, c5, 6" : : [zero] "r" (0)); 
+
+    dsb();
+    isb();
+}
+
+/* Write Translation Table Base Register 0 */
+static inline void write_ttbr0(u32 bar)
+{
+    barrier();
+
+    asm volatile("mcr p15, 0, %[bar], c2, c0, 0 @ Write TTBR0\n\t"
+            : : [bar] "r" (bar));
+
+    refresh_tlb();
+}
+
 #endif

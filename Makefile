@@ -104,7 +104,7 @@ export KCONFIG_AUTOHEADER
 
 # All Phony Targets
 .PHONY : all everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries mrproper kernel fs drivers servers objdirs kvm kvm-debug
+	setup-toolchain libraries mrproper kernel fs drivers servers objdirs kvm kvm-debug 
 
 # Default starting position
 all : realclean everything
@@ -212,7 +212,7 @@ libraries:
 	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
 	@(cd lib; make)
 
-kernel: 
+kernel:
 	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'
 	@(cd kernel; make)
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
