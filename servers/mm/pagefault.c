@@ -64,12 +64,12 @@ PUBLIC void do_handle_fault()
         if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
     }
 
-    if (!(vr->flags & RF_WRITABLE) && wrflag) {
+    /*if (!(vr->flags & RF_WRITABLE) && wrflag) {
         printl("MM: SIGSEGV %d ro address %x\n", mm_msg.FAULT_PROC, pfla);
 
         if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
         if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
-    }
+    }*/
         
     if (region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1) == 0) handled = 1;
 
@@ -105,7 +105,7 @@ PRIVATE int handle_memory(struct mmproc * mmp, vir_bytes start, vir_bytes len, i
     while (len > 0) {
         if (!(vr = region_lookup(mmp, start))) {
             return EFAULT;
-        } else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
+        } //else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
 
         vir_bytes offset = start - (vir_bytes)vr->vir_addr;
         vir_bytes sublen = len;

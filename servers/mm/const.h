@@ -23,12 +23,18 @@
  */
 #define GROWSDOWN_GUARD_LEN     0x8000
 
+/* Region flags */
 #define RF_NORMAL   0x0
 #define RF_WRITABLE 0x1
 #define RF_SHARED   0x2
 #define RF_MAPPED   0x4
 #define RF_GUARD    0x8
 #define RF_GROWSDOWN 0x10
+
+/* Page frame flags */
+#define PFF_WRITABLE 0x1
+#define PFF_SHARED   0x2
+#define PFF_MAPPED   0x4
 
 #define MAX_PAGEDIR_PDES    5
  
