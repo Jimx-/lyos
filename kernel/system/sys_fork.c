@@ -31,6 +31,7 @@
 PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
 {
     endpoint_t parent_ep = m->ENDPOINT;
+    void* newsp = m->BUF;
     int child_slot = m->PROC_NR, parent_slot, retval;
 
     int gen = ENDPOINT_G(parent_ep) + 1;
@@ -54,6 +55,12 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     }
 
     if (m->FLAGS & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
+
+#ifdef __i386__
+    if (newsp != NULL) {
+        child->regs.esp = (reg_t)newsp;
+    }
+#endif
 
     m->ENDPOINT = child_ep;
     unlock_proc(parent);

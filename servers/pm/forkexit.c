@@ -43,6 +43,8 @@ PRIVATE void check_parent(struct pmproc * pmp, int try_cleanup);
 PUBLIC int do_fork(MESSAGE * p)
 {
     int child_slot = 0, n = 0;
+    void* newsp = p->BUF;
+
     endpoint_t parent_ep = p->source, child_ep;
     struct pmproc * pm_parent = pm_endpt_proc(parent_ep);
     if (!pm_parent) return EINVAL;
@@ -61,6 +63,7 @@ PUBLIC int do_fork(MESSAGE * p)
     msg2mm.type = PM_MM_FORK;
     msg2mm.ENDPOINT = parent_ep;
     msg2mm.PROC_NR = child_slot;
+    msg2mm.BUF = newsp;
     send_recv(BOTH, TASK_MM, &msg2mm);
     if (msg2mm.RETVAL != 0) return msg2mm.RETVAL;
     child_ep = msg2mm.ENDPOINT;
@@ -75,7 +78,7 @@ PUBLIC int do_fork(MESSAGE * p)
     pmp->pid = find_free_pid();
 
     p->PID = pmp->pid;
-
+    
     /* tell FS, see fs_fork() */
     MESSAGE msg2fs;
     msg2fs.type = PM_VFS_FORK;

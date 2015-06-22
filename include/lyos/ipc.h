@@ -24,7 +24,7 @@
 #define ASMF_DONE   0x2
 typedef struct {
     endpoint_t dest;
-    MESSAGE* msg;
+    MESSAGE msg;
     int flags;
     int result;
 } async_message_t;
@@ -34,5 +34,6 @@ int sendrec(int function, int src_dest, MESSAGE* p_msg);
 int send_async(async_message_t* table, size_t len);
 
 int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags);
+int async_sendrec(endpoint_t dest, MESSAGE* msg, int flags);
 
 #endif

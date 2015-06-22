@@ -582,6 +582,7 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
 
     	flags = amsg.flags;
     	dest = amsg.dest;
+    	amsg.msg.source = sender->endpoint;
 
     	if (!flags) continue;
     	if (flags & ASMF_DONE) continue;
@@ -589,9 +590,7 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
     	done = FALSE;
     	if (dest != p->endpoint) continue;
 
-    	MESSAGE tmp;
-    	data_vir_copy_check(p, KERNEL, &tmp, sender->endpoint, amsg.msg, sizeof(MESSAGE));
-		retval = data_vir_copy_check(p, KERNEL, p->recv_msg, sender->endpoint, amsg.msg, sizeof(MESSAGE));
+		retval = data_vir_copy_check(p, KERNEL, p->recv_msg, KERNEL, &amsg.msg, sizeof(MESSAGE));
 		if (retval != 0) {
 			goto async_error;
 		}
@@ -867,6 +866,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
 
     	flags = amsg.flags;
     	dest = amsg.dest;
+    	amsg.msg.source = p_to_send->endpoint;
 
     	if (dest == p_to_send->endpoint) {
     		retval = EINVAL;
@@ -887,7 +887,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
     	if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
 	    	(p_dest->recvfrom == p_to_send->endpoint ||
 	     	p_dest->recvfrom == ANY)) {
-			retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, p_to_send->endpoint, amsg.msg, sizeof(MESSAGE));
+			retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, KERNEL, &amsg.msg, sizeof(MESSAGE));
 			if (retval != 0) {
 				unlock_proc(p_dest);
 				goto async_error;

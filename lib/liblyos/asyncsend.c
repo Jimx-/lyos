@@ -69,7 +69,7 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
     }
 
     async_msg[next_slot].flags |= ASMF_USED;
-    async_msg[next_slot].msg = msg;
+    async_msg[next_slot].msg = *msg;
     async_msg[next_slot].dest = dest;
 
     next_slot++;
@@ -77,4 +77,13 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
 
     /* tell kernel to process messages */
     return send_async(&async_msg[first_slot], len);
+}
+
+PUBLIC int async_sendrec(endpoint_t dest, MESSAGE* msg, int flags)
+{
+    int retval = asyncsend3(dest, msg, 0);
+    if (retval) return retval;
+
+    retval = send_recv(RECEIVE, dest, msg);
+    return retval;
 }

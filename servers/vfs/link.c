@@ -25,6 +25,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "errno.h"
 #include "path.h"
 #include "proto.h"
@@ -49,7 +50,7 @@ PRIVATE int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
     m.REQ_NUM = (int)num;
     m.REQ_FILESIZE = newsize;
 
-    send_recv(BOTH, fs_ep, &m);
+    async_sendrec(fs_ep, &m, 0);
 
     return m.RET_RETVAL;
 }

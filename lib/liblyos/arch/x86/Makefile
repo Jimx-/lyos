@@ -15,6 +15,10 @@ $(ARCHLIB): $(LOBJS)
 	@echo -e '\tASM\tlib/liblyos/arch/x86/$@'
 	@$(ASM) $(ASMKFLAGS) -o $@ $<
 
+%.o : %.S
+	@echo -e '\tAS\tlib/liblyos/arch/x86/$@'
+	@$(AS) $(ASFLAGS) -o $@ $<
+
 %.o: %.c
 	@echo -e '\tCC\tlib/liblyos/arch/x86/$@'
 	@$(CC) $(CFLAGS) -o $@ $<

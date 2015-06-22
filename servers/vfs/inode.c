@@ -25,6 +25,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "errno.h"
 #include "fcntl.h"
 #include "path.h"
@@ -129,6 +130,6 @@ PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num)
     m.REQ_DEV = dev;
     m.REQ_NUM = num;
 
-    send_recv(BOTH, fs_e, &m);
+    async_sendrec(fs_e, &m, 0);
     return m.RET_RETVAL;
 }

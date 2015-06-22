@@ -44,6 +44,7 @@ PUBLIC int do_fork()
 {
     endpoint_t parent_ep = mm_msg.ENDPOINT;
     int child_slot = mm_msg.PROC_NR;
+    void* newsp = mm_msg.BUF;
     endpoint_t child_ep;
     struct mmproc * mmp = &mmproc_table[child_slot];
 
@@ -56,7 +57,7 @@ PUBLIC int do_fork()
     mmp->slot = child_slot;
     mmp->flags &= MMPF_INUSE;
 
-    if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, KF_MMINHIBIT)) != 0) return retval;
+    if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, KF_MMINHIBIT, newsp)) != 0) return retval;
     mmp->endpoint = child_ep;
 
     if (pgd_new(&(mmp->pgd)) != 0) {
@@ -67,24 +68,16 @@ PUBLIC int do_fork()
     if (pgd_bind(mmp, &mmp->pgd)) panic("MM: fork: cannot bind new pgdir");
 
     INIT_LIST_HEAD(&(mmp->mem_regions));
-
     /* copy regions */
     struct vir_region * vr;
     list_for_each_entry(vr, &(mmparent->mem_regions), list) {
         struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
-           list_add(&(new_region->list), &(mmp->mem_regions));
+        list_add(&(new_region->list), &(mmp->mem_regions));
            
-           if (!(vr->flags & RF_MAPPED)) continue;
+        if (!(vr->flags & RF_MAPPED)) continue;
 
-           /*if (vr->flags & RF_WRITABLE) {
-               region_alloc_phys(new_region);
-               region_map_phys(mmp, new_region);
-
-               data_copy(child_ep, new_region->vir_addr, parent_ep, vr->vir_addr, vr->length);
-           } else {  */  /* can be shared */
-               region_share(mmp, new_region, mmparent, vr);
-               region_map_phys(mmp, new_region);
-           //}
+        region_share(mmp, new_region, mmparent, vr);
+        region_map_phys(mmp, new_region);
     }
 
     /* child PID will be returned to the parent proc */

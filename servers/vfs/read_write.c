@@ -25,6 +25,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include <sys/stat.h>
 #include "errno.h"
 #include "path.h"
@@ -59,7 +60,7 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, in
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    send_recv(BOTH, fs_ep, &m);
+    async_sendrec(fs_ep, &m, 0);
 
     if (m.type != FSREQ_RET) {
         printl("VFS: request_readwrite: received invalid message.");
@@ -159,7 +160,7 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 positio
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    send_recv(BOTH, fs_ep, &m);
+    async_sendrec(fs_ep, &m, 0);
 
     if (m.RET_RETVAL == 0) { 
         *newpos = m.RWPOS;

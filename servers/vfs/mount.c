@@ -32,6 +32,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #define __LINUX_ERRNO_EXTENSIONS__   /* we want ENOTBLK */
 #include "errno.h"
 #include "fcntl.h"
@@ -290,7 +291,7 @@ PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)
     m.type = FS_MOUNTPOINT;
     m.REQ_DEV = dev;
     m.REQ_NUM = num;
-    send_recv(BOTH, fs_ep, &m);
+    async_sendrec(fs_ep, &m, 0);
 
     return m.RET_RETVAL;
 }

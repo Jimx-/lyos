@@ -277,6 +277,8 @@ int fork()
 {
 	MESSAGE msg;
 	msg.type = FORK;
+	msg.FLAGS = 0;
+	msg.BUF = NULL;
 
 	cmb();
 

@@ -13,7 +13,7 @@ realclean :
 
 $(SYSFS): $(FSOBJS)
 	@echo -e '\tLD\tfs/sysfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tfs/sysfs/$@'

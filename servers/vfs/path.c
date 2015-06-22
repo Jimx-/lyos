@@ -25,6 +25,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "errno.h"
 #include "fcntl.h"
 #include "path.h"
@@ -50,7 +51,8 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
     m.REQ_UCRED = &ucred;
 
     memset(ret, 0, sizeof(struct lookup_result));
-    send_recv(BOTH, fs_e, &m);
+    //send_recv(BOTH, fs_e, &m);
+    async_sendrec(fs_e, &m, 0);
 
     int retval = m.RET_RETVAL;
 

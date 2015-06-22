@@ -27,6 +27,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "path.h"
 #include "const.h"
 #include "proto.h"
@@ -90,7 +91,7 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
 
     m.REQ_DEV = dev;
 
-    send_recv(BOTH, fs_ep, &m);
+    async_sendrec(fs_ep, &m, 0);
     
     int retval = m.RET_RETVAL;
 

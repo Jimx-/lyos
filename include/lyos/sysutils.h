@@ -45,7 +45,7 @@ PUBLIC int      syscall_entry(int syscall_nr, MESSAGE * m);
 PUBLIC void     panic(const char *fmt, ...);
 
 #define KF_MMINHIBIT    1
-PUBLIC int      kernel_fork(endpoint_t parent_ep, int child_proc, endpoint_t * child_ep, int flags);
+PUBLIC int      kernel_fork(endpoint_t parent_ep, int child_proc, endpoint_t * child_ep, int flags, void* newsp);
 
 PUBLIC int      kernel_clear(endpoint_t ep);
 
