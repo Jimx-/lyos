@@ -25,6 +25,9 @@ struct mmproc {
 
     struct list_head mem_regions;   /* Memory regions */
 
+    struct mmproc* group_leader;
+    struct list_head group_list;
+    
     endpoint_t endpoint;
     int slot;
 };

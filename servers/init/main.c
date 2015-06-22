@@ -7,15 +7,25 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <sched.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
+
+char stack[2048];
+int func(void* arg)
+{
+	printf("!!!!!!!!!!!!!!!!Thread !\n");
+	return 0;
+}
 
 int main(int argc, char * argv[])
 {
 	int fd_stdin  = open("/dev/console", O_RDWR);
 	int fd_stdout = open("/dev/console", O_RDWR);
 	int fd_stderr = open("/dev/console", O_RDWR);
+
+	clone(func, (char*)stack + 2048, CLONE_VM, NULL);
 
 	int pid_rc = fork();
 	if (pid_rc) {

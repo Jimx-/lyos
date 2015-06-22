@@ -1,7 +1,6 @@
 .section .text
 
 .global __clone
-.global __done
 
 .equ STACK_PARENT,	1
 .equ NR_SENDREC,	1
@@ -15,7 +14,6 @@ __clone:
 
 	mov (%esp), %ecx
 	cmpl $STACK_PARENT, %ecx
-__done:
 	je __clone_parent
 
 	movl 4(%esp), %eax	/* fn */

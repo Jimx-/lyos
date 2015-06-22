@@ -160,6 +160,8 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
 			mmp = &mmproc_table[bp->proc_nr];
 			mmp->flags = MMPF_INUSE;
 			mmp->endpoint = endpoint;
+			mmp->group_leader = mmp;
+			INIT_LIST_HEAD(&mmp->group_list);
 
 			return mmp;
 		}

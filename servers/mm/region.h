@@ -49,6 +49,7 @@ struct vir_region {
     int length;
     struct phys_region phys_block;  /*<- physical memory block */
 
+    int refcnt;
     int flags;
 };
 

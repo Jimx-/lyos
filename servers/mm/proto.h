@@ -67,7 +67,7 @@ PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
-                            struct mmproc * p_src, struct vir_region * src);
+                            struct mmproc * p_src, struct vir_region * src, int private);
 PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr);
 PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr, 
         vir_bytes offset, vir_bytes sublen, int wrflag);

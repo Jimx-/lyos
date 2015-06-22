@@ -44,6 +44,7 @@ PUBLIC int do_fork(MESSAGE * p)
 {
     int child_slot = 0, n = 0;
     void* newsp = p->BUF;
+    int flags = p->FLAGS;
     endpoint_t parent_ep = p->source, child_ep;
     struct pmproc * pm_parent = pm_endpt_proc(parent_ep);
     if (!pm_parent) return EINVAL;
@@ -63,6 +64,7 @@ PUBLIC int do_fork(MESSAGE * p)
     msg2mm.ENDPOINT = parent_ep;
     msg2mm.PROC_NR = child_slot;
     msg2mm.BUF = newsp;
+    msg2mm.FLAGS = flags;
     send_recv(BOTH, TASK_MM, &msg2mm);
     if (msg2mm.RETVAL != 0) return msg2mm.RETVAL;
     child_ep = msg2mm.ENDPOINT;

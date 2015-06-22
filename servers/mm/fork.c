@@ -26,6 +26,7 @@
 #include "signal.h"
 #include "errno.h"
 #include "sys/wait.h"
+#include <sched.h>
 #include "region.h"
 #include "const.h"
 #include "proto.h"
@@ -45,6 +46,7 @@ PUBLIC int do_fork()
     endpoint_t parent_ep = mm_msg.ENDPOINT;
     int child_slot = mm_msg.PROC_NR;
     void* newsp = mm_msg.BUF;
+    int flags = mm_msg.FLAGS;
     endpoint_t child_ep;
     struct mmproc * mmp = &mmproc_table[child_slot];
 
@@ -76,8 +78,18 @@ PUBLIC int do_fork()
            
         if (!(vr->flags & RF_MAPPED)) continue;
 
-        region_share(mmp, new_region, mmparent, vr);
+        region_share(mmp, new_region, mmparent, vr, (flags & CLONE_VM) ? FALSE : TRUE);
         region_map_phys(mmp, new_region);
+    }
+
+    mmp->group_leader = mmp;
+    INIT_LIST_HEAD(&mmp->group_list);
+
+    /* add child to process group */
+    if (flags & CLONE_VM) {
+        mmp->group_leader = mmparent->group_leader;
+        if (mmparent->group_leader == NULL) panic("do_fork(): BUG: parent has no group leader\n");
+        list_add(&mmp->group_list, &mmp->group_leader->group_list);
     }
 
     /* child PID will be returned to the parent proc */

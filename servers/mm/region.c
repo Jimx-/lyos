@@ -155,6 +155,7 @@ PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags
         region->vir_addr = vir_base;
         region->length = vir_length;
         region->flags = flags;
+        region->refcnt = 1;
         struct phys_region * pr = &(region->phys_block);
         pr->capacity = 0;
         if (phys_region_init(pr, region->length / PG_SIZE) != 0) return NULL;
@@ -390,7 +391,7 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
 #endif
 
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
-                            struct mmproc * p_src, struct vir_region * src)
+                            struct mmproc * p_src, struct vir_region * src, int private)
 {
     int i;
 
@@ -407,7 +408,7 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
         if (frame->refcnt) {
             frame->refcnt++;
             frame->flags |= PFF_SHARED;
-            frame->flags &= ~PFF_WRITABLE;
+            if (private) frame->flags &= ~PFF_WRITABLE;
             phys_region_set(prdest, i, frame);
         }
     }
@@ -493,12 +494,15 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
 
 PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes offset)
 {
+    /* TODO: notify all group members of the change to keep synchronized */
     struct phys_region * pregion = &vr->phys_block;
     struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
 
+    /* release the old frame */
     frame->refcnt--;
     if (frame->refcnt <= 1) frame->flags |= PFF_WRITABLE;
     
+    /* allocate a new frame */
     struct phys_frame * new_frame;
     SLABALLOC(new_frame);
     if (!new_frame) return ENOMEM;
@@ -507,11 +511,13 @@ PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes off
     new_frame->flags = frame->flags & PFF_WRITABLE;
     phys_region_set(pregion, offset / ARCH_PG_SIZE, new_frame);
 
+    /* map the new frame */
     int retval = region_alloc_phys(vr);
     if (retval) return retval;
 
     region_map_phys(mmp, vr);
 
+    /* copy the data to the new frame */
     return data_copy(mmp->endpoint, (void *)((vir_bytes)vr->vir_addr + offset), NO_TASK, (void *)frame->phys_addr, ARCH_PG_SIZE); 
 }
 
@@ -520,7 +526,8 @@ PUBLIC int region_free(struct vir_region * rp)
     struct phys_region * pregion = &(rp->phys_block);
 
     phys_region_free(pregion);
-    SLABFREE(rp);
+    rp->refcnt--;
+    if (rp->refcnt <= 0) SLABFREE(rp);
 
     return 0;
 }
