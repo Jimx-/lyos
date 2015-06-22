@@ -12,6 +12,8 @@ __clone:
 	movl 12(%esp), %ebx
 	int $0x90
 
+	lock; addl $0,0(%esp)
+
 	mov (%esp), %ecx
 	cmpl $STACK_PARENT, %ecx
 	je __clone_parent

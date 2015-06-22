@@ -192,6 +192,7 @@
 #define GS_SETSID	10
 #define GS_GETPGID	11
 #define GS_GETPPID	12
+#define GS_GETTID	13
 				 
 #define GS_GETHOSTNAME	1
 #define GS_SETHOSTNAME	2

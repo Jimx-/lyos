@@ -22,6 +22,7 @@
 struct pmproc {
     int flags;
     
+    pid_t tgid;
     pid_t pid;
 
     endpoint_t endpoint;
@@ -42,6 +43,9 @@ struct pmproc {
     uid_t realuid, effuid, suid;
     gid_t realgid, effgid, sgid;
     pid_t procgrp;
+
+    struct pmproc* group_leader;
+    struct list_head thread_group;
 
     int exit_status;
 };

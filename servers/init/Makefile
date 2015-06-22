@@ -12,7 +12,7 @@ realclean :
 
 $(INIT): $(INITOBJS)
 	@echo -e '\tLD\tservers/init/$@'
-	@$(CC) -o $@ $^
+	@$(CC) -o $@ $^ -Xlinker -Ttext -Xlinker 0x8000
 
 %.o: %.c
 	@echo -e '\tCC\tservers/init/$@'

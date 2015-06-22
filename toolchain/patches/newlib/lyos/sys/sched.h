@@ -25,8 +25,9 @@
 extern "C" {
 #endif
 
-#define CLONE_VM		0x100
-#define CLONE_VFORK		0x4000
+#define CLONE_VM		0x00000100
+#define CLONE_VFORK		0x00004000
+#define CLONE_THREAD	0x00010000
 
 int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg, ...);
 

@@ -183,6 +183,20 @@ int getpid()
 	return msg.PID;
 }
 
+int gettid()
+{
+	MESSAGE msg;
+	msg.type	= GETSETID;
+	msg.REQUEST = GS_GETTID;
+    
+    cmb();
+
+	send_recv(BOTH, TASK_PM, &msg);
+	//assert(msg.type == SYSCALL_RET);
+
+	return msg.PID;
+}
+
 pid_t getppid(void)
 {
 	MESSAGE msg;

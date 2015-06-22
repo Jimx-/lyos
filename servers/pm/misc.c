@@ -48,6 +48,9 @@ PUBLIC int do_getsetid(MESSAGE * p)
         p->ENDPOINT = p->source;
         break;
     case GS_GETPID:
+        p->PID = pmp->tgid;
+        break;
+    case GS_GETTID:
         p->PID = pmp->pid;
         break;
     case GS_GETPPID:

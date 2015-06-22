@@ -159,6 +159,9 @@ PRIVATE void pm_init()
         pmp->flags |= PMPF_INUSE;
         pmp->endpoint = bp->endpoint;
         pmp->tracer = NO_TASK;
+        pmp->tgid = pmp->pid;
+        pmp->group_leader = pmp;
+        INIT_LIST_HEAD(&pmp->thread_group);
 
         vfs_msg.type = PM_VFS_INIT;
         vfs_msg.PROC_NR = bp->proc_nr;

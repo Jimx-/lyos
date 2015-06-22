@@ -24,6 +24,7 @@
 #include "lyos/const.h"
 #include "string.h"
 #include <errno.h>
+#include <sched.h>
 #include "lyos/proc.h"
 #include <lyos/ipc.h>
 #include <lyos/sysutils.h>
@@ -77,6 +78,19 @@ PUBLIC int do_fork(MESSAGE * p)
     pmp->parent = parent_ep;
     pmp->endpoint = child_ep;
     pmp->pid = find_free_pid();
+
+    /* thread-related */
+    pmp->tgid = pmp->pid;
+    if (flags & CLONE_THREAD) {
+        pmp->tgid = pm_parent->tgid;
+    }
+
+    pmp->group_leader = pmp;
+    INIT_LIST_HEAD(&pmp->thread_group);
+    if (flags & CLONE_THREAD) {
+        pmp->group_leader = pm_parent->group_leader;
+        list_add(&pmp->thread_group, &pm_parent->group_leader->thread_group);
+    }
 
     p->PID = pmp->pid;
     
