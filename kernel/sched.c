@@ -40,6 +40,8 @@ PUBLIC bitchunk_t sched_queue_bitmap[BITCHUNKS(SCHED_QUEUES)];
 
 PUBLIC u32 rr_interval_ms;
 
+#define JIFFIES_MS(j) (((j) * MSEC_PER_SEC) / system_hz)
+
 PRIVATE void dequeue_proc_locked(struct proc * p);
 
 PUBLIC void init_sched()
@@ -85,6 +87,11 @@ PUBLIC struct proc * pick_proc()
     }
 
     list_for_each_entry(p, &sched_queues[q], run_list) {
+        if (p->deadline < JIFFIES_MS(jiffies)) {
+            selected = p;
+            break;
+        }
+
         if (smallest == -1 || smallest > p->deadline) {
             smallest = p->deadline;
             selected = p;
@@ -153,7 +160,19 @@ PUBLIC void proc_no_time(struct proc * p)
     int prio_ratio = p->priority;
 
     p->counter_ns = rr_interval_ms * NSEC_PER_MSEC;
-    p->deadline = jiffies + rr_interval_ms * prio_ratio;
+    p->deadline = JIFFIES_MS(jiffies) + rr_interval_ms * prio_ratio;
 
     PST_UNSET(p, PST_NO_QUANTUM);
+}
+
+/**
+ * <Ring 0> Update deadline of the process upon clock interrupt.
+ */
+PUBLIC void sched_clock(struct proc* p)
+{
+    int prio_ratio = p->priority;
+    //u32 time_slice = (u32)p->counter_ns;
+
+    //p->deadline = JIFFIES_MS(jiffies) + time_slice / NSEC_PER_MSEC * prio_ratio;
+    p->deadline = JIFFIES_MS(jiffies) + rr_interval_ms * prio_ratio;
 }

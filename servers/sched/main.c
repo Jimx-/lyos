@@ -29,7 +29,7 @@
 PUBLIC int main()
 {
     printl("sched: Userspace scheduler is running.\n");
-
+    
     while (TRUE) {
         MESSAGE msg;
 

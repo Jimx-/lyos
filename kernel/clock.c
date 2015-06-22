@@ -40,6 +40,8 @@ DEF_LIST(timer_list);
 PUBLIC spinlock_t timers_lock;
 PUBLIC clock_t next_timeout = TIMER_UNSET;
 
+PUBLIC void sched_clock(struct proc* p);
+
 /*****************************************************************************
  *                                read_jiffies
  *****************************************************************************/
@@ -100,6 +102,8 @@ PUBLIC int clock_handler(irq_hook_t * hook)
     }
 #endif
 
+    sched_clock(get_cpulocal_var(proc_ptr));
+    
     return 1;
 }
 

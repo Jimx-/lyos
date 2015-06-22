@@ -158,8 +158,12 @@ no_schedule:
 		ksig_proc(p->endpoint, SIGTRAP);
 	}
 
-	if (p->counter_ns <= 0) proc_no_time(p);
 	if (!proc_is_runnable(p)) goto reschedule;
+	if (p->counter_ns <= 0) {
+		PST_SET(p, PST_NO_QUANTUM);
+		proc_no_time(p);
+		goto reschedule;
+	}
 
 	p = arch_switch_to_user();
 

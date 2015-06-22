@@ -12,7 +12,7 @@ realclean :
 
 $(PM): $(PMOBJS)
 	@echo -e '\tLD\tservers/pm/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)  -Xlinker -Ttext -Xlinker 0x8000
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tservers/pm/$@'
