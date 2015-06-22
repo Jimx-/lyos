@@ -401,7 +401,7 @@ int waitpid(int pid, int * status, int options)
 
 	send_recv(BOTH, TASK_PM, &msg);
 
-	*status = msg.STATUS;
+	if (status) *status = msg.STATUS;
 
 	return msg.PID;
 }
@@ -423,7 +423,7 @@ int wait(int * status)
 
 	send_recv(BOTH, TASK_PM, &msg);
 
-	*status = msg.STATUS;
+	if (status) *status = msg.STATUS;
 
 	return msg.PID;
 }

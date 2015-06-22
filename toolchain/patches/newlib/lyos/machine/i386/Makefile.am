@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = cygnus
 
 noinst_LIBRARIES = lib.a
 
-lib_a_SOURCES = __sigreturn.S gate_intr.S
+lib_a_SOURCES = __sigreturn.S gate_intr.S clone.c __clone.S
 lib_a_LIBADD =
 lib_a_DEPENDENCIES =
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)

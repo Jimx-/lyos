@@ -7,9 +7,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <lyos/type.h>
-#include <lyos/const.h>
-#include <lyos/ipc.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
@@ -20,10 +17,9 @@ int main(int argc, char * argv[])
 	int fd_stdout = open("/dev/console", O_RDWR);
 	int fd_stderr = open("/dev/console", O_RDWR);
 
-	int pida = fork();
-	if (pida) {
-		int status;
-		wait3(&status, 0, NULL);
+	int pid_rc = fork();
+	if (pid_rc) {
+		waitpid(pid_rc, NULL, 0);
 	} else {
 		char * rc_args[] = {"/bin/sh", "/etc/rc", NULL};
 		execv("/bin/sh", rc_args);

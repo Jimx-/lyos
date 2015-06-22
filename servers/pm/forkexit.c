@@ -44,7 +44,6 @@ PUBLIC int do_fork(MESSAGE * p)
 {
     int child_slot = 0, n = 0;
     void* newsp = p->BUF;
-
     endpoint_t parent_ep = p->source, child_ep;
     struct pmproc * pm_parent = pm_endpt_proc(parent_ep);
     if (!pm_parent) return EINVAL;
