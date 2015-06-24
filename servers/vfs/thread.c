@@ -36,13 +36,100 @@
 #include "proto.h"
 #include <elf.h>
 #include "global.h"
-#include "thread.h"1
+#include "thread.h"
+
+PRIVATE DEF_SPINLOCK(request_queue_lock);
+PRIVATE DEF_LIST(request_queue);
+int queued_request = 0;
+
+PRIVATE DEF_SPINLOCK(waiting_queue_lock);
+PRIVATE DEF_LIST(waiting_queue);
+
+PRIVATE void thread_wait(struct worker_thread* thread)
+{
+    thread->state = WT_WAITING;
+
+    spinlock_lock(&waiting_queue_lock);
+    list_add(&thread->wait, waiting_queue.prev);
+    spinlock_unlock(&waiting_queue_lock);
+
+    MESSAGE wait_mess;
+    send_recv(RECEIVE, TASK_FS, &wait_mess);
+
+    if (wait_mess.type != FS_THREAD_WAKEUP) panic("[Thread %d]: unknown wakeup message from vfs\n");
+}
+
+PRIVATE void thread_wakeup(struct worker_thread* thread)
+{
+    if (thread->state == WT_RUNNING) return;
+
+    spinlock_lock(&waiting_queue_lock);
+    list_del(&thread->wait);
+    spinlock_unlock(&waiting_queue_lock);
+
+    MESSAGE wakeup_mess;
+    wakeup_mess.type = FS_THREAD_WAKEUP;
+    send_recv(SEND, thread->endpoint, &wakeup_mess);
+}
+
+PUBLIC void enqueue_request(MESSAGE* msg)
+{
+    struct vfs_message* req = (struct vfs_message*) malloc(sizeof(struct vfs_message));
+    if (!req) panic("enqueue_request(): Out of memory");
+
+    memcpy(&req->msg, msg, sizeof(MESSAGE));
+    INIT_LIST_HEAD(&req->list);
+
+    spinlock_lock(&request_queue_lock);
+    list_add(&req->list, &request_queue);
+    queued_request++;
+    spinlock_unlock(&request_queue_lock);
+
+    if (list_empty(&waiting_queue)) return;
+    /* try to wake up some threads */
+
+    int i = queued_request;
+    struct worker_thread* thread, *tmp;
+    list_for_each_entry_safe(thread, tmp, &waiting_queue, wait) {
+        if (i < 0) break;
+
+        thread_wakeup(thread);
+        i--;
+    }
+}
+
+PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
+{
+    struct vfs_message* ret;
+
+    while (1) {
+        spinlock_lock(&request_queue_lock);
+        if (!list_empty(&request_queue)) {
+            ret = list_entry(request_queue.next, struct vfs_message, list);
+            list_del(&ret->list);
+            queued_request--;
+            spinlock_unlock(&request_queue_lock);
+            return ret;
+        }
+        spinlock_unlock(&request_queue_lock);
+
+        thread_wait(thread);
+    }
+
+    return NULL;
+}
 
 PRIVATE int worker_loop(void* arg)
 {
-    printl("Worker %d\n", arg);
-    MESSAGE m;
-        send_recv(RECEIVE, ANY, &m);
+    struct worker_thread* self = (struct worker_thread*) arg;
+    struct vfs_message* req;
+
+    printl("VFS: Worker thread %d is ready\n", self->id);
+    
+    while (1) {
+        req = dequeue_request(self);
+        free(req);
+    }
 }
 
 PUBLIC pid_t create_worker(int id)
@@ -52,8 +139,10 @@ PUBLIC pid_t create_worker(int id)
     if (id >= NR_WORKER_THREADS || id < 0) return -EINVAL;
 
     struct worker_thread* thread = &workers[id];
+    thread->id = id;
+    thread->state = WT_WAITING;
 
-    pid_t pid = clone(worker_loop, (char*)thread->stack + sizeof(thread->stack), CLONE_VM | CLONE_THREAD, (void*) id);
+    pid_t pid = clone(worker_loop, (char*)thread->stack + sizeof(thread->stack), CLONE_VM | CLONE_THREAD, (void*) thread);
     if (pid < 0) return pid;
 
     retval = get_procep(pid, &thread->endpoint);
@@ -72,6 +161,12 @@ PUBLIC pid_t create_worker(int id)
 
     if ((retval = privctl(thread->endpoint, PRIVCTL_SET_PRIV, &thread->priv)) != 0) return -retval;
     if ((retval = privctl(thread->endpoint, PRIVCTL_ALLOW, NULL)) != 0) return -retval;
+
+    INIT_LIST_HEAD(&thread->wait);
+
+    spinlock_lock(&waiting_queue_lock);
+    list_add(&thread->wait, &waiting_queue);
+    spinlock_unlock(&waiting_queue_lock);
 
     return pid;
 }

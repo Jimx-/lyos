@@ -266,6 +266,7 @@ enum msgtype {
     FS_MMAP,
     FS_CHMOD,
     FS_GETDENTS,
+    FS_THREAD_WAKEUP,
 
     /* message type for mm calls */
     MM_MAP_PHYS = 1201,

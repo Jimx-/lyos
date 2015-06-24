@@ -20,14 +20,24 @@
 
 #define DEFAULT_THREAD_STACK_SIZE   2048
 
-#define NR_WORKER_THREADS  2
+#define NR_WORKER_THREADS           4
 
+#define WT_RUNNING     0
+#define WT_WAITING     1
 struct worker_thread {
     int id;
     endpoint_t endpoint;
     struct priv priv;
+    int state;
 
     char stack[DEFAULT_THREAD_STACK_SIZE];
+
+    struct list_head wait;
+};
+
+struct vfs_message {
+    struct list_head list;
+    MESSAGE msg;
 };
 
 #endif

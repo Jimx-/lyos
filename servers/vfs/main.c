@@ -56,16 +56,6 @@
  * utime
  */
 
-
-int thread_func(void* arg)
-{
-    printl("Hello, thread");
-    MESSAGE m;
-    int i = send_recv(RECEIVE, ANY, &m);
-    printl("%d\n", i);
-}
-char stack[2048];
-
 PUBLIC void init_vfs();
 
 PRIVATE int fs_fork(MESSAGE * p);
@@ -87,6 +77,8 @@ PUBLIC int main()
 		pcaller = vfs_endpt_proc(src);
 		int msgtype = msg.type;
 
+		enqueue_request(&msg);
+		
 		switch (msgtype) {
         case FS_REGISTER:
             msg.RETVAL = do_register_filesystem(&msg);
