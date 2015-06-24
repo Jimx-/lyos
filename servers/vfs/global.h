@@ -23,6 +23,7 @@
 #endif
     
 #include "fproc.h"
+#include "thread.h"
 
 /* FS */
 EXTERN  int                 ROOT_DEV;
@@ -44,11 +45,15 @@ extern struct list_head vfs_mount_table;
 /* how many times the root is mounted */
 extern int have_root;
 
+extern int nr_workers;
+
 #define INODE_HASH_LOG2   7    
 #define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)
 #define INODE_HASH_MASK   (((unsigned long)1<<INODE_HASH_LOG2)-1)
 
 /* inode hash table */
 EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
+
+EXTERN struct worker_thread workers[NR_WORKER_THREADS];
 
 #endif 

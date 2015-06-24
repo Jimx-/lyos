@@ -27,6 +27,4 @@
 EXTERN int initfs_headers_count;
 EXTERN int initfs_headers[MAX_HEADERS];
 
-EXTERN endpoint_t this_ep;
-
 #endif

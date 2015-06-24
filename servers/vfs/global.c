@@ -27,6 +27,8 @@ PUBLIC DEF_LIST(filesystem_table);
 
 PUBLIC int have_root = 0;
 
+PUBLIC int nr_workers = 0; 
+
 PUBLIC  u8 * fsbuf = (u8*)&_fsbuf;
 
 /*****************************************************************************/

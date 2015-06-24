@@ -95,12 +95,14 @@ PUBLIC int do_fork(MESSAGE * p)
     p->PID = pmp->pid;
     
     /* tell FS, see fs_fork() */
-    MESSAGE msg2fs;
-    msg2fs.type = PM_VFS_FORK;
-    msg2fs.ENDPOINT = child_slot;
-    msg2fs.PENDPOINT = parent_ep;
-    msg2fs.PID = pmp->pid;
-    send_recv(BOTH, TASK_FS, &msg2fs);
+    if (parent_ep != TASK_FS) {
+        MESSAGE msg2fs;
+        msg2fs.type = PM_VFS_FORK;
+        msg2fs.ENDPOINT = child_slot;
+        msg2fs.PENDPOINT = parent_ep;
+        msg2fs.PID = pmp->pid;
+        send_recv(BOTH, TASK_FS, &msg2fs);
+    }
 
     /* birth of the child */
     MESSAGE msg2child;

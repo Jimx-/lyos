@@ -29,7 +29,7 @@
 PRIVATE endpoint_t driver_table[NR_DEVICES];
 PRIVATE endpoint_t self_ep = NO_TASK;
 
-PRIVATE void bdev_init()
+PUBLIC void bdev_init()
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++) driver_table[i] = NO_TASK;

@@ -32,7 +32,7 @@
 #include "libmemfs/libmemfs.h"
 #include "node.h"
 #include "proto.h"
-    
+
 PRIVATE int sysfs_init();
 PRIVATE int sysfs_message_hook(MESSAGE * m);
 

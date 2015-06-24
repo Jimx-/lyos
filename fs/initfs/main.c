@@ -36,8 +36,6 @@ PUBLIC int main()
 {
 	printl("initfs: InitFS driver is running\n");
 
-    this_ep = get_endpoint(); /* get our endpoint */
-
 	MESSAGE m;
 
 	int reply;
@@ -55,9 +53,6 @@ PUBLIC int main()
             break;
 		case FS_PUTINODE:
 			break;
-        /*
-        case FS_MOUNTPOINT:
-            break; */
         case FS_READSUPER:
             m.RET_RETVAL = initfs_readsuper(&m);
             break;
@@ -67,16 +62,10 @@ PUBLIC int main()
         case FS_RDWT:
         	m.RWRET = initfs_rdwt(&m);
         	break;
-        /*
-        case FS_CREATE:
-        	break;
-        case FS_FTRUNC:
-        	break;
-        */
         case FS_SYNC:
             break;
 		default:
-			printl("initfs: unknown message\n");
+			m.RET_RETVAL = ENOSYS;
 			break;
 		}
 

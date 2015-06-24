@@ -40,7 +40,7 @@ PUBLIC int initfs_readsuper(MESSAGE * p)
     int i, position = 0;
     initfs_headers_count = 0;
 
-    bdev_driver(dev);
+    bdev_init();
     
     for (i = 0;;i++)
     {

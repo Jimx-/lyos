@@ -82,5 +82,7 @@ PUBLIC int do_chmod(int type, MESSAGE * p);
 PUBLIC int do_ioctl(MESSAGE * p);
 PUBLIC int do_fcntl(MESSAGE * p);
 
+PUBLIC pid_t create_worker(int id);
+
 #endif
 

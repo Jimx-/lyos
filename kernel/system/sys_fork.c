@@ -32,6 +32,7 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
 {
     endpoint_t parent_ep = m->ENDPOINT;
     void* newsp = m->BUF;
+    int flags = m->FLAGS;
     int child_slot = m->PROC_NR, parent_slot, retval;
 
     int gen = ENDPOINT_G(parent_ep) + 1;
@@ -42,6 +43,7 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     struct proc * parent = proc_addr(parent_slot), * child = proc_addr(child_slot);
 
     lock_proc(parent);
+    lock_proc(child);
 
     *child = *parent;
     snprintf(child->name, sizeof(child->name), "%s_%d", parent->name, child_ep);
@@ -54,7 +56,11 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
         PST_SET_LOCKED(child, PST_NO_PRIV);
     }
 
-    if (m->FLAGS & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
+    /* clear message queue */
+    child->q_sending = NULL;
+    child->next_sending = NULL;
+
+    if (flags & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
 
 #ifdef __i386__
     if (newsp != NULL) {

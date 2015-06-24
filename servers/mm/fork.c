@@ -59,7 +59,10 @@ PUBLIC int do_fork()
     mmp->slot = child_slot;
     mmp->flags &= MMPF_INUSE;
 
-    if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, KF_MMINHIBIT, newsp)) != 0) return retval;
+    int kfork_flags = KF_MMINHIBIT;
+    if (flags & CLONE_THREAD) kfork_flags |= KF_THREAD;
+
+    if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, kfork_flags, newsp)) != 0) return retval;
     mmp->endpoint = child_ep;
 
     if (pgd_new(&(mmp->pgd)) != 0) {

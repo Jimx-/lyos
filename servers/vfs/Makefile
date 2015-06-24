@@ -3,7 +3,7 @@
 
 VFS 		= vfs
 FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
-				read_write.o stat.o link.o misc.o exec.o device.o
+				read_write.o stat.o link.o misc.o exec.o device.o thread.o
 LIBS 		= -lexec -llyos
 
 everything : realclean $(VFS)
@@ -13,7 +13,7 @@ realclean :
 
 $(VFS): $(FSOBJS)
 	@echo -e '\tLD\tservers/vfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) -Xlinker -Ttext -Xlinker 0x8000
 
 %.o: %.c
 	@echo -e '\tCC\tservers/vfs/$@'

@@ -34,6 +34,7 @@
 #include <elf.h>
 #include "lyos/param.h"
 #include "global.h"
+#include "thread.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -55,6 +56,15 @@
  * utime
  */
 
+
+int thread_func(void* arg)
+{
+    printl("Hello, thread");
+    MESSAGE m;
+    int i = send_recv(RECEIVE, ANY, &m);
+    printl("%d\n", i);
+}
+char stack[2048];
 
 PUBLIC void init_vfs();
 
@@ -199,6 +209,15 @@ PUBLIC void init_vfs()
     
     pm_msg.RETVAL = 0;
     send_recv(SEND, TASK_PM, &pm_msg);
+
+    int id;
+    for (id = 0; id < NR_WORKER_THREADS; id++) {
+    	pid_t pid = create_worker(id);
+    	if (pid > 0) nr_workers++;
+    }
+    printl("VFS: Started %d worker thread(s)\n", nr_workers);
+
+    //clone(thread_func, (char*)stack + 2048, CLONE_VM | CLONE_THREAD, NULL);
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root

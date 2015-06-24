@@ -13,28 +13,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "errno.h"
-#include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
-#include "assert.h"
-#include "lyos/const.h"
-#include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
-#include "lyos/list.h"
-#include "lyos/driver.h"
-#include "global.h"
-    
-/**
- * <Ring 1> Read/Write init device
- */
-PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length, void * buf)
-{
-	bdev_readwrite(rw_flag, dev, position, length, TASK_INITFS, buf);
-}
+#ifndef _VFS_THREAD_H_
+#define _VFS_THREAD_H_
+
+#include <lyos/priv.h>
+
+#define DEFAULT_THREAD_STACK_SIZE   2048
+
+#define NR_WORKER_THREADS  2
+
+struct worker_thread {
+    int id;
+    endpoint_t endpoint;
+    struct priv priv;
+
+    char stack[DEFAULT_THREAD_STACK_SIZE];
+};
+
+#endif

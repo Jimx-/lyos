@@ -47,6 +47,7 @@ PUBLIC int announce_chardev(char * name, dev_t dev);
 PUBLIC endpoint_t get_blockdev_driver(dev_t dev);
 PUBLIC endpoint_t get_chardev_driver(dev_t dev);
 
+PUBLIC void bdev_init();
 PUBLIC int bdev_driver(dev_t dev);
 PUBLIC int bdev_readwrite(int io_type, int dev, u64 pos,
             int bytes, int proc_nr, void * buf);
