@@ -42,6 +42,9 @@ PRIVATE DEF_SPINLOCK(request_queue_lock);
 PRIVATE DEF_LIST(request_queue);
 int queued_request = 0;
 
+PRIVATE DEF_SPINLOCK(response_queue_lock);
+PRIVATE DEF_LIST(response_queue);
+
 PRIVATE DEF_SPINLOCK(waiting_queue_lock);
 PRIVATE DEF_LIST(waiting_queue);
 
@@ -119,6 +122,27 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
     return NULL;
 }
 
+PRIVATE void enqueue_response(struct vfs_message* res)
+{
+    spinlock_lock(&response_queue_lock);
+    list_add(&res->list, &response_queue);
+    spinlock_unlock(&response_queue_lock);
+}
+
+PUBLIC struct vfs_message* dequeue_response()
+{
+    struct vfs_message* ret = NULL;
+
+    spinlock_lock(&response_queue_lock);
+    if (!list_empty(&response_queue)) {
+        ret = list_entry(response_queue.next, struct vfs_message, list);
+        list_del(&ret->list);
+    }
+    spinlock_unlock(&response_queue_lock);
+
+    return ret;
+}
+
 PRIVATE int worker_loop(void* arg)
 {
     struct worker_thread* self = (struct worker_thread*) arg;
@@ -128,7 +152,8 @@ PRIVATE int worker_loop(void* arg)
     
     while (1) {
         req = dequeue_request(self);
-        free(req);
+        /* handle request */
+        enqueue_response(req);
     }
 }
 

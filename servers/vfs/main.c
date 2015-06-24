@@ -157,6 +157,13 @@ PUBLIC int main()
 			msg.type = SYSCALL_RET;
 			send_recv(SEND_NONBLOCK, src, &msg);
 		}
+
+		struct vfs_message* res;
+		while (TRUE) {
+			res = dequeue_response();
+			if (!res) break;
+			free(res);
+		}
 	}
 
 	return 0;

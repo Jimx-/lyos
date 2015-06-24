@@ -16,6 +16,8 @@
 #ifndef _VFS_PROTO_H_
 #define _VFS_PROTO_H_
 
+#include "thread.h"
+    
 PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr);
 PUBLIC struct fproc * vfs_endpt_proc(endpoint_t ep);
 
@@ -84,6 +86,7 @@ PUBLIC int do_fcntl(MESSAGE * p);
 
 PUBLIC pid_t create_worker(int id);
 PUBLIC void enqueue_request(MESSAGE* msg);
+PUBLIC struct vfs_message* dequeue_response();
 
 #endif
 
