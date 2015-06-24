@@ -12,21 +12,31 @@ diff -rupN origin/config.sub new/config.sub
 diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
 --- origin/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
 +++ new/gcc/config/lyos.h	2014-10-12 10:29:05.011217056 +0800
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,25 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
-+	do { \
-+		builtin_define_std ("lyos"); \
-+		builtin_define_std ("unix"); \
-+		builtin_assert ("system=lyos"); \
-+		builtin_assert ("system=unix"); \
-+	} while (0);
++  do { \
++    builtin_define_std ("lyos"); \
++    builtin_define_std ("unix"); \
++    builtin_assert ("system=lyos"); \
++    builtin_assert ("system=unix"); \
++  } while (0);
 +
 +#undef STARTFILE_SPEC
-+#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
++#define STARTFILE_SPEC "%{!shared:crt0.o%s} \
++   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
 +
 +#undef ENDFILE_SPEC
 +#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++
++#undef  LINK_SPEC
++#define LINK_SPEC "-m lyos_i386 \
++  %{shared:-shared -dynamic-linker " "/lib/ld-lyos.so" "} \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      %{m32:-dynamic-linker " "/lib/ld-lyos.so" "}} \
++    %{static:-static}}"
 +
 diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
 --- origin/gcc/config.gcc	2013-03-07 06:54:11.000000000 +0800
@@ -85,7 +95,7 @@ diff -rupN origin/libgcc/config.host new/libgcc/config.host
  	;;
 +i[34567]86-*-lyos*)
 + tmake_file="$tmake_file i386/t-i386elf t-svr4 i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
-+	extra_parts="crtbegin.o crtend.o"
++	extra_parts="$extra_parts crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o"
 +	;;
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"

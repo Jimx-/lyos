@@ -73,7 +73,7 @@ if __name__ == "__main__":
 		mkdir('gcc')
 		push_dir('gcc')
 		os.environ["PKG_CONFIG_LIBDIR"] = ""
-		configure(GCC_VERSION, ' --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+		#configure(GCC_VERSION, ' --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc')
 		make('all-gcc')
 		make('install-gcc')
 		make('all-target-libgcc')
