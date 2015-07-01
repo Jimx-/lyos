@@ -62,7 +62,7 @@ PUBLIC void clear_inode(struct inode * pin)
 
 PUBLIC struct inode * new_inode(dev_t dev, ino_t num)
 {
-    struct inode * pin = (struct inode *)sbrk(sizeof(struct inode));
+    struct inode * pin = (struct inode *)malloc(sizeof(struct inode));
     if (!pin) return NULL;
 
     clear_inode(pin);
@@ -109,8 +109,9 @@ PUBLIC void put_inode(struct inode * pin)
     }
 
     unhash_inode(pin);
-    
     unlock_inode(pin);
+    
+    free(pin);
 }
 
 PUBLIC void lock_inode(struct inode * pin)

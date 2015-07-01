@@ -60,7 +60,7 @@ PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
 
 PUBLIC struct vfs_mount * get_free_vfs_mount()
 {
-    struct  vfs_mount * vmnt = (struct vfs_mount *)sbrk(sizeof(struct vfs_mount));
+    struct  vfs_mount * vmnt = (struct vfs_mount *)malloc(sizeof(struct vfs_mount));
     if (vmnt == NULL) {
         err_code = ENOMEM;
         return NULL;
