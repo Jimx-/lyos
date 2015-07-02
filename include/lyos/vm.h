@@ -21,7 +21,8 @@
 #define PCTL_WHO    u.m3.m3i1
 #define PCTL_PARAM  u.m3.m3i2
 
-#define PCTL_CLEARPROC   1 
+#define PCTL_CLEARPROC      1 
+#define PCTL_CLEARMEM       2
 
 /* vmctl request */
 #define VMCTL_BOOTINHIBIT_CLEAR 1

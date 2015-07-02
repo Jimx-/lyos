@@ -72,12 +72,13 @@ PUBLIC int do_fork()
 
     if (pgd_bind(mmp, &mmp->pgd)) panic("MM: fork: cannot bind new pgdir");
 
-    INIT_LIST_HEAD(&(mmp->mem_regions));
+    if ((mmp->mem_regions = region_alloc_vm_area()) == NULL) return -ENOMEM;
+
     /* copy regions */
     struct vir_region * vr;
-    list_for_each_entry(vr, &(mmparent->mem_regions), list) {
+    list_for_each_entry(vr, &mmparent->mem_regions->list, list) {
         struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
-        list_add(&(new_region->list), &(mmp->mem_regions));
+        list_add(&(new_region->list), &mmp->mem_regions->list);
            
         if (!(vr->flags & RF_MAPPED)) continue;
 
@@ -101,14 +102,14 @@ PUBLIC int do_fork()
     return 0;
 }
 
-PUBLIC int proc_free(struct mmproc * mmp)
+PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
 {
     /* free memory */
     struct vir_region * vr;
 
-    if (!list_empty(&(mmp->mem_regions))) {
-        list_for_each_entry(vr, &(mmp->mem_regions), list) {
-            if ((&(vr->list) != &(mmp->mem_regions)) && (&(vr->list) != mmp->mem_regions.next)) {
+    if (!list_empty(&mmp->mem_regions->list)) {
+        list_for_each_entry(vr, &mmp->mem_regions->list, list) {
+            if ((&(vr->list) != &mmp->mem_regions->list) && (&(vr->list) != mmp->mem_regions->list.next)) {
                 region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
                 region_free(list_entry(vr->list.prev, struct vir_region, list));
             }
@@ -116,7 +117,12 @@ PUBLIC int proc_free(struct mmproc * mmp)
     }
     region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
     region_free(list_entry(vr->list.prev, struct vir_region, list)); 
-    INIT_LIST_HEAD(&(mmp->mem_regions));
+
+    if (clear_proc) 
+        region_free_vm_area(mmp->mem_regions);
+    else    /* clear mem regions only */
+        INIT_LIST_HEAD(&mmp->mem_regions->list);
+
     pgd_clear(&(mmp->pgd));
 
     return 0;

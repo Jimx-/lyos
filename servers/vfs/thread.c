@@ -147,8 +147,6 @@ PRIVATE int worker_loop(void* arg)
 {
     struct worker_thread* self = (struct worker_thread*) arg;
     struct vfs_message* req;
-
-    printl("VFS: Worker thread %d is ready\n", self->id);
     
     while (1) {
         req = dequeue_request(self);

@@ -23,6 +23,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <atomic.h>
 #include "signal.h"
 #include "errno.h"
 #include "region.h"
@@ -254,7 +255,7 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
 
     if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
 
-    list_add(&vr->list, &mmp->mem_regions);
+    list_add(&vr->list, &mmp->mem_regions->list);
 
     return vr;
 }
@@ -320,7 +321,7 @@ PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr)
 {
     unsigned offset = ~0;
     struct vir_region * vr, * rb = NULL;
-    list_for_each_entry(vr, &(mmp->mem_regions), list) {
+    list_for_each_entry(vr, &mmp->mem_regions->list, list) {
         /* need no extend */
         if (addr >= (int)(vr->vir_addr) && addr <= (int)(vr->vir_addr) + vr->length) {
             return 0;
@@ -422,7 +423,7 @@ PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
 {
     struct vir_region * vr;
 
-    list_for_each_entry(vr, &(mmp->mem_regions), list) {
+    list_for_each_entry(vr, &mmp->mem_regions->list, list) {
         if (addr >= (vir_bytes)(vr->vir_addr) && addr < (vir_bytes)(vr->vir_addr) + vr->length) {
             return vr;
         }
@@ -530,4 +531,26 @@ PUBLIC int region_free(struct vir_region * rp)
     if (rp->refcnt <= 0) SLABFREE(rp);
 
     return 0;
+}
+
+PUBLIC struct vm_area* region_alloc_vm_area()
+{
+    struct vm_area* area;
+
+    SLABALLOC(area);
+    if (!area) return NULL;
+
+    INIT_LIST_HEAD(&area->list);
+    INIT_ATOMIC(&area->refcnt, 1);
+    
+    return area;
+}
+
+PUBLIC void region_free_vm_area(struct vm_area* area)
+{
+    atomic_dec(&area->refcnt);
+
+    if (atomic_get(&area->refcnt) <= 0) {
+        SLABFREE(area);
+    }
 }

@@ -54,6 +54,7 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd);
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
 PUBLIC int pgd_clear(pgdir_t * pgd);
 PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv, vir_bytes maxv);
+PUBLIC struct vm_area* region_alloc_vm_area();
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);
 PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags);
@@ -75,7 +76,7 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
         vir_bytes offset, int wrflag);
 PUBLIC int region_free(struct vir_region * rp);
 
-PUBLIC int proc_free(struct mmproc * p);
+PUBLIC int proc_free(struct mmproc * p, int clear_proc);
 
 /* mm/forkexit.c */
 PUBLIC int  do_fork();

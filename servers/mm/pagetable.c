@@ -114,6 +114,8 @@ PUBLIC void pt_init()
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
 
+    //if ((mmprocess->mem_regions = region_alloc_vm_area()) == NULL) panic("cannot allocate vm area");
+
     pt_init_done = 1;
 }
 

@@ -110,7 +110,7 @@ PUBLIC void put_inode(struct inode * pin)
 
     unhash_inode(pin);
     unlock_inode(pin);
-    
+
     free(pin);
 }
 

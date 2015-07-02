@@ -67,5 +67,5 @@ PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len)
 
 PUBLIC int libexec_clearproc(struct exec_info * execi)
 {
-    return procctl(execi->proc_e, PCTL_CLEARPROC);
+    return procctl(execi->proc_e, PCTL_CLEARMEM);
 }

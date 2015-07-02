@@ -13,33 +13,29 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _MM_MMPROC_H_
-#define _MM_MMPROC_H_
+#ifndef _ARCH_ATOMIC_H_
+#define _ARCH_ATOMIC_H_
 
-#include <atomic.h>
-#include <page.h>
-    
-struct vm_area {
-    atomic_t refcnt;
-    struct list_head list;
-};
+typedef struct {
+    volatile int counter;
+} atomic_t;
 
-/* Memory related information of a process */
-struct mmproc {
-    int flags;
-    pgdir_t pgd;
+#define ATOMIC_INIT(i) { (i) }
+#define INIT_ATOMIC(v, i) do { (v)->counter = i; } while(0) 
 
-    struct vm_area* mem_regions;   /* Memory regions */
+PRIVATE inline int atomic_get(atomic_t* v)
+{
+    return v->counter;
+}
 
-    struct mmproc* group_leader;
-    struct list_head group_list;
-    
-    endpoint_t endpoint;
-    int slot;
-};
+PRIVATE inline void atomic_inc(atomic_t* v)
+{
+    asm volatile("lock incl %0" : "+m" (v->counter));
+}
 
-#define MMPF_INUSE  0x01
-
-#define mmproc2ep(mmp) ((mmp) - mmproc_table)
+PRIVATE inline void atomic_dec(atomic_t* v)
+{
+    asm volatile("lock decl %0" : "+m" (v->counter));
+}
 
 #endif
