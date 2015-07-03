@@ -7,7 +7,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <sched.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
@@ -25,7 +24,7 @@ int main(int argc, char * argv[])
 		char * rc_args[] = {"/bin/sh", "/etc/rc", NULL};
 		execv("/bin/sh", rc_args);
 	}
-	
+
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
 	if (fd_hostname != -1) {

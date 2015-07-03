@@ -64,7 +64,7 @@ PUBLIC int do_fork()
 
     int clone_vm = flags & CLONE_VM;
 
-    if (clone_vm) {
+    if (clone_vm) {     /* share address space */
         mmp->mm = NULL;
         mmp->active_mm = mmparent->active_mm;
         atomic_inc(&mmp->active_mm->refcnt);

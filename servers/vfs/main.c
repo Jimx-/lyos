@@ -71,13 +71,13 @@ PUBLIC int main()
 	init_vfs();
 	
 	MESSAGE msg;
-	while (1) {
+	while (TRUE) {
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
 		pcaller = vfs_endpt_proc(src);
 		int msgtype = msg.type;
 
-		enqueue_request(&msg);
+		/*enqueue_request(&msg);*/
 		
 		switch (msgtype) {
         case FS_REGISTER:
@@ -158,12 +158,18 @@ PUBLIC int main()
 			send_recv(SEND_NONBLOCK, src, &msg);
 		}
 
-		struct vfs_message* res;
+		/*struct vfs_message* res;
 		while (TRUE) {
 			res = dequeue_response();
 			if (!res) break;
+
+			if (res->msg.type != SUSPEND_PROC && res->msg.RETVAL != SUSPEND) {
+				res->msg.type = SYSCALL_RET;
+				send_recv(SEND_NONBLOCK, res->msg.source, &res->msg);
+			}
+
 			free(res);
-		}
+		}*/
 	}
 
 	return 0;
