@@ -73,7 +73,7 @@ PUBLIC int do_mmap()
         if (prot & PROT_WRITE) vr_flags |= RF_WRITABLE;
 
         if (!(vr = mmap_region(mmp, addr, flags, len, vr_flags))) return ENOMEM;
-        list_add(&(vr->list), &mmp->mem_regions->list);
+        list_add(&(vr->list), &mmp->active_mm->mem_regions);
     }
 
     mm_msg.MMAP_RETADDR = (int)vr->vir_addr;

@@ -52,6 +52,7 @@ PRIVATE struct pagedir_mapping {
 } pagedir_mappings[MAX_PAGEDIR_PDES];
 
 PRIVATE struct mmproc * mmprocess = &mmproc_table[TASK_MM];
+PRIVATE struct mm_struct self_mm;
 //#define PAGETABLE_DEBUG    1
 
 /* before MM has set up page table for its own, we use these pages in page allocation */
@@ -77,6 +78,12 @@ PUBLIC void pt_init()
         global_bit = ARCH_PG_GLOBAL;
 #endif
 
+    /* init mm structure */
+    mmprocess->mm = &self_mm;
+    mm_init(mmprocess->mm);
+    mmprocess->mm->slot = TASK_MM;
+    mmprocess->active_mm = mmprocess->mm;
+
     /* Setting up page dir mappings, which make all page dirs visible to kernel */
     int end_pde = kernel_info.kernel_end_pde;
     for (i = 0; i < MAX_PAGEDIR_PDES; i++) {
@@ -94,7 +101,7 @@ PUBLIC void pt_init()
     pt_kern_mapping_init();
 
     /* prepare page directory for MM */
-    pgdir_t * mypgd = &mmprocess->pgd;
+    pgdir_t * mypgd = &mmprocess->mm->pgd;
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
     
     unsigned int mypdbr = 0;
@@ -114,9 +121,32 @@ PUBLIC void pt_init()
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
 
-    //if ((mmprocess->mem_regions = region_alloc_vm_area()) == NULL) panic("cannot allocate vm area");
-
     pt_init_done = 1;
+}
+
+PUBLIC struct mm_struct* mm_allocate()
+{
+    struct mm_struct* mm;
+
+    int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
+    mm = alloc_vmem(NULL, len);
+    return mm;
+}
+
+PUBLIC void mm_init(struct mm_struct* mm)
+{
+    if (!mm) return;
+
+    INIT_LIST_HEAD(&mm->mem_regions);
+    INIT_ATOMIC(&mm->refcnt, 1);
+}
+
+PUBLIC void mm_free(struct mm_struct* mm)
+{
+    if (atomic_dec_and_test(&mm->refcnt) <= 0) {
+        int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
+        free_vmem(mm, len);
+    }
 }
 
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
@@ -365,7 +395,7 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
 
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
 {
-    int slot = who->slot, pdm_slot;
+    int slot = who->active_mm->slot, pdm_slot;
     int pages_per_pgdir = ARCH_PGD_SIZE / ARCH_PG_SIZE;
     int slots_per_pdm = ARCH_VM_DIR_ENTRIES / pages_per_pgdir;
 

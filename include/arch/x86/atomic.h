@@ -38,4 +38,14 @@ PRIVATE inline void atomic_dec(atomic_t* v)
     asm volatile("lock decl %0" : "+m" (v->counter));
 }
 
+PRIVATE inline int atomic_dec_and_test(atomic_t* v)  
+{  
+    unsigned char c;  
+  
+    asm volatile("lock decl %0; sete %1"  
+             : "+m" (v->counter), "=qm" (c)  
+             : : "memory");  
+    return c != 0;  
+}  
+
 #endif

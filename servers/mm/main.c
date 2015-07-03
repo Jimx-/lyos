@@ -139,11 +139,14 @@ PRIVATE void init_mm()
 		if (bp->proc_nr < 0) continue;
 
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
-		mmp->slot = i;
 		mmp->flags = MMPF_INUSE;
-		if ((mmp->mem_regions = region_alloc_vm_area()) == NULL) panic("cannot allocate vm area");
 
 		if (bp->proc_nr == TASK_MM) continue;
+		
+		if ((mmp->mm = mm_allocate()) == NULL) panic("cannot allocate mm struct for %d", bp->endpoint);
+		mm_init(mmp->mm);
+		mmp->mm->slot = i;
+		mmp->active_mm = mmp->mm;
 
 		spawn_bootproc(mmp, bp);
 
@@ -182,7 +185,7 @@ PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
 	struct vir_region * vr = NULL;
 
 	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
-    list_add(&(vr->list), &mmexeci->mmp->mem_regions->list);
+    list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
 
     return 0;
 }
@@ -193,7 +196,7 @@ PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len
 	struct vir_region * vr = NULL;
 
 	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_PREALLOC, len, RF_WRITABLE))) return ENOMEM;
-    list_add(&(vr->list), &mmexeci->mmp->mem_regions->list);
+    list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
 
     return 0;
 }
@@ -209,8 +212,8 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
 
 PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 {
-	if (pgd_new(&(mmp->pgd))) panic("MM: spawn_bootproc: pgd_new failed");
-	if (pgd_bind(mmp, &mmp->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
+	if (pgd_new(&mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_new failed");
+	if (pgd_bind(mmp, &mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
 
 	struct mm_exec_info mmexeci;
 	struct exec_info * execi = &mmexeci.execi;

@@ -234,7 +234,7 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
 #endif
         int flags = PG_PRESENT | PG_USER;
         if (frame->flags & PFF_WRITABLE) flags |= PG_RW;
-        pt_mappage(&(mmp->pgd), frame->phys_addr, (void*)base, flags);
+        pt_mappage(&mmp->active_mm->pgd, frame->phys_addr, (void*)base, flags);
         frame->flags |= PFF_MAPPED;
     }
 
@@ -250,12 +250,12 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
     int pages = len / ARCH_PG_SIZE;
     if (len % ARCH_PG_SIZE) pages++;
 
-    vir_bytes vaddr = pgd_find_free_pages(&mmp->pgd, pages, minv, maxv);
+    vir_bytes vaddr = pgd_find_free_pages(&mmp->active_mm->pgd, pages, minv, maxv);
     if (vaddr == 0) return NULL;
 
     if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
 
-    list_add(&vr->list, &mmp->mem_regions->list);
+    list_add(&vr->list, &mmp->active_mm->mem_regions);
 
     return vr;
 }
@@ -268,7 +268,7 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     /* not mapped */
     if (!(rp->flags & RF_MAPPED)) return 0;
 
-    unmap_memory(&(mmp->pgd), rp->vir_addr, rp->length);
+    unmap_memory(&mmp->active_mm->pgd, rp->vir_addr, rp->length);
 
     struct phys_region * pregion = &(rp->phys_block);
     int i;
@@ -283,6 +283,7 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     return 0;
 }
 
+#if 0
 /**
  * <Ring 1> Make virtual region rp write-protected. 
  */
@@ -316,12 +317,13 @@ PUBLIC int region_unwp_page(struct mmproc * mmp, struct vir_region * rp, vir_byt
 
     return 0;
 }
+#endif
 
 PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr)
 {
     unsigned offset = ~0;
     struct vir_region * vr, * rb = NULL;
-    list_for_each_entry(vr, &mmp->mem_regions->list, list) {
+    list_for_each_entry(vr, &mmp->active_mm->mem_regions, list) {
         /* need no extend */
         if (addr >= (int)(vr->vir_addr) && addr <= (int)(vr->vir_addr) + vr->length) {
             return 0;
@@ -392,7 +394,7 @@ PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
 #endif
 
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
-                            struct mmproc * p_src, struct vir_region * src, int private)
+                            struct mmproc * p_src, struct vir_region * src)
 {
     int i;
 
@@ -409,7 +411,7 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
         if (frame->refcnt) {
             frame->refcnt++;
             frame->flags |= PFF_SHARED;
-            if (private) frame->flags &= ~PFF_WRITABLE;
+            frame->flags &= ~PFF_WRITABLE;
             phys_region_set(prdest, i, frame);
         }
     }
@@ -423,7 +425,7 @@ PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
 {
     struct vir_region * vr;
 
-    list_for_each_entry(vr, &mmp->mem_regions->list, list) {
+    list_for_each_entry(vr, &mmp->active_mm->mem_regions, list) {
         if (addr >= (vir_bytes)(vr->vir_addr) && addr < (vir_bytes)(vr->vir_addr) + vr->length) {
             return vr;
         }
@@ -531,26 +533,4 @@ PUBLIC int region_free(struct vir_region * rp)
     if (rp->refcnt <= 0) SLABFREE(rp);
 
     return 0;
-}
-
-PUBLIC struct vm_area* region_alloc_vm_area()
-{
-    struct vm_area* area;
-
-    SLABALLOC(area);
-    if (!area) return NULL;
-
-    INIT_LIST_HEAD(&area->list);
-    INIT_ATOMIC(&area->refcnt, 1);
-    
-    return area;
-}
-
-PUBLIC void region_free_vm_area(struct vm_area* area)
-{
-    atomic_dec(&area->refcnt);
-
-    if (atomic_get(&area->refcnt) <= 0) {
-        SLABFREE(area);
-    }
 }

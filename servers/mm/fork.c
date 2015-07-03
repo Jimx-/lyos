@@ -56,34 +56,43 @@ PUBLIC int do_fork()
     struct mmproc * mmparent = mmproc_table + parent_slot;
     
     *mmp = mmproc_table[parent_slot];
-    mmp->slot = child_slot;
     mmp->flags &= MMPF_INUSE;
 
     int kfork_flags = KF_MMINHIBIT;
-    if (flags & CLONE_THREAD) kfork_flags |= KF_THREAD;
-
     if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, kfork_flags, newsp)) != 0) return retval;
     mmp->endpoint = child_ep;
 
-    if (pgd_new(&(mmp->pgd)) != 0) {
-        printl("MM: fork: can't create new page directory.\n");
-        return -ENOMEM;
-    }
+    int clone_vm = flags & CLONE_VM;
 
-    if (pgd_bind(mmp, &mmp->pgd)) panic("MM: fork: cannot bind new pgdir");
+    if (clone_vm) {
+        mmp->mm = NULL;
+        mmp->active_mm = mmparent->active_mm;
+        atomic_inc(&mmp->active_mm->refcnt);
+        if (pgd_bind(mmp, &mmp->active_mm->pgd)) panic("MM: fork: cannot bind new pgdir");
+    } else {
+        if ((mmp->mm = mm_allocate()) == NULL) return -ENOMEM;
+        mm_init(mmp->mm);
+        mmp->mm->slot = child_slot;
+        mmp->active_mm = mmp->mm;
 
-    if ((mmp->mem_regions = region_alloc_vm_area()) == NULL) return -ENOMEM;
+        if (pgd_new(&mmp->mm->pgd) != 0) {
+            printl("MM: fork: can't create new page directory.\n");
+            return -ENOMEM;
+        }
 
-    /* copy regions */
-    struct vir_region * vr;
-    list_for_each_entry(vr, &mmparent->mem_regions->list, list) {
-        struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
-        list_add(&(new_region->list), &mmp->mem_regions->list);
+        if (pgd_bind(mmp, &mmp->mm->pgd)) panic("MM: fork: cannot bind new pgdir");
+
+        /* copy regions */
+        struct vir_region * vr;
+        list_for_each_entry(vr, &mmparent->active_mm->mem_regions, list) {
+            struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
+            list_add(&(new_region->list), &mmp->active_mm->mem_regions);
            
-        if (!(vr->flags & RF_MAPPED)) continue;
+            if (!(vr->flags & RF_MAPPED)) continue;
 
-        region_share(mmp, new_region, mmparent, vr, (flags & CLONE_VM) ? FALSE : TRUE);
-        region_map_phys(mmp, new_region);
+            region_share(mmp, new_region, mmparent, vr);
+            region_map_phys(mmp, new_region);
+        }
     }
 
     mmp->group_leader = mmp;
@@ -107,9 +116,15 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
     /* free memory */
     struct vir_region * vr;
 
-    if (!list_empty(&mmp->mem_regions->list)) {
-        list_for_each_entry(vr, &mmp->mem_regions->list, list) {
-            if ((&(vr->list) != &mmp->mem_regions->list) && (&(vr->list) != mmp->mem_regions->list.next)) {
+    if (mmp->mm == NULL) {
+        atomic_dec(&mmp->active_mm->refcnt);
+        mmp->active_mm = NULL;
+        return 0;
+    }
+
+    if (!list_empty(&mmp->mm->mem_regions)) {
+        list_for_each_entry(vr, &mmp->mm->mem_regions, list) {
+            if ((&(vr->list) != &mmp->mm->mem_regions) && (&(vr->list) != mmp->mm->mem_regions.next)) {
                 region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
                 region_free(list_entry(vr->list.prev, struct vir_region, list));
             }
@@ -118,12 +133,14 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
     region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
     region_free(list_entry(vr->list.prev, struct vir_region, list)); 
 
-    if (clear_proc) 
-        region_free_vm_area(mmp->mem_regions);
-    else    /* clear mem regions only */
-        INIT_LIST_HEAD(&mmp->mem_regions->list);
+    pgd_clear(&(mmp->mm->pgd));
 
-    pgd_clear(&(mmp->pgd));
+    if (clear_proc) {
+        mm_free(mmp->mm);
+        mmp->mm = mmp->active_mm = NULL;
+    }
+    else    /* clear mem regions only */
+        INIT_LIST_HEAD(&mmp->mm->mem_regions);
 
     return 0;
 }

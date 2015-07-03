@@ -45,11 +45,11 @@ PUBLIC int do_procctl()
     switch (param) {
         case PCTL_CLEARPROC:    /* clear proc struct & mem regions */
             if (mm_msg.source != TASK_FS && mm_msg.source != TASK_PM) retval = EPERM;
-            else if (!list_empty(&mmp->mem_regions->list)) retval = proc_free(mmp, 1);
+            else if (!list_empty(&mmp->active_mm->mem_regions)) retval = proc_free(mmp, 1);
             break;
         case PCTL_CLEARMEM:     /* clear mem regions only */
             if (mm_msg.source != TASK_FS && mm_msg.source != TASK_PM) retval = EPERM;
-            else if (!list_empty(&mmp->mem_regions->list)) retval = proc_free(mmp, 0);
+            else if (!list_empty(&mmp->active_mm->mem_regions)) retval = proc_free(mmp, 0);
             break;
         default:
             retval = EINVAL;

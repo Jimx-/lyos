@@ -19,23 +19,25 @@
 #include <atomic.h>
 #include <page.h>
     
-struct vm_area {
+struct mm_struct {
     atomic_t refcnt;
-    struct list_head list;
+
+    int slot;
+    pgdir_t pgd;
+    struct list_head mem_regions;
 };
 
 /* Memory related information of a process */
 struct mmproc {
     int flags;
-    pgdir_t pgd;
 
-    struct vm_area* mem_regions;   /* Memory regions */
+    struct mm_struct* active_mm;
+    struct mm_struct* mm;
 
     struct mmproc* group_leader;
     struct list_head group_list;
     
     endpoint_t endpoint;
-    int slot;
 };
 
 #define MMPF_INUSE  0x01
