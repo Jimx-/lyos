@@ -40,6 +40,9 @@
  */
 PUBLIC int do_access(MESSAGE * p)
 {
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
+
     int namelen = p->NAME_LEN + 1;
     char pathname[MAX_PATH];
     if (namelen > MAX_PATH) return ENAMETOOLONG;
@@ -95,6 +98,9 @@ PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access)
  */
 PUBLIC mode_t do_umask(MESSAGE * p)
 {
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
+
     mode_t old = ~(pcaller->umask);
     pcaller->umask = ~((mode_t)p->MODE & RWX_MODES);
     return old;
@@ -118,6 +124,8 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, m
 PUBLIC int do_chmod(int type, MESSAGE * p)
 {
     struct inode * pin;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
 
     if (type == CHMOD) {
         char pathname[MAX_PATH];

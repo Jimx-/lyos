@@ -31,8 +31,8 @@
 #include "fcntl.h"
 #include "global.h"
 
-PRIVATE int change_directory(struct inode ** ppin, endpoint_t src, char * pathname, int len);
-PRIVATE int change_node(struct inode ** ppin, struct inode * pin);
+PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t src, char * pathname, int len);
+PRIVATE int change_node(struct fproc* fp, struct inode ** ppin, struct inode * pin);
 
 PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr)
 {
@@ -52,6 +52,8 @@ PUBLIC int do_fcntl(MESSAGE * p)
     int fd = p->FD;
     int request = p->REQUEST;
     int argx = p->BUF_LEN;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
 
     if (fd < 0 || fd >= NR_FILES) return -EINVAL;
 
@@ -92,6 +94,8 @@ PUBLIC int do_dup(MESSAGE * p)
 {
     int fd = p->FD;
     int newfd = p->NEWFD;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
 
     struct file_desc * filp = pcaller->filp[fd];
     
@@ -125,7 +129,9 @@ PUBLIC int do_dup(MESSAGE * p)
  */
 PUBLIC int do_chdir(MESSAGE * p)
 {
-    return change_directory(&(pcaller->pwd), p->source, p->PATHNAME, p->NAME_LEN);
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
+    return change_directory(pcaller, &pcaller->pwd, p->source, p->PATHNAME, p->NAME_LEN);
 }
 
 /**
@@ -133,11 +139,14 @@ PUBLIC int do_chdir(MESSAGE * p)
  */
 PUBLIC int do_fchdir(MESSAGE * p)
 {
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
+
     struct file_desc * filp = pcaller->filp[p->FD];
 
     if (!filp) return EINVAL;
 
-    return change_node(&(pcaller->pwd), filp->fd_inode);
+    return change_node(pcaller, &pcaller->pwd, filp->fd_inode);
 }
 
 /**
@@ -147,7 +156,7 @@ PUBLIC int do_fchdir(MESSAGE * p)
  * @param  len      Length of pathname.
  * @return          Zero on success.
  */
-PRIVATE int change_directory(struct inode ** ppin, endpoint_t src, char * string, int len)
+PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t src, char * string, int len)
 {
     char pathname[MAX_PATH];
     if (len > MAX_PATH) return ENAMETOOLONG;
@@ -156,10 +165,10 @@ PRIVATE int change_directory(struct inode ** ppin, endpoint_t src, char * string
     data_copy(SELF, pathname, src, string, len);
     pathname[len] = '\0';
 
-    struct inode * pin = resolve_path(pathname, pcaller);
+    struct inode * pin = resolve_path(pathname, fp);
     if (!pin) return err_code;
 
-    int retval = change_node(ppin, pin);
+    int retval = change_node(fp, ppin, pin);
 
     put_inode(pin);
     return retval;
@@ -168,7 +177,7 @@ PRIVATE int change_directory(struct inode ** ppin, endpoint_t src, char * string
 /**
  * <Ring 1> Change ppin into pin.
  */
-PRIVATE int change_node(struct inode ** ppin, struct inode * pin)
+PRIVATE int change_node(struct fproc* fp, struct inode ** ppin, struct inode * pin)
 {
     int retval = 0;
 
@@ -180,7 +189,7 @@ PRIVATE int change_node(struct inode ** ppin, struct inode * pin)
         retval = ENOTDIR;
     } else {
         /* must be searchable */
-        retval = forbidden(pcaller, pin, X_BIT); 
+        retval = forbidden(fp, pin, X_BIT); 
     }
 
     if (retval == 0) {

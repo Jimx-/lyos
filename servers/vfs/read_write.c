@@ -82,10 +82,11 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, in
 PUBLIC int do_rdwt(MESSAGE * p)
 {
     int fd = p->FD;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
     struct file_desc * filp = pcaller->filp[fd];
     int rw_flag = p->type;
     char * buf = p->BUF;
-    int src = p->source;
     int len = p->CNT;
 
     int bytes_rdwt = 0, retval = 0;
@@ -173,6 +174,8 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 positio
 PUBLIC int do_getdents(MESSAGE * p)
 {
     int fd = p->FD;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
     struct file_desc * filp = pcaller->filp[fd];
 
     if (!filp) return EBADF;

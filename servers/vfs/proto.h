@@ -39,7 +39,7 @@ PUBLIC struct inode * last_dir(char * pathname, struct fproc * fp);
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
 PUBLIC void lock_vmnt(struct vfs_mount * vmnt);
 PUBLIC void unlock_vmnt(struct vfs_mount * vmnt);
-PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
+PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
 PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access);
 PUBLIC mode_t do_umask(MESSAGE * p);
 

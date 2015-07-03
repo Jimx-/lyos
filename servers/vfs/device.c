@@ -33,6 +33,8 @@
 PUBLIC int do_ioctl(MESSAGE * p)
 {
     int fd = p->FD;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
     struct file_desc * filp = pcaller->filp[fd];
     if (filp == NULL) return EBADF;
 

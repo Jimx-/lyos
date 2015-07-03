@@ -33,7 +33,6 @@ EXTERN  struct inode        inode_table[NR_INODE];
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];
 extern  u8 *                fsbuf;
 EXTERN  MESSAGE             fs_msg;
-EXTERN  struct fproc *      pcaller;
 EXTERN  struct inode *      root_inode;
 
 EXTERN  int                 err_code;

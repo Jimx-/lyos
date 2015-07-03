@@ -63,6 +63,9 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * 
  */
 PUBLIC int do_stat(MESSAGE * p)
 {
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
+
     int namelen = p->NAME_LEN + 1;
     char pathname[MAX_PATH];
     if (namelen > MAX_PATH) return ENAMETOOLONG;
@@ -86,9 +89,10 @@ PUBLIC int do_stat(MESSAGE * p)
  */
 PUBLIC int do_fstat(MESSAGE * p)
 {
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
     int fd = p->FD;
     char * buf = p->BUF;
-    int src = p->source;
 
     if (pcaller->filp[fd] == NULL) return EINVAL;
 

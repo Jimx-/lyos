@@ -41,7 +41,7 @@
 
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
 
-PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode);
+PRIVATE struct inode * new_node(struct fproc* fp, char * pathname, int flags, mode_t mode);
 PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
                             char * pathname, mode_t mode, struct lookup_result * res);
 
@@ -59,6 +59,7 @@ PUBLIC int do_open(MESSAGE * p)
     int name_len = p->NAME_LEN; /* length of filename */
     int src = p->source;    /* caller proc nr. */
     mode_t mode = p->MODE;  /* access mode */
+    struct fproc* pcaller = vfs_endpt_proc(src);
     
     mode_t bits = mode_map[flags & O_ACCMODE];
     if (!bits) return -EINVAL;
@@ -98,7 +99,7 @@ PUBLIC int do_open(MESSAGE * p)
     if (flags & O_CREAT) {
         mode = I_REGULAR | (mode & ALL_MODES & pcaller->umask);
         err_code = 0;
-        pin = new_node(pathname, flags, mode);
+        pin = new_node(pcaller, pathname, flags, mode);
         retval = err_code;
         if (retval == 0) exist = 0;
         else if (retval != EEXIST) {
@@ -169,6 +170,8 @@ PUBLIC int do_open(MESSAGE * p)
 PUBLIC int do_close(MESSAGE * p)
 {
     int fd = p->FD;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
     
     if (fd < 0 || fd >= NR_FILES) return EBADF;
     if (pcaller->filp[fd] == NULL) return EBADF;
@@ -191,24 +194,24 @@ PUBLIC int do_close(MESSAGE * p)
  * @param  mode     Mode.
  * @return          Ptr to the inode.
  */
-PRIVATE struct inode * new_node(char * pathname, int flags, mode_t mode)
+PRIVATE struct inode * new_node(struct fproc* fp, char * pathname, int flags, mode_t mode)
 {
     struct inode * pin_dir = NULL;
 
     struct lookup_result res;
 
-    if ((pin_dir = last_dir(pathname, pcaller)) == NULL) return NULL;
+    if ((pin_dir = last_dir(pathname, fp)) == NULL) return NULL;
 
     lock_inode(pin_dir);
     lock_vmnt(pin_dir->i_vmnt);
     int retval = 0;
-    struct inode * pin = resolve_path(pathname, pcaller);
+    struct inode * pin = resolve_path(pathname, fp);
 
     /* no such entry, create one */
     if (pin == NULL && err_code == ENOENT) {
-        if ((retval = forbidden(pcaller, pin_dir, W_BIT | X_BIT)) == 0) {
+        if ((retval = forbidden(fp, pin_dir, W_BIT | X_BIT)) == 0) {
             retval = request_create(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
-                pcaller->realuid, pcaller->realgid, pathname, mode, &res);
+                fp->realuid, fp->realgid, pathname, mode, &res);
         }
         if (retval != 0) {
             err_code = retval;
@@ -285,6 +288,8 @@ PUBLIC int do_lseek(MESSAGE * p)
     int fd = p->FD;
     int offset = p->OFFSET;
     int whence = p->WHENCE;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
 
     struct file_desc * filp = pcaller->filp[fd];
     if (!filp) return EINVAL;

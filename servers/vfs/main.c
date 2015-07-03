@@ -74,7 +74,6 @@ PUBLIC int main()
 	while (TRUE) {
 		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
-		pcaller = vfs_endpt_proc(src);
 		int msgtype = msg.type;
 
 		/*enqueue_request(&msg);*/
@@ -226,7 +225,7 @@ PUBLIC void init_vfs()
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root
-    mount_fs(initrd_dev, "/", TASK_INITFS, 0);
+    mount_fs(vfs_endpt_proc(TASK_FS), initrd_dev, "/", TASK_INITFS, 0);
     printl("VFS: Mounted init ramdisk\n");
 }
 

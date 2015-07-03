@@ -82,7 +82,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct
     memcpy(execi->prog_name, pathname, MAX_PATH);
     memcpy(execi->args.prog_name, pathname, MAX_PATH);
 
-    if ((execi->pin = resolve_path(pathname, pcaller)) == NULL) return err_code;
+    if ((execi->pin = resolve_path(pathname, fp)) == NULL) return err_code;
     execi->vmnt = execi->pin->i_vmnt;
 
     if ((execi->pin->i_mode & I_TYPE) != I_REGULAR) return ENOEXEC;

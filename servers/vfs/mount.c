@@ -42,7 +42,7 @@
 #include "global.h"
 
 /* find device number of the given pathname */
-PRIVATE dev_t name2dev(char * pathname);
+PRIVATE dev_t name2dev(struct fproc* fp, char * pathname);
 PRIVATE dev_t get_none_dev();
 PRIVATE int is_none_dev(dev_t dev);
 PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
@@ -105,6 +105,7 @@ PUBLIC int do_mount(MESSAGE * p)
 {
     unsigned long flags = p->MFLAGS;
     int src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
 
     /* find fs endpoint */
     int label_len = p->MNAMELEN3;
@@ -132,7 +133,7 @@ PUBLIC int do_mount(MESSAGE * p)
         data_copy(SELF, source, src, p->MSOURCE, source_len);
         source[source_len] = '\0';
 
-        dev_nr = name2dev(source);
+        dev_nr = name2dev(pcaller, source);
         if (dev_nr == 0) return err_code;
     } else {
         dev_nr = get_none_dev();
@@ -143,14 +144,14 @@ PUBLIC int do_mount(MESSAGE * p)
     target[target_len] = '\0';
 
     int readonly = flags & MS_READONLY;
-    int retval = mount_fs(dev_nr, target, fs_e, readonly);
+    int retval = mount_fs(pcaller, dev_nr, target, fs_e, readonly);
 
     if (retval == 0 && (strcmp(target, "/") == 0)) printl("VFS: %s is %s mounted on %s\n", source, readonly ? "read-only" : "read-write", target);
     return retval;
 }
 
 
-PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly)
+PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly)
 {
     if (!is_none_dev(dev)) {
         endpoint_t drv_e = dd_map[MAJOR(dev)].driver_nr;
@@ -174,7 +175,7 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
 
     if (!mount_root) {
         /* resolve the mountpoint */
-        pmp = resolve_path(mountpoint, pcaller);
+        pmp = resolve_path(mountpoint, fp);
         if (pmp == NULL) retval = err_code;
         else if (pmp->i_cnt == 1) retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
         else retval = EBUSY;
@@ -255,9 +256,9 @@ PUBLIC int mount_fs(dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly
  *
  * @return The device number of the given pathname.
  */
-PRIVATE dev_t name2dev(char * pathname)
+PRIVATE dev_t name2dev(struct fproc* fp, char * pathname)
 {
-   struct inode * pin = resolve_path(pathname, pcaller);
+   struct inode * pin = resolve_path(pathname, fp);
 
    if (pin == NULL) {
        return (dev_t)0;
