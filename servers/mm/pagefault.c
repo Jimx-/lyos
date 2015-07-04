@@ -62,6 +62,8 @@ PUBLIC void do_handle_fault()
 
         if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
         if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+
+        return;
     }
 
     /*if (!(vr->flags & RF_WRITABLE) && wrflag) {

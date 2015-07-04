@@ -37,6 +37,7 @@ struct pmproc {
     sigset_t sig_ignore;
     sigset_t sig_catch;
     sigset_t sig_trace;
+    int sig_status;
     struct sigaction sigaction[NSIG];
     vir_bytes sigreturn_f;
 

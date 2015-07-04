@@ -233,7 +233,7 @@ PRIVATE void tell_parent(struct pmproc * pmp)
     MESSAGE msg2parent;
     msg2parent.type = SYSCALL_RET;
     msg2parent.PID = pmp->pid;
-    msg2parent.STATUS = pmp->exit_status;
+    msg2parent.STATUS = W_EXITCODE(pmp->exit_status, pmp->sig_status);
     send_recv(SEND_NONBLOCK, pmp->parent, &msg2parent);
 
 }

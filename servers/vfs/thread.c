@@ -153,12 +153,12 @@ PRIVATE void handle_request(MESSAGE* msg)
     int msgtype = msg->type;
 
     switch (msgtype) {
-    /*case OPEN:
+    case OPEN:
         msg->FD = do_open(msg);
-        break;*/
-    /*case CLOSE:
+        break;
+    case CLOSE:
         msg->RETVAL = do_close(msg);
-        break;*/
+        break;
     case RESUME_PROC:
         msg->RETVAL = 0;
         msg->source = msg->PROC_NR;

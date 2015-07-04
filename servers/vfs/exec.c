@@ -46,6 +46,8 @@ struct vfs_exec_info {
     struct vfs_mount * vmnt;
     struct stat sbuf;
     int mmfd;
+    int is_dyn;
+    int exec_fd;
 };
 
 typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
@@ -181,6 +183,9 @@ PUBLIC int fs_exec(MESSAGE * msg)
     execi.args.new_euid = fp->effuid;
     execi.args.new_egid = fp->effgid;
 
+    execi.is_dyn = 0;
+    execi.exec_fd = -1;
+
     /* copy everything we need before we free the old process */
     int orig_stack_len = msg->BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
@@ -206,7 +211,11 @@ PUBLIC int fs_exec(MESSAGE * msg)
 
     char interp[MAX_PATH];
     if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp, sizeof(interp)) > 0) {
-        printl("%s\n", interp);
+        execi.exec_fd = common_open(fp, pathname, O_RDONLY, 0);
+        if (execi.exec_fd < 0) return -execi.exec_fd;
+
+        retval = get_exec_inode(&execi, interp, fp);
+        if (retval) return retval;
     }
 
     /* find an fd for MM */
@@ -330,6 +339,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     }
 
     AUXV_ENT(auxv, AT_ENTRY, execi->args.entry_point);
+    AUXV_ENT(auxv, AT_EXECFD, execi->exec_fd);
     AUXV_ENT(auxv, AT_UID, execi->args.new_uid);
     AUXV_ENT(auxv, AT_GID, execi->args.new_gid);
     AUXV_ENT(auxv, AT_EUID, execi->args.new_euid);

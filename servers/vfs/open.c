@@ -52,68 +52,71 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gi
  */
 PUBLIC int do_open(MESSAGE * p)
 {
-    int fd = -1;        /* return value */
-
     /* get parameters from the message */
     int flags = p->FLAGS;   /* open flags */
     int name_len = p->NAME_LEN; /* length of filename */
     int src = p->source;    /* caller proc nr. */
     mode_t mode = p->MODE;  /* access mode */
     struct fproc* pcaller = vfs_endpt_proc(src);
-    
+
+    char pathname[MAX_PATH];
+    if (name_len > MAX_PATH) {
+        return -ENAMETOOLONG;
+    }
+        
+    data_copy(TASK_FS, pathname, src, p->PATHNAME, name_len);
+    pathname[name_len] = '\0';
+
+    return common_open(pcaller, pathname, flags, mode);
+}
+
+PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
+{
+    int fd = -1;    /* return fd */
     mode_t bits = mode_map[flags & O_ACCMODE];
     if (!bits) return -EINVAL;
 
     int exist = 1;
     int retval = 0;
 
-    char pathname[MAX_PATH];
-    if (name_len > MAX_PATH) {
-        err_code = -ENAMETOOLONG;
-        return -1;
-    }
-        
-    data_copy(TASK_FS, pathname, src, p->PATHNAME, name_len);
-    pathname[name_len] = '\0';
-
     /* find a free slot in PROCESS::filp[] */
     int i;
     for (i = 0; i < NR_FILES; i++) {
-        if (pcaller->filp[i] == 0) {
+        if (fp->filp[i] == 0) {
             fd = i;
             break;
         }
     }
     if ((fd < 0) || (fd >= NR_FILES))
-        panic("filp[] is full (PID:%d)", pcaller->endpoint);
+        panic("filp[] is full (PID:%d)", fp->endpoint);
 
     /* find a free slot in f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++)
         if (f_desc_table[i].fd_inode == 0)
             break;
     if (i >= NR_FILE_DESC)
-        panic("f_desc_table[] is full (PID:%d)", pcaller->endpoint);
+        panic("f_desc_table[] is full (PID:%d)", fp->endpoint);
 
     struct inode * pin = NULL;
 
     if (flags & O_CREAT) {
-        mode = I_REGULAR | (mode & ALL_MODES & pcaller->umask);
+        mode = I_REGULAR | (mode & ALL_MODES & fp->umask);
         err_code = 0;
-        pin = new_node(pcaller, pathname, flags, mode);
+        pin = new_node(fp, pathname, flags, mode);
         retval = err_code;
         if (retval == 0) exist = 0;
         else if (retval != EEXIST) {
             return -retval;
         } else exist = !(flags & O_EXCL);
     } else {
-        pin = resolve_path(pathname, pcaller);
+        pin = resolve_path(pathname, fp);
         if (pin == NULL) return -err_code;
 
-        DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, pcaller->name)); 
+        DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, fp->name)); 
     }
 
     struct file_desc * filp = &f_desc_table[i];
-    pcaller->filp[fd] = filp;
+    fp->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
     filp->fd_inode = pin;
@@ -121,12 +124,12 @@ PUBLIC int do_open(MESSAGE * p)
 
     MESSAGE driver_msg;
     if (exist) {
-        if ((retval = forbidden(pcaller, pin, bits)) == 0) {
+        if ((retval = forbidden(fp, pin, bits)) == 0) {
             switch (pin->i_mode & I_TYPE) {
                 case I_REGULAR:
                     /* truncate the inode */
                     if (flags & O_TRUNC) {
-                        if ((retval = forbidden(pcaller, pin, W_BIT)) != 0) {
+                        if ((retval = forbidden(fp, pin, W_BIT)) != 0) {
                             break;
                         }
                         truncate_node(pin, 0);
@@ -151,7 +154,7 @@ PUBLIC int do_open(MESSAGE * p)
     }
 
     if (retval != 0) {
-        pcaller->filp[fd] = NULL;
+        fp->filp[fd] = NULL;
         filp->fd_cnt = 0;
         filp->fd_mode = 0;
         filp->fd_inode = 0;

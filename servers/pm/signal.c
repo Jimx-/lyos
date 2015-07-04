@@ -223,6 +223,7 @@ PUBLIC void sig_proc(struct pmproc * p_dest, int signo, int trace)
         return;
     }
 
+    p_dest->sig_status = signo;
     exit_proc(p_dest, 0);
 }
 

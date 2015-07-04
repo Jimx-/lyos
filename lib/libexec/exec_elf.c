@@ -44,7 +44,7 @@ PRIVATE int elf_unpack(char * hdr, Elf32_Ehdr ** elf_hdr, Elf32_Phdr ** prog_hdr
 
 PRIVATE int elf_check_header(Elf32_Ehdr * elf_hdr)
 {
-	if (elf_hdr->e_ident[0] != 0x7f || elf_hdr->e_type != ET_EXEC) {
+	if (elf_hdr->e_ident[0] != 0x7f || (elf_hdr->e_type != ET_EXEC && elf_hdr->e_type != ET_DYN)) {
 		return ENOEXEC;
 	}
 

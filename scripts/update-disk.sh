@@ -65,11 +65,12 @@ fi
 
 cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
 #cp -rf obj/destdir.$ARCH/bin/service /$MOUNT_POINT/bin/service 
-cp -rf obj/destdir.$ARCH/bin/bash /$MOUNT_POINT/bin/bash
-cp -rf obj/destdir.$ARCH/bin/sh /$MOUNT_POINT/bin/sh
+#cp -rf obj/destdir.$ARCH/bin/bash /$MOUNT_POINT/bin/bash
+#cp -rf obj/destdir.$ARCH/bin/sh /$MOUNT_POINT/bin/sh
 #cp -rf obj/destdir.$ARCH/sbin/pci /$MOUNT_POINT/sbin/ 
-cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
+#cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
+#cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/ 
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 

@@ -155,6 +155,7 @@ PRIVATE void pm_init()
         sigemptyset(&pmp->sig_pending);
         sigemptyset(&pmp->sig_catch);
         sigemptyset(&pmp->sig_trace);
+        pmp->sig_status = 0;
 
         pmp->flags |= PMPF_INUSE;
         pmp->endpoint = bp->endpoint;
