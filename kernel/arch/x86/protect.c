@@ -23,6 +23,7 @@
 #include "lyos/proc.h"
 #include "string.h"
 #include <errno.h>
+#include <signal.h>
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "arch_const.h"
@@ -36,6 +37,34 @@ extern u32 StackTop;
 PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
 PUBLIC int syscall_style = 0; 
+
+struct exception_info {
+	char* msg;
+	int signo;
+};
+
+PRIVATE struct exception_info err_description[] = {	
+					{ "#DE Divide Error", SIGFPE } ,
+					{ "#DB RESERVED", SIGTRAP },
+					{ "—  NMI Interrupt", SIGBUS },
+					{ "#BP Breakpoint", SIGTRAP },
+					{ "#OF Overflow", SIGFPE },
+					{ "#BR BOUND Range Exceeded", SIGFPE },
+					{ "#UD Invalid Opcode (Undefined Opcode)", SIGILL },
+					{ "#NM Device Not Available (No Math Coprocessor)", SIGFPE },
+					{ "#DF Double Fault", SIGSEGV },
+					{ "    Coprocessor Segment Overrun (reserved)", SIGSEGV},
+					{ "#TS Invalid TSS", SIGSEGV },
+					{ "#NP Segment Not Present", SIGSEGV },
+					{ "#SS Stack-Segment Fault", SIGSEGV },
+					{ "#GP General Protection", SIGSEGV },
+					{ "#PF Page Fault", SIGSEGV },
+					{ "—  (Intel reserved. Do not use.)", SIGILL },
+					{ "#MF x87 FPU Floating-Point Error (Math Fault)", SIGFPE },
+					{ "#AC Alignment Check", SIGBUS },
+					{ "#MC Machine Check", SIGBUS },
+					{ "#XF SIMD Floating-Point Exception", SIGFPE },
+				};
 
 //#define PROTECT_DEBUG
 
@@ -427,31 +456,10 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
  *======================================================================*/
 PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 {
-#ifdef PROTECT_DEBUG
-	char err_description[][64] = {	"#DE Divide Error",
-					"#DB RESERVED",
-					"—  NMI Interrupt",
-					"#BP Breakpoint",
-					"#OF Overflow",
-					"#BR BOUND Range Exceeded",
-					"#UD Invalid Opcode (Undefined Opcode)",
-					"#NM Device Not Available (No Math Coprocessor)",
-					"#DF Double Fault",
-					"    Coprocessor Segment Overrun (reserved)",
-					"#TS Invalid TSS",
-					"#NP Segment Not Present",
-					"#SS Stack-Segment Fault",
-					"#GP General Protection",
-					"#PF Page Fault",
-					"—  (Intel reserved. Do not use.)",
-					"#MF x87 FPU Floating-Point Error (Math Fault)",
-					"#AC Alignment Check",
-					"#MC Machine Check",
-					"#XF SIMD Floating-Point Exception"
-				};
-
 	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
-	printk("Exception: %s on CPU %d\n", err_description[frame->vec_no], cpuid);
+	
+#ifdef PROTECT_DEBUG
+	printk("Exception: %s on CPU %d\n", err_description[frame->vec_no].msg, cpuid);
 	printk("  EFLAGS: %d, CS: %d, EIP: 0x%x, PID: %d(%s)", frame->eflags, frame->cs, frame->eip,
 		fault_proc->endpoint, fault_proc->name);
 
@@ -478,6 +486,8 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 
 	if (in_kernel) {
 		panic("unhandled exception in kernel");
+	} else {
+		ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);
 	}
 }
 
