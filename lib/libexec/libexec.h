@@ -40,6 +40,10 @@ struct exec_info {
 	int entry_point;
 	int stack_top;
 	int brk;
+
+	u32 phdr;
+	int phnum;
+	void* load_base;
 };
 
 PUBLIC int libexec_allocmem(struct exec_info * execi, int vaddr, size_t len);

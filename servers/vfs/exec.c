@@ -42,12 +42,17 @@
 struct vfs_exec_info {
     struct exec_info args;
     char prog_name[MAX_PATH];
+    char dyn_prog_name[MAX_PATH];
     struct inode * pin;
     struct vfs_mount * vmnt;
     struct stat sbuf;
     int mmfd;
-    int is_dyn;
     int exec_fd;
+    /* dynamic linking */
+    int is_dyn;
+    int dyn_phnum;
+    u32 dyn_phdr;
+    u32 dyn_entry;
 };
 
 typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
@@ -209,15 +214,6 @@ PUBLIC int fs_exec(MESSAGE * msg)
         while(1);
     }
 
-    char interp[MAX_PATH];
-    if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp, sizeof(interp)) > 0) {
-        execi.exec_fd = common_open(fp, pathname, O_RDONLY, 0);
-        if (execi.exec_fd < 0) return -execi.exec_fd;
-
-        retval = get_exec_inode(&execi, interp, fp);
-        if (retval) return retval;
-    }
-
     /* find an fd for MM */
     struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
     /* find a free slot in PROCESS::filp[] */
@@ -255,6 +251,32 @@ PUBLIC int fs_exec(MESSAGE * msg)
 
     execi.args.proc_e = src;
     execi.args.filesize = execi.pin->i_size;
+
+    char interp[MAX_PATH];
+    if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp, sizeof(interp)) > 0) {
+        execi.exec_fd = common_open(fp, pathname, O_RDONLY, 0);
+        if (execi.exec_fd < 0) return -execi.exec_fd;
+
+        /* load the main executable first */
+        for (i = 0; exec_loaders[i].loader != NULL; i++) {
+            retval = (*exec_loaders[i].loader)(&execi.args);
+            if (!retval) break;  /* loaded successfully */
+        }
+        if (retval) return retval;
+
+        execi.is_dyn = 1;
+        execi.dyn_entry = execi.args.entry_point;
+        execi.dyn_phdr = execi.args.phdr;
+        execi.dyn_phnum = execi.args.phnum;
+        strlcpy((char*) execi.dyn_prog_name, (char*)execi.prog_name, sizeof(execi.dyn_prog_name));
+        execi.dyn_prog_name[sizeof(execi.dyn_prog_name)] = '\0';
+
+        retval = get_exec_inode(&execi, interp, fp);
+        if (retval) return retval;
+
+        execi.args.filesize = execi.pin->i_size;
+        execi.args.clearproc = NULL;
+    }
 
     /* relocate stack pointers */
     char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
@@ -338,7 +360,16 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
         vec++; \
     }
 
-    AUXV_ENT(auxv, AT_ENTRY, execi->args.entry_point);
+    if (!execi->is_dyn) {
+        AUXV_ENT(auxv, AT_ENTRY, execi->args.entry_point);
+        AUXV_ENT(auxv, AT_PHDR, execi->args.phdr);
+        AUXV_ENT(auxv, AT_PHNUM, execi->args.phnum);
+    } else {
+        AUXV_ENT(auxv, AT_ENTRY, execi->dyn_entry);
+        AUXV_ENT(auxv, AT_PHDR, execi->dyn_phdr);
+        AUXV_ENT(auxv, AT_PHNUM, execi->dyn_phnum);
+    }
+    AUXV_ENT(auxv, AT_BASE, (u32)execi->args.load_base);
     AUXV_ENT(auxv, AT_EXECFD, execi->exec_fd);
     AUXV_ENT(auxv, AT_UID, execi->args.new_uid);
     AUXV_ENT(auxv, AT_GID, execi->args.new_gid);
@@ -352,12 +383,13 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     AUXV_ENT(auxv, AT_PLATFORM, NULL);
     AUXV_ENT(auxv, AT_NULL, 0);
 
-    size_t name_len = strlen(execi->prog_name) + 1 + strlen(LYOS_PLATFORM) + 1;
+    char* prog_name = execi->is_dyn ? (char*) execi->dyn_prog_name : (char*) execi->prog_name;
+    size_t name_len = strlen(prog_name) + 1 + strlen(LYOS_PLATFORM) + 1;
     char* userp = NULL;
     /* add AT_EXECFN and AT_PLATFORM if there is enough space */
     if ((vir_bytes)auxv_end - (vir_bytes)auxv > name_len) {
-        strcpy((char*)auxv, execi->prog_name);
-        strcpy((char*)auxv + strlen(execi->prog_name) + 1, LYOS_PLATFORM);
+        strcpy((char*)auxv, prog_name);
+        strcpy((char*)auxv + strlen(prog_name) + 1, LYOS_PLATFORM);
         auxv_end = (Elf32_auxv_t*)((vir_bytes)auxv + name_len); 
         auxv_end = (Elf32_auxv_t*)roundup((u32)auxv_end, sizeof(int));
         userp = (vir_bytes)auxv - (vir_bytes)auxv_buf;
@@ -368,7 +400,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     if (userp) {
         userp -= auxv_len;
         AUXV_ENT(auxv_execfn, AT_EXECFN, userp);
-        AUXV_ENT(auxv_execfn, AT_PLATFORM, userp + strlen(execi->prog_name) + 1);
+        AUXV_ENT(auxv_execfn, AT_PLATFORM, userp + strlen(prog_name) + 1);
     } else {
         /* AT_EXECFN and AT_PLATFORM not present */
         AUXV_ENT(auxv_execfn, AT_NULL, 0);

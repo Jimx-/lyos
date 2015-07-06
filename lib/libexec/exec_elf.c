@@ -91,12 +91,15 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     int retval;
     Elf32_Ehdr * elf_hdr;
     Elf32_Phdr * prog_hdr;
+    u32 load_base = 0xffffffff;
 
     if ((retval = elf_check_header((Elf32_Ehdr *)execi->header)) != 0) return retval;
 
     if ((retval = elf_unpack(execi->header, &elf_hdr, &prog_hdr)) != 0) return retval;
 
     if (execi->clearproc) execi->clearproc(execi);
+
+    execi->phnum = elf_hdr->e_phnum;
 
     int i;
     /* load every segment */
@@ -109,7 +112,11 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 
         if (phdr->p_flags & PF_W) mmap_prot |= PROT_WRITE;
 
+        if (phdr->p_type == PT_PHDR) execi->phdr = phdr->p_vaddr;
+
         if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0) continue;    /* ignore */
+
+        if ((u32)phdr->p_vaddr < load_base) load_base = (u32)phdr->p_vaddr;
 
         if((phdr->p_vaddr % PG_SIZE) != (phdr->p_offset % PG_SIZE)) {
             printl("libexec: unaligned ELF program?\n");
@@ -181,8 +188,8 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         return ENOMEM;
     }
     //execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
-
     execi->entry_point = elf_hdr->e_entry;
+    execi->load_base = (void*)load_base;
 
     return 0;
 }
