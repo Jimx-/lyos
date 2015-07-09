@@ -215,6 +215,10 @@
 #define MSG_KERNLOG 	0x2  	/* the process has a kernellog message */
 
 #define VFS_REQ_BASE	 	1001
+#define MM_REQ_BASE			1201
+#define PM_REQ_BASE			1501
+#define DRV_REQ_BASE		2001
+#define SYSFS_REQ_BASE		2100
 #define SERVMAN_REQ_BASE 	2201
 #define PCI_REQ_BASE 		2301
 #define INPUT_REQ_BASE		2401
@@ -252,7 +256,7 @@ enum msgtype {
 	GET_DRIVER,	/* 54 ~ 55 */
 
 	/* message type for fs request */
-	FSREQ_RET = 1001,
+	FSREQ_RET = VFS_REQ_BASE,
     FS_REGISTER,
 	FS_PUTINODE,					/* 1001 ~ 1011 */
 	FS_LOOKUP,
@@ -269,10 +273,12 @@ enum msgtype {
     FS_THREAD_WAKEUP,
 
     /* message type for mm calls */
-    MM_MAP_PHYS = 1201,
+    MM_MAP_PHYS = MM_REQ_BASE,
+    MM_VFS_REQUEST,
+    MM_VFS_REPLY,
     
     /* message type for pm calls */
-    PM_VFS_INIT = 1501,			/* 1501 */
+    PM_VFS_INIT = PM_REQ_BASE,			/* 1501 */
     PM_MM_FORK,
     PM_VFS_FORK,
     PM_SIGRETURN,
@@ -282,19 +288,21 @@ enum msgtype {
     PM_VFS_EXEC,
 
 	/* message type for drivers */
-	DEV_OPEN = 2001,
+	DEV_OPEN = DRV_REQ_BASE,
 	DEV_CLOSE,
 	DEV_READ,
 	DEV_WRITE,
 	DEV_IOCTL,						/* 2001 ~ 2005 */
 
 	/* message for sysfs */
-	SYSFS_PUBLISH = 2100,				/* 2100 */
-	SYSFS_RETRIEVE = 2101,
+	SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */
+	SYSFS_RETRIEVE,
 
 	/* SERVMAN */
-	SERVICE_UP = SERVMAN_REQ_BASE, SERVICE_DOWN,
-	SERVICE_INIT, SERVICE_INIT_REPLY,
+	SERVICE_UP = SERVMAN_REQ_BASE, 
+	SERVICE_DOWN,
+	SERVICE_INIT, 
+	SERVICE_INIT_REPLY,
 
 	PCI_SET_ACL = PCI_REQ_BASE,
 	PCI_FIRST_DEV,

@@ -88,5 +88,8 @@ PUBLIC pid_t create_worker(int id);
 PUBLIC void enqueue_request(MESSAGE* msg);
 PUBLIC struct vfs_message* dequeue_response();
 
+PUBLIC struct file_desc* alloc_filp();
+PUBLIC int get_fd(struct fproc* fp);
+
 #endif
 

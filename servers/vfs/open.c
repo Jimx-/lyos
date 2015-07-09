@@ -80,22 +80,8 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     int retval = 0;
 
     /* find a free slot in PROCESS::filp[] */
-    int i;
-    for (i = 0; i < NR_FILES; i++) {
-        if (fp->filp[i] == 0) {
-            fd = i;
-            break;
-        }
-    }
-    if ((fd < 0) || (fd >= NR_FILES))
-        panic("filp[] is full (PID:%d)", fp->endpoint);
-
-    /* find a free slot in f_desc_table[] */
-    for (i = 0; i < NR_FILE_DESC; i++)
-        if (f_desc_table[i].fd_inode == 0)
-            break;
-    if (i >= NR_FILE_DESC)
-        panic("f_desc_table[] is full (PID:%d)", fp->endpoint);
+    fd = get_fd(fp);
+    if (fd < 0) return fd;
 
     struct inode * pin = NULL;
 
@@ -115,7 +101,8 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, fp->name)); 
     }
 
-    struct file_desc * filp = &f_desc_table[i];
+    struct file_desc * filp = alloc_filp();
+    if (!filp) return -ENOMEM;
     fp->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;

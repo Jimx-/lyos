@@ -81,6 +81,19 @@ extern  struct dev_drv_map  dd_map[];
 #define CRMODE				u.m3.m3l2
 #define CRPATHNAME        	u.m3.m3p1
 
+/* for mm request */
+#define MMRTYPE				u.m3.m3i1
+#define MMRRESULT			u.m3.m3i1
+#define MMR_FDLOOKUP		1
+#define MMR_FDREAD			2
+#define MMRFD				u.m3.m3i2
+#define MMRENDPOINT			u.m3.m3i3
+#define MMRDEV				u.m3.m3i4
+#define MMRINO				u.m3.m3l1
+#define MMROFFSET			u.m3.m3l1
+#define MMRLENGTH			u.m3.m3l2
+#define MMRBUF				u.m3.m3p1
+
 #define RET_RETVAL          u.m5.m5i1
 #define RET_NUM             u.m5.m5i2
 #define RET_UID             u.m5.m5i3

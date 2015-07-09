@@ -10,8 +10,8 @@
  * Flags contain sharing type and options.
  * Sharing types; choose one.
  */
-#define	MAP_SHARED	0x0001	/* share changes */
-#define	MAP_PRIVATE	0x0002	/* changes are private */
+#define	MAP_SHARED		0x0001	/* share changes */
+#define	MAP_PRIVATE		0x0002	/* changes are private */
 
 /*
  * Mapping type
@@ -19,8 +19,8 @@
 #define MAP_ANONYMOUS	0x0004  /* anonymous memory */
 #define MAP_ANON 		MAP_ANONYMOUS	
 
-#define MAP_FIXED	0x0008
-#define MAP_PREALLOC	0x0020
+#define MAP_FIXED		0x0008
+#define MAP_POPULATE	0x0010
 
 /*
  * Error indicator returned by mmap(2)

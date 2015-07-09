@@ -16,6 +16,9 @@
 /**
  * Like alloc.c, however, vmalloc.c provides functions that allocate virtual memory in kernel
  * address space.
+ *
+ * alloc_vmem/free_vmem: allocate/free both physical and virtual memory.
+ * alloc_vmpages/free_vmpages: allocate/free only virtual memory.
  */
 
 #include "lyos/type.h"

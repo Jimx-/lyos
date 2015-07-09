@@ -26,10 +26,12 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/fs.h>
 #include "region.h"
 #include "proto.h"
 #include "const.h"
 #include "lyos/vm.h"
+#include <lyos/ipc.h>
 #include <sys/mman.h>
 #include "global.h"
 
@@ -37,18 +39,73 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     int mmap_flags, size_t len, int vrflags)
 {
     struct vir_region * vr = NULL;
+
+    if (mmap_flags & MAP_PRIVATE) vrflags |= RF_PRIVATE;
+    else if (mmap_flags & MAP_SHARED) vrflags |= RF_SHARED;
+
     if (addr || (mmap_flags & MAP_FIXED)) {
         vr = region_new((void *)addr, len, vrflags);
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
+    } else {
+        vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, vrflags);
+        if (!vr) return NULL;
+    }
 
-        if (!(mmap_flags & MAP_PREALLOC)) {
-            region_alloc_phys(vr);
-            region_map_phys(mmp, vr);
-        }
+    if (mmap_flags & MAP_POPULATE) {    /*  populate (prefault) page tables for a mapping */
+        region_alloc_phys(vr);
+        region_map_phys(mmp, vr);
     }
 
     return vr;
+}
+
+PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int flags, int prot, int mmfd, off_t offset, dev_t dev, ino_t ino, vir_bytes* ret_addr)
+{
+    int vrflags = 0;
+    struct vir_region * vr;
+
+    len = roundup(len, ARCH_PG_SIZE);
+
+    if (prot & PROT_WRITE) vrflags |= RF_WRITABLE;
+
+    if (offset % ARCH_PG_SIZE) return EINVAL;
+    if (addr % ARCH_PG_SIZE) return EINVAL;
+
+    if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL) return ENOMEM;
+
+    *ret_addr = (vir_bytes)vr->vir_addr;
+
+    struct mm_file_desc* filp = get_mm_file_desc(mmfd, dev, ino);
+    if (!filp) return ENOMEM;
+
+    file_reference(vr, filp);
+    vr->flags |= RF_FILEMAP;
+    vr->param.file.offset = offset;
+
+    return 0;
+}
+
+PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
+{
+    MESSAGE* mmap_msg = (MESSAGE*) arg;
+    vir_bytes ret_addr = (vir_bytes) MAP_FAILED;
+    int result;
+
+    if (msg->MMRRESULT) {
+        result = msg->MMRRESULT;
+    } else {
+        result = mmap_file(mmp, (vir_bytes)mmap_msg->MMAP_VADDR, mmap_msg->MMAP_LEN, mmap_msg->MMAP_FLAGS, mmap_msg->MMAP_PROT, msg->MMRFD, 
+                mmap_msg->MMAP_OFFSET, msg->MMRDEV, msg->MMRINO, &ret_addr);
+    }
+
+    MESSAGE reply_msg;
+    memset(&reply_msg, 0, sizeof(MESSAGE));
+    reply_msg.type = SYSCALL_RET;
+    reply_msg.RETVAL = result;
+    reply_msg.MMAP_RETADDR = ret_addr;
+
+    send_recv(SEND_NONBLOCK, mmap_msg->source, &reply_msg);
 }
 
 PUBLIC int do_mmap()
@@ -65,6 +122,11 @@ PUBLIC int do_mmap()
 
     if (len < 0) return EINVAL;
 
+    /* return EINVAL when flags contained neither MAP_PRIVATE or MAP_SHARED, or
+     * contained both of these values. */
+    if ((flags & MAP_PRIVATE) && (flags & MAP_SHARED)) return EINVAL;
+    if (!(flags & MAP_PRIVATE) && !(flags & MAP_SHARED)) return EINVAL;
+
     if ((fd == -1) || (flags & MAP_ANONYMOUS)) {
         if (fd != -1) return EINVAL;
 
@@ -74,6 +136,10 @@ PUBLIC int do_mmap()
 
         if (!(vr = mmap_region(mmp, addr, flags, len, vr_flags))) return ENOMEM;
         list_add(&(vr->list), &mmp->active_mm->mem_regions);
+    } else {    /* mapping file */
+        if (enqueue_vfs_request(mmp, MMR_FDLOOKUP, fd, 0, 0, 0, mmap_file_callback, &mm_msg, sizeof(MESSAGE)) != 0) return ENOMEM;
+
+        return SUSPEND;
     }
 
     mm_msg.MMAP_RETADDR = (int)vr->vir_addr;

@@ -25,7 +25,9 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include "errno.h"
+#include <page.h>
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
@@ -199,4 +201,96 @@ PRIVATE int change_node(struct fproc* fp, struct inode ** ppin, struct inode * p
     }
 
     return retval;
+}
+
+PUBLIC int do_mm_request(MESSAGE* m)
+{
+    int req_type = m->MMRTYPE;
+    int fd = m->MMRFD;
+    int result = 0;
+    endpoint_t ep = m->MMRENDPOINT;
+    struct fproc* fp = vfs_endpt_proc(ep);
+    struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
+    size_t len = m->MMRLENGTH;
+    off_t offset = m->MMROFFSET;
+    phys_bytes buf = m->MMRBUF;
+
+    if (!mm_task) panic("mm not present!");
+
+    if (m->source != TASK_MM) return EPERM;
+
+    switch (req_type) {
+    case MMR_FDLOOKUP:
+        {
+            if (!fp) {
+                result = ESRCH;
+                goto reply;
+            }
+
+            struct file_desc* filp = fp->filp[fd];
+            if (!filp || !filp->fd_inode) {
+                result = EBADF;
+                goto reply;
+            }
+
+            int mmfd = get_fd(mm_task);
+            if (mmfd < 0) {
+                result = -mmfd;
+                goto reply;
+            }
+
+            filp->fd_cnt++;
+            mm_task->filp[mmfd] = filp;
+
+            m->MMRDEV = filp->fd_inode->i_dev;
+            m->MMRINO = filp->fd_inode->i_num;
+            m->MMRLENGTH = roundup(filp->fd_inode->i_size, PG_SIZE);
+            m->MMRFD = mmfd;
+
+            result = 0;
+            break;
+        }
+
+    case MMR_FDREAD:
+        {
+            struct file_desc* filp = mm_task->filp[fd];
+            if (!filp || !filp->fd_inode) {
+                result = EBADF;
+                goto reply;
+            }
+
+            struct inode* pin = filp->fd_inode;
+            int file_type = pin->i_mode & I_TYPE;
+
+            if (file_type == I_CHAR_SPECIAL) {
+                MESSAGE driver_msg;
+                memset(&driver_msg, 0, sizeof(driver_msg));
+                
+                driver_msg.type = DEV_READ;
+                driver_msg.DEVICE   = MINOR(pin->i_specdev);
+                driver_msg.BUF  = buf;
+                driver_msg.CNT  = len;
+                driver_msg.PROC_NR  = KERNEL;
+                send_recv(BOTH, dd_map[MAJOR(pin->i_specdev)].driver_nr, &driver_msg);
+            } else if (file_type == I_REGULAR) {
+                result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
+                    buf, len, NULL, NULL);
+            } else if (file_type == I_DIRECTORY) {
+                return EISDIR;
+            } else {
+                return EBADF;
+            }
+
+            break;
+        }
+    }
+
+reply:
+    m->MMRRESULT = result;
+    m->MMRENDPOINT = ep;
+
+    m->type = MM_VFS_REPLY;
+    if (asyncsend3(TASK_MM, m, 0) != 0) panic("do_mm_request(): cannot reply to mm");
+
+    return SUSPEND;
 }

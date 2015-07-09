@@ -87,6 +87,9 @@ PUBLIC int main()
 		case MM_MAP_PHYS:
 			mm_msg.RETVAL = do_map_phys();
 			break;
+		case MM_VFS_REPLY:
+			mm_msg.RETVAL = do_vfs_reply();
+			break;
 		case FAULT:
 			do_handle_fault();
 			reply = 0;
@@ -96,7 +99,7 @@ PUBLIC int main()
 			break;
 		}
 
-		if (reply) {
+		if (reply && mm_msg.RETVAL != SUSPEND) {
 			mm_msg.type = SYSCALL_RET;
 			send_recv(SEND_NONBLOCK, src, &mm_msg);
 		}
@@ -129,6 +132,7 @@ PRIVATE void init_mm()
 		VMALLOC_END - vmalloc_start);
 	pt_init();
 	slabs_init();
+	page_cache_init();
 
 	__lyos_init();
 
@@ -184,7 +188,7 @@ PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
 	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
 	struct vir_region * vr = NULL;
 
-	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_POPULATE, len, RF_WRITABLE))) return ENOMEM;
     list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
 
     return 0;
@@ -195,7 +199,7 @@ PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len
 	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
 	struct vir_region * vr = NULL;
 
-	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_PREALLOC, len, RF_WRITABLE))) return ENOMEM;
+	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
     list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
 
     return 0;

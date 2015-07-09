@@ -67,8 +67,8 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, in
         return EINVAL;
     }
 
-    *newpos = m.RWPOS;
-    *bytes_rdwt = m.RWCNT;
+    if (newpos) *newpos = m.RWPOS;
+    if (bytes_rdwt) *bytes_rdwt = m.RWCNT;
 
     return m.RWRET;
 }

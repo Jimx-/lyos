@@ -26,6 +26,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
 #include <signal.h>
 #include "region.h"
 #include "proto.h"
@@ -66,14 +67,18 @@ PUBLIC void do_handle_fault()
         return;
     }
 
-    /*if (!(vr->flags & RF_WRITABLE) && wrflag) {
+    if (!(vr->flags & RF_WRITABLE) && wrflag) {
         printl("MM: SIGSEGV %d ro address %x\n", mm_msg.FAULT_PROC, pfla);
 
         if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
         if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
-    }*/
-        
-    if (region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1) == 0) handled = 1;
+
+        return;
+    }
+
+    int retval;
+    if ((retval = region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1)) == 0) handled = 1;
+    else if (retval == SUSPEND) return;
 
 
 #ifdef PAGEFAULT_DEBUG

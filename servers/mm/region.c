@@ -23,12 +23,30 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/ipc.h>
+#include <lyos/fs.h>
+#include <lyos/vm.h>
 #include <atomic.h>
 #include "signal.h"
 #include "errno.h"
 #include "region.h"
 #include "proto.h"
 #include "const.h"
+#include "cache.h"
+
+PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr, 
+        vir_bytes offset, int wrflag);
+
+/* Page fault state */
+struct filemap_pf_state {
+    struct mmproc* mmp;
+    struct vir_region* vr;
+    vir_bytes offset;
+    int wrflag;
+
+    phys_bytes cache_phys;
+    vir_bytes cache_vir;
+};
 
 //#define REGION_DEBUG 1
 
@@ -129,6 +147,11 @@ PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
 PRIVATE inline struct phys_frame * phys_region_set(struct phys_region * rp, int i, struct phys_frame * pf)
 {
     struct phys_frame ** frame = &rp->frames[i];
+
+    /*if (*frame) {
+        if ((*frame)->refcnt <= 1) SLABFREE(*frame);
+    }*/
+
     *frame = pf;
 
     return pf;
@@ -450,11 +473,105 @@ PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr,
     return 0;
 }
 
+PRIVATE void region_handle_pf_filemap_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
+{
+    struct filemap_pf_state* state = (struct filemap_pf_state*) arg;
+    struct mmproc* fault_proc = state->mmp;
+    struct vir_region* vr = state->vr;
+
+    if (msg->MMRRESULT != 0) goto kill;
+
+    struct phys_frame * frame;
+    SLABALLOC(frame);
+    if (!frame) goto kill;
+
+    frame->refcnt = 0;
+    frame->phys_addr = state->cache_phys;
+    frame->flags = PFF_SHARED | (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
+
+    off_t file_offset = vr->param.file.offset + state->offset;
+
+    if (page_cache_add(vr->param.file.filp->dev, 0, vr->param.file.filp->ino, file_offset, frame) != 0) goto kill;
+
+    /* the page is in the cache now, retry */
+    int retval = region_handle_pf_filemap(state->mmp, state->vr, state->offset, state->wrflag);
+    if (retval == SUSPEND) return;
+    if (retval != 0) goto kill;
+
+    if (vmctl(VMCTL_PAGEFAULT_CLEAR, fault_proc->endpoint) != 0) panic("pagefault: vmctl failed");
+    return;
+
+kill:
+    printl("MM: SIGSEGV %d bad address\n", fault_proc->endpoint);
+    if (kernel_kill(fault_proc->endpoint, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
+    if (vmctl(VMCTL_PAGEFAULT_CLEAR, fault_proc->endpoint) != 0) panic("pagefault: vmctl failed");
+}
+
+PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr, 
+        vir_bytes offset, int wrflag)
+{
+    struct phys_region * pregion = &vr->phys_block;
+    struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+    if (!vr->param.file.filp) panic("region_handle_pf_filemap(): BUG: file mapping region has no file param");
+    int fd = vr->param.file.filp->fd;
+
+    offset = rounddown(offset, PG_SIZE);
+
+    if (frame->phys_addr == NULL) { /* page not present */
+        struct page_cache* cp;
+        off_t file_offset = vr->param.file.offset + offset;
+
+        cp = find_cache_by_ino(vr->param.file.filp->dev, vr->param.file.filp->ino, file_offset);
+        if (cp) {   /* cache hit */
+            
+            cp->page->refcnt++;
+            cp->page->flags |= PFF_SHARED;
+            cp->page->flags &= ~PFF_WRITABLE;
+            phys_region_set(pregion, offset / ARCH_PG_SIZE, cp->page);
+
+            if (vr->flags & RF_PRIVATE) {   /* private mapping */
+                region_cow(mmp, vr, offset);
+            } else if (wrflag && vr->flags & RF_WRITABLE && !(cp->page->flags & PFF_WRITABLE)) {
+                /* want to write, but cache is not writable */
+                region_cow(mmp, vr, offset);
+            }
+
+            region_map_phys(mmp, vr);
+
+            return 0;
+        }
+
+        /* tell vfs to read in this page */
+        phys_bytes buf_phys;
+        vir_bytes buf_vir = alloc_vmem(&buf_phys, ARCH_PG_SIZE);
+        if (!buf_vir) return ENOMEM;
+
+        memset((void*)buf_vir, 0, ARCH_PG_SIZE);
+
+        struct filemap_pf_state state;
+        state.mmp = mmp;
+        state.vr = vr;
+        state.offset = offset;
+        state.wrflag = wrflag;
+        state.cache_vir = buf_vir;
+        state.cache_phys = buf_phys;
+
+        if (enqueue_vfs_request(mmp, MMR_FDREAD, fd, buf_vir, file_offset, ARCH_PG_SIZE, region_handle_pf_filemap_callback, &state, sizeof(state)) != 0)
+            return ENOMEM;
+
+        return SUSPEND;
+    }
+
+    return region_cow(mmp, vr, offset);
+}
+
 PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr, 
         vir_bytes offset, int wrflag)
 {
     struct phys_region * pregion = &vr->phys_block;
     struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+
+    if (vr->flags & RF_FILEMAP) return region_handle_pf_filemap(mmp, vr, offset, wrflag);
 
     if (wrflag && frame->flags & PFF_SHARED) {
         /* writing to write-protected page */
@@ -512,6 +629,7 @@ PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes off
     memset(new_frame, 0, sizeof(*new_frame));
 
     new_frame->flags = frame->flags & PFF_WRITABLE;
+    new_frame->refcnt = 1;
     phys_region_set(pregion, offset / ARCH_PG_SIZE, new_frame);
 
     /* map the new frame */

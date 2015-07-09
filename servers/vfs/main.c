@@ -144,6 +144,9 @@ PUBLIC int main()
 		case EXIT:
 			msg.RETVAL = fs_exit(&msg);
 			break;
+		case MM_VFS_REQUEST:
+			msg.RETVAL = do_mm_request(&msg);
+			break;
 		case RESUME_PROC:
 			src = msg.PROC_NR;
 			break;

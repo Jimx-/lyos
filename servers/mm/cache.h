@@ -13,31 +13,22 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _MM_CONST_H_
-#define _MM_CONST_H_
-    
-/* stack guard */
-/**
- * when there is a page fault caused by access to this guard area,
- * stack size will be enlarged.
- */
-#define GROWSDOWN_GUARD_LEN     0x8000
+#ifndef _MM_CACHE_H_
+#define _MM_CACHE_H_
 
-/* Region flags */
-#define RF_NORMAL   0x0
-#define RF_WRITABLE 0x1
-#define RF_SHARED   0x2
-#define RF_MAPPED   0x4
-#define RF_GUARD    0x8
-#define RF_GROWSDOWN 0x10
-#define RF_FILEMAP  0x20
-#define RF_PRIVATE  0x40
+struct page_cache {
+    dev_t dev;
+    off_t dev_offset;
 
-/* Page frame flags */
-#define PFF_WRITABLE 0x1
-#define PFF_SHARED   0x2
-#define PFF_MAPPED   0x4
+    ino_t ino;
+    off_t ino_offset;
 
-#define MAX_PAGEDIR_PDES    5
- 
-#endif /* _MM_CONST_H_ */
+    struct phys_frame* page;
+
+    struct list_head hash_dev;
+    struct list_head hash_ino;
+};
+
+PUBLIC struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino, off_t ino_off);
+
+#endif

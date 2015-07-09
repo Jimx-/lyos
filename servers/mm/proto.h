@@ -92,4 +92,13 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     int mmap_flags, size_t len, int vrflags);
 PUBLIC int do_mmap();
 
+typedef void (*vfs_callback_t) (struct mmproc* mmp, MESSAGE* msg, void* arg);
+PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_bytes addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len);
+PUBLIC int do_vfs_reply();
+
+PUBLIC struct mm_file_desc* get_mm_file_desc(int fd, dev_t dev, ino_t ino);
+PUBLIC void file_reference(struct vir_region* vr, struct mm_file_desc* filp);
+
+PUBLIC void page_cache_init();
+
 #endif

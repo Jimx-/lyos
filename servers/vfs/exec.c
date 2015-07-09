@@ -217,23 +217,11 @@ PUBLIC int fs_exec(MESSAGE * msg)
     /* find an fd for MM */
     struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
     /* find a free slot in PROCESS::filp[] */
-    int fd = -1;
-    for (i = 0; i < NR_FILES; i++) {
-        if (mm_task->filp[i] == 0) {
-            fd = i;
-            break;
-        }
-    }
-    if (fd < 0)
-        panic("VFS: do_exec(): MM's filp[] is full");
+    int fd = get_fd(mm_task);
+    if (fd < 0) return fd;
 
-    for (i = 0; i < NR_FILE_DESC; i++)
-        if (f_desc_table[i].fd_inode == 0)
-            break;
-    if (i >= NR_FILE_DESC)
-        panic("f_desc_table[] is full.");
-
-    struct file_desc * filp = &f_desc_table[i];
+    struct file_desc * filp = alloc_filp();
+    if (!filp) return ENOMEM;
     mm_task->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;

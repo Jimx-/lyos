@@ -7,6 +7,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <sys/mman.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
@@ -27,6 +28,7 @@ int main(int argc, char * argv[])
 
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
+
 	if (fd_hostname != -1) {
 		char hostname[256];
 		memset(hostname, 0, sizeof(hostname));
