@@ -276,6 +276,7 @@ enum msgtype {
     MM_MAP_PHYS = MM_REQ_BASE,
     MM_VFS_REQUEST,
     MM_VFS_REPLY,
+    MM_GETINFO,
     
     /* message type for pm calls */
     PM_VFS_INIT = PM_REQ_BASE,			/* 1501 */

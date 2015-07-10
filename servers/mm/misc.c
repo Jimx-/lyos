@@ -58,3 +58,22 @@ PUBLIC int do_procctl()
 
     return retval;
 }
+
+PUBLIC int do_mm_getinfo()
+{
+    int request = mm_msg.REQUEST;
+    endpoint_t src = mm_msg.source;
+    size_t len = mm_msg.BUF_LEN;
+    void* addr = mm_msg.BUF;
+
+    switch (request) {
+    case MM_GET_MEMINFO:
+        if (len < sizeof(mem_info)) return EINVAL;
+
+        return data_copy(src, addr, SELF, &mem_info, sizeof(mem_info));
+    default:
+        return EINVAL;
+    }
+
+    return EINVAL;
+}

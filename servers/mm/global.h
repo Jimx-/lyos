@@ -17,6 +17,7 @@
 #define _MM_GLOBAL_H_
 
 #include <lyos/param.h>
+#include <lyos/vm.h>
 #include "mmproc.h"
 
 /* EXTERN is extern except for global.c */
@@ -42,5 +43,7 @@ EXTERN  unsigned int        memory_size;
 EXTERN  int                 mem_start;
 
 EXTERN  MESSAGE         mm_msg;
+
+EXTERN struct mem_info  mem_info;
 
 #endif 

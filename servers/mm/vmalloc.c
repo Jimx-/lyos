@@ -34,6 +34,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/vm.h>
 #include "page.h"
 #include "region.h"
 #include "proto.h"
@@ -108,7 +109,7 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
  	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
  	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW | PG_USER);
- 	
+
  	return retval;
 }
 
@@ -141,6 +142,7 @@ PUBLIC vir_bytes alloc_vmpages(int nr_pages)
 			/* Delete the hole if used up completely. */
 			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
 
+			mem_info.vmalloc_used += memsize;
 			/* Return the start address of the acquired block. */
 			return(old_base);
 		}
@@ -165,6 +167,8 @@ PUBLIC void free_vmpages(vir_bytes base, int nr_pages)
 	new_ptr->h_len = len;
  	free_slots = new_ptr->h_next;
 	hp = hole_head;
+
+	mem_info.vmalloc_used -= len;
 
 	/* Insert the slot to a proper place */
 	if (hp == NULL || base <= hp->h_base) {

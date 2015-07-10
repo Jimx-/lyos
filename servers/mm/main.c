@@ -90,6 +90,9 @@ PUBLIC int main()
 		case MM_VFS_REPLY:
 			mm_msg.RETVAL = do_vfs_reply();
 			break;
+		case MM_GETINFO:
+			mm_msg.RETVAL = do_mm_getinfo();
+			break;
 		case FAULT:
 			do_handle_fault();
 			reply = 0;
@@ -128,8 +131,10 @@ PRIVATE void init_mm()
 
 	/* initialize hole table */
 	vir_bytes vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
-	vmem_init(vmalloc_start, 
-		VMALLOC_END - vmalloc_start);
+	vmem_init(vmalloc_start, VMALLOC_END - vmalloc_start);
+	mem_info.vmalloc_total = VMALLOC_END - vmalloc_start;
+	mem_info.vmalloc_used = 0;
+
 	pt_init();
 	slabs_init();
 	page_cache_init();
@@ -317,6 +322,9 @@ PRIVATE void print_memmap()
 
 	mem_start = kernel_info.kernel_end_phys;
 	free_mem_size = memory_size - mem_start;
+
+	mem_info.mem_total = memory_size;
+	mem_info.mem_free = free_mem_size;
 }
 
 PRIVATE void process_system_notify()

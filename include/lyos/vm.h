@@ -67,6 +67,15 @@
 #define KMF_WRITE      0x1
 #define KMF_USER       0x2
 
+#define MM_GET_MEMINFO  1
+
+struct mem_info {
+    vir_bytes mem_total;
+    vir_bytes mem_free;
+    vir_bytes vmalloc_total;
+    vir_bytes vmalloc_used;
+};
+
 PUBLIC int procctl(endpoint_t who, int param);
 PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags);
 PUBLIC int vmctl_reply_kern_mapping(int index, void * vir_addr);
@@ -77,5 +86,6 @@ PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len);
 PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
                         int * flags, endpoint_t * caller);
 PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result);
+PUBLIC int get_meminfo(struct mem_info* mem_info);
 
 #endif

@@ -29,6 +29,7 @@
 #include "page.h"
 #include "region.h"
 #include "proto.h"
+#include "global.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
@@ -83,6 +84,9 @@ PUBLIC int alloc_mem(int memsize)
 			/* Delete the hole if used up completely. */
 			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
 
+			/* Update stat */
+			mem_info.mem_free -= memsize;
+
 			/* Return the start address of the acquired block. */
 			return(old_base);
 		}
@@ -121,6 +125,8 @@ PUBLIC int alloc_pages(int nr_pages)
 			if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
 				prev_ptr->h_len += alignment;
 
+			mem_info.mem_free -= memsize;
+
 			/* Delete the hole if used up completely. */
 			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
 
@@ -157,6 +163,8 @@ PUBLIC int free_mem(int base, int len)
 	new_ptr->h_len = len;
  	free_slots = new_ptr->h_next;
 	hp = hole_head;
+
+	mem_info.mem_free += len;
 
 	/* Insert the slot to a proper place */
 	if (hp == NULL || base <= hp->h_base) {
