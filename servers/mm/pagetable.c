@@ -143,7 +143,7 @@ PUBLIC void mm_init(struct mm_struct* mm)
 
 PUBLIC void mm_free(struct mm_struct* mm)
 {
-    if (atomic_dec_and_test(&mm->refcnt) <= 0) {
+    if (atomic_dec_and_test(&mm->refcnt)) {
         int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
         free_vmem(mm, len);
     }
