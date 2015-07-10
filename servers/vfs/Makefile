@@ -13,7 +13,7 @@ realclean :
 
 $(VFS): $(FSOBJS)
 	@echo -e '\tLD\tservers/vfs/$@'
-	@$(CC) $(SERVERCFLAGS) -Wl,-Ttext,0x80000000 -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo -e '\tCC\tservers/vfs/$@'

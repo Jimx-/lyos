@@ -146,13 +146,13 @@ PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
 
 PRIVATE inline struct phys_frame * phys_region_set(struct phys_region * rp, int i, struct phys_frame * pf)
 {
-    struct phys_frame ** frame = &rp->frames[i];
+    struct phys_frame* frame = rp->frames[i];
 
-    /*if (*frame) {
-        if ((*frame)->refcnt <= 1) SLABFREE(*frame);
-    }*/
+    if (frame != NULL) {
+        if (frame->refcnt == 0) SLABFREE(frame);
+    }
 
-    *frame = pf;
+    rp->frames[i] = pf;
 
     return pf;
 }
@@ -306,42 +306,6 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     return 0;
 }
 
-#if 0
-/**
- * <Ring 1> Make virtual region rp write-protected. 
- */
-PUBLIC int region_wp(struct mmproc * mmp, struct vir_region * rp)
-{
-    pt_wp_memory(&(mmp->pgd), rp->vir_addr, rp->length);
-
-    return 0;
-}
-
-PUBLIC int region_wp_page(struct mmproc * mmp, struct vir_region * rp, vir_bytes offset)
-{
-    pt_wp_memory(&(mmp->pgd), (vir_bytes)rp->vir_addr + offset, ARCH_PG_SIZE);
-
-    return 0;
-}
-
-/**
- * <Ring 1> Make virtual region rp unwrite-protected. 
- */
-PUBLIC int region_unwp(struct mmproc * mmp, struct vir_region * rp)
-{
-    pt_unwp_memory(&(mmp->pgd), rp->vir_addr, rp->length);
-
-    return 0;
-}
-
-PUBLIC int region_unwp_page(struct mmproc * mmp, struct vir_region * rp, vir_bytes offset)
-{
-    pt_unwp_memory(&(mmp->pgd), (vir_bytes)rp->vir_addr + offset, ARCH_PG_SIZE);
-
-    return 0;
-}
-#endif
-
 PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr)
 {
     unsigned offset = ~0;
@@ -385,36 +349,6 @@ PUBLIC int region_extend(struct vir_region * rp, int increment)
     if (retval) return retval;
     return region_alloc_phys(rp);
 }
-
-#if 0
-/**
- * <Ring 1> Extend stack.
- */
-PUBLIC int region_extend_stack(struct vir_region * rp, int increment)
-{
-    struct phys_region * pregion = &(rp->phys_block);
-
-    /* make sure it's page-aligned */
-    if (increment % PG_SIZE != 0) {
-        increment += PG_SIZE - (increment % PG_SIZE);
-    }
-
-    rp->length += increment;
-    rp->vir_addr = (void*)((int)(rp->vir_addr) - increment);
-
-    int retval = phys_region_extend_up_to(pregion, rp->length / PG_SIZE);
-    if(retval) return retval;
-    phys_region_right_shift(pregion, increment / PG_SIZE);
-    
-    retval = region_alloc_phys(rp);
-
-#if REGION_DEBUG
-    printl("MM: region_extend_stack: extended stack by 0x%x bytes\n", increment);
-#endif
-
-    return retval;
-}
-#endif
 
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
                             struct mmproc * p_src, struct vir_region * src)
@@ -491,7 +425,7 @@ PRIVATE void region_handle_pf_filemap_callback(struct mmproc* mmp, MESSAGE* msg,
 
     off_t file_offset = vr->param.file.offset + state->offset;
 
-    if (page_cache_add(vr->param.file.filp->dev, 0, vr->param.file.filp->ino, file_offset, frame) != 0) goto kill;
+    if (page_cache_add(vr->param.file.filp->dev, 0, vr->param.file.filp->ino, file_offset, state->cache_vir, frame) != 0) goto kill;
 
     /* the page is in the cache now, retry */
     int retval = region_handle_pf_filemap(state->mmp, state->vr, state->offset, state->wrflag);
@@ -614,7 +548,6 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
 
 PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes offset)
 {
-    /* TODO: notify all group members of the change to keep synchronized */
     struct phys_region * pregion = &vr->phys_block;
     struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
 

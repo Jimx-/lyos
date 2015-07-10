@@ -255,7 +255,7 @@ PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length)
     /* sanity check */
     if ((vir_bytes)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
     if (length % PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
-    
+
     while (1) {
         pt_wppage(pgd, vir_addr);
 
@@ -385,11 +385,13 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         if (pgd->vir_pts[i]) {
-            free_vmem((int)(pgd->vir_pts[i]), PT_SIZE);
+            free_vmem((vir_bytes)pgd->vir_pts[i], ARCH_PT_SIZE);
         }
         pgd->vir_pts[i] = NULL;
     }
 
+    free_vmem((vir_bytes) pgd->vir_addr, ARCH_PGD_SIZE);
+    
     return 0;
 }
 
@@ -449,6 +451,18 @@ PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv
     }
 
     return 0;
+}
+
+PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr)
+{
+    unsigned long pgd_index = ARCH_PDE(vir_addr);
+    unsigned long pt_index = ARCH_PTE(vir_addr);
+
+    pte_t * pt = pgd->vir_pts[pgd_index];
+
+    phys_bytes phys = pt[pt_index] & ARCH_VM_ADDR_MASK;
+
+    return phys;
 }
 
 PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)

@@ -23,6 +23,7 @@ struct page_cache {
     ino_t ino;
     off_t ino_offset;
 
+    vir_bytes vir_addr;
     struct phys_frame* page;
 
     struct list_head hash_dev;

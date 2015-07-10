@@ -133,9 +133,8 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
     region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
     region_free(list_entry(vr->list.prev, struct vir_region, list)); 
 
-    pgd_clear(&(mmp->mm->pgd));
-
     if (clear_proc) {
+        pgd_clear(&(mmp->mm->pgd));
         mm_free(mmp->mm);
         mmp->mm = mmp->active_mm = NULL;
     }

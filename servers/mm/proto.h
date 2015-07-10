@@ -22,15 +22,16 @@ PUBLIC int mm_verify_endpt(endpoint_t ep, int * proc_nr);
 PUBLIC struct mmproc * endpt_mmproc(endpoint_t ep);
 
 PUBLIC void mem_init(int mem_start, int free_mem_size);
-PUBLIC void vmem_init(int mem_start, int free_mem_size);
+PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size);
 /* PUBLIC int   alloc_mem(int pid, int memsize); */
 PUBLIC int  alloc_mem(int memsize);
 PUBLIC int  free_mem(int base, int len);
 PUBLIC int alloc_pages(int nr_pages);
 
-PUBLIC int  alloc_vmem(phys_bytes * phys_addr, int memsize);
-PUBLIC int alloc_vmpages(int nr_pages);
-PUBLIC int  free_vmem(int base, int len);
+PUBLIC vir_bytes  alloc_vmem(phys_bytes * phys_addr, int memsize);
+PUBLIC vir_bytes alloc_vmpages(int nr_pages);
+PUBLIC void  free_vmem(vir_bytes base, int len);
+PUBLIC void free_vmpages(vir_bytes base, int nr_pages);
 
 PUBLIC void slabs_init();
 PUBLIC void * slaballoc(int bytes);
@@ -53,6 +54,7 @@ PUBLIC int pgd_new(pgdir_t * pgd);
 PUBLIC int pgd_mapkernel(pgdir_t * pgd);
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
 PUBLIC int pgd_clear(pgdir_t * pgd);
+PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr);
 PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv, vir_bytes maxv);
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);

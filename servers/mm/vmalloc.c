@@ -46,7 +46,7 @@ PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
 PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp);
 PRIVATE void merge_hole(struct hole * hp);
 
-PUBLIC void vmem_init(int mem_start, int free_mem_size)
+PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size)
 {
 	struct hole *hp;
 
@@ -60,7 +60,9 @@ PUBLIC void vmem_init(int mem_start, int free_mem_size)
   	free_slots = &hole[0];
 
 	/* Free memory */
-	free_vmem(mem_start, free_mem_size);
+	int nr_pages = free_mem_size / ARCH_PG_SIZE;
+	if (free_mem_size % ARCH_PG_SIZE) nr_pages++;
+	free_vmpages(mem_start, nr_pages);
 }
 
 /*****************************************************************************
@@ -74,7 +76,7 @@ PUBLIC void vmem_init(int mem_start, int free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
+PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
 {
 	int pages = memsize / PG_SIZE;
 	if (memsize % PG_SIZE != 0)
@@ -115,7 +117,7 @@ PUBLIC int alloc_vmem(phys_bytes * phys_addr, int memsize)
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-PUBLIC int alloc_vmpages(int nr_pages)
+PUBLIC vir_bytes alloc_vmpages(int nr_pages)
 {
 	int memsize = nr_pages * PG_SIZE;
  	struct hole *hp, *prev_ptr;
@@ -150,22 +152,13 @@ PUBLIC int alloc_vmpages(int nr_pages)
   	return(-ENOMEM);
 }
 
-/*****************************************************************************
- *                                free_vmem
- *****************************************************************************/
-/**
- * Free a memory block.
- *
- * @param base	Base address of block to free.
- * @param len	Number of bytes to free.
- *
- * @return  Zero if success.
- *****************************************************************************/
-PUBLIC int free_vmem(int base, int len)
+PUBLIC void free_vmpages(vir_bytes base, int nr_pages)
 {
+	if (nr_pages <= 0) return;
+
+	int len = nr_pages * ARCH_PG_SIZE;
 	struct hole *hp, *new_ptr, *prev_ptr;
 
-	if (len == 0) return EINVAL;
   	if ((new_ptr = free_slots) == NULL)
   		panic("hole table full");
 	new_ptr->h_base = base;
@@ -180,7 +173,7 @@ PUBLIC int free_vmem(int base, int len)
 		new_ptr->h_next = hp;
 		hole_head = new_ptr;
 		merge_hole(new_ptr);
-		return 0;
+		return;
  	}
 
 	/* Find where it should go */
@@ -193,7 +186,36 @@ PUBLIC int free_vmem(int base, int len)
   	new_ptr->h_next = prev_ptr->h_next;
   	prev_ptr->h_next = new_ptr;
 	merge_hole(prev_ptr);
-	return 0;
+}
+
+/*****************************************************************************
+ *                                free_vmem
+ *****************************************************************************/
+/**
+ * Free a memory block.
+ *
+ * @param base	Base address of block to free.
+ * @param len	Number of bytes to free.
+ *
+ * @return  Zero if success.
+ *****************************************************************************/
+PUBLIC void free_vmem(vir_bytes base, int len)
+{
+	if (!pt_init_done) return;
+
+	int nr_pages = len / ARCH_PG_SIZE;
+	if (len % ARCH_PG_SIZE) nr_pages++;
+
+	/* free physical memory */
+	int i;
+	vir_bytes addr = base;
+	struct mmproc* mmprocess = &mmproc_table[TASK_MM];
+	for (i = 0; i < nr_pages; i++, addr += ARCH_PG_SIZE) {
+		phys_bytes phys = pgd_va2pa(&mmprocess->mm->pgd, addr);
+		if (phys) free_mem(phys, ARCH_PG_SIZE);
+	}
+
+	free_vmpages(base, nr_pages);
 }
 
 /*******************************************************************

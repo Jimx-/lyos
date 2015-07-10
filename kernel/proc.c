@@ -400,7 +400,7 @@ out:
 
 	return retval;
 }
-void mark(){}
+
 /*****************************************************************************
  *                                msg_receive
  *****************************************************************************/
@@ -427,8 +427,6 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 	struct proc* prev = NULL;
 	int copyok = 0;
 	int retval = 0;
-
-	if (p_to_recv->endpoint == 1037) mark();
 
 	lock_proc(who_wanna_recv);
 	/* PST_SENDING is set means that the process failed to send a 

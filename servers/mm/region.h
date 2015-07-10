@@ -26,8 +26,8 @@
 struct phys_frame {
     void * phys_addr;
 
-    u8 refcnt;
-    u8 flags;
+    int refcnt;
+    int flags;
 };
 
 /**
