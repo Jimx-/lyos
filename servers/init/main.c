@@ -28,7 +28,6 @@ int main(int argc, char * argv[])
 
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
-
 	if (fd_hostname != -1) {
 		char hostname[256];
 		memset(hostname, 0, sizeof(hostname));

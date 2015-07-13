@@ -244,7 +244,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
 
             m->MMRDEV = filp->fd_inode->i_dev;
             m->MMRINO = filp->fd_inode->i_num;
-            m->MMRLENGTH = roundup(filp->fd_inode->i_size, PG_SIZE);
+            m->MMRLENGTH = filp->fd_inode->i_size;
             m->MMRFD = mmfd;
 
             result = 0;
@@ -273,8 +273,17 @@ PUBLIC int do_mm_request(MESSAGE* m)
                 driver_msg.PROC_NR  = KERNEL;
                 send_recv(BOTH, dd_map[MAJOR(pin->i_specdev)].driver_nr, &driver_msg);
             } else if (file_type == I_REGULAR) {
+                if (offset > pin->i_size) {
+                    result = 0;
+                    goto reply;
+                }
+
+                if (offset + len > pin->i_size) len = pin->i_size - offset;
+
+                size_t count;
                 result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
-                    buf, len, NULL, NULL);
+                    buf, len, NULL, &count);
+                m->MMRLENGTH = count;
             } else if (file_type == I_DIRECTORY) {
                 return EISDIR;
             } else {

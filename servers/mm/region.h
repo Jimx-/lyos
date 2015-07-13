@@ -58,6 +58,7 @@ struct vir_region {
         struct {
             struct mm_file_desc* filp;
             off_t offset;
+            size_t clearend;
         } file;
     } param;
 };

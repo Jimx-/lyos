@@ -77,7 +77,7 @@ PUBLIC void do_handle_fault()
     }
 
     int retval;
-    if ((retval = region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, 1)) == 0) handled = 1;
+    if ((retval = region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, wrflag)) == 0) handled = 1;
     else if (retval == SUSPEND) return;
 
 

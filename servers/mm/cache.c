@@ -26,6 +26,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/vm.h>
 #include "region.h"
 #include "proto.h"
 #include "const.h"
@@ -40,6 +41,8 @@ PUBLIC void page_cache_init()
 {
     int i;
     for (i = 0; i < HASHSIZE; i++) INIT_LIST_HEAD(&cache_hash_ino[i]);
+
+    mem_info.cached = 0;
 }
 
 PRIVATE int _hash(int ino)
@@ -63,10 +66,12 @@ PUBLIC int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offs
     cache->dev = dev;
     cache->dev_offset = dev_offset;
     cache->ino = ino;
-    cache->ino_offset;
+    cache->ino_offset = ino_offset;
     cache->vir_addr = vir_addr;
     cache->page = frame;
     cache->page->refcnt++;
+
+    mem_info.cached += ARCH_PG_SIZE;
 
     cache_add_hash_ino(cache);
 

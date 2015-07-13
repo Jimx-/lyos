@@ -47,7 +47,7 @@ PUBLIC void * mmap_for(endpoint_t forwhom,
 }
 
 PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
-    dev_t dev, ino_t ino, int fd, int vaddr, int flags)
+    dev_t dev, ino_t ino, int fd, int vaddr, int flags, int prot, size_t clearend)
 {
     MESSAGE m;
 
@@ -62,8 +62,11 @@ PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
     m.MMAP_FD = fd;
     m.MMAP_VADDR = vaddr;
     m.MMAP_FLAGS = flags;
+    m.MMAP_PROT = prot;
+    m.MMAP_CLEAREND = clearend;
 
-    send_recv(BOTH, TASK_MM, &m);
+    asyncsend3(TASK_MM, &m, 0);
+    send_recv(RECEIVE, TASK_MM, &m);
 
     return m.RETVAL;
 }

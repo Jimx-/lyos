@@ -72,6 +72,8 @@
 struct mem_info {
     vir_bytes mem_total;
     vir_bytes mem_free;
+    vir_bytes cached;
+    vir_bytes slab;
     vir_bytes vmalloc_total;
     vir_bytes vmalloc_used;
 };
@@ -87,5 +89,7 @@ PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes
                         int * flags, endpoint_t * caller);
 PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result);
 PUBLIC int get_meminfo(struct mem_info* mem_info);
+PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
+    dev_t dev, ino_t ino, int fd, int vaddr, int flags, int prot, size_t clearend);
 
 #endif

@@ -14,7 +14,7 @@ Version 0.4.0
 
 Version 0.4.1
 - CHG Set PROC_BASE according to kernel size.
-- NEW In-memory InitFS serving as initial ramdisk. 
+- NEW In-memory InitFS serving as initial ramdisk.
 - NEW Page fault handler.
 - CHG Partly moved system tasks out of kernel address space.
 - NEW Service manager.

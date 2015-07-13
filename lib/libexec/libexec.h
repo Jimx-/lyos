@@ -9,8 +9,7 @@ typedef int (*libexec_allocator_t)(struct exec_info *execi, int vaddr, size_t le
 typedef int (*libexec_clearmem_t)(struct exec_info *execi, int vaddr, size_t len);
 typedef int (*libexec_clearproc_t)(struct exec_info *execi);
 typedef int (*libexec_copymem_t)(struct exec_info *execi, off_t offset, int vaddr, size_t len);
-typedef int (*libexec_mmap_t)(struct exec_info *execi,
-	int vaddr, int len, int foffset, int protflags);
+typedef int (*libexec_mmap_t)(struct exec_info *execi, int vaddr, int len, int foffset, int protflags, size_t clearend);
 
 struct exec_info {
 	endpoint_t proc_e;

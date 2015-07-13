@@ -107,7 +107,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         Elf32_Phdr * phdr = &prog_hdr[i];
         off_t foffset;
         u32 vaddr;
-        size_t fsize, memsize;
+        size_t fsize, memsize, clearend = 0;
         int mmap_prot = PROT_READ;
 
         if (phdr->p_flags & PF_W) mmap_prot |= PROT_WRITE;
@@ -126,6 +126,12 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         fsize = phdr->p_filesz;
         vaddr = phdr->p_vaddr;
         memsize = phdr->p_memsz;
+
+        /* clear memory beyond file size */
+        size_t rem = (vaddr + fsize) % PG_SIZE;
+        if (rem && (fsize < memsize)) {
+            clearend = PG_SIZE - rem;
+        }
 
 #ifdef ELF_DEBUG
         printl("libexec: segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x }, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
@@ -148,8 +154,20 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             roundup(execi->brk, sizeof(int));
         }
 
-        if (0 /* execi->memmap(...) == 0 */) {
+        if (0) {
+        //if (execi->memmap && execi->memmap(execi, vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
+            /* allocate remaining memory */
+            if (memsize > fsize) {
+                size_t rem_size = memsize - fsize;
+                vir_bytes rem_start = vaddr + fsize;
 
+                if (execi->allocmem(execi, rem_start, rem_size) != 0) {
+                    if (execi->clearproc) execi->clearproc(execi);
+                    return ENOMEM;
+                }
+
+                execi->clearmem(execi, rem_start, rem_size);
+            }
         } else {
             if (execi->allocmem(execi, vaddr, memsize) != 0) {
                 if (execi->clearproc) execi->clearproc(execi);
@@ -200,6 +218,7 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
     int retval;
     Elf32_Ehdr * elf_hdr;
     Elf32_Phdr * prog_hdr;
+    u32 load_base = 0xffffffff;
 
     if ((retval = elf_check_header((Elf32_Ehdr *)execi->header)) != 0) return retval;
 
@@ -207,18 +226,24 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
 
     if (execi->clearproc) execi->clearproc(execi);
 
+    execi->phnum = elf_hdr->e_phnum;
+
     int i;
     /* load every segment */
     for (i = 0; i < elf_hdr->e_phnum; i++) {
         Elf32_Phdr * phdr = &prog_hdr[i];
         off_t foffset;
         u32 vaddr;
-        size_t fsize, memsize;
+        size_t fsize, memsize, clearend = 0;
         int mmap_prot = PROT_READ;
 
         if (phdr->p_flags & PF_W) mmap_prot |= PROT_WRITE;
 
+        if (phdr->p_type == PT_PHDR) execi->phdr = phdr->p_vaddr;
+
         if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0) continue;    /* ignore */
+
+        if ((u32)phdr->p_vaddr < load_base) load_base = (u32)phdr->p_vaddr;
 
         if((phdr->p_vaddr % PG_SIZE) != (phdr->p_offset % PG_SIZE)) {
             printl("libexec: unaligned ELF program?\n");
@@ -228,6 +253,12 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
         fsize = phdr->p_filesz;
         vaddr = phdr->p_vaddr;
         memsize = phdr->p_memsz;
+
+        /* clear memory beyond file size */
+        size_t rem = (vaddr + fsize) % PG_SIZE;
+        if (rem && (fsize < memsize)) {
+            clearend = PG_SIZE - rem;
+        }
 
         printl("libexec: segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x }, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
 
@@ -248,8 +279,21 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
             roundup(execi->brk, sizeof(int));
         }
 
-        if (0 /* execi->memmap(...) == 0 */) {
+        //if (0) {
+        if (execi->memmap && execi->memmap(execi, vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
+            printl("libexec: memmap 0x%x - 0x%x\n", vaddr, vaddr + fsize);
+            /* allocate remaining memory */
+            if (memsize > fsize) {
+                size_t rem_size = memsize - fsize;
+                vir_bytes rem_start = vaddr + fsize;
 
+                if (execi->allocmem(execi, rem_start, rem_size) != 0) {
+                    if (execi->clearproc) execi->clearproc(execi);
+                    return ENOMEM;
+                }
+
+                execi->clearmem(execi, rem_start, rem_size);
+            }
         } else {
             if (execi->allocmem(execi, vaddr, memsize) != 0) {
                 if (execi->clearproc) execi->clearproc(execi);
@@ -284,8 +328,8 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
         return ENOMEM;
     }
     //execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
-
     execi->entry_point = elf_hdr->e_entry;
+    execi->load_base = (void*)load_base;
 
     return 0;
 }

@@ -14,7 +14,7 @@ realclean :
 
 $(MM): $(MMOBJS)
 	@echo -e '\tLD\tservers/mm/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
+	@$(CC) $(SERVERCFLAGS) -Wl,-Ttext,0x80000000 -o $@ $^ $(LIBS) 
 
 arch/$(ARCH)/arch-mm.o:
 	@(cd arch/$(ARCH)/; make)

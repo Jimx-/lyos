@@ -30,6 +30,7 @@
 #include "signal.h"
 #include "errno.h"
 #include "region.h"
+#include "global.h"
 #include "proto.h"
 #include "const.h"
 #include "cache.h"
@@ -278,8 +279,6 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
 
     if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
 
-    list_add(&vr->list, &mmp->active_mm->mem_regions);
-
     return vr;
 }
 
@@ -448,6 +447,13 @@ PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr
     struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
     if (!vr->param.file.filp) panic("region_handle_pf_filemap(): BUG: file mapping region has no file param");
     int fd = vr->param.file.filp->fd;
+    static char zero_page[ARCH_PG_SIZE];
+    static int first = 1;
+
+    if (first) {
+        memset((char*) zero_page, 0, ARCH_PG_SIZE);
+        first = 0;
+    }
 
     offset = rounddown(offset, PG_SIZE);
 
@@ -459,15 +465,20 @@ PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr
         if (cp) {   /* cache hit */
             
             cp->page->refcnt++;
-            cp->page->flags |= PFF_SHARED;
-            cp->page->flags &= ~PFF_WRITABLE;
             phys_region_set(pregion, offset / ARCH_PG_SIZE, cp->page);
 
-            if (vr->flags & RF_PRIVATE) {   /* private mapping */
+            if (vr->flags & RF_WRITABLE && vr->flags & RF_PRIVATE) {   /* private mapping */
                 region_cow(mmp, vr, offset);
             } else if (wrflag && vr->flags & RF_WRITABLE && !(cp->page->flags & PFF_WRITABLE)) {
                 /* want to write, but cache is not writable */
                 region_cow(mmp, vr, offset);
+            }
+
+            if (vr->flags & RF_WRITABLE && vr->param.file.clearend > 0 && roundup(offset + vr->param.file.clearend, ARCH_PG_SIZE) >= vr->length) {
+                frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+                phys_bytes phaddr = frame->phys_addr;
+                phaddr += ARCH_PG_SIZE - vr->param.file.clearend;
+                data_copy(NO_TASK, phaddr, SELF, (char*) zero_page, vr->param.file.clearend);
             }
 
             region_map_phys(mmp, vr);
@@ -505,7 +516,7 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
     struct phys_region * pregion = &vr->phys_block;
     struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
 
-    if (vr->flags & RF_FILEMAP) return region_handle_pf_filemap(mmp, vr, offset, wrflag);
+    if (vr->flags & RF_FILEMAP && frame->phys_addr == NULL) return region_handle_pf_filemap(mmp, vr, offset, wrflag);
 
     if (wrflag && frame->flags & PFF_SHARED) {
         /* writing to write-protected page */
@@ -536,10 +547,16 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
     if (!new_frame) return ENOMEM;
     memset(new_frame, 0, sizeof(*new_frame));
 
+    void * paddr = (void *)alloc_pages(1);
+    if (!paddr) return ENOMEM;
+    new_frame->flags = (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
+    new_frame->phys_addr = paddr; 
+    new_frame->refcnt = 1;
+
     phys_region_set(pregion, offset / ARCH_PG_SIZE, new_frame);
 
-    int retval = region_alloc_phys(vr);
-    if (retval) return retval;
+    //int retval = region_alloc_phys(vr);
+    //if (retval) return retval;
 
     region_map_phys(mmp, vr);
 
@@ -552,7 +569,7 @@ PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes off
     struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
 
     /* release the old frame */
-    frame->refcnt--;
+    if (frame->refcnt) frame->refcnt--;
     if (frame->refcnt <= 1) frame->flags |= PFF_WRITABLE;
     
     /* allocate a new frame */
@@ -561,13 +578,12 @@ PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes off
     if (!new_frame) return ENOMEM;
     memset(new_frame, 0, sizeof(*new_frame));
 
-    new_frame->flags = frame->flags & PFF_WRITABLE;
+    void * paddr = (void *)alloc_pages(1);
+    if (!paddr) return ENOMEM;
+    new_frame->phys_addr = paddr; 
     new_frame->refcnt = 1;
+    new_frame->flags = (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
     phys_region_set(pregion, offset / ARCH_PG_SIZE, new_frame);
-
-    /* map the new frame */
-    int retval = region_alloc_phys(vr);
-    if (retval) return retval;
 
     region_map_phys(mmp, vr);
 

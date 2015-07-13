@@ -60,7 +60,7 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     return vr;
 }
 
-PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int flags, int prot, int mmfd, off_t offset, dev_t dev, ino_t ino, vir_bytes* ret_addr)
+PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int flags, int prot, int mmfd, off_t offset, dev_t dev, ino_t ino, size_t clearend, vir_bytes* ret_addr)
 {
     int vrflags = 0;
     struct vir_region * vr;
@@ -73,6 +73,7 @@ PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int fla
     if (addr % ARCH_PG_SIZE) return EINVAL;
 
     if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL) return ENOMEM;
+    list_add(&(vr->list), &mmp->active_mm->mem_regions);
 
     *ret_addr = (vir_bytes)vr->vir_addr;
 
@@ -82,6 +83,7 @@ PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int fla
     file_reference(vr, filp);
     vr->flags |= RF_FILEMAP;
     vr->param.file.offset = offset;
+    vr->param.file.clearend = clearend;
 
     return 0;
 }
@@ -96,7 +98,7 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
         result = msg->MMRRESULT;
     } else {
         result = mmap_file(mmp, (vir_bytes)mmap_msg->MMAP_VADDR, mmap_msg->MMAP_LEN, mmap_msg->MMAP_FLAGS, mmap_msg->MMAP_PROT, msg->MMRFD, 
-                mmap_msg->MMAP_OFFSET, msg->MMRDEV, msg->MMRINO, &ret_addr);
+                mmap_msg->MMAP_OFFSET, msg->MMRDEV, msg->MMRINO, 0, &ret_addr);
     }
 
     MESSAGE reply_msg;
@@ -106,6 +108,20 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
     reply_msg.MMAP_RETADDR = ret_addr;
 
     send_recv(SEND_NONBLOCK, mmap_msg->source, &reply_msg);
+}
+
+PUBLIC int do_vfs_mmap()
+{
+    endpoint_t src = mm_msg.source;
+    if (src != TASK_FS) return EPERM;
+
+    endpoint_t who = mm_msg.MMAP_WHO;
+    struct mmproc* mmp = endpt_mmproc(who);
+    if (!mmp) return ESRCH;
+
+    vir_bytes ret_addr;
+    return mmap_file(mmp, mm_msg.MMAP_VADDR, mm_msg.MMAP_LEN, mm_msg.MMAP_FLAGS, mm_msg.MMAP_PROT, mm_msg.MMAP_FD, 
+            mm_msg.MMAP_OFFSET, mm_msg.MMAP_DEV, mm_msg.MMAP_INO, mm_msg.MMAP_CLEAREND, &ret_addr);
 }
 
 PUBLIC int do_mmap()
@@ -172,6 +188,7 @@ PUBLIC int do_map_phys()
 
     struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE);
     if (!vr) return ENOMEM;
+    list_add(&vr->list, &mmp->active_mm->mem_regions);
 
     region_set_phys(vr, phys_addr);
     region_map_phys(mmp, vr);

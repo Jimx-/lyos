@@ -88,6 +88,10 @@ PUBLIC int do_fork()
             struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
             list_add(&(new_region->list), &mmp->active_mm->mem_regions);
            
+            if (vr->flags & RF_FILEMAP) {
+                new_region->param.file = vr->param.file;
+            }
+
             if (!(vr->flags & RF_MAPPED)) continue;
 
             region_share(mmp, new_region, mmparent, vr);
@@ -137,8 +141,7 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
         pgd_clear(&(mmp->mm->pgd));
         mm_free(mmp->mm);
         mmp->mm = mmp->active_mm = NULL;
-    }
-    else    /* clear mem regions only */
+    } else    /* clear mem regions only */
         INIT_LIST_HEAD(&mmp->mm->mem_regions);
 
     return 0;

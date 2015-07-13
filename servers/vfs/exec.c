@@ -34,6 +34,7 @@
 #include "proto.h"
 #include <sys/stat.h>
 #include "page.h"
+#include <lyos/vm.h>
 #include <elf.h>
 #include <lyos/sysutils.h>
 #include "libexec/libexec.h"
@@ -73,7 +74,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct
 PRIVATE int read_header(struct vfs_exec_info * execi);
 PRIVATE int is_script(struct vfs_exec_info * execi);
 PRIVATE int request_vfs_mmap(struct exec_info *execi,
-    int vaddr, int len, int foffset, int protflags);
+    int vaddr, int len, int foffset, int protflags, size_t clearend);
 
 /* open the executable and fill in exec info */
 PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct fproc * fp)
@@ -144,14 +145,14 @@ PRIVATE int is_script(struct vfs_exec_info * execi)
 
 /* issue a vfs_mmap request */
 PRIVATE int request_vfs_mmap(struct exec_info *execi,
-    int vaddr, int len, int foffset, int protflags)
+    int vaddr, int len, int foffset, int protflags, size_t clearend)
 {
     struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
     struct inode * pin = vexeci->pin;
 
-    int flags = 0;
+    int flags = MAP_PRIVATE | MAP_FIXED;
 
-    return vfs_mmap(execi->proc_e, foffset, len, pin->i_dev, pin->i_num, vexeci->mmfd, vaddr, flags);
+    return vfs_mmap(execi->proc_e, foffset, len, pin->i_dev, pin->i_num, vexeci->mmfd, vaddr, flags, protflags, clearend);
 }
 
 /*****************************************************************************
@@ -218,17 +219,20 @@ PUBLIC int fs_exec(MESSAGE * msg)
     struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
     /* find a free slot in PROCESS::filp[] */
     int fd = get_fd(mm_task);
-    if (fd < 0) return fd;
 
     struct file_desc * filp = alloc_filp();
-    if (!filp) return ENOMEM;
-    mm_task->filp[fd] = filp;
-    filp->fd_cnt = 1;
-    filp->fd_pos = 0;
-    filp->fd_inode = execi.pin;
-    filp->fd_mode = O_RDONLY;
-    execi.mmfd = fd;
-    execi.args.memmap = request_vfs_mmap;
+    if (!filp || fd < 0) {
+        execi.mmfd = -1;
+        execi.args.memmap = NULL;
+    } else {
+        mm_task->filp[fd] = filp;
+        filp->fd_cnt = 1;
+        filp->fd_pos = 0;
+        filp->fd_inode = execi.pin;
+        filp->fd_mode = O_RDONLY;
+        execi.mmfd = fd;
+        execi.args.memmap = request_vfs_mmap;
+    }
 
     execi.args.allocmem = libexec_allocmem;
     execi.args.allocmem_prealloc = libexec_allocmem_prealloc;

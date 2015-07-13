@@ -68,6 +68,8 @@ PUBLIC void slabs_init()
     for (i = 0; i < SLABSIZE; i++) {
         INIT_LIST_HEAD(&slabs[i]);
     }
+
+    mem_info.slab = 0;
 }
 
 PRIVATE struct slabdata * alloc_slabdata()
@@ -82,6 +84,8 @@ PRIVATE struct slabdata * alloc_slabdata()
     INIT_LIST_HEAD(&(sd->header.list));
     sd->header.phys = phys;
     sd->header.data = sd;
+
+    mem_info.slab += ARCH_PG_SIZE;
 
     return sd;
 }
