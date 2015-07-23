@@ -26,6 +26,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/fs.h>
 #include "region.h"
 #include "proto.h"
 #include "const.h"
@@ -63,4 +64,14 @@ PUBLIC void file_reference(struct vir_region* vr, struct mm_file_desc* filp)
 {
     vr->param.file.filp = filp;
     filp->refcnt++;
+}
+
+PUBLIC void file_unreferenced(struct mm_file_desc* filp)
+{
+    filp->refcnt--;
+    if (filp->refcnt <= 0) {
+        enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, filp->fd, 0, 0, 0, NULL, NULL, 0);
+        list_del(&filp->list);
+        SLABFREE(filp);
+    }
 }

@@ -34,6 +34,7 @@
 #include "proto.h"
 #include "const.h"
 #include "cache.h"
+#include "file.h"
 
 PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr, 
         vir_bytes offset, int wrflag);
@@ -414,17 +415,22 @@ PRIVATE void region_handle_pf_filemap_callback(struct mmproc* mmp, MESSAGE* msg,
 
     if (msg->MMRRESULT != 0) goto kill;
 
-    struct phys_frame * frame;
-    SLABALLOC(frame);
-    if (!frame) goto kill;
-
-    frame->refcnt = 0;
-    frame->phys_addr = state->cache_phys;
-    frame->flags = PFF_SHARED | (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
-
     off_t file_offset = vr->param.file.offset + state->offset;
+    struct page_cache* cp = find_cache_by_ino(vr->param.file.filp->dev, vr->param.file.filp->ino, file_offset);
 
-    if (page_cache_add(vr->param.file.filp->dev, 0, vr->param.file.filp->ino, file_offset, state->cache_vir, frame) != 0) goto kill;
+    if (!cp) {
+        struct phys_frame * frame;
+        SLABALLOC(frame);
+        if (!frame) goto kill;
+
+        frame->refcnt = 0;
+        frame->phys_addr = state->cache_phys;
+        frame->flags = PFF_SHARED | (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
+
+        if (page_cache_add(vr->param.file.filp->dev, 0, vr->param.file.filp->ino, file_offset, state->cache_vir, frame) != 0) goto kill;
+    } else {
+        free_vmem(state->cache_vir, ARCH_PG_SIZE);
+    }
 
     /* the page is in the cache now, retry */
     int retval = region_handle_pf_filemap(state->mmp, state->vr, state->offset, state->wrflag);
@@ -597,6 +603,9 @@ PUBLIC int region_free(struct vir_region * rp)
 
     phys_region_free(pregion);
     rp->refcnt--;
+
+    if (rp->flags & RF_FILEMAP) file_unreferenced(rp->param.file.filp);
+
     if (rp->refcnt <= 0) SLABFREE(rp);
 
     return 0;

@@ -5,6 +5,7 @@
 #include "env.h"
 
 static char** envp;
+size_t pagesz;
 
 void setenv(char** vector)
 {
@@ -66,7 +67,7 @@ void parse_auxv(char* envp[], struct so_info* si, int show_auxv, char** base)
     		if (show_auxv) xprintf(hex ? "%s:\t0x%x\n" : "%s:\t%d\n", #type, auxv->a_un.a_val);	\
     	}
 
-    	PARSE_ENTRY(AT_PAGESZ, 0);
+    	PARSE_ENTRY_SET(AT_PAGESZ, 0, pagesz);
     	PARSE_ENTRY(AT_CLKTCK, 0);
     	PARSE_ENTRY_SET(AT_PHDR, 1, si->phdr);
     	PARSE_ENTRY_SET(AT_BASE, 1, *base);

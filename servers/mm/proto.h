@@ -93,6 +93,7 @@ PUBLIC int do_procctl();
 PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     int mmap_flags, size_t len, int vrflags);
 PUBLIC int do_mmap();
+PUBLIC int do_munmap();
 
 typedef void (*vfs_callback_t) (struct mmproc* mmp, MESSAGE* msg, void* arg);
 PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_bytes addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len);

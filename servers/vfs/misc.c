@@ -240,6 +240,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             }
 
             filp->fd_cnt++;
+            filp->fd_inode->i_cnt++;
             mm_task->filp[mmfd] = filp;
 
             m->MMRDEV = filp->fd_inode->i_dev;
@@ -273,13 +274,6 @@ PUBLIC int do_mm_request(MESSAGE* m)
                 driver_msg.PROC_NR  = KERNEL;
                 send_recv(BOTH, dd_map[MAJOR(pin->i_specdev)].driver_nr, &driver_msg);
             } else if (file_type == I_REGULAR) {
-                if (offset > pin->i_size) {
-                    result = 0;
-                    goto reply;
-                }
-
-                if (offset + len > pin->i_size) len = pin->i_size - offset;
-
                 size_t count;
                 result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
                     buf, len, NULL, &count);
@@ -291,6 +285,22 @@ PUBLIC int do_mm_request(MESSAGE* m)
             }
 
             break;
+        }
+        case MMR_FDCLOSE:
+        {
+            struct file_desc* filp = mm_task->filp[fd];
+            if (!filp || !filp->fd_inode) {
+                result = EBADF;
+                goto reply;
+            }
+
+            struct inode* pin = filp->fd_inode;
+
+            put_inode(pin);
+            if (--filp->fd_cnt == 0) {
+                filp->fd_inode = NULL;
+                mm_task->filp[fd] = NULL;
+            }
         }
     }
 

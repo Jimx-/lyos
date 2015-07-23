@@ -30,7 +30,7 @@ static void init_si_pool()
     }
 }
 
-static struct so_info* alloc_info(const char* name)
+struct so_info* alloc_info(const char* name)
 {
 	int i;
 	struct so_info* si = NULL;
@@ -47,6 +47,7 @@ static struct so_info* alloc_info(const char* name)
 
 	memcpy((char*)si->name, name, name_len);
 	si->name[name_len] = '\0';
+	si->name_len = name_len;
 	si->flags = SI_USED;
 	si->next = NULL;
 	si->list = NULL;
@@ -90,6 +91,12 @@ int ldso_main(int argc, char* argv[], char* envp[])
 		show_auxv = show_auxv_env[0] - '0';
 	}
 
+	int bind_now = 0;
+	char* bind_now_env = env_get("LD_BIND_NOW");
+	if (bind_now_env) {
+		bind_now = bind_now_env[0] - '0';
+	}
+
 	struct so_info* si = alloc_info("Main executable");
 	if (si == NULL) return -1;
 	si->flags |= SI_EXEC;
@@ -107,5 +114,7 @@ int ldso_main(int argc, char* argv[], char* envp[])
 
 	ldso_load_needed(si);
 
-	return 0;
+	ldso_relocate_objects(si, bind_now);
+
+	return si->entry;
 }

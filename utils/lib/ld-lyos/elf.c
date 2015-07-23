@@ -70,6 +70,16 @@ int ldso_process_dynamic(struct so_info* si)
 			*needed_tail = needed;
 			needed_tail = &needed->next;
 			break;
+		case DT_HASH:
+			{
+				int* hash_table = (int*)(si->relocbase + dp->d_un.d_ptr);
+
+				si->nbuckets = hash_table[0];
+				si->nchains = hash_table[1];
+				si->buckets = hash_table + 2;
+				si->chains = si->buckets + si->nbuckets;
+				break;
+			}
 		}
 	}
 

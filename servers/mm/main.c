@@ -81,6 +81,9 @@ PUBLIC int main()
 		case MMAP:
 			mm_msg.RETVAL = do_mmap();
 			break;
+		case MUNMAP:
+			mm_msg.RETVAL = do_munmap();
+			break;
 		case FS_MMAP:
 			mm_msg.RETVAL = do_vfs_mmap();
 			break;

@@ -173,7 +173,7 @@ PUBLIC void init_idt()
 {
 	/* 全部初始化成中断门(没有陷阱门) */
 	init_idt_desc(INT_VECTOR_DIVIDE,	DA_386IGate,
-		      divide_error - KERNEL_VMA,		PRIVILEGE_KRNL);
+		      divide_error,		PRIVILEGE_KRNL);
 
 	init_idt_desc(INT_VECTOR_DEBUG,		DA_386IGate,
 		      single_step_exception,	PRIVILEGE_KRNL);

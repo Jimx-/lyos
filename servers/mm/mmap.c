@@ -197,3 +197,26 @@ PUBLIC int do_map_phys()
 
     return 0;
 }
+
+PUBLIC int do_munmap()
+{
+    endpoint_t who = mm_msg.MMAP_WHO < 0 ? mm_msg.source : mm_msg.MMAP_WHO;
+    vir_bytes addr = mm_msg.MMAP_VADDR;
+    size_t len = mm_msg.MMAP_LEN;
+    struct mmproc * mmp = endpt_mmproc(who);
+
+    if (len < 0) return EINVAL;
+    if (!mmp) return EINVAL;
+
+    struct vir_region * vr;
+    vr = region_lookup(mmp, addr);
+
+    if (!vr) return EINVAL;
+
+    /* TODO: split region */
+    region_unmap_phys(mmp, vr);
+    list_del(&vr->list);
+    region_free(vr);
+
+    return 0;
+}

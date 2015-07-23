@@ -229,6 +229,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
         filp->fd_cnt = 1;
         filp->fd_pos = 0;
         filp->fd_inode = execi.pin;
+        filp->fd_inode->i_cnt++;
         filp->fd_mode = O_RDONLY;
         execi.mmfd = fd;
         execi.args.memmap = request_vfs_mmap;
@@ -261,7 +262,6 @@ PUBLIC int fs_exec(MESSAGE * msg)
         execi.dyn_phdr = execi.args.phdr;
         execi.dyn_phnum = execi.args.phnum;
         strlcpy((char*) execi.dyn_prog_name, (char*)execi.prog_name, sizeof(execi.dyn_prog_name));
-        execi.dyn_prog_name[sizeof(execi.dyn_prog_name)] = '\0';
 
         retval = get_exec_inode(&execi, interp, fp);
         if (retval) return retval;

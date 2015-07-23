@@ -86,6 +86,8 @@ extern  struct dev_drv_map  dd_map[];
 #define MMRRESULT			u.m3.m3i1
 #define MMR_FDLOOKUP		1
 #define MMR_FDREAD			2
+#define MMR_FDWRITE			3
+#define MMR_FDCLOSE			4
 #define MMRFD				u.m3.m3i2
 #define MMRENDPOINT			u.m3.m3i3
 #define MMRDEV				u.m3.m3i4

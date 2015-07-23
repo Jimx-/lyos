@@ -7,7 +7,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <sys/mman.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4

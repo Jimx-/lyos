@@ -1261,3 +1261,24 @@ void * mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
     if (m.RETVAL) return MAP_FAILED;
     else return (void *)m.MMAP_RETADDR;
 }
+
+int munmap(void *addr, size_t len)
+{
+    MESSAGE m;
+
+    memset(&m, 0, sizeof(MESSAGE));
+
+    m.type = MUNMAP;
+    m.MMAP_WHO = SELF;
+    m.MMAP_VADDR = (int)addr;
+    m.MMAP_LEN = len;
+
+    send_recv(BOTH, TASK_MM, &m);
+
+    if (m.RETVAL) {
+    	errno = -m.RETVAL;
+    	return -1;
+    }
+    
+    return 0;
+}

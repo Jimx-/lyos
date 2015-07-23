@@ -50,10 +50,14 @@ struct so_info* ldso_load_object(char* pathname)
 	}
 
 	if (si == NULL) {
+		si = ldso_map_object(pathname, fd);
 		close(fd);
+		if (si == NULL) return NULL;
+
+		ldso_process_dynamic(si);
 	}
 
-	return NULL;
+	return si;
 }
 
 static struct so_info* search_library(char* name, int name_len, char* path, int path_len)
@@ -61,9 +65,11 @@ static struct so_info* search_library(char* name, int name_len, char* path, int 
 	char pathname[PATH_MAX];
 	if (name_len + path_len + 2 >= PATH_MAX) return NULL;
 
+	int pathname_len = path_len + 1 + name_len;
 	memcpy(pathname, path, path_len);
 	pathname[path_len] = '/';
 	memcpy(pathname + path_len + 1, name, name_len);
+	pathname[pathname_len] = '\0';
 
 	return ldso_load_object(pathname);
 }
@@ -114,6 +120,8 @@ int ldso_load_needed(struct so_info* first)
 			char* name = si->strtab + needed->name;
 
 			if (!ldso_load_by_name(name, needed, si)) retval = -1;
+
+			if (retval == -1) return retval;
 		}
 	}
 

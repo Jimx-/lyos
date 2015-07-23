@@ -90,6 +90,7 @@ PUBLIC int do_fork()
            
             if (vr->flags & RF_FILEMAP) {
                 new_region->param.file = vr->param.file;
+                file_reference(new_region, vr->param.file.filp);
             }
 
             if (!(vr->flags & RF_MAPPED)) continue;

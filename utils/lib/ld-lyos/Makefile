@@ -1,6 +1,7 @@
 
 LDLYOS			= $(DESTDIR)/lib/ld-lyos.so
-LDLYOSOBJS 		= arch/$(ARCH)/arch-ldso.o ldso.o env.o xprintf.o elf.o paths.o load.o
+LDLYOSOBJS 		= arch/$(ARCH)/arch-ldso.o ldso.o env.o xprintf.o elf.o paths.o load.o map.o reloc.o \
+					symbol.o
 
 CFLAGS			= -I$(SRCDIR)/include/ -I$(SRCDIR)/include/lyos/ -I$(PWD) -g
 
