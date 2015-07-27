@@ -38,6 +38,7 @@ PRIVATE int procfs_init_hook();
 struct memfs_hooks fs_hooks = {
     .init_hook = procfs_init_hook,
     .read_hook = procfs_read_hook,
+    .getdents_hook = NULL,
 };
 
 PUBLIC int main()
@@ -46,7 +47,7 @@ PUBLIC int main()
     serv_init();
 
 	struct memfs_stat root_stat;
-    root_stat.st_mode = (I_DIRECTORY | 0555);
+    root_stat.st_mode = (I_DIRECTORY | 0755);
     root_stat.st_uid = SU_UID;
     root_stat.st_gid = 0;
 

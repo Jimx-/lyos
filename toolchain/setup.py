@@ -174,7 +174,7 @@ if __name__ == "__main__":
 	if BUILD_COREUTILS:
 		mkdir('coreutils')
 		push_dir('coreutils')
-		configure_host(COREUTILS_VERSION, ' --disable-nls')
+		#configure_host(COREUTILS_VERSION, ' --disable-nls')
 		make_and_install_to_destdir()
 		pop_dir()
 

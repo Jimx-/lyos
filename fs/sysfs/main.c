@@ -39,6 +39,7 @@ PRIVATE int sysfs_message_hook(MESSAGE * m);
 struct memfs_hooks fs_hooks = {
     .message_hook = sysfs_message_hook,
     .read_hook = sysfs_read_hook,
+    .getdents_hook = NULL,
 };
 
 PUBLIC int main()
@@ -46,7 +47,7 @@ PUBLIC int main()
     sysfs_init();
 
     struct memfs_stat root_stat;
-    root_stat.st_mode = (I_DIRECTORY | 0555);
+    root_stat.st_mode = (I_DIRECTORY | 0755);
     root_stat.st_uid = SU_UID;
     root_stat.st_gid = 0;
 

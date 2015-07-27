@@ -186,6 +186,9 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
     case BRK:
         printf("brk(0x%x)", msg.ADDR);
         break;
+    case GETDENTS:
+        printf("getdents(%d, 0x%x, %d)", msg.FD, msg.BUF, msg.CNT);
+        break;
     case EXIT:
         printf("exit(%d) = ?\n", msg.STATUS);   /* exit has no return value */
         break;
@@ -226,6 +229,7 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
         }
     case CLOSE:
     case BRK:
+    case GETDENTS:
         retval = msg.RETVAL;
         break;
     }
