@@ -224,12 +224,12 @@ PUBLIC void init_vfs()
     }
     printl("VFS: Started %d worker thread(s)\n", nr_workers);
 
-    //clone(thread_func, (char*)stack + 2048, CLONE_VM | CLONE_THREAD, NULL);
-
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root
     mount_fs(vfs_endpt_proc(TASK_FS), initrd_dev, "/", TASK_INITFS, 0);
     printl("VFS: Mounted init ramdisk\n");
+
+    add_filesystem(TASK_SYSFS, "sysfs");
 }
 
 /* Perform fs part of fork/exit */

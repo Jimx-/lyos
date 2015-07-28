@@ -8,15 +8,16 @@ LIBSYSFS	= $(LIBOUTDIR)/libsysfs.a
 LIBFSDRIVER	= $(LIBOUTDIR)/libfsdriver.a
 LIBINPUTDRV	= $(LIBOUTDIR)/libinputdriver.a
 LIBMEMFS	= $(LIBOUTDIR)/libmemfs.a
+LIBDEVMAN	= $(LIBOUTDIR)/libdevman.a
 
 .PHONY: everything realclean
 	
 everything : realclean $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER)\
-				$(LIBMEMFS) $(LIBINPUTDRV)
+				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN)
 
 realclean :
 	@rm -f $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS) \
-		$(LIBINPUTDRV)
+		$(LIBINPUTDRV) $(LIBDEVMAN)
 
 $(LIBDRIVER): 
 	@(cd libdriver; make)
@@ -38,3 +39,6 @@ $(LIBINPUTDRV):
 	
 $(LIBMEMFS):
 	@(cd libmemfs; make)
+
+$(LIBDEVMAN):
+	@(cd libdevman; make)

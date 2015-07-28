@@ -30,8 +30,6 @@ PRIVATE int mounted = 0;
 PUBLIC int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node * node)
 {
     if (mounted) return EBUSY;
-
-    if (fs_hooks.init_hook) fs_hooks.init_hook();
     
 	node->fn_num = root_inode.i_num;
     node->fn_mode = root_inode.i_stat.st_mode;

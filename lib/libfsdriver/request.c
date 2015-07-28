@@ -31,6 +31,9 @@ PUBLIC int fsdriver_register(struct fsdriver * fsd)
 {
     MESSAGE m;
 
+    /* don't register this filesystem */
+    if (!fsd->name) return 0;
+
     /* register the filesystem */
     m.type = FS_REGISTER;
     m.PATHNAME = fsd->name;

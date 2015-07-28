@@ -59,6 +59,8 @@ PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_sta
     memfs_set_inode_stat(&root_inode, root_stat);
     memfs_addhash_inode(&root_inode);
 
+    if (fs_hooks.init_hook) fs_hooks.init_hook();
+    
     return fsdriver_start(&fsd);
 }
 

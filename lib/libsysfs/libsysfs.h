@@ -17,6 +17,8 @@
 #define SYSFS_SERVICE_DOMAIN_LABEL "services.%s"
 #define SYSFS_SERVICE_ENDPOINT_LABEL SYSFS_SERVICE_DOMAIN_LABEL ".endpoint"
 
+#define SYSFS_BUS_DOMAIN_LABEL		"bus.%s"
+
 PUBLIC int sysfs_publish_domain(char * key, int flags);
 PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags);
 

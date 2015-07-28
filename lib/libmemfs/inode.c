@@ -61,8 +61,7 @@ PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name)
     if (!pin) return NULL;
 
     pin->i_num = num;
-    strcpy(pin->i_name, name);
-    pin->i_name[strlen(name)] = '\0';
+    strlcpy(pin->i_name, name, sizeof(pin->i_name));
     INIT_LIST_HEAD(&pin->i_hash);
     INIT_LIST_HEAD(&pin->i_list);
     INIT_LIST_HEAD(&pin->i_children);
@@ -84,6 +83,18 @@ PUBLIC struct memfs_inode * memfs_find_inode(ino_t num)
     }
 
     return NULL;
+}
+
+PUBLIC void memfs_update_inode(struct memfs_inode* pin)
+{
+    if (pin->i_update == 0) return;
+
+    u32 timestamp = now();
+
+    if (pin->i_update & CTIME) pin->i_ctime = timestamp;
+    if (pin->i_update & MTIME) pin->i_mtime = timestamp;
+    if (pin->i_update & ATIME) pin->i_atime = timestamp;
+    pin->i_update = 0;
 }
 
 PUBLIC struct memfs_inode * memfs_get_root_inode()
@@ -111,6 +122,9 @@ PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * 
 
     pin->i_index = index;
     pin->data = data;
+
+    pin->i_update = ATIME | CTIME | MTIME;
+    memfs_update_inode(pin);
     
     return pin;
 }

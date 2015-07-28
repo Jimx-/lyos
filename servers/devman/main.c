@@ -20,6 +20,7 @@
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
+#include <errno.h>
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
@@ -49,8 +50,14 @@ PUBLIC int main(int argc, char * argv[])
         case GET_DRIVER:
             msg.RETVAL = do_get_driver(&msg);
             break;
+        case DM_BUS_REGISTER:
+            msg.RETVAL = do_bus_register(&msg);
+            break;
+        case DM_DEVICE_REGISTER:
+            msg.RETVAL = do_device_register(&msg);
+            break;
         default:
-            printl("DEVMAN: unknown message type\n");
+            msg.RETVAL = ENOSYS;
             break;
         }
 
@@ -60,11 +67,21 @@ PUBLIC int main(int argc, char * argv[])
     return 0;
 }
 
+PRIVATE void init_sysfs()
+{
+    sysfs_publish_domain("bus", SF_PRIV_OVERWRITE);
+    sysfs_publish_domain("devices", SF_PRIV_OVERWRITE);
+}
+
 PRIVATE void devman_init()
 {
 	printl("DEVMAN: Device manager is running.\n");
 
     init_dd_map();
+    init_bus();
+    init_device();
+
+    init_sysfs();
 
     /* Map init ramdisk */
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);

@@ -20,6 +20,10 @@
 
 typedef void * cbdata_t;
 
+#define ATIME            002    /* set if atime field needs updating */
+#define CTIME            004    /* set if ctime field needs updating */
+#define MTIME            010    /* set if mtime field needs updating */
+
 struct memfs_stat {
     dev_t st_dev;
     dev_t st_device;
@@ -37,6 +41,11 @@ struct memfs_inode {
     struct memfs_stat i_stat;
     cbdata_t data;
 
+    u32 i_atime;
+    u32 i_mtime;
+    u32 i_ctime;
+    u32 i_update;
+    
     struct list_head i_hash;
     struct list_head i_list;
     struct list_head i_children;

@@ -30,13 +30,16 @@
 #include "lyos/list.h"
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
+#include <libsysfs/libsysfs.h>
 #include "node.h"
 #include "proto.h"
 
 PRIVATE int sysfs_init();
+PRIVATE int sysfs_post_init();
 PRIVATE int sysfs_message_hook(MESSAGE * m);
 
 struct memfs_hooks fs_hooks = {
+    .init_hook = NULL,
     .message_hook = sysfs_message_hook,
     .read_hook = sysfs_read_hook,
     .getdents_hook = NULL,
@@ -51,7 +54,7 @@ PUBLIC int main()
     root_stat.st_uid = SU_UID;
     root_stat.st_gid = 0;
 
-    return memfs_start("sysfs", &fs_hooks, &root_stat);
+    return memfs_start(NULL, &fs_hooks, &root_stat);
 }
 
 PRIVATE int sysfs_init()

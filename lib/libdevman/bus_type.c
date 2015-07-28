@@ -13,22 +13,29 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _DEVMAN_PROTO_H_
-#define _DEVMAN_PROTO_H_
-
+#include <lyos/type.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
+#include <errno.h>
+#include <lyos/const.h>
+#include <string.h>
+#include <lyos/proc.h>
+#include <lyos/global.h>
+#include <lyos/driver.h>
+#include <lyos/proto.h>
 #include <libdevman/libdevman.h>
 
-PUBLIC void init_dd_map();
-PUBLIC int do_announce_driver(MESSAGE * m);
-PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep);
-PUBLIC int do_get_driver(MESSAGE * m);
+PUBLIC bus_type_id_t bus_register(char* name)
+{
+    MESSAGE msg;
 
-PUBLIC void init_bus();
-PUBLIC bus_type_id_t do_bus_register(MESSAGE* m);
-PUBLIC struct bus_type* get_bus_type(bus_type_id_t id);
+    msg.type = DM_BUS_REGISTER;
+    msg.BUF = name;
+    msg.NAME_LEN = strlen(name);
 
-PUBLIC void init_device();
-PUBLIC device_id_t do_device_register(MESSAGE* m);
-PUBLIC struct device* get_device(device_id_t id);
+    send_recv(BOTH, TASK_DEVMAN, &msg);
 
-#endif
+    return msg.RETVAL;
+} 

@@ -18,6 +18,8 @@
 #ifndef _PCI_H_
 #define _PCI_H_
 
+#include <libdevman/libdevman.h>
+
 struct pcidev{
     u8 busnr;
     u8 dev;
@@ -29,10 +31,13 @@ struct pcidev{
     u8 baseclass;
     u8 subclass;
     u8 infclass;
+
+    device_id_t dev_id;
 };
 
 struct pcibus{
     int busnr;
+    device_id_t dev_id;
 
     u8 (*rreg_u8)(int busind, int devind, int port);
     u16 (*rreg_u16)(int busind, int devind, int port);

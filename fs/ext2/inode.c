@@ -148,9 +148,13 @@ PUBLIC int ext2_putinode(dev_t dev, ino_t num)
 
 PRIVATE void update_times(ext2_inode_t * pin)
 {
-    if (pin->i_update & CTIME) pin->i_ctime = now();
-    if (pin->i_update & MTIME) pin->i_mtime = now();
-    if (pin->i_update & ATIME) pin->i_atime = now();
+    if (pin->i_update == 0) return;
+
+    u32 timestamp = now();
+
+    if (pin->i_update & CTIME) pin->i_ctime = timestamp;
+    if (pin->i_update & MTIME) pin->i_mtime = timestamp;
+    if (pin->i_update & ATIME) pin->i_atime = timestamp;
     pin->i_update = 0;
 }
 

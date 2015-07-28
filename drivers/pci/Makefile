@@ -4,7 +4,7 @@
 PCI		= pci
 PCIOBJS = main.o pci.o pci_table.o pci_intel.o
 
-LIBS	= -llyos
+LIBS	= -ldevman -llyos
 
 everything : realclean $(PCI)
 

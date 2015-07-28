@@ -48,6 +48,8 @@ PRIVATE int nr_pcibus = 0;
 PUBLIC struct pcidev pcidev[NR_PCIDEV];
 PRIVATE int nr_pcidev = 0;
 
+PRIVATE bus_type_id_t pci_bus_id;
+
 PRIVATE void pci_intel_init();
 PRIVATE void pci_probe_bus(int busind);
 
@@ -86,6 +88,9 @@ PUBLIC u32 pci_read_attr_u32(int devind, int port)
 
 PUBLIC int pci_init()
 {
+	pci_bus_id = bus_register("pci");
+	if (pci_bus_id == BUS_TYPE_ERROR) return 1;
+
 	pci_intel_init();
 
 	int i;
@@ -94,6 +99,28 @@ PUBLIC int pci_init()
 	}
 
 	return 0;
+}
+
+PRIVATE device_id_t pci_register_bus(int busind)
+{
+	struct device_info devinf;
+	snprintf(devinf.name, sizeof(devinf.name), "pci%02x", pcibus[busind].busnr);
+	devinf.bus = BUS_TYPE_ERROR;
+	devinf.parent = NO_DEVICE_ID;
+
+	return device_register(&devinf);
+}
+
+PRIVATE device_id_t pci_register_device(int devind)
+{
+	int busind = get_busind(pcidev[devind].busnr);
+
+	struct device_info devinf;
+	snprintf(devinf.name, sizeof(devinf.name), "pci%02x:%02x:%x", pcidev[devind].busnr, pcidev[devind].dev, pcidev[devind].func);
+	devinf.bus = pci_bus_id;
+	devinf.parent = pcibus[busind].dev_id;
+
+	return device_register(&devinf);
 }
 
 PRIVATE void pci_intel_init()
@@ -112,7 +139,14 @@ PRIVATE void pci_intel_init()
 	if (nr_pcibus >= NR_PCIBUS) return;
 
 	int busind = nr_pcibus++;
+
 	pcibus[busind].busnr = 0;
+	pcibus[busind].dev_id = pci_register_bus(busind);
+	if (pcibus[busind].dev_id == NO_DEVICE_ID) {
+		nr_pcibus--;
+		return;
+	}
+
 	pcibus[busind].rreg_u8 = pcii_rreg_u8;
 	pcibus[busind].rreg_u16 = pcii_rreg_u16;
 	pcibus[busind].rreg_u32 = pcii_rreg_u32;
@@ -148,6 +182,9 @@ PRIVATE void pci_probe_bus(int busind)
 			u8 infclass = pci_read_attr_u8(devind, PCI_PIFR);
 
 			devind = nr_pcidev;
+			
+			if ((pcidev[devind].dev_id = pci_register_device(devind)) == NO_DEVICE_ID) continue;
+
 			nr_pcidev++;
 
 			pcidev[devind].vid = vendor;

@@ -17,7 +17,7 @@
 #define _SYSFS_PROTO_H_
 
 PUBLIC void init_node();
-PUBLIC sysfs_node_t * new_node(char * name, int flags, int type);
+PUBLIC sysfs_node_t * new_node(char * name, int flags);
 PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name);
 PUBLIC sysfs_node_t * lookup_node_by_name(char * name);
 PUBLIC sysfs_node_t * create_node(char * name, int flags);

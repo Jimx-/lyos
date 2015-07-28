@@ -48,6 +48,9 @@ PRIVATE int memfs_stat_inode(struct memfs_inode* pin, struct fsdriver_data* data
     sbuf.st_ino = pin->i_num;
     sbuf.st_mode = pin->i_stat.st_mode;
     sbuf.st_nlink = 1;
+    sbuf.st_atime = pin->i_atime;
+    sbuf.st_ctime = pin->i_ctime;
+    sbuf.st_mtime = pin->i_mtime;
     sbuf.st_uid = pin->i_stat.st_uid;
     sbuf.st_gid = pin->i_stat.st_gid;
     sbuf.st_rdev = (special ? pin->i_stat.st_device : 0);

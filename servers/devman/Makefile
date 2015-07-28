@@ -2,7 +2,7 @@
 # Makefile for device manager.
 
 DEVMAN		= devman
-DEVMANOBJS = main.o ddmap.o global.o
+DEVMANOBJS = main.o ddmap.o global.o bus.o device.o
 LIBS 		= -llyos -lsysfs
 
 everything : realclean $(DEVMAN)

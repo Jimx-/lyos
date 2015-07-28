@@ -254,6 +254,8 @@ enum msgtype {
 	/* DEVMAN */
 	ANNOUNCE_DEVICE = 500, 
 	GET_DRIVER,	/* 54 ~ 55 */
+	DM_BUS_REGISTER,
+	DM_DEVICE_REGISTER,
 
 	/* message type for fs request */
 	FSREQ_RET = VFS_REQ_BASE,

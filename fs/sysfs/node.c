@@ -31,6 +31,7 @@
 #include "libsysfs/libsysfs.h"
 #include <sys/syslimits.h>
 #include "node.h"
+#include "proto.h"
 #include "global.h"
 
 PRIVATE int node_num;
@@ -53,7 +54,7 @@ PUBLIC sysfs_node_t * new_node(char * name, int flags)
 
     INIT_LIST_HEAD(&(node->list));
     INIT_LIST_HEAD(&(node->children));
-    strcpy(node->name, name);
+    strlcpy(node->name, name, NAME_MAX);
     node->flags = flags;
     node->parent = NULL;
 
