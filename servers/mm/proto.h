@@ -54,6 +54,7 @@ PUBLIC int pgd_new(pgdir_t * pgd);
 PUBLIC int pgd_mapkernel(pgdir_t * pgd);
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
 PUBLIC int pgd_clear(pgdir_t * pgd);
+PUBLIC int pgd_free(pgdir_t * pgd);
 PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr);
 PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv, vir_bytes maxv);
 

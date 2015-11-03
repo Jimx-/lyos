@@ -2,7 +2,7 @@
 # Makefile for libmemfs.
 #
 
-LIBMEMFSOBJS	= memfs.o super.o inode.o lookup.o protect.o stat.o readwrite.o getdents.o
+LIBMEMFSOBJS	= memfs.o super.o inode.o lookup.o protect.o stat.o readwrite.o getdents.o global.o
 LIBMEMFS 		= $(LIBOUTDIR)/libmemfs.a
 ARFLAGS			= rcs
 

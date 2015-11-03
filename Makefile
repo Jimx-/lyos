@@ -41,6 +41,7 @@ export KERNELVERSION
 # Directories
 SRCDIR = $(shell pwd)
 INCDIR = $(SRCDIR)/include
+SERVERSINCDIR = $(SRCDIR)/servers
 SYSINCDIR = $(SRCDIR)/include/sys
 ARCHINCDIR = $(SRCDIR)/include/arch/$(ARCH)
 LIBDIR = $(SRCDIR)/lib/
@@ -64,7 +65,7 @@ LD		= $(SUBARCH)-elf-lyos-ld
 OBJCOPY = $(SUBARCH)-elf-lyos-objcopy
 CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ASFLAGS = -I $(INCDIR)/
-SERVERCFLAGS	= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
+SERVERCFLAGS	= -I $(INCDIR)/ -I $(SERVERSINCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory
 ARFLAGS		= rcs
 MAKE 		= make

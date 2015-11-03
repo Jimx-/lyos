@@ -2,7 +2,7 @@
 # Makefile for procfs.
 
 PROCFS		= procfs
-PROCFSOBJS = main.o root.o buffer.o file.o cpuinfo.o memory.o
+PROCFSOBJS = main.o root.o buffer.o file.o cpuinfo.o memory.o tree.o pid.o
 LIBS 		= -lmemfs -lfsdriver -ldriver -llyos
 
 .PHONY: everything realclean
@@ -14,7 +14,7 @@ realclean :
 
 $(PROCFS): $(PROCFSOBJS)
 	@echo -e '\tLD\tfs/procfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) -Xlinker -Ttext -Xlinker 0x30000000
 
 %.o: %.c
 	@echo -e '\tCC\tfs/procfs/$@'

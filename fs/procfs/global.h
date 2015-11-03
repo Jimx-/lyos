@@ -18,7 +18,12 @@
 #define _PROCFS_GLOBAL_H_
 
 #include "type.h"
-    
+#include "pm/pmproc.h"
+
 extern struct procfs_file root_files[];
+extern struct procfs_file pid_files[];
+
+extern struct proc proc[NR_TASKS + NR_PROCS];
+extern struct pmproc pmproc[NR_PROCS];
 
 #endif

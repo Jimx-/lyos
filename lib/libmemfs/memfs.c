@@ -53,6 +53,8 @@ PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_sta
     memfs_init_inode();
 
     root_inode.i_num = 0;
+    root_inode.i_index = NO_INDEX;
+    root_inode.i_parent = NULL;
     INIT_LIST_HEAD(&root_inode.i_hash);
     INIT_LIST_HEAD(&root_inode.i_list);
     INIT_LIST_HEAD(&root_inode.i_children);

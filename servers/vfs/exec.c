@@ -306,6 +306,10 @@ PUBLIC int fs_exec(MESSAGE * msg)
     ps.ps_argvstr = orig_stack;
     ps.ps_envstr = envp;
 
+    /* record frame info */
+    msg->BUF = orig_stack;
+    msg->BUF_LEN = orig_stack_len;
+
     return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
 }
 

@@ -31,6 +31,7 @@ PUBLIC  int     get_kinfo(kinfo_t * kinfo);
 PUBLIC  int     get_bootprocs(struct boot_proc * bp);
 PUBLIC  int     get_kernel_cmdline(char * buf, int buflen);
 PUBLIC  int     get_machine(struct machine* machine);
+PUBLIC  int     get_proctab(struct proc* proc);
 
 PUBLIC  int     data_copy(endpoint_t dest_pid, void * dest_addr, 
     endpoint_t src_pid, void * src_addr, int len);
@@ -80,5 +81,8 @@ PUBLIC int      get_ticks(clock_t* ticks, clock_t* idle_ticks);
 PUBLIC clock_t kernel_alarm(clock_t expire_time, int abs_time);
 
 PUBLIC int     kernel_trace(int request, endpoint_t endpoint, void* addr, void* data);
+
+#define PM_INFO_PROCTAB    1
+PUBLIC int     pm_getinfo(int request, void* dest, int size);
 
 #endif

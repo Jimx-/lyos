@@ -43,6 +43,8 @@ struct exec_loader {
     libexec_exec_loadfunc_t loader;
 };
 
+PUBLIC int libexec_load_elf_dbg(struct exec_info * execi);
+
 PRIVATE struct exec_loader exec_loaders[] = {
     { libexec_load_elf },
     { NULL },
@@ -80,7 +82,6 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
 
     execi.proc_e = target;
     execi.filesize = exec_len;
-
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi);
         if (!retval) break;  /* loaded successfully */

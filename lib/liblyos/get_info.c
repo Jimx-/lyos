@@ -81,3 +81,8 @@ PUBLIC int get_cpuinfo(struct cpuinfo * cpuinfo)
 {
     return getinfo(GETINFO_CPUINFO, cpuinfo);
 }
+
+PUBLIC int get_proctab(struct proc* proc)
+{
+    return getinfo(GETINFO_PROCTAB, proc);
+}

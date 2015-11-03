@@ -212,7 +212,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     return 0;
 }
 
-#if 0
+#if 1
 PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
 {
     int retval;

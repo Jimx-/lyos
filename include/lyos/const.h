@@ -209,6 +209,7 @@
 #define GETINFO_HZ			5
 #define GETINFO_MACHINE		6
 #define GETINFO_CPUINFO		7
+#define GETINFO_PROCTAB		8
 				 
 /* special message flags */
 #define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
@@ -289,6 +290,7 @@ enum msgtype {
     PM_GETPROCEP,
     PM_VFS_GETSETID_REPLY,
     PM_VFS_EXEC,
+    PM_GETINFO,
 
 	/* message type for drivers */
 	DEV_OPEN = DRV_REQ_BASE,

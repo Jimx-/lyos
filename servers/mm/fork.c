@@ -128,22 +128,23 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
     }
 
     if (!list_empty(&mmp->mm->mem_regions)) {
-        list_for_each_entry(vr, &mmp->mm->mem_regions, list) {
-            if ((&(vr->list) != &mmp->mm->mem_regions) && (&(vr->list) != mmp->mm->mem_regions.next)) {
-                region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
-                region_free(list_entry(vr->list.prev, struct vir_region, list));
-            }
+        struct vir_region* tmp;
+        list_for_each_entry_safe(vr, tmp, &mmp->mm->mem_regions, list) {
+            region_unmap_phys(mmp, vr);
+            region_free(vr);
         }
     }
-    region_unmap_phys(mmp, list_entry(vr->list.prev, struct vir_region, list));
-    region_free(list_entry(vr->list.prev, struct vir_region, list)); 
 
     if (clear_proc) {
-        pgd_clear(&(mmp->mm->pgd));
+        pgd_free(&(mmp->mm->pgd));
         mm_free(mmp->mm);
         mmp->mm = mmp->active_mm = NULL;
-    } else    /* clear mem regions only */
+    } else {   /* clear mem regions only */
+        /*pgd_clear(&mmp->mm->pgd);
+        pgd_mapkernel(&mmp->mm->pgd);*/
+
         INIT_LIST_HEAD(&mmp->mm->mem_regions);
+    }
 
     return 0;
 }

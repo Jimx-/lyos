@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include <lyos/sysutils.h>
 #include "proto.h"
 #include "const.h"
 #include "global.h"
@@ -159,4 +160,23 @@ PUBLIC int do_getprocep(MESSAGE * p)
     }
 
     return ESRCH;
+}
+
+PUBLIC int do_pm_getinfo(MESSAGE * p)
+{
+    vir_bytes dest = (vir_bytes) p->BUF;
+    size_t len;
+    int request = p->REQUEST;
+    vir_bytes src_addr;
+
+    switch (request) {
+    case PM_INFO_PROCTAB:
+        src_addr = (vir_bytes) pmproc_table;
+        len = sizeof(struct pmproc) * NR_PROCS;
+        break;
+    default:
+        return EINVAL;
+    }
+
+    return data_copy(p->source, dest, SELF, src_addr, len);
 }

@@ -34,11 +34,13 @@
 
 PRIVATE int init_procfs();
 PRIVATE int procfs_init_hook();
+PUBLIC int procfs_lookup_hook();
 
 struct memfs_hooks fs_hooks = {
     .init_hook = procfs_init_hook,
     .read_hook = procfs_read_hook,
     .getdents_hook = NULL,
+    .lookup_hook = procfs_lookup_hook,
 };
 
 PUBLIC int main()
@@ -72,7 +74,6 @@ PRIVATE void build_root(struct memfs_inode * root)
     struct procfs_file * fp;
     for (fp = root_files; fp->name != NULL; fp++) {
         stat.st_mode = fp->mode;
-
         struct memfs_inode * pin = memfs_add_inode(root, fp->name, NO_INDEX, &stat, fp->data);
         if (pin == NULL) return;
     }
@@ -89,5 +90,6 @@ PRIVATE int procfs_init_hook()
 
         first = 0;
     }
+
     return 0;
 }

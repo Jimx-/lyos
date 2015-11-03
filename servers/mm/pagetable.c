@@ -379,6 +379,14 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 }
 
 /* <Ring 1> */
+PUBLIC int pgd_free(pgdir_t * pgd)
+{
+    pgd_clear(pgd);
+    free_vmem((vir_bytes) pgd->vir_addr, ARCH_PGD_SIZE);
+    
+    return 0;
+}
+
 PUBLIC int pgd_clear(pgdir_t * pgd)
 {
     int i;
@@ -389,8 +397,6 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
         }
         pgd->vir_pts[i] = NULL;
     }
-
-    free_vmem((vir_bytes) pgd->vir_addr, ARCH_PGD_SIZE);
     
     return 0;
 }

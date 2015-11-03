@@ -409,7 +409,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	printk("\n  CR2(PFLA): 0x%x, CR3: 0x%x\n", pfla, read_cr3());
 #endif
 	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
-	
+
 	int in_phys_copy = (frame->eip > (vir_bytes)phys_copy) &&
 						(frame->eip < (vir_bytes)phys_copy_fault);
 	int in_phys_set = 0;	/* not implemented */

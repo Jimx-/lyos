@@ -39,6 +39,7 @@ struct memfs_inode {
     char i_name[NAME_MAX];
 
     struct memfs_stat i_stat;
+    struct memfs_inode* i_parent;
     cbdata_t data;
 
     u32 i_atime;
@@ -49,7 +50,7 @@ struct memfs_inode {
     struct list_head i_hash;
     struct list_head i_list;
     struct list_head i_children;
-} __attribute__((packed));
+};
 
 #define MEMFS_INODE_HASH_LOG2   7
 #define MEMFS_INODE_HASH_SIZE   ((unsigned long)1<<MEMFS_INODE_HASH_LOG2)
@@ -60,10 +61,12 @@ extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 
 extern struct memfs_inode root_inode;
 
-PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name);
+PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name, int index);
 PUBLIC void memfs_set_inode_stat(struct memfs_inode * pin, struct memfs_stat * stat);
 PUBLIC struct memfs_inode * memfs_get_root_inode();
 PUBLIC struct memfs_inode * memfs_find_inode(ino_t num);
+PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent, char* name);
+PUBLIC struct memfs_inode * memfs_find_inode_by_index(struct memfs_inode* parent, int index);
 PUBLIC void memfs_addhash_inode(struct memfs_inode * inode);
 
 #endif

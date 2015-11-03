@@ -48,6 +48,9 @@ struct pmproc {
     struct pmproc* group_leader;
     struct list_head thread_group;
 
+    vir_bytes frame_addr;
+    vir_bytes frame_size;
+
     int exit_status;
 };
 

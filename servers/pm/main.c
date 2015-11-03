@@ -82,6 +82,9 @@ PUBLIC int main(int argc, char * argv[])
         case PM_GETPROCEP: 
             msg.RETVAL = do_getprocep(&msg);
             break;
+        case PM_GETINFO:
+            msg.RETVAL = do_pm_getinfo(&msg);
+            break;
         case PM_VFS_GETSETID_REPLY:
             src = msg.ENDPOINT;
             break;

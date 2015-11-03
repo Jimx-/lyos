@@ -49,7 +49,9 @@ PUBLIC int initfs_rdwt(MESSAGE * p)
 
     off_t filesize = initfs_getsize(phdr->size);
 
-    if (filesize < nbytes + position) nbytes = filesize - position;
+    if (filesize < nbytes + position) {
+        nbytes = filesize - position;
+    }
     bdev_readwrite((rw_flag == READ) ? DEV_READ : DEV_WRITE, dev, initfs_headers[num] + 512 + position, nbytes, src, buf);
     
     p->RWPOS = position + nbytes;

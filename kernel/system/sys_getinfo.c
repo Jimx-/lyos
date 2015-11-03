@@ -67,15 +67,19 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
         size = sizeof(machine);
         break;
     case GETINFO_CPUINFO:
-        addr = (void *)&cpu_info;
+        addr = (void *)cpu_info;
         size = sizeof(cpu_info);
+        break;
+    case GETINFO_PROCTAB:
+        addr = (void *)proc_table;
+        size = sizeof(struct proc) * (NR_TASKS + NR_PROCS);
         break;
     default:
         return EINVAL;
     }
 
     if (buf_len > 0 && buf_len < size) return E2BIG;
-    if (addr) memcpy(buf, addr, size);
+    if (addr) data_vir_copy_check(p_proc->endpoint, p_proc->endpoint, buf, KERNEL, addr, size); 
 
     return 0;
 }

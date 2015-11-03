@@ -25,6 +25,6 @@
 #endif
 
 EXTERN int initfs_headers_count;
-EXTERN int initfs_headers[MAX_HEADERS];
+EXTERN unsigned initfs_headers[MAX_HEADERS];
 
 #endif

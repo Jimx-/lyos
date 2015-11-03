@@ -58,6 +58,14 @@ PRIVATE struct memfs_inode * memfs_advance(struct memfs_inode * parent, char * n
     if (strcmp(name, ".") == 0) return parent;
     if (*name == '\0') return parent;
 
+    if (fs_hooks.lookup_hook) {
+        int r;
+        if ((r = fs_hooks.lookup_hook(parent, name, parent->data)) != 0) {
+            errno = r;
+            return NULL;
+        }
+    }
+
     list_for_each_entry(node, &(parent->i_children), i_list) {
         if (strcmp(node->i_name, name) == 0) {
             return node;

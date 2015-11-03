@@ -30,6 +30,16 @@
 #include "global.h"
 #include "proto.h"
 
+PRIVATE void pid_read(struct memfs_inode* pin)
+{
+    struct memfs_inode* parent = memfs_node_parent(pin);
+
+    int slot = memfs_node_index(parent);
+    int index = memfs_node_index(pin);
+
+    ((void (*)(int))pid_files[index].data)(slot);
+}
+
 PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
         off_t offset, cbdata_t data)
 {
@@ -37,6 +47,12 @@ PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t cou
 
     if (memfs_node_index(inode) == NO_INDEX) {
         ((void (*)(void))data)();
+    } else {
+        struct memfs_inode* parent = memfs_node_parent(inode);
+
+        if (memfs_node_index(parent) != NO_INDEX) {
+            pid_read(inode);
+        }
     }
 
     return buf_used();

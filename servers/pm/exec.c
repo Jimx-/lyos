@@ -49,6 +49,9 @@ PUBLIC int do_exec(MESSAGE* m)
 
     if (msg.RETVAL) return msg.RETVAL;
 
+    pmp->frame_addr = (vir_bytes) msg.BUF;
+    pmp->frame_size = (vir_bytes) msg.BUF_LEN;
+
     /* tell tracer */
     if (pmp->tracer != NO_TASK) {
         sig_proc(pmp, SIGTRAP, TRUE);
