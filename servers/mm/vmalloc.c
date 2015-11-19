@@ -79,7 +79,7 @@ PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size)
  *****************************************************************************/
 PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
 {
-	int pages = memsize / PG_SIZE;
+	int pages = memsize / ARCH_PG_SIZE;
 	if (memsize % PG_SIZE != 0)
 		pages++;
 
@@ -108,7 +108,7 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
 
  	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
- 	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, PG_PRESENT | PG_RW | PG_USER);
+ 	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
 
  	return retval;
 }

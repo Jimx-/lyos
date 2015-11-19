@@ -16,8 +16,14 @@
 #ifndef	_ARCH_TYPE_H_
 #define	_ARCH_TYPE_H_
 
+#include "stackframe.h"
+    
 struct cpu_info {
     
+};
+
+struct tss {
+    reg_t sp0;
 };
 
 #endif

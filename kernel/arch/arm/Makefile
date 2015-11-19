@@ -1,6 +1,6 @@
 
 KERNELOBJS	= head.o kernel.o start.o system.o memory.o fpu.o direct_tty.o clock.o \
-				page.o kliba.o
+				page.o kliba.o protect.o bootmods/bootmods.o
 
 ARCHKERNEL		= arch-kernel.o
 
@@ -31,3 +31,6 @@ $(ARCHKERNEL): $(KERNELOBJS) $(machine-y)
 
 mach-omap2/mach-omap2.o:
 	@(cd mach-omap2; make)
+
+bootmods/bootmods.o:
+	@(cd bootmods; make)

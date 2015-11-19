@@ -40,7 +40,7 @@ PRIVATE struct kern_mapping {
 } kern_mappings[MAX_KERN_MAPPINGS];
 PRIVATE int nr_kern_mappings = 0;
 
-#if (ARCH == x86)
+#if defined(__i386__)
 PRIVATE int global_bit = 0;
 #endif
 
@@ -73,7 +73,7 @@ PUBLIC void pt_init()
         bootstrap_pages[i].used = 0;
     }
 
-#if (ARCH == x86)
+#if defined(__i386__)
     if (_cpufeature(_CPUF_I386_PGE))
         global_bit = ARCH_PG_GLOBAL;
 #endif
@@ -152,7 +152,7 @@ PUBLIC void mm_free(struct mm_struct* mm)
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 {
     phys_bytes pt_phys;
-    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, PT_SIZE);
+    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, ARCH_PT_SIZE);
     if (pt == NULL) {
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
@@ -188,7 +188,7 @@ PUBLIC int pt_mappage(pgdir_t * pgd, void * phys_addr, void * vir_addr, u32 flag
 
     /* page table not present */
     if (pt == NULL) {
-        int retval = pt_create(pgd, pgd_index, PG_PRESENT | PG_RW | PG_USER);
+        int retval = pt_create(pgd, pgd_index, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
 
         if (retval) return retval;
         pt = pgd->vir_pts[pgd_index];
@@ -210,7 +210,7 @@ PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
     unsigned long pt_index = ARCH_PTE(vir_addr);
 
     pte_t * pt = pgd->vir_pts[pgd_index];
-    if (pt) pt[pt_index] &= ~PG_RW;
+    if (pt) pt[pt_index] &= ~ARCH_PG_RW;
 
     return 0;
 }
@@ -226,7 +226,7 @@ PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
     unsigned long pt_index = ARCH_PTE(vir_addr);
 
     pte_t * pt = pgd->vir_pts[pgd_index];
-    if (pt) pt[pt_index] |= PG_RW;
+    if (pt) pt[pt_index] |= ARCH_PG_RW;
 
     return 0;
 }
@@ -234,16 +234,16 @@ PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
 PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length, int flags)
 {
     /* sanity check */
-    if ((int)phys_addr % PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
-    if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
-    if (length % PG_SIZE != 0) printl("MM: pt_writemap: length is not page-aligned!\n");
+    if ((int)phys_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
+    if ((int)vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: length is not page-aligned!\n");
     
     while (1) {
         pt_mappage(pgd, phys_addr, vir_addr, flags);
 
-        length -= PG_SIZE;
-        phys_addr = (void *)((int)phys_addr + PG_SIZE);
-        vir_addr = (void *)((int)vir_addr + PG_SIZE);
+        length -= ARCH_PG_SIZE;
+        phys_addr = (void *)((int)phys_addr + ARCH_PG_SIZE);
+        vir_addr = (void *)((int)vir_addr + ARCH_PG_SIZE);
         if (length <= 0) break;
     }
 
@@ -253,14 +253,14 @@ PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int len
 PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
-    if ((vir_bytes)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
-    if (length % PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
+    if ((vir_bytes)vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_wppage(pgd, vir_addr);
 
-        length -= PG_SIZE;
-        vir_addr = (void *)((vir_bytes)vir_addr + PG_SIZE);
+        length -= ARCH_PG_SIZE;
+        vir_addr = (void *)((vir_bytes)vir_addr + ARCH_PG_SIZE);
         if (length <= 0) break;
     }
 
@@ -270,14 +270,14 @@ PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length)
 PUBLIC int pt_unwp_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
-    if ((int)vir_addr % PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
-    if (length % PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
+    if ((int)vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
     
     while (1) {
         pt_unwppage(pgd, vir_addr);
 
-        length -= PG_SIZE;
-        vir_addr = (void *)((int)vir_addr + PG_SIZE);
+        length -= ARCH_PG_SIZE;
+        vir_addr = (void *)((int)vir_addr + ARCH_PG_SIZE);
         if (length <= 0) break;
     }
 
@@ -301,13 +301,13 @@ PUBLIC void pt_kern_mapping_init()
         kmapping->phys_addr = addr;
         kmapping->len = len;
 
-        kmapping->flags = PG_PRESENT;
-        if (flags & KMF_USER) kmapping->flags |= PG_USER;
-        if (flags & KMF_WRITE) kmapping->flags |= PG_RW;
-        else kmapping->flags |= PG_RO;
+        kmapping->flags = ARCH_PG_PRESENT;
+        if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
+        if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
+        else kmapping->flags |= ARCH_PG_RO;
 
         /* where this region will be mapped */
-        kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / PG_SIZE);
+        kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
         if (kmapping->vir_addr == NULL) panic("MM: cannot allocate memory for kernel mappings");
 
         if (vmctl_reply_kern_mapping(rindex, kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
@@ -326,7 +326,7 @@ PUBLIC int pgd_new(pgdir_t * pgd)
 {
     phys_bytes pgd_phys;
     /* map the directory so that we can write it */
-    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, PGD_SIZE);
+    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, ARCH_PGD_SIZE);
 
     pgd->phys_addr = (void *)pgd_phys;
     pgd->vir_addr = pg_dir;
@@ -358,7 +358,15 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     unsigned int addr = 0, mapped = 0, kern_size = (kernel_info.kernel_end_pde - kernel_info.kernel_start_pde) * ARCH_BIG_PAGE_SIZE;
 
     while (mapped < kern_size) {
+#if defined(__i386__)
         pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit;
+#elif defined(__arm__)
+        pgd->vir_addr[kernel_pde] = (addr & ARM_VM_SECTION_MASK)
+            | ARM_VM_SECTION
+            | ARM_VM_SECTION_DOMAIN
+            | ARM_VM_SECTION_CACHED
+            | ARM_VM_SECTION_SUPER;
+#endif
 
         addr += ARCH_BIG_PAGE_SIZE;
         mapped += ARCH_BIG_PAGE_SIZE;
@@ -474,14 +482,14 @@ PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr)
 PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)
 {
     /* sanity check */
-    if ((int)vir_addr % PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
-    if (length % PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
+    if ((int)vir_addr % ARCH_PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_mappage(pgd, NULL, vir_addr, 0);
 
-        length -= PG_SIZE;
-        vir_addr += PG_SIZE;
+        length -= ARCH_PG_SIZE;
+        vir_addr += ARCH_PG_SIZE;
         if (length <= 0) break;
     }
 

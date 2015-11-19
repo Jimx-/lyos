@@ -1,6 +1,6 @@
 uenvcmd=run mmcbootcmd
 bootargs=hz=100
 
-bootlyos=setenv bootargs $bootargs mach_type=1 ; echo Booting lyos with arguments: $bootargs; bootm  0x80300000 
+bootlyos=setenv bootargs $bootargs ; echo Booting lyos with arguments: $bootargs; bootm  0x80300000 
 
 mmcbootcmd=echo starting from MMC ; mmc part 0; ; fatload mmc 0:1 0x80300000 lyos.ub; run bootlyos

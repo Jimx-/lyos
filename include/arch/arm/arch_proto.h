@@ -24,6 +24,8 @@
 #define out_byte(a, b) *((volatile unsigned char *)(a)) = (b)
 #define in_byte(a) (*((volatile unsigned char *)(a)))
 
+PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
+
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
 
 /* Data memory barrier */
@@ -71,6 +73,14 @@ static inline void write_ttbr0(u32 bar)
             : : [bar] "r" (bar));
 
     refresh_tlb();
+}
+
+static inline void write_vbar(u32 vbar)
+{
+    asm volatile("mcr p15, 0, %[vbar], c12, c0, 0 @ Write VBAR\n\t"
+            : : [vbar] "r" (vbar));
+
+    isb();
 }
 
 #endif

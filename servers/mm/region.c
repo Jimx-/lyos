@@ -68,7 +68,7 @@ PRIVATE void phys_region_free(struct phys_region * rp)
             if (frame->refcnt) frame->refcnt--;
 
             if (frame->refcnt <= 0) {
-                if (frame->phys_addr) free_mem((int)(frame->phys_addr), PG_SIZE);
+                if (frame->phys_addr) free_mem((int)(frame->phys_addr), ARCH_PG_SIZE);
                 SLABFREE(frame);
             }
         }
@@ -82,8 +82,8 @@ PRIVATE void phys_region_free(struct phys_region * rp)
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity)
 {
     int alloc_size = capacity * sizeof(struct phys_frame *);
-    if (alloc_size % PG_SIZE != 0) {
-        alloc_size = (alloc_size / PG_SIZE + 1) * PG_SIZE;
+    if (alloc_size % ARCH_PG_SIZE != 0) {
+        alloc_size = (alloc_size / ARCH_PG_SIZE + 1) * ARCH_PG_SIZE;
         capacity = alloc_size / sizeof(struct phys_frame *);
     }
 
@@ -100,8 +100,8 @@ PUBLIC int phys_region_init(struct phys_region * rp, int capacity)
 PRIVATE int phys_region_realloc(struct phys_region * rp, int new_capacity)
 {
     int alloc_size = new_capacity * sizeof(struct phys_frame *);
-    if (alloc_size % PG_SIZE != 0) {
-        alloc_size = (alloc_size / PG_SIZE + 1) * PG_SIZE;
+    if (alloc_size % ARCH_PG_SIZE != 0) {
+        alloc_size = (alloc_size / ARCH_PG_SIZE + 1) * ARCH_PG_SIZE;
         new_capacity = alloc_size / sizeof(struct phys_frame *);
     }
 
@@ -184,7 +184,7 @@ PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags
         region->refcnt = 1;
         struct phys_region * pr = &(region->phys_block);
         pr->capacity = 0;
-        if (phys_region_init(pr, region->length / PG_SIZE) != 0) return NULL;
+        if (phys_region_init(pr, region->length / ARCH_PG_SIZE) != 0) return NULL;
     }
     
     return region;
@@ -199,7 +199,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     int base = (int)rp->vir_addr, len = rp->length;
     int i;
 
-    for (i = 0; len > 0; len -= PG_SIZE, base += PG_SIZE, i++) {
+    for (i = 0; len > 0; len -= ARCH_PG_SIZE, base += ARCH_PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
         void * paddr = (void *)alloc_pages(1);
@@ -250,15 +250,15 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
     int base = (int)rp->vir_addr, len = rp->length;
     int i;
 
-    for (i = 0; len > 0; len -= PG_SIZE, base += PG_SIZE, i++) {
+    for (i = 0; len > 0; len -= ARCH_PG_SIZE, base += ARCH_PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
         if (frame->phys_addr == NULL) continue;
 #if REGION_DEBUG
         printl("MM: region_map_phys: mapping page(0x%x -> 0x%x)\n", 
                 base, frame->phys_addr);
 #endif
-        int flags = PG_PRESENT | PG_USER;
-        if (frame->flags & PFF_WRITABLE) flags |= PG_RW;
+        int flags = ARCH_PG_PRESENT | ARCH_PG_USER;
+        if (frame->flags & PFF_WRITABLE) flags |= ARCH_PG_RW;
         pt_mappage(&mmp->active_mm->pgd, frame->phys_addr, (void*)base, flags);
         frame->flags |= PFF_MAPPED;
     }

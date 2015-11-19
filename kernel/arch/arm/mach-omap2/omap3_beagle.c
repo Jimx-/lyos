@@ -13,8 +13,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <lyos/type.h>
+#include <sys/types.h>
+#include <lyos/const.h>
+#include <string.h>
+#include <lyos/proc.h>
+#include <lyos/global.h>
+#include <lyos/proto.h>
 #include "arch.h"
 
+PRIVATE void omap3_disp_char(const char c)
+{
+    char* a = 0x49020000;
+    *a = c;
+}
+
 MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
-    
+    .serial_putc = omap3_disp_char,
 MACHINE_END

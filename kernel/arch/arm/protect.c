@@ -15,46 +15,40 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "stdio.h"
-#include "stdarg.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
 #include "lyos/proc.h"
 #include "string.h"
+#include <errno.h>
+#include <signal.h>
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "arch.h"
+#include "arch_const.h"
+#include "arch_proto.h"
+#include "arch_smp.h"
+#include "arch_type.h"
+#include <lyos/cpulocals.h>
+#include <lyos/cpufeature.h>
 
-PUBLIC void disp_char(const char c)
+extern int exc_vector_table;
+
+PUBLIC struct tss tss[CONFIG_SMP_MAX_CPUS];
+
+PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 {
-    machine_desc->serial_putc(c);
+    struct tss* t = &tss[cpu];
+
+    t->sp0 = kernel_stack - ARM_STACK_TOP_RESERVED;
+    *((reg_t *)(t->sp0 + sizeof(reg_t))) = cpu;
+
+    return 0;
 }
 
-PUBLIC void direct_put_str(const char * str)
+PUBLIC void init_prot()
 {
-    while (*str)  {
-        disp_char(*str);
-        str++;
-    }
+    write_vbar((reg_t) &exc_vector_table);
 }
 
-PUBLIC int direct_print(const char * fmt, ...)
+PUBLIC void irq_entry_handle()
 {
-    int i;
-    char buf[256];
-    va_list arg;
-    
-    va_start(arg, fmt); 
-    i = vsprintf(buf, fmt, arg);
-    direct_put_str(buf);
-
-    va_end(arg);
-
-    return i;
-}
-
-PUBLIC void direct_cls()
-{
-
+    direct_print("IRQ\n");
 }

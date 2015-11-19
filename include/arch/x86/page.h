@@ -88,6 +88,10 @@ PUBLIC void reload_cr3();
 #define ARCH_PG_USER            PG_USER
 #define ARCH_PG_GLOBAL          PG_GLOBAL
 
+#define ARCH_PDE_PRESENT        PG_PRESENT
+#define ARCH_PDE_RW             PG_RW
+#define ARCH_PDE_USER           PG_USER
+
 #define ARCH_VM_DIR_ENTRIES     I386_VM_DIR_ENTRIES
 #define ARCH_VM_ADDR_MASK       I386_VM_ADDR_MASK
 #define ARCH_VM_OFFSET_MASK     I386_VM_OFFSET_MASK

@@ -175,7 +175,6 @@ no_schedule:
 	stop_context(proc_addr(KERNEL));
 
 	restart_local_timer();
-
 	restore_user_context(p);
 }
 

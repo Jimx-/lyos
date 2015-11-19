@@ -124,7 +124,6 @@ PRIVATE int dispatch_sys_call(int call_nr, MESSAGE * msg, struct proc * p_proc)
 PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
 {
     MESSAGE msg;
-
     if (call_nr > NR_SYS_CALLS || call_nr < 0) return EINVAL;
 
     p_proc->syscall_msg = m_user;

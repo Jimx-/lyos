@@ -13,28 +13,34 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_ARCH_H_
-#define _ARCH_ARCH_H_
+#ifndef _ARCH_ATOMIC_H_
+#define _ARCH_ATOMIC_H_
 
-#include "mach_type.h"
+typedef struct {
+    volatile int counter;
+} atomic_t;
 
-struct machine_desc {
-    int id;
-    const char* name;
+#define ATOMIC_INIT(i) { (i) }
+#define INIT_ATOMIC(v, i) do { (v)->counter = i; } while(0) 
 
-    void (*init_machine)(void);
-    void (*serial_putc)(const char c);
-};
+PRIVATE inline int atomic_get(atomic_t* v)
+{
+    return v->counter;
+}
 
-#define MACHINE_START(_type,_name)          \
-static const struct machine_desc __mach_desc_##_type    \
- __attribute__ ((used))    \
- __attribute__((__section__(".arch.info.init"))) = {    \
-    .id     = MACH_TYPE_##_type,        \
-    .name   = _name,
+PRIVATE inline void atomic_inc(atomic_t* v)
+{
+    v->counter++;
+}
 
-#define MACHINE_END             \
-};
+PRIVATE inline void atomic_dec(atomic_t* v)
+{
+    v->counter--;
+}
+
+PRIVATE inline int atomic_dec_and_test(atomic_t* v)  
+{  
+    return (--v->counter == 0);
+}  
 
 #endif
-    

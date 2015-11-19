@@ -24,6 +24,11 @@
 #include "page.h"
 #endif
 
+#ifdef __arm__
+#include "arch_type.h"
+#include "page.h"
+#endif
+
 #include <lyos/param.h>
 #include <lyos/priv.h>
 
@@ -40,6 +45,12 @@ EXTERN  phys_bytes          lapic_addr;
 EXTERN  vir_bytes           lapic_vaddr;
 EXTERN  vir_bytes           lapic_eoi_addr;
 EXTERN  u32                 bsp_cpu_id, bsp_lapic_id;
+EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
+#endif
+
+#ifdef __arm__
+EXTERN  struct machine_desc* machine_desc;
+extern  pde_t               initial_pgd[];
 EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 #endif
 

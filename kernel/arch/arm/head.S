@@ -1,7 +1,10 @@
+.include "sconst.inc"
+
 .section .head
 
 .global _lyos_start	/* entry point */
 .global _paging_enabled
+.global k_stacks_start
 .extern cstart
 .extern setup_paging
 .extern kernel_main
@@ -23,7 +26,7 @@ _failed:
 
 .section .unpaged_data
 UnpagedStackSpace:
-	.space 4096
+	.space K_STACK_SIZE
 UnpagedStackTop:
 
 .section .text
@@ -39,5 +42,9 @@ hang:
 
 .section .data
 StackSpace:
-	.space 4096
+	.space K_STACK_SIZE
 StackTop:
+.balign	K_STACK_SIZE
+k_stacks_start:
+	.space 2 * K_STACK_SIZE * 8
+k_stacks_end:

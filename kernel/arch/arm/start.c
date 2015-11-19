@@ -23,9 +23,13 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include <lyos/log.h>
 #include "arch.h"
+#include "arch_proto.h"
+#include "arch_const.h"
+#include "setup.h"
 
-extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE;
+extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE, _KERN_OFFSET;
 extern char _arch_init_start, _arch_init_end;
 
 /* paging utilities */
@@ -34,31 +38,71 @@ PRIVATE phys_bytes kern_phys_base = (phys_bytes) &_PHYS_BASE;
 PRIVATE phys_bytes kern_size = (phys_bytes) &_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
+extern u32 k_stacks_start;
 PUBLIC void * k_stacks;
 
 PRIVATE char * env_get(const char *name);
 PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
 
+PRIVATE void parse_atags(void* atags_ptr)
+{
+    struct tag* t;
+
+    static char cmdline[KINFO_CMDLINE_LEN];
+    static char var[KINFO_CMDLINE_LEN];
+    static char value[KINFO_CMDLINE_LEN];
+
+    for (t = atags_ptr; t->hdr.size; t = (struct tag *)((u32 *)t + t->hdr.size)) {
+        switch (t->hdr.tag) {
+        case ATAG_CORE:
+            break;
+        case ATAG_MEM:
+            kinfo.memmaps[kinfo.memmaps_count].addr = t->u.mem.start;
+            kinfo.memmaps[kinfo.memmaps_count].len = t->u.mem.size;
+            kinfo.memmaps[kinfo.memmaps_count].type = KINFO_MEMORY_AVAILABLE;
+            kinfo.memmaps_count++;
+            kinfo.memory_size += t->u.mem.size;
+            break;
+        case ATAG_CMDLINE:
+        {
+            strlcpy(cmdline, (void *)t->u.cmdline.cmdline, KINFO_CMDLINE_LEN);
+            char * p = cmdline;
+            while (*p) {
+                int var_i = 0;
+                int value_i = 0;
+                while (*p == ' ') p++;
+                if (!*p) break;
+                while (*p && *p != '=' && *p != ' ' && var_i < KINFO_CMDLINE_LEN - 1) 
+                    var[var_i++] = *p++ ;
+                var[var_i] = 0;
+                if (*p++ != '=') continue;
+                while (*p && *p != ' ' && value_i < KINFO_CMDLINE_LEN - 1) 
+                    value[value_i++] = *p++ ;
+                value[value_i] = 0;
+            
+                kinfo_set_param(kinfo.cmdline, var, value);
+            }
+        }
+        default:
+            break;
+        }
+    }
+}
+
 PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 {
-    /*
-    memset(kinfo.cmdline, 0, sizeof(kinfo.cmdline));
-    int i;
-    for (i = 1; i < argc; i++) {
-        \/* copy argument into kinfo cmdline buffer *\/
-        char* name = argv[i];
-        char* value = strchr(name, '=');
-        if (!value) continue;
-
-        *value = '\0';
-        value++;
-        kinfo_set_param(kinfo.cmdline, name, value);
-    }*/
+    memset(&kinfo, 0, sizeof(kinfo_t));
+    kinfo.magic = KINFO_MAGIC;
 
     kinfo.kernel_start_pde = ARCH_PDE(kern_vir_base);
     kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_size);
     kinfo.kernel_start_phys = kern_phys_base;
     kinfo.kernel_end_phys = kern_phys_base + kern_size; 
+    if (kinfo.kernel_end_phys % PAGE_ALIGN) {
+        kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % PAGE_ALIGN;
+    }
+
+    k_stacks = &k_stacks_start;
 
     /* kernel memory layout */
     kinfo.kernel_text_start = (vir_bytes)*(&_text);
@@ -76,10 +120,27 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     for (; mach < (struct machine_desc*) &_arch_init_end; mach++) {
         if (mach->id == mach_type) break;
     }
-    if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported");
-    direct_print("Mach type: %s\n", mach->name);
     
-    while(1);
+    if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported");
+    machine_desc = mach;
+    
+    parse_atags(atags_ptr);
+    
+    init_prot();
+    
+    memset(&kern_log, 0, sizeof(struct kern_log));
+    spinlock_init(&kern_log.lock);
+
+#define SET_MODULE(nr, name) do { \
+    extern char _binary_##name##_start[], _binary_##name##_end[]; \
+    kinfo.modules[nr].start_addr = (vir_bytes)*(&_binary_##name##_start) - (phys_bytes) &_KERN_OFFSET; \
+    kinfo.modules[nr].end_addr = (vir_bytes)*(&_binary_##name##_end) - (phys_bytes) &_KERN_OFFSET; } while(0)
+
+    SET_MODULE(TASK_MM, mm);
+    SET_MODULE(TASK_PM, pm);
+
+    cut_memmap(&kinfo, 0, PG_SIZE);
+    cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 
 PRIVATE char * get_value(const char * param, const char * key)
@@ -137,5 +198,8 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
 
 PUBLIC void init_arch()
 {
-    
+    if (machine_desc->init_machine)
+        machine_desc->init_machine();
+
+    init_tss(0, get_k_stack_top(0));
 }
