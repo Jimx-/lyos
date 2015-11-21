@@ -84,6 +84,7 @@ PUBLIC void reload_cr3();
 
 #define ARCH_PG_PRESENT         PG_PRESENT
 #define ARCH_PG_RW              PG_RW
+#define ARCH_PG_RO              PG_RO
 #define ARCH_PG_BIGPAGE         PG_BIGPAGE
 #define ARCH_PG_USER            PG_USER
 #define ARCH_PG_GLOBAL          PG_GLOBAL

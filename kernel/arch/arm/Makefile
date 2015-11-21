@@ -23,7 +23,7 @@ $(ARCHKERNEL): $(KERNELOBJS) $(machine-y)
 
 %.o : %.S
 	@echo -e '\tAS\tkernel/arch/arm/$@'
-	@$(AS) -o $@ $<
+	@$(AS) $(ASFLAGS) -o $@ $<
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/arm/$@'

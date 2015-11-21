@@ -52,6 +52,7 @@ EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 EXTERN  struct machine_desc* machine_desc;
 extern  pde_t               initial_pgd[];
 EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
+EXTERN  vir_bytes           uart_base_addr;
 #endif
 
 extern  int booting_cpu;

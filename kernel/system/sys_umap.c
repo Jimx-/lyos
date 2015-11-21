@@ -42,6 +42,6 @@ PUBLIC int sys_umap(MESSAGE * m, struct proc* p)
     if (ep == SELF) ep = p->endpoint;
     
     m->UMAP_DSTADDR = va2pa(ep, (void *)srcaddr);
-
+    
     return 0;
 }

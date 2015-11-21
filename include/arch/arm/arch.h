@@ -22,6 +22,8 @@ struct machine_desc {
     int id;
     const char* name;
 
+    phys_bytes uart_base;
+
     void (*init_machine)(void);
     void (*serial_putc)(const char c);
 };

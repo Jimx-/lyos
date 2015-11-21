@@ -16,7 +16,7 @@
 .balign	4096
 exc_vector_table:
 	ldr pc, =invalid_exc			/* Reset */
-	ldr pc, =undefined_inst_exc			/* Undefined Instruction */
+	ldr pc, =undefined_inst_exc		/* Undefined Instruction */
 	ldr pc, =svc_entry				/* Supervisor Call */
 	ldr pc, =invalid_exc			/* Prefetch Abort */
 	ldr pc, =invalid_exc			/* Data Abort */

@@ -24,10 +24,11 @@
 
 PRIVATE void omap3_disp_char(const char c)
 {
-    char* a = 0x49020000;
+    char* a = (char*) uart_base_addr;
     *a = c;
 }
 
 MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
+    .uart_base = (phys_bytes) 0x49020000,
     .serial_putc = omap3_disp_char,
 MACHINE_END

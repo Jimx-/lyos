@@ -155,7 +155,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
 
 PUBLIC void arch_set_syscall_result(struct proc * p, int result)
 {
-
+    p->regs.r0 = result;
 }
 
 PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)

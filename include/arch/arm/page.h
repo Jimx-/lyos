@@ -25,7 +25,7 @@ typedef unsigned int    pte_t;
 
 #define ARM_VM_DIR_ENTRIES      4096
 /* size of a directory */
-#define ARM_PGD_SIZE    0x1000
+#define ARM_PGD_SIZE    0x4000
 /* size of a page table */
 #define ARM_PT_SIZE     0x1000
 /* size of a physical page */
@@ -83,6 +83,8 @@ typedef struct {
 #define ARM_VM_PDE_MASK     (~((1 << ARM_VM_PDE_SHIFT) - 1))
 
 #define ARM_VM_ADDR_MASK        0xFFFFF000
+#define ARM_VM_OFFSET_MASK      0x00000FFF
+#define ARM_VM_OFFSET_MASK_1MB  0x000FFFFF /* physical address */
 
 /* ARM pagefault status bits */
 #define ARM_PF_ALIGN          0x01 /* Pagefault caused by Alignment fault */

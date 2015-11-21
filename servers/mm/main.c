@@ -144,11 +144,10 @@ PRIVATE void init_mm()
 	pt_init();
 	slabs_init();
 	page_cache_init();
-
+	
 	__lyos_init();
 
 	init_mmproc(TASK_MM);
-
 	struct boot_proc * bp;
 	for (i = -NR_TASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
 		if (bp->proc_nr < 0) continue;

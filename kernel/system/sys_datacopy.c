@@ -34,7 +34,7 @@ PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
 
     void * dest_addr = m->DEST_ADDR;
     endpoint_t dest_ep = m->DEST_EP == SELF ? p_proc->endpoint : m->DEST_EP;
-
+    
     struct vir_addr src, dest;
 
     src.addr = src_addr;

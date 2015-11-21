@@ -14,7 +14,7 @@ realclean :
 
 $(PROCFS): $(PROCFSOBJS)
 	@echo -e '\tLD\tfs/procfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) -Xlinker -Ttext -Xlinker 0x30000000
 
 %.o: %.c
 	@echo -e '\tCC\tfs/procfs/$@'

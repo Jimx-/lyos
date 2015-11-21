@@ -100,6 +100,7 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     kinfo.kernel_end_phys = kern_phys_base + kern_size; 
     if (kinfo.kernel_end_phys % PAGE_ALIGN) {
         kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % PAGE_ALIGN;
+        kinfo.kernel_end_pde++;
     }
 
     k_stacks = &k_stacks_start;
@@ -141,6 +142,8 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 
     cut_memmap(&kinfo, 0, PG_SIZE);
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
+
+    uart_base_addr = machine_desc->uart_base;
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

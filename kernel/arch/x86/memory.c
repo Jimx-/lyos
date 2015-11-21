@@ -132,7 +132,6 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
 
 PRIVATE u32 get_phys32(phys_bytes phys_addr)
 {
-    u32 old_cr3 = read_cr3();
     u32 v;
 
     if (la_la_copy(proc_addr(KERNEL), &v, NULL, phys_addr, sizeof(v))) {

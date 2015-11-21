@@ -64,6 +64,16 @@ static inline void refresh_tlb(void)
     isb();
 }
 
+/* Read Translation Table Base Register 0 */
+static inline u32 read_ttbr0()
+{
+    u32 bar;
+    asm volatile("mrc p15, 0, %[bar], c2, c0, 0 @ Read TTBR0\n\t"
+            : [bar] "=r" (bar));
+
+    return bar;
+}
+
 /* Write Translation Table Base Register 0 */
 static inline void write_ttbr0(u32 bar)
 {

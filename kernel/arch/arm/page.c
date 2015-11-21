@@ -209,7 +209,9 @@ PUBLIC void pg_load(pde_t * pgd)
 
 PUBLIC void reload_ttbr0()
 {
-    u32 bar = (u32)initial_pgd;
+    u32 bar;
+    asm volatile("mrc p15, 0, %[bar], c2, c0, 0 @ Read TTBR0\n\t"
+            : [bar] "=r" (bar));
     asm volatile("mcr p15, 0, %[bar], c2, c0, 0 @ Write TTBR0\n\t"
             : : [bar] "r" (bar));
 }
@@ -218,6 +220,5 @@ PUBLIC void switch_address_space(struct proc * p)
 {
     get_cpulocal_var(pt_proc) = p;
     u32 bar = p->seg.ttbr_phys;
-    asm volatile("mcr p15, 0, %[bar], c2, c0, 0 @ Write TTBR0\n\t"
-            : : [bar] "r" (bar));
+    write_ttbr0(bar);
 }

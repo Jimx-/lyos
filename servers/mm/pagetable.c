@@ -53,7 +53,7 @@ PRIVATE struct pagedir_mapping {
 
 PRIVATE struct mmproc * mmprocess = &mmproc_table[TASK_MM];
 PRIVATE struct mm_struct self_mm;
-//#define PAGETABLE_DEBUG    1
+#define PAGETABLE_DEBUG    1
 
 /* before MM has set up page table for its own, we use these pages in page allocation */
 PRIVATE char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES] 
@@ -102,6 +102,7 @@ PUBLIC void pt_init()
 
     /* prepare page directory for MM */
     pgdir_t * mypgd = &mmprocess->mm->pgd;
+
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
     
     unsigned int mypdbr = 0;
@@ -167,7 +168,11 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
         pt[i] = 0;
     }
 
+#ifdef __i386__
     pgd->vir_addr[pde] = pt_phys | flags;
+#elif defined(__arm__)
+    pgd->vir_addr[pde] = (pt_phys & ARM_VM_PDE_MASK) | ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+#endif
     pgd->vir_pts[pde] = pt;
 
     return 0;
@@ -303,8 +308,15 @@ PUBLIC void pt_kern_mapping_init()
 
         kmapping->flags = ARCH_PG_PRESENT;
         if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
+#if defined(__arm__)
+        else kmapping->flags |= ARM_PG_SUPER;
+#endif
         if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
         else kmapping->flags |= ARCH_PG_RO;
+
+#if defined(__arm__)
+        kmapping->flags |= ARM_PG_CACHED;
+#endif
 
         /* where this region will be mapped */
         kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
@@ -355,7 +367,7 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 {
     int i;
     int kernel_pde = kernel_info.kernel_start_pde;
-    unsigned int addr = 0, mapped = 0, kern_size = (kernel_info.kernel_end_pde - kernel_info.kernel_start_pde) * ARCH_BIG_PAGE_SIZE;
+    unsigned int addr = kernel_info.kernel_start_phys, mapped = 0, kern_size = (kernel_info.kernel_end_pde - kernel_info.kernel_start_pde) * ARCH_BIG_PAGE_SIZE;
 
     while (mapped < kern_size) {
 #if defined(__i386__)
