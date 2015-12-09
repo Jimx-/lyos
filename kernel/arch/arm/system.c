@@ -161,6 +161,10 @@ PUBLIC void arch_set_syscall_result(struct proc * p, int result)
 PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)
 {
     memcpy(p->name, name, PROC_NAME_LEN);
+
+    p->regs.pc = ip;
+    p->regs.sp = sp;
+    p->regs.r0 = ps;
     
     return 0;
 }

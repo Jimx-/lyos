@@ -24,6 +24,9 @@
 #define out_byte(a, b) *((volatile unsigned char *)(a)) = (b)
 #define in_byte(a) (*((volatile unsigned char *)(a)))
 
+#define mmio_write(a, b) *((volatile unsigned int *)(a)) = (b)
+#define mmio_read(a) (*((volatile unsigned int *)(a)))
+
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
 
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);

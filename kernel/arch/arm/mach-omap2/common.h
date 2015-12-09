@@ -13,10 +13,9 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_MACH_TYPE_H_
-#define _ARCH_MACH_TYPE_H_
+#ifndef _MACH_OMAP2_COMMON_H_
+#define _MACH_OMAP2_COMMON_H_
 
-#define MACH_TYPE_OMAP3_BEAGLE   1546
-#define MACH_TYPE_TI_AM335X_EVM  3589
-    
-#endif
+PUBLIC void omap3_disp_char(const char c);
+
+#endif /* _MACH_OMAP2_COMMON_H_ */

@@ -26,6 +26,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "const.h"
 #include "page.h"
 #include "region.h"
 #include "proto.h"
@@ -103,20 +104,23 @@ PUBLIC int alloc_mem(int memsize)
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-PUBLIC int alloc_pages(int nr_pages)
+PUBLIC int alloc_pages(int nr_pages, int memflags)
 {
 	int memsize = nr_pages * PG_SIZE;
  	struct hole *hp, *prev_ptr;
 	int old_base;
+	phys_bytes page_align = PAGE_ALIGN;
+
+	if (memflags & APF_ALIGN16K) {
+		page_align = 0x4000;
+	}
 
     prev_ptr = NULL;
 	hp = hole_head;
-	
 	while (hp != NULL) {
 		int alignment = 0;
-		if (hp->h_base % PAGE_ALIGN != 0)
-			alignment = PAGE_ALIGN - (hp->h_base % PAGE_ALIGN);
-
+		if (hp->h_base % page_align != 0)
+			alignment = page_align - (hp->h_base % page_align);
 		if (hp->h_len >= memsize + alignment) {
 			/* We found a hole that is big enough.  Use it. */
 			old_base = hp->h_base + alignment;

@@ -38,6 +38,16 @@
 #define PFF_SHARED   0x2
 #define PFF_MAPPED   0x4
 
+/* Page allocation types */
+#define PGT_SLAB        1
+#define PGT_PAGEDIR     2
+#define PGT_PAGETABLE   3
+
+/* alloc_page() flags */
+#define APF_NORMAL      0x0
+#define APF_ALIGN4K     0x1
+#define APF_ALIGN16K    0x2
+
 #define MAX_PAGEDIR_PDES    5
  
 #endif /* _MM_CONST_H_ */

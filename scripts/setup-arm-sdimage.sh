@@ -36,11 +36,11 @@ mount $LOOP_DEVICE $MOUNT_POINT
 
 if [ ! -f $MLO ];
 then
-   wget http://downloads.angstrom-distribution.org/demo/beagleboard/MLO-beagleboard -O $MLO
+   wget http://downloads.angstrom-distribution.org/demo/beaglebone/MLO -O $MLO
 fi
 if [ ! -f $UBOOT ];
 then
-   wget http://downloads.angstrom-distribution.org/demo/beagleboard/u-boot-beagleboard.img -O $UBOOT
+   wget http://downloads.angstrom-distribution.org/demo/beaglebone/u-boot.img -O $UBOOT
 fi
 
 mkimage -A arm -O linux -T multi -C none -a 0x80200000 -e 0x80200000 -n 'Lyos/arm' -d  obj/destdir.arm/boot/lyos.bin obj/destdir.arm/boot/lyos.ub

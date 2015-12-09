@@ -89,7 +89,7 @@ PUBLIC int phys_region_init(struct phys_region * rp, int capacity)
 
     if (rp->capacity != 0) phys_region_free(rp);
 
-    rp->frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size);
+    rp->frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size, 0);
     if (rp->frames == NULL) return ENOMEM;
     memset(rp->frames, 0, alloc_size);
     rp->capacity = capacity;
@@ -105,7 +105,7 @@ PRIVATE int phys_region_realloc(struct phys_region * rp, int new_capacity)
         new_capacity = alloc_size / sizeof(struct phys_frame *);
     }
 
-    struct phys_frame * new_frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size);
+    struct phys_frame * new_frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size, 0);
     if (new_frames == NULL) return ENOMEM;
 
     memcpy(new_frames, rp->frames, rp->capacity * sizeof(struct phys_frame *));
@@ -202,7 +202,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     for (i = 0; len > 0; len -= ARCH_PG_SIZE, base += ARCH_PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get(pregion, i);
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
-        void * paddr = (void *)alloc_pages(1);
+        void * paddr = (void *)alloc_pages(1, APF_NORMAL);
         if (!paddr) return ENOMEM;
         frame->flags = (rp->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
         frame->phys_addr = paddr; 
@@ -494,7 +494,7 @@ PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr
 
         /* tell vfs to read in this page */
         phys_bytes buf_phys;
-        vir_bytes buf_vir = alloc_vmem(&buf_phys, ARCH_PG_SIZE);
+        vir_bytes buf_vir = alloc_vmem(&buf_phys, ARCH_PG_SIZE, 0);
         if (!buf_vir) return ENOMEM;
 
         memset((void*)buf_vir, 0, ARCH_PG_SIZE);
@@ -553,7 +553,7 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
     if (!new_frame) return ENOMEM;
     memset(new_frame, 0, sizeof(*new_frame));
 
-    void * paddr = (void *)alloc_pages(1);
+    void * paddr = (void *)alloc_pages(1, APF_NORMAL);
     if (!paddr) return ENOMEM;
     new_frame->flags = (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
     new_frame->phys_addr = paddr; 
@@ -584,7 +584,7 @@ PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes off
     if (!new_frame) return ENOMEM;
     memset(new_frame, 0, sizeof(*new_frame));
 
-    void * paddr = (void *)alloc_pages(1);
+    void * paddr = (void *)alloc_pages(1, APF_NORMAL);
     if (!paddr) return ENOMEM;
     new_frame->phys_addr = paddr; 
     new_frame->refcnt = 1;

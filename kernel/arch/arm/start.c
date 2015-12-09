@@ -122,8 +122,9 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
         if (mach->id == mach_type) break;
     }
     
-    if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported");
+    if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported(mach_type: %d)", mach_type);
     machine_desc = mach;
+    uart_base_addr = machine_desc->uart_base;
     
     parse_atags(atags_ptr);
     
@@ -139,11 +140,10 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 
     SET_MODULE(TASK_MM, mm);
     SET_MODULE(TASK_PM, pm);
+    SET_MODULE(TASK_SERVMAN, servman);
 
     cut_memmap(&kinfo, 0, PG_SIZE);
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
-
-    uart_base_addr = machine_desc->uart_base;
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

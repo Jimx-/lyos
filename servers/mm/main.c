@@ -151,7 +151,7 @@ PRIVATE void init_mm()
 	struct boot_proc * bp;
 	for (i = -NR_TASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
 		if (bp->proc_nr < 0) continue;
-
+		if (bp->endpoint >= 3) return;
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
 		mmp->flags = MMPF_INUSE;
 
@@ -219,8 +219,7 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
 {
 	struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
     if (offset + len > mmexeci->bp->len) return ENOEXEC;
-    data_copy(execi->proc_e, (void *)vaddr, NO_TASK, (void *)((int)(mmexeci->bp->base) + offset), len);
-    
+    data_copy(execi->proc_e, (void *)vaddr, NO_TASK, (void *)((phys_bytes)(mmexeci->bp->base) + offset), len);
     return 0;
 }
 
@@ -228,7 +227,7 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
 {
 	if (pgd_new(&mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_new failed");
 	if (pgd_bind(mmp, &mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
-
+	
 	struct mm_exec_info mmexeci;
 	struct exec_info * execi = &mmexeci.execi;
 	char header[ARCH_PG_SIZE];

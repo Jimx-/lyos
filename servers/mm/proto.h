@@ -26,9 +26,9 @@ PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size);
 /* PUBLIC int   alloc_mem(int pid, int memsize); */
 PUBLIC int  alloc_mem(int memsize);
 PUBLIC int  free_mem(int base, int len);
-PUBLIC int alloc_pages(int nr_pages);
+PUBLIC int alloc_pages(int nr_pages, int memflags);
 
-PUBLIC vir_bytes  alloc_vmem(phys_bytes * phys_addr, int memsize);
+PUBLIC vir_bytes  alloc_vmem(phys_bytes * phys_addr, int memsize, int reason);
 PUBLIC vir_bytes alloc_vmpages(int nr_pages);
 PUBLIC void  free_vmem(vir_bytes base, int len);
 PUBLIC void free_vmpages(vir_bytes base, int nr_pages);

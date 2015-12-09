@@ -12,6 +12,11 @@ config MACH_OMAP3_BEAGLE
 	depends on ARCH_OMAP3
 	default y
 
+config MACH_TI_AM335X_EVM
+	bool "TI AM335X EVM"
+	depends on ARCH_OMAP3
+	default y
+
 endmenu
 
 endif

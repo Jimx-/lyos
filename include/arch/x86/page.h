@@ -24,6 +24,7 @@ typedef unsigned int    pde_t;
 typedef unsigned int    pte_t;
 
 #define I386_VM_DIR_ENTRIES     1024
+#define I386_VM_PT_ENTRIES      1024
 
 #define I386_VM_ADDR_MASK       0xfffff000
 #define I386_VM_OFFSET_MASK     (~I386_VM_ADDR_MASK)
@@ -94,6 +95,7 @@ PUBLIC void reload_cr3();
 #define ARCH_PDE_USER           PG_USER
 
 #define ARCH_VM_DIR_ENTRIES     I386_VM_DIR_ENTRIES
+#define ARCH_VM_PT_ENTRIES      I386_VM_PT_ENTRIES
 #define ARCH_VM_ADDR_MASK       I386_VM_ADDR_MASK
 #define ARCH_VM_OFFSET_MASK     I386_VM_OFFSET_MASK
 #define ARCH_VM_ADDR_MASK_BIG   I386_VM_ADDR_MASK_BIG

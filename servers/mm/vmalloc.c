@@ -36,6 +36,7 @@
 #include "lyos/proto.h"
 #include <lyos/vm.h>
 #include "page.h"
+#include "const.h"
 #include "region.h"
 #include "proto.h"
 #include "global.h"
@@ -77,7 +78,7 @@ PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
+PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 {
 	int pages = memsize / ARCH_PG_SIZE;
 	if (memsize % PG_SIZE != 0)
@@ -91,8 +92,8 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
 		}
 
 #ifdef __arm__
-		/* allocate page table at 16k alignment */
-		if (memsize == ARCH_PGD_SIZE) {		
+		/* allocate page directory at 16k alignment */
+		if (reason == PGT_PAGEDIR) {		
 			while ((bootstrap_pages[i].phys_addr % ARCH_PGD_SIZE != 0) && i + pages < STATIC_BOOTSTRAP_PAGES) {
 				bootstrap_pages[i].used = 1;
 				i++;
@@ -114,8 +115,15 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize)
 		return ret;
 	}
 
+	int memflags = 0;
+#ifdef __arm__
+	if (reason == PGT_PAGEDIR) {
+		memflags |= APF_ALIGN16K;
+	}
+#endif
+
 	/* allocate physical memory */
-    int phys_pages = alloc_pages(pages);
+    int phys_pages = alloc_pages(pages, memflags);
  	int vir_pages = alloc_vmpages(pages);
  	int retval = vir_pages;
 

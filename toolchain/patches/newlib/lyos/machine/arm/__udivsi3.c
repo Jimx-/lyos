@@ -1,9 +1,9 @@
 #include <limits.h>
-int __udivsi3(int n, int d)
+unsigned int __udivsi3(unsigned int n, unsigned int d)
 {
-    const unsigned n_uword_bits = sizeof(int) * CHAR_BIT;
-    int q;
-    int r;
+    const unsigned n_uword_bits = sizeof(unsigned int) * CHAR_BIT;
+    unsigned int q;
+    unsigned int r;
     unsigned sr;
     /* special cases */
     if (d == 0)
@@ -21,7 +21,7 @@ int __udivsi3(int n, int d)
     /* Not a special case */
     q = n << (n_uword_bits - sr);
     r = n >> sr;
-    int carry = 0;
+    unsigned int carry = 0;
     for (; sr > 0; --sr)
     {
         /* r:q = ((r:q)  << 1) | carry */

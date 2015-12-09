@@ -53,7 +53,7 @@ PRIVATE struct pagedir_mapping {
 
 PRIVATE struct mmproc * mmprocess = &mmproc_table[TASK_MM];
 PRIVATE struct mm_struct self_mm;
-#define PAGETABLE_DEBUG    1
+//#define PAGETABLE_DEBUG    1
 
 /* before MM has set up page table for its own, we use these pages in page allocation */
 PRIVATE char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES] 
@@ -91,11 +91,15 @@ PUBLIC void pt_init()
         pdm->pde_no = end_pde++;
         phys_bytes phys_addr;
 
-        if ((pdm->entries = (pte_t *)alloc_vmem(&phys_addr, ARCH_PG_SIZE)) == NULL) 
+        if ((pdm->entries = (pte_t *)alloc_vmem(&phys_addr, ARCH_PG_SIZE, PGT_PAGETABLE)) == NULL) 
             panic("MM: no memory for pagedir mappings");
         
         pdm->phys_addr = phys_addr;
+#if defined(__i386__)
         pdm->val = (phys_addr & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW;
+#elif defined(__arm__)
+        pdm->val = (phys_addr & ARCH_VM_ADDR_MASK) | ARM_VM_PDE_PRESENT | ARM_PG_CACHED | ARM_VM_PDE_DOMAIN;
+#endif
     }
 
     pt_kern_mapping_init();
@@ -130,7 +134,7 @@ PUBLIC struct mm_struct* mm_allocate()
     struct mm_struct* mm;
 
     int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
-    mm = alloc_vmem(NULL, len);
+    mm = alloc_vmem(NULL, len, 0);
     return mm;
 }
 
@@ -153,7 +157,7 @@ PUBLIC void mm_free(struct mm_struct* mm)
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 {
     phys_bytes pt_phys;
-    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, ARCH_PT_SIZE);
+    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, ARCH_PT_SIZE, PGT_PAGETABLE);
     if (pt == NULL) {
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
@@ -164,7 +168,7 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 #endif
 
     int i;
-    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
+    for (i = 0; i < ARCH_VM_PT_ENTRIES; i++) {
         pt[i] = 0;
     }
 
@@ -338,7 +342,7 @@ PUBLIC int pgd_new(pgdir_t * pgd)
 {
     phys_bytes pgd_phys;
     /* map the directory so that we can write it */
-    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, ARCH_PGD_SIZE);
+    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, ARCH_PGD_SIZE, PGT_PAGEDIR);
 
     pgd->phys_addr = (void *)pgd_phys;
     pgd->vir_addr = pg_dir;
@@ -425,17 +429,31 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
 {
     int slot = who->active_mm->slot, pdm_slot;
     int pages_per_pgdir = ARCH_PGD_SIZE / ARCH_PG_SIZE;
-    int slots_per_pdm = ARCH_VM_DIR_ENTRIES / pages_per_pgdir;
+    int slots_per_pdm = ARCH_VM_PT_ENTRIES / pages_per_pgdir;
 
     /* fill in the slot */
     struct pagedir_mapping * pdm = &pagedir_mappings[slot / slots_per_pdm];
     pdm_slot = slot % slots_per_pdm;
 
     phys_bytes phys = (phys_bytes)pgd->phys_addr & ARCH_VM_ADDR_MASK;
+#if defined(__i386__)
     pdm->entries[pdm_slot] = phys | ARCH_PG_PRESENT | ARCH_PG_RW;
+#elif defined(__arm__)
+    int _i;
+    for (_i = 0; _i < pages_per_pgdir; _i++) {
+        pdm->entries[pdm_slot * pages_per_pgdir + _i] = (phys + _i * ARCH_PG_SIZE) | ARCH_PG_PRESENT
+            | ARCH_PG_RW
+            | ARM_PG_CACHED
+            | ARCH_PG_USER;
+    }
+#endif
 
+#if defined(__i386__)
     /* calculate the vir addr of the pgdir visible to the kernel */
     vir_bytes vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PG_SIZE;
+#elif defined(__arm__)
+    vir_bytes vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PGD_SIZE;
+#endif
 
     return vmctl_set_address_space(who->endpoint, pgd->phys_addr, (void *)vir_addr);
 }
@@ -452,8 +470,8 @@ PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv
         pte_t * pt_entries = pgd->vir_pts[i];
         /* the pde is empty, we have I386_VM_DIR_ENTRIES free pages */
         if (pt_entries == NULL) {
-            nr_pages -= ARCH_VM_DIR_ENTRIES;
-            allocated_pages += ARCH_VM_DIR_ENTRIES;
+            nr_pages -= ARCH_VM_PT_ENTRIES;
+            allocated_pages += ARCH_VM_PT_ENTRIES;
             if (retaddr == 0) retaddr = ARCH_VM_ADDRESS(i, 0, 0);
             if (nr_pages <= 0) {
                 return retaddr;
@@ -461,7 +479,7 @@ PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv
             continue;
         }
 
-        for (j = 0; j < ARCH_VM_DIR_ENTRIES; j++) {
+        for (j = 0; j < ARCH_VM_PT_ENTRIES; j++) {
             if (pt_entries[j] != 0) {
                 nr_pages += allocated_pages;
                 retaddr = 0;

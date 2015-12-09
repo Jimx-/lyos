@@ -13,10 +13,17 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_MACH_TYPE_H_
-#define _ARCH_MACH_TYPE_H_
+#include <lyos/type.h>
+#include <sys/types.h>
+#include <lyos/const.h>
+#include <string.h>
+#include <lyos/proc.h>
+#include <lyos/global.h>
+#include <lyos/proto.h>
+#include "arch.h"
+#include "common.h"
 
-#define MACH_TYPE_OMAP3_BEAGLE   1546
-#define MACH_TYPE_TI_AM335X_EVM  3589
-    
-#endif
+MACHINE_START(TI_AM335X_EVM, "TI AM335X EVM")
+    .uart_base = (phys_bytes) 0x44e09000,
+    .serial_putc = omap3_disp_char,
+MACHINE_END

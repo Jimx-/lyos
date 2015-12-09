@@ -75,7 +75,7 @@ PUBLIC void slabs_init()
 PRIVATE struct slabdata * alloc_slabdata()
 {
     phys_bytes phys;
-    struct slabdata * sd = (struct slabdata *)alloc_vmem(&phys, ARCH_PG_SIZE);
+    struct slabdata * sd = (struct slabdata *)alloc_vmem(&phys, ARCH_PG_SIZE, PGT_SLAB);
     if (!sd) return NULL;
 
     memset(&sd->header.used_mask, 0, sizeof(sd->header.used_mask));

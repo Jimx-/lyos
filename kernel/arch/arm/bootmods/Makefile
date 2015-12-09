@@ -2,7 +2,7 @@
 # Makefile for Lyos boot modules.  #
 ####################################
 
-BOOTMODSOBJS	= mm.o pm.o
+BOOTMODSOBJS	= mm.o pm.o servman.o
 
 BOOTMODS		= bootmods.o
 
@@ -26,3 +26,9 @@ pm.o: $(DESTDIR)/sbin/pm
 	@cp $< ./
 	@$(OBJCOPY) -I binary -O elf32-littlearm -B arm pm $@
 	@rm ./pm
+
+servman.o: $(DESTDIR)/sbin/servman
+	@echo -e '\tOBJCOPY\tkernel/bootmods/$@'
+	@cp $< ./
+	@$(OBJCOPY) -I binary -O elf32-littlearm -B arm servman $@
+	@rm ./servman

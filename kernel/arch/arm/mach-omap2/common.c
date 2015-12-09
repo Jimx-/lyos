@@ -21,9 +21,32 @@
 #include <lyos/global.h>
 #include <lyos/proto.h>
 #include "arch.h"
-#include "common.h"
+#include "arch_proto.h"
 
-MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
-    .uart_base = (phys_bytes) 0x49020000,
-    .serial_putc = omap3_disp_char,
-MACHINE_END
+#define OMAP3_THR 0x000
+
+#define OMAP3_LSR 0x014
+#define OMAP3_LSR_TEMT    0x40
+#define OMAP3_LSR_THRE    0x20
+
+#define OMAP3_SSR 0x044
+
+PUBLIC void omap3_disp_char(const char c)
+{
+    int i;
+    char* base = (char*) uart_base_addr;
+
+    for (i = 0; i < 100000; i++) {
+        if (mmio_read(base + OMAP3_LSR) & OMAP3_LSR_THRE) {
+            break;
+        }
+    }
+
+    mmio_write(base + OMAP3_THR, c);
+
+    for (i = 0; i < 100000; i++) {
+        if (mmio_read(base + OMAP3_LSR) & (OMAP3_LSR_THRE | OMAP3_LSR_TEMT)) {
+            break;
+        }
+    }
+}

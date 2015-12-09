@@ -24,6 +24,7 @@ typedef unsigned int    pde_t;
 typedef unsigned int    pte_t;
 
 #define ARM_VM_DIR_ENTRIES      4096
+#define ARM_VM_PT_ENTRIES       256
 /* size of a directory */
 #define ARM_PGD_SIZE    0x4000
 /* size of a page table */
@@ -140,6 +141,7 @@ typedef struct {
 #define PG_SIZE                 0x1000      /* 4kB */
 
 #define ARCH_VM_DIR_ENTRIES     ARM_VM_DIR_ENTRIES
+#define ARCH_VM_PT_ENTRIES      ARM_VM_PT_ENTRIES
 #define ARCH_VM_ADDR_MASK       ARM_VM_ADDR_MASK
 
 #define ARCH_PG_PRESENT         ARM_PG_PRESENT
