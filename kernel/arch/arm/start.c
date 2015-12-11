@@ -57,6 +57,7 @@ PRIVATE void parse_atags(void* atags_ptr)
         case ATAG_CORE:
             break;
         case ATAG_MEM:
+            /* memory information */
             kinfo.memmaps[kinfo.memmaps_count].addr = t->u.mem.start;
             kinfo.memmaps[kinfo.memmaps_count].len = t->u.mem.size;
             kinfo.memmaps[kinfo.memmaps_count].type = KINFO_MEMORY_AVAILABLE;
@@ -65,6 +66,7 @@ PRIVATE void parse_atags(void* atags_ptr)
             break;
         case ATAG_CMDLINE:
         {
+            /* kernel command line */
             strlcpy(cmdline, (void *)t->u.cmdline.cmdline, KINFO_CMDLINE_LEN);
             char * p = cmdline;
             while (*p) {
@@ -82,6 +84,22 @@ PRIVATE void parse_atags(void* atags_ptr)
             
                 kinfo_set_param(kinfo.cmdline, var, value);
             }
+            break;
+        }
+        case ATAG_INITRD2:
+        {
+            /* initrd2: the real initial ramdisk */
+            char initrd_param_buf[20];
+            sprintf(initrd_param_buf, "0x%x", (phys_bytes)t->u.initrd.start + (phys_bytes) &_KERN_OFFSET);
+            kinfo_set_param(kinfo.cmdline, "initrd_base", initrd_param_buf);
+            sprintf(initrd_param_buf, "%u", (phys_bytes)t->u.initrd.size);
+            kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
+            phys_bytes initrd_end = (phys_bytes)t->u.initrd.start + (phys_bytes)t->u.initrd.size;
+            phys_bytes kern_initrd_size = initrd_end - kern_phys_base;
+            /* update kernel size to protect initrd from being overwritten */
+            kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_initrd_size);
+            kinfo.kernel_end_phys = initrd_end; 
+            break;
         }
         default:
             break;
@@ -93,15 +111,6 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 {
     memset(&kinfo, 0, sizeof(kinfo_t));
     kinfo.magic = KINFO_MAGIC;
-
-    kinfo.kernel_start_pde = ARCH_PDE(kern_vir_base);
-    kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_size);
-    kinfo.kernel_start_phys = kern_phys_base;
-    kinfo.kernel_end_phys = kern_phys_base + kern_size; 
-    if (kinfo.kernel_end_phys % PAGE_ALIGN) {
-        kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % PAGE_ALIGN;
-        kinfo.kernel_end_pde++;
-    }
 
     k_stacks = &k_stacks_start;
 
@@ -117,6 +126,7 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     if (hz_value) system_hz = atoi(hz_value);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
+    /* look up the machine type */
     struct machine_desc* mach = (struct machine_desc*) &_arch_init_start;
     for (; mach < (struct machine_desc*) &_arch_init_end; mach++) {
         if (mach->id == mach_type) break;
@@ -126,8 +136,18 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     machine_desc = mach;
     uart_base_addr = machine_desc->uart_base;
     
+    kinfo.kernel_start_pde = ARCH_PDE(kern_vir_base);
+    kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_size);
+    kinfo.kernel_start_phys = kern_phys_base;
+    kinfo.kernel_end_phys = kern_phys_base + kern_size; 
+
     parse_atags(atags_ptr);
-    
+
+    if (kinfo.kernel_end_phys % PAGE_ALIGN) {
+        kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % PAGE_ALIGN;
+        kinfo.kernel_end_pde++;
+    }
+
     init_prot();
     
     memset(&kern_log, 0, sizeof(struct kern_log));
@@ -141,6 +161,15 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     SET_MODULE(TASK_MM, mm);
     SET_MODULE(TASK_PM, pm);
     SET_MODULE(TASK_SERVMAN, servman);
+    SET_MODULE(TASK_DEVMAN, devman);
+    SET_MODULE(TASK_SCHED, sched);
+    SET_MODULE(TASK_FS, vfs);
+    SET_MODULE(TASK_SYS, systask);
+    SET_MODULE(TASK_TTY, tty);
+    SET_MODULE(TASK_RD, ramdisk);
+    SET_MODULE(TASK_INITFS, initfs);
+    SET_MODULE(TASK_SYSFS, sysfs);
+    SET_MODULE(INIT, init);
 
     cut_memmap(&kinfo, 0, PG_SIZE);
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);

@@ -44,6 +44,7 @@ then
 fi
 
 mkimage -A arm -O linux -T multi -C none -a 0x80200000 -e 0x80200000 -n 'Lyos/arm' -d  obj/destdir.arm/boot/lyos.bin obj/destdir.arm/boot/lyos.ub
+mkimage -A arm -O linux -T ramdisk -C none -a 0x81000000 -e 0x81000000 -n "Initial Ram Disk" -d obj/destdir.arm/boot/initrd.tar obj/destdir.arm/boot/initrd.ub
 
 cp $MLO $UBOOT ./scripts/uEnv.txt $MOUNT_POINT
 cp -rf obj/destdir.arm/boot/* $MOUNT_POINT

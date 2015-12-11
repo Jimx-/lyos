@@ -151,7 +151,7 @@ PRIVATE void init_mm()
 	struct boot_proc * bp;
 	for (i = -NR_TASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
 		if (bp->proc_nr < 0) continue;
-		if (bp->endpoint >= 3) return;
+
 		struct mmproc * mmp = init_mmproc(bp->endpoint);
 		mmp->flags = MMPF_INUSE;
 

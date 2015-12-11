@@ -34,7 +34,10 @@
 PRIVATE char hostname[MAX_HOSTNAME_LEN];
 PRIVATE struct utsname uname_buf;
 
+#ifdef __i386__
 PRIVATE int read_register(char reg_addr);
+#endif
+
 PRIVATE u32 get_rtc_time(struct time *t);
 PRIVATE u32 secs_of_years(int years);
 PRIVATE u32 secs_of_months(int months, int year);
@@ -97,6 +100,7 @@ PUBLIC int main()
  *****************************************************************************/
 PRIVATE u32 get_rtc_time(struct time *t)
 {
+#ifdef __i386__
 	t->year = read_register(YEAR);
 	t->month = read_register(MONTH);
 	t->day = read_register(DAY);
@@ -115,10 +119,12 @@ PRIVATE u32 get_rtc_time(struct time *t)
 	}
 
 	t->year += 2000;
-
+#endif
+	
 	return 0;
 }
 
+#ifdef __i386__
 /*****************************************************************************
  *                                read_register
  *****************************************************************************/
@@ -136,6 +142,7 @@ PRIVATE int read_register(char reg_addr)
 	portio_inb(CLK_IO, &v);
 	return v;
 }
+#endif
 
 PRIVATE u32 secs_of_years(int years) {
 	u32 days = 0;

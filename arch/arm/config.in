@@ -5,6 +5,7 @@
 
 source "kernel/config.in"
 
+source "drivers/config.in"
 
 menu "Processor type and features"
 
