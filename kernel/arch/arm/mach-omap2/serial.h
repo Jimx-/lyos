@@ -13,29 +13,20 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_ARCH_H_
-#define _ARCH_ARCH_H_
+#ifndef _MACH_OMAP2_SERIAL_H_
+#define _MACH_OMAP2_SERIAL_H_
 
-#include "mach_type.h"
+/* UART base */
+#define OMAP3_BEAGLE_DEBUG_UART_BASE 0x49020000
+#define OMAP3_AM335X_DEBUG_UART_BASE 0x44E09000
 
-struct machine_desc {
-    int id;
-    const char* name;
+/* UART registers */
+#define OMAP3_THR 0x000
 
-    void (*init_machine)(void);
-    void (*serial_putc)(const char c);
-    void (*handle_irq)(void);
-};
+#define OMAP3_LSR 0x014
+#define OMAP3_LSR_TEMT    0x40
+#define OMAP3_LSR_THRE    0x20
 
-#define MACHINE_START(_type,_name)          \
-static const struct machine_desc __mach_desc_##_type    \
- __attribute__ ((used))    \
- __attribute__((__section__(".arch.info.init"))) = {    \
-    .id     = MACH_TYPE_##_type,        \
-    .name   = _name,
-
-#define MACHINE_END             \
-};
+#define OMAP3_SSR 0x044
 
 #endif
-    

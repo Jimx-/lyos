@@ -134,7 +134,6 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     
     if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported(mach_type: %d)", mach_type);
     machine_desc = mach;
-    uart_base_addr = machine_desc->uart_base;
     
     kinfo.kernel_start_pde = ARCH_PDE(kern_vir_base);
     kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_size);

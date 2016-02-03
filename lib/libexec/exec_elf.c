@@ -154,8 +154,8 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             roundup(execi->brk, sizeof(int));
         }
 
-        if (0) {
-        //if (execi->memmap && execi->memmap(execi, vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
+        //if (0) {
+        if (execi->memmap && execi->memmap(execi, vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
             /* allocate remaining memory */
             if (memsize > fsize) {
                 size_t rem_size = memsize - fsize;

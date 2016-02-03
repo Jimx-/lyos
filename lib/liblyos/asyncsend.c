@@ -25,24 +25,26 @@
 #define ASYNC_SIZE  200
 PRIVATE async_message_t async_msg[ASYNC_SIZE];
 PRIVATE int first_slot = 0, next_slot = 0;
+PRIVATE int initialized = 0;
 
 PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
 {
-	static int initialized = 0;
     int i;
 
     if (!initialized) {
         for (i = 0; i < ASYNC_SIZE; i++) {
             async_msg[i].flags = 0;
         }
+
+        initialized = 1;
     }
 
     /* find first in-use slot */
     for (; first_slot < next_slot; first_slot++) {
         /* skip processed message */
-        if (async_msg[i].flags & ASMF_DONE) continue;
+        if (async_msg[first_slot].flags & ASMF_DONE) continue;
 
-        if (async_msg[i].flags != 0) break;
+        if (async_msg[first_slot].flags != 0) break;
     }
 
     if (first_slot >= next_slot) first_slot = next_slot = 0;    /* all messages processed */
@@ -51,7 +53,7 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
     if (next_slot >= ASYNC_SIZE) {
         send_async(NULL, 0);
 
-        int dest_idx, src_idx;
+        int dest_idx = 0, src_idx;
         for (src_idx = first_slot; src_idx < next_slot; src_idx++) {
             if (async_msg[src_idx].flags == 0) continue;
             if (async_msg[src_idx].flags & ASMF_DONE) continue;
@@ -68,7 +70,7 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
         if (next_slot >= ASYNC_SIZE) panic("async table full\n");
     }
 
-    async_msg[next_slot].flags |= ASMF_USED;
+    async_msg[next_slot].flags = flags | ASMF_USED;
     async_msg[next_slot].msg = *msg;
     async_msg[next_slot].dest = dest;
 
@@ -82,7 +84,10 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
 PUBLIC int async_sendrec(endpoint_t dest, MESSAGE* msg, int flags)
 {
     int retval = asyncsend3(dest, msg, 0);
-    if (retval) return retval;
+    if (retval) {
+        printl("async sendrec failed\n");
+        return retval;
+    }
 
     retval = send_recv(RECEIVE, dest, msg);
     return retval;

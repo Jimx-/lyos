@@ -84,14 +84,16 @@ PUBLIC int do_vfs_reply()
 {
     if (mm_msg.source != TASK_FS || !active) return EPERM;
 
+    struct vfs_request* orig = active;
     struct mmproc* mmp = endpt_mmproc(mm_msg.MMRENDPOINT);
-
-    if (active->callback) active->callback(mmp, &mm_msg, active->arg);
-
-    SLABFREE(active);
+    vfs_callback_t cbf = active->callback;
     active = NULL;
 
-    if (queue) process_queue();
+    if (cbf) cbf(mmp, &mm_msg, orig->arg);
+
+    SLABFREE(orig);
+
+    if (queue && !active) process_queue();
 
     return SUSPEND;
 }

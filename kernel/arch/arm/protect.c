@@ -22,6 +22,7 @@
 #include <signal.h>
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "arch.h"
 #include "arch_const.h"
 #include "arch_proto.h"
 #include "arch_smp.h"
@@ -50,5 +51,6 @@ PUBLIC void init_prot()
 
 PUBLIC void irq_entry_handle()
 {
-    direct_print("IRQ\n");
+    if (machine_desc->handle_irq)
+        machine_desc->handle_irq();
 }

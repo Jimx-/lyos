@@ -18,6 +18,7 @@
 #include <sys/dirent.h>
 #include <sys/resource.h>
 #include <sys/ptrace.h>
+#include <sys/statfs.h>
 #include <grp.h>
 
 #include "const.h"
@@ -154,6 +155,16 @@ int execve(const char *name, char * argv[], char * const envp[])
 int execvp(const char *file, char * argv[])
 {
 	return execv(file, argv);
+}
+
+int execlp(const char *file, const char *arg, ...)
+{
+	return ENOSYS;
+}
+
+int execl(const char *path, const char *arg, ...)
+{
+	return ENOSYS;
 }
 
 endpoint_t get_endpoint()
@@ -781,6 +792,16 @@ int stat(const char *path, struct stat *buf)
 	return msg.RETVAL;
 }
 
+int statfs(const char *path, struct statfs *buf)
+{
+	return ENOSYS;
+}
+
+int fstatfs(int fd, struct statfs *buf)
+{
+	return ENOSYS;
+}
+
 int rmdir(const char *path )
 {
 	printf("rmdir: not implemented\n");
@@ -1282,3 +1303,29 @@ int munmap(void *addr, size_t len)
     
     return 0;
 }
+
+struct group* getgrnam(const char* name)
+{
+	return NULL;
+}
+
+struct group* getgrgid(gid_t gid)
+{
+	return NULL;
+}
+
+int ftruncate(int fd, off_t length)
+{
+	return -ENOSYS;
+}
+
+char* getlogin()
+{
+	return NULL;
+}
+
+ int select(int nfds, fd_set *readfds, fd_set *writefds,
+                  fd_set *exceptfds, struct timeval *timeout)
+ {
+ 	return -ENOSYS;
+ }

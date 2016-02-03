@@ -5,7 +5,7 @@ else
 	include $(SRCDIR)/.config
 endif
 
-obj-y += common.o
+obj-y += common.o interrupt.o
 obj-$(CONFIG_MACH_OMAP3_BEAGLE) += omap3_beagle.o
 obj-$(CONFIG_MACH_TI_AM335X_EVM) += am335xevm.o
 

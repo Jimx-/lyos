@@ -232,7 +232,10 @@ PUBLIC int fs_exec(MESSAGE * msg)
         filp->fd_inode->i_cnt++;
         filp->fd_mode = O_RDONLY;
         execi.mmfd = fd;
-        execi.args.memmap = request_vfs_mmap;
+        execi.args.memmap = NULL;
+        /* uncomment this line to enable demand loading */
+        /* can't do this yet, it will cause deadlocks */
+        //execi.args.memmap = request_vfs_mmap;
     }
 
     execi.args.allocmem = libexec_allocmem;

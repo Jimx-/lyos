@@ -171,16 +171,41 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
     return (void*)((pte_v & ARCH_VM_ADDR_MASK) + (la & ARM_VM_OFFSET_MASK));
 }
 
+#define MAX_KERN_MAPPINGS   8
+
+struct kern_map {
+    phys_bytes phys_addr;
+    phys_bytes len;
+    int flags;
+    vir_bytes vir_addr;
+    vir_bytes* mapped_addr;
+};
+
+PRIVATE struct kern_map kern_mappings[MAX_KERN_MAPPINGS];
+PRIVATE int kern_mapping_count = 0;
+
+PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, vir_bytes* mapped_addr)
+{
+    if (kern_mapping_count >= MAX_KERN_MAPPINGS) return ENOMEM;
+
+    struct kern_map* pkm = &kern_mappings[kern_mapping_count++];
+    pkm->phys_addr = phys_addr;
+    pkm->len = len;
+    pkm->flags = flags;
+    pkm->mapped_addr = mapped_addr;
+
+    return 0;
+}
+
 #define KM_USERMAPPED   0
-#define KM_UART_BASE     1
-#define KM_LAST         KM_UART_BASE
+#define KM_KERN_MAPPING 1
 
 extern char _usermapped[], _eusermapped[];
 PUBLIC vir_bytes usermapped_offset;
 
 PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
 {
-    if (index > KM_LAST) return 1;
+    if (index >= KM_KERN_MAPPING + kern_mapping_count) return 1;
 
     if (index == KM_USERMAPPED) {
         *addr = (caddr_t)((char *)*(&_usermapped) - (phys_bytes) &_KERN_OFFSET);
@@ -189,17 +214,16 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
         return 0;
     } 
 
-    if (index == KM_UART_BASE) {
-        *addr = (caddr_t) machine_desc->uart_base;
-        *len = ARCH_PG_SIZE;
-        *flags = KMF_WRITE;
+    if (index >= KM_KERN_MAPPING && index < KM_KERN_MAPPING + kern_mapping_count) {
+        struct kern_map* pkm = &kern_mappings[index - KM_KERN_MAPPING];
+        *addr = (caddr_t) pkm->phys_addr;
+        *len = pkm->len;
+        *flags = pkm->flags;
         return 0;
     }
 
     return 0;
 }
-
-PRIVATE vir_bytes uart_base_v;
 
 PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
 {
@@ -217,8 +241,8 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         return 0;   
     }
 
-    if (index == KM_UART_BASE) {
-        uart_base_v = (vir_bytes) vir_addr;
+    if (index >= KM_KERN_MAPPING && index < KM_KERN_MAPPING + kern_mapping_count) {
+        kern_mappings[index - KM_KERN_MAPPING].vir_addr = vir_addr;
         return 0;
     }
 
@@ -231,7 +255,13 @@ PRIVATE void setttbr0(struct proc * p, void * ttbr, void * ttbr_v)
     p->seg.ttbr_vir = (u32 *)ttbr_v;
 
     if (p->endpoint == TASK_MM) { 
-        uart_base_addr = uart_base_v;
+        int i;
+        /* update mapped address of kernel mappings */
+        for (i = 0; i < kern_mapping_count; i++) {
+            struct kern_map* pkm = &kern_mappings[i];
+            *(pkm->mapped_addr) = pkm->vir_addr;
+        }
+
         write_ttbr0((u32)ttbr);
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
     }

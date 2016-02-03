@@ -31,6 +31,8 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
 
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
 
+PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, vir_bytes* mapped_addr);
+
 /* Data memory barrier */
 static inline void dmb(void)
 {

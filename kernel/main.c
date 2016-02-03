@@ -52,7 +52,6 @@ PUBLIC void init_arch();
  *****************************************************************************/
 PUBLIC int kernel_main()
 {
-	printk(LYOS_BANNER);
 	init_arch();
     init_sched();
 	init_proc();
@@ -60,6 +59,8 @@ PUBLIC int kernel_main()
 	init_memory();
 	init_irq();
     init_time();
+
+    printk(LYOS_BANNER);
 
     int i;
     struct boot_proc * bp = boot_procs;

@@ -22,26 +22,13 @@
 #include <lyos/proto.h>
 #include "arch.h"
 #include "arch_proto.h"
-#include "serial.h"
+#include "interrupt.h"
+    
+PUBLIC vir_bytes intr_base_addr;
 
-PUBLIC vir_bytes uart_base_addr;
-
-PUBLIC void omap3_disp_char(const char c)
+PUBLIC void omap3_handle_irq(void)
 {
-    int i;
-    char* base = (char*) uart_base_addr;
-
-    for (i = 0; i < 100000; i++) {
-        if (mmio_read(base + OMAP3_LSR) & OMAP3_LSR_THRE) {
-            break;
-        }
-    }
-
-    mmio_write(base + OMAP3_THR, c);
-
-    for (i = 0; i < 100000; i++) {
-        if (mmio_read(base + OMAP3_LSR) & (OMAP3_LSR_THRE | OMAP3_LSR_TEMT)) {
-            break;
-        }
-    }
+    int irq = mmio_read(intr_base_addr + OMAP3_INTCPS_SIR_IRQ) & OMAP3_INTR_ACTIVEIRQ_MASK;
+    irq_handle(irq);
+    mmio_write(intr_base_addr + OMAP3_INTCPS_CONTROL, OMAP3_INTR_NEWIRQAGR);
 }

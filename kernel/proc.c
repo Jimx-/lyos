@@ -469,7 +469,6 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 		else who_wanna_recv->recv_msg = NULL;
 	}
 
-
 	/* Arrives here if no interrupt for who_wanna_recv. */
 	if (src == ANY) {
 		/* who_wanna_recv is ready to receive messages from
@@ -592,7 +591,6 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
 
     	done = FALSE;
     	if (dest != p->endpoint) continue;
-
 		retval = data_vir_copy_check(p, KERNEL, p->recv_msg, KERNEL, &amsg.msg, sizeof(MESSAGE));
 		if (retval != 0) {
 			goto async_error;
@@ -870,7 +868,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
     	flags = amsg.flags;
     	dest = amsg.dest;
     	amsg.msg.source = p_to_send->endpoint;
-
+    	
     	if (dest == p_to_send->endpoint) {
     		retval = EINVAL;
     		goto async_error;
