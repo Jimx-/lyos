@@ -231,6 +231,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
         filp->fd_inode = execi.pin;
         filp->fd_inode->i_cnt++;
         filp->fd_mode = O_RDONLY;
+        unlock_filp(filp);
         execi.mmfd = fd;
         execi.args.memmap = NULL;
         /* uncomment this line to enable demand loading */

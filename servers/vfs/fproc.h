@@ -31,6 +31,10 @@ EXTERN struct fproc {
     int umask;
 
     struct file_desc * filp[NR_FILES];
+    spinlock_t lock;
 } fproc_table[NR_PROCS];
+
+PUBLIC void lock_fproc(struct fproc* fp);
+PUBLIC void unlock_fproc(struct fproc* fp);
 
 #endif  /* _VFS_FPROC_H_ */

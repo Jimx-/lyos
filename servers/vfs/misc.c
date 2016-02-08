@@ -233,6 +233,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
                 goto reply;
             }
 
+            lock_fproc(mm_task);
             int mmfd = get_fd(mm_task);
             if (mmfd < 0) {
                 result = -mmfd;
@@ -242,6 +243,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             filp->fd_cnt++;
             filp->fd_inode->i_cnt++;
             mm_task->filp[mmfd] = filp;
+            unlock_fproc(mm_task);
 
             m->MMRDEV = filp->fd_inode->i_dev;
             m->MMRINO = filp->fd_inode->i_num;

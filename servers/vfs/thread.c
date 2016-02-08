@@ -50,16 +50,16 @@ PRIVATE DEF_LIST(waiting_queue);
 
 PRIVATE void thread_wait(struct worker_thread* thread)
 {
-    thread->state = WT_WAITING;
-
+    MESSAGE wait_mess;
+    
     spinlock_lock(&waiting_queue_lock);
     list_add(&thread->wait, waiting_queue.prev);
+    thread->state = WT_WAITING;
     spinlock_unlock(&waiting_queue_lock);
 
-    MESSAGE wait_mess;
     send_recv(RECEIVE, TASK_FS, &wait_mess);
 
-    if (wait_mess.type != FS_THREAD_WAKEUP) panic("[Thread %d]: unknown wakeup message from vfs\n");
+    if (wait_mess.type != FS_THREAD_WAKEUP) panic("[Thread %d]: unknown wakeup message from vfs(%d)\n", wait_mess.type);
 }
 
 PRIVATE void thread_wakeup(struct worker_thread* thread)
@@ -92,7 +92,7 @@ PUBLIC void enqueue_request(MESSAGE* msg)
     if (list_empty(&waiting_queue)) return;
     /* try to wake up some threads */
 
-    int i = queued_request;
+    int i = queued_request < nr_workers ? queued_request : nr_workers;
     struct worker_thread* thread, *tmp;
     list_for_each_entry_safe(thread, tmp, &waiting_queue, wait) {
         if (i < 0) break;

@@ -24,6 +24,7 @@
 
 #define WT_RUNNING     0
 #define WT_WAITING     1
+    
 struct worker_thread {
     int id;
     endpoint_t endpoint;

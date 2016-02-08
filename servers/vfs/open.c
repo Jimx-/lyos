@@ -80,8 +80,12 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     int retval = 0;
 
     /* find a free slot in PROCESS::filp[] */
+    lock_fproc(fp);
     fd = get_fd(fp);
-    if (fd < 0) return fd;
+    if (fd < 0) {
+        unlock_fproc(fp);
+        return fd;
+    }
 
     struct inode * pin = NULL;
 
@@ -92,17 +96,24 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         retval = err_code;
         if (retval == 0) exist = 0;
         else if (retval != EEXIST) {
+            unlock_fproc(fp);
             return -retval;
         } else exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, fp);
-        if (pin == NULL) return -err_code;
+        if (pin == NULL) {
+            unlock_fproc(fp);
+            return -err_code;
+        }
 
         DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, fp->name)); 
     }
 
     struct file_desc * filp = alloc_filp();
-    if (!filp) return -ENOMEM;
+    if (!filp) {
+        unlock_fproc(fp);
+        return -ENOMEM;
+    }
     fp->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
@@ -146,9 +157,13 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         filp->fd_mode = 0;
         filp->fd_inode = 0;
         put_inode(pin);
+        unlock_fproc(fp);
+        unlock_filp(filp);
         return -retval;
     }
 
+    unlock_fproc(fp);
+    unlock_filp(filp);
     return fd;
 }
 

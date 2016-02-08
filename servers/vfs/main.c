@@ -76,7 +76,7 @@ PUBLIC int main()
 		int src = msg.source;
 		int msgtype = msg.type;
 
-		/*enqueue_request(&msg);*/
+		//enqueue_request(&msg);
 		
 		switch (msgtype) {
         case FS_REGISTER:
@@ -182,12 +182,20 @@ PUBLIC void init_vfs()
 	int i;
 
 	/* f_desc_table[] */
-	for (i = 0; i < NR_FILE_DESC; i++)
+	for (i = 0; i < NR_FILE_DESC; i++) {
 		memset(&f_desc_table[i], 0, sizeof(struct file_desc));
-
+		spinlock_init(&f_desc_table[i].fd_lock);
+	}
+	spinlock_init(&f_desc_table_lock);
+	
 	/* inode_table[] */
 	for (i = 0; i < NR_INODE; i++)
 		memset(&inode_table[i], 0, sizeof(struct inode));
+
+	/* fproc_table[] */
+	for (i = 0; i < NR_PROCS; i++) {
+		spinlock_init(&fproc_table[i].lock);
+	}
 
     init_inode_table();
 
@@ -271,4 +279,14 @@ PRIVATE int fs_exit(MESSAGE * m)
 		}
 	}
 	return 0;
+}
+
+PUBLIC void lock_fproc(struct fproc* fp)
+{
+	spinlock_lock(&fp->lock);
+}
+
+PUBLIC void unlock_fproc(struct fproc* fp)
+{
+	spinlock_unlock(&fp->lock);
 }

@@ -9,15 +9,16 @@ LIBFSDRIVER	= $(LIBOUTDIR)/libfsdriver.a
 LIBINPUTDRV	= $(LIBOUTDIR)/libinputdriver.a
 LIBMEMFS	= $(LIBOUTDIR)/libmemfs.a
 LIBDEVMAN	= $(LIBOUTDIR)/libdevman.a
+LIBPTHREAD	= $(LIBOUTDIR)/libpthread.a
 
 .PHONY: everything realclean
 	
 everything : realclean $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER)\
-				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN)
+				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD)
 
 realclean :
 	@rm -f $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS) \
-		$(LIBINPUTDRV) $(LIBDEVMAN)
+		$(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD)
 
 $(LIBDRIVER): 
 	@(cd libdriver; make)
@@ -42,3 +43,6 @@ $(LIBMEMFS):
 
 $(LIBDEVMAN):
 	@(cd libdevman; make)
+
+$(LIBPTHREAD):
+	@(cd libpthread; make)

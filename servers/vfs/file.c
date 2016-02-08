@@ -31,14 +31,32 @@
 #include "fcntl.h"
 #include "global.h"
 
+PUBLIC void lock_filp(struct file_desc* filp)
+{
+    spinlock_lock(&filp->fd_lock);
+}
+
+PUBLIC void unlock_filp(struct file_desc* filp)
+{
+    spinlock_unlock(&filp->fd_lock);
+}
+
 PUBLIC struct file_desc* alloc_filp()
 {
     int i;
 
+    spinlock_lock(&f_desc_table_lock);
     /* find a free slot in f_desc_table[] */
-    for (i = 0; i < NR_FILE_DESC; i++)
-        if (f_desc_table[i].fd_inode == 0)
-            return &f_desc_table[i];
+    for (i = 0; i < NR_FILE_DESC; i++) {
+        struct file_desc* filp = &f_desc_table[i];
+
+        if (f_desc_table[i].fd_inode == 0) {
+            lock_filp(filp);
+            spinlock_unlock(&f_desc_table_lock);
+            return filp;
+        }
+    }
+    spinlock_unlock(&f_desc_table_lock);
 
     return NULL;
 }
@@ -46,6 +64,7 @@ PUBLIC struct file_desc* alloc_filp()
 PUBLIC int get_fd(struct fproc* fp)
 {
     int i;
+
     for (i = 0; i < NR_FILES; i++) {
         if (fp->filp[i] == 0) {
             return i;
