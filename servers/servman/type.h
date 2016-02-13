@@ -38,6 +38,9 @@ struct sproc {
     endpoint_t caller_e;
     int caller_request;
 
+    /* ------------------- */
+    char proc_name[PROC_NAME_LEN];
+    char label[PROC_NAME_LEN];
     struct pci_acl pci_acl;
 };
 

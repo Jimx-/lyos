@@ -64,7 +64,7 @@ PUBLIC int do_open(MESSAGE * p)
         return -ENAMETOOLONG;
     }
         
-    data_copy(TASK_FS, pathname, src, p->PATHNAME, name_len);
+    data_copy(SELF, pathname, src, p->PATHNAME, name_len);
     pathname[name_len] = '\0';
 
     return common_open(pcaller, pathname, flags, mode);
@@ -80,10 +80,8 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     int retval = 0;
 
     /* find a free slot in PROCESS::filp[] */
-    lock_fproc(fp);
     fd = get_fd(fp);
     if (fd < 0) {
-        unlock_fproc(fp);
         return fd;
     }
 
@@ -96,22 +94,18 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         retval = err_code;
         if (retval == 0) exist = 0;
         else if (retval != EEXIST) {
-            unlock_fproc(fp);
             return -retval;
         } else exist = !(flags & O_EXCL);
     } else {
         pin = resolve_path(pathname, fp);
         if (pin == NULL) {
-            unlock_fproc(fp);
             return -err_code;
         }
-
-        DEB(printl("open file `%s' with inode_nr = %d, proc: %d(%s)\n", pathname, pin->i_num, src, fp->name)); 
+        DEB(printl("open file `%s' with inode_nr = %d, proc: %d, %d\n", pathname, pin->i_num, fp->endpoint, fd)); 
     }
 
     struct file_desc * filp = alloc_filp();
     if (!filp) {
-        unlock_fproc(fp);
         return -ENOMEM;
     }
     fp->filp[fd] = filp;
@@ -157,12 +151,10 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         filp->fd_mode = 0;
         filp->fd_inode = 0;
         put_inode(pin);
-        unlock_fproc(fp);
         unlock_filp(filp);
         return -retval;
     }
 
-    unlock_fproc(fp);
     unlock_filp(filp);
     return fd;
 }
@@ -184,6 +176,7 @@ PUBLIC int do_close(MESSAGE * p)
 
     DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", 
             fd, pcaller->endpoint, pcaller->filp[fd]->fd_inode->i_num, pcaller->filp[fd]->fd_cnt, pcaller->filp[fd]->fd_inode->i_cnt));
+
     put_inode(pcaller->filp[fd]->fd_inode);
     if (--pcaller->filp[fd]->fd_cnt == 0)
         pcaller->filp[fd]->fd_inode = NULL;

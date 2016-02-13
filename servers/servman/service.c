@@ -169,9 +169,7 @@ PUBLIC int publish_service(struct sproc * sp)
 {
     char label[MAX_PATH];
 
-    char * name = strrchr(sp->argv[0], '/');
-    if (!name) name = sp->argv[0];
-    else name++;
+    char * name = sp->label;
     sprintf(label, SYSFS_SERVICE_DOMAIN_LABEL, name);
     int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 

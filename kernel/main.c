@@ -68,6 +68,11 @@ PUBLIC int kernel_main()
     	struct proc * p = proc_addr(bp->proc_nr);
     	bp->endpoint = p->endpoint;
 
+        /* set task name */
+        if (i < NR_TASKS) {
+            strlcpy(p->name, bp->name, sizeof(p->name));
+        }
+
         /* set module info */
         if (i >= NR_TASKS) {
             struct kinfo_module * mb_mod = &kinfo.modules[i - NR_TASKS];

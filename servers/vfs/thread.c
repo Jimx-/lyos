@@ -45,20 +45,14 @@ int queued_request = 0;
 PRIVATE DEF_SPINLOCK(response_queue_lock);
 PRIVATE DEF_LIST(response_queue);
 
-PRIVATE DEF_SPINLOCK(waiting_queue_lock);
-PRIVATE DEF_LIST(waiting_queue);
-
 PRIVATE void thread_wait(struct worker_thread* thread)
 {
     MESSAGE wait_mess;
-    
-    spinlock_lock(&waiting_queue_lock);
-    list_add(&thread->wait, waiting_queue.prev);
+
     thread->state = WT_WAITING;
-    spinlock_unlock(&waiting_queue_lock);
-
     send_recv(RECEIVE, TASK_FS, &wait_mess);
-
+    thread->state = WT_RUNNING;
+    
     if (wait_mess.type != FS_THREAD_WAKEUP) panic("[Thread %d]: unknown wakeup message from vfs(%d)\n", wait_mess.type);
 }
 
@@ -66,14 +60,9 @@ PRIVATE void thread_wakeup(struct worker_thread* thread)
 {
     if (thread->state == WT_RUNNING) return;
 
-    spinlock_lock(&waiting_queue_lock);
-    list_del(&thread->wait);
-    spinlock_unlock(&waiting_queue_lock);
-
     MESSAGE wakeup_mess;
     wakeup_mess.type = FS_THREAD_WAKEUP;
     send_recv(SEND_NONBLOCK, thread->endpoint, &wakeup_mess);
-    thread->state = WT_RUNNING;
 }
 
 PUBLIC void enqueue_request(MESSAGE* msg)
@@ -89,16 +78,13 @@ PUBLIC void enqueue_request(MESSAGE* msg)
     queued_request++;
     spinlock_unlock(&request_queue_lock);
 
-    if (list_empty(&waiting_queue)) return;
     /* try to wake up some threads */
-
-    int i = queued_request < nr_workers ? queued_request : nr_workers;
-    struct worker_thread* thread, *tmp;
-    list_for_each_entry_safe(thread, tmp, &waiting_queue, wait) {
-        if (i < 0) break;
-
-        thread_wakeup(thread);
-        i--;
+    int num = queued_request < nr_workers ? queued_request : nr_workers;
+    int i;
+    for (i = 0; i < NR_WORKER_THREADS && num > 0; i++) {
+        if (workers[i].state != WT_WAITING) continue;
+        num--;
+        thread_wakeup(&workers[i]);
     }
 }
 
@@ -129,9 +115,11 @@ PRIVATE void enqueue_response(struct vfs_message* res)
     list_add(&res->list, &response_queue);
     spinlock_unlock(&response_queue_lock);
 
-    MESSAGE wakeup_mess;
-    wakeup_mess.type = FS_THREAD_WAKEUP;
-    send_recv(SEND_NONBLOCK, TASK_FS, &wakeup_mess);
+    if (fs_sleeping) {
+        MESSAGE wakeup_mess;
+        wakeup_mess.type = FS_THREAD_WAKEUP;
+        send_recv(SEND_NONBLOCK, TASK_FS, &wakeup_mess);
+    }
 }
 
 PUBLIC struct vfs_message* dequeue_response()
@@ -163,8 +151,11 @@ PRIVATE void handle_request(MESSAGE* msg)
         msg->RETVAL = 0;
         msg->source = msg->PROC_NR;
         break;
+    case PM_VFS_EXEC:
+        msg->RETVAL = fs_exec(msg);
+        break;
     default:
-        msg->RETVAL = SUSPEND;
+        msg->RETVAL = ENOSYS;
         break;
     }
 }
@@ -210,8 +201,6 @@ PUBLIC pid_t create_worker(int id)
 
     if ((retval = privctl(thread->endpoint, PRIVCTL_SET_PRIV, &thread->priv)) != 0) return -retval;
     if ((retval = privctl(thread->endpoint, PRIVCTL_ALLOW, NULL)) != 0) return -retval;
-
-    INIT_LIST_HEAD(&thread->wait);
 
     return pid;
 }

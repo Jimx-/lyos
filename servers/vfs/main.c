@@ -72,22 +72,24 @@ PUBLIC int main()
 	
 	MESSAGE msg;
 	while (TRUE) {
+		fs_sleeping = 1;
 		send_recv(RECEIVE, ANY, &msg);
+		fs_sleeping = 0;
 		int src = msg.source;
 		int msgtype = msg.type;
 
-		//enqueue_request(&msg);
+		if (msgtype == RESUME_PROC || msgtype == OPEN || msgtype == CLOSE) enqueue_request(&msg);
 		
 		switch (msgtype) {
         case FS_REGISTER:
             msg.RETVAL = do_register_filesystem(&msg);
             break;
-		case OPEN:
+		/*case OPEN:
 			msg.FD = do_open(&msg);
-			break;
-		case CLOSE:
+			break;*/
+		/*case CLOSE:
 			msg.RETVAL = do_close(&msg);
-			break;
+			break;*/
 		case READ:
 		case WRITE:
 			msg.CNT = do_rdwt(&msg);
@@ -147,20 +149,22 @@ PUBLIC int main()
 		case MM_VFS_REQUEST:
 			msg.RETVAL = do_mm_request(&msg);
 			break;
-		case RESUME_PROC:
-			src = msg.PROC_NR;
-			break;
+		//case RESUME_PROC:
+		//	src = msg.PROC_NR;
+		//	break;
 		default:
 			msg.RETVAL = ENOSYS;
 			break;
 		}
 
-		if (msg.type != SUSPEND_PROC && msg.RETVAL != SUSPEND) {
-			msg.type = SYSCALL_RET;
-			send_recv(SEND_NONBLOCK, src, &msg);
+		if (msg.type != RESUME_PROC && msg.type != OPEN && msg.type != CLOSE) {
+			if (msg.type != FS_THREAD_WAKEUP && msg.type != SUSPEND_PROC && msg.RETVAL != SUSPEND) {
+				msg.type = SYSCALL_RET;
+				send_recv(SEND_NONBLOCK, src, &msg);
+			}
 		}
 
-		/*struct vfs_message* res;
+		struct vfs_message* res;
 		while (TRUE) {
 			res = dequeue_response();
 			if (!res) break;
@@ -171,7 +175,7 @@ PUBLIC int main()
 			}
 
 			free(res);
-		}*/
+		}
 	}
 
 	return 0;
@@ -238,6 +242,8 @@ PUBLIC void init_vfs()
     printl("VFS: Mounted init ramdisk\n");
 
     add_filesystem(TASK_SYSFS, "sysfs");
+
+    fs_sleeping = 0;
 }
 
 /* Perform fs part of fork/exit */
@@ -246,7 +252,15 @@ PRIVATE int fs_fork(MESSAGE * p)
 	int i;
 	struct fproc * child = vfs_endpt_proc(p->ENDPOINT);
 	struct fproc * parent = vfs_endpt_proc(p->PENDPOINT);
-	if (child == NULL || parent == NULL) return EINVAL;
+
+	lock_fproc(child);
+	lock_fproc(parent);
+
+	if (child == NULL || parent == NULL) {
+		unlock_fproc(parent);
+		unlock_fproc(child);
+		return EINVAL;
+	}
 	
 	*child = *parent;
 	child->pid = p->PID;
@@ -262,6 +276,9 @@ PRIVATE int fs_fork(MESSAGE * p)
 	if (child->root) child->root->i_cnt++;
 	if (child->pwd) child->pwd->i_cnt++;
 
+	unlock_fproc(parent);
+	unlock_fproc(child);
+
 	return 0;
 }
 
@@ -269,6 +286,7 @@ PRIVATE int fs_exit(MESSAGE * m)
 {
 	int i;
 	struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
+	lock_fproc(p);
 	for (i = 0; i < NR_FILES; i++) {
 		if (p->filp[i]) {
 			p->filp[i]->fd_inode->i_cnt--;
@@ -278,6 +296,7 @@ PRIVATE int fs_exit(MESSAGE * m)
 			p->filp[i] = 0;
 		}
 	}
+	unlock_fproc(p);
 	return 0;
 }
 

@@ -26,6 +26,10 @@ struct service_pci_class {
 struct service_up_req {
     char * cmdline;
     int cmdlen;
+    char* progname;
+    int prognamelen;
+    char* label;
+    int labellen;
 
     int nr_pci_class;
     struct service_pci_class pci_class[NR_PCI_CLASS];

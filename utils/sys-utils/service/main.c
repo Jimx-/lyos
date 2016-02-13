@@ -9,10 +9,15 @@
 #include <lyos/ipc.h>
 #include <lyos/service.h>
 
-char * req_path = NULL;
-char * config_path = NULL;
+char* req_path = NULL;
+char* req_args = NULL;
+char* req_label = NULL;
+char* config_path = NULL;
+char cmdline[4096];
 
-#define ARG_CONFIG	'--config'
+#define ARG_ARGS	"--args"
+#define ARG_CONFIG	"--config"
+#define ARG_LABEL	"--label"
 
 static char * requests[] = {
 	"up",
@@ -32,7 +37,7 @@ static void print_usage(char * name, char * reason)
 	fprintf(stderr, "Error: %s\n", reason);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "    %s up <server> [%s <path>]\n", name, ARG_CONFIG);
+	fprintf(stderr, "    %s up <server> [%s <path>] [%s <args>] [%s <label>]\n", name, ARG_CONFIG, ARG_ARGS, ARG_LABEL);
 	fprintf(stderr, "\n");
 }
 
@@ -75,6 +80,10 @@ static int parse_cmd(int argc, char * argv[])
 	for (; index < argc; index++) {
 		if (!strcmp(argv[index], ARG_CONFIG)) {
 			config_path = argv[++index];
+		} else if (!strcmp(argv[index], ARG_ARGS)) {
+			req_args = argv[++index];
+		} else if (!strcmp(argv[index], ARG_LABEL)) {
+			req_label = argv[++index];
 		}
 	}
 
@@ -104,8 +113,24 @@ int main(int argc, char * argv[])
 			if (parse_config(progname, config_path, &up_req) != 0) errx(1, "cannot parse config");
 		}
 
-		up_req.cmdline = req_path;
-		up_req.cmdlen = strlen(req_path);
+		strcpy(cmdline, req_path);
+		if (req_args) {
+			cmdline[strlen(req_path)] = ' ';
+			strcpy(cmdline + strlen(req_path) + 1, req_args);
+		}
+
+		up_req.cmdline = cmdline;
+		up_req.cmdlen = strlen(cmdline);
+		up_req.progname = progname;
+		up_req.prognamelen = strlen(progname);
+
+		if (req_label) {
+			up_req.label = req_label;
+			up_req.labellen = strlen(req_label);
+		} else {
+			up_req.labellen = 0;
+		}
+
 		msg.BUF = &up_req;
 		break;
 	}

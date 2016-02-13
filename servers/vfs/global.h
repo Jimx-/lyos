@@ -54,6 +54,7 @@ extern int nr_workers;
 /* inode hash table */
 EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
 
+EXTERN int fs_sleeping;
 EXTERN struct worker_thread workers[NR_WORKER_THREADS];
 
 #endif 

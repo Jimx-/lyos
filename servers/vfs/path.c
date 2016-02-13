@@ -51,8 +51,8 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
     m.REQ_UCRED = &ucred;
 
     memset(ret, 0, sizeof(struct lookup_result));
-    //send_recv(BOTH, fs_e, &m);
-    async_sendrec(fs_e, &m, 0);
+    send_recv(BOTH, fs_e, &m);
+    //async_sendrec(fs_e, &m, 0);
 
     int retval = m.RET_RETVAL;
 

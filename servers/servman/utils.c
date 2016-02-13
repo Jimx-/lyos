@@ -49,6 +49,7 @@ PUBLIC int init_sproc(struct sproc * sp, struct service_up_req * up_req, endpoin
         }
     }
 
+    sp->label[0] = '\0';
     set_sproc(sp, up_req, source);
     return 0;
 }
@@ -81,6 +82,22 @@ PUBLIC int set_sproc(struct sproc * sp, struct service_up_req * up_req, endpoint
     data_copy(SELF, sp->cmdline, source, up_req->cmdline, up_req->cmdlen);
     sp->cmdline[up_req->cmdlen] = '\0';
     set_cmd_args(sp);
+
+    if (up_req->prognamelen > PROC_NAME_LEN) return E2BIG;
+    data_copy(SELF, sp->proc_name, source, up_req->progname, up_req->prognamelen);
+    sp->proc_name[up_req->prognamelen] = '\0';
+
+    if (!strcmp(sp->label, "")) {
+        if (up_req->labellen) {
+            if (up_req->labellen > PROC_NAME_LEN) return E2BIG;
+            data_copy(SELF, sp->label, source, up_req->label, up_req->labellen);
+            sp->label[up_req->labellen] = '\0';
+        } else {
+            int len = strlen(sp->proc_name);
+            memcpy(sp->label, sp->proc_name, len);
+            sp->label[len] = '\0';
+        }
+    }
 
     return 0;
 }

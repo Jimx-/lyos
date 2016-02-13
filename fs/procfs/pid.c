@@ -47,6 +47,11 @@ PUBLIC struct procfs_file pid_files[] = {
 PRIVATE void dump_state(int pst, char* buf)
 {
     int i = 0;
+    if (pst == 0) {
+        buf[0] = 'R';
+        return;
+    }
+    
 #define ADD_FLAG(f, c) if (pst & f) buf[i++] = c
     ADD_FLAG(PST_BOOTINHIBIT, 'B');
     ADD_FLAG(PST_SENDING, 's');
@@ -64,6 +69,7 @@ PRIVATE void pid_status(int slot)
     buf_printf("Name:\t%s\n", proc[slot].name);
 
     char state[10];
+    memset(state, 0, sizeof(state));
     dump_state(proc[slot].state, state);
     buf_printf("State:\t%s\n", state);
 
