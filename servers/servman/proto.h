@@ -12,7 +12,7 @@ PUBLIC int read_exec(struct sproc * sp);
 
 PUBLIC int do_service_up(MESSAGE * msg);
 PUBLIC int do_service_init_reply(MESSAGE * msg);
-PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progname);
+PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progname, char** argv);
 PUBLIC int serv_prepare_module_stack();
 PUBLIC int announce_service(char * name, endpoint_t serv_ep);
 

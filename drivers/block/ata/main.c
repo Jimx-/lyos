@@ -79,7 +79,7 @@ struct dev_driver hd_driver =
  * Main loop of HD driver.
  * 
  *****************************************************************************/
-PUBLIC int main()
+PUBLIC int main(int argc, char** argv)
 {
 	serv_register_init_fresh_callback(init_hd);
 	serv_init();

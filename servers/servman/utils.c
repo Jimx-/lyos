@@ -68,11 +68,12 @@ PRIVATE void set_cmd_args(struct sproc * sp)
             while (*++p == ' ');
             if (*p == '\0') break;
             if (argc + 1 == ARGV_MAX) break;
-            sp->argv[argc] = p;
+            sp->argv[argc++] = p;
         }
         p++;
     }
 
+    sp->argv[argc] = NULL;
     sp->argc = argc;
 }
 

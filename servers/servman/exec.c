@@ -58,13 +58,35 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
     return 0;
 }
 
-PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progname)
+PRIVATE char* prepare_stack(char** argv, size_t* frame_size, int* argc)
+{
+    char** p;
+    size_t stack_size = 2 * sizeof(void*);
+    *argc = 0;
+
+    for (p = argv; *p; p++) {
+        stack_size = stack_size + sizeof(*p) + strlen(*p) + 1;
+        (*argc)++;
+    }
+    stack_size = (stack_size + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
+    *frame_size = stack_size;
+
+    return (char*) malloc(stack_size);
+}
+
+PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progname, char** argv)
 {
     int i;
     int retval;
 
     struct exec_info execi;
     memset(&execi, 0, sizeof(execi));
+
+    size_t frame_size;
+    int argc;
+    char* frame = prepare_stack(argv, &frame_size, &argc);
+    if (!frame) return ENOMEM;
+    memset(frame, 0, frame_size);
 
     /* stack info */
     execi.stack_top = VM_STACK_TOP;
@@ -82,6 +104,11 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
 
     execi.proc_e = target;
     execi.filesize = exec_len;
+
+    char* vsp = (char*)VM_STACK_TOP - frame_size;
+    char** fpw = (char**) frame;
+    char* fp = frame + (sizeof(char*) * argc + 2 * sizeof(void*));
+
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi);
         if (!retval) break;  /* loaded successfully */
@@ -89,12 +116,28 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
 
     if (retval) return retval;
 
-    struct ps_strings ps;
-    ps.ps_nargvstr = 0;
-    ps.ps_argvstr = NULL;
-    ps.ps_envstr = NULL;
+    int envp_offset;
+    char* save_fp = fp;
+    char** p;
+    for (p = argv; *p; p++) {
+        int len = strlen(*p);
+        *fpw++ = (char*)(vsp + (fp - frame));
+        memcpy(fp, *p, len);
+        fp += len;
+        *fp++ = '\0';
+    }
+    *fpw++ = NULL;
+    envp_offset = (char*)fpw - frame;
+    *fpw++ = NULL;
+    data_copy(target, vsp, SELF, frame, frame_size);
+    free(frame);
 
-    return kernel_exec(target, (void *)VM_STACK_TOP, progname, execi.entry_point, &ps);
+    struct ps_strings ps;
+    ps.ps_nargvstr = argc;
+    ps.ps_argvstr = vsp;
+    ps.ps_envstr = vsp + envp_offset;
+
+    return kernel_exec(target, vsp, progname, execi.entry_point, &ps);
 }
 
 

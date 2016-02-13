@@ -136,7 +136,7 @@ PUBLIC int create_service(struct sproc * sp)
 
     if ((retval = read_exec(sp)) != 0) return retval;
 
-    if ((retval = serv_exec(sp->endpoint, sp->exec, sp->exec_len, sp->argv[0])) != 0) return retval;
+    if ((retval = serv_exec(sp->endpoint, sp->exec, sp->exec_len, sp->proc_name, sp->argv)) != 0) return retval;
     free(sp->exec);
     sp->exec = NULL;
 
