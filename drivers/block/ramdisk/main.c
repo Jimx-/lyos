@@ -23,10 +23,11 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include <lyos/driver.h>
 #include "multiboot.h"
 #include <errno.h>
 #include <lyos/sysutils.h>
+
+#include "libblockdriver/libblockdriver.h"
 
 #define MAX_RAMDISKS	CONFIG_BLK_DEV_RAM_COUNT
 
@@ -41,19 +42,17 @@ PRIVATE struct ramdisk_dev ramdisks[MAX_RAMDISKS];
 PRIVATE struct ramdisk_dev initramdisk;
 
 PRIVATE void init_rd(int argc, char * argv[]);
-PRIVATE int rd_open(MESSAGE * p);
-PRIVATE int rd_close(MESSAGE * p);
-PRIVATE int rd_rdwt(MESSAGE * p);
-PRIVATE int rd_ioctl(MESSAGE * p);
+PRIVATE int rd_open(dev_t minor, int access);
+PRIVATE int rd_close(dev_t minor);
+PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos,
+	  endpoint_t endpoint, char* buf, unsigned int count);
+PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
 
-struct dev_driver rd_driver = 
-{
-	"ramdisk",
-	rd_open,
-	rd_close,
-	rd_rdwt,
-	rd_rdwt, 
-	rd_ioctl 
+struct blockdriver rd_driver = {
+	.bdr_open = rd_open,
+	.bdr_close = rd_close,
+	.bdr_readwrite = rd_rdwt,
+	.bdr_ioctl = rd_ioctl,
 };
 
 PUBLIC int main(int argc, char * argv[])
@@ -61,49 +60,45 @@ PUBLIC int main(int argc, char * argv[])
 	env_setargs(argc, argv);
 	init_rd(argc, argv);
 
-	dev_driver_task(&rd_driver);
+	blockdriver_task(&rd_driver);
 
 	return 0;
 }
 
-PRIVATE int rd_open(MESSAGE * p)
+PRIVATE int rd_open(dev_t minor, int access)
 {
 	return 0;
 }
 
-PRIVATE int rd_close(MESSAGE * p)
+PRIVATE int rd_close(dev_t minor)
 {
 	return 0;
 }
 
-PRIVATE int rd_rdwt(MESSAGE * p)
+PRIVATE int rd_rdwt(dev_t minor, int do_write, u64 pos,
+	  endpoint_t endpoint, char* buf, unsigned int count)
 {
-	u64 pos = p->POSITION;
-	int count = p->CNT;
-	int dev = MINOR(p->DEVICE);
-
     struct ramdisk_dev * ramdisk; 
-    if (dev == MINOR_INITRD) ramdisk = &initramdisk;
-    else ramdisk = ramdisks + dev;
+    if (minor == MINOR_INITRD) ramdisk = &initramdisk;
+    else ramdisk = ramdisks + minor;
 
 	char * addr = ramdisk->start + (int)pos;
 	
 	if (pos > ramdisk->length){
-		p->CNT = 0;
 		return 0;
 	}
 
-	if (p->type == DEV_WRITE) {
-		if (ramdisk->rdonly) return EROFS;
-		data_copy(SELF, addr, p->PROC_NR, p->BUF, count);
-	}else if(p->type == DEV_READ){
-		data_copy(p->PROC_NR, p->BUF, SELF, addr, count);
+	if (do_write) {
+		if (ramdisk->rdonly) return -EROFS;
+		data_copy(SELF, addr, endpoint, buf, count);
+	} else {
+		data_copy(endpoint, buf, SELF, addr, count);
 	}
 
 	return 0;
 }
 
-PRIVATE int rd_ioctl(MESSAGE * p)
+PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
 {
 	return 0;
 }

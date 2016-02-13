@@ -51,7 +51,7 @@ PUBLIC int do_ioctl(MESSAGE * p)
     } else {
         MESSAGE msg_to_driver;
 
-        msg_to_driver.type = DEV_IOCTL;
+        msg_to_driver.type = CDEV_IOCTL;
         msg_to_driver.DEVICE = MINOR(dev);
         msg_to_driver.REQUEST = p->REQUEST;
         msg_to_driver.BUF = p->BUF;

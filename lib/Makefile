@@ -7,6 +7,7 @@ LIBLYOS 	= $(LIBOUTDIR)/liblyos.a
 LIBSYSFS	= $(LIBOUTDIR)/libsysfs.a
 LIBFSDRIVER	= $(LIBOUTDIR)/libfsdriver.a
 LIBINPUTDRV	= $(LIBOUTDIR)/libinputdriver.a
+LIBBLOCKDRV = $(LIBOUTDIR)/libblockdriver.a
 LIBMEMFS	= $(LIBOUTDIR)/libmemfs.a
 LIBDEVMAN	= $(LIBOUTDIR)/libdevman.a
 LIBPTHREAD	= $(LIBOUTDIR)/libpthread.a
@@ -14,11 +15,11 @@ LIBPTHREAD	= $(LIBOUTDIR)/libpthread.a
 .PHONY: everything realclean
 	
 everything : realclean $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER)\
-				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD)
+				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV)
 
 realclean :
 	@rm -f $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS) \
-		$(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD)
+		$(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV)
 
 $(LIBDRIVER): 
 	@(cd libdriver; make)
@@ -37,7 +38,10 @@ $(LIBFSDRIVER):
 	
 $(LIBINPUTDRV):
 	@(cd libinputdriver; make)
-	
+
+$(LIBBLOCKDRV):
+	@(cd libblockdriver; make)
+
 $(LIBMEMFS):
 	@(cd libmemfs; make)
 

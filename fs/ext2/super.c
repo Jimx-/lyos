@@ -51,7 +51,7 @@ PUBLIC int read_ext2_super_block(dev_t dev)
 {
     MESSAGE driver_msg;
 
-    driver_msg.type     = DEV_READ;
+    driver_msg.type     = BDEV_READ;
     driver_msg.DEVICE   = MINOR(dev);
     // byte offset 1024
     driver_msg.POSITION = 1024;
@@ -130,7 +130,7 @@ PUBLIC int write_ext2_super_block(dev_t dev)
     if (!psb) return EINVAL;
 
     MESSAGE driver_msg;
-    driver_msg.type     = DEV_WRITE;
+    driver_msg.type     = BDEV_WRITE;
     driver_msg.DEVICE   = MINOR(dev);
     // byte offset 1024
     driver_msg.POSITION = 1024;
@@ -167,7 +167,7 @@ PUBLIC ext2_bgdescriptor_t * get_ext2_group_desc(ext2_superblock_t * psb, unsign
 PRIVATE void bdev_open(dev_t dev)
 {
     MESSAGE driver_msg;
-	driver_msg.type = DEV_OPEN;
+	driver_msg.type = BDEV_OPEN;
 	driver_msg.DEVICE = MINOR(dev);
     endpoint_t driver_ep = get_blockdev_driver(dev);
 	send_recv(BOTH, driver_ep, &driver_msg);
@@ -176,7 +176,7 @@ PRIVATE void bdev_open(dev_t dev)
 PRIVATE void bdev_close(dev_t dev)
 {
     MESSAGE driver_msg;
-	driver_msg.type = DEV_CLOSE;
+	driver_msg.type = BDEV_CLOSE;
 	driver_msg.DEVICE = MINOR(dev);
 	endpoint_t driver_ep = get_blockdev_driver(dev);
     send_recv(BOTH, driver_ep, &driver_msg);

@@ -98,5 +98,9 @@ PUBLIC int bdev_readwrite(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 
     send_recv(BOTH, driver_table[major], &driver_msg);
 
-    return driver_msg.RETVAL;
+    if (driver_msg.RETVAL < 0) {
+        return -driver_msg.RETVAL;
+    }
+    driver_msg.CNT = driver_msg.RETVAL;
+    return 0;
 }

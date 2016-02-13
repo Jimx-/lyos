@@ -30,13 +30,16 @@
 #include <lyos/sysutils.h>
 #include <pci.h>
 
+#include "libblockdriver/libblockdriver.h"
+
 #include "ata.h"
 
 PRIVATE int		init_hd				();
-PRIVATE int 	hd_open				(MESSAGE * p);
-PRIVATE int 	hd_close			(MESSAGE * p);
-PRIVATE int 	hd_rdwt				(MESSAGE * p);
-PRIVATE int 	hd_ioctl			(MESSAGE * p);
+PRIVATE int 	hd_open				(dev_t minor, int access);
+PRIVATE int 	hd_close			(dev_t minor);
+PRIVATE ssize_t hd_rdwt				(dev_t minor, int do_write, u64 pos,
+	  								endpoint_t endpoint, char* buf, unsigned int count);
+PRIVATE int 	hd_ioctl			(dev_t minor, int request, endpoint_t endpoint, char* buf);
 PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
 PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition			(int device, int style);
@@ -62,14 +65,11 @@ PRIVATE struct part_info* current_part;
 #define DEB(x)
 #endif
 
-struct dev_driver hd_driver = 
-{
-	"HD",
-	hd_open,
-	hd_close,
-	hd_rdwt,
-	hd_rdwt, 
-	hd_ioctl 
+struct blockdriver hd_driver = {
+	.bdr_open = hd_open,
+	.bdr_close = hd_close,
+	.bdr_readwrite = hd_rdwt,
+	.bdr_ioctl = hd_ioctl,
 };
 
 /*****************************************************************************
@@ -84,7 +84,7 @@ PUBLIC int main(int argc, char** argv)
 	serv_register_init_fresh_callback(init_hd);
 	serv_init();
 
-	dev_driver_task(&hd_driver);	
+	blockdriver_task(&hd_driver);	
 
 	return 0;
 }
@@ -230,9 +230,9 @@ PRIVATE int init_hd()
  * 
  * @param device The device to be opened.
  *****************************************************************************/
-PRIVATE int hd_open(MESSAGE * p)
+PRIVATE int hd_open(dev_t minor, int access)
 {
-	hd_prepare(p->DEVICE);
+	hd_prepare(minor);
 
 	current_drive->open_cnt++;
 
@@ -247,9 +247,9 @@ PRIVATE int hd_open(MESSAGE * p)
  * 
  * @param device The device to be opened.
  *****************************************************************************/
-PRIVATE int hd_close(MESSAGE * p)
+PRIVATE int hd_close(dev_t minor)
 {
-	hd_prepare(p->DEVICE);
+	hd_prepare(minor);
 
 	current_drive->open_cnt--;
 
@@ -264,11 +264,11 @@ PRIVATE int hd_close(MESSAGE * p)
  * 
  * @param p Message ptr.
  *****************************************************************************/
-PRIVATE int hd_rdwt(MESSAGE * p)
+PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos,
+	  								endpoint_t endpoint, char* buf, unsigned int count)
 {
-	hd_prepare(p->DEVICE);
+	hd_prepare(minor);
 
-	u64 pos = p->POSITION;
 	assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
 
 	/**
@@ -281,36 +281,37 @@ PRIVATE int hd_rdwt(MESSAGE * p)
 
 	struct hd_cmd cmd;
 	cmd.features	= 0;
-	cmd.count	= (p->CNT + SECTOR_SIZE - 1) / SECTOR_SIZE;
+	cmd.count	= (count + SECTOR_SIZE - 1) / SECTOR_SIZE;
 	cmd.lba_low	= sect_nr & 0xFF;
 	cmd.lba_mid	= (sect_nr >>  8) & 0xFF;
 	cmd.lba_high	= (sect_nr >> 16) & 0xFF;
 	cmd.device	= MAKE_DEVICE_REG(1, current_drive->ldh, (sect_nr >> 24) & 0xF);
-	cmd.command	= (p->type == DEV_READ) ? ATA_READ : ATA_WRITE;
+	cmd.command	= do_write ? ATA_WRITE : ATA_READ;
 	hd_cmd_out(&cmd);
 
-	int bytes_left = p->CNT;
-	int buf = (int)p->BUF;
+	int bytes_left = count;
+	int bytes_rdwt = 0;
 
 	while (bytes_left) {
 		int bytes = min(SECTOR_SIZE, bytes_left);
-		if (p->type == DEV_READ) {
+		if (!do_write) {
 			interrupt_wait();
 			portio_sin(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
-			data_copy(p->PROC_NR, (void*)buf, SELF, hdbuf, bytes);
+			data_copy(endpoint, buf, SELF, hdbuf, bytes);
 		}
 		else {
 			if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
 				panic("hd writing error.");
 
-			data_copy(SELF, hdbuf, p->PROC_NR, (void*)buf, bytes);
+			data_copy(SELF, hdbuf, endpoint, buf, bytes);
 			portio_sout(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
 			interrupt_wait();
 		}
 		bytes_left -= bytes;
 		buf += bytes;
+		bytes_rdwt += bytes;
 	}
-	return 0;
+	return bytes_rdwt;
 }				
 
 /*****************************************************************************
@@ -321,13 +322,12 @@ PRIVATE int hd_rdwt(MESSAGE * p)
  * 
  * @param p  Ptr to the MESSAGE.
  *****************************************************************************/
-PRIVATE int hd_ioctl(MESSAGE * p)
+PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
 {
-	int device = p->DEVICE;
-	hd_prepare(device);
+	hd_prepare(minor);
 
-	if (p->REQUEST == DIOCTL_GET_GEO) {
-		data_copy(p->PROC_NR, p->BUF, SELF, current_part, sizeof(struct part_info));
+	if (request == DIOCTL_GET_GEO) {
+		data_copy(endpoint, buf, SELF, current_part, sizeof(struct part_info));
 	}
 	else {
 		return EINVAL;

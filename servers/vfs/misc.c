@@ -269,7 +269,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
                 MESSAGE driver_msg;
                 memset(&driver_msg, 0, sizeof(driver_msg));
                 
-                driver_msg.type = DEV_READ;
+                driver_msg.type = CDEV_READ;
                 driver_msg.DEVICE   = MINOR(pin->i_specdev);
                 driver_msg.BUF  = buf;
                 driver_msg.CNT  = len;

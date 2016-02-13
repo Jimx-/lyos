@@ -51,10 +51,10 @@ PUBLIC int initfs_lookup(MESSAGE * p)
 	int i;
 	char filename[TAR_MAX_PATH];
 	for (i = 0; i < initfs_headers_count; i++) {
-		initfs_rw_dev(DEV_READ, dev, initfs_headers[i], TAR_MAX_PATH, filename);
+		initfs_rw_dev(BDEV_READ, dev, initfs_headers[i], TAR_MAX_PATH, filename);
 		if (strcmp(filename, pathname) == 0) {
 			char header[512];
-			initfs_rw_dev(DEV_READ, dev, initfs_headers[i], 512, header);
+			initfs_rw_dev(BDEV_READ, dev, initfs_headers[i], 512, header);
 			struct posix_tar_header * phdr = (struct posix_tar_header*)header;
 			p->RET_NUM = i;
 			p->RET_UID = initfs_get8(phdr->uid);

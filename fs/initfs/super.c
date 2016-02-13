@@ -44,7 +44,7 @@ PUBLIC int initfs_readsuper(MESSAGE * p)
     
     for (i = 0;;i++)
     {
-        initfs_rw_dev(DEV_READ, dev, position, 512, buf);
+        initfs_rw_dev(BDEV_READ, dev, position, 512, buf);
 
         struct posix_tar_header * header = (struct posix_tar_header *)buf;
         if (header->name[0] == '\0')

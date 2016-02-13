@@ -106,7 +106,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
 
     /* TODO: read/write for block special */
     if (file_type == I_CHAR_SPECIAL) {
-        int t = p->type == READ ? DEV_READ : DEV_WRITE;
+        int t = p->type == READ ? CDEV_READ : CDEV_WRITE;
         p->type = t;
 
         int dev = pin->i_specdev;

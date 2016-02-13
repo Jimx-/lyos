@@ -1,7 +1,7 @@
 
 ATA 	= ata
 ATAOBJS 	= main.o
-LIBS	= -ldriver -llyos -lsysfs
+LIBS	= -lblockdriver -llyos -lsysfs
 
 everything : realclean $(ATA)
 

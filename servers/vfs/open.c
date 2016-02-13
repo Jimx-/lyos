@@ -131,7 +131,7 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
                     retval = (bits & W_BIT) ? EISDIR : 0;
                     break;
                 case I_CHAR_SPECIAL:    /* open char device */
-                    driver_msg.type = DEV_OPEN;
+                    driver_msg.type = CDEV_OPEN;
                     int dev = pin->i_specdev;
                     driver_msg.DEVICE = MINOR(dev);
                     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);

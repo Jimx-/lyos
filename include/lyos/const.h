@@ -292,12 +292,17 @@ enum msgtype {
     PM_VFS_EXEC,
     PM_GETINFO,
 
-	/* message type for drivers */
-	DEV_OPEN = DRV_REQ_BASE,
-	DEV_CLOSE,
-	DEV_READ,
-	DEV_WRITE,
-	DEV_IOCTL,						/* 2001 ~ 2005 */
+	/* message type for drivers */					/* 2001 ~ 2005 */
+	BDEV_OPEN = DRV_REQ_BASE,
+	BDEV_CLOSE,
+	BDEV_READ,
+	BDEV_WRITE,
+	BDEV_IOCTL,
+	CDEV_OPEN,										/* 2006 ~ 2010 */			
+	CDEV_CLOSE,
+	CDEV_READ,
+	CDEV_WRITE,
+	CDEV_IOCTL,	
 
 	/* message for sysfs */
 	SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */

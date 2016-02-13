@@ -109,7 +109,7 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
         nr_buffers++;
     } else {                         /* find a buffer in the freelist */
         pb = (ext2_buffer_t *)(ext2_buffer_freelist.next);          /* pick the first one */
-        if (pb->b_dirt) ext2_rw_buffer(DEV_WRITE, pb);   /* write back to disk to make it clear */
+        if (pb->b_dirt) ext2_rw_buffer(BDEV_WRITE, pb);   /* write back to disk to make it clear */
         if (pb->b_size != block_size) { /* realloc */
             free(pb->b_data);
             pb->b_size = block_size;
@@ -125,7 +125,7 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
    
     pb->b_flags = 0;
     
-    ext2_rw_buffer(DEV_READ, pb);
+    ext2_rw_buffer(BDEV_READ, pb);
     list_add(&(pb->hash), &ext2_buffer_cache[hash]);
     return pb;
 }
@@ -148,7 +148,7 @@ PUBLIC void ext2_put_buffer(ext2_buffer_t * pb)
         //ext2_buffer_freelist_tail = &(pb->list);
     }
     if (pb->b_flags & EXT2_BUFFER_WRITE_IMME && pb->b_dirt && pb->b_dev != 0) {
-        ext2_rw_buffer(DEV_WRITE, pb);
+        ext2_rw_buffer(BDEV_WRITE, pb);
     }
 }
 
@@ -165,13 +165,13 @@ PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
 
 PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t * pb)
 {
-    /*if (rw_flag == DEV_WRITE) {
+    /*if (rw_flag == BDEV_WRITE) {
         memcpy(ext2fsbuf, pb->b_data, pb->b_size);
     }*/
 
     rw_ext2_blocks(rw_flag, pb->b_dev, pb->b_block, 1, pb->b_data);
 
-    /*if (rw_flag == DEV_READ) {
+    /*if (rw_flag == BDEV_READ) {
         memcpy(pb->b_data, ext2fsbuf, pb->b_size);
     }*/
 
@@ -201,7 +201,7 @@ PUBLIC void ext2_sync_buffers()
 #ifdef EXT2_BUFFER_DEBUG
             printl("Writing block #%d at dev 0x%x\n", pb->b_block, pb->b_dev);
 #endif
-            ext2_rw_buffer(DEV_WRITE, pb);
+            ext2_rw_buffer(BDEV_WRITE, pb);
         }
     }
 }

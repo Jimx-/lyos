@@ -44,7 +44,7 @@ PUBLIC int initfs_stat(MESSAGE * p)
     memset(&sbuf, 0, sizeof(struct stat));
 
     char header[512];
-    initfs_rw_dev(DEV_READ, dev, initfs_headers[num], 512, header);
+    initfs_rw_dev(BDEV_READ, dev, initfs_headers[num], 512, header);
     struct posix_tar_header * phdr = (struct posix_tar_header *)header;
 
     /* fill in the information */

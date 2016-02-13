@@ -44,7 +44,7 @@ PUBLIC int initfs_rdwt(MESSAGE * p)
     int nbytes = p->RWCNT;
 
     char header[512];
-    initfs_rw_dev(DEV_READ, dev, initfs_headers[num], 512, header);
+    initfs_rw_dev(BDEV_READ, dev, initfs_headers[num], 512, header);
     struct posix_tar_header * phdr = (struct posix_tar_header *)header;
 
     off_t filesize = initfs_getsize(phdr->size);
@@ -52,7 +52,7 @@ PUBLIC int initfs_rdwt(MESSAGE * p)
     if (filesize < nbytes + position) {
         nbytes = filesize - position;
     }
-    bdev_readwrite((rw_flag == READ) ? DEV_READ : DEV_WRITE, dev, initfs_headers[num] + 512 + position, nbytes, src, buf);
+    bdev_readwrite((rw_flag == READ) ? BDEV_READ : BDEV_WRITE, dev, initfs_headers[num] + 512 + position, nbytes, src, buf);
     
     p->RWPOS = position + nbytes;
     p->RWCNT = nbytes;

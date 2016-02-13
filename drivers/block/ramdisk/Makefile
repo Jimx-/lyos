@@ -1,6 +1,6 @@
 
 RDOBJS 	= main.o
-LIBS	= -ldriver -llyos 
+LIBS	= -lblockdriver -llyos 
 
 RAMDISK = ramdisk
 

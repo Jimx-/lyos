@@ -114,17 +114,17 @@ PUBLIC int main()
 		TTY* ptty = minor2tty(msg.DEVICE);
 
 		switch (msg.type) {
-		case DEV_OPEN:
+		case CDEV_OPEN:
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 			break;
-		case DEV_READ:
+		case CDEV_READ:
 			tty_do_read(ptty, &msg);
 			break;
-		case DEV_WRITE:
+		case CDEV_WRITE:
 			tty_do_write(ptty, &msg);
 			break;
-		case DEV_IOCTL:
+		case CDEV_IOCTL:
 			tty_do_ioctl(ptty, &msg);
 			break;
 		case INPUT_TTY_UP:

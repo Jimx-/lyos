@@ -93,7 +93,7 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
     /* update all times */
     pin->i_update = ATIME | CTIME | MTIME;
 
-    ext2_rw_inode(pin, DEV_WRITE);
+    ext2_rw_inode(pin, BDEV_WRITE);
 
     /* create the directory entry */
     int retval = ext2_search_dir(pin_dir, pathname, &pin->i_num, SD_MAKE,
