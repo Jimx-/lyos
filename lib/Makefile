@@ -1,28 +1,29 @@
 #
 # Makefile for Lyos libraries.
 
-LIBDRIVER 	= $(LIBOUTDIR)/libdriver.a
+LIBBDEV 	= $(LIBOUTDIR)/libbdev.a
 LIBEXEC 	= $(LIBOUTDIR)/libexec.a
 LIBLYOS 	= $(LIBOUTDIR)/liblyos.a
 LIBSYSFS	= $(LIBOUTDIR)/libsysfs.a
 LIBFSDRIVER	= $(LIBOUTDIR)/libfsdriver.a
 LIBINPUTDRV	= $(LIBOUTDIR)/libinputdriver.a
 LIBBLOCKDRV = $(LIBOUTDIR)/libblockdriver.a
+LIBCHARDRV = $(LIBOUTDIR)/libchardriver.a
 LIBMEMFS	= $(LIBOUTDIR)/libmemfs.a
 LIBDEVMAN	= $(LIBOUTDIR)/libdevman.a
 LIBPTHREAD	= $(LIBOUTDIR)/libpthread.a
 
 .PHONY: everything realclean
 	
-everything : realclean $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER)\
-				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV)
+everything : realclean $(LIBSYSFS) $(LIBBDEV) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER)\
+				$(LIBMEMFS) $(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV) $(LIBCHARDRV)
 
 realclean :
-	@rm -f $(LIBSYSFS) $(LIBDRIVER) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS) \
-		$(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV)
+	@rm -f $(LIBSYSFS) $(LIBBDEV) $(LIBLYOS) $(LIBEXEC) $(LIBFSDRIVER) $(LIBMEMFS) \
+		$(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV) $(LIBCHARDRV)
 
-$(LIBDRIVER): 
-	@(cd libdriver; make)
+$(LIBBDEV): 
+	@(cd libbdev; make)
 
 $(LIBEXEC): 
 	@(cd libexec; make)
@@ -41,6 +42,9 @@ $(LIBINPUTDRV):
 
 $(LIBBLOCKDRV):
 	@(cd libblockdriver; make)
+
+$(LIBCHARDRV):
+	@(cd libchardriver; make)
 
 $(LIBMEMFS):
 	@(cd libmemfs; make)

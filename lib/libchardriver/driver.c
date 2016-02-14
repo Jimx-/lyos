@@ -13,18 +13,18 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
-#include "sys/types.h"
-#include "stdio.h"
-#include "assert.h"
-#include "unistd.h"
+#include <lyos/type.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
 #include <errno.h>
-#include "lyos/const.h"
-#include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/driver.h"
-#include "lyos/proto.h"
+#include <lyos/const.h>
+#include <string.h>
+#include <lyos/proc.h>
+#include <lyos/global.h>
+#include <lyos/driver.h>
+#include <lyos/proto.h>
 
 PUBLIC int announce_chardev(char * name, dev_t dev)
 {
@@ -40,30 +40,4 @@ PUBLIC int announce_chardev(char * name, dev_t dev)
 	send_recv(BOTH, TASK_DEVMAN, &msg);
 
 	return msg.RETVAL;
-}
-
-PUBLIC endpoint_t get_blockdev_driver(dev_t dev)
-{
-    MESSAGE msg;
-
-    msg.type = GET_DRIVER;
-    msg.DEVICE = dev;
-    msg.FLAGS = DT_BLOCKDEV;
-
-    send_recv(BOTH, TASK_DEVMAN, &msg);
-
-    return (msg.RETVAL != 0) ? -msg.RETVAL : msg.PID;
-}
-
-PUBLIC endpoint_t get_chardev_driver(dev_t dev)
-{
-    MESSAGE msg;
-
-    msg.type = GET_DRIVER;
-    msg.DEVICE = dev;
-    msg.FLAGS = DT_CHARDEV;
-
-    send_recv(BOTH, TASK_DEVMAN, &msg);
-
-    return (msg.RETVAL != 0) ? -msg.RETVAL : msg.PID;
 }

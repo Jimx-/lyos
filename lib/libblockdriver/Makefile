@@ -1,5 +1,5 @@
 #
-# Makefile for libdriver.
+# Makefile for libblockdriver.
 #
 
 LIBBDRVOBJS		= driver.o

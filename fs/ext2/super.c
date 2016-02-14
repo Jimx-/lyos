@@ -163,25 +163,6 @@ PUBLIC ext2_bgdescriptor_t * get_ext2_group_desc(ext2_superblock_t * psb, unsign
     return &(psb->sb_bgdescs[desc_num]);
 }
 
-
-PRIVATE void bdev_open(dev_t dev)
-{
-    MESSAGE driver_msg;
-	driver_msg.type = BDEV_OPEN;
-	driver_msg.DEVICE = MINOR(dev);
-    endpoint_t driver_ep = get_blockdev_driver(dev);
-	send_recv(BOTH, driver_ep, &driver_msg);
-}
-
-PRIVATE void bdev_close(dev_t dev)
-{
-    MESSAGE driver_msg;
-	driver_msg.type = BDEV_CLOSE;
-	driver_msg.DEVICE = MINOR(dev);
-	endpoint_t driver_ep = get_blockdev_driver(dev);
-    send_recv(BOTH, driver_ep, &driver_msg);
-}
-
 /**
  * @brief ext2_readsuper Handle the FS_READSUPER request
  *

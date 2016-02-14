@@ -3,7 +3,7 @@
 
 PROCFS		= procfs
 PROCFSOBJS = main.o root.o buffer.o file.o cpuinfo.o memory.o tree.o pid.o
-LIBS 		= -lmemfs -lfsdriver -ldriver -llyos
+LIBS 		= -lmemfs -lfsdriver -lbdev -llyos
 
 .PHONY: everything realclean
 

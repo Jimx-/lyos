@@ -13,4 +13,6 @@ struct blockdriver {
 
 PUBLIC void blockdriver_task(struct blockdriver* bd);
 
+PUBLIC int announce_blockdev(char * name, dev_t dev);
+
 #endif

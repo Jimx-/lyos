@@ -4,7 +4,7 @@
 TTYOBJS 		= arch/$(ARCH)/arch-tty.o \
 			tty.o global.o
 TTY		= tty
-LIBS	= -llyos -ldriver -lsysfs
+LIBS	= -llyos -lchardriver -lsysfs
 
 CFLAGS += -I$(CURDIR)
 SERVERCFLAGS += -I$(CURDIR)

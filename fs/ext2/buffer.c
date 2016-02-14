@@ -159,7 +159,7 @@ PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
 	ext2_superblock_t * psb = get_ext2_super_block(dev);
 	unsigned long block_size = psb->sb_block_size;
 
-	if (bdev_readwrite(rw_flag, dev, block_size * block_nr, block_size * block_count, ext2_ep, buf) != 0) 
+	if (bdev_readwrite(rw_flag, dev, block_size * block_nr, block_size * block_count, ext2_ep, buf) < 0) 
         printl("ext2: warning: bdev_readwrite failed!\n");
 }
 

@@ -1,6 +1,6 @@
 
 FSOBJS 	= main.o buffer.o super.o path.o global.o utils.o stat.o read_write.o
-LIBS	= -ldriver -llyos 
+LIBS	= -lbdev -llyos 
 
 INITFS = initfs
 

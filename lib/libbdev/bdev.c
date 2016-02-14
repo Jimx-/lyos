@@ -65,10 +65,73 @@ PUBLIC int bdev_driver(dev_t dev)
 }
 
 /*****************************************************************************
+ *                                bdev_sendrec
+ *****************************************************************************/
+/**
+ * Send a message to and receive the reply from the corresponding driver.
+ * 
+ * @param dev      device nr
+ * @param msg      Ptr to the message
+ * 
+ * @return Zero if success.
+ *****************************************************************************/
+PUBLIC int bdev_sendrec(dev_t dev, MESSAGE* msg)
+{
+    dev_t major = MAJOR(dev);
+    if (driver_table[major] == NO_TASK) bdev_update(dev);
+
+    return send_recv(BOTH, driver_table[major], msg);
+}
+
+/*****************************************************************************
+ *                                bdev_open
+ *****************************************************************************/
+/**
+ * Open the device.
+ * 
+ * @param dev      device nr
+ * 
+ * @return Zero if success.
+ *****************************************************************************/
+PUBLIC int bdev_open(dev_t dev)
+{
+    MESSAGE driver_msg;
+
+    driver_msg.type = BDEV_OPEN;
+    driver_msg.DEVICE = MINOR(dev);
+
+    bdev_sendrec(dev, &driver_msg);
+
+    return driver_msg.RETVAL;
+}
+
+/*****************************************************************************
+ *                                bdev_close
+ *****************************************************************************/
+/**
+ * Close the device.
+ * 
+ * @param dev      device nr
+ * 
+ * @return Zero if success.
+ *****************************************************************************/
+PUBLIC int bdev_close(dev_t dev)
+{
+    MESSAGE driver_msg;
+
+    driver_msg.type = BDEV_OPEN;
+    driver_msg.DEVICE = MINOR(dev);
+
+    bdev_sendrec(dev, &driver_msg);
+
+    return driver_msg.RETVAL;
+}
+
+/*****************************************************************************
  *                                bdev_readwrite
  *****************************************************************************/
 /**
- * <Ring 1> R/W a sector via messaging with the corresponding driver.
+ * R/W a sector via messaging with the corresponding driver.
  * 
  * @param io_type  DEV_READ or DEV_WRITE
  * @param dev      device nr
@@ -77,17 +140,14 @@ PUBLIC int bdev_driver(dev_t dev)
  * @param proc_nr  To whom the buffer belongs.
  * @param buf      r/w buffer.
  * 
- * @return Zero if success.
+ * @return Bytes read/wrote or a negative error code.
  *****************************************************************************/
-PUBLIC int bdev_readwrite(int io_type, int dev, u64 pos, int bytes, int proc_nr,
+PUBLIC ssize_t bdev_readwrite(int io_type, int dev, u64 pos, int bytes, int proc_nr,
              void* buf)
 {
     MESSAGE driver_msg;
     
     if (proc_nr == SELF) proc_nr = self_ep;
-
-    dev_t major = MAJOR(dev);
-    if (driver_table[major] == NO_TASK) bdev_update(dev);
 
     driver_msg.type     = io_type;
     driver_msg.DEVICE   = MINOR(dev);
@@ -96,11 +156,7 @@ PUBLIC int bdev_readwrite(int io_type, int dev, u64 pos, int bytes, int proc_nr,
     driver_msg.CNT      = bytes;
     driver_msg.PROC_NR  = proc_nr;
 
-    send_recv(BOTH, driver_table[major], &driver_msg);
+    bdev_sendrec(dev, &driver_msg);
 
-    if (driver_msg.RETVAL < 0) {
-        return -driver_msg.RETVAL;
-    }
-    driver_msg.CNT = driver_msg.RETVAL;
-    return 0;
+    return driver_msg.RETVAL;
 }
