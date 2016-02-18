@@ -100,7 +100,7 @@ PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes
     int retval = syscall_entry(NR_VMCTL, &m);
 
     *target = m.VMCTL_MMREQ_TARGET;
-    *start = m.VMCTL_MMREQ_ADDR;
+    *start = (vir_bytes) m.VMCTL_MMREQ_ADDR;
     *len = m.VMCTL_MMREQ_LEN;
     *flags = m.VMCTL_MMREQ_FLAGS;
     *caller = m.VMCTL_MMREQ_CALLER;

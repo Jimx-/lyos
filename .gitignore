@@ -15,15 +15,16 @@ obj
 #
 # Disk image
 #
-lyos-disk.img
+*.img
 
 #
 # Kernel
 #
 *.bin
-System.map
+*.map
 arch/*/lyos
 lyos.gz
+*.elf
 
 #
 # Initrd 
@@ -43,6 +44,9 @@ ramdisk/sbin
 include/lyos/compile.h
 scripts/.Config.in.swp
 include/config
+.config
+.config.old
+.version
 
 #
 # Toolchain

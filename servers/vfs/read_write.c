@@ -117,7 +117,6 @@ PUBLIC int do_rdwt(MESSAGE * p)
         p->PROC_NR  = src;
         assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
         send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, p);
-        assert(p->CNT == len);
 
         return p->CNT;
     } else if (file_type == I_REGULAR) {

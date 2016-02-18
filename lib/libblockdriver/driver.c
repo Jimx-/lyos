@@ -62,49 +62,55 @@ PRIVATE int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
     return bd->bdr_ioctl(minor, request, ep, buf);
 }
 
+PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
+{
+    int src = msg->source;
+
+    if (msg->type == NOTIFY_MSG) {
+        switch (msg->source) {
+        case INTERRUPT:
+            if (bd->bdr_intr) bd->bdr_intr(msg->INTERRUPTS);
+            break;
+        case CLOCK:
+            if (bd->bdr_alarm) bd->bdr_alarm(msg->TIMESTAMP);
+            break;
+        }
+        return;
+    }
+
+    switch (msg->type) {
+    case BDEV_OPEN:
+        msg->RETVAL = do_open(bd, msg);
+        break;
+
+    case BDEV_CLOSE:
+        msg->RETVAL = do_close(bd, msg);
+        break;
+
+    case BDEV_READ:
+    case BDEV_WRITE:
+        msg->RETVAL = do_rdwt(bd, msg);
+        break;
+
+    case BDEV_IOCTL:
+        msg->RETVAL = do_ioctl(bd, msg);
+        break;
+
+    default:
+        msg->RETVAL = ENOSYS;
+        break;
+    }
+
+    send_recv(SEND, src, msg);
+}
+
 PUBLIC void blockdriver_task(struct blockdriver* bd)
 {
     MESSAGE msg;
     while (TRUE) {
         send_recv(RECEIVE, ANY, &msg);
-        int src = msg.source;
-
-        if (msg.type == NOTIFY_MSG) {
-            switch (msg.source) {
-            case INTERRUPT:
-                if (bd->bdr_intr) bd->bdr_intr(msg.INTERRUPTS);
-                break;
-            case CLOCK:
-                if (bd->bdr_alarm) bd->bdr_alarm(msg.TIMESTAMP);
-                break;
-            }
-            continue;
-        }
-
-        switch (msg.type) {
-        case BDEV_OPEN:
-            msg.RETVAL = do_open(bd, &msg);
-            break;
-
-        case BDEV_CLOSE:
-            msg.RETVAL = do_close(bd, &msg);
-            break;
-
-        case BDEV_READ:
-        case BDEV_WRITE:
-            msg.RETVAL = do_rdwt(bd, &msg);
-            break;
-
-        case BDEV_IOCTL:
-            msg.RETVAL = do_ioctl(bd, &msg);
-            break;
-
-        default:
-            msg.RETVAL = ENOSYS;
-            break;
-        }
-
-        send_recv(SEND, src, &msg);
+        
+        blockdriver_process(bd, &msg);
     }
 }
 

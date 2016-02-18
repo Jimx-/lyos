@@ -77,7 +77,7 @@ PUBLIC int get_machine(struct machine* machine)
     return getinfo(GETINFO_MACHINE, machine);
 }
 
-PUBLIC int get_cpuinfo(struct cpuinfo * cpuinfo)
+PUBLIC int get_cpuinfo(struct cpu_info * cpuinfo)
 {
     return getinfo(GETINFO_CPUINFO, cpuinfo);
 }

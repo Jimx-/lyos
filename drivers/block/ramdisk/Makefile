@@ -1,6 +1,6 @@
 
 RDOBJS 	= main.o
-LIBS	= -lblockdriver -llyos 
+LIBS	= -lblockdriver -lchardriver -llyos 
 
 RAMDISK = ramdisk
 
@@ -13,7 +13,7 @@ realclean :
 
 $(RAMDISK): $(RDOBJS)
 	@echo -e '\tLD\tdrivers/block/ramdisk/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
+	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)  -Xlinker -Ttext -Xlinker 0x60000000
 
 %.o: %.c
 	@echo -e '\tCC\tdrivers/block/ramdisk/$@'

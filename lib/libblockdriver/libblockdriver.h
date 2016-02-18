@@ -11,6 +11,7 @@ struct blockdriver {
 	void (*bdr_alarm)(clock_t timestamp);
 };
 
+PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg);
 PUBLIC void blockdriver_task(struct blockdriver* bd);
 
 PUBLIC int announce_blockdev(char * name, dev_t dev);

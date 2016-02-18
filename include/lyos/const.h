@@ -224,6 +224,9 @@
 #define PCI_REQ_BASE 		2301
 #define INPUT_REQ_BASE		2401
 
+#define IS_BDEV_REQ(x) ((x) >= BDEV_OPEN && (x) <= BDEV_IOCTL)
+#define IS_CDEV_REQ(x) ((x) >= CDEV_OPEN && (x) <= CDEV_IOCTL)
+
 /**
  * @enum msgtype
  * @brief MESSAGE types
