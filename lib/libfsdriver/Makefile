@@ -2,19 +2,7 @@
 # Makefile for libfsdriver.
 #
 
-LIBFSDOBJS		= request.o fsdriver.o utils.o dentry.o lookup.o
-LIBFSD 		= $(LIBOUTDIR)/libfsdriver.a
-ARFLAGS			= rcs
+SRCS	= request.c fsdriver.c utils.c dentry.c lookup.c
+LIB 	= fsdriver
 
-everything : realclean $(LIBFSD)
-
-realclean :
-	@rm -f $(LIBFSDOBJS)
-
-$(LIBFSD): $(LIBFSDOBJS)
-	@echo -e '\tAR\t$@'
-	@$(AR) $(ARFLAGS) $@ $^
-
-%.o: %.c
-	@echo -e '\tCC\tlib/libfsdrvier/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+include lyos.lib.mk

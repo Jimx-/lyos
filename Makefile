@@ -63,10 +63,11 @@ AS 		= $(SUBARCH)-elf-lyos-as
 CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
 OBJCOPY = $(SUBARCH)-elf-lyos-objcopy
+INSTALL = install
 CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ASFLAGS = -I $(INCDIR)/ -I $(ARCHINCDIR)/
 SERVERCFLAGS	= -I $(INCDIR)/ -I $(SERVERSINCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
-MAKEFLAGS	+= --no-print-directory
+MAKEFLAGS	+= --no-print-directory -I $(SRCDIR)/utils/mk/
 ARFLAGS		= rcs
 MAKE 		= make
 
@@ -75,7 +76,7 @@ ifeq ($(CONFIG_DEBUG_INFO),y)
 	SERVERCFLAGS += -g
 endif
 
-export AS ASM CC LD OBJCOPY CFLAGS ASFLAGS HOSTCC HOSTLD SERVERCFLAGS
+export AS ASM CC LD OBJCOPY INSTALL CFLAGS ASFLAGS ARFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
 LYOSKERNEL = $(ARCHDIR)/lyos.elf
 ifeq ($(CONFIG_COMPRESS_GZIP),y)
@@ -102,6 +103,14 @@ AUTOCONFINC = $(SRCDIR)/include/config/autoconf.h
 
 KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
+
+VERBOSE ?= 0 
+ifeq ($(VERBOSE), 1)  
+  Q = 
+else  
+  Q = @ 
+endif 
+export Q
 
 # All Phony Targets
 .PHONY : all everything final image clean realclean disasm all buildimg help lib config menuconfig \

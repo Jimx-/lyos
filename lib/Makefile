@@ -23,34 +23,44 @@ realclean :
 		$(LIBINPUTDRV) $(LIBDEVMAN) $(LIBPTHREAD) $(LIBBLOCKDRV) $(LIBCHARDRV)
 
 $(LIBBDEV): 
-	@(cd libbdev; make)
+	$(Q)$(MAKE) -C libbdev $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libbdev $(MAKEFLAGS) install
 
 $(LIBEXEC): 
-	@(cd libexec; make)
+	$(Q)$(MAKE) -C libexec $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libexec $(MAKEFLAGS) install
 
 $(LIBLYOS): 
 	@(cd liblyos; make)
 
 $(LIBSYSFS): 
-	@(cd libsysfs; make)
+	$(Q)$(MAKE) -C libsysfs $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libsysfs $(MAKEFLAGS) install
 
 $(LIBFSDRIVER):
-	@(cd libfsdriver; make)
+	$(Q)$(MAKE) -C libfsdriver $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libfsdriver $(MAKEFLAGS) install
 	
 $(LIBINPUTDRV):
-	@(cd libinputdriver; make)
+	$(Q)$(MAKE) -C libinputdriver $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libinputdriver $(MAKEFLAGS) install
 
 $(LIBBLOCKDRV):
-	@(cd libblockdriver; make)
+	$(Q)$(MAKE) -C libblockdriver $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libblockdriver $(MAKEFLAGS) install
 
 $(LIBCHARDRV):
-	@(cd libchardriver; make)
+	$(Q)$(MAKE) -C libchardriver $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libchardriver $(MAKEFLAGS) install
 
 $(LIBMEMFS):
-	@(cd libmemfs; make)
+	$(Q)$(MAKE) -C libmemfs $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libmemfs $(MAKEFLAGS) install
 
 $(LIBDEVMAN):
-	@(cd libdevman; make)
+	$(Q)$(MAKE) -C libdevman $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libdevman $(MAKEFLAGS) install
 
 $(LIBPTHREAD):
-	@(cd libpthread; make)
+	$(Q)$(MAKE) -C libpthread $(MAKEFLAGS)
+	$(Q)$(MAKE) -C libpthread $(MAKEFLAGS) install

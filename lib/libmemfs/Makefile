@@ -2,19 +2,7 @@
 # Makefile for libmemfs.
 #
 
-LIBMEMFSOBJS	= memfs.o super.o inode.o lookup.o protect.o stat.o readwrite.o getdents.o global.o
-LIBMEMFS 		= $(LIBOUTDIR)/libmemfs.a
-ARFLAGS			= rcs
+SRCS 	= memfs.c super.c inode.c lookup.c protect.c stat.c readwrite.c getdents.c global.c
+LIB 	= memfs
 
-everything : realclean $(LIBMEMFS)
-
-realclean :
-	@rm -f $(LIBMEMFSOBJS)
-
-$(LIBMEMFS): $(LIBMEMFSOBJS)
-	@echo -e '\tAR\t$@'
-	@$(AR) $(ARFLAGS) $@ $^
-
-%.o: %.c
-	@echo -e '\tCC\tlib/libmemfs/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+include lyos.lib.mk

@@ -49,7 +49,7 @@ PRIVATE int do_rdwt(struct blockdriver* bd, MESSAGE* msg)
     unsigned int count = msg->CNT;
 
     return bd->bdr_readwrite(minor, do_write, pos,
-      ep, buf, count);
+        ep, buf, count);
 }
 
 PRIVATE int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
