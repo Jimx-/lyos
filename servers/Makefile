@@ -11,15 +11,16 @@ PM			= pm/pm
 SYSTASK		= systask/systask
 SCHED		= sched/sched
 INPUT 		= input/input
+IPC			= ipc/ipc
 
 .PHONY: everything realclean
 	
 everything : realclean $(MM) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK) $(SERVMAN) \
-			$(SCHED) $(INPUT)
+			$(SCHED) $(INPUT) $(IPC)
 
 realclean :
 	@rm -f $(MM) $(INIT) $(DEVMAN) $(PM) $(VFS) $(SYSTASK) $(SERVMAN) $(SCHED) \
-			$(INPUT)
+			$(INPUT) $(IPC)
 
 $(MM):
 	@(cd mm; make)
@@ -56,3 +57,7 @@ $(SCHED):
 $(INPUT):
 	@(cd input; make)
 	@cp -f $(INPUT) $(DESTDIR)/sbin
+
+$(IPC):
+	@$(MAKE) $(MAKEFALGS) -C ipc
+	@cp -f $(IPC) $(DESTDIR)/sbin

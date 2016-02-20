@@ -3,7 +3,7 @@
 ####################################
 
 BOOTMODSOBJS	= mm.o pm.o servman.o devman.o sched.o vfs.o systask.o tty.o ramdisk.o \
-					initfs.o sysfs.o init.o
+					initfs.o sysfs.o ipc.o init.o
 
 BOOTMODS		= bootmods.o
 
@@ -82,6 +82,12 @@ sysfs.o: $(DESTDIR)/sbin/sysfs
 	@cp $< ./
 	@$(OBJCOPY) -I binary -O elf32-littlearm -B arm sysfs $@
 	@rm ./sysfs
+
+sysfs.o: $(DESTDIR)/sbin/ipc
+	@echo -e '\tOBJCOPY\tkernel/bootmods/$@'
+	@cp $< ./
+	@$(OBJCOPY) -I binary -O elf32-littlearm -B arm ipc $@
+	@rm ./ipc
 
 init.o: $(DESTDIR)/sbin/init
 	@echo -e '\tOBJCOPY\tkernel/bootmods/$@'

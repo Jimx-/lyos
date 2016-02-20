@@ -25,9 +25,9 @@
 /* Number of tasks & processes */
 #define NR_TASKS        4
 #if __i386__
-#define NR_BOOT_PROCS   (NR_TASKS + 13)
+#define NR_BOOT_PROCS   (NR_TASKS + 14)
 #else
-#define NR_BOOT_PROCS   (NR_TASKS + 12)
+#define NR_BOOT_PROCS   (NR_TASKS + 13)
 #endif    
 #define NR_PROCS        256
 #define NR_PRIV_PROCS   64

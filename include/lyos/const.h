@@ -128,11 +128,12 @@
 #define	TASK_RD			8
 #define TASK_INITFS		9
 #define TASK_SYSFS		10
+#define TASK_IPC		11
 #ifdef __i386__
-#define TASK_PCI		11
-#define INIT			12
+#define TASK_PCI		12
+#define INIT			13
 #else
-#define INIT 			11
+#define INIT 			12
 #endif
 #define ANY				(NR_PROCS + 10)
 #define SELF			(-0x8ace)
@@ -253,7 +254,7 @@ enum msgtype {
 	UMASK, DUP, IOCTL, FCNTL, CHMOD, FCHMOD, GETDENTS,		/* 39 */
 	SUSPEND_PROC, RESUME_PROC, EXEC, WAIT, KILL, ACCT, 		/* 45 */
 	BRK, GETSETID, ALARM, SIGACTION, SIGPROCMASK, SIGSUSPEND,	/* 51 */
-	PROCCTL, MMAP, FORK, EXIT, MUNMAP,	/* 56 */
+	PROCCTL, MMAP, FORK, EXIT, MUNMAP, FUTEX, /* 57 */
 
 	/* DEVMAN */
 	ANNOUNCE_DEVICE = 500, 
@@ -402,6 +403,15 @@ enum msgtype {
 #define FAULT_ADDR	u.m3.m3i2
 #define FAULT_PROC	u.m3.m3i3
 #define FAULT_ERRCODE u.m3.m3i4
+
+/* macros for futex */
+#define FUTEX_OP	u.m3.m3i1
+#define FUTEX_VAL	u.m3.m3i2
+#define FUTEX_VAL2	u.m3.m3i3
+#define FUTEX_VAL3	u.m3.m3i4
+#define FUTEX_UADDR	u.m3.m3p1
+#define FUTEX_UADDR2	u.m3.m3p2
+#define FUTEX_TIMEOUT	u.m3.m3l1
 
 /* ioctl requests */
 #define	DIOCTL_GET_GEO	1

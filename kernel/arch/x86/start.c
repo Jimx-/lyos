@@ -154,6 +154,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	SET_MODULE(TASK_RD, ramdisk);
 	SET_MODULE(TASK_INITFS, initfs);
 	SET_MODULE(TASK_SYSFS, sysfs);
+	SET_MODULE(TASK_IPC, ipc);
 	SET_MODULE(TASK_PCI, pci);
 	SET_MODULE(INIT, init);
 

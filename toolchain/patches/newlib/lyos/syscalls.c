@@ -19,6 +19,7 @@
 #include <sys/resource.h>
 #include <sys/ptrace.h>
 #include <sys/statfs.h>
+#include <sys/futex.h>
 #include <grp.h>
 
 #include "const.h"
@@ -1277,6 +1278,8 @@ void * mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
     m.MMAP_FD = fd;
     m.MMAP_OFFSET = offset;
 
+    cmb();
+
     send_recv(BOTH, TASK_MM, &m);
 
     if (m.RETVAL) return MAP_FAILED;
@@ -1293,6 +1296,8 @@ int munmap(void *addr, size_t len)
     m.MMAP_WHO = SELF;
     m.MMAP_VADDR = (int)addr;
     m.MMAP_LEN = len;
+
+    cmb();
 
     send_recv(BOTH, TASK_MM, &m);
 
@@ -1324,8 +1329,37 @@ char* getlogin()
 	return NULL;
 }
 
- int select(int nfds, fd_set *readfds, fd_set *writefds,
-                  fd_set *exceptfds, struct timeval *timeout)
- {
- 	return -ENOSYS;
- }
+int select(int nfds, fd_set *readfds, fd_set *writefds,
+                fd_set *exceptfds, struct timeval *timeout)
+{
+	return -ENOSYS;
+}
+
+int futex(int* uaddr, int futex_op, int val,
+	const struct timespec* timeout,   /* or: uint32_t val2 */
+    int* uaddr2, int val3)
+{
+    MESSAGE m;
+
+    memset(&m, 0, sizeof(MESSAGE));
+
+    m.type = FUTEX;
+    m.FUTEX_UADDR = uaddr;
+    m.FUTEX_OP = futex_op;
+    m.FUTEX_VAL = val;
+    m.FUTEX_VAL2 = (u32)timeout;
+    m.FUTEX_TIMEOUT = (u64)timeout;
+    m.FUTEX_UADDR2 = uaddr2;
+    m.FUTEX_VAL3 = val3;
+
+    cmb();
+
+    send_recv(BOTH, TASK_IPC, &m);
+
+    if (m.RETVAL != 0) {
+		errno = m.RETVAL;
+		return -1;
+	}
+
+    return 0;
+}

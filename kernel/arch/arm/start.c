@@ -168,6 +168,7 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     SET_MODULE(TASK_RD, ramdisk);
     SET_MODULE(TASK_INITFS, initfs);
     SET_MODULE(TASK_SYSFS, sysfs);
+    SET_MODULE(TASK_IPC, ipc);
     SET_MODULE(INIT, init);
 
     cut_memmap(&kinfo, 0, PG_SIZE);
