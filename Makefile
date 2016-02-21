@@ -114,14 +114,14 @@ export Q
 
 # All Phony Targets
 .PHONY : all everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries mrproper kernel fs drivers servers objdirs kvm kvm-debug 
+	setup-toolchain libraries install-libraries mrproper kernel fs drivers servers objdirs kvm kvm-debug 
 
 # Default starting position
 all : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries fs drivers servers kernel initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries install-libraries fs drivers servers kernel initrd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -161,8 +161,8 @@ clean :
 	@rm -f $(OBJS)
 
 realclean :
-	@find . \( -path ./toolchain -o -path ./obj \) -prune -o -name "*.o" -exec rm -f {} \;
-	@find . \( -path ./toolchain -o -path ./obj \) -prune -o -name "*.a" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib \) -prune -o -name "*.o" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib \) -prune -o -name "*.a" -exec rm -f {} \;
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
@@ -220,7 +220,11 @@ objdirs:
 
 libraries:
 	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
-	@(cd lib; make)
+	$(Q)$(MAKE) -C lib $(MAKEFLAGS)
+
+install-libraries:
+	@echo -e '$(COLORGREEN)Installing the libraries...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C lib $(MAKEFLAGS) install
 
 kernel:
 	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'

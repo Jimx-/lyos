@@ -2,32 +2,14 @@
 # Makefile for Lyos library. #
 ##############################
 
-AR		= ar
-ARFLAGS		= rcs
+include arch/$(ARCH)/Makefile
 
-LOBJS		= arch/$(ARCH)/arch-lib.o \
-			printl.o spin.o time.o data_copy.o procctl.o mmap.o get_info.o \
-			vmctl.o privctl.o umap.o env.o panic.o irqctl.o fork.o clear.o exec.o signal.o \
-			map_phys.o read_tsc_64.o get_procep.o serv_init.o kill.o ksig.o \
-			pci_set_acl.o pci_get_dev.o pci_attr.o get_ticks.o trace.o timer.o \
-			alarm.o send_async.o asyncsend.o mm_getinfo.o pm_getinfo.o
+SRCS	+= printl.c spin.c time.c data_copy.c procctl.c mmap.c get_info.c \
+			vmctl.c privctl.c umap.c env.c panic.c irqctl.c fork.c clear.c exec.c signal.c \
+			map_phys.c read_tsc_64.c get_procep.c serv_init.c kill.c ksig.c \
+			pci_set_acl.c pci_get_dev.c pci_attr.c get_ticks.c trace.c timer.c \
+			alarm.c send_async.c asyncsend.c mm_getinfo.c pm_getinfo.c
 
-LIB		= $(LIBOUTDIR)/liblyos.a
+LIB 	= lyos
 
-.PHONY: everything realclean 
-	
-everything : realclean $(LIB)
-
-realclean :
-	@rm -f $(LOBJS)
-
-$(LIB): $(LOBJS)
-	@echo -e '\tAR\t$@'
-	@$(AR) $(ARFLAGS) $@ $^
-
-arch/$(ARCH)/arch-lib.o:
-	@(cd arch/$(ARCH)/; make)
- 
-%.o: %.c
-	@echo -e '\tCC\tlib/liblyos/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+include lyos.lib.mk

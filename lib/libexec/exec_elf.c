@@ -33,12 +33,6 @@
 
 //#define ELF_DEBUG
 
-#define roundup(x, a)  do {\
-                        if ((x) % (a) != 0) {   \
-                            (x) = (x) + (a) - ((x) % (a));    \
-                        }   \
-                    } while(0)
-
 PRIVATE int elf_check_header(Elf32_Ehdr * elf_hdr);
 PRIVATE int elf_unpack(char * hdr, Elf32_Ehdr ** elf_hdr, Elf32_Phdr ** prog_hdr);
 
@@ -144,14 +138,14 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         fsize += alignment;
         memsize += alignment;
 
-        roundup(memsize, PG_SIZE);
-        roundup(fsize, PG_SIZE);
+        memsize = roundup(memsize, PG_SIZE);
+        fsize = roundup(fsize, PG_SIZE);
         if ((phdr->p_flags & PF_X) != 0)
             execi->text_size = memsize;
         else {
             execi->data_size = memsize;
             execi->brk = phdr->p_vaddr + phdr->p_memsz + 1;
-            roundup(execi->brk, sizeof(int));
+            execi->brk = roundup(execi->brk, sizeof(int));
         }
 
         //if (0) {
@@ -269,14 +263,14 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
         fsize += alignment;
         memsize += alignment;
 
-        roundup(memsize, PG_SIZE);
-        roundup(fsize, PG_SIZE);
+        memsize = roundup(memsize, PG_SIZE);
+        fsize = roundup(fsize, PG_SIZE);
         if ((phdr->p_flags & PF_X) != 0)
             execi->text_size = memsize;
         else {
             execi->data_size = memsize;
             execi->brk = phdr->p_vaddr + phdr->p_memsz + 1;
-            roundup(execi->brk, sizeof(int));
+            execi->brk = roundup(execi->brk, sizeof(int));
         }
 
         //if (0) {
