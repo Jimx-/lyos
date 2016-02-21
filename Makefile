@@ -113,15 +113,15 @@ endif
 export Q
 
 # All Phony Targets
-.PHONY : all everything final image clean realclean disasm all buildimg help lib config menuconfig \
-	setup-toolchain libraries install-libraries mrproper kernel fs drivers servers objdirs kvm kvm-debug 
+.PHONY : all everything disasm clean realclean mrproper install help config menuconfig \
+	setup-toolchain libraries install-libraries  kernel fs install-fs drivers servers objdirs kvm kvm-debug 
 
-# Default starting position
+# Default entry point
 all : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries install-libraries fs drivers servers kernel initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries install-libraries fs install-fs drivers servers kernel initrd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -158,11 +158,12 @@ silentoldconfig:
 
 clean :
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
-	@rm -f $(OBJS)
+	$(Q)$(MAKE) -C lib $(MAKEFLAGS) clean
+	$(Q)$(MAKE) -C fs $(MAKEFLAGS) clean
 
 realclean :
-	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib \) -prune -o -name "*.o" -exec rm -f {} \;
-	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib \) -prune -o -name "*.a" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs \) -prune -o -name "*.o" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs \) -prune -o -name "*.a" -exec rm -f {} \;
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
@@ -173,6 +174,8 @@ mrproper:
 	@echo -e '$(COLORRED)Removing configure files...$(COLORDEFAULT)'
 	@rm -f .config .config.old
 	@rm -rf $(CONFIGDIR)
+
+install: install-libraries install-fs
 
 update-disk:
 	@(cd utils; make)
@@ -202,11 +205,11 @@ disasm :
 help :
 	@echo "Make options:"
 	@echo "-----------------------------------------------------------------"
-	@echo "make\t\t: build the kernel image."
-	@echo "make disasm\t: dump the kernel into lyos.bin.asm."
+	@echo "make\t\t: build everything."
 	@echo "-----------------------------------------------------------------"
 	@echo "make clean\t: remove all object files but keep config files."
 	@echo "make realclean\t: remove all object files and config file."
+	@echo "make install\t: install everything to DESTDIR."
 
 objdirs:
 	@(mkdir -p $(OBJDIR))
@@ -238,8 +241,12 @@ endif
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 
 fs:
-	@echo -e '$(COLORGREEN)Compiling the filesystem server...$(COLORDEFAULT)'
-	@(cd fs; make)
+	@echo -e '$(COLORGREEN)Compiling the filesystem servers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C fs $(MAKEFLAGS)
+
+install-fs:
+	@echo -e '$(COLORGREEN)Installing the filesystem servers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C fs $(MAKEFLAGS) install
 
 drivers:
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'

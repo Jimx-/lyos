@@ -1,6 +1,5 @@
 
-
-CFLAGS = -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
+CFLAGS = $(SERVERCFLAGS)
 INSTALL_PREFIX = /sbin
 
 include lyos.prog.mk

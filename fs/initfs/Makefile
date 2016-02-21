@@ -1,20 +1,7 @@
 
-FSOBJS 	= main.o buffer.o super.o path.o global.o utils.o stat.o read_write.o
-LIBS	= -lbdev -llyos 
+SRCS 	= main.c buffer.c super.c path.c global.c utils.c stat.c read_write.c
+LIBS	= bdev lyos 
 
-INITFS = initfs
+PROG	= initfs
 
-everything : realclean $(INITFS)
-
-all : realclean $(INITFS)
-
-realclean :
-	@rm -f $(INITFS) $(FSOBJS)
-
-$(INITFS): $(FSOBJS)
-	@echo -e '\tLD\tfs/initfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
-
-%.o: %.c
-	@echo -e '\tCC\tfs/initfs/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk

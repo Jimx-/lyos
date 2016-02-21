@@ -1,22 +1,7 @@
 
-FSOBJS 	= main.o global.o node.o utils.o buffer.o file.o
-LIBS	= -lmemfs -lfsdriver -lbdev -llyos
+SRCS 	= main.c global.c node.c utils.c buffer.c file.c
+LIBS	= memfs fsdriver bdev lyos
 
-SYSFS = sysfs
+PROG 	= sysfs
 
-everything : realclean $(SYSFS)
-
-all : realclean $(SYSFS)
-
-realclean :
-	@rm -f $(SYSFS) $(FSOBJS)
-
-$(SYSFS): $(FSOBJS)
-	@echo -e '\tLD\tfs/sysfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tfs/sysfs/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
-
-
+include lyos.service.mk

@@ -1,21 +1,9 @@
 #
 # Makefile for procfs.
 
-PROCFS		= procfs
-PROCFSOBJS = main.o root.o buffer.o file.o cpuinfo.o memory.o tree.o pid.o
-LIBS 		= -lmemfs -lfsdriver -lbdev -llyos
+SRCS	= main.c root.c buffer.c file.c cpuinfo.c memory.c tree.c pid.c
+LIBS 	= memfs fsdriver bdev lyos
 
-.PHONY: everything realclean
+PROG	= procfs
 
-everything : realclean $(PROCFS)
-
-realclean :
-	@rm -f $(PROCFS)
-
-$(PROCFS): $(PROCFSOBJS)
-	@echo -e '\tLD\tfs/procfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) -Xlinker -Ttext -Xlinker 0x30000000
-
-%.o: %.c
-	@echo -e '\tCC\tfs/procfs/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk
