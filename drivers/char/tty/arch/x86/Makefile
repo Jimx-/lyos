@@ -1,18 +1,3 @@
 
-ARCHTTYOBJS		= console.o keyboard.o rs232.o vgacon.o fbcon.o fbcon_bochs.o
-
-ARCHTTY		= arch-tty.o
-LIBS		= -llyos
-
-everything : realclean $(ARCHTTY)
-
-realclean :
-	@rm -f $(ARCHTTYOBJS)
-
-$(ARCHTTY): $(ARCHTTYOBJS)
-	@echo -e '\tLD\tdrivers/char/tty/arch/x86/$@'
-	@$(LD) -r -o $(ARCHTTY) $(ARCHTTYOBJS)
-
-%.o: %.c
-	@echo -e '\tCC\tdrivers/char/tty/arch/x86/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+SRCS	+= arch/x86/console.c arch/x86/keyboard.c arch/x86/rs232.c \
+			arch/x86/vgacon.c arch/x86/fbcon.c arch/x86/fbcon_bochs.c

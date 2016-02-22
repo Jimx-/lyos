@@ -22,9 +22,9 @@ LYOS GALLERY
 ![procfs][6]
 
 
-  [1]: http://jimx.1x.net/images/screenshot-0.png
-  [2]: http://jimx.1x.net/images/screenshot-1.png
-  [3]: http://jimx.1x.net/images/screenshot-2.png
-  [4]: http://jimx.1x.net/images/screenshot-3.png
-  [5]: http://jimx.1x.net/images/screenshot-7.png
-  [6]: http://jimx.1x.net/images/screenshot-8.png
+  [1]: http://img.hoop8.com/attachments/1602/1241948110089.png
+  [2]: http://img.hoop8.com/attachments/1602/1421948110089.png
+  [3]: http://img.hoop8.com/attachments/1602/1581948110089.png
+  [4]: http://img.hoop8.com/attachments/1602/1721948110089.png
+  [5]: http://img.hoop8.com/attachments/1602/1861948110089.png
+  [6]: http://img.hoop8.com/attachments/1602/1981948110089.png

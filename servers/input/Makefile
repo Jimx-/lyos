@@ -1,20 +1,9 @@
 #
 # Makefile for input driver.
 
-INPUT		= input
-INPUTOBJS = main.o
+SRCS 	= main.c
+LIBS	= lyos sysfs
 
-LIBS	= -llyos -lsysfs
+PROG 	= input
 
-everything : realclean $(INPUT)
-
-realclean :
-	@rm -f $(INPUT) $(INPUTOBJS)
-
-$(INPUT): $(INPUTOBJS)
-	@echo -e '\tCC\tservers/input/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tservers/input/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk

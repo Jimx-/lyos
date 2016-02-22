@@ -67,5 +67,5 @@ COMPILATION AND INSTALLATION 编译与安装
 
 5. Run Lyos with QEMU, run ```make kvm``` 
 
-  [1]: http://jimx.1x.net/images/screenshot-8.png
+  [1]: http://img.hoop8.com/attachments/1602/0651948110089.png
   

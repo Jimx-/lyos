@@ -35,7 +35,6 @@
 #define ID2INDEX(id) (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
-#define NR_DEVICES    128
 PRIVATE struct device devices[NR_DEVICES];
 
 PUBLIC void init_device()

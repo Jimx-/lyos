@@ -2,9 +2,6 @@
 # Makefile for Lyos kernel.  #
 ##############################
 
-AR		= ar
-ARFLAGS		= rcs
-
 LDSCRIPT = arch/$(ARCH)/lyos.lds
 LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 

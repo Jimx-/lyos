@@ -1,19 +1,7 @@
 
-ATA 	= ata
-ATAOBJS 	= main.o
-LIBS	= -lblockdriver -llyos -lsysfs
+PROG 	= ata
 
-everything : realclean $(ATA)
+SRCS 	= main.c
+LIBS	= blockdriver lyos sysfs
 
-all : realclean $(ATA)
-
-realclean :
-	@rm -f $(ATA) $(ATAOBJS)
-
-$(ATA): $(ATAOBJS)
-	@echo -e '\tLD\tdrivers/block/ata/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tdrivers/block/ata/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk

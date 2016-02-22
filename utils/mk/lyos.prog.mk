@@ -37,6 +37,9 @@ $(BIN): $(OBJS) $(LINKLIBS) $(EXTRAOBJS)
 $(BUILD_PATH):
 	$(Q)mkdir $(BUILD_PATH)
 
+$(BUILD_PATH)/arch/$(ARCH):
+	$(Q)mkdir -p $(BUILD_PATH)/arch/$(ARCH)
+
 -include $(DEPS)
 
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.c

@@ -1,19 +1,9 @@
 #
 # Makefile for the Lyos userspace scheduler.
 
-SCHEDOBJS 	= main.o
-LIBS 		= -llyos
-SCHED		= sched
+SRCS 	= main.c
+LIBS 	= lyos
 
-everything : realclean $(SCHED)
+PROG 	= sched
 
-realclean :
-	@rm -f $(SCHED) $(SCHEDOBJS)
-
-$(SCHED): $(SCHEDOBJS)
-	@echo -e '\tLD\tservers/sched/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tservers/sched/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk

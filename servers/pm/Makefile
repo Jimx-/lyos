@@ -1,21 +1,9 @@
 #
 # Makefile for process manager.
 
-PM			= pm
-PMOBJS 		= main.o global.o utils.o forkexit.o signal.o misc.o trace.o exec.o
-LIBS 		= -llyos
+SRCS 	= main.c global.c utils.c forkexit.c signal.c misc.c trace.c exec.c
+LIBS 	= lyos
 
-everything : realclean $(PM)
+PROG 	= pm
 
-realclean :
-	@rm -f $(PM) $(PMOBJS)
-
-$(PM): $(PMOBJS)
-	@echo -e '\tLD\tservers/pm/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tservers/pm/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
-
-
+include lyos.service.mk

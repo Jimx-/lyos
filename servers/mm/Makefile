@@ -1,24 +1,10 @@
 #
 # Makefile for the Lyos memory manager.
 
+SRCS 	= main.c fork.c pagetable.c alloc.c region.c vmalloc.c brk.c \
+			pagefault.c misc.c mmap.c global.c utils.c slab.c vfs.c file.c cache.c
+LIBS 	= exec lyos
 
-MM			= mm
-MMOBJS 		= main.o fork.o pagetable.o alloc.o region.o vmalloc.o brk.o \
-			pagefault.o misc.o mmap.o global.o utils.o slab.o vfs.o file.o cache.o
-LIBS 		= -lexec -llyos 
+PROG	= mm
 
-everything : realclean $(MM)
-
-realclean :
-	@rm -f $(MM) $(MMOBJS)
-
-$(MM): $(MMOBJS)
-	@echo -e '\tLD\tservers/mm/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-arch/$(ARCH)/arch-mm.o:
-	@(cd arch/$(ARCH)/; make)
-
-%.o: %.c
-	@echo -e '\tCC\tservers/mm/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk

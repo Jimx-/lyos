@@ -1,13 +1,6 @@
 #
 # Makefile for the Lyos character device drivers
 
-TTY = tty/tty
+SUBDIRS	= tty
 
-everything : realclean $(TTY)
-
-realclean :
-	@rm -f $(TTY)
-
-$(TTY):
-	@(cd tty; make)
-	@(cp $(TTY) $(DESTDIR)/sbin)
+include lyos.subdirs.mk

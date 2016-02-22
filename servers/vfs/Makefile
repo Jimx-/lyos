@@ -1,20 +1,10 @@
 #
 # Makefile for the Lyos filesystem.
 
-VFS 		= vfs
-FSOBJS		= main.o super.o open.o mount.o global.o path.o inode.o protect.o \
-				read_write.o stat.o link.o misc.o exec.o device.o thread.o file.o
-LIBS 		= -lexec -llyos
+SRCS	= main.c super.c open.c mount.c global.c path.c inode.c protect.c \
+			read_write.c stat.c link.c misc.c exec.c device.c thread.c file.c
+LIBS 	= exec lyos
 
-everything : realclean $(VFS)
+PROG 	= vfs
 
-realclean :
-	@rm -f $(VFS) $(FSOBJS)
-
-$(VFS): $(FSOBJS)
-	@echo -e '\tLD\tservers/vfs/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tservers/vfs/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
+include lyos.service.mk

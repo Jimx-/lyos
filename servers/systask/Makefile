@@ -1,21 +1,9 @@
 #
 # Makefile for process manager.
 
-SYSTASK			= systask
-SYSTASKOBJS 	= main.o
-LIBS 			= -llyos
+SRCS 	= main.c
+LIBS 	= lyos
 
-everything : realclean $(SYSTASK)
+PROG 	= systask
 
-realclean :
-	@rm -f $(SYSTASK) $(SYSTASKOBJS)
-
-$(SYSTASK): $(SYSTASKOBJS)
-	@echo -e '\tLD\tservers/systask/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS)
-
-%.o: %.c
-	@echo -e '\tCC\tservers/systask/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
-
-
+include lyos.service.mk

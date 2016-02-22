@@ -2,18 +2,10 @@
 # Makefile for Lyos init.	 #
 ##############################
 
-INITOBJS 	= main.o 
-INIT		= init
+SRCS	= main.c
+PROG	= init
 
-everything : realclean $(INIT)
+CFLAGS	=
+INSTALL_PREFIX = /sbin
 
-realclean :
-	@rm -f $(INIT) $(INITOBJS)
-
-$(INIT): $(INITOBJS)
-	@echo -e '\tLD\tservers/init/$@'
-	@$(CC) -o $@ $^
-
-%.o: %.c
-	@echo -e '\tCC\tservers/init/$@'
-	@$(CC) -c $<
+include lyos.prog.mk

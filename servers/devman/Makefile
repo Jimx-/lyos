@@ -1,21 +1,9 @@
 #
 # Makefile for device manager.
 
-DEVMAN		= devman
-DEVMANOBJS = main.o ddmap.o global.o bus.o device.o
-LIBS 		= -llyos -lsysfs
+SRCS 	= main.c ddmap.c global.c bus.c device.c
+LIBS 	= lyos sysfs
 
-everything : realclean $(DEVMAN)
+PROG 	= devman
 
-realclean :
-	@rm -f $(DEVMAN) $(DEVMANOBJS)
-
-$(DEVMAN): $(DEVMANOBJS)
-	@echo -e '\tLD\tservers/devman/$@'
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ $(LIBS) 
-
-%.o: %.c
-	@echo -e '\tCC\tservers/devman/$@'
-	@$(CC) $(SERVERCFLAGS) -c $<
-
-
+include lyos.service.mk

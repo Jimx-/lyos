@@ -114,14 +114,16 @@ export Q
 
 # All Phony Targets
 .PHONY : all everything disasm clean realclean mrproper install help config menuconfig \
-	setup-toolchain libraries install-libraries  kernel fs install-fs drivers servers objdirs kvm kvm-debug 
+	setup-toolchain libraries install-libraries kernel fs install-fs drivers install-drivers servers install-servers \
+	objdirs kvm kvm-debug 
 
 # Default entry point
 all : realclean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries install-libraries fs install-fs drivers servers kernel initrd
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries install-libraries fs install-fs drivers \
+		install-drivers servers install-servers kernel initrd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -160,10 +162,12 @@ clean :
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C lib $(MAKEFLAGS) clean
 	$(Q)$(MAKE) -C fs $(MAKEFLAGS) clean
+	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) clean
+	$(Q)$(MAKE) -C servers $(MAKEFLAGS) clean
 
 realclean :
-	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs \) -prune -o -name "*.o" -exec rm -f {} \;
-	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs \) -prune -o -name "*.a" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs -o -path ./drivers -o -path ./servers \) -prune -o -name "*.o" -exec rm -f {} \;
+	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs -o -path ./drivers \) -prune -o -name "*.a" -exec rm -f {} \;
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
@@ -175,7 +179,7 @@ mrproper:
 	@rm -f .config .config.old
 	@rm -rf $(CONFIGDIR)
 
-install: install-libraries install-fs
+install: install-libraries install-fs install-drivers
 
 update-disk:
 	@(cd utils; make)
@@ -222,11 +226,11 @@ objdirs:
 	@(mkdir -p $(DESTDIR)/usr/sbin)
 
 libraries:
-	@echo -e '$(COLORGREEN)Compiling the libraries...$(COLORDEFAULT)'
+	@echo -e '$(COLORGREEN)Compiling libraries...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C lib $(MAKEFLAGS)
 
 install-libraries:
-	@echo -e '$(COLORGREEN)Installing the libraries...$(COLORDEFAULT)'
+	@echo -e '$(COLORGREEN)Installing libraries...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C lib $(MAKEFLAGS) install
 
 kernel:
@@ -241,17 +245,25 @@ endif
 	@@echo -e '$(COLORGREEN)Kernel is ready.$(COLORDEFAULT)'
 
 fs:
-	@echo -e '$(COLORGREEN)Compiling the filesystem servers...$(COLORDEFAULT)'
+	@echo -e '$(COLORGREEN)Compiling filesystem servers...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C fs $(MAKEFLAGS)
 
 install-fs:
-	@echo -e '$(COLORGREEN)Installing the filesystem servers...$(COLORDEFAULT)'
+	@echo -e '$(COLORGREEN)Installing filesystem servers...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C fs $(MAKEFLAGS) install
 
 drivers:
 	@echo -e '$(COLORGREEN)Compiling device drivers...$(COLORDEFAULT)'
-	@(cd drivers; make)
+	$(Q)$(MAKE) -C drivers $(MAKEFLAGS)
+
+install-drivers:
+	@echo -e '$(COLORGREEN)Installing device drivers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) install
 
 servers:
 	@echo -e '$(COLORGREEN)Compiling servers...$(COLORDEFAULT)'
-	@(cd servers; make)
+	$(Q)$(MAKE) -C servers $(MAKEFLAGS)
+
+install-servers:
+	@echo -e '$(COLORGREEN)Installing servers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C servers $(MAKEFLAGS) install
