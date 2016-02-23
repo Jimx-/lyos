@@ -8,6 +8,21 @@
 #include <sys/stat.h>
 #include <signal.h>
 
+#include <sys/futex.h>
+#include "libpthread/pthread.h"
+
+int futexp = 0;
+
+void* thread_main(void *threadid)
+{
+   long tid;
+   tid = (long)threadid;
+   int s = futex(&futexp, FUTEX_WAIT, 0, NULL, NULL, 0);
+   if (s) printf("error: %d\n", s);
+   printf("Hello World! It's me, thread #%ld!\n", tid);
+   pthread_exit(NULL);
+}
+
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
 
@@ -25,6 +40,9 @@ int main(int argc, char * argv[])
 		execv("/bin/sh", rc_args);
 	}
 
+	pthread_t thread;
+	pthread_create(thread, NULL, thread_main, (void *)1);
+
 	/* set hostname */
 	int fd_hostname = open("/etc/hostname", O_RDONLY);
 	if (fd_hostname != -1) {
@@ -35,6 +53,9 @@ int main(int argc, char * argv[])
 		sethostname(hostname, len);
 		close(fd_hostname);
 	}
+
+	futexp = 1;
+	futex(&futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
 
 	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/ttyS0"};
 	int i;

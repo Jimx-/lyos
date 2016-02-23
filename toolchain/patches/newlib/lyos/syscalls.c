@@ -1340,7 +1340,6 @@ int futex(int* uaddr, int futex_op, int val,
     int* uaddr2, int val3)
 {
     MESSAGE m;
-
     memset(&m, 0, sizeof(MESSAGE));
 
     m.type = FUTEX;
@@ -1354,12 +1353,7 @@ int futex(int* uaddr, int futex_op, int val,
 
     cmb();
 
-    send_recv(BOTH, TASK_IPC, &m);
+    send_recv(BOTH, TASK_MM, &m);
 
-    if (m.RETVAL != 0) {
-		errno = m.RETVAL;
-		return -1;
-	}
-
-    return 0;
+    return m.RETVAL;
 }

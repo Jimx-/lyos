@@ -13,39 +13,30 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _MM_MMPROC_H_
-#define _MM_MMPROC_H_
 
-#include <atomic.h>
-#include <page.h>
-    
-#include "futex.h"
-    
-struct mm_struct {
-    atomic_t refcnt;
+#ifndef _MM_FUTEX_H_
+#define _MM_FUTEX_H_
 
-    int slot;
-    pgdir_t pgd;
-    struct list_head mem_regions;
+union futex_key {
+    struct {
+        unsigned long addr;
+        struct mm_struct* mm;
+        int offset;
+    } private;
+    struct {
+        unsigned long word;
+        void* ptr;
+        int offset;
+    } both;
 };
 
-/* Memory related information of a process */
-struct mmproc {
-    int flags;
+struct futex_entry {
+    struct list_head list;
 
-    struct mm_struct* active_mm;
-    struct mm_struct* mm;
+    struct mmproc* mmp;
+    union futex_key key;
 
-    struct mmproc* group_leader;
-    struct list_head group_list;
-    
-    endpoint_t endpoint;
-
-    struct futex_entry futex_entry;
+    u32 bitset;
 };
-
-#define MMPF_INUSE  0x01
-
-#define mmproc2ep(mmp) ((mmp) - mmproc_table)
 
 #endif

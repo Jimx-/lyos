@@ -99,6 +99,9 @@ PUBLIC int main()
 		case MM_GETINFO:
 			mm_msg.RETVAL = do_mm_getinfo();
 			break;
+		case FUTEX:
+			mm_msg.RETVAL = do_futex();
+			break;
 		case FAULT:
 			do_handle_fault();
 			reply = 0;
@@ -148,6 +151,9 @@ PRIVATE void init_mm()
 	__lyos_init();
 
 	init_mmproc(TASK_MM);
+	
+	futex_init();
+	
 	struct boot_proc * bp;
 	for (i = -NR_TASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
 		if (bp->proc_nr < 0) continue;

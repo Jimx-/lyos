@@ -105,4 +105,7 @@ PUBLIC void file_reference(struct vir_region* vr, struct mm_file_desc* filp);
 
 PUBLIC void page_cache_init();
 
+PUBLIC void futex_init();
+PUBLIC int do_futex();
+
 #endif
