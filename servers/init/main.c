@@ -11,13 +11,13 @@
 #include <sys/futex.h>
 #include "libpthread/pthread.h"
 
-int futexp = 0;
+pthread_mutex_t mutex;
 
 void* thread_main(void *threadid)
 {
    long tid;
    tid = (long)threadid;
-   int s = futex(&futexp, FUTEX_WAIT, 0, NULL, NULL, 0);
+   int s = pthread_mutex_lock(&mutex);
    if (s) printf("error: %d\n", s);
    printf("Hello World! It's me, thread #%ld!\n", tid);
    pthread_exit(NULL);
@@ -40,6 +40,9 @@ int main(int argc, char * argv[])
 		execv("/bin/sh", rc_args);
 	}
 
+	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_lock(&mutex);
+
 	pthread_t thread;
 	pthread_create(thread, NULL, thread_main, (void *)1);
 
@@ -54,8 +57,7 @@ int main(int argc, char * argv[])
 		close(fd_hostname);
 	}
 
-	futexp = 1;
-	futex(&futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
+	pthread_mutex_unlock(&mutex);
 
 	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/ttyS0"};
 	int i;
