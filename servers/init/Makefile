@@ -4,8 +4,8 @@
 
 SRCS	= main.c
 PROG	= init
-LIBS 	= pthread
-#CFLAGS	=
+
+CFLAGS	=
 INSTALL_PREFIX = /sbin
 
-include lyos.service.mk
+include lyos.prog.mk
