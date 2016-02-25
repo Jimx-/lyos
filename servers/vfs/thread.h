@@ -22,14 +22,10 @@
 
 #define NR_WORKER_THREADS           4
 
-#define WT_RUNNING     0
-#define WT_WAITING     1
-
 struct worker_thread {
     int id;
     endpoint_t endpoint;
     struct priv priv;
-    int state;
 
     char stack[DEFAULT_THREAD_STACK_SIZE];
 };

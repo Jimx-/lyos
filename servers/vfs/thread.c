@@ -31,6 +31,9 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 #include <sched.h>
+
+#include "libpthread/pthread.h"
+
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -38,32 +41,13 @@
 #include "global.h"
 #include "thread.h"
 
-PRIVATE DEF_SPINLOCK(request_queue_lock);
+PRIVATE pthread_mutex_t request_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+PRIVATE pthread_cond_t request_queue_not_empty = PTHREAD_COND_INITIALIZER;
 PRIVATE DEF_LIST(request_queue);
 int queued_request = 0;
 
-PRIVATE DEF_SPINLOCK(response_queue_lock);
+PRIVATE pthread_mutex_t response_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 PRIVATE DEF_LIST(response_queue);
-
-PRIVATE void thread_wait(struct worker_thread* thread)
-{
-    MESSAGE wait_mess;
-
-    thread->state = WT_WAITING;
-    send_recv(RECEIVE, TASK_FS, &wait_mess);
-    thread->state = WT_RUNNING;
-    
-    if (wait_mess.type != FS_THREAD_WAKEUP) panic("[Thread %d]: unknown wakeup message from vfs(%d)\n", wait_mess.type);
-}
-
-PRIVATE void thread_wakeup(struct worker_thread* thread)
-{
-    if (thread->state == WT_RUNNING) return;
-
-    MESSAGE wakeup_mess;
-    wakeup_mess.type = FS_THREAD_WAKEUP;
-    send_recv(SEND_NONBLOCK, thread->endpoint, &wakeup_mess);
-}
 
 PUBLIC void enqueue_request(MESSAGE* msg)
 {
@@ -73,19 +57,14 @@ PUBLIC void enqueue_request(MESSAGE* msg)
     memcpy(&req->msg, msg, sizeof(MESSAGE));
     INIT_LIST_HEAD(&req->list);
 
-    spinlock_lock(&request_queue_lock);
+    pthread_mutex_lock(&request_queue_mutex);
     list_add(&req->list, &request_queue);
-    queued_request++;
-    spinlock_unlock(&request_queue_lock);
 
-    /* try to wake up some threads */
-    int num = queued_request < nr_workers ? queued_request : nr_workers;
-    int i;
-    for (i = 0; i < NR_WORKER_THREADS && num > 0; i++) {
-        if (workers[i].state != WT_WAITING) continue;
-        num--;
-        thread_wakeup(&workers[i]);
+    if (!list_empty(&request_queue)) {
+        pthread_cond_signal(&request_queue_not_empty);
     }
+
+    pthread_mutex_unlock(&request_queue_mutex);
 }
 
 PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
@@ -93,17 +72,24 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
     struct vfs_message* ret;
 
     while (1) {
-        spinlock_lock(&request_queue_lock);
+        pthread_mutex_lock(&request_queue_mutex);
+
+        if (list_empty(&request_queue)) {
+            pthread_cond_wait(&request_queue_not_empty, &request_queue_mutex);
+        }
+
         if (!list_empty(&request_queue)) {
             ret = list_entry(request_queue.next, struct vfs_message, list);
             list_del(&ret->list);
-            queued_request--;
-            spinlock_unlock(&request_queue_lock);
+            
+            if (!list_empty(&request_queue)) {
+                pthread_cond_signal(&request_queue_not_empty);
+            }
+
+            pthread_mutex_unlock(&request_queue_mutex);
             return ret;
         }
-        spinlock_unlock(&request_queue_lock);
-
-        thread_wait(thread);
+        pthread_mutex_unlock(&request_queue_mutex);
     }
 
     return NULL;
@@ -111,9 +97,9 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
 
 PRIVATE void enqueue_response(struct vfs_message* res)
 {
-    spinlock_lock(&response_queue_lock);
+    pthread_mutex_lock(&response_queue_mutex);
     list_add(&res->list, &response_queue);
-    spinlock_unlock(&response_queue_lock);
+    pthread_mutex_unlock(&response_queue_mutex);
 
     if (fs_sleeping) {
         MESSAGE wakeup_mess;
@@ -126,12 +112,12 @@ PUBLIC struct vfs_message* dequeue_response()
 {
     struct vfs_message* ret = NULL;
 
-    spinlock_lock(&response_queue_lock);
+    pthread_mutex_lock(&response_queue_mutex);
     if (!list_empty(&response_queue)) {
         ret = list_entry(response_queue.next, struct vfs_message, list);
         list_del(&ret->list);
     }
-    spinlock_unlock(&response_queue_lock);
+    pthread_mutex_unlock(&response_queue_mutex);
 
     return ret;
 }
@@ -180,7 +166,6 @@ PUBLIC pid_t create_worker(int id)
 
     struct worker_thread* thread = &workers[id];
     thread->id = id;
-    thread->state = WT_WAITING;
 
     pid_t pid = clone(worker_loop, (char*)thread->stack + sizeof(thread->stack), CLONE_VM | CLONE_THREAD, (void*) thread);
     if (pid < 0) return pid;
