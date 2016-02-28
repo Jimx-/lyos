@@ -5,6 +5,8 @@ OBJS = $(patsubst %.c, $(BUILD_PATH)/%.o, $(patsubst %.S, $(BUILD_PATH)/%.o, $(p
 LINKLIBS = $(LIBS:%=$(LIBOUTDIR)/lib%.a)
 DEPS = $(OBJS:.o=.d)
 
+INSTALL_PREFIX ?= /bin
+
 BIN = $(BUILD_PATH)/$(PROG)
 
 ifeq ($(wildcard arch),) 
@@ -32,7 +34,7 @@ install :
 
 $(BIN): $(OBJS) $(LINKLIBS) $(EXTRAOBJS)
 	@echo -e '\tLD\t$(PROG)/$@'
-	$(Q)$(CC) $(CFLAGS) $(EXTRACFLAGS) -o $@ $(OBJS) $(EXTRAOBJS) $(patsubst %,-l%,$(LIBS))
+	$(Q)$(CC) $(CFLAGS) $(EXTRACFLAGS) -o $@ $(OBJS) $(EXTRAOBJS) $(EXTRALIBS) $(patsubst %,-l%,$(LIBS))
 
 $(BUILD_PATH):
 	$(Q)mkdir $(BUILD_PATH)

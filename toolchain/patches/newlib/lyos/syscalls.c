@@ -1357,3 +1357,21 @@ int futex(int* uaddr, int futex_op, int val,
 
     return m.RETVAL;
 }
+
+int kprof(int action, size_t size, int freq, void* info, void* buf)
+{
+    MESSAGE m;
+    memset(&m, 0, sizeof(MESSAGE));
+
+	m.type = PM_KPROFILE;
+    m.KP_ACTION = action;
+    m.KP_SIZE = size;
+    m.KP_FREQ = freq;
+    m.KP_CTL = info;
+    m.KP_BUF = buf;
+    cmb();
+
+    send_recv(BOTH, TASK_PM, &m);
+
+    return m.RETVAL;
+}

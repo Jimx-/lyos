@@ -12,7 +12,8 @@ realclean :
 	@rm -f $(INITRD)
 
 $(INITRD):
-	@(cd ../utils; make)
+	$(Q)$(MAKE) -C ../utils $(MAKEFLAGS)
+	$(Q)$(MAKE) -C ../utils $(MAKEFLAGS) install
 	@cp $(DESTDIR)/sbin/init sbin/
 	@cp $(DESTDIR)/sbin/ext2fs sbin/
 	@cp $(DESTDIR)/sbin/ata sbin/

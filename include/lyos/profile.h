@@ -13,29 +13,35 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _PATH_H_
-#define _PATH_H_
+#ifndef _PROFILE_H_
+#define _PROFILE_H_
 
-#include "rwlock.h"
+#include <lyos/type.h>
+#include <lyos/proc.h>
 
-struct lookup {
-    char* path;
-    rwlock_access_t vmnt_lock;
-    rwlock_access_t inode_lock;
-    struct vfs_mount** vmnt;
-    struct inode** inode;
+#define KPROF_SAMPLE_BUFSIZE    (4 << 20)
+
+#define KPROF_START     1
+#define KPROF_STOP      2
+
+struct kprof_sample {
+    endpoint_t endpt;
+    void* pc;
 };
 
-struct lookup_result {
-    endpoint_t fs_ep;
-    ino_t inode_nr;
-    mode_t mode;
-    uid_t uid;
-    gid_t gid;
-    int size;
-    dev_t dev;
-    dev_t spec_dev;
-    int offsetp;
+struct kprof_info {
+    int mem_used;
+    int idle_samples;
+    int system_samples;
+    int user_samples;
+    int total_samples;
 };
+
+struct kprof_proc {
+    endpoint_t endpt;
+    char name[PROC_NAME_LEN];
+};
+
+int kprof(int action, size_t size, int freq, void* info, void* buf);
 
 #endif

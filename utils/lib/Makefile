@@ -1,12 +1,4 @@
 
-LIBS = $(DESTDIR)/lib/ld-lyos.so
+SUBDIRS = ld-lyos
 
-everything : realclean $(LIBS)
-
-all : realclean $(LIBS)
-
-realclean :
-	@rm -f $(LIBS)
-
-$(DESTDIR)/lib/ld-lyos.so:
-	@(cd ld-lyos; make)
+include lyos.subdirs.mk

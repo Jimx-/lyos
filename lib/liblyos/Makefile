@@ -8,7 +8,7 @@ SRCS	+= printl.c spin.c time.c data_copy.c procctl.c mmap.c get_info.c \
 			vmctl.c privctl.c umap.c env.c panic.c irqctl.c fork.c clear.c exec.c signal.c \
 			map_phys.c read_tsc_64.c get_procep.c serv_init.c kill.c ksig.c \
 			pci_set_acl.c pci_get_dev.c pci_attr.c get_ticks.c trace.c timer.c \
-			alarm.c send_async.c asyncsend.c mm_getinfo.c pm_getinfo.c
+			alarm.c send_async.c asyncsend.c mm_getinfo.c pm_getinfo.c kprofile.c
 
 LIB 	= lyos
 

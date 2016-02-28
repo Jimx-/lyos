@@ -24,6 +24,10 @@ typedef long pthread_condattr_t;
 
 #define PTHREAD_COND_INITIALIZER  { { 0 } }
 
+typedef struct {
+	int state;
+} pthread_rwlock_t;
+
 #define PTHREAD_CREATE_DETACHED  0x00000001
 #define PTHREAD_CREATE_JOINABLE  0x00000000
 

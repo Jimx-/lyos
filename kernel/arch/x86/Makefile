@@ -30,7 +30,7 @@ $(ARCHKERNEL): $(KERNELOBJS)
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/x86/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 bootmods/bootmods.o:
 	@(cd bootmods; make)

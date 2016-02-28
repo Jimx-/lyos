@@ -71,5 +71,6 @@ PUBLIC int errno;
 
 PUBLIC int err_code = 0;
 
-
-
+#if CONFIG_PROFILING
+PUBLIC int kprofiling = 0;
+#endif

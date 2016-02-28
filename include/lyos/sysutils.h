@@ -85,4 +85,6 @@ PUBLIC int     kernel_trace(int request, endpoint_t endpoint, void* addr, void* 
 #define PM_INFO_PROCTAB    1
 PUBLIC int     pm_getinfo(int request, void* dest, int size);
 
+PUBLIC int kernel_kprofile(int action, size_t size, int freq, endpoint_t endpt, void* info, void* buf);
+
 #endif

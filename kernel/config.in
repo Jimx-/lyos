@@ -51,7 +51,12 @@ config LOG_BUF_SHIFT
             14 => 16 KB
             13 =>  8 KB
             12 =>  4 KB
-            
+
+config PROFILING
+    bool "Kernel profiling"
+    help
+      Enable kernel profiling.
+
 endmenu
 
 menu "Kernel hacking"

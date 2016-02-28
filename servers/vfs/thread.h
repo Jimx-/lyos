@@ -17,8 +17,10 @@
 #define _VFS_THREAD_H_
 
 #include <lyos/priv.h>
+#include "libpthread/pthread.h"
 
-#define DEFAULT_THREAD_STACK_SIZE   (1024*1024)
+/* 256k stack */
+#define DEFAULT_THREAD_STACK_SIZE   (1024 * 256)
 
 #define NR_WORKER_THREADS           4
 
@@ -27,7 +29,8 @@ struct worker_thread {
     endpoint_t endpoint;
     struct priv priv;
 
-    char stack[DEFAULT_THREAD_STACK_SIZE];
+    pthread_mutex_t event_mutex;
+    pthread_cond_t event;
 };
 
 struct vfs_message {

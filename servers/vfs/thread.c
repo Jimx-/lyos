@@ -32,8 +32,6 @@
 #include <lyos/sysutils.h>
 #include <sched.h>
 
-#include "libpthread/pthread.h"
-
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -41,14 +39,16 @@
 #include "global.h"
 #include "thread.h"
 
+PRIVATE char __thread_stack[NR_WORKER_THREADS * DEFAULT_THREAD_STACK_SIZE] __attribute__ ((aligned (DEFAULT_THREAD_STACK_SIZE)));
+
 PRIVATE pthread_mutex_t request_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 PRIVATE pthread_cond_t request_queue_not_empty = PTHREAD_COND_INITIALIZER;
 PRIVATE DEF_LIST(request_queue);
-int queued_request = 0;
 
 PRIVATE pthread_mutex_t response_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 PRIVATE DEF_LIST(response_queue);
 
+/* producer-consumer model */
 PUBLIC void enqueue_request(MESSAGE* msg)
 {
     struct vfs_message* req = (struct vfs_message*) malloc(sizeof(struct vfs_message));
@@ -146,11 +146,18 @@ PRIVATE void handle_request(MESSAGE* msg)
     }
 }
 
+PRIVATE int worker_self()
+{
+    int tmp;
+    int* sp = (int*)(((vir_bytes)&tmp & (~(DEFAULT_THREAD_STACK_SIZE-1))) + DEFAULT_THREAD_STACK_SIZE - sizeof(int));
+    return *sp;
+}
+
 PRIVATE int worker_loop(void* arg)
 {
     struct worker_thread* self = (struct worker_thread*) arg;
     struct vfs_message* req;
-    
+ 
     while (1) {
         req = dequeue_request(self);
         handle_request(&req->msg);
@@ -167,7 +174,15 @@ PUBLIC pid_t create_worker(int id)
     struct worker_thread* thread = &workers[id];
     thread->id = id;
 
-    pid_t pid = clone(worker_loop, (char*)thread->stack + sizeof(thread->stack), CLONE_VM | CLONE_THREAD, (void*) thread);
+    pthread_mutex_init(&thread->event_mutex, NULL);
+    pthread_cond_init(&thread->event, NULL);
+    
+    /* put thread id on stack */
+    char* sp = (char*)__thread_stack + (id + 1) * DEFAULT_THREAD_STACK_SIZE;
+    sp -= sizeof(int);
+    *(int*)sp = id;
+
+    pid_t pid = clone(worker_loop, sp, CLONE_VM | CLONE_THREAD, (void*) thread);
     if (pid < 0) return pid;
 
     retval = get_procep(pid, &thread->endpoint);

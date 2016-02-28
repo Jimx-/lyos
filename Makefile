@@ -64,7 +64,7 @@ CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
 OBJCOPY = $(SUBARCH)-elf-lyos-objcopy
 INSTALL = install
-CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -c -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ASFLAGS = -I $(INCDIR)/ -I $(ARCHINCDIR)/
 SERVERCFLAGS	= -I $(INCDIR)/ -I $(SERVERSINCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory -I $(SRCDIR)/utils/mk/
@@ -164,10 +164,10 @@ clean :
 	$(Q)$(MAKE) -C fs $(MAKEFLAGS) clean
 	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) clean
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) clean
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS) clean
 
 realclean :
-	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs -o -path ./drivers -o -path ./servers \) -prune -o -name "*.o" -exec rm -f {} \;
-	@find . \( -path ./toolchain -o -path ./obj -o -path ./lib -o -path ./fs -o -path ./drivers \) -prune -o -name "*.a" -exec rm -f {} \;
+	@find ./kernel -prune -o -name "*.o" -exec rm -f {} \;
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
@@ -182,7 +182,8 @@ mrproper:
 install: install-libraries install-fs install-drivers
 
 update-disk:
-	@(cd utils; make)
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS)
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS) install
 	@sudo bash scripts/update-disk.sh
 
 kvm:
@@ -195,7 +196,8 @@ kvm-debug:
 	@qemu-system-i386 -s -S -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768" -initrd "$(LYOSINITRD)" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -vga std -sdl
 
 disk-image:
-	@(cd utils; make)
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS)
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS) install
 	@sudo bash scripts/setup-disk.sh
 
 initrd:

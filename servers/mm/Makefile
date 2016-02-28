@@ -7,6 +7,4 @@ LIBS 	= exec lyos
 
 PROG	= mm
 
-EXTRACFLAGS = -Xlinker -Ttext -Xlinker 0x60000000
-
 include lyos.service.mk

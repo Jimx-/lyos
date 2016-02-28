@@ -27,7 +27,7 @@ $(ARCHKERNEL): $(KERNELOBJS) $(machine-y)
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/arm/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 mach-omap2/mach-omap2.o:
 	@(cd mach-omap2; make)

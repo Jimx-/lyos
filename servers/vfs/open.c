@@ -73,6 +73,7 @@ PUBLIC int do_open(MESSAGE * p)
 PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
 {
     int fd = -1;    /* return fd */
+    
     mode_t bits = mode_map[flags & O_ACCMODE];
     if (!bits) return -EINVAL;
 

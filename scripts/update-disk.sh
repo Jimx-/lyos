@@ -42,18 +42,21 @@ LOOP_DEVICE=loop1
 
 source $SRCDIR/.config
 
-# Here's where we need to be root.
-losetup /dev/$LOOP_DEVICE $DISK
+LOOPRAW=`losetup -f`
+losetup $LOOPRAW $DISK
+TMP=`kpartx -av $DISK`
+TMP2=${TMP/add map /}
+LOOP=${TMP2%%p1 *}
+LOOPDEV=/dev/${LOOP}
+LOOPMAP=/dev/mapper/${LOOP}p1
 
 IMAGE_SIZE=`wc -c < $DISK`
 IMAGE_SIZE_SECTORS=`expr $IMAGE_SIZE / 512`
-MAPPER_LINE="0 $IMAGE_SIZE_SECTORS linear 7:1 0"
+MAPPER_LINE="0 $IMAGE_SIZE_SECTORS linear /dev/$LOOP_DEVICE 0"
 
 echo "$MAPPER_LINE" | dmsetup create hda
 
-kpartx -a /dev/mapper/hda
-
-mount /dev/mapper/hda1 /$MOUNT_POINT
+mount $LOOPMAP /$MOUNT_POINT
 
 echo "Installing kernel."
 if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
@@ -64,7 +67,7 @@ else
 fi
 
 cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
-#cp -rf obj/destdir.$ARCH/bin/service /$MOUNT_POINT/bin/service 
+cp -rf obj/destdir.$ARCH/bin/profile /$MOUNT_POINT/bin/
 #cp -rf obj/destdir.$ARCH/bin/bash /$MOUNT_POINT/bin/bash
 cp -rf obj/destdir.$ARCH/bin/cat /$MOUNT_POINT/bin/cat
 cp -rf obj/destdir.$ARCH/sbin/procfs /$MOUNT_POINT/sbin/ 
@@ -75,9 +78,9 @@ cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 
 umount $MOUNT_POINT
-kpartx -d /dev/mapper/hda
-dmsetup remove hda
-losetup -d /dev/$LOOP_DEVICE
+kpartx -d $LOOPMAP
+dmsetup remove $LOOPMAP
+losetup -d $LOOPDEV
 
 if [ -n "$SUDO_USER" ] ; then
     echo "Reassigning permissions on disk image to $SUDO_USER"

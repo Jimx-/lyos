@@ -1,7 +1,7 @@
 #
 # Makefile for process manager.
 
-SRCS 	= main.c global.c utils.c forkexit.c signal.c misc.c trace.c exec.c
+SRCS 	= main.c global.c utils.c forkexit.c signal.c misc.c trace.c exec.c profile.c
 LIBS 	= lyos
 
 PROG 	= pm

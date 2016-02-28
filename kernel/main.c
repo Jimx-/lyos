@@ -113,7 +113,7 @@ PUBLIC int kernel_main()
 
     /* failed to init smp */
 	finish_bsp_booting();
-	
+
 	while(TRUE) {}
 }
 
@@ -137,7 +137,7 @@ PUBLIC void finish_bsp_booting()
 #if CONFIG_SMP
     set_cpu_flag(cpuid, CPU_IS_READY);
 #endif
-    
+
 	switch_to_user();
 }
 

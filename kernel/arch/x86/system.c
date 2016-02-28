@@ -36,6 +36,7 @@
 #include <lyos/vm.h>
 #include "libexec/libexec.h"
 #include "arch_type.h"
+#include "cmos.h"
 
 PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -235,3 +236,36 @@ PUBLIC void identify_cpu()
     cpu_info[cpu].flags[0] = ecx;
     cpu_info[cpu].flags[1] = edx;
 }
+
+#if CONFIG_PROFILING
+
+PUBLIC int arch_init_profile_clock(u32 freq)
+{
+    out_byte(RTC_INDEX, RTC_REG_A);
+    out_byte(RTC_IO, RTC_A_DV_OK | freq);
+    out_byte(RTC_INDEX, RTC_REG_B);
+    int r = in_byte(RTC_IO);
+    out_byte(RTC_INDEX, RTC_REG_B); 
+    out_byte(RTC_IO, r | RTC_B_PIE);
+    out_byte(RTC_INDEX, RTC_REG_C);
+    in_byte(RTC_IO);
+
+    return CMOS_CLOCK_IRQ;
+}
+
+PUBLIC void arch_stop_profile_clock()
+{
+    int r;
+    out_byte(RTC_INDEX, RTC_REG_B);
+    r = in_byte(RTC_IO);
+    out_byte(RTC_INDEX, RTC_REG_B);  
+    out_byte(RTC_IO, r & ~RTC_B_PIE);
+}
+
+PUBLIC void arch_ack_profile_clock()
+{
+    out_byte(RTC_INDEX, RTC_REG_C);
+    in_byte(RTC_IO);
+}
+
+#endif

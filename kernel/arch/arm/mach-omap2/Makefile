@@ -22,4 +22,4 @@ $(OMAP2): $(obj-y)
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/arm/mach-omap2/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<

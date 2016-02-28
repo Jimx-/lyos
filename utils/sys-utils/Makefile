@@ -1,15 +1,4 @@
 
-SYSCMDS = $(DESTDIR)/bin/service $(DESTDIR)/bin/mount
+SUBDIRS 	= mount service
 
-everything : realclean $(SYSCMDS)
-
-all : realclean $(SYSCMDS)
-
-realclean :
-	@rm -f $(SYSCMDS)
-
-$(DESTDIR)/bin/service:
-	@(cd service; make)
-
-$(DESTDIR)/bin/mount: mount.c
-	@$(CC) -o $@ $<
+include lyos.subdirs.mk

@@ -86,3 +86,12 @@ EXTERN  int         mb_flags;
 extern struct kern_log kern_log;
 
 extern struct machine machine;
+
+#if CONFIG_PROFILING
+#include <lyos/profile.h>
+
+EXTERN char profile_sample_buf[KPROF_SAMPLE_BUFSIZE];
+extern int kprofiling;
+EXTERN struct kprof_info kprof_info;
+
+#endif

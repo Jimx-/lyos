@@ -31,7 +31,8 @@ char * getloginname()
 int main(int argc, char * argv[]) 
 {
 	int ask = 0;
-	char * username, * p, * prompt;
+	char * username, * prompt;
+	//char* p;
 	struct passwd * pwd;
 
 	if (*argv) {
@@ -57,7 +58,7 @@ int main(int argc, char * argv[])
 		}
 
 		prompt = "Password: ";
-		p = getpass(prompt);
+		//p = getpass(prompt);
 		printf("\n");
 
 		ok = 1;

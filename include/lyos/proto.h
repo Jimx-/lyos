@@ -92,6 +92,12 @@ PUBLIC  void    dequeue_proc(struct proc * p);
 /* sched.c */
 PUBLIC  void    init_sched();
 
+/* profile.c */
+#if CONFIG_PROFILING
+PUBLIC void init_profile_clock(u32 freq);
+PUBLIC void stop_profile_clock();
+#endif
+
 /* direct_tty.c */
 PUBLIC  void    direct_put_str(const char * str);
 PUBLIC  int     direct_print(const char * fmt, ...);
@@ -145,6 +151,7 @@ PUBLIC  int sys_endksig(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_times(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_trace(MESSAGE * m, struct proc * p_proc);
 PUBLIC  int sys_alarm(MESSAGE * m, struct proc * p_proc);
+PUBLIC  int sys_kprofile(MESSAGE * m, struct proc * p_proc);
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */

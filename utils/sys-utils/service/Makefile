@@ -1,17 +1,12 @@
 
-SERVICE			= $(DESTDIR)/bin/service
-SERVICEOBJS 	= main.o parse.o cJSON/libcjson.a
+SRCS 		= main.c parse.c
+EXTRAOBJS 	= cJSON/libcjson.a
+EXTRALIBS	= -lm
+PROG 		= service
 
-everything : realclean $(SERVICE)
+CFLAGS 		+= -I./cJSON
 
-realclean :
-	@rm -f $(SERVICE) $(SERVICEOBJS)
+include lyos.prog.mk
 
-$(SERVICE): $(SERVICEOBJS)
-	@$(CC) $(SERVERCFLAGS) -o $@ $^ -lm
-
-cJSON/libcjson.a:
-	@(cd cJSON; make libcjson.a)
-
-%.o: %.c
-	@$(CC) $(SERVERCFLAGS) -c $< -I./cJSON
+cJSON/libcjson.a: cJSON/cJSON.c cJSON/cJSON.h
+	$(Q)$(MAKE) -C cJSON $(MAKEFLAGS) libcjson.a

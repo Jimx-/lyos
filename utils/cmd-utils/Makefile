@@ -1,15 +1,4 @@
 
-CMDS = $(DESTDIR)/bin/cat $(DESTDIR)/usr/bin/strace
+SUBDIRS 	= cat strace profile
 
-everything : realclean $(CMDS)
-
-all : realclean $(CMDS)
-
-realclean :
-	@rm -f $(CMDS)
-
-$(DESTDIR)/bin/cat: cat.c
-	@$(CC) -o $@ $<
-
-$(DESTDIR)/usr/bin/strace: strace.c
-	@$(CC) -I$(INCDIR) -o $@ $<
+include lyos.subdirs.mk

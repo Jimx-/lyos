@@ -106,6 +106,7 @@
 #define	XT_WINI_IRQ		5	/* xt winchester */
 #define	FLOPPY_IRQ		6	/* floppy disk */
 #define	PRINTER_IRQ		7
+#define CMOS_CLOCK_IRQ	8
 #define PS_2_IRQ		12
 #define	AT_WINI_IRQ		14	/* at winchester */
 #define AT_WINI_1_IRQ	15
@@ -142,7 +143,7 @@
 #define	MAX_TICKS	0x7FFFABCD
 
 /* system call */
-#define NR_SYS_CALLS	22
+#define NR_SYS_CALLS	23
 #define NR_PRINTX		0
 #define NR_SENDREC		1
 #define NR_DATACOPY		2
@@ -165,6 +166,7 @@
 #define NR_TIMES		19
 #define NR_TRACE		20
 #define NR_ALARM 		21
+#define NR_KPROFILE		22
 
 /* kernel signals */
 #define SIGKSIG		SIGUSR1
@@ -295,6 +297,7 @@ enum msgtype {
     PM_VFS_GETSETID_REPLY,
     PM_VFS_EXEC,
     PM_GETINFO,
+    PM_KPROFILE,
 
 	/* message type for drivers */					/* 2001 ~ 2005 */
 	BDEV_OPEN = DRV_REQ_BASE,
@@ -412,6 +415,14 @@ enum msgtype {
 #define FUTEX_UADDR	u.m3.m3p1
 #define FUTEX_UADDR2	u.m3.m3p2
 #define FUTEX_TIMEOUT	u.m3.m3l1
+
+/* macros for kprofile */
+#define KP_ACTION	u.m3.m3i1
+#define KP_SIZE		u.m3.m3i2
+#define KP_FREQ		u.m3.m3i3
+#define KP_ENDPT	u.m3.m3i4
+#define KP_CTL		u.m3.m3p1
+#define KP_BUF		u.m3.m3p2
 
 /* ioctl requests */
 #define	DIOCTL_GET_GEO	1

@@ -9,7 +9,7 @@ KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o\
 			clock.o global.o proc.o \
 			klib.o cpulocals.o \
 			sysinfo.o system/system.o interrupt.o system.o smp.o \
-			clocksource.o sched.o
+			clocksource.o sched.o profile.o
 LIB			= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
 LIBC		= $(DESTDIR)/usr/lib/libc.a 
 
@@ -32,7 +32,7 @@ arch/$(ARCH)/arch-kernel.o:
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/$@'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 system/system.o:
 	@(cd system; make)

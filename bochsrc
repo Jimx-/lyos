@@ -5,7 +5,7 @@
 # how much memory the emulated machine will have
 megs: 1024
 
-display_library: sdl
+display_library: x
 
 # filename of ROM images
 romimage: file=$BXSHARE/BIOS-bochs-latest
@@ -29,4 +29,3 @@ com1: enabled=1, mode=file, dev=serout
 # enable key mapping, using US layout as default.
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 
-cpu: count=2, ips=20000000
