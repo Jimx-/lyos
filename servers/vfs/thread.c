@@ -146,13 +146,6 @@ PRIVATE void handle_request(MESSAGE* msg)
     }
 }
 
-PRIVATE int worker_self()
-{
-    int tmp;
-    int* sp = (int*)(((vir_bytes)&tmp & (~(DEFAULT_THREAD_STACK_SIZE-1))) + DEFAULT_THREAD_STACK_SIZE - sizeof(int));
-    return *sp;
-}
-
 PRIVATE int worker_loop(void* arg)
 {
     struct worker_thread* self = (struct worker_thread*) arg;
@@ -204,3 +197,28 @@ PUBLIC pid_t create_worker(int id)
 
     return pid;
 }
+
+PUBLIC struct worker_thread* worker_self()
+{
+    int tmp;
+    int* sp = (int*)(((vir_bytes)&tmp & (~(DEFAULT_THREAD_STACK_SIZE-1))) + DEFAULT_THREAD_STACK_SIZE - sizeof(int));
+    return &workers[*sp];
+}
+
+PUBLIC void worker_wait()
+{
+    struct worker_thread* thread = worker_self();
+
+    pthread_mutex_lock(&thread->event_mutex);
+    pthread_cond_wait(&thread->event, &thread->event_mutex);
+    pthread_mutex_unlock(&thread->event_mutex);
+}
+
+PUBLIC void worker_wake(struct worker_thread* thread)
+{
+    pthread_mutex_lock(&thread->event_mutex);
+    pthread_cond_signal(&thread->event);
+    pthread_mutex_unlock(&thread->event_mutex);
+}
+
+

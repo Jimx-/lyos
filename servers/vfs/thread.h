@@ -31,11 +31,16 @@ struct worker_thread {
 
     pthread_mutex_t event_mutex;
     pthread_cond_t event;
+
+    struct list_head list;
 };
 
 struct vfs_message {
     struct list_head list;
     MESSAGE msg;
 };
+
+PUBLIC void worker_wait();
+PUBLIC void worker_wake(struct worker_thread* thread);
 
 #endif

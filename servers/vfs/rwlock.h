@@ -16,6 +16,24 @@
 #ifndef _VFS_RWLOCK_H_
 #define _VFS_RWLOCK_H_
 
-typedef enum { RW_NONE, RW_READ, RW_READSER, RW_WRITE } rwlock_access_t;
+#include "thread.h"
+
+typedef enum { RW_NONE, RW_READ, RW_WRITE } rwlock_type_t;
+
+typedef struct {
+    int state;
+    struct worker_thread* owner;
+
+    pthread_mutex_t pending_mutex;
+    u32 pending_reader_count;
+    u32 pending_writer_count;
+    /*struct list_head pending_writers;
+    struct list_head pending_readers;*/
+
+   u32 pending_reader_serial; 
+} rwlock_t;
+
+PUBLIC void rwlock_init(rwlock_t* lock);
+PUBLIC int rwlock_lock(rwlock_t* lock, rwlock_type_t type);
 
 #endif

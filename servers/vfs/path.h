@@ -20,8 +20,8 @@
 
 struct lookup {
     char* path;
-    rwlock_access_t vmnt_lock;
-    rwlock_access_t inode_lock;
+    rwlock_type_t vmnt_lock;
+    rwlock_type_t inode_lock;
     struct vfs_mount** vmnt;
     struct inode** inode;
 };
