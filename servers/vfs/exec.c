@@ -227,9 +227,11 @@ PUBLIC int fs_exec(MESSAGE * msg)
     /* find an fd for MM */
     struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
     /* find a free slot in PROCESS::filp[] */
-    int fd = get_fd(mm_task);
+    int fd;
+    struct file_desc * filp = NULL;
+    retval = get_fd(mm_task, 0, &fd, &filp);
+    if (retval) return retval;
 
-    struct file_desc * filp = alloc_filp();
     if (!filp || fd < 0) {
         execi.mmfd = -1;
         execi.args.memmap = NULL;

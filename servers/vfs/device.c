@@ -36,11 +36,14 @@ PUBLIC int do_ioctl(MESSAGE * p)
     int fd = p->FD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc * filp = pcaller->filp[fd];
+    struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
     if (filp == NULL) return EBADF;
 
     struct inode * pin = filp->fd_inode;
-    if (pin == NULL) return EBADF;
+    if (pin == NULL) {
+        unlock_filp(filp);
+        return EBADF;
+    }
 
     int file_type = pin->i_mode & I_TYPE;
     if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL) return ENOTTY;
@@ -61,6 +64,8 @@ PUBLIC int do_ioctl(MESSAGE * p)
         assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
         send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &msg_to_driver);
     }
+
+    unlock_filp(filp);
 
     return 0;
 }

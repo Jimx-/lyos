@@ -82,15 +82,9 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     int retval = 0;
 
     /* find a free slot in PROCESS::filp[] */
-    fd = get_fd(fp);
-    if (fd < 0) {
-        return fd;
-    }
-
-    struct file_desc * filp = alloc_filp();
-    if (!filp) {
-        return -ENOMEM;
-    }
+    struct file_desc * filp = NULL;
+    retval = get_fd(fp, 0, &fd, &filp);
+    if (retval) return retval;
 
     struct inode* pin = NULL;
     struct vfs_mount* vmnt = NULL;
@@ -322,8 +316,8 @@ PUBLIC int do_lseek(MESSAGE * p)
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
 
-    struct file_desc * filp = pcaller->filp[fd];
-    if (!filp) return EINVAL;
+    struct file_desc * filp = get_filp(pcaller, fd, RWL_WRITE);
+    if (!filp) return EBADF;
 
     u64 pos = 0;
     switch (whence) {
@@ -346,5 +340,6 @@ PUBLIC int do_lseek(MESSAGE * p)
         p->OFFSET = newpos;
     }
 
+    unlock_filp(filp);
     return 0;
 }

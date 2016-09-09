@@ -113,7 +113,6 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 PUBLIC int do_vfs_mmap()
 {
     endpoint_t src = mm_msg.source;
-    if (src != TASK_FS) return EPERM;
 
     endpoint_t who = mm_msg.MMAP_WHO;
     struct mmproc* mmp = endpt_mmproc(who);

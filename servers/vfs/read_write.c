@@ -188,7 +188,6 @@ PUBLIC int do_getdents(MESSAGE * p)
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
     struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
-
     if (!filp) return EBADF;
 
     if (!(filp->fd_inode->i_mode & R_BIT)) {
@@ -204,6 +203,7 @@ PUBLIC int do_getdents(MESSAGE * p)
     int retval = request_getdents(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev, 
                 filp->fd_inode->i_num, filp->fd_pos, p->source, p->BUF, p->CNT, &newpos);
     if (retval > 0) filp->fd_pos = newpos;
+
     unlock_filp(filp);
 
     return retval;

@@ -127,6 +127,9 @@ PRIVATE void handle_request(MESSAGE* msg)
     int msgtype = msg->type;
 
     switch (msgtype) {
+    case FS_REGISTER:
+        msg->RETVAL = do_register_filesystem(msg);
+        break;
     case OPEN:
         msg->FD = do_open(msg);
         break;
@@ -137,15 +140,64 @@ PRIVATE void handle_request(MESSAGE* msg)
     case WRITE:
         msg->CNT = do_rdwt(msg);
         break;
+    case IOCTL:
+        msg->RETVAL = do_ioctl(msg);
+        break;
+    case STAT:
+        msg->RETVAL = do_stat(msg);
+        break;
     case FSTAT:
         msg->RETVAL = do_fstat(msg);
+        break;
+    case ACCESS:
+        msg->RETVAL = do_access(msg);
+        break;
+    case LSEEK:
+        msg->RETVAL = do_lseek(msg);
+        break;
+    case UMASK:
+        msg->RETVAL = (int)do_umask(msg);
+        break;
+    case FCNTL:
+        msg->RETVAL = do_fcntl(msg);
+        break;
+    case DUP:
+        msg->RETVAL = do_dup(msg);
+        break;
+    case CHDIR:
+        msg->RETVAL = do_chdir(msg);
+        break;
+    case FCHDIR:
+        msg->RETVAL = do_fchdir(msg);
+        break;
+    case MOUNT:
+        msg->RETVAL = do_mount(msg);
+        break;
+    case CHMOD:
+    case FCHMOD:
+        msg->RETVAL = do_chmod(msgtype, msg);
+        break; 
+    case GETDENTS:
+        msg->RETVAL = do_getdents(msg);
+        break;
+    case PM_VFS_GETSETID:
+        msg->RETVAL = fs_getsetid(msg);
+        break;
+    case PM_VFS_FORK:
+        msg->RETVAL = fs_fork(msg);
+        break; 
+    case PM_VFS_EXEC:
+        msg->RETVAL = fs_exec(msg);
+        break;
+    case EXIT:
+        msg->RETVAL = fs_exit(msg);
+        break;
+    case MM_VFS_REQUEST:
+        msg->RETVAL = do_mm_request(msg);
         break;
     case RESUME_PROC:
         msg->RETVAL = 0;
         msg->source = msg->PROC_NR;
-        break;
-    case PM_VFS_EXEC:
-        msg->RETVAL = fs_exec(msg);
         break;
     default:
         msg->RETVAL = ENOSYS;

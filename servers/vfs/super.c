@@ -48,7 +48,7 @@ PUBLIC int do_register_filesystem(MESSAGE * p)
     char name[FS_LABEL_MAX];
     name[name_len] = '\0';
 
-    data_copy(TASK_FS, name, p->source, p->PATHNAME, name_len);
+    data_copy(SELF, name, p->source, p->PATHNAME, name_len);
 
     return add_filesystem(p->source, name);
 }
@@ -64,7 +64,9 @@ PUBLIC int add_filesystem(endpoint_t fs_ep, char * name)
     strcpy(pfs->name, name);
     pfs->fs_ep = fs_ep;
 
+    pthread_mutex_lock(&filesystem_lock);
     list_add(&(pfs->list), &filesystem_table);
+    pthread_mutex_unlock(&filesystem_lock);
 
     printl("VFS: %s filesystem registered, endpoint: %d\n", pfs->name, pfs->fs_ep);
 

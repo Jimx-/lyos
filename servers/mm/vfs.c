@@ -82,7 +82,7 @@ PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_byt
 
 PUBLIC int do_vfs_reply()
 {
-    if (mm_msg.source != TASK_FS || !active) return EPERM;
+    if (!active) return EPERM;
 
     struct vfs_request* orig = active;
     struct mmproc* mmp = endpt_mmproc(mm_msg.MMRENDPOINT);

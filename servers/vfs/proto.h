@@ -92,15 +92,17 @@ PUBLIC int do_chmod(int type, MESSAGE * p);
 PUBLIC int do_ioctl(MESSAGE * p);
 PUBLIC int do_fcntl(MESSAGE * p);
 
+PUBLIC int fs_fork(MESSAGE * p);
+PUBLIC int fs_exit(MESSAGE * m);
+
 PUBLIC pid_t create_worker(int id);
 PUBLIC void enqueue_request(MESSAGE* msg);
 PUBLIC struct vfs_message* dequeue_response();
 
-PUBLIC struct file_desc* alloc_filp();
-PUBLIC int get_fd(struct fproc* fp);
 PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 PUBLIC void unlock_filp(struct file_desc* filp);
 PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
+PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
 #endif
 

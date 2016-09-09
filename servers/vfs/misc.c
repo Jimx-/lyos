@@ -50,6 +50,16 @@ PUBLIC struct fproc * vfs_endpt_proc(endpoint_t ep)
     return NULL;
 }
 
+PUBLIC void lock_fproc(struct fproc* fp)
+{
+    pthread_mutex_lock(&fp->lock);
+}
+
+PUBLIC void unlock_fproc(struct fproc* fp)
+{
+    pthread_mutex_unlock(&fp->lock);
+}
+
 PUBLIC int do_fcntl(MESSAGE * p)
 {
     int fd = p->FD;
@@ -57,37 +67,37 @@ PUBLIC int do_fcntl(MESSAGE * p)
     int argx = p->BUF_LEN;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
+    int retval = 0;
 
-    if (fd < 0 || fd >= NR_FILES) return -EINVAL;
-
-    struct file_desc * filp = pcaller->filp[fd];
+    struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
     if (!filp) return EBADF;
+
     int i, newfd;
     switch(request) {
         case F_DUPFD:
             if (argx < 0 || argx >= NR_FILES) return -EINVAL;
+
             newfd = -1;
-            for (i = argx; i < NR_FILES; i++) {
-                if (pcaller->filp[i] == 0) {
-                    newfd = i;
-                    break;
-                }
+            retval = get_fd(pcaller, argx, &newfd, NULL);
+            if (retval) {
+                unlock_filp(filp);
+                return retval;
             }
-            if ((newfd < 0) || (newfd >= NR_FILES))
-                panic("filp[] is full (PID:%d)", pcaller->endpoint);
             filp->fd_cnt++;
             pcaller->filp[newfd] = filp;
-            return newfd;
+            retval = newfd;
+            break;
         case F_SETFD:
-            return 0;
+            break;
         case F_SETFL:
             filp->fd_mode = argx;
-            return 0;
+            break;
         default:
             break;
     }
 
-    return 0;
+    unlock_filp(filp);
+    return retval;
 }
 
 /**
@@ -99,20 +109,18 @@ PUBLIC int do_dup(MESSAGE * p)
     int newfd = p->NEWFD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
+    int retval = 0;
 
-    struct file_desc * filp = pcaller->filp[fd];
+    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    if (!filp) return EBADF;
     
     if (newfd == -1) {
         /* find a free slot in PROCESS::filp[] */
-        int i;
-        for (i = 0; i < NR_FILES; i++) {
-            if (pcaller->filp[i] == 0) {
-                newfd = i;
-                break;
-            }
+        retval = get_fd(pcaller, 0, &newfd, NULL);
+        if (retval) {
+            unlock_filp(filp);
+            return retval;
         }
-        if ((newfd < 0) || (newfd >= NR_FILES))
-            panic("filp[] is full (PID:%d)", pcaller->endpoint);
     }
 
     if (pcaller->filp[newfd] != 0) {
@@ -123,6 +131,7 @@ PUBLIC int do_dup(MESSAGE * p)
 
     filp->fd_cnt++;
     pcaller->filp[newfd] = filp;
+    unlock_filp(filp);
 
     return newfd;
 }
@@ -145,11 +154,12 @@ PUBLIC int do_fchdir(MESSAGE * p)
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
 
-    struct file_desc * filp = pcaller->filp[p->FD];
+    struct file_desc* filp = get_filp(pcaller, p->FD, RWL_READ);
+    if (!filp) return EBADF;
 
-    if (!filp) return EINVAL;
-
-    return change_node(pcaller, &pcaller->pwd, filp->fd_inode);
+    int retval = change_node(pcaller, &pcaller->pwd, filp->fd_inode);
+    unlock_filp(filp);
+    return retval;
 }
 
 /**
@@ -182,6 +192,7 @@ PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t 
     unlock_inode(pin);
     unlock_vmnt(vmnt);
     put_inode(pin);
+
     return retval;
 }
 
@@ -236,16 +247,16 @@ PUBLIC int do_mm_request(MESSAGE* m)
                 goto reply;
             }
 
-            struct file_desc* filp = fp->filp[fd];
+            struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
             if (!filp || !filp->fd_inode) {
                 result = EBADF;
                 goto reply;
             }
 
             lock_fproc(mm_task);
-            int mmfd = get_fd(mm_task);
-            if (mmfd < 0) {
-                result = -mmfd;
+            int mmfd;
+            result = get_fd(mm_task, 0, &mmfd, NULL);
+            if (result) {
                 goto reply;
             }
 
@@ -259,13 +270,14 @@ PUBLIC int do_mm_request(MESSAGE* m)
             m->MMRLENGTH = filp->fd_inode->i_size;
             m->MMRFD = mmfd;
 
+            unlock_filp(filp);
             result = 0;
             break;
         }
 
     case MMR_FDREAD:
         {
-            struct file_desc* filp = mm_task->filp[fd];
+            struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
             if (!filp || !filp->fd_inode) {
                 result = EBADF;
                 goto reply;
@@ -290,16 +302,19 @@ PUBLIC int do_mm_request(MESSAGE* m)
                     buf, len, NULL, &count);
                 m->MMRLENGTH = count;
             } else if (file_type == I_DIRECTORY) {
+                unlock_filp(filp);
                 return EISDIR;
             } else {
+                unlock_filp(filp);
                 return EBADF;
             }
 
+            unlock_filp(filp);
             break;
         }
         case MMR_FDCLOSE:
         {
-            struct file_desc* filp = mm_task->filp[fd];
+            struct file_desc* filp = get_filp(mm_task, fd, RWL_READ);
             if (!filp || !filp->fd_inode) {
                 result = EBADF;
                 goto reply;
@@ -307,11 +322,15 @@ PUBLIC int do_mm_request(MESSAGE* m)
 
             struct inode* pin = filp->fd_inode;
 
+            unlock_inode(pin);
             put_inode(pin);
+
             if (--filp->fd_cnt == 0) {
                 filp->fd_inode = NULL;
                 mm_task->filp[fd] = NULL;
             }
+
+            unlock_filp(filp);
         }
     }
 
@@ -320,7 +339,65 @@ reply:
     m->MMRENDPOINT = ep;
 
     m->type = MM_VFS_REPLY;
-    if (asyncsend3(TASK_MM, m, 0) != 0) panic("do_mm_request(): cannot reply to mm");
+    if (send_recv(SEND, TASK_MM, m) != 0) panic("do_mm_request(): cannot reply to mm");
 
     return SUSPEND;
+}
+
+/* Perform fs part of fork/exit */
+PUBLIC int fs_fork(MESSAGE * p)
+{
+    int i;
+    struct fproc * child = vfs_endpt_proc(p->ENDPOINT);
+    struct fproc * parent = vfs_endpt_proc(p->PENDPOINT);
+    pthread_mutex_t cmutex;
+
+    if (child == NULL || parent == NULL) {
+        return EINVAL;
+    }
+    
+    lock_fproc(parent);
+    lock_fproc(child);
+
+    cmutex = child->lock;
+    *child = *parent;
+    child->lock = cmutex;
+    child->pid = p->PID;
+    child->endpoint = p->ENDPOINT;
+
+    for (i = 0; i < NR_FILES; i++) {
+        struct file_desc* filp = get_filp(child, i, RWL_WRITE);
+        if (filp) {
+            filp->fd_cnt++;
+            filp->fd_inode->i_cnt++;
+            unlock_filp(filp);
+        }
+    }
+
+    if (child->root) child->root->i_cnt++;
+    if (child->pwd) child->pwd->i_cnt++;
+
+    unlock_fproc(child);
+    unlock_fproc(parent);
+    return 0;
+}
+
+PUBLIC int fs_exit(MESSAGE * m)
+{
+    int i;
+    struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
+
+    for (i = 0; i < NR_FILES; i++) {
+        struct file_desc* filp = get_filp(p, i, RWL_WRITE);
+        if (filp) {
+            p->filp[i]->fd_inode->i_cnt--;
+            if (--p->filp[i]->fd_cnt == 0) {
+                p->filp[i]->fd_inode = 0;
+            }
+            unlock_filp(filp);
+            p->filp[i] = 0;
+        }
+    }
+
+    return 0;
 }

@@ -29,7 +29,6 @@
 /* FS */
 EXTERN  int                 ROOT_DEV;
 EXTERN  struct file_desc    f_desc_table[NR_FILE_DESC];
-EXTERN  pthread_mutex_t     f_desc_table_lock;
 EXTERN  struct inode        inode_table[NR_INODE];
 #define FSBUF_SIZE          0x100000
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];
@@ -38,6 +37,7 @@ EXTERN  MESSAGE             fs_msg;
 EXTERN  struct inode *      root_inode;
 EXTERN  int                 err_code;
 
+EXTERN pthread_mutex_t  filesystem_lock;
 extern struct list_head filesystem_table;
 /* vfs mount table */
 extern struct list_head vfs_mount_table;

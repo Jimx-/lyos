@@ -88,6 +88,7 @@ PUBLIC int do_stat(MESSAGE * p)
     unlock_inode(pin);
     unlock_vmnt(vmnt);
     put_inode(pin);
+    
     return retval;
 }
 
@@ -109,6 +110,8 @@ PUBLIC int do_fstat(MESSAGE * p)
     /* Issue the request */
     int retval = request_stat(filp->fd_inode->i_fs_ep, 
         filp->fd_inode->i_dev, filp->fd_inode->i_num, src, buf);
+
     unlock_filp(filp);
+
     return retval;
 }

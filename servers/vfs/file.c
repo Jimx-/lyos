@@ -51,36 +51,52 @@ PUBLIC struct file_desc* alloc_filp()
 {
     int i;
 
-    pthread_mutex_lock(&f_desc_table_lock);
     /* find a free slot in f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++) {
         struct file_desc* filp = &f_desc_table[i];
 
         if (f_desc_table[i].fd_inode == 0 && !pthread_mutex_trylock(&filp->fd_lock)) {
-            pthread_mutex_unlock(&f_desc_table_lock);
             return filp;
         }
     }
-    pthread_mutex_unlock(&f_desc_table_lock);
 
     return NULL;
 }
 
-PUBLIC int get_fd(struct fproc* fp)
+PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
 {
+    /* find an unused fd in proc's filp table and a free file slot */
+
     int i;
 
-    for (i = 0; i < NR_FILES; i++) {
+    for (i = start; i < NR_FILES; i++) {
         if (fp->filp[i] == 0) {
-            return i;
+            *fd = i;
+            break;
         }
     }
+    if (i == NR_FILES) {
+        return EMFILE;
+    }
+    if (!fpp) return 0;
     
-    return -ENFILE;
+    /* find a free slot in f_desc_table[] */
+    for (i = 0; i < NR_FILE_DESC; i++) {
+        struct file_desc* filp = &f_desc_table[i];
+
+        if (filp->fd_inode == 0 && !pthread_mutex_trylock(&filp->fd_lock)) {
+            *fpp = filp;
+            return 0;
+        }
+    }
+
+    return ENFILE;
 }
 
 PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
 {
+    /* retrieve a file descriptor from fp's filp table and lock it */
+    
     struct file_desc* filp = NULL;
     
     if (fd < 0 || fd >= NR_FILES) {

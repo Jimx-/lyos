@@ -184,6 +184,7 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
         lookup.vmnt_lock = RWL_WRITE;
         lookup.inode_lock = RWL_WRITE;
         pmp = resolve_path(&lookup, fp);
+        
         if (pmp == NULL) retval = err_code;
         else if (pmp->i_cnt == 1) retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
         else retval = EBUSY;

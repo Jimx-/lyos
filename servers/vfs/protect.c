@@ -152,6 +152,7 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
         lookup.vmnt_lock = RWL_READ;
         lookup.inode_lock = RWL_WRITE;
         pin = resolve_path(&lookup, pcaller);
+        
     } else if (type == FCHMOD) {
         filp = get_filp(pcaller, p->FD, RWL_WRITE);
         if (!filp) return EBADF;
@@ -190,6 +191,7 @@ PUBLIC int fs_getsetid(MESSAGE * p)
     if (fp == NULL) 
         retval = EINVAL;
     else {
+        lock_fproc(fp);
         switch (p->u.m3.m3i3) {
         case GS_SETUID:
             fp->realuid = p->UID;
@@ -203,6 +205,7 @@ PUBLIC int fs_getsetid(MESSAGE * p)
             retval = EINVAL;
             break;
         }
+        unlock_fproc(fp); 
     }
 
     p->type = PM_VFS_GETSETID_REPLY;

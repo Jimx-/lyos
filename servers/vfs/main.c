@@ -59,9 +59,6 @@
 
 PUBLIC void init_vfs();
 
-PRIVATE int fs_fork(MESSAGE * p);
-PRIVATE int fs_exit(MESSAGE * m);
-
 /**
  * <Ring 1> Main loop of VFS.
  */
@@ -76,96 +73,13 @@ PUBLIC int main()
 		fs_sleeping = 1;
 		send_recv(RECEIVE, ANY, &msg);
 		fs_sleeping = 0;
-		int src = msg.source;
+
 		int msgtype = msg.type;
-
-		if (msgtype == RESUME_PROC || msgtype == OPEN || msgtype == CLOSE || msgtype == READ || msgtype == WRITE) enqueue_request(&msg);
-		
-		switch (msgtype) {
-        case FS_REGISTER:
-            msg.RETVAL = do_register_filesystem(&msg);
-            break;
-		/*case OPEN:
-			msg.FD = do_open(&msg);
-			break;*/
-		/*case CLOSE:
-			msg.RETVAL = do_close(&msg);
-			break;*/
-		//case READ:
-		/*case WRITE:
-			msg.CNT = do_rdwt(&msg);
-			break; */
-		case IOCTL:
-			msg.RETVAL = do_ioctl(&msg);
-			break;
-		case STAT:
-			msg.RETVAL = do_stat(&msg);
-			break;
-		case FSTAT:
-			msg.RETVAL = do_fstat(&msg);
-			break; 
-		case ACCESS:
-			msg.RETVAL = do_access(&msg);
-			break;
-		case LSEEK:
-			msg.RETVAL = do_lseek(&msg);
-			break;
-		case UMASK:
-			msg.RETVAL = (int)do_umask(&msg);
-			break;
-		case FCNTL:
-			msg.RETVAL = do_fcntl(&msg);
-			break;
-		case DUP:
-			msg.RETVAL = do_dup(&msg);
-			break;
-		case CHDIR:
-			msg.RETVAL = do_chdir(&msg);
-			break;
-		case FCHDIR:
-			msg.RETVAL = do_fchdir(&msg);
-			break;
-		case MOUNT:
-			msg.RETVAL = do_mount(&msg);
-			break;
-		case CHMOD:
-		case FCHMOD:
-			msg.RETVAL = do_chmod(msgtype, &msg);
-			break;
-		case GETDENTS:
-			msg.RETVAL = do_getdents(&msg);
-			break;
-		case PM_VFS_FORK:
-			msg.RETVAL = fs_fork(&msg);
-			break;
-		case PM_VFS_GETSETID:
-			msg.RETVAL = fs_getsetid(&msg);
-			break;
-		case PM_VFS_EXEC:
-			msg.RETVAL = fs_exec(&msg);
-			break;
-		case EXIT:
-			msg.RETVAL = fs_exit(&msg);
-			break;
-		case MM_VFS_REQUEST:
-			msg.RETVAL = do_mm_request(&msg);
-			break;
-		//case RESUME_PROC:
-		//	src = msg.PROC_NR;
-		//	break;
-		default:
-			msg.RETVAL = ENOSYS;
-			break;
-		}
-
-		if (msgtype != RESUME_PROC && msgtype != OPEN && msgtype != CLOSE && msgtype != READ && msgtype != WRITE) {
-			if (msg.type != FS_THREAD_WAKEUP && msg.type != SUSPEND_PROC && msg.RETVAL != SUSPEND) {
-				msg.type = SYSCALL_RET;
-				send_recv(SEND_NONBLOCK, src, &msg);
-			}
-		}
+		/* enqueue a request from the user */
+		if (msgtype != FS_THREAD_WAKEUP) enqueue_request(&msg);
 
 		struct vfs_message* res;
+		/* send result back to the user */
 		while (TRUE) {
 			res = dequeue_response();
 			if (!res) break;
@@ -191,7 +105,6 @@ PUBLIC void init_vfs()
 		memset(&f_desc_table[i], 0, sizeof(struct file_desc));
 		pthread_mutex_init(&f_desc_table[i].fd_lock, NULL);
 	}
-	pthread_mutex_init(&f_desc_table_lock, NULL);
 	
 	/* inode_table[] */
 	for (i = 0; i < NR_INODE; i++)
@@ -201,6 +114,7 @@ PUBLIC void init_vfs()
 	for (i = 0; i < NR_PROCS; i++) {
 		pthread_mutex_init(&fproc_table[i].lock, NULL);
 	}
+	pthread_mutex_init(&filesystem_lock, NULL);
 
     init_inode_table();
 
@@ -245,70 +159,4 @@ PUBLIC void init_vfs()
     add_filesystem(TASK_SYSFS, "sysfs");
 
     fs_sleeping = 0;
-}
-
-/* Perform fs part of fork/exit */
-PRIVATE int fs_fork(MESSAGE * p)
-{
-	int i;
-	struct fproc * child = vfs_endpt_proc(p->ENDPOINT);
-	struct fproc * parent = vfs_endpt_proc(p->PENDPOINT);
-
-	lock_fproc(child);
-	lock_fproc(parent);
-
-	if (child == NULL || parent == NULL) {
-		unlock_fproc(parent);
-		unlock_fproc(child);
-		return EINVAL;
-	}
-	
-	*child = *parent;
-	child->pid = p->PID;
-	child->endpoint = p->ENDPOINT;
-
-	for (i = 0; i < NR_FILES; i++) {
-		if (child->filp[i]) {
-			child->filp[i]->fd_cnt++;
-			child->filp[i]->fd_inode->i_cnt++;
-		}
-	}
-
-	if (child->root) child->root->i_cnt++;
-	if (child->pwd) child->pwd->i_cnt++;
-
-	unlock_fproc(parent);
-	unlock_fproc(child);
-
-	return 0;
-}
-
-PRIVATE int fs_exit(MESSAGE * m)
-{
-	int i;
-	struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
-	lock_fproc(p);
-	for (i = 0; i < NR_FILES; i++) {
-		struct file_desc* filp = get_filp(p, i, RWL_WRITE);
-		if (filp) {
-			p->filp[i]->fd_inode->i_cnt--;
-			if (--p->filp[i]->fd_cnt == 0) {
-				p->filp[i]->fd_inode = 0;
-			}
-			unlock_filp(filp);
-			p->filp[i] = 0;
-		}
-	}
-	unlock_fproc(p);
-	return 0;
-}
-
-PUBLIC void lock_fproc(struct fproc* fp)
-{
-	pthread_mutex_lock(&fp->lock);
-}
-
-PUBLIC void unlock_fproc(struct fproc* fp)
-{
-	pthread_mutex_unlock(&fp->lock);
 }
