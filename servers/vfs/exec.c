@@ -29,6 +29,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
+#include "types.h"
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -90,8 +91,16 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct
     memcpy(execi->prog_name, pathname, MAX_PATH);
     memcpy(execi->args.prog_name, pathname, MAX_PATH);
 
-    if ((execi->pin = resolve_path(pathname, fp)) == NULL) return err_code;
+    struct lookup lookup;
+    struct vfs_mount* vmnt = NULL;
+    struct inode* pin = NULL;
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_WRITE;
+    if ((execi->pin = resolve_path(&lookup, fp)) == NULL) return err_code;
     execi->vmnt = execi->pin->i_vmnt;
+    unlock_inode(execi->pin);
+    unlock_vmnt(execi->vmnt);
 
     if ((execi->pin->i_mode & I_TYPE) != I_REGULAR) return ENOEXEC;
     if ((retval = forbidden(fp, execi->pin, X_BIT)) != 0) return retval;

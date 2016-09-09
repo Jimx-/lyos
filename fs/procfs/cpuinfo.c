@@ -153,7 +153,7 @@ PUBLIC void root_cpuinfo()
         return;
     }
 
-    if (get_cpuinfo(&cpu_info)) {
+    if (get_cpuinfo(cpu_info)) {
         printl("procfs: can't get cpu info\n");
         return;
     }

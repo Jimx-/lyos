@@ -26,18 +26,24 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "errno.h"
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
 #include "global.h"
 
-PUBLIC void lock_filp(struct file_desc* filp)
+PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
 {
+    if (filp->fd_inode) rwlock_lock(&filp->fd_inode->i_lock, lock_type);
     spinlock_lock(&filp->fd_lock);
 }
 
 PUBLIC void unlock_filp(struct file_desc* filp)
 {
+    if (filp->fd_cnt) {
+        unlock_inode(filp->fd_inode);
+    }
+
     spinlock_unlock(&filp->fd_lock);
 }
 
@@ -50,8 +56,8 @@ PUBLIC struct file_desc* alloc_filp()
     for (i = 0; i < NR_FILE_DESC; i++) {
         struct file_desc* filp = &f_desc_table[i];
 
-        if (f_desc_table[i].fd_inode == 0) {
-            lock_filp(filp);
+        if (f_desc_table[i].fd_inode == 0 && !spinlock_locked(&filp->fd_lock)) {
+            spinlock_lock(&filp->fd_lock);
             spinlock_unlock(&f_desc_table_lock);
             return filp;
         }
@@ -72,4 +78,21 @@ PUBLIC int get_fd(struct fproc* fp)
     }
     
     return -ENFILE;
+}
+
+PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
+{
+    struct file_desc* filp = NULL;
+    
+    if (fd < 0 || fd >= NR_FILES) {
+        err_code = EINVAL;
+        return NULL;
+    }
+    filp = fp->filp[fd];
+    if (!filp) {
+        err_code = EBADF;
+    } else {
+        lock_filp(filp, lock_type);
+    }
+    return filp;
 }

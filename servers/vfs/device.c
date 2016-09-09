@@ -26,6 +26,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "errno.h"
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "global.h"

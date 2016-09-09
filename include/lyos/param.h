@@ -16,6 +16,8 @@
 #ifndef _PARAM_H_
 #define _PARAM_H_
 
+#include <lyos/config.h>
+    
 #define KINFO_MAGIC     0x4B494E
 
 #define KINFO_CMDLINE_LEN	1024

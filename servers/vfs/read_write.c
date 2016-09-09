@@ -28,6 +28,7 @@
 #include <lyos/ipc.h>
 #include <sys/stat.h>
 #include "errno.h"
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
@@ -60,7 +61,7 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, in
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    async_sendrec(fs_ep, &m, 0);
+    send_recv(BOTH, fs_ep, &m);
 
     if (m.type != FSREQ_RET) {
         printl("VFS: request_readwrite: received invalid message.");
@@ -84,15 +85,15 @@ PUBLIC int do_rdwt(MESSAGE * p)
     int fd = p->FD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc * filp = pcaller->filp[fd];
     int rw_flag = p->type;
+    rwlock_type_t lock_type = (rw_flag == WRITE) ? RWL_WRITE : RWL_READ; 
+    struct file_desc * filp = get_filp(pcaller, fd, lock_type);
     char * buf = p->BUF;
     int len = p->CNT;
 
     int bytes_rdwt = 0, retval = 0;
     u64 newpos;
 
-    if (fd < 0) return -EBADF;
     if (!filp) return -EBADF;
 
     int position = filp->fd_pos;
@@ -101,24 +102,32 @@ PUBLIC int do_rdwt(MESSAGE * p)
 
     /* TODO: pipe goes here */
     /* if (PIPE) ... */
-    if (pin == NULL) return -ENOENT;
+    if (pin == NULL) {
+        unlock_filp(filp);
+        return -ENOENT;
+    }
     int file_type = pin->i_mode & I_TYPE;
 
     /* TODO: read/write for block special */
     if (file_type == I_CHAR_SPECIAL) {
         int t = p->type == READ ? CDEV_READ : CDEV_WRITE;
-        p->type = t;
+        MESSAGE driver_msg;
+        driver_msg.type = t;
 
         int dev = pin->i_specdev;
 
-        p->DEVICE   = MINOR(dev);
-        p->BUF  = buf;
-        p->CNT  = len;
-        p->PROC_NR  = src;
+        driver_msg.DEVICE   = MINOR(dev);
+        driver_msg.BUF  = buf;
+        driver_msg.CNT  = len;
+        driver_msg.PROC_NR  = src;
         assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-        send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, p);
+        send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
-        return p->CNT;
+        p->type = driver_msg.type;
+        p->PROC_NR = driver_msg.PROC_NR;
+
+        unlock_filp(filp);
+        return driver_msg.CNT;
     } else if (file_type == I_REGULAR) {
         /* check for O_APPEND */
         if (rw_flag == WRITE) {
@@ -133,6 +142,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
         bytes_rdwt += bytes;
         position = newpos;
     } else if (file_type == I_DIRECTORY) {
+        unlock_filp(filp);
         return -EISDIR;
     } else {
         printl("VFS: do_rdwt: unknown file type: %x\n", file_type);
@@ -144,6 +154,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
 
     filp->fd_pos = position;
 
+    unlock_filp(filp);
     if (!retval) {
         return bytes_rdwt;
     }
@@ -177,17 +188,24 @@ PUBLIC int do_getdents(MESSAGE * p)
     int fd = p->FD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc * filp = pcaller->filp[fd];
+    struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
 
     if (!filp) return EBADF;
 
-    if (!(filp->fd_inode->i_mode & R_BIT)) return EBADF;
-    if (!S_ISDIR(filp->fd_inode->i_mode)) return EBADF;
+    if (!(filp->fd_inode->i_mode & R_BIT)) {
+        unlock_filp(filp);
+        return EBADF;
+    }
+    if (!S_ISDIR(filp->fd_inode->i_mode)) {
+        unlock_filp(filp);
+        return EBADF;
+    }
 
     u64 newpos;
     int retval = request_getdents(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev, 
                 filp->fd_inode->i_num, filp->fd_pos, p->source, p->BUF, p->CNT, &newpos);
     if (retval > 0) filp->fd_pos = newpos;
+    unlock_filp(filp);
 
     return retval;
 }

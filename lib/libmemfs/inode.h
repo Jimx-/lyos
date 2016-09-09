@@ -61,6 +61,7 @@ extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 
 extern struct memfs_inode root_inode;
 
+PUBLIC void memfs_init_inode();
 PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name, int index);
 PUBLIC void memfs_set_inode_stat(struct memfs_inode * pin, struct memfs_stat * stat);
 PUBLIC struct memfs_inode * memfs_get_root_inode();

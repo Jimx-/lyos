@@ -17,23 +17,16 @@
 #define _VFS_RWLOCK_H_
 
 #include "thread.h"
+#include <lyos/spinlock.h>
 
-typedef enum { RW_NONE, RW_READ, RW_WRITE } rwlock_type_t;
+typedef enum { RWL_NONE, RWL_READ, RWL_WRITE } rwlock_type_t;
 
 typedef struct {
-    int state;
-    struct worker_thread* owner;
-
-    pthread_mutex_t pending_mutex;
-    u32 pending_reader_count;
-    u32 pending_writer_count;
-    /*struct list_head pending_writers;
-    struct list_head pending_readers;*/
-
-   u32 pending_reader_serial; 
+    spinlock_t lock; 
 } rwlock_t;
 
 PUBLIC void rwlock_init(rwlock_t* lock);
 PUBLIC int rwlock_lock(rwlock_t* lock, rwlock_type_t type);
+PUBLIC int rwlock_unlock(rwlock_t* lock);
 
 #endif

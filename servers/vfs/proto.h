@@ -16,6 +16,8 @@
 #ifndef _VFS_PROTO_H_
 #define _VFS_PROTO_H_
 
+#include "path.h"
+#include "rwlock.h"
 #include "thread.h"
     
 PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr);
@@ -29,19 +31,24 @@ PUBLIC void init_inode_table();
 PUBLIC struct inode * new_inode(dev_t dev, ino_t num);
 PUBLIC struct inode * find_inode(dev_t dev, ino_t num);
 PUBLIC void put_inode(struct inode * pin);
-PUBLIC void lock_inode(struct inode * pin);
+PUBLIC int lock_inode(struct inode * pin, rwlock_type_t type);
 PUBLIC void unlock_inode(struct inode * pin);
 PUBLIC void sync_inode  (struct inode * p);
 
-PUBLIC struct inode * resolve_path(char * pathname, struct fproc * fp);
-PUBLIC struct inode * last_dir(char * pathname, struct fproc * fp);
+PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags, 
+                struct vfs_mount** vmnt, struct inode** inode);
+PUBLIC struct inode * resolve_path(struct lookup* lookup, struct fproc * fp);
+PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp);
 
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
-PUBLIC void lock_vmnt(struct vfs_mount * vmnt);
+PUBLIC int lock_vmnt(struct vfs_mount * vmnt, rwlock_type_t type);
 PUBLIC void unlock_vmnt(struct vfs_mount * vmnt);
 PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly);
 PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access);
 PUBLIC mode_t do_umask(MESSAGE * p);
+PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt);
+PUBLIC struct vfs_mount * get_free_vfs_mount();
+PUBLIC int do_vfs_open(MESSAGE * p);
 
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
 PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 
@@ -50,6 +57,7 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
         int readonly, int is_root, struct lookup_result * res);
 
 PUBLIC int do_open(MESSAGE * p);
+PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode);
 PUBLIC int  do_close(MESSAGE * p);
 PUBLIC int  do_lseek(MESSAGE * p);
 PUBLIC int  do_chroot(MESSAGE * p);
@@ -90,6 +98,9 @@ PUBLIC struct vfs_message* dequeue_response();
 
 PUBLIC struct file_desc* alloc_filp();
 PUBLIC int get_fd(struct fproc* fp);
+PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
+PUBLIC void unlock_filp(struct file_desc* filp);
+PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 
 #endif
 

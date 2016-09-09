@@ -23,6 +23,7 @@
 #include <lyos/fs.h>
 #include "string.h"
 #include <lyos/ipc.h>
+#include <lyos/sysutils.h>
 #include "libfsdriver/libfsdriver.h"
 
 PUBLIC int fsdriver_copyin(struct fsdriver_data * data, size_t offset, void * buf, size_t len)

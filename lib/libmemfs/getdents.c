@@ -44,7 +44,7 @@ PUBLIC int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data * data, u64
     static char getdents_buf[GETDENTS_BUFSIZE];
 
     int retval = 0;
-    int done = 0;
+    //int done = 0;
     off_t pos = *ppos, i = 0;
 
     struct memfs_inode* pin = memfs_find_inode(num);

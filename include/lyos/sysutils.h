@@ -18,6 +18,7 @@
 
 #include <signal.h>
 #include <lyos/param.h>
+#include "arch_type.h"
     
 #define SYS_CALL_MASK_SIZE  BITCHUNKS(NR_SYS_CALL)
 
@@ -31,6 +32,7 @@ PUBLIC  int     get_kinfo(kinfo_t * kinfo);
 PUBLIC  int     get_bootprocs(struct boot_proc * bp);
 PUBLIC  int     get_kernel_cmdline(char * buf, int buflen);
 PUBLIC  int     get_machine(struct machine* machine);
+PUBLIC  int     get_cpuinfo(struct cpu_info* cpuinfo);
 PUBLIC  int     get_proctab(struct proc* proc);
 
 PUBLIC  int     data_copy(endpoint_t dest_pid, void * dest_addr, 
@@ -80,11 +82,16 @@ PUBLIC int      get_ticks(clock_t* ticks, clock_t* idle_ticks);
 #define TIME_LEFT       u.m3.m3l1
 PUBLIC clock_t kernel_alarm(clock_t expire_time, int abs_time);
 
+PUBLIC u32 now();
+
 PUBLIC int     kernel_trace(int request, endpoint_t endpoint, void* addr, void* data);
 
 #define PM_INFO_PROCTAB    1
 PUBLIC int     pm_getinfo(int request, void* dest, int size);
 
 PUBLIC int kernel_kprofile(int action, size_t size, int freq, endpoint_t endpt, void* info, void* buf);
+
+PUBLIC void * mmap_for(endpoint_t forwhom,
+    void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 
 #endif

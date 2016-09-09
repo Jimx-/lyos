@@ -28,6 +28,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include "types.h"
+#include "const.h"
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -51,11 +53,19 @@ PUBLIC int do_access(MESSAGE * p)
     //phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
     pathname[namelen] = 0;
 
-    struct inode * pin = resolve_path(pathname, pcaller);
+    struct lookup lookup;
+    struct vfs_mount* vmnt = NULL;
+    struct inode* pin = NULL;
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_WRITE;
+    pin = resolve_path(&lookup, pcaller);
     if (!pin) return ENOENT;
 
     int retval = forbidden(pcaller, pin, p->MODE);
 
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
     put_inode(pin);
 
     return (retval == 0) ? 0 : -1;
@@ -123,10 +133,13 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, m
 
 PUBLIC int do_chmod(int type, MESSAGE * p)
 {
-    struct inode * pin;
+    struct inode * pin = NULL;
+    struct vfs_mount* vmnt = NULL;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
+    struct file_desc* filp = NULL;
 
+    struct lookup lookup;
     if (type == CHMOD) {
         char pathname[MAX_PATH];
         if (p->NAME_LEN > MAX_PATH) return ENAMETOOLONG;
@@ -135,9 +148,12 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
         data_copy(SELF, pathname, pcaller->endpoint, p->PATHNAME, p->NAME_LEN);
         pathname[p->NAME_LEN] = '\0';
 
-        pin = resolve_path(pathname, pcaller);
+        init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+        lookup.vmnt_lock = RWL_READ;
+        lookup.inode_lock = RWL_WRITE;
+        pin = resolve_path(&lookup, pcaller);
     } else if (type == FCHMOD) {
-        struct file_desc * filp = pcaller->filp[p->FD];
+        filp = get_filp(pcaller, p->FD, RWL_WRITE);
         if (!filp) return EBADF;
 
         pin = filp->fd_inode;
@@ -153,6 +169,12 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
 
     if (retval == 0) pin->i_mode = result;
 
+    if (type == CHMOD) {
+        unlock_vmnt(vmnt);
+        unlock_inode(pin);
+    } else {
+        unlock_filp(filp);
+    }
     put_inode(pin);
 
     return 0;

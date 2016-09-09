@@ -27,6 +27,7 @@
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
 #include "errno.h"
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"

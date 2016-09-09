@@ -16,6 +16,7 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "assert.h"
 #include "stddef.h"
@@ -28,6 +29,8 @@
 #include <lyos/ipc.h>
 #include "errno.h"
 #include "fcntl.h"
+#include "const.h"
+#include "types.h"
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -57,7 +60,7 @@ PUBLIC void clear_inode(struct inode * pin)
     pin->i_cnt = 0;
     pin->i_dev = 0;
     pin->i_num = 0;
-    spinlock_init(&(pin->i_lock));
+    rwlock_init(&(pin->i_lock));
 }
 
 PUBLIC struct inode * new_inode(dev_t dev, ino_t num)
@@ -91,7 +94,7 @@ PUBLIC void put_inode(struct inode * pin)
 {
     if (!pin) return;
 
-    lock_inode(pin);
+    lock_inode(pin, RWL_WRITE);
 
     if (pin->i_cnt > 1) {
         pin->i_cnt--;
@@ -114,14 +117,14 @@ PUBLIC void put_inode(struct inode * pin)
     free(pin);
 }
 
-PUBLIC void lock_inode(struct inode * pin)
+PUBLIC int lock_inode(struct inode * pin, rwlock_type_t type)
 {
-    spinlock_lock(&(pin->i_lock));
+    return rwlock_lock(&(pin->i_lock), type);
 }
 
 PUBLIC void unlock_inode(struct inode * pin)
 {
-    spinlock_unlock(&(pin->i_lock));
+    rwlock_unlock(&(pin->i_lock));
 }
         
 PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num)

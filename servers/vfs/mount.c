@@ -23,6 +23,7 @@
 #include "lyos/type.h"
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "assert.h"
 #include "stddef.h"
@@ -37,6 +38,8 @@
 #include "errno.h"
 #include "fcntl.h"
 #include "lyos/list.h"
+#include "const.h"
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "global.h"
@@ -55,7 +58,7 @@ PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
     vmnt->m_mounted_on = 0;
     vmnt->m_root_node = 0;
     vmnt->m_label[0] = '\0';
-    spinlock_init(&(vmnt->m_lock));
+    rwlock_init(&(vmnt->m_lock));
 }
 
 PUBLIC struct vfs_mount * get_free_vfs_mount()
@@ -87,9 +90,9 @@ PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev)
  * Lock the vfs mount.
  * @param vmnt 
  */
-PUBLIC void lock_vmnt(struct vfs_mount * vmnt)
+PUBLIC int lock_vmnt(struct vfs_mount * vmnt, rwlock_type_t type)
 {
-    spinlock_lock(&(vmnt->m_lock));
+    return rwlock_lock(&(vmnt->m_lock), type);
 }
 
 /**
@@ -98,7 +101,7 @@ PUBLIC void lock_vmnt(struct vfs_mount * vmnt)
  */
 PUBLIC void unlock_vmnt(struct vfs_mount * vmnt)
 {
-    spinlock_unlock(&(vmnt->m_lock));
+    rwlock_unlock(&(vmnt->m_lock));
 }
 
 PUBLIC int do_mount(MESSAGE * p)
@@ -165,22 +168,35 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
     struct vfs_mount * new_pvm = get_free_vfs_mount();
     if (new_pvm == NULL) return ENOMEM;
 
-    lock_vmnt(new_pvm);
+    lock_vmnt(new_pvm, RWL_WRITE);
 
     int retval = 0;
     struct inode * pmp = NULL; 
+    struct vfs_mount* parent_vmnt = NULL;
 
     int is_root = (strcmp(mountpoint, "/") == 0);
     int mount_root = (is_root && have_root < 2); /* root can be mounted twice */
 
     if (!mount_root) {
         /* resolve the mountpoint */
-        pmp = resolve_path(mountpoint, fp);
+        struct lookup lookup;
+        init_lookup(&lookup, mountpoint, 0, &parent_vmnt, &pmp);
+        lookup.vmnt_lock = RWL_WRITE;
+        lookup.inode_lock = RWL_WRITE;
+        pmp = resolve_path(&lookup, fp);
         if (pmp == NULL) retval = err_code;
         else if (pmp->i_cnt == 1) retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
         else retval = EBUSY;
 
+        if (pmp) {
+            unlock_vmnt(parent_vmnt);
+        }
+
         if (retval) {
+            if (pmp) {
+                unlock_inode(pmp);
+                put_inode(pmp);
+            }
             unlock_vmnt(new_pvm);
             return retval;
         }
@@ -196,15 +212,26 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
     retval = request_readsuper(fs_ep, dev, readonly, is_root, &res);
     
     if (retval) {
+        if (pmp) {
+            unlock_inode(pmp);
+            put_inode(pmp);
+        }
         unlock_vmnt(new_pvm);
         return retval;
     }
 
     struct inode * root_inode = new_inode(dev, res.inode_nr);
 
-    if (!root_inode) return err_code;
+    if (!root_inode) {
+        if (pmp) {
+            unlock_inode(pmp);
+            put_inode(pmp);
+        }
+        unlock_vmnt(new_pvm);
+        return err_code;
+    }
 
-    lock_inode(root_inode);
+    lock_inode(root_inode, RWL_WRITE);
     root_inode->i_fs_ep = fs_ep;
     root_inode->i_mode = res.mode;
     root_inode->i_gid = res.gid;
@@ -242,6 +269,7 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
     new_pvm->m_mounted_on = pmp;
     new_pvm->m_root_node = root_inode;
 
+    unlock_inode(pmp);
     unlock_vmnt(new_pvm);
     unlock_inode(root_inode);
 
@@ -258,18 +286,26 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
  */
 PRIVATE dev_t name2dev(struct fproc* fp, char * pathname)
 {
-   struct inode * pin = resolve_path(pathname, fp);
+    struct vfs_mount* vmnt = NULL;
+    struct inode* pin = NULL;
+    struct lookup lookup;
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.inode_lock = RWL_READ;
+    lookup.vmnt_lock = RWL_READ;
+    pin = resolve_path(&lookup, fp);
 
-   if (pin == NULL) {
+    if (pin == NULL) {
        return (dev_t)0;
-   }
+    }
 
-   dev_t retval = 0;
-   if ((pin->i_mode & I_TYPE) == I_BLOCK_SPECIAL) retval = pin->i_specdev;
-   else err_code = ENOTBLK;
+    dev_t retval = 0;
+    if ((pin->i_mode & I_TYPE) == I_BLOCK_SPECIAL) retval = pin->i_specdev;
+    else err_code = ENOTBLK;
 
-   put_inode(pin);
-   return retval;
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
+    put_inode(pin);
+    return retval;
 }
 
 PRIVATE int is_none_dev(dev_t dev)

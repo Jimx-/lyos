@@ -80,6 +80,9 @@ PUBLIC int fsdriver_stat(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_ftrunc(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_chmod(struct fsdriver * fsd, MESSAGE * m);
 PUBLIC int fsdriver_sync(struct fsdriver * fsd, MESSAGE * m);
+PUBLIC int fsdriver_getdents(struct fsdriver * fsd, MESSAGE * m);
+PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m);
+PUBLIC int fsdriver_create(struct fsdriver * fsd, MESSAGE * m);
 
 PUBLIC int fsdriver_driver(dev_t dev);
 

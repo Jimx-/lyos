@@ -15,58 +15,34 @@
 
 #include "lyos/type.h"
 #include "sys/types.h"
-#include "lyos/config.h"
-#include "errno.h"
 #include "stdio.h"
-#include "stddef.h"
 #include "unistd.h"
-#include "assert.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
+#include "tty.h"
+#include "console.h"
 #include "lyos/global.h"
+#include "keyboard.h"
 #include "lyos/proto.h"
-#include "lyos/list.h"
-#include <lyos/driver.h>
+#include <lyos/interrupt.h>
+#include <lyos/portio.h>
+#include <lyos/input.h>
 #include "proto.h"
-#include "global.h"
-#include "tar.h"
 
-PUBLIC int initfs_readsuper(MESSAGE * p)
+PUBLIC void do_input(MESSAGE* msg)
 {
-    dev_t dev = p->REQ_DEV;
 
-    char buf[512];
-    int i, position = 0;
-    initfs_headers_count = 0;
-
-    bdev_init();
-    
-    for (i = 0;;i++)
-    {
-        initfs_rw_dev(BDEV_READ, dev, position, 512, buf);
-
-        struct posix_tar_header * header = (struct posix_tar_header *)buf;
-        if (header->name[0] == '\0')
-            break;
-
-        int size = initfs_getsize(header->size);
-        initfs_headers[i] = position;
-        position += ((size / 512) + 1) * 512;
-        if (size % 512)
-            position += 512;
-
-        initfs_headers_count++;
-    }
-
-    /* fill result */
-	p->RET_NUM = 0;
-	p->RET_UID = 0;
-	p->RET_GID = 0;
-	p->RET_FILESIZE = 0;
-	p->RET_MODE = 0;
-    
-    return 0;
 }
 
+PUBLIC void init_keyboard()
+{
+
+}
+
+PUBLIC void kb_init(TTY * tty)
+{
+
+}

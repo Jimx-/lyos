@@ -16,4 +16,15 @@
 #ifndef _VFS_CONST_H_
 #define _VFS_CONST_H_
 
+/**
+ * @def   INODE_SIZE
+ * @brief The size of i-node stored \b in \b the \b device.
+ *
+ * Note that this is the size of the struct in the device, \b NOT in memory.
+ * The size in memory is larger because of some more members.
+ */
+#define INODE_SIZE  32
+
+#define VMNT_READONLY       0x001
+
 #endif

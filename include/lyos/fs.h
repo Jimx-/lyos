@@ -16,8 +16,7 @@
 #ifndef	_FS_H_
 #define	_FS_H_
 
-#include "lyos/list.h"
-#include "lyos/spinlock.h"
+#include <lyos/list.h>
    
 #define MAJOR_NONE		0
 #define NR_NONEDEVS		64 
@@ -108,104 +107,6 @@ extern  struct dev_drv_map  dd_map[];
 #define MS_READONLY         0x001
 #define RF_READONLY         0x001
 #define RF_ISROOT           0x002
-
-/**
- * @struct inode
- * @brief  i-node
- *
- * The \c start_sect and\c nr_sects locate the file in the device,
- * and the size show how many bytes is used.
- * If <tt> size < (nr_sects * SECTOR_SIZE) </tt>, the rest bytes
- * are wasted and reserved for later writing.
- *
- * \b NOTE: Remember to change INODE_SIZE if the members are changed
- */
-struct inode {
-	struct list_head list;
-	endpoint_t	i_fs_ep;		/**< FS process's pid */
-	u32	i_mode;		/**< Accsess mode */
-	u32	i_size;		/**< File size */
-	u32	i_start_sect;	/**< The first sector of the data */
-	u32	i_nr_sects;	/**< How many sectors the file occupies */
-	uid_t i_uid;  /* uid and gid */
-	gid_t i_gid;
-	dev_t i_dev;  /**< On which device this inode resides */
-    dev_t i_specdev;  /**< Device number for block/character special file */
-	int	i_cnt;		/**< How many procs share this inode  */
-	int	i_num;		/**< inode nr.  */
-	spinlock_t i_lock;
-
-	struct vfs_mount * i_vmnt;
-};
-
-struct vfs_mount {
-	struct list_head list;
-  	int m_fs_ep;			/**< FS process's pid */
-  	int m_dev;			/**< Device number */
-  	unsigned int m_flags;		/**< Mount flags */
-  	struct inode *m_mounted_on;	/**< Mount point */
-  	struct inode *m_root_node;	/**< Root inode */
-  	char m_label[FS_LABEL_MAX];	/**< Label of the file system process */
-  	spinlock_t m_lock;
-};
-
-#define VMNT_READONLY       0x001
-
-/**
- * @def   INODE_SIZE
- * @brief The size of i-node stored \b in \b the \b device.
- *
- * Note that this is the size of the struct in the device, \b NOT in memory.
- * The size in memory is larger because of some more members.
- */
-#define	INODE_SIZE	32
-
-/**
- * @def   MAX_FILENAME_LEN
- * @brief Max len of a filename
- * @see   dir_entry
- */
-#define	MAX_FILENAME_LEN	12
-
-/**
- * @struct file_desc
- * @brief  File Descriptor
- */
-struct file_desc {
-	int		fd_mode;	/**< R or W */
-	int		fd_pos;		/**< Current position for R/W. */
-	int		fd_cnt;		/**< How many procs share this desc */
-	struct inode*	fd_inode;	/**< Ptr to the i-node */
-	spinlock_t fd_lock;
-};
-
-struct file_system {
-    struct list_head list;
-	char name[FS_LABEL_MAX];
-	int fs_ep;
-};
-
-PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt);
-PUBLIC struct vfs_mount * get_free_vfs_mount();
-PUBLIC int do_vfs_open(MESSAGE * p);
-
-/**
- * Since all invocations of `rw_sector()' in FS look similar (most of the
- * params are the same), we use this macro to make code more readable.
- */
-#define RD_SECT(dev,sect_nr) rw_sector(DEV_READ, \
-				       dev,				\
-				       (sect_nr) * SECTOR_SIZE,		\
-				       SECTOR_SIZE, /* read one sector */ \
-				       TASK_FS,				\
-				       fsbuf);
-#define WR_SECT(dev,sect_nr) rw_sector(DEV_WRITE, \
-				       dev,				\
-				       (sect_nr) * SECTOR_SIZE,		\
-				       SECTOR_SIZE, /* write one sector */ \
-				       TASK_FS,				\
-				       fsbuf);
-
 	
 /* User credential info */
 struct vfs_ucred {

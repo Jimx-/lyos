@@ -31,7 +31,7 @@ PUBLIC void panic(char * msg, ...);
 
 #define _DIRENT_NAMEOFF(dp) \
      ((char *)(void *)&(dp)->d_name - (char *)(void *)dp)
-#define _DIRENT_RECLEN(dp, namlen) \     
+#define _DIRENT_RECLEN(dp, namlen) \
      ((_DIRENT_NAMEOFF(dp) + (namlen) + 1 + 0xf) & ~0xf)
 
 PUBLIC int fsdriver_dentry_list_init(struct fsdriver_dentry_list * list, struct fsdriver_data * data, 

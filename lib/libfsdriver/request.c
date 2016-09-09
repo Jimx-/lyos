@@ -25,6 +25,7 @@
 #include <lyos/ipc.h>
 #include <sys/syslimits.h>
 #include <lyos/driver.h>
+#include <lyos/sysutils.h>
 #include "libfsdriver/libfsdriver.h"
 
 PUBLIC int fsdriver_register(struct fsdriver * fsd)

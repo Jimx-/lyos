@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include "types.h"
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -78,7 +79,7 @@ PUBLIC int main()
 		int src = msg.source;
 		int msgtype = msg.type;
 
-		if (msgtype == RESUME_PROC || msgtype == OPEN || msgtype == CLOSE) enqueue_request(&msg);
+		if (msgtype == RESUME_PROC || msgtype == OPEN || msgtype == CLOSE || msgtype == READ || msgtype == WRITE) enqueue_request(&msg);
 		
 		switch (msgtype) {
         case FS_REGISTER:
@@ -90,10 +91,10 @@ PUBLIC int main()
 		/*case CLOSE:
 			msg.RETVAL = do_close(&msg);
 			break;*/
-		case READ:
-		case WRITE:
+		//case READ:
+		/*case WRITE:
 			msg.CNT = do_rdwt(&msg);
-			break;
+			break; */
 		case IOCTL:
 			msg.RETVAL = do_ioctl(&msg);
 			break;
@@ -102,7 +103,7 @@ PUBLIC int main()
 			break;
 		case FSTAT:
 			msg.RETVAL = do_fstat(&msg);
-			break;
+			break; 
 		case ACCESS:
 			msg.RETVAL = do_access(&msg);
 			break;
@@ -157,7 +158,7 @@ PUBLIC int main()
 			break;
 		}
 
-		if (msg.type != RESUME_PROC && msg.type != OPEN && msg.type != CLOSE) {
+		if (msgtype != RESUME_PROC && msgtype != OPEN && msgtype != CLOSE && msgtype != READ && msgtype != WRITE) {
 			if (msg.type != FS_THREAD_WAKEUP && msg.type != SUSPEND_PROC && msg.RETVAL != SUSPEND) {
 				msg.type = SYSCALL_RET;
 				send_recv(SEND_NONBLOCK, src, &msg);
@@ -288,11 +289,13 @@ PRIVATE int fs_exit(MESSAGE * m)
 	struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
 	lock_fproc(p);
 	for (i = 0; i < NR_FILES; i++) {
-		if (p->filp[i]) {
+		struct file_desc* filp = get_filp(p, i, RWL_WRITE);
+		if (filp) {
 			p->filp[i]->fd_inode->i_cnt--;
 			if (--p->filp[i]->fd_cnt == 0) {
 				p->filp[i]->fd_inode = 0;
 			}
+			unlock_filp(filp);
 			p->filp[i] = 0;
 		}
 	}

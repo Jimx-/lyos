@@ -28,6 +28,7 @@
 #include <lyos/ipc.h>
 #include "errno.h"
 #include <page.h>
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
@@ -167,11 +168,19 @@ PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t 
     data_copy(SELF, pathname, src, string, len);
     pathname[len] = '\0';
 
-    struct inode * pin = resolve_path(pathname, fp);
+    struct lookup lookup;
+    struct vfs_mount* vmnt = NULL;
+    struct inode* pin = NULL;
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_WRITE;
+    pin = resolve_path(&lookup, fp);
     if (!pin) return err_code;
 
     int retval = change_node(fp, ppin, pin);
 
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
     put_inode(pin);
     return retval;
 }

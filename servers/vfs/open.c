@@ -26,6 +26,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include "types.h"
 #include "errno.h"
 #include "path.h"
 #include "proto.h"
@@ -41,7 +42,7 @@
 
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
 
-PRIVATE struct inode * new_node(struct fproc* fp, char * pathname, int flags, mode_t mode);
+PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int flags, mode_t mode);
 PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
                             char * pathname, mode_t mode, struct lookup_result * res);
 
@@ -73,7 +74,7 @@ PUBLIC int do_open(MESSAGE * p)
 PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
 {
     int fd = -1;    /* return fd */
-    
+    struct lookup lookup;
     mode_t bits = mode_map[flags & O_ACCMODE];
     if (!bits) return -EINVAL;
 
@@ -86,29 +87,39 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         return fd;
     }
 
-    struct inode * pin = NULL;
-
-    if (flags & O_CREAT) {
-        mode = I_REGULAR | (mode & ALL_MODES & fp->umask);
-        err_code = 0;
-        pin = new_node(fp, pathname, flags, mode);
-        retval = err_code;
-        if (retval == 0) exist = 0;
-        else if (retval != EEXIST) {
-            return -retval;
-        } else exist = !(flags & O_EXCL);
-    } else {
-        pin = resolve_path(pathname, fp);
-        if (pin == NULL) {
-            return -err_code;
-        }
-        DEB(printl("open file `%s' with inode_nr = %d, proc: %d, %d\n", pathname, pin->i_num, fp->endpoint, fd)); 
-    }
-
     struct file_desc * filp = alloc_filp();
     if (!filp) {
         return -ENOMEM;
     }
+
+    struct inode* pin = NULL;
+    struct vfs_mount* vmnt = NULL;
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+
+    if (flags & O_CREAT) {
+        mode = I_REGULAR | (mode & ALL_MODES & fp->umask);
+        err_code = 0;
+        pin = new_node(fp, &lookup, flags, mode);
+        retval = err_code;
+        if (retval == 0) exist = 0;
+        else if (retval != EEXIST) {
+            if (pin) unlock_inode(pin);
+            unlock_filp(filp);
+            return -retval;
+        } else exist = !(flags & O_EXCL);
+    } else {
+        lookup.vmnt_lock = RWL_READ;
+        lookup.inode_lock = RWL_WRITE;
+
+        pin = resolve_path(&lookup, fp);
+        if (pin == NULL) {
+            unlock_filp(filp);
+            return -err_code;
+        }
+
+        if (vmnt) unlock_vmnt(vmnt);
+    }
+
     fp->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
@@ -151,11 +162,13 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         filp->fd_cnt = 0;
         filp->fd_mode = 0;
         filp->fd_inode = 0;
-        put_inode(pin);
         unlock_filp(filp);
+        unlock_inode(pin);
+        put_inode(pin);
         return -retval;
     }
 
+    DEB(printl("open file `%s' with inode_nr = %d, proc: %d, %d\n", pathname, pin->i_num, fp->endpoint, fd)); 
     unlock_filp(filp);
     return fd;
 }
@@ -171,16 +184,25 @@ PUBLIC int do_close(MESSAGE * p)
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
     
-    if (fd < 0 || fd >= NR_FILES) return EBADF;
-    if (pcaller->filp[fd] == NULL) return EBADF;
-    if (pcaller->filp[fd]->fd_inode == NULL) return EBADF;
+    struct file_desc* filp = get_filp(pcaller, fd, RWL_WRITE);
+    if (!filp) return EBADF;
+    if (filp->fd_inode == NULL) {
+        unlock_filp(filp);
+        return EBADF;
+    }
 
     DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", 
             fd, pcaller->endpoint, pcaller->filp[fd]->fd_inode->i_num, pcaller->filp[fd]->fd_cnt, pcaller->filp[fd]->fd_inode->i_cnt));
 
-    put_inode(pcaller->filp[fd]->fd_inode);
-    if (--pcaller->filp[fd]->fd_cnt == 0)
-        pcaller->filp[fd]->fd_inode = NULL;
+    struct inode* pin = filp->fd_inode;
+    if (--filp->fd_cnt == 0) {
+        unlock_inode(pin);
+        put_inode(pin);
+        filp->fd_inode = NULL;
+    } else {
+        unlock_inode(pin);
+    }
+    unlock_filp(filp);
     pcaller->filp[fd] = NULL;
 
     return 0;
@@ -193,39 +215,50 @@ PUBLIC int do_close(MESSAGE * p)
  * @param  mode     Mode.
  * @return          Ptr to the inode.
  */
-PRIVATE struct inode * new_node(struct fproc* fp, char * pathname, int flags, mode_t mode)
+PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int flags, mode_t mode)
 {
     struct inode * pin_dir = NULL;
-
+    struct vfs_mount* vmnt_dir, *vmnt;
+    struct lookup dir_lookup;
     struct lookup_result res;
 
-    if ((pin_dir = last_dir(pathname, fp)) == NULL) return NULL;
+    init_lookup(&dir_lookup, lookup->pathname, 0, &vmnt_dir, &pin_dir);
+    dir_lookup.vmnt_lock = RWL_WRITE;
+    dir_lookup.inode_lock = RWL_WRITE;
+    if ((pin_dir = last_dir(&dir_lookup, fp)) == NULL) return NULL;
+    if (vmnt_dir) unlock_vmnt(vmnt_dir);
 
-    lock_inode(pin_dir);
-    lock_vmnt(pin_dir->i_vmnt);
     int retval = 0;
-    struct inode * pin = resolve_path(pathname, fp);
+    struct inode * pin = NULL;
+    init_lookup(&dir_lookup, lookup->pathname, 0, &vmnt, &pin);
+    dir_lookup.vmnt_lock = RWL_WRITE;
+    dir_lookup.inode_lock = RWL_WRITE;
+    pin = resolve_path(&dir_lookup, fp);
+    if (vmnt) unlock_vmnt(vmnt_dir);
 
     /* no such entry, create one */
     if (pin == NULL && err_code == ENOENT) {
         if ((retval = forbidden(fp, pin_dir, W_BIT | X_BIT)) == 0) {
             retval = request_create(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
-                fp->realuid, fp->realgid, pathname, mode, &res);
+                fp->realuid, fp->realgid, lookup->pathname, mode, &res);
         }
         if (retval != 0) {
             err_code = retval;
             unlock_inode(pin_dir);
-            unlock_vmnt(pin_dir->i_vmnt);
             put_inode(pin_dir);
             return NULL;
         }
         err_code = 0;
     } else {
         err_code = EEXIST;
+        unlock_inode(pin_dir);
+        unlock_inode(pin);
+        put_inode(pin_dir);
         return NULL;
     }
 
     pin = new_inode(pin_dir->i_dev, res.inode_nr);
+    lock_inode(pin, RWL_WRITE);
     pin->i_fs_ep = pin_dir->i_fs_ep;
     pin->i_size = res.size;
     pin->i_mode = res.mode;
@@ -235,7 +268,6 @@ PRIVATE struct inode * new_node(struct fproc* fp, char * pathname, int flags, mo
     pin->i_cnt = 1;
 
     unlock_inode(pin_dir);
-    unlock_vmnt(pin_dir->i_vmnt);
     put_inode(pin_dir);
     return pin;
 }

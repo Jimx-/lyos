@@ -20,6 +20,7 @@
 #include "lyos/list.h"
 #include <lyos/fs.h>
 #include <lyos/const.h>
+#include "types.h"
 #include "global.h"
 
 PUBLIC DEF_LIST(vfs_mount_table);

@@ -459,7 +459,7 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 {
 	/* tell the tty: */
 	tty->tty_inreply = SYSCALL_RET;
-	tty->tty_incaller   = msg->source;  /* who called, usually FS */
+	tty->tty_incaller   = msg->source;  /* who called, usually FS thread */
 	tty->tty_inprocnr   = msg->PROC_NR; /* who wants the chars */
 	tty->tty_inbuf  = msg->BUF;/* where the chars should be put */
 	tty->tty_inleft = msg->CNT; /* how many chars are requested */
@@ -468,6 +468,7 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 	msg->type = SUSPEND_PROC;
 	msg->CNT = tty->tty_inleft;
 	send_recv(SEND, tty->tty_incaller, msg);
+	tty->tty_incaller = TASK_FS;  /* tell FS to unblock caller later */
 	tty->tty_inreply = RESUME_PROC;
 }
 
@@ -485,7 +486,7 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 {
 	/* tell the tty: */
 	tty->tty_outreply    = SYSCALL_RET;
-	tty->tty_outcaller   = msg->source;  /* who called, usually FS */
+	tty->tty_outcaller   = msg->source;  /* who called, usually FS thread */
 	tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
 	tty->tty_outbuf  = msg->BUF;/* where are the chars */
 	tty->tty_outleft = msg->CNT; /* how many chars are requested */
@@ -503,6 +504,7 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 		msg->type = SUSPEND_PROC;
 		msg->CNT = tty->tty_outleft;
 		send_recv(SEND, tty->tty_outcaller, msg);
+		tty->tty_outcaller = TASK_FS;  /* tell FS to unblock caller later */
 		tty->tty_outreply = RESUME_PROC;
 	}
 }

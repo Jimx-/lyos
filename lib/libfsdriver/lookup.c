@@ -24,6 +24,7 @@
 #include "string.h"
 #include <lyos/ipc.h>
 #include <sys/stat.h>
+#include <lyos/sysutils.h>
 #include <sys/syslimits.h>
 #include "libfsdriver/libfsdriver.h"
 
@@ -99,9 +100,9 @@ PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
     int dev = m->REQ_DEV;
     int start = m->REQ_START_INO;
     int root = m->REQ_ROOT_INO;
-    int flags = (int)m->REQ_FLAGS;
+    //int flags = (int)m->REQ_FLAGS;
     int name_len = m->REQ_NAMELEN;
-    off_t offset;
+    //off_t offset;
     struct fsdriver_node cur_node, next_node;
     int retval = 0, is_mountpoint;
     struct vfs_ucred ucred;

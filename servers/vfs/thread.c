@@ -31,7 +31,7 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 #include <sched.h>
-
+#include "types.h"
 #include "path.h"
 #include "global.h"
 #include "proto.h"
@@ -132,6 +132,13 @@ PRIVATE void handle_request(MESSAGE* msg)
         break;
     case CLOSE:
         msg->RETVAL = do_close(msg);
+        break;
+    case READ:
+    case WRITE:
+        msg->CNT = do_rdwt(msg);
+        break;
+    case FSTAT:
+        msg->RETVAL = do_fstat(msg);
         break;
     case RESUME_PROC:
         msg->RETVAL = 0;

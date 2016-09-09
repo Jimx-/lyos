@@ -35,7 +35,6 @@ EXTERN  u8                  _fsbuf[FSBUF_SIZE];
 extern  u8 *                fsbuf;
 EXTERN  MESSAGE             fs_msg;
 EXTERN  struct inode *      root_inode;
-
 EXTERN  int                 err_code;
 
 extern struct list_head filesystem_table;
@@ -54,7 +53,7 @@ extern int nr_workers;
 /* inode hash table */
 EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
 
-EXTERN int fs_sleeping;
+EXTERN volatile int fs_sleeping;
 EXTERN struct worker_thread workers[NR_WORKER_THREADS];
 
 #endif 

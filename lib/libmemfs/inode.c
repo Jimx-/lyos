@@ -16,6 +16,7 @@
 #include <lyos/type.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
@@ -23,6 +24,7 @@
 #include <lyos/fs.h>
 #include <lyos/const.h>
 #include <lyos/ipc.h>
+#include <lyos/sysutils.h>
 #include "libmemfs/libmemfs.h"
 
 PUBLIC struct memfs_inode root_inode;

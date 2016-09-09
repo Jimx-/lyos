@@ -31,6 +31,7 @@
 #include "proto.h"
 #include "fcntl.h"
 #include <sys/stat.h>
+#include "types.h"
 #include "global.h"
     
 /**
@@ -51,7 +52,7 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * 
     m.STSRC = src;
     m.STBUF = buf;
 
-    async_sendrec(fs_ep, &m, 0);
+    send_recv(BOTH, fs_ep, &m);
 
     return m.STRET;
 }
@@ -73,11 +74,19 @@ PUBLIC int do_stat(MESSAGE * p)
     data_copy(SELF, pathname, p->source, p->PATHNAME, namelen);
     pathname[namelen] = 0;
 
-    struct inode * pin = resolve_path(pathname, pcaller);
+    struct lookup lookup;
+    struct inode* pin = NULL;
+    struct vfs_mount* vmnt = NULL;
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_READ;
+    pin = resolve_path(&lookup, pcaller);
     if (!pin) return ENOENT;
 
     int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num, p->source, p->BUF);
 
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
     put_inode(pin);
     return retval;
 }
@@ -94,10 +103,12 @@ PUBLIC int do_fstat(MESSAGE * p)
     int fd = p->FD;
     char * buf = p->BUF;
 
-    if (pcaller->filp[fd] == NULL) return EINVAL;
+    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    if (!filp) return EINVAL;
 
     /* Issue the request */
-    int retval = request_stat(pcaller->filp[fd]->fd_inode->i_fs_ep, 
-        pcaller->filp[fd]->fd_inode->i_dev, pcaller->filp[fd]->fd_inode->i_num, src, buf);
+    int retval = request_stat(filp->fd_inode->i_fs_ep, 
+        filp->fd_inode->i_dev, filp->fd_inode->i_num, src, buf);
+    unlock_filp(filp);
     return retval;
 }

@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/ipc.h>
+#include "types.h"
 #include "path.h"
 #include "const.h"
 #include "proto.h"
@@ -55,6 +56,7 @@ PUBLIC int do_register_filesystem(MESSAGE * p)
 PUBLIC int add_filesystem(endpoint_t fs_ep, char * name)
 {
     struct file_system * pfs = (struct file_system *)malloc(sizeof(struct file_system));
+    
     if (!pfs) {
         return ENOMEM;
     }
