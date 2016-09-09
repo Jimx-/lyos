@@ -24,11 +24,12 @@
     
 #include "fproc.h"
 #include "thread.h"
+#include "libpthread/pthread.h"
 
 /* FS */
 EXTERN  int                 ROOT_DEV;
 EXTERN  struct file_desc    f_desc_table[NR_FILE_DESC];
-EXTERN  spinlock_t          f_desc_table_lock;
+EXTERN  pthread_mutex_t     f_desc_table_lock;
 EXTERN  struct inode        inode_table[NR_INODE];
 #define FSBUF_SIZE          0x100000
 EXTERN  u8                  _fsbuf[FSBUF_SIZE];

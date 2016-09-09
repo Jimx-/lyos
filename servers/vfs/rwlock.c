@@ -36,18 +36,18 @@
 
 PUBLIC void rwlock_init(rwlock_t* lock)
 {
-    spinlock_init(&lock->lock);
+    pthread_mutex_init(&lock->lock, NULL);
 }
 
 PUBLIC int rwlock_lock(rwlock_t* lock, rwlock_type_t type)
 {
     if (type != RWL_NONE)
-        spinlock_lock(&lock->lock);
+        pthread_mutex_lock(&lock->lock);
     return 0;
 }
 
 PUBLIC int rwlock_unlock(rwlock_t* lock)
 {
-    spinlock_unlock(&lock->lock);
+    pthread_mutex_unlock(&lock->lock);
     return 0;
 }

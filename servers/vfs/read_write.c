@@ -123,8 +123,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
         assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
         send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
-        p->type = driver_msg.type;
-        p->PROC_NR = driver_msg.PROC_NR;
+        if (driver_msg.type == SUSPEND_PROC) p->RETVAL = SUSPEND;
 
         unlock_filp(filp);
         return driver_msg.CNT;

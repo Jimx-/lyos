@@ -189,9 +189,9 @@ PUBLIC void init_vfs()
 	/* f_desc_table[] */
 	for (i = 0; i < NR_FILE_DESC; i++) {
 		memset(&f_desc_table[i], 0, sizeof(struct file_desc));
-		spinlock_init(&f_desc_table[i].fd_lock);
+		pthread_mutex_init(&f_desc_table[i].fd_lock, NULL);
 	}
-	spinlock_init(&f_desc_table_lock);
+	pthread_mutex_init(&f_desc_table_lock, NULL);
 	
 	/* inode_table[] */
 	for (i = 0; i < NR_INODE; i++)
@@ -199,7 +199,7 @@ PUBLIC void init_vfs()
 
 	/* fproc_table[] */
 	for (i = 0; i < NR_PROCS; i++) {
-		spinlock_init(&fproc_table[i].lock);
+		pthread_mutex_init(&fproc_table[i].lock, NULL);
 	}
 
     init_inode_table();
@@ -305,10 +305,10 @@ PRIVATE int fs_exit(MESSAGE * m)
 
 PUBLIC void lock_fproc(struct fproc* fp)
 {
-	spinlock_lock(&fp->lock);
+	pthread_mutex_lock(&fp->lock);
 }
 
 PUBLIC void unlock_fproc(struct fproc* fp)
 {
-	spinlock_unlock(&fp->lock);
+	pthread_mutex_unlock(&fp->lock);
 }

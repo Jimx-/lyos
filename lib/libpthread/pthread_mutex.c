@@ -108,3 +108,17 @@ int pthread_mutex_unlock(pthread_mutex_t* pmutex)
 
 	return 0;
 }
+
+int pthread_mutex_trylock(pthread_mutex_t* pmutex)
+{
+	pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*) pmutex;
+
+	unsigned short old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+	unsigned short type = old_state & MUTEX_TYPE_MASK;
+
+	if (type == MUTEX_TYPE_NORMAL) {
+		return __pthread_normal_mutex_trylock(mutex);
+	}
+
+	return EBUSY;
+}

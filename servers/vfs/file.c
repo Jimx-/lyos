@@ -35,7 +35,7 @@
 PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
 {
     if (filp->fd_inode) rwlock_lock(&filp->fd_inode->i_lock, lock_type);
-    spinlock_lock(&filp->fd_lock);
+    pthread_mutex_lock(&filp->fd_lock);
 }
 
 PUBLIC void unlock_filp(struct file_desc* filp)
@@ -44,25 +44,24 @@ PUBLIC void unlock_filp(struct file_desc* filp)
         unlock_inode(filp->fd_inode);
     }
 
-    spinlock_unlock(&filp->fd_lock);
+    pthread_mutex_unlock(&filp->fd_lock);
 }
 
 PUBLIC struct file_desc* alloc_filp()
 {
     int i;
 
-    spinlock_lock(&f_desc_table_lock);
+    pthread_mutex_lock(&f_desc_table_lock);
     /* find a free slot in f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++) {
         struct file_desc* filp = &f_desc_table[i];
 
-        if (f_desc_table[i].fd_inode == 0 && !spinlock_locked(&filp->fd_lock)) {
-            spinlock_lock(&filp->fd_lock);
-            spinlock_unlock(&f_desc_table_lock);
+        if (f_desc_table[i].fd_inode == 0 && !pthread_mutex_trylock(&filp->fd_lock)) {
+            pthread_mutex_unlock(&f_desc_table_lock);
             return filp;
         }
     }
-    spinlock_unlock(&f_desc_table_lock);
+    pthread_mutex_unlock(&f_desc_table_lock);
 
     return NULL;
 }

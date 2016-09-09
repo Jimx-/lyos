@@ -31,7 +31,7 @@ EXTERN struct fproc {
     int umask;
 
     struct file_desc * filp[NR_FILES];
-    spinlock_t lock;
+    pthread_mutex_t lock;
 } fproc_table[NR_PROCS];
 
 PUBLIC void lock_fproc(struct fproc* fp);

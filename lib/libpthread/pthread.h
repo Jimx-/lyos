@@ -62,6 +62,7 @@ int pthread_cond_wait(pthread_cond_t*, pthread_mutex_t*);
 int pthread_mutex_init(pthread_mutex_t*, const pthread_mutexattr_t*);
 int pthread_mutex_lock(pthread_mutex_t*);
 int pthread_mutex_unlock(pthread_mutex_t*);
+int pthread_mutex_trylock(pthread_mutex_t*);
 
 int pthread_rwlock_init(pthread_rwlock_t*, const pthread_rwlockattr_t*);
 int pthread_rwlock_rdlock(pthread_rwlock_t*);

@@ -17,12 +17,11 @@
 #define _VFS_RWLOCK_H_
 
 #include "thread.h"
-#include <lyos/spinlock.h>
 
 typedef enum { RWL_NONE, RWL_READ, RWL_WRITE } rwlock_type_t;
 
 typedef struct {
-    spinlock_t lock; 
+    pthread_mutex_t lock; 
 } rwlock_t;
 
 PUBLIC void rwlock_init(rwlock_t* lock);
