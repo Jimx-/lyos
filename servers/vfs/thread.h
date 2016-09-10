@@ -43,5 +43,6 @@ struct vfs_message {
 
 PUBLIC void worker_wait();
 PUBLIC void worker_wake(struct worker_thread* thread);
+PUBLIC struct worker_thread* worker_self();
 
 #endif

@@ -21,7 +21,17 @@
 typedef enum { RWL_NONE, RWL_READ, RWL_WRITE } rwlock_type_t;
 
 typedef struct {
-    pthread_mutex_t lock; 
+    int state;
+    int owner;
+
+    pthread_mutex_t pending_mutex;
+    unsigned int pending_reader_count;
+    unsigned int pending_writer_count;
+    /*struct list_head pending_writers;
+    struct list_head pending_readers;*/
+
+    unsigned int pending_reader_serial; 
+    unsigned int pending_writer_serial;
 } rwlock_t;
 
 PUBLIC void rwlock_init(rwlock_t* lock);
