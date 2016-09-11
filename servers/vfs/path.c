@@ -123,18 +123,28 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
 
     ino_t root_ino = 0;
     struct vfs_mount * vmnt = find_vfs_mount(dev);
-
     if (vmnt == NULL) {
         err_code = EIO;   /* no such mountpoint */
         return NULL;
+    }
+
+    int ret = lock_vmnt(vmnt, RWL_WRITE);
+    if (ret) {
+        if (ret == EBUSY) {
+            vmnt = NULL;
+        } else {
+            return ret;
+        }
     }
 
     *(lookup->vmnt) = vmnt;
 
     if (fp->root->i_dev == fp->pwd->i_dev) root_ino = fp->root->i_num;
 
-    int ret = request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, fp, &res);
+    ret = request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, fp, &res);
     if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
+        if (vmnt) unlock_vmnt(vmnt);
+        *(lookup->vmnt) = NULL;
         err_code = ret;
         return NULL;
     }
@@ -159,6 +169,8 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
             }
 
             if (dir_pin == NULL) {
+                if (vmnt) unlock_vmnt(vmnt);
+                *(lookup->vmnt) = NULL;
                 err_code = EIO;
                 return NULL;
             }
@@ -171,15 +183,27 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
         if (dir_pin->i_dev == fp->root->i_dev) root_ino = fp->root->i_num;
         else root_ino = 0;
 
+        if (vmnt) unlock_vmnt(vmnt);
         vmnt = find_vfs_mount(dir_pin->i_dev);
         if (!vmnt) {
+            *(lookup->vmnt) = NULL;
             err_code = EIO;
             return NULL;
+        }
+        ret = lock_vmnt(vmnt, RWL_WRITE);
+        if (ret) {
+            if (ret == EBUSY) {
+                vmnt = NULL;
+            } else {
+                return ret;
+            }
         }
 
         ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino, fp, &res);
 
         if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
+            if (vmnt) unlock_vmnt(vmnt);
+            *(lookup->vmnt) = NULL;
             err_code = ret;
             return NULL;
         }
@@ -241,5 +265,7 @@ PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp)
     struct inode* pin = resolve_path(lookup, fp);
 
     *c = old_char;
+    lookup->pathname = c;
+    
     return pin;
 }

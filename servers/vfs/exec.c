@@ -71,14 +71,14 @@ PRIVATE struct exec_loader exec_loaders[] = {
     { NULL },
 };
 
-PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct fproc * fp);
+PRIVATE int get_exec_inode(struct vfs_exec_info * execi, struct lookup* lookup, struct fproc * fp);
 PRIVATE int read_header(struct vfs_exec_info * execi);
 PRIVATE int is_script(struct vfs_exec_info * execi);
 PRIVATE int request_vfs_mmap(struct exec_info *execi,
     int vaddr, int len, int foffset, int protflags, size_t clearend);
 
 /* open the executable and fill in exec info */
-PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct fproc * fp)
+PRIVATE int get_exec_inode(struct vfs_exec_info * execi, struct lookup* lookup, struct fproc * fp)
 {
     int retval;
 
@@ -88,18 +88,11 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, char * pathname, struct
         execi->pin = NULL;
     }
 
-    memcpy(execi->prog_name, pathname, MAX_PATH);
-    memcpy(execi->args.prog_name, pathname, MAX_PATH);
+    memcpy(execi->prog_name, lookup->pathname, MAX_PATH);
+    memcpy(execi->args.prog_name, lookup->pathname, MAX_PATH);
 
-    struct lookup lookup;
-    struct vfs_mount* vmnt = NULL;
-    struct inode* pin = NULL;
-    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
-    lookup.vmnt_lock = RWL_READ;
-    lookup.inode_lock = RWL_WRITE;
-    if ((execi->pin = resolve_path(&lookup, fp)) == NULL) return err_code;
+    if ((execi->pin = resolve_path(lookup, fp)) == NULL) return err_code;
     execi->vmnt = execi->pin->i_vmnt;
-    unlock_inode(execi->pin);
     unlock_vmnt(execi->vmnt);
 
     if ((execi->pin->i_mode & I_TYPE) != I_REGULAR) return ENOEXEC;
@@ -216,7 +209,11 @@ PUBLIC int fs_exec(MESSAGE * msg)
     data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
-    retval = get_exec_inode(&execi, pathname, fp);
+    struct lookup lookup;
+    init_lookup(&lookup, pathname, 0, &execi.vmnt, &execi.pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_READ;
+    retval = get_exec_inode(&execi, &lookup, fp);
     if (retval) return retval;
 
     if (is_script(&execi)) {
@@ -226,6 +223,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
 
     /* find an fd for MM */
     struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
+    lock_proc(mm_task);
     /* find a free slot in PROCESS::filp[] */
     int fd;
     struct file_desc * filp = NULL;
@@ -244,11 +242,9 @@ PUBLIC int fs_exec(MESSAGE * msg)
         filp->fd_mode = O_RDONLY;
         unlock_filp(filp);
         execi.mmfd = fd;
-        execi.args.memmap = NULL;
-        /* uncomment this line to enable demand loading */
-        /* can't do this yet, it will cause deadlocks */
-        //execi.args.memmap = request_vfs_mmap;
+        execi.args.memmap = request_vfs_mmap;
     }
+    unlock_proc(mm_task);
 
     execi.args.allocmem = libexec_allocmem;
     execi.args.allocmem_prealloc = libexec_allocmem_prealloc;
@@ -278,7 +274,8 @@ PUBLIC int fs_exec(MESSAGE * msg)
         execi.dyn_phnum = execi.args.phnum;
         strlcpy((char*) execi.dyn_prog_name, (char*)execi.prog_name, sizeof(execi.dyn_prog_name));
 
-        retval = get_exec_inode(&execi, interp, fp);
+        init_lookup(&lookup, interp, 0, &execi.vmnt, &execi.pin);
+        retval = get_exec_inode(&execi, &lookup, fp);
         if (retval) return retval;
 
         execi.args.filesize = execi.pin->i_size;
@@ -324,6 +321,11 @@ PUBLIC int fs_exec(MESSAGE * msg)
     /* record frame info */
     msg->BUF = orig_stack;
     msg->BUF_LEN = orig_stack_len;
+
+    if (execi.pin) {
+        unlock_inode(execi.pin);
+        put_inode(execi.pin);
+    }
 
     return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
 }

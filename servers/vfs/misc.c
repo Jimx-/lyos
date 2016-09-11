@@ -238,7 +238,6 @@ PUBLIC int do_mm_request(MESSAGE* m)
     if (!mm_task) panic("mm not present!");
 
     if (m->source != TASK_MM) return EPERM;
-
     switch (req_type) {
     case MMR_FDLOOKUP:
         {

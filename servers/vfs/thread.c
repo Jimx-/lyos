@@ -210,7 +210,7 @@ PRIVATE int worker_loop(void* arg)
     struct worker_thread* self = (struct worker_thread*) arg;
     struct vfs_message* req;
  
-    while (1) {
+    while (TRUE) {
         req = dequeue_request(self);
         handle_request(&req->msg);
         enqueue_response(req);

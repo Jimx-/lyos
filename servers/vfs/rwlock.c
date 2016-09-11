@@ -220,4 +220,3 @@ PUBLIC int rwlock_unlock(rwlock_t* lock)
 
     return 0;
 }
-

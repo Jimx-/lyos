@@ -275,7 +275,7 @@ PUBLIC int libexec_load_elf_dbg(struct exec_info * execi)
 
         //if (0) {
         if (execi->memmap && execi->memmap(execi, vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
-            printl("libexec: memmap 0x%x - 0x%x\n", vaddr, vaddr + fsize);
+            printl("libexec: memmap 0x%x - 0x%x, clearend: %d\n", vaddr, vaddr + fsize, clearend);
             /* allocate remaining memory */
             if (memsize > fsize) {
                 size_t rem_size = memsize - fsize;

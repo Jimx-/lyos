@@ -151,19 +151,18 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         }
     }
 
+    DEB(printl("open file `%s' with inode_nr = %d, proc: %d, %d\n", pathname, pin->i_num, fp->endpoint, fd)); 
+    unlock_filp(filp);
+
     if (retval != 0) {
         fp->filp[fd] = NULL;
         filp->fd_cnt = 0;
         filp->fd_mode = 0;
         filp->fd_inode = 0;
-        unlock_filp(filp);
-        unlock_inode(pin);
         put_inode(pin);
         return -retval;
     }
 
-    DEB(printl("open file `%s' with inode_nr = %d, proc: %d, %d\n", pathname, pin->i_num, fp->endpoint, fd)); 
-    unlock_filp(filp);
     return fd;
 }
 
@@ -224,11 +223,11 @@ PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int fla
 
     int retval = 0;
     struct inode * pin = NULL;
-    init_lookup(&dir_lookup, lookup->pathname, 0, &vmnt, &pin);
+    init_lookup(&dir_lookup, dir_lookup.pathname, 0, &vmnt, &pin);
     dir_lookup.vmnt_lock = RWL_WRITE;
     dir_lookup.inode_lock = RWL_WRITE;
     pin = resolve_path(&dir_lookup, fp);
-    if (vmnt) unlock_vmnt(vmnt_dir);
+    if (vmnt) unlock_vmnt(vmnt);
 
     /* no such entry, create one */
     if (pin == NULL && err_code == ENOENT) {
@@ -245,10 +244,10 @@ PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int fla
         err_code = 0;
     } else {
         err_code = EEXIST;
-        unlock_inode(pin_dir);
-        unlock_inode(pin);
+        if (pin_dir != pin)
+            unlock_inode(pin_dir);
         put_inode(pin_dir);
-        return NULL;
+        return pin;
     }
 
     pin = new_inode(pin_dir->i_dev, res.inode_nr);
