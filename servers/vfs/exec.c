@@ -34,6 +34,7 @@
 #include "global.h"
 #include "proto.h"
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include "page.h"
 #include <lyos/vm.h>
 #include <elf.h>
@@ -59,6 +60,8 @@ struct vfs_exec_info {
 
 typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
 PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
+PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_size, char* pathname, vir_bytes* vsp);
+PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg, vir_bytes* vsp);
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
     stack_hook_t setup_stack;
@@ -156,7 +159,7 @@ PRIVATE int request_vfs_mmap(struct exec_info *execi,
 
     return vfs_mmap(execi->proc_e, foffset, len, pin->i_dev, pin->i_num, vexeci->mmfd, vaddr, flags, protflags, clearend);
 }
-
+void mark() { }
 /*****************************************************************************
  *                            do_exec
  *****************************************************************************/
@@ -195,6 +198,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     execi.exec_fd = -1;
 
     /* copy everything we need before we free the old process */
+    vir_bytes user_sp = msg->BUF;
     int orig_stack_len = msg->BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
 
@@ -205,7 +209,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
           orig_stack_len);
 
     /* copy prog name */
-    char pathname[MAX_PATH];
+    char pathname[PATH_MAX];
     data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
@@ -216,9 +220,24 @@ PUBLIC int fs_exec(MESSAGE * msg)
     retval = get_exec_inode(&execi, &lookup, fp);
     if (retval) return retval;
 
+    /* relocate stack pointers */
+    char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
+    int delta = (vir_bytes) orig_stack - user_sp;
+
+    if (orig_stack_len) {  
+        char **q = (char**)stackcopy;
+        for (; *q != 0; q++) {
+            *q += delta;
+        }
+        q++;
+        for (; *q != 0; q++)
+            *q += delta;
+    } 
+
     if (is_script(&execi)) {
-        printl("Is a script!\n");
-        while(1);
+        setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname, &orig_stack);
+        retval = get_exec_inode(&execi, &lookup, fp);
+        if (retval) return retval;
     }
 
     /* find an fd for MM */
@@ -256,7 +275,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     execi.args.proc_e = src;
     execi.args.filesize = execi.pin->i_size;
 
-    char interp[MAX_PATH];
+    char interp[PATH_MAX];
     if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp, sizeof(interp)) > 0) {
         execi.exec_fd = common_open(fp, pathname, O_RDONLY, 0);
         if (execi.exec_fd < 0) return -execi.exec_fd;
@@ -282,10 +301,6 @@ PUBLIC int fs_exec(MESSAGE * msg)
         execi.args.clearproc = NULL;
     }
 
-    /* relocate stack pointers */
-    char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
-
-    int delta = (int)orig_stack - (int)msg->BUF;
 
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi.args);
@@ -299,19 +314,15 @@ PUBLIC int fs_exec(MESSAGE * msg)
 
     int argc = 0;
     char * envp = orig_stack;
-
     if (orig_stack_len) {  
         char **q = (char**)stackcopy;
         for (; *q != 0; q++, argc++) {
-            *q += delta;
         }
         q++;
-        envp += (int)q - (int)stackcopy;
-        for (; *q != 0; q++)
-            *q += delta;
+        envp += (vir_bytes) q - (vir_bytes) stackcopy;
     } 
 
-    data_copy(src, orig_stack, TASK_FS, stackcopy, orig_stack_len);
+    data_copy(src, orig_stack, SELF, stackcopy, orig_stack_len);
 
     struct ps_strings ps;
     ps.ps_nargvstr = argc;
@@ -423,6 +434,93 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
 
     *stack_size = *stack_size + auxv_len;
     *vsp = *vsp - auxv_len;
+
+    return 0;
+}
+
+PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_size, char* pathname, vir_bytes* vsp)
+{
+    prepend_arg(1, stack, stack_size, pathname, vsp);
+
+    off_t newpos;
+    int retval;
+    char buf[PG_SIZE];
+    int bytes_rdwt;
+    char* interp = NULL;
+
+    /* read the file */
+    retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, 
+        0, READ, TASK_FS, buf, sizeof(buf), &newpos, &bytes_rdwt);
+    if (retval) return retval;
+
+    int n = pin->i_size;
+    if (n > sizeof(buf)) n = sizeof(buf);
+    n -= 2;
+    char* p = &buf[2];
+    if (n > PATH_MAX) n = PATH_MAX;
+
+    memcpy(pathname, p, n);
+    p = memchr(pathname, '\n', n);
+    if (!p) return ENOEXEC;
+    p--;
+
+    while (TRUE) {
+        while (p > pathname && (*p == ' ' || *p == '\t')) p--;
+        if (p <= pathname) break;
+        *(p+1) = '\0';
+
+        while (p > pathname && (*p != ' ' && *p != '\t')) p--;
+        if (p != pathname) p++;
+        interp = p;
+        p--;
+
+        prepend_arg(0, stack, stack_size, interp, vsp);
+    }
+
+    if (!interp) return ENOEXEC;
+    if (interp != pathname) memmove(pathname, interp, strlen(interp) + 1);
+
+    return 0;
+}
+
+PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg, vir_bytes* vsp)
+{
+    int arglen = strlen(arg) + 1;
+    char** arg0 = (char**)stack;
+    /* delta of argv[0] to vsp */
+    int delta = (int) ((vir_bytes) *arg0 - *vsp);
+    int orig_size = *stack_size;
+    char* arg_start;
+
+    int offset;
+    if (replace) {
+        /* replace the former argument with the new one */ 
+        arglen--;
+        offset = arglen - strlen(stack + delta);
+        arg_start = stack + delta;
+    } else {
+        /* insert a pointer and a string */
+        offset = arglen + sizeof(char*);
+        arg_start = stack + delta + sizeof(char*);
+    }
+
+    if (*stack_size + offset >= ARG_MAX) {
+        return ENOMEM;
+    }
+    memmove(stack + delta + offset, stack + delta, orig_size - delta);
+    memcpy(arg_start, arg, arglen);
+
+    if (!replace) {
+        memmove(stack + sizeof(char*), stack, delta);
+    }
+
+    if (replace) {
+        *arg0 = (char*) (*vsp + delta - offset);
+    } else {
+        *arg0 = (char*) (*vsp + delta - arglen);
+    }
+    *stack_size += offset;
+    *vsp -= offset;
 
     return 0;
 }
