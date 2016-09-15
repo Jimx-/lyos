@@ -514,11 +514,7 @@ PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
         memmove(stack + sizeof(char*), stack, delta);
     }
 
-    if (replace) {
-        *arg0 = (char*) (*vsp + delta - offset);
-    } else {
-        *arg0 = (char*) (*vsp + delta - arglen);
-    }
+    *arg0 = (char*) (*vsp + delta - (replace ? offset : arglen));
     *stack_size += offset;
     *vsp -= offset;
 
