@@ -171,7 +171,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         memset(&execi, 0, sizeof(execi));
 
         execi.stack_top = VM_STACK_TOP;
-        execi.stack_size = PROC_ORIGIN_STACK;
+        execi.stack_size = PROC_ORIGIN_STACK * 2;
 
         /* header */
         execi.header = bp->base;

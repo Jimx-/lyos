@@ -39,4 +39,10 @@
 PUBLIC void fpu_init()
 {
     fninit();
+
+    write_cr0(read_cr0() | 0x22);
+    u32 cr4 = read_cr4();
+    cr4 |= (1 << 9);
+    cr4 |= (1 << 10);
+    write_cr4(cr4);
 }

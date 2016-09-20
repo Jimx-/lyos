@@ -272,11 +272,13 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
                 vir_bytes minv, vir_bytes maxv, vir_bytes len, int flags)
 {
     struct vir_region * vr;
-    int pages = len / ARCH_PG_SIZE;
+    /*int pages = len / ARCH_PG_SIZE;
     if (len % ARCH_PG_SIZE) pages++;
 
     vir_bytes vaddr = pgd_find_free_pages(&mmp->active_mm->pgd, pages, minv, maxv);
-    if (vaddr == 0) return NULL;
+    if (vaddr == 0) return NULL; */
+    vir_bytes vaddr = mmp->mmap_base;
+    mmp->mmap_base += len;
 
     if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
 

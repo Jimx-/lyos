@@ -159,7 +159,7 @@ PRIVATE int request_vfs_mmap(struct exec_info *execi,
 
     return vfs_mmap(execi->proc_e, foffset, len, pin->i_dev, pin->i_num, vexeci->mmfd, vaddr, flags, protflags, clearend);
 }
-void mark() { }
+
 /*****************************************************************************
  *                            do_exec
  *****************************************************************************/

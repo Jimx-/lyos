@@ -140,8 +140,7 @@ if __name__ == "__main__":
 	if BUILD_GCC_NATIVE is not None:
 		mkdir('gcc-native')
 		push_dir('gcc-native')
-		make('distclean')
-		configure_host(GCC_VERSION, '--disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
+		configure_native(GCC_VERSION, '--disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib')
 		make('DESTDIR=' + SYSROOT + ' all-gcc')
 		make('DESTDIR=' + SYSROOT + ' install-gcc')
 		make('DESTDIR=' + SYSROOT + ' all-target-libgcc')

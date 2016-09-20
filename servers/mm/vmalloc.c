@@ -78,14 +78,20 @@ PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
+ void mark() { }
 PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 {
+	/* avoid recursive allocation */
+	static int level = 0;
 	int pages = memsize / ARCH_PG_SIZE;
 	if (memsize % PG_SIZE != 0)
 		pages++;
 
+	level++;
+
 	/* using bootstrap pages */
-	if (!pt_init_done) {
+	if (level > 1 || !pt_init_done) {
+		if (level > 1) mark();
 		int i, j;
 		for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
 			if (!bootstrap_pages[i].used) break;
@@ -101,12 +107,13 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 		}
 #endif
 
+		level--;
 		if (i + pages >= STATIC_BOOTSTRAP_PAGES) {
 			panic("out of bootstrap pages.");
 			return 0;
 		}
 
-		*phys_addr = bootstrap_pages[i].phys_addr;
+		if (phys_addr) *phys_addr = bootstrap_pages[i].phys_addr;
 		int ret = bootstrap_pages[i].vir_addr;
 		for (j = i; j < i + pages; j++) {
 			bootstrap_pages[j].used = 1;
@@ -130,7 +137,9 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
  	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
  	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+ 	vmctl_flushtlb(SELF);
 
+ 	level--;
  	return retval;
 }
 

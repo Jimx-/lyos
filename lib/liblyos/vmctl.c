@@ -90,6 +90,16 @@ PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_v
     return syscall_entry(NR_VMCTL, &m);
 }
 
+PUBLIC int vmctl_flushtlb(endpoint_t who)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_FLUSHTLB;
+    m.VMCTL_WHO = who;
+
+    return syscall_entry(NR_VMCTL, &m);
+}
+
 PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
                         int * flags, endpoint_t * caller)
 {

@@ -162,6 +162,10 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
     }
+    if (pgd->vir_pts[pde]) {
+        free_vmem(pt, ARCH_PT_SIZE);
+        return 0;
+    }
 
 #if PAGETABLE_DEBUG
         printl("MM: pt_create: allocated new page table\n");

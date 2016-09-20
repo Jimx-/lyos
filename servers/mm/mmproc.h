@@ -42,6 +42,7 @@ struct mmproc {
     endpoint_t endpoint;
 
     struct futex_entry futex_entry;
+    vir_bytes mmap_base;
 };
 
 #define MMPF_INUSE  0x01

@@ -35,6 +35,7 @@
 #define VMCTL_CLEAR_MEMCACHE    8
 #define VMCTL_GET_MMREQ         9
 #define VMCTL_REPLY_MMREQ       10
+#define VMCTL_FLUSHTLB          11
 
 #define VMCTL_GET_KM_INDEX   u.m3.m3i2
 #define VMCTL_GET_KM_RETVAL  u.m3.m3i2
@@ -88,6 +89,7 @@ PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len);
 PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
                         int * flags, endpoint_t * caller);
 PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result);
+PUBLIC int vmctl_flushtlb(endpoint_t who);
 PUBLIC int get_meminfo(struct mem_info* mem_info);
 PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
     dev_t dev, ino_t ino, int fd, int vaddr, int flags, int prot, size_t clearend);

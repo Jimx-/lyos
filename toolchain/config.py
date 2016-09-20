@@ -5,7 +5,7 @@ ROOT_DIR = os.getcwd()
 PREFIX = os.sep.join([ROOT_DIR, 'local'])
 PREFIX_BIN = os.sep.join([PREFIX, 'bin'])
 CROSSPREFIX = '/usr'
-DESTDIR = ROOT_DIR + '/../obj/destdir.' + os.environ["ARCH"] + '/'
+DESTDIR = os.popen('readlink -f ' + ROOT_DIR + '/../obj/destdir.' + os.environ["ARCH"] + '/').read()[:-1]
 SYSROOT = DESTDIR
 try:
 	TARGET = os.environ["SUBARCH"] + '-elf-lyos'

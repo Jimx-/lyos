@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -9,7 +10,7 @@
 
 static void do_trace(pid_t child, int s);
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[], char* envp[])
 {   
     if (argc == 1) return 0;
 
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     argv++;
     if(child == 0) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        exit(execve(argv[0], argv, NULL));
+        exit(execve(argv[0], argv, envp));
     }
     else {
         int status;
@@ -192,6 +193,9 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
     case EXIT:
         printf("exit(%d) = ?\n", msg.STATUS);   /* exit has no return value */
         break;
+    case MMAP:
+        printf("mmap(0x%x, %d, %d, %d, %d, %d)", msg.MMAP_VADDR, msg.MMAP_LEN, msg.MMAP_PROT, msg.MMAP_FLAGS, msg.MMAP_FD, msg.MMAP_OFFSET);
+        break;
     default:
         printf("syscall(%d)", type);
         break;
@@ -231,6 +235,10 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     case BRK:
     case GETDENTS:
         retval = msg.RETVAL;
+        break;
+    case MMAP:
+        base = 16;
+        retval = (int)msg.MMAP_RETADDR;
         break;
     }
 
@@ -281,6 +289,9 @@ static void trace_call_out(pid_t child)
     copy_message_from(child, src_msg, &msg);
     
     switch (call_nr) {
+    case NR_GETINFO:
+        printf(" = 0x%x\n", ptrace(PTRACE_PEEKDATA, child, msg.BUF, 0));
+        return;
     case NR_SENDREC:
         trace_sendrec_out(child, &msg);
         return;

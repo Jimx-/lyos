@@ -28,7 +28,7 @@
 
 extern struct mmproc mmproc_table[];
 
-#define STATIC_BOOTSTRAP_PAGES  20
+#define STATIC_BOOTSTRAP_PAGES  25
 EXTERN struct {
     int used;
     phys_bytes phys_addr;

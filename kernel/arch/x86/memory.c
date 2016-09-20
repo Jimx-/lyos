@@ -366,6 +366,9 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
     case VMCTL_SET_ADDRESS_SPACE:
         setcr3(p, m->VMCTL_PHYS_ADDR, m->VMCTL_VIR_ADDR);
         return 0;
+    case VMCTL_FLUSHTLB:
+        reload_cr3();
+        return 0; 
     }
 
     return EINVAL;

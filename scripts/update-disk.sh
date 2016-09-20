@@ -73,6 +73,7 @@ cp -rf obj/destdir.$ARCH/bin/cat /$MOUNT_POINT/bin/cat
 cp -rf obj/destdir.$ARCH/sbin/procfs /$MOUNT_POINT/sbin/ 
 #cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
 cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/usr/ /$MOUNT_POINT/
 cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/ 
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
