@@ -58,11 +58,27 @@ PUBLIC sysfs_node_t * new_node(char * name, int flags)
     node->flags = flags;
     node->parent = NULL;
 
+    switch (NODE_TYPE(node)) {
+    case SF_TYPE_DYNAMIC:
+        node->u.dyn_attr = (dyn_attr_info_t*) malloc(sizeof(dyn_attr_info_t));
+        break;
+    default:
+        break;
+    }
+
     return node;
 }
 
 PUBLIC int free_node(sysfs_node_t * node)
 {
+    switch (NODE_TYPE(node)) {
+    case SF_TYPE_DYNAMIC:
+        if (node->u.dyn_attr) free(node->u.dyn_attr);
+        break;
+    default:
+        break;
+    }
+
     free(node);
 
     return 0;

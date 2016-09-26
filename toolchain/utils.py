@@ -94,7 +94,7 @@ def configure_host(name, extra_opt=''):
 def configure_native(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
 	os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' + CROSSPREFIX + ' ' + 
-					' --with-sysroot=/ --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt) and cmd_error()
+					' --with-lib-path=' + PREFIX + '/' + TARGET + '/lib ' +extra_opt) and cmd_error()
 
 def make(extra_opt=''):
 	os.system('make '+ extra_opt) and cmd_error()

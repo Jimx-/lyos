@@ -6,6 +6,5 @@ SRCS 	= main.c fork.c pagetable.c alloc.c region.c vmalloc.c brk.c \
 LIBS 	= exec lyos
 
 PROG	= mm
-SERVERCFLAGS  += -Xlinker -Ttext -Xlinker 0x70000000
 
 include lyos.service.mk

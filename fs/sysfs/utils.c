@@ -34,6 +34,12 @@
 #include "node.h"
 #include "global.h"
     
+PRIVATE sysfs_dyn_attr_id_t alloc_dyn_attr_id()
+{
+    static sysfs_dyn_attr_id_t next_id = 1;
+    return next_id++;
+}
+
 PUBLIC int do_publish(MESSAGE * m)
 {
     endpoint_t src = m->source;
@@ -52,6 +58,10 @@ PUBLIC int do_publish(MESSAGE * m)
 
     if (flags & SF_TYPE_U32) {
         node->u.u32v = m->u.m3.m3i3;
+    } else if (flags & SF_TYPE_DYNAMIC) {
+        node->u.dyn_attr->owner = src;
+        node->u.dyn_attr->id = alloc_dyn_attr_id();
+        m->ATTRID = node->u.dyn_attr->id;
     }
 
     return 0;

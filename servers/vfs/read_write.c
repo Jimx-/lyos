@@ -157,7 +157,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
     if (!retval) {
         return bytes_rdwt;
     }
-    return retval;
+    return -retval;
 }
 
 PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 position,

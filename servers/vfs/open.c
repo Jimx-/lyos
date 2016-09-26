@@ -233,7 +233,7 @@ PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int fla
     if (pin == NULL && err_code == ENOENT) {
         if ((retval = forbidden(fp, pin_dir, W_BIT | X_BIT)) == 0) {
             retval = request_create(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
-                fp->realuid, fp->realgid, lookup->pathname, mode, &res);
+                fp->realuid, fp->realgid, dir_lookup.pathname, mode, &res);
         }
         if (retval != 0) {
             err_code = retval;

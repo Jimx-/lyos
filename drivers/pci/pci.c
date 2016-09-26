@@ -92,7 +92,7 @@ PUBLIC int pci_init()
 	if (pci_bus_id == BUS_TYPE_ERROR) return 1;
 
 	pci_intel_init();
-
+	
 	int i;
 	for (i = 0; i < NR_PRIV_PROCS; i++) {
 		pci_acl[i].inuse = 0;

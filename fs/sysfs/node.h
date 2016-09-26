@@ -18,10 +18,16 @@
 
 #include <sys/syslimits.h>
 #include "libmemfs/libmemfs.h"
+#include "libsysfs/libsysfs.h"
 
 #define NODE_TYPE(node) (node->flags & SF_TYPE_MASK)
 
 struct sysfs_node;
+
+typedef struct dyn_attr_info {
+    endpoint_t owner;
+    sysfs_dyn_attr_id_t id;
+} dyn_attr_info_t;
 
 typedef struct sysfs_node {
     struct list_head list;
@@ -36,6 +42,7 @@ typedef struct sysfs_node {
         char * str;
         u32 u32v;
         dev_t devno;
+        dyn_attr_info_t* dyn_attr;
     } u;
 
     struct memfs_inode * inode;

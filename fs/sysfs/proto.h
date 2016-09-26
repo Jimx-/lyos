@@ -28,5 +28,7 @@ PUBLIC size_t buf_used();
 
 PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
         off_t offset, cbdata_t data);
+PUBLIC ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
+        off_t offset, cbdata_t data);
 
 #endif

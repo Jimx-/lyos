@@ -263,6 +263,9 @@ enum msgtype {
 	GET_DRIVER,	/* 54 ~ 55 */
 	DM_BUS_REGISTER,
 	DM_DEVICE_REGISTER,
+	DM_BUS_ATTR_ADD,
+	DM_BUS_ATTR_SHOW,
+	DM_BUS_ATTR_STORE,
 
 	/* message type for fs request */
 	FSREQ_RET = VFS_REQ_BASE,
@@ -314,6 +317,8 @@ enum msgtype {
 	/* message for sysfs */
 	SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */
 	SYSFS_RETRIEVE,
+	SYSFS_DYN_SHOW,
+	SYSFS_DYN_STORE,
 
 	/* SERVMAN */
 	SERVICE_UP = SERVMAN_REQ_BASE, 
@@ -375,6 +380,7 @@ enum msgtype {
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
 #define TIMESTAMP	u.m3.m3l1
+#define ATTRID		u.m3.m3i3
 
 /* macros for sendrec */
 #define SR_FUNCTION u.m3.m3i1

@@ -84,6 +84,10 @@ PUBLIC int main()
         case PCI_ATTR_R32:
             msg.RETVAL = do_attr_r32(&msg);
             break;
+        case DM_BUS_ATTR_SHOW:
+        case DM_BUS_ATTR_STORE:
+            msg.CNT = devman_bus_attr_handle(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

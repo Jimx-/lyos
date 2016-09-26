@@ -35,7 +35,7 @@ int main(int argc, char * argv[])
 		sethostname(hostname, len);
 		close(fd_hostname);
 	}
-
+	
 	char * ttylist[NR_TTY] = {"/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/ttyS0"};
 	int i;
 	for (i = 0; i < NR_TTY; i++) {

@@ -127,7 +127,6 @@ PUBLIC void init_screen(TTY* tty)
 	 *   variables related to `position' and `size' below are
 	 *   in WORDs, but not in BYTEs.
 	 */
-
 	if (using_fb) {
 		fbcon_init_con(con);
 	} else {

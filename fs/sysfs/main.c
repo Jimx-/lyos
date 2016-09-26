@@ -42,6 +42,7 @@ struct memfs_hooks fs_hooks = {
     .init_hook = NULL,
     .message_hook = sysfs_message_hook,
     .read_hook = sysfs_read_hook,
+    .write_hook = sysfs_write_hook,
     .getdents_hook = NULL,
 };
 

@@ -1,7 +1,7 @@
 
 KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o apic.o acpi.o \
 				system.o gate.o direct_tty.o page.o memory.o clock.o sys_sportio.o \
-				apic_asm.o fpu.o hpet.o tsc.o bootmods/bootmods.o
+				apic_asm.o fpu.o hpet.o tsc.o
 
 # Import configuration
 ifeq ($(wildcard $(SRCDIR)/.config),) 
@@ -31,6 +31,3 @@ $(ARCHKERNEL): $(KERNELOBJS)
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/x86/$@'
 	@$(CC) $(CFLAGS) -c -o $@ $<
-
-bootmods/bootmods.o:
-	@(cd bootmods; make)

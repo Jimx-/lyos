@@ -54,6 +54,10 @@ PUBLIC int main()
         case SERVICE_INIT_REPLY:
             msg.RETVAL = do_service_init_reply(&msg);
             break;
+        case SYSFS_DYN_SHOW:
+        case SYSFS_DYN_STORE:
+            msg.CNT = sysfs_handle_dyn_attr(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

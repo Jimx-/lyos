@@ -138,6 +138,14 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	sprintf(initrd_param_buf, "%u", (unsigned int)initrd_len);
 	kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
 
+	/* set module information */
+	int i;
+	multiboot_module_t * bootmod = initrd_mod + 1;
+	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++, bootmod++) {
+		kinfo.modules[i].start_addr = (phys_bytes)bootmod->mod_start;
+		kinfo.modules[i].end_addr = (phys_bytes)bootmod->mod_end;
+	}
+/*
 #define SET_MODULE(nr, name) do { \
 	extern char _binary_##name##_start[], _binary_##name##_end[]; \
 	kinfo.modules[nr].start_addr = (vir_bytes)*(&_binary_##name##_start) - KERNEL_VMA; \
@@ -157,7 +165,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	SET_MODULE(TASK_IPC, ipc);
 	SET_MODULE(TASK_PCI, pci);
 	SET_MODULE(INIT, init);
-
+*/
 	/* kernel memory layout */
 	kinfo.kernel_text_start = (vir_bytes)*(&_text);
 	kinfo.kernel_data_start = (vir_bytes)*(&_data);

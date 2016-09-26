@@ -66,7 +66,8 @@ PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag, struct fsdriver_da
 	}
 
 	off_t off;
-	size_t chunk, len;
+	size_t chunk;
+	ssize_t len;
 	int retval = 0;
 	for (off = 0; off < *count; ) {
 		chunk = *count - off;

@@ -5,6 +5,4 @@ LIBS	=  fsdriver bdev lyos
 
 PROG	= ext2fs
 
-EXTRACFLAGS = -Xlinker -Ttext -Xlinker 0x30000000
-
 include lyos.service.mk

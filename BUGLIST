@@ -7,4 +7,3 @@ Version 0.3.1 [branch: develop][compiler: gcc-4.6.2]
 
 Version 0.4.1 [branch: smp]
 [***][FIXED] Infinte loop in schedule when there is no process runnable.
-[***][     ] Some servers(like procfs and ext2fs) can't be linked at normal 0x40000000, or they will crash.
