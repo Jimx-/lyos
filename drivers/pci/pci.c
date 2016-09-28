@@ -30,9 +30,11 @@
 #include <lyos/portio.h>
 #include <lyos/service.h>
 #include <lyos/ipc.h>
+#include <libsysfs/libsysfs.h>
 
 #include <pci.h>
 #include "pci.h"
+#include "pci_dev_attr.h"
 
 #define PCI_DEBUG
 
@@ -120,7 +122,14 @@ PRIVATE device_id_t pci_register_device(int devind)
 	devinf.bus = pci_bus_id;
 	devinf.parent = pcibus[busind].dev_id;
 
-	return device_register(&devinf);
+	device_id_t device_id = device_register(&devinf);
+	if (device_id == NO_DEVICE_ID) return NO_DEVICE_ID;
+
+	struct device_attribute attr;
+	devman_init_device_attr(&attr, device_id, "vendor", SF_PRIV_OVERWRITE, (void*) &pcidev[devind], pci_vendor_show, NULL);
+	devman_device_attr_add(&attr);
+
+	return device_id;
 }
 
 PRIVATE void pci_intel_init()

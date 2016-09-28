@@ -59,6 +59,9 @@ PUBLIC int main(int argc, char * argv[])
         case DM_BUS_ATTR_ADD:
             msg.RETVAL = do_bus_attr_add(&msg);
             break;
+        case DM_DEVICE_ATTR_ADD:
+            msg.RETVAL = do_device_attr_add(&msg);
+            break;
         case SYSFS_DYN_SHOW:
         case SYSFS_DYN_STORE:
             msg.CNT = sysfs_handle_dyn_attr(&msg);

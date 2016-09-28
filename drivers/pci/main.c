@@ -88,6 +88,10 @@ PUBLIC int main()
         case DM_BUS_ATTR_STORE:
             msg.CNT = devman_bus_attr_handle(&msg);
             break;
+        case DM_DEVICE_ATTR_SHOW:
+        case DM_DEVICE_ATTR_STORE:
+            msg.CNT = devman_device_attr_handle(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

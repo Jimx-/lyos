@@ -32,6 +32,24 @@
 #include <libdevman/libdevman.h>
 #include "type.h"
 
+struct device_attr_cb_data {
+    struct list_head list;
+    sysfs_dyn_attr_id_t sysfs_id;
+    dev_attr_id_t id;
+    endpoint_t owner;
+    struct device* device;
+};
+
+#define DEVICE_ATTR_HASH_LOG2   7
+#define DEVICE_ATTR_HASH_SIZE   ((unsigned long)1<<DEVICE_ATTR_HASH_LOG2)
+#define DEVICE_ATTR_HASH_MASK   (((unsigned long)1<<DEVICE_ATTR_HASH_LOG2)-1)
+
+/* device attribute hash table */
+PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
+
+/* device attribute show buffer size */
+#define BUFSIZE 4096
+
 #define ID2INDEX(id) (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
@@ -42,6 +60,10 @@ PUBLIC void init_device()
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
         devices[i].id = NO_DEVICE_ID;
+    }
+
+    for (i = 0; i < DEVICE_ATTR_HASH_SIZE; i++) {
+        INIT_LIST_HEAD(&device_attr_table[i]);
     }
 }
 
@@ -121,4 +143,100 @@ PUBLIC struct device* get_device(device_id_t id)
     if (id == NO_DEVICE_ID) return NULL;
 
     return &devices[ID2INDEX(id)];
+}
+
+PRIVATE struct device_attr_cb_data* alloc_device_attr()
+{
+    static dev_attr_id_t next_id = 1;
+    struct device_attr_cb_data* attr = (struct device_attr_cb_data*) malloc(sizeof(struct device_attr_cb_data));
+
+    if (!attr) return NULL;
+
+    attr->id = next_id++;
+    INIT_LIST_HEAD(&attr->list);
+
+    return attr;
+}
+
+PRIVATE void device_attr_addhash(struct device_attr_cb_data* attr)
+{
+    /* Add a device attribute to hash table */
+    unsigned int hash = attr->id & DEVICE_ATTR_HASH_MASK;
+    list_add(&attr->list, &device_attr_table[hash]);
+}
+
+PRIVATE void device_attr_unhash(struct device_attr_cb_data* attr)
+{
+    /* Remove a dynamic attribute from hash table */
+    list_del(&attr->list);
+}
+
+PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+{
+    struct device_attr_cb_data* attr = (struct device_attr_cb_data*) sf_attr->cb_data;
+
+    MESSAGE msg;
+    msg.type = DM_DEVICE_ATTR_SHOW;
+    msg.BUF = buf;
+    msg.CNT = BUFSIZE;
+    msg.TARGET = attr->id;
+
+    /* TODO: async read/write */
+    send_recv(BOTH, attr->owner, &msg);
+
+    ssize_t count = msg.CNT;
+    if (count < 0) return count;
+
+    if (count >= BUFSIZE) return E2BIG;
+    buf[count] = '\0';
+
+    return count;
+}
+
+PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
+{
+    struct device_attr_cb_data* attr = (struct device_attr_cb_data*) (sf_attr->cb_data);
+    
+    MESSAGE msg;
+
+    msg.type = DM_DEVICE_ATTR_STORE;
+    msg.BUF = buf;
+    msg.CNT = count;
+    msg.TARGET = attr->id;
+
+    /* TODO: async read/write */
+    send_recv(BOTH, attr->owner, &msg);
+
+    return msg.CNT;
+}
+
+PUBLIC int do_device_attr_add(MESSAGE* m)
+{
+    struct device_attr_info info; 
+    char device_root[MAX_PATH];
+    char label[MAX_PATH];
+
+    if (m->BUF_LEN != sizeof(info)) return EINVAL;
+
+    data_copy(SELF, &info, m->source, m->BUF, m->BUF_LEN);
+
+    struct device_attr_cb_data* attr = alloc_device_attr();
+    attr->device = get_device(info.device);
+    attr->owner = m->source;
+
+    device_domain_label(attr->device, device_root);
+    snprintf(label, MAX_PATH, "%s.%s", device_root, info.name);
+
+    sysfs_dyn_attr_t sysfs_attr;
+    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr, 
+                                    device_attr_show, device_attr_store);
+    if (retval) return retval;
+    retval = sysfs_publish_dyn_attr(&sysfs_attr);
+    if (retval < 0) return -retval;
+
+    attr->sysfs_id = retval;
+    device_attr_addhash(attr);
+
+    m->ATTRID = attr->id;
+    return 0;
 }

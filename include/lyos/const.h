@@ -266,6 +266,9 @@ enum msgtype {
 	DM_BUS_ATTR_ADD,
 	DM_BUS_ATTR_SHOW,
 	DM_BUS_ATTR_STORE,
+	DM_DEVICE_ATTR_ADD,
+	DM_DEVICE_ATTR_SHOW,
+	DM_DEVICE_ATTR_STORE,
 
 	/* message type for fs request */
 	FSREQ_RET = VFS_REQ_BASE,

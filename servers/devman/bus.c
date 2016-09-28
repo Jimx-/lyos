@@ -166,7 +166,7 @@ PRIVATE void bus_attr_unhash(struct bus_attr_cb_data* attr)
     list_del(&attr->list);
 }
 
-PUBLIC ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
     struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*) sf_attr->cb_data;
 
@@ -188,7 +188,7 @@ PUBLIC ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
     return count;
 }
 
-PUBLIC ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
+PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
 {
     struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*) (sf_attr->cb_data);
     

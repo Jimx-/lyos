@@ -34,6 +34,7 @@ struct device_info {
 
 typedef int dev_attr_id_t;
 #define ATTR_NAME_MAX   32
+
 struct bus_attr_info {
     char name[ATTR_NAME_MAX];
     mode_t mode;
@@ -52,6 +53,24 @@ struct bus_attribute {
     bus_attr_store_t store;
 };
 
+struct device_attr_info {
+    char name[ATTR_NAME_MAX];
+    mode_t mode;
+    device_id_t device;
+};
+
+struct device_attribute;
+typedef ssize_t (*device_attr_show_t)(struct device_attribute* attr,char* buf);
+typedef ssize_t (*device_attr_store_t)(struct device_attribute* attr, const char* buf, size_t count);
+struct device_attribute {
+    struct device_attr_info info;
+    dev_attr_id_t id;
+    void* cb_data;
+    struct list_head list;
+    device_attr_show_t show;
+    device_attr_store_t store;
+};
+
 PUBLIC bus_type_id_t bus_register(char* name);
 PUBLIC device_id_t device_register(struct device_info* devinf);
 
@@ -59,5 +78,10 @@ PUBLIC int devman_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, c
                                 bus_attr_show_t show, bus_attr_store_t store);
 PUBLIC int devman_bus_attr_add(struct bus_attribute* attr);
 PUBLIC ssize_t devman_bus_attr_handle(MESSAGE* msg);
+
+PUBLIC int devman_init_device_attr(struct device_attribute* attr, device_id_t device, char* name, mode_t mode, void* cb_data,
+                                device_attr_show_t show, device_attr_store_t store);
+PUBLIC int devman_device_attr_add(struct device_attribute* attr);
+PUBLIC ssize_t devman_device_attr_handle(MESSAGE* msg);
 
 #endif
