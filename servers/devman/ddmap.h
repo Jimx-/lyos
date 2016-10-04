@@ -13,29 +13,17 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/type.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
-#include <errno.h>
-#include <lyos/const.h>
-#include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/driver.h>
-#include <lyos/proto.h>
-#include <libdevman/libdevman.h>
+#ifndef _DDMAP_H_
+#define _DDMAP_H_
 
-PUBLIC device_id_t dm_device_register(struct device_info* devinf)
-{
-    MESSAGE msg;
+/* device-driver mapping */
+struct dev_driver_map{
+    struct list_head list;
 
-    msg.type = DM_DEVICE_REGISTER;
-    msg.BUF = devinf;
-    msg.BUF_LEN = sizeof(*devinf);
+    dev_t minor;
+    int type;
 
-    send_recv(BOTH, TASK_DEVMAN, &msg);
+    endpoint_t drv_ep;
+};
 
-    return msg.RETVAL;
-}
+#endif

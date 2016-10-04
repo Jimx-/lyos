@@ -37,7 +37,7 @@
 /* bus attribute hash table */
 PRIVATE struct list_head bus_attr_table[BUS_ATTR_HASH_SIZE];
 
-PUBLIC int devman_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name, mode_t mode, void* cb_data,
+PUBLIC int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name, mode_t mode, void* cb_data,
 								bus_attr_show_t show, bus_attr_store_t store)
 {
 	static int initialized = 0;
@@ -93,7 +93,7 @@ PRIVATE struct bus_attribute* find_bus_attr_by_id(dev_attr_id_t id)
     return NULL;
 }
 
-PUBLIC int devman_bus_attr_add(struct bus_attribute* attr)
+PUBLIC int dm_bus_attr_add(struct bus_attribute* attr)
 {
 	MESSAGE msg;
 
@@ -117,7 +117,7 @@ PUBLIC int devman_bus_attr_add(struct bus_attribute* attr)
     return 0;
 }
 
-PUBLIC ssize_t devman_bus_attr_handle(MESSAGE* msg)
+PUBLIC ssize_t dm_bus_attr_handle(MESSAGE* msg)
 {
 	/* handle bus attribute show/store request */
 	int rw_flag = msg->type;

@@ -31,6 +31,7 @@
 #include <pci.h>
 
 #include "libblockdriver/libblockdriver.h"
+#include <libdevman/libdevman.h>
 
 #include "ata.h"
 
@@ -479,23 +480,12 @@ PRIVATE void register_hd(struct ata_info * hdi)
 	for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) { 
 		if (hdi->primary[i].size == 0) 
 			continue; 
-		char name[6];
-		memset(name, 0, sizeof(name));
-
-		if (i == 0) sprintf(name, "hd%d", drive);
-		else sprintf(name, "hd%d%c", drive, 'a' + i - 1);
-
-		announce_blockdev(name, MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + i));
+		dm_bdev_add(MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + i));
 	} 
 	for (i = 0; i < NR_SUB_PER_DRIVE; i++) { 
 		if (hdi->logical[i].size == 0) 
 			continue; 
-		char name[6];
-		memset(name, 0, sizeof(name));
-
-		sprintf(name, "hd%d%c", drive, 'a' + i + NR_PRIM_PER_DRIVE - 1);
-
-		announce_blockdev(name, MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + NR_PRIM_PER_DRIVE + i));
+		dm_bdev_add(MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + NR_PRIM_PER_DRIVE + i));
  	} 
 } 
 

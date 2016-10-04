@@ -1,3 +1,4 @@
+
 /*  This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -23,17 +24,30 @@
 #include <string.h>
 #include <lyos/proc.h>
 #include <lyos/global.h>
-#include <lyos/driver.h>
 #include <lyos/proto.h>
-#include <libdevman/libdevman.h>
 
-PUBLIC device_id_t dm_device_register(struct device_info* devinf)
+#include "libdevman.h"
+
+PUBLIC int dm_bdev_add(dev_t dev)
 {
     MESSAGE msg;
 
-    msg.type = DM_DEVICE_REGISTER;
-    msg.BUF = devinf;
-    msg.BUF_LEN = sizeof(*devinf);
+    msg.type = DM_DEVICE_ADD;
+    msg.DEVICE = dev;
+    msg.FLAGS = DT_BLOCKDEV;
+
+    send_recv(BOTH, TASK_DEVMAN, &msg);
+
+    return msg.RETVAL;
+}
+
+PUBLIC int dm_cdev_add(dev_t dev)
+{
+    MESSAGE msg;
+
+    msg.type = DM_DEVICE_ADD;
+    msg.DEVICE = dev;
+    msg.FLAGS = DT_CHARDEV;
 
     send_recv(BOTH, TASK_DEVMAN, &msg);
 

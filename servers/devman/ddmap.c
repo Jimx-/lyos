@@ -30,6 +30,8 @@
 #include <stdlib.h>
 #include <lyos/sysutils.h>
 
+#include "ddmap.h"
+    
 PUBLIC void init_dd_map()
 {
     int i;
@@ -53,20 +55,11 @@ PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep)
     return 0;
 }
 
-PUBLIC int do_announce_driver(MESSAGE * m)
+PUBLIC int do_device_add(MESSAGE * m)
 {
     int type = m->FLAGS;
     endpoint_t drv_ep = m->source;
     dev_t dev = m->DEVICE;
-    dev_t major = MAJOR(dev), minor = MINOR(dev);
-
-    char * name = (char *)malloc(m->NAME_LEN + 1);
-    if (name == NULL) return ENOMEM;
-    data_copy(SELF, name, m->source, m->BUF, m->NAME_LEN);
-    name[m->NAME_LEN] = '\0';
-
-    //printl("DEVMAN: Registering driver #%d for /dev/%s (%c%d,%d)\n", drv_ep, name, type == DT_BLOCKDEV ? 'b' : 'c', 
-    //                major, minor);
 
     int retval = map_driver(dev, type, drv_ep);
     if (retval) return retval;
@@ -83,7 +76,7 @@ PUBLIC int do_get_driver(MESSAGE * m)
     struct dev_driver_map * map;
     list_for_each_entry(map, &dd_map[major], list) {
         if (map->minor == minor && map->type == type) {
-            m->PID = map->drv_ep;
+            m->ENDPOINT = map->drv_ep;
             return 0;
         }
     }

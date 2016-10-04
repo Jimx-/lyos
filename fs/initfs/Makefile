@@ -1,6 +1,6 @@
 
 SRCS 	= main.c buffer.c super.c path.c global.c utils.c stat.c read_write.c
-LIBS	= bdev lyos 
+LIBS	= bdev devman lyos 
 
 PROG	= initfs
 

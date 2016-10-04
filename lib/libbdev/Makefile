@@ -2,7 +2,7 @@
 # Makefile for libbdev.
 #
 
-SRCS	= bdev.c driver.c
+SRCS	= bdev.c
 LIB 	= bdev
 
 include lyos.lib.mk

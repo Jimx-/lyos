@@ -37,7 +37,7 @@
 /* device attribute hash table */
 PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 
-PUBLIC int devman_init_device_attr(struct device_attribute* attr, device_id_t device, char* name, mode_t mode, void* cb_data,
+PUBLIC int dm_init_device_attr(struct device_attribute* attr, device_id_t device, char* name, mode_t mode, void* cb_data,
 								device_attr_show_t show, device_attr_store_t store)
 {
 	static int initialized = 0;
@@ -93,7 +93,7 @@ PRIVATE struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
     return NULL;
 }
 
-PUBLIC int devman_device_attr_add(struct device_attribute* attr)
+PUBLIC int dm_device_attr_add(struct device_attribute* attr)
 {
 	MESSAGE msg;
 
@@ -117,7 +117,7 @@ PUBLIC int devman_device_attr_add(struct device_attribute* attr)
     return 0;
 }
 
-PUBLIC ssize_t devman_device_attr_handle(MESSAGE* msg)
+PUBLIC ssize_t dm_device_attr_handle(MESSAGE* msg)
 {
 	/* handle device attribute show/store request */
 	int rw_flag = msg->type;

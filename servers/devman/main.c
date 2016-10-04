@@ -44,10 +44,10 @@ PUBLIC int main(int argc, char * argv[])
         int src = msg.source;
 
         switch (msg.type) {
-        case ANNOUNCE_DEVICE:
-            msg.RETVAL = do_announce_driver(&msg);
+        case DM_DEVICE_ADD:
+            msg.RETVAL = do_device_add(&msg);
             break;
-        case GET_DRIVER:
+        case DM_GET_DRIVER:
             msg.RETVAL = do_get_driver(&msg);
             break;
         case DM_BUS_REGISTER:

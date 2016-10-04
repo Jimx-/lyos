@@ -17,22 +17,8 @@
 #define _DRIVER_H_
 
 #define NR_DEVICES      135
-#define DT_BLOCKDEV     1
-#define DT_CHARDEV      2
 
 #define MAJOR_MAX       64
-
-struct dev_driver_map{
-    struct list_head list;
-
-    dev_t minor;
-    int type;
-
-    endpoint_t drv_ep;
-};
-
-PUBLIC endpoint_t get_blockdev_driver(dev_t dev);
-PUBLIC endpoint_t get_chardev_driver(dev_t dev);
 
 PUBLIC void bdev_init();
 PUBLIC int bdev_driver(dev_t dev);

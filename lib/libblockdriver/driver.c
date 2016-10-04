@@ -113,19 +113,3 @@ PUBLIC void blockdriver_task(struct blockdriver* bd)
         blockdriver_process(bd, &msg);
     }
 }
-
-PUBLIC int announce_blockdev(char * name, dev_t dev)
-{
-    MESSAGE msg;
-
-    msg.type = ANNOUNCE_DEVICE;
-    msg.BUF = name;
-    msg.NAME_LEN = strlen(name);
-    msg.PROC_NR = get_endpoint();
-    msg.DEVICE = dev;
-    msg.FLAGS = DT_BLOCKDEV;
-
-    send_recv(BOTH, TASK_DEVMAN, &msg);
-
-    return msg.RETVAL;
-}

@@ -2,6 +2,6 @@
 PROG 	= ata
 
 SRCS 	= main.c
-LIBS	= blockdriver lyos sysfs
+LIBS	= blockdriver devman lyos sysfs
 
 include lyos.service.mk

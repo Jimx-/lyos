@@ -4,7 +4,7 @@
 include arch/$(ARCH)/Makefile
 
 SRCS 	+= tty.c global.c
-LIBS	= lyos chardriver sysfs
+LIBS	= lyos chardriver devman sysfs
 
 PROG	= tty
 

@@ -40,6 +40,8 @@
 #include <lyos/timer.h>
 #include "global.h"
 
+#include <libdevman/libdevman.h>
+    
 PRIVATE struct sysinfo * _sysinfo;
 PRIVATE dev_t cons_minor = CONS_MINOR + 1;
 
@@ -178,17 +180,10 @@ PRIVATE void init_tty()
 		if (i < NR_CONSOLES) {	/* consoles */
 			init_screen(tty);
 			kb_init(tty);
-
-			/* announce the device */
-			char name[6];
-			sprintf(name, "tty%d", (int)(tty - TTY_FIRST + 1));
-			announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST + 1)));
+			dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST + 1)));
 		} else {	/* serial ports */
 			init_rs(tty);
-
-			char name[6];
-			sprintf(name, "ttyS%d", i - NR_CONSOLES);
-			announce_chardev(name, MAKE_DEV(DEV_CHAR_TTY, i - NR_CONSOLES + SERIAL_MINOR));
+			dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, i - NR_CONSOLES + SERIAL_MINOR));
 		}
 	}
 

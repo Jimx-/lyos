@@ -90,7 +90,7 @@ PUBLIC u32 pci_read_attr_u32(int devind, int port)
 
 PUBLIC int pci_init()
 {
-	pci_bus_id = bus_register("pci");
+	pci_bus_id = dm_bus_register("pci");
 	if (pci_bus_id == BUS_TYPE_ERROR) return 1;
 
 	pci_intel_init();
@@ -110,7 +110,7 @@ PRIVATE device_id_t pci_register_bus(int busind)
 	devinf.bus = BUS_TYPE_ERROR;
 	devinf.parent = NO_DEVICE_ID;
 
-	return device_register(&devinf);
+	return dm_device_register(&devinf);
 }
 
 PRIVATE device_id_t pci_register_device(int devind)
@@ -122,12 +122,12 @@ PRIVATE device_id_t pci_register_device(int devind)
 	devinf.bus = pci_bus_id;
 	devinf.parent = pcibus[busind].dev_id;
 
-	device_id_t device_id = device_register(&devinf);
+	device_id_t device_id = dm_device_register(&devinf);
 	if (device_id == NO_DEVICE_ID) return NO_DEVICE_ID;
 
 	struct device_attribute attr;
-	devman_init_device_attr(&attr, device_id, "vendor", SF_PRIV_OVERWRITE, (void*) &pcidev[devind], pci_vendor_show, NULL);
-	devman_device_attr_add(&attr);
+	dm_init_device_attr(&attr, device_id, "vendor", SF_PRIV_OVERWRITE, (void*) &pcidev[devind], pci_vendor_show, NULL);
+	dm_device_attr_add(&attr);
 
 	return device_id;
 }

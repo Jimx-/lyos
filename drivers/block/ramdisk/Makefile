@@ -1,6 +1,6 @@
 
 SRCS 	= main.c
-LIBS	= blockdriver chardriver lyos 
+LIBS	= blockdriver chardriver devman lyos 
 
 PROG	= ramdisk
 

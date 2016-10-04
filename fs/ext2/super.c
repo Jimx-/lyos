@@ -31,6 +31,8 @@
 #include "ext2_fs.h"
 #include "global.h"
 
+#include <libdevman/libdevman.h>
+    
 //#define DEBUG
 #if defined(DEBUG)
 #define DEB(x) printl("ext2fs: "); x
@@ -59,7 +61,7 @@ PUBLIC int read_ext2_super_block(dev_t dev)
     // size 1024 bytes
     driver_msg.CNT      = EXT2_SUPERBLOCK_SIZE;
     driver_msg.PROC_NR  = ext2_ep;
-    endpoint_t driver_ep = get_blockdev_driver(dev);
+    endpoint_t driver_ep = dm_get_bdev_driver(dev);
     int retval;
     if ((retval = send_recv(BOTH, driver_ep, &driver_msg)) != 0) return retval;
 
@@ -138,7 +140,7 @@ PUBLIC int write_ext2_super_block(dev_t dev)
     // size 1024 bytes
     driver_msg.CNT      = EXT2_SUPERBLOCK_SIZE;
     driver_msg.PROC_NR  = ext2_ep;
-    endpoint_t driver_ep = get_blockdev_driver(dev);
+    endpoint_t driver_ep = dm_get_bdev_driver(dev);
     send_recv(BOTH, driver_ep, &driver_msg);
 
     return 0;

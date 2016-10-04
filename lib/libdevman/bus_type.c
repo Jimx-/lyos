@@ -27,7 +27,7 @@
 #include <lyos/proto.h>
 #include <libdevman/libdevman.h>
 
-PUBLIC bus_type_id_t bus_register(char* name)
+PUBLIC bus_type_id_t dm_bus_register(char* name)
 {
     MESSAGE msg;
 

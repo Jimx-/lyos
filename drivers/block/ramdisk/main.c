@@ -29,6 +29,7 @@
 
 #include "libblockdriver/libblockdriver.h"
 #include "libchardriver/libchardriver.h"
+#include <libdevman/libdevman.h>
 
 /*
   1 char	Memory devices
@@ -224,8 +225,8 @@ PRIVATE void init_rd(int argc, char * argv[])
 
 	printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", len, len / 1024, base);
 
-	announce_chardev("/dev/mem", MAKE_DEV(DEV_RD, DEV_MEM));
-	announce_chardev("/dev/kmem", MAKE_DEV(DEV_RD, DEV_MEM));
-	announce_chardev("/dev/null", MAKE_DEV(DEV_RD, DEV_MEM));
-	announce_chardev("/dev/zero", MAKE_DEV(DEV_RD, DEV_MEM));
+	dm_cdev_add(MAKE_DEV(DEV_RD, DEV_MEM));
+	dm_cdev_add(MAKE_DEV(DEV_RD, DEV_MEM));
+	dm_cdev_add(MAKE_DEV(DEV_RD, DEV_MEM));
+	dm_cdev_add(MAKE_DEV(DEV_RD, DEV_MEM));
 }

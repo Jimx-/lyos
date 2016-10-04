@@ -25,6 +25,8 @@
 #include <lyos/global.h>
 #include <lyos/driver.h>
 #include <lyos/proto.h>
+    
+#include <libdevman/libdevman.h>
 
 PRIVATE endpoint_t driver_table[NR_DEVICES];
 PRIVATE endpoint_t self_ep = NO_TASK;
@@ -39,7 +41,7 @@ PRIVATE void bdev_set(dev_t dev)
 {
     dev_t major = MAJOR(dev);
 
-    driver_table[major] = get_blockdev_driver(dev);
+    driver_table[major] = dm_get_bdev_driver(dev);
 
     if (driver_table[major] < 0) driver_table[major] = NO_TASK;
 }
