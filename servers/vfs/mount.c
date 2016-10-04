@@ -156,14 +156,6 @@ PUBLIC int do_mount(MESSAGE * p)
 
 PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly)
 {
-    if (!is_none_dev(dev)) {
-        endpoint_t drv_e = dd_map[MAJOR(dev)].driver_nr;
-        if (drv_e == 0) {
-            printl("VFS: mount_fs: no device driver for dev %d\n", dev);
-            return EINVAL;
-        }
-    }
-
     if (find_vfs_mount(dev) != NULL) return EBUSY;
     struct vfs_mount * new_pvm = get_free_vfs_mount();
     if (new_pvm == NULL) return ENOMEM;

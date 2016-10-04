@@ -34,6 +34,7 @@
 PUBLIC int do_ioctl(MESSAGE * p)
 {
     int fd = p->FD;
+    int retval = 0;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
     struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
@@ -53,19 +54,10 @@ PUBLIC int do_ioctl(MESSAGE * p)
     if (file_type == I_BLOCK_SPECIAL) {
 
     } else {
-        MESSAGE msg_to_driver;
-
-        msg_to_driver.type = CDEV_IOCTL;
-        msg_to_driver.DEVICE = MINOR(dev);
-        msg_to_driver.REQUEST = p->REQUEST;
-        msg_to_driver.BUF = p->BUF;
-        msg_to_driver.PROC_NR = p->source;
-
-        assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-        send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &msg_to_driver);
+        retval = cdev_io(CDEV_IOCTL, dev, p->source, (vir_bytes) p->BUF, 0, p->REQUEST);
     }
 
     unlock_filp(filp);
 
-    return 0;
+    return retval;
 }

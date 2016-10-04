@@ -104,5 +104,10 @@ PUBLIC void unlock_filp(struct file_desc* filp);
 PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
+PUBLIC int cdev_open(dev_t dev);
+PUBLIC int cdev_close(dev_t dev);
+PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, vir_bytes buf, off_t pos,
+    size_t count);
+    
 #endif
 

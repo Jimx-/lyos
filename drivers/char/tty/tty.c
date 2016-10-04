@@ -515,7 +515,7 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
  *****************************************************************************/
 PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
 {
-	int retval = SYSCALL_RET;
+	int retval = 0;
 
 	switch (msg->REQUEST) {
 	case TCGETS:
@@ -537,7 +537,8 @@ PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
 		break;
 	}
 
-	msg->type = retval;
+	msg->type = SYSCALL_RET;
+	msg->RETVAL = retval;
 	send_recv(SEND, msg->source, msg);
 }
 

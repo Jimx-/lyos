@@ -20,15 +20,6 @@
    
 #define MAJOR_NONE		0
 #define NR_NONEDEVS		64 
-/**
- * @struct dev_drv_map fs.h "include/sys/fs.h"
- * @brief  The Device_nr.\ - Driver_nr.\ MAP.
- */
-struct dev_drv_map {
-	int driver_nr; /**< The proc nr.\ of the device driver. */
-};
-
-extern  struct dev_drv_map  dd_map[];
 
 #define	MAX_PATH	512
 #define FS_LABEL_MAX 15

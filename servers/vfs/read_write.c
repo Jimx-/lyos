@@ -111,22 +111,16 @@ PUBLIC int do_rdwt(MESSAGE * p)
     /* TODO: read/write for block special */
     if (file_type == I_CHAR_SPECIAL) {
         int t = p->type == READ ? CDEV_READ : CDEV_WRITE;
-        MESSAGE driver_msg;
-        driver_msg.type = t;
-
         int dev = pin->i_specdev;
 
-        driver_msg.DEVICE   = MINOR(dev);
-        driver_msg.BUF  = buf;
-        driver_msg.CNT  = len;
-        driver_msg.PROC_NR  = src;
-        assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-        send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
-
-        if (driver_msg.type == SUSPEND_PROC) p->RETVAL = SUSPEND;
+        retval = cdev_io(t, dev, src, buf, position, len);
+        if (retval < 0) {
+            p->RETVAL = retval;
+            retval = 0;
+        }
 
         unlock_filp(filp);
-        return driver_msg.CNT;
+        return retval;
     } else if (file_type == I_REGULAR) {
         /* check for O_APPEND */
         if (rw_flag == WRITE) {

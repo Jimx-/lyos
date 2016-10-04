@@ -286,15 +286,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             int file_type = pin->i_mode & I_TYPE;
 
             if (file_type == I_CHAR_SPECIAL) {
-                MESSAGE driver_msg;
-                memset(&driver_msg, 0, sizeof(driver_msg));
-                
-                driver_msg.type = CDEV_READ;
-                driver_msg.DEVICE   = MINOR(pin->i_specdev);
-                driver_msg.BUF  = buf;
-                driver_msg.CNT  = len;
-                driver_msg.PROC_NR  = KERNEL;
-                send_recv(BOTH, dd_map[MAJOR(pin->i_specdev)].driver_nr, &driver_msg);
+                cdev_io(CDEV_READ, pin->i_specdev, KERNEL, buf, offset, len);
             } else if (file_type == I_REGULAR) {
                 size_t count;
                 result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
