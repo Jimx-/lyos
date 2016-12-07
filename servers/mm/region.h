@@ -17,6 +17,7 @@
 #define _REGION_H_
 
 #include <lyos/list.h>
+#include <lyos/avl.h>
 
 #include "file.h"
 
@@ -44,6 +45,7 @@ struct phys_region {
  */
 struct vir_region {
     struct list_head list;
+    struct avl_node avl;
 
     struct mmproc * parent;
     

@@ -18,6 +18,7 @@
 
 #include <atomic.h>
 #include <page.h>
+#include <lyos/avl.h>
     
 #include "futex.h"
     
@@ -27,6 +28,7 @@ struct mm_struct {
     int slot;
     pgdir_t pgd;
     struct list_head mem_regions;
+    struct avl_root mem_avl;
 };
 
 /* Memory related information of a process */

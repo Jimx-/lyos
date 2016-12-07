@@ -380,6 +380,7 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
     return 0;
 }
 
+/*
 PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
 {
     struct vir_region * vr;
@@ -392,6 +393,7 @@ PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
 
     return NULL;
 }
+*/
 
 PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr, 
         vir_bytes offset, vir_bytes len, int wrflag)

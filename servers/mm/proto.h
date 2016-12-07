@@ -78,6 +78,8 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
         vir_bytes offset, int wrflag);
 PUBLIC int region_free(struct vir_region * rp);
 
+PUBLIC void region_init_avl(struct mm_struct* mm);
+
 PUBLIC int proc_free(struct mmproc * p, int clear_proc);
 
 /* mm/forkexit.c */

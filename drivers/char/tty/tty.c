@@ -168,6 +168,9 @@ PRIVATE void init_tty()
 
 	init_keyboard();
 
+	/* add /dev/console */
+	dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, CONS_MINOR));
+	
 	for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
 
 		tty->ibuf_cnt = tty->tty_eotcnt = 0;

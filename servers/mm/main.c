@@ -207,6 +207,7 @@ PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
 
 	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_POPULATE, len, RF_WRITABLE))) return ENOMEM;
     list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
+    avl_insert(&vr->avl, &mmexeci->mmp->active_mm->mem_avl);
 
     return 0;
 }
@@ -218,6 +219,7 @@ PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len
 
 	if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
     list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
+    avl_insert(&vr->avl, &mmexeci->mmp->active_mm->mem_avl);
 
     return 0;
 }

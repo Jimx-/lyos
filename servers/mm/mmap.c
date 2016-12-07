@@ -74,6 +74,7 @@ PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int fla
 
     if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL) return ENOMEM;
     list_add(&(vr->list), &mmp->active_mm->mem_regions);
+    avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
 
     *ret_addr = (vir_bytes)vr->vir_addr;
 
@@ -151,6 +152,7 @@ PUBLIC int do_mmap()
 
         if (!(vr = mmap_region(mmp, addr, flags, len, vr_flags))) return ENOMEM;
         list_add(&(vr->list), &mmp->active_mm->mem_regions);
+        avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
     } else {    /* mapping file */
         if (enqueue_vfs_request(mmp, MMR_FDLOOKUP, fd, 0, 0, 0, mmap_file_callback, &mm_msg, sizeof(MESSAGE)) != 0) return ENOMEM;
 
@@ -188,6 +190,7 @@ PUBLIC int do_map_phys()
     struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE);
     if (!vr) return ENOMEM;
     list_add(&vr->list, &mmp->active_mm->mem_regions);
+    avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
 
     region_set_phys(vr, phys_addr);
     region_map_phys(mmp, vr);
@@ -215,6 +218,7 @@ PUBLIC int do_munmap()
     /* TODO: split region */
     region_unmap_phys(mmp, vr);
     list_del(&vr->list);
+    avl_erase(&vr->avl, &mmp->active_mm->mem_avl);
     region_free(vr);
 
     return 0;

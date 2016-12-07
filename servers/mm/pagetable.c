@@ -143,6 +143,7 @@ PUBLIC void mm_init(struct mm_struct* mm)
     if (!mm) return;
 
     INIT_LIST_HEAD(&mm->mem_regions);
+    region_init_avl(mm);
     INIT_ATOMIC(&mm->refcnt, 1);
 }
 

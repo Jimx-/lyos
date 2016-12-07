@@ -87,6 +87,7 @@ PUBLIC int do_fork()
         list_for_each_entry(vr, &mmparent->active_mm->mem_regions, list) {
             struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
             list_add(&(new_region->list), &mmp->active_mm->mem_regions);
+            avl_insert(&new_region->avl, &mmp->active_mm->mem_avl);
            
             if (vr->flags & RF_FILEMAP) {
                 new_region->param.file = vr->param.file;
@@ -145,6 +146,7 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
         pgd_mapkernel(&mmp->mm->pgd);*/
 
         INIT_LIST_HEAD(&mmp->mm->mem_regions);
+        region_init_avl(mmp->mm);
     }
 
     return 0;
