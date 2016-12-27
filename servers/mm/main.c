@@ -40,7 +40,7 @@
 
 PRIVATE phys_bytes free_mem_size;
 
-PUBLIC void __lyos_init();
+PUBLIC void __lyos_init(char* envp[]);
 
 PRIVATE void init_mm();
 PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint);
@@ -148,7 +148,7 @@ PRIVATE void init_mm()
 	slabs_init();
 	page_cache_init();
 	
-	__lyos_init();
+	__lyos_init(NULL);
 
 	init_mmproc(TASK_MM);
 	
@@ -278,7 +278,7 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     struct ps_strings ps;
     ps.ps_nargvstr = 0;
     //ps.ps_argvstr = orig_stack;
-    //ps.ps_envstr = module_envp;
+    ps.ps_envstr = NULL;
 
     if (kernel_exec(bp->endpoint, VM_STACK_TOP, bp->name, execi->entry_point, &ps) != 0) panic("kernel exec failed");
 

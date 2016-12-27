@@ -25,8 +25,6 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/ipc.h>
 #include "types.h"
 #include "const.h"

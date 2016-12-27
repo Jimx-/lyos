@@ -22,10 +22,8 @@
 #include <lyos/const.h>
 #include <string.h>
 #include <lyos/proc.h>
-#include <lyos/global.h>
 #include <lyos/driver.h>
 #include <lyos/fs.h>
-#include <lyos/proto.h>
 #include <lyos/ipc.h>
 #include "const.h"
 #include "types.h"

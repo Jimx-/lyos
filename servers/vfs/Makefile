@@ -8,6 +8,6 @@ LIBS 	= exec lyos devman pthread
 
 PROG 	= vfs
 
-EXTRACFLAGS = -Xlinker -Ttext -Xlinker 0x60000000
+EXTRACFLAGS = -Xlinker -Ttext -Xlinker 0x60000000 -Wl,-Map,vfs.map -g
 
 include lyos.service.mk

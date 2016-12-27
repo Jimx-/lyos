@@ -77,6 +77,7 @@ void parse_auxv(char* envp[], struct so_info* si, int show_auxv, char** base)
     	PARSE_ENTRY(AT_GID, 0);
     	PARSE_ENTRY(AT_EUID, 0);
     	PARSE_ENTRY(AT_EGID, 0);
+        PARSE_ENTRY(AT_SYSINFO, 1);
     	PARSE_STR(AT_EXECFN);
     	PARSE_STR(AT_PLATFORM);
     }

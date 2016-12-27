@@ -1,4 +1,7 @@
 
+CFLAGS = 
+INSTALL_PREFIX=/usr/bin
+
 SRCS 	= getty.c
 PROG 	= getty
 

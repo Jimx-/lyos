@@ -31,8 +31,6 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/ipc.h>
 #define __LINUX_ERRNO_EXTENSIONS__   /* we want ENOTBLK */
 #include "errno.h"

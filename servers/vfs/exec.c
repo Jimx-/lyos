@@ -27,8 +27,6 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "types.h"
 #include "path.h"
 #include "global.h"
@@ -402,6 +400,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     AUXV_ENT(auxv, AT_EGID, execi->args.new_egid);
     AUXV_ENT(auxv, AT_PAGESZ, PG_SIZE);
     AUXV_ENT(auxv, AT_CLKTCK, get_system_hz());
+    AUXV_ENT(auxv, AT_SYSINFO, (vir_bytes) sysinfo);
 
     Elf32_auxv_t* auxv_execfn = auxv;
     AUXV_ENT(auxv, AT_EXECFN, NULL);

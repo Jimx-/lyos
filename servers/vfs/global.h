@@ -22,6 +22,8 @@
 #define EXTERN
 #endif
     
+#include <lyos/param.h>
+
 #include "fproc.h"
 #include "thread.h"
 #include "libpthread/pthread.h"
@@ -56,5 +58,7 @@ EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
 
 EXTERN volatile int fs_sleeping;
 EXTERN struct worker_thread workers[NR_WORKER_THREADS];
+
+EXTERN struct sysinfo* sysinfo;
 
 #endif 

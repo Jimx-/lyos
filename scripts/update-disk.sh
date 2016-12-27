@@ -71,7 +71,8 @@ cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
 #cp -rf obj/destdir.$ARCH/bin/bash /$MOUNT_POINT/bin/bash
 cp -rf obj/destdir.$ARCH/bin/* /$MOUNT_POINT/bin/
 #cp -rf obj/destdir.$ARCH/sbin/procfs /$MOUNT_POINT/sbin/ 
-#cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
 #cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
 #cp -rf obj/destdir.$ARCH/usr/ /$MOUNT_POINT/
 cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/

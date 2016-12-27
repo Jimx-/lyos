@@ -135,7 +135,8 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
     struct ps_strings ps;
     ps.ps_nargvstr = argc;
     ps.ps_argvstr = vsp;
-    ps.ps_envstr = vsp + envp_offset;
+    //ps.ps_envstr = vsp + envp_offset;
+    ps.ps_envstr = NULL;
 
     return kernel_exec(target, vsp, progname, execi.entry_point, &ps);
 }

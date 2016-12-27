@@ -25,8 +25,6 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
 #include <lyos/ipc.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
@@ -71,8 +69,8 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
 {
     struct vfs_message* ret;
 
+    pthread_mutex_lock(&request_queue_mutex);
     while (1) {
-        pthread_mutex_lock(&request_queue_mutex);
 
         if (list_empty(&request_queue)) {
             pthread_cond_wait(&request_queue_not_empty, &request_queue_mutex);
@@ -89,8 +87,8 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
             pthread_mutex_unlock(&request_queue_mutex);
             return ret;
         }
-        pthread_mutex_unlock(&request_queue_mutex);
     }
+    pthread_mutex_unlock(&request_queue_mutex);
 
     return NULL;
 }
@@ -108,16 +106,26 @@ PRIVATE void enqueue_response(struct vfs_message* res)
     }
 }
 
+PUBLIC void lock_response_queue()
+{
+    pthread_mutex_lock(&response_queue_mutex);
+}
+
+PUBLIC void unlock_response_queue()
+{
+    pthread_mutex_unlock(&response_queue_mutex);
+}
+
 PUBLIC struct vfs_message* dequeue_response()
 {
     struct vfs_message* ret = NULL;
 
-    pthread_mutex_lock(&response_queue_mutex);
+    //pthread_mutex_lock(&response_queue_mutex);
     if (!list_empty(&response_queue)) {
         ret = list_entry(response_queue.next, struct vfs_message, list);
         list_del(&ret->list);
     }
-    pthread_mutex_unlock(&response_queue_mutex);
+    //pthread_mutex_unlock(&response_queue_mutex);
 
     return ret;
 }

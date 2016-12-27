@@ -10,7 +10,9 @@ _start:
 	push 	%edx	# argv
 	push	%eax	# argc
 
+	push 	%ecx
 	call 	__lyos_init
+	addl 	$4, %esp
 	
 	call	ldso_main
 	# don't need to clean up the stack here

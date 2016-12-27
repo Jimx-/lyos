@@ -98,6 +98,8 @@ PUBLIC int fs_exit(MESSAGE * m);
 PUBLIC pid_t create_worker(int id);
 PUBLIC void enqueue_request(MESSAGE* msg);
 PUBLIC struct vfs_message* dequeue_response();
+PUBLIC void lock_response_queue();
+PUBLIC void unlock_response_queue();
 
 PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 PUBLIC void unlock_filp(struct file_desc* filp);

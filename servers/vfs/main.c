@@ -25,8 +25,6 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/ipc.h>
 #include "types.h"
 #include "path.h"
@@ -34,6 +32,7 @@
 #include "proto.h"
 #include <elf.h>
 #include "lyos/param.h"
+#include <lyos/sysutils.h>
 #include "global.h"
 #include "thread.h"
 
@@ -80,6 +79,7 @@ PUBLIC int main()
 
 		struct vfs_message* res;
 		/* send result back to the user */
+		lock_response_queue();
 		while (TRUE) {
 			res = dequeue_response();
 			if (!res) break;
@@ -91,6 +91,7 @@ PUBLIC int main()
 
 			free(res);
 		}
+		unlock_response_queue();
 	}
 
 	return 0;
@@ -160,4 +161,6 @@ PUBLIC void init_vfs()
     add_filesystem(TASK_SYSFS, "sysfs");
 
     fs_sleeping = 0;
+
+    get_sysinfo(&sysinfo);
 }

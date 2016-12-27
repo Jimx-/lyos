@@ -1,5 +1,5 @@
 
-CFLAGS = -v -Wl,-Map,cat.map
+CFLAGS = 
 SRCS 	= cat.c
 PROG 	= cat
 
