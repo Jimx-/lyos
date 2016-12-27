@@ -118,7 +118,6 @@ int ldso_load_needed(struct so_info* first)
 
 		for (needed = si->needed; needed; needed = needed->next) {
 			char* name = si->strtab + needed->name;
-
 			if (!ldso_load_by_name(name, needed, si)) retval = -1;
 
 			if (retval == -1) return retval;

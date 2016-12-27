@@ -46,6 +46,7 @@ PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
 
     while (node) {
     	struct vir_region * vr = avl_entry(node, struct vir_region, avl);
+        
         if (addr >= (vir_bytes)(vr->vir_addr) && addr < (vir_bytes)(vr->vir_addr) + vr->length) {
             return vr;
         } else if (addr < (vir_bytes)(vr->vir_addr)) {

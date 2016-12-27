@@ -305,7 +305,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
         }
         case MMR_FDCLOSE:
         {
-            struct file_desc* filp = get_filp(mm_task, fd, RWL_READ);
+            struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
             if (!filp || !filp->fd_inode) {
                 result = EBADF;
                 goto reply;
@@ -316,10 +316,12 @@ PUBLIC int do_mm_request(MESSAGE* m)
             unlock_inode(pin);
             put_inode(pin);
 
+            lock_fproc(mm_task);
             if (--filp->fd_cnt == 0) {
                 filp->fd_inode = NULL;
                 mm_task->filp[fd] = NULL;
             }
+            unlock_fproc(mm_task);
 
             unlock_filp(filp);
         }
@@ -355,6 +357,7 @@ PUBLIC int fs_fork(MESSAGE * p)
     child->lock = cmutex;
     child->pid = p->PID;
     child->endpoint = p->ENDPOINT;
+    child->flags |= FPF_INUSE;
 
     for (i = 0; i < NR_FILES; i++) {
         struct file_desc* filp = get_filp(child, i, RWL_WRITE);
@@ -378,6 +381,7 @@ PUBLIC int fs_exit(MESSAGE * m)
     int i;
     struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
 
+    p->flags &= ~FPF_INUSE;
     for (i = 0; i < NR_FILES; i++) {
         struct file_desc* filp = get_filp(p, i, RWL_WRITE);
         if (filp) {

@@ -56,7 +56,7 @@ PUBLIC int do_fork()
     struct mmproc * mmparent = mmproc_table + parent_slot;
     
     *mmp = mmproc_table[parent_slot];
-    mmp->flags &= MMPF_INUSE;
+    mmp->flags |= MMPF_INUSE;
 
     int kfork_flags = KF_MMINHIBIT;
     if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, kfork_flags, newsp)) != 0) return retval;
@@ -141,6 +141,8 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
         pgd_free(&(mmp->mm->pgd));
         mm_free(mmp->mm);
         mmp->mm = mmp->active_mm = NULL;
+
+        mmp->flags &= ~MMPF_INUSE;
     } else {   /* clear mem regions only */
         /*pgd_clear(&mmp->mm->pgd);
         pgd_mapkernel(&mmp->mm->pgd);*/

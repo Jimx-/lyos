@@ -417,6 +417,11 @@ PRIVATE void region_handle_pf_filemap_callback(struct mmproc* mmp, MESSAGE* msg,
     struct mmproc* fault_proc = state->mmp;
     struct vir_region* vr = state->vr;
 
+    /* the process has been killed */
+    if (!(state->mmp->flags & MMPF_INUSE)) {
+        return;
+    }
+
     if (msg->MMRRESULT != 0) goto kill;
 
     off_t file_offset = vr->param.file.offset + state->offset;

@@ -1,4 +1,5 @@
 .global syscall_gate_intr
+.type syscall_gate_intr, @function
 
 .section .text
 

@@ -31,7 +31,7 @@ unsigned long ldso_elf_hash(const char *name)
 	return h;
 }
 
-Elf32_Sym* ldso_lookup_symbol_obj(char* name, unsigned long hash, struct so_info* si)
+Elf32_Sym* ldso_lookup_symbol_obj(char* name, unsigned long hash, struct so_info* si, int in_plt)
 {
 	unsigned long symnum;
 
@@ -41,7 +41,10 @@ Elf32_Sym* ldso_lookup_symbol_obj(char* name, unsigned long hash, struct so_info
 
 		if (__strcmp(name, str)) continue;
 
-		if (ELF32_ST_TYPE(sym->st_info) != STT_FUNC || sym->st_shndx == 0) continue;
+		if (sym->st_shndx == SHN_UNDEF &&
+		    (in_plt ||
+		    sym->st_value == 0 ||
+		    ELF32_ST_TYPE(sym->st_info) != STT_FUNC)) continue;
 
 		return sym;
 	}
@@ -49,12 +52,12 @@ Elf32_Sym* ldso_lookup_symbol_obj(char* name, unsigned long hash, struct so_info
 	return NULL;
 }
 
-Elf32_Sym* ldso_lookup_symbol_list(char* name, unsigned long hash, struct so_info* list, struct so_info** obj)
+Elf32_Sym* ldso_lookup_symbol_list(char* name, unsigned long hash, struct so_info* list, struct so_info** obj, int in_plt)
 {
 	struct so_info* si;
 	Elf32_Sym* sym;
-	for (si = list; si != NULL; si = si->list) {
-		sym = ldso_lookup_symbol_obj(name, hash, si);
+	for (si = list; si != NULL; si = si->next) {
+		sym = ldso_lookup_symbol_obj(name, hash, si, in_plt);
 
 		if (sym) {
 			*obj = si;
@@ -65,13 +68,13 @@ Elf32_Sym* ldso_lookup_symbol_list(char* name, unsigned long hash, struct so_inf
 	return NULL;
 }
 
-Elf32_Sym* ldso_lookup_symbol(char* name, unsigned long hash, struct so_info* so, struct so_info** obj)
+Elf32_Sym* ldso_lookup_symbol(char* name, unsigned long hash, struct so_info* so, struct so_info** obj, int in_plt)
 {
 	Elf32_Sym* def = NULL;
 	struct so_info* def_obj = NULL;
 
 	if (!def) {
-		Elf32_Sym* sym = ldso_lookup_symbol_list(name, hash, si_list, &def_obj);
+		Elf32_Sym* sym = ldso_lookup_symbol_list(name, hash, si_list, &def_obj, in_plt);
 		if (sym) def = sym;
 	}
 
@@ -83,7 +86,7 @@ Elf32_Sym* ldso_lookup_symbol(char* name, unsigned long hash, struct so_info* so
 	return NULL;
 }
 
-Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum, struct so_info** obj)
+Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum, struct so_info** obj, int in_plt)
 {
 	Elf32_Sym* sym;
 	Elf32_Sym* def = NULL;
@@ -94,7 +97,7 @@ Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum, struct so_inf
 
 	if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
 		unsigned long hash = ldso_elf_hash(name);
-		def = ldso_lookup_symbol(name, hash, si, &def_obj);
+		def = ldso_lookup_symbol(name, hash, si, &def_obj, in_plt);
 	} else {
 		def = sym;
 		def_obj = si;
@@ -109,5 +112,5 @@ Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum, struct so_inf
 
 Elf32_Sym* ldso_find_plt_sym(struct so_info* si, unsigned long symnum, struct so_info** obj)
 {
-	return ldso_find_sym(si, symnum, obj);
+	return ldso_find_sym(si, symnum, obj, 1);
 }

@@ -16,7 +16,9 @@
 #ifndef _PAGE_H_
 #define _PAGE_H_
 
-#define KERNEL_VMA      0xf0000000
+#define LOWMEM_END      0x30000000
+#define KERNEL_VMA      0xc0000000
+#define VMALLOC_START   (KERNEL_VMA + LOWMEM_END)
 #define VMALLOC_END     0xf7c00000
 #define VM_STACK_TOP    KERNEL_VMA
 

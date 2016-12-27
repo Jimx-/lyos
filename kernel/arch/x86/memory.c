@@ -212,8 +212,9 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
 }
 
 #define KM_USERMAPPED   0
-#define KM_LAPIC        1
-#define KM_IOAPIC_FIRST 2
+#define KM_LOWMEM_START 1
+#define KM_LAPIC        2
+#define KM_IOAPIC_FIRST 3
 
 extern char _usermapped[], _eusermapped[];
 PUBLIC vir_bytes usermapped_offset;
@@ -251,6 +252,15 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
         *flags = KMF_USER;
         return 0;
     } 
+
+    /* dummy mapping to fetch low memory start from MM */
+    if (index == KM_LOWMEM_START) {
+        *addr = NULL;
+        *len = 0;
+        *flags = 0;
+        return 0;
+    }
+
 #if CONFIG_X86_LOCAL_APIC
     if (index == KM_LAPIC) {
         if (!lapic_addr) return EINVAL;
@@ -305,6 +315,10 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
             sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
         }
         return 0;   
+    }
+    if (index == KM_LOWMEM_START) {
+        printk("kernel: low memory base: %x\n", vir_addr);
+        return 0;
     }
 #if CONFIG_X86_LOCAL_APIC
     if (index == KM_LAPIC) {

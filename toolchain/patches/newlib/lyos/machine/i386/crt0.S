@@ -17,7 +17,7 @@
 
 .global _start
 .extern	main
-.extern	exit
+.extern	_exit
 
 .section .text
 

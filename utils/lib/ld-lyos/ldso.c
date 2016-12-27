@@ -55,7 +55,7 @@ struct so_info* alloc_info(const char* name)
 	if (si_list == NULL) {
 		si_list_tail = si_list = si;
 	} else {
-		si_list_tail->list = si;
+		si_list_tail->next = si;
 		si_list_tail = si;
 	}
 
@@ -80,7 +80,6 @@ static ldso_init_self(char* interp_base, char* relocbase)
 int ldso_main(int argc, char* argv[], char* envp[])
 {
 	init_si_pool();
-
 	/* parse environments and aux vectors */
 	setenv(envp);
 
@@ -115,6 +114,8 @@ int ldso_main(int argc, char* argv[], char* envp[])
 	ldso_load_needed(si);
 
 	ldso_relocate_objects(si, bind_now);
+
+	ldso_do_copy_relocations(si);
 
 	return si->entry;
 }

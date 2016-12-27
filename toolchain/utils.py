@@ -81,7 +81,7 @@ def patch(name):
 
 def configure(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])
-	os.system(path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + ' --with-sysroot=' + SYSROOT + extra_opt) and cmd_error()
+	os.system('CC=gcc-4.8 ' + path + ' --target=' + TARGET + ' --prefix=' + PREFIX + ' ' + ' --with-sysroot=' + SYSROOT + extra_opt) and cmd_error()
 
 def configure_cross(name, extra_opt=''):
 	path = os.sep.join([ROOT_DIR, 'sources', name, 'configure'])

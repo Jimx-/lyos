@@ -5,7 +5,7 @@
 SRCS	= main.c
 PROG	= init
 
-CFLAGS	=
+CFLAGS	= 
 INSTALL_PREFIX = /sbin
 
 include lyos.prog.mk

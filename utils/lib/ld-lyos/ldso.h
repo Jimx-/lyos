@@ -83,6 +83,8 @@ struct so_info* alloc_info(const char* name);
 void ldso_die(char* reason);
 void ldso_setup_pltgot(struct so_info* si);
 int ldso_relocate_plt_lazy(struct so_info* si);
+int ldso_relocate_nonplt_objects(struct so_info* si);
+int ldso_do_copy_relocations(struct so_info* si);
 Elf32_Sym* ldso_find_plt_sym(struct so_info* si, unsigned long symnum, struct so_info** obj);
 
 #endif

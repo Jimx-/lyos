@@ -34,6 +34,8 @@ EXTERN struct fproc {
     pthread_mutex_t lock;
 } fproc_table[NR_PROCS];
 
+#define FPF_INUSE   0x1
+
 PUBLIC void lock_fproc(struct fproc* fp);
 PUBLIC void unlock_fproc(struct fproc* fp);
 

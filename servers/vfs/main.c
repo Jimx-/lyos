@@ -136,6 +136,7 @@ PUBLIC void init_vfs()
     	pfp->pwd = NULL;
 		pfp->root = NULL;
 		pfp->umask = ~0;
+		pfp->flags |= FPF_INUSE;
 
 		for (i = 0; i < NR_FILES; i++)
 			pfp->filp[i] = 0;

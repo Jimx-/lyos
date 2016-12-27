@@ -15,12 +15,11 @@ _start:
 	call	ldso_main
 	# don't need to clean up the stack here
 
-	jmp 	*%eax
-
-	push	%eax
-	call	_exit
-
-	hlt	# should never arrive here
+	movl 	%eax, %ebx
+	pop 	%eax
+	pop 	%edx
+	pop 	%ecx
+	jmp 	*%ebx
 
 ldso_bind_entry:
 	pushf

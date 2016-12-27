@@ -311,33 +311,39 @@ PUBLIC void pt_kern_mapping_init()
     while (!vmctl_get_kern_mapping(rindex, &addr, &len, &flags)) {
         if (rindex > MAX_KERN_MAPPINGS) panic("MM: too many kernel mappings");
 
-        /* fill in mapping information */
-        kmapping->phys_addr = addr;
-        kmapping->len = len;
+        if (addr) {
+            /* fill in mapping information */
+            kmapping->phys_addr = addr;
+            kmapping->len = len;
 
-        kmapping->flags = ARCH_PG_PRESENT;
-        if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
+            kmapping->flags = ARCH_PG_PRESENT;
+            if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
 #if defined(__arm__)
-        else kmapping->flags |= ARM_PG_SUPER;
+            else kmapping->flags |= ARM_PG_SUPER;
 #endif
-        if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
-        else kmapping->flags |= ARCH_PG_RO;
+            if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
+            else kmapping->flags |= ARCH_PG_RO;
 
 #if defined(__arm__)
-        kmapping->flags |= ARM_PG_CACHED;
+            kmapping->flags |= ARM_PG_CACHED;
 #endif
 
-        /* where this region will be mapped */
-        kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
-        if (kmapping->vir_addr == NULL) panic("MM: cannot allocate memory for kernel mappings");
+            /* where this region will be mapped */
+            kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
+            if (kmapping->vir_addr == NULL) panic("MM: cannot allocate memory for kernel mappings");
 
-        if (vmctl_reply_kern_mapping(rindex, kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
+            if (vmctl_reply_kern_mapping(rindex, kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
 
-        printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n", 
-                rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
+            printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n", 
+                    rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
 
-        nr_kern_mappings++;
-        kmapping++;
+            nr_kern_mappings++;
+            kmapping++;
+        } else {
+            /* tell kernel low memory base */
+            vir_bytes lowmem_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE - KERNEL_VMA;
+            if (vmctl_reply_kern_mapping(rindex, lowmem_start)) panic("MM: cannot reply kernel mapping");
+        }
         rindex++;
     }
 }
@@ -376,7 +382,7 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 {
     int i;
     int kernel_pde = kernel_info.kernel_start_pde;
-    unsigned int addr = kernel_info.kernel_start_phys, mapped = 0, kern_size = (kernel_info.kernel_end_pde - kernel_info.kernel_start_pde) * ARCH_BIG_PAGE_SIZE;
+    vir_bytes addr = kernel_info.kernel_start_phys, mapped = 0, kern_size = (kernel_info.kernel_end_pde - kernel_info.kernel_start_pde) * ARCH_BIG_PAGE_SIZE;
 
     while (mapped < kern_size) {
 #if defined(__i386__)
@@ -398,6 +404,24 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     for(i = 0; i < MAX_PAGEDIR_PDES; i++) {
         struct pagedir_mapping * pdm = &pagedir_mappings[i];
         pgd->vir_addr[pdm->pde_no] = pdm->val;
+        kernel_pde++;
+    }
+
+    /* map low memory */
+    addr = kernel_pde * ARCH_BIG_PAGE_SIZE;
+    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
+#if defined(__i386__)
+        pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW;
+#elif defined(__arm__)
+        pgd->vir_addr[kernel_pde] = (addr & ARM_VM_SECTION_MASK)
+            | ARM_VM_SECTION
+            | ARM_VM_SECTION_DOMAIN
+            | ARM_VM_SECTION_CACHED
+            | ARM_VM_SECTION_SUPER;
+#endif
+
+        addr += ARCH_BIG_PAGE_SIZE;
+        kernel_pde++;
     }
 
     for (i = 0; i < nr_kern_mappings; i++) {

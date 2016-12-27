@@ -78,7 +78,6 @@ PUBLIC void vmem_init(vir_bytes mem_start, vir_bytes free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
- void mark() { }
 PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 {
 	/* avoid recursive allocation */
@@ -91,7 +90,6 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 
 	/* using bootstrap pages */
 	if (level > 1 || !pt_init_done) {
-		if (level > 1) mark();
 		int i, j;
 		for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
 			if (!bootstrap_pages[i].used) break;

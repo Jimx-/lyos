@@ -18,6 +18,7 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 	if (!si) return NULL;
 
 	si->ehdr = mmap(NULL, pagesz, PROT_READ, MAP_SHARED, fd, 0);
+
 	if (si->ehdr == MAP_FAILED) {
 		goto failed;
 	}
@@ -68,32 +69,32 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 	size_t text_size = roundup(segs[0]->p_memsz);
 	off_t base_offset = rounddown(segs[0]->p_offset);
 
+	/* Map data segment */
+	Elf32_Addr data_vaddr = rounddown(segs[1]->p_vaddr);
+	size_t data_size = roundup(segs[1]->p_memsz);
+	off_t data_offset = rounddown(segs[1]->p_offset);
+	Elf32_Addr clear_vaddr = data_vaddr + segs[1]->p_filesz;
+	size_t clear_size = segs[1]->p_memsz - segs[1]->p_filesz;
+	
 	if (base_offset < pagesz) {
 		munmap(ehdr, pagesz);
 		ehdr = MAP_FAILED;
 	}
 
 	/* Map text segment */
-	char* mapbase = mmap(base_addr, text_size, PROT_READ | PROT_EXEC, MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
+	char* mapbase = mmap(base_addr, text_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
 	if (mapbase == MAP_FAILED) {
 		xprintf("%s: failed to map text segment\n", pathname);
 		goto failed;
 	}
 
-	/* Map data segment */
-	Elf32_Addr data_vaddr = rounddown(segs[1]->p_vaddr);
-	size_t data_size = roundup(segs[1]->p_memsz);
-	off_t data_offset = rounddown(segs[1]->p_offset);
-	Elf32_Addr data_addr = mapbase + (data_vaddr - base_addr);
-	Elf32_Addr clear_vaddr = data_vaddr + segs[1]->p_filesz;
-	size_t clear_size = segs[1]->p_memsz - segs[1]->p_filesz;
 	Elf32_Addr clear_addr = mapbase + (clear_vaddr - base_addr);
+	Elf32_Addr data_addr = mapbase + (data_vaddr - base_addr);
 
 	if (mmap(data_addr, data_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd, data_offset) == MAP_FAILED) {
 		xprintf("%s: failed to map data segment\n", pathname);
 		goto failed;
 	}
-
 	memset(clear_addr, 0, clear_size);
 
 	si->mapbase = mapbase;

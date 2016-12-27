@@ -13,8 +13,8 @@
 ;    You should have received a copy of the GNU General Public License
 ;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>.
 
-; 3.75G - 4G: kernel space
-KERNEL_VMA	equ	0xF0000000
+; 3G - 4G: kernel space
+KERNEL_VMA	equ	0xC0000000
 KERNEL_PDE	equ KERNEL_VMA >> 22
 
 I386_CR0_WP     equ 0x00010000  ; Enable write-protection.

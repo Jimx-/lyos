@@ -35,7 +35,7 @@ diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
 +  %{!shared: \
 +    %{!static: \
 +      %{rdynamic:-export-dynamic} \
-+      %{m32:-dynamic-linker " "/lib/ld-lyos.so" "}} \
++      %{!dynamic-linker:-dynamic-linker " "/lib/ld-lyos.so" "}} \
 +    %{static:-static}}"
 +
 diff -rupN origin/gcc/config.gcc new/gcc/config.gcc

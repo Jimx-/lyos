@@ -3,7 +3,7 @@ LDLYOS			= ld-lyos.so
 LDLYOSOBJS 		= arch/$(ARCH)/arch-ldso.o ldso.o env.o xprintf.o elf.o paths.o load.o map.o reloc.o \
 					symbol.o
 
-CFLAGS			= -I$(SRCDIR)/include/ -I$(SRCDIR)/include/lyos/ -I$(CURDIR) -g
+CFLAGS			= -I$(SRCDIR)/include/ -I$(SRCDIR)/include/lyos/ -I$(CURDIR) -g -static
 
 .PHONY : everything realclean install
 

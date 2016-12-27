@@ -38,7 +38,7 @@
 #include "const.h"
 #include "global.h"
 
-PRIVATE int free_mem_size;
+PRIVATE phys_bytes free_mem_size;
 
 PUBLIC void __lyos_init();
 
@@ -66,7 +66,6 @@ PUBLIC int main()
 		int reply = 1;
 
 		int msgtype = mm_msg.type;
-
 		switch (msgtype) {
 		case NOTIFY_MSG:
             if (src == SYSTEM) 
@@ -136,13 +135,14 @@ PRIVATE void init_mm()
 	int i;
 	
 	get_kinfo(&kernel_info);
-	print_memmap();
 
 	/* initialize hole table */
-	vir_bytes vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
-	vmem_init(vmalloc_start, VMALLOC_END - vmalloc_start);
-	mem_info.vmalloc_total = VMALLOC_END - vmalloc_start;
+	//vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
+	vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
+	mem_info.vmalloc_total = VMALLOC_END - VMALLOC_START;
 	mem_info.vmalloc_used = 0;
+
+	print_memmap();
 
 	pt_init();
 	slabs_init();
@@ -329,9 +329,10 @@ PRIVATE void print_memmap()
 						reserved_memsize / 1024);
 
 	printl("Virtual kernel memory layout:\n");
-	printl("  .text   : 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
-	printl("  .data   : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
-	printl("  .bss    : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
+	printl("  .text     : 0x%08x - 0x%08x  (%dkB)\n", text_start, text_end, text_len / 1024);
+	printl("  .data     : 0x%08x - 0x%08x  (%dkB)\n", data_start, data_end, data_len / 1024);
+	printl("  .bss      : 0x%08x - 0x%08x  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
+	printl("  .vmalloc  : 0x%08x - 0x%08x  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
 
 	mem_start = kernel_info.kernel_end_phys;
 	free_mem_size = memory_size - mem_start;

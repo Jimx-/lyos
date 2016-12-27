@@ -60,6 +60,7 @@ HD		= lyos-disk.img
 HOSTCC	= gcc
 HOSTLD	= ld
 AS 		= $(SUBARCH)-elf-lyos-as
+AR 		= $(SUBARCH)-elf-lyos-ar
 CC		= $(SUBARCH)-elf-lyos-gcc
 LD		= $(SUBARCH)-elf-lyos-ld
 OBJCOPY = $(SUBARCH)-elf-lyos-objcopy
@@ -270,3 +271,15 @@ servers:
 install-servers:
 	@echo -e '$(COLORGREEN)Installing servers...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) install
+
+libc.so:
+	cp ${DESTDIR}/usr/lib/libc.a libc.a
+	${CC} -shared -o libc.so -Wl,--whole-archive libc.a -Wl,--no-whole-archive
+	rm libc.a
+	cp ${DESTDIR}/usr/lib/libg.a libg.a
+	${CC} -shared -o libg.so -Wl,--whole-archive libg.a -Wl,--no-whole-archive
+	rm libg.a
+
+libc-test:
+	${CC} -o a.o -c a.c
+	${CC} -o hello a.o -Wl,-Map,hello.map
