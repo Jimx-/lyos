@@ -79,6 +79,9 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
 PUBLIC int region_free(struct vir_region * rp);
 
 PUBLIC void region_init_avl(struct mm_struct* mm);
+PUBLIC void region_avl_start_iter(struct avl_root* root, struct avl_iter* iter, void* key, int flags);
+PUBLIC struct vir_region* region_avl_get_iter(struct avl_iter* iter);
+PUBLIC void region_avl_dec_iter(struct avl_iter* iter);
 
 PUBLIC int proc_free(struct mmproc * p, int clear_proc);
 

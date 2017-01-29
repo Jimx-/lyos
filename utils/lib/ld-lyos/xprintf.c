@@ -10,7 +10,19 @@ static char* i2a(int val, int base, char ** ps)
 	if (q) {
 		i2a(q, base, ps);
 	}
-	*(*ps)++ = (m < 10) ? (m + '0') : (m - 10 + 'A');
+	*(*ps)++ = (m < 10) ? (m + '0') : (m - 10 + 'a');
+
+	return *ps;
+}
+
+static char* u2a(unsigned int val, int base, char ** ps)
+{
+	unsigned int m = val % base;
+	unsigned int q = val / base;
+	if (q) {
+		i2a(q, base, ps);
+	}
+	*(*ps)++ = (m < 10) ? (m + '0') : (m - 10 + 'a');
 
 	return *ps;
 }
@@ -65,7 +77,7 @@ static int vsprintf(char *buf, const char *fmt, char * args)
 			break;
 		case 'x':
 			m = *((int*)p_next_arg);
-			i2a(m, 16, &q);
+			u2a(m, 16, &q);
 			p_next_arg += 4;
 			break;
 		case 'd':

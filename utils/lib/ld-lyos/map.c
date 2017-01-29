@@ -87,6 +87,7 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 		xprintf("%s: failed to map text segment\n", pathname);
 		goto failed;
 	}
+	xprintf("mapped text: %x - %x\n", mapbase, (unsigned int)mapbase + text_size);
 
 	Elf32_Addr clear_addr = mapbase + (clear_vaddr - base_addr);
 	Elf32_Addr data_addr = mapbase + (data_vaddr - base_addr);
@@ -95,7 +96,9 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 		xprintf("%s: failed to map data segment\n", pathname);
 		goto failed;
 	}
+	xprintf("mapped data: %x - %x\n", data_addr, (unsigned int)data_addr + data_size);
 	memset(clear_addr, 0, clear_size);
+	xprintf("clear: %x - %x\n", clear_addr, (unsigned int)clear_addr + clear_size);
 
 	si->mapbase = mapbase;
 	si->relocbase = mapbase - base_addr;

@@ -184,7 +184,6 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
 			mmp->flags = MMPF_INUSE;
 			mmp->endpoint = endpoint;
 			mmp->group_leader = mmp;
-			mmp->mmap_base = ARCH_BIG_PAGE_SIZE;
 			INIT_LIST_HEAD(&mmp->group_list);
 
 			return mmp;

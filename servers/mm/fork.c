@@ -122,7 +122,6 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
     /* free memory */
     struct vir_region * vr;
 
-    mmp->mmap_base = ARCH_BIG_PAGE_SIZE;
     if (mmp->mm == NULL) {
         atomic_dec(&mmp->active_mm->refcnt);
         mmp->active_mm = NULL;

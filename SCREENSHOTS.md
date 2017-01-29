@@ -22,9 +22,9 @@ LYOS GALLERY
 ![procfs][6]
 
 
-  [1]: http://chuantu.biz/t5/36/1475073563x3708035606.png
-  [2]: http://chuantu.biz/t5/36/1475073603x3708035606.png
-  [3]: http://chuantu.biz/t5/36/1475073633x3708035606.png
-  [4]: http://chuantu.biz/t5/36/1475073693x3708035606.png
-  [5]: http://chuantu.biz/t5/36/1475073715x3708035606.png
-  [6]: http://chuantu.biz/t5/36/1475073732x3708035606.png
+  [1]: http://i.imgur.com/fdeyDMR.png
+  [2]: http://i.imgur.com/vyled7w.png
+  [3]: http://i.imgur.com/crD0hZI.png
+  [4]: http://i.imgur.com/1pU75pz.png
+  [5]: http://i.imgur.com/L9GnbpF.png
+  [6]: http://i.imgur.com/xRTPGRJ.png

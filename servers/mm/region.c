@@ -268,21 +268,75 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
     return 0;
 }
 
+/*
 PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp, 
                 vir_bytes minv, vir_bytes maxv, vir_bytes len, int flags)
 {
     struct vir_region * vr;
-    /*int pages = len / ARCH_PG_SIZE;
-    if (len % ARCH_PG_SIZE) pages++;
-
-    vir_bytes vaddr = pgd_find_free_pages(&mmp->active_mm->pgd, pages, minv, maxv);
-    if (vaddr == 0) return NULL; */
     vir_bytes vaddr = mmp->mmap_base;
     mmp->mmap_base += len;
 
     if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
 
     return vr;
+}
+*/
+
+PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp, 
+                vir_bytes minv, vir_bytes maxv, vir_bytes len, int flags)
+{
+    int found = 0;
+    vir_bytes vaddr; 
+
+    if (!maxv) maxv = minv + len;
+    if (minv + len > maxv) return NULL;
+
+    struct avl_iter iter;
+    struct vir_region vr_max;
+    vr_max.vir_addr = maxv;
+    region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_max, AVL_GREATER_EQUAL);
+    struct vir_region* last = region_avl_get_iter(&iter);
+
+#define TRY_ALLOC_REGION(start, end) \
+    do {   \
+        vir_bytes rstart = ((start) > minv) ? (start) : minv; \
+        vir_bytes rend = ((end) < maxv) ? (end) : maxv;     \
+        if (rend > rstart && (rend - rstart >= len)) { \
+            vaddr = rend - len; \
+            found = 1;       \
+        }   \
+    } while (0)
+
+#define ALLOC_REGION(start, end)  \
+    do {    \
+        TRY_ALLOC_REGION((start) + ARCH_PG_SIZE, (end) - ARCH_PG_SIZE); \
+        if (!found) { \
+            TRY_ALLOC_REGION(start, end); \
+        } \
+    } while (0) 
+
+    if(!last) {
+        region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_max, AVL_LESS);
+        last = region_avl_get_iter(&iter);
+        ALLOC_REGION(last ? (vir_bytes) last->vir_addr + last->length : 0, VM_STACK_TOP);
+    }
+
+    if(!found) {
+        struct vir_region* vr;
+        while((vr = region_avl_get_iter(&iter)) && !found) {
+            struct vir_region* nextvr;
+            region_avl_dec_iter(&iter);
+            nextvr = region_avl_get_iter(&iter);
+            ALLOC_REGION(nextvr ? (vir_bytes) nextvr->vir_addr + nextvr->length : 0,
+              vr->vir_addr);
+        }
+    }
+
+    if (!found) {
+        return NULL;
+    }
+
+    return region_new(vaddr, len, flags);
 }
 
 /**

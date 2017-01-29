@@ -12,12 +12,14 @@ typedef int (*avl_node_node_compare_t)(struct avl_node*, struct avl_node*);
 
 struct avl_root {
     struct avl_node* node;
+    avl_key_node_compare_t kn_comp;
     avl_node_node_compare_t nn_comp;
 };
 
 #define AVL_ROOT (struct avl_root) { NULL, NULL, NULL }
-#define INIT_AVL_ROOT(root, nn) do { (root)->node = NULL; \
-                        (root)->nn_comp = nn; } while (0)
+#define INIT_AVL_ROOT(root, kn, nn) do { (root)->node = NULL; \
+                        (root)->nn_comp = nn; \
+                        (root)->kn_comp = kn; } while (0)
 
 #define avl_entry(ptr, type, member) ({          \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
@@ -26,6 +28,19 @@ struct avl_root {
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
+
+#define AVL_MAX_DEPTH       32
+
+#define AVL_LESS            0x1
+#define AVL_EQUAL           0x2
+#define AVL_GREATER         0x4
+#define AVL_GREATER_EQUAL   (AVL_GREATER | AVL_EQUAL)
+struct avl_iter {
+    struct avl_root* root;
+    int depth;
+    unsigned long branch;
+    struct avl_node* path[AVL_MAX_DEPTH];
+};
 
 PRIVATE inline int avl_tree_height(struct avl_node* node)
 {
@@ -186,6 +201,78 @@ PRIVATE inline struct avl_node* avl_erase_recur(struct avl_node* node, struct av
 PRIVATE inline void avl_erase(struct avl_node* node, struct avl_root* root)
 {
     root->node = avl_erase_recur(node, root->node, root->nn_comp);
+}
+
+PRIVATE inline void avl_start_iter(struct avl_root* root, struct avl_iter* iter, void* key, int flags)
+{
+    int depth = 0;
+    iter->root = root;
+    iter->depth = ~0;
+
+    struct avl_node* cur = root->node;
+    if (!cur) return;
+
+    int target;
+    if (flags & AVL_LESS) target = 1;
+    else if (flags & AVL_GREATER) target = -1;
+    else target = 0;
+
+    while (1) {
+        int cmp = root->kn_comp(key, cur);
+        if (cmp == 0) {
+            if (flags & AVL_EQUAL) {
+                iter->depth = depth;
+                break;
+            }
+            cmp = -target;
+        }
+
+        if (target && target == cmp) {
+            iter->depth = depth;
+        }
+        cur = cmp < 0 ? cur->left : cur->right;
+        if (!cur) break;
+
+        if (cmp < 0) {
+            iter->branch &= ~(1 << depth);
+        } else {
+            iter->branch |= (1 << depth);
+        }
+
+        iter->path[depth++] = cur;
+    }
+}
+
+PRIVATE inline struct avl_node* avl_get_iter(struct avl_iter* iter)
+{
+    if (iter->depth == ~0) return NULL;
+    return (iter->depth == 0) ? iter->root->node : iter->path[iter->depth - 1];
+}
+
+PRIVATE inline void avl_dec_iter(struct avl_iter* iter)
+{
+    if (iter->depth != ~0) {
+        struct avl_node* cur = (iter->depth == 0) ? iter->root->node : iter->path[iter->depth - 1];
+        cur = cur->left;
+        if (!cur) {
+            do {
+                if (iter->depth == 0) {
+                    iter->depth = ~0;
+                    break;
+                }
+                iter->depth--;
+            } while (!(iter->branch & (1 << iter->depth)));
+        } else {
+            iter->branch &= ~(1 << iter->depth);
+            iter->path[iter->depth++] = cur;
+            while (1) {
+                cur = cur->right;
+                if (!cur) break;
+                iter->branch |= (1 << iter->depth);
+                iter->path[iter->depth++] = cur;
+            }
+        }
+    }
 }
 
 #endif

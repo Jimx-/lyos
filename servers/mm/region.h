@@ -49,7 +49,7 @@ struct vir_region {
 
     struct mmproc * parent;
     
-    void * vir_addr;
+    vir_bytes vir_addr;
     int length;
     struct phys_region phys_block;  /*<- physical memory block */
 

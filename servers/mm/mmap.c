@@ -44,7 +44,8 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     else if (mmap_flags & MAP_SHARED) vrflags |= RF_SHARED;
 
     if (addr || (mmap_flags & MAP_FIXED)) {
-        vr = region_new((void *)addr, len, vrflags);
+        //vr = region_new((void *)addr, len, vrflags);
+        vr = region_find_free_region(mmp, addr, 0, len, vrflags);
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
     } else {

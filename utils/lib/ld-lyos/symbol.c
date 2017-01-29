@@ -36,6 +36,7 @@ Elf32_Sym* ldso_lookup_symbol_obj(char* name, unsigned long hash, struct so_info
 	unsigned long symnum;
 
 	for (symnum = si->buckets[hash % si->nbuckets]; symnum != 0; symnum = si->chains[symnum]) {
+
 		Elf32_Sym* sym = si->symtab + symnum;
 		char* str = si->strtab + sym->st_name;
 
