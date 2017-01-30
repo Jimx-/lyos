@@ -131,10 +131,15 @@ PRIVATE int phys_region_right_shift(struct phys_region * rp, int new_start)
     return 0;
 }
 
-PRIVATE struct phys_frame * phys_region_get(struct phys_region * rp, int i)
+PRIVATE inline struct phys_frame * phys_region_get(struct phys_region * rp, int i)
 {
-    struct phys_frame * pf = rp->frames[i];
-    
+    return rp->frames[i];
+}
+
+PRIVATE struct phys_frame * phys_region_get_or_alloc(struct phys_region * rp, int i)
+{
+    struct phys_frame * pf = phys_region_get(rp, i);
+
     if (pf == NULL) {
         SLABALLOC(pf);
         if (!pf) return NULL;
@@ -200,7 +205,7 @@ PUBLIC int region_alloc_phys(struct vir_region * rp)
     int i;
 
     for (i = 0; len > 0; len -= ARCH_PG_SIZE, base += ARCH_PG_SIZE, i++) {
-        struct phys_frame * frame = phys_region_get(pregion, i);
+        struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
         void * paddr = (void *)alloc_pages(1, APF_NORMAL);
         if (!paddr) return ENOMEM;
@@ -225,7 +230,7 @@ PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr)
     int i;
 
     for (i = 0; len > 0; len -= PG_SIZE, i++) {
-        struct phys_frame * frame = phys_region_get(pregion, i);
+        struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
         frame->flags = (rp->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
         frame->phys_addr = (void *)phys_addr; 
@@ -251,7 +256,7 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
     int i;
 
     for (i = 0; len > 0; len -= ARCH_PG_SIZE, base += ARCH_PG_SIZE, i++) {
-        struct phys_frame * frame = phys_region_get(pregion, i);
+        struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->phys_addr == NULL) continue;
 #if REGION_DEBUG
         printl("MM: region_map_phys: mapping page(0x%x -> 0x%x)\n", 
@@ -313,7 +318,7 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
         if (!found) { \
             TRY_ALLOC_REGION(start, end); \
         } \
-    } while (0) 
+    } while (0)
 
     if(!last) {
         region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_max, AVL_LESS);
@@ -353,7 +358,7 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     int i;
 
     for (i = 0; i < rp->length / PG_SIZE; i++) {
-        struct phys_frame * frame = phys_region_get(pregion, i);
+        struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         frame->flags &= ~PFF_MAPPED;
     }
 
@@ -420,7 +425,7 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
     if (prdest->capacity < src->length / ARCH_PG_SIZE)
         phys_region_realloc(prdest, src->length / ARCH_PG_SIZE);
     for (i = 0; i < src->length / PG_SIZE; i++) {
-        struct phys_frame * frame = phys_region_get(pregion, i);
+        struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->refcnt) {
             frame->refcnt++;
             frame->flags |= PFF_SHARED;
@@ -513,7 +518,7 @@ PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr
         vir_bytes offset, int wrflag)
 {
     struct phys_region * pregion = &vr->phys_block;
-    struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+    struct phys_frame * frame = phys_region_get_or_alloc(pregion, offset / ARCH_PG_SIZE);
     if (!vr->param.file.filp) panic("region_handle_pf_filemap(): BUG: file mapping region has no file param");
     int fd = vr->param.file.filp->fd;
     static char zero_page[ARCH_PG_SIZE];
@@ -544,7 +549,7 @@ PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr
             }
 
             if (vr->flags & RF_WRITABLE && vr->param.file.clearend > 0 && roundup(offset + vr->param.file.clearend, ARCH_PG_SIZE) >= vr->length) {
-                frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+                frame = phys_region_get_or_alloc(pregion, offset / ARCH_PG_SIZE);
                 phys_bytes phaddr = frame->phys_addr;
                 phaddr += ARCH_PG_SIZE - vr->param.file.clearend;
                 data_copy(NO_TASK, phaddr, SELF, (char*) zero_page, vr->param.file.clearend);
@@ -583,7 +588,7 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
         vir_bytes offset, int wrflag)
 {
     struct phys_region * pregion = &vr->phys_block;
-    struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+    struct phys_frame * frame = phys_region_get_or_alloc(pregion, offset / ARCH_PG_SIZE);
 
     if (vr->flags & RF_FILEMAP && frame->phys_addr == NULL) return region_handle_pf_filemap(mmp, vr, offset, wrflag);
 
@@ -635,12 +640,12 @@ PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
 PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes offset)
 {
     struct phys_region * pregion = &vr->phys_block;
-    struct phys_frame * frame = phys_region_get(pregion, offset / ARCH_PG_SIZE);
+    struct phys_frame * frame = phys_region_get_or_alloc(pregion, offset / ARCH_PG_SIZE);
 
     /* release the old frame */
     if (frame->refcnt) frame->refcnt--;
     if (frame->refcnt <= 1) frame->flags |= PFF_WRITABLE;
-    
+
     /* allocate a new frame */
     struct phys_frame * new_frame;
     SLABALLOC(new_frame);
@@ -658,6 +663,153 @@ PUBLIC int region_cow(struct mmproc * mmp, struct vir_region * vr, vir_bytes off
 
     /* copy the data to the new frame */
     return data_copy(mmp->endpoint, (void *)((vir_bytes)vr->vir_addr + offset), NO_TASK, (void *)frame->phys_addr, ARCH_PG_SIZE); 
+}
+
+PRIVATE int region_split(struct mmproc* mmp, struct vir_region* vr, vir_bytes len, struct vir_region** v1, struct vir_region** v2)
+{
+    struct vir_region* r1 = region_new(vr->vir_addr, len, vr->flags);
+    if (!r1) goto failed;
+
+    struct vir_region* r2 = region_new(vr->vir_addr + len, vr->length - len, vr->flags);
+    if (!r2) goto failed;
+
+    struct phys_region* pr = &vr->phys_block;
+    struct phys_region* pr1 = &r1->phys_block;
+    int i;
+    for (i = 0; i < r1->length / ARCH_PG_SIZE; i++) {
+        struct phys_frame* frame = phys_region_get_or_alloc(pr, i);
+        frame->refcnt++;
+        phys_region_set(pr1, i, frame);
+    }
+
+    struct phys_region* pr2 = &r1->phys_block;
+    off_t poff = len / ARCH_PG_SIZE;
+    for (i = 0; i < r2->length / ARCH_PG_SIZE; i++) {
+        struct phys_frame* frame = phys_region_get_or_alloc(pr, i + poff);
+        frame->refcnt++;
+        phys_region_set(pr2, i, frame);
+    }
+
+    if (vr->flags & RF_FILEMAP) {
+        r1->param.file = vr->param.file;
+        r2->param.file = vr->param.file;
+        file_reference(r1, vr->param.file.filp);
+        file_reference(r2, vr->param.file.filp);
+        r1->param.file.clearend = 0;
+        r2->param.file.offset += r1->length;
+    }
+
+    list_del(&vr->list);
+    avl_erase(&vr->avl, &mmp->active_mm->mem_avl);
+    region_free(vr);
+
+    list_add(&r1->list, &mmp->active_mm->mem_regions);
+    avl_insert(&r1->avl, &mmp->active_mm->mem_avl);
+    list_add(&r2->list, &mmp->active_mm->mem_regions);
+    avl_insert(&r2->avl, &mmp->active_mm->mem_avl);
+
+    *v1 = r1;
+    *v2 = r2;
+
+    return 0;
+
+ failed:
+    if (r1) region_free(r1);
+    if (r2) region_free(r2);
+
+    return ENOMEM;
+}
+
+PRIVATE int region_subfree(struct vir_region * rp, vir_bytes offset, vir_bytes len)
+{
+    struct phys_region * pregion = &rp->phys_block;
+    vir_bytes limit = offset + len;
+
+    vir_bytes p;
+    struct phys_frame* frame;
+    for (p = offset; p < limit; p += ARCH_PG_SIZE) {
+        int i = p / ARCH_PG_SIZE;
+        frame = phys_region_get(pregion, i);
+        if (frame != NULL) {
+            if (frame->refcnt) frame->refcnt--;
+
+            if (frame->refcnt <= 0) {
+                if (frame->phys_addr) free_mem((int)(frame->phys_addr), ARCH_PG_SIZE);
+            }
+            phys_region_set(pregion, i, NULL);
+        }
+    }
+
+    return 0;
+}
+
+PRIVATE int region_unmap(struct mmproc* mmp, struct vir_region* vr,
+                                vir_bytes offset, vir_bytes len)
+{
+    region_subfree(vr, offset, len);
+
+    if (len == vr->length) {
+        list_del(&vr->list);
+        avl_erase(&vr->avl, &mmp->active_mm->mem_avl);
+        region_free(vr);
+    } else if (offset + len == vr->length) {
+        vr->length -= len;
+    }
+
+    unmap_memory(&mmp->active_mm->pgd, vr->vir_addr + offset, len);
+    return 0;
+}
+
+PUBLIC int region_unmap_range(struct mmproc* mmp, vir_bytes start, vir_bytes len)
+{
+    vir_bytes offset = start % ARCH_PG_SIZE;
+
+    start -= offset;
+    len += offset;
+    len = roundup(len, ARCH_PG_SIZE);
+
+    struct vir_region* vr, *next_vr;
+    struct avl_iter iter;
+    struct vir_region vr_start;
+    vr_start.vir_addr = start;
+    region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_start, AVL_LESS_EQUAL);
+    if (!(vr = region_avl_get_iter(&iter))) {
+        region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_start, AVL_GREATER);
+        if (!(vr = region_avl_get_iter(&iter))) {
+            return 0;
+        }
+    }
+
+    vir_bytes limit = start + len;
+    for (; vr && vr->vir_addr < limit; vr = next_vr) {
+        region_avl_inc_iter(&iter);
+        next_vr = region_avl_get_iter(&iter);
+
+        vir_bytes cur_start = max(start, vr->vir_addr);
+        vir_bytes cur_limit = min(limit, vr->vir_addr + vr->length);
+        if (cur_start >= cur_limit) continue;
+
+        /* need spliting */
+        if (cur_start > vr->vir_addr && cur_limit < vr->vir_addr + vr->length) {
+            struct vir_region* v1, *v2;
+            vir_bytes split_len = cur_limit - vr->vir_addr;
+            int retval;
+            if (retval = region_split(mmp, vr, split_len, &v1, &v2)) {
+                return retval;
+            }
+            vr = v1;
+        }
+
+        int retval = region_unmap(mmp, vr, cur_start - vr->vir_addr,
+                                  cur_limit - cur_start);
+        if (retval) return retval;
+
+        if (next_vr) {
+            region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, next_vr, AVL_EQUAL);
+        }
+    }
+
+    return 0;
 }
 
 PUBLIC int region_free(struct vir_region * rp)

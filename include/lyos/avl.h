@@ -35,6 +35,8 @@ struct avl_root {
 #define AVL_EQUAL           0x2
 #define AVL_GREATER         0x4
 #define AVL_GREATER_EQUAL   (AVL_GREATER | AVL_EQUAL)
+#define AVL_LESS_EQUAL      (AVL_LESS | AVL_EQUAL)
+
 struct avl_iter {
     struct avl_root* root;
     int depth;
@@ -247,6 +249,32 @@ PRIVATE inline struct avl_node* avl_get_iter(struct avl_iter* iter)
 {
     if (iter->depth == ~0) return NULL;
     return (iter->depth == 0) ? iter->root->node : iter->path[iter->depth - 1];
+}
+
+PRIVATE inline void avl_inc_iter(struct avl_iter* iter)
+{
+    if (iter->depth != ~0) {
+        struct avl_node* cur = (iter->depth == 0) ? iter->root->node : iter->path[iter->depth - 1];
+        cur = cur->right;
+        if (!cur) {
+            do {
+                if (iter->depth == 0) {
+                    iter->depth = ~0;
+                    break;
+                }
+                iter->depth--;
+            } while (iter->branch & (1 << iter->depth));
+        } else {
+            iter->branch |= (1 << iter->depth);
+            iter->path[iter->depth++] = cur;
+            while (1) {
+                cur = cur->left;
+                if (!cur) break;
+                iter->branch &= ~(1 << iter->depth);
+                iter->path[iter->depth++] = cur;
+            }
+        }
+    }
 }
 
 PRIVATE inline void avl_dec_iter(struct avl_iter* iter)

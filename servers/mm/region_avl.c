@@ -84,6 +84,11 @@ PUBLIC struct vir_region* region_avl_get_iter(struct avl_iter* iter)
     return avl_entry(node, struct vir_region, avl);
 }
 
+PUBLIC void region_avl_inc_iter(struct avl_iter* iter)
+{
+    avl_inc_iter(iter);
+}
+
 PUBLIC void region_avl_dec_iter(struct avl_iter* iter)
 {
     avl_dec_iter(iter);

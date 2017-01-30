@@ -43,8 +43,12 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     if (mmap_flags & MAP_PRIVATE) vrflags |= RF_PRIVATE;
     else if (mmap_flags & MAP_SHARED) vrflags |= RF_SHARED;
 
+    /* first unmap the region */
+    if (addr && (mmap_flags & MAP_FIXED)) {
+        if (region_unmap_range(mmp, addr, len)) return NULL;
+    }
+
     if (addr || (mmap_flags & MAP_FIXED)) {
-        //vr = region_new((void *)addr, len, vrflags);
         vr = region_find_free_region(mmp, addr, 0, len, vrflags);
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
@@ -205,22 +209,11 @@ PUBLIC int do_munmap()
 {
     endpoint_t who = mm_msg.MMAP_WHO < 0 ? mm_msg.source : mm_msg.MMAP_WHO;
     vir_bytes addr = mm_msg.MMAP_VADDR;
-    size_t len = mm_msg.MMAP_LEN;
+    vir_bytes len = mm_msg.MMAP_LEN;
     struct mmproc * mmp = endpt_mmproc(who);
 
     if (len < 0) return EINVAL;
     if (!mmp) return EINVAL;
 
-    struct vir_region * vr;
-    vr = region_lookup(mmp, addr);
-
-    if (!vr) return EINVAL;
-
-    /* TODO: split region */
-    region_unmap_phys(mmp, vr);
-    list_del(&vr->list);
-    avl_erase(&vr->avl, &mmp->active_mm->mem_avl);
-    region_free(vr);
-
-    return 0;
+    return region_unmap_range(mmp, addr, len);
 }

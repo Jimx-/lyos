@@ -9,8 +9,8 @@
 #include "ldso.h"
 #include "env.h"
 
-#define roundup(x) ((x % pagesz == 0) ? x : ((x + pagesz) - (x % pagesz)))
-#define rounddown(x) (x - (x % pagesz))
+#define roundup(x) (((x) % pagesz == 0) ? (x) : (((x) + pagesz) - ((x) % pagesz)))
+#define rounddown(x) ((x) - ((x) % pagesz))
 
 struct so_info* ldso_map_object(char* pathname, int fd)
 {
@@ -65,8 +65,10 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 		goto failed;
 	}
 
-	Elf32_Addr base_addr = si->is_dynamic ? NULL : rounddown(segs[0]->p_vaddr);
+    Elf32_Addr base_vaddr = rounddown(segs[0]->p_vaddr);
+	Elf32_Addr base_addr = si->is_dynamic ? NULL : base_vaddr;
 	size_t text_size = roundup(segs[0]->p_memsz);
+    size_t map_size = roundup(segs[1]->p_vaddr + segs[1]->p_memsz) - base_vaddr;
 	off_t base_offset = rounddown(segs[0]->p_offset);
 
 	/* Map data segment */
@@ -75,19 +77,18 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 	off_t data_offset = rounddown(segs[1]->p_offset);
 	Elf32_Addr clear_vaddr = data_vaddr + segs[1]->p_filesz;
 	size_t clear_size = segs[1]->p_memsz - segs[1]->p_filesz;
-	
+
 	if (base_offset < pagesz) {
 		munmap(ehdr, pagesz);
 		ehdr = MAP_FAILED;
 	}
 
 	/* Map text segment */
-	char* mapbase = mmap(base_addr, text_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
+	char* mapbase = mmap(base_addr, map_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
 	if (mapbase == MAP_FAILED) {
 		xprintf("%s: failed to map text segment\n", pathname);
 		goto failed;
 	}
-	xprintf("mapped text: %x - %x\n", mapbase, (unsigned int)mapbase + text_size);
 
 	Elf32_Addr clear_addr = mapbase + (clear_vaddr - base_addr);
 	Elf32_Addr data_addr = mapbase + (data_vaddr - base_addr);
@@ -96,9 +97,7 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 		xprintf("%s: failed to map data segment\n", pathname);
 		goto failed;
 	}
-	xprintf("mapped data: %x - %x\n", data_addr, (unsigned int)data_addr + data_size);
 	memset(clear_addr, 0, clear_size);
-	xprintf("clear: %x - %x\n", clear_addr, (unsigned int)clear_addr + clear_size);
 
 	si->mapbase = mapbase;
 	si->relocbase = mapbase - base_addr;

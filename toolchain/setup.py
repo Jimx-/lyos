@@ -121,6 +121,9 @@ if __name__ == "__main__":
 		make()
 		make(' DESTDIR=' + SYSROOT + ' install')
 		copy(TARGET + '/newlib/libc/sys/lyos/crt*.o', SYSROOT + CROSSPREFIX + '/lib/')
+
+		for lib in ['c', 'g']:
+			os.system('{}-gcc -shared -o {}/usr/lib/lib{}.so -Wl,--whole-archive {}/usr/lib/lib{}.a -Wl,--no-whole-archive'.format(TARGET, DESTDIR, lib, DESTDIR, lib))
 		pop_dir()
 
 	if BUILD_GCC is not None:

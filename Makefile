@@ -273,13 +273,6 @@ install-servers:
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) install
 
 libc.so:
-	cp ${DESTDIR}/usr/lib/libc.a libc.a
-	${CC} -shared -o libc.so -Wl,--whole-archive libc.a -Wl,--no-whole-archive
-	rm libc.a
-	cp ${DESTDIR}/usr/lib/libg.a libg.a
-	${CC} -shared -o libg.so -Wl,--whole-archive libg.a -Wl,--no-whole-archive
-	rm libg.a
+	${CC} -shared -o ${DESTDIR}/usr/lib/libc.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libc.a -Wl,--no-whole-archive
+	${CC} -shared -o ${DESTDIR}/usr/lib/libg.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libg.a -Wl,--no-whole-archive
 
-libc-test:
-	${CC} -o a.o -c a.c
-	${CC} -o hello a.o -Wl,-Map,hello.map

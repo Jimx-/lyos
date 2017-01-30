@@ -76,11 +76,13 @@ PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr,
         vir_bytes offset, vir_bytes sublen, int wrflag);
 PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr, 
         vir_bytes offset, int wrflag);
+PUBLIC int region_unmap_range(struct mmproc* mmp, vir_bytes start, vir_bytes len);
 PUBLIC int region_free(struct vir_region * rp);
 
 PUBLIC void region_init_avl(struct mm_struct* mm);
 PUBLIC void region_avl_start_iter(struct avl_root* root, struct avl_iter* iter, void* key, int flags);
 PUBLIC struct vir_region* region_avl_get_iter(struct avl_iter* iter);
+PUBLIC void region_avl_inc_iter(struct avl_iter* iter);
 PUBLIC void region_avl_dec_iter(struct avl_iter* iter);
 
 PUBLIC int proc_free(struct mmproc * p, int clear_proc);

@@ -298,6 +298,8 @@ PUBLIC int fs_exec(MESSAGE * msg)
         execi.args.filesize = execi.pin->i_size;
         execi.args.clearproc = NULL;
         execi.args.memmap = NULL;
+        /* prevent libexec from allocating stack twice */
+        execi.args.allocmem_prealloc = NULL;
     }
 
 
