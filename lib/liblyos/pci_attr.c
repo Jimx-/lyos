@@ -40,8 +40,35 @@ PUBLIC u8 pci_attr_r8(int devind, u16 port)
     }
 
     MESSAGE msg;
-    
+
     msg.type = PCI_ATTR_R8;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
+
+#ifdef __i386__
+    send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
+
+    return (u8)msg.u.m3.m3i2;
+}
+
+PUBLIC u16 pci_attr_r16(int devind, u16 port)
+{
+    u32 v;
+    int retval;
+
+    if (__pci_endpoint == NO_TASK) {
+        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
+        if (retval) return retval;
+
+        __pci_endpoint = (endpoint_t)v;
+    }
+
+    MESSAGE msg;
+
+    msg.type = PCI_ATTR_R16;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
@@ -79,4 +106,32 @@ PUBLIC u32 pci_attr_r32(int devind, u16 port)
 #endif
 
     return msg.u.m3.m3i2;
+}
+
+PUBLIC int pci_attr_w16(int devind, u16 port, u16 value)
+{
+    u32 v;
+    int retval;
+
+    if (__pci_endpoint == NO_TASK) {
+        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
+        if (retval) return retval;
+
+        __pci_endpoint = (endpoint_t)v;
+    }
+
+    MESSAGE msg;
+
+    msg.type = PCI_ATTR_W16;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
+    msg.u.m3.m3i4 = value;
+
+#ifdef __i386__
+    send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
+
+    return msg.RETVAL;
 }

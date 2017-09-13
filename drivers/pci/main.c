@@ -50,7 +50,9 @@ PRIVATE int do_set_acl(MESSAGE * m);
 PRIVATE int do_first_dev(MESSAGE * m);
 PRIVATE int do_next_dev(MESSAGE * m);
 PRIVATE int do_attr_r8(MESSAGE * m);
+PRIVATE int do_attr_r16(MESSAGE * m);
 PRIVATE int do_attr_r32(MESSAGE * m);
+PRIVATE int do_attr_w16(MESSAGE * m);
 
 PUBLIC int main()
 {
@@ -81,8 +83,14 @@ PUBLIC int main()
         case PCI_ATTR_R8:
             msg.RETVAL = do_attr_r8(&msg);
             break;
+        case PCI_ATTR_R16:
+            msg.RETVAL = do_attr_r16(&msg);
+            break;
         case PCI_ATTR_R32:
             msg.RETVAL = do_attr_r32(&msg);
+            break;
+        case PCI_ATTR_W16:
+            msg.RETVAL = do_attr_w16(&msg);
             break;
         case DM_BUS_ATTR_SHOW:
         case DM_BUS_ATTR_STORE:
@@ -187,6 +195,18 @@ PRIVATE int do_attr_r8(MESSAGE * m)
     return 0;
 }
 
+PRIVATE int do_attr_r16(MESSAGE * m)
+{
+    struct pci_acl * acl = get_acl(m->source);
+
+    int devind = m->u.m3.m3i2;
+    u16 offset = (u16)m->u.m3.m3i3;
+
+    m->u.m3.m3i2 = pci_read_attr_u16(devind, offset);
+
+    return 0;
+}
+
 PRIVATE int do_attr_r32(MESSAGE * m)
 {
     struct pci_acl * acl = get_acl(m->source);
@@ -199,3 +219,15 @@ PRIVATE int do_attr_r32(MESSAGE * m)
     return 0;
 }
 
+PRIVATE int do_attr_w16(MESSAGE * m)
+{
+    struct pci_acl * acl = get_acl(m->source);
+
+    int devind = m->u.m3.m3i2;
+    u16 offset = (u16)m->u.m3.m3i3;
+    u16 value = (u16)m->u.m3.m3i4;
+
+    pci_write_attr_u16(devind, offset, value);
+
+    return 0;
+}

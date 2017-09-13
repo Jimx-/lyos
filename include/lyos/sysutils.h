@@ -70,7 +70,9 @@ PUBLIC int      end_ksig(endpoint_t ep);
 PUBLIC int      pci_first_dev(int * devind, u16 * vid, u16 * did);
 PUBLIC int      pci_next_dev(int * devind, u16 * vid, u16 * did);
 PUBLIC u8       pci_attr_r8(int devind, u16 port);
+PUBLIC u16      pci_attr_r16(int devind, u16 port);
 PUBLIC u32      pci_attr_r32(int devind, u16 port);
+PUBLIC int      pci_attr_w16(int devind, u16 port, u16 value);
 
 PUBLIC int      get_system_hz();
 #define BOOT_TICKS      u.m3.m3l1

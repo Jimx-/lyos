@@ -201,14 +201,29 @@ PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags
 PUBLIC int region_alloc_phys(struct vir_region * rp)
 {
     struct phys_region * pregion = &(rp->phys_block);
+    vir_bytes contig_mem;
     int base = (int)rp->vir_addr, len = rp->length;
     int i;
 
+    if (rp->flags & RF_CONTIG) {
+        contig_mem = alloc_pages(roundup(rp->length, ARCH_PG_SIZE) / ARCH_PG_SIZE, APF_NORMAL);
+        if (!contig_mem) return ENOMEM;
+    }
+
     for (i = 0; len > 0; len -= ARCH_PG_SIZE, base += ARCH_PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
+        void * paddr = NULL;
+
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
-        void * paddr = (void *)alloc_pages(1, APF_NORMAL);
+
+        if (rp->flags & RF_CONTIG) {
+            paddr = (void*) contig_mem;
+            contig_mem += ARCH_PG_SIZE;
+        } else {
+            paddr = (void *)alloc_pages(1, APF_NORMAL);
+        }
         if (!paddr) return ENOMEM;
+
         frame->flags = (rp->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
         frame->phys_addr = paddr; 
         frame->refcnt = 1;

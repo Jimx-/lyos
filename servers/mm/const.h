@@ -32,7 +32,8 @@
 #define RF_GROWSDOWN 0x10
 #define RF_FILEMAP  0x20
 #define RF_PRIVATE  0x40
-
+#define RF_CONTIG   0x80
+ 
 /* Page frame flags */
 #define PFF_WRITABLE 0x1
 #define PFF_SHARED   0x2

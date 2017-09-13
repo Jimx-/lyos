@@ -42,7 +42,13 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
 
     if (mmap_flags & MAP_PRIVATE) vrflags |= RF_PRIVATE;
     else if (mmap_flags & MAP_SHARED) vrflags |= RF_SHARED;
+    if (mmap_flags & MAP_CONTIG) vrflags |= RF_CONTIG;
 
+    /* Contiguous physical memory must be populated */
+    if (mmap_flags & (MAP_POPULATE | MAP_CONTIG) == MAP_CONTIG) {
+        return NULL;
+    }
+    
     /* first unmap the region */
     if (addr && (mmap_flags & MAP_FIXED)) {
         if (region_unmap_range(mmp, addr, len)) return NULL;

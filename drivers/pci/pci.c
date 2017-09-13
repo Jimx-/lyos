@@ -88,6 +88,13 @@ PUBLIC u32 pci_read_attr_u32(int devind, int port)
 	return pcibus[busind].rreg_u32(busind, devind, port);
 }
 
+PUBLIC void pci_write_attr_u16(int devind, int port, u16 value)
+{
+	int busnr = pcidev[devind].busnr;
+	int busind = get_busind(busnr);
+	pcibus[busind].wreg_u16(busind, devind, port, value);
+}
+
 PUBLIC int pci_init()
 {
 	pci_bus_id = dm_bus_register("pci");
@@ -159,6 +166,7 @@ PRIVATE void pci_intel_init()
 	pcibus[busind].rreg_u8 = pcii_rreg_u8;
 	pcibus[busind].rreg_u16 = pcii_rreg_u16;
 	pcibus[busind].rreg_u32 = pcii_rreg_u32;
+    pcibus[busind].wreg_u16 = pcii_wreg_u16;
 
 	pci_probe_bus(busind);
 }

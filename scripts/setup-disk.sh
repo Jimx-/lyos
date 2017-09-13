@@ -60,7 +60,8 @@ grub-install --target=i386-pc --boot-directory=$MOUNT_POINT/boot $LOOPRAW
 umount $MOUNT_POINT
 kpartx -d $LOOPMAP
 dmsetup remove $LOOPMAP
-losetup -d LOOPDEV
+losetup -d $LOOPDEV
+losetup -d $LOOPRAW
 
 if [ -n "$SUDO_USER" ] ; then
     echo "Reassigning permissions on disk image to $SUDO_USER"

@@ -333,7 +333,9 @@ enum msgtype {
 	PCI_FIRST_DEV,
 	PCI_NEXT_DEV,
 	PCI_ATTR_R8,
+    PCI_ATTR_R16,
 	PCI_ATTR_R32,
+    PCI_ATTR_W16,
 
 	/* INPUT */
 	INPUT_SEND_EVENT = INPUT_REQ_BASE,
@@ -459,34 +461,6 @@ enum msgtype {
 #define	ROOT_INODE		1
 
 #define MINOR_INITRD    120
-
-#define	MAX_DRIVES		4
-#define	NR_PART_PER_DRIVE	4
-#define	NR_SUB_PER_PART		16
-#define	NR_SUB_PER_DRIVE	(NR_SUB_PER_PART * NR_PART_PER_DRIVE)
-#define	NR_PRIM_PER_DRIVE	(NR_PART_PER_DRIVE + 1)
-
-/**
- * @def MAX_PRIM
- * Defines the max minor number of the primary partitions.
- * If there are 2 disks, prim_dev ranges in hd[0-9], this macro will
- * equals 9.
- */
-
-#define	MAX_PRIM		(MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)
-
-#define	MAX_SUBPARTITIONS	(NR_SUB_PER_DRIVE * MAX_DRIVES)
-
-/* device numbers of hard disk */
-#define MINOR_hd1 		0x1
-#define	MINOR_hd1a		0x10
-#define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART)
-
-#define	P_PRIMARY	0
-#define	P_EXTENDED	1
-
-#define NO_PART		0x00	/* unused entry */
-#define EXT_PART	0x05	/* extended partition */
 
 #define	NR_FILES	64
 #define	NR_FILE_DESC	64	/* FIXME */
