@@ -70,12 +70,14 @@ PUBLIC int main()
 	MESSAGE msg;
 	while (TRUE) {
 		fs_sleeping = 1;
-		send_recv(RECEIVE, ANY, &msg);
+		send_recv(RECEIVE_ASYNC, ANY, &msg);
 		fs_sleeping = 0;
 
 		int msgtype = msg.type;
 		/* enqueue a request from the user */
-		if (msgtype != FS_THREAD_WAKEUP) enqueue_request(&msg);
+		if (msgtype != FS_THREAD_WAKEUP) {
+            enqueue_request(&msg);
+        }
 
 		struct vfs_message* res;
 		/* send result back to the user */

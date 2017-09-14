@@ -93,7 +93,8 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
 
     m.REQ_DEV = dev;
 
-    async_sendrec(fs_ep, &m, 0);
+    //async_sendrec(fs_ep, &m, 0);
+    send_recv(BOTH, fs_ep, &m);
     
     int retval = m.RET_RETVAL;
 

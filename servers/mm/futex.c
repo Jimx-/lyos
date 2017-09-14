@@ -140,6 +140,7 @@ PRIVATE int futex_wait(struct mmproc* mmp, u32* uaddr, unsigned int flags, u32 v
 PRIVATE void wakeup_proc(struct mmproc* mmp)
 {
     MESSAGE msg;
+
     msg.type = SYSCALL_RET;
     msg.RETVAL = 0;
     send_recv(SEND_NONBLOCK, mmp->endpoint, &msg);

@@ -35,7 +35,7 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
 
     MESSAGE m;
     while (TRUE) {
-        send_recv(RECEIVE, ANY, &m);
+        send_recv(RECEIVE_ASYNC, ANY, &m);
 
         int msgtype = m.type;
         int src = m.source;

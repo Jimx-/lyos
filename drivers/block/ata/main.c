@@ -183,7 +183,6 @@ PRIVATE int init_hd()
         if (umap(SELF, prdt, &prdt_phys) != 0) {
             dma_disabled = 1;
         }
-        printl("ata: PRDT phys: 0x%x\n", prdt_phys);
     }
 
     _page_size = getpagesize();
@@ -492,7 +491,7 @@ dma_failed_retry:
         int err = interrupt_wait_check();
         if (err) {
             errors ++;
-            if (errors > 3) {
+            if (err == ERR_BAD_SECTOR || errors > 3) {
                 return -EIO;
             }
             goto dma_failed_retry;

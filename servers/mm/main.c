@@ -61,7 +61,7 @@ PUBLIC int main()
 	init_mm();
 	
 	while (TRUE) {
-		send_recv(RECEIVE, ANY, &mm_msg);
+		send_recv(RECEIVE_ASYNC, ANY, &mm_msg);
 		int src = mm_msg.source;
 		int reply = 1;
 
@@ -106,10 +106,10 @@ PUBLIC int main()
 			reply = 0;
 			break;
 		default:
+            printl("MM: unknown message type: %d\n", msgtype);
 			mm_msg.RETVAL = ENOSYS;
 			break;
 		}
-
 		if (reply && mm_msg.RETVAL != SUSPEND) {
 			mm_msg.type = SYSCALL_RET;
 			send_recv(SEND_NONBLOCK, src, &mm_msg);

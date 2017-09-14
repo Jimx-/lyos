@@ -93,7 +93,7 @@ PUBLIC int do_fork(MESSAGE * p)
     }
 
     p->PID = pmp->pid;
-    
+
     /* tell FS, see fs_fork() */
     if (parent_ep != TASK_FS) {
         MESSAGE msg2fs;

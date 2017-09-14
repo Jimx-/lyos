@@ -42,20 +42,20 @@
 #define TIMER2         0x42 /* I/O port for timer channel 2 */
 #define TIMER_MODE     0x43 /* I/O port for timer mode control */
 #define RATE_GENERATOR 0x34 /* 00-11-010-0 :
-			     * Counter0 - LSB then MSB - rate generator - binary
-			     */
+                 * Counter0 - LSB then MSB - rate generator - binary
+                 */
 #define TIMER_FREQ     1193182L/* clock frequency for timer in PC and AT */
 #define HZ             100  /* clock freq (software settable on IBM-PC) */
-#define DEFAULT_HZ	   100  /* clock freq (software settable on IBM-PC) */
+#define DEFAULT_HZ     100  /* clock freq (software settable on IBM-PC) */
 
 /* AT keyboard */
 /* 8042 ports */
 #define KB_DATA		0x60	/* I/O port for keyboard data
-					Read : Read Output Buffer
-					Write: Write Input Buffer(8042 Data&8048 Command) */
+                    Read : Read Output Buffer
+                    Write: Write Input Buffer(8042 Data&8048 Command) */
 #define KB_CMD		0x64	/* I/O port for keyboard command
-					Read : Read Status Register
-					Write: Write Input Buffer(8042 Command) */
+                    Read : Read Status Register
+                    Write: Write Input Buffer(8042 Command) */
 #define LED_CODE	0xED
 #define KB_ACK		0xFA
 
@@ -70,10 +70,10 @@
 
 /* CMOS */
 #define CLK_ELE		0x70	/* CMOS RAM address register port (write only)
-				 * Bit 7 = 1  NMI disable
-				 *	   0  NMI enable
-				 * Bits 6-0 = RAM address
-				 */
+                 * Bit 7 = 1  NMI disable
+                 *     0  NMI enable
+                 * Bits 6-0 = RAM address
+                 */
 
 #define CLK_IO		0x71	/* CMOS RAM data register port (read/write) */
 
@@ -85,15 +85,15 @@
 #define  SECOND           0
 #define  CLK_STATUS    0x0B	/* Status register B: RTC configuration	*/
 #define  CLK_HEALTH    0x0E	/* Diagnostic status: (should be set by Power
-				 * On Self-Test [POST])
-				 * Bit  7 = RTC lost power
-				 *	6 = Checksum (for addr 0x10-0x2d) bad
-				 *	5 = Config. Info. bad at POST
-				 *	4 = Mem. size error at POST
-				 *	3 = I/O board failed initialization
-				 *	2 = CMOS time invalid
-				 *    1-0 =    reserved
-				 */
+                 * On Self-Test [POST])
+                 * Bit  7 = RTC lost power
+                 *	6 = Checksum (for addr 0x10-0x2d) bad
+                 *	5 = Config. Info. bad at POST
+                 *	4 = Mem. size error at POST
+                 *	3 = I/O board failed initialization
+                 *	2 = CMOS time invalid
+                 *    1-0 =    reserved
+                 */
 
 /* Hardware interrupts */
 #define	NR_IRQ			16	/* Number of IRQs */
@@ -114,13 +114,13 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER	-20
-#define CLOCK 			-4
-#define SYSTEM 			-3
-#define KERNEL 			-2
+#define CLOCK           -4
+#define SYSTEM          -3
+#define KERNEL          -2
 #define INTERRUPT		-1
-#define TASK_MM     	0
+#define TASK_MM         0
 #define TASK_PM			1
-#define TASK_SERVMAN 	2
+#define TASK_SERVMAN    2
 #define TASK_DEVMAN		3
 #define TASK_SCHED		4
 #define TASK_FS			5
@@ -134,7 +134,7 @@
 #define TASK_PCI		12
 #define INIT			13
 #else
-#define INIT 			12
+#define INIT            12
 #endif
 #define ANY				(NR_PROCS + 10)
 #define SELF			(-0x8ace)
@@ -165,22 +165,24 @@
 #define NR_ENDKSIG		18
 #define NR_TIMES		19
 #define NR_TRACE		20
-#define NR_ALARM 		21
+#define NR_ALARM        21
 #define NR_KPROFILE		22
 
 /* kernel signals */
 #define SIGKSIG		SIGUSR1
 #define SIGKMEM		SIGUSR2
-				 
+
 /* ipc */
 #define SEND			1
 #define RECEIVE			2
 #define BOTH			3	/* BOTH = (SEND | RECEIVE) */
 #define SEND_NONBLOCK	4
 #define SEND_ASYNC		5
+#define RECEIVE_ASYNC   6
 
 #define IPCF_FROMKERNEL	0x1
 #define IPCF_NONBLOCK	0x2
+#define IPCF_ASYNC	    0x4
 
 /* get/set id requests */
 #define GS_GETUID	1
@@ -196,7 +198,7 @@
 #define GS_GETPGID	11
 #define GS_GETPPID	12
 #define GS_GETTID	13
-				 
+
 #define GS_GETHOSTNAME	1
 #define GS_SETHOSTNAME	2
 
@@ -208,23 +210,23 @@
 #define GETINFO_SYSINFO		1
 #define GETINFO_KINFO		2
 #define GETINFO_CMDLINE		3
-#define GETINFO_BOOTPROCS 	4
+#define GETINFO_BOOTPROCS   4
 #define GETINFO_HZ			5
 #define GETINFO_MACHINE		6
 #define GETINFO_CPUINFO		7
 #define GETINFO_PROCTAB		8
-				 
-/* special message flags */
-#define MSG_INTERRUPT	0x1 	/* the process has an interrupt message */
-#define MSG_KERNLOG 	0x2  	/* the process has a kernellog message */
 
-#define VFS_REQ_BASE	 	1001
+/* special message flags */
+#define MSG_INTERRUPT	0x1     /* the process has an interrupt message */
+#define MSG_KERNLOG     0x2     /* the process has a kernellog message */
+
+#define VFS_REQ_BASE        1001
 #define MM_REQ_BASE			1201
 #define PM_REQ_BASE			1501
 #define DRV_REQ_BASE		2001
 #define SYSFS_REQ_BASE		2100
-#define SERVMAN_REQ_BASE 	2201
-#define PCI_REQ_BASE 		2301
+#define SERVMAN_REQ_BASE    2201
+#define PCI_REQ_BASE        2301
 #define INPUT_REQ_BASE		2401
 
 #define IS_BDEV_REQ(x) ((x) >= BDEV_OPEN && (x) <= BDEV_IOCTL)
@@ -235,46 +237,46 @@
  * @brief MESSAGE types
  */
 enum msgtype {
-	/* 
-	 * when hard interrupt occurs, a msg (with type==HARD_INT) will
-	 * be sent to some tasks
-	 */
-	NOTIFY_MSG = 1, 						/* 1 */
-	/* 
-	 * when exception occurs, a msg (with type==FAULT) will
-	 * be sent to some tasks
-	 */
-	FAULT,								/* 2 */
+    /*
+     * when hard interrupt occurs, a msg (with type==HARD_INT) will
+     * be sent to some tasks
+     */
+    NOTIFY_MSG = 1,                         /* 1 */
+    /*
+     * when exception occurs, a msg (with type==FAULT) will
+     * be sent to some tasks
+     */
+    FAULT,								/* 2 */
 
-	SYSCALL_RET,						/* 3 */
+    SYSCALL_RET,						/* 3 */
 
-	/* message type for syscalls */
-	GET_TICKS, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,	/* 11 */
-	PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,	GETSETHOSTNAME,	/* 17 */
-	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK, 	/* 25 */
-	MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, FCHDIR, ACCESS, 	/* 32 */
-	UMASK, DUP, IOCTL, FCNTL, CHMOD, FCHMOD, GETDENTS,		/* 39 */
-	SUSPEND_PROC, RESUME_PROC, EXEC, WAIT, KILL, ACCT, 		/* 45 */
-	BRK, GETSETID, ALARM, SIGACTION, SIGPROCMASK, SIGSUSPEND,	/* 51 */
-	PROCCTL, MMAP, FORK, EXIT, MUNMAP, FUTEX, /* 57 */
+    /* message type for syscalls */
+    GET_TICKS, GET_RTC_TIME, FTIME, BREAK, PTRACE, GTTY, STTY, UNAME,	/* 11 */
+    PROF, PHYS, LOCK, MPX, GET_TIME_OF_DAY,	GETSETHOSTNAME,	/* 17 */
+    OPEN, CLOSE, READ, WRITE, LSEEK, STAT, FSTAT, UNLINK,   /* 25 */
+    MOUNT, UMOUNT, MKDIR, CHROOT, CHDIR, FCHDIR, ACCESS,    /* 32 */
+    UMASK, DUP, IOCTL, FCNTL, CHMOD, FCHMOD, GETDENTS,		/* 39 */
+    SUSPEND_PROC, RESUME_PROC, EXEC, WAIT, KILL, ACCT,      /* 45 */
+    BRK, GETSETID, ALARM, SIGACTION, SIGPROCMASK, SIGSUSPEND,	/* 51 */
+    PROCCTL, MMAP, FORK, EXIT, MUNMAP, FUTEX, /* 57 */
 
-	/* DEVMAN */
-	DM_DEVICE_ADD = 500, 
-	DM_GET_DRIVER,	/* 54 ~ 55 */
-	DM_BUS_REGISTER,
-	DM_DEVICE_REGISTER,
-	DM_BUS_ATTR_ADD,
-	DM_BUS_ATTR_SHOW,
-	DM_BUS_ATTR_STORE,
-	DM_DEVICE_ATTR_ADD,
-	DM_DEVICE_ATTR_SHOW,
-	DM_DEVICE_ATTR_STORE,
+    /* DEVMAN */
+    DM_DEVICE_ADD = 500,
+    DM_GET_DRIVER,	/* 54 ~ 55 */
+    DM_BUS_REGISTER,
+    DM_DEVICE_REGISTER,
+    DM_BUS_ATTR_ADD,
+    DM_BUS_ATTR_SHOW,
+    DM_BUS_ATTR_STORE,
+    DM_DEVICE_ATTR_ADD,
+    DM_DEVICE_ATTR_SHOW,
+    DM_DEVICE_ATTR_STORE,
 
-	/* message type for fs request */
-	FSREQ_RET = VFS_REQ_BASE,
+    /* message type for fs request */
+    FSREQ_RET = VFS_REQ_BASE,
     FS_REGISTER,
-	FS_PUTINODE,					/* 1001 ~ 1011 */
-	FS_LOOKUP,
+    FS_PUTINODE,					/* 1001 ~ 1011 */
+    FS_LOOKUP,
     FS_MOUNTPOINT,
     FS_READSUPER,
     FS_STAT,
@@ -292,7 +294,7 @@ enum msgtype {
     MM_VFS_REQUEST,
     MM_VFS_REPLY,
     MM_GETINFO,
-    
+
     /* message type for pm calls */
     PM_VFS_INIT = PM_REQ_BASE,			/* 1501 */
     PM_MM_FORK,
@@ -305,43 +307,43 @@ enum msgtype {
     PM_GETINFO,
     PM_KPROFILE,
 
-	/* message type for drivers */					/* 2001 ~ 2005 */
-	BDEV_OPEN = DRV_REQ_BASE,
-	BDEV_CLOSE,
-	BDEV_READ,
-	BDEV_WRITE,
-	BDEV_IOCTL,
-	CDEV_OPEN,										/* 2006 ~ 2010 */			
-	CDEV_CLOSE,
-	CDEV_READ,
-	CDEV_WRITE,
-	CDEV_IOCTL,	
+    /* message type for drivers */					/* 2001 ~ 2005 */
+    BDEV_OPEN = DRV_REQ_BASE,
+    BDEV_CLOSE,
+    BDEV_READ,
+    BDEV_WRITE,
+    BDEV_IOCTL,
+    CDEV_OPEN,										/* 2006 ~ 2010 */
+    CDEV_CLOSE,
+    CDEV_READ,
+    CDEV_WRITE,
+    CDEV_IOCTL,
 
-	/* message for sysfs */
-	SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */
-	SYSFS_RETRIEVE,
-	SYSFS_DYN_SHOW,
-	SYSFS_DYN_STORE,
+    /* message for sysfs */
+    SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */
+    SYSFS_RETRIEVE,
+    SYSFS_DYN_SHOW,
+    SYSFS_DYN_STORE,
 
-	/* SERVMAN */
-	SERVICE_UP = SERVMAN_REQ_BASE, 
-	SERVICE_DOWN,
-	SERVICE_INIT, 
-	SERVICE_INIT_REPLY,
+    /* SERVMAN */
+    SERVICE_UP = SERVMAN_REQ_BASE,
+    SERVICE_DOWN,
+    SERVICE_INIT,
+    SERVICE_INIT_REPLY,
 
-	PCI_SET_ACL = PCI_REQ_BASE,
-	PCI_FIRST_DEV,
-	PCI_NEXT_DEV,
-	PCI_ATTR_R8,
+    PCI_SET_ACL = PCI_REQ_BASE,
+    PCI_FIRST_DEV,
+    PCI_NEXT_DEV,
+    PCI_ATTR_R8,
     PCI_ATTR_R16,
-	PCI_ATTR_R32,
+    PCI_ATTR_R32,
     PCI_ATTR_W16,
 
-	/* INPUT */
-	INPUT_SEND_EVENT = INPUT_REQ_BASE,
-	INPUT_TTY_UP,
-	INPUT_TTY_EVENT,
-	INPUT_SETLEDS,
+    /* INPUT */
+    INPUT_SEND_EVENT = INPUT_REQ_BASE,
+    INPUT_TTY_UP,
+    INPUT_TTY_EVENT,
+    INPUT_SETLEDS,
 };
 
 /* macros for messages */
@@ -354,10 +356,10 @@ enum msgtype {
 #define MODE		u.m3.m3i4
 #define	CNT			u.m3.m3i2
 #define NEWID		u.m3.m3i1
-#define UID 		u.m3.m3i1
-#define EUID 		u.m3.m3i2
-#define GID 		u.m3.m3i1
-#define EGID 		u.m3.m3i2
+#define UID         u.m3.m3i1
+#define EUID        u.m3.m3i2
+#define GID         u.m3.m3i1
+#define EGID        u.m3.m3i2
 #define NEWUID		u.m3.m3i1
 #define NEWGID		u.m3.m3i2
 #define	REQUEST		u.m3.m3i2
@@ -366,21 +368,21 @@ enum msgtype {
 #define ENDPOINT	u.m3.m3i4
 #define	DEVICE		u.m3.m3i4
 #define	POSITION	u.m3.m3l1
-#define ADDR 		u.m3.m3p2
+#define ADDR        u.m3.m3p2
 #define	BUF			u.m3.m3p2
 #define	OFFSET		u.m3.m3i2
 #define	WHENCE		u.m3.m3i3
 #define SECONDS		u.m3.m3i1
 #define SIGNR		u.m3.m3i1
-#define SIGSET	 	u.m3.m3i1
-#define MASK 		u.m3.m3i1
+#define SIGSET      u.m3.m3i1
+#define MASK        u.m3.m3i1
 #define HOW			u.m3.m3i2
 #define OPTIONS		u.m3.m3i1
 #define NEWSA		u.m3.m3p1
 #define OLDSA		u.m3.m3p2
 #define SIGRET		u.m3.m3l1
 #define TARGET		u.m3.m3i4
-#define INTERRUPTS 	u.m3.m3l1
+#define INTERRUPTS  u.m3.m3l1
 #define	PID			u.m3.m3i2
 #define	RETVAL		u.m3.m3i1
 #define	STATUS		u.m3.m3i1
@@ -392,7 +394,7 @@ enum msgtype {
 #define SR_SRCDEST	u.m3.m3i2
 #define SR_MSG		u.m3.m3p1
 #define SR_TABLE	u.m3.m3p1
-#define SR_LEN 		u.m3.m3i2
+#define SR_LEN      u.m3.m3i2
 
 /* macros for data_copy */
 #define SRC_EP		u.m3.m3i1
@@ -480,7 +482,7 @@ enum msgtype {
 #define I_NAMED_PIPE    0010000	/* named pipe (FIFO) */
 #define I_SET_UID_BIT   0004000	/* set effective uid_t on exec */
 #define I_SET_GID_BIT   0002000	/* set effective gid_t on exec */
-#define I_SET_STCKY_BIT 0001000	/* sticky bit */ 
+#define I_SET_STCKY_BIT 0001000	/* sticky bit */
 #define ALL_MODES       0007777	/* all bits for user, group and others */
 #define RWX_MODES       0000777	/* mode bits for RWX only */
 #define R_BIT           0000004	/* Rwx protection bit */
@@ -489,7 +491,7 @@ enum msgtype {
 #define I_NOT_ALLOC     0000000	/* this inode is free */
 
 #define	is_special(m)	((((m) & I_TYPE_MASK) == I_BLOCK_SPECIAL) ||	\
-			 (((m) & I_TYPE_MASK) == I_CHAR_SPECIAL))
+             (((m) & I_TYPE_MASK) == I_CHAR_SPECIAL))
 
 #define	NR_DEFAULT_FILE_SECTS	2048 /* 2048 * 512 = 1MB */
 

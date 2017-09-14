@@ -174,16 +174,20 @@ PUBLIC int do_close(MESSAGE * p)
     int fd = p->FD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_WRITE);
+
+    return close_fd(pcaller, fd);
+}
+
+PUBLIC int close_fd(struct fproc* fp, int fd)
+{
+    struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
     if (!filp) return EBADF;
     if (filp->fd_inode == NULL) {
         unlock_filp(filp);
         return EBADF;
     }
 
-    DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", 
-            fd, pcaller->endpoint, pcaller->filp[fd]->fd_inode->i_num, pcaller->filp[fd]->fd_cnt, pcaller->filp[fd]->fd_inode->i_cnt));
+    DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, fd->refcnt = %d, inode->refcnt = %d)\n", fd, fp->endpoint, fp->filp[fd]->fd_inode->i_num, fp->filp[fd]->fd_cnt, fp->filp[fd]->fd_inode->i_cnt));
 
     struct inode* pin = filp->fd_inode;
     if (--filp->fd_cnt == 0) {
@@ -194,7 +198,7 @@ PUBLIC int do_close(MESSAGE * p)
         unlock_inode(pin);
     }
     unlock_filp(filp);
-    pcaller->filp[fd] = NULL;
+    fp->filp[fd] = NULL;
 
     return 0;
 }
@@ -289,7 +293,8 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gi
     m.CRNAMELEN = strlen(pathname);
     m.CRMODE = (int)mode;
 
-    async_sendrec(fs_ep, &m, 0);
+    //async_sendrec(fs_ep, &m, 0);
+    send_recv(BOTH, fs_ep, &m);
 
     res->fs_ep = fs_ep;
     res->inode_nr = m.CRINO;

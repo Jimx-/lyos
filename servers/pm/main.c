@@ -46,7 +46,7 @@ PUBLIC int main(int argc, char * argv[])
 
         switch (msg.type) {
         case NOTIFY_MSG:
-            if (src == SYSTEM) 
+            if (src == SYSTEM)
                 process_system_notify(&msg);
             break;
         case FORK:

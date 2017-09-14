@@ -122,7 +122,8 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, m
     m.REQ_NUM = num;
     m.REQ_MODE = mode;
 
-    async_sendrec(fs_ep, &m, 0);
+    //async_sendrec(fs_ep, &m, 0);
+    send_recv(BOTH, fs_ep, &m);
 
     *result = (mode_t)m.RET_MODE;
 

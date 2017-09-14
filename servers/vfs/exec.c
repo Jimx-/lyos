@@ -140,7 +140,6 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
         (u64)offset, READ, execi->proc_e, (char *)vaddr, len, &newpos, &bytes_rdwt);
 }
 
-/* if there is #!, Not implemented */
 PRIVATE int is_script(struct vfs_exec_info * execi)
 {
     return ((execi->args.header[0] == '#') && (execi->args.header[1] == '!'));
@@ -178,9 +177,11 @@ PUBLIC int fs_exec(MESSAGE * msg)
     int name_len = msg->NAME_LEN; /* length of filename */
     int src = msg->ENDPOINT;    /* caller proc nr. */
     struct fproc * fp = vfs_endpt_proc(src);
+    struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
     int i;
 
     memset(&execi, 0, sizeof(execi));
+    lock_proc(mm_task);
 
     /* stack info */
     execi.args.stack_top = VM_STACK_TOP;
@@ -198,7 +199,10 @@ PUBLIC int fs_exec(MESSAGE * msg)
     /* copy everything we need before we free the old process */
     vir_bytes user_sp = msg->BUF;
     int orig_stack_len = msg->BUF_LEN;
-    if (orig_stack_len > PROC_ORIGIN_STACK) return ENOMEM;  /* stack too big */
+    if (orig_stack_len > PROC_ORIGIN_STACK) {
+        retval = ENOMEM;  /* stack too big */
+        goto exec_finalize;
+    }
 
     static char stackcopy[PROC_ORIGIN_STACK];
     memset(stackcopy, 0, sizeof(stackcopy));
@@ -216,7 +220,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
     retval = get_exec_inode(&execi, &lookup, fp);
-    if (retval) return retval;
+    if (retval) goto exec_finalize;
 
     /* relocate stack pointers */
     char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
@@ -235,12 +239,10 @@ PUBLIC int fs_exec(MESSAGE * msg)
     if (is_script(&execi)) {
         setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname, &orig_stack);
         retval = get_exec_inode(&execi, &lookup, fp);
-        if (retval) return retval;
+        if (retval) goto exec_finalize;
     }
 
     /* find an fd for MM */
-    struct fproc * mm_task = vfs_endpt_proc(TASK_MM);
-    lock_proc(mm_task);
     /* find a free slot in PROCESS::filp[] */
     int fd;
     struct file_desc * filp = NULL;
@@ -257,11 +259,9 @@ PUBLIC int fs_exec(MESSAGE * msg)
         filp->fd_inode = execi.pin;
         filp->fd_inode->i_cnt++;
         filp->fd_mode = O_RDONLY;
-        unlock_filp(filp);
         execi.mmfd = fd;
         execi.args.memmap = request_vfs_mmap;
     }
-    unlock_proc(mm_task);
 
     execi.args.allocmem = libexec_allocmem;
     execi.args.allocmem_prealloc = libexec_allocmem_prealloc;
@@ -276,14 +276,17 @@ PUBLIC int fs_exec(MESSAGE * msg)
     char interp[PATH_MAX];
     if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp, sizeof(interp)) > 0) {
         execi.exec_fd = common_open(fp, pathname, O_RDONLY, 0);
-        if (execi.exec_fd < 0) return -execi.exec_fd;
+        if (execi.exec_fd < 0) {
+            retval = -execi.exec_fd;
+            goto exec_finalize;
+        }
 
         /* load the main executable first */
         for (i = 0; exec_loaders[i].loader != NULL; i++) {
             retval = (*exec_loaders[i].loader)(&execi.args);
             if (!retval) break;  /* loaded successfully */
         }
-        if (retval) return retval;
+        if (retval) goto exec_finalize;
 
         execi.is_dyn = 1;
         execi.dyn_entry = execi.args.entry_point;
@@ -293,7 +296,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
 
         init_lookup(&lookup, interp, 0, &execi.vmnt, &execi.pin);
         retval = get_exec_inode(&execi, &lookup, fp);
-        if (retval) return retval;
+        if (retval) goto exec_finalize;
 
         execi.args.filesize = execi.pin->i_size;
         execi.args.clearproc = NULL;
@@ -311,7 +314,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
         }
     }
 
-    if (retval) return retval;
+    if (retval) goto exec_finalize;
 
     int argc = 0;
     char * envp = orig_stack;
@@ -334,12 +337,23 @@ PUBLIC int fs_exec(MESSAGE * msg)
     msg->BUF = orig_stack;
     msg->BUF_LEN = orig_stack_len;
 
+ exec_finalize:
+    if (filp) {
+        unlock_filp(filp);
+    }
+
     if (execi.pin) {
         unlock_inode(execi.pin);
         put_inode(execi.pin);
     }
 
-    return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
+    unlock_proc(mm_task);
+
+    if (!retval) {
+        return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
+    }
+
+    return retval;
 }
 
 /*****************************************************************************

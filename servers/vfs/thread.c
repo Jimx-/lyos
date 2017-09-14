@@ -58,9 +58,7 @@ PUBLIC void enqueue_request(MESSAGE* msg)
     pthread_mutex_lock(&request_queue_mutex);
     list_add(&req->list, &request_queue);
 
-    if (!list_empty(&request_queue)) {
-        pthread_cond_signal(&request_queue_not_empty);
-    }
+    pthread_cond_signal(&request_queue_not_empty);
 
     pthread_mutex_unlock(&request_queue_mutex);
 }
@@ -208,6 +206,7 @@ PRIVATE void handle_request(MESSAGE* msg)
         msg->source = msg->PROC_NR;
         break;
     default:
+        printl("VFS: unknown message type: %d\n", msgtype);
         msg->RETVAL = ENOSYS;
         break;
     }

@@ -164,7 +164,8 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 positio
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    async_sendrec(fs_ep, &m, 0);
+    //async_sendrec(fs_ep, &m, 0);
+    send_recv(BOTH, fs_ep, &m);
 
     if (m.RET_RETVAL == 0) { 
         *newpos = m.RWPOS;

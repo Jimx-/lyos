@@ -39,7 +39,7 @@ PUBLIC struct proc * pick_proc();
 PUBLIC void proc_no_time(struct proc * p);
 
 PRIVATE void idle();
-PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m);
+PRIVATE int  msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags);
 PRIVATE int receive_async(struct proc* p);
 PRIVATE int receive_async_from(struct proc* p, struct proc* sender);
 PRIVATE int  has_pending_notify(struct proc * p, endpoint_t src);
@@ -252,13 +252,16 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
 			if (ret != 0 || function == SEND) break;
 			/* fall through for BOTH */
 		case RECEIVE:
-			ret = msg_receive(p, src_dest, msg);
+			ret = msg_receive(p, src_dest, msg, flags);
 			break;
 		case SEND_NONBLOCK:
 			ret = msg_send(p, src_dest, msg, flags | IPCF_NONBLOCK);
 			break;
 		case SEND_ASYNC:
 			ret = msg_senda(p, async_msg, msg_len);
+			break;
+        case RECEIVE_ASYNC:
+			ret = msg_receive(p, src_dest, msg, flags | IPCF_ASYNC);
 			break;
 		default:
 			ret = EINVAL;
@@ -312,8 +315,10 @@ PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
 		if (p->state & PST_SENDING) {
 			if (p->sendto == src) {
 				p = endpt_proc(dest);
+                printk("kernel: deadlock detected, chain: %d ", dest);
 				do {
 					p = endpt_proc(p->sendto);
+                    printk("-> %d ", p->endpoint);
 				} while (p != endpt_proc(src));
 				return 1;
 			}
@@ -414,7 +419,7 @@ out:
  * 
  * @return  Zero if success.
  *****************************************************************************/
-PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
+PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
 {
 	struct proc* who_wanna_recv = p_to_recv; /**
 						  * This name is a little bit
@@ -456,18 +461,20 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m)
 
 	/* check for async messages */
 	int async_id;
-	if ((async_id = has_pending_async(who_wanna_recv, src)) != PRIV_ID_NULL) {
-		int proc_nr = priv_addr(async_id)->proc_nr;
-		struct proc * async_sender = proc_addr(proc_nr);
-		
-		who_wanna_recv->recv_msg = m;
+    if (flags & IPCF_ASYNC) {
+        if ((async_id = has_pending_async(who_wanna_recv, src)) != PRIV_ID_NULL) {
+            int proc_nr = priv_addr(async_id)->proc_nr;
+            struct proc * async_sender = proc_addr(proc_nr);
 
-		if (src == ANY) retval = receive_async(who_wanna_recv);
-		else retval = receive_async_from(who_wanna_recv, async_sender);
+            who_wanna_recv->recv_msg = m;
 
-		if (retval == 0) goto out;
-		else who_wanna_recv->recv_msg = NULL;
-	}
+            if (src == ANY) retval = receive_async(who_wanna_recv);
+            else retval = receive_async_from(who_wanna_recv, async_sender);
+
+            if (retval == 0) goto out;
+            else who_wanna_recv->recv_msg = NULL;
+        }
+    }
 
 	/* Arrives here if no interrupt for who_wanna_recv. */
 	if (src == ANY) {
