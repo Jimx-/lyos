@@ -98,7 +98,7 @@ PUBLIC int do_fork(MESSAGE * p)
     if (parent_ep != TASK_FS) {
         MESSAGE msg2fs;
         msg2fs.type = PM_VFS_FORK;
-        msg2fs.ENDPOINT = child_slot;
+        msg2fs.ENDPOINT = child_ep;
         msg2fs.PENDPOINT = parent_ep;
         msg2fs.PID = pmp->pid;
         send_recv(BOTH, TASK_FS, &msg2fs);

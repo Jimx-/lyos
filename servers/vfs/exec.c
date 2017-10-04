@@ -110,7 +110,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, struct lookup* lookup, 
 /* read in the executable header */
 PRIVATE int read_header(struct vfs_exec_info * execi)
 {
-    u64 newpos; 
+    u64 newpos;
     int bytes_rdwt;
     static char buf[PG_SIZE];
 
@@ -118,14 +118,14 @@ PRIVATE int read_header(struct vfs_exec_info * execi)
     execi->args.header = buf;
 
     /* read the file */
-    return request_readwrite(execi->pin->i_fs_ep, execi->pin->i_dev, execi->pin->i_num, 
+    return request_readwrite(execi->pin->i_fs_ep, execi->pin->i_dev, execi->pin->i_num,
         0, READ, TASK_FS, buf, execi->args.header_len, &newpos, &bytes_rdwt);
 }
 
 /* read segment */
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
-    u64 newpos; 
+    u64 newpos;
     int bytes_rdwt;
 
     struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
@@ -136,7 +136,7 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
         //return EIO;
     }
 
-    return request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, 
+    return request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num,
         (u64)offset, READ, execi->proc_e, (char *)vaddr, len, &newpos, &bytes_rdwt);
 }
 
@@ -162,10 +162,10 @@ PRIVATE int request_vfs_mmap(struct exec_info *execi,
  *****************************************************************************/
 /**
  * <Ring 3> Perform the EXEC syscall.
- * 
+ *
  * @param  msg Ptr to the message.
  * @return     Zero on success.
- * 
+ *
  *****************************************************************************/
 PUBLIC int fs_exec(MESSAGE * msg)
 {
@@ -226,7 +226,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
     int delta = (vir_bytes) orig_stack - user_sp;
 
-    if (orig_stack_len) {  
+    if (orig_stack_len) {
         char **q = (char**)stackcopy;
         for (; *q != 0; q++) {
             *q += delta;
@@ -234,7 +234,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
         q++;
         for (; *q != 0; q++)
             *q += delta;
-    } 
+    }
 
     if (is_script(&execi)) {
         setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname, &orig_stack);
@@ -318,13 +318,13 @@ PUBLIC int fs_exec(MESSAGE * msg)
 
     int argc = 0;
     char * envp = orig_stack;
-    if (orig_stack_len) {  
+    if (orig_stack_len) {
         char **q = (char**)stackcopy;
         for (; *q != 0; q++, argc++) {
         }
         q++;
         envp += (vir_bytes) q - (vir_bytes) stackcopy;
-    } 
+    }
 
     data_copy(src, orig_stack, SELF, stackcopy, orig_stack_len);
 
@@ -359,20 +359,20 @@ PUBLIC int fs_exec(MESSAGE * msg)
 /*****************************************************************************
  *                        setup_stack_elf32
  *****************************************************************************/
-/**                   
+/**
  * <Ring 3> Setup auxiliary vectors.
- * 
+ *
  * @param vfs_exec_info Ptr to exec info.
  * @param stack Stack pointer.
  * @param stack_size Size of stack.
  * @param vsp Virtual stack pointer in caller's address space.
- * 
+ *
  * @return Zero on success.
  *****************************************************************************/
 PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp)
 {
     char** arg_str;
-    if (*stack_size) {  
+    if (*stack_size) {
         arg_str = (char**)stack;
         for (; *arg_str != 0; arg_str++) ;
         arg_str++;
@@ -430,10 +430,10 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     if ((vir_bytes)auxv_end - (vir_bytes)auxv > name_len) {
         strcpy((char*)auxv, prog_name);
         strcpy((char*)auxv + strlen(prog_name) + 1, LYOS_PLATFORM);
-        auxv_end = (Elf32_auxv_t*)((vir_bytes)auxv + name_len); 
+        auxv_end = (Elf32_auxv_t*)((vir_bytes)auxv + name_len);
         auxv_end = (Elf32_auxv_t*)roundup((u32)auxv_end, sizeof(int));
         userp = (vir_bytes)auxv - (vir_bytes)auxv_buf;
-        userp += *vsp + (vir_bytes)arg_str - (vir_bytes)stack; 
+        userp += *vsp + (vir_bytes)arg_str - (vir_bytes)stack;
     }
 
     size_t auxv_len = (vir_bytes)auxv_end - (vir_bytes)auxv_buf;
@@ -465,7 +465,7 @@ PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_siz
     char* interp = NULL;
 
     /* read the file */
-    retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, 
+    retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num,
         0, READ, TASK_FS, buf, sizeof(buf), &newpos, &bytes_rdwt);
     if (retval) return retval;
 
@@ -510,7 +510,7 @@ PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
 
     int offset;
     if (replace) {
-        /* replace the former argument with the new one */ 
+        /* replace the former argument with the new one */
         arglen--;
         offset = arglen - strlen(stack + delta);
         arg_start = stack + delta;

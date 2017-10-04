@@ -38,7 +38,6 @@ export SUBARCH=$SUBARCH ARCH=$ARCH
 DISK=lyos-disk.img
 SRCDIR=./
 MOUNT_POINT=/mnt/lyos-root
-LOOP_DEVICE=loop1
 
 source $SRCDIR/.config
 
@@ -49,12 +48,6 @@ TMP2=${TMP/add map /}
 LOOP=${TMP2%%p1 *}
 LOOPDEV=/dev/${LOOP}
 LOOPMAP=/dev/mapper/${LOOP}p1
-
-IMAGE_SIZE=`wc -c < $DISK`
-IMAGE_SIZE_SECTORS=`expr $IMAGE_SIZE / 512`
-MAPPER_LINE="0 $IMAGE_SIZE_SECTORS linear /dev/$LOOP_DEVICE 0"
-
-echo "$MAPPER_LINE" | dmsetup create hda
 
 mount $LOOPMAP /$MOUNT_POINT
 
@@ -78,7 +71,6 @@ cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
 cp -rf obj/destdir.$ARCH/usr/lib/libg.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/ 
-cp -rf hello /$MOUNT_POINT/bin/
 #cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 
@@ -86,6 +78,7 @@ umount $MOUNT_POINT
 kpartx -d $LOOPMAP
 dmsetup remove $LOOPMAP
 losetup -d $LOOPDEV
+losetup -d $LOOPRAW
 
 if [ -n "$SUDO_USER" ] ; then
     echo "Reassigning permissions on disk image to $SUDO_USER"

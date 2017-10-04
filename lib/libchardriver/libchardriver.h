@@ -14,6 +14,6 @@ struct chardriver {
 };
 
 PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg);
-PUBLIC void chardriver_task(struct chardriver* cd);
+PUBLIC int chardriver_task(struct chardriver* cd);
 
 #endif

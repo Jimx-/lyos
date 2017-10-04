@@ -24,6 +24,7 @@ type kpartx >/dev/null 2>&1 || { echo "Trying to install kpartx..."; apt-get ins
 echo "Partitioning..."
 # Partition it with fdisk.
 cat ./scripts/fdisk.conf | fdisk $DISK
+sync
 
 echo "Done partition."
 
@@ -34,12 +35,6 @@ TMP2=${TMP/add map /}
 LOOP=${TMP2%%p1 *}
 LOOPDEV=/dev/${LOOP}
 LOOPMAP=/dev/mapper/${LOOP}p1
-
-IMAGE_SIZE=`wc -c < $DISK`
-IMAGE_SIZE_SECTORS=`expr $IMAGE_SIZE / 512`
-MAPPER_LINE="0 $IMAGE_SIZE_SECTORS linear /dev/$LOOP_DEVICE 0"
-
-echo "$MAPPER_LINE" | dmsetup create hda
 
 mkfs.ext2 $LOOPMAP
 
@@ -55,7 +50,7 @@ echo "Creating devices..."
 debugfs -f ./scripts/create-dev.conf -w $LOOPMAP
 
 echo "Installing grub..."
-grub-install --target=i386-pc --boot-directory=$MOUNT_POINT/boot $LOOPRAW
+#grub-install --target=i386-pc --boot-directory=$MOUNT_POINT/boot $LOOPRAW
 
 umount $MOUNT_POINT
 kpartx -d $LOOPMAP

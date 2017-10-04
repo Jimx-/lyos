@@ -19,6 +19,7 @@ sudo mknod tty6 c 4 6
 sudo mknod ttyS0 c 4 16
 sudo mknod ttyS1 c 4 17
 sudo mknod ttyS2 c 4 18
+sudo mknod fb0 c 29 0
 
 popd > /dev/null
 

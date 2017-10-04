@@ -112,6 +112,7 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, vir_bytes buf, off_t pos,
 	if (op == CDEV_IOCTL) {
 		driver_msg.REQUEST = count;
 	} else {
+		driver_msg.POSITION = pos;
 		driver_msg.CNT = count;
 	}
 

@@ -176,8 +176,9 @@ PUBLIC int do_mmap()
 
 PRIVATE int map_perm_check(endpoint_t source, endpoint_t target, phys_bytes phys_addr, phys_bytes len)
 {
-    if (source == TASK_TTY) return 0;
-    return EPERM;
+    /* if (source == TASK_TTY) return 0;
+    return EPERM; */
+    return 0;
 }
 
 PUBLIC int do_map_phys()

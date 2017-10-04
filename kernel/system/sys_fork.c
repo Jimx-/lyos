@@ -50,8 +50,8 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     child->endpoint = child_ep;
     child->p_parent = parent_ep;
 
-    /* child of priv prov, reset its priv structure and block it */
-    if (child->priv->flags & PRF_PRIV_PROC) {
+    /* child of priv proc, reset its priv structure and block it */
+    if (!child->priv || child->priv->flags & PRF_PRIV_PROC) {
         child->priv = NULL;
         PST_SET_LOCKED(child, PST_NO_PRIV);
     }

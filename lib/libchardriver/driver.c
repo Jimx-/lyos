@@ -112,7 +112,7 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
     send_recv(SEND, src, msg);
 }
 
-PUBLIC void chardriver_task(struct chardriver* cd)
+PUBLIC int chardriver_task(struct chardriver* cd)
 {
     MESSAGE msg;
     while (TRUE) {
@@ -120,4 +120,6 @@ PUBLIC void chardriver_task(struct chardriver* cd)
         
         chardriver_process(cd, &msg);
     }
+
+    return 0;
 }

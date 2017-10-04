@@ -212,7 +212,7 @@ PRIVATE void pci_probe_bus(int busind)
 
 			char * name = pci_dev_name(vendor, device);
 			if (name) {
-				printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus_nr, i, func, vendor, device, name);
+				printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s %x %x %x\n", bus_nr, i, func, vendor, device, name);
 			} else {
 				printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n", bus_nr, i, func, vendor, device);
 			}

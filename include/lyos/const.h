@@ -16,6 +16,9 @@
 #ifndef	_CONST_H_
 #define _CONST_H_
 
+/* return value */
+#define OK          0
+
 /* max() & min() */
 #define	max(a,b)	((a) > (b) ? (a) : (b))
 #define	min(a,b)	((a) < (b) ? (a) : (b))
@@ -450,7 +453,8 @@ enum msgtype {
 #define	DEV_RD			1
 #define	DEV_FLOPPY		2
 #define	DEV_HD			3
-#define	DEV_CHAR_TTY		4
+#define	DEV_CHAR_TTY	4
+#define DEV_CHAR_FB     29
 /* make device number from major and minor numbers */
 #define	MAJOR_SHIFT		8
 #define MINOR_MASK		((1U << MAJOR_SHIFT) - 1)
