@@ -321,6 +321,7 @@ enum msgtype {
     CDEV_READ,
     CDEV_WRITE,
     CDEV_IOCTL,
+    CDEV_MMAP,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */

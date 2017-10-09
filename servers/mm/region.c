@@ -68,7 +68,7 @@ PRIVATE void phys_region_free(struct phys_region * rp)
             if (frame->refcnt) frame->refcnt--;
 
             if (frame->refcnt <= 0) {
-                if (frame->phys_addr) free_mem((int)(frame->phys_addr), ARCH_PG_SIZE);
+                if (frame->phys_addr && !(frame->flags & PFF_DIRECT)) free_mem((int)(frame->phys_addr), ARCH_PG_SIZE);
                 SLABFREE(frame);
             }
         }
@@ -247,7 +247,12 @@ PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr)
     for (i = 0; len > 0; len -= PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->refcnt > 0 && frame->phys_addr != NULL) continue;
+
         frame->flags = (rp->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
+        if (rp->flags & RF_DIRECT){
+            frame->flags |= PFF_DIRECT;
+        }
+
         frame->phys_addr = (void *)phys_addr; 
         frame->refcnt = 1;
         phys_addr += ARCH_PG_SIZE;

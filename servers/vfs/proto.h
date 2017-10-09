@@ -110,6 +110,8 @@ PUBLIC int cdev_open(dev_t dev);
 PUBLIC int cdev_close(dev_t dev);
 PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, vir_bytes buf, off_t pos,
     size_t count);
-    
+PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
+    size_t length, char** retaddr);
+
 #endif
 

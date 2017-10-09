@@ -32,6 +32,7 @@
 #include <lyos/service.h>
 #include <libchardriver/libchardriver.h>
 #include <libdevman/libdevman.h>
+#include <sys/mman.h>
 
 #include "fb.h"
 
@@ -44,6 +45,7 @@ PRIVATE ssize_t fb_read(dev_t minor, u64 pos,
 PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
   endpoint_t endpoint, char* buf, unsigned int count);
 PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
+PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, size_t length, char** retaddr);
 
 PRIVATE int open_counter[NR_FB_DEVS];
 
@@ -53,6 +55,7 @@ PRIVATE struct chardriver fbdriver = {
     .cdr_read = fb_read,
     .cdr_write = fb_write,
     .cdr_ioctl = fb_ioctl,
+    .cdr_mmap = fb_mmap,
 };
 
 /*****************************************************************************
@@ -131,5 +134,28 @@ PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
 
 PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
 {
+    return 0;
+}
+
+PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, size_t length, char** retaddr)
+{
+    int retval = OK;
+    phys_bytes base, size;
+    if (minor < 0 || minor >= NR_FB_DEVS) return ENXIO;
+
+    retval = arch_get_device_phys(minor, &base, &size);
+    if (retval != OK) return retval;
+
+    if (length == 0 || offset >= size) return OK;
+    if (offset + length > size) {
+        length = size - offset;
+    }
+
+    char* mapped = mm_map_phys(endpoint, base + (size_t)offset, length);
+    if (mapped == MAP_FAILED) {
+        return ENOMEM;
+    }
+
+    *retaddr = mapped;
     return 0;
 }

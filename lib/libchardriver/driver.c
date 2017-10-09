@@ -65,6 +65,23 @@ PRIVATE int do_ioctl(struct chardriver* cd, MESSAGE* msg)
     return cd->cdr_ioctl(minor, request, ep, buf);
 }
 
+PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
+{
+    if (!cd->cdr_mmap) return ENODEV;
+
+    int minor = msg->DEVICE;
+    endpoint_t ep = msg->PROC_NR;
+    char* addr = msg->ADDR;
+    off_t offset = msg->POSITION;
+    size_t length = msg->CNT;
+
+    char* retaddr;
+    int retval = cd->cdr_mmap(minor, ep, addr, offset, length, &retaddr);
+
+    msg->ADDR = retaddr;
+    return retval;
+}
+
 PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
 {
     int src = msg->source;
@@ -102,6 +119,10 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
     }
     case CDEV_IOCTL:
         msg->RETVAL = do_ioctl(cd, msg);
+        break;
+
+    case CDEV_MMAP:
+        msg->RETVAL = do_mmap(cd, msg);
         break;
 
     default:

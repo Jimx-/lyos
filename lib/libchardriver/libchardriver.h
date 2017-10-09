@@ -9,6 +9,7 @@ struct chardriver {
 	ssize_t (*cdr_write)(dev_t minor, u64 pos,
 	  endpoint_t endpoint, char* buf, unsigned int count);
 	int (*cdr_ioctl)(dev_t minor, int request, endpoint_t endpoint, char* buf);
+	int (*cdr_mmap)(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, size_t length, char** retaddr);
 	void (*cdr_intr)(unsigned mask);
 	void (*cdr_alarm)(clock_t timestamp);
 };

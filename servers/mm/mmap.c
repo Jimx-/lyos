@@ -100,6 +100,22 @@ PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int fla
     return 0;
 }
 
+PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
+{
+    /* driver has done the mapping */
+    MESSAGE* mmap_msg = (MESSAGE*) arg;
+
+    enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, msg->MMRFD, 0, 0, 0, NULL, NULL, 0);
+
+    MESSAGE reply_msg;
+    memset(&reply_msg, 0, sizeof(MESSAGE));
+    reply_msg.type = SYSCALL_RET;
+    reply_msg.RETVAL = msg->MMRRESULT;
+    reply_msg.MMAP_RETADDR = msg->MMRBUF;
+
+    send_recv(SEND_NONBLOCK, msg->MMRENDPOINT, &reply_msg);
+}
+
 PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
     MESSAGE* mmap_msg = (MESSAGE*) arg;
@@ -109,8 +125,18 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
     if (msg->MMRRESULT) {
         result = msg->MMRRESULT;
     } else {
-        result = mmap_file(mmp, (vir_bytes)mmap_msg->MMAP_VADDR, mmap_msg->MMAP_LEN, mmap_msg->MMAP_FLAGS, mmap_msg->MMAP_PROT, msg->MMRFD, 
+        mode_t file_mode = msg->MMRMODE;
+        if ((file_mode & I_TYPE) == I_CHAR_SPECIAL) {   /* map device */
+            if (enqueue_vfs_request(mmp, MMR_FDMMAP, msg->MMRFD, (vir_bytes) mmap_msg->MMAP_VADDR, mmap_msg->MMAP_OFFSET, mmap_msg->MMAP_LEN, 
+                mmap_device_callback, mmap_msg, sizeof(MESSAGE)) != 0) {
+                result = ENOMEM;
+            } else {
+                return;
+            }
+        } else {
+            result = mmap_file(mmp, (vir_bytes)mmap_msg->MMAP_VADDR, mmap_msg->MMAP_LEN, mmap_msg->MMAP_FLAGS, mmap_msg->MMAP_PROT, msg->MMRFD, 
                 mmap_msg->MMAP_OFFSET, msg->MMRDEV, msg->MMRINO, 0, &ret_addr);
+        }
     }
 
     MESSAGE reply_msg;
@@ -199,7 +225,7 @@ PUBLIC int do_map_phys()
     len += offset;
     if (len % ARCH_PG_SIZE) len += ARCH_PG_SIZE - (len % ARCH_PG_SIZE);
 
-    struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE);
+    struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE | RF_DIRECT);
     if (!vr) return ENOMEM;
     list_add(&vr->list, &mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmp->active_mm->mem_avl);

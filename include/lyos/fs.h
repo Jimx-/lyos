@@ -78,12 +78,14 @@
 #define MMR_FDREAD			2
 #define MMR_FDWRITE			3
 #define MMR_FDCLOSE			4
+#define MMR_FDMMAP          5
 #define MMRFD				u.m3.m3i2
 #define MMRENDPOINT			u.m3.m3i3
 #define MMRDEV				u.m3.m3i4
 #define MMRINO				u.m3.m3l1
 #define MMROFFSET			u.m3.m3l1
 #define MMRLENGTH			u.m3.m3l2
+#define MMRMODE             u.m3.m3l2
 #define MMRBUF				u.m3.m3p1
 
 #define RET_RETVAL          u.m5.m5i1

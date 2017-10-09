@@ -232,6 +232,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
     size_t len = m->MMRLENGTH;
     off_t offset = m->MMROFFSET;
     phys_bytes buf = m->MMRBUF;
+    vir_bytes vaddr = (vir_bytes) m->MMRBUF;
 
     if (!mm_task) panic("mm not present!");
 
@@ -264,7 +265,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
 
             m->MMRDEV = filp->fd_inode->i_dev;
             m->MMRINO = filp->fd_inode->i_num;
-            m->MMRLENGTH = filp->fd_inode->i_size;
+            m->MMRMODE = filp->fd_inode->i_mode;
             m->MMRFD = mmfd;
 
             unlock_filp(filp);
@@ -292,16 +293,47 @@ PUBLIC int do_mm_request(MESSAGE* m)
                 m->MMRLENGTH = count;
             } else if (file_type == I_DIRECTORY) {
                 unlock_filp(filp);
-                return EISDIR;
+                result = EISDIR;
+                goto reply;
             } else {
                 unlock_filp(filp);
-                return EBADF;
+                result = EBADF;
+                goto reply;
             }
 
             unlock_filp(filp);
             break;
         }
-        case MMR_FDCLOSE:
+    case MMR_FDMMAP:
+        {
+            struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
+            char* retaddr;
+            if (!filp || !filp->fd_inode) {
+                result = EBADF;
+                goto reply;
+            }
+
+            struct inode* pin = filp->fd_inode;
+            int file_type = pin->i_mode & I_TYPE;
+
+            if (file_type == I_CHAR_SPECIAL) {
+                result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr);
+                if (result) {
+                    unlock_filp(filp);
+                    goto reply;
+                }
+
+                m->MMRBUF = retaddr;
+            } else {    /* error if MM is trying to map a non-device file */
+                unlock_filp(filp);
+                result = EBADF;
+                goto reply;
+            }
+
+            unlock_filp(filp);
+            break;
+        }
+    case MMR_FDCLOSE:
         {
             struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
             if (!filp || !filp->fd_inode) {

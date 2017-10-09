@@ -7,6 +7,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <sys/mman.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
@@ -55,6 +56,14 @@ int main(int argc, char * argv[])
 			_exit(execv(GETTY, argv));
 		}
 	}
+
+	int fb = open("/dev/fb0", O_RDWR);
+	int* fbp = mmap(NULL, 4000, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+	int* p;
+	for (p = fbp, i = 0; i < 1000; i++) {
+		*p++ = 0xff0000;
+	}
+	close(fb);
 
 	while (1) {
 		int s;

@@ -100,6 +100,7 @@ struct chardriver c_driver = {
 	.cdr_read = char_read,
 	.cdr_write = char_write,
 	.cdr_ioctl = char_ioctl,
+	.cdr_mmap = NULL,
 };
 
 PUBLIC int main(int argc, char * argv[])

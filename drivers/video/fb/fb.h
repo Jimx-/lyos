@@ -5,5 +5,6 @@
 
 PUBLIC int arch_init_fb(int minor);
 PUBLIC int arch_get_device(int minor, vir_bytes* base, vir_bytes* size);
+PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size);
 
 #endif

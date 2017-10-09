@@ -98,3 +98,14 @@ PUBLIC int arch_get_device(int minor, vir_bytes* base, vir_bytes* size)
     *size = fb_mem_size;
     return OK;
 }
+
+PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size)
+{
+    if (!initialized || minor != 0) {
+        return ENXIO; 
+    } 
+
+    *phys_base = fb_mem_phys;
+    *size = fb_mem_size;
+    return OK;
+}

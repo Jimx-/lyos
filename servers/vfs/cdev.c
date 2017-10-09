@@ -126,3 +126,25 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, vir_bytes buf, off_t pos,
 	if (op == CDEV_IOCTL) return driver_msg.RETVAL;
 	return driver_msg.CNT;
 }
+
+PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
+	size_t length, char** retaddr)
+{
+	MESSAGE driver_msg;
+	driver_msg.type = CDEV_MMAP;
+	driver_msg.DEVICE = MINOR(dev);
+	driver_msg.ADDR = vaddr;
+	driver_msg.PROC_NR = src;
+	driver_msg.POSITION = offset;
+	driver_msg.CNT = length;
+
+	int retval = cdev_sendrec(dev, &driver_msg);
+	if (retval) return retval;
+
+	if (driver_msg.type == SUSPEND_PROC) {
+		return SUSPEND;
+	}
+
+	*retaddr = driver_msg.ADDR;
+	return driver_msg.RETVAL;
+}
