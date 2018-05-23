@@ -28,7 +28,6 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/fs.h>
-#include <lyos/ipc.h>
 #include "page.h"
 #include "region.h"
 #include "proto.h"

@@ -18,7 +18,6 @@
 #include "lyos/config.h"
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "lyos/list.h"
 #include "tty.h"
 #include "console.h"

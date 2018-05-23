@@ -9,7 +9,6 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include <lyos/ipc.h>
 #include <lyos/fs.h>
 #include <lyos/vm.h>
 #include <atomic.h>

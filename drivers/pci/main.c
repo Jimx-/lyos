@@ -18,7 +18,6 @@
     
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -31,7 +30,6 @@
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/service.h>
-#include <lyos/ipc.h>
 
 #include <pci.h>
 #include "pci.h"

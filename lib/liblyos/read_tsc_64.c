@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
 #include "stdio.h"
@@ -23,7 +22,6 @@
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/vm.h"
-#include "lyos/ipc.h"
 
 PUBLIC void read_tsc(unsigned long * high, unsigned long * low);
 

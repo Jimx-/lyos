@@ -25,7 +25,6 @@
 #include <lyos/proc.h>
 #include <lyos/driver.h>
 #include <lyos/fs.h>
-#include <lyos/ipc.h>
 #include "const.h"
 #include "types.h"
 #include "global.h"

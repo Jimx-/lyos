@@ -15,14 +15,12 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
 #include "stdio.h"
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
-#include "lyos/ipc.h"
 
 #define ASYNC_SIZE  200
 PRIVATE async_message_t async_msg[ASYNC_SIZE];

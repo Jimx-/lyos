@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
 #include "stdio.h"
@@ -24,7 +23,6 @@
 #include "assert.h"
 #include <errno.h>
 #include "lyos/vm.h"
-#include "lyos/ipc.h"
 #include <lyos/config.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>

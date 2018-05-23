@@ -15,10 +15,8 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
-#include <lyos/ipc.h>
 #include <lyos/portio.h>
 
 int syscall_entry(int syscall_nr, MESSAGE * m);

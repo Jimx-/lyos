@@ -29,7 +29,6 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include <lyos/ipc.h>
 #include "libsysfs/libsysfs.h"
 #include "proto.h"
 #include "global.h"

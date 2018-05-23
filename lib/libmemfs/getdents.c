@@ -23,7 +23,6 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
-#include <lyos/ipc.h>
 #include <sys/dirent.h>
 #include "libmemfs/libmemfs.h"
 

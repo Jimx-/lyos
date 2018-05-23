@@ -24,7 +24,6 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
-#include <lyos/ipc.h>
 #include <lyos/sysutils.h>
 #include "libmemfs/libmemfs.h"
 

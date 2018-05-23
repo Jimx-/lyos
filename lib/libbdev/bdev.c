@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <assert.h>

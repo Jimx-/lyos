@@ -24,7 +24,6 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include <lyos/ipc.h>
 #include <lyos/sysutils.h>
 #include <signal.h>
 #include "errno.h"

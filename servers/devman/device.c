@@ -27,7 +27,6 @@
 #include <lyos/fs.h>
 #include "lyos/proc.h"
 #include "lyos/driver.h"
-#include <lyos/ipc.h>
 #include <lyos/sysutils.h>
 #include <libsysfs/libsysfs.h>
 #include <libdevman/libdevman.h>

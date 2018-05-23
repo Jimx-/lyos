@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "assert.h"
@@ -24,7 +23,6 @@
 #include "lyos/const.h"
 #include <lyos/fs.h>
 #include "string.h"
-#include <lyos/ipc.h>
 #include <sys/syslimits.h>
 #include <sys/dirent.h>
 #include "libfsdriver/libfsdriver.h"

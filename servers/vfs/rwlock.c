@@ -26,7 +26,6 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/proc.h>
-#include <lyos/ipc.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 #include <sys/futex.h>

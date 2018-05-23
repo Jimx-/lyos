@@ -23,7 +23,6 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
-#include <lyos/ipc.h>
 #include "libmemfs/libmemfs.h"
 
 PUBLIC struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];

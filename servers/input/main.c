@@ -29,7 +29,6 @@
 #include "lyos/proto.h"
 #include <lyos/service.h>
 #include <lyos/input.h>
-#include <lyos/ipc.h>
 #include "libsysfs/libsysfs.h"
 
 PRIVATE int init_input();

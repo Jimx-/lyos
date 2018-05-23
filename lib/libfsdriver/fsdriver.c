@@ -16,7 +16,6 @@
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "assert.h"
@@ -25,7 +24,6 @@
 #include "lyos/const.h"
 #include <lyos/fs.h>
 #include "string.h"
-#include <lyos/ipc.h>
 #include "libfsdriver/libfsdriver.h"
 
 PUBLIC int fsdriver_start(struct fsdriver * fsd)

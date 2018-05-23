@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <assert.h>
 #include <lyos/service.h>
-#include <lyos/ipc.h>
 #include "libsysfs/libsysfs.h"
 
 extern endpoint_t __pci_endpoint;

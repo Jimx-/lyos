@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include <stdlib.h>
@@ -25,7 +24,6 @@
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include "string.h"
-#include <lyos/ipc.h>
 #include "libsysfs.h"
 
 #define DYN_ATTR_HASH_LOG2   7

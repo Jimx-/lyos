@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "assert.h"
@@ -23,7 +22,6 @@
 #include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
-#include <lyos/ipc.h>
 #include "libsysfs.h"
 
 PUBLIC int sysfs_publish_domain(char * key, int flags)

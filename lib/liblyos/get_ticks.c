@@ -16,14 +16,12 @@
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
 #include "stdio.h"
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
-#include <lyos/ipc.h>
 #include <string.h>
 #include <lyos/sysutils.h>
 

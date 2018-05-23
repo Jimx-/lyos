@@ -15,7 +15,6 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <lyos/ipc.h>
 #include <lyos/config.h>
 #include "sys/types.h"
 #include "stdio.h"
@@ -26,7 +25,6 @@
 #include <lyos/fs.h>
 #include "string.h"
 #include <limits.h>
-#include <lyos/ipc.h>
 #include <lyos/input.h>
 #include <libsysfs/libsysfs.h>
 #include "libinputdriver/libinputdriver.h"

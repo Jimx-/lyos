@@ -32,7 +32,6 @@
 #include "proto.h"
 #include "const.h"
 #include "lyos/vm.h"
-#include <lyos/ipc.h>
 #include <sys/mman.h>
 #include "global.h"
 

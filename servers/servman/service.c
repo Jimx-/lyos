@@ -32,7 +32,6 @@
 #include "lyos/proto.h"
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
-#include <lyos/ipc.h>
 #include "proto.h"
 #include "const.h"
 #include "type.h"
