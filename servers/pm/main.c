@@ -16,7 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
     
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -90,6 +91,9 @@ PUBLIC int main(int argc, char * argv[])
             break;
         case PM_VFS_GETSETID_REPLY:
             src = msg.ENDPOINT;
+            break;
+        case PM_GETEPINFO:
+            msg.RETVAL = do_pm_getepinfo(&msg);
             break;
         case EXEC:
             msg.RETVAL = do_exec(&msg);

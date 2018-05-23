@@ -1,7 +1,7 @@
 #
 # Makefile for the Lyos IPC server.
 
-SRCS 	= main.c
+SRCS 	= main.c shmem.c utils.c
 LIBS 	= lyos
 
 PROG 	= ipc

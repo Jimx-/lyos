@@ -1,4 +1,5 @@
 #include "type.h"
+#include "ipc.h"
 #include "const.h"
 
 #include <elf.h>

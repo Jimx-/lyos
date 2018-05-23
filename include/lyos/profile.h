@@ -17,6 +17,7 @@
 #define _PROFILE_H_
 
 #include <lyos/type.h>
+#include <lyos/ipc.h>
 #include <lyos/proc.h>
 
 #define KPROF_SAMPLE_BUFSIZE    (4 << 20)

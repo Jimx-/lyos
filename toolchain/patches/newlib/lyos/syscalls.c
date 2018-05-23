@@ -1,4 +1,6 @@
 #include "type.h"
+#include "ipc.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <utime.h>
@@ -20,6 +22,7 @@
 #include <sys/ptrace.h>
 #include <sys/statfs.h>
 #include <sys/futex.h>
+#include <sys/shm.h>
 #include <grp.h>
 
 #include "const.h"
@@ -1377,4 +1380,20 @@ int kprof(int action, size_t size, int freq, void* info, void* buf)
     send_recv(BOTH, TASK_PM, &m);
 
     return m.RETVAL;
+}
+
+int shmget(key_t key, size_t size, int flags)
+{
+    MESSAGE m;
+    memset(&m, 0, sizeof(MESSAGE));
+
+	m.type = IPC_SHMGET;
+	m.IPC_KEY = key;
+	m.IPC_SIZE = size;
+	m.IPC_FLAGS = flags;
+    cmb();
+
+    send_recv(BOTH, TASK_PM, &m);
+
+    return m.IPC_RETID;
 }

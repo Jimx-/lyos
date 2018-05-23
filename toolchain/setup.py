@@ -2,12 +2,14 @@ from utils import *
 from config import *
 import os
 
+
 def get_env(name):
     try:
         val = os.environ[name]
     except KeyError:
         val = None
     return val
+
 
 BUILD_BINUTILS = get_env("BUILD_BINUTILS")
 BUILD_GCC = get_env("BUILD_GCC")
@@ -49,7 +51,7 @@ if __name__ == "__main__":
     patch(NEWLIB_VERSION)
     patch(NCURSES_VERSION)
 
-    pop_dir()   # sources
+    pop_dir()  # sources
 
     mkdir('build')
     mkdir('local')
@@ -66,7 +68,7 @@ if __name__ == "__main__":
         os.environ["PKG_CONFIG_LIBDIR"] = ""
         configure(BINUTILS_VERSION)
         make_and_install()
-        pop_dir()   # binutils
+        pop_dir()  # binutils
 
     os.environ["PATH"] += os.pathsep + PREFIX_BIN
 
@@ -74,12 +76,15 @@ if __name__ == "__main__":
         mkdir('gcc')
         push_dir('gcc')
         os.environ["PKG_CONFIG_LIBDIR"] = ""
-        configure(GCC_VERSION, ' --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc')
+        configure(
+            GCC_VERSION, ' --with-build-sysroot=' + SYSROOT +
+            ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc'
+        )
         make('all-gcc')
         make('install-gcc')
         make('all-target-libgcc')
         make('install-target-libgcc')
-        pop_dir()   # gcc
+        pop_dir()  # gcc
 
     os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
     os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
@@ -92,17 +97,26 @@ if __name__ == "__main__":
         # newlib
         newlib_dir = '../sources/' + NEWLIB_VERSION
 
-        push_dir(newlib_dir + '/newlib/libc/sys/')
-        os.system('autoconf')
+        push_dir(newlib_dir)
+        os.system(
+            "find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || exit"
+        )
         pop_dir()
 
         if not os.path.exists(newlib_dir + '/newlib/libc/sys/lyos'):
-            copy_dir('../patches/newlib/lyos', newlib_dir + '/newlib/libc/sys/lyos')
-            copy('../../include/lyos/type.h', newlib_dir + '/newlib/libc/sys/lyos')
-            copy('../../include/lyos/const.h', newlib_dir + '/newlib/libc/sys/lyos')
-            copy('../patches/newlib/malign.c', newlib_dir + '/newlib/libc/stdlib')
+            copy_dir('../patches/newlib/lyos',
+                     newlib_dir + '/newlib/libc/sys/lyos')
+            copy('../../include/lyos/type.h',
+                 newlib_dir + '/newlib/libc/sys/lyos')
+            copy('../../include/lyos/const.h',
+                 newlib_dir + '/newlib/libc/sys/lyos')
+            copy('../../include/lyos/ipc.h',
+                 newlib_dir + '/newlib/libc/sys/lyos')
+            copy('../patches/newlib/malign.c',
+                 newlib_dir + '/newlib/libc/stdlib')
             mkdir(newlib_dir + '/newlib/libc/sys/lyos/lyos')
-            copy('../../include/lyos/list.h', newlib_dir + '/newlib/libc/sys/lyos/lyos')
+            copy('../../include/lyos/list.h',
+                 newlib_dir + '/newlib/libc/sys/lyos/lyos')
 
         if os.path.exists('newlib'):
             rmdir('newlib')
@@ -117,14 +131,18 @@ if __name__ == "__main__":
         mkdir('newlib')
         push_dir('newlib')
         configure_cross(NEWLIB_VERSION)
-        os.system("sed 's/prefix}\/" + TARGET + "/prefix}/' Makefile > Makefile.bak")
+        os.system(
+            "sed 's/prefix}\/" + TARGET + "/prefix}/' Makefile > Makefile.bak")
         copy("Makefile.bak", "Makefile")
         make()
         make(' DESTDIR=' + SYSROOT + ' install')
-        copy(TARGET + '/newlib/libc/sys/lyos/crt*.o', SYSROOT + CROSSPREFIX + '/lib/')
+        copy(TARGET + '/newlib/libc/sys/lyos/crt*.o',
+             SYSROOT + CROSSPREFIX + '/lib/')
 
         for lib in ['c', 'g']:
-            os.system('{}-gcc -shared -o {}/usr/lib/lib{}.so -Wl,--whole-archive {}/usr/lib/lib{}.a -Wl,--no-whole-archive'.format(TARGET, DESTDIR, lib, DESTDIR, lib))
+            os.system(
+                '{}-gcc -shared -o {}/usr/lib/lib{}.so -Wl,--whole-archive {}/usr/lib/lib{}.a -Wl,--no-whole-archive'.
+                format(TARGET, DESTDIR, lib, DESTDIR, lib))
         pop_dir()
 
     if BUILD_GCC is not None:
@@ -137,14 +155,18 @@ if __name__ == "__main__":
     if BUILD_BINUTILS_NATIVE is not None:
         mkdir('binutils-native')
         push_dir('binutils-native')
-        configure_host(BINUTILS_VERSION, ' --disable-werror') # throw warnings away
+        configure_host(BINUTILS_VERSION,
+                       ' --disable-werror')  # throw warnings away
         make_and_install_to_destdir()
         pop_dir()
 
     if BUILD_GCC_NATIVE is not None:
         mkdir('gcc-native')
         push_dir('gcc-native')
-        configure_native(GCC_VERSION, '--with-sysroot=/ --with-build-sysroot=' + SYSROOT + ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib', False)
+        configure_native(
+            GCC_VERSION, '--with-sysroot=/ --with-build-sysroot=' + SYSROOT +
+            ' --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib',
+            False)
         make('DESTDIR=' + SYSROOT + ' all-gcc')
         make('DESTDIR=' + SYSROOT + ' install-gcc')
         make('DESTDIR=' + SYSROOT + ' all-target-libgcc')
@@ -152,7 +174,7 @@ if __name__ == "__main__":
         os.system('touch ' + SYSROOT + '/usr/include/fenv.h')
         make('DESTDIR=' + SYSROOT + ' all-target-libstdc++-v3')
         make('DESTDIR=' + SYSROOT + ' install-target-libstdc++-v3')
-        pop_dir()   # gcc-native
+        pop_dir()  # gcc-native
 
     if BUILD_BASH is not None:
         mkdir('bash')
@@ -177,16 +199,18 @@ if __name__ == "__main__":
     if BUILD_COREUTILS:
         mkdir('coreutils')
         push_dir('coreutils')
-        configure_host(COREUTILS_VERSION, ' --disable-nls')
+        #configure_host(COREUTILS_VERSION, ' --disable-nls')
         make_and_install_to_destdir()
         pop_dir()
 
     if BUILD_NCURSES:
         mkdir('ncurses')
         push_dir('ncurses')
-        configure_host(NCURSES_VERSION, ' --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests')
+        configure_host(
+            NCURSES_VERSION,
+            ' --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests'
+        )
         make_and_install_to_destdir()
         pop_dir()
 
-    pop_dir()   # build
-    
+    pop_dir()  # build

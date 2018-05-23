@@ -16,7 +16,9 @@
 #define _TTY_GLOBAL_VARIABLE_HERE_
 
 #include "lyos/config.h"
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
+#include <lyos/ipc.h>
 #include "lyos/list.h"
 #include "tty.h"
 #include "console.h"

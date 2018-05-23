@@ -5,8 +5,9 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <lyos/const.h>
 #include <lyos/type.h>
+#include <lyos/ipc.h>
+#include <lyos/const.h>
 
 static void do_trace(pid_t child, int s);
 

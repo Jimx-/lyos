@@ -15,6 +15,7 @@
 
 #include <lyos/compile.h>
 #include <lyos/type.h>
+#include <lyos/ipc.h>
 #include <sys/types.h>
 #include <lyos/config.h>
 #include <stdio.h>
@@ -25,13 +26,14 @@
 #include <lyos/proc.h>
 #include <lyos/global.h>
 #include <lyos/proto.h>
+#include <sys/shm.h>
 
 #include "proto.h"
 
 PUBLIC int main()
 {
     printl("ipc: IPC server is running.\n");
-    
+
     while (TRUE) {
         MESSAGE msg;
 
@@ -41,6 +43,9 @@ PUBLIC int main()
         int msgtype = msg.type;
 
         switch (msgtype) {
+        case IPC_SHMGET:
+            msg.RETVAL = do_shmget(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

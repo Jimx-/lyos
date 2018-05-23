@@ -15,7 +15,8 @@
 
 #define _SYSFS_GLOBAL_VARIABLE_HERE_
 
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/list.h"
 #include "libsysfs/libsysfs.h"

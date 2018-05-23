@@ -50,7 +50,7 @@ echo "Creating devices..."
 debugfs -f ./scripts/create-dev.conf -w $LOOPMAP
 
 echo "Installing grub..."
-#grub-install --target=i386-pc --boot-directory=$MOUNT_POINT/boot $LOOPRAW
+grub-install --target=i386-pc --boot-directory=$MOUNT_POINT/boot $LOOPRAW
 
 umount $MOUNT_POINT
 kpartx -d $LOOPMAP

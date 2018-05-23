@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/mman.h>
+#include <sys/shm.h>
 
 #define GETTY "/usr/bin/getty"
 #define NR_TTY	4
@@ -57,6 +58,7 @@ int main(int argc, char * argv[])
 		}
 	}
 
+	/*
 	int fb = open("/dev/fb0", O_RDWR);
 	int* fbp = mmap(NULL, 4000, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
 	int* p;
@@ -64,6 +66,8 @@ int main(int argc, char * argv[])
 		*p++ = 0xff0000;
 	}
 	close(fb);
+	*/
+	key_t key = shmget(IPC_PRIVATE, 0x100, IPC_CREAT);
 
 	while (1) {
 		int s;

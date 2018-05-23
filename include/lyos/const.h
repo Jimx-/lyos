@@ -1,3 +1,4 @@
+
 /*  This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -231,6 +232,7 @@
 #define SERVMAN_REQ_BASE    2201
 #define PCI_REQ_BASE        2301
 #define INPUT_REQ_BASE		2401
+#define IPC_REQ_BASE        2501
 
 #define IS_BDEV_REQ(x) ((x) >= BDEV_OPEN && (x) <= BDEV_IOCTL)
 #define IS_CDEV_REQ(x) ((x) >= CDEV_OPEN && (x) <= CDEV_IOCTL)
@@ -297,6 +299,7 @@ enum msgtype {
     MM_VFS_REQUEST,
     MM_VFS_REPLY,
     MM_GETINFO,
+    MM_REMAP,
 
     /* message type for pm calls */
     PM_VFS_INIT = PM_REQ_BASE,			/* 1501 */
@@ -309,6 +312,7 @@ enum msgtype {
     PM_VFS_EXEC,
     PM_GETINFO,
     PM_KPROFILE,
+    PM_GETEPINFO,
 
     /* message type for drivers */					/* 2001 ~ 2005 */
     BDEV_OPEN = DRV_REQ_BASE,
@@ -348,6 +352,9 @@ enum msgtype {
     INPUT_TTY_UP,
     INPUT_TTY_EVENT,
     INPUT_SETLEDS,
+
+    /* IPC */
+    IPC_SHMGET = IPC_REQ_BASE,
 };
 
 /* macros for messages */
@@ -440,6 +447,18 @@ enum msgtype {
 #define KP_ENDPT	u.m3.m3i4
 #define KP_CTL		u.m3.m3p1
 #define KP_BUF		u.m3.m3p2
+
+/* macros for ipc calls */
+#define IPC_KEY     u.m3.m3i1
+#define IPC_ID      u.m3.m3i1
+#define IPC_SIZE    u.m3.m3i2
+#define IPC_FLAGS   u.m3.m3i3
+#define IPC_ADDR    u.m3.m3p1
+#define IPC_RETID   u.m3.m3i2
+
+/* macros for getepinfo */
+#define EP_EFFUID   u.m3.m3i2
+#define EP_EFFGID   u.m3.m3i3
 
 /* ioctl requests */
 #define	DIOCTL_GET_GEO	1

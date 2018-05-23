@@ -95,5 +95,8 @@ PUBLIC int kernel_kprofile(int action, size_t size, int freq, endpoint_t endpt, 
 
 PUBLIC void * mmap_for(endpoint_t forwhom,
     void *addr, size_t len, int prot, int flags, int fd, off_t offset);
+PUBLIC void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr, void* src_addr, size_t size);
+
+PUBLIC pid_t get_epinfo(endpoint_t ep, uid_t* euid, gid_t* egid);
 
 #endif

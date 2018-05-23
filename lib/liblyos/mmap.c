@@ -13,7 +13,9 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
 #include "stdio.h"
@@ -65,8 +67,24 @@ PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
     m.MMAP_PROT = prot;
     m.MMAP_CLEAREND = clearend;
 
-    asyncsend3(TASK_MM, &m, 0);
-    send_recv(RECEIVE, TASK_MM, &m);
+    send_recv(BOTH, TASK_MM, &m);
 
     return m.RETVAL;
+}
+
+PUBLIC void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr, void* src_addr, size_t size)
+{
+    MESSAGE m;
+    memset(&m, 0, sizeof(MESSAGE));
+
+    m.type = MM_REMAP;
+    m.u.m_mm_remap.src = src;
+    m.u.m_mm_remap.dest = dest;
+    m.u.m_mm_remap.src_addr = src_addr;
+    m.u.m_mm_remap.dest_addr = dest_addr;
+    m.u.m_mm_remap.size = size;
+    
+    send_recv(BOTH, TASK_MM, &m);
+
+    return m.u.m_mm_remap.ret_addr;
 }

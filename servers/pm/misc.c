@@ -13,7 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
@@ -179,4 +180,16 @@ PUBLIC int do_pm_getinfo(MESSAGE * p)
     }
 
     return data_copy(p->source, dest, SELF, src_addr, len);
+}
+
+PUBLIC int do_pm_getepinfo(MESSAGE* p)
+{
+    endpoint_t endpoint = p->ENDPOINT;
+    struct pmproc* pmp = pm_endpt_proc(endpoint);
+    if (pmp == NULL) return -ESRCH;
+
+    p->EP_EFFUID = pmp->effuid;
+    p->EP_EFFGID = pmp->effgid;
+
+    return pmp->pid;
 }

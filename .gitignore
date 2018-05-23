@@ -30,13 +30,17 @@ lyos.gz
 # Initrd 
 #
 initrd.tar
+ramdisk/bin
+ramdisk/lib
 ramdisk/etc
+ramdisk/usr
 ramdisk/sbin
 
 # 
 # Library
 #
 *.a
+*.so
 
 #
 # Generated
@@ -75,3 +79,9 @@ init/init.map
 
 drivers/devman/devman
 fs/procfs/procfs
+
+#
+# Download
+#
+scripts/download
+

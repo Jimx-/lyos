@@ -1,27 +1,28 @@
 import os
-import ConfigParser
+import configparser
 
-ROOT_DIR = os.getcwd() 
+ROOT_DIR = os.getcwd()
 PREFIX = os.sep.join([ROOT_DIR, 'local'])
 PREFIX_BIN = os.sep.join([PREFIX, 'bin'])
 CROSSPREFIX = '/usr'
-DESTDIR = os.popen('readlink -f ' + ROOT_DIR + '/../obj/destdir.' + os.environ["ARCH"] + '/').read()[:-1]
+DESTDIR = os.popen('readlink -f ' + ROOT_DIR + '/../obj/destdir.' +
+                   os.environ["ARCH"] + '/').read()[:-1]
 SYSROOT = DESTDIR
 try:
-	TARGET = os.environ["SUBARCH"] + '-elf-lyos'
+    TARGET = os.environ["SUBARCH"] + '-elf-lyos'
 except:
-	TARGET = 'i686-elf-lyos'
+    TARGET = 'i686-elf-lyos'
 
 os.environ["PKG_CONFIG_LIBDIR"] = SYSROOT + '/usr/lib/pkgconfig'
 os.environ["PKG_CONFIG_SYSROOT_DIR"] = SYSROOT
 os.environ["TOOLCHAIN"] = SYSROOT + '/usr'
 
-packs = ConfigParser.ConfigParser()
+packs = configparser.ConfigParser()
 packs.read('packages.list')
 
 GCC_VERSION = 'gcc-' + packs.get('gcc', 'version')
 GCC_REPO = packs.get('gcc', 'repo')
-GCC_TARBALL = GCC_VERSION + '.tar.bz2'
+GCC_TARBALL = GCC_VERSION + '.tar.gz'
 GCC_TARBALL_URL = GCC_REPO + GCC_VERSION + '/' + GCC_TARBALL
 
 BINUTILS_VERSION = 'binutils-' + packs.get('binutils', 'version')

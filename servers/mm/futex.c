@@ -15,6 +15,7 @@
 
 #include <lyos/compile.h>
 #include <lyos/type.h>
+#include <lyos/ipc.h>
 #include <sys/types.h>
 #include <lyos/config.h>
 #include <stdio.h>

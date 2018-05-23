@@ -13,7 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -33,7 +34,6 @@
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
-#include <lyos/ipc.h>
     
 PUBLIC struct proc * pick_proc();
 PUBLIC void proc_no_time(struct proc * p);

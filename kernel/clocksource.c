@@ -13,7 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -197,7 +198,7 @@ PUBLIC void register_clocksource_khz(struct clocksource * cs, u32 khz)
  * <Ring 0> Calculate time in nanoseconds from clocksource cycles.
  *
  *****************************************************************************/
-PUBLIC inline u64 clocksource_cyc2ns(struct clocksource * cs, u64 cycles)
+PUBLIC u64 clocksource_cyc2ns(struct clocksource * cs, u64 cycles)
 {
     return (cycles * cs->mul) >> cs->shift;
 }

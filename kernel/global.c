@@ -15,7 +15,8 @@
 
 #define GLOBAL_VARIABLES_HERE
 
-#include "lyos/type.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
