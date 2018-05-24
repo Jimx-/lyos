@@ -74,7 +74,7 @@ PUBLIC int region_extend_up_to(struct mmproc * mmp, vir_bytes addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
-                            struct mmproc * p_src, struct vir_region * src);
+                            struct mmproc * p_src, struct vir_region * src, int writable);
 PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr);
 PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr, 
         vir_bytes offset, vir_bytes sublen, int wrflag);
@@ -110,6 +110,7 @@ PUBLIC int do_mmap();
 PUBLIC int do_munmap();
 PUBLIC int do_vfs_mmap();
 PUBLIC int do_map_phys();
+PUBLIC int do_mm_remap();
 
 typedef void (*vfs_callback_t) (struct mmproc* mmp, MESSAGE* msg, void* arg);
 PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_bytes addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len);

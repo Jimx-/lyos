@@ -246,3 +246,44 @@ PUBLIC int do_munmap()
 
     return region_unmap_range(mmp, addr, len);
 }
+
+PUBLIC int do_mm_remap()
+{
+    endpoint_t src = mm_msg.u.m_mm_remap.src;
+    if (src == SELF) src = mm_msg.source;
+    endpoint_t dest = mm_msg.u.m_mm_remap.dest;
+    if (src == SELF) dest = mm_msg.source;
+    vir_bytes src_addr = (vir_bytes) mm_msg.u.m_mm_remap.src_addr;
+    vir_bytes dest_addr = (vir_bytes) mm_msg.u.m_mm_remap.dest_addr;
+    size_t size = mm_msg.u.m_mm_remap.size;
+
+    if (size < 0) return EINVAL;
+    struct mmproc* smmp = endpt_mmproc(src);
+    if (!smmp) return EINVAL;
+    struct mmproc* dmmp = endpt_mmproc(dest);
+    if (!dmmp) return EINVAL;
+
+    struct vir_region* src_region = region_lookup(smmp, src_addr);
+    if (src_region->vir_addr != src_addr) return EFAULT;
+
+    if (size % ARCH_PG_SIZE) {
+        size = size - (size % ARCH_PG_SIZE) + ARCH_PG_SIZE;
+    }
+
+    if (size != src_region->length) return EFAULT;
+
+    int vrflags = RF_SHARED | RF_WRITABLE;
+    struct vir_region* new_region = NULL;
+    if (dest_addr) {
+        new_region = region_new(dest_addr, size, vrflags);
+    } else {
+        new_region = region_find_free_region(dmmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, size, vrflags);
+    }
+    if (!new_region) return ENOMEM;
+
+    region_share(dmmp, new_region, smmp, src_region, TRUE);
+    region_map_phys(dmmp, new_region);
+
+    mm_msg.u.m_mm_remap.ret_addr = (void*) new_region->vir_addr;
+    return 0;
+}

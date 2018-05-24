@@ -182,7 +182,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     int i;
 
     memset(&execi, 0, sizeof(execi));
-    lock_proc(mm_task);
+    lock_fproc(mm_task);
 
     /* stack info */
     execi.args.stack_top = VM_STACK_TOP;
@@ -314,7 +314,6 @@ PUBLIC int fs_exec(MESSAGE * msg)
             break;  /* loaded successfully */
         }
     }
-
     if (retval) goto exec_finalize;
 
     int argc = 0;
@@ -338,7 +337,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     msg->BUF = orig_stack;
     msg->BUF_LEN = orig_stack_len;
 
- exec_finalize:
+exec_finalize:
     if (filp) {
         unlock_filp(filp);
     }
@@ -348,7 +347,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
         put_inode(execi.pin);
     }
 
-    unlock_proc(mm_task);
+    unlock_fproc(mm_task);
 
     if (!retval) {
         return kernel_exec(src, orig_stack, pathname, (void*) execi.args.entry_point, &ps);

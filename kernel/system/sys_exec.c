@@ -35,7 +35,6 @@ PUBLIC int sys_exec(MESSAGE * m, struct proc * p_proc)
     if (!p) return EINVAL;
 
     lock_proc(p);
-
     char name[PROC_NAME_LEN];
     memcpy(name, m->KEXEC_NAME, sizeof(name));
     name[sizeof(name) - 1] = '\0';

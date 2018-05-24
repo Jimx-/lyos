@@ -97,7 +97,7 @@ PUBLIC int do_fork()
 
             if (!(vr->flags & RF_MAPPED)) continue;
 
-            region_share(mmp, new_region, mmparent, vr);
+            region_share(mmp, new_region, mmparent, vr, FALSE);
             region_map_phys(mmp, new_region);
         }
     }

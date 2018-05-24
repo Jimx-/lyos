@@ -339,6 +339,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
             if (!filp || !filp->fd_inode) {
                 result = EBADF;
+                if (filp) unlock_filp(filp);
                 goto reply;
             }
 

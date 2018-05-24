@@ -46,6 +46,9 @@ PUBLIC int main()
         case IPC_SHMGET:
             msg.RETVAL = do_shmget(&msg);
             break;
+        case IPC_SHMAT:
+            msg.RETVAL = do_shmat(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

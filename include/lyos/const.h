@@ -355,6 +355,7 @@ enum msgtype {
 
     /* IPC */
     IPC_SHMGET = IPC_REQ_BASE,
+    IPC_SHMAT,
 };
 
 /* macros for messages */
@@ -455,6 +456,7 @@ enum msgtype {
 #define IPC_FLAGS   u.m3.m3i3
 #define IPC_ADDR    u.m3.m3p1
 #define IPC_RETID   u.m3.m3i2
+#define IPC_RETADDR u.m3.m3p2
 
 /* macros for getepinfo */
 #define EP_EFFUID   u.m3.m3i2

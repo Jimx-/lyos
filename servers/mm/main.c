@@ -87,6 +87,9 @@ PUBLIC int main()
         case FS_MMAP:
             mm_msg.RETVAL = do_vfs_mmap();
             break;
+        case MM_REMAP:
+            mm_msg.RETVAL = do_mm_remap();
+            break;
         case PROCCTL:
             mm_msg.RETVAL = do_procctl();
             break;

@@ -36,7 +36,7 @@
 #include "proto.h"
 
 struct shm {
-    struct shmid    shmid;
+    struct shmid_ds shmid;
     vir_bytes       page;
 };
 
@@ -52,8 +52,8 @@ PRIVATE struct shm* shm_find_key(key_t key)
     if (key == IPC_PRIVATE) return NULL;
 
     for (i = 0; i < shm_count; i++) {
-        if (!(shm_list[i].shmid.perm.mode & SHM_INUSE)) continue;
-        if (shm_list[i].shmid.perm.key == key)
+        if (!(shm_list[i].shmid.shm_perm.mode & SHM_INUSE)) continue;
+        if (shm_list[i].shmid.shm_perm.key == key)
             return &shm_list[i];
     }
 
@@ -69,8 +69,8 @@ PRIVATE struct shm* shm_find_id(int id)
     if (i >= shm_count) return NULL;
 
     shm = &shm_list[i];
-    if (!(shm->shmid.perm.mode & SHM_INUSE)) return NULL;
-    if (!(shm->shmid.perm.seq != IPCID_TO_SEQ(id))) return NULL;
+    if (!(shm->shmid.shm_perm.mode & SHM_INUSE)) return NULL;
+    if (shm->shmid.shm_perm.seq != IPCID_TO_SEQ(id)) return NULL;
 
     return shm;
 }
@@ -90,13 +90,13 @@ PUBLIC int do_shmget(MESSAGE* msg)
     shm = shm_find_key(key);
 
     if (shm) {
-        if (!check_perm(&shm->shmid.perm, endpoint, flags)) {
+        if (!check_perm(&shm->shmid.shm_perm, endpoint, flags)) {
             return EACCES;
         }
         if ((flags & IPC_CREAT) && (flags & IPC_EXCL)) {
             return EEXIST;
         }
-        if (size && shm->shmid.size < size) {
+        if (size && shm->shmid.shm_segsz < size) {
             return EINVAL;
         }
 
@@ -111,13 +111,13 @@ PUBLIC int do_shmget(MESSAGE* msg)
         size = roundup(size, ARCH_PG_SIZE);
 
         for (i = 0; i < SHMMNI; i++) {
-            if (!(shm_list[i].shmid.perm.mode & SHM_INUSE)) break;
+            if (!(shm_list[i].shmid.shm_perm.mode & SHM_INUSE)) break;
         }
         if (i == SHMMNI) {
             return ENOSPC;
         }
 
-        page = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+        page = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
         if (page == MAP_FAILED)
             return ENOMEM;
         memset(page, 0, size);
@@ -127,24 +127,25 @@ PUBLIC int do_shmget(MESSAGE* msg)
         pid_t pid = get_epinfo(endpoint, &uid, &gid);
 
         shm = &shm_list[i];
-        int seq = shm->shmid.perm.seq;
+        int seq = shm->shmid.shm_perm.seq;
         memset(shm, 0, sizeof(*shm));
-        shm->shmid.perm.key = key;
-        shm->shmid.perm.uid = uid;
-        shm->shmid.perm.gid = gid;
-        shm->shmid.perm.cuid = uid;
-        shm->shmid.perm.cgid = gid;
-        shm->shmid.perm.mode = SHM_INUSE | (flags & 0777);
-        shm->shmid.perm.seq = (seq + 1) & 0x7fff;
-        shm->shmid.size = old_size;
-        shm->shmid.cpid = pid;
-        shm->shmid.lpid = 0;
+        shm->shmid.shm_perm.key = key;
+        shm->shmid.shm_perm.uid = uid;
+        shm->shmid.shm_perm.gid = gid;
+        shm->shmid.shm_perm.cuid = uid;
+        shm->shmid.shm_perm.cgid = gid;
+        shm->shmid.shm_perm.mode = SHM_INUSE | (flags & 0777);
+        shm->shmid.shm_perm.seq = (seq + 1) & 0x7fff;
+        shm->shmid.shm_segsz = old_size;
+        shm->shmid.shm_ctime = now();
+        shm->shmid.shm_cpid = pid;
+        shm->shmid.shm_lpid = 0;
         shm->page = (vir_bytes) page;
 
         if (i == shm_count) shm_count++;
     }
 
-    msg->IPC_RETID = IXSEQ_TO_IPCID(i, shm->shmid.perm.seq);
+    msg->IPC_RETID = IXSEQ_TO_IPCID(i, shm->shmid.shm_perm.seq);
     return 0;
 }
 
@@ -171,7 +172,16 @@ PUBLIC int do_shmat(MESSAGE* msg)
     int mask = 0;
     if (flags & SHM_RDONLY) mask = IPC_R;
     else mask = IPC_R | IPC_W;
-    if (!check_perm(&shm->shmid.perm, msg->source, mask)) return EACCES;
+    if (!check_perm(&shm->shmid.shm_perm, msg->source, mask)) return EACCES;
 
+    void* retaddr = mm_remap(msg->source, SELF, (void*) addr, (void*) shm->page, shm->shmid.shm_segsz);
+    if (retaddr == MAP_FAILED) return ENOMEM;
+
+    shm->shmid.shm_atime = now();
+    uid_t uid;
+    pid_t pid = get_epinfo(msg->source, &uid, NULL);
+    shm->shmid.shm_lpid = pid;
+    
+    msg->IPC_RETADDR = retaddr;
     return 0;
 }

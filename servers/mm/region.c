@@ -436,11 +436,10 @@ PUBLIC int region_extend(struct vir_region * rp, int increment)
 }
 
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
-                            struct mmproc * p_src, struct vir_region * src)
+                            struct mmproc * p_src, struct vir_region * src, int writable)
 {
     int i;
 
-    dest->vir_addr = src->vir_addr;
     dest->length = src->length;
     dest->flags = src->flags;
 
@@ -453,7 +452,9 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
         if (frame->refcnt) {
             frame->refcnt++;
             frame->flags |= PFF_SHARED;
-            frame->flags &= ~PFF_WRITABLE;
+            if (!writable) {
+                frame->flags &= ~PFF_WRITABLE;
+            }
             phys_region_set(prdest, i, frame);
         }
     }
@@ -469,7 +470,7 @@ PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr)
     struct vir_region * vr;
 
     list_for_each_entry(vr, &mmp->active_mm->mem_regions, list) {
-        if (addr >= (vir_bytes)(vr->vir_addr) && addr < (vir_bytes)(vr->vir_addr) + vr->length) {
+        if (addr >= vr->vir_addr && addr < vr->vir_addr + vr->length) {
             return vr;
         }
     }

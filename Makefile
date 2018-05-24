@@ -159,20 +159,15 @@ silentoldconfig:
 	@(cd scripts/config; make config)
 	$(CONF) --silentoldconfig  $(CONFIGIN)
 
-clean :
+clean:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C lib $(MAKEFLAGS) clean
 	$(Q)$(MAKE) -C fs $(MAKEFLAGS) clean
 	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) clean
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) clean
-	$(Q)$(MAKE) -C utils $(MAKEFLAGS) clean
 
 realclean :
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
-	$(Q)$(MAKE) -C lib $(MAKEFLAGS) realclean
-	$(Q)$(MAKE) -C fs $(MAKEFLAGS) realclean
-	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) realclean
-	$(Q)$(MAKE) -C servers $(MAKEFLAGS) realclean
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:
@@ -199,7 +194,7 @@ kvm-disk:
 	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -sdl -vga std
 
 kvm-debug:
-	@qemu-system-i386 -s -S -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768" -initrd "$(LYOSINITRD),$(DESTDIR)/sbin/mm,$(DESTDIR)/sbin/pm,$(DESTDIR)/sbin/servman,$(DESTDIR)/sbin/devman,$(DESTDIR)/sbin/sched,$(DESTDIR)/sbin/vfs,$(DESTDIR)/sbin/systask,$(DESTDIR)/sbin/tty,$(DESTDIR)/sbin/ramdisk,$(DESTDIR)/sbin/initfs,$(DESTDIR)/sbin/sysfs,$(DESTDIR)/sbin/ipc,$(DESTDIR)/sbin/pci,$(DESTDIR)/sbin/init" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -vga std -sdl
+	@qemu-system-i386 -s -S -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768" -initrd "$(LYOSINITRD),$(DESTDIR)/sbin/mm,$(DESTDIR)/sbin/pm,$(DESTDIR)/sbin/servman,$(DESTDIR)/sbin/devman,$(DESTDIR)/sbin/sched,$(DESTDIR)/sbin/vfs,$(DESTDIR)/sbin/systask,$(DESTDIR)/sbin/tty,$(DESTDIR)/sbin/ramdisk,$(DESTDIR)/sbin/initfs,$(DESTDIR)/sbin/sysfs,$(DESTDIR)/sbin/ipc,$(DESTDIR)/sbin/pci,$(DESTDIR)/sbin/init" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -vga std -sdl --enable-kvm
 
 disk-image:
 	$(Q)$(MAKE) -C utils $(MAKEFLAGS)

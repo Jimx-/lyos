@@ -1393,7 +1393,24 @@ int shmget(key_t key, size_t size, int flags)
 	m.IPC_FLAGS = flags;
     cmb();
 
-    send_recv(BOTH, TASK_PM, &m);
+    send_recv(BOTH, TASK_IPC, &m);
 
+	if (m.RETVAL != 0) return -m.RETVAL;
     return m.IPC_RETID;
+}
+
+void* shmat(int shmid, const void* shmaddr, int shmflg)
+{
+    MESSAGE m;
+    memset(&m, 0, sizeof(MESSAGE));
+
+	m.type = IPC_SHMAT;
+	m.IPC_ID = shmid;
+	m.IPC_ADDR = (void*) shmaddr;
+	m.IPC_FLAGS = shmflg;
+    cmb();
+
+    send_recv(BOTH, TASK_IPC, &m);
+
+    return m.IPC_RETADDR;
 }
