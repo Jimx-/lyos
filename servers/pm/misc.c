@@ -178,7 +178,7 @@ PUBLIC int do_pm_getinfo(MESSAGE * p)
         return EINVAL;
     }
 
-    return data_copy(p->source, dest, SELF, src_addr, len);
+    return data_copy(p->source, (void*) dest, SELF, (void*) src_addr, len);
 }
 
 PUBLIC int do_pm_getepinfo(MESSAGE* p)

@@ -22,6 +22,7 @@
 #include "assert.h"
 #include "stddef.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"

@@ -58,7 +58,6 @@ PRIVATE int do_getsethostname(MESSAGE * p);
 PUBLIC int main()
 {
 	MESSAGE msg;
-	struct time t;
 	struct timeval tv;
 
 	prepare_uname_buf(&uname_buf);

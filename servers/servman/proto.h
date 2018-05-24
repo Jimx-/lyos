@@ -16,4 +16,6 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
 PUBLIC int serv_prepare_module_stack();
 PUBLIC int announce_service(char * name, endpoint_t serv_ep);
 
+PUBLIC int late_reply(struct sproc * sp, int retval);
+
 #endif

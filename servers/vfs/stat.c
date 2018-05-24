@@ -21,15 +21,16 @@
 #include "assert.h"
 #include "stddef.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
 #include "errno.h"
+#include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "fcntl.h"
 #include <sys/stat.h>
-#include "types.h"
 #include "global.h"
     
 /**

@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -41,7 +42,7 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 
 	Elf32_Phdr* segs[2];
 	int nsegs = 0;
-	for (; phdr < phend; phdr++) {
+	for (; (char*) phdr < phend; phdr++) {
 		switch (phdr->p_type) {
 		case PT_LOAD:
 			if (nsegs < 2) segs[nsegs] = phdr;
@@ -66,7 +67,7 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 	}
 
     Elf32_Addr base_vaddr = rounddown(segs[0]->p_vaddr);
-	Elf32_Addr base_addr = si->is_dynamic ? NULL : base_vaddr;
+	Elf32_Addr base_addr = (Elf32_Addr) (si->is_dynamic ? 0 : base_vaddr);
 	size_t text_size = roundup(segs[0]->p_memsz);
     size_t map_size = roundup(segs[1]->p_vaddr + segs[1]->p_memsz) - base_vaddr;
 	off_t base_offset = rounddown(segs[0]->p_offset);
@@ -84,26 +85,26 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 	}
 
 	/* Map text segment */
-	char* mapbase = mmap(base_addr, map_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
+	char* mapbase = mmap((void*) base_addr, map_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
 	if (mapbase == MAP_FAILED) {
 		xprintf("%s: failed to map text segment\n", pathname);
 		goto failed;
 	}
 
-	Elf32_Addr clear_addr = mapbase + (clear_vaddr - base_addr);
-	Elf32_Addr data_addr = mapbase + (data_vaddr - base_addr);
+	Elf32_Addr clear_addr = (Elf32_Addr) (mapbase + (clear_vaddr - base_addr));
+	Elf32_Addr data_addr = (Elf32_Addr) (mapbase + (data_vaddr - base_addr));
 
-	if (mmap(data_addr, data_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd, data_offset) == MAP_FAILED) {
+	if (mmap((void*) data_addr, data_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd, data_offset) == MAP_FAILED) {
 		xprintf("%s: failed to map data segment\n", pathname);
 		goto failed;
 	}
-	memset(clear_addr, 0, clear_size);
+	memset((void*) clear_addr, 0, clear_size);
 
 	si->mapbase = mapbase;
 	si->relocbase = mapbase - base_addr;
 
 	if (si->dynamic) si->dynamic = (Elf32_Dyn*) (si->relocbase + (Elf32_Addr) si->dynamic);
-	if (si->entry) si->entry = (Elf32_Dyn*) (si->relocbase + (Elf32_Addr) si->entry);
+	if (si->entry) si->entry = (char*) (si->relocbase + (Elf32_Addr) si->entry);
 
 	return si;
 

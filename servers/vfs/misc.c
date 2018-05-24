@@ -21,6 +21,7 @@
 #include "assert.h"
 #include "stddef.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -70,7 +71,7 @@ PUBLIC int do_fcntl(MESSAGE * p)
     struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
     if (!filp) return EBADF;
 
-    int i, newfd;
+    int newfd;
     switch(request) {
         case F_DUPFD:
             if (argx < 0 || argx >= NR_FILES) return -EINVAL;
@@ -231,7 +232,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
     struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
     size_t len = m->MMRLENGTH;
     off_t offset = m->MMROFFSET;
-    phys_bytes buf = m->MMRBUF;
+    phys_bytes buf = (phys_bytes) m->MMRBUF;
     vir_bytes vaddr = (vir_bytes) m->MMRBUF;
 
     if (!mm_task) panic("mm not present!");
@@ -285,11 +286,11 @@ PUBLIC int do_mm_request(MESSAGE* m)
             int file_type = pin->i_mode & I_TYPE;
 
             if (file_type == I_CHAR_SPECIAL) {
-                cdev_io(CDEV_READ, pin->i_specdev, KERNEL, buf, offset, len);
+                cdev_io(CDEV_READ, pin->i_specdev, KERNEL, (void*) buf, offset, len);
             } else if (file_type == I_REGULAR) {
                 size_t count;
                 result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
-                    buf, len, NULL, &count);
+                    (void*) buf, len, NULL, &count);
                 m->MMRLENGTH = count;
             } else if (file_type == I_DIRECTORY) {
                 unlock_filp(filp);

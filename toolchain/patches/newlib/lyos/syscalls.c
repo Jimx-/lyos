@@ -3,6 +3,8 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 #include <utime.h>
 #include <sys/fcntl.h>
 #include <sys/times.h>
@@ -79,14 +81,8 @@ void _exit(int status)
 
 	send_recv(BOTH, TASK_PM, &msg);
 	//assert(msg.type == SYSCALL_RET);
+	while (1);
 }
-
-int execv(const char *path, char * argv[])
-{
-	return execve(path, argv, NULL);
-}
-
-#define ARG_MAX	0x40000
 
 int execve(const char *name, char * argv[], char * const envp[]) 
 {
@@ -107,7 +103,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 
 	int env_start = stack_len / sizeof(char*);
 
-	p = envp;
+	p = (char**) envp;
 	if (p) {
 		while (*p++) {
 			stack_len += sizeof(char*);
@@ -131,7 +127,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 
 	if (envp) {
 		q = (char**)arg_stack + env_start;
-		for (p = envp; *p != 0; p++) {
+		for (p = (char**) envp; *p != 0; p++) {
 			*q++ = &arg_stack[stack_len];
 
 			strcpy(&arg_stack[stack_len], *p);
@@ -154,6 +150,11 @@ int execve(const char *name, char * argv[], char * const envp[])
 	//assert(msg.type == SYSCALL_RET);
 
 	return msg.RETVAL;
+}
+
+int execv(const char *path, char * argv[])
+{
+	return execve(path, argv, NULL);
 }
 
 int execvp(const char *file, char * argv[])
@@ -343,8 +344,6 @@ void sigreturn(void * scp)
 	cmb();
 
 	send_recv(BOTH, TASK_PM, &msg);
-
-	return msg.RETVAL;
 } 
 
 int sigaction(int signum, const struct sigaction * act, struct sigaction * oldact)
@@ -352,7 +351,7 @@ int sigaction(int signum, const struct sigaction * act, struct sigaction * oldac
 	MESSAGE msg;
 
 	msg.type = SIGACTION;
-	msg.NEWSA = act;
+	msg.NEWSA = (struct sigaction*) act;
 	msg.OLDSA = oldact;
 	msg.SIGNR = signum;
 	msg.SIGRET = (int)__sigreturn;
@@ -572,11 +571,6 @@ mode_t umask(mode_t mask)
 	return msg.RETVAL;
 }
 
-int dup(int fd)
-{
-	return dup2(fd, -1);
-}
-
 int dup2(int fd, int fd2)
 {
 	MESSAGE msg;
@@ -592,12 +586,17 @@ int dup2(int fd, int fd2)
 	return msg.RETVAL;
 }
 
+int dup(int fd)
+{
+	return dup2(fd, -1);
+}
+
 int chdir(const char * path)
 {
 	MESSAGE msg;
 	msg.type = CHDIR;
 
-	msg.PATHNAME = path;
+	msg.PATHNAME = (char*) path;
 	msg.NAME_LEN = strlen(path);
 
 	cmb();
@@ -626,7 +625,7 @@ int chmod(const char *path, mode_t mode)
 	MESSAGE msg;
 	msg.type = CHMOD;
 
-	msg.PATHNAME = path;
+	msg.PATHNAME = (char*) path;
 	msg.NAME_LEN = strlen(path);
 
 	cmb();
@@ -662,10 +661,10 @@ int mount(const char *source, const char *target,
 	else msg.MNAMELEN1 = strlen(source);
 	msg.MNAMELEN2 = strlen(target);
 	msg.MNAMELEN3 = strlen(filesystemtype);
-	msg.MSOURCE = source;
-	msg.MTARGET = target;
-	msg.MLABEL = filesystemtype;
-	msg.MDATA = data;
+	msg.MSOURCE = (char*) source;
+	msg.MTARGET = (char*) target;
+	msg.MLABEL = (char*) filesystemtype;
+	msg.MDATA = (char*) data;
 
 	cmb();
 
@@ -678,7 +677,7 @@ int access(const char *pathname, int mode)
 {
 	MESSAGE msg;
 	msg.type   = ACCESS;
-	msg.PATHNAME = pathname;
+	msg.PATHNAME = (char*) pathname;
 	msg.NAME_LEN = strlen(pathname);
 	msg.MODE = mode;
 
@@ -931,6 +930,7 @@ int closedir(DIR * dirp)
 	return close(fd);
 }
 
+extern char* getcwd(char*, size_t);
 char *getwd(char *buf)
 {
 	if (getcwd(buf, PATH_MAX) != 0) return NULL;
@@ -1111,7 +1111,7 @@ int sethostname(const char *name, size_t len)
 
 	msg.type = GETSETHOSTNAME;
 	msg.REQUEST = GS_SETHOSTNAME;
-	msg.BUF = name;
+	msg.BUF = (char*) name;
 	msg.BUF_LEN = len;
 
 	cmb();
@@ -1353,7 +1353,7 @@ int futex(int* uaddr, int futex_op, int val,
     m.FUTEX_OP = futex_op;
     m.FUTEX_VAL = val;
     m.FUTEX_VAL2 = (u32)timeout;
-    m.FUTEX_TIMEOUT = (u64)timeout;
+    m.FUTEX_TIMEOUT = (u32)timeout;
     m.FUTEX_UADDR2 = uaddr2;
     m.FUTEX_VAL3 = val3;
 

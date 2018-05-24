@@ -20,6 +20,7 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "assert.h"
 #include "unistd.h"
 #include "lyos/config.h"
@@ -37,6 +38,12 @@
 #include "type.h"
 #include "global.h"
 #include "libsysfs/libsysfs.h"
+
+PUBLIC int create_service(struct sproc * sp);
+PUBLIC int start_service(struct sproc * sp);
+PUBLIC int run_service(struct sproc * sp, int init_type);
+PUBLIC int init_service(struct sproc * sp, int init_type);
+PUBLIC int publish_service(struct sproc * sp);
 
 PUBLIC int check_permission(endpoint_t caller, int request)
 {

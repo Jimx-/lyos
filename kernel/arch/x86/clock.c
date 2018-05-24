@@ -34,6 +34,7 @@
 #include "apic.h"
 #include "acpi.h"
 #include "tsc.h"
+#include "hpet.h"
 
 PRIVATE irq_hook_t timer_irq_hook;
 
@@ -74,7 +75,6 @@ PUBLIC int init_local_timer(int freq)
 {
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
-        unsigned cpu = cpuid;
         lapic_set_timer_one_shot(1000000 / system_hz);
     } else 
 #endif

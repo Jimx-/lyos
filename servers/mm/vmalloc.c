@@ -135,7 +135,7 @@ PUBLIC vir_bytes alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 
  	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
- 	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, (void *)phys_pages, (void *)vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+ 	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages, vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
  	vmctl_flushtlb(SELF);
 
  	level--;

@@ -1,6 +1,7 @@
 #include <sched.h>
 #include <errno.h>
 #include <../../type.h>
+#include <../../ipc.h>
 #include <../../const.h>
 
 #define STACK_CHILD	0

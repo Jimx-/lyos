@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <sys/shm.h>
 
 #define GETTY "/usr/bin/getty"

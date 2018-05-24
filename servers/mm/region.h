@@ -25,7 +25,7 @@
  * Physical frame
  */
 struct phys_frame {
-    void * phys_addr;
+    phys_bytes phys_addr;
 
     int refcnt;
     int flags;
@@ -50,7 +50,7 @@ struct vir_region {
     struct mmproc * parent;
     
     vir_bytes vir_addr;
-    int length;
+    vir_bytes length;
     struct phys_region phys_block;  /*<- physical memory block */
 
     int refcnt;

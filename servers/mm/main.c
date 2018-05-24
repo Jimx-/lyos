@@ -22,6 +22,7 @@
 #include "assert.h"
 #include <errno.h>
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
@@ -250,12 +251,12 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     execi->stack_size = PROC_ORIGIN_STACK;
 
     /* header */
-    data_copy(SELF, header, NO_TASK, bp->base, sizeof(header));
+    data_copy(SELF, header, NO_TASK, (void*) bp->base, sizeof(header));
     execi->header = header;
     execi->header_len = sizeof(header);
 
     execi->allocmem = mm_allocmem;
-    execi->allocmem_prealloc = mm_allocmem;
+    execi->allocmem_prealloc = mm_allocmem_prealloc;
     execi->copymem = read_segment;
     execi->clearproc = NULL;
     execi->clearmem = libexec_clearmem;
@@ -280,7 +281,7 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     //ps.ps_argvstr = orig_stack;
     ps.ps_envstr = NULL;
 
-    if (kernel_exec(bp->endpoint, VM_STACK_TOP, bp->name, execi->entry_point, &ps) != 0) panic("kernel exec failed");
+    if (kernel_exec(bp->endpoint, (void*) VM_STACK_TOP, bp->name, (void*) execi->entry_point, &ps) != 0) panic("kernel exec failed");
 
     vmctl(VMCTL_BOOTINHIBIT_CLEAR, bp->endpoint);
 }

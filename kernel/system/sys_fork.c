@@ -34,7 +34,7 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     endpoint_t parent_ep = m->ENDPOINT;
     void* newsp = m->BUF;
     int flags = m->FLAGS;
-    int child_slot = m->PROC_NR, parent_slot, retval;
+    int child_slot = m->PROC_NR, parent_slot;
 
     int gen = ENDPOINT_G(parent_ep) + 1;
     endpoint_t child_ep = make_endpoint(gen, child_slot);

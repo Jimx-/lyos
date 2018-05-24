@@ -12,7 +12,7 @@ typedef struct {
 	int private;
 } pthread_mutex_t;
 
-#define PTHREAD_MUTEX_INITIALIZER { { ((PTHREAD_MUTEX_NORMAL & 3) << 14) } }
+#define PTHREAD_MUTEX_INITIALIZER { ((PTHREAD_MUTEX_NORMAL & 3) << 14) }
 
 typedef long pthread_mutexattr_t;
 
@@ -22,7 +22,7 @@ typedef struct {
 
 typedef long pthread_condattr_t;
 
-#define PTHREAD_COND_INITIALIZER  { { 0 } }
+#define PTHREAD_COND_INITIALIZER  { 0 }
 
 typedef struct {
     int state;
@@ -40,7 +40,7 @@ typedef struct {
 
 typedef long pthread_rwlockattr_t;
 
-#define PTHREAD_RWLOCK_INITIALIZER { { 0 } }
+#define PTHREAD_RWLOCK_INITIALIZER { 0 }
 
 #define PTHREAD_CREATE_DETACHED  0x00000001
 #define PTHREAD_CREATE_JOINABLE  0x00000000
@@ -58,6 +58,7 @@ int pthread_exit(void* value_ptr);
 
 int pthread_cond_init(pthread_cond_t*, const pthread_condattr_t*);
 int pthread_cond_wait(pthread_cond_t*, pthread_mutex_t*);
+int pthread_cond_signal(pthread_cond_t* cond);
 
 int pthread_mutex_init(pthread_mutex_t*, const pthread_mutexattr_t*);
 int pthread_mutex_lock(pthread_mutex_t*);

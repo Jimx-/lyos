@@ -168,7 +168,11 @@ clean :
 	$(Q)$(MAKE) -C utils $(MAKEFLAGS) clean
 
 realclean :
-	@find ./kernel -prune -o -name "*.o" -exec rm -f {} \;
+	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C lib $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C fs $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C servers $(MAKEFLAGS) realclean
 	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
 
 mrproper:

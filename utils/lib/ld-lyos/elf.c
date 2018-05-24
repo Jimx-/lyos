@@ -103,7 +103,7 @@ int ldso_process_phdr(struct so_info* si, Elf32_Phdr* phdr, int phnum)
 
 	for (hdr = phdr; hdr < phdr + phnum; hdr++) {
 		if (hdr->p_type == PT_PHDR) {
-			si->phdr = (char*)hdr->p_vaddr;
+			si->phdr = (Elf32_Phdr*) hdr->p_vaddr;
 			si->relocbase = (char*)((char*)phdr - (char*)si->phdr);
 			si->phnum = si->phnum;
 			break;

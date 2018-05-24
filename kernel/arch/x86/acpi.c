@@ -257,7 +257,7 @@ PUBLIC struct acpi_madt_int_src * acpi_get_int_src_next()
     if (ret)
         idx++;
 
-    return ret;
+    return (struct acpi_madt_int_src*) ret;
 }
 
 PUBLIC struct acpi_hpet * acpi_get_hpet()

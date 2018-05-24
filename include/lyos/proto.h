@@ -62,6 +62,7 @@ PUBLIC void 	init_8259A();
 PUBLIC void     init_irq();
 PUBLIC void     irq_handle(int irq);
 PUBLIC void     put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler);
+PUBLIC void     rm_irq_handler(irq_hook_t * hook);
 PUBLIC int      disable_irq(irq_hook_t * hook);
 PUBLIC void     enable_irq(irq_hook_t * hook);
 
@@ -71,6 +72,8 @@ PUBLIC int      init_time();
 PUBLIC int   	init_bsp_timer(int freq);
 PUBLIC int      init_ap_timer(int freq);
 PUBLIC void     stop_context(struct proc * p);
+PUBLIC void     set_sys_timer(struct timer_list* timer);
+PUBLIC void     reset_sys_timer(struct timer_list* timer);
 
 /* proc.c */
 PUBLIC  void    init_proc();
@@ -159,7 +162,6 @@ PUBLIC  void    sys_call();             /* int_handler */
 /* system call */
 PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	printx(char * s);
-PUBLIC  int privctl(int whom, int request, void * data);
 PUBLIC  int getinfo(int request, void* buf);
 PUBLIC  int vmctl(int request, endpoint_t who);
 

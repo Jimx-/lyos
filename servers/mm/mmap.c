@@ -45,7 +45,7 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     if (mmap_flags & MAP_CONTIG) vrflags |= RF_CONTIG;
 
     /* Contiguous physical memory must be populated */
-    if (mmap_flags & (MAP_POPULATE | MAP_CONTIG) == MAP_CONTIG) {
+    if ((mmap_flags & (MAP_POPULATE | MAP_CONTIG)) == MAP_CONTIG) {
         return NULL;
     }
     
@@ -103,15 +103,13 @@ PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int fla
 PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
     /* driver has done the mapping */
-    MESSAGE* mmap_msg = (MESSAGE*) arg;
-
     enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, msg->MMRFD, 0, 0, 0, NULL, NULL, 0);
 
     MESSAGE reply_msg;
     memset(&reply_msg, 0, sizeof(MESSAGE));
     reply_msg.type = SYSCALL_RET;
     reply_msg.RETVAL = msg->MMRRESULT;
-    reply_msg.MMAP_RETADDR = msg->MMRBUF;
+    reply_msg.MMAP_RETADDR = (vir_bytes) msg->MMRBUF;
 
     send_recv(SEND_NONBLOCK, msg->MMRENDPOINT, &reply_msg);
 }
@@ -150,8 +148,6 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 
 PUBLIC int do_vfs_mmap()
 {
-    endpoint_t src = mm_msg.source;
-
     endpoint_t who = mm_msg.MMAP_WHO;
     struct mmproc* mmp = endpt_mmproc(who);
     if (!mmp) return ESRCH;

@@ -23,6 +23,7 @@
 #include "errno.h"
 #include "assert.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"

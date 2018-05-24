@@ -172,4 +172,6 @@ PUBLIC int do_shmat(MESSAGE* msg)
     if (flags & SHM_RDONLY) mask = IPC_R;
     else mask = IPC_R | IPC_W;
     if (!check_perm(&shm->shmid.perm, msg->source, mask)) return EACCES;
+
+    return 0;
 }

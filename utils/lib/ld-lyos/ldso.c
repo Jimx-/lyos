@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <elf.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "ldso.h"
 #include "env.h"
@@ -62,7 +64,7 @@ struct so_info* alloc_info(const char* name)
 	return si;
 }
 
-static ldso_init_self(char* interp_base, char* relocbase)
+static void ldso_init_self(char* interp_base, char* relocbase)
 {
 	char* self_name = LDSO_PATH;
 	memcpy((char*)si_self.name, self_name, strlen(self_name));
@@ -83,15 +85,15 @@ int ldso_main(int argc, char* argv[], char* envp[])
 	/* parse environments and aux vectors */
 	setenv(envp);
 
-	char* ld_library_path = env_get("LD_LIBRARY_PATH");
+	const char* ld_library_path = env_get("LD_LIBRARY_PATH");
 	int show_auxv = 0;
-	char* show_auxv_env = env_get("LD_SHOW_AUXV");
+	const char* show_auxv_env = env_get("LD_SHOW_AUXV");
 	if (show_auxv_env) {
 		show_auxv = show_auxv_env[0] - '0';
 	}
 
 	int bind_now = 0;
-	char* bind_now_env = env_get("LD_BIND_NOW");
+	const char* bind_now_env = env_get("LD_BIND_NOW");
 	if (bind_now_env) {
 		bind_now = bind_now_env[0] - '0';
 	}
@@ -117,5 +119,5 @@ int ldso_main(int argc, char* argv[], char* envp[])
 
 	ldso_do_copy_relocations(si);
 
-	return si->entry;
+	return (int) si->entry;
 }

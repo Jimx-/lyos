@@ -207,7 +207,6 @@ PRIVATE u32 hpet_ref_ms(u64 hpet1, u64 hpet2)
 PRIVATE int apic_calibrate(unsigned cpu)
 {
     u32 val, lvtt;
-    irq_hook_t calibrate_hook;
     u64 tsc0, tsc1;
     u32 lapic_tctr0, lapic_tctr1;
 
@@ -384,7 +383,7 @@ PRIVATE void ioapic_init_legacy_irqs()
 {
     struct acpi_madt_int_src * acpi_int_src;
 
-    while (acpi_int_src = acpi_get_int_src_next()) {
+    while ((acpi_int_src = acpi_get_int_src_next())) {
         isa_irq_to_gsi[acpi_int_src->bus_int] = acpi_int_src->global_int;
         printk("ACPI: IRQ%d used by override\n", acpi_int_src->bus_int);
     }

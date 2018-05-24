@@ -76,6 +76,7 @@ struct device_attribute {
 PUBLIC int dm_bdev_add(dev_t dev);
 PUBLIC int dm_cdev_add(dev_t dev);
 PUBLIC endpoint_t dm_get_bdev_driver(dev_t dev);
+PUBLIC endpoint_t dm_get_cdev_driver(dev_t dev);
 
 PUBLIC bus_type_id_t dm_bus_register(char* name);
 PUBLIC device_id_t dm_device_register(struct device_info* devinf);

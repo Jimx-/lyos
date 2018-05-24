@@ -66,10 +66,11 @@ PUBLIC int  do_umount(MESSAGE * p);
 PUBLIC int  do_mkdir(MESSAGE * p);
 
 /* fs/Lyos/read_write.c */
-PUBLIC int  do_rdwt(MESSAGE * p);
+PUBLIC int do_rdwt(MESSAGE * p);
+PUBLIC int do_getdents(MESSAGE * p);
 
 /* fs/Lyos/link.c */
-PUBLIC int  do_unlink(MESSAGE * p);
+PUBLIC int do_unlink(MESSAGE * p);
 
 PUBLIC int truncate_node(struct inode * pin, int newsize);
 
@@ -77,17 +78,19 @@ PUBLIC int do_dup(MESSAGE * p);
 PUBLIC int do_chdir(MESSAGE * p);
 PUBLIC int do_fchdir(MESSAGE * p);
 
+PUBLIC int do_mm_request(MESSAGE* m);
 PUBLIC int fs_exec(MESSAGE * msg);
 
 PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * buf);
 
 PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
-    void * buf, int nbytes, u64 * newpos, int * bytes_rdwt);
+    void * buf, size_t nbytes, u64 * newpos, size_t * bytes_rdwt);
 
 PUBLIC int do_stat(MESSAGE * p);
 PUBLIC int do_fstat(MESSAGE * p);
 PUBLIC int do_access(MESSAGE * p);
 PUBLIC int do_chmod(int type, MESSAGE * p);
+PUBLIC int fs_getsetid(MESSAGE * p);
 
 PUBLIC int do_ioctl(MESSAGE * p);
 PUBLIC int do_fcntl(MESSAGE * p);
@@ -108,7 +111,7 @@ PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
 PUBLIC int cdev_open(dev_t dev);
 PUBLIC int cdev_close(dev_t dev);
-PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, vir_bytes buf, off_t pos,
+PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
     size_t count);
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
     size_t length, char** retaddr);

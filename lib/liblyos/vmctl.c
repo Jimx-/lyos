@@ -50,7 +50,7 @@ PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * fl
     return m.VMCTL_GET_KM_RETVAL;
 }
 
-PUBLIC int vmctl_reply_kern_mapping(int index, void * vir_addr)
+PUBLIC int vmctl_reply_kern_mapping(int index, void* vir_addr)
 {
     MESSAGE m;
     

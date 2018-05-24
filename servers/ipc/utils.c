@@ -18,6 +18,7 @@
 #include <lyos/ipc.h>
 #include <sys/types.h>
 #include <lyos/config.h>
+#include <lyos/sysutils.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -49,5 +50,5 @@ PUBLIC int check_perm(struct ipc_perm* perm, endpoint_t source, mode_t mode)
  		mode >>= 6;
  	}
 
- 	return mode && (mode & perm_mode == mode);
+ 	return mode && ((mode & perm_mode) == mode);
 }

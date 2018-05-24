@@ -123,7 +123,7 @@ PUBLIC void pg_map(phys_bytes phys_addr, vir_bytes vir_addr, vir_bytes vir_end, 
             pt = pg_alloc_pt(&pt_ph);
             pgd[pde] = (pt_ph & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
         } else {
-            pt = (pte_t *)((phys_bytes)pgd[pde] & ARCH_VM_ADDR_MASK + KERNEL_VMA);
+            pt = (pte_t *)(((phys_bytes)pgd[pde] & ARCH_VM_ADDR_MASK) + KERNEL_VMA);
         }
 
         pt[pte] = (phys & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;

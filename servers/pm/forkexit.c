@@ -157,7 +157,6 @@ PUBLIC int do_fork(MESSAGE * p)
  *****************************************************************************/
 PUBLIC int do_exit(MESSAGE * p)
 {
-    int i;
     endpoint_t src = p->source;
     int status = p->STATUS;
     
@@ -173,7 +172,7 @@ PUBLIC int do_exit(MESSAGE * p)
 
 PUBLIC void exit_proc(struct pmproc * pmp, int status)
 {
-    int i, parent_slot;
+    int i;
     endpoint_t ep = pmp->endpoint;
 
     kernel_clear(ep);
@@ -256,7 +255,7 @@ PRIVATE void check_parent(struct pmproc * pmp, int try_cleanup)
         if (try_cleanup) cleanup(pmp);
     } else {
         pmp->flags |= PMPF_HANGING;
-        sig_proc(parent, SIGCHLD);
+        sig_proc(parent, SIGCHLD, TRUE);
     }
 }
 

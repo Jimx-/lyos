@@ -1,4 +1,5 @@
 #include <elf.h>
+#include <string.h>
 
 #include "ldso.h"
 

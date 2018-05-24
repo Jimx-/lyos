@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <lyos/config.h>
 #include <lyos/const.h>
 #include <lyos/proc.h>
@@ -51,7 +52,7 @@ PRIVATE void profile_record_sample(struct proc* p, void* pc)
 
 PRIVATE void profile_record_proc(struct proc* p)
 {
-    struct kprof_proc* s = (struct kprof_sample*) (profile_sample_buf + kprof_info.mem_used);
+    struct kprof_proc* s = (struct kprof_proc*) (profile_sample_buf + kprof_info.mem_used);
 
     s->endpt = p->endpoint;
     strcpy(s->name, p->name);

@@ -97,7 +97,7 @@ PUBLIC int cdev_close(dev_t dev)
 	return cdev_opcl(CDEV_CLOSE, dev);
 }
 
-PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, vir_bytes buf, off_t pos,
+PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 	size_t count)
 {
 	if (op != CDEV_READ && op != CDEV_WRITE && op != CDEV_IOCTL) {
@@ -133,7 +133,7 @@ PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
 	MESSAGE driver_msg;
 	driver_msg.type = CDEV_MMAP;
 	driver_msg.DEVICE = MINOR(dev);
-	driver_msg.ADDR = vaddr;
+	driver_msg.ADDR = (void*) vaddr;
 	driver_msg.PROC_NR = src;
 	driver_msg.POSITION = offset;
 	driver_msg.CNT = length;

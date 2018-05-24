@@ -3,6 +3,9 @@
 
 #include <sys/ipc.h>
 
+#define SHM_RDONLY  010000
+#define SHM_RND     020000
+
 struct shmid {
     struct ipc_perm perm;
     size_t          size;

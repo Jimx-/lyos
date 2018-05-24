@@ -67,7 +67,7 @@ PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_byt
     m->MMRENDPOINT = mmp->endpoint;
     m->MMROFFSET = offset;
     m->MMRLENGTH = len;
-    m->MMRBUF = addr;
+    m->MMRBUF = (void*) addr;
 
     request->callback = callback;
     if (arg) memcpy((char*)request->arg, arg, arg_len);

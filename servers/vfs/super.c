@@ -18,11 +18,13 @@
 #include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "stddef.h"
 #include "errno.h"
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"

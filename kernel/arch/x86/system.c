@@ -41,6 +41,8 @@
 
 PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
+PUBLIC void _cpuid(u32 *eax, u32 *ebx, u32 *ecx, u32 *edx);
+
 /**
  * <Ring 0> Switch back to user.
  */
@@ -164,8 +166,6 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
 
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
 {
-    struct kinfo_module * mod = &kinfo.modules[bp->proc_nr];
-
     /* make MM run */
     if (bp->proc_nr == TASK_MM) {
         struct exec_info execi;
@@ -175,7 +175,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.stack_size = PROC_ORIGIN_STACK * 2;
 
         /* header */
-        execi.header = bp->base;
+        execi.header = (char*) bp->base;
         execi.header_len = bp->len;
 
         execi.allocmem = kernel_allocmem;

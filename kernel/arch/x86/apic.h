@@ -47,6 +47,7 @@
 
 PUBLIC u32 apicid();
 PUBLIC int lapic_enable(unsigned cpu);
+PUBLIC void apic_init_idt(int reset);
 #if CONFIG_SMP
 PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);
 PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline);

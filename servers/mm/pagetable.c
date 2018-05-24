@@ -34,8 +34,8 @@
 
 #define MAX_KERN_MAPPINGS   10
 PRIVATE struct kern_mapping {
-    void * phys_addr;
-    void * vir_addr;
+    phys_bytes phys_addr;
+    vir_bytes vir_addr;
     int len;
     int flags;
 } kern_mappings[MAX_KERN_MAPPINGS];
@@ -59,6 +59,8 @@ PRIVATE struct mm_struct self_mm;
 /* before MM has set up page table for its own, we use these pages in page allocation */
 PRIVATE char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES] 
         __attribute__((aligned(ARCH_PG_SIZE)));
+
+PUBLIC void mm_init(struct mm_struct* mm);
 
 PUBLIC void pt_init()
 {
@@ -135,7 +137,7 @@ PUBLIC struct mm_struct* mm_allocate()
     struct mm_struct* mm;
 
     int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
-    mm = alloc_vmem(NULL, len, 0);
+    mm = (struct mm_struct*) alloc_vmem(NULL, len, 0);
     return mm;
 }
 
@@ -152,7 +154,7 @@ PUBLIC void mm_free(struct mm_struct* mm)
 {
     if (atomic_dec_and_test(&mm->refcnt)) {
         int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
-        free_vmem(mm, len);
+        free_vmem((vir_bytes) mm, len);
     }
 }
 
@@ -165,7 +167,7 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
         return ENOMEM;
     }
     if (pgd->vir_pts[pde]) {
-        free_vmem(pt, ARCH_PT_SIZE);
+        free_vmem((vir_bytes) pt, ARCH_PT_SIZE);
         return 0;
     }
 
@@ -194,7 +196,7 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_mappage(pgdir_t * pgd, void * phys_addr, void * vir_addr, u32 flags)
+PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, u32 flags)
 {
     unsigned long pgd_index = ARCH_PDE(vir_addr);
     unsigned long pt_index = ARCH_PTE(vir_addr);
@@ -246,19 +248,19 @@ PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
     return 0;
 }
 
-PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length, int flags)
+PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, int length, int flags)
 {
     /* sanity check */
-    if ((int)phys_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
-    if ((int)vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
+    if (phys_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
+    if (vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
     if (length % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: length is not page-aligned!\n");
     
     while (1) {
         pt_mappage(pgd, phys_addr, vir_addr, flags);
 
         length -= ARCH_PG_SIZE;
-        phys_addr = (void *)((int)phys_addr + ARCH_PG_SIZE);
-        vir_addr = (void *)((int)vir_addr + ARCH_PG_SIZE);
+        phys_addr = phys_addr + ARCH_PG_SIZE;
+        vir_addr = vir_addr + ARCH_PG_SIZE;
         if (length <= 0) break;
     }
 
@@ -314,7 +316,7 @@ PUBLIC void pt_kern_mapping_init()
 
         if (addr) {
             /* fill in mapping information */
-            kmapping->phys_addr = addr;
+            kmapping->phys_addr = (phys_bytes) addr;
             kmapping->len = len;
 
             kmapping->flags = ARCH_PG_PRESENT;
@@ -330,10 +332,10 @@ PUBLIC void pt_kern_mapping_init()
 #endif
 
             /* where this region will be mapped */
-            kmapping->vir_addr = (void *)alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
-            if (kmapping->vir_addr == NULL) panic("MM: cannot allocate memory for kernel mappings");
+            kmapping->vir_addr = alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
+            if (!kmapping->vir_addr) panic("MM: cannot allocate memory for kernel mappings");
 
-            if (vmctl_reply_kern_mapping(rindex, kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
+            if (vmctl_reply_kern_mapping(rindex, (void*) kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
 
             printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n", 
                     rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
@@ -343,7 +345,7 @@ PUBLIC void pt_kern_mapping_init()
         } else {
             /* tell kernel low memory base */
             vir_bytes lowmem_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE - KERNEL_VMA;
-            if (vmctl_reply_kern_mapping(rindex, lowmem_start)) panic("MM: cannot reply kernel mapping");
+            if (vmctl_reply_kern_mapping(rindex, (void*) lowmem_start)) panic("MM: cannot reply kernel mapping");
         }
         rindex++;
     }
@@ -539,14 +541,14 @@ PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr)
     return phys;
 }
 
-PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length)
+PUBLIC int unmap_memory(pgdir_t * pgd, vir_bytes vir_addr, int length)
 {
     /* sanity check */
     if ((int)vir_addr % ARCH_PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
     if (length % ARCH_PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
 
     while (1) {
-        pt_mappage(pgd, NULL, vir_addr, 0);
+        pt_mappage(pgd, 0, vir_addr, 0);
 
         length -= ARCH_PG_SIZE;
         vir_addr += ARCH_PG_SIZE;

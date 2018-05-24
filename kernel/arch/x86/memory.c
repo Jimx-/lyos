@@ -50,6 +50,8 @@ PRIVATE u32 temppdes[MAX_TEMPPDES];
 #define EFAULT_SRC      1
 #define EFAULT_DEST     2
 
+PUBLIC  int     send_sig(endpoint_t ep, int signo);
+
 PUBLIC void init_memory()
 {
     int i;
@@ -113,7 +115,7 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
 
         if (changed) reload_cr3();
 
-        phys_bytes fault_addr = phys_copy((void *)dest_mapped, (void *)src_mapped, chunk);
+        phys_bytes fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 
         if (fault_addr) {
             if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk) 
@@ -135,7 +137,7 @@ PRIVATE u32 get_phys32(phys_bytes phys_addr)
 {
     u32 v;
 
-    if (la_la_copy(proc_addr(KERNEL), &v, NULL, phys_addr, sizeof(v))) {
+    if (la_la_copy(proc_addr(KERNEL), (phys_bytes) &v, NULL, phys_addr, sizeof(v))) {
         panic("get_phys32: la_la_copy failed");
     }
 
@@ -265,7 +267,7 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 #if CONFIG_X86_LOCAL_APIC
     if (index == KM_LAPIC) {
         if (!lapic_addr) return EINVAL;
-        *addr = lapic_addr;
+        *addr = (caddr_t) lapic_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
@@ -273,14 +275,14 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 #endif
 #if CONFIG_X86_IO_APIC
     if (ioapic_enabled && index >= KM_IOAPIC_FIRST && index <= KM_IOAPIC_END) {
-        *addr = io_apics[index - KM_IOAPIC_FIRST].phys_addr;
+        *addr = (caddr_t) io_apics[index - KM_IOAPIC_FIRST].phys_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
     }
 #endif
     if (hpet_addr && index == KM_HPET) {
-        *addr = hpet_addr;
+        *addr = (caddr_t) hpet_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
@@ -462,10 +464,10 @@ PUBLIC int _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_
 {
     struct vir_addr src, dest;
 
-    src.addr = src_addr;
+    src.addr = (vir_bytes) src_addr;
     src.proc_ep = src_ep;
 
-    dest.addr = dest_addr;
+    dest.addr = (vir_bytes) dest_addr;
     dest.proc_ep = dest_ep;
 
     if (check) 

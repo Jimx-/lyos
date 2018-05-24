@@ -23,6 +23,7 @@
 #include "assert.h"
 #include "errno.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -208,6 +209,7 @@ PUBLIC int fs_getsetid(MESSAGE * p)
     }
 
     p->type = PM_VFS_GETSETID_REPLY;
+    p->RETVAL = retval;
     send_recv(SEND, TASK_PM, p);
 
     return SUSPEND;

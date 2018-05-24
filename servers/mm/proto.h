@@ -41,15 +41,15 @@ PUBLIC void slabfree(void * mem, int bytes);
 
 PUBLIC void pt_init();
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags);
-PUBLIC int pt_mappage(pgdir_t * pgd, void * phys_addr, void * vir_addr, u32 flags);
+PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, u32 flags);
 PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr);
 PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr);
-PUBLIC int pt_writemap(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length, int flags);
+PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, int length, int flags);
 PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, int length);
 PUBLIC int pt_unwp_memory(pgdir_t * pgd, void * vir_addr, int length);
 PUBLIC void pt_kern_mapping_init();
 PUBLIC int map_memory(pgdir_t * pgd, void * phys_addr, void * vir_addr, int length);
-PUBLIC int unmap_memory(pgdir_t * pgd, void * vir_addr, int length);
+PUBLIC int unmap_memory(pgdir_t * pgd, vir_bytes vir_addr, int length);
 PUBLIC int pgd_new(pgdir_t * pgd);
 PUBLIC int pgd_mapkernel(pgdir_t * pgd);
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
@@ -58,15 +58,19 @@ PUBLIC int pgd_free(pgdir_t * pgd);
 PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr);
 PUBLIC vir_bytes pgd_find_free_pages(pgdir_t * pgd, int nr_pages, vir_bytes minv, vir_bytes maxv);
 
+PUBLIC struct mm_struct* mm_allocate();
+PUBLIC void mm_init(struct mm_struct* mm);
+PUBLIC void mm_free(struct mm_struct* mm);
+
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);
-PUBLIC struct vir_region * region_new(void * vir_base, int vir_length, int flags);
+PUBLIC struct vir_region * region_new(vir_bytes vir_base, vir_bytes vir_length, int flags);
 PUBLIC int region_alloc_phys(struct vir_region * rp);
 PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp);
 PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr);
 PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp);
 PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp, 
                 vir_bytes minv, vir_bytes maxv, vir_bytes len, int flags);
-PUBLIC int region_extend_up_to(struct mmproc * mmp, char * addr);
+PUBLIC int region_extend_up_to(struct mmproc * mmp, vir_bytes addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest, 
@@ -98,10 +102,14 @@ PUBLIC void do_mmrequest();
 
 PUBLIC int do_procctl();
 
+PUBLIC int do_mm_getinfo();
+
 PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     int mmap_flags, size_t len, int vrflags);
 PUBLIC int do_mmap();
 PUBLIC int do_munmap();
+PUBLIC int do_vfs_mmap();
+PUBLIC int do_map_phys();
 
 typedef void (*vfs_callback_t) (struct mmproc* mmp, MESSAGE* msg, void* arg);
 PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_bytes addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len);
@@ -109,8 +117,10 @@ PUBLIC int do_vfs_reply();
 
 PUBLIC struct mm_file_desc* get_mm_file_desc(int fd, dev_t dev, ino_t ino);
 PUBLIC void file_reference(struct vir_region* vr, struct mm_file_desc* filp);
+PUBLIC void file_unreferenced(struct mm_file_desc* filp);
 
 PUBLIC void page_cache_init();
+PUBLIC int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offset, vir_bytes vir_addr, struct phys_frame* frame);
 
 PUBLIC void futex_init();
 PUBLIC int do_futex();

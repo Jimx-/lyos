@@ -34,6 +34,7 @@ PUBLIC  int     get_kernel_cmdline(char * buf, int buflen);
 PUBLIC  int     get_machine(struct machine* machine);
 PUBLIC  int     get_cpuinfo(struct cpu_info* cpuinfo);
 PUBLIC  int     get_proctab(struct proc* proc);
+PUBLIC  int     privctl(int whom, int request, void * data);
 
 PUBLIC  int     data_copy(endpoint_t dest_pid, void * dest_addr, 
     endpoint_t src_pid, void * src_addr, int len);
@@ -60,6 +61,7 @@ PUBLIC int      kernel_clear(endpoint_t ep);
 PUBLIC int      kernel_exec(endpoint_t ep, void * sp, char * name, void * ip, struct ps_strings * ps);
 
 PUBLIC int      kernel_sigsend(endpoint_t ep, struct siginfo * si);
+PUBLIC int      kernel_sigreturn(endpoint_t ep, void * scp);
 PUBLIC int      kernel_kill(endpoint_t ep, int signo);
 
 PUBLIC int      get_procep(pid_t pid, endpoint_t * ep);

@@ -18,6 +18,7 @@
 #include "sys/types.h"
 #include "lyos/config.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include <fcntl.h>
 #include "stddef.h"
 #include "stdlib.h"
@@ -25,6 +26,7 @@
 #include "assert.h"
 #include "errno.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -117,8 +119,7 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
 
     if (retval) return retval;
 
-    int envp_offset;
-    char* save_fp = fp;
+    //int envp_offset;
     char** p;
     for (p = argv; *p; p++) {
         int len = strlen(*p);
@@ -128,7 +129,7 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
         *fp++ = '\0';
     }
     *fpw++ = NULL;
-    envp_offset = (char*)fpw - frame;
+    //envp_offset = (char*)fpw - frame;
     *fpw++ = NULL;
     data_copy(target, vsp, SELF, frame, frame_size);
     free(frame);
@@ -139,7 +140,7 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
     //ps.ps_envstr = vsp + envp_offset;
     ps.ps_envstr = NULL;
 
-    return kernel_exec(target, vsp, progname, execi.entry_point, &ps);
+    return kernel_exec(target, vsp, progname, (void*) execi.entry_point, &ps);
 }
 
 

@@ -150,7 +150,7 @@ PUBLIC void init_prot()
 
 	init_idt();
 
-	init_tss(0, &StackTop);
+	init_tss(0, (u32) &StackTop);
 
 	load_prot_selectors();
 }
@@ -418,10 +418,10 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	if ((in_kernel || is_kerntaske(fault_proc->endpoint)) && (in_phys_copy || in_phys_set)) {
 		if (in_kernel) {
 			if (in_phys_copy) {
-				frame->eip = phys_copy_fault_in_kernel;
+				frame->eip = (u32) phys_copy_fault_in_kernel;
 			}
 		} else {
-			fault_proc->regs.eip = phys_copy_fault;
+			fault_proc->regs.eip = (u32) phys_copy_fault;
 			fault_proc->regs.eax = pfla;
 		}
 
@@ -473,7 +473,7 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 		if (frame->eip >= (vir_bytes)copy_user_message && 
 			frame->eip <= (vir_bytes)copy_user_message_end) {
 			if (frame->vec_no == 14 || frame->vec_no == 13) {	/* #PF or #GP */
-				frame->eip = copy_user_message_fault;
+				frame->eip = (u32) copy_user_message_fault;
 				return;
 			}
 			else panic("copy user messsage failed unexpectedly");

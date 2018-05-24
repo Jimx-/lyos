@@ -31,6 +31,7 @@
 #include "lyos/cpulocals.h"
 #include <lyos/clocksource.h>
 #include <lyos/time.h>
+#include <lyos/sysutils.h>
 #include "div64.h"
 
 extern spinlock_t clocksource_lock;
@@ -42,6 +43,9 @@ PUBLIC spinlock_t timers_lock;
 PUBLIC clock_t next_timeout = TIMER_UNSET;
 
 PUBLIC void sched_clock(struct proc* p);
+
+extern void timer_add(struct list_head* list, struct timer_list* timer);
+extern void timer_expire(struct list_head* list, clock_t timestamp);
 
 /*****************************************************************************
  *                                read_jiffies

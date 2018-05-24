@@ -29,6 +29,7 @@
 #include "assert.h"
 #include "stddef.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -45,7 +46,7 @@
 /* find device number of the given pathname */
 PRIVATE dev_t name2dev(struct fproc* fp, char * pathname);
 PRIVATE dev_t get_none_dev();
-PRIVATE int is_none_dev(dev_t dev);
+//PRIVATE int is_none_dev(dev_t dev);
 PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
 
 PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
@@ -299,10 +300,12 @@ PRIVATE dev_t name2dev(struct fproc* fp, char * pathname)
     return retval;
 }
 
+/*
 PRIVATE int is_none_dev(dev_t dev)
 {
     return (MAJOR(dev) == MAJOR_NONE) && (MINOR(dev) < NR_NONEDEVS);
 }
+*/
 
 PRIVATE dev_t get_none_dev()
 {

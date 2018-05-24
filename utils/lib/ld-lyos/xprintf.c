@@ -1,5 +1,6 @@
-
+#include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #define STR_DEFAULT_LEN 512
 

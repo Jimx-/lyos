@@ -38,10 +38,10 @@ PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
     
     struct vir_addr src, dest;
 
-    src.addr = src_addr;
+    src.addr = (vir_bytes) src_addr;
     src.proc_ep = src_ep;
 
-    dest.addr = dest_addr;
+    dest.addr = (vir_bytes) dest_addr;
     dest.proc_ep = dest_ep;
 
     int len = m->BUF_LEN;

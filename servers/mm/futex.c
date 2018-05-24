@@ -30,6 +30,7 @@
 #include <sys/futex.h>
     
 #include "global.h"
+#include "region.h"
 #include "proto.h"
 #include "futex.h"
 
@@ -107,7 +108,7 @@ PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     vir_bytes vaddr = alloc_vmpages(1);
     if (!vaddr) return ENOMEM;
 
-    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, (void *)phys_addr, (void *)vaddr, ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_addr, vaddr, ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
     u32 uval = *(u32*)(vaddr + offset);
 
     if (uval != val) {

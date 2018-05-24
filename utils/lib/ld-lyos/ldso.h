@@ -86,6 +86,17 @@ int ldso_relocate_plt_lazy(struct so_info* si);
 int ldso_relocate_nonplt_objects(struct so_info* si);
 int ldso_do_copy_relocations(struct so_info* si);
 Elf32_Sym* ldso_find_plt_sym(struct so_info* si, unsigned long symnum, struct so_info** obj);
+struct so_info* ldso_map_object(char* pathname, int fd);
+unsigned long ldso_elf_hash(const char *name);
+Elf32_Sym* ldso_lookup_symbol_obj(char* name, unsigned long hash, struct so_info* si, int in_plt);
+Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum, struct so_info** obj, int in_plt);
+int ldso_load_needed(struct so_info* first);
+int ldso_relocate_objects(struct so_info* first, int bind_now);
+void ldso_init_paths(struct search_paths* list);
+void ldso_add_paths(struct search_paths* list, const char* paths);
+
+
+int xprintf(const char *fmt, ...);
 
 #endif
 

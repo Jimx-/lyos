@@ -29,15 +29,18 @@ PUBLIC int do_kill(MESSAGE * p);
 PUBLIC int do_getsetid(MESSAGE * p);
 PUBLIC int do_sigprocmask(MESSAGE * p);
 PUBLIC int do_sigsuspend(MESSAGE * p);
+PUBLIC int do_sigreturn(MESSAGE * p);
 PUBLIC int do_ptrace(MESSAGE * m);
 PUBLIC int do_exec(MESSAGE * m);
 PUBLIC int do_pm_getinfo(MESSAGE * p);
 PUBLIC int do_pm_kprofile(MESSAGE* msg);
+PUBLIC int do_getprocep(MESSAGE * p);
 PUBLIC int do_pm_getepinfo(MESSAGE* p);
 
 PUBLIC int waiting_for(struct pmproc* parent, struct pmproc * child);
 PUBLIC void exit_proc(struct pmproc* pmp, int status);
 
+PUBLIC void sig_proc(struct pmproc * p_dest, int signo, int trace);
 PUBLIC int process_ksig(endpoint_t target, int signo);
 
 PUBLIC void trace_signal(struct pmproc* p_dest, int signo);

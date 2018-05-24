@@ -1,9 +1,10 @@
 #include <elf.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "ldso.h"
 
-static void add_path(struct search_paths* list, char* path, int len)
+static void add_path(struct search_paths* list, const char* path, int len)
 {
 	struct search_path* ppath = &list->paths[list->count];
 	memcpy((char*)ppath->pathname, path, len);
@@ -28,9 +29,9 @@ static char* _strchr(const char* str, char character)
 	return p;
 }
 
-void ldso_add_paths(struct search_paths* list, char* paths)
+void ldso_add_paths(struct search_paths* list, const char* paths)
 {
-	char* start = paths;
+	const char* start = paths;
 	char* end;
 	int len;
 

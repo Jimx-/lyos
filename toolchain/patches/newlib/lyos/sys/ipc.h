@@ -2,13 +2,16 @@
 #define _SYS_IPC_H_
 
 #include <sys/types.h>
+#include <stdint.h>
 
 struct ipc_perm {
     uid_t   uid;
+    uid_t   cuid;
     gid_t   gid;
+    gid_t   cgid;
     mode_t  mode;
 
-    u16     seq;
+    uint16_t seq;
     key_t   key;
 };
 
@@ -21,4 +24,5 @@ struct ipc_perm {
 #define IPC_NOWAIT  004000
 
 #define IPC_PRIVATE ((key_t)0)
+
 #endif

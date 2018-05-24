@@ -176,7 +176,6 @@ PUBLIC void slabfree(void * mem, int bytes)
     /* no slab ? */
     if (list_empty(slab)) return;
 
-    int max_objs = DATABYTES / bytes;
     /* find the slab that contains this obj */
     list_for_each_entry(header, slab, list) {
         if (header->used == 0) continue;

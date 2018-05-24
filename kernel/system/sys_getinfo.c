@@ -80,7 +80,7 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
     }
 
     if (buf_len > 0 && buf_len < size) return E2BIG;
-    if (addr) data_vir_copy_check(p_proc->endpoint, p_proc->endpoint, buf, KERNEL, addr, size); 
+    if (addr) data_vir_copy_check(p_proc, p_proc->endpoint, buf, KERNEL, addr, size); 
 
     return 0;
 }

@@ -59,11 +59,11 @@ void parse_auxv(char* envp[], struct so_info* si, int show_auxv, char** base)
     	}
 #define PARSE_STR(type) \
     	if (auxv->a_type == type) {	\
-    		if (show_auxv) xprintf("%s:\t%s\n", #type, (char*)auxv->a_un.a_val);	\
+    		if (show_auxv) xprintf("%s:\t%s\n", (char*) #type, (char*)auxv->a_un.a_val);	\
     	}
 #define PARSE_ENTRY_SET(type, hex, var) \
     	if (auxv->a_type == type) {	\
-    		var = auxv->a_un.a_val; \
+    		var = (typeof(var)) auxv->a_un.a_val; \
     		if (show_auxv) xprintf(hex ? "%s:\t0x%x\n" : "%s:\t%d\n", #type, auxv->a_un.a_val);	\
     	}
 
@@ -81,6 +81,4 @@ void parse_auxv(char* envp[], struct so_info* si, int show_auxv, char** base)
     	PARSE_STR(AT_EXECFN);
     	PARSE_STR(AT_PLATFORM);
     }
-
-    return -1;
 }

@@ -162,7 +162,7 @@ PRIVATE void smp_start_aps()
         if (apicid() == cpuid2apicid[i] && bsp_lapic_id == apicid()) continue;
 
         __ap_id = booting_cpu = i;
-        memcpy(__ap_id_phys, &__ap_id, sizeof(u32));
+        memcpy((void*) __ap_id_phys, (void*) &__ap_id, sizeof(u32));
 
         /* INIT-SIPI-SIPI sequence */
         cmb();

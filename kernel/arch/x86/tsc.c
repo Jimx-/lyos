@@ -50,7 +50,7 @@ PRIVATE u64 tsc_read(struct clocksource * cs)
 PRIVATE struct clocksource tsc_clocksource = {
     .name = "tsc",
     .rating = 300,
-    .read = read_tsc_64,
+    .read = tsc_read,
     .mask = 0xffffffffffffffff,
 };
 

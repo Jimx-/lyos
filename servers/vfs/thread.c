@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <lyos/config.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <unistd.h>
 #include <assert.h>
@@ -28,6 +29,7 @@
 #include <lyos/proc.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
+#include <libpthread/pthread.h>
 #include <sched.h>
 #include "types.h"
 #include "path.h"
@@ -222,6 +224,8 @@ PRIVATE int worker_loop(void* arg)
         handle_request(&req->msg);
         enqueue_response(req);
     }
+
+    return 0;
 }
 
 PUBLIC pid_t create_worker(int id)

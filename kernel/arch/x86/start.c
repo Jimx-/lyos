@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "stddef.h"
 #include "protect.h"
@@ -29,6 +30,7 @@
 #include "page.h"
 #include "acpi.h"
 #include "arch_const.h"
+#include "arch_proto.h"
 #include <lyos/log.h>
 #include <lyos/spinlock.h>
 

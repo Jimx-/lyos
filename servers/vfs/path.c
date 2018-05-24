@@ -21,6 +21,7 @@
 #include "assert.h"
 #include "stddef.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -132,7 +133,7 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
         if (ret == EBUSY) {
             vmnt = NULL;
         } else {
-            return ret;
+            return NULL;
         }
     }
 
@@ -194,7 +195,7 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
             if (ret == EBUSY) {
                 vmnt = NULL;
             } else {
-                return ret;
+                return NULL;
             }
         }
 

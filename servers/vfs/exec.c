@@ -112,7 +112,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, struct lookup* lookup, 
 PRIVATE int read_header(struct vfs_exec_info * execi)
 {
     u64 newpos;
-    int bytes_rdwt;
+    size_t bytes_rdwt;
     static char buf[PG_SIZE];
 
     execi->args.header_len = min(sizeof(buf), execi->pin->i_size);
@@ -127,7 +127,7 @@ PRIVATE int read_header(struct vfs_exec_info * execi)
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
 {
     u64 newpos;
-    int bytes_rdwt;
+    size_t bytes_rdwt;
 
     struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
     struct inode * pin = vexeci->pin;
@@ -198,7 +198,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     execi.exec_fd = -1;
 
     /* copy everything we need before we free the old process */
-    vir_bytes user_sp = msg->BUF;
+    vir_bytes user_sp = (vir_bytes) msg->BUF;
     int orig_stack_len = msg->BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) {
         retval = ENOMEM;  /* stack too big */
@@ -238,7 +238,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     }
 
     if (is_script(&execi)) {
-        setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname, &orig_stack);
+        setup_script_stack(execi.pin, stackcopy, (size_t*) &orig_stack_len, pathname, (vir_bytes*) &orig_stack);
         retval = get_exec_inode(&execi, &lookup, fp);
         if (retval) goto exec_finalize;
     }
@@ -351,7 +351,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     unlock_proc(mm_task);
 
     if (!retval) {
-        return kernel_exec(src, orig_stack, pathname, execi.args.entry_point, &ps);
+        return kernel_exec(src, orig_stack, pathname, (void*) execi.args.entry_point, &ps);
     }
 
     return retval;
@@ -391,7 +391,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
 #define AUXV_ENT(vec, type, val) \
     if (vec < auxv_end) { \
         vec->a_type = type; \
-        vec->a_un.a_val = val; \
+        vec->a_un.a_val = (typeof(vec->a_un.a_val)) val; \
         vec++; \
     } else { \
         vec--; \
@@ -433,7 +433,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
         strcpy((char*)auxv + strlen(prog_name) + 1, LYOS_PLATFORM);
         auxv_end = (Elf32_auxv_t*)((vir_bytes)auxv + name_len);
         auxv_end = (Elf32_auxv_t*)roundup((u32)auxv_end, sizeof(int));
-        userp = (vir_bytes)auxv - (vir_bytes)auxv_buf;
+        userp = (char*) ((vir_bytes)auxv - (vir_bytes)auxv_buf);
         userp += *vsp + (vir_bytes)arg_str - (vir_bytes)stack;
     }
 
@@ -459,10 +459,10 @@ PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_siz
 {
     prepend_arg(1, stack, stack_size, pathname, vsp);
 
-    off_t newpos;
+    u64 newpos;
     int retval;
     char buf[PG_SIZE];
-    int bytes_rdwt;
+    size_t bytes_rdwt;
     char* interp = NULL;
 
     /* read the file */

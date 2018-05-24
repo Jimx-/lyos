@@ -21,6 +21,7 @@
 #include "assert.h"
 #include "stddef.h"
 #include "lyos/const.h"
+#include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -118,7 +119,6 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     filp->fd_inode = pin;
     filp->fd_mode = flags;
 
-    MESSAGE driver_msg;
     if (exist) {
         if ((retval = forbidden(fp, pin, bits)) == 0) {
             switch (pin->i_mode & I_TYPE) {
@@ -164,20 +164,6 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     return fd;
 }
 
-/**
- * <Ring 1> Perform the close syscall.
- * @param  p Ptr to the message.
- * @return   Zero if success.
- */
-PUBLIC int do_close(MESSAGE * p)
-{
-    int fd = p->FD;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-
-    return close_fd(pcaller, fd);
-}
-
 PUBLIC int close_fd(struct fproc* fp, int fd)
 {
     struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
@@ -201,6 +187,20 @@ PUBLIC int close_fd(struct fproc* fp, int fd)
     fp->filp[fd] = NULL;
 
     return 0;
+}
+
+/**
+ * <Ring 1> Perform the close syscall.
+ * @param  p Ptr to the message.
+ * @return   Zero if success.
+ */
+PUBLIC int do_close(MESSAGE * p)
+{
+    int fd = p->FD;
+    endpoint_t src = p->source;
+    struct fproc* pcaller = vfs_endpt_proc(src);
+
+    return close_fd(pcaller, fd);
 }
 
 /**

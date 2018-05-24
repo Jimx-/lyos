@@ -47,6 +47,7 @@ PRIVATE int  has_pending_async(struct proc * p, endpoint_t src);
 PRIVATE void unset_notify_pending(struct proc * p, int id);
 PRIVATE void set_notify_msg(struct proc * sender, MESSAGE * m, endpoint_t src);
 PRIVATE int  deadlock(int src, int dest);
+PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len);
 
 PUBLIC void init_proc()
 {
@@ -619,7 +620,7 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
     }
 
     if (done) {
-    	priv->async_table = NULL;
+    	priv->async_table = 0;
     	priv->async_len = 0;
     } else {	/* make kernel rescan the table next time the receiver try to receive and set priv->async_table properly */
     	p->priv->async_pending |= (1 << priv->id);
@@ -856,7 +857,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
     }
 
     /* clear async message table */
-    priv->async_table = NULL;
+    priv->async_table = 0;
     priv->async_len = 0;
 
     if (len == 0) return 0;
@@ -925,7 +926,7 @@ async_error:
 
     /* save the table if not done */
     if (!done) {
-    	priv->async_table = table;
+    	priv->async_table = (vir_bytes) table;
     	priv->async_len = len;
     }
 

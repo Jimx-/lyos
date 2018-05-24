@@ -76,7 +76,7 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     data_vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
 
 #ifdef __i386__
-    p_dest->regs.esp = sfp;
+    p_dest->regs.esp = (u32) sfp;
     p_dest->regs.eip = si.sig_handler;
 #endif
 

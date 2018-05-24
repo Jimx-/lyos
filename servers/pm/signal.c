@@ -160,7 +160,7 @@ PRIVATE int send_sig(struct pmproc * p_dest, int signo)
     int retval;
         
     si.signo = signo;
-    si.sig_handler = p_dest->sigaction[signo].sa_handler;
+    si.sig_handler = (vir_bytes) p_dest->sigaction[signo].sa_handler;
     si.sig_return = p_dest->sigreturn_f;
 
     /*if (p_dest->sigaction[signo].sa_flags & SA_NODEFER) 

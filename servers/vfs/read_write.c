@@ -25,6 +25,7 @@
 #include "lyos/fs.h"
 #include "lyos/proc.h"
 #include <sys/stat.h>
+#include <lyos/sysutils.h>
 #include "errno.h"
 #include "types.h"
 #include "path.h"
@@ -47,7 +48,7 @@
  * @return            Zero on success. Otherwise an error code.
  */
 PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
-    void * buf, int nbytes, u64 * newpos, int * bytes_rdwt)
+    void * buf, size_t nbytes, u64 * newpos, size_t * bytes_rdwt)
 {
     MESSAGE m;
     m.type = FS_RDWT;
@@ -89,7 +90,8 @@ PUBLIC int do_rdwt(MESSAGE * p)
     char * buf = p->BUF;
     int len = p->CNT;
 
-    int bytes_rdwt = 0, retval = 0;
+    size_t bytes_rdwt = 0;
+    int retval = 0;
     u64 newpos;
 
     if (!filp) return -EBADF;
@@ -126,7 +128,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
         }
         
         /* issue the request */
-        int bytes = 0;
+        size_t bytes = 0;
         retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position, rw_flag, src,
             buf, len, &newpos, &bytes);
 
