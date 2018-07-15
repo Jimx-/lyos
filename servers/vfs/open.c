@@ -228,7 +228,7 @@ PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int fla
     init_lookup(&dir_lookup, dir_lookup.pathname, 0, &vmnt, &pin);
     dir_lookup.vmnt_lock = RWL_WRITE;
     dir_lookup.inode_lock = RWL_WRITE;
-    pin = resolve_path(&dir_lookup, fp);
+    pin = advance_path(pin_dir, &dir_lookup, fp);
     if (vmnt) unlock_vmnt(vmnt);
 
     /* no such entry, create one */
@@ -264,6 +264,7 @@ PRIVATE struct inode * new_node(struct fproc* fp, struct lookup* lookup, int fla
 
     unlock_inode(pin_dir);
     put_inode(pin_dir);
+
     return pin;
 }
 
@@ -344,4 +345,67 @@ PUBLIC int do_lseek(MESSAGE * p)
 
     unlock_filp(filp);
     return 0;
+}
+
+PRIVATE int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
+                          char * pathname, mode_t mode)
+{
+    MESSAGE m;
+
+    memset(&m, 0, sizeof(MESSAGE));
+    m.type = FS_MKDIR;
+    m.CRDEV = (int)dev;
+    m.CRINO = (int)num;
+    m.CRUID = (int)uid;
+    m.CRGID = (int)gid;
+    m.CRPATHNAME = pathname;
+    m.CRNAMELEN = strlen(pathname);
+    m.CRMODE = (int)mode;
+
+    send_recv(BOTH, fs_ep, &m);
+
+    return m.CRRET;
+}
+
+PUBLIC int do_mkdir(MESSAGE* p)
+{
+    int name_len = p->NAME_LEN; /* length of filename */
+    int src = p->source;    /* caller proc nr. */
+    mode_t mode = p->MODE;  /* access mode */
+    struct fproc* pcaller = vfs_endpt_proc(src);
+
+    char pathname[MAX_PATH + 1];
+    if (name_len > MAX_PATH) {
+        return -ENAMETOOLONG;
+    }
+        
+    data_copy(SELF, pathname, src, p->PATHNAME, name_len);
+    pathname[name_len] = '\0';
+
+    struct vfs_mount* vmnt;
+    struct inode* pin;
+    struct lookup lookup;
+    int retval = 0;
+
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_WRITE;
+    lookup.inode_lock = RWL_WRITE;
+
+    mode_t bits = I_DIRECTORY | (mode & ALL_MODES & pcaller->umask);
+    if ((pin = last_dir(&lookup, pcaller)) == NULL) {
+        return errno;
+    }
+
+    if (!(pin->i_mode & I_DIRECTORY)) {
+        retval = ENOTDIR;
+    } else if ((retval = forbidden(pcaller, pin, W_BIT | X_BIT)) == 0) {
+        retval = request_mkdir(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                                pcaller->realuid, pcaller->realgid, lookup.pathname, bits);
+    }
+
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
+    put_inode(pin);
+        
+    return retval;
 }

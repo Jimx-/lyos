@@ -154,7 +154,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 
 int execv(const char *path, char * argv[])
 {
-	return execve(path, argv, NULL);
+	return execve(path, argv, environ);
 }
 
 int execvp(const char *file, char * argv[])
@@ -164,11 +164,13 @@ int execvp(const char *file, char * argv[])
 
 int execlp(const char *file, const char *arg, ...)
 {
+	puts("execlp: not implemented");
 	return ENOSYS;
 }
 
 int execl(const char *path, const char *arg, ...)
 {
+	puts("execl: not implemented");
 	return ENOSYS;
 }
 
@@ -458,7 +460,7 @@ int wait(int * status)
 
 int getgroups(int size, gid_t list[])
 {
-	//printf("getgroups: not implemented\n");
+	puts("getgroups: not implemented");
 	return 0;
 }
 
@@ -496,17 +498,27 @@ int close(int fd)
 
 int mkdir(const char *pathname, mode_t mode)
 {
-	return 0;
+	MESSAGE msg;
+	memset(&msg, 0, sizeof(MESSAGE));
+	msg.type = MKDIR;
+    msg.PATHNAME	= (void*)pathname;
+    msg.NAME_LEN	= strlen(pathname);
+	msg.MODE 		= mode;
+	cmb();
+
+	send_recv(BOTH, TASK_FS, &msg);
+	return msg.RETVAL;
 }
 
 int mknod(const char *pathname, mode_t mode, dev_t dev)
 {
+	puts("mknod: not implemented");
 	return ENOSYS;
 }
 
 int link(char *old, char *new)
 {
-	//printf("link: not implemented\n");
+	puts("link: not implemented");
 	return 0;
 }
 
@@ -627,6 +639,7 @@ int chmod(const char *path, mode_t mode)
 
 	msg.PATHNAME = (char*) path;
 	msg.NAME_LEN = strlen(path);
+    msg.MODE = mode;
 
 	cmb();
 
@@ -641,6 +654,7 @@ int fchmod(int fd, mode_t mode)
 	msg.type = FCHMOD;
 
 	msg.FD = fd;
+    msg.MODE = mode;
 
 	cmb();
 
@@ -714,16 +728,19 @@ int open(const char *pathname, int flags, ...)
 	MESSAGE msg;
 	va_list parg;
 
-	msg.type	= OPEN;
-	
-	msg.PATHNAME	= (void*)pathname;
-	msg.FLAGS	= flags;
-	msg.NAME_LEN	= strlen(pathname);
-
+    memset(&msg, 0, sizeof(MESSAGE));
 	va_start(parg, flags);
-	msg.MODE = va_arg(parg, mode_t);
-	va_end(parg);
-	
+
+    msg.type        = OPEN;
+    msg.PATHNAME	= (void*)pathname;
+    msg.FLAGS	    = flags;
+    msg.NAME_LEN	= strlen(pathname);
+
+    if (flags & O_CREAT) {
+        msg.MODE        = va_arg(parg, mode_t);
+    }
+
+    va_end(parg);
 	cmb();
 	
 	send_recv(BOTH, TASK_FS, &msg);
@@ -797,17 +814,19 @@ int stat(const char *path, struct stat *buf)
 
 int statfs(const char *path, struct statfs *buf)
 {
+	puts("statfs: not implemented");
 	return ENOSYS;
 }
 
 int fstatfs(int fd, struct statfs *buf)
 {
+	puts("fstatfs: not implemented");
 	return ENOSYS;
 }
 
 int rmdir(const char *path )
 {
-	printf("rmdir: not implemented\n");
+	puts("rmdir: not implemented");
 	return 0;
 }	
 
@@ -1192,6 +1211,12 @@ int tcflow(int fd, int action)
 	return 0;
 }
 
+int tcflush(int fd, int which)
+{
+	puts("tcflush: not implemented");
+	return 0;
+}
+
 int pipe(int pipefd[2])
 {
 	printf("pipe: not implemented\n");
@@ -1202,48 +1227,56 @@ int __dirfd(DIR *dirp)
 	return dirp->fd;
 }
 
+void sync(void)
+{
+	puts("sync: not implemented");
+}
+
 int fsync(int fd)
 {
+	puts("fsync: not implemented");
 	return 0;
 }
 
 unsigned int alarm(unsigned int seconds)
 {
+	puts("alarm: not implemented");
 	return 0;
 }
 
 unsigned int sleep(unsigned int seconds)
 {
-	return 0;
-}
-
-long sysconf(int name)
-{
+	puts("sleep: not implemented");
 	return 0;
 }
 
 clock_t times(struct tms *buf)
 {
+	puts("times: not implemented");
 	return 0;
 }
 
 int getrusage(int who, struct rusage *usage)
 {
+	puts("getrusage: not implemented");
 	return 0;
 }
 
 struct group *getgrent(void)
 {
+	puts("getgrent: not implemented");
 	return NULL;
 }
 
 void setgrent(void)
 {
+	puts("setgrent: not implemented");
 
 }
 
 void endgrent(void)
 {
+	puts("endgrent: not implemented");
 
 }
 
@@ -1317,28 +1350,45 @@ int munmap(void *addr, size_t len)
 
 struct group* getgrnam(const char* name)
 {
+	puts("getgrnam: not implemented");
 	return NULL;
 }
 
 struct group* getgrgid(gid_t gid)
 {
+	puts("getgrgid: not implemented");
 	return NULL;
 }
 
 int ftruncate(int fd, off_t length)
 {
+	puts("ftruncate: not implemented");
 	return -ENOSYS;
 }
 
 char* getlogin()
 {
+	puts("getlogin: not implemented");
 	return NULL;
 }
 
 int select(int nfds, fd_set *readfds, fd_set *writefds,
                 fd_set *exceptfds, struct timeval *timeout)
 {
-	return -ENOSYS;
+	MESSAGE m;
+	memset(&m, 0, sizeof(MESSAGE));
+
+	m.type = SELECT;
+	m.u.m_vfs_select.nfds = nfds;
+	m.u.m_vfs_select.readfds = readfds;
+	m.u.m_vfs_select.writefds = writefds;
+	m.u.m_vfs_select.exceptfds = exceptfds;
+	m.u.m_vfs_select.timeout = timeout;
+
+	cmb();
+	send_recv(BOTH, TASK_FS, &m);
+	
+	return m.RETVAL;
 }
 
 int futex(int* uaddr, int futex_op, int val,

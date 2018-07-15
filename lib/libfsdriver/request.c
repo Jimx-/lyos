@@ -124,6 +124,33 @@ PUBLIC int fsdriver_create(struct fsdriver * fsd, MESSAGE * m)
     return retval;
 }
 
+PUBLIC int fsdriver_mkdir(struct fsdriver * fsd, MESSAGE * m)
+{
+    mode_t mode = (mode_t)(m->CRMODE);
+    uid_t uid = (uid_t)(m->CRUID);
+    gid_t gid = (gid_t)(m->CRGID);
+    int src = m->source;
+
+    dev_t dev = m->CRDEV;
+    ino_t num = (ino_t)(m->CRINO);
+
+    if (fsd->fs_mkdir == NULL) return ENOSYS;
+
+    char pathname[NAME_MAX + 1];
+    int len = m->CRNAMELEN;
+
+    /* error: name too long */
+    if (len > NAME_MAX + 1) {
+        return ENAMETOOLONG;
+    }
+
+    data_copy(SELF, pathname, src, m->CRPATHNAME, len);
+    pathname[len] = '\0';
+    
+    int retval = fsd->fs_mkdir(dev, num, pathname, mode, uid, gid);
+    return retval;
+}
+
 PUBLIC int fsdriver_readwrite(struct fsdriver * fsd, MESSAGE * m)
 {
     dev_t dev = (int)m->RWDEV;

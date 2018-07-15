@@ -16,5 +16,6 @@ struct chardriver {
 
 PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg);
 PUBLIC int chardriver_task(struct chardriver* cd);
+PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor);
 
 #endif

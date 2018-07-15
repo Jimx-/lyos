@@ -27,8 +27,8 @@ $(INITRD):
 	@cp -f $(DESTDIR)/bin/service bin/
 	@cp -f $(DESTDIR)/bin/mount bin/
 	@cp -f $(DESTDIR)/lib/ld-lyos.so lib/
-	#@cp -f $(DESTDIR)/usr/lib/libc.so usr/lib
-	#@cp -f $(DESTDIR)/usr/lib/libg.so usr/lib
+	@cp -f $(DESTDIR)/usr/lib/libc.so usr/lib
+	@cp -f $(DESTDIR)/usr/lib/libg.so usr/lib
 	@cp -rf ../sysroot/etc/* etc/
 	@touch .root
 	@(cd ../scripts ; bash create-ramdisk-dev.sh)

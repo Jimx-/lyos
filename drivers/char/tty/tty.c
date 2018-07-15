@@ -46,32 +46,35 @@
 PRIVATE struct sysinfo * _sysinfo;
 PRIVATE dev_t cons_minor = CONS_MINOR + 1;
 
-#define TTY_FIRST	(tty_table)
-#define TTY_END		(tty_table + NR_CONSOLES + NR_SERIALS)
+#define TTY_FIRST   (tty_table)
+#define TTY_END         (tty_table + NR_CONSOLES + NR_SERIALS)
 
 /* Default termios */
 PRIVATE struct termios termios_defaults = {
   TINPUT_DEF, TOUTPUT_DEF, TCTRL_DEF, TLOCAL_DEF, TSPEED_DEF, TSPEED_DEF,
   {
-	TINTR_DEF, TQUIT_DEF, TERASE_DEF, TKILL_DEF, TEOF_DEF, TTIME_DEF, TMIN_DEF,
-	0, TSTART_DEF, TSTOP_DEF, TSUSP_DEF, TEOL_DEF, TREPRINT_DEF,  TDISCARD_DEF, 0, TLNEXT_DEF,
+    TINTR_DEF, TQUIT_DEF, TERASE_DEF, TKILL_DEF, TEOF_DEF, TTIME_DEF, TMIN_DEF,
+    0, TSTART_DEF, TSTOP_DEF, TSUSP_DEF, TEOL_DEF, TREPRINT_DEF,  TDISCARD_DEF, 0, TLNEXT_DEF,
   },
 };
 
-PRIVATE void	init_tty	();
-PRIVATE TTY * 	minor2tty	(dev_t minor);
-PRIVATE void 	set_console_line(char val[CONS_ARG]);
-PRIVATE void	tty_dev_read	(TTY* tty);
-PRIVATE void	tty_dev_write	(TTY* tty);
-PRIVATE void 	in_transfer	(TTY* tty);
-PRIVATE void	tty_do_read	(TTY* tty, MESSAGE* msg);
-PRIVATE void	tty_do_write	(TTY* tty, MESSAGE* msg);
-PRIVATE void 	tty_do_ioctl(TTY* tty, MESSAGE* msg);
-PRIVATE void 	tty_do_kern_log();
-PRIVATE void	tty_echo	(TTY* tty, char c);
-PRIVATE void	tty_sigproc (TTY * tty, int signo);
-PRIVATE void 	erase		(TTY * tty);
-PRIVATE void	put_key		(TTY* tty, u32 key);
+PRIVATE void    init_tty    ();
+PRIVATE TTY *   minor2tty   (dev_t minor);
+PRIVATE void    set_console_line(char val[CONS_ARG]);
+PRIVATE void    tty_dev_read    (TTY* tty);
+PRIVATE void    tty_dev_write   (TTY* tty);
+PRIVATE void    in_transfer     (TTY* tty);
+PRIVATE void    tty_do_read     (TTY* tty, MESSAGE* msg);
+PRIVATE void    tty_do_write    (TTY* tty, MESSAGE* msg);
+PRIVATE void    tty_do_ioctl(TTY* tty, MESSAGE* msg);
+PRIVATE void    tty_do_kern_log();
+PRIVATE void    tty_do_select(TTY* tty, MESSAGE* msg);
+PRIVATE void    tty_echo    (TTY* tty, char c);
+PRIVATE void    tty_sigproc (TTY * tty, int signo);
+PRIVATE void    erase       (TTY * tty);
+PRIVATE void    put_key         (TTY* tty, u32 key);
+PRIVATE int     select_try(TTY* tty, int ops);
+PRIVATE int     select_retry(TTY* tty);
 
 
 /*****************************************************************************
@@ -82,67 +85,74 @@ PRIVATE void	put_key		(TTY* tty, u32 key);
  *****************************************************************************/
 PUBLIC int main()
 {
-	TTY *	tty;
-	MESSAGE msg;
+    TTY *   tty;
+    MESSAGE msg;
 
-	init_tty();
+    init_tty();
 
-	while (1) {
-		for (tty = TTY_FIRST; tty < TTY_END; tty++) {
-			handle_events(tty);
-		}
-		
-		send_recv(RECEIVE, ANY, &msg);
+    while (1) {
+        for (tty = TTY_FIRST; tty < TTY_END; tty++) {
+            handle_events(tty);
+        }
+        
+        send_recv(RECEIVE, ANY, &msg);
 
-		int src = msg.source;
-		assert(src != TASK_TTY);
+        int src = msg.source;
+        assert(src != TASK_TTY);
 
-		/* notify */
-		if (msg.type == NOTIFY_MSG) {
-			switch (msg.source) {
-			case KERNEL:
-				tty_do_kern_log();
-				break;
-			case INTERRUPT:
-				if (msg.INTERRUPTS & rs_irq_set)
-					rs_interrupt(&msg);
-				break;
-			case CLOCK:
-				expire_timer(msg.TIMESTAMP);
-				break;
-			}
-			continue;
-		}
+        /* notify */
+        if (msg.type == NOTIFY_MSG) {
+            switch (msg.source) {
+            case KERNEL:
+                tty_do_kern_log();
+                break;
+            case INTERRUPT:
+                if (msg.INTERRUPTS & rs_irq_set)
+                    rs_interrupt(&msg);
+                break;
+            case CLOCK:
+                expire_timer(msg.TIMESTAMP);
+                break;
+            }
+            continue;
+        }
 
-		TTY* ptty = minor2tty(msg.DEVICE);
+        TTY* ptty;
 
-		switch (msg.type) {
-		case CDEV_OPEN:
-			msg.type = SYSCALL_RET;
-			send_recv(SEND, src, &msg);
-			break;
-		case CDEV_READ:
-			tty_do_read(ptty, &msg);
-			break;
-		case CDEV_WRITE:
-			tty_do_write(ptty, &msg);
-			break;
-		case CDEV_IOCTL:
-			tty_do_ioctl(ptty, &msg);
-			break;
-		case INPUT_TTY_UP:
-		case INPUT_TTY_EVENT:
-			do_input(&msg);
-			break;
-		default:
-			msg.type = SYSCALL_RET;
-			msg.RETVAL = ENOSYS;
-			send_recv(SEND, src, &msg);
-			break;
-		}
-	}
+        switch (msg.type) {
+        case CDEV_OPEN:
+            msg.type = SYSCALL_RET;
+            send_recv(SEND, src, &msg);
+            break;
+        case CDEV_READ:
+            ptty = minor2tty(msg.DEVICE);
+            tty_do_read(ptty, &msg);
+            break;
+        case CDEV_WRITE:
+            ptty = minor2tty(msg.DEVICE);
+            tty_do_write(ptty, &msg);
+            break;
+        case CDEV_IOCTL:
+            ptty = minor2tty(msg.DEVICE);
+            tty_do_ioctl(ptty, &msg);
+            break;
+        case CDEV_SELECT:
+            ptty = minor2tty(msg.u.m_vfs_cdev_select.device);
+            tty_do_select(ptty, &msg);
+            break;
+        case INPUT_TTY_UP:
+        case INPUT_TTY_EVENT:
+            do_input(&msg);
+            break;
+        default:
+            msg.type = SYSCALL_RET;
+            msg.RETVAL = ENOSYS;
+            send_recv(SEND, src, &msg);
+            break;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -157,77 +167,81 @@ PUBLIC int main()
  *****************************************************************************/
 PRIVATE void init_tty()
 {
-	TTY * tty;
-	int i;
+    TTY * tty;
+    int i;
 
-	get_sysinfo(&_sysinfo);
+    get_sysinfo(&_sysinfo);
 
-	char val[CONS_ARG];
-	if (env_get_param("console", val, CONS_ARG) == 0) {
-		set_console_line(val);
-	}
+    char val[CONS_ARG];
+    if (env_get_param("console", val, CONS_ARG) == 0) {
+        set_console_line(val);
+    }
 
-	init_keyboard();
+    init_keyboard();
 
-	/* add /dev/console */
-	dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, CONS_MINOR));
-	
-	for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
+    /* add /dev/console */
+    dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, CONS_MINOR));
+    
+    for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
 
-		tty->ibuf_cnt = tty->tty_eotcnt = 0;
-		tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
+        tty->ibuf_cnt = tty->tty_eotcnt = 0;
+        tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
 
-		tty->tty_min = 1;
-		
-		tty->tty_termios = termios_defaults;
+        tty->tty_min = 1;
+        
+        tty->tty_termios = termios_defaults;
 
-		if (i < NR_CONSOLES) {	/* consoles */
-			init_screen(tty);
-			kb_init(tty);
-			dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST + 1)));
-		} else {	/* serial ports */
-			init_rs(tty);
-			dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, i - NR_CONSOLES + SERIAL_MINOR));
-		}
-	}
+        if (i < NR_CONSOLES) {  /* consoles */
+            init_screen(tty);
+            kb_init(tty);
+            dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, (tty - TTY_FIRST + 1)));
+        } else {    /* serial ports */
+            init_rs(tty);
+            dm_cdev_add(MAKE_DEV(DEV_CHAR_TTY, i - NR_CONSOLES + SERIAL_MINOR));
+        }
 
-	select_console(0);
+		tty->tty_select_ops = 0;
+		tty->tty_select_proc = NO_TASK;
+		tty->tty_select_minor = NO_DEV;
+    }
 
-	/* start to handle kernel logging request */
-	kernlog_register();
+    select_console(0);
+
+    /* start to handle kernel logging request */
+    kernlog_register();
 }
 
 
 PRIVATE TTY * minor2tty(dev_t minor)
 {
-	TTY * ptty = NULL;
+    TTY * ptty = NULL;
 
-	if (minor == CONS_MINOR || minor == LOG_MINOR) minor = cons_minor;
+    if (minor == CONS_MINOR || minor == LOG_MINOR) minor = cons_minor;
 
-	if (minor - CONS_MINOR - 1 < NR_CONSOLES) ptty = &tty_table[minor - CONS_MINOR - 1];
-	else if (minor - SERIAL_MINOR < NR_SERIALS) ptty = &tty_table[NR_CONSOLES + minor - SERIAL_MINOR];
+    if (minor - CONS_MINOR - 1 < NR_CONSOLES) ptty = &tty_table[minor - CONS_MINOR - 1];
+    else if (minor - SERIAL_MINOR < NR_SERIALS) ptty = &tty_table[NR_CONSOLES + minor - SERIAL_MINOR];
 
-	return ptty;
+    return ptty;
 }
 
 PRIVATE void set_console_line(char val[CONS_ARG])
 {
-	if (!strncmp(val, "console", CONS_ARG - 1)) cons_minor = CONS_MINOR;
+    if (!strncmp(val, "console", CONS_ARG - 1)) cons_minor = CONS_MINOR;
 
-	char * pv = val;
-	if (!strncmp(pv, "tty", 3)) {
-		pv += 3;
-		if (*pv == 'S') {	/* serial */
-			pv++;
-			if (*pv >= '0' && *pv <= '9') {
-				int minor = atoi(pv);
-				if (minor <= NR_SERIALS) cons_minor = minor + SERIAL_MINOR;
-			}
-		} else if (*pv >= '0' && *pv <= '9') {	/* console */
-			int minor = atoi(pv);
-			if (minor <= NR_CONSOLES) cons_minor = minor;
-		}
-	}
+    char * pv = val;
+    if (!strncmp(pv, "tty", 3)) {
+        pv += 3;
+        if (*pv == 'S') {    /* serial */
+            pv++;
+            if (*pv >= '0' && *pv <= '9') {
+                int minor = atoi(pv);
+                if (minor <= NR_SERIALS) cons_minor = minor + SERIAL_MINOR;
+            }
+        } else if (*pv >= '0' && *pv <= '9') {     /* console */
+            int minor = atoi(pv);
+            if (minor <= NR_CONSOLES) cons_minor = minor;
+        }
+    }
 }
 
 /*****************************************************************************
@@ -241,75 +255,75 @@ PRIVATE void set_console_line(char val[CONS_ARG])
  *****************************************************************************/
 PUBLIC int in_process(TTY* tty, char * buf, int count)
 {
-	int cnt, key;
+    int cnt, key;
 
-	for (cnt = 0; cnt < count; cnt++) {	
-		key = *buf++ & 0xFF;
+    for (cnt = 0; cnt < count; cnt++) {  
+        key = *buf++ & 0xFF;
 
-		if (tty->tty_termios.c_iflag & ISTRIP) key &= 0x7F;
+        if (tty->tty_termios.c_iflag & ISTRIP) key &= 0x7F;
 
-		if (tty->tty_termios.c_lflag & IEXTEN) {
-			/* Previous character was a character escape? */
-			if (tty->tty_escaped) {
-				tty->tty_escaped = 0;
-				put_key(tty, key);
-				tty_echo(tty, key);
-				continue;
-			}
-			
-			/* LNEXT (^V) to escape the next character? */
-			if (key == tty->tty_termios.c_cc[VLNEXT]) {
-				tty->tty_escaped = 1;
-				tty_echo(tty, key);
-				continue;
-			}
-		}
+        if (tty->tty_termios.c_lflag & IEXTEN) {
+            /* Previous character was a character escape? */
+            if (tty->tty_escaped) {
+                tty->tty_escaped = 0;
+                put_key(tty, key);
+                tty_echo(tty, key);
+                continue;
+            }
+            
+            /* LNEXT (^V) to escape the next character? */
+            if (key == tty->tty_termios.c_cc[VLNEXT]) {
+                tty->tty_escaped = 1;
+                tty_echo(tty, key);
+                continue;
+            }
+        }
 
-		/* Map CR to LF, ignore CR, or map LF to CR. */
-		if (key == '\r') {
-			if (tty->tty_termios.c_iflag & IGNCR) return;
-			if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
-		} else if (key == '\n') {
-			if (tty->tty_termios.c_iflag & INLCR) key = '\r';
-		}
-		
-		if (tty->tty_termios.c_lflag & ICANON) {
-			if (key == tty->tty_termios.c_cc[VERASE]) {
-				erase(tty);
-				if (!(tty->tty_termios.c_lflag & ECHOE)) {
-					tty_echo(tty, key);
-				}
-				continue;
-			}
+        /* Map CR to LF, ignore CR, or map LF to CR. */
+        if (key == '\r') {
+            if (tty->tty_termios.c_iflag & IGNCR) return;
+            if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
+        } else if (key == '\n') {
+            if (tty->tty_termios.c_iflag & INLCR) key = '\r';
+        }
+        
+        if (tty->tty_termios.c_lflag & ICANON) {
+            if (key == tty->tty_termios.c_cc[VERASE]) {
+                erase(tty);
+                if (!(tty->tty_termios.c_lflag & ECHOE)) {
+                    tty_echo(tty, key);
+                }
+                continue;
+            }
 
-			if (key == '\n') key |= IN_EOT;
+            if (key == '\n') key |= IN_EOT;
 
-			if (key == tty->tty_termios.c_cc[VEOL]) key |= IN_EOT;
-		}
+            if (key == tty->tty_termios.c_cc[VEOL]) key |= IN_EOT;
+        }
 
-		if (tty->tty_termios.c_lflag & ISIG) {
-			int signo = 0;
+        if (tty->tty_termios.c_lflag & ISIG) {
+            int signo = 0;
 
-			if (key == tty->tty_termios.c_cc[VINTR]) {
-				signo = SIGINT;
-			} else if (key == tty->tty_termios.c_cc[VQUIT]) {
-				signo = SIGQUIT;
-			}
+            if (key == tty->tty_termios.c_cc[VINTR]) {
+                signo = SIGINT;
+            } else if (key == tty->tty_termios.c_cc[VQUIT]) {
+                signo = SIGQUIT;
+            }
 
-			if (signo > 0) {
-				tty_echo(tty, key);
-				tty_sigproc(tty, signo);
-				continue;
-			}
-		}
+            if (signo > 0) {
+                tty_echo(tty, key);
+                tty_sigproc(tty, signo);
+                continue;
+            }
+        }
 
-		put_key(tty, key);
-		tty_echo(tty, key);
+        put_key(tty, key);
+        tty_echo(tty, key);
 
-		if (key & IN_EOT) tty->tty_eotcnt++;
-	}
+        if (key & IN_EOT) tty->tty_eotcnt++;
+    }
 
-	return cnt;
+    return cnt;
 }
 
 
@@ -326,13 +340,13 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
  *****************************************************************************/
 PRIVATE void put_key(TTY* tty, u32 key)
 {
-	if (tty->ibuf_cnt < TTY_IN_BYTES) {
-		*(tty->ibuf_head) = key;
-		tty->ibuf_head++;
-		if (tty->ibuf_head == tty->ibuf + TTY_IN_BYTES)
-			tty->ibuf_head = tty->ibuf;
-		tty->ibuf_cnt++;
-	}
+    if (tty->ibuf_cnt < TTY_IN_BYTES) {
+        *(tty->ibuf_head) = key;
+        tty->ibuf_head++;
+        if (tty->ibuf_head == tty->ibuf + TTY_IN_BYTES)
+            tty->ibuf_head = tty->ibuf;
+        tty->ibuf_cnt++;
+    }
 }
 
 
@@ -349,7 +363,7 @@ PRIVATE void put_key(TTY* tty, u32 key)
  *****************************************************************************/
 PRIVATE void tty_dev_read(TTY* tty)
 {
-	if (tty->tty_devread) tty->tty_devread(tty);
+    if (tty->tty_devread) tty->tty_devread(tty);
 }
 
 
@@ -363,7 +377,7 @@ PRIVATE void tty_dev_read(TTY* tty)
  *****************************************************************************/
 PRIVATE void tty_dev_write(TTY* tty)
 {
-	if (tty->tty_devwrite) tty->tty_devwrite(tty);
+    if (tty->tty_devwrite) tty->tty_devwrite(tty);
 }
 
 /*****************************************************************************
@@ -376,50 +390,50 @@ PRIVATE void tty_dev_write(TTY* tty)
  *****************************************************************************/
 PRIVATE void in_transfer(TTY* tty)
 {
-	char buf[64], *bp;
+    char buf[64], *bp;
 
-	if (tty->tty_inleft == 0 || tty->tty_eotcnt < tty->tty_min) return;
+    if (tty->tty_inleft == 0 || tty->tty_eotcnt < tty->tty_min) return;
 
-	bp = buf;
-	while (tty->tty_inleft > 0 && tty->tty_eotcnt > 0) {
-		char ch = *(tty->ibuf_tail);
-		tty->ibuf_tail++;
-		if (tty->ibuf_tail == tty->ibuf + TTY_IN_BYTES)
-			tty->ibuf_tail = tty->ibuf;
-		tty->ibuf_cnt--;
+    bp = buf;
+    while (tty->tty_inleft > 0 && tty->tty_eotcnt > 0) {
+        char ch = *(tty->ibuf_tail);
+        tty->ibuf_tail++;
+        if (tty->ibuf_tail == tty->ibuf + TTY_IN_BYTES)
+            tty->ibuf_tail = tty->ibuf;
+        tty->ibuf_cnt--;
 
-		*bp = ch & IN_CHAR;
-		tty->tty_inleft--;
-		if (++bp == buf + sizeof(buf)) {	/* buffer full */
-			void * p = tty->tty_inbuf +
-					   tty->tty_trans_cnt;
-			data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, sizeof(buf));
-			tty->tty_trans_cnt += sizeof(buf);
-			bp = buf;
-		}
+        *bp = ch & IN_CHAR;
+        tty->tty_inleft--;
+        if (++bp == buf + sizeof(buf)) {  /* buffer full */
+            void * p = tty->tty_inbuf +
+                       tty->tty_trans_cnt;
+            data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, sizeof(buf));
+            tty->tty_trans_cnt += sizeof(buf);
+            bp = buf;
+        }
 
-		if (ch == '\n') {
-			tty->tty_eotcnt--;
-			if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
-		}
-	}
+        if (ch == '\n') {
+            tty->tty_eotcnt--;
+            if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
+        }
+    }
 
-	if (bp > buf) {
-		int count = bp - buf;
-		void * p = tty->tty_inbuf +
-					   tty->tty_trans_cnt;
-		data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, count);
-		tty->tty_trans_cnt += count;
-	}
+    if (bp > buf) {
+        int count = bp - buf;
+        void * p = tty->tty_inbuf +
+                       tty->tty_trans_cnt;
+        data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, count);
+        tty->tty_trans_cnt += count;
+    }
 
-	if (tty->tty_inleft == 0) {
-		MESSAGE msg;
-		msg.type = tty->tty_inreply;
-		msg.PROC_NR = tty->tty_inprocnr;
-		msg.CNT = tty->tty_trans_cnt;
-		send_recv(SEND, tty->tty_incaller, &msg);
-		tty->tty_inleft = 0;
-	}
+    if (tty->tty_inleft == 0) {
+        MESSAGE msg;
+        msg.type = tty->tty_inreply;
+        msg.PROC_NR = tty->tty_inprocnr;
+        msg.CNT = tty->tty_trans_cnt;
+        send_recv(SEND, tty->tty_incaller, &msg);
+        tty->tty_inleft = 0;
+    }
 }
 
 /*****************************************************************************
@@ -432,11 +446,15 @@ PRIVATE void in_transfer(TTY* tty)
  *****************************************************************************/
 PUBLIC void handle_events(TTY * tty)
 {
-	do {
-		tty_dev_read(tty);
-		tty_dev_write(tty);
-	} while (tty->tty_events);
-	in_transfer(tty);
+    do {
+        tty_dev_read(tty);
+        tty_dev_write(tty);
+    } while (tty->tty_events);
+    in_transfer(tty);
+
+    if (tty->tty_select_ops) {
+        select_retry(tty);
+    }
 }
 
 /*****************************************************************************
@@ -456,19 +474,19 @@ PUBLIC void handle_events(TTY * tty)
  *****************************************************************************/
 PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 {
-	/* tell the tty: */
-	tty->tty_inreply = SYSCALL_RET;
-	tty->tty_incaller   = msg->source;  /* who called, usually FS thread */
-	tty->tty_inprocnr   = msg->PROC_NR; /* who wants the chars */
-	tty->tty_inbuf  = msg->BUF;/* where the chars should be put */
-	tty->tty_inleft = msg->CNT; /* how many chars are requested */
-	tty->tty_trans_cnt= 0; /* how many chars have been transferred */
+    /* tell the tty: */
+    tty->tty_inreply = SYSCALL_RET;
+    tty->tty_incaller   = msg->source;  /* who called, usually FS thread */
+    tty->tty_inprocnr   = msg->PROC_NR; /* who wants the chars */
+    tty->tty_inbuf  = msg->BUF;/* where the chars should be put */
+    tty->tty_inleft = msg->CNT; /* how many chars are requested */
+    tty->tty_trans_cnt = 0; /* how many chars have been transferred */
 
-	msg->type = SUSPEND_PROC;
-	msg->CNT = tty->tty_inleft;
-	send_recv(SEND, tty->tty_incaller, msg);
-	tty->tty_incaller = TASK_FS;  /* tell FS to unblock caller later */
-	tty->tty_inreply = RESUME_PROC;
+    msg->type = SUSPEND_PROC;
+    msg->CNT = tty->tty_inleft;
+    send_recv(SEND, tty->tty_incaller, msg);
+    tty->tty_incaller = TASK_FS;  /* tell FS to unblock caller later */
+    tty->tty_inreply = RESUME_PROC;
 }
 
 
@@ -483,29 +501,29 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
  *****************************************************************************/
 PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 {
-	/* tell the tty: */
-	tty->tty_outreply    = SYSCALL_RET;
-	tty->tty_outcaller   = msg->source;  /* who called, usually FS thread */
-	tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
-	tty->tty_outbuf  = msg->BUF;/* where are the chars */
-	tty->tty_outleft = msg->CNT; /* how many chars are requested */
-	tty->tty_outcnt = 0;
+    /* tell the tty: */
+    tty->tty_outreply    = SYSCALL_RET;
+    tty->tty_outcaller   = msg->source;  /* who called, usually FS thread */
+    tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
+    tty->tty_outbuf  = msg->BUF;/* where are the chars */
+    tty->tty_outleft = msg->CNT; /* how many chars are requested */
+    tty->tty_outcnt = 0;
 
-	handle_events(tty);
-	if (tty->tty_outleft == 0) return;	/* already done, just return */
+    handle_events(tty);
+    if (tty->tty_outleft == 0) return;    /* already done, just return */
 
-	if (msg->FLAGS & O_NONBLOCK) {	/* do not block */	
-		tty->tty_outleft = tty->tty_outcnt = 0;
-		msg->type = tty->tty_outreply;
-		msg->STATUS = tty->tty_outcnt > 0 ? tty->tty_outcnt : EAGAIN;
-		send_recv(SEND, tty->tty_outcaller, msg);
-	} else {	/* block */
-		msg->type = SUSPEND_PROC;
-		msg->CNT = tty->tty_outleft;
-		send_recv(SEND, tty->tty_outcaller, msg);
-		tty->tty_outcaller = TASK_FS;  /* tell FS to unblock caller later */
-		tty->tty_outreply = RESUME_PROC;
-	}
+    if (msg->FLAGS & O_NONBLOCK) {   /* do not block */    
+        tty->tty_outleft = tty->tty_outcnt = 0;
+        msg->type = tty->tty_outreply;
+        msg->STATUS = tty->tty_outcnt > 0 ? tty->tty_outcnt : EAGAIN;
+        send_recv(SEND, tty->tty_outcaller, msg);
+    } else {    /* block */
+        msg->type = SUSPEND_PROC;
+        msg->CNT = tty->tty_outleft;
+        send_recv(SEND, tty->tty_outcaller, msg);
+        tty->tty_outcaller = TASK_FS;  /* tell FS to unblock caller later */
+        tty->tty_outreply = RESUME_PROC;
+    }
 }
 
 /*****************************************************************************
@@ -519,31 +537,99 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
  *****************************************************************************/
 PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
 {
-	int retval = 0;
+    int retval = 0;
 
-	switch (msg->REQUEST) {
-	case TCGETS:
-		data_copy(msg->PROC_NR, msg->BUF, SELF, &(tty->tty_termios), sizeof(struct termios));
-		break;
-	case TCSETSW:
+    switch (msg->REQUEST) {
+    case TCGETS:
+        data_copy(msg->PROC_NR, msg->BUF, SELF, &(tty->tty_termios), sizeof(struct termios));
+        break;
+    case TCSETSW:
     case TCSETSF:
     //case TCDRAIN:
     case TCSETS:
-    	data_copy(SELF, &(tty->tty_termios), msg->PROC_NR, msg->BUF, sizeof(struct termios));
-    	break;
+        data_copy(SELF, &(tty->tty_termios), msg->PROC_NR, msg->BUF, sizeof(struct termios));
+        break;
     case TIOCGPGRP:
-    	data_copy(msg->PROC_NR, msg->BUF, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
-    	break;
+        data_copy(msg->PROC_NR, msg->BUF, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
+        break;
     case TIOCSPGRP:
-    	data_copy(SELF, &tty->tty_pgrp, msg->PROC_NR, msg->BUF, sizeof(tty->tty_pgrp));
-    	break;
-	default:
-		break;
+        data_copy(SELF, &tty->tty_pgrp, msg->PROC_NR, msg->BUF, sizeof(tty->tty_pgrp));
+        break;
+    default:
+        break;
+    }
+
+    msg->type = SYSCALL_RET;
+    msg->RETVAL = retval;
+    send_recv(SEND, msg->source, msg);
+}
+
+PRIVATE int select_try(TTY* tty, int ops)
+{
+	int ready_ops = 0;
+
+	if (tty->tty_termios.c_ospeed == B0) {
+		ready_ops |= ops;
 	}
 
-	msg->type = SYSCALL_RET;
-	msg->RETVAL = retval;
-	send_recv(SEND, msg->source, msg);
+	if (ops & CDEV_SEL_RD) {
+		if (tty->tty_inleft > 0) {
+			ready_ops |= CDEV_SEL_RD;
+		} else if (tty->ibuf_cnt > 0) {
+			if (!(tty->tty_termios.c_lflag & ICANON) || tty->tty_eotcnt > 0) {
+				ready_ops |= CDEV_SEL_RD;
+			}
+		}
+	}
+
+	if (ops & CDEV_SEL_WR) {
+		if (tty->tty_outleft > 0) {
+			ready_ops |= CDEV_SEL_WR;
+		}
+	}
+
+	return ready_ops;
+}
+
+PRIVATE int select_retry(TTY* tty)
+{
+    int ops;
+    if (tty->tty_select_ops && (ops = select_try(tty, tty->tty_select_ops))) {
+        MESSAGE msg;
+        memset(&msg, 0, sizeof(MESSAGE));
+        msg.type = CDEV_SELECT_REPLY2;
+        msg.RETVAL = ops;
+        msg.DEVICE = tty->tty_select_minor;
+        send_recv(SEND, TASK_FS, &msg);
+        tty->tty_select_ops &= ~ops;
+    }
+    return 0;
+}
+
+PRIVATE void tty_do_select(TTY* tty, MESSAGE* msg)
+{
+	dev_t minor = MINOR(msg->u.m_vfs_cdev_select.device);
+	int ops = msg->u.m_vfs_cdev_select.ops;
+	int watch = ops & CDEV_NOTIFY;
+	ops &= (CDEV_SEL_RD | CDEV_SEL_WR | CDEV_SEL_EXC);
+
+	int ready_ops = select_try(tty, ops);
+
+	ops &= ~ready_ops;
+	if (ops && watch) {
+		if (tty->tty_select_ops != 0 && tty->tty_select_minor != minor) {
+			ready_ops = -EBADF;
+		} else {
+			tty->tty_select_ops |= ops;
+			tty->tty_select_proc = msg->source;
+			tty->tty_select_minor = minor;
+		}
+	}
+
+	msg->type = CDEV_SELECT_REPLY1;
+	msg->RETVAL = ready_ops;
+	msg->DEVICE = minor;
+	send_recv(SEND, TASK_FS, msg);
 }
 
 /*****************************************************************************
@@ -555,31 +641,31 @@ PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
  *****************************************************************************/
 PRIVATE void tty_do_kern_log()
 {
-	static int prev_next = 0;
-	static char kernel_log_copy[KERN_LOG_SIZE];
-	struct kern_log * klog = _sysinfo->kern_log;
-	int next = klog->next;
-	TTY * tty;
+    static int prev_next = 0;
+    static char kernel_log_copy[KERN_LOG_SIZE];
+    struct kern_log * klog = _sysinfo->kern_log;
+    int next = klog->next;
+    TTY * tty;
 
-	size_t bytes = ((next + KERN_LOG_SIZE) - prev_next) % KERN_LOG_SIZE, copy;
-	if (bytes > 0) {
-		copy = min(bytes, KERN_LOG_SIZE - prev_next);
-		memcpy(kernel_log_copy, &klog->buf[prev_next], copy);
-		if (bytes > copy) memcpy(&kernel_log_copy[copy], klog->buf, bytes - copy);
-		
-		tty = minor2tty(cons_minor);
-		/* tell the tty: */
-		tty->tty_outreply    = SYSCALL_RET;
-		tty->tty_outcaller   = KERNEL;
-		tty->tty_outprocnr   = TASK_TTY; /* who wants to output the chars */
-		tty->tty_outbuf  = kernel_log_copy;/* where are the chars */
-		tty->tty_outleft = bytes; /* how many chars are requested */
-		tty->tty_outcnt = 0;
+    size_t bytes = ((next + KERN_LOG_SIZE) - prev_next) % KERN_LOG_SIZE, copy;
+    if (bytes > 0) {
+        copy = min(bytes, KERN_LOG_SIZE - prev_next);
+        memcpy(kernel_log_copy, &klog->buf[prev_next], copy);
+        if (bytes > copy) memcpy(&kernel_log_copy[copy], klog->buf, bytes - copy);
+        
+        tty = minor2tty(cons_minor);
+        /* tell the tty: */
+        tty->tty_outreply    = SYSCALL_RET;
+        tty->tty_outcaller   = KERNEL;
+        tty->tty_outprocnr   = TASK_TTY; /* who wants to output the chars */
+        tty->tty_outbuf  = kernel_log_copy;/* where are the chars */
+        tty->tty_outleft = bytes; /* how many chars are requested */
+        tty->tty_outcnt = 0;
 
-		handle_events(tty);
-	}
+        handle_events(tty);
+    }
 
-	prev_next = next;
+    prev_next = next;
 }
 
 /*****************************************************************************
@@ -591,18 +677,18 @@ PRIVATE void tty_do_kern_log()
  *****************************************************************************/
 PRIVATE void erase(TTY * tty)
 {
-	if (tty->ibuf_cnt == 0) return;
+    if (tty->ibuf_cnt == 0) return;
 
-	u32 * head = tty->ibuf_head;
-	if (head == tty->ibuf)
-			head = tty->ibuf + TTY_IN_BYTES;
-	head--;
-	tty->ibuf_head = head;
-	tty->ibuf_cnt--;
+    u32 * head = tty->ibuf_head;
+    if (head == tty->ibuf)
+            head = tty->ibuf + TTY_IN_BYTES;
+    head--;
+    tty->ibuf_head = head;
+    tty->ibuf_cnt--;
 
-	if (tty->tty_termios.c_lflag & ECHOE) {
-		tty->tty_echo(tty, '\b');
-	}
+    if (tty->tty_termios.c_lflag & ECHOE) {
+        tty->tty_echo(tty, '\b');
+    }
 }
 
 /*****************************************************************************
@@ -614,30 +700,30 @@ PRIVATE void erase(TTY * tty)
  *****************************************************************************/
 PRIVATE void tty_echo(TTY* tty, char c)
 {
-	if (!(tty->tty_termios.c_lflag & ECHO)) return;
+    if (!(tty->tty_termios.c_lflag & ECHO)) return;
 
-	int len;
-	if ((c & IN_CHAR) < ' ') {
-		switch (c & (IN_CHAR)) {
-		case '\t':
-			len = 0;
-			do {
-				tty->tty_echo(tty, ' ');
-				len++;
-			} while (len < TAB_SIZE);
-			break;
-		case '\n':
-		case '\r':
-			tty->tty_echo(tty, c);
-			break;
-		default:
-			tty->tty_echo(tty, '^');
-			tty->tty_echo(tty, '@' + (c & IN_CHAR));
-			break;
-		}
-	} else {
-		tty->tty_echo(tty, c);
-	}
+    int len;
+    if ((c & IN_CHAR) < ' ') {
+        switch (c & (IN_CHAR)) {
+        case '\t':
+            len = 0;
+            do {
+                tty->tty_echo(tty, ' ');
+                len++;
+            } while (len < TAB_SIZE);
+            break;
+        case '\n':
+        case '\r':
+            tty->tty_echo(tty, c);
+            break;
+        default:
+            tty->tty_echo(tty, '^');
+            tty->tty_echo(tty, '@' + (c & IN_CHAR));
+            break;
+        }
+    } else {
+        tty->tty_echo(tty, c);
+    }
 }
 
 /*****************************************************************************
@@ -649,10 +735,10 @@ PRIVATE void tty_echo(TTY* tty, char c)
  *****************************************************************************/
 PRIVATE void tty_sigproc(TTY * tty, int signo)
 {
-	endpoint_t ep;
-	if (get_procep(tty->tty_pgrp, &ep) != 0) return;
+    endpoint_t ep;
+    if (get_procep(tty->tty_pgrp, &ep) != 0) return;
 
-	int retval;
-	if ((retval = kernel_kill(ep, signo)) != 0) panic("unable to send signal(%d)", retval);
+    int retval;
+    if ((retval = kernel_kill(ep, signo)) != 0) panic("unable to send signal(%d)", retval);
 }
 

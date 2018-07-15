@@ -415,15 +415,16 @@ PUBLIC int fs_exit(MESSAGE * m)
 
     p->flags &= ~FPF_INUSE;
     for (i = 0; i < NR_FILES; i++) {
-        struct file_desc* filp = get_filp(p, i, RWL_WRITE);
-        if (filp) {
-            p->filp[i]->fd_inode->i_cnt--;
-            if (--p->filp[i]->fd_cnt == 0) {
-                p->filp[i]->fd_inode = 0;
-            }
-            unlock_filp(filp);
-            p->filp[i] = 0;
-        }
+        close_fd(p, i);
+    }
+
+    if (p->pwd) {
+        put_inode(p->pwd);
+        p->pwd = NULL;
+    }
+    if (p->root) {
+        put_inode(p->root);
+        p->root = NULL;
     }
 
     return 0;

@@ -335,6 +335,7 @@ PUBLIC void ext2_sync_inodes();
 PUBLIC int ext2_sync();
 
 PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn);
+PUBLIC int ext2_mkdir(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid);
 
 PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data * data, size_t * bytes);
 PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);

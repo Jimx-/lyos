@@ -77,6 +77,24 @@ struct file_desc {
     int     fd_cnt;     /**< How many procs share this desc */
     struct inode*   fd_inode;   /**< Ptr to the i-node */
     pthread_mutex_t fd_lock;
+
+    int     fd_selectors;       /**< How many selectors blocked on this desc */
+    int     fd_select_ops;
+    #define SFL_UPDATE      0x1
+    #define SFL_BUSY        0x2
+    #define SFL_BLOCKED     0x4
+    #define SFL_RD_BLOCK    0x8
+    #define SFL_WR_BLOCK    0x10
+    #define SFL_EXC_BLOCK   0x20
+    int     fd_select_flags;
+    dev_t   fd_select_dev;
+};
+
+/* character device mapping */
+struct cdmap {
+    endpoint_t driver;
+    int select_busy;
+    struct file_desc* select_filp;
 };
 
 struct file_system {

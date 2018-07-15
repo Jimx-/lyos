@@ -82,14 +82,33 @@ VERIFY_MESS_SIZE(mess5);
 struct mess_mm_remap {
 	endpoint_t 	src;
 	endpoint_t 	dest;
-	void* 			src_addr;
-	void*			dest_addr;
+	void*       src_addr;
+	void*		dest_addr;
 	size_t 		size;
-	void*			ret_addr;
+	void*		ret_addr;
 
 	u8 			_pad[16];
 };
 VERIFY_MESS_SIZE(mess_mm_remap);
+
+struct mess_vfs_select {
+    u32     nfds;
+    void*   readfds;
+    void*   writefds;
+    void*   exceptfds;
+    void*   timeout;
+
+    u8      _pad[20];
+};
+VERIFY_MESS_SIZE(mess_vfs_select);
+
+struct mess_vfs_cdev_select {
+    u64     device;
+    u32     ops;
+
+    u8      _pad[28];
+};
+VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 
 typedef struct {
     int source;
@@ -101,6 +120,8 @@ typedef struct {
         struct mess4 m4;
         struct mess5 m5;
 		struct mess_mm_remap m_mm_remap;
+        struct mess_vfs_select m_vfs_select;
+        struct mess_vfs_cdev_select m_vfs_cdev_select;
 
 		u8 _pad[40];
     } u;

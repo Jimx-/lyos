@@ -62,17 +62,21 @@ typedef struct s_tty
 	void*	tty_outbuf;
 	int	tty_outleft;
 	int	tty_outcnt;
-	pid_t tty_pgrp;
-	int tty_min;
-	int tty_eotcnt;
+	pid_t 	tty_pgrp;
+	int 	tty_min;
+	int 	tty_eotcnt;
+
+	int 	tty_select_ops;
+	endpoint_t 	tty_select_proc;
+	dev_t 	tty_select_minor;
 
 	struct termios tty_termios;
 
-	int tty_escaped;
+	int 	tty_escaped;
 
-	void *	tty_dev;
-	devfun_t tty_devread;
-	devfun_t tty_devwrite;
+	void *		tty_dev;
+	devfun_t 	tty_devread;
+	devfun_t 	tty_devwrite;
 	devfunarg_t tty_echo;
 }TTY;
 

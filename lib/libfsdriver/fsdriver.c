@@ -63,6 +63,9 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
         case FS_CREATE:
             m.CRRET = fsdriver_create(fsd, &m);
             break;
+        case FS_MKDIR:
+            m.CRRET = fsdriver_mkdir(fsd, &m);
+            break;
         case FS_FTRUNC:
             m.RET_RETVAL = fsdriver_ftrunc(fsd, &m);
             break;

@@ -119,8 +119,10 @@ def configure_native(name, extra_opt='', libpath=True):
     else:
         libpath_opt = ' '
 
-    os.system(path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix='
-              + CROSSPREFIX + ' ' + libpath_opt + extra_opt) and cmd_error()
+    os.system(
+        'ac_cv_sizeof_int=4 vim_cv_getcwd_broken=no vim_cv_memmove_handles_overlap=yes vim_cv_stat_ignores_slash=no vim_cv_tgetent=zero vim_cv_terminfo=yes vim_cv_toupper_broken=no vim_cv_tty_group=world '
+        + path + ' --host=' + TARGET + ' --target=' + TARGET + ' --prefix=' +
+        CROSSPREFIX + ' ' + libpath_opt + extra_opt) and cmd_error()
 
 
 def make(extra_opt=''):

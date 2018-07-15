@@ -122,6 +122,7 @@ PUBLIC void init_vfs()
 	pthread_mutex_init(&filesystem_lock, NULL);
 
     init_inode_table();
+    init_select();
 
     /* initialize system procs */
     MESSAGE pm_msg;
@@ -167,4 +168,5 @@ PUBLIC void init_vfs()
     fs_sleeping = 0;
 
     get_sysinfo(&sysinfo);
+    system_hz = get_system_hz();
 }

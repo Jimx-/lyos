@@ -115,3 +115,42 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
     err_code = retval;
     return pin;
 }
+
+PUBLIC int ext2_mkdir(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid)
+{
+    ext2_inode_t * pin_dir = get_ext2_inode(dev, dir_num);
+    if (pin_dir == NULL) return ENOENT;
+
+    ext2_inode_t * pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
+    int retval = err_code, r1, r2;
+
+    if (pin == NULL || retval == EEXIST) {
+        if (pin) put_ext2_inode(pin);
+        put_ext2_inode(pin_dir);
+        return retval;
+    } 
+
+    ino_t dotdot, dot;
+    dotdot = pin_dir->i_num;
+    dot = pin->i_num;
+    
+    /* create '..' and '.' in the new directory */
+    r1 = ext2_search_dir(pin, "..", &dotdot, SD_MAKE, I_DIRECTORY);
+    r2 = ext2_search_dir(pin, ".", &dot, SD_MAKE, I_DIRECTORY);
+
+    if (!r1 && !r2) {
+        pin->i_links_count++;
+        pin_dir->i_links_count++;
+        pin_dir->i_dirt = 1;
+    } else {
+        if (ext2_search_dir(pin_dir, name, NULL, SD_DELETE, 0)) {
+            panic("failed to delete directory");
+        }
+        pin->i_links_count--;
+    }
+    pin->i_dirt = 1;
+
+    put_ext2_inode(pin_dir);
+    put_ext2_inode(pin);
+    return errno;
+}

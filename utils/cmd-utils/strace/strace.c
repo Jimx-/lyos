@@ -155,6 +155,13 @@ static void trace_stat_in(pid_t child, MESSAGE* msg)
     printf(", 0x%x)", msg->BUF);
 }
 
+static void trace_chmod_in(pid_t child, MESSAGE* msg)
+{
+    printf("chmod(");
+    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    printf(", 0%o)", msg->MODE);
+}
+
 static int recorded_sendrec_type;
 static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
 {
@@ -197,6 +204,15 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
     case MMAP:
         printf("mmap(0x%x, %d, %d, %d, %d, %d)", msg.MMAP_VADDR, msg.MMAP_LEN, msg.MMAP_PROT, msg.MMAP_FLAGS, msg.MMAP_FD, msg.MMAP_OFFSET);
         break;
+    case UMASK:
+        printf("umask(0%o)", msg.MODE);
+        break;
+    case CHMOD:
+        trace_chmod_in(child, &msg);
+        break;
+    case GETSETID:
+        printf("getsetid(%d)", msg.REQUEST);
+        break;
     default:
         printf("syscall(%d)", type);
         break;
@@ -235,6 +251,10 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     case CLOSE:
     case BRK:
     case GETDENTS:
+    case UMASK:
+    case CHMOD:
+    case GETSETID:
+    case SELECT:
         retval = msg.RETVAL;
         break;
     case MMAP:

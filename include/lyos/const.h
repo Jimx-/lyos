@@ -263,7 +263,7 @@ enum msgtype {
     UMASK, DUP, IOCTL, FCNTL, CHMOD, FCHMOD, GETDENTS,		/* 39 */
     SUSPEND_PROC, RESUME_PROC, EXEC, WAIT, KILL, ACCT,      /* 45 */
     BRK, GETSETID, ALARM, SIGACTION, SIGPROCMASK, SIGSUSPEND,	/* 51 */
-    PROCCTL, MMAP, FORK, EXIT, MUNMAP, FUTEX, /* 57 */
+    PROCCTL, MMAP, FORK, EXIT, MUNMAP, FUTEX, SELECT, /* 58 */
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -293,6 +293,7 @@ enum msgtype {
     FS_CHMOD,
     FS_GETDENTS,
     FS_THREAD_WAKEUP,
+    FS_MKDIR,
 
     /* message type for mm calls */
     MM_MAP_PHYS = MM_REQ_BASE,
@@ -326,6 +327,9 @@ enum msgtype {
     CDEV_WRITE,
     CDEV_IOCTL,
     CDEV_MMAP,
+    CDEV_SELECT,
+    CDEV_SELECT_REPLY1,
+    CDEV_SELECT_REPLY2,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE,				/* 2100 */
@@ -464,6 +468,12 @@ enum msgtype {
 
 /* ioctl requests */
 #define	DIOCTL_GET_GEO	1
+
+/* cdev select ops */
+#define CDEV_SEL_RD     0x1
+#define CDEV_SEL_WR     0x2
+#define CDEV_SEL_EXC    0x4
+#define CDEV_NOTIFY     0x8
 
 /* Hard Drive */
 #define SECTOR_SIZE		512

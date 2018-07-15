@@ -1,0 +1,11 @@
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2018-05-24 23:56:34.373925202 +0800
++++ new/config.sub	2018-05-24 23:56:54.057259252 +0800
+@@ -1396,6 +1396,7 @@ case $os in
+ 	      | -sym* | -kopensolaris* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+ 	      | -aos* | -aros* | -cloudabi* | -sortix* \
++          | -lyos* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+ 	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \

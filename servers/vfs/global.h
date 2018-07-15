@@ -28,6 +28,8 @@
 #include "thread.h"
 #include "libpthread/pthread.h"
 
+EXTERN int system_hz;
+
 /* FS */
 EXTERN  int                 ROOT_DEV;
 EXTERN  struct file_desc    f_desc_table[NR_FILE_DESC];
@@ -60,5 +62,7 @@ EXTERN volatile int fs_sleeping;
 EXTERN struct worker_thread workers[NR_WORKER_THREADS];
 
 EXTERN struct sysinfo* sysinfo;
+
+extern struct cdmap cdmap[];
 
 #endif 

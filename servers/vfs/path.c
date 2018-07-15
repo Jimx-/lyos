@@ -27,6 +27,7 @@
 #include "lyos/proc.h"
 #include "errno.h"
 #include "fcntl.h"
+#include <sys/syslimits.h>
     
 #include "types.h"
 #include "path.h"
@@ -96,7 +97,6 @@ PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags,
     *inode = NULL;
 }
 
-/* Resolve a pathname */
 PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
 {
     /* start inode: root or pwd */
@@ -106,8 +106,14 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
         return NULL;
     }
     
+    struct inode * start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
+    return advance_path(start, lookup, fp);
+}
+
+/* Resolve a pathname */
+PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, struct fproc * fp)
+{
     char* pathname = lookup->pathname;
-    struct inode * start = (pathname[0] == '/' ? fp->root : fp->pwd);
     struct inode * new_pin = NULL, * pin = NULL;
 
     struct lookup_result res;
@@ -245,27 +251,61 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
  */
 PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp)
 {
-    char* pathname = lookup->pathname;
-    char * c = strrchr(pathname, '/');
-    if (c == NULL) {
-        return fp->pwd;
-    }
-
-    c = pathname + strlen(pathname);
-
-    while (*c != '/') {
-        c--;
-    }
-    /* cpp */
-    c++;
-    /* Terminate the string */
-    char old_char = *c;
-    *c = '\0';
-
-    struct inode* pin = resolve_path(lookup, fp);
-
-    *c = old_char;
-    lookup->pathname = c;
+    struct inode* result_pin = NULL;
+    char* cp;
+    char entry[PATH_MAX + 1];
     
-    return pin;
+    do {
+        struct inode * start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
+
+        size_t len = strlen(lookup->pathname);
+        if (len == 0) {
+            errno = ENOENT;
+            result_pin = NULL;
+            break;
+        }
+
+        while (len > 1 && lookup->pathname[len - 1] == '/') {
+            len--;
+            lookup->pathname[len] = '\0';
+        }
+
+        cp = strrchr(lookup->pathname, '/');
+        if (cp == NULL) {
+            if (strlcpy(entry, lookup->pathname, PATH_MAX + 1) >= PATH_MAX + 1) {
+                errno = ENAMETOOLONG;
+                result_pin = NULL;
+                break;
+            }
+            entry[PATH_MAX] = '\0';
+            lookup->pathname[0] = '.';
+            lookup->pathname[1] = '\0';
+        } else if (cp[1] == '/') {
+            entry[0] = '.';
+            entry[1] = '\0';
+        } else {
+            if (strlcpy(entry, cp + 1, PATH_MAX + 1) >= PATH_MAX + 1) {
+                errno = ENAMETOOLONG;
+                result_pin = NULL;
+                break;
+            }
+            cp[1] = '\0';
+            entry[PATH_MAX] = '\0';
+        }
+
+        while (cp > lookup->pathname && *cp == '/') {
+            *cp = '\0';
+            cp--;
+        }
+
+        if ((result_pin = advance_path(start, lookup, fp)) == NULL) {
+            break;
+        }
+
+        strlcpy(lookup->pathname, entry, PATH_MAX + 1);
+        break;
+    } while (0);
+
+    
+    return result_pin;
 }

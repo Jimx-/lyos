@@ -134,6 +134,18 @@ PRIVATE void handle_request(MESSAGE* msg)
 {
     int msgtype = msg->type;
 
+    /* handle kernel signals first */
+    if (msg->type == NOTIFY_MSG) {
+        switch (msg->source) {
+        case CLOCK:
+            expire_timer(msg->TIMESTAMP);
+            break;
+        }
+        /* no reply */
+        msg->RETVAL = SUSPEND;
+        return;
+    }
+
     switch (msgtype) {
     case FS_REGISTER:
         msg->RETVAL = do_register_filesystem(msg);
@@ -163,6 +175,9 @@ PRIVATE void handle_request(MESSAGE* msg)
     case LSEEK:
         msg->RETVAL = do_lseek(msg);
         break;
+    case MKDIR:
+        msg->RETVAL = do_mkdir(msg);
+        break;
     case UMASK:
         msg->RETVAL = (int)do_umask(msg);
         break;
@@ -188,6 +203,9 @@ PRIVATE void handle_request(MESSAGE* msg)
     case GETDENTS:
         msg->RETVAL = do_getdents(msg);
         break;
+    case SELECT:
+        msg->RETVAL = do_select(msg);
+        break;
     case PM_VFS_GETSETID:
         msg->RETVAL = fs_getsetid(msg);
         break;
@@ -202,6 +220,11 @@ PRIVATE void handle_request(MESSAGE* msg)
         break;
     case MM_VFS_REQUEST:
         msg->RETVAL = do_mm_request(msg);
+        break;
+    case CDEV_SELECT_REPLY1:
+    case CDEV_SELECT_REPLY2:
+        cdev_reply(msg);
+        msg->RETVAL = SUSPEND;
         break;
     case RESUME_PROC:
         msg->RETVAL = 0;
@@ -291,4 +314,11 @@ PUBLIC void worker_wake(struct worker_thread* thread)
     pthread_mutex_unlock(&thread->event_mutex);
 }
 
-
+PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg)
+{
+    /* revive a blocked process after returning from a blocking call */
+    struct vfs_message* req = (struct vfs_message*) malloc(sizeof(struct vfs_message));
+    memcpy(&req->msg, msg, sizeof(MESSAGE));
+    req->msg.source = endpoint;
+    enqueue_response(req);
+}

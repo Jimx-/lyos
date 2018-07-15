@@ -145,3 +145,21 @@ PUBLIC int chardriver_task(struct chardriver* cd)
 
     return 0;
 }
+
+PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
+{
+    switch (msg->type) {
+    case CDEV_OPEN:
+    case CDEV_CLOSE:
+    case CDEV_READ:
+    case CDEV_WRITE:
+    case CDEV_IOCTL:
+        *minor = msg->DEVICE;
+        return 0;
+    case CDEV_SELECT:
+        *minor = msg->u.m_vfs_cdev_select.device;
+        return 0;
+    default:
+        return EINVAL;
+    }
+}

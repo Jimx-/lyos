@@ -20,6 +20,7 @@ BUILD_BASH = get_env("BUILD_BASH")
 BUILD_DASH = get_env("BUILD_DASH")
 BUILD_NCURSES = get_env("BUILD_NCURSES")
 BUILD_COREUTILS = get_env("BUILD_COREUTILS")
+BUILD_VIM = get_env("BUILD_VIM")
 
 if __name__ == "__main__":
     # Prepare source packages
@@ -196,14 +197,14 @@ if __name__ == "__main__":
 
         copy(SYSROOT + '/usr/bin/dash', SYSROOT + '/bin/sh')
 
-    if BUILD_COREUTILS:
+    if BUILD_COREUTILS is not None:
         mkdir('coreutils')
         push_dir('coreutils')
-        #configure_host(COREUTILS_VERSION, ' --disable-nls')
+        configure_host(COREUTILS_VERSION, ' --disable-nls')
         make_and_install_to_destdir()
         pop_dir()
 
-    if BUILD_NCURSES:
+    if BUILD_NCURSES is not None:
         mkdir('ncurses')
         push_dir('ncurses')
         configure_host(
@@ -211,6 +212,17 @@ if __name__ == "__main__":
             ' --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests'
         )
         make_and_install_to_destdir()
+        pop_dir()
+
+    if BUILD_VIM is not None:
+        push_dir('../sources/vim74')
+
+        configure_native(
+            'vim74',
+            '--with-tlib=ncurses --enable-gui=no --disable-gtktest --disable-xim --with-features=normal --disable-gpm --without-x --disable-netbeans --enable-multibyte'
+        )
+        make_and_install_to_destdir()
+
         pop_dir()
 
     pop_dir()  # build

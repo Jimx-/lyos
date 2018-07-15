@@ -5,6 +5,7 @@
 #include <elf.h>
 
 extern char _end[];
+extern char ** environ;
 
 char * _brksize = (char *)0;
 
@@ -55,6 +56,7 @@ static struct sysinfo * get_sysinfo()
 
 void __lyos_init(char* envp[])
 {
+    environ = envp;
 	_syscall_gate = syscall_gate_intr;
 
 	struct sysinfo * si = parse_auxv(envp);

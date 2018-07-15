@@ -16,7 +16,7 @@ static struct needed_entry* alloc_needed_entry()
 int ldso_process_dynamic(struct so_info* si)
 {
 	Elf32_Dyn* dp;
-	int use_pltrel, use_pltrela;
+	int use_pltrel = 0, use_pltrela = 0;
 	Elf32_Addr pltrel, pltrelsz;
 	Elf32_Addr relsz;
 	Elf32_Addr init, fini;

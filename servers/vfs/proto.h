@@ -38,6 +38,7 @@ PUBLIC void sync_inode  (struct inode * p);
 PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags, 
                 struct vfs_mount** vmnt, struct inode** inode);
 PUBLIC struct inode * resolve_path(struct lookup* lookup, struct fproc * fp);
+PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, struct fproc * fp);
 PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp);
 
 PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev);
@@ -59,6 +60,7 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
 PUBLIC int do_open(MESSAGE * p);
 PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode);
 PUBLIC int  do_close(MESSAGE * p);
+PUBLIC int close_fd(struct fproc* fp, int fd);
 PUBLIC int  do_lseek(MESSAGE * p);
 PUBLIC int  do_chroot(MESSAGE * p);
 PUBLIC int  do_mount(MESSAGE * p);
@@ -103,6 +105,7 @@ PUBLIC void enqueue_request(MESSAGE* msg);
 PUBLIC struct vfs_message* dequeue_response();
 PUBLIC void lock_response_queue();
 PUBLIC void unlock_response_queue();
+PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg);
 
 PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 PUBLIC void unlock_filp(struct file_desc* filp);
@@ -115,6 +118,14 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
     size_t count);
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
     size_t length, char** retaddr);
+PUBLIC int cdev_select(dev_t dev, int ops);
+PUBLIC int cdev_reply(MESSAGE* msg);
+PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);
+
+PUBLIC void init_select();
+PUBLIC int do_select(MESSAGE* msg);
+PUBLIC void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor, int status);
+PUBLIC void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor, int status);
 
 #endif
 

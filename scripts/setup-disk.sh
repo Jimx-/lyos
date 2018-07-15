@@ -44,6 +44,7 @@ echo "Installing sysroot..."
 cp -rf $SRCDIR/sysroot/* /$MOUNT_POINT/
 cp -rf $SRCDIR/obj/destdir.x86/* /$MOUNT_POINT/
 chown 1000:1000 /$MOUNT_POINT/home/jimx
+chmod 0777 /$MOUNT_POINT/tmp
 sync
 
 echo "Creating devices..."
