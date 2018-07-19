@@ -32,6 +32,8 @@ EXTERN struct fproc {
 
     struct file_desc * filp[NR_FILES];
     pthread_mutex_t lock;
+
+    struct worker_thread* worker;
 } fproc_table[NR_PROCS];
 
 #define FPF_INUSE   0x1

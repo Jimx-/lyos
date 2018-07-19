@@ -102,6 +102,14 @@ struct mess_vfs_select {
 };
 VERIFY_MESS_SIZE(mess_vfs_select);
 
+struct mess_vfs_cdev_openclose {
+    u64     minor;
+    u32     id;
+
+    u8      _pad[28];
+};
+VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
+
 struct mess_vfs_cdev_select {
     u64     device;
     u32     ops;
@@ -109,6 +117,14 @@ struct mess_vfs_cdev_select {
     u8      _pad[28];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_select);
+
+struct mess_vfs_cdev_reply {
+    u32     status;
+    u32     id;
+
+    u8      _pad[32];
+};
+VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
 
 typedef struct {
     int source;
@@ -121,7 +137,9 @@ typedef struct {
         struct mess5 m5;
 		struct mess_mm_remap m_mm_remap;
         struct mess_vfs_select m_vfs_select;
+        struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_select m_vfs_cdev_select;
+        struct mess_vfs_cdev_reply m_vfs_cdev_reply;
 
 		u8 _pad[40];
     } u;

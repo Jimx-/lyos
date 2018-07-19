@@ -286,7 +286,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             int file_type = pin->i_mode & I_TYPE;
 
             if (file_type == I_CHAR_SPECIAL) {
-                cdev_io(CDEV_READ, pin->i_specdev, KERNEL, (void*) buf, offset, len);
+                cdev_io(CDEV_READ, pin->i_specdev, KERNEL, (void*) buf, offset, len, fp);
             } else if (file_type == I_REGULAR) {
                 size_t count;
                 result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
@@ -318,7 +318,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             int file_type = pin->i_mode & I_TYPE;
 
             if (file_type == I_CHAR_SPECIAL) {
-                result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr);
+                result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr, fp);
                 if (result) {
                     unlock_filp(filp);
                     goto reply;

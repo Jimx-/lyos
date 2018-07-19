@@ -112,13 +112,13 @@ PUBLIC void unlock_filp(struct file_desc* filp);
 PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
-PUBLIC int cdev_open(dev_t dev);
-PUBLIC int cdev_close(dev_t dev);
+PUBLIC int cdev_open(dev_t dev, struct fproc* fp);
+PUBLIC int cdev_close(dev_t dev, struct fproc* fp);
 PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-    size_t count);
+    size_t count, struct fproc* fp);
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
-    size_t length, char** retaddr);
-PUBLIC int cdev_select(dev_t dev, int ops);
+    size_t length, char** retaddr, struct fproc* fp);
+PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp);
 PUBLIC int cdev_reply(MESSAGE* msg);
 PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);
 

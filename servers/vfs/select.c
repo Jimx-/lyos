@@ -313,7 +313,7 @@ PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block, str
     if (pm->select_busy) return SUSPEND;
 
     filp->fd_select_flags &= ~SFL_UPDATE;
-    int retval = cdev_select(dev, rops);
+    int retval = cdev_select(dev, rops, fp);
     if (retval) return retval;
 
     pm->select_busy = 1;

@@ -137,7 +137,7 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
                 case I_CHAR_SPECIAL:    /* open char device */
                 {
                     int dev = pin->i_specdev;
-                    retval = cdev_open(dev);
+                    retval = cdev_open(dev, fp);
                     break;
                 }
                 case I_BLOCK_SPECIAL:

@@ -31,7 +31,7 @@
 
 PRIVATE int do_open(struct chardriver* cd, MESSAGE* msg)
 {
-    return cd->cdr_open(msg->DEVICE, 0);
+    return cd->cdr_open(msg->u.m_vfs_cdev_openclose.minor, 0);
 }
 
 PRIVATE int do_close(struct chardriver* cd, MESSAGE* msg)
@@ -86,6 +86,7 @@ PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
 PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
 {
     int src = msg->source;
+    int retval = 0;
 
     if (msg->type == NOTIFY_MSG) {
         switch (msg->source) {
@@ -101,13 +102,11 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
 
     switch (msg->type) {
     case CDEV_OPEN:
-        msg->RETVAL = do_open(cd, msg);
+        retval = do_open(cd, msg);
         break;
-
     case CDEV_CLOSE:
-        msg->RETVAL = do_close(cd, msg);
+        retval = do_close(cd, msg);
         break;
-
     case CDEV_READ:
     case CDEV_WRITE: {
         int r = do_rdwt(cd, msg);
@@ -131,7 +130,7 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
         break;
     }
 
-    send_recv(SEND, src, msg);
+    chardriver_reply(msg, retval);
 }
 
 PUBLIC int chardriver_task(struct chardriver* cd)
@@ -146,11 +145,42 @@ PUBLIC int chardriver_task(struct chardriver* cd)
     return 0;
 }
 
+PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
+{
+    MESSAGE reply_msg;
+
+    if (retval == SUSPEND) {
+        switch (msg->type) {
+        case CDEV_READ:
+        case CDEV_WRITE:
+        case CDEV_IOCTL:
+            return;
+        default:
+            panic("chardriver: bad request to suspend: %d", msg->type);
+        }
+    }
+
+    memset(&reply_msg, 0, sizeof(MESSAGE));
+
+    switch (msg->type) {
+    case CDEV_OPEN:
+    case CDEV_CLOSE:
+        reply_msg.type = CDEV_REPLY;
+        reply_msg.u.m_vfs_cdev_reply.status = retval;
+        reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_openclose.id;
+        break;
+    }
+
+    send_recv(SEND, TASK_FS, &reply_msg);
+}
+
 PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
 {
     switch (msg->type) {
     case CDEV_OPEN:
     case CDEV_CLOSE:
+        *minor = msg->u.m_vfs_cdev_openclose.minor;
+        break;
     case CDEV_READ:
     case CDEV_WRITE:
     case CDEV_IOCTL:

@@ -53,7 +53,7 @@ PUBLIC int do_ioctl(MESSAGE * p)
     if (file_type == I_BLOCK_SPECIAL) {
 
     } else {
-        retval = cdev_io(CDEV_IOCTL, dev, p->source, p->BUF, 0, p->REQUEST);
+        retval = cdev_io(CDEV_IOCTL, dev, p->source, p->BUF, 0, p->REQUEST, pcaller);
     }
 
     unlock_filp(filp);

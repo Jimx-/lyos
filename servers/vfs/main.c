@@ -118,6 +118,7 @@ PUBLIC void init_vfs()
 	/* fproc_table[] */
 	for (i = 0; i < NR_PROCS; i++) {
 		pthread_mutex_init(&fproc_table[i].lock, NULL);
+        fproc_table[i].worker = NULL;
 	}
 	pthread_mutex_init(&filesystem_lock, NULL);
 

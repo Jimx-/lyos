@@ -113,7 +113,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
         int t = p->type == READ ? CDEV_READ : CDEV_WRITE;
         int dev = pin->i_specdev;
 
-        retval = cdev_io(t, dev, src, buf, position, len);
+        retval = cdev_io(t, dev, src, buf, position, len, pcaller);
         if (retval < 0) {
             p->RETVAL = retval;
             retval = 0;

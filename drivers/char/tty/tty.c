@@ -42,6 +42,7 @@
 #include "global.h"
 
 #include <libdevman/libdevman.h>
+#include <libchardriver/libchardriver.h>
     
 PRIVATE struct sysinfo * _sysinfo;
 PRIVATE dev_t cons_minor = CONS_MINOR + 1;
@@ -64,6 +65,7 @@ PRIVATE void    set_console_line(char val[CONS_ARG]);
 PRIVATE void    tty_dev_read    (TTY* tty);
 PRIVATE void    tty_dev_write   (TTY* tty);
 PRIVATE void    in_transfer     (TTY* tty);
+PRIVATE int     do_open     (dev_t minor, int access);
 PRIVATE void    tty_do_read     (TTY* tty, MESSAGE* msg);
 PRIVATE void    tty_do_write    (TTY* tty, MESSAGE* msg);
 PRIVATE void    tty_do_ioctl(TTY* tty, MESSAGE* msg);
@@ -76,6 +78,9 @@ PRIVATE void    put_key         (TTY* tty, u32 key);
 PRIVATE int     select_try(TTY* tty, int ops);
 PRIVATE int     select_retry(TTY* tty);
 
+PRIVATE struct chardriver tty_driver = {
+    .cdr_open = do_open,
+};
 
 /*****************************************************************************
  *                                task_tty
@@ -121,8 +126,7 @@ PUBLIC int main()
 
         switch (msg.type) {
         case CDEV_OPEN:
-            msg.type = SYSCALL_RET;
-            send_recv(SEND, src, &msg);
+            chardriver_process(&tty_driver, &msg);
             break;
         case CDEV_READ:
             ptty = minor2tty(msg.DEVICE);
@@ -457,6 +461,17 @@ PUBLIC void handle_events(TTY * tty)
     }
 }
 
+PRIVATE int do_open(dev_t minor, int access)
+{
+    TTY* tty = minor2tty(minor);
+
+    if (tty == NULL) {
+        return ENXIO;
+    }
+
+    return 0;
+}
+
 /*****************************************************************************
  *                                tty_do_read
  *****************************************************************************/
@@ -488,7 +503,6 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
     tty->tty_incaller = TASK_FS;  /* tell FS to unblock caller later */
     tty->tty_inreply = RESUME_PROC;
 }
-
 
 /*****************************************************************************
  *                                tty_do_write

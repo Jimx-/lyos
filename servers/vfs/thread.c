@@ -221,6 +221,7 @@ PRIVATE void handle_request(MESSAGE* msg)
     case MM_VFS_REQUEST:
         msg->RETVAL = do_mm_request(msg);
         break;
+    case CDEV_REPLY:
     case CDEV_SELECT_REPLY1:
     case CDEV_SELECT_REPLY2:
         cdev_reply(msg);
@@ -259,6 +260,7 @@ PUBLIC pid_t create_worker(int id)
 
     struct worker_thread* thread = &workers[id];
     thread->id = id;
+    thread->driver_msg = NULL;
 
     pthread_mutex_init(&thread->event_mutex, NULL);
     pthread_cond_init(&thread->event, NULL);

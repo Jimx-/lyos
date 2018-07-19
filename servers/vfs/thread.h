@@ -34,6 +34,8 @@ struct worker_thread {
     pthread_cond_t event;
 
     struct list_head list;
+
+    MESSAGE* driver_msg;
 };
 
 struct vfs_message {

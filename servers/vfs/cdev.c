@@ -25,6 +25,7 @@
 #include <lyos/proc.h>
 #include <lyos/driver.h>
 #include <lyos/fs.h>
+#include <lyos/sysutils.h>
 #include "const.h"
 #include "types.h"
 #include "global.h"
@@ -81,6 +82,14 @@ PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
 	return NULL;
 }
 
+PRIVATE int cdev_send(dev_t dev, MESSAGE* msg)
+{
+    struct fproc* driver = cdev_get(dev);
+    if (!driver) return ENXIO;
+
+    return send_recv(SEND, driver->endpoint, msg);
+}
+
 PRIVATE int cdev_sendrec(dev_t dev, MESSAGE* msg)
 {
     struct fproc* driver = cdev_get(dev);
@@ -89,7 +98,7 @@ PRIVATE int cdev_sendrec(dev_t dev, MESSAGE* msg)
     return send_recv(BOTH, driver->endpoint, msg);
 }
 
-PRIVATE int cdev_opcl(int op, dev_t dev)
+PRIVATE int cdev_opcl(int op, dev_t dev, struct fproc* fp)
 {
     if (op != CDEV_OPEN && op != CDEV_CLOSE) {
         return EINVAL;
@@ -97,23 +106,37 @@ PRIVATE int cdev_opcl(int op, dev_t dev)
 
     MESSAGE driver_msg;
     driver_msg.type = op;
-    driver_msg.DEVICE = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_openclose.minor = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_openclose.id = fp->endpoint;
 
-    return cdev_sendrec(dev, &driver_msg);
+    fp->worker = worker_self();
+    fp->worker->driver_msg = &driver_msg;
+
+    if (cdev_send(dev, &driver_msg) != 0) {
+        panic("vfs: cdev_opcl send message failed");
+    }
+
+    if (fp->worker->driver_msg != NULL)
+        worker_wait();  /* wait for asynchronous reply from device driver */
+    fp->worker = NULL;
+
+    int retval = driver_msg.u.m_vfs_cdev_reply.status;
+    
+    return retval;
 }
 
-PUBLIC int cdev_open(dev_t dev)
+PUBLIC int cdev_open(dev_t dev, struct fproc* fp)
 {
-    return cdev_opcl(CDEV_OPEN, dev);
+    return cdev_opcl(CDEV_OPEN, dev, fp);
 }
 
-PUBLIC int cdev_close(dev_t dev)
+PUBLIC int cdev_close(dev_t dev, struct fproc* fp)
 {
-    return cdev_opcl(CDEV_CLOSE, dev);
+    return cdev_opcl(CDEV_CLOSE, dev, fp);
 }
 
 PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-    size_t count)
+    size_t count, struct fproc* fp)
 {
     if (op != CDEV_READ && op != CDEV_WRITE && op != CDEV_IOCTL) {
         return EINVAL;
@@ -143,7 +166,7 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 }
 
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
-    size_t length, char** retaddr)
+    size_t length, char** retaddr, struct fproc* fp)
 {
     MESSAGE driver_msg;
     driver_msg.type = CDEV_MMAP;
@@ -164,7 +187,7 @@ PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
     return driver_msg.RETVAL;
 }
 
-PUBLIC int cdev_select(dev_t dev, int ops)
+PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
     struct fproc* driver = cdev_get(dev);
     if (!driver) return ENXIO;
@@ -179,9 +202,27 @@ PUBLIC int cdev_select(dev_t dev, int ops)
 	return retval;
 }
 
+PRIVATE void cdev_reply_generic(MESSAGE* msg)
+{
+    endpoint_t endpoint = msg->u.m_vfs_cdev_reply.id;
+
+    struct fproc* fp = vfs_endpt_proc(endpoint);
+    if (fp == NULL) return;
+
+    struct worker_thread* worker = fp->worker;
+    if (worker != NULL && worker->driver_msg != NULL) {
+        *worker->driver_msg = *msg;
+        worker->driver_msg = NULL;
+        worker_wake(worker);
+    }
+}
+
 PUBLIC int cdev_reply(MESSAGE* msg)
 {
 	switch (msg->type) {
+    case CDEV_REPLY:
+        cdev_reply_generic(msg);
+        break;
 	case CDEV_SELECT_REPLY1:
 		do_select_cdev_reply1(msg->source, msg->DEVICE, msg->RETVAL);
 		break;
