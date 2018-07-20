@@ -7,13 +7,17 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 : ${BUILD_EVERYTHING:=false}
 : ${BUILD_NEWLIB:=false}
+: ${BUILD_BASH:=false}
 : ${BUILD_COREUTILS:=false}
+: ${BUILD_DASH:=false}
 : ${BUILD_VIM:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_NEWLIB=true
-    BUILD_COREUTILS:=true
-    BUILD_VIM:=true
+    BUILD_BASH=true
+    BUILD_COREUTILS=true
+    BUILD_DASH=true
+    BUILD_VIM=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, target: $TARGET)"
@@ -36,7 +40,7 @@ if $BUILD_NEWLIB; then
     fi
     
     pushd $DIR/sources/newlib-2.0.0 > /dev/null
-    #find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
+    find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
     popd > /dev/null
     
     pushd $DIR/sources/newlib-2.0.0/newlib/libc/sys > /dev/null
@@ -58,6 +62,20 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
 fi
 
+# Build bash
+if $BUILD_BASH; then
+    if [ ! -d "bash" ]; then
+        mkdir bash
+    fi
+    
+    pushd bash > /dev/null
+    $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    cp $SYSROOT/usr/bin/bash $SYSROOT/bin/bash
+    popd > /dev/null
+fi
+
 # Build coreutils
 if $BUILD_COREUTILS; then
     if [ ! -d "coreutils" ]; then
@@ -70,6 +88,21 @@ if $BUILD_COREUTILS; then
     make DESTDIR=$SYSROOT install
     popd > /dev/null
 fi 
+
+# Build dash
+if $BUILD_DASH; then
+    if [ ! -d "dash" ]; then
+        mkdir dash
+    fi
+    
+    pushd dash > /dev/null
+    $DIR/sources/dash-0.5.8/configure --host=$TARGET --prefix=$CROSSPREFIX || cmd_error
+    sed -i '/# define _GNU_SOURCE 1/d' config.h
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    cp $SYSROOT/usr/bin/dash $SYSROOT/bin/sh
+    popd > /dev/null
+fi
 
 # Build Vim
 if $BUILD_VIM; then
