@@ -74,6 +74,7 @@ cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/ 
 #cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 #cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
+sync
 
 umount $MOUNT_POINT
 kpartx -d $LOOPMAP

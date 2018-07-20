@@ -114,10 +114,6 @@ PUBLIC int do_rdwt(MESSAGE * p)
         int dev = pin->i_specdev;
 
         retval = cdev_io(t, dev, src, buf, position, len, pcaller);
-        if (retval < 0) {
-            p->RETVAL = retval;
-            retval = 0;
-        }
 
         unlock_filp(filp);
         return retval;

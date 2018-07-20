@@ -158,7 +158,7 @@ PRIVATE void handle_request(MESSAGE* msg)
         break;
     case READ:
     case WRITE:
-        msg->CNT = do_rdwt(msg);
+        msg->RETVAL = do_rdwt(msg);
         break;
     case IOCTL:
         msg->RETVAL = do_ioctl(msg);
@@ -228,7 +228,6 @@ PRIVATE void handle_request(MESSAGE* msg)
         msg->RETVAL = SUSPEND;
         break;
     case RESUME_PROC:
-        msg->RETVAL = 0;
         msg->source = msg->PROC_NR;
         break;
     default:

@@ -89,7 +89,7 @@ PRIVATE void cons_write(TTY * tty)
         MESSAGE msg;
         msg.type = tty->tty_outreply;
         msg.PROC_NR = tty->tty_outprocnr;
-        msg.CNT = tty->tty_outcnt;
+        msg.RETVAL = tty->tty_outcnt;
         send_recv(SEND, tty->tty_outcaller, &msg); 
     }
 }

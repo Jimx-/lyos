@@ -766,7 +766,11 @@ int read(int fd, void *buf, int count)
 
 	send_recv(BOTH, TASK_FS, &msg);
 
-	return msg.CNT;
+	if (msg.RETVAL < 0) {
+		errno = -msg.RETVAL;
+		return -1;
+	}
+	return msg.RETVAL;
 }
 
 int ioctl(int fd, int request, void * data)
@@ -867,7 +871,11 @@ int write(int fd, const void *buf, int count)
 	
 	send_recv(BOTH, TASK_FS, &msg);
 
-	return msg.CNT;
+	if (msg.RETVAL < 0) {
+		errno = -msg.RETVAL;
+		return -1;
+	}
+	return msg.RETVAL;
 }
 
 int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)

@@ -110,11 +110,7 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
     case CDEV_READ:
     case CDEV_WRITE: {
         int r = do_rdwt(cd, msg);
-        if (r < 0) msg->RETVAL = -r;
-        else {
-            msg->RETVAL = 0;
-            msg->CNT = r;
-        }
+        msg->RETVAL = r;
         break;
     }
     case CDEV_IOCTL:

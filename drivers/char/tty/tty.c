@@ -434,7 +434,7 @@ PRIVATE void in_transfer(TTY* tty)
         MESSAGE msg;
         msg.type = tty->tty_inreply;
         msg.PROC_NR = tty->tty_inprocnr;
-        msg.CNT = tty->tty_trans_cnt;
+        msg.RETVAL = tty->tty_trans_cnt;
         send_recv(SEND, tty->tty_incaller, &msg);
         tty->tty_inleft = 0;
     }
@@ -466,7 +466,7 @@ PRIVATE int do_open(dev_t minor, int access)
     TTY* tty = minor2tty(minor);
 
     if (tty == NULL) {
-        return ENXIO;
+        return -ENXIO;
     }
 
     return 0;
@@ -498,7 +498,7 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
     tty->tty_trans_cnt = 0; /* how many chars have been transferred */
 
     msg->type = SUSPEND_PROC;
-    msg->CNT = tty->tty_inleft;
+    msg->RETVAL= tty->tty_inleft;
     send_recv(SEND, tty->tty_incaller, msg);
     tty->tty_incaller = TASK_FS;  /* tell FS to unblock caller later */
     tty->tty_inreply = RESUME_PROC;
@@ -529,11 +529,10 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
     if (msg->FLAGS & O_NONBLOCK) {   /* do not block */    
         tty->tty_outleft = tty->tty_outcnt = 0;
         msg->type = tty->tty_outreply;
-        msg->STATUS = tty->tty_outcnt > 0 ? tty->tty_outcnt : EAGAIN;
+        msg->RETVAL = tty->tty_outcnt > 0 ? tty->tty_outcnt : EAGAIN;
         send_recv(SEND, tty->tty_outcaller, msg);
     } else {    /* block */
         msg->type = SUSPEND_PROC;
-        msg->CNT = tty->tty_outleft;
         send_recv(SEND, tty->tty_outcaller, msg);
         tty->tty_outcaller = TASK_FS;  /* tell FS to unblock caller later */
         tty->tty_outreply = RESUME_PROC;

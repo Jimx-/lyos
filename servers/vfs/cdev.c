@@ -161,8 +161,7 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
         return SUSPEND;
     }
 
-    if (op == CDEV_IOCTL) return driver_msg.RETVAL;
-    return driver_msg.CNT;
+    return driver_msg.RETVAL;
 }
 
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,

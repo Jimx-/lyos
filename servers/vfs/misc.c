@@ -336,26 +336,8 @@ PUBLIC int do_mm_request(MESSAGE* m)
         }
     case MMR_FDCLOSE:
         {
-            struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
-            if (!filp || !filp->fd_inode) {
-                result = EBADF;
-                if (filp) unlock_filp(filp);
-                goto reply;
-            }
-
-            struct inode* pin = filp->fd_inode;
-
-            unlock_inode(pin);
-            put_inode(pin);
-
-            lock_fproc(mm_task);
-            if (--filp->fd_cnt == 0) {
-                filp->fd_inode = NULL;
-                mm_task->filp[fd] = NULL;
-            }
-            unlock_fproc(mm_task);
-
-            unlock_filp(filp);
+            result = close_fd(fp, fd);
+            break;
         }
     }
 
