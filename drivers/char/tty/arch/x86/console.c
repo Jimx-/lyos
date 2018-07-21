@@ -34,6 +34,8 @@
 #include "proto.h"
 #include "global.h"
 
+#include <libchardriver/libchardriver.h>
+
 #define     V_MEM_BASE  0xB8000 /* base of color video memory */
 #define     V_MEM_SIZE  0x8000  /* 32K: B8000H -> BFFFFH */
 
@@ -71,7 +73,7 @@ PRIVATE void cons_write(TTY * tty)
     if (i == 0) return;
     while (i) {
         int bytes = min(TTY_OUT_BUF_LEN, i);
-        data_copy(TASK_TTY, buf, tty->tty_outprocnr, p, bytes);
+        data_copy(TASK_TTY, buf, tty->tty_outcaller, p, bytes);
 
         for (j = 0; j < bytes; j++)
         {
@@ -85,12 +87,8 @@ PRIVATE void cons_write(TTY * tty)
 
     flush((CONSOLE *)tty->tty_dev);
 
-    if (tty->tty_outleft == 0 && tty->tty_outcaller != KERNEL) {     /* done, reply to caller */
-        MESSAGE msg;
-        msg.type = tty->tty_outreply;
-        msg.PROC_NR = tty->tty_outprocnr;
-        msg.RETVAL = tty->tty_outcnt;
-        send_recv(SEND, tty->tty_outcaller, &msg); 
+    if (tty->tty_outleft == 0 && tty->tty_outcaller != TASK_TTY) {     /* done, reply to caller */
+        chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
     }
 }
 

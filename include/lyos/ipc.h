@@ -110,8 +110,21 @@ struct mess_vfs_cdev_openclose {
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
 
+struct mess_vfs_cdev_readwrite {
+    u64         minor;
+    endpoint_t  endpoint;
+    u32         id;
+    void*       buf;
+    u32         request;
+    off_t       pos;
+    size_t      count;
+
+    u8          _pad[8];
+};
+VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
+
 struct mess_vfs_cdev_select {
-    u64     device;
+    u64     minor;
     u32     ops;
 
     u8      _pad[28];
@@ -119,7 +132,7 @@ struct mess_vfs_cdev_select {
 VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 
 struct mess_vfs_cdev_reply {
-    u32     status;
+    s32     status;
     u32     id;
 
     u8      _pad[32];
@@ -138,6 +151,7 @@ typedef struct {
 		struct mess_mm_remap m_mm_remap;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
+        struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_select m_vfs_cdev_select;
         struct mess_vfs_cdev_reply m_vfs_cdev_reply;
 

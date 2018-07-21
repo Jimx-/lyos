@@ -144,24 +144,22 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 
     MESSAGE driver_msg;
     driver_msg.type = op;
-    driver_msg.DEVICE = MINOR(dev);
-    driver_msg.BUF = buf;
-    driver_msg.PROC_NR = src;
+    driver_msg.u.m_vfs_cdev_readwrite.minor = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_readwrite.buf = buf;
+    driver_msg.u.m_vfs_cdev_readwrite.endpoint = src;
+    driver_msg.u.m_vfs_cdev_readwrite.id = src;
     if (op == CDEV_IOCTL) {
-        driver_msg.REQUEST = count;
+        driver_msg.u.m_vfs_cdev_readwrite.request = count;
     } else {
-        driver_msg.POSITION = pos;
-        driver_msg.CNT = count;
+        driver_msg.u.m_vfs_cdev_readwrite.pos = pos;
+        driver_msg.u.m_vfs_cdev_readwrite.count = count;
     }
 
-    int retval = cdev_sendrec(dev, &driver_msg);
-    if (retval) return retval;
-
-    if (driver_msg.type == SUSPEND_PROC) {
-        return SUSPEND;
+    if (cdev_send(dev, &driver_msg) != 0) {
+        panic("vfs: cdev_io send message failed");
     }
 
-    return driver_msg.RETVAL;
+    return SUSPEND;
 }
 
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
@@ -188,17 +186,13 @@ PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
 
 PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
-    struct fproc* driver = cdev_get(dev);
-    if (!driver) return ENXIO;
-
 	MESSAGE driver_msg;
 	memset(&driver_msg, 0, sizeof(MESSAGE));
 	driver_msg.type = CDEV_SELECT;
-	driver_msg.u.m_vfs_cdev_select.device = MINOR(dev);
+	driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev);
 	driver_msg.u.m_vfs_cdev_select.ops = ops;
 
-	int retval = send_recv(SEND, driver->endpoint, &driver_msg);
-	return retval;
+	return cdev_send(dev, &driver_msg);
 }
 
 PRIVATE void cdev_reply_generic(MESSAGE* msg)
@@ -213,6 +207,11 @@ PRIVATE void cdev_reply_generic(MESSAGE* msg)
         *worker->driver_msg = *msg;
         worker->driver_msg = NULL;
         worker_wake(worker);
+    } else {
+        MESSAGE reply_msg;
+        reply_msg.type = SYSCALL_RET;
+        reply_msg.RETVAL = msg->u.m_vfs_cdev_reply.status;
+        revive_proc(fp->endpoint, &reply_msg);
     }
 }
 

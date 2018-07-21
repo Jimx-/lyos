@@ -33,6 +33,8 @@
 #include "proto.h"
 #include "global.h"
 
+#include <libchardriver/libchardriver.h>
+
 /* 8250 constants */
 #define UART_FREQ         115200L   /* timer frequency */
 
@@ -244,7 +246,7 @@ PRIVATE void rs_write(TTY * tty)
 
         if (count == 0) break;
 
-        data_copy(SELF, rs->ohead, tty->tty_outprocnr, (char *)tty->tty_outbuf + tty->tty_outcnt, count);
+        data_copy(SELF, rs->ohead, tty->tty_outcaller, (char *)tty->tty_outbuf + tty->tty_outcnt, count);
 
         ocount = count;
         rs->ocount += ocount;
@@ -255,12 +257,8 @@ PRIVATE void rs_write(TTY * tty)
         tty->tty_outcnt += ocount;
 
         if ((tty->tty_outleft -= count) == 0) {
-            if (tty->tty_outcaller != KERNEL) {
-                MESSAGE msg;
-                msg.type = tty->tty_outreply;
-                msg.PROC_NR = tty->tty_outprocnr;
-                msg.RETVAL = tty->tty_outcnt;
-                send_recv(SEND, tty->tty_outcaller, &msg); 
+            if (tty->tty_outcaller != TASK_TTY) {
+                chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
             }
         }
     }

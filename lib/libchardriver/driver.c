@@ -31,39 +31,46 @@
 
 PRIVATE int do_open(struct chardriver* cd, MESSAGE* msg)
 {
+    if (cd->cdr_open == NULL) return 0;
     return cd->cdr_open(msg->u.m_vfs_cdev_openclose.minor, 0);
 }
 
 PRIVATE int do_close(struct chardriver* cd, MESSAGE* msg)
 {
-    return cd->cdr_close(msg->DEVICE);
+    if (cd->cdr_close == NULL) return 0;
+    return cd->cdr_close(msg->u.m_vfs_cdev_openclose.minor);
 }
 
 PRIVATE ssize_t do_rdwt(struct chardriver* cd, MESSAGE* msg)
 {
     int do_write = 0;
     if (msg->type == CDEV_WRITE) do_write = 1;
-    int minor = msg->DEVICE;
-    u64 pos = msg->POSITION;
-    endpoint_t ep = msg->PROC_NR;
-    char* buf = msg->BUF;
-    unsigned int count = msg->CNT;
+
+    int minor = msg->u.m_vfs_cdev_readwrite.minor;
+    cdev_id_t id = msg->u.m_vfs_cdev_readwrite.id;
+    u64 pos = msg->u.m_vfs_cdev_readwrite.pos;
+    endpoint_t ep = msg->u.m_vfs_cdev_readwrite.endpoint;
+    char* buf = msg->u.m_vfs_cdev_readwrite.buf;
+    unsigned int count = msg->u.m_vfs_cdev_readwrite.count;
 
     if (do_write && cd->cdr_write) return cd->cdr_write(minor, pos,
-        ep, buf, count);
+        ep, buf, count, id);
     else if (!do_write && cd->cdr_read) return cd->cdr_read(minor, pos,
-        ep, buf, count);
+        ep, buf, count, id);
     return -EIO;
 }
 
 PRIVATE int do_ioctl(struct chardriver* cd, MESSAGE* msg)
 {
-    int minor = msg->DEVICE;
-    int request = msg->REQUEST;
-    endpoint_t ep = msg->PROC_NR;
-    char* buf = msg->BUF;
+    int minor = msg->u.m_vfs_cdev_readwrite.minor;
+    cdev_id_t id = msg->u.m_vfs_cdev_readwrite.id;
+    int request = msg->u.m_vfs_cdev_readwrite.request;
+    endpoint_t ep = msg->u.m_vfs_cdev_readwrite.endpoint;
+    char* buf = msg->u.m_vfs_cdev_readwrite.buf;
 
-    return cd->cdr_ioctl(minor, request, ep, buf);
+    if (cd->cdr_ioctl == NULL) return ENOTTY;
+
+    return cd->cdr_ioctl(minor, request, ep, buf, id);
 }
 
 PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
@@ -81,6 +88,16 @@ PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
 
     msg->ADDR = retaddr;
     return retval;
+}
+
+PRIVATE int do_select(struct chardriver* cd, MESSAGE* msg)
+{
+    int minor = msg->u.m_vfs_cdev_select.minor;
+    int ops = msg->u.m_vfs_cdev_select.ops;
+    endpoint_t endpoint = msg->source;
+
+    if (cd->cdr_select == NULL) return EBADF;
+    return cd->cdr_select(minor, ops, endpoint);
 }
 
 PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
@@ -108,21 +125,20 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
         retval = do_close(cd, msg);
         break;
     case CDEV_READ:
-    case CDEV_WRITE: {
-        int r = do_rdwt(cd, msg);
-        msg->RETVAL = r;
+    case CDEV_WRITE:
+        retval = do_rdwt(cd, msg);
         break;
-    }
     case CDEV_IOCTL:
-        msg->RETVAL = do_ioctl(cd, msg);
+        retval = do_ioctl(cd, msg);
         break;
-
     case CDEV_MMAP:
         msg->RETVAL = do_mmap(cd, msg);
         break;
-
+    case CDEV_SELECT:
+        retval = do_select(cd, msg);
+        break;
     default:
-        msg->RETVAL = ENOSYS;
+        retval = ENOSYS;
         break;
     }
 
@@ -165,9 +181,35 @@ PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
         reply_msg.u.m_vfs_cdev_reply.status = retval;
         reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_openclose.id;
         break;
+    case CDEV_READ:
+    case CDEV_WRITE:
+    case CDEV_IOCTL:
+        reply_msg.type = CDEV_REPLY;
+        reply_msg.u.m_vfs_cdev_reply.status = retval;
+        reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_readwrite.id;
+        break;
+    case CDEV_SELECT:
+        reply_msg.type = CDEV_SELECT_REPLY1;
+        reply_msg.RETVAL = retval;
+        reply_msg.DEVICE = msg->u.m_vfs_cdev_select.minor;
+        break;
     }
 
     send_recv(SEND, TASK_FS, &reply_msg);
+}
+
+PUBLIC void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval)
+{
+    MESSAGE msg;
+    memset(&msg, 0, sizeof(MESSAGE));
+
+    msg.type = CDEV_REPLY;
+    msg.u.m_vfs_cdev_reply.status = retval;
+    msg.u.m_vfs_cdev_reply.id = id;
+
+    if (send_recv(SEND, endpoint, &msg) != 0) {
+        panic("chardriver: failed to reply to vfs");
+    }
 }
 
 PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
@@ -180,10 +222,10 @@ PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
     case CDEV_READ:
     case CDEV_WRITE:
     case CDEV_IOCTL:
-        *minor = msg->DEVICE;
+        *minor = msg->u.m_vfs_cdev_readwrite.minor;
         return 0;
     case CDEV_SELECT:
-        *minor = msg->u.m_vfs_cdev_select.device;
+        *minor = msg->u.m_vfs_cdev_select.minor;
         return 0;
     default:
         return EINVAL;

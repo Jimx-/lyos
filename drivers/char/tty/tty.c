@@ -66,11 +66,11 @@ PRIVATE void    tty_dev_read    (TTY* tty);
 PRIVATE void    tty_dev_write   (TTY* tty);
 PRIVATE void    in_transfer     (TTY* tty);
 PRIVATE int     do_open     (dev_t minor, int access);
-PRIVATE void    tty_do_read     (TTY* tty, MESSAGE* msg);
-PRIVATE void    tty_do_write    (TTY* tty, MESSAGE* msg);
-PRIVATE void    tty_do_ioctl(TTY* tty, MESSAGE* msg);
+PRIVATE ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
+PRIVATE ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
+PRIVATE int     do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id);
+PRIVATE int     do_select(dev_t minor, int ops, endpoint_t endpoint);
 PRIVATE void    tty_do_kern_log();
-PRIVATE void    tty_do_select(TTY* tty, MESSAGE* msg);
 PRIVATE void    tty_echo    (TTY* tty, char c);
 PRIVATE void    tty_sigproc (TTY * tty, int signo);
 PRIVATE void    erase       (TTY * tty);
@@ -80,6 +80,10 @@ PRIVATE int     select_retry(TTY* tty);
 
 PRIVATE struct chardriver tty_driver = {
     .cdr_open = do_open,
+    .cdr_read = do_read,
+    .cdr_write = do_write,
+    .cdr_ioctl = do_ioctl,
+    .cdr_select = do_select,
 };
 
 /*****************************************************************************
@@ -122,38 +126,16 @@ PUBLIC int main()
             continue;
         }
 
-        TTY* ptty;
-
         switch (msg.type) {
-        case CDEV_OPEN:
-            chardriver_process(&tty_driver, &msg);
-            break;
-        case CDEV_READ:
-            ptty = minor2tty(msg.DEVICE);
-            tty_do_read(ptty, &msg);
-            break;
-        case CDEV_WRITE:
-            ptty = minor2tty(msg.DEVICE);
-            tty_do_write(ptty, &msg);
-            break;
-        case CDEV_IOCTL:
-            ptty = minor2tty(msg.DEVICE);
-            tty_do_ioctl(ptty, &msg);
-            break;
-        case CDEV_SELECT:
-            ptty = minor2tty(msg.u.m_vfs_cdev_select.device);
-            tty_do_select(ptty, &msg);
-            break;
         case INPUT_TTY_UP:
         case INPUT_TTY_EVENT:
             do_input(&msg);
-            break;
+            continue;
         default:
-            msg.type = SYSCALL_RET;
-            msg.RETVAL = ENOSYS;
-            send_recv(SEND, src, &msg);
             break;
         }
+
+        chardriver_process(&tty_driver, &msg);
     }
 
     return 0;
@@ -411,7 +393,7 @@ PRIVATE void in_transfer(TTY* tty)
         if (++bp == buf + sizeof(buf)) {  /* buffer full */
             void * p = tty->tty_inbuf +
                        tty->tty_trans_cnt;
-            data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, sizeof(buf));
+            data_copy(tty->tty_incaller, p, TASK_TTY, buf, sizeof(buf));
             tty->tty_trans_cnt += sizeof(buf);
             bp = buf;
         }
@@ -426,17 +408,12 @@ PRIVATE void in_transfer(TTY* tty)
         int count = bp - buf;
         void * p = tty->tty_inbuf +
                        tty->tty_trans_cnt;
-        data_copy(tty->tty_inprocnr, p, TASK_TTY, buf, count);
+        data_copy(tty->tty_incaller, p, TASK_TTY, buf, count);
         tty->tty_trans_cnt += count;
     }
 
     if (tty->tty_inleft == 0) {
-        MESSAGE msg;
-        msg.type = tty->tty_inreply;
-        msg.PROC_NR = tty->tty_inprocnr;
-        msg.RETVAL = tty->tty_trans_cnt;
-        send_recv(SEND, tty->tty_incaller, &msg);
-        tty->tty_inleft = 0;
+        chardriver_reply_io(TASK_FS, tty->tty_inid, tty->tty_trans_cnt);
     }
 }
 
@@ -466,7 +443,7 @@ PRIVATE int do_open(dev_t minor, int access)
     TTY* tty = minor2tty(minor);
 
     if (tty == NULL) {
-        return -ENXIO;
+        return ENXIO;
     }
 
     return 0;
@@ -487,21 +464,23 @@ PRIVATE int do_open(dev_t minor, int access)
  *
  * @see documentation/tty/
  *****************************************************************************/
-PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
+PRIVATE ssize_t do_read(dev_t minor, u64 pos,
+	  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
-    /* tell the tty: */
-    tty->tty_inreply = SYSCALL_RET;
-    tty->tty_incaller   = msg->source;  /* who called, usually FS thread */
-    tty->tty_inprocnr   = msg->PROC_NR; /* who wants the chars */
-    tty->tty_inbuf  = msg->BUF;/* where the chars should be put */
-    tty->tty_inleft = msg->CNT; /* how many chars are requested */
-    tty->tty_trans_cnt = 0; /* how many chars have been transferred */
+    TTY* tty = minor2tty(minor);
 
-    msg->type = SUSPEND_PROC;
-    msg->RETVAL= tty->tty_inleft;
-    send_recv(SEND, tty->tty_incaller, msg);
-    tty->tty_incaller = TASK_FS;  /* tell FS to unblock caller later */
-    tty->tty_inreply = RESUME_PROC;
+    if (tty == NULL) {
+        return -ENXIO;
+    }
+
+    /* tell the tty: */
+    tty->tty_incaller = endpoint;  /* who wants the char */
+    tty->tty_inid = id;  /* task id */
+    tty->tty_inbuf = buf;    /* where the chars should be put */
+    tty->tty_inleft = count;     /* how many chars are requested */
+    tty->tty_trans_cnt = 0;  /* how many chars have been transferred */
+
+    return SUSPEND;
 }
 
 /*****************************************************************************
@@ -513,30 +492,24 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
  * @param tty  To which TTY the calller proc is bound.
  * @param msg  The MESSAGE.
  *****************************************************************************/
-PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
+PRIVATE ssize_t do_write(dev_t minor, u64 pos,
+	  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
-    /* tell the tty: */
-    tty->tty_outreply    = SYSCALL_RET;
-    tty->tty_outcaller   = msg->source;  /* who called, usually FS thread */
-    tty->tty_outprocnr   = msg->PROC_NR; /* who wants to output the chars */
-    tty->tty_outbuf  = msg->BUF;/* where are the chars */
-    tty->tty_outleft = msg->CNT; /* how many chars are requested */
+    TTY* tty = minor2tty(minor);
+
+    if (tty == NULL) {
+        return -ENXIO;
+    }
+
+    tty->tty_outcaller = endpoint;
+    tty->tty_outid = id;
+    tty->tty_outbuf = buf;
+    tty->tty_outleft = count;
     tty->tty_outcnt = 0;
 
     handle_events(tty);
-    if (tty->tty_outleft == 0) return;    /* already done, just return */
 
-    if (msg->FLAGS & O_NONBLOCK) {   /* do not block */    
-        tty->tty_outleft = tty->tty_outcnt = 0;
-        msg->type = tty->tty_outreply;
-        msg->RETVAL = tty->tty_outcnt > 0 ? tty->tty_outcnt : EAGAIN;
-        send_recv(SEND, tty->tty_outcaller, msg);
-    } else {    /* block */
-        msg->type = SUSPEND_PROC;
-        send_recv(SEND, tty->tty_outcaller, msg);
-        tty->tty_outcaller = TASK_FS;  /* tell FS to unblock caller later */
-        tty->tty_outreply = RESUME_PROC;
-    }
+    return SUSPEND;
 }
 
 /*****************************************************************************
@@ -548,33 +521,36 @@ PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
  * @param tty  To which TTY the calller proc is bound.
  * @param msg  The MESSAGE.
  *****************************************************************************/
-PRIVATE void tty_do_ioctl(TTY* tty, MESSAGE* msg)
+PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id)
 {
     int retval = 0;
+    TTY* tty = minor2tty(minor);
 
-    switch (msg->REQUEST) {
+    if (tty == NULL) {
+        return -ENXIO;
+    }
+
+    switch (request) {
     case TCGETS:
-        data_copy(msg->PROC_NR, msg->BUF, SELF, &(tty->tty_termios), sizeof(struct termios));
+        data_copy(endpoint, buf, SELF, &(tty->tty_termios), sizeof(struct termios));
         break;
     case TCSETSW:
     case TCSETSF:
     //case TCDRAIN:
     case TCSETS:
-        data_copy(SELF, &(tty->tty_termios), msg->PROC_NR, msg->BUF, sizeof(struct termios));
+        data_copy(SELF, &(tty->tty_termios), endpoint, buf, sizeof(struct termios));
         break;
     case TIOCGPGRP:
-        data_copy(msg->PROC_NR, msg->BUF, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
+        data_copy(endpoint, buf, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
         break;
     case TIOCSPGRP:
-        data_copy(SELF, &tty->tty_pgrp, msg->PROC_NR, msg->BUF, sizeof(tty->tty_pgrp));
+        data_copy(SELF, &tty->tty_pgrp, endpoint, buf, sizeof(tty->tty_pgrp));
         break;
     default:
         break;
     }
 
-    msg->type = SYSCALL_RET;
-    msg->RETVAL = retval;
-    send_recv(SEND, msg->source, msg);
+    return retval;
 }
 
 PRIVATE int select_try(TTY* tty, int ops)
@@ -619,10 +595,14 @@ PRIVATE int select_retry(TTY* tty)
     return 0;
 }
 
-PRIVATE void tty_do_select(TTY* tty, MESSAGE* msg)
+PRIVATE int do_select(dev_t minor, int ops, endpoint_t endpoint)
 {
-	dev_t minor = MINOR(msg->u.m_vfs_cdev_select.device);
-	int ops = msg->u.m_vfs_cdev_select.ops;
+    TTY* tty = minor2tty(minor);
+
+    if (tty == NULL) {
+        return -ENXIO;
+    }
+
 	int watch = ops & CDEV_NOTIFY;
 	ops &= (CDEV_SEL_RD | CDEV_SEL_WR | CDEV_SEL_EXC);
 
@@ -634,15 +614,12 @@ PRIVATE void tty_do_select(TTY* tty, MESSAGE* msg)
 			ready_ops = -EBADF;
 		} else {
 			tty->tty_select_ops |= ops;
-			tty->tty_select_proc = msg->source;
+			tty->tty_select_proc = endpoint;
 			tty->tty_select_minor = minor;
 		}
 	}
 
-	msg->type = CDEV_SELECT_REPLY1;
-	msg->RETVAL = ready_ops;
-	msg->DEVICE = minor;
-	send_recv(SEND, TASK_FS, msg);
+    return ready_ops;
 }
 
 /*****************************************************************************
@@ -668,9 +645,7 @@ PRIVATE void tty_do_kern_log()
         
         tty = minor2tty(cons_minor);
         /* tell the tty: */
-        tty->tty_outreply    = SYSCALL_RET;
-        tty->tty_outcaller   = KERNEL;
-        tty->tty_outprocnr   = TASK_TTY; /* who wants to output the chars */
+        tty->tty_outcaller   = TASK_TTY; /* who wants to output the chars */
         tty->tty_outbuf  = kernel_log_copy;/* where are the chars */
         tty->tty_outleft = bytes; /* how many chars are requested */
         tty->tty_outcnt = 0;

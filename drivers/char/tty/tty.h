@@ -50,15 +50,13 @@ typedef struct s_tty
 	int	ibuf_cnt;		/* how many */
 
 	int	tty_events;
-	int	tty_inreply;
 	int	tty_incaller;
-	int	tty_inprocnr;
+	int	tty_inid;
 	void*	tty_inbuf;
 	int	tty_inleft;
 	int	tty_trans_cnt;
-	int	tty_outreply;
 	int	tty_outcaller;
-	int	tty_outprocnr;
+	int	tty_outid;
 	void*	tty_outbuf;
 	int	tty_outleft;
 	int	tty_outcnt;
