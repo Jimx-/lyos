@@ -68,7 +68,7 @@ int main(int argc, char * argv[])
 	}
 	close(fb);
 	*/
-
+	
 	int shmid = shmget(IPC_PRIVATE, 0x100, IPC_CREAT | 0600);
 	int* shm = shmat(shmid, NULL, SHM_RDONLY);
 	*shm = 100;

@@ -222,13 +222,11 @@ PRIVATE void handle_request(MESSAGE* msg)
         msg->RETVAL = do_mm_request(msg);
         break;
     case CDEV_REPLY:
+    case CDEV_MMAP_REPLY:
     case CDEV_SELECT_REPLY1:
     case CDEV_SELECT_REPLY2:
         cdev_reply(msg);
         msg->RETVAL = SUSPEND;
-        break;
-    case RESUME_PROC:
-        msg->source = msg->PROC_NR;
         break;
     default:
         printl("VFS: unknown message type: %d\n", msgtype);

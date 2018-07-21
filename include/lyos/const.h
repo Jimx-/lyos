@@ -329,6 +329,7 @@ enum msgtype {
     CDEV_MMAP,
     CDEV_SELECT,
     CDEV_REPLY,
+    CDEV_MMAP_REPLY,
     CDEV_SELECT_REPLY1,
     CDEV_SELECT_REPLY2,
 

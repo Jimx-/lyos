@@ -77,16 +77,16 @@ PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
 {
     if (!cd->cdr_mmap) return ENODEV;
 
-    int minor = msg->DEVICE;
-    endpoint_t ep = msg->PROC_NR;
-    char* addr = msg->ADDR;
-    off_t offset = msg->POSITION;
-    size_t length = msg->CNT;
+    int minor = msg->u.m_vfs_cdev_mmap.minor;
+    endpoint_t ep = msg->u.m_vfs_cdev_mmap.endpoint;
+    char* addr = msg->u.m_vfs_cdev_mmap.addr;
+    off_t offset = msg->u.m_vfs_cdev_mmap.pos;
+    size_t length = msg->u.m_vfs_cdev_mmap.count;
 
     char* retaddr;
     int retval = cd->cdr_mmap(minor, ep, addr, offset, length, &retaddr);
 
-    msg->ADDR = retaddr;
+    msg->u.m_vfs_cdev_mmap.addr = retaddr;
     return retval;
 }
 
@@ -132,7 +132,7 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
         retval = do_ioctl(cd, msg);
         break;
     case CDEV_MMAP:
-        msg->RETVAL = do_mmap(cd, msg);
+        retval = do_mmap(cd, msg);
         break;
     case CDEV_SELECT:
         retval = do_select(cd, msg);
@@ -187,6 +187,12 @@ PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
         reply_msg.type = CDEV_REPLY;
         reply_msg.u.m_vfs_cdev_reply.status = retval;
         reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_readwrite.id;
+        break;
+    case CDEV_MMAP:
+        reply_msg.type = CDEV_MMAP_REPLY;
+        reply_msg.u.m_vfs_cdev_mmap_reply.status = retval;
+        reply_msg.u.m_vfs_cdev_mmap_reply.endpoint = msg->u.m_vfs_cdev_mmap.endpoint;
+        reply_msg.u.m_vfs_cdev_mmap_reply.retaddr = msg->u.m_vfs_cdev_mmap.addr;
         break;
     case CDEV_SELECT:
         reply_msg.type = CDEV_SELECT_REPLY1;

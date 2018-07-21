@@ -42,10 +42,10 @@ PRIVATE int init_fb();
 PRIVATE int fb_open(dev_t minor, int access);
 PRIVATE int fb_close(dev_t minor);
 PRIVATE ssize_t fb_read(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count);
+  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
 PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count);
-PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
+  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
+PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id);
 PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, size_t length, char** retaddr);
 
 PRIVATE int open_counter[NR_FB_DEVS];
@@ -108,13 +108,13 @@ PRIVATE int fb_close(dev_t minor)
 }
 
 PRIVATE ssize_t fb_read(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count)
+  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
     return 0;
 }
 
 PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count)
+  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
     int retval = OK;
     vir_bytes base, size;
@@ -133,7 +133,7 @@ PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
     return count;
 }
 
-PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
+PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id)
 {
     return 0;
 }

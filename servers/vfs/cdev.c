@@ -163,25 +163,21 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 }
 
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
-    size_t length, char** retaddr, struct fproc* fp)
+    size_t length, struct fproc* fp)
 {
     MESSAGE driver_msg;
     driver_msg.type = CDEV_MMAP;
-    driver_msg.DEVICE = MINOR(dev);
-    driver_msg.ADDR = (void*) vaddr;
-    driver_msg.PROC_NR = src;
-    driver_msg.POSITION = offset;
-    driver_msg.CNT = length;
+    driver_msg.u.m_vfs_cdev_mmap.minor = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_mmap.addr = (void*) vaddr;
+    driver_msg.u.m_vfs_cdev_mmap.endpoint = src;
+    driver_msg.u.m_vfs_cdev_mmap.pos = offset;
+    driver_msg.u.m_vfs_cdev_mmap.count = length;
 
-    int retval = cdev_sendrec(dev, &driver_msg);
-    if (retval) return retval;
-
-    if (driver_msg.type == SUSPEND_PROC) {
-        return SUSPEND;
+    if (cdev_send(dev, &driver_msg) != 0) {
+        panic("vfs: cdev_mamp send message failed");
     }
 
-    *retaddr = driver_msg.ADDR;
-    return driver_msg.RETVAL;
+    return SUSPEND;
 }
 
 PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
@@ -215,16 +211,34 @@ PRIVATE void cdev_reply_generic(MESSAGE* msg)
     }
 }
 
+PRIVATE void cdev_mmap_reply(endpoint_t endpoint, void* retaddr, int retval)
+{
+    MESSAGE reply_msg;
+    memset(&reply_msg, 0, sizeof(MESSAGE));
+
+    reply_msg.type = MM_VFS_REPLY;
+    reply_msg.MMRRESULT = retval;
+    reply_msg.MMRENDPOINT = endpoint;
+    reply_msg.MMRBUF = retaddr;
+
+    if (send_recv(SEND, TASK_MM, &reply_msg) != 0) {
+        panic("vfs: cdev_mmap_reply(): cannot reply to mm");
+    }
+}
+
 PUBLIC int cdev_reply(MESSAGE* msg)
 {
 	switch (msg->type) {
     case CDEV_REPLY:
         cdev_reply_generic(msg);
         break;
-	case CDEV_SELECT_REPLY1:
-		do_select_cdev_reply1(msg->source, msg->DEVICE, msg->RETVAL);
-		break;
-	case CDEV_SELECT_REPLY2:
+    case CDEV_MMAP_REPLY:
+        cdev_mmap_reply(msg->u.m_vfs_cdev_mmap_reply.endpoint, msg->u.m_vfs_cdev_mmap_reply.retaddr, msg->u.m_vfs_cdev_mmap_reply.status);
+        break;
+    case CDEV_SELECT_REPLY1:
+        do_select_cdev_reply1(msg->source, msg->DEVICE, msg->RETVAL);
+        break;
+    case CDEV_SELECT_REPLY2:
 		do_select_cdev_reply2(msg->source, msg->DEVICE, msg->RETVAL);
 		break;
 	}

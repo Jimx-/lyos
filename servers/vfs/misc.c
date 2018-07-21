@@ -308,7 +308,6 @@ PUBLIC int do_mm_request(MESSAGE* m)
     case MMR_FDMMAP:
         {
             struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
-            char* retaddr;
             if (!filp || !filp->fd_inode) {
                 result = EBADF;
                 goto reply;
@@ -318,13 +317,11 @@ PUBLIC int do_mm_request(MESSAGE* m)
             int file_type = pin->i_mode & I_TYPE;
 
             if (file_type == I_CHAR_SPECIAL) {
-                result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr, fp);
+                result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, fp);
                 if (result) {
                     unlock_filp(filp);
                     goto reply;
                 }
-
-                m->MMRBUF = retaddr;
             } else {    /* error if MM is trying to map a non-device file */
                 unlock_filp(filp);
                 result = EBADF;
@@ -342,11 +339,13 @@ PUBLIC int do_mm_request(MESSAGE* m)
     }
 
 reply:
-    m->MMRRESULT = result;
-    m->MMRENDPOINT = ep;
+    if (result != SUSPEND) {
+        m->MMRRESULT = result;
+        m->MMRENDPOINT = ep;
 
-    m->type = MM_VFS_REPLY;
-    if (send_recv(SEND, TASK_MM, m) != 0) panic("do_mm_request(): cannot reply to mm");
+        m->type = MM_VFS_REPLY;
+        if (send_recv(SEND, TASK_MM, m) != 0) panic("vfs: do_mm_request(): cannot reply to mm");
+    }
 
     return SUSPEND;
 }
