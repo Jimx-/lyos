@@ -94,8 +94,12 @@ PRIVATE void cons_write(TTY * tty)
 
     flush((CONSOLE *)tty->tty_dev);
 
-    if (tty->tty_outleft == 0 && tty->tty_outcaller != TASK_TTY) {     /* done, reply to caller */
-        chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
+    if (tty->tty_outleft == 0) {
+        if (tty->tty_outcaller != TASK_TTY) {     /* done, reply to caller */
+            chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
+        }
+        tty->tty_outcaller = NO_TASK;
+        tty->tty_outcnt = 0;
     }
 }
 
@@ -122,7 +126,7 @@ PUBLIC void init_screen(TTY* tty)
     if (!first) {
         using_fb = fbcon_init();
         first = 1;
-    }   
+    }
 
     if (!console_mem) {
         console_mem = mm_map_phys(SELF, V_MEM_BASE, V_MEM_SIZE);
@@ -326,7 +330,7 @@ PRIVATE void do_escape(CONSOLE * con, char c)
     int value, m, n, i, bg_color, fg_color;
     unsigned src, dst, count;
     //int *paramp;
-    
+
     int cursor_x = (con->cursor - con->origin) % con->cols;
     int cursor_y = (con->cursor - con->origin) / con->cols;
 

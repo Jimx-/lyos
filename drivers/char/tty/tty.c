@@ -64,6 +64,7 @@ PRIVATE TTY *   minor2tty   (dev_t minor);
 PRIVATE void    set_console_line(char val[CONS_ARG]);
 PRIVATE void    tty_dev_read    (TTY* tty);
 PRIVATE void    tty_dev_write   (TTY* tty);
+PRIVATE void    tty_dev_ioctl   (TTY* tty);
 PRIVATE void    in_transfer     (TTY* tty);
 PRIVATE int     do_open     (dev_t minor, int access);
 PRIVATE ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
@@ -74,9 +75,9 @@ PRIVATE void    tty_do_kern_log();
 PRIVATE void    tty_echo    (TTY* tty, char c);
 PRIVATE void    tty_sigproc (TTY * tty, int signo);
 PRIVATE void    erase       (TTY * tty);
-PRIVATE void    put_key         (TTY* tty, u32 key);
 PRIVATE int     select_try(TTY* tty, int ops);
 PRIVATE int     select_retry(TTY* tty);
+PRIVATE void    tty_icancel(TTY* tty);
 
 PRIVATE struct chardriver tty_driver = {
     .cdr_open = do_open,
@@ -172,10 +173,15 @@ PRIVATE void init_tty()
 
         tty->ibuf_cnt = tty->tty_eotcnt = 0;
         tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
-
         tty->tty_min = 1;
-        
         tty->tty_termios = termios_defaults;
+
+        tty->tty_incaller = NO_TASK;
+        tty->tty_outcaller = NO_TASK;
+        tty->tty_inleft = 0;
+        tty->tty_outleft = 0;
+        tty->tty_iocaller = NO_TASK;
+        tty->tty_ioreq = 0;
 
         if (i < NR_CONSOLES) {  /* consoles */
             init_screen(tty);
@@ -252,15 +258,14 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
             /* Previous character was a character escape? */
             if (tty->tty_escaped) {
                 tty->tty_escaped = 0;
-                put_key(tty, key);
-                tty_echo(tty, key);
-                continue;
+                key |= IN_ESC;
             }
             
             /* LNEXT (^V) to escape the next character? */
             if (key == tty->tty_termios.c_cc[VLNEXT]) {
                 tty->tty_escaped = 1;
-                tty_echo(tty, key);
+                tty_echo(tty, '^');
+                tty_echo(tty, '\b');
                 continue;
             }
         }
@@ -280,6 +285,10 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
                     tty_echo(tty, key);
                 }
                 continue;
+            }
+
+            if (key == tty->tty_termios.c_cc[VEOF]) {
+                key |= IN_EOT | IN_EOF;
             }
 
             if (key == '\n') key |= IN_EOT;
@@ -303,36 +312,30 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
             }
         }
 
-        put_key(tty, key);
-        tty_echo(tty, key);
+        if (tty->ibuf_cnt == buflen(tty->ibuf)) {
+            if (tty->tty_termios.c_lflag & ICANON) continue;
+            break;
+        }
 
+        if (!(tty->tty_termios.c_lflag & ICANON)) {
+            /* all characters are line break in raw mode */
+            key |= IN_EOT;
+        }
+
+        if (tty->tty_termios.c_lflag & (ECHO | ECHONL))
+            tty_echo(tty, key);
+
+        *tty->ibuf_head++ = key;
+        if (tty->ibuf_head == bufend(tty->ibuf)) {
+            tty->ibuf_head = tty->ibuf;
+        }
+        tty->ibuf_cnt++;
         if (key & IN_EOT) tty->tty_eotcnt++;
+
+        if (tty->ibuf_cnt == buflen(tty->ibuf)) in_transfer(tty);
     }
 
     return cnt;
-}
-
-
-/*****************************************************************************
- *                                put_key
- *****************************************************************************/
-/**
- * Put a key into the in-buffer of TTY.
- *
- * @callergraph
- * 
- * @param tty  To which TTY the key is put.
- * @param key  The key. It's an integer whose higher 24 bits are metadata.
- *****************************************************************************/
-PRIVATE void put_key(TTY* tty, u32 key)
-{
-    if (tty->ibuf_cnt < TTY_IN_BYTES) {
-        *(tty->ibuf_head) = key;
-        tty->ibuf_head++;
-        if (tty->ibuf_head == tty->ibuf + TTY_IN_BYTES)
-            tty->ibuf_head = tty->ibuf;
-        tty->ibuf_cnt++;
-    }
 }
 
 
@@ -367,6 +370,26 @@ PRIVATE void tty_dev_write(TTY* tty)
 }
 
 /*****************************************************************************
+ *                                tty_dev_ioctl
+ *****************************************************************************/
+/**
+ * Wait for output process to finish and execute the ioctl.
+ * 
+ * @param tty   Ptr to a TTY struct.
+ *****************************************************************************/
+PRIVATE void tty_dev_ioctl(TTY* tty)
+{
+    int retval = 0;
+    if (tty->tty_outleft > 0) return;
+
+    if (tty->tty_ioreq == TCSETSF) tty_icancel(tty);
+    retval = data_copy(SELF, &(tty->tty_termios), tty->tty_iocaller, tty->tty_iobuf, sizeof(struct termios));
+    tty->tty_ioreq = 0;
+    chardriver_reply_io(TASK_FS, tty->tty_ioid, retval);
+    tty->tty_iocaller = NO_TASK;
+}
+
+/*****************************************************************************
  *                                in_transfer
  *****************************************************************************/
 /**
@@ -382,9 +405,9 @@ PRIVATE void in_transfer(TTY* tty)
 
     bp = buf;
     while (tty->tty_inleft > 0 && tty->tty_eotcnt > 0) {
-        char ch = *(tty->ibuf_tail);
-        tty->ibuf_tail++;
-        if (tty->ibuf_tail == tty->ibuf + TTY_IN_BYTES)
+        int ch = *(tty->ibuf_tail);
+
+        if (++tty->ibuf_tail == bufend(tty->ibuf))
             tty->ibuf_tail = tty->ibuf;
         tty->ibuf_cnt--;
 
@@ -398,7 +421,7 @@ PRIVATE void in_transfer(TTY* tty)
             bp = buf;
         }
 
-        if (ch == '\n') {
+        if (ch & IN_EOT) {
             tty->tty_eotcnt--;
             if (tty->tty_termios.c_lflag & ICANON) tty->tty_inleft = 0;
         }
@@ -414,6 +437,8 @@ PRIVATE void in_transfer(TTY* tty)
 
     if (tty->tty_inleft == 0) {
         chardriver_reply_io(TASK_FS, tty->tty_inid, tty->tty_trans_cnt);
+        tty->tty_incaller = NO_TASK;
+        tty->tty_trans_cnt = 0;
     }
 }
 
@@ -428,10 +453,20 @@ PRIVATE void in_transfer(TTY* tty)
 PUBLIC void handle_events(TTY * tty)
 {
     do {
+        tty->tty_events = 0;
+        
         tty_dev_read(tty);
         tty_dev_write(tty);
+        if (tty->tty_ioreq) tty_dev_ioctl(tty);
     } while (tty->tty_events);
     in_transfer(tty);
+
+    /* return to caller if bytes are available */
+    if (tty->tty_trans_cnt >= tty->tty_min && tty->tty_inleft > 0) {
+        chardriver_reply_io(TASK_FS, tty->tty_inid, tty->tty_trans_cnt);
+        tty->tty_inleft = tty->tty_trans_cnt = 0;
+        tty->tty_incaller = NO_TASK;
+    }
 
     if (tty->tty_select_ops) {
         select_retry(tty);
@@ -473,12 +508,24 @@ PRIVATE ssize_t do_read(dev_t minor, u64 pos,
         return -ENXIO;
     }
 
+    if (tty->tty_incaller != NO_TASK || tty->tty_inleft > 0) return -EIO;
+    if (count <= 0) return -EINVAL;
+
     /* tell the tty: */
     tty->tty_incaller = endpoint;  /* who wants the char */
     tty->tty_inid = id;  /* task id */
     tty->tty_inbuf = buf;    /* where the chars should be put */
     tty->tty_inleft = count;     /* how many chars are requested */
     tty->tty_trans_cnt = 0;  /* how many chars have been transferred */
+
+    in_transfer(tty);
+    handle_events(tty);
+
+    if (tty->tty_inleft == 0) return SUSPEND;     /* already done */
+
+    if (tty->tty_select_ops) {
+        select_retry(tty);
+    }
 
     return SUSPEND;
 }
@@ -500,6 +547,8 @@ PRIVATE ssize_t do_write(dev_t minor, u64 pos,
     if (tty == NULL) {
         return -ENXIO;
     }
+    if (tty->tty_outcaller != NO_TASK || tty->tty_outleft > 0) return -EIO;
+    if (count <= 0) return -EINVAL;
 
     tty->tty_outcaller = endpoint;
     tty->tty_outid = id;
@@ -508,6 +557,12 @@ PRIVATE ssize_t do_write(dev_t minor, u64 pos,
     tty->tty_outcnt = 0;
 
     handle_events(tty);
+
+    if (tty->tty_outleft == 0) return SUSPEND;     /* already done */
+
+    if (tty->tty_select_ops) {
+        select_retry(tty);
+    }
 
     return SUSPEND;
 }
@@ -524,6 +579,7 @@ PRIVATE ssize_t do_write(dev_t minor, u64 pos,
 PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id)
 {
     int retval = 0;
+    int i;
     TTY* tty = minor2tty(minor);
 
     if (tty == NULL) {
@@ -531,20 +587,39 @@ PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, c
     }
 
     switch (request) {
-    case TCGETS:
-        data_copy(endpoint, buf, SELF, &(tty->tty_termios), sizeof(struct termios));
+    case TCGETS:    /* get termios attributes */
+        retval = data_copy(endpoint, buf, SELF, &(tty->tty_termios), sizeof(struct termios));
         break;
     case TCSETSW:
     case TCSETSF:
-    //case TCDRAIN:
-    case TCSETS:
-        data_copy(SELF, &(tty->tty_termios), endpoint, buf, sizeof(struct termios));
+        if (tty->tty_outleft > 0) {
+            /* wait for output process to finish */
+            tty->tty_iocaller = endpoint;
+            tty->tty_iobuf = buf;
+            tty->tty_ioid = id;
+            tty->tty_ioreq = request;
+            return SUSPEND;
+        }
+        if (request == TCSETSF) tty_icancel(tty);
+    case TCSETS:    /* set termios attributes */
+        retval = data_copy(SELF, &(tty->tty_termios), endpoint, buf, sizeof(struct termios));
+        if (retval != 0) break;
         break;
-    case TIOCGPGRP:
-        data_copy(endpoint, buf, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
+    case TCFLSH:
+        retval = data_copy(SELF, &i, endpoint, buf, sizeof(i));
+        if (retval != 0) break;
+        if (i == TCIFLUSH || i == TCIOFLUSH) {
+            tty_icancel(tty);
+        }
+        if (i == TCOFLUSH || i == TCIOFLUSH) {
+            
+        }
+        break;
+    case TIOCGPGRP: /* get/set process group */
+        retval = data_copy(endpoint, buf, SELF, &tty->tty_pgrp, sizeof(tty->tty_pgrp));
         break;
     case TIOCSPGRP:
-        data_copy(SELF, &tty->tty_pgrp, endpoint, buf, sizeof(tty->tty_pgrp));
+        retval = data_copy(SELF, &tty->tty_pgrp, endpoint, buf, sizeof(tty->tty_pgrp));
         break;
     default:
         break;
@@ -688,8 +763,6 @@ PRIVATE void erase(TTY * tty)
  *****************************************************************************/
 PRIVATE void tty_echo(TTY* tty, char c)
 {
-    if (!(tty->tty_termios.c_lflag & ECHO)) return;
-
     int len;
     if ((c & IN_CHAR) < ' ') {
         switch (c & (IN_CHAR)) {
@@ -730,3 +803,15 @@ PRIVATE void tty_sigproc(TTY * tty, int signo)
     if ((retval = kernel_kill(ep, signo)) != 0) panic("unable to send signal(%d)", retval);
 }
 
+/*****************************************************************************
+ *                                tty_icancel
+ *****************************************************************************/
+/**
+ * Cancel all pending inputs.
+ *
+ *****************************************************************************/
+PRIVATE void tty_icancel(TTY* tty)
+{
+    tty->tty_trans_cnt = tty->tty_eotcnt = 0;
+    tty->ibuf_tail = tty->ibuf_head;
+}

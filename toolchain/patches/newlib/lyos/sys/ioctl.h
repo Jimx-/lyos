@@ -7,5 +7,6 @@
 #define TCSETSF  0x4003
 #define TIOCGPGRP 	0x4004
 #define TIOCSPGRP 	0x4005
+#define TCFLSH      0x4006
 
 #endif /* _IOCTL_H_ */

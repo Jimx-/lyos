@@ -84,7 +84,8 @@ PUBLIC int      get_ticks(clock_t* ticks, clock_t* idle_ticks);
 #define EXP_TIME        u.m3.m3l1
 #define ABS_TIME        u.m3.m3i2
 #define TIME_LEFT       u.m3.m3l1
-PUBLIC clock_t kernel_alarm(clock_t expire_time, int abs_time);
+#define kernel_alarm(expire_time, abs_time) kernel_alarm2(expire_time, abs_time, NULL)
+PUBLIC int kernel_alarm2(clock_t expire_time, int abs_time, clock_t* time_left);
 
 PUBLIC u32 now();
 

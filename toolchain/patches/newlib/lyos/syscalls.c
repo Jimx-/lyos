@@ -1216,13 +1216,14 @@ pid_t tcgetpgrp(int fd)
 
 int tcflow(int fd, int action)
 {
+	puts("tcflow: not implemented");
 	return 0;
 }
 
 int tcflush(int fd, int which)
 {
-	puts("tcflush: not implemented");
-	return 0;
+	int selector = which;
+	return ioctl(fd, TCFLSH, &selector);
 }
 
 int pipe(int pipefd[2])

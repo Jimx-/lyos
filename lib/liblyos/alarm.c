@@ -21,13 +21,15 @@
 #include <string.h>
 #include <lyos/sysutils.h>
 
-PUBLIC clock_t kernel_alarm(clock_t expire_time, int abs_time)
+PUBLIC int kernel_alarm2(clock_t expire_time, int abs_time, clock_t* time_left)
 {
     MESSAGE m;
     m.EXP_TIME = expire_time;
     m.ABS_TIME = abs_time;
 
-    syscall_entry(NR_ALARM, &m);
+    int retval = syscall_entry(NR_ALARM, &m);
+    if (retval) return retval;
 
-    return m.TIME_LEFT;
+    if (time_left) *time_left = m.TIME_LEFT;
+    return 0;
 }

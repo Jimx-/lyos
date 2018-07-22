@@ -20,6 +20,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <lyos/timer.h>
+#include <lyos/sysutils.h>
 
 PRIVATE DEF_LIST(_timer_list);
 PRIVATE DEF_LIST(_timer_list_expiring);
@@ -86,7 +87,7 @@ PUBLIC void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t 
     else next_timeout = list_entry(_timer_list.next, struct timer_list, list)->expire_time;
     
     if (!expiring && (prev_timeout == TIMER_UNSET || prev_timeout > next_timeout)) {
-        if (kernel_alarm(next_timeout, 1) != 0) panic("can't set timer\n");
+        if (kernel_alarm(next_timeout, 1) != 0) panic("can't set timer");
     }
 }
 

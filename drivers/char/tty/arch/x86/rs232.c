@@ -260,6 +260,8 @@ PRIVATE void rs_write(TTY * tty)
             if (tty->tty_outcaller != TASK_TTY) {
                 chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
             }
+            tty->tty_outcaller = NO_TASK;
+            tty->tty_outcnt = 0;
         }
     }
 }

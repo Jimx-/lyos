@@ -22,7 +22,9 @@
 #define TTY_IN_BYTES		256	/* tty input queue size */
 
 #define IN_CHAR       		0x00FF	/* low 8 bits */
-#define IN_EOT				0x1000	/* End Of Text */
+#define IN_EOT				0x1000	/* char is line break */
+#define IN_EOF 			0x2000  /* char is EOF */
+#define IN_ESC 			0x4000  /* escaped by ^V */
 
 #define TAB_SIZE           8	/* distance between tab stops */
 #define TAB_MASK           7	/* mask to compute a tab stop position */
@@ -54,11 +56,18 @@ typedef struct s_tty
 	void*	tty_inbuf;
 	int	tty_inleft;
 	int	tty_trans_cnt;
+
 	int	tty_outcaller;
 	int	tty_outid;
 	void*	tty_outbuf;
 	int	tty_outleft;
 	int	tty_outcnt;
+
+	int 	tty_iocaller;
+	int 	tty_ioid;
+	int 	tty_ioreq;
+	void* 	tty_iobuf;
+
 	pid_t 	tty_pgrp;
 	int 	tty_min;
 	int 	tty_eotcnt;
