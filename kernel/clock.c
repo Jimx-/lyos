@@ -99,9 +99,11 @@ PUBLIC int clock_handler(irq_hook_t * hook)
 #endif
         /* timer expired */
         if (jiffies >= next_timeout && next_timeout != TIMER_UNSET) {
+            spinlock_lock(&timers_lock);
             timer_expire(&timer_list, jiffies);
             if (list_empty(&timer_list)) next_timeout = TIMER_UNSET;
             else next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+            spinlock_unlock(&timers_lock);
         }
 #if CONFIG_SMP
     }
@@ -199,6 +201,8 @@ PUBLIC void stop_context(struct proc * p)
 PUBLIC void set_sys_timer(struct timer_list* timer)
 {
     spinlock_lock(&timers_lock);
+
+    if (timer->expire_time != TIMER_UNSET) list_del(&timer->list);
 
     timer_add(&timer_list, timer);
     next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;

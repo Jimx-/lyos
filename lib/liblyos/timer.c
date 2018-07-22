@@ -29,7 +29,7 @@ PRIVATE int expiring = 0;
 PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
 {
     struct timer_list* tp;
-    struct timer_list* prev = NULL;
+    struct list_head* target = list;
 
     if (list_empty(list)) {
         list_add(&timer->list, list);
@@ -38,14 +38,10 @@ PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
 
     list_for_each_entry(tp, list, list) {
         if (tp->expire_time >= timer->expire_time) break;
-        prev = tp;
+        target = &tp->list;
     }    
 
-    if (prev == NULL) {
-        list_add(&timer->list, list);
-    } else {
-        list_add(&timer->list, &prev->list);
-    }
+    list_add(&timer->list, target);
 }
 
 PUBLIC void timer_expire(struct list_head* list, clock_t timestamp)
@@ -86,7 +82,7 @@ PUBLIC void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t 
     if (list_empty(&_timer_list)) next_timeout = TIMER_UNSET;
     else next_timeout = list_entry(_timer_list.next, struct timer_list, list)->expire_time;
     
-    if (!expiring && (prev_timeout == TIMER_UNSET || prev_timeout > next_timeout)) {
+    if (!expiring && (prev_timeout == TIMER_UNSET || prev_timeout != next_timeout)) {
         if (kernel_alarm(next_timeout, 1) != 0) panic("can't set timer");
     }
 }
@@ -108,6 +104,6 @@ PUBLIC void expire_timer(clock_t timestamp)
     else next_timeout = list_entry(_timer_list.next, struct timer_list, list)->expire_time;
     
     if (next_timeout != TIMER_UNSET) {
-        if (kernel_alarm(next_timeout, 1) != 0) panic("can't set timer\n");
-    }
+        if (kernel_alarm(next_timeout, 1) != 0) panic("can't set timer");
+    } 
 }

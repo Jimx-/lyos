@@ -109,6 +109,7 @@ PUBLIC void init_proc()
         priv->proc_nr = NO_TASK;
         priv->id = id++;
         priv->timer.expire_time = TIMER_UNSET;
+        INIT_LIST_HEAD(&priv->timer.list);
 
         sigemptyset(&priv->sig_pending);
         priv->notify_pending = 0;

@@ -245,7 +245,6 @@ PUBLIC int do_select(MESSAGE* msg)
         return retval;
     }
 
-    has_timeout = 0;
     if (has_timeout && entry->block) {
         clock_t ticks;
         ticks = timeout.tv_sec * system_hz + (timeout.tv_usec * system_hz + 1000000L - 1) / 1000000L;
