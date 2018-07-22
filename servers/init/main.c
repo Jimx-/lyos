@@ -66,13 +66,13 @@ int main(int argc, char * argv[])
 	for (p = fbp, i = 0; i < 1000; i++) {
 		*p++ = 0xff0000;
 	}
-	close(fb);
-	*/
+	close(fb); */
 	
+	/*
 	int shmid = shmget(IPC_PRIVATE, 0x100, IPC_CREAT | 0600);
 	int* shm = shmat(shmid, NULL, SHM_RDONLY);
 	*shm = 100;
-
+	*/
 	while (1) {
 		int s;
 		wait(&s);

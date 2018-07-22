@@ -109,20 +109,11 @@ PRIVATE int cdev_opcl(int op, dev_t dev, struct fproc* fp)
     driver_msg.u.m_vfs_cdev_openclose.minor = MINOR(dev);
     driver_msg.u.m_vfs_cdev_openclose.id = fp->endpoint;
 
-    fp->worker = worker_self();
-    fp->worker->driver_msg = &driver_msg;
-
-    if (cdev_send(dev, &driver_msg) != 0) {
+    if (cdev_sendrec(dev, &driver_msg) != 0) {
         panic("vfs: cdev_opcl send message failed");
     }
 
-    if (fp->worker->driver_msg != NULL)
-        worker_wait();  /* wait for asynchronous reply from device driver */
-    fp->worker = NULL;
-
-    int retval = driver_msg.u.m_vfs_cdev_reply.status;
-    
-    return retval;
+    return driver_msg.u.m_vfs_cdev_reply.status;
 }
 
 PUBLIC int cdev_open(dev_t dev, struct fproc* fp)

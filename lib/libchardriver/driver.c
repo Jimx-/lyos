@@ -173,10 +173,12 @@ PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
     }
 
     memset(&reply_msg, 0, sizeof(MESSAGE));
+    endpoint_t dest_ep = TASK_FS;
 
     switch (msg->type) {
     case CDEV_OPEN:
     case CDEV_CLOSE:
+        dest_ep = msg->source;
         reply_msg.type = CDEV_REPLY;
         reply_msg.u.m_vfs_cdev_reply.status = retval;
         reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_openclose.id;
@@ -201,7 +203,7 @@ PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
         break;
     }
 
-    send_recv(SEND, TASK_FS, &reply_msg);
+    send_recv(SEND, dest_ep, &reply_msg);
 }
 
 PUBLIC void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval)

@@ -20,7 +20,6 @@
 #include <sys/types.h>
 
 #define TTY_IN_BYTES		256	/* tty input queue size */
-#define TTY_OUT_BUF_LEN		2	/* tty output buffer size */
 
 #define IN_CHAR       		0x00FF	/* low 8 bits */
 #define IN_EOT				0x1000	/* End Of Text */

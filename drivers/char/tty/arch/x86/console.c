@@ -64,26 +64,33 @@ PRIVATE void    clear_screen(int pos, int len);
  *****************************************************************************/
 PRIVATE void cons_write(TTY * tty)
 {
-    char buf[TTY_OUT_BUF_LEN];
+    char buf[4096];
     char * p = tty->tty_outbuf;
-    int i = tty->tty_outleft;
+    size_t count;
     int j;
 
+    count = tty->tty_outleft;
     /* Nothing to write */
-    if (i == 0) return;
-    while (i) {
-        int bytes = min(TTY_OUT_BUF_LEN, i);
-        data_copy(TASK_TTY, buf, tty->tty_outcaller, p, bytes);
+    if (count == 0) return;
 
-        for (j = 0; j < bytes; j++)
+    do {
+        if (count > sizeof(buf)) count = sizeof(buf);
+        if (tty->tty_outcaller == TASK_TTY) {
+            memcpy(buf, p, count);
+        } else {
+            data_copy(TASK_TTY, buf, tty->tty_outcaller, p, count);
+        }
+
+        for (j = 0; j < count; j++)
         {
             tty->tty_outcnt++;
             out_char(tty, buf[j]);
         }
-        tty->tty_outleft -= bytes;
-        i -= bytes;
-        p += bytes;
-    }
+        tty->tty_outleft -= count;
+        p += count;
+
+        count = tty->tty_outleft;
+    } while (count > 0);
 
     flush((CONSOLE *)tty->tty_dev);
 
