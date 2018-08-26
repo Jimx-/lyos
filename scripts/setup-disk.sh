@@ -19,7 +19,7 @@ source $SRCDIR/.config
 type kpartx >/dev/null 2>&1 || { echo "Trying to install kpartx..."; apt-get install kpartx; }
 
 # Create a 1GiB blank disk image.
-#dd if=/dev/zero of=$DISK bs=4096 count=$SIZE
+dd if=/dev/zero of=$DISK bs=4096 count=$SIZE
 
 echo "Partitioning..."
 # Partition it with fdisk.

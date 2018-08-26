@@ -98,6 +98,7 @@ check:
 	setenv("HOME", pwd->pw_dir, 1);
 	setenv("SHELL", pwd->pw_shell, 1);
 	setenv("USER", pwd->pw_name, 1);
+	setenv("PATH", "/usr/bin:/bin", 1);
 
 	if (*pwd->pw_shell == '\0') {
 		pwd->pw_shell = _PATH_BSHELL;

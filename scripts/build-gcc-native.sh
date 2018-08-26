@@ -31,8 +31,7 @@ if [ $ARCH = "i686" ]; then
 fi
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
-#export BUILD_GCC_NATIVE=1
-export BUILD_VIM=1
+export BUILD_GCC_NATIVE=1
 
 pushd toolchain > /dev/null
 python setup.py

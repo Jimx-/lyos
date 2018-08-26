@@ -6,27 +6,48 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/utils.sh
 
 : ${BUILD_EVERYTHING:=false}
+: ${BUILD_BINUTILS:=false}
+: ${BUILD_GCC:=false}
 : ${BUILD_NEWLIB:=false}
+: ${BUILD_NATIVE_GCC:=false}
 : ${BUILD_BASH:=false}
 : ${BUILD_COREUTILS:=false}
 : ${BUILD_DASH:=false}
 : ${BUILD_VIM:=false}
 
 if $BUILD_EVERYTHING; then
+    BUILD_BINUTILS=true
+    BUILD_GCC=true
     BUILD_NEWLIB=true
+    BUILD_NATIVE_GCC=true
     BUILD_BASH=true
     BUILD_COREUTILS=true
     BUILD_DASH=true
     BUILD_VIM=true
 fi
 
-echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, target: $TARGET)"
+echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
 if [ ! -d "build" ]; then
     mkdir build
 fi
 
 pushd build > /dev/null
+
+# Build binutils
+if $BUILD_BINUTILS; then
+    if [ ! -d "binutils" ]; then
+        mkdir binutils
+    fi
+    
+    unset PKG_CONFIG_LIBDIR
+    
+    pushd binutils
+    $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
+    make -j8 || cmd_error
+    make install || cmd_error
+    popd
+fi 
 
 . $DIR/activate.sh
 
@@ -61,6 +82,24 @@ if $BUILD_NEWLIB; then
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libg.so -Wl,--whole-archive $SYSROOT/usr/lib/libg.a -Wl,--no-whole-archive || cmd_error
     popd > /dev/null
 fi
+
+# Build native gcc
+if $BUILD_NATIVE_GCC; then
+    if [ ! -d "gcc-native" ]; then
+        mkdir gcc-native
+    fi
+    
+    pushd gcc-native > /dev/null
+    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib || cmd_error
+    make DESTDIR=$SYSROOT all-gcc -j8 || cmd_error
+    make DESTDIR=$SYSROOT install-gcc -j || cmd_error
+    make DESTDIR=$SYSROOT all-target-libgcc -j8 || cmd_error
+    make DESTDIR=$SYSROOT install-target-libgcc -j || cmd_error
+    touch $SYSROOT/usr/include/fenv.h 
+    make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
+    make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
+    popd > /dev/null
+fi 
 
 # Build bash
 if $BUILD_BASH; then
