@@ -1,0 +1,97 @@
+diff -rupN old/bfd/config.bfd new/bfd/config.bfd
+--- old/bfd/config.bfd	2018-07-09 15:44:53.000000000 +0800
++++ new/bfd/config.bfd	2018-08-26 22:11:49.589215578 +0800
+@@ -358,6 +358,10 @@ case "${targ}" in
+     targ_defvec=arm_elf32_le_vec
+     targ_selvecs="arm_elf32_be_vec"
+     ;;
++  arm-*-lyos*)
++    targ_defvec=arm_elf32_le_vec
++    targ_selvecs=arm_elf32_be_vec
++    ;;
+   arm-*-nto* | nto*arm*)
+     targ_defvec=arm_elf32_le_vec
+     targ_selvecs=arm_elf32_be_vec
+@@ -558,6 +562,10 @@ case "${targ}" in
+     targ_defvec=i386_elf32_vec
+     targ_selvecs="iamcu_elf32_vec i386_coff_vec"
+     ;;
++  i[3-7]86-*-lyos*)
++    targ_defvec=i386_elf32_vec
++    targ_selvecs=
++    ;;
+   i[3-7]86-*-solaris2*)
+     targ_defvec=i386_elf32_sol2_vec
+     targ_selvecs="iamcu_elf32_vec i386_coff_vec i386_pei_vec"
+@@ -1186,6 +1194,11 @@ case "${targ}" in
+     ;;
+ #endif
+ 
++  riscv-*-lyos*)
++    targ_defvec=riscv_elf32_vec
++    targ_selvecs="riscv_elf32_vec riscv_elf64_vec"
++    ;;
++
+   rl78-*-elf)
+     targ_defvec=rl78_elf32_vec
+     targ_underscore=yes
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2018-07-06 15:13:31.000000000 +0800
++++ new/config.sub	2018-08-26 22:13:03.985881982 +0800
+@@ -1374,6 +1374,7 @@ case $os in
+ 	     | os2* | vos* | palmos* | uclinux* | nucleus* \
+ 	     | morphos* | superux* | rtmk* | windiss* \
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
++        | lyos* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd*)
+diff -rupN old/gas/configure.tgt new/gas/configure.tgt
+--- old/gas/configure.tgt	2018-06-25 02:38:57.000000000 +0800
++++ new/gas/configure.tgt	2018-08-26 22:16:22.999214624 +0800
+@@ -142,6 +142,7 @@ case ${generic_target} in
+   arm-*-eabi* | arm-*-rtems*)		fmt=elf em=armeabi ;;
+   arm-*-symbianelf*)			fmt=elf em=symbian ;;
+   arm-*-kaos*)				fmt=elf ;;
++  arm-*-lyos*)				fmt=elf ;;
+   arm-*-conix*)				fmt=elf ;;
+   arm-*-freebsd[89].* | armeb-*-freebsd[89].*)
+ 					fmt=elf  em=freebsd ;;
+@@ -214,6 +215,7 @@ case ${generic_target} in
+   i386-*-elf*)				fmt=elf ;;
+   i386-*-fuchsia*)			fmt=elf ;;
+   i386-*-kaos*)				fmt=elf ;;
++  i386-*-lyos*)				fmt=elf ;;
+   i386-*-bsd*)				fmt=aout em=386bsd ;;
+   i386-*-nacl*)				fmt=elf em=nacl
+     case ${cpu} in
+diff -rupN old/ld/configure.tgt new/ld/configure.tgt
+--- old/ld/configure.tgt	2018-07-09 15:44:53.000000000 +0800
++++ new/ld/configure.tgt	2018-08-26 22:17:56.425880951 +0800
+@@ -119,6 +119,7 @@ arm-*-elf | arm*-*-eabi* | arm-*-rtems*)
+ 			targ_emul=armelf ;;
+ arm*-*-symbianelf*)	targ_emul=armsymbian;;
+ arm-*-kaos*)		targ_emul=armelf ;;
++arm-*-lyos*)		targ_emul=armelf ;;
+ arm9e-*-elf)		targ_emul=armelf ;;
+ arm*b-*-linux-*eabi*)	targ_emul=armelfb_linux_eabi
+ 			targ_extra_emuls=armelf_linux_eabi
+@@ -312,6 +313,7 @@ x86_64-*-elf* | x86_64-*-rtems* | x86_64
+ 			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/x86_64/i386/'`
+ 			;;
+ i[3-7]86-*-kaos*)	targ_emul=elf_i386 ;;
++i[3-7]86-*-lyos*)	targ_emul=elf_i386 ;;
+ i[3-7]86-*-dragonfly*)	targ_emul=elf_i386
+ 			targ_extra_emuls="elf_iamcu i386bsd" ;;
+ x86_64-*-dragonfly*)	targ_emul=elf_x86_64
+diff -rupN old/ld/emulparams/elf_i386.sh new/ld/emulparams/elf_i386.sh
+--- old/ld/emulparams/elf_i386.sh	2018-06-25 02:38:57.000000000 +0800
++++ new/ld/emulparams/elf_i386.sh	2018-08-26 22:19:02.955880710 +0800
+@@ -34,4 +34,7 @@ case "$target" in
+ 	;;
+     esac
+     ;;
++  i[3-7]86*-lyos*)
++    TEXT_START_ADDR=0x40000000
++    ;;
+ esac

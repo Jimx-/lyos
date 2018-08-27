@@ -102,7 +102,7 @@ getcwd (pt, size)
     {
       goto err;
     }
-  eup = up + MAXPATHLEN;
+  eup = up + MAXNAMLEN;
   bup = up;
   up[0] = '.';
   up[1] = '\0';

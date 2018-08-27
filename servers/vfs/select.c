@@ -331,7 +331,7 @@ PRIVATE int is_char_dev(struct file_desc* filp)
 PRIVATE int copy_fdset(struct select_entry* entry, int nfds, int direction)
 {
     if (nfds < 0 || nfds > OPEN_MAX) return EINVAL;
-    int fdset_size = (size_t) (howmany(nfds, NFDBITS) * sizeof(fd_mask));
+    int fdset_size = (size_t) (_howmany(nfds, NFDBITS) * sizeof(fd_mask));
     int retval;
 
     int copyin = (direction == FDS_COPYIN);

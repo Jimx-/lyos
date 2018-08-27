@@ -46,6 +46,6 @@ PUBLIC int sysfs_retrieve_u32(char * key, u32 * value);
 PUBLIC int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags, void* cb_data,
 								sysfs_dyn_attr_show_t show, sysfs_dyn_attr_store_t store);
 PUBLIC int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr);
-PUBLIC int sysfs_handle_dyn_attr(MESSAGE* msg);
+PUBLIC ssize_t sysfs_handle_dyn_attr(MESSAGE* msg);
 
 #endif /* _LIBSYSFS_H_ */

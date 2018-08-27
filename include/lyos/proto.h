@@ -33,7 +33,6 @@ PUBLIC void switch_address_space(struct proc * p);
 /* klib.c */
 PUBLIC void	delay(int time);
 PUBLIC void	disp_int(int input);
-PUBLIC char *	itoa(char * str, int num);
 
 /* kernel.asm */
 PUBLIC void     restore_user_context(struct proc * p);

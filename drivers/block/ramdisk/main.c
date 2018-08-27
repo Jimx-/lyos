@@ -133,7 +133,7 @@ PRIVATE int rd_close(dev_t minor)
 	return 0;
 }
 
-PRIVATE int rd_rdwt(dev_t minor, int do_write, u64 pos,
+PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos,
 	  endpoint_t endpoint, char* buf, unsigned int count)
 {
     struct ramdisk_dev * ramdisk; 

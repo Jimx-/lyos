@@ -1,0 +1,140 @@
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2016-12-29 19:04:53.000000000 +0800
++++ new/config.sub	2018-08-26 23:27:32.249199601 +0800
+@@ -2,7 +2,7 @@
+ # Configuration validation subroutine script.
+ #   Copyright 1992-2016 Free Software Foundation, Inc.
+ 
+-timestamp='2016-12-24'
++timestamp='2018-08-26'
+ 
+ # This file is free software; you can redistribute it and/or modify it
+ # under the terms of the GNU General Public License as published by
+@@ -1408,6 +1408,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
++            | -lyos* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+ 	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
+--- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
++++ new/gcc/config/lyos.h	2018-08-26 23:28:12.175866128 +0800
+@@ -0,0 +1,24 @@
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS() \
++  do { \
++    builtin_define_std ("lyos"); \
++    builtin_define_std ("unix"); \
++    builtin_assert ("system=lyos"); \
++    builtin_assert ("system=unix"); \
++  } while (0);
++
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "%{!shared:crt0.o%s} \
++   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
++
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++
++#undef  LINK_SPEC
++#define LINK_SPEC "-m lyos_i386 \
++  %{shared:-shared -dynamic-linker " "/lib/ld-lyos.so" "} \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      %{!dynamic-linker:-dynamic-linker " "/lib/ld-lyos.so" "}} \
++    %{static:-static}}"
+diff -rupN old/gcc/config.gcc new/gcc/config.gcc
+--- old/gcc/config.gcc	2017-03-24 21:59:51.000000000 +0800
++++ new/gcc/config.gcc	2018-08-26 23:36:40.469197676 +0800
+@@ -910,6 +910,11 @@ case ${target} in
+     *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
+   esac
+   ;;
++*-*-lyos*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  ;;
+ *-*-elf|arc*-*-elf*)
+   # Assume that newlib is being used and so __cxa_atexit is provided.
+   default_use_cxa_atexit=yes
+@@ -1063,6 +1068,10 @@ arm-wrs-vxworks)
+ 	tmake_file="${tmake_file} arm/t-arm arm/t-vxworks"
+ 	target_cpu_cname="arm6"
+ 	;;
++arm-*-lyos*)
++	tm_file="dbxelf.h elfos.h newlib-stdint.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h lyos.h"
++	tmake_file="arm/t-arm arm/t-arm-elf"
++	;;
+ arm*-*-freebsd*)                # ARM FreeBSD EABI
+ 	tm_file="dbxelf.h elfos.h ${fbsd_tm_file} arm/elf.h"
+ 	case $target in
+@@ -1427,6 +1436,11 @@ hppa[12]*-*-hpux11*)
+ 		dwarf2=no
+ 	fi
+ 	;;
++i[34567]86-*-lyos*)
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h newlib-stdint.h i386/i386elf.h lyos.h"
++	tmake_file="${tmake_file} i386/t-i386elf t-svr4 i386/t-crtstuff"
++	use_fixproto=yes
++	;;
+ i[34567]86-*-darwin*)
+ 	need_64bit_isa=yes
+ 	# Baseline choice for a machine that allows m64 support.
+@@ -2030,6 +2044,13 @@ riscv*-*-linux*)
+ 	# Force .init_array support.  The configure script cannot always
+ 	# automatically detect that GAS supports it, yet we require it.
+ 	gcc_cv_initfini_array=yes
++	;;
++riscv*-*-lyos*)
++	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h lyos.h"
++	tmake_file="${tmake_file} riscv/t-riscv"
++	# Force .init_array support.  The configure script cannot always
++	# automatically detect that GAS supports it, yet we require it.
++	gcc_cv_initfini_array=yes
+ 	;;
+ riscv*-*-elf*)
+ 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
+diff -rupN old/libgcc/config.host new/libgcc/config.host
+--- old/libgcc/config.host	2017-03-11 03:33:27.000000000 +0800
++++ new/libgcc/config.host	2018-08-26 23:38:49.309197238 +0800
+@@ -438,6 +438,9 @@ arm*-*-eabi* | arm*-*-symbianelf* | arm*
+ 	extra_parts="$extra_parts crtfastmath.o"
+ 	unwind_header=config/arm/unwind-arm.h
+ 	;;
++arm-*-lyos*)
++	extra_parts="crtbegin.o crtend.o"
++	;;
+ avr-*-*)
+ 	# Make HImode functions for AVR
+ 	tmake_file="${cpu_type}/t-avr t-fpbit"
+@@ -757,6 +760,10 @@ x86_64-*-mingw*)
+ 		extra_parts="$extra_parts vtv_start.o vtv_end.o vtv_start_preinit.o vtv_end_preinit.o"
+ 	fi
+ 	;;
++i[34567]86-*-lyos*)
++	tmake_file="$tmake_file i386/t-i386elf t-svr4 i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	extra_parts="$extra_parts crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o"
++	;;
+ ia64*-*-elf*)
+ 	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
+ 	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
+diff -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
+--- old/libstdc++-v3/crossconfig.m4	2017-01-18 07:36:12.000000000 +0800
++++ new/libstdc++-v3/crossconfig.m4	2018-08-26 23:39:53.915863686 +0800
+@@ -193,6 +193,12 @@ case "${host}" in
+     AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
+     AM_ICONV
+     ;;
++  *-lyos*)
++    AC_CHECK_HEADERS([sys/types.h local.h float.h])
++    GLIBCXX_CHECK_BUILTIN_MATH_SUPPORT
++    GLIBCXX_CHECK_COMPLEX_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
+   *-mingw32*)
+     GLIBCXX_CHECK_LINKER_FEATURES
+     GLIBCXX_CHECK_MATH_SUPPORT

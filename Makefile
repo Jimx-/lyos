@@ -27,6 +27,10 @@ ifeq ($(ARCH),arm)
 	SUBARCH = arm
 endif
 
+ifeq ($(ARCH),riscv32)
+	ARCH = riscv
+endif
+
 export SUBARCH ARCH 
 
 # Import configuration
@@ -119,7 +123,7 @@ export Q
 	objdirs kvm kvm-debug 
 
 # Default entry point
-all : realclean everything
+all : clean everything
 
 include $(ARCHDIR)/Makefile
 
@@ -168,7 +172,11 @@ clean:
 
 realclean :
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'
-	@rm -f $(LYOSKERNEL) $(LYOSZKERNEL) $(LYOSINITRD)
+	$(Q)$(MAKE) -C lib $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C fs $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C servers $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS) realclean
 
 mrproper:
 	@echo -e '$(COLORRED)Removing object files...$(COLORDEFAULT)'

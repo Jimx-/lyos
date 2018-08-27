@@ -1,7 +1,6 @@
 #ifndef _BITS_PTHREAD_TYPES_H_
 #define _BITS_PTHREAD_TYPES_H_
 
-#include <sys/types.h>
 #include <sys/sched.h>
 
 typedef long pthread_t;

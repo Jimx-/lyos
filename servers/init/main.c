@@ -25,7 +25,8 @@ int main(int argc, char * argv[])
 		waitpid(pid_rc, NULL, 0);
 	} else {
 		char * rc_args[] = {"/bin/sh", "/etc/rc", NULL};
-		execv("/bin/sh", rc_args);
+		char * rc_env[] = {NULL};
+		execve("/bin/sh", rc_args, rc_env);
 	}
 
 	/* set hostname */

@@ -33,7 +33,6 @@ function patc() {
 function install_newlib () {
     cp -rf $DIR/patches/newlib/lyos $1/newlib/libc/sys/
     cp $DIR/../include/lyos/{type.h,const.h,ipc.h} $1/newlib/libc/sys/lyos/
-    cp $DIR/patches/newlib/malign.c $1/newlib/libc/stdlib
     if [ ! -d "$1/newlib/libc/sys/lyos/lyos" ]; then
         mkdir $1/newlib/libc/sys/lyos/lyos
     fi

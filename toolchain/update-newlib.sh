@@ -12,10 +12,10 @@ fi
 
 pushd sources > /dev/null
 
-rm -rf newlib-2.0.0
-unzip "newlib-2.0.0.tar.gz" "newlib-2.0.0"
-patc "newlib-2.0.0"
-install_newlib "newlib-2.0.0"
+rm -rf newlib-3.0.0
+unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
+patc "newlib-3.0.0"
+install_newlib "newlib-3.0.0"
 
 popd > /dev/null
 

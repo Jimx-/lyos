@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "type.h"
 #include "ipc.h"
 
@@ -1083,6 +1085,16 @@ int setgid(gid_t gid)
 	return msg.RETVAL;
 }
 
+int setreuid(uid_t ruid, uid_t euid)
+{
+	return setuid(ruid);
+}
+
+int setregid(uid_t rgid, uid_t egid)
+{
+	return setgid(rgid);
+}
+
 int geteuid()
 {
 	MESSAGE msg;
@@ -1472,4 +1484,15 @@ void* shmat(int shmid, const void* shmaddr, int shmflg)
     send_recv(BOTH, TASK_IPC, &m);
 
     return m.IPC_RETADDR;
+}
+
+int getentropy(void *buffer, size_t length)
+{
+	printf("getentropy: not implemented\n");
+	return ENOSYS;
+}
+
+int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	
 }

@@ -1,7 +1,6 @@
 #ifndef _PTHREAD_H_
 #define _PTHREAD_H_
 
-#include <bits/pthread_types.h>
 #include <sys/types.h>
 
 #define PTHREAD_MUTEX_NORMAL		0

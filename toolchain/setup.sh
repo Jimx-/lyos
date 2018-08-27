@@ -49,6 +49,22 @@ if $BUILD_BINUTILS; then
     popd
 fi 
 
+# Build gcc
+if $BUILD_GCC; then
+    if [ -d gcc ]; then
+        rm -rf gcc
+    fi
+    mkdir gcc
+
+    unset PKG_CONFIG_LIBDIR
+
+    pushd gcc
+    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
+    make -j8 all-gcc all-target-libgcc || cmd_error
+    make install-gcc install-target-libgcc || cmd_error
+    popd
+fi
+
 . $DIR/activate.sh
 
 # Build newlib
@@ -60,11 +76,11 @@ if $BUILD_NEWLIB; then
         mkdir newlib
     fi
     
-    pushd $DIR/sources/newlib-2.0.0 > /dev/null
+    pushd $DIR/sources/newlib-3.0.0 > /dev/null
     find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
     popd > /dev/null
     
-    pushd $DIR/sources/newlib-2.0.0/newlib/libc/sys > /dev/null
+    pushd $DIR/sources/newlib-3.0.0/newlib/libc/sys > /dev/null
     autoconf || cmd_error
     pushd lyos > /dev/null
     autoreconf
@@ -72,7 +88,7 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
     
     pushd newlib > /dev/null
-    $DIR/sources/newlib-2.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
+    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
     make -j || cmd_error
@@ -122,9 +138,9 @@ if $BUILD_COREUTILS; then
     fi
     
     pushd coreutils > /dev/null
-    $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
-    make -j
-    make DESTDIR=$SYSROOT install
+    #$DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
+    #make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi 
 
@@ -135,7 +151,7 @@ if $BUILD_DASH; then
     fi
     
     pushd dash > /dev/null
-    $DIR/sources/dash-0.5.8/configure --host=$TARGET --prefix=$CROSSPREFIX || cmd_error
+    $DIR/sources/dash-0.5.10/configure --host=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -i '/# define _GNU_SOURCE 1/d' config.h
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
