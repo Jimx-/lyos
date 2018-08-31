@@ -485,6 +485,8 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     vir_bytes vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PG_SIZE;
 #elif defined(__arm__)
     vir_bytes vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PGD_SIZE;
+#elif defined(__riscv)
+    vir_bytes vir_addr = 0;
 #endif
 
     return vmctl_set_address_space(who->endpoint, pgd->phys_addr, (void *)vir_addr);

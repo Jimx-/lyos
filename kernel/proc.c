@@ -34,7 +34,7 @@
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
-    
+
 PUBLIC struct proc * pick_proc();
 PUBLIC void proc_no_time(struct proc * p);
 
@@ -59,7 +59,7 @@ PUBLIC void init_proc()
     for (i = -NR_TASKS; i < NR_PROCS; i++,p++) {
         spinlock_init(&p->lock);
         INIT_LIST_HEAD(&p->run_list);
-        
+
         if (i >= (NR_BOOT_PROCS - NR_TASKS)) {
             p->state = PST_FREE_SLOT;
             continue;
@@ -117,7 +117,7 @@ PUBLIC void init_proc()
     }
 
     /* prepare idle process struct */
-    
+
     for (i = 0; i < CONFIG_SMP_MAX_CPUS; i++) {
         struct proc * p = get_cpu_var_ptr(i, idle_proc);
         p->state |= PST_STOPPED;
@@ -203,13 +203,13 @@ PRIVATE void idle()
         restart_local_timer();
     else
         stop_local_timer();
-    
+
 #else
     restart_local_timer();
 #endif
 
     stop_context(proc_addr(KERNEL));
-    
+
     halt_cpu();
 }
 
@@ -218,12 +218,12 @@ PRIVATE void idle()
  *****************************************************************************/
 /**
  * <Ring 0> The core routine of system call `sendrec()'.
- * 
+ *
  * @param function SEND or RECEIVE
  * @param src_dest To/From whom the message is transferred.
  * @param m        Ptr to the MESSAGE body.
  * @param p        The caller proc.
- * 
+ *
  * @return Zero if success.
  *****************************************************************************/
 PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
@@ -238,7 +238,7 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
     int flags = 0;
     int caller = p->endpoint;
     MESSAGE * mla = (MESSAGE * )msg;
-    
+
     if (function != SEND_ASYNC) {
         mla->source = caller;
         if (!verify_endpt(src_dest, NULL)) return EINVAL;
@@ -278,7 +278,7 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
  *****************************************************************************/
 /**
  * <Ring 0~3> Clear up a MESSAGE by setting each byte to 0.
- * 
+ *
  * @param p  The message to be cleared.
  *****************************************************************************/
 PUBLIC void reset_msg(MESSAGE* p)
@@ -303,10 +303,10 @@ PUBLIC struct proc * endpt_proc(endpoint_t ep)
  * instance, if we have procs trying to send messages like this:
  * A -> B -> C -> A, then a deadlock occurs, because all of them will
  * wait forever. If no cycles detected, it is considered as safe.
- * 
+ *
  * @param src   Who wants to send message.
  * @param dest  To whom the message is sent.
- * 
+ *
  * @return Zero if success.
  *****************************************************************************/
 PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
@@ -340,11 +340,11 @@ PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
  * <Ring 0> Send a message to the dest proc. If dest is blocked waiting for
  * the message, copy the message to it and unblock dest. Otherwise the caller
  * will be blocked and appended to the dest's sending queue.
- * 
+ *
  * @param p_to_send  The caller, the sender.
  * @param dest     To whom the message is sent.
  * @param m        The message.
- * 
+ *
  * @return Zero if success.
  *****************************************************************************/
 PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
@@ -380,7 +380,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
             retval = EBUSY;
             goto out;
         }
-        
+
         PST_SET_LOCKED(sender, PST_SENDING);
         sender->sendto = dest;
         retval = data_vir_copy_check(p_to_send, KERNEL, &sender->send_msg, KERNEL, m, sizeof(MESSAGE));
@@ -414,11 +414,11 @@ out:
  * <Ring 0> Try to get a message from the src proc. If src is blocked sending
  * the message, copy the message from it and unblock src. Otherwise the caller
  * will be blocked.
- * 
+ *
  * @param p_to_recv The caller, the proc who wanna receive.
  * @param src     From whom the message will be received.
  * @param m       The message ptr to accept the message.
- * 
+ *
  * @return  Zero if success.
  *****************************************************************************/
 PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
@@ -435,7 +435,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
     int retval = 0;
 
     lock_proc(who_wanna_recv);
-    /* PST_SENDING is set means that the process failed to send a 
+    /* PST_SENDING is set means that the process failed to send a
      * message in sendrec(BOTH), simply block it.
      */
     if (PST_IS_SET(who_wanna_recv, PST_SENDING)) goto no_msg;
@@ -637,7 +637,7 @@ PRIVATE int receive_async(struct proc* p)
     int retval;
     priv_map_t async_pending = p->priv->async_pending;
     struct priv* priv;
-    
+
     for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
         if (priv->proc_nr == NO_TASK) continue;
         if (!(async_pending & (1 << priv->id))) continue;
@@ -661,7 +661,7 @@ PRIVATE int has_pending_async(struct proc * p, endpoint_t src)
         struct proc * sender = endpt_proc(src);
         if (!sender) return PRIV_ID_NULL;
 
-        if (async_pending & (1 << sender->priv->id)) return sender->priv->id; 
+        if (async_pending & (1 << sender->priv->id)) return sender->priv->id;
         else return PRIV_ID_NULL;
     }
 
@@ -683,7 +683,7 @@ PRIVATE int has_pending_notify(struct proc * p, endpoint_t src)
         struct proc * sender = endpt_proc(src);
         if (!sender) return PRIV_ID_NULL;
 
-        if (notify_pending & (1 << sender->priv->id)) return sender->priv->id; 
+        if (notify_pending & (1 << sender->priv->id)) return sender->priv->id;
         else return PRIV_ID_NULL;
     }
 
@@ -726,10 +726,10 @@ PRIVATE void set_notify_msg(struct proc * dest, MESSAGE * m, endpoint_t src)
  *****************************************************************************/
 /**
  * @brief Send a notification to the dest proc.
- * 
+ *
  * @param p_to_send     Who wants to send the notification.
  * @param dest The dest proc.
- * 
+ *
  * @return Zero on success, otherwise errcode.
  */
 PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
@@ -743,7 +743,7 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
     if (!PST_IS_SET(p_dest, PST_SENDING) && PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
         (p_dest->recvfrom == p_to_send->endpoint ||
          p_dest->recvfrom == ANY)) {
-        
+
         MESSAGE m;
         set_notify_msg(p_dest, &m, p_to_send->endpoint);
         retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg, p_to_send->endpoint, &m, sizeof(MESSAGE));
@@ -771,10 +771,10 @@ PUBLIC int msg_notify(struct proc * p_to_send, endpoint_t dest)
  *****************************************************************************/
 /**
  * @brief Verify if an endpoint number is valid and convert it to proc nr.
- * 
+ *
  * @param ep Endpoint number.
  * @param proc_nr [out] Ptr to proc nr.
- * 
+ *
  * @return Non-zero if the endpoint number is valid.
  */
 PUBLIC int verify_endpt(endpoint_t ep, int * proc_nr)
@@ -799,7 +799,7 @@ PUBLIC void dumproc(struct proc* p)
 {
 #if 0
     sprintf(info, "counter: 0x%x.  ", p->counter); disp_color_str(info, text_color);
-    sprintf(info, "priority: 0x%x.  ", p->priority); disp_color_str(info, text_color); 
+    sprintf(info, "priority: 0x%x.  ", p->priority); disp_color_str(info, text_color);
 
     sprintf(info, "name: %s.  ", p->name); disp_color_str(info, text_color);
     disp_color_str("\n", text_color);
@@ -843,11 +843,11 @@ PUBLIC void dump_msg(const char * title, MESSAGE* m)
  *****************************************************************************/
 /**
  * <Ring 0> Send asynchronous messages.
- * 
+ *
  * @param p_to_send  The caller, the sender.
  * @param table      The table containing all async messages to be sent.
  * @param len        How many messages to be sent.
- * 
+ *
  * @return Zero if success.
  *****************************************************************************/
 PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
@@ -877,7 +877,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         flags = amsg.flags;
         dest = amsg.dest;
         amsg.msg.source = p_to_send->endpoint;
-        
+
         if (dest == p_to_send->endpoint) {
             retval = EINVAL;
             goto async_error;

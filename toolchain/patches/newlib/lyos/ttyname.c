@@ -49,9 +49,9 @@ static char ttyname_buf[TTYNAME_BUFSIZE] = _PATH_DEV;
 char* ttyname(int fd)
 {
   register int  fail;
-  register char *ret=NULL;
+  register char *ret = NULL;
   fail = ttyname_r( fd, ttyname_buf, sizeof(ttyname_buf) );
-  if ( fail )  errno = fail;
+  if (fail)  errno = fail;
    else  ret = ttyname_buf;
   return ret;
 }

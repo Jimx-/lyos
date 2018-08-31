@@ -6,10 +6,13 @@
 .equ NR_SENDREC,	1
 
 __clone:
+    push %ebp
+    movl %esp, %ebp
+
 	push %ebx
 	push $STACK_PARENT
 	movl $NR_SENDREC, %eax	/* NR_SENDREC */
-	movl 12(%esp), %ebx
+	movl 16(%esp), %ebx
 	int $0x90
 
 	lock; addl $0,0(%esp)
@@ -27,4 +30,5 @@ __clone:
 __clone_parent:
 	add $4, %esp
 	pop %ebx
+    pop %ebp
 	ret

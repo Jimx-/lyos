@@ -59,7 +59,8 @@ if $BUILD_GCC; then
     unset PKG_CONFIG_LIBDIR
 
     pushd gcc
-    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
+    #$DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
+    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --enable-shared=libgcc || cmd_error
     make -j8 all-gcc all-target-libgcc || cmd_error
     make install-gcc install-target-libgcc || cmd_error
     popd
@@ -138,8 +139,8 @@ if $BUILD_COREUTILS; then
     fi
     
     pushd coreutils > /dev/null
-    #$DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
-    #make -j || cmd_error
+    $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
+    make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi 

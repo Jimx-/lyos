@@ -54,6 +54,11 @@ extern  pde_t               initial_pgd[];
 EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 #endif
 
+#ifdef __riscv
+EXTERN  u32                 bsp_cpu_id;
+extern  pde_t               initial_pgd[];
+#endif
+
 extern  int booting_cpu;
 extern  int booted_aps;
 EXTERN  int ncpus;

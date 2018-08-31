@@ -61,6 +61,8 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
     child->q_sending = NULL;
     child->next_sending = NULL;
 
+    child->user_time = 0;
+
     if (flags & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
 
 #ifdef __i386__

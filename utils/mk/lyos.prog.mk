@@ -1,6 +1,6 @@
 
 SRC_PATH = .
-BUILD_PATH = ./obj
+BUILD_PATH = ./obj.$(SUBARCH)
 OBJS = $(patsubst %.c, $(BUILD_PATH)/%.o, $(patsubst %.S, $(BUILD_PATH)/%.o, $(patsubst %.asm, $(BUILD_PATH)/%.o, $(SRCS))))
 LINKLIBS = $(LIBS:%=$(LIBOUTDIR)/lib%.a)
 DEPS = $(OBJS:.o=.d)

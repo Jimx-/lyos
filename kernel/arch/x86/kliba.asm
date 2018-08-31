@@ -175,7 +175,7 @@ x86_lgdt:
 	mov eax, [ebp + 4 + 4]
 
 	lgdt [eax]
-	
+
 	pop ebp
 	ret
 
@@ -185,7 +185,7 @@ x86_lidt:
 	mov eax, [ebp + 4 + 4]
 
 	lidt [eax]
-	
+
 	pop ebp
 	ret
 
@@ -194,7 +194,7 @@ x86_lldt:
 	mov ebp, esp
 
 	lldt [ebp + 4 + 4]
-	
+
 	pop ebp
 	ret
 
@@ -203,7 +203,7 @@ x86_ltr:
 	mov ebp, esp
 
 	ltr [ebp + 4 + 4]
-	
+
 	pop ebp
 	ret
 
@@ -260,7 +260,7 @@ x86_load_ss:
 read_ebp:
 	mov eax, ebp
 	ret
-	
+
 switch_k_stack:
 	mov eax, [esp + 4 + 4]
 	mov ecx, [esp + 4]
@@ -273,7 +273,7 @@ switch_k_stack:
 fninit:
 	fninit
 	ret
-	
+
 ia32_read_msr:
 	push ebp
 	mov ebp, esp
@@ -377,7 +377,7 @@ i8259_eoi_slave:
 arch_pause:
 	pause
 	ret
-	
+
 phys_copy:
 	push	ebp
 	mov		ebp, esp
@@ -423,7 +423,7 @@ phys_copy_fault_in_kernel:
 	mov		eax, cr2
 	ret
 
-; copy a user message of 48 bytes
+; copy a user message of 64 bytes
 copy_user_message:
 	mov 	ecx, [esp + 8]	; src
 	mov 	edx, [esp + 4]	; dest
@@ -452,6 +452,14 @@ copy_user_message:
 	mov 	[edx + 10*4], eax
 	mov 	eax, [ecx + 11*4]
 	mov 	[edx + 11*4], eax
+	mov 	eax, [ecx + 12*4]
+	mov 	[edx + 12*4], eax
+	mov 	eax, [ecx + 13*4]
+	mov 	[edx + 13*4], eax
+	mov 	eax, [ecx + 14*4]
+	mov 	[edx + 14*4], eax
+	mov 	eax, [ecx + 15*4]
+	mov 	[edx + 15*4], eax
 copy_user_message_end:
 	mov 	eax, 0
 	ret

@@ -7,4 +7,6 @@ menu "Device Drivers"
 
 source "drivers/block/config.in"
 
+source "drivers/pci/config.in"
+
 endmenu

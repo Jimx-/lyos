@@ -116,7 +116,7 @@ struct proc {
     u64 counter_ns;                 /* remained ticks */
     int quantum_ms;
     u64 cycles;
-    
+
     int sched_policy;
     u64 deadline;
     struct list_head run_list;
@@ -134,7 +134,7 @@ struct proc {
 	int cpu;			/* on which cpu this proc runs */
 	int last_cpu;
 #endif
-	
+
 	MESSAGE send_msg;
 	MESSAGE * recv_msg;
 	MESSAGE * syscall_msg;
@@ -153,6 +153,9 @@ struct proc {
 	int p_parent; /**< pid of parent process */
 
 	sigset_t sig_pending;
+
+	clock_t user_time;	/* user time in ticks */
+	clock_t sys_time;	/* sys time in ticks */
 
 	struct {
 		struct proc * next_request;
@@ -194,7 +197,7 @@ extern u32 rr_interval_ms;
  * @see global.h
  */
 //#define	PROCS_BASE		0x1000000 /* 16 MB */
-#define	PROC_ORIGIN_STACK	0x80000    /*  32 KB */
+#define	PROC_ORIGIN_STACK	0x100000    /*  32 KB */
 
 /* stacks of tasks */
 #define	STACK_SIZE_DEFAULT	0x80000 /* 32 KB */

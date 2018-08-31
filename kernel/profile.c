@@ -94,6 +94,8 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
     profile_sample(p, 
 #ifdef __i386__
         (void*) p->regs.eip
+#elif defined(__riscv)
+        0
 #endif
     );
 

@@ -36,13 +36,13 @@ PRIVATE char hostname[MAX_HOSTNAME_LEN];
 PRIVATE struct utsname uname_buf;
 
 #ifdef __i386__
-PRIVATE int read_register(char reg_addr);
+PRIVATE inline int read_register(int reg_addr);
 #endif
 
-PRIVATE u32 get_rtc_time(struct time *t);
-PRIVATE u32 secs_of_years(int years);
-PRIVATE u32 secs_of_months(int months, int year);
-PRIVATE u32 do_gettimeofday(struct timeval *tv, struct timezone *tz);
+PRIVATE int get_rtc_time(struct time *t);
+PRIVATE int secs_of_years(int years);
+PRIVATE int secs_of_months(int months, int year);
+PRIVATE int do_gettimeofday(struct timeval *tv, struct timezone *tz);
 PRIVATE int prepare_uname_buf(struct utsname * buf);
 PRIVATE int do_getsethostname(MESSAGE * p);
 
@@ -53,7 +53,7 @@ PRIVATE int do_getsethostname(MESSAGE * p);
  *****************************************************************************/
 /**
  * <Ring 1> The main loop of TASK SYS.
- * 
+ *
  *****************************************************************************/
 PUBLIC int main()
 {
@@ -68,14 +68,20 @@ PUBLIC int main()
 
 		switch (msg.type) {
 		case UNAME:
+			//printl(">>>>>>>> enter UNAME\n");
 			msg.RETVAL = data_copy(src, msg.BUF, TASK_SYS, &uname_buf, sizeof(struct utsname));
+			//printl("<<<<<<<< exit UNAME\n");
 			break;
 		case GET_TIME_OF_DAY:
+			//printl(">>>>>>>> enter GET_TIME_OF_DAY\n");
 			msg.RETVAL = do_gettimeofday(&tv, NULL);
 			data_copy(src, msg.BUF, TASK_SYS, &tv, sizeof(tv));
+			//printl("<<<<<<<< exit GET_TIME_OF_DAY\n");
 			break;
 		case GETSETHOSTNAME:
+			//printl(">>>>>>>> enter GET_SET_HOSTNAME\n");
 			msg.RETVAL = do_getsethostname(&msg);
+			//printl("<<<<<<<< exit GET_SET_HOSTNAME\n");
 			break;
 		default:
             msg.RETVAL = ENOSYS;
@@ -95,11 +101,12 @@ PUBLIC int main()
  *****************************************************************************/
 /**
  * Get RTC time from the CMOS
- * 
+ *
  * @return Zero.
  *****************************************************************************/
-PRIVATE u32 get_rtc_time(struct time *t)
+PRIVATE int get_rtc_time(struct time *t)
 {
+	int retval;
 #ifdef __i386__
 	t->year = read_register(YEAR);
 	t->month = read_register(MONTH);
@@ -108,7 +115,7 @@ PRIVATE u32 get_rtc_time(struct time *t)
 	t->minute = read_register(MINUTE);
 	t->second = read_register(SECOND);
 
-	if ((read_register(CLK_STATUS) & 0x04) == 0) {
+	if ((retval = read_register(CLK_STATUS) & 0x04) == 0) {
 		/* Convert BCD to binary (default RTC mode) */
 		t->year = BCD_TO_DEC(t->year);
 		t->month = BCD_TO_DEC(t->month);
@@ -120,8 +127,8 @@ PRIVATE u32 get_rtc_time(struct time *t)
 
 	t->year += 2000;
 #endif
-	
-	return 0;
+
+	return retval;
 }
 
 #ifdef __i386__
@@ -130,22 +137,22 @@ PRIVATE u32 get_rtc_time(struct time *t)
  *****************************************************************************/
 /**
  * Read register from CMOS.
- * 
- * @param reg_addr 
- * 
- * @return 
+ *
+ * @param reg_addr
+ *
+ * @return
  *****************************************************************************/
-PRIVATE int read_register(char reg_addr)
+PRIVATE inline int read_register(int reg_addr)
 {
-	u32 v;
+	int v;
 	portio_outb(CLK_ELE, reg_addr);
 	portio_inb(CLK_IO, &v);
 	return v;
 }
 #endif
 
-PRIVATE u32 secs_of_years(int years) {
-	u32 days = 0;
+PRIVATE int secs_of_years(int years) {
+	int days = 0;
 	while (years > 1969) {
 		days += 365;
 		if (years % 4 == 0) {
@@ -162,8 +169,8 @@ PRIVATE u32 secs_of_years(int years) {
 	return days * 86400;
 }
 
-PRIVATE u32 secs_of_months(int months, int year) {
-	u32 days = 0;
+PRIVATE int secs_of_months(int months, int year) {
+	int days = 0;
 	switch(months) {
 		case 11:
 			days += 30;
@@ -196,13 +203,13 @@ PRIVATE u32 secs_of_months(int months, int year) {
 	return days * 86400;
 }
 
-PRIVATE u32 do_gettimeofday(struct timeval *tv, struct timezone *tz)
+PRIVATE int do_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
 	struct time t;
 	int ret;
 	if ((ret = get_rtc_time(&t)) != 0) return ret;
 
-	u32 time = secs_of_years(t.year - 1) + 
+	int time = secs_of_years(t.year - 1) +
 					secs_of_months(t.month - 1, t.year) +
 					(t.day - 1) * 86400 +
 					t.hour * 3600 +

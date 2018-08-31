@@ -4,7 +4,7 @@
 .global halt_cpu
 .global arch_pause
 
-/* copy a message of 48 bytes */
+/* copy a message of 64 bytes */
 copy_user_message:
 	push	{r4-r10, lr}
 	mov 	r9, r1
@@ -12,11 +12,11 @@ copy_user_message:
 	/* first 32 bytes */
 	ldm 	r9, {r0-r7}
 	stm		r10, {r0-r7}
-	/* next 16 bytes */
+	/* next 32 bytes */
 	add		r9, r9, #32
 	add 	r10, r10, #32
-	ldm		r9, {r0-r3}
-	stm		r10, {r0-r3}
+	ldm		r9, {r0-r7}
+	stm		r10, {r0-r7}
 
 copy_user_message_end:
 	pop 	{r4-r10, lr}

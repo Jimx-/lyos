@@ -31,12 +31,17 @@ ifeq ($(ARCH),riscv32)
 	ARCH = riscv
 endif
 
+ifeq ($(ARCH),riscv64)
+	ARCH = riscv
+endif
+
 export SUBARCH ARCH 
 
 # Import configuration
 ifeq ($(wildcard .config),) 
 else
-	include .config
+	-include .config
+	export
 endif
 
 KERNELVERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
@@ -103,8 +108,8 @@ CONFIGDIR = $(SRCDIR)/include/config
 CONFIGIN = $(SRCDIR)/config.in
 CONF = $(SRCDIR)/scripts/config/conf
 MCONF = $(SRCDIR)/scripts/config/mconf
-CONFIGINC = $(SRCDIR)/.config
 AUTOCONFINC = $(SRCDIR)/include/config/autoconf.h
+CONFIGINC = $(SRCDIR)/.config
 
 KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
@@ -184,7 +189,7 @@ mrproper:
 	@echo -e '$(COLORRED)Removing compile.h...$(COLORDEFAULT)'
 	@rm -f $(INCLUDEDIR)/lyos/compile.h
 	@echo -e '$(COLORRED)Removing configure files...$(COLORDEFAULT)'
-	@rm -f .config .config.old
+	@rm -f $(CONFIGINC) $(CONFIGINC).old
 	@rm -rf $(CONFIGDIR)
 
 install: install-libraries install-fs install-drivers

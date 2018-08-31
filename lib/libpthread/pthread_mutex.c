@@ -7,8 +7,8 @@
 #include <sys/futex.h>
 
 typedef struct {
-	unsigned short state;
-	unsigned short owner;
+	unsigned int state;
+	unsigned int owner;
 } pthread_mutex_internal_t;
 
 #define MUTEX_TYPE_MASK		(3 << 14)
@@ -34,10 +34,10 @@ int pthread_mutex_init(pthread_mutex_t* pmutex, const pthread_mutexattr_t* attr)
 
 static inline int __pthread_normal_mutex_trylock(pthread_mutex_internal_t* mutex)
 {
-	unsigned short unlocked = MUTEX_STATE_UNLOCKED;
-	unsigned short locked_uncontended = MUTEX_STATE_LOCKED_UNCONTENDED;
+	unsigned int unlocked = MUTEX_STATE_UNLOCKED;
+	unsigned int locked_uncontended = MUTEX_STATE_LOCKED_UNCONTENDED;
 
-	unsigned short old_state = unlocked;
+	unsigned int old_state = unlocked;
 	if (__sync_bool_compare_and_swap(&mutex->state, old_state, locked_uncontended)) {
 		return 0;
 	}
@@ -48,8 +48,8 @@ static inline int __pthread_normal_mutex_lock(pthread_mutex_internal_t* mutex, c
 {
 	if (__pthread_normal_mutex_trylock(mutex) == 0) return 0;
 
-	unsigned short unlocked = MUTEX_STATE_UNLOCKED;
-	unsigned short locked_contended = MUTEX_STATE_LOCKED_CONTENDED;
+	unsigned int unlocked = MUTEX_STATE_UNLOCKED;
+	unsigned int locked_contended = MUTEX_STATE_LOCKED_CONTENDED;
 
 	while (__atomic_exchange_n(&mutex->state, locked_contended, __ATOMIC_ACQUIRE) != unlocked) {
 		futex((int*)&mutex->state, FUTEX_WAIT, locked_contended, abs_time, NULL, 0);
@@ -60,8 +60,8 @@ static inline int __pthread_normal_mutex_lock(pthread_mutex_internal_t* mutex, c
 
 static inline void __pthread_normal_mutex_unlock(pthread_mutex_internal_t* mutex)
 {
-	unsigned short unlocked = MUTEX_STATE_UNLOCKED;
-	unsigned short locked_contended = MUTEX_STATE_LOCKED_CONTENDED;
+	unsigned int unlocked = MUTEX_STATE_UNLOCKED;
+	unsigned int locked_contended = MUTEX_STATE_LOCKED_CONTENDED;
 
 	if (__atomic_exchange_n(&mutex->state, unlocked, __ATOMIC_RELEASE) == locked_contended) {
 		futex((int*)&mutex->state, FUTEX_WAKE, 1, NULL, NULL, 0);
@@ -70,8 +70,8 @@ static inline void __pthread_normal_mutex_unlock(pthread_mutex_internal_t* mutex
 
 static int __pthread_mutex_lock_timeout(pthread_mutex_internal_t* mutex, const struct timespec* abs_time)
 {
-	unsigned short old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
-	unsigned short type = old_state & MUTEX_TYPE_MASK;
+	unsigned int old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+	unsigned int type = old_state & MUTEX_TYPE_MASK;
 
 	if (type == MUTEX_TYPE_NORMAL) {
 		return __pthread_normal_mutex_lock(mutex, abs_time);
@@ -84,8 +84,8 @@ int pthread_mutex_lock(pthread_mutex_t* pmutex)
 {
 	pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*) pmutex;
 
-	unsigned short old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
-	unsigned short type = old_state & MUTEX_TYPE_MASK;
+	unsigned int old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+	unsigned int type = old_state & MUTEX_TYPE_MASK;
 
 	if (type == MUTEX_TYPE_NORMAL) {
 		if (__pthread_normal_mutex_trylock(mutex) == 0) return 0;
@@ -98,8 +98,8 @@ int pthread_mutex_unlock(pthread_mutex_t* pmutex)
 {
 	pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*) pmutex;
 
-	unsigned short old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
-	unsigned short type = old_state & MUTEX_TYPE_MASK;
+	unsigned int old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+	unsigned int type = old_state & MUTEX_TYPE_MASK;
 
 	if (type == MUTEX_TYPE_NORMAL) {
 		__pthread_normal_mutex_unlock(mutex);
@@ -113,8 +113,8 @@ int pthread_mutex_trylock(pthread_mutex_t* pmutex)
 {
 	pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*) pmutex;
 
-	unsigned short old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
-	unsigned short type = old_state & MUTEX_TYPE_MASK;
+	unsigned int old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+	unsigned int type = old_state & MUTEX_TYPE_MASK;
 
 	if (type == MUTEX_TYPE_NORMAL) {
 		return __pthread_normal_mutex_trylock(mutex);

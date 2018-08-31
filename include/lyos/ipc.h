@@ -20,7 +20,7 @@
 
 #define SUSPEND -1000
 
-#define VERIFY_MESS_SIZE(msg_type) typedef int _VERIFY_##msg_type[sizeof(struct msg_type) == 40 ? 1 : -1]
+#define VERIFY_MESS_SIZE(msg_type) typedef int _VERIFY_##msg_type[sizeof(struct msg_type) == 56 ? 1 : -1]
 /**
  * MESSAGE mechanism is borrowed from MINIX
  */
@@ -30,7 +30,7 @@ struct mess1 {  /* 16 bytes */
     int m1i3;
     int m1i4;
 
-	u8	_pad[24];
+	u8	_pad[40];
 };
 VERIFY_MESS_SIZE(mess1);
 
@@ -40,7 +40,7 @@ struct mess2 {  /* 16 bytes */
     void* m2p3;
     void* m2p4;
 
-	u8 _pad[24];
+	u8 _pad[40];
 };
 VERIFY_MESS_SIZE(mess2);
 
@@ -53,15 +53,17 @@ struct mess3 {  /* 40 bytes */
     u64     m3l2;
     void*   m3p1;
     void*   m3p2;
+
+    u8 _pad[16];
 };
 VERIFY_MESS_SIZE(mess3);
 
 struct mess4 {  /* 36 bytes */
     u64 m4l1;
-    int m4i1, m4i2, m4i3; 
+    int m4i1, m4i2, m4i3;
     void *m4p1, *m4p2, *m4p3, *m4p4;
 
-	u32 _pad;
+    u8 _pad[20];
 };
 VERIFY_MESS_SIZE(mess4);
 
@@ -76,6 +78,8 @@ struct mess5 {  /* 40 bytes */
     int m5i8;
     int m5i9;
     int m5i10;
+
+    u8 _pad[16];
 };
 VERIFY_MESS_SIZE(mess5);
 
@@ -87,7 +91,7 @@ struct mess_mm_remap {
 	size_t 		size;
 	void*		ret_addr;
 
-	u8 			_pad[16];
+	u8 			_pad[32];
 };
 VERIFY_MESS_SIZE(mess_mm_remap);
 
@@ -98,7 +102,7 @@ struct mess_vfs_select {
     void*   exceptfds;
     void*   timeout;
 
-    u8      _pad[20];
+    u8      _pad[36];
 };
 VERIFY_MESS_SIZE(mess_vfs_select);
 
@@ -106,7 +110,7 @@ struct mess_vfs_cdev_openclose {
     u64     minor;
     u32     id;
 
-    u8      _pad[28];
+    u8      _pad[44];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
 
@@ -119,7 +123,7 @@ struct mess_vfs_cdev_readwrite {
     off_t       pos;
     size_t      count;
 
-    u8          _pad[8];
+    u8          _pad[24];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 
@@ -130,7 +134,7 @@ struct mess_vfs_cdev_mmap {
     off_t       pos;
     size_t      count;
 
-    u8          _pad[16];
+    u8          _pad[32];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap);
 
@@ -138,7 +142,7 @@ struct mess_vfs_cdev_select {
     u64     minor;
     u32     ops;
 
-    u8      _pad[28];
+    u8      _pad[44];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 
@@ -146,7 +150,7 @@ struct mess_vfs_cdev_reply {
     s32     status;
     u32     id;
 
-    u8      _pad[32];
+    u8      _pad[48];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
 
@@ -155,7 +159,7 @@ struct mess_vfs_cdev_mmap_reply {
     endpoint_t  endpoint;
     void*       retaddr;
 
-    u8          _pad[28];
+    u8          _pad[44];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap_reply);
 
@@ -177,10 +181,10 @@ typedef struct {
         struct mess_vfs_cdev_reply m_vfs_cdev_reply;
         struct mess_vfs_cdev_mmap_reply m_vfs_cdev_mmap_reply;
 
-		u8 _pad[40];
+		u8 _pad[56];
     } u;
-} MESSAGE;
-typedef int _VERIFY_MESSAGE[sizeof(MESSAGE) == 48 ? 1 : -1];
+} __attribute__((packed)) MESSAGE;
+typedef int _VERIFY_MESSAGE[sizeof(MESSAGE) == 64 ? 1 : -1];
 
 #define ASMF_USED   0x1
 #define ASMF_DONE   0x2
