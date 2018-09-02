@@ -1,4 +1,4 @@
-/*  
+/*
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -13,11 +13,12 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include <errno.h>
 #include "lyos/config.h"
@@ -165,11 +166,13 @@ PRIVATE void device_attr_addhash(struct device_attr_cb_data* attr)
     list_add(&attr->list, &device_attr_table[hash]);
 }
 
+/*
 PRIVATE void device_attr_unhash(struct device_attr_cb_data* attr)
 {
-    /* Remove a dynamic attribute from hash table */
+    \/\* Remove a dynamic attribute from hash table \*\/
     list_del(&attr->list);
 }
+*/
 
 PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
@@ -196,11 +199,11 @@ PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
 {
     struct device_attr_cb_data* attr = (struct device_attr_cb_data*) (sf_attr->cb_data);
-    
+
     MESSAGE msg;
 
     msg.type = DM_DEVICE_ATTR_STORE;
-    msg.BUF = buf;
+    msg.BUF = (char*) buf;
     msg.CNT = count;
     msg.TARGET = attr->id;
 
@@ -212,7 +215,7 @@ PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, si
 
 PUBLIC int do_device_attr_add(MESSAGE* m)
 {
-    struct device_attr_info info; 
+    struct device_attr_info info;
     char device_root[MAX_PATH];
     char label[MAX_PATH];
 
@@ -228,7 +231,7 @@ PUBLIC int do_device_attr_add(MESSAGE* m)
     snprintf(label, MAX_PATH, "%s.%s", device_root, info.name);
 
     sysfs_dyn_attr_t sysfs_attr;
-    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr, 
+    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr,
                                     device_attr_show, device_attr_store);
     if (retval) return retval;
     retval = sysfs_publish_dyn_attr(&sysfs_attr);

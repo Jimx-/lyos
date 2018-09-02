@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/const.h"
@@ -29,6 +30,7 @@
 #include "keyboard.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
+#include <lyos/sysutils.h>
 #include <lyos/vm.h>
 #include <lyos/timer.h>
 #include <sys/mman.h>
@@ -43,6 +45,8 @@
 
 int fb_scr_width, fb_scr_height;
 PRIVATE int cursor_state = 0;
+
+extern int fbcon_init_bochs(int devind, int x_res, int y_res);
 
 PRIVATE void fbcon_outchar(CONSOLE * con, char ch);
 PRIVATE void fbcon_flush(CONSOLE * con);
@@ -85,7 +89,7 @@ PUBLIC int fbcon_init()
 
 PRIVATE void set_pixel(int x, int y, int val)
 {
-    u32 * vmem = fb_mem_base;
+    u32 * vmem = (u32*) fb_mem_base;
     u32 * pixel = &vmem[y * x_resolution + x];
     *pixel = val;
 }
@@ -117,7 +121,7 @@ PRIVATE void print_char(CONSOLE* con, int x, int y, char ch)
 {
     u8 color = con->color;
     int fg_color, bg_color;
-    u8 * font = number_font[ch];
+    const u8* font = &number_font[ch * FONT_HEIGHT];
     int i, j;
 
     color_to_rgb(color, con->attributes, &fg_color, &bg_color);
@@ -138,7 +142,7 @@ PRIVATE void print_cursor(CONSOLE* con, int x, int y, int state)
     u8 color = state ? con->color : MAKE_COLOR(BG_COLOR(con->color), BG_COLOR(con->color));
     int fg_color, bg_color;
     int i, j;
-    
+
     color_to_rgb(color, con->attributes, &fg_color, &bg_color);
 
     for (i = 0; i < FONT_HEIGHT; i++) {
@@ -193,8 +197,8 @@ PRIVATE void fbcon_flush(CONSOLE * con)
         int line = visible_origin / con->cols;
         int col = visible_origin % con->cols;
         u32 offset = line * FONT_HEIGHT * x_resolution + col * FONT_WIDTH;
-        
-        u32* base = (char*)fb_mem_base;
+
+        u32* base = (u32*)fb_mem_base;
         u32* new_base = base + offset;
         memmove(base, new_base, (x_resolution * y_resolution - offset) * sizeof(u32));
         new_base = base + (x_resolution * y_resolution - offset);

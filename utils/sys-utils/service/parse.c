@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <lyos/const.h>
 #include <lyos/type.h>
@@ -39,8 +40,8 @@ static void parse_pci_class(cJSON * root, struct service_up_req * up_req)
 			if (*check == '/') {
 				interface = strtoul(check + 1, &check, 0x10);
 				mask = 0xffffff;
-			}	 
-		} 
+			}
+		}
 
 		if (*check != '\0') continue;
 
@@ -71,7 +72,7 @@ int parse_config(char * progname, char * path, struct service_up_req * up_req)
 	}
 
 	parse_pci_class(root, up_req);
-	
+
 	cJSON_Delete(root);
 	free(buf);
 

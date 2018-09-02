@@ -21,6 +21,8 @@
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
+#include <string.h>
+#include <lyos/sysutils.h>
 
 PUBLIC int send_async(async_message_t* table, size_t len)
 {

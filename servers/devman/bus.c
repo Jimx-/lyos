@@ -1,4 +1,4 @@
-/*  
+/*
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -160,11 +160,13 @@ PRIVATE void bus_attr_addhash(struct bus_attr_cb_data* attr)
     list_add(&attr->list, &bus_attr_table[hash]);
 }
 
+/*
 PRIVATE void bus_attr_unhash(struct bus_attr_cb_data* attr)
 {
-    /* Remove a dynamic attribute from hash table */
+    \/\* Remove a dynamic attribute from hash table \*\/
     list_del(&attr->list);
 }
+*/
 
 PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
@@ -191,11 +193,11 @@ PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
 {
     struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*) (sf_attr->cb_data);
-    
+
     MESSAGE msg;
 
     msg.type = DM_BUS_ATTR_STORE;
-    msg.BUF = buf;
+    msg.BUF = (char*) buf;
     msg.CNT = count;
     msg.TARGET = attr->id;
 
@@ -207,7 +209,7 @@ PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_
 
 PUBLIC int do_bus_attr_add(MESSAGE* m)
 {
-    struct bus_attr_info info; 
+    struct bus_attr_info info;
     char bus_root[MAX_PATH];
     char label[MAX_PATH];
 
@@ -222,7 +224,7 @@ PUBLIC int do_bus_attr_add(MESSAGE* m)
     snprintf(label, MAX_PATH, "%s.%s", bus_root, info.name);
 
     sysfs_dyn_attr_t sysfs_attr;
-    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr, 
+    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr,
                                     bus_attr_show, bus_attr_store);
     if (retval) return retval;
     retval = sysfs_publish_dyn_attr(&sysfs_attr);

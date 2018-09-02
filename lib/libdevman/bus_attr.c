@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
@@ -68,16 +69,16 @@ PUBLIC int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char*
 
 PRIVATE void bus_attr_addhash(struct bus_attribute* attr)
 {
-	/* Add a bus attribute to hash table */
 	unsigned int hash = attr->id & BUS_ATTR_HASH_MASK;
 	list_add(&attr->list, &bus_attr_table[hash]);
 }
 
+/*
 PRIVATE void bus_attr_unhash(struct bus_attribute* attr)
 {
-	/* Remove a dynamic attribute from hash table */
 	list_del(&attr->list);
 }
+*/
 
 PRIVATE struct bus_attribute* find_bus_attr_by_id(dev_attr_id_t id)
 {

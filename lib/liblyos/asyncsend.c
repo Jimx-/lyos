@@ -21,6 +21,7 @@
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
+#include <lyos/sysutils.h>
 
 #define ASYNC_SIZE  200
 PRIVATE async_message_t async_msg[ASYNC_SIZE];

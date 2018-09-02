@@ -29,6 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <lyos/service.h>
 #include "libfsdriver/libfsdriver.h"
 #include "ext2_fs.h"
 #include "global.h"

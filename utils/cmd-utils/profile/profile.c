@@ -1,7 +1,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <lyos/profile.h>
 
 #define EACTION	1
@@ -25,8 +27,9 @@ int memsize = 0;
 char* sample_buf = NULL;
 struct kprof_info kprof_info;
 
-int parse_args(int argc, char* argv[]);
-int start();
+static int parse_args(int argc, char* argv[]);
+static int start();
+static int stop();
 
 int main(int argc, char* argv[])
 {
@@ -49,7 +52,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-int parse_args(int argc, char* argv[])
+static int parse_args(int argc, char* argv[])
 {
 	while (--argc) {
 		++argv;
@@ -86,7 +89,7 @@ int parse_args(int argc, char* argv[])
 	return 0;
 }
 
-int start()
+static int start()
 {
 	return kprof(KPROF_START, 0, freq, NULL, NULL);
 }
@@ -109,7 +112,7 @@ int init_outfile()
 int write_outfile()
 {
 	char header[100];
-	sprintf(header, "kprof\n%d %d %d\n", sizeof(struct kprof_info), sizeof(struct kprof_proc), sizeof(struct kprof_sample));
+	sprintf(header, "kprof\n%d %d %d\n", (int) sizeof(struct kprof_info), (int) sizeof(struct kprof_proc), (int) sizeof(struct kprof_sample));
 
 	if (write(outfile_fd, header, strlen(header) < 0)) return 1;
 
@@ -120,7 +123,7 @@ int write_outfile()
 	return 0;
 }
 
-int stop()
+static int stop()
 {
 	if (alloc_mem()) return 1;
 	if (init_outfile()) return 1;

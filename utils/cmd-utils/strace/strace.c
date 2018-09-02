@@ -3,7 +3,10 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -12,7 +15,7 @@
 static void do_trace(pid_t child, int s);
 
 int main(int argc, char* argv[], char* envp[])
-{   
+{
     if (argc == 1) return 0;
 
     pid_t child;
@@ -33,10 +36,10 @@ int main(int argc, char* argv[], char* envp[])
 
 static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
 {
-    long* src = src_msg;
-    long* dest = dest_msg;
+    long* src = (long*) src_msg;
+    long* dest = (long*) dest_msg;
 
-    while (src < (char*)src_msg + sizeof(MESSAGE)) {
+    while (src < (long*) ((char*) src_msg + sizeof(MESSAGE))) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
         if (data == -1) return -1;
         *dest = data;
@@ -49,15 +52,15 @@ static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
 
 static void print_path(pid_t pid, char* string, int len)
 {
-    char* buf = malloc(len + 5);
-    if (!buf) return NULL;
+    char* buf = (char*) malloc(len + 5);
+    if (!buf) return;
 
-    long* src = string;
-    long* dest = buf;
+    long* src = (long*) string;
+    long* dest = (long*) buf;
 
-    while (src < string + len) {
+    while (src < (long*) (string + len)) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
-        if (data == -1) return -1;
+        if (data == -1) return;
         *dest = data;
         src++;
         dest++;
@@ -70,7 +73,7 @@ static void print_path(pid_t pid, char* string, int len)
     free(buf);
 }
 
-static char* print_str(pid_t pid, char* str, int len)
+static void print_str(pid_t pid, char* str, int len)
 {
 #define DEFAULT_BUF_LEN 32
     int truncated = 0;
@@ -80,23 +83,23 @@ static char* print_str(pid_t pid, char* str, int len)
     }
 
     char* buf = malloc(len + 1);
-    if (!buf) return NULL;
+    if (!buf) return;
 
-    long* src = str;
-    long* dest = buf;
+    long* src = (long*) str;
+    long* dest = (long*) buf;
 
-    while (src < str + len) {
+    while (src < (long*) (str + len)) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
-        if (data == -1) return -1;
+        if (data == -1) goto out;
         *dest = data;
         src++;
         dest++;
     }
 
     buf[len] = '\0';
-    
     printf("\"%s\"%s", buf, truncated ? "..." : "");
 
+out:
     free(buf);
 }
 
@@ -145,14 +148,14 @@ static void trace_exec_in(pid_t child, MESSAGE* msg)
 {
     printf("execve(");
     print_path(child, msg->PATHNAME, msg->NAME_LEN);
-    printf(", 0x%x)", msg->BUF);
+    printf(", 0x%p)", msg->BUF);
 }
 
 static void trace_stat_in(pid_t child, MESSAGE* msg)
 {
     printf("stat(");
     print_path(child, msg->PATHNAME, msg->NAME_LEN);
-    printf(", 0x%x)", msg->BUF);
+    printf(", 0x%p)", msg->BUF);
 }
 
 static void trace_chmod_in(pid_t child, MESSAGE* msg)
@@ -178,7 +181,7 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
         printf("close(%d)", msg.FD);
         break;
     case READ:
-        printf("read(%d, 0x%x, %d)", msg.FD, msg.BUF, msg.CNT);
+        printf("read(%d, 0x%p, %d)", msg.FD, msg.BUF, msg.CNT);
         break;
     case WRITE:
         trace_write_in(child, &msg);
@@ -187,16 +190,16 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
         trace_stat_in(child, &msg);
         break;
     case FSTAT:
-        printf("fstat(%d, 0x%x)", msg.FD, msg.BUF);
+        printf("fstat(%d, 0x%p)", msg.FD, msg.BUF);
         break;
     case EXEC:
         trace_exec_in(child, &msg);
         break;
     case BRK:
-        printf("brk(0x%x)", msg.ADDR);
+        printf("brk(0x%p)", msg.ADDR);
         break;
     case GETDENTS:
-        printf("getdents(%d, 0x%x, %d)", msg.FD, msg.BUF, msg.CNT);
+        printf("getdents(%d, 0x%p, %d)", msg.FD, msg.BUF, msg.CNT);
         break;
     case EXIT:
         printf("exit(%d) = ?\n", msg.STATUS);   /* exit has no return value */
@@ -284,9 +287,9 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
 #define ORIG_EAX    18
 static void trace_call_in(pid_t child)
 {
-    long call_nr = ptrace(PTRACE_PEEKUSER, child, ORIG_EAX*4, 0);
+    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*) (ORIG_EAX*4), 0);
 
-    void* src_msg = (void*) ptrace(PTRACE_PEEKUSER, child, EBX*4, 0);
+    void* src_msg = (void*) ptrace(PTRACE_PEEKUSER, child, (void*) (EBX*4), 0);
     MESSAGE msg;
     copy_message_from(child, src_msg, &msg);
 
@@ -302,23 +305,23 @@ static void trace_call_in(pid_t child)
 
 static void trace_call_out(pid_t child)
 {
-    long call_nr = ptrace(PTRACE_PEEKUSER, child, ORIG_EAX*4, 0);
-    long eax = ptrace(PTRACE_PEEKUSER, child, EAX*4, 0);
+    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*) (ORIG_EAX*4), 0);
+    long eax = ptrace(PTRACE_PEEKUSER, child, (void*) (EAX*4), 0);
 
-    void* src_msg = (void*) ptrace(PTRACE_PEEKUSER, child, EBX*4, 0);
+    void* src_msg = (void*) ptrace(PTRACE_PEEKUSER, child, (void*) (EBX*4), 0);
     MESSAGE msg;
     copy_message_from(child, src_msg, &msg);
-    
+
     switch (call_nr) {
     case NR_GETINFO:
-        printf(" = 0x%x\n", ptrace(PTRACE_PEEKDATA, child, msg.BUF, 0));
+        printf(" = 0x%lx\n", ptrace(PTRACE_PEEKDATA, child, msg.BUF, 0));
         return;
     case NR_SENDREC:
         trace_sendrec_out(child, &msg);
         return;
     }
 
-    printf(" = %d\n", eax);
+    printf(" = %ld\n", eax);
 }
 
 static void do_trace(pid_t child, int s)

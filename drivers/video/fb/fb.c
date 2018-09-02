@@ -31,6 +31,7 @@
 #include <lyos/list.h>
 #include <lyos/sysutils.h>
 #include <lyos/service.h>
+#include <lyos/vm.h>
 #include <libchardriver/libchardriver.h>
 #include <libdevman/libdevman.h>
 #include <sys/mman.h>
@@ -64,7 +65,7 @@ PRIVATE struct chardriver fbdriver = {
  *****************************************************************************/
 /**
  * <Ring 3> The main loop of framebuffer driver.
- * 
+ *
  *****************************************************************************/
 PUBLIC int main()
 {
@@ -89,7 +90,7 @@ PRIVATE int init_fb()
 PRIVATE int fb_open(dev_t minor, int access)
 {
     if (minor < 0 || minor >= NR_FB_DEVS) return ENXIO;
-     
+
     int retval = arch_init_fb(minor);
     if (retval) {
         return ENXIO;
@@ -128,7 +129,7 @@ PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
         count = size - pos;
     }
 
-    data_copy(SELF, base + (size_t)pos, endpoint, buf, count);
+    data_copy(SELF, (void*) (base + (size_t)pos), endpoint, buf, count);
 
     return count;
 }
@@ -152,7 +153,7 @@ PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, 
         length = size - offset;
     }
 
-    char* mapped = mm_map_phys(endpoint, base + (size_t)offset, length);
+    char* mapped = mm_map_phys(endpoint, (void*) (base + (size_t)offset), length);
     if (mapped == MAP_FAILED) {
         return ENOMEM;
     }

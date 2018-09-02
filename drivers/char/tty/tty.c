@@ -272,7 +272,7 @@ PUBLIC int in_process(TTY* tty, char * buf, int count)
 
         /* Map CR to LF, ignore CR, or map LF to CR. */
         if (key == '\r') {
-            if (tty->tty_termios.c_iflag & IGNCR) return;
+            if (tty->tty_termios.c_iflag & IGNCR) return cnt;
             if (tty->tty_termios.c_iflag & ICRNL) key = '\n';
         } else if (key == '\n') {
             if (tty->tty_termios.c_iflag & INLCR) key = '\r';

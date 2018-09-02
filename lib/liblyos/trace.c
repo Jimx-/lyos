@@ -18,6 +18,7 @@
 #include <lyos/const.h>
 #include <stdio.h>
 #include <string.h>
+#include <lyos/sysutils.h>
 #include <lyos/trace.h>
 
 PUBLIC int kernel_trace(int request, endpoint_t endpoint, void* addr, void* data)

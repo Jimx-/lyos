@@ -19,6 +19,7 @@
 #include "lyos/config.h"
 #include "errno.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
@@ -89,7 +90,7 @@ PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name)
 {
     sysfs_node_t * node;
 
-    if (NODE_TYPE(parent) != SF_TYPE_DOMAIN) return ENOTDIR;
+    if (NODE_TYPE(parent) != SF_TYPE_DOMAIN) return NULL;
 
     list_for_each_entry(node, &(parent->children), list) {
         if (strcmp(node->name, name) == 0) {

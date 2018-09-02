@@ -14,26 +14,26 @@ static int list()
 
 static int mount_all()
 {
-	struct mntent *m;  
-	FILE *f = NULL;  
+	struct mntent *m;
+	FILE *f = NULL;
 	f = setmntent(_PATH_MNTTAB, "r");
 
-	if(!f)  
-		exit(EXIT_FAILURE); 
+	if(!f)
+		exit(EXIT_FAILURE);
 
 	while ((m = getmntent(f))) {
 		int mount_flags = 0;
 
 		if (strcmp(m->mnt_fsname, "none") == 0) m->mnt_fsname = NULL;
-		
+
 		if (mount(m->mnt_fsname, m->mnt_dir, m->mnt_type, mount_flags, NULL) != 0) {
 			fprintf(stderr, "Can't mount on %s\n", m->mnt_dir);
 			exit(EXIT_FAILURE);
 		}
 	}
-	
+
 	endmntent(f);
-	return 0;  
+	return 0;
 }
 
 static void usage()
@@ -45,7 +45,7 @@ static void usage()
 int main(int argc, char * argv[])
 {
 	int i, a_flag = 0;
-	char * type, * opt;
+	char* opt;
 
 	if (argc == 1) return list();
 

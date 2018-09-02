@@ -26,6 +26,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
+#include <lyos/sysutils.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
 #include <pci.h>
@@ -54,6 +55,7 @@
 #define VBE_DISPI_LFB_ENABLED            0x40
 #define VBE_DISPI_NOCLEARMEM             0x80
 
+/*
 PRIVATE u16 bochs_read(u16 reg)
 {
 	portio_outw(VBE_DISPI_IOPORT_INDEX, reg);
@@ -68,6 +70,7 @@ PRIVATE void bochs_write(u16 reg, u16 val)
 	portio_outw(VBE_DISPI_IOPORT_INDEX, reg);
 	portio_outw(VBE_DISPI_IOPORT_DATA, val);
 }
+*/
 
 PUBLIC int fb_init_bochs(int devind)
 {
@@ -78,12 +81,12 @@ PUBLIC int fb_init_bochs(int devind)
 	vmem_phys_base &= 0xfffffff0;
 	phys_bytes vmem_size = x_res * y_res * 8;
 
-	vir_bytes vmem_base = mm_map_phys(SELF, vmem_phys_base, vmem_size);
-	if (vmem_base == MAP_FAILED) return 0;
+	void* vmem_base = mm_map_phys(SELF, (void*) vmem_phys_base, vmem_size);
+	if ( vmem_base == MAP_FAILED) return 0;
 
 	fb_mem_phys = vmem_phys_base;
-	fb_mem_vir = vmem_base;
+	fb_mem_vir = (vir_bytes) vmem_base;
 	fb_mem_size = vmem_size;
-	
+
     return 1;
 }

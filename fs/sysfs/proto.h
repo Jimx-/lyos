@@ -18,6 +18,7 @@
 
 PUBLIC void init_node();
 PUBLIC sysfs_node_t * new_node(char * name, int flags);
+PUBLIC int add_node(sysfs_node_t * parent, sysfs_node_t * child);
 PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name);
 PUBLIC sysfs_node_t * lookup_node_by_name(char * name);
 PUBLIC sysfs_node_t * create_node(char * name, int flags);
@@ -30,5 +31,8 @@ PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t coun
         off_t offset, cbdata_t data);
 PUBLIC ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
         off_t offset, cbdata_t data);
+
+PUBLIC int do_publish(MESSAGE* m);
+PUBLIC int do_retrieve(MESSAGE* m);
 
 #endif

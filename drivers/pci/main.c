@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -63,7 +63,6 @@ PUBLIC int main()
 	MESSAGE msg;
 
 	while (TRUE) {
-        MESSAGE msg;
 
         send_recv(RECEIVE, ANY, &msg);
         int src = msg.source;
@@ -127,7 +126,7 @@ PRIVATE int do_set_acl(MESSAGE * m)
     if (i >= NR_PRIV_PROCS) return ENOMEM;
 
     int retval = data_copy(SELF, &pci_acl[i], m->source, m->BUF, sizeof(struct pci_acl));
-    
+
     if (retval) return retval;
 
     pci_acl[i].inuse = 1;
@@ -185,7 +184,7 @@ PRIVATE int do_next_dev(MESSAGE * m)
 
 PRIVATE int do_attr_r8(MESSAGE * m)
 {
-    struct pci_acl * acl = get_acl(m->source);
+    //struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;
@@ -197,7 +196,7 @@ PRIVATE int do_attr_r8(MESSAGE * m)
 
 PRIVATE int do_attr_r16(MESSAGE * m)
 {
-    struct pci_acl * acl = get_acl(m->source);
+    //struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;
@@ -209,7 +208,7 @@ PRIVATE int do_attr_r16(MESSAGE * m)
 
 PRIVATE int do_attr_r32(MESSAGE * m)
 {
-    struct pci_acl * acl = get_acl(m->source);
+    //struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;
@@ -221,7 +220,7 @@ PRIVATE int do_attr_r32(MESSAGE * m)
 
 PRIVATE int do_attr_w16(MESSAGE * m)
 {
-    struct pci_acl * acl = get_acl(m->source);
+    //struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;

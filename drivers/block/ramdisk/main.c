@@ -12,7 +12,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -83,10 +83,10 @@ PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
 PRIVATE int char_open(dev_t minor, int access);
 PRIVATE int char_close(dev_t minor);
 PRIVATE ssize_t char_read(dev_t minor, u64 pos,
-	  endpoint_t endpoint, char* buf, unsigned int count);
+	  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
 PRIVATE ssize_t char_write(dev_t minor, u64 pos,
-	  endpoint_t endpoint, char* buf, unsigned int count);
-PRIVATE int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
+	  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
+PRIVATE int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id);
 
 struct blockdriver rd_driver = {
 	.bdr_open = rd_open,
@@ -136,12 +136,12 @@ PRIVATE int rd_close(dev_t minor)
 PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos,
 	  endpoint_t endpoint, char* buf, unsigned int count)
 {
-    struct ramdisk_dev * ramdisk; 
+    struct ramdisk_dev * ramdisk;
     if (minor == MINOR_INITRD) ramdisk = &initramdisk;
     else ramdisk = ramdisks + minor;
 
 	char * addr = ramdisk->start + (int)pos;
-	
+
 	if (pos > ramdisk->length){
 		return 0;
 	}
@@ -178,7 +178,7 @@ PRIVATE int char_close(dev_t minor)
 }
 
 PRIVATE ssize_t char_read(dev_t minor, u64 pos,
-	  endpoint_t endpoint, char* buf, unsigned int count)
+	  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
 	ssize_t retval;
 
@@ -195,7 +195,7 @@ PRIVATE ssize_t char_read(dev_t minor, u64 pos,
 }
 
 PRIVATE ssize_t char_write(dev_t minor, u64 pos,
-	  endpoint_t endpoint, char* buf, unsigned int count)
+	  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
 	ssize_t retval;
 
@@ -207,10 +207,11 @@ PRIVATE ssize_t char_write(dev_t minor, u64 pos,
 		retval = count;
 		break;
 	}
-	return 0;
+
+	return retval;
 }
 
-PRIVATE int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
+PRIVATE int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id)
 {
 	return 0;
 }

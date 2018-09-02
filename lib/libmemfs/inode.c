@@ -52,10 +52,12 @@ PUBLIC void memfs_addhash_inode(struct memfs_inode * inode)
     list_add(&(inode->i_hash), &memfs_inode_table[hash]);
 }
 
+/*
 PRIVATE void memfs_unhash_inode(struct memfs_inode * inode)
 {
     list_del(&(inode->i_hash));
 }
+*/
 
 PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name, int index)
 {

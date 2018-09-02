@@ -31,5 +31,6 @@ PUBLIC int do_bus_attr_add(MESSAGE* m);
 PUBLIC void init_device();
 PUBLIC device_id_t do_device_register(MESSAGE* m);
 PUBLIC struct device* get_device(device_id_t id);
+PUBLIC int do_device_attr_add(MESSAGE* m);
 
 #endif

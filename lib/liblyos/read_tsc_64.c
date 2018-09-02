@@ -27,7 +27,7 @@ PUBLIC void read_tsc(unsigned long * high, unsigned long * low);
 
 PUBLIC void read_tsc_64(u64 * v)
 {
-    u32 hi, lo;
+    unsigned long hi, lo;
     read_tsc(&hi, &lo);
     *v = make64(hi, lo);
 }

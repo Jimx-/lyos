@@ -64,7 +64,7 @@ PRIVATE ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr, size_t count
 {
     MESSAGE msg;
     msg.type = SYSFS_DYN_STORE;
-    msg.BUF = ptr;
+    msg.BUF = (char*) ptr;
     msg.CNT = count;
     msg.TARGET = node->u.dyn_attr->id;
 

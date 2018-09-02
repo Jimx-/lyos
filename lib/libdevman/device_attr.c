@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
@@ -73,11 +74,12 @@ PRIVATE void device_attr_addhash(struct device_attribute* attr)
 	list_add(&attr->list, &device_attr_table[hash]);
 }
 
+/*
 PRIVATE void device_attr_unhash(struct device_attribute* attr)
 {
-	/* Remove a dynamic attribute from hash table */
 	list_del(&attr->list);
 }
+*/
 
 PRIVATE struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
 {

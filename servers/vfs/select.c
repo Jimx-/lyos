@@ -44,7 +44,7 @@ PRIVATE struct select_entry {
     fd_set readfds, writefds, exceptfds;
     fd_set ready_readfds, ready_writefds, ready_exceptfds;
     fd_set* vir_readfds, *vir_writefds, *vir_exceptfds;
-    struct filp* filps[OPEN_MAX];
+    struct file_desc* filps[OPEN_MAX];
     int type[OPEN_MAX];
     int nfds, nreadyfds;
     int error;
@@ -102,7 +102,7 @@ PUBLIC int do_select(MESSAGE* msg)
     int src = msg->source;
     int retval = 0;
     int nfds = msg->u.m_vfs_select.nfds;
-    vir_bytes vtimeout = msg->u.m_vfs_select.timeout;
+    vir_bytes vtimeout = (vir_bytes) msg->u.m_vfs_select.timeout;
     struct timeval timeout;
     struct fproc* pcaller = vfs_endpt_proc(src);
     if (!pcaller) return EINVAL;
@@ -177,7 +177,7 @@ PUBLIC int do_select(MESSAGE* msg)
             }
         }
         unlock_filp(filp);
-        
+
         if (entry->type[fd] == -1) {
             entry->error = EBADF;
             break;
@@ -426,7 +426,7 @@ PRIVATE void select_cancel_filp(struct file_desc* filp)
 PRIVATE void select_lock_filp(struct file_desc* filp, int ops)
 {
     rwlock_type_t lock_type = RWL_READ;
-    
+
     if (ops & (SEL_EXCEPT | SEL_WRITE)) {
         lock_type = RWL_WRITE;
     }

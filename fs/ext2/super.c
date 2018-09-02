@@ -19,6 +19,7 @@
 #include "lyos/config.h"
 #include "errno.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "stddef.h"
 #include "unistd.h"
 #include "assert.h"
@@ -32,6 +33,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
+#include <libbdev/libbdev.h>
 #include <libdevman/libdevman.h>
     
 //#define DEBUG

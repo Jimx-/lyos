@@ -102,7 +102,6 @@ PRIVATE int do_select(struct chardriver* cd, MESSAGE* msg)
 
 PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
 {
-    int src = msg->source;
     int retval = 0;
 
     if (msg->type == NOTIFY_MSG) {
@@ -235,7 +234,7 @@ PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
     case CDEV_SELECT:
         *minor = msg->u.m_vfs_cdev_select.minor;
         return 0;
-    default:
-        return EINVAL;
     }
+
+    return EINVAL;
 }

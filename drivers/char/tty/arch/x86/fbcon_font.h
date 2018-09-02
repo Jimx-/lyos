@@ -4,7 +4,7 @@
 /*                                            */
 /**********************************************/
 
-static const unsigned char number_font[][16] = {
+static const unsigned char number_font[] = {
 
 	/* 0 0x00 '^@' */
 	0x00, /* 00000000 */

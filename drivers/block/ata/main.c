@@ -29,6 +29,7 @@
 #include <lyos/interrupt.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <lyos/vm.h>
 #include <pci.h>
 #include <sys/mman.h>
 
@@ -360,7 +361,7 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, vir_bytes buf, unsigned
     while (count > 0) {
         n = count;
 
-        retval = umap(endpoint, buf, &user_phys);
+        retval = umap(endpoint, (void*) buf, &user_phys);
         if (retval != 0) {
             panic("ata: setup_dma(): failed to map user buffer");
         }
@@ -721,7 +722,7 @@ PRIVATE void register_hd(struct ata_info * hdi)
 PRIVATE int hd_identify(int drive)
 {
     struct hd_cmd cmd;
-    memset(&cmd, sizeof(cmd), 0);
+    memset(&cmd, 0, sizeof(cmd));
 
     select_drive(drive);
 

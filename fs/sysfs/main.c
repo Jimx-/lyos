@@ -36,7 +36,6 @@
 #include "proto.h"
 
 PRIVATE int sysfs_init();
-PRIVATE int sysfs_post_init();
 PRIVATE int sysfs_message_hook(MESSAGE * m);
 
 struct memfs_hooks fs_hooks = {

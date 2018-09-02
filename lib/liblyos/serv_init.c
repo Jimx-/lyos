@@ -22,6 +22,7 @@
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/service.h"
+#include <lyos/sysutils.h>
 
 PRIVATE int init_fresh_callback_default()
 {

@@ -35,10 +35,10 @@ ifeq ($(ARCH),riscv64)
 	ARCH = riscv
 endif
 
-export SUBARCH ARCH 
+export SUBARCH ARCH
 
 # Import configuration
-ifeq ($(wildcard .config),) 
+ifeq ($(wildcard .config),)
 else
 	-include .config
 	export
@@ -114,18 +114,18 @@ CONFIGINC = $(SRCDIR)/.config
 KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
 
-VERBOSE ?= 0 
-ifeq ($(VERBOSE), 1)  
-  Q = 
-else  
-  Q = @ 
-endif 
+VERBOSE ?= 0
+ifeq ($(VERBOSE), 1)
+  Q =
+else
+  Q = @
+endif
 export Q
 
 # All Phony Targets
 .PHONY : all everything disasm clean realclean mrproper install help config menuconfig \
 	setup-toolchain libraries install-libraries kernel fs install-fs drivers install-drivers servers install-servers \
-	objdirs kvm kvm-debug 
+	objdirs kvm kvm-debug
 
 # Default entry point
 all : clean everything
@@ -158,7 +158,7 @@ config: $(CONFIGIN) $(CONFIGINC)
 	@$(MAKE) -f Makefile silentoldconfig
 
 menuconfig: $(CONFIGIN) $(CONFIGINC)
-	@(cd scripts/config; make menuconfig) 
+	@(cd scripts/config; make menuconfig)
 	$(MCONF) $(CONFIGIN)
 	@$(MAKE) -f Makefile silentoldconfig
 

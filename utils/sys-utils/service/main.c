@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 #include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <lyos/const.h>
@@ -91,9 +92,9 @@ static int parse_cmd(int argc, char * argv[])
 }
 
 int main(int argc, char * argv[])
-{	
+{
 	int request = parse_cmd(argc, argv);
-	
+
 	MESSAGE msg;
 	char * progname;
 	struct service_up_req up_req;
@@ -109,7 +110,7 @@ int main(int argc, char * argv[])
 		if (!config_path) {
 			sprintf(config_dfl, "/etc/system/%s.conf", progname);
 			config_path = config_dfl;
-			
+
 			if (parse_config(progname, config_path, &up_req) != 0) errx(1, "cannot parse config");
 		}
 
@@ -137,6 +138,6 @@ int main(int argc, char * argv[])
 
 	if (send_recv(BOTH, TASK_SERVMAN, &msg) != 0) die(argv[0], "cannot send request to servman");
 	if (msg.RETVAL != 0) die(argv[0],  "servman reply error");
-	
+
 	return EXIT_SUCCESS;
 }

@@ -32,6 +32,7 @@
 #include <lyos/interrupt.h>
 #include <lyos/portio.h>
 #include <lyos/input.h>
+#include <libsysfs/libsysfs.h>
 #include "proto.h"
 
 PRIVATE	struct kb_inbuf	kb_in;
@@ -231,11 +232,9 @@ PUBLIC void keyboard_read(TTY* tty)
 		}
 
 		if(make){ /* Break Code is ignored */
-			int pad = 0;
 
 			/* deal with the numpad first */
 			if ((key >= PAD_SLASH) && (key <= PAD_9)) {
-				pad = 1;
 				switch(key) {	/* '/', '*', '-', '+',
 						 * and 'Enter' in num pad
 						 */

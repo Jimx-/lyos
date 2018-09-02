@@ -67,11 +67,12 @@ PRIVATE void dyn_attr_addhash(sysfs_dyn_attr_t* attr)
 	list_add(&attr->list, &dyn_attr_table[hash]);
 }
 
+/*
 PRIVATE void dyn_attr_unhash(sysfs_dyn_attr_t* attr)
 {
-	/* Remove a dynamic attribute from hash table */
 	list_del(&attr->list);
 }
+*/
 
 PRIVATE sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
 {

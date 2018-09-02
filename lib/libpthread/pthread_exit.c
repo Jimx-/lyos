@@ -1,8 +1,11 @@
-#include "pthread.h"
+#include <unistd.h>
 
+#include "pthread.h"
 #include "pthread_internal.h"
 
 int pthread_exit(void* value_ptr)
 {
 	_exit(0);
+
+	return 0;
 }

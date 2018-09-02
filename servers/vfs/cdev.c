@@ -64,10 +64,10 @@ PUBLIC struct fproc* cdev_get(dev_t dev)
     }
 
     dev_t major = MAJOR(dev);
-    if (cdmap[major].driver == NO_TASK) 
+    if (cdmap[major].driver == NO_TASK)
         if (!cdev_update(dev)) return NULL;
 
-    return vfs_endpt_proc(cdmap[major].driver);    
+    return vfs_endpt_proc(cdmap[major].driver);
 }
 
 PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
@@ -233,4 +233,6 @@ PUBLIC int cdev_reply(MESSAGE* msg)
 		do_select_cdev_reply2(msg->source, msg->DEVICE, msg->RETVAL);
 		break;
 	}
+
+    return 0;
 }

@@ -34,7 +34,8 @@
 #include "libmemfs/libmemfs.h"
 #include "node.h"
 #include "global.h"
-    
+#include "proto.h"
+
 PRIVATE sysfs_dyn_attr_id_t alloc_dyn_attr_id()
 {
     static sysfs_dyn_attr_id_t next_id = 1;

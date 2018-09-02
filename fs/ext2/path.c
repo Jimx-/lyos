@@ -32,7 +32,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE char dot2[2] = "..";
+//PRIVATE char dot2[2] = "..";
 
 PUBLIC int ext2_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint)
 {
@@ -107,7 +107,6 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
 	if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
 	int ret = 0;
 	if (flag != SD_IS_EMPTY) {
-		mode_t bits = (flag == SD_LOOK_UP ? X_BIT : W_BIT | X_BIT);
 		if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
 			if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
 		}

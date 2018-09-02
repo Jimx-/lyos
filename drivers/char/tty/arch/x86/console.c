@@ -43,6 +43,8 @@ PUBLIC char * console_mem = NULL;
 
 /* #define __TTY_DEBUG__ */
 
+extern int fbcon_init();
+
 /* local routines */
 PRIVATE void    cons_write(TTY * tty);
 PRIVATE void    parse_escape(CONSOLE * con, char c);
@@ -129,7 +131,7 @@ PUBLIC void init_screen(TTY* tty)
     }
 
     if (!console_mem) {
-        console_mem = mm_map_phys(SELF, V_MEM_BASE, V_MEM_SIZE);
+        console_mem = mm_map_phys(SELF, (void*) V_MEM_BASE, V_MEM_SIZE);
         if (console_mem == MAP_FAILED) panic("can't map console memory");
     }
 
