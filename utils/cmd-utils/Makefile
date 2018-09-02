@@ -1,4 +1,4 @@
 
-SUBDIRS 	= cat strace profile
+SUBDIRS 	= strace profile
 
 include lyos.subdirs.mk
