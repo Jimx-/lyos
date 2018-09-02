@@ -3,6 +3,21 @@
 # see documentation/config/kconfig-language.txt.
 #
 
+config 64BIT
+       bool "64-bit kernel" if ARCH = "x86_64"
+       default SUBARCH = "x86_64"
+    help
+         Say yes to build a 64-bit kernel - formerly known as x86_64
+         Say no to build a 32-bit kernel - formerly known as i386
+
+config X86_32
+       def_bool y
+    depends on !64BIT
+
+config X86_64
+    def_bool y
+    depends on 64BIT
+
 source "kernel/config.in"
 
 source "drivers/config.in"
