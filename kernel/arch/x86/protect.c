@@ -37,14 +37,14 @@ extern u32 StackTop;
 
 PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC int syscall_style = 0; 
+PUBLIC int syscall_style = 0;
 
 struct exception_info {
 	char* msg;
 	int signo;
 };
 
-PRIVATE struct exception_info err_description[] = {	
+PRIVATE struct exception_info err_description[] = {
 					{ "#DE Divide Error", SIGFPE } ,
 					{ "#DB RESERVED", SIGTRAP },
 					{ "—  NMI Interrupt", SIGBUS },
@@ -125,7 +125,7 @@ PUBLIC void init_prot()
 {
 	if(_cpufeature(_CPUF_I386_SYSENTER))
 		syscall_style |= SST_INTEL_SYSENTER;
-  	if(_cpufeature(_CPUF_I386_SYSCALL)) 
+  	if(_cpufeature(_CPUF_I386_SYSCALL))
 		syscall_style |= SST_AMD_SYSCALL;
 
     /* setup gdt */
@@ -145,7 +145,7 @@ PUBLIC void init_prot()
 	u32* p_idt_base  = (u32*)(&idt_ptr[2]);
 	*p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
 	*p_idt_base  = (u32)&idt;
-	
+
 	init_8259A();
 
 	init_idt();
@@ -289,7 +289,7 @@ PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handle
 	p_gate->offset_high	= (base >> 16) & 0xFFFF;
 }
 
-PUBLIC void reload_idt() 
+PUBLIC void reload_idt()
 {
 	x86_lidt((u8*)&idt_ptr);
 }
@@ -386,7 +386,7 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
  */
 PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 {
-	int pfla = read_cr2();
+	reg_t pfla = read_cr2();
 
 #ifdef PROTECT_DEBUG
 	if (frame->err_code & PG_PRESENT) {
@@ -411,8 +411,8 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 #endif
 	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
 
-	int in_phys_copy = (frame->eip > (vir_bytes)phys_copy) &&
-						(frame->eip < (vir_bytes)phys_copy_fault);
+	int in_phys_copy = (frame->eip >= (uintptr_t) phys_copy) &&
+						(frame->eip < (uintptr_t) phys_copy_fault);
 	int in_phys_set = 0;	/* not implemented */
 
 	if ((in_kernel || is_kerntaske(fault_proc->endpoint)) && (in_phys_copy || in_phys_set)) {
@@ -440,12 +440,12 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 	MESSAGE msg;
 	msg.type = FAULT;
 	msg.FAULT_NR = frame->vec_no;
-	msg.FAULT_ADDR = pfla;
+	msg.FAULT_ADDR = (void*) pfla;
 	msg.FAULT_PROC = fault_proc->endpoint;
 	msg.FAULT_ERRCODE = frame->err_code;
 
 	msg_send(fault_proc, TASK_MM, &msg, IPCF_FROMKERNEL);
-	
+
 	/* block the process */
 	PST_SET(fault_proc, PST_PAGEFAULT);
 }
@@ -458,7 +458,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame * frame)
 PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 {
 	struct proc * fault_proc = get_cpulocal_var(proc_ptr);
-	
+
 #ifdef PROTECT_DEBUG
 	printk("Exception: %s on CPU %d\n", err_description[frame->vec_no].msg, cpuid);
 	printk("  EFLAGS: %d, CS: %d, EIP: 0x%x, PID: %d(%s)", frame->eflags, frame->cs, frame->eip,
@@ -470,10 +470,10 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame * frame)
 #endif
 
 	if (in_kernel) {
-		if (frame->eip >= (vir_bytes)copy_user_message && 
-			frame->eip <= (vir_bytes)copy_user_message_end) {
+		if (frame->eip >= (uintptr_t)copy_user_message &&
+			frame->eip < (uintptr_t)copy_user_message_end) {
 			if (frame->vec_no == 14 || frame->vec_no == 13) {	/* #PF or #GP */
-				frame->eip = (u32) copy_user_message_fault;
+				frame->eip = (reg_t) copy_user_message_fault;
 				return;
 			}
 			else panic("copy user messsage failed unexpectedly");

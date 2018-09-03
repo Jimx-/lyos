@@ -12,7 +12,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -31,7 +31,7 @@
 #include "proto.h"
 #include "const.h"
 #include "global.h"
- 
+
 PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo);
 PRIVATE void check_pending(struct pmproc * pmp);
 
@@ -43,7 +43,7 @@ PUBLIC int do_sigaction(MESSAGE * p)
     struct sigaction * old_action = p->OLDSA;
 
     if (pmp == NULL) return EINVAL;
-    
+
     int signum = p->SIGNR;
 
     if (signum == SIGKILL) return 0;
@@ -54,17 +54,17 @@ PUBLIC int do_sigaction(MESSAGE * p)
     if(old_action) {
         data_copy(p->source, old_action, SELF, save, sizeof(struct sigaction));
     }
-    
+
     if (!p->NEWSA) return 0;
     data_copy(SELF, &new_sa, p->source, p->NEWSA, sizeof(struct sigaction));
-              
+
     if (new_sa.sa_handler == SIG_IGN) {
         sigaddset(&pmp->sig_ignore, signum);
         sigdelset(&pmp->sig_pending, signum);
         sigdelset(&pmp->sig_catch, signum);
     } else if (new_sa.sa_handler == SIG_DFL) {
         sigdelset(&pmp->sig_ignore, signum);
-        sigdelset(&pmp->sig_catch, signum);        
+        sigdelset(&pmp->sig_catch, signum);
     } else {
         sigdelset(&pmp->sig_ignore, signum);
         sigaddset(&pmp->sig_catch, signum);
@@ -75,8 +75,8 @@ PUBLIC int do_sigaction(MESSAGE * p)
     sigdelset(&new_sa.sa_mask, SIGSTOP);
     pmp->sigaction[signum].sa_mask = new_sa.sa_mask;
     pmp->sigaction[signum].sa_flags = new_sa.sa_flags;
-    pmp->sigreturn_f = (vir_bytes)p->SIGRET;
-              
+    pmp->sigreturn_f = p->SIGRET;
+
     return 0;
 }
 
@@ -150,7 +150,7 @@ PUBLIC int do_kill(MESSAGE * p)
     if (pmp == NULL) return EINVAL;
 
     int sig = p->SIGNR;
-    int pid = p->PID; 
+    int pid = p->PID;
     return kill_sig(pmp, pid, sig);
 }
 
@@ -158,14 +158,14 @@ PRIVATE int send_sig(struct pmproc * p_dest, int signo)
 {
     struct siginfo si;
     int retval;
-        
+
     si.signo = signo;
-    si.sig_handler = (vir_bytes) p_dest->sigaction[signo].sa_handler;
+    si.sig_handler = p_dest->sigaction[signo].sa_handler;
     si.sig_return = p_dest->sigreturn_f;
 
-    /*if (p_dest->sigaction[signo].sa_flags & SA_NODEFER) 
+    /*if (p_dest->sigaction[signo].sa_flags & SA_NODEFER)
         sigdelset(&p_dest->sig_mask, signo);
-    else 
+    else
         sigaddset(&p_dest->sig_mask, signo);*/
 
     int i;
@@ -237,7 +237,7 @@ PRIVATE int kill_sig(struct pmproc * pmp, pid_t dest, int signo)
     if (dest == INIT_PID && signo == SIGKILL) return EINVAL;    /* attempt to kill INIT */
 
     struct pmproc * p_dest;
-    
+
     for (p_dest = &pmproc_table[NR_PROCS-1]; p_dest >= &pmproc_table[0]; p_dest--) {
         if (!(p_dest->flags & PMPF_INUSE)) continue;
 

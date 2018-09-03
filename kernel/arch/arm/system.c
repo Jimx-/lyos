@@ -68,13 +68,13 @@ PUBLIC struct proc * arch_switch_to_user()
     return p;
 }
 
-PRIVATE int kernel_clearmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     memset((void *)vaddr, 0, len);
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
     reload_ttbr0();
@@ -83,7 +83,7 @@ PRIVATE int kernel_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
     memcpy((void *)vaddr, (char*)execi->header + offset, len);
@@ -112,7 +112,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.copymem = read_segment;
         execi.clearproc = NULL;
         execi.clearmem = kernel_clearmem;
-        
+
         execi.proc_e = bp->endpoint;
         execi.filesize = bp->len;
 
@@ -141,11 +141,11 @@ PUBLIC int arch_reset_proc(struct proc * p)
     memset(&p->regs, 0, sizeof(p->regs));
 
     if (p->endpoint == TASK_MM) {
-        /* use bootstrap page table */ 
+        /* use bootstrap page table */
         p->seg.ttbr_phys = (u32)initial_pgd;
         p->seg.ttbr_vir = (u32 *)((phys_bytes)initial_pgd + (phys_bytes) &_KERN_OFFSET);
-    } 
-    
+    }
+
     if (is_kerntaske(p->endpoint))
         p->regs.psr = PSR_F | PSR_SVC32_MODE;
     else
@@ -166,7 +166,7 @@ PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strin
     p->regs.pc = ip;
     p->regs.sp = sp;
     p->regs.r0 = ps;
-    
+
     return 0;
 }
 

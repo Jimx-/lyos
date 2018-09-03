@@ -57,7 +57,7 @@ PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
         struct kinfo_mmap_entry * entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
-        
+
         if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= ARCH_PG_SIZE)) {
             entry->addr += ARCH_PG_SIZE;
             entry->len -= ARCH_PG_SIZE;
@@ -77,7 +77,7 @@ PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size)
         struct kinfo_mmap_entry * entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
-        
+
         if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= size)) {
             entry->addr += size;
             entry->len -= size;
@@ -104,12 +104,12 @@ PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
     return ret;
 }
 
-PUBLIC void pg_map(phys_bytes phys_addr, vir_bytes vir_addr, vir_bytes vir_end, kinfo_t * pk)
+PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
 {
     pte_t * pt;
-    pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + KERNEL_VMA); 
+    pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + KERNEL_VMA);
     if (phys_addr % PG_SIZE) phys_addr = (phys_addr / PG_SIZE) * PG_SIZE;
-    if (vir_addr % PG_SIZE) vir_addr = (vir_addr / PG_SIZE) * PG_SIZE;
+    if ((uintptr_t) vir_addr % PG_SIZE) vir_addr = (void*) (((uintptr_t) vir_addr / PG_SIZE) * PG_SIZE);
 
     while (vir_addr < vir_end) {
         phys_bytes phys = phys_addr;
@@ -153,7 +153,7 @@ PUBLIC pde_t pg_mapkernel(pde_t * pgd)
     phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;
     phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys;
     int pde = ARCH_PDE(KERNEL_VMA);
-    
+
     while (mapped < kern_len) {
         pgd[pde] = kern_phys | PG_PRESENT | PG_RW | ARCH_PG_BIGPAGE;
         mapped += ARCH_BIG_PAGE_SIZE;

@@ -53,14 +53,14 @@ struct vfs_exec_info {
     /* dynamic linking */
     int is_dyn;
     int dyn_phnum;
-    u32 dyn_phdr;
-    u32 dyn_entry;
+    void* dyn_phdr;
+    void* dyn_entry;
 };
 
-typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
-PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp);
-PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_size, char* pathname, vir_bytes* vsp);
-PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg, vir_bytes* vsp);
+typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack, size_t* stack_size, void** vsp);
+PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, void** vsp);
+PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_size, char* pathname, void** vsp);
+PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg, void** vsp);
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
     stack_hook_t setup_stack;
@@ -77,7 +77,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info * execi, struct lookup* lookup, 
 PRIVATE int read_header(struct vfs_exec_info * execi);
 PRIVATE int is_script(struct vfs_exec_info * execi);
 PRIVATE int request_vfs_mmap(struct exec_info *execi,
-    int vaddr, int len, int foffset, int protflags, size_t clearend);
+    void* vaddr, size_t len, off_t foffset, int protflags, size_t clearend);
 
 /* open the executable and fill in exec info */
 PRIVATE int get_exec_inode(struct vfs_exec_info * execi, struct lookup* lookup, struct fproc * fp)
@@ -124,7 +124,7 @@ PRIVATE int read_header(struct vfs_exec_info * execi)
 }
 
 /* read segment */
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     u64 newpos;
     size_t bytes_rdwt;
@@ -138,7 +138,7 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
     }
 
     return request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num,
-        (u64)offset, READ, execi->proc_e, (char *)vaddr, len, &newpos, &bytes_rdwt);
+        (u64)offset, READ, execi->proc_e, vaddr, len, &newpos, &bytes_rdwt);
 }
 
 PRIVATE int is_script(struct vfs_exec_info * execi)
@@ -147,8 +147,7 @@ PRIVATE int is_script(struct vfs_exec_info * execi)
 }
 
 /* issue a vfs_mmap request */
-PRIVATE int request_vfs_mmap(struct exec_info *execi,
-    int vaddr, int len, int foffset, int protflags, size_t clearend)
+PRIVATE int request_vfs_mmap(struct exec_info *execi, void* vaddr, size_t len, off_t foffset, int protflags, size_t clearend)
 {
     struct vfs_exec_info * vexeci = (struct vfs_exec_info *)(execi->callback_data);
     struct inode * pin = vexeci->pin;
@@ -185,7 +184,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     lock_fproc(mm_task);
 
     /* stack info */
-    execi.args.stack_top = VM_STACK_TOP;
+    execi.args.stack_top = (void*) VM_STACK_TOP;
     execi.args.stack_size = PROC_ORIGIN_STACK;
 
     /* uid & gid */
@@ -198,8 +197,8 @@ PUBLIC int fs_exec(MESSAGE * msg)
     execi.exec_fd = -1;
 
     /* copy everything we need before we free the old process */
-    vir_bytes user_sp = (vir_bytes) msg->BUF;
-    int orig_stack_len = msg->BUF_LEN;
+    void* user_sp = msg->BUF;
+    size_t orig_stack_len = msg->BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) {
         retval = ENOMEM;  /* stack too big */
         goto exec_finalize;
@@ -224,8 +223,8 @@ PUBLIC int fs_exec(MESSAGE * msg)
     if (retval) goto exec_finalize;
 
     /* relocate stack pointers */
-    char * orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
-    int delta = (vir_bytes) orig_stack - user_sp;
+    char* orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
+    int delta = (void*) orig_stack - user_sp;
 
     if (orig_stack_len) {
         char **q = (char**)stackcopy;
@@ -238,7 +237,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     }
 
     if (is_script(&execi)) {
-        setup_script_stack(execi.pin, stackcopy, (size_t*) &orig_stack_len, pathname, (vir_bytes*) &orig_stack);
+        setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname, (void**) &orig_stack);
         retval = get_exec_inode(&execi, &lookup, fp);
         if (retval) goto exec_finalize;
     }
@@ -310,7 +309,7 @@ PUBLIC int fs_exec(MESSAGE * msg)
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi.args);
         if (!retval) {
-            if (exec_loaders[i].setup_stack) retval = (*exec_loaders[i].setup_stack)(&execi, stackcopy, (size_t*)&orig_stack_len, (vir_bytes*)&orig_stack);
+            if (exec_loaders[i].setup_stack) retval = (*exec_loaders[i].setup_stack)(&execi, stackcopy, &orig_stack_len, (void**) &orig_stack);
             break;  /* loaded successfully */
         }
     }
@@ -320,10 +319,9 @@ PUBLIC int fs_exec(MESSAGE * msg)
     char * envp = orig_stack;
     if (orig_stack_len) {
         char **q = (char**)stackcopy;
-        for (; *q != 0; q++, argc++) {
-        }
+        for (; *q != 0; q++, argc++) ;
         q++;
-        envp += (vir_bytes) q - (vir_bytes) stackcopy;
+        envp += (void*) q - (void*) stackcopy;
     }
 
     data_copy(src, orig_stack, SELF, stackcopy, orig_stack_len);
@@ -369,7 +367,7 @@ exec_finalize:
  *
  * @return Zero on success.
  *****************************************************************************/
-PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, vir_bytes* vsp)
+PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* stack_size, void** vsp)
 {
     char** arg_str;
     if (*stack_size) {
@@ -416,7 +414,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     AUXV_ENT(auxv, AT_EGID, execi->args.new_egid);
     AUXV_ENT(auxv, AT_PAGESZ, PG_SIZE);
     AUXV_ENT(auxv, AT_CLKTCK, get_system_hz());
-    AUXV_ENT(auxv, AT_SYSINFO, (vir_bytes) sysinfo);
+    AUXV_ENT(auxv, AT_SYSINFO, (void*) sysinfo);
 
     Elf32_auxv_t* auxv_execfn = auxv;
     AUXV_ENT(auxv, AT_EXECFN, NULL);
@@ -427,16 +425,16 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     size_t name_len = strlen(prog_name) + 1 + strlen(LYOS_PLATFORM) + 1;
     char* userp = NULL;
     /* add AT_EXECFN and AT_PLATFORM if there is enough space */
-    if ((vir_bytes)auxv_end - (vir_bytes)auxv > name_len) {
+    if ((void*)auxv_end - (void*)auxv > name_len) {
         strcpy((char*)auxv, prog_name);
         strcpy((char*)auxv + strlen(prog_name) + 1, LYOS_PLATFORM);
-        auxv_end = (Elf32_auxv_t*)((vir_bytes)auxv + name_len);
+        auxv_end = (Elf32_auxv_t*)((void*)auxv + name_len);
         auxv_end = (Elf32_auxv_t*)roundup((u32)auxv_end, sizeof(int));
-        userp = (char*) ((vir_bytes)auxv - (vir_bytes)auxv_buf);
-        userp += *vsp + (vir_bytes)arg_str - (vir_bytes)stack;
+        userp = (char*) ((void*)auxv - (void*)auxv_buf);
+        userp += (uintptr_t) *vsp + (uintptr_t)arg_str - (uintptr_t)stack;
     }
 
-    size_t auxv_len = (vir_bytes)auxv_end - (vir_bytes)auxv_buf;
+    size_t auxv_len = (void*)auxv_end - (void*)auxv_buf;
     if (userp) {
         userp -= auxv_len;
         AUXV_ENT(auxv_execfn, AT_EXECFN, userp);
@@ -454,7 +452,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     return 0;
 }
 
-PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_size, char* pathname, vir_bytes* vsp)
+PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_size, char* pathname, void** vsp)
 {
     prepend_arg(1, stack, stack_size, pathname, vsp);
 
@@ -499,12 +497,12 @@ PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_siz
     return 0;
 }
 
-PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg, vir_bytes* vsp)
+PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg, void** vsp)
 {
     int arglen = strlen(arg) + 1;
     char** arg0 = (char**)stack;
     /* delta of argv[0] to vsp */
-    int delta = (int) ((vir_bytes) *arg0 - *vsp);
+    int delta = (int) ((void*) *arg0 - *vsp);
     int orig_size = *stack_size;
     char* arg_start;
 

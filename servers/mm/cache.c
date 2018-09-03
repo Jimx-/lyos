@@ -58,7 +58,7 @@ PRIVATE void cache_add_hash_ino(struct page_cache* cp)
     list_add(&cp->hash_ino, &cache_hash_ino[hash]);
 }
 
-PUBLIC int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offset, vir_bytes vir_addr, struct phys_frame* frame)
+PUBLIC int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offset, void* vir_addr, struct phys_frame* frame)
 {
     struct page_cache* cache;
     SLABALLOC(cache);

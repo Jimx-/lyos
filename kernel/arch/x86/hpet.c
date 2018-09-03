@@ -38,8 +38,8 @@
 #include "hpet.h"
 #include "div64.h"
 
-PUBLIC vir_bytes   hpet_addr;
-PUBLIC vir_bytes   hpet_vaddr;
+PUBLIC void*   hpet_addr;
+PUBLIC void*   hpet_vaddr;
 
 PRIVATE u8 hpet_enabled = 0;
 PRIVATE u64 hpet_freq;
@@ -61,9 +61,9 @@ PUBLIC int init_hpet()
     struct acpi_hpet * hpet = acpi_get_hpet();
     if (!hpet) return 0;
 
-    hpet_addr = hpet->address.address;
-    printk("ACPI: HPET id: 0x%x base: 0x%x\n", hpet->block_id, hpet_addr);
-    
+    hpet_addr = (void*) ((uintptr_t) hpet->address.address);
+    printk("ACPI: HPET id: 0x%x base: 0x%p\n", hpet->block_id, hpet_addr);
+
     /* enable hpet */
     u32 conf = hpet_read(HPET_CFG);
     conf |= HPET_CFG_ENABLE;

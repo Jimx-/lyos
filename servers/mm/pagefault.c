@@ -44,13 +44,13 @@ PUBLIC void do_handle_fault()
         return;
     }
 
-    vir_bytes pfla = mm_msg.FAULT_ADDR;
+    void* pfla = mm_msg.FAULT_ADDR;
     struct mmproc * mmp = endpt_mmproc(mm_msg.FAULT_PROC);
     int err_code = mm_msg.FAULT_ERRCODE;
     int wrflag = ARCH_PF_WRITE(err_code);
     int handled = 0;
 
-    pfla = rounddown(pfla, ARCH_PG_SIZE);
+    pfla = (void*) rounddown(((uintptr_t) pfla), ARCH_PG_SIZE);
 
     struct vir_region * vr;
     vr = region_lookup(mmp, pfla);
@@ -78,7 +78,7 @@ PUBLIC void do_handle_fault()
     }
 
     int retval;
-    if ((retval = region_handle_pf(mmp, vr, pfla - (vir_bytes)vr->vir_addr, wrflag)) == 0) handled = 1;
+    if ((retval = region_handle_pf(mmp, vr, pfla - (void*)vr->vir_addr, wrflag)) == 0) handled = 1;
     else if (retval == SUSPEND) return;
 
 
@@ -101,13 +101,13 @@ PUBLIC void do_handle_fault()
     }
 }
 
-PRIVATE int handle_memory(struct mmproc * mmp, vir_bytes start, vir_bytes len, int wrflag, endpoint_t caller)
+PRIVATE int handle_memory(struct mmproc * mmp, void* start, size_t len, int wrflag, endpoint_t caller)
 {
     struct vir_region * vr;
 
-    if (start % ARCH_PG_SIZE) {
-        len += start % ARCH_PG_SIZE;
-        start -= start % ARCH_PG_SIZE;
+    if ((uintptr_t) start % ARCH_PG_SIZE) {
+        len += (uintptr_t) start % ARCH_PG_SIZE;
+        start -= (uintptr_t) start % ARCH_PG_SIZE;
     }
 
     while (len > 0) {
@@ -115,8 +115,8 @@ PRIVATE int handle_memory(struct mmproc * mmp, vir_bytes start, vir_bytes len, i
             return EFAULT;
         } //else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
 
-        vir_bytes offset = start - (vir_bytes)vr->vir_addr;
-        vir_bytes sublen = len;
+        off_t offset = start - (void*)vr->vir_addr;
+        size_t sublen = len;
 
         if (offset + sublen > vr->length) {
             sublen = vr->length - offset;
@@ -135,13 +135,14 @@ PRIVATE int handle_memory(struct mmproc * mmp, vir_bytes start, vir_bytes len, i
 PUBLIC void do_mmrequest()
 {
     endpoint_t target, caller;
-    vir_bytes start, len;
+    void* start;
+    size_t len;
     int flags;
     struct mmproc * mmp;
     int result;
 
     while (TRUE) {
-        int type = vmctl_get_mmrequest(&target, &start, &len, 
+        int type = vmctl_get_mmrequest(&target, &start, &len,
                         &flags, &caller);
 
         switch (type) {

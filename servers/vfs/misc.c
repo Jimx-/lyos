@@ -112,7 +112,7 @@ PUBLIC int do_dup(MESSAGE * p)
 
     struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
     if (!filp) return EBADF;
-    
+
     if (newfd == -1) {
         /* find a free slot in PROCESS::filp[] */
         retval = get_fd(pcaller, 0, &newfd, NULL);
@@ -162,7 +162,7 @@ PUBLIC int do_fchdir(MESSAGE * p)
 }
 
 /**
- * <Ring 1> Change the directory.  
+ * <Ring 1> Change the directory.
  * @param  ppin     Directory to be change.
  * @param  string   Pathname.
  * @param  len      Length of pathname.
@@ -210,7 +210,7 @@ PRIVATE int change_node(struct fproc* fp, struct inode ** ppin, struct inode * p
         retval = ENOTDIR;
     } else {
         /* must be searchable */
-        retval = forbidden(fp, pin, X_BIT); 
+        retval = forbidden(fp, pin, X_BIT);
     }
 
     if (retval == 0) {
@@ -233,7 +233,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
     size_t len = m->MMRLENGTH;
     off_t offset = m->MMROFFSET;
     phys_bytes buf = (phys_bytes) m->MMRBUF;
-    vir_bytes vaddr = (vir_bytes) m->MMRBUF;
+    void* vaddr = m->MMRBUF;
 
     if (!mm_task) panic("mm not present!");
 
@@ -361,7 +361,7 @@ PUBLIC int fs_fork(MESSAGE * p)
     if (child == NULL || parent == NULL) {
         return EINVAL;
     }
-    
+
     lock_fproc(parent);
     lock_fproc(child);
 

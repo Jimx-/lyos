@@ -18,7 +18,7 @@
 
 typedef u32 reg_t;
 
-struct stackframe { 
+struct stackframe {
     reg_t r0;
     reg_t r1;
     reg_t r2;
@@ -48,7 +48,7 @@ struct sigcontext {
 };
 
 struct sigframe {
-    int retaddr_sigreturn;
+    void* retaddr_sigreturn;
     int signum;
     int code;
     struct sigcontext *scp;

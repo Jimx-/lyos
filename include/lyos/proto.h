@@ -116,10 +116,10 @@ PUBLIC u32      now();
 
 PUBLIC endpoint_t get_endpoint();
 
-PUBLIC int      data_copy(endpoint_t dest_ep, void * dest_addr, 
+PUBLIC int      data_copy(endpoint_t dest_ep, void * dest_addr,
     endpoint_t src_ep, void * src_addr, int len);
 PUBLIC int      _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct vir_addr * src_addr,
-                                vir_bytes bytes, int check);
+                                size_t bytes, int check);
 PUBLIC int      _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_addr,
                         endpoint_t src_ep, void * src_addr, int len, int check);
 #define vir_copy(dest, src, bytes) _vir_copy(NULL, dest, src, bytes, 0)

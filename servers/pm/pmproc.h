@@ -15,13 +15,13 @@
 
 #ifndef _PM_MMPROC_H_
 #define _PM_MMPROC_H_
-    
+
 #include <signal.h>
-    
+
 /* Information of a process used in PM */
 struct pmproc {
     int flags;
-    
+
     pid_t tgid;
     pid_t pid;
 
@@ -39,7 +39,7 @@ struct pmproc {
     sigset_t sig_trace;
     int sig_status;
     struct sigaction sigaction[NSIG];
-    vir_bytes sigreturn_f;
+    void* sigreturn_f;
 
     uid_t realuid, effuid, suid;
     gid_t realgid, effgid, sgid;
@@ -48,8 +48,8 @@ struct pmproc {
     struct pmproc* group_leader;
     struct list_head thread_group;
 
-    vir_bytes frame_addr;
-    vir_bytes frame_size;
+    void* frame_addr;
+    size_t frame_size;
 
     int exit_status;
 };

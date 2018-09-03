@@ -21,7 +21,7 @@
 #define PCTL_WHO    u.m3.m3i1
 #define PCTL_PARAM  u.m3.m3i2
 
-#define PCTL_CLEARPROC      1 
+#define PCTL_CLEARPROC      1
 #define PCTL_CLEARMEM       2
 
 /* vmctl request */
@@ -71,12 +71,12 @@
 #define MM_GET_MEMINFO  1
 
 struct mem_info {
-    vir_bytes mem_total;
-    vir_bytes mem_free;
-    vir_bytes cached;
-    vir_bytes slab;
-    vir_bytes vmalloc_total;
-    vir_bytes vmalloc_used;
+    size_t mem_total;
+    size_t mem_free;
+    size_t cached;
+    size_t slab;
+    size_t vmalloc_total;
+    size_t vmalloc_used;
 };
 
 PUBLIC int procctl(endpoint_t who, int param);
@@ -86,12 +86,12 @@ PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned * pdbr);
 PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_vir);
 PUBLIC int umap(endpoint_t ep, void * vir_addr, phys_bytes * phys_addr);
 PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len);
-PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
+PUBLIC int vmctl_get_mmrequest(endpoint_t * target, void** start, size_t* len,
                         int * flags, endpoint_t * caller);
 PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result);
 PUBLIC int vmctl_flushtlb(endpoint_t who);
 PUBLIC int get_meminfo(struct mem_info* mem_info);
 PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
-    dev_t dev, ino_t ino, int fd, int vaddr, int flags, int prot, size_t clearend);
+    dev_t dev, ino_t ino, int fd, void* vaddr, int flags, int prot, size_t clearend);
 
 #endif

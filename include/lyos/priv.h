@@ -36,7 +36,7 @@ struct priv {
 
     struct timer_list timer;
 
-    vir_bytes async_table;
+    void* async_table;
     size_t async_len;
     priv_map_t async_pending;
 };

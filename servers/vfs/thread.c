@@ -79,7 +79,7 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
         if (!list_empty(&request_queue)) {
             ret = list_entry(request_queue.next, struct vfs_message, list);
             list_del(&ret->list);
-            
+
             if (!list_empty(&request_queue)) {
                 pthread_cond_signal(&request_queue_not_empty);
             }
@@ -199,7 +199,7 @@ PRIVATE void handle_request(MESSAGE* msg)
     case CHMOD:
     case FCHMOD:
         msg->RETVAL = do_chmod(msgtype, msg);
-        break; 
+        break;
     case GETDENTS:
         msg->RETVAL = do_getdents(msg);
         break;
@@ -211,7 +211,7 @@ PRIVATE void handle_request(MESSAGE* msg)
         break;
     case PM_VFS_FORK:
         msg->RETVAL = fs_fork(msg);
-        break; 
+        break;
     case PM_VFS_EXEC:
         msg->RETVAL = fs_exec(msg);
         break;
@@ -239,7 +239,7 @@ PRIVATE int worker_loop(void* arg)
 {
     struct worker_thread* self = (struct worker_thread*) arg;
     struct vfs_message* req;
- 
+
     while (TRUE) {
         req = dequeue_request(self);
         handle_request(&req->msg);
@@ -261,7 +261,7 @@ PUBLIC pid_t create_worker(int id)
 
     pthread_mutex_init(&thread->event_mutex, NULL);
     pthread_cond_init(&thread->event, NULL);
-    
+
     /* put thread id on stack */
     char* sp = (char*)__thread_stack + (id + 1) * DEFAULT_THREAD_STACK_SIZE;
     sp -= sizeof(int);
@@ -293,7 +293,7 @@ PUBLIC pid_t create_worker(int id)
 PUBLIC struct worker_thread* worker_self()
 {
     int tmp;
-    int* sp = (int*)(((vir_bytes)&tmp & (~(DEFAULT_THREAD_STACK_SIZE-1))) + DEFAULT_THREAD_STACK_SIZE - sizeof(int));
+    int* sp = (int*)(((uintptr_t)&tmp & (~(DEFAULT_THREAD_STACK_SIZE-1))) + DEFAULT_THREAD_STACK_SIZE - sizeof(int));
     return &workers[*sp];
 }
 

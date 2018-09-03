@@ -53,11 +53,11 @@ PRIVATE struct exec_loader exec_loaders[] = {
     { NULL },
 };
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
-    data_copy(execi->proc_e, (void *)vaddr, SELF, (void *)((int)(execi->header) + offset), len);
-    
+    data_copy(execi->proc_e, vaddr, SELF, (void *)(execi->header + offset), len);
+
     return 0;
 }
 
@@ -92,7 +92,7 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
     memset(frame, 0, frame_size);
 
     /* stack info */
-    execi.stack_top = VM_STACK_TOP;
+    execi.stack_top = (void*) VM_STACK_TOP;
     execi.stack_size = PROC_ORIGIN_STACK;
 
     /* header */

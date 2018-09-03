@@ -143,7 +143,7 @@ PRIVATE void init_mm()
 
     /* initialize hole table */
     //vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
-    vmem_init(VMALLOC_START, VMALLOC_END - VMALLOC_START);
+    vmem_init((void*) VMALLOC_START, VMALLOC_END - VMALLOC_START);
     mem_info.vmalloc_total = VMALLOC_END - VMALLOC_START;
     mem_info.vmalloc_used = 0;
 
@@ -204,7 +204,7 @@ struct mm_exec_info {
     struct mmproc * mmp;
 };
 
-PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int mm_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
     struct vir_region * vr = NULL;
@@ -216,7 +216,7 @@ PRIVATE int mm_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, void* vaddr, size_t len)
 {
     struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
     struct vir_region * vr = NULL;
@@ -228,11 +228,11 @@ PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
     if (offset + len > mmexeci->bp->len) return ENOEXEC;
-    data_copy(execi->proc_e, (void *)vaddr, NO_TASK, (void *)((phys_bytes)(mmexeci->bp->base) + offset), len);
+    data_copy(execi->proc_e, vaddr, NO_TASK, (void *)((phys_bytes) mmexeci->bp->base + offset), len);
     return 0;
 }
 
@@ -250,7 +250,7 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     mmexeci.bp = bp;
 
     /* stack info */
-    execi->stack_top = VM_STACK_TOP;
+    execi->stack_top = (void*) VM_STACK_TOP;
     execi->stack_size = PROC_ORIGIN_STACK;
 
     /* header */
@@ -322,9 +322,12 @@ PRIVATE void print_memmap()
             reserved_memsize += mmap->len;
     }
 
-    vir_bytes text_start = kernel_info.kernel_text_start, text_end = kernel_info.kernel_text_end, text_len = text_end - text_start;
-    vir_bytes data_start = kernel_info.kernel_data_start, data_end = kernel_info.kernel_data_end, data_len = data_end - data_start;
-    vir_bytes bss_start = kernel_info.kernel_bss_start, bss_end = kernel_info.kernel_bss_end, bss_len = bss_end - bss_start;
+    void* text_start = kernel_info.kernel_text_start, *text_end = kernel_info.kernel_text_end;
+    size_t text_len = text_end - text_start;
+    void* data_start = kernel_info.kernel_data_start, *data_end = kernel_info.kernel_data_end;
+    size_t data_len = data_end - data_start;
+    void* bss_start = kernel_info.kernel_bss_start, *bss_end = kernel_info.kernel_bss_end;
+    size_t bss_len = bss_end - bss_start;
 
     usable_memsize = usable_memsize - text_len - data_len - bss_len;
     printl("Memory: %dk/%dk available (%dk kernel code, %dk data, %dk reserved)\n",

@@ -25,7 +25,7 @@
 #include "arch_proto.h"
 #include "interrupt.h"
     
-PUBLIC vir_bytes intr_base_addr;
+PUBLIC void* intr_base_addr;
 
 PUBLIC void omap3_handle_irq(void)
 {

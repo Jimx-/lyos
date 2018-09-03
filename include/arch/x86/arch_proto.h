@@ -91,7 +91,7 @@ PUBLIC void stop_local_timer();
 PUBLIC void smp_commence();
 
 PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end);
-PUBLIC void pg_map(phys_bytes phys_addr, vir_bytes vir_addr, vir_bytes vir_end, kinfo_t * pk);
+PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk);
 PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size);
 
 PUBLIC void clear_memcache();

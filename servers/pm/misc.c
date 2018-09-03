@@ -59,7 +59,7 @@ PUBLIC int do_getsetid(MESSAGE * p)
         if (pmpi == NULL) panic("proc invalid parent");
 
         p->PID = pmpi->pid;
-        break; 
+        break;
     case GS_GETUID:
         retval = pmp->realuid;
         break;
@@ -71,7 +71,7 @@ PUBLIC int do_getsetid(MESSAGE * p)
         break;
     case GS_GETEGID:
         retval = pmp->effgid;
-        break; 
+        break;
     case GS_GETPGRP:
         p->PID = pmp->procgrp;
         break;
@@ -90,12 +90,12 @@ PUBLIC int do_getsetid(MESSAGE * p)
             }
         }
         break;
-        
+
     case GS_SETUID:
         uid = p->NEWID;
 
         if (uid != pmp->realuid && pmp->effuid != SU_UID) return EPERM;
-        
+
         pmp->realuid = pmp->effuid = uid;
 
         msg2fs.type = PM_VFS_GETSETID;
@@ -110,7 +110,7 @@ PUBLIC int do_getsetid(MESSAGE * p)
         gid = p->NEWID;
 
         if (gid != pmp->realgid && pmp->effuid != SU_UID) return EPERM;
-        
+
         pmp->realgid = pmp->effgid = gid;
 
         msg2fs.type = PM_VFS_GETSETID;
@@ -164,14 +164,14 @@ PUBLIC int do_getprocep(MESSAGE * p)
 
 PUBLIC int do_pm_getinfo(MESSAGE * p)
 {
-    vir_bytes dest = (vir_bytes) p->BUF;
+    void* dest = p->BUF;
     size_t len;
     int request = p->REQUEST;
-    vir_bytes src_addr;
+    void* src_addr;
 
     switch (request) {
     case PM_INFO_PROCTAB:
-        src_addr = (vir_bytes) pmproc_table;
+        src_addr = pmproc_table;
         len = sizeof(struct pmproc) * NR_PROCS;
         break;
     default:

@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdint.h>
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
@@ -57,7 +58,7 @@ PRIVATE void	print_identify_info	(u16* hdinfo);
 PRIVATE void    register_hd			(struct ata_info * hdi);
 PRIVATE void    start_dma			(struct ata_info* drive, int do_write);
 PRIVATE void    stop_dma			(struct ata_info* drive);
-PRIVATE int     setup_dma			(int do_write, endpoint_t endpoint, vir_bytes buf, unsigned int count);
+PRIVATE int     setup_dma			(int do_write, endpoint_t endpoint, void* buf, unsigned int count);
 
 PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
 PRIVATE	struct ata_info	hd_info[MAX_DRIVES], *current_drive;
@@ -350,9 +351,10 @@ PRIVATE int error_dma(struct ata_info* drive)
     return 0;
 }
 
-PRIVATE int setup_dma(int do_write, endpoint_t endpoint, vir_bytes buf, unsigned int count)
+PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf, unsigned int count)
 {
-    unsigned int n, offset;
+    size_t n;
+    off_t offset;
     int prdt_idx = 0;
     phys_bytes user_phys;
     int retval;
@@ -361,7 +363,7 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, vir_bytes buf, unsigned
     while (count > 0) {
         n = count;
 
-        retval = umap(endpoint, (void*) buf, &user_phys);
+        retval = umap(endpoint, buf, &user_phys);
         if (retval != 0) {
             panic("ata: setup_dma(): failed to map user buffer");
         }
@@ -371,8 +373,8 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, vir_bytes buf, unsigned
         }
 
         /* user buffer crosses pages or boundary of 64k */
-        if (buf / _page_size != (buf + n - 1) / _page_size) {
-            n = (buf / _page_size + 1) * _page_size - buf;
+        if ((uintptr_t) buf / _page_size != ((uintptr_t) buf + n - 1) / _page_size) {
+            n = ((uintptr_t) buf / _page_size + 1) * _page_size - (uintptr_t) buf;
         }
 
         /* user buffer crosses boundary of 64k */
@@ -451,7 +453,7 @@ PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos,
 dma_failed_retry:
     if (do_dma) {
         stop_dma(current_drive);
-        if (!setup_dma(do_write, endpoint, (vir_bytes) buf, count)) {
+        if (!setup_dma(do_write, endpoint, (void*) buf, count)) {
             do_dma = 0;
         }
     }

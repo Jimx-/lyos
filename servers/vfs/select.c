@@ -102,7 +102,7 @@ PUBLIC int do_select(MESSAGE* msg)
     int src = msg->source;
     int retval = 0;
     int nfds = msg->u.m_vfs_select.nfds;
-    vir_bytes vtimeout = (vir_bytes) msg->u.m_vfs_select.timeout;
+    void* vtimeout = msg->u.m_vfs_select.timeout;
     struct timeval timeout;
     struct fproc* pcaller = vfs_endpt_proc(src);
     if (!pcaller) return EINVAL;
@@ -130,7 +130,7 @@ PUBLIC int do_select(MESSAGE* msg)
 
     int has_timeout = 0;
     if (vtimeout != 0) {
-        retval = data_copy(SELF, &timeout, src, (void*) vtimeout, sizeof(timeout));
+        retval = data_copy(SELF, &timeout, src, vtimeout, sizeof(timeout));
 
         if (retval == 0 && (timeout.tv_sec < 0 || timeout.tv_usec < 0 || timeout.tv_usec >= 1000000)) {
             retval = EINVAL;

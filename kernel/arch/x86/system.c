@@ -70,11 +70,11 @@ PUBLIC int arch_reset_proc(struct proc * p)
     p->regs.esp = 0;
 
     if (p->endpoint == TASK_MM) {
-        /* use bootstrap page table */ 
+        /* use bootstrap page table */
         p->seg.cr3_phys = (u32)initial_pgd;
         p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
-    } 
-    
+    }
+
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;
     p->regs.ds =
     p->regs.es =
@@ -90,7 +90,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
 
 /**
  * <Ring 0> Restore user context according to proc's kernel trap type.
- * 
+ *
  * @param proc Which proc to restore.
  */
 PUBLIC void restore_user_context(struct proc * p)
@@ -137,29 +137,29 @@ PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strin
     p->regs.edx = (reg_t)ps->ps_argvstr;
     p->regs.ecx = (reg_t)ps->ps_envstr;
     p->seg.trap_style = KTS_INT;
-    
+
     return 0;
 }
 
-PRIVATE int kernel_clearmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
 {
-    memset((void *)vaddr, 0, len);
+    memset(vaddr, 0, len);
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
     reload_cr3();
-    memset((void *)vaddr, 0, len);
+    memset(vaddr, 0, len);
 
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
-    memcpy((void *)vaddr, (void *)((int)(execi->header) + offset), len);
+    memcpy(vaddr, (void *)(execi->header + offset), len);
 
     return 0;
 }
@@ -171,7 +171,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         struct exec_info execi;
         memset(&execi, 0, sizeof(execi));
 
-        execi.stack_top = VM_STACK_TOP;
+        execi.stack_top = (void*) VM_STACK_TOP;
         execi.stack_size = PROC_ORIGIN_STACK * 2;
 
         /* header */
@@ -183,7 +183,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.copymem = read_segment;
         execi.clearproc = NULL;
         execi.clearmem = kernel_clearmem;
-        
+
         execi.proc_e = bp->endpoint;
         execi.filesize = bp->len;
 
@@ -247,7 +247,7 @@ PUBLIC int arch_init_profile_clock(u32 freq)
     out_byte(RTC_IO, RTC_A_DV_OK | freq);
     out_byte(RTC_INDEX, RTC_REG_B);
     int r = in_byte(RTC_IO);
-    out_byte(RTC_INDEX, RTC_REG_B); 
+    out_byte(RTC_INDEX, RTC_REG_B);
     out_byte(RTC_IO, r | RTC_B_PIE);
     out_byte(RTC_INDEX, RTC_REG_C);
     in_byte(RTC_IO);
@@ -260,7 +260,7 @@ PUBLIC void arch_stop_profile_clock()
     int r;
     out_byte(RTC_INDEX, RTC_REG_B);
     r = in_byte(RTC_IO);
-    out_byte(RTC_INDEX, RTC_REG_B);  
+    out_byte(RTC_INDEX, RTC_REG_B);
     out_byte(RTC_IO, r & ~RTC_B_PIE);
 }
 

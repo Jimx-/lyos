@@ -53,7 +53,7 @@ PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * fl
 PUBLIC int vmctl_reply_kern_mapping(int index, void* vir_addr)
 {
     MESSAGE m;
-    
+
     m.VMCTL_REQUEST = VMCTL_REPLY_KERN_MAPPING;
     m.VMCTL_REPLY_KM_INDEX = index;
     m.VMCTL_REPLY_KM_ADDR = vir_addr;
@@ -100,7 +100,7 @@ PUBLIC int vmctl_flushtlb(endpoint_t who)
     return syscall_entry(NR_VMCTL, &m);
 }
 
-PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes * len, 
+PUBLIC int vmctl_get_mmrequest(endpoint_t * target, void** start, size_t* len,
                         int * flags, endpoint_t * caller)
 {
     MESSAGE m;
@@ -110,7 +110,7 @@ PUBLIC int vmctl_get_mmrequest(endpoint_t * target, vir_bytes * start, vir_bytes
     int retval = syscall_entry(NR_VMCTL, &m);
 
     *target = m.VMCTL_MMREQ_TARGET;
-    *start = (vir_bytes) m.VMCTL_MMREQ_ADDR;
+    *start = m.VMCTL_MMREQ_ADDR;
     *len = m.VMCTL_MMREQ_LEN;
     *flags = m.VMCTL_MMREQ_FLAGS;
     *caller = m.VMCTL_MMREQ_CALLER;

@@ -47,7 +47,7 @@ struct slabheader {
     struct list_head list;
     bitchunk_t used_mask[BITCHUNKS(ARCH_PG_SIZE / MINSIZE)];
     u16 freeguess;
-    u16 used; 
+    u16 used;
     phys_bytes phys;
     struct slabdata * data;
 };
@@ -110,7 +110,7 @@ PUBLIC void * slaballoc(int bytes)
         if (!sd) return NULL;
 
         list_add(&sd->header.list, slab);
-    } 
+    }
 
     int i;
     int max_objs = DATABYTES / bytes;
@@ -181,9 +181,9 @@ PUBLIC void slabfree(void * mem, int bytes)
         if (header->used == 0) continue;
         sd = header->data;
 
-        if (((vir_bytes)mem >= (vir_bytes)&sd->data) &&
-         ((vir_bytes)mem < (vir_bytes)&sd->data + DATABYTES)) {
-            int i = ((vir_bytes)mem - (vir_bytes)&sd->data) / bytes;
+        if ((mem >= (void*) (&sd->data)) &&
+         (mem < (void*) (&sd->data + DATABYTES))) {
+            int i = ((void*)mem - (void*)&sd->data) / bytes;
             UNSET_BIT(header->used_mask, i);
             header->used--;
             header->freeguess = i;

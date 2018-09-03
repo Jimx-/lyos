@@ -118,7 +118,8 @@ PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
   endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
 {
     int retval = OK;
-    vir_bytes base, size;
+    void* base;
+    size_t size;
     if (minor < 0 || minor >= NR_FB_DEVS) return -ENXIO;
 
     retval = arch_get_device(minor, &base, &size);

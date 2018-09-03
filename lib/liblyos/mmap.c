@@ -47,7 +47,7 @@ PUBLIC void * mmap_for(endpoint_t forwhom,
 }
 
 PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
-    dev_t dev, ino_t ino, int fd, int vaddr, int flags, int prot, size_t clearend)
+    dev_t dev, ino_t ino, int fd, void* vaddr, int flags, int prot, size_t clearend)
 {
     MESSAGE m;
 
@@ -81,7 +81,7 @@ PUBLIC void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr, void* sr
     m.u.m_mm_remap.src_addr = src_addr;
     m.u.m_mm_remap.dest_addr = dest_addr;
     m.u.m_mm_remap.size = size;
-    
+
     send_recv(BOTH, TASK_MM, &m);
 
     return m.u.m_mm_remap.ret_addr;

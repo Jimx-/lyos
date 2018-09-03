@@ -18,24 +18,24 @@
 
 typedef u32 reg_t;
 
-struct stackframe { 
-    reg_t gs;     
-    reg_t fs; 
-    reg_t es; 
-    reg_t ds; 
-    reg_t edi;    
-    reg_t esi;    
-    reg_t ebp;    
-    reg_t kernel_esp; 
-    reg_t ebx;    
-    reg_t edx;    
-    reg_t ecx;    
-    reg_t eax;    
+struct stackframe {
+    reg_t gs;
+    reg_t fs;
+    reg_t es;
+    reg_t ds;
+    reg_t edi;
+    reg_t esi;
+    reg_t ebp;
+    reg_t kernel_esp;
+    reg_t ebx;
+    reg_t edx;
+    reg_t ecx;
+    reg_t eax;
     reg_t retaddr;
-    reg_t eip;    
-    reg_t cs; 
-    reg_t eflags; 
-    reg_t esp;    
+    reg_t eip;
+    reg_t cs;
+    reg_t eflags;
+    reg_t esp;
     reg_t ss;
     reg_t orig_eax;
 };
@@ -76,7 +76,7 @@ struct sigcontext {
 };
 
 struct sigframe {
-    int retaddr_sigreturn;
+    void* retaddr_sigreturn;
     int signum;
     int code;
     struct sigcontext *scp;

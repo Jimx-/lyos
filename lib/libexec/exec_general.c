@@ -31,9 +31,9 @@
 #include "lyos/vm.h"
 #include "sys/mman.h"
 
-PUBLIC int libexec_allocmem(struct exec_info * execi, int vaddr, size_t len)
+PUBLIC int libexec_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 {
-    if(mmap_for(execi->proc_e, (void*)vaddr, len,
+    if(mmap_for(execi->proc_e, vaddr, len,
         PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED|MAP_POPULATE, -1, 0) == MAP_FAILED) {
         return ENOMEM;
     }
@@ -41,9 +41,9 @@ PUBLIC int libexec_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PUBLIC int libexec_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t len)
+PUBLIC int libexec_allocmem_prealloc(struct exec_info * execi, void* vaddr, size_t len)
 {
-    if(mmap_for(execi->proc_e, (void*)vaddr, len,
+    if(mmap_for(execi->proc_e, vaddr, len,
         PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0) == MAP_FAILED) {
         return ENOMEM;
     }
@@ -51,7 +51,7 @@ PUBLIC int libexec_allocmem_prealloc(struct exec_info * execi, int vaddr, size_t
     return 0;
 }
 
-PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len)
+PUBLIC int libexec_clearmem(struct exec_info * execi, void* vaddr, size_t len)
 {
 #define _ZERO_BUF_LEN    512
     char zerobuf[_ZERO_BUF_LEN];
@@ -59,7 +59,7 @@ PUBLIC int libexec_clearmem(struct exec_info * execi, int vaddr, size_t len)
 
     while (len > 0) {
         int copy_len = min(len, _ZERO_BUF_LEN);
-        data_copy(execi->proc_e, (void*)vaddr, SELF, zerobuf, copy_len);
+        data_copy(execi->proc_e, vaddr, SELF, zerobuf, copy_len);
         vaddr += copy_len;
         len -= copy_len;
     }

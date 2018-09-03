@@ -168,7 +168,8 @@ struct proc {
 		int type;
 		struct {
 			struct {
-				vir_bytes start, len;
+				void* start;
+				size_t len;
 				int write;
 			} check;
 		} params;

@@ -41,9 +41,9 @@ EXTERN	struct descriptor	gdt[GDT_SIZE];
 EXTERN	u8			        idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct gate		    idt[IDT_SIZE];
 EXTERN  pde_t *             initial_pgd;
-EXTERN  phys_bytes          lapic_addr;
-EXTERN  vir_bytes           lapic_vaddr;
-EXTERN  vir_bytes           lapic_eoi_addr;
+EXTERN  void*          lapic_addr;
+EXTERN  void*           lapic_vaddr;
+EXTERN  void*           lapic_eoi_addr;
 EXTERN  u32                 bsp_cpu_id, bsp_lapic_id;
 EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 #endif

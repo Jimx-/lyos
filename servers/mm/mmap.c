@@ -35,7 +35,7 @@
 #include <sys/mman.h>
 #include "global.h"
 
-PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
+PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, void* addr,
     int mmap_flags, size_t len, int vrflags)
 {
     struct vir_region * vr = NULL;
@@ -48,7 +48,7 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     if ((mmap_flags & (MAP_POPULATE | MAP_CONTIG)) == MAP_CONTIG) {
         return NULL;
     }
-    
+
     /* first unmap the region */
     if (addr && (mmap_flags & MAP_FIXED)) {
         if (region_unmap_range(mmp, addr, len)) return NULL;
@@ -59,7 +59,7 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
     } else {
-        vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, vrflags);
+        vr = region_find_free_region(mmp, (void*) ARCH_BIG_PAGE_SIZE, (void*) VM_STACK_TOP, len, vrflags);
         if (!vr) return NULL;
     }
 
@@ -71,7 +71,7 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, int addr,
     return vr;
 }
 
-PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int flags, int prot, int mmfd, off_t offset, dev_t dev, ino_t ino, size_t clearend, vir_bytes* ret_addr)
+PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags, int prot, int mmfd, off_t offset, dev_t dev, ino_t ino, size_t clearend, void** ret_addr)
 {
     int vrflags = 0;
     struct vir_region * vr;
@@ -81,13 +81,13 @@ PRIVATE int mmap_file(struct mmproc* mmp, vir_bytes addr, vir_bytes len, int fla
     if (prot & PROT_WRITE) vrflags |= RF_WRITABLE;
 
     if (offset % ARCH_PG_SIZE) return EINVAL;
-    if (addr % ARCH_PG_SIZE) return EINVAL;
+    if ((uintptr_t) addr % ARCH_PG_SIZE) return EINVAL;
 
     if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL) return ENOMEM;
     list_add(&(vr->list), &mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
 
-    *ret_addr = (vir_bytes)vr->vir_addr;
+    *ret_addr = vr->vir_addr;
 
     struct mm_file_desc* filp = get_mm_file_desc(mmfd, dev, ino);
     if (!filp) return ENOMEM;
@@ -109,7 +109,7 @@ PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
     memset(&reply_msg, 0, sizeof(MESSAGE));
     reply_msg.type = SYSCALL_RET;
     reply_msg.RETVAL = msg->MMRRESULT;
-    reply_msg.MMAP_RETADDR = (vir_bytes) msg->MMRBUF;
+    reply_msg.MMAP_RETADDR = msg->MMRBUF;
 
     send_recv(SEND_NONBLOCK, msg->MMRENDPOINT, &reply_msg);
 }
@@ -117,7 +117,7 @@ PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
     MESSAGE* mmap_msg = (MESSAGE*) arg;
-    vir_bytes ret_addr = (vir_bytes) MAP_FAILED;
+    void* ret_addr = MAP_FAILED;
     int result;
 
     if (msg->MMRRESULT) {
@@ -125,14 +125,14 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
     } else {
         mode_t file_mode = msg->MMRMODE;
         if ((file_mode & I_TYPE) == I_CHAR_SPECIAL) {   /* map device */
-            if (enqueue_vfs_request(mmp, MMR_FDMMAP, msg->MMRFD, (vir_bytes) mmap_msg->MMAP_VADDR, mmap_msg->MMAP_OFFSET, mmap_msg->MMAP_LEN, 
+            if (enqueue_vfs_request(mmp, MMR_FDMMAP, msg->MMRFD, mmap_msg->MMAP_VADDR, mmap_msg->MMAP_OFFSET, mmap_msg->MMAP_LEN,
                 mmap_device_callback, mmap_msg, sizeof(MESSAGE)) != 0) {
                 result = ENOMEM;
             } else {
                 return;
             }
         } else {
-            result = mmap_file(mmp, (vir_bytes)mmap_msg->MMAP_VADDR, mmap_msg->MMAP_LEN, mmap_msg->MMAP_FLAGS, mmap_msg->MMAP_PROT, msg->MMRFD, 
+            result = mmap_file(mmp, mmap_msg->MMAP_VADDR, mmap_msg->MMAP_LEN, mmap_msg->MMAP_FLAGS, mmap_msg->MMAP_PROT, msg->MMRFD,
                 mmap_msg->MMAP_OFFSET, msg->MMRDEV, msg->MMRINO, 0, &ret_addr);
         }
     }
@@ -152,8 +152,8 @@ PUBLIC int do_vfs_mmap()
     struct mmproc* mmp = endpt_mmproc(who);
     if (!mmp) return ESRCH;
 
-    vir_bytes ret_addr;
-    return mmap_file(mmp, mm_msg.MMAP_VADDR, mm_msg.MMAP_LEN, mm_msg.MMAP_FLAGS, mm_msg.MMAP_PROT, mm_msg.MMAP_FD, 
+    void* ret_addr;
+    return mmap_file(mmp, mm_msg.MMAP_VADDR, mm_msg.MMAP_LEN, mm_msg.MMAP_FLAGS, mm_msg.MMAP_PROT, mm_msg.MMAP_FD,
             mm_msg.MMAP_OFFSET, mm_msg.MMAP_DEV, mm_msg.MMAP_INO, mm_msg.MMAP_CLEAREND, &ret_addr);
 }
 
@@ -229,7 +229,7 @@ PUBLIC int do_map_phys()
     region_set_phys(vr, phys_addr);
     region_map_phys(mmp, vr);
 
-    mm_msg.ADDR = (void *)((vir_bytes)vr->vir_addr + offset);
+    mm_msg.ADDR = (void *)((void*)vr->vir_addr + offset);
 
     return 0;
 }
@@ -237,8 +237,8 @@ PUBLIC int do_map_phys()
 PUBLIC int do_munmap()
 {
     endpoint_t who = mm_msg.MMAP_WHO < 0 ? mm_msg.source : mm_msg.MMAP_WHO;
-    vir_bytes addr = mm_msg.MMAP_VADDR;
-    vir_bytes len = mm_msg.MMAP_LEN;
+    void* addr = mm_msg.MMAP_VADDR;
+    void* len = mm_msg.MMAP_LEN;
     struct mmproc * mmp = endpt_mmproc(who);
 
     if (len < 0) return EINVAL;
@@ -253,8 +253,8 @@ PUBLIC int do_mm_remap()
     if (src == SELF) src = mm_msg.source;
     endpoint_t dest = mm_msg.u.m_mm_remap.dest;
     if (src == SELF) dest = mm_msg.source;
-    vir_bytes src_addr = (vir_bytes) mm_msg.u.m_mm_remap.src_addr;
-    vir_bytes dest_addr = (vir_bytes) mm_msg.u.m_mm_remap.dest_addr;
+    void* src_addr = mm_msg.u.m_mm_remap.src_addr;
+    void* dest_addr = mm_msg.u.m_mm_remap.dest_addr;
     size_t size = mm_msg.u.m_mm_remap.size;
 
     if (size < 0) return EINVAL;

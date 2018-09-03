@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -49,8 +49,8 @@ PUBLIC int do_exec(MESSAGE* m)
 
     if (msg.RETVAL) return msg.RETVAL;
 
-    pmp->frame_addr = (vir_bytes) msg.BUF;
-    pmp->frame_size = (vir_bytes) msg.BUF_LEN;
+    pmp->frame_addr = msg.BUF;
+    pmp->frame_size = msg.BUF_LEN;
 
     /* tell tracer */
     if (pmp->tracer != NO_TASK) {

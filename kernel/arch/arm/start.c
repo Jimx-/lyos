@@ -116,12 +116,12 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     k_stacks = &k_stacks_start;
 
     /* kernel memory layout */
-    kinfo.kernel_text_start = (vir_bytes)*(&_text);
-    kinfo.kernel_data_start = (vir_bytes)*(&_data);
-    kinfo.kernel_bss_start = (vir_bytes)*(&_bss);
-    kinfo.kernel_text_end = (vir_bytes)*(&_etext);
-    kinfo.kernel_data_end = (vir_bytes)*(&_edata);
-    kinfo.kernel_bss_end = (vir_bytes)*(&_ebss);
+    kinfo.kernel_text_start = (void*)*(&_text);
+    kinfo.kernel_data_start = (void*)*(&_data);
+    kinfo.kernel_bss_start = (void*)*(&_bss);
+    kinfo.kernel_text_end = (void*)*(&_etext);
+    kinfo.kernel_data_end = (void*)*(&_edata);
+    kinfo.kernel_bss_end = (void*)*(&_ebss);
 
     char * hz_value = env_get("hz");
     if (hz_value) system_hz = atoi(hz_value);
@@ -155,8 +155,8 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 
 #define SET_MODULE(nr, name) do { \
     extern char _binary_##name##_start[], _binary_##name##_end[]; \
-    kinfo.modules[nr].start_addr = (vir_bytes)*(&_binary_##name##_start) - (phys_bytes) &_KERN_OFFSET; \
-    kinfo.modules[nr].end_addr = (vir_bytes)*(&_binary_##name##_end) - (phys_bytes) &_KERN_OFFSET; } while(0)
+    kinfo.modules[nr].start_addr = (void*)*(&_binary_##name##_start) - (phys_bytes) &_KERN_OFFSET; \
+    kinfo.modules[nr].end_addr = (void*)*(&_binary_##name##_end) - (phys_bytes) &_KERN_OFFSET; } while(0)
 
     SET_MODULE(TASK_MM, mm);
     SET_MODULE(TASK_PM, pm);

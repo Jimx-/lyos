@@ -48,9 +48,9 @@ struct vir_region {
     struct avl_node avl;
 
     struct mmproc * parent;
-    
-    vir_bytes vir_addr;
-    vir_bytes length;
+
+    void* vir_addr;
+    size_t length;
     struct phys_region phys_block;  /*<- physical memory block */
 
     int refcnt;

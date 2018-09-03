@@ -43,7 +43,7 @@ typedef	unsigned short		u16;
 typedef	unsigned char		u8;
 
 typedef unsigned int 		phys_bytes;
-typedef unsigned int 		vir_bytes;
+
 typedef unsigned int        block_t;
 
 typedef int 				endpoint_t;
@@ -73,12 +73,12 @@ typedef u16 port_t;
 
 struct hole {
 	struct hole * h_next;
-	int h_base;
-	int h_len;
+	void* h_base;
+	unsigned int h_len;
 };
 
 struct vir_addr {
-	vir_bytes addr;
+	void* addr;
 	endpoint_t proc_ep;
 };
 
@@ -102,9 +102,9 @@ struct ps_strings {
 struct siginfo {
 	int mask;
 	int signo;
-	vir_bytes sig_handler;
-	vir_bytes sig_return;
-	vir_bytes stackptr;
+	void* sig_handler;
+	void* sig_return;
+	void* stackptr;
 };
 
 #endif /* _TYPE_H_ */

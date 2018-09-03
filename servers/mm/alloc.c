@@ -40,14 +40,15 @@ PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
 PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp);
 PRIVATE void merge_hole(struct hole * hp);
 
-PUBLIC void mem_init(int mem_start, int free_mem_size)
+PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
 {
 	struct hole *hp;
 
   	/* Put all holes on the free list. */
   	for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
 		hp->h_next = hp + 1;
-		hp->h_base = hp->h_len = 0;
+		hp->h_base = NULL;
+        hp->h_len = 0;
   	}
   	hole[NR_HOLES-1].h_next = NULL;
   	hole_head = NULL;
@@ -68,14 +69,14 @@ PUBLIC void mem_init(int mem_start, int free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC int alloc_mem(int memsize)
+PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
 {
  	struct hole *hp, *prev_ptr;
-	int old_base;
+	void* old_base;
 
     prev_ptr = NULL;
 	hp = hole_head;
-	
+
 	while (hp != NULL) {
 		if (hp->h_len >= memsize) {
 			/* We found a hole that is big enough.  Use it. */
@@ -97,7 +98,7 @@ PUBLIC int alloc_mem(int memsize)
 		hp = hp->h_next;
 	}
 	printl("MM: alloc_mem() failed.(Out of memory)\n");
-  	return(-ENOMEM);
+  	return NULL;
 }
 
 /**
@@ -105,11 +106,11 @@ PUBLIC int alloc_mem(int memsize)
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-PUBLIC int alloc_pages(int nr_pages, int memflags)
+PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
 {
-	int memsize = nr_pages * PG_SIZE;
+	size_t memsize = nr_pages * PG_SIZE;
  	struct hole *hp, *prev_ptr;
-	int old_base;
+	void* old_base;
 	phys_bytes page_align = PAGE_ALIGN;
 
 	if (memflags & APF_ALIGN16K) {
@@ -119,9 +120,9 @@ PUBLIC int alloc_pages(int nr_pages, int memflags)
     prev_ptr = NULL;
 	hp = hole_head;
 	while (hp != NULL) {
-		int alignment = 0;
-		if (hp->h_base % page_align != 0)
-			alignment = page_align - (hp->h_base % page_align);
+		size_t alignment = 0;
+		if ((uintptr_t) hp->h_base % page_align != 0)
+			alignment = page_align - ((uintptr_t) hp->h_base % page_align);
 		if (hp->h_len >= memsize + alignment) {
 			/* We found a hole that is big enough.  Use it. */
 			old_base = hp->h_base + alignment;
@@ -157,7 +158,7 @@ PUBLIC int alloc_pages(int nr_pages, int memflags)
  *
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC int free_mem(int base, int len)
+PUBLIC int free_mem(phys_bytes base, phys_bytes len)
 {
 	struct hole *hp, *new_ptr, *prev_ptr;
 

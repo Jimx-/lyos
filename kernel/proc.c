@@ -586,7 +586,7 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
     async_message_t amsg;
     /* process all async messages */
     for (i = 0; i < priv->async_len; i++) {
-        if (data_vir_copy(KERNEL, &amsg, sender->endpoint, (void*)((vir_bytes)priv->async_table + i * sizeof(amsg)), sizeof(amsg)) != 0) {
+        if (data_vir_copy(KERNEL, &amsg, sender->endpoint, (void*)((char*) priv->async_table + i * sizeof(amsg)), sizeof(amsg)) != 0) {
             retval = EFAULT;
             goto async_error;
         }
@@ -612,7 +612,7 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
         amsg.result = retval;
         amsg.flags |= ASMF_DONE;
 
-        if (data_vir_copy(sender->endpoint, (void*)((vir_bytes)priv->async_table + i * sizeof(amsg)), KERNEL, &amsg, sizeof(amsg)) != 0) {
+        if (data_vir_copy(sender->endpoint, (void*)((void*)priv->async_table + i * sizeof(amsg)), KERNEL, &amsg, sizeof(amsg)) != 0) {
             retval = EFAULT;
             goto async_error;
         }
@@ -871,7 +871,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
     struct proc* p_dest;
     /* process all async messages */
     for (i = 0; i < len; i++) {
-        retval = data_vir_copy(KERNEL, &amsg, KERNEL, (void*)((vir_bytes)table + i * sizeof(amsg)), sizeof(amsg));
+        retval = data_vir_copy(KERNEL, &amsg, KERNEL, (void*)((void*)table + i * sizeof(amsg)), sizeof(amsg));
         if (retval) goto async_error;
 
         flags = amsg.flags;
@@ -916,7 +916,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         amsg.result = retval;
         amsg.flags |= ASMF_DONE;
 
-        retval = data_vir_copy(KERNEL, (void*)((vir_bytes)table + i * sizeof(amsg)), KERNEL, &amsg, sizeof(amsg));
+        retval = data_vir_copy(KERNEL, (void*)((void*)table + i * sizeof(amsg)), KERNEL, &amsg, sizeof(amsg));
         if (retval) goto async_error;
 
         unlock_proc(p_dest);
@@ -927,7 +927,7 @@ async_error:
 
     /* save the table if not done */
     if (!done) {
-        priv->async_table = (vir_bytes) table;
+        priv->async_table = table;
         priv->async_len = len;
     }
 

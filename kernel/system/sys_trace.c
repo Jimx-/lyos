@@ -12,7 +12,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -52,11 +52,11 @@ PUBLIC int sys_trace(MESSAGE * m, struct proc * p_proc)
         PST_UNSET(target, PST_TRACED);
         return 0;
     case TRACE_PEEKTEXT:
-    case TRACE_PEEKDATA:    /* we don't separate text and data segments, so these 
+    case TRACE_PEEKDATA:    /* we don't separate text and data segments, so these
                                 two are equivalent */
-        src.addr = (vir_bytes)addr;
+        src.addr = addr;
         src.proc_ep = target->endpoint;
-        dest.addr = (vir_bytes)&data;
+        dest.addr = &data;
         dest.proc_ep = KERNEL;
 
         retval = vir_copy(&dest, &src, sizeof(data));

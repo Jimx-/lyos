@@ -17,7 +17,7 @@
 #define _PARAM_H_
 
 #include <lyos/config.h>
-    
+
 #define KINFO_MAGIC     0x4B494E
 
 #define KINFO_CMDLINE_LEN	1024
@@ -30,7 +30,7 @@ struct kinfo_mmap_entry {
 	#define KINFO_MEMORY_RESERVED               2
 	u32 type;
 };
-     
+
 struct kinfo_module {
     phys_bytes start_addr;
     phys_bytes end_addr;
@@ -39,7 +39,7 @@ struct kinfo_module {
 typedef struct kinfo {
     int magic;
 
-    vir_bytes memory_size;
+    size_t memory_size;
 	int memmaps_count;
 	struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
 
@@ -49,9 +49,9 @@ typedef struct kinfo {
 	char cmdline[KINFO_CMDLINE_LEN];
 
     unsigned int kernel_start_pde, kernel_end_pde;
-    vir_bytes kernel_text_start, kernel_text_end;
-    vir_bytes kernel_data_start, kernel_data_end;
-    vir_bytes kernel_bss_start, kernel_bss_end;
+    void* kernel_text_start, *kernel_text_end;
+    void* kernel_data_start, *kernel_data_end;
+    void* kernel_bss_start, *kernel_bss_end;
 
     phys_bytes kernel_start_phys, kernel_end_phys;
 
@@ -67,7 +67,7 @@ struct machine {
 struct sysinfo {
 #define SYSINFO_MAGIC   0x534946
     int magic;
-    
+
     syscall_gate_t syscall_gate;
 
     kinfo_t * kinfo;

@@ -82,10 +82,10 @@ PUBLIC int fb_init_bochs(int devind)
 	phys_bytes vmem_size = x_res * y_res * 8;
 
 	void* vmem_base = mm_map_phys(SELF, (void*) vmem_phys_base, vmem_size);
-	if ( vmem_base == MAP_FAILED) return 0;
+	if (vmem_base == MAP_FAILED) return 0;
 
 	fb_mem_phys = vmem_phys_base;
-	fb_mem_vir = (vir_bytes) vmem_base;
+	fb_mem_vir = vmem_base;
 	fb_mem_size = vmem_size;
 
     return 1;

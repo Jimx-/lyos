@@ -134,7 +134,7 @@ PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
     return ret;
 }
 
-PUBLIC void pg_map(phys_bytes phys_addr, vir_bytes vir_addr, vir_bytes vir_end, kinfo_t * pk)
+PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
 {
     pte_t * pt;
     pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + (phys_bytes) &_KERN_OFFSET); 

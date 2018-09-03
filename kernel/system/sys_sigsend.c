@@ -12,7 +12,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -35,13 +35,13 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     if (!p_dest) return EINVAL;
 
     data_vir_copy(KERNEL, &si, p->endpoint, m->BUF, sizeof(si));
-    
+
     lock_proc(p_dest);
 
 #ifdef __i386__
-    si.stackptr = p_dest->regs.esp;
+    si.stackptr = (void*) p_dest->regs.esp;
 #endif
-    
+
     struct sigframe sf, * sfp;
     sfp = (struct sigframe *)si.stackptr - 1;
     memset(&sf, 0, sizeof(sf));
@@ -76,11 +76,11 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     data_vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
 
 #ifdef __i386__
-    p_dest->regs.esp = (u32) sfp;
-    p_dest->regs.eip = si.sig_handler;
+    p_dest->regs.esp = (reg_t) sfp;
+    p_dest->regs.eip = (reg_t) si.sig_handler;
 #endif
 
     unlock_proc(p_dest);
-    
+
     return 0;
 }

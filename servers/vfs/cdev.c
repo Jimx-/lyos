@@ -153,7 +153,7 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
     return SUSPEND;
 }
 
-PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, vir_bytes vaddr, off_t offset,
+PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
     size_t length, struct fproc* fp)
 {
     MESSAGE driver_msg;

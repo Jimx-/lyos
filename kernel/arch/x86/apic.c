@@ -147,13 +147,13 @@ PUBLIC u32 apicid()
 #define IOAPIC_IOREGSEL 0x0
 #define IOAPIC_IOWIN    0x10
 
-PRIVATE u32 ioapic_read(u32 ioa_base, u32 reg)
+PRIVATE u32 ioapic_read(void* ioa_base, u32 reg)
 {
     *((volatile u32 *)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
     return *(volatile u32 *)(ioa_base + IOAPIC_IOWIN);
 }
 
-PRIVATE void ioapic_write(u32 ioa_base, u8 reg, u32 val)
+PRIVATE void ioapic_write(void* ioa_base, u8 reg, u32 val)
 {
     *((volatile u32 *)(ioa_base + IOAPIC_IOREGSEL)) = reg;
     *((volatile u32 *)(ioa_base + IOAPIC_IOWIN)) = val;
@@ -164,11 +164,11 @@ PRIVATE void ioapic_redirt_entry_write(void * ioapic_addr,
                     u32 hi,
                     u32 lo)
 {
-    ioapic_write((u32)ioapic_addr, (u8) (IOAPIC_REDIR_TABLE + entry * 2 + 1), hi);
-    ioapic_write((u32)ioapic_addr, (u8) (IOAPIC_REDIR_TABLE + entry * 2), lo);
+    ioapic_write(ioapic_addr, (u8) (IOAPIC_REDIR_TABLE + entry * 2 + 1), hi);
+    ioapic_write(ioapic_addr, (u8) (IOAPIC_REDIR_TABLE + entry * 2), lo);
 }
 
-PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
+PRIVATE void ioapic_enable_pin(void* ioapic_addr, int pin)
 {
     u32 lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
 
@@ -176,7 +176,7 @@ PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
     ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
 }
 
-PRIVATE void ioapic_disable_pin(vir_bytes ioapic_addr, int pin)
+PRIVATE void ioapic_disable_pin(void* ioapic_addr, int pin)
 {
     u32 lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
 
@@ -217,7 +217,7 @@ PRIVATE int apic_calibrate(unsigned cpu)
 
     val = 0;
     lapic_write(LAPIC_TIMER_CCR, val);
-    
+
     lvtt = lapic_read(LAPIC_TIMER_DCR) & ~0x0b;
     lvtt = APIC_TDCR_1;
     lapic_write(LAPIC_TIMER_DCR, lvtt);
@@ -240,19 +240,19 @@ PRIVATE int apic_calibrate(unsigned cpu)
         do_div(hpet_expect, 1000);
         do_div(hpet_expect, hpet_readl(HPET_PERIOD));
         hpet_expect += hpet0;
-        
+
         while (hpet_readl(HPET_COUNTER) < hpet_expect) { }
     } else {
 
         out_byte(0x61, (in_byte(0x61) & 0x02) | 0x01);
-    
+
         out_byte(TIMER_MODE, 0xb0);
         out_byte(TIMER2, cal_latch & 0xff);
         out_byte(TIMER2, (u8)(cal_latch >> 8));
 
         while ((in_byte(0x61) & 0x20) == 0) { }
         stop_8253_timer();
-    } 
+    }
 
     if (hpet) hpet1 = hpet_readl(HPET_COUNTER);
     read_tsc_64(&tsc1);
@@ -292,11 +292,11 @@ PUBLIC int lapic_enable(unsigned cpu)
     u32 val, nlvt;
 
     if (!lapic_addr) return 0;
-    
+
     if (!lapic_enable_msr()) return 0;
 
     lapic_eoi_addr = LAPIC_EOI;
-    
+
     lapic_write(LAPIC_TPR, 0x0);
 
     val = lapic_read(LAPIC_SIVR);
@@ -306,7 +306,7 @@ PUBLIC int lapic_enable(unsigned cpu)
     lapic_read(LAPIC_SIVR);
 
     apic_eoi();
-    
+
     val = lapic_read(LAPIC_LDR) & ~0xFF000000;
     val |= (cpu & 0xFF) << 24;
     lapic_write(LAPIC_LDR, val);
@@ -502,7 +502,7 @@ PUBLIC void ioapic_set_irq(int irq)
 
             set_irq_redir_low(irq, &low_32);
             hi_32 = cpuid << 24;
-            ioapic_redirt_entry_write((void *)io_apics[ioa].addr,
+            ioapic_redirt_entry_write(io_apics[ioa].addr,
                     io_apic_irq[irq].pin, hi_32, low_32);
         }
     }
@@ -525,14 +525,14 @@ PUBLIC int detect_ioapics()
         if (acpi_ioa == NULL) break;
 
         io_apics[n].id = acpi_ioa->id;
-        io_apics[n].addr = acpi_ioa->address;
+        io_apics[n].addr = (void*) ((uintptr_t) acpi_ioa->address);
         io_apics[n].phys_addr = (phys_bytes)acpi_ioa->address;
         io_apics[n].gsi_base = acpi_ioa->global_int_base;
         io_apics[n].pins = ((ioapic_read(io_apics[n].addr,
-                IOAPIC_VERSION) & 0xff0000) >> 16) + 1; 
+                IOAPIC_VERSION) & 0xff0000) >> 16) + 1;
         io_apics[n].version = ioapic_read(io_apics[n].addr,
                 IOAPIC_VERSION) & 0x0000ff;
-        printk("IOAPIC[%d]: apic_id %d, version %d, address 0x%x, GSI %d-%d\n", 
+        printk("IOAPIC[%d]: apic_id %d, version %d, address 0x%x, GSI %d-%d\n",
             n, io_apics[n].id, io_apics[n].version, io_apics[n].addr, io_apics[n].gsi_base, io_apics[n].gsi_base + io_apics[n].pins - 1);
 
         n++;
@@ -714,7 +714,7 @@ PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 
     for (i = 0; i < 2; i++) {
         u32 val;
-        
+
         lapic_errstatus();
 
         val = lapic_read(LAPIC_ICR2) & 0xFFFFFF;
@@ -745,7 +745,7 @@ PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
     return 0;
 }
 
-int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline) 
+int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline)
 {
     u32 errstatus = 0;
     int timeout;
@@ -769,7 +769,7 @@ int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline)
         if (!timeout) break;
     }
 
-    if (errstatus) 
+    if (errstatus)
         return -1;
 
     lapic_errstatus();
@@ -790,7 +790,7 @@ int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline)
         if(!timeout) break;
     }
 
-    if (errstatus) 
+    if (errstatus)
         return -1;
 
     lapic_errstatus();

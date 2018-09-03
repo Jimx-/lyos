@@ -37,7 +37,7 @@
 
 struct shm {
     struct shmid_ds shmid;
-    vir_bytes       page;
+    void*       page;
 };
 
 #define     SHM_INUSE   0x0800
@@ -140,7 +140,7 @@ PUBLIC int do_shmget(MESSAGE* msg)
         shm->shmid.shm_ctime = now();
         shm->shmid.shm_cpid = pid;
         shm->shmid.shm_lpid = 0;
-        shm->page = (vir_bytes) page;
+        shm->page = page;
 
         if (i == shm_count) shm_count++;
     }
@@ -152,15 +152,15 @@ PUBLIC int do_shmget(MESSAGE* msg)
 PUBLIC int do_shmat(MESSAGE* msg)
 {
     int id, flags;
-    vir_bytes addr;
+    void* addr;
 
     id = msg->IPC_ID;
-    addr = (vir_bytes) msg->IPC_ADDR;
+    addr = msg->IPC_ADDR;
     flags = msg->IPC_FLAGS;
 
-    if (addr % ARCH_PG_SIZE) {
+    if ((uintptr_t) addr % ARCH_PG_SIZE) {
         if (flags & SHM_RND) {
-            addr -= (addr % ARCH_PG_SIZE);
+            addr -= ((uintptr_t) addr % ARCH_PG_SIZE);
         } else {
             return EINVAL;
         }
@@ -181,7 +181,7 @@ PUBLIC int do_shmat(MESSAGE* msg)
     uid_t uid;
     pid_t pid = get_epinfo(msg->source, &uid, NULL);
     shm->shmid.shm_lpid = pid;
-    
+
     msg->IPC_RETADDR = retaddr;
     return 0;
 }

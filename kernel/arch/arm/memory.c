@@ -96,17 +96,17 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * 
     u32 offset = la & ARM_VM_OFFSET_MASK_1MB;
     *len = min(*len, ARM_SECTION_SIZE - offset);
 
-    return pde * ARM_SECTION_SIZE + offset; 
+    return pde * ARM_SECTION_SIZE + offset;
 }
 
 PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
-        struct proc * p_src, phys_bytes src_la, vir_bytes len)
+        struct proc * p_src, phys_bytes src_la, size_t len)
 {
     if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
     if (read_ttbr0() != get_cpulocal_var(pt_proc)->seg.ttbr_phys) panic("bad pt_proc ttbr0 value");
 
     while (len > 0) {
-        vir_bytes chunk = len;
+        size_t chunk = len;
         phys_bytes src_mapped, dest_mapped;
         int changed = 0;
 
@@ -118,9 +118,9 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         phys_bytes fault_addr = memcpy((void *)dest_mapped, (void *)src_mapped, chunk);
 
         /*if (fault_addr) {
-            if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk) 
+            if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
                 return EFAULT_SRC;
-            if (fault_addr >= dest_mapped && fault_addr < dest_mapped + chunk) 
+            if (fault_addr >= dest_mapped && fault_addr < dest_mapped + chunk)
                 return EFAULT_DEST;
             return EFAULT;
         }*/
@@ -178,14 +178,14 @@ struct kern_map {
     phys_bytes phys_addr;
     phys_bytes len;
     int flags;
-    vir_bytes vir_addr;
-    vir_bytes* mapped_addr;
+    void* vir_addr;
+    void** mapped_addr;
 };
 
 PRIVATE struct kern_map kern_mappings[MAX_KERN_MAPPINGS];
 PRIVATE int kern_mapping_count = 0;
 
-PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, vir_bytes* mapped_addr)
+PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, void** mapped_addr)
 {
     if (kern_mapping_count >= MAX_KERN_MAPPINGS) return ENOMEM;
 
@@ -202,7 +202,7 @@ PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, vir_by
 #define KM_KERN_MAPPING 1
 
 extern char _usermapped[], _eusermapped[];
-PUBLIC vir_bytes usermapped_offset;
+PUBLIC off_t usermapped_offset;
 
 PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
 {
@@ -213,7 +213,7 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
         *len = (char *)*(&_eusermapped) - (char *)*(&_usermapped);
         *flags = KMF_USER;
         return 0;
-    } 
+    }
 
     if (index >= KM_KERN_MAPPING && index < KM_KERN_MAPPING + kern_mapping_count) {
         struct kern_map* pkm = &kern_mappings[index - KM_KERN_MAPPING];
@@ -239,7 +239,7 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
         sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
         sysinfo.machine = (struct machine*)USER_PTR(&machine);
-        return 0;   
+        return 0;
     }
 
     if (index >= KM_KERN_MAPPING && index < KM_KERN_MAPPING + kern_mapping_count) {
@@ -255,7 +255,7 @@ PRIVATE void setttbr0(struct proc * p, void * ttbr, void * ttbr_v)
     p->seg.ttbr_phys = (u32)ttbr;
     p->seg.ttbr_vir = (u32 *)ttbr_v;
 
-    if (p->endpoint == TASK_MM) { 
+    if (p->endpoint == TASK_MM) {
         int i;
         /* update mapped address of kernel mappings */
         for (i = 0; i < kern_mapping_count; i++) {
@@ -286,7 +286,7 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
     return EINVAL;
 }
 
-PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, vir_bytes laddr, vir_bytes bytes, int write, int type)
+PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, void* laddr, size_t bytes, int write, int type)
 {
     PST_SET_LOCKED(caller, PST_MMREQUEST);
 
@@ -305,7 +305,7 @@ PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, vir_bytes laddr,
 }
 
 PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct vir_addr * src_addr,
-                                vir_bytes bytes, int check)
+                                void* bytes, int check)
 {
     struct vir_addr * vir_addrs[2];
     struct proc * procs[2];
@@ -324,18 +324,18 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
         if (proc_ep != NO_TASK && procs[i] == NULL) return ESRCH;
     }
 
-    int retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr, 
+    int retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr,
                 procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
 
     if (retval) {
         if (retval == EFAULT) return EFAULT;
 
         if (retval != EFAULT_SRC && retval != EFAULT_DEST) panic("vir_copy: la_la_copy failed");
-        
+
         if (!check || !caller) return EFAULT;
 
         int write;
-        vir_bytes fault_la;
+        void* fault_la;
         endpoint_t target;
         if (retval == EFAULT_SRC) {
             target = vir_addrs[_SRC_]->proc_ep;
@@ -365,8 +365,8 @@ PUBLIC int _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_
     dest.addr = dest_addr;
     dest.proc_ep = dest_ep;
 
-    if (check) 
+    if (check)
         return vir_copy_check(caller, &dest, &src, len);
-    else 
+    else
         return vir_copy(&dest, &src, len);
 }

@@ -53,7 +53,7 @@ PRIVATE void process_queue()
     if (asyncsend3(TASK_FS, &active->req_msg, 0) != 0) panic("async send vfs request failed");
 }
 
-PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, vir_bytes addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len)
+PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, void* addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len)
 {
     struct vfs_request* request;    
     SLABALLOC(request);

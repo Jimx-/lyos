@@ -60,7 +60,7 @@ PRIVATE void copy_trampoline()
     phys_bytes tramp_size, tramp_start = (phys_bytes)&trampoline;
 
     tramp_size = (phys_bytes)&__trampoline_end - tramp_start;
-    
+
     trampoline_base = pg_alloc_lowest(&kinfo, tramp_size);
 
     /* copy GDT and IDT */
@@ -91,13 +91,13 @@ PUBLIC void smp_init()
 
     machine.cpu_count = ncpus;
 
-    init_tss_all(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
+    init_tss_all(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
 
-    lapic_addr = LOCAL_APIC_DEF_ADDR;
+    lapic_addr = (void*) LOCAL_APIC_DEF_ADDR;
 
     bsp_lapic_id = apicid();
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
-    
+
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");
     }
@@ -105,7 +105,7 @@ PUBLIC void smp_init()
     if (!detect_ioapics()) {
         panic("no ioapic detected");
     }
-    
+
     ioapic_enable();
 
     apic_init_idt(0);
@@ -120,7 +120,7 @@ PRIVATE void init_tss_all()
     unsigned cpu;
 
     for(cpu = 0; cpu < ncpus ; cpu++) {
-        init_tss(cpu, (u32)get_k_stack_top(cpu)); 
+        init_tss(cpu, (u32)get_k_stack_top(cpu));
     }
 }
 
@@ -190,7 +190,7 @@ PRIVATE void smp_start_aps()
     out_byte(CLK_ELE, 0xF);
     out_byte(CLK_IO, 0);
 
-    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id)); 
+    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
 
     finish_bsp_booting();
 }
@@ -199,12 +199,12 @@ PRIVATE void ap_finish_booting()
 {
     ap_ready = cpuid;
 
-    init_tss(cpuid, (u32)get_k_stack_top(cpuid)); 
+    init_tss(cpuid, (u32)get_k_stack_top(cpuid));
 
     printk("smp: CPU %d is up\n", cpuid);
 
     identify_cpu();
-    
+
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 

@@ -45,9 +45,9 @@ struct dev_probe {
     { .vid = 0xffff, .did = 0xffff, NULL },
 };
 
-PUBLIC vir_bytes fb_mem_vir;
+PUBLIC void* fb_mem_vir;
 PUBLIC phys_bytes fb_mem_phys;
-PUBLIC vir_bytes fb_mem_size;
+PUBLIC size_t fb_mem_size;
 PRIVATE int initialized = 0;
 
 PUBLIC int arch_init_fb(int minor)
@@ -75,7 +75,7 @@ PUBLIC int arch_init_fb(int minor)
                 if (probe->init_func) {
                     if (probe->init_func(devind)) ok = 1;
                 }
-            } 
+            }
             probe++;
         }
 
@@ -89,11 +89,11 @@ PUBLIC int arch_init_fb(int minor)
     return 0;
 }
 
-PUBLIC int arch_get_device(int minor, vir_bytes* base, vir_bytes* size)
+PUBLIC int arch_get_device(int minor, void** base, size_t* size)
 {
     if (!initialized || minor != 0) {
-        return ENXIO; 
-    } 
+        return ENXIO;
+    }
 
     *base = fb_mem_vir;
     *size = fb_mem_size;
@@ -103,8 +103,8 @@ PUBLIC int arch_get_device(int minor, vir_bytes* base, vir_bytes* size)
 PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size)
 {
     if (!initialized || minor != 0) {
-        return ENXIO; 
-    } 
+        return ENXIO;
+    }
 
     *phys_base = fb_mem_phys;
     *size = fb_mem_size;

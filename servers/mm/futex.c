@@ -28,13 +28,13 @@
 #include <lyos/proto.h>
 #include <lyos/list.h>
 #include <sys/futex.h>
-    
+
 #include "global.h"
 #include "region.h"
 #include "proto.h"
 #include "futex.h"
 
-#define QUEUE_HASH_LOG2   7    
+#define QUEUE_HASH_LOG2   7
 #define QUEUE_HASH_SIZE   ((unsigned long)1<<QUEUE_HASH_LOG2)
 #define QUEUE_HASH_MASK   (((unsigned long)1<<QUEUE_HASH_LOG2)-1)
 
@@ -99,13 +99,13 @@ PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     *list = futex_hash(&entry->key);
 
     /* map uaddr in current address space */
-    off_t offset = (vir_bytes) uaddr % ARCH_PG_SIZE;
-    uaddr = (u32*)((vir_bytes) uaddr - offset);
-    phys_bytes phys_addr = pgd_va2pa(&mmp->active_mm->pgd, (vir_bytes) uaddr);
+    off_t offset = (uintptr_t) uaddr % ARCH_PG_SIZE;
+    uaddr = (u32*)((uintptr_t) uaddr - offset);
+    phys_bytes phys_addr = pgd_va2pa(&mmp->active_mm->pgd, (void*) uaddr);
     if (!phys_addr) {
         return EFAULT;
     }
-    vir_bytes vaddr = alloc_vmpages(1);
+    void* vaddr = alloc_vmpages(1);
     if (!vaddr) return ENOMEM;
 
     pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_addr, vaddr, ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);

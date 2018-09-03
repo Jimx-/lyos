@@ -61,9 +61,9 @@ PUBLIC int ioapic_enable();
 struct io_apic {
 	unsigned	id;
 	char		version;
-	vir_bytes	addr;
+	void*	addr;
 	phys_bytes	phys_addr;
-	vir_bytes	vir_addr;
+	void*	vir_addr;
 	unsigned	pins;
 	unsigned	gsi_base;
 };
