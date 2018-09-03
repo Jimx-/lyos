@@ -42,7 +42,11 @@ typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;
 
-typedef unsigned int 		phys_bytes;
+#ifdef CONFIG_PHYS_BYTES_64BIT
+typedef u64 		phys_bytes;
+#else
+typedef u32 		phys_bytes;
+#endif
 
 typedef unsigned int        block_t;
 

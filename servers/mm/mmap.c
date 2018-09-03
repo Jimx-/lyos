@@ -172,8 +172,8 @@ PUBLIC int do_vfs_mmap()
         mm_msg.u.m_mm_mmap.prot,
         mm_msg.u.m_mm_mmap.fd,
         mm_msg.u.m_mm_mmap.offset,
-        mm_msg.u.m_mm_mmap.dev,
-        mm_msg.u.m_mm_mmap.ino,
+        mm_msg.u.m_mm_mmap.devino.dev,
+        mm_msg.u.m_mm_mmap.devino.ino,
         mm_msg.u.m_mm_mmap.clearend,
         &ret_addr
     );

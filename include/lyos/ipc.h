@@ -40,7 +40,7 @@ struct mess2 {  /* 16 bytes */
     void* m2p3;
     void* m2p4;
 
-	u8 _pad[40];
+	u8 _pad[56 - 4*sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess2);
 
@@ -54,7 +54,7 @@ struct mess3 {  /* 40 bytes */
     void*   m3p1;
     void*   m3p2;
 
-    u8 _pad[16];
+    u8 _pad[24 - 2*sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess3);
 
@@ -63,7 +63,7 @@ struct mess4 {  /* 36 bytes */
     int m4i1, m4i2, m4i3;
     void *m4p1, *m4p2, *m4p3, *m4p4;
 
-    u8 _pad[20];
+    u8 _pad[36 - 4*sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess4);
 
@@ -87,15 +87,21 @@ struct mess_mm_mmap {
     endpoint_t who;
     size_t offset;
     size_t length;
-    u64 dev;
-    u32 ino;
-    int fd;
+
+    union {
+        struct {
+            u64 dev;
+            u32 ino;
+        } devino;
+        int fd;
+    };
+
     int flags;
     int prot;
     void* vaddr;
     size_t clearend;
 
-    u8 _pad[12];
+    u8 _pad[32 - 3*sizeof(size_t) - sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess_mm_mmap);
 
@@ -103,7 +109,7 @@ struct mess_mm_mmap_reply {
     int retval;
     void* retaddr;
 
-    u8 _pad[48];
+    u8 _pad[52 - sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess_mm_mmap_reply);
 
@@ -115,7 +121,7 @@ struct mess_mm_remap {
 	size_t 		size;
 	void*		ret_addr;
 
-	u8 			_pad[32];
+	u8 			_pad[48 - 3*sizeof(void*) - sizeof(size_t)];
 };
 VERIFY_MESS_SIZE(mess_mm_remap);
 
@@ -126,7 +132,7 @@ struct mess_pm_signal {
     void* sigret;
     int retval;
 
-    u8 _pad[36];
+    u8 _pad[48 - 3*sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess_pm_signal);
 
@@ -137,7 +143,7 @@ struct mess_vfs_select {
     void*   exceptfds;
     void*   timeout;
 
-    u8      _pad[36];
+    u8      _pad[52 - 4*sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess_vfs_select);
 
@@ -158,7 +164,7 @@ struct mess_vfs_cdev_readwrite {
     off_t       pos;
     size_t      count;
 
-    u8          _pad[24];
+    u8          _pad[36 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 
@@ -169,7 +175,7 @@ struct mess_vfs_cdev_mmap {
     off_t       pos;
     size_t      count;
 
-    u8          _pad[32];
+    u8          _pad[44 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap);
 
@@ -194,7 +200,7 @@ struct mess_vfs_cdev_mmap_reply {
     endpoint_t  endpoint;
     void*       retaddr;
 
-    u8          _pad[44];
+    u8          _pad[48 - sizeof(void*)];
 };
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap_reply);
 
