@@ -1330,20 +1330,20 @@ void * mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
     memset(&m, 0, sizeof(MESSAGE));
 
     m.type = MMAP;
-    m.MMAP_WHO = SELF;
-    m.MMAP_VADDR = (int)addr;
-    m.MMAP_LEN = len;
-    m.MMAP_PROT = prot;
-    m.MMAP_FLAGS = flags;
-    m.MMAP_FD = fd;
-    m.MMAP_OFFSET = offset;
+    m.u.m_mm_mmap.who = SELF;
+    m.u.m_mm_mmap.vaddr = addr;
+    m.u.m_mm_mmap.length = len;
+    m.u.m_mm_mmap.prot = prot;
+    m.u.m_mm_mmap.flags = flags;
+    m.u.m_mm_mmap.fd = fd;
+    m.u.m_mm_mmap.offset = offset;
 
     cmb();
 
     send_recv(BOTH, TASK_MM, &m);
 
-    if (m.RETVAL) return MAP_FAILED;
-    else return (void *)m.MMAP_RETADDR;
+    if (m.u.m_mm_mmap_reply.retval) return MAP_FAILED;
+    else return m.u.m_mm_mmap_reply.retaddr;
 }
 
 int munmap(void *addr, size_t len)
@@ -1353,9 +1353,9 @@ int munmap(void *addr, size_t len)
     memset(&m, 0, sizeof(MESSAGE));
 
     m.type = MUNMAP;
-    m.MMAP_WHO = SELF;
-    m.MMAP_VADDR = (int)addr;
-    m.MMAP_LEN = len;
+    m.u.m_mm_mmap.who = SELF;
+    m.u.m_mm_mmap.vaddr = addr;
+    m.u.m_mm_mmap.length = len;
 
     cmb();
 

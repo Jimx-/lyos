@@ -83,6 +83,30 @@ struct mess5 {  /* 40 bytes */
 };
 VERIFY_MESS_SIZE(mess5);
 
+struct mess_mm_mmap {
+    endpoint_t who;
+    size_t offset;
+    size_t length;
+    u64 dev;
+    u32 ino;
+    int fd;
+    int flags;
+    int prot;
+    void* vaddr;
+    size_t clearend;
+
+    u8 _pad[12];
+};
+VERIFY_MESS_SIZE(mess_mm_mmap);
+
+struct mess_mm_mmap_reply {
+    int retval;
+    void* retaddr;
+
+    u8 _pad[48];
+};
+VERIFY_MESS_SIZE(mess_mm_mmap_reply);
+
 struct mess_mm_remap {
 	endpoint_t 	src;
 	endpoint_t 	dest;
@@ -172,6 +196,8 @@ typedef struct {
         struct mess3 m3;
         struct mess4 m4;
         struct mess5 m5;
+		struct mess_mm_mmap m_mm_mmap;
+		struct mess_mm_mmap_reply m_mm_mmap_reply;
 		struct mess_mm_remap m_mm_remap;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;

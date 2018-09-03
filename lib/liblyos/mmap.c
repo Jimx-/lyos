@@ -32,18 +32,18 @@ PUBLIC void * mmap_for(endpoint_t forwhom,
     memset(&m, 0, sizeof(MESSAGE));
 
     m.type = MMAP;
-    m.MMAP_WHO = forwhom;
-    m.MMAP_VADDR = (int)addr;
-    m.MMAP_LEN = len;
-    m.MMAP_PROT = prot;
-    m.MMAP_FLAGS = flags;
-    m.MMAP_FD = fd;
-    m.MMAP_OFFSET = offset;
+    m.u.m_mm_mmap.who = forwhom;
+    m.u.m_mm_mmap.vaddr = addr;
+    m.u.m_mm_mmap.length = len;
+    m.u.m_mm_mmap.prot = prot;
+    m.u.m_mm_mmap.flags = flags;
+    m.u.m_mm_mmap.fd = fd;
+    m.u.m_mm_mmap.offset = offset;
 
     send_recv(BOTH, TASK_MM, &m);
 
-    if (m.RETVAL) return MAP_FAILED;
-    else return (void *)m.MMAP_RETADDR;
+    if (m.u.m_mm_mmap_reply.retval) return MAP_FAILED;
+    return m.u.m_mm_mmap_reply.retaddr;
 }
 
 PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
@@ -54,20 +54,20 @@ PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
     memset(&m, 0, sizeof(MESSAGE));
 
     m.type = FS_MMAP;
-    m.MMAP_WHO = who;
-    m.MMAP_OFFSET = offset;
-    m.MMAP_LEN = len;
-    m.MMAP_DEV = dev;
-    m.MMAP_INO = ino;
-    m.MMAP_FD = fd;
-    m.MMAP_VADDR = vaddr;
-    m.MMAP_FLAGS = flags;
-    m.MMAP_PROT = prot;
-    m.MMAP_CLEAREND = clearend;
+    m.u.m_mm_mmap.who = who;
+    m.u.m_mm_mmap.offset = offset;
+    m.u.m_mm_mmap.length = len;
+    m.u.m_mm_mmap.dev = dev;
+    m.u.m_mm_mmap.ino = ino;
+    m.u.m_mm_mmap.fd = fd;
+    m.u.m_mm_mmap.vaddr = vaddr;
+    m.u.m_mm_mmap.flags = flags;
+    m.u.m_mm_mmap.prot = prot;
+    m.u.m_mm_mmap.clearend = clearend;
 
     send_recv(BOTH, TASK_MM, &m);
 
-    return m.RETVAL;
+    return m.u.m_mm_mmap_reply.retval;
 }
 
 PUBLIC void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr, void* src_addr, size_t size)

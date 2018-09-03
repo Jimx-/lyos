@@ -205,7 +205,7 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
         printf("exit(%d) = ?\n", msg.STATUS);   /* exit has no return value */
         break;
     case MMAP:
-        printf("mmap(0x%x, %d, %d, %d, %d, %d)", msg.MMAP_VADDR, msg.MMAP_LEN, msg.MMAP_PROT, msg.MMAP_FLAGS, msg.MMAP_FD, msg.MMAP_OFFSET);
+        printf("mmap(0x%p, %ld, %d, %d, %d, %ld)", msg.u.m_mm_mmap.vaddr, msg.u.m_mm_mmap.length, msg.u.m_mm_mmap.prot, msg.u.m_mm_mmap.flags, msg.u.m_mm_mmap.fd, msg.u.m_mm_mmap.offset);
         break;
     case UMASK:
         printf("umask(0%o)", msg.MODE);
@@ -262,7 +262,7 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
         break;
     case MMAP:
         base = 16;
-        retval = (int)msg.MMAP_RETADDR;
+        retval = (int) msg.u.m_mm_mmap_reply.retaddr;
         break;
     }
 
