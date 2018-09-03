@@ -32,22 +32,23 @@
 #include "region.h"
 #include "proto.h"
 #include "global.h"
+#include "types.h"
 
-PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
-PRIVATE struct hole *hole_head;	/* pointer to first hole */
-PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
+PRIVATE struct phys_hole hole[NR_HOLES]; /* the hole table */
+PRIVATE struct phys_hole *hole_head;	/* pointer to first hole */
+PRIVATE struct phys_hole *free_slots;/* ptr to list of unused table slots */
 
-PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp);
-PRIVATE void merge_hole(struct hole * hp);
+PRIVATE void delete_slot(struct phys_hole *prev_ptr, struct phys_hole *hp);
+PRIVATE void merge_hole(struct phys_hole * hp);
 
 PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
 {
-	struct hole *hp;
+	struct phys_hole *hp;
 
   	/* Put all holes on the free list. */
   	for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
 		hp->h_next = hp + 1;
-		hp->h_base = NULL;
+		hp->h_base = 0;
         hp->h_len = 0;
   	}
   	hole[NR_HOLES-1].h_next = NULL;
@@ -71,8 +72,8 @@ PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
  *****************************************************************************/
 PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
 {
- 	struct hole *hp, *prev_ptr;
-	void* old_base;
+ 	struct phys_hole *hp, *prev_ptr;
+	phys_bytes old_base;
 
     prev_ptr = NULL;
 	hp = hole_head;
@@ -98,7 +99,7 @@ PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
 		hp = hp->h_next;
 	}
 	printl("MM: alloc_mem() failed.(Out of memory)\n");
-  	return NULL;
+  	return 0;
 }
 
 /**
@@ -109,8 +110,8 @@ PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
 PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
 {
 	size_t memsize = nr_pages * PG_SIZE;
- 	struct hole *hp, *prev_ptr;
-	void* old_base;
+ 	struct phys_hole *hp, *prev_ptr;
+	phys_bytes old_base;
 	phys_bytes page_align = PAGE_ALIGN;
 
 	if (memflags & APF_ALIGN16K) {
@@ -121,8 +122,8 @@ PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
 	hp = hole_head;
 	while (hp != NULL) {
 		size_t alignment = 0;
-		if ((uintptr_t) hp->h_base % page_align != 0)
-			alignment = page_align - ((uintptr_t) hp->h_base % page_align);
+		if (hp->h_base % page_align != 0)
+			alignment = page_align - (hp->h_base % page_align);
 		if (hp->h_len >= memsize + alignment) {
 			/* We found a hole that is big enough.  Use it. */
 			old_base = hp->h_base + alignment;
@@ -144,7 +145,7 @@ PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
 		hp = hp->h_next;
 	}
 	printl("MM: alloc_pages() failed.(Out of memory)\n");
-  	return(-ENOMEM);
+  	return 0;
 }
 
 /*****************************************************************************
@@ -160,7 +161,7 @@ PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
  *****************************************************************************/
 PUBLIC int free_mem(phys_bytes base, phys_bytes len)
 {
-	struct hole *hp, *new_ptr, *prev_ptr;
+	struct phys_hole *hp, *new_ptr, *prev_ptr;
 
 	if (len == 0) return EINVAL;
   	if ((new_ptr = free_slots) == NULL)
@@ -202,7 +203,7 @@ PUBLIC int free_mem(phys_bytes base, phys_bytes len)
  * Remove an entry from the list.
  *
  *******************************************************************/
-PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
+PRIVATE void delete_slot(struct phys_hole *prev_ptr, struct phys_hole *hp)
 {
 	if (hp == hole_head)
 		hole_head = hp->h_next;
@@ -221,9 +222,9 @@ PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
  * Merge contiguous holes.
  *
  *******************************************************************/
-PRIVATE void merge_hole(struct hole * hp)
+PRIVATE void merge_hole(struct phys_hole * hp)
 {
-	struct hole *next_ptr;
+	struct phys_hole *next_ptr;
 
   	if ((next_ptr = hp->h_next) == NULL) return; /* last hole */
   	if (hp->h_base + hp->h_len == next_ptr->h_base) {

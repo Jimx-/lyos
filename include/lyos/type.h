@@ -71,12 +71,6 @@ typedef	int 	(*irq_handler_t)	(irq_hook_t * irq_hook);
 
 typedef u16 port_t;
 
-struct hole {
-	struct hole * h_next;
-	void* h_base;
-	unsigned int h_len;
-};
-
 struct vir_addr {
 	void* addr;
 	endpoint_t proc_ep;

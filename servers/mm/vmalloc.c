@@ -41,6 +41,7 @@
 #include "region.h"
 #include "proto.h"
 #include "global.h"
+#include "types.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
