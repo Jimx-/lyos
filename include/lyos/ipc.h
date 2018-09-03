@@ -119,6 +119,17 @@ struct mess_mm_remap {
 };
 VERIFY_MESS_SIZE(mess_mm_remap);
 
+struct mess_pm_signal {
+    int signum;
+    void* act;
+    void* oldact;
+    void* sigret;
+    int retval;
+
+    u8 _pad[36];
+};
+VERIFY_MESS_SIZE(mess_pm_signal);
+
 struct mess_vfs_select {
     u32     nfds;
     void*   readfds;
@@ -199,6 +210,7 @@ typedef struct {
 		struct mess_mm_mmap m_mm_mmap;
 		struct mess_mm_mmap_reply m_mm_mmap_reply;
 		struct mess_mm_remap m_mm_remap;
+		struct mess_pm_signal m_pm_signal;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;

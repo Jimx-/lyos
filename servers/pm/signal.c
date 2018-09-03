@@ -40,11 +40,11 @@ PUBLIC int do_sigaction(MESSAGE * p)
     struct pmproc * pmp = pm_endpt_proc(p->source);
     struct sigaction new_sa;
     struct sigaction * save;
-    struct sigaction * old_action = p->OLDSA;
+    struct sigaction * old_action = p->u.m_pm_signal.oldact;
 
     if (pmp == NULL) return EINVAL;
 
-    int signum = p->SIGNR;
+    int signum = p->u.m_pm_signal.signum;
 
     if (signum == SIGKILL) return 0;
     if (signum < 1 || signum > NSIG) return -EINVAL;
@@ -55,8 +55,8 @@ PUBLIC int do_sigaction(MESSAGE * p)
         data_copy(p->source, old_action, SELF, save, sizeof(struct sigaction));
     }
 
-    if (!p->NEWSA) return 0;
-    data_copy(SELF, &new_sa, p->source, p->NEWSA, sizeof(struct sigaction));
+    if (!p->u.m_pm_signal.act) return 0;
+    data_copy(SELF, &new_sa, p->source, p->u.m_pm_signal.act, sizeof(struct sigaction));
 
     if (new_sa.sa_handler == SIG_IGN) {
         sigaddset(&pmp->sig_ignore, signum);
@@ -75,7 +75,7 @@ PUBLIC int do_sigaction(MESSAGE * p)
     sigdelset(&new_sa.sa_mask, SIGSTOP);
     pmp->sigaction[signum].sa_mask = new_sa.sa_mask;
     pmp->sigaction[signum].sa_flags = new_sa.sa_flags;
-    pmp->sigreturn_f = p->SIGRET;
+    pmp->sigreturn_f = p->u.m_pm_signal.sigret;
 
     return 0;
 }

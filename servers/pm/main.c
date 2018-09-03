@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -59,7 +59,7 @@ PUBLIC int main(int argc, char * argv[])
             msg.RETVAL = do_exit(&msg);
             break;
         case SIGACTION:
-            msg.RETVAL = do_sigaction(&msg);
+            msg.u.m_pm_signal.retval = do_sigaction(&msg);
             break;
         case SIGSUSPEND:
             msg.RETVAL = do_sigsuspend(&msg);
@@ -79,7 +79,7 @@ PUBLIC int main(int argc, char * argv[])
         case PM_SIGRETURN:
             msg.RETVAL = do_sigreturn(&msg);
             break;
-        case PM_GETPROCEP: 
+        case PM_GETPROCEP:
             msg.RETVAL = do_getprocep(&msg);
             break;
         case PM_GETINFO:
@@ -124,7 +124,7 @@ PRIVATE void pm_init()
     static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
                 SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
     static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
-    static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
+    static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE,
                 SIGBUS, SIGSEGV };
     char * sig_ptr;
     sigemptyset(&core_set);
@@ -143,7 +143,7 @@ PRIVATE void pm_init()
     struct boot_proc * bp;
     for (bp = boot_procs; bp < &boot_procs[NR_BOOT_PROCS]; bp++) {
         if (bp->proc_nr < 0) continue;
-        
+
         procs_in_use++;
 
         pmp = &pmproc_table[bp->proc_nr];
@@ -199,7 +199,7 @@ PRIVATE void process_system_notify(MESSAGE * m)
             get_ksig(&target, &sigset);
 
             if (target == NO_TASK) break;
-        
+
             int signo;
             for (signo = 0; signo < NSIG; signo++) {
                 if (sigismember(&sigset, signo)) {

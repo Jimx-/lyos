@@ -355,16 +355,16 @@ int sigaction(int signum, const struct sigaction * act, struct sigaction * oldac
     MESSAGE msg;
 
     msg.type = SIGACTION;
-    msg.NEWSA = (struct sigaction*) act;
-    msg.OLDSA = oldact;
-    msg.SIGNR = signum;
-    msg.SIGRET = (int)__sigreturn;
+    msg.u.m_pm_signal.act = (void*) act;
+    msg.u.m_pm_signal.oldact = oldact;
+    msg.u.m_pm_signal.signum = signum;
+    msg.u.m_pm_signal.sigret = __sigreturn;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
 
-    return msg.RETVAL;
+    return msg.u.m_pm_signal.retval;
 }
 
 sighandler_t signal(int signum, sighandler_t handler)
