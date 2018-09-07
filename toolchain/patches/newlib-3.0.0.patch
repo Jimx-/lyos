@@ -4,10 +4,10 @@ diff -rupN old/config.sub new/config.sub
 @@ -2,7 +2,7 @@
  # Configuration validation subroutine script.
  #   Copyright 1992-2016 Free Software Foundation, Inc.
- 
+
 -timestamp='2016-05-10'
 +timestamp='2018-08-26'
- 
+
  # This file is free software; you can redistribute it and/or modify it
  # under the terms of the GNU General Public License as published by
 @@ -1398,6 +1398,7 @@ case $os in
@@ -29,7 +29,7 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
 +    have_sys_mach_dir=yes ;;
    *) ;; #shared library not supported for ${host}
  esac
- 
+
 @@ -409,6 +411,9 @@ case "${host}" in
  	sys_dir=a29khif
  	signal_dir=
@@ -48,7 +48,7 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
 +    sys_dir=lyos
 +    newlib_cflags="${newlib_cflags} -D_NO_GETPWENT -D_I386MACH_NEED_SOTYPE_FUNCTION"
 +	;;
-+  riscv32-*-lyos*)
++  riscv*-*-lyos*)
 +    sys_dir=lyos
 +   ;;
    i[34567]86-pc-linux-*)
@@ -56,7 +56,7 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
  	unix_dir=unix
 @@ -578,6 +587,9 @@ esac
  # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
- 
+
  case "${host}" in
 +  *-*-lyos)
 +	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES -DSIGNAL_PROVIDED"
@@ -114,20 +114,20 @@ diff -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/se
 --- old/newlib/libc/machine/i386/setjmp.S	2018-01-19 02:07:45.000000000 +0800
 +++ new/newlib/libc/machine/i386/setjmp.S	2018-08-27 11:12:06.796060310 +0800
 @@ -115,7 +115,6 @@ SYM (longjmp):
- 
+
  	movl	24(edi),ebp
- 
+
 -       __CLI
  	movl	28(edi),esp
- 	
- 	pushl	32(edi)	
+
+ 	pushl	32(edi)
 @@ -126,7 +125,6 @@ SYM (longjmp):
  	movl	12(edi),edx
  	movl	16(edi),esi
  	movl	20(edi),edi
 -       __STI
  #endif
- 
+
  	ret
 diff -rupN old/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
 --- old/newlib/libc/sys/configure.in	2018-01-19 02:07:45.000000000 +0800

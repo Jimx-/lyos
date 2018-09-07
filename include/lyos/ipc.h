@@ -31,7 +31,7 @@ struct mess1 {  /* 16 bytes */
     int m1i4;
 
 	u8	_pad[40];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess1);
 
 struct mess2 {  /* 16 bytes */
@@ -41,7 +41,7 @@ struct mess2 {  /* 16 bytes */
     void* m2p4;
 
 	u8 _pad[56 - 4*sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess2);
 
 struct mess3 {  /* 40 bytes */
@@ -55,7 +55,7 @@ struct mess3 {  /* 40 bytes */
     void*   m3p2;
 
     u8 _pad[24 - 2*sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess3);
 
 struct mess4 {  /* 36 bytes */
@@ -64,7 +64,7 @@ struct mess4 {  /* 36 bytes */
     void *m4p1, *m4p2, *m4p3, *m4p4;
 
     u8 _pad[36 - 4*sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess4);
 
 struct mess5 {  /* 40 bytes */
@@ -80,7 +80,7 @@ struct mess5 {  /* 40 bytes */
     int m5i10;
 
     u8 _pad[16];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess5);
 
 struct mess_mm_mmap {
@@ -92,7 +92,7 @@ struct mess_mm_mmap {
         struct {
             u64 dev;
             u32 ino;
-        } devino;
+        } __attribute__((packed)) devino;
         int fd;
     };
 
@@ -102,7 +102,7 @@ struct mess_mm_mmap {
     size_t clearend;
 
     u8 _pad[32 - 3*sizeof(size_t) - sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap);
 
 struct mess_mm_mmap_reply {
@@ -110,7 +110,7 @@ struct mess_mm_mmap_reply {
     void* retaddr;
 
     u8 _pad[52 - sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap_reply);
 
 struct mess_mm_remap {
@@ -122,7 +122,7 @@ struct mess_mm_remap {
 	void*		ret_addr;
 
 	u8 			_pad[48 - 3*sizeof(void*) - sizeof(size_t)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_remap);
 
 struct mess_pm_signal {
@@ -133,7 +133,7 @@ struct mess_pm_signal {
     int retval;
 
     u8 _pad[48 - 3*sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_signal);
 
 struct mess_vfs_select {
@@ -144,7 +144,7 @@ struct mess_vfs_select {
     void*   timeout;
 
     u8      _pad[52 - 4*sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_select);
 
 struct mess_vfs_cdev_openclose {
@@ -152,7 +152,7 @@ struct mess_vfs_cdev_openclose {
     u32     id;
 
     u8      _pad[44];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
 
 struct mess_vfs_cdev_readwrite {
@@ -165,7 +165,7 @@ struct mess_vfs_cdev_readwrite {
     size_t      count;
 
     u8          _pad[36 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 
 struct mess_vfs_cdev_mmap {
@@ -176,7 +176,7 @@ struct mess_vfs_cdev_mmap {
     size_t      count;
 
     u8          _pad[44 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap);
 
 struct mess_vfs_cdev_select {
@@ -184,7 +184,7 @@ struct mess_vfs_cdev_select {
     u32     ops;
 
     u8      _pad[44];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 
 struct mess_vfs_cdev_reply {
@@ -192,7 +192,7 @@ struct mess_vfs_cdev_reply {
     u32     id;
 
     u8      _pad[48];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
 
 struct mess_vfs_cdev_mmap_reply {
@@ -201,7 +201,7 @@ struct mess_vfs_cdev_mmap_reply {
     void*       retaddr;
 
     u8          _pad[48 - sizeof(void*)];
-};
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap_reply);
 
 typedef struct {

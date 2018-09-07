@@ -28,10 +28,10 @@
 
 PUBLIC int fsdriver_copyin(struct fsdriver_data * data, size_t offset, void * buf, size_t len)
 {
-    return data_copy(SELF, buf, data->src, (void *)((unsigned int)data->buf + offset), len);
+    return data_copy(SELF, buf, data->src, (void *)(data->buf + offset), len);
 }
 
 PUBLIC int fsdriver_copyout(struct fsdriver_data * data, size_t offset, void * buf, size_t len)
 {
-    return data_copy(data->src, (void *)((unsigned int)data->buf + offset), SELF, buf, len);
+    return data_copy(data->src, (void *)(data->buf + offset), SELF, buf, len);
 }
