@@ -31,7 +31,7 @@
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <lyos/vm.h>
-#include <pci.h>
+#include <asm/pci.h>
 #include <sys/mman.h>
 
 #include "libblockdriver/libblockdriver.h"

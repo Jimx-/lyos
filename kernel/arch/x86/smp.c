@@ -19,7 +19,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
@@ -27,9 +27,9 @@
 #include "lyos/proto.h"
 #include "acpi.h"
 #include "apic.h"
-#include "arch_const.h"
-#include "arch_proto.h"
-#include "arch_smp.h"
+#include <asm/const.h>
+#include <asm/proto.h>
+#include <asm/smp.h>
 #include <lyos/cpulocals.h>
 #include <lyos/smp.h>
 

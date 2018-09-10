@@ -19,16 +19,16 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "arch_const.h"
-#include "arch_proto.h"
+#include <asm/const.h>
+#include <asm/proto.h>
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
+#include <asm/smp.h>
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/param.h>
@@ -77,12 +77,19 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, void* la, size_t* len, int i
     /* the process is already in current page table */
     if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint))) return (phys_bytes) la;
 
+    phys_bytes pa;
     pde_t pdeval;
     u32 pde = temppdes[index];
+
     if (p) {
         if (!p->seg.cr3_vir) panic("create_temp_map: proc cr3_vir not set");
         pdeval = p->seg.cr3_vir[ARCH_PDE(la)];
     } else {    /* physical address */
+        pa = (phys_bytes) la;
+        if (pa >= lowmem_base && pa < LOWMEM_END) { /* low memory */
+            *len = min(*len, LOWMEM_END - pa);
+            return pa + KERNEL_VMA;
+        }
         pdeval = (((uintptr_t) la) & ARCH_VM_ADDR_MASK_BIG) |
             ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW;
     }
@@ -320,7 +327,8 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         return 0;
     }
     if (index == KM_LOWMEM_START) {
-        printk("kernel: low memory base: %x\n", vir_addr);
+        printk("kernel: low memory base: 0x%x\n", vir_addr);
+        lowmem_base = (phys_bytes) vir_addr;
         return 0;
     }
 #if CONFIG_X86_LOCAL_APIC

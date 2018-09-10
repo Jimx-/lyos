@@ -19,22 +19,22 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "arch_const.h"
-#include "arch_proto.h"
+#include <asm/const.h>
+#include <asm/proto.h>
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
+#include <asm/smp.h>
 #endif
 #include "lyos/cpulocals.h"
 #include "apic.h"
 #include "acpi.h"
-#include "tsc.h"
-#include "hpet.h"
+#include <asm/tsc.h>
+#include <asm/hpet.h>
 
 PRIVATE irq_hook_t timer_irq_hook;
 

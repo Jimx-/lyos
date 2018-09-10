@@ -28,7 +28,7 @@
 #include "lyos/proto.h"
 #include <errno.h>
 #include <lyos/portio.h>
-#include <arch_proto.h>
+#include <asm/proto.h>
     
 PRIVATE char vportio_buf[VPORTIO_BUF_SIZE];
 PRIVATE pb_pair_t * pbp = (pb_pair_t *)vportio_buf;

@@ -1,8 +1,8 @@
 #include <sched.h>
 #include <errno.h>
-#include <../../type.h>
-#include <../../ipc.h>
-#include <../../const.h>
+#include <lyos/type.h>
+#include <lyos/ipc.h>
+#include <lyos/const.h>
 
 #define STACK_CHILD	0
 

@@ -30,9 +30,9 @@
 #include <lyos/portio.h>
 #include <lyos/service.h>
 
-#include <pci.h>
+#include <asm/pci.h>
 #include "pci.h"
-#include <pci_intel.h>
+#include <asm/pci_intel.h>
 
 PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset) 
 {

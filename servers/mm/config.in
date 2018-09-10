@@ -1,0 +1,2 @@
+config PHYS_BYTES_64BIT
+       def_bool 64BIT

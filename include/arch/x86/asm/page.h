@@ -18,8 +18,8 @@
 
 #define LOWMEM_END      0x30000000
 #define KERNEL_VMA      0xc0000000
-#define VMALLOC_START   (KERNEL_VMA + LOWMEM_END)
-#define VMALLOC_END     0xf7c00000
+#define VMALLOC_START   0x1000
+#define VMALLOC_END     0x40000000 /* region where MM map physical memory into its address space */
 #define VM_STACK_TOP    KERNEL_VMA
 
 typedef unsigned int    pde_t;
@@ -56,7 +56,7 @@ typedef struct {
 #define PG_BIG_SIZE PT_MEMSIZE
 
 #define PG_PRESENT  0x001
-#define PG_RO       0x000 
+#define PG_RO       0x000
 #define PG_RW       0x002
 #define PG_USER     0x004
 #define PG_BIGPAGE  0x080

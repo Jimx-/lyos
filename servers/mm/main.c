@@ -32,7 +32,7 @@
 #include <sys/mman.h>
 #include "libexec/libexec.h"
 #include "multiboot.h"
-#include "page.h"
+#include <asm/page.h>
 #include <elf.h>
 #include "region.h"
 #include "proto.h"

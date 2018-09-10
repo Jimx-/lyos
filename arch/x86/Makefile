@@ -1,5 +1,5 @@
 ASM		= nasm
-DASM	= objdump
+DASM	       = objdump
 
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
 

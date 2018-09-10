@@ -25,7 +25,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/smp.h>
-#include "arch_proto.h"
+#include <asm/proto.h>
 
 PUBLIC int booted_aps = 0;
 

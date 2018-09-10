@@ -20,7 +20,7 @@
 #include "stdarg.h"
 #include "unistd.h"
 #include "assert.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "lyos/proc.h"
 #include "string.h"

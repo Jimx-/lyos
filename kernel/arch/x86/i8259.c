@@ -18,7 +18,7 @@
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"

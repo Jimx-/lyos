@@ -32,8 +32,8 @@
 #include <lyos/sysutils.h>
 #include "type.h"
 #include "proto.h"
-#include "arch_const.h"
-#include "arch_type.h"
+#include <asm/const.h>
+#include <asm/type.h>
 
 #ifdef __i386__
 PRIVATE const char * x86_flag[] = {

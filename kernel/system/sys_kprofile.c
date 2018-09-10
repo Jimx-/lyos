@@ -28,7 +28,7 @@
 #include <lyos/sysutils.h>
 #include <lyos/profile.h>
 
-#include "arch_proto.h"
+#include <asm/proto.h>
 
 #if CONFIG_PROFILING
 

@@ -25,7 +25,7 @@
 #include <lyos/config.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
-#include "arch_type.h"
+#include <asm/type.h>
 
 PUBLIC int getinfo(int request, void* buf)
 {

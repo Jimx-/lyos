@@ -32,7 +32,7 @@
 #include <lyos/sysutils.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
-#include <pci.h>
+#include <asm/pci.h>
 #include "proto.h"
 #include "global.h"
 

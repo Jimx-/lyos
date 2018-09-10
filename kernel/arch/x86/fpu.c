@@ -19,7 +19,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
@@ -27,10 +27,10 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/fs.h"
-#include "arch_const.h"
-#include "arch_proto.h"
+#include <asm/const.h>
+#include <asm/proto.h>
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
+#include <asm/smp.h>
 #endif
 #include "lyos/cpulocals.h"
 

@@ -29,7 +29,7 @@
 #include <lyos/sysutils.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
-#include <pci.h>
+#include <asm/pci.h>
 
 #include "arch_fb.h"
 

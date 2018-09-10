@@ -36,7 +36,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/vm.h>
-#include "page.h"
+#include <asm/page.h>
+
 #include "const.h"
 #include "region.h"
 #include "proto.h"

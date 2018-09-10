@@ -20,13 +20,13 @@
 #endif
 
 #ifdef __i386__
-#include "protect.h"
-#include "page.h"
+#include <asm/protect.h>
+#include <asm/page.h>
 #endif
 
 #ifdef __arm__
-#include "arch_type.h"
-#include "page.h"
+#include <asm/type.h>
+#include <asm/page.h>
 #endif
 
 #include <lyos/param.h>
@@ -41,11 +41,12 @@ EXTERN	struct descriptor	gdt[GDT_SIZE];
 EXTERN	u8			        idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	struct gate		    idt[IDT_SIZE];
 EXTERN  pde_t *             initial_pgd;
-EXTERN  void*          lapic_addr;
-EXTERN  void*           lapic_vaddr;
-EXTERN  void*           lapic_eoi_addr;
+EXTERN  void*               lapic_addr;
+EXTERN  void*               lapic_vaddr;
+EXTERN  void*               lapic_eoi_addr;
 EXTERN  u32                 bsp_cpu_id, bsp_lapic_id;
 EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
+EXTERN  phys_bytes          lowmem_base;
 #endif
 
 #ifdef __arm__

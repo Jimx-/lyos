@@ -30,7 +30,7 @@
 #include <sys/mman.h>
 #include <sys/shm.h>
 
-#include "page.h"
+#include <asm/page.h>
 
 #include "const.h"
 #include "proto.h"

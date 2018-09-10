@@ -34,7 +34,7 @@
 #include "lyos/proto.h"
 #include "proto.h"
 #include <sys/stat.h>
-#include "page.h"
+#include <asm/page.h>
 #include <elf.h>
 #include "libexec/libexec.h"
 #include <sys/mman.h>

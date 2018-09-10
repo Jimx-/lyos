@@ -1,0 +1,8 @@
+IndentWidth: 4
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+MaxEmptyLinesToKeep: 1
+
+AlignTrailingComments: true

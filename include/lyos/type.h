@@ -16,6 +16,8 @@
 #ifndef _TYPE_H_
 #define _TYPE_H_
 
+#include <lyos/config.h>
+
 /* routine types */
 #define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
 #define	PRIVATE	static	/* PRIVATE x limits the scope of x */

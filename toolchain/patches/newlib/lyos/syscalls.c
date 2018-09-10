@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 
-#include "type.h"
-#include "ipc.h"
+#include <lyos/type.h>
+#include <lyos/ipc.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -29,7 +29,7 @@
 #include <sys/shm.h>
 #include <grp.h>
 
-#include "const.h"
+#include <lyos/const.h>
 
 typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
 int syscall_gate_intr(int syscall_nr, MESSAGE * m);

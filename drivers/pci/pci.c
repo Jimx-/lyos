@@ -32,7 +32,7 @@
 #include <lyos/service.h>
 #include <libsysfs/libsysfs.h>
 
-#include <pci.h>
+#include <asm/pci.h>
 #include "pci.h"
 #include "pci_dev_attr.h"
 

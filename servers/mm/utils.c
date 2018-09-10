@@ -27,7 +27,8 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "page.h"
+#include <asm/page.h>
+
 #include "region.h"
 #include "proto.h"
 #include "global.h"

@@ -20,17 +20,17 @@
 #include <stdlib.h>
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "multiboot.h"
-#include "page.h"
+#include <asm/page.h>
 #include "acpi.h"
-#include "arch_const.h"
-#include "arch_proto.h"
+#include <asm/const.h>
+#include <asm/proto.h>
 #include <lyos/log.h>
 #include <lyos/spinlock.h>
 

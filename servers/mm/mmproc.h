@@ -16,8 +16,8 @@
 #ifndef _MM_MMPROC_H_
 #define _MM_MMPROC_H_
 
-#include <atomic.h>
-#include <page.h>
+#include <asm/atomic.h>
+#include <asm/page.h>
 #include <lyos/avl.h>
     
 #include "futex.h"

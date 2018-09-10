@@ -27,7 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <errno.h>
-#include "arch_type.h"
+#include <asm/type.h>
 
 extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 

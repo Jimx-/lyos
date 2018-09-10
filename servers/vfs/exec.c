@@ -34,7 +34,7 @@
 #include "proto.h"
 #include <sys/stat.h>
 #include <sys/syslimits.h>
-#include "page.h"
+#include <asm/page.h>
 #include <lyos/vm.h>
 #include <elf.h>
 #include <lyos/sysutils.h>

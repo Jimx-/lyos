@@ -32,7 +32,7 @@
 #include <lyos/service.h>
 #include <libsysfs/libsysfs.h>
 
-#include <pci.h>
+#include <asm/pci.h>
 #include "pci.h"
 
 PUBLIC ssize_t pci_vendor_show(struct device_attribute* attr, char* buf)

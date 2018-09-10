@@ -71,14 +71,15 @@ HOSTLD	= ld
 AS 		= $(SUBARCH)-elf-lyos-as
 AR 		= $(SUBARCH)-elf-lyos-ar
 CC		= $(SUBARCH)-elf-lyos-gcc
+CPP	= $(SUBARCH)-elf-lyos-g++
 LD		= $(SUBARCH)-elf-lyos-ld
 OBJCOPY = $(SUBARCH)-elf-lyos-objcopy
 INSTALL = install
-CFLAGS		= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -fno-builtin -fno-stack-protector -fpack-struct -Wall
+CFLAGS	= -I $(INCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -fno-builtin -fno-stack-protector -fpack-struct -Wall
 ASFLAGS = -I $(INCDIR)/ -I $(ARCHINCDIR)/
 SERVERCFLAGS	= -I $(INCDIR)/ -I $(SERVERSINCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory -I $(SRCDIR)/utils/mk/
-ARFLAGS		= rcs
+ARFLAGS	= rcs
 MAKE 		= make
 
 ifeq ($(CONFIG_DEBUG_INFO),y)
@@ -86,7 +87,7 @@ ifeq ($(CONFIG_DEBUG_INFO),y)
 	SERVERCFLAGS += -g
 endif
 
-export AS ASM CC LD OBJCOPY INSTALL CFLAGS ASFLAGS ARFLAGS HOSTCC HOSTLD SERVERCFLAGS
+export AS ASM CC CPP LD OBJCOPY INSTALL CFLAGS ASFLAGS ARFLAGS HOSTCC HOSTLD SERVERCFLAGS
 
 LYOSKERNEL = $(ARCHDIR)/lyos.elf
 ifeq ($(CONFIG_COMPRESS_GZIP),y)

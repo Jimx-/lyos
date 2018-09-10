@@ -16,7 +16,7 @@
 #ifndef	_INTERRUPT_H_
 #define	_INTERRUPT_H_
 
-#include "hwint.h"
+#include <asm/hwint.h>
 
 /* irqctl message fields */
 #define IRQ_IRQ         u.m3.m3i1

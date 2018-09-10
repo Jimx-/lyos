@@ -28,7 +28,7 @@
 #include "lyos/proto.h"
 #include <elf.h>
 #include "libexec.h"
-#include "page.h"
+#include <asm/page.h>
 #include "lyos/vm.h"
 #include <sys/mman.h>
 

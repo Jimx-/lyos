@@ -26,7 +26,7 @@
 #include "lyos/fs.h"
 #include "lyos/proc.h"
 #include "errno.h"
-#include <page.h>
+#include <asm/page.h>
 #include "types.h"
 #include "path.h"
 #include "proto.h"

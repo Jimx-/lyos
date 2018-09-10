@@ -25,10 +25,10 @@
 #include <lyos/global.h>
 #include <lyos/proto.h>
 #include <lyos/interrupt.h>
-#include "arch_const.h"
-#include "arch_proto.h"
+#include <asm/const.h>
+#include <asm/proto.h>
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
+#include <asm/smp.h>
 #endif
 #include <lyos/cpulocals.h>
 

@@ -19,18 +19,18 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "stddef.h"
-#include "protect.h"
+#include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "page.h"
+#include <asm/page.h>
 #include <errno.h>
-#include "arch_proto.h"
-#include "arch_const.h"
+#include <asm/proto.h>
+#include <asm/const.h>
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
+#include <asm/smp.h>
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/cpufeature.h>

@@ -28,7 +28,7 @@
 #include "lyos/proto.h"
 #include <errno.h>
 #include <lyos/portio.h>
-#include <arch_proto.h>
+#include <asm/proto.h>
 
 PUBLIC int sys_portio(MESSAGE * m, struct proc * p_proc)
 {

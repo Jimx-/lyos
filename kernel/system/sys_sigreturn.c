@@ -26,7 +26,7 @@
 #include "lyos/proto.h"
 #include <signal.h>
 #include "errno.h"
-#include "stackframe.h"
+#include <asm/stackframe.h>
 
 PUBLIC int sys_sigreturn(MESSAGE * m, struct proc* p)
 {

@@ -31,10 +31,10 @@
 #include "lyos/compile.h"
 #include "errno.h"
 #include "multiboot.h"
-#include "arch_const.h"
-#include "arch_proto.h"
+#include <asm/const.h>
+#include <asm/proto.h>
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
+#include <asm/smp.h>
 #include <lyos/smp.h>
 #endif
 #include "lyos/cpulocals.h"

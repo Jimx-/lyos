@@ -18,8 +18,8 @@
 
 #include <signal.h>
 #include <lyos/list.h>
-#include "stackframe.h"
-#include "page.h"
+#include <asm/stackframe.h>
+#include <asm/page.h>
 #include <lyos/spinlock.h>
 #include <lyos/endpoint.h>
 

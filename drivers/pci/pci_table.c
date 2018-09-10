@@ -29,7 +29,7 @@
 #include "lyos/proto.h"
 #include <lyos/service.h>
 
-#include <pci.h>
+#include <asm/pci.h>
 #include "pci.h"
 
 /* device table from Minix */

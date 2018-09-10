@@ -27,7 +27,7 @@
 #include "lyos/proto.h"
 #include <lyos/fs.h>
 #include <lyos/vm.h>
-#include <atomic.h>
+#include <asm/atomic.h>
 #include "signal.h"
 #include "errno.h"
 #include "region.h"

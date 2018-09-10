@@ -42,26 +42,26 @@ PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
  * also
  */
 PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
-	{CLOCK,			"clock"		},
-	{SYSTEM, 		"system" 	},
-	{KERNEL,		"kernel"	},
-	{INTERRUPT,		"interrupt"	},
-	{TASK_MM, 		"MM"		},
-	{TASK_PM,		"PM"		},
-	{TASK_SERVMAN, 	"SERVMAN"	},
-	{TASK_DEVMAN,	"DEVMAN"	},
-	{TASK_SCHED, 	"SCHED"		},
-	{TASK_FS, 		"VFS"		},
-	{TASK_SYS, 		"SYS"		},
-	{TASK_TTY,		"TTY"		},
-	{TASK_RD, 		"RD"		},
-	{TASK_INITFS, 	"INITFS"	},
-	{TASK_SYSFS,	"SYSFS"		},
-	{TASK_IPC, 		"IPC"		},
+    {CLOCK, "clock"},
+    {SYSTEM, "system"},
+    {KERNEL, "kernel"},
+    {INTERRUPT, "interrupt"},
+    {TASK_MM, "MM"},
+    {TASK_PM, "PM"},
+    {TASK_SERVMAN, "SERVMAN"},
+    {TASK_DEVMAN, "DEVMAN"},
+    {TASK_SCHED, "SCHED"},
+    {TASK_FS, "VFS"},
+    {TASK_SYS, "SYS"},
+    {TASK_TTY, "TTY"},
+    {TASK_RD, "RD"},
+    {TASK_INITFS, "INITFS"},
+    {TASK_SYSFS, "SYSFS"},
+    {TASK_IPC, "IPC"},
 #ifdef __i386__
-	{TASK_PCI,		"PCI"		},
+    {TASK_PCI, "PCI"},
 #endif
-	{INIT,			"INIT"		},
+    {INIT, "INIT"},
 };
 
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];

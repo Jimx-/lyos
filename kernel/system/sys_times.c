@@ -25,7 +25,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <errno.h>
-#include "arch_proto.h"
+#include <asm/proto.h>
 #include <lyos/sysutils.h>
 #include <lyos/time.h>
 
