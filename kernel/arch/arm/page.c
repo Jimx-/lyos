@@ -138,8 +138,8 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
 {
     pte_t * pt;
     pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + (phys_bytes) &_KERN_OFFSET); 
-    if (phys_addr % PG_SIZE) phys_addr = (phys_addr / PG_SIZE) * PG_SIZE;
-    if (vir_addr % PG_SIZE) vir_addr = (vir_addr / PG_SIZE) * PG_SIZE;
+    if (phys_addr % ARCH_PG_SIZE) phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
+    if (vir_addr % ARCH_PG_SIZE) vir_addr = (vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
 
     while (vir_addr < vir_end) {
         phys_bytes phys = phys_addr;
@@ -155,10 +155,10 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
                     | ARM_VM_PAGEDIR
                     | ARM_VM_PDE_DOMAIN;
         } else {
-            pt = (pte_t *)(((phys_bytes)pgd[pde] & ARCH_VM_ADDR_MASK) + (phys_bytes) &_KERN_OFFSET);
+            pt = (pte_t *)(((phys_bytes)pgd[pde] & ARCH_PG_MASK) + (phys_bytes) &_KERN_OFFSET);
         }
 
-        pt[pte] = (phys & ARM_VM_ADDR_MASK)
+        pt[pte] = (phys & ARM_PG_MASK)
             | ARM_PG_PRESENT
             | ARM_PG_CACHED
             | ARM_PG_USER;

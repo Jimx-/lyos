@@ -83,24 +83,24 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, void* la, size_t* len, int i
 
     if (p) {
         if (!p->seg.cr3_vir) panic("create_temp_map: proc cr3_vir not set");
-        pdeval = p->seg.cr3_vir[ARCH_PDE(la)];
+        pdeval = __pde(p->seg.cr3_vir[ARCH_PDE(la)]);
     } else {    /* physical address */
         pa = (phys_bytes) la;
         if (pa >= lowmem_base && pa < LOWMEM_END) { /* low memory */
             *len = min(*len, LOWMEM_END - pa);
             return pa + KERNEL_VMA;
         }
-        pdeval = (((uintptr_t) la) & ARCH_VM_ADDR_MASK_BIG) |
-            ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW;
+        pdeval = __pde((((uintptr_t) la) & I386_VM_ADDR_MASK_4MB) |
+            ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW);
     }
 
     if (!get_cpulocal_var(pt_proc)->seg.cr3_vir) panic("create_temp_map: pt_proc cr3_vir not set");
-    if (get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] != pdeval) {
-        get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] = pdeval;
+    if (get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] != pde_val(pdeval)) {
+        get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] = pde_val(pdeval);
         *changed = 1;
     }
 
-    off_t offset = ((uintptr_t) la) & ARCH_VM_OFFSET_MASK_BIG;
+    off_t offset = ((uintptr_t) la) & I386_VM_OFFSET_MASK_4MB;
     *len = min(*len, ARCH_BIG_PAGE_SIZE - offset);
 
     return pde * ARCH_BIG_PAGE_SIZE + offset;
@@ -192,17 +192,17 @@ PUBLIC void * la2pa(endpoint_t ep, void * la)
 
     pde_t * pgd_phys = (pde_t *)(p->seg.cr3_phys);
 
-    pde_t pde_v = (pde_t)get_phys32((phys_bytes)(pgd_phys + pgd_index));
+    pde_t pde_v = __pde(get_phys32((phys_bytes)(pgd_phys + pgd_index)));
 
-    if (pde_v & ARCH_PG_BIGPAGE) {
-        phys_addr = pde_v & ARCH_VM_ADDR_MASK_BIG;
-        phys_addr += (phys_bytes)la & ARCH_VM_OFFSET_MASK_BIG;
+    if (pde_val(pde_v) & ARCH_PG_BIGPAGE) {
+        phys_addr = pde_val(pde_v) & I386_VM_ADDR_MASK_4MB;
+        phys_addr += (phys_bytes)la & I386_VM_OFFSET_MASK_4MB;
         return (void *)phys_addr;
     }
 
-    pte_t * pt_entries = (pte_t *)(pde_v & ARCH_VM_ADDR_MASK);
-    pte_t pte_v = (pte_t)get_phys32((phys_bytes)(pt_entries + pt_index));
-    return (void*)((pte_v & ARCH_VM_ADDR_MASK) + ((int)la & ARCH_VM_OFFSET_MASK));
+    pte_t * pt_entries = (pte_t *)(pde_val(pde_v) & ARCH_PG_MASK);
+    pte_t pte_v = __pte(get_phys32((phys_bytes)(pt_entries + pt_index)));
+    return (void*)((pte_val(pte_v) & ARCH_PG_MASK) + ((uintptr_t)la % ARCH_PG_SIZE));
 }
 
 /*****************************************************************************

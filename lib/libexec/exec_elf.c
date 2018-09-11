@@ -113,7 +113,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 
         if (phdr->p_vaddr < load_base) load_base = phdr->p_vaddr;
 
-        if((phdr->p_vaddr % PG_SIZE) != (phdr->p_offset % PG_SIZE)) {
+        if((phdr->p_vaddr % ARCH_PG_SIZE) != (phdr->p_offset % ARCH_PG_SIZE)) {
             printl("libexec: unaligned ELF program?\n");
         }
 
@@ -123,9 +123,9 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         memsize = phdr->p_memsz;
 
         /* clear memory beyond file size */
-        size_t rem = (vaddr + fsize) % PG_SIZE;
+        size_t rem = (vaddr + fsize) % ARCH_PG_SIZE;
         if (rem && (fsize < memsize)) {
-            clearend = PG_SIZE - rem;
+            clearend = ARCH_PG_SIZE - rem;
         }
 
 #ifdef ELF_DEBUG
@@ -133,14 +133,14 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 #endif
 
         /* align */
-        size_t alignment = vaddr % PG_SIZE;
+        size_t alignment = vaddr % ARCH_PG_SIZE;
         foffset -= alignment;
         vaddr -= alignment;
         fsize += alignment;
         memsize += alignment;
 
-        memsize = roundup(memsize, PG_SIZE);
-        fsize = roundup(fsize, PG_SIZE);
+        memsize = roundup(memsize, ARCH_PG_SIZE);
+        fsize = roundup(fsize, ARCH_PG_SIZE);
         if ((phdr->p_flags & PF_X) != 0)
             execi->text_size = memsize;
         else {

@@ -87,7 +87,7 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 	/* avoid recursive allocation */
 	static int level = 0;
 	int pages = memsize / ARCH_PG_SIZE;
-	if (memsize % PG_SIZE != 0)
+	if (memsize % ARCH_PG_SIZE != 0)
 		pages++;
 
 	level++;
@@ -102,7 +102,7 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 #ifdef __arm__
 		/* allocate page directory at 16k alignment */
 		if (reason == PGT_PAGEDIR) {
-			while ((bootstrap_pages[i].phys_addr % ARCH_PGD_SIZE != 0) && i + pages < STATIC_BOOTSTRAP_PAGES) {
+			while ((bootstrap_pages[i].phys_addr % (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) != 0) && i + pages < STATIC_BOOTSTRAP_PAGES) {
 				bootstrap_pages[i].used = 1;
 				i++;
 			}
@@ -152,7 +152,7 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
  */
 PUBLIC void* alloc_vmpages(int nr_pages)
 {
-	size_t memsize = nr_pages * PG_SIZE;
+	size_t memsize = nr_pages * ARCH_PG_SIZE;
  	struct hole *hp, *prev_ptr;
 	void* old_base;
 
@@ -161,8 +161,8 @@ PUBLIC void* alloc_vmpages(int nr_pages)
 
 	while (hp != NULL) {
 		size_t alignment = 0;
-		if ((uintptr_t) hp->h_base % PAGE_ALIGN != 0)
-			alignment = PAGE_ALIGN - ((uintptr_t) hp->h_base % PAGE_ALIGN);
+		if ((uintptr_t) hp->h_base % ARCH_PG_SIZE != 0)
+			alignment = ARCH_PG_SIZE - ((uintptr_t) hp->h_base % ARCH_PG_SIZE);
 		if (hp->h_len >= memsize + alignment) {
 			/* We found a hole that is big enough.  Use it. */
 			old_base = hp->h_base + alignment;

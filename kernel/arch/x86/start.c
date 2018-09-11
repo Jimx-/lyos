@@ -79,12 +79,12 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	phys_bytes mod_ends = (phys_bytes)last_mod->mod_end;
 
 	/* setup kernel page table */
-	initial_pgd = (pde_t *)((int)&pgd0 - KERNEL_VMA);
-	phys_bytes procs_base = mod_ends & ARCH_VM_ADDR_MASK;
-    int kernel_pts = procs_base / PT_MEMSIZE;
-    if (procs_base % PT_MEMSIZE != 0) {
+	initial_pgd = (pde_t *)((uintptr_t)&pgd0 - KERNEL_VMA);
+	phys_bytes procs_base = mod_ends & ARCH_PG_MASK;
+    int kernel_pts = procs_base >> ARCH_PGD_SHIFT;
+    if (procs_base % ARCH_PGD_SIZE != 0) {
     	kernel_pts++;
-    	procs_base = kernel_pts * PT_MEMSIZE;
+    	procs_base = kernel_pts << ARCH_PGD_SHIFT;
     }
     kinfo.kernel_start_pde = ARCH_PDE(KERNEL_VMA);
 	kinfo.kernel_end_pde = ARCH_PDE(KERNEL_VMA) + kernel_pts;
@@ -92,7 +92,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	kinfo.kernel_end_phys = procs_base; 
 
 	pg_identity(initial_pgd);
-	kinfo.kernel_end_pde = pg_mapkernel(initial_pgd);
+	kinfo.kernel_end_pde = pde_val(pg_mapkernel(initial_pgd));
 	pg_load(initial_pgd);
 	
 	/* initial_pgd --> physical initial pgd */
@@ -177,7 +177,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	kinfo.kernel_data_end = (void*)*(&_edata);
 	kinfo.kernel_bss_end = (void*)*(&_ebss);
 
-	cut_memmap(&kinfo, 0, PG_SIZE);
+	cut_memmap(&kinfo, 0, ARCH_PG_SIZE);
 	cut_memmap(&kinfo, 0x100000, kinfo.kernel_end_phys);
 
 	char * hz_value = env_get("hz");

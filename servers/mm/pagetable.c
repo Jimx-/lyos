@@ -100,9 +100,9 @@ PUBLIC void pt_init()
 
         pdm->phys_addr = phys_addr;
 #if defined(__i386__)
-        pdm->val = (phys_addr & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW;
+        pdm->val = __pde((phys_addr & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW);
 #elif defined(__arm__)
-        pdm->val = (phys_addr & ARCH_VM_ADDR_MASK) | ARM_VM_PDE_PRESENT | ARM_PG_CACHED | ARM_VM_PDE_DOMAIN;
+        pdm->val = __pde((phys_addr & ARCH_PG_MASK) | ARM_VM_PDE_PRESENT | ARM_PG_CACHED | ARM_VM_PDE_DOMAIN);
 #endif
     }
 
@@ -117,14 +117,14 @@ PUBLIC void pt_init()
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
     if (vmctl_getpdbr(SELF, &mypdbr)) panic("MM: failed to get page directory base register");
     /* kernel has done identity mapping for the bootstrap page dir we are using, so this is ok */
-    data_copy(SELF, &currentpagedir, NO_TASK, (void *)mypdbr, ARCH_PGD_SIZE);
+    data_copy(SELF, &currentpagedir, NO_TASK, (void *)mypdbr, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
 
     for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         pde_t entry = currentpagedir[i];
 
-        if (entry & ARCH_PG_BIGPAGE) continue;
+        if (pde_val(entry) & ARCH_PG_BIGPAGE) continue;
         mypgd->vir_addr[i] = entry;
-        mypgd->vir_pts[i] = (pte_t *)((entry + KERNEL_VMA) & ARCH_VM_ADDR_MASK);
+        mypgd->vir_pts[i] = (pte_t *)((pde_val(entry) + KERNEL_VMA) & ARCH_PG_MASK);
     }
 
     /* using the new page dir */
@@ -162,13 +162,13 @@ PUBLIC void mm_free(struct mm_struct* mm)
 PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 {
     phys_bytes pt_phys;
-    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, ARCH_PT_SIZE, PGT_PAGETABLE);
+    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, sizeof(pte_t) * ARCH_VM_PT_ENTRIES, PGT_PAGETABLE);
     if (pt == NULL) {
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
     }
     if (pgd->vir_pts[pde]) {
-        free_vmem(pt, ARCH_PT_SIZE);
+        free_vmem(pt, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
         return 0;
     }
 
@@ -178,13 +178,13 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
 
     int i;
     for (i = 0; i < ARCH_VM_PT_ENTRIES; i++) {
-        pt[i] = 0;
+        pt[i] = __pte(0);
     }
 
 #ifdef __i386__
-    pgd->vir_addr[pde] = pt_phys | flags;
+    pgd->vir_addr[pde] = __pde(pt_phys | flags);
 #elif defined(__arm__)
-    pgd->vir_addr[pde] = (pt_phys & ARM_VM_PDE_MASK) | ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN;
+    pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) | ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
 #endif
     pgd->vir_pts[pde] = pt;
 
@@ -212,7 +212,7 @@ PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsig
         pt = pgd->vir_pts[pgd_index];
     }
 
-    pt[pt_index] = (phys_addr & 0xFFFFF000) | flags;
+    pt[pt_index] = __pte((phys_addr & 0xFFFFF000) | flags);
 
     return 0;
 }
@@ -228,7 +228,9 @@ PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
     unsigned long pt_index = ARCH_PTE(vir_addr);
 
     pte_t * pt = pgd->vir_pts[pgd_index];
-    if (pt) pt[pt_index] &= ~ARCH_PG_RW;
+    if (pt) {
+        pt[pt_index] = __pte(pte_val(pt[pt_index]) & (~ARCH_PG_RW));
+    }
 
     return 0;
 }
@@ -244,7 +246,9 @@ PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
     unsigned long pt_index = ARCH_PTE(vir_addr);
 
     pte_t * pt = pgd->vir_pts[pgd_index];
-    if (pt) pt[pt_index] |= ARCH_PG_RW;
+    if (pt) {
+        pt[pt_index] = __pte(pte_val(pt[pt_index]) | ARCH_PG_RW);
+    }
 
     return 0;
 }
@@ -357,7 +361,7 @@ PUBLIC int pgd_new(pgdir_t * pgd)
 {
     phys_bytes pgd_phys;
     /* map the directory so that we can write it */
-    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, ARCH_PGD_SIZE, PGT_PAGEDIR);
+    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES, PGT_PAGEDIR);
 
     pgd->phys_addr = (void *)pgd_phys;
     pgd->vir_addr = pg_dir;
@@ -366,7 +370,7 @@ PUBLIC int pgd_new(pgdir_t * pgd)
 
     /* zero it */
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        pg_dir[i] = 0;
+        pg_dir[i] = __pde(0);
     }
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
@@ -391,13 +395,13 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 
     while (mapped < kern_size) {
 #if defined(__i386__)
-        pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit;
+        pgd->vir_addr[kernel_pde] = __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit);
 #elif defined(__arm__)
-        pgd->vir_addr[kernel_pde] = (addr & ARM_VM_SECTION_MASK)
+        pgd->vir_addr[kernel_pde] = __pde((addr & ARM_VM_SECTION_MASK)
             | ARM_VM_SECTION
             | ARM_VM_SECTION_DOMAIN
             | ARM_VM_SECTION_CACHED
-            | ARM_VM_SECTION_SUPER;
+            | ARM_VM_SECTION_SUPER);
 #endif
 
         addr += ARCH_BIG_PAGE_SIZE;
@@ -416,13 +420,13 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     addr = kernel_pde * ARCH_BIG_PAGE_SIZE;
     while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
 #if defined(__i386__)
-        pgd->vir_addr[kernel_pde] = addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW;
+        pgd->vir_addr[kernel_pde] = __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
 #elif defined(__arm__)
-        pgd->vir_addr[kernel_pde] = (addr & ARM_VM_SECTION_MASK)
+        pgd->vir_addr[kernel_pde] = __pde((addr & ARM_VM_SECTION_MASK)
             | ARM_VM_SECTION
             | ARM_VM_SECTION_DOMAIN
             | ARM_VM_SECTION_CACHED
-            | ARM_VM_SECTION_SUPER;
+            | ARM_VM_SECTION_SUPER);
 #endif
 
         addr += ARCH_BIG_PAGE_SIZE;
@@ -440,7 +444,7 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 PUBLIC int pgd_free(pgdir_t * pgd)
 {
     pgd_clear(pgd);
-    free_vmem(pgd->vir_addr, ARCH_PGD_SIZE);
+    free_vmem(pgd->vir_addr, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
 
     return 0;
 }
@@ -451,7 +455,7 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         if (pgd->vir_pts[i]) {
-            free_vmem(pgd->vir_pts[i], ARCH_PT_SIZE);
+            free_vmem(pgd->vir_pts[i], sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
         }
         pgd->vir_pts[i] = NULL;
     }
@@ -462,23 +466,23 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
 {
     int slot = who->active_mm->slot, pdm_slot;
-    int pages_per_pgdir = ARCH_PGD_SIZE / ARCH_PG_SIZE;
+    int pages_per_pgdir = (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) / ARCH_PG_SIZE;
     int slots_per_pdm = ARCH_VM_PT_ENTRIES / pages_per_pgdir;
 
     /* fill in the slot */
     struct pagedir_mapping * pdm = &pagedir_mappings[slot / slots_per_pdm];
     pdm_slot = slot % slots_per_pdm;
 
-    phys_bytes phys = (phys_bytes)pgd->phys_addr & ARCH_VM_ADDR_MASK;
+    phys_bytes phys = (phys_bytes)pgd->phys_addr & ARCH_PG_MASK;
 #if defined(__i386__)
-    pdm->entries[pdm_slot] = phys | ARCH_PG_PRESENT | ARCH_PG_RW;
+    pdm->entries[pdm_slot] = __pte(phys | ARCH_PG_PRESENT | ARCH_PG_RW);
 #elif defined(__arm__)
     int _i;
     for (_i = 0; _i < pages_per_pgdir; _i++) {
-        pdm->entries[pdm_slot * pages_per_pgdir + _i] = (phys + _i * ARCH_PG_SIZE) | ARCH_PG_PRESENT
+        pdm->entries[pdm_slot * pages_per_pgdir + _i] = __pte((phys + _i * ARCH_PG_SIZE) | ARCH_PG_PRESENT
             | ARCH_PG_RW
             | ARM_PG_CACHED
-            | ARCH_PG_USER;
+            | ARCH_PG_USER);
     }
 #endif
 
@@ -486,7 +490,7 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     /* calculate the vir addr of the pgdir visible to the kernel */
     void* vir_addr = (void*) (pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PG_SIZE);
 #elif defined(__arm__)
-    void* vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PGD_SIZE;
+    void* vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
 #elif defined(__riscv)
     void* vir_addr = 0;
 #endif
@@ -516,7 +520,7 @@ PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* 
         }
 
         for (j = 0; j < ARCH_VM_PT_ENTRIES; j++) {
-            if (pt_entries[j] != 0) {
+            if (pte_val(pt_entries[j]) != 0) {
                 nr_pages += allocated_pages;
                 retaddr = 0;
                 allocated_pages = 0;
@@ -540,7 +544,7 @@ PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, void* vir_addr)
 
     pte_t * pt = pgd->vir_pts[pgd_index];
 
-    phys_bytes phys = pt[pt_index] & ARCH_VM_ADDR_MASK;
+    phys_bytes phys = pte_val(pt[pt_index]) & ARCH_PG_MASK;
 
     return phys;
 }

@@ -109,10 +109,10 @@ PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
  */
 PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
 {
-	size_t memsize = nr_pages * PG_SIZE;
+	size_t memsize = nr_pages * ARCH_PG_SIZE;
  	struct phys_hole *hp, *prev_ptr;
 	phys_bytes old_base;
-	phys_bytes page_align = PAGE_ALIGN;
+	phys_bytes page_align = ARCH_PG_SIZE;
 
 	if (memflags & APF_ALIGN16K) {
 		page_align = 0x4000;

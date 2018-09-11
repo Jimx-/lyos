@@ -248,7 +248,7 @@ PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr)
     int len = rp->length;
     int i;
 
-    for (i = 0; len > 0; len -= PG_SIZE, i++) {
+    for (i = 0; len > 0; len -= ARCH_PG_SIZE, i++) {
         struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->refcnt > 0 && frame->phys_addr != 0) continue;
 
@@ -382,7 +382,7 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     struct phys_region * pregion = &(rp->phys_block);
     int i;
 
-    for (i = 0; i < rp->length / PG_SIZE; i++) {
+    for (i = 0; i < rp->length / ARCH_PG_SIZE; i++) {
         struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         frame->flags &= ~PFF_MAPPED;
     }
@@ -426,12 +426,12 @@ PUBLIC int region_extend_up_to(struct mmproc * mmp, void* addr)
  */
 PUBLIC int region_extend(struct vir_region * rp, int increment)
 {
-    if (increment % PG_SIZE != 0) {
-        increment += PG_SIZE - (increment % PG_SIZE);
+    if (increment % ARCH_PG_SIZE != 0) {
+        increment += ARCH_PG_SIZE - (increment % ARCH_PG_SIZE);
     }
 
     rp->length += increment;
-    int retval = phys_region_extend_up_to(&(rp->phys_block), rp->length / PG_SIZE);
+    int retval = phys_region_extend_up_to(&(rp->phys_block), rp->length / ARCH_PG_SIZE);
     if (retval) return retval;
     return region_alloc_phys(rp);
 }
@@ -448,7 +448,7 @@ PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
     struct phys_region * prdest = &(dest->phys_block);
     if (prdest->capacity < src->length / ARCH_PG_SIZE)
         phys_region_realloc(prdest, src->length / ARCH_PG_SIZE);
-    for (i = 0; i < src->length / PG_SIZE; i++) {
+    for (i = 0; i < src->length / ARCH_PG_SIZE; i++) {
         struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
         if (frame->refcnt) {
             frame->refcnt++;
@@ -555,7 +555,7 @@ PRIVATE int region_handle_pf_filemap(struct mmproc * mmp, struct vir_region * vr
         first = 0;
     }
 
-    offset = rounddown(offset, PG_SIZE);
+    offset = rounddown(offset, ARCH_PG_SIZE);
 
     if (!frame->phys_addr) { /* page not present */
         struct page_cache* cp;

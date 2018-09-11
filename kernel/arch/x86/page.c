@@ -108,8 +108,8 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
 {
     pte_t * pt;
     pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + KERNEL_VMA);
-    if (phys_addr % PG_SIZE) phys_addr = (phys_addr / PG_SIZE) * PG_SIZE;
-    if ((uintptr_t) vir_addr % PG_SIZE) vir_addr = (void*) (((uintptr_t) vir_addr / PG_SIZE) * PG_SIZE);
+    if (phys_addr % ARCH_PG_SIZE) phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
+    if ((uintptr_t) vir_addr % ARCH_PG_SIZE) vir_addr = (void*) (((uintptr_t) vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE);
 
     while (vir_addr < vir_end) {
         phys_bytes phys = phys_addr;
@@ -118,15 +118,15 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
         int pde = ARCH_PDE(vir_addr);
         int pte = ARCH_PTE(vir_addr);
 
-        if (pgd[pde] & ARCH_PG_BIGPAGE) {
+        if (pde_val(pgd[pde]) & ARCH_PG_BIGPAGE) {
             phys_bytes pt_ph;
             pt = pg_alloc_pt(&pt_ph);
-            pgd[pde] = (pt_ph & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
+            pgd[pde] = __pde((pt_ph & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
         } else {
-            pt = (pte_t *)(((phys_bytes)pgd[pde] & ARCH_VM_ADDR_MASK) + KERNEL_VMA);
+            pt = (pte_t *)((pde_val(pgd[pde]) & ARCH_PG_MASK) + KERNEL_VMA);
         }
 
-        pt[pte] = (phys & ARCH_VM_ADDR_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
+        pt[pte] = __pte((phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
         vir_addr += ARCH_PG_SIZE;
         if (phys_addr != 0) phys_addr += ARCH_PG_SIZE;
     }
@@ -139,12 +139,12 @@ PUBLIC void pg_identity(pde_t * pgd)
 {
     int i;
     phys_bytes phys;
-    int flags = PG_PRESENT | PG_RW | PG_USER | ARCH_PG_BIGPAGE;
+    int flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER | ARCH_PG_BIGPAGE;
     /* initialize page directory */
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         if (i >= kinfo.kernel_start_pde && i < kinfo.kernel_end_pde) continue;  /* don't touch kernel */
         phys = i * ARCH_BIG_PAGE_SIZE;
-        pgd[i] = phys | flags;
+        pgd[i] = __pde(phys | flags);
     }
 }
 
@@ -152,16 +152,16 @@ PUBLIC pde_t pg_mapkernel(pde_t * pgd)
 {
     phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;
     phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys;
-    int pde = ARCH_PDE(KERNEL_VMA);
+    unsigned long pde = ARCH_PDE(KERNEL_VMA);
 
     while (mapped < kern_len) {
-        pgd[pde] = kern_phys | PG_PRESENT | PG_RW | ARCH_PG_BIGPAGE;
+        pgd[pde] = __pde(kern_phys | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_BIGPAGE);
         mapped += ARCH_BIG_PAGE_SIZE;
         kern_phys += ARCH_BIG_PAGE_SIZE;
         pde++;
     }
 
-    return pde;
+    return __pde(pde);
 }
 
 PUBLIC void pg_load(pde_t * pgd)

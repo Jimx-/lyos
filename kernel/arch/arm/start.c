@@ -143,8 +143,8 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
 
     parse_atags(atags_ptr);
 
-    if (kinfo.kernel_end_phys % PAGE_ALIGN) {
-        kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % PAGE_ALIGN;
+    if (kinfo.kernel_end_phys % ARCH_PG_SIZE) {
+        kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % ARCH_PG_SIZE;
         kinfo.kernel_end_pde++;
     }
 
@@ -172,7 +172,7 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     SET_MODULE(TASK_IPC, ipc);
     SET_MODULE(INIT, init);
 
-    cut_memmap(&kinfo, 0, PG_SIZE);
+    cut_memmap(&kinfo, 0, ARCH_PG_SIZE);
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 

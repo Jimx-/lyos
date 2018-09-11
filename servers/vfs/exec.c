@@ -113,7 +113,7 @@ PRIVATE int read_header(struct vfs_exec_info * execi)
 {
     u64 newpos;
     size_t bytes_rdwt;
-    static char buf[PG_SIZE];
+    static char buf[ARCH_PG_SIZE];
 
     execi->args.header_len = min(sizeof(buf), execi->pin->i_size);
     execi->args.header = buf;
@@ -412,7 +412,7 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack, size_t* 
     AUXV_ENT(auxv, AT_GID, execi->args.new_gid);
     AUXV_ENT(auxv, AT_EUID, execi->args.new_euid);
     AUXV_ENT(auxv, AT_EGID, execi->args.new_egid);
-    AUXV_ENT(auxv, AT_PAGESZ, PG_SIZE);
+    AUXV_ENT(auxv, AT_PAGESZ, ARCH_PG_SIZE);
     AUXV_ENT(auxv, AT_CLKTCK, get_system_hz());
     AUXV_ENT(auxv, AT_SYSINFO, (void*) sysinfo);
 
@@ -458,7 +458,7 @@ PRIVATE int setup_script_stack(struct inode* pin, char* stack, size_t* stack_siz
 
     u64 newpos;
     int retval;
-    char buf[PG_SIZE];
+    char buf[ARCH_PG_SIZE];
     size_t bytes_rdwt;
     char* interp = NULL;
 

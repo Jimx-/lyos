@@ -167,9 +167,9 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
         return (void *)phys_addr;
     }
 
-    pte_t * pt_entries = (pte_t *)(pde_v & ARCH_VM_ADDR_MASK);
+    pte_t * pt_entries = (pte_t *)(pde_v & ARCH_PG_MASK);
     pte_t pte_v = (pte_t)get_phys32((phys_bytes)(pt_entries + pt_index));
-    return (void*)((pte_v & ARCH_VM_ADDR_MASK) + (la & ARM_VM_OFFSET_MASK));
+    return (void*)((pte_v & ARCH_PG_MASK) + ((uintptr_t) la % ARCH_PG_SIZE));
 }
 
 #define MAX_KERN_MAPPINGS   8

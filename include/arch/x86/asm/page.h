@@ -13,8 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _PAGE_H_
-#define _PAGE_H_
+#ifndef _ARCH_PAGE_H_
+#define _ARCH_PAGE_H_
 
 #define LOWMEM_END      0x30000000
 #define KERNEL_VMA      0xc0000000
@@ -22,16 +22,25 @@
 #define VMALLOC_END     0x40000000 /* region where MM map physical memory into its address space */
 #define VM_STACK_TOP    KERNEL_VMA
 
-typedef unsigned int    pde_t;
-typedef unsigned int    pte_t;
+typedef struct {
+    unsigned long pde;
+} pde_t;
+
+typedef struct {
+    unsigned long pte;
+} pte_t;
+
+#define pde_val(x) ((x).pde)
+#define __pde(x) ((pde_t) { (x) })
+
+#define pte_val(x) ((x).pte)
+#define __pte(x) ((pte_t) { (x) })
 
 #define I386_VM_DIR_ENTRIES     1024
 #define I386_VM_PT_ENTRIES      1024
 
-#define I386_VM_ADDR_MASK       0xfffff000
-#define I386_VM_OFFSET_MASK     (~I386_VM_ADDR_MASK)
-#define I386_VM_ADDR_MASK_BIG   0xffc00000
-#define I386_VM_OFFSET_MASK_BIG 0x003fffff
+#define I386_VM_ADDR_MASK_4MB   0xffc00000
+#define I386_VM_OFFSET_MASK_4MB 0x003fffff
 
 /* struct page_directory */
 typedef struct {
@@ -44,25 +53,25 @@ typedef struct {
     pte_t * vir_pts[I386_VM_DIR_ENTRIES];
 } pgdir_t;
 
-/* size of a directory */
-#define PGD_SIZE    0x1000
-/* size of a page table */
-#define PT_SIZE     0x1000
-/* size of a physical page */
-#define PG_SIZE     0x1000
-/* size of the memory that a page table maps */
-#define PT_MEMSIZE  (PG_SIZE * I386_VM_DIR_ENTRIES)
+/* size of page directory */
+#define I386_PGD_SHIFT  (22)
+#define I386_PGD_SIZE   (1UL << I386_PGD_SHIFT)
+#define I386_PGD_MASK   (~(I386_PGD_SIZE - 1))
+
+/* size of a virtual page */
+#define I386_PG_SHIFT   (12)
+#define I386_PG_SIZE    (1UL << I386_PG_SHIFT)
+#define I386_PG_MASK    (~(I386_PG_SIZE - 1))
+
 /* size of a big page */
-#define PG_BIG_SIZE PT_MEMSIZE
+#define PG_BIG_SIZE     I386_PGD_SIZE
 
-#define PG_PRESENT  0x001
-#define PG_RO       0x000
-#define PG_RW       0x002
-#define PG_USER     0x004
-#define PG_BIGPAGE  0x080
-#define PG_GLOBAL   (1L<< 8)
-
-#define PAGE_ALIGN  0x1000
+#define I386_PG_PRESENT  0x001
+#define I386_PG_RO       0x000
+#define I386_PG_RW       0x002
+#define I386_PG_USER     0x004
+#define I386_PG_BIGPAGE  0x080
+#define I386_PG_GLOBAL   (1L<< 8)
 
 #define I386_CR0_WP     0x00010000  /* Enable paging */
 #define I386_CR0_PG     0x80000000  /* Enable paging */
@@ -72,9 +81,9 @@ typedef struct {
 #define I386_CR4_MCE    0x00000040  /* Machine check enable */
 #define I386_CR4_PGE    0x00000080  /* Global page flag enable */
 
-#define I386_PF_PROT(x)         ((x) & PG_PRESENT)
+#define I386_PF_PROT(x)         ((x) & I386_PG_PRESENT)
 #define I386_PF_NOPAGE(x)       (!I386_PF_PROT(x))
-#define I386_PF_WRITE(x)        ((x) & PG_RW)
+#define I386_PF_WRITE(x)        ((x) & I386_PG_RW)
 
 PUBLIC void pg_identity(pde_t * pgd);
 PUBLIC pde_t pg_mapkernel(pde_t * pgd);
@@ -85,35 +94,36 @@ PUBLIC int read_cr2();
 PUBLIC int read_cr3();
 PUBLIC void reload_cr3();
 
-#define ARCH_PG_PRESENT         PG_PRESENT
-#define ARCH_PG_RW              PG_RW
-#define ARCH_PG_RO              PG_RO
-#define ARCH_PG_BIGPAGE         PG_BIGPAGE
-#define ARCH_PG_USER            PG_USER
-#define ARCH_PG_GLOBAL          PG_GLOBAL
+#define ARCH_PG_PRESENT         I386_PG_PRESENT
+#define ARCH_PG_RW              I386_PG_RW
+#define ARCH_PG_RO              I386_PG_RO
+#define ARCH_PG_BIGPAGE         I386_PG_BIGPAGE
+#define ARCH_PG_USER            I386_PG_USER
+#define ARCH_PG_GLOBAL          I386_PG_GLOBAL
 
-#define ARCH_PDE_PRESENT        PG_PRESENT
-#define ARCH_PDE_RW             PG_RW
-#define ARCH_PDE_USER           PG_USER
+#define ARCH_PDE_PRESENT        I386_PG_PRESENT
+#define ARCH_PDE_RW             I386_PG_RW
+#define ARCH_PDE_USER           I386_PG_USER
 
 #define ARCH_VM_DIR_ENTRIES     I386_VM_DIR_ENTRIES
 #define ARCH_VM_PT_ENTRIES      I386_VM_PT_ENTRIES
-#define ARCH_VM_ADDR_MASK       I386_VM_ADDR_MASK
 #define ARCH_VM_OFFSET_MASK     I386_VM_OFFSET_MASK
-#define ARCH_VM_ADDR_MASK_BIG   I386_VM_ADDR_MASK_BIG
-#define ARCH_VM_OFFSET_MASK_BIG I386_VM_OFFSET_MASK_BIG
 #define ARCH_PF_PROT(x)         I386_PF_PROT(x)
 #define ARCH_PF_NOPAGE(x)       I386_PF_NOPAGE(x)
 #define ARCH_PF_WRITE(x)        I386_PF_WRITE(x)
 
-#define ARCH_PDE(x)     ((unsigned long)(x) >> 22 & 0x03FF)
-#define ARCH_PTE(x)     ((unsigned long)(x) >> 12 & 0x03FF)
+#define ARCH_PDE(x)     ((unsigned long)(x) >> I386_PGD_SHIFT & 0x03FF)
+#define ARCH_PTE(x)     ((unsigned long)(x) >> I386_PG_SHIFT & 0x03FF)
 
-#define ARCH_VM_ADDRESS(pde, pte, offset)   (pde * PT_MEMSIZE + pte * PG_SIZE + offset)
+#define ARCH_VM_ADDRESS(pde, pte, offset)   ((pde << I386_PGD_SHIFT) | (pte << I386_PG_SHIFT) | offset)
 
-#define ARCH_PGD_SIZE        PGD_SIZE
-#define ARCH_PT_SIZE         PT_SIZE
-#define ARCH_PG_SIZE         PG_SIZE
+#define ARCH_PGD_SIZE        I386_PGD_SIZE
+#define ARCH_PGD_SHIFT       I386_PGD_SHIFT
+#define ARCH_PGD_MASK        I386_PGD_MASK
+
+#define ARCH_PG_SIZE         I386_PG_SIZE
+#define ARCH_PG_SHIFT        I386_PG_SHIFT
+#define ARCH_PG_MASK         I386_PG_MASK
 #define ARCH_BIG_PAGE_SIZE   PG_BIG_SIZE
 
 #endif
