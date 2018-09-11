@@ -1,0 +1,91 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+config 64BIT
+    bool
+
+config 32BIT
+    bool
+
+config RISCV
+    def_bool y
+    select PHYS_BYTES_64BIT
+
+config KERNEL_VMA
+    hex
+    default 0xC0000000 if 32BIT && MAXPHYSMEM_2GB
+    default 0xffffffff80000000 if 64BIT && MAXPHYSMEM_2GB
+    default 0xffffffe000000000 if 64BIT && MAXPHYSMEM_128GB
+
+source "kernel/config.in"
+
+source "drivers/config.in"
+
+source "servers/config.in"
+
+menu "Platform type"
+
+choice
+	prompt "Base ISA"
+	default ARCH_RV64I
+	help
+	  This selects the base ISA that this kernel will traget and must match
+	  the target platform.
+
+config ARCH_RV32I
+	bool "RV32I"
+	select 32BIT
+
+config ARCH_RV64I
+	bool "RV64I"
+	select 64BIT
+
+endchoice
+
+choice
+  prompt "Kernel Code Model"
+	default CMODEL_MEDLOW if 32BIT
+	default CMODEL_MEDANY if 64BIT
+
+	config CMODEL_MEDLOW
+		bool "medium low code model"
+	config CMODEL_MEDANY
+		bool "medium any code model"
+endchoice
+
+choice
+	prompt "Maximum Physical Memory"
+	default MAXPHYSMEM_2GB if 32BIT
+	default MAXPHYSMEM_2GB if 64BIT && CMODEL_MEDLOW
+	default MAXPHYSMEM_128GB if 64BIT && CMODEL_MEDANY
+
+	config MAXPHYSMEM_2GB
+		bool "2GiB"
+	config MAXPHYSMEM_128GB
+		depends on 64BIT && CMODEL_MEDANY
+		select MODULE_SECTIONS if MODULES
+		bool "128GiB"
+endchoice
+
+config SMP
+    bool "Symmetric multiprocessing"
+    help
+      Enable support for systems that have more than one processor.
+
+config SMP_MAX_CPUS
+    int "Max number of CPUs"
+    depends on SMP
+    default "8"
+    help
+      The default value is 8 CPUs.
+
+config RISCV_ISA_C
+	bool "Emit compressed instructions"
+	default y
+
+config RISCV_ISA_A
+	def_bool y
+
+endmenu

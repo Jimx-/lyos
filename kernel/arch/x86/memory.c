@@ -180,7 +180,7 @@ PUBLIC void* va2la(endpoint_t ep, void* va)
  *****************************************************************************/
 PUBLIC void * la2pa(endpoint_t ep, void * la)
 {
-    if (is_kerntaske(ep)) return (void *)((int)la - KERNEL_VMA);
+    if (is_kerntaske(ep)) return (void *)((uintptr_t)la - KERNEL_VMA);
 
     int slot;
     if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
@@ -190,9 +190,9 @@ PUBLIC void * la2pa(endpoint_t ep, void * la)
     unsigned long pgd_index = ARCH_PDE(la);
     unsigned long pt_index = ARCH_PTE(la);
 
-    pde_t * pgd_phys = (pde_t *)(p->seg.cr3_phys);
+    phys_bytes pgd_phys = (phys_bytes) (p->seg.cr3_phys);
 
-    pde_t pde_v = __pde(get_phys32((phys_bytes)(pgd_phys + pgd_index)));
+    pde_t pde_v = __pde(get_phys32(pgd_phys + pgd_index));
 
     if (pde_val(pde_v) & ARCH_PG_BIGPAGE) {
         phys_addr = pde_val(pde_v) & I386_VM_ADDR_MASK_4MB;

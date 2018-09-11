@@ -1,0 +1,91 @@
+#include <asm/page.h>
+#include <asm/const.h>
+#include <asm/csr.h>
+
+.section .head
+
+.globl _lyos_start	/* entry point */
+
+_lyos_start:
+    /* mask interrupts */
+	csrw sie, zero
+
+.option push
+.option norelax
+    /* load global pointer */
+    la gp, __global_pointer$
+.option pop
+
+    /* pick one hart to boot the others */
+    la a3, hart_counter
+    li a2, 1
+    amoadd.w a3, a2, (a3)
+	bnez a3, .Lsecondary_start
+
+    /* save hart ID and DTB from bootloader */
+    mv s0, a0
+    mv s1, a1
+
+    /* setup paging */
+    la sp, KStackTop
+    call setup_paging
+    call enable_paging
+
+    /* reload stack pointer */
+    la sp, KStackTop
+
+    /* start kernel */
+    mv a0, s0
+    mv a1, s1
+    call cstart
+    tail kernel_main
+
+enable_paging:
+    /* relocate return address */
+    li a1, KERNEL_VMA
+    la a0, _lyos_start
+    sub a1, a1, a0
+    add ra, ra, a1
+
+    la a0, 1f
+    add a0, a0, a1
+    csrw stvec, a0
+
+    /* computer satp for initial pgd */
+    la a2, initial_pgd
+    srl a2, a2, ARCH_PG_SHIFT
+    li a1, SATP_MODE
+    or a2, a2, a1
+
+    la a0, trampoline_pgd
+    srl a0, a0, ARCH_PG_SHIFT
+    or a0, a0, a1
+    sfence.vma
+    csrw sptbr, a0
+.align 2
+1:
+    la a1, .Lno_smp
+    csrw stvec, a1
+
+.option push
+.option norelax
+    /* reload global pointer */
+    la gp, __global_pointer$
+.option pop
+
+    /* load initial pgd */
+    csrw sptbr, a2
+
+    ret
+
+.Lsecondary_start:
+
+.align 2
+.Lno_smp:
+	wfi
+	j .Lno_smp
+
+.section .data
+KStackSpace:
+	.zero K_STACK_SIZE
+KStackTop:
