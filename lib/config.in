@@ -1,0 +1,10 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+menu "Libraries"
+
+source "lib/libof/config.in"
+
+endmenu

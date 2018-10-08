@@ -1,6 +1,7 @@
 #include <asm/page.h>
 #include <asm/const.h>
 #include <asm/csr.h>
+#include <asm/asm.h>
 
 .section .head
 
@@ -31,8 +32,9 @@ _lyos_start:
     call setup_paging
     call enable_paging
 
-    /* reload stack pointer */
+    /* reload stack pointer and save hart id */
     la sp, KStackTop
+    mv tp, s0
 
     /* start kernel */
     mv a0, s0
@@ -79,6 +81,14 @@ enable_paging:
     ret
 
 .Lsecondary_start:
+#ifdef CONFIG_SMP
+    li a1, CONFIG_SMP_MAX_CPUS
+    bgeu a0, a1, .Lno_smp
+
+    la a3, .Lno_smp
+    csrw stvec, a3
+
+#endif
 
 .align 2
 .Lno_smp:
@@ -89,3 +99,8 @@ enable_paging:
 KStackSpace:
 	.zero K_STACK_SIZE
 KStackTop:
+
+.balign	K_STACK_SIZE
+k_stacks_start:
+	.space 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
+k_stacks_end:

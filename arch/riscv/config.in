@@ -12,6 +12,7 @@ config 32BIT
 config RISCV
     def_bool y
     select PHYS_BYTES_64BIT
+    select OF
 
 config KERNEL_VMA
     hex
@@ -24,6 +25,8 @@ source "kernel/config.in"
 source "drivers/config.in"
 
 source "servers/config.in"
+
+source "lib/config.in"
 
 menu "Platform type"
 

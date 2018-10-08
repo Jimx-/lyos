@@ -44,7 +44,7 @@ $(BUILD_PATH)/arch/$(ARCH):
 
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.c
 	@echo -e '\tCC\tlib$(LIB)/$<'
-	$(Q)$(CC) $(CFLAGS) -c -MP -MMD $< -o $@
+	$(Q)$(CC) $(CFLAGS) -I. -c -MP -MMD $< -o $@
 
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.asm
 	@echo -e '\tASM\tlib$(LIB)/$<'

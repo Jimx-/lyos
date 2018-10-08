@@ -13,6 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -28,6 +29,7 @@
 #include <asm/proto.h>
 #include <asm/const.h>
 #include <asm/setup.h>
+#include <asm/smp.h>
 
 /* counter for selecting one hart to boot the others */
 unsigned int hart_counter __attribute__((__section__(".unpaged_text"))) = 0;
@@ -40,7 +42,7 @@ PRIVATE phys_bytes kern_vir_base = (phys_bytes) &_VIR_BASE;
 PRIVATE phys_bytes kern_size = (phys_bytes) &_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
-extern u32 k_stacks_start;
+extern char k_stacks_start;
 PUBLIC void * k_stacks;
 
 PRIVATE char * env_get(const char *name);
@@ -48,6 +50,7 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
 
 PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
 {
+    printk("%d %d\n", hart_id, cpuid);
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

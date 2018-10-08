@@ -17,7 +17,10 @@
 #define	_ARCH_SMP_H_
 
 #if CONFIG_SMP
-#define cpuid   0
+#define cpuid  ({                                   \
+    register unsigned long tp __asm__("tp");        \
+    tp;                                             \
+    })
 #else
 #define cpuid   0
 #endif
