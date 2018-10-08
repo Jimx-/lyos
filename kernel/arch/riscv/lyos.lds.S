@@ -7,7 +7,7 @@ _VIR_BASE = KERNEL_VMA;
 
 SECTIONS{
     . = _VIR_BASE;
-    _start = .;
+    _lyos_start = .;
 
     . = ALIGN(4096);
     .unpaged_text : AT(ADDR(.unpaged_text) - _VIR_BASE) {

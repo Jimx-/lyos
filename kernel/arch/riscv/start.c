@@ -31,6 +31,8 @@
 #include <asm/setup.h>
 #include <asm/smp.h>
 
+#include <libof/libof.h>
+
 /* counter for selecting one hart to boot the others */
 unsigned int hart_counter __attribute__((__section__(".unpaged_text"))) = 0;
 
@@ -50,7 +52,7 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
 
 PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
 {
-    printk("%d %d\n", hart_id, cpuid);
+    of_scan_fdt(__va(dtb_phys));
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

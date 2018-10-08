@@ -58,10 +58,12 @@ PUBLIC void enable_paging() __attribute__((__section__(".unpaged_text")));
 
 PUBLIC void setup_paging()
 {
-    extern char _start;
+    extern char _lyos_start;
     int i;
-    uintptr_t pa = (uintptr_t) &_start;
+    uintptr_t pa = (uintptr_t) &_lyos_start;
     pgprot_t prot = __pgprot(pgprot_val(RISCV_PG_KERNEL) | _RISCV_PG_EXEC);
+
+    va_pa_offset = KERNEL_VMA - pa;
 
 #ifndef __PAGETABLE_PMD_FOLDED
     trampoline_pgd[(KERNEL_VMA >> ARCH_PGD_SHIFT) % ARCH_VM_DIR_ENTRIES] =

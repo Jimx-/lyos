@@ -75,6 +75,8 @@ typedef struct {
 
 #include <asm/pagetable.h>
 
+extern  unsigned long va_pa_offset;
+
 #endif
 
 #define ARCH_VM_DIR_ENTRIES     RISCV_VM_DIR_ENTRIES
@@ -112,5 +114,9 @@ typedef struct {
 
 #define ARCH_PTE(v)             (((unsigned long)(v) >> RISCV_PG_SHIFT) & 0xff)
 #define ARCH_PDE(x)             ((unsigned long)(x) >> RISCV_PGD_SHIFT)
+
+#ifndef __va
+#define __va(x)     ((void*) ((unsigned long)(x) + va_pa_offset))
+#endif
 
 #endif

@@ -58,6 +58,7 @@ EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 #ifdef __riscv
 EXTERN  u32                 bsp_cpu_id;
 extern  pde_t               initial_pgd[];
+EXTERN  unsigned long       va_pa_offset;
 #endif
 
 extern  int booting_cpu;

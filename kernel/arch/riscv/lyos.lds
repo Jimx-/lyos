@@ -3,7 +3,7 @@ ENTRY (_lyos_start)
 _VIR_BASE = 0xffffffe000000000;
 SECTIONS{
     . = _VIR_BASE;
-    _start = .;
+    _lyos_start = .;
     . = ALIGN(4096);
     .unpaged_text : AT(ADDR(.unpaged_text) - _VIR_BASE) {
         _unpaged_text = .;
