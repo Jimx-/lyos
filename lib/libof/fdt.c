@@ -4,17 +4,19 @@
 
 #include <libfdt/libfdt.h>
 
-PUBLIC int of_scan_fdt(void* blob)
+PUBLIC int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int, void*), void* arg, void* blob)
 {
     int offset, depth = -1;
+    int retval = 0;
     const char* pathname;
 
     for (offset = fdt_next_node(blob, -1, &depth);
-         offset >= 0 && depth >= 0;
+         offset >= 0 && depth >= 0 && !retval;
          offset = fdt_next_node(blob, offset, &depth)) {
         pathname = fdt_get_name(blob, offset, NULL);
-        printk("%s\n", pathname);
+
+        retval = scan(blob, offset, pathname, depth, arg);
     }
 
-    return 0;
+    return retval;
 }

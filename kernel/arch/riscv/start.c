@@ -30,7 +30,9 @@
 #include <asm/const.h>
 #include <asm/setup.h>
 #include <asm/smp.h>
+#include <asm/byteorder.h>
 
+#include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
 /* counter for selecting one hart to boot the others */
@@ -47,12 +49,71 @@ extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern char k_stacks_start;
 PUBLIC void * k_stacks;
 
+PRIVATE int dt_root_addr_cells, dt_root_size_cells;
+
 PRIVATE char * env_get(const char *name);
 PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
 
+/* Scan for root address cells and size cells in FDT */
+PRIVATE int fdt_scan_root(void* blob, unsigned long offset, const char* name, int depth, void* arg)
+{
+    if (depth != 0) return 0;
+
+    dt_root_addr_cells = 1;
+    dt_root_size_cells = 1;
+
+    u32* prop;
+    if ((prop = fdt_getprop(blob, offset, "#size-cells", NULL)) != NULL) {
+        dt_root_size_cells = be32_to_cpup(prop);
+    }
+
+    if ((prop = fdt_getprop(blob, offset, "#address-cells", NULL)) != NULL) {
+        dt_root_addr_cells = be32_to_cpup(prop);
+    }
+
+    return 1;
+}
+
+/* Scan for memory nodes in FDT */
+PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name, int depth, void* arg)
+{
+    const char* type = fdt_getprop(blob, offset, "device_type", NULL);
+    if (!type || strcmp(type, "memory") != 0) return 0;
+
+    const u32* reg, *lim;
+    size_t len;
+    reg = fdt_getprop(blob, offset, "reg", &len);
+    if (!reg) return 0;
+
+    lim = reg + (len / sizeof(u32));
+
+    while ((int) (lim - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+        phys_bytes base, size;
+
+        base = of_read_number(reg, dt_root_addr_cells);
+        reg += dt_root_addr_cells;
+        size = of_read_number(reg, dt_root_size_cells);
+        reg += dt_root_size_cells;
+
+        if (size == 0) continue;
+
+		kinfo.memmaps[kinfo.memmaps_count].addr = base;
+		kinfo.memmaps[kinfo.memmaps_count].len = size;
+		kinfo.memmaps[kinfo.memmaps_count].type = KINFO_MEMORY_AVAILABLE;
+		kinfo.memmaps_count++;
+		kinfo.memory_size += size;
+    }
+
+    return 0;
+}
+
 PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
 {
-    of_scan_fdt(__va(dtb_phys));
+	kinfo.memmaps_count = 0;
+    kinfo.memory_size = 0;
+
+    of_scan_fdt(fdt_scan_root, NULL, __va(dtb_phys));
+    of_scan_fdt(fdt_scan_memory, NULL, __va(dtb_phys));
 }
 
 PRIVATE char * get_value(const char * param, const char * key)
