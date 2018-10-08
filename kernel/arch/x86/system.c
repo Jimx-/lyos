@@ -72,7 +72,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
     if (p->endpoint == TASK_MM) {
         /* use bootstrap page table */
         p->seg.cr3_phys = (u32)initial_pgd;
-        p->seg.cr3_vir = (u32 *)((int)initial_pgd + KERNEL_VMA);
+        p->seg.cr3_vir = (u32 *)__va(initial_pgd);
     }
 
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;

@@ -84,7 +84,7 @@ EXTERN struct sysinfo * sysinfo_user;
 /* Multiboot */
 extern  kinfo_t     kinfo;
 EXTERN  int         mb_mod_count;
-EXTERN  int         mb_mod_addr;
+EXTERN  void*       mb_mod_addr;
 EXTERN  int         mb_magic;
 EXTERN  int         mb_flags;
 

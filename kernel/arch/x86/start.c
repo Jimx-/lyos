@@ -52,18 +52,19 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 	kinfo.magic = KINFO_MAGIC;
 	mb_magic = mboot_magic;
 
-	int mb_mmap_addr, mb_mmap_len;
+	void* mb_mmap_addr;
+	size_t mb_mmap_len;
 
 	/* grub provides physical address, we want virtual address */
-	mboot = (struct multiboot_info *)((int)mboot + KERNEL_VMA);
-	mb_mmap_addr = mboot->mmap_addr + KERNEL_VMA;
+	mboot = (struct multiboot_info *) __va(mboot);
+	mb_mmap_addr = __va(mboot->mmap_addr);
 	mb_mmap_len = mboot->mmap_length;
 
 	kinfo.mods_count = mb_mod_count = mboot->mods_count;
 
 	kinfo.memmaps_count = -1;
 	struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
-	while ((unsigned int)mmap < mb_mmap_len + mb_mmap_addr) {
+	while ((void*)mmap < mb_mmap_addr + mb_mmap_len) {
 		kinfo.memmaps_count++;
 		kinfo.memmaps[kinfo.memmaps_count].addr = mmap->addr;
 		kinfo.memmaps[kinfo.memmaps_count].len = mmap->len;
@@ -72,7 +73,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 		mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
 
-	mb_mod_addr = (int)mboot->mods_addr + KERNEL_VMA;
+	mb_mod_addr = __va(mboot->mods_addr);
 	multiboot_module_t * last_mod = (multiboot_module_t *)mboot->mods_addr;
 	last_mod += mb_mod_count - 1;
 
@@ -133,7 +134,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
 	/* set initrd parameters */
 	multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
-    char * initrd_base = (char*)(initrd_mod->mod_start + KERNEL_VMA);
+    char * initrd_base = (char*) __va(initrd_mod->mod_start);
     unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
 	char initrd_param_buf[20];
 	sprintf(initrd_param_buf, "0x%x", (unsigned int)initrd_base);

@@ -88,7 +88,7 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, void* la, size_t* len, int i
         pa = (phys_bytes) la;
         if (pa >= lowmem_base && pa < LOWMEM_END) { /* low memory */
             *len = min(*len, LOWMEM_END - pa);
-            return pa + KERNEL_VMA;
+            return (phys_bytes) __va(pa);
         }
         pdeval = __pde((((uintptr_t) la) & I386_VM_ADDR_MASK_4MB) |
             ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW);
@@ -192,7 +192,7 @@ PUBLIC void * la2pa(endpoint_t ep, void * la)
 
     phys_bytes pgd_phys = (phys_bytes) (p->seg.cr3_phys);
 
-    pde_t pde_v = __pde(get_phys32(pgd_phys + pgd_index));
+    pde_t pde_v = __pde(get_phys32(pgd_phys + sizeof(pde_t) * pgd_index));
 
     if (pde_val(pde_v) & ARCH_PG_BIGPAGE) {
         phys_addr = pde_val(pde_v) & I386_VM_ADDR_MASK_4MB;

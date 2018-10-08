@@ -172,7 +172,7 @@ PUBLIC int serv_prepare_module_stack()
 
     /* initrd_base and initrd_len */
     multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
-    char * initrd_base = (char*)(initrd_mod->mod_start + KERNEL_VMA);
+    char * initrd_base = (char*) __va(initrd_mod->mod_start);
     unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
 
     //CLEAR_ARG();

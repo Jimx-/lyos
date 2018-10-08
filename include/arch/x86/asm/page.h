@@ -126,4 +126,8 @@ PUBLIC void reload_cr3();
 #define ARCH_PG_MASK         I386_PG_MASK
 #define ARCH_BIG_PAGE_SIZE   PG_BIG_SIZE
 
+#ifndef __va
+#define __va(x)     ((void*) ((unsigned long)(x) + KERNEL_VMA))
+#endif
+
 #endif

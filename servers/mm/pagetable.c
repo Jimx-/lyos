@@ -124,7 +124,7 @@ PUBLIC void pt_init()
 
         if (pde_val(entry) & ARCH_PG_BIGPAGE) continue;
         mypgd->vir_addr[i] = entry;
-        mypgd->vir_pts[i] = (pte_t *)((pde_val(entry) + KERNEL_VMA) & ARCH_PG_MASK);
+        mypgd->vir_pts[i] = (pte_t *)((uintptr_t) __va(pde_val(entry)) & ARCH_PG_MASK);
     }
 
     /* using the new page dir */
