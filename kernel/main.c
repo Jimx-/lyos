@@ -103,7 +103,7 @@ PUBLIC int kernel_main()
             p->state |= PST_NO_PRIV;
         }
 
-        arch_boot_proc(p, bp);
+        //arch_boot_proc(p, bp);
     }
 
     memcpy(&kinfo.boot_procs, boot_procs, sizeof(kinfo.boot_procs));

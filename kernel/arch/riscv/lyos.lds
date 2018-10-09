@@ -48,6 +48,12 @@ SECTIONS{
         _ebss = .;
     }
     . = ALIGN(4096);
+    .bootmods : AT(ADDR(.bootmods) - _VIR_BASE) {
+        _bootmods = .;
+            *(.bootmods)
+        . = ALIGN(4096); _ebootmods = .;
+    }
+    . = ALIGN(4096);
     .usermapped : AT(ADDR(.usermapped) - _VIR_BASE) {
         _usermapped = .;
             *(.usermapped)

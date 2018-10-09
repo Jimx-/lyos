@@ -1,6 +1,6 @@
 
 KERNELOBJS	= head.o kernel.o start.o system.o memory.o fpu.o direct_tty.o clock.o \
-				page.o kliba.o protect.o smp.o
+				page.o kliba.o protect.o smp.o bootmods/bootmods.o
 
 ARCHKERNEL		= arch-kernel.o
 LINKERSCRIPT	= lyos.lds
@@ -24,3 +24,6 @@ $(ARCHKERNEL): $(KERNELOBJS)
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/riscv/$@'
 	@$(CC) $(CFLAGS) -c -o $@ $<
+
+bootmods/bootmods.o:
+	@(cd bootmods; make)

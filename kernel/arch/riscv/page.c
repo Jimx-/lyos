@@ -58,10 +58,13 @@ PUBLIC void enable_paging() __attribute__((__section__(".unpaged_text")));
 
 PUBLIC void setup_paging()
 {
-    extern char _lyos_start;
+    extern char _lyos_start, _end;
     int i;
     uintptr_t pa = (uintptr_t) &_lyos_start;
     pgprot_t prot = __pgprot(pgprot_val(RISCV_PG_KERNEL) | _RISCV_PG_EXEC);
+
+    kinfo.kernel_start_phys = (phys_bytes) pa;
+    kinfo.kernel_end_phys = (phys_bytes) &_end;
 
     va_pa_offset = KERNEL_VMA - pa;
 

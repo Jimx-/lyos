@@ -109,11 +109,38 @@ PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name, 
 
 PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
 {
+    initial_boot_params = __va(dtb_phys);
+
 	kinfo.memmaps_count = 0;
     kinfo.memory_size = 0;
 
-    of_scan_fdt(fdt_scan_root, NULL, __va(dtb_phys));
-    of_scan_fdt(fdt_scan_memory, NULL, __va(dtb_phys));
+    k_stacks = &k_stacks_start;
+
+    of_scan_fdt(fdt_scan_root, NULL, initial_boot_params);
+    of_scan_fdt(fdt_scan_memory, NULL, initial_boot_params);
+
+    /* setup boot modules */
+#define SET_MODULE(nr, name) do { \
+    extern char _bootmod_##name##_start[], _bootmod_##name##_end[]; \
+    kinfo.modules[nr].start_addr = (void*)*(&_bootmod_##name##_start) - va_pa_offset; \
+    kinfo.modules[nr].end_addr = (void*)*(&_bootmod_##name##_end) - va_pa_offset; } while(0)
+
+    SET_MODULE(TASK_MM, mm);
+    SET_MODULE(TASK_PM, pm);
+    SET_MODULE(TASK_SERVMAN, servman);
+    SET_MODULE(TASK_DEVMAN, devman);
+    SET_MODULE(TASK_SCHED, sched);
+    SET_MODULE(TASK_FS, vfs);
+    SET_MODULE(TASK_SYS, systask);
+    SET_MODULE(TASK_TTY, tty);
+    SET_MODULE(TASK_RD, ramdisk);
+    SET_MODULE(TASK_INITFS, initfs);
+    SET_MODULE(TASK_SYSFS, sysfs);
+    SET_MODULE(TASK_IPC, ipc);
+    SET_MODULE(INIT, init);
+
+    /* reserve memory used by the kernel */
+    cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 
 PRIVATE char * get_value(const char * param, const char * key)

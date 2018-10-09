@@ -88,6 +88,7 @@ EXTERN  int         mb_mod_count;
 EXTERN  void*       mb_mod_addr;
 EXTERN  int         mb_magic;
 EXTERN  int         mb_flags;
+EXTERN  void*       initial_boot_params;
 
 /* KERNEL LOG */
 extern struct kern_log kern_log;

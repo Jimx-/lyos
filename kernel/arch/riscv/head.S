@@ -88,6 +88,22 @@ enable_paging:
     la a3, .Lno_smp
     csrw stvec, a3
 
+    slli a3, a0, REG_SHIFT
+    la a1, __cpu_stack_pointer
+    la a2, __cpu_task_pointer
+    add a1, a1, a3
+    add a2, a2, a3
+
+.Lap_wait:
+    REG_L sp, (a1)
+    REG_L tp, (a2)
+    beqz sp, .Lap_wait
+    beqz tp, .Lap_wait
+
+    fence
+
+    call enable_paging
+    tail smp_boot_ap
 #endif
 
 .align 2
@@ -100,6 +116,7 @@ KStackSpace:
 	.zero K_STACK_SIZE
 KStackTop:
 
+.globl k_stacks_start, k_stacks_end
 .balign	K_STACK_SIZE
 k_stacks_start:
 	.space 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
