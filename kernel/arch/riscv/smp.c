@@ -32,6 +32,7 @@
 
 #include <libof/libof.h>
 
+PRIVATE int smp_commenced = 0;
 PRIVATE int __cpu_ready;
 PUBLIC void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
 PUBLIC void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
@@ -66,6 +67,8 @@ PRIVATE void smp_start_cpu(int hart_id)
     __cpu_task_pointer[hart_id] = (void*) hart_id;
 
     while (__cpu_ready != hart_id) ;
+
+    set_cpu_flag(hart_id, CPU_IS_READY);
 }
 
 PUBLIC void smp_init()
@@ -75,7 +78,22 @@ PUBLIC void smp_init()
 
 PUBLIC void smp_boot_ap()
 {
-    printk("%d\n", cpuid);
+    __cpu_ready = cpuid;
+    printk("smp: CPU %d is up\n", cpuid);
 
-    while (1);
+    get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+    get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+
+    ap_finished_booting();
+
+    while (!smp_commenced) ;
+
+    switch_address_space(proc_addr(TASK_MM));
+
+    switch_to_user();
+}
+
+PUBLIC void smp_commence()
+{
+    smp_commenced = 1;
 }
