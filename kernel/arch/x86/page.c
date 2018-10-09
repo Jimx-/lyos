@@ -107,7 +107,7 @@ PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
 PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
 {
     pte_t * pt;
-    pde_t * pgd = (pde_t *)__va(initial_pgd);
+    pde_t * pgd = (pde_t *) __va(initial_pgd);
     if (phys_addr % ARCH_PG_SIZE) phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
     if ((uintptr_t) vir_addr % ARCH_PG_SIZE) vir_addr = (void*) (((uintptr_t) vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE);
 

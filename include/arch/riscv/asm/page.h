@@ -22,7 +22,7 @@
 #define KERNEL_VMA      CONFIG_KERNEL_VMA
 #define VMALLOC_START   (KERNEL_VMA + LOWMEM_END)
 #define VMALLOC_END     0xf7c00000
-#define VM_STACK_TOP    KERNEL_VMA
+#define VM_STACK_TOP    0x80000000000
 
 #define RISCV_PG_SHIFT    (12)
 #define RISCV_PG_SIZE     (1UL << RISCV_PG_SHIFT)
@@ -80,7 +80,6 @@ extern  unsigned long va_pa_offset;
 #endif
 
 #define ARCH_VM_DIR_ENTRIES     RISCV_VM_DIR_ENTRIES
-#define ARCH_VM_PMD_ENTRIES     RISCV_VM_PMD_ENTRIES
 #define ARCH_VM_PT_ENTRIES      RISCV_VM_PT_ENTRIES
 
 #define ARCH_PG_PRESENT         0
@@ -94,6 +93,8 @@ extern  unsigned long va_pa_offset;
 #define ARCH_PGD_MASK           RISCV_PGD_MASK
 
 #ifndef __PAGETABLE_PMD_FOLDED
+#define ARCH_VM_PMD_ENTRIES     RISCV_VM_PMD_ENTRIES
+
 #define ARCH_PMD_SIZE           RISCV_PMD_SIZE
 #define ARCH_PMD_SHIFT          RISCV_PMD_SHIFT
 #define ARCH_PMD_MASK           RISCV_PMD_MASK
@@ -109,14 +110,12 @@ extern  unsigned long va_pa_offset;
 #define ARCH_PF_NOPAGE(x)       0
 #define ARCH_PF_WRITE(x)        0
 
-
 #define ARCH_VM_ADDRESS(pde, pte, offset)   ((pde << RISCV_PGD_SHIFT) | (pte << RISCV_PG_SHIFT) | offset)
 
 #define ARCH_PTE(v)             (((unsigned long)(v) >> RISCV_PG_SHIFT) & 0xff)
 #define ARCH_PDE(x)             ((unsigned long)(x) >> RISCV_PGD_SHIFT)
 
-#ifndef __va
+#define __pa(x)     ((phys_bytes)(x) - va_pa_offset)
 #define __va(x)     ((void*) ((unsigned long)(x) + va_pa_offset))
-#endif
 
 #endif

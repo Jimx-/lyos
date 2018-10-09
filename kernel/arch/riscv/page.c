@@ -118,12 +118,96 @@ PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
     return 0;
 }
 
-PRIVATE pte_t* pg_alloc_pt(phys_bytes * ph)
+PRIVATE pte_t* pg_alloc_pt(kinfo_t* pk)
 {
+    phys_bytes phys_addr = pg_alloc_page(pk);
+    pte_t* pt = __va(phys_addr);
+
+    memset(pt, 0, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
+    return pt;
+}
+
+PRIVATE pmd_t* pg_alloc_pmd(kinfo_t* pk)
+{
+    phys_bytes phys_addr = pg_alloc_page(pk);
+    pmd_t* pmd = __va(phys_addr);
+
+    memset(pmd, 0, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+    return pmd;
+}
+
+PRIVATE inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
+{
+    return pgd + ARCH_PDE(addr);
+}
+
+PRIVATE inline int pde_present(pde_t pde)
+{
+    return pde_val(pde) & _RISCV_PG_PRESENT;
+}
+
+PRIVATE inline void pde_populate(pde_t* pde, pmd_t* pmd)
+{
+    unsigned long pfn = __pa(pmd) >> ARCH_PG_SHIFT;
+    *pde = __pde((pfn << RISCV_PG_PFN_SHIFT) | _RISCV_PG_TABLE);
+}
+
+PRIVATE inline pmd_t* pmd_offset(pde_t* pmd, unsigned long addr)
+{
+    pmd_t* vaddr = (pmd_t*) __va((pde_val(*pmd) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
+    return vaddr + ARCH_PMDE(addr);
+}
+
+PRIVATE inline int pmde_present(pmd_t pmde)
+{
+    return pmd_val(pmde) & _RISCV_PG_PRESENT;
+}
+
+PRIVATE inline void pmde_populate(pmd_t* pmde, pte_t* pt)
+{
+    unsigned long pfn = __pa(pt) >> ARCH_PG_SHIFT;
+    *pmde = __pmd((pfn << RISCV_PG_PFN_SHIFT) | _RISCV_PG_TABLE);
+}
+
+PRIVATE inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
+{
+    pte_t* vaddr = (pte_t*) __va((pmd_val(*pt) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
+    return vaddr + ARCH_PTE(addr);
+}
+
+PRIVATE inline int pte_present(pte_t pte)
+{
+    return pte_val(pte) & _RISCV_PG_PRESENT;
 }
 
 PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
 {
+    pde_t* pgd = initial_pgd;
+
+    if (phys_addr % ARCH_PG_SIZE) phys_addr = roundup(phys_addr, ARCH_PG_SIZE);
+
+    while (vir_addr < vir_end) {
+        phys_bytes ph = phys_addr;
+        if (ph == 0) ph = pg_alloc_page(pk);
+
+        pde_t* pde = pgd_offset(pgd, (unsigned long) vir_addr);
+        if (!pde_present(*pde)) {
+            pmd_t* new_pmd = pg_alloc_pmd(pk);
+            pde_populate(pde, new_pmd);
+        }
+
+        pmd_t* pmde = pmd_offset(pde, (unsigned long) vir_addr);
+        if (!pmde_present(*pmde)) {
+            pte_t* new_pt = pg_alloc_pt(pk);
+            pmde_populate(pmde, new_pt);
+        }
+
+        pte_t* pte = pte_offset(pmde, (unsigned long) vir_addr);
+        *pte = pfn_pte(((unsigned long) vir_addr) >> ARCH_PG_SHIFT, RISCV_PG_EXEC_WRITE);
+
+        vir_addr += ARCH_PG_SIZE;
+        if (phys_addr != 0) phys_addr += ARCH_PG_SIZE;
+    }
 }
 
 PUBLIC void pg_identity(pde_t * pgd)

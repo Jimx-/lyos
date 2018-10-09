@@ -26,18 +26,19 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include <elf.h>
 #include "libexec.h"
 #include <asm/page.h>
-#include "lyos/vm.h"
+#include <lyos/vm.h>
 #include <sys/mman.h>
+
+#include "exec_elf.h"
 
 //#define ELF_DEBUG
 
-PRIVATE int elf_check_header(Elf32_Ehdr * elf_hdr);
-PRIVATE int elf_unpack(char * hdr, Elf32_Ehdr ** elf_hdr, Elf32_Phdr ** prog_hdr);
+PRIVATE int elf_check_header(Elf_Ehdr * elf_hdr);
+PRIVATE int elf_unpack(char * hdr, Elf_Ehdr ** elf_hdr, Elf_Phdr ** prog_hdr);
 
-PRIVATE int elf_check_header(Elf32_Ehdr * elf_hdr)
+PRIVATE int elf_check_header(Elf_Ehdr * elf_hdr)
 {
 	if (elf_hdr->e_ident[0] != 0x7f || (elf_hdr->e_type != ET_EXEC && elf_hdr->e_type != ET_DYN)) {
 		return ENOEXEC;
@@ -46,18 +47,18 @@ PRIVATE int elf_check_header(Elf32_Ehdr * elf_hdr)
 	return 0;
 }
 
-PRIVATE int elf_unpack(char * hdr, Elf32_Ehdr ** elf_hdr, Elf32_Phdr ** prog_hdr)
+PRIVATE int elf_unpack(char * hdr, Elf_Ehdr ** elf_hdr, Elf_Phdr ** prog_hdr)
 {
-	*elf_hdr = (Elf32_Ehdr *)hdr;
-	*prog_hdr = (Elf32_Phdr *)(hdr + (*elf_hdr)->e_phoff);
+	*elf_hdr = (Elf_Ehdr *)hdr;
+	*prog_hdr = (Elf_Phdr *)(hdr + (*elf_hdr)->e_phoff);
 
 	return 0;
 }
 
 PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen)
 {
-    Elf32_Ehdr* elf_hdr;
-    Elf32_Phdr* prog_hdr;
+    Elf_Ehdr* elf_hdr;
+    Elf_Phdr* prog_hdr;
 
     if (elf_unpack(hdr, &elf_hdr, &prog_hdr)) return 0;
 
@@ -84,11 +85,11 @@ PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen
 PUBLIC int libexec_load_elf(struct exec_info * execi)
 {
     int retval;
-    Elf32_Ehdr * elf_hdr;
-    Elf32_Phdr * prog_hdr;
+    Elf_Ehdr * elf_hdr;
+    Elf_Phdr * prog_hdr;
     uintptr_t load_base = 0xffffffff;
 
-    if ((retval = elf_check_header((Elf32_Ehdr *)execi->header)) != 0) return retval;
+    if ((retval = elf_check_header((Elf_Ehdr *)execi->header)) != 0) return retval;
 
     if ((retval = elf_unpack(execi->header, &elf_hdr, &prog_hdr)) != 0) return retval;
 
@@ -99,7 +100,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     int i;
     /* load every segment */
     for (i = 0; i < elf_hdr->e_phnum; i++) {
-        Elf32_Phdr * phdr = &prog_hdr[i];
+        Elf_Phdr * phdr = &prog_hdr[i];
         off_t foffset;
         uintptr_t vaddr;
         size_t fsize, memsize, clearend = 0;

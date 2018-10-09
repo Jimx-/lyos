@@ -18,4 +18,6 @@ typedef struct {
 
 #define RISCV_VM_PMD_ENTRIES     (ARCH_PG_SIZE / sizeof(pmd_t))
 
+#define ARCH_PMDE(x)            (((unsigned long)(x) >> RISCV_PMD_SHIFT) & (RISCV_VM_PMD_ENTRIES-1))
+
 #endif // _ARCH_PAGE_64_H_

@@ -122,8 +122,8 @@ PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
     /* setup boot modules */
 #define SET_MODULE(nr, name) do { \
     extern char _bootmod_##name##_start[], _bootmod_##name##_end[]; \
-    kinfo.modules[nr].start_addr = (void*)*(&_bootmod_##name##_start) - va_pa_offset; \
-    kinfo.modules[nr].end_addr = (void*)*(&_bootmod_##name##_end) - va_pa_offset; } while(0)
+    kinfo.modules[nr].start_addr = (void*)*(&_bootmod_##name##_start); \
+    kinfo.modules[nr].end_addr = (void*)*(&_bootmod_##name##_end); } while(0)
 
     SET_MODULE(TASK_MM, mm);
     SET_MODULE(TASK_PM, pm);

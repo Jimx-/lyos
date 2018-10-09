@@ -42,13 +42,13 @@ PUBLIC struct proc * arch_switch_to_user()
 {
 }
 
-PRIVATE int kernel_clearmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     memset((void *)vaddr, 0, len);
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info * execi, int vaddr, size_t len)
+PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
     memset((void *)vaddr, 0, len);
@@ -56,7 +56,7 @@ PRIVATE int kernel_allocmem(struct exec_info * execi, int vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
     memcpy((void *)vaddr, (char*)execi->header + offset, len);
@@ -66,8 +66,6 @@ PRIVATE int read_segment(struct exec_info *execi, off_t offset, int vaddr, size_
 
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
 {
-    struct kinfo_module * mod = &kinfo.modules[bp->proc_nr];
-
     /* make MM run */
     if (bp->proc_nr == TASK_MM) {
         struct exec_info execi;
@@ -77,7 +75,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.stack_size = PROC_ORIGIN_STACK;
 
         /* header */
-        execi.header = bp->base;
+        execi.header = (void*) bp->base;
         execi.header_len = bp->len;
 
         execi.allocmem = kernel_allocmem;
