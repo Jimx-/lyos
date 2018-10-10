@@ -150,7 +150,6 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             execi->brk = (void*) roundup((uintptr_t) execi->brk, sizeof(int));
         }
 
-        //if (0) {
         if (execi->memmap && execi->memmap(execi, (void*) vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
             /* allocate remaining memory */
             if (memsize > fsize) {

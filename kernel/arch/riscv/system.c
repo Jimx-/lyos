@@ -44,14 +44,16 @@ PUBLIC struct proc * arch_switch_to_user()
 
 PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
 {
-    memset((void *)vaddr, 0, len);
+    enable_user_access();
+    memset(vaddr, 0, len);
+    disable_user_access();
+
     return 0;
 }
 
 PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
-    memset((void *)vaddr, 0, len);
 
     return 0;
 }
@@ -59,7 +61,10 @@ PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
 PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
+
+    enable_user_access();
     memcpy((void *)vaddr, (char*)execi->header + offset, len);
+    disable_user_access();
 
     return 0;
 }

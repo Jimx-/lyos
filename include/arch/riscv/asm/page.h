@@ -22,7 +22,7 @@
 #define KERNEL_VMA      CONFIG_KERNEL_VMA
 #define VMALLOC_START   (KERNEL_VMA + LOWMEM_END)
 #define VMALLOC_END     0xf7c00000
-#define VM_STACK_TOP    0x80000000000
+#define VM_STACK_TOP    0x8000000000UL
 
 #define RISCV_PG_SHIFT    (12)
 #define RISCV_PG_SIZE     (1UL << RISCV_PG_SHIFT)
@@ -112,7 +112,7 @@ extern  unsigned long va_pa_offset;
 
 #define ARCH_VM_ADDRESS(pde, pte, offset)   ((pde << RISCV_PGD_SHIFT) | (pte << RISCV_PG_SHIFT) | offset)
 
-#define ARCH_PTE(v)             (((unsigned long)(v) >> RISCV_PG_SHIFT) & 0xff)
+#define ARCH_PTE(v)             (((unsigned long)(v) >> RISCV_PG_SHIFT) & (ARCH_VM_PT_ENTRIES-1))
 #define ARCH_PDE(x)             ((unsigned long)(x) >> RISCV_PGD_SHIFT)
 
 #define __pa(x)     ((phys_bytes)(x) - va_pa_offset)

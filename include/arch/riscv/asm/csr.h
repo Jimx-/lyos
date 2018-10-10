@@ -1,6 +1,9 @@
 #ifndef _ARCH_CSR_H_
 #define _ARCH_CSR_H_
 
+/* Status register flags */
+#define SR_SUM  0x00040000UL    /* Supervisor may access User Memory */
+
 /* SATP flags */
 #if __riscv_xlen == 32
 #define SATP_PPN     0x003FFFFFUL

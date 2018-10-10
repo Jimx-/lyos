@@ -203,7 +203,7 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
         }
 
         pte_t* pte = pte_offset(pmde, (unsigned long) vir_addr);
-        *pte = pfn_pte(((unsigned long) vir_addr) >> ARCH_PG_SHIFT, RISCV_PG_EXEC_WRITE);
+        *pte = pfn_pte(ph >> ARCH_PG_SHIFT, RISCV_PG_EXEC_WRITE);
 
         vir_addr += ARCH_PG_SIZE;
         if (phys_addr != 0) phys_addr += ARCH_PG_SIZE;

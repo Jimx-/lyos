@@ -3,7 +3,7 @@
 
 #include <asm/pagetable-bits.h>
 
-#define _RISCV_PG_BASE  (_RISCV_PG_PRESENT | _RISCV_PG_ACCESSED | _RISCV_PG_USER)
+#define _RISCV_PG_BASE  (_RISCV_PG_PRESENT | _RISCV_PG_ACCESSED | _RISCV_PG_USER | _RISCV_PG_DIRTY)
 
 #define RISCV_PG_NONE       __pgprot(0)
 #define RISCV_PG_READ       __pgprot(_RISCV_PG_BASE | _RISCV_PG_READ)

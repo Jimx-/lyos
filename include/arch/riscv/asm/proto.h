@@ -16,6 +16,8 @@
 #ifndef _ARCH_PROTO_H_
 #define _ARCH_PROTO_H_
 
+#include <asm/csr.h>
+
 /* in/out functions */
 #define out_long(a, b) *((volatile unsigned int *)(a)) = (b)
 #define in_long(a) (*((volatile unsigned int *)(a)))
@@ -32,5 +34,15 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
 PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
 
 PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, void** mapped_addr);
+
+PRIVATE inline void enable_user_access()
+{
+    __asm__ __volatile__ ("csrs sstatus, %0" : : "r" (SR_SUM) : "memory");
+}
+
+PRIVATE inline void disable_user_access()
+{
+    __asm__ __volatile__ ("csrc sstatus, %0" : : "r" (SR_SUM) : "memory");
+}
 
 #endif
