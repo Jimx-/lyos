@@ -120,6 +120,14 @@ PUBLIC void arch_set_syscall_result(struct proc * p, int result)
 
 PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)
 {
+    memcpy(p->name, name, PROC_NAME_LEN);
+
+    p->regs.sp = (reg_t) sp;
+    p->regs.sepc = (reg_t) ip;
+    p->regs.a0 = (reg_t) ps->ps_nargvstr;
+    p->regs.a1 = (reg_t) ps->ps_argvstr;
+    p->regs.a2 = (reg_t) ps->ps_envstr;
+
     return 0;
 }
 
