@@ -17,10 +17,10 @@
 #define	_ARCH_SMP_H_
 
 #if CONFIG_SMP
-#define cpuid  ({                                   \
-    register unsigned long tp __asm__("tp");        \
+#define cpuid  (({                                   \
+    register struct proc* tp __asm__("tp");        \
     tp;                                             \
-    })
+    })->regs.cpu)
 #else
 #define cpuid   0
 #endif

@@ -2,6 +2,7 @@
 #include <asm/const.h>
 #include <asm/csr.h>
 #include <asm/asm.h>
+#include <sconst.h>
 
 .section .head
 
@@ -34,7 +35,8 @@ _lyos_start:
 
     /* reload stack pointer and save hart id */
     la sp, KStackTop
-    mv tp, s0
+    la tp, init_stackframe
+    sw s0, P_CPU(tp)
 
     /* start kernel */
     mv a0, s0

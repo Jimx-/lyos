@@ -36,9 +36,9 @@
 #ifndef __ASSEMBLY__
 
 #ifdef CONFIG_64BIT
-#include <asm/page-64.h>
+#include <asm/page_64.h>
 #else
-#include <asm/page-32.h>
+#include <asm/page_32.h>
 #endif
 
 typedef struct {

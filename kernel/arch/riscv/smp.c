@@ -37,7 +37,9 @@ PRIVATE int __cpu_ready;
 PUBLIC void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
 PUBLIC void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
 
-PRIVATE void smp_start_cpu(int hart_id);
+PUBLIC struct stackframe init_stackframe;   /* used to retrieve the id of the init cpu */
+
+PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc);
 
 PRIVATE int fdt_scan_hart(void* blob, unsigned long offset, const char* name, int depth, void* arg)
 {
@@ -52,19 +54,20 @@ PRIVATE int fdt_scan_hart(void* blob, unsigned long offset, const char* name, in
 
     if (hart_id == cpuid) return 0;
 
-    smp_start_cpu(hart_id);
+    smp_start_cpu(hart_id, get_cpu_var_ptr(hart_id, idle_proc));
 
     return 0;
 }
 
-PRIVATE void smp_start_cpu(int hart_id)
+PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc)
 {
     __cpu_ready = -1;
+    idle_proc->regs.cpu = hart_id;
 
     __asm__ __volatile__ ("fence rw, rw" : : : "memory");
 
     __cpu_stack_pointer[hart_id] = get_k_stack_top(hart_id);
-    __cpu_task_pointer[hart_id] = (void*) hart_id;
+    __cpu_task_pointer[hart_id] = (void*) idle_proc;
 
     while (__cpu_ready != hart_id) ;
 
@@ -74,6 +77,8 @@ PRIVATE void smp_start_cpu(int hart_id)
 PUBLIC void smp_init()
 {
     of_scan_fdt(fdt_scan_hart, NULL, initial_boot_params);
+
+    finish_bsp_booting();
 }
 
 PUBLIC void smp_boot_ap()
