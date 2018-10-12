@@ -206,14 +206,17 @@ do_exception:
 	andi a0, a0, SR_SPP     /* in_kernel */
     mv a1, tp               /* proc_ptr */
 
-    slli t0, s4, RISCV_LGPTR
+    slli t0, s3, RISCV_LGPTR
     la t1, exc_vector_table
     la t2, exc_vector_table_end
     add t0, t1, t0
     bgeu t1, t2, 1f
 
     REG_L t0, 0(t0)
-    jr t0
+    jalr t0
+
+.L2:
+    j .L2
 
     tail switch_to_user
 
@@ -243,12 +246,12 @@ restore_user_context:
     csrw sscratch, tp
 
 restore_all:
-    restore_fstate
-
     REG_L a0, SSTATUSREG(tp)
     REG_L a1, SEPCREG(tp)
     csrw sstatus, a0
     csrw sepc, a1
+
+    restore_fstate
 
 	REG_L x1,  RAREG(tp)
 	REG_L x2,  SPREG(tp)
@@ -286,20 +289,20 @@ restore_all:
     sret
 
 exc_vector_table:
+	RISCV_PTR do_trap_insn_misaligned
+	RISCV_PTR do_trap_insn_fault
+	RISCV_PTR do_trap_insn_illegal
+	RISCV_PTR do_trap_break
+	RISCV_PTR do_trap_load_misaligned
+	RISCV_PTR do_trap_load_fault
+	RISCV_PTR do_trap_store_misaligned
+	RISCV_PTR do_trap_store_fault
+	RISCV_PTR do_trap_ecall_u
+	RISCV_PTR do_trap_ecall_s
 	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_ecall_m
+	RISCV_PTR do_page_fault
+	RISCV_PTR do_page_fault
 	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
-	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_page_fault
 exc_vector_table_end:

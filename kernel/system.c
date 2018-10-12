@@ -115,7 +115,7 @@ PRIVATE int finish_sys_call(struct proc * p_proc, MESSAGE * msg, int result)
 PRIVATE int dispatch_sys_call(int call_nr, MESSAGE * msg, struct proc * p_proc)
 {
     int retval;
-    
+
     if (sys_call_table[call_nr]) {
         sys_call_handler_t handler = sys_call_table[call_nr];
         retval = handler(msg, p_proc);

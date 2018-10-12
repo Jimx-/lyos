@@ -60,7 +60,7 @@ PRIVATE void kputs(char * s);
  * 
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC int sys_printx(MESSAGE * m, struct proc* p_proc)
+PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
 {
 	switch (m->REQUEST) {
 	case PRX_OUTPUT:
@@ -97,7 +97,7 @@ PRIVATE void kputc(char c)
 /**
  * <Ring 0> Put a string into kernel log buffer.
  */
-PRIVATE void kputs(char * s)
+PRIVATE void kputs(char* s)
 {
 	const char * p;
 	char ch;

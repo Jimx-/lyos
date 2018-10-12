@@ -57,3 +57,63 @@ PUBLIC void do_trap_unknown(int in_kernel, struct proc* p)
 {
     printk("unknown trap\n");
 }
+
+PUBLIC void do_trap_insn_misaligned(int in_kernel, struct proc* p)
+{
+    printk("insn misaligned\n");
+}
+
+PUBLIC void do_trap_insn_fault(int in_kernel, struct proc* p)
+{
+    printk("insn fault\n");
+}
+
+PUBLIC void do_trap_insn_illegal(int in_kernel, struct proc* p)
+{
+    printk("insn illegal\n");
+}
+
+PUBLIC void do_trap_break(int in_kernel, struct proc* p)
+{
+    printk("break\n");
+}
+
+PUBLIC void do_trap_load_misaligned(int in_kernel, struct proc* p)
+{
+    printk("load misaligned\n");
+}
+
+PUBLIC void do_trap_load_fault(int in_kernel, struct proc* p)
+{
+    printk("load fault\n");
+}
+
+PUBLIC void do_trap_store_misaligned(int in_kernel, struct proc* p)
+{
+    printk("store misaligned\n");
+}
+
+PUBLIC void do_trap_store_fault(int in_kernel, struct proc* p)
+{
+    printk("store fault\n");
+}
+
+PUBLIC void do_trap_ecall_u(int in_kernel, struct proc* p)
+{
+    printk("ecall u\n");
+}
+
+PUBLIC void do_trap_ecall_s(int in_kernel, struct proc* p)
+{
+    printk("ecall s\n");
+}
+
+PUBLIC void do_trap_ecall_m(int in_kernel, struct proc* p)
+{
+    printk("ecall m\n");
+}
+
+PUBLIC void do_page_fault(int in_kernel, struct proc* p)
+{
+    printk("page fault %d %x %lx %lx\n", in_kernel, p->regs.scause, p->regs.sbadaddr, p->regs.sepc);
+}
