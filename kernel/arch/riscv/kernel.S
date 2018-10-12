@@ -179,9 +179,11 @@ fstate_saved:
 .option pop
 
     mv s0, a0
+    mv s2, a1
     mv a0, tp
     call stop_context
     mv a0, s0
+    mv a1, s2
 
     /* check whether cause is interrupt or exception */
     bge s3, zero, do_exception
