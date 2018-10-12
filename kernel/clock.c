@@ -56,7 +56,7 @@ extern void timer_expire(struct list_head* list, clock_t timestamp);
  * @param clocksource The jiffies clocksource.
  * @return The jiffies.
  *****************************************************************************/
-PRIVATE u64 read_jiffies(struct clocksource * cs)
+PRIVATE u64 read_jiffies(struct clocksource* cs)
 {
     return jiffies;
 }
@@ -176,7 +176,7 @@ PUBLIC int init_ap_timer(int freq)
 PUBLIC void stop_context(struct proc * p)
 {
     spinlock_lock(&clocksource_lock);
-    u64 * ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
+    u64* ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
 
     if (!curr_clocksource) return;
     u64 cycle = curr_clocksource->read(curr_clocksource);

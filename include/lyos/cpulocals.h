@@ -28,9 +28,9 @@ extern struct CPULOCAL_STRUCT {
 	struct proc * run_queue_head[NR_SCHED_QUEUES];
 	struct proc * run_queue_tail[NR_SCHED_QUEUES];
 
-	volatile u8 cpu_is_idle;
+	volatile int cpu_is_idle;
 
-	u8 fpu_present;
+	int fpu_present;
 
 	u64 context_switch_clock;
 	

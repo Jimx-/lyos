@@ -63,6 +63,7 @@ PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc)
 {
     __cpu_ready = -1;
     idle_proc->regs.cpu = hart_id;
+    init_tss(hart_id, get_k_stack_top(hart_id));
 
     __asm__ __volatile__ ("fence rw, rw" : : : "memory");
 
@@ -76,6 +77,8 @@ PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc)
 
 PUBLIC void smp_init()
 {
+    init_tss(cpuid, get_k_stack_top(cpuid));
+
     of_scan_fdt(fdt_scan_hart, NULL, initial_boot_params);
 
     finish_bsp_booting();
@@ -85,6 +88,8 @@ PUBLIC void smp_boot_ap()
 {
     __cpu_ready = cpuid;
     printk("smp: CPU %d is up\n", cpuid);
+
+    init_prot();
 
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);

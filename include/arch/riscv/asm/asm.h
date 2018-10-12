@@ -10,6 +10,7 @@
 #endif
 
 #define REG_L       __REG_SEL(ld, lw)
+#define REG_S       __REG_SEL(sd, sw)
 #define REG_SHIFT   __REG_SEL(3, 2)
 
 #endif // _ARCH_ASM_H_

@@ -16,7 +16,7 @@
 #ifndef	_ARCH_TYPE_H_
 #define	_ARCH_TYPE_H_
 
-#include "stackframe.h"
+#include <asm/stackframe.h>
     
 struct cpu_info {
     

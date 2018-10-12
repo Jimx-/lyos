@@ -1,3 +1,5 @@
+#include <asm/csr.h>
+
 .section .text
 
 .globl copy_user_message
@@ -11,6 +13,10 @@ copy_user_message:
     ret
 
 halt_cpu:
+    fence
+    csrs sstatus, SR_SIE
+    wfi
+    csrc sstatus, SR_SIE
     ret
 
 arch_pause:

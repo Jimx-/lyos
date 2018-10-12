@@ -38,8 +38,18 @@ Lyos is free software: you can redistribute it and/or modify
 
 PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC struct proc * arch_switch_to_user()
+PUBLIC struct proc* arch_switch_to_user()
 {
+    struct proc* p;
+    reg_t stk;
+
+    stk = tss[cpuid].sp0;
+    p = get_cpulocal_var(proc_ptr);
+
+    p->regs.kernel_sp = stk;
+    p->regs.cpu = cpuid;
+
+    return p;
 }
 
 PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
@@ -94,6 +104,10 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
 
         if (libexec_load_elf(&execi) != 0) panic("can't load MM");
         strcpy(p->name, bp->name);
+
+        p->regs.sepc = (reg_t) execi.entry_point;
+        p->regs.sp = (reg_t) VM_STACK_TOP;
+        p->regs.a2 = (reg_t) 0; // environ
     }
 }
 
@@ -116,6 +130,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
 
 PUBLIC void arch_set_syscall_result(struct proc * p, int result)
 {
+    p->regs.a0 = (reg_t) result;
 }
 
 PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)

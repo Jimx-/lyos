@@ -25,9 +25,10 @@
 #endif
 
 #ifdef __arm__
-#include <asm/type.h>
 #include <asm/page.h>
 #endif
+
+#include <asm/type.h>
 
 #include <lyos/param.h>
 #include <lyos/priv.h>
@@ -59,6 +60,7 @@ EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 EXTERN  u32                 bsp_cpu_id;
 extern  pde_t               initial_pgd[];
 EXTERN  unsigned long       va_pa_offset;
+EXTERN  struct tss          tss[CONFIG_SMP_MAX_CPUS];
 #endif
 
 extern  int booting_cpu;

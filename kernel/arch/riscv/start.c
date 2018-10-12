@@ -198,4 +198,5 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
 
 PUBLIC void init_arch()
 {
+    init_prot();
 }

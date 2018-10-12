@@ -11,7 +11,7 @@
 
 /* register offsets into stackframe */
 #define P_STACKBASE 0
-#define SEPCREG     P_STACKBASE + REG_SIZE
+#define SEPCREG     P_STACKBASE
 #define RAREG       SEPCREG + REG_SIZE
 #define SPREG       RAREG + REG_SIZE
 #define KERNELSPREG SPREG + REG_SIZE
@@ -46,9 +46,45 @@
 #define T6REG       T5REG + REG_SIZE
 #define SSTATUSREG  T6REG + REG_SIZE
 #define SBADADDRREG SSTATUSREG + REG_SIZE
-#define SCAUSE      SBADADDRREG + REG_SIZE
+#define SCAUSEREG   SBADADDRREG + REG_SIZE
 
-#define P_ORIGA0    SCAUSE + REG_SIZE
+#define P_ORIGA0    SCAUSEREG + REG_SIZE
 #define P_CPU       P_ORIGA0 + REG_SIZE
+
+#define P_TBR       P_CPU + REG_SIZE
+
+#define F0REG       P_TBR + REG_SIZE
+#define F1REG       F0REG + 8
+#define F2REG       F1REG + 8
+#define F3REG       F2REG + 8
+#define F4REG       F3REG + 8
+#define F5REG       F4REG + 8
+#define F6REG       F5REG + 8
+#define F7REG       F6REG + 8
+#define F8REG       F7REG + 8
+#define F9REG       F8REG + 8
+#define F10REG      F9REG + 8
+#define F11REG      F10REG + 8
+#define F12REG      F11REG + 8
+#define F13REG      F12REG + 8
+#define F14REG      F13REG + 8
+#define F15REG      F14REG + 8
+#define F16REG      F15REG + 8
+#define F17REG      F16REG + 8
+#define F18REG      F17REG + 8
+#define F19REG      F18REG + 8
+#define F20REG      F19REG + 8
+#define F21REG      F20REG + 8
+#define F22REG      F21REG + 8
+#define F23REG      F22REG + 8
+#define F24REG      F23REG + 8
+#define F25REG      F24REG + 8
+#define F26REG      F25REG + 8
+#define F27REG      F26REG + 8
+#define F28REG      F27REG + 8
+#define F29REG      F28REG + 8
+#define F30REG      F29REG + 8
+#define F31REG      F30REG + 8
+#define FCSRREG     F31REG + 8
 
 #endif // _ARCH_SCONST_H_

@@ -12,14 +12,23 @@
 .section .text
 
 _start:
+    # initialize global pointer
+.option push
+.option norelax
+    la      gp, __global_pointer$
+.option pop
+
     mv      s0, a0
     mv      s1, a1
     mv      s2, a2
-	call	__lyos_init
+
+    mv      a0, s2
+    call	__lyos_init
+
     mv      a0, s0
     mv      a1, s1
     mv      a2, s2
 
-	call		main
+    call		main
 
-	call 		_exit
+    call 		_exit

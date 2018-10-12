@@ -20,6 +20,7 @@
 #include <lyos/list.h>
 #include <asm/stackframe.h>
 #include <asm/page.h>
+#include <asm/fpu.h>
 #include <lyos/spinlock.h>
 #include <lyos/endpoint.h>
 
@@ -109,6 +110,7 @@
 struct proc {
 	struct stackframe regs;    /* process registers saved in stack frame */
 	struct segframe seg;
+	struct fpu_state fstate;
 
 	spinlock_t lock;
 

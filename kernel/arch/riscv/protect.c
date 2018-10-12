@@ -27,18 +27,26 @@
 #include <asm/proto.h>
 #include <asm/smp.h>
 #include <asm/type.h>
+#include <asm/csr.h>
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>
 
 PUBLIC struct tss tss[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
+extern void trap_entry(void);
+
+PUBLIC int init_tss(unsigned int cpu, void* kernel_stack)
 {
+    struct tss* t = &tss[cpu];
+
+    t->sp0 = (reg_t) kernel_stack;
     return 0;
 }
 
 PUBLIC void init_prot()
 {
+    csr_write(stvec, &trap_entry);
+    csr_write(sie, -1);
 }
 
 PUBLIC void irq_entry_handle()
