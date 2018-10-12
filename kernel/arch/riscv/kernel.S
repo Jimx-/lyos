@@ -202,7 +202,24 @@ do_exception:
     li t0, EXC_SYSCALL
     beq s3, t0, do_syscall
 
-    nop
+	REG_L a0, SSTATUSREG(tp)
+	andi a0, a0, SR_SPP     /* in_kernel */
+    mv a1, tp               /* proc_ptr */
+
+    slli t0, s4, RISCV_LGPTR
+    la t1, exc_vector_table
+    la t2, exc_vector_table_end
+    add t0, t1, t0
+    bgeu t1, t2, 1f
+
+    REG_L t0, 0(t0)
+    jr t0
+
+    tail switch_to_user
+
+1:
+    call do_trap_unknown
+    tail switch_to_user
 
 do_syscall:
     REG_S a0, P_ORIGA0(tp)
@@ -268,3 +285,21 @@ restore_all:
 
     sret
 
+exc_vector_table:
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+	RISCV_PTR do_trap_unknown
+exc_vector_table_end:

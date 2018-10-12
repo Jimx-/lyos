@@ -52,3 +52,8 @@ PUBLIC void init_prot()
 PUBLIC void irq_entry_handle()
 {
 }
+
+PUBLIC void do_trap_unknown(int in_kernel, struct proc* p)
+{
+    printk("unknown trap\n");
+}
