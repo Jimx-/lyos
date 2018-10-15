@@ -125,10 +125,18 @@ PUBLIC void identify_cpu()
 
 PUBLIC int arch_reset_proc(struct proc * p)
 {
+    memset(&p->regs, 0, sizeof(p->regs));
+
+    if (p->endpoint == TASK_MM) {
+        /* use bootstrap page table */
+        p->seg.ptbr_phys = (reg_t) __pa(initial_pgd);
+        p->seg.ptbr_vir = (reg_t*) initial_pgd;
+    }
+
     return 0;
 }
 
-PUBLIC void arch_set_syscall_result(struct proc * p, int result)
+PUBLIC void arch_set_syscall_result(struct proc* p, int result)
 {
     p->regs.a0 = (reg_t) result;
 }

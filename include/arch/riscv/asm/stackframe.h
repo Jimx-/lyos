@@ -64,7 +64,8 @@ struct stackframe {
 };
 
 struct segframe {
-    reg_t tbr;
+    reg_t ptbr_phys;
+    reg_t* ptbr_vir;
 };
 
 struct sigcontext {

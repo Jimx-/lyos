@@ -51,9 +51,10 @@
 #define P_ORIGA0    SCAUSEREG + REG_SIZE
 #define P_CPU       P_ORIGA0 + REG_SIZE
 
-#define P_TBR       P_CPU + REG_SIZE
+#define P_TBR_PHYS  P_CPU + REG_SIZE
+#define P_TBR_VIR   P_TBR_PHYS + REG_SIZE
 
-#define F0REG       P_TBR + REG_SIZE
+#define F0REG       P_TBR_VIR + REG_SIZE
 #define F1REG       F0REG + 8
 #define F2REG       F1REG + 8
 #define F3REG       F2REG + 8

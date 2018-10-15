@@ -45,4 +45,21 @@ PRIVATE inline void disable_user_access()
     __asm__ __volatile__ ("csrc sstatus, %0" : : "r" (SR_SUM) : "memory");
 }
 
+PRIVATE inline void flush_tlb()
+{
+	__asm__ __volatile__ ("sfence.vma" : : : "memory");
+}
+
+PRIVATE inline phys_bytes read_ptbr()
+{
+    reg_t ptbr = csr_read(sptbr);
+    return (phys_bytes) ((ptbr & SATP_PPN) << ARCH_PG_SHIFT);
+}
+
+PRIVATE inline void write_ptbr(phys_bytes ptbr)
+{
+    flush_tlb();
+    csr_write(sptbr, (ptbr >> ARCH_PG_SHIFT) | SATP_MODE);
+}
+
 #endif

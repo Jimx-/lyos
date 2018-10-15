@@ -34,6 +34,7 @@ PUBLIC	int	printx(char * s)
     memset(&m, 0, sizeof(m));
     m.REQUEST = PRX_OUTPUT;
     m.BUF = s;
+    m.BUF_LEN = strlen(s);
 
     return syscall_entry(NR_PRINTX, &m);
 }

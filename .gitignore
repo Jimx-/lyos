@@ -89,5 +89,6 @@ scripts/download
 #
 # Index
 #
+.ccls-cache
 .cquery_cached_index
 compile_commands.json

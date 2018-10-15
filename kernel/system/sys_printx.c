@@ -62,16 +62,27 @@ PRIVATE void kputs(char * s);
  *****************************************************************************/
 PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
 {
-	switch (m->REQUEST) {
-	case PRX_OUTPUT:
-		kputs(m->BUF);
-		break;
-	case PRX_REGISTER:
-		p_proc->priv->kernlog_request = TRUE;
-		break;
-	}
+	char buf[80*25 + 1];
+	int retval;
 
-	return 0;
+    switch (m->REQUEST) {
+    case PRX_OUTPUT:
+		if (m->BUF_LEN >= sizeof(buf)) {
+			return EINVAL;
+		}
+
+		retval = data_vir_copy_check(p_proc, KERNEL, buf, p_proc->endpoint, m->BUF, m->BUF_LEN);
+		if (retval) return retval;
+
+		buf[m->BUF_LEN] = '\0';
+        kputs(buf);
+        break;
+    case PRX_REGISTER:
+        p_proc->priv->kernlog_request = TRUE;
+        break;
+    }
+
+    return 0;
 }
 
 /**
@@ -79,19 +90,19 @@ PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
  */
 PRIVATE void kputc(char c)
 {
-	if (c != 0) {
-		kern_log.buf[kern_log.next] = c;
-		if (kern_log.size < sizeof(kern_log.buf)) kern_log.size++;
-		kern_log.next = (kern_log.next + 1) % KERN_LOG_SIZE;
-	} else {	/* inform output process */
-		struct priv * priv;
-		for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
-			if (priv->proc_nr != NO_TASK && priv->kernlog_request) 
-				msg_notify(proc_addr(KERNEL), proc_addr(priv->proc_nr)->endpoint);
-				//inform_kernel_log(proc_addr(priv->proc_nr)->endpoint);
-		}
-		//inform_kernel_log(TASK_TTY);
-	}
+    if (c != 0) {
+        kern_log.buf[kern_log.next] = c;
+        if (kern_log.size < sizeof(kern_log.buf)) kern_log.size++;
+        kern_log.next = (kern_log.next + 1) % KERN_LOG_SIZE;
+    } else {    /* inform output process */
+        struct priv * priv;
+        for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
+            if (priv->proc_nr != NO_TASK && priv->kernlog_request)
+                msg_notify(proc_addr(KERNEL), proc_addr(priv->proc_nr)->endpoint);
+                //inform_kernel_log(proc_addr(priv->proc_nr)->endpoint);
+        }
+        //inform_kernel_log(TASK_TTY);
+    }
 }
 
 /**
@@ -99,19 +110,19 @@ PRIVATE void kputc(char c)
  */
 PRIVATE void kputs(char* s)
 {
-	const char * p;
-	char ch;
+    const char * p;
+    char ch;
 
-	p = s;
+    p = s;
 
-	spinlock_lock(&kern_log.lock);
+    spinlock_lock(&kern_log.lock);
 
-	while ((ch = *p++) != 0) {
-		kputc(ch);
-	}
-	kputc(0);
-	direct_print("%s", s);
-	spinlock_unlock(&kern_log.lock);
+    while ((ch = *p++) != 0) {
+        kputc(ch);
+    }
+    kputc(0);
+    direct_print("%s", s);
+    spinlock_unlock(&kern_log.lock);
 }
 
 /*****************************************************************************
@@ -126,15 +137,15 @@ PRIVATE void kputs(char* s)
  *****************************************************************************/
 PUBLIC int printk(const char *fmt, ...)
 {
-	int i;
-	char buf[STR_DEFAULT_LEN];
-	va_list arg;
-	
-	va_start(arg, fmt);	
-	i = vsprintf(buf, fmt, arg);
-	kputs(buf);
+    int i;
+    char buf[STR_DEFAULT_LEN];
+    va_list arg;
 
-	va_end(arg);
+    va_start(arg, fmt);
+    i = vsprintf(buf, fmt, arg);
+    kputs(buf);
 
-	return i;
+    va_end(arg);
+
+    return i;
 }
