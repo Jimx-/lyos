@@ -31,29 +31,29 @@ PRIVATE inline u64 make64(unsigned long hi, unsigned long lo)
 }
 PRIVATE inline unsigned long ex64lo(u64 i)
 {
-	return (unsigned long)i;
+    return (unsigned long)i;
 }
 
 PRIVATE inline unsigned long ex64hi(u64 i)
 {
-	return (unsigned long)(i>>32);
+    return (unsigned long)(i>>32);
 }
 
-typedef int 				s32;
+typedef int                 s32;
 typedef	unsigned int		u32;
 typedef	unsigned short		u16;
 typedef	unsigned char		u8;
 
 #ifdef CONFIG_PHYS_BYTES_64BIT
-typedef u64 		phys_bytes;
+typedef u64         phys_bytes;
 #else
-typedef u32 		phys_bytes;
+typedef u32         phys_bytes;
 #endif
 
 typedef unsigned int        block_t;
 
-typedef int 				endpoint_t;
-typedef unsigned long 		priv_map_t;
+typedef int                 endpoint_t;
+typedef unsigned long       priv_map_t;
 
 typedef u32					bitchunk_t;
 
@@ -73,38 +73,38 @@ typedef struct irq_hook{
     irq_policy_t irq_policy;
 } irq_hook_t;
 
-typedef	int 	(*irq_handler_t)	(irq_hook_t * irq_hook);
+typedef	int     (*irq_handler_t)	(irq_hook_t * irq_hook);
 
 typedef u16 port_t;
 
 struct vir_addr {
-	void* addr;
-	endpoint_t proc_ep;
+    void* addr;
+    endpoint_t proc_ep;
 };
 
 struct proc;
 
 struct boot_proc {
-	int proc_nr;
-	char name[16];
-	endpoint_t endpoint;
-	phys_bytes base;
-	phys_bytes len;
+    int proc_nr;
+    char name[16];
+    endpoint_t endpoint;
+    phys_bytes base;
+    phys_bytes len;
 };
 
 struct ps_strings {
-	char	*ps_argvstr;	/* first of 0 or more argument strings */
-	int	ps_nargvstr;	/* the number of argument strings */
-	char	*ps_envstr;	/* first of 0 or more environment strings */
-	int	ps_nenvstr;	/* the number of environment strings */
+    char	*ps_argvstr;	/* first of 0 or more argument strings */
+    int	ps_nargvstr;	/* the number of argument strings */
+    char	*ps_envstr;	/* first of 0 or more environment strings */
+    int	ps_nenvstr;	/* the number of environment strings */
 };
 
 struct siginfo {
-	int mask;
-	int signo;
-	void* sig_handler;
-	void* sig_return;
-	void* stackptr;
+    int mask;
+    int signo;
+    void* sig_handler;
+    void* sig_return;
+    void* stackptr;
 };
 
 #endif /* _TYPE_H_ */

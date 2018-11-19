@@ -53,23 +53,22 @@ PUBLIC int kernlog_register()
  *****************************************************************************/
 /**
  * low level print
- * 
+ *
  * @param fmt  The format string
- * 
+ *
  * @return  The number of chars printed.
  *****************************************************************************/
 PUBLIC int printl(const char *fmt, ...)
 {
-	int i;
-	char buf[STR_DEFAULT_LEN];
-	va_list arg;
+    int i;
+    char buf[STR_DEFAULT_LEN];
+    va_list arg;
 
-	va_start(arg, fmt);	
-	i = vsprintf(buf, fmt, arg);
-	printx(buf);
+    va_start(arg, fmt);
+    i = vsprintf(buf, fmt, arg);
+    printx(buf);
 
-	va_end(arg);
+    va_end(arg);
 
-	return i;
+    return i;
 }
-

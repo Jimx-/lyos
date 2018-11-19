@@ -52,29 +52,29 @@ PRIVATE void kputs(char * s);
  * something goes really wrong and the system is to be halted; if it equals
  * MAG_CH_ASSERT, then this syscall was invoked by `assert()', which means
  * an assertion failure has occured. @see kernel/main lib/misc.c.
- * 
+ *
  * @param _unused1  Ignored.
  * @param _unused2  Ignored.
  * @param s         The string to be printed.
  * @param p_proc    Caller proc.
- * 
+ *
  * @return  Zero if success.
  *****************************************************************************/
 PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
 {
-	char buf[80*25 + 1];
-	int retval;
+    char buf[80*25 + 1];
+    int retval;
 
     switch (m->REQUEST) {
     case PRX_OUTPUT:
-		if (m->BUF_LEN >= sizeof(buf)) {
-			return EINVAL;
-		}
+        if (m->BUF_LEN >= sizeof(buf)) {
+            return EINVAL;
+        }
 
-		retval = data_vir_copy_check(p_proc, KERNEL, buf, p_proc->endpoint, m->BUF, m->BUF_LEN);
-		if (retval) return retval;
+        retval = data_vir_copy_check(p_proc, KERNEL, buf, p_proc->endpoint, m->BUF, m->BUF_LEN);
+        if (retval) return retval;
 
-		buf[m->BUF_LEN] = '\0';
+        buf[m->BUF_LEN] = '\0';
         kputs(buf);
         break;
     case PRX_REGISTER:
@@ -130,9 +130,9 @@ PRIVATE void kputs(char* s)
  *****************************************************************************/
 /**
  * Kernel's print
- * 
+ *
  * @param fmt  The format string
- * 
+ *
  * @return  The number of chars printed.
  *****************************************************************************/
 PUBLIC int printk(const char *fmt, ...)

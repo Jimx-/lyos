@@ -75,7 +75,6 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
     if (read_ptbr() != get_cpulocal_var(pt_proc)->seg.ptbr_phys) panic("bad pt_proc ptbr value");
 
     enable_user_access();
-
     while (len > 0) {
         size_t chunk = len;
         phys_bytes src_mapped, dest_mapped;
@@ -100,7 +99,6 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         src_la += chunk;
         dest_la += chunk;
     }
-
     disable_user_access();
 
     return 0;

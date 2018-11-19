@@ -21,15 +21,15 @@
 #define KINFO_MAGIC     0x4B494E
 
 #define KINFO_CMDLINE_LEN	1024
-#define KINFO_MAXMEMMAP 		40
+#define KINFO_MAXMEMMAP         40
 
 struct kinfo_mmap_entry {
-	u64 addr;
-	u64 len;
-	#define KINFO_MEMORY_AVAILABLE              1
-	#define KINFO_MEMORY_RESERVED               2
-	u32 type;
-};
+    u64 addr;
+    u64 len;
+    #define KINFO_MEMORY_AVAILABLE              1
+    #define KINFO_MEMORY_RESERVED               2
+    u32 type;
+} __attribute__((packed));
 
 struct kinfo_module {
     phys_bytes start_addr;
@@ -40,13 +40,13 @@ typedef struct kinfo {
     int magic;
 
     size_t memory_size;
-	int memmaps_count;
-	struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
+    int memmaps_count;
+    struct kinfo_mmap_entry memmaps[KINFO_MAXMEMMAP];
 
     struct kinfo_module modules[NR_BOOT_PROCS - NR_TASKS];
-	int mods_count;
+    int mods_count;
 
-	char cmdline[KINFO_CMDLINE_LEN];
+    char cmdline[KINFO_CMDLINE_LEN];
 
     unsigned int kernel_start_pde, kernel_end_pde;
     void* kernel_text_start, *kernel_text_end;
@@ -56,12 +56,12 @@ typedef struct kinfo {
     phys_bytes kernel_start_phys, kernel_end_phys;
 
     struct boot_proc boot_procs[NR_BOOT_PROCS];
-} kinfo_t;
+} __attribute__((packed)) kinfo_t;
 
 typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
 
 struct machine {
-    u32 cpu_count;
+    unsigned long cpu_count;
 };
 
 struct sysinfo {
