@@ -97,11 +97,11 @@ PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name, 
 
         if (size == 0) continue;
 
-		kinfo.memmaps[kinfo.memmaps_count].addr = base;
-		kinfo.memmaps[kinfo.memmaps_count].len = size;
-		kinfo.memmaps[kinfo.memmaps_count].type = KINFO_MEMORY_AVAILABLE;
-		kinfo.memmaps_count++;
-		kinfo.memory_size += size;
+        kinfo.memmaps[kinfo.memmaps_count].addr = base;
+        kinfo.memmaps[kinfo.memmaps_count].len = size;
+        kinfo.memmaps[kinfo.memmaps_count].type = KINFO_MEMORY_AVAILABLE;
+        kinfo.memmaps_count++;
+        kinfo.memory_size += size;
     }
 
     return 0;
@@ -111,7 +111,7 @@ PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
 {
     initial_boot_params = __va(dtb_phys);
 
-	kinfo.memmaps_count = 0;
+    kinfo.memmaps_count = 0;
     kinfo.memory_size = 0;
 
     k_stacks = &k_stacks_start;
@@ -138,6 +138,14 @@ PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
     SET_MODULE(TASK_SYSFS, sysfs);
     SET_MODULE(TASK_IPC, ipc);
     SET_MODULE(INIT, init);
+
+    /* kernel memory layout */
+    kinfo.kernel_text_start = (void*)*(&_text);
+    kinfo.kernel_data_start = (void*)*(&_data);
+    kinfo.kernel_bss_start = (void*)*(&_bss);
+    kinfo.kernel_text_end = (void*)*(&_etext);
+    kinfo.kernel_data_end = (void*)*(&_edata);
+    kinfo.kernel_bss_end = (void*)*(&_ebss);
 
     /* reserve memory used by the kernel */
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
@@ -181,13 +189,13 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
         while (*p++);
         p++;
     }
-    
+
     for (p = buf; p < bufend && (*p || *(p + 1)); p++);
     if (p > buf) p++;
-    
+
     if (p + namelen + valuelen + 3 > bufend)
         return -1;
-    
+
     strcpy(p, name);
     p[namelen] = '=';
     strcpy(p + namelen + 1, value);

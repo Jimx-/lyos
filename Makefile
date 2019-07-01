@@ -68,8 +68,8 @@ HD		= lyos-disk.img
 # Programs, flags, etc.
 HOSTCC	= gcc
 HOSTLD	= ld
-AS 		= $(SUBARCH)-elf-lyos-as
-AR 		= $(SUBARCH)-elf-lyos-ar
+AS		= $(SUBARCH)-elf-lyos-as
+AR		= $(SUBARCH)-elf-lyos-ar
 CC		= $(SUBARCH)-elf-lyos-gcc
 CPP	= $(SUBARCH)-elf-lyos-g++
 LD		= $(SUBARCH)-elf-lyos-ld
@@ -80,7 +80,7 @@ ASFLAGS = -I $(INCDIR)/ -I $(ARCHINCDIR)/
 SERVERCFLAGS	= -I $(INCDIR)/ -I $(SERVERSINCDIR)/ -I$(LIBDIR) -I $(ARCHINCDIR)/ -L$(LIBOUTDIR)/ -Wall -static
 MAKEFLAGS	+= --no-print-directory -I $(SRCDIR)/utils/mk/
 ARFLAGS	= rcs
-MAKE 		= make
+MAKE		= make
 
 ifeq ($(CONFIG_DEBUG_INFO),y)
 	CFLAGS += -g
@@ -288,4 +288,3 @@ install-servers:
 libc.so:
 	${CC} -shared -o ${DESTDIR}/usr/lib/libc.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libc.a -Wl,--no-whole-archive
 	${CC} -shared -o ${DESTDIR}/usr/lib/libg.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libg.a -Wl,--no-whole-archive
-

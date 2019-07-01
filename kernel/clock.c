@@ -86,8 +86,8 @@ PUBLIC int clock_handler(irq_hook_t * hook)
 #if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
 #endif
-	   if (++jiffies >= MAX_TICKS)
-		  jiffies = 0;
+       if (++jiffies >= MAX_TICKS)
+          jiffies = 0;
 #if CONFIG_SMP
     }
 #endif
