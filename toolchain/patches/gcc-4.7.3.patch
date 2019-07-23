@@ -30,7 +30,7 @@ diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
 +#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
 +
 +#undef  LINK_SPEC
-+#define LINK_SPEC "-m lyos_i386 \
++#define LINK_SPEC "\
 +  %{shared:-shared -dynamic-linker " "/lib/ld-lyos.so" "} \
 +  %{!shared: \
 +    %{!static: \
