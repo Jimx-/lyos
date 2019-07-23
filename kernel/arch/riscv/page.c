@@ -50,7 +50,7 @@ PUBLIC pmd_t trampoline_pmd[ARCH_VM_PMD_ENTRIES] __attribute__ ((__section__(".u
 #endif
 
 PUBLIC void pg_identity(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
-PUBLIC pde_t pg_mapkernel(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
+PUBLIC void pg_mapkernel(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
 PUBLIC void pg_load(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
 
 PUBLIC void setup_paging() __attribute__((__section__(".unpaged_text")));
@@ -106,7 +106,7 @@ PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
         struct kinfo_mmap_entry * entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
-        
+
         if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= ARCH_PG_SIZE)) {
             entry->addr += ARCH_PG_SIZE;
             entry->len -= ARCH_PG_SIZE;
@@ -214,7 +214,7 @@ PUBLIC void pg_identity(pde_t * pgd)
 {
 }
 
-PUBLIC pde_t pg_mapkernel(pde_t * pgd)
+PUBLIC void pg_mapkernel(pde_t * pgd)
 {
 }
 
@@ -222,6 +222,6 @@ PUBLIC void pg_load(pde_t * pgd)
 {
 }
 
-PUBLIC void switch_address_space(struct proc * p) 
+PUBLIC void switch_address_space(struct proc * p)
 {
 }

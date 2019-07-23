@@ -88,7 +88,7 @@ typedef struct {
 #define I386_PF_WRITE(x)        ((x) & I386_PG_RW)
 
 PUBLIC void pg_identity(pde_t * pgd);
-PUBLIC pde_t pg_mapkernel(pde_t * pgd);
+PUBLIC void pg_mapkernel(pde_t * pgd);
 PUBLIC void pg_load(pde_t * pgd);
 PUBLIC void enable_paging();
 PUBLIC void disable_paging();

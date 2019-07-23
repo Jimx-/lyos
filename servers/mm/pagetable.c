@@ -46,13 +46,6 @@ PRIVATE int nr_kern_mappings = 0;
 PRIVATE int global_bit = 0;
 #endif
 
-PRIVATE struct pagedir_mapping {
-    int pde_no;
-    phys_bytes phys_addr;
-    pte_t * entries;
-    pde_t val;
-} pagedir_mappings[MAX_PAGEDIR_PDES];
-
 PRIVATE struct mmproc * mmprocess = &mmproc_table[TASK_MM];
 PRIVATE struct mm_struct self_mm;
 //#define PAGETABLE_DEBUG    1
@@ -87,24 +80,6 @@ PUBLIC void pt_init()
     mm_init(mmprocess->mm);
     mmprocess->mm->slot = TASK_MM;
     mmprocess->active_mm = mmprocess->mm;
-
-    /* Setting up page dir mappings, which make all page dirs visible to kernel */
-    int end_pde = kernel_info.kernel_end_pde;
-    for (i = 0; i < MAX_PAGEDIR_PDES; i++) {
-        struct pagedir_mapping * pdm = &pagedir_mappings[i];
-        pdm->pde_no = end_pde++;
-        phys_bytes phys_addr;
-
-        if ((pdm->entries = (pte_t *)alloc_vmem(&phys_addr, ARCH_PG_SIZE, PGT_PAGETABLE)) == NULL)
-            panic("MM: no memory for pagedir mappings");
-
-        pdm->phys_addr = phys_addr;
-#if defined(__i386__)
-        pdm->val = __pde((phys_addr & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW);
-#elif defined(__arm__)
-        pdm->val = __pde((phys_addr & ARCH_PG_MASK) | ARM_VM_PDE_PRESENT | ARM_PG_CACHED | ARM_VM_PDE_DOMAIN);
-#endif
-    }
 
     pt_kern_mapping_init();
 
@@ -320,40 +295,35 @@ PUBLIC void pt_kern_mapping_init()
     while (!vmctl_get_kern_mapping(rindex, &addr, &len, &flags)) {
         if (rindex > MAX_KERN_MAPPINGS) panic("MM: too many kernel mappings");
 
-        if (addr) {
-            /* fill in mapping information */
-            kmapping->phys_addr = (phys_bytes) addr;
-            kmapping->len = len;
+        /* fill in mapping information */
+        kmapping->phys_addr = (phys_bytes) addr;
+        kmapping->len = len;
 
-            kmapping->flags = ARCH_PG_PRESENT;
-            if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
+        kmapping->flags = ARCH_PG_PRESENT;
+        if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
 #if defined(__arm__)
-            else kmapping->flags |= ARM_PG_SUPER;
+        else kmapping->flags |= ARM_PG_SUPER;
 #endif
-            if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
-            else kmapping->flags |= ARCH_PG_RO;
+        if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
+        else kmapping->flags |= ARCH_PG_RO;
 
 #if defined(__arm__)
-            kmapping->flags |= ARM_PG_CACHED;
+        kmapping->flags |= ARM_PG_CACHED;
 #endif
 
-            /* where this region will be mapped */
-            kmapping->vir_addr = pkmap_start;
-            if (!kmapping->vir_addr) panic("MM: cannot allocate memory for kernel mappings");
+        /* where this region will be mapped */
+        kmapping->vir_addr = pkmap_start;
+        if (!kmapping->vir_addr) panic("MM: cannot allocate memory for kernel mappings");
 
-            if (vmctl_reply_kern_mapping(rindex, (void*) kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
+        if (vmctl_reply_kern_mapping(rindex, (void*) kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
 
-            printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n",
-                    rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
+        printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n",
+                rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
 
-            pkmap_start += kmapping->len;
-            nr_kern_mappings++;
-            kmapping++;
-        } else {
-            /* tell kernel low memory base */
-            void* lowmem_start = (void*) ((kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE - KERNEL_VMA);
-            if (vmctl_reply_kern_mapping(rindex, (void*) lowmem_start)) panic("MM: cannot reply kernel mapping");
-        }
+        pkmap_start += kmapping->len;
+        nr_kern_mappings++;
+        kmapping++;
+
         rindex++;
     }
 }
@@ -393,33 +363,8 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     int i;
     int kernel_pde = kernel_info.kernel_start_pde;
     phys_bytes addr = kernel_info.kernel_start_phys;
-    size_t mapped = 0, kern_size = (kernel_info.kernel_end_pde - kernel_info.kernel_start_pde) * ARCH_BIG_PAGE_SIZE;
-
-    while (mapped < kern_size) {
-#if defined(__i386__)
-        pgd->vir_addr[kernel_pde] = __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit);
-#elif defined(__arm__)
-        pgd->vir_addr[kernel_pde] = __pde((addr & ARM_VM_SECTION_MASK)
-            | ARM_VM_SECTION
-            | ARM_VM_SECTION_DOMAIN
-            | ARM_VM_SECTION_CACHED
-            | ARM_VM_SECTION_SUPER);
-#endif
-
-        addr += ARCH_BIG_PAGE_SIZE;
-        mapped += ARCH_BIG_PAGE_SIZE;
-        kernel_pde++;
-    }
-
-    /* map page dirs */
-    for(i = 0; i < MAX_PAGEDIR_PDES; i++) {
-        struct pagedir_mapping * pdm = &pagedir_mappings[i];
-        pgd->vir_addr[pdm->pde_no] = pdm->val;
-        kernel_pde++;
-    }
 
     /* map low memory */
-    addr = kernel_pde * ARCH_BIG_PAGE_SIZE;
     while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
 #if defined(__i386__)
         pgd->vir_addr[kernel_pde] = __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
@@ -467,37 +412,8 @@ PUBLIC int pgd_clear(pgdir_t * pgd)
 
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
 {
-    int slot = who->active_mm->slot, pdm_slot;
-    int pages_per_pgdir = (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) / ARCH_PG_SIZE;
-    int slots_per_pdm = ARCH_VM_PT_ENTRIES / pages_per_pgdir;
-
-    /* fill in the slot */
-    struct pagedir_mapping * pdm = &pagedir_mappings[slot / slots_per_pdm];
-    pdm_slot = slot % slots_per_pdm;
-
-    phys_bytes phys = (phys_bytes)pgd->phys_addr & ARCH_PG_MASK;
-#if defined(__i386__)
-    pdm->entries[pdm_slot] = __pte(phys | ARCH_PG_PRESENT | ARCH_PG_RW);
-#elif defined(__arm__)
-    int _i;
-    for (_i = 0; _i < pages_per_pgdir; _i++) {
-        pdm->entries[pdm_slot * pages_per_pgdir + _i] = __pte((phys + _i * ARCH_PG_SIZE) | ARCH_PG_PRESENT
-            | ARCH_PG_RW
-            | ARM_PG_CACHED
-            | ARCH_PG_USER);
-    }
-#endif
-
-#if defined(__i386__)
-    /* calculate the vir addr of the pgdir visible to the kernel */
-    void* vir_addr = (void*) (pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * ARCH_PG_SIZE);
-#elif defined(__arm__)
-    void* vir_addr = pdm->pde_no * ARCH_BIG_PAGE_SIZE + pdm_slot * (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
-#elif defined(__riscv)
-    void* vir_addr = 0;
-#endif
-
-    return vmctl_set_address_space(who->endpoint, pgd->phys_addr, (void *)vir_addr);
+    /* make sure that the page directory is in low memory */
+    return vmctl_set_address_space(who->endpoint, pgd->phys_addr, __va(pgd->phys_addr));
 }
 
 PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* maxv)

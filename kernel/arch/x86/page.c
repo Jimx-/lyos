@@ -148,10 +148,11 @@ PUBLIC void pg_identity(pde_t * pgd)
     }
 }
 
-PUBLIC pde_t pg_mapkernel(pde_t * pgd)
+PUBLIC void pg_mapkernel(pde_t * pgd)
 {
     phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;
-    phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys;
+    /* phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys; */
+    phys_bytes kern_len = LOWMEM_END;
     unsigned long pde = ARCH_PDE(KERNEL_VMA);
 
     while (mapped < kern_len) {
@@ -160,8 +161,6 @@ PUBLIC pde_t pg_mapkernel(pde_t * pgd)
         kern_phys += ARCH_BIG_PAGE_SIZE;
         pde++;
     }
-
-    return __pde(pde);
 }
 
 PUBLIC void pg_load(pde_t * pgd)

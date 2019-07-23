@@ -55,8 +55,9 @@ PUBLIC  int     send_sig(endpoint_t ep, int signo);
 PUBLIC void init_memory()
 {
     int i;
+    int temppde_start = ARCH_PDE(PKMAP_END);
     for (i = 0; i < MAX_TEMPPDES; i++) {
-        temppdes[i] = kinfo.kernel_end_pde++;
+        temppdes[i] = temppde_start++;
     }
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 }
@@ -86,7 +87,7 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, void* la, size_t* len, int i
         pdeval = __pde(p->seg.cr3_vir[ARCH_PDE(la)]);
     } else {    /* physical address */
         pa = (phys_bytes) la;
-        if (pa >= lowmem_base && pa < LOWMEM_END) { /* low memory */
+        if (pa < LOWMEM_END) { /* low memory */
             *len = min(*len, LOWMEM_END - pa);
             return (phys_bytes) __va(pa);
         }
@@ -222,9 +223,8 @@ PUBLIC void * va2pa(endpoint_t ep, void * va)
 }
 
 #define KM_USERMAPPED   0
-#define KM_LOWMEM_START 1
-#define KM_LAPIC        2
-#define KM_IOAPIC_FIRST 3
+#define KM_LAPIC        1
+#define KM_IOAPIC_FIRST 2
 
 extern char _usermapped[], _eusermapped[];
 PUBLIC off_t usermapped_offset;
@@ -260,14 +260,6 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
         *addr = (caddr_t)((char *)*(&_usermapped) - KERNEL_VMA);
         *len = (char *)*(&_eusermapped) - (char *)*(&_usermapped);
         *flags = KMF_USER;
-        return 0;
-    }
-
-    /* dummy mapping to fetch low memory start from MM */
-    if (index == KM_LOWMEM_START) {
-        *addr = NULL;
-        *len = 0;
-        *flags = 0;
         return 0;
     }
 
@@ -324,11 +316,6 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         } else {
             sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
         }
-        return 0;
-    }
-    if (index == KM_LOWMEM_START) {
-        printk("kernel: low memory base: 0x%x\n", vir_addr);
-        lowmem_base = (phys_bytes) vir_addr;
         return 0;
     }
 #if CONFIG_X86_LOCAL_APIC

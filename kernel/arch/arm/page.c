@@ -44,7 +44,7 @@ PRIVATE phys_bytes kern_size __attribute__ ((__section__(".unpaged_data"))) = (p
 PUBLIC pde_t initial_pgd[ARCH_VM_DIR_ENTRIES] __attribute__ ((__section__(".unpaged_data"))) __attribute__((aligned(16384)));
 
 PUBLIC void pg_identity(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
-PUBLIC pde_t pg_mapkernel(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
+PUBLIC void pg_mapkernel(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
 PUBLIC void pg_load(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
 
 PUBLIC void setup_paging() __attribute__((__section__(".unpaged_text")));
@@ -53,13 +53,13 @@ PUBLIC void enable_paging() __attribute__((__section__(".unpaged_text")));
 PUBLIC void setup_paging()
 {
     pg_identity(initial_pgd);
-    int freepde = pg_mapkernel(initial_pgd);
+    pg_mapkernel(initial_pgd);
     pg_load(initial_pgd);
     enable_paging();
 }
 
 /* CR1 bits */
-#define CR_M    (1 << 0)    /* Enable MMU */    
+#define CR_M    (1 << 0)    /* Enable MMU */
 #define CR_C    (1 << 2)    /* Data cache */
 #define CR_Z    (1 << 11)   /* Branch Predict */
 #define CR_I    (1 << 12)   /* Instruction cache */
@@ -107,7 +107,7 @@ PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
         struct kinfo_mmap_entry * entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
-        
+
         if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= ARCH_PG_SIZE)) {
             entry->addr += ARCH_PG_SIZE;
             entry->len -= ARCH_PG_SIZE;
@@ -137,7 +137,7 @@ PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
 PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
 {
     pte_t * pt;
-    pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + (phys_bytes) &_KERN_OFFSET); 
+    pde_t * pgd = (pde_t *)((phys_bytes)initial_pgd + (phys_bytes) &_KERN_OFFSET);
     if (phys_addr % ARCH_PG_SIZE) phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
     if (vir_addr % ARCH_PG_SIZE) vir_addr = (vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
 
@@ -181,14 +181,14 @@ PUBLIC void pg_identity(pde_t * pgd)
     }
 }
 
-PUBLIC pde_t pg_mapkernel(pde_t * pgd)
+PUBLIC void pg_mapkernel(pde_t * pgd)
 {
     int pde;
     phys_bytes mapped_size = 0, kern_phys = kern_phys_base;
 
     pde = kern_vir_base / ARM_SECTION_SIZE;
     while (mapped_size < kern_size) {
-        pgd[pde] = (kern_phys & ARM_VM_SECTION_MASK) 
+        pgd[pde] = (kern_phys & ARM_VM_SECTION_MASK)
             | ARM_VM_SECTION
             | ARM_VM_SECTION_SUPER
             | ARM_VM_SECTION_DOMAIN
@@ -197,8 +197,6 @@ PUBLIC pde_t pg_mapkernel(pde_t * pgd)
         kern_phys += ARM_SECTION_SIZE;
         pde++;
     }
-
-    return pde;
 }
 
 PUBLIC void pg_load(pde_t * pgd)
@@ -214,7 +212,7 @@ PUBLIC void reload_ttbr0()
     write_ttbr0(bar);
 }
 
-PUBLIC void switch_address_space(struct proc * p) 
+PUBLIC void switch_address_space(struct proc * p)
 {
     get_cpulocal_var(pt_proc) = p;
     u32 bar = p->seg.ttbr_phys;
