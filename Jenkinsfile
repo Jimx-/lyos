@@ -11,7 +11,10 @@ pipeline {
         stage('Compile') {
             steps {
                 sh '''
-                    ./scripts/setup-toolchain.sh -m i686
+                    cd toolchain
+                    ./download.sh
+                    BUILD_EVERYTHING=true ./setup.sh
+                    cd ..
                 	make SUBARCH=i686
                 '''
             }

@@ -9,6 +9,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
 : ${BUILD_NEWLIB:=false}
+: ${BUILD_NATIVE_BINUTILS:=false}
 : ${BUILD_NATIVE_GCC:=false}
 : ${BUILD_BASH:=false}
 : ${BUILD_COREUTILS:=false}
@@ -19,6 +20,7 @@ if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
     BUILD_GCC=true
     BUILD_NEWLIB=true
+    BUILD_NATIVE_BINUTILS=true
     BUILD_NATIVE_GCC=true
     BUILD_BASH=true
     BUILD_COREUTILS=true
@@ -39,15 +41,15 @@ if $BUILD_BINUTILS; then
     if [ ! -d "binutils" ]; then
         mkdir binutils
     fi
-    
+
     unset PKG_CONFIG_LIBDIR
-    
+
     pushd binutils
     $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
     make -j8 || cmd_error
     make install || cmd_error
     popd
-fi 
+fi
 
 # Build gcc
 if $BUILD_GCC; then
@@ -59,8 +61,7 @@ if $BUILD_GCC; then
     unset PKG_CONFIG_LIBDIR
 
     pushd gcc
-    #$DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
-    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --enable-shared=libgcc || cmd_error
+    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
     make -j8 all-gcc all-target-libgcc || cmd_error
     make install-gcc install-target-libgcc || cmd_error
     popd
@@ -76,18 +77,18 @@ if $BUILD_NEWLIB; then
         rm -rf newlib
         mkdir newlib
     fi
-    
+
     pushd $DIR/sources/newlib-3.0.0 > /dev/null
     find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
     popd > /dev/null
-    
+
     pushd $DIR/sources/newlib-3.0.0/newlib/libc/sys > /dev/null
     autoconf || cmd_error
     pushd lyos > /dev/null
     autoreconf
     popd > /dev/null
     popd > /dev/null
-    
+
     pushd newlib > /dev/null
     $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
@@ -100,30 +101,43 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
 fi
 
+# Build native binutils
+if $BUILD_NATIVE_BINUTILS; then
+    if [ ! -d "binutils-native" ]; then
+        mkdir binutils-native
+    fi
+
+    pushd binutils-native > /dev/null
+    $DIR/sources/binutils-2.31/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-werror || cmd_error
+    make -j8 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
 # Build native gcc
 if $BUILD_NATIVE_GCC; then
     if [ ! -d "gcc-native" ]; then
         mkdir gcc-native
     fi
-    
+
     pushd gcc-native > /dev/null
     $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j8 || cmd_error
     make DESTDIR=$SYSROOT install-gcc -j || cmd_error
     make DESTDIR=$SYSROOT all-target-libgcc -j8 || cmd_error
     make DESTDIR=$SYSROOT install-target-libgcc -j || cmd_error
-    touch $SYSROOT/usr/include/fenv.h 
+    touch $SYSROOT/usr/include/fenv.h
     make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
     make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
     popd > /dev/null
-fi 
+fi
 
 # Build bash
 if $BUILD_BASH; then
     if [ ! -d "bash" ]; then
         mkdir bash
     fi
-    
+
     pushd bash > /dev/null
     $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
     make -j || cmd_error
@@ -137,20 +151,20 @@ if $BUILD_COREUTILS; then
     if [ ! -d "coreutils" ]; then
         mkdir coreutils
     fi
-    
+
     pushd coreutils > /dev/null
     $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
-fi 
+fi
 
 # Build dash
 if $BUILD_DASH; then
     if [ ! -d "dash" ]; then
         mkdir dash
     fi
-    
+
     pushd dash > /dev/null
     $DIR/sources/dash-0.5.10/configure --host=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -i '/# define _GNU_SOURCE 1/d' config.h
@@ -168,5 +182,5 @@ if $BUILD_VIM; then
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
-    
+
 popd > /dev/null

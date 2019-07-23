@@ -132,8 +132,8 @@ if __name__ == "__main__":
         mkdir('newlib')
         push_dir('newlib')
         configure_cross(NEWLIB_VERSION)
-        os.system(
-            "sed 's/prefix}\/" + TARGET + "/prefix}/' Makefile > Makefile.bak")
+        os.system("sed 's/prefix}\/" + TARGET +
+                  "/prefix}/' Makefile > Makefile.bak")
         copy("Makefile.bak", "Makefile")
         make()
         make(' DESTDIR=' + SYSROOT + ' install')
@@ -142,8 +142,8 @@ if __name__ == "__main__":
 
         for lib in ['c', 'g']:
             os.system(
-                '{}-gcc -shared -o {}/usr/lib/lib{}.so -Wl,--whole-archive {}/usr/lib/lib{}.a -Wl,--no-whole-archive'.
-                format(TARGET, DESTDIR, lib, DESTDIR, lib))
+                '{}-gcc -shared -o {}/usr/lib/lib{}.so -Wl,--whole-archive {}/usr/lib/lib{}.a -Wl,--no-whole-archive'
+                .format(TARGET, DESTDIR, lib, DESTDIR, lib))
         pop_dir()
 
     if BUILD_GCC is not None:
