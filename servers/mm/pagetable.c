@@ -37,7 +37,7 @@
 PRIVATE struct kern_mapping {
     phys_bytes phys_addr;
     void* vir_addr;
-    int len;
+    size_t len;
     int flags;
 } kern_mappings[MAX_KERN_MAPPINGS];
 PRIVATE int nr_kern_mappings = 0;
@@ -315,6 +315,7 @@ PUBLIC void pt_kern_mapping_init()
     caddr_t addr;
     int len, flags;
     struct kern_mapping * kmapping = kern_mappings;
+    void* pkmap_start = (void*)PKMAP_START;
 
     while (!vmctl_get_kern_mapping(rindex, &addr, &len, &flags)) {
         if (rindex > MAX_KERN_MAPPINGS) panic("MM: too many kernel mappings");
@@ -337,7 +338,7 @@ PUBLIC void pt_kern_mapping_init()
 #endif
 
             /* where this region will be mapped */
-            kmapping->vir_addr = alloc_vmpages(kmapping->len / ARCH_PG_SIZE);
+            kmapping->vir_addr = pkmap_start;
             if (!kmapping->vir_addr) panic("MM: cannot allocate memory for kernel mappings");
 
             if (vmctl_reply_kern_mapping(rindex, (void*) kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
@@ -345,6 +346,7 @@ PUBLIC void pt_kern_mapping_init()
             printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n",
                     rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
 
+            pkmap_start += kmapping->len;
             nr_kern_mappings++;
             kmapping++;
         } else {

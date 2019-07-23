@@ -341,6 +341,7 @@ PRIVATE void print_memmap()
     printl("  .data     : %08p - %08p  (%dkB)\n", data_start, data_end, data_len / 1024);
     printl("  .bss      : %08p - %08p  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
     printl("  .vmalloc  : %08p - %08p  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
+    printl("  .pkmap    : %08p - %08p  (%dkB)\n", PKMAP_START, PKMAP_END, (PKMAP_END - PKMAP_START) / 1024);
 
     mem_start = kernel_info.kernel_end_phys;
     free_mem_size = memory_size - mem_start;
