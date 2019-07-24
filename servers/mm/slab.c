@@ -161,7 +161,7 @@ PUBLIC void * slaballoc(int bytes)
     return NULL;
 }
 
-PUBLIC void slabfree(void * mem, int bytes)
+PUBLIC void slabfree(void* mem, int bytes)
 {
     if (bytes > MAXSIZE || bytes < MINSIZE) {
         return;
@@ -182,7 +182,7 @@ PUBLIC void slabfree(void * mem, int bytes)
         sd = header->data;
 
         if ((mem >= (void*) (&sd->data)) &&
-         (mem < (void*) (&sd->data + DATABYTES))) {
+         (mem < (void*)&sd->data + DATABYTES)) {
             int i = ((void*)mem - (void*)&sd->data) / bytes;
             UNSET_BIT(header->used_mask, i);
             header->used--;

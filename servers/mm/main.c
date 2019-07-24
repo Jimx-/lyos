@@ -310,7 +310,7 @@ PRIVATE void print_memmap()
         printl("  [mem %08x%08x-%08x%08x] %s\n", base_h, base_l, last_h, last_l,
             (mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");
 
-        if (mmap->type == KINFO_MEMORY_AVAILABLE) {
+        if (mmap->type == KINFO_MEMORY_AVAILABLE && mmap->addr >= kernel_info.kernel_end_phys) {
             usable_memsize += mmap->len;
             if (first) {
                 mem_init(mmap->addr, mmap->len);

@@ -39,7 +39,7 @@
  *****************************************************************************/
 /**
  * Perform the memory part of fork() syscall.
- * 
+ *
  * @return  Zero if success, otherwise -1.
  *****************************************************************************/
 PUBLIC int do_fork()
@@ -55,7 +55,7 @@ PUBLIC int do_fork()
     int parent_slot, retval;
     if ((retval = mm_verify_endpt(parent_ep, &parent_slot)) != 0) return retval;
     struct mmproc * mmparent = mmproc_table + parent_slot;
-    
+
     *mmp = mmproc_table[parent_slot];
     mmp->flags |= MMPF_INUSE;
 
@@ -89,7 +89,7 @@ PUBLIC int do_fork()
             struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
             list_add(&(new_region->list), &mmp->active_mm->mem_regions);
             avl_insert(&new_region->avl, &mmp->active_mm->mem_avl);
-           
+
             if (vr->flags & RF_FILEMAP) {
                 new_region->param.file = vr->param.file;
                 file_reference(new_region, vr->param.file.filp);
@@ -114,7 +114,7 @@ PUBLIC int do_fork()
 
     /* child PID will be returned to the parent proc */
     mm_msg.ENDPOINT = mmp->endpoint;
-    
+
     return 0;
 }
 

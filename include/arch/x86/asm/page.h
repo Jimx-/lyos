@@ -132,4 +132,8 @@ PUBLIC void reload_cr3();
 #define __va(x)     ((void*) ((unsigned long)(x) + KERNEL_VMA))
 #endif
 
+#ifndef __pa
+#define __pa(x)     ((phys_bytes)(x) - KERNEL_VMA)
+#endif
+
 #endif

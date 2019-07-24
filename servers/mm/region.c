@@ -64,13 +64,15 @@ PRIVATE void phys_region_free(struct phys_region * rp)
 {
     struct phys_frame * frame;
     int i;
+
     for (i = 0; i < rp->capacity; i++) {
         frame = rp->frames[i];
+
         if (frame != NULL) {
             if (frame->refcnt) frame->refcnt--;
 
             if (frame->refcnt <= 0) {
-                if (frame->phys_addr && !(frame->flags & PFF_DIRECT)) free_mem((int)(frame->phys_addr), ARCH_PG_SIZE);
+                if (frame->phys_addr && !(frame->flags & PFF_DIRECT)) free_mem(frame->phys_addr, ARCH_PG_SIZE);
                 SLABFREE(frame);
             }
         }
@@ -110,6 +112,7 @@ PRIVATE int phys_region_realloc(struct phys_region * rp, int new_capacity)
     struct phys_frame** new_frames = (struct phys_frame **)alloc_vmem(NULL, alloc_size, 0);
     if (new_frames == NULL) return ENOMEM;
 
+    memset(new_frames, 0, alloc_size);
     memcpy(new_frames, rp->frames, rp->capacity * sizeof(struct phys_frame *));
     free_vmem(rp->frames, rp->capacity * sizeof(struct phys_frame *));
     rp->frames = new_frames;
@@ -383,8 +386,10 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     int i;
 
     for (i = 0; i < rp->length / ARCH_PG_SIZE; i++) {
-        struct phys_frame * frame = phys_region_get_or_alloc(pregion, i);
-        frame->flags &= ~PFF_MAPPED;
+        struct phys_frame * frame = phys_region_get(pregion, i);
+        if (frame) {
+            frame->flags &= ~PFF_MAPPED;
+        }
     }
 
     rp->flags &= ~RF_MAPPED;
@@ -760,7 +765,7 @@ PRIVATE int region_subfree(struct vir_region * rp, off_t offset, size_t len)
             if (frame->refcnt) frame->refcnt--;
 
             if (frame->refcnt <= 0) {
-                if (frame->phys_addr) free_mem((int)(frame->phys_addr), ARCH_PG_SIZE);
+                if (frame->phys_addr) free_mem(frame->phys_addr, ARCH_PG_SIZE);
             }
             phys_region_set(pregion, i, NULL);
         }

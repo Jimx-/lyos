@@ -53,22 +53,22 @@ PRIVATE void merge_hole(struct hole * hp);
 
 PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
 {
-	struct hole *hp;
+    struct hole *hp;
 
-  	/* Put all holes on the free list. */
-  	for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
-		hp->h_next = hp + 1;
-		hp->h_base = NULL;
+    /* Put all holes on the free list. */
+    for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
+        hp->h_next = hp + 1;
+        hp->h_base = NULL;
         hp->h_len = 0;
-  	}
-  	hole[NR_HOLES-1].h_next = NULL;
-  	hole_head = NULL;
-  	free_slots = &hole[0];
+    }
+    hole[NR_HOLES-1].h_next = NULL;
+    hole_head = NULL;
+    free_slots = &hole[0];
 
-	/* Free memory */
-	int nr_pages = free_mem_size / ARCH_PG_SIZE;
-	if (free_mem_size % ARCH_PG_SIZE) nr_pages++;
-	free_vmpages(mem_start, nr_pages);
+    /* Free memory */
+    int nr_pages = free_mem_size / ARCH_PG_SIZE;
+    if (free_mem_size % ARCH_PG_SIZE) nr_pages++;
+    free_vmpages(mem_start, nr_pages);
 }
 
 /*****************************************************************************
@@ -84,65 +84,70 @@ PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
  *****************************************************************************/
 PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 {
-	/* avoid recursive allocation */
-	static int level = 0;
-	int pages = memsize / ARCH_PG_SIZE;
-	if (memsize % ARCH_PG_SIZE != 0)
-		pages++;
+    /* avoid recursive allocation */
+    static int level = 0;
+    int pages = memsize / ARCH_PG_SIZE;
+    if (memsize % ARCH_PG_SIZE != 0)
+        pages++;
 
-	level++;
+    level++;
 
-	/* using bootstrap pages */
-	if (level > 1 || !pt_init_done) {
-		int i, j;
-		for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
-			if (!bootstrap_pages[i].used) break;
-		}
+    /* using bootstrap pages */
+    if (level > 1 || !pt_init_done) {
+        int i, j;
+        for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
+            if (!bootstrap_pages[i].used) break;
+        }
 
 #ifdef __arm__
-		/* allocate page directory at 16k alignment */
-		if (reason == PGT_PAGEDIR) {
-			while ((bootstrap_pages[i].phys_addr % (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) != 0) && i + pages < STATIC_BOOTSTRAP_PAGES) {
-				bootstrap_pages[i].used = 1;
-				i++;
-			}
-		}
+        /* allocate page directory at 16k alignment */
+        if (reason == PGT_PAGEDIR) {
+            while ((bootstrap_pages[i].phys_addr % (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) != 0) && i + pages < STATIC_BOOTSTRAP_PAGES) {
+                bootstrap_pages[i].used = 1;
+                i++;
+            }
+        }
 #endif
 
-		level--;
-		if (i + pages >= STATIC_BOOTSTRAP_PAGES) {
-			panic("out of bootstrap pages.");
-			return 0;
-		}
+        level--;
+        if (i + pages >= STATIC_BOOTSTRAP_PAGES) {
+            panic("out of bootstrap pages.");
+            return 0;
+        }
 
-		if (phys_addr) *phys_addr = bootstrap_pages[i].phys_addr;
-		void* ret = bootstrap_pages[i].vir_addr;
-		for (j = i; j < i + pages; j++) {
-			bootstrap_pages[j].used = 1;
-		}
+        if (phys_addr) *phys_addr = bootstrap_pages[i].phys_addr;
+        void* ret = bootstrap_pages[i].vir_addr;
+        for (j = i; j < i + pages; j++) {
+            bootstrap_pages[j].used = 1;
+        }
 
-		return ret;
-	}
+        return ret;
+    }
 
-	int memflags = 0;
+    int memflags = 0;
 #ifdef __arm__
-	if (reason == PGT_PAGEDIR) {
-		memflags |= APF_ALIGN16K;
-	}
+    if (reason == PGT_PAGEDIR) {
+        memflags |= APF_ALIGN16K;
+    }
 #endif
 
-	/* allocate physical memory */
+    /* allocate physical memory */
     phys_bytes phys_pages = alloc_pages(pages, memflags);
- 	void* vir_pages = alloc_vmpages(pages);
- 	void* retval = vir_pages;
+    if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
- 	if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
+    if (phys_pages < LOWMEM_END) {
+        level--;
+        return __va(phys_pages);
+    }
 
- 	pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages, vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
- 	vmctl_flushtlb(SELF);
+    void* vir_pages = alloc_vmpages(pages);
+    void* retval = vir_pages;
 
- 	level--;
- 	return retval;
+    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages, vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    vmctl_flushtlb(SELF);
+
+    level--;
+    return retval;
 }
 
 /**
@@ -152,76 +157,76 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
  */
 PUBLIC void* alloc_vmpages(int nr_pages)
 {
-	size_t memsize = nr_pages * ARCH_PG_SIZE;
- 	struct hole *hp, *prev_ptr;
-	void* old_base;
+    size_t memsize = nr_pages * ARCH_PG_SIZE;
+    struct hole *hp, *prev_ptr;
+    void* old_base;
 
     prev_ptr = NULL;
-	hp = hole_head;
+    hp = hole_head;
 
-	while (hp != NULL) {
-		size_t alignment = 0;
-		if ((uintptr_t) hp->h_base % ARCH_PG_SIZE != 0)
-			alignment = ARCH_PG_SIZE - ((uintptr_t) hp->h_base % ARCH_PG_SIZE);
-		if (hp->h_len >= memsize + alignment) {
-			/* We found a hole that is big enough.  Use it. */
-			old_base = hp->h_base + alignment;
-			hp->h_base += memsize + alignment;
-			hp->h_len -= memsize - alignment;
-			if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
-				prev_ptr->h_len += alignment;
+    while (hp != NULL) {
+        size_t alignment = 0;
+        if ((uintptr_t) hp->h_base % ARCH_PG_SIZE != 0)
+            alignment = ARCH_PG_SIZE - ((uintptr_t) hp->h_base % ARCH_PG_SIZE);
+        if (hp->h_len >= memsize + alignment) {
+            /* We found a hole that is big enough.  Use it. */
+            old_base = hp->h_base + alignment;
+            hp->h_base += memsize + alignment;
+            hp->h_len -= memsize - alignment;
+            if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
+                prev_ptr->h_len += alignment;
 
-			/* Delete the hole if used up completely. */
-			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
+            /* Delete the hole if used up completely. */
+            if (hp->h_len == 0) delete_slot(prev_ptr, hp);
 
-			mem_info.vmalloc_used += memsize;
-			/* Return the start address of the acquired block. */
-			return (void*) old_base;
-		}
+            mem_info.vmalloc_used += memsize;
+            /* Return the start address of the acquired block. */
+            return (void*) old_base;
+        }
 
-		prev_ptr = hp;
-		hp = hp->h_next;
-	}
-	printl("MM: alloc_vmpages() failed.(Out of virtual memory space)\n");
-  	return NULL;
+        prev_ptr = hp;
+        hp = hp->h_next;
+    }
+    printl("MM: alloc_vmpages() failed.(Out of virtual memory space)\n");
+    return NULL;
 }
 
 PUBLIC void free_vmpages(void* base, int nr_pages)
 {
-	if (nr_pages <= 0) return;
+    if (nr_pages <= 0) return;
 
-	int len = nr_pages * ARCH_PG_SIZE;
-	struct hole *hp, *new_ptr, *prev_ptr;
+    int len = nr_pages * ARCH_PG_SIZE;
+    struct hole *hp, *new_ptr, *prev_ptr;
 
-  	if ((new_ptr = free_slots) == NULL)
-  		panic("hole table full");
-	new_ptr->h_base = base;
-	new_ptr->h_len = len;
- 	free_slots = new_ptr->h_next;
-	hp = hole_head;
+    if ((new_ptr = free_slots) == NULL)
+        panic("hole table full");
+    new_ptr->h_base = base;
+    new_ptr->h_len = len;
+    free_slots = new_ptr->h_next;
+    hp = hole_head;
 
-	mem_info.vmalloc_used -= len;
+    mem_info.vmalloc_used -= len;
 
-	/* Insert the slot to a proper place */
-	if (hp == NULL || base <= hp->h_base) {
-	/* If there's no hole or the block's address is less than the lowest hole,
-	   put it on the front of the list */
-		new_ptr->h_next = hp;
-		hole_head = new_ptr;
-		merge_hole(new_ptr);
-		return;
- 	}
+    /* Insert the slot to a proper place */
+    if (hp == NULL || base <= hp->h_base) {
+    /* If there's no hole or the block's address is less than the lowest hole,
+       put it on the front of the list */
+        new_ptr->h_next = hp;
+        hole_head = new_ptr;
+        merge_hole(new_ptr);
+        return;
+    }
 
-	/* Find where it should go */
-	prev_ptr = NULL;
-	while (hp != NULL && base > hp->h_base) {
-		prev_ptr = hp;
-		hp = hp->h_next;
-  	}
+    /* Find where it should go */
+    prev_ptr = NULL;
+    while (hp != NULL && base > hp->h_base) {
+        prev_ptr = hp;
+        hp = hp->h_next;
+    }
 
-  	new_ptr->h_next = prev_ptr->h_next;
-  	prev_ptr->h_next = new_ptr;
-	merge_hole(prev_ptr);
+    new_ptr->h_next = prev_ptr->h_next;
+    prev_ptr->h_next = new_ptr;
+    merge_hole(prev_ptr);
 }
 
 /*****************************************************************************
@@ -237,21 +242,21 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
  *****************************************************************************/
 PUBLIC void free_vmem(void* base, int len)
 {
-	if (!pt_init_done) return;
+    if (!pt_init_done) return;
 
-	int nr_pages = len / ARCH_PG_SIZE;
-	if (len % ARCH_PG_SIZE) nr_pages++;
+    int nr_pages = len / ARCH_PG_SIZE;
+    if (len % ARCH_PG_SIZE) nr_pages++;
 
-	/* free physical memory */
-	int i;
-	void* addr = base;
-	struct mmproc* mmprocess = &mmproc_table[TASK_MM];
-	for (i = 0; i < nr_pages; i++, addr += ARCH_PG_SIZE) {
-		phys_bytes phys = pgd_va2pa(&mmprocess->mm->pgd, addr);
-		if (phys) free_mem(phys, ARCH_PG_SIZE);
-	}
+    /* free physical memory */
+    int i;
+    void* addr = base;
+    struct mmproc* mmprocess = &mmproc_table[TASK_MM];
+    for (i = 0; i < nr_pages; i++, addr += ARCH_PG_SIZE) {
+        phys_bytes phys = pgd_va2pa(&mmprocess->mm->pgd, addr);
+        if (phys) free_mem(phys, ARCH_PG_SIZE);
+    }
 
-	free_vmpages(base, nr_pages);
+    free_vmpages(base, nr_pages);
 }
 
 /*******************************************************************
@@ -263,15 +268,15 @@ PUBLIC void free_vmem(void* base, int len)
  *******************************************************************/
 PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
 {
-	if (hp == hole_head)
-		hole_head = hp->h_next;
-	else
-		prev_ptr->h_next = hp->h_next;
+    if (hp == hole_head)
+        hole_head = hp->h_next;
+    else
+        prev_ptr->h_next = hp->h_next;
 
-  	hp->h_next = free_slots;
-  	hp->h_base = NULL;
+    hp->h_next = free_slots;
+    hp->h_base = NULL;
     hp->h_len = 0;
-  	free_slots = hp;
+    free_slots = hp;
 }
 
 /*******************************************************************
@@ -283,19 +288,19 @@ PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
  *******************************************************************/
 PRIVATE void merge_hole(struct hole * hp)
 {
-	struct hole *next_ptr;
+    struct hole *next_ptr;
 
-  	if ((next_ptr = hp->h_next) == NULL) return; /* last hole */
-  	if (hp->h_base + hp->h_len == next_ptr->h_base) {
-		hp->h_len += next_ptr->h_len;	/* first one gets second one's mem */
-		delete_slot(hp, next_ptr);
-  	} else {
-		hp = next_ptr;
-  	}
+    if ((next_ptr = hp->h_next) == NULL) return; /* last hole */
+    if (hp->h_base + hp->h_len == next_ptr->h_base) {
+        hp->h_len += next_ptr->h_len;	/* first one gets second one's mem */
+        delete_slot(hp, next_ptr);
+    } else {
+        hp = next_ptr;
+    }
 
-  	if ((next_ptr = hp->h_next) == NULL) return;	/* hp is the last hole now */
-  	if (hp->h_base + hp->h_len == next_ptr->h_base) {
-		hp->h_len += next_ptr->h_len;
-		delete_slot(hp, next_ptr);
-  	}
+    if ((next_ptr = hp->h_next) == NULL) return;	/* hp is the last hole now */
+    if (hp->h_base + hp->h_len == next_ptr->h_base) {
+        hp->h_len += next_ptr->h_len;
+        delete_slot(hp, next_ptr);
+    }
 }

@@ -88,6 +88,29 @@ PUBLIC void pt_init()
 
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
 
+    /* map kernel for MM */
+    int kernel_pde = kernel_info.kernel_start_pde;
+    phys_bytes paddr = kernel_info.kernel_start_phys;
+    int user_flag = 0;
+
+    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
+        if (paddr >= kernel_info.kernel_end_phys) {
+            user_flag = ARCH_PG_USER;
+        }
+#if defined(__i386__)
+        mypgd->vir_addr[kernel_pde] = __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | user_flag);
+#elif defined(__arm__)
+        mypgd->vir_addr[kernel_pde] = __pde((paddr & ARM_VM_SECTION_MASK)
+            | ARM_VM_SECTION
+            | ARM_VM_SECTION_DOMAIN
+            | ARM_VM_SECTION_CACHED
+            | ARM_VM_SECTION_SUPER);
+#endif
+
+        paddr += ARCH_BIG_PAGE_SIZE;
+        kernel_pde++;
+    }
+
     unsigned int mypdbr = 0;
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
     if (vmctl_getpdbr(SELF, &mypdbr)) panic("MM: failed to get page directory base register");
@@ -97,9 +120,16 @@ PUBLIC void pt_init()
     for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         pde_t entry = currentpagedir[i];
 
+        if (!(pde_val(entry) & ARCH_PG_PRESENT)) continue;
         if (pde_val(entry) & ARCH_PG_BIGPAGE) continue;
-        mypgd->vir_addr[i] = entry;
-        mypgd->vir_pts[i] = (pte_t *)((uintptr_t) __va(pde_val(entry)) & ARCH_PG_MASK);
+
+        if (pt_create(mypgd, i, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER) != 0) {
+            panic("MM: failed to allocate page table for MM");
+        }
+
+        phys_bytes ptphys_kern = pde_val(entry) & ARCH_PG_MASK;
+        phys_bytes ptphys_mm = pde_val(mypgd->vir_addr[i]) & ARCH_PG_MASK;
+        data_copy(NO_TASK, (void*)ptphys_mm, NO_TASK, (void*)ptphys_kern, ARCH_PG_SIZE);
     }
 
     /* using the new page dir */
@@ -460,8 +490,11 @@ PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, void* vir_addr)
     unsigned long pgd_index = ARCH_PDE(vir_addr);
     unsigned long pt_index = ARCH_PTE(vir_addr);
 
-    pte_t * pt = pgd->vir_pts[pgd_index];
+    if (vir_addr >= KERNEL_VMA) {
+        return __pa(vir_addr);
+    }
 
+    pte_t * pt = pgd->vir_pts[pgd_index];
     phys_bytes phys = pte_val(pt[pt_index]) & ARCH_PG_MASK;
 
     return phys;
