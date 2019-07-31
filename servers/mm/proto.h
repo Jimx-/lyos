@@ -39,7 +39,9 @@ PUBLIC void slabfree(void * mem, int bytes);
 #define SLABFREE(p) do { slabfree(p, sizeof(*p)); p = NULL; } while(0)
 
 PUBLIC void pt_init();
-PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags);
+PUBLIC pmd_t* pmd_create(pde_t* pde, unsigned addr);
+PUBLIC int pt_create(pmd_t* pmde);
+PUBLIC pte_t* pt_create_map(pmd_t* pmde, unsigned long addr);
 PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsigned int flags);
 PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr);
 PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr);

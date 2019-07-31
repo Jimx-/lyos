@@ -66,7 +66,7 @@ PUBLIC void pt_init()
         phys_bytes bootstrap_phys_addr;
         if (umap(SELF, v, &bootstrap_phys_addr)) panic("MM: can't get phys addr for bootstrap page");
         bootstrap_pages[i].phys_addr = bootstrap_phys_addr;
-        bootstrap_pages[i].vir_addr = v;
+        bootstrap_pages[i].vir_addr = __va(bootstrap_phys_addr);
         bootstrap_pages[i].used = 0;
     }
 
@@ -123,7 +123,7 @@ PUBLIC void pt_init()
         if (!(pde_val(entry) & ARCH_PG_PRESENT)) continue;
         if (pde_val(entry) & ARCH_PG_BIGPAGE) continue;
 
-        if (pt_create(mypgd, i, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER) != 0) {
+        if (pt_create((pmd_t*)&mypgd->vir_addr[i]) != 0) {
             panic("MM: failed to allocate page table for MM");
         }
 
@@ -164,17 +164,23 @@ PUBLIC void mm_free(struct mm_struct* mm)
     }
 }
 
-PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
+PUBLIC pmd_t* pmd_create(pde_t* pde, unsigned addr)
 {
+    return pmd_offset(pde, addr);
+}
+
+PUBLIC int pt_create(pmd_t* pmde)
+{
+    if (!pmde_none(*pmde)) {
+        /* page table already created */
+        return 0;
+    }
+
     phys_bytes pt_phys;
     pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, sizeof(pte_t) * ARCH_VM_PT_ENTRIES, PGT_PAGETABLE);
     if (pt == NULL) {
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
-    }
-    if (pgd->vir_pts[pde]) {
-        free_vmem(pt, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
-        return 0;
     }
 
 #if PAGETABLE_DEBUG
@@ -187,13 +193,17 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
     }
 
 #ifdef __i386__
-    pgd->vir_addr[pde] = __pde(pt_phys | flags);
+    pmde_populate(pmde, pt);
 #elif defined(__arm__)
     pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) | ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
 #endif
-    pgd->vir_pts[pde] = pt;
 
     return 0;
+}
+
+PUBLIC pte_t* pt_create_map(pmd_t* pmde, unsigned long addr) {
+    pt_create(pmde);
+    return pte_offset(pmde, addr);
 }
 
 /**
@@ -204,20 +214,15 @@ PUBLIC int pt_create(pgdir_t * pgd, int pde, u32 flags)
  */
 PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsigned int flags)
 {
-    unsigned long pgd_index = ARCH_PDE(vir_addr);
-    unsigned long pt_index = ARCH_PTE(vir_addr);
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
 
-    pte_t * pt = pgd->vir_pts[pgd_index];
+    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
+    pmde = pmd_create(pde, (unsigned long)vir_addr);
+    pte = pt_create_map(pmde, (unsigned long)vir_addr);
 
-    /* page table not present */
-    if (pt == NULL) {
-        int retval = pt_create(pgd, pgd_index, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
-
-        if (retval) return retval;
-        pt = pgd->vir_pts[pgd_index];
-    }
-
-    pt[pt_index] = __pte((phys_addr & 0xFFFFF000) | flags);
+    *pte = __pte((phys_addr & ARCH_PG_MASK) | flags);
 
     return 0;
 }
@@ -229,13 +234,26 @@ PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsig
  */
 PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
 {
-    unsigned long pgd_index = ARCH_PDE(vir_addr);
-    unsigned long pt_index = ARCH_PTE(vir_addr);
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
 
-    pte_t * pt = pgd->vir_pts[pgd_index];
-    if (pt) {
-        pt[pt_index] = __pte(pte_val(pt[pt_index]) & (~ARCH_PG_RW));
+    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
+    if (pde_none(*pde)) {
+        return EINVAL;
     }
+
+    pmde = pmd_offset(pde, (unsigned long)vir_addr);
+    if (pmde_none(*pmde)) {
+        return EINVAL;
+    }
+
+    pte = pte_offset(pmde, (unsigned long)vir_addr);
+    if (pte_none(*pte)) {
+        return EINVAL;
+    }
+
+    *pte = __pte(pte_val(*pte) & (~ARCH_PG_RW));
 
     return 0;
 }
@@ -247,13 +265,26 @@ PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
  */
 PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
 {
-    unsigned long pgd_index = ARCH_PDE(vir_addr);
-    unsigned long pt_index = ARCH_PTE(vir_addr);
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
 
-    pte_t * pt = pgd->vir_pts[pgd_index];
-    if (pt) {
-        pt[pt_index] = __pte(pte_val(pt[pt_index]) | ARCH_PG_RW);
+    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
+    if (pde_none(*pde)) {
+        return EINVAL;
     }
+
+    pmde = pmd_offset(pde, (unsigned long)vir_addr);
+    if (pmde_none(*pmde)) {
+        return EINVAL;
+    }
+
+    pte = pte_offset(pmde, (unsigned long)vir_addr);
+    if (pte_none(*pte)) {
+        return EINVAL;
+    }
+
+    *pte = __pte(pte_val(*pte) | ARCH_PG_RW);
 
     return 0;
 }
@@ -428,6 +459,7 @@ PUBLIC int pgd_free(pgdir_t * pgd)
 
 PUBLIC int pgd_clear(pgdir_t * pgd)
 {
+    /* TODO: clean up the page directory recursively */
     int i;
 
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
@@ -451,13 +483,22 @@ PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* 
     unsigned int start_pde = ARCH_PDE(minv);
     unsigned int end_pde = ARCH_PDE(maxv);
 
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
+
     int i, j;
     int allocated_pages = 0;
     void* retaddr = 0;
+
     for (i = start_pde; i < end_pde; i++) {
-        pte_t * pt_entries = pgd->vir_pts[i];
+        unsigned long pde_addr = ARCH_VM_ADDRESS(i, 0, 0);
+        pde = pgd_offset(pgd->vir_addr, (unsigned long)pde_addr);
+        pmde = pmd_offset(pde, (unsigned long)pde_addr);
+        pte = pte_offset(pmde, (unsigned long)pde_addr);
+
         /* the pde is empty, we have I386_VM_DIR_ENTRIES free pages */
-        if (pt_entries == NULL) {
+        if (pmde_none(*pmde)) {
             nr_pages -= ARCH_VM_PT_ENTRIES;
             allocated_pages += ARCH_VM_PT_ENTRIES;
             if (retaddr == 0) retaddr = (void*) ARCH_VM_ADDRESS(i, 0, 0);
@@ -468,7 +509,7 @@ PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* 
         }
 
         for (j = 0; j < ARCH_VM_PT_ENTRIES; j++) {
-            if (pte_val(pt_entries[j]) != 0) {
+            if (pte_val(pte[j]) != 0) {
                 nr_pages += allocated_pages;
                 retaddr = 0;
                 allocated_pages = 0;
@@ -487,17 +528,21 @@ PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* 
 
 PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, void* vir_addr)
 {
-    unsigned long pgd_index = ARCH_PDE(vir_addr);
-    unsigned long pt_index = ARCH_PTE(vir_addr);
-
-    if (vir_addr >= KERNEL_VMA) {
+    if (vir_addr >= (void*)KERNEL_VMA) {
         return __pa(vir_addr);
     }
 
-    pte_t * pt = pgd->vir_pts[pgd_index];
-    phys_bytes phys = pte_val(pt[pt_index]) & ARCH_PG_MASK;
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
 
-    return phys;
+    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
+    pmde = pmd_offset(pde, (unsigned long)vir_addr);
+    pte = pte_offset(pmde, (unsigned long)vir_addr);
+
+    phys_bytes phys = pte_val(*pte) & ARCH_PG_MASK;
+
+    return phys + ((unsigned long)vir_addr % ARCH_PG_SIZE);
 }
 
 PUBLIC int unmap_memory(pgdir_t * pgd, void* vir_addr, size_t length)
