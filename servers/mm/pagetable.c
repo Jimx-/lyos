@@ -32,11 +32,12 @@
 #include <lyos/cpufeature.h>
 #include "global.h"
 #include "const.h"
+#include "pagetable.h"
 
 #define MAX_KERN_MAPPINGS   10
 PRIVATE struct kern_mapping {
     phys_bytes phys_addr;
-    void* vir_addr;
+    vir_bytes vir_addr;
     size_t len;
     int flags;
 } kern_mappings[MAX_KERN_MAPPINGS];
@@ -121,15 +122,18 @@ PUBLIC void pt_init()
         pde_t entry = currentpagedir[i];
 
         if (!(pde_val(entry) & ARCH_PG_PRESENT)) continue;
-        if (pde_val(entry) & ARCH_PG_BIGPAGE) continue;
-
-        if (pt_create((pmd_t*)&mypgd->vir_addr[i]) != 0) {
-            panic("MM: failed to allocate page table for MM");
+        if (pde_val(entry) & ARCH_PG_BIGPAGE) {
+            continue;
         }
 
-        phys_bytes ptphys_kern = pde_val(entry) & ARCH_PG_MASK;
-        phys_bytes ptphys_mm = pde_val(mypgd->vir_addr[i]) & ARCH_PG_MASK;
-        data_copy(NO_TASK, (void*)ptphys_mm, NO_TASK, (void*)ptphys_kern, ARCH_PG_SIZE);
+        /* if (pt_create((pmd_t*)&mypgd->vir_addr[i]) != 0) { */
+        /*     panic("MM: failed to allocate page table for MM"); */
+        /* } */
+
+        /* phys_bytes ptphys_kern = pde_val(entry) & ARCH_PG_MASK; */
+        /* phys_bytes ptphys_mm = pde_val(mypgd->vir_addr[i]) & ARCH_PG_MASK; */
+        /* data_copy(NO_TASK, (void*)ptphys_mm, NO_TASK, (void*)ptphys_kern, ARCH_PG_SIZE); */
+        mypgd->vir_addr[i] = entry;
     }
 
     /* using the new page dir */
@@ -164,8 +168,21 @@ PUBLIC void mm_free(struct mm_struct* mm)
     }
 }
 
-PUBLIC pmd_t* pmd_create(pde_t* pde, unsigned addr)
+#ifndef __PAGETABLE_PMD_FOLDED
+PRIVATE void __pmd_create(pde_t* pde, vir_bytes addr)
 {
+
+}
+#else
+#define __pmd_create(pde, addr) NULL
+#endif
+
+PUBLIC pmd_t* pmd_create(pde_t* pde, vir_bytes addr)
+{
+    if (pde_none(*pde)) {
+        __pmd_create(pde, addr);
+    }
+
     return pmd_offset(pde, addr);
 }
 
@@ -201,7 +218,7 @@ PUBLIC int pt_create(pmd_t* pmde)
     return 0;
 }
 
-PUBLIC pte_t* pt_create_map(pmd_t* pmde, unsigned long addr) {
+PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr) {
     pt_create(pmde);
     return pte_offset(pmde, addr);
 }
@@ -212,18 +229,43 @@ PUBLIC pte_t* pt_create_map(pmd_t* pmde, unsigned long addr) {
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsigned int flags)
+PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, unsigned int flags)
 {
     pde_t* pde;
     pmd_t* pmde;
     pte_t* pte;
 
-    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
-    pmde = pmd_create(pde, (unsigned long)vir_addr);
-    pte = pt_create_map(pmde, (unsigned long)vir_addr);
+    pde = pgd_offset(pgd->vir_addr, vir_addr);
+    pmde = pmd_create(pde, vir_addr);
+    pte = pt_create_map(pmde, vir_addr);
 
     *pte = __pte((phys_addr & ARCH_PG_MASK) | flags);
 
+    return 0;
+}
+
+PRIVATE int pt_follow(pgdir_t* pgd, vir_bytes addr, pte_t** ptepp)
+{
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
+
+    pde = pgd_offset(pgd->vir_addr, addr);
+    if (pde_none(*pde)) {
+        return EINVAL;
+    }
+
+    pmde = pmd_offset(pde, addr);
+    if (pmde_none(*pmde)) {
+        return EINVAL;
+    }
+
+    pte = pte_offset(pmde, addr);
+    if (!pte_present(*pte)) {
+        return EINVAL;
+    }
+
+    *ptepp = pte;
     return 0;
 }
 
@@ -232,25 +274,13 @@ PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsig
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
+PUBLIC int pt_wppage(pgdir_t * pgd, vir_bytes vir_addr)
 {
-    pde_t* pde;
-    pmd_t* pmde;
     pte_t* pte;
+    int retval;
 
-    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
-    if (pde_none(*pde)) {
-        return EINVAL;
-    }
-
-    pmde = pmd_offset(pde, (unsigned long)vir_addr);
-    if (pmde_none(*pmde)) {
-        return EINVAL;
-    }
-
-    pte = pte_offset(pmde, (unsigned long)vir_addr);
-    if (pte_none(*pte)) {
-        return EINVAL;
+    if ((retval = pt_follow(pgd, vir_addr, &pte)) != 0) {
+        return retval;
     }
 
     *pte = __pte(pte_val(*pte) & (~ARCH_PG_RW));
@@ -263,33 +293,20 @@ PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr)
+PUBLIC int pt_unwppage(pgdir_t * pgd, vir_bytes vir_addr)
 {
-    pde_t* pde;
-    pmd_t* pmde;
     pte_t* pte;
+    int retval;
 
-    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
-    if (pde_none(*pde)) {
-        return EINVAL;
+    if ((retval = pt_follow(pgd, vir_addr, &pte)) != 0) {
+        return retval;
     }
-
-    pmde = pmd_offset(pde, (unsigned long)vir_addr);
-    if (pmde_none(*pmde)) {
-        return EINVAL;
-    }
-
-    pte = pte_offset(pmde, (unsigned long)vir_addr);
-    if (pte_none(*pte)) {
-        return EINVAL;
-    }
-
     *pte = __pte(pte_val(*pte) | ARCH_PG_RW);
 
     return 0;
 }
 
-PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, size_t length, int flags)
+PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, size_t length, int flags)
 {
     /* sanity check */
     if (phys_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
@@ -308,34 +325,34 @@ PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, size
     return 0;
 }
 
-PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, size_t length)
+PUBLIC int pt_wp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
-    if ((uintptr_t) vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
     if (length % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_wppage(pgd, vir_addr);
 
         length -= ARCH_PG_SIZE;
-        vir_addr = (void *)((void*)vir_addr + ARCH_PG_SIZE);
+        vir_addr += ARCH_PG_SIZE;
         if (length <= 0) break;
     }
 
     return 0;
 }
 
-PUBLIC int pt_unwp_memory(pgdir_t * pgd, void * vir_addr, size_t length)
+PUBLIC int pt_unwp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
-    if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
     if (length % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_unwppage(pgd, vir_addr);
 
         length -= ARCH_PG_SIZE;
-        vir_addr = (void *)((char*)vir_addr + ARCH_PG_SIZE);
+        vir_addr += ARCH_PG_SIZE;
         if (length <= 0) break;
     }
 
@@ -373,7 +390,7 @@ PUBLIC void pt_kern_mapping_init()
 #endif
 
         /* where this region will be mapped */
-        kmapping->vir_addr = pkmap_start;
+        kmapping->vir_addr = (vir_bytes) pkmap_start;
         if (!kmapping->vir_addr) panic("MM: cannot allocate memory for kernel mappings");
 
         if (vmctl_reply_kern_mapping(rindex, (void*) kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
@@ -451,25 +468,69 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
 /* <Ring 1> */
 PUBLIC int pgd_free(pgdir_t * pgd)
 {
-    pgd_clear(pgd);
     free_vmem(pgd->vir_addr, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
-
     return 0;
 }
 
-PUBLIC int pgd_clear(pgdir_t * pgd)
+PUBLIC void pt_free_range(pmd_t* pt)
 {
-    /* TODO: clean up the page directory recursively */
-    int i;
+    pte_t* pte = pte_offset(pt, 0);
+    pmde_clear(pt);
+    free_vmem(pte, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
+}
 
-    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        if (pgd->vir_pts[i]) {
-            free_vmem(pgd->vir_pts[i], sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
+PUBLIC void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end, vir_bytes floor, vir_bytes ceiling)
+{
+    vir_bytes start = addr;
+    vir_bytes next;
+    pmd_t* pmde = pmd_offset(pmd, addr);
+
+    do {
+        next = pmd_addr_end(addr, end);
+
+        if (pmde_none(*pmde) || pmde_bad(*pmde)) {
+            pmde++;
+            addr = next;
+            continue;
         }
-        pgd->vir_pts[i] = NULL;
+        pt_free_range(pmde);
+
+        pmde++;
+        addr = next;
+    } while (addr != end);
+
+    start &= ARCH_PGD_MASK;
+    if (start < floor) return;
+
+    if (ceiling) {
+        ceiling &= ARCH_PGD_MASK;
     }
 
-    return 0;
+    if (end > ceiling) return;
+
+    pmde = pmd_offset(pmd, 0);
+    pde_clear(pmd);
+    free_vmem(pmde, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+}
+
+PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end, vir_bytes floor, vir_bytes ceiling)
+{
+    pde_t* pde = pgd_offset(pgd->vir_addr, addr);
+    vir_bytes next;
+
+    do {
+        next = pgd_addr_end(addr, end);
+
+        if (pde_none(*pde) || pde_bad(*pde)) {
+            pde++;
+            addr = next;
+            continue;
+        }
+        pmd_free_range(pde, addr, end, floor, ceiling);
+
+        pde++;
+        addr = next;
+    } while (addr != end);
 }
 
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
@@ -478,74 +539,26 @@ PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
     return vmctl_set_address_space(who->endpoint, pgd->phys_addr, __va(pgd->phys_addr));
 }
 
-PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* maxv)
+PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
 {
-    unsigned int start_pde = ARCH_PDE(minv);
-    unsigned int end_pde = ARCH_PDE(maxv);
-
-    pde_t* pde;
-    pmd_t* pmde;
     pte_t* pte;
+    int retval;
 
-    int i, j;
-    int allocated_pages = 0;
-    void* retaddr = 0;
-
-    for (i = start_pde; i < end_pde; i++) {
-        unsigned long pde_addr = ARCH_VM_ADDRESS(i, 0, 0);
-        pde = pgd_offset(pgd->vir_addr, (unsigned long)pde_addr);
-        pmde = pmd_offset(pde, (unsigned long)pde_addr);
-        pte = pte_offset(pmde, (unsigned long)pde_addr);
-
-        /* the pde is empty, we have I386_VM_DIR_ENTRIES free pages */
-        if (pmde_none(*pmde)) {
-            nr_pages -= ARCH_VM_PT_ENTRIES;
-            allocated_pages += ARCH_VM_PT_ENTRIES;
-            if (retaddr == 0) retaddr = (void*) ARCH_VM_ADDRESS(i, 0, 0);
-            if (nr_pages <= 0) {
-                return retaddr;
-            }
-            continue;
-        }
-
-        for (j = 0; j < ARCH_VM_PT_ENTRIES; j++) {
-            if (pte_val(pte[j]) != 0) {
-                nr_pages += allocated_pages;
-                retaddr = 0;
-                allocated_pages = 0;
-            } else {
-                nr_pages--;
-                allocated_pages++;
-                if (!retaddr) retaddr = (void*) ARCH_VM_ADDRESS(i, j, 0);
-            }
-
-            if (nr_pages <= 0) return retaddr;
-        }
+    if (vir_addr >= KERNEL_VMA) {
+        *phys_addr = __pa(vir_addr);
+        return 0;
     }
 
+    if ((retval = pt_follow(pgd, (unsigned long) vir_addr, &pte)) != 0) {
+        return retval;
+    }
+
+    phys_bytes phys = pte_val(*pte) & ARCH_PG_MASK;
+    *phys_addr = phys + ((unsigned long)vir_addr % ARCH_PG_SIZE);
     return 0;
 }
 
-PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, void* vir_addr)
-{
-    if (vir_addr >= (void*)KERNEL_VMA) {
-        return __pa(vir_addr);
-    }
-
-    pde_t* pde;
-    pmd_t* pmde;
-    pte_t* pte;
-
-    pde = pgd_offset(pgd->vir_addr, (unsigned long)vir_addr);
-    pmde = pmd_offset(pde, (unsigned long)vir_addr);
-    pte = pte_offset(pmde, (unsigned long)vir_addr);
-
-    phys_bytes phys = pte_val(*pte) & ARCH_PG_MASK;
-
-    return phys + ((unsigned long)vir_addr % ARCH_PG_SIZE);
-}
-
-PUBLIC int unmap_memory(pgdir_t * pgd, void* vir_addr, size_t length)
+PUBLIC int unmap_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
     if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");

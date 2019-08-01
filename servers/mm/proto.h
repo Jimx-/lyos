@@ -39,49 +39,48 @@ PUBLIC void slabfree(void * mem, int bytes);
 #define SLABFREE(p) do { slabfree(p, sizeof(*p)); p = NULL; } while(0)
 
 PUBLIC void pt_init();
-PUBLIC pmd_t* pmd_create(pde_t* pde, unsigned addr);
+PUBLIC pmd_t* pmd_create(pde_t* pde, vir_bytes addr);
 PUBLIC int pt_create(pmd_t* pmde);
-PUBLIC pte_t* pt_create_map(pmd_t* pmde, unsigned long addr);
-PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, unsigned int flags);
-PUBLIC int pt_wppage(pgdir_t * pgd, void * vir_addr);
-PUBLIC int pt_unwppage(pgdir_t * pgd, void * vir_addr);
-PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, void* vir_addr, size_t length, int flags);
-PUBLIC int pt_wp_memory(pgdir_t * pgd, void * vir_addr, size_t length);
-PUBLIC int pt_unwp_memory(pgdir_t * pgd, void * vir_addr, size_t length);
+PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr);
+PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, unsigned int flags);
+PUBLIC int pt_wppage(pgdir_t * pgd, vir_bytes vir_addr);
+PUBLIC int pt_unwppage(pgdir_t * pgd, vir_bytes vir_addr);
+PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, size_t length, int flags);
+PUBLIC int pt_wp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length);
+PUBLIC int pt_unwp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length);
 PUBLIC void pt_kern_mapping_init();
-PUBLIC int map_memory(pgdir_t * pgd, void * phys_addr, void * vir_addr, size_t length);
-PUBLIC int unmap_memory(pgdir_t * pgd, void* vir_addr, size_t length);
+PUBLIC int unmap_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length);
 PUBLIC int pgd_new(pgdir_t * pgd);
 PUBLIC int pgd_mapkernel(pgdir_t * pgd);
 PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd);
 PUBLIC int pgd_clear(pgdir_t * pgd);
+PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end, vir_bytes floor, vir_bytes ceiling);
 PUBLIC int pgd_free(pgdir_t * pgd);
-PUBLIC phys_bytes pgd_va2pa(pgdir_t* pgd, void* vir_addr);
-PUBLIC void* pgd_find_free_pages(pgdir_t * pgd, int nr_pages, void* minv, void* maxv);
+PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr);
 
 PUBLIC struct mm_struct* mm_allocate();
 PUBLIC void mm_init(struct mm_struct* mm);
 PUBLIC void mm_free(struct mm_struct* mm);
 
 PUBLIC int phys_region_init(struct phys_region * rp, int capacity);
-PUBLIC struct vir_region * region_new(void* vir_base, size_t vir_length, int flags);
+PUBLIC struct vir_region * region_new(vir_bytes vir_base, size_t vir_length, int flags);
 PUBLIC int region_alloc_phys(struct vir_region * rp);
 PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp);
 PUBLIC int region_set_phys(struct vir_region * rp, phys_bytes phys_addr);
 PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp);
 PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
-                void* minv, void* maxv, size_t len, int flags);
-PUBLIC int region_extend_up_to(struct mmproc * mmp, void* addr);
+                vir_bytes minv, vir_bytes maxv, size_t len, int flags);
+PUBLIC int region_extend_up_to(struct mmproc * mmp, vir_bytes addr);
 PUBLIC int region_extend(struct vir_region * rp, int increment);
 PUBLIC int region_extend_stack(struct vir_region * rp, int increment);
 PUBLIC int region_share(struct mmproc * p_dest, struct vir_region * dest,
                             struct mmproc * p_src, struct vir_region * src, int writable);
-PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, void* addr);
+PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, vir_bytes addr);
 PUBLIC int region_handle_memory(struct mmproc * mmp, struct vir_region * vr,
         off_t offset, size_t sublen, int wrflag);
 PUBLIC int region_handle_pf(struct mmproc * mmp, struct vir_region * vr,
         off_t offset, int wrflag);
-PUBLIC int region_unmap_range(struct mmproc* mmp, void* start, size_t len);
+PUBLIC int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len);
 PUBLIC int region_free(struct vir_region * rp);
 
 PUBLIC void region_init_avl(struct mm_struct* mm);

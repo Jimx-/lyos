@@ -142,7 +142,7 @@ PRIVATE int acpi_find_rsdp()
         if (acpi_find_rsdp_ptr((void *)(u32)ebda, (void *)((u32)ebda + 0x400))) {
             return 1;
         }
-    } 
+    }
 
     if (acpi_find_rsdp_ptr((void *)0xE0000, (void *)0x100000)) {
         return 1;

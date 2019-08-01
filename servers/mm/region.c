@@ -178,7 +178,7 @@ PRIVATE inline struct phys_frame * phys_region_set(struct phys_region * rp, int 
  * @param  vir_length Virtual memory length.
  * @return            The memory region created.
  */
-PUBLIC struct vir_region * region_new(void* vir_base, size_t vir_length, int flags)
+PUBLIC struct vir_region * region_new(vir_bytes vir_base, size_t vir_length, int flags)
 {
     struct vir_region * region;
 
@@ -279,7 +279,7 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
 #endif
 
     struct phys_region * pregion = &(rp->phys_block);
-    void* base = rp->vir_addr;
+    vir_bytes base = rp->vir_addr;
     size_t len = rp->length;
     int i;
 
@@ -301,25 +301,11 @@ PUBLIC int region_map_phys(struct mmproc * mmp, struct vir_region * rp)
     return 0;
 }
 
-/*
 PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
-                void* minv, void* maxv, void* len, int flags)
-{
-    struct vir_region * vr;
-    void* vaddr = mmp->mmap_base;
-    mmp->mmap_base += len;
-
-    if ((vr = region_new(vaddr, len, flags)) == NULL) return NULL;
-
-    return vr;
-}
-*/
-
-PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
-                void* minv, void* maxv, size_t len, int flags)
+                vir_bytes minv, vir_bytes maxv, size_t len, int flags)
 {
     int found = 0;
-    void* vaddr;
+    vir_bytes vaddr;
 
     if (!maxv) maxv = minv + len;
     if (minv + len > maxv) return NULL;
@@ -332,8 +318,8 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
 
 #define TRY_ALLOC_REGION(start, end) \
     do {   \
-        void* rstart = ((start) > minv) ? (start) : minv; \
-        void* rend = ((end) < maxv) ? (end) : maxv;     \
+        vir_bytes rstart = ((start) > minv) ? (start) : minv; \
+        vir_bytes rend = ((end) < maxv) ? (end) : maxv;     \
         if (rend > rstart && (rend - rstart >= len)) { \
             vaddr = rend - len; \
             found = 1;       \
@@ -351,7 +337,7 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
     if(!last) {
         region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_max, AVL_LESS);
         last = region_avl_get_iter(&iter);
-        ALLOC_REGION(last ? (last->vir_addr + last->length) : NULL, ((void*) VM_STACK_TOP));
+        ALLOC_REGION(last ? (last->vir_addr + last->length) : 0, VM_STACK_TOP);
     }
 
     if(!found) {
@@ -360,7 +346,7 @@ PUBLIC struct vir_region * region_find_free_region(struct mmproc * mmp,
             struct vir_region* nextvr;
             region_avl_dec_iter(&iter);
             nextvr = region_avl_get_iter(&iter);
-            ALLOC_REGION(nextvr ? (void*) nextvr->vir_addr + nextvr->length : 0,
+            ALLOC_REGION(nextvr ? nextvr->vir_addr + nextvr->length : 0,
               vr->vir_addr);
         }
     }
@@ -397,7 +383,7 @@ PUBLIC int region_unmap_phys(struct mmproc * mmp, struct vir_region * rp)
     return 0;
 }
 
-PUBLIC int region_extend_up_to(struct mmproc * mmp, void* addr)
+PUBLIC int region_extend_up_to(struct mmproc * mmp, vir_bytes addr)
 {
     unsigned offset = ~0;
     struct vir_region * vr, * rb = NULL;
@@ -791,9 +777,9 @@ PRIVATE int region_unmap(struct mmproc* mmp, struct vir_region* vr,
     return 0;
 }
 
-PUBLIC int region_unmap_range(struct mmproc* mmp, void* start, size_t len)
+PUBLIC int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
 {
-    off_t offset = (uintptr_t) start % ARCH_PG_SIZE;
+    off_t offset = start % ARCH_PG_SIZE;
 
     start -= offset;
     len += offset;
@@ -811,13 +797,13 @@ PUBLIC int region_unmap_range(struct mmproc* mmp, void* start, size_t len)
         }
     }
 
-    void* limit = start + len;
+    vir_bytes limit = start + len;
     for (; vr && vr->vir_addr < limit; vr = next_vr) {
         region_avl_inc_iter(&iter);
         next_vr = region_avl_get_iter(&iter);
 
-        void* cur_start = max(start, vr->vir_addr);
-        void* cur_limit = min(limit, vr->vir_addr + vr->length);
+        vir_bytes cur_start = max(start, vr->vir_addr);
+        vir_bytes cur_limit = min(limit, vr->vir_addr + vr->length);
         if (cur_start >= cur_limit) continue;
 
         /* need spliting */

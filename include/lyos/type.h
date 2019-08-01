@@ -49,6 +49,7 @@ typedef u64         phys_bytes;
 #else
 typedef u32         phys_bytes;
 #endif
+typedef unsigned long   vir_bytes;
 
 typedef unsigned int        block_t;
 

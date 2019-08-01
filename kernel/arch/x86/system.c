@@ -71,8 +71,8 @@ PUBLIC int arch_reset_proc(struct proc * p)
 
     if (p->endpoint == TASK_MM) {
         /* use bootstrap page table */
-        p->seg.cr3_phys = (u32)initial_pgd;
-        p->seg.cr3_vir = (u32 *)__va(initial_pgd);
+        p->seg.cr3_phys = __pa(initial_pgd);
+        p->seg.cr3_vir = (u32*)initial_pgd;
     }
 
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;
@@ -175,7 +175,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.stack_size = PROC_ORIGIN_STACK * 2;
 
         /* header */
-        execi.header = (char*) bp->base;
+        execi.header = __va(bp->base);
         execi.header_len = bp->len;
 
         execi.allocmem = kernel_allocmem;

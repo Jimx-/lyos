@@ -51,15 +51,15 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, void* addr,
 
     /* first unmap the region */
     if (addr && (mmap_flags & MAP_FIXED)) {
-        if (region_unmap_range(mmp, addr, len)) return NULL;
+        if (region_unmap_range(mmp, (vir_bytes)addr, len)) return NULL;
     }
 
     if (addr || (mmap_flags & MAP_FIXED)) {
-        vr = region_find_free_region(mmp, addr, 0, len, vrflags);
+        vr = region_find_free_region(mmp, (vir_bytes)addr, 0, len, vrflags);
         if(!vr && (mmap_flags & MAP_FIXED))
             return NULL;
     } else {
-        vr = region_find_free_region(mmp, (void*) ARCH_BIG_PAGE_SIZE, (void*) VM_STACK_TOP, len, vrflags);
+        vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, vrflags);
         if (!vr) return NULL;
     }
 
@@ -81,13 +81,13 @@ PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags, int
     if (prot & PROT_WRITE) vrflags |= RF_WRITABLE;
 
     if (offset % ARCH_PG_SIZE) return EINVAL;
-    if ((uintptr_t) addr % ARCH_PG_SIZE) return EINVAL;
+    if ((vir_bytes) addr % ARCH_PG_SIZE) return EINVAL;
 
     if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL) return ENOMEM;
     list_add(&(vr->list), &mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
 
-    *ret_addr = vr->vir_addr;
+    *ret_addr = (void*)vr->vir_addr;
 
     struct mm_file_desc* filp = get_mm_file_desc(mmfd, dev, ino);
     if (!filp) return ENOMEM;
@@ -214,7 +214,7 @@ PUBLIC int do_mmap()
         return SUSPEND;
     }
 
-    mm_msg.u.m_mm_mmap_reply.retaddr = vr->vir_addr;
+    mm_msg.u.m_mm_mmap_reply.retaddr = (void*)vr->vir_addr;
     return 0;
 }
 
@@ -243,7 +243,7 @@ PUBLIC int do_map_phys()
     len += offset;
     if (len % ARCH_PG_SIZE) len += ARCH_PG_SIZE - (len % ARCH_PG_SIZE);
 
-    struct vir_region * vr = region_find_free_region(mmp, (void*) ARCH_BIG_PAGE_SIZE, (void*) VM_STACK_TOP, len, RF_WRITABLE | RF_DIRECT);
+    struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE | RF_DIRECT);
     if (!vr) return ENOMEM;
     list_add(&vr->list, &mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
@@ -251,7 +251,7 @@ PUBLIC int do_map_phys()
     region_set_phys(vr, phys_addr);
     region_map_phys(mmp, vr);
 
-    mm_msg.ADDR = (void *)((void*)vr->vir_addr + offset);
+    mm_msg.ADDR = (void *)(vr->vir_addr + offset);
 
     return 0;
 }
@@ -266,7 +266,7 @@ PUBLIC int do_munmap()
     if (len < 0) return EINVAL;
     if (!mmp) return EINVAL;
 
-    return region_unmap_range(mmp, addr, len);
+    return region_unmap_range(mmp, (vir_bytes)addr, len);
 }
 
 PUBLIC int do_mm_remap()
@@ -285,8 +285,8 @@ PUBLIC int do_mm_remap()
     struct mmproc* dmmp = endpt_mmproc(dest);
     if (!dmmp) return EINVAL;
 
-    struct vir_region* src_region = region_lookup(smmp, src_addr);
-    if (src_region->vir_addr != src_addr) return EFAULT;
+    struct vir_region* src_region = region_lookup(smmp, (vir_bytes)src_addr);
+    if (src_region->vir_addr != (vir_bytes)src_addr) return EFAULT;
 
     if (size % ARCH_PG_SIZE) {
         size = size - (size % ARCH_PG_SIZE) + ARCH_PG_SIZE;
@@ -297,9 +297,9 @@ PUBLIC int do_mm_remap()
     int vrflags = RF_SHARED | RF_WRITABLE;
     struct vir_region* new_region = NULL;
     if (dest_addr) {
-        new_region = region_new(dest_addr, size, vrflags);
+        new_region = region_new((vir_bytes)dest_addr, size, vrflags);
     } else {
-        new_region = region_find_free_region(dmmp, (void*) ARCH_BIG_PAGE_SIZE, (void*) VM_STACK_TOP, size, vrflags);
+        new_region = region_find_free_region(dmmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, size, vrflags);
     }
     if (!new_region) return ENOMEM;
 

@@ -137,6 +137,6 @@ PUBLIC void reload_cr3();
 #endif
 
 #include <lyos/pagetable-nopmd.h>
-#include "asm/pgalloc.h"
+#include "asm/pagetable.h"
 
 #endif

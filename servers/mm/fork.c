@@ -133,6 +133,7 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
         struct vir_region* tmp;
         list_for_each_entry_safe(vr, tmp, &mmp->mm->mem_regions, list) {
             region_unmap_phys(mmp, vr);
+            pgd_free_range(&mmp->mm->pgd, vr->vir_addr, vr->vir_addr + vr->length, vr->vir_addr, vr->vir_addr + vr->length);
             region_free(vr);
         }
     }

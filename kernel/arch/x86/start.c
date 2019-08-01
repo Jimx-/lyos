@@ -80,7 +80,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     phys_bytes mod_ends = (phys_bytes)last_mod->mod_end;
 
     /* setup kernel page table */
-    initial_pgd = (pde_t *)((uintptr_t)&pgd0 - KERNEL_VMA);
+    initial_pgd = &pgd0;
     phys_bytes procs_base = mod_ends & ARCH_PG_MASK;
     int kernel_pts = procs_base >> ARCH_PGD_SHIFT;
     if (procs_base % ARCH_PGD_SIZE != 0) {

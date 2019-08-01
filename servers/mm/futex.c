@@ -101,14 +101,15 @@ PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     /* map uaddr in current address space */
     off_t offset = (uintptr_t) uaddr % ARCH_PG_SIZE;
     uaddr = (u32*)((uintptr_t) uaddr - offset);
-    phys_bytes phys_addr = pgd_va2pa(&mmp->active_mm->pgd, (void*) uaddr);
-    if (!phys_addr) {
-        return EFAULT;
+    phys_bytes phys_addr;
+    ret = pgd_va2pa(&mmp->active_mm->pgd, (vir_bytes) uaddr, &phys_addr);
+    if (ret) {
+        return ret;
     }
     void* vaddr = alloc_vmpages(1);
     if (!vaddr) return ENOMEM;
 
-    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_addr, vaddr, ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_addr, (vir_bytes) vaddr, ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
     u32 uval = *(u32*)(vaddr + offset);
 
     if (uval != val) {

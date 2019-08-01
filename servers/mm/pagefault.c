@@ -50,10 +50,10 @@ PUBLIC void do_handle_fault()
     int wrflag = ARCH_PF_WRITE(err_code);
     int handled = 0;
 
-    pfla = (void*) rounddown(((uintptr_t) pfla), ARCH_PG_SIZE);
+    pfla = (void*) rounddown((vir_bytes)pfla, ARCH_PG_SIZE);
 
     struct vir_region * vr;
-    vr = region_lookup(mmp, pfla);
+    vr = region_lookup(mmp, (vir_bytes)pfla);
 
     if (!vr) {
         if (ARCH_PF_PROT(err_code)) {
@@ -105,13 +105,13 @@ PRIVATE int handle_memory(struct mmproc * mmp, void* start, size_t len, int wrfl
 {
     struct vir_region * vr;
 
-    if ((uintptr_t) start % ARCH_PG_SIZE) {
-        len += (uintptr_t) start % ARCH_PG_SIZE;
-        start -= (uintptr_t) start % ARCH_PG_SIZE;
+    if ((vir_bytes) start % ARCH_PG_SIZE) {
+        len += (vir_bytes) start % ARCH_PG_SIZE;
+        start -= (vir_bytes) start % ARCH_PG_SIZE;
     }
 
     while (len > 0) {
-        if (!(vr = region_lookup(mmp, start))) {
+        if (!(vr = region_lookup(mmp, (vir_bytes)start))) {
             return EFAULT;
         } //else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
 

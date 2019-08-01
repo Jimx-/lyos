@@ -58,7 +58,7 @@ PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
     /* Put all holes on the free list. */
     for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
         hp->h_next = hp + 1;
-        hp->h_base = NULL;
+        hp->h_base = 0;
         hp->h_len = 0;
     }
     hole[NR_HOLES-1].h_next = NULL;
@@ -143,7 +143,7 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
     void* vir_pages = alloc_vmpages(pages);
     void* retval = vir_pages;
 
-    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages, vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages, (vir_bytes) vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
     vmctl_flushtlb(SELF);
 
     level--;
@@ -159,15 +159,15 @@ PUBLIC void* alloc_vmpages(int nr_pages)
 {
     size_t memsize = nr_pages * ARCH_PG_SIZE;
     struct hole *hp, *prev_ptr;
-    void* old_base;
+    vir_bytes old_base;
 
     prev_ptr = NULL;
     hp = hole_head;
 
     while (hp != NULL) {
         size_t alignment = 0;
-        if ((uintptr_t) hp->h_base % ARCH_PG_SIZE != 0)
-            alignment = ARCH_PG_SIZE - ((uintptr_t) hp->h_base % ARCH_PG_SIZE);
+        if (hp->h_base % ARCH_PG_SIZE != 0)
+            alignment = ARCH_PG_SIZE - (hp->h_base % ARCH_PG_SIZE);
         if (hp->h_len >= memsize + alignment) {
             /* We found a hole that is big enough.  Use it. */
             old_base = hp->h_base + alignment;
@@ -200,7 +200,7 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
 
     if ((new_ptr = free_slots) == NULL)
         panic("hole table full");
-    new_ptr->h_base = base;
+    new_ptr->h_base = (vir_bytes) base;
     new_ptr->h_len = len;
     free_slots = new_ptr->h_next;
     hp = hole_head;
@@ -208,7 +208,7 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
     mem_info.vmalloc_used -= len;
 
     /* Insert the slot to a proper place */
-    if (hp == NULL || base <= hp->h_base) {
+    if (hp == NULL || (vir_bytes) base <= hp->h_base) {
     /* If there's no hole or the block's address is less than the lowest hole,
        put it on the front of the list */
         new_ptr->h_next = hp;
@@ -219,7 +219,7 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
 
     /* Find where it should go */
     prev_ptr = NULL;
-    while (hp != NULL && base > hp->h_base) {
+    while (hp != NULL && (vir_bytes) base > hp->h_base) {
         prev_ptr = hp;
         hp = hp->h_next;
     }
@@ -248,12 +248,13 @@ PUBLIC void free_vmem(void* base, int len)
     if (len % ARCH_PG_SIZE) nr_pages++;
 
     /* free physical memory */
-    int i;
-    void* addr = base;
+    int i, ret;
+    vir_bytes addr = (vir_bytes) base;
+    phys_bytes phys;
     struct mmproc* mmprocess = &mmproc_table[TASK_MM];
     for (i = 0; i < nr_pages; i++, addr += ARCH_PG_SIZE) {
-        phys_bytes phys = pgd_va2pa(&mmprocess->mm->pgd, addr);
-        if (phys) free_mem(phys, ARCH_PG_SIZE);
+        ret = pgd_va2pa(&mmprocess->mm->pgd, addr, &phys);
+        if (!ret) free_mem(phys, ARCH_PG_SIZE);
     }
 
     free_vmpages(base, nr_pages);
@@ -274,7 +275,7 @@ PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
         prev_ptr->h_next = hp->h_next;
 
     hp->h_next = free_slots;
-    hp->h_base = NULL;
+    hp->h_base = 0;
     hp->h_len = 0;
     free_slots = hp;
 }

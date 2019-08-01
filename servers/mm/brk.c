@@ -40,6 +40,6 @@ PUBLIC int do_brk()
 
     void * addr = mm_msg.ADDR;
 
-    if (region_extend_up_to(mmp, addr) == 0) return 0;
+    if (region_extend_up_to(mmp, (vir_bytes)addr) == 0) return 0;
     return ENOMEM;
 }
