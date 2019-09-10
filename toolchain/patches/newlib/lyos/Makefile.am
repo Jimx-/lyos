@@ -12,7 +12,7 @@ else
 extra_objs =
 endif
 
-SUBLIBS = machine/lib.a
+SUBLIBS = ${LYOS_MACHINE_LIB}
 
 lib_a_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c ttyname.c \
 							 mntent.c err.c progname.c crypt3.c sysconf.c regex.c
@@ -50,5 +50,5 @@ machine/crti.o:; @true
 machine/crtn.o:; @true
 machine/lib.a:; @true
 
-ACLOCAL_AMFLAGS = -I ../../..
+ACLOCAL_AMFLAGS = -I ../../.. -I ../../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

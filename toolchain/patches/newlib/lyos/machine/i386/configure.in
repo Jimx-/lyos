@@ -7,7 +7,5 @@ AC_CONFIG_SRCDIR([crtn.S])
 AC_CONFIG_AUX_DIR(../../../../../..)
 NEWLIB_CONFIGURE(../../../../..)
 
-AM_PROG_AS
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

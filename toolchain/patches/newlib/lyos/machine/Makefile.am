@@ -2,7 +2,9 @@ AUTOMAKE_OPTIONS = cygnus
 
 SUBDIRS = $(machine_dir) .
 
+if HAVE_MACHINE_DIR
 MACHLIB = lib.a
+endif
 
 noinst_DATA = crt0.o crti.o crtn.o
 
@@ -37,5 +39,5 @@ $(machine_dir)/crtn.o: ; @true
 
 CLEANFILES = crt0.o crti.o crtn.o
 
-ACLOCAL_AMFLAGS = -I ../../../..
+ACLOCAL_AMFLAGS = -I ../../../.. -I ../../../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

@@ -79,7 +79,7 @@ if $BUILD_NEWLIB; then
     fi
 
     pushd $DIR/sources/newlib-3.0.0 > /dev/null
-    find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
+    # find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
     popd > /dev/null
 
     pushd $DIR/sources/newlib-3.0.0/newlib/libc/sys > /dev/null

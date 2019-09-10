@@ -1,5 +1,8 @@
 AUTOMAKE_OPTIONS = cygnus
 
+INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
+AM_CCASFLAGS = $(INCLUDES)
+
 noinst_LIBRARIES = lib.a
 
 lib_a_SOURCES = __sigreturn.S gate_intr.S clone.c __clone.S getpagesize.c
@@ -12,5 +15,7 @@ if MAY_SUPPLY_SYSCALLS
 all-local: crt0.o crti.o crtn.o
 endif
 
-ACLOCAL_AMFLAGS = -I ../../../../..
+include $(srcdir)/../../../../../Makefile.shared
+
+ACLOCAL_AMFLAGS = -I ../../../../.. -I ../../../../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

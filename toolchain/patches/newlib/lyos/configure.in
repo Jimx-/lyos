@@ -1,10 +1,21 @@
 AC_PREREQ(2.59)
 AC_INIT([newlib], [NEWLIB_VERSION])
+AC_CONFIG_SRCDIR([syscalls.c])
 
 AC_CONFIG_AUX_DIR(../../../..)
 NEWLIB_CONFIGURE(../../..)
 
 AC_CONFIG_SUBDIRS(machine)
+
+if test -n "${machine_dir}"; then
+  if test "${use_libtool}" = "yes"; then
+    LYOS_MACHINE_LIB=machine/${machine_dir}/liblyos${machine_dir}.${aext}
+  else
+    LYOS_MACHINE_LIB=machine/lib.${aext}
+  fi
+fi
+AC_SUBST(LYOS_MACHINE_LIB)
+AC_SUBST(machine_dir)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
