@@ -120,6 +120,17 @@ if $BUILD_NATIVE_GCC; then
         mkdir gcc-native
     fi
 
+
+    if [ ! -e $DIR/sources/gcc-4.7.3/mpfr ]; then
+        ln -s $DIR/sources/mpfr-2.4.2 $DIR/sources/gcc-4.7.3/mpfr
+    fi
+    if [ ! -e $DIR/sources/gcc-4.7.3/mpc ]; then
+        ln -s $DIR/sources/mpc-0.8.1 $DIR/sources/gcc-4.7.3/mpc
+    fi
+    if [ ! -e $DIR/sources/gcc-4.7.3/gmp ]; then
+        ln -s $DIR/sources/gmp-4.3.2 $DIR/sources/gcc-4.7.3/gmp
+    fi
+
     pushd gcc-native > /dev/null
     $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j8 || cmd_error
