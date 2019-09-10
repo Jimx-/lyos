@@ -336,6 +336,11 @@ int kill(int pid,int signo)
     return msg.RETVAL;
 }
 
+int killpg(int pgrp, int signo)
+{
+    return kill(-pgrp, signo);
+}
+
 void __sigreturn();
 
 void sigreturn(void * scp)
