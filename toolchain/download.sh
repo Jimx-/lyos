@@ -22,6 +22,7 @@ download "gcc-native" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-4.7.3" "gcc-4.7.3
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
 download "dash" "http://gondor.apana.org.au/~herbert/dash/files/" "dash-0.5.10.tar.gz" || cmd_error
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
+download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -33,6 +34,7 @@ unzip "gcc-4.7.3.tar.bz2" "gcc-4.7.3"
 unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
 unzip "dash-0.5.10.tar.gz" "dash-0.5.10"
 unzip "coreutils-8.13.tar.xz" "coreutils-8.13"
+unzip "bash-4.3.tar.gz" "bash-4.3"
 
 echo "Patching..."
 patc "binutils-2.31"
