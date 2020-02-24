@@ -1,0 +1,53 @@
+diff -rupN old/src/bltin/printf.c new/src/bltin/printf.c
+--- old/src/bltin/printf.c	2018-04-03 00:16:35.000000000 +0800
++++ new/src/bltin/printf.c	2020-02-24 21:23:58.238172573 +0800
+@@ -28,7 +28,7 @@
+  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  * SUCH DAMAGE.
+  */
+-
++#define _GNU_SOURCE
+ #include <sys/types.h>
+ 
+ #include <ctype.h>
+diff -rupN old/src/mystring.c new/src/mystring.c
+--- old/src/mystring.c	2018-03-10 16:01:43.000000000 +0800
++++ new/src/mystring.c	2020-02-24 21:23:58.248172500 +0800
+@@ -42,6 +42,7 @@
+  *	is_number(s)		Return true if s is a string of digits.
+  */
+ 
++#define _GNU_SOURCE
+ #include <ctype.h>
+ #include <errno.h>
+ #include <inttypes.h>
+diff -rupN old/src/system.h new/src/system.h
+--- old/src/system.h	2014-09-28 16:19:32.000000000 +0800
++++ new/src/system.h	2020-02-24 21:23:58.248172500 +0800
+@@ -83,14 +83,7 @@ void *bsearch(const void *, const void *
+ #endif
+ 
+ #ifndef HAVE_KILLPG
+-static inline int killpg(pid_t pid, int signal)
+-{
+-#ifdef DEBUG
+-	if (pid < 0)
+-		abort();
+-#endif
+-	return kill(-pid, signal);
+-}
++#define killpg(pid, signal) kill(-pid, signal)
+ #endif
+ 
+ #ifndef HAVE_SYSCONF
+diff -rupN old/src/var.c new/src/var.c
+--- old/src/var.c	2014-10-07 22:30:35.000000000 +0800
++++ new/src/var.c	2020-02-24 21:23:58.248172500 +0800
+@@ -32,6 +32,7 @@
+  * SUCH DAMAGE.
+  */
+ 
++#define _GNU_SOURCE
+ #include <unistd.h>
+ #include <stdio.h>
+ #include <stdlib.h>

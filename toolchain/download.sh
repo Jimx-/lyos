@@ -46,6 +46,7 @@ patc "gcc-4.7.3"
 patc "newlib-3.0.0"
 patc "coreutils-8.13"
 patc "bash-4.3"
+patc "dash-0.5.10"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"
