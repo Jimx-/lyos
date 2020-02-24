@@ -111,6 +111,7 @@ CONF = $(SRCDIR)/scripts/config/conf
 MCONF = $(SRCDIR)/scripts/config/mconf
 AUTOCONFINC = $(SRCDIR)/include/config/autoconf.h
 CONFIGINC = $(SRCDIR)/.config
+DEFCONFIG = $(ARCHDIR)/configs/$(SUBARCH)_defconfig
 
 KCONFIG_AUTOHEADER = include/config/autoconf.h
 export KCONFIG_AUTOHEADER
@@ -161,6 +162,11 @@ config: $(CONFIGIN) $(CONFIGINC)
 menuconfig: $(CONFIGIN) $(CONFIGINC)
 	@(cd scripts/config; make menuconfig)
 	$(MCONF) $(CONFIGIN)
+	@$(MAKE) -f Makefile silentoldconfig
+
+defconfig: $(CONFIGIN) $(CONFIGINC)
+	@(cd scripts/config; make config)
+	$(CONF) --defconfig=$(DEFCONFIG) $(CONFIGIN)
 	@$(MAKE) -f Makefile silentoldconfig
 
 silentoldconfig:
