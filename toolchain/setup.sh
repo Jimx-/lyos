@@ -25,7 +25,6 @@ if $BUILD_EVERYTHING; then
     BUILD_BASH=true
     BUILD_COREUTILS=true
     BUILD_DASH=true
-    BUILD_VIM=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
