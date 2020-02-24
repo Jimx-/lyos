@@ -164,6 +164,8 @@ if $BUILD_COREUTILS; then
     fi
 
     pushd coreutils > /dev/null
+    touch $DIR/sources/coreutils-8.13/man/sort.1
+    touch $DIR/sources/coreutils-8.13/man/stat.1
     $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
