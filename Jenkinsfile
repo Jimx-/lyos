@@ -12,6 +12,7 @@ pipeline {
             steps {
                 sh 'make SUBARCH=i686 defconfig'
                 sh 'mkdir -p ./obj/destdir.x86'
+                sh 'mkdir -p ./obj/destdir.x86/bin'
                 
                 dir('toolchain') {
                     sh './download.sh'

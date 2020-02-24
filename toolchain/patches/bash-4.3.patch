@@ -1,3 +1,40 @@
+diff -rupN old/include/posixwait.h new/include/posixwait.h
+--- old/include/posixwait.h	2008-08-12 22:03:03.000000000 +0800
++++ new/include/posixwait.h	2020-02-24 19:42:00.795212224 +0800
+@@ -21,6 +21,8 @@
+ #if !defined (_POSIXWAIT_H_)
+ #  define _POSIXWAIT_H_
+ 
++#define _POSIX_VERSION
++
+ /* If _POSIX_VERSION is not defined, we assume that <sys/wait.h> defines
+    a `union wait' and various macros used to manipulate it.  Look in
+    unionwait.h for the things we expect to find. */
+diff -rupN old/include/shtty.h new/include/shtty.h
+--- old/include/shtty.h	2008-08-12 22:03:44.000000000 +0800
++++ new/include/shtty.h	2020-02-24 19:51:08.926574056 +0800
+@@ -26,6 +26,8 @@
+ 
+ #include "stdc.h"
+ 
++#define _POSIX_VERSION
++
+ #if defined (_POSIX_VERSION) && defined (HAVE_TERMIOS_H) && defined (HAVE_TCGETATTR) && !defined (TERMIOS_MISSING)
+ #  define TERMIOS_TTY_DRIVER
+ #else
+diff -rupN old/lib/readline/rltty.h new/lib/readline/rltty.h
+--- old/lib/readline/rltty.h	2009-01-05 03:32:33.000000000 +0800
++++ new/lib/readline/rltty.h	2020-02-24 19:51:46.365990315 +0800
+@@ -22,6 +22,9 @@
+ #if !defined (_RLTTY_H_)
+ #define _RLTTY_H_
+ 
++#undef NEW_TTY_DRIVER
++#define TERMIOS_TTY_DRIVER
++
+ /* Posix systems use termios and the Posix signal functions. */
+ #if defined (TERMIOS_TTY_DRIVER)
+ #  include <termios.h>
 diff -rupN old/lib/sh/oslib.c new/lib/sh/oslib.c
 --- old/lib/sh/oslib.c	2013-10-14 21:12:57.000000000 +0800
 +++ new/lib/sh/oslib.c	2020-02-24 18:02:49.043107739 +0800
