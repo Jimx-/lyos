@@ -10,7 +10,7 @@ pipeline {
         }
         stage('Compile') {
             steps {
-                sh 'make silentoldconfig'
+                sh 'make SUBARCH=i686 silentoldconfig'
                 
                 dir('toolchain') {
                     sh './download.sh'
