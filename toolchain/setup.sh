@@ -138,8 +138,8 @@ if $BUILD_NATIVE_GCC; then
     make DESTDIR=$SYSROOT all-target-libgcc -j8 || cmd_error
     make DESTDIR=$SYSROOT install-target-libgcc -j || cmd_error
     touch $SYSROOT/usr/include/fenv.h
-    make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
-    make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
+    # make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
+    # make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
     popd > /dev/null
 fi
 

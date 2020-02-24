@@ -1,6 +1,6 @@
-diff -rupN origin/config.sub new/config.sub
---- origin/config.sub	2012-08-06 22:34:27.000000000 +0800
-+++ new/config.sub	2014-10-12 10:29:05.007217045 +0800
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2012-08-06 22:34:27.000000000 +0800
++++ new/config.sub	2020-02-24 16:21:19.164775997 +0800
 @@ -1353,6 +1353,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -9,9 +9,9 @@ diff -rupN origin/config.sub new/config.sub
  	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
-diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
---- origin/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2014-10-12 10:29:05.011217056 +0800
+diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
+--- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
++++ new/gcc/config/lyos.h	2020-02-24 16:21:19.164775997 +0800
 @@ -0,0 +1,25 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -38,9 +38,9 @@ diff -rupN origin/gcc/config/lyos.h new/gcc/config/lyos.h
 +      %{!dynamic-linker:-dynamic-linker " "/lib/ld-lyos.so" "}} \
 +    %{static:-static}}"
 +
-diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
---- origin/gcc/config.gcc	2013-03-07 06:54:11.000000000 +0800
-+++ new/gcc/config.gcc	2014-10-12 10:31:44.104005930 +0800
+diff -rupN old/gcc/config.gcc new/gcc/config.gcc
+--- old/gcc/config.gcc	2013-03-07 06:54:11.000000000 +0800
++++ new/gcc/config.gcc	2020-02-24 16:21:19.168109283 +0800
 @@ -767,6 +767,11 @@ case ${target} in
      *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
    esac
@@ -76,9 +76,52 @@ diff -rupN origin/gcc/config.gcc new/gcc/config.gcc
  i[34567]86-*-darwin*)
  	need_64bit_isa=yes
  	# Baseline choice for a machine that allows m64 support.
-diff -rupN origin/libgcc/config.host new/libgcc/config.host
---- origin/libgcc/config.host	2013-03-07 01:42:45.000000000 +0800
-+++ new/libgcc/config.host	2014-10-12 10:30:51.607745638 +0800
+diff -rupN old/gcc/cp/cfns.h new/gcc/cp/cfns.h
+--- old/gcc/cp/cfns.h	2009-04-22 03:03:23.000000000 +0800
++++ new/gcc/cp/cfns.h	2020-02-24 16:40:08.253071546 +0800
+@@ -53,6 +53,9 @@ __inline
+ static unsigned int hash (const char *, unsigned int);
+ #ifdef __GNUC__
+ __inline
++#ifdef __GNUC_STDC_INLINE__
++__attribute__ ((__gnu_inline__))
++#endif
+ #endif
+ const char * libc_name_p (const char *, unsigned int);
+ /* maximum key range = 391, duplicates = 0 */
+@@ -96,7 +99,7 @@ hash (register const char *str, register
+       400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
+       400, 400, 400, 400, 400, 400, 400
+     };
+-  register int hval = len;
++  register int hval = (int)len;
+ 
+   switch (hval)
+     {
+diff -rupN old/gcc/doc/gcc.texi new/gcc/doc/gcc.texi
+--- old/gcc/doc/gcc.texi	2010-06-10 07:46:33.000000000 +0800
++++ new/gcc/doc/gcc.texi	2020-02-24 16:23:16.109925318 +0800
+@@ -86,9 +86,15 @@ Published by:
+ @item GNU Press
+ @tab Website: www.gnupress.org
+ @item a division of the
+-@tab General: @tex press@@gnu.org @end tex
++@tab General: 
++@tex 
++press@@gnu.org 
++@end tex
+ @item Free Software Foundation
+-@tab Orders:  @tex sales@@gnu.org @end tex
++@tab Orders:  
++@tex 
++sales@@gnu.org 
++@end tex
+ @item 51 Franklin Street, Fifth Floor
+ @tab Tel 617-542-5942
+ @item Boston, MA 02110-1301 USA
+diff -rupN old/libgcc/config.host new/libgcc/config.host
+--- old/libgcc/config.host	2013-03-07 01:42:45.000000000 +0800
++++ new/libgcc/config.host	2020-02-24 16:21:19.168109283 +0800
 @@ -382,6 +382,9 @@ arm*-*-elf)
  arm*-wince-pe*)
  	tmake_file="$tmake_file arm/t-arm arm/t-wince-pe"
@@ -100,9 +143,9 @@ diff -rupN origin/libgcc/config.host new/libgcc/config.host
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm"
-diff -rupN origin/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
---- origin/libstdc++-v3/crossconfig.m4	2011-07-18 19:04:18.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2014-10-12 10:29:05.031217144 +0800
+diff -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
+--- old/libstdc++-v3/crossconfig.m4	2011-07-18 19:04:18.000000000 +0800
++++ new/libstdc++-v3/crossconfig.m4	2020-02-24 16:21:19.168109283 +0800
 @@ -150,6 +150,12 @@ case "${host}" in
      GCC_CHECK_TLS
      AM_ICONV

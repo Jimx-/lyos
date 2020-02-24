@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ -z "$SUBARCH" ]; then
     SUBARCH=i686
     ARCH=x86
-fi  
+fi
 
 if [ -z "$ARCH" ]; then
     echo "ARCH must be set"
