@@ -1,0 +1,67 @@
+diff -rupN old/lib/sh/oslib.c new/lib/sh/oslib.c
+--- old/lib/sh/oslib.c	2013-10-14 21:12:57.000000000 +0800
++++ new/lib/sh/oslib.c	2020-02-24 18:02:49.043107739 +0800
+@@ -236,8 +236,8 @@ killpg (pgrp, sig)
+ #if !defined (HAVE_MKFIFO) && defined (PROCESS_SUBSTITUTION)
+ int
+ mkfifo (path, mode)
+-     char *path;
+-     int mode;
++     const char *path;
++     mode_t mode;
+ {
+ #if defined (S_IFIFO)
+   return (mknod (path, (mode | S_IFIFO), 0));
+diff -rupN old/lib/sh/tmpfile.c new/lib/sh/tmpfile.c
+--- old/lib/sh/tmpfile.c	2013-12-19 06:50:13.000000000 +0800
++++ new/lib/sh/tmpfile.c	2020-02-24 18:02:49.043107739 +0800
+@@ -137,7 +137,7 @@ sh_mktmpname (nameroot, flags)
+       filenum = (filenum << 1) ^
+ 		(unsigned long) time ((time_t *)0) ^
+ 		(unsigned long) dollar_dollar_pid ^
+-		(unsigned long) ((flags & MT_USERANDOM) ? random () : ntmpfiles++);
++		(unsigned long) (ntmpfiles++);
+       sprintf (filename, "%s/%s-%lu", tdir, lroot, filenum);
+       if (tmpnamelen > 0 && tmpnamelen < 32)
+ 	filename[tdlen + 1 + tmpnamelen] = '\0';
+@@ -186,7 +186,7 @@ sh_mktmpfd (nameroot, flags, namep)
+       filenum = (filenum << 1) ^
+ 		(unsigned long) time ((time_t *)0) ^
+ 		(unsigned long) dollar_dollar_pid ^
+-		(unsigned long) ((flags & MT_USERANDOM) ? random () : ntmpfiles++);
++		(unsigned long) (ntmpfiles++);
+       sprintf (filename, "%s/%s-%lu", tdir, lroot, filenum);
+       if (tmpnamelen > 0 && tmpnamelen < 32)
+ 	filename[tdlen + 1 + tmpnamelen] = '\0';
+diff -rupN old/support/config.sub new/support/config.sub
+--- old/support/config.sub	2013-12-17 23:49:47.000000000 +0800
++++ new/support/config.sub	2020-02-24 18:02:49.073107481 +0800
+@@ -149,7 +149,7 @@ case $os in
+ 	-convergent* | -ncr* | -news | -32* | -3600* | -3100* | -hitachi* |\
+ 	-c[123]* | -convex* | -sun | -crds | -omron* | -dg | -ultra | -tti* | \
+ 	-harris | -dolphin | -highlevel | -gould | -cbm | -ns | -masscomp | \
+-	-apple | -axis | -knuth | -cray | -microblaze*)
++	-apple | -axis | -knuth | -cray | -microblaze | -lyos)
+ 		os=
+ 		basic_machine=$1
+ 		;;
+@@ -353,7 +353,7 @@ case $basic_machine in
+ 	# We use `pc' rather than `unknown'
+ 	# because (1) that's what they normally are, and
+ 	# (2) the word "unknown" tends to confuse beginning users.
+-	i*86 | x86_64)
++	i*86* | x86_64)
+ 	  basic_machine=$basic_machine-pc
+ 	  ;;
+ 	# Object if more than one company name word.
+@@ -751,6 +751,10 @@ case $basic_machine in
+ 		basic_machine=i386-mach
+ 		os=-mach
+ 		;;
++	i686-elf-lyos)
++		basic_machine=i386-unknown
++		os=lyos
++		;;
+ 	i386-vsta | vsta)
+ 		basic_machine=i386-unknown
+ 		os=-vsta
