@@ -10,13 +10,14 @@ pipeline {
         }
         stage('Compile') {
             steps {
-                sh '''
-                    cd toolchain
-                    ./download.sh
-                    BUILD_EVERYTHING=true ./setup.sh
-                    cd ..
-                	make SUBARCH=i686
-                '''
+                sh 'make silentoldconfig'
+                
+                dir('toolchain') {
+                    sh './download.sh'
+                    sh 'BUILD_EVERYTHING=true ./setup.sh'
+                }
+                
+                sh 'make SUBARCH=i686'
             }
         }
     }
