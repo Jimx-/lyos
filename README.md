@@ -1,16 +1,15 @@
 This is lyos <https://github.com/Jimx-/lyos>
+[![Build Status](https://ci2.jimx.site:8080/buildStatus/icon?job=lyos)](https://ci2.jimx.site:8080/job/lyos/)
 
 ![procfs][1]
 
-WHAT IS LYOS 简介
+WHAT IS LYOS
 ===============
     
 Lyos is an open source microkernel multitasking operating system, it runs
 on 32-bit x86-based PCs. It is distributed under the GNU General Public License.
 
-Lyos是一个开源的微内核多任务操作系统，运行于32位x86 PC上， 使用GNU GPL协议。
-
-FEATURES 功能
+FEATURES
 ============
 Lyos has many standard features:
 
@@ -35,24 +34,7 @@ Lyos has many standard features:
     - Newlib
     - Dash, GNU Binutils, gcc, GNU Bash...
 
-Lyos具有的功能：
-
-* 微内核
-    - 内核仅处理消息传递，中断和任务调度。内存管理，文件/设备操作由运行在用户空间的驱动程序完成
-* 多任务
-    - BFS调度器
-* 对称多处理(SMP)
-* ELF加载
-* 文件系统
-    - Ext2
-    - procfs, sysfs等
-* 内存管理
-    - 基于虚拟内存
-* 用户空间
-    - Newlib
-    - Dash, GNU Binutils, gcc, GNU Bash等
-
-COMPILATION AND INSTALLATION 编译与安装
+COMPILATION AND INSTALLATION
 ======================================
 
 1. Get the source ```git clone git://github.com/Jimx-/lyos.git```
