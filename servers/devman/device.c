@@ -119,15 +119,20 @@ PRIVATE int publish_device(struct device* dev)
         return retval;
     }
 
-    struct memfs_stat stat;
-    stat.st_mode = (I_REGULAR | 0644);
-    stat.st_uid = SU_UID;
-    stat.st_gid = 0;
-    struct memfs_inode* pin = memfs_add_inode(memfs_get_root_inode(), dev->name,
-                                              NO_INDEX, &stat, NULL);
+    if (dev->devt != NO_DEV) {
+        struct memfs_stat stat;
+        stat.st_mode =
+            ((dev->type == DT_BLOCKDEV ? I_BLOCK_SPECIAL : I_CHAR_SPECIAL) |
+             0644);
+        stat.st_uid = SU_UID;
+        stat.st_gid = 0;
+        stat.st_device = dev->devt;
+        struct memfs_inode* pin = memfs_add_inode(
+            memfs_get_root_inode(), dev->name, NO_INDEX, &stat, NULL);
 
-    if (!pin) {
-        return ENOMEM;
+        if (!pin) {
+            return ENOMEM;
+        }
     }
 
     return 0;
@@ -148,6 +153,8 @@ PUBLIC device_id_t do_device_register(MESSAGE* m)
     dev->owner = m->source;
     dev->bus = get_bus_type(devinf.bus);
     dev->parent = get_device(devinf.parent);
+    dev->devt = devinf.devt;
+    dev->type = devinf.type;
 
     if (publish_device(dev) != 0) return NO_DEVICE_ID;
 

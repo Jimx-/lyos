@@ -27,6 +27,8 @@ struct device {
     struct device* parent;
     char name[DEVICE_NAME_MAX];
     endpoint_t owner;
+    dev_t devt;
+    int type;
 
     struct bus_type* bus;
 };

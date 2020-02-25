@@ -204,6 +204,7 @@ PRIVATE void init_tty()
     devinf.bus = tty_subsys_id;
     devinf.parent = NO_DEVICE_ID;
     devinf.devt = devt;
+    devinf.type = DT_CHARDEV;
 
     device_id = dm_device_register(&devinf);
     if (device_id == NO_DEVICE_ID) panic("tty: cannot register console device");
@@ -224,6 +225,7 @@ PRIVATE void init_tty()
         memset(&devinf, 0, sizeof(devinf));
         devinf.bus = tty_subsys_id;
         devinf.parent = NO_DEVICE_ID;
+        devinf.type = DT_CHARDEV;
 
         if (i < NR_CONSOLES) { /* consoles */
             init_screen(tty);
