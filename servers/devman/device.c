@@ -31,6 +31,7 @@
 #include <lyos/sysutils.h>
 #include <libsysfs/libsysfs.h>
 #include <libdevman/libdevman.h>
+#include <libmemfs/libmemfs.h>
 #include "type.h"
 
 struct device_attr_cb_data {
@@ -41,9 +42,9 @@ struct device_attr_cb_data {
     struct device* device;
 };
 
-#define DEVICE_ATTR_HASH_LOG2   7
-#define DEVICE_ATTR_HASH_SIZE   ((unsigned long)1<<DEVICE_ATTR_HASH_LOG2)
-#define DEVICE_ATTR_HASH_MASK   (((unsigned long)1<<DEVICE_ATTR_HASH_LOG2)-1)
+#define DEVICE_ATTR_HASH_LOG2 7
+#define DEVICE_ATTR_HASH_SIZE ((unsigned long)1 << DEVICE_ATTR_HASH_LOG2)
+#define DEVICE_ATTR_HASH_MASK (((unsigned long)1 << DEVICE_ATTR_HASH_LOG2) - 1)
 
 /* device attribute hash table */
 PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
@@ -88,7 +89,6 @@ PRIVATE struct device* alloc_device()
     return dev;
 }
 
-
 PRIVATE void device_domain_label(struct device* dev, char* buf)
 {
     char name[MAX_PATH];
@@ -115,7 +115,22 @@ PRIVATE int publish_device(struct device* dev)
     device_domain_label(dev, label);
     int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
-    return retval;
+    if (retval) {
+        return retval;
+    }
+
+    struct memfs_stat stat;
+    stat.st_mode = (I_REGULAR | 0644);
+    stat.st_uid = SU_UID;
+    stat.st_gid = 0;
+    struct memfs_inode* pin = memfs_add_inode(memfs_get_root_inode(), dev->name,
+                                              NO_INDEX, &stat, NULL);
+
+    if (!pin) {
+        return ENOMEM;
+    }
+
+    return 0;
 }
 
 PUBLIC device_id_t do_device_register(MESSAGE* m)
@@ -149,7 +164,8 @@ PUBLIC struct device* get_device(device_id_t id)
 PRIVATE struct device_attr_cb_data* alloc_device_attr()
 {
     static dev_attr_id_t next_id = 1;
-    struct device_attr_cb_data* attr = (struct device_attr_cb_data*) malloc(sizeof(struct device_attr_cb_data));
+    struct device_attr_cb_data* attr =
+        (struct device_attr_cb_data*)malloc(sizeof(struct device_attr_cb_data));
 
     if (!attr) return NULL;
 
@@ -176,7 +192,8 @@ PRIVATE void device_attr_unhash(struct device_attr_cb_data* attr)
 
 PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
-    struct device_attr_cb_data* attr = (struct device_attr_cb_data*) sf_attr->cb_data;
+    struct device_attr_cb_data* attr =
+        (struct device_attr_cb_data*)sf_attr->cb_data;
 
     MESSAGE msg;
     msg.type = DM_DEVICE_ATTR_SHOW;
@@ -196,14 +213,16 @@ PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
     return count;
 }
 
-PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
+PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
+                                  size_t count)
 {
-    struct device_attr_cb_data* attr = (struct device_attr_cb_data*) (sf_attr->cb_data);
+    struct device_attr_cb_data* attr =
+        (struct device_attr_cb_data*)(sf_attr->cb_data);
 
     MESSAGE msg;
 
     msg.type = DM_DEVICE_ATTR_STORE;
-    msg.BUF = (char*) buf;
+    msg.BUF = (char*)buf;
     msg.CNT = count;
     msg.TARGET = attr->id;
 
@@ -231,8 +250,9 @@ PUBLIC int do_device_attr_add(MESSAGE* m)
     snprintf(label, MAX_PATH, "%s.%s", device_root, info.name);
 
     sysfs_dyn_attr_t sysfs_attr;
-    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr,
-                                    device_attr_show, device_attr_store);
+    int retval =
+        sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*)attr,
+                            device_attr_show, device_attr_store);
     if (retval) return retval;
     retval = sysfs_publish_dyn_attr(&sysfs_attr);
     if (retval < 0) return -retval;

@@ -40,7 +40,9 @@
 
 //#define DEBUG
 #ifdef DEBUG
-#define DEB(x) printl("VFS: "); x
+#define DEB(x)       \
+    printl("VFS: "); \
+    x
 #else
 #define DEB(x)
 #endif
@@ -65,97 +67,97 @@ PUBLIC void init_vfs();
  */
 PUBLIC int main()
 {
-	printl("VFS: Virtual filesystem is running.\n");
+    printl("VFS: Virtual filesystem is running.\n");
 
-	init_vfs();
-	
-	MESSAGE msg;
-	while (TRUE) {
-		fs_sleeping = 1;
-		send_recv(RECEIVE_ASYNC, ANY, &msg);
-		fs_sleeping = 0;
+    init_vfs();
 
-		int msgtype = msg.type;
-		/* enqueue a request from the user */
-		if (msgtype != FS_THREAD_WAKEUP) {
+    MESSAGE msg;
+    while (TRUE) {
+        fs_sleeping = 1;
+        send_recv(RECEIVE_ASYNC, ANY, &msg);
+        fs_sleeping = 0;
+
+        int msgtype = msg.type;
+        /* enqueue a request from the user */
+        if (msgtype != FS_THREAD_WAKEUP) {
             enqueue_request(&msg);
         }
 
-		struct vfs_message* res;
-		/* send result back to the user */
-		lock_response_queue();
-		while (TRUE) {
-			res = dequeue_response();
-			if (!res) break;
+        struct vfs_message* res;
+        /* send result back to the user */
+        lock_response_queue();
+        while (TRUE) {
+            res = dequeue_response();
+            if (!res) break;
 
-			if (res->msg.type != SUSPEND_PROC && res->msg.RETVAL != SUSPEND) {
-				res->msg.type = SYSCALL_RET;
-				send_recv(SEND_NONBLOCK, res->msg.source, &res->msg);
-			}
+            if (res->msg.type != SUSPEND_PROC && res->msg.RETVAL != SUSPEND) {
+                res->msg.type = SYSCALL_RET;
+                send_recv(SEND_NONBLOCK, res->msg.source, &res->msg);
+            }
 
-			free(res);
-		}
-		unlock_response_queue();
-	}
+            free(res);
+        }
+        unlock_response_queue();
+    }
 
-	return 0;
+    return 0;
 }
 
 PUBLIC void init_vfs()
 {
-	int i;
+    int i;
 
-	/* f_desc_table[] */
-	for (i = 0; i < NR_FILE_DESC; i++) {
-		memset(&f_desc_table[i], 0, sizeof(struct file_desc));
-		pthread_mutex_init(&f_desc_table[i].fd_lock, NULL);
-	}
-	
-	/* inode_table[] */
-	for (i = 0; i < NR_INODE; i++)
-		memset(&inode_table[i], 0, sizeof(struct inode));
+    /* f_desc_table[] */
+    for (i = 0; i < NR_FILE_DESC; i++) {
+        memset(&f_desc_table[i], 0, sizeof(struct file_desc));
+        pthread_mutex_init(&f_desc_table[i].fd_lock, NULL);
+    }
 
-	/* fproc_table[] */
-	for (i = 0; i < NR_PROCS; i++) {
-		pthread_mutex_init(&fproc_table[i].lock, NULL);
+    /* inode_table[] */
+    for (i = 0; i < NR_INODE; i++)
+        memset(&inode_table[i], 0, sizeof(struct inode));
+
+    /* fproc_table[] */
+    for (i = 0; i < NR_PROCS; i++) {
+        pthread_mutex_init(&fproc_table[i].lock, NULL);
         fproc_table[i].worker = NULL;
-	}
-	pthread_mutex_init(&filesystem_lock, NULL);
+    }
+    pthread_mutex_init(&filesystem_lock, NULL);
 
     init_inode_table();
     init_select();
 
     /* initialize system procs */
     MESSAGE pm_msg;
-    struct fproc * pfp;
+    struct fproc* pfp;
     do {
-    	send_recv(RECEIVE, TASK_PM, &pm_msg);
+        send_recv(RECEIVE, TASK_PM, &pm_msg);
 
-    	if (pm_msg.type != PM_VFS_INIT) panic("bad msg type from pm");
+        if (pm_msg.type != PM_VFS_INIT) panic("bad msg type from pm");
 
-    	if (pm_msg.ENDPOINT == NO_TASK) break;
+        if (pm_msg.ENDPOINT == NO_TASK) break;
 
-    	pfp = &fproc_table[pm_msg.PROC_NR];
-    	pfp->endpoint = pm_msg.ENDPOINT;
-    	pfp->pid = pm_msg.PID;
-    	pfp->realuid = pfp->effuid = SU_UID;
-    	pfp->realgid = pfp->effgid = (gid_t)0;
-    	pfp->pwd = NULL;
-		pfp->root = NULL;
-		pfp->umask = ~0;
-		pfp->flags |= FPF_INUSE;
+        pfp = &fproc_table[pm_msg.PROC_NR];
+        pfp->endpoint = pm_msg.ENDPOINT;
+        pfp->pid = pm_msg.PID;
+        pfp->realuid = pfp->effuid = SU_UID;
+        pfp->realgid = pfp->effgid = (gid_t)0;
+        pfp->pwd = NULL;
+        pfp->root = NULL;
+        pfp->umask = ~0;
+        pfp->flags |= FPF_INUSE;
 
-		for (i = 0; i < NR_FILES; i++)
-			pfp->filp[i] = 0;
-    } while(TRUE);
-    
+        for (i = 0; i < NR_FILES; i++)
+            pfp->filp[i] = 0;
+    } while (TRUE);
+
     pm_msg.RETVAL = 0;
     send_recv(SEND, TASK_PM, &pm_msg);
 
     int id;
     for (id = 0; id < NR_WORKER_THREADS; id++) {
-    	pid_t pid = create_worker(id);
-    	if (pid > 0) nr_workers++;
+        pid_t pid = create_worker(id);
+        if (pid > 0) nr_workers++;
     }
     printl("VFS: Started %d worker thread(s)\n", nr_workers);
 
@@ -165,6 +167,7 @@ PUBLIC void init_vfs()
     printl("VFS: Mounted init ramdisk\n");
 
     add_filesystem(TASK_SYSFS, "sysfs");
+    add_filesystem(TASK_DEVMAN, "devfs");
 
     fs_sleeping = 0;
 

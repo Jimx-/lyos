@@ -1,9 +1,9 @@
 #
 # Makefile for device manager.
 
-SRCS 	= main.c ddmap.c global.c bus.c device.c
-LIBS 	= lyos sysfs
+SRCS	= main.c ddmap.c global.c bus.c device.c
+LIBS	= sysfs memfs fsdriver bdev devman lyos
 
-PROG 	= devman
+PROG	= devman
 
 include lyos.service.mk
