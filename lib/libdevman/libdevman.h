@@ -17,7 +17,7 @@
 #define _LIBDEVMAN_H_
 
 #include <lyos/list.h>
-    
+
 typedef int bus_type_id_t;
 #define BUS_NAME_MAX    32
 #define BUS_TYPE_ERROR  -1
@@ -30,7 +30,8 @@ struct device_info {
     char name[DEVICE_NAME_MAX];
     device_id_t parent;
     bus_type_id_t bus;
-};
+    dev_t devt;
+} __attribute__((packed));
 
 typedef int dev_attr_id_t;
 #define ATTR_NAME_MAX   32
