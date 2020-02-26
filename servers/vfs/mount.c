@@ -33,7 +33,7 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
-#define __LINUX_ERRNO_EXTENSIONS__   /* we want ENOTBLK */
+#define __LINUX_ERRNO_EXTENSIONS__ /* we want ENOTBLK */
 #include "errno.h"
 #include "fcntl.h"
 #include "lyos/list.h"
@@ -44,12 +44,12 @@
 #include "global.h"
 
 /* find device number of the given pathname */
-PRIVATE dev_t name2dev(struct fproc* fp, char * pathname);
+PRIVATE dev_t name2dev(struct fproc* fp, char* pathname);
 PRIVATE dev_t get_none_dev();
-//PRIVATE int is_none_dev(dev_t dev);
+// PRIVATE int is_none_dev(dev_t dev);
 PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
 
-PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
+PUBLIC void clear_vfs_mount(struct vfs_mount* vmnt)
 {
     vmnt->m_fs_ep = NO_TASK;
     vmnt->m_dev = NO_DEV;
@@ -60,9 +60,10 @@ PUBLIC void clear_vfs_mount(struct vfs_mount * vmnt)
     rwlock_init(&(vmnt->m_lock));
 }
 
-PUBLIC struct vfs_mount * get_free_vfs_mount()
+PUBLIC struct vfs_mount* get_free_vfs_mount()
 {
-    struct  vfs_mount * vmnt = (struct vfs_mount *)malloc(sizeof(struct vfs_mount));
+    struct vfs_mount* vmnt =
+        (struct vfs_mount*)malloc(sizeof(struct vfs_mount));
     if (vmnt == NULL) {
         err_code = ENOMEM;
         return NULL;
@@ -73,10 +74,11 @@ PUBLIC struct vfs_mount * get_free_vfs_mount()
     return vmnt;
 }
 
-PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev)
+PUBLIC struct vfs_mount* find_vfs_mount(dev_t dev)
 {
-    struct vfs_mount * vmnt;
-    list_for_each_entry(vmnt, &vfs_mount_table, list) {
+    struct vfs_mount* vmnt;
+    list_for_each_entry(vmnt, &vfs_mount_table, list)
+    {
         if (vmnt->m_dev == dev) {
             return vmnt;
         }
@@ -87,23 +89,23 @@ PUBLIC struct vfs_mount * find_vfs_mount(dev_t dev)
 
 /**
  * Lock the vfs mount.
- * @param vmnt 
+ * @param vmnt
  */
-PUBLIC int lock_vmnt(struct vfs_mount * vmnt, rwlock_type_t type)
+PUBLIC int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type)
 {
     return rwlock_lock(&(vmnt->m_lock), type);
 }
 
 /**
  * Unlock the vfs mount.
- * @param vmnt 
+ * @param vmnt
  */
-PUBLIC void unlock_vmnt(struct vfs_mount * vmnt)
+PUBLIC void unlock_vmnt(struct vfs_mount* vmnt)
 {
     rwlock_unlock(&(vmnt->m_lock));
 }
 
-PUBLIC int do_mount(MESSAGE * p)
+PUBLIC int do_mount(MESSAGE* p)
 {
     unsigned long flags = p->MFLAGS;
     int src = p->source;
@@ -113,25 +115,44 @@ PUBLIC int do_mount(MESSAGE * p)
     int label_len = p->MNAMELEN3;
     char fs_label[FS_LABEL_MAX];
     if (label_len > FS_LABEL_MAX) return ENAMETOOLONG;
-    
+
     data_copy(SELF, fs_label, src, p->MLABEL, label_len);
     fs_label[label_len] = '\0';
 
     int fs_e = get_filesystem_endpoint(fs_label);
 
     if (fs_e == -1) return EINVAL;
-    
+
     int source_len = p->MNAMELEN1;
     int target_len = p->MNAMELEN2;
 
     char source[MAX_PATH];
     if (source_len > MAX_PATH) return ENAMETOOLONG;
-    
+
     char target[MAX_PATH];
-    if (target_len > MAX_PATH) return ENAMETOOLONG;       
+    if (target_len > MAX_PATH) return ENAMETOOLONG;
+
+    data_copy(SELF, target, src, p->MTARGET, target_len);
+    target[target_len] = '\0';
+
+    int is_root = strcmp(target, "/") == 0;
+    int mount_root = (is_root && have_root < 2); /* root can be mounted twice */
 
     dev_t dev_nr;
-    if (source_len > 0) {
+    if (mount_root) {
+        /* /dev is not available before we mount root so we need to parse it
+         * differently */
+        data_copy(SELF, source, src, p->MSOURCE, source_len);
+        source[source_len] = '\0';
+
+        int major, minor;
+        char dummy;
+        if (sscanf(source, "dev(%u,%u)%c", &major, &minor, &dummy) == 2) {
+            dev_nr = MAKE_DEV(major, minor);
+        } else {
+            return EINVAL;
+        }
+    } else if (source_len > 0) {
         data_copy(SELF, source, src, p->MSOURCE, source_len);
         source[source_len] = '\0';
 
@@ -142,27 +163,26 @@ PUBLIC int do_mount(MESSAGE * p)
         if (dev_nr == 0) return err_code;
     }
 
-    data_copy(SELF, target, src, p->MTARGET, target_len);
-    target[target_len] = '\0';
-
     int readonly = flags & MS_READONLY;
     int retval = mount_fs(pcaller, dev_nr, target, fs_e, readonly);
 
-    if (retval == 0 && (strcmp(target, "/") == 0)) printl("VFS: %s is %s mounted on %s\n", source, readonly ? "read-only" : "read-write", target);
+    if (retval == 0 && is_root)
+        printl("VFS: %s is %s mounted on %s\n", source,
+               readonly ? "read-only" : "read-write", target);
     return retval;
 }
 
-
-PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t fs_ep, int readonly)
+PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char* mountpoint,
+                    endpoint_t fs_ep, int readonly)
 {
     if (find_vfs_mount(dev) != NULL) return EBUSY;
-    struct vfs_mount * new_pvm = get_free_vfs_mount();
+    struct vfs_mount* new_pvm = get_free_vfs_mount();
     if (new_pvm == NULL) return ENOMEM;
 
     lock_vmnt(new_pvm, RWL_WRITE);
 
     int retval = 0;
-    struct inode * pmp = NULL; 
+    struct inode* pmp = NULL;
     struct vfs_mount* parent_vmnt = NULL;
 
     int is_root = (strcmp(mountpoint, "/") == 0);
@@ -175,10 +195,13 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
         lookup.vmnt_lock = RWL_WRITE;
         lookup.inode_lock = RWL_WRITE;
         pmp = resolve_path(&lookup, fp);
-        
-        if (pmp == NULL) retval = err_code;
-        else if (pmp->i_cnt == 1) retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
-        else retval = EBUSY;
+
+        if (pmp == NULL)
+            retval = err_code;
+        else if (pmp->i_cnt == 1)
+            retval = request_mountpoint(pmp->i_fs_ep, pmp->i_dev, pmp->i_num);
+        else
+            retval = EBUSY;
 
         if (pmp) {
             unlock_vmnt(parent_vmnt);
@@ -197,12 +220,14 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
     new_pvm->m_dev = dev;
     new_pvm->m_fs_ep = fs_ep;
 
-    if (readonly) new_pvm->m_flags |= VMNT_READONLY;
-    else new_pvm->m_flags &= ~VMNT_READONLY;
+    if (readonly)
+        new_pvm->m_flags |= VMNT_READONLY;
+    else
+        new_pvm->m_flags &= ~VMNT_READONLY;
 
     struct lookup_result res;
     retval = request_readsuper(fs_ep, dev, readonly, is_root, &res);
-    
+
     if (retval) {
         if (pmp) {
             unlock_inode(pmp);
@@ -212,7 +237,7 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
         return retval;
     }
 
-    struct inode * root_inode = new_inode(dev, res.inode_nr);
+    struct inode* root_inode = new_inode(dev, res.inode_nr);
 
     if (!root_inode) {
         if (pmp) {
@@ -239,7 +264,7 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
         ROOT_DEV = dev;
 
         /* update all root inodes */
-        struct fproc * fp = fproc_table;
+        struct fproc* fp = fproc_table;
         int i;
         for (i = 0; i < NR_PROCS; i++, fp++) {
 
@@ -268,7 +293,6 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
     return 0;
 }
 
-
 /**
  * @brief name2dev Find the device number of the given pathname.
  *
@@ -276,7 +300,7 @@ PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char * mountpoint, endpoint_t f
  *
  * @return The device number of the given pathname.
  */
-PRIVATE dev_t name2dev(struct fproc* fp, char * pathname)
+PRIVATE dev_t name2dev(struct fproc* fp, char* pathname)
 {
     struct vfs_mount* vmnt = NULL;
     struct inode* pin = NULL;
@@ -287,12 +311,14 @@ PRIVATE dev_t name2dev(struct fproc* fp, char * pathname)
     pin = resolve_path(&lookup, fp);
 
     if (pin == NULL) {
-       return (dev_t)0;
+        return (dev_t)0;
     }
 
     dev_t retval = 0;
-    if ((pin->i_mode & I_TYPE) == I_BLOCK_SPECIAL) retval = pin->i_specdev;
-    else err_code = ENOTBLK;
+    if ((pin->i_mode & I_TYPE) == I_BLOCK_SPECIAL)
+        retval = pin->i_specdev;
+    else
+        err_code = ENOTBLK;
 
     unlock_inode(pin);
     unlock_vmnt(vmnt);
@@ -322,9 +348,8 @@ PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)
     m.type = FS_MOUNTPOINT;
     m.REQ_DEV = dev;
     m.REQ_NUM = num;
-    //async_sendrec(fs_ep, &m, 0);
+    // async_sendrec(fs_ep, &m, 0);
     send_recv(BOTH, fs_ep, &m);
 
     return m.RET_RETVAL;
 }
-

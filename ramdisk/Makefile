@@ -31,7 +31,6 @@ $(INITRD):
 	@cp -f $(DESTDIR)/usr/lib/libg.so usr/lib
 	@cp -rf ../sysroot/etc/* etc/
 	@touch .root
-	@(cd ../scripts ; bash create-ramdisk-dev.sh)
-	@tar -cvf $(INITRD) .root bin/* lib/* sbin/* dev/* etc/* usr/bin/* usr/lib/* > /dev/null
+	@tar -cvf $(INITRD) .root bin/* lib/* sbin/* etc/* usr/bin/* usr/lib/* > /dev/null
 	@rm .root
 	@cp -f $(INITRD) $(DESTDIR)/boot/

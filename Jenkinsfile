@@ -18,13 +18,9 @@ pipeline {
                     sh 'BUILD_EVERYTHING=true ./setup.sh'
                 }
                 
-                sh 'make SUBARCH=i686 genconf'
-                sh 'make SUBARCH=i686 libraries'
-                sh 'make SUBARCH=i686 install-libraries'
-                sh 'make SUBARCH=i686 fs'
-                sh 'make SUBARCH=i686 drivers'
-                sh 'make SUBARCH=i686 servers'
-                sh 'make SUBARCH=i686 kernel'
+                ansiColor('xterm') {    
+                    sh 'make SUBARCH=i686'
+                }
             }
         }
     }
