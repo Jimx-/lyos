@@ -12,6 +12,8 @@ PRIVATE inline u64 of_read_number(const u32* cell, int size)
     return r;
 }
 
-PUBLIC int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int, void*), void* arg, void* blob);
+PUBLIC int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int,
+                                   void*),
+                       void* arg, void* blob);
 
 #endif // _LIBOF_H_

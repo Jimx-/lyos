@@ -30,65 +30,68 @@
 #include <libdevman/libdevman.h>
 #include <libsysfs/libsysfs.h>
 
-#define BUFSIZE 	4096
-    
-#define DEVICE_ATTR_HASH_LOG2   7
-#define DEVICE_ATTR_HASH_SIZE   ((unsigned long)1<<DEVICE_ATTR_HASH_LOG2)
-#define DEVICE_ATTR_HASH_MASK   (((unsigned long)1<<DEVICE_ATTR_HASH_LOG2)-1)
+#define BUFSIZE 4096
+
+#define DEVICE_ATTR_HASH_LOG2 7
+#define DEVICE_ATTR_HASH_SIZE ((unsigned long)1 << DEVICE_ATTR_HASH_LOG2)
+#define DEVICE_ATTR_HASH_MASK (((unsigned long)1 << DEVICE_ATTR_HASH_LOG2) - 1)
 
 /* device attribute hash table */
 PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 
-PUBLIC int dm_init_device_attr(struct device_attribute* attr, device_id_t device, char* name, mode_t mode, void* cb_data,
-								device_attr_show_t show, device_attr_store_t store)
+PUBLIC int dm_init_device_attr(struct device_attribute* attr,
+                               device_id_t device, char* name, mode_t mode,
+                               void* cb_data, device_attr_show_t show,
+                               device_attr_store_t store)
 {
-	static int initialized = 0;
-	if (!initialized) {
-		int i;
-		for (i = 0; i < DEVICE_ATTR_HASH_SIZE; i++) {
-			INIT_LIST_HEAD(&device_attr_table[i]);
-		}
-		initialized = 1;
-	}
+    static int initialized = 0;
+    if (!initialized) {
+        int i;
+        for (i = 0; i < DEVICE_ATTR_HASH_SIZE; i++) {
+            INIT_LIST_HEAD(&device_attr_table[i]);
+        }
+        initialized = 1;
+    }
 
-	if (strlen(name) >= ATTR_NAME_MAX) {
-		return ENAMETOOLONG;
-	}	
-	strlcpy(attr->info.name, name, ATTR_NAME_MAX);
-	attr->info.name[ATTR_NAME_MAX-1] = '\0';
-	attr->info.device = device;
-	attr->info.mode = mode;
+    if (strlen(name) >= ATTR_NAME_MAX) {
+        return ENAMETOOLONG;
+    }
+    strlcpy(attr->info.name, name, ATTR_NAME_MAX);
+    attr->info.name[ATTR_NAME_MAX - 1] = '\0';
+    attr->info.device = device;
+    attr->info.mode = mode;
 
-	attr->cb_data = cb_data;
-	attr->show = show;
-	attr->store = store;
-	INIT_LIST_HEAD(&attr->list);
+    attr->cb_data = cb_data;
+    attr->show = show;
+    attr->store = store;
+    INIT_LIST_HEAD(&attr->list);
 
-	return 0;
+    return 0;
 }
 
 PRIVATE void device_attr_addhash(struct device_attribute* attr)
 {
-	/* Add a device attribute to hash table */
-	unsigned int hash = attr->id & DEVICE_ATTR_HASH_MASK;
-	list_add(&attr->list, &device_attr_table[hash]);
+    /* Add a device attribute to hash table */
+    unsigned int hash = attr->id & DEVICE_ATTR_HASH_MASK;
+    list_add(&attr->list, &device_attr_table[hash]);
 }
 
 /*
 PRIVATE void device_attr_unhash(struct device_attribute* attr)
 {
-	list_del(&attr->list);
+    list_del(&attr->list);
 }
 */
 
 PRIVATE struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
 {
-	/* Find a dynamic attribute by its attribute id */
-	unsigned int hash = id & DEVICE_ATTR_HASH_MASK;
+    /* Find a dynamic attribute by its attribute id */
+    unsigned int hash = id & DEVICE_ATTR_HASH_MASK;
 
-	struct device_attribute* attr;
-    list_for_each_entry(attr, &device_attr_table[hash], list) {
-    	if (attr->id == id) {
+    struct device_attribute* attr;
+    list_for_each_entry(attr, &device_attr_table[hash], list)
+    {
+        if (attr->id == id) {
             return attr;
         }
     }
@@ -98,58 +101,59 @@ PRIVATE struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
 
 PUBLIC int dm_device_attr_add(struct device_attribute* attr)
 {
-	MESSAGE msg;
+    MESSAGE msg;
 
-	msg.type = DM_DEVICE_ATTR_ADD;
-	msg.BUF = &attr->info;
-	msg.BUF_LEN = sizeof(attr->info);
+    msg.type = DM_DEVICE_ATTR_ADD;
+    msg.BUF = &attr->info;
+    msg.BUF_LEN = sizeof(attr->info);
 
     send_recv(BOTH, TASK_DEVMAN, &msg);
 
     if (msg.RETVAL) return msg.RETVAL;
 
-	struct device_attribute* new_attr = (struct device_attribute*) malloc(sizeof(struct device_attribute));
-	if (!new_attr) return ENOMEM;
-	memcpy(new_attr, attr, sizeof(*attr));
+    struct device_attribute* new_attr =
+        (struct device_attribute*)malloc(sizeof(struct device_attribute));
+    if (!new_attr) return ENOMEM;
+    memcpy(new_attr, attr, sizeof(*attr));
 
-	dev_attr_id_t id = (dev_attr_id_t) msg.ATTRID;
-	new_attr->id = id;
+    dev_attr_id_t id = (dev_attr_id_t)msg.ATTRID;
+    new_attr->id = id;
 
-	device_attr_addhash(new_attr);
+    device_attr_addhash(new_attr);
 
     return 0;
 }
 
 PUBLIC ssize_t dm_device_attr_handle(MESSAGE* msg)
 {
-	/* handle device attribute show/store request */
-	int rw_flag = msg->type;
-	static char tmp_buf[BUFSIZE];
-	ssize_t count = msg->CNT;
-	char* buf = msg->BUF;
+    /* handle device attribute show/store request */
+    int rw_flag = msg->type;
+    static char tmp_buf[BUFSIZE];
+    ssize_t count = msg->CNT;
+    char* buf = msg->BUF;
 
-	struct device_attribute* attr = find_device_attr_by_id(msg->TARGET);
-	if (!attr) return -ENOENT;
+    struct device_attribute* attr = find_device_attr_by_id(msg->TARGET);
+    if (!attr) return -ENOENT;
 
-	if (rw_flag == DM_DEVICE_ATTR_SHOW) {
-		if (!attr->show) return -EPERM;
+    if (rw_flag == DM_DEVICE_ATTR_SHOW) {
+        if (!attr->show) return -EPERM;
 
-		ssize_t byte_read = attr->show(attr, tmp_buf);
-		if (byte_read >= count) {
-			return -E2BIG;
-		}
-		if (byte_read < 0) return byte_read;
+        ssize_t byte_read = attr->show(attr, tmp_buf);
+        if (byte_read >= count) {
+            return -E2BIG;
+        }
+        if (byte_read < 0) return byte_read;
 
-		data_copy(msg->source, buf, SELF, tmp_buf, byte_read);
-		return byte_read;
-	} else {
-		if (!attr->store) return -EPERM;
+        data_copy(msg->source, buf, SELF, tmp_buf, byte_read);
+        return byte_read;
+    } else {
+        if (!attr->store) return -EPERM;
 
-		if (count >= BUFSIZE) return -E2BIG;
-		data_copy(SELF, tmp_buf, msg->source, buf, count);
+        if (count >= BUFSIZE) return -E2BIG;
+        data_copy(SELF, tmp_buf, msg->source, buf, count);
 
-		return attr->store(attr, tmp_buf, count);
-	}
+        return attr->store(attr, tmp_buf, count);
+    }
 
-	return 0;
+    return 0;
 }

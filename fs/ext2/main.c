@@ -36,7 +36,9 @@
 
 #define DEBUG
 #ifdef DEBUG
-#define DEB(x) printl("ext2fs: "); x
+#define DEB(x)          \
+    printl("ext2fs: "); \
+    x
 #else
 #define DEB(x)
 #endif
@@ -72,22 +74,22 @@ struct fsdriver ext2fsdriver = {
  *****************************************************************************/
 /**
  * <Ring 1> The main loop of TASK Ext2 FS.
- * 
+ *
  *****************************************************************************/
 PUBLIC int main()
 {
     serv_register_init_fresh_callback(init_ext2fs);
     serv_init();
 
-	return fsdriver_start(&ext2fsdriver);
+    return fsdriver_start(&ext2fsdriver);
 }
 
 PUBLIC int init_ext2fs()
 {
     printl("ext2fs: Ext2 filesystem driver is running\n");
     ext2_ep = get_endpoint();
-    
-	ext2_init_inode();
+
+    ext2_init_inode();
     ext2_init_buffer_cache();
 
     err_code = 0;
@@ -97,7 +99,7 @@ PUBLIC int init_ext2fs()
 
 PRIVATE int ext2_mountpoint(dev_t dev, ino_t num)
 {
-    ext2_inode_t * pin = get_ext2_inode(dev, num);
+    ext2_inode_t* pin = get_ext2_inode(dev, num);
 
     if (pin == NULL) return EINVAL;
 
@@ -105,17 +107,17 @@ PRIVATE int ext2_mountpoint(dev_t dev, ino_t num)
 
     int retval = 0;
     mode_t bits = pin->i_mode & I_TYPE;
-    if (bits == I_BLOCK_SPECIAL || bits == I_CHAR_SPECIAL) retval =  ENOTDIR;
+    if (bits == I_BLOCK_SPECIAL || bits == I_CHAR_SPECIAL) retval = ENOTDIR;
 
-   if (!retval) pin->i_mountpoint = 1;
-   put_ext2_inode(pin);
+    if (!retval) pin->i_mountpoint = 1;
+    put_ext2_inode(pin);
 
-   return retval;
+    return retval;
 }
 
 PUBLIC int ext2_sync()
 {
-	ext2_sync_inodes();
-	ext2_sync_buffers();
-	return 0;
+    ext2_sync_inodes();
+    ext2_sync_buffers();
+    return 0;
 }

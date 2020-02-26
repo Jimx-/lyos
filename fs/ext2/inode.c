@@ -18,7 +18,7 @@
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "stddef.h"     /* for NULL */
+#include "stddef.h" /* for NULL */
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
@@ -34,15 +34,16 @@
 
 //#define INODE_DEBUG
 #ifdef INODE_DEBUG
-#define DEB(x) printl("ext2fs: "); x
+#define DEB(x)          \
+    printl("ext2fs: "); \
+    x
 #else
 #define DEB(x)
 #endif
 
-
-PRIVATE ext2_inode_t * ext2_alloc_unused_inode();
-PRIVATE void ext2_release_inode(ext2_inode_t * pin);
-PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag);
+PRIVATE ext2_inode_t* ext2_alloc_unused_inode();
+PRIVATE void ext2_release_inode(ext2_inode_t* pin);
+PRIVATE int rw_inode(ext2_inode_t* inode, int rw_flag);
 
 PUBLIC void ext2_init_inode()
 {
@@ -57,41 +58,43 @@ PUBLIC void ext2_init_inode()
     }
 }
 
-PRIVATE ext2_inode_t * ext2_alloc_unused_inode()
+PRIVATE ext2_inode_t* ext2_alloc_unused_inode()
 {
     if (list_empty(&ext2_unused_inode_list)) panic("ext2: inode table full.");
 
-    ext2_inode_t * ret = list_entry((&ext2_unused_inode_list)->next, ext2_inode_t, list);
+    ext2_inode_t* ret =
+        list_entry((&ext2_unused_inode_list)->next, ext2_inode_t, list);
     list_del(&(ret->list));
 
     return ret;
 }
 
-PRIVATE void ext2_release_inode(ext2_inode_t * pin)
+PRIVATE void ext2_release_inode(ext2_inode_t* pin)
 {
     list_add(&(pin->list), &ext2_unused_inode_list);
 }
 
-PRIVATE void ext2_addhash_inode(ext2_inode_t * inode)
+PRIVATE void ext2_addhash_inode(ext2_inode_t* inode)
 {
     unsigned int hash = inode->i_num & EXT2_INODE_HASH_MASK;
 
     list_add(&(inode->list), &ext2_inode_table[hash]);
 }
 
-PRIVATE void ext2_unhash_inode(ext2_inode_t * inode)
+PRIVATE void ext2_unhash_inode(ext2_inode_t* inode)
 {
     list_del(&(inode->list));
 }
 
-PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num)
+PUBLIC ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num)
 {
     int hash = num & EXT2_INODE_HASH_MASK;
 
-    ext2_inode_t * inode;
+    ext2_inode_t* inode;
     /* first look for it in the hash table */
-    list_for_each_entry(inode, &ext2_inode_table[hash], list) {
-        if ((inode->i_num == num) && (inode->i_dev == dev)) {   /* hit */
+    list_for_each_entry(inode, &ext2_inode_table[hash], list)
+    {
+        if ((inode->i_num == num) && (inode->i_dev == dev)) { /* hit */
             ++inode->i_count;
             return inode;
         }
@@ -106,7 +109,7 @@ PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num)
     inode->i_dev = dev;
     inode->i_num = num;
     inode->i_count = 1;
-    rw_inode(inode, BDEV_READ);  /* get it from the disk */
+    rw_inode(inode, BDEV_READ); /* get it from the disk */
 
     /* add it to hash table */
     ext2_addhash_inode(inode);
@@ -114,20 +117,21 @@ PUBLIC ext2_inode_t * get_ext2_inode(dev_t dev, ino_t num)
     return inode;
 }
 
-PUBLIC ext2_inode_t * find_ext2_inode(dev_t dev, ino_t num)
+PUBLIC ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num)
 {
     int hash = num & EXT2_INODE_HASH_MASK;
 
-    ext2_inode_t * inode;
-    list_for_each_entry(inode, &ext2_inode_table[hash], list) {
-        if ((inode->i_num == num) && (inode->i_dev == dev)) {   /* hit */
+    ext2_inode_t* inode;
+    list_for_each_entry(inode, &ext2_inode_table[hash], list)
+    {
+        if ((inode->i_num == num) && (inode->i_dev == dev)) { /* hit */
             return inode;
         }
     }
     return NULL;
 }
 
-PUBLIC void put_ext2_inode(ext2_inode_t * pin)
+PUBLIC void put_ext2_inode(ext2_inode_t* pin)
 {
     if (!pin) return;
     if (pin->i_count < 1) panic("ext2fs: put_inode: pin->i_count already < 1");
@@ -141,13 +145,13 @@ PUBLIC void put_ext2_inode(ext2_inode_t * pin)
 
 PUBLIC int ext2_putinode(dev_t dev, ino_t num)
 {
-    ext2_inode_t * pin = get_ext2_inode(dev, num);
+    ext2_inode_t* pin = get_ext2_inode(dev, num);
     put_ext2_inode(pin);
 
     return 0;
 }
 
-PRIVATE void update_times(ext2_inode_t * pin)
+PRIVATE void update_times(ext2_inode_t* pin)
 {
     if (pin->i_update == 0) return;
 
@@ -159,27 +163,30 @@ PRIVATE void update_times(ext2_inode_t * pin)
     pin->i_update = 0;
 }
 
-PUBLIC int ext2_rw_inode(ext2_inode_t * inode, int rw_flag)
+PUBLIC int ext2_rw_inode(ext2_inode_t* inode, int rw_flag)
 {
     return rw_inode(inode, rw_flag);
 }
 
-PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
+PRIVATE int rw_inode(ext2_inode_t* inode, int rw_flag)
 {
     dev_t dev = inode->i_dev;
 
-    ext2_superblock_t * psb = get_ext2_super_block(dev);
+    ext2_superblock_t* psb = get_ext2_super_block(dev);
     inode->i_sb = psb;
     int desc_num = (inode->i_num - 1) / psb->sb_inodes_per_group;
-    ext2_bgdescriptor_t * bgdesc = get_ext2_group_desc(psb, desc_num);
+    ext2_bgdescriptor_t* bgdesc = get_ext2_group_desc(psb, desc_num);
 
-    if (bgdesc == NULL) panic("ext2fs: Can't get block descriptor to read/write inode");
+    if (bgdesc == NULL)
+        panic("ext2fs: Can't get block descriptor to read/write inode");
 
-    int offset = ((inode->i_num - 1) % psb->sb_inodes_per_group) * EXT2_INODE_SIZE(psb);
-    block_t block_nr = (block_t) bgdesc->inode_table + (offset >> psb->sb_blocksize_bits);
+    int offset =
+        ((inode->i_num - 1) % psb->sb_inodes_per_group) * EXT2_INODE_SIZE(psb);
+    block_t block_nr =
+        (block_t)bgdesc->inode_table + (offset >> psb->sb_blocksize_bits);
     /* read the inode table */
     offset &= (psb->sb_block_size - 1);
-    ext2_buffer_t * pb = ext2_get_buffer(dev, block_nr);
+    ext2_buffer_t* pb = ext2_get_buffer(dev, block_nr);
     if (!pb) return err_code;
 
     if (rw_flag == BDEV_READ) {
@@ -189,7 +196,8 @@ PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
         memcpy((void*)(pb->b_data + offset), inode, EXT2_GOOD_OLD_INODE_SIZE);
         pb->b_dirt = 1;
         /* write back to the device */
-    } else return EINVAL;
+    } else
+        return EINVAL;
 
     ext2_put_buffer(pb);
 
@@ -200,12 +208,13 @@ PRIVATE int rw_inode(ext2_inode_t * inode, int rw_flag)
  * <Ring 1> Print pin's information.
  * @param pin The inode.
  */
-PUBLIC void ext2_dump_inode(ext2_inode_t * pin)
+PUBLIC void ext2_dump_inode(ext2_inode_t* pin)
 {
     printl("-------------------------\n");
     printl("Ext2 Inode #%d @ dev %x\n", pin->i_num, pin->i_dev);
     printl("  Mode: 0x%x, Size: %d\n", pin->i_mode, pin->i_size);
-    printl("  atime: 0x%x\n  ctime: 0x%x\n  mtime: 0x%x\n", pin->i_atime, pin->i_ctime, pin->i_mtime);
+    printl("  atime: 0x%x\n  ctime: 0x%x\n  mtime: 0x%x\n", pin->i_atime,
+           pin->i_ctime, pin->i_mtime);
     printl("  User: %d, Group: %d\n", pin->i_uid, pin->i_gid);
     printl("  Blocks: %d, Links: %d\n", pin->i_blocks, pin->i_links_count);
     printl("-------------------------\n");
@@ -218,10 +227,12 @@ PUBLIC void ext2_sync_inodes()
 {
     int i;
     for (i = 0; i < EXT2_INODE_HASH_SIZE; i++) {
-        ext2_inode_t * pin;
-        list_for_each_entry(pin, &ext2_inode_table[i], list) {
+        ext2_inode_t* pin;
+        list_for_each_entry(pin, &ext2_inode_table[i], list)
+        {
             if (pin->i_dirt) {
-                DEB(printl("Writing inode #%d at dev 0x%x\n", pin->i_num, pin->i_dev));
+                DEB(printl("Writing inode #%d at dev 0x%x\n", pin->i_num,
+                           pin->i_dev));
                 ext2_rw_inode(pin, BDEV_WRITE);
             }
         }

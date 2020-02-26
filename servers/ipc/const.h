@@ -16,9 +16,9 @@
 #ifndef _IPC_CONST_H_
 #define _IPC_CONST_H_
 
-#define IPCID_TO_IX(id)     ((id) & 0xffff)
-#define IPCID_TO_SEQ(id)    (((id) >> 16) & 0xffff)
+#define IPCID_TO_IX(id) ((id)&0xffff)
+#define IPCID_TO_SEQ(id) (((id) >> 16) & 0xffff)
 
-#define IXSEQ_TO_IPCID(ix, seq) (((seq) << 16) | ((ix) & 0xffff))
+#define IXSEQ_TO_IPCID(ix, seq) (((seq) << 16) | ((ix)&0xffff))
 
 #endif

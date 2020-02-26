@@ -39,4 +39,4 @@ PUBLIC bus_type_id_t dm_bus_register(char* name)
     send_recv(BOTH, TASK_DEVMAN, &msg);
 
     return msg.RETVAL;
-} 
+}

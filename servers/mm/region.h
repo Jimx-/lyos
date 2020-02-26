@@ -35,7 +35,7 @@ struct phys_frame {
  * Physical memory region
  */
 struct phys_region {
-    struct phys_frame ** frames;
+    struct phys_frame** frames;
 
     int capacity;
 };
@@ -47,11 +47,11 @@ struct vir_region {
     struct list_head list;
     struct avl_node avl;
 
-    struct mmproc * parent;
+    struct mmproc* parent;
 
     vir_bytes vir_addr;
     size_t length;
-    struct phys_region phys_block;  /*<- physical memory block */
+    struct phys_region phys_block; /*<- physical memory block */
 
     int refcnt;
     int flags;

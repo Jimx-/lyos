@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -49,7 +49,7 @@ PUBLIC int main()
     serv_register_init_fresh_callback(init_procfs);
     serv_init();
 
-	struct memfs_stat root_stat;
+    struct memfs_stat root_stat;
     root_stat.st_mode = (I_DIRECTORY | 0755);
     root_stat.st_uid = SU_UID;
     root_stat.st_gid = 0;
@@ -59,12 +59,12 @@ PUBLIC int main()
 
 PRIVATE int init_procfs()
 {
-	printl("procfs: procfs is running.\n");
+    printl("procfs: procfs is running.\n");
 
     return 0;
 }
 
-PRIVATE void build_root(struct memfs_inode * root)
+PRIVATE void build_root(struct memfs_inode* root)
 {
     struct memfs_stat stat;
 
@@ -72,10 +72,11 @@ PRIVATE void build_root(struct memfs_inode * root)
     stat.st_gid = 0;
     stat.st_size = 0;
 
-    struct procfs_file * fp;
+    struct procfs_file* fp;
     for (fp = root_files; fp->name != NULL; fp++) {
         stat.st_mode = fp->mode;
-        struct memfs_inode * pin = memfs_add_inode(root, fp->name, NO_INDEX, &stat, fp->data);
+        struct memfs_inode* pin =
+            memfs_add_inode(root, fp->name, NO_INDEX, &stat, fp->data);
         if (pin == NULL) return;
     }
 }
@@ -85,7 +86,7 @@ PRIVATE int procfs_init_hook()
     static int first = 1;
 
     if (first) {
-        struct memfs_inode * root = memfs_get_root_inode();
+        struct memfs_inode* root = memfs_get_root_inode();
 
         build_root(root);
 

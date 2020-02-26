@@ -25,8 +25,8 @@
 #endif
 
 extern struct sproc sproc_table[];
-extern struct sproc * sproc_ptr[];
+extern struct sproc* sproc_ptr[];
 
 extern struct boot_priv boot_priv_table[];
 
-#endif 
+#endif

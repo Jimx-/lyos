@@ -60,11 +60,12 @@ PRIVATE ssize_t dyn_attr_show(sysfs_node_t* node)
     return count;
 }
 
-PRIVATE ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr, size_t count)
+PRIVATE ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr,
+                               size_t count)
 {
     MESSAGE msg;
     msg.type = SYSFS_DYN_STORE;
-    msg.BUF = (char*) ptr;
+    msg.BUF = (char*)ptr;
     msg.CNT = count;
     msg.TARGET = node->u.dyn_attr->id;
 
@@ -74,8 +75,8 @@ PRIVATE ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr, size_t count
     return msg.CNT;
 }
 
-PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data)
+PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr,
+                               size_t count, off_t offset, cbdata_t data)
 {
     init_buf(ptr, count, offset);
 
@@ -96,8 +97,8 @@ PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t coun
     return buf_used();
 }
 
-PUBLIC ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data)
+PUBLIC ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr,
+                                size_t count, off_t offset, cbdata_t data)
 {
     sysfs_node_t* node = (sysfs_node_t*)data;
     int retval = 0;

@@ -12,26 +12,25 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-   
+
 #ifndef _TIME_H
 #define _TIME_H
 
 struct time {
-	u32 year;
-	u32 month;
-	u32 day;
-	u32 hour;
-	u32 minute;
-	u32 second;
+    u32 year;
+    u32 month;
+    u32 day;
+    u32 hour;
+    u32 minute;
+    u32 second;
 };
 
-#define MSEC_PER_SEC    1000L
-#define USEC_PER_MSEC   1000L
-#define NSEC_PER_USEC   1000L
-#define NSEC_PER_MSEC   1000000L
-#define USEC_PER_SEC    1000000L
-#define NSEC_PER_SEC    1000000000L
-#define FSEC_PER_SEC    1000000000000000LL
+#define MSEC_PER_SEC 1000L
+#define USEC_PER_MSEC 1000L
+#define NSEC_PER_USEC 1000L
+#define NSEC_PER_MSEC 1000000L
+#define USEC_PER_SEC 1000000L
+#define NSEC_PER_SEC 1000000000L
+#define FSEC_PER_SEC 1000000000000000LL
 
 #endif
-

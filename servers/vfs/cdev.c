@@ -40,9 +40,9 @@ PRIVATE void init_cdev()
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
         cdmap[i].driver = NO_TASK;
-		cdmap[i].select_busy = 0;
-		cdmap[i].select_filp = NULL;
-	}
+        cdmap[i].select_busy = 0;
+        cdmap[i].select_filp = NULL;
+    }
 }
 
 PRIVATE int cdev_update(dev_t dev)
@@ -58,7 +58,7 @@ PUBLIC struct fproc* cdev_get(dev_t dev)
 {
     static int first = 1;
 
-    if (first)    {
+    if (first) {
         init_cdev();
         first = 0;
     }
@@ -72,14 +72,14 @@ PUBLIC struct fproc* cdev_get(dev_t dev)
 
 PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
 {
-	int i;
-	for (i = 0; i < NR_DEVICES; i++) {
-		if (cdmap[i].driver != NO_TASK && cdmap[i].driver == driver_ep) {
-			return &cdmap[i];
-		}
-	}
+    int i;
+    for (i = 0; i < NR_DEVICES; i++) {
+        if (cdmap[i].driver != NO_TASK && cdmap[i].driver == driver_ep) {
+            return &cdmap[i];
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 PRIVATE int cdev_send(dev_t dev, MESSAGE* msg)
@@ -127,7 +127,7 @@ PUBLIC int cdev_close(dev_t dev, struct fproc* fp)
 }
 
 PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-    size_t count, struct fproc* fp)
+                   size_t count, struct fproc* fp)
 {
     if (op != CDEV_READ && op != CDEV_WRITE && op != CDEV_IOCTL) {
         return EINVAL;
@@ -154,12 +154,12 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 }
 
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
-    size_t length, struct fproc* fp)
+                     size_t length, struct fproc* fp)
 {
     MESSAGE driver_msg;
     driver_msg.type = CDEV_MMAP;
     driver_msg.u.m_vfs_cdev_mmap.minor = MINOR(dev);
-    driver_msg.u.m_vfs_cdev_mmap.addr = (void*) vaddr;
+    driver_msg.u.m_vfs_cdev_mmap.addr = (void*)vaddr;
     driver_msg.u.m_vfs_cdev_mmap.endpoint = src;
     driver_msg.u.m_vfs_cdev_mmap.pos = offset;
     driver_msg.u.m_vfs_cdev_mmap.count = length;
@@ -173,13 +173,13 @@ PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
 
 PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
-	MESSAGE driver_msg;
-	memset(&driver_msg, 0, sizeof(MESSAGE));
-	driver_msg.type = CDEV_SELECT;
-	driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev);
-	driver_msg.u.m_vfs_cdev_select.ops = ops;
+    MESSAGE driver_msg;
+    memset(&driver_msg, 0, sizeof(MESSAGE));
+    driver_msg.type = CDEV_SELECT;
+    driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_select.ops = ops;
 
-	return cdev_send(dev, &driver_msg);
+    return cdev_send(dev, &driver_msg);
 }
 
 PRIVATE void cdev_reply_generic(MESSAGE* msg)
@@ -219,20 +219,22 @@ PRIVATE void cdev_mmap_reply(endpoint_t endpoint, void* retaddr, int retval)
 
 PUBLIC int cdev_reply(MESSAGE* msg)
 {
-	switch (msg->type) {
+    switch (msg->type) {
     case CDEV_REPLY:
         cdev_reply_generic(msg);
         break;
     case CDEV_MMAP_REPLY:
-        cdev_mmap_reply(msg->u.m_vfs_cdev_mmap_reply.endpoint, msg->u.m_vfs_cdev_mmap_reply.retaddr, msg->u.m_vfs_cdev_mmap_reply.status);
+        cdev_mmap_reply(msg->u.m_vfs_cdev_mmap_reply.endpoint,
+                        msg->u.m_vfs_cdev_mmap_reply.retaddr,
+                        msg->u.m_vfs_cdev_mmap_reply.status);
         break;
     case CDEV_SELECT_REPLY1:
         do_select_cdev_reply1(msg->source, msg->DEVICE, msg->RETVAL);
         break;
     case CDEV_SELECT_REPLY2:
-		do_select_cdev_reply2(msg->source, msg->DEVICE, msg->RETVAL);
-		break;
-	}
+        do_select_cdev_reply2(msg->source, msg->DEVICE, msg->RETVAL);
+        break;
+    }
 
     return 0;
 }

@@ -29,31 +29,33 @@
 #include "path.h"
 #include "proto.h"
 #include "global.h"
-    
-PUBLIC int do_ioctl(MESSAGE * p)
+
+PUBLIC int do_ioctl(MESSAGE* p)
 {
     int fd = p->FD;
     int retval = 0;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
     if (filp == NULL) return EBADF;
 
-    struct inode * pin = filp->fd_inode;
+    struct inode* pin = filp->fd_inode;
     if (pin == NULL) {
         unlock_filp(filp);
         return EBADF;
     }
 
     int file_type = pin->i_mode & I_TYPE;
-    if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL) return ENOTTY;
+    if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL)
+        return ENOTTY;
 
     dev_t dev = pin->i_specdev;
 
     if (file_type == I_BLOCK_SPECIAL) {
 
     } else {
-        retval = cdev_io(CDEV_IOCTL, dev, p->source, p->BUF, 0, p->REQUEST, pcaller);
+        retval =
+            cdev_io(CDEV_IOCTL, dev, p->source, p->BUF, 0, p->REQUEST, pcaller);
     }
 
     unlock_filp(filp);

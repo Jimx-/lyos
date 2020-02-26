@@ -39,7 +39,7 @@ PUBLIC int init_tss(unsigned int cpu, void* kernel_stack)
 {
     struct tss* t = &tss[cpu];
 
-    t->sp0 = (reg_t) kernel_stack;
+    t->sp0 = (reg_t)kernel_stack;
     return 0;
 }
 
@@ -49,9 +49,7 @@ PUBLIC void init_prot()
     csr_write(sie, -1);
 }
 
-PUBLIC void irq_entry_handle()
-{
-}
+PUBLIC void irq_entry_handle() {}
 
 PUBLIC void do_trap_unknown(int in_kernel, struct proc* p)
 {
@@ -73,10 +71,7 @@ PUBLIC void do_trap_insn_illegal(int in_kernel, struct proc* p)
     printk("insn illegal\n");
 }
 
-PUBLIC void do_trap_break(int in_kernel, struct proc* p)
-{
-    printk("break\n");
-}
+PUBLIC void do_trap_break(int in_kernel, struct proc* p) { printk("break\n"); }
 
 PUBLIC void do_trap_load_misaligned(int in_kernel, struct proc* p)
 {
@@ -115,5 +110,6 @@ PUBLIC void do_trap_ecall_m(int in_kernel, struct proc* p)
 
 PUBLIC void do_page_fault(int in_kernel, struct proc* p)
 {
-    printk("page fault %d %x %lx %lx\n", in_kernel, p->regs.scause, p->regs.sbadaddr, p->regs.sepc);
+    printk("page fault %d %x %lx %lx\n", in_kernel, p->regs.scause,
+           p->regs.sbadaddr, p->regs.sepc);
 }

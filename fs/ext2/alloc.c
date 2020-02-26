@@ -18,7 +18,7 @@
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
-#include "stddef.h"     /* for NULL */
+#include "stddef.h" /* for NULL */
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
@@ -33,101 +33,107 @@
 #include "global.h"
 
 /* how many bits in a char */
-#define CHAR_BIT        8
+#define CHAR_BIT 8
 
-PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t * psb, ext2_inode_t * parent, mode_t mode);
+PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
+                                 mode_t mode);
 
-PUBLIC int ext2_setbit(bitchunk_t * bitmap, int max_bits, off_t startp)
+PUBLIC int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
 {
     int b = -1;
-    bitchunk_t * chunk, * limit = &bitmap[(max_bits >> 3) / sizeof(bitchunk_t)];
-    
+    bitchunk_t *chunk, *limit = &bitmap[(max_bits >> 3) / sizeof(bitchunk_t)];
+
     for (chunk = &bitmap[startp]; chunk < limit; chunk++) {
-	    int i;
-	    bitchunk_t k;
+        int i;
+        bitchunk_t k;
 
-	    /* no free bits */
-        if (*chunk == (bitchunk_t) ~0)
-		    continue;
+        /* no free bits */
+        if (*chunk == (bitchunk_t)~0) continue;
 
-	    /* find and allocate a free bit */
-	    k = (bitchunk_t) *chunk;
-	    for (i = 0; (k & (1 << i)) != 0; ++i) {}
+        /* find and allocate a free bit */
+        k = (bitchunk_t)*chunk;
+        for (i = 0; (k & (1 << i)) != 0; ++i) {
+        }
 
-	    /* bit number */
-	    b = (chunk - &bitmap[0]) * sizeof(bitchunk_t) * CHAR_BIT + i;
+        /* bit number */
+        b = (chunk - &bitmap[0]) * sizeof(bitchunk_t) * CHAR_BIT + i;
 
-	    /* beyond limit */
-	    if (b >= max_bits) {
-		    b = -1;
-		    continue;
-	    }
+        /* beyond limit */
+        if (b >= max_bits) {
+            b = -1;
+            continue;
+        }
 
-	    /* allocate bit */
-	    k |= 1 << i;
-	    *chunk = (bitchunk_t) k;
-	    break;
+        /* allocate bit */
+        k |= 1 << i;
+        *chunk = (bitchunk_t)k;
+        break;
     }
 
-    return b; 
+    return b;
 }
 
-PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin)
+PUBLIC block_t ext2_alloc_block(ext2_inode_t* pin)
 {
-    ext2_superblock_t * psb = pin->i_sb;
+    ext2_superblock_t* psb = pin->i_sb;
     block_t block = 0;
-    
+
     if (psb->sb_readonly) {
-        printl("ext2fs: alloc_block: try to allocate block on readonly filesystem!");
+        printl("ext2fs: alloc_block: try to allocate block on readonly "
+               "filesystem!");
         err_code = EROFS;
         return 0;
     }
 
     int group = (pin->i_num - 1) / psb->sb_inodes_per_group;
-	block_t goal = psb->sb_blocks_per_group*group + psb->sb_first_data_block;
-    off_t startp= ((goal - psb->sb_first_data_block) % psb->sb_blocks_per_group)
-			/ (sizeof(bitchunk_t) * CHAR_BIT);
+    block_t goal = psb->sb_blocks_per_group * group + psb->sb_first_data_block;
+    off_t startp =
+        ((goal - psb->sb_first_data_block) % psb->sb_blocks_per_group) /
+        (sizeof(bitchunk_t) * CHAR_BIT);
 
     int i;
     for (i = 0; i <= psb->sb_groups_count; i++, group++) {
-	    ext2_buffer_t * pb;
-	    ext2_bgdescriptor_t * gd;
+        ext2_buffer_t* pb;
+        ext2_bgdescriptor_t* gd;
 
-	    if (group >= psb->sb_groups_count)
-		    group = 0;
+        if (group >= psb->sb_groups_count) group = 0;
 
-	    gd = get_ext2_group_desc(psb, group);
-	    if (gd == NULL)
-		    panic("ext2fs: alloc_block: can't get block group descriptor to alloc block");
+        gd = get_ext2_group_desc(psb, group);
+        if (gd == NULL)
+            panic("ext2fs: alloc_block: can't get block group descriptor to "
+                  "alloc block");
 
-	    if (gd->free_blocks_count == 0) {
-		    startp = 0;
-		    continue;
-	    }
+        if (gd->free_blocks_count == 0) {
+            startp = 0;
+            continue;
+        }
 
-	    pb = ext2_get_buffer(psb->sb_dev, gd->block_bitmap);
+        pb = ext2_get_buffer(psb->sb_dev, gd->block_bitmap);
 
-        int bit = ext2_setbit((bitchunk_t*)pb->b_data, psb->sb_blocks_per_group, startp);
+        int bit = ext2_setbit((bitchunk_t*)pb->b_data, psb->sb_blocks_per_group,
+                              startp);
 
         if (bit == -1) {
             if (startp == 0) {
-                panic("ext2fs: alloc_block: failed to allocate bit in bitmap with free bits");
+                panic("ext2fs: alloc_block: failed to allocate bit in bitmap "
+                      "with free bits");
             } else {
                 startp = 0;
                 continue;
             }
         }
 
-	    block = psb->sb_first_data_block + group * psb->sb_blocks_per_group + bit;
+        block =
+            psb->sb_first_data_block + group * psb->sb_blocks_per_group + bit;
 
         pb->b_dirt = 1;
-	    ext2_put_buffer(pb);
+        ext2_put_buffer(pb);
 
-	    gd->free_blocks_count--;
-	    psb->sb_free_blocks_count--;
-	    ext2_update_group_desc(psb, group);
+        gd->free_blocks_count--;
+        psb->sb_free_blocks_count--;
+        ext2_update_group_desc(psb, group);
 
-	    return block;
+        return block;
     }
 
     return block;
@@ -139,9 +145,9 @@ PUBLIC block_t ext2_alloc_block(ext2_inode_t * pin)
  * @param  mode   Inode mode.
  * @return        The inode allocated.
  */
-PUBLIC ext2_inode_t * ext2_alloc_inode(ext2_inode_t * parent, mode_t mode)
+PUBLIC ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
 {
-    ext2_superblock_t * psb = parent->i_sb;
+    ext2_superblock_t* psb = parent->i_sb;
     /* Can't allocate inode on readonly filesystem */
     if (psb->sb_readonly) {
         err_code = EROFS;
@@ -155,7 +161,7 @@ PUBLIC ext2_inode_t * ext2_alloc_inode(ext2_inode_t * parent, mode_t mode)
         return NULL;
     }
 
-    ext2_inode_t * pin = get_ext2_inode(psb->sb_dev, num);
+    ext2_inode_t* pin = get_ext2_inode(psb->sb_dev, num);
 
     if (pin) {
         pin->i_mode = mode;
@@ -174,15 +180,17 @@ PUBLIC ext2_inode_t * ext2_alloc_inode(ext2_inode_t * parent, mode_t mode)
  * @param  mode   Inode mode.
  * @return        Inode number.
  */
-PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t * psb, ext2_inode_t * parent, mode_t mode)
+PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
+                                 mode_t mode)
 {
     /* Can't allocate inode on readonly filesystem */
     if (psb->sb_readonly) {
-        panic("ext2fs: ext2_alloc_inode_bit: can't allocate inode on readonly filesystem.");
+        panic("ext2fs: ext2_alloc_inode_bit: can't allocate inode on readonly "
+              "filesystem.");
     }
 
-    ext2_bgdescriptor_t * group = NULL;
-    ext2_bgdescriptor_t * bgdesc = psb->sb_bgdescs;
+    ext2_bgdescriptor_t* group = NULL;
+    ext2_bgdescriptor_t* bgdesc = psb->sb_bgdescs;
     int i;
     for (i = 0; i < psb->sb_groups_count; i++, bgdesc++) {
         if (bgdesc->free_inodes_count > 0) {
@@ -193,8 +201,9 @@ PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t * psb, ext2_inode_t * parent,
 
     /* No space */
     if (group == NULL) return 0;
-    ext2_buffer_t * pb = ext2_get_buffer(psb->sb_dev, group->inode_bitmap);
-    int bit = ext2_setbit((bitchunk_t*)(pb->b_data), psb->sb_inodes_per_group, 0);
+    ext2_buffer_t* pb = ext2_get_buffer(psb->sb_dev, group->inode_bitmap);
+    int bit =
+        ext2_setbit((bitchunk_t*)(pb->b_data), psb->sb_inodes_per_group, 0);
 
     ino_t num = (group - psb->sb_bgdescs) * psb->sb_inodes_per_group + bit + 1;
 
@@ -210,7 +219,7 @@ PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t * psb, ext2_inode_t * parent,
 
     psb->sb_free_inodes_count--;
     group->free_inodes_count--;
-    
+
     /* write back the changes */
     write_ext2_super_block(psb->sb_dev);
     ext2_update_group_desc(psb, group - psb->sb_bgdescs);

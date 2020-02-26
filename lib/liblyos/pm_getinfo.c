@@ -35,6 +35,6 @@ PUBLIC int pm_getinfo(int request, void* dest, int size)
     m.BUF_LEN = size;
 
     send_recv(BOTH, TASK_PM, &m);
-    
+
     return m.RETVAL;
 }

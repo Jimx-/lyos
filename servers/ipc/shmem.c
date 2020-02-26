@@ -37,13 +37,13 @@
 
 struct shm {
     struct shmid_ds shmid;
-    void*       page;
+    void* page;
 };
 
-#define     SHM_INUSE   0x0800
+#define SHM_INUSE 0x0800
 
-PRIVATE struct shm  shm_list[SHMMNI];
-PRIVATE int         shm_count = 0;
+PRIVATE struct shm shm_list[SHMMNI];
+PRIVATE int shm_count = 0;
 
 PRIVATE struct shm* shm_find_key(key_t key)
 {
@@ -53,8 +53,7 @@ PRIVATE struct shm* shm_find_key(key_t key)
 
     for (i = 0; i < shm_count; i++) {
         if (!(shm_list[i].shmid.shm_perm.mode & SHM_INUSE)) continue;
-        if (shm_list[i].shmid.shm_perm.key == key)
-            return &shm_list[i];
+        if (shm_list[i].shmid.shm_perm.key == key) return &shm_list[i];
     }
 
     return NULL;
@@ -117,9 +116,9 @@ PUBLIC int do_shmget(MESSAGE* msg)
             return ENOSPC;
         }
 
-        page = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
-        if (page == MAP_FAILED)
-            return ENOMEM;
+        page = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON,
+                    -1, 0);
+        if (page == MAP_FAILED) return ENOMEM;
         memset(page, 0, size);
 
         uid_t uid;
@@ -158,9 +157,9 @@ PUBLIC int do_shmat(MESSAGE* msg)
     addr = msg->IPC_ADDR;
     flags = msg->IPC_FLAGS;
 
-    if ((uintptr_t) addr % ARCH_PG_SIZE) {
+    if ((uintptr_t)addr % ARCH_PG_SIZE) {
         if (flags & SHM_RND) {
-            addr -= ((uintptr_t) addr % ARCH_PG_SIZE);
+            addr -= ((uintptr_t)addr % ARCH_PG_SIZE);
         } else {
             return EINVAL;
         }
@@ -170,11 +169,14 @@ PUBLIC int do_shmat(MESSAGE* msg)
     if (!shm) return EINVAL;
 
     int mask = 0;
-    if (flags & SHM_RDONLY) mask = IPC_R;
-    else mask = IPC_R | IPC_W;
+    if (flags & SHM_RDONLY)
+        mask = IPC_R;
+    else
+        mask = IPC_R | IPC_W;
     if (!check_perm(&shm->shmid.shm_perm, msg->source, mask)) return EACCES;
 
-    void* retaddr = mm_remap(msg->source, SELF, (void*) addr, (void*) shm->page, shm->shmid.shm_segsz);
+    void* retaddr = mm_remap(msg->source, SELF, (void*)addr, (void*)shm->page,
+                             shm->shmid.shm_segsz);
     if (retaddr == MAP_FAILED) return ENOMEM;
 
     shm->shmid.shm_atime = now();

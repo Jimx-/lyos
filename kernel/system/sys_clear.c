@@ -29,13 +29,13 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_clear(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_clear(MESSAGE* m, struct proc* p_proc)
 {
     endpoint_t ep = m->ENDPOINT;
     int slot;
     if (!verify_endpt(ep, &slot)) return EINVAL;
 
-    struct proc * p = proc_addr(slot);
+    struct proc* p = proc_addr(slot);
     PST_SETFLAGS(p, PST_FREE_SLOT);
 
     return 0;

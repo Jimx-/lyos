@@ -33,33 +33,29 @@
 #include "fcntl.h"
 #include "global.h"
 
-PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t src, char * pathname, int len);
-PRIVATE int change_node(struct fproc* fp, struct inode ** ppin, struct inode * pin);
+PRIVATE int change_directory(struct fproc* fp, struct inode** ppin,
+                             endpoint_t src, char* pathname, int len);
+PRIVATE int change_node(struct fproc* fp, struct inode** ppin,
+                        struct inode* pin);
 
-PUBLIC int vfs_verify_endpt(endpoint_t ep, int * proc_nr)
+PUBLIC int vfs_verify_endpt(endpoint_t ep, int* proc_nr)
 {
     *proc_nr = ENDPOINT_P(ep);
     return 0;
 }
 
-PUBLIC struct fproc * vfs_endpt_proc(endpoint_t ep)
+PUBLIC struct fproc* vfs_endpt_proc(endpoint_t ep)
 {
     int proc_nr;
     if (vfs_verify_endpt(ep, &proc_nr) == 0) return &fproc_table[proc_nr];
     return NULL;
 }
 
-PUBLIC void lock_fproc(struct fproc* fp)
-{
-    pthread_mutex_lock(&fp->lock);
-}
+PUBLIC void lock_fproc(struct fproc* fp) { pthread_mutex_lock(&fp->lock); }
 
-PUBLIC void unlock_fproc(struct fproc* fp)
-{
-    pthread_mutex_unlock(&fp->lock);
-}
+PUBLIC void unlock_fproc(struct fproc* fp) { pthread_mutex_unlock(&fp->lock); }
 
-PUBLIC int do_fcntl(MESSAGE * p)
+PUBLIC int do_fcntl(MESSAGE* p)
 {
     int fd = p->FD;
     int request = p->REQUEST;
@@ -68,31 +64,31 @@ PUBLIC int do_fcntl(MESSAGE * p)
     struct fproc* pcaller = vfs_endpt_proc(src);
     int retval = 0;
 
-    struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
     if (!filp) return EBADF;
 
     int newfd;
-    switch(request) {
-        case F_DUPFD:
-            if (argx < 0 || argx >= NR_FILES) return -EINVAL;
+    switch (request) {
+    case F_DUPFD:
+        if (argx < 0 || argx >= NR_FILES) return -EINVAL;
 
-            newfd = -1;
-            retval = get_fd(pcaller, argx, &newfd, NULL);
-            if (retval) {
-                unlock_filp(filp);
-                return retval;
-            }
-            filp->fd_cnt++;
-            pcaller->filp[newfd] = filp;
-            retval = newfd;
-            break;
-        case F_SETFD:
-            break;
-        case F_SETFL:
-            filp->fd_mode = argx;
-            break;
-        default:
-            break;
+        newfd = -1;
+        retval = get_fd(pcaller, argx, &newfd, NULL);
+        if (retval) {
+            unlock_filp(filp);
+            return retval;
+        }
+        filp->fd_cnt++;
+        pcaller->filp[newfd] = filp;
+        retval = newfd;
+        break;
+    case F_SETFD:
+        break;
+    case F_SETFL:
+        filp->fd_mode = argx;
+        break;
+    default:
+        break;
     }
 
     unlock_filp(filp);
@@ -102,7 +98,7 @@ PUBLIC int do_fcntl(MESSAGE * p)
 /**
  * <Ring 1> Perform the DUP and DUP2 syscalls.
  */
-PUBLIC int do_dup(MESSAGE * p)
+PUBLIC int do_dup(MESSAGE* p)
 {
     int fd = p->FD;
     int newfd = p->NEWFD;
@@ -138,17 +134,18 @@ PUBLIC int do_dup(MESSAGE * p)
 /**
  * <Ring 1> Perform the CHDIR syscall.
  */
-PUBLIC int do_chdir(MESSAGE * p)
+PUBLIC int do_chdir(MESSAGE* p)
 {
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    return change_directory(pcaller, &pcaller->pwd, p->source, p->PATHNAME, p->NAME_LEN);
+    return change_directory(pcaller, &pcaller->pwd, p->source, p->PATHNAME,
+                            p->NAME_LEN);
 }
 
 /**
  * <Ring 1> Perform the FCHDIR syscall.
  */
-PUBLIC int do_fchdir(MESSAGE * p)
+PUBLIC int do_fchdir(MESSAGE* p)
 {
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
@@ -168,7 +165,8 @@ PUBLIC int do_fchdir(MESSAGE * p)
  * @param  len      Length of pathname.
  * @return          Zero on success.
  */
-PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t src, char * string, int len)
+PRIVATE int change_directory(struct fproc* fp, struct inode** ppin,
+                             endpoint_t src, char* string, int len)
 {
     char pathname[MAX_PATH];
     if (len > MAX_PATH) return ENAMETOOLONG;
@@ -198,7 +196,8 @@ PRIVATE int change_directory(struct fproc* fp, struct inode ** ppin, endpoint_t 
 /**
  * <Ring 1> Change ppin into pin.
  */
-PRIVATE int change_node(struct fproc* fp, struct inode ** ppin, struct inode * pin)
+PRIVATE int change_node(struct fproc* fp, struct inode** ppin,
+                        struct inode* pin)
 {
     int retval = 0;
 
@@ -232,110 +231,108 @@ PUBLIC int do_mm_request(MESSAGE* m)
     struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
     size_t len = m->MMRLENGTH;
     off_t offset = m->MMROFFSET;
-    phys_bytes buf = (phys_bytes) m->MMRBUF;
+    phys_bytes buf = (phys_bytes)m->MMRBUF;
     void* vaddr = m->MMRBUF;
 
     if (!mm_task) panic("mm not present!");
 
     if (m->source != TASK_MM) return EPERM;
     switch (req_type) {
-    case MMR_FDLOOKUP:
-        {
-            if (!fp) {
-                result = ESRCH;
-                goto reply;
-            }
+    case MMR_FDLOOKUP: {
+        if (!fp) {
+            result = ESRCH;
+            goto reply;
+        }
 
-            struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
-            if (!filp || !filp->fd_inode) {
-                result = EBADF;
-                goto reply;
-            }
+        struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
+        if (!filp || !filp->fd_inode) {
+            result = EBADF;
+            goto reply;
+        }
 
-            lock_fproc(mm_task);
-            int mmfd;
-            result = get_fd(mm_task, 0, &mmfd, NULL);
+        lock_fproc(mm_task);
+        int mmfd;
+        result = get_fd(mm_task, 0, &mmfd, NULL);
+        if (result) {
+            goto reply;
+        }
+
+        filp->fd_cnt++;
+        filp->fd_inode->i_cnt++;
+        mm_task->filp[mmfd] = filp;
+        unlock_fproc(mm_task);
+
+        m->MMRDEV = filp->fd_inode->i_dev;
+        m->MMRINO = filp->fd_inode->i_num;
+        m->MMRMODE = filp->fd_inode->i_mode;
+        m->MMRFD = mmfd;
+
+        unlock_filp(filp);
+        result = 0;
+        break;
+    }
+
+    case MMR_FDREAD: {
+        struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
+        if (!filp || !filp->fd_inode) {
+            result = EBADF;
+            goto reply;
+        }
+
+        struct inode* pin = filp->fd_inode;
+        int file_type = pin->i_mode & I_TYPE;
+
+        if (file_type == I_CHAR_SPECIAL) {
+            cdev_io(CDEV_READ, pin->i_specdev, KERNEL, (void*)buf, offset, len,
+                    fp);
+        } else if (file_type == I_REGULAR) {
+            size_t count;
+            result =
+                request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset,
+                                  READ, TASK_MM, (void*)buf, len, NULL, &count);
+            m->MMRLENGTH = count;
+        } else if (file_type == I_DIRECTORY) {
+            unlock_filp(filp);
+            result = EISDIR;
+            goto reply;
+        } else {
+            unlock_filp(filp);
+            result = EBADF;
+            goto reply;
+        }
+
+        unlock_filp(filp);
+        break;
+    }
+    case MMR_FDMMAP: {
+        struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
+        if (!filp || !filp->fd_inode) {
+            result = EBADF;
+            goto reply;
+        }
+
+        struct inode* pin = filp->fd_inode;
+        int file_type = pin->i_mode & I_TYPE;
+
+        if (file_type == I_CHAR_SPECIAL) {
+            result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, fp);
             if (result) {
-                goto reply;
-            }
-
-            filp->fd_cnt++;
-            filp->fd_inode->i_cnt++;
-            mm_task->filp[mmfd] = filp;
-            unlock_fproc(mm_task);
-
-            m->MMRDEV = filp->fd_inode->i_dev;
-            m->MMRINO = filp->fd_inode->i_num;
-            m->MMRMODE = filp->fd_inode->i_mode;
-            m->MMRFD = mmfd;
-
-            unlock_filp(filp);
-            result = 0;
-            break;
-        }
-
-    case MMR_FDREAD:
-        {
-            struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
-            if (!filp || !filp->fd_inode) {
-                result = EBADF;
-                goto reply;
-            }
-
-            struct inode* pin = filp->fd_inode;
-            int file_type = pin->i_mode & I_TYPE;
-
-            if (file_type == I_CHAR_SPECIAL) {
-                cdev_io(CDEV_READ, pin->i_specdev, KERNEL, (void*) buf, offset, len, fp);
-            } else if (file_type == I_REGULAR) {
-                size_t count;
-                result = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset, READ, TASK_MM,
-                    (void*) buf, len, NULL, &count);
-                m->MMRLENGTH = count;
-            } else if (file_type == I_DIRECTORY) {
                 unlock_filp(filp);
-                result = EISDIR;
-                goto reply;
-            } else {
-                unlock_filp(filp);
-                result = EBADF;
                 goto reply;
             }
-
+        } else { /* error if MM is trying to map a non-device file */
             unlock_filp(filp);
-            break;
+            result = EBADF;
+            goto reply;
         }
-    case MMR_FDMMAP:
-        {
-            struct file_desc* filp = get_filp(mm_task, fd, RWL_WRITE);
-            if (!filp || !filp->fd_inode) {
-                result = EBADF;
-                goto reply;
-            }
 
-            struct inode* pin = filp->fd_inode;
-            int file_type = pin->i_mode & I_TYPE;
-
-            if (file_type == I_CHAR_SPECIAL) {
-                result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, fp);
-                if (result) {
-                    unlock_filp(filp);
-                    goto reply;
-                }
-            } else {    /* error if MM is trying to map a non-device file */
-                unlock_filp(filp);
-                result = EBADF;
-                goto reply;
-            }
-
-            unlock_filp(filp);
-            break;
-        }
-    case MMR_FDCLOSE:
-        {
-            result = close_fd(fp, fd);
-            break;
-        }
+        unlock_filp(filp);
+        break;
+    }
+    case MMR_FDCLOSE: {
+        result = close_fd(fp, fd);
+        break;
+    }
     }
 
 reply:
@@ -344,18 +341,19 @@ reply:
         m->MMRENDPOINT = ep;
 
         m->type = MM_VFS_REPLY;
-        if (send_recv(SEND, TASK_MM, m) != 0) panic("vfs: do_mm_request(): cannot reply to mm");
+        if (send_recv(SEND, TASK_MM, m) != 0)
+            panic("vfs: do_mm_request(): cannot reply to mm");
     }
 
     return SUSPEND;
 }
 
 /* Perform fs part of fork/exit */
-PUBLIC int fs_fork(MESSAGE * p)
+PUBLIC int fs_fork(MESSAGE* p)
 {
     int i;
-    struct fproc * child = vfs_endpt_proc(p->ENDPOINT);
-    struct fproc * parent = vfs_endpt_proc(p->PENDPOINT);
+    struct fproc* child = vfs_endpt_proc(p->ENDPOINT);
+    struct fproc* parent = vfs_endpt_proc(p->PENDPOINT);
     pthread_mutex_t cmutex;
 
     if (child == NULL || parent == NULL) {
@@ -389,10 +387,10 @@ PUBLIC int fs_fork(MESSAGE * p)
     return 0;
 }
 
-PUBLIC int fs_exit(MESSAGE * m)
+PUBLIC int fs_exit(MESSAGE* m)
 {
     int i;
-    struct fproc * p = vfs_endpt_proc(m->ENDPOINT);
+    struct fproc* p = vfs_endpt_proc(m->ENDPOINT);
 
     p->flags &= ~FPF_INUSE;
     for (i = 0; i < NR_FILES; i++) {

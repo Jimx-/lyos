@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -32,7 +32,7 @@
 #include <lyos/sysutils.h>
 
 #include "ddmap.h"
-    
+
 PUBLIC void init_dd_map()
 {
     int i;
@@ -43,7 +43,8 @@ PUBLIC void init_dd_map()
 
 PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep)
 {
-    struct dev_driver_map * map = (struct dev_driver_map *)malloc(sizeof(struct dev_driver_map));
+    struct dev_driver_map* map =
+        (struct dev_driver_map*)malloc(sizeof(struct dev_driver_map));
     if (map == NULL) return ENOMEM;
 
     map->minor = MINOR(dev);
@@ -56,7 +57,7 @@ PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep)
     return 0;
 }
 
-PUBLIC int do_device_add(MESSAGE * m)
+PUBLIC int do_device_add(MESSAGE* m)
 {
     int type = m->FLAGS;
     endpoint_t drv_ep = m->source;
@@ -68,14 +69,15 @@ PUBLIC int do_device_add(MESSAGE * m)
     return 0;
 }
 
-PUBLIC int do_get_driver(MESSAGE * m)
+PUBLIC int do_get_driver(MESSAGE* m)
 {
     dev_t dev = m->DEVICE;
     dev_t major = MAJOR(dev), minor = MINOR(dev);
     int type = m->FLAGS;
 
-    struct dev_driver_map * map;
-    list_for_each_entry(map, &dd_map[major], list) {
+    struct dev_driver_map* map;
+    list_for_each_entry(map, &dd_map[major], list)
+    {
         if (map->minor == minor && map->type == type) {
             m->ENDPOINT = map->drv_ep;
             return 0;
@@ -83,4 +85,3 @@ PUBLIC int do_get_driver(MESSAGE * m)
     }
     return ENXIO;
 }
-

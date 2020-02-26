@@ -26,18 +26,20 @@
 #include "common.h"
 #include "serial.h"
 #include "interrupt.h"
-    
+
 PRIVATE void omap3_beagle_init_serial(void)
 {
     /* map UART register */
     uart_base_addr = OMAP3_BEAGLE_DEBUG_UART_BASE;
-    kern_map_phys(OMAP3_BEAGLE_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE, &uart_base_addr);
+    kern_map_phys(OMAP3_BEAGLE_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE,
+                  &uart_base_addr);
 }
 
 PRIVATE void omap3_beagle_init_interrupt(void)
 {
     intr_base_addr = OMAP3_BEAGLE_INTR_BASE;
-    kern_map_phys(OMAP3_BEAGLE_INTR_BASE, ARCH_PG_SIZE, KMF_WRITE, &intr_base_addr);
+    kern_map_phys(OMAP3_BEAGLE_INTR_BASE, ARCH_PG_SIZE, KMF_WRITE,
+                  &intr_base_addr);
 }
 
 PRIVATE void omap3_beagle_init_machine(void)
@@ -46,7 +48,6 @@ PRIVATE void omap3_beagle_init_machine(void)
     omap3_beagle_init_interrupt();
 }
 
-MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
-    .init_machine = omap3_beagle_init_machine,
-    .serial_putc = omap3_disp_char,
-MACHINE_END
+MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board").init_machine =
+    omap3_beagle_init_machine,
+                            .serial_putc = omap3_disp_char, MACHINE_END

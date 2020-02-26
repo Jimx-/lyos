@@ -19,62 +19,56 @@
 #include <lyos/config.h>
 
 /* routine types */
-#define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
-#define	PRIVATE	static	/* PRIVATE x limits the scope of x */
+#define PUBLIC         /* PUBLIC is the opposite of PRIVATE */
+#define PRIVATE static /* PRIVATE x limits the scope of x */
 
 #define EXTERN extern
 
-typedef	unsigned long long	u64;
+typedef unsigned long long u64;
 PRIVATE inline u64 make64(unsigned long hi, unsigned long lo)
 {
     return ((u64)hi << 32) | (u64)lo;
 }
-PRIVATE inline unsigned long ex64lo(u64 i)
-{
-    return (unsigned long)i;
-}
+PRIVATE inline unsigned long ex64lo(u64 i) { return (unsigned long)i; }
 
-PRIVATE inline unsigned long ex64hi(u64 i)
-{
-    return (unsigned long)(i>>32);
-}
+PRIVATE inline unsigned long ex64hi(u64 i) { return (unsigned long)(i >> 32); }
 
-typedef int                 s32;
-typedef	unsigned int		u32;
-typedef	unsigned short		u16;
-typedef	unsigned char		u8;
+typedef int s32;
+typedef unsigned int u32;
+typedef unsigned short u16;
+typedef unsigned char u8;
 
 #ifdef CONFIG_PHYS_BYTES_64BIT
-typedef u64         phys_bytes;
+typedef u64 phys_bytes;
 #else
-typedef u32         phys_bytes;
+typedef u32 phys_bytes;
 #endif
-typedef unsigned long   vir_bytes;
+typedef unsigned long vir_bytes;
 
-typedef unsigned int        block_t;
+typedef unsigned int block_t;
 
-typedef int                 endpoint_t;
-typedef unsigned long       priv_map_t;
+typedef int endpoint_t;
+typedef unsigned long priv_map_t;
 
-typedef u32					bitchunk_t;
+typedef u32 bitchunk_t;
 
-typedef	void	(*int_handler)	();
-typedef	void	(*task_f)	();
+typedef void (*int_handler)();
+typedef void (*task_f)();
 
 typedef unsigned long irq_id_t;
 typedef unsigned long irq_hook_id_t;
 typedef unsigned long irq_policy_t;
-typedef struct irq_hook{
+typedef struct irq_hook {
     int irq;
     irq_hook_id_t id;
-    int (*handler)(struct irq_hook *);
-    struct irq_hook * next;
-    endpoint_t	proc_ep;
+    int (*handler)(struct irq_hook*);
+    struct irq_hook* next;
+    endpoint_t proc_ep;
     irq_hook_id_t notify_id;
     irq_policy_t irq_policy;
 } irq_hook_t;
 
-typedef	int     (*irq_handler_t)	(irq_hook_t * irq_hook);
+typedef int (*irq_handler_t)(irq_hook_t* irq_hook);
 
 typedef u16 port_t;
 
@@ -94,10 +88,10 @@ struct boot_proc {
 };
 
 struct ps_strings {
-    char	*ps_argvstr;	/* first of 0 or more argument strings */
-    int	ps_nargvstr;	/* the number of argument strings */
-    char	*ps_envstr;	/* first of 0 or more environment strings */
-    int	ps_nenvstr;	/* the number of environment strings */
+    char* ps_argvstr; /* first of 0 or more argument strings */
+    int ps_nargvstr;  /* the number of argument strings */
+    char* ps_envstr;  /* first of 0 or more environment strings */
+    int ps_nenvstr;   /* the number of environment strings */
 };
 
 struct siginfo {

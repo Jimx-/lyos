@@ -16,12 +16,11 @@
 #ifndef _ARCH_CONST_H_
 #define _ARCH_CONST_H_
 
-#define ARM_STACK_TOP_RESERVED  (2 * sizeof(reg_t))
-#define K_STACK_SIZE    ARCH_PG_SIZE
-extern void * k_stacks;
+#define ARM_STACK_TOP_RESERVED (2 * sizeof(reg_t))
+#define K_STACK_SIZE ARCH_PG_SIZE
+extern void* k_stacks;
 extern u32 k_stacks_start, k_stacks_end;
-#define get_k_stack_top(cpu)    ((void *)(((char*)(k_stacks)) \
-                    + 2 * ((cpu) + 1) * K_STACK_SIZE))
-                        
+#define get_k_stack_top(cpu) \
+    ((void*)(((char*)(k_stacks)) + 2 * ((cpu) + 1) * K_STACK_SIZE))
+
 #endif
-    

@@ -16,8 +16,6 @@
 #ifndef _IPC_IPROC_H_
 #define _IPC_IPROC_H_
 
-struct iproc {
-
-};
+struct iproc {};
 
 #endif

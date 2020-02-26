@@ -16,7 +16,7 @@
 #ifndef _SERVICE_H_
 #define _SERVICE_H_
 
-#define NR_PCI_CLASS    4
+#define NR_PCI_CLASS 4
 
 struct service_pci_class {
     unsigned classid;
@@ -24,7 +24,7 @@ struct service_pci_class {
 };
 
 struct service_up_req {
-    char * cmdline;
+    char* cmdline;
     int cmdlen;
     char* progname;
     int prognamelen;
@@ -38,7 +38,7 @@ struct service_up_req {
 struct pci_acl {
     endpoint_t endpoint;
     unsigned inuse;
-    
+
     int nr_pci_class;
     struct service_pci_class pci_class[NR_PCI_CLASS];
 };
@@ -50,6 +50,6 @@ typedef int (*serv_init_fresh_callback_t)();
 PUBLIC void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb);
 PUBLIC int serv_init();
 
-PUBLIC int pci_set_acl(struct pci_acl * pci_acl);
+PUBLIC int pci_set_acl(struct pci_acl* pci_acl);
 
 #endif

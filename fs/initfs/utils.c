@@ -33,52 +33,52 @@
 #include "global.h"
 #include "tar.h"
 
-PUBLIC unsigned int initfs_getsize(const char *in)
+PUBLIC unsigned int initfs_getsize(const char* in)
 {
- 
+
     unsigned int size = 0;
     unsigned int j;
     unsigned int count = 1;
- 
+
     for (j = 11; j > 0; j--, count *= 8)
         size += ((in[j - 1] - '0') * count);
- 
+
     return size;
 }
 
-PUBLIC unsigned int initfs_get8(const char *in)
+PUBLIC unsigned int initfs_get8(const char* in)
 {
- 
+
     unsigned int size = 0;
     unsigned int j;
     unsigned int count = 1;
- 
+
     for (j = 7; j > 0; j--, count *= 8)
         size += ((in[j - 1] - '0') * count);
- 
+
     return size;
 }
 
-PUBLIC unsigned int initfs_getmode(struct posix_tar_header * phdr)
+PUBLIC unsigned int initfs_getmode(struct posix_tar_header* phdr)
 {
     unsigned int mode;
 
     switch (phdr->typeflag) {
-        case '0': 
-        case '\0':
-            mode = I_REGULAR;
-            break;
-        case '3':
-            mode = I_CHAR_SPECIAL;
-            break;
-        case '4':
-            mode = I_BLOCK_SPECIAL;
-            break;
-        default:
-            break;
+    case '0':
+    case '\0':
+        mode = I_REGULAR;
+        break;
+    case '3':
+        mode = I_CHAR_SPECIAL;
+        break;
+    case '4':
+        mode = I_BLOCK_SPECIAL;
+        break;
+    default:
+        break;
     }
 
     mode |= initfs_get8(phdr->mode);
-    
+
     return mode;
 }

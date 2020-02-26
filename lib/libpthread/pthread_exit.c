@@ -5,7 +5,7 @@
 
 int pthread_exit(void* value_ptr)
 {
-	_exit(0);
+    _exit(0);
 
-	return 0;
+    return 0;
 }

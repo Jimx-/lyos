@@ -32,7 +32,7 @@
 #include "proto.h"
 #include "fcntl.h"
 #include "global.h"
-    
+
 /**
  * <Ring 1> Send read/write request.
  * @param  fs_ep      Endpoint of FS driver.
@@ -44,11 +44,12 @@
  * @param  buf        Buffer.
  * @param  nbytes     How many bytes to read/write.
  * @param  newpos     [OUT] New position.
- * @param  bytes_rdwt [OUT] How many bytes read/written. 
+ * @param  bytes_rdwt [OUT] How many bytes read/written.
  * @return            Zero on success. Otherwise an error code.
  */
-PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, int rw_flag, endpoint_t src,
-    void * buf, size_t nbytes, u64 * newpos, size_t * bytes_rdwt)
+PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
+                             int rw_flag, endpoint_t src, void* buf,
+                             size_t nbytes, u64* newpos, size_t* bytes_rdwt)
 {
     MESSAGE m;
     m.type = FS_RDWT;
@@ -76,18 +77,18 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos, in
 /**
  * <Ring 1> Perform read/wrte syscall.
  * @param  p Ptr to message.
- * @return   On success, the number of bytes read is returned. Otherwise a 
+ * @return   On success, the number of bytes read is returned. Otherwise a
  *           negative error code is returned.
  */
-PUBLIC int do_rdwt(MESSAGE * p)
+PUBLIC int do_rdwt(MESSAGE* p)
 {
     int fd = p->FD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
     int rw_flag = p->type;
-    rwlock_type_t lock_type = (rw_flag == WRITE) ? RWL_WRITE : RWL_READ; 
-    struct file_desc * filp = get_filp(pcaller, fd, lock_type);
-    char * buf = p->BUF;
+    rwlock_type_t lock_type = (rw_flag == WRITE) ? RWL_WRITE : RWL_READ;
+    struct file_desc* filp = get_filp(pcaller, fd, lock_type);
+    char* buf = p->BUF;
     int len = p->CNT;
 
     size_t bytes_rdwt = 0;
@@ -98,7 +99,7 @@ PUBLIC int do_rdwt(MESSAGE * p)
 
     int position = filp->fd_pos;
     int flags = (mode_t)filp->fd_mode;
-    struct inode * pin = filp->fd_inode;
+    struct inode* pin = filp->fd_inode;
 
     /* TODO: pipe goes here */
     /* if (PIPE) ... */
@@ -122,11 +123,12 @@ PUBLIC int do_rdwt(MESSAGE * p)
         if (rw_flag == WRITE) {
             if (flags & O_APPEND) position = pin->i_size;
         }
-        
+
         /* issue the request */
         size_t bytes = 0;
-        retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position, rw_flag, src,
-            buf, len, &newpos, &bytes);
+        retval =
+            request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position,
+                              rw_flag, src, buf, len, &newpos, &bytes);
 
         bytes_rdwt += bytes;
         position = newpos;
@@ -150,8 +152,9 @@ PUBLIC int do_rdwt(MESSAGE * p)
     return -retval;
 }
 
-PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 position,
-                                    endpoint_t src, void * buf, size_t nbytes, u64 * newpos)
+PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
+                             u64 position, endpoint_t src, void* buf,
+                             size_t nbytes, u64* newpos)
 {
     MESSAGE m;
     m.type = FS_GETDENTS;
@@ -162,10 +165,10 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 positio
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    //async_sendrec(fs_ep, &m, 0);
+    // async_sendrec(fs_ep, &m, 0);
     send_recv(BOTH, fs_ep, &m);
 
-    if (m.RET_RETVAL == 0) { 
+    if (m.RET_RETVAL == 0) {
         *newpos = m.RWPOS;
         return m.RWCNT;
     }
@@ -173,12 +176,12 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num, u64 positio
     return -m.RET_RETVAL;
 }
 
-PUBLIC int do_getdents(MESSAGE * p)
+PUBLIC int do_getdents(MESSAGE* p)
 {
     int fd = p->FD;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc * filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
     if (!filp) return EBADF;
 
     if (!(filp->fd_inode->i_mode & R_BIT)) {
@@ -191,8 +194,9 @@ PUBLIC int do_getdents(MESSAGE * p)
     }
 
     u64 newpos;
-    int retval = request_getdents(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev, 
-                filp->fd_inode->i_num, filp->fd_pos, p->source, p->BUF, p->CNT, &newpos);
+    int retval = request_getdents(
+        filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev, filp->fd_inode->i_num,
+        filp->fd_pos, p->source, p->BUF, p->CNT, &newpos);
     if (retval > 0) filp->fd_pos = newpos;
 
     unlock_filp(filp);

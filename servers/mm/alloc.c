@@ -35,28 +35,28 @@
 #include "types.h"
 
 PRIVATE struct phys_hole hole[NR_HOLES]; /* the hole table */
-PRIVATE struct phys_hole *hole_head;	/* pointer to first hole */
-PRIVATE struct phys_hole *free_slots;/* ptr to list of unused table slots */
+PRIVATE struct phys_hole* hole_head;     /* pointer to first hole */
+PRIVATE struct phys_hole* free_slots;    /* ptr to list of unused table slots */
 
-PRIVATE void delete_slot(struct phys_hole *prev_ptr, struct phys_hole *hp);
-PRIVATE void merge_hole(struct phys_hole * hp);
+PRIVATE void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp);
+PRIVATE void merge_hole(struct phys_hole* hp);
 
 PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
 {
-	struct phys_hole *hp;
+    struct phys_hole* hp;
 
-  	/* Put all holes on the free list. */
-  	for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
-		hp->h_next = hp + 1;
-		hp->h_base = 0;
+    /* Put all holes on the free list. */
+    for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
+        hp->h_next = hp + 1;
+        hp->h_base = 0;
         hp->h_len = 0;
-  	}
-  	hole[NR_HOLES-1].h_next = NULL;
-  	hole_head = NULL;
-  	free_slots = &hole[0];
+    }
+    hole[NR_HOLES - 1].h_next = NULL;
+    hole_head = NULL;
+    free_slots = &hole[0];
 
-	/* Free memory */
-	free_mem(mem_start, free_mem_size);
+    /* Free memory */
+    free_mem(mem_start, free_mem_size);
 }
 
 /*****************************************************************************
@@ -72,34 +72,34 @@ PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
  *****************************************************************************/
 PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
 {
- 	struct phys_hole *hp, *prev_ptr;
-	phys_bytes old_base;
+    struct phys_hole *hp, *prev_ptr;
+    phys_bytes old_base;
 
     prev_ptr = NULL;
-	hp = hole_head;
+    hp = hole_head;
 
-	while (hp != NULL) {
-		if (hp->h_len >= memsize) {
-			/* We found a hole that is big enough.  Use it. */
-			old_base = hp->h_base;
-			hp->h_base += memsize;
-			hp->h_len -= memsize;
+    while (hp != NULL) {
+        if (hp->h_len >= memsize) {
+            /* We found a hole that is big enough.  Use it. */
+            old_base = hp->h_base;
+            hp->h_base += memsize;
+            hp->h_len -= memsize;
 
-			/* Delete the hole if used up completely. */
-			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
+            /* Delete the hole if used up completely. */
+            if (hp->h_len == 0) delete_slot(prev_ptr, hp);
 
-			/* Update stat */
-			mem_info.mem_free -= memsize;
+            /* Update stat */
+            mem_info.mem_free -= memsize;
 
-			/* Return the start address of the acquired block. */
-			return(old_base);
-		}
+            /* Return the start address of the acquired block. */
+            return (old_base);
+        }
 
-		prev_ptr = hp;
-		hp = hp->h_next;
-	}
-	printl("MM: alloc_mem() failed.(Out of memory)\n");
-  	return 0;
+        prev_ptr = hp;
+        hp = hp->h_next;
+    }
+    printl("MM: alloc_mem() failed.(Out of memory)\n");
+    return 0;
 }
 
 /**
@@ -109,43 +109,43 @@ PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
  */
 PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
 {
-	size_t memsize = nr_pages * ARCH_PG_SIZE;
- 	struct phys_hole *hp, *prev_ptr;
-	phys_bytes old_base;
-	phys_bytes page_align = ARCH_PG_SIZE;
+    size_t memsize = nr_pages * ARCH_PG_SIZE;
+    struct phys_hole *hp, *prev_ptr;
+    phys_bytes old_base;
+    phys_bytes page_align = ARCH_PG_SIZE;
 
-	if (memflags & APF_ALIGN16K) {
-		page_align = 0x4000;
-	}
+    if (memflags & APF_ALIGN16K) {
+        page_align = 0x4000;
+    }
 
     prev_ptr = NULL;
-	hp = hole_head;
-	while (hp != NULL) {
-		size_t alignment = 0;
-		if (hp->h_base % page_align != 0)
-			alignment = page_align - (hp->h_base % page_align);
-		if (hp->h_len >= memsize + alignment) {
-			/* We found a hole that is big enough.  Use it. */
-			old_base = hp->h_base + alignment;
-			hp->h_base += memsize + alignment;
-			hp->h_len -= (memsize + alignment);
-			if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
-				prev_ptr->h_len += alignment;
+    hp = hole_head;
+    while (hp != NULL) {
+        size_t alignment = 0;
+        if (hp->h_base % page_align != 0)
+            alignment = page_align - (hp->h_base % page_align);
+        if (hp->h_len >= memsize + alignment) {
+            /* We found a hole that is big enough.  Use it. */
+            old_base = hp->h_base + alignment;
+            hp->h_base += memsize + alignment;
+            hp->h_len -= (memsize + alignment);
+            if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
+                prev_ptr->h_len += alignment;
 
-			mem_info.mem_free -= memsize;
+            mem_info.mem_free -= memsize;
 
-			/* Delete the hole if used up completely. */
-			if (hp->h_len == 0) delete_slot(prev_ptr, hp);
+            /* Delete the hole if used up completely. */
+            if (hp->h_len == 0) delete_slot(prev_ptr, hp);
 
-			/* Return the start address of the acquired block. */
-			return(old_base);
-		}
+            /* Return the start address of the acquired block. */
+            return (old_base);
+        }
 
-		prev_ptr = hp;
-		hp = hp->h_next;
-	}
-	printl("MM: alloc_pages() failed.(Out of memory)\n");
-  	return 0;
+        prev_ptr = hp;
+        hp = hp->h_next;
+    }
+    printl("MM: alloc_pages() failed.(Out of memory)\n");
+    return 0;
 }
 
 /*****************************************************************************
@@ -161,39 +161,38 @@ PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
  *****************************************************************************/
 PUBLIC int free_mem(phys_bytes base, phys_bytes len)
 {
-	struct phys_hole *hp, *new_ptr, *prev_ptr;
+    struct phys_hole *hp, *new_ptr, *prev_ptr;
 
-	if (len == 0) return EINVAL;
-  	if ((new_ptr = free_slots) == NULL)
-  		panic("hole table full");
-	new_ptr->h_base = base;
-	new_ptr->h_len = len;
- 	free_slots = new_ptr->h_next;
-	hp = hole_head;
+    if (len == 0) return EINVAL;
+    if ((new_ptr = free_slots) == NULL) panic("hole table full");
+    new_ptr->h_base = base;
+    new_ptr->h_len = len;
+    free_slots = new_ptr->h_next;
+    hp = hole_head;
 
-	mem_info.mem_free += len;
+    mem_info.mem_free += len;
 
-	/* Insert the slot to a proper place */
-	if (hp == NULL || base <= hp->h_base) {
-	/* If there's no hole or the block's address is less than the lowest hole,
-	   put it on the front of the list */
-		new_ptr->h_next = hp;
-		hole_head = new_ptr;
-		merge_hole(new_ptr);
-		return 0;
- 	}
+    /* Insert the slot to a proper place */
+    if (hp == NULL || base <= hp->h_base) {
+        /* If there's no hole or the block's address is less than the lowest
+           hole, put it on the front of the list */
+        new_ptr->h_next = hp;
+        hole_head = new_ptr;
+        merge_hole(new_ptr);
+        return 0;
+    }
 
-	/* Find where it should go */
-	prev_ptr = NULL;
-	while (hp != NULL && base > hp->h_base) {
-		prev_ptr = hp;
-		hp = hp->h_next;
-  	}
+    /* Find where it should go */
+    prev_ptr = NULL;
+    while (hp != NULL && base > hp->h_base) {
+        prev_ptr = hp;
+        hp = hp->h_next;
+    }
 
-  	new_ptr->h_next = prev_ptr->h_next;
-  	prev_ptr->h_next = new_ptr;
-	merge_hole(prev_ptr);
-	return 0;
+    new_ptr->h_next = prev_ptr->h_next;
+    prev_ptr->h_next = new_ptr;
+    merge_hole(prev_ptr);
+    return 0;
 }
 
 /*******************************************************************
@@ -203,16 +202,16 @@ PUBLIC int free_mem(phys_bytes base, phys_bytes len)
  * Remove an entry from the list.
  *
  *******************************************************************/
-PRIVATE void delete_slot(struct phys_hole *prev_ptr, struct phys_hole *hp)
+PRIVATE void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp)
 {
-	if (hp == hole_head)
-		hole_head = hp->h_next;
-	else
-		prev_ptr->h_next = hp->h_next;
+    if (hp == hole_head)
+        hole_head = hp->h_next;
+    else
+        prev_ptr->h_next = hp->h_next;
 
-  	hp->h_next = free_slots;
-  	hp->h_base = hp->h_len = 0;
-  	free_slots = hp;
+    hp->h_next = free_slots;
+    hp->h_base = hp->h_len = 0;
+    free_slots = hp;
 }
 
 /*******************************************************************
@@ -222,21 +221,21 @@ PRIVATE void delete_slot(struct phys_hole *prev_ptr, struct phys_hole *hp)
  * Merge contiguous holes.
  *
  *******************************************************************/
-PRIVATE void merge_hole(struct phys_hole * hp)
+PRIVATE void merge_hole(struct phys_hole* hp)
 {
-	struct phys_hole *next_ptr;
+    struct phys_hole* next_ptr;
 
-  	if ((next_ptr = hp->h_next) == NULL) return; /* last hole */
-  	if (hp->h_base + hp->h_len == next_ptr->h_base) {
-		hp->h_len += next_ptr->h_len;	/* first one gets second one's mem */
-		delete_slot(hp, next_ptr);
-  	} else {
-		hp = next_ptr;
-  	}
+    if ((next_ptr = hp->h_next) == NULL) return; /* last hole */
+    if (hp->h_base + hp->h_len == next_ptr->h_base) {
+        hp->h_len += next_ptr->h_len; /* first one gets second one's mem */
+        delete_slot(hp, next_ptr);
+    } else {
+        hp = next_ptr;
+    }
 
-  	if ((next_ptr = hp->h_next) == NULL) return;	/* hp is the last hole now */
-  	if (hp->h_base + hp->h_len == next_ptr->h_base) {
-		hp->h_len += next_ptr->h_len;
-		delete_slot(hp, next_ptr);
-  	}
+    if ((next_ptr = hp->h_next) == NULL) return; /* hp is the last hole now */
+    if (hp->h_base + hp->h_len == next_ptr->h_base) {
+        hp->h_len += next_ptr->h_len;
+        delete_slot(hp, next_ptr);
+    }
 }

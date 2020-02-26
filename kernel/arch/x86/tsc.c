@@ -40,7 +40,7 @@
 
 PUBLIC u32 tsc_khz;
 
-PRIVATE u64 tsc_read(struct clocksource * cs)
+PRIVATE u64 tsc_read(struct clocksource* cs)
 {
     u64 tsc;
     read_tsc_64(&tsc);
@@ -101,18 +101,16 @@ PRIVATE u32 probe_ticks;
 #define PROBE_TICKS (system_hz / 10)
 PRIVATE u64 tsc0, tsc1;
 
-PRIVATE int tsc_calibrate_handler(irq_hook_t * hook)
+PRIVATE int tsc_calibrate_handler(irq_hook_t* hook)
 {
     u64 tsc;
 
     probe_ticks++;
     read_tsc_64(&tsc);
 
-
     if (probe_ticks == 1) {
         tsc0 = tsc;
-    }
-    else if (probe_ticks == PROBE_TICKS) {
+    } else if (probe_ticks == PROBE_TICKS) {
         tsc1 = tsc;
     }
 
@@ -129,7 +127,8 @@ PRIVATE u32 pit_calibrate_tsc()
     init_8253_timer(system_hz);
 
     enable_int();
-    while (probe_ticks < PROBE_TICKS) enable_int();
+    while (probe_ticks < PROBE_TICKS)
+        enable_int();
     disable_int();
 
     rm_irq_handler(&calibrate_hook);

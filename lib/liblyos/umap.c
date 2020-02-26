@@ -23,9 +23,9 @@
 #include "assert.h"
 #include "lyos/vm.h"
 
-int syscall_entry(int syscall_nr, MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC int umap(endpoint_t ep, void * vir_addr, phys_bytes * phys_addr)
+PUBLIC int umap(endpoint_t ep, void* vir_addr, phys_bytes* phys_addr)
 {
     MESSAGE m;
     m.UMAP_WHO = ep;

@@ -37,14 +37,13 @@ PUBLIC void wait_for_aps_to_finish_booting()
     int n = 0;
     int i;
 
-    for (i = 0 ; i < ncpus ; i++) {
-        if (test_cpu_flag(i, CPU_IS_READY))
-            n++;
+    for (i = 0; i < ncpus; i++) {
+        if (test_cpu_flag(i, CPU_IS_READY)) n++;
     }
 
     if (n != ncpus) printk("smp: only %d out of %d cpus booted\n", n, ncpus);
 
-    while (booted_aps != (n - 1)) 
+    while (booted_aps != (n - 1))
         arch_pause();
 }
 
@@ -69,7 +68,4 @@ PUBLIC void clear_cpu_flag(int cpu, u32 flag)
     spinlock_unlock(&cpus_lock);
 }
 
-PUBLIC int test_cpu_flag(int cpu, u32 flag)
-{
-    return cpus[cpu].flags & flag;
-}
+PUBLIC int test_cpu_flag(int cpu, u32 flag) { return cpus[cpu].flags & flag; }

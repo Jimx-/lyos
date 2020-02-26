@@ -13,8 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_STACKFRAME_H_
-#define	_STACKFRAME_H_
+#ifndef _STACKFRAME_H_
+#define _STACKFRAME_H_
 
 typedef unsigned long reg_t;
 
@@ -76,10 +76,10 @@ struct sigframe {
     int retaddr_sigreturn;
     int signum;
     int code;
-    struct sigcontext *scp;
+    struct sigcontext* scp;
     int retaddr;
-    struct sigcontext *scp_sigreturn;
-    struct sigcontext sc;   /* actual saved context */
+    struct sigcontext* scp_sigreturn;
+    struct sigcontext sc; /* actual saved context */
 };
 
 #endif

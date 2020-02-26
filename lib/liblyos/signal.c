@@ -26,23 +26,22 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_sigsend(endpoint_t ep, struct siginfo * si)
+PUBLIC int kernel_sigsend(endpoint_t ep, struct siginfo* si)
 {
     MESSAGE m;
-    
+
     m.ENDPOINT = ep;
     m.BUF = si;
 
     return syscall_entry(NR_SIGSEND, &m);
 }
 
-PUBLIC int kernel_sigreturn(endpoint_t ep, void * scp)
+PUBLIC int kernel_sigreturn(endpoint_t ep, void* scp)
 {
     MESSAGE m;
-    
+
     m.ENDPOINT = ep;
     m.BUF = scp;
 
     return syscall_entry(NR_SIGRETURN, &m);
 }
-

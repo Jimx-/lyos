@@ -38,7 +38,7 @@
  *
  * - The meaning of `base':	base => first_valid_byte
  * - The meaning of `limit':	base + limit => last_valid_byte
- * 
+ *
  * @param b   Memory base of kernel.
  * @param l   Memory limit of kernel.
  *****************************************************************************/
@@ -77,11 +77,12 @@ PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
  *======================================================================*/
 PUBLIC void delay(int time)
 {
-	int i, j, k;
-	for(k=0;k<time;k++){
-		/*for(i=0;i<10000;i++){	for Virtual PC	*/
-		for(i=0;i<10;i++){/*	for Bochs	*/
-			for(j=0;j<10000;j++){}
-		}
-	}
+    int i, j, k;
+    for (k = 0; k < time; k++) {
+        /*for(i=0;i<10000;i++){	for Virtual PC	*/
+        for (i = 0; i < 10; i++) { /*	for Bochs	*/
+            for (j = 0; j < 10000; j++) {
+            }
+        }
+    }
 }

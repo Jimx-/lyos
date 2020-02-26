@@ -94,7 +94,7 @@ PUBLIC u32 pci_attr_r32(int devind, u16 port)
     }
 
     MESSAGE msg;
-    
+
     msg.type = PCI_ATTR_R32;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;

@@ -28,13 +28,11 @@ PRIVATE inline int pmde_none(pmd_t pmde)
 
 PRIVATE inline int pmde_bad(pmd_t pmde)
 {
-    return ((pmd_val(pmde) & !ARCH_PG_MASK) & ~ARCH_PG_USER) != (ARCH_PG_PRESENT | ARCH_PG_RW);
+    return ((pmd_val(pmde) & !ARCH_PG_MASK) & ~ARCH_PG_USER) !=
+           (ARCH_PG_PRESENT | ARCH_PG_RW);
 }
 
-PRIVATE inline void pmde_clear(pmd_t* pmde)
-{
-    *pmde = __pmd(0);
-}
+PRIVATE inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
 PRIVATE inline void pmde_populate(pmd_t* pmde, pte_t* pt)
 {
@@ -54,8 +52,7 @@ PRIVATE inline int pte_present(pte_t pte)
 
 PRIVATE inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
 {
-    pte_t* vaddr =
-        (pte_t*)__va(pmd_val(*pt) & ARCH_PG_MASK);
+    pte_t* vaddr = (pte_t*)__va(pmd_val(*pt) & ARCH_PG_MASK);
     return vaddr + ARCH_PTE(addr);
 }
 

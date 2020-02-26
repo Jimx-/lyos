@@ -34,7 +34,7 @@
 #include "global.h"
 #include "tar.h"
 
-PUBLIC int initfs_readsuper(MESSAGE * p)
+PUBLIC int initfs_readsuper(MESSAGE* p)
 {
     dev_t dev = p->REQ_DEV;
 
@@ -43,31 +43,27 @@ PUBLIC int initfs_readsuper(MESSAGE * p)
     initfs_headers_count = 0;
 
     bdev_init();
-    
-    for (i = 0;;i++)
-    {
+
+    for (i = 0;; i++) {
         initfs_rw_dev(BDEV_READ, dev, position, 512, buf);
 
-        struct posix_tar_header * header = (struct posix_tar_header *)buf;
-        if (header->name[0] == '\0')
-            break;
+        struct posix_tar_header* header = (struct posix_tar_header*)buf;
+        if (header->name[0] == '\0') break;
 
         int size = initfs_getsize(header->size);
         initfs_headers[i] = position;
         position += ((size / 512) + 1) * 512;
-        if (size % 512)
-            position += 512;
+        if (size % 512) position += 512;
 
         initfs_headers_count++;
     }
 
     /* fill result */
-	p->RET_NUM = 0;
-	p->RET_UID = 0;
-	p->RET_GID = 0;
-	p->RET_FILESIZE = 0;
-	p->RET_MODE = 0;
-    
+    p->RET_NUM = 0;
+    p->RET_UID = 0;
+    p->RET_GID = 0;
+    p->RET_FILESIZE = 0;
+    p->RET_MODE = 0;
+
     return 0;
 }
-

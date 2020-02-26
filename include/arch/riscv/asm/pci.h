@@ -18,5 +18,4 @@
 #ifndef _ARCH_PCI_H_
 #define _ARCH_PCI_H_
 
-                             
 #endif

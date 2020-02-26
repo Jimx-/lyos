@@ -32,188 +32,198 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-//PRIVATE char dot2[2] = "..";
+// PRIVATE char dot2[2] = "..";
 
-PUBLIC int ext2_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint)
+PUBLIC int ext2_lookup(dev_t dev, ino_t start, char* name,
+                       struct fsdriver_node* fn, int* is_mountpoint)
 {
-	ext2_inode_t * dir_pin = find_ext2_inode(dev, start);
-	if (!dir_pin) return ENOENT;
+    ext2_inode_t* dir_pin = find_ext2_inode(dev, start);
+    if (!dir_pin) return ENOENT;
 
-	err_code = 0;
+    err_code = 0;
 
-	ext2_inode_t * pin = ext2_advance(dir_pin, name);
-	if (!pin) return err_code;
+    ext2_inode_t* pin = ext2_advance(dir_pin, name);
+    if (!pin) return err_code;
 
-	/* fill result */
-	fn->fn_num = pin->i_num;
-	fn->fn_uid = pin->i_uid;
-	fn->fn_gid = pin->i_gid;
-	fn->fn_size = pin->i_size;
-	fn->fn_mode = pin->i_mode;
+    /* fill result */
+    fn->fn_num = pin->i_num;
+    fn->fn_uid = pin->i_uid;
+    fn->fn_gid = pin->i_gid;
+    fn->fn_size = pin->i_size;
+    fn->fn_mode = pin->i_mode;
     fn->fn_device = pin->i_block[0];
     *is_mountpoint = pin->i_mountpoint;
 
-	return 0;
+    return 0;
 }
 
 /* find component in dir_pin */
-PUBLIC ext2_inode_t *ext2_advance(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1])
+PUBLIC ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
+                                  char string[EXT2_NAME_LEN + 1])
 {
-	ino_t num;
-	ext2_inode_t * pin;
+    ino_t num;
+    ext2_inode_t* pin;
 
-  	/* If 'string' is empty, return an error. */
-  	if (string[0] == '\0') {
-		err_code = ENOENT;
-		return NULL;
-  	}
+    /* If 'string' is empty, return an error. */
+    if (string[0] == '\0') {
+        err_code = ENOENT;
+        return NULL;
+    }
 
-  	/* Check for NULL. */
-  	if (!dir_pin) return NULL;
+    /* Check for NULL. */
+    if (!dir_pin) return NULL;
 
-  	if (dir_pin->i_links_count == 0) {
-  		err_code = ENOENT;
-  		return NULL;
-  	}
+    if (dir_pin->i_links_count == 0) {
+        err_code = ENOENT;
+        return NULL;
+    }
 
-  	/* If 'string' is not present in the directory, return error. */
- 	if ((err_code = ext2_search_dir(dir_pin, string, &num, SD_LOOK_UP, 0)) != 0) {
-		return NULL;
-  	}
+    /* If 'string' is not present in the directory, return error. */
+    if ((err_code = ext2_search_dir(dir_pin, string, &num, SD_LOOK_UP, 0)) !=
+        0) {
+        return NULL;
+    }
 
-  	/* The component has been found in the directory.  Get inode. */
-  	if ((pin = get_ext2_inode(dir_pin->i_dev, (int)num)) == NULL)  {
-		return NULL;
-  	}
+    /* The component has been found in the directory.  Get inode. */
+    if ((pin = get_ext2_inode(dir_pin->i_dev, (int)num)) == NULL) {
+        return NULL;
+    }
 
-  	return pin;
+    return pin;
 }
 
 /* search file named string in dir_pin */
 /* if flag == SD_MAKE, create it
  * if flag == SD_DELETE, delete it
- * if flag == SD_LOOK_UP, look it up and return it inode num 
+ * if flag == SD_LOOK_UP, look it up and return it inode num
  * if flag == SD_IS_EMPTY, check whether this directory is empty */
-PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1], ino_t *num, 
-								int flag, int ftype)
+PUBLIC int ext2_search_dir(ext2_inode_t* dir_pin,
+                           char string[EXT2_NAME_LEN + 1], ino_t* num, int flag,
+                           int ftype)
 {
-	ext2_dir_entry_t * pde, * prev_pde;
-	off_t pos;
-	block_t b;
-	int hit = 0;
-	int match = 0;
-	unsigned new_slots = 0;
-	int  required_space = 0;
-	if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
-	int ret = 0;
-	if (flag != SD_IS_EMPTY) {
-		if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
-			if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
-		}
-	}
+    ext2_dir_entry_t *pde, *prev_pde;
+    off_t pos;
+    block_t b;
+    int hit = 0;
+    int match = 0;
+    unsigned new_slots = 0;
+    int required_space = 0;
+    if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
+    int ret = 0;
+    if (flag != SD_IS_EMPTY) {
+        if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
+            if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
+        }
+    }
 
-	pos = 0;
-	if (ret != 0) return ret;
-	
-	/* calculate the required space */
-	if (flag == SD_MAKE) {
-		int len = strlen(string);
-		required_space = EXT2_MIN_DIR_ENTRY_SIZE + len;
-		required_space += (required_space & 0x03) == 0 ? 0 :
-			     (EXT2_DIR_ENTRY_ALIGN - (required_space & 0x03));
-		if (dir_pin->i_last_dpos < dir_pin->i_size &&
-				dir_pin->i_last_dentry_size <= required_space)
-			pos = dir_pin->i_last_dpos;
-	}
+    pos = 0;
+    if (ret != 0) return ret;
 
-    ext2_buffer_t * pb = NULL;
-	for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
-		b = ext2_read_map(dir_pin, pos);
+    /* calculate the required space */
+    if (flag == SD_MAKE) {
+        int len = strlen(string);
+        required_space = EXT2_MIN_DIR_ENTRY_SIZE + len;
+        required_space +=
+            (required_space & 0x03) == 0
+                ? 0
+                : (EXT2_DIR_ENTRY_ALIGN - (required_space & 0x03));
+        if (dir_pin->i_last_dpos < dir_pin->i_size &&
+            dir_pin->i_last_dentry_size <= required_space)
+            pos = dir_pin->i_last_dpos;
+    }
+
+    ext2_buffer_t* pb = NULL;
+    for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
+        b = ext2_read_map(dir_pin, pos);
 
         if ((pb = ext2_get_buffer(dir_pin->i_dev, b)) == NULL) return err_code;
-		prev_pde = NULL;
+        prev_pde = NULL;
 
-		for (pde = (ext2_dir_entry_t*)pb->b_data;
-				((char *)pde - (char*)pb->b_data) < dir_pin->i_sb->sb_block_size;
-				pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len) ) {
+        for (pde = (ext2_dir_entry_t*)pb->b_data;
+             ((char*)pde - (char*)pb->b_data) < dir_pin->i_sb->sb_block_size;
+             pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len)) {
 
-			match = 0;
-			if (flag != SD_MAKE && pde->d_inode != (ino_t)0) {
-				if (flag == SD_IS_EMPTY) {
-					if (memcmp(pde->d_name, ".", 1) != 0 &&
-					    memcmp(pde->d_name, "..", 2) != 0) match = 1; /* dir is not empty */
-				} else {
-					if (memcmp(pde->d_name, string, pde->d_name_len) == 0 && pde->d_name_len == strlen(string)){
-						match = 1;
-					}
-				}
-			}
+            match = 0;
+            if (flag != SD_MAKE && pde->d_inode != (ino_t)0) {
+                if (flag == SD_IS_EMPTY) {
+                    if (memcmp(pde->d_name, ".", 1) != 0 &&
+                        memcmp(pde->d_name, "..", 2) != 0)
+                        match = 1; /* dir is not empty */
+                } else {
+                    if (memcmp(pde->d_name, string, pde->d_name_len) == 0 &&
+                        pde->d_name_len == strlen(string)) {
+                        match = 1;
+                    }
+                }
+            }
 
-			ret = 0;
-			if (match) {
-				if (flag == SD_IS_EMPTY) ret = ENOTEMPTY;	/* not empty */
-				else if (flag == SD_DELETE) {
-					if (pde->d_name_len >= sizeof(ino_t)) {
-						/* Save inode number for recovery. */
-						int ino_offset = pde->d_name_len - sizeof(ino_t);
-						*((ino_t *) &pde->d_name[ino_offset]) = pde->d_inode;
-					}
-					pde->d_inode = (ino_t)0;	/* erase entry */
-					if (!EXT2_HAS_COMPAT_FEATURE(dir_pin->i_sb,
-								EXT2_COMPAT_DIR_INDEX))
-						dir_pin->i_flags &= ~EXT2_INDEX_FL;
-					if (pos < dir_pin->i_last_dpos) {
-						dir_pin->i_last_dpos = pos;
-						dir_pin->i_last_dentry_size = pde->d_rec_len;
-					}
-					dir_pin->i_update |= CTIME | MTIME;
-					dir_pin->i_dirt = INO_DIRTY;
+            ret = 0;
+            if (match) {
+                if (flag == SD_IS_EMPTY)
+                    ret = ENOTEMPTY; /* not empty */
+                else if (flag == SD_DELETE) {
+                    if (pde->d_name_len >= sizeof(ino_t)) {
+                        /* Save inode number for recovery. */
+                        int ino_offset = pde->d_name_len - sizeof(ino_t);
+                        *((ino_t*)&pde->d_name[ino_offset]) = pde->d_inode;
+                    }
+                    pde->d_inode = (ino_t)0; /* erase entry */
+                    if (!EXT2_HAS_COMPAT_FEATURE(dir_pin->i_sb,
+                                                 EXT2_COMPAT_DIR_INDEX))
+                        dir_pin->i_flags &= ~EXT2_INDEX_FL;
+                    if (pos < dir_pin->i_last_dpos) {
+                        dir_pin->i_last_dpos = pos;
+                        dir_pin->i_last_dentry_size = pde->d_rec_len;
+                    }
+                    dir_pin->i_update |= CTIME | MTIME;
+                    dir_pin->i_dirt = INO_DIRTY;
 
-					if (prev_pde) {
-						prev_pde->d_rec_len += pde->d_rec_len;
-					}
-				} else {
-					*num = (ino_t)pde->d_inode;
-				}
+                    if (prev_pde) {
+                        prev_pde->d_rec_len += pde->d_rec_len;
+                    }
+                } else {
+                    *num = (ino_t)pde->d_inode;
+                }
                 ext2_put_buffer(pb);
-				return ret;
-			}
+                return ret;
+            }
 
-			/* Check for free slot */
-			if (flag == SD_MAKE && pde->d_inode == 0) {
-				/* we found a free slot, check if it has enough space */
-				if (required_space <= pde->d_rec_len) {
-					hit = 1;	/* we found a free slot */
-					break;
-				}
-			}
+            /* Check for free slot */
+            if (flag == SD_MAKE && pde->d_inode == 0) {
+                /* we found a free slot, check if it has enough space */
+                if (required_space <= pde->d_rec_len) {
+                    hit = 1; /* we found a free slot */
+                    break;
+                }
+            }
 
-			/* Can we shrink dentry? */
-			if (flag == SD_MAKE && required_space <= EXT2_DIR_ENTRY_SHRINK(pde)) {
-				int actual_size = EXT2_DIR_ENTRY_ACTUAL_SIZE(pde);
-				int new_slot_size = pde->d_rec_len;
-				new_slot_size -= actual_size;
-				pde->d_rec_len = actual_size;
-				pde = (ext2_dir_entry_t *)((int)pde + pde->d_rec_len);
-				pde->d_rec_len = new_slot_size;
-				pde->d_inode = 0;
-				hit = 1;
-				break;
-			}
+            /* Can we shrink dentry? */
+            if (flag == SD_MAKE &&
+                required_space <= EXT2_DIR_ENTRY_SHRINK(pde)) {
+                int actual_size = EXT2_DIR_ENTRY_ACTUAL_SIZE(pde);
+                int new_slot_size = pde->d_rec_len;
+                new_slot_size -= actual_size;
+                pde->d_rec_len = actual_size;
+                pde = (ext2_dir_entry_t*)((int)pde + pde->d_rec_len);
+                pde->d_rec_len = new_slot_size;
+                pde->d_inode = 0;
+                hit = 1;
+                break;
+            }
 
-			prev_pde = pde;
-		}
-		if (hit) break;
+            prev_pde = pde;
+        }
+        if (hit) break;
         ext2_put_buffer(pb);
-	}
+    }
 
-	/* the whole directory has been searched */
-	if (flag != SD_MAKE) {
-		return (flag == SD_IS_EMPTY ? 0 : ENOENT);
-	}
+    /* the whole directory has been searched */
+    if (flag != SD_MAKE) {
+        return (flag == SD_IS_EMPTY ? 0 : ENOENT);
+    }
 
-	dir_pin->i_last_dpos = pos;
-  	dir_pin->i_last_dentry_size = required_space;
+    dir_pin->i_last_dpos = pos;
+    dir_pin->i_last_dentry_size = required_space;
 
     int extended = 0;
     if (!hit) {
@@ -226,20 +236,21 @@ PUBLIC int ext2_search_dir(ext2_inode_t * dir_pin, char string[EXT2_NAME_LEN + 1
         pde->d_rec_len = dir_pin->i_sb->sb_block_size;
         extended = 1;
     }
-    
+
     pde->d_name_len = strlen(string);
     int i;
-    for (i = 0; i < pde->d_name_len && string[i]; i++) pde->d_name[i] = string[i];
+    for (i = 0; i < pde->d_name_len && string[i]; i++)
+        pde->d_name[i] = string[i];
     pde->d_inode = *num;
 
     pb->b_dirt = 1;
     ext2_put_buffer(pb);
-    dir_pin->i_update |= CTIME | MTIME;	
+    dir_pin->i_update |= CTIME | MTIME;
     dir_pin->i_dirt = 1;
 
     if (new_slots == 1) {
-	    dir_pin->i_size += (off_t) (pde->d_rec_len);
-	    if (extended) ext2_rw_inode(dir_pin, BDEV_WRITE);
+        dir_pin->i_size += (off_t)(pde->d_rec_len);
+        if (extended) ext2_rw_inode(dir_pin, BDEV_WRITE);
     }
     return 0;
 }

@@ -34,9 +34,9 @@
 #include "proto.h"
 #include "futex.h"
 
-#define QUEUE_HASH_LOG2   7
-#define QUEUE_HASH_SIZE   ((unsigned long)1<<QUEUE_HASH_LOG2)
-#define QUEUE_HASH_MASK   (((unsigned long)1<<QUEUE_HASH_LOG2)-1)
+#define QUEUE_HASH_LOG2 7
+#define QUEUE_HASH_SIZE ((unsigned long)1 << QUEUE_HASH_LOG2)
+#define QUEUE_HASH_MASK (((unsigned long)1 << QUEUE_HASH_LOG2) - 1)
 
 PRIVATE struct list_head futex_queues[QUEUE_HASH_SIZE];
 
@@ -57,13 +57,15 @@ PRIVATE struct list_head* futex_hash(union futex_key* key)
 
 PRIVATE inline int futex_match_key(union futex_key* k1, union futex_key* k2)
 {
-    return (k1 && k2 && k1->both.word == k2->both.word && k1->both.ptr == k2->both.ptr && k1->both.offset == k2->both.offset);
+    return (k1 && k2 && k1->both.word == k2->both.word &&
+            k1->both.ptr == k2->both.ptr && k1->both.offset == k2->both.offset);
 }
 
-PRIVATE int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared, union futex_key* key)
+PRIVATE int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared,
+                          union futex_key* key)
 {
     /* set the parameters properly in key */
-    unsigned long addr = (unsigned long) uaddr;
+    unsigned long addr = (unsigned long)uaddr;
     struct mm_struct* mm = mmp->active_mm;
 
     key->both.offset = addr % ARCH_PG_SIZE;
@@ -78,7 +80,8 @@ PRIVATE int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared, union fute
     return EINVAL;
 }
 
-PRIVATE inline void futex_queue(struct mmproc* mmp, struct futex_entry* entry, struct list_head* list)
+PRIVATE inline void futex_queue(struct mmproc* mmp, struct futex_entry* entry,
+                                struct list_head* list)
 {
     /* put mmp in the waiting queue */
     INIT_LIST_HEAD(&entry->list);
@@ -86,8 +89,9 @@ PRIVATE inline void futex_queue(struct mmproc* mmp, struct futex_entry* entry, s
     entry->mmp = mmp;
 }
 
-PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags, u32 val,
-                       struct futex_entry* entry, struct list_head** list)
+PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
+                             u32 val, struct futex_entry* entry,
+                             struct list_head** list)
 {
     int ret;
 
@@ -99,17 +103,18 @@ PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     *list = futex_hash(&entry->key);
 
     /* map uaddr in current address space */
-    off_t offset = (uintptr_t) uaddr % ARCH_PG_SIZE;
-    uaddr = (u32*)((uintptr_t) uaddr - offset);
+    off_t offset = (uintptr_t)uaddr % ARCH_PG_SIZE;
+    uaddr = (u32*)((uintptr_t)uaddr - offset);
     phys_bytes phys_addr;
-    ret = pgd_va2pa(&mmp->active_mm->pgd, (vir_bytes) uaddr, &phys_addr);
+    ret = pgd_va2pa(&mmp->active_mm->pgd, (vir_bytes)uaddr, &phys_addr);
     if (ret) {
         return ret;
     }
     void* vaddr = alloc_vmpages(1);
     if (!vaddr) return ENOMEM;
 
-    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_addr, (vir_bytes) vaddr, ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_addr, (vir_bytes)vaddr,
+                ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
     u32 uval = *(u32*)(vaddr + offset);
 
     if (uval != val) {
@@ -121,8 +126,8 @@ PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     return ret;
 }
 
-PRIVATE int futex_wait(struct mmproc* mmp, u32* uaddr, unsigned int flags, u32 val,
-                       u64 abs_time, u32 bitset)
+PRIVATE int futex_wait(struct mmproc* mmp, u32* uaddr, unsigned int flags,
+                       u32 val, u64 abs_time, u32 bitset)
 {
     int ret;
     struct futex_entry* q = &mmp->futex_entry;
@@ -148,8 +153,8 @@ PRIVATE void wakeup_proc(struct mmproc* mmp)
     send_recv(SEND_NONBLOCK, mmp->endpoint, &msg);
 }
 
-PRIVATE int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags, int nr_wake,
-                       u32 bitset)
+PRIVATE int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags,
+                       int nr_wake, u32 bitset)
 {
     union futex_key key;
     int ret;
@@ -163,7 +168,8 @@ PRIVATE int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags, int n
 
     struct list_head* list = futex_hash(&key);
     struct futex_entry *q, *tmp;
-    list_for_each_entry_safe(q, tmp, list, list) {
+    list_for_each_entry_safe(q, tmp, list, list)
+    {
         if (futex_match_key(&q->key, &key)) {
             if (!(q->bitset & bitset)) continue;
 
@@ -174,7 +180,8 @@ PRIVATE int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags, int n
         }
     }
 
-    list_for_each_entry_safe(q, tmp, &wake_queue, list) {
+    list_for_each_entry_safe(q, tmp, &wake_queue, list)
+    {
         wakeup_proc(q->mmp);
         list_del(&q->list);
     }

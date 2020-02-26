@@ -49,9 +49,9 @@ PUBLIC void init_node()
     INIT_LIST_HEAD(&(root_node.children));
 }
 
-PUBLIC sysfs_node_t * new_node(char * name, int flags)
+PUBLIC sysfs_node_t* new_node(char* name, int flags)
 {
-    sysfs_node_t * node = (sysfs_node_t *)malloc(sizeof(sysfs_node_t));
+    sysfs_node_t* node = (sysfs_node_t*)malloc(sizeof(sysfs_node_t));
     if (node == NULL) return NULL;
 
     INIT_LIST_HEAD(&(node->list));
@@ -62,7 +62,7 @@ PUBLIC sysfs_node_t * new_node(char * name, int flags)
 
     switch (NODE_TYPE(node)) {
     case SF_TYPE_DYNAMIC:
-        node->u.dyn_attr = (dyn_attr_info_t*) malloc(sizeof(dyn_attr_info_t));
+        node->u.dyn_attr = (dyn_attr_info_t*)malloc(sizeof(dyn_attr_info_t));
         break;
     default:
         break;
@@ -71,7 +71,7 @@ PUBLIC sysfs_node_t * new_node(char * name, int flags)
     return node;
 }
 
-PUBLIC int free_node(sysfs_node_t * node)
+PUBLIC int free_node(sysfs_node_t* node)
 {
     switch (NODE_TYPE(node)) {
     case SF_TYPE_DYNAMIC:
@@ -86,13 +86,14 @@ PUBLIC int free_node(sysfs_node_t * node)
     return 0;
 }
 
-PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name)
+PUBLIC sysfs_node_t* find_node(sysfs_node_t* parent, char* name)
 {
-    sysfs_node_t * node;
+    sysfs_node_t* node;
 
     if (NODE_TYPE(parent) != SF_TYPE_DOMAIN) return NULL;
 
-    list_for_each_entry(node, &(parent->children), list) {
+    list_for_each_entry(node, &(parent->children), list)
+    {
         if (strcmp(node->name, name) == 0) {
             return node;
         }
@@ -101,16 +102,17 @@ PUBLIC sysfs_node_t * find_node(sysfs_node_t * parent, char * name)
     return NULL;
 }
 
-PUBLIC sysfs_node_t * lookup_node_by_name(char * name)
+PUBLIC sysfs_node_t* lookup_node_by_name(char* name)
 {
-    sysfs_node_t * dir_pn = &root_node;
-    
+    sysfs_node_t* dir_pn = &root_node;
+
     char component[NAME_MAX];
-    char * end;
+    char* end;
 
     while (*name != '\0') {
         end = name;
-        while(*end != '\0' && *end !='.') end++;
+        while (*end != '\0' && *end != '.')
+            end++;
 
         int len = end - name;
         if (len == 0) {
@@ -121,7 +123,7 @@ PUBLIC sysfs_node_t * lookup_node_by_name(char * name)
         memcpy(component, name, len);
         component[len] = '\0';
 
-        sysfs_node_t * pn = find_node(dir_pn, component);
+        sysfs_node_t* pn = find_node(dir_pn, component);
         if (!pn) {
             errno = ENOENT;
             return NULL;
@@ -135,23 +137,26 @@ PUBLIC sysfs_node_t * lookup_node_by_name(char * name)
     return dir_pn;
 }
 
-PUBLIC sysfs_node_t * create_node(char * name, int flags)
+PUBLIC sysfs_node_t* create_node(char* name, int flags)
 {
     if (name == NULL) return NULL;
 
-    char * end = name + strlen(name);
+    char* end = name + strlen(name);
 
-    while (*end != '.' && end > name) end--;
-    if (name == end) name = "\0";
-    else *end++ = '\0';
+    while (*end != '.' && end > name)
+        end--;
+    if (name == end)
+        name = "\0";
+    else
+        *end++ = '\0';
 
-    sysfs_node_t * dir_pn = lookup_node_by_name(name);
+    sysfs_node_t* dir_pn = lookup_node_by_name(name);
     if (!dir_pn) {
         errno = ENOENT;
         return NULL;
     }
 
-    sysfs_node_t * new_pn = new_node(end, flags);
+    sysfs_node_t* new_pn = new_node(end, flags);
     if (!new_pn) {
         errno = ENOMEM;
         return NULL;
@@ -166,7 +171,7 @@ PUBLIC sysfs_node_t * create_node(char * name, int flags)
     return new_pn;
 }
 
-PRIVATE void stat_node(struct memfs_stat * stat, sysfs_node_t * node)
+PRIVATE void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
 {
     int file_type = 0;
     mode_t bits;
@@ -187,13 +192,14 @@ PRIVATE void stat_node(struct memfs_stat * stat, sysfs_node_t * node)
     stat->st_gid = 0;
 }
 
-PUBLIC int add_node(sysfs_node_t * parent, sysfs_node_t * child)
+PUBLIC int add_node(sysfs_node_t* parent, sysfs_node_t* child)
 {
     struct memfs_stat stat;
     stat_node(&stat, child);
-    
-    struct memfs_inode * pin = memfs_add_inode(parent->inode, child->name, NO_INDEX, &stat, child);
-    if (!pin) return ENOMEM; 
+
+    struct memfs_inode* pin =
+        memfs_add_inode(parent->inode, child->name, NO_INDEX, &stat, child);
+    if (!pin) return ENOMEM;
 
     list_add(&child->list, &parent->children);
 

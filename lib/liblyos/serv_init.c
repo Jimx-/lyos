@@ -24,12 +24,10 @@
 #include "lyos/service.h"
 #include <lyos/sysutils.h>
 
-PRIVATE int init_fresh_callback_default()
-{
-    return 0;
-}
+PRIVATE int init_fresh_callback_default() { return 0; }
 
-PRIVATE serv_init_fresh_callback_t init_fresh_callback = init_fresh_callback_default;
+PRIVATE serv_init_fresh_callback_t init_fresh_callback =
+    init_fresh_callback_default;
 
 PUBLIC void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb)
 {
@@ -47,11 +45,11 @@ PUBLIC int serv_init()
 
     int retval;
     switch (msg.REQUEST) {
-        case SERVICE_INIT_FRESH:
-            retval = init_fresh_callback();
-            break;
-        default:
-            panic("invalid init request from servman");
+    case SERVICE_INIT_FRESH:
+        retval = init_fresh_callback();
+        break;
+    default:
+        panic("invalid init request from servman");
     }
 
     msg.type = SERVICE_INIT_REPLY;

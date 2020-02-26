@@ -32,26 +32,29 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, mode_t mode, block_t initial_block, uid_t uid, gid_t gid);
+PRIVATE ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
+                                     mode_t mode, block_t initial_block,
+                                     uid_t uid, gid_t gid);
 
 /**
  * <Ring 1> Create a file.
  * @param p Ptr to the message.
  * @return  Zero on success.
  */
-PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid, struct fsdriver_node * fn)
+PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode,
+                       uid_t uid, gid_t gid, struct fsdriver_node* fn)
 {
-    ext2_inode_t * pin_dir = get_ext2_inode(dev, dir_num);
+    ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;
 
-    ext2_inode_t * pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
+    ext2_inode_t* pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
     int retval = err_code;
 
     if (pin == NULL) {
-        //put_ext2_inode(pin);
+        // put_ext2_inode(pin);
         put_ext2_inode(pin_dir);
         return retval;
-    } 
+    }
 
     fn->fn_num = pin->i_num;
     fn->fn_mode = pin->i_mode;
@@ -71,17 +74,19 @@ PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t
  * @param  b        Block to start searching.
  * @return          Zero on success.
  */
-PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, mode_t mode, block_t initial_block, uid_t uid, gid_t gid)
+PRIVATE ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
+                                     mode_t mode, block_t initial_block,
+                                     uid_t uid, gid_t gid)
 {
     /* the directory does not actually exist */
     if (pin_dir->i_links_count == 0) {
         err_code = ENOENT;
         return NULL;
     }
-    
+
     /* try to get the last component */
-    ext2_inode_t * pin = ext2_advance(pin_dir, pathname);
-    
+    ext2_inode_t* pin = ext2_advance(pin_dir, pathname);
+
     if (pin == NULL && err_code == ENOENT) {
         pin = ext2_alloc_inode(pin_dir, mode);
         if (pin == NULL) return NULL;
@@ -98,7 +103,7 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
 
     /* create the directory entry */
     int retval = ext2_search_dir(pin_dir, pathname, &pin->i_num, SD_MAKE,
-              pin->i_mode & I_TYPE);
+                                 pin->i_mode & I_TYPE);
 
     if (retval != 0) {
         pin->i_links_count--;
@@ -116,24 +121,25 @@ PRIVATE ext2_inode_t * ext2_new_inode(ext2_inode_t * pin_dir, char * pathname, m
     return pin;
 }
 
-PUBLIC int ext2_mkdir(dev_t dev, ino_t dir_num, char * name, mode_t mode, uid_t uid, gid_t gid)
+PUBLIC int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode,
+                      uid_t uid, gid_t gid)
 {
-    ext2_inode_t * pin_dir = get_ext2_inode(dev, dir_num);
+    ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;
 
-    ext2_inode_t * pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
+    ext2_inode_t* pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
     int retval = err_code, r1, r2;
 
     if (pin == NULL || retval == EEXIST) {
         if (pin) put_ext2_inode(pin);
         put_ext2_inode(pin_dir);
         return retval;
-    } 
+    }
 
     ino_t dotdot, dot;
     dotdot = pin_dir->i_num;
     dot = pin->i_num;
-    
+
     /* create '..' and '.' in the new directory */
     r1 = ext2_search_dir(pin, "..", &dotdot, SD_MAKE, I_DIRECTORY);
     r2 = ext2_search_dir(pin, ".", &dot, SD_MAKE, I_DIRECTORY);

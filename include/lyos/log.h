@@ -18,13 +18,13 @@
 
 #include <lyos/spinlock.h>
 
-#define KERN_LOG_SIZE	(1 << CONFIG_LOG_BUF_SHIFT)
+#define KERN_LOG_SIZE (1 << CONFIG_LOG_BUF_SHIFT)
 
 struct kern_log {
-	char buf[KERN_LOG_SIZE];
-	int size, next;
+    char buf[KERN_LOG_SIZE];
+    int size, next;
 
-	spinlock_t lock;
+    spinlock_t lock;
 };
 
 #endif

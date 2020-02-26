@@ -21,9 +21,9 @@
 #include "libpthread/pthread.h"
 
 /* 256k stack */
-#define DEFAULT_THREAD_STACK_SIZE   (1024 * 256)
+#define DEFAULT_THREAD_STACK_SIZE (1024 * 256)
 
-#define NR_WORKER_THREADS           CONFIG_SMP_MAX_CPUS
+#define NR_WORKER_THREADS CONFIG_SMP_MAX_CPUS
 
 struct worker_thread {
     int id;

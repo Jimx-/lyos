@@ -39,7 +39,8 @@
 #include "global.h"
 #include "thread.h"
 
-PRIVATE char __thread_stack[NR_WORKER_THREADS * DEFAULT_THREAD_STACK_SIZE] __attribute__ ((aligned (DEFAULT_THREAD_STACK_SIZE)));
+PRIVATE char __thread_stack[NR_WORKER_THREADS * DEFAULT_THREAD_STACK_SIZE]
+    __attribute__((aligned(DEFAULT_THREAD_STACK_SIZE)));
 
 PRIVATE pthread_mutex_t request_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 PRIVATE pthread_cond_t request_queue_not_empty = PTHREAD_COND_INITIALIZER;
@@ -51,7 +52,8 @@ PRIVATE DEF_LIST(response_queue);
 /* producer-consumer model */
 PUBLIC void enqueue_request(MESSAGE* msg)
 {
-    struct vfs_message* req = (struct vfs_message*) malloc(sizeof(struct vfs_message));
+    struct vfs_message* req =
+        (struct vfs_message*)malloc(sizeof(struct vfs_message));
     if (!req) panic("enqueue_request(): Out of memory");
 
     memcpy(&req->msg, msg, sizeof(MESSAGE));
@@ -106,10 +108,7 @@ PRIVATE void enqueue_response(struct vfs_message* res)
     }
 }
 
-PUBLIC void lock_response_queue()
-{
-    pthread_mutex_lock(&response_queue_mutex);
-}
+PUBLIC void lock_response_queue() { pthread_mutex_lock(&response_queue_mutex); }
 
 PUBLIC void unlock_response_queue()
 {
@@ -120,12 +119,12 @@ PUBLIC struct vfs_message* dequeue_response()
 {
     struct vfs_message* ret = NULL;
 
-    //pthread_mutex_lock(&response_queue_mutex);
+    // pthread_mutex_lock(&response_queue_mutex);
     if (!list_empty(&response_queue)) {
         ret = list_entry(response_queue.next, struct vfs_message, list);
         list_del(&ret->list);
     }
-    //pthread_mutex_unlock(&response_queue_mutex);
+    // pthread_mutex_unlock(&response_queue_mutex);
 
     return ret;
 }
@@ -237,7 +236,7 @@ PRIVATE void handle_request(MESSAGE* msg)
 
 PRIVATE int worker_loop(void* arg)
 {
-    struct worker_thread* self = (struct worker_thread*) arg;
+    struct worker_thread* self = (struct worker_thread*)arg;
     struct vfs_message* req;
 
     while (TRUE) {
@@ -267,7 +266,7 @@ PUBLIC pid_t create_worker(int id)
     sp -= sizeof(int);
     *(int*)sp = id;
 
-    pid_t pid = clone(worker_loop, sp, CLONE_VM | CLONE_THREAD, (void*) thread);
+    pid_t pid = clone(worker_loop, sp, CLONE_VM | CLONE_THREAD, (void*)thread);
     if (pid < 0) return pid;
 
     retval = get_procep(pid, &thread->endpoint);
@@ -284,8 +283,11 @@ PUBLIC pid_t create_worker(int id)
         priv->syscall_mask[j] = ~0;
     }
 
-    if ((retval = privctl(thread->endpoint, PRIVCTL_SET_PRIV, &thread->priv)) != 0) return -retval;
-    if ((retval = privctl(thread->endpoint, PRIVCTL_ALLOW, NULL)) != 0) return -retval;
+    if ((retval = privctl(thread->endpoint, PRIVCTL_SET_PRIV, &thread->priv)) !=
+        0)
+        return -retval;
+    if ((retval = privctl(thread->endpoint, PRIVCTL_ALLOW, NULL)) != 0)
+        return -retval;
 
     return pid;
 }
@@ -293,7 +295,8 @@ PUBLIC pid_t create_worker(int id)
 PUBLIC struct worker_thread* worker_self()
 {
     int tmp;
-    int* sp = (int*)(((uintptr_t)&tmp & (~(DEFAULT_THREAD_STACK_SIZE-1))) + DEFAULT_THREAD_STACK_SIZE - sizeof(int));
+    int* sp = (int*)(((uintptr_t)&tmp & (~(DEFAULT_THREAD_STACK_SIZE - 1))) +
+                     DEFAULT_THREAD_STACK_SIZE - sizeof(int));
     return &workers[*sp];
 }
 
@@ -316,7 +319,8 @@ PUBLIC void worker_wake(struct worker_thread* thread)
 PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg)
 {
     /* revive a blocked process after returning from a blocking call */
-    struct vfs_message* req = (struct vfs_message*) malloc(sizeof(struct vfs_message));
+    struct vfs_message* req =
+        (struct vfs_message*)malloc(sizeof(struct vfs_message));
     memcpy(&req->msg, msg, sizeof(MESSAGE));
     req->msg.source = endpoint;
     enqueue_response(req);

@@ -37,14 +37,14 @@
 #include <lyos/spinlock.h>
 
 PRIVATE spinlock_t irq_handlers_lock;
-PRIVATE irq_hook_t * irq_handlers[NR_IRQ] = {0};
+PRIVATE irq_hook_t* irq_handlers[NR_IRQ] = {0};
 
 /*****************************************************************************
  *                                init_irq
  *****************************************************************************/
 /**
  * <Ring 0> Initializes IRQ subsystem.
- * 
+ *
  *****************************************************************************/
 PUBLIC void init_irq()
 {
@@ -60,14 +60,14 @@ PUBLIC void init_irq()
  *****************************************************************************/
 /**
  * <Ring 0> Register an IRQ handler.
- * 
+ *
  *****************************************************************************/
-PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
+PUBLIC void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
 {
     if (irq < 0 || irq >= NR_IRQ) panic("invalid irq %d", irq);
- 
-    spinlock_lock(&irq_handlers_lock);    
-    irq_hook_t ** line = &irq_handlers[irq];
+
+    spinlock_lock(&irq_handlers_lock);
+    irq_hook_t** line = &irq_handlers[irq];
 
     int used_ids = 0;
     while (*line != NULL) {
@@ -80,7 +80,8 @@ PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
     }
 
     int id;
-    for (id = 1; id != 0; id <<= 1) if ((used_ids & id) == 0) break;
+    for (id = 1; id != 0; id <<= 1)
+        if ((used_ids & id) == 0) break;
 
     if (id == 0) panic("too many handlers for irq %d", irq);
 
@@ -96,17 +97,17 @@ PUBLIC void put_irq_handler(int irq, irq_hook_t * hook, irq_handler_t handler)
     spinlock_unlock(&irq_handlers_lock);
 }
 
-PUBLIC void rm_irq_handler(irq_hook_t * hook)
+PUBLIC void rm_irq_handler(irq_hook_t* hook)
 {
     int irq = hook->irq;
     int id = hook->id;
 
     spinlock_lock(&irq_handlers_lock);
-    irq_hook_t ** line = &irq_handlers[irq];
+    irq_hook_t** line = &irq_handlers[irq];
     while (*line != NULL) {
         if ((*line)->id == id) {
             (*line) = (*line)->next;
-        } else 
+        } else
             line = &(*line)->next;
     }
 
@@ -121,12 +122,13 @@ PUBLIC void rm_irq_handler(irq_hook_t * hook)
 PUBLIC void irq_handle(int irq)
 {
     spinlock_lock(&irq_handlers_lock);
-    irq_hook_t * hook = irq_handlers[irq];
+    irq_hook_t* hook = irq_handlers[irq];
 
     hwint_mask(irq);
 
     while (hook != NULL) {
-        if ((*hook->handler)(hook)) /* reenable int */;
+        if ((*hook->handler)(hook)) /* reenable int */
+            ;
 
         hook = hook->next;
     }
@@ -137,12 +139,9 @@ PUBLIC void irq_handle(int irq)
     spinlock_unlock(&irq_handlers_lock);
 }
 
-PUBLIC void enable_irq(irq_hook_t * hook)
-{
-    hwint_unmask(hook->irq);
-}
+PUBLIC void enable_irq(irq_hook_t* hook) { hwint_unmask(hook->irq); }
 
-PUBLIC int disable_irq(irq_hook_t * hook)
+PUBLIC int disable_irq(irq_hook_t* hook)
 {
     hwint_mask(hook->irq);
     return 1;

@@ -26,62 +26,64 @@
 #include "string.h"
 #include "libsysfs.h"
 
-#define DYN_ATTR_HASH_LOG2   7
-#define DYN_ATTR_HASH_SIZE   ((unsigned long)1<<DYN_ATTR_HASH_LOG2)
-#define DYN_ATTR_HASH_MASK   (((unsigned long)1<<DYN_ATTR_HASH_LOG2)-1)
+#define DYN_ATTR_HASH_LOG2 7
+#define DYN_ATTR_HASH_SIZE ((unsigned long)1 << DYN_ATTR_HASH_LOG2)
+#define DYN_ATTR_HASH_MASK (((unsigned long)1 << DYN_ATTR_HASH_LOG2) - 1)
 
 /* dynamic attribute hash table */
 PRIVATE struct list_head dyn_attr_table[DYN_ATTR_HASH_SIZE];
 
-PUBLIC int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags, void* cb_data,
-								sysfs_dyn_attr_show_t show, sysfs_dyn_attr_store_t store)
+PUBLIC int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
+                               void* cb_data, sysfs_dyn_attr_show_t show,
+                               sysfs_dyn_attr_store_t store)
 {
-	static int initialized = 0;
-	if (!initialized) {
-		int i;
-		for (i = 0; i < DYN_ATTR_HASH_SIZE; i++) {
-			INIT_LIST_HEAD(&dyn_attr_table[i]);
-		}
-		initialized = 1;
-	}
+    static int initialized = 0;
+    if (!initialized) {
+        int i;
+        for (i = 0; i < DYN_ATTR_HASH_SIZE; i++) {
+            INIT_LIST_HEAD(&dyn_attr_table[i]);
+        }
+        initialized = 1;
+    }
 
-	if (strlen(label) >= NAME_MAX) {
-		return ENAMETOOLONG;
-	}	
-	strlcpy(attr->label, label, NAME_MAX);
-	attr->label[NAME_MAX-1] = '\0';
+    if (strlen(label) >= NAME_MAX) {
+        return ENAMETOOLONG;
+    }
+    strlcpy(attr->label, label, NAME_MAX);
+    attr->label[NAME_MAX - 1] = '\0';
 
-	attr->flags = flags;
-	attr->cb_data = cb_data;
-	attr->show = show;
-	attr->store = store;
-	INIT_LIST_HEAD(&attr->list);
+    attr->flags = flags;
+    attr->cb_data = cb_data;
+    attr->show = show;
+    attr->store = store;
+    INIT_LIST_HEAD(&attr->list);
 
-	return 0;
+    return 0;
 }
 
 PRIVATE void dyn_attr_addhash(sysfs_dyn_attr_t* attr)
 {
-	/* Add a dynamic attribute to hash table */
-	unsigned int hash = attr->attr_id & DYN_ATTR_HASH_MASK;
-	list_add(&attr->list, &dyn_attr_table[hash]);
+    /* Add a dynamic attribute to hash table */
+    unsigned int hash = attr->attr_id & DYN_ATTR_HASH_MASK;
+    list_add(&attr->list, &dyn_attr_table[hash]);
 }
 
 /*
 PRIVATE void dyn_attr_unhash(sysfs_dyn_attr_t* attr)
 {
-	list_del(&attr->list);
+    list_del(&attr->list);
 }
 */
 
 PRIVATE sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
 {
-	/* Find a dynamic attribute by its attribute id */
-	unsigned int hash = id & DYN_ATTR_HASH_MASK;
+    /* Find a dynamic attribute by its attribute id */
+    unsigned int hash = id & DYN_ATTR_HASH_MASK;
 
-	sysfs_dyn_attr_t* attr;
-    list_for_each_entry(attr, &dyn_attr_table[hash], list) {
-    	if (attr->attr_id == id) {
+    sysfs_dyn_attr_t* attr;
+    list_for_each_entry(attr, &dyn_attr_table[hash], list)
+    {
+        if (attr->attr_id == id) {
             return attr;
         }
     }
@@ -91,7 +93,7 @@ PRIVATE sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
 
 PUBLIC int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
 {
-	MESSAGE msg;
+    MESSAGE msg;
 
     msg.type = SYSFS_PUBLISH;
 
@@ -103,49 +105,50 @@ PUBLIC int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
 
     if (msg.RETVAL) return msg.RETVAL;
 
-	sysfs_dyn_attr_t* new_attr = (sysfs_dyn_attr_t*) malloc(sizeof(sysfs_dyn_attr_t));
-	if (!new_attr) return ENOMEM;
-	memcpy(new_attr, attr, sizeof(sysfs_dyn_attr_t));
+    sysfs_dyn_attr_t* new_attr =
+        (sysfs_dyn_attr_t*)malloc(sizeof(sysfs_dyn_attr_t));
+    if (!new_attr) return ENOMEM;
+    memcpy(new_attr, attr, sizeof(sysfs_dyn_attr_t));
 
-	sysfs_dyn_attr_id_t id = (sysfs_dyn_attr_id_t) msg.ATTRID;
-	new_attr->attr_id = id;
+    sysfs_dyn_attr_id_t id = (sysfs_dyn_attr_id_t)msg.ATTRID;
+    new_attr->attr_id = id;
 
-	dyn_attr_addhash(new_attr);
+    dyn_attr_addhash(new_attr);
 
     return 0;
 }
 
-#define BUFSIZE 	4096
+#define BUFSIZE 4096
 PUBLIC ssize_t sysfs_handle_dyn_attr(MESSAGE* msg)
 {
-	/* handle dynamic attribute show/store request */
-	int rw_flag = msg->type;
-	static char tmp_buf[BUFSIZE];
-	ssize_t count = msg->CNT;
-	char* buf = msg->BUF;
+    /* handle dynamic attribute show/store request */
+    int rw_flag = msg->type;
+    static char tmp_buf[BUFSIZE];
+    ssize_t count = msg->CNT;
+    char* buf = msg->BUF;
 
-	sysfs_dyn_attr_t* attr = find_dyn_attr_by_id(msg->TARGET);
-	if (!attr) return -ENOENT;
+    sysfs_dyn_attr_t* attr = find_dyn_attr_by_id(msg->TARGET);
+    if (!attr) return -ENOENT;
 
-	if (rw_flag == SYSFS_DYN_SHOW) {
-		if (!attr->show) return -EPERM;
+    if (rw_flag == SYSFS_DYN_SHOW) {
+        if (!attr->show) return -EPERM;
 
-		ssize_t byte_read = attr->show(attr, tmp_buf);
-		if (byte_read >= count) {
-			return -E2BIG;
-		}
-		if (byte_read < 0) return byte_read;
+        ssize_t byte_read = attr->show(attr, tmp_buf);
+        if (byte_read >= count) {
+            return -E2BIG;
+        }
+        if (byte_read < 0) return byte_read;
 
-		data_copy(msg->source, buf, SELF, tmp_buf, byte_read);
-		return byte_read;
-	} else {
-		if (!attr->store) return -EPERM;
+        data_copy(msg->source, buf, SELF, tmp_buf, byte_read);
+        return byte_read;
+    } else {
+        if (!attr->store) return -EPERM;
 
-		if (count >= BUFSIZE) return -E2BIG;
-		data_copy(SELF, tmp_buf, msg->source, buf, count);
+        if (count >= BUFSIZE) return -E2BIG;
+        data_copy(SELF, tmp_buf, msg->source, buf, count);
 
-		return attr->store(attr, tmp_buf, count);
-	}
+        return attr->store(attr, tmp_buf, count);
+    }
 
-	return 0;
+    return 0;
 }

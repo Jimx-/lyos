@@ -23,9 +23,9 @@
 #include "assert.h"
 #include "lyos/vm.h"
 
-PUBLIC void read_tsc(unsigned long * high, unsigned long * low);
+PUBLIC void read_tsc(unsigned long* high, unsigned long* low);
 
-PUBLIC void read_tsc_64(u64 * v)
+PUBLIC void read_tsc_64(u64* v)
 {
     unsigned long hi, lo;
     read_tsc(&hi, &lo);

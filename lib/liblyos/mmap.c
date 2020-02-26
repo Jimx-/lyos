@@ -24,8 +24,8 @@
 #include <sys/mman.h>
 #include <string.h>
 
-PUBLIC void * mmap_for(endpoint_t forwhom,
-    void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+PUBLIC void* mmap_for(endpoint_t forwhom, void* addr, size_t len, int prot,
+                      int flags, int fd, off_t offset)
 {
     MESSAGE m;
 
@@ -46,8 +46,9 @@ PUBLIC void * mmap_for(endpoint_t forwhom,
     return m.u.m_mm_mmap_reply.retaddr;
 }
 
-PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
-    dev_t dev, ino_t ino, int fd, void* vaddr, int flags, int prot, size_t clearend)
+PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len, dev_t dev,
+                    ino_t ino, int fd, void* vaddr, int flags, int prot,
+                    size_t clearend)
 {
     MESSAGE m;
 
@@ -70,7 +71,8 @@ PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len,
     return m.u.m_mm_mmap_reply.retval;
 }
 
-PUBLIC void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr, void* src_addr, size_t size)
+PUBLIC void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr,
+                      void* src_addr, size_t size)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(MESSAGE));

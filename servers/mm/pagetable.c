@@ -34,7 +34,7 @@
 #include "const.h"
 #include "pagetable.h"
 
-#define MAX_KERN_MAPPINGS   10
+#define MAX_KERN_MAPPINGS 10
 PRIVATE struct kern_mapping {
     phys_bytes phys_addr;
     vir_bytes vir_addr;
@@ -47,13 +47,14 @@ PRIVATE int nr_kern_mappings = 0;
 PRIVATE int global_bit = 0;
 #endif
 
-PRIVATE struct mmproc * mmprocess = &mmproc_table[TASK_MM];
+PRIVATE struct mmproc* mmprocess = &mmproc_table[TASK_MM];
 PRIVATE struct mm_struct self_mm;
 //#define PAGETABLE_DEBUG    1
 
-/* before MM has set up page table for its own, we use these pages in page allocation */
+/* before MM has set up page table for its own, we use these pages in page
+ * allocation */
 PRIVATE char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES]
-        __attribute__((aligned(ARCH_PG_SIZE)));
+    __attribute__((aligned(ARCH_PG_SIZE)));
 
 PUBLIC void mm_init(struct mm_struct* mm);
 
@@ -63,17 +64,17 @@ PUBLIC void pt_init()
 
     void* bootstrap_pages_mem = static_bootstrap_pages;
     for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
-        void * v = (void *)(bootstrap_pages_mem + i * ARCH_PG_SIZE);
+        void* v = (void*)(bootstrap_pages_mem + i * ARCH_PG_SIZE);
         phys_bytes bootstrap_phys_addr;
-        if (umap(SELF, v, &bootstrap_phys_addr)) panic("MM: can't get phys addr for bootstrap page");
+        if (umap(SELF, v, &bootstrap_phys_addr))
+            panic("MM: can't get phys addr for bootstrap page");
         bootstrap_pages[i].phys_addr = bootstrap_phys_addr;
         bootstrap_pages[i].vir_addr = __va(bootstrap_phys_addr);
         bootstrap_pages[i].used = 0;
     }
 
 #if defined(__i386__)
-    if (_cpufeature(_CPUF_I386_PGE))
-        global_bit = ARCH_PG_GLOBAL;
+    if (_cpufeature(_CPUF_I386_PGE)) global_bit = ARCH_PG_GLOBAL;
 #endif
 
     /* init mm structure */
@@ -85,7 +86,7 @@ PUBLIC void pt_init()
     pt_kern_mapping_init();
 
     /* prepare page directory for MM */
-    pgdir_t * mypgd = &mmprocess->mm->pgd;
+    pgdir_t* mypgd = &mmprocess->mm->pgd;
 
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
 
@@ -99,13 +100,13 @@ PUBLIC void pt_init()
             user_flag = ARCH_PG_USER;
         }
 #if defined(__i386__)
-        mypgd->vir_addr[kernel_pde] = __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | user_flag);
+        mypgd->vir_addr[kernel_pde] = __pde(
+            paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | user_flag);
 #elif defined(__arm__)
-        mypgd->vir_addr[kernel_pde] = __pde((paddr & ARM_VM_SECTION_MASK)
-            | ARM_VM_SECTION
-            | ARM_VM_SECTION_DOMAIN
-            | ARM_VM_SECTION_CACHED
-            | ARM_VM_SECTION_SUPER);
+        mypgd->vir_addr[kernel_pde] =
+            __pde((paddr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
+                  ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
+                  ARM_VM_SECTION_SUPER);
 #endif
 
         paddr += ARCH_BIG_PAGE_SIZE;
@@ -114,11 +115,14 @@ PUBLIC void pt_init()
 
     unsigned int mypdbr = 0;
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
-    if (vmctl_getpdbr(SELF, &mypdbr)) panic("MM: failed to get page directory base register");
-    /* kernel has done identity mapping for the bootstrap page dir we are using, so this is ok */
-    data_copy(SELF, &currentpagedir, NO_TASK, (void *)mypdbr, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
+    if (vmctl_getpdbr(SELF, &mypdbr))
+        panic("MM: failed to get page directory base register");
+    /* kernel has done identity mapping for the bootstrap page dir we are using,
+     * so this is ok */
+    data_copy(SELF, &currentpagedir, NO_TASK, (void*)mypdbr,
+              sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
 
-    for(i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
+    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         pde_t entry = currentpagedir[i];
 
         if (!(pde_val(entry) & ARCH_PG_PRESENT)) continue;
@@ -132,7 +136,8 @@ PUBLIC void pt_init()
 
         /* phys_bytes ptphys_kern = pde_val(entry) & ARCH_PG_MASK; */
         /* phys_bytes ptphys_mm = pde_val(mypgd->vir_addr[i]) & ARCH_PG_MASK; */
-        /* data_copy(NO_TASK, (void*)ptphys_mm, NO_TASK, (void*)ptphys_kern, ARCH_PG_SIZE); */
+        /* data_copy(NO_TASK, (void*)ptphys_mm, NO_TASK, (void*)ptphys_kern,
+         * ARCH_PG_SIZE); */
         mypgd->vir_addr[i] = entry;
     }
 
@@ -147,7 +152,7 @@ PUBLIC struct mm_struct* mm_allocate()
     struct mm_struct* mm;
 
     int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
-    mm = (struct mm_struct*) alloc_vmem(NULL, len, 0);
+    mm = (struct mm_struct*)alloc_vmem(NULL, len, 0);
     return mm;
 }
 
@@ -169,10 +174,7 @@ PUBLIC void mm_free(struct mm_struct* mm)
 }
 
 #ifndef __PAGETABLE_PMD_FOLDED
-PRIVATE void __pmd_create(pde_t* pde, vir_bytes addr)
-{
-
-}
+PRIVATE void __pmd_create(pde_t* pde, vir_bytes addr) {}
 #else
 #define __pmd_create(pde, addr) NULL
 #endif
@@ -194,14 +196,15 @@ PUBLIC int pt_create(pmd_t* pmde)
     }
 
     phys_bytes pt_phys;
-    pte_t * pt = (pte_t *)alloc_vmem(&pt_phys, sizeof(pte_t) * ARCH_VM_PT_ENTRIES, PGT_PAGETABLE);
+    pte_t* pt = (pte_t*)alloc_vmem(&pt_phys, sizeof(pte_t) * ARCH_VM_PT_ENTRIES,
+                                   PGT_PAGETABLE);
     if (pt == NULL) {
         printl("MM: pt_create: failed to allocate memory for new page table\n");
         return ENOMEM;
     }
 
 #if PAGETABLE_DEBUG
-        printl("MM: pt_create: allocated new page table\n");
+    printl("MM: pt_create: allocated new page table\n");
 #endif
 
     int i;
@@ -212,13 +215,15 @@ PUBLIC int pt_create(pmd_t* pmde)
 #ifdef __i386__
     pmde_populate(pmde, pt);
 #elif defined(__arm__)
-    pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) | ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
+    pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) |
+                               ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
 #endif
 
     return 0;
 }
 
-PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr) {
+PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
+{
     pt_create(pmde);
     return pte_offset(pmde, addr);
 }
@@ -229,7 +234,8 @@ PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr) {
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_mappage(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, unsigned int flags)
+PUBLIC int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
+                      unsigned int flags)
 {
     pde_t* pde;
     pmd_t* pmde;
@@ -274,7 +280,7 @@ PRIVATE int pt_follow(pgdir_t* pgd, vir_bytes addr, pte_t** ptepp)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_wppage(pgdir_t * pgd, vir_bytes vir_addr)
+PUBLIC int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr)
 {
     pte_t* pte;
     int retval;
@@ -293,7 +299,7 @@ PUBLIC int pt_wppage(pgdir_t * pgd, vir_bytes vir_addr)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_unwppage(pgdir_t * pgd, vir_bytes vir_addr)
+PUBLIC int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr)
 {
     pte_t* pte;
     int retval;
@@ -306,12 +312,16 @@ PUBLIC int pt_unwppage(pgdir_t * pgd, vir_bytes vir_addr)
     return 0;
 }
 
-PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, size_t length, int flags)
+PUBLIC int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
+                       size_t length, int flags)
 {
     /* sanity check */
-    if (phys_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
-    if ((uintptr_t) vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0) printl("MM: pt_writemap: length is not page-aligned!\n");
+    if (phys_addr % ARCH_PG_SIZE != 0)
+        printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
+    if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0)
+        printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0)
+        printl("MM: pt_writemap: length is not page-aligned!\n");
 
     while (1) {
         pt_mappage(pgd, phys_addr, vir_addr, flags);
@@ -325,11 +335,13 @@ PUBLIC int pt_writemap(pgdir_t * pgd, phys_bytes phys_addr, vir_bytes vir_addr, 
     return 0;
 }
 
-PUBLIC int pt_wp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
+PUBLIC int pt_wp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
-    if (vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
+    if (vir_addr % ARCH_PG_SIZE != 0)
+        printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0)
+        printl("MM: pt_wp_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_wppage(pgd, vir_addr);
@@ -342,11 +354,13 @@ PUBLIC int pt_wp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
     return 0;
 }
 
-PUBLIC int pt_unwp_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
+PUBLIC int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
-    if (vir_addr % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0) printl("MM: pt_wp_memory: length is not page-aligned!\n");
+    if (vir_addr % ARCH_PG_SIZE != 0)
+        printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0)
+        printl("MM: pt_wp_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_unwppage(pgd, vir_addr);
@@ -367,36 +381,42 @@ PUBLIC void pt_kern_mapping_init()
     int rindex = 0;
     caddr_t addr;
     int len, flags;
-    struct kern_mapping * kmapping = kern_mappings;
+    struct kern_mapping* kmapping = kern_mappings;
     void* pkmap_start = (void*)PKMAP_START;
 
     while (!vmctl_get_kern_mapping(rindex, &addr, &len, &flags)) {
         if (rindex > MAX_KERN_MAPPINGS) panic("MM: too many kernel mappings");
 
         /* fill in mapping information */
-        kmapping->phys_addr = (phys_bytes) addr;
+        kmapping->phys_addr = (phys_bytes)addr;
         kmapping->len = len;
 
         kmapping->flags = ARCH_PG_PRESENT;
         if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
 #if defined(__arm__)
-        else kmapping->flags |= ARM_PG_SUPER;
+        else
+            kmapping->flags |= ARM_PG_SUPER;
 #endif
-        if (flags & KMF_WRITE) kmapping->flags |= ARCH_PG_RW;
-        else kmapping->flags |= ARCH_PG_RO;
+        if (flags & KMF_WRITE)
+            kmapping->flags |= ARCH_PG_RW;
+        else
+            kmapping->flags |= ARCH_PG_RO;
 
 #if defined(__arm__)
         kmapping->flags |= ARM_PG_CACHED;
 #endif
 
         /* where this region will be mapped */
-        kmapping->vir_addr = (vir_bytes) pkmap_start;
-        if (!kmapping->vir_addr) panic("MM: cannot allocate memory for kernel mappings");
+        kmapping->vir_addr = (vir_bytes)pkmap_start;
+        if (!kmapping->vir_addr)
+            panic("MM: cannot allocate memory for kernel mappings");
 
-        if (vmctl_reply_kern_mapping(rindex, (void*) kmapping->vir_addr)) panic("MM: cannot reply kernel mapping");
+        if (vmctl_reply_kern_mapping(rindex, (void*)kmapping->vir_addr))
+            panic("MM: cannot reply kernel mapping");
 
-        printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n",
-                rindex, kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len, kmapping->len / 1024);
+        printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n", rindex,
+               kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len,
+               kmapping->len / 1024);
 
         pkmap_start += kmapping->len;
         nr_kern_mappings++;
@@ -407,13 +427,14 @@ PUBLIC void pt_kern_mapping_init()
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_new(pgdir_t * pgd)
+PUBLIC int pgd_new(pgdir_t* pgd)
 {
     phys_bytes pgd_phys;
     /* map the directory so that we can write it */
-    pde_t * pg_dir = (pde_t *)alloc_vmem(&pgd_phys, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES, PGT_PAGEDIR);
+    pde_t* pg_dir = (pde_t*)alloc_vmem(
+        &pgd_phys, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES, PGT_PAGEDIR);
 
-    pgd->phys_addr = (void *)pgd_phys;
+    pgd->phys_addr = (void*)pgd_phys;
     pgd->vir_addr = pg_dir;
 
     int i;
@@ -436,7 +457,7 @@ PUBLIC int pgd_new(pgdir_t * pgd)
  * @param  pgd The page directory.
  * @return     Zero on success.
  */
-PUBLIC int pgd_mapkernel(pgdir_t * pgd)
+PUBLIC int pgd_mapkernel(pgdir_t* pgd)
 {
     int i;
     int kernel_pde = kernel_info.kernel_start_pde;
@@ -445,13 +466,13 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     /* map low memory */
     while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
 #if defined(__i386__)
-        pgd->vir_addr[kernel_pde] = __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
+        pgd->vir_addr[kernel_pde] =
+            __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
 #elif defined(__arm__)
-        pgd->vir_addr[kernel_pde] = __pde((addr & ARM_VM_SECTION_MASK)
-            | ARM_VM_SECTION
-            | ARM_VM_SECTION_DOMAIN
-            | ARM_VM_SECTION_CACHED
-            | ARM_VM_SECTION_SUPER);
+        pgd->vir_addr[kernel_pde] =
+            __pde((addr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
+                  ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
+                  ARM_VM_SECTION_SUPER);
 #endif
 
         addr += ARCH_BIG_PAGE_SIZE;
@@ -459,14 +480,15 @@ PUBLIC int pgd_mapkernel(pgdir_t * pgd)
     }
 
     for (i = 0; i < nr_kern_mappings; i++) {
-        pt_writemap(pgd, kern_mappings[i].phys_addr, kern_mappings[i].vir_addr, kern_mappings[i].len, kern_mappings[i].flags);
+        pt_writemap(pgd, kern_mappings[i].phys_addr, kern_mappings[i].vir_addr,
+                    kern_mappings[i].len, kern_mappings[i].flags);
     }
 
     return 0;
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_free(pgdir_t * pgd)
+PUBLIC int pgd_free(pgdir_t* pgd)
 {
     free_vmem(pgd->vir_addr, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
     return 0;
@@ -479,7 +501,8 @@ PUBLIC void pt_free_range(pmd_t* pt)
     free_vmem(pte, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
 }
 
-PUBLIC void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end, vir_bytes floor, vir_bytes ceiling)
+PUBLIC void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end,
+                           vir_bytes floor, vir_bytes ceiling)
 {
     vir_bytes start = addr;
     vir_bytes next;
@@ -513,7 +536,8 @@ PUBLIC void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end, vir_bytes 
     free_vmem(pmde, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
 }
 
-PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end, vir_bytes floor, vir_bytes ceiling)
+PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
+                           vir_bytes floor, vir_bytes ceiling)
 {
     pde_t* pde = pgd_offset(pgd->vir_addr, addr);
     vir_bytes next;
@@ -533,10 +557,11 @@ PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end, vir_byte
     } while (addr != end);
 }
 
-PUBLIC int pgd_bind(struct mmproc * who, pgdir_t * pgd)
+PUBLIC int pgd_bind(struct mmproc* who, pgdir_t* pgd)
 {
     /* make sure that the page directory is in low memory */
-    return vmctl_set_address_space(who->endpoint, pgd->phys_addr, __va(pgd->phys_addr));
+    return vmctl_set_address_space(who->endpoint, pgd->phys_addr,
+                                   __va(pgd->phys_addr));
 }
 
 PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
@@ -549,7 +574,7 @@ PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
         return 0;
     }
 
-    if ((retval = pt_follow(pgd, (unsigned long) vir_addr, &pte)) != 0) {
+    if ((retval = pt_follow(pgd, (unsigned long)vir_addr, &pte)) != 0) {
         return retval;
     }
 
@@ -558,11 +583,13 @@ PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
     return 0;
 }
 
-PUBLIC int unmap_memory(pgdir_t * pgd, vir_bytes vir_addr, size_t length)
+PUBLIC int unmap_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
-    if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0) printl("MM: map_memory: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0) printl("MM: map_memory: length is not page-aligned!\n");
+    if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0)
+        printl("MM: map_memory: vir_addr is not page-aligned!\n");
+    if (length % ARCH_PG_SIZE != 0)
+        printl("MM: map_memory: length is not page-aligned!\n");
 
     while (1) {
         pt_mappage(pgd, 0, vir_addr, 0);

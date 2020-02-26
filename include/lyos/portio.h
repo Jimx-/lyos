@@ -16,45 +16,57 @@
 #ifndef _PORTIO_H_
 #define _PORTIO_H_
 
-#define PIO_TYPE_MASK   0x3
-#define PIO_DIR_MASK    0x4
+#define PIO_TYPE_MASK 0x3
+#define PIO_DIR_MASK 0x4
 
-#define PIO_BYTE    0x1
-#define PIO_WORD    0x2
-#define PIO_LONG    0x3
+#define PIO_BYTE 0x1
+#define PIO_WORD 0x2
+#define PIO_LONG 0x3
 
-#define PIO_IN    0
-#define PIO_OUT   0x4
+#define PIO_IN 0
+#define PIO_OUT 0x4
 
-#define PIO_PORT    u.m3.m3i1
+#define PIO_PORT u.m3.m3i1
 #define PIO_VECSIZE u.m3.m3i2
-#define PIO_BUFLEN  u.m3.m3i2
-#define PIO_VALUE   u.m3.m3i2
+#define PIO_BUFLEN u.m3.m3i2
+#define PIO_VALUE u.m3.m3i2
 #define PIO_REQUEST u.m3.m3i3
-#define PIO_BUF     u.m3.m3p1
+#define PIO_BUF u.m3.m3p1
 
-typedef struct { u16 port; u8 value; u8 _padding; } pb_pair_t;
-typedef struct { u16 port; u16 value; } pw_pair_t;
-typedef struct { u16 port; u32 value; } pl_pair_t;
+typedef struct {
+    u16 port;
+    u8 value;
+    u8 _padding;
+} pb_pair_t;
+typedef struct {
+    u16 port;
+    u16 value;
+} pw_pair_t;
+typedef struct {
+    u16 port;
+    u32 value;
+} pl_pair_t;
 
-PUBLIC int portio_in(int port, u32 * value, int type);
+PUBLIC int portio_in(int port, u32* value, int type);
 PUBLIC int portio_out(int port, u32 value, int type);
 
-#define portio_inb(p, v) portio_in(p, (u32 *)v, PIO_BYTE)
-#define portio_inw(p, v) portio_in(p, (u32 *)v, PIO_WORD)
-#define portio_inl(p, v) portio_in(p, (u32 *)v, PIO_LONG)
+#define portio_inb(p, v) portio_in(p, (u32*)v, PIO_BYTE)
+#define portio_inw(p, v) portio_in(p, (u32*)v, PIO_WORD)
+#define portio_inl(p, v) portio_in(p, (u32*)v, PIO_LONG)
 
 #define portio_outb(p, v) portio_out(p, (u32)v, PIO_BYTE)
 #define portio_outw(p, v) portio_out(p, (u32)v, PIO_WORD)
 #define portio_outl(p, v) portio_out(p, (u32)v, PIO_LONG)
 
-#define pv_set(pair, p, v) do { \
-                    (pair).port = (p);  \
-                    (pair).value = (v); } while(0)
+#define pv_set(pair, p, v)  \
+    do {                    \
+        (pair).port = (p);  \
+        (pair).value = (v); \
+    } while (0)
 
-PUBLIC int portio_voutb(pb_pair_t * pairs, int nr_ports);
+PUBLIC int portio_voutb(pb_pair_t* pairs, int nr_ports);
 
-PUBLIC int portio_sin(int port, void * buf, int len);
-PUBLIC int portio_sout(int port, void * buf, int len);
+PUBLIC int portio_sin(int port, void* buf, int len);
+PUBLIC int portio_sout(int port, void* buf, int len);
 
 #endif

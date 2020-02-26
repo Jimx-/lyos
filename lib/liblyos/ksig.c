@@ -27,7 +27,7 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int get_ksig(endpoint_t * ep, sigset_t * set)
+PUBLIC int get_ksig(endpoint_t* ep, sigset_t* set)
 {
     MESSAGE m;
 

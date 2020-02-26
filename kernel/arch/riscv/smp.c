@@ -37,11 +37,13 @@ PRIVATE int __cpu_ready;
 PUBLIC void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
 PUBLIC void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC struct stackframe init_stackframe;   /* used to retrieve the id of the init cpu */
+PUBLIC struct stackframe
+    init_stackframe; /* used to retrieve the id of the init cpu */
 
 PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc);
 
-PRIVATE int fdt_scan_hart(void* blob, unsigned long offset, const char* name, int depth, void* arg)
+PRIVATE int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
+                          int depth, void* arg)
 {
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     if (!type || strcmp(type, "cpu") != 0) return 0;
@@ -65,12 +67,13 @@ PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc)
     idle_proc->regs.cpu = hart_id;
     init_tss(hart_id, get_k_stack_top(hart_id));
 
-    __asm__ __volatile__ ("fence rw, rw" : : : "memory");
+    __asm__ __volatile__("fence rw, rw" : : : "memory");
 
     __cpu_stack_pointer[hart_id] = get_k_stack_top(hart_id);
-    __cpu_task_pointer[hart_id] = (void*) idle_proc;
+    __cpu_task_pointer[hart_id] = (void*)idle_proc;
 
-    while (__cpu_ready != hart_id) ;
+    while (__cpu_ready != hart_id)
+        ;
 
     set_cpu_flag(hart_id, CPU_IS_READY);
 }
@@ -96,14 +99,12 @@ PUBLIC void smp_boot_ap()
 
     ap_finished_booting();
 
-    while (!smp_commenced) ;
+    while (!smp_commenced)
+        ;
 
     switch_address_space(proc_addr(TASK_MM));
 
     switch_to_user();
 }
 
-PUBLIC void smp_commence()
-{
-    smp_commenced = 1;
-}
+PUBLIC void smp_commence() { smp_commenced = 1; }

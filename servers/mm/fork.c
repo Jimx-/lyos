@@ -49,27 +49,30 @@ PUBLIC int do_fork()
     void* newsp = mm_msg.BUF;
     int flags = mm_msg.FLAGS;
     endpoint_t child_ep;
-    struct mmproc * mmp = &mmproc_table[child_slot];
+    struct mmproc* mmp = &mmproc_table[child_slot];
 
     /* duplicate the process table */
     int parent_slot, retval;
     if ((retval = mm_verify_endpt(parent_ep, &parent_slot)) != 0) return retval;
-    struct mmproc * mmparent = mmproc_table + parent_slot;
+    struct mmproc* mmparent = mmproc_table + parent_slot;
 
     *mmp = mmproc_table[parent_slot];
     mmp->flags |= MMPF_INUSE;
 
     int kfork_flags = KF_MMINHIBIT;
-    if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, kfork_flags, newsp)) != 0) return retval;
+    if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, kfork_flags,
+                              newsp)) != 0)
+        return retval;
     mmp->endpoint = child_ep;
 
     int clone_vm = flags & CLONE_VM;
 
-    if (clone_vm) {     /* share address space */
+    if (clone_vm) { /* share address space */
         mmp->mm = NULL;
         mmp->active_mm = mmparent->active_mm;
         atomic_inc(&mmp->active_mm->refcnt);
-        if (pgd_bind(mmp, &mmp->active_mm->pgd)) panic("MM: fork: cannot bind new pgdir");
+        if (pgd_bind(mmp, &mmp->active_mm->pgd))
+            panic("MM: fork: cannot bind new pgdir");
     } else {
         if ((mmp->mm = mm_allocate()) == NULL) return -ENOMEM;
         mm_init(mmp->mm);
@@ -81,12 +84,15 @@ PUBLIC int do_fork()
             return -ENOMEM;
         }
 
-        if (pgd_bind(mmp, &mmp->mm->pgd)) panic("MM: fork: cannot bind new pgdir");
+        if (pgd_bind(mmp, &mmp->mm->pgd))
+            panic("MM: fork: cannot bind new pgdir");
 
         /* copy regions */
-        struct vir_region * vr;
-        list_for_each_entry(vr, &mmparent->active_mm->mem_regions, list) {
-            struct vir_region * new_region = region_new(vr->vir_addr, vr->length, vr->flags);
+        struct vir_region* vr;
+        list_for_each_entry(vr, &mmparent->active_mm->mem_regions, list)
+        {
+            struct vir_region* new_region =
+                region_new(vr->vir_addr, vr->length, vr->flags);
             list_add(&(new_region->list), &mmp->active_mm->mem_regions);
             avl_insert(&new_region->avl, &mmp->active_mm->mem_avl);
 
@@ -108,7 +114,8 @@ PUBLIC int do_fork()
     /* add child to process group */
     if (flags & CLONE_VM) {
         mmp->group_leader = mmparent->group_leader;
-        if (mmparent->group_leader == NULL) panic("do_fork(): BUG: parent has no group leader\n");
+        if (mmparent->group_leader == NULL)
+            panic("do_fork(): BUG: parent has no group leader\n");
         list_add(&mmp->group_list, &mmp->group_leader->group_list);
     }
 
@@ -118,10 +125,10 @@ PUBLIC int do_fork()
     return 0;
 }
 
-PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
+PUBLIC int proc_free(struct mmproc* mmp, int clear_proc)
 {
     /* free memory */
-    struct vir_region * vr;
+    struct vir_region* vr;
 
     if (mmp->mm == NULL) {
         atomic_dec(&mmp->active_mm->refcnt);
@@ -131,9 +138,12 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
 
     if (!list_empty(&mmp->mm->mem_regions)) {
         struct vir_region* tmp;
-        list_for_each_entry_safe(vr, tmp, &mmp->mm->mem_regions, list) {
+        list_for_each_entry_safe(vr, tmp, &mmp->mm->mem_regions, list)
+        {
             region_unmap_phys(mmp, vr);
-            pgd_free_range(&mmp->mm->pgd, vr->vir_addr, vr->vir_addr + vr->length, vr->vir_addr, vr->vir_addr + vr->length);
+            pgd_free_range(&mmp->mm->pgd, vr->vir_addr,
+                           vr->vir_addr + vr->length, vr->vir_addr,
+                           vr->vir_addr + vr->length);
             region_free(vr);
         }
     }
@@ -144,7 +154,7 @@ PUBLIC int proc_free(struct mmproc * mmp, int clear_proc)
         mmp->mm = mmp->active_mm = NULL;
 
         mmp->flags &= ~MMPF_INUSE;
-    } else {   /* clear mem regions only */
+    } else { /* clear mem regions only */
         /*pgd_clear(&mmp->mm->pgd);
         pgd_mapkernel(&mmp->mm->pgd);*/
 

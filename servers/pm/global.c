@@ -18,8 +18,8 @@
 #include "lyos/config.h"
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>  
+#include <sys/types.h>
 #include "lyos/list.h"
 #include "global.h"
 
-PUBLIC  struct pmproc pmproc_table[NR_PROCS];
+PUBLIC struct pmproc pmproc_table[NR_PROCS];

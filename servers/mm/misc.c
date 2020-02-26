@@ -33,26 +33,27 @@
 #include "lyos/vm.h"
 #include "global.h"
 
-
 PUBLIC int do_procctl()
 {
     endpoint_t who = mm_msg.PCTL_WHO;
     int param = mm_msg.PCTL_PARAM;
     int retval = 0;
 
-    struct mmproc * mmp = endpt_mmproc(who);
+    struct mmproc* mmp = endpt_mmproc(who);
     if (!mmp) return EINVAL;
 
     switch (param) {
-        case PCTL_CLEARPROC:    /* clear proc struct & mem regions */
-            if (!list_empty(&mmp->active_mm->mem_regions)) retval = proc_free(mmp, 1);
-            break;
-        case PCTL_CLEARMEM:     /* clear mem regions only */
-            if (!list_empty(&mmp->active_mm->mem_regions)) retval = proc_free(mmp, 0);
-            break;
-        default:
-            retval = EINVAL;
-            break;
+    case PCTL_CLEARPROC: /* clear proc struct & mem regions */
+        if (!list_empty(&mmp->active_mm->mem_regions))
+            retval = proc_free(mmp, 1);
+        break;
+    case PCTL_CLEARMEM: /* clear mem regions only */
+        if (!list_empty(&mmp->active_mm->mem_regions))
+            retval = proc_free(mmp, 0);
+        break;
+    default:
+        retval = EINVAL;
+        break;
     }
 
     return retval;

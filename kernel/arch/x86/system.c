@@ -41,30 +41,30 @@
 
 PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC void _cpuid(u32 *eax, u32 *ebx, u32 *ecx, u32 *edx);
+PUBLIC void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
 
 /**
  * <Ring 0> Switch back to user.
  */
-PUBLIC struct proc * arch_switch_to_user()
+PUBLIC struct proc* arch_switch_to_user()
 {
-    char * stack;
-    struct proc * p;
+    char* stack;
+    struct proc* p;
 
 #ifdef CONFIG_SMP
-    stack = (char *)tss[cpuid].esp0;
+    stack = (char*)tss[cpuid].esp0;
 #else
-    stack = (char *)tss[0].esp0;
+    stack = (char*)tss[0].esp0;
 #endif
 
     p = get_cpulocal_var(proc_ptr);
     /* save the proc ptr on the stack */
-    *((reg_t *)stack) = (reg_t)p;
+    *((reg_t*)stack) = (reg_t)p;
 
     return p;
 }
 
-PUBLIC int arch_reset_proc(struct proc * p)
+PUBLIC int arch_reset_proc(struct proc* p)
 {
     p->regs.eip = 0;
     p->regs.esp = 0;
@@ -76,13 +76,10 @@ PUBLIC int arch_reset_proc(struct proc * p)
     }
 
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;
-    p->regs.ds =
-    p->regs.es =
-    p->regs.fs =
-    p->regs.gs =
-    p->regs.ss = SELECTOR_USER_DS | RPL_USER;
+    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs = p->regs.ss =
+        SELECTOR_USER_DS | RPL_USER;
 
-    p->regs.eflags  = 0x202;    /* IF=1, bit 2 is always 1 */
+    p->regs.eflags = 0x202; /* IF=1, bit 2 is always 1 */
     p->seg.trap_style = KTS_INT;
 
     return 0;
@@ -93,7 +90,7 @@ PUBLIC int arch_reset_proc(struct proc * p)
  *
  * @param proc Which proc to restore.
  */
-PUBLIC void restore_user_context(struct proc * p)
+PUBLIC void restore_user_context(struct proc* p)
 {
     int trap_style = p->seg.trap_style;
     p->seg.trap_style = KTS_NONE;
@@ -127,7 +124,8 @@ PUBLIC void idle_stop()
     if (is_idle) restart_local_timer();
 }
 
-PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)
+PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
+                          struct ps_strings* ps, char* name)
 {
     memcpy(p->name, name, PROC_NAME_LEN);
 
@@ -141,13 +139,13 @@ PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strin
     return 0;
 }
 
-PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
+PRIVATE int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     memset(vaddr, 0, len);
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
+PRIVATE int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
     reload_cr3();
@@ -156,22 +154,23 @@ PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                         size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
-    memcpy(vaddr, (void *)(execi->header + offset), len);
+    memcpy(vaddr, (void*)(execi->header + offset), len);
 
     return 0;
 }
 
-PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
+PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp)
 {
     /* make MM run */
     if (bp->proc_nr == TASK_MM) {
         struct exec_info execi;
         memset(&execi, 0, sizeof(execi));
 
-        execi.stack_top = (void*) VM_STACK_TOP;
+        execi.stack_top = (void*)VM_STACK_TOP;
         execi.stack_size = PROC_ORIGIN_STACK * 2;
 
         /* header */
@@ -197,7 +196,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
     }
 }
 
-PUBLIC void arch_set_syscall_result(struct proc * p, int result)
+PUBLIC void arch_set_syscall_result(struct proc* p, int result)
 {
     p->regs.eax = (u32)result;
 }
@@ -217,11 +216,14 @@ PUBLIC void identify_cpu()
     eax = 0;
     _cpuid(&eax, &ebx, &ecx, &edx);
 
-    if (ebx == INTEL_CPUID_EBX && ecx == INTEL_CPUID_ECX && edx == INTEL_CPUID_EDX) {
+    if (ebx == INTEL_CPUID_EBX && ecx == INTEL_CPUID_ECX &&
+        edx == INTEL_CPUID_EDX) {
         cpu_info[cpu].vendor = CPU_VENDOR_INTEL;
-    } else if (ebx == AMD_CPUID_EBX && ecx == AMD_CPUID_ECX && edx == AMD_CPUID_EDX) {
+    } else if (ebx == AMD_CPUID_EBX && ecx == AMD_CPUID_ECX &&
+               edx == AMD_CPUID_EDX) {
         cpu_info[cpu].vendor = CPU_VENDOR_AMD;
-    } else cpu_info[cpu].vendor = CPU_VENDOR_UNKNOWN;
+    } else
+        cpu_info[cpu].vendor = CPU_VENDOR_UNKNOWN;
 
     if (eax == 0) return;
 
@@ -229,11 +231,10 @@ PUBLIC void identify_cpu()
     _cpuid(&eax, &ebx, &ecx, &edx);
 
     cpu_info[cpu].family = (eax >> 8) & 0xf;
-    if (cpu_info[cpu].family == 0xf)
-        cpu_info[cpu].family += (eax >> 20) & 0xff;
+    if (cpu_info[cpu].family == 0xf) cpu_info[cpu].family += (eax >> 20) & 0xff;
     cpu_info[cpu].model = (eax >> 4) & 0xf;
     if (cpu_info[cpu].model == 0xf || cpu_info[cpu].model == 0x6)
-        cpu_info[cpu].model += ((eax >> 16) & 0xf) << 4 ;
+        cpu_info[cpu].model += ((eax >> 16) & 0xf) << 4;
     cpu_info[cpu].stepping = eax & 0xf;
     cpu_info[cpu].flags[0] = ecx;
     cpu_info[cpu].flags[1] = edx;

@@ -71,7 +71,7 @@ PUBLIC int inputdriver_start(struct inputdriver* inpd)
         if (msg.type == NOTIFY_MSG) {
             switch (src) {
             case INTERRUPT:
-                if (inpd->input_interrupt) 
+                if (inpd->input_interrupt)
                     inpd->input_interrupt(msg.INTERRUPTS);
                 break;
             }
@@ -80,8 +80,10 @@ PUBLIC int inputdriver_start(struct inputdriver* inpd)
 
         switch (msg.type) {
         default:
-            if (inpd->input_other) msg.RETVAL = inpd->input_other(&msg);
-            else msg.RETVAL = ENOSYS;
+            if (inpd->input_other)
+                msg.RETVAL = inpd->input_other(&msg);
+            else
+                msg.RETVAL = ENOSYS;
             break;
         }
 

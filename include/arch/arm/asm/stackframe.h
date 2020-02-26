@@ -13,8 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_STACKFRAME_H_
-#define	_STACKFRAME_H_
+#ifndef _STACKFRAME_H_
+#define _STACKFRAME_H_
 
 typedef u32 reg_t;
 
@@ -28,19 +28,19 @@ struct stackframe {
     reg_t r6;
     reg_t r7;
     reg_t r8;
-    reg_t r9;                     /*  sb */
-    reg_t r10;                    /*  sl */
+    reg_t r9;  /*  sb */
+    reg_t r10; /*  sl */
     reg_t r11;
-    reg_t r12;                    /*  ip */
-    reg_t sp;                     /*  r13 */
-    reg_t lr;                     /*  r14 */
-    reg_t pc;                     /*  r15  */
+    reg_t r12; /*  ip */
+    reg_t sp;  /*  r13 */
+    reg_t lr;  /*  r14 */
+    reg_t pc;  /*  r15  */
     reg_t psr;
 };
 
 struct segframe {
     reg_t ttbr_phys;
-    reg_t * ttbr_vir;
+    reg_t* ttbr_vir;
 };
 
 struct sigcontext {
@@ -51,10 +51,10 @@ struct sigframe {
     void* retaddr_sigreturn;
     int signum;
     int code;
-    struct sigcontext *scp;
+    struct sigcontext* scp;
     int retaddr;
-    struct sigcontext *scp_sigreturn;
-    struct sigcontext sc;   /* actual saved context */
+    struct sigcontext* scp_sigreturn;
+    struct sigcontext sc; /* actual saved context */
 };
 
 #endif

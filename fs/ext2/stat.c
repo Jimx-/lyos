@@ -33,7 +33,7 @@
 #include "global.h"
 #include <sys/stat.h>
 
-PRIVATE int ext2_stat_inode(ext2_inode_t * pin, struct fsdriver_data * data);
+PRIVATE int ext2_stat_inode(ext2_inode_t* pin, struct fsdriver_data* data);
 
 /**
  * Stat an inode.
@@ -42,7 +42,7 @@ PRIVATE int ext2_stat_inode(ext2_inode_t * pin, struct fsdriver_data * data);
  * @param  buf Buffer.
  * @return     Zero on success.
  */
-PRIVATE int ext2_stat_inode(ext2_inode_t * pin, struct fsdriver_data * data)
+PRIVATE int ext2_stat_inode(ext2_inode_t* pin, struct fsdriver_data* data)
 {
     struct stat sbuf;
 
@@ -77,10 +77,10 @@ PRIVATE int ext2_stat_inode(ext2_inode_t * pin, struct fsdriver_data * data)
  * @param  p Ptr to the message.
  * @return   Zero on success.
  */
-PUBLIC int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data * data)
+PUBLIC int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data* data)
 {
     /* find the inode */
-    ext2_inode_t * pin = get_ext2_inode(dev, num);
+    ext2_inode_t* pin = get_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
     return ext2_stat_inode(pin, data);

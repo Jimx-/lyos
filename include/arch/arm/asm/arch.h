@@ -27,15 +27,13 @@ struct machine_desc {
     void (*handle_irq)(void);
 };
 
-#define MACHINE_START(_type,_name)          \
-static const struct machine_desc __mach_desc_##_type    \
- __attribute__ ((used))    \
- __attribute__((__section__(".arch.info.init"))) = {    \
-    .id     = MACH_TYPE_##_type,        \
-    .name   = _name,
+#define MACHINE_START(_type, _name)                                            \
+    static const struct machine_desc __mach_desc_##_type __attribute__((used)) \
+        __attribute__((__section__(".arch.info.init"))) = {                    \
+            .id = MACH_TYPE_##_type, .name = _name,
 
-#define MACHINE_END             \
-};
+#define MACHINE_END \
+    }               \
+    ;
 
 #endif
-    

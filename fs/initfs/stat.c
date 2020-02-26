@@ -34,19 +34,19 @@
 #include "tar.h"
 #include <sys/stat.h>
 
-PUBLIC int initfs_stat(MESSAGE * p)
+PUBLIC int initfs_stat(MESSAGE* p)
 {
     dev_t dev = (dev_t)p->STDEV;
     ino_t num = (ino_t)p->STINO;
     int src = p->STSRC;
-    char * buf = p->STBUF;
+    char* buf = p->STBUF;
 
     struct stat sbuf;
     memset(&sbuf, 0, sizeof(struct stat));
 
     char header[512];
     initfs_rw_dev(BDEV_READ, dev, initfs_headers[num], 512, header);
-    struct posix_tar_header * phdr = (struct posix_tar_header *)header;
+    struct posix_tar_header* phdr = (struct posix_tar_header*)header;
 
     /* fill in the information */
     sbuf.st_dev = dev;

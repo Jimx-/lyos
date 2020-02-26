@@ -29,11 +29,11 @@
 #include <errno.h>
 #include <lyos/portio.h>
 
-PUBLIC int sys_sportio(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_sportio(MESSAGE* m, struct proc* p_proc)
 {
     int dir = m->PIO_REQUEST & PIO_DIR_MASK;
     size_t buf_len = m->PIO_BUFLEN;
-    void * buf = m->PIO_BUF;
+    void* buf = m->PIO_BUF;
     int port = m->PIO_PORT;
 
     if (dir == PIO_IN) {

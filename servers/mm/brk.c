@@ -35,10 +35,10 @@
 PUBLIC int do_brk()
 {
     endpoint_t src = mm_msg.source;
-    struct mmproc * mmp = endpt_mmproc(src);
+    struct mmproc* mmp = endpt_mmproc(src);
     if (!mmp) return EINVAL;
 
-    void * addr = mm_msg.ADDR;
+    void* addr = mm_msg.ADDR;
 
     if (region_extend_up_to(mmp, (vir_bytes)addr) == 0) return 0;
     return ENOMEM;

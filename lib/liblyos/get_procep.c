@@ -23,7 +23,7 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC int get_procep(pid_t pid, endpoint_t * ep)
+PUBLIC int get_procep(pid_t pid, endpoint_t* ep)
 {
     MESSAGE m;
 
@@ -35,7 +35,7 @@ PUBLIC int get_procep(pid_t pid, endpoint_t * ep)
     send_recv(BOTH, TASK_PM, &m);
 
     if (m.RETVAL) return m.RETVAL;
-    
+
     if (ep) *ep = m.ENDPOINT;
     return 0;
 }

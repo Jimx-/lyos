@@ -34,45 +34,45 @@ extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 /*======================================================================*
                                sys_getinfo
  *======================================================================*/
-PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_getinfo(MESSAGE* m, struct proc* p_proc)
 {
     int request = m->REQUEST;
-    void * buf = m->BUF;
+    void* buf = m->BUF;
     size_t buf_len = m->BUF_LEN;
-    void * addr = NULL;
+    void* addr = NULL;
     size_t size = 0;
-    struct sysinfo ** psi;
+    struct sysinfo** psi;
 
     switch (request) {
     case GETINFO_SYSINFO:
-        psi = (struct sysinfo **)buf;
+        psi = (struct sysinfo**)buf;
         *psi = sysinfo_user;
         break;
     case GETINFO_KINFO:
-        addr = (void *)&kinfo;
+        addr = (void*)&kinfo;
         size = sizeof(kinfo_t);
         break;
     case GETINFO_CMDLINE:
-        addr = (void *)&kinfo.cmdline;
+        addr = (void*)&kinfo.cmdline;
         size = sizeof(kinfo.cmdline);
         break;
     case GETINFO_BOOTPROCS:
-        addr = (void *)&kinfo.boot_procs;
+        addr = (void*)&kinfo.boot_procs;
         size = sizeof(kinfo.boot_procs);
         break;
     case GETINFO_HZ:
         m->RETVAL = system_hz;
         return 0;
     case GETINFO_MACHINE:
-        addr = (void *)&machine;
+        addr = (void*)&machine;
         size = sizeof(machine);
         break;
     case GETINFO_CPUINFO:
-        addr = (void *)cpu_info;
+        addr = (void*)cpu_info;
         size = sizeof(cpu_info);
         break;
     case GETINFO_PROCTAB:
-        addr = (void *)proc_table;
+        addr = (void*)proc_table;
         size = sizeof(struct proc) * (NR_TASKS + NR_PROCS);
         break;
     default:
@@ -81,7 +81,8 @@ PUBLIC int sys_getinfo(MESSAGE * m, struct proc * p_proc)
 
     if (buf_len > 0 && buf_len < size) return E2BIG;
 
-    if (addr) data_vir_copy_check(p_proc, p_proc->endpoint, buf, KERNEL, addr, size);
+    if (addr)
+        data_vir_copy_check(p_proc, p_proc->endpoint, buf, KERNEL, addr, size);
 
     return 0;
 }

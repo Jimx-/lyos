@@ -26,7 +26,8 @@
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
 
-PRIVATE int memfs_stat_inode(struct memfs_inode* pin, struct fsdriver_data* data);
+PRIVATE int memfs_stat_inode(struct memfs_inode* pin,
+                             struct fsdriver_data* data);
 
 /**
  * Stat an inode.
@@ -35,7 +36,8 @@ PRIVATE int memfs_stat_inode(struct memfs_inode* pin, struct fsdriver_data* data
  * @param  buf Buffer.
  * @return     Zero on success.
  */
-PRIVATE int memfs_stat_inode(struct memfs_inode* pin, struct fsdriver_data* data)
+PRIVATE int memfs_stat_inode(struct memfs_inode* pin,
+                             struct fsdriver_data* data)
 {
     struct stat sbuf;
 

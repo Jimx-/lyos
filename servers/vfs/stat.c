@@ -32,7 +32,7 @@
 #include "fcntl.h"
 #include <sys/stat.h>
 #include "global.h"
-    
+
 /**
  * <Ring 1> Issue the stat request.
  * @param  fs_ep Endpoint of FS driver.
@@ -41,7 +41,8 @@
  * @param  buf   Buffer.
  * @return       Zero on success.
  */
-PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * buf)
+PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
+                        char* buf)
 {
     MESSAGE m;
 
@@ -61,7 +62,7 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char * 
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_stat(MESSAGE * p)
+PUBLIC int do_stat(MESSAGE* p)
 {
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
@@ -82,12 +83,13 @@ PUBLIC int do_stat(MESSAGE * p)
     pin = resolve_path(&lookup, pcaller);
     if (!pin) return ENOENT;
 
-    int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num, p->source, p->BUF);
+    int retval =
+        request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num, p->source, p->BUF);
 
     unlock_inode(pin);
     unlock_vmnt(vmnt);
     put_inode(pin);
-    
+
     return retval;
 }
 
@@ -96,19 +98,19 @@ PUBLIC int do_stat(MESSAGE * p)
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_fstat(MESSAGE * p)
+PUBLIC int do_fstat(MESSAGE* p)
 {
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
     int fd = p->FD;
-    char * buf = p->BUF;
+    char* buf = p->BUF;
 
     struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
     if (!filp) return EINVAL;
 
     /* Issue the request */
-    int retval = request_stat(filp->fd_inode->i_fs_ep, 
-        filp->fd_inode->i_dev, filp->fd_inode->i_num, src, buf);
+    int retval = request_stat(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev,
+                              filp->fd_inode->i_num, src, buf);
 
     unlock_filp(filp);
 

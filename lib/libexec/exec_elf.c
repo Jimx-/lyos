@@ -35,27 +35,29 @@
 
 //#define ELF_DEBUG
 
-PRIVATE int elf_check_header(Elf_Ehdr * elf_hdr);
-PRIVATE int elf_unpack(char * hdr, Elf_Ehdr ** elf_hdr, Elf_Phdr ** prog_hdr);
+PRIVATE int elf_check_header(Elf_Ehdr* elf_hdr);
+PRIVATE int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr);
 
-PRIVATE int elf_check_header(Elf_Ehdr * elf_hdr)
+PRIVATE int elf_check_header(Elf_Ehdr* elf_hdr)
 {
-	if (elf_hdr->e_ident[0] != 0x7f || (elf_hdr->e_type != ET_EXEC && elf_hdr->e_type != ET_DYN)) {
-		return ENOEXEC;
-	}
+    if (elf_hdr->e_ident[0] != 0x7f ||
+        (elf_hdr->e_type != ET_EXEC && elf_hdr->e_type != ET_DYN)) {
+        return ENOEXEC;
+    }
 
-	return 0;
+    return 0;
 }
 
-PRIVATE int elf_unpack(char * hdr, Elf_Ehdr ** elf_hdr, Elf_Phdr ** prog_hdr)
+PRIVATE int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr)
 {
-	*elf_hdr = (Elf_Ehdr *)hdr;
-	*prog_hdr = (Elf_Phdr *)(hdr + (*elf_hdr)->e_phoff);
+    *elf_hdr = (Elf_Ehdr*)hdr;
+    *prog_hdr = (Elf_Phdr*)(hdr + (*elf_hdr)->e_phoff);
 
-	return 0;
+    return 0;
 }
 
-PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen)
+PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp,
+                          size_t maxlen)
 {
     Elf_Ehdr* elf_hdr;
     Elf_Phdr* prog_hdr;
@@ -66,10 +68,9 @@ PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen
     for (i = 0; i < elf_hdr->e_phnum; i++) {
         switch (prog_hdr[i].p_type) {
         case PT_INTERP:
-            if(!interp) return 1;
-            if(prog_hdr[i].p_filesz >= maxlen)
-                return -1;
-            if(prog_hdr[i].p_offset + prog_hdr[i].p_filesz >= hdr_len)
+            if (!interp) return 1;
+            if (prog_hdr[i].p_filesz >= maxlen) return -1;
+            if (prog_hdr[i].p_offset + prog_hdr[i].p_filesz >= hdr_len)
                 return -1;
             memcpy(interp, hdr + prog_hdr[i].p_offset, prog_hdr[i].p_filesz);
             interp[prog_hdr[i].p_filesz] = '\0';
@@ -82,16 +83,18 @@ PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen
     return 0;
 }
 
-PUBLIC int libexec_load_elf(struct exec_info * execi)
+PUBLIC int libexec_load_elf(struct exec_info* execi)
 {
     int retval;
-    Elf_Ehdr * elf_hdr;
-    Elf_Phdr * prog_hdr;
+    Elf_Ehdr* elf_hdr;
+    Elf_Phdr* prog_hdr;
     uintptr_t load_base = 0xffffffff;
 
-    if ((retval = elf_check_header((Elf_Ehdr *)execi->header)) != 0) return retval;
+    if ((retval = elf_check_header((Elf_Ehdr*)execi->header)) != 0)
+        return retval;
 
-    if ((retval = elf_unpack(execi->header, &elf_hdr, &prog_hdr)) != 0) return retval;
+    if ((retval = elf_unpack(execi->header, &elf_hdr, &prog_hdr)) != 0)
+        return retval;
 
     if (execi->clearproc) execi->clearproc(execi);
 
@@ -100,7 +103,7 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
     int i;
     /* load every segment */
     for (i = 0; i < elf_hdr->e_phnum; i++) {
-        Elf_Phdr * phdr = &prog_hdr[i];
+        Elf_Phdr* phdr = &prog_hdr[i];
         off_t foffset;
         uintptr_t vaddr;
         size_t fsize, memsize, clearend = 0;
@@ -108,13 +111,14 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
 
         if (phdr->p_flags & PF_W) mmap_prot |= PROT_WRITE;
 
-        if (phdr->p_type == PT_PHDR) execi->phdr = (void*) phdr->p_vaddr;
+        if (phdr->p_type == PT_PHDR) execi->phdr = (void*)phdr->p_vaddr;
 
-        if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0) continue;    /* ignore */
+        if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0)
+            continue; /* ignore */
 
         if (phdr->p_vaddr < load_base) load_base = phdr->p_vaddr;
 
-        if((phdr->p_vaddr % ARCH_PG_SIZE) != (phdr->p_offset % ARCH_PG_SIZE)) {
+        if ((phdr->p_vaddr % ARCH_PG_SIZE) != (phdr->p_offset % ARCH_PG_SIZE)) {
             printl("libexec: unaligned ELF program?\n");
         }
 
@@ -130,7 +134,9 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
         }
 
 #ifdef ELF_DEBUG
-        printl("libexec: segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: 0x%x }, foffset: 0x%x\n", i, vaddr, fsize, memsize, foffset);
+        printl("libexec: segment %d: vaddr: 0x%x, size: { file: 0x%x, mem: "
+               "0x%x }, foffset: 0x%x\n",
+               i, vaddr, fsize, memsize, foffset);
 #endif
 
         /* align */
@@ -146,15 +152,16 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             execi->text_size = memsize;
         else {
             execi->data_size = memsize;
-            execi->brk = (void*) (phdr->p_vaddr + phdr->p_memsz + 1);
-            execi->brk = (void*) roundup((uintptr_t) execi->brk, sizeof(int));
+            execi->brk = (void*)(phdr->p_vaddr + phdr->p_memsz + 1);
+            execi->brk = (void*)roundup((uintptr_t)execi->brk, sizeof(int));
         }
 
-        if (execi->memmap && execi->memmap(execi, (void*) vaddr, fsize, foffset, mmap_prot, clearend) == 0) {
+        if (execi->memmap && execi->memmap(execi, (void*)vaddr, fsize, foffset,
+                                           mmap_prot, clearend) == 0) {
             /* allocate remaining memory */
             if (memsize > fsize) {
                 size_t rem_size = memsize - fsize;
-                void* rem_start = (void*) (vaddr + fsize);
+                void* rem_start = (void*)(vaddr + fsize);
 
                 if (execi->allocmem(execi, rem_start, rem_size) != 0) {
                     if (execi->clearproc) execi->clearproc(execi);
@@ -164,12 +171,12 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
                 execi->clearmem(execi, rem_start, rem_size);
             }
         } else {
-            if (execi->allocmem(execi, (void*) vaddr, memsize) != 0) {
+            if (execi->allocmem(execi, (void*)vaddr, memsize) != 0) {
                 if (execi->clearproc) execi->clearproc(execi);
                 return ENOMEM;
             }
 
-            if (execi->copymem(execi, foffset, (void*) vaddr, fsize) != 0) {
+            if (execi->copymem(execi, foffset, (void*)vaddr, fsize) != 0) {
                 if (execi->clearproc) execi->clearproc(execi);
                 return ENOMEM;
             }
@@ -178,9 +185,10 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             size_t zero_len = phdr->p_vaddr - vaddr;
             if (zero_len) {
 #ifdef ELF_DEBUG
-                printl("libexec: clear memory 0x%x - 0x%x\n", vaddr, vaddr + zero_len);
+                printl("libexec: clear memory 0x%x - 0x%x\n", vaddr,
+                       vaddr + zero_len);
 #endif
-                execi->clearmem(execi, (void*) vaddr, zero_len);
+                execi->clearmem(execi, (void*)vaddr, zero_len);
             }
 
             size_t fileend = phdr->p_vaddr + phdr->p_filesz;
@@ -188,22 +196,25 @@ PUBLIC int libexec_load_elf(struct exec_info * execi)
             zero_len = memend - fileend;
             if (zero_len) {
 #ifdef ELF_DEBUG
-                printl("libexec: clear memory 0x%x - 0x%x\n", fileend, fileend + zero_len);
+                printl("libexec: clear memory 0x%x - 0x%x\n", fileend,
+                       fileend + zero_len);
 #endif
-                execi->clearmem(execi, (void*) fileend, zero_len);
+                execi->clearmem(execi, (void*)fileend, zero_len);
             }
         }
     }
 
     /* allocate stack */
-    if (execi->allocmem_prealloc && execi->allocmem_prealloc(execi, execi->stack_top - execi->stack_size, execi->stack_size) != 0) {
+    if (execi->allocmem_prealloc &&
+        execi->allocmem_prealloc(execi, execi->stack_top - execi->stack_size,
+                                 execi->stack_size) != 0) {
         if (execi->clearproc) execi->clearproc(execi);
         return ENOMEM;
     }
-    //execi->clearmem(execi, execi->stack_top - execi->stack_size, execi->stack_size);
-    execi->entry_point = (void*) elf_hdr->e_entry;
-    execi->load_base = (void*) load_base;
+    // execi->clearmem(execi, execi->stack_top - execi->stack_size,
+    // execi->stack_size);
+    execi->entry_point = (void*)elf_hdr->e_entry;
+    execi->load_base = (void*)load_base;
 
     return 0;
 }
-

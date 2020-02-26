@@ -34,7 +34,7 @@ PRIVATE void sig_alarm(struct timer_list* timer)
     msg_notify(proc_addr(CLOCK), (endpoint_t)timer->arg);
 }
 
-PUBLIC int sys_alarm(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_alarm(MESSAGE* m, struct proc* p_proc)
 {
     clock_t expire_time = m->EXP_TIME;
     int absolute_time = m->ABS_TIME;
@@ -43,12 +43,12 @@ PUBLIC int sys_alarm(MESSAGE * m, struct proc * p_proc)
 
     struct timer_list* tp;
     tp = &(p_proc->priv->timer);
-    tp->arg = (unsigned long) p_proc->endpoint;
+    tp->arg = (unsigned long)p_proc->endpoint;
     tp->callback = sig_alarm;
 
     if ((tp->expire_time != TIMER_UNSET) && (tp->expire_time > jiffies))
         m->TIME_LEFT = tp->expire_time - jiffies;
-    else 
+    else
         m->TIME_LEFT = 0;
 
     if (expire_time == 0) {

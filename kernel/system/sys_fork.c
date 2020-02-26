@@ -29,7 +29,7 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_fork(MESSAGE* m, struct proc* p_proc)
 {
     endpoint_t parent_ep = m->ENDPOINT;
     void* newsp = m->BUF;
@@ -41,7 +41,8 @@ PUBLIC int sys_fork(MESSAGE * m, struct proc * p_proc)
 
     if (!verify_endpt(parent_ep, &parent_slot)) return EINVAL;
 
-    struct proc * parent = proc_addr(parent_slot), * child = proc_addr(child_slot);
+    struct proc *parent = proc_addr(parent_slot),
+                *child = proc_addr(child_slot);
 
     lock_proc(parent);
     lock_proc(child);

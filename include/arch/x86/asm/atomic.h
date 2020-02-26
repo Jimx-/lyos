@@ -20,32 +20,36 @@ typedef struct {
     volatile int counter;
 } atomic_t;
 
-#define ATOMIC_INIT(i) { (i) }
-#define INIT_ATOMIC(v, i) do { (v)->counter = i; } while(0) 
+#define ATOMIC_INIT(i) \
+    {                  \
+        (i)            \
+    }
+#define INIT_ATOMIC(v, i) \
+    do {                  \
+        (v)->counter = i; \
+    } while (0)
 
-PRIVATE inline int atomic_get(atomic_t* v)
-{
-    return v->counter;
-}
+PRIVATE inline int atomic_get(atomic_t* v) { return v->counter; }
 
 PRIVATE inline void atomic_inc(atomic_t* v)
 {
-    asm volatile("lock incl %0" : "+m" (v->counter));
+    asm volatile("lock incl %0" : "+m"(v->counter));
 }
 
 PRIVATE inline void atomic_dec(atomic_t* v)
 {
-    asm volatile("lock decl %0" : "+m" (v->counter));
+    asm volatile("lock decl %0" : "+m"(v->counter));
 }
 
-PRIVATE inline int atomic_dec_and_test(atomic_t* v)  
-{  
-    unsigned char c;  
-  
-    asm volatile("lock decl %0; sete %1"  
-             : "+m" (v->counter), "=qm" (c)  
-             : : "memory");  
-    return c != 0;  
-}  
+PRIVATE inline int atomic_dec_and_test(atomic_t* v)
+{
+    unsigned char c;
+
+    asm volatile("lock decl %0; sete %1"
+                 : "+m"(v->counter), "=qm"(c)
+                 :
+                 : "memory");
+    return c != 0;
+}
 
 #endif

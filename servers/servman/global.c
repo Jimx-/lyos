@@ -18,30 +18,30 @@
 #include "lyos/config.h"
 #include <lyos/type.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>  
+#include <sys/types.h>
 #include "lyos/list.h"
 #include <lyos/const.h>
 #include "global.h"
 
-PUBLIC  struct sproc sproc_table[NR_PRIV_PROCS];
-PUBLIC  struct sproc * sproc_ptr[NR_PROCS];
+PUBLIC struct sproc sproc_table[NR_PRIV_PROCS];
+PUBLIC struct sproc* sproc_ptr[NR_PROCS];
 
 PUBLIC struct boot_priv boot_priv_table[] = {
-    {TASK_MM,       "MM"        , TASK_FLAGS },
-    {TASK_PM,       "PM"        , TASK_FLAGS },
-    {TASK_SERVMAN,  "SERVMAN"   , TASK_FLAGS },
-    {TASK_DEVMAN,   "DEVMAN"    , TASK_FLAGS },
-    {TASK_SCHED,    "SCHED"     , TASK_FLAGS },
-    {TASK_FS,       "VFS"       , TASK_FLAGS },
-    {TASK_SYS,      "SYS"       , TASK_FLAGS },
-    {TASK_TTY,      "TTY"       , TASK_FLAGS },
-    {TASK_RD,       "RD"        , TASK_FLAGS },
-    {TASK_INITFS,   "INITFS"    , TASK_FLAGS },
-    {TASK_SYSFS,    "SYSFS"     , TASK_FLAGS },
-    {TASK_IPC,      "IPC"       , TASK_FLAGS },
+    {TASK_MM, "MM", TASK_FLAGS},
+    {TASK_PM, "PM", TASK_FLAGS},
+    {TASK_SERVMAN, "SERVMAN", TASK_FLAGS},
+    {TASK_DEVMAN, "DEVMAN", TASK_FLAGS},
+    {TASK_SCHED, "SCHED", TASK_FLAGS},
+    {TASK_FS, "VFS", TASK_FLAGS},
+    {TASK_SYS, "SYS", TASK_FLAGS},
+    {TASK_TTY, "TTY", TASK_FLAGS},
+    {TASK_RD, "RD", TASK_FLAGS},
+    {TASK_INITFS, "INITFS", TASK_FLAGS},
+    {TASK_SYSFS, "SYSFS", TASK_FLAGS},
+    {TASK_IPC, "IPC", TASK_FLAGS},
 #ifdef __i386__
-    {TASK_PCI,      "PCI"       , TASK_FLAGS },
+    {TASK_PCI, "PCI", TASK_FLAGS},
 #endif
-    {INIT,          "INIT"      , USER_FLAGS },
-    {NO_TASK,       ""          , 0          },
+    {INIT, "INIT", USER_FLAGS},
+    {NO_TASK, "", 0},
 };

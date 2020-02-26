@@ -35,12 +35,12 @@
 #include "lyos/cpulocals.h"
 #include <lyos/cpufeature.h>
 
-PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end)
+PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
 {
     int i;
 
     for (i = 0; i < pk->memmaps_count; i++) {
-        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
         u64 mmap_end = entry->addr + entry->len;
         if (start >= entry->addr && end <= mmap_end) {
             entry->addr = end;
@@ -49,12 +49,12 @@ PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end)
     }
 }
 
-PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
+PUBLIC phys_bytes pg_alloc_page(kinfo_t* pk)
 {
     int i;
 
     for (i = pk->memmaps_count - 1; i >= 0; i--) {
-        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
 
@@ -69,12 +69,12 @@ PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
     return 0;
 }
 
-PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size)
+PUBLIC phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
 {
     int i;
 
     for (i = 0; i < pk->memmaps_count; i++) {
-        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
 
@@ -89,14 +89,15 @@ PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size)
     return 0;
 }
 
-PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
+PRIVATE pte_t* pg_alloc_pt(phys_bytes* ph)
 {
-    pte_t * ret;
+    pte_t* ret;
 #define PG_PAGETABLES 6
-    static pte_t pagetables[PG_PAGETABLES][1024]  __attribute__((aligned(ARCH_PG_SIZE)));
+    static pte_t pagetables[PG_PAGETABLES][1024]
+        __attribute__((aligned(ARCH_PG_SIZE)));
     static int pt_inuse = 0;
 
-    if(pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
+    if (pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
 
     ret = pagetables[pt_inuse++];
     *ph = (phys_bytes)ret - KERNEL_VMA;
@@ -104,12 +105,15 @@ PRIVATE pte_t * pg_alloc_pt(phys_bytes * ph)
     return ret;
 }
 
-PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
+PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
+                   kinfo_t* pk)
 {
-    pte_t * pt;
-    pde_t * pgd = initial_pgd;
-    if (phys_addr % ARCH_PG_SIZE) phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
-    if ((uintptr_t) vir_addr % ARCH_PG_SIZE) vir_addr = (void*) (((uintptr_t) vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE);
+    pte_t* pt;
+    pde_t* pgd = initial_pgd;
+    if (phys_addr % ARCH_PG_SIZE)
+        phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
+    if ((uintptr_t)vir_addr % ARCH_PG_SIZE)
+        vir_addr = (void*)(((uintptr_t)vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE);
 
     while (vir_addr < vir_end) {
         phys_bytes phys = phys_addr;
@@ -121,12 +125,14 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
         if (!pde_val(pgd[pde]) || pde_val(pgd[pde]) & ARCH_PG_BIGPAGE) {
             phys_bytes pt_ph;
             pt = pg_alloc_pt(&pt_ph);
-            pgd[pde] = __pde((pt_ph & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+            pgd[pde] = __pde((pt_ph & ARCH_PG_MASK) | ARCH_PG_PRESENT |
+                             ARCH_PG_RW | ARCH_PG_USER);
         } else {
-            pt = (pte_t *) __va(pde_val(pgd[pde]) & ARCH_PG_MASK);
+            pt = (pte_t*)__va(pde_val(pgd[pde]) & ARCH_PG_MASK);
         }
 
-        pt[pte] = __pte((phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+        pt[pte] = __pte((phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
+                        ARCH_PG_USER);
         vir_addr += ARCH_PG_SIZE;
         if (phys_addr != 0) phys_addr += ARCH_PG_SIZE;
     }
@@ -135,20 +141,21 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
 /**
  * <Ring 0> Setup identity paging for kernel
  */
-PUBLIC void pg_identity(pde_t * pgd)
+PUBLIC void pg_identity(pde_t* pgd)
 {
     int i;
     phys_bytes phys;
     int flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER | ARCH_PG_BIGPAGE;
     /* initialize page directory */
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        if (i >= kinfo.kernel_start_pde && i < kinfo.kernel_end_pde) continue;  /* don't touch kernel */
+        if (i >= kinfo.kernel_start_pde && i < kinfo.kernel_end_pde)
+            continue; /* don't touch kernel */
         phys = i * ARCH_BIG_PAGE_SIZE;
         pgd[i] = __pde(phys | flags);
     }
 }
 
-PUBLIC void pg_mapkernel(pde_t * pgd)
+PUBLIC void pg_mapkernel(pde_t* pgd)
 {
     phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;
     /* phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys; */
@@ -160,21 +167,23 @@ PUBLIC void pg_mapkernel(pde_t * pgd)
         if (kern_phys >= kinfo.kernel_end_phys) {
             user_flag = ARCH_PG_USER;
         }
-        pgd[pde] = __pde(kern_phys | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_BIGPAGE | user_flag);
+        pgd[pde] = __pde(kern_phys | ARCH_PG_PRESENT | ARCH_PG_RW |
+                         ARCH_PG_BIGPAGE | user_flag);
         mapped += ARCH_BIG_PAGE_SIZE;
         kern_phys += ARCH_BIG_PAGE_SIZE;
         pde++;
     }
 }
 
-PUBLIC void pg_load(pde_t * pgd)
+PUBLIC void pg_load(pde_t* pgd)
 {
     write_cr3(__pa(pgd));
     enable_paging();
 }
 
 /* <Ring 0> */
-PUBLIC void switch_address_space(struct proc * p) {
+PUBLIC void switch_address_space(struct proc* p)
+{
     get_cpulocal_var(pt_proc) = p;
     write_cr3(p->seg.cr3_phys);
 }

@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -37,6 +37,6 @@
 
 PUBLIC ssize_t pci_vendor_show(struct device_attribute* attr, char* buf)
 {
-	struct pcidev* dev = (struct pcidev*) (attr->cb_data);	
-	return sprintf(buf, "0x%04x", dev->vid);
+    struct pcidev* dev = (struct pcidev*)(attr->cb_data);
+    return sprintf(buf, "0x%04x", dev->vid);
 }

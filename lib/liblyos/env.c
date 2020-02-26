@@ -28,53 +28,55 @@
 #include <stdlib.h>
 
 int env_argc = 0;
-char ** env_argv = NULL;
+char** env_argv = NULL;
 
-#define ENV_BUF_SIZE	32
+#define ENV_BUF_SIZE 32
 
-PUBLIC void panic(const char *fmt, ...);
+PUBLIC void panic(const char* fmt, ...);
 
-PUBLIC void env_setargs(int argc, char * argv[])
+PUBLIC void env_setargs(int argc, char* argv[])
 {
-	env_argc = argc;
-	env_argv = argv;
-} 
-
-PRIVATE char * get_value(const char * param, const char * key)
-{
-	char * envp = (char *)param;
-	const char * name = key;
-
-	for (; *envp != 0;) {
-		for (name = key; *name != 0 && *name == *envp; name++, envp++);
-		if (*name == '\0' && *envp == '=') return envp + 1;
-		while (*envp++ != 0);
-	}
-
-	return NULL;
+    env_argc = argc;
+    env_argv = argv;
 }
 
-PUBLIC int env_get_param(const char * key, char * value, int max_len)
+PRIVATE char* get_value(const char* param, const char* key)
 {
-	static char kernel_cmdline[KINFO_CMDLINE_LEN];
+    char* envp = (char*)param;
+    const char* name = key;
 
-	if (key == NULL) return EINVAL;
+    for (; *envp != 0;) {
+        for (name = key; *name != 0 && *name == *envp; name++, envp++)
+            ;
+        if (*name == '\0' && *envp == '=') return envp + 1;
+        while (*envp++ != 0)
+            ;
+    }
 
-	int key_len = strlen(key);
-	int i;
-	for (i = 0; i < env_argc; i++) {
-		if (strncmp(env_argv[i], key, key_len) != 0) continue;
-		if (strlen(env_argv[i]) < key_len) continue;
-		if (env_argv[i][key_len] != '=') continue;
+    return NULL;
+}
 
-		char * key_value = env_argv[i] + key_len + 1;
-		if (strlen(key_value) + 1 > max_len) return E2BIG;
-		strcpy(value, key_value);
+PUBLIC int env_get_param(const char* key, char* value, int max_len)
+{
+    static char kernel_cmdline[KINFO_CMDLINE_LEN];
 
-		return 0;
-	}
+    if (key == NULL) return EINVAL;
 
-	MESSAGE m;
+    int key_len = strlen(key);
+    int i;
+    for (i = 0; i < env_argc; i++) {
+        if (strncmp(env_argv[i], key, key_len) != 0) continue;
+        if (strlen(env_argv[i]) < key_len) continue;
+        if (env_argv[i][key_len] != '=') continue;
+
+        char* key_value = env_argv[i] + key_len + 1;
+        if (strlen(key_value) + 1 > max_len) return E2BIG;
+        strcpy(value, key_value);
+
+        return 0;
+    }
+
+    MESSAGE m;
     m.REQUEST = GETINFO_CMDLINE;
     m.BUF = kernel_cmdline;
     m.BUF_LEN = sizeof(kernel_cmdline);
@@ -82,77 +84,93 @@ PUBLIC int env_get_param(const char * key, char * value, int max_len)
     int retval = syscall_entry(NR_GETINFO, &m);
     if (retval) return retval;
 
-    char * key_value = get_value(kernel_cmdline, key);
+    char* key_value = get_value(kernel_cmdline, key);
     if (key_value == NULL) return ESRCH;
 
     if (strlen(key_value) > max_len) return E2BIG;
     strcpy(value, key_value);
 
-	return 0;
+    return 0;
 }
 
-PUBLIC void env_panic(char * key)
+PUBLIC void env_panic(char* key)
 {
-	static char value[ENV_BUF_SIZE] = "<unknown>";
-  	env_get_param(key, value, sizeof(value));
-	panic("bad environment setting: %s = %s\n", key, value);
+    static char value[ENV_BUF_SIZE] = "<unknown>";
+    env_get_param(key, value, sizeof(value));
+    panic("bad environment setting: %s = %s\n", key, value);
 }
 
-PUBLIC int env_get_long(char * key, long * value, const char * fmt, int field, long min, long max)
+PUBLIC int env_get_long(char* key, long* value, const char* fmt, int field,
+                        long min, long max)
 {
-	char val_buf[ENV_BUF_SIZE];
-	int retval = 0;
-	char punct[] = ":;,.";
-	long param;
-	unsigned long uparam;
+    char val_buf[ENV_BUF_SIZE];
+    int retval = 0;
+    char punct[] = ":;,.";
+    long param;
+    unsigned long uparam;
 
-	if ((retval = env_get_param(key, val_buf, ENV_BUF_SIZE)) != 0) return retval;
-	char * pv = val_buf, * end;
-	int i = 0;
+    if ((retval = env_get_param(key, val_buf, ENV_BUF_SIZE)) != 0)
+        return retval;
+    char *pv = val_buf, *end;
+    int i = 0;
 
-	while (1) {
-		while (*pv == ' ') pv++;
-		if (*pv == 0) return retval;
-		if (*fmt == 0) break;
+    while (1) {
+        while (*pv == ' ')
+            pv++;
+        if (*pv == 0) return retval;
+        if (*fmt == 0) break;
 
-		if (strchr(punct, *pv)) {
-			if (strchr(punct, *fmt) != NULL) i++;
-			if (*fmt++ == *pv) pv++;
-		} else {
-			int radix = -1, sign = 1;
-			switch (*fmt) {
-				case '*': break;
-				case 'd': radix = 10; break;
-				case 'x': radix = 16; break;
-				case 'o': radix = 8; break;
-				case 'u': radix = 0; sign = 0; break;
-				default: goto badenv;
-			}
+        if (strchr(punct, *pv)) {
+            if (strchr(punct, *fmt) != NULL) i++;
+            if (*fmt++ == *pv) pv++;
+        } else {
+            int radix = -1, sign = 1;
+            switch (*fmt) {
+            case '*':
+                break;
+            case 'd':
+                radix = 10;
+                break;
+            case 'x':
+                radix = 16;
+                break;
+            case 'o':
+                radix = 8;
+                break;
+            case 'u':
+                radix = 0;
+                sign = 0;
+                break;
+            default:
+                goto badenv;
+            }
 
-			if (radix < 0) while (strchr(punct, *pv) == NULL) pv++;
-			else {
-				if (sign)
-					param = strtol(pv, &end, radix);
-				else 
-					uparam = strtoul(pv, &end, radix);
+            if (radix < 0)
+                while (strchr(punct, *pv) == NULL)
+                    pv++;
+            else {
+                if (sign)
+                    param = strtol(pv, &end, radix);
+                else
+                    uparam = strtoul(pv, &end, radix);
 
-				if (pv == end) break;
-				pv = end;
-			}
+                if (pv == end) break;
+                pv = end;
+            }
 
-			if (i == field) {
-				if (sign) {
-					if (min >= 0 && param < min) break;
-					if (max >= 0 && param > max) break;
-					*value = param;
-				} else {
-					*(unsigned long *)value = uparam;
-				}
-			}
-		}
-	}
+            if (i == field) {
+                if (sign) {
+                    if (min >= 0 && param < min) break;
+                    if (max >= 0 && param > max) break;
+                    *value = param;
+                } else {
+                    *(unsigned long*)value = uparam;
+                }
+            }
+        }
+    }
 
 badenv:
-	env_panic(key);
-	return EINVAL;
+    env_panic(key);
+    return EINVAL;
 }

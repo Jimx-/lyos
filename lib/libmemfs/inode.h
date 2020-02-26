@@ -18,11 +18,11 @@
 
 #include <sys/syslimits.h>
 
-typedef void * cbdata_t;
+typedef void* cbdata_t;
 
-#define ATIME            002    /* set if atime field needs updating */
-#define CTIME            004    /* set if ctime field needs updating */
-#define MTIME            010    /* set if mtime field needs updating */
+#define ATIME 002 /* set if atime field needs updating */
+#define CTIME 004 /* set if ctime field needs updating */
+#define MTIME 010 /* set if mtime field needs updating */
 
 struct memfs_stat {
     dev_t st_dev;
@@ -46,15 +46,15 @@ struct memfs_inode {
     u32 i_mtime;
     u32 i_ctime;
     u32 i_update;
-    
+
     struct list_head i_hash;
     struct list_head i_list;
     struct list_head i_children;
 };
 
-#define MEMFS_INODE_HASH_LOG2   7
-#define MEMFS_INODE_HASH_SIZE   ((unsigned long)1<<MEMFS_INODE_HASH_LOG2)
-#define MEMFS_INODE_HASH_MASK   (((unsigned long)1<<MEMFS_INODE_HASH_LOG2)-1)
+#define MEMFS_INODE_HASH_LOG2 7
+#define MEMFS_INODE_HASH_SIZE ((unsigned long)1 << MEMFS_INODE_HASH_LOG2)
+#define MEMFS_INODE_HASH_MASK (((unsigned long)1 << MEMFS_INODE_HASH_LOG2) - 1)
 
 /* inode hash table */
 extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
@@ -62,12 +62,15 @@ extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 extern struct memfs_inode root_inode;
 
 PUBLIC void memfs_init_inode();
-PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name, int index);
-PUBLIC void memfs_set_inode_stat(struct memfs_inode * pin, struct memfs_stat * stat);
-PUBLIC struct memfs_inode * memfs_get_root_inode();
-PUBLIC struct memfs_inode * memfs_find_inode(ino_t num);
-PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent, char* name);
-PUBLIC struct memfs_inode * memfs_find_inode_by_index(struct memfs_inode* parent, int index);
-PUBLIC void memfs_addhash_inode(struct memfs_inode * inode);
+PUBLIC struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index);
+PUBLIC void memfs_set_inode_stat(struct memfs_inode* pin,
+                                 struct memfs_stat* stat);
+PUBLIC struct memfs_inode* memfs_get_root_inode();
+PUBLIC struct memfs_inode* memfs_find_inode(ino_t num);
+PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
+                                                    char* name);
+PUBLIC struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
+                                                     int index);
+PUBLIC void memfs_addhash_inode(struct memfs_inode* inode);
 
 #endif

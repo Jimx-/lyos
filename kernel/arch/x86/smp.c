@@ -35,9 +35,9 @@
 
 /* trampoline parameters */
 extern volatile u32 __ap_id, __ap_pgd;
-extern volatile u8 __ap_gdt[6], __ap_idt[6];    /* 0~15:Limit  16~47:Base */
+extern volatile u8 __ap_gdt[6], __ap_idt[6]; /* 0~15:Limit  16~47:Base */
 extern u32 __ap_gdt_table, __ap_idt_table;
-extern void * __trampoline_end;
+extern void* __trampoline_end;
 phys_bytes trampoline_base;
 
 PRIVATE u8 apicid2cpuid[255];
@@ -53,7 +53,8 @@ PRIVATE void smp_start_aps();
 
 PUBLIC void trampoline();
 
-#define AP_LIN_ADDR(addr) (phys_bytes)((u32)addr - (u32)&trampoline + trampoline_base)
+#define AP_LIN_ADDR(addr) \
+    (phys_bytes)((u32)addr - (u32)&trampoline + trampoline_base)
 
 PRIVATE void copy_trampoline()
 {
@@ -78,7 +79,7 @@ PRIVATE void copy_trampoline()
     *idt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
     *idt_base = AP_LIN_ADDR(&__ap_idt_table);
 
-    memcpy((void *)trampoline_base, trampoline, tramp_size);
+    memcpy((void*)trampoline_base, trampoline, tramp_size);
 }
 
 PUBLIC void smp_init()
@@ -93,7 +94,7 @@ PUBLIC void smp_init()
 
     init_tss_all(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
 
-    lapic_addr = (void*) LOCAL_APIC_DEF_ADDR;
+    lapic_addr = (void*)LOCAL_APIC_DEF_ADDR;
 
     bsp_lapic_id = apicid();
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
@@ -111,27 +112,28 @@ PUBLIC void smp_init()
     apic_init_idt(0);
     reload_idt();
 
-    switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -
-            X86_STACK_TOP_RESERVED, smp_start_aps);
+    switch_k_stack((char*)get_k_stack_top(bsp_cpu_id) - X86_STACK_TOP_RESERVED,
+                   smp_start_aps);
 }
 
 PRIVATE void init_tss_all()
 {
     unsigned cpu;
 
-    for(cpu = 0; cpu < ncpus ; cpu++) {
+    for (cpu = 0; cpu < ncpus; cpu++) {
         init_tss(cpu, (u32)get_k_stack_top(cpu));
     }
 }
 
 PRIVATE int discover_cpus()
 {
-    struct acpi_madt_lapic * cpu;
+    struct acpi_madt_lapic* cpu;
 
     while (ncpus < CONFIG_SMP_MAX_CPUS && (cpu = acpi_get_lapic_next())) {
         apicid2cpuid[cpu->apic_id] = ncpus;
         cpuid2apicid[ncpus] = cpu->apic_id;
-        printk("CPU %3d local APIC id 0x%03x %s\n", ncpus, cpu->apic_id, ncpus == 0 ? "(bsp)" : "");
+        printk("CPU %3d local APIC id 0x%03x %s\n", ncpus, cpu->apic_id,
+               ncpus == 0 ? "(bsp)" : "");
         ncpus++;
     }
 
@@ -142,7 +144,7 @@ PRIVATE void smp_start_aps()
 {
     u32 reset_vector;
 
-    memcpy(&reset_vector, (void *)0x467, sizeof(u32));
+    memcpy(&reset_vector, (void*)0x467, sizeof(u32));
 
     /* set CMOS system shutdown mode */
     out_byte(CLK_ELE, 0xF);
@@ -154,7 +156,7 @@ PRIVATE void smp_start_aps()
     copy_trampoline();
 
     phys_bytes __ap_id_phys = AP_LIN_ADDR(&__ap_id);
-    memcpy((void *)0x467, &trampoline_base, sizeof(u32));
+    memcpy((void*)0x467, &trampoline_base, sizeof(u32));
 
     int i;
     for (i = 0; i < ncpus; i++) {
@@ -162,12 +164,12 @@ PRIVATE void smp_start_aps()
         if (apicid() == cpuid2apicid[i] && bsp_lapic_id == apicid()) continue;
 
         __ap_id = booting_cpu = i;
-        memcpy((void*) __ap_id_phys, (void*) &__ap_id, sizeof(u32));
+        memcpy((void*)__ap_id_phys, (void*)&__ap_id, sizeof(u32));
 
         /* INIT-SIPI-SIPI sequence */
         cmb();
         if (apic_send_init_ipi(i, trampoline_base) ||
-                apic_send_startup_ipi(i, trampoline_base)) {
+            apic_send_startup_ipi(i, trampoline_base)) {
             printk("smp: cannot boot CPU %d\n", i);
             continue;
         }
@@ -186,7 +188,7 @@ PRIVATE void smp_start_aps()
         }
     }
 
-    memcpy((void *)0x467, &reset_vector, sizeof(u32));
+    memcpy((void*)0x467, &reset_vector, sizeof(u32));
     out_byte(CLK_ELE, 0xF);
     out_byte(CLK_IO, 0);
 
@@ -211,12 +213,14 @@ PRIVATE void ap_finish_booting()
     lapic_enable(cpuid);
     fpu_init();
 
-    if (init_ap_timer(system_hz) != 0) panic("smp: cannot init timer for CPU %d", cpuid);
+    if (init_ap_timer(system_hz) != 0)
+        panic("smp: cannot init timer for CPU %d", cpuid);
 
     ap_finished_booting();
 
     /* wait for MM is ready */
-    while (!smp_commenced) ;
+    while (!smp_commenced)
+        ;
     /* flush TLB */
     switch_address_space(proc_addr(TASK_MM));
 
@@ -225,11 +229,8 @@ PRIVATE void ap_finish_booting()
 
 PUBLIC void smp_boot_ap()
 {
-    switch_k_stack((char *)get_k_stack_top(__ap_id) -
-            X86_STACK_TOP_RESERVED, ap_finish_booting);
+    switch_k_stack((char*)get_k_stack_top(__ap_id) - X86_STACK_TOP_RESERVED,
+                   ap_finish_booting);
 }
 
-PUBLIC void smp_commence()
-{
-    smp_commenced = 1;
-}
+PUBLIC void smp_commence() { smp_commenced = 1; }

@@ -20,16 +20,15 @@ struct ext2_buffer {
     struct list_head list;
     struct list_head hash;
 
-    char *  b_data;
-    dev_t   b_dev;
+    char* b_data;
+    dev_t b_dev;
     block_t b_block;
-    char    b_dirt;
-    int     b_refcnt;
-    size_t  b_size;
-    int     b_flags;
+    char b_dirt;
+    int b_refcnt;
+    size_t b_size;
+    int b_flags;
 };
 
 typedef struct ext2_buffer ext2_buffer_t;
 
 #endif
-

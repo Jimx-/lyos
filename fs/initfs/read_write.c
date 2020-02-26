@@ -33,28 +33,29 @@
 #include "global.h"
 #include "tar.h"
 #include "lyos/driver.h"
-    
-PUBLIC int initfs_rdwt(MESSAGE * p)
+
+PUBLIC int initfs_rdwt(MESSAGE* p)
 {
     dev_t dev = (int)p->RWDEV;
     ino_t num = p->RWINO;
     u64 position = p->RWPOS;
     int src = p->RWSRC;
     int rw_flag = p->RWFLAG;
-    void * buf = p->RWBUF;
+    void* buf = p->RWBUF;
     int nbytes = p->RWCNT;
 
     char header[512];
     initfs_rw_dev(BDEV_READ, dev, initfs_headers[num], 512, header);
-    struct posix_tar_header * phdr = (struct posix_tar_header *)header;
+    struct posix_tar_header* phdr = (struct posix_tar_header*)header;
 
     off_t filesize = initfs_getsize(phdr->size);
 
     if (filesize < nbytes + position) {
         nbytes = filesize - position;
     }
-    bdev_readwrite((rw_flag == READ) ? BDEV_READ : BDEV_WRITE, dev, initfs_headers[num] + 512 + position, nbytes, src, buf);
-    
+    bdev_readwrite((rw_flag == READ) ? BDEV_READ : BDEV_WRITE, dev,
+                   initfs_headers[num] + 512 + position, nbytes, src, buf);
+
     p->RWPOS = position + nbytes;
     p->RWCNT = nbytes;
 

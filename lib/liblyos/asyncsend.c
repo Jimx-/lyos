@@ -23,7 +23,7 @@
 #include "assert.h"
 #include <lyos/sysutils.h>
 
-#define ASYNC_SIZE  200
+#define ASYNC_SIZE 200
 PRIVATE async_message_t async_msg[ASYNC_SIZE];
 PRIVATE int first_slot = 0, next_slot = 0;
 PRIVATE int initialized = 0;
@@ -48,7 +48,8 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
         if (async_msg[first_slot].flags != 0) break;
     }
 
-    if (first_slot >= next_slot) first_slot = next_slot = 0;    /* all messages processed */
+    if (first_slot >= next_slot)
+        first_slot = next_slot = 0; /* all messages processed */
 
     /* table full, try to clean up processed slots */
     if (next_slot >= ASYNC_SIZE) {
@@ -63,7 +64,8 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
             dest_idx++;
         }
 
-        for (i = dest_idx; i < ASYNC_SIZE; i++) async_msg[i].flags = 0;
+        for (i = dest_idx; i < ASYNC_SIZE; i++)
+            async_msg[i].flags = 0;
 
         first_slot = 0;
         next_slot = dest_idx;

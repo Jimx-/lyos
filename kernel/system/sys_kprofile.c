@@ -49,25 +49,23 @@ PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc)
 
     int action = m->KP_ACTION;
     switch (action) {
-    case KPROF_START:
-    {
+    case KPROF_START: {
         int freq = m->KP_FREQ;
-        
+
         if (kprofiling) {
             ret = EBUSY;
             goto out;
         }
 
         memset(&kprof_info, 0, sizeof(kprof_info));
-        
+
         clear_recorded_flag();
         init_profile_clock(freq);
 
         kprofiling = 1;
         break;
     }
-    case KPROF_STOP:
-    {
+    case KPROF_STOP: {
         if (!kprofiling) return EBUSY;
         kprofiling = 0;
 
@@ -78,8 +76,10 @@ PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc)
             memsize = kprof_info.mem_used;
         }
 
-        data_vir_copy(m->KP_ENDPT, m->KP_CTL, KERNEL, &kprof_info, sizeof(&kprof_info));
-        data_vir_copy(m->KP_ENDPT, m->KP_BUF, KERNEL, profile_sample_buf, memsize);
+        data_vir_copy(m->KP_ENDPT, m->KP_CTL, KERNEL, &kprof_info,
+                      sizeof(&kprof_info));
+        data_vir_copy(m->KP_ENDPT, m->KP_BUF, KERNEL, profile_sample_buf,
+                      memsize);
         break;
     }
     default:

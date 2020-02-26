@@ -13,14 +13,12 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_ARCH_TYPE_H_
-#define	_ARCH_TYPE_H_
+#ifndef _ARCH_TYPE_H_
+#define _ARCH_TYPE_H_
 
 #include <asm/stackframe.h>
-    
-struct cpu_info {
-    
-};
+
+struct cpu_info {};
 
 struct tss {
     reg_t sp0;

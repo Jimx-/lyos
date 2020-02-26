@@ -13,17 +13,17 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_HPET_H_
-#define	_HPET_H_
+#ifndef _HPET_H_
+#define _HPET_H_
 
-#define HPET_ID                 0x000
-#define HPET_PERIOD             0x004
-#define HPET_CFG                0x010
-#define HPET_STATUS             0x020
-#define HPET_COUNTER            0x0f0
+#define HPET_ID 0x000
+#define HPET_PERIOD 0x004
+#define HPET_CFG 0x010
+#define HPET_STATUS 0x020
+#define HPET_COUNTER 0x0f0
 
-#define HPET_CFG_ENABLE         0x001
-#define HPET_CFG_LEGACY         0x002
+#define HPET_CFG_ENABLE 0x001
+#define HPET_CFG_LEGACY 0x002
 
 PUBLIC int init_hpet();
 PUBLIC u8 is_hpet_enabled();

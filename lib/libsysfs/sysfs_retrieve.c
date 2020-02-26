@@ -24,7 +24,7 @@
 #include "string.h"
 #include "libsysfs.h"
 
-PUBLIC int sysfs_retrieve_u32(char * key, u32 * value)
+PUBLIC int sysfs_retrieve_u32(char* key, u32* value)
 {
     MESSAGE msg;
 
@@ -37,6 +37,6 @@ PUBLIC int sysfs_retrieve_u32(char * key, u32 * value)
     send_recv(BOTH, TASK_SYSFS, &msg);
 
     if (value) *value = msg.u.m3.m3i3;
-    
+
     return msg.RETVAL;
 }

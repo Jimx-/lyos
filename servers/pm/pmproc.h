@@ -31,7 +31,7 @@ struct pmproc {
 
     endpoint_t wait_pid;
 
-    sigset_t sig_pending;   /* signals to be handled */
+    sigset_t sig_pending; /* signals to be handled */
     sigset_t sig_mask;
     sigset_t sig_mask_saved;
     sigset_t sig_ignore;
@@ -54,10 +54,10 @@ struct pmproc {
     int exit_status;
 };
 
-#define PMPF_INUSE      0x01
-#define PMPF_WAITING    0x02
-#define PMPF_HANGING    0x04
-#define PMPF_SIGSUSPENDED   0x08
-#define PMPF_TRACED     0x10
+#define PMPF_INUSE 0x01
+#define PMPF_WAITING 0x02
+#define PMPF_HANGING 0x04
+#define PMPF_SIGSUSPENDED 0x08
+#define PMPF_TRACED 0x10
 
 #endif

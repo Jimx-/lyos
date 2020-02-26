@@ -56,13 +56,10 @@ extern void timer_expire(struct list_head* list, clock_t timestamp);
  * @param clocksource The jiffies clocksource.
  * @return The jiffies.
  *****************************************************************************/
-PRIVATE u64 read_jiffies(struct clocksource* cs)
-{
-    return jiffies;
-}
+PRIVATE u64 read_jiffies(struct clocksource* cs) { return jiffies; }
 
-#define NSEC_PER_JIFFY  (NSEC_PER_SEC/DEFAULT_HZ)
-#define JIFFY_SHIFT     8
+#define NSEC_PER_JIFFY (NSEC_PER_SEC / DEFAULT_HZ)
+#define JIFFY_SHIFT 8
 PRIVATE struct clocksource jiffies_clocksource = {
     .name = "jiffies",
     .rating = 1,
@@ -81,18 +78,18 @@ PRIVATE struct clocksource jiffies_clocksource = {
  *
  * @param irq The IRQ nr, unused here.
  *****************************************************************************/
-PUBLIC int clock_handler(irq_hook_t * hook)
+PUBLIC int clock_handler(irq_hook_t* hook)
 {
 #if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
 #endif
-       if (++jiffies >= MAX_TICKS)
-          jiffies = 0;
+        if (++jiffies >= MAX_TICKS) jiffies = 0;
 #if CONFIG_SMP
     }
 #endif
 
-    if (get_cpulocal_var(proc_ptr) == get_cpulocal_var_ptr(idle_proc)) idle_ticks++;
+    if (get_cpulocal_var(proc_ptr) == get_cpulocal_var_ptr(idle_proc))
+        idle_ticks++;
     get_cpulocal_var(proc_ptr)->user_time++;
 
 #if CONFIG_SMP
@@ -102,8 +99,12 @@ PUBLIC int clock_handler(irq_hook_t * hook)
         if (jiffies >= next_timeout && next_timeout != TIMER_UNSET) {
             spinlock_lock(&timers_lock);
             timer_expire(&timer_list, jiffies);
-            if (list_empty(&timer_list)) next_timeout = TIMER_UNSET;
-            else next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+            if (list_empty(&timer_list))
+                next_timeout = TIMER_UNSET;
+            else
+                next_timeout =
+                    list_entry(timer_list.next, struct timer_list, list)
+                        ->expire_time;
             spinlock_unlock(&timers_lock);
         }
 #if CONFIG_SMP
@@ -173,7 +174,7 @@ PUBLIC int init_ap_timer(int freq)
  *
  * @param p Stop context for whom.
  *****************************************************************************/
-PUBLIC void stop_context(struct proc * p)
+PUBLIC void stop_context(struct proc* p)
 {
     spinlock_lock(&clocksource_lock);
     u64* ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
@@ -187,8 +188,8 @@ PUBLIC void stop_context(struct proc * p)
 
     if (p->endpoint >= 0) {
         if (ex64hi(nsec) < ex64hi(p->counter_ns) ||
-                (ex64hi(nsec) == ex64hi(p->counter_ns) &&
-                 ex64lo(nsec) < ex64lo(p->counter_ns)))
+            (ex64hi(nsec) == ex64hi(p->counter_ns) &&
+             ex64lo(nsec) < ex64lo(p->counter_ns)))
             p->counter_ns = p->counter_ns - nsec;
         else {
             p->counter_ns = 0;
@@ -206,7 +207,8 @@ PUBLIC void set_sys_timer(struct timer_list* timer)
     if (timer->expire_time != TIMER_UNSET) list_del(&timer->list);
 
     timer_add(&timer_list, timer);
-    next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+    next_timeout =
+        list_entry(timer_list.next, struct timer_list, list)->expire_time;
 
     spinlock_unlock(&timers_lock);
 }
@@ -216,8 +218,11 @@ PUBLIC void reset_sys_timer(struct timer_list* timer)
     spinlock_lock(&timers_lock);
 
     timer_remove(timer);
-    if (list_empty(&timer_list)) next_timeout = TIMER_UNSET;
-    else next_timeout = list_entry(timer_list.next, struct timer_list, list)->expire_time;
+    if (list_empty(&timer_list))
+        next_timeout = TIMER_UNSET;
+    else
+        next_timeout =
+            list_entry(timer_list.next, struct timer_list, list)->expire_time;
 
     spinlock_unlock(&timers_lock);
 }

@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2014 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -37,7 +37,8 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int init_sproc(struct sproc * sp, struct service_up_req * up_req, endpoint_t source)
+PUBLIC int init_sproc(struct sproc* sp, struct service_up_req* up_req,
+                      endpoint_t source)
 {
     sp->priv.flags = TASK_FLAGS;
 
@@ -56,10 +57,10 @@ PUBLIC int init_sproc(struct sproc * sp, struct service_up_req * up_req, endpoin
     return 0;
 }
 
-PRIVATE void set_cmd_args(struct sproc * sp)
+PRIVATE void set_cmd_args(struct sproc* sp)
 {
     strcpy(sp->cmd_args, sp->cmdline);
-    char * p = sp->cmd_args;
+    char* p = sp->cmd_args;
     int argc = 0;
 
     sp->argv[argc++] = p;
@@ -67,7 +68,8 @@ PRIVATE void set_cmd_args(struct sproc * sp)
     while (*p != '\0') {
         if (*p == ' ') {
             *p = '\0';
-            while (*++p == ' ');
+            while (*++p == ' ')
+                ;
             if (*p == '\0') break;
             if (argc + 1 == ARGV_MAX) break;
             sp->argv[argc++] = p;
@@ -79,7 +81,8 @@ PRIVATE void set_cmd_args(struct sproc * sp)
     sp->argc = argc;
 }
 
-PUBLIC int set_sproc(struct sproc * sp, struct service_up_req * up_req, endpoint_t source)
+PUBLIC int set_sproc(struct sproc* sp, struct service_up_req* up_req,
+                     endpoint_t source)
 {
     if (up_req->cmdlen > CMDLINE_MAX) return E2BIG;
     data_copy(SELF, sp->cmdline, source, up_req->cmdline, up_req->cmdlen);
@@ -87,7 +90,8 @@ PUBLIC int set_sproc(struct sproc * sp, struct service_up_req * up_req, endpoint
     set_cmd_args(sp);
 
     if (up_req->prognamelen > PROC_NAME_LEN) return E2BIG;
-    data_copy(SELF, sp->proc_name, source, up_req->progname, up_req->prognamelen);
+    data_copy(SELF, sp->proc_name, source, up_req->progname,
+              up_req->prognamelen);
     sp->proc_name[up_req->prognamelen] = '\0';
 
     if (!strcmp(sp->label, "")) {
@@ -105,7 +109,7 @@ PUBLIC int set_sproc(struct sproc * sp, struct service_up_req * up_req, endpoint
     return 0;
 }
 
-PUBLIC int alloc_sproc(struct sproc ** ppsp)
+PUBLIC int alloc_sproc(struct sproc** ppsp)
 {
     int i;
     for (i = 0; i < NR_PRIV_PROCS; i++) {
@@ -117,19 +121,19 @@ PUBLIC int alloc_sproc(struct sproc ** ppsp)
     return ENOMEM;
 }
 
-PUBLIC int free_sproc(struct sproc * sp)
+PUBLIC int free_sproc(struct sproc* sp)
 {
     sp->flags &= ~SPF_INUSE;
 
     return 0;
 }
 
-PUBLIC int read_exec(struct sproc * sp)
+PUBLIC int read_exec(struct sproc* sp)
 {
-    char * name = sp->argv[0];
+    char* name = sp->argv[0];
 
     struct stat sbuf;
-    
+
     int retval = stat(name, &sbuf);
     if (retval) return retval;
 
@@ -137,7 +141,7 @@ PUBLIC int read_exec(struct sproc * sp)
     if (fd == -1) return errno;
 
     sp->exec_len = sbuf.st_size;
-    sp->exec = (char *)malloc(sp->exec_len);
+    sp->exec = (char*)malloc(sp->exec_len);
     if (!sp->exec) {
         close(fd);
         return ENOMEM;
@@ -152,10 +156,11 @@ PUBLIC int read_exec(struct sproc * sp)
 
     if (n > 0)
         return EIO;
-    else return errno;
+    else
+        return errno;
 }
 
-PUBLIC int late_reply(struct sproc * sp, int retval)
+PUBLIC int late_reply(struct sproc* sp, int retval)
 {
     MESSAGE msg;
 

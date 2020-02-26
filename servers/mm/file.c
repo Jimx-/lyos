@@ -54,7 +54,8 @@ PRIVATE struct mm_file_desc* alloc_mm_file_desc(int fd, dev_t dev, ino_t ino)
 PUBLIC struct mm_file_desc* get_mm_file_desc(int fd, dev_t dev, ino_t ino)
 {
     struct mm_file_desc* filp;
-    list_for_each_entry(filp, &file_list, list) {
+    list_for_each_entry(filp, &file_list, list)
+    {
         if (filp->dev == dev && filp->ino == ino && filp->fd == fd) return filp;
     }
 
@@ -71,7 +72,8 @@ PUBLIC void file_unreferenced(struct mm_file_desc* filp)
 {
     filp->refcnt--;
     if (filp->refcnt <= 0) {
-        enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, filp->fd, 0, 0, 0, NULL, NULL, 0);
+        enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, filp->fd, 0, 0,
+                            0, NULL, NULL, 0);
         list_del(&filp->list);
         SLABFREE(filp);
     }

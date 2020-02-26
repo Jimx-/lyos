@@ -39,7 +39,8 @@ PUBLIC int do_pm_kprofile(MESSAGE* msg)
     switch (msg->KP_ACTION) {
     case KPROF_START:
     case KPROF_STOP:
-        return kernel_kprofile(msg->KP_ACTION, msg->KP_SIZE, msg->KP_FREQ, msg->source, msg->KP_CTL, msg->KP_BUF);
+        return kernel_kprofile(msg->KP_ACTION, msg->KP_SIZE, msg->KP_FREQ,
+                               msg->source, msg->KP_CTL, msg->KP_BUF);
     }
 
     return EINVAL;

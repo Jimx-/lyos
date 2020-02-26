@@ -40,7 +40,9 @@
 #include "lyos/cpulocals.h"
 #include <lyos/log.h>
 
-#define LYOS_BANNER "Lyos version "UTS_RELEASE" (compiled by "LYOS_COMPILE_BY"@"LYOS_COMPILE_HOST")("LYOS_COMPILER") "UTS_VERSION"\n"
+#define LYOS_BANNER                                              \
+    "Lyos version " UTS_RELEASE " (compiled by " LYOS_COMPILE_BY \
+    "@" LYOS_COMPILE_HOST ")(" LYOS_COMPILER ") " UTS_VERSION "\n"
 
 PUBLIC void init_arch();
 
@@ -48,26 +50,26 @@ PUBLIC void init_arch();
  *                               kernel_main
  *****************************************************************************/
 /**
- * jmp from kernel.asm::_start. 
- * 
+ * jmp from kernel.asm::_start.
+ *
  *****************************************************************************/
 PUBLIC int kernel_main()
 {
-	init_arch();
+    init_arch();
     init_sched();
-	init_proc();
+    init_proc();
     init_system();
-	init_memory();
-	init_irq();
+    init_memory();
+    init_irq();
     init_time();
 
     printk(LYOS_BANNER);
 
     int i;
-    struct boot_proc * bp = boot_procs;
+    struct boot_proc* bp = boot_procs;
     for (i = 0; i < NR_BOOT_PROCS; i++, bp++) {
-    	struct proc * p = proc_addr(bp->proc_nr);
-    	bp->endpoint = p->endpoint;
+        struct proc* p = proc_addr(bp->proc_nr);
+        bp->endpoint = p->endpoint;
 
         /* set task name */
         if (i < NR_TASKS) {
@@ -76,30 +78,33 @@ PUBLIC int kernel_main()
 
         /* set module info */
         if (i >= NR_TASKS) {
-            struct kinfo_module * mb_mod = &kinfo.modules[i - NR_TASKS];
+            struct kinfo_module* mb_mod = &kinfo.modules[i - NR_TASKS];
             bp->base = mb_mod->start_addr;
             bp->len = mb_mod->end_addr - mb_mod->start_addr;
         }
 
-    	if (is_kerntaske(bp->endpoint) || bp->endpoint == TASK_MM || bp->endpoint == TASK_SERVMAN) {
-    		/* assign priv structure */
-    		set_priv(p, static_priv_id(bp->endpoint));
+        if (is_kerntaske(bp->endpoint) || bp->endpoint == TASK_MM ||
+            bp->endpoint == TASK_SERVMAN) {
+            /* assign priv structure */
+            set_priv(p, static_priv_id(bp->endpoint));
             p->priv->flags |= PRF_PRIV_PROC;
-            
+
             int allowed_calls;
-    		if (bp->endpoint == TASK_MM) {
-    			allowed_calls = TASK_CALLS;
-    		} if (bp->endpoint == TASK_SERVMAN) {
-    			allowed_calls = TASK_CALLS;
-    		} else {
-    			allowed_calls = KERNTASK_CALLS;
-    		}
+            if (bp->endpoint == TASK_MM) {
+                allowed_calls = TASK_CALLS;
+            }
+            if (bp->endpoint == TASK_SERVMAN) {
+                allowed_calls = TASK_CALLS;
+            } else {
+                allowed_calls = KERNTASK_CALLS;
+            }
 
             int j;
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
-                p->priv->syscall_mask[j] = (allowed_calls == ALL_CALLS_ALLOWED) ? (~0) : 0;
+                p->priv->syscall_mask[j] =
+                    (allowed_calls == ALL_CALLS_ALLOWED) ? (~0) : 0;
             }
-    	} else {
+        } else {
             p->state |= PST_NO_PRIV;
         }
 
@@ -113,33 +118,34 @@ PUBLIC int kernel_main()
 #endif
 
     /* failed to init smp */
-	finish_bsp_booting();
+    finish_bsp_booting();
 
-	while(TRUE) {}
+    while (TRUE) {
+    }
 }
 
 PUBLIC void finish_bsp_booting()
 {
     identify_cpu();
-    
+
     if (init_bsp_timer(system_hz) != 0) panic("unable to init bsp timer");
 
-	fpu_init();
+    fpu_init();
 
-	/* proc_ptr should point to somewhere */
-	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+    /* proc_ptr should point to somewhere */
+    get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
 
-	int i;
-	/* enqueue runnable process */
-	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
-		PST_UNSET(proc_addr(i), PST_STOPPED);
-	}
+    int i;
+    /* enqueue runnable process */
+    for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
+        PST_UNSET(proc_addr(i), PST_STOPPED);
+    }
 
 #if CONFIG_SMP
     set_cpu_flag(cpuid, CPU_IS_READY);
 #endif
 
-	switch_to_user();
+    switch_to_user();
 }
 
 /*****************************************************************************
@@ -147,35 +153,36 @@ PUBLIC void finish_bsp_booting()
  *****************************************************************************/
 PUBLIC int get_ticks()
 {
-	MESSAGE msg;
-	reset_msg(&msg);
-	msg.type = GET_TICKS;
-	send_recv(BOTH, TASK_SYS, &msg);
-	return msg.RETVAL;
+    MESSAGE msg;
+    reset_msg(&msg);
+    msg.type = GET_TICKS;
+    send_recv(BOTH, TASK_SYS, &msg);
+    return msg.RETVAL;
 }
 
 /*****************************************************************************
  *                                panic
  *****************************************************************************/
-PUBLIC void panic(const char *fmt, ...)
+PUBLIC void panic(const char* fmt, ...)
 {
-	char buf[256];
+    char buf[256];
 
-	/* 4 is the size of fmt in the stack */
-	va_list arg = (va_list)((char*)&fmt + 4);
+    /* 4 is the size of fmt in the stack */
+    va_list arg = (va_list)((char*)&fmt + 4);
 
-	vsprintf(buf, fmt, arg);
+    vsprintf(buf, fmt, arg);
 
-	direct_cls();
+    direct_cls();
     kern_log.buf[kern_log.size] = 0;
     direct_put_str(kern_log.buf);
 #if CONFIG_SMP
     direct_print("\nKernel panic on CPU %d: %s", cpuid, buf);
 #else
-	direct_print("\nKernel panic: %s", buf);
+    direct_print("\nKernel panic: %s", buf);
 #endif
 
-	while(1);
-	/* should never arrive here */
-	__asm__ __volatile__("ud2");
+    while (1)
+        ;
+    /* should never arrive here */
+    __asm__ __volatile__("ud2");
 }

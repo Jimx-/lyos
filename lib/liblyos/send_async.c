@@ -26,11 +26,11 @@
 
 PUBLIC int send_async(async_message_t* table, size_t len)
 {
-	MESSAGE m;
-	memset(&m, 0, sizeof(m));
-	m.SR_FUNCTION = SEND_ASYNC;
-	m.SR_TABLE = table;
-	m.SR_LEN = len;
+    MESSAGE m;
+    memset(&m, 0, sizeof(m));
+    m.SR_FUNCTION = SEND_ASYNC;
+    m.SR_TABLE = table;
+    m.SR_LEN = len;
 
-	return syscall_entry(NR_SENDREC, &m);
+    return syscall_entry(NR_SENDREC, &m);
 }

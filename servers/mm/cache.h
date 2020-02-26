@@ -30,6 +30,7 @@ struct page_cache {
     struct list_head hash_ino;
 };
 
-PUBLIC struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino, off_t ino_off);
+PUBLIC struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino,
+                                            off_t ino_off);
 
 #endif

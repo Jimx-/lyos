@@ -35,20 +35,20 @@
 
 PUBLIC int check_perm(struct ipc_perm* perm, endpoint_t source, mode_t mode)
 {
-	uid_t uid;
-	gid_t gid;
-	mode_t perm_mode;
-	get_epinfo(source, &uid, &gid);
+    uid_t uid;
+    gid_t gid;
+    mode_t perm_mode;
+    get_epinfo(source, &uid, &gid);
 
-	if (uid == perm->uid || uid == perm->cuid) {
-		perm_mode = perm->mode & 0x0700;
- 	} else if (gid == perm->gid || gid == perm->cgid) {
- 		perm_mode = perm->mode & 0x0070;
- 		mode >>= 3;
- 	} else {
- 		perm_mode = perm->mode & 0x0007;
- 		mode >>= 6;
- 	}
+    if (uid == perm->uid || uid == perm->cuid) {
+        perm_mode = perm->mode & 0x0700;
+    } else if (gid == perm->gid || gid == perm->cgid) {
+        perm_mode = perm->mode & 0x0070;
+        mode >>= 3;
+    } else {
+        perm_mode = perm->mode & 0x0007;
+        mode >>= 6;
+    }
 
- 	return mode && ((mode & perm_mode) == mode);
+    return mode && ((mode & perm_mode) == mode);
 }

@@ -209,7 +209,7 @@ struct part_ent {
                                | 20h    | Read Sectors With Retry         |    V  V  V  V   |
                                | E8h  @ | Write Buffer                    |             D   |
                                +--------+---------------------------------+-----------------+
-
+                           
                                KEY FOR SYMBOLS IN THE TABLE:
                                ===========================================-----=========================================================================
                                PC    Register 1F1: Write Precompensation	@     These commands are
@@ -240,7 +240,8 @@ struct part_ent {
                           Reset.                        |                        - The drive is held
                           reset when RST=1.                        |                        Setting
                           RST=0 re-enables the                        drive.                        |                        -
-                          The host must                        set                        RST=1 and wait for at least                        |                        5
+                          The host must                        set                        RST=1 and
+                          wait for at least                        |                        5
                           microsecondsbefore                        setting RST=0, to ensure                        |                        that the
                           drive recognizes                        the reset.
                               `--------------------------------------------- HOB (High Order Byte)

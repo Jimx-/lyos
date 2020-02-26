@@ -27,7 +27,7 @@
 /*****************************************************************************
  *                                mm_map_phys
  *****************************************************************************/
-PUBLIC void * mm_map_phys(endpoint_t who, void * phys_addr, size_t len)
+PUBLIC void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len)
 {
     MESSAGE msg;
 

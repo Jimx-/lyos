@@ -26,7 +26,7 @@
 #include <lyos/global.h>
 #include <lyos/proto.h>
 #include <lyos/driver.h>
-    
+
 #include "libblockdriver/libblockdriver.h"
 
 PRIVATE int do_open(struct blockdriver* bd, MESSAGE* msg)
@@ -49,8 +49,7 @@ PRIVATE int do_rdwt(struct blockdriver* bd, MESSAGE* msg)
     char* buf = msg->BUF;
     unsigned int count = msg->CNT;
 
-    return bd->bdr_readwrite(minor, do_write, pos,
-        ep, buf, count);
+    return bd->bdr_readwrite(minor, do_write, pos, ep, buf, count);
 }
 
 PRIVATE int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
@@ -110,7 +109,7 @@ PUBLIC void blockdriver_task(struct blockdriver* bd)
     MESSAGE msg;
     while (TRUE) {
         send_recv(RECEIVE, ANY, &msg);
-        
+
         blockdriver_process(bd, &msg);
     }
 }

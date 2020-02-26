@@ -29,9 +29,9 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_getksig(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_getksig(MESSAGE* m, struct proc* p_proc)
 {
-    struct proc * p;
+    struct proc* p;
 
     for (p = proc_table + NR_TASKS; p < proc_table + NR_PROCS; p++) {
         if (PST_IS_SET(p, PST_SIGNALED)) {

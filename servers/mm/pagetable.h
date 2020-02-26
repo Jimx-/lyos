@@ -16,16 +16,18 @@
 #ifndef _MM_PAGETABLE_H_
 #define _MM_PAGETABLE_H_
 
-#define pgd_addr_end(addr, end)						\
-({	vir_bytes __boundary = ((addr) + ARCH_PGD_SIZE) & ARCH_PGD_MASK;	\
-    (__boundary - 1 < (end) - 1)? __boundary: (end);		\
-})
+#define pgd_addr_end(addr, end)                                          \
+    ({                                                                   \
+        vir_bytes __boundary = ((addr) + ARCH_PGD_SIZE) & ARCH_PGD_MASK; \
+        (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
+    })
 
 #ifndef pmd_addr_end
-#define pmd_addr_end(addr, end)						\
-({	vir_bytes __boundary = ((addr) + ARCH_PMD_SIZE) & ARCH_PMD_MASK;	\
-    (__boundary - 1 < (end) - 1)? __boundary: (end);		\
-})
+#define pmd_addr_end(addr, end)                                          \
+    ({                                                                   \
+        vir_bytes __boundary = ((addr) + ARCH_PMD_SIZE) & ARCH_PMD_MASK; \
+        (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
+    })
 
 #endif
 

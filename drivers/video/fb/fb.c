@@ -42,12 +42,14 @@ PRIVATE int init_fb();
 
 PRIVATE int fb_open(dev_t minor, int access);
 PRIVATE int fb_close(dev_t minor);
-PRIVATE ssize_t fb_read(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
-PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id);
-PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id);
-PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, size_t length, char** retaddr);
+PRIVATE ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                        unsigned int count, cdev_id_t id);
+PRIVATE ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                         unsigned int count, cdev_id_t id);
+PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                     cdev_id_t id);
+PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
+                    size_t length, char** retaddr);
 
 PRIVATE int open_counter[NR_FB_DEVS];
 
@@ -72,7 +74,7 @@ PUBLIC int main()
     serv_register_init_fresh_callback(init_fb);
     serv_init();
 
-	return chardriver_task(&fbdriver);
+    return chardriver_task(&fbdriver);
 }
 
 PRIVATE int init_fb()
@@ -108,14 +110,14 @@ PRIVATE int fb_close(dev_t minor)
     return OK;
 }
 
-PRIVATE ssize_t fb_read(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
+PRIVATE ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                        unsigned int count, cdev_id_t id)
 {
     return 0;
 }
 
-PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
-  endpoint_t endpoint, char* buf, unsigned int count, cdev_id_t id)
+PRIVATE ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                         unsigned int count, cdev_id_t id)
 {
     int retval = OK;
     void* base;
@@ -130,17 +132,19 @@ PRIVATE ssize_t fb_write(dev_t minor, u64 pos,
         count = size - pos;
     }
 
-    data_copy(SELF, (void*) (base + (size_t)pos), endpoint, buf, count);
+    data_copy(SELF, (void*)(base + (size_t)pos), endpoint, buf, count);
 
     return count;
 }
 
-PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf, cdev_id_t id)
+PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                     cdev_id_t id)
 {
     return 0;
 }
 
-PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, size_t length, char** retaddr)
+PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
+                    size_t length, char** retaddr)
 {
     int retval = OK;
     phys_bytes base, size;
@@ -154,7 +158,8 @@ PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset, 
         length = size - offset;
     }
 
-    char* mapped = mm_map_phys(endpoint, (void*) (base + (size_t)offset), length);
+    char* mapped =
+        mm_map_phys(endpoint, (void*)(base + (size_t)offset), length);
     if (mapped == MAP_FAILED) {
         return ENOMEM;
     }

@@ -36,15 +36,15 @@
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
-PUBLIC void * k_stacks;
+PUBLIC void* k_stacks;
 
-PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
-PRIVATE char * env_get(const char *name);
+PRIVATE int kinfo_set_param(char* buf, char* name, char* value);
+PRIVATE char* env_get(const char* name);
 
 /*======================================================================*
                             cstart
  *======================================================================*/
-PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
+PUBLIC void cstart(struct multiboot_info* mboot, u32 mboot_magic)
 {
     kinfo.memory_size = 0;
     memset(&kinfo, 0, sizeof(kinfo_t));
@@ -56,25 +56,27 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     size_t mb_mmap_len;
 
     /* grub provides physical address, we want virtual address */
-    mboot = (struct multiboot_info *) __va(mboot);
+    mboot = (struct multiboot_info*)__va(mboot);
     mb_mmap_addr = __va(mboot->mmap_addr);
     mb_mmap_len = mboot->mmap_length;
 
     kinfo.mods_count = mb_mod_count = mboot->mods_count;
 
     kinfo.memmaps_count = -1;
-    struct multiboot_mmap_entry * mmap = (struct multiboot_mmap_entry *)mb_mmap_addr;
+    struct multiboot_mmap_entry* mmap =
+        (struct multiboot_mmap_entry*)mb_mmap_addr;
     while ((void*)mmap < mb_mmap_addr + mb_mmap_len) {
         kinfo.memmaps_count++;
         kinfo.memmaps[kinfo.memmaps_count].addr = mmap->addr;
         kinfo.memmaps[kinfo.memmaps_count].len = mmap->len;
         kinfo.memmaps[kinfo.memmaps_count].type = mmap->type;
         kinfo.memory_size += mmap->len;
-        mmap = (struct multiboot_mmap_entry *)((unsigned int)mmap + mmap->size + sizeof(unsigned int));
+        mmap = (struct multiboot_mmap_entry*)((unsigned int)mmap + mmap->size +
+                                              sizeof(unsigned int));
     }
 
     mb_mod_addr = __va(mboot->mods_addr);
-    multiboot_module_t * last_mod = (multiboot_module_t *)mboot->mods_addr;
+    multiboot_module_t* last_mod = (multiboot_module_t*)mboot->mods_addr;
     last_mod += mb_mod_count - 1;
 
     phys_bytes mod_ends = (phys_bytes)last_mod->mod_end;
@@ -113,19 +115,21 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
         static char var[KINFO_CMDLINE_LEN];
         static char value[KINFO_CMDLINE_LEN];
 
-        memcpy(cmdline, (void *)mboot->cmdline, KINFO_CMDLINE_LEN);
-        char * p = cmdline;
+        memcpy(cmdline, (void*)mboot->cmdline, KINFO_CMDLINE_LEN);
+        char* p = cmdline;
         while (*p) {
             int var_i = 0;
             int value_i = 0;
-            while (*p == ' ') p++;
+            while (*p == ' ')
+                p++;
             if (!*p) break;
-            while (*p && *p != '=' && *p != ' ' && var_i < KINFO_CMDLINE_LEN - 1)
-                var[var_i++] = *p++ ;
+            while (*p && *p != '=' && *p != ' ' &&
+                   var_i < KINFO_CMDLINE_LEN - 1)
+                var[var_i++] = *p++;
             var[var_i] = 0;
             if (*p++ != '=') continue;
             while (*p && *p != ' ' && value_i < KINFO_CMDLINE_LEN - 1)
-                value[value_i++] = *p++ ;
+                value[value_i++] = *p++;
             value[value_i] = 0;
 
             kinfo_set_param(kinfo.cmdline, var, value);
@@ -133,8 +137,8 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     }
 
     /* set initrd parameters */
-    multiboot_module_t * initrd_mod = (multiboot_module_t *)mb_mod_addr;
-    char * initrd_base = (char*) __va(initrd_mod->mod_start);
+    multiboot_module_t* initrd_mod = (multiboot_module_t*)mb_mod_addr;
+    char* initrd_base = (char*)__va(initrd_mod->mod_start);
     unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
     char initrd_param_buf[20];
     sprintf(initrd_param_buf, "0x%x", (unsigned int)initrd_base);
@@ -144,32 +148,33 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
 
     /* set module information */
     int i;
-    multiboot_module_t * bootmod = initrd_mod + 1;
+    multiboot_module_t* bootmod = initrd_mod + 1;
     for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++, bootmod++) {
-        kinfo.modules[i].start_addr = (phys_bytes) bootmod->mod_start;
-        kinfo.modules[i].end_addr = (phys_bytes) bootmod->mod_end;
+        kinfo.modules[i].start_addr = (phys_bytes)bootmod->mod_start;
+        kinfo.modules[i].end_addr = (phys_bytes)bootmod->mod_end;
     }
-/*
-#define SET_MODULE(nr, name) do { \
-    extern char _binary_##name##_start[], _binary_##name##_end[]; \
-    kinfo.modules[nr].start_addr = (void*)*(&_binary_##name##_start) - KERNEL_VMA; \
-    kinfo.modules[nr].end_addr = (void*)*(&_binary_##name##_end) - KERNEL_VMA; } while(0)
+    /*
+    #define SET_MODULE(nr, name) do { \
+        extern char _binary_##name##_start[], _binary_##name##_end[]; \
+        kinfo.modules[nr].start_addr = (void*)*(&_binary_##name##_start) -
+    KERNEL_VMA; \ kinfo.modules[nr].end_addr = (void*)*(&_binary_##name##_end) -
+    KERNEL_VMA; } while(0)
 
-    SET_MODULE(TASK_MM, mm);
-    SET_MODULE(TASK_PM, pm);
-    SET_MODULE(TASK_SERVMAN, servman);
-    SET_MODULE(TASK_DEVMAN, devman);
-    SET_MODULE(TASK_SCHED, sched);
-    SET_MODULE(TASK_FS, vfs);
-    SET_MODULE(TASK_SYS, systask);
-    SET_MODULE(TASK_TTY, tty);
-    SET_MODULE(TASK_RD, ramdisk);
-    SET_MODULE(TASK_INITFS, initfs);
-    SET_MODULE(TASK_SYSFS, sysfs);
-    SET_MODULE(TASK_IPC, ipc);
-    SET_MODULE(TASK_PCI, pci);
-    SET_MODULE(INIT, init);
-*/
+        SET_MODULE(TASK_MM, mm);
+        SET_MODULE(TASK_PM, pm);
+        SET_MODULE(TASK_SERVMAN, servman);
+        SET_MODULE(TASK_DEVMAN, devman);
+        SET_MODULE(TASK_SCHED, sched);
+        SET_MODULE(TASK_FS, vfs);
+        SET_MODULE(TASK_SYS, systask);
+        SET_MODULE(TASK_TTY, tty);
+        SET_MODULE(TASK_RD, ramdisk);
+        SET_MODULE(TASK_INITFS, initfs);
+        SET_MODULE(TASK_SYSFS, sysfs);
+        SET_MODULE(TASK_IPC, ipc);
+        SET_MODULE(TASK_PCI, pci);
+        SET_MODULE(INIT, init);
+    */
     /* kernel memory layout */
     kinfo.kernel_text_start = (void*)*(&_text);
     kinfo.kernel_data_start = (void*)*(&_data);
@@ -181,7 +186,7 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     cut_memmap(&kinfo, 0, ARCH_PG_SIZE);
     cut_memmap(&kinfo, 0x100000, kinfo.kernel_end_phys);
 
-    char * hz_value = env_get("hz");
+    char* hz_value = env_get("hz");
     if (hz_value) system_hz = atoi(hz_value);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
@@ -191,55 +196,56 @@ PUBLIC void cstart(struct multiboot_info *mboot, u32 mboot_magic)
     machine.cpu_count = 1;
 }
 
-PRIVATE char * get_value(const char * param, const char * key)
+PRIVATE char* get_value(const char* param, const char* key)
 {
-    char * envp = (char *)param;
-    const char * name = key;
+    char* envp = (char*)param;
+    const char* name = key;
 
     for (; *envp != 0;) {
-        for (name = key; *name != 0 && *name == *envp; name++, envp++);
+        for (name = key; *name != 0 && *name == *envp; name++, envp++)
+            ;
         if (*name == '\0' && *envp == '=') return envp + 1;
-        while (*envp++ != 0);
+        while (*envp++ != 0)
+            ;
     }
 
     return NULL;
 }
 
-PRIVATE char * env_get(const char *name)
+PRIVATE char* env_get(const char* name)
 {
     return get_value(kinfo.cmdline, name);
 }
 
-PUBLIC void init_arch()
-{
-    acpi_init();
-}
+PUBLIC void init_arch() { acpi_init(); }
 
-PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
+PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
 {
-    char *p = buf;
-    char *bufend = buf + KINFO_CMDLINE_LEN;
-    char *q;
+    char* p = buf;
+    char* bufend = buf + KINFO_CMDLINE_LEN;
+    char* q;
     int namelen = strlen(name);
     int valuelen = strlen(value);
 
     while (*p) {
         if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
             q = p;
-            while (*q) q++;
+            while (*q)
+                q++;
             for (q++; q < bufend; q++, p++)
                 *p = *q;
             break;
         }
-        while (*p++);
+        while (*p++)
+            ;
         p++;
     }
 
-    for (p = buf; p < bufend && (*p || *(p + 1)); p++);
+    for (p = buf; p < bufend && (*p || *(p + 1)); p++)
+        ;
     if (p > buf) p++;
 
-    if (p + namelen + valuelen + 3 > bufend)
-        return -1;
+    if (p + namelen + valuelen + 3 > bufend) return -1;
 
     strcpy(p, name);
     p[namelen] = '=';

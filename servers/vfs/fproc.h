@@ -25,20 +25,20 @@ EXTERN struct fproc {
     pid_t pid;
     endpoint_t endpoint;
 
-    struct inode * pwd;         /* working directory */
-    struct inode * root;        /* root directory */
+    struct inode* pwd;  /* working directory */
+    struct inode* root; /* root directory */
 
     int umask;
 
-    struct file_desc * filp[NR_FILES];
+    struct file_desc* filp[NR_FILES];
     pthread_mutex_t lock;
 
     struct worker_thread* worker;
 } fproc_table[NR_PROCS];
 
-#define FPF_INUSE   0x1
+#define FPF_INUSE 0x1
 
 PUBLIC void lock_fproc(struct fproc* fp);
 PUBLIC void unlock_fproc(struct fproc* fp);
 
-#endif  /* _VFS_FPROC_H_ */
+#endif /* _VFS_FPROC_H_ */

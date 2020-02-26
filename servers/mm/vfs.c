@@ -33,7 +33,7 @@
 #include "proto.h"
 #include "global.h"
 
-#define ARG_SIZE_MAX    64
+#define ARG_SIZE_MAX 64
 
 struct vfs_request {
     MESSAGE req_msg;
@@ -43,19 +43,22 @@ struct vfs_request {
     struct vfs_request* next;
 };
 
-PRIVATE struct vfs_request* queue = NULL, *active = NULL;
+PRIVATE struct vfs_request *queue = NULL, *active = NULL;
 
 PRIVATE void process_queue()
 {
     active = queue;
     queue = queue->next;
 
-    if (asyncsend3(TASK_FS, &active->req_msg, 0) != 0) panic("async send vfs request failed");
+    if (asyncsend3(TASK_FS, &active->req_msg, 0) != 0)
+        panic("async send vfs request failed");
 }
 
-PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, void* addr, off_t offset, size_t len, vfs_callback_t callback, void* arg, int arg_len)
+PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd,
+                               void* addr, off_t offset, size_t len,
+                               vfs_callback_t callback, void* arg, int arg_len)
 {
-    struct vfs_request* request;    
+    struct vfs_request* request;
     SLABALLOC(request);
     if (!request) return ENOMEM;
 
@@ -67,7 +70,7 @@ PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, void* a
     m->MMRENDPOINT = mmp->endpoint;
     m->MMROFFSET = offset;
     m->MMRLENGTH = len;
-    m->MMRBUF = (void*) addr;
+    m->MMRBUF = (void*)addr;
 
     request->callback = callback;
     if (arg) memcpy((char*)request->arg, arg, arg_len);
@@ -75,7 +78,7 @@ PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, void* a
     request->next = queue;
     queue = request;
 
-    if (!active) process_queue(); 
+    if (!active) process_queue();
 
     return 0;
 }

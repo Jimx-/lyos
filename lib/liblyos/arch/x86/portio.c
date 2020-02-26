@@ -19,9 +19,9 @@
 #include "lyos/const.h"
 #include <lyos/portio.h>
 
-int syscall_entry(int syscall_nr, MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC int portio_in(int port, u32 * value, int type)
+PUBLIC int portio_in(int port, u32* value, int type)
 {
     MESSAGE m;
     m.PIO_REQUEST = PIO_IN | type;
@@ -29,7 +29,7 @@ PUBLIC int portio_in(int port, u32 * value, int type)
 
     int retval = syscall_entry(NR_PORTIO, &m);
 
-    if (type == PIO_BYTE) 
+    if (type == PIO_BYTE)
         *(u8*)value = (u8)m.PIO_VALUE;
     else
         *value = m.PIO_VALUE;
@@ -47,7 +47,7 @@ PUBLIC int portio_out(int port, u32 value, int type)
     return syscall_entry(NR_PORTIO, &m);
 }
 
-PUBLIC int portio_voutb(pb_pair_t * pairs, int nr_ports)
+PUBLIC int portio_voutb(pb_pair_t* pairs, int nr_ports)
 {
     MESSAGE m;
     m.PIO_REQUEST = PIO_OUT | PIO_BYTE;
@@ -57,7 +57,7 @@ PUBLIC int portio_voutb(pb_pair_t * pairs, int nr_ports)
     return syscall_entry(NR_VPORTIO, &m);
 }
 
-PUBLIC int portio_sin(int port, void * buf, int len)
+PUBLIC int portio_sin(int port, void* buf, int len)
 {
     MESSAGE m;
     m.PIO_REQUEST = PIO_IN;
@@ -68,7 +68,7 @@ PUBLIC int portio_sin(int port, void * buf, int len)
     return syscall_entry(NR_SPORTIO, &m);
 }
 
-PUBLIC int portio_sout(int port, void * buf, int len)
+PUBLIC int portio_sout(int port, void* buf, int len)
 {
     MESSAGE m;
     m.PIO_REQUEST = PIO_OUT;

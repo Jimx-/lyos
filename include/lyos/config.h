@@ -23,38 +23,40 @@
 #endif
 
 /* Number of tasks & processes */
-#define NR_TASKS        4
+#define NR_TASKS 4
 #if __i386__
-#define NR_BOOT_PROCS   (NR_TASKS + 14)
+#define NR_BOOT_PROCS (NR_TASKS + 14)
 #else
-#define NR_BOOT_PROCS   (NR_TASKS + 13)
-#endif    
-#define NR_PROCS        256
-#define NR_PRIV_PROCS   64
-    
-#define NR_SCHED_QUEUES     16
-#define MIN_USER_PRIO       (NR_SCHED_QUEUES - 1)   /* min user priority */
-#define MAX_USER_PRIO       0                       /* max user priority */
-#define USER_PRIO           ((MIN_USER_PRIO - MAX_USER_PRIO) / 2 + MAX_USER_PRIO)   /* default user priority */
-#define TASK_PRIO           (USER_PRIO / 2)   /* default task priority */
+#define NR_BOOT_PROCS (NR_TASKS + 13)
+#endif
+#define NR_PROCS 256
+#define NR_PRIV_PROCS 64
 
-#define USER_QUANTUM        15
-#define TASK_QUANTUM        15
+#define NR_SCHED_QUEUES 16
+#define MIN_USER_PRIO (NR_SCHED_QUEUES - 1) /* min user priority */
+#define MAX_USER_PRIO 0                     /* max user priority */
+#define USER_PRIO                          \
+    ((MIN_USER_PRIO - MAX_USER_PRIO) / 2 + \
+     MAX_USER_PRIO)               /* default user priority */
+#define TASK_PRIO (USER_PRIO / 2) /* default task priority */
 
-#define VPORTIO_BUF_SIZE     256
+#define USER_QUANTUM 15
+#define TASK_QUANTUM 15
+
+#define VPORTIO_BUF_SIZE 256
 
 #if CONFIG_X86_LOCAL_APIC
-#define NR_IRQ_HOOKS        64
+#define NR_IRQ_HOOKS 64
 #else
-#define NR_IRQ_HOOKS        16
+#define NR_IRQ_HOOKS 16
 #endif
 
 /* TTY */
-#define NR_CONSOLES 6   /* consoles */
-#define NR_SERIALS  3   /* serial ports */
+#define NR_CONSOLES 6 /* consoles */
+#define NR_SERIALS 3  /* serial ports */
 
 /* PCI */
-#define NR_PCIBUS   4
-#define NR_PCIDEV   50
-    
+#define NR_PCIBUS 4
+#define NR_PCIDEV 50
+
 #endif

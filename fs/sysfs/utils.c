@@ -42,7 +42,7 @@ PRIVATE sysfs_dyn_attr_id_t alloc_dyn_attr_id()
     return next_id++;
 }
 
-PUBLIC int do_publish(MESSAGE * m)
+PUBLIC int do_publish(MESSAGE* m)
 {
     endpoint_t src = m->source;
     int len = m->NAME_LEN;
@@ -55,7 +55,7 @@ PUBLIC int do_publish(MESSAGE * m)
     data_copy(SELF, name, src, m->PATHNAME, len);
     name[len] = '\0';
 
-    sysfs_node_t * node = create_node(name, flags);
+    sysfs_node_t* node = create_node(name, flags);
     if (!node) return errno;
 
     if (flags & SF_TYPE_U32) {
@@ -69,7 +69,7 @@ PUBLIC int do_publish(MESSAGE * m)
     return 0;
 }
 
-PUBLIC int do_retrieve(MESSAGE * m)
+PUBLIC int do_retrieve(MESSAGE* m)
 {
     endpoint_t src = m->source;
     int len = m->NAME_LEN;
@@ -82,7 +82,7 @@ PUBLIC int do_retrieve(MESSAGE * m)
     data_copy(SELF, name, src, m->PATHNAME, len);
     name[len] = '\0';
 
-    sysfs_node_t * node = lookup_node_by_name(name);
+    sysfs_node_t* node = lookup_node_by_name(name);
     if (!node) return ENOENT;
 
     if (node->flags & SF_PRIV_RETRIEVE) return EPERM;

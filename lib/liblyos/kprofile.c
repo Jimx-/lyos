@@ -26,7 +26,8 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_kprofile(int action, size_t size, int freq, endpoint_t endpt, void* info, void* buf)
+PUBLIC int kernel_kprofile(int action, size_t size, int freq, endpoint_t endpt,
+                           void* info, void* buf)
 {
     MESSAGE m;
     m.KP_ACTION = action;

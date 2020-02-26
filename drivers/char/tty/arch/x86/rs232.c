@@ -36,86 +36,86 @@
 #include <libchardriver/libchardriver.h>
 
 /* 8250 constants */
-#define UART_FREQ         115200L   /* timer frequency */
+#define UART_FREQ 115200L /* timer frequency */
 
-#define RS_IBUFSIZE          1024      /* RS232 input buffer size */
-#define RS_IBUFLOW           (RS_IBUFSIZE / 4)
-#define RS_IBUFHIGH          (RS_IBUFSIZE * 3 / 4)
-#define RS_OBUFSIZE          1024      /* RS232 output buffer size */
+#define RS_IBUFSIZE 1024 /* RS232 input buffer size */
+#define RS_IBUFLOW (RS_IBUFSIZE / 4)
+#define RS_IBUFHIGH (RS_IBUFSIZE * 3 / 4)
+#define RS_OBUFSIZE 1024 /* RS232 output buffer size */
 
 /* Interrupt enable bits */
-#define IE_RECEIVER_READY       1
-#define IE_TRANSMITTER_READY    2
-#define IE_LINE_STATUS_CHANGE   4
-#define IE_MODEM_STATUS_CHANGE  8
+#define IE_RECEIVER_READY 1
+#define IE_TRANSMITTER_READY 2
+#define IE_LINE_STATUS_CHANGE 4
+#define IE_MODEM_STATUS_CHANGE 8
 
 /* Line control bits */
-#define LC_CS5               0x00   /* LSB0 and LSB1 encoding for CS5 */
-#define LC_CS6               0x01   /* LSB0 and LSB1 encoding for CS6 */
-#define LC_CS7               0x02   /* LSB0 and LSB1 encoding for CS7 */
-#define LC_CS8               0x03   /* LSB0 and LSB1 encoding for CS8 */
-#define LC_2STOP_BITS        0x04
-#define LC_PARITY            0x08
-#define LC_PAREVEN           0x10
-#define LC_BREAK             0x40
-#define LC_ADDRESS_DIVISOR   0x80
+#define LC_CS5 0x00 /* LSB0 and LSB1 encoding for CS5 */
+#define LC_CS6 0x01 /* LSB0 and LSB1 encoding for CS6 */
+#define LC_CS7 0x02 /* LSB0 and LSB1 encoding for CS7 */
+#define LC_CS8 0x03 /* LSB0 and LSB1 encoding for CS8 */
+#define LC_2STOP_BITS 0x04
+#define LC_PARITY 0x08
+#define LC_PAREVEN 0x10
+#define LC_BREAK 0x40
+#define LC_ADDRESS_DIVISOR 0x80
 
 /* Interrupt status bits */
-#define IS_MODEM_STATUS_CHANGE  0
-#define IS_NOTPENDING           1
-#define IS_TRANSMITTER_READY    2
-#define IS_RECEIVER_READY       4
-#define IS_LINE_STATUS_CHANGE   6
-#define IS_IDBITS               6
+#define IS_MODEM_STATUS_CHANGE 0
+#define IS_NOTPENDING 1
+#define IS_TRANSMITTER_READY 2
+#define IS_RECEIVER_READY 4
+#define IS_LINE_STATUS_CHANGE 6
+#define IS_IDBITS 6
 
 /* Line status bits */
-#define LS_OVERRUN_ERR          2
-#define LS_PARITY_ERR           4
-#define LS_FRAMING_ERR          8
-#define LS_BREAK_INTERRUPT   0x10
+#define LS_OVERRUN_ERR 2
+#define LS_PARITY_ERR 4
+#define LS_FRAMING_ERR 8
+#define LS_BREAK_INTERRUPT 0x10
 #define LS_TRANSMITTER_READY 0x20
 
 /* Modem control bits */
-#define MC_DTR                  1
-#define MC_RTS                  2
-#define MC_OUT2                 8   /* required for PC & AT interrupts */
+#define MC_DTR 1
+#define MC_RTS 2
+#define MC_OUT2 8 /* required for PC & AT interrupts */
 
 /* Modem status bits */
-#define MS_CTS               0x10
-#define MS_RLSD              0x80       /* Received Line Signal Detect */
-#define MS_DRLSD             0x08       /* RLSD Delta */
+#define MS_CTS 0x10
+#define MS_RLSD 0x80  /* Received Line Signal Detect */
+#define MS_DRLSD 0x08 /* RLSD Delta */
 
 #define devready(rs) ((rs_inb(rs->modem_status_port) | rs->cts) & MS_CTS)
 #define txready(rs) (rs_inb(rs->line_status_port) & LS_TRANSMITTER_READY)
 
-#define istart(rs) \
+#define istart(rs)                                                 \
     (portio_outb((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR), \
-        (rs)->idevready = TRUE)
-#define istop(rs) \
+     (rs)->idevready = TRUE)
+#define istop(rs)                                         \
     (portio_outb((rs)->modem_ctl_port, MC_OUT2 | MC_DTR), \
-        (rs)->idevready = FALSE)
+     (rs)->idevready = FALSE)
 
 typedef struct rs232 {
-    TTY * rs_tty;
+    TTY* rs_tty;
 
     int cts;
 
     unsigned char ostate;
-#define ODONE          1
-#define ORAW           2
-#define OWAKEUP        4
+#define ODONE 1
+#define ORAW 2
+#define OWAKEUP 4
 #define ODEVREADY MS_CTS
-#define OQUEUED     0x20
-#define OSWREADY    0x40
-#define ODEVHUP  MS_RLSD
+#define OQUEUED 0x20
+#define OSWREADY 0x40
+#define ODEVHUP MS_RLSD
 
-    char * ihead, * itail;
-    char * ohead, * otail;
+    char *ihead, *itail;
+    char *ohead, *otail;
 
     int icount, ocount;
     int idevready;
 
-    port_t xmit_port;     /* i/o ports */
+    port_t xmit_port; /* i/o ports */
     port_t recv_port;
     port_t div_low_port;
     port_t div_hi_port;
@@ -135,16 +135,11 @@ typedef struct rs232 {
 
 PRIVATE rs232_t rs_lines[NR_SERIALS];
 
-PRIVATE port_t com_addr[] = {
-    0x3F8,
-    0x2F8,
-    0x3E8,
-    0x2E8
-};
+PRIVATE port_t com_addr[] = {0x3F8, 0x2F8, 0x3E8, 0x2E8};
 
-PUBLIC  irq_id_t    rs_irq_set;
+PUBLIC irq_id_t rs_irq_set;
 
-PRIVATE void rs_ostart(rs232_t * rs);
+PRIVATE void rs_ostart(rs232_t* rs);
 
 PRIVATE int rs_inb(port_t port)
 {
@@ -154,38 +149,31 @@ PRIVATE int rs_inb(port_t port)
     return v;
 }
 
-PRIVATE void rs_config(rs232_t * rs)
+PRIVATE void rs_config(rs232_t* rs)
 {
-    TTY * tty = rs->rs_tty;
+    TTY* tty = rs->rs_tty;
     PRIVATE struct speed_divisor {
         int speed;
         int divisor;
     } sp2d[] = {
-        { B50,      UART_FREQ / 50      },
-        { B75,      UART_FREQ / 75      },
-        { B110,     UART_FREQ / 110     },
-        { B134,     UART_FREQ * 10 / 1345   },
-        { B150,     UART_FREQ / 150     },
-        { B200,     UART_FREQ / 200     },
-        { B300,     UART_FREQ / 300     },
-        { B600,     UART_FREQ / 600     },
-        { B1200,    UART_FREQ / 1200    },
-        { B1800,    UART_FREQ / 1800    },
-        { B2400,    UART_FREQ / 2400    },
-        { B4800,    UART_FREQ / 4800    },
-        { B9600,    UART_FREQ / 9600    },
-        { B19200,   UART_FREQ / 19200   },
-        { B38400,   UART_FREQ / 38400   },
+        {B50, UART_FREQ / 50},       {B75, UART_FREQ / 75},
+        {B110, UART_FREQ / 110},     {B134, UART_FREQ * 10 / 1345},
+        {B150, UART_FREQ / 150},     {B200, UART_FREQ / 200},
+        {B300, UART_FREQ / 300},     {B600, UART_FREQ / 600},
+        {B1200, UART_FREQ / 1200},   {B1800, UART_FREQ / 1800},
+        {B2400, UART_FREQ / 2400},   {B4800, UART_FREQ / 4800},
+        {B9600, UART_FREQ / 9600},   {B19200, UART_FREQ / 19200},
+        {B38400, UART_FREQ / 38400},
         //{ B57600,   UART_FREQ / 57600   },
         //{ B115200,  UART_FREQ / 115200L },
     };
 
-    struct speed_divisor * sd;
+    struct speed_divisor* sd;
 
     rs->cts = (tty->tty_termios.c_cflag & CLOCAL) ? MS_CTS : 0;
 
     int divisor = 0;
-    for (sd = sp2d; sd < sp2d + sizeof(sp2d)/sizeof(sp2d[0]); sd++) {
+    for (sd = sp2d; sd < sp2d + sizeof(sp2d) / sizeof(sp2d[0]); sd++) {
         if (sd->speed == tty->tty_termios.c_ospeed) divisor = sd->divisor;
     }
     if (divisor == 0) return;
@@ -198,13 +186,13 @@ PRIVATE void rs_config(rs232_t * rs)
 
     if (divisor >= (UART_FREQ / 110)) line_controls |= LC_2STOP_BITS;
 
-    if((tty->tty_termios.c_cflag & CSIZE) == CS5)
+    if ((tty->tty_termios.c_cflag & CSIZE) == CS5)
         line_controls |= LC_CS5;
-    else if((tty->tty_termios.c_cflag & CSIZE) == CS6)
+    else if ((tty->tty_termios.c_cflag & CSIZE) == CS6)
         line_controls |= LC_CS6;
-    else if((tty->tty_termios.c_cflag & CSIZE) == CS7)
+    else if ((tty->tty_termios.c_cflag & CSIZE) == CS7)
         line_controls |= LC_CS7;
-    else if((tty->tty_termios.c_cflag & CSIZE) == CS8)
+    else if ((tty->tty_termios.c_cflag & CSIZE) == CS8)
         line_controls |= LC_CS8;
 
     pb_pair_t pv_pairs[4];
@@ -217,10 +205,10 @@ PRIVATE void rs_config(rs232_t * rs)
     rs->ostate = devready(rs) | OSWREADY;
 }
 
-PRIVATE void rs_read(TTY * tty)
+PRIVATE void rs_read(TTY* tty)
 {
     int count, icount;
-    rs232_t * rs = (rs232_t *)tty->tty_dev;
+    rs232_t* rs = (rs232_t*)tty->tty_dev;
 
     while ((count = rs->icount) > 0) {
         icount = bufend(rs->ibuf) - rs->itail;
@@ -234,9 +222,9 @@ PRIVATE void rs_read(TTY * tty)
     }
 }
 
-PRIVATE void rs_write(TTY * tty)
+PRIVATE void rs_write(TTY* tty)
 {
-    rs232_t * rs = (rs232_t *)tty->tty_dev;
+    rs232_t* rs = (rs232_t*)tty->tty_dev;
 
     while (TRUE) {
         int ocount = buflen(rs->obuf) - rs->ocount;
@@ -246,7 +234,8 @@ PRIVATE void rs_write(TTY * tty)
 
         if (count == 0) break;
 
-        data_copy(SELF, rs->ohead, tty->tty_outcaller, (char *)tty->tty_outbuf + tty->tty_outcnt, count);
+        data_copy(SELF, rs->ohead, tty->tty_outcaller,
+                  (char*)tty->tty_outbuf + tty->tty_outcnt, count);
 
         ocount = count;
         rs->ocount += ocount;
@@ -266,9 +255,9 @@ PRIVATE void rs_write(TTY * tty)
     }
 }
 
-PRIVATE void rs_echo(TTY * tty, char c)
+PRIVATE void rs_echo(TTY* tty, char c)
 {
-    rs232_t * rs = (rs232_t *)tty->tty_dev;
+    rs232_t* rs = (rs232_t*)tty->tty_dev;
     int ocount;
 
     if (buflen(rs->obuf) == rs->ocount) return;
@@ -277,14 +266,15 @@ PRIVATE void rs_echo(TTY * tty, char c)
 
     rs->ocount += ocount;
     rs_ostart(rs);
-    if ((rs->ohead += ocount) >= bufend(rs->obuf)) rs->ohead -= buflen(rs->obuf);
+    if ((rs->ohead += ocount) >= bufend(rs->obuf))
+        rs->ohead -= buflen(rs->obuf);
 }
 
-PUBLIC int init_rs(TTY * tty)
+PUBLIC int init_rs(TTY* tty)
 {
     int line = tty - &tty_table[NR_CONSOLES];
 
-    rs232_t * rs = tty->tty_dev = &rs_lines[line];
+    rs232_t* rs = tty->tty_dev = &rs_lines[line];
     rs->rs_tty = tty;
 
     rs->ihead = rs->itail = rs->ibuf;
@@ -313,8 +303,9 @@ PUBLIC int init_rs(TTY * tty)
 
     rs_irq_set = (1 << rs->irq);
 
-    portio_outb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
-                | IE_RECEIVER_READY | IE_TRANSMITTER_READY);
+    portio_outb(rs->int_enab_port,
+                IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE |
+                    IE_RECEIVER_READY | IE_TRANSMITTER_READY);
 
     tty->tty_devread = rs_read;
     tty->tty_devwrite = rs_write;
@@ -324,7 +315,7 @@ PUBLIC int init_rs(TTY * tty)
     return 0;
 }
 
-PRIVATE void rs_in_int(rs232_t * rs)
+PRIVATE void rs_in_int(rs232_t* rs)
 {
     u32 ch;
     portio_inb(rs->recv_port, &ch);
@@ -336,7 +327,7 @@ PRIVATE void rs_in_int(rs232_t * rs)
     if (++rs->ihead >= bufend(rs->ibuf)) rs->ihead = rs->ibuf;
 }
 
-PRIVATE void rs_out_int(rs232_t * rs)
+PRIVATE void rs_out_int(rs232_t* rs)
 {
     while (txready(rs) && rs->ostate >= (ODEVREADY | OSWREADY | OQUEUED)) {
         portio_outb(rs->xmit_port, *rs->otail);
@@ -348,13 +339,13 @@ PRIVATE void rs_out_int(rs232_t * rs)
     }
 }
 
-PRIVATE void rs_ostart(rs232_t * rs)
+PRIVATE void rs_ostart(rs232_t* rs)
 {
     rs->ostate |= OQUEUED;
     if (txready(rs)) rs_out_int(rs);
 }
 
-PRIVATE void rs_handle_irq(rs232_t * rs)
+PRIVATE void rs_handle_irq(rs232_t* rs)
 {
     int i = 1000;
     while (i--) {
@@ -375,10 +366,10 @@ PRIVATE void rs_handle_irq(rs232_t * rs)
     }
 }
 
-PUBLIC int rs_interrupt(MESSAGE * m)
+PUBLIC int rs_interrupt(MESSAGE* m)
 {
     unsigned long irq_set = m->INTERRUPTS;
-    rs232_t * rs = rs_lines;
+    rs232_t* rs = rs_lines;
     int i;
 
     for (i = 0; i < NR_SERIALS; i++, rs++) {
@@ -387,4 +378,3 @@ PUBLIC int rs_interrupt(MESSAGE * m)
 
     return 0;
 }
-

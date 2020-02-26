@@ -21,15 +21,15 @@
 
 #include "inode.h"
 
-#define NO_INDEX  -1
+#define NO_INDEX -1
 
 struct memfs_hooks {
     int (*init_hook)();
-    int (*message_hook)(MESSAGE * m);
+    int (*message_hook)(MESSAGE* m);
     ssize_t (*read_hook)(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data);
+                         off_t offset, cbdata_t data);
     ssize_t (*write_hook)(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data);
+                          off_t offset, cbdata_t data);
     ssize_t (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
     int (*lookup_hook)(struct memfs_inode* parent, char* name, cbdata_t data);
 };
@@ -39,17 +39,24 @@ extern struct memfs_hooks fs_hooks;
 extern char* memfs_buf;
 extern size_t memfs_bufsize;
 
-PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_stat * root_stat);
-PUBLIC int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node * node);
-PUBLIC int memfs_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint);
-PUBLIC int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data  * data);
-PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count);
-PUBLIC int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * ppos, size_t * count);
+PUBLIC int memfs_start(char* name, struct memfs_hooks* hooks,
+                       struct memfs_stat* root_stat);
+PUBLIC int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+PUBLIC int memfs_lookup(dev_t dev, ino_t start, char* name,
+                        struct fsdriver_node* fn, int* is_mountpoint);
+PUBLIC int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
+PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
+                           struct fsdriver_data* data, u64* rwpos, int* count);
+PUBLIC int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
+                          u64* ppos, size_t* count);
 
 PUBLIC int memfs_init_buf();
 PUBLIC int memfs_free_buf();
 
 PUBLIC int memfs_node_index(struct memfs_inode* pin);
 PUBLIC struct memfs_inode* memfs_node_parent(struct memfs_inode* pin);
-PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, int index, struct memfs_stat * stat, cbdata_t data);
+PUBLIC struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
+                                           char* name, int index,
+                                           struct memfs_stat* stat,
+                                           cbdata_t data);
 #endif

@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -36,74 +36,23 @@
 #include <asm/type.h>
 
 #ifdef __i386__
-PRIVATE const char * x86_flag[] = {
-    "sse3",
-    "pclmulqdq",
-    "dtes64",
-    "monitor",
-    "ds_cpl",
-    "vmx",
-    "smx",
-    "est",
-    "tm2",
-    "ssse3",
-    "cnxt_id",
-    "sdbg",
-    "fma",
-    "cx16",
-    "xtpr",
-    "pdcm",
-    "",
-    "pcid",
-    "dca",
-    "sse4_1",
-    "sse4_2",
-    "x2apic",
-    "movbe",
-    "popcnt",
-    "tsc_deadline",
-    "aes",
-    "xsave",
-    "osxsave",
-    "avx",
-    "f16c",
-    "rdrnd",
-    "hypervisor",
-    "fpu",
-    "vme",
-    "de",
-    "pse",
-    "tsc",
-    "msr",
-    "pae",
-    "mce",
-    "cx8",
-    "apic",
-    "",
-    "sep",
-    "mtrr",
-    "pge",
-    "mca",
-    "cmov",
-    "pat",
-    "pse36",
-    "psn",
-    "clfsh",
-    "",
-    "ds",
-    "acpi",
-    "mmx",
-    "fxsr",
-    "sse",
-    "sse2",
-    "ss",
-    "htt",
-    "tm",
-    "ia64",
-    "pbe",
+PRIVATE const char* x86_flag[] = {
+    "sse3",    "pclmulqdq",  "dtes64",  "monitor", "ds_cpl",
+    "vmx",     "smx",        "est",     "tm2",     "ssse3",
+    "cnxt_id", "sdbg",       "fma",     "cx16",    "xtpr",
+    "pdcm",    "",           "pcid",    "dca",     "sse4_1",
+    "sse4_2",  "x2apic",     "movbe",   "popcnt",  "tsc_deadline",
+    "aes",     "xsave",      "osxsave", "avx",     "f16c",
+    "rdrnd",   "hypervisor", "fpu",     "vme",     "de",
+    "pse",     "tsc",        "msr",     "pae",     "mce",
+    "cx8",     "apic",       "",        "sep",     "mtrr",
+    "pge",     "mca",        "cmov",    "pat",     "pse36",
+    "psn",     "clfsh",      "",        "ds",      "acpi",
+    "mmx",     "fxsr",       "sse",     "sse2",    "ss",
+    "htt",     "tm",         "ia64",    "pbe",
 };
 
-PRIVATE void print_x86_cpu_flags(u32 * flags)
+PRIVATE void print_x86_cpu_flags(u32* flags)
 {
     int i, j;
 
@@ -117,7 +66,7 @@ PRIVATE void print_x86_cpu_flags(u32 * flags)
 }
 #endif
 
-PRIVATE void print_cpu(struct cpu_info * cpu_info, int idx)
+PRIVATE void print_cpu(struct cpu_info* cpu_info, int idx)
 {
     buf_printf("%-16s: %d\n", "processor", idx);
 

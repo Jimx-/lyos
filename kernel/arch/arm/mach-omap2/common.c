@@ -30,7 +30,7 @@ PUBLIC void* uart_base_addr;
 PUBLIC void omap3_disp_char(const char c)
 {
     int i;
-    char* base = (char*) uart_base_addr;
+    char* base = (char*)uart_base_addr;
 
     for (i = 0; i < 100000; i++) {
         if (mmio_read(base + OMAP3_LSR) & OMAP3_LSR_THRE) {

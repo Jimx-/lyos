@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <lyos/bitmap.h>
 #include <lyos/timer.h>
-    
+
 /* Process privilege structure */
 struct priv {
     int proc_nr;
@@ -41,29 +41,28 @@ struct priv {
     priv_map_t async_pending;
 };
 
-#define FIRST_PRIV          priv_table[0]
-#define LAST_PRIV           priv_table[NR_PRIV_PROCS]
-#define FIRST_STATIC_PRIV   FIRST_PRIV
-#define LAST_STATIC_PRIV    priv_table[NR_BOOT_PROCS]
-#define FIRST_DYN_PRIV      LAST_STATIC_PRIV
-#define LAST_DYN_PRIV       LAST_PRIV
+#define FIRST_PRIV priv_table[0]
+#define LAST_PRIV priv_table[NR_PRIV_PROCS]
+#define FIRST_STATIC_PRIV FIRST_PRIV
+#define LAST_STATIC_PRIV priv_table[NR_BOOT_PROCS]
+#define FIRST_DYN_PRIV LAST_STATIC_PRIV
+#define LAST_DYN_PRIV LAST_PRIV
 
-#define priv_addr(n)        (&priv_table[n])
-#define static_priv_id(n)   ((n) + NR_TASKS)
+#define priv_addr(n) (&priv_table[n])
+#define static_priv_id(n) ((n) + NR_TASKS)
 
-#define PRIV_ID_NULL        (-1)
+#define PRIV_ID_NULL (-1)
 
-#define PRF_PRIV_PROC       0x01
-#define PRF_DYN_ID          0x02
+#define PRF_PRIV_PROC 0x01
+#define PRF_DYN_ID 0x02
 
-#define TASK_FLAGS          (PRF_PRIV_PROC)
-#define USER_FLAGS          (0)
+#define TASK_FLAGS (PRF_PRIV_PROC)
+#define USER_FLAGS (0)
 
-#define NO_CALLS_ALLOWED    (-1)
-#define ALL_CALLS_ALLOWED   (-2)
+#define NO_CALLS_ALLOWED (-1)
+#define ALL_CALLS_ALLOWED (-2)
 
-#define TASK_CALLS          ALL_CALLS_ALLOWED
-#define KERNTASK_CALLS      NO_CALLS_ALLOWED
-
+#define TASK_CALLS ALL_CALLS_ALLOWED
+#define KERNTASK_CALLS NO_CALLS_ALLOWED
 
 #endif

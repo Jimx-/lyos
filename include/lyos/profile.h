@@ -20,10 +20,10 @@
 #include <lyos/ipc.h>
 #include <lyos/proc.h>
 
-#define KPROF_SAMPLE_BUFSIZE    (4 << 20)
+#define KPROF_SAMPLE_BUFSIZE (4 << 20)
 
-#define KPROF_START     1
-#define KPROF_STOP      2
+#define KPROF_START 1
+#define KPROF_STOP 2
 
 struct kprof_sample {
     endpoint_t endpt;

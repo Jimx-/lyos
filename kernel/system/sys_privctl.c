@@ -34,22 +34,22 @@
 #endif
 #include <lyos/cpulocals.h>
 
-PUBLIC int arch_privctl(MESSAGE * m, struct proc* p);
+PUBLIC int arch_privctl(MESSAGE* m, struct proc* p);
 
-PRIVATE int update_priv(struct proc * p, struct priv * priv);
+PRIVATE int update_priv(struct proc* p, struct priv* priv);
 
-PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
+PUBLIC int sys_privctl(MESSAGE* m, struct proc* p)
 {
-	endpoint_t whom = m->ENDPOINT;
-	int request = m->REQUEST;
+    endpoint_t whom = m->ENDPOINT;
+    int request = m->REQUEST;
     int priv_id;
     struct priv priv;
     int r;
-	
-	struct proc * target = endpt_proc(whom);
+
+    struct proc* target = endpt_proc(whom);
     if (!target) return EINVAL;
 
-	switch (request) {
+    switch (request) {
     case PRIVCTL_SET_PRIV:
         if (!PST_IS_SET(target, PST_NO_PRIV)) return EPERM;
 
@@ -72,13 +72,13 @@ PUBLIC int sys_privctl(MESSAGE * m, struct proc* p)
 
         return 0;
     default:
-    	break;
-	}
+        break;
+    }
 
-	return EINVAL;
+    return EINVAL;
 }
 
-PRIVATE int update_priv(struct proc * p, struct priv * priv)
+PRIVATE int update_priv(struct proc* p, struct priv* priv)
 {
     p->priv->flags = priv->flags;
     return 0;

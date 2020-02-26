@@ -34,16 +34,16 @@ extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE, _KERN_OFFSET;
 extern char _arch_init_start, _arch_init_end;
 
 /* paging utilities */
-PRIVATE phys_bytes kern_vir_base = (phys_bytes) &_VIR_BASE;
-PRIVATE phys_bytes kern_phys_base = (phys_bytes) &_PHYS_BASE;
-PRIVATE phys_bytes kern_size = (phys_bytes) &_KERN_SIZE;
+PRIVATE phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
+PRIVATE phys_bytes kern_phys_base = (phys_bytes)&_PHYS_BASE;
+PRIVATE phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern u32 k_stacks_start;
-PUBLIC void * k_stacks;
+PUBLIC void* k_stacks;
 
-PRIVATE char * env_get(const char *name);
-PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
+PRIVATE char* env_get(const char* name);
+PRIVATE int kinfo_set_param(char* buf, char* name, char* value);
 
 PRIVATE void parse_atags(void* atags_ptr)
 {
@@ -53,7 +53,7 @@ PRIVATE void parse_atags(void* atags_ptr)
     static char var[KINFO_CMDLINE_LEN];
     static char value[KINFO_CMDLINE_LEN];
 
-    for (t = atags_ptr; t->hdr.size; t = (struct tag *)((u32 *)t + t->hdr.size)) {
+    for (t = atags_ptr; t->hdr.size; t = (struct tag*)((u32*)t + t->hdr.size)) {
         switch (t->hdr.tag) {
         case ATAG_CORE:
             break;
@@ -65,41 +65,43 @@ PRIVATE void parse_atags(void* atags_ptr)
             kinfo.memmaps_count++;
             kinfo.memory_size += t->u.mem.size;
             break;
-        case ATAG_CMDLINE:
-        {
+        case ATAG_CMDLINE: {
             /* kernel command line */
-            strlcpy(cmdline, (void *)t->u.cmdline.cmdline, KINFO_CMDLINE_LEN);
-            char * p = cmdline;
+            strlcpy(cmdline, (void*)t->u.cmdline.cmdline, KINFO_CMDLINE_LEN);
+            char* p = cmdline;
             while (*p) {
                 int var_i = 0;
                 int value_i = 0;
-                while (*p == ' ') p++;
+                while (*p == ' ')
+                    p++;
                 if (!*p) break;
-                while (*p && *p != '=' && *p != ' ' && var_i < KINFO_CMDLINE_LEN - 1) 
-                    var[var_i++] = *p++ ;
+                while (*p && *p != '=' && *p != ' ' &&
+                       var_i < KINFO_CMDLINE_LEN - 1)
+                    var[var_i++] = *p++;
                 var[var_i] = 0;
                 if (*p++ != '=') continue;
-                while (*p && *p != ' ' && value_i < KINFO_CMDLINE_LEN - 1) 
-                    value[value_i++] = *p++ ;
+                while (*p && *p != ' ' && value_i < KINFO_CMDLINE_LEN - 1)
+                    value[value_i++] = *p++;
                 value[value_i] = 0;
-            
+
                 kinfo_set_param(kinfo.cmdline, var, value);
             }
             break;
         }
-        case ATAG_INITRD2:
-        {
+        case ATAG_INITRD2: {
             /* initrd2: the real initial ramdisk */
             char initrd_param_buf[20];
-            sprintf(initrd_param_buf, "0x%x", (phys_bytes)t->u.initrd.start + (phys_bytes) &_KERN_OFFSET);
+            sprintf(initrd_param_buf, "0x%x",
+                    (phys_bytes)t->u.initrd.start + (phys_bytes)&_KERN_OFFSET);
             kinfo_set_param(kinfo.cmdline, "initrd_base", initrd_param_buf);
             sprintf(initrd_param_buf, "%u", (phys_bytes)t->u.initrd.size);
             kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
-            phys_bytes initrd_end = (phys_bytes)t->u.initrd.start + (phys_bytes)t->u.initrd.size;
+            phys_bytes initrd_end =
+                (phys_bytes)t->u.initrd.start + (phys_bytes)t->u.initrd.size;
             phys_bytes kern_initrd_size = initrd_end - kern_phys_base;
             /* update kernel size to protect initrd from being overwritten */
             kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_initrd_size);
-            kinfo.kernel_end_phys = initrd_end; 
+            kinfo.kernel_end_phys = initrd_end;
             break;
         }
         default:
@@ -123,40 +125,46 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     kinfo.kernel_data_end = (void*)*(&_edata);
     kinfo.kernel_bss_end = (void*)*(&_ebss);
 
-    char * hz_value = env_get("hz");
+    char* hz_value = env_get("hz");
     if (hz_value) system_hz = atoi(hz_value);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
     /* look up the machine type */
-    struct machine_desc* mach = (struct machine_desc*) &_arch_init_start;
-    for (; mach < (struct machine_desc*) &_arch_init_end; mach++) {
+    struct machine_desc* mach = (struct machine_desc*)&_arch_init_start;
+    for (; mach < (struct machine_desc*)&_arch_init_end; mach++) {
         if (mach->id == mach_type) break;
     }
-    
-    if (mach >= (struct machine_desc*) &_arch_init_end) panic("machine not supported(mach_type: %d)", mach_type);
+
+    if (mach >= (struct machine_desc*)&_arch_init_end)
+        panic("machine not supported(mach_type: %d)", mach_type);
     machine_desc = mach;
-    
+
     kinfo.kernel_start_pde = ARCH_PDE(kern_vir_base);
     kinfo.kernel_end_pde = ARCH_PDE(kern_vir_base + kern_size);
     kinfo.kernel_start_phys = kern_phys_base;
-    kinfo.kernel_end_phys = kern_phys_base + kern_size; 
+    kinfo.kernel_end_phys = kern_phys_base + kern_size;
 
     parse_atags(atags_ptr);
 
     if (kinfo.kernel_end_phys % ARCH_PG_SIZE) {
-        kinfo.kernel_end_phys += ARCH_PG_SIZE - kinfo.kernel_end_phys % ARCH_PG_SIZE;
+        kinfo.kernel_end_phys +=
+            ARCH_PG_SIZE - kinfo.kernel_end_phys % ARCH_PG_SIZE;
         kinfo.kernel_end_pde++;
     }
 
     init_prot();
-    
+
     memset(&kern_log, 0, sizeof(struct kern_log));
     spinlock_init(&kern_log.lock);
 
-#define SET_MODULE(nr, name) do { \
-    extern char _binary_##name##_start[], _binary_##name##_end[]; \
-    kinfo.modules[nr].start_addr = (void*)*(&_binary_##name##_start) - (phys_bytes) &_KERN_OFFSET; \
-    kinfo.modules[nr].end_addr = (void*)*(&_binary_##name##_end) - (phys_bytes) &_KERN_OFFSET; } while(0)
+#define SET_MODULE(nr, name)                                               \
+    do {                                                                   \
+        extern char _binary_##name##_start[], _binary_##name##_end[];      \
+        kinfo.modules[nr].start_addr =                                     \
+            (void*)*(&_binary_##name##_start) - (phys_bytes)&_KERN_OFFSET; \
+        kinfo.modules[nr].end_addr =                                       \
+            (void*)*(&_binary_##name##_end) - (phys_bytes)&_KERN_OFFSET;   \
+    } while (0)
 
     SET_MODULE(TASK_MM, mm);
     SET_MODULE(TASK_PM, pm);
@@ -176,51 +184,55 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 
-PRIVATE char * get_value(const char * param, const char * key)
+PRIVATE char* get_value(const char* param, const char* key)
 {
-    char * envp = (char *)param;
-    const char * name = key;
+    char* envp = (char*)param;
+    const char* name = key;
 
     for (; *envp != 0;) {
-        for (name = key; *name != 0 && *name == *envp; name++, envp++);
+        for (name = key; *name != 0 && *name == *envp; name++, envp++)
+            ;
         if (*name == '\0' && *envp == '=') return envp + 1;
-        while (*envp++ != 0);
+        while (*envp++ != 0)
+            ;
     }
 
     return NULL;
 }
 
-PRIVATE char * env_get(const char *name)
+PRIVATE char* env_get(const char* name)
 {
     return get_value(kinfo.cmdline, name);
 }
 
-PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
+PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
 {
-    char *p = buf;
-    char *bufend = buf + KINFO_CMDLINE_LEN;
-    char *q;
+    char* p = buf;
+    char* bufend = buf + KINFO_CMDLINE_LEN;
+    char* q;
     int namelen = strlen(name);
     int valuelen = strlen(value);
 
     while (*p) {
         if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
             q = p;
-            while (*q) q++;
+            while (*q)
+                q++;
             for (q++; q < bufend; q++, p++)
                 *p = *q;
             break;
         }
-        while (*p++);
+        while (*p++)
+            ;
         p++;
     }
-    
-    for (p = buf; p < bufend && (*p || *(p + 1)); p++);
+
+    for (p = buf; p < bufend && (*p || *(p + 1)); p++)
+        ;
     if (p > buf) p++;
-    
-    if (p + namelen + valuelen + 3 > bufend)
-        return -1;
-    
+
+    if (p + namelen + valuelen + 3 > bufend) return -1;
+
     strcpy(p, name);
     p[namelen] = '=';
     strcpy(p + namelen + 1, value);
@@ -231,8 +243,7 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
 
 PUBLIC void init_arch()
 {
-    if (machine_desc->init_machine)
-        machine_desc->init_machine();
+    if (machine_desc->init_machine) machine_desc->init_machine();
 
     init_tss(0, get_k_stack_top(0));
 }

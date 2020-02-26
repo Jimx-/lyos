@@ -32,9 +32,9 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PUBLIC int ext2_chmod(dev_t dev, ino_t num, mode_t * mode)
+PUBLIC int ext2_chmod(dev_t dev, ino_t num, mode_t* mode)
 {
-    ext2_inode_t * pin = find_ext2_inode(dev, num);
+    ext2_inode_t* pin = find_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
     pin->i_mode = *mode;

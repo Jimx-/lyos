@@ -41,7 +41,7 @@ PRIVATE irq_hook_t timer_irq_hook;
 PUBLIC int arch_init_time()
 {
     init_hpet();
-    
+
     init_tsc();
 
     return 0;
@@ -52,14 +52,14 @@ PUBLIC int arch_init_time()
  *****************************************************************************/
 /**
  * <Ring 0> Initialize 8253/8254 PIT (Programmable Interval Timer).
- * 
+ *
  *****************************************************************************/
 PUBLIC int init_8253_timer(int freq)
 {
     /* 初始化 8253 PIT */
     out_byte(TIMER_MODE, RATE_GENERATOR);
-    out_byte(TIMER0, (u8) (TIMER_FREQ/freq) );
-    out_byte(TIMER0, (u8) ((TIMER_FREQ/freq) >> 8));
+    out_byte(TIMER0, (u8)(TIMER_FREQ / freq));
+    out_byte(TIMER0, (u8)((TIMER_FREQ / freq) >> 8));
 
     return 0;
 }
@@ -76,7 +76,7 @@ PUBLIC int init_local_timer(int freq)
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
         lapic_set_timer_one_shot(1000000 / system_hz);
-    } else 
+    } else
 #endif
     {
         init_8253_timer(freq);

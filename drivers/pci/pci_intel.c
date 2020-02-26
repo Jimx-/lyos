@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -34,7 +34,7 @@
 #include "pci.h"
 #include <asm/pci_intel.h>
 
-PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset) 
+PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset)
 {
     u8 v;
 
@@ -44,7 +44,7 @@ PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset)
     return v;
 }
 
-PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset) 
+PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
 {
     u32 v;
 
@@ -54,7 +54,7 @@ PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
     return (u16)((v >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset) 
+PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset)
 {
     u32 v;
 
@@ -72,20 +72,24 @@ PUBLIC void pcii_write_u16(u32 bus, u32 slot, u32 func, u16 offset, u16 value)
 
 PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
 {
-    return pcii_read_u8(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
+    return pcii_read_u8(pcibus[busind].busnr, pcidev[devind].dev,
+                        pcidev[devind].func, port);
 }
 
 PUBLIC u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port)
 {
-    return pcii_read_u16(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
+    return pcii_read_u16(pcibus[busind].busnr, pcidev[devind].dev,
+                         pcidev[devind].func, port);
 }
 
 PUBLIC u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port)
 {
-    return pcii_read_u32(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port);
+    return pcii_read_u32(pcibus[busind].busnr, pcidev[devind].dev,
+                         pcidev[devind].func, port);
 }
 
 PUBLIC void pcii_wreg_u16(u32 busind, u32 devind, u16 port, u16 value)
 {
-    return pcii_write_u16(pcibus[busind].busnr, pcidev[devind].dev, pcidev[devind].func, port, value);
+    return pcii_write_u16(pcibus[busind].busnr, pcidev[devind].dev,
+                          pcidev[devind].func, port, value);
 }

@@ -43,12 +43,12 @@ struct bus_attr_cb_data {
 #define ID2INDEX(id) (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
-#define NR_BUS_TYPES    32
+#define NR_BUS_TYPES 32
 PRIVATE struct bus_type bus_types[NR_BUS_TYPES];
 
-#define BUS_ATTR_HASH_LOG2   7
-#define BUS_ATTR_HASH_SIZE   ((unsigned long)1<<BUS_ATTR_HASH_LOG2)
-#define BUS_ATTR_HASH_MASK   (((unsigned long)1<<BUS_ATTR_HASH_LOG2)-1)
+#define BUS_ATTR_HASH_LOG2 7
+#define BUS_ATTR_HASH_SIZE ((unsigned long)1 << BUS_ATTR_HASH_LOG2)
+#define BUS_ATTR_HASH_MASK (((unsigned long)1 << BUS_ATTR_HASH_LOG2) - 1)
 
 /* bus attribute hash table */
 PRIVATE struct list_head bus_attr_table[BUS_ATTR_HASH_SIZE];
@@ -143,7 +143,8 @@ PUBLIC struct bus_type* get_bus_type(bus_type_id_t id)
 PRIVATE struct bus_attr_cb_data* alloc_bus_attr()
 {
     static dev_attr_id_t next_id = 1;
-    struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*) malloc(sizeof(struct bus_attr_cb_data));
+    struct bus_attr_cb_data* attr =
+        (struct bus_attr_cb_data*)malloc(sizeof(struct bus_attr_cb_data));
 
     if (!attr) return NULL;
 
@@ -170,7 +171,7 @@ PRIVATE void bus_attr_unhash(struct bus_attr_cb_data* attr)
 
 PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
-    struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*) sf_attr->cb_data;
+    struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*)sf_attr->cb_data;
 
     MESSAGE msg;
     msg.type = DM_BUS_ATTR_SHOW;
@@ -190,14 +191,16 @@ PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
     return count;
 }
 
-PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf, size_t count)
+PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
+                               size_t count)
 {
-    struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*) (sf_attr->cb_data);
+    struct bus_attr_cb_data* attr =
+        (struct bus_attr_cb_data*)(sf_attr->cb_data);
 
     MESSAGE msg;
 
     msg.type = DM_BUS_ATTR_STORE;
-    msg.BUF = (char*) buf;
+    msg.BUF = (char*)buf;
     msg.CNT = count;
     msg.TARGET = attr->id;
 
@@ -224,8 +227,9 @@ PUBLIC int do_bus_attr_add(MESSAGE* m)
     snprintf(label, MAX_PATH, "%s.%s", bus_root, info.name);
 
     sysfs_dyn_attr_t sysfs_attr;
-    int retval = sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*) attr,
-                                    bus_attr_show, bus_attr_store);
+    int retval =
+        sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*)attr,
+                            bus_attr_show, bus_attr_store);
     if (retval) return retval;
     retval = sysfs_publish_dyn_attr(&sysfs_attr);
     if (retval < 0) return -retval;

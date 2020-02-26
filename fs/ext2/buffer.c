@@ -38,7 +38,8 @@
 //#define EXT2_BUFFER_DEBUG
 
 PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb);
-PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count, void * buf);
+PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
+                            void* buf);
 
 PRIVATE int nr_buffers;
 
@@ -52,33 +53,38 @@ PUBLIC void ext2_init_buffer_cache()
 }
 
 /**
- * @brief get_buffer Check if the required block is in the block cache, if it is, return it.
+ * @brief get_buffer Check if the required block is in the block cache, if it
+ * is, return it.
  *
  * @param dev   Required device.
  * @param block Required block.
  *
  * @return Ptr to block buffer if found.
  */
-PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
+PUBLIC ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
 {
-#define REPORT_ERROR_AND_RETURN(e)    \
-    do { \
-        printl("ext2: warning: buffer operation failed(d%d, b%d, e%d)\n", dev, block, e); \
-        err_code = e; return NULL;  \
+#define REPORT_ERROR_AND_RETURN(e)                                             \
+    do {                                                                       \
+        printl("ext2: warning: buffer operation failed(d%d, b%d, e%d)\n", dev, \
+               block, e);                                                      \
+        err_code = e;                                                          \
+        return NULL;                                                           \
     } while (0)
 
     if (!dev) REPORT_ERROR_AND_RETURN(EINVAL);
 
     block_t hash = block % EXT2_BUFFER_HASH_SIZE;
-    ext2_buffer_t * buf;
-    list_for_each_entry(buf, &ext2_buffer_cache[hash], hash) {
+    ext2_buffer_t* buf;
+    list_for_each_entry(buf, &ext2_buffer_cache[hash], hash)
+    {
         if (buf->b_dev == dev && buf->b_block == block) {
             buf->b_refcnt++;
             return buf;
         }
     }
 
-    list_for_each_entry(buf, &ext2_buffer_freelist, list) {
+    list_for_each_entry(buf, &ext2_buffer_freelist, list)
+    {
         if (buf->b_dev == dev && buf->b_block == block) {
             buf->b_refcnt++;
             /* put it back to hash table */
@@ -88,15 +94,16 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
         }
     }
 
-    ext2_superblock_t * psb = get_ext2_super_block(dev);
+    ext2_superblock_t* psb = get_ext2_super_block(dev);
     if (!psb) REPORT_ERROR_AND_RETURN(EINVAL);
 
     size_t block_size = psb->sb_block_size;
 
-    ext2_buffer_t * pb = NULL;
+    ext2_buffer_t* pb = NULL;
 
-    if (nr_buffers < MAX_BUFFERS || list_empty(&ext2_buffer_freelist)) {     /* just allocate one */
-        pb = (ext2_buffer_t *)malloc(sizeof(ext2_buffer_t ));
+    if (nr_buffers < MAX_BUFFERS ||
+        list_empty(&ext2_buffer_freelist)) { /* just allocate one */
+        pb = (ext2_buffer_t*)malloc(sizeof(ext2_buffer_t));
         if (!pb) REPORT_ERROR_AND_RETURN(ENOMEM);
 
         pb->b_dev = dev;
@@ -106,16 +113,19 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
         pb->b_size = block_size;
 
         /* allocate data area */
-        pb->b_data = (char *)malloc(block_size);
+        pb->b_data = (char*)malloc(block_size);
         if (!pb->b_data) REPORT_ERROR_AND_RETURN(ENOMEM);
         nr_buffers++;
-    } else {                         /* find a buffer in the freelist */
-        pb = (ext2_buffer_t *)(ext2_buffer_freelist.next);          /* pick the first one */
-        if (pb->b_dirt) ext2_rw_buffer(BDEV_WRITE, pb);   /* write back to disk to make it clear */
+    } else { /* find a buffer in the freelist */
+        pb = (ext2_buffer_t*)(ext2_buffer_freelist
+                                  .next); /* pick the first one */
+        if (pb->b_dirt)
+            ext2_rw_buffer(BDEV_WRITE,
+                           pb); /* write back to disk to make it clear */
         if (pb->b_size != block_size) { /* realloc */
             free(pb->b_data);
             pb->b_size = block_size;
-            pb->b_data = (char *)malloc(pb->b_size);
+            pb->b_data = (char*)malloc(pb->b_size);
             if (!pb->b_data) REPORT_ERROR_AND_RETURN(ENOMEM);
         }
         ext2_zero_buffer(pb);
@@ -124,15 +134,15 @@ PUBLIC ext2_buffer_t * ext2_get_buffer(dev_t dev, block_t block)
         pb->b_refcnt = 1;
         list_del(&(pb->list));
     }
-   
+
     pb->b_flags = 0;
-    
+
     ext2_rw_buffer(BDEV_READ, pb);
     list_add(&(pb->hash), &ext2_buffer_cache[hash]);
     return pb;
 }
 
-PUBLIC void ext2_put_buffer(ext2_buffer_t * pb)
+PUBLIC void ext2_put_buffer(ext2_buffer_t* pb)
 {
     if (!pb) return;
 
@@ -144,28 +154,30 @@ PUBLIC void ext2_put_buffer(ext2_buffer_t * pb)
     }
 
     if (--pb->b_refcnt == 0) {
-        /* put it to freelist */ 
+        /* put it to freelist */
         list_del(&(pb->hash));
         list_add(&(pb->list), ext2_buffer_freelist_tail);
-        //ext2_buffer_freelist_tail = &(pb->list);
+        // ext2_buffer_freelist_tail = &(pb->list);
     }
     if (pb->b_flags & EXT2_BUFFER_WRITE_IMME && pb->b_dirt && pb->b_dev != 0) {
         ext2_rw_buffer(BDEV_WRITE, pb);
     }
 }
 
-PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count, void * buf)
+PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
+                            void* buf)
 {
-	if (!block_nr) return;
+    if (!block_nr) return;
 
-	ext2_superblock_t * psb = get_ext2_super_block(dev);
-	unsigned long block_size = psb->sb_block_size;
+    ext2_superblock_t* psb = get_ext2_super_block(dev);
+    unsigned long block_size = psb->sb_block_size;
 
-	if (bdev_readwrite(rw_flag, dev, block_size * block_nr, block_size * block_count, ext2_ep, buf) < 0) 
+    if (bdev_readwrite(rw_flag, dev, block_size * block_nr,
+                       block_size * block_count, ext2_ep, buf) < 0)
         printl("ext2: warning: bdev_readwrite failed!\n");
 }
 
-PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t * pb)
+PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb)
 {
     /*if (rw_flag == BDEV_WRITE) {
         memcpy(ext2fsbuf, pb->b_data, pb->b_size);
@@ -184,21 +196,22 @@ PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t * pb)
  * Clear the buffer.
  * @param pb Ptr to the buffer.
  */
-PUBLIC void ext2_zero_buffer(ext2_buffer_t * pb)
+PUBLIC void ext2_zero_buffer(ext2_buffer_t* pb)
 {
     if (pb == NULL || pb->b_data == NULL) return;
     memset(pb->b_data, 0, pb->b_size);
 }
 
 /**
- * @brief sync_buffers Synchronize all dirty buffers 
+ * @brief sync_buffers Synchronize all dirty buffers
  *
- * @return 
+ * @return
  */
 PUBLIC void ext2_sync_buffers()
 {
-    ext2_buffer_t * pb;
-    list_for_each_entry(pb, &ext2_buffer_freelist, list) {
+    ext2_buffer_t* pb;
+    list_for_each_entry(pb, &ext2_buffer_freelist, list)
+    {
         if (pb->b_dirt) {
 #ifdef EXT2_BUFFER_DEBUG
             printl("Writing block #%d at dev 0x%x\n", pb->b_block, pb->b_dev);

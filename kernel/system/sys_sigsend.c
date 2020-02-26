@@ -28,10 +28,10 @@
 #include "errno.h"
 #include <asm/stackframe.h>
 
-PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
+PUBLIC int sys_sigsend(MESSAGE* m, struct proc* p)
 {
     struct siginfo si;
-    struct proc * p_dest = endpt_proc(m->ENDPOINT);
+    struct proc* p_dest = endpt_proc(m->ENDPOINT);
     if (!p_dest) return EINVAL;
 
     data_vir_copy(KERNEL, &si, p->endpoint, m->BUF, sizeof(si));
@@ -39,11 +39,11 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     lock_proc(p_dest);
 
 #ifdef __i386__
-    si.stackptr = (void*) p_dest->regs.esp;
+    si.stackptr = (void*)p_dest->regs.esp;
 #endif
 
-    struct sigframe sf, * sfp;
-    sfp = (struct sigframe *)si.stackptr - 1;
+    struct sigframe sf, *sfp;
+    sfp = (struct sigframe*)si.stackptr - 1;
     memset(&sf, 0, sizeof(sf));
     sf.scp = &sfp->sc;
     sf.scp_sigreturn = &sfp->sc;
@@ -76,8 +76,8 @@ PUBLIC int sys_sigsend(MESSAGE * m, struct proc* p)
     data_vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
 
 #ifdef __i386__
-    p_dest->regs.esp = (reg_t) sfp;
-    p_dest->regs.eip = (reg_t) si.sig_handler;
+    p_dest->regs.esp = (reg_t)sfp;
+    p_dest->regs.eip = (reg_t)si.sig_handler;
 #endif
 
     unlock_proc(p_dest);

@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2011 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -43,12 +43,12 @@ PUBLIC void root_cpuinfo();
 PUBLIC void root_meminfo();
 
 PUBLIC struct procfs_file root_files[] = {
-    { "cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline },
-    { "version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version },
-    { "uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime },
-    { "cpuinfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo },
-    { "meminfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_meminfo },
-    { NULL, 0, NULL },
+    {"cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},
+    {"version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version},
+    {"uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime},
+    {"cpuinfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo},
+    {"meminfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_meminfo},
+    {NULL, 0, NULL},
 };
 
 PRIVATE void root_cmdline()
@@ -61,8 +61,10 @@ PRIVATE void root_cmdline()
 
         int i;
         for (i = 0; i < KINFO_CMDLINE_LEN; i++) {
-            if (kernel_cmdline[i] == '\0' && kernel_cmdline[i + 1] != '\0') kernel_cmdline[i] = ' ';
-            if (kernel_cmdline[i] == '\0' && kernel_cmdline[i + 1] == '\0') break;
+            if (kernel_cmdline[i] == '\0' && kernel_cmdline[i + 1] != '\0')
+                kernel_cmdline[i] = ' ';
+            if (kernel_cmdline[i] == '\0' && kernel_cmdline[i + 1] == '\0')
+                break;
         }
 
         kernel_cmdline_init = 1;
@@ -76,7 +78,8 @@ PRIVATE void root_version()
     struct utsname utsname;
     uname(&utsname);
 
-    buf_printf("%s version %s %s\n", utsname.sysname, utsname.release, utsname.version);
+    buf_printf("%s version %s %s\n", utsname.sysname, utsname.release,
+               utsname.version);
 }
 
 PRIVATE void root_uptime()

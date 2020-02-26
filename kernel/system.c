@@ -35,13 +35,10 @@
 #include "lyos/cpulocals.h"
 #include <lyos/vm.h>
 
-typedef int (*sys_call_handler_t)(MESSAGE * m, struct proc * p_proc);
-PRIVATE  sys_call_handler_t  sys_call_table[NR_SYS_CALLS];
+typedef int (*sys_call_handler_t)(MESSAGE* m, struct proc* p_proc);
+PRIVATE sys_call_handler_t sys_call_table[NR_SYS_CALLS];
 
-PRIVATE int sys_nosys(MESSAGE * m, struct proc * p_proc)
-{
-    return ENOSYS;
-}
+PRIVATE int sys_nosys(MESSAGE* m, struct proc* p_proc) { return ENOSYS; }
 
 PUBLIC void init_system()
 {
@@ -79,9 +76,9 @@ PUBLIC void init_system()
 #endif
 }
 
-PUBLIC int set_priv(struct proc * p, int id)
+PUBLIC int set_priv(struct proc* p, int id)
 {
-    struct priv * priv;
+    struct priv* priv;
     if (id == PRIV_ID_NULL) {
         for (priv = &FIRST_DYN_PRIV; priv < &LAST_DYN_PRIV; priv++) {
             if (priv->proc_nr == NO_TASK) break;
@@ -98,7 +95,7 @@ PUBLIC int set_priv(struct proc * p, int id)
     return 0;
 }
 
-PRIVATE int finish_sys_call(struct proc * p_proc, MESSAGE * msg, int result)
+PRIVATE int finish_sys_call(struct proc* p_proc, MESSAGE* msg, int result)
 {
     if (result == MMSUSPEND) {
         p_proc->mm_request.saved_reqmsg = *msg;
@@ -108,11 +105,11 @@ PRIVATE int finish_sys_call(struct proc * p_proc, MESSAGE * msg, int result)
     }
 
     arch_set_syscall_result(p_proc, result);
-    
+
     return result;
 }
 
-PRIVATE int dispatch_sys_call(int call_nr, MESSAGE * msg, struct proc * p_proc)
+PRIVATE int dispatch_sys_call(int call_nr, MESSAGE* msg, struct proc* p_proc)
 {
     int retval;
 
@@ -126,7 +123,7 @@ PRIVATE int dispatch_sys_call(int call_nr, MESSAGE * msg, struct proc * p_proc)
     return retval;
 }
 
-PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
+PUBLIC int handle_sys_call(int call_nr, MESSAGE* m_user, struct proc* p_proc)
 {
     MESSAGE msg;
     if (call_nr > NR_SYS_CALLS || call_nr < 0) return EINVAL;
@@ -134,7 +131,8 @@ PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
     p_proc->syscall_msg = m_user;
 
     if (copy_user_message(&msg, m_user) != 0) {
-        printk("kernel: copy message failed!(SIGSEGV #%d 0x%x)\n", p_proc->endpoint, m_user);
+        printk("kernel: copy message failed!(SIGSEGV #%d 0x%x)\n",
+               p_proc->endpoint, m_user);
         ksig_proc(p_proc->endpoint, SIGSEGV);
         return EFAULT;
     }
@@ -160,9 +158,10 @@ PUBLIC int handle_sys_call(int call_nr, MESSAGE * m_user, struct proc * p_proc)
     return retval;
 }
 
-PUBLIC int resume_sys_call(struct proc * p)
+PUBLIC int resume_sys_call(struct proc* p)
 {
-    int retval = dispatch_sys_call(p->mm_request.saved_reqmsg.type, &p->mm_request.saved_reqmsg, p);
+    int retval = dispatch_sys_call(p->mm_request.saved_reqmsg.type,
+                                   &p->mm_request.saved_reqmsg, p);
 
     p->flags &= ~PF_RESUME_SYSCALL;
 
@@ -172,10 +171,10 @@ PUBLIC int resume_sys_call(struct proc * p)
 
 PUBLIC int send_sig(endpoint_t ep, int signo)
 {
-    struct proc * p = endpt_proc(ep);
+    struct proc* p = endpt_proc(ep);
     if (!p) return EINVAL;
 
-    struct priv * priv = p->priv;
+    struct priv* priv = p->priv;
     if (!priv) return ENOENT;
 
     sigaddset(&priv->sig_pending, signo);
@@ -186,7 +185,7 @@ PUBLIC int send_sig(endpoint_t ep, int signo)
 
 PUBLIC void ksig_proc(endpoint_t ep, int signo)
 {
-    struct proc * p = endpt_proc(ep);
+    struct proc* p = endpt_proc(ep);
     if (!p) return;
 
     if (!sigismember(&p->sig_pending, signo)) {
@@ -194,7 +193,8 @@ PUBLIC void ksig_proc(endpoint_t ep, int signo)
 
         if (!PST_IS_SET(p, PST_SIGNALED)) {
             PST_SET(p, PST_SIGNALED | PST_SIG_PENDING);
-            if (send_sig(TASK_PM, SIGKSIG) != 0) panic("sig_proc: send_sig failed");
+            if (send_sig(TASK_PM, SIGKSIG) != 0)
+                panic("sig_proc: send_sig failed");
         }
     }
 }

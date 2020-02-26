@@ -32,25 +32,27 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data * data, size_t * bytes)
+PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
+                       size_t* bytes)
 {
     register int retval = 0;
-    ext2_inode_t * pin = find_ext2_inode(dev, num);
+    ext2_inode_t* pin = find_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
-    char * text = NULL;
+    char* text = NULL;
 
-    ext2_buffer_t * pb = NULL;
+    ext2_buffer_t* pb = NULL;
     if (pin->i_size >= EXT2_MAX_FAST_SYMLINK_LENGTH) {
         block_t b = ext2_read_map(pin, 0);
         pb = ext2_get_buffer(dev, b);
-        if (!pb) retval = EIO;
+        if (!pb)
+            retval = EIO;
         else {
-            text = (char *)pb->b_data;
+            text = (char*)pb->b_data;
             retval = 0;
         }
     } else {
-        text = (char *)pin->i_block;
+        text = (char*)pin->i_block;
         retval = 0;
     }
 

@@ -1,4 +1,4 @@
-/*      
+/*
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -19,11 +19,11 @@
 
 #include <libmemfs/libmemfs.h>
 
-PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data);
+PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr,
+                                size_t count, off_t offset, cbdata_t data);
 
 PUBLIC void init_buf(char* ptr, size_t len, off_t off);
-PUBLIC void buf_printf(char * fmt, ...);
+PUBLIC void buf_printf(char* fmt, ...);
 PUBLIC size_t buf_used();
 
 #endif

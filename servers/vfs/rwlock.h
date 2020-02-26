@@ -30,7 +30,7 @@ typedef struct {
     /*struct list_head pending_writers;
     struct list_head pending_readers;*/
 
-    unsigned int pending_reader_serial; 
+    unsigned int pending_reader_serial;
     unsigned int pending_writer_serial;
 } rwlock_t;
 

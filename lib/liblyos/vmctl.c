@@ -23,7 +23,7 @@
 #include "assert.h"
 #include "lyos/vm.h"
 
-int syscall_entry(int syscall_nr, MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE* m);
 
 PUBLIC int vmctl(int request, endpoint_t who)
 {
@@ -35,7 +35,8 @@ PUBLIC int vmctl(int request, endpoint_t who)
     return syscall_entry(NR_VMCTL, &m);
 }
 
-PUBLIC int vmctl_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
+PUBLIC int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len,
+                                  int* flags)
 {
     MESSAGE m;
 
@@ -63,7 +64,7 @@ PUBLIC int vmctl_reply_kern_mapping(int index, void* vir_addr)
     return m.VMCTL_REPLY_KM_RETVAL;
 }
 
-PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned * pdbr)
+PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
 {
     MESSAGE m;
 
@@ -78,7 +79,8 @@ PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned * pdbr)
     return 0;
 }
 
-PUBLIC int vmctl_set_address_space(endpoint_t who, void * pgd_phys, void * pgd_vir)
+PUBLIC int vmctl_set_address_space(endpoint_t who, void* pgd_phys,
+                                   void* pgd_vir)
 {
     MESSAGE m;
 
@@ -100,8 +102,8 @@ PUBLIC int vmctl_flushtlb(endpoint_t who)
     return syscall_entry(NR_VMCTL, &m);
 }
 
-PUBLIC int vmctl_get_mmrequest(endpoint_t * target, void** start, size_t* len,
-                        int * flags, endpoint_t * caller)
+PUBLIC int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
+                               int* flags, endpoint_t* caller)
 {
     MESSAGE m;
 

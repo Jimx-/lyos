@@ -35,48 +35,47 @@
 
 PUBLIC int main()
 {
-	printl("initfs: InitFS driver is running\n");
+    printl("initfs: InitFS driver is running\n");
 
-	MESSAGE m;
+    MESSAGE m;
 
-	int reply;
+    int reply;
 
-	while (1) {
-		send_recv(RECEIVE, ANY, &m);
+    while (1) {
+        send_recv(RECEIVE, ANY, &m);
 
-		int msgtype = m.type;
-		int src = m.source;
-		reply = 1;
+        int msgtype = m.type;
+        int src = m.source;
+        reply = 1;
 
-		switch (msgtype) {
-		case FS_LOOKUP:
-			m.RET_RETVAL = initfs_lookup(&m);
+        switch (msgtype) {
+        case FS_LOOKUP:
+            m.RET_RETVAL = initfs_lookup(&m);
             break;
-		case FS_PUTINODE:
-			break;
+        case FS_PUTINODE:
+            break;
         case FS_READSUPER:
             m.RET_RETVAL = initfs_readsuper(&m);
             break;
         case FS_STAT:
-        	m.STRET = initfs_stat(&m);
-        	break;
+            m.STRET = initfs_stat(&m);
+            break;
         case FS_RDWT:
-        	m.RWRET = initfs_rdwt(&m);
-        	break;
+            m.RWRET = initfs_rdwt(&m);
+            break;
         case FS_SYNC:
             break;
-		default:
-			m.RET_RETVAL = ENOSYS;
-			break;
-		}
+        default:
+            m.RET_RETVAL = ENOSYS;
+            break;
+        }
 
-		/* reply */
-		if (reply) {
-			m.type = FSREQ_RET;
-			send_recv(SEND, src, &m);
-		}
-	}
+        /* reply */
+        if (reply) {
+            m.type = FSREQ_RET;
+            send_recv(SEND, src, &m);
+        }
+    }
 
     return 0;
 }
-

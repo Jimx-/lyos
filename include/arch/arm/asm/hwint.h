@@ -13,8 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_HWINT_H_
-#define	_HWINT_H_
+#ifndef _HWINT_H_
+#define _HWINT_H_
 
 #define hwint_mask(irq)
 #define hwint_unmask(irq)

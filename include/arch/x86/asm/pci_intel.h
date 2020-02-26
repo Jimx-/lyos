@@ -18,10 +18,11 @@
 #ifndef _ARCH_PCI_INTEL_H_
 #define _ARCH_PCI_INTEL_H_
 
-#define PCII_CTRL     0xCF8
-#define PCII_DATA     0xCFC
+#define PCII_CTRL 0xCF8
+#define PCII_DATA 0xCFC
 
-#define PCII_SELREG(bus, slot, func, offset) ((u32)(((bus) << 16) | ((slot) << 11) | \
-            ((func) << 8) | ((offset) & 0xFC) | ((u32)0x80000000)))
+#define PCII_SELREG(bus, slot, func, offset)                                  \
+    ((u32)(((bus) << 16) | ((slot) << 11) | ((func) << 8) | ((offset)&0xFC) | \
+           ((u32)0x80000000)))
 
 #endif

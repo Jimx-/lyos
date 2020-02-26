@@ -38,10 +38,10 @@
 /**
  * <Ring 0> Perform the VMCTL syscall.
  */
-PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
+PUBLIC int sys_vmctl(MESSAGE* m, struct proc* p)
 {
     int who = m->VMCTL_WHO, request = m->VMCTL_REQUEST;
-    struct proc * target = (who == SELF) ? p : endpt_proc(who);
+    struct proc* target = (who == SELF) ? p : endpt_proc(who);
     int type;
 
     switch (request) {
@@ -54,14 +54,13 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
         PST_UNSET(target, PST_MMINHIBIT);
         return 0;
     case VMCTL_GET_KERN_MAPPING:
-        m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(m->VMCTL_GET_KM_INDEX, 
-                                    (caddr_t*)&m->VMCTL_GET_KM_ADDR,
-                                    &m->VMCTL_GET_KM_LEN,
-                                    &m->VMCTL_GET_KM_FLAGS); 
+        m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(
+            m->VMCTL_GET_KM_INDEX, (caddr_t*)&m->VMCTL_GET_KM_ADDR,
+            &m->VMCTL_GET_KM_LEN, &m->VMCTL_GET_KM_FLAGS);
         return 0;
     case VMCTL_REPLY_KERN_MAPPING:
-        m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(m->VMCTL_REPLY_KM_INDEX,
-                                    m->VMCTL_REPLY_KM_ADDR);
+        m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(
+            m->VMCTL_REPLY_KM_INDEX, m->VMCTL_REPLY_KM_ADDR);
         return 0;
     case VMCTL_PAGEFAULT_CLEAR:
         if (!target) return EINVAL;
@@ -76,7 +75,8 @@ PUBLIC int sys_vmctl(MESSAGE * m, struct proc * p)
         switch (mmrequest->mm_request.req_type) {
         case MMREQ_CHECK:
             m->VMCTL_MMREQ_TARGET = mmrequest->mm_request.target;
-            m->VMCTL_MMREQ_ADDR = (void*) mmrequest->mm_request.params.check.start;
+            m->VMCTL_MMREQ_ADDR =
+                (void*)mmrequest->mm_request.params.check.start;
             m->VMCTL_MMREQ_LEN = mmrequest->mm_request.params.check.len;
             m->VMCTL_MMREQ_FLAGS = mmrequest->mm_request.params.check.write;
             m->VMCTL_MMREQ_CALLER = mmrequest->endpoint;

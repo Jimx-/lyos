@@ -17,7 +17,7 @@
 #define _DDMAP_H_
 
 /* device-driver mapping */
-struct dev_driver_map{
+struct dev_driver_map {
     struct list_head list;
 
     dev_t minor;

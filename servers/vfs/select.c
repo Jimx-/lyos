@@ -35,7 +35,7 @@
 #include "fcntl.h"
 #include "global.h"
 
-#define MAX_SELECTS     25
+#define MAX_SELECTS 25
 
 PRIVATE struct select_entry {
     pthread_mutex_t lock;
@@ -43,7 +43,7 @@ PRIVATE struct select_entry {
     endpoint_t endpoint;
     fd_set readfds, writefds, exceptfds;
     fd_set ready_readfds, ready_writefds, ready_exceptfds;
-    fd_set* vir_readfds, *vir_writefds, *vir_exceptfds;
+    fd_set *vir_readfds, *vir_writefds, *vir_exceptfds;
     struct file_desc* filps[OPEN_MAX];
     int type[OPEN_MAX];
     int nfds, nreadyfds;
@@ -53,11 +53,12 @@ PRIVATE struct select_entry {
     struct timer_list timer;
 } select_table[MAX_SELECTS];
 
-PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block, struct fproc* fp);
+PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block,
+                                struct fproc* fp);
 PRIVATE int is_char_dev(struct file_desc* filp);
 
-#define FDS_COPYIN      1
-#define FDS_COPYOUT     2
+#define FDS_COPYIN 1
+#define FDS_COPYOUT 2
 PRIVATE int copy_fdset(struct select_entry* entry, int nfds, int direction);
 PRIVATE int fd_getops(struct select_entry* entry, int fd);
 PRIVATE void fd_setfromops(struct select_entry* entry, int fd, int ops);
@@ -71,18 +72,19 @@ PRIVATE void select_return(struct select_entry* entry);
 PRIVATE void select_timeout_check(struct timer_list* tp);
 
 PRIVATE struct fd_operation {
-    int (*select_request)(struct file_desc* filp, int* ops, int block, struct fproc* fp);
+    int (*select_request)(struct file_desc* filp, int* ops, int block,
+                          struct fproc* fp);
     int (*match)(struct file_desc* filp);
 } fd_operations[] = {
-    { select_request_char, is_char_dev },
+    {select_request_char, is_char_dev},
 };
 
 #define FD_TYPES (sizeof(fd_operations) / sizeof(fd_operations[0]))
 
-#define SEL_READ    CDEV_SEL_RD
-#define SEL_WRITE   CDEV_SEL_WR
-#define SEL_EXCEPT  CDEV_SEL_EXC
-#define SEL_NOTIFY  CDEV_NOTIFY
+#define SEL_READ CDEV_SEL_RD
+#define SEL_WRITE CDEV_SEL_WR
+#define SEL_EXCEPT CDEV_SEL_EXC
+#define SEL_NOTIFY CDEV_NOTIFY
 
 #define lock_select_entry(entry) pthread_mutex_lock(&(entry)->lock)
 #define unlock_select_entry(entry) pthread_mutex_unlock(&(entry)->lock)
@@ -92,7 +94,8 @@ PUBLIC void init_select()
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
         int i;
-        for (i = 0; i < OPEN_MAX; i++) select_table[slot].filps[i] = NULL;
+        for (i = 0; i < OPEN_MAX; i++)
+            select_table[slot].filps[i] = NULL;
         pthread_mutex_init(&select_table[slot].lock, NULL);
     }
 }
@@ -110,7 +113,9 @@ PUBLIC int do_select(MESSAGE* msg)
     if (nfds < 0 || nfds > OPEN_MAX) return EINVAL;
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
-        if (select_table[slot].caller == NULL && !pthread_mutex_trylock(&select_table[slot].lock)) break;
+        if (select_table[slot].caller == NULL &&
+            !pthread_mutex_trylock(&select_table[slot].lock))
+            break;
     }
     if (slot == MAX_SELECTS) return ENOSPC;
 
@@ -132,7 +137,8 @@ PUBLIC int do_select(MESSAGE* msg)
     if (vtimeout != 0) {
         retval = data_copy(SELF, &timeout, src, vtimeout, sizeof(timeout));
 
-        if (retval == 0 && (timeout.tv_sec < 0 || timeout.tv_usec < 0 || timeout.tv_usec >= 1000000)) {
+        if (retval == 0 && (timeout.tv_sec < 0 || timeout.tv_usec < 0 ||
+                            timeout.tv_usec >= 1000000)) {
             retval = EINVAL;
         }
         if (retval) {
@@ -144,7 +150,8 @@ PUBLIC int do_select(MESSAGE* msg)
         has_timeout = 1;
     }
 
-    if (!has_timeout || (has_timeout && (timeout.tv_usec > 0 || timeout.tv_sec > 0))) {
+    if (!has_timeout ||
+        (has_timeout && (timeout.tv_usec > 0 || timeout.tv_sec > 0))) {
         entry->block = 1;
     } else {
         entry->block = 0;
@@ -216,7 +223,8 @@ PUBLIC int do_select(MESSAGE* msg)
 
             newops = filp->fd_select_ops | ops;
             select_lock_filp(filp, newops);
-            retval = fd_operations[entry->type[fd]].select_request(filp, &newops, entry->block, pcaller);
+            retval = fd_operations[entry->type[fd]].select_request(
+                filp, &newops, entry->block, pcaller);
             unlock_filp(filp);
             if (retval && retval != SUSPEND) {
                 entry->error = retval;
@@ -229,7 +237,8 @@ PUBLIC int do_select(MESSAGE* msg)
 
     entry->starting = FALSE;
 
-    if ((entry->nreadyfds > 0 || entry->error != 0 || !entry->block) && !is_deferred(entry)) {
+    if ((entry->nreadyfds > 0 || entry->error != 0 || !entry->block) &&
+        !is_deferred(entry)) {
         if (entry->error)
             retval = entry->error;
         else {
@@ -247,7 +256,8 @@ PUBLIC int do_select(MESSAGE* msg)
 
     if (has_timeout && entry->block) {
         clock_t ticks;
-        ticks = timeout.tv_sec * system_hz + (timeout.tv_usec * system_hz + 1000000L - 1) / 1000000L;
+        ticks = timeout.tv_sec * system_hz +
+                (timeout.tv_usec * system_hz + 1000000L - 1) / 1000000L;
         entry->expiry = ticks;
         set_timer(&entry->timer, ticks, select_timeout_check, slot);
     }
@@ -279,10 +289,14 @@ PRIVATE int select_filter(struct file_desc* filp, int* ops, int block)
     int rops = *ops;
     *ops = 0;
 
-    if (!block && !(filp->fd_select_flags & (SFL_UPDATE | SFL_BUSY)) && (filp->fd_select_flags & SFL_BLOCKED)) {
-        if ((rops & SEL_READ) && (filp->fd_select_flags & SFL_RD_BLOCK)) rops &= ~SEL_READ;
-        if ((rops & SEL_WRITE) && (filp->fd_select_flags & SFL_WR_BLOCK)) rops &= ~SEL_WRITE;
-        if ((rops & SEL_EXCEPT) && (filp->fd_select_flags & SFL_EXC_BLOCK)) rops &= ~SEL_EXCEPT;
+    if (!block && !(filp->fd_select_flags & (SFL_UPDATE | SFL_BUSY)) &&
+        (filp->fd_select_flags & SFL_BLOCKED)) {
+        if ((rops & SEL_READ) && (filp->fd_select_flags & SFL_RD_BLOCK))
+            rops &= ~SEL_READ;
+        if ((rops & SEL_WRITE) && (filp->fd_select_flags & SFL_WR_BLOCK))
+            rops &= ~SEL_WRITE;
+        if ((rops & SEL_EXCEPT) && (filp->fd_select_flags & SFL_EXC_BLOCK))
+            rops &= ~SEL_EXCEPT;
         if (!(rops & (SEL_READ | SEL_WRITE | SEL_EXCEPT))) {
             return 0;
         }
@@ -300,7 +314,8 @@ PRIVATE int select_filter(struct file_desc* filp, int* ops, int block)
     return rops;
 }
 
-PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block, struct fproc* fp)
+PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block,
+                                struct fproc* fp)
 {
     dev_t dev = filp->fd_inode->i_specdev;
 
@@ -331,12 +346,12 @@ PRIVATE int is_char_dev(struct file_desc* filp)
 PRIVATE int copy_fdset(struct select_entry* entry, int nfds, int direction)
 {
     if (nfds < 0 || nfds > OPEN_MAX) return EINVAL;
-    int fdset_size = (size_t) (_howmany(nfds, NFDBITS) * sizeof(fd_mask));
+    int fdset_size = (size_t)(_howmany(nfds, NFDBITS) * sizeof(fd_mask));
     int retval;
 
     int copyin = (direction == FDS_COPYIN);
     endpoint_t src_ep, dst_ep;
-    fd_set* src_fds, *dst_fds;
+    fd_set *src_fds, *dst_fds;
 
     src_ep = copyin ? entry->endpoint : SELF;
     dst_ep = copyin ? SELF : entry->endpoint;
@@ -378,17 +393,22 @@ PRIVATE int fd_getops(struct select_entry* entry, int fd)
 
 PRIVATE void fd_setfromops(struct select_entry* entry, int fd, int ops)
 {
-    if ((ops & SEL_READ) && entry->vir_readfds && FD_ISSET(fd, &entry->readfds) && !FD_ISSET(fd, &entry->ready_readfds)) {
+    if ((ops & SEL_READ) && entry->vir_readfds &&
+        FD_ISSET(fd, &entry->readfds) && !FD_ISSET(fd, &entry->ready_readfds)) {
         FD_SET(fd, &entry->ready_readfds);
         entry->nreadyfds++;
     }
 
-    if ((ops & SEL_WRITE) && entry->vir_writefds && FD_ISSET(fd, &entry->writefds) && !FD_ISSET(fd, &entry->ready_writefds)) {
+    if ((ops & SEL_WRITE) && entry->vir_writefds &&
+        FD_ISSET(fd, &entry->writefds) &&
+        !FD_ISSET(fd, &entry->ready_writefds)) {
         FD_SET(fd, &entry->ready_writefds);
         entry->nreadyfds++;
     }
 
-    if ((ops & SEL_EXCEPT) && entry->vir_exceptfds && FD_ISSET(fd, &entry->exceptfds) && !FD_ISSET(fd, &entry->ready_exceptfds)) {
+    if ((ops & SEL_EXCEPT) && entry->vir_exceptfds &&
+        FD_ISSET(fd, &entry->exceptfds) &&
+        !FD_ISSET(fd, &entry->ready_exceptfds)) {
         FD_SET(fd, &entry->ready_exceptfds);
         entry->nreadyfds++;
     }
@@ -475,7 +495,8 @@ PRIVATE void update_status(struct file_desc* filp, int status)
 
 PRIVATE void tell_proc(struct select_entry* entry)
 {
-    if ((entry->nreadyfds > 0 || entry->error != 0 || !entry->block) && !is_deferred(entry)) {
+    if ((entry->nreadyfds > 0 || entry->error != 0 || !entry->block) &&
+        !is_deferred(entry)) {
         select_return(entry);
     }
 }
@@ -592,7 +613,8 @@ PRIVATE void select_reply2(int is_char, dev_t dev, int status)
 
 PUBLIC void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor, int status)
 {
-    /* handle the secondary select reply when the request is blocked and an operation becomes ready */
+    /* handle the secondary select reply when the request is blocked and an
+     * operation becomes ready */
     struct cdmap* pm = cdev_lookup_by_endpoint(driver_ep);
     if (!pm) return;
 

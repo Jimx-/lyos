@@ -32,10 +32,10 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int do_getsetid(MESSAGE * p)
+PUBLIC int do_getsetid(MESSAGE* p)
 {
     int retval = 0;
-    struct pmproc * pmp = pm_endpt_proc(p->source), * pmpi;
+    struct pmproc *pmp = pm_endpt_proc(p->source), *pmpi;
     if (!pmp) return EINVAL;
     uid_t uid;
     gid_t gid;
@@ -146,12 +146,12 @@ PUBLIC int do_getsetid(MESSAGE * p)
     return retval;
 }
 
-PUBLIC int do_getprocep(MESSAGE * p)
+PUBLIC int do_getprocep(MESSAGE* p)
 {
     pid_t pid = p->PID;
     int i;
 
-    struct pmproc * pmp = pmproc_table;
+    struct pmproc* pmp = pmproc_table;
     for (i = 0; i < NR_PROCS; i++, pmp++) {
         if (pmp->pid == pid) {
             p->ENDPOINT = pmp->endpoint;
@@ -162,7 +162,7 @@ PUBLIC int do_getprocep(MESSAGE * p)
     return ESRCH;
 }
 
-PUBLIC int do_pm_getinfo(MESSAGE * p)
+PUBLIC int do_pm_getinfo(MESSAGE* p)
 {
     void* dest = p->BUF;
     size_t len;
@@ -178,7 +178,7 @@ PUBLIC int do_pm_getinfo(MESSAGE * p)
         return EINVAL;
     }
 
-    return data_copy(p->source, (void*) dest, SELF, (void*) src_addr, len);
+    return data_copy(p->source, (void*)dest, SELF, (void*)src_addr, len);
 }
 
 PUBLIC int do_pm_getepinfo(MESSAGE* p)

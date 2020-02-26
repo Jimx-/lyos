@@ -45,7 +45,7 @@ PUBLIC void memfs_init_inode()
     }
 }
 
-PUBLIC void memfs_addhash_inode(struct memfs_inode * inode)
+PUBLIC void memfs_addhash_inode(struct memfs_inode* inode)
 {
     unsigned int hash = inode->i_num & MEMFS_INODE_HASH_MASK;
 
@@ -59,9 +59,10 @@ PRIVATE void memfs_unhash_inode(struct memfs_inode * inode)
 }
 */
 
-PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name, int index)
+PUBLIC struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index)
 {
-    struct memfs_inode * pin = (struct memfs_inode *)malloc(sizeof(struct memfs_inode));
+    struct memfs_inode* pin =
+        (struct memfs_inode*)malloc(sizeof(struct memfs_inode));
     if (!pin) return NULL;
 
     pin->i_num = num;
@@ -76,13 +77,14 @@ PUBLIC struct memfs_inode * memfs_new_inode(ino_t num, char * name, int index)
     return pin;
 }
 
-PUBLIC struct memfs_inode * memfs_find_inode(ino_t num)
+PUBLIC struct memfs_inode* memfs_find_inode(ino_t num)
 {
     int hash = num & MEMFS_INODE_HASH_MASK;
 
-    struct memfs_inode * inode;
-    list_for_each_entry(inode, &memfs_inode_table[hash], i_hash) {
-        if (inode->i_num == num) {   /* hit */
+    struct memfs_inode* inode;
+    list_for_each_entry(inode, &memfs_inode_table[hash], i_hash)
+    {
+        if (inode->i_num == num) { /* hit */
             return inode;
         }
     }
@@ -90,11 +92,13 @@ PUBLIC struct memfs_inode * memfs_find_inode(ino_t num)
     return NULL;
 }
 
-PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent, char* name)
+PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
+                                                    char* name)
 {
-    struct memfs_inode * node;
+    struct memfs_inode* node;
 
-    list_for_each_entry(node, &(parent->i_children), i_list) {
+    list_for_each_entry(node, &(parent->i_children), i_list)
+    {
         if (strcmp(node->i_name, name) == 0) {
             return node;
         }
@@ -103,16 +107,18 @@ PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent, 
     return NULL;
 }
 
-PUBLIC struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent, int index)
+PUBLIC struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
+                                                     int index)
 {
-    struct memfs_inode * node;
+    struct memfs_inode* node;
 
     if (!(parent->i_stat.st_mode & I_DIRECTORY)) {
         errno = ENOTDIR;
         return NULL;
     }
 
-    list_for_each_entry(node, &(parent->i_children), i_list) {
+    list_for_each_entry(node, &(parent->i_children), i_list)
+    {
         if (node->i_index == index) return node;
     }
 
@@ -124,10 +130,7 @@ PUBLIC struct memfs_inode* memfs_node_parent(struct memfs_inode* pin)
     return pin->i_parent;
 }
 
-PUBLIC int memfs_node_index(struct memfs_inode* pin)
-{
-    return pin->i_index;
-}
+PUBLIC int memfs_node_index(struct memfs_inode* pin) { return pin->i_index; }
 
 PUBLIC void memfs_update_inode(struct memfs_inode* pin)
 {
@@ -141,23 +144,24 @@ PUBLIC void memfs_update_inode(struct memfs_inode* pin)
     pin->i_update = 0;
 }
 
-PUBLIC struct memfs_inode * memfs_get_root_inode()
-{
-    return &root_inode;
-}
+PUBLIC struct memfs_inode* memfs_get_root_inode() { return &root_inode; }
 
-PUBLIC void memfs_set_inode_stat(struct memfs_inode * pin, struct memfs_stat * stat)
+PUBLIC void memfs_set_inode_stat(struct memfs_inode* pin,
+                                 struct memfs_stat* stat)
 {
     if (!pin || !stat) return;
 
     memcpy(&pin->i_stat, stat, sizeof(struct memfs_stat));
 }
 
-PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * name, int index, struct memfs_stat * stat, cbdata_t data)
+PUBLIC struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
+                                           char* name, int index,
+                                           struct memfs_stat* stat,
+                                           cbdata_t data)
 {
     ino_t new_num = allocate_inode_num();
 
-    struct memfs_inode * pin = memfs_new_inode(new_num, name, index);
+    struct memfs_inode* pin = memfs_new_inode(new_num, name, index);
     if (!pin) return NULL;
 
     list_add(&pin->i_list, &parent->i_children);
@@ -169,6 +173,6 @@ PUBLIC struct memfs_inode * memfs_add_inode(struct memfs_inode * parent, char * 
 
     pin->i_update = ATIME | CTIME | MTIME;
     memfs_update_inode(pin);
-    
+
     return pin;
 }

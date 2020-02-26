@@ -45,25 +45,28 @@ PUBLIC void do_handle_fault()
     }
 
     void* pfla = mm_msg.FAULT_ADDR;
-    struct mmproc * mmp = endpt_mmproc(mm_msg.FAULT_PROC);
+    struct mmproc* mmp = endpt_mmproc(mm_msg.FAULT_PROC);
     int err_code = mm_msg.FAULT_ERRCODE;
     int wrflag = ARCH_PF_WRITE(err_code);
     int handled = 0;
 
-    pfla = (void*) rounddown((vir_bytes)pfla, ARCH_PG_SIZE);
+    pfla = (void*)rounddown((vir_bytes)pfla, ARCH_PG_SIZE);
 
-    struct vir_region * vr;
+    struct vir_region* vr;
     vr = region_lookup(mmp, (vir_bytes)pfla);
 
     if (!vr) {
         if (ARCH_PF_PROT(err_code)) {
-            printl("MM: SIGSEGV %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
+            printl("MM: SIGSEGV %d protected address %x\n", mm_msg.FAULT_PROC,
+                   pfla);
         } else if (ARCH_PF_NOPAGE(err_code)) {
             printl("MM: SIGSEGV %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
         }
 
-        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
-        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0)
+            panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0)
+            panic("pagefault: vmctl failed");
 
         return;
     }
@@ -71,20 +74,25 @@ PUBLIC void do_handle_fault()
     if (!(vr->flags & RF_WRITABLE) && wrflag) {
         printl("MM: SIGSEGV %d ro address %x\n", mm_msg.FAULT_PROC, pfla);
 
-        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
-        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0)
+            panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0)
+            panic("pagefault: vmctl failed");
 
         return;
     }
 
     int retval;
-    if ((retval = region_handle_pf(mmp, vr, pfla - (void*)vr->vir_addr, wrflag)) == 0) handled = 1;
-    else if (retval == SUSPEND) return;
-
+    if ((retval = region_handle_pf(mmp, vr, pfla - (void*)vr->vir_addr,
+                                   wrflag)) == 0)
+        handled = 1;
+    else if (retval == SUSPEND)
+        return;
 
 #ifdef PAGEFAULT_DEBUG
     if (ARCH_PF_PROT(err_code)) {
-        printl("MM: pagefault: %d protected address %x\n", mm_msg.FAULT_PROC, pfla);
+        printl("MM: pagefault: %d protected address %x\n", mm_msg.FAULT_PROC,
+               pfla);
     } else if (ARCH_PF_NOPAGE(err_code)) {
         printl("MM: pagefault: %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
     }
@@ -94,26 +102,30 @@ PUBLIC void do_handle_fault()
 
     /* resume */
     if (handled) {
-        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0)
+            panic("pagefault: vmctl failed");
     } else {
-        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0) panic("pagefault: unable to kill proc");
-        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0) panic("pagefault: vmctl failed");
+        if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0)
+            panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, mm_msg.FAULT_PROC) != 0)
+            panic("pagefault: vmctl failed");
     }
 }
 
-PRIVATE int handle_memory(struct mmproc * mmp, void* start, size_t len, int wrflag, endpoint_t caller)
+PRIVATE int handle_memory(struct mmproc* mmp, void* start, size_t len,
+                          int wrflag, endpoint_t caller)
 {
-    struct vir_region * vr;
+    struct vir_region* vr;
 
-    if ((vir_bytes) start % ARCH_PG_SIZE) {
-        len += (vir_bytes) start % ARCH_PG_SIZE;
-        start -= (vir_bytes) start % ARCH_PG_SIZE;
+    if ((vir_bytes)start % ARCH_PG_SIZE) {
+        len += (vir_bytes)start % ARCH_PG_SIZE;
+        start -= (vir_bytes)start % ARCH_PG_SIZE;
     }
 
     while (len > 0) {
         if (!(vr = region_lookup(mmp, (vir_bytes)start))) {
             return EFAULT;
-        } //else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
+        } // else if (!(vr->flags & RF_WRITABLE) && wrflag) return EFAULT;
 
         off_t offset = start - (void*)vr->vir_addr;
         size_t sublen = len;
@@ -138,12 +150,11 @@ PUBLIC void do_mmrequest()
     void* start;
     size_t len;
     int flags;
-    struct mmproc * mmp;
+    struct mmproc* mmp;
     int result;
 
     while (TRUE) {
-        int type = vmctl_get_mmrequest(&target, &start, &len,
-                        &flags, &caller);
+        int type = vmctl_get_mmrequest(&target, &start, &len, &flags, &caller);
 
         switch (type) {
         case MMREQ_CHECK:

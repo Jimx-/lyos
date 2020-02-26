@@ -38,15 +38,15 @@
 extern int _KERN_OFFSET;
 
 /* temporary mappings */
-#define MAX_TEMPPDES    2
-#define TEMPPDE_SRC     0
-#define TEMPPDE_DST     1
+#define MAX_TEMPPDES 2
+#define TEMPPDE_SRC 0
+#define TEMPPDE_DST 1
 PRIVATE u32 temppdes[MAX_TEMPPDES];
 
-#define _SRC_           0
-#define _DEST_          1
-#define EFAULT_SRC      1
-#define EFAULT_DEST     2
+#define _SRC_ 0
+#define _DEST_ 1
+#define EFAULT_SRC 1
+#define EFAULT_DEST 2
 
 PUBLIC void init_memory()
 {
@@ -57,22 +57,23 @@ PUBLIC void init_memory()
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 }
 
-PUBLIC void clear_memcache()
-{
-}
+PUBLIC void clear_memcache() {}
 
 /* Temporarily map la in p's address space in kernel address space */
-PRIVATE phys_bytes create_temp_map(struct proc * p, phys_bytes la, phys_bytes * len, int index, int * changed)
+PRIVATE phys_bytes create_temp_map(struct proc* p, phys_bytes la,
+                                   phys_bytes* len, int index, int* changed)
 {
     /* the process is already in current page table */
-    if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint))) return la;
+    if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
+        return la;
 }
 
-PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
-        struct proc * p_src, phys_bytes src_la, void* len)
+PRIVATE int la_la_copy(struct proc* p_dest, phys_bytes dest_la,
+                       struct proc* p_src, phys_bytes src_la, void* len)
 {
     if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
-    if (read_ptbr() != get_cpulocal_var(pt_proc)->seg.ptbr_phys) panic("bad pt_proc ptbr value");
+    if (read_ptbr() != get_cpulocal_var(pt_proc)->seg.ptbr_phys)
+        panic("bad pt_proc ptbr value");
 
     enable_user_access();
     while (len > 0) {
@@ -80,12 +81,15 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
         phys_bytes src_mapped, dest_mapped;
         int changed = 0;
 
-        src_mapped = create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
-        dest_mapped = create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
+        src_mapped =
+            create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
+        dest_mapped =
+            create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
 
         if (changed) flush_tlb();
 
-        phys_bytes fault_addr = memcpy((void *)dest_mapped, (void *)src_mapped, chunk);
+        phys_bytes fault_addr =
+            memcpy((void*)dest_mapped, (void*)src_mapped, chunk);
 
         /*if (fault_addr) {
             if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
@@ -104,15 +108,11 @@ PRIVATE int la_la_copy(struct proc * p_dest, phys_bytes dest_la,
     return 0;
 }
 
-PRIVATE u32 get_phys32(phys_bytes phys_addr)
-{
-}
+PRIVATE u32 get_phys32(phys_bytes phys_addr) {}
 
-PUBLIC void * va2pa(endpoint_t ep, void * va)
-{
-}
+PUBLIC void* va2pa(endpoint_t ep, void* va) {}
 
-#define MAX_KERN_MAPPINGS   8
+#define MAX_KERN_MAPPINGS 8
 
 struct kern_map {
     phys_bytes phys_addr;
@@ -125,31 +125,29 @@ struct kern_map {
 PRIVATE struct kern_map kern_mappings[MAX_KERN_MAPPINGS];
 PRIVATE int kern_mapping_count = 0;
 
-PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, void** mapped_addr)
+PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
+                         void** mapped_addr)
 {
     return 0;
 }
 
-#define KM_USERMAPPED   0
+#define KM_USERMAPPED 0
 #define KM_KERN_MAPPING 1
 
 extern char _usermapped[], _eusermapped[];
 PUBLIC off_t usermapped_offset;
 
-PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
+PUBLIC int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
 {
     return 0;
 }
 
-PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
-{
-    return 0;
-}
+PUBLIC int arch_reply_kern_mapping(int index, void* vir_addr) { return 0; }
 
 PRIVATE void setptbr(struct proc* p, phys_bytes ptbr)
 {
-    p->seg.ptbr_phys = (reg_t) ptbr;
-    p->seg.ptbr_vir = (reg_t) __va(ptbr);
+    p->seg.ptbr_phys = (reg_t)ptbr;
+    p->seg.ptbr_vir = (reg_t)__va(ptbr);
 
     if (p->endpoint == TASK_MM) {
         int i;
@@ -166,7 +164,7 @@ PRIVATE void setptbr(struct proc* p, phys_bytes ptbr)
     PST_UNSET(p, PST_MMINHIBIT);
 }
 
-PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
+PUBLIC int arch_vmctl(MESSAGE* m, struct proc* p)
 {
     int request = m->VMCTL_REQUEST;
 
@@ -175,14 +173,15 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
         m->VMCTL_VALUE = p->seg.ptbr_phys;
         return 0;
     case VMCTL_SET_ADDRESS_SPACE:
-        setptbr(p, (phys_bytes) m->VMCTL_PHYS_ADDR);
+        setptbr(p, (phys_bytes)m->VMCTL_PHYS_ADDR);
         return 0;
     }
 
     return EINVAL;
 }
 
-PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, void* laddr, void* bytes, int write, int type)
+PUBLIC void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
+                       void* bytes, int write, int type)
 {
     PST_SET_LOCKED(caller, PST_MMREQUEST);
 
@@ -196,15 +195,16 @@ PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, void* laddr, voi
     caller->mm_request.next_request = mmrequest;
     mmrequest = caller;
     if (!caller->mm_request.next_request) {
-        if (send_sig(TASK_MM, SIGKMEM) != 0) panic("mm_suspend: send_sig failed");
+        if (send_sig(TASK_MM, SIGKMEM) != 0)
+            panic("mm_suspend: send_sig failed");
     }
 }
 
-PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct vir_addr * src_addr,
-                                size_t bytes, int check)
+PUBLIC int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
+                     struct vir_addr* src_addr, size_t bytes, int check)
 {
-    struct vir_addr * vir_addrs[2];
-    struct proc * procs[2];
+    struct vir_addr* vir_addrs[2];
+    struct proc* procs[2];
 
     if (bytes < 0) return EINVAL;
 
@@ -221,12 +221,13 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
     }
 
     int retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr,
-                procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
+                            procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
 
     if (retval) {
         if (retval == EFAULT) return EFAULT;
 
-        if (retval != EFAULT_SRC && retval != EFAULT_DEST) panic("vir_copy: la_la_copy failed");
+        if (retval != EFAULT_SRC && retval != EFAULT_DEST)
+            panic("vir_copy: la_la_copy failed");
 
         if (!check || !caller) return EFAULT;
 
@@ -250,8 +251,9 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
     return 0;
 }
 
-PUBLIC int _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_addr,
-                        endpoint_t src_ep, void * src_addr, int len, int check)
+PUBLIC int _data_vir_copy(struct proc* caller, endpoint_t dest_ep,
+                          void* dest_addr, endpoint_t src_ep, void* src_addr,
+                          int len, int check)
 {
     struct vir_addr src, dest;
 

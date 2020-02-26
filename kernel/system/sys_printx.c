@@ -34,7 +34,7 @@
 #include <lyos/priv.h>
 
 PRIVATE void kputc(char c);
-PRIVATE void kputs(char * s);
+PRIVATE void kputs(char* s);
 
 /*****************************************************************************
  *                                sys_printx
@@ -62,7 +62,7 @@ PRIVATE void kputs(char * s);
  *****************************************************************************/
 PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
 {
-    char buf[80*25 + 1];
+    char buf[80 * 25 + 1];
     int retval;
 
     switch (m->REQUEST) {
@@ -71,7 +71,8 @@ PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
             return EINVAL;
         }
 
-        retval = data_vir_copy_check(p_proc, KERNEL, buf, p_proc->endpoint, m->BUF, m->BUF_LEN);
+        retval = data_vir_copy_check(p_proc, KERNEL, buf, p_proc->endpoint,
+                                     m->BUF, m->BUF_LEN);
         if (retval) return retval;
 
         buf[m->BUF_LEN] = '\0';
@@ -94,14 +95,15 @@ PRIVATE void kputc(char c)
         kern_log.buf[kern_log.next] = c;
         if (kern_log.size < sizeof(kern_log.buf)) kern_log.size++;
         kern_log.next = (kern_log.next + 1) % KERN_LOG_SIZE;
-    } else {    /* inform output process */
-        struct priv * priv;
+    } else { /* inform output process */
+        struct priv* priv;
         for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
             if (priv->proc_nr != NO_TASK && priv->kernlog_request)
-                msg_notify(proc_addr(KERNEL), proc_addr(priv->proc_nr)->endpoint);
-                //inform_kernel_log(proc_addr(priv->proc_nr)->endpoint);
+                msg_notify(proc_addr(KERNEL),
+                           proc_addr(priv->proc_nr)->endpoint);
+            // inform_kernel_log(proc_addr(priv->proc_nr)->endpoint);
         }
-        //inform_kernel_log(TASK_TTY);
+        // inform_kernel_log(TASK_TTY);
     }
 }
 
@@ -110,7 +112,7 @@ PRIVATE void kputc(char c)
  */
 PRIVATE void kputs(char* s)
 {
-    const char * p;
+    const char* p;
     char ch;
 
     p = s;
@@ -135,7 +137,7 @@ PRIVATE void kputs(char* s)
  *
  * @return  The number of chars printed.
  *****************************************************************************/
-PUBLIC int printk(const char *fmt, ...)
+PUBLIC int printk(const char* fmt, ...)
 {
     int i;
     char buf[STR_DEFAULT_LEN];

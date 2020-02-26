@@ -35,12 +35,12 @@
 #include "global.h"
 
 /**
-*   register_filesystem - register a new filesystem
-*   @m: Ptr to register message
-*
-*   Adds the file system passed to the list of file systems the kernel
-*/
-PUBLIC int do_register_filesystem(MESSAGE * p)
+ *   register_filesystem - register a new filesystem
+ *   @m: Ptr to register message
+ *
+ *   Adds the file system passed to the list of file systems the kernel
+ */
+PUBLIC int do_register_filesystem(MESSAGE* p)
 {
     int name_len = p->NAME_LEN;
 
@@ -53,10 +53,11 @@ PUBLIC int do_register_filesystem(MESSAGE * p)
     return add_filesystem(p->source, name);
 }
 
-PUBLIC int add_filesystem(endpoint_t fs_ep, char * name)
+PUBLIC int add_filesystem(endpoint_t fs_ep, char* name)
 {
-    struct file_system * pfs = (struct file_system *)malloc(sizeof(struct file_system));
-    
+    struct file_system* pfs =
+        (struct file_system*)malloc(sizeof(struct file_system));
+
     if (!pfs) {
         return ENOMEM;
     }
@@ -68,15 +69,17 @@ PUBLIC int add_filesystem(endpoint_t fs_ep, char * name)
     list_add(&(pfs->list), &filesystem_table);
     pthread_mutex_unlock(&filesystem_lock);
 
-    printl("VFS: %s filesystem registered, endpoint: %d\n", pfs->name, pfs->fs_ep);
+    printl("VFS: %s filesystem registered, endpoint: %d\n", pfs->name,
+           pfs->fs_ep);
 
     return 0;
 }
 
-PUBLIC endpoint_t get_filesystem_endpoint(char * name)
+PUBLIC endpoint_t get_filesystem_endpoint(char* name)
 {
-    struct file_system * pfs;
-    list_for_each_entry(pfs, &filesystem_table, list) {
+    struct file_system* pfs;
+    list_for_each_entry(pfs, &filesystem_table, list)
+    {
         if (strcmp(pfs->name, name) == 0) {
             return pfs->fs_ep;
         }
@@ -84,8 +87,8 @@ PUBLIC endpoint_t get_filesystem_endpoint(char * name)
     return -1;
 }
 
-PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
-        int readonly, int is_root, struct lookup_result * res)
+PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly,
+                             int is_root, struct lookup_result* res)
 {
     MESSAGE m;
     m.type = FS_READSUPER;
@@ -95,9 +98,9 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
 
     m.REQ_DEV = dev;
 
-    //async_sendrec(fs_ep, &m, 0);
+    // async_sendrec(fs_ep, &m, 0);
     send_recv(BOTH, fs_ep, &m);
-    
+
     int retval = m.RET_RETVAL;
 
     if (!retval) {
@@ -111,4 +114,3 @@ PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev,
     }
     return retval;
 }
-

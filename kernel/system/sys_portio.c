@@ -30,37 +30,38 @@
 #include <lyos/portio.h>
 #include <asm/proto.h>
 
-PUBLIC int sys_portio(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_portio(MESSAGE* m, struct proc* p_proc)
 {
-    int type = m->PIO_REQUEST & PIO_TYPE_MASK, dir = m->PIO_REQUEST & PIO_DIR_MASK;
+    int type = m->PIO_REQUEST & PIO_TYPE_MASK,
+        dir = m->PIO_REQUEST & PIO_DIR_MASK;
 
     if (dir == PIO_IN) {
         switch (type) {
-            case PIO_BYTE:
-                m->PIO_VALUE = in_byte(m->PIO_PORT);
-                break;
-            case PIO_WORD:
-                m->PIO_VALUE = in_word(m->PIO_PORT);
-                break;
-            case PIO_LONG:
-                m->PIO_VALUE = in_long(m->PIO_PORT);
-                break;
-            default:
-                return EINVAL;
+        case PIO_BYTE:
+            m->PIO_VALUE = in_byte(m->PIO_PORT);
+            break;
+        case PIO_WORD:
+            m->PIO_VALUE = in_word(m->PIO_PORT);
+            break;
+        case PIO_LONG:
+            m->PIO_VALUE = in_long(m->PIO_PORT);
+            break;
+        default:
+            return EINVAL;
         }
     } else {
         switch (type) {
-            case PIO_BYTE:
-                out_byte(m->PIO_PORT, m->PIO_VALUE);
-                break;
-            case PIO_WORD:
-                out_word(m->PIO_PORT, m->PIO_VALUE);
-                break;
-            case PIO_LONG:
-                out_long(m->PIO_PORT, m->PIO_VALUE);
-                break;
-            default:
-                return EINVAL;
+        case PIO_BYTE:
+            out_byte(m->PIO_PORT, m->PIO_VALUE);
+            break;
+        case PIO_WORD:
+            out_word(m->PIO_PORT, m->PIO_VALUE);
+            break;
+        case PIO_LONG:
+            out_long(m->PIO_PORT, m->PIO_VALUE);
+            break;
+        default:
+            return EINVAL;
         }
     }
 

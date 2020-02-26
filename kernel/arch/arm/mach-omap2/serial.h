@@ -24,8 +24,8 @@
 #define OMAP3_THR 0x000
 
 #define OMAP3_LSR 0x014
-#define OMAP3_LSR_TEMT    0x40
-#define OMAP3_LSR_THRE    0x20
+#define OMAP3_LSR_TEMT 0x40
+#define OMAP3_LSR_THRE 0x20
 
 #define OMAP3_SSR 0x044
 

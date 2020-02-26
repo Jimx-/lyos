@@ -4,7 +4,9 @@
 
 #include <libfdt/libfdt.h>
 
-PUBLIC int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int, void*), void* arg, void* blob)
+PUBLIC int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int,
+                                   void*),
+                       void* arg, void* blob)
 {
     int offset, depth = -1;
     int retval = 0;

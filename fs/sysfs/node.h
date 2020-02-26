@@ -36,16 +36,16 @@ typedef struct sysfs_node {
     char name[NAME_MAX];
     int flags;
 
-    struct sysfs_node * parent;
-    
+    struct sysfs_node* parent;
+
     union {
-        char * str;
+        char* str;
         u32 u32v;
         dev_t devno;
         dyn_attr_info_t* dyn_attr;
     } u;
 
-    struct memfs_inode * inode;
+    struct memfs_inode* inode;
 } sysfs_node_t;
 
 #endif /* _SYSFS_NODE_H_ */

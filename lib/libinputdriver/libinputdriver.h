@@ -16,7 +16,6 @@
 #ifndef _LIBINPUTDRIVER_H_
 #define _LIBINPUTDRIVER_H_
 
-
 struct inputdriver {
     void (*input_interrupt)(unsigned long irq_set);
     int (*input_other)(MESSAGE* m);

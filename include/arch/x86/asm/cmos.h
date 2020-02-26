@@ -16,15 +16,15 @@
 #ifndef _ARCH_CMOS_H_
 #define _ARCH_CMOS_H_
 
-#define RTC_INDEX   0x70
-#define RTC_IO      0x71
+#define RTC_INDEX 0x70
+#define RTC_IO 0x71
 
-#define RTC_REG_A   0xA
-    #define RTC_A_DV_OK     0x20
+#define RTC_REG_A 0xA
+#define RTC_A_DV_OK 0x20
 
-#define RTC_REG_B   0xB
-    #define RTC_B_PIE       0x40
+#define RTC_REG_B 0xB
+#define RTC_B_PIE 0x40
 
-#define RTC_REG_C   0xC
+#define RTC_REG_C 0xC
 
 #endif

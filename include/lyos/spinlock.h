@@ -19,7 +19,7 @@
 #include "lyos/config.h"
 
 typedef struct spinlock {
-	volatile unsigned int lock;
+    volatile unsigned int lock;
 } spinlock_t;
 
 /* Single CPU */
@@ -29,18 +29,21 @@ typedef struct spinlock {
 #define spinlock_init(lock)
 #define spinlock_lock(lock)
 #define spinlock_unlock(lock)
-#define spinlock_locked(lock)   0
+#define spinlock_locked(lock) 0
 
 #else
 
-#define DEF_SPINLOCK(l)  spinlock_t l = { 0 }
-#define spinlock_init(l) do { (l)->lock = 0; } while(0)
+#define DEF_SPINLOCK(l) spinlock_t l = {0}
+#define spinlock_init(l) \
+    do {                 \
+        (l)->lock = 0;   \
+    } while (0)
 
-void arch_spinlock_lock(unsigned int * lock);
-void arch_spinlock_unlock(unsigned int * lock);
+void arch_spinlock_lock(unsigned int* lock);
+void arch_spinlock_unlock(unsigned int* lock);
 
-#define spinlock_lock(l) arch_spinlock_lock((unsigned int *)l)
-#define spinlock_unlock(l) arch_spinlock_unlock((unsigned int *)l)
+#define spinlock_lock(l) arch_spinlock_lock((unsigned int*)l)
+#define spinlock_unlock(l) arch_spinlock_unlock((unsigned int*)l)
 #define spinlock_locked(l) ((l)->lock != 0)
 
 #endif /* CONFIG_SMP */

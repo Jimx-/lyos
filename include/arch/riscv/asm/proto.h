@@ -19,41 +19,42 @@
 #include <asm/csr.h>
 
 /* in/out functions */
-#define out_long(a, b) *((volatile unsigned int *)(a)) = (b)
-#define in_long(a) (*((volatile unsigned int *)(a)))
-#define out_word(a, b) *((volatile unsigned int *)(a)) = ((b) | ((b) << 16))
-#define in_word(a) ((*((volatile unsigned int *)(a))) & 0xffff)
-#define out_byte(a, b) *((volatile unsigned char *)(a)) = (b)
-#define in_byte(a) (*((volatile unsigned char *)(a)))
+#define out_long(a, b) *((volatile unsigned int*)(a)) = (b)
+#define in_long(a) (*((volatile unsigned int*)(a)))
+#define out_word(a, b) *((volatile unsigned int*)(a)) = ((b) | ((b) << 16))
+#define in_word(a) ((*((volatile unsigned int*)(a))) & 0xffff)
+#define out_byte(a, b) *((volatile unsigned char*)(a)) = (b)
+#define in_byte(a) (*((volatile unsigned char*)(a)))
 
-#define mmio_write(a, b) *((volatile unsigned int *)(a)) = (b)
-#define mmio_read(a) (*((volatile unsigned int *)(a)))
+#define mmio_write(a, b) *((volatile unsigned int*)(a)) = (b)
+#define mmio_read(a) (*((volatile unsigned int*)(a)))
 
 PUBLIC int init_tss(unsigned cpu, void* kernel_stack);
 
-PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
+PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
-PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags, void** mapped_addr);
+PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
+                         void** mapped_addr);
 
 PRIVATE inline void enable_user_access()
 {
-    __asm__ __volatile__ ("csrs sstatus, %0" : : "r" (SR_SUM) : "memory");
+    __asm__ __volatile__("csrs sstatus, %0" : : "r"(SR_SUM) : "memory");
 }
 
 PRIVATE inline void disable_user_access()
 {
-    __asm__ __volatile__ ("csrc sstatus, %0" : : "r" (SR_SUM) : "memory");
+    __asm__ __volatile__("csrc sstatus, %0" : : "r"(SR_SUM) : "memory");
 }
 
 PRIVATE inline void flush_tlb()
 {
-	__asm__ __volatile__ ("sfence.vma" : : : "memory");
+    __asm__ __volatile__("sfence.vma" : : : "memory");
 }
 
 PRIVATE inline phys_bytes read_ptbr()
 {
     reg_t ptbr = csr_read(sptbr);
-    return (phys_bytes) ((ptbr & SATP_PPN) << ARCH_PG_SHIFT);
+    return (phys_bytes)((ptbr & SATP_PPN) << ARCH_PG_SHIFT);
 }
 
 PRIVATE inline void write_ptbr(phys_bytes ptbr)

@@ -40,23 +40,24 @@
 #include <sys/mman.h>
 #include <multiboot.h>
 
-#define MAX_MODULE_PARAMS   64
+#define MAX_MODULE_PARAMS 64
 
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
 };
 
-PUBLIC int libexec_load_elf_dbg(struct exec_info * execi);
+PUBLIC int libexec_load_elf_dbg(struct exec_info* execi);
 
 PRIVATE struct exec_loader exec_loaders[] = {
-    { libexec_load_elf },
-    { NULL },
+    {libexec_load_elf},
+    {NULL},
 };
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                         size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
-    data_copy(execi->proc_e, vaddr, SELF, (void *)(execi->header + offset), len);
+    data_copy(execi->proc_e, vaddr, SELF, (void*)(execi->header + offset), len);
 
     return 0;
 }
@@ -71,13 +72,14 @@ PRIVATE char* prepare_stack(char** argv, size_t* frame_size, int* argc)
         stack_size = stack_size + sizeof(*p) + strlen(*p) + 1;
         (*argc)++;
     }
-    stack_size = (stack_size + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
+    stack_size = (stack_size + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
     *frame_size = stack_size;
 
-    return (char*) malloc(stack_size);
+    return (char*)malloc(stack_size);
 }
 
-PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progname, char** argv)
+PUBLIC int serv_exec(endpoint_t target, char* exec, int exec_len,
+                     char* progname, char** argv)
 {
     int i;
     int retval;
@@ -92,7 +94,7 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
     memset(frame, 0, frame_size);
 
     /* stack info */
-    execi.stack_top = (void*) VM_STACK_TOP;
+    execi.stack_top = (void*)VM_STACK_TOP;
     execi.stack_size = PROC_ORIGIN_STACK;
 
     /* header */
@@ -109,17 +111,17 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
     execi.filesize = exec_len;
 
     char* vsp = (char*)VM_STACK_TOP - frame_size;
-    char** fpw = (char**) frame;
+    char** fpw = (char**)frame;
     char* fp = frame + (sizeof(char*) * argc + 2 * sizeof(void*));
 
     for (i = 0; exec_loaders[i].loader != NULL; i++) {
         retval = (*exec_loaders[i].loader)(&execi);
-        if (!retval) break;  /* loaded successfully */
+        if (!retval) break; /* loaded successfully */
     }
 
     if (retval) return retval;
 
-    //int envp_offset;
+    // int envp_offset;
     char** p;
     for (p = argv; *p; p++) {
         int len = strlen(*p);
@@ -129,7 +131,7 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
         *fp++ = '\0';
     }
     *fpw++ = NULL;
-    //envp_offset = (char*)fpw - frame;
+    // envp_offset = (char*)fpw - frame;
     *fpw++ = NULL;
     data_copy(target, vsp, SELF, frame, frame_size);
     free(frame);
@@ -137,12 +139,11 @@ PUBLIC int serv_exec(endpoint_t target, char * exec, int exec_len, char * progna
     struct ps_strings ps;
     ps.ps_nargvstr = argc;
     ps.ps_argvstr = vsp;
-    //ps.ps_envstr = vsp + envp_offset;
+    // ps.ps_envstr = vsp + envp_offset;
     ps.ps_envstr = NULL;
 
-    return kernel_exec(target, vsp, progname, (void*) execi.entry_point, &ps);
+    return kernel_exec(target, vsp, progname, (void*)execi.entry_point, &ps);
 }
-
 
 #if 0
 PRIVATE int module_argc;
@@ -160,13 +161,14 @@ PUBLIC int serv_prepare_module_stack()
     int i;
 
 #define CLEAR_ARG() memset(arg, 0, sizeof(arg))
-#define COPY_STRING(str) do { \
-                                stacktop--;    \
-                                stacktop -= strlen(str);   \
-                                strcpy(stacktop, str); \
-                                argv[module_argc] = stacktop - delta; \
-                                module_argc++;  \
-                            } while (0)
+#define COPY_STRING(str)                      \
+    do {                                      \
+        stacktop--;                           \
+        stacktop -= strlen(str);              \
+        strcpy(stacktop, str);                \
+        argv[module_argc] = stacktop - delta; \
+        module_argc++;                        \
+    } while (0)
 
     module_argc = 0;
 

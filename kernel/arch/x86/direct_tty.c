@@ -29,42 +29,41 @@
 
 PRIVATE int disp_pos = 0, print_line = 0;
 
-#define V_MEM_BASE  __va(0xB8000)
+#define V_MEM_BASE __va(0xB8000)
 
 #define SCR_HEIGHT 25
 #define SCR_WIDTH 80
 #define SCR_SIZE (80 * 25)
 
-PRIVATE char get_char(int line, int col) 
+PRIVATE char get_char(int line, int col)
 {
     int offset = line * SCR_WIDTH * 2 + col * 2;
-    char * video_mem = (char *)V_MEM_BASE; 
+    char* video_mem = (char*)V_MEM_BASE;
     return video_mem[offset];
 }
 
 PRIVATE void put_char(const char c)
 {
-    char * video_mem = (char *)V_MEM_BASE; 
+    char* video_mem = (char*)V_MEM_BASE;
     video_mem[disp_pos++] = c;
-    video_mem[disp_pos++] = 0x07;   /* grey on black */
+    video_mem[disp_pos++] = 0x07; /* grey on black */
 }
 
 PRIVATE void put_char_at(const char c, int line, int col)
 {
     int offset = line * SCR_WIDTH * 2 + col * 2;
-    char * video_mem = (char *)V_MEM_BASE; 
+    char* video_mem = (char*)V_MEM_BASE;
     video_mem[offset++] = c;
-    video_mem[offset] = 0x07;   /* grey on black */
+    video_mem[offset] = 0x07; /* grey on black */
 }
 
-PRIVATE void scroll_up(int lines) 
+PRIVATE void scroll_up(int lines)
 {
     int i, j;
-    for (i = 0; i < SCR_HEIGHT; i++ ) {
-        for (j = 0; j < SCR_WIDTH; j++ ) {
+    for (i = 0; i < SCR_HEIGHT; i++) {
+        for (j = 0; j < SCR_WIDTH; j++) {
             char c = 0;
-            if(i < SCR_HEIGHT - lines)
-                c = get_char(i + lines, j);
+            if (i < SCR_HEIGHT - lines) c = get_char(i + lines, j);
             put_char_at(c, i, j);
         }
     }
@@ -79,7 +78,7 @@ PUBLIC void disp_char(const char c)
 
     if (c == '\n') {
         int space = SCR_WIDTH - ((disp_pos / 2) % SCR_WIDTH), i;
-        for (i = 0; i < space; i++) 
+        for (i = 0; i < space; i++)
             put_char(' ');
         print_line++;
         return;
@@ -92,21 +91,21 @@ PUBLIC void disp_char(const char c)
         scroll_up(1);
 }
 
-PUBLIC void direct_put_str(const char * str)
+PUBLIC void direct_put_str(const char* str)
 {
-    while (*str)  {
+    while (*str) {
         disp_char(*str);
         str++;
     }
 }
 
-PUBLIC int direct_print(const char * fmt, ...)
+PUBLIC int direct_print(const char* fmt, ...)
 {
     int i;
     char buf[256];
     va_list arg;
-    
-    va_start(arg, fmt); 
+
+    va_start(arg, fmt);
     i = vsprintf(buf, fmt, arg);
     direct_put_str(buf);
 

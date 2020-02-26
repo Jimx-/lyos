@@ -19,21 +19,21 @@
 struct clocksource;
 
 struct clocksource {
-	struct list_head list;
+    struct list_head list;
 
-	u64 (*read)(struct clocksource * cs);
-	u32 mul;
-	u32 shift;
+    u64 (*read)(struct clocksource* cs);
+    u32 mul;
+    u32 shift;
     u64 mask;
 
-	char * name;
-	u32 rating;
+    char* name;
+    u32 rating;
 };
 
 PUBLIC void init_clocksource();
-PUBLIC void register_clocksource(struct clocksource * cs);
-PUBLIC void register_clocksource_hz(struct clocksource * cs, u32 hz);
-PUBLIC void register_clocksource_khz(struct clocksource * cs, u32 khz);
-PUBLIC u64 clocksource_cyc2ns(struct clocksource * cs, u64 cycles);
+PUBLIC void register_clocksource(struct clocksource* cs);
+PUBLIC void register_clocksource_hz(struct clocksource* cs, u32 hz);
+PUBLIC void register_clocksource_khz(struct clocksource* cs, u32 khz);
+PUBLIC u64 clocksource_cyc2ns(struct clocksource* cs, u64 cycles);
 
 #endif

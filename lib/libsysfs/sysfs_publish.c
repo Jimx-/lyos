@@ -24,7 +24,7 @@
 #include "string.h"
 #include "libsysfs.h"
 
-PUBLIC int sysfs_publish_domain(char * key, int flags)
+PUBLIC int sysfs_publish_domain(char* key, int flags)
 {
     MESSAGE msg;
 
@@ -39,7 +39,7 @@ PUBLIC int sysfs_publish_domain(char * key, int flags)
     return msg.RETVAL;
 }
 
-PUBLIC int sysfs_publish_u32(char * key, u32 value, int flags)
+PUBLIC int sysfs_publish_u32(char* key, u32 value, int flags)
 {
     MESSAGE msg;
 

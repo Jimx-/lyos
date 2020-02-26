@@ -12,28 +12,28 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-   
+
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
 #include <lyos/list.h>
-    
+
 struct timer_list;
 
 typedef void (*timer_callback_t)(struct timer_list* timer);
 
 struct timer_list {
-	struct list_head list;
+    struct list_head list;
     clock_t expire_time;
     timer_callback_t callback;
     unsigned long arg;
 };
 
-#define TIMER_UNSET ((clock_t) 0xffffffff)
+#define TIMER_UNSET ((clock_t)0xffffffff)
 
 PUBLIC void timer_remove(struct timer_list* timer);
-PUBLIC void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb, int arg);
+PUBLIC void set_timer(struct timer_list* timer, clock_t ticks,
+                      timer_callback_t cb, int arg);
 PUBLIC void expire_timer(clock_t timestamp);
 
 #endif
-

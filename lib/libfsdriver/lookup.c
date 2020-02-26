@@ -28,81 +28,82 @@
 #include <sys/syslimits.h>
 #include "libfsdriver/libfsdriver.h"
 
-PRIVATE int get_next_name(char ** ptr, char ** start, char * name, size_t namesize)
+PRIVATE int get_next_name(char** ptr, char** start, char* name, size_t namesize)
 {
-	char * p;
-	int i;
+    char* p;
+    int i;
 
-	for (p = *ptr; *p == '/'; p++);
+    for (p = *ptr; *p == '/'; p++)
+        ;
 
-	*start = p;
+    *start = p;
 
-	if (*p) {
-		for (i = 0; *p && *p != '/' && i < namesize; p++, i++)
-			name[i] = *p;
+    if (*p) {
+        for (i = 0; *p && *p != '/' && i < namesize; p++, i++)
+            name[i] = *p;
 
-		if (i >= namesize)
-			return ENAMETOOLONG;
+        if (i >= namesize) return ENAMETOOLONG;
 
-		name[i] = 0;
-	} else
-		strlcpy(name, ".", namesize);
+        name[i] = 0;
+    } else
+        strlcpy(name, ".", namesize);
 
-	*ptr = p;
-	return 0;
+    *ptr = p;
+    return 0;
 }
 
-PRIVATE int access_dir(struct fsdriver_node * fn, struct vfs_ucred * ucred)
+PRIVATE int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
 {
-	mode_t mask;
+    mode_t mask;
 
-	if (!S_ISDIR(fn->fn_mode)) return ENOTDIR;
+    if (!S_ISDIR(fn->fn_mode)) return ENOTDIR;
 
-	if (ucred->uid == SU_UID) return 0;
+    if (ucred->uid == SU_UID) return 0;
 
-	if (ucred->uid == fn->fn_uid) mask = S_IXUSR;
-	else if (ucred->gid == fn->fn_gid) mask = S_IXGRP;
-	else {
-		mask = S_IXOTH;
-	}
+    if (ucred->uid == fn->fn_uid)
+        mask = S_IXUSR;
+    else if (ucred->gid == fn->fn_gid)
+        mask = S_IXGRP;
+    else {
+        mask = S_IXOTH;
+    }
 
-	return (fn->fn_mode & mask) ? 0 : EACCES;
+    return (fn->fn_mode & mask) ? 0 : EACCES;
 }
 
-PRIVATE int resolve_link(struct fsdriver * fsd, dev_t dev, ino_t num, char * pathname, int path_len, char * ptr)
+PRIVATE int resolve_link(struct fsdriver* fsd, dev_t dev, ino_t num,
+                         char* pathname, int path_len, char* ptr)
 {
-	struct fsdriver_data data;
-	char path[PATH_MAX];
-	int retval;
+    struct fsdriver_data data;
+    char path[PATH_MAX];
+    int retval;
 
-	data.src = SELF;
-	data.buf = path;
-	size_t size = sizeof(path) - 1;
+    data.src = SELF;
+    data.buf = path;
+    size_t size = sizeof(path) - 1;
 
-	if (fsd->fs_rdlink == NULL) return ENOSYS;
+    if (fsd->fs_rdlink == NULL) return ENOSYS;
 
-	if ((retval = fsd->fs_rdlink(dev, num, &data, &size)) != 0)
-		return retval;
+    if ((retval = fsd->fs_rdlink(dev, num, &data, &size)) != 0) return retval;
 
-	if (size + strlen(ptr) >= sizeof(path))
-		return ENAMETOOLONG;
+    if (size + strlen(ptr) >= sizeof(path)) return ENAMETOOLONG;
 
-	strlcpy(&path[size], ptr, sizeof(path) - size);
+    strlcpy(&path[size], ptr, sizeof(path) - size);
 
-	strlcpy(pathname, path, path_len);
+    strlcpy(pathname, path, path_len);
 
-	return 0;
+    return 0;
 }
 
-PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
+PUBLIC int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m)
 {
     int src = m->source;
     int dev = m->REQ_DEV;
     int start = m->REQ_START_INO;
     int root = m->REQ_ROOT_INO;
-    //int flags = (int)m->REQ_FLAGS;
+    // int flags = (int)m->REQ_FLAGS;
     int name_len = m->REQ_NAMELEN;
-    //off_t offset;
+    // off_t offset;
     struct fsdriver_node cur_node, next_node;
     int retval = 0, is_mountpoint;
     struct vfs_ucred ucred;
@@ -118,99 +119,104 @@ PUBLIC int fsdriver_lookup(struct fsdriver * fsd, MESSAGE * m)
 
     if (fsd->fs_lookup == NULL) return ENOSYS;
 
-	char * cp, * last;
-	char component[NAME_MAX + 1];
+    char *cp, *last;
+    char component[NAME_MAX + 1];
 
-	strlcpy(component, ".", sizeof(component));
-	retval = fsd->fs_lookup(dev, start, component, &cur_node, &is_mountpoint);
-	if (retval) return retval;
+    strlcpy(component, ".", sizeof(component));
+    retval = fsd->fs_lookup(dev, start, component, &cur_node, &is_mountpoint);
+    if (retval) return retval;
 
-	/* scan */
-	for (cp = last = pathname; *cp != '\0';) {
-		if ((retval = get_next_name(&cp, &last, component, sizeof(component))) != 0) 
-			break;
+    /* scan */
+    for (cp = last = pathname; *cp != '\0';) {
+        if ((retval =
+                 get_next_name(&cp, &last, component, sizeof(component))) != 0)
+            break;
 
-		if (is_mountpoint) {
-			if (strcmp(component, "..")) {
-				retval = EINVAL;
-				break;
-			}
-		} else {
-			if ((retval = access_dir(&cur_node, &ucred)) != 0) 
-				break;
-		}
+        if (is_mountpoint) {
+            if (strcmp(component, "..")) {
+                retval = EINVAL;
+                break;
+            }
+        } else {
+            if ((retval = access_dir(&cur_node, &ucred)) != 0) break;
+        }
 
-		if (strcmp(component, ".") == 0) continue;
+        if (strcmp(component, ".") == 0) continue;
 
-		if (strcmp(component, "..") == 0) {
-			if (cur_node.fn_num == root) continue;
+        if (strcmp(component, "..") == 0) {
+            if (cur_node.fn_num == root) continue;
 
-			if (cur_node.fn_num == fsd->root_num) {
-				cp = last;
-				retval = ELEAVEMOUNT;
+            if (cur_node.fn_num == fsd->root_num) {
+                cp = last;
+                retval = ELEAVEMOUNT;
 
-				break;
-			}
-		}
+                break;
+            }
+        }
 
-		if ((retval = fsd->fs_lookup(dev, cur_node.fn_num, component, &next_node, &is_mountpoint)) != 0)
-			break;
+        if ((retval = fsd->fs_lookup(dev, cur_node.fn_num, component,
+                                     &next_node, &is_mountpoint)) != 0)
+            break;
 
-		/* resolve symlink */
-		if (S_ISLNK(next_node.fn_mode) && (*cp)) {
-			if (++symloop < _POSIX_SYMLOOP_MAX) {
-				retval = resolve_link(fsd, dev, next_node.fn_num, pathname, sizeof(pathname), cp);
-			} else
-				retval = ELOOP;
+        /* resolve symlink */
+        if (S_ISLNK(next_node.fn_mode) && (*cp)) {
+            if (++symloop < _POSIX_SYMLOOP_MAX) {
+                retval = resolve_link(fsd, dev, next_node.fn_num, pathname,
+                                      sizeof(pathname), cp);
+            } else
+                retval = ELOOP;
 
-			if (fsd->fs_putinode) fsd->fs_putinode(dev, next_node.fn_num);
+            if (fsd->fs_putinode) fsd->fs_putinode(dev, next_node.fn_num);
 
-			if (retval) break;
+            if (retval) break;
 
-			cp = pathname;
+            cp = pathname;
 
-			/* absolute symlink */
-			if (*cp == '/') {
-				retval = ESYMLINK;
-				break;
-			}
+            /* absolute symlink */
+            if (*cp == '/') {
+                retval = ESYMLINK;
+                break;
+            }
 
-			continue;
-		}
+            continue;
+        }
 
-		if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num);
-		cur_node = next_node;
+        if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num);
+        cur_node = next_node;
 
-		if (is_mountpoint) {
-			retval = EENTERMOUNT;
-			break;
-		}
-	}
+        if (is_mountpoint) {
+            retval = EENTERMOUNT;
+            break;
+        }
+    }
 
-	if (retval == EENTERMOUNT || retval == ELEAVEMOUNT || retval == ESYMLINK) {
-		int retval2;
+    if (retval == EENTERMOUNT || retval == ELEAVEMOUNT || retval == ESYMLINK) {
+        int retval2;
 
-		if (symloop > 0) {
-			retval2 = data_copy(src, m->REQ_PATHNAME, SELF, pathname, strlen(pathname) + 1);
-		} else retval2 = 0;
+        if (symloop > 0) {
+            retval2 = data_copy(src, m->REQ_PATHNAME, SELF, pathname,
+                                strlen(pathname) + 1);
+        } else
+            retval2 = 0;
 
-		if (retval2 == 0) {
-			m->RET_OFFSET = cp - pathname;
-			if (retval == EENTERMOUNT) {
-				m->RET_NUM = cur_node.fn_num;
-			}
-		} else retval = retval2;
-	}
+        if (retval2 == 0) {
+            m->RET_OFFSET = cp - pathname;
+            if (retval == EENTERMOUNT) {
+                m->RET_NUM = cur_node.fn_num;
+            }
+        } else
+            retval = retval2;
+    }
 
-	if (retval == 0) {
-		m->RET_NUM = cur_node.fn_num;
-    	m->RET_UID = cur_node.fn_uid;
-    	m->RET_GID = cur_node.fn_gid;
-    	m->RET_FILESIZE = cur_node.fn_size;
-    	m->RET_MODE = cur_node.fn_mode;
-    	m->RET_SPECDEV = cur_node.fn_device;
+    if (retval == 0) {
+        m->RET_NUM = cur_node.fn_num;
+        m->RET_UID = cur_node.fn_uid;
+        m->RET_GID = cur_node.fn_gid;
+        m->RET_FILESIZE = cur_node.fn_size;
+        m->RET_MODE = cur_node.fn_mode;
+        m->RET_SPECDEV = cur_node.fn_device;
     } else {
-    	if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num);
+        if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num);
     }
 
     return retval;

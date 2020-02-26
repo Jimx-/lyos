@@ -33,21 +33,24 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, struct fsdriver_data * data, off_t data_offset);
+PRIVATE int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
+                          int offset, int rw_flag, struct fsdriver_data* data,
+                          off_t data_offset);
 
 /**
  * Ext2 read/write syscall.
  * @param  p Ptr to message.
  * @return   Zero on success.
  */
-PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * data, u64 * rwpos, int * count)
+PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
+                     struct fsdriver_data* data, u64* rwpos, int* count)
 {
     u64 position = *rwpos;
     int nbytes = *count;
     off_t data_offset = 0;
 
     int retval = 0;
-    ext2_inode_t * pin = find_ext2_inode(dev, num);
+    ext2_inode_t* pin = find_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
     int file_size = pin->i_size;
@@ -70,7 +73,8 @@ PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * d
         }
 
         /* rw */
-        retval = ext2_rw_chunk(pin, position, chunk, nbytes, offset, rw_flag, data, data_offset);
+        retval = ext2_rw_chunk(pin, position, chunk, nbytes, offset, rw_flag,
+                               data, data_offset);
         if (retval) break;
 
         /* move on */
@@ -119,12 +123,14 @@ PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data * d
  * @param  buf      Buffer.
  * @return          Zero on success.
  */
-PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left, int offset, int rw_flag, struct fsdriver_data * data, off_t data_offset)
+PRIVATE int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
+                          int offset, int rw_flag, struct fsdriver_data* data,
+                          off_t data_offset)
 {
 
     int b = 0;
     int dev = 0;
-    ext2_buffer_t * bp = NULL;
+    ext2_buffer_t* bp = NULL;
 
     b = ext2_read_map(pin, position);
     dev = pin->i_dev;
@@ -152,10 +158,13 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left,
 
     if (rw_flag == READ) {
         /* copy the data to userspace */
-        if (b != 0) fsdriver_copyout(data, data_offset, (void *)((int)bp->b_data + offset), chunk);
+        if (b != 0)
+            fsdriver_copyout(data, data_offset,
+                             (void*)((int)bp->b_data + offset), chunk);
     } else {
         /* copy the data from userspace */
-        fsdriver_copyin(data, data_offset, (void *)((int)bp->b_data + offset), chunk);
+        fsdriver_copyin(data, data_offset, (void*)((int)bp->b_data + offset),
+                        chunk);
         bp->b_dirt = 1;
     }
 
@@ -165,7 +174,7 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t * pin, u64 position, int chunk, int left,
 }
 
 /* locate the block number where the position can be found */
-PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
+PUBLIC block_t ext2_read_map(ext2_inode_t* pin, off_t position)
 {
     int index;
     block_t b;
@@ -178,7 +187,7 @@ PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
     /* triple indirect slots */
     static long triple_ind_s;
     static long out_range_s;
-    ext2_buffer_t * pb = NULL;
+    ext2_buffer_t* pb = NULL;
 
     if (first_time) {
         addr_in_block = pin->i_sb->sb_block_size / EXT2_BLOCK_ADDRESS_BYTES;
@@ -189,17 +198,17 @@ PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
         first_time = 0;
     }
 
-    block_pos = position / pin->i_sb->sb_block_size; 
+    block_pos = position / pin->i_sb->sb_block_size;
 
     /* block number is in the inode */
-    if (block_pos < EXT2_NDIR_BLOCKS)
-        return(pin->i_block[block_pos]);
+    if (block_pos < EXT2_NDIR_BLOCKS) return (pin->i_block[block_pos]);
 
     /* single indirect */
     if (block_pos < doub_ind_s) {
-        b = pin->i_block[EXT2_NDIR_BLOCKS]; /* address of single indirect block */
+        b = pin->i_block[EXT2_NDIR_BLOCKS]; /* address of single indirect block
+                                             */
         index = block_pos - EXT2_NDIR_BLOCKS;
-    } else if (block_pos >= out_range_s) { 
+    } else if (block_pos >= out_range_s) {
         return 0;
     } else {
         /* double or triple indirect block. At first if it's triple,
@@ -213,24 +222,27 @@ PUBLIC block_t ext2_read_map(ext2_inode_t * pin, off_t position)
             pb = ext2_get_buffer(pin->i_dev, b);
             excess = block_pos - triple_ind_s;
             index = excess / addr_in_block2;
-            b = *(block_t *)(pb->b_data + sizeof(block_t) * index);    /* num of double ind block */
+            b = *(block_t*)(pb->b_data +
+                            sizeof(block_t) *
+                                index); /* num of double ind block */
             excess = excess % addr_in_block2;
             ext2_put_buffer(pb);
         }
         if (b == 0) return b;
         pb = ext2_get_buffer(pin->i_dev, b);
         index = excess / addr_in_block;
-        b = *(block_t *)(pb->b_data + sizeof(block_t) * index);    /* num of single ind block */
+        b = *(block_t*)(pb->b_data +
+                        sizeof(block_t) * index); /* num of single ind block */
         index = excess % addr_in_block; /* index into single ind blk */
         ext2_put_buffer(pb);
     }
     if (b == 0) return b;
     pb = ext2_get_buffer(pin->i_dev, b);
-    b = *(block_t *)(pb->b_data + sizeof(block_t) * index);
+    b = *(block_t*)(pb->b_data + sizeof(block_t) * index);
     return b;
 }
 
-PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
+PUBLIC int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
 {
     block_t b1, b2, b3;
     int index1, index2, index3;
@@ -245,10 +257,8 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
     /* triple indirect slots */
     static long triple_ind_s;
     static long out_range_s;
-             
-    ext2_buffer_t * pb = NULL,
-        *pb_dindir = NULL,
-        *pb_tindir = NULL;
+
+    ext2_buffer_t *pb = NULL, *pb_dindir = NULL, *pb_tindir = NULL;
 
     if (first_time) {
         addr_in_block = pin->i_sb->sb_block_size / EXT2_BLOCK_ADDRESS_BYTES;
@@ -259,7 +269,7 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
         first_time = 0;
     }
 
-    block_pos = position / pin->i_sb->sb_block_size; 
+    block_pos = position / pin->i_sb->sb_block_size;
 
     if (block_pos < EXT2_NDIR_BLOCKS) {
         pin->i_block[block_pos] = new_block;
@@ -267,12 +277,12 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
         return 0;
     }
 
-
     if (block_pos < doub_ind_s) {
         b1 = pin->i_block[EXT2_NDIR_BLOCKS];
         index1 = block_pos - EXT2_NDIR_BLOCKS;
         single = TRUE;
-    } else if (block_pos >= out_range_s) return EFBIG;
+    } else if (block_pos >= out_range_s)
+        return EFBIG;
     else {
         excess = block_pos - doub_ind_s;
         b2 = pin->i_block[EXT2_DIND_BLOCK];
@@ -285,27 +295,28 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
                 pin->i_block[EXT2_TIND_BLOCK] = b3;
                 pin->i_blocks += pin->i_sb->sb_block_size / 512;
                 new_triple = TRUE;
-            }
-            else {
+            } else {
                 pb_tindir = ext2_get_buffer(pin->i_dev, b3);
                 if (new_triple) {
                     pb_tindir->b_dirt = 1;
                 }
                 excess = block_pos - triple_ind_s;
                 index3 = excess / addr_in_block2;
-                b2 = *(block_t *)((int)pb_tindir->b_data + sizeof(block_t) * index3);
+                b2 = *(block_t*)((int)pb_tindir->b_data +
+                                 sizeof(block_t) * index3);
                 excess = excess % addr_in_block2;
             }
             triple = TRUE;
         }
 
         if (b2 == 0) {
-            if ( (b2 = ext2_alloc_block(pin) ) == 0) {
+            if ((b2 = ext2_alloc_block(pin)) == 0) {
                 ext2_put_buffer(pb_tindir);
-                return(ENOSPC);
+                return (ENOSPC);
             }
             if (triple) {
-                *(block_t *)((int)pb_tindir->b_data + sizeof(block_t) * index3) = b2;  /* update triple indir */
+                *(block_t*)((int)pb_tindir->b_data + sizeof(block_t) * index3) =
+                    b2; /* update triple indir */
                 pb_tindir->b_dirt = 1;
             } else {
                 pin->i_block[EXT2_DIND_BLOCK] = b2;
@@ -320,7 +331,7 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
                 pb_dindir->b_dirt = 1;
             }
             index2 = excess / addr_in_block;
-            b1 = *(block_t *)((int)pb_dindir->b_data + sizeof(block_t) * index2);
+            b1 = *(block_t*)((int)pb_dindir->b_data + sizeof(block_t) * index2);
             index1 = excess % addr_in_block;
         }
         single = FALSE;
@@ -330,11 +341,13 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
                 ext2_put_buffer(pb_dindir);
                 ext2_put_buffer(pb_tindir);
                 return ENOSPC;
-            }   
+            }
             if (single) {
-                pin->i_block[EXT2_NDIR_BLOCKS] = b1; /* update inode single indirect */
+                pin->i_block[EXT2_NDIR_BLOCKS] =
+                    b1; /* update inode single indirect */
             } else {
-                *(block_t *)((int)pb_dindir + sizeof(block_t) * index2) = b1;  /* update dbl indir */
+                *(block_t*)((int)pb_dindir + sizeof(block_t) * index2) =
+                    b1; /* update dbl indir */
                 pb_dindir->b_dirt = 1;
             }
             pin->i_blocks += pin->i_sb->sb_block_size / 512;
@@ -343,7 +356,7 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
         if (b1 != 0) {
             pb = ext2_get_buffer(pin->i_dev, b1);
         } else {
-            *(block_t *)((int)pb + sizeof(block_t) * index1) = new_block;
+            *(block_t*)((int)pb + sizeof(block_t) * index1) = new_block;
             pin->i_blocks += pin->i_sb->sb_block_size / 512;
         }
         pb->b_dirt = (b1 == 0);
@@ -351,16 +364,16 @@ PUBLIC int ext2_write_map(ext2_inode_t * pin, off_t position, block_t new_block)
     }
 
     ext2_put_buffer(pb_dindir);
-    ext2_put_buffer(pb_tindir); 
+    ext2_put_buffer(pb_tindir);
 
     return 0;
 }
 
-PUBLIC ext2_buffer_t * ext2_new_block(ext2_inode_t * pin, off_t position)
+PUBLIC ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position)
 {
     block_t b = ext2_read_map(pin, position);
 
-    if (b == 0) {   
+    if (b == 0) {
         b = ext2_alloc_block(pin);
 
         /* can't allocate a block */
@@ -379,7 +392,7 @@ PUBLIC ext2_buffer_t * ext2_new_block(ext2_inode_t * pin, off_t position)
     return ext2_get_buffer(pin->i_dev, b);
 }
 
-PRIVATE int dirent_type(ext2_dir_entry_t * dp)
+PRIVATE int dirent_type(ext2_dir_entry_t* dp)
 {
     switch (dp->d_file_type) {
     case EXT2_FT_REG_FILE:
@@ -399,50 +412,53 @@ PRIVATE int dirent_type(ext2_dir_entry_t * dp)
     }
 }
 
-PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data * data, u64 * ppos, size_t * count)
+PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
+                         u64* ppos, size_t* count)
 {
 #define GETDENTS_BUFSIZE (sizeof(struct dirent) + EXT2_NAME_LEN + 1)
-#define GETDENTS_ENTRIES    8
+#define GETDENTS_ENTRIES 8
     static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
 
     int retval = 0;
     int done = 0;
     off_t pos = *ppos;
 
-    ext2_inode_t * pin = find_ext2_inode(dev, num);
+    ext2_inode_t* pin = find_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
     size_t block_size = pin->i_sb->sb_block_size;
     off_t block_off = pos % block_size; /* offset in block */
-    off_t block_pos = pos - block_off; /* block position */
+    off_t block_pos = pos - block_off;  /* block position */
 
     off_t newpos = pin->i_size;
 
     struct fsdriver_dentry_list list;
-    fsdriver_dentry_list_init(&list, data, *count, getdents_buf, sizeof(getdents_buf));
+    fsdriver_dentry_list_init(&list, data, *count, getdents_buf,
+                              sizeof(getdents_buf));
 
     for (; block_pos < pin->i_size; block_pos += block_size) {
         block_t b = ext2_read_map(pin, block_pos);
-        ext2_buffer_t * pb = ext2_get_buffer(pin->i_dev, b);
+        ext2_buffer_t* pb = ext2_get_buffer(pin->i_dev, b);
         if (pb == NULL) panic("hole in directory\n");
 
-        ext2_dir_entry_t * dp = (ext2_dir_entry_t *)pb->b_data;
+        ext2_dir_entry_t* dp = (ext2_dir_entry_t*)pb->b_data;
 
         off_t cur_pos = block_pos;
-        for (; cur_pos + dp->d_rec_len <= pos && 
-            (char*)EXT2_NEXT_DIR_ENTRY(dp) - (char*)pb->b_data < block_size;
-            dp = EXT2_NEXT_DIR_ENTRY(dp)) {
+        for (; cur_pos + dp->d_rec_len <= pos &&
+               (char*)EXT2_NEXT_DIR_ENTRY(dp) - (char*)pb->b_data < block_size;
+             dp = EXT2_NEXT_DIR_ENTRY(dp)) {
             cur_pos += dp->d_rec_len;
         }
-        for (; (char*)dp - (char*)pb->b_data < block_size; 
-            dp = EXT2_NEXT_DIR_ENTRY(dp)) {
+        for (; (char*)dp - (char*)pb->b_data < block_size;
+             dp = EXT2_NEXT_DIR_ENTRY(dp)) {
             if (dp->d_inode == 0) continue;
-            
-            off_t ent_pos = block_pos + ((char *)dp - (char*)pb->b_data);
 
-            int retval = fsdriver_dentry_list_add(&list, dp->d_inode, dp->d_name,
-                dp->d_name_len, dirent_type(dp));
-            
+            off_t ent_pos = block_pos + ((char*)dp - (char*)pb->b_data);
+
+            int retval =
+                fsdriver_dentry_list_add(&list, dp->d_inode, dp->d_name,
+                                         dp->d_name_len, dirent_type(dp));
+
             if (retval <= 0) {
                 newpos = ent_pos;
                 done = 1;
@@ -452,17 +468,19 @@ PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data * data, u64 
 
         ext2_put_buffer(pb);
         if (done) break;
-    }   
+    }
 
     int bytes = fsdriver_dentry_list_finish(&list);
-    if (bytes < 0) retval = -bytes;
-    else *count = bytes;
+    if (bytes < 0)
+        retval = -bytes;
+    else
+        *count = bytes;
 
     *ppos = newpos;
     pin->i_update |= ATIME;
     pin->i_dirt = 1;
 
     put_ext2_inode(pin);
-    
+
     return retval;
 }

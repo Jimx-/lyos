@@ -35,13 +35,15 @@
 #include <sys/mman.h>
 #include "global.h"
 
-PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, void* addr,
-    int mmap_flags, size_t len, int vrflags)
+PUBLIC struct vir_region* mmap_region(struct mmproc* mmp, void* addr,
+                                      int mmap_flags, size_t len, int vrflags)
 {
-    struct vir_region * vr = NULL;
+    struct vir_region* vr = NULL;
 
-    if (mmap_flags & MAP_PRIVATE) vrflags |= RF_PRIVATE;
-    else if (mmap_flags & MAP_SHARED) vrflags |= RF_SHARED;
+    if (mmap_flags & MAP_PRIVATE)
+        vrflags |= RF_PRIVATE;
+    else if (mmap_flags & MAP_SHARED)
+        vrflags |= RF_SHARED;
     if (mmap_flags & MAP_CONTIG) vrflags |= RF_CONTIG;
 
     /* Contiguous physical memory must be populated */
@@ -56,14 +58,15 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, void* addr,
 
     if (addr || (mmap_flags & MAP_FIXED)) {
         vr = region_find_free_region(mmp, (vir_bytes)addr, 0, len, vrflags);
-        if(!vr && (mmap_flags & MAP_FIXED))
-            return NULL;
+        if (!vr && (mmap_flags & MAP_FIXED)) return NULL;
     } else {
-        vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, vrflags);
+        vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len,
+                                     vrflags);
         if (!vr) return NULL;
     }
 
-    if (mmap_flags & MAP_POPULATE) {    /*  populate (prefault) page tables for a mapping */
+    if (mmap_flags &
+        MAP_POPULATE) { /*  populate (prefault) page tables for a mapping */
         region_alloc_phys(vr);
         region_map_phys(mmp, vr);
     }
@@ -71,19 +74,22 @@ PUBLIC struct vir_region * mmap_region(struct mmproc * mmp, void* addr,
     return vr;
 }
 
-PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags, int prot, int mmfd, off_t offset, dev_t dev, ino_t ino, size_t clearend, void** ret_addr)
+PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags,
+                      int prot, int mmfd, off_t offset, dev_t dev, ino_t ino,
+                      size_t clearend, void** ret_addr)
 {
     int vrflags = 0;
-    struct vir_region * vr;
+    struct vir_region* vr;
 
     len = roundup(len, ARCH_PG_SIZE);
 
     if (prot & PROT_WRITE) vrflags |= RF_WRITABLE;
 
     if (offset % ARCH_PG_SIZE) return EINVAL;
-    if ((vir_bytes) addr % ARCH_PG_SIZE) return EINVAL;
+    if ((vir_bytes)addr % ARCH_PG_SIZE) return EINVAL;
 
-    if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL) return ENOMEM;
+    if ((vr = mmap_region(mmp, addr, flags, len, vrflags)) == NULL)
+        return ENOMEM;
     list_add(&(vr->list), &mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
 
@@ -103,7 +109,8 @@ PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags, int
 PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
     /* driver has done the mapping */
-    enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, msg->MMRFD, 0, 0, 0, NULL, NULL, 0);
+    enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, msg->MMRFD, 0, 0,
+                        0, NULL, NULL, 0);
 
     MESSAGE reply_msg;
     memset(&reply_msg, 0, sizeof(MESSAGE));
@@ -116,7 +123,7 @@ PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 
 PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
-    MESSAGE* mmap_msg = (MESSAGE*) arg;
+    MESSAGE* mmap_msg = (MESSAGE*)arg;
     void* ret_addr = MAP_FAILED;
     int result;
 
@@ -124,27 +131,21 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
         result = msg->MMRRESULT;
     } else {
         mode_t file_mode = msg->MMRMODE;
-        if ((file_mode & I_TYPE) == I_CHAR_SPECIAL) {   /* map device */
-            if (enqueue_vfs_request(mmp, MMR_FDMMAP, msg->MMRFD, mmap_msg->u.m_mm_mmap.vaddr, mmap_msg->u.m_mm_mmap.offset, mmap_msg->u.m_mm_mmap.length,
-                mmap_device_callback, mmap_msg, sizeof(MESSAGE)) != 0) {
+        if ((file_mode & I_TYPE) == I_CHAR_SPECIAL) { /* map device */
+            if (enqueue_vfs_request(
+                    mmp, MMR_FDMMAP, msg->MMRFD, mmap_msg->u.m_mm_mmap.vaddr,
+                    mmap_msg->u.m_mm_mmap.offset, mmap_msg->u.m_mm_mmap.length,
+                    mmap_device_callback, mmap_msg, sizeof(MESSAGE)) != 0) {
                 result = ENOMEM;
             } else {
                 return;
             }
         } else {
             result = mmap_file(
-                mmp,
-                mmap_msg->u.m_mm_mmap.vaddr,
-                mmap_msg->u.m_mm_mmap.length,
-                mmap_msg->u.m_mm_mmap.flags,
-                mmap_msg->u.m_mm_mmap.prot,
-                msg->MMRFD,
-                mmap_msg->u.m_mm_mmap.offset,
-                msg->MMRDEV,
-                msg->MMRINO,
-                0,
-                &ret_addr
-            );
+                mmp, mmap_msg->u.m_mm_mmap.vaddr, mmap_msg->u.m_mm_mmap.length,
+                mmap_msg->u.m_mm_mmap.flags, mmap_msg->u.m_mm_mmap.prot,
+                msg->MMRFD, mmap_msg->u.m_mm_mmap.offset, msg->MMRDEV,
+                msg->MMRINO, 0, &ret_addr);
         }
     }
 
@@ -164,32 +165,26 @@ PUBLIC int do_vfs_mmap()
     if (!mmp) return ESRCH;
 
     void* ret_addr;
-    return mmap_file(
-        mmp,
-        mm_msg.u.m_mm_mmap.vaddr,
-        mm_msg.u.m_mm_mmap.length,
-        mm_msg.u.m_mm_mmap.flags,
-        mm_msg.u.m_mm_mmap.prot,
-        mm_msg.u.m_mm_mmap.fd,
-        mm_msg.u.m_mm_mmap.offset,
-        mm_msg.u.m_mm_mmap.devino.dev,
-        mm_msg.u.m_mm_mmap.devino.ino,
-        mm_msg.u.m_mm_mmap.clearend,
-        &ret_addr
-    );
+    return mmap_file(mmp, mm_msg.u.m_mm_mmap.vaddr, mm_msg.u.m_mm_mmap.length,
+                     mm_msg.u.m_mm_mmap.flags, mm_msg.u.m_mm_mmap.prot,
+                     mm_msg.u.m_mm_mmap.fd, mm_msg.u.m_mm_mmap.offset,
+                     mm_msg.u.m_mm_mmap.devino.dev,
+                     mm_msg.u.m_mm_mmap.devino.ino, mm_msg.u.m_mm_mmap.clearend,
+                     &ret_addr);
 }
 
 PUBLIC int do_mmap()
 {
-    endpoint_t who = mm_msg.u.m_mm_mmap.who < 0 ? mm_msg.source : mm_msg.u.m_mm_mmap.who;
+    endpoint_t who =
+        mm_msg.u.m_mm_mmap.who < 0 ? mm_msg.source : mm_msg.u.m_mm_mmap.who;
     void* addr = mm_msg.u.m_mm_mmap.vaddr;
     size_t len = mm_msg.u.m_mm_mmap.length;
-    struct mmproc * mmp = endpt_mmproc(who);
+    struct mmproc* mmp = endpt_mmproc(who);
     int flags = mm_msg.u.m_mm_mmap.flags;
     int fd = mm_msg.u.m_mm_mmap.fd;
     int prot = mm_msg.u.m_mm_mmap.prot;
 
-    struct vir_region * vr = NULL;
+    struct vir_region* vr = NULL;
 
     if (len < 0) return EINVAL;
 
@@ -208,8 +203,11 @@ PUBLIC int do_mmap()
         if (!(vr = mmap_region(mmp, addr, flags, len, vr_flags))) return ENOMEM;
         list_add(&(vr->list), &mmp->active_mm->mem_regions);
         avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
-    } else {    /* mapping file */
-        if (enqueue_vfs_request(mmp, MMR_FDLOOKUP, fd, 0, 0, 0, mmap_file_callback, &mm_msg, sizeof(MESSAGE)) != 0) return ENOMEM;
+    } else { /* mapping file */
+        if (enqueue_vfs_request(mmp, MMR_FDLOOKUP, fd, 0, 0, 0,
+                                mmap_file_callback, &mm_msg,
+                                sizeof(MESSAGE)) != 0)
+            return ENOMEM;
 
         return SUSPEND;
     }
@@ -218,7 +216,8 @@ PUBLIC int do_mmap()
     return 0;
 }
 
-PRIVATE int map_perm_check(endpoint_t source, endpoint_t target, phys_bytes phys_addr, phys_bytes len)
+PRIVATE int map_perm_check(endpoint_t source, endpoint_t target,
+                           phys_bytes phys_addr, phys_bytes len)
 {
     /* if (source == TASK_TTY) return 0;
     return EPERM; */
@@ -230,12 +229,13 @@ PUBLIC int do_map_phys()
     endpoint_t who = mm_msg.ENDPOINT == SELF ? mm_msg.source : mm_msg.ENDPOINT;
     phys_bytes phys_addr = (phys_bytes)mm_msg.ADDR;
     phys_bytes len = mm_msg.BUF_LEN;
-    struct mmproc * mmp = endpt_mmproc(who);
+    struct mmproc* mmp = endpt_mmproc(who);
     int retval = 0;
 
     if (!mmp) return EINVAL;
 
-    if ((retval = map_perm_check(mm_msg.source, who, phys_addr, len)) != 0) return retval;
+    if ((retval = map_perm_check(mm_msg.source, who, phys_addr, len)) != 0)
+        return retval;
 
     /* align */
     off_t offset = phys_addr % ARCH_PG_SIZE;
@@ -243,7 +243,8 @@ PUBLIC int do_map_phys()
     len += offset;
     if (len % ARCH_PG_SIZE) len += ARCH_PG_SIZE - (len % ARCH_PG_SIZE);
 
-    struct vir_region * vr = region_find_free_region(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE | RF_DIRECT);
+    struct vir_region* vr = region_find_free_region(
+        mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, RF_WRITABLE | RF_DIRECT);
     if (!vr) return ENOMEM;
     list_add(&vr->list, &mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmp->active_mm->mem_avl);
@@ -251,17 +252,18 @@ PUBLIC int do_map_phys()
     region_set_phys(vr, phys_addr);
     region_map_phys(mmp, vr);
 
-    mm_msg.ADDR = (void *)(vr->vir_addr + offset);
+    mm_msg.ADDR = (void*)(vr->vir_addr + offset);
 
     return 0;
 }
 
 PUBLIC int do_munmap()
 {
-    endpoint_t who = mm_msg.u.m_mm_mmap.who < 0 ? mm_msg.source : mm_msg.u.m_mm_mmap.who;
+    endpoint_t who =
+        mm_msg.u.m_mm_mmap.who < 0 ? mm_msg.source : mm_msg.u.m_mm_mmap.who;
     void* addr = mm_msg.u.m_mm_mmap.vaddr;
     size_t len = mm_msg.u.m_mm_mmap.length;
-    struct mmproc * mmp = endpt_mmproc(who);
+    struct mmproc* mmp = endpt_mmproc(who);
 
     if (len < 0) return EINVAL;
     if (!mmp) return EINVAL;
@@ -299,13 +301,14 @@ PUBLIC int do_mm_remap()
     if (dest_addr) {
         new_region = region_new((vir_bytes)dest_addr, size, vrflags);
     } else {
-        new_region = region_find_free_region(dmmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, size, vrflags);
+        new_region = region_find_free_region(dmmp, ARCH_BIG_PAGE_SIZE,
+                                             VM_STACK_TOP, size, vrflags);
     }
     if (!new_region) return ENOMEM;
 
     region_share(dmmp, new_region, smmp, src_region, TRUE);
     region_map_phys(dmmp, new_region);
 
-    mm_msg.u.m_mm_remap.ret_addr = (void*) new_region->vir_addr;
+    mm_msg.u.m_mm_remap.ret_addr = (void*)new_region->vir_addr;
     return 0;
 }

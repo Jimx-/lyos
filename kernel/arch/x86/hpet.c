@@ -38,13 +38,13 @@
 #include <asm/hpet.h>
 #include <asm/div64.h>
 
-PUBLIC void*   hpet_addr;
-PUBLIC void*   hpet_vaddr;
+PUBLIC void* hpet_addr;
+PUBLIC void* hpet_vaddr;
 
 PRIVATE u8 hpet_enabled = 0;
 PRIVATE u64 hpet_freq;
 
-PRIVATE u64 read_hpet(struct clocksource * cs)
+PRIVATE u64 read_hpet(struct clocksource* cs)
 {
     return hpet_readl(HPET_COUNTER);
 }
@@ -58,10 +58,10 @@ PRIVATE struct clocksource hpet_clocksource = {
 
 PUBLIC int init_hpet()
 {
-    struct acpi_hpet * hpet = acpi_get_hpet();
+    struct acpi_hpet* hpet = acpi_get_hpet();
     if (!hpet) return 0;
 
-    hpet_addr = (void*) ((uintptr_t) hpet->address.address);
+    hpet_addr = (void*)((uintptr_t)hpet->address.address);
     printk("ACPI: HPET id: 0x%x base: 0x%p\n", hpet->block_id, hpet_addr);
 
     /* enable hpet */
@@ -81,22 +81,10 @@ PUBLIC int init_hpet()
     return hpet_enabled;
 }
 
-PUBLIC u8 is_hpet_enabled()
-{
-    return hpet_enabled;
-}
+PUBLIC u8 is_hpet_enabled() { return hpet_enabled; }
 
-PUBLIC u32 hpet_read(u32 a)
-{
-    return *(u32 *)(hpet_addr + a);
-}
+PUBLIC u32 hpet_read(u32 a) { return *(u32*)(hpet_addr + a); }
 
-PUBLIC u64 hpet_readl(u32 a)
-{
-    return *(u64 *)(hpet_addr + a);
-}
+PUBLIC u64 hpet_readl(u32 a) { return *(u64*)(hpet_addr + a); }
 
-PUBLIC u32 hpet_write(u32 a, u32 v)
-{
-    return *(u32 *)(hpet_addr + a) = v;
-}
+PUBLIC u32 hpet_write(u32 a, u32 v) { return *(u32*)(hpet_addr + a) = v; }

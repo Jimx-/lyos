@@ -12,7 +12,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -35,7 +35,7 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int do_ptrace(MESSAGE * m)
+PUBLIC int do_ptrace(MESSAGE* m)
 {
     struct pmproc* pmp = pm_endpt_proc(m->source);
     if (!pmp) return EINVAL;
@@ -80,7 +80,7 @@ PUBLIC int do_ptrace(MESSAGE * m)
         break;
     }
 
-    switch(request) {
+    switch (request) {
     case PTRACE_SYSCALL:
         trace_req = TRACE_SYSCALL;
         break;

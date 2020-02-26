@@ -36,6 +36,4 @@
 /**
  * <Ring 0> Initialize FPU.
  */
-PUBLIC void fpu_init()
-{
-}
+PUBLIC void fpu_init() {}

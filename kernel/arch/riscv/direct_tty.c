@@ -27,26 +27,23 @@
 #include <lyos/proto.h>
 #include <asm/sbi.h>
 
-PUBLIC void disp_char(const char c)
-{
-    sbi_console_putchar((int) c);
-}
+PUBLIC void disp_char(const char c) { sbi_console_putchar((int)c); }
 
-PUBLIC void direct_put_str(const char * str)
+PUBLIC void direct_put_str(const char* str)
 {
-    while (*str)  {
+    while (*str) {
         disp_char(*str);
         str++;
     }
 }
 
-PUBLIC int direct_print(const char * fmt, ...)
+PUBLIC int direct_print(const char* fmt, ...)
 {
     int i;
     char buf[256];
     va_list arg;
-    
-    va_start(arg, fmt); 
+
+    va_start(arg, fmt);
     i = vsprintf(buf, fmt, arg);
     direct_put_str(buf);
 
@@ -55,7 +52,4 @@ PUBLIC int direct_print(const char * fmt, ...)
     return i;
 }
 
-PUBLIC void direct_cls()
-{
-
-}
+PUBLIC void direct_cls() {}

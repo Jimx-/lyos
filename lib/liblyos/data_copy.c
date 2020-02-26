@@ -20,16 +20,16 @@
 #include <string.h>
 #include <assert.h>
 
-int syscall_entry(int syscall_nr, MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE* m);
 
 /*****************************************************************************
  *                                data_copy
  *****************************************************************************/
-PUBLIC int data_copy(endpoint_t dest_ep, void * dest_addr, 
-    endpoint_t src_ep, void * src_addr, int len)
+PUBLIC int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
+                     void* src_addr, int len)
 {
-	MESSAGE m;
-    
+    MESSAGE m;
+
     m.SRC_EP = src_ep;
     m.SRC_ADDR = src_addr;
 

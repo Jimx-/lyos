@@ -25,4 +25,4 @@
 /* ddmap */
 EXTERN struct list_head dd_map[MAJOR_MAX];
 
-#endif 
+#endif

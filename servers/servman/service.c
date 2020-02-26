@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2014 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -39,24 +39,24 @@
 #include "global.h"
 #include "libsysfs/libsysfs.h"
 
-PUBLIC int create_service(struct sproc * sp);
-PUBLIC int start_service(struct sproc * sp);
-PUBLIC int run_service(struct sproc * sp, int init_type);
-PUBLIC int init_service(struct sproc * sp, int init_type);
-PUBLIC int publish_service(struct sproc * sp);
+PUBLIC int create_service(struct sproc* sp);
+PUBLIC int start_service(struct sproc* sp);
+PUBLIC int run_service(struct sproc* sp, int init_type);
+PUBLIC int init_service(struct sproc* sp, int init_type);
+PUBLIC int publish_service(struct sproc* sp);
 
 PUBLIC int check_permission(endpoint_t caller, int request)
 {
-    //struct proc * p = endpt_proc(caller);
-    //if (p->euid != SU_UID) return EPERM;
+    // struct proc * p = endpt_proc(caller);
+    // if (p->euid != SU_UID) return EPERM;
 
     return 0;
 }
 
-PUBLIC int do_service_up(MESSAGE * msg)
+PUBLIC int do_service_up(MESSAGE* msg)
 {
     /* get parameters from the message */
-    int src = msg->source;    /* caller proc nr. */
+    int src = msg->source; /* caller proc nr. */
 
     if (check_permission(src, SERVICE_UP) != 0) return EPERM;
 
@@ -64,7 +64,7 @@ PUBLIC int do_service_up(MESSAGE * msg)
     struct service_up_req up_req;
     data_copy(SELF, &up_req, src, msg->BUF, sizeof(up_req));
 
-    struct sproc * psp;
+    struct sproc* psp;
     int retval = alloc_sproc(&psp);
     if (retval) return retval;
 
@@ -81,13 +81,13 @@ PUBLIC int do_service_up(MESSAGE * msg)
     return SUSPEND;
 }
 
-PUBLIC int do_service_init_reply(MESSAGE * msg)
+PUBLIC int do_service_init_reply(MESSAGE* msg)
 {
     int slot = ENDPOINT_P(msg->source);
     int result = msg->RETVAL;
 
-    struct sproc * sp = sproc_ptr[slot];
-    if (!sp) return SUSPEND;    /* should not happen */
+    struct sproc* sp = sproc_ptr[slot];
+    if (!sp) return SUSPEND; /* should not happen */
 
     if (!(sp->flags & SPF_INITIALIZING)) {
         return EINVAL;
@@ -102,7 +102,7 @@ PUBLIC int do_service_init_reply(MESSAGE * msg)
     return SUSPEND;
 }
 
-PUBLIC int start_service(struct sproc * sp)
+PUBLIC int start_service(struct sproc* sp)
 {
     int retval = create_service(sp);
     if (retval) return retval;
@@ -116,7 +116,7 @@ PUBLIC int start_service(struct sproc * sp)
     return 0;
 }
 
-PUBLIC int create_service(struct sproc * sp)
+PUBLIC int create_service(struct sproc* sp)
 {
     int child_pid = fork();
 
@@ -143,14 +143,16 @@ PUBLIC int create_service(struct sproc * sp)
 
     if ((retval = read_exec(sp)) != 0) return retval;
 
-    if ((retval = serv_exec(sp->endpoint, sp->exec, sp->exec_len, sp->proc_name, sp->argv)) != 0) return retval;
+    if ((retval = serv_exec(sp->endpoint, sp->exec, sp->exec_len, sp->proc_name,
+                            sp->argv)) != 0)
+        return retval;
     free(sp->exec);
     sp->exec = NULL;
 
     return 0;
 }
 
-PUBLIC int run_service(struct sproc * sp, int init_type)
+PUBLIC int run_service(struct sproc* sp, int init_type)
 {
     int r;
     if ((r = privctl(sp->endpoint, PRIVCTL_ALLOW, NULL)) != 0) return r;
@@ -160,7 +162,7 @@ PUBLIC int run_service(struct sproc * sp, int init_type)
     return 0;
 }
 
-PUBLIC int init_service(struct sproc * sp, int init_type)
+PUBLIC int init_service(struct sproc* sp, int init_type)
 {
     MESSAGE m;
     m.type = SERVICE_INIT;
@@ -172,16 +174,16 @@ PUBLIC int init_service(struct sproc * sp, int init_type)
     return 0;
 }
 
-PUBLIC int publish_service(struct sproc * sp)
+PUBLIC int publish_service(struct sproc* sp)
 {
     char label[MAX_PATH];
 
-    char * name = sp->label;
+    char* name = sp->label;
     sprintf(label, SYSFS_SERVICE_DOMAIN_LABEL, name);
     int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
     sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
-    retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE); 
+    retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE);
 
     sp->pci_acl.endpoint = sp->endpoint;
     if (sp->pci_acl.nr_pci_class > 0) {

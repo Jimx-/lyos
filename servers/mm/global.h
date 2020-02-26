@@ -28,22 +28,22 @@
 
 extern struct mmproc mmproc_table[];
 
-#define STATIC_BOOTSTRAP_PAGES  25
+#define STATIC_BOOTSTRAP_PAGES 25
 EXTERN struct {
     int used;
     phys_bytes phys_addr;
     void* vir_addr;
 } bootstrap_pages[STATIC_BOOTSTRAP_PAGES];
 
-extern int pt_init_done; 
+extern int pt_init_done;
 
 EXTERN kinfo_t kernel_info;
 
-EXTERN  unsigned int        memory_size;
-EXTERN  int                 mem_start;
+EXTERN unsigned int memory_size;
+EXTERN int mem_start;
 
-EXTERN  MESSAGE         mm_msg;
+EXTERN MESSAGE mm_msg;
 
-EXTERN struct mem_info  mem_info;
+EXTERN struct mem_info mem_info;
 
-#endif 
+#endif

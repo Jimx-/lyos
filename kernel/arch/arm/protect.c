@@ -40,18 +40,14 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
     struct tss* t = &tss[cpu];
 
     t->sp0 = kernel_stack - ARM_STACK_TOP_RESERVED;
-    *((reg_t *)(t->sp0 + sizeof(reg_t))) = cpu;
+    *((reg_t*)(t->sp0 + sizeof(reg_t))) = cpu;
 
     return 0;
 }
 
-PUBLIC void init_prot()
-{
-    write_vbar((reg_t) &exc_vector_table);
-}
+PUBLIC void init_prot() { write_vbar((reg_t)&exc_vector_table); }
 
 PUBLIC void irq_entry_handle()
 {
-    if (machine_desc->handle_irq)
-        machine_desc->handle_irq();
+    if (machine_desc->handle_irq) machine_desc->handle_irq();
 }

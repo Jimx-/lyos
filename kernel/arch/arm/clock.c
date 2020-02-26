@@ -31,27 +31,12 @@
 #endif
 #include "lyos/cpulocals.h"
 
-PUBLIC int arch_init_time()
-{
-    return 0;
-}
+PUBLIC int arch_init_time() { return 0; }
 
+PUBLIC int init_local_timer(int freq) { return 0; }
 
-PUBLIC int init_local_timer(int freq)
-{
+PUBLIC void restart_local_timer() {}
 
-    return 0;
-}
+PUBLIC void stop_local_timer() {}
 
-PUBLIC void restart_local_timer()
-{
-}
-
-PUBLIC void stop_local_timer()
-{
-}
-
-PUBLIC int put_local_timer_handler(irq_handler_t handler)
-{
-    return 0;
-}
+PUBLIC int put_local_timer_handler(irq_handler_t handler) { return 0; }

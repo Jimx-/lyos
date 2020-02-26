@@ -38,14 +38,14 @@ PUBLIC endpoint_t dm_get_bdev_driver(dev_t dev)
     msg.FLAGS = DT_BLOCKDEV;
 
     send_recv(BOTH, TASK_DEVMAN, &msg);
-    
+
     return (msg.RETVAL != 0) ? -msg.RETVAL : msg.ENDPOINT;
 }
 
 PUBLIC endpoint_t dm_get_cdev_driver(dev_t dev)
 {
     MESSAGE msg;
-    
+
     msg.type = DM_GET_DRIVER;
     msg.DEVICE = dev;
     msg.FLAGS = DT_CHARDEV;

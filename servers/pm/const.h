@@ -16,7 +16,7 @@
 #ifndef _PM_CONST_H_
 #define _PM_CONST_H_
 
-#define INIT_PID    1
-    
-#define NR_PIDS     32767
+#define INIT_PID 1
+
+#define NR_PIDS 32767
 #endif

@@ -34,6 +34,6 @@ PUBLIC int get_ticks(clock_t* ticks, clock_t* idle_ticks)
 
     if (ticks) *ticks = m.BOOT_TICKS;
     if (idle_ticks) *idle_ticks = m.IDLE_TICKS;
-    
+
     return retval;
 }

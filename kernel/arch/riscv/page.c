@@ -36,22 +36,34 @@
 
 extern char _VIR_BASE, _KERN_SIZE;
 
-PRIVATE phys_bytes kern_vir_base __attribute__ ((__section__(".unpaged_data"))) = (phys_bytes) &_VIR_BASE;
-PRIVATE phys_bytes kern_size __attribute__ ((__section__(".unpaged_data"))) = (phys_bytes) &_KERN_SIZE;
+PRIVATE phys_bytes kern_vir_base __attribute__((__section__(".unpaged_data"))) =
+    (phys_bytes)&_VIR_BASE;
+PRIVATE phys_bytes kern_size __attribute__((__section__(".unpaged_data"))) =
+    (phys_bytes)&_KERN_SIZE;
 
 /* init page directory */
-PUBLIC pde_t initial_pgd[ARCH_VM_DIR_ENTRIES] __attribute__ ((__section__(".unpaged_data"))) __attribute__((aligned(ARCH_PG_SIZE)));
-PUBLIC pde_t trampoline_pgd[ARCH_VM_DIR_ENTRIES] __attribute__ ((__section__(".unpaged_data"))) __attribute__((aligned(ARCH_PG_SIZE)));
+PUBLIC pde_t initial_pgd[ARCH_VM_DIR_ENTRIES]
+    __attribute__((__section__(".unpaged_data")))
+    __attribute__((aligned(ARCH_PG_SIZE)));
+PUBLIC pde_t trampoline_pgd[ARCH_VM_DIR_ENTRIES]
+    __attribute__((__section__(".unpaged_data")))
+    __attribute__((aligned(ARCH_PG_SIZE)));
 /* create page middle directories if it is not folded */
 #ifndef __PAGETABLE_PMD_FOLDED
 #define NUM_INIT_PMDS ((uintptr_t)-KERNEL_VMA >> ARCH_PGD_SHIFT)
-PUBLIC pmd_t initial_pmd[ARCH_VM_PMD_ENTRIES * NUM_INIT_PMDS] __attribute__ ((__section__(".unpaged_data"))) __attribute__((aligned(ARCH_PG_SIZE)));
-PUBLIC pmd_t trampoline_pmd[ARCH_VM_PMD_ENTRIES] __attribute__ ((__section__(".unpaged_data"))) __attribute__((aligned(ARCH_PG_SIZE)));
+PUBLIC pmd_t initial_pmd[ARCH_VM_PMD_ENTRIES * NUM_INIT_PMDS]
+    __attribute__((__section__(".unpaged_data")))
+    __attribute__((aligned(ARCH_PG_SIZE)));
+PUBLIC pmd_t trampoline_pmd[ARCH_VM_PMD_ENTRIES]
+    __attribute__((__section__(".unpaged_data")))
+    __attribute__((aligned(ARCH_PG_SIZE)));
 #endif
 
-PUBLIC void pg_identity(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
-PUBLIC void pg_mapkernel(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
-PUBLIC void pg_load(pde_t * pgd) __attribute__((__section__(".unpaged_text")));
+PUBLIC void pg_identity(pde_t* pgd)
+    __attribute__((__section__(".unpaged_text")));
+PUBLIC void pg_mapkernel(pde_t* pgd)
+    __attribute__((__section__(".unpaged_text")));
+PUBLIC void pg_load(pde_t* pgd) __attribute__((__section__(".unpaged_text")));
 
 PUBLIC void setup_paging() __attribute__((__section__(".unpaged_text")));
 PUBLIC void enable_paging() __attribute__((__section__(".unpaged_text")));
@@ -60,36 +72,39 @@ PUBLIC void setup_paging()
 {
     extern char _lyos_start, _end;
     int i;
-    uintptr_t pa = (uintptr_t) &_lyos_start;
+    uintptr_t pa = (uintptr_t)&_lyos_start;
     pgprot_t prot = __pgprot(pgprot_val(RISCV_PG_KERNEL) | _RISCV_PG_EXEC);
 
-    kinfo.kernel_start_phys = (phys_bytes) pa;
-    kinfo.kernel_end_phys = (phys_bytes) &_end;
+    kinfo.kernel_start_phys = (phys_bytes)pa;
+    kinfo.kernel_end_phys = (phys_bytes)&_end;
 
     va_pa_offset = KERNEL_VMA - pa;
 
 #ifndef __PAGETABLE_PMD_FOLDED
     trampoline_pgd[(KERNEL_VMA >> ARCH_PGD_SHIFT) % ARCH_VM_DIR_ENTRIES] =
-        pfn_pde((uintptr_t) trampoline_pmd >> ARCH_PG_SHIFT, __pgprot(_RISCV_PG_TABLE));
+        pfn_pde((uintptr_t)trampoline_pmd >> ARCH_PG_SHIFT,
+                __pgprot(_RISCV_PG_TABLE));
     trampoline_pmd[0] = pfn_pmd((pa >> ARCH_PG_SHIFT), prot);
 
     for (i = 0; i < NUM_INIT_PMDS; i++) {
         initial_pgd[(KERNEL_VMA >> ARCH_PGD_SHIFT) % ARCH_VM_DIR_ENTRIES + i] =
-            pfn_pde(((uintptr_t) initial_pmd >> ARCH_PG_SHIFT) + i, __pgprot(_RISCV_PG_TABLE));
+            pfn_pde(((uintptr_t)initial_pmd >> ARCH_PG_SHIFT) + i,
+                    __pgprot(_RISCV_PG_TABLE));
     }
 
     for (i = 0; i < sizeof(initial_pmd) / sizeof(pmd_t); i++) {
-        initial_pmd[i] = pfn_pmd((pa + i * ARCH_PMD_SIZE) >> ARCH_PG_SHIFT, prot);
+        initial_pmd[i] =
+            pfn_pmd((pa + i * ARCH_PMD_SIZE) >> ARCH_PG_SHIFT, prot);
     }
 #endif
 }
 
-PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end)
+PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
 {
     int i;
 
     for (i = 0; i < pk->memmaps_count; i++) {
-        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
         u64 mmap_end = entry->addr + entry->len;
         if (start >= entry->addr && end <= mmap_end) {
             entry->addr = end;
@@ -98,12 +113,12 @@ PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end)
     }
 }
 
-PUBLIC phys_bytes pg_alloc_page(kinfo_t * pk)
+PUBLIC phys_bytes pg_alloc_page(kinfo_t* pk)
 {
     int i;
 
     for (i = pk->memmaps_count - 1; i >= 0; i--) {
-        struct kinfo_mmap_entry * entry = &pk->memmaps[i];
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
 
@@ -154,7 +169,8 @@ PRIVATE inline void pde_populate(pde_t* pde, pmd_t* pmd)
 
 PRIVATE inline pmd_t* pmd_offset(pde_t* pmd, unsigned long addr)
 {
-    pmd_t* vaddr = (pmd_t*) __va((pde_val(*pmd) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
+    pmd_t* vaddr =
+        (pmd_t*)__va((pde_val(*pmd) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
     return vaddr + ARCH_PMDE(addr);
 }
 
@@ -171,7 +187,8 @@ PRIVATE inline void pmde_populate(pmd_t* pmde, pte_t* pt)
 
 PRIVATE inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
 {
-    pte_t* vaddr = (pte_t*) __va((pmd_val(*pt) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
+    pte_t* vaddr =
+        (pte_t*)__va((pmd_val(*pt) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
     return vaddr + ARCH_PTE(addr);
 }
 
@@ -180,7 +197,8 @@ PRIVATE inline int pte_present(pte_t pte)
     return pte_val(pte) & _RISCV_PG_PRESENT;
 }
 
-PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk)
+PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
+                   kinfo_t* pk)
 {
     pde_t* pgd = initial_pgd;
 
@@ -190,19 +208,19 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
         phys_bytes ph = phys_addr;
         if (ph == 0) ph = pg_alloc_page(pk);
 
-        pde_t* pde = pgd_offset(pgd, (unsigned long) vir_addr);
+        pde_t* pde = pgd_offset(pgd, (unsigned long)vir_addr);
         if (!pde_present(*pde)) {
             pmd_t* new_pmd = pg_alloc_pmd(pk);
             pde_populate(pde, new_pmd);
         }
 
-        pmd_t* pmde = pmd_offset(pde, (unsigned long) vir_addr);
+        pmd_t* pmde = pmd_offset(pde, (unsigned long)vir_addr);
         if (!pmde_present(*pmde)) {
             pte_t* new_pt = pg_alloc_pt(pk);
             pmde_populate(pmde, new_pt);
         }
 
-        pte_t* pte = pte_offset(pmde, (unsigned long) vir_addr);
+        pte_t* pte = pte_offset(pmde, (unsigned long)vir_addr);
         *pte = pfn_pte(ph >> ARCH_PG_SHIFT, RISCV_PG_EXEC_WRITE);
 
         vir_addr += ARCH_PG_SIZE;
@@ -210,18 +228,10 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t 
     }
 }
 
-PUBLIC void pg_identity(pde_t * pgd)
-{
-}
+PUBLIC void pg_identity(pde_t* pgd) {}
 
-PUBLIC void pg_mapkernel(pde_t * pgd)
-{
-}
+PUBLIC void pg_mapkernel(pde_t* pgd) {}
 
-PUBLIC void pg_load(pde_t * pgd)
-{
-}
+PUBLIC void pg_load(pde_t* pgd) {}
 
-PUBLIC void switch_address_space(struct proc * p)
-{
-}
+PUBLIC void switch_address_space(struct proc* p) {}

@@ -39,7 +39,7 @@
  * @param  p Ptr to the message.
  * @return   Zero if success. Otherwise -1.
  */
-PUBLIC int do_access(MESSAGE * p)
+PUBLIC int do_access(MESSAGE* p)
 {
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
@@ -49,7 +49,8 @@ PUBLIC int do_access(MESSAGE * p)
     if (namelen > MAX_PATH) return ENAMETOOLONG;
 
     data_copy(SELF, pathname, p->source, p->PATHNAME, namelen);
-    //phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME), namelen);
+    // phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME),
+    // namelen);
     pathname[namelen] = 0;
 
     struct lookup lookup;
@@ -70,7 +71,7 @@ PUBLIC int do_access(MESSAGE * p)
     return (retval == 0) ? 0 : -1;
 }
 
-PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access)
+PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access)
 {
     mode_t bits, perm_bits;
     int shift;
@@ -79,15 +80,19 @@ PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access)
     bits = pin->i_mode;
 
     if (fp->realuid == SU_UID) {
-        if ((bits & I_TYPE) == I_DIRECTORY || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
+        if ((bits & I_TYPE) == I_DIRECTORY ||
+            bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
             perm_bits = R_BIT | W_BIT | X_BIT;
         else
             perm_bits = R_BIT | W_BIT;
     } else {
-        if (fp->realuid == pin->i_uid) shift = 6;    /* owner */
-        else if (fp->realgid == pin->i_gid) shift = 3;   /* group */
-        else shift = 0;                 /* other */
-        perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT); 
+        if (fp->realuid == pin->i_uid)
+            shift = 6; /* owner */
+        else if (fp->realgid == pin->i_gid)
+            shift = 3; /* group */
+        else
+            shift = 0; /* other */
+        perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT);
     }
 
     if ((perm_bits | access) != perm_bits) return EACCES;
@@ -105,7 +110,7 @@ PUBLIC int forbidden(struct fproc * fp, struct inode * pin, int access)
  * @param  p Ptr to the message.
  * @return   Complement of the old mask.
  */
-PUBLIC mode_t do_umask(MESSAGE * p)
+PUBLIC mode_t do_umask(MESSAGE* p)
 {
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
@@ -115,7 +120,8 @@ PUBLIC mode_t do_umask(MESSAGE * p)
     return old;
 }
 
-PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, mode_t * result)
+PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode,
+                          mode_t* result)
 {
     MESSAGE m;
     m.type = FS_CHMOD;
@@ -123,7 +129,7 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, m
     m.REQ_NUM = num;
     m.REQ_MODE = mode;
 
-    //async_sendrec(fs_ep, &m, 0);
+    // async_sendrec(fs_ep, &m, 0);
     send_recv(BOTH, fs_ep, &m);
 
     *result = (mode_t)m.RET_MODE;
@@ -131,9 +137,9 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode, m
     return m.RET_RETVAL;
 }
 
-PUBLIC int do_chmod(int type, MESSAGE * p)
+PUBLIC int do_chmod(int type, MESSAGE* p)
 {
-    struct inode * pin = NULL;
+    struct inode* pin = NULL;
     struct vfs_mount* vmnt = NULL;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
@@ -152,7 +158,7 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
         lookup.vmnt_lock = RWL_READ;
         lookup.inode_lock = RWL_WRITE;
         pin = resolve_path(&lookup, pcaller);
-        
+
     } else if (type == FCHMOD) {
         filp = get_filp(pcaller, p->FD, RWL_WRITE);
         if (!filp) return EBADF;
@@ -162,11 +168,13 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
 
     if (!pin) return ENOENT;
 
-    if (pin->i_uid != pcaller->effuid && pcaller->effuid != SU_UID) return EPERM;
+    if (pin->i_uid != pcaller->effuid && pcaller->effuid != SU_UID)
+        return EPERM;
     if (pin->i_vmnt->m_flags & VMNT_READONLY) return EROFS;
 
     mode_t result;
-    int retval = request_chmod(pin->i_fs_ep, pin->i_dev, pin->i_num, p->MODE, &result);
+    int retval =
+        request_chmod(pin->i_fs_ep, pin->i_dev, pin->i_num, p->MODE, &result);
 
     if (retval == 0) pin->i_mode = result;
 
@@ -181,14 +189,14 @@ PUBLIC int do_chmod(int type, MESSAGE * p)
     return 0;
 }
 
-PUBLIC int fs_getsetid(MESSAGE * p)
+PUBLIC int fs_getsetid(MESSAGE* p)
 {
     if (p->source != TASK_PM) return EPERM;
 
-    struct fproc * fp = vfs_endpt_proc(p->ENDPOINT);
+    struct fproc* fp = vfs_endpt_proc(p->ENDPOINT);
     int retval = 0;
 
-    if (fp == NULL) 
+    if (fp == NULL)
         retval = EINVAL;
     else {
         lock_fproc(fp);
@@ -205,7 +213,7 @@ PUBLIC int fs_getsetid(MESSAGE * p)
             retval = EINVAL;
             break;
         }
-        unlock_fproc(fp); 
+        unlock_fproc(fp);
     }
 
     p->type = PM_VFS_GETSETID_REPLY;

@@ -40,17 +40,17 @@
 extern int syscall_style;
 
 /* temporary mappings */
-#define MAX_TEMPPDES    2
-#define TEMPPDE_SRC     0
-#define TEMPPDE_DST     1
+#define MAX_TEMPPDES 2
+#define TEMPPDE_SRC 0
+#define TEMPPDE_DST 1
 PRIVATE u32 temppdes[MAX_TEMPPDES];
 
-#define _SRC_           0
-#define _DEST_          1
-#define EFAULT_SRC      1
-#define EFAULT_DEST     2
+#define _SRC_ 0
+#define _DEST_ 1
+#define EFAULT_SRC 1
+#define EFAULT_DEST 2
 
-PUBLIC  int     send_sig(endpoint_t ep, int signo);
+PUBLIC int send_sig(endpoint_t ep, int signo);
 
 PUBLIC void init_memory()
 {
@@ -66,17 +66,19 @@ PUBLIC void clear_memcache()
 {
     int i;
     for (i = 0; i < MAX_TEMPPDES; i++) {
-        struct proc * p = get_cpulocal_var(pt_proc);
+        struct proc* p = get_cpulocal_var(pt_proc);
         int pde = temppdes[i];
         p->seg.cr3_vir[pde] = 0;
     }
 }
 
 /* Temporarily map la in p's address space in kernel address space */
-PRIVATE phys_bytes create_temp_map(struct proc * p, void* la, size_t* len, int index, int * changed)
+PRIVATE phys_bytes create_temp_map(struct proc* p, void* la, size_t* len,
+                                   int index, int* changed)
 {
     /* the process is already in current page table */
-    if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint))) return (phys_bytes) la;
+    if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
+        return (phys_bytes)la;
 
     phys_bytes pa;
     pde_t pdeval;
@@ -85,41 +87,46 @@ PRIVATE phys_bytes create_temp_map(struct proc * p, void* la, size_t* len, int i
     if (p) {
         if (!p->seg.cr3_vir) panic("create_temp_map: proc cr3_vir not set");
         pdeval = __pde(p->seg.cr3_vir[ARCH_PDE(la)]);
-    } else {    /* physical address */
-        pa = (phys_bytes) la;
+    } else { /* physical address */
+        pa = (phys_bytes)la;
         if (pa < LOWMEM_END) { /* low memory */
             *len = min(*len, LOWMEM_END - pa);
-            return (phys_bytes) __va(pa);
+            return (phys_bytes)__va(pa);
         }
-        pdeval = __pde((((uintptr_t) la) & I386_VM_ADDR_MASK_4MB) |
-            ARCH_PG_BIGPAGE | ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW);
+        pdeval =
+            __pde((((uintptr_t)la) & I386_VM_ADDR_MASK_4MB) | ARCH_PG_BIGPAGE |
+                  ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW);
     }
 
-    if (!get_cpulocal_var(pt_proc)->seg.cr3_vir) panic("create_temp_map: pt_proc cr3_vir not set");
+    if (!get_cpulocal_var(pt_proc)->seg.cr3_vir)
+        panic("create_temp_map: pt_proc cr3_vir not set");
     if (get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] != pde_val(pdeval)) {
         get_cpulocal_var(pt_proc)->seg.cr3_vir[pde] = pde_val(pdeval);
         *changed = 1;
     }
 
-    off_t offset = ((uintptr_t) la) & I386_VM_OFFSET_MASK_4MB;
+    off_t offset = ((uintptr_t)la) & I386_VM_OFFSET_MASK_4MB;
     *len = min(*len, ARCH_BIG_PAGE_SIZE - offset);
 
     return pde * ARCH_BIG_PAGE_SIZE + offset;
 }
 
-PRIVATE int la_la_copy(struct proc * p_dest, void* dest_la,
-        struct proc * p_src, void* src_la, size_t len)
+PRIVATE int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
+                       void* src_la, size_t len)
 {
     if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
-    if (read_cr3() != get_cpulocal_var(pt_proc)->seg.cr3_phys) panic("bad pt_proc cr3 value");
+    if (read_cr3() != get_cpulocal_var(pt_proc)->seg.cr3_phys)
+        panic("bad pt_proc cr3 value");
 
     while (len > 0) {
         size_t chunk = len;
         phys_bytes src_mapped, dest_mapped;
         int changed = 0;
 
-        src_mapped = create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
-        dest_mapped = create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
+        src_mapped =
+            create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
+        dest_mapped =
+            create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
 
         if (changed) reload_cr3();
 
@@ -145,7 +152,7 @@ PRIVATE u32 get_phys32(phys_bytes phys_addr)
 {
     u32 v;
 
-    if (la_la_copy(proc_addr(KERNEL), &v, NULL, (void*) phys_addr, sizeof(v))) {
+    if (la_la_copy(proc_addr(KERNEL), &v, NULL, (void*)phys_addr, sizeof(v))) {
         panic("get_phys32: la_la_copy failed");
     }
 
@@ -163,10 +170,7 @@ PRIVATE u32 get_phys32(phys_bytes phys_addr)
  *
  * @return The linear address for the given virtual address.
  *****************************************************************************/
-PUBLIC void* va2la(endpoint_t ep, void* va)
-{
-    return va;
-}
+PUBLIC void* va2la(endpoint_t ep, void* va) { return va; }
 
 /*****************************************************************************
  *                la2pa
@@ -179,9 +183,9 @@ PUBLIC void* va2la(endpoint_t ep, void* va)
  *
  * @return The physical address for the given linear address.
  *****************************************************************************/
-PUBLIC void * la2pa(endpoint_t ep, void * la)
+PUBLIC void* la2pa(endpoint_t ep, void* la)
 {
-    if (is_kerntaske(ep)) return (void *)((uintptr_t)la - KERNEL_VMA);
+    if (is_kerntaske(ep)) return (void*)((uintptr_t)la - KERNEL_VMA);
 
     int slot;
     if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
@@ -191,19 +195,20 @@ PUBLIC void * la2pa(endpoint_t ep, void * la)
     unsigned long pgd_index = ARCH_PDE(la);
     unsigned long pt_index = ARCH_PTE(la);
 
-    phys_bytes pgd_phys = (phys_bytes) (p->seg.cr3_phys);
+    phys_bytes pgd_phys = (phys_bytes)(p->seg.cr3_phys);
 
     pde_t pde_v = __pde(get_phys32(pgd_phys + sizeof(pde_t) * pgd_index));
 
     if (pde_val(pde_v) & ARCH_PG_BIGPAGE) {
         phys_addr = pde_val(pde_v) & I386_VM_ADDR_MASK_4MB;
         phys_addr += (phys_bytes)la & I386_VM_OFFSET_MASK_4MB;
-        return (void *)phys_addr;
+        return (void*)phys_addr;
     }
 
-    pte_t * pt_entries = (pte_t *)(pde_val(pde_v) & ARCH_PG_MASK);
+    pte_t* pt_entries = (pte_t*)(pde_val(pde_v) & ARCH_PG_MASK);
     pte_t pte_v = __pte(get_phys32((phys_bytes)(pt_entries + pt_index)));
-    return (void*)((pte_val(pte_v) & ARCH_PG_MASK) + ((uintptr_t)la % ARCH_PG_SIZE));
+    return (void*)((pte_val(pte_v) & ARCH_PG_MASK) +
+                   ((uintptr_t)la % ARCH_PG_SIZE));
 }
 
 /*****************************************************************************
@@ -217,13 +222,10 @@ PUBLIC void * la2pa(endpoint_t ep, void * la)
  *
  * @return The physical address for the given virtual address.
  *****************************************************************************/
-PUBLIC void * va2pa(endpoint_t ep, void * va)
-{
-    return la2pa(ep, va2la(ep, va));
-}
+PUBLIC void* va2pa(endpoint_t ep, void* va) { return la2pa(ep, va2la(ep, va)); }
 
-#define KM_USERMAPPED   0
-#define KM_LAPIC        1
+#define KM_USERMAPPED 0
+#define KM_LAPIC 1
 #define KM_IOAPIC_FIRST 2
 
 extern char _usermapped[], _eusermapped[];
@@ -236,19 +238,21 @@ PRIVATE int KM_HPET = -1;
 extern u8 ioapic_enabled;
 extern int nr_ioapics;
 extern struct io_apic io_apics[MAX_IOAPICS];
-extern void* hpet_addr, *hpet_vaddr;
+extern void *hpet_addr, *hpet_vaddr;
 /**
  * <Ring 0> Get kernel mapping information.
  */
-PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags)
+PUBLIC int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
 {
     static int first = 1;
 
     if (first) {
         if (ioapic_enabled) {
             KM_IOAPIC_END = KM_IOAPIC_FIRST + nr_ioapics - 1;
-            if (hpet_addr) KM_HPET = KM_IOAPIC_END + 1;
-            else KM_HPET = KM_IOAPIC_END;
+            if (hpet_addr)
+                KM_HPET = KM_IOAPIC_END + 1;
+            else
+                KM_HPET = KM_IOAPIC_END;
             KM_LAST = KM_HPET;
         }
         first = 0;
@@ -257,8 +261,8 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
     if (index > KM_LAST) return 1;
 
     if (index == KM_USERMAPPED) {
-        *addr = (caddr_t)((char *)*(&_usermapped) - KERNEL_VMA);
-        *len = (char *)*(&_eusermapped) - (char *)*(&_usermapped);
+        *addr = (caddr_t)((char*)*(&_usermapped) - KERNEL_VMA);
+        *len = (char*)*(&_eusermapped) - (char*)*(&_usermapped);
         *flags = KMF_USER;
         return 0;
     }
@@ -266,7 +270,7 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 #if CONFIG_X86_LOCAL_APIC
     if (index == KM_LAPIC) {
         if (!lapic_addr) return EINVAL;
-        *addr = (caddr_t) lapic_addr;
+        *addr = (caddr_t)lapic_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
@@ -274,14 +278,14 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 #endif
 #if CONFIG_X86_IO_APIC
     if (ioapic_enabled && index >= KM_IOAPIC_FIRST && index <= KM_IOAPIC_END) {
-        *addr = (caddr_t) io_apics[index - KM_IOAPIC_FIRST].phys_addr;
+        *addr = (caddr_t)io_apics[index - KM_IOAPIC_FIRST].phys_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
     }
 #endif
     if (hpet_addr && index == KM_HPET) {
-        *addr = (caddr_t) hpet_addr;
+        *addr = (caddr_t)hpet_addr;
         *len = 4 << 10;
         *flags = KMF_WRITE;
         return 0;
@@ -293,18 +297,18 @@ PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * fla
 /**
  * <Ring 0> Set kernel mapping information according to MM's parameter.
  */
-PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
+PUBLIC int arch_reply_kern_mapping(int index, void* vir_addr)
 {
-    char * usermapped_start = (char *)*(&_usermapped);
+    char* usermapped_start = (char*)*(&_usermapped);
 
-#define USER_PTR(x) (((char *)(x) - usermapped_start) + (char *)vir_addr)
+#define USER_PTR(x) (((char*)(x)-usermapped_start) + (char*)vir_addr)
 
     if (index == KM_USERMAPPED) {
-        usermapped_offset = (char *)vir_addr - usermapped_start;
+        usermapped_offset = (char*)vir_addr - usermapped_start;
         sysinfo.magic = SYSINFO_MAGIC;
-        sysinfo_user = (struct sysinfo *)USER_PTR(&sysinfo);
-        sysinfo.kinfo = (kinfo_t *)USER_PTR(&kinfo);
-        sysinfo.kern_log = (struct kern_log *)USER_PTR(&kern_log);
+        sysinfo_user = (struct sysinfo*)USER_PTR(&sysinfo);
+        sysinfo.kinfo = (kinfo_t*)USER_PTR(&kinfo);
+        sysinfo.kern_log = (struct kern_log*)USER_PTR(&kern_log);
         sysinfo.machine = (struct machine*)USER_PTR(&machine);
 
         if (syscall_style & SST_AMD_SYSCALL) {
@@ -334,14 +338,13 @@ PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr)
         hpet_vaddr = vir_addr;
     }
 
-
     return 0;
 }
 
-PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
+PRIVATE void setcr3(struct proc* p, void* cr3, void* cr3_v)
 {
     p->seg.cr3_phys = (u32)cr3;
-    p->seg.cr3_vir = (u32 *)cr3_v;
+    p->seg.cr3_vir = (u32*)cr3_v;
 
     if (p->endpoint == TASK_MM) {
 #if CONFIG_SMP
@@ -367,7 +370,7 @@ PRIVATE void setcr3(struct proc * p, void * cr3, void * cr3_v)
     PST_UNSET(p, PST_MMINHIBIT);
 }
 
-PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
+PUBLIC int arch_vmctl(MESSAGE* m, struct proc* p)
 {
     int request = m->VMCTL_REQUEST;
 
@@ -386,7 +389,8 @@ PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p)
     return EINVAL;
 }
 
-PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, void* laddr, size_t bytes, int write, int type)
+PUBLIC void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
+                       size_t bytes, int write, int type)
 {
     PST_SET_LOCKED(caller, PST_MMREQUEST);
 
@@ -400,15 +404,16 @@ PUBLIC void mm_suspend(struct proc * caller, endpoint_t target, void* laddr, siz
     caller->mm_request.next_request = mmrequest;
     mmrequest = caller;
     if (!caller->mm_request.next_request) {
-        if (send_sig(TASK_MM, SIGKMEM) != 0) panic("mm_suspend: send_sig failed");
+        if (send_sig(TASK_MM, SIGKMEM) != 0)
+            panic("mm_suspend: send_sig failed");
     }
 }
 
-PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct vir_addr * src_addr,
-                                size_t bytes, int check)
+PUBLIC int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
+                     struct vir_addr* src_addr, size_t bytes, int check)
 {
-    struct vir_addr * vir_addrs[2];
-    struct proc * procs[2];
+    struct vir_addr* vir_addrs[2];
+    struct proc* procs[2];
 
     if (bytes < 0) return EINVAL;
 
@@ -425,12 +430,13 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
     }
 
     int retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr,
-                procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
+                            procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
 
     if (retval) {
         if (retval == EFAULT) return EFAULT;
 
-        if (retval != EFAULT_SRC && retval != EFAULT_DEST) panic("vir_copy: la_la_copy failed");
+        if (retval != EFAULT_SRC && retval != EFAULT_DEST)
+            panic("vir_copy: la_la_copy failed");
 
         if (!check || !caller) return EFAULT;
 
@@ -454,8 +460,9 @@ PUBLIC int _vir_copy(struct proc * caller, struct vir_addr * dest_addr, struct v
     return 0;
 }
 
-PUBLIC int _data_vir_copy(struct proc * caller, endpoint_t dest_ep, void * dest_addr,
-                        endpoint_t src_ep, void * src_addr, int len, int check)
+PUBLIC int _data_vir_copy(struct proc* caller, endpoint_t dest_ep,
+                          void* dest_addr, endpoint_t src_ep, void* src_addr,
+                          int len, int check)
 {
     struct vir_addr src, dest;
 

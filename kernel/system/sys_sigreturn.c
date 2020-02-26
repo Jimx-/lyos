@@ -12,7 +12,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -28,10 +28,10 @@
 #include "errno.h"
 #include <asm/stackframe.h>
 
-PUBLIC int sys_sigreturn(MESSAGE * m, struct proc* p)
+PUBLIC int sys_sigreturn(MESSAGE* m, struct proc* p)
 {
     struct sigcontext sc;
-    struct proc * p_dest = endpt_proc(m->ENDPOINT);
+    struct proc* p_dest = endpt_proc(m->ENDPOINT);
     if (!p_dest) return EINVAL;
 
     data_vir_copy(KERNEL, &sc, p_dest->endpoint, m->BUF, sizeof(sc));

@@ -23,22 +23,23 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC int printl(const char *fmt, ...);
+PUBLIC int printl(const char* fmt, ...);
 
-PUBLIC void __panic(const char *fmt, ...)
+PUBLIC void __panic(const char* fmt, ...)
 {
     char buf[STR_DEFAULT_LEN];
     va_list arg;
 
     printl("panic: ");
-    va_start(arg, fmt); 
+    va_start(arg, fmt);
     vsprintf(buf, fmt, arg);
     printl(buf);
     va_end(arg);
 
     _exit(1);
 
-    for (;;);
+    for (;;)
+        ;
 }
 
-void panic(const char *fmt, ...) __attribute__ ((weak, alias ("__panic")));
+void panic(const char* fmt, ...) __attribute__((weak, alias("__panic")));

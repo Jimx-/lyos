@@ -26,15 +26,16 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_exec(endpoint_t ep, void * sp, char * name, void * ip, struct ps_strings * ps)
+PUBLIC int kernel_exec(endpoint_t ep, void* sp, char* name, void* ip,
+                       struct ps_strings* ps)
 {
-	MESSAGE m;
+    MESSAGE m;
 
-	m.KEXEC_ENDPOINT = ep;
-	m.KEXEC_SP = sp;
-	m.KEXEC_NAME = name;
-	m.KEXEC_IP = ip;
-	m.KEXEC_PSSTR = ps;
+    m.KEXEC_ENDPOINT = ep;
+    m.KEXEC_SP = sp;
+    m.KEXEC_NAME = name;
+    m.KEXEC_IP = ip;
+    m.KEXEC_PSSTR = ps;
 
-	return syscall_entry(NR_EXEC, &m);
+    return syscall_entry(NR_EXEC, &m);
 }

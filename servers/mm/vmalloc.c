@@ -14,8 +14,8 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 /**
- * Like alloc.c, however, vmalloc.c provides functions that allocate virtual memory in kernel
- * address space.
+ * Like alloc.c, however, vmalloc.c provides functions that allocate virtual
+ * memory in kernel address space.
  *
  * alloc_vmem/free_vmem: allocate/free both physical and virtual memory.
  * alloc_vmpages/free_vmpages: allocate/free only virtual memory.
@@ -45,15 +45,15 @@
 #include "types.h"
 
 PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
-PRIVATE struct hole *hole_head;	/* pointer to first hole */
-PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
+PRIVATE struct hole* hole_head;     /* pointer to first hole */
+PRIVATE struct hole* free_slots;    /* ptr to list of unused table slots */
 
-PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp);
-PRIVATE void merge_hole(struct hole * hp);
+PRIVATE void delete_slot(struct hole* prev_ptr, struct hole* hp);
+PRIVATE void merge_hole(struct hole* hp);
 
 PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
 {
-    struct hole *hp;
+    struct hole* hp;
 
     /* Put all holes on the free list. */
     for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) {
@@ -61,7 +61,7 @@ PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
         hp->h_base = 0;
         hp->h_len = 0;
     }
-    hole[NR_HOLES-1].h_next = NULL;
+    hole[NR_HOLES - 1].h_next = NULL;
     hole_head = NULL;
     free_slots = &hole[0];
 
@@ -82,13 +82,12 @@ PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
+PUBLIC void* alloc_vmem(phys_bytes* phys_addr, int memsize, int reason)
 {
     /* avoid recursive allocation */
     static int level = 0;
     int pages = memsize / ARCH_PG_SIZE;
-    if (memsize % ARCH_PG_SIZE != 0)
-        pages++;
+    if (memsize % ARCH_PG_SIZE != 0) pages++;
 
     level++;
 
@@ -102,7 +101,10 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
 #ifdef __arm__
         /* allocate page directory at 16k alignment */
         if (reason == PGT_PAGEDIR) {
-            while ((bootstrap_pages[i].phys_addr % (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) != 0) && i + pages < STATIC_BOOTSTRAP_PAGES) {
+            while ((bootstrap_pages[i].phys_addr %
+                        (sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) !=
+                    0) &&
+                   i + pages < STATIC_BOOTSTRAP_PAGES) {
                 bootstrap_pages[i].used = 1;
                 i++;
             }
@@ -143,7 +145,9 @@ PUBLIC void* alloc_vmem(phys_bytes * phys_addr, int memsize, int reason)
     void* vir_pages = alloc_vmpages(pages);
     void* retval = vir_pages;
 
-    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages, (vir_bytes) vir_pages, pages * ARCH_PG_SIZE, ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages,
+                (vir_bytes)vir_pages, pages * ARCH_PG_SIZE,
+                ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
     vmctl_flushtlb(SELF);
 
     level--;
@@ -181,7 +185,7 @@ PUBLIC void* alloc_vmpages(int nr_pages)
 
             mem_info.vmalloc_used += memsize;
             /* Return the start address of the acquired block. */
-            return (void*) old_base;
+            return (void*)old_base;
         }
 
         prev_ptr = hp;
@@ -198,9 +202,8 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
     int len = nr_pages * ARCH_PG_SIZE;
     struct hole *hp, *new_ptr, *prev_ptr;
 
-    if ((new_ptr = free_slots) == NULL)
-        panic("hole table full");
-    new_ptr->h_base = (vir_bytes) base;
+    if ((new_ptr = free_slots) == NULL) panic("hole table full");
+    new_ptr->h_base = (vir_bytes)base;
     new_ptr->h_len = len;
     free_slots = new_ptr->h_next;
     hp = hole_head;
@@ -208,9 +211,9 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
     mem_info.vmalloc_used -= len;
 
     /* Insert the slot to a proper place */
-    if (hp == NULL || (vir_bytes) base <= hp->h_base) {
-    /* If there's no hole or the block's address is less than the lowest hole,
-       put it on the front of the list */
+    if (hp == NULL || (vir_bytes)base <= hp->h_base) {
+        /* If there's no hole or the block's address is less than the lowest
+           hole, put it on the front of the list */
         new_ptr->h_next = hp;
         hole_head = new_ptr;
         merge_hole(new_ptr);
@@ -219,7 +222,7 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
 
     /* Find where it should go */
     prev_ptr = NULL;
-    while (hp != NULL && (vir_bytes) base > hp->h_base) {
+    while (hp != NULL && (vir_bytes)base > hp->h_base) {
         prev_ptr = hp;
         hp = hp->h_next;
     }
@@ -249,7 +252,7 @@ PUBLIC void free_vmem(void* base, int len)
 
     /* free physical memory */
     int i, ret;
-    vir_bytes addr = (vir_bytes) base;
+    vir_bytes addr = (vir_bytes)base;
     phys_bytes phys;
     struct mmproc* mmprocess = &mmproc_table[TASK_MM];
     for (i = 0; i < nr_pages; i++, addr += ARCH_PG_SIZE) {
@@ -267,7 +270,7 @@ PUBLIC void free_vmem(void* base, int len)
  * Remove an entry from the list.
  *
  *******************************************************************/
-PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
+PRIVATE void delete_slot(struct hole* prev_ptr, struct hole* hp)
 {
     if (hp == hole_head)
         hole_head = hp->h_next;
@@ -287,19 +290,19 @@ PRIVATE void delete_slot(struct hole *prev_ptr, struct hole *hp)
  * Merge contiguous holes.
  *
  *******************************************************************/
-PRIVATE void merge_hole(struct hole * hp)
+PRIVATE void merge_hole(struct hole* hp)
 {
-    struct hole *next_ptr;
+    struct hole* next_ptr;
 
     if ((next_ptr = hp->h_next) == NULL) return; /* last hole */
     if (hp->h_base + hp->h_len == next_ptr->h_base) {
-        hp->h_len += next_ptr->h_len;	/* first one gets second one's mem */
+        hp->h_len += next_ptr->h_len; /* first one gets second one's mem */
         delete_slot(hp, next_ptr);
     } else {
         hp = next_ptr;
     }
 
-    if ((next_ptr = hp->h_next) == NULL) return;	/* hp is the last hole now */
+    if ((next_ptr = hp->h_next) == NULL) return; /* hp is the last hole now */
     if (hp->h_base + hp->h_len == next_ptr->h_base) {
         hp->h_len += next_ptr->h_len;
         delete_slot(hp, next_ptr);

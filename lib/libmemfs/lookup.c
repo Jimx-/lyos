@@ -25,14 +25,16 @@
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
 
-PRIVATE struct memfs_inode * memfs_advance(struct memfs_inode * parent, char * name);
+PRIVATE struct memfs_inode* memfs_advance(struct memfs_inode* parent,
+                                          char* name);
 
-PUBLIC int memfs_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_node * fn, int * is_mountpoint)
+PUBLIC int memfs_lookup(dev_t dev, ino_t start, char* name,
+                        struct fsdriver_node* fn, int* is_mountpoint)
 {
-    struct memfs_inode * dir_pin = memfs_find_inode(start);
+    struct memfs_inode* dir_pin = memfs_find_inode(start);
     if (!dir_pin) return EINVAL;
 
-    struct memfs_inode * pin = memfs_advance(dir_pin, name);
+    struct memfs_inode* pin = memfs_advance(dir_pin, name);
     if (!pin) return errno;
 
     /* fill result */
@@ -47,9 +49,10 @@ PUBLIC int memfs_lookup(dev_t dev, ino_t start, char * name, struct fsdriver_nod
     return 0;
 }
 
-PRIVATE struct memfs_inode * memfs_advance(struct memfs_inode * parent, char * name)
+PRIVATE struct memfs_inode* memfs_advance(struct memfs_inode* parent,
+                                          char* name)
 {
-    struct memfs_inode * node;
+    struct memfs_inode* node;
 
     if (!(parent->i_stat.st_mode & I_DIRECTORY)) {
         errno = ENOTDIR;
@@ -67,7 +70,8 @@ PRIVATE struct memfs_inode * memfs_advance(struct memfs_inode * parent, char * n
         }
     }
 
-    list_for_each_entry(node, &(parent->i_children), i_list) {
+    list_for_each_entry(node, &(parent->i_children), i_list)
+    {
         if (strcmp(node->i_name, name) == 0) {
             return node;
         }

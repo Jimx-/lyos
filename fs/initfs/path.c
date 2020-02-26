@@ -33,41 +33,42 @@
 #include "global.h"
 #include "tar.h"
 
-PUBLIC int initfs_lookup(MESSAGE * p)
+PUBLIC int initfs_lookup(MESSAGE* p)
 {
-	int src = p->source;
-	int dev = p->REQ_DEV;
-	int name_len = p->REQ_NAMELEN;
+    int src = p->source;
+    int dev = p->REQ_DEV;
+    int name_len = p->REQ_NAMELEN;
 
-	char string[TAR_MAX_PATH];
+    char string[TAR_MAX_PATH];
 
-	data_copy(SELF, string, src, p->REQ_PATHNAME, name_len);
-	string[name_len] = '\0';
+    data_copy(SELF, string, src, p->REQ_PATHNAME, name_len);
+    string[name_len] = '\0';
 
-	char * pathname = string; 
-	while (*pathname == '/') {
-		pathname++;
-	}
+    char* pathname = string;
+    while (*pathname == '/') {
+        pathname++;
+    }
 
-	int i;
-	char filename[TAR_MAX_PATH];
-	for (i = 0; i < initfs_headers_count; i++) {
-		initfs_rw_dev(BDEV_READ, dev, initfs_headers[i], TAR_MAX_PATH, filename);
-		if (strcmp(filename, pathname) == 0) {
-			char header[512];
-			initfs_rw_dev(BDEV_READ, dev, initfs_headers[i], 512, header);
-			struct posix_tar_header * phdr = (struct posix_tar_header*)header;
-			p->RET_NUM = i;
-			p->RET_UID = initfs_get8(phdr->uid);
-			p->RET_GID = initfs_get8(phdr->gid);
-			p->RET_FILESIZE = initfs_getsize(phdr->size);
-			p->RET_MODE = initfs_getmode(phdr);
-			int major = initfs_get8(phdr->devmajor);
-			int minor = initfs_get8(phdr->devminor);
-    		p->RET_SPECDEV = MAKE_DEV(major, minor);
-    		return 0;
-		}
-	}
+    int i;
+    char filename[TAR_MAX_PATH];
+    for (i = 0; i < initfs_headers_count; i++) {
+        initfs_rw_dev(BDEV_READ, dev, initfs_headers[i], TAR_MAX_PATH,
+                      filename);
+        if (strcmp(filename, pathname) == 0) {
+            char header[512];
+            initfs_rw_dev(BDEV_READ, dev, initfs_headers[i], 512, header);
+            struct posix_tar_header* phdr = (struct posix_tar_header*)header;
+            p->RET_NUM = i;
+            p->RET_UID = initfs_get8(phdr->uid);
+            p->RET_GID = initfs_get8(phdr->gid);
+            p->RET_FILESIZE = initfs_getsize(phdr->size);
+            p->RET_MODE = initfs_getmode(phdr);
+            int major = initfs_get8(phdr->devmajor);
+            int minor = initfs_get8(phdr->devminor);
+            p->RET_SPECDEV = MAKE_DEV(major, minor);
+            return 0;
+        }
+    }
 
-	return ENOENT;
+    return ENOENT;
 }

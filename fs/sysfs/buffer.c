@@ -34,7 +34,7 @@ PRIVATE char* buf;
 PRIVATE size_t used, left;
 PRIVATE off_t offset;
 
-#define BUF_SIZE    4096
+#define BUF_SIZE 4096
 
 PUBLIC void init_buf(char* ptr, size_t len, off_t off)
 {
@@ -44,13 +44,12 @@ PUBLIC void init_buf(char* ptr, size_t len, off_t off)
     used = 0;
 }
 
-PUBLIC void buf_printf(char * fmt, ...)
+PUBLIC void buf_printf(char* fmt, ...)
 {
     va_list args;
     ssize_t len, max;
 
-    if (left == 0)
-        return;
+    if (left == 0) return;
 
     max = min(offset + left + 1, BUF_SIZE);
 
@@ -62,8 +61,7 @@ PUBLIC void buf_printf(char * fmt, ...)
      * The snprintf family returns the number of bytes that would be stored
      * if the buffer were large enough, excluding the null terminator.
      */
-    if (len >= BUF_SIZE)
-        len = BUF_SIZE - 1;
+    if (len >= BUF_SIZE) len = BUF_SIZE - 1;
 
     if (offset > 0) {
 
@@ -79,14 +77,10 @@ PUBLIC void buf_printf(char * fmt, ...)
         offset = 0;
     }
 
-    if (len > (ssize_t)left)
-        len = left;
+    if (len > (ssize_t)left) len = left;
 
     used += len;
     left -= len;
 }
 
-PUBLIC size_t buf_used()
-{
-    return used;
-} 
+PUBLIC size_t buf_used() { return used; }

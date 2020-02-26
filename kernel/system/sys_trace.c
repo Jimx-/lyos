@@ -28,12 +28,12 @@
 #include <errno.h>
 #include <lyos/trace.h>
 
-PUBLIC int sys_trace(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_trace(MESSAGE* m, struct proc* p_proc)
 {
-    struct proc * target = endpt_proc(m->TRACE_ENDPOINT);
+    struct proc* target = endpt_proc(m->TRACE_ENDPOINT);
     if (!target) return ESRCH;
     off_t offset = (off_t)m->TRACE_ADDR;
-    void * addr = m->TRACE_ADDR;
+    void* addr = m->TRACE_ADDR;
     long data;
     int retval;
 
@@ -52,8 +52,8 @@ PUBLIC int sys_trace(MESSAGE * m, struct proc * p_proc)
         PST_UNSET(target, PST_TRACED);
         return 0;
     case TRACE_PEEKTEXT:
-    case TRACE_PEEKDATA:    /* we don't separate text and data segments, so these
-                                two are equivalent */
+    case TRACE_PEEKDATA: /* we don't separate text and data segments, so these
+                             two are equivalent */
         src.addr = addr;
         src.proc_ep = target->endpoint;
         dest.addr = &data;

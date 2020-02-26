@@ -52,7 +52,7 @@ PUBLIC struct proc* arch_switch_to_user()
     return p;
 }
 
-PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
+PRIVATE int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     enable_user_access();
     memset(vaddr, 0, len);
@@ -61,25 +61,26 @@ PRIVATE int kernel_clearmem(struct exec_info * execi, void* vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info * execi, void* vaddr, size_t len)
+PRIVATE int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
 
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                         size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
 
     enable_user_access();
-    memcpy((void *)vaddr, (char*)execi->header + offset, len);
+    memcpy((void*)vaddr, (char*)execi->header + offset, len);
     disable_user_access();
 
     return 0;
 }
 
-PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
+PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp)
 {
     /* make MM run */
     if (bp->proc_nr == TASK_MM) {
@@ -90,7 +91,7 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.stack_size = PROC_ORIGIN_STACK;
 
         /* header */
-        execi.header = (void*) bp->base;
+        execi.header = (void*)bp->base;
         execi.header_len = bp->len;
 
         execi.allocmem = kernel_allocmem;
@@ -98,16 +99,16 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
         execi.copymem = read_segment;
         execi.clearproc = NULL;
         execi.clearmem = kernel_clearmem;
-        
+
         execi.proc_e = bp->endpoint;
         execi.filesize = bp->len;
 
         if (libexec_load_elf(&execi) != 0) panic("can't load MM");
         strcpy(p->name, bp->name);
 
-        p->regs.sepc = (reg_t) execi.entry_point;
-        p->regs.sp = (reg_t) VM_STACK_TOP;
-        p->regs.a2 = (reg_t) 0; // environ
+        p->regs.sepc = (reg_t)execi.entry_point;
+        p->regs.sp = (reg_t)VM_STACK_TOP;
+        p->regs.a2 = (reg_t)0; // environ
     }
 }
 
@@ -118,19 +119,16 @@ PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp)
  * <Ring 0> Identify a cpu.
  *
  *****************************************************************************/
-PUBLIC void identify_cpu()
-{
+PUBLIC void identify_cpu() {}
 
-}
-
-PUBLIC int arch_reset_proc(struct proc * p)
+PUBLIC int arch_reset_proc(struct proc* p)
 {
     memset(&p->regs, 0, sizeof(p->regs));
 
     if (p->endpoint == TASK_MM) {
         /* use bootstrap page table */
-        p->seg.ptbr_phys = (reg_t) __pa(initial_pgd);
-        p->seg.ptbr_vir = (reg_t*) initial_pgd;
+        p->seg.ptbr_phys = (reg_t)__pa(initial_pgd);
+        p->seg.ptbr_vir = (reg_t*)initial_pgd;
     }
 
     return 0;
@@ -138,34 +136,27 @@ PUBLIC int arch_reset_proc(struct proc * p)
 
 PUBLIC void arch_set_syscall_result(struct proc* p, int result)
 {
-    p->regs.a0 = (reg_t) result;
+    p->regs.a0 = (reg_t)result;
 }
 
-PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name)
+PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
+                          struct ps_strings* ps, char* name)
 {
     memcpy(p->name, name, PROC_NAME_LEN);
 
-    p->regs.sp = (reg_t) sp;
-    p->regs.sepc = (reg_t) ip;
-    p->regs.a0 = (reg_t) ps->ps_nargvstr;
-    p->regs.a1 = (reg_t) ps->ps_argvstr;
-    p->regs.a2 = (reg_t) ps->ps_envstr;
+    p->regs.sp = (reg_t)sp;
+    p->regs.sepc = (reg_t)ip;
+    p->regs.a0 = (reg_t)ps->ps_nargvstr;
+    p->regs.a1 = (reg_t)ps->ps_argvstr;
+    p->regs.a2 = (reg_t)ps->ps_envstr;
 
     return 0;
 }
 
-PUBLIC void idle_stop()
-{
-}
+PUBLIC void idle_stop() {}
 
-PUBLIC void arch_init_profile_clock()
-{
-}
+PUBLIC void arch_init_profile_clock() {}
 
-PUBLIC void arch_stop_profile_clock()
-{
-}
+PUBLIC void arch_stop_profile_clock() {}
 
-PUBLIC void arch_ack_profile_clock()
-{
-}
+PUBLIC void arch_ack_profile_clock() {}

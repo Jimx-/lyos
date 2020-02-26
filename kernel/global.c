@@ -30,12 +30,12 @@
 #include "sys/utsname.h"
 #include <lyos/log.h>
 
-PUBLIC  int booting_cpu = 0;
+PUBLIC int booting_cpu = 0;
 
-PUBLIC	struct proc proc_table[NR_TASKS + NR_PROCS];
-PUBLIC  struct priv priv_table[NR_PRIV_PROCS];
+PUBLIC struct proc proc_table[NR_TASKS + NR_PROCS];
+PUBLIC struct priv priv_table[NR_PRIV_PROCS];
 
-/* when this is modified, modify 
+/* when this is modified, modify
  *	- NR_BOOT_PROCS in config.h
  *	- TASK_XXX in const.h
  *	- boot_priv_table in servman
@@ -64,10 +64,10 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
     {INIT, "INIT"},
 };
 
-PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
+PUBLIC char task_stack[STACK_SIZE_TOTAL];
 
-PUBLIC  irq_hook_t	irq_hooks[NR_IRQ_HOOKS];
-												   
+PUBLIC irq_hook_t irq_hooks[NR_IRQ_HOOKS];
+
 PUBLIC int errno;
 
 PUBLIC int err_code = 0;

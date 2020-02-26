@@ -16,7 +16,7 @@
 #ifndef _SMP_H_
 #define _SMP_H_
 
-#define CPU_IS_READY    1
+#define CPU_IS_READY 1
 
 struct cpu {
     u32 flags;

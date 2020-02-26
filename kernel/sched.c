@@ -41,15 +41,15 @@ PUBLIC bitchunk_t sched_queue_bitmap[BITCHUNKS(SCHED_QUEUES)];
 
 PUBLIC u32 rr_interval_ms;
 
-#define JIFFIES_MS(j) (((j) * MSEC_PER_SEC) / system_hz)
+#define JIFFIES_MS(j) (((j)*MSEC_PER_SEC) / system_hz)
 
-PRIVATE void dequeue_proc_locked(struct proc * p);
+PRIVATE void dequeue_proc_locked(struct proc* p);
 
 PUBLIC void init_sched()
 {
     int i = 0;
     spinlock_init(&sched_queues_lock);
-    for (i = 0; i < SCHED_QUEUES; i++) 
+    for (i = 0; i < SCHED_QUEUES; i++)
         INIT_LIST_HEAD(&sched_queues[i]);
 
     rr_interval_ms = RR_INTERVAL_DEFAULT;
@@ -60,11 +60,11 @@ PUBLIC void init_sched()
  *****************************************************************************/
 /**
  * <Ring 0> Choose one proc to run.
- * 
+ *
  *****************************************************************************/
-PUBLIC struct proc * pick_proc()
+PUBLIC struct proc* pick_proc()
 {
-    struct proc *p, * selected;
+    struct proc *p, *selected;
     int q = -1, i, j;
     u64 smallest = -1;
 
@@ -87,7 +87,8 @@ PUBLIC struct proc * pick_proc()
         return NULL;
     }
 
-    list_for_each_entry(p, &sched_queues[q], run_list) {
+    list_for_each_entry(p, &sched_queues[q], run_list)
+    {
         if (p->deadline < JIFFIES_MS(jiffies)) {
             selected = p;
             break;
@@ -98,18 +99,18 @@ PUBLIC struct proc * pick_proc()
             selected = p;
         }
     }
-    
+
     dequeue_proc_locked(selected);
 
     spinlock_unlock(&sched_queues_lock);
     return selected;
 }
 
-PRIVATE int proc_queue(struct proc * p)
+PRIVATE int proc_queue(struct proc* p)
 {
     int queue;
 
-    if (p->sched_policy == SCHED_RUNTIME) 
+    if (p->sched_policy == SCHED_RUNTIME)
         queue = p->priority;
     else
         queue = SCHED_RUNTIME_QUEUES - 2 + p->sched_policy;
@@ -120,7 +121,7 @@ PRIVATE int proc_queue(struct proc * p)
 /**
  * <Ring 0> Insert a process into scheduling queue.
  */
-PUBLIC void enqueue_proc(struct proc * p)
+PUBLIC void enqueue_proc(struct proc* p)
 {
     spinlock_lock(&sched_queues_lock);
 
@@ -132,8 +133,8 @@ PUBLIC void enqueue_proc(struct proc * p)
     spinlock_unlock(&sched_queues_lock);
 }
 
-PRIVATE void dequeue_proc_locked(struct proc * p)
-{ 
+PRIVATE void dequeue_proc_locked(struct proc* p)
+{
     int queue = proc_queue(p);
 
     list_del(&(p->run_list));
@@ -144,8 +145,8 @@ PRIVATE void dequeue_proc_locked(struct proc * p)
 /**
  * <Ring 0> Remove a process from scheduling queue.
  */
-PUBLIC void dequeue_proc(struct proc * p)
-{  
+PUBLIC void dequeue_proc(struct proc* p)
+{
     spinlock_lock(&sched_queues_lock);
 
     dequeue_proc_locked(p);
@@ -156,7 +157,7 @@ PUBLIC void dequeue_proc(struct proc * p)
 /**
  * <Ring 0> Called when a process has run out its counter.
  */
-PUBLIC void proc_no_time(struct proc * p)
+PUBLIC void proc_no_time(struct proc* p)
 {
     int prio_ratio = p->priority;
 
@@ -172,8 +173,9 @@ PUBLIC void proc_no_time(struct proc * p)
 PUBLIC void sched_clock(struct proc* p)
 {
     int prio_ratio = p->priority;
-    //u32 time_slice = (u32)p->counter_ns;
+    // u32 time_slice = (u32)p->counter_ns;
 
-    //p->deadline = JIFFIES_MS(jiffies) + time_slice / NSEC_PER_MSEC * prio_ratio;
+    // p->deadline = JIFFIES_MS(jiffies) + time_slice / NSEC_PER_MSEC *
+    // prio_ratio;
     p->deadline = JIFFIES_MS(jiffies) + rr_interval_ms * prio_ratio;
 }

@@ -40,13 +40,13 @@
 #include "global.h"
 
 PRIVATE phys_bytes free_mem_size;
-PUBLIC  unsigned long va_pa_offset;
+PUBLIC unsigned long va_pa_offset;
 
 PUBLIC void __lyos_init(char* envp[]);
 
 PRIVATE void init_mm();
-PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint);
-PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp);
+PRIVATE struct mmproc* init_mmproc(endpoint_t endpoint);
+PRIVATE void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp);
 PRIVATE void print_memmap();
 
 PRIVATE void process_system_notify();
@@ -70,8 +70,7 @@ PUBLIC int main()
         int msgtype = mm_msg.type;
         switch (msgtype) {
         case NOTIFY_MSG:
-            if (src == SYSTEM)
-                process_system_notify();
+            if (src == SYSTEM) process_system_notify();
             break;
         case PM_MM_FORK:
             mm_msg.RETVAL = do_fork();
@@ -143,8 +142,9 @@ PRIVATE void init_mm()
     get_kinfo(&kernel_info);
 
     /* initialize hole table */
-    //vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) * ARCH_BIG_PAGE_SIZE;
-    vmem_init((void*) VMALLOC_START, VMALLOC_END - VMALLOC_START);
+    // vmalloc_start = (kernel_info.kernel_end_pde + MAX_PAGEDIR_PDES) *
+    // ARCH_BIG_PAGE_SIZE;
+    vmem_init((void*)VMALLOC_START, VMALLOC_END - VMALLOC_START);
     mem_info.vmalloc_total = VMALLOC_END - VMALLOC_START;
     mem_info.vmalloc_used = 0;
 
@@ -160,16 +160,18 @@ PRIVATE void init_mm()
 
     futex_init();
 
-    struct boot_proc * bp;
-    for (i = -NR_TASKS, bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
+    struct boot_proc* bp;
+    for (i = -NR_TASKS, bp = kernel_info.boot_procs;
+         bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++, i++) {
         if (bp->proc_nr < 0) continue;
 
-        struct mmproc * mmp = init_mmproc(bp->endpoint);
+        struct mmproc* mmp = init_mmproc(bp->endpoint);
         mmp->flags = MMPF_INUSE;
 
         if (bp->proc_nr == TASK_MM) continue;
 
-        if ((mmp->mm = mm_allocate()) == NULL) panic("cannot allocate mm struct for %d", bp->endpoint);
+        if ((mmp->mm = mm_allocate()) == NULL)
+            panic("cannot allocate mm struct for %d", bp->endpoint);
         mm_init(mmp->mm);
         mmp->mm->slot = i;
         mmp->active_mm = mmp->mm;
@@ -180,11 +182,12 @@ PRIVATE void init_mm()
     }
 }
 
-PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
+PRIVATE struct mmproc* init_mmproc(endpoint_t endpoint)
 {
-    struct mmproc * mmp;
-    struct boot_proc * bp;
-    for (bp = kernel_info.boot_procs; bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++) {
+    struct mmproc* mmp;
+    struct boot_proc* bp;
+    for (bp = kernel_info.boot_procs;
+         bp < &kernel_info.boot_procs[NR_BOOT_PROCS]; bp++) {
         if (bp->endpoint == endpoint) {
             mmp = &mmproc_table[bp->proc_nr];
             mmp->flags = MMPF_INUSE;
@@ -201,49 +204,58 @@ PRIVATE struct mmproc * init_mmproc(endpoint_t endpoint)
 
 struct mm_exec_info {
     struct exec_info execi;
-    struct boot_proc * bp;
-    struct mmproc * mmp;
+    struct boot_proc* bp;
+    struct mmproc* mmp;
 };
 
-PRIVATE int mm_allocmem(struct exec_info * execi, void* vaddr, size_t len)
+PRIVATE int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
-    struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
-    struct vir_region * vr = NULL;
+    struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
+    struct vir_region* vr = NULL;
 
-    if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED|MAP_POPULATE, len, RF_WRITABLE))) return ENOMEM;
+    if (!(vr = mmap_region(mmexeci->mmp, vaddr,
+                           MAP_ANONYMOUS | MAP_FIXED | MAP_POPULATE, len,
+                           RF_WRITABLE)))
+        return ENOMEM;
     list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmexeci->mmp->active_mm->mem_avl);
 
     return 0;
 }
 
-PRIVATE int mm_allocmem_prealloc(struct exec_info * execi, void* vaddr, size_t len)
+PRIVATE int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
+                                 size_t len)
 {
-    struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
-    struct vir_region * vr = NULL;
+    struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
+    struct vir_region* vr = NULL;
 
-    if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS|MAP_FIXED, len, RF_WRITABLE))) return ENOMEM;
+    if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS | MAP_FIXED, len,
+                           RF_WRITABLE)))
+        return ENOMEM;
     list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
     avl_insert(&vr->avl, &mmexeci->mmp->active_mm->mem_avl);
 
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info *execi, off_t offset, void* vaddr, size_t len)
+PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                         size_t len)
 {
-    struct mm_exec_info * mmexeci = (struct mm_exec_info *)execi->callback_data;
+    struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
     if (offset + len > mmexeci->bp->len) return ENOEXEC;
-    data_copy(execi->proc_e, vaddr, NO_TASK, (void *)((phys_bytes) mmexeci->bp->base + offset), len);
+    data_copy(execi->proc_e, vaddr, NO_TASK,
+              (void*)((phys_bytes)mmexeci->bp->base + offset), len);
     return 0;
 }
 
-PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
+PRIVATE void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp)
 {
     if (pgd_new(&mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_new failed");
-    if (pgd_bind(mmp, &mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_bind failed");
+    if (pgd_bind(mmp, &mmp->mm->pgd))
+        panic("MM: spawn_bootproc: pgd_bind failed");
 
     struct mm_exec_info mmexeci;
-    struct exec_info * execi = &mmexeci.execi;
+    struct exec_info* execi = &mmexeci.execi;
     char header[ARCH_PG_SIZE];
     memset(&mmexeci, 0, sizeof(mmexeci));
 
@@ -251,11 +263,11 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     mmexeci.bp = bp;
 
     /* stack info */
-    execi->stack_top = (void*) VM_STACK_TOP;
+    execi->stack_top = (void*)VM_STACK_TOP;
     execi->stack_size = PROC_ORIGIN_STACK;
 
     /* header */
-    data_copy(SELF, header, NO_TASK, (void*) bp->base, sizeof(header));
+    data_copy(SELF, header, NO_TASK, (void*)bp->base, sizeof(header));
     execi->header = header;
     execi->header_len = sizeof(header);
 
@@ -270,22 +282,26 @@ PRIVATE void spawn_bootproc(struct mmproc * mmp, struct boot_proc * bp)
     execi->filesize = bp->len;
 
     char interp[MAX_PATH];
-    if (elf_is_dynamic(execi->header, execi->header_len, interp, sizeof(interp)) > 0) {
+    if (elf_is_dynamic(execi->header, execi->header_len, interp,
+                       sizeof(interp)) > 0) {
         printl("%s\n", interp);
     }
 
-    if (libexec_load_elf(execi) != 0) panic("can't load boot proc #%d", bp->endpoint);
+    if (libexec_load_elf(execi) != 0)
+        panic("can't load boot proc #%d", bp->endpoint);
 
     /* copy the stack */
-    //char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
-    //data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
+    // char * orig_stack = (char*)(VM_STACK_TOP - module_stack_len);
+    // data_copy(target, orig_stack, SELF, module_stp, module_stack_len);
 
     struct ps_strings ps;
     ps.ps_nargvstr = 0;
-    //ps.ps_argvstr = orig_stack;
+    // ps.ps_argvstr = orig_stack;
     ps.ps_envstr = NULL;
 
-    if (kernel_exec(bp->endpoint, (void*) VM_STACK_TOP, bp->name, (void*) execi->entry_point, &ps) != 0) panic("kernel exec failed");
+    if (kernel_exec(bp->endpoint, (void*)VM_STACK_TOP, bp->name,
+                    (void*)execi->entry_point, &ps) != 0)
+        panic("kernel exec failed");
 
     vmctl(VMCTL_BOOTINHIBIT_CLEAR, bp->endpoint);
 }
@@ -300,17 +316,19 @@ PRIVATE void print_memmap()
     memory_size = kernel_info.memory_size;
 
     printl("Kernel-provided physical RAM map:\n");
-    struct kinfo_mmap_entry * mmap;
-    for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count; i++, mmap++) {
+    struct kinfo_mmap_entry* mmap;
+    for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count;
+         i++, mmap++) {
         u64 last_byte = mmap->addr + mmap->len;
         u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000L) >> 32),
             base_l = (u32)(mmap->addr & 0xFFFFFFFF);
         u32 last_h = (u32)((last_byte & 0xFFFFFFFF00000000L) >> 32),
             last_l = (u32)(last_byte & 0xFFFFFFFF);
         printl("  [mem %08x%08x-%08x%08x] %s\n", base_h, base_l, last_h, last_l,
-            (mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");
+               (mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");
 
-        if (mmap->type == KINFO_MEMORY_AVAILABLE && mmap->addr >= kernel_info.kernel_end_phys) {
+        if (mmap->type == KINFO_MEMORY_AVAILABLE &&
+            mmap->addr >= kernel_info.kernel_end_phys) {
             usable_memsize += mmap->len;
             if (first) {
                 mem_init(mmap->addr, mmap->len);
@@ -318,30 +336,37 @@ PRIVATE void print_memmap()
             } else {
                 free_mem(mmap->addr, mmap->len);
             }
-        }
-        else
+        } else
             reserved_memsize += mmap->len;
     }
 
-    void* text_start = kernel_info.kernel_text_start, *text_end = kernel_info.kernel_text_end;
+    void *text_start = kernel_info.kernel_text_start,
+         *text_end = kernel_info.kernel_text_end;
     size_t text_len = text_end - text_start;
-    void* data_start = kernel_info.kernel_data_start, *data_end = kernel_info.kernel_data_end;
+    void *data_start = kernel_info.kernel_data_start,
+         *data_end = kernel_info.kernel_data_end;
     size_t data_len = data_end - data_start;
-    void* bss_start = kernel_info.kernel_bss_start, *bss_end = kernel_info.kernel_bss_end;
+    void *bss_start = kernel_info.kernel_bss_start,
+         *bss_end = kernel_info.kernel_bss_end;
     size_t bss_len = bss_end - bss_start;
 
     usable_memsize = usable_memsize - text_len - data_len - bss_len;
-    printl("Memory: %dk/%dk available (%dk kernel code, %dk data, %dk reserved)\n",
-                        usable_memsize / 1024, memory_size / 1024,
-                        text_len / 1024, (data_len + bss_len) / 1024,
-                        reserved_memsize / 1024);
+    printl(
+        "Memory: %dk/%dk available (%dk kernel code, %dk data, %dk reserved)\n",
+        usable_memsize / 1024, memory_size / 1024, text_len / 1024,
+        (data_len + bss_len) / 1024, reserved_memsize / 1024);
 
     printl("Virtual kernel memory layout:\n");
-    printl("  .text     : %08p - %08p  (%dkB)\n", text_start, text_end, text_len / 1024);
-    printl("  .data     : %08p - %08p  (%dkB)\n", data_start, data_end, data_len / 1024);
-    printl("  .bss      : %08p - %08p  (%dkB)\n", bss_start, bss_end, bss_len / 1024);
-    printl("  .vmalloc  : %08p - %08p  (%dkB)\n", VMALLOC_START, VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
-    printl("  .pkmap    : %08p - %08p  (%dkB)\n", PKMAP_START, PKMAP_END, (PKMAP_END - PKMAP_START) / 1024);
+    printl("  .text     : %08p - %08p  (%dkB)\n", text_start, text_end,
+           text_len / 1024);
+    printl("  .data     : %08p - %08p  (%dkB)\n", data_start, data_end,
+           data_len / 1024);
+    printl("  .bss      : %08p - %08p  (%dkB)\n", bss_start, bss_end,
+           bss_len / 1024);
+    printl("  .vmalloc  : %08p - %08p  (%dkB)\n", VMALLOC_START, VMALLOC_END,
+           (VMALLOC_END - VMALLOC_START) / 1024);
+    printl("  .pkmap    : %08p - %08p  (%dkB)\n", PKMAP_START, PKMAP_END,
+           (PKMAP_END - PKMAP_START) / 1024);
 
     mem_start = kernel_info.kernel_end_phys;
     free_mem_size = memory_size - mem_start;

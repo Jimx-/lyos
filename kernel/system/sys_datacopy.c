@@ -28,12 +28,12 @@
 #include <errno.h>
 #include <asm/proto.h>
 
-PUBLIC int sys_datacopy(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_datacopy(MESSAGE* m, struct proc* p_proc)
 {
-    void * src_addr = m->SRC_ADDR;
+    void* src_addr = m->SRC_ADDR;
     endpoint_t src_ep = m->SRC_EP == SELF ? p_proc->endpoint : m->SRC_EP;
 
-    void * dest_addr = m->DEST_ADDR;
+    void* dest_addr = m->DEST_ADDR;
     endpoint_t dest_ep = m->DEST_EP == SELF ? p_proc->endpoint : m->DEST_EP;
 
     struct vir_addr src, dest;

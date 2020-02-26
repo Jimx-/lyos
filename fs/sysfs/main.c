@@ -36,7 +36,7 @@
 #include "proto.h"
 
 PRIVATE int sysfs_init();
-PRIVATE int sysfs_message_hook(MESSAGE * m);
+PRIVATE int sysfs_message_hook(MESSAGE* m);
 
 struct memfs_hooks fs_hooks = {
     .init_hook = NULL,
@@ -67,14 +67,14 @@ PRIVATE int sysfs_init()
     return 0;
 }
 
-PRIVATE int sysfs_message_hook(MESSAGE * m)
+PRIVATE int sysfs_message_hook(MESSAGE* m)
 {
     int msgtype = m->type;
     int retval = 0;
-    
+
     switch (msgtype) {
     case SYSFS_PUBLISH:
-        retval = do_publish(m); 
+        retval = do_publish(m);
         break;
     case SYSFS_RETRIEVE:
         retval = do_retrieve(m);

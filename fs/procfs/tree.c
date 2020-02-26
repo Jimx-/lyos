@@ -42,10 +42,7 @@ PRIVATE int slot_in_use(int slot)
     return !(proc[slot].state & PST_FREE_SLOT);
 }
 
-PRIVATE int update_proc_table()
-{
-    return get_proctab(proc);
-}
+PRIVATE int update_proc_table() { return get_proctab(proc); }
 
 PRIVATE int update_pmproc_table()
 {
@@ -65,7 +62,7 @@ PRIVATE int update_tables()
 
 PRIVATE void make_stat(struct memfs_stat* stat, int slot, int index)
 {
-    if (index == NO_INDEX) 
+    if (index == NO_INDEX)
         stat->st_mode = (I_DIRECTORY | 0755);
     else
         stat->st_mode = pid_files[index].mode;
@@ -96,16 +93,18 @@ PRIVATE void build_pid_dirs()
         struct memfs_stat stat;
         make_stat(&stat, i, NO_INDEX);
 
-        memfs_add_inode(root, name, i, &stat, (cbdata_t) pid);
+        memfs_add_inode(root, name, i, &stat, (cbdata_t)pid);
     }
 }
 
 PRIVATE int is_pid_dir(struct memfs_inode* pin)
 {
-    return (memfs_node_parent(pin) == memfs_get_root_inode()) && (memfs_node_index(pin) != NO_INDEX);
+    return (memfs_node_parent(pin) == memfs_get_root_inode()) &&
+           (memfs_node_index(pin) != NO_INDEX);
 }
 
-PRIVATE void build_one_pid_entry(struct memfs_inode* parent, char* name, int slot)
+PRIVATE void build_one_pid_entry(struct memfs_inode* parent, char* name,
+                                 int slot)
 {
     if (memfs_find_inode_by_name(parent, name)) return;
 
@@ -115,7 +114,7 @@ PRIVATE void build_one_pid_entry(struct memfs_inode* parent, char* name, int slo
             struct memfs_stat stat;
             make_stat(&stat, slot, i);
 
-            memfs_add_inode(parent, name, i, &stat, (cbdata_t) 0);
+            memfs_add_inode(parent, name, i, &stat, (cbdata_t)0);
         }
     }
 }
@@ -129,7 +128,8 @@ PRIVATE void build_pid_entries(struct memfs_inode* pin, char* name)
     }
 }
 
-PUBLIC int procfs_lookup_hook(struct memfs_inode* parent, char* name, cbdata_t data)
+PUBLIC int procfs_lookup_hook(struct memfs_inode* parent, char* name,
+                              cbdata_t data)
 {
     static clock_t last_update = 0;
 

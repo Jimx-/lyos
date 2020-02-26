@@ -29,9 +29,9 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_exec(MESSAGE * m, struct proc * p_proc)
+PUBLIC int sys_exec(MESSAGE* m, struct proc* p_proc)
 {
-    struct proc * p = endpt_proc(m->KEXEC_ENDPOINT);
+    struct proc* p = endpt_proc(m->KEXEC_ENDPOINT);
     if (!p) return EINVAL;
 
     lock_proc(p);

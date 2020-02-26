@@ -28,9 +28,9 @@
 #include "lyos/proto.h"
 #include "lyos/cpulocals.h"
 
-struct CPULOCAL_STRUCT 
+struct CPULOCAL_STRUCT
 #ifdef CONFIG_SMP
-CPULOCAL_STRUCT[CONFIG_SMP_MAX_CPUS];
+    CPULOCAL_STRUCT[CONFIG_SMP_MAX_CPUS];
 #else
-CPULOCAL_STRUCT;
+    CPULOCAL_STRUCT;
 #endif

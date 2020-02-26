@@ -16,7 +16,7 @@
 #ifndef _INITFS_CONST_H_
 #define _INITFS_CONST_H_
 
-#define TAR_MAX_PATH    100
-#define MAX_HEADERS     100
+#define TAR_MAX_PATH 100
+#define MAX_HEADERS 100
 
 #endif

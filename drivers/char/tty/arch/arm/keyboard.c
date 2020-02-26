@@ -33,17 +33,8 @@
 #include <lyos/input.h>
 #include "proto.h"
 
-PUBLIC void do_input(MESSAGE* msg)
-{
+PUBLIC void do_input(MESSAGE* msg) {}
 
-}
+PUBLIC void init_keyboard() {}
 
-PUBLIC void init_keyboard()
-{
-
-}
-
-PUBLIC void kb_init(TTY * tty)
-{
-
-}
+PUBLIC void kb_init(TTY* tty) {}

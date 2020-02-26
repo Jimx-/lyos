@@ -26,7 +26,7 @@
 #include "string.h"
 #include "libfsdriver/libfsdriver.h"
 
-PUBLIC int fsdriver_start(struct fsdriver * fsd)
+PUBLIC int fsdriver_start(struct fsdriver* fsd)
 {
     int retval = fsdriver_register(fsd);
     if (retval != 0) return retval;
@@ -41,7 +41,7 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
         int src = m.source;
         reply = 1;
 
-        switch(msgtype) {
+        switch (msgtype) {
         case FS_LOOKUP:
             m.RET_RETVAL = fsdriver_lookup(fsd, &m);
             break;
@@ -79,8 +79,10 @@ PUBLIC int fsdriver_start(struct fsdriver * fsd)
             m.RET_RETVAL = fsdriver_sync(fsd, &m);
             break;
         default:
-            if (fsd->fs_other) m.RET_RETVAL = fsd->fs_other(&m);
-            else m.RET_RETVAL = ENOSYS;
+            if (fsd->fs_other)
+                m.RET_RETVAL = fsd->fs_other(&m);
+            else
+                m.RET_RETVAL = ENOSYS;
             break;
         }
 

@@ -56,32 +56,29 @@
 
 #include "libfdt_internal.h"
 
-static int fdt_cells(const void *fdt, int nodeoffset, const char *name)
+static int fdt_cells(const void* fdt, int nodeoffset, const char* name)
 {
-	const fdt32_t *c;
-	int val;
-	int len;
+    const fdt32_t* c;
+    int val;
+    int len;
 
-	c = fdt_getprop(fdt, nodeoffset, name, &len);
-	if (!c)
-		return 2;
+    c = fdt_getprop(fdt, nodeoffset, name, &len);
+    if (!c) return 2;
 
-	if (len != sizeof(*c))
-		return -FDT_ERR_BADNCELLS;
+    if (len != sizeof(*c)) return -FDT_ERR_BADNCELLS;
 
-	val = fdt32_to_cpu(*c);
-	if ((val <= 0) || (val > FDT_MAX_NCELLS))
-		return -FDT_ERR_BADNCELLS;
+    val = fdt32_to_cpu(*c);
+    if ((val <= 0) || (val > FDT_MAX_NCELLS)) return -FDT_ERR_BADNCELLS;
 
-	return val;
+    return val;
 }
 
-int fdt_address_cells(const void *fdt, int nodeoffset)
+int fdt_address_cells(const void* fdt, int nodeoffset)
 {
-	return fdt_cells(fdt, nodeoffset, "#address-cells");
+    return fdt_cells(fdt, nodeoffset, "#address-cells");
 }
 
-int fdt_size_cells(const void *fdt, int nodeoffset)
+int fdt_size_cells(const void* fdt, int nodeoffset)
 {
-	return fdt_cells(fdt, nodeoffset, "#size-cells");
+    return fdt_cells(fdt, nodeoffset, "#size-cells");
 }

@@ -35,11 +35,11 @@
 #include <lyos/vm.h>
 #include "global.h"
 
-#define OBJ_ALIGN   4
+#define OBJ_ALIGN 4
 
-#define SLABSIZE    200
-#define MINSIZE     8
-#define MAXSIZE     ((SLABSIZE - 1 + MINSIZE / OBJ_ALIGN) * OBJ_ALIGN)
+#define SLABSIZE 200
+#define MINSIZE 8
+#define MAXSIZE ((SLABSIZE - 1 + MINSIZE / OBJ_ALIGN) * OBJ_ALIGN)
 
 struct slabdata;
 
@@ -49,10 +49,10 @@ struct slabheader {
     u16 freeguess;
     u16 used;
     phys_bytes phys;
-    struct slabdata * data;
+    struct slabdata* data;
 };
 
-#define DATABYTES   (ARCH_PG_SIZE - sizeof(struct slabheader))
+#define DATABYTES (ARCH_PG_SIZE - sizeof(struct slabheader))
 
 struct slabdata {
     u8 data[DATABYTES];
@@ -73,10 +73,11 @@ PUBLIC void slabs_init()
     mem_info.slab = 0;
 }
 
-PRIVATE struct slabdata * alloc_slabdata()
+PRIVATE struct slabdata* alloc_slabdata()
 {
     phys_bytes phys;
-    struct slabdata * sd = (struct slabdata *)alloc_vmem(&phys, ARCH_PG_SIZE, PGT_SLAB);
+    struct slabdata* sd =
+        (struct slabdata*)alloc_vmem(&phys, ARCH_PG_SIZE, PGT_SLAB);
     if (!sd) return NULL;
 
     memset(&sd->header.used_mask, 0, sizeof(sd->header.used_mask));
@@ -91,16 +92,16 @@ PRIVATE struct slabdata * alloc_slabdata()
     return sd;
 }
 
-PUBLIC void * slaballoc(int bytes)
+PUBLIC void* slaballoc(int bytes)
 {
     if (bytes > MAXSIZE || bytes < MINSIZE) {
         printl("mm: slaballoc: invalid size(%d bytes)\n", bytes);
         return NULL;
     }
 
-    struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
-    struct slabdata * sd;
-    struct slabheader * header;
+    struct list_head* slab = &slabs[SLAB_INDEX(bytes)];
+    struct slabdata* sd;
+    struct slabheader* header;
 
     bytes = roundup(bytes, OBJ_ALIGN);
 
@@ -115,7 +116,8 @@ PUBLIC void * slaballoc(int bytes)
     int i;
     int max_objs = DATABYTES / bytes;
     /* try to find a slab with enough space */
-    list_for_each_entry(header, slab, list) {
+    list_for_each_entry(header, slab, list)
+    {
         if (header->used == max_objs) continue;
 
         for (i = header->freeguess; i < max_objs; i++) {
@@ -125,7 +127,7 @@ PUBLIC void * slaballoc(int bytes)
                 header->freeguess = i + 1;
                 header->used++;
 
-                return (void *)&sd->data[i * bytes];
+                return (void*)&sd->data[i * bytes];
             }
         }
 
@@ -136,7 +138,7 @@ PUBLIC void * slaballoc(int bytes)
                 header->freeguess = i + 1;
                 header->used++;
 
-                return (void *)&sd->data[i * bytes];
+                return (void*)&sd->data[i * bytes];
             }
         }
     }
@@ -154,7 +156,7 @@ PUBLIC void * slaballoc(int bytes)
             header->freeguess = i + 1;
             header->used++;
 
-            return (void *)&sd->data[i * bytes];
+            return (void*)&sd->data[i * bytes];
         }
     }
 
@@ -167,9 +169,9 @@ PUBLIC void slabfree(void* mem, int bytes)
         return;
     }
 
-    struct list_head * slab = &slabs[SLAB_INDEX(bytes)];
-    struct slabdata * sd;
-    struct slabheader * header;
+    struct list_head* slab = &slabs[SLAB_INDEX(bytes)];
+    struct slabdata* sd;
+    struct slabheader* header;
 
     bytes = roundup(bytes, OBJ_ALIGN);
 
@@ -177,12 +179,13 @@ PUBLIC void slabfree(void* mem, int bytes)
     if (list_empty(slab)) return;
 
     /* find the slab that contains this obj */
-    list_for_each_entry(header, slab, list) {
+    list_for_each_entry(header, slab, list)
+    {
         if (header->used == 0) continue;
         sd = header->data;
 
-        if ((mem >= (void*) (&sd->data)) &&
-         (mem < (void*)&sd->data + DATABYTES)) {
+        if ((mem >= (void*)(&sd->data)) &&
+            (mem < (void*)&sd->data + DATABYTES)) {
             int i = ((void*)mem - (void*)&sd->data) / bytes;
             UNSET_BIT(header->used_mask, i);
             header->used--;

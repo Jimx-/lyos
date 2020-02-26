@@ -1,5 +1,5 @@
-/*  
-    
+/*
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -40,9 +40,9 @@ PRIVATE void pid_status(int slot);
 PRIVATE void pid_environ(int slot);
 
 PUBLIC struct procfs_file pid_files[] = {
-    { "status", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_status },
-    { "environ", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_environ },
-    { NULL, 0, NULL },
+    {"status", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_status},
+    {"environ", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_environ},
+    {NULL, 0, NULL},
 };
 
 PRIVATE void dump_state(int pst, char* buf)
@@ -52,8 +52,9 @@ PRIVATE void dump_state(int pst, char* buf)
         buf[0] = 'R';
         return;
     }
-    
-#define ADD_FLAG(f, c) if (pst & f) buf[i++] = c
+
+#define ADD_FLAG(f, c) \
+    if (pst & f) buf[i++] = c
     ADD_FLAG(PST_BOOTINHIBIT, 'B');
     ADD_FLAG(PST_SENDING, 's');
     ADD_FLAG(PST_RECEIVING, 'r');
@@ -77,13 +78,16 @@ PRIVATE void pid_status(int slot)
     if (pi >= 0) {
         buf_printf("Tgid:\t%d\n", pmproc[pi].tgid);
         buf_printf("Pid:\t%d\n", pmproc[pi].pid);
-        buf_printf("Uid:\t%d\t%d\t%d\n", pmproc[pi].realuid, pmproc[pi].effuid, pmproc[pi].suid);
-        buf_printf("Gid:\t%d\t%d\t%d\n", pmproc[pi].realgid, pmproc[pi].effgid, pmproc[pi].sgid);
+        buf_printf("Uid:\t%d\t%d\t%d\n", pmproc[pi].realuid, pmproc[pi].effuid,
+                   pmproc[pi].suid);
+        buf_printf("Gid:\t%d\t%d\t%d\n", pmproc[pi].realgid, pmproc[pi].effgid,
+                   pmproc[pi].sgid);
         buf_printf("SigPnd:\t%016x\n", pmproc[pi].sig_pending);
     }
 }
 
 PRIVATE void pid_environ(int slot)
 {
-    printl("environ %d, %x, %x\n", slot, pmproc[slot].frame_addr, pmproc[slot].frame_size);
+    printl("environ %d, %x, %x\n", slot, pmproc[slot].frame_addr,
+           pmproc[slot].frame_size);
 }

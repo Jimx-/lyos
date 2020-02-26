@@ -1,4 +1,4 @@
-/*      
+/*
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -41,8 +41,8 @@ PRIVATE void pid_read(struct memfs_inode* pin)
     ((void (*)(int))pid_files[index].data)(slot);
 }
 
-PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
-        off_t offset, cbdata_t data)
+PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr,
+                                size_t count, off_t offset, cbdata_t data)
 {
     init_buf(ptr, count, offset);
 

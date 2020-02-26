@@ -31,11 +31,12 @@
 #include "lyos/list.h"
 #include "lyos/driver.h"
 #include "global.h"
-    
+
 /**
  * <Ring 1> Read/Write init device
  */
-PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length, void * buf)
+PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length,
+                          void* buf)
 {
-	bdev_readwrite(rw_flag, dev, position, length, TASK_INITFS, buf);
+    bdev_readwrite(rw_flag, dev, position, length, TASK_INITFS, buf);
 }

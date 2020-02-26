@@ -38,12 +38,12 @@ PUBLIC int do_exec(MESSAGE* m)
     if (!pmp) return EINVAL;
 
     MESSAGE msg;
-    msg.type        = PM_VFS_EXEC;
-    msg.PATHNAME    = m->PATHNAME;
-    msg.NAME_LEN    = m->NAME_LEN;
-    msg.BUF         = m->BUF;
-    msg.BUF_LEN     = m->BUF_LEN;
-    msg.ENDPOINT    = ep;
+    msg.type = PM_VFS_EXEC;
+    msg.PATHNAME = m->PATHNAME;
+    msg.NAME_LEN = m->NAME_LEN;
+    msg.BUF = m->BUF;
+    msg.BUF_LEN = m->BUF_LEN;
+    msg.ENDPOINT = ep;
 
     send_recv(BOTH, TASK_FS, &msg);
 
@@ -59,4 +59,3 @@ PUBLIC int do_exec(MESSAGE* m)
 
     return 0;
 }
-

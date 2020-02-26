@@ -16,14 +16,13 @@
 #ifndef _DRIVER_H_
 #define _DRIVER_H_
 
-#define NR_DEVICES      135
+#define NR_DEVICES 135
 
-#define MAJOR_MAX       64
+#define MAJOR_MAX 64
 
 PUBLIC void bdev_init();
 PUBLIC int bdev_driver(dev_t dev);
-PUBLIC ssize_t bdev_readwrite(int io_type, int dev, u64 pos,
-            int bytes, int proc_nr, void * buf);
+PUBLIC ssize_t bdev_readwrite(int io_type, int dev, u64 pos, int bytes,
+                              int proc_nr, void* buf);
 
 #endif
-

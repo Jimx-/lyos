@@ -22,11 +22,10 @@ int main(int argc, char* argv[], char* envp[])
     child = fork();
 
     argv++;
-    if(child == 0) {
+    if (child == 0) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
         exit(execve(argv[0], argv, envp));
-    }
-    else {
+    } else {
         int status;
         wait(&status);
         do_trace(child, status);
@@ -36,10 +35,10 @@ int main(int argc, char* argv[], char* envp[])
 
 static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
 {
-    long* src = (long*) src_msg;
-    long* dest = (long*) dest_msg;
+    long* src = (long*)src_msg;
+    long* dest = (long*)dest_msg;
 
-    while (src < (long*) ((char*) src_msg + sizeof(MESSAGE))) {
+    while (src < (long*)((char*)src_msg + sizeof(MESSAGE))) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
         if (data == -1) return -1;
         *dest = data;
@@ -52,13 +51,13 @@ static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
 
 static void print_path(pid_t pid, char* string, int len)
 {
-    char* buf = (char*) malloc(len + 5);
+    char* buf = (char*)malloc(len + 5);
     if (!buf) return;
 
-    long* src = (long*) string;
-    long* dest = (long*) buf;
+    long* src = (long*)string;
+    long* dest = (long*)buf;
 
-    while (src < (long*) (string + len)) {
+    while (src < (long*)(string + len)) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
         if (data == -1) return;
         *dest = data;
@@ -85,10 +84,10 @@ static void print_str(pid_t pid, char* str, int len)
     char* buf = malloc(len + 1);
     if (!buf) return;
 
-    long* src = (long*) str;
-    long* dest = (long*) buf;
+    long* src = (long*)str;
+    long* dest = (long*)buf;
 
-    while (src < (long*) (str + len)) {
+    while (src < (long*)(str + len)) {
         long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
         if (data == -1) goto out;
         *dest = data;
@@ -103,19 +102,14 @@ out:
     free(buf);
 }
 
-static void print_err(int err)
-{
-    printf("%d %s", err, strerror(err));
-}
+static void print_err(int err) { printf("%d %s", err, strerror(err)); }
 
 /*
 static void print_msg(MESSAGE* m)
 {
     int packed = 0;
-    printf("{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}%s}%s",
-           packed ? "" : "\n        ",
-           m->source,
-           packed ? " " : "\n        ",
+    printf("{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x,
+0x%x}%s}%s", packed ? "" : "\n        ", m->source, packed ? " " : "\n        ",
            m->type,
            packed ? " " : "\n        ",
            m->u.m3.m3i1,
@@ -202,10 +196,13 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
         printf("getdents(%d, 0x%p, %d)", msg.FD, msg.BUF, msg.CNT);
         break;
     case EXIT:
-        printf("exit(%d) = ?\n", msg.STATUS);   /* exit has no return value */
+        printf("exit(%d) = ?\n", msg.STATUS); /* exit has no return value */
         break;
     case MMAP:
-        printf("mmap(0x%p, %ld, %d, %d, %d, %ld)", msg.u.m_mm_mmap.vaddr, msg.u.m_mm_mmap.length, msg.u.m_mm_mmap.prot, msg.u.m_mm_mmap.flags, msg.u.m_mm_mmap.fd, msg.u.m_mm_mmap.offset);
+        printf("mmap(0x%p, %ld, %d, %d, %d, %ld)", msg.u.m_mm_mmap.vaddr,
+               msg.u.m_mm_mmap.length, msg.u.m_mm_mmap.prot,
+               msg.u.m_mm_mmap.flags, msg.u.m_mm_mmap.fd,
+               msg.u.m_mm_mmap.offset);
         break;
     case UMASK:
         printf("umask(0%o)", msg.MODE);
@@ -262,7 +259,7 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
         break;
     case MMAP:
         base = 16;
-        retval = (int) msg.u.m_mm_mmap_reply.retaddr;
+        retval = (int)msg.u.m_mm_mmap_reply.retaddr;
         break;
     }
 
@@ -282,14 +279,14 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     printf("\n");
 }
 
-#define EBX         8
-#define EAX         11
-#define ORIG_EAX    18
+#define EBX 8
+#define EAX 11
+#define ORIG_EAX 18
 static void trace_call_in(pid_t child)
 {
-    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*) (ORIG_EAX*4), 0);
+    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*)(ORIG_EAX * 4), 0);
 
-    void* src_msg = (void*) ptrace(PTRACE_PEEKUSER, child, (void*) (EBX*4), 0);
+    void* src_msg = (void*)ptrace(PTRACE_PEEKUSER, child, (void*)(EBX * 4), 0);
     MESSAGE msg;
     copy_message_from(child, src_msg, &msg);
 
@@ -305,10 +302,10 @@ static void trace_call_in(pid_t child)
 
 static void trace_call_out(pid_t child)
 {
-    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*) (ORIG_EAX*4), 0);
-    long eax = ptrace(PTRACE_PEEKUSER, child, (void*) (EAX*4), 0);
+    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*)(ORIG_EAX * 4), 0);
+    long eax = ptrace(PTRACE_PEEKUSER, child, (void*)(EAX * 4), 0);
 
-    void* src_msg = (void*) ptrace(PTRACE_PEEKUSER, child, (void*) (EBX*4), 0);
+    void* src_msg = (void*)ptrace(PTRACE_PEEKUSER, child, (void*)(EBX * 4), 0);
     MESSAGE msg;
     copy_message_from(child, src_msg, &msg);
 
@@ -343,8 +340,10 @@ static void do_trace(pid_t child, int s)
         switch (stopsig) {
         case SIGTRAP:
             call_in = ~call_in;
-            if (call_in) trace_call_in(child);
-            else trace_call_out(child);
+            if (call_in)
+                trace_call_in(child);
+            else
+                trace_call_out(child);
             break;
         }
     }

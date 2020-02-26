@@ -42,20 +42,21 @@ extern char _VIR_BASE, _KERN_SIZE;
 extern char __global_pointer;
 
 /* paging utilities */
-PRIVATE phys_bytes kern_vir_base = (phys_bytes) &_VIR_BASE;
-PRIVATE phys_bytes kern_size = (phys_bytes) &_KERN_SIZE;
+PRIVATE phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
+PRIVATE phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern char k_stacks_start;
-PUBLIC void * k_stacks;
+PUBLIC void* k_stacks;
 
 PRIVATE int dt_root_addr_cells, dt_root_size_cells;
 
-PRIVATE char * env_get(const char *name);
-PRIVATE int kinfo_set_param(char * buf, char * name, char * value);
+PRIVATE char* env_get(const char* name);
+PRIVATE int kinfo_set_param(char* buf, char* name, char* value);
 
 /* Scan for root address cells and size cells in FDT */
-PRIVATE int fdt_scan_root(void* blob, unsigned long offset, const char* name, int depth, void* arg)
+PRIVATE int fdt_scan_root(void* blob, unsigned long offset, const char* name,
+                          int depth, void* arg)
 {
     if (depth != 0) return 0;
 
@@ -75,19 +76,20 @@ PRIVATE int fdt_scan_root(void* blob, unsigned long offset, const char* name, in
 }
 
 /* Scan for memory nodes in FDT */
-PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name, int depth, void* arg)
+PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name,
+                            int depth, void* arg)
 {
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     if (!type || strcmp(type, "memory") != 0) return 0;
 
-    const u32* reg, *lim;
+    const u32 *reg, *lim;
     size_t len;
     reg = fdt_getprop(blob, offset, "reg", &len);
     if (!reg) return 0;
 
     lim = reg + (len / sizeof(u32));
 
-    while ((int) (lim - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+    while ((int)(lim - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
         phys_bytes base, size;
 
         base = of_read_number(reg, dt_root_addr_cells);
@@ -120,10 +122,12 @@ PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
     of_scan_fdt(fdt_scan_memory, NULL, initial_boot_params);
 
     /* setup boot modules */
-#define SET_MODULE(nr, name) do { \
-    extern char _bootmod_##name##_start[], _bootmod_##name##_end[]; \
-    kinfo.modules[nr].start_addr = (void*)*(&_bootmod_##name##_start); \
-    kinfo.modules[nr].end_addr = (void*)*(&_bootmod_##name##_end); } while(0)
+#define SET_MODULE(nr, name)                                               \
+    do {                                                                   \
+        extern char _bootmod_##name##_start[], _bootmod_##name##_end[];    \
+        kinfo.modules[nr].start_addr = (void*)*(&_bootmod_##name##_start); \
+        kinfo.modules[nr].end_addr = (void*)*(&_bootmod_##name##_end);     \
+    } while (0)
 
     SET_MODULE(TASK_MM, mm);
     SET_MODULE(TASK_PM, pm);
@@ -151,50 +155,54 @@ PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 
-PRIVATE char * get_value(const char * param, const char * key)
+PRIVATE char* get_value(const char* param, const char* key)
 {
-    char * envp = (char *)param;
-    const char * name = key;
+    char* envp = (char*)param;
+    const char* name = key;
 
     for (; *envp != 0;) {
-        for (name = key; *name != 0 && *name == *envp; name++, envp++);
+        for (name = key; *name != 0 && *name == *envp; name++, envp++)
+            ;
         if (*name == '\0' && *envp == '=') return envp + 1;
-        while (*envp++ != 0);
+        while (*envp++ != 0)
+            ;
     }
 
     return NULL;
 }
 
-PRIVATE char * env_get(const char *name)
+PRIVATE char* env_get(const char* name)
 {
     return get_value(kinfo.cmdline, name);
 }
 
-PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
+PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
 {
-    char *p = buf;
-    char *bufend = buf + KINFO_CMDLINE_LEN;
-    char *q;
+    char* p = buf;
+    char* bufend = buf + KINFO_CMDLINE_LEN;
+    char* q;
     int namelen = strlen(name);
     int valuelen = strlen(value);
 
     while (*p) {
         if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
             q = p;
-            while (*q) q++;
+            while (*q)
+                q++;
             for (q++; q < bufend; q++, p++)
                 *p = *q;
             break;
         }
-        while (*p++);
+        while (*p++)
+            ;
         p++;
     }
 
-    for (p = buf; p < bufend && (*p || *(p + 1)); p++);
+    for (p = buf; p < bufend && (*p || *(p + 1)); p++)
+        ;
     if (p > buf) p++;
 
-    if (p + namelen + valuelen + 3 > bufend)
-        return -1;
+    if (p + namelen + valuelen + 3 > bufend) return -1;
 
     strcpy(p, name);
     p[namelen] = '=';
@@ -204,7 +212,4 @@ PRIVATE int kinfo_set_param(char * buf, char * name, char * value)
     return 0;
 }
 
-PUBLIC void init_arch()
-{
-    init_prot();
-}
+PUBLIC void init_arch() { init_prot(); }

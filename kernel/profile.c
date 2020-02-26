@@ -42,7 +42,8 @@ PRIVATE irq_hook_t profile_clock_irq_hook;
 
 PRIVATE void profile_record_sample(struct proc* p, void* pc)
 {
-    struct kprof_sample* s = (struct kprof_sample*) (profile_sample_buf + kprof_info.mem_used);
+    struct kprof_sample* s =
+        (struct kprof_sample*)(profile_sample_buf + kprof_info.mem_used);
 
     s->endpt = p->endpoint;
     s->pc = pc;
@@ -52,7 +53,8 @@ PRIVATE void profile_record_sample(struct proc* p, void* pc)
 
 PRIVATE void profile_record_proc(struct proc* p)
 {
-    struct kprof_proc* s = (struct kprof_proc*) (profile_sample_buf + kprof_info.mem_used);
+    struct kprof_proc* s =
+        (struct kprof_proc*)(profile_sample_buf + kprof_info.mem_used);
 
     s->endpt = p->endpoint;
     strcpy(s->name, p->name);
@@ -64,14 +66,17 @@ PRIVATE void profile_record_proc(struct proc* p)
 PRIVATE void profile_sample(struct proc* p, void* pc)
 {
     if (!kprofiling) return;
-    if (kprof_info.mem_used + sizeof(struct kprof_sample) + sizeof(struct kprof_proc) > KPROF_SAMPLE_BUFSIZE) {
+    if (kprof_info.mem_used + sizeof(struct kprof_sample) +
+            sizeof(struct kprof_proc) >
+        KPROF_SAMPLE_BUFSIZE) {
         return;
     }
 
     lock_proc(p);
     if (p == &get_cpulocal_var(idle_proc)) {
         kprof_info.idle_samples++;
-    } else if ((p->priv && (p->priv->flags & PRF_PRIV_PROC)) || p->endpoint == KERNEL) {
+    } else if ((p->priv && (p->priv->flags & PRF_PRIV_PROC)) ||
+               p->endpoint == KERNEL) {
         kprof_info.system_samples++;
 
         if (!(p->flags & PF_PROFILE_RECORDED)) {
@@ -83,19 +88,19 @@ PRIVATE void profile_sample(struct proc* p, void* pc)
         kprof_info.user_samples++;
     }
     kprof_info.total_samples++;
-    
+
     unlock_proc(p);
 }
 
-PRIVATE int profile_clock_handler(irq_hook_t *hook)
+PRIVATE int profile_clock_handler(irq_hook_t* hook)
 {
     struct proc* p = get_cpulocal_var(proc_ptr);
 
-    profile_sample(p, 
+    profile_sample(p,
 #ifdef __i386__
-        (void*) p->regs.eip
+                   (void*)p->regs.eip
 #elif defined(__riscv)
-        0
+                   0
 #endif
     );
 

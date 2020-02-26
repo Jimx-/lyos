@@ -1,4 +1,4 @@
-/*      
+/*
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
 #define _PROCFS_TYPE_H_
 
 struct procfs_file {
-    char * name;
+    char* name;
     mode_t mode;
-    void * data;
+    void* data;
 };
 
 #endif

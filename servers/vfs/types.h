@@ -33,29 +33,29 @@
  */
 struct inode {
     struct list_head list;
-    endpoint_t  i_fs_ep;        /**< FS process's pid */
-    u32 i_mode;     /**< Accsess mode */
-    u32 i_size;     /**< File size */
+    endpoint_t i_fs_ep; /**< FS process's pid */
+    u32 i_mode;         /**< Accsess mode */
+    u32 i_size;         /**< File size */
     u32 i_start_sect;   /**< The first sector of the data */
-    u32 i_nr_sects; /**< How many sectors the file occupies */
-    uid_t i_uid;  /* uid and gid */
+    u32 i_nr_sects;     /**< How many sectors the file occupies */
+    uid_t i_uid;        /* uid and gid */
     gid_t i_gid;
-    dev_t i_dev;  /**< On which device this inode resides */
-    dev_t i_specdev;  /**< Device number for block/character special file */
-    int i_cnt;      /**< How many procs share this inode  */
-    int i_num;      /**< inode nr.  */
+    dev_t i_dev;     /**< On which device this inode resides */
+    dev_t i_specdev; /**< Device number for block/character special file */
+    int i_cnt;       /**< How many procs share this inode  */
+    int i_num;       /**< inode nr.  */
     rwlock_t i_lock;
 
-    struct vfs_mount * i_vmnt;
+    struct vfs_mount* i_vmnt;
 };
 
 struct vfs_mount {
     struct list_head list;
-    int m_fs_ep;            /**< FS process's pid */
-    int m_dev;          /**< Device number */
+    int m_fs_ep;                /**< FS process's pid */
+    int m_dev;                  /**< Device number */
     unsigned int m_flags;       /**< Mount flags */
-    struct inode *m_mounted_on; /**< Mount point */
-    struct inode *m_root_node;  /**< Root inode */
+    struct inode* m_mounted_on; /**< Mount point */
+    struct inode* m_root_node;  /**< Root inode */
     char m_label[FS_LABEL_MAX]; /**< Label of the file system process */
     rwlock_t m_lock;
 };
@@ -65,29 +65,29 @@ struct vfs_mount {
  * @brief Max len of a filename
  * @see   dir_entry
  */
-#define MAX_FILENAME_LEN    12
+#define MAX_FILENAME_LEN 12
 
 /**
  * @struct file_desc
  * @brief  File Descriptor
  */
 struct file_desc {
-    int     fd_mode;    /**< R or W */
-    int     fd_pos;     /**< Current position for R/W. */
-    int     fd_cnt;     /**< How many procs share this desc */
-    struct inode*   fd_inode;   /**< Ptr to the i-node */
+    int fd_mode;            /**< R or W */
+    int fd_pos;             /**< Current position for R/W. */
+    int fd_cnt;             /**< How many procs share this desc */
+    struct inode* fd_inode; /**< Ptr to the i-node */
     pthread_mutex_t fd_lock;
 
-    int     fd_selectors;       /**< How many selectors blocked on this desc */
-    int     fd_select_ops;
-    #define SFL_UPDATE      0x1
-    #define SFL_BUSY        0x2
-    #define SFL_BLOCKED     0x4
-    #define SFL_RD_BLOCK    0x8
-    #define SFL_WR_BLOCK    0x10
-    #define SFL_EXC_BLOCK   0x20
-    int     fd_select_flags;
-    dev_t   fd_select_dev;
+    int fd_selectors; /**< How many selectors blocked on this desc */
+    int fd_select_ops;
+#define SFL_UPDATE 0x1
+#define SFL_BUSY 0x2
+#define SFL_BLOCKED 0x4
+#define SFL_RD_BLOCK 0x8
+#define SFL_WR_BLOCK 0x10
+#define SFL_EXC_BLOCK 0x20
+    int fd_select_flags;
+    dev_t fd_select_dev;
 };
 
 /* character device mapping */

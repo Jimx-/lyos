@@ -13,8 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef	_HWINT_H_
-#define	_HWINT_H_
+#ifndef _HWINT_H_
+#define _HWINT_H_
 
 /* i8259 PIC */
 PUBLIC void i8259_mask(int irq);
@@ -36,8 +36,14 @@ extern u8 ioapic_enabled;
 #define hwint_mask(irq) ioapic_mask(irq)
 #define hwint_unmask(irq) ioapic_unmask(irq)
 #define hwint_ack(irq) ioapic_eoi(irq)
-#define hwint_used(irq) do { if (ioapic_enabled) ioapic_set_irq(irq); } while (0)
-#define hwint_not_used(irq) do { if (ioapic_enabled) ioapic_unset_irq(irq); } while (0)
+#define hwint_used(irq)                          \
+    do {                                         \
+        if (ioapic_enabled) ioapic_set_irq(irq); \
+    } while (0)
+#define hwint_not_used(irq)                        \
+    do {                                           \
+        if (ioapic_enabled) ioapic_unset_irq(irq); \
+    } while (0)
 
 #else
 

@@ -27,7 +27,7 @@
 
 PUBLIC struct memfs_hooks fs_hooks;
 
-PRIVATE int memfs_other(MESSAGE * m);
+PRIVATE int memfs_other(MESSAGE* m);
 
 struct fsdriver fsd = {
     .name = NULL,
@@ -41,13 +41,14 @@ struct fsdriver fsd = {
     .fs_other = memfs_other,
 };
 
-PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_stat * root_stat)
+PUBLIC int memfs_start(char* name, struct memfs_hooks* hooks,
+                       struct memfs_stat* root_stat)
 {
     fsd.name = name;
 
     if (!hooks) return EINVAL;
     memcpy(&fs_hooks, hooks, sizeof(fs_hooks));
-    
+
     if (memfs_init_buf()) return ENOMEM;
 
     memfs_init_inode();
@@ -62,12 +63,14 @@ PUBLIC int memfs_start(char * name, struct memfs_hooks * hooks, struct memfs_sta
     memfs_addhash_inode(&root_inode);
 
     if (fs_hooks.init_hook) fs_hooks.init_hook();
-    
+
     return fsdriver_start(&fsd);
 }
 
-PRIVATE int memfs_other(MESSAGE * m)
+PRIVATE int memfs_other(MESSAGE* m)
 {
-    if (fs_hooks.message_hook) return fs_hooks.message_hook(m);
-    else return ENOSYS;
+    if (fs_hooks.message_hook)
+        return fs_hooks.message_hook(m);
+    else
+        return ENOSYS;
 }

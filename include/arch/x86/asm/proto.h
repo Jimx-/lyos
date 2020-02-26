@@ -16,10 +16,10 @@
 #ifndef _ARCH_PROTO_H_
 #define _ARCH_PROTO_H_
 
-#define cmb() __asm__ __volatile__ ("" ::: "memory")
-    
-PUBLIC void x86_lgdt(u8 * p_gdt);
-PUBLIC void x86_lidt(u8 * p_idt);
+#define cmb() __asm__ __volatile__("" ::: "memory")
+
+PUBLIC void x86_lgdt(u8* p_gdt);
+PUBLIC void x86_lidt(u8* p_idt);
 PUBLIC void x86_lldt(u32 ldt);
 PUBLIC void x86_ltr(u32 tss);
 PUBLIC void x86_load_kerncs();
@@ -40,45 +40,47 @@ PUBLIC void arch_pause();
 PUBLIC int init_8253_timer(int freq);
 PUBLIC void stop_8253_timer();
 
-PUBLIC void switch_k_stack(char * esp, void * cont);
+PUBLIC void switch_k_stack(char* esp, void* cont);
 
 PUBLIC reg_t read_ebp();
 
 #ifndef __GNUC__
 /* call a function to read the stack fram pointer (%ebp) */
-#define get_stack_frame(__X)    ((reg_t)read_ebp())
+#define get_stack_frame(__X) ((reg_t)read_ebp())
 #else
 /* read %ebp directly */
-#define get_stack_frame(__X)    ((reg_t)__builtin_frame_address(0))
+#define get_stack_frame(__X) ((reg_t)__builtin_frame_address(0))
 #endif
 
-PUBLIC int arch_init_proc(struct proc * p, void * sp, void * ip, struct ps_strings * ps, char * name);
-PUBLIC int arch_reset_proc(struct proc * p);
-PUBLIC void arch_boot_proc(struct proc * p, struct boot_proc * bp);
+PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
+                          struct ps_strings* ps, char* name);
+PUBLIC int arch_reset_proc(struct proc* p);
+PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
-PUBLIC struct proc * arch_switch_to_user();
+PUBLIC struct proc* arch_switch_to_user();
 
-PUBLIC int arch_get_kern_mapping(int index, caddr_t * addr, int * len, int * flags);
-PUBLIC int arch_reply_kern_mapping(int index, void * vir_addr);
-PUBLIC int arch_vmctl(MESSAGE * m, struct proc * p);
+PUBLIC int arch_get_kern_mapping(int index, caddr_t* addr, int* len,
+                                 int* flags);
+PUBLIC int arch_reply_kern_mapping(int index, void* vir_addr);
+PUBLIC int arch_vmctl(MESSAGE* m, struct proc* p);
 
 PUBLIC void sys_call_sysenter();
 
-PUBLIC int syscall_int(int syscall_nr, MESSAGE * m);
-PUBLIC int syscall_sysenter(int syscall_nr, MESSAGE * m);
-PUBLIC int syscall_syscall(int syscall_nr, MESSAGE * m);
+PUBLIC int syscall_int(int syscall_nr, MESSAGE* m);
+PUBLIC int syscall_sysenter(int syscall_nr, MESSAGE* m);
+PUBLIC int syscall_syscall(int syscall_nr, MESSAGE* m);
 
 struct exception_frame {
-    reg_t   vec_no;     /* which interrupt vector was triggered */
-    reg_t   err_code;    /* zero if no exception does not push err code */
-    reg_t   eip;
-    reg_t   cs;
-    reg_t   eflags;
+    reg_t vec_no;   /* which interrupt vector was triggered */
+    reg_t err_code; /* zero if no exception does not push err code */
+    reg_t eip;
+    reg_t cs;
+    reg_t eflags;
 };
 
 PUBLIC void fninit();
 
-PUBLIC void ia32_read_msr(u32 reg, u32 * hi, u32 * lo);
+PUBLIC void ia32_read_msr(u32 reg, u32* hi, u32* lo);
 PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
 PUBLIC void halt_cpu();
@@ -90,12 +92,13 @@ PUBLIC void stop_local_timer();
 
 PUBLIC void smp_commence();
 
-PUBLIC void cut_memmap(kinfo_t * pk, phys_bytes start, phys_bytes end);
-PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t * pk);
-PUBLIC phys_bytes pg_alloc_lowest(kinfo_t * pk, phys_bytes size);
+PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end);
+PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
+                   kinfo_t* pk);
+PUBLIC phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size);
 
 PUBLIC void clear_memcache();
 
-PUBLIC void arch_set_syscall_result(struct proc * p, int result);
+PUBLIC void arch_set_syscall_result(struct proc* p, int result);
 
 #endif

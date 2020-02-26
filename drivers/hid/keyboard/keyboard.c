@@ -32,23 +32,23 @@
 
 #include "keyboard.h"
 
-PRIVATE	struct kb_inbuf	kb_in;
-PRIVATE	int		code_with_E0;
-PUBLIC 	irq_id_t	kb_irq_set;
-PRIVATE int		kb_hook_id;
+PRIVATE struct kb_inbuf kb_in;
+PRIVATE int code_with_E0;
+PUBLIC irq_id_t kb_irq_set;
+PRIVATE int kb_hook_id;
 
-PRIVATE int 	processing = 0;
+PRIVATE int processing = 0;
 
 PRIVATE int init_keyboard();
 PRIVATE void keyboard_process();
 PRIVATE void keyboard_interrupt(unsigned long irq_set);
-PRIVATE u8	get_byte_from_kb_buf();
-PRIVATE void	set_leds();
-PRIVATE void	kb_wait();
-PRIVATE void	kb_ack();
+PRIVATE u8 get_byte_from_kb_buf();
+PRIVATE void set_leds();
+PRIVATE void kb_wait();
+PRIVATE void kb_ack();
 
 PRIVATE struct inputdriver keyboard_driver = {
-	.input_interrupt = keyboard_interrupt,
+    .input_interrupt = keyboard_interrupt,
 };
 
 /*****************************************************************************
@@ -60,10 +60,10 @@ PRIVATE struct inputdriver keyboard_driver = {
  *****************************************************************************/
 PUBLIC int main()
 {
-	serv_register_init_fresh_callback(init_keyboard);
-	serv_init();
+    serv_register_init_fresh_callback(init_keyboard);
+    serv_init();
 
-	return inputdriver_start(&keyboard_driver);
+    return inputdriver_start(&keyboard_driver);
 }
 
 /*****************************************************************************
@@ -76,20 +76,18 @@ PUBLIC int main()
  *****************************************************************************/
 PRIVATE void keyboard_interrupt(unsigned long irq_set)
 {
-	u8 scan_code;
-	portio_inb(KB_DATA, &scan_code);
+    u8 scan_code;
+    portio_inb(KB_DATA, &scan_code);
 
-	if (kb_in.count < KB_IN_BYTES) {
-		*(kb_in.p_head) = scan_code;
-		kb_in.p_head++;
-		if (kb_in.p_head == kb_in.buf + KB_IN_BYTES)
-			kb_in.p_head = kb_in.buf;
-		kb_in.count++;
-	}
+    if (kb_in.count < KB_IN_BYTES) {
+        *(kb_in.p_head) = scan_code;
+        kb_in.p_head++;
+        if (kb_in.p_head == kb_in.buf + KB_IN_BYTES) kb_in.p_head = kb_in.buf;
+        kb_in.count++;
+    }
 
-	if (!processing) keyboard_process();
+    if (!processing) keyboard_process();
 }
-
 
 /*****************************************************************************
  *                                init_keyboard
@@ -100,18 +98,18 @@ PRIVATE void keyboard_interrupt(unsigned long irq_set)
  *****************************************************************************/
 PRIVATE int init_keyboard()
 {
-	kb_in.count = 0;
-	kb_in.p_head = kb_in.p_tail = kb_in.buf;
+    kb_in.count = 0;
+    kb_in.p_head = kb_in.p_tail = kb_in.buf;
 
-	set_leds();
+    set_leds();
 
-	kb_irq_set = 1 << KEYBOARD_IRQ;
-	kb_hook_id = KEYBOARD_IRQ;
+    kb_irq_set = 1 << KEYBOARD_IRQ;
+    kb_hook_id = KEYBOARD_IRQ;
 
-	irq_setpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &kb_hook_id);
-	irq_enable(&kb_hook_id);
+    irq_setpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &kb_hook_id);
+    irq_enable(&kb_hook_id);
 
-	return 0;
+    return 0;
 }
 
 /*****************************************************************************
@@ -123,81 +121,80 @@ PRIVATE int init_keyboard()
  *****************************************************************************/
 PRIVATE void keyboard_process()
 {
-	u8	scan_code;
+    u8 scan_code;
 
-	/**
-	 * 1 : make
-	 * 0 : break
-	 */
-	int	make;
+    /**
+     * 1 : make
+     * 0 : break
+     */
+    int make;
 
-	/**
-	 * We use a integer to record a key press.
-	 * For instance, if the key HOME is pressed, key will be evaluated to
-	 * `HOME' defined in keyboard.h.
-	 */
-	u32	key = 0;
+    /**
+     * We use a integer to record a key press.
+     * For instance, if the key HOME is pressed, key will be evaluated to
+     * `HOME' defined in keyboard.h.
+     */
+    u32 key = 0;
 
-	processing = 1;
-	while (kb_in.count > 0) {
-		code_with_E0 = 0;
-		scan_code = get_byte_from_kb_buf();
+    processing = 1;
+    while (kb_in.count > 0) {
+        code_with_E0 = 0;
+        scan_code = get_byte_from_kb_buf();
 
-		/* parse the scan code below */
-		if (scan_code == 0xE1) {
-			int i;
-			u8 pausebreak_scan_code[] = {0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5};
-			int is_pausebreak = 1;
-			for (i = 1; i < 6; i++) {
-				if (get_byte_from_kb_buf() != pausebreak_scan_code[i]) {
-					is_pausebreak = 0;
-					break;
-				}
-			}
-			if (is_pausebreak) {
-				key = KEY_PAUSE;
-			}
-		}
-		else if (scan_code == 0xE0) {
-			code_with_E0 = 1;
-			scan_code = get_byte_from_kb_buf();
+        /* parse the scan code below */
+        if (scan_code == 0xE1) {
+            int i;
+            u8 pausebreak_scan_code[] = {0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5};
+            int is_pausebreak = 1;
+            for (i = 1; i < 6; i++) {
+                if (get_byte_from_kb_buf() != pausebreak_scan_code[i]) {
+                    is_pausebreak = 0;
+                    break;
+                }
+            }
+            if (is_pausebreak) {
+                key = KEY_PAUSE;
+            }
+        } else if (scan_code == 0xE0) {
+            code_with_E0 = 1;
+            scan_code = get_byte_from_kb_buf();
 
-			/* PrintScreen is pressed */
-			if (scan_code == 0x2A) {
-				code_with_E0 = 0;
-				if ((scan_code = get_byte_from_kb_buf()) == 0xE0) {
-					code_with_E0 = 1;
-					if ((scan_code = get_byte_from_kb_buf()) == 0x37) {
-						key = KEY_SYSRQ;
-						make = 1;
-					}
-				}
-			}
-			/* PrintScreen is released */
-			else if (scan_code == 0xB7) {
-				code_with_E0 = 0;
-				if ((scan_code = get_byte_from_kb_buf()) == 0xE0) {
-					code_with_E0 = 1;
-					if ((scan_code = get_byte_from_kb_buf()) == 0xAA) {
-						key = KEY_SYSRQ;
-						make = 0;
-					}
-				}
-			}
-		}
+            /* PrintScreen is pressed */
+            if (scan_code == 0x2A) {
+                code_with_E0 = 0;
+                if ((scan_code = get_byte_from_kb_buf()) == 0xE0) {
+                    code_with_E0 = 1;
+                    if ((scan_code = get_byte_from_kb_buf()) == 0x37) {
+                        key = KEY_SYSRQ;
+                        make = 1;
+                    }
+                }
+            }
+            /* PrintScreen is released */
+            else if (scan_code == 0xB7) {
+                code_with_E0 = 0;
+                if ((scan_code = get_byte_from_kb_buf()) == 0xE0) {
+                    code_with_E0 = 1;
+                    if ((scan_code = get_byte_from_kb_buf()) == 0xAA) {
+                        key = KEY_SYSRQ;
+                        make = 0;
+                    }
+                }
+            }
+        }
 
-		if ((key != KEY_PAUSE) && (key != KEY_SYSRQ)) {
+        if ((key != KEY_PAUSE) && (key != KEY_SYSRQ)) {
 
-			/* make or break */
-			make = (scan_code & FLAG_BREAK ? 0 : 1);
+            /* make or break */
+            make = (scan_code & FLAG_BREAK ? 0 : 1);
 
-			key = scan_code & ~FLAG_BREAK;
-		}
+            key = scan_code & ~FLAG_BREAK;
+        }
 
-		inputdriver_send_event(EV_KEY, key, make);
-	}
+        inputdriver_send_event(EV_KEY, key, make);
+    }
 
-	processing = 0;
+    processing = 0;
 }
 
 /*****************************************************************************
@@ -210,20 +207,20 @@ PRIVATE void keyboard_process()
  *****************************************************************************/
 PRIVATE u8 get_byte_from_kb_buf()
 {
-	u8	scan_code;
+    u8 scan_code;
 
-	while (kb_in.count <= 0) {} /* wait for a byte to arrive */
+    while (kb_in.count <= 0) {
+    } /* wait for a byte to arrive */
 
-	scan_code = *(kb_in.p_tail);
-	kb_in.p_tail++;
-	if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES) {
-		kb_in.p_tail = kb_in.buf;
-	}
-	kb_in.count--;
+    scan_code = *(kb_in.p_tail);
+    kb_in.p_tail++;
+    if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES) {
+        kb_in.p_tail = kb_in.buf;
+    }
+    kb_in.count--;
 
-	return scan_code;
+    return scan_code;
 }
-
 
 /*****************************************************************************
  *                                kb_wait
@@ -234,13 +231,12 @@ PRIVATE u8 get_byte_from_kb_buf()
  *****************************************************************************/
 PRIVATE void kb_wait()
 {
-	u8 kb_stat;
+    u8 kb_stat;
 
-	do {
-		portio_inb(KB_CMD, &kb_stat);
-	} while (kb_stat & 0x02);
+    do {
+        portio_inb(KB_CMD, &kb_stat);
+    } while (kb_stat & 0x02);
 }
-
 
 /*****************************************************************************
  *                                kb_ack
@@ -251,13 +247,12 @@ PRIVATE void kb_wait()
  *****************************************************************************/
 PRIVATE void kb_ack()
 {
-	u8 kb_read;
+    u8 kb_read;
 
-	do {
-		portio_inb(KB_DATA, &kb_read);
-	} while (kb_read != KB_ACK);
+    do {
+        portio_inb(KB_DATA, &kb_read);
+    } while (kb_read != KB_ACK);
 }
-
 
 /*****************************************************************************
  *                                set_leds
@@ -268,14 +263,14 @@ PRIVATE void kb_ack()
  *****************************************************************************/
 PRIVATE void set_leds()
 {
-	u8 leds = 0;
-	//u8 leds = (caps_lock << 2) | (num_lock << 1) | scroll_lock;
+    u8 leds = 0;
+    // u8 leds = (caps_lock << 2) | (num_lock << 1) | scroll_lock;
 
-	kb_wait();
-	portio_outb(KB_DATA, LED_CODE);
-	kb_ack();
+    kb_wait();
+    portio_outb(KB_DATA, LED_CODE);
+    kb_ack();
 
-	kb_wait();
-	portio_outb(KB_DATA, leds);
-	kb_ack();
+    kb_wait();
+    portio_outb(KB_DATA, leds);
+    kb_ack();
 }

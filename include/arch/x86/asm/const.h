@@ -16,49 +16,49 @@
 #ifndef _ARCH_CONST_H_
 #define _ARCH_CONST_H_
 
-#define X86_STACK_TOP_RESERVED  (2 * sizeof(reg_t))
-#define K_STACK_SIZE    ARCH_PG_SIZE
-extern void * k_stacks;
+#define X86_STACK_TOP_RESERVED (2 * sizeof(reg_t))
+#define K_STACK_SIZE ARCH_PG_SIZE
+extern void* k_stacks;
 extern u32 k_stacks_start, k_stacks_end;
-#define get_k_stack_top(cpu)    ((void *)(((char*)(k_stacks)) \
-                    + 2 * ((cpu) + 1) * K_STACK_SIZE))
+#define get_k_stack_top(cpu) \
+    ((void*)(((char*)(k_stacks)) + 2 * ((cpu) + 1) * K_STACK_SIZE))
 
 /* kernel trap style */
-#define KTS_NONE        0
-#define KTS_INT         1
-#define KTS_SYSENTER    2
-#define KTS_SYSCALL     3
+#define KTS_NONE 0
+#define KTS_INT 1
+#define KTS_SYSENTER 2
+#define KTS_SYSCALL 3
 
 /* syscall style */
-#define SST_INTEL_SYSENTER  1
-#define SST_AMD_SYSCALL     2
+#define SST_INTEL_SYSENTER 1
+#define SST_AMD_SYSCALL 2
 
 /* MSRs */
-#define INTEL_MSR_SYSENTER_CS         0x174
-#define INTEL_MSR_SYSENTER_ESP        0x175
-#define INTEL_MSR_SYSENTER_EIP        0x176
+#define INTEL_MSR_SYSENTER_CS 0x174
+#define INTEL_MSR_SYSENTER_ESP 0x175
+#define INTEL_MSR_SYSENTER_EIP 0x176
 
-#define AMD_EFER_SCE        (1L << 0)   /* SYSCALL/SYSRET enabled */
-#define AMD_MSR_EFER        0xC0000080  /* extended features msr */
-#define AMD_MSR_STAR        0xC0000081  /* SYSCALL params msr */
+#define AMD_EFER_SCE (1L << 0)  /* SYSCALL/SYSRET enabled */
+#define AMD_MSR_EFER 0xC0000080 /* extended features msr */
+#define AMD_MSR_STAR 0xC0000081 /* SYSCALL params msr */
 
-#define NR_IRQS_LEGACY  16
+#define NR_IRQS_LEGACY 16
 #if CONFIG_X86_IO_APIC
-#define NR_IRQ_VECTORS        64
+#define NR_IRQ_VECTORS 64
 #else
-#define NR_IRQ_VECTORS        NR_IRQS_LEGACY
+#define NR_IRQ_VECTORS NR_IRQS_LEGACY
 #endif
 
 #define INTEL_CPUID_EBX 0x756e6547 /* ASCII value of "Genu" */
 #define INTEL_CPUID_EDX 0x49656e69 /* ASCII value of "ineI" */
 #define INTEL_CPUID_ECX 0x6c65746e /* ASCII value of "ntel" */
 
-#define AMD_CPUID_EBX   0x68747541 /* ASCII value of "Auth" */
-#define AMD_CPUID_EDX   0x69746e65 /* ASCII value of "enti" */
-#define AMD_CPUID_ECX   0x444d4163 /* ASCII value of "cAMD" */
+#define AMD_CPUID_EBX 0x68747541 /* ASCII value of "Auth" */
+#define AMD_CPUID_EDX 0x69746e65 /* ASCII value of "enti" */
+#define AMD_CPUID_ECX 0x444d4163 /* ASCII value of "cAMD" */
 
-#define CPU_VENDOR_INTEL    1
-#define CPU_VENDOR_AMD      2
-#define CPU_VENDOR_UNKNOWN  0xff
+#define CPU_VENDOR_INTEL 1
+#define CPU_VENDOR_AMD 2
+#define CPU_VENDOR_UNKNOWN 0xff
 
 #endif

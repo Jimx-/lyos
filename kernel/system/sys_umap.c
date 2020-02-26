@@ -35,14 +35,14 @@
 #include <lyos/cpulocals.h>
 #include <lyos/vm.h>
 
-PUBLIC int sys_umap(MESSAGE * m, struct proc* p)
+PUBLIC int sys_umap(MESSAGE* m, struct proc* p)
 {
     endpoint_t ep = m->UMAP_WHO;
     void* srcaddr = m->UMAP_SRCADDR;
 
     if (ep == SELF) ep = p->endpoint;
 
-    m->UMAP_DSTADDR = va2pa(ep, (void *)srcaddr);
+    m->UMAP_DSTADDR = va2pa(ep, (void*)srcaddr);
 
     return 0;
 }

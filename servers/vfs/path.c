@@ -28,14 +28,15 @@
 #include "errno.h"
 #include "fcntl.h"
 #include <sys/syslimits.h>
-    
+
 #include "types.h"
 #include "path.h"
 #include "proto.h"
 #include "global.h"
 
-PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev, 
-                ino_t start, ino_t root, struct fproc * fp, struct lookup_result * ret)
+PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
+                          ino_t start, ino_t root, struct fproc* fp,
+                          struct lookup_result* ret)
 {
     MESSAGE m;
 
@@ -54,13 +55,13 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
 
     memset(ret, 0, sizeof(struct lookup_result));
     send_recv(BOTH, fs_e, &m);
-    //async_sendrec(fs_e, &m, 0);
+    // async_sendrec(fs_e, &m, 0);
 
     int retval = m.RET_RETVAL;
 
     ret->fs_ep = m.source;
 
-    switch(retval) {
+    switch (retval) {
     case 0:
         ret->inode_nr = m.RET_NUM;
         ret->uid = m.RET_UID;
@@ -84,8 +85,8 @@ PUBLIC int request_lookup(endpoint_t fs_e, char * pathname, dev_t dev,
     return retval;
 }
 
-PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags, 
-                struct vfs_mount** vmnt, struct inode** inode)
+PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags,
+                        struct vfs_mount** vmnt, struct inode** inode)
 {
     lookup->pathname = pathname;
     lookup->flags = flags;
@@ -97,24 +98,27 @@ PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags,
     *inode = NULL;
 }
 
-PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc * fp)
+PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc* fp)
 {
     /* start inode: root or pwd */
     if (!fp->root || !fp->pwd) {
-        printl("VFS: resolve_path: process #%d has no root or working directory\n", fp->endpoint);
+        printl(
+            "VFS: resolve_path: process #%d has no root or working directory\n",
+            fp->endpoint);
         err_code = ENOENT;
         return NULL;
     }
-    
-    struct inode * start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
+
+    struct inode* start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
     return advance_path(start, lookup, fp);
 }
 
 /* Resolve a pathname */
-PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, struct fproc * fp)
+PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
+                                  struct fproc* fp)
 {
     char* pathname = lookup->pathname;
-    struct inode * new_pin = NULL, * pin = NULL;
+    struct inode *new_pin = NULL, *pin = NULL;
 
     struct lookup_result res;
 
@@ -128,9 +132,9 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
     int num = start->i_num;
 
     ino_t root_ino = 0;
-    struct vfs_mount * vmnt = find_vfs_mount(dev);
+    struct vfs_mount* vmnt = find_vfs_mount(dev);
     if (vmnt == NULL) {
-        err_code = EIO;   /* no such mountpoint */
+        err_code = EIO; /* no such mountpoint */
         return NULL;
     }
 
@@ -147,14 +151,15 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
 
     if (fp->root->i_dev == fp->pwd->i_dev) root_ino = fp->root->i_num;
 
-    ret = request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, fp, &res);
+    ret =
+        request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, fp, &res);
     if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
         if (vmnt) unlock_vmnt(vmnt);
         *(lookup->vmnt) = NULL;
         err_code = ret;
         return NULL;
     }
-    
+
     /* TODO: deal with EENTERMOUNT and ELEAVEMOUNT */
     while (ret == EENTERMOUNT || ret == ELEAVEMOUNT) {
         int path_offset = res.offsetp;
@@ -162,11 +167,12 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
         memmove(pathname, &pathname[path_offset], left_len);
         pathname[left_len] = '\0';
 
-        struct inode * dir_pin = NULL;
+        struct inode* dir_pin = NULL;
         if (ret == EENTERMOUNT) {
-            list_for_each_entry(vmnt, &vfs_mount_table, list) {
+            list_for_each_entry(vmnt, &vfs_mount_table, list)
+            {
                 if (vmnt->m_dev != 0 && vmnt->m_mounted_on != NULL) {
-                    if (vmnt->m_mounted_on->i_num == res.inode_nr && 
+                    if (vmnt->m_mounted_on->i_num == res.inode_nr &&
                         vmnt->m_mounted_on->i_fs_ep == res.fs_ep) {
                         dir_pin = vmnt->m_root_node;
                         break;
@@ -186,8 +192,10 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
         endpoint_t fs_e = dir_pin->i_fs_ep;
         ino_t dir_num = dir_pin->i_num;
 
-        if (dir_pin->i_dev == fp->root->i_dev) root_ino = fp->root->i_num;
-        else root_ino = 0;
+        if (dir_pin->i_dev == fp->root->i_dev)
+            root_ino = fp->root->i_num;
+        else
+            root_ino = 0;
 
         if (vmnt) unlock_vmnt(vmnt);
         vmnt = find_vfs_mount(dir_pin->i_dev);
@@ -205,7 +213,8 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
             }
         }
 
-        ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino, fp, &res);
+        ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino,
+                             fp, &res);
 
         if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
             if (vmnt) unlock_vmnt(vmnt);
@@ -231,7 +240,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
         new_pin->i_specdev = res.spec_dev;
         new_pin->i_vmnt = find_vfs_mount(res.dev);
         if (!new_pin->i_vmnt) panic("VFS: resolve_path: vmnt not found");
-        
+
         pin = new_pin;
     } else {
         lock_inode(pin, lookup->inode_lock);
@@ -249,14 +258,14 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup, st
  * @param  fp       The caller.
  * @return          Inode of the last directory on success. Otherwise NULL.
  */
-PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp)
+PUBLIC struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
 {
     struct inode* result_pin = NULL;
     char* cp;
     char entry[PATH_MAX + 1];
-    
+
     do {
-        struct inode * start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
+        struct inode* start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
 
         size_t len = strlen(lookup->pathname);
         if (len == 0) {
@@ -272,7 +281,8 @@ PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp)
 
         cp = strrchr(lookup->pathname, '/');
         if (cp == NULL) {
-            if (strlcpy(entry, lookup->pathname, PATH_MAX + 1) >= PATH_MAX + 1) {
+            if (strlcpy(entry, lookup->pathname, PATH_MAX + 1) >=
+                PATH_MAX + 1) {
                 errno = ENAMETOOLONG;
                 result_pin = NULL;
                 break;
@@ -306,6 +316,5 @@ PUBLIC struct inode * last_dir(struct lookup* lookup, struct fproc * fp)
         break;
     } while (0);
 
-    
     return result_pin;
 }

@@ -29,32 +29,33 @@
 #include <errno.h>
 #include <lyos/portio.h>
 #include <asm/proto.h>
-    
-PRIVATE char vportio_buf[VPORTIO_BUF_SIZE];
-PRIVATE pb_pair_t * pbp = (pb_pair_t *)vportio_buf;
-PRIVATE pw_pair_t * pwp = (pw_pair_t *)vportio_buf;
-PRIVATE pl_pair_t * plp = (pl_pair_t *)vportio_buf;
 
-PUBLIC int sys_vportio(MESSAGE * m, struct proc * p_proc)
+PRIVATE char vportio_buf[VPORTIO_BUF_SIZE];
+PRIVATE pb_pair_t* pbp = (pb_pair_t*)vportio_buf;
+PRIVATE pw_pair_t* pwp = (pw_pair_t*)vportio_buf;
+PRIVATE pl_pair_t* plp = (pl_pair_t*)vportio_buf;
+
+PUBLIC int sys_vportio(MESSAGE* m, struct proc* p_proc)
 {
-    int type = m->PIO_REQUEST & PIO_TYPE_MASK, dir = m->PIO_REQUEST & PIO_DIR_MASK;
+    int type = m->PIO_REQUEST & PIO_TYPE_MASK,
+        dir = m->PIO_REQUEST & PIO_DIR_MASK;
     int vec_size = m->PIO_VECSIZE;
 
     if (vec_size <= 0) return EINVAL;
-    
+
     int bytes;
     switch (type) {
-        case PIO_BYTE:
-            bytes = sizeof(pb_pair_t) * vec_size;
-            break;
-        case PIO_WORD:
-            bytes = sizeof(pw_pair_t) * vec_size;
-            break;
-        case PIO_LONG:
-            bytes = sizeof(pl_pair_t) * vec_size;
-            break;
-        default:
-            return EINVAL;
+    case PIO_BYTE:
+        bytes = sizeof(pb_pair_t) * vec_size;
+        break;
+    case PIO_WORD:
+        bytes = sizeof(pw_pair_t) * vec_size;
+        break;
+    case PIO_LONG:
+        bytes = sizeof(pl_pair_t) * vec_size;
+        break;
+    default:
+        return EINVAL;
     }
 
     if (bytes > VPORTIO_BUF_SIZE) return E2BIG;
@@ -64,26 +65,32 @@ PUBLIC int sys_vportio(MESSAGE * m, struct proc * p_proc)
 
     int i;
     switch (type) {
-        case PIO_BYTE:
-            for (i = 0; i < vec_size; i++) {
-                if (dir == PIO_IN) pbp[i].value = in_byte(pbp[i].port);
-                else out_byte(pbp[i].port, pbp[i].value);
-            }
-            break;
-        case PIO_WORD:
-            for (i = 0; i < vec_size; i++) {
-                if (dir == PIO_IN) pwp[i].value = in_word(pwp[i].port);
-                else out_word(pwp[i].port, pwp[i].value);
-            }
-            break;
-        case PIO_LONG:
-            for (i = 0; i < vec_size; i++) {
-                if (dir == PIO_IN) plp[i].value = in_long(plp[i].port);
-                else out_long(plp[i].port, plp[i].value);
-            }
-            break;
-        default:
-            return EINVAL;
+    case PIO_BYTE:
+        for (i = 0; i < vec_size; i++) {
+            if (dir == PIO_IN)
+                pbp[i].value = in_byte(pbp[i].port);
+            else
+                out_byte(pbp[i].port, pbp[i].value);
+        }
+        break;
+    case PIO_WORD:
+        for (i = 0; i < vec_size; i++) {
+            if (dir == PIO_IN)
+                pwp[i].value = in_word(pwp[i].port);
+            else
+                out_word(pwp[i].port, pwp[i].value);
+        }
+        break;
+    case PIO_LONG:
+        for (i = 0; i < vec_size; i++) {
+            if (dir == PIO_IN)
+                plp[i].value = in_long(plp[i].port);
+            else
+                out_long(plp[i].port, plp[i].value);
+        }
+        break;
+    default:
+        return EINVAL;
     }
 
     if (dir == PIO_IN) {

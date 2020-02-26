@@ -13,7 +13,6 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-
 #include <lyos/config.h>
 #include <lyos/type.h>
 #include <lyos/ipc.h>
@@ -26,9 +25,9 @@
 #include <string.h>
 #include <lyos/sysutils.h>
 
-int syscall_entry(int syscall_nr, MESSAGE * m);
+int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC	int	printx(char * s)
+PUBLIC int printx(char* s)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(m));
@@ -58,7 +57,7 @@ PUBLIC int kernlog_register()
  *
  * @return  The number of chars printed.
  *****************************************************************************/
-PUBLIC int printl(const char *fmt, ...)
+PUBLIC int printl(const char* fmt, ...)
 {
     int i;
     char buf[STR_DEFAULT_LEN];

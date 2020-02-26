@@ -29,26 +29,25 @@ extern struct list_head ext2_superblock_table;
 
 /* buffer */
 #define EXT2FSBUF_SIZE 1024
-extern u8 * ext2fsbuf;
+extern u8* ext2fsbuf;
 EXTERN u8 _ext2fsbuf[EXT2FSBUF_SIZE];
 
-#define EXT2_INODE_HASH_LOG2   7
-#define EXT2_INODE_HASH_SIZE   ((unsigned long)1<<EXT2_INODE_HASH_LOG2)
-#define EXT2_INODE_HASH_MASK   (((unsigned long)1<<EXT2_INODE_HASH_LOG2)-1)
+#define EXT2_INODE_HASH_LOG2 7
+#define EXT2_INODE_HASH_SIZE ((unsigned long)1 << EXT2_INODE_HASH_LOG2)
+#define EXT2_INODE_HASH_MASK (((unsigned long)1 << EXT2_INODE_HASH_LOG2) - 1)
 
 /* inode hash table */
-#define EXT2_NR_INODES   512
+#define EXT2_NR_INODES 512
 EXTERN struct list_head ext2_inode_table[EXT2_INODE_HASH_SIZE];
 EXTERN ext2_inode_t ext2_inode_buffer[EXT2_NR_INODES];
 EXTERN struct list_head ext2_unused_inode_list;
 
 /* buffer cache */
-#define MAX_BUFFERS              100
-#define EXT2_BUFFER_HASH_SIZE    17
+#define MAX_BUFFERS 100
+#define EXT2_BUFFER_HASH_SIZE 17
 EXTERN struct list_head ext2_buffer_cache[EXT2_BUFFER_HASH_SIZE];
-extern struct list_head ext2_buffer_freelist, * ext2_buffer_freelist_tail;
+extern struct list_head ext2_buffer_freelist, *ext2_buffer_freelist_tail;
 
 EXTERN endpoint_t ext2_ep;
 
 #endif
-

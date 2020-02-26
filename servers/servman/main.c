@@ -1,6 +1,6 @@
-/*  
+/*
     (c)Copyright 2014 Jimx
-    
+
     This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-    
+
 #include <lyos/type.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
@@ -80,8 +80,8 @@ PRIVATE void servman_init()
     int i;
     /* prepare priv structure for all priv procs */
     for (i = 0; boot_priv_table[i].endpoint != NO_TASK; i++) {
-        struct boot_priv * bpriv = &boot_priv_table[i];
-        struct sproc * sp = &sproc_table[i];
+        struct boot_priv* bpriv = &boot_priv_table[i];
+        struct sproc* sp = &sproc_table[i];
 
         sp->flags |= SPF_INUSE;
         sp->priv.id = static_priv_id(ENDPOINT_P(bpriv->endpoint));
@@ -92,18 +92,21 @@ PRIVATE void servman_init()
         if (sp->priv.flags == TASK_FLAGS) {
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
                 sp->priv.syscall_mask[j] = ~0;
-            } 
+            }
         } else if (sp->priv.flags == USER_FLAGS) {
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
                 sp->priv.syscall_mask[j] = 0;
-            } 
+            }
         }
 
         /* set privilege */
         if (bpriv->endpoint != TASK_MM && bpriv->endpoint != TASK_SERVMAN) {
             int r;
-            if ((r = privctl(bpriv->endpoint, PRIVCTL_SET_PRIV, &(sp->priv))) != 0) panic("unable to set priv(%d)", r);
-            if ((r = privctl(bpriv->endpoint, PRIVCTL_ALLOW, NULL)) != 0) panic("unable to allow priv(%d)", r);
+            if ((r = privctl(bpriv->endpoint, PRIVCTL_SET_PRIV, &(sp->priv))) !=
+                0)
+                panic("unable to set priv(%d)", r);
+            if ((r = privctl(bpriv->endpoint, PRIVCTL_ALLOW, NULL)) != 0)
+                panic("unable to allow priv(%d)", r);
         }
 
         sp->endpoint = bpriv->endpoint;

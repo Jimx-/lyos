@@ -32,11 +32,11 @@
 #include "const.h"
 
 PRIVATE void pm_init();
-PRIVATE void process_system_notify(MESSAGE * m);
+PRIVATE void process_system_notify(MESSAGE* m);
 
-PUBLIC int main(int argc, char * argv[])
+PUBLIC int main(int argc, char* argv[])
 {
-	pm_init();
+    pm_init();
 
     MESSAGE msg;
 
@@ -46,8 +46,7 @@ PUBLIC int main(int argc, char * argv[])
 
         switch (msg.type) {
         case NOTIFY_MSG:
-            if (src == SYSTEM)
-                process_system_notify(&msg);
+            if (src == SYSTEM) process_system_notify(&msg);
             break;
         case FORK:
             msg.RETVAL = do_fork(&msg);
@@ -115,32 +114,35 @@ PRIVATE void pm_init()
 {
     int retval = 0;
     struct boot_proc boot_procs[NR_BOOT_PROCS];
-    struct pmproc * pmp;
+    struct pmproc* pmp;
     MESSAGE vfs_msg;
 
     printl("PM: process manager is running.\n");
 
     /* signal sets */
-    static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
-                SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
-    static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
-    static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE,
-                SIGBUS, SIGSEGV };
-    char * sig_ptr;
+    static char core_sigs[] = {SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
+                               SIGEMT,  SIGFPE, SIGBUS,  SIGSEGV};
+    static char ign_sigs[] = {SIGCHLD, SIGWINCH, SIGCONT};
+    static char noign_sigs[] = {SIGILL, SIGTRAP, SIGEMT,
+                                SIGFPE, SIGBUS,  SIGSEGV};
+    char* sig_ptr;
     sigemptyset(&core_set);
-    for (sig_ptr = core_sigs; sig_ptr < core_sigs+sizeof(core_sigs); sig_ptr++)
+    for (sig_ptr = core_sigs; sig_ptr < core_sigs + sizeof(core_sigs);
+         sig_ptr++)
         sigaddset(&core_set, *sig_ptr);
     sigemptyset(&ign_set);
-    for (sig_ptr = ign_sigs; sig_ptr < ign_sigs+sizeof(ign_sigs); sig_ptr++)
+    for (sig_ptr = ign_sigs; sig_ptr < ign_sigs + sizeof(ign_sigs); sig_ptr++)
         sigaddset(&ign_set, *sig_ptr);
     sigemptyset(&noign_set);
-    for (sig_ptr = noign_sigs; sig_ptr < noign_sigs+sizeof(noign_sigs); sig_ptr++)
+    for (sig_ptr = noign_sigs; sig_ptr < noign_sigs + sizeof(noign_sigs);
+         sig_ptr++)
         sigaddset(&noign_set, *sig_ptr);
 
-    if ((retval = get_bootprocs(boot_procs)) != 0) panic("cannot get boot procs from kernel");
+    if ((retval = get_bootprocs(boot_procs)) != 0)
+        panic("cannot get boot procs from kernel");
     procs_in_use = 0;
 
-    struct boot_proc * bp;
+    struct boot_proc* bp;
     for (bp = boot_procs; bp < &boot_procs[NR_BOOT_PROCS]; bp++) {
         if (bp->proc_nr < 0) continue;
 
@@ -154,7 +156,8 @@ PRIVATE void pm_init()
         } else {
             if (bp->proc_nr == TASK_SERVMAN)
                 pmp->parent = INIT;
-            else pmp->parent = TASK_SERVMAN;
+            else
+                pmp->parent = TASK_SERVMAN;
 
             pmp->pid = find_free_pid();
         }
@@ -186,7 +189,7 @@ PRIVATE void pm_init()
     if (vfs_msg.RETVAL != 0) panic("pm_init: bad reply from vfs");
 }
 
-PRIVATE void process_system_notify(MESSAGE * m)
+PRIVATE void process_system_notify(MESSAGE* m)
 {
     sigset_t sigset = m->SIGSET;
 

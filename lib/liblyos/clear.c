@@ -29,7 +29,7 @@
 PUBLIC int kernel_clear(endpoint_t ep)
 {
     MESSAGE m;
-    
+
     m.ENDPOINT = ep;
 
     return syscall_entry(NR_CLEAR, &m);

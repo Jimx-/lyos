@@ -34,7 +34,7 @@ PUBLIC pid_t get_epinfo(endpoint_t ep, uid_t* euid, gid_t* egid)
     send_recv(BOTH, TASK_PM, &m);
 
     if (m.RETVAL < 0) return m.RETVAL;
-    
+
     if (euid) *euid = m.EP_EFFUID;
     if (egid) *egid = m.EP_EFFGID;
 
