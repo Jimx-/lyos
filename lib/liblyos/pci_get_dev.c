@@ -24,10 +24,11 @@
 #include <assert.h>
 #include <lyos/service.h>
 #include "libsysfs/libsysfs.h"
+#include <libdevman/libdevman.h>
 
 extern endpoint_t __pci_endpoint;
 
-PUBLIC int pci_first_dev(int * devind, u16 * vid, u16 * did)
+PUBLIC int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 {
     u32 v;
     int retval;
@@ -40,7 +41,7 @@ PUBLIC int pci_first_dev(int * devind, u16 * vid, u16 * did)
     }
 
     MESSAGE msg;
-    
+
     msg.type = PCI_FIRST_DEV;
 
 #ifdef __i386__
@@ -53,10 +54,14 @@ PUBLIC int pci_first_dev(int * devind, u16 * vid, u16 * did)
     *vid = msg.u.m3.m3i3;
     *did = msg.u.m3.m3i4;
 
+    if (dev_id) {
+        *dev_id = (device_id_t)msg.u.m3.m3l1;
+    }
+
     return msg.RETVAL;
 }
 
-PUBLIC int pci_next_dev(int * devind, u16 * vid, u16 * did)
+PUBLIC int pci_next_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 {
     u32 v;
     int retval;
@@ -69,10 +74,10 @@ PUBLIC int pci_next_dev(int * devind, u16 * vid, u16 * did)
     }
 
     MESSAGE msg;
-    
+
     msg.type = PCI_NEXT_DEV;
     msg.u.m3.m3i2 = *devind;
-    
+
 #ifdef __i386__
     send_recv(BOTH, TASK_PCI, &msg);
 #else
@@ -82,6 +87,10 @@ PUBLIC int pci_next_dev(int * devind, u16 * vid, u16 * did)
     *devind = msg.u.m3.m3i2;
     *vid = msg.u.m3.m3i3;
     *did = msg.u.m3.m3i4;
+
+    if (dev_id) {
+        *dev_id = (device_id_t)msg.u.m3.m3l1;
+    }
 
     return msg.RETVAL;
 }

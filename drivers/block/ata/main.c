@@ -30,6 +30,7 @@
 #include <lyos/interrupt.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <lyos/pci_utils.h>
 #include <lyos/vm.h>
 #include <asm/pci.h>
 #include <sys/mman.h>
@@ -39,60 +40,65 @@
 
 #include "ata.h"
 
-PRIVATE int		init_hd				();
-PRIVATE int     hd_open				(dev_t minor, int access);
-PRIVATE int     hd_close			(dev_t minor);
-PRIVATE ssize_t hd_rdwt				(dev_t minor, int do_write, u64 pos,
-                                    endpoint_t endpoint, char* buf, unsigned int count);
-PRIVATE int     hd_ioctl			(dev_t minor, int request, endpoint_t endpoint, char* buf);
-PRIVATE void	hd_cmd_out			(struct hd_cmd* cmd);
-PRIVATE void	get_part_table		(int drive, int sect_nr, struct part_ent * entry);
-PRIVATE void	partition			(int device, int style);
-PRIVATE void	print_hdinfo		(struct ata_info * hdi);
-PRIVATE int		waitfor				(int mask, int val, int timeout);
-PRIVATE int		waitfor_dma			(int mask, int val, int timeout);
-PRIVATE void	interrupt_wait		();
-PRIVATE int     interrupt_wait_check();
-PRIVATE	int		hd_identify			(int drive);
-PRIVATE void	print_identify_info	(u16* hdinfo);
-PRIVATE void    register_hd			(struct ata_info * hdi);
-PRIVATE void    start_dma			(struct ata_info* drive, int do_write);
-PRIVATE void    stop_dma			(struct ata_info* drive);
-PRIVATE int     setup_dma			(int do_write, endpoint_t endpoint, void* buf, unsigned int count);
+PRIVATE int init_hd();
+PRIVATE int hd_open(dev_t minor, int access);
+PRIVATE int hd_close(dev_t minor);
+PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
+                        char* buf, unsigned int count);
+PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
+PRIVATE void hd_cmd_out(struct hd_cmd* cmd);
+PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent* entry);
+PRIVATE void partition(int device, int style);
+PRIVATE void print_hdinfo(struct ata_info* hdi);
+PRIVATE int waitfor(int mask, int val, int timeout);
+PRIVATE int waitfor_dma(int mask, int val, int timeout);
+PRIVATE void interrupt_wait();
+PRIVATE int interrupt_wait_check();
+PRIVATE int hd_identify(int drive);
+PRIVATE void print_identify_info(u16* hdinfo);
+PRIVATE void hd_register(struct ata_info* hdi);
+PRIVATE void start_dma(struct ata_info* drive, int do_write);
+PRIVATE void stop_dma(struct ata_info* drive);
+PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
+                      unsigned int count);
 
-PRIVATE	u8		hdbuf[SECTOR_SIZE * 2];
-PRIVATE	struct ata_info	hd_info[MAX_DRIVES], *current_drive;
+PRIVATE u8 hdbuf[SECTOR_SIZE * 2];
+PRIVATE struct ata_info hd_info[MAX_DRIVES], *current_drive;
 PRIVATE struct part_info* current_part;
 
-#define select_drive(drive) do { current_drive = &hd_info[drive]; } while(0)
+#define select_drive(drive)              \
+    do {                                 \
+        current_drive = &hd_info[drive]; \
+    } while (0)
 
-#define	DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
+#define DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
 
-PRIVATE int         dma_disabled = 0;
+PRIVATE int dma_disabled = 0;
 
 /* Physical Region Descriptor Table Entry */
-struct prdte
-{
+struct prdte {
     phys_bytes prdte_base;
     u16 prdte_count;
     u8 prdte_reserved;
     u8 prdte_flags;
 };
-#define NUM_PRDTES		1024
-#define PRDT_SIZE		(sizeof(struct prdte) * NUM_PRDTES)
-PRIVATE struct prdte*   prdt;
-PRIVATE phys_bytes      prdt_phys;
-#define PRDTE_FL_EOT	0x80	/* End of PRDT */
+#define NUM_PRDTES 1024
+#define PRDT_SIZE (sizeof(struct prdte) * NUM_PRDTES)
+PRIVATE struct prdte* prdt;
+PRIVATE phys_bytes prdt_phys;
+#define PRDTE_FL_EOT 0x80 /* End of PRDT */
 
 // #define ATA_DEBUG
 #ifdef ATA_DEBUG
-#define DEB(x) printl("ata: "); x
+#define DEB(x)       \
+    printl("ata: "); \
+    x
 #else
 #define DEB(x)
 #endif
 
 #define ERR_BAD_SECTOR 1
-#define ERR_OTHER      2
+#define ERR_OTHER 2
 
 int getpagesize();
 unsigned int _page_size;
@@ -128,9 +134,9 @@ PRIVATE struct part_info* hd_prepare(dev_t device)
     if (drive >= MAX_DRIVES) return NULL;
 
     int part_no = MINOR(device) % NR_SUB_PER_DRIVE;
-    current_part = part_no < NR_PRIM_PER_DRIVE ?
-        &hd_info[drive].primary[part_no] :
-        &hd_info[drive].logical[part_no - NR_PRIM_PER_DRIVE];
+    current_part = part_no < NR_PRIM_PER_DRIVE
+                       ? &hd_info[drive].primary[part_no]
+                       : &hd_info[drive].logical[part_no - NR_PRIM_PER_DRIVE];
 
     select_drive(drive);
 
@@ -144,7 +150,7 @@ PRIVATE struct part_info* hd_prepare(dev_t device)
  * <Ring 1> Initialize and try to identify a hard drive.
  *****************************************************************************/
 PRIVATE int init_drive(int drive, int base_cmd, int base_ctl, int base_dma,
-    int native, int slave, int hook)
+                       int native, int slave, int hook, device_id_t parent_dev)
 {
     hd_info[drive].state = 0;
 
@@ -155,6 +161,7 @@ PRIVATE int init_drive(int drive, int base_cmd, int base_ctl, int base_dma,
     hd_info[drive].irq_hook = hook;
     hd_info[drive].ldh = (slave << 4) | 0xA0;
     hd_info[drive].dma = 0;
+    hd_info[drive].port_dev_id = parent_dev;
 
     hd_info[drive].open_cnt = 0;
 
@@ -178,7 +185,9 @@ PRIVATE int init_hd()
 
     if (!dma_disabled) {
         /* setup DMA buffer */
-        prdt = mmap(NULL, PRDT_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_CONTIG|MAP_POPULATE, -1, 0);
+        prdt = mmap(NULL, PRDT_SIZE, PROT_READ | PROT_WRITE,
+                    MAP_PRIVATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_POPULATE, -1,
+                    0);
         if (prdt == MAP_FAILED) {
             dma_disabled = 1;
             printl("ata: failed to allocate PRDT\n");
@@ -194,8 +203,12 @@ PRIVATE int init_hd()
 
     int devind;
     u16 vid, did;
+    device_id_t dev_id;
+    int port_id = 0;
+    device_id_t port_dev_id;
+    struct device_info devinf;
 
-    int retval = pci_first_dev(&devind, &vid, &did);
+    int retval = pci_first_dev(&devind, &vid, &did, &dev_id);
     while (retval == 0) {
         u8 baseclass, subclass, interface;
 
@@ -211,9 +224,20 @@ PRIVATE int init_hd()
 
         if (!ide || interface & (PCI_IDE_PRI_NATIVE | PCI_IDE_SEC_NATIVE)) {
             native_hook = irq_hook++;
-            if (irq_setpolicy(irq, IRQ_REENABLE, &native_hook) != 0) panic("register IRQ failed");
+            if (irq_setpolicy(irq, IRQ_REENABLE, &native_hook) != 0)
+                panic("register IRQ failed");
             if (irq_enable(&native_hook) != 0) panic("can't enable native IRQ");
         }
+
+        /* register the port */
+        memset(&devinf, 0, sizeof(devinf));
+        snprintf(devinf.name, sizeof(devinf.name), "ata%d", port_id);
+        devinf.bus = BUS_TYPE_ERROR;
+        devinf.parent = dev_id;
+        devinf.devt = NO_DEV;
+
+        port_dev_id = dm_device_register(&devinf);
+        if (port_dev_id == NO_DEVICE_ID) panic("cannot register ata port");
 
         u32 base_cmd, base_ctl, base_dma;
         base_dma = pci_attr_r32(devind, PCI_BAR_5) & PCI_BAR_IO_MASK;
@@ -221,15 +245,25 @@ PRIVATE int init_hd()
             base_cmd = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
             base_ctl = pci_attr_r32(devind, PCI_BAR_2) & PCI_BAR_IO_MASK;
 
-            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 0, native_hook)) nr_drives++;
-            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 1, native_hook)) nr_drives++;
+            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 0,
+                           native_hook, port_dev_id))
+                nr_drives++;
+            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 1,
+                           native_hook, port_dev_id))
+                nr_drives++;
         } else {
             compat_hook = irq_hook++;
-            if (irq_setpolicy(AT_WINI_IRQ, IRQ_REENABLE, &compat_hook) != 0) panic("register IRQ failed");
-            if (irq_enable(&compat_hook) != 0) panic("can't enable compatible IRQ");
+            if (irq_setpolicy(AT_WINI_IRQ, IRQ_REENABLE, &compat_hook) != 0)
+                panic("register IRQ failed");
+            if (irq_enable(&compat_hook) != 0)
+                panic("can't enable compatible IRQ");
 
-            if (init_drive(nr_drives, REG_CMD_BASE0, REG_CTL_BASE0, base_dma, 0, 0, compat_hook)) nr_drives++;
-            if (init_drive(nr_drives, REG_CMD_BASE0, REG_CTL_BASE0, base_dma, 0, 1, compat_hook)) nr_drives++;
+            if (init_drive(nr_drives, REG_CMD_BASE0, REG_CTL_BASE0, base_dma, 0,
+                           0, compat_hook, port_dev_id))
+                nr_drives++;
+            if (init_drive(nr_drives, REG_CMD_BASE0, REG_CTL_BASE0, base_dma, 0,
+                           1, compat_hook, port_dev_id))
+                nr_drives++;
         }
 
         if (base_dma) base_dma += PCI_DMA_2ND_OFF;
@@ -237,16 +271,24 @@ PRIVATE int init_hd()
             base_cmd = pci_attr_r32(devind, PCI_BAR_3) & PCI_BAR_IO_MASK;
             base_ctl = pci_attr_r32(devind, PCI_BAR_4) & PCI_BAR_IO_MASK;
 
-            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 0, native_hook)) nr_drives++;
-            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 1, native_hook)) nr_drives++;
+            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 0,
+                           native_hook, port_dev_id))
+                nr_drives++;
+            if (init_drive(nr_drives, base_cmd, base_ctl, base_dma, 1, 1,
+                           native_hook, port_dev_id))
+                nr_drives++;
         } else {
             compat_hook = irq_hook++;
-            if (irq_setpolicy(AT_WINI_1_IRQ, IRQ_REENABLE, &compat_hook) != 0) panic("register IRQ failed");
-            if (irq_enable(&compat_hook) != 0) panic("can't enable compatible IRQ");
+            if (irq_setpolicy(AT_WINI_1_IRQ, IRQ_REENABLE, &compat_hook) != 0)
+                panic("register IRQ failed");
+            if (irq_enable(&compat_hook) != 0)
+                panic("can't enable compatible IRQ");
 
-            //if (init_drive(nr_drives, REG_CMD_BASE1, REG_CTL_BASE1, base_dma, 0, 0, compat_hook)) nr_drives++;
-            if (init_drive(nr_drives, REG_CMD_BASE1, REG_CTL_BASE1, base_dma, 0, 1, compat_hook)) nr_drives++;
-
+            // if (init_drive(nr_drives, REG_CMD_BASE1, REG_CTL_BASE1, base_dma,
+            // 0, 0, compat_hook)) nr_drives++;
+            if (init_drive(nr_drives, REG_CMD_BASE1, REG_CTL_BASE1, base_dma, 0,
+                           1, compat_hook, port_dev_id))
+                nr_drives++;
         }
 
         /* enable bus mastering */
@@ -255,7 +297,8 @@ PRIVATE int init_hd()
             pci_attr_w16(devind, PCI_CR, (cr | PCI_CR_MAST_EN));
         }
 
-        retval = pci_next_dev(&devind, &vid, &did);
+        retval = pci_next_dev(&devind, &vid, &did, &dev_id);
+        port_id++;
     }
 
     printl("ata: %d hard drives\n", nr_drives);
@@ -266,7 +309,7 @@ PRIVATE int init_hd()
 
             partition(i * NR_SUB_PER_DRIVE, P_PRIMARY);
             print_hdinfo(current_drive);
-            register_hd(current_drive);
+            hd_register(current_drive);
         }
     }
 
@@ -311,7 +354,11 @@ PRIVATE int hd_close(dev_t minor)
 
 PRIVATE void start_dma(struct ata_info* drive, int do_write)
 {
-    u32 cmd = DMA_CMD_START | (do_write ? 0 : DMA_CMD_RW); /* clear Read/Write bit when writing to the disk */
+    u32 cmd =
+        DMA_CMD_START |
+        (do_write
+             ? 0
+             : DMA_CMD_RW); /* clear Read/Write bit when writing to the disk */
     if (portio_outb(drive->base_dma + DMA_REG_CMD, cmd) != 0) {
         panic("ata: start_dma() failed");
     }
@@ -332,8 +379,8 @@ PRIVATE int error_dma(struct ata_info* drive)
     retval = portio_inb(current_drive->base_dma + DMA_REG_STATUS, &v);
     if (retval != 0) panic("ata: error_dma(): sys_inb failed");
 
-#define DMAERR(msg) \
-    printl("ata: DMA error %s\n", msg);\
+#define DMAERR(msg)                     \
+    printl("ata: DMA error %s\n", msg); \
     return 1;
 
     if (!current_drive->dma_int) {
@@ -351,7 +398,8 @@ PRIVATE int error_dma(struct ata_info* drive)
     return 0;
 }
 
-PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf, unsigned int count)
+PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
+                      unsigned int count)
 {
     size_t n;
     off_t offset;
@@ -373,8 +421,9 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf, unsigned int
         }
 
         /* user buffer crosses pages or boundary of 64k */
-        if ((uintptr_t) buf / _page_size != ((uintptr_t) buf + n - 1) / _page_size) {
-            n = ((uintptr_t) buf / _page_size + 1) * _page_size - (uintptr_t) buf;
+        if ((uintptr_t)buf / _page_size !=
+            ((uintptr_t)buf + n - 1) / _page_size) {
+            n = ((uintptr_t)buf / _page_size + 1) * _page_size - (uintptr_t)buf;
         }
 
         /* user buffer crosses boundary of 64k */
@@ -406,22 +455,23 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf, unsigned int
 #ifdef ATA_DEBUG
     int i;
     for (i = 0; i < prdt_idx; i++) {
-        printl("ata: prdt[%d]: base 0x%lx, size %d, flags 0x%x\n",
-            i, prdt[i].prdte_base, prdt[i].prdte_count,
-            prdt[i].prdte_flags);
+        printl("ata: prdt[%d]: base 0x%lx, size %d, flags 0x%x\n", i,
+               prdt[i].prdte_base, prdt[i].prdte_count, prdt[i].prdte_flags);
     }
 #endif
 
     u32 dma_status;
     retval = portio_inb(current_drive->base_dma + DMA_REG_STATUS, &dma_status);
     if (retval != 0) panic("ata: setup_dma(): portio_inb failed");
-    if (dma_status & DMA_ST_BM_ACTIVE) panic("ata: setup_dma(): Bus Master IDE active");
+    if (dma_status & DMA_ST_BM_ACTIVE)
+        panic("ata: setup_dma(): Bus Master IDE active");
 
     if (prdt_phys & 3) panic("ata: setup_dma(): PRDT not aligned");
     retval = portio_outl(current_drive->base_dma + DMA_REG_PRDTP, prdt_phys);
     if (retval != 0) panic("ata: setup_dma(): portio_outl failed");
 
-    retval = portio_outb(current_drive->base_dma + DMA_REG_STATUS, DMA_ST_INT | DMA_ST_ERROR);
+    retval = portio_outb(current_drive->base_dma + DMA_REG_STATUS,
+                         DMA_ST_INT | DMA_ST_ERROR);
     if (retval != 0) panic("ata: setup_dma(): portio_outb failed");
 
     return 1;
@@ -435,8 +485,8 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf, unsigned int
  *
  * @param p Message ptr.
  *****************************************************************************/
-PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos,
-                                    endpoint_t endpoint, char* buf, unsigned int count)
+PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
+                        char* buf, unsigned int count)
 {
     hd_prepare(minor);
 
@@ -453,7 +503,7 @@ PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos,
 dma_failed_retry:
     if (do_dma) {
         stop_dma(current_drive);
-        if (!setup_dma(do_write, endpoint, (void*) buf, count)) {
+        if (!setup_dma(do_write, endpoint, (void*)buf, count)) {
             do_dma = 0;
         }
     }
@@ -462,16 +512,16 @@ dma_failed_retry:
     sect_nr += current_part->base;
 
     struct hd_cmd cmd;
-    cmd.features	= 0;
-    cmd.count	= count >> SECTOR_SIZE_SHIFT;
-    cmd.lba_low	= sect_nr & 0xFF;
-    cmd.lba_mid	= (sect_nr >>  8) & 0xFF;
-    cmd.lba_high	= (sect_nr >> 16) & 0xFF;
-    cmd.device	= MAKE_DEVICE_REG(1, current_drive->ldh, (sect_nr >> 24) & 0xF);
+    cmd.features = 0;
+    cmd.count = count >> SECTOR_SIZE_SHIFT;
+    cmd.lba_low = sect_nr & 0xFF;
+    cmd.lba_mid = (sect_nr >> 8) & 0xFF;
+    cmd.lba_high = (sect_nr >> 16) & 0xFF;
+    cmd.device = MAKE_DEVICE_REG(1, current_drive->ldh, (sect_nr >> 24) & 0xF);
     if (do_dma) {
-        cmd.command	= do_write ? ATA_WRITE_DMA : ATA_READ_DMA;
+        cmd.command = do_write ? ATA_WRITE_DMA : ATA_READ_DMA;
     } else {
-        cmd.command	= do_write ? ATA_WRITE : ATA_READ;
+        cmd.command = do_write ? ATA_WRITE : ATA_READ;
     }
     hd_cmd_out(&cmd);
 
@@ -481,7 +531,8 @@ dma_failed_retry:
 
     if (do_write) {
         u32 status;
-        if (portio_inb(current_drive->base_ctl + REG_ALT_STATUS, &status) != 0) {
+        if (portio_inb(current_drive->base_ctl + REG_ALT_STATUS, &status) !=
+            0) {
             panic("ata: hd_rdwt(): portio_inb failed");
         }
     }
@@ -494,7 +545,7 @@ dma_failed_retry:
 
         int err = interrupt_wait_check();
         if (err) {
-            errors ++;
+            errors++;
             if (err == ERR_BAD_SECTOR || errors > 3) {
                 return -EIO;
             }
@@ -523,8 +574,7 @@ dma_failed_retry:
             interrupt_wait();
             portio_sin(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
             data_copy(endpoint, buf, SELF, hdbuf, bytes);
-        }
-        else {
+        } else {
             if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
                 panic("hd writing error.");
 
@@ -553,8 +603,7 @@ PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
 
     if (request == DIOCTL_GET_GEO) {
         data_copy(endpoint, buf, SELF, current_part, sizeof(struct part_info));
-    }
-    else {
+    } else {
         return EINVAL;
     }
 
@@ -571,24 +620,22 @@ PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
  * @param sect_nr The sector at which the partition table is located.
  * @param entry   Ptr to part_ent struct.
  *****************************************************************************/
-PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
+PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent* entry)
 {
     struct hd_cmd cmd;
-    cmd.features	= 0;
-    cmd.count	= 1;
-    cmd.lba_low	= sect_nr & 0xFF;
-    cmd.lba_mid	= (sect_nr >>  8) & 0xFF;
-    cmd.lba_high	= (sect_nr >> 16) & 0xFF;
-    cmd.device	= MAKE_DEVICE_REG(1, /* LBA mode*/
-                      current_drive->ldh,
-                      (sect_nr >> 24) & 0xF);
-    cmd.command	= ATA_READ;
+    cmd.features = 0;
+    cmd.count = 1;
+    cmd.lba_low = sect_nr & 0xFF;
+    cmd.lba_mid = (sect_nr >> 8) & 0xFF;
+    cmd.lba_high = (sect_nr >> 16) & 0xFF;
+    cmd.device = MAKE_DEVICE_REG(1, /* LBA mode*/
+                                 current_drive->ldh, (sect_nr >> 24) & 0xF);
+    cmd.command = ATA_READ;
     hd_cmd_out(&cmd);
     interrupt_wait();
 
     portio_sin(current_drive->base_cmd + REG_DATA, hdbuf, SECTOR_SIZE);
-    memcpy(entry,
-           hdbuf + PARTITION_TABLE_OFFSET,
+    memcpy(entry, hdbuf + PARTITION_TABLE_OFFSET,
            sizeof(struct part_ent) * NR_PART_PER_DRIVE);
 }
 
@@ -606,7 +653,7 @@ PRIVATE void partition(int device, int style)
 {
     int i;
     int drive = DRV_OF_DEV(device);
-    struct ata_info * hdi = &hd_info[drive];
+    struct ata_info* hdi = &hd_info[drive];
 
     struct part_ent part_tbl[NR_SUB_PER_DRIVE];
 
@@ -615,11 +662,10 @@ PRIVATE void partition(int device, int style)
 
         int nr_prim_parts = 0;
         for (i = 0; i < NR_PART_PER_DRIVE; i++) { /* 0~3 */
-            if (part_tbl[i].sys_id == NO_PART)
-                continue;
+            if (part_tbl[i].sys_id == NO_PART) continue;
 
             nr_prim_parts++;
-            int dev_nr = i + 1;       /* 1~4 */
+            int dev_nr = i + 1; /* 1~4 */
             hdi->primary[dev_nr].base = part_tbl[i].start_sect;
             hdi->primary[dev_nr].size = part_tbl[i].nr_sects;
 
@@ -627,8 +673,7 @@ PRIVATE void partition(int device, int style)
                 partition(device + dev_nr, P_EXTENDED);
         }
         assert(nr_prim_parts != 0);
-    }
-    else if (style == P_EXTENDED) {
+    } else if (style == P_EXTENDED) {
         int j;
         /* find first free slot for logical partition */
         for (j = 0; j < NR_SUB_PER_DRIVE; j++) {
@@ -651,65 +696,82 @@ PRIVATE void partition(int device, int style)
 
             /* no more logical partitions
                in this extended partition */
-            if (part_tbl[1].sys_id == NO_PART)
-                break;
+            if (part_tbl[1].sys_id == NO_PART) break;
         }
-    }
-    else {
+    } else {
         assert(0);
     }
 }
 
-/*****************************************************************************  */
-/*                                print_hdinfo									*/
-/*****************************************************************************  */
-/* <Ring 1> Print disk info.													*/
-/*  *																			*/
-/*  * @param hdi  Ptr to struct ata_info.										*/
+/*****************************************************************************
+ */
+/*                                print_hdinfo */
+/*****************************************************************************
+ */
+/* <Ring 1> Print disk info. */
+/*  * */
+/*  * @param hdi  Ptr to struct ata_info. */
 /*  *****************************************************************************/
-PRIVATE void print_hdinfo(struct ata_info * hdi)
- {
+PRIVATE void print_hdinfo(struct ata_info* hdi)
+{
     int i;
     printl("Hard disk information:\n");
     for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) {
-        if (hdi->primary[i].size == 0)
-            continue;
+        if (hdi->primary[i].size == 0) continue;
         printl("%spartition %d: base %d(0x%x), size %d(0x%x) (in sector)\n",
-           i == 0 ? "  " : "     ",
-               i,
-               hdi->primary[i].base,
-               hdi->primary[i].base,
-               hdi->primary[i].size,
+               i == 0 ? "  " : "     ", i, hdi->primary[i].base,
+               hdi->primary[i].base, hdi->primary[i].size,
                hdi->primary[i].size);
     }
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
-        if (hdi->logical[i].size == 0)
-            continue;
+        if (hdi->logical[i].size == 0) continue;
         printl("              "
                "%d: base %d(0x%x), size %d(0x%x) (in sector)\n",
-               i,
-               hdi->logical[i].base,
-               hdi->logical[i].base,
-               hdi->logical[i].size,
-               hdi->logical[i].size);
+               i, hdi->logical[i].base, hdi->logical[i].base,
+               hdi->logical[i].size, hdi->logical[i].size);
     }
 }
 
-/*****************************************************************************  */
-/*                                register_hd									*/
-/*****************************************************************************  */
-PRIVATE void register_hd(struct ata_info * hdi)
- {
-    int i, drive = (hdi - hd_info) + 1;
+/*****************************************************************************
+ */
+/*                                register_hd */
+/*****************************************************************************
+ */
+PRIVATE void hd_register(struct ata_info* hdi)
+{
+    int i, drive = hdi - hd_info;
+    struct device_info devinf;
+    dev_t devt;
+
+    /* register the device */
+    memset(&devinf, 0, sizeof(devinf));
+    devinf.bus = BUS_TYPE_ERROR;
+    devinf.parent = hdi->port_dev_id;
+    devinf.type = DT_BLOCKDEV;
+
     for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) {
-        if (hdi->primary[i].size == 0)
-            continue;
-        dm_bdev_add(MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + i));
+        if (hdi->primary[i].size == 0) continue;
+
+        devt = MAKE_DEV(DEV_HD, drive * NR_SUB_PER_DRIVE + i);
+        dm_bdev_add(devt);
+
+        snprintf(devinf.name, sizeof(devinf.name), "hd%d%c", drive + 1,
+                 'a' + (char)i);
+        devinf.devt = devt;
+        dm_device_register(&devinf);
     }
+
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
-        if (hdi->logical[i].size == 0)
-            continue;
-        dm_bdev_add(MAKE_DEV(DEV_HD, (drive - 1) * NR_SUB_PER_DRIVE + NR_PRIM_PER_DRIVE + i));
+        if (hdi->logical[i].size == 0) continue;
+
+        devt =
+            MAKE_DEV(DEV_HD, drive * NR_SUB_PER_DRIVE + NR_PRIM_PER_DRIVE + i);
+        dm_bdev_add(devt);
+
+        snprintf(devinf.name, sizeof(devinf.name), "hd%d%c", drive + 1,
+                 'a' + (char)(NR_PRIM_PER_DRIVE + i));
+        devinf.devt = devt;
+        dm_device_register(&devinf);
     }
 }
 
@@ -728,16 +790,16 @@ PRIVATE int hd_identify(int drive)
 
     select_drive(drive);
 
-    cmd.device  = current_drive->ldh;
+    cmd.device = current_drive->ldh;
     cmd.command = ATA_IDENTIFY;
     hd_cmd_out(&cmd);
 
     u8 status;
     portio_inb(current_drive->base_cmd + REG_STATUS, &status);
-    if (!status) return 0;	/* this drive does not exist */
+    if (!status) return 0; /* this drive does not exist */
 
     if (waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT) &&
-         !(current_drive->status & (STATUS_DFSE | STATUS_ERR))) {
+        !(current_drive->status & (STATUS_DFSE | STATUS_ERR))) {
         portio_sin(current_drive->base_cmd + REG_DATA, hdbuf, SECTOR_SIZE);
 
         u16* hdinfo = (u16*)hdbuf;
@@ -778,22 +840,22 @@ PRIVATE void print_identify_info(u16* hdinfo)
     struct iden_info_ascii {
         int idx;
         int len;
-        char * desc;
+        char* desc;
     } iinfo[] = {{27, 40, "HD Model: "}, /* Serial number in ASCII */
-             {10, 20, "HD Serial Number: "} /* Model number in ASCII */ };
+                 {10, 20, "HD Serial Number: "} /* Model number in ASCII */};
 
     int sectors = ((int)hdinfo[61] << 16) + hdinfo[60];
     printl("%dMB ", sectors * 512 / 1000000);
 
-    for (k = 0; k < sizeof(iinfo)/sizeof(iinfo[0]); k++) {
-        char * p = (char*)&hdinfo[iinfo[k].idx];
-        for (i = 0; i < iinfo[k].len/2; i++) {
-            s[i*2+1] = *p++;
-            s[i*2] = *p++;
+    for (k = 0; k < sizeof(iinfo) / sizeof(iinfo[0]); k++) {
+        char* p = (char*)&hdinfo[iinfo[k].idx];
+        for (i = 0; i < iinfo[k].len / 2; i++) {
+            s[i * 2 + 1] = *p++;
+            s[i * 2] = *p++;
         }
-        s[i*2] = 0;
+        s[i * 2] = 0;
         /*printl(iinfo[k].desc);*/
-        for (j = 0;j <= i*2; j++)
+        for (j = 0; j <= i * 2; j++)
             if (s[j] != ' ') printl("%c", s[j]);
         printl(" ");
     }
@@ -822,8 +884,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
      * For all commands, the host must first check if BSY=1,
      * and should proceed no further unless and until BSY=0
      */
-    if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT))
-        panic("hd error.");
+    if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT)) panic("hd error.");
 
     pb_pair_t cmd_pairs[8];
     /* Activate the Interrupt Enable (nIEN) bit */
@@ -874,14 +935,16 @@ PRIVATE void interrupt_wait()
  *                            interrupt_wait_check
  *****************************************************************************/
 /**
- * <Ring 3> Wait until a disk interrupt occurs. Check the status and return error/success.
+ * <Ring 3> Wait until a disk interrupt occurs. Check the status and return
+ *error/success.
  *
  *****************************************************************************/
 PRIVATE int interrupt_wait_check()
 {
     interrupt_wait();
 
-    if ((current_drive->status & (STATUS_BSY | STATUS_DFSE | STATUS_ERR)) == 0) {
+    if ((current_drive->status & (STATUS_BSY | STATUS_DFSE | STATUS_ERR)) ==
+        0) {
         return 0;
     }
 
@@ -909,14 +972,13 @@ PRIVATE int interrupt_wait_check()
  *****************************************************************************/
 PRIVATE int waitfor(int mask, int val, int timeout)
 {
-    while(TRUE) {
+    while (TRUE) {
         u8 status;
         portio_inb(current_drive->base_cmd + REG_STATUS, &status);
 
         current_drive->status = status;
 
-        if ((status & mask) == val)
-            return 1;
+        if ((status & mask) == val) return 1;
     }
 
     return 0;
@@ -924,12 +986,11 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 
 PRIVATE int waitfor_dma(int mask, int val, int timeout)
 {
-    while(TRUE) {
+    while (TRUE) {
         u8 status;
         portio_inb(current_drive->base_dma + DMA_REG_STATUS, &status);
 
-        if ((status & mask) == val)
-            return 1;
+        if ((status & mask) == val) return 1;
     }
 
     return 0;

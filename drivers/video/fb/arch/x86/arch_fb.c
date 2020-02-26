@@ -30,6 +30,7 @@
 #include <lyos/proto.h>
 #include <lyos/list.h>
 #include <lyos/sysutils.h>
+#include <lyos/pci_utils.h>
 #include <lyos/service.h>
 #include <libchardriver/libchardriver.h>
 
@@ -41,8 +42,8 @@ struct dev_probe {
     u16 did;
     fb_dev_init_func init_func;
 } dev_probes[] = {
-    { .vid = 0x1234, .did = 0x1111, fb_init_bochs },
-    { .vid = 0xffff, .did = 0xffff, NULL },
+    {.vid = 0x1234, .did = 0x1111, fb_init_bochs},
+    {.vid = 0xffff, .did = 0xffff, NULL},
 };
 
 PUBLIC void* fb_mem_vir;
@@ -55,7 +56,7 @@ PUBLIC int arch_init_fb(int minor)
 
     int devind;
     u16 vid, did;
-    int retval = pci_first_dev(&devind, &vid, &did);
+    int retval = pci_first_dev(&devind, &vid, &did, NULL);
     int ok = 0;
 
     if (minor != 0) {
@@ -79,7 +80,7 @@ PUBLIC int arch_init_fb(int minor)
             probe++;
         }
 
-        retval = pci_next_dev(&devind, &vid, &did);
+        retval = pci_next_dev(&devind, &vid, &did, NULL);
     }
 
     if (!ok) {
@@ -100,7 +101,8 @@ PUBLIC int arch_get_device(int minor, void** base, size_t* size)
     return OK;
 }
 
-PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size)
+PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base,
+                                phys_bytes* size)
 {
     if (!initialized || minor != 0) {
         return ENXIO;

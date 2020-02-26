@@ -46,23 +46,23 @@ PUBLIC int pci_init();
 
 PUBLIC struct pci_acl pci_acl[NR_PRIV_PROCS];
 
-PRIVATE int do_set_acl(MESSAGE * m);
-PRIVATE int do_first_dev(MESSAGE * m);
-PRIVATE int do_next_dev(MESSAGE * m);
-PRIVATE int do_attr_r8(MESSAGE * m);
-PRIVATE int do_attr_r16(MESSAGE * m);
-PRIVATE int do_attr_r32(MESSAGE * m);
-PRIVATE int do_attr_w16(MESSAGE * m);
+PRIVATE int do_set_acl(MESSAGE* m);
+PRIVATE int do_first_dev(MESSAGE* m);
+PRIVATE int do_next_dev(MESSAGE* m);
+PRIVATE int do_attr_r8(MESSAGE* m);
+PRIVATE int do_attr_r16(MESSAGE* m);
+PRIVATE int do_attr_r32(MESSAGE* m);
+PRIVATE int do_attr_w16(MESSAGE* m);
 
 PUBLIC int main()
 {
-	//serv_register_init_fresh_callback(pci_init);
-	//serv_init();
+    // serv_register_init_fresh_callback(pci_init);
+    // serv_init();
     pci_init();
 
-	MESSAGE msg;
+    MESSAGE msg;
 
-	while (TRUE) {
+    while (TRUE) {
 
         send_recv(RECEIVE, ANY, &msg);
         int src = msg.source;
@@ -70,9 +70,9 @@ PUBLIC int main()
         int msgtype = msg.type;
 
         switch (msgtype) {
-	    case PCI_SET_ACL:
-	    	msg.RETVAL = do_set_acl(&msg);
-	    	break;
+        case PCI_SET_ACL:
+            msg.RETVAL = do_set_acl(&msg);
+            break;
         case PCI_FIRST_DEV:
             msg.RETVAL = do_first_dev(&msg);
             break;
@@ -110,10 +110,10 @@ PUBLIC int main()
         }
     }
 
-	return 0;
+    return 0;
 }
 
-PRIVATE int do_set_acl(MESSAGE * m)
+PRIVATE int do_set_acl(MESSAGE* m)
 {
     int i;
 
@@ -125,7 +125,8 @@ PRIVATE int do_set_acl(MESSAGE * m)
 
     if (i >= NR_PRIV_PROCS) return ENOMEM;
 
-    int retval = data_copy(SELF, &pci_acl[i], m->source, m->BUF, sizeof(struct pci_acl));
+    int retval =
+        data_copy(SELF, &pci_acl[i], m->source, m->BUF, sizeof(struct pci_acl));
 
     if (retval) return retval;
 
@@ -133,7 +134,7 @@ PRIVATE int do_set_acl(MESSAGE * m)
     return 0;
 }
 
-PRIVATE struct pci_acl * get_acl(endpoint_t ep)
+PRIVATE struct pci_acl* get_acl(endpoint_t ep)
 {
     int i;
     for (i = 0; i < NR_PRIV_PROCS; i++) {
@@ -145,46 +146,49 @@ PRIVATE struct pci_acl * get_acl(endpoint_t ep)
     return NULL;
 }
 
-PRIVATE int do_first_dev(MESSAGE * m)
+PRIVATE int do_first_dev(MESSAGE* m)
 {
-    struct pci_acl * acl = get_acl(m->source);
+    struct pci_acl* acl = get_acl(m->source);
 
     int devind;
     u16 vid, did;
+    device_id_t dev_id;
 
-    int retval = _pci_first_dev(acl, &devind, &vid, &did);
+    int retval = _pci_first_dev(acl, &devind, &vid, &did, &dev_id);
 
     if (retval) return retval;
 
     m->u.m3.m3i2 = devind;
     m->u.m3.m3i3 = vid;
     m->u.m3.m3i4 = did;
+    m->u.m3.m3l1 = dev_id;
 
     return 0;
 }
 
-PRIVATE int do_next_dev(MESSAGE * m)
+PRIVATE int do_next_dev(MESSAGE* m)
 {
-    struct pci_acl * acl = get_acl(m->source);
+    struct pci_acl* acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
-
     u16 vid, did;
+    device_id_t dev_id;
 
-    int retval = _pci_next_dev(acl, &devind, &vid, &did);
+    int retval = _pci_next_dev(acl, &devind, &vid, &did, &dev_id);
 
     if (retval) return retval;
 
     m->u.m3.m3i2 = devind;
     m->u.m3.m3i3 = vid;
     m->u.m3.m3i4 = did;
+    m->u.m3.m3l1 = dev_id;
 
     return 0;
 }
 
-PRIVATE int do_attr_r8(MESSAGE * m)
+PRIVATE int do_attr_r8(MESSAGE* m)
 {
-    //struct pci_acl * acl = get_acl(m->source);
+    // struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;
@@ -194,9 +198,9 @@ PRIVATE int do_attr_r8(MESSAGE * m)
     return 0;
 }
 
-PRIVATE int do_attr_r16(MESSAGE * m)
+PRIVATE int do_attr_r16(MESSAGE* m)
 {
-    //struct pci_acl * acl = get_acl(m->source);
+    // struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;
@@ -206,9 +210,9 @@ PRIVATE int do_attr_r16(MESSAGE * m)
     return 0;
 }
 
-PRIVATE int do_attr_r32(MESSAGE * m)
+PRIVATE int do_attr_r32(MESSAGE* m)
 {
-    //struct pci_acl * acl = get_acl(m->source);
+    // struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;
@@ -218,9 +222,9 @@ PRIVATE int do_attr_r32(MESSAGE * m)
     return 0;
 }
 
-PRIVATE int do_attr_w16(MESSAGE * m)
+PRIVATE int do_attr_w16(MESSAGE* m)
 {
-    //struct pci_acl * acl = get_acl(m->source);
+    // struct pci_acl * acl = get_acl(m->source);
 
     int devind = m->u.m3.m3i2;
     u16 offset = (u16)m->u.m3.m3i3;

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "unistd.h"
 #include <errno.h>
+#include <string.h>
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"

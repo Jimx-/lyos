@@ -246,7 +246,8 @@ PRIVATE int visible(struct pci_acl* acl, int devind)
     return FALSE;
 }
 
-PUBLIC int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did)
+PUBLIC int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
+                          device_id_t* dev_id)
 {
     int i;
 
@@ -260,11 +261,13 @@ PUBLIC int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did)
     *devind = i;
     *vid = pcidev[i].vid;
     *did = pcidev[i].did;
+    *dev_id = pcidev[i].dev_id;
 
     return 0;
 }
 
-PUBLIC int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did)
+PUBLIC int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
+                         device_id_t* dev_id)
 {
     int i;
 
@@ -278,6 +281,7 @@ PUBLIC int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did)
     *devind = i;
     *vid = pcidev[i].vid;
     *did = pcidev[i].did;
+    *dev_id = pcidev[i].dev_id;
 
     return 0;
 }

@@ -31,6 +31,7 @@
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/sysutils.h>
+#include <lyos/pci_utils.h>
 #include <lyos/vm.h>
 #include <lyos/timer.h>
 #include <sys/mman.h>
@@ -39,17 +40,17 @@
 
 #include "fbcon_font.h"
 
-#define VID_ARG     10
-#define XRES_DEFAULT    1024
-#define YRES_DEFAULT    768
+#define VID_ARG 10
+#define XRES_DEFAULT 1024
+#define YRES_DEFAULT 768
 
 int fb_scr_width, fb_scr_height;
 PRIVATE int cursor_state = 0;
 
 extern int fbcon_init_bochs(int devind, int x_res, int y_res);
 
-PRIVATE void fbcon_outchar(CONSOLE * con, char ch);
-PRIVATE void fbcon_flush(CONSOLE * con);
+PRIVATE void fbcon_outchar(CONSOLE* con, char ch);
+PRIVATE void fbcon_flush(CONSOLE* con);
 PRIVATE void update_cursor(struct timer_list* tp);
 
 PRIVATE struct timer_list cursor_timer;
@@ -58,7 +59,7 @@ PUBLIC int fbcon_init()
 {
     int devind;
     u16 vid, did;
-    int retval = pci_first_dev(&devind, &vid, &did);
+    int retval = pci_first_dev(&devind, &vid, &did, NULL);
 
     char val[VID_ARG];
     x_resolution = XRES_DEFAULT;
@@ -66,7 +67,8 @@ PUBLIC int fbcon_init()
     if (env_get_param("video", val, VID_ARG) == 0) {
         char* end;
         x_resolution = strtoul(val, &end, 10);
-        if (*end != 'x') x_resolution = XRES_DEFAULT;
+        if (*end != 'x')
+            x_resolution = XRES_DEFAULT;
         else {
             end++;
             y_resolution = strtoul(end, &end, 10);
@@ -77,11 +79,12 @@ PUBLIC int fbcon_init()
     fb_scr_width = x_resolution / FONT_WIDTH;
 
     while (retval == 0) {
-        if (vid == 0x1234 && did == 0x1111) {   /* 0x1234:0x1111: Bochs VBE Extension */
+        if (vid == 0x1234 &&
+            did == 0x1111) { /* 0x1234:0x1111: Bochs VBE Extension */
             return fbcon_init_bochs(devind, x_resolution, y_resolution);
         }
 
-        retval = pci_next_dev(&devind, &vid, &did);
+        retval = pci_next_dev(&devind, &vid, &did, NULL);
     }
 
     return 0;
@@ -89,17 +92,17 @@ PUBLIC int fbcon_init()
 
 PRIVATE void set_pixel(int x, int y, int val)
 {
-    u32 * vmem = (u32*) fb_mem_base;
-    u32 * pixel = &vmem[y * x_resolution + x];
+    u32* vmem = (u32*)fb_mem_base;
+    u32* pixel = &vmem[y * x_resolution + x];
     *pixel = val;
 }
 
-#define RGB_RED         0xaa0000
-#define RGB_GREEN       0x00aa00
-#define RGB_BLUE        0x0000aa
-#define RGB_RED_BRI     0xff0000
-#define RGB_GREEN_BRI   0x00ff00
-#define RGB_BLUE_BRI    0x0000ff
+#define RGB_RED 0xaa0000
+#define RGB_GREEN 0x00aa00
+#define RGB_BLUE 0x0000aa
+#define RGB_RED_BRI 0xff0000
+#define RGB_GREEN_BRI 0x00ff00
+#define RGB_BLUE_BRI 0x0000ff
 PRIVATE void color_to_rgb(u8 color, u8 attr, int* fg, int* bg)
 {
     int r = (attr & BOLD) ? RGB_RED_BRI : RGB_RED;
@@ -128,10 +131,10 @@ PRIVATE void print_char(CONSOLE* con, int x, int y, char ch)
 
     for (i = 0; i < FONT_HEIGHT; i++) {
         for (j = 0; j < FONT_WIDTH; j++) {
-            if (font[i] & (1 << (FONT_WIDTH-j))) {
-                set_pixel(x+j, y+i, fg_color);
+            if (font[i] & (1 << (FONT_WIDTH - j))) {
+                set_pixel(x + j, y + i, fg_color);
             } else {
-                set_pixel(x+j, y+i, bg_color);
+                set_pixel(x + j, y + i, bg_color);
             }
         }
     }
@@ -139,7 +142,8 @@ PRIVATE void print_char(CONSOLE* con, int x, int y, char ch)
 
 PRIVATE void print_cursor(CONSOLE* con, int x, int y, int state)
 {
-    u8 color = state ? con->color : MAKE_COLOR(BG_COLOR(con->color), BG_COLOR(con->color));
+    u8 color = state ? con->color
+                     : MAKE_COLOR(BG_COLOR(con->color), BG_COLOR(con->color));
     int fg_color, bg_color;
     int i, j;
 
@@ -147,16 +151,16 @@ PRIVATE void print_cursor(CONSOLE* con, int x, int y, int state)
 
     for (i = 0; i < FONT_HEIGHT; i++) {
         for (j = 0; j < FONT_WIDTH; j++) {
-            if (i > FONT_HEIGHT-CURSOR_HEIGHT) {
-                set_pixel(x+j, y+i, fg_color);
+            if (i > FONT_HEIGHT - CURSOR_HEIGHT) {
+                set_pixel(x + j, y + i, fg_color);
             } else {
-                set_pixel(x+j, y+i, bg_color);
+                set_pixel(x + j, y + i, bg_color);
             }
         }
     }
 }
 
-PUBLIC void fbcon_init_con(CONSOLE * con)
+PUBLIC void fbcon_init_con(CONSOLE* con)
 {
     con->cols = fb_scr_width;
     con->rows = fb_scr_height;
@@ -164,7 +168,8 @@ PUBLIC void fbcon_init_con(CONSOLE * con)
     con->origin = 0;
     con->visible_origin = con->cursor = con->origin;
     con->scr_end = con->origin + fb_scr_width * fb_scr_height;
-    con->con_size = fb_scr_width * fb_scr_height * 2;   /* * 2: extra space for scrolling */
+    con->con_size =
+        fb_scr_width * fb_scr_height * 2; /* * 2: extra space for scrolling */
 
     con->outchar = fbcon_outchar;
     con->flush = fbcon_flush;
@@ -172,7 +177,7 @@ PUBLIC void fbcon_init_con(CONSOLE * con)
     update_cursor(&cursor_timer);
 }
 
-PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
+PRIVATE void fbcon_outchar(CONSOLE* con, char ch)
 {
     int line, col;
     int cursor = con->cursor;
@@ -188,7 +193,7 @@ PRIVATE void fbcon_outchar(CONSOLE * con, char ch)
     print_char(con, col * FONT_WIDTH, line * FONT_HEIGHT, ch);
 }
 
-PRIVATE void fbcon_flush(CONSOLE * con)
+PRIVATE void fbcon_flush(CONSOLE* con)
 {
     if (con->visible_origin != con->origin) {
         u32 delta = con->visible_origin - con->origin;
@@ -200,7 +205,8 @@ PRIVATE void fbcon_flush(CONSOLE * con)
 
         u32* base = (u32*)fb_mem_base;
         u32* new_base = base + offset;
-        memmove(base, new_base, (x_resolution * y_resolution - offset) * sizeof(u32));
+        memmove(base, new_base,
+                (x_resolution * y_resolution - offset) * sizeof(u32));
         new_base = base + (x_resolution * y_resolution - offset);
         memset(new_base, 0, offset * sizeof(u32));
 
