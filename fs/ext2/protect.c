@@ -37,11 +37,12 @@ PUBLIC int ext2_chmod(dev_t dev, ino_t num, mode_t* mode)
     ext2_inode_t* pin = find_ext2_inode(dev, num);
     if (!pin) return EINVAL;
 
-    pin->i_mode = *mode;
+    pin->i_mode = (pin->i_mode & ~ALL_MODES) | (*mode & ALL_MODES);
     pin->i_dirt = 1;
     pin->i_update |= CTIME;
 
     *mode = pin->i_mode;
 
+    put_ext2_inode(pin);
     return 0;
 }
