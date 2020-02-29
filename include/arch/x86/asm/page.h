@@ -139,7 +139,4 @@ PUBLIC void reload_cr3();
 #define __pa(x) ((phys_bytes)(x)-KERNEL_VMA)
 #endif
 
-#include <lyos/pagetable-nopmd.h>
-#include "asm/pagetable.h"
-
 #endif

@@ -17,6 +17,7 @@
 #define _MM_PROTO_H_
 
 #include "mmproc.h"
+#include "pagetable.h"
 
 PUBLIC int mm_verify_endpt(endpoint_t ep, int* proc_nr);
 PUBLIC struct mmproc* endpt_mmproc(endpoint_t ep);

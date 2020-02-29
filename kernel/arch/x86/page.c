@@ -161,14 +161,10 @@ PUBLIC void pg_mapkernel(pde_t* pgd)
     /* phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys; */
     phys_bytes kern_len = LOWMEM_END;
     unsigned long pde = ARCH_PDE(KERNEL_VMA);
-    int user_flag = 0;
 
     while (mapped < kern_len) {
-        if (kern_phys >= kinfo.kernel_end_phys) {
-            user_flag = ARCH_PG_USER;
-        }
-        pgd[pde] = __pde(kern_phys | ARCH_PG_PRESENT | ARCH_PG_RW |
-                         ARCH_PG_BIGPAGE | user_flag);
+        pgd[pde] =
+            __pde(kern_phys | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_BIGPAGE);
         mapped += ARCH_BIG_PAGE_SIZE;
         kern_phys += ARCH_BIG_PAGE_SIZE;
         pde++;

@@ -90,18 +90,14 @@ PUBLIC void pt_init()
 
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
 
-    /* map kernel for MM */
     int kernel_pde = kernel_info.kernel_start_pde;
     phys_bytes paddr = kernel_info.kernel_start_phys;
-    int user_flag = 0;
 
+    /* map kernel for MM */
     while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
-        if (paddr >= kernel_info.kernel_end_phys) {
-            user_flag = ARCH_PG_USER;
-        }
 #if defined(__i386__)
-        mypgd->vir_addr[kernel_pde] = __pde(
-            paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | user_flag);
+        mypgd->vir_addr[kernel_pde] =
+            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
 #elif defined(__arm__)
         mypgd->vir_addr[kernel_pde] =
             __pde((paddr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
@@ -111,6 +107,25 @@ PUBLIC void pt_init()
 
         paddr += ARCH_BIG_PAGE_SIZE;
         kernel_pde++;
+    }
+
+    /* create direct mapping to access physical memory */
+    for (kernel_pde = 0, paddr = 0; kernel_pde < ARCH_PDE(LOWMEM_END);
+         kernel_pde++, paddr += ARCH_BIG_PAGE_SIZE) {
+        if (paddr < kernel_info.kernel_end_phys) {
+            continue;
+        }
+
+#if defined(__i386__)
+        mypgd->vir_addr[kernel_pde] =
+            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW |
+                  ARCH_PG_USER);
+#elif defined(__arm__)
+        mypgd->vir_addr[kernel_pde] =
+            __pde((paddr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
+                  ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
+                  ARM_VM_SECTION_SUPER);
+#endif
     }
 
     unsigned int mypdbr = 0;

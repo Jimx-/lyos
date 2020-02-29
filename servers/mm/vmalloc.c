@@ -137,11 +137,6 @@ PUBLIC void* alloc_vmem(phys_bytes* phys_addr, int memsize, int reason)
     phys_bytes phys_pages = alloc_pages(pages, memflags);
     if (phys_addr != NULL) *phys_addr = (phys_bytes)phys_pages;
 
-    if (phys_pages < LOWMEM_END) {
-        level--;
-        return __va(phys_pages);
-    }
-
     void* vir_pages = alloc_vmpages(pages);
     void* retval = vir_pages;
 
