@@ -1,12 +1,11 @@
-
 SRC_PATH = .
 BUILD_PATH = ./obj.$(SUBARCH)
 OBJS = $(patsubst %.c, $(BUILD_PATH)/%.o, $(patsubst %.S, $(BUILD_PATH)/%.o, $(patsubst %.asm, $(BUILD_PATH)/%.o, $(SRCS))))
 DEPS = $(OBJS:.o=.d)
 INSTALL_PREFIX = /lib
 
-ifeq ($(wildcard arch),) 
-	ARCH_BUILD_PATH = 
+ifeq ($(wildcard arch),)
+	ARCH_BUILD_PATH =
 else
 	ARCH_BUILD_PATH = $(BUILD_PATH)/arch/$(ARCH)
 endif

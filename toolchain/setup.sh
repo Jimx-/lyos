@@ -37,13 +37,13 @@ pushd build > /dev/null
 
 # Build binutils
 if $BUILD_BINUTILS; then
-    if [ ! -d "binutils" ]; then
-        mkdir binutils
+    if [ ! -d "binutils-$SUBARCH" ]; then
+        mkdir binutils-$SUBARCH
     fi
 
     unset PKG_CONFIG_LIBDIR
 
-    pushd binutils
+    pushd binutils-$SUBARCH
     $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
     make -j8 || cmd_error
     make install || cmd_error
@@ -52,14 +52,13 @@ fi
 
 # Build gcc
 if $BUILD_GCC; then
-    if [ -d gcc ]; then
-        rm -rf gcc
+    if [ ! -d "gcc-$SUBARCH" ]; then
+        mkdir gcc-$SUBARCH
     fi
-    mkdir gcc
 
     unset PKG_CONFIG_LIBDIR
 
-    pushd gcc
+    pushd gcc-$SUBARCH
     $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
     make -j8 all-gcc all-target-libgcc || cmd_error
     make install-gcc install-target-libgcc || cmd_error
@@ -70,11 +69,11 @@ fi
 
 # Build newlib
 if $BUILD_NEWLIB; then
-    if [ ! -d "newlib" ]; then
-        mkdir newlib
+    if [ ! -d "newlib-$SUBARCH" ]; then
+        mkdir newlib-$SUBARCH
     else
-        rm -rf newlib
-        mkdir newlib
+        rm -rf newlib-$SUBARCH
+        mkdir newlib-$SUBARCH
     fi
 
     pushd $DIR/sources/newlib-3.0.0 > /dev/null
@@ -88,7 +87,7 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
     popd > /dev/null
 
-    pushd newlib > /dev/null
+    pushd newlib-$SUBARCH > /dev/null
     $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
@@ -102,11 +101,11 @@ fi
 
 # Build native binutils
 if $BUILD_NATIVE_BINUTILS; then
-    if [ ! -d "binutils-native" ]; then
-        mkdir binutils-native
+    if [ ! -d "binutils-native-$SUBARCH" ]; then
+        mkdir binutils-native-$SUBARCH
     fi
 
-    pushd binutils-native > /dev/null
+    pushd binutils-native-$SUBARCH > /dev/null
     $DIR/sources/binutils-2.31/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-werror || cmd_error
     make -j8 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
@@ -115,8 +114,8 @@ fi
 
 # Build native gcc
 if $BUILD_NATIVE_GCC; then
-    if [ ! -d "gcc-native" ]; then
-        mkdir gcc-native
+    if [ ! -d "gcc-native-$SUBARCH" ]; then
+        mkdir gcc-native-$SUBARCH
     fi
 
 
@@ -130,7 +129,7 @@ if $BUILD_NATIVE_GCC; then
         ln -s $DIR/sources/gmp-4.3.2 $DIR/sources/gcc-4.7.3/gmp
     fi
 
-    pushd gcc-native > /dev/null
+    pushd gcc-native-$SUBARCH > /dev/null
     $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j8 || cmd_error
     make DESTDIR=$SYSROOT install-gcc -j || cmd_error
@@ -144,11 +143,11 @@ fi
 
 # Build bash
 if $BUILD_BASH; then
-    if [ ! -d "bash" ]; then
-        mkdir bash
+    if [ ! -d "bash-$SUBARCH" ]; then
+        mkdir bash-$SUBARCH
     fi
 
-    pushd bash > /dev/null
+    pushd bash-$SUBARCH > /dev/null
     $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
@@ -158,11 +157,11 @@ fi
 
 # Build coreutils
 if $BUILD_COREUTILS; then
-    if [ ! -d "coreutils" ]; then
-        mkdir coreutils
+    if [ ! -d "coreutils-$SUBARCH" ]; then
+        mkdir coreutils-$SUBARCH
     fi
 
-    pushd coreutils > /dev/null
+    pushd coreutils-$SUBARCH > /dev/null
     touch $DIR/sources/coreutils-8.13/man/sort.1
     touch $DIR/sources/coreutils-8.13/man/stat.1
     $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
@@ -173,11 +172,11 @@ fi
 
 # Build dash
 if $BUILD_DASH; then
-    if [ ! -d "dash" ]; then
-        mkdir dash
+    if [ ! -d "dash-$SUBARCH" ]; then
+        mkdir dash-$SUBARCH
     fi
 
-    pushd dash > /dev/null
+    pushd dash-$SUBARCH > /dev/null
     $DIR/sources/dash-0.5.10/configure --host=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -i '/# define _GNU_SOURCE 1/d' config.h
     make -j || cmd_error
