@@ -18,9 +18,9 @@
 
 #define LOWMEM_END 0x30000000
 #define KERNEL_VMA 0xc0000000
-#define VMALLOC_START 0x1000
+#define VMALLOC_START 0x80000000
 #define VMALLOC_END                                                          \
-    0x40000000 /* region where MM map physical memory into its address space \
+    0xb0000000 /* region where MM map physical memory into its address space \
                 */
 #define PKMAP_START (KERNEL_VMA + LOWMEM_END)
 #define PKMAP_END (PKMAP_START + 0x400000) /* 4 MB */
