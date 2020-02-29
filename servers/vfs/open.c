@@ -331,11 +331,11 @@ PUBLIC int do_lseek(MESSAGE* p)
     int whence = p->WHENCE;
     endpoint_t src = p->source;
     struct fproc* pcaller = vfs_endpt_proc(src);
+    off_t pos, newpos;
 
     struct file_desc* filp = get_filp(pcaller, fd, RWL_WRITE);
     if (!filp) return EBADF;
 
-    u64 pos = 0;
     switch (whence) {
     case SEEK_SET:
         pos = 0;
@@ -346,11 +346,13 @@ PUBLIC int do_lseek(MESSAGE* p)
     case SEEK_END:
         pos = filp->fd_inode->i_size;
         break;
+    default:
+        unlock_filp(filp);
+        return EINVAL;
     }
 
-    u64 newpos = pos + offset;
-    /* no negative position */
-    if (newpos < 0)
+    newpos = pos + offset;
+    if (((offset > 0) && (newpos <= pos)) || ((offset < 0) && (newpos >= pos)))
         return EOVERFLOW;
     else {
         filp->fd_pos = newpos;
