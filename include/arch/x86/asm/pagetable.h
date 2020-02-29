@@ -34,10 +34,10 @@ PRIVATE inline int pmde_bad(pmd_t pmde)
 
 PRIVATE inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
-PRIVATE inline void pmde_populate(pmd_t* pmde, pte_t* pt)
+PRIVATE inline void pmde_populate(pmd_t* pmde, phys_bytes pt_phys)
 {
-    phys_bytes pt_phys = __pa(pt) & I386_PG_MASK;
-    *pmde = __pmd(pt_phys | ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+    *pmde = __pmd((pt_phys & I386_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
+                  ARCH_PG_USER);
 }
 
 PRIVATE inline int pte_none(pte_t pte)

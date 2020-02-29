@@ -69,7 +69,7 @@ PUBLIC void pt_init()
         if (umap(SELF, v, &bootstrap_phys_addr))
             panic("MM: can't get phys addr for bootstrap page");
         bootstrap_pages[i].phys_addr = bootstrap_phys_addr;
-        bootstrap_pages[i].vir_addr = __va(bootstrap_phys_addr);
+        bootstrap_pages[i].vir_addr = v;
         bootstrap_pages[i].used = 0;
     }
 
@@ -213,7 +213,7 @@ PUBLIC int pt_create(pmd_t* pmde)
     }
 
 #ifdef __i386__
-    pmde_populate(pmde, pt);
+    pmde_populate(pmde, pt_phys);
 #elif defined(__arm__)
     pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) |
                                ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
