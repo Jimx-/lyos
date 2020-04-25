@@ -35,6 +35,7 @@
 #include <elf.h>
 #include "lyos/param.h"
 #include <lyos/sysutils.h>
+#include <libcoro/libcoro.h>
 #include "global.h"
 #include "thread.h"
 
@@ -70,6 +71,7 @@ PUBLIC int main()
     printl("VFS: Virtual filesystem is running.\n");
 
     init_vfs();
+    coro_init();
 
     MESSAGE msg;
     while (TRUE) {
