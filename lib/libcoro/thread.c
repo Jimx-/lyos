@@ -106,11 +106,15 @@ static void coro_thread_init(coro_thread_t thread, coro_thread_attr_t* attr,
         tcb->attr = __default_thread_attr;
     }
 
-    tcb->context.uc_link = NULL;
-
-    if (getcontext(&tcb->context) == -1) {
-        panic("failed to initialize ucontext");
+    if (coro_cond_init(&tcb->exited, NULL) != 0) {
+        panic("cannot initialize condition variable");
     }
+
+    if (coro_mutex_init(&tcb->exitm, NULL) != 0) {
+        panic("cannot initialize mutex");
+    }
+
+    tcb->context.uc_link = NULL;
 
     stacksize = tcb->attr.stacksize;
     stackaddr = tcb->attr.stackaddr;
@@ -152,11 +156,32 @@ void coro_thread_reset(coro_thread_t thread)
     tcb->result = NULL;
 
     tcb->context.uc_link = NULL;
+
+    if (tcb->attr.stackaddr == NULL) {
+        if (tcb->context.uc_stack.ss_sp != NULL) {
+            if (munmap(tcb->context.uc_stack.ss_sp,
+                       tcb->context.uc_stack.ss_size) != 0) {
+                panic("failed unmap stack");
+            }
+            tcb->context.uc_stack.ss_sp = NULL;
+        }
+    }
+
+    tcb->context.uc_stack.ss_size = 0;
 }
 
 static void coro_thread_stop(coro_thread_t thread)
 {
     coro_tcb_t* tcb = coro_find_tcb(thread);
+
+    if (tcb->state == CR_DEAD) {
+        return;
+    }
+
+    if (thread != current_thread) {
+        coro_thread_reset(thread);
+        coro_queue_enqueue(&free_threads, thread);
+    }
 }
 
 void coro_exit(void* result)
@@ -170,8 +195,52 @@ void coro_exit(void* result)
     tcb->result = result;
     tcb->state = CR_EXITING;
 
+    if (coro_cond_signal(&tcb->exited) != 0) {
+        panic("cannot signal exit");
+    }
+
     coro_schedule();
 }
+
+int coro_join(coro_thread_t thread, void** value)
+{
+    coro_tcb_t* tcb;
+    int retval;
+
+    if (!is_valid_id(thread)) {
+        return EINVAL;
+    } else if (thread == current_thread) {
+        return EDEADLK;
+    }
+
+    tcb = coro_find_tcb(thread);
+    if (tcb->state == CR_DEAD) {
+        return ESRCH;
+    }
+
+    if (tcb->state != CR_EXITING) {
+        if ((retval = coro_mutex_lock(&tcb->exitm)) != 0) {
+            return retval;
+        }
+
+        if ((retval = coro_cond_wait(&tcb->exited, &tcb->exitm)) != 0) {
+            return retval;
+        }
+
+        if ((retval = coro_mutex_unlock(&tcb->exitm)) != 0) {
+            return retval;
+        }
+    }
+
+    if (value != NULL) {
+        *value = tcb->result;
+    }
+
+    coro_thread_stop(thread);
+    return 0;
+}
+
+coro_thread_t coro_self(void) { return current_thread; }
 
 static void coro_trampoline(void)
 {
