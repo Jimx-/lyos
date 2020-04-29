@@ -129,7 +129,7 @@ PUBLIC int main()
             handle_events(tty);
         }
 
-        send_recv(RECEIVE, ANY, &msg);
+        send_recv(RECEIVE_ASYNC, ANY, &msg);
 
         int src = msg.source;
         assert(src != TASK_TTY);

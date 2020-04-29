@@ -209,8 +209,8 @@ PRIVATE u8 get_byte_from_kb_buf()
 {
     u8 scan_code;
 
-    while (kb_in.count <= 0) {
-    } /* wait for a byte to arrive */
+    /* while (kb_in.count <= 0) { */
+    /* } /\* wait for a byte to arrive *\/ */
 
     scan_code = *(kb_in.p_tail);
     kb_in.p_tail++;

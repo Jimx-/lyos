@@ -13,14 +13,14 @@
 #include "global.h"
 #include "proto.h"
 
-#define CORO_STACK_MIN 2048
+#define CORO_STACK_MIN 0x1000
 
-static coro_thread_attr_t __default_thread_attr = {
+static coro_attr_t __default_thread_attr = {
     .stacksize = CORO_STACK_MIN,
     .stackaddr = NULL,
 };
 
-static void coro_thread_init(coro_thread_t thread, coro_thread_attr_t* attr,
+static void coro_thread_init(coro_thread_t thread, coro_attr_t* attr,
                              void* (*proc)(void*), void* arg);
 static void coro_thread_stop(coro_thread_t thread);
 static void coro_trampoline(void);
@@ -51,7 +51,7 @@ void coro_init(void)
 coro_tcb_t* coro_find_tcb(coro_thread_t thread)
 {
     if (!is_valid_id(thread)) {
-        panic("invalid coroutine id");
+        panic("invalid coroutine id %d", thread);
     }
 
     if (thread == MAIN_THREAD) {
@@ -61,7 +61,7 @@ coro_tcb_t* coro_find_tcb(coro_thread_t thread)
     }
 }
 
-int coro_thread_create(coro_thread_t* tid, coro_thread_attr_t* attr,
+int coro_thread_create(coro_thread_t* tid, coro_attr_t* attr,
                        void* (*proc)(void*), void* arg)
 {
     coro_thread_t thread;
@@ -88,7 +88,7 @@ int coro_thread_create(coro_thread_t* tid, coro_thread_attr_t* attr,
     return 0;
 }
 
-static void coro_thread_init(coro_thread_t thread, coro_thread_attr_t* attr,
+static void coro_thread_init(coro_thread_t thread, coro_attr_t* attr,
                              void* (*proc)(void*), void* arg)
 {
     coro_tcb_t* tcb = coro_find_tcb(thread);
@@ -308,4 +308,39 @@ static int realloc_thread_pool(void)
     }
 
     return 0;
+}
+
+void coro_stacktrace(coro_thread_t t)
+{
+#ifdef __i386__ /* stacktrace only implemented on x86 */
+    unsigned long bp, hbp, pc;
+    coro_tcb_t* tcb;
+    ucontext_t* ctx;
+
+    tcb = coro_find_tcb(t);
+    ctx = &tcb->context;
+
+    if (t != MAIN_THREAD && ctx->uc_stack.ss_size == 0)
+        return; /* no stack, no stacktrace */
+
+    printl("thread %d: ", t);
+
+    __asm__("mov %%ebp, %0" : "=r"(bp)::);
+
+    while (bp) {
+        pc = ((unsigned long*)bp)[1];
+        hbp = ((unsigned long*)bp)[0];
+
+        printl("0x%lx ", (unsigned long)pc);
+
+        if (hbp != 0 && hbp <= bp) {
+            pc = -1;
+            printl("0x%lx ", (unsigned long)pc);
+            break;
+        }
+        bp = hbp;
+    }
+
+    printl("\n");
+#endif
 }

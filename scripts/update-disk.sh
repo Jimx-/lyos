@@ -9,10 +9,10 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 SUBARCH=$(uname -m | sed -e s/sun4u/sparc64/ \
-		-e s/arm.*/arm/ -e s/sa110/arm/ \
-		-e s/s390x/s390/ -e s/parisc64/parisc/ \
-		-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
-		-e s/sh[234].*/sh/ )
+        -e s/arm.*/arm/ -e s/sa110/arm/ \
+        -e s/s390x/s390/ -e s/parisc64/parisc/ \
+        -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+        -e s/sh[234].*/sh/ )
 ARCH=$SUBARCH
 
 while getopts "m:" arg
@@ -29,7 +29,7 @@ do
 done
 
 if [ $ARCH = "i686" ]; then
-	ARCH=x86
+    ARCH=x86
 fi
 ARCH=x86
 
@@ -54,24 +54,24 @@ mount $LOOPMAP /$MOUNT_POINT
 echo "Installing kernel."
 if [[ $CONFIG_COMPRESS_GZIP == "y" ]]
 then
-	cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
+    cp -r $SRCDIR/arch/x86/lyos.gz /$MOUNT_POINT/boot/
 else
-	cp -r $SRCDIR/arch/x86/lyos.elf /$MOUNT_POINT/boot/
+    cp -r $SRCDIR/arch/x86/lyos.elf /$MOUNT_POINT/boot/
 fi
 
 #cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
 #cp -rf obj/destdir.$ARCH/bin/profile /$MOUNT_POINT/bin/
-#cp -rf obj/destdir.$ARCH/usr/bin/bash /$MOUNT_POINT/usr/bin/bash
-#cp -rf obj/destdir.$ARCH/bin/* /$MOUNT_POINT/bin/
-#cp -rf obj/destdir.$ARCH/sbin/procfs /$MOUNT_POINT/sbin/ 
-#cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
-#cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/usr/bin/bash /$MOUNT_POINT/usr/bin/bash
+cp -rf obj/destdir.$ARCH/bin/* /$MOUNT_POINT/bin/
+#cp -rf obj/destdir.$ARCH/sbin/procfs /$MOUNT_POINT/sbin/
+cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
+cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
 cp -rf obj/destdir.$ARCH/usr/bin/vim /$MOUNT_POINT/usr/bin/
 cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
 #cp -rf obj/destdir.$ARCH/usr/ /$MOUNT_POINT/
 cp -rf obj/destdir.$ARCH/usr/lib/libg.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
-cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/ 
+cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/
 #cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 #cp -rf sysroot/boot/* /$MOUNT_POINT/boot/
 sync

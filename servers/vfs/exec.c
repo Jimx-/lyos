@@ -181,16 +181,15 @@ PRIVATE int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
  * @return     Zero on success.
  *
  *****************************************************************************/
-PUBLIC int fs_exec(MESSAGE* msg)
+PUBLIC int fs_exec(void)
 {
     int retval;
 
     struct vfs_exec_info execi;
 
     /* get parameters from the message */
-    int name_len = msg->NAME_LEN; /* length of filename */
-    int src = msg->ENDPOINT;      /* caller proc nr. */
-    struct fproc* fp = vfs_endpt_proc(src);
+    int name_len = self->msg_in.NAME_LEN; /* length of filename */
+    int src = self->msg_in.ENDPOINT;      /* caller proc nr. */
     struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
     int i;
 
@@ -202,17 +201,17 @@ PUBLIC int fs_exec(MESSAGE* msg)
     execi.args.stack_size = PROC_ORIGIN_STACK;
 
     /* uid & gid */
-    execi.args.new_uid = fp->realuid;
-    execi.args.new_gid = fp->realgid;
-    execi.args.new_euid = fp->effuid;
-    execi.args.new_egid = fp->effgid;
+    execi.args.new_uid = fproc->realuid;
+    execi.args.new_gid = fproc->realgid;
+    execi.args.new_euid = fproc->effuid;
+    execi.args.new_egid = fproc->effgid;
 
     execi.is_dyn = 0;
     execi.exec_fd = -1;
 
     /* copy everything we need before we free the old process */
-    void* user_sp = msg->BUF;
-    size_t orig_stack_len = msg->BUF_LEN;
+    void* user_sp = self->msg_in.BUF;
+    size_t orig_stack_len = self->msg_in.BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) {
         retval = ENOMEM; /* stack too big */
         goto exec_finalize;
@@ -220,18 +219,18 @@ PUBLIC int fs_exec(MESSAGE* msg)
 
     static char stackcopy[PROC_ORIGIN_STACK];
     memset(stackcopy, 0, sizeof(stackcopy));
-    data_copy(SELF, stackcopy, src, msg->BUF, orig_stack_len);
+    data_copy(SELF, stackcopy, src, self->msg_in.BUF, orig_stack_len);
 
     /* copy prog name */
     char pathname[PATH_MAX];
-    data_copy(SELF, pathname, src, msg->PATHNAME, name_len);
+    data_copy(SELF, pathname, src, self->msg_in.PATHNAME, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
     struct lookup lookup;
     init_lookup(&lookup, pathname, 0, &execi.vmnt, &execi.pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
-    retval = get_exec_inode(&execi, &lookup, fp);
+    retval = get_exec_inode(&execi, &lookup, fproc);
     if (retval) goto exec_finalize;
 
     /* relocate stack pointers */
@@ -251,7 +250,7 @@ PUBLIC int fs_exec(MESSAGE* msg)
     if (is_script(&execi)) {
         setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname,
                            (void**)&orig_stack);
-        retval = get_exec_inode(&execi, &lookup, fp);
+        retval = get_exec_inode(&execi, &lookup, fproc);
         if (retval) goto exec_finalize;
     }
 
@@ -289,7 +288,9 @@ PUBLIC int fs_exec(MESSAGE* msg)
     char interp[PATH_MAX];
     if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp,
                        sizeof(interp)) > 0) {
-        execi.exec_fd = common_open(fp, pathname, O_RDONLY, 0);
+        unlock_inode(execi.pin);
+        execi.exec_fd = common_open(pathname, O_RDONLY, 0);
+        lock_inode(execi.pin, RWL_READ);
         if (execi.exec_fd < 0) {
             retval = -execi.exec_fd;
             goto exec_finalize;
@@ -310,7 +311,9 @@ PUBLIC int fs_exec(MESSAGE* msg)
                 sizeof(execi.dyn_prog_name));
 
         init_lookup(&lookup, interp, 0, &execi.vmnt, &execi.pin);
-        retval = get_exec_inode(&execi, &lookup, fp);
+        lookup.vmnt_lock = RWL_READ;
+        lookup.inode_lock = RWL_READ;
+        retval = get_exec_inode(&execi, &lookup, fproc);
         if (retval) goto exec_finalize;
 
         execi.args.filesize = execi.pin->i_size;
@@ -349,8 +352,8 @@ PUBLIC int fs_exec(MESSAGE* msg)
     ps.ps_envstr = envp;
 
     /* record frame info */
-    msg->BUF = orig_stack;
-    msg->BUF_LEN = orig_stack_len;
+    self->msg_out.BUF = orig_stack;
+    self->msg_out.BUF_LEN = orig_stack_len;
 
 exec_finalize:
     if (filp) {
@@ -358,7 +361,7 @@ exec_finalize:
     }
 
     if (execi.pin) {
-        unlock_inode(execi.pin);
+        if (!filp || filp->fd_inode != execi.pin) unlock_inode(execi.pin);
         put_inode(execi.pin);
     }
 

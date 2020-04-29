@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     for (i = 0; i < NR_TTY; i++) {
         int pid = fork();
         if (pid) {
-            // printf("Parent\n");
+            /* printf("Parent\n"); */
         } else {
             close(fd_stdin);
             close(fd_stdout);

@@ -15,6 +15,7 @@
 
 #include <lyos/type.h>
 #include <lyos/ipc.h>
+#include <lyos/sysutils.h>
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
@@ -33,17 +34,39 @@
 
 PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
 {
-    if (filp->fd_inode) rwlock_lock(&filp->fd_inode->i_lock, lock_type);
-    pthread_mutex_lock(&filp->fd_lock);
+    int retval;
+    struct worker_thread* old_self;
+
+    if (filp->fd_inode) lock_inode(filp->fd_inode, lock_type);
+
+    retval = mutex_trylock(&filp->fd_lock);
+    if (retval == 0) {
+        return;
+    }
+
+    /* need blocking */
+    old_self = worker_suspend();
+
+    retval = mutex_lock(&filp->fd_lock);
+    if (retval != 0) {
+        panic("failed to acquire filp lock: %d", retval);
+    }
+
+    worker_resume(old_self);
 }
 
 PUBLIC void unlock_filp(struct file_desc* filp)
 {
-    if (filp->fd_cnt) {
+    int retval;
+
+    if (filp->fd_cnt > 0) {
         unlock_inode(filp->fd_inode);
     }
 
-    pthread_mutex_unlock(&filp->fd_lock);
+    retval = mutex_unlock(&filp->fd_lock);
+    if (retval != 0) {
+        panic("failed to unlock filp: %d", retval);
+    }
 }
 
 PUBLIC struct file_desc* alloc_filp()
@@ -54,8 +77,7 @@ PUBLIC struct file_desc* alloc_filp()
     for (i = 0; i < NR_FILE_DESC; i++) {
         struct file_desc* filp = &f_desc_table[i];
 
-        if (f_desc_table[i].fd_inode == 0 &&
-            !pthread_mutex_trylock(&filp->fd_lock)) {
+        if (f_desc_table[i].fd_inode == 0 && !mutex_trylock(&filp->fd_lock)) {
             return filp;
         }
     }
@@ -66,7 +88,6 @@ PUBLIC struct file_desc* alloc_filp()
 PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
 {
     /* find an unused fd in proc's filp table and a free file slot */
-
     int i;
 
     for (i = start; i < NR_FILES; i++) {
@@ -84,7 +105,7 @@ PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
     for (i = 0; i < NR_FILE_DESC; i++) {
         struct file_desc* filp = &f_desc_table[i];
 
-        if (filp->fd_inode == 0 && !pthread_mutex_trylock(&filp->fd_lock)) {
+        if (filp->fd_inode == 0 && !mutex_trylock(&filp->fd_lock)) {
             *fpp = filp;
             return 0;
         }
@@ -97,7 +118,6 @@ PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd,
                                   rwlock_type_t lock_type)
 {
     /* retrieve a file descriptor from fp's filp table and lock it */
-
     struct file_desc* filp = NULL;
 
     if (fd < 0 || fd >= NR_FILES) {
@@ -105,6 +125,7 @@ PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd,
         return NULL;
     }
     filp = fp->filp[fd];
+
     if (!filp) {
         err_code = EBADF;
     } else {

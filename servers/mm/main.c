@@ -110,7 +110,7 @@ PUBLIC int main()
             reply = 0;
             break;
         default:
-            printl("MM: unknown message type: %d\n", msgtype);
+            printl("MM: unknown message type: %d from %d\n", msgtype, src);
             mm_msg.RETVAL = ENOSYS;
             break;
         }

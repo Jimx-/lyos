@@ -62,47 +62,154 @@
  */
 
 PUBLIC void init_vfs();
+static void dispatch_work(MESSAGE* msg, void (*func)(void));
+static void do_work(void);
+static void do_reply(struct worker_thread* worker, MESSAGE* msg);
+static void init_root(void);
 
 /**
  * <Ring 1> Main loop of VFS.
  */
 PUBLIC int main()
 {
+    MESSAGE msg;
+    int txn_id;
+    struct worker_thread* wp;
+
     printl("VFS: Virtual filesystem is running.\n");
 
-    init_vfs();
     coro_init();
+    init_vfs();
 
-    MESSAGE msg;
     while (TRUE) {
-        fs_sleeping = 1;
+        worker_yield();
+
         send_recv(RECEIVE_ASYNC, ANY, &msg);
-        fs_sleeping = 0;
+        fproc = vfs_endpt_proc(msg.source);
 
-        int msgtype = msg.type;
-        /* enqueue a request from the user */
-        if (msgtype != FS_THREAD_WAKEUP) {
-            enqueue_request(&msg);
-        }
-
-        struct vfs_message* res;
-        /* send result back to the user */
-        lock_response_queue();
-        while (TRUE) {
-            res = dequeue_response();
-            if (!res) break;
-
-            if (res->msg.type != SUSPEND_PROC && res->msg.RETVAL != SUSPEND) {
-                res->msg.type = SYSCALL_RET;
-                send_recv(SEND_NONBLOCK, res->msg.source, &res->msg);
+        txn_id = VFS_TXN_GET_ID(msg.type);
+        if (IS_VFS_TXN_ID(txn_id)) {
+            wp = worker_get((thread_t)(txn_id - FS_TXN_ID));
+            if (wp == NULL || wp->fproc == NULL) {
+                printl("VFS: spurious message to worker %d from %d\n", wp->tid,
+                       msg.source);
+                continue;
             }
 
-            free(res);
+            msg.type = VFS_TXN_GET_TYPE(msg.type);
+            do_reply(wp, &msg);
+            continue;
         }
-        unlock_response_queue();
+
+        switch (msg.type) {
+        case CDEV_REPLY:
+        case CDEV_MMAP_REPLY:
+        case CDEV_SELECT_REPLY1:
+        case CDEV_SELECT_REPLY2:
+            cdev_reply(&msg);
+            break;
+        default:
+            dispatch_work(&msg, do_work);
+            break;
+        }
     }
 
     return 0;
+}
+
+static void dispatch_work(MESSAGE* msg, void (*func)(void))
+{
+    worker_dispatch(fproc, func, msg);
+}
+
+static void do_work(void)
+{
+    int msgtype = self->msg_in.type;
+
+    memset(&self->msg_out, 0, sizeof(MESSAGE));
+
+    switch (msgtype) {
+    case FS_REGISTER:
+        self->msg_out.RETVAL = do_register_filesystem();
+        break;
+    case OPEN:
+        self->msg_out.FD = do_open();
+        break;
+    case CLOSE:
+        self->msg_out.RETVAL = do_close();
+        break;
+    case READ:
+    case WRITE:
+        self->msg_out.RETVAL = do_rdwt();
+        break;
+    case IOCTL:
+        self->msg_out.RETVAL = do_ioctl();
+        break;
+    case STAT:
+        self->msg_out.RETVAL = do_stat();
+        break;
+    case FSTAT:
+        self->msg_out.RETVAL = do_fstat();
+        break;
+    case FCNTL:
+        self->msg_out.RETVAL = do_fcntl();
+        break;
+    case CHDIR:
+        self->msg_out.RETVAL = do_chdir();
+        break;
+    case FCHDIR:
+        self->msg_out.RETVAL = do_fchdir();
+        break;
+    case MOUNT:
+        self->msg_out.RETVAL = do_mount();
+        break;
+    case GETDENTS:
+        self->msg_out.RETVAL = do_getdents();
+        break;
+    case PM_VFS_GETSETID:
+        self->msg_out.RETVAL = fs_getsetid();
+        break;
+    case PM_VFS_FORK:
+        self->msg_out.RETVAL = fs_fork();
+        break;
+    case EXIT:
+        self->msg_out.RETVAL = fs_exit();
+        break;
+    case PM_VFS_EXEC:
+        self->msg_out.RETVAL = fs_exec();
+        break;
+    case MM_VFS_REQUEST:
+        self->msg_out.RETVAL = do_mm_request();
+        break;
+    default:
+        panic("unknown type %d\n", msgtype);
+        self->msg_out.RETVAL = ENOSYS;
+        break;
+    }
+
+    if (self->msg_out.type != SUSPEND_PROC && self->msg_out.RETVAL != SUSPEND) {
+        self->msg_out.type = SYSCALL_RET;
+        send_recv(SEND_NONBLOCK, fproc->endpoint, &self->msg_out);
+    }
+}
+
+static void do_reply(struct worker_thread* worker, MESSAGE* msg)
+{
+    if (worker->recv_from != msg->source) {
+        printl("VFS: thread %d waiting for %d to reply, not %d\n", worker->tid,
+               worker->recv_from, msg->source);
+        return;
+    }
+
+    if (worker->msg_recv == NULL) {
+        return;
+    }
+
+    *worker->msg_recv = *msg;
+    worker->msg_recv = NULL;
+    worker->recv_from = NO_TASK;
+
+    worker_wake(worker);
 }
 
 PUBLIC void init_vfs()
@@ -112,7 +219,7 @@ PUBLIC void init_vfs()
     /* f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++) {
         memset(&f_desc_table[i], 0, sizeof(struct file_desc));
-        pthread_mutex_init(&f_desc_table[i].fd_lock, NULL);
+        mutex_init(&f_desc_table[i].fd_lock, NULL);
     }
 
     /* inode_table[] */
@@ -121,10 +228,10 @@ PUBLIC void init_vfs()
 
     /* fproc_table[] */
     for (i = 0; i < NR_PROCS; i++) {
-        pthread_mutex_init(&fproc_table[i].lock, NULL);
+        mutex_init(&fproc_table[i].lock, NULL);
         fproc_table[i].worker = NULL;
+        fproc_table[i].flags = 0;
     }
-    pthread_mutex_init(&filesystem_lock, NULL);
 
     init_inode_table();
     init_select();
@@ -156,17 +263,11 @@ PUBLIC void init_vfs()
     pm_msg.RETVAL = 0;
     send_recv(SEND, TASK_PM, &pm_msg);
 
-    int id;
-    for (id = 0; id < NR_WORKER_THREADS; id++) {
-        pid_t pid = create_worker(id);
-        if (pid > 0) nr_workers++;
-    }
-    printl("VFS: Started %d worker thread(s)\n", nr_workers);
+    worker_init();
+    printl("VFS: Started %d worker thread(s)\n", NR_WORKER_THREADS);
 
-    int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
-    // mount root
-    mount_fs(vfs_endpt_proc(TASK_FS), initrd_dev, "/", TASK_INITFS, 0);
-    printl("VFS: Mounted init ramdisk\n");
+    MESSAGE msg;
+    worker_dispatch(vfs_endpt_proc(TASK_FS), init_root, &msg);
 
     add_filesystem(TASK_SYSFS, "sysfs");
     add_filesystem(TASK_DEVMAN, "devfs");
@@ -175,4 +276,19 @@ PUBLIC void init_vfs()
 
     get_sysinfo(&sysinfo);
     system_hz = get_system_hz();
+}
+
+static void init_root(void)
+{
+    worker_allow(FALSE);
+
+    int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
+    // mount root
+    if (mount_fs(initrd_dev, "/", TASK_INITFS, 0) != 0) {
+        panic("failed to mount initial ramdisk");
+    }
+
+    printl("VFS: Mounted init ramdisk\n");
+
+    worker_allow(TRUE);
 }

@@ -10,7 +10,7 @@ struct __coro_tcb;
 typedef struct {
     size_t stacksize;
     void* stackaddr;
-} coro_thread_attr_t;
+} coro_attr_t;
 
 typedef struct {
     struct __coro_tcb* head;
@@ -38,13 +38,18 @@ typedef struct {
 
 /* thread.c */
 void coro_init(void);
-int coro_thread_create(coro_thread_t* tid, coro_thread_attr_t* attr,
+int coro_thread_create(coro_thread_t* tid, coro_attr_t* attr,
                        void* (*proc)(void*), void* arg);
 coro_thread_t coro_self(void);
 int coro_join(coro_thread_t thread, void** value);
 
+/* attr.c */
+int coro_attr_init(coro_attr_t* attr);
+int coro_attr_setstacksize(coro_attr_t* attr, size_t stacksize);
+
 /* scheduler.c */
 int coro_yield(void);
+void coro_yield_all(void);
 
 /* mutex.c */
 int coro_mutex_init(coro_mutex_t* mutex, coro_mutexattr_t* attr);

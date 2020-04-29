@@ -368,26 +368,28 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame* frame)
     reg_t pfla = read_cr2();
 
 #ifdef PROTECT_DEBUG
-    if (frame->err_code & PG_PRESENT) {
+    if (frame->err_code & ARCH_PG_PRESENT) {
         printk("  Protection violation ");
     } else {
         printk("  Page not present ");
     }
 
-    if (frame->err_code & PG_RW) {
+    if (frame->err_code & ARCH_PG_RW) {
         printk("caused by write access ");
     } else {
         printk("caused by read access ");
     }
 
-    if (frame->err_code & PG_USER) {
+    if (frame->err_code & ARCH_PG_USER) {
         printk("in user mode");
     } else {
         printk("in supervisor mode");
     }
 
-    printk("\n  CR2(PFLA): 0x%x, CR3: 0x%x\n", pfla, read_cr3());
+    printk("\n  CR2(PFLA): 0x%x, CR3: 0x%x, EIP: 0x%x\n", pfla, read_cr3(),
+           frame->eip);
 #endif
+
     struct proc* fault_proc = get_cpulocal_var(proc_ptr);
 
     int in_phys_copy = (frame->eip >= (uintptr_t)phys_copy) &&

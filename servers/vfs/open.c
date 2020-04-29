@@ -54,27 +54,26 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
  * @param  p Ptr to the message.
  * @return   fd number if success, otherwise a negative error code.
  */
-PUBLIC int do_open(MESSAGE* p)
+PUBLIC int do_open(void)
 {
     /* get parameters from the message */
-    int flags = p->FLAGS;       /* open flags */
-    int name_len = p->NAME_LEN; /* length of filename */
-    int src = p->source;        /* caller proc nr. */
-    mode_t mode = p->MODE;      /* access mode */
-    struct fproc* pcaller = vfs_endpt_proc(src);
+    int flags = self->msg_in.FLAGS;       /* open flags */
+    int name_len = self->msg_in.NAME_LEN; /* length of filename */
+    int src = self->msg_in.source;        /* caller proc nr. */
+    mode_t mode = self->msg_in.MODE;      /* access mode */
 
     char pathname[MAX_PATH];
     if (name_len > MAX_PATH) {
         return -ENAMETOOLONG;
     }
 
-    data_copy(SELF, pathname, src, p->PATHNAME, name_len);
+    data_copy(SELF, pathname, src, self->msg_in.PATHNAME, name_len);
     pathname[name_len] = '\0';
 
-    return common_open(pcaller, pathname, flags, mode);
+    return common_open(pathname, flags, mode);
 }
 
-PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
+PUBLIC int common_open(char* pathname, int flags, mode_t mode)
 {
     int fd = -1; /* return fd */
     struct lookup lookup;
@@ -86,7 +85,7 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
 
     /* find a free slot in PROCESS::filp[] */
     struct file_desc* filp = NULL;
-    retval = get_fd(fp, 0, &fd, &filp);
+    retval = get_fd(fproc, 0, &fd, &filp);
     if (retval) return retval;
 
     struct inode* pin = NULL;
@@ -94,9 +93,9 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     init_lookup(&lookup, pathname, 0, &vmnt, &pin);
 
     if (flags & O_CREAT) {
-        mode = I_REGULAR | (mode & ALL_MODES & fp->umask);
+        mode = I_REGULAR | (mode & ALL_MODES & fproc->umask);
         err_code = 0;
-        pin = new_node(fp, &lookup, flags, mode);
+        pin = new_node(fproc, &lookup, flags, mode);
         retval = err_code;
         if (retval == 0)
             exist = 0;
@@ -110,7 +109,7 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         lookup.vmnt_lock = RWL_READ;
         lookup.inode_lock = RWL_WRITE;
 
-        pin = resolve_path(&lookup, fp);
+        pin = resolve_path(&lookup, fproc);
         if (pin == NULL) {
             unlock_filp(filp);
             return -err_code;
@@ -119,19 +118,19 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
         if (vmnt) unlock_vmnt(vmnt);
     }
 
-    fp->filp[fd] = filp;
+    fproc->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
     filp->fd_inode = pin;
     filp->fd_mode = flags;
 
     if (exist) {
-        if ((retval = forbidden(fp, pin, bits)) == 0) {
+        if ((retval = forbidden(fproc, pin, bits)) == 0) {
             switch (pin->i_mode & I_TYPE) {
             case I_REGULAR:
                 /* truncate the inode */
                 if (flags & O_TRUNC) {
-                    if ((retval = forbidden(fp, pin, W_BIT)) != 0) {
+                    if ((retval = forbidden(fproc, pin, W_BIT)) != 0) {
                         break;
                     }
                     truncate_node(pin, 0);
@@ -143,7 +142,7 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
             case I_CHAR_SPECIAL: /* open char device */
             {
                 int dev = pin->i_specdev;
-                retval = cdev_open(dev, fp);
+                retval = cdev_open(dev);
                 break;
             }
             case I_BLOCK_SPECIAL:
@@ -156,11 +155,11 @@ PUBLIC int common_open(struct fproc* fp, char* pathname, int flags, mode_t mode)
     }
 
     DEB(printl("open file `%s' with inode_nr = %d, proc: %d, %d\n", pathname,
-               pin->i_num, fp->endpoint, fd));
+               pin->i_num, fproc->endpoint, fd));
     unlock_filp(filp);
 
     if (retval != 0) {
-        fp->filp[fd] = NULL;
+        fproc->filp[fd] = NULL;
         filp->fd_cnt = 0;
         filp->fd_mode = 0;
         filp->fd_inode = 0;
@@ -190,10 +189,13 @@ PUBLIC int close_fd(struct fproc* fp, int fd)
         unlock_inode(pin);
         put_inode(pin);
         filp->fd_inode = NULL;
+    } else if (filp->fd_cnt < 0) {
+        panic("VFS: invalid filp ref count");
     } else {
         unlock_inode(pin);
     }
-    unlock_filp(filp);
+
+    mutex_unlock(&filp->fd_lock);
     fp->filp[fd] = NULL;
 
     return 0;
@@ -204,13 +206,11 @@ PUBLIC int close_fd(struct fproc* fp, int fd)
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_close(MESSAGE* p)
+PUBLIC int do_close()
 {
-    int fd = p->FD;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
+    int fd = self->msg_in.FD;
 
-    return close_fd(pcaller, fd);
+    return close_fd(fproc, fd);
 }
 
 /**
@@ -295,6 +295,7 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
                            gid_t gid, char* pathname, mode_t mode,
                            struct lookup_result* res)
 {
+    printl("create\n");
     MESSAGE m;
 
     m.type = FS_CREATE;
@@ -312,7 +313,6 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
     res->fs_ep = fs_ep;
     res->inode_nr = m.CRINO;
     res->mode = m.CRMODE;
-    ;
     res->uid = m.CRUID;
     res->gid = m.CRGID;
     res->size = m.CRFILESIZE;
@@ -366,6 +366,7 @@ PUBLIC int do_lseek(MESSAGE* p)
 PRIVATE int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
                           gid_t gid, char* pathname, mode_t mode)
 {
+    printl("mkdir\n");
     MESSAGE m;
 
     memset(&m, 0, sizeof(MESSAGE));

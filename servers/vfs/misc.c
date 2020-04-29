@@ -32,6 +32,7 @@
 #include "proto.h"
 #include "fcntl.h"
 #include "global.h"
+#include "thread.h"
 
 PRIVATE int change_directory(struct fproc* fp, struct inode** ppin,
                              endpoint_t src, char* pathname, int len);
@@ -51,20 +52,37 @@ PUBLIC struct fproc* vfs_endpt_proc(endpoint_t ep)
     return NULL;
 }
 
-PUBLIC void lock_fproc(struct fproc* fp) { pthread_mutex_lock(&fp->lock); }
-
-PUBLIC void unlock_fproc(struct fproc* fp) { pthread_mutex_unlock(&fp->lock); }
-
-PUBLIC int do_fcntl(MESSAGE* p)
+PUBLIC void lock_fproc(struct fproc* fp)
 {
-    int fd = p->FD;
-    int request = p->REQUEST;
-    int argx = p->BUF_LEN;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
+    int retval;
+    struct worker_thread* old_self;
+
+    retval = mutex_trylock(&fp->lock);
+    if (retval == 0) {
+        return;
+    }
+
+    /* need blocking */
+    old_self = worker_suspend();
+
+    retval = mutex_lock(&fp->lock);
+    if (retval != 0) {
+        panic("failed to acquire proc lock: %d", retval);
+    }
+
+    worker_resume(old_self);
+}
+
+PUBLIC void unlock_fproc(struct fproc* fp) { mutex_unlock(&fp->lock); }
+
+PUBLIC int do_fcntl()
+{
+    int fd = self->msg_in.FD;
+    int request = self->msg_in.REQUEST;
+    int argx = self->msg_in.BUF_LEN;
     int retval = 0;
 
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
     if (!filp) return EBADF;
 
     int newfd;
@@ -73,13 +91,13 @@ PUBLIC int do_fcntl(MESSAGE* p)
         if (argx < 0 || argx >= NR_FILES) return -EINVAL;
 
         newfd = -1;
-        retval = get_fd(pcaller, argx, &newfd, NULL);
+        retval = get_fd(fproc, argx, &newfd, NULL);
         if (retval) {
             unlock_filp(filp);
             return retval;
         }
         filp->fd_cnt++;
-        pcaller->filp[newfd] = filp;
+        fproc->filp[newfd] = filp;
         retval = newfd;
         break;
     case F_SETFD:
@@ -121,7 +139,7 @@ PUBLIC int do_dup(MESSAGE* p)
     if (pcaller->filp[newfd] != 0) {
         /* close the file */
         p->FD = newfd;
-        do_close(p);
+        close_fd(pcaller, newfd);
     }
 
     filp->fd_cnt++;
@@ -134,26 +152,21 @@ PUBLIC int do_dup(MESSAGE* p)
 /**
  * <Ring 1> Perform the CHDIR syscall.
  */
-PUBLIC int do_chdir(MESSAGE* p)
+PUBLIC int do_chdir(void)
 {
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-    return change_directory(pcaller, &pcaller->pwd, p->source, p->PATHNAME,
-                            p->NAME_LEN);
+    return change_directory(fproc, &fproc->pwd, fproc->endpoint,
+                            self->msg_in.PATHNAME, self->msg_in.NAME_LEN);
 }
 
 /**
  * <Ring 1> Perform the FCHDIR syscall.
  */
-PUBLIC int do_fchdir(MESSAGE* p)
+PUBLIC int do_fchdir(void)
 {
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-
-    struct file_desc* filp = get_filp(pcaller, p->FD, RWL_READ);
+    struct file_desc* filp = get_filp(fproc, self->msg_in.FD, RWL_READ);
     if (!filp) return EBADF;
 
-    int retval = change_node(pcaller, &pcaller->pwd, filp->fd_inode);
+    int retval = change_node(fproc, &fproc->pwd, filp->fd_inode);
     unlock_filp(filp);
     return retval;
 }
@@ -221,22 +234,22 @@ PRIVATE int change_node(struct fproc* fp, struct inode** ppin,
     return retval;
 }
 
-PUBLIC int do_mm_request(MESSAGE* m)
+PUBLIC int do_mm_request(void)
 {
-    int req_type = m->MMRTYPE;
-    int fd = m->MMRFD;
+    int req_type = self->msg_in.MMRTYPE;
+    int fd = self->msg_in.MMRFD;
     int result = 0;
-    endpoint_t ep = m->MMRENDPOINT;
+    endpoint_t ep = self->msg_in.MMRENDPOINT;
     struct fproc* fp = vfs_endpt_proc(ep);
     struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
-    size_t len = m->MMRLENGTH;
-    off_t offset = m->MMROFFSET;
-    phys_bytes buf = (phys_bytes)m->MMRBUF;
-    void* vaddr = m->MMRBUF;
+    size_t len = self->msg_in.MMRLENGTH;
+    off_t offset = self->msg_in.MMROFFSET;
+    phys_bytes buf = (phys_bytes)self->msg_in.MMRBUF;
+    void* vaddr = self->msg_in.MMRBUF;
 
     if (!mm_task) panic("mm not present!");
 
-    if (m->source != TASK_MM) return EPERM;
+    if (self->msg_in.source != TASK_MM) return EPERM;
     switch (req_type) {
     case MMR_FDLOOKUP: {
         if (!fp) {
@@ -245,12 +258,12 @@ PUBLIC int do_mm_request(MESSAGE* m)
         }
 
         struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
+
         if (!filp || !filp->fd_inode) {
             result = EBADF;
             goto reply;
         }
 
-        lock_fproc(mm_task);
         int mmfd;
         result = get_fd(mm_task, 0, &mmfd, NULL);
         if (result) {
@@ -258,16 +271,15 @@ PUBLIC int do_mm_request(MESSAGE* m)
         }
 
         filp->fd_cnt++;
-        filp->fd_inode->i_cnt++;
         mm_task->filp[mmfd] = filp;
-        unlock_fproc(mm_task);
 
-        m->MMRDEV = filp->fd_inode->i_dev;
-        m->MMRINO = filp->fd_inode->i_num;
-        m->MMRMODE = filp->fd_inode->i_mode;
-        m->MMRFD = mmfd;
+        self->msg_out.MMRDEV = filp->fd_inode->i_dev;
+        self->msg_out.MMRINO = filp->fd_inode->i_num;
+        self->msg_out.MMRMODE = filp->fd_inode->i_mode;
+        self->msg_out.MMRFD = mmfd;
 
         unlock_filp(filp);
+
         result = 0;
         break;
     }
@@ -290,7 +302,7 @@ PUBLIC int do_mm_request(MESSAGE* m)
             result =
                 request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset,
                                   READ, TASK_MM, (void*)buf, len, NULL, &count);
-            m->MMRLENGTH = count;
+            self->msg_out.MMRLENGTH = count;
         } else if (file_type == I_DIRECTORY) {
             unlock_filp(filp);
             result = EISDIR;
@@ -337,11 +349,11 @@ PUBLIC int do_mm_request(MESSAGE* m)
 
 reply:
     if (result != SUSPEND) {
-        m->MMRRESULT = result;
-        m->MMRENDPOINT = ep;
+        self->msg_out.MMRRESULT = result;
+        self->msg_out.MMRENDPOINT = ep;
 
-        m->type = MM_VFS_REPLY;
-        if (send_recv(SEND, TASK_MM, m) != 0)
+        self->msg_out.type = MM_VFS_REPLY;
+        if (asyncsend3(TASK_MM, &self->msg_out, 0) != 0)
             panic("vfs: do_mm_request(): cannot reply to mm");
     }
 
@@ -349,12 +361,12 @@ reply:
 }
 
 /* Perform fs part of fork/exit */
-PUBLIC int fs_fork(MESSAGE* p)
+PUBLIC int fs_fork(void)
 {
     int i;
-    struct fproc* child = vfs_endpt_proc(p->ENDPOINT);
-    struct fproc* parent = vfs_endpt_proc(p->PENDPOINT);
-    pthread_mutex_t cmutex;
+    struct fproc* child = vfs_endpt_proc(self->msg_in.ENDPOINT);
+    struct fproc* parent = vfs_endpt_proc(self->msg_out.PENDPOINT);
+    mutex_t cmutex;
 
     if (child == NULL || parent == NULL) {
         return EINVAL;
@@ -366,16 +378,14 @@ PUBLIC int fs_fork(MESSAGE* p)
     cmutex = child->lock;
     *child = *parent;
     child->lock = cmutex;
-    child->pid = p->PID;
-    child->endpoint = p->ENDPOINT;
+    child->pid = self->msg_in.PID;
+    child->endpoint = self->msg_in.ENDPOINT;
     child->flags |= FPF_INUSE;
 
     for (i = 0; i < NR_FILES; i++) {
-        struct file_desc* filp = get_filp(child, i, RWL_WRITE);
+        struct file_desc* filp = child->filp[i];
         if (filp) {
             filp->fd_cnt++;
-            filp->fd_inode->i_cnt++;
-            unlock_filp(filp);
         }
     }
 
@@ -387,10 +397,10 @@ PUBLIC int fs_fork(MESSAGE* p)
     return 0;
 }
 
-PUBLIC int fs_exit(MESSAGE* m)
+PUBLIC int fs_exit()
 {
     int i;
-    struct fproc* p = vfs_endpt_proc(m->ENDPOINT);
+    struct fproc* p = vfs_endpt_proc(self->msg_in.ENDPOINT);
 
     p->flags &= ~FPF_INUSE;
     for (i = 0; i < NR_FILES; i++) {

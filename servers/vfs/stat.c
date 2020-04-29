@@ -52,7 +52,7 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
     m.STSRC = src;
     m.STBUF = buf;
 
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     return m.STRET;
 }
@@ -62,16 +62,13 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_stat(MESSAGE* p)
+PUBLIC int do_stat(void)
 {
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-
-    int namelen = p->NAME_LEN + 1;
+    int namelen = self->msg_in.NAME_LEN + 1;
     char pathname[MAX_PATH];
     if (namelen > MAX_PATH) return ENAMETOOLONG;
 
-    data_copy(SELF, pathname, p->source, p->PATHNAME, namelen);
+    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
     pathname[namelen] = 0;
 
     struct lookup lookup;
@@ -80,11 +77,11 @@ PUBLIC int do_stat(MESSAGE* p)
     init_lookup(&lookup, pathname, 0, &vmnt, &pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
-    pin = resolve_path(&lookup, pcaller);
+    pin = resolve_path(&lookup, fproc);
     if (!pin) return ENOENT;
 
-    int retval =
-        request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num, p->source, p->BUF);
+    int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                              fproc->endpoint, self->msg_in.BUF);
 
     unlock_inode(pin);
     unlock_vmnt(vmnt);
@@ -98,19 +95,17 @@ PUBLIC int do_stat(MESSAGE* p)
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_fstat(MESSAGE* p)
+PUBLIC int do_fstat(void)
 {
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-    int fd = p->FD;
-    char* buf = p->BUF;
+    int fd = self->msg_in.FD;
+    char* buf = self->msg_in.BUF;
 
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
     if (!filp) return EINVAL;
 
     /* Issue the request */
     int retval = request_stat(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev,
-                              filp->fd_inode->i_num, src, buf);
+                              filp->fd_inode->i_num, fproc->endpoint, buf);
 
     unlock_filp(filp);
 

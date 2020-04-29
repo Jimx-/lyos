@@ -57,6 +57,7 @@ int coro_cond_wait(coro_cond_t* cond, coro_mutex_t* mutex)
         return retval;
     }
 
+    coro_queue_enqueue(&cond->wait_queue, current_thread);
     coro_suspend(CR_BLOCKED);
 
     if ((retval = coro_mutex_lock(mutex)) != 0) {

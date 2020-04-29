@@ -16,7 +16,7 @@
 #ifndef _PATH_H_
 #define _PATH_H_
 
-#include "rwlock.h"
+#include "thread.h"
 
 struct lookup {
     char* pathname;

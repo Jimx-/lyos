@@ -17,8 +17,7 @@
 #define _VFS_TYPES_H_
 
 #include <lyos/spinlock.h>
-#include "libpthread/pthread.h"
-#include "rwlock.h"
+#include "thread.h"
 
 /**
  * @struct inode
@@ -76,7 +75,7 @@ struct file_desc {
     int fd_pos;             /**< Current position for R/W. */
     int fd_cnt;             /**< How many procs share this desc */
     struct inode* fd_inode; /**< Ptr to the i-node */
-    pthread_mutex_t fd_lock;
+    mutex_t fd_lock;
 
     int fd_selectors; /**< How many selectors blocked on this desc */
     int fd_select_ops;

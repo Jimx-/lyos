@@ -316,7 +316,7 @@ PUBLIC void worker_wake(struct worker_thread* thread)
     pthread_mutex_unlock(&thread->event_mutex);
 }
 
-PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg)
+PUBLIC void revive_proc(endpoint_t endpoint, int result)
 {
     /* revive a blocked process after returning from a blocking call */
     struct vfs_message* req =
@@ -324,4 +324,6 @@ PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg)
     memcpy(&req->msg, msg, sizeof(MESSAGE));
     req->msg.source = endpoint;
     enqueue_response(req);
+
+    send_recv(SEND_NONBLOCK, fproc->endpoint, &self->msg_out);
 }

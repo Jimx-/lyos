@@ -61,7 +61,7 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     if (m.type != FSREQ_RET) {
         printl("VFS: request_readwrite: received invalid message.");
@@ -80,16 +80,14 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
  * @return   On success, the number of bytes read is returned. Otherwise a
  *           negative error code is returned.
  */
-PUBLIC int do_rdwt(MESSAGE* p)
+PUBLIC int do_rdwt()
 {
-    int fd = p->FD;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-    int rw_flag = p->type;
+    int fd = self->msg_in.FD;
+    int rw_flag = self->msg_in.type;
     rwlock_type_t lock_type = (rw_flag == WRITE) ? RWL_WRITE : RWL_READ;
-    struct file_desc* filp = get_filp(pcaller, fd, lock_type);
-    char* buf = p->BUF;
-    int len = p->CNT;
+    struct file_desc* filp = get_filp(fproc, fd, lock_type);
+    char* buf = self->msg_in.BUF;
+    int len = self->msg_in.CNT;
 
     size_t bytes_rdwt = 0;
     int retval = 0;
@@ -111,10 +109,10 @@ PUBLIC int do_rdwt(MESSAGE* p)
 
     /* TODO: read/write for block special */
     if (file_type == I_CHAR_SPECIAL) {
-        int t = p->type == READ ? CDEV_READ : CDEV_WRITE;
+        int t = self->msg_in.type == READ ? CDEV_READ : CDEV_WRITE;
         int dev = pin->i_specdev;
 
-        retval = cdev_io(t, dev, src, buf, position, len, pcaller);
+        retval = cdev_io(t, dev, fproc->endpoint, buf, position, len, fproc);
 
         unlock_filp(filp);
         return retval;
@@ -126,9 +124,9 @@ PUBLIC int do_rdwt(MESSAGE* p)
 
         /* issue the request */
         size_t bytes = 0;
-        retval =
-            request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position,
-                              rw_flag, src, buf, len, &newpos, &bytes);
+        retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                                   position, rw_flag, fproc->endpoint, buf, len,
+                                   &newpos, &bytes);
 
         bytes_rdwt += bytes;
         position = newpos;
@@ -165,8 +163,7 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
     m.RWBUF = buf;
     m.RWCNT = nbytes;
 
-    // async_sendrec(fs_ep, &m, 0);
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     if (m.RET_RETVAL == 0) {
         *newpos = m.RWPOS;
@@ -176,12 +173,10 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
     return -m.RET_RETVAL;
 }
 
-PUBLIC int do_getdents(MESSAGE* p)
+PUBLIC int do_getdents(void)
 {
-    int fd = p->FD;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    int fd = self->msg_in.FD;
+    struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
     if (!filp) return EBADF;
 
     if (!(filp->fd_inode->i_mode & R_BIT)) {
@@ -194,9 +189,10 @@ PUBLIC int do_getdents(MESSAGE* p)
     }
 
     u64 newpos;
-    int retval = request_getdents(
-        filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev, filp->fd_inode->i_num,
-        filp->fd_pos, p->source, p->BUF, p->CNT, &newpos);
+    int retval =
+        request_getdents(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev,
+                         filp->fd_inode->i_num, filp->fd_pos, fproc->endpoint,
+                         self->msg_in.BUF, self->msg_in.CNT, &newpos);
     if (retval > 0) filp->fd_pos = newpos;
 
     unlock_filp(filp);

@@ -24,9 +24,9 @@
 
 #include <lyos/param.h>
 
+#include "const.h"
 #include "fproc.h"
 #include "thread.h"
-#include "libpthread/pthread.h"
 
 EXTERN int system_hz;
 
@@ -40,16 +40,14 @@ extern u8* fsbuf;
 EXTERN MESSAGE fs_msg;
 EXTERN struct inode* root_inode;
 EXTERN int err_code;
+EXTERN struct fproc* fproc;
 
-EXTERN pthread_mutex_t filesystem_lock;
 extern struct list_head filesystem_table;
 /* vfs mount table */
 extern struct list_head vfs_mount_table;
 
 /* how many times the root is mounted */
 extern int have_root;
-
-extern int nr_workers;
 
 #define INODE_HASH_LOG2 7
 #define INODE_HASH_SIZE ((unsigned long)1 << INODE_HASH_LOG2)
@@ -58,8 +56,10 @@ extern int nr_workers;
 /* inode hash table */
 EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
 
-EXTERN volatile int fs_sleeping;
+extern int nr_workers;
 EXTERN struct worker_thread workers[NR_WORKER_THREADS];
+EXTERN struct worker_thread* self;
+EXTERN volatile int fs_sleeping;
 
 EXTERN struct sysinfo* sysinfo;
 

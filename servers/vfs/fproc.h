@@ -31,12 +31,15 @@ EXTERN struct fproc {
     int umask;
 
     struct file_desc* filp[NR_FILES];
-    pthread_mutex_t lock;
+    mutex_t lock;
 
+    MESSAGE msg;
+    void (*func)(void);
     struct worker_thread* worker;
 } fproc_table[NR_PROCS];
 
 #define FPF_INUSE 0x1
+#define FPF_PENDING 0x2
 
 PUBLIC void lock_fproc(struct fproc* fp);
 PUBLIC void unlock_fproc(struct fproc* fp);

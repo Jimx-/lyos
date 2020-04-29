@@ -42,9 +42,10 @@ PUBLIC int main()
     int reply;
 
     while (1) {
-        send_recv(RECEIVE, ANY, &m);
+        send_recv(RECEIVE_ASYNC, ANY, &m);
 
-        int msgtype = m.type;
+        int txn_id = VFS_TXN_GET_ID(m.type);
+        int msgtype = VFS_TXN_GET_TYPE(m.type);
         int src = m.source;
         reply = 1;
 
@@ -72,7 +73,7 @@ PUBLIC int main()
 
         /* reply */
         if (reply) {
-            m.type = FSREQ_RET;
+            m.type = VFS_TXN_TYPE_ID(FSREQ_RET, txn_id);
             send_recv(SEND, src, &m);
         }
     }

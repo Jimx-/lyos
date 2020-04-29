@@ -95,7 +95,14 @@ int coro_rwlock_unlock(coro_rwlock_t* rwlock)
         rwlock->writer = NO_THREAD;
 
         retval = coro_mutex_unlock(&rwlock->reader_queue);
+    } else if (rwlock->readers == 0 && rwlock->writer != NO_THREAD &&
+               rwlock->writer != current_thread) {
+        return EPERM;
     } else {
+        if (rwlock->readers == 0) {
+            panic("rwlock already unlocked");
+        }
+
         rwlock->readers--;
 
         if (rwlock->readers == 0 && rwlock->writer != NO_THREAD) {

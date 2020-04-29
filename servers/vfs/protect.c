@@ -189,25 +189,27 @@ PUBLIC int do_chmod(int type, MESSAGE* p)
     return 0;
 }
 
-PUBLIC int fs_getsetid(MESSAGE* p)
+PUBLIC int fs_getsetid(void)
 {
-    if (p->source != TASK_PM) return EPERM;
+    if (fproc->endpoint != TASK_PM) return EPERM;
 
-    struct fproc* fp = vfs_endpt_proc(p->ENDPOINT);
+    struct fproc* fp = vfs_endpt_proc(self->msg_in.ENDPOINT);
     int retval = 0;
+
+    assert(fp != fproc);
 
     if (fp == NULL)
         retval = EINVAL;
     else {
         lock_fproc(fp);
-        switch (p->u.m3.m3i3) {
+        switch (self->msg_in.u.m3.m3i3) {
         case GS_SETUID:
-            fp->realuid = p->UID;
-            fp->effuid = p->EUID;
+            fp->realuid = self->msg_in.UID;
+            fp->effuid = self->msg_in.EUID;
             break;
         case GS_SETGID:
-            fp->realgid = p->GID;
-            fp->effgid = p->EGID;
+            fp->realgid = self->msg_in.GID;
+            fp->effgid = self->msg_in.EGID;
             break;
         default:
             retval = EINVAL;
@@ -216,9 +218,10 @@ PUBLIC int fs_getsetid(MESSAGE* p)
         unlock_fproc(fp);
     }
 
-    p->type = PM_VFS_GETSETID_REPLY;
-    p->RETVAL = retval;
-    send_recv(SEND, TASK_PM, p);
+    self->msg_out.type = PM_VFS_GETSETID_REPLY;
+    self->msg_out.RETVAL = retval;
+    self->msg_out.ENDPOINT = self->msg_in.ENDPOINT;
+    send_recv(SEND, TASK_PM, &self->msg_out);
 
     return SUSPEND;
 }

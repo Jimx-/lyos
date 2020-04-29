@@ -27,4 +27,6 @@
 
 #define VMNT_READONLY 0x001
 
+#define NR_WORKER_THREADS 8
+
 #endif

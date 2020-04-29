@@ -41,7 +41,7 @@ PUBLIC int main(int argc, char* argv[])
     MESSAGE msg;
 
     while (TRUE) {
-        send_recv(RECEIVE, ANY, &msg);
+        send_recv(RECEIVE_ASYNC, ANY, &msg);
         int src = msg.source;
 
         switch (msg.type) {

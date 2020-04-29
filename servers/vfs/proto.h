@@ -17,13 +17,12 @@
 #define _VFS_PROTO_H_
 
 #include "path.h"
-#include "rwlock.h"
 #include "thread.h"
 
 PUBLIC int vfs_verify_endpt(endpoint_t ep, int* proc_nr);
 PUBLIC struct fproc* vfs_endpt_proc(endpoint_t ep);
 
-PUBLIC int do_register_filesystem(MESSAGE* p);
+PUBLIC int do_register_filesystem();
 PUBLIC int add_filesystem(endpoint_t fs_ep, char* name);
 PUBLIC endpoint_t get_filesystem_endpoint(char* name);
 
@@ -45,8 +44,8 @@ PUBLIC struct inode* last_dir(struct lookup* lookup, struct fproc* fp);
 PUBLIC struct vfs_mount* find_vfs_mount(dev_t dev);
 PUBLIC int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
 PUBLIC void unlock_vmnt(struct vfs_mount* vmnt);
-PUBLIC int mount_fs(struct fproc* fp, dev_t dev, char* mountpoint,
-                    endpoint_t fs_ep, int readonly);
+PUBLIC int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep,
+                    int readonly);
 PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access);
 PUBLIC mode_t do_umask(MESSAGE* p);
 PUBLIC void clear_vfs_mount(struct vfs_mount* vmnt);
@@ -60,20 +59,19 @@ PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
 PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly,
                              int is_root, struct lookup_result* res);
 
-PUBLIC int do_open(MESSAGE* p);
-PUBLIC int common_open(struct fproc* fp, char* pathname, int flags,
-                       mode_t mode);
-PUBLIC int do_close(MESSAGE* p);
+PUBLIC int do_open(void);
+PUBLIC int common_open(char* pathname, int flags, mode_t mode);
+PUBLIC int do_close(void);
 PUBLIC int close_fd(struct fproc* fp, int fd);
 PUBLIC int do_lseek(MESSAGE* p);
 PUBLIC int do_chroot(MESSAGE* p);
-PUBLIC int do_mount(MESSAGE* p);
+PUBLIC int do_mount(void);
 PUBLIC int do_umount(MESSAGE* p);
 PUBLIC int do_mkdir(MESSAGE* p);
 
 /* fs/Lyos/read_write.c */
-PUBLIC int do_rdwt(MESSAGE* p);
-PUBLIC int do_getdents(MESSAGE* p);
+PUBLIC int do_rdwt(void);
+PUBLIC int do_getdents(void);
 
 /* fs/Lyos/link.c */
 PUBLIC int do_unlink(MESSAGE* p);
@@ -81,11 +79,11 @@ PUBLIC int do_unlink(MESSAGE* p);
 PUBLIC int truncate_node(struct inode* pin, int newsize);
 
 PUBLIC int do_dup(MESSAGE* p);
-PUBLIC int do_chdir(MESSAGE* p);
-PUBLIC int do_fchdir(MESSAGE* p);
+PUBLIC int do_chdir(void);
+PUBLIC int do_fchdir(void);
 
-PUBLIC int do_mm_request(MESSAGE* m);
-PUBLIC int fs_exec(MESSAGE* msg);
+PUBLIC int do_mm_request(void);
+PUBLIC int fs_exec(void);
 
 PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
                         char* buf);
@@ -94,24 +92,35 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
                              int rw_flag, endpoint_t src, void* buf,
                              size_t nbytes, u64* newpos, size_t* bytes_rdwt);
 
-PUBLIC int do_stat(MESSAGE* p);
-PUBLIC int do_fstat(MESSAGE* p);
+PUBLIC int do_stat(void);
+PUBLIC int do_fstat(void);
 PUBLIC int do_access(MESSAGE* p);
 PUBLIC int do_chmod(int type, MESSAGE* p);
-PUBLIC int fs_getsetid(MESSAGE* p);
+PUBLIC int fs_getsetid(void);
 
-PUBLIC int do_ioctl(MESSAGE* p);
-PUBLIC int do_fcntl(MESSAGE* p);
+PUBLIC int do_ioctl(void);
+PUBLIC int do_fcntl(void);
 
-PUBLIC int fs_fork(MESSAGE* p);
-PUBLIC int fs_exit(MESSAGE* m);
+PUBLIC int fs_fork(void);
+PUBLIC int fs_exit(void);
 
-PUBLIC pid_t create_worker(int id);
-PUBLIC void enqueue_request(MESSAGE* msg);
-PUBLIC struct vfs_message* dequeue_response();
-PUBLIC void lock_response_queue();
-PUBLIC void unlock_response_queue();
-PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg);
+/* worker.c */
+int rwlock_lock(rwlock_t* rwlock, rwlock_type_t lock_type);
+
+void worker_init(void);
+void worker_yield(void);
+void worker_wait(void);
+void worker_wake(struct worker_thread* worker);
+void worker_dispatch(struct fproc* fp, void (*func)(void), MESSAGE* msg);
+void worker_allow(int allow);
+struct worker_thread* worker_suspend(void);
+void worker_resume(struct worker_thread* worker);
+void revive_proc(endpoint_t endpoint, MESSAGE* msg);
+
+struct worker_thread* worker_get(thread_t tid);
+
+/* ipc.c */
+int fs_sendrec(endpoint_t fs_e, MESSAGE* msg);
 
 PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 PUBLIC void unlock_filp(struct file_desc* filp);
@@ -119,8 +128,8 @@ PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd,
                                   rwlock_type_t lock_type);
 PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
-PUBLIC int cdev_open(dev_t dev, struct fproc* fp);
-PUBLIC int cdev_close(dev_t dev, struct fproc* fp);
+PUBLIC int cdev_open(dev_t dev);
+PUBLIC int cdev_close(dev_t dev);
 PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
                    size_t count, struct fproc* fp);
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,

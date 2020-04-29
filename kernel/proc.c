@@ -374,6 +374,7 @@ PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 
         p_dest->recv_msg = 0;
         PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
+        p_dest->flags &= ~PF_RECV_ASYNC;
         p_dest->recvfrom = NO_TASK;
     } else { /* p_dest is not waiting for the msg */
         if (flags & IPCF_NONBLOCK) {
@@ -457,6 +458,7 @@ PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
 
         who_wanna_recv->recv_msg = NULL;
         PST_UNSET_LOCKED(who_wanna_recv, PST_RECEIVING);
+        who_wanna_recv->flags &= ~PF_RECV_ASYNC;
         who_wanna_recv->recvfrom = NO_TASK;
 
         goto out;
@@ -567,6 +569,7 @@ no_msg:
      */
     PST_SET_LOCKED(who_wanna_recv, PST_RECEIVING);
 
+    who_wanna_recv->flags |= (flags & IPCF_ASYNC) ? PF_RECV_ASYNC : 0;
     who_wanna_recv->recv_msg = m;
     who_wanna_recv->recvfrom = src;
 
@@ -615,6 +618,7 @@ PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
         }
 
         p->recv_msg = 0;
+        p->flags &= ~PF_RECV_ASYNC;
         PST_UNSET_LOCKED(p, PST_RECEIVING);
         p->recvfrom = NO_TASK;
 
@@ -770,6 +774,7 @@ PUBLIC int msg_notify(struct proc* p_to_send, endpoint_t dest)
         }
 
         p_dest->recv_msg = NULL;
+        p_dest->flags &= ~PF_RECV_ASYNC;
         PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
         p_dest->recvfrom = NO_TASK;
 
@@ -907,6 +912,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         if (!PST_IS_SET(p_dest, PST_SENDING) &&
             PST_IS_SET(p_dest,
                        PST_RECEIVING) && /* p_dest is waiting for the msg */
+            (p_dest->flags & PF_RECV_ASYNC) &&
             (p_dest->recvfrom == p_to_send->endpoint ||
              p_dest->recvfrom == ANY)) {
             retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
@@ -917,6 +923,7 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
             }
 
             p_dest->recv_msg = 0;
+            p_dest->flags &= ~PF_RECV_ASYNC;
             PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
             p_dest->recvfrom = NO_TASK;
         } else { /* tell dest that it has a pending async message */

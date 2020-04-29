@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <sys/syslimits.h>
 #include <sys/time.h>
+#include <lyos/timer.h>
 
 #include "types.h"
 #include "path.h"
@@ -38,7 +39,7 @@
 #define MAX_SELECTS 25
 
 PRIVATE struct select_entry {
-    pthread_mutex_t lock;
+    mutex_t lock;
     struct fproc* caller;
     endpoint_t endpoint;
     fd_set readfds, writefds, exceptfds;
@@ -86,8 +87,8 @@ PRIVATE struct fd_operation {
 #define SEL_EXCEPT CDEV_SEL_EXC
 #define SEL_NOTIFY CDEV_NOTIFY
 
-#define lock_select_entry(entry) pthread_mutex_lock(&(entry)->lock)
-#define unlock_select_entry(entry) pthread_mutex_unlock(&(entry)->lock)
+#define lock_select_entry(entry) mutex_lock(&(entry)->lock)
+#define unlock_select_entry(entry) mutex_unlock(&(entry)->lock)
 
 PUBLIC void init_select()
 {
@@ -96,7 +97,7 @@ PUBLIC void init_select()
         int i;
         for (i = 0; i < OPEN_MAX; i++)
             select_table[slot].filps[i] = NULL;
-        pthread_mutex_init(&select_table[slot].lock, NULL);
+        mutex_init(&select_table[slot].lock, NULL);
     }
 }
 
@@ -114,7 +115,7 @@ PUBLIC int do_select(MESSAGE* msg)
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
         if (select_table[slot].caller == NULL &&
-            !pthread_mutex_trylock(&select_table[slot].lock))
+            !mutex_trylock(&select_table[slot].lock))
             break;
     }
     if (slot == MAX_SELECTS) return ENOSPC;
@@ -520,7 +521,7 @@ PRIVATE void select_return(struct select_entry* entry)
     memset(&mess, 0, sizeof(mess));
     mess.type = SYSCALL_RET;
     mess.RETVAL = retval;
-    revive_proc(entry->endpoint, &mess);
+    /* revive_proc(entry->endpoint, &mess); */
 }
 
 PRIVATE void select_reply1(struct file_desc* filp, int status)

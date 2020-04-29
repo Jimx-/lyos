@@ -98,37 +98,43 @@ PRIVATE int cdev_sendrec(dev_t dev, MESSAGE* msg)
     return send_recv(BOTH, driver->endpoint, msg);
 }
 
-PRIVATE int cdev_opcl(int op, dev_t dev, struct fproc* fp)
+PRIVATE int cdev_opcl(int op, dev_t dev)
 {
     if (op != CDEV_OPEN && op != CDEV_CLOSE) {
         return EINVAL;
     }
 
+    struct fproc* driver = cdev_get(dev);
+    if (!driver) return ENXIO;
+
     MESSAGE driver_msg;
     driver_msg.type = op;
     driver_msg.u.m_vfs_cdev_openclose.minor = MINOR(dev);
-    driver_msg.u.m_vfs_cdev_openclose.id = fp->endpoint;
+    driver_msg.u.m_vfs_cdev_openclose.id = fproc->endpoint;
 
-    if (cdev_sendrec(dev, &driver_msg) != 0) {
+    if (asyncsend3(driver->endpoint, &driver_msg, 0)) {
         panic("vfs: cdev_opcl send message failed");
     }
+
+    self->recv_from = driver->endpoint;
+    self->msg_driver = &driver_msg;
+
+    worker_wait();
+    self->recv_from = NO_TASK;
 
     return driver_msg.u.m_vfs_cdev_reply.status;
 }
 
-PUBLIC int cdev_open(dev_t dev, struct fproc* fp)
-{
-    return cdev_opcl(CDEV_OPEN, dev, fp);
-}
+PUBLIC int cdev_open(dev_t dev) { return cdev_opcl(CDEV_OPEN, dev); }
 
-PUBLIC int cdev_close(dev_t dev, struct fproc* fp)
-{
-    return cdev_opcl(CDEV_CLOSE, dev, fp);
-}
+PUBLIC int cdev_close(dev_t dev) { return cdev_opcl(CDEV_CLOSE, dev); }
 
 PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
                    size_t count, struct fproc* fp)
 {
+    struct fproc* driver = cdev_get(dev);
+    if (!driver) return ENXIO;
+
     if (op != CDEV_READ && op != CDEV_WRITE && op != CDEV_IOCTL) {
         return EINVAL;
     }
@@ -146,7 +152,7 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
         driver_msg.u.m_vfs_cdev_readwrite.count = count;
     }
 
-    if (cdev_send(dev, &driver_msg) != 0) {
+    if (asyncsend3(driver->endpoint, &driver_msg, 0) != 0) {
         panic("vfs: cdev_io send message failed");
     }
 
@@ -185,20 +191,22 @@ PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
 PRIVATE void cdev_reply_generic(MESSAGE* msg)
 {
     endpoint_t endpoint = msg->u.m_vfs_cdev_reply.id;
+    int retval;
 
     struct fproc* fp = vfs_endpt_proc(endpoint);
     if (fp == NULL) return;
 
     struct worker_thread* worker = fp->worker;
-    if (worker != NULL && worker->driver_msg != NULL) {
-        *worker->driver_msg = *msg;
-        worker->driver_msg = NULL;
+    if (worker != NULL && worker->msg_driver != NULL) {
+        *worker->msg_driver = *msg;
+        worker->msg_driver = NULL;
         worker_wake(worker);
     } else {
         MESSAGE reply_msg;
         reply_msg.type = SYSCALL_RET;
-        reply_msg.RETVAL = msg->u.m_vfs_cdev_reply.status;
-        revive_proc(fp->endpoint, &reply_msg);
+        retval = msg->u.m_vfs_cdev_reply.status;
+        reply_msg.RETVAL = (retval == EINTR) ? EAGAIN : retval;
+        revive_proc(endpoint, &reply_msg);
     }
 }
 

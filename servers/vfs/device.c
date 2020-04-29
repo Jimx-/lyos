@@ -30,13 +30,11 @@
 #include "proto.h"
 #include "global.h"
 
-PUBLIC int do_ioctl(MESSAGE* p)
+PUBLIC int do_ioctl(void)
 {
-    int fd = p->FD;
+    int fd = self->msg_in.FD;
     int retval = 0;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
     if (filp == NULL) return EBADF;
 
     struct inode* pin = filp->fd_inode;
@@ -54,8 +52,8 @@ PUBLIC int do_ioctl(MESSAGE* p)
     if (file_type == I_BLOCK_SPECIAL) {
 
     } else {
-        retval =
-            cdev_io(CDEV_IOCTL, dev, p->source, p->BUF, 0, p->REQUEST, pcaller);
+        retval = cdev_io(CDEV_IOCTL, dev, fproc->endpoint, self->msg_in.BUF, 0,
+                         self->msg_in.REQUEST, fproc);
     }
 
     unlock_filp(filp);

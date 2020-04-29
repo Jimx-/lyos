@@ -229,6 +229,8 @@
 #define MSG_KERNLOG 0x2   /* the process has a kernellog message */
 
 #define VFS_REQ_BASE 1001
+#define VFS_TXN_BASE 1101
+#define IS_VFS_TXN_ID(t) ((t) >= VFS_TXN_BASE && (t) < MM_REQ_BASE)
 #define MM_REQ_BASE 1201
 #define PM_REQ_BASE 1501
 #define DRV_REQ_BASE 2001
@@ -345,6 +347,8 @@ enum msgtype {
     FS_GETDENTS,
     FS_THREAD_WAKEUP,
     FS_MKDIR,
+
+    FS_TXN_ID = VFS_TXN_BASE,
 
     /* message type for mm calls */
     MM_MAP_PHYS = MM_REQ_BASE,

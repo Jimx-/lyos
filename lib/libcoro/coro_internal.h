@@ -13,7 +13,7 @@ typedef enum {
 struct __coro_tcb {
     coro_thread_t id;
     coro_state_t state;
-    coro_thread_attr_t attr;
+    coro_attr_t attr;
     ucontext_t context;
     coro_mutex_t exitm;
     coro_cond_t exited;

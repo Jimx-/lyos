@@ -46,6 +46,13 @@ int coro_yield(void)
     return 0;
 }
 
+void coro_yield_all(void)
+{
+    while (!coro_queue_empty(&run_queue)) {
+        coro_yield();
+    }
+}
+
 void coro_suspend(coro_state_t state)
 {
     coro_tcb_t* tcb = coro_find_tcb(current_thread);

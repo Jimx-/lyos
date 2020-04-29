@@ -39,6 +39,7 @@ PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
                           struct lookup_result* ret)
 {
     MESSAGE m;
+    int retval;
 
     struct vfs_ucred ucred;
     ucred.uid = fp->effuid;
@@ -54,11 +55,9 @@ PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
     m.REQ_UCRED = &ucred;
 
     memset(ret, 0, sizeof(struct lookup_result));
-    send_recv(BOTH, fs_e, &m);
-    // async_sendrec(fs_e, &m, 0);
+    fs_sendrec(fs_e, &m);
 
-    int retval = m.RET_RETVAL;
-
+    retval = m.RET_RETVAL;
     ret->fs_ep = m.source;
 
     switch (retval) {
@@ -132,7 +131,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
     int num = start->i_num;
 
     ino_t root_ino = 0;
-    struct vfs_mount* vmnt = find_vfs_mount(dev);
+    struct vfs_mount *vmnt_tmp, *vmnt = find_vfs_mount(dev);
     if (vmnt == NULL) {
         err_code = EIO; /* no such mountpoint */
         return NULL;
@@ -146,8 +145,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
             return NULL;
         }
     }
-
-    *(lookup->vmnt) = vmnt;
+    *lookup->vmnt = vmnt;
 
     if (fp->root->i_dev == fp->pwd->i_dev) root_ino = fp->root->i_num;
 
@@ -169,19 +167,19 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
 
         struct inode* dir_pin = NULL;
         if (ret == EENTERMOUNT) {
-            list_for_each_entry(vmnt, &vfs_mount_table, list)
+            list_for_each_entry(vmnt_tmp, &vfs_mount_table, list)
             {
-                if (vmnt->m_dev != 0 && vmnt->m_mounted_on != NULL) {
-                    if (vmnt->m_mounted_on->i_num == res.inode_nr &&
-                        vmnt->m_mounted_on->i_fs_ep == res.fs_ep) {
-                        dir_pin = vmnt->m_root_node;
+                if (vmnt_tmp->m_dev != 0 && vmnt_tmp->m_mounted_on != NULL) {
+                    if (vmnt_tmp->m_mounted_on->i_num == res.inode_nr &&
+                        vmnt_tmp->m_mounted_on->i_fs_ep == res.fs_ep) {
+                        dir_pin = vmnt_tmp->m_root_node;
                         break;
                     }
                 }
             }
 
             if (dir_pin == NULL) {
-                if (vmnt) unlock_vmnt(vmnt);
+                if (vmnt_tmp) unlock_vmnt(vmnt_tmp);
                 *(lookup->vmnt) = NULL;
                 err_code = EIO;
                 return NULL;
@@ -204,6 +202,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
             err_code = EIO;
             return NULL;
         }
+
         ret = lock_vmnt(vmnt, RWL_WRITE);
         if (ret) {
             if (ret == EBUSY) {
@@ -212,6 +211,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
                 return NULL;
             }
         }
+        *lookup->vmnt = vmnt;
 
         ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino,
                              fp, &res);
@@ -222,6 +222,12 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
             err_code = ret;
             return NULL;
         }
+    }
+
+    if ((*lookup->vmnt) != NULL && lookup->vmnt_lock != RWL_WRITE) {
+        /* downgrade vmnt to requested lock level */
+        unlock_vmnt(*lookup->vmnt);
+        lock_vmnt(*lookup->vmnt, RWL_READ);
     }
 
     if ((pin = find_inode(res.dev, res.inode_nr)) == NULL) { /* not found */
@@ -238,7 +244,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
         new_pin->i_size = res.size;
         new_pin->i_fs_ep = res.fs_ep;
         new_pin->i_specdev = res.spec_dev;
-        new_pin->i_vmnt = find_vfs_mount(res.dev);
+        new_pin->i_vmnt = vmnt;
         if (!new_pin->i_vmnt) panic("VFS: resolve_path: vmnt not found");
 
         pin = new_pin;

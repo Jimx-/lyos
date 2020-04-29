@@ -37,7 +37,8 @@ PUBLIC int fsdriver_start(struct fsdriver* fsd)
     while (TRUE) {
         send_recv(RECEIVE_ASYNC, ANY, &m);
 
-        int msgtype = m.type;
+        int txn_id = VFS_TXN_GET_ID(m.type);
+        int msgtype = VFS_TXN_GET_TYPE(m.type);
         int src = m.source;
         reply = 1;
 
@@ -88,7 +89,7 @@ PUBLIC int fsdriver_start(struct fsdriver* fsd)
 
         /* reply */
         if (reply) {
-            m.type = FSREQ_RET;
+            m.type = VFS_TXN_TYPE_ID(FSREQ_RET, txn_id);
             send_recv(SEND, src, &m);
         }
 

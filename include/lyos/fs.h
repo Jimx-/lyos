@@ -109,4 +109,8 @@ struct vfs_ucred {
 
 #define _POSIX_SYMLOOP_MAX 8
 
+#define VFS_TXN_TYPE_ID(t, id) (((t) << 16) | ((id)&0xffff))
+#define VFS_TXN_GET_ID(t) ((t)&0xffff)
+#define VFS_TXN_GET_TYPE(t) (((t) >> 16) & 0xffff)
+
 #endif /* _FS_H_ */

@@ -148,7 +148,7 @@ PUBLIC int chardriver_task(struct chardriver* cd)
 {
     MESSAGE msg;
     while (TRUE) {
-        send_recv(RECEIVE, ANY, &msg);
+        send_recv(RECEIVE_ASYNC, ANY, &msg);
 
         chardriver_process(cd, &msg);
     }
