@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
@@ -48,13 +49,13 @@ int main(int argc, char* argv[])
         if (pid) {
             /* printf("Parent\n"); */
         } else {
-            close(fd_stdin);
-            close(fd_stdout);
-            close(fd_stderr);
+            close(0);
+            close(1);
+            close(2);
 
-            open(ttylist[i], O_RDWR);
-            open(ttylist[i], O_RDWR);
-            open(ttylist[i], O_RDWR);
+            assert(open(ttylist[i], O_RDWR) == 0);
+            assert(open(ttylist[i], O_RDWR) == 1);
+            assert(open(ttylist[i], O_RDWR) == 2);
 
             char* argv[] = {GETTY, NULL};
             _exit(execv(GETTY, argv));
