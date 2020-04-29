@@ -44,8 +44,10 @@ PUBLIC int do_ioctl(void)
     }
 
     int file_type = pin->i_mode & I_TYPE;
-    if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL)
+    if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL) {
+        unlock_filp(filp);
         return ENOTTY;
+    }
 
     dev_t dev = pin->i_specdev;
 
