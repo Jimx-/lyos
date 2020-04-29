@@ -365,7 +365,7 @@ PUBLIC int fs_fork(void)
 {
     int i;
     struct fproc* child = vfs_endpt_proc(self->msg_in.ENDPOINT);
-    struct fproc* parent = vfs_endpt_proc(self->msg_out.PENDPOINT);
+    struct fproc* parent = vfs_endpt_proc(self->msg_in.PENDPOINT);
     mutex_t cmutex;
 
     if (child == NULL || parent == NULL) {
@@ -378,6 +378,7 @@ PUBLIC int fs_fork(void)
     cmutex = child->lock;
     *child = *parent;
     child->lock = cmutex;
+
     child->pid = self->msg_in.PID;
     child->endpoint = self->msg_in.ENDPOINT;
     child->flags |= FPF_INUSE;
