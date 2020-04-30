@@ -9,3 +9,6 @@ fi
 
 PS1="\033[01;32m\u@\h\033[00m:\033[01;34m\w\a $PS1\033[00m"
 export PS1
+
+LSCOLORS=Gxfxcxdxbxegedabagacad
+export LSCOLORS

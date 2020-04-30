@@ -151,8 +151,23 @@ static void do_work(void)
     case FSTAT:
         self->msg_out.RETVAL = do_fstat();
         break;
+    case ACCESS:
+        self->msg_out.RETVAL = do_access();
+        break;
+    case LSEEK:
+        self->msg_out.RETVAL = do_lseek();
+        break;
+    case MKDIR:
+        self->msg_out.RETVAL = do_mkdir();
+        break;
+    case UMASK:
+        self->msg_out.RETVAL = (int)do_umask();
+        break;
     case FCNTL:
         self->msg_out.RETVAL = do_fcntl();
+        break;
+    case DUP:
+        self->msg_out.RETVAL = do_dup();
         break;
     case CHDIR:
         self->msg_out.RETVAL = do_chdir();
@@ -162,6 +177,10 @@ static void do_work(void)
         break;
     case MOUNT:
         self->msg_out.RETVAL = do_mount();
+        break;
+    case CHMOD:
+    case FCHMOD:
+        self->msg_in.RETVAL = do_chmod(msgtype);
         break;
     case GETDENTS:
         self->msg_out.RETVAL = do_getdents();
@@ -182,7 +201,6 @@ static void do_work(void)
         self->msg_out.RETVAL = do_mm_request();
         break;
     default:
-        panic("unknown type %d\n", msgtype);
         self->msg_out.RETVAL = ENOSYS;
         break;
     }

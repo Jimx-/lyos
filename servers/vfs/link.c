@@ -49,8 +49,7 @@ PRIVATE int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
     m.REQ_NUM = (int)num;
     m.REQ_FILESIZE = newsize;
 
-    // async_sendrec(fs_ep, &m, 0);
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     return m.RET_RETVAL;
 }

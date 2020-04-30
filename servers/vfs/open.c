@@ -295,7 +295,6 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
                            gid_t gid, char* pathname, mode_t mode,
                            struct lookup_result* res)
 {
-    printl("create\n");
     MESSAGE m;
 
     m.type = FS_CREATE;
@@ -307,8 +306,7 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
     m.CRNAMELEN = strlen(pathname);
     m.CRMODE = (int)mode;
 
-    // async_sendrec(fs_ep, &m, 0);
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     res->fs_ep = fs_ep;
     res->inode_nr = m.CRINO;
@@ -324,16 +322,14 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
  * @param  p Ptr to the message.
  * @return   Zero on success.
  */
-PUBLIC int do_lseek(MESSAGE* p)
+PUBLIC int do_lseek(void)
 {
-    int fd = p->FD;
-    int offset = p->OFFSET;
-    int whence = p->WHENCE;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
+    int fd = self->msg_in.FD;
+    int offset = self->msg_in.OFFSET;
+    int whence = self->msg_in.WHENCE;
     off_t pos, newpos;
 
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_WRITE);
+    struct file_desc* filp = get_filp(fproc, fd, RWL_WRITE);
     if (!filp) return EBADF;
 
     switch (whence) {
@@ -352,11 +348,13 @@ PUBLIC int do_lseek(MESSAGE* p)
     }
 
     newpos = pos + offset;
-    if (((offset > 0) && (newpos <= pos)) || ((offset < 0) && (newpos >= pos)))
+    if (((offset > 0) && (newpos <= pos)) ||
+        ((offset < 0) && (newpos >= pos))) {
+        unlock_filp(filp);
         return EOVERFLOW;
-    else {
+    } else {
         filp->fd_pos = newpos;
-        p->OFFSET = newpos;
+        self->msg_out.OFFSET = newpos;
     }
 
     unlock_filp(filp);
@@ -366,7 +364,6 @@ PUBLIC int do_lseek(MESSAGE* p)
 PRIVATE int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
                           gid_t gid, char* pathname, mode_t mode)
 {
-    printl("mkdir\n");
     MESSAGE m;
 
     memset(&m, 0, sizeof(MESSAGE));
@@ -379,24 +376,22 @@ PRIVATE int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
     m.CRNAMELEN = strlen(pathname);
     m.CRMODE = (int)mode;
 
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     return m.CRRET;
 }
 
-PUBLIC int do_mkdir(MESSAGE* p)
+PUBLIC int do_mkdir(void)
 {
-    int name_len = p->NAME_LEN; /* length of filename */
-    int src = p->source;        /* caller proc nr. */
-    mode_t mode = p->MODE;      /* access mode */
-    struct fproc* pcaller = vfs_endpt_proc(src);
+    int name_len = self->msg_in.NAME_LEN; /* length of filename */
+    mode_t mode = self->msg_in.MODE;      /* access mode */
 
     char pathname[MAX_PATH + 1];
     if (name_len > MAX_PATH) {
         return -ENAMETOOLONG;
     }
 
-    data_copy(SELF, pathname, src, p->PATHNAME, name_len);
+    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, name_len);
     pathname[name_len] = '\0';
 
     struct vfs_mount* vmnt;
@@ -408,17 +403,17 @@ PUBLIC int do_mkdir(MESSAGE* p)
     lookup.vmnt_lock = RWL_WRITE;
     lookup.inode_lock = RWL_WRITE;
 
-    mode_t bits = I_DIRECTORY | (mode & ALL_MODES & pcaller->umask);
-    if ((pin = last_dir(&lookup, pcaller)) == NULL) {
+    mode_t bits = I_DIRECTORY | (mode & ALL_MODES & fproc->umask);
+    if ((pin = last_dir(&lookup, fproc)) == NULL) {
         return errno;
     }
 
     if (!(pin->i_mode & I_DIRECTORY)) {
         retval = ENOTDIR;
-    } else if ((retval = forbidden(pcaller, pin, W_BIT | X_BIT)) == 0) {
-        retval = request_mkdir(pin->i_fs_ep, pin->i_dev, pin->i_num,
-                               pcaller->realuid, pcaller->realgid,
-                               lookup.pathname, bits);
+    } else if ((retval = forbidden(fproc, pin, W_BIT | X_BIT)) == 0) {
+        retval =
+            request_mkdir(pin->i_fs_ep, pin->i_dev, pin->i_num, fproc->realuid,
+                          fproc->realgid, lookup.pathname, bits);
     }
 
     unlock_inode(pin);

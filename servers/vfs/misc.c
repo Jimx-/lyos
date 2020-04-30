@@ -116,34 +116,32 @@ PUBLIC int do_fcntl()
 /**
  * <Ring 1> Perform the DUP and DUP2 syscalls.
  */
-PUBLIC int do_dup(MESSAGE* p)
+PUBLIC int do_dup(void)
 {
-    int fd = p->FD;
-    int newfd = p->NEWFD;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
+    int fd = self->msg_in.FD;
+    int newfd = self->msg_in.NEWFD;
     int retval = 0;
 
-    struct file_desc* filp = get_filp(pcaller, fd, RWL_READ);
+    struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
     if (!filp) return EBADF;
 
     if (newfd == -1) {
         /* find a free slot in PROCESS::filp[] */
-        retval = get_fd(pcaller, 0, &newfd, NULL);
+        retval = get_fd(fproc, 0, &newfd, NULL);
         if (retval) {
             unlock_filp(filp);
             return retval;
         }
     }
 
-    if (pcaller->filp[newfd] != 0) {
+    if (fproc->filp[newfd] != NULL) {
         /* close the file */
-        p->FD = newfd;
-        close_fd(pcaller, newfd);
+        self->msg_out.FD = newfd;
+        close_fd(fproc, newfd);
     }
 
     filp->fd_cnt++;
-    pcaller->filp[newfd] = filp;
+    fproc->filp[newfd] = filp;
     unlock_filp(filp);
 
     return newfd;

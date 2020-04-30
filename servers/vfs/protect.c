@@ -39,18 +39,13 @@
  * @param  p Ptr to the message.
  * @return   Zero if success. Otherwise -1.
  */
-PUBLIC int do_access(MESSAGE* p)
+PUBLIC int do_access(void)
 {
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-
-    int namelen = p->NAME_LEN + 1;
+    int namelen = self->msg_in.NAME_LEN + 1;
     char pathname[MAX_PATH];
     if (namelen > MAX_PATH) return ENAMETOOLONG;
 
-    data_copy(SELF, pathname, p->source, p->PATHNAME, namelen);
-    // phys_copy(va2pa(getpid(), pathname), va2pa(p->source, p->PATHNAME),
-    // namelen);
+    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
     pathname[namelen] = 0;
 
     struct lookup lookup;
@@ -59,10 +54,10 @@ PUBLIC int do_access(MESSAGE* p)
     init_lookup(&lookup, pathname, 0, &vmnt, &pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_WRITE;
-    pin = resolve_path(&lookup, pcaller);
+    pin = resolve_path(&lookup, fproc);
     if (!pin) return ENOENT;
 
-    int retval = forbidden(pcaller, pin, p->MODE);
+    int retval = forbidden(fproc, pin, self->msg_in.MODE);
 
     unlock_inode(pin);
     unlock_vmnt(vmnt);
@@ -110,13 +105,10 @@ PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access)
  * @param  p Ptr to the message.
  * @return   Complement of the old mask.
  */
-PUBLIC mode_t do_umask(MESSAGE* p)
+PUBLIC mode_t do_umask(void)
 {
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-
-    mode_t old = ~(pcaller->umask);
-    pcaller->umask = ~((mode_t)p->MODE & RWX_MODES);
+    mode_t old = ~(fproc->umask);
+    fproc->umask = ~((mode_t)self->msg_in.MODE & RWX_MODES);
     return old;
 }
 
@@ -130,51 +122,59 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode,
     m.REQ_MODE = mode;
 
     // async_sendrec(fs_ep, &m, 0);
-    send_recv(BOTH, fs_ep, &m);
+    fs_sendrec(fs_ep, &m);
 
     *result = (mode_t)m.RET_MODE;
 
     return m.RET_RETVAL;
 }
 
-PUBLIC int do_chmod(int type, MESSAGE* p)
+PUBLIC int do_chmod(int type)
 {
     struct inode* pin = NULL;
     struct vfs_mount* vmnt = NULL;
-    endpoint_t src = p->source;
-    struct fproc* pcaller = vfs_endpt_proc(src);
     struct file_desc* filp = NULL;
 
     struct lookup lookup;
     if (type == CHMOD) {
         char pathname[MAX_PATH];
-        if (p->NAME_LEN > MAX_PATH) return ENAMETOOLONG;
+        if (self->msg_in.NAME_LEN > MAX_PATH) return ENAMETOOLONG;
 
         /* fetch the name */
-        data_copy(SELF, pathname, pcaller->endpoint, p->PATHNAME, p->NAME_LEN);
-        pathname[p->NAME_LEN] = '\0';
+        data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME,
+                  self->msg_in.NAME_LEN);
+        pathname[self->msg_in.NAME_LEN] = '\0';
 
         init_lookup(&lookup, pathname, 0, &vmnt, &pin);
         lookup.vmnt_lock = RWL_READ;
         lookup.inode_lock = RWL_WRITE;
-        pin = resolve_path(&lookup, pcaller);
+        pin = resolve_path(&lookup, fproc);
 
     } else if (type == FCHMOD) {
-        filp = get_filp(pcaller, p->FD, RWL_WRITE);
+        filp = get_filp(fproc, self->msg_in.FD, RWL_WRITE);
         if (!filp) return EBADF;
 
         pin = filp->fd_inode;
     }
 
-    if (!pin) return ENOENT;
+    if (!pin) {
+        if (filp) unlock_filp(filp);
+        return ENOENT;
+    }
 
-    if (pin->i_uid != pcaller->effuid && pcaller->effuid != SU_UID)
+    if (pin->i_uid != fproc->effuid && fproc->effuid != SU_UID) {
+        if (filp) unlock_filp(filp);
         return EPERM;
-    if (pin->i_vmnt->m_flags & VMNT_READONLY) return EROFS;
+    }
+
+    if (pin->i_vmnt->m_flags & VMNT_READONLY) {
+        if (filp) unlock_filp(filp);
+        return EROFS;
+    }
 
     mode_t result;
-    int retval =
-        request_chmod(pin->i_fs_ep, pin->i_dev, pin->i_num, p->MODE, &result);
+    int retval = request_chmod(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                               self->msg_in.MODE, &result);
 
     if (retval == 0) pin->i_mode = result;
 

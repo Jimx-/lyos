@@ -47,7 +47,7 @@ PUBLIC void unlock_vmnt(struct vfs_mount* vmnt);
 PUBLIC int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep,
                     int readonly);
 PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access);
-PUBLIC mode_t do_umask(MESSAGE* p);
+PUBLIC mode_t do_umask(void);
 PUBLIC void clear_vfs_mount(struct vfs_mount* vmnt);
 PUBLIC struct vfs_mount* get_free_vfs_mount();
 PUBLIC int do_vfs_open(MESSAGE* p);
@@ -63,11 +63,11 @@ PUBLIC int do_open(void);
 PUBLIC int common_open(char* pathname, int flags, mode_t mode);
 PUBLIC int do_close(void);
 PUBLIC int close_fd(struct fproc* fp, int fd);
-PUBLIC int do_lseek(MESSAGE* p);
+PUBLIC int do_lseek(void);
 PUBLIC int do_chroot(MESSAGE* p);
 PUBLIC int do_mount(void);
 PUBLIC int do_umount(MESSAGE* p);
-PUBLIC int do_mkdir(MESSAGE* p);
+PUBLIC int do_mkdir(void);
 
 /* fs/Lyos/read_write.c */
 PUBLIC int do_rdwt(void);
@@ -78,7 +78,7 @@ PUBLIC int do_unlink(MESSAGE* p);
 
 PUBLIC int truncate_node(struct inode* pin, int newsize);
 
-PUBLIC int do_dup(MESSAGE* p);
+PUBLIC int do_dup(void);
 PUBLIC int do_chdir(void);
 PUBLIC int do_fchdir(void);
 
@@ -94,8 +94,8 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
 
 PUBLIC int do_stat(void);
 PUBLIC int do_fstat(void);
-PUBLIC int do_access(MESSAGE* p);
-PUBLIC int do_chmod(int type, MESSAGE* p);
+PUBLIC int do_access(void);
+PUBLIC int do_chmod(int type);
 PUBLIC int fs_getsetid(void);
 
 PUBLIC int do_ioctl(void);
@@ -116,7 +116,6 @@ void worker_allow(int allow);
 struct worker_thread* worker_suspend(void);
 void worker_resume(struct worker_thread* worker);
 void revive_proc(endpoint_t endpoint, MESSAGE* msg);
-
 struct worker_thread* worker_get(thread_t tid);
 
 /* ipc.c */
