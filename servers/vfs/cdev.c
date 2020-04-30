@@ -82,22 +82,6 @@ PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
     return NULL;
 }
 
-PRIVATE int cdev_send(dev_t dev, MESSAGE* msg)
-{
-    struct fproc* driver = cdev_get(dev);
-    if (!driver) return ENXIO;
-
-    return send_recv(SEND, driver->endpoint, msg);
-}
-
-PRIVATE int cdev_sendrec(dev_t dev, MESSAGE* msg)
-{
-    struct fproc* driver = cdev_get(dev);
-    if (!driver) return ENXIO;
-
-    return send_recv(BOTH, driver->endpoint, msg);
-}
-
 PRIVATE int cdev_opcl(int op, dev_t dev)
 {
     if (op != CDEV_OPEN && op != CDEV_CLOSE) {
@@ -162,30 +146,31 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
                      size_t length, struct fproc* fp)
 {
-    MESSAGE driver_msg;
-    driver_msg.type = CDEV_MMAP;
-    driver_msg.u.m_vfs_cdev_mmap.minor = MINOR(dev);
-    driver_msg.u.m_vfs_cdev_mmap.addr = (void*)vaddr;
-    driver_msg.u.m_vfs_cdev_mmap.endpoint = src;
-    driver_msg.u.m_vfs_cdev_mmap.pos = offset;
-    driver_msg.u.m_vfs_cdev_mmap.count = length;
+    /* MESSAGE driver_msg; */
+    /* driver_msg.type = CDEV_MMAP; */
+    /* driver_msg.u.m_vfs_cdev_mmap.minor = MINOR(dev); */
+    /* driver_msg.u.m_vfs_cdev_mmap.addr = (void*)vaddr; */
+    /* driver_msg.u.m_vfs_cdev_mmap.endpoint = src; */
+    /* driver_msg.u.m_vfs_cdev_mmap.pos = offset; */
+    /* driver_msg.u.m_vfs_cdev_mmap.count = length; */
 
-    if (cdev_send(dev, &driver_msg) != 0) {
-        panic("vfs: cdev_mamp send message failed");
-    }
+    /* if (cdev_send(dev, &driver_msg) != 0) { */
+    /*     panic("vfs: cdev_mamp send message failed"); */
+    /* } */
 
     return SUSPEND;
 }
 
 PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
-    MESSAGE driver_msg;
-    memset(&driver_msg, 0, sizeof(MESSAGE));
-    driver_msg.type = CDEV_SELECT;
-    driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev);
-    driver_msg.u.m_vfs_cdev_select.ops = ops;
+    /* MESSAGE driver_msg; */
+    /* memset(&driver_msg, 0, sizeof(MESSAGE)); */
+    /* driver_msg.type = CDEV_SELECT; */
+    /* driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev); */
+    /* driver_msg.u.m_vfs_cdev_select.ops = ops; */
 
-    return cdev_send(dev, &driver_msg);
+    /* return cdev_send(dev, &driver_msg); */
+    return SUSPEND;
 }
 
 PRIVATE void cdev_reply_generic(MESSAGE* msg)

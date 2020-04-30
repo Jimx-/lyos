@@ -290,8 +290,6 @@ PUBLIC void init_vfs()
     add_filesystem(TASK_SYSFS, "sysfs");
     add_filesystem(TASK_DEVMAN, "devfs");
 
-    fs_sleeping = 0;
-
     get_sysinfo(&sysinfo);
     system_hz = get_system_hz();
 }

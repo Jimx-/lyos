@@ -34,10 +34,6 @@ EXTERN int system_hz;
 EXTERN int ROOT_DEV;
 EXTERN struct file_desc f_desc_table[NR_FILE_DESC];
 EXTERN struct inode inode_table[NR_INODE];
-#define FSBUF_SIZE 0x100000
-EXTERN u8 _fsbuf[FSBUF_SIZE];
-extern u8* fsbuf;
-EXTERN MESSAGE fs_msg;
 EXTERN struct inode* root_inode;
 EXTERN int err_code;
 EXTERN struct fproc* fproc;
@@ -56,10 +52,8 @@ extern int have_root;
 /* inode hash table */
 EXTERN struct list_head vfs_inode_table[INODE_HASH_SIZE];
 
-extern int nr_workers;
 EXTERN struct worker_thread workers[NR_WORKER_THREADS];
 EXTERN struct worker_thread* self;
-EXTERN volatile int fs_sleeping;
 
 EXTERN struct sysinfo* sysinfo;
 
