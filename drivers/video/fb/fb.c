@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <assert.h>
+#include <unistd.h>
 #include <lyos/const.h>
 #include <string.h>
 #include <lyos/fs.h>
@@ -53,6 +54,8 @@ PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
 
 PRIVATE int open_counter[NR_FB_DEVS];
 
+static bus_type_id_t fb_subsys_id;
+
 PRIVATE struct chardriver fbdriver = {
     .cdr_open = fb_open,
     .cdr_close = fb_close,
@@ -79,12 +82,32 @@ PUBLIC int main()
 
 PRIVATE int init_fb()
 {
+    int i;
+    struct device_info devinf;
+    device_id_t device_id;
+    dev_t devt;
+
     printl("fb: framebuffer driver is running\n");
 
-    int i;
+    fb_subsys_id = dm_bus_register("fb");
+    if (fb_subsys_id == BUS_TYPE_ERROR)
+        panic("tty: cannot register tty subsystem");
+
     for (i = 0; i < NR_FB_DEVS; i++) {
         open_counter[i] = 0;
-        dm_cdev_add(MAKE_DEV(DEV_CHAR_FB, i));
+        devt = MAKE_DEV(DEV_CHAR_FB, i);
+        dm_cdev_add(devt);
+
+        memset(&devinf, 0, sizeof(devinf));
+        snprintf(devinf.name, sizeof(devinf.name), "fb%d", i);
+        devinf.bus = fb_subsys_id;
+        devinf.parent = NO_DEVICE_ID;
+        devinf.devt = devt;
+        devinf.type = DT_CHARDEV;
+
+        device_id = dm_device_register(&devinf);
+        if (device_id == NO_DEVICE_ID)
+            panic("tty: cannot register console device");
     }
     return 0;
 }

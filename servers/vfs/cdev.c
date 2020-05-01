@@ -146,17 +146,20 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
 PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
                      size_t length, struct fproc* fp)
 {
-    /* MESSAGE driver_msg; */
-    /* driver_msg.type = CDEV_MMAP; */
-    /* driver_msg.u.m_vfs_cdev_mmap.minor = MINOR(dev); */
-    /* driver_msg.u.m_vfs_cdev_mmap.addr = (void*)vaddr; */
-    /* driver_msg.u.m_vfs_cdev_mmap.endpoint = src; */
-    /* driver_msg.u.m_vfs_cdev_mmap.pos = offset; */
-    /* driver_msg.u.m_vfs_cdev_mmap.count = length; */
+    struct fproc* driver = cdev_get(dev);
+    if (!driver) return ENXIO;
 
-    /* if (cdev_send(dev, &driver_msg) != 0) { */
-    /*     panic("vfs: cdev_mamp send message failed"); */
-    /* } */
+    MESSAGE driver_msg;
+    driver_msg.type = CDEV_MMAP;
+    driver_msg.u.m_vfs_cdev_mmap.minor = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_mmap.addr = (void*)vaddr;
+    driver_msg.u.m_vfs_cdev_mmap.endpoint = src;
+    driver_msg.u.m_vfs_cdev_mmap.pos = offset;
+    driver_msg.u.m_vfs_cdev_mmap.count = length;
+
+    if (asyncsend3(driver->endpoint, &driver_msg, 0) != 0) {
+        panic("vfs: cdev_io send message failed");
+    }
 
     return SUSPEND;
 }
@@ -205,9 +208,7 @@ PRIVATE void cdev_mmap_reply(endpoint_t endpoint, void* retaddr, int retval)
     reply_msg.MMRENDPOINT = endpoint;
     reply_msg.MMRBUF = retaddr;
 
-    if (send_recv(SEND, TASK_MM, &reply_msg) != 0) {
-        panic("vfs: cdev_mmap_reply(): cannot reply to mm");
-    }
+    revive_proc(TASK_MM, &reply_msg);
 }
 
 PUBLIC int cdev_reply(MESSAGE* msg)

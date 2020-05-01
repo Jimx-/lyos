@@ -62,14 +62,14 @@ int main(int argc, char* argv[])
         }
     }
 
-    /*
-    int fb = open("/dev/fb0", O_RDWR);
-    int* fbp = mmap(NULL, 4000, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
-    int* p;
-    for (p = fbp, i = 0; i < 1000; i++) {
-        *p++ = 0xff0000;
-    }
-    close(fb); */
+    /* int fb = open("/dev/fb0", O_RDWR); */
+    /* int* fbp = mmap(NULL, 4000, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+     */
+    /* int* p; */
+    /* for (p = fbp, i = 0; i < 1000; i++) { */
+    /*     *p++ = 0xff0000; */
+    /* } */
+    /* close(fb); */
 
     /*
     int shmid = shmget(IPC_PRIVATE, 0x100, IPC_CREAT | 0600);
