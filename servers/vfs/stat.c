@@ -78,6 +78,7 @@ PUBLIC int do_stat(void)
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
     pin = resolve_path(&lookup, fproc);
+
     if (!pin) return ENOENT;
 
     int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num,

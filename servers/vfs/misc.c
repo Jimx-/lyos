@@ -340,7 +340,7 @@ PUBLIC int do_mm_request(void)
         break;
     }
     case MMR_FDCLOSE: {
-        result = close_fd(fp, fd);
+        result = close_fd(mm_task, fd);
         break;
     }
     }

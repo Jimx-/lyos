@@ -684,6 +684,7 @@ PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
                            sizeof(tty->tty_pgrp));
         break;
     default:
+        retval = EINVAL;
         break;
     }
 

@@ -33,7 +33,7 @@
 
 #include "exec_elf.h"
 
-//#define ELF_DEBUG
+// #define ELF_DEBUG
 
 PRIVATE int elf_check_header(Elf_Ehdr* elf_hdr);
 PRIVATE int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr);

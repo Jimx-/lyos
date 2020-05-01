@@ -108,6 +108,10 @@ PUBLIC int main()
         case CDEV_SELECT_REPLY2:
             cdev_reply(&msg);
             break;
+        case PM_VFS_EXEC:
+            fproc = vfs_endpt_proc(msg.ENDPOINT);
+            dispatch_work(&msg, do_work);
+            break;
         default:
             dispatch_work(&msg, do_work);
             break;
@@ -207,7 +211,7 @@ static void do_work(void)
 
     if (self->msg_out.type != SUSPEND_PROC && self->msg_out.RETVAL != SUSPEND) {
         self->msg_out.type = SYSCALL_RET;
-        send_recv(SEND_NONBLOCK, fproc->endpoint, &self->msg_out);
+        send_recv(SEND_NONBLOCK, self->msg_in.source, &self->msg_out);
     }
 }
 

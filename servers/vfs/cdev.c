@@ -190,7 +190,7 @@ PRIVATE void cdev_reply_generic(MESSAGE* msg)
         MESSAGE reply_msg;
         reply_msg.type = SYSCALL_RET;
         retval = msg->u.m_vfs_cdev_reply.status;
-        reply_msg.RETVAL = (retval == EINTR) ? EAGAIN : retval;
+        reply_msg.RETVAL = (retval == -EINTR) ? -EAGAIN : retval;
         revive_proc(endpoint, &reply_msg);
     }
 }
