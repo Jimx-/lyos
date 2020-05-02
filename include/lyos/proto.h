@@ -100,6 +100,11 @@ PUBLIC void init_profile_clock(u32 freq);
 PUBLIC void stop_profile_clock();
 #endif
 
+/* watchdog.c */
+int init_profile_nmi(unsigned int freq);
+void stop_profile_nmi(void);
+void nmi_watchdog_handler();
+
 /* direct_tty.c */
 PUBLIC void direct_put_str(const char* str);
 PUBLIC int direct_print(const char* fmt, ...);

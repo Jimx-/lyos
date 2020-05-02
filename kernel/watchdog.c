@@ -18,6 +18,7 @@
 #include "sys/types.h"
 #include "stdio.h"
 #include "unistd.h"
+#include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/proc.h"
@@ -36,3 +37,46 @@
 
 int watchdog_enabled;
 struct arch_watchdog* watchdog;
+
+int init_profile_nmi(unsigned int freq)
+{
+    int retval;
+
+    if (!watchdog_enabled) {
+        return ENODEV;
+    }
+
+    if (!watchdog->init_profile) {
+        stop_profile_nmi();
+        return ENODEV;
+    }
+
+    retval = watchdog->init_profile(freq);
+    if (retval) return retval;
+
+    watchdog->reset_val = watchdog->profile_reset_val;
+
+    if (watchdog->reset) {
+        watchdog->reset(cpuid);
+    }
+
+    return 0;
+}
+
+void stop_profile_nmi(void)
+{
+    if (watchdog) {
+        watchdog->reset_val = watchdog->watchdog_reset_val;
+    }
+
+    if (!watchdog_enabled) {
+        arch_watchdog_stop();
+    }
+}
+
+void nmi_watchdog_handler()
+{
+    if ((watchdog_enabled || kprofiling) && watchdog->reset) {
+        watchdog->reset(cpuid);
+    }
+}

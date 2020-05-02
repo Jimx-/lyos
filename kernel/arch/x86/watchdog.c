@@ -6,6 +6,7 @@
 #include "stddef.h"
 #include <asm/protect.h>
 #include "lyos/const.h"
+#include <errno.h>
 #include "string.h"
 #include "lyos/proc.h"
 #include "lyos/global.h"
@@ -72,21 +73,22 @@ static void intel_watchdog_init(unsigned int cpu)
 {
     u64 cpu_freq;
     u32 val;
-    ia32_write_msr(INTEL_MSR_PMC0, 0, 0);
-
-    val = INTEL_MSR_ERFEVTSEL_INT_EN | INTEL_MSR_ERFEVTSEL_OS |
-          INTEL_MSR_ERFEVTSEL_USR | INTEL_MSR_ERFEVTSEL_UNHALTED_CORE_CYCLES;
-    ia32_write_msr(INTEL_MSR_ERFEVTSEL0, 0, val);
 
     cpu_freq = cpu_hz[cpu];
     while (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffff)
         cpu_freq >>= 1;
-    cpu_freq = make64(ex64hi(cpu_freq), -ex64lo(cpu_freq));
 
-    watchdog->reset_val = watchdog->watchdog_reset_val = cpu_freq;
+    watchdog->reset_val = watchdog->watchdog_reset_val = -cpu_freq;
 
-    ia32_write_msr(INTEL_MSR_PMC0, 0, ex64lo(watchdog->reset_val));
-    ia32_write_msr(INTEL_MSR_ERFEVTSEL0, 0, val | INTEL_MSR_ERFEVTSEL_EN);
+    /* set initial ctr0 value */
+    ia32_write_msr(INTEL_MSR_PERF_FIXED_CTR0, ex64hi(watchdog->reset_val),
+                   ex64lo(watchdog->reset_val));
+
+    /* enable ctr0 */
+    ia32_write_msr(INTEL_MSR_PERF_GLOBAL_CTRL, 0x1, 0);
+
+    /* count in OS & user mode, interrupt enabled */
+    ia32_write_msr(INTEL_MSR_PERF_FIXED_CTRL, 0, 0xb);
 
     /* unmask interrupt and deliver NMIs */
     lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
@@ -94,8 +96,17 @@ static void intel_watchdog_init(unsigned int cpu)
 
 static void intel_watchdog_reset(unsigned int cpu)
 {
+    ia32_write_msr(INTEL_MSR_PERF_FIXED_CTRL, 0, 0x0);
+
+    /* reload ctr0 value */
+    ia32_write_msr(INTEL_MSR_PERF_FIXED_CTR0, ex64hi(watchdog->reset_val),
+                   ex64lo(watchdog->reset_val));
+
+    /* force host to reprogram ctr0 */
+    ia32_write_msr(INTEL_MSR_PERF_FIXED_CTRL, 0, 0xb);
+
+    /* unmask interrupt and deliver NMIs */
     lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
-    ia32_write_msr(INTEL_MSR_PMC0, 0, ex64lo(watchdog->reset_val));
 }
 
 static int intel_watchdog_init_profile(unsigned int freq)
@@ -105,7 +116,12 @@ static int intel_watchdog_init_profile(unsigned int freq)
     cpu_freq = cpu_hz[cpuid];
     do_div(cpu_freq, freq);
 
-    cpu_freq = make64(0, -ex64lo(cpu_freq));
+    if (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffffU) {
+        printk("nmi watchdog ticks exceed 31 bits\n");
+        return EINVAL;
+    }
+
+    cpu_freq = -cpu_freq;
     watchdog->profile_reset_val = cpu_freq;
 
     return 0;

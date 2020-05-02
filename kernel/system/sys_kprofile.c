@@ -60,7 +60,7 @@ PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc)
         memset(&kprof_info, 0, sizeof(kprof_info));
 
         clear_recorded_flag();
-        init_profile_clock(freq);
+        init_profile_nmi(freq);
 
         kprofiling = 1;
         break;
@@ -69,7 +69,7 @@ PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc)
         if (!kprofiling) return EBUSY;
         kprofiling = 0;
 
-        stop_profile_clock();
+        stop_profile_nmi();
 
         int memsize = m->KP_SIZE;
         if (memsize > kprof_info.mem_used) {
