@@ -37,6 +37,31 @@
 #define IOAPIC_ARB 0x2
 #define IOAPIC_REDIR_TABLE 0x10
 
+#define APIC_ICR_DM_MASK 0x00000700
+#define APIC_ICR_VECTOR APIC_LVTT_VECTOR_MASK
+#define APIC_ICR_DM_FIXED (0 << 8)
+#define APIC_ICR_DM_LOWEST_PRIORITY (1 << 8)
+#define APIC_ICR_DM_SMI (2 << 8)
+#define APIC_ICR_DM_RESERVED (3 << 8)
+#define APIC_ICR_DM_NMI (4 << 8)
+#define APIC_ICR_DM_INIT (5 << 8)
+#define APIC_ICR_DM_STARTUP (6 << 8)
+#define APIC_ICR_DM_EXTINT (7 << 8)
+
+#define APIC_ICR_DM_PHYSICAL (0 << 11)
+#define APIC_ICR_DM_LOGICAL (1 << 11)
+
+#define APIC_ICR_DELIVERY_PENDING (1 << 12)
+
+#define APIC_ICR_INT_POLARITY (1 << 13)
+
+#define APIC_ICR_LEVEL_ASSERT (1 << 14)
+#define APIC_ICR_LEVEL_DEASSERT (0 << 14)
+
+#define APIC_ICR_TRIGGER (1 << 15)
+
+#define APIC_ICR_INT_MASK (1 << 16)
+
 #define MAX_IOAPICS 32
 
 #define lapic_read(what) (*((volatile u32*)((what))))

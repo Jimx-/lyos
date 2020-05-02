@@ -34,9 +34,17 @@ extern u32 k_stacks_start, k_stacks_end;
 #define SST_AMD_SYSCALL 2
 
 /* MSRs */
+#define INTEL_MSR_PMC0 0xc1
 #define INTEL_MSR_SYSENTER_CS 0x174
 #define INTEL_MSR_SYSENTER_ESP 0x175
 #define INTEL_MSR_SYSENTER_EIP 0x176
+#define INTEL_MSR_ERFEVTSEL0 0x186
+
+#define INTEL_MSR_ERFEVTSEL_UNHALTED_CORE_CYCLES (0x3c)
+#define INTEL_MSR_ERFEVTSEL_USR (1 << 16)
+#define INTEL_MSR_ERFEVTSEL_OS (1 << 17)
+#define INTEL_MSR_ERFEVTSEL_INT_EN (1 << 20)
+#define INTEL_MSR_ERFEVTSEL_EN (1 << 22)
 
 #define AMD_EFER_SCE (1L << 0)  /* SYSCALL/SYSRET enabled */
 #define AMD_MSR_EFER 0xC0000080 /* extended features msr */

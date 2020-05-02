@@ -1,7 +1,6 @@
-
 KERNELOBJS	= kernel.o kliba.o i8259.o start.o protect.o apic.o acpi.o \
 				system.o gate.o direct_tty.o page.o memory.o clock.o sys_sportio.o \
-				apic_asm.o fpu.o hpet.o tsc.o
+				apic_asm.o fpu.o hpet.o tsc.o watchdog.o
 
 ifeq ($(CONFIG_SMP),y)
 	KERNELOBJS += smp.o trampoline.o trampoline_32.o

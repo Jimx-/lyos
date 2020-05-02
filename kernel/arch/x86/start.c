@@ -33,6 +33,7 @@
 #include <asm/proto.h>
 #include <lyos/log.h>
 #include <lyos/spinlock.h>
+#include <lyos/watchdog.h>
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
@@ -189,6 +190,10 @@ PUBLIC void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     char* hz_value = env_get("hz");
     if (hz_value) system_hz = atoi(hz_value);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
+
+    watchdog_enabled = 0;
+    char* watchdog_value = env_get("watchdog");
+    if (watchdog_value) watchdog_enabled = atoi(watchdog_value);
 
     if (mb_flags & MULTIBOOT_INFO_VIDEO_INFO) {
     }

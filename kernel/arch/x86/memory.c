@@ -33,6 +33,7 @@
 #include "lyos/cpulocals.h"
 #include <lyos/param.h>
 #include <lyos/vm.h>
+#include <lyos/watchdog.h>
 #include <errno.h>
 #include "apic.h"
 #include <lyos/smp.h>
@@ -363,6 +364,12 @@ PRIVATE void setcr3(struct proc* p, void* cr3, void* cr3_v)
             io_apics[i].addr = io_apics[i].vir_addr;
         }
         hpet_addr = hpet_vaddr;
+
+        if (watchdog_enabled) {
+            if (arch_watchdog_init() != 0) {
+                watchdog_enabled = 0;
+            }
+        }
 
         smp_commence();
     }

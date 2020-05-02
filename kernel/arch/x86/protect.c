@@ -455,6 +455,11 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame* frame)
         printk("\n");
 #endif
 
+    if (frame->vec_no == 2) {
+        printk("NMI\n");
+        return;
+    }
+
     if (in_kernel) {
         if (frame->eip >= (uintptr_t)copy_user_message &&
             frame->eip < (uintptr_t)copy_user_message_end) {
