@@ -98,12 +98,13 @@ PUBLIC void init_sched();
 #if CONFIG_PROFILING
 PUBLIC void init_profile_clock(u32 freq);
 PUBLIC void stop_profile_clock();
+void nmi_profile_handler(int in_kernel, void* pc);
 #endif
 
 /* watchdog.c */
 int init_profile_nmi(unsigned int freq);
 void stop_profile_nmi(void);
-void nmi_watchdog_handler();
+void nmi_watchdog_handler(int in_kernel, void* pc);
 
 /* direct_tty.c */
 PUBLIC void direct_put_str(const char* str);

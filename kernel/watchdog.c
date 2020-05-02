@@ -74,9 +74,16 @@ void stop_profile_nmi(void)
     }
 }
 
-void nmi_watchdog_handler()
+void nmi_watchdog_handler(int in_kernel, void* pc)
 {
+    /* no locks are allowed in NMI handler */
+#if CONFIG_PROFILING
+    if (kprofiling) {
+        nmi_profile_handler(in_kernel, pc);
+    }
+
     if ((watchdog_enabled || kprofiling) && watchdog->reset) {
         watchdog->reset(cpuid);
     }
+#endif
 }

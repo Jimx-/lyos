@@ -25,6 +25,9 @@
 #define KPROF_START 1
 #define KPROF_STOP 2
 
+#define KPROF_TYPE_PROC ((u8)1)
+#define KPROF_TYPE_SAMPLE ((u8)2)
+
 struct kprof_sample {
     endpoint_t endpt;
     void* pc;

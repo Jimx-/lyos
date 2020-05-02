@@ -456,7 +456,7 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame* frame)
 #endif
 
     if (frame->vec_no == 2) {
-        nmi_watchdog_handler();
+        nmi_watchdog_handler(in_kernel, (void*)frame->eip);
         return;
     }
 

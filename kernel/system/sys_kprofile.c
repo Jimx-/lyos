@@ -77,7 +77,7 @@ PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc)
         }
 
         data_vir_copy(m->KP_ENDPT, m->KP_CTL, KERNEL, &kprof_info,
-                      sizeof(&kprof_info));
+                      sizeof(kprof_info));
         data_vir_copy(m->KP_ENDPT, m->KP_BUF, KERNEL, profile_sample_buf,
                       memsize);
         break;

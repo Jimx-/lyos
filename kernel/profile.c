@@ -43,37 +43,42 @@ PRIVATE irq_hook_t profile_clock_irq_hook;
 PRIVATE void profile_record_sample(struct proc* p, void* pc)
 {
     struct kprof_sample* s =
-        (struct kprof_sample*)(profile_sample_buf + kprof_info.mem_used);
+        (struct kprof_sample*)(profile_sample_buf + kprof_info.mem_used + 1);
+
+    profile_sample_buf[kprof_info.mem_used] = KPROF_TYPE_SAMPLE;
 
     s->endpt = p->endpoint;
     s->pc = pc;
 
-    kprof_info.mem_used += sizeof(struct kprof_sample);
+    kprof_info.mem_used += 1 + sizeof(struct kprof_sample);
 }
 
 PRIVATE void profile_record_proc(struct proc* p)
 {
     struct kprof_proc* s =
-        (struct kprof_proc*)(profile_sample_buf + kprof_info.mem_used);
+        (struct kprof_proc*)(profile_sample_buf + kprof_info.mem_used + 1);
+
+    profile_sample_buf[kprof_info.mem_used] = KPROF_TYPE_PROC;
 
     s->endpt = p->endpoint;
-    strcpy(s->name, p->name);
+    strlcpy(s->name, p->name, sizeof(s->name));
+    s->name[sizeof(s->name) - 1] = '\0';
     p->flags |= PF_PROFILE_RECORDED;
 
-    kprof_info.mem_used += sizeof(struct kprof_proc);
+    kprof_info.mem_used += 1 + sizeof(struct kprof_proc);
 }
 
 PRIVATE void profile_sample(struct proc* p, void* pc)
 {
     if (!kprofiling) return;
     if (kprof_info.mem_used + sizeof(struct kprof_sample) +
-            sizeof(struct kprof_proc) >
+            sizeof(struct kprof_proc) + 2 >
         KPROF_SAMPLE_BUFSIZE) {
         return;
     }
 
     lock_proc(p);
-    if (p == &get_cpulocal_var(idle_proc)) {
+    if (p == get_cpulocal_var_ptr(idle_proc)) {
         kprof_info.idle_samples++;
     } else if ((p->priv && (p->priv->flags & PRF_PRIV_PROC)) ||
                p->endpoint == KERNEL) {
@@ -123,6 +128,28 @@ PUBLIC void stop_profile_clock()
     arch_stop_profile_clock();
     disable_irq(&profile_clock_irq_hook);
     rm_irq_handler(&profile_clock_irq_hook);
+}
+
+void nmi_profile_handler(int in_kernel, void* pc)
+{
+    struct proc* p = get_cpulocal_var(proc_ptr);
+
+    if (in_kernel) {
+        struct proc* kp;
+        struct proc* idle = get_cpulocal_var_ptr(idle_proc);
+
+        if (p == idle) {
+            kprof_info.idle_samples++;
+            kprof_info.total_samples++;
+            return;
+        }
+
+        kp = endpt_proc(KERNEL);
+
+        profile_sample(kp, pc);
+    } else {
+        profile_sample(p, pc);
+    }
 }
 
 #endif

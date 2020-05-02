@@ -4,74 +4,80 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <lyos/profile.h>
-
-#define EACTION 1
-#define EBADARG 2
-#define EFREQ 3
 
 #define START 1
 #define STOP 2
-int action = 0;
-
-#define DEF_OUTFILE "profile.out"
-char* outfile = "";
-int outfile_fd;
 
 #define DEF_FREQ 6
-int freq = 0;
-
+#define DEF_OUTFILE "profile.out"
 #define DEF_MEMSIZE 4
-int memsize = 0;
 
-char* sample_buf = NULL;
-struct kprof_info kprof_info;
+#define OUTPUT_MAGIC 0x4652504b /* kprf */
+
+static const char* prog_name;
+static int action = 0;
+static char* outfile = "";
+static FILE* foutput;
+static int freq = 0;
+static size_t memsize = 0;
+static char* sample_buf = NULL;
+static struct kprof_info kprof_info;
 
 static int parse_args(int argc, char* argv[]);
 static int start();
 static int stop();
 
+void die(int error, const char* msg)
+{
+    fprintf(stderr, "%s: %s (%d)", prog_name, msg, error);
+    exit(EXIT_FAILURE);
+}
+
 int main(int argc, char* argv[])
 {
     int ret = parse_args(argc, argv);
     if (ret) {
-        return 1;
+        return EXIT_FAILURE;
     }
 
     switch (action) {
     case START:
-        if (start()) return 1;
+        if (start()) return EXIT_FAILURE;
         break;
     case STOP:
-        if (stop()) return 1;
+        if (stop()) return EXIT_FAILURE;
         break;
     default:
-        return 1;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 static int parse_args(int argc, char* argv[])
 {
+    prog_name = argv[0];
+
     while (--argc) {
         ++argv;
 
         if (strcmp(*argv, "start") == 0) {
             if (action) {
-                return EACTION;
+                return EINVAL;
             }
             action = START;
         } else if (strcmp(*argv, "stop") == 0) {
             if (action) {
-                return EACTION;
+                return EINVAL;
             }
             action = STOP;
         } else if (strcmp(*argv, "-f") == 0) {
-            if (--argc == 0) return EBADARG;
-            if (sscanf(*++argv, "%u", &freq) != 1) return EFREQ;
+            if (--argc == 0) return EINVAL;
+            if (sscanf(*++argv, "%u", &freq) != 1) return EINVAL;
         } else if (strcmp(*argv, "-o") == 0) {
-            if (--argc == 0) return EBADARG;
+            if (--argc == 0) return EINVAL;
             outfile = *++argv;
         }
     }
@@ -93,7 +99,7 @@ static int start() { return kprof(KPROF_START, 0, freq, NULL, NULL); }
 int alloc_mem()
 {
     if ((sample_buf = (char*)malloc(memsize)) == NULL) {
-        return 1;
+        return ENOMEM;
     } else
         memset(sample_buf, 0, memsize);
 
@@ -102,35 +108,50 @@ int alloc_mem()
 
 int init_outfile()
 {
-    if ((outfile_fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY)) == -1)
-        return 1;
+    foutput = fopen(outfile, "wb");
+    if (foutput == NULL) {
+        return errno;
+    }
+
     return 0;
 }
 
 int write_outfile()
 {
-    char header[100];
-    sprintf(header, "kprof\n%d %d %d\n", (int)sizeof(struct kprof_info),
-            (int)sizeof(struct kprof_proc), (int)sizeof(struct kprof_sample));
+    int header[4];
+    header[0] = OUTPUT_MAGIC;
+    header[1] = sizeof(struct kprof_info);
+    header[2] = sizeof(struct kprof_proc);
+    header[3] = sizeof(struct kprof_sample);
 
-    if (write(outfile_fd, header, strlen(header) < 0)) return 1;
+    if (fwrite(header, sizeof(int), 4, foutput) < 0) return errno;
+    if (fwrite(&kprof_info, sizeof(struct kprof_info), 1, foutput) < 0)
+        return errno;
 
-    int size = memsize;
-    if (memsize > kprof_info.mem_used) memsize = kprof_info.mem_used;
+    size_t size = memsize;
+    if (size > kprof_info.mem_used) size = kprof_info.mem_used;
 
-    if (write(outfile_fd, sample_buf, size < 0)) return 1;
+    if (fwrite(sample_buf, 1, size, foutput) < 0) return errno;
     return 0;
 }
 
 static int stop()
 {
-    if (alloc_mem()) return 1;
-    if (init_outfile()) return 1;
+    int retval;
 
-    int ret = kprof(KPROF_STOP, memsize, 0, &kprof_info, sample_buf);
-    if (ret) return ret;
+    if ((retval = alloc_mem()) != 0) return retval;
+    if ((retval = init_outfile()) != 0) {
+        die(retval, "cannot open output file");
+    }
 
-    if (write_outfile()) return 1;
+    retval = kprof(KPROF_STOP, memsize, 0, &kprof_info, sample_buf);
+    if (retval) return retval;
+
+    if ((retval = write_outfile()) != 0) {
+        die(retval, "cannot write to output");
+    }
+
+    fclose(foutput);
 
     return 0;
 }
