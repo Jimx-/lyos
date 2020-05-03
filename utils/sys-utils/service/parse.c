@@ -31,7 +31,7 @@ static void parse_pci_class(cJSON* root, struct service_up_req* up_req)
         char* check;
 
         unsigned char base_class = strtoul(str, &check, 0x10);
-        unsigned char sub_class, interface;
+        unsigned char sub_class = 0, interface = 0;
         unsigned int mask = 0xff0000;
 
         if (*check == '/') {

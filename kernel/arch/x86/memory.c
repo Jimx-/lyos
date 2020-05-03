@@ -458,6 +458,8 @@ PUBLIC int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
             target = vir_addrs[_DEST_]->proc_ep;
             fault_la = vir_addrs[_DEST_]->addr;
             write = 1;
+        } else {
+            return EINVAL;
         }
 
         mm_suspend(caller, target, fault_la, bytes, write, MMREQ_TYPE_SYSCALL);

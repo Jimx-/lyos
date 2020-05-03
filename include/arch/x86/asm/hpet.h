@@ -25,10 +25,24 @@
 #define HPET_CFG_ENABLE 0x001
 #define HPET_CFG_LEGACY 0x002
 
+extern void* hpet_addr;
+
 PUBLIC int init_hpet();
-PUBLIC u8 is_hpet_enabled();
-PUBLIC u32 hpet_read(u32 a);
-PUBLIC u64 hpet_readl(u32 a);
-PUBLIC u32 hpet_write(u32 a, u32 v);
+PUBLIC int is_hpet_enabled();
+
+static __attribute__((always_inline)) inline u32 hpet_read(u32 a)
+{
+    return *(volatile u32*)(hpet_addr + a);
+}
+
+static __attribute__((always_inline)) inline u64 hpet_readl(u32 a)
+{
+    return *(volatile u64*)(hpet_addr + a);
+}
+
+static __attribute__((always_inline)) inline u32 hpet_write(u32 a, u32 v)
+{
+    return *(volatile u32*)(hpet_addr + a) = v;
+}
 
 #endif

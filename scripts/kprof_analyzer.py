@@ -29,11 +29,12 @@ def load_samples(fin):
     mem_used, idle_samples, system_samples, user_samples, total_samples = struct.unpack(
         'iiiii', kprof_info)
 
+    sample_counts = (idle_samples, system_samples, user_samples, total_samples)
     procs = dict()
     samples = []
 
     payload = fin.read(mem_used)
-    while payload:
+    while len(payload) > 5:
         tag, payload = payload[0], payload[1:]
         endpoint = struct.unpack('i', payload[:4])[0]
         payload = payload[4:]
@@ -47,7 +48,7 @@ def load_samples(fin):
             payload = payload[4:]
             samples.append(dict(pc=pc, endpoint=endpoint))
 
-    return procs, samples
+    return sample_counts, procs, samples
 
 
 def get_symbols(procs, kernel, sbin, toolchain):
@@ -113,26 +114,59 @@ def get_progress_bar(percentage, length):
     return bar
 
 
-def print_report(procs, locs):
+def print_report(sample_counts, procs, locs):
+    idle_samples, system_samples, user_samples, total_samples = sample_counts
+
     slocs = sorted([(k, v) for k, v in locs.items()], key=lambda x: -x[1])
     total = sum([x[1] for x in slocs])
 
-    for ((endpoint, func), count) in slocs:
+    print('System process samples:'.rjust(25), end='')
+    print(
+        f'{system_samples} ({round(system_samples / total_samples * 100.0):3.0f}%)'
+        .rjust(15))
+    print('User process samples:'.rjust(25), end='')
+    print(
+        f'{user_samples} ({round(user_samples / total_samples * 100.0):3.0f}%)'
+        .rjust(15))
+    print('Idle samples:'.rjust(25), end='')
+    print(
+        f'{idle_samples} ({round(idle_samples / total_samples * 100.0):3.0f}%)'
+        .rjust(15))
+    print(('-' * 7 + '  ' + '-' * 4 + ' ').rjust(40))
+    print('Total samples:'.rjust(25), end='')
+    print(f'{total_samples} (100%)'.rjust(15))
+    print('')
+
+    print('-' * 80)
+    print('Total system process time' + f'{system_samples} samples'.rjust(55))
+    print('-' * 80)
+
+    for (endpoint, func), count in slocs:
+        percentage = count / total * 100.0
         print(procs[endpoint].lower().rjust(8), end='')
         print(func.rjust(35), end='')
         print(' ', end='')
-        print(get_progress_bar(count / total * 100.0, 40), end='')
-        print(f'{count / total * 100.0:.1f}%'.rjust(5), end='')
-        print('')
+        print(get_progress_bar(percentage, 30), end='')
+        print(f'{percentage:.1f}%'.rjust(6))
+
+        if percentage < 1.0:
+            break
+
+    rest = sum(
+        [count / total * 100.0 for _, count in slocs if count < total * 0.01])
+    print('<1%'.rjust(43), end='')
+    print(' ', end='')
+    print(get_progress_bar(rest, 30), end='')
+    print(f'{rest:.1f}%'.rjust(6))
 
 
 if __name__ == '__main__':
     args = parse_args()
 
     with open(args.input, 'rb') as fin:
-        procs, samples = load_samples(fin)
+        sample_counts, procs, samples = load_samples(fin)
         symbol_map = get_symbols(procs, args.kernel, args.sbin, args.toolchain)
 
         locs = get_sample_locs(samples, symbol_map)
 
-        print_report(procs, locs)
+        print_report(sample_counts, procs, locs)

@@ -25,13 +25,14 @@
 #define EXTERN extern
 
 typedef unsigned long long u64;
-PRIVATE inline u64 make64(unsigned long hi, unsigned long lo)
+PRIVATE __attribute__((always_inline)) inline u64 make64(unsigned long hi, unsigned long lo)
 {
     return ((u64)hi << 32) | (u64)lo;
 }
-PRIVATE inline unsigned long ex64lo(u64 i) { return (unsigned long)i; }
 
-PRIVATE inline unsigned long ex64hi(u64 i) { return (unsigned long)(i >> 32); }
+PRIVATE __attribute__((always_inline)) inline unsigned long ex64lo(u64 i) { return (unsigned long)i; }
+
+PRIVATE __attribute__((always_inline)) inline unsigned long ex64hi(u64 i) { return (unsigned long)(i >> 32); }
 
 typedef int s32;
 typedef unsigned int u32;

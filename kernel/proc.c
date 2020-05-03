@@ -288,7 +288,7 @@ PUBLIC void reset_msg(MESSAGE* p) { memset(p, 0, sizeof(MESSAGE)); }
 
 PUBLIC struct proc* endpt_proc(endpoint_t ep)
 {
-    int n;
+    int n = -1;
     if (!verify_endpt(ep, &n)) return NULL;
 
     return proc_addr(n);

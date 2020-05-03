@@ -100,7 +100,7 @@ int coro_rwlock_unlock(coro_rwlock_t* rwlock)
         return EPERM;
     } else {
         if (rwlock->readers == 0) {
-            panic("rwlock already unlocked");
+            return EPERM;
         }
 
         rwlock->readers--;

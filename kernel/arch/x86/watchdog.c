@@ -72,7 +72,6 @@ void arch_watchdog_stop(void) {}
 static void intel_watchdog_init(unsigned int cpu)
 {
     u64 cpu_freq;
-    u32 val;
 
     cpu_freq = cpu_hz[cpu];
     while (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffff)

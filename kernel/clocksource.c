@@ -88,6 +88,7 @@ PRIVATE void clocksource_select()
     if (curr_clocksource != NULL && curr_clocksource != selected)
         printk("kernel: switched to clocksource %s\n", selected->name);
     curr_clocksource = selected;
+
     spinlock_unlock(&clocksource_lock);
 }
 
@@ -196,16 +197,4 @@ PUBLIC void register_clocksource_hz(struct clocksource* cs, u32 hz)
 PUBLIC void register_clocksource_khz(struct clocksource* cs, u32 khz)
 {
     register_clocksource_scale(cs, 1000, khz);
-}
-
-/*****************************************************************************
- *                                clocksource_cyc2ns
- *****************************************************************************/
-/**
- * <Ring 0> Calculate time in nanoseconds from clocksource cycles.
- *
- *****************************************************************************/
-PUBLIC u64 clocksource_cyc2ns(struct clocksource* cs, u64 cycles)
-{
-    return (cycles * cs->mul) >> cs->shift;
 }

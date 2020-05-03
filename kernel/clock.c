@@ -176,7 +176,6 @@ PUBLIC int init_ap_timer(int freq)
  *****************************************************************************/
 PUBLIC void stop_context(struct proc* p)
 {
-    spinlock_lock(&clocksource_lock);
     u64* ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
 
     if (!curr_clocksource) return;
@@ -197,7 +196,6 @@ PUBLIC void stop_context(struct proc* p)
     }
 
     *ctx_switch_clock = cycle;
-    spinlock_unlock(&clocksource_lock);
 }
 
 PUBLIC void set_sys_timer(struct timer_list* timer)

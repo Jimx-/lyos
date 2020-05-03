@@ -64,7 +64,7 @@ PUBLIC void init_sched()
  *****************************************************************************/
 PUBLIC struct proc* pick_proc()
 {
-    struct proc *p, *selected;
+    struct proc *p, *selected = NULL;
     int q = -1, i, j;
     u64 smallest = -1;
 
