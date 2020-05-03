@@ -142,14 +142,14 @@ static void trace_exec_in(pid_t child, MESSAGE* msg)
 {
     printf("execve(");
     print_path(child, msg->PATHNAME, msg->NAME_LEN);
-    printf(", 0x%p)", msg->BUF);
+    printf(", %p)", msg->BUF);
 }
 
 static void trace_stat_in(pid_t child, MESSAGE* msg)
 {
     printf("stat(");
     print_path(child, msg->PATHNAME, msg->NAME_LEN);
-    printf(", 0x%p)", msg->BUF);
+    printf(", %p)", msg->BUF);
 }
 
 static void trace_chmod_in(pid_t child, MESSAGE* msg)
@@ -175,7 +175,7 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
         printf("close(%d)", msg.FD);
         break;
     case READ:
-        printf("read(%d, 0x%p, %d)", msg.FD, msg.BUF, msg.CNT);
+        printf("read(%d, %p, %d)", msg.FD, msg.BUF, msg.CNT);
         break;
     case WRITE:
         trace_write_in(child, &msg);
@@ -184,22 +184,22 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
         trace_stat_in(child, &msg);
         break;
     case FSTAT:
-        printf("fstat(%d, 0x%p)", msg.FD, msg.BUF);
+        printf("fstat(%d, %p)", msg.FD, msg.BUF);
         break;
     case EXEC:
         trace_exec_in(child, &msg);
         break;
     case BRK:
-        printf("brk(0x%p)", msg.ADDR);
+        printf("brk(%p)", msg.ADDR);
         break;
     case GETDENTS:
-        printf("getdents(%d, 0x%p, %d)", msg.FD, msg.BUF, msg.CNT);
+        printf("getdents(%d, %p, %d)", msg.FD, msg.BUF, msg.CNT);
         break;
     case EXIT:
         printf("exit(%d) = ?\n", msg.STATUS); /* exit has no return value */
         break;
     case MMAP:
-        printf("mmap(0x%p, %ld, %d, %d, %d, %ld)", msg.u.m_mm_mmap.vaddr,
+        printf("mmap(%p, %ld, %d, %d, %d, %ld)", msg.u.m_mm_mmap.vaddr,
                msg.u.m_mm_mmap.length, msg.u.m_mm_mmap.prot,
                msg.u.m_mm_mmap.flags, msg.u.m_mm_mmap.fd,
                msg.u.m_mm_mmap.offset);
