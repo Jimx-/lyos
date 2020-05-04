@@ -80,6 +80,8 @@ PUBLIC int _cpufeature(int cpufeature)
         return ecx & CPUID1_ECX_SSE4_1;
     case _CPUF_I386_SSE4_2:
         return ecx & CPUID1_ECX_SSE4_2;
+    case _CPUF_I386_HYPERVISOR:
+        return ecx & CPUID1_ECX_HYPERVISOR;
     case _CPUF_I386_HTT:
         return edx & CPUID1_EDX_HTT;
     case _CPUF_I386_HTT_MAX_NUM:

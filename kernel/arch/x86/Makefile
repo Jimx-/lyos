@@ -6,6 +6,10 @@ ifeq ($(CONFIG_SMP),y)
 	KERNELOBJS += smp.o trampoline.o trampoline_32.o
 endif
 
+ifeq ($(CONFIG_KVM_GUEST), y)
+	KERNELOBJS += kvm.o kvmclock.o
+endif
+
 ARCHKERNEL		= arch-kernel.o
 
 everything : realclean $(ARCHKERNEL)

@@ -11,7 +11,7 @@ config 64BIT
          Say no to build a 32-bit kernel - formerly known as i386
 
 config X86_32
-       def_bool y
+    def_bool y
     depends on !64BIT
 
 config X86_64
@@ -33,12 +33,12 @@ endmenu
 menu "Processor type and features"
 
 config X86_LOCAL_APIC
-	def_bool y
-	depends on SMP
+    def_bool y
+    depends on SMP
 
 config X86_IO_APIC
-	def_bool y
-	depends on SMP
+    def_bool y
+    depends on SMP
 
 config SMP
     bool "Symmetric multiprocessing"
@@ -51,5 +51,12 @@ config SMP_MAX_CPUS
     default "8"
     help
       The default value is 8 CPUs.
+
+config KVM_GUEST
+    bool "KVM Guest support"
+    default y
+    help
+      This option enables various optimizations for running under the KVM
+      hypervisor.
 
 endmenu

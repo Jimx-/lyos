@@ -209,6 +209,8 @@ update-disk:
 kvm:
 	@qemu-system-x86_64 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768 watchdog=1" -initrd "$(LYOSINITRD),$(DESTDIR)/sbin/mm,$(DESTDIR)/sbin/pm,$(DESTDIR)/sbin/servman,$(DESTDIR)/sbin/devman,$(DESTDIR)/sbin/sched,$(DESTDIR)/sbin/vfs,$(DESTDIR)/sbin/systask,$(DESTDIR)/sbin/tty,$(DESTDIR)/sbin/ramdisk,$(DESTDIR)/sbin/initfs,$(DESTDIR)/sbin/sysfs,$(DESTDIR)/sbin/ipc,$(DESTDIR)/sbin/pci,$(DESTDIR)/sbin/init" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 2048 -serial stdio -vga std -sdl -cpu host,pmu=true --enable-kvm
 
+kvm-telnet:
+	@qemu-system-x86_64 -smp 2 -kernel $(LYOSKERNEL) -append "console=ttyS0 video=1024x768 watchdog=1" -initrd "$(LYOSINITRD),$(DESTDIR)/sbin/mm,$(DESTDIR)/sbin/pm,$(DESTDIR)/sbin/servman,$(DESTDIR)/sbin/devman,$(DESTDIR)/sbin/sched,$(DESTDIR)/sbin/vfs,$(DESTDIR)/sbin/systask,$(DESTDIR)/sbin/tty,$(DESTDIR)/sbin/ramdisk,$(DESTDIR)/sbin/initfs,$(DESTDIR)/sbin/sysfs,$(DESTDIR)/sbin/ipc,$(DESTDIR)/sbin/pci,$(DESTDIR)/sbin/init" -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 2048 -serial telnet:localhost:4321,server,nowait -nographic -cpu host,pmu=true --enable-kvm
 
 kvm-disk:
 	@qemu-system-i386 -smp 2 -net nic,model=rtl8139 -net user -hda lyos-disk.img -m 1024 -serial stdio -sdl -vga std

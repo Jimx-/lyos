@@ -59,10 +59,6 @@ PRIVATE u32 pit_calibrate_tsc();
 
 PRIVATE void init_tsc_clocksource()
 {
-    /* TSC is not an ideal clocksource on SMP systems */
-#if CONFIG_SMP
-    tsc_clocksource.rating = 0;
-#endif
     register_clocksource_khz(&tsc_clocksource, tsc_khz);
 }
 

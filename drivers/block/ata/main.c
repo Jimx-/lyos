@@ -616,7 +616,7 @@ PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
 /**
  * <Ring 1> Get a partition table of a drive.
  *
- * @param drive   Drive nr (0 for the 1st disk, 1 for the 2nd, ...)n
+ * @param drive   Drive nr (0 for the 1st disk, 1 for the 2nd, ...)
  * @param sect_nr The sector at which the partition table is located.
  * @param entry   Ptr to part_ent struct.
  *****************************************************************************/
@@ -793,10 +793,14 @@ PRIVATE int hd_identify(int drive)
     cmd.device = current_drive->ldh;
     cmd.command = ATA_IDENTIFY;
     hd_cmd_out(&cmd);
+    waitfor(STATUS_BSY, 0, 0);
 
     u8 status;
     portio_inb(current_drive->base_cmd + REG_STATUS, &status);
     if (!status) return 0; /* this drive does not exist */
+
+    /* consume the interrupt notification */
+    interrupt_wait();
 
     if (waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT) &&
         !(current_drive->status & (STATUS_DFSE | STATUS_ERR))) {

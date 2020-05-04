@@ -35,14 +35,18 @@
 #include "acpi.h"
 #include <asm/tsc.h>
 #include <asm/hpet.h>
+#include <lyos/kvm_para.h>
 
 PRIVATE irq_hook_t timer_irq_hook;
 
 PUBLIC int arch_init_time()
 {
     init_hpet();
-
     init_tsc();
+
+#ifdef CONFIG_KVM_GUEST
+    init_kvmclock();
+#endif
 
     return 0;
 }
