@@ -23,35 +23,36 @@ global  arch_spinlock_unlock
 ;                  void arch_spinlock_lock(u32 * lock);
 ; ========================================================================
 arch_spinlock_lock:
-	mov	eax, [esp + 4]
-	mov	edx, 1
+    mov	eax, [esp + 4]
+    mov	edx, 1
 .2:
-	mov	ecx, 1
-	xchg ecx, [eax]
-	test ecx, ecx
-	je .0
+    mov	ecx, 1
+    xchg ecx, [eax]
+    test ecx, ecx
+    js .0
 
-	cmp	edx, 1 << 16
-	je	.1
-	shl	edx, 1
-.1:
-	mov	ecx, edx
-.3:
-	pause
-	sub ecx, 1
-	test ecx, ecx
-	jz .2
-	jmp	.3
+    mfence
+    ret
+
 .0:
-	mfence
-	ret
+    cmp	edx, 1 << 16
+    je	.1
+    shl	edx, 1
+.1:
+    mov	ecx, edx
+.3:
+    pause
+    sub ecx, 1
+    test ecx, ecx
+    jz .2
+    jmp	.3
 
 ; ========================================================================
 ;                  void arch_spinlock_unlock(u32 * lock);
 ; ========================================================================
 arch_spinlock_unlock:
-	mov	eax, [esp + 4]
-	mov	ecx, 0
-	xchg [eax], ecx
-	mfence
-	ret
+    mov	eax, [esp + 4]
+    mov	ecx, 0
+    xchg [eax], ecx
+    mfence
+    ret

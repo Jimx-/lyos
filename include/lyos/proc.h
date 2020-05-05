@@ -192,10 +192,6 @@ struct proc {
     } mm_request;
 };
 
-extern struct list_head sched_queues[SCHED_QUEUES];
-extern spinlock_t sched_queues_lock;
-extern bitchunk_t sched_queue_bitmap[];
-
 extern u32 rr_interval_ms;
 
 #define FIRST_PROC proc_table[0]

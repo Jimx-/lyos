@@ -43,7 +43,11 @@ PUBLIC u32 tsc_khz;
 PRIVATE u64 tsc_read(struct clocksource* cs)
 {
     u64 tsc;
-    read_tsc_64(&tsc);
+    unsigned long tsc_hi, tsc_lo;
+
+    read_tsc(&tsc_hi, &tsc_lo);
+    tsc = make64(tsc_hi, tsc_lo);
+
     return tsc;
 }
 

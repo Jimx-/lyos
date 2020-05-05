@@ -35,22 +35,20 @@
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
 
-PUBLIC struct list_head sched_queues[SCHED_QUEUES];
-PUBLIC spinlock_t sched_queues_lock;
-PUBLIC bitchunk_t sched_queue_bitmap[BITCHUNKS(SCHED_QUEUES)];
-
 PUBLIC u32 rr_interval_ms;
 
 #define JIFFIES_MS(j) (((j)*MSEC_PER_SEC) / system_hz)
 
-PRIVATE void dequeue_proc_locked(struct proc* p);
-
 PUBLIC void init_sched()
 {
-    int i = 0;
-    spinlock_init(&sched_queues_lock);
-    for (i = 0; i < SCHED_QUEUES; i++)
-        INIT_LIST_HEAD(&sched_queues[i]);
+    int i, cpu;
+    struct list_head* runqs;
+
+    for (cpu = 0; cpu < CONFIG_SMP_MAX_CPUS; cpu++) {
+        runqs = get_cpu_var(cpu, run_queues);
+        for (i = 0; i < SCHED_QUEUES; i++)
+            INIT_LIST_HEAD(&runqs[i]);
+    }
 
     rr_interval_ms = RR_INTERVAL_DEFAULT;
 }
@@ -67,13 +65,13 @@ PUBLIC struct proc* pick_proc()
     struct proc *p, *selected = NULL;
     int q = -1, i, j;
     u64 smallest = -1;
-
-    spinlock_lock(&sched_queues_lock);
+    struct list_head* runqs = get_cpulocal_var(run_queues);
+    bitchunk_t* bitmap = get_cpulocal_var(run_queue_bitmap);
 
     for (i = 0; i < BITCHUNKS(SCHED_QUEUES); i++) {
-        if (sched_queue_bitmap[i]) {
+        if (bitmap[i]) {
             for (j = 0; j < BITCHUNK_BITS; j++) {
-                if (sched_queue_bitmap[i] & (1 << j)) {
+                if (bitmap[i] & (1 << j)) {
                     q = i * BITCHUNK_BITS + j;
                     break;
                 }
@@ -83,11 +81,10 @@ PUBLIC struct proc* pick_proc()
     }
 
     if (q == -1) {
-        spinlock_unlock(&sched_queues_lock);
         return NULL;
     }
 
-    list_for_each_entry(p, &sched_queues[q], run_list)
+    list_for_each_entry(p, &runqs[q], run_list)
     {
         if (p->deadline < JIFFIES_MS(jiffies)) {
             selected = p;
@@ -100,9 +97,8 @@ PUBLIC struct proc* pick_proc()
         }
     }
 
-    dequeue_proc_locked(selected);
+    dequeue_proc(selected);
 
-    spinlock_unlock(&sched_queues_lock);
     return selected;
 }
 
@@ -123,35 +119,23 @@ PRIVATE int proc_queue(struct proc* p)
  */
 PUBLIC void enqueue_proc(struct proc* p)
 {
-    spinlock_lock(&sched_queues_lock);
-
     int queue = proc_queue(p);
+    struct list_head* runqs = get_cpulocal_var(run_queues);
+    bitchunk_t* bitmap = get_cpulocal_var(run_queue_bitmap);
 
-    list_add(&(p->run_list), &sched_queues[queue]);
-    SET_BIT(sched_queue_bitmap, queue);
-
-    spinlock_unlock(&sched_queues_lock);
+    list_add(&(p->run_list), &runqs[queue]);
+    SET_BIT(bitmap, queue);
 }
 
-PRIVATE void dequeue_proc_locked(struct proc* p)
+void dequeue_proc(struct proc* p)
 {
     int queue = proc_queue(p);
+    struct list_head* runqs = get_cpulocal_var(run_queues);
+    bitchunk_t* bitmap = get_cpulocal_var(run_queue_bitmap);
 
     list_del(&(p->run_list));
 
-    if (list_empty(&sched_queues[queue])) UNSET_BIT(sched_queue_bitmap, queue);
-}
-
-/**
- * <Ring 0> Remove a process from scheduling queue.
- */
-PUBLIC void dequeue_proc(struct proc* p)
-{
-    spinlock_lock(&sched_queues_lock);
-
-    dequeue_proc_locked(p);
-
-    spinlock_unlock(&sched_queues_lock);
+    if (list_empty(&runqs[queue])) UNSET_BIT(bitmap, queue);
 }
 
 /**

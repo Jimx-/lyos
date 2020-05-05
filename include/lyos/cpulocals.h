@@ -24,9 +24,9 @@ extern struct CPULOCAL_STRUCT {
     struct proc* pt_proc; /* proc whose page table is loaded */
     struct proc idle_proc;
 
-    /* run queue */
-    struct proc* run_queue_head[NR_SCHED_QUEUES];
-    struct proc* run_queue_tail[NR_SCHED_QUEUES];
+    /* run queues */
+    struct list_head run_queues[SCHED_QUEUES];
+    bitchunk_t run_queue_bitmap[BITCHUNKS(SCHED_QUEUES)];
 
     volatile int cpu_is_idle;
 
