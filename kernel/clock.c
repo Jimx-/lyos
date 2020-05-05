@@ -178,6 +178,7 @@ PUBLIC void stop_context(struct proc* p)
 {
     u64* ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
 
+    if (!curr_clocksource) return;
     u64 cycle = curr_clocksource->read(curr_clocksource);
     u64 delta = cycle - *ctx_switch_clock;
     p->cycles += delta;

@@ -1,6 +1,6 @@
 diff -rupN old/build-aux/config.sub new/build-aux/config.sub
 --- old/build-aux/config.sub	2011-08-28 15:36:41.000000000 +0800
-+++ new/build-aux/config.sub	2020-02-24 20:09:40.856901223 +0800
++++ new/build-aux/config.sub	2020-05-05 17:46:16.961121062 +0800
 @@ -1350,7 +1350,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -12,7 +12,7 @@ diff -rupN old/build-aux/config.sub new/build-aux/config.sub
  	-qnx*)
 diff -rupN old/lib/getaddrinfo.c new/lib/getaddrinfo.c
 --- old/lib/getaddrinfo.c	2011-01-02 05:23:07.000000000 +0800
-+++ new/lib/getaddrinfo.c	2020-02-24 20:09:40.910233792 +0800
++++ new/lib/getaddrinfo.c	2020-05-05 17:46:16.977787597 +0800
 @@ -137,200 +137,6 @@ getaddrinfo (const char *restrict nodena
               const struct addrinfo *restrict hints,
               struct addrinfo **restrict res)
@@ -300,7 +300,7 @@ diff -rupN old/lib/getaddrinfo.c new/lib/getaddrinfo.c
  }
 diff -rupN old/lib/getcwd.c new/lib/getcwd.c
 --- old/lib/getcwd.c	2011-08-20 00:09:37.000000000 +0800
-+++ new/lib/getcwd.c	2020-02-24 20:09:40.910233792 +0800
++++ new/lib/getcwd.c	2020-05-05 17:46:16.977787597 +0800
 @@ -101,6 +101,11 @@
     NULL, an array is allocated with `malloc'; the array is SIZE bytes long,
     unless SIZE == 0, in which case it is as big as necessary.  */
@@ -315,7 +315,7 @@ diff -rupN old/lib/getcwd.c new/lib/getcwd.c
  {
 diff -rupN old/lib/getdtablesize.c new/lib/getdtablesize.c
 --- old/lib/getdtablesize.c	2011-04-25 01:21:45.000000000 +0800
-+++ new/lib/getdtablesize.c	2020-02-24 20:09:40.910233792 +0800
++++ new/lib/getdtablesize.c	2020-05-05 17:46:16.977787597 +0800
 @@ -20,8 +20,6 @@
  /* Specification.  */
  #include <unistd.h>
@@ -363,7 +363,7 @@ diff -rupN old/lib/getdtablesize.c new/lib/getdtablesize.c
 -#endif
 diff -rupN old/lib/readlink.c new/lib/readlink.c
 --- old/lib/readlink.c	2011-04-25 01:21:45.000000000 +0800
-+++ new/lib/readlink.c	2020-02-24 20:09:40.923566934 +0800
++++ new/lib/readlink.c	2020-05-05 17:46:16.977787597 +0800
 @@ -23,7 +23,6 @@
  #include <string.h>
  #include <sys/stat.h>
@@ -388,9 +388,21 @@ diff -rupN old/lib/readlink.c new/lib/readlink.c
  }
 -
 -#endif /* HAVE_READLINK */
+diff -rupN old/lib/save-cwd.c new/lib/save-cwd.c
+--- old/lib/save-cwd.c	2011-04-30 03:39:05.000000000 +0800
++++ new/lib/save-cwd.c	2020-05-05 17:50:44.215666175 +0800
+@@ -87,7 +87,7 @@ restore_cwd (const struct saved_cwd *cwd
+   if (0 <= cwd->desc)
+     return fchdir (cwd->desc);
+   else
+-    return chdir_long (cwd->name);
++    return chdir (cwd->name);
+ }
+ 
+ void
 diff -rupN old/src/sort.c new/src/sort.c
 --- old/src/sort.c	2011-07-29 16:12:25.000000000 +0800
-+++ new/src/sort.c	2020-02-24 20:09:41.013565644 +0800
++++ new/src/sort.c	2020-05-05 17:46:16.941121220 +0800
 @@ -1,4637 +1,5 @@
 -/* sort - sort lines of text (with all kinds of options).
 -   Copyright (C) 1988, 1991-2011 Free Software Foundation, Inc.
@@ -5031,7 +5043,7 @@ diff -rupN old/src/sort.c new/src/sort.c
  }
 diff -rupN old/src/stat.c new/src/stat.c
 --- old/src/stat.c	2011-09-08 18:16:17.000000000 +0800
-+++ new/src/stat.c	2020-02-24 20:09:41.016898930 +0800
++++ new/src/stat.c	2020-05-05 17:46:16.941121220 +0800
 @@ -1,1486 +1,5 @@
 -/* stat.c -- display file or file system status
 -   Copyright (C) 2001-2011 Free Software Foundation, Inc.
