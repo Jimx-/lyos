@@ -143,7 +143,7 @@ setup-toolchain:
 
 $(CONFIGINC):
 	@echo -e '$(COLORYELLOW)Using default configuration$(COLORDEFAULT)'
-	@cp $(ARCHDIR)/configs/$(SUBARCH).conf $(CONFIGINC)
+	@cp $(DEFCONFIG) $(CONFIGINC)
 
 $(AUTOCONFINC):
 	@$(MAKE) -f Makefile silentoldconfig
