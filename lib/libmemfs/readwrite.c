@@ -76,7 +76,7 @@ PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
         if (chunk > memfs_bufsize) chunk = memfs_bufsize;
 
         if (rw_flag == WRITE) {
-            retval = fsdriver_copyin(data, off, memfs_buf, len);
+            retval = fsdriver_copyin(data, off, memfs_buf, chunk);
         }
 
         if (rw_flag == READ) {

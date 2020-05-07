@@ -123,7 +123,7 @@ PUBLIC void enqueue_proc(struct proc* p)
     struct list_head* runqs = get_cpulocal_var(run_queues);
     bitchunk_t* bitmap = get_cpulocal_var(run_queue_bitmap);
 
-    list_add(&(p->run_list), &runqs[queue]);
+    list_add(&p->run_list, &runqs[queue]);
     SET_BIT(bitmap, queue);
 }
 

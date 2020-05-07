@@ -31,15 +31,15 @@
 
 #include <lyos/const.h>
 
-typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE * m);
-int syscall_gate_intr(int syscall_nr, MESSAGE * m);
+typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE* m);
+int syscall_gate_intr(int syscall_nr, MESSAGE* m);
 
 extern syscall_gate_t _syscall_gate;
 
-extern char * _brksize;
+extern char* _brksize;
 
 /* compiler memory barrier */
-#define cmb() __asm__ __volatile__ ("" ::: "memory")
+#define cmb() __asm__ __volatile__("" ::: "memory")
 
 int syscall_entry(int syscall_nr, MESSAGE* m)
 {
@@ -65,28 +65,28 @@ int send_recv(int function, int src_dest, MESSAGE* msg)
 {
     int ret = 0;
 
-    if (function == RECEIVE)
-        memset(msg, 0, sizeof(MESSAGE));
+    if (function == RECEIVE) memset(msg, 0, sizeof(MESSAGE));
 
     return sendrec(function, src_dest, msg);
 }
 
-extern char **environ;
+extern char** environ;
 
 void _exit(int status)
 {
     MESSAGE msg;
-    msg.type    = EXIT;
-    msg.STATUS  = status;
+    msg.type = EXIT;
+    msg.STATUS = status;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
-    while (1);
+    // assert(msg.type == SYSCALL_RET);
+    while (1)
+        ;
 }
 
-int execve(const char *name, char * argv[], char * const envp[])
+int execve(const char* name, char* argv[], char* const envp[])
 {
     char **p = argv, **q = NULL;
     char arg_stack[ARG_MAX];
@@ -95,7 +95,7 @@ int execve(const char *name, char * argv[], char * const envp[])
     /* arg_stack layout */
     /* | argv | 0 | envp | 0 | strings | */
     if (p) {
-        while(*p++) {
+        while (*p++) {
             stack_len += sizeof(char*);
         }
     }
@@ -105,7 +105,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 
     int env_start = stack_len / sizeof(char*);
 
-    p = (char**) envp;
+    p = (char**)envp;
     if (p) {
         while (*p++) {
             stack_len += sizeof(char*);
@@ -129,7 +129,7 @@ int execve(const char *name, char * argv[], char * const envp[])
 
     if (envp) {
         q = (char**)arg_stack + env_start;
-        for (p = (char**) envp; *p != 0; p++) {
+        for (p = (char**)envp; *p != 0; p++) {
             *q++ = &arg_stack[stack_len];
 
             strcpy(&arg_stack[stack_len], *p);
@@ -140,37 +140,34 @@ int execve(const char *name, char * argv[], char * const envp[])
     }
 
     MESSAGE msg;
-    msg.type    = EXEC;
-    msg.PATHNAME    = (void*)name;
-    msg.NAME_LEN    = strlen(name);
-    msg.BUF             = (void*)arg_stack;
-    msg.BUF_LEN         = stack_len;
+    msg.type = EXEC;
+    msg.PATHNAME = (void*)name;
+    msg.NAME_LEN = strlen(name);
+    msg.BUF = (void*)arg_stack;
+    msg.BUF_LEN = stack_len;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.RETVAL;
 }
 
-int execv(const char *path, char * argv[])
+int execv(const char* path, char* argv[])
 {
     return execve(path, argv, environ);
 }
 
-int execvp(const char *file, char * argv[])
-{
-    return execv(file, argv);
-}
+int execvp(const char* file, char* argv[]) { return execv(file, argv); }
 
-int execlp(const char *file, const char *arg, ...)
+int execlp(const char* file, const char* arg, ...)
 {
     puts("execlp: not implemented");
     return ENOSYS;
 }
 
-int execl(const char *path, const char *arg, ...)
+int execl(const char* path, const char* arg, ...)
 {
     puts("execl: not implemented");
     return ENOSYS;
@@ -179,7 +176,7 @@ int execl(const char *path, const char *arg, ...)
 endpoint_t get_endpoint()
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_GETEP;
 
     cmb();
@@ -192,13 +189,13 @@ endpoint_t get_endpoint()
 int getpid()
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_GETPID;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.PID;
 }
@@ -206,13 +203,13 @@ int getpid()
 int gettid()
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_GETTID;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.PID;
 }
@@ -220,13 +217,13 @@ int gettid()
 pid_t getppid(void)
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_GETPPID;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.PID;
 }
@@ -234,14 +231,14 @@ pid_t getppid(void)
 pid_t getpgid(pid_t pid)
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_GETPGID;
-    msg.PID     = pid;
+    msg.PID = pid;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.PID;
 }
@@ -249,7 +246,7 @@ pid_t getpgid(pid_t pid)
 pid_t setsid(void)
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_SETSID;
 
     cmb();
@@ -296,13 +293,13 @@ int setpgid(pid_t pid, pid_t pgid)
 pid_t getpgrp(void)
 {
     MESSAGE msg;
-    msg.type    = GETSETID;
+    msg.type = GETSETID;
     msg.REQUEST = GS_GETPGRP;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.PID;
 }
@@ -321,29 +318,26 @@ int fork()
     return msg.PID;
 }
 
-int kill(int pid,int signo)
+int kill(int pid, int signo)
 {
     MESSAGE msg;
-    msg.type    = KILL;
-    msg.PID         = pid;
-    msg.SIGNR   = signo;
+    msg.type = KILL;
+    msg.PID = pid;
+    msg.SIGNR = signo;
 
     cmb();
 
     send_recv(BOTH, TASK_PM, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.RETVAL;
 }
 
-int killpg(int pgrp, int signo)
-{
-    return kill(-pgrp, signo);
-}
+int killpg(int pgrp, int signo) { return kill(-pgrp, signo); }
 
 void __sigreturn();
 
-void sigreturn(void * scp)
+void sigreturn(void* scp)
 {
     MESSAGE msg;
 
@@ -355,12 +349,12 @@ void sigreturn(void * scp)
     send_recv(BOTH, TASK_PM, &msg);
 }
 
-int sigaction(int signum, const struct sigaction * act, struct sigaction * oldact)
+int sigaction(int signum, const struct sigaction* act, struct sigaction* oldact)
 {
     MESSAGE msg;
 
     msg.type = SIGACTION;
-    msg.u.m_pm_signal.act = (void*) act;
+    msg.u.m_pm_signal.act = (void*)act;
     msg.u.m_pm_signal.oldact = oldact;
     msg.u.m_pm_signal.signum = signum;
     msg.u.m_pm_signal.sigret = __sigreturn;
@@ -379,19 +373,20 @@ sighandler_t signal(int signum, sighandler_t handler)
     sa.sa_handler = handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
-    if (sigaction(signum, &sa, &osa) < 0)
-        return (SIG_ERR);
+    if (sigaction(signum, &sa, &osa) < 0) return (SIG_ERR);
 
     return osa.sa_handler;
 }
 
-int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+int sigprocmask(int how, const sigset_t* set, sigset_t* oldset)
 {
     MESSAGE msg;
-    msg.type   = SIGPROCMASK;
+    msg.type = SIGPROCMASK;
 
-    if (set) msg.MASK = *set;
-    else set = 0;
+    if (set)
+        msg.MASK = *set;
+    else
+        set = 0;
 
     cmb();
 
@@ -407,10 +402,10 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
     return 0;
 }
 
-int sigsuspend(const sigset_t *mask)
+int sigsuspend(const sigset_t* mask)
 {
     MESSAGE msg;
-    msg.type   = SIGSUSPEND;
+    msg.type = SIGSUSPEND;
 
     msg.MASK = *mask;
 
@@ -426,10 +421,10 @@ int sigsuspend(const sigset_t *mask)
     return 0;
 }
 
-int waitpid(int pid, int * status, int options)
+int waitpid(int pid, int* status, int options)
 {
     MESSAGE msg;
-    msg.type   = WAIT;
+    msg.type = WAIT;
 
     msg.PID = pid;
     msg.OPTIONS = options;
@@ -443,15 +438,15 @@ int waitpid(int pid, int * status, int options)
     return msg.PID;
 }
 
-pid_t wait3(int *status, int options, struct rusage *rusage)
+pid_t wait3(int* status, int options, struct rusage* rusage)
 {
     return waitpid(-1, status, options);
 }
 
-int wait(int * status)
+int wait(int* status)
 {
     MESSAGE msg;
-    msg.type   = WAIT;
+    msg.type = WAIT;
 
     msg.PID = -1;
     msg.OPTIONS = 0;
@@ -471,17 +466,18 @@ int getgroups(int size, gid_t list[])
     return 0;
 }
 
-int isatty(int fd) {
+int isatty(int fd)
+{
     struct termios t;
 
     return (tcgetattr(fd, &t) != -1);
 }
 
-int uname(struct utsname * name)
+int uname(struct utsname* name)
 {
     MESSAGE msg;
     msg.type = UNAME;
-    msg.BUF = (void *)name;
+    msg.BUF = (void*)name;
 
     cmb();
 
@@ -493,8 +489,8 @@ int uname(struct utsname * name)
 int close(int fd)
 {
     MESSAGE msg;
-    msg.type   = CLOSE;
-    msg.FD     = fd;
+    msg.type = CLOSE;
+    msg.FD = fd;
 
     cmb();
 
@@ -503,39 +499,39 @@ int close(int fd)
     return msg.RETVAL;
 }
 
-int mkdir(const char *pathname, mode_t mode)
+int mkdir(const char* pathname, mode_t mode)
 {
     MESSAGE msg;
     memset(&msg, 0, sizeof(MESSAGE));
     msg.type = MKDIR;
-    msg.PATHNAME    = (void*)pathname;
-    msg.NAME_LEN    = strlen(pathname);
-    msg.MODE        = mode;
+    msg.PATHNAME = (void*)pathname;
+    msg.NAME_LEN = strlen(pathname);
+    msg.MODE = mode;
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
     return msg.RETVAL;
 }
 
-int mknod(const char *pathname, mode_t mode, dev_t dev)
+int mknod(const char* pathname, mode_t mode, dev_t dev)
 {
     puts("mknod: not implemented");
     return ENOSYS;
 }
 
-int link(char *old, char *new)
+int link(char* old, char* new)
 {
     puts("link: not implemented");
     return 0;
 }
 
-int unlink(const char * pathname)
+int unlink(const char* pathname)
 {
     MESSAGE msg;
-    msg.type   = UNLINK;
+    msg.type = UNLINK;
 
-    msg.PATHNAME    = (void*)pathname;
-    msg.NAME_LEN    = strlen(pathname);
+    msg.PATHNAME = (void*)pathname;
+    msg.NAME_LEN = strlen(pathname);
 
     cmb();
 
@@ -547,10 +543,10 @@ int unlink(const char * pathname)
 int fcntl(int fd, int cmd, ...)
 {
     MESSAGE msg;
-    msg.type   = FCNTL;
+    msg.type = FCNTL;
 
-    msg.FD  = fd;
-    msg.REQUEST     = cmd;
+    msg.FD = fd;
+    msg.REQUEST = cmd;
 
     va_list argp;
 
@@ -558,7 +554,7 @@ int fcntl(int fd, int cmd, ...)
 
     msg.BUF_LEN = 0;
 
-    switch(cmd) {
+    switch (cmd) {
     case F_DUPFD:
     case F_SETFD:
     case F_SETFL:
@@ -605,17 +601,14 @@ int dup2(int fd, int fd2)
     return msg.RETVAL;
 }
 
-int dup(int fd)
-{
-    return dup2(fd, -1);
-}
+int dup(int fd) { return dup2(fd, -1); }
 
-int chdir(const char * path)
+int chdir(const char* path)
 {
     MESSAGE msg;
     msg.type = CHDIR;
 
-    msg.PATHNAME = (char*) path;
+    msg.PATHNAME = (char*)path;
     msg.NAME_LEN = strlen(path);
 
     cmb();
@@ -639,12 +632,12 @@ int fchdir(int fd)
     return msg.RETVAL;
 }
 
-int chmod(const char *path, mode_t mode)
+int chmod(const char* path, mode_t mode)
 {
     MESSAGE msg;
     msg.type = CHMOD;
 
-    msg.PATHNAME = (char*) path;
+    msg.PATHNAME = (char*)path;
     msg.NAME_LEN = strlen(path);
     msg.MODE = mode;
 
@@ -670,22 +663,23 @@ int fchmod(int fd, mode_t mode)
     return msg.RETVAL;
 }
 
-int mount(const char *source, const char *target,
-          const char *filesystemtype, unsigned long mountflags,
-          const void *data)
+int mount(const char* source, const char* target, const char* filesystemtype,
+          unsigned long mountflags, const void* data)
 {
     MESSAGE msg;
     msg.type = MOUNT;
 
     msg.MFLAGS = mountflags;
-    if (source == NULL)  msg.MNAMELEN1 = 0;
-    else msg.MNAMELEN1 = strlen(source);
+    if (source == NULL)
+        msg.MNAMELEN1 = 0;
+    else
+        msg.MNAMELEN1 = strlen(source);
     msg.MNAMELEN2 = strlen(target);
     msg.MNAMELEN3 = strlen(filesystemtype);
-    msg.MSOURCE = (char*) source;
-    msg.MTARGET = (char*) target;
-    msg.MLABEL = (char*) filesystemtype;
-    msg.MDATA = (char*) data;
+    msg.MSOURCE = (char*)source;
+    msg.MTARGET = (char*)target;
+    msg.MLABEL = (char*)filesystemtype;
+    msg.MDATA = (char*)data;
 
     cmb();
 
@@ -694,11 +688,11 @@ int mount(const char *source, const char *target,
     return msg.RETVAL;
 }
 
-int access(const char *pathname, int mode)
+int access(const char* pathname, int mode)
 {
     MESSAGE msg;
-    msg.type   = ACCESS;
-    msg.PATHNAME = (char*) pathname;
+    msg.type = ACCESS;
+    msg.PATHNAME = (char*)pathname;
     msg.NAME_LEN = strlen(pathname);
     msg.MODE = mode;
 
@@ -712,8 +706,8 @@ int access(const char *pathname, int mode)
 int lseek(int fd, int offset, int whence)
 {
     MESSAGE msg;
-    msg.type   = LSEEK;
-    msg.FD     = fd;
+    msg.type = LSEEK;
+    msg.FD = fd;
     msg.OFFSET = offset;
     msg.WHENCE = whence;
 
@@ -730,7 +724,7 @@ int lseek(int fd, int offset, int whence)
     return msg.OFFSET;
 }
 
-int open(const char *pathname, int flags, ...)
+int open(const char* pathname, int flags, ...)
 {
     MESSAGE msg;
     va_list parg;
@@ -738,20 +732,20 @@ int open(const char *pathname, int flags, ...)
     memset(&msg, 0, sizeof(MESSAGE));
     va_start(parg, flags);
 
-    msg.type        = OPEN;
-    msg.PATHNAME    = (void*)pathname;
-    msg.FLAGS       = flags;
-    msg.NAME_LEN    = strlen(pathname);
+    msg.type = OPEN;
+    msg.PATHNAME = (void*)pathname;
+    msg.FLAGS = flags;
+    msg.NAME_LEN = strlen(pathname);
 
     if (flags & O_CREAT) {
-        msg.MODE        = va_arg(parg, mode_t);
+        msg.MODE = va_arg(parg, mode_t);
     }
 
     va_end(parg);
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     if (msg.FD < 0) {
         errno = -msg.FD;
@@ -761,13 +755,13 @@ int open(const char *pathname, int flags, ...)
     return msg.FD;
 }
 
-int read(int fd, void *buf, int count)
+int read(int fd, void* buf, int count)
 {
     MESSAGE msg;
     msg.type = READ;
-    msg.FD   = fd;
-    msg.BUF  = buf;
-    msg.CNT  = count;
+    msg.FD = fd;
+    msg.BUF = buf;
+    msg.CNT = count;
 
     cmb();
 
@@ -780,7 +774,7 @@ int read(int fd, void *buf, int count)
     return msg.RETVAL;
 }
 
-int ioctl(int fd, int request, void * data)
+int ioctl(int fd, int request, void* data)
 {
     MESSAGE msg;
     msg.type = IOCTL;
@@ -796,24 +790,25 @@ int ioctl(int fd, int request, void * data)
     return msg.RETVAL == 0 ? 0 : -1;
 }
 
-int creat(const char *path, mode_t mode) {
+int creat(const char* path, mode_t mode)
+{
     return open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
 }
 
-int stat(const char *path, struct stat *buf)
+int stat(const char* path, struct stat* buf)
 {
     MESSAGE msg;
 
-    msg.type    = STAT;
+    msg.type = STAT;
 
-    msg.PATHNAME    = (void*)path;
-    msg.BUF         = (void*)buf;
-    msg.NAME_LEN    = strlen(path);
+    msg.PATHNAME = (void*)path;
+    msg.BUF = (void*)buf;
+    msg.NAME_LEN = strlen(path);
 
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     if (msg.RETVAL > 0) {
         errno = msg.RETVAL;
@@ -823,56 +818,53 @@ int stat(const char *path, struct stat *buf)
     return msg.RETVAL;
 }
 
-int statfs(const char *path, struct statfs *buf)
+int statfs(const char* path, struct statfs* buf)
 {
     puts("statfs: not implemented");
     return ENOSYS;
 }
 
-int fstatfs(int fd, struct statfs *buf)
+int fstatfs(int fd, struct statfs* buf)
 {
     puts("fstatfs: not implemented");
     return ENOSYS;
 }
 
-int rmdir(const char *path )
+int rmdir(const char* path)
 {
     puts("rmdir: not implemented");
     return 0;
 }
 
-int fstat(int fd, struct stat *buf)
+int fstat(int fd, struct stat* buf)
 {
     MESSAGE msg;
 
-    msg.type    = FSTAT;
+    msg.type = FSTAT;
 
-    msg.FD      = fd;
-    msg.BUF         = (void*)buf;
+    msg.FD = fd;
+    msg.BUF = (void*)buf;
 
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
-    //assert(msg.type == SYSCALL_RET);
+    // assert(msg.type == SYSCALL_RET);
 
     return msg.RETVAL;
 }
 
-int _stat(const char* path, mode_t mode) __attribute__ ((weak, alias ("stat")));
-int _fstat(int fd, struct stat* buf) __attribute__ ((weak, alias ("fstat")));
+int _stat(const char* path, mode_t mode) __attribute__((weak, alias("stat")));
+int _fstat(int fd, struct stat* buf) __attribute__((weak, alias("fstat")));
 
-int lstat(const char *path, struct stat *buf)
-{
-    return stat(path, buf);
-}
+int lstat(const char* path, struct stat* buf) { return stat(path, buf); }
 
-int write(int fd, const void *buf, int count)
+int write(int fd, const void* buf, int count)
 {
     MESSAGE msg;
     msg.type = WRITE;
-    msg.FD   = fd;
-    msg.BUF  = (void*)buf;
-    msg.CNT  = count;
+    msg.FD = fd;
+    msg.BUF = (void*)buf;
+    msg.CNT = count;
 
     cmb();
 
@@ -885,13 +877,13 @@ int write(int fd, const void *buf, int count)
     return msg.RETVAL;
 }
 
-int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
+int getdents(unsigned int fd, struct dirent* dirp, unsigned int count)
 {
     MESSAGE msg;
     msg.type = GETDENTS;
-    msg.FD   = fd;
-    msg.BUF  = (void*)dirp;
-    msg.CNT  = count;
+    msg.FD = fd;
+    msg.BUF = (void*)dirp;
+    msg.CNT = count;
 
     cmb();
 
@@ -900,8 +892,8 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
     return msg.RETVAL;
 }
 
-#define DIRBLKSIZ   1024
-DIR * opendir(const char * name)
+#define DIRBLKSIZ 1024
+DIR* opendir(const char* name)
 {
     int fd = open(name, O_RDONLY);
     if (fd == -1) return NULL;
@@ -918,7 +910,7 @@ DIR * opendir(const char * name)
         return NULL;
     }
 
-    DIR * dir = (DIR *)malloc(sizeof(DIR));
+    DIR* dir = (DIR*)malloc(sizeof(DIR));
     if (!dir) {
         close(fd);
         return NULL;
@@ -936,25 +928,26 @@ DIR * opendir(const char * name)
     return dir;
 }
 
-struct dirent * readdir(DIR * dirp)
+struct dirent* readdir(DIR* dirp)
 {
-    struct dirent * dp;
+    struct dirent* dp;
 
     if (!dirp) return NULL;
 
     if (dirp->loc >= dirp->size) dirp->loc = 0;
     if (dirp->loc == 0) {
-        if ((dirp->size = getdents(dirp->fd, dirp->buf, dirp->len)) <= 0) return NULL;
+        if ((dirp->size = getdents(dirp->fd, dirp->buf, dirp->len)) <= 0)
+            return NULL;
     }
 
-    dp = (struct dirent *)((char *)dirp->buf + dirp->loc);
+    dp = (struct dirent*)((char*)dirp->buf + dirp->loc);
     if (dp->d_reclen >= dirp->len - dirp->loc + 1) return NULL;
     dirp->loc += dp->d_reclen;
 
     return dp;
 }
 
-int closedir(DIR * dirp)
+int closedir(DIR* dirp)
 {
     int fd = dirp->fd;
 
@@ -965,31 +958,31 @@ int closedir(DIR * dirp)
 }
 
 extern char* getcwd(char*, size_t);
-char *getwd(char *buf)
+char* getwd(char* buf)
 {
     if (getcwd(buf, PATH_MAX) != 0) return NULL;
     return buf;
 }
 
-long pathconf(const char *path, int name)
+long pathconf(const char* path, int name)
 {
     printf("pathconf: not implemented\n");
     return 0;
 }
 
-int utime(const char *filename, const struct utimbuf *times)
+int utime(const char* filename, const struct utimbuf* times)
 {
     printf("utime: not implemented\n");
     return 0;
 }
 
-int chown(const char *path, uid_t owner, gid_t group)
+int chown(const char* path, uid_t owner, gid_t group)
 {
     printf("chown: not implemented\n");
     return 0;
 }
 
-int brk(void * addr)
+int brk(void* addr)
 {
     MESSAGE msg;
     msg.type = BRK;
@@ -1013,17 +1006,20 @@ caddr_t sbrk(int nbytes)
 {
     char *oldsize = _brksize, *newsize = _brksize + nbytes;
 
-    if ((nbytes < 0 && newsize > oldsize) || (nbytes > 0 && newsize < oldsize)) return (caddr_t)(-1);
-    if (brk(newsize) == 0) return (caddr_t)oldsize;
-    else return (caddr_t)(-1);
+    if ((nbytes < 0 && newsize > oldsize) || (nbytes > 0 && newsize < oldsize))
+        return (caddr_t)(-1);
+    if (brk(newsize) == 0)
+        return (caddr_t)oldsize;
+    else
+        return (caddr_t)(-1);
 }
 
-int gettimeofday(struct timeval* tv, void *tz)
+int gettimeofday(struct timeval* tv, void* tz)
 {
     MESSAGE msg;
 
     msg.type = GET_TIME_OF_DAY;
-    msg.BUF  = (void*)tv;
+    msg.BUF = (void*)tv;
 
     cmb();
 
@@ -1090,15 +1086,9 @@ int setgid(gid_t gid)
     return msg.RETVAL;
 }
 
-int setreuid(uid_t ruid, uid_t euid)
-{
-    return setuid(ruid);
-}
+int setreuid(uid_t ruid, uid_t euid) { return setuid(ruid); }
 
-int setregid(uid_t rgid, uid_t egid)
-{
-    return setgid(rgid);
-}
+int setregid(uid_t rgid, uid_t egid) { return setgid(rgid); }
 
 int geteuid()
 {
@@ -1128,7 +1118,7 @@ int getegid()
     return msg.RETVAL;
 }
 
-int gethostname(char *name, size_t len)
+int gethostname(char* name, size_t len)
 {
     MESSAGE msg;
 
@@ -1149,13 +1139,13 @@ int gethostname(char *name, size_t len)
     return 0;
 }
 
-int sethostname(const char *name, size_t len)
+int sethostname(const char* name, size_t len)
 {
     MESSAGE msg;
 
     msg.type = GETSETHOSTNAME;
     msg.REQUEST = GS_SETHOSTNAME;
-    msg.BUF = (char*) name;
+    msg.BUF = (char*)name;
     msg.BUF_LEN = len;
 
     cmb();
@@ -1171,42 +1161,35 @@ int sethostname(const char *name, size_t len)
 }
 
 /* termios */
-speed_t cfgetispeed(const struct termios * tio)
-{
-    return tio->c_ispeed;
-}
+speed_t cfgetispeed(const struct termios* tio) { return tio->c_ispeed; }
 
-speed_t cfgetospeed(const struct termios * tio)
-{
-    return tio->c_ospeed;
-}
+speed_t cfgetospeed(const struct termios* tio) { return tio->c_ospeed; }
 
-int cfsetispeed(struct termios * tio, speed_t speed)
+int cfsetispeed(struct termios* tio, speed_t speed)
 {
     tio->c_ispeed = speed;
     return 0;
 }
 
-int cfsetospeed(struct termios * tio, speed_t speed)
+int cfsetospeed(struct termios* tio, speed_t speed)
 {
     tio->c_ospeed = speed;
     return 0;
 }
 
-int tcgetattr(int fd, struct termios * tio) {
-    return ioctl(fd, TCGETS, tio);
-}
+int tcgetattr(int fd, struct termios* tio) { return ioctl(fd, TCGETS, tio); }
 
-int tcsetattr(int fd, int actions, struct termios * tio) {
+int tcsetattr(int fd, int actions, struct termios* tio)
+{
     switch (actions) {
-        case TCSANOW:
-            return ioctl(fd, TCSETS, tio);
-        case TCSADRAIN:
-            return ioctl(fd, TCSETSW, tio);
-        case TCSAFLUSH:
-            return ioctl(fd, TCSETSF, tio);
-        default:
-            return 0;
+    case TCSANOW:
+        return ioctl(fd, TCSETS, tio);
+    case TCSADRAIN:
+        return ioctl(fd, TCSETSW, tio);
+    case TCSAFLUSH:
+        return ioctl(fd, TCSETSF, tio);
+    default:
+        return 0;
     }
 }
 
@@ -1243,20 +1226,11 @@ int tcflush(int fd, int which)
     return ioctl(fd, TCFLSH, &selector);
 }
 
-int pipe(int pipefd[2])
-{
-    printf("pipe: not implemented\n");
-}
+int pipe(int pipefd[2]) { printf("pipe: not implemented\n"); }
 
-int __dirfd(DIR *dirp)
-{
-    return dirp->fd;
-}
+int __dirfd(DIR* dirp) { return dirp->fd; }
 
-void sync(void)
-{
-    puts("sync: not implemented");
-}
+void sync(void) { puts("sync: not implemented"); }
 
 int fsync(int fd)
 {
@@ -1276,37 +1250,29 @@ unsigned int sleep(unsigned int seconds)
     return 0;
 }
 
-clock_t times(struct tms *buf)
+clock_t times(struct tms* buf)
 {
     puts("times: not implemented");
     return 0;
 }
 
-int getrusage(int who, struct rusage *usage)
+int getrusage(int who, struct rusage* usage)
 {
     puts("getrusage: not implemented");
     return 0;
 }
 
-struct group *getgrent(void)
+struct group* getgrent(void)
 {
     puts("getgrent: not implemented");
     return NULL;
 }
 
-void setgrent(void)
-{
-    puts("setgrent: not implemented");
+void setgrent(void) { puts("setgrent: not implemented"); }
 
-}
+void endgrent(void) { puts("endgrent: not implemented"); }
 
-void endgrent(void)
-{
-    puts("endgrent: not implemented");
-
-}
-
-long ptrace(int request, pid_t pid, void *addr, void *data)
+long ptrace(int request, pid_t pid, void* addr, void* data)
 {
     MESSAGE msg;
 
@@ -1328,7 +1294,7 @@ long ptrace(int request, pid_t pid, void *addr, void *data)
     return msg.PTRACE_RET;
 }
 
-void * mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+void* mmap(void* addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     MESSAGE m;
 
@@ -1347,11 +1313,13 @@ void * mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 
     send_recv(BOTH, TASK_MM, &m);
 
-    if (m.u.m_mm_mmap_reply.retval) return MAP_FAILED;
-    else return m.u.m_mm_mmap_reply.retaddr;
+    if (m.u.m_mm_mmap_reply.retval)
+        return MAP_FAILED;
+    else
+        return m.u.m_mm_mmap_reply.retaddr;
 }
 
-int munmap(void *addr, size_t len)
+int munmap(void* addr, size_t len)
 {
     MESSAGE m;
 
@@ -1398,8 +1366,8 @@ char* getlogin()
     return NULL;
 }
 
-int select(int nfds, fd_set *readfds, fd_set *writefds,
-                fd_set *exceptfds, struct timeval *timeout)
+int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+           struct timeval* timeout)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(MESSAGE));
@@ -1418,8 +1386,8 @@ int select(int nfds, fd_set *readfds, fd_set *writefds,
 }
 
 int futex(int* uaddr, int futex_op, int val,
-    const struct timespec* timeout,   /* or: uint32_t val2 */
-    int* uaddr2, int val3)
+          const struct timespec* timeout, /* or: uint32_t val2 */
+          int* uaddr2, int val3)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(MESSAGE));
@@ -1482,7 +1450,7 @@ void* shmat(int shmid, const void* shmaddr, int shmflg)
 
     m.type = IPC_SHMAT;
     m.IPC_ID = shmid;
-    m.IPC_ADDR = (void*) shmaddr;
+    m.IPC_ADDR = (void*)shmaddr;
     m.IPC_FLAGS = shmflg;
     cmb();
 
@@ -1491,13 +1459,43 @@ void* shmat(int shmid, const void* shmaddr, int shmflg)
     return m.IPC_RETADDR;
 }
 
-int getentropy(void *buffer, size_t length)
+int getentropy(void* buffer, size_t length)
 {
     printf("getentropy: not implemented\n");
     return ENOSYS;
 }
 
-int posix_memalign(void **memptr, size_t alignment, size_t size)
+int posix_memalign(void** memptr, size_t alignment, size_t size) { return 0; }
+
+int getrlimit(int resource, struct rlimit* rlim)
 {
+    rlim_t limit;
+
+    switch (resource) {
+    case RLIMIT_CPU:
+    case RLIMIT_FSIZE:
+    case RLIMIT_DATA:
+    case RLIMIT_STACK:
+    case RLIMIT_CORE:
+    case RLIMIT_RSS:
+    case RLIMIT_MEMLOCK:
+    case RLIMIT_SBSIZE:
+    case RLIMIT_AS:
+    case RLIMIT_NTHR:
+        limit = RLIM_INFINITY;
+        break;
+
+    case RLIMIT_NOFILE:
+        limit = OPEN_MAX;
+        break;
+
+    default:
+        errno = EINVAL;
+        return -1;
+    }
+
+    rlim->rlim_cur = limit;
+    rlim->rlim_max = limit;
+
     return 0;
 }

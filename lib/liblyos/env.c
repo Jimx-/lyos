@@ -106,7 +106,7 @@ PUBLIC int env_get_long(char* key, long* value, const char* fmt, int field,
     char val_buf[ENV_BUF_SIZE];
     int retval = 0;
     char punct[] = ":;,.";
-    long param;
+    long param = 0;
     unsigned long uparam;
 
     if ((retval = env_get_param(key, val_buf, ENV_BUF_SIZE)) != 0)

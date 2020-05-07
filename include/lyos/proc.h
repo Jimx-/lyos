@@ -192,8 +192,6 @@ struct proc {
     } mm_request;
 };
 
-extern u32 rr_interval_ms;
-
 #define FIRST_PROC proc_table[0]
 #define LAST_PROC proc_table[NR_TASKS + NR_PROCS - 1]
 
@@ -215,5 +213,12 @@ extern u32 rr_interval_ms;
 #define STACK_SIZE_MM STACK_SIZE_DEFAULT
 
 #define STACK_SIZE_TOTAL (STACK_SIZE_MM)
+
+/* CPU states */
+#define CPS_USER 0
+#define CPS_SYS 1
+#define CPS_IDLE 2
+#define CPS_INTR 3
+#define CPU_STATES 4
 
 #endif

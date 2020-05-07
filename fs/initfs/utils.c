@@ -75,6 +75,7 @@ PUBLIC unsigned int initfs_getmode(struct posix_tar_header* phdr)
         mode = I_BLOCK_SPECIAL;
         break;
     default:
+        mode = 0;
         break;
     }
 

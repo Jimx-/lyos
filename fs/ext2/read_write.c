@@ -245,7 +245,7 @@ PUBLIC block_t ext2_read_map(ext2_inode_t* pin, off_t position)
 PUBLIC int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
 {
     block_t b1, b2, b3;
-    int index1, index2, index3;
+    int index1, index2, index3 = 0;
     char new_dbl = 0, new_triple = 0;
     int single = 0, triple = 0;
     unsigned long excess, block_pos;

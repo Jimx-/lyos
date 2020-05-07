@@ -43,7 +43,7 @@ PUBLIC int serv_init()
         send_recv(RECEIVE, TASK_SERVMAN, &msg);
     } while (msg.type != SERVICE_INIT);
 
-    int retval;
+    int retval = 0;
     switch (msg.REQUEST) {
     case SERVICE_INIT_FRESH:
         retval = init_fresh_callback();

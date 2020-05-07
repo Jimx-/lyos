@@ -119,7 +119,6 @@ PUBLIC void init_proc()
     }
 
     /* prepare idle process struct */
-
     for (i = 0; i < CONFIG_SMP_MAX_CPUS; i++) {
         struct proc* p = get_cpu_var_ptr(i, idle_proc);
         p->state |= PST_STOPPED;

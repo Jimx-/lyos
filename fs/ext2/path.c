@@ -165,7 +165,8 @@ PUBLIC int ext2_search_dir(ext2_inode_t* dir_pin,
                     if (pde->d_name_len >= sizeof(ino_t)) {
                         /* Save inode number for recovery. */
                         int ino_offset = pde->d_name_len - sizeof(ino_t);
-                        *((ino_t*)&pde->d_name[ino_offset]) = pde->d_inode;
+                        memcpy(&pde->d_name[ino_offset], &pde->d_inode,
+                               sizeof(pde->d_inode));
                     }
                     pde->d_inode = (ino_t)0; /* erase entry */
                     if (!EXT2_HAS_COMPAT_FEATURE(dir_pin->i_sb,
