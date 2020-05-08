@@ -42,8 +42,6 @@ DEF_LIST(timer_list);
 PUBLIC spinlock_t timers_lock;
 PUBLIC clock_t next_timeout = TIMER_UNSET;
 
-static u64 tsc_per_state[CONFIG_SMP_MAX_CPUS][CPU_STATES];
-
 PUBLIC void sched_clock(struct proc* p);
 
 extern void timer_add(struct list_head* list, struct timer_list* timer);
@@ -178,7 +176,6 @@ PUBLIC int init_ap_timer(int freq)
  *****************************************************************************/
 PUBLIC void stop_context(struct proc* p)
 {
-    int counter;
     u64* ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
 
     if (!curr_clocksource) return;
@@ -196,21 +193,7 @@ PUBLIC void stop_context(struct proc* p)
         }
     }
 
-    if (p->endpoint >= 0) {
-        if (p->priv->flags == TASK_FLAGS) {
-            counter = CPS_SYS;
-        } else {
-            counter = CPS_USER;
-        }
-    } else {
-        if (p == get_cpulocal_var_ptr(idle_proc)) {
-            counter = CPS_IDLE;
-        } else {
-            counter = CPS_INTR;
-        }
-    }
-
-    tsc_per_state[cpuid][counter] += delta;
+    arch_stop_context(p, delta);
 
     *ctx_switch_clock = cycle;
 }

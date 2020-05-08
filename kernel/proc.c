@@ -122,6 +122,7 @@ PUBLIC void init_proc()
     for (i = 0; i < CONFIG_SMP_MAX_CPUS; i++) {
         struct proc* p = get_cpu_var_ptr(i, idle_proc);
         p->state |= PST_STOPPED;
+        p->endpoint = IDLE;
         sprintf(p->name, "idle%d", i);
     }
 
@@ -210,7 +211,7 @@ PRIVATE void idle()
     restart_local_timer();
 #endif
 
-    stop_context(proc_addr(KERNEL));
+    stop_context(get_cpulocal_var_ptr(idle_proc));
 
     halt_cpu();
 }

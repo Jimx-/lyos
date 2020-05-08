@@ -28,6 +28,7 @@
 #include "lyos/proto.h"
 #include <errno.h>
 #include <asm/type.h>
+#include <asm/proto.h>
 
 extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -42,6 +43,8 @@ PUBLIC int sys_getinfo(MESSAGE* m, struct proc* p_proc)
     void* addr = NULL;
     size_t size = 0;
     struct sysinfo** psi;
+    u64 ticks[CPU_STATES];
+    unsigned int cpu;
 
     switch (request) {
     case GETINFO_SYSINFO:
@@ -74,6 +77,17 @@ PUBLIC int sys_getinfo(MESSAGE* m, struct proc* p_proc)
     case GETINFO_PROCTAB:
         addr = (void*)proc_table;
         size = sizeof(struct proc) * (NR_TASKS + NR_PROCS);
+        break;
+    case GETINFO_CPUTICKS:
+        cpu = m->u.m3.m3i1;
+
+        if (cpu >= CONFIG_SMP_MAX_CPUS) {
+            return EINVAL;
+        }
+
+        get_cpu_ticks(cpu, ticks);
+        addr = (void*)ticks;
+        size = sizeof(ticks);
         break;
     default:
         return EINVAL;

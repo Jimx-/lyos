@@ -24,6 +24,7 @@
 #include "lyos/vm.h"
 #include <lyos/config.h>
 #include <lyos/param.h>
+#include <lyos/proc.h>
 #include <lyos/sysutils.h>
 #include <asm/type.h>
 
@@ -82,4 +83,15 @@ PUBLIC int get_cpuinfo(struct cpu_info* cpuinfo)
 PUBLIC int get_proctab(struct proc* proc)
 {
     return getinfo(GETINFO_PROCTAB, proc);
+}
+
+int get_cputicks(unsigned int cpu, u64* ticks)
+{
+    MESSAGE m;
+    m.REQUEST = GETINFO_CPUTICKS;
+    m.u.m3.m3i1 = cpu;
+    m.BUF = ticks;
+    m.BUF_LEN = 0;
+
+    return syscall_entry(NR_GETINFO, &m);
 }

@@ -219,6 +219,7 @@ struct proc {
 #define CPS_SYS 1
 #define CPS_IDLE 2
 #define CPS_INTR 3
-#define CPU_STATES 4
+#define CPS_STEAL 4
+#define CPU_STATES 5
 
 #endif

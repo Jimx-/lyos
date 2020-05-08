@@ -122,6 +122,7 @@
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
 #define INVALID_DRIVER -20
+#define IDLE -19
 #define CLOCK -4
 #define SYSTEM -3
 #define KERNEL -2
@@ -223,6 +224,7 @@
 #define GETINFO_MACHINE 6
 #define GETINFO_CPUINFO 7
 #define GETINFO_PROCTAB 8
+#define GETINFO_CPUTICKS 9
 
 /* special message flags */
 #define MSG_INTERRUPT 0x1 /* the process has an interrupt message */

@@ -35,9 +35,13 @@
 #include "acpi.h"
 #include <asm/tsc.h>
 #include <asm/hpet.h>
+#include <asm/div64.h>
 #include <lyos/kvm_para.h>
 
 PRIVATE irq_hook_t timer_irq_hook;
+
+static u64 tsc_per_tick[CONFIG_SMP_MAX_CPUS];
+static u64 tsc_per_state[CONFIG_SMP_MAX_CPUS][CPU_STATES];
 
 PUBLIC int arch_init_time()
 {
@@ -77,8 +81,13 @@ PUBLIC void stop_8253_timer()
 
 PUBLIC int init_local_timer(int freq)
 {
+#ifdef CONFIG_KVM_GUEST
+    kvm_register_clock();
+#endif
+
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
+        tsc_per_tick[cpuid] = do_div(cpu_hz[cpuid], system_hz);
         lapic_set_timer_one_shot(1000000 / system_hz);
     } else
 #endif
@@ -123,4 +132,33 @@ PUBLIC int put_local_timer_handler(irq_handler_t handler)
     }
 
     return 0;
+}
+
+void arch_stop_context(struct proc* p, u64 delta)
+{
+    int counter;
+
+    if (p->endpoint >= 0) {
+        if (p->priv->flags == TASK_FLAGS) {
+            counter = CPS_SYS;
+        } else {
+            counter = CPS_USER;
+        }
+    } else {
+        if (p == get_cpulocal_var_ptr(idle_proc)) {
+            counter = CPS_IDLE;
+        } else {
+            counter = CPS_INTR;
+        }
+    }
+
+    tsc_per_state[cpuid][counter] += delta;
+}
+
+void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES])
+{
+    int i;
+    for (i = 0; i < CPU_STATES; i++) {
+        ticks[i] = do_div(tsc_per_state[cpu][i], tsc_per_tick[cpu]);
+    }
 }

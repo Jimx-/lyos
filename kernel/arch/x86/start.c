@@ -35,6 +35,10 @@
 #include <lyos/spinlock.h>
 #include <lyos/watchdog.h>
 
+#ifdef CONFIG_KVM_GUEST
+#include <lyos/kvm_para.h>
+#endif
+
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
 PUBLIC void* k_stacks;
@@ -222,7 +226,16 @@ PRIVATE char* env_get(const char* name)
     return get_value(kinfo.cmdline, name);
 }
 
-PUBLIC void init_arch() { acpi_init(); }
+PUBLIC void init_arch()
+{
+    acpi_init();
+
+#ifdef CONFIG_KVM_GUEST
+    kvm_init_guest();
+
+    kvm_init_guest_cpu();
+#endif
+}
 
 PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
 {

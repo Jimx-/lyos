@@ -41,6 +41,7 @@ PRIVATE void root_version();
 PRIVATE void root_uptime();
 PUBLIC void root_cpuinfo();
 PUBLIC void root_meminfo();
+static void root_stat(void);
 
 PUBLIC struct procfs_file root_files[] = {
     {"cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},
@@ -48,6 +49,7 @@ PUBLIC struct procfs_file root_files[] = {
     {"uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime},
     {"cpuinfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo},
     {"meminfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_meminfo},
+    {"stat", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_stat},
     {NULL, 0, NULL},
 };
 
@@ -91,4 +93,30 @@ PRIVATE void root_uptime()
 
     buf_printf("%ld.%0.2ld ", ticks / hz, ticks % hz);
     buf_printf("%ld.%0.2ld\n", idle_ticks / hz, idle_ticks % hz);
+}
+
+static void root_stat(void)
+{
+    struct machine machine;
+    u64 ticks[CPU_STATES];
+
+    if (get_machine(&machine)) {
+        printl("procfs: can't get machine info\n");
+        return;
+    }
+
+    int i, j;
+    for (i = 0; i < machine.cpu_count; i++) {
+        if (get_cputicks(i, ticks) != 0) {
+            return;
+        }
+
+        buf_printf("cpu%d", i);
+
+        for (j = 0; j < CPU_STATES; j++) {
+            buf_printf(" %llu", ticks[j]);
+        }
+
+        buf_printf("\n");
+    }
 }

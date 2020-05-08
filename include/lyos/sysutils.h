@@ -34,6 +34,7 @@ PUBLIC int get_kernel_cmdline(char* buf, int buflen);
 PUBLIC int get_machine(struct machine* machine);
 PUBLIC int get_cpuinfo(struct cpu_info* cpuinfo);
 PUBLIC int get_proctab(struct proc* proc);
+int get_cputicks(unsigned int cpu, u64* ticks);
 PUBLIC int privctl(int whom, int request, void* data);
 
 PUBLIC int data_copy(endpoint_t dest_pid, void* dest_addr, endpoint_t src_pid,

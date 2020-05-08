@@ -89,6 +89,8 @@ PUBLIC int init_local_timer(int freq);
 PUBLIC int put_local_timer_handler(irq_handler_t handler);
 PUBLIC void restart_local_timer();
 PUBLIC void stop_local_timer();
+void arch_stop_context(struct proc* p, u64 delta);
+void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]);
 
 PUBLIC void smp_commence();
 

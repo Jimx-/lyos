@@ -33,6 +33,10 @@
 #include <lyos/cpulocals.h>
 #include <lyos/smp.h>
 
+#ifdef CONFIG_KVM_GUEST
+#include <lyos/kvm_para.h>
+#endif
+
 /* trampoline parameters */
 extern volatile u32 __ap_id, __ap_pgd;
 extern volatile u8 __ap_gdt[6], __ap_idt[6]; /* 0~15:Limit  16~47:Base */
@@ -215,6 +219,10 @@ PRIVATE void ap_finish_booting()
 
     if (init_ap_timer(system_hz) != 0)
         panic("smp: cannot init timer for CPU %d", cpuid);
+
+#ifdef CONFIG_KVM_GUEST
+    kvm_init_guest_cpu();
+#endif
 
     ap_finished_booting();
 
