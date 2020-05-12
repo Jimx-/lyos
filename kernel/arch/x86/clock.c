@@ -87,7 +87,8 @@ PUBLIC int init_local_timer(int freq)
 
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
-        tsc_per_tick[cpuid] = do_div(cpu_hz[cpuid], system_hz);
+        tsc_per_tick[cpuid] = cpu_hz[cpuid];
+        do_div(tsc_per_tick[cpuid], (u64)system_hz);
         lapic_set_timer_one_shot(1000000 / system_hz);
     } else
 #endif
@@ -159,6 +160,7 @@ void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES])
 {
     int i;
     for (i = 0; i < CPU_STATES; i++) {
-        ticks[i] = do_div(tsc_per_state[cpu][i], tsc_per_tick[cpu]);
+        ticks[i] = tsc_per_state[cpu][i];
+        do_div(ticks[i], tsc_per_tick[cpu]);
     }
 }
