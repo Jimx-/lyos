@@ -129,6 +129,10 @@ void kvm_register_clock(void)
     struct pvclock_vsyscall_time_info* src = this_cpu_hvclock();
     u64 pa;
 
+    if (msr_kvm_system_time == 0) {
+        return;
+    }
+
     pa = (u64)__pa(&src->pvti) | 0x1ULL;
     ia32_write_msr(msr_kvm_system_time, ex64hi(pa), ex64lo(pa));
 
