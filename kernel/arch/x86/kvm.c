@@ -111,7 +111,7 @@ static void kvm_guest_apic_eoi_write(void)
         printk("PV EOI\n");
         *eoi_addr &= ~KVM_PV_EOI_MASK;
     } else {
-        apic_native_eoi_write();
+        apic->native_eoi_write();
     }
 }
 

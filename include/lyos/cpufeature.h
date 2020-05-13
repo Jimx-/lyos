@@ -26,6 +26,7 @@
 #define _CPUF_I386_SYSCALL 17  /* AMD SYSCALL instrs */
 
 #define _CPUF_I386_HYPERVISOR 18 /* Hypervisor present */
+#define _CPUF_I386_HAS_X2APIC 19 /* Supports X2APIC */
 
 /* CPUID flags */
 #define CPUID1_EDX_FPU (1L)               /* FPU presence */
@@ -42,6 +43,7 @@
 #define CPUID1_ECX_SSSE3 (1L << 9)
 #define CPUID1_ECX_SSE4_1 (1L << 19)
 #define CPUID1_ECX_SSE4_2 (1L << 20)
+#define CPUID1_ECX_X2APIC (1L << 21)
 #define CPUID1_ECX_HYPERVISOR (1L << 31)
 
 #define CPUID_EF_EDX_SYSENTER (1L << 11) /* Intel SYSENTER */
