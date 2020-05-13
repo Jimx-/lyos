@@ -3,28 +3,28 @@
 
 #define LOCAL_APIC_DEF_ADDR 0xfee00000 /* default local apic address */
 
-#define LAPIC_ID (lapic_addr + 0x020)
-#define LAPIC_VERSION (lapic_addr + 0x030)
-#define LAPIC_TPR (lapic_addr + 0x080)
-#define LAPIC_EOI (lapic_addr + 0x0b0)
-#define LAPIC_LDR (lapic_addr + 0x0d0)
-#define LAPIC_DFR (lapic_addr + 0x0e0)
-#define LAPIC_SIVR (lapic_addr + 0x0f0)
-#define LAPIC_ISR (lapic_addr + 0x100)
-#define LAPIC_TMR (lapic_addr + 0x180)
-#define LAPIC_IRR (lapic_addr + 0x200)
-#define LAPIC_ESR (lapic_addr + 0x280)
-#define LAPIC_ICR1 (lapic_addr + 0x300)
-#define LAPIC_ICR2 (lapic_addr + 0x310)
-#define LAPIC_LVTTR (lapic_addr + 0x320)
-#define LAPIC_LVTTMR (lapic_addr + 0x330)
-#define LAPIC_LVTPCR (lapic_addr + 0x340)
-#define LAPIC_LINT0 (lapic_addr + 0x350)
-#define LAPIC_LINT1 (lapic_addr + 0x360)
-#define LAPIC_LVTER (lapic_addr + 0x370)
-#define LAPIC_TIMER_ICR (lapic_addr + 0x380)
-#define LAPIC_TIMER_CCR (lapic_addr + 0x390)
-#define LAPIC_TIMER_DCR (lapic_addr + 0x3e0)
+#define LAPIC_ID 0x020
+#define LAPIC_VERSION 0x030
+#define LAPIC_TPR 0x080
+#define LAPIC_EOI 0x0b0
+#define LAPIC_LDR 0x0d0
+#define LAPIC_DFR 0x0e0
+#define LAPIC_SIVR 0x0f0
+#define LAPIC_ISR 0x100
+#define LAPIC_TMR 0x180
+#define LAPIC_IRR 0x200
+#define LAPIC_ESR 0x280
+#define LAPIC_ICR1 0x300
+#define LAPIC_ICR2 0x310
+#define LAPIC_LVTTR 0x320
+#define LAPIC_LVTTMR 0x330
+#define LAPIC_LVTPCR 0x340
+#define LAPIC_LINT0 0x350
+#define LAPIC_LINT1 0x360
+#define LAPIC_LVTER 0x370
+#define LAPIC_TIMER_ICR 0x380
+#define LAPIC_TIMER_CCR 0x390
+#define LAPIC_TIMER_DCR 0x3e0
 
 #define APIC_TIMER_INT_VECTOR 0xf0
 #define APIC_SMP_SCHED_PROC_VECTOR 0xf1
@@ -64,18 +64,23 @@
 
 #define MAX_IOAPICS 32
 
-#define lapic_read(what) (*((volatile u32*)((what))))
-#define lapic_write(what, data)              \
-    do {                                     \
-        (*((volatile u32*)((what)))) = data; \
+#define lapic_read(what) (*((volatile u32*)(lapic_addr + (what))))
+
+#define lapic_write(what, data)                           \
+    do {                                                  \
+        (*((volatile u32*)(lapic_addr + (what)))) = data; \
     } while (0)
-#define apic_eoi()                          \
-    do {                                    \
-        *(volatile u32*)lapic_eoi_addr = 0; \
+
+extern void (*apic_native_eoi_write)(void);
+extern void (*apic_eoi_write)(void);
+#define apic_eoi()        \
+    do {                  \
+        apic_eoi_write(); \
     } while (0)
 
 PUBLIC u32 apicid();
 PUBLIC int lapic_enable(unsigned cpu);
+void apic_set_eoi_write(void (*eoi_write)(void));
 PUBLIC void apic_init_idt(int reset);
 #if CONFIG_SMP
 PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);

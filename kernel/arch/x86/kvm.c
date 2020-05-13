@@ -34,9 +34,14 @@
 #include <lyos/cpulocals.h>
 #include <lyos/kvm_para.h>
 
+#include "apic.h"
+
 static int has_steal_clock = 0;
 
-static struct kvm_steal_time steal_time[CONFIG_SMP_MAX_CPUS];
+static struct kvm_steal_time steal_time[CONFIG_SMP_MAX_CPUS]
+    __attribute__((aligned(64)));
+
+static volatile unsigned long kvm_apic_eoi[CONFIG_SMP_MAX_CPUS];
 
 extern void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
 
@@ -98,16 +103,40 @@ static void kvm_register_steal_time(void)
            (unsigned long long)__pa(st));
 }
 
+static void kvm_guest_apic_eoi_write(void)
+{
+    volatile unsigned long* eoi_addr = &kvm_apic_eoi[cpuid];
+
+    if (*eoi_addr & KVM_PV_EOI_MASK) {
+        printk("PV EOI\n");
+        *eoi_addr &= ~KVM_PV_EOI_MASK;
+    } else {
+        apic_native_eoi_write();
+    }
+}
+
 void kvm_init_guest(void)
 {
     if (kvm_para_has_feature(KVM_FEATURE_STEAL_TIME)) {
         has_steal_clock = 1;
     }
+
+    if (kvm_para_has_feature(KVM_FEATURE_PV_EOI)) {
+        apic_set_eoi_write(kvm_guest_apic_eoi_write);
+    }
 }
 
 void kvm_init_guest_cpu(void)
 {
+    u64 val;
+
     if (has_steal_clock) kvm_register_steal_time();
+
+    if (kvm_para_has_feature(KVM_FEATURE_PV_EOI)) {
+        kvm_apic_eoi[cpuid] = 0;
+        val = (u64)__pa(&kvm_apic_eoi[cpuid]) | KVM_MSR_ENABLED;
+        ia32_write_msr(MSR_KVM_PV_EOI_EN, ex64hi(val), ex64lo(val));
+    }
 }
 
 u64 kvm_steal_clock(int cpu)

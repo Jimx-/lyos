@@ -2,7 +2,7 @@ bits 32
 
 %include "sconst.inc"
 
-[section .text]	
+[section .text]
 
 global	apic_hwint00
 global	apic_hwint01
@@ -78,255 +78,257 @@ extern  switch_to_user
 extern  irq_handle
 extern  idle_stop
 extern  lapic_eoi_addr
-extern 	clock_handler
+    extern  apic_native_mem_eoi_write
+    extern  apic_eoi_write
+extern  clock_handler
 extern  apic_spurious_int_handler
 extern  apic_error_int_handler
 
 ; interrupt and exception - hardware interrupt
 ; ---------------------------------
-%macro	apic_hwint 		1
-	cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
-	je .1
-	call	save
-	push 	esi
-	call 	stop_context
-	pop 	esi
-	push	%1						; `.
-	call	irq_handle	;  | Call the interrupt handler
-	pop	ecx							; /
-	jmp switch_to_user
+%macro	apic_hwint      1
+    cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
+    je .1
+    call	save
+    push    esi
+    call    stop_context
+    pop     esi
+    push	%1						; `.
+    call	irq_handle	;  | Call the interrupt handler
+    pop	ecx							; /
+    jmp switch_to_user
 .1:
-	pushad
-	call idle_stop
-	push	%1			; `.
-	call	irq_handle	;  | 中断处理程序
-	pop	ecx			; /
-	CLEAR_IF	dword [esp + 40]
-	popad
-	iret
+    pushad
+    call idle_stop
+    push	%1			; `.
+    call	irq_handle	;  | 中断处理程序
+    pop	ecx			; /
+    CLEAR_IF	dword [esp + 40]
+    popad
+    iret
 %endmacro
 
-%macro	lapic_int 		1
+%macro	lapic_int       1
 cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
-	je .1
-	call	save
-	push 	esi
-	call 	stop_context
-	pop 	esi
-	call	%1
-	mov eax, dword [lapic_eoi_addr]
-	mov dword [eax], 0
-	jmp switch_to_user
+    je .1
+    call	save
+    push    esi
+    call    stop_context
+    pop     esi
+    call	%1
+    mov     eax, dword [apic_eoi_write]
+    call    eax
+    jmp     switch_to_user
 .1:
-	pushad
-	call idle_stop
-	call	%1
-	mov eax, dword [lapic_eoi_addr]
-	mov dword [eax], 0
-	CLEAR_IF	dword [esp + 40]
-	popad
-	iret
+    pushad
+    call    idle_stop
+    call	%1
+    mov     eax, dword [apic_eoi_write]
+    call    eax
+    CLEAR_IF	dword [esp + 40]
+    popad
+    iret
 %endmacro
 
 ALIGN   16
 apic_timer_int_handler:
-	lapic_int	clock_handler
+    lapic_int	clock_handler
 ALIGN   16
 apic_spurious_intr:
-	lapic_int	apic_spurious_int_handler
+    lapic_int	apic_spurious_int_handler
 ALIGN   16
 apic_error_intr:
-	lapic_int	apic_error_int_handler
+    lapic_int	apic_error_int_handler
 
 ALIGN	16
 apic_hwint00:
-	apic_hwint	0
+    apic_hwint	0
 ALIGN	16
 apic_hwint01:
-	apic_hwint	1
+    apic_hwint	1
 ALIGN	16
 apic_hwint02:
-	apic_hwint	2
+    apic_hwint	2
 ALIGN	16
 apic_hwint03:
-	apic_hwint	3
+    apic_hwint	3
 ALIGN	16
 apic_hwint04:
-	apic_hwint	4
+    apic_hwint	4
 ALIGN	16
 apic_hwint05:
-	apic_hwint	5
+    apic_hwint	5
 ALIGN	16
 apic_hwint06:
-	apic_hwint	6
+    apic_hwint	6
 ALIGN	16
 apic_hwint07:
-	apic_hwint	7
+    apic_hwint	7
 ALIGN	16
 apic_hwint08:
-	apic_hwint	8
+    apic_hwint	8
 ALIGN	16
 apic_hwint09:
-	apic_hwint	9
+    apic_hwint	9
 ALIGN	16
 apic_hwint10:
-	apic_hwint	10
+    apic_hwint	10
 ALIGN	16
 apic_hwint11:
-	apic_hwint	11
+    apic_hwint	11
 ALIGN	16
 apic_hwint12:
-	apic_hwint	12
+    apic_hwint	12
 ALIGN	16
 apic_hwint13:
-	apic_hwint	13
+    apic_hwint	13
 ALIGN	16
 apic_hwint14:
-	apic_hwint	14
+    apic_hwint	14
 ALIGN	16
 apic_hwint15:
-	apic_hwint	15
+    apic_hwint	15
 ALIGN	16
 apic_hwint16:
-	apic_hwint	16
+    apic_hwint	16
 ALIGN	16
 apic_hwint17:
-	apic_hwint	17
+    apic_hwint	17
 ALIGN	16
 apic_hwint18:
-	apic_hwint	18
+    apic_hwint	18
 ALIGN	16
 apic_hwint19:
-	apic_hwint	19
+    apic_hwint	19
 ALIGN	16
 apic_hwint20:
-	apic_hwint	20
+    apic_hwint	20
 ALIGN	16
 apic_hwint21:
-	apic_hwint	21
+    apic_hwint	21
 ALIGN	16
 apic_hwint22:
-	apic_hwint	22
+    apic_hwint	22
 ALIGN	16
 apic_hwint23:
-	apic_hwint	23
+    apic_hwint	23
 ALIGN	16
 apic_hwint24:
-	apic_hwint	24
+    apic_hwint	24
 ALIGN	16
 apic_hwint25:
-	apic_hwint	25
+    apic_hwint	25
 ALIGN	16
 apic_hwint26:
-	apic_hwint	26
+    apic_hwint	26
 ALIGN	16
 apic_hwint27:
-	apic_hwint	27
+    apic_hwint	27
 ALIGN	16
 apic_hwint28:
-	apic_hwint	28
+    apic_hwint	28
 ALIGN	16
 apic_hwint29:
-	apic_hwint	29
+    apic_hwint	29
 ALIGN	16
 apic_hwint30:
-	apic_hwint	30
+    apic_hwint	30
 ALIGN	16
 apic_hwint31:
-	apic_hwint	31
+    apic_hwint	31
 ALIGN	16
 apic_hwint32:
-	apic_hwint	32
+    apic_hwint	32
 ALIGN	16
 apic_hwint33:
-	apic_hwint	33
+    apic_hwint	33
 ALIGN	16
 apic_hwint34:
-	apic_hwint	34
+    apic_hwint	34
 ALIGN	16
 apic_hwint35:
-	apic_hwint	35
+    apic_hwint	35
 ALIGN	16
 apic_hwint36:
-	apic_hwint	36
+    apic_hwint	36
 ALIGN	16
 apic_hwint37:
-	apic_hwint	37
+    apic_hwint	37
 ALIGN	16
 apic_hwint38:
-	apic_hwint	38
+    apic_hwint	38
 ALIGN	16
 apic_hwint39:
-	apic_hwint	39
+    apic_hwint	39
 ALIGN	16
 apic_hwint40:
-	apic_hwint	40
+    apic_hwint	40
 ALIGN	16
 apic_hwint41:
-	apic_hwint	41
+    apic_hwint	41
 ALIGN	16
 apic_hwint42:
-	apic_hwint	42
+    apic_hwint	42
 ALIGN	16
 apic_hwint43:
-	apic_hwint	43
+    apic_hwint	43
 ALIGN	16
 apic_hwint44:
-	apic_hwint	44
+    apic_hwint	44
 ALIGN	16
 apic_hwint45:
-	apic_hwint	45
+    apic_hwint	45
 ALIGN	16
 apic_hwint46:
-	apic_hwint	46
+    apic_hwint	46
 ALIGN	16
 apic_hwint47:
-	apic_hwint	47
+    apic_hwint	47
 ALIGN	16
 apic_hwint48:
-	apic_hwint	48
+    apic_hwint	48
 ALIGN	16
 apic_hwint49:
-	apic_hwint	49
+    apic_hwint	49
 ALIGN	16
 apic_hwint50:
-	apic_hwint	50
+    apic_hwint	50
 ALIGN	16
 apic_hwint51:
-	apic_hwint	51
+    apic_hwint	51
 ALIGN	16
 apic_hwint52:
-	apic_hwint	52
+    apic_hwint	52
 ALIGN	16
 apic_hwint53:
-	apic_hwint	53
+    apic_hwint	53
 ALIGN	16
 apic_hwint54:
-	apic_hwint	54
+    apic_hwint	54
 ALIGN	16
 apic_hwint55:
-	apic_hwint	55
+    apic_hwint	55
 ALIGN	16
 apic_hwint56:
-	apic_hwint	56
+    apic_hwint	56
 ALIGN	16
 apic_hwint57:
-	apic_hwint	57
+    apic_hwint	57
 ALIGN	16
 apic_hwint58:
-	apic_hwint	58
+    apic_hwint	58
 ALIGN	16
 apic_hwint59:
-	apic_hwint	59
+    apic_hwint	59
 ALIGN	16
 apic_hwint60:
-	apic_hwint	60
+    apic_hwint	60
 ALIGN	16
 apic_hwint61:
-	apic_hwint	61
+    apic_hwint	61
 ALIGN	16
 apic_hwint62:
-	apic_hwint	62
+    apic_hwint	62
 ALIGN	16
 apic_hwint63:
-	apic_hwint	63
+    apic_hwint	63

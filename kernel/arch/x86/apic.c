@@ -108,6 +108,7 @@
 #define APIC_ICR_DEST_ALL_BUT_SELF (3 << 18)
 
 #define IA32_APIC_BASE 0x1b
+#define IA32_APIC_BASE_X2APIC_ENABLE_BIT 10
 #define IA32_APIC_BASE_ENABLE_BIT 11
 
 DEF_SPINLOCK(calibrate_lock);
@@ -119,6 +120,11 @@ PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 
 PUBLIC struct io_apic io_apics[MAX_IOAPICS];
 PUBLIC u32 nr_ioapics;
+
+static void apic_native_mem_eoi_write(void) { lapic_write(LAPIC_EOI, 0); }
+
+void (*apic_native_eoi_write)(void) = apic_native_mem_eoi_write;
+void (*apic_eoi_write)(void) = apic_native_mem_eoi_write;
 
 struct irq;
 typedef void (*eoi_method_t)(struct irq*);
@@ -284,6 +290,12 @@ PUBLIC int lapic_enable_msr()
     return 1;
 }
 
+void apic_set_eoi_write(void (*eoi_write)(void))
+{
+    apic_native_eoi_write = apic_eoi_write;
+    apic_eoi_write = eoi_write;
+}
+
 PUBLIC int lapic_enable(unsigned cpu)
 {
     u32 val, nlvt;
@@ -292,7 +304,7 @@ PUBLIC int lapic_enable(unsigned cpu)
 
     if (!lapic_enable_msr()) return 0;
 
-    lapic_eoi_addr = LAPIC_EOI;
+    lapic_eoi_addr = lapic_addr + LAPIC_EOI;
 
     lapic_write(LAPIC_TPR, 0x0);
 
@@ -345,13 +357,13 @@ PUBLIC void lapic_set_timer_one_shot(const u32 usec)
 
     ticks_per_us = lapic_bus_freq[cpu] / 1000000;
 
-    lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
-
     lvtt = APIC_TDCR_1;
     lapic_write(LAPIC_TIMER_DCR, lvtt);
 
     lvtt = APIC_TIMER_INT_VECTOR;
     lapic_write(LAPIC_LVTTR, lvtt);
+
+    lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }
 
 PUBLIC void lapic_restart_timer()

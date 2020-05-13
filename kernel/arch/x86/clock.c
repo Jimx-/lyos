@@ -113,7 +113,7 @@ PUBLIC void stop_local_timer()
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
         lapic_stop_timer();
-        apic_eoi();
+        /* apic_eoi(); */
     } else
 #endif
     {

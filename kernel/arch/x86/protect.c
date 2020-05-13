@@ -477,7 +477,8 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame* frame)
     }
 
     if (in_kernel) {
-        panic("unhandled exception in kernel");
+        panic("unhandled exception in kernel %d, eip: %x", frame->vec_no,
+              frame->eip);
     } else {
         ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);
     }

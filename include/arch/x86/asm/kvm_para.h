@@ -9,7 +9,7 @@
 #define KVM_FEATURE_MMU_OP 2
 #define KVM_FEATURE_CLOCKSOURCE2 3
 #define KVM_FEATURE_STEAL_TIME 5
-#define KVM_PV_EOI 6
+#define KVM_FEATURE_PV_EOI 6
 
 #define MSR_KVM_WALL_CLOCK 0x11
 #define MSR_KVM_SYSTEM_TIME 0x12
@@ -19,6 +19,10 @@
 #define MSR_KVM_WALL_CLOCK_NEW 0x4b564d00
 #define MSR_KVM_SYSTEM_TIME_NEW 0x4b564d01
 #define MSR_KVM_STEAL_TIME 0x4b564d03
+#define MSR_KVM_PV_EOI_EN 0x4b564d04
+
+#define KVM_PV_EOI_BIT 0
+#define KVM_PV_EOI_MASK (0x1 << KVM_PV_EOI_BIT)
 
 struct kvm_steal_time {
     u64 steal;

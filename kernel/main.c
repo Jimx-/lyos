@@ -176,9 +176,9 @@ PUBLIC void panic(const char* fmt, ...)
     kern_log.buf[kern_log.size] = 0;
     direct_put_str(kern_log.buf);
 #if CONFIG_SMP
-    direct_print("\nKernel panic on CPU %d: %s", cpuid, buf);
+    direct_print("\nKernel panic on CPU %d: %s\n", cpuid, buf);
 #else
-    direct_print("\nKernel panic: %s", buf);
+    direct_print("\nKernel panic: %s\n", buf);
 #endif
 
     while (1)

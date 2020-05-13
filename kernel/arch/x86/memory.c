@@ -358,7 +358,7 @@ PRIVATE void setcr3(struct proc* p, void* cr3, void* cr3_v)
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
         /* using virtual address now */
         lapic_addr = lapic_vaddr;
-        lapic_eoi_addr = LAPIC_EOI;
+        lapic_eoi_addr = lapic_addr + LAPIC_EOI;
         int i;
         for (i = 0; i < nr_ioapics; i++) {
             io_apics[i].addr = io_apics[i].vir_addr;

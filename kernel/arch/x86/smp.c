@@ -100,7 +100,7 @@ PUBLIC void smp_init()
 
     lapic_addr = (void*)LOCAL_APIC_DEF_ADDR;
 
-    bsp_lapic_id = apicid();
+    bsp_lapic_id = *(volatile u32*)(lapic_addr + LAPIC_ID);
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
 
     if (!lapic_enable(bsp_cpu_id)) {
