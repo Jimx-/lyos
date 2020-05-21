@@ -93,7 +93,7 @@
 #define APIC_ICR_LEVEL_DEASSERT (0 << 14)
 
 #define APIC_ICR_TRIGGER (1 << 15)
-#define APIC_ICR_TM_LEVEL 0
+#define APIC_ICR_TM_LEVEL APIC_ICR_TRIGGER
 #define APIC_ICR_TM_EDGE 0
 
 #define APIC_ICR_INT_MASK (1 << 16)
@@ -292,6 +292,9 @@ void apic_set_eoi_write(void (*eoi_write)(void))
 {
     apic->native_eoi_write = apic->eoi_write;
     apic->eoi_write = eoi_write;
+
+    x2apic_phys.native_eoi_write = x2apic_phys.eoi_write;
+    x2apic_phys.eoi_write = eoi_write;
 }
 
 PUBLIC int lapic_enable(unsigned cpu)
@@ -355,11 +358,11 @@ PUBLIC void lapic_set_timer_one_shot(const u32 usec)
 
     ticks_per_us = lapic_bus_freq[cpu] / 1000000;
 
-    lvtt = APIC_TDCR_1;
-    lapic_write(LAPIC_TIMER_DCR, lvtt);
-
     lvtt = APIC_TIMER_INT_VECTOR;
     lapic_write(LAPIC_LVTTR, lvtt);
+
+    lvtt = APIC_TDCR_1;
+    lapic_write(LAPIC_TIMER_DCR, lvtt);
 
     lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }

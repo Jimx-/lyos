@@ -108,7 +108,6 @@ static void kvm_guest_apic_eoi_write(void)
     volatile unsigned long* eoi_addr = &kvm_apic_eoi[cpuid];
 
     if (*eoi_addr & KVM_PV_EOI_MASK) {
-        printk("PV EOI\n");
         *eoi_addr &= ~KVM_PV_EOI_MASK;
     } else {
         apic->native_eoi_write();

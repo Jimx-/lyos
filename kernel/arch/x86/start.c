@@ -232,8 +232,6 @@ PUBLIC void init_arch()
 
 #ifdef CONFIG_KVM_GUEST
     kvm_init_guest();
-
-    kvm_init_guest_cpu();
 #endif
 }
 

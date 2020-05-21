@@ -116,6 +116,10 @@ PUBLIC void smp_init()
     apic_init_idt(0);
     reload_idt();
 
+#ifdef CONFIG_KVM_GUEST
+    kvm_init_guest_cpu();
+#endif
+
     switch_k_stack((char*)get_k_stack_top(bsp_cpu_id) - X86_STACK_TOP_RESERVED,
                    smp_start_aps);
 }
