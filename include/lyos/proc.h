@@ -23,6 +23,7 @@
 #include <asm/fpu.h>
 #include <lyos/spinlock.h>
 #include <lyos/endpoint.h>
+#include <lyos/cpulocals.h>
 
 /* Process State */
 #define PST_BOOTINHIBIT \
@@ -196,6 +197,12 @@ struct proc {
 #define LAST_PROC proc_table[NR_TASKS + NR_PROCS - 1]
 
 #define NR_HOLES ((NR_PROCS * 2) + 4)
+
+DECLARE_CPULOCAL(struct proc*, proc_ptr);
+DECLARE_CPULOCAL(struct proc*, pt_proc);
+DECLARE_CPULOCAL(struct proc, idle_proc);
+
+DECLARE_CPULOCAL(volatile int, cpu_is_idle);
 
 /**
  * All forked proc will use memory above PROCS_BASE.

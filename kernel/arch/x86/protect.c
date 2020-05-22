@@ -134,6 +134,7 @@ PUBLIC void init_prot()
     init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff,
               DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
     init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
+    init_desc(&gdt[INDEX_CPULOCALS], 0, 0xfffff, DA_DRW | DA_32 | DA_LIMIT_4K);
 
     u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
     u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
@@ -164,7 +165,7 @@ PUBLIC void load_prot_selectors()
     x86_load_kerncs();
     x86_load_ds(SELECTOR_KERNEL_DS);
     x86_load_es(SELECTOR_KERNEL_DS);
-    x86_load_fs(SELECTOR_KERNEL_DS);
+    x86_load_fs(SELECTOR_CPULOCALS);
     x86_load_gs(SELECTOR_KERNEL_DS);
     x86_load_ss(SELECTOR_KERNEL_DS);
 }

@@ -38,10 +38,10 @@
 
 static int has_steal_clock = 0;
 
-static struct kvm_steal_time steal_time[CONFIG_SMP_MAX_CPUS]
+static DEFINE_CPULOCAL(struct kvm_steal_time, steal_time)
     __attribute__((aligned(64)));
 
-static volatile unsigned long kvm_apic_eoi[CONFIG_SMP_MAX_CPUS];
+static DEFINE_CPULOCAL(unsigned long, kvm_apic_eoi);
 
 extern void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
 
@@ -91,7 +91,7 @@ unsigned int kvm_arch_para_features(void)
 
 static void kvm_register_steal_time(void)
 {
-    struct kvm_steal_time* st = &steal_time[cpuid];
+    struct kvm_steal_time* st = get_cpulocal_var_ptr(steal_time);
     u64 val;
 
     if (!has_steal_clock) return;
@@ -105,7 +105,7 @@ static void kvm_register_steal_time(void)
 
 static void kvm_guest_apic_eoi_write(void)
 {
-    volatile unsigned long* eoi_addr = &kvm_apic_eoi[cpuid];
+    volatile unsigned long* eoi_addr = get_cpulocal_var_ptr(kvm_apic_eoi);
 
     if (*eoi_addr & KVM_PV_EOI_MASK) {
         *eoi_addr &= ~KVM_PV_EOI_MASK;
@@ -132,8 +132,8 @@ void kvm_init_guest_cpu(void)
     if (has_steal_clock) kvm_register_steal_time();
 
     if (kvm_para_has_feature(KVM_FEATURE_PV_EOI)) {
-        kvm_apic_eoi[cpuid] = 0;
-        val = (u64)__pa(&kvm_apic_eoi[cpuid]) | KVM_MSR_ENABLED;
+        get_cpulocal_var(kvm_apic_eoi) = 0;
+        val = (u64)__pa(get_cpulocal_var_ptr(kvm_apic_eoi)) | KVM_MSR_ENABLED;
         ia32_write_msr(MSR_KVM_PV_EOI_EN, ex64hi(val), ex64lo(val));
     }
 }
@@ -146,7 +146,7 @@ u64 kvm_steal_clock(int cpu)
 
     if (!has_steal_clock) return 0;
 
-    src = &steal_time[cpuid];
+    src = get_cpulocal_var_ptr(steal_time);
     do {
         version = src->version;
         cmb();

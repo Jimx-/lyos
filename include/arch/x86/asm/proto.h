@@ -97,10 +97,13 @@ PUBLIC void smp_commence();
 PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end);
 PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
                    kinfo_t* pk);
+PUBLIC phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages);
 PUBLIC phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size);
 
 PUBLIC void clear_memcache();
 
 PUBLIC void arch_set_syscall_result(struct proc* p, int result);
+
+PUBLIC void arch_setup_cpulocals(void);
 
 #endif

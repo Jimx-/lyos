@@ -35,6 +35,12 @@
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
 
+DEFINE_CPULOCAL(struct proc*, proc_ptr);
+DEFINE_CPULOCAL(struct proc*, pt_proc);
+DEFINE_CPULOCAL(struct proc, idle_proc);
+
+DEFINE_CPULOCAL(volatile int, cpu_is_idle);
+
 PUBLIC struct proc* pick_proc();
 PUBLIC void proc_no_time(struct proc* p);
 

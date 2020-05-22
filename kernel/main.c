@@ -56,6 +56,7 @@ PUBLIC void init_arch();
 PUBLIC int kernel_main()
 {
     init_arch();
+    arch_setup_cpulocals();
     init_sched();
     init_proc();
     init_system();

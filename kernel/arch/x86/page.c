@@ -49,20 +49,21 @@ PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
     }
 }
 
-PUBLIC phys_bytes pg_alloc_page(kinfo_t* pk)
+PUBLIC phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages)
 {
     int i;
+    vir_bytes size = nr_pages * ARCH_PG_SIZE;
 
     for (i = pk->memmaps_count - 1; i >= 0; i--) {
         struct kinfo_mmap_entry* entry = &pk->memmaps[i];
 
         if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
 
-        if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= ARCH_PG_SIZE)) {
-            entry->addr += ARCH_PG_SIZE;
-            entry->len -= ARCH_PG_SIZE;
+        if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= size)) {
+            entry->addr += size;
+            entry->len -= size;
 
-            return entry->addr - ARCH_PG_SIZE;
+            return entry->addr - size;
         }
     }
 
@@ -117,7 +118,7 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
 
     while (vir_addr < vir_end) {
         phys_bytes phys = phys_addr;
-        if (phys == 0) phys = pg_alloc_page(pk);
+        if (phys == 0) phys = pg_alloc_pages(pk, 1);
 
         int pde = ARCH_PDE(vir_addr);
         int pte = ARCH_PTE(vir_addr);

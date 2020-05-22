@@ -26,6 +26,7 @@ obj.*
 arch/*/lyos
 lyos.gz
 *.elf
+bootmods
 
 #
 # Initrd 

@@ -96,7 +96,7 @@ PUBLIC void smp_init()
 
     machine.cpu_count = ncpus;
 
-    init_tss_all(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
+    init_tss_all();
 
     lapic_addr = (void*)LOCAL_APIC_DEF_ADDR;
 

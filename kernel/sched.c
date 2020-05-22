@@ -37,6 +37,9 @@
 
 PUBLIC u32 rr_interval_ms;
 
+static DEFINE_CPULOCAL(struct list_head[SCHED_QUEUES], run_queues);
+static DEFINE_CPULOCAL(bitchunk_t[BITCHUNKS(SCHED_QUEUES)], run_queue_bitmap);
+
 #define JIFFIES_MS(j) (((j)*MSEC_PER_SEC) / system_hz)
 
 PUBLIC void init_sched()

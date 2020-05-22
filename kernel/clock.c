@@ -38,6 +38,8 @@ extern spinlock_t clocksource_lock;
 
 PUBLIC clock_t idle_ticks = 0;
 
+static DEFINE_CPULOCAL(u64, context_switch_clock);
+
 DEF_LIST(timer_list);
 PUBLIC spinlock_t timers_lock;
 PUBLIC clock_t next_timeout = TIMER_UNSET;
