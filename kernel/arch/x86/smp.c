@@ -52,7 +52,6 @@ PRIVATE u32 ap_ready;
 PRIVATE int smp_commenced = 0;
 
 PRIVATE int discover_cpus();
-PRIVATE void init_tss_all();
 PRIVATE void smp_start_aps();
 
 PUBLIC void trampoline();
@@ -69,7 +68,8 @@ PRIVATE void copy_trampoline()
     trampoline_base = pg_alloc_lowest(&kinfo, tramp_size);
 
     /* copy GDT and IDT */
-    memcpy(&__ap_gdt_table, gdt, sizeof(gdt));
+    memcpy(&__ap_gdt_table, get_cpu_gdt(cpuid),
+           sizeof(struct descriptor) * GDT_SIZE);
     memcpy(&__ap_idt_table, idt, sizeof(idt));
 
     /* Set up descriptors */
@@ -96,7 +96,7 @@ PUBLIC void smp_init()
 
     machine.cpu_count = ncpus;
 
-    init_tss_all();
+    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
 
     lapic_addr = (void*)LOCAL_APIC_DEF_ADDR;
 
@@ -122,15 +122,6 @@ PUBLIC void smp_init()
 
     switch_k_stack((char*)get_k_stack_top(bsp_cpu_id) - X86_STACK_TOP_RESERVED,
                    smp_start_aps);
-}
-
-PRIVATE void init_tss_all()
-{
-    unsigned cpu;
-
-    for (cpu = 0; cpu < ncpus; cpu++) {
-        init_tss(cpu, (u32)get_k_stack_top(cpu));
-    }
 }
 
 PRIVATE int discover_cpus()
@@ -174,6 +165,10 @@ PRIVATE void smp_start_aps()
         __ap_id = booting_cpu = i;
         memcpy((void*)__ap_id_phys, (void*)&__ap_id, sizeof(u32));
 
+        /* Copy per-cpu GDT */
+        memcpy(get_cpu_gdt(i), get_cpu_gdt(cpuid),
+               sizeof(struct descriptor) * GDT_SIZE);
+
         /* INIT-SIPI-SIPI sequence */
         cmb();
         if (apic_send_init_ipi(i, trampoline_base) ||
@@ -200,16 +195,12 @@ PRIVATE void smp_start_aps()
     out_byte(CLK_ELE, 0xF);
     out_byte(CLK_IO, 0);
 
-    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
-
     finish_bsp_booting();
 }
 
 PRIVATE void ap_finish_booting()
 {
     ap_ready = cpuid;
-
-    init_tss(cpuid, (u32)get_k_stack_top(cpuid));
 
     printk("smp: CPU %d is up\n", cpuid);
 
@@ -241,6 +232,9 @@ PRIVATE void ap_finish_booting()
 
 PUBLIC void smp_boot_ap()
 {
+    init_tss(__ap_id, (u32)get_k_stack_top(__ap_id));
+    load_prot_selectors(__ap_id);
+
     switch_k_stack((char*)get_k_stack_top(__ap_id) - X86_STACK_TOP_RESERVED,
                    ap_finish_booting);
 }

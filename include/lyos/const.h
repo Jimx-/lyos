@@ -28,7 +28,6 @@
 #define rounddown(x, align) ((x) - ((x) % align))
 
 /* GDT 和 IDT 中描述符的个数 */
-#define GDT_SIZE 128
 #define IDT_SIZE 256
 
 #define NR_LOCAL_SEGS 3

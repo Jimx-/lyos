@@ -37,9 +37,6 @@ EXTERN int jiffies;
 extern struct clocksource* curr_clocksource;
 
 #ifdef __i386__
-EXTERN u8 gdt_ptr[6]; /* 0~15:Limit  16~47:Base */
-EXTERN struct descriptor gdt[GDT_SIZE];
-EXTERN u8 idt_ptr[6]; /* 0~15:Limit  16~47:Base */
 EXTERN struct gate idt[IDT_SIZE];
 EXTERN pde_t* initial_pgd;
 EXTERN void* lapic_addr;

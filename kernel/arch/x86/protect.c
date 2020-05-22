@@ -35,6 +35,9 @@
 
 extern u32 StackTop;
 
+DEFINE_CPULOCAL(struct gdt_page, gdt_page)
+__attribute__((aligned(ARCH_PG_SIZE)));
+
 PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
 PUBLIC int syscall_style = 0;
@@ -122,10 +125,13 @@ PUBLIC void init_idt();
  *======================================================================*/
 PUBLIC void init_prot()
 {
+    struct descriptor* gdt;
+
     if (_cpufeature(_CPUF_I386_SYSENTER)) syscall_style |= SST_INTEL_SYSENTER;
     if (_cpufeature(_CPUF_I386_SYSCALL)) syscall_style |= SST_AMD_SYSCALL;
 
     /* setup gdt */
+    gdt = get_cpu_gdt(booting_cpu);
     init_desc(&gdt[0], 0, 0, 0);
     init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR | DA_32 | DA_LIMIT_4K);
     init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW | DA_32 | DA_LIMIT_4K);
@@ -136,31 +142,34 @@ PUBLIC void init_prot()
     init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
     init_desc(&gdt[INDEX_CPULOCALS], 0, 0xfffff, DA_DRW | DA_32 | DA_LIMIT_4K);
 
-    u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
-    u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
-    *p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
-    *p_gdt_base = (u32)&gdt;
-
-    u16* p_idt_limit = (u16*)(&idt_ptr[0]);
-    u32* p_idt_base = (u32*)(&idt_ptr[2]);
-    *p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
-    *p_idt_base = (u32)&idt;
-
     init_8259A();
 
     init_idt();
 
     init_tss(0, (u32)&StackTop);
 
-    load_prot_selectors();
+    load_prot_selectors(booting_cpu);
 }
 
-PUBLIC void load_prot_selectors()
+PUBLIC void load_prot_selectors(unsigned int cpu)
 {
+    u8 gdt_ptr[6]; /* 0~15:Limit  16~47:Base */
+    u8 idt_ptr[6]; /* 0~15:Limit  16~47:Base */
+
+    u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
+    u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
+    *p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
+    *p_gdt_base = (u32)get_cpu_gdt(cpu);
+
+    u16* p_idt_limit = (u16*)(&idt_ptr[0]);
+    u32* p_idt_base = (u32*)(&idt_ptr[2]);
+    *p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
+    *p_idt_base = (u32)&idt;
+
     x86_lgdt((u8*)&gdt_ptr);
     x86_lidt((u8*)&idt_ptr);
     x86_lldt(SELECTOR_LDT);
-    x86_ltr(SELECTOR_TSS(booting_cpu));
+    x86_ltr(SELECTOR_TSS);
 
     x86_load_kerncs();
     x86_load_ds(SELECTOR_KERNEL_DS);
@@ -268,7 +277,17 @@ PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type,
     p_gate->offset_high = (base >> 16) & 0xFFFF;
 }
 
-PUBLIC void reload_idt() { x86_lidt((u8*)&idt_ptr); }
+PUBLIC void reload_idt()
+{
+    u8 idt_ptr[6];
+
+    u16* p_idt_limit = (u16*)(&idt_ptr[0]);
+    u32* p_idt_base = (u32*)(&idt_ptr[2]);
+    *p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
+    *p_idt_base = (u32)&idt;
+
+    x86_lidt((u8*)&idt_ptr);
+}
 
 PUBLIC void sys_call_syscall_cpu0();
 PUBLIC void sys_call_syscall_cpu1();
@@ -282,14 +301,14 @@ PUBLIC void sys_call_syscall_cpu7();
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
 {
     struct tss* t = &tss[cpu];
+    struct descriptor* gdt = get_cpu_gdt(cpu);
 
     /* Fill the TSS descriptor in GDT */
     memset(t, 0, sizeof(struct tss));
     t->ss0 = SELECTOR_KERNEL_DS;
     t->cs = SELECTOR_KERNEL_CS;
     percpu_kstack[cpu] = t->esp0 = kernel_stack - X86_STACK_TOP_RESERVED;
-    init_desc(&gdt[INDEX_TSS(cpu)], makelinear(SELECTOR_KERNEL_DS, t),
-              sizeof(struct tss) - 1, DA_386TSS);
+    init_desc(&gdt[INDEX_TSS], (u32)t, sizeof(struct tss) - 1, DA_386TSS);
     t->iobase = sizeof(struct tss); /* No IO permission bitmap */
 
     /* set cpuid */
@@ -327,20 +346,7 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
         set_star(7);
     }
 
-    return SELECTOR_TSS(cpu);
-}
-
-/*======================================================================*
-                           seg2phys
- *----------------------------------------------------------------------*
- 由段名求绝对地址
- *======================================================================*/
-PUBLIC u32 seg2linear(u16 seg)
-{
-    struct descriptor* p_dest = &gdt[seg >> 3];
-
-    return (p_dest->base_high << 24) | (p_dest->base_mid << 16) |
-           (p_dest->base_low);
+    return SELECTOR_TSS;
 }
 
 /*======================================================================*

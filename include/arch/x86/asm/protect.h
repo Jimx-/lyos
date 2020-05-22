@@ -16,6 +16,9 @@
 #ifndef _PROTECT_H_
 #define _PROTECT_H_
 
+#include <asm/page.h>
+#include <lyos/cpulocals.h>
+
 /* Segment descriptor */
 struct descriptor /* 8 bytes */
 {
@@ -79,19 +82,18 @@ struct tss {
 #define INDEX_USER_RW 4
 #define INDEX_LDT 5
 #define INDEX_CPULOCALS 6
-#define INDEX_TSS_FIRST 7
-#define INDEX_TSS(i) (INDEX_TSS_FIRST + i)
+#define INDEX_TSS 7
 
 /* selector */
 #define SEG_SELECTOR(i) (i * 8)
 #define SELECTOR_DUMMY 0
 #define SELECTOR_KERNEL_C SEG_SELECTOR(INDEX_KERNEL_C)
 #define SELECTOR_KERNEL_RW SEG_SELECTOR(INDEX_KERNEL_RW)
-#define SELECTOR_USER_C SEG_SELECTOR(INDEX_USER_C)
-#define SELECTOR_USER_RW SEG_SELECTOR(INDEX_USER_RW)
+#define SELECTOR_USER_C (SEG_SELECTOR(INDEX_USER_C) | PRIVILEGE_USER)
+#define SELECTOR_USER_RW (SEG_SELECTOR(INDEX_USER_RW) | PRIVILEGE_USER)
 #define SELECTOR_LDT SEG_SELECTOR(INDEX_LDT)
 #define SELECTOR_CPULOCALS SEG_SELECTOR(INDEX_CPULOCALS)
-#define SELECTOR_TSS(i) SEG_SELECTOR(INDEX_TSS(i))
+#define SELECTOR_TSS SEG_SELECTOR(INDEX_TSS)
 
 #define SELECTOR_KERNEL_CS SELECTOR_KERNEL_C
 #define SELECTOR_KERNEL_DS SELECTOR_KERNEL_RW
@@ -168,19 +170,25 @@ struct tss {
 /* 系统调用 */
 #define INT_VECTOR_SYS_CALL 0x90
 
-/* 宏 */
-/* 线性地址 → 物理地址 */
-//#define vir2phys(seg_base, vir)	(u32)(((u32)seg_base) + (u32)(vir))
+#define GDT_SIZE 128
 
-/* seg:off -> linear addr */
-#define makelinear(seg, off) (u32)(((u32)(seg2linear(seg))) + (u32)(off))
+struct gdt_page {
+    struct descriptor gdt[GDT_SIZE];
+} __attribute__((aligned(ARCH_PG_SIZE)));
+
+DECLARE_CPULOCAL(struct gdt_page, gdt_page)
+__attribute__((aligned(ARCH_PG_SIZE)));
+
+static inline struct descriptor* get_cpu_gdt(unsigned int cpu)
+{
+    return get_cpu_var(cpu, gdt_page).gdt;
+}
 
 /* protect.c */
 PUBLIC void init_prot();
-PUBLIC u32 seg2linear(u16 seg);
 PUBLIC void init_desc(struct descriptor* p_desc, u32 base, u32 limit,
                       u16 attribute);
-PUBLIC void load_prot_selectors();
+PUBLIC void load_prot_selectors(unsigned int cpu);
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
 PUBLIC void init_idt();
 PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type,
