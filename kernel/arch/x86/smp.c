@@ -49,7 +49,7 @@ PUBLIC u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
 PRIVATE u32 ap_ready;
 
-PRIVATE int smp_commenced = 0;
+PRIVATE volatile int smp_commenced = 0;
 
 PRIVATE int discover_cpus();
 PRIVATE void smp_start_aps();
@@ -223,7 +223,8 @@ PRIVATE void ap_finish_booting()
 
     /* wait for MM is ready */
     while (!smp_commenced)
-        ;
+        arch_pause();
+
     /* flush TLB */
     switch_address_space(proc_addr(TASK_MM));
 

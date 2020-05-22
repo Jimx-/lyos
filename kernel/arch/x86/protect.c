@@ -308,6 +308,8 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
     t->ss0 = SELECTOR_KERNEL_DS;
     t->cs = SELECTOR_KERNEL_CS;
     percpu_kstack[cpu] = t->esp0 = kernel_stack - X86_STACK_TOP_RESERVED;
+    init_desc(&gdt[INDEX_CPULOCALS], cpulocals_offset(cpu), 0xfffff,
+              DA_DRW | DA_32 | DA_LIMIT_4K);
     init_desc(&gdt[INDEX_TSS], (u32)t, sizeof(struct tss) - 1, DA_386TSS);
     t->iobase = sizeof(struct tss); /* No IO permission bitmap */
 

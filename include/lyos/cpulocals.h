@@ -37,4 +37,6 @@ extern vir_bytes __cpulocals_offset[CONFIG_SMP_MAX_CPUS];
 #define DEFINE_CPULOCAL(type, name) \
     __attribute__((section(CPULOCAL_BASE_SECTION))) __typeof__(type) name
 
+DECLARE_CPULOCAL(unsigned int, cpu_number);
+
 #endif /* _CPULOCALS_H_ */
