@@ -33,6 +33,7 @@
 #endif
 #include <lyos/cpulocals.h>
 #include <lyos/kvm_para.h>
+#include <asm/bitops.h>
 
 #include "apic.h"
 
@@ -105,13 +106,12 @@ static void kvm_register_steal_time(void)
 
 static void kvm_guest_apic_eoi_write(void)
 {
-    volatile unsigned long* eoi_addr = get_cpulocal_var_ptr(kvm_apic_eoi);
-
-    if (*eoi_addr & KVM_PV_EOI_MASK) {
-        *eoi_addr &= ~KVM_PV_EOI_MASK;
-    } else {
-        apic->native_eoi_write();
+    if (arch_test_and_clear_bit_non_atomic(
+            KVM_PV_EOI_BIT, get_cpulocal_var_ptr(kvm_apic_eoi))) {
+        return;
     }
+
+    apic->native_eoi_write();
 }
 
 void kvm_init_guest(void)
