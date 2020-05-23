@@ -188,6 +188,7 @@ static inline struct descriptor* get_cpu_gdt(unsigned int cpu)
 PUBLIC void init_prot();
 PUBLIC void init_desc(struct descriptor* p_desc, u32 base, u32 limit,
                       u16 attribute);
+PUBLIC void load_direct_gdt(unsigned int cpu);
 PUBLIC void load_prot_selectors(unsigned int cpu);
 PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
 PUBLIC void init_idt();

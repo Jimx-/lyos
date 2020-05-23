@@ -379,7 +379,6 @@ PUBLIC void lapic_stop_timer()
     lvtt = lapic_read(LAPIC_LVTTR);
     lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
     lapic_write(LAPIC_TIMER_ICR, 0);
-    lapic_write(LAPIC_TIMER_CCR, 0);
 }
 
 PUBLIC void lapic_microsec_sleep(unsigned usec)

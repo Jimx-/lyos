@@ -15,7 +15,7 @@
 #include <asm/proto.h>
 #include <lyos/cpulocals.h>
 
-DEFINE_CPULOCAL(unsigned int, cpu_number);
+DEFINE_CPULOCAL(unsigned int, cpu_number) = 0;
 
 #define BOOT_CPULOCALS_OFFSET 0
 vir_bytes __cpulocals_offset[CONFIG_SMP_MAX_CPUS] = {
@@ -37,6 +37,10 @@ void arch_setup_cpulocals(void)
         memcpy(ptr, (void*)_cpulocals_start, _cpulocals_end - _cpulocals_start);
 
         get_cpu_var(cpu, cpu_number) = cpu;
+
+        if (!cpu) {
+            load_direct_gdt(cpu);
+        }
 
         ptr += size;
     }

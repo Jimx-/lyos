@@ -140,7 +140,6 @@ PUBLIC void init_prot()
     init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff,
               DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
     init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
-    init_desc(&gdt[INDEX_CPULOCALS], 0, 0xfffff, DA_DRW | DA_32 | DA_LIMIT_4K);
 
     init_8259A();
 
@@ -151,22 +150,28 @@ PUBLIC void init_prot()
     load_prot_selectors(booting_cpu);
 }
 
-PUBLIC void load_prot_selectors(unsigned int cpu)
+PUBLIC void load_direct_gdt(unsigned int cpu)
 {
     u8 gdt_ptr[6]; /* 0~15:Limit  16~47:Base */
-    u8 idt_ptr[6]; /* 0~15:Limit  16~47:Base */
 
     u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
     u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
     *p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
     *p_gdt_base = (u32)get_cpu_gdt(cpu);
 
+    x86_lgdt((u8*)&gdt_ptr);
+}
+
+PUBLIC void load_prot_selectors(unsigned int cpu)
+{
+    u8 idt_ptr[6]; /* 0~15:Limit  16~47:Base */
+
     u16* p_idt_limit = (u16*)(&idt_ptr[0]);
     u32* p_idt_base = (u32*)(&idt_ptr[2]);
     *p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
     *p_idt_base = (u32)&idt;
 
-    x86_lgdt((u8*)&gdt_ptr);
+    load_direct_gdt(cpu);
     x86_lidt((u8*)&idt_ptr);
     x86_lldt(SELECTOR_LDT);
     x86_ltr(SELECTOR_TSS);

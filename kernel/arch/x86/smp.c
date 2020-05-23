@@ -96,12 +96,12 @@ PUBLIC void smp_init()
 
     machine.cpu_count = ncpus;
 
-    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
-
     lapic_addr = (void*)LOCAL_APIC_DEF_ADDR;
 
     bsp_lapic_id = *(volatile u32*)(lapic_addr + LAPIC_ID);
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
+
+    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
 
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");
@@ -160,14 +160,11 @@ PRIVATE void smp_start_aps()
     int i;
     for (i = 0; i < ncpus; i++) {
         ap_ready = -1;
+
         if (apicid() == cpuid2apicid[i] && bsp_lapic_id == apicid()) continue;
 
         __ap_id = booting_cpu = i;
         memcpy((void*)__ap_id_phys, (void*)&__ap_id, sizeof(u32));
-
-        /* Copy per-cpu GDT */
-        memcpy(get_cpu_gdt(i), get_cpu_gdt(cpuid),
-               sizeof(struct descriptor) * GDT_SIZE);
 
         /* INIT-SIPI-SIPI sequence */
         cmb();
