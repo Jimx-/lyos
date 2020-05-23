@@ -219,6 +219,12 @@ PRIVATE void idle()
     stop_context(get_cpulocal_var_ptr(idle_proc));
 
     halt_cpu();
+
+#if CONFIG_SMP
+    if (cpuid != bsp_cpu_id) {
+        setup_local_timer_one_shot();
+    }
+#endif
 }
 
 /*****************************************************************************

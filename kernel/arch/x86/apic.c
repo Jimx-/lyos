@@ -350,19 +350,44 @@ PUBLIC int lapic_enable(unsigned cpu)
     return 1;
 }
 
-PUBLIC void lapic_set_timer_one_shot(const u32 usec)
+static void lapic_setup_timer_lvtt(int one_shot, int irqen)
 {
-    u32 lvtt;
-    u32 ticks_per_us;
-    const u8 cpu = cpuid;
+    u32 lvtt = APIC_TIMER_INT_VECTOR;
 
-    ticks_per_us = lapic_bus_freq[cpu] / 1000000;
+    if (!one_shot) {
+        lvtt |= APIC_LVT_TM_PERIODIC;
+    }
 
-    lvtt = APIC_TIMER_INT_VECTOR;
+    if (!irqen) {
+        lvtt |= APIC_LVTT_MASK;
+    }
+
     lapic_write(LAPIC_LVTTR, lvtt);
 
     lvtt = APIC_TDCR_1;
     lapic_write(LAPIC_TIMER_DCR, lvtt);
+}
+
+static inline void lapic_setup_timer_one_shot_periodic(int one_shot)
+{
+    lapic_setup_timer_lvtt(one_shot, TRUE);
+}
+
+void lapic_setup_timer_one_shot(void)
+{
+    lapic_setup_timer_one_shot_periodic(TRUE);
+}
+
+void lapic_setup_timer_periodic(void)
+{
+    lapic_setup_timer_one_shot_periodic(FALSE);
+}
+
+PUBLIC void lapic_set_timer_one_shot(const u32 usec)
+{
+    u32 ticks_per_us;
+
+    ticks_per_us = lapic_bus_freq[cpuid] / 1000000;
 
     lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }

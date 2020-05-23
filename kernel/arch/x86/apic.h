@@ -117,6 +117,8 @@ PUBLIC void apic_init_idt(int reset);
 PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);
 PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline);
 #endif
+void lapic_setup_timer_one_shot(void);
+void lapic_setup_timer_periodic(void);
 PUBLIC void lapic_set_timer_one_shot(const u32 usec);
 PUBLIC void lapic_restart_timer();
 PUBLIC void lapic_stop_timer();

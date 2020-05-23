@@ -89,7 +89,7 @@ PUBLIC int init_local_timer(int freq)
     if (lapic_addr) {
         tsc_per_tick[cpuid] = cpu_hz[cpuid];
         do_div(tsc_per_tick[cpuid], (u64)system_hz);
-        lapic_set_timer_one_shot(1000000 / system_hz);
+        setup_local_timer_one_shot();
     } else
 #endif
     {
@@ -97,6 +97,24 @@ PUBLIC int init_local_timer(int freq)
     }
 
     return 0;
+}
+
+void setup_local_timer_one_shot(void)
+{
+#ifdef CONFIG_X86_LOCAL_APIC
+    if (lapic_addr) {
+        lapic_setup_timer_one_shot();
+    }
+#endif
+}
+
+void setup_local_timer_periodic(void)
+{
+#ifdef CONFIG_X86_LOCAL_APIC
+    if (lapic_addr) {
+        lapic_setup_timer_periodic();
+    }
+#endif
 }
 
 PUBLIC void restart_local_timer()

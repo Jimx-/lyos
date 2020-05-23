@@ -86,6 +86,8 @@ PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 PUBLIC void halt_cpu();
 
 PUBLIC int init_local_timer(int freq);
+void setup_local_timer_one_shot(void);
+void setup_local_timer_periodic(void);
 PUBLIC int put_local_timer_handler(irq_handler_t handler);
 PUBLIC void restart_local_timer();
 PUBLIC void stop_local_timer();
