@@ -135,6 +135,7 @@ PUBLIC void finish_bsp_booting()
 
     /* proc_ptr should point to somewhere */
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+    get_cpulocal_var(fpu_owner) = NULL;
 
     int i;
     /* enqueue runnable process */

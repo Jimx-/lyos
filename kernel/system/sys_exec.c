@@ -41,6 +41,9 @@ PUBLIC int sys_exec(MESSAGE* m, struct proc* p_proc)
 
     arch_init_proc(p, m->KEXEC_SP, m->KEXEC_IP, m->KEXEC_PSSTR, m->KEXEC_NAME);
 
+    release_fpu(p);
+    p->flags &= ~PF_FPU_INITIALIZED;
+
     unlock_proc(p);
     return 0;
 }

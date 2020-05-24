@@ -474,6 +474,11 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame* frame)
         return;
     }
 
+    if (frame->vec_no == 7 && !in_kernel) {
+        copr_not_available_handler();
+        return;
+    }
+
     if (in_kernel) {
         if (frame->eip >= (uintptr_t)copy_user_message &&
             frame->eip < (uintptr_t)copy_user_message_end) {
@@ -482,6 +487,17 @@ PUBLIC void exception_handler(int in_kernel, struct exception_frame* frame)
                 return;
             } else
                 panic("copy user messsage failed unexpectedly");
+        }
+
+        if ((frame->eip >= (uintptr_t)frstor &&
+             frame->eip < (uintptr_t)frstor_end) ||
+            (frame->eip >= (uintptr_t)fxrstor &&
+             frame->eip < (uintptr_t)fxrstor_end)) {
+            if (frame->vec_no == 14 || frame->vec_no == 13) { /* #PF or #GP */
+                frame->eip = (reg_t)frstor_fault;
+                return;
+            } else
+                panic("frstor failed unexpectedly");
         }
     }
 

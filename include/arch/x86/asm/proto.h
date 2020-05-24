@@ -78,7 +78,17 @@ struct exception_frame {
     reg_t eflags;
 };
 
-PUBLIC void fninit();
+void fninit(void);
+unsigned short fnstsw(void);
+void fnstcw(unsigned short* cw);
+void fnsave(void* state);
+void fxsave(void* state);
+int frstor(void* state);
+int frstor_end(void*);
+int fxrstor(void* state);
+int fxrstor_end(void*);
+int frstor_fault(void*);
+void clts(void);
 
 PUBLIC void ia32_read_msr(u32 reg, u32* hi, u32* lo);
 PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);

@@ -52,6 +52,7 @@
 #define PF_LEAVE_SYSCALL 0x004    /* syscall tracing: leaving syscall */
 #define PF_PROFILE_RECORDED 0x008 /* recorded in the sample buffer */
 #define PF_RECV_ASYNC 0x010       /* proc can receive async message */
+#define PF_FPU_INITIALIZED 0x020  /* proc has used FPU */
 
 #define proc_slot(n) ((n) + NR_TASKS)
 #define proc_addr(n) (&proc_table[(n) + NR_TASKS])
@@ -123,7 +124,6 @@
 struct proc {
     struct stackframe regs; /* process registers saved in stack frame */
     struct segframe seg;
-    struct fpu_state fstate;
 
     spinlock_t lock;
 
@@ -138,6 +138,7 @@ struct proc {
 
     struct priv* priv;
     endpoint_t endpoint;
+    int slot;
     char name[PROC_NAME_LEN]; /* name of the process */
 
     int state; /**
@@ -201,6 +202,7 @@ struct proc {
 DECLARE_CPULOCAL(struct proc*, proc_ptr);
 DECLARE_CPULOCAL(struct proc*, pt_proc);
 DECLARE_CPULOCAL(struct proc, idle_proc);
+DECLARE_CPULOCAL(struct proc*, fpu_owner);
 
 DECLARE_CPULOCAL(volatile int, cpu_is_idle);
 

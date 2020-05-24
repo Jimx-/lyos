@@ -44,6 +44,7 @@ struct segframe {
     int trap_style;
     u32 cr3_phys;
     u32* cr3_vir;
+    char* fpu_state;
 };
 
 struct sigcontext {

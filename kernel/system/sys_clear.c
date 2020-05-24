@@ -38,5 +38,8 @@ PUBLIC int sys_clear(MESSAGE* m, struct proc* p_proc)
     struct proc* p = proc_addr(slot);
     PST_SETFLAGS(p, PST_FREE_SLOT);
 
+    release_fpu(p);
+    p->flags &= ~PF_FPU_INITIALIZED;
+
     return 0;
 }

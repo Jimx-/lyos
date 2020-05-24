@@ -38,6 +38,7 @@
 #include "libexec/libexec.h"
 #include <asm/type.h>
 #include <asm/cmos.h>
+#include <asm/fpu.h>
 
 PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -64,8 +65,12 @@ PUBLIC struct proc* arch_switch_to_user()
     return p;
 }
 
+static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __attribute__((aligned(16)));
+
 PUBLIC int arch_reset_proc(struct proc* p)
 {
+    char* fpu = NULL;
+
     p->regs.eip = 0;
     p->regs.esp = 0;
 
@@ -81,6 +86,13 @@ PUBLIC int arch_reset_proc(struct proc* p)
 
     p->regs.eflags = 0x202; /* IF=1, bit 2 is always 1 */
     p->seg.trap_style = KTS_INT;
+
+    if (p->slot >= 0) {
+        fpu = fpu_state[p->slot];
+        memset(fpu, 0, FPU_XFP_SIZE);
+    }
+
+    p->seg.fpu_state = fpu;
 
     return 0;
 }

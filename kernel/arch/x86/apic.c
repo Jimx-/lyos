@@ -107,7 +107,6 @@
 #define IA32_APIC_BASE_X2APIC_ENABLE_BIT 10
 #define IA32_APIC_BASE_ENABLE_BIT 11
 
-DEF_SPINLOCK(calibrate_lock);
 extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
 extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
@@ -204,8 +203,6 @@ PRIVATE int apic_calibrate(unsigned cpu)
     u64 tsc0, tsc1;
     u32 lapic_tctr0, lapic_tctr1;
 
-    spinlock_lock(&calibrate_lock);
-
     val = 0xffffffff;
     lapic_write(LAPIC_TIMER_ICR, val);
 
@@ -264,8 +261,6 @@ PRIVATE int apic_calibrate(unsigned cpu)
 
     u32 lapic_delta = lapic_tctr0 - lapic_tctr1;
     lapic_bus_freq[cpuid] = lapic_delta * (1000 / cal_ms);
-
-    spinlock_unlock(&calibrate_lock);
 
     return 0;
 }

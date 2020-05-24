@@ -39,6 +39,8 @@ DEFINE_CPULOCAL(struct proc*, proc_ptr);
 DEFINE_CPULOCAL(struct proc*, pt_proc);
 DEFINE_CPULOCAL(struct proc, idle_proc);
 
+DEFINE_CPULOCAL(struct proc*, fpu_owner) = NULL;
+
 DEFINE_CPULOCAL(volatile int, cpu_is_idle);
 
 PUBLIC struct proc* pick_proc();
@@ -86,6 +88,7 @@ PUBLIC void init_proc()
 
         p->p_parent = NO_TASK;
         p->endpoint = make_endpoint(0, i); /* generation 0 */
+        p->slot = i;
 
         reset_msg(&p->send_msg);
         p->recv_msg = 0;
@@ -184,6 +187,12 @@ no_schedule:
 #endif
 
     stop_context(proc_addr(KERNEL));
+
+    if (get_cpulocal_var(fpu_owner) != p && p->endpoint != TASK_MM) {
+        enable_fpu_exception();
+    } else {
+        disable_fpu_exception();
+    }
 
     restart_local_timer();
     restore_user_context(p);
@@ -966,4 +975,33 @@ PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
     unlock_proc(p_to_send);
 
     return 0;
+}
+
+void copr_not_available_handler(void)
+{
+    struct proc* p = get_cpulocal_var(proc_ptr);
+    struct proc** local_fpu_owner = get_cpulocal_var_ptr(fpu_owner);
+
+    disable_fpu_exception();
+
+    if (*local_fpu_owner) {
+        save_local_fpu(*local_fpu_owner, FALSE);
+    }
+
+    if (restore_fpu(p)) {
+        *local_fpu_owner = NULL;
+        ksig_proc(p->endpoint, SIGFPE);
+        return;
+    }
+
+    *local_fpu_owner = p;
+}
+
+void release_fpu(struct proc* p)
+{
+    struct proc** local_fpu_owner = get_cpulocal_var_ptr(fpu_owner);
+
+    if (*local_fpu_owner == p) {
+        *local_fpu_owner = NULL;
+    }
 }

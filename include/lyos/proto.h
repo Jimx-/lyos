@@ -45,8 +45,14 @@ PUBLIC void finish_bsp_booting();
 PUBLIC void panic(const char* fmt, ...);
 
 /* system.c */
-PUBLIC void fpu_init();
 PUBLIC void identify_cpu();
+
+/* fpu.c */
+void fpu_init(void);
+void enable_fpu_exception(void);
+void disable_fpu_exception(void);
+void save_local_fpu(struct proc* p, int retain);
+int restore_fpu(struct proc* p);
 
 /* smp.c */
 PUBLIC void smp_init();
@@ -90,6 +96,8 @@ PUBLIC void dump_proc(struct proc* p);
 PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC void enqueue_proc(struct proc* p);
 PUBLIC void dequeue_proc(struct proc* p);
+void copr_not_available_handler(void);
+void release_fpu(struct proc* p);
 
 /* sched.c */
 PUBLIC void init_sched();
@@ -139,7 +147,7 @@ PUBLIC int _data_vir_copy(struct proc* caller, endpoint_t dest_ep,
 
 PUBLIC int service_up(const char* name, char* argv[], char* const envp[]);
 
-/* proc.c */
+/* System calls */
 PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p);
 PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc);
 PUBLIC int sys_datacopy(MESSAGE* m, struct proc* p_proc);

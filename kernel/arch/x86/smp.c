@@ -205,6 +205,7 @@ PRIVATE void ap_finish_booting()
 
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+    get_cpulocal_var(fpu_owner) = NULL;
 
     lapic_enable(cpuid);
     fpu_init();
