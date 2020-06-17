@@ -33,7 +33,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 #include "buffer.h"
-#include "lyos/driver.h"
+#include "lyos/bdev.h"
 
 //#define EXT2_BUFFER_DEBUG
 

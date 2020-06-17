@@ -24,7 +24,7 @@
 #include <lyos/fs.h>
 #include "string.h"
 #include <sys/syslimits.h>
-#include <lyos/driver.h>
+#include <lyos/bdev.h>
 #include <lyos/sysutils.h>
 #include "libfsdriver/libfsdriver.h"
 

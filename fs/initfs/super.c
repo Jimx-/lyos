@@ -29,7 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
-#include <lyos/driver.h>
+#include <lyos/bdev.h>
 #include "proto.h"
 #include "global.h"
 #include "tar.h"

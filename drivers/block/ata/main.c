@@ -24,7 +24,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "lyos/driver.h"
+#include <lyos/driver.h>
 #include <errno.h>
 #include <lyos/portio.h>
 #include <lyos/interrupt.h>
@@ -41,14 +41,13 @@
 #include "ata.h"
 
 PRIVATE int init_hd();
+static struct part_info* hd_part(dev_t device);
 PRIVATE int hd_open(dev_t minor, int access);
 PRIVATE int hd_close(dev_t minor);
 PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
                         char* buf, unsigned int count);
 PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
 PRIVATE void hd_cmd_out(struct hd_cmd* cmd);
-PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent* entry);
-PRIVATE void partition(int device, int style);
 PRIVATE void print_hdinfo(struct ata_info* hdi);
 PRIVATE int waitfor(int mask, int val, int timeout);
 PRIVATE int waitfor_dma(int mask, int val, int timeout);
@@ -62,7 +61,7 @@ PRIVATE void stop_dma(struct ata_info* drive);
 PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
                       unsigned int count);
 
-PRIVATE u8 hdbuf[SECTOR_SIZE * 2];
+PRIVATE u8 hdbuf[CD_SECTOR_SIZE];
 PRIVATE struct ata_info hd_info[MAX_DRIVES], *current_drive;
 PRIVATE struct part_info* current_part;
 
@@ -108,6 +107,7 @@ struct blockdriver hd_driver = {
     .bdr_close = hd_close,
     .bdr_readwrite = hd_rdwt,
     .bdr_ioctl = hd_ioctl,
+    .bdr_part = hd_part,
 };
 
 /*****************************************************************************
@@ -127,17 +127,27 @@ PUBLIC int main(int argc, char** argv)
     return 0;
 }
 
+static struct part_info* hd_part(dev_t device)
+{
+    int drive = DRV_OF_DEV(device);
+    if (drive >= MAX_DRIVES) return NULL;
+
+    int part_no = MINOR(device) % NR_SUB_PER_DRIVE;
+    struct part_info* part =
+        part_no < NR_PRIM_PER_DRIVE
+            ? &hd_info[drive].primary[part_no]
+            : &hd_info[drive].logical[part_no - NR_PRIM_PER_DRIVE];
+
+    return part;
+}
+
 PRIVATE struct part_info* hd_prepare(dev_t device)
 {
     int drive = DRV_OF_DEV(device);
 
     if (drive >= MAX_DRIVES) return NULL;
 
-    int part_no = MINOR(device) % NR_SUB_PER_DRIVE;
-    current_part = part_no < NR_PRIM_PER_DRIVE
-                       ? &hd_info[drive].primary[part_no]
-                       : &hd_info[drive].logical[part_no - NR_PRIM_PER_DRIVE];
-
+    current_part = hd_part(device);
     select_drive(drive);
 
     return current_part;
@@ -307,7 +317,7 @@ PRIVATE int init_hd()
         if (hd_info[i].open_cnt++ == 0) {
             hd_prepare(i * NR_SUB_PER_DRIVE);
 
-            partition(i * NR_SUB_PER_DRIVE, P_PRIMARY);
+            partition(&hd_driver, i * NR_SUB_PER_DRIVE, P_PRIMARY);
             print_hdinfo(current_drive);
             hd_register(current_drive);
         }
@@ -495,7 +505,7 @@ PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
     /**
      * We only allow to R/W from a SECTOR boundary:
      */
-    assert((pos & 0x1FF) == 0);
+    assert((pos & (SECTOR_SIZE - 1)) == 0);
 
     int do_dma = current_drive->dma;
     int errors = 0;
@@ -508,8 +518,8 @@ dma_failed_retry:
         }
     }
 
+    pos += current_part->base;
     u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
-    sect_nr += current_part->base;
 
     struct hd_cmd cmd;
     cmd.features = 0;
@@ -611,99 +621,6 @@ PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
 }
 
 /*****************************************************************************
- *                                get_part_table
- *****************************************************************************/
-/**
- * <Ring 1> Get a partition table of a drive.
- *
- * @param drive   Drive nr (0 for the 1st disk, 1 for the 2nd, ...)
- * @param sect_nr The sector at which the partition table is located.
- * @param entry   Ptr to part_ent struct.
- *****************************************************************************/
-PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent* entry)
-{
-    struct hd_cmd cmd;
-    cmd.features = 0;
-    cmd.count = 1;
-    cmd.lba_low = sect_nr & 0xFF;
-    cmd.lba_mid = (sect_nr >> 8) & 0xFF;
-    cmd.lba_high = (sect_nr >> 16) & 0xFF;
-    cmd.device = MAKE_DEVICE_REG(1, /* LBA mode*/
-                                 current_drive->ldh, (sect_nr >> 24) & 0xF);
-    cmd.command = ATA_READ;
-    hd_cmd_out(&cmd);
-    interrupt_wait();
-
-    portio_sin(current_drive->base_cmd + REG_DATA, hdbuf, SECTOR_SIZE);
-    memcpy(entry, hdbuf + PARTITION_TABLE_OFFSET,
-           sizeof(struct part_ent) * NR_PART_PER_DRIVE);
-}
-
-/*****************************************************************************
- *                                partition
- *****************************************************************************/
-/**
- * <Ring 1> This routine is called when a device is opened. It reads the
- * partition table(s) and fills the hd_info struct.
- *
- * @param device Device nr.
- * @param style  P_PRIMARY or P_EXTENDED.
- *****************************************************************************/
-PRIVATE void partition(int device, int style)
-{
-    int i;
-    int drive = DRV_OF_DEV(device);
-    struct ata_info* hdi = &hd_info[drive];
-
-    struct part_ent part_tbl[NR_SUB_PER_DRIVE];
-
-    if (style == P_PRIMARY) {
-        get_part_table(drive, drive, part_tbl);
-
-        int nr_prim_parts = 0;
-        for (i = 0; i < NR_PART_PER_DRIVE; i++) { /* 0~3 */
-            if (part_tbl[i].sys_id == NO_PART) continue;
-
-            nr_prim_parts++;
-            int dev_nr = i + 1; /* 1~4 */
-            hdi->primary[dev_nr].base = part_tbl[i].start_sect;
-            hdi->primary[dev_nr].size = part_tbl[i].nr_sects;
-
-            if (part_tbl[i].sys_id == EXT_PART) /* extended */
-                partition(device + dev_nr, P_EXTENDED);
-        }
-        assert(nr_prim_parts != 0);
-    } else if (style == P_EXTENDED) {
-        int j;
-        /* find first free slot for logical partition */
-        for (j = 0; j < NR_SUB_PER_DRIVE; j++) {
-            if (hdi->logical[j].size == 0) break;
-        }
-        int k = device % NR_PRIM_PER_DRIVE; /* 1~4 */
-        int ext_start_sect = hdi->primary[k].base;
-        int s = ext_start_sect;
-        int nr_1st_sub = j;
-
-        for (i = 0; i < NR_SUB_PER_PART; i++) {
-            int dev_nr = nr_1st_sub + i;
-
-            get_part_table(drive, s, part_tbl);
-
-            hdi->logical[dev_nr].base = s + part_tbl[0].start_sect;
-            hdi->logical[dev_nr].size = part_tbl[0].nr_sects;
-
-            s = ext_start_sect + part_tbl[1].start_sect;
-
-            /* no more logical partitions
-               in this extended partition */
-            if (part_tbl[1].sys_id == NO_PART) break;
-        }
-    } else {
-        assert(0);
-    }
-}
-
-/*****************************************************************************
  */
 /*                                print_hdinfo */
 /*****************************************************************************
@@ -718,17 +635,23 @@ PRIVATE void print_hdinfo(struct ata_info* hdi)
     printl("Hard disk information:\n");
     for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) {
         if (hdi->primary[i].size == 0) continue;
-        printl("%spartition %d: base %d(0x%x), size %d(0x%x) (in sector)\n",
-               i == 0 ? "  " : "     ", i, hdi->primary[i].base,
-               hdi->primary[i].base, hdi->primary[i].size,
-               hdi->primary[i].size);
+
+        u32 base_sect = hdi->primary[i].base >> SECTOR_SIZE_SHIFT;
+        u32 nr_sects = hdi->primary[i].size >> SECTOR_SIZE_SHIFT;
+
+        printl("%spartition %d: base %u(0x%x), size %u(0x%x) (in sectors)\n",
+               i == 0 ? "  " : "     ", i, base_sect, base_sect, nr_sects,
+               nr_sects);
     }
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
         if (hdi->logical[i].size == 0) continue;
+
+        u32 base_sect = hdi->logical[i].base >> SECTOR_SIZE_SHIFT;
+        u32 nr_sects = hdi->logical[i].size >> SECTOR_SIZE_SHIFT;
+
         printl("              "
-               "%d: base %d(0x%x), size %d(0x%x) (in sector)\n",
-               i, hdi->logical[i].base, hdi->logical[i].base,
-               hdi->logical[i].size, hdi->logical[i].size);
+               "%d: base %d(0x%x), size %d(0x%x) (in sectors)\n",
+               i, base_sect, base_sect, nr_sects, nr_sects);
     }
 }
 
@@ -812,7 +735,8 @@ PRIVATE int hd_identify(int drive)
 
         current_drive->primary[0].base = 0;
         /* Total Nr of User Addressable Sectors */
-        current_drive->primary[0].size = ((int)hdinfo[61] << 16) + hdinfo[60];
+        current_drive->primary[0].size = (((u64)hdinfo[61] << 16) + hdinfo[60])
+                                         << SECTOR_SIZE_SHIFT;
 
         /* check DMA */
         int capabilities = hdinfo[ID_CAPABILITIES];

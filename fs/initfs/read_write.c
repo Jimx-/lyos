@@ -32,7 +32,7 @@
 #include "proto.h"
 #include "global.h"
 #include "tar.h"
-#include "lyos/driver.h"
+#include "lyos/bdev.h"
 
 PUBLIC int initfs_rdwt(MESSAGE* p)
 {

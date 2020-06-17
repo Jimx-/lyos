@@ -20,9 +20,9 @@
 
 #define MAJOR_MAX 64
 
-PUBLIC void bdev_init();
-PUBLIC int bdev_driver(dev_t dev);
-PUBLIC ssize_t bdev_readwrite(int io_type, int dev, u64 pos, int bytes,
-                              int proc_nr, void* buf);
+struct part_info {
+    u64 base; /* byte offset of start sector */
+    u64 size; /* how many bytes in this partition */
+};
 
 #endif
