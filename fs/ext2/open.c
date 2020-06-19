@@ -32,17 +32,17 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
-                                     mode_t mode, block_t initial_block,
-                                     uid_t uid, gid_t gid);
+static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
+                                    mode_t mode, block_t initial_block,
+                                    uid_t uid, gid_t gid);
 
 /**
  * <Ring 1> Create a file.
  * @param p Ptr to the message.
  * @return  Zero on success.
  */
-PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode,
-                       uid_t uid, gid_t gid, struct fsdriver_node* fn)
+int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
+                gid_t gid, struct fsdriver_node* fn)
 {
     ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;
@@ -74,9 +74,9 @@ PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode,
  * @param  b        Block to start searching.
  * @return          Zero on success.
  */
-PRIVATE ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
-                                     mode_t mode, block_t initial_block,
-                                     uid_t uid, gid_t gid)
+static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
+                                    mode_t mode, block_t initial_block,
+                                    uid_t uid, gid_t gid)
 {
     /* the directory does not actually exist */
     if (pin_dir->i_links_count == 0) {
@@ -121,8 +121,8 @@ PRIVATE ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
     return pin;
 }
 
-PUBLIC int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode,
-                      uid_t uid, gid_t gid)
+int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
+               gid_t gid)
 {
     ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;

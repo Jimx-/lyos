@@ -37,7 +37,7 @@
 
 #define BUFSIZE 4096
 
-PRIVATE ssize_t dyn_attr_show(sysfs_node_t* node)
+static ssize_t dyn_attr_show(sysfs_node_t* node)
 {
     static char buf[BUFSIZE];
 
@@ -60,8 +60,7 @@ PRIVATE ssize_t dyn_attr_show(sysfs_node_t* node)
     return count;
 }
 
-PRIVATE ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr,
-                               size_t count)
+static ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr, size_t count)
 {
     MESSAGE msg;
     msg.type = SYSFS_DYN_STORE;
@@ -75,8 +74,8 @@ PRIVATE ssize_t dyn_attr_store(sysfs_node_t* node, const char* ptr,
     return msg.CNT;
 }
 
-PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr,
-                               size_t count, off_t offset, cbdata_t data)
+ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
+                        off_t offset, cbdata_t data)
 {
     init_buf(ptr, count, offset);
 
@@ -97,8 +96,8 @@ PUBLIC ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr,
     return buf_used();
 }
 
-PUBLIC ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr,
-                                size_t count, off_t offset, cbdata_t data)
+ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
+                         off_t offset, cbdata_t data)
 {
     sysfs_node_t* node = (sysfs_node_t*)data;
     int retval = 0;

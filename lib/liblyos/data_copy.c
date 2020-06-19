@@ -25,8 +25,8 @@ int syscall_entry(int syscall_nr, MESSAGE* m);
 /*****************************************************************************
  *                                data_copy
  *****************************************************************************/
-PUBLIC int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
-                     void* src_addr, int len)
+int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
+              void* src_addr, int len)
 {
     MESSAGE m;
 

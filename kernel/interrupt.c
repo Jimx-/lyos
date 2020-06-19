@@ -36,8 +36,8 @@
 #include <lyos/interrupt.h>
 #include <lyos/spinlock.h>
 
-PRIVATE spinlock_t irq_handlers_lock;
-PRIVATE irq_hook_t* irq_handlers[NR_IRQ] = {0};
+static spinlock_t irq_handlers_lock;
+static irq_hook_t* irq_handlers[NR_IRQ] = {0};
 
 /*****************************************************************************
  *                                init_irq
@@ -46,7 +46,7 @@ PRIVATE irq_hook_t* irq_handlers[NR_IRQ] = {0};
  * <Ring 0> Initializes IRQ subsystem.
  *
  *****************************************************************************/
-PUBLIC void init_irq()
+void init_irq()
 {
     int i;
     for (i = 0; i < NR_IRQ_HOOKS; i++) {
@@ -62,7 +62,7 @@ PUBLIC void init_irq()
  * <Ring 0> Register an IRQ handler.
  *
  *****************************************************************************/
-PUBLIC void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
+void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
 {
     if (irq < 0 || irq >= NR_IRQ) panic("invalid irq %d", irq);
 
@@ -97,7 +97,7 @@ PUBLIC void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
     spinlock_unlock(&irq_handlers_lock);
 }
 
-PUBLIC void rm_irq_handler(irq_hook_t* hook)
+void rm_irq_handler(irq_hook_t* hook)
 {
     int irq = hook->irq;
     int id = hook->id;
@@ -119,7 +119,7 @@ PUBLIC void rm_irq_handler(irq_hook_t* hook)
     spinlock_unlock(&irq_handlers_lock);
 }
 
-PUBLIC void irq_handle(int irq)
+void irq_handle(int irq)
 {
     spinlock_lock(&irq_handlers_lock);
     irq_hook_t* hook = irq_handlers[irq];
@@ -139,9 +139,9 @@ PUBLIC void irq_handle(int irq)
     spinlock_unlock(&irq_handlers_lock);
 }
 
-PUBLIC void enable_irq(irq_hook_t* hook) { hwint_unmask(hook->irq); }
+void enable_irq(irq_hook_t* hook) { hwint_unmask(hook->irq); }
 
-PUBLIC int disable_irq(irq_hook_t* hook)
+int disable_irq(irq_hook_t* hook)
 {
     hwint_mask(hook->irq);
     return 1;

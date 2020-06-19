@@ -35,8 +35,8 @@
 #include <sys/mman.h>
 #include "global.h"
 
-PUBLIC struct vir_region* mmap_region(struct mmproc* mmp, void* addr,
-                                      int mmap_flags, size_t len, int vrflags)
+struct vir_region* mmap_region(struct mmproc* mmp, void* addr, int mmap_flags,
+                               size_t len, int vrflags)
 {
     struct vir_region* vr = NULL;
 
@@ -76,9 +76,9 @@ PUBLIC struct vir_region* mmap_region(struct mmproc* mmp, void* addr,
     return vr;
 }
 
-PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags,
-                      int prot, int mmfd, off_t offset, dev_t dev, ino_t ino,
-                      size_t clearend, void** ret_addr)
+static int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags,
+                     int prot, int mmfd, off_t offset, dev_t dev, ino_t ino,
+                     size_t clearend, void** ret_addr)
 {
     int vrflags = 0;
     struct vir_region* vr;
@@ -108,7 +108,7 @@ PRIVATE int mmap_file(struct mmproc* mmp, void* addr, size_t len, int flags,
     return 0;
 }
 
-PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
+static void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
     /* driver has done the mapping */
     enqueue_vfs_request(&mmproc_table[TASK_MM], MMR_FDCLOSE, msg->MMRFD, 0, 0,
@@ -123,7 +123,7 @@ PRIVATE void mmap_device_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
     send_recv(SEND_NONBLOCK, msg->MMRENDPOINT, &reply_msg);
 }
 
-PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
+static void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
 {
     MESSAGE* mmap_msg = (MESSAGE*)arg;
     void* ret_addr = MAP_FAILED;
@@ -160,7 +160,7 @@ PRIVATE void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
     send_recv(SEND_NONBLOCK, mmap_msg->source, &reply_msg);
 }
 
-PUBLIC int do_vfs_mmap()
+int do_vfs_mmap()
 {
     endpoint_t who = mm_msg.u.m_mm_mmap.who;
     struct mmproc* mmp = endpt_mmproc(who);
@@ -175,7 +175,7 @@ PUBLIC int do_vfs_mmap()
                      &ret_addr);
 }
 
-PUBLIC int do_mmap()
+int do_mmap()
 {
     endpoint_t who =
         mm_msg.u.m_mm_mmap.who < 0 ? mm_msg.source : mm_msg.u.m_mm_mmap.who;
@@ -218,15 +218,15 @@ PUBLIC int do_mmap()
     return 0;
 }
 
-PRIVATE int map_perm_check(endpoint_t source, endpoint_t target,
-                           phys_bytes phys_addr, phys_bytes len)
+static int map_perm_check(endpoint_t source, endpoint_t target,
+                          phys_bytes phys_addr, phys_bytes len)
 {
     /* if (source == TASK_TTY) return 0;
     return EPERM; */
     return 0;
 }
 
-PUBLIC int do_map_phys()
+int do_map_phys()
 {
     endpoint_t who = mm_msg.ENDPOINT == SELF ? mm_msg.source : mm_msg.ENDPOINT;
     phys_bytes phys_addr = (phys_bytes)mm_msg.ADDR;
@@ -259,7 +259,7 @@ PUBLIC int do_map_phys()
     return 0;
 }
 
-PUBLIC int do_munmap()
+int do_munmap()
 {
     endpoint_t who =
         mm_msg.u.m_mm_mmap.who < 0 ? mm_msg.source : mm_msg.u.m_mm_mmap.who;
@@ -275,7 +275,7 @@ PUBLIC int do_munmap()
     return region_unmap_range(mmp, (vir_bytes)addr, len);
 }
 
-PUBLIC int do_mm_remap()
+int do_mm_remap()
 {
     endpoint_t src = mm_msg.u.m_mm_remap.src;
     if (src == SELF) src = mm_msg.source;

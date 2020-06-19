@@ -35,7 +35,7 @@
 #include "lyos/cpulocals.h"
 #include <lyos/cpufeature.h>
 
-PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
+void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
 {
     int i;
 
@@ -49,7 +49,7 @@ PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
     }
 }
 
-PUBLIC phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages)
+phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages)
 {
     int i;
     vir_bytes size = nr_pages * ARCH_PG_SIZE;
@@ -70,7 +70,7 @@ PUBLIC phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages)
     return 0;
 }
 
-PUBLIC phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
+phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
 {
     int i;
 
@@ -90,7 +90,7 @@ PUBLIC phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
     return 0;
 }
 
-PRIVATE pte_t* pg_alloc_pt(phys_bytes* ph)
+static pte_t* pg_alloc_pt(phys_bytes* ph)
 {
     pte_t* ret;
 #define PG_PAGETABLES 6
@@ -106,8 +106,7 @@ PRIVATE pte_t* pg_alloc_pt(phys_bytes* ph)
     return ret;
 }
 
-PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
-                   kinfo_t* pk)
+void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
 {
     pte_t* pt;
     pde_t* pgd = initial_pgd;
@@ -142,7 +141,7 @@ PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
 /**
  * <Ring 0> Setup identity paging for kernel
  */
-PUBLIC void pg_identity(pde_t* pgd)
+void pg_identity(pde_t* pgd)
 {
     int i;
     phys_bytes phys;
@@ -156,7 +155,7 @@ PUBLIC void pg_identity(pde_t* pgd)
     }
 }
 
-PUBLIC void pg_mapkernel(pde_t* pgd)
+void pg_mapkernel(pde_t* pgd)
 {
     phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;
     /* phys_bytes kern_len = kinfo.kernel_end_phys - kern_phys; */
@@ -172,20 +171,20 @@ PUBLIC void pg_mapkernel(pde_t* pgd)
     }
 }
 
-PUBLIC void pg_load(pde_t* pgd)
+void pg_load(pde_t* pgd)
 {
     write_cr3(__pa(pgd));
     enable_paging();
 }
 
 /* <Ring 0> */
-PUBLIC void switch_address_space(struct proc* p)
+void switch_address_space(struct proc* p)
 {
     get_cpulocal_var(pt_proc) = p;
     write_cr3(p->seg.cr3_phys);
 }
 
-PUBLIC void enable_paging()
+void enable_paging()
 {
     u32 cr4;
     int pge_supported;
@@ -200,7 +199,7 @@ PUBLIC void enable_paging()
 }
 
 /* <Ring 0> */
-PUBLIC void disable_paging()
+void disable_paging()
 {
     int cr0;
     cr0 = read_cr0();

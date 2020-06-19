@@ -25,9 +25,9 @@
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
 
-PUBLIC struct memfs_hooks fs_hooks;
+struct memfs_hooks fs_hooks;
 
-PRIVATE int memfs_other(MESSAGE* m);
+static int memfs_other(MESSAGE* m);
 
 struct fsdriver fsd = {
     .name = NULL,
@@ -41,8 +41,8 @@ struct fsdriver fsd = {
     .fs_other = memfs_other,
 };
 
-PUBLIC int memfs_start(char* name, struct memfs_hooks* hooks,
-                       struct memfs_stat* root_stat)
+int memfs_start(char* name, struct memfs_hooks* hooks,
+                struct memfs_stat* root_stat)
 {
     fsd.name = name;
 
@@ -67,7 +67,7 @@ PUBLIC int memfs_start(char* name, struct memfs_hooks* hooks,
     return fsdriver_start(&fsd);
 }
 
-PRIVATE int memfs_other(MESSAGE* m)
+static int memfs_other(MESSAGE* m)
 {
     if (fs_hooks.message_hook)
         return fs_hooks.message_hook(m);

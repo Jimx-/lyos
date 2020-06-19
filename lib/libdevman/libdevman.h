@@ -77,25 +77,24 @@ struct device_attribute {
 
 #define DT_BLOCKDEV 1
 #define DT_CHARDEV 2
-PUBLIC int dm_bdev_add(dev_t dev);
-PUBLIC int dm_cdev_add(dev_t dev);
-PUBLIC endpoint_t dm_get_bdev_driver(dev_t dev);
-PUBLIC endpoint_t dm_get_cdev_driver(dev_t dev);
+int dm_bdev_add(dev_t dev);
+int dm_cdev_add(dev_t dev);
+endpoint_t dm_get_bdev_driver(dev_t dev);
+endpoint_t dm_get_cdev_driver(dev_t dev);
 
-PUBLIC bus_type_id_t dm_bus_register(char* name);
-PUBLIC device_id_t dm_device_register(struct device_info* devinf);
+bus_type_id_t dm_bus_register(char* name);
+device_id_t dm_device_register(struct device_info* devinf);
 
-PUBLIC int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus,
-                            char* name, mode_t mode, void* cb_data,
-                            bus_attr_show_t show, bus_attr_store_t store);
-PUBLIC int dm_bus_attr_add(struct bus_attribute* attr);
-PUBLIC ssize_t dm_bus_attr_handle(MESSAGE* msg);
+int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name,
+                     mode_t mode, void* cb_data, bus_attr_show_t show,
+                     bus_attr_store_t store);
+int dm_bus_attr_add(struct bus_attribute* attr);
+ssize_t dm_bus_attr_handle(MESSAGE* msg);
 
-PUBLIC int dm_init_device_attr(struct device_attribute* attr,
-                               device_id_t device, char* name, mode_t mode,
-                               void* cb_data, device_attr_show_t show,
-                               device_attr_store_t store);
-PUBLIC int dm_device_attr_add(struct device_attribute* attr);
-PUBLIC ssize_t dm_device_attr_handle(MESSAGE* msg);
+int dm_init_device_attr(struct device_attribute* attr, device_id_t device,
+                        char* name, mode_t mode, void* cb_data,
+                        device_attr_show_t show, device_attr_store_t store);
+int dm_device_attr_add(struct device_attribute* attr);
+ssize_t dm_device_attr_handle(MESSAGE* msg);
 
 #endif

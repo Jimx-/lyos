@@ -30,10 +30,10 @@ struct clocksource {
     u32 rating;
 };
 
-PUBLIC void init_clocksource();
-PUBLIC void register_clocksource(struct clocksource* cs);
-PUBLIC void register_clocksource_hz(struct clocksource* cs, u32 hz);
-PUBLIC void register_clocksource_khz(struct clocksource* cs, u32 khz);
+void init_clocksource();
+void register_clocksource(struct clocksource* cs);
+void register_clocksource_hz(struct clocksource* cs, u32 hz);
+void register_clocksource_khz(struct clocksource* cs, u32 khz);
 
 static __attribute__((always_inline)) inline u64
 clocksource_cyc2ns(struct clocksource* cs, u64 cycles)

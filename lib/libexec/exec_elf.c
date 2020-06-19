@@ -35,10 +35,10 @@
 
 // #define ELF_DEBUG
 
-PRIVATE int elf_check_header(Elf_Ehdr* elf_hdr);
-PRIVATE int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr);
+static int elf_check_header(Elf_Ehdr* elf_hdr);
+static int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr);
 
-PRIVATE int elf_check_header(Elf_Ehdr* elf_hdr)
+static int elf_check_header(Elf_Ehdr* elf_hdr)
 {
     if (elf_hdr->e_ident[0] != 0x7f ||
         (elf_hdr->e_type != ET_EXEC && elf_hdr->e_type != ET_DYN)) {
@@ -48,7 +48,7 @@ PRIVATE int elf_check_header(Elf_Ehdr* elf_hdr)
     return 0;
 }
 
-PRIVATE int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr)
+static int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr)
 {
     *elf_hdr = (Elf_Ehdr*)hdr;
     *prog_hdr = (Elf_Phdr*)(hdr + (*elf_hdr)->e_phoff);
@@ -56,8 +56,7 @@ PRIVATE int elf_unpack(char* hdr, Elf_Ehdr** elf_hdr, Elf_Phdr** prog_hdr)
     return 0;
 }
 
-PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp,
-                          size_t maxlen)
+int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen)
 {
     Elf_Ehdr* elf_hdr;
     Elf_Phdr* prog_hdr;
@@ -83,7 +82,7 @@ PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp,
     return 0;
 }
 
-PUBLIC int libexec_load_elf(struct exec_info* execi)
+int libexec_load_elf(struct exec_info* execi)
 {
     int retval;
     Elf_Ehdr* elf_hdr;

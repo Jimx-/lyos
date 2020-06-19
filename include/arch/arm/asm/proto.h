@@ -27,12 +27,12 @@
 #define mmio_write(a, b) *((volatile unsigned int*)(a)) = (b)
 #define mmio_read(a) (*((volatile unsigned int*)(a)))
 
-PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
+int init_tss(unsigned cpu, unsigned kernel_stack);
 
-PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp);
+void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
-PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
-                         void** mapped_addr);
+int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
+                  void** mapped_addr);
 
 /* Data memory barrier */
 static inline void dmb(void) { asm volatile("dmb" : : : "memory"); }

@@ -26,8 +26,8 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_fork(endpoint_t parent_ep, int child_proc,
-                       endpoint_t* child_ep, int flags, void* newsp)
+int kernel_fork(endpoint_t parent_ep, int child_proc, endpoint_t* child_ep,
+                int flags, void* newsp)
 {
     MESSAGE m;
     m.ENDPOINT = parent_ep;

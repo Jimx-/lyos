@@ -33,7 +33,7 @@
 
 #include "ddmap.h"
 
-PUBLIC void init_dd_map()
+void init_dd_map()
 {
     int i;
     for (i = 0; i < MAJOR_MAX; i++) {
@@ -41,7 +41,7 @@ PUBLIC void init_dd_map()
     }
 }
 
-PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep)
+int map_driver(dev_t dev, int type, endpoint_t drv_ep)
 {
     struct dev_driver_map* map =
         (struct dev_driver_map*)malloc(sizeof(struct dev_driver_map));
@@ -57,7 +57,7 @@ PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep)
     return 0;
 }
 
-PUBLIC int do_device_add(MESSAGE* m)
+int do_device_add(MESSAGE* m)
 {
     int type = m->FLAGS;
     endpoint_t drv_ep = m->source;
@@ -69,7 +69,7 @@ PUBLIC int do_device_add(MESSAGE* m)
     return 0;
 }
 
-PUBLIC int do_get_driver(MESSAGE* m)
+int do_get_driver(MESSAGE* m)
 {
     dev_t dev = m->DEVICE;
     dev_t major = MAJOR(dev), minor = MINOR(dev);

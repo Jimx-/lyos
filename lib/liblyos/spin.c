@@ -20,12 +20,12 @@
 #include "string.h"
 #include "assert.h"
 
-PUBLIC int printl(const char* fmt, ...);
+int printl(const char* fmt, ...);
 
 /*****************************************************************************
  *                                spin
  *****************************************************************************/
-PUBLIC void spin(char* func_name)
+void spin(char* func_name)
 {
     printl("\nspinning in %s ...\n", func_name);
     while (1) {

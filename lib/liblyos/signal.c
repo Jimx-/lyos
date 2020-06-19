@@ -26,7 +26,7 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_sigsend(endpoint_t ep, struct siginfo* si)
+int kernel_sigsend(endpoint_t ep, struct siginfo* si)
 {
     MESSAGE m;
 
@@ -36,7 +36,7 @@ PUBLIC int kernel_sigsend(endpoint_t ep, struct siginfo* si)
     return syscall_entry(NR_SIGSEND, &m);
 }
 
-PUBLIC int kernel_sigreturn(endpoint_t ep, void* scp)
+int kernel_sigreturn(endpoint_t ep, void* scp)
 {
     MESSAGE m;
 

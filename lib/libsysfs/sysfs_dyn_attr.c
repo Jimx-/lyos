@@ -31,11 +31,11 @@
 #define DYN_ATTR_HASH_MASK (((unsigned long)1 << DYN_ATTR_HASH_LOG2) - 1)
 
 /* dynamic attribute hash table */
-PRIVATE struct list_head dyn_attr_table[DYN_ATTR_HASH_SIZE];
+static struct list_head dyn_attr_table[DYN_ATTR_HASH_SIZE];
 
-PUBLIC int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
-                               void* cb_data, sysfs_dyn_attr_show_t show,
-                               sysfs_dyn_attr_store_t store)
+int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
+                        void* cb_data, sysfs_dyn_attr_show_t show,
+                        sysfs_dyn_attr_store_t store)
 {
     static int initialized = 0;
     if (!initialized) {
@@ -61,7 +61,7 @@ PUBLIC int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
     return 0;
 }
 
-PRIVATE void dyn_attr_addhash(sysfs_dyn_attr_t* attr)
+static void dyn_attr_addhash(sysfs_dyn_attr_t* attr)
 {
     /* Add a dynamic attribute to hash table */
     unsigned int hash = attr->attr_id & DYN_ATTR_HASH_MASK;
@@ -69,13 +69,13 @@ PRIVATE void dyn_attr_addhash(sysfs_dyn_attr_t* attr)
 }
 
 /*
-PRIVATE void dyn_attr_unhash(sysfs_dyn_attr_t* attr)
+static void dyn_attr_unhash(sysfs_dyn_attr_t* attr)
 {
     list_del(&attr->list);
 }
 */
 
-PRIVATE sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
+static sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
 {
     /* Find a dynamic attribute by its attribute id */
     unsigned int hash = id & DYN_ATTR_HASH_MASK;
@@ -91,7 +91,7 @@ PRIVATE sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
     return NULL;
 }
 
-PUBLIC int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
+int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
 {
     MESSAGE msg;
 
@@ -119,7 +119,7 @@ PUBLIC int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
 }
 
 #define BUFSIZE 4096
-PUBLIC ssize_t sysfs_handle_dyn_attr(MESSAGE* msg)
+ssize_t sysfs_handle_dyn_attr(MESSAGE* msg)
 {
     /* handle dynamic attribute show/store request */
     int rw_flag = msg->type;

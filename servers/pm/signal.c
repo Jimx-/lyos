@@ -32,10 +32,10 @@
 #include "const.h"
 #include "global.h"
 
-PRIVATE int kill_sig(struct pmproc* pmp, pid_t dest, int signo);
-PRIVATE void check_pending(struct pmproc* pmp);
+static int kill_sig(struct pmproc* pmp, pid_t dest, int signo);
+static void check_pending(struct pmproc* pmp);
 
-PUBLIC int do_sigaction(MESSAGE* p)
+int do_sigaction(MESSAGE* p)
 {
     struct pmproc* pmp = pm_endpt_proc(p->source);
     struct sigaction new_sa;
@@ -81,7 +81,7 @@ PUBLIC int do_sigaction(MESSAGE* p)
     return 0;
 }
 
-PUBLIC int do_sigprocmask(MESSAGE* p)
+int do_sigprocmask(MESSAGE* p)
 {
     struct pmproc* pmp = pm_endpt_proc(p->source);
     if (pmp == NULL) return EINVAL;
@@ -119,7 +119,7 @@ PUBLIC int do_sigprocmask(MESSAGE* p)
     return 0;
 }
 
-PUBLIC int do_sigsuspend(MESSAGE* p)
+int do_sigsuspend(MESSAGE* p)
 {
     struct pmproc* pmp = pm_endpt_proc(p->source);
     if (pmp == NULL) return EINVAL;
@@ -143,7 +143,7 @@ PUBLIC int do_sigsuspend(MESSAGE* p)
  * @param PID       u.m3.m3i2 the pid of the process.
  * @param SIGNR     u.m3.m3i1 the signal.
  *****************************************************************************/
-PUBLIC int do_kill(MESSAGE* p)
+int do_kill(MESSAGE* p)
 {
     struct pmproc* pmp = pm_endpt_proc(p->source);
     if (pmp == NULL) return EINVAL;
@@ -153,7 +153,7 @@ PUBLIC int do_kill(MESSAGE* p)
     return kill_sig(pmp, pid, sig);
 }
 
-PRIVATE int send_sig(struct pmproc* p_dest, int signo)
+static int send_sig(struct pmproc* p_dest, int signo)
 {
     struct siginfo si;
     int retval;
@@ -193,7 +193,7 @@ PRIVATE int send_sig(struct pmproc* p_dest, int signo)
     return retval;
 }
 
-PUBLIC void sig_proc(struct pmproc* p_dest, int signo, int trace)
+void sig_proc(struct pmproc* p_dest, int signo, int trace)
 {
     /* signal the tracer first */
     if (trace && p_dest->tracer != NO_TASK && signo != SIGKILL) {
@@ -226,7 +226,7 @@ PUBLIC void sig_proc(struct pmproc* p_dest, int signo, int trace)
     exit_proc(p_dest, 0);
 }
 
-PRIVATE int kill_sig(struct pmproc* pmp, pid_t dest, int signo)
+static int kill_sig(struct pmproc* pmp, pid_t dest, int signo)
 {
     int errcode = ESRCH;
     int count = 0;
@@ -271,7 +271,7 @@ PRIVATE int kill_sig(struct pmproc* pmp, pid_t dest, int signo)
         return errcode;
 }
 
-PUBLIC int do_sigreturn(MESSAGE* p)
+int do_sigreturn(MESSAGE* p)
 {
     int retval;
 
@@ -280,7 +280,7 @@ PUBLIC int do_sigreturn(MESSAGE* p)
     return retval;
 }
 
-PRIVATE void check_pending(struct pmproc* pmp)
+static void check_pending(struct pmproc* pmp)
 {
     int i;
 
@@ -293,7 +293,7 @@ PRIVATE void check_pending(struct pmproc* pmp)
     }
 }
 
-PUBLIC int process_ksig(endpoint_t target, int signo)
+int process_ksig(endpoint_t target, int signo)
 {
     struct pmproc* pmp = pm_endpt_proc(target);
     if (!pmp) return EINVAL;

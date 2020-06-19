@@ -29,19 +29,19 @@
 
 #include "libchardriver/libchardriver.h"
 
-PRIVATE int do_open(struct chardriver* cd, MESSAGE* msg)
+static int do_open(struct chardriver* cd, MESSAGE* msg)
 {
     if (cd->cdr_open == NULL) return 0;
     return cd->cdr_open(msg->u.m_vfs_cdev_openclose.minor, 0);
 }
 
-PRIVATE int do_close(struct chardriver* cd, MESSAGE* msg)
+static int do_close(struct chardriver* cd, MESSAGE* msg)
 {
     if (cd->cdr_close == NULL) return 0;
     return cd->cdr_close(msg->u.m_vfs_cdev_openclose.minor);
 }
 
-PRIVATE ssize_t do_rdwt(struct chardriver* cd, MESSAGE* msg)
+static ssize_t do_rdwt(struct chardriver* cd, MESSAGE* msg)
 {
     int do_write = 0;
     if (msg->type == CDEV_WRITE) do_write = 1;
@@ -60,7 +60,7 @@ PRIVATE ssize_t do_rdwt(struct chardriver* cd, MESSAGE* msg)
     return -EIO;
 }
 
-PRIVATE int do_ioctl(struct chardriver* cd, MESSAGE* msg)
+static int do_ioctl(struct chardriver* cd, MESSAGE* msg)
 {
     int minor = msg->u.m_vfs_cdev_readwrite.minor;
     cdev_id_t id = msg->u.m_vfs_cdev_readwrite.id;
@@ -73,7 +73,7 @@ PRIVATE int do_ioctl(struct chardriver* cd, MESSAGE* msg)
     return cd->cdr_ioctl(minor, request, ep, buf, id);
 }
 
-PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
+static int do_mmap(struct chardriver* cd, MESSAGE* msg)
 {
     if (!cd->cdr_mmap) return ENODEV;
 
@@ -90,7 +90,7 @@ PRIVATE int do_mmap(struct chardriver* cd, MESSAGE* msg)
     return retval;
 }
 
-PRIVATE int do_select(struct chardriver* cd, MESSAGE* msg)
+static int do_select(struct chardriver* cd, MESSAGE* msg)
 {
     int minor = msg->u.m_vfs_cdev_select.minor;
     int ops = msg->u.m_vfs_cdev_select.ops;
@@ -100,7 +100,7 @@ PRIVATE int do_select(struct chardriver* cd, MESSAGE* msg)
     return cd->cdr_select(minor, ops, endpoint);
 }
 
-PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
+void chardriver_process(struct chardriver* cd, MESSAGE* msg)
 {
     int retval = 0;
 
@@ -144,7 +144,7 @@ PUBLIC void chardriver_process(struct chardriver* cd, MESSAGE* msg)
     chardriver_reply(msg, retval);
 }
 
-PUBLIC int chardriver_task(struct chardriver* cd)
+int chardriver_task(struct chardriver* cd)
 {
     MESSAGE msg;
     while (TRUE) {
@@ -156,7 +156,7 @@ PUBLIC int chardriver_task(struct chardriver* cd)
     return 0;
 }
 
-PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
+void chardriver_reply(MESSAGE* msg, int retval)
 {
     MESSAGE reply_msg;
 
@@ -206,7 +206,7 @@ PUBLIC void chardriver_reply(MESSAGE* msg, int retval)
     send_recv(SEND, dest_ep, &reply_msg);
 }
 
-PUBLIC void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval)
+void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval)
 {
     MESSAGE msg;
     memset(&msg, 0, sizeof(MESSAGE));
@@ -220,7 +220,7 @@ PUBLIC void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval)
     }
 }
 
-PUBLIC int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
+int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
 {
     switch (msg->type) {
     case CDEV_OPEN:

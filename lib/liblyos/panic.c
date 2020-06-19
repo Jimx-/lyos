@@ -23,9 +23,9 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC int printl(const char* fmt, ...);
+int printl(const char* fmt, ...);
 
-PUBLIC void __panic(const char* fmt, ...)
+void __panic(const char* fmt, ...)
 {
     char buf[STR_DEFAULT_LEN];
     va_list arg;

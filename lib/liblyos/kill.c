@@ -26,7 +26,7 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_kill(endpoint_t ep, int signo)
+int kernel_kill(endpoint_t ep, int signo)
 {
     MESSAGE m;
     m.ENDPOINT = ep;

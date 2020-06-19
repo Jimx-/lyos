@@ -26,7 +26,7 @@
 /*****************************************************************************
  *                                procctl
  *****************************************************************************/
-PUBLIC int procctl(endpoint_t who, int param)
+int procctl(endpoint_t who, int param)
 {
     MESSAGE msg;
 

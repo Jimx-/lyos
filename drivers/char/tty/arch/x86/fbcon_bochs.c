@@ -59,13 +59,13 @@
 #define VBE_DISPI_LFB_ENABLED 0x40
 #define VBE_DISPI_NOCLEARMEM 0x80
 
-PRIVATE void bochs_write(u16 reg, u16 val)
+static void bochs_write(u16 reg, u16 val)
 {
     portio_outw(VBE_DISPI_IOPORT_INDEX, reg);
     portio_outw(VBE_DISPI_IOPORT_DATA, val);
 }
 
-PUBLIC int fbcon_init_bochs(int devind, int x_res, int y_res)
+int fbcon_init_bochs(int devind, int x_res, int y_res)
 {
     bochs_write(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_DISABLED);
     bochs_write(VBE_DISPI_INDEX_XRES, x_res);

@@ -34,6 +34,6 @@
 #include "proto.h"
 #include "global.h"
 
-PUBLIC void init_screen(TTY* tty) {}
+void init_screen(TTY* tty) {}
 
-PUBLIC void select_console(int nr_console) {}
+void select_console(int nr_console) {}

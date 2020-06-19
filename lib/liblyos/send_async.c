@@ -24,7 +24,7 @@
 #include <string.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int send_async(async_message_t* table, size_t len)
+int send_async(async_message_t* table, size_t len)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(m));

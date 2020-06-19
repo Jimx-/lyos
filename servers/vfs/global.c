@@ -24,7 +24,7 @@
 #include "types.h"
 #include "global.h"
 
-PUBLIC DEF_LIST(vfs_mount_table);
-PUBLIC DEF_LIST(filesystem_table);
+DEF_LIST(vfs_mount_table);
+DEF_LIST(filesystem_table);
 
-PUBLIC int have_root = 0;
+int have_root = 0;

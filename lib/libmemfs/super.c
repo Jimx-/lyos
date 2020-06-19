@@ -25,9 +25,9 @@
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
 
-PRIVATE int mounted = 0;
+static int mounted = 0;
 
-PUBLIC int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
+int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
 {
     if (mounted) return EBUSY;
 

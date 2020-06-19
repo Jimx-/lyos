@@ -29,17 +29,17 @@
 
 #include <libdevman/libdevman.h>
 
-PRIVATE endpoint_t driver_table[NR_DEVICES];
-PRIVATE endpoint_t self_ep = NO_TASK;
+static endpoint_t driver_table[NR_DEVICES];
+static endpoint_t self_ep = NO_TASK;
 
-PUBLIC void bdev_init()
+void bdev_init()
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++)
         driver_table[i] = NO_TASK;
 }
 
-PRIVATE void bdev_set(dev_t dev)
+static void bdev_set(dev_t dev)
 {
     dev_t major = MAJOR(dev);
 
@@ -48,9 +48,9 @@ PRIVATE void bdev_set(dev_t dev)
     if (driver_table[major] < 0) driver_table[major] = NO_TASK;
 }
 
-PRIVATE void bdev_update(dev_t dev) { bdev_set(dev); }
+static void bdev_update(dev_t dev) { bdev_set(dev); }
 
-PUBLIC int bdev_driver(dev_t dev)
+int bdev_driver(dev_t dev)
 {
     static int first = 1;
 
@@ -76,7 +76,7 @@ PUBLIC int bdev_driver(dev_t dev)
  *
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int bdev_sendrec(dev_t dev, MESSAGE* msg)
+int bdev_sendrec(dev_t dev, MESSAGE* msg)
 {
     dev_t major = MAJOR(dev);
     if (driver_table[major] == NO_TASK) bdev_update(dev);
@@ -94,7 +94,7 @@ PUBLIC int bdev_sendrec(dev_t dev, MESSAGE* msg)
  *
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int bdev_open(dev_t dev)
+int bdev_open(dev_t dev)
 {
     MESSAGE driver_msg;
 
@@ -116,7 +116,7 @@ PUBLIC int bdev_open(dev_t dev)
  *
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int bdev_close(dev_t dev)
+int bdev_close(dev_t dev)
 {
     MESSAGE driver_msg;
 

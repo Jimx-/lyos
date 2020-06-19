@@ -21,8 +21,7 @@
 #include <lyos/sysutils.h>
 #include <lyos/trace.h>
 
-PUBLIC int kernel_trace(int request, endpoint_t endpoint, void* addr,
-                        void* data)
+int kernel_trace(int request, endpoint_t endpoint, void* addr, void* data)
 {
     MESSAGE msg;
 

@@ -36,13 +36,13 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE sysfs_dyn_attr_id_t alloc_dyn_attr_id()
+static sysfs_dyn_attr_id_t alloc_dyn_attr_id()
 {
     static sysfs_dyn_attr_id_t next_id = 1;
     return next_id++;
 }
 
-PUBLIC int do_publish(MESSAGE* m)
+int do_publish(MESSAGE* m)
 {
     endpoint_t src = m->source;
     int len = m->NAME_LEN;
@@ -69,7 +69,7 @@ PUBLIC int do_publish(MESSAGE* m)
     return 0;
 }
 
-PUBLIC int do_retrieve(MESSAGE* m)
+int do_retrieve(MESSAGE* m)
 {
     endpoint_t src = m->source;
     int len = m->NAME_LEN;

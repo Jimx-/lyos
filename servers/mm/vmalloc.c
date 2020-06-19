@@ -44,14 +44,14 @@
 #include "global.h"
 #include "types.h"
 
-PRIVATE struct hole hole[NR_HOLES]; /* the hole table */
-PRIVATE struct hole* hole_head;     /* pointer to first hole */
-PRIVATE struct hole* free_slots;    /* ptr to list of unused table slots */
+static struct hole hole[NR_HOLES]; /* the hole table */
+static struct hole* hole_head;     /* pointer to first hole */
+static struct hole* free_slots;    /* ptr to list of unused table slots */
 
-PRIVATE void delete_slot(struct hole* prev_ptr, struct hole* hp);
-PRIVATE void merge_hole(struct hole* hp);
+static void delete_slot(struct hole* prev_ptr, struct hole* hp);
+static void merge_hole(struct hole* hp);
 
-PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
+void vmem_init(void* mem_start, size_t free_mem_size)
 {
     struct hole* hp;
 
@@ -82,7 +82,7 @@ PUBLIC void vmem_init(void* mem_start, size_t free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC void* alloc_vmem(phys_bytes* phys_addr, int memsize, int reason)
+void* alloc_vmem(phys_bytes* phys_addr, int memsize, int reason)
 {
     /* avoid recursive allocation */
     static int level = 0;
@@ -154,7 +154,7 @@ PUBLIC void* alloc_vmem(phys_bytes* phys_addr, int memsize, int reason)
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-PUBLIC void* alloc_vmpages(int nr_pages)
+void* alloc_vmpages(int nr_pages)
 {
     size_t memsize = nr_pages * ARCH_PG_SIZE;
     struct hole *hp, *prev_ptr;
@@ -190,7 +190,7 @@ PUBLIC void* alloc_vmpages(int nr_pages)
     return NULL;
 }
 
-PUBLIC void free_vmpages(void* base, int nr_pages)
+void free_vmpages(void* base, int nr_pages)
 {
     if (nr_pages <= 0) return;
 
@@ -238,7 +238,7 @@ PUBLIC void free_vmpages(void* base, int nr_pages)
  *
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC void free_vmem(void* base, int len)
+void free_vmem(void* base, int len)
 {
     if (!pt_init_done) return;
 
@@ -265,7 +265,7 @@ PUBLIC void free_vmem(void* base, int len)
  * Remove an entry from the list.
  *
  *******************************************************************/
-PRIVATE void delete_slot(struct hole* prev_ptr, struct hole* hp)
+static void delete_slot(struct hole* prev_ptr, struct hole* hp)
 {
     if (hp == hole_head)
         hole_head = hp->h_next;
@@ -285,7 +285,7 @@ PRIVATE void delete_slot(struct hole* prev_ptr, struct hole* hp)
  * Merge contiguous holes.
  *
  *******************************************************************/
-PRIVATE void merge_hole(struct hole* hp)
+static void merge_hole(struct hole* hp)
 {
     struct hole* next_ptr;
 

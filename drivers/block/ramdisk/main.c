@@ -70,26 +70,26 @@ struct ramdisk_dev {
     int rdonly;
 };
 
-PRIVATE struct ramdisk_dev ramdisks[MAX_RAMDISKS];
-PRIVATE struct ramdisk_dev initramdisk;
+static struct ramdisk_dev ramdisks[MAX_RAMDISKS];
+static struct ramdisk_dev initramdisk;
 
-PRIVATE bus_type_id_t mem_subsys_id;
+static bus_type_id_t mem_subsys_id;
 
-PRIVATE void init_rd(int argc, char* argv[]);
-PRIVATE int rd_open(dev_t minor, int access);
-PRIVATE int rd_close(dev_t minor);
-PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
-                        endpoint_t endpoint, void* buf, size_t count);
-PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
+static void init_rd(int argc, char* argv[]);
+static int rd_open(dev_t minor, int access);
+static int rd_close(dev_t minor);
+static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
+                       endpoint_t endpoint, void* buf, size_t count);
+static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
 
-PRIVATE int char_open(dev_t minor, int access);
-PRIVATE int char_close(dev_t minor);
-PRIVATE ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+static int char_open(dev_t minor, int access);
+static int char_close(dev_t minor);
+static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                         unsigned int count, cdev_id_t id);
+static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
                           unsigned int count, cdev_id_t id);
-PRIVATE ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                           unsigned int count, cdev_id_t id);
-PRIVATE int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                       cdev_id_t id);
+static int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                      cdev_id_t id);
 
 struct blockdriver rd_driver = {
     .bdr_open = rd_open,
@@ -107,7 +107,7 @@ struct chardriver c_driver = {
     .cdr_mmap = NULL,
 };
 
-PUBLIC int main(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     env_setargs(argc, argv);
     init_rd(argc, argv);
@@ -126,12 +126,12 @@ PUBLIC int main(int argc, char* argv[])
     return 0;
 }
 
-PRIVATE int rd_open(dev_t minor, int access) { return 0; }
+static int rd_open(dev_t minor, int access) { return 0; }
 
-PRIVATE int rd_close(dev_t minor) { return 0; }
+static int rd_close(dev_t minor) { return 0; }
 
-PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
-                        endpoint_t endpoint, void* buf, size_t count)
+static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
+                       endpoint_t endpoint, void* buf, size_t count)
 {
     struct ramdisk_dev* ramdisk;
     if (minor == MINOR_INITRD)
@@ -155,12 +155,12 @@ PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
     return count;
 }
 
-PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
+static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
 {
     return 0;
 }
 
-PRIVATE int char_open(dev_t minor, int access)
+static int char_open(dev_t minor, int access)
 {
     if (minor <= 0 || minor > NR_CDEVS) return ENXIO;
 
@@ -168,7 +168,7 @@ PRIVATE int char_open(dev_t minor, int access)
     return 0;
 }
 
-PRIVATE int char_close(dev_t minor)
+static int char_close(dev_t minor)
 {
     if (minor <= 0 || minor > NR_CDEVS) return ENXIO;
 
@@ -176,8 +176,8 @@ PRIVATE int char_close(dev_t minor)
     return 0;
 }
 
-PRIVATE ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                          unsigned int count, cdev_id_t id)
+static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                         unsigned int count, cdev_id_t id)
 {
     ssize_t retval;
 
@@ -192,8 +192,8 @@ PRIVATE ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
     return retval;
 }
 
-PRIVATE ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                           unsigned int count, cdev_id_t id)
+static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                          unsigned int count, cdev_id_t id)
 {
     ssize_t retval;
 
@@ -209,13 +209,13 @@ PRIVATE ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
     return retval;
 }
 
-PRIVATE int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                       cdev_id_t id)
+static int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                      cdev_id_t id)
 {
     return 0;
 }
 
-PRIVATE void init_rd(int argc, char* argv[])
+static void init_rd(int argc, char* argv[])
 {
     long base, len;
     struct device_info devinf;

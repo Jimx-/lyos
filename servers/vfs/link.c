@@ -30,7 +30,7 @@
 #include "proto.h"
 #include "fcntl.h"
 
-PRIVATE int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize);
+static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize);
 
 /**
  * Send FTRUNC request to FS driver.
@@ -40,7 +40,7 @@ PRIVATE int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize);
  * @param  newsize New size.
  * @return         Zero on success.
  */
-PRIVATE int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
+static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
 {
     MESSAGE m;
 
@@ -54,7 +54,7 @@ PRIVATE int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
     return m.RET_RETVAL;
 }
 
-PUBLIC int truncate_node(struct inode* pin, int newsize)
+int truncate_node(struct inode* pin, int newsize)
 {
     int file_type = pin->i_mode & I_TYPE;
     if (file_type != I_REGULAR) return EINVAL;

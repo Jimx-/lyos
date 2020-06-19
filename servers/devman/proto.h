@@ -18,19 +18,19 @@
 
 #include <libdevman/libdevman.h>
 
-PUBLIC void init_dd_map();
-PUBLIC int map_driver(dev_t dev, int type, endpoint_t drv_ep);
-PUBLIC int do_device_add(MESSAGE* m);
-PUBLIC int do_get_driver(MESSAGE* m);
+void init_dd_map();
+int map_driver(dev_t dev, int type, endpoint_t drv_ep);
+int do_device_add(MESSAGE* m);
+int do_get_driver(MESSAGE* m);
 
-PUBLIC void init_bus();
-PUBLIC bus_type_id_t do_bus_register(MESSAGE* m);
-PUBLIC struct bus_type* get_bus_type(bus_type_id_t id);
-PUBLIC int do_bus_attr_add(MESSAGE* m);
+void init_bus();
+bus_type_id_t do_bus_register(MESSAGE* m);
+struct bus_type* get_bus_type(bus_type_id_t id);
+int do_bus_attr_add(MESSAGE* m);
 
-PUBLIC void init_device();
-PUBLIC device_id_t do_device_register(MESSAGE* m);
-PUBLIC struct device* get_device(device_id_t id);
-PUBLIC int do_device_attr_add(MESSAGE* m);
+void init_device();
+device_id_t do_device_register(MESSAGE* m);
+struct device* get_device(device_id_t id);
+int do_device_attr_add(MESSAGE* m);
 
 #endif

@@ -33,17 +33,17 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PRIVATE int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
-                          int offset, int rw_flag, struct fsdriver_data* data,
-                          off_t data_offset);
+static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
+                         int offset, int rw_flag, struct fsdriver_data* data,
+                         off_t data_offset);
 
 /**
  * Ext2 read/write syscall.
  * @param  p Ptr to message.
  * @return   Zero on success.
  */
-PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
-                     struct fsdriver_data* data, u64* rwpos, int* count)
+int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
+              u64* rwpos, int* count)
 {
     u64 position = *rwpos;
     int nbytes = *count;
@@ -123,9 +123,9 @@ PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
  * @param  buf      Buffer.
  * @return          Zero on success.
  */
-PRIVATE int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
-                          int offset, int rw_flag, struct fsdriver_data* data,
-                          off_t data_offset)
+static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
+                         int offset, int rw_flag, struct fsdriver_data* data,
+                         off_t data_offset)
 {
 
     int b = 0;
@@ -174,7 +174,7 @@ PRIVATE int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
 }
 
 /* locate the block number where the position can be found */
-PUBLIC block_t ext2_read_map(ext2_inode_t* pin, off_t position)
+block_t ext2_read_map(ext2_inode_t* pin, off_t position)
 {
     int index;
     block_t b;
@@ -242,7 +242,7 @@ PUBLIC block_t ext2_read_map(ext2_inode_t* pin, off_t position)
     return b;
 }
 
-PUBLIC int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
+int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
 {
     block_t b1, b2, b3;
     int index1, index2, index3 = 0;
@@ -369,7 +369,7 @@ PUBLIC int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
     return 0;
 }
 
-PUBLIC ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position)
+ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position)
 {
     block_t b = ext2_read_map(pin, position);
 
@@ -392,7 +392,7 @@ PUBLIC ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position)
     return ext2_get_buffer(pin->i_dev, b);
 }
 
-PRIVATE int dirent_type(ext2_dir_entry_t* dp)
+static int dirent_type(ext2_dir_entry_t* dp)
 {
     switch (dp->d_file_type) {
     case EXT2_FT_REG_FILE:
@@ -412,8 +412,8 @@ PRIVATE int dirent_type(ext2_dir_entry_t* dp)
     }
 }
 
-PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
-                         u64* ppos, size_t* count)
+int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
+                  size_t* count)
 {
 #define GETDENTS_BUFSIZE (sizeof(struct dirent) + EXT2_NAME_LEN + 1)
 #define GETDENTS_ENTRIES 8

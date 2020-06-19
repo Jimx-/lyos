@@ -49,14 +49,12 @@ struct exec_info {
     void* load_base;
 };
 
-PUBLIC int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len);
-PUBLIC int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr,
-                                     size_t len);
-PUBLIC int libexec_clearproc(struct exec_info* execi);
-PUBLIC int libexec_clearmem(struct exec_info* execi, void* vaddr, size_t len);
+int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len);
+int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len);
+int libexec_clearproc(struct exec_info* execi);
+int libexec_clearmem(struct exec_info* execi, void* vaddr, size_t len);
 
-PUBLIC int libexec_load_elf(struct exec_info* execi);
-PUBLIC int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp,
-                          size_t maxlen);
+int libexec_load_elf(struct exec_info* execi);
+int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen);
 
 #endif /* _LIBEXEC_H_ */

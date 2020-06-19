@@ -42,20 +42,20 @@
 #define DBGPRINT(x)
 #endif
 
-PUBLIC int pci_init();
+int pci_init();
 
-PUBLIC struct pci_acl pci_acl[NR_PRIV_PROCS];
+struct pci_acl pci_acl[NR_PRIV_PROCS];
 
-PRIVATE int do_set_acl(MESSAGE* m);
-PRIVATE int do_first_dev(MESSAGE* m);
-PRIVATE int do_next_dev(MESSAGE* m);
-PRIVATE int do_attr_r8(MESSAGE* m);
-PRIVATE int do_attr_r16(MESSAGE* m);
-PRIVATE int do_attr_r32(MESSAGE* m);
-PRIVATE int do_attr_w16(MESSAGE* m);
+static int do_set_acl(MESSAGE* m);
+static int do_first_dev(MESSAGE* m);
+static int do_next_dev(MESSAGE* m);
+static int do_attr_r8(MESSAGE* m);
+static int do_attr_r16(MESSAGE* m);
+static int do_attr_r32(MESSAGE* m);
+static int do_attr_w16(MESSAGE* m);
 static int do_get_bar(MESSAGE* m);
 
-PUBLIC int main()
+int main()
 {
     // serv_register_init_fresh_callback(pci_init);
     // serv_init();
@@ -117,7 +117,7 @@ PUBLIC int main()
     return 0;
 }
 
-PRIVATE int do_set_acl(MESSAGE* m)
+static int do_set_acl(MESSAGE* m)
 {
     int i;
 
@@ -138,7 +138,7 @@ PRIVATE int do_set_acl(MESSAGE* m)
     return 0;
 }
 
-PRIVATE struct pci_acl* get_acl(endpoint_t ep)
+static struct pci_acl* get_acl(endpoint_t ep)
 {
     int i;
     for (i = 0; i < NR_PRIV_PROCS; i++) {
@@ -150,7 +150,7 @@ PRIVATE struct pci_acl* get_acl(endpoint_t ep)
     return NULL;
 }
 
-PRIVATE int do_first_dev(MESSAGE* m)
+static int do_first_dev(MESSAGE* m)
 {
     struct pci_acl* acl = get_acl(m->source);
 
@@ -170,7 +170,7 @@ PRIVATE int do_first_dev(MESSAGE* m)
     return 0;
 }
 
-PRIVATE int do_next_dev(MESSAGE* m)
+static int do_next_dev(MESSAGE* m)
 {
     struct pci_acl* acl = get_acl(m->source);
 
@@ -209,7 +209,7 @@ static int do_get_bar(MESSAGE* m)
     return 0;
 }
 
-PRIVATE int do_attr_r8(MESSAGE* m)
+static int do_attr_r8(MESSAGE* m)
 {
     // struct pci_acl * acl = get_acl(m->source);
 
@@ -221,7 +221,7 @@ PRIVATE int do_attr_r8(MESSAGE* m)
     return 0;
 }
 
-PRIVATE int do_attr_r16(MESSAGE* m)
+static int do_attr_r16(MESSAGE* m)
 {
     // struct pci_acl * acl = get_acl(m->source);
 
@@ -233,7 +233,7 @@ PRIVATE int do_attr_r16(MESSAGE* m)
     return 0;
 }
 
-PRIVATE int do_attr_r32(MESSAGE* m)
+static int do_attr_r32(MESSAGE* m)
 {
     // struct pci_acl * acl = get_acl(m->source);
 
@@ -245,7 +245,7 @@ PRIVATE int do_attr_r32(MESSAGE* m)
     return 0;
 }
 
-PRIVATE int do_attr_w16(MESSAGE* m)
+static int do_attr_w16(MESSAGE* m)
 {
     // struct pci_acl * acl = get_acl(m->source);
 

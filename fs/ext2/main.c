@@ -45,9 +45,9 @@
 
 #define BLOCK2SECTOR(blk_size, blk_nr) (blk_nr * (blk_size))
 
-PUBLIC int init_ext2fs();
+int init_ext2fs();
 
-PRIVATE int ext2_mountpoint(dev_t dev, ino_t num);
+static int ext2_mountpoint(dev_t dev, ino_t num);
 
 struct fsdriver ext2fsdriver = {
     .name = "ext2",
@@ -76,7 +76,7 @@ struct fsdriver ext2fsdriver = {
  * <Ring 1> The main loop of TASK Ext2 FS.
  *
  *****************************************************************************/
-PUBLIC int main()
+int main()
 {
     serv_register_init_fresh_callback(init_ext2fs);
     serv_init();
@@ -84,7 +84,7 @@ PUBLIC int main()
     return fsdriver_start(&ext2fsdriver);
 }
 
-PUBLIC int init_ext2fs()
+int init_ext2fs()
 {
     printl("ext2fs: Ext2 filesystem driver is running\n");
     ext2_ep = get_endpoint();
@@ -97,7 +97,7 @@ PUBLIC int init_ext2fs()
     return 0;
 }
 
-PRIVATE int ext2_mountpoint(dev_t dev, ino_t num)
+static int ext2_mountpoint(dev_t dev, ino_t num)
 {
     ext2_inode_t* pin = get_ext2_inode(dev, num);
 
@@ -115,7 +115,7 @@ PRIVATE int ext2_mountpoint(dev_t dev, ino_t num)
     return retval;
 }
 
-PUBLIC int ext2_sync()
+int ext2_sync()
 {
     ext2_sync_inodes();
     ext2_sync_buffers();

@@ -38,16 +38,16 @@ extern u32 StackTop;
 DEFINE_CPULOCAL(struct gdt_page, gdt_page)
 __attribute__((aligned(ARCH_PG_SIZE)));
 
-PUBLIC u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
+u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC int syscall_style = 0;
+int syscall_style = 0;
 
 struct exception_info {
     char* msg;
     int signo;
 };
 
-PRIVATE struct exception_info err_description[] = {
+static struct exception_info err_description[] = {
     {"#DE Divide Error", SIGFPE},
     {"#DB RESERVED", SIGTRAP},
     {"—  NMI Interrupt", SIGBUS},
@@ -73,8 +73,8 @@ PRIVATE struct exception_info err_description[] = {
 //#define PROTECT_DEBUG
 
 /* 本文件内函数声明 */
-PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type,
-                          int_handler handler, unsigned char privilege);
+void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler,
+                   unsigned char privilege);
 
 /* 中断处理函数 */
 void divide_error();
@@ -110,20 +110,20 @@ void hwint13();
 void hwint14();
 void hwint15();
 
-PUBLIC void phys_copy_fault();
-PUBLIC void phys_copy_fault_in_kernel();
-PUBLIC void copy_user_message_end();
-PUBLIC void copy_user_message_fault();
-PRIVATE void page_fault_handler(int in_kernel, struct exception_frame* frame);
+void phys_copy_fault();
+void phys_copy_fault_in_kernel();
+void copy_user_message_end();
+void copy_user_message_fault();
+static void page_fault_handler(int in_kernel, struct exception_frame* frame);
 
-PUBLIC void init_idt();
+void init_idt();
 
 /*======================================================================*
                             init_prot
  *----------------------------------------------------------------------*
  初始化 IDT
  *======================================================================*/
-PUBLIC void init_prot()
+void init_prot()
 {
     struct descriptor* gdt;
 
@@ -150,7 +150,7 @@ PUBLIC void init_prot()
     load_prot_selectors(booting_cpu);
 }
 
-PUBLIC void load_direct_gdt(unsigned int cpu)
+void load_direct_gdt(unsigned int cpu)
 {
     u8 gdt_ptr[6]; /* 0~15:Limit  16~47:Base */
 
@@ -162,7 +162,7 @@ PUBLIC void load_direct_gdt(unsigned int cpu)
     x86_lgdt((u8*)&gdt_ptr);
 }
 
-PUBLIC void load_prot_selectors(unsigned int cpu)
+void load_prot_selectors(unsigned int cpu)
 {
     u8 idt_ptr[6]; /* 0~15:Limit  16~47:Base */
 
@@ -184,7 +184,7 @@ PUBLIC void load_prot_selectors(unsigned int cpu)
     x86_load_ss(SELECTOR_KERNEL_DS);
 }
 
-PUBLIC void init_idt()
+void init_idt()
 {
     /* 全部初始化成中断门(没有陷阱门) */
     init_idt_desc(INT_VECTOR_DIVIDE, DA_386IGate, divide_error, PRIVILEGE_KRNL);
@@ -270,8 +270,8 @@ PUBLIC void init_idt()
  *----------------------------------------------------------------------*
  初始化 386 中断门
  *======================================================================*/
-PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type,
-                          int_handler handler, unsigned char privilege)
+void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler,
+                   unsigned char privilege)
 {
     struct gate* p_gate = &idt[vector];
     u32 base = (u32)handler;
@@ -282,7 +282,7 @@ PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type,
     p_gate->offset_high = (base >> 16) & 0xFFFF;
 }
 
-PUBLIC void reload_idt()
+void reload_idt()
 {
     u8 idt_ptr[6];
 
@@ -294,16 +294,16 @@ PUBLIC void reload_idt()
     x86_lidt((u8*)&idt_ptr);
 }
 
-PUBLIC void sys_call_syscall_cpu0();
-PUBLIC void sys_call_syscall_cpu1();
-PUBLIC void sys_call_syscall_cpu2();
-PUBLIC void sys_call_syscall_cpu3();
-PUBLIC void sys_call_syscall_cpu4();
-PUBLIC void sys_call_syscall_cpu5();
-PUBLIC void sys_call_syscall_cpu6();
-PUBLIC void sys_call_syscall_cpu7();
+void sys_call_syscall_cpu0();
+void sys_call_syscall_cpu1();
+void sys_call_syscall_cpu2();
+void sys_call_syscall_cpu3();
+void sys_call_syscall_cpu4();
+void sys_call_syscall_cpu5();
+void sys_call_syscall_cpu6();
+void sys_call_syscall_cpu7();
 
-PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
+int init_tss(unsigned cpu, unsigned kernel_stack)
 {
     struct tss* t = &tss[cpu];
     struct descriptor* gdt = get_cpu_gdt(cpu);
@@ -361,8 +361,7 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
  *----------------------------------------------------------------------*
  初始化段描述符
  *======================================================================*/
-PUBLIC void init_desc(struct descriptor* p_desc, u32 base, u32 limit,
-                      u16 attribute)
+void init_desc(struct descriptor* p_desc, u32 base, u32 limit, u16 attribute)
 {
     p_desc->limit_low = limit & 0x0FFFF;     /* 段界限 1		(2 字节) */
     p_desc->base_low = base & 0x0FFFF;       /* 段基址 1		(2 字节) */
@@ -377,7 +376,7 @@ PUBLIC void init_desc(struct descriptor* p_desc, u32 base, u32 limit,
 /**
  * <Ring 0> Handle page fault.
  */
-PRIVATE void page_fault_handler(int in_kernel, struct exception_frame* frame)
+static void page_fault_handler(int in_kernel, struct exception_frame* frame)
 {
     reg_t pfla = read_cr2();
 
@@ -453,7 +452,7 @@ PRIVATE void page_fault_handler(int in_kernel, struct exception_frame* frame)
  *----------------------------------------------------------------------*
  异常处理
  *======================================================================*/
-PUBLIC void exception_handler(int in_kernel, struct exception_frame* frame)
+void exception_handler(int in_kernel, struct exception_frame* frame)
 {
     struct proc* fault_proc = get_cpulocal_var(proc_ptr);
 

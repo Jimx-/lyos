@@ -25,7 +25,7 @@
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC int vmctl(int request, endpoint_t who)
+int vmctl(int request, endpoint_t who)
 {
     MESSAGE m;
 
@@ -35,8 +35,7 @@ PUBLIC int vmctl(int request, endpoint_t who)
     return syscall_entry(NR_VMCTL, &m);
 }
 
-PUBLIC int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len,
-                                  int* flags)
+int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
 {
     MESSAGE m;
 
@@ -51,7 +50,7 @@ PUBLIC int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len,
     return m.VMCTL_GET_KM_RETVAL;
 }
 
-PUBLIC int vmctl_reply_kern_mapping(int index, void* vir_addr)
+int vmctl_reply_kern_mapping(int index, void* vir_addr)
 {
     MESSAGE m;
 
@@ -64,7 +63,7 @@ PUBLIC int vmctl_reply_kern_mapping(int index, void* vir_addr)
     return m.VMCTL_REPLY_KM_RETVAL;
 }
 
-PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
+int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
 {
     MESSAGE m;
 
@@ -79,8 +78,7 @@ PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
     return 0;
 }
 
-PUBLIC int vmctl_set_address_space(endpoint_t who, void* pgd_phys,
-                                   void* pgd_vir)
+int vmctl_set_address_space(endpoint_t who, void* pgd_phys, void* pgd_vir)
 {
     MESSAGE m;
 
@@ -92,7 +90,7 @@ PUBLIC int vmctl_set_address_space(endpoint_t who, void* pgd_phys,
     return syscall_entry(NR_VMCTL, &m);
 }
 
-PUBLIC int vmctl_flushtlb(endpoint_t who)
+int vmctl_flushtlb(endpoint_t who)
 {
     MESSAGE m;
 
@@ -102,8 +100,8 @@ PUBLIC int vmctl_flushtlb(endpoint_t who)
     return syscall_entry(NR_VMCTL, &m);
 }
 
-PUBLIC int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
-                               int* flags, endpoint_t* caller)
+int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
+                        int* flags, endpoint_t* caller)
 {
     MESSAGE m;
 
@@ -120,7 +118,7 @@ PUBLIC int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
     return retval;
 }
 
-PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result)
+int vmctl_reply_mmreq(endpoint_t who, int result)
 {
     MESSAGE m;
 

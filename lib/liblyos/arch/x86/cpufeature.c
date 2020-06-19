@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <string.h>
 
-PUBLIC void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
+void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
 
-PUBLIC int _cpufeature(int cpufeature)
+int _cpufeature(int cpufeature)
 {
     u32 eax, ebx, ecx, edx;
     u32 ef_eax = 0, ef_ebx = 0, ef_ecx = 0, ef_edx = 0;

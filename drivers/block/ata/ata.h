@@ -123,7 +123,7 @@
                                | 20h    | Read Sectors With Retry         |    V  V  V  V   |
                                | E8h  @ | Write Buffer                    |             D   |
                                +--------+---------------------------------+-----------------+
-
+                           
                                KEY FOR SYMBOLS IN THE TABLE:
                                ===========================================-----=========================================================================
                                PC    Register 1F1: Write Precompensation	@     These commands are

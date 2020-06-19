@@ -43,22 +43,21 @@ DEFINE_CPULOCAL(struct proc*, fpu_owner) = NULL;
 
 DEFINE_CPULOCAL(volatile int, cpu_is_idle);
 
-PUBLIC struct proc* pick_proc();
-PUBLIC void proc_no_time(struct proc* p);
+struct proc* pick_proc();
+void proc_no_time(struct proc* p);
 
-PRIVATE void idle();
-PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags);
-PRIVATE int receive_async(struct proc* p);
-PRIVATE int receive_async_from(struct proc* p, struct proc* sender);
-PRIVATE int has_pending_notify(struct proc* p, endpoint_t src);
-PRIVATE int has_pending_async(struct proc* p, endpoint_t src);
-PRIVATE void unset_notify_pending(struct proc* p, int id);
-PRIVATE void set_notify_msg(struct proc* sender, MESSAGE* m, endpoint_t src);
-PRIVATE int deadlock(int src, int dest);
-PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table,
-                     size_t len);
+static void idle();
+static int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags);
+static int receive_async(struct proc* p);
+static int receive_async_from(struct proc* p, struct proc* sender);
+static int has_pending_notify(struct proc* p, endpoint_t src);
+static int has_pending_async(struct proc* p, endpoint_t src);
+static void unset_notify_pending(struct proc* p, int id);
+static void set_notify_msg(struct proc* sender, MESSAGE* m, endpoint_t src);
+static int deadlock(int src, int dest);
+int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len);
 
-PUBLIC void init_proc()
+void init_proc()
 {
     int i;
     struct proc* p = proc_table;
@@ -141,7 +140,7 @@ PUBLIC void init_proc()
 /**
  * <Ring 0> Switch back to user space.
  */
-PUBLIC void switch_to_user()
+void switch_to_user()
 {
     struct proc* p = get_cpulocal_var(proc_ptr);
 
@@ -198,7 +197,7 @@ no_schedule:
     restore_user_context(p);
 }
 
-PRIVATE void switch_address_space_idle()
+static void switch_address_space_idle()
 {
 #if CONFIG_SMP
     switch_address_space(proc_addr(TASK_MM));
@@ -208,7 +207,7 @@ PRIVATE void switch_address_space_idle()
 /**
  * <Ring 0> Called when there is no work to do. Halt the CPU.
  */
-PRIVATE void idle()
+static void idle()
 {
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     switch_address_space_idle();
@@ -249,7 +248,7 @@ PRIVATE void idle()
  *
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
+int sys_sendrec(MESSAGE* m, struct proc* p)
 {
     int function = m->SR_FUNCTION;
     int src_dest = m->SR_SRCDEST;
@@ -304,9 +303,9 @@ PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p)
  *
  * @param p  The message to be cleared.
  *****************************************************************************/
-PUBLIC void reset_msg(MESSAGE* p) { memset(p, 0, sizeof(MESSAGE)); }
+void reset_msg(MESSAGE* p) { memset(p, 0, sizeof(MESSAGE)); }
 
-PUBLIC struct proc* endpt_proc(endpoint_t ep)
+struct proc* endpt_proc(endpoint_t ep)
 {
     int n = -1;
     if (!verify_endpt(ep, &n)) return NULL;
@@ -329,7 +328,7 @@ PUBLIC struct proc* endpt_proc(endpoint_t ep)
  *
  * @return Zero if success.
  *****************************************************************************/
-PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
+static int deadlock(endpoint_t src, endpoint_t dest)
 {
     struct proc* p = endpt_proc(dest);
 
@@ -366,7 +365,7 @@ PRIVATE int deadlock(endpoint_t src, endpoint_t dest)
  *
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
+int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 {
     struct proc* sender = p_to_send;
     struct proc* p_dest = endpt_proc(dest); /* proc dest */
@@ -442,7 +441,7 @@ out:
  *
  * @return  Zero if success.
  *****************************************************************************/
-PRIVATE int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
+static int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
 {
     struct proc* who_wanna_recv = p_to_recv; /**
                                               * This name is a little bit
@@ -599,7 +598,7 @@ out:
     return retval;
 }
 
-PRIVATE int receive_async_from(struct proc* p, struct proc* sender)
+static int receive_async_from(struct proc* p, struct proc* sender)
 {
     struct priv* priv = sender->priv;
     if (!(priv->flags & PRF_PRIV_PROC)) { /* only privilege processes can send
@@ -668,7 +667,7 @@ async_error:
     return retval;
 }
 
-PRIVATE int receive_async(struct proc* p)
+static int receive_async(struct proc* p)
 {
     int retval;
     priv_map_t async_pending = p->priv->async_pending;
@@ -686,7 +685,7 @@ PRIVATE int receive_async(struct proc* p)
     return ESRCH;
 }
 
-PRIVATE int has_pending_async(struct proc* p, endpoint_t src)
+static int has_pending_async(struct proc* p, endpoint_t src)
 {
     priv_map_t async_pending = p->priv->async_pending;
     int i;
@@ -710,7 +709,7 @@ PRIVATE int has_pending_async(struct proc* p, endpoint_t src)
     return PRIV_ID_NULL;
 }
 
-PRIVATE int has_pending_notify(struct proc* p, endpoint_t src)
+static int has_pending_notify(struct proc* p, endpoint_t src)
 {
     priv_map_t notify_pending = p->priv->notify_pending;
     int i;
@@ -734,12 +733,12 @@ PRIVATE int has_pending_notify(struct proc* p, endpoint_t src)
     return PRIV_ID_NULL;
 }
 
-PRIVATE void unset_notify_pending(struct proc* p, int id)
+static void unset_notify_pending(struct proc* p, int id)
 {
     p->priv->notify_pending &= ~(1 << id);
 }
 
-PRIVATE void set_notify_msg(struct proc* dest, MESSAGE* m, endpoint_t src)
+static void set_notify_msg(struct proc* dest, MESSAGE* m, endpoint_t src)
 {
     memset(m, 0, sizeof(MESSAGE));
     m->source = src;
@@ -772,7 +771,7 @@ PRIVATE void set_notify_msg(struct proc* dest, MESSAGE* m, endpoint_t src)
  *
  * @return Zero on success, otherwise errcode.
  */
-PUBLIC int msg_notify(struct proc* p_to_send, endpoint_t dest)
+int msg_notify(struct proc* p_to_send, endpoint_t dest)
 {
     struct proc* p_dest = endpt_proc(dest);
     if (!p_dest) return EINVAL;
@@ -819,7 +818,7 @@ PUBLIC int msg_notify(struct proc* p_to_send, endpoint_t dest)
  *
  * @return Non-zero if the endpoint number is valid.
  */
-PUBLIC int verify_endpt(endpoint_t ep, int* proc_nr)
+int verify_endpt(endpoint_t ep, int* proc_nr)
 {
     if (ep < -NR_TASKS) return 0;
     if (ep == NO_TASK || ep == ANY || ep == SELF) return 1;
@@ -837,7 +836,7 @@ PUBLIC int verify_endpt(endpoint_t ep, int* proc_nr)
 /*****************************************************************************
  *                                dumproc
  *****************************************************************************/
-PUBLIC void dumproc(struct proc* p)
+void dumproc(struct proc* p)
 {
 #if 0
     sprintf(info, "counter: 0x%x.  ", p->counter); disp_color_str(info, text_color);
@@ -857,7 +856,7 @@ PUBLIC void dumproc(struct proc* p)
 /*****************************************************************************
  *                                dummsg
  *****************************************************************************/
-PUBLIC void dump_msg(const char* title, MESSAGE* m)
+void dump_msg(const char* title, MESSAGE* m)
 {
     int packed = 0;
     printk("\n\n%s<0x%x>{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, "
@@ -882,7 +881,7 @@ PUBLIC void dump_msg(const char* title, MESSAGE* m)
  *
  * @return Zero if success.
  *****************************************************************************/
-PUBLIC int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
+int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
 {
     struct priv* priv = p_to_send->priv;
     if (!(priv->flags & PRF_PRIV_PROC)) { /* only privilege processes can send

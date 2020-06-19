@@ -35,7 +35,7 @@ extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 /*======================================================================*
                                sys_getinfo
  *======================================================================*/
-PUBLIC int sys_getinfo(MESSAGE* m, struct proc* p_proc)
+int sys_getinfo(MESSAGE* m, struct proc* p_proc)
 {
     int request = m->REQUEST;
     void* buf = m->BUF;

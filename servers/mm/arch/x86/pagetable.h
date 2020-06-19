@@ -18,41 +18,41 @@
 
 #include <lyos/pagetable-nopmd.h>
 
-PRIVATE inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
+static inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
 {
     return pgd + ARCH_PDE(addr);
 }
 
-PRIVATE inline int pmde_none(pmd_t pmde)
+static inline int pmde_none(pmd_t pmde)
 {
     return !(pmd_val(pmde) & ARCH_PG_PRESENT);
 }
 
-PRIVATE inline int pmde_bad(pmd_t pmde)
+static inline int pmde_bad(pmd_t pmde)
 {
     return ((pmd_val(pmde) & !ARCH_PG_MASK) & ~ARCH_PG_USER) !=
            (ARCH_PG_PRESENT | ARCH_PG_RW);
 }
 
-PRIVATE inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
+static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
-PRIVATE inline void pmde_populate(pmd_t* pmde, phys_bytes pt_phys)
+static inline void pmde_populate(pmd_t* pmde, phys_bytes pt_phys)
 {
     *pmde = __pmd((pt_phys & I386_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
                   ARCH_PG_USER);
 }
 
-PRIVATE inline int pte_none(pte_t pte)
+static inline int pte_none(pte_t pte)
 {
     return !(pte_val(pte) & ARCH_PG_PRESENT);
 }
 
-PRIVATE inline int pte_present(pte_t pte)
+static inline int pte_present(pte_t pte)
 {
     return pte_val(pte) & ARCH_PG_PRESENT;
 }
 
-PRIVATE inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
+static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
 {
     pte_t* vaddr = (pte_t*)(pmd_val(*pt) & ARCH_PG_MASK);
     return vaddr + ARCH_PTE(addr);

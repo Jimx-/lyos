@@ -24,12 +24,12 @@ typedef struct {
 
 #define ARCH_VM_PMD_ENTRIES 1
 
-PRIVATE inline int pde_none(pde_t pde) { return 0; }
-PRIVATE inline int pde_bad(pde_t pde) { return 0; }
-PRIVATE inline int pde_present(pde_t pde) { return 1; }
-PRIVATE inline void pde_clear(pde_t* pde) {}
+static inline int pde_none(pde_t pde) { return 0; }
+static inline int pde_bad(pde_t pde) { return 0; }
+static inline int pde_present(pde_t pde) { return 1; }
+static inline void pde_clear(pde_t* pde) {}
 
-PRIVATE inline pmd_t* pmd_offset(pde_t* pmd, unsigned long addr)
+static inline pmd_t* pmd_offset(pde_t* pmd, unsigned long addr)
 {
     return (pmd_t*)pmd;
 }

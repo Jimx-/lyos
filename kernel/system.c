@@ -36,11 +36,11 @@
 #include <lyos/vm.h>
 
 typedef int (*sys_call_handler_t)(MESSAGE* m, struct proc* p_proc);
-PRIVATE sys_call_handler_t sys_call_table[NR_SYS_CALLS];
+static sys_call_handler_t sys_call_table[NR_SYS_CALLS];
 
-PRIVATE int sys_nosys(MESSAGE* m, struct proc* p_proc) { return ENOSYS; }
+static int sys_nosys(MESSAGE* m, struct proc* p_proc) { return ENOSYS; }
 
-PUBLIC void init_system()
+void init_system()
 {
     int i;
     for (i = 0; i < NR_SYS_CALLS; i++) {
@@ -76,7 +76,7 @@ PUBLIC void init_system()
 #endif
 }
 
-PUBLIC int set_priv(struct proc* p, int id)
+int set_priv(struct proc* p, int id)
 {
     struct priv* priv;
     if (id == PRIV_ID_NULL) {
@@ -95,7 +95,7 @@ PUBLIC int set_priv(struct proc* p, int id)
     return 0;
 }
 
-PRIVATE int finish_sys_call(struct proc* p_proc, MESSAGE* msg, int result)
+static int finish_sys_call(struct proc* p_proc, MESSAGE* msg, int result)
 {
     if (result == MMSUSPEND) {
         p_proc->mm_request.saved_reqmsg = *msg;
@@ -109,7 +109,7 @@ PRIVATE int finish_sys_call(struct proc* p_proc, MESSAGE* msg, int result)
     return result;
 }
 
-PRIVATE int dispatch_sys_call(int call_nr, MESSAGE* msg, struct proc* p_proc)
+static int dispatch_sys_call(int call_nr, MESSAGE* msg, struct proc* p_proc)
 {
     int retval;
 
@@ -123,7 +123,7 @@ PRIVATE int dispatch_sys_call(int call_nr, MESSAGE* msg, struct proc* p_proc)
     return retval;
 }
 
-PUBLIC int handle_sys_call(int call_nr, MESSAGE* m_user, struct proc* p_proc)
+int handle_sys_call(int call_nr, MESSAGE* m_user, struct proc* p_proc)
 {
     MESSAGE msg;
     if (call_nr >= NR_SYS_CALLS || call_nr < 0) return EINVAL;
@@ -158,7 +158,7 @@ PUBLIC int handle_sys_call(int call_nr, MESSAGE* m_user, struct proc* p_proc)
     return retval;
 }
 
-PUBLIC int resume_sys_call(struct proc* p)
+int resume_sys_call(struct proc* p)
 {
     int retval = dispatch_sys_call(p->mm_request.saved_reqmsg.type,
                                    &p->mm_request.saved_reqmsg, p);
@@ -169,7 +169,7 @@ PUBLIC int resume_sys_call(struct proc* p)
     return retval;
 }
 
-PUBLIC int send_sig(endpoint_t ep, int signo)
+int send_sig(endpoint_t ep, int signo)
 {
     struct proc* p = endpt_proc(ep);
     if (!p) return EINVAL;
@@ -183,7 +183,7 @@ PUBLIC int send_sig(endpoint_t ep, int signo)
     return 0;
 }
 
-PUBLIC void ksig_proc(endpoint_t ep, int signo)
+void ksig_proc(endpoint_t ep, int signo)
 {
     struct proc* p = endpt_proc(ep);
     if (!p) return;

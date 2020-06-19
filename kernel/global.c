@@ -30,10 +30,10 @@
 #include "sys/utsname.h"
 #include <lyos/log.h>
 
-PUBLIC int booting_cpu = 0;
+int booting_cpu = 0;
 
-PUBLIC struct proc proc_table[NR_TASKS + NR_PROCS];
-PUBLIC struct priv priv_table[NR_PRIV_PROCS];
+struct proc proc_table[NR_TASKS + NR_PROCS];
+struct priv priv_table[NR_PRIV_PROCS];
 
 /* when this is modified, modify
  *	- NR_BOOT_PROCS in config.h
@@ -41,7 +41,7 @@ PUBLIC struct priv priv_table[NR_PRIV_PROCS];
  *	- boot_priv_table in servman
  * also
  */
-PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
+struct boot_proc boot_procs[NR_BOOT_PROCS] = {
     {CLOCK, "clock"},
     {SYSTEM, "system"},
     {KERNEL, "kernel"},
@@ -64,14 +64,14 @@ PUBLIC struct boot_proc boot_procs[NR_BOOT_PROCS] = {
     {INIT, "INIT"},
 };
 
-PUBLIC char task_stack[STACK_SIZE_TOTAL];
+char task_stack[STACK_SIZE_TOTAL];
 
-PUBLIC irq_hook_t irq_hooks[NR_IRQ_HOOKS];
+irq_hook_t irq_hooks[NR_IRQ_HOOKS];
 
-PUBLIC int errno;
+int errno;
 
-PUBLIC int err_code = 0;
+int err_code = 0;
 
 #if CONFIG_PROFILING
-PUBLIC int kprofiling = 0;
+int kprofiling = 0;
 #endif

@@ -20,7 +20,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-PUBLIC u32 now()
+u32 now()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

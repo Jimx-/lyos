@@ -34,18 +34,18 @@ extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE, _KERN_OFFSET;
 extern char _arch_init_start, _arch_init_end;
 
 /* paging utilities */
-PRIVATE phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
-PRIVATE phys_bytes kern_phys_base = (phys_bytes)&_PHYS_BASE;
-PRIVATE phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
+static phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
+static phys_bytes kern_phys_base = (phys_bytes)&_PHYS_BASE;
+static phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern u32 k_stacks_start;
-PUBLIC void* k_stacks;
+void* k_stacks;
 
-PRIVATE char* env_get(const char* name);
-PRIVATE int kinfo_set_param(char* buf, char* name, char* value);
+static char* env_get(const char* name);
+static int kinfo_set_param(char* buf, char* name, char* value);
 
-PRIVATE void parse_atags(void* atags_ptr)
+static void parse_atags(void* atags_ptr)
 {
     struct tag* t;
 
@@ -110,7 +110,7 @@ PRIVATE void parse_atags(void* atags_ptr)
     }
 }
 
-PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
+void cstart(int r0, int mach_type, void* atags_ptr)
 {
     memset(&kinfo, 0, sizeof(kinfo_t));
     kinfo.magic = KINFO_MAGIC;
@@ -184,7 +184,7 @@ PUBLIC void cstart(int r0, int mach_type, void* atags_ptr)
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 
-PRIVATE char* get_value(const char* param, const char* key)
+static char* get_value(const char* param, const char* key)
 {
     char* envp = (char*)param;
     const char* name = key;
@@ -200,12 +200,12 @@ PRIVATE char* get_value(const char* param, const char* key)
     return NULL;
 }
 
-PRIVATE char* env_get(const char* name)
+static char* env_get(const char* name)
 {
     return get_value(kinfo.cmdline, name);
 }
 
-PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
+static int kinfo_set_param(char* buf, char* name, char* value)
 {
     char* p = buf;
     char* bufend = buf + KINFO_CMDLINE_LEN;
@@ -241,7 +241,7 @@ PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
     return 0;
 }
 
-PUBLIC void init_arch()
+void init_arch()
 {
     if (machine_desc->init_machine) machine_desc->init_machine();
 

@@ -26,8 +26,9 @@
 #include <lyos/interrupt.h>
 
 /* 8259A interrupt controller ports. */
-#define INT_M_CTL 0x20 /* I/O port for interrupt controller         <Master> \
-                        */
+#define INT_M_CTL                                              \
+    0x20 /* I/O port for interrupt controller         <Master> \
+          */
 #define INT_M_CTLMASK \
     0x21               /* setting bits in this port disables ints   <Master> */
 #define INT_S_CTL 0xA0 /* I/O port for second interrupt controller  <Slave> */
@@ -37,7 +38,7 @@
 /*======================================================================*
                             init_8259A
  *======================================================================*/
-PUBLIC void init_8259A()
+void init_8259A()
 {
     out_byte(INT_M_CTL, 0x11); /* Master 8259, ICW1. */
     out_byte(INT_S_CTL, 0x11); /* Slave  8259, ICW1. */
@@ -56,26 +57,26 @@ PUBLIC void init_8259A()
     out_byte(INT_S_CTLMASK, 0xFF);                /* Slave  8259, OCW1. */
 }
 
-PUBLIC void disable_8259A()
+void disable_8259A()
 {
     out_byte(INT_S_CTLMASK, 0xFF);
     out_byte(INT_M_CTLMASK, 0xFF);
     in_byte(INT_M_CTLMASK);
 }
 
-PUBLIC void i8259_mask(int irq)
+void i8259_mask(int irq)
 {
     u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;
     out_byte(ctl_mask, in_byte(ctl_mask) | (1 << (irq & 0x7)));
 }
 
-PUBLIC void i8259_unmask(int irq)
+void i8259_unmask(int irq)
 {
     u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;
     out_byte(ctl_mask, in_byte(ctl_mask) & ~(1 << (irq & 0x7)));
 }
 
-PUBLIC void i8259_eoi(int irq)
+void i8259_eoi(int irq)
 {
     if (irq < 8)
         i8259_eoi_master();

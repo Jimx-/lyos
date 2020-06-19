@@ -29,7 +29,7 @@
 
 #include "libdevman.h"
 
-PUBLIC endpoint_t dm_get_bdev_driver(dev_t dev)
+endpoint_t dm_get_bdev_driver(dev_t dev)
 {
     MESSAGE msg;
 
@@ -42,7 +42,7 @@ PUBLIC endpoint_t dm_get_bdev_driver(dev_t dev)
     return (msg.RETVAL != 0) ? -msg.RETVAL : msg.ENDPOINT;
 }
 
-PUBLIC endpoint_t dm_get_cdev_driver(dev_t dev)
+endpoint_t dm_get_cdev_driver(dev_t dev)
 {
     MESSAGE msg;
 

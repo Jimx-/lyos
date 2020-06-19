@@ -26,7 +26,7 @@
 #include "string.h"
 #include "libfsdriver/libfsdriver.h"
 
-PUBLIC int fsdriver_start(struct fsdriver* fsd)
+int fsdriver_start(struct fsdriver* fsd)
 {
     int retval = fsdriver_register(fsd);
     if (retval != 0) return retval;

@@ -34,14 +34,14 @@
 #include "global.h"
 #include "types.h"
 
-PRIVATE struct phys_hole hole[NR_HOLES]; /* the hole table */
-PRIVATE struct phys_hole* hole_head;     /* pointer to first hole */
-PRIVATE struct phys_hole* free_slots;    /* ptr to list of unused table slots */
+static struct phys_hole hole[NR_HOLES]; /* the hole table */
+static struct phys_hole* hole_head;     /* pointer to first hole */
+static struct phys_hole* free_slots;    /* ptr to list of unused table slots */
 
-PRIVATE void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp);
-PRIVATE void merge_hole(struct phys_hole* hp);
+static void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp);
+static void merge_hole(struct phys_hole* hp);
 
-PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
+void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
 {
     struct phys_hole* hp;
 
@@ -70,7 +70,7 @@ PUBLIC void mem_init(phys_bytes mem_start, phys_bytes free_mem_size)
  *
  * @return  The base of the memory just allocated.
  *****************************************************************************/
-PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
+phys_bytes alloc_mem(phys_bytes memsize)
 {
     struct phys_hole *hp, *prev_ptr;
     phys_bytes old_base;
@@ -107,7 +107,7 @@ PUBLIC phys_bytes alloc_mem(phys_bytes memsize)
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
+phys_bytes alloc_pages(int nr_pages, int memflags)
 {
     size_t memsize = nr_pages * ARCH_PG_SIZE;
     struct phys_hole *hp, *prev_ptr;
@@ -159,7 +159,7 @@ PUBLIC phys_bytes alloc_pages(int nr_pages, int memflags)
  *
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC int free_mem(phys_bytes base, phys_bytes len)
+int free_mem(phys_bytes base, phys_bytes len)
 {
     struct phys_hole *hp, *new_ptr, *prev_ptr;
 
@@ -202,7 +202,7 @@ PUBLIC int free_mem(phys_bytes base, phys_bytes len)
  * Remove an entry from the list.
  *
  *******************************************************************/
-PRIVATE void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp)
+static void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp)
 {
     if (hp == hole_head)
         hole_head = hp->h_next;
@@ -221,7 +221,7 @@ PRIVATE void delete_slot(struct phys_hole* prev_ptr, struct phys_hole* hp)
  * Merge contiguous holes.
  *
  *******************************************************************/
-PRIVATE void merge_hole(struct phys_hole* hp)
+static void merge_hole(struct phys_hole* hp)
 {
     struct phys_hole* next_ptr;
 

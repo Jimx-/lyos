@@ -33,9 +33,9 @@
 
 #include <libdevman/libdevman.h>
 
-PUBLIC struct cdmap cdmap[NR_DEVICES];
+struct cdmap cdmap[NR_DEVICES];
 
-PRIVATE void init_cdev()
+static void init_cdev()
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
@@ -45,7 +45,7 @@ PRIVATE void init_cdev()
     }
 }
 
-PRIVATE int cdev_update(dev_t dev)
+static int cdev_update(dev_t dev)
 {
     dev_t major = MAJOR(dev);
     cdmap[major].driver = dm_get_cdev_driver(dev);
@@ -54,7 +54,7 @@ PRIVATE int cdev_update(dev_t dev)
     return cdmap[major].driver != NO_TASK;
 }
 
-PUBLIC struct fproc* cdev_get(dev_t dev)
+struct fproc* cdev_get(dev_t dev)
 {
     static int first = 1;
 
@@ -70,7 +70,7 @@ PUBLIC struct fproc* cdev_get(dev_t dev)
     return vfs_endpt_proc(cdmap[major].driver);
 }
 
-PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
+struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
@@ -82,7 +82,7 @@ PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
     return NULL;
 }
 
-PRIVATE int cdev_opcl(int op, dev_t dev)
+static int cdev_opcl(int op, dev_t dev)
 {
     if (op != CDEV_OPEN && op != CDEV_CLOSE) {
         return EINVAL;
@@ -109,12 +109,12 @@ PRIVATE int cdev_opcl(int op, dev_t dev)
     return driver_msg.u.m_vfs_cdev_reply.status;
 }
 
-PUBLIC int cdev_open(dev_t dev) { return cdev_opcl(CDEV_OPEN, dev); }
+int cdev_open(dev_t dev) { return cdev_opcl(CDEV_OPEN, dev); }
 
-PUBLIC int cdev_close(dev_t dev) { return cdev_opcl(CDEV_CLOSE, dev); }
+int cdev_close(dev_t dev) { return cdev_opcl(CDEV_CLOSE, dev); }
 
-PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-                   size_t count, struct fproc* fp)
+int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
+            size_t count, struct fproc* fp)
 {
     struct fproc* driver = cdev_get(dev);
     if (!driver) return ENXIO;
@@ -143,8 +143,8 @@ PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
     return SUSPEND;
 }
 
-PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
-                     size_t length, struct fproc* fp)
+int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
+              size_t length, struct fproc* fp)
 {
     struct fproc* driver = cdev_get(dev);
     if (!driver) return ENXIO;
@@ -164,7 +164,7 @@ PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
     return SUSPEND;
 }
 
-PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
+int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
     /* MESSAGE driver_msg; */
     /* memset(&driver_msg, 0, sizeof(MESSAGE)); */
@@ -176,7 +176,7 @@ PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp)
     return SUSPEND;
 }
 
-PRIVATE void cdev_reply_generic(MESSAGE* msg)
+static void cdev_reply_generic(MESSAGE* msg)
 {
     endpoint_t endpoint = msg->u.m_vfs_cdev_reply.id;
     int retval;
@@ -198,7 +198,7 @@ PRIVATE void cdev_reply_generic(MESSAGE* msg)
     }
 }
 
-PRIVATE void cdev_mmap_reply(endpoint_t endpoint, void* retaddr, int retval)
+static void cdev_mmap_reply(endpoint_t endpoint, void* retaddr, int retval)
 {
     MESSAGE reply_msg;
     memset(&reply_msg, 0, sizeof(MESSAGE));
@@ -211,7 +211,7 @@ PRIVATE void cdev_mmap_reply(endpoint_t endpoint, void* retaddr, int retval)
     revive_proc(TASK_MM, &reply_msg);
 }
 
-PUBLIC int cdev_reply(MESSAGE* msg)
+int cdev_reply(MESSAGE* msg)
 {
     switch (msg->type) {
     case CDEV_REPLY:

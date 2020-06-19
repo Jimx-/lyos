@@ -32,7 +32,7 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int do_brk()
+int do_brk()
 {
     endpoint_t src = mm_msg.source;
     struct mmproc* mmp = endpt_mmproc(src);

@@ -59,34 +59,34 @@ struct vfs_exec_info {
 
 typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack,
                             size_t* stack_size, void** vsp);
-PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
-                              size_t* stack_size, void** vsp);
-PRIVATE int setup_script_stack(struct inode* pin, char* stack,
-                               size_t* stack_size, char* pathname, void** vsp);
-PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
-                        void** vsp);
+static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
+                             size_t* stack_size, void** vsp);
+static int setup_script_stack(struct inode* pin, char* stack,
+                              size_t* stack_size, char* pathname, void** vsp);
+static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
+                       void** vsp);
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
     stack_hook_t setup_stack;
 };
 
-PUBLIC int libexec_load_elf_dbg(struct exec_info* execi);
+int libexec_load_elf_dbg(struct exec_info* execi);
 
-PRIVATE struct exec_loader exec_loaders[] = {
+static struct exec_loader exec_loaders[] = {
     {libexec_load_elf, setup_stack_elf32},
     {NULL},
 };
 
-PRIVATE int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
-                           struct fproc* fp);
-PRIVATE int read_header(struct vfs_exec_info* execi);
-PRIVATE int is_script(struct vfs_exec_info* execi);
-PRIVATE int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
-                             off_t foffset, int protflags, size_t clearend);
+static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
+                          struct fproc* fp);
+static int read_header(struct vfs_exec_info* execi);
+static int is_script(struct vfs_exec_info* execi);
+static int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
+                            off_t foffset, int protflags, size_t clearend);
 
 /* open the executable and fill in exec info */
-PRIVATE int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
-                           struct fproc* fp)
+static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
+                          struct fproc* fp)
 {
     int retval;
 
@@ -116,7 +116,7 @@ PRIVATE int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
 }
 
 /* read in the executable header */
-PRIVATE int read_header(struct vfs_exec_info* execi)
+static int read_header(struct vfs_exec_info* execi)
 {
     u64 newpos;
     size_t bytes_rdwt;
@@ -132,8 +132,8 @@ PRIVATE int read_header(struct vfs_exec_info* execi)
 }
 
 /* read segment */
-PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
-                         size_t len)
+static int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                        size_t len)
 {
     u64 newpos;
     size_t bytes_rdwt;
@@ -152,14 +152,14 @@ PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
                              &bytes_rdwt);
 }
 
-PRIVATE int is_script(struct vfs_exec_info* execi)
+static int is_script(struct vfs_exec_info* execi)
 {
     return ((execi->args.header[0] == '#') && (execi->args.header[1] == '!'));
 }
 
 /* issue a vfs_mmap request */
-PRIVATE int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
-                             off_t foffset, int protflags, size_t clearend)
+static int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
+                            off_t foffset, int protflags, size_t clearend)
 {
     struct vfs_exec_info* vexeci =
         (struct vfs_exec_info*)(execi->callback_data);
@@ -181,7 +181,7 @@ PRIVATE int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
  * @return     Zero on success.
  *
  *****************************************************************************/
-PUBLIC int fs_exec(void)
+int fs_exec(void)
 {
     int retval;
 
@@ -388,8 +388,8 @@ exec_finalize:
  *
  * @return Zero on success.
  *****************************************************************************/
-PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
-                              size_t* stack_size, void** vsp)
+static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
+                             size_t* stack_size, void** vsp)
 {
     char** arg_str;
     if (*stack_size) {
@@ -477,8 +477,8 @@ PRIVATE int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
     return 0;
 }
 
-PRIVATE int setup_script_stack(struct inode* pin, char* stack,
-                               size_t* stack_size, char* pathname, void** vsp)
+static int setup_script_stack(struct inode* pin, char* stack,
+                              size_t* stack_size, char* pathname, void** vsp)
 {
     prepend_arg(1, stack, stack_size, pathname, vsp);
 
@@ -525,8 +525,8 @@ PRIVATE int setup_script_stack(struct inode* pin, char* stack,
     return 0;
 }
 
-PRIVATE int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
-                        void** vsp)
+static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
+                       void** vsp)
 {
     int arglen = strlen(arg) + 1;
     char** arg0 = (char**)stack;

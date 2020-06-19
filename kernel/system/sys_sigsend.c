@@ -28,7 +28,7 @@
 #include "errno.h"
 #include <asm/stackframe.h>
 
-PUBLIC int sys_sigsend(MESSAGE* m, struct proc* p)
+int sys_sigsend(MESSAGE* m, struct proc* p)
 {
     struct siginfo si;
     struct proc* p_dest = endpt_proc(m->ENDPOINT);

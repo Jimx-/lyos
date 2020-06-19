@@ -27,7 +27,7 @@
 #include "serial.h"
 #include "interrupt.h"
 
-PRIVATE void omap3_beagle_init_serial(void)
+static void omap3_beagle_init_serial(void)
 {
     /* map UART register */
     uart_base_addr = OMAP3_BEAGLE_DEBUG_UART_BASE;
@@ -35,14 +35,14 @@ PRIVATE void omap3_beagle_init_serial(void)
                   &uart_base_addr);
 }
 
-PRIVATE void omap3_beagle_init_interrupt(void)
+static void omap3_beagle_init_interrupt(void)
 {
     intr_base_addr = OMAP3_BEAGLE_INTR_BASE;
     kern_map_phys(OMAP3_BEAGLE_INTR_BASE, ARCH_PG_SIZE, KMF_WRITE,
                   &intr_base_addr);
 }
 
-PRIVATE void omap3_beagle_init_machine(void)
+static void omap3_beagle_init_machine(void)
 {
     omap3_beagle_init_serial();
     omap3_beagle_init_interrupt();

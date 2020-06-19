@@ -29,10 +29,10 @@
 
 #define BUFSIZE 1024
 
-PUBLIC char* memfs_buf;
-PUBLIC size_t memfs_bufsize;
+char* memfs_buf;
+size_t memfs_bufsize;
 
-PUBLIC int memfs_init_buf()
+int memfs_init_buf()
 {
     memfs_buf = (char*)malloc(BUFSIZE);
     if (memfs_buf == NULL) return ENOMEM;
@@ -41,7 +41,7 @@ PUBLIC int memfs_init_buf()
     return 0;
 }
 
-PUBLIC int memfs_free_buf()
+int memfs_free_buf()
 {
     free(memfs_buf);
     memfs_buf = NULL;
@@ -50,8 +50,8 @@ PUBLIC int memfs_free_buf()
     return 0;
 }
 
-PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
-                           struct fsdriver_data* data, u64* rwpos, int* count)
+int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
+                    struct fsdriver_data* data, u64* rwpos, int* count)
 {
     struct memfs_inode* pin = memfs_find_inode(num);
     if (!pin) return ENOENT;

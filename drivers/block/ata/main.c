@@ -40,30 +40,30 @@
 
 #include "ata.h"
 
-PRIVATE int init_hd();
+static int init_hd();
 static struct part_info* hd_part(dev_t device);
-PRIVATE int hd_open(dev_t minor, int access);
-PRIVATE int hd_close(dev_t minor);
-PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
-                        endpoint_t endpoint, void* buf, size_t count);
-PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
-PRIVATE void hd_cmd_out(struct hd_cmd* cmd);
-PRIVATE void print_hdinfo(struct ata_info* hdi);
-PRIVATE int waitfor(int mask, int val, int timeout);
-PRIVATE int waitfor_dma(int mask, int val, int timeout);
-PRIVATE void interrupt_wait();
-PRIVATE int interrupt_wait_check();
-PRIVATE int hd_identify(int drive);
-PRIVATE void print_identify_info(u16* hdinfo);
-PRIVATE void hd_register(struct ata_info* hdi);
-PRIVATE void start_dma(struct ata_info* drive, int do_write);
-PRIVATE void stop_dma(struct ata_info* drive);
-PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
-                      unsigned int count);
+static int hd_open(dev_t minor, int access);
+static int hd_close(dev_t minor);
+static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
+                       endpoint_t endpoint, void* buf, size_t count);
+static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
+static void hd_cmd_out(struct hd_cmd* cmd);
+static void print_hdinfo(struct ata_info* hdi);
+static int waitfor(int mask, int val, int timeout);
+static int waitfor_dma(int mask, int val, int timeout);
+static void interrupt_wait();
+static int interrupt_wait_check();
+static int hd_identify(int drive);
+static void print_identify_info(u16* hdinfo);
+static void hd_register(struct ata_info* hdi);
+static void start_dma(struct ata_info* drive, int do_write);
+static void stop_dma(struct ata_info* drive);
+static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
+                     unsigned int count);
 
-PRIVATE u8 hdbuf[CD_SECTOR_SIZE];
-PRIVATE struct ata_info hd_info[MAX_DRIVES], *current_drive;
-PRIVATE struct part_info* current_part;
+static u8 hdbuf[CD_SECTOR_SIZE];
+static struct ata_info hd_info[MAX_DRIVES], *current_drive;
+static struct part_info* current_part;
 
 #define select_drive(drive)              \
     do {                                 \
@@ -72,7 +72,7 @@ PRIVATE struct part_info* current_part;
 
 #define DRV_OF_DEV(dev) (dev / NR_SUB_PER_DRIVE)
 
-PRIVATE int dma_disabled = 0;
+static int dma_disabled = 0;
 
 /* Physical Region Descriptor Table Entry */
 struct prdte {
@@ -83,8 +83,8 @@ struct prdte {
 };
 #define NUM_PRDTES 1024
 #define PRDT_SIZE (sizeof(struct prdte) * NUM_PRDTES)
-PRIVATE struct prdte* prdt;
-PRIVATE phys_bytes prdt_phys;
+static struct prdte* prdt;
+static phys_bytes prdt_phys;
 #define PRDTE_FL_EOT 0x80 /* End of PRDT */
 
 // #define ATA_DEBUG
@@ -117,7 +117,7 @@ struct blockdriver hd_driver = {
  * Main loop of HD driver.
  *
  *****************************************************************************/
-PUBLIC int main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     serv_register_init_fresh_callback(init_hd);
     serv_init();
@@ -141,7 +141,7 @@ static struct part_info* hd_part(dev_t device)
     return part;
 }
 
-PRIVATE struct part_info* hd_prepare(dev_t device)
+static struct part_info* hd_prepare(dev_t device)
 {
     int drive = DRV_OF_DEV(device);
 
@@ -159,8 +159,8 @@ PRIVATE struct part_info* hd_prepare(dev_t device)
 /**
  * <Ring 1> Initialize and try to identify a hard drive.
  *****************************************************************************/
-PRIVATE int init_drive(int drive, int base_cmd, int base_ctl, int base_dma,
-                       int native, int slave, int hook, device_id_t parent_dev)
+static int init_drive(int drive, int base_cmd, int base_ctl, int base_dma,
+                      int native, int slave, int hook, device_id_t parent_dev)
 {
     hd_info[drive].state = 0;
 
@@ -185,7 +185,7 @@ PRIVATE int init_drive(int drive, int base_cmd, int base_ctl, int base_dma,
  * <Ring 1> Check hard drive, set IRQ handler, enable IRQ and initialize data
  *          structures.
  *****************************************************************************/
-PRIVATE int init_hd()
+static int init_hd()
 {
     int i;
 
@@ -336,7 +336,7 @@ PRIVATE int init_hd()
  *
  * @param device The device to be opened.
  *****************************************************************************/
-PRIVATE int hd_open(dev_t minor, int access)
+static int hd_open(dev_t minor, int access)
 {
     hd_prepare(minor);
 
@@ -353,7 +353,7 @@ PRIVATE int hd_open(dev_t minor, int access)
  *
  * @param device The device to be opened.
  *****************************************************************************/
-PRIVATE int hd_close(dev_t minor)
+static int hd_close(dev_t minor)
 {
     hd_prepare(minor);
 
@@ -362,7 +362,7 @@ PRIVATE int hd_close(dev_t minor)
     return 0;
 }
 
-PRIVATE void start_dma(struct ata_info* drive, int do_write)
+static void start_dma(struct ata_info* drive, int do_write)
 {
     u32 cmd =
         DMA_CMD_START |
@@ -374,14 +374,14 @@ PRIVATE void start_dma(struct ata_info* drive, int do_write)
     }
 }
 
-PRIVATE void stop_dma(struct ata_info* drive)
+static void stop_dma(struct ata_info* drive)
 {
     if (portio_outb(drive->base_dma + DMA_REG_CMD, 0) != 0) {
         panic("ata: stop_dma() failed");
     }
 }
 
-PRIVATE int error_dma(struct ata_info* drive)
+static int error_dma(struct ata_info* drive)
 {
     int retval;
     u32 v = 0;
@@ -408,8 +408,8 @@ PRIVATE int error_dma(struct ata_info* drive)
     return 0;
 }
 
-PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
-                      unsigned int count)
+static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
+                     unsigned int count)
 {
     size_t n;
     off_t offset;
@@ -495,8 +495,8 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
  *
  * @param p Message ptr.
  *****************************************************************************/
-PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
-                        endpoint_t endpoint, void* buf, size_t count)
+static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
+                       endpoint_t endpoint, void* buf, size_t count)
 {
     hd_prepare(minor);
 
@@ -607,7 +607,7 @@ dma_failed_retry:
  *
  * @param p  Ptr to the MESSAGE.
  *****************************************************************************/
-PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
+static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
 {
     hd_prepare(minor);
 
@@ -629,7 +629,7 @@ PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
 /*  * */
 /*  * @param hdi  Ptr to struct ata_info. */
 /*  *****************************************************************************/
-PRIVATE void print_hdinfo(struct ata_info* hdi)
+static void print_hdinfo(struct ata_info* hdi)
 {
     int i;
     printl("Hard disk information:\n");
@@ -660,7 +660,7 @@ PRIVATE void print_hdinfo(struct ata_info* hdi)
 /*                                register_hd */
 /*****************************************************************************
  */
-PRIVATE void hd_register(struct ata_info* hdi)
+static void hd_register(struct ata_info* hdi)
 {
     int i, drive = hdi - hd_info;
     struct device_info devinf;
@@ -706,7 +706,7 @@ PRIVATE void hd_register(struct ata_info* hdi)
  *
  * @param drive  Drive Nr.
  *****************************************************************************/
-PRIVATE int hd_identify(int drive)
+static int hd_identify(int drive)
 {
     struct hd_cmd cmd;
     memset(&cmd, 0, sizeof(cmd));
@@ -760,7 +760,7 @@ PRIVATE int hd_identify(int drive)
  *
  * @param hdinfo  The buffer read from the disk i/o port.
  *****************************************************************************/
-PRIVATE void print_identify_info(u16* hdinfo)
+static void print_identify_info(u16* hdinfo)
 {
     int i, j, k;
     char s[64];
@@ -806,7 +806,7 @@ PRIVATE void print_identify_info(u16* hdinfo)
  *
  * @param cmd  The command struct ptr.
  *****************************************************************************/
-PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
+static void hd_cmd_out(struct hd_cmd* cmd)
 {
     /**
      * For all commands, the host must first check if BSY=1,
@@ -837,7 +837,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
  * <Ring 1> Wait until a disk interrupt occurs.
  *
  *****************************************************************************/
-PRIVATE void interrupt_wait()
+static void interrupt_wait()
 {
     MESSAGE msg;
     send_recv(RECEIVE, INTERRUPT, &msg);
@@ -867,7 +867,7 @@ PRIVATE void interrupt_wait()
  *error/success.
  *
  *****************************************************************************/
-PRIVATE int interrupt_wait_check()
+static int interrupt_wait_check()
 {
     interrupt_wait();
 
@@ -898,7 +898,7 @@ PRIVATE int interrupt_wait_check()
  *
  * @return One if sucess, zero if timeout.
  *****************************************************************************/
-PRIVATE int waitfor(int mask, int val, int timeout)
+static int waitfor(int mask, int val, int timeout)
 {
     while (TRUE) {
         u8 status;
@@ -912,7 +912,7 @@ PRIVATE int waitfor(int mask, int val, int timeout)
     return 0;
 }
 
-PRIVATE int waitfor_dma(int mask, int val, int timeout)
+static int waitfor_dma(int mask, int val, int timeout)
 {
     while (TRUE) {
         u8 status;

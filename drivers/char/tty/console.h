@@ -61,15 +61,16 @@ typedef struct s_console {
  *      MAKE_COLOR(BLACK, RED) | BRIGHT
  *      MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
  */
-#define BLACK 0x0                       /* 0000 */
-#define WHITE 0x7                       /* 0111 */
-#define RED 0x1                         /* 0001 */
-#define GREEN 0x2                       /* 0010 */
-#define BLUE 0x4                        /* 0100 */
-#define FLASH 0x80                      /* 1000 0000 */
-#define BRIGHT 0x08                     /* 0000 1000 */
-#define MAKE_COLOR(x, y) ((x << 4) | y) /* MAKE_COLOR(Background,Foreground) \
-                                         */
+#define BLACK 0x0   /* 0000 */
+#define WHITE 0x7   /* 0111 */
+#define RED 0x1     /* 0001 */
+#define GREEN 0x2   /* 0010 */
+#define BLUE 0x4    /* 0100 */
+#define FLASH 0x80  /* 1000 0000 */
+#define BRIGHT 0x08 /* 0000 1000 */
+#define MAKE_COLOR(x, y)                                \
+    ((x << 4) | y) /* MAKE_COLOR(Background,Foreground) \
+                    */
 #define BG_COLOR(c) ((c >> 4) & 0xf)
 #define FG_COLOR(c) (c & 0xf)
 
@@ -91,7 +92,7 @@ typedef struct s_console {
 
 #define CURSOR_BLINK_RATE 2 /* cursor blink rate (hz) */
 
-PUBLIC void vgacon_init_con(CONSOLE* con);
-PUBLIC void fbcon_init_con(CONSOLE* con);
+void vgacon_init_con(CONSOLE* con);
+void fbcon_init_con(CONSOLE* con);
 
 #endif /* _CONSOLE_H_ */

@@ -27,7 +27,7 @@
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC int printx(char* s)
+int printx(char* s)
 {
     MESSAGE m;
     memset(&m, 0, sizeof(m));
@@ -38,7 +38,7 @@ PUBLIC int printx(char* s)
     return syscall_entry(NR_PRINTX, &m);
 }
 
-PUBLIC int kernlog_register()
+int kernlog_register()
 {
     MESSAGE m;
     memset(&m, 0, sizeof(m));
@@ -57,7 +57,7 @@ PUBLIC int kernlog_register()
  *
  * @return  The number of chars printed.
  *****************************************************************************/
-PUBLIC int printl(const char* fmt, ...)
+int printl(const char* fmt, ...)
 {
     int i;
     char buf[STR_DEFAULT_LEN];

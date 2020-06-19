@@ -44,22 +44,22 @@ extern u32 __ap_gdt_table, __ap_idt_table;
 extern void* __trampoline_end;
 phys_bytes trampoline_base;
 
-PRIVATE u8 apicid2cpuid[255];
-PUBLIC u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
+static u8 apicid2cpuid[255];
+u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
-PRIVATE u32 ap_ready;
+static u32 ap_ready;
 
-PRIVATE volatile int smp_commenced = 0;
+static volatile int smp_commenced = 0;
 
-PRIVATE int discover_cpus();
-PRIVATE void smp_start_aps();
+static int discover_cpus();
+static void smp_start_aps();
 
-PUBLIC void trampoline();
+void trampoline();
 
 #define AP_LIN_ADDR(addr) \
     (phys_bytes)((u32)addr - (u32)&trampoline + trampoline_base)
 
-PRIVATE void copy_trampoline()
+static void copy_trampoline()
 {
     phys_bytes tramp_size, tramp_start = (phys_bytes)&trampoline;
 
@@ -86,7 +86,7 @@ PRIVATE void copy_trampoline()
     memcpy((void*)trampoline_base, trampoline, tramp_size);
 }
 
-PUBLIC void smp_init()
+void smp_init()
 {
     ncpus = 0;
 
@@ -124,7 +124,7 @@ PUBLIC void smp_init()
                    smp_start_aps);
 }
 
-PRIVATE int discover_cpus()
+static int discover_cpus()
 {
     struct acpi_madt_lapic* cpu;
 
@@ -139,7 +139,7 @@ PRIVATE int discover_cpus()
     return ncpus;
 }
 
-PRIVATE void smp_start_aps()
+static void smp_start_aps()
 {
     u32 reset_vector;
 
@@ -195,7 +195,7 @@ PRIVATE void smp_start_aps()
     finish_bsp_booting();
 }
 
-PRIVATE void ap_finish_booting()
+static void ap_finish_booting()
 {
     ap_ready = cpuid;
 
@@ -229,7 +229,7 @@ PRIVATE void ap_finish_booting()
     switch_to_user();
 }
 
-PUBLIC void smp_boot_ap()
+void smp_boot_ap()
 {
     init_tss(__ap_id, (u32)get_k_stack_top(__ap_id));
     load_prot_selectors(__ap_id);
@@ -238,4 +238,4 @@ PUBLIC void smp_boot_ap()
                    ap_finish_booting);
 }
 
-PUBLIC void smp_commence() { smp_commenced = 1; }
+void smp_commence() { smp_commenced = 1; }

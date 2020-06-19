@@ -23,7 +23,7 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC int pm_getinfo(int request, void* dest, int size)
+int pm_getinfo(int request, void* dest, int size)
 {
     MESSAGE m;
 

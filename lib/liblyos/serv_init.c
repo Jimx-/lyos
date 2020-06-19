@@ -24,18 +24,18 @@
 #include "lyos/service.h"
 #include <lyos/sysutils.h>
 
-PRIVATE int init_fresh_callback_default() { return 0; }
+static int init_fresh_callback_default() { return 0; }
 
-PRIVATE serv_init_fresh_callback_t init_fresh_callback =
+static serv_init_fresh_callback_t init_fresh_callback =
     init_fresh_callback_default;
 
-PUBLIC void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb)
+void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb)
 {
     if (cb == NULL) return;
     init_fresh_callback = cb;
 }
 
-PUBLIC int serv_init()
+int serv_init()
 {
     MESSAGE msg;
 

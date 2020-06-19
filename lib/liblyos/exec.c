@@ -26,8 +26,8 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_exec(endpoint_t ep, void* sp, char* name, void* ip,
-                       struct ps_strings* ps)
+int kernel_exec(endpoint_t ep, void* sp, char* name, void* ip,
+                struct ps_strings* ps)
 {
     MESSAGE m;
 

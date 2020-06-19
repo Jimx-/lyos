@@ -17,19 +17,19 @@
 #define _HWINT_H_
 
 /* i8259 PIC */
-PUBLIC void i8259_mask(int irq);
-PUBLIC void i8259_unmask(int irq);
-PUBLIC void i8259_eoi();
-PUBLIC void i8259_eoi_master();
-PUBLIC void i8259_eoi_slave();
+void i8259_mask(int irq);
+void i8259_unmask(int irq);
+void i8259_eoi();
+void i8259_eoi_master();
+void i8259_eoi_slave();
 
 #if CONFIG_X86_IO_APIC
 
-PUBLIC void ioapic_mask(int irq);
-PUBLIC void ioapic_unmask(int irq);
-PUBLIC void ioapic_eoi(int irq);
-PUBLIC void ioapic_set_irq(int irq);
-PUBLIC void ioapic_unset_irq(int irq);
+void ioapic_mask(int irq);
+void ioapic_unmask(int irq);
+void ioapic_eoi(int irq);
+void ioapic_set_irq(int irq);
+void ioapic_unset_irq(int irq);
 
 extern u8 ioapic_enabled;
 
@@ -55,6 +55,6 @@ extern u8 ioapic_enabled;
 
 #endif
 
-PUBLIC void disable_8259A();
+void disable_8259A();
 
 #endif

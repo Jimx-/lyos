@@ -27,12 +27,12 @@
 #include <lyos/smp.h>
 #include <asm/proto.h>
 
-PUBLIC int booted_aps = 0;
+int booted_aps = 0;
 
-PRIVATE struct cpu cpus[CONFIG_SMP_MAX_CPUS];
-PRIVATE DEF_SPINLOCK(cpus_lock);
+static struct cpu cpus[CONFIG_SMP_MAX_CPUS];
+static DEF_SPINLOCK(cpus_lock);
 
-PUBLIC void wait_for_aps_to_finish_booting()
+void wait_for_aps_to_finish_booting()
 {
     int n = 0;
     int i;
@@ -47,25 +47,25 @@ PUBLIC void wait_for_aps_to_finish_booting()
         arch_pause();
 }
 
-PUBLIC void ap_finished_booting()
+void ap_finished_booting()
 {
     spinlock_lock(&cpus_lock);
     booted_aps++;
     spinlock_unlock(&cpus_lock);
 }
 
-PUBLIC void set_cpu_flag(int cpu, u32 flag)
+void set_cpu_flag(int cpu, u32 flag)
 {
     spinlock_lock(&cpus_lock);
     cpus[cpu].flags |= flag;
     spinlock_unlock(&cpus_lock);
 }
 
-PUBLIC void clear_cpu_flag(int cpu, u32 flag)
+void clear_cpu_flag(int cpu, u32 flag)
 {
     spinlock_lock(&cpus_lock);
     cpus[cpu].flags &= ~flag;
     spinlock_unlock(&cpus_lock);
 }
 
-PUBLIC int test_cpu_flag(int cpu, u32 flag) { return cpus[cpu].flags & flag; }
+int test_cpu_flag(int cpu, u32 flag) { return cpus[cpu].flags & flag; }

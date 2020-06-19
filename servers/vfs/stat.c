@@ -41,8 +41,7 @@
  * @param  buf   Buffer.
  * @return       Zero on success.
  */
-PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
-                        char* buf)
+int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char* buf)
 {
     MESSAGE m;
 
@@ -62,7 +61,7 @@ PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_stat(void)
+int do_stat(void)
 {
     int namelen = self->msg_in.NAME_LEN + 1;
     char pathname[MAX_PATH];
@@ -96,7 +95,7 @@ PUBLIC int do_stat(void)
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_fstat(void)
+int do_fstat(void)
 {
     int fd = self->msg_in.FD;
     char* buf = self->msg_in.BUF;

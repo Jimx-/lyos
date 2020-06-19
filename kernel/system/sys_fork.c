@@ -29,7 +29,7 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_fork(MESSAGE* m, struct proc* p_proc)
+int sys_fork(MESSAGE* m, struct proc* p_proc)
 {
     endpoint_t parent_ep = m->ENDPOINT;
     void* newsp = m->BUF;

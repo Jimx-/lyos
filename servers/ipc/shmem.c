@@ -42,10 +42,10 @@ struct shm {
 
 #define SHM_INUSE 0x0800
 
-PRIVATE struct shm shm_list[SHMMNI];
-PRIVATE int shm_count = 0;
+static struct shm shm_list[SHMMNI];
+static int shm_count = 0;
 
-PRIVATE struct shm* shm_find_key(key_t key)
+static struct shm* shm_find_key(key_t key)
 {
     unsigned int i;
 
@@ -59,7 +59,7 @@ PRIVATE struct shm* shm_find_key(key_t key)
     return NULL;
 }
 
-PRIVATE struct shm* shm_find_id(int id)
+static struct shm* shm_find_id(int id)
 {
     struct shm* shm;
     unsigned int i;
@@ -74,7 +74,7 @@ PRIVATE struct shm* shm_find_id(int id)
     return shm;
 }
 
-PUBLIC int do_shmget(MESSAGE* msg)
+int do_shmget(MESSAGE* msg)
 {
     key_t key;
     size_t old_size, size;
@@ -148,7 +148,7 @@ PUBLIC int do_shmget(MESSAGE* msg)
     return 0;
 }
 
-PUBLIC int do_shmat(MESSAGE* msg)
+int do_shmat(MESSAGE* msg)
 {
     int id, flags;
     void* addr;

@@ -35,8 +35,8 @@
 #include "node.h"
 #include "proto.h"
 
-PRIVATE int sysfs_init();
-PRIVATE int sysfs_message_hook(MESSAGE* m);
+static int sysfs_init();
+static int sysfs_message_hook(MESSAGE* m);
 
 struct memfs_hooks fs_hooks = {
     .init_hook = NULL,
@@ -46,7 +46,7 @@ struct memfs_hooks fs_hooks = {
     .getdents_hook = NULL,
 };
 
-PUBLIC int main()
+int main()
 {
     sysfs_init();
 
@@ -58,7 +58,7 @@ PUBLIC int main()
     return memfs_start(NULL, &fs_hooks, &root_stat);
 }
 
-PRIVATE int sysfs_init()
+static int sysfs_init()
 {
     printl("sysfs: SysFS is running\n");
 
@@ -67,7 +67,7 @@ PRIVATE int sysfs_init()
     return 0;
 }
 
-PRIVATE int sysfs_message_hook(MESSAGE* m)
+static int sysfs_message_hook(MESSAGE* m)
 {
     int msgtype = m->type;
     int retval = 0;

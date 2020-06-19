@@ -31,7 +31,7 @@
 /*****************************************************************************
  *                                get_meminfo
  *****************************************************************************/
-PUBLIC int get_meminfo(struct mem_info* mem_info)
+int get_meminfo(struct mem_info* mem_info)
 {
     MESSAGE msg;
     struct mem_info buf;

@@ -67,36 +67,34 @@ struct fsdriver {
     int (*fs_other)(MESSAGE* m);
 } __attribute__((packed));
 
-PUBLIC int fsdriver_start(struct fsdriver* fsd);
+int fsdriver_start(struct fsdriver* fsd);
 
-PUBLIC int fsdriver_copyin(struct fsdriver_data* data, size_t offset, void* buf,
-                           size_t len);
-PUBLIC int fsdriver_copyout(struct fsdriver_data* data, size_t offset,
-                            void* buf, size_t len);
+int fsdriver_copyin(struct fsdriver_data* data, size_t offset, void* buf,
+                    size_t len);
+int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
+                     size_t len);
 
-PUBLIC int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
-                                     struct fsdriver_data* data,
-                                     size_t data_size, char* buf,
-                                     size_t buf_size);
-PUBLIC int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list,
-                                    ino_t num, char* name, size_t name_len,
-                                    int type);
-PUBLIC int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list);
+int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
+                              struct fsdriver_data* data, size_t data_size,
+                              char* buf, size_t buf_size);
+int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
+                             char* name, size_t name_len, int type);
+int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list);
 
-PUBLIC int fsdriver_register(struct fsdriver* fsd);
-PUBLIC int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_create(struct fsdriver* fsd, MESSAGE* m);
-PUBLIC int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_register(struct fsdriver* fsd);
+int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_create(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m);
 
-PUBLIC int fsdriver_driver(dev_t dev);
+int fsdriver_driver(dev_t dev);
 
 #endif

@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <lyos/portio.h>
 
-PUBLIC int sys_sportio(MESSAGE* m, struct proc* p_proc)
+int sys_sportio(MESSAGE* m, struct proc* p_proc)
 {
     int dir = m->PIO_REQUEST & PIO_DIR_MASK;
     size_t buf_len = m->PIO_BUFLEN;

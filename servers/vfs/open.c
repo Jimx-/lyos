@@ -41,20 +41,20 @@
 #define DEB(x)
 #endif
 
-PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
+static char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
 
-PRIVATE struct inode* new_node(struct fproc* fp, struct lookup* lookup,
-                               int flags, mode_t mode);
-PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
-                           gid_t gid, char* pathname, mode_t mode,
-                           struct lookup_result* res);
+static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
+                              int flags, mode_t mode);
+static int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
+                          gid_t gid, char* pathname, mode_t mode,
+                          struct lookup_result* res);
 
 /**
  * <Ring 1> Perform the open syscall.
  * @param  p Ptr to the message.
  * @return   fd number if success, otherwise a negative error code.
  */
-PUBLIC int do_open(void)
+int do_open(void)
 {
     /* get parameters from the message */
     int flags = self->msg_in.FLAGS;       /* open flags */
@@ -73,7 +73,7 @@ PUBLIC int do_open(void)
     return common_open(pathname, flags, mode);
 }
 
-PUBLIC int common_open(char* pathname, int flags, mode_t mode)
+int common_open(char* pathname, int flags, mode_t mode)
 {
     int fd = -1; /* return fd */
     struct lookup lookup;
@@ -170,7 +170,7 @@ PUBLIC int common_open(char* pathname, int flags, mode_t mode)
     return fd;
 }
 
-PUBLIC int close_fd(struct fproc* fp, int fd)
+int close_fd(struct fproc* fp, int fd)
 {
     struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
     if (!filp) return EBADF;
@@ -206,7 +206,7 @@ PUBLIC int close_fd(struct fproc* fp, int fd)
  * @param  p Ptr to the message.
  * @return   Zero if success.
  */
-PUBLIC int do_close()
+int do_close()
 {
     int fd = self->msg_in.FD;
 
@@ -220,8 +220,8 @@ PUBLIC int do_close()
  * @param  mode     Mode.
  * @return          Ptr to the inode.
  */
-PRIVATE struct inode* new_node(struct fproc* fp, struct lookup* lookup,
-                               int flags, mode_t mode)
+static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
+                              int flags, mode_t mode)
 {
     struct inode* pin_dir = NULL;
     struct vfs_mount *vmnt_dir, *vmnt;
@@ -291,9 +291,9 @@ PRIVATE struct inode* new_node(struct fproc* fp, struct lookup* lookup,
  * @param  res      Result.
  * @return          Zero on success.
  */
-PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
-                           gid_t gid, char* pathname, mode_t mode,
-                           struct lookup_result* res)
+static int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
+                          gid_t gid, char* pathname, mode_t mode,
+                          struct lookup_result* res)
 {
     MESSAGE m;
 
@@ -322,7 +322,7 @@ PRIVATE int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
  * @param  p Ptr to the message.
  * @return   Zero on success.
  */
-PUBLIC int do_lseek(void)
+int do_lseek(void)
 {
     int fd = self->msg_in.FD;
     int offset = self->msg_in.OFFSET;
@@ -361,8 +361,8 @@ PUBLIC int do_lseek(void)
     return 0;
 }
 
-PRIVATE int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
-                          gid_t gid, char* pathname, mode_t mode)
+static int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
+                         gid_t gid, char* pathname, mode_t mode)
 {
     MESSAGE m;
 
@@ -381,7 +381,7 @@ PRIVATE int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
     return m.CRRET;
 }
 
-PUBLIC int do_mkdir(void)
+int do_mkdir(void)
 {
     int name_len = self->msg_in.NAME_LEN; /* length of filename */
     mode_t mode = self->msg_in.MODE;      /* access mode */

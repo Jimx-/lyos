@@ -48,7 +48,7 @@ struct device_attr_cb_data {
 #define DEVICE_ATTR_HASH_MASK (((unsigned long)1 << DEVICE_ATTR_HASH_LOG2) - 1)
 
 /* device attribute hash table */
-PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
+static struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 
 /* device attribute show buffer size */
 #define BUFSIZE 4096
@@ -56,9 +56,9 @@ PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 #define ID2INDEX(id) (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
-PRIVATE struct device devices[NR_DEVICES];
+static struct device devices[NR_DEVICES];
 
-PUBLIC void init_device()
+void init_device()
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
@@ -70,7 +70,7 @@ PUBLIC void init_device()
     }
 }
 
-PRIVATE struct device* alloc_device()
+static struct device* alloc_device()
 {
     int i;
     struct device* dev = NULL;
@@ -90,7 +90,7 @@ PRIVATE struct device* alloc_device()
     return dev;
 }
 
-PRIVATE void device_domain_label(struct device* dev, char* buf)
+static void device_domain_label(struct device* dev, char* buf)
 {
     char name[MAX_PATH];
 
@@ -110,7 +110,7 @@ PRIVATE void device_domain_label(struct device* dev, char* buf)
     snprintf(buf, MAX_PATH, "devices.%s", name);
 }
 
-PRIVATE int publish_device(struct device* dev)
+static int publish_device(struct device* dev)
 {
     char label[MAX_PATH];
     device_domain_label(dev, label);
@@ -139,7 +139,7 @@ PRIVATE int publish_device(struct device* dev)
     return 0;
 }
 
-PUBLIC device_id_t do_device_register(MESSAGE* m)
+device_id_t do_device_register(MESSAGE* m)
 {
     struct device_info devinf;
 
@@ -162,14 +162,14 @@ PUBLIC device_id_t do_device_register(MESSAGE* m)
     return dev->id;
 }
 
-PUBLIC struct device* get_device(device_id_t id)
+struct device* get_device(device_id_t id)
 {
     if (id == NO_DEVICE_ID) return NULL;
 
     return &devices[ID2INDEX(id)];
 }
 
-PRIVATE struct device_attr_cb_data* alloc_device_attr()
+static struct device_attr_cb_data* alloc_device_attr()
 {
     static dev_attr_id_t next_id = 1;
     struct device_attr_cb_data* attr =
@@ -183,7 +183,7 @@ PRIVATE struct device_attr_cb_data* alloc_device_attr()
     return attr;
 }
 
-PRIVATE void device_attr_addhash(struct device_attr_cb_data* attr)
+static void device_attr_addhash(struct device_attr_cb_data* attr)
 {
     /* Add a device attribute to hash table */
     unsigned int hash = attr->id & DEVICE_ATTR_HASH_MASK;
@@ -191,14 +191,14 @@ PRIVATE void device_attr_addhash(struct device_attr_cb_data* attr)
 }
 
 /*
-PRIVATE void device_attr_unhash(struct device_attr_cb_data* attr)
+static void device_attr_unhash(struct device_attr_cb_data* attr)
 {
     \/\* Remove a dynamic attribute from hash table \*\/
     list_del(&attr->list);
 }
 */
 
-PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+static ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
     struct device_attr_cb_data* attr =
         (struct device_attr_cb_data*)sf_attr->cb_data;
@@ -221,8 +221,8 @@ PRIVATE ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
     return count;
 }
 
-PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
-                                  size_t count)
+static ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
+                                 size_t count)
 {
     struct device_attr_cb_data* attr =
         (struct device_attr_cb_data*)(sf_attr->cb_data);
@@ -240,7 +240,7 @@ PRIVATE ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
     return msg.CNT;
 }
 
-PUBLIC int do_device_attr_add(MESSAGE* m)
+int do_device_attr_add(MESSAGE* m)
 {
     struct device_attr_info info;
     char device_root[MAX_PATH];

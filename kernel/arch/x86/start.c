@@ -41,15 +41,15 @@
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern pde_t pgd0;
-PUBLIC void* k_stacks;
+void* k_stacks;
 
-PRIVATE int kinfo_set_param(char* buf, char* name, char* value);
-PRIVATE char* env_get(const char* name);
+static int kinfo_set_param(char* buf, char* name, char* value);
+static char* env_get(const char* name);
 
 /*======================================================================*
                             cstart
  *======================================================================*/
-PUBLIC void cstart(struct multiboot_info* mboot, u32 mboot_magic)
+void cstart(struct multiboot_info* mboot, u32 mboot_magic)
 {
     kinfo.memory_size = 0;
     memset(&kinfo, 0, sizeof(kinfo_t));
@@ -205,7 +205,7 @@ PUBLIC void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     machine.cpu_count = 1;
 }
 
-PRIVATE char* get_value(const char* param, const char* key)
+static char* get_value(const char* param, const char* key)
 {
     char* envp = (char*)param;
     const char* name = key;
@@ -221,12 +221,12 @@ PRIVATE char* get_value(const char* param, const char* key)
     return NULL;
 }
 
-PRIVATE char* env_get(const char* name)
+static char* env_get(const char* name)
 {
     return get_value(kinfo.cmdline, name);
 }
 
-PUBLIC void init_arch()
+void init_arch()
 {
     acpi_init();
 
@@ -235,7 +235,7 @@ PUBLIC void init_arch()
 #endif
 }
 
-PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
+static int kinfo_set_param(char* buf, char* name, char* value)
 {
     char* p = buf;
     char* bufend = buf + KINFO_CMDLINE_LEN;

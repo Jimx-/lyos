@@ -37,10 +37,10 @@
 #define V_MEM_BASE 0xB8000 /* base of color video memory */
 #define V_MEM_SIZE 0x8000  /* 32K: B8000H -> BFFFFH */
 
-PRIVATE void vga_outchar(CONSOLE* con, char ch);
-PRIVATE void vga_flush(CONSOLE* con);
+static void vga_outchar(CONSOLE* con, char ch);
+static void vga_flush(CONSOLE* con);
 
-PUBLIC void vgacon_init_con(CONSOLE* con)
+void vgacon_init_con(CONSOLE* con)
 {
     int v_mem_size = V_MEM_SIZE >> 1; /* size of Video Memory */
     int size_per_con = v_mem_size / NR_CONSOLES;
@@ -55,7 +55,7 @@ PUBLIC void vgacon_init_con(CONSOLE* con)
     con->flush = vga_flush;
 }
 
-PRIVATE void vga_outchar(CONSOLE* con, char ch)
+static void vga_outchar(CONSOLE* con, char ch)
 {
     u8* pch = (u8*)(console_mem + con->cursor * 2);
 
@@ -80,7 +80,7 @@ PRIVATE void vga_outchar(CONSOLE* con, char ch)
  * @param position  Position of the cursor based on the beginning of the video
  *                  memory. Note that it counts in WORDs, not in BYTEs.
  *****************************************************************************/
-PRIVATE void set_cursor(unsigned int position)
+static void set_cursor(unsigned int position)
 {
     pb_pair_t pv_pairs[4];
     pv_set(pv_pairs[0], CRTC_ADDR_REG, CURSOR_H);
@@ -98,7 +98,7 @@ PRIVATE void set_cursor(unsigned int position)
  *
  * @param addr  Offset in the video memory.
  *****************************************************************************/
-PRIVATE void set_video_start_addr(u32 addr)
+static void set_video_start_addr(u32 addr)
 {
     pb_pair_t pv_pairs[4];
     pv_set(pv_pairs[0], CRTC_ADDR_REG, START_ADDR_H);
@@ -108,7 +108,7 @@ PRIVATE void set_video_start_addr(u32 addr)
     portio_voutb(pv_pairs, 4);
 }
 
-PRIVATE void vga_flush(CONSOLE* con)
+static void vga_flush(CONSOLE* con)
 {
     set_cursor(con->cursor);
     set_video_start_addr(con->visible_origin);

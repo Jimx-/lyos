@@ -38,9 +38,9 @@
 #define QUEUE_HASH_SIZE ((unsigned long)1 << QUEUE_HASH_LOG2)
 #define QUEUE_HASH_MASK (((unsigned long)1 << QUEUE_HASH_LOG2) - 1)
 
-PRIVATE struct list_head futex_queues[QUEUE_HASH_SIZE];
+static struct list_head futex_queues[QUEUE_HASH_SIZE];
 
-PUBLIC void futex_init()
+void futex_init()
 {
     int i;
     for (i = 0; i < QUEUE_HASH_MASK; i++) {
@@ -48,21 +48,21 @@ PUBLIC void futex_init()
     }
 }
 
-PRIVATE struct list_head* futex_hash(union futex_key* key)
+static struct list_head* futex_hash(union futex_key* key)
 {
     u32 hash = key->both.word + key->both.offset;
 
     return &futex_queues[hash & QUEUE_HASH_MASK];
 }
 
-PRIVATE inline int futex_match_key(union futex_key* k1, union futex_key* k2)
+static inline int futex_match_key(union futex_key* k1, union futex_key* k2)
 {
     return (k1 && k2 && k1->both.word == k2->both.word &&
             k1->both.ptr == k2->both.ptr && k1->both.offset == k2->both.offset);
 }
 
-PRIVATE int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared,
-                          union futex_key* key)
+static int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared,
+                         union futex_key* key)
 {
     /* set the parameters properly in key */
     unsigned long addr = (unsigned long)uaddr;
@@ -80,8 +80,8 @@ PRIVATE int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared,
     return EINVAL;
 }
 
-PRIVATE inline void futex_queue(struct mmproc* mmp, struct futex_entry* entry,
-                                struct list_head* list)
+static inline void futex_queue(struct mmproc* mmp, struct futex_entry* entry,
+                               struct list_head* list)
 {
     /* put mmp in the waiting queue */
     INIT_LIST_HEAD(&entry->list);
@@ -89,9 +89,9 @@ PRIVATE inline void futex_queue(struct mmproc* mmp, struct futex_entry* entry,
     entry->mmp = mmp;
 }
 
-PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
-                             u32 val, struct futex_entry* entry,
-                             struct list_head** list)
+static int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
+                            u32 val, struct futex_entry* entry,
+                            struct list_head** list)
 {
     int ret;
 
@@ -126,8 +126,8 @@ PRIVATE int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     return ret;
 }
 
-PRIVATE int futex_wait(struct mmproc* mmp, u32* uaddr, unsigned int flags,
-                       u32 val, u64 abs_time, u32 bitset)
+static int futex_wait(struct mmproc* mmp, u32* uaddr, unsigned int flags,
+                      u32 val, u64 abs_time, u32 bitset)
 {
     int ret;
     struct futex_entry* q = &mmp->futex_entry;
@@ -144,7 +144,7 @@ PRIVATE int futex_wait(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     return SUSPEND;
 }
 
-PRIVATE void wakeup_proc(struct mmproc* mmp)
+static void wakeup_proc(struct mmproc* mmp)
 {
     MESSAGE msg;
 
@@ -153,8 +153,8 @@ PRIVATE void wakeup_proc(struct mmproc* mmp)
     send_recv(SEND_NONBLOCK, mmp->endpoint, &msg);
 }
 
-PRIVATE int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags,
-                       int nr_wake, u32 bitset)
+static int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags,
+                      int nr_wake, u32 bitset)
 {
     union futex_key key;
     int ret;
@@ -189,7 +189,7 @@ PRIVATE int futex_wake(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     return ret;
 }
 
-PUBLIC int do_futex()
+int do_futex()
 {
     int op = mm_msg.FUTEX_OP;
     u32* uaddr = (u32*)mm_msg.FUTEX_UADDR;

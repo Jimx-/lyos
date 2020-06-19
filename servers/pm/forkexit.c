@@ -33,7 +33,7 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE void check_parent(struct pmproc* pmp, int try_cleanup);
+static void check_parent(struct pmproc* pmp, int try_cleanup);
 
 /**
  * @brief Perform the fork() syscall.
@@ -41,7 +41,7 @@ PRIVATE void check_parent(struct pmproc* pmp, int try_cleanup);
  * @param p Ptr to message.
  * @return Zero on success, otherwise the error code.
  */
-PUBLIC int do_fork(MESSAGE* p)
+int do_fork(MESSAGE* p)
 {
     int child_slot = 0, n = 0;
     void* newsp = p->BUF;
@@ -155,7 +155,7 @@ PUBLIC int do_fork(MESSAGE* p)
  * @param status  Exiting status for parent.
  *
  *****************************************************************************/
-PUBLIC int do_exit(MESSAGE* p)
+int do_exit(MESSAGE* p)
 {
     endpoint_t src = p->source;
     int status = p->STATUS;
@@ -170,7 +170,7 @@ PUBLIC int do_exit(MESSAGE* p)
     return SUSPEND;
 }
 
-PUBLIC void exit_proc(struct pmproc* pmp, int status)
+void exit_proc(struct pmproc* pmp, int status)
 {
     int i;
     endpoint_t ep = pmp->endpoint;
@@ -212,7 +212,7 @@ PUBLIC void exit_proc(struct pmproc* pmp, int status)
  *
  * @param proc  Process to clean up.
  *****************************************************************************/
-PRIVATE void cleanup(struct pmproc* pmp)
+static void cleanup(struct pmproc* pmp)
 {
     /* release the proc */
     procs_in_use--;
@@ -220,7 +220,7 @@ PRIVATE void cleanup(struct pmproc* pmp)
     pmp->flags = 0;
 }
 
-PRIVATE void tell_parent(struct pmproc* pmp)
+static void tell_parent(struct pmproc* pmp)
 {
     int retval;
     endpoint_t parent_ep = pmp->parent;
@@ -236,13 +236,13 @@ PRIVATE void tell_parent(struct pmproc* pmp)
     send_recv(SEND_NONBLOCK, pmp->parent, &msg2parent);
 }
 
-PUBLIC int waiting_for(struct pmproc* parent, struct pmproc* child)
+int waiting_for(struct pmproc* parent, struct pmproc* child)
 {
     return (parent->flags & PMPF_WAITING) &&
            (parent->wait_pid == -1 || parent->wait_pid == child->pid);
 }
 
-PRIVATE void check_parent(struct pmproc* pmp, int try_cleanup)
+static void check_parent(struct pmproc* pmp, int try_cleanup)
 {
     int retval;
     endpoint_t parent_ep = pmp->parent;
@@ -277,7 +277,7 @@ PRIVATE void check_parent(struct pmproc* pmp, int try_cleanup)
  *     <4> return (MM will go on with the next message loop)
  *
  *****************************************************************************/
-PUBLIC int do_wait(MESSAGE* p)
+int do_wait(MESSAGE* p)
 {
     endpoint_t parent_ep = p->source;
     int parent_slot, retval;

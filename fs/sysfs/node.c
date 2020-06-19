@@ -36,9 +36,9 @@
 #include "proto.h"
 #include "global.h"
 
-PRIVATE int node_num;
+static int node_num;
 
-PUBLIC void init_node()
+void init_node()
 {
     node_num = 0;
 
@@ -49,7 +49,7 @@ PUBLIC void init_node()
     INIT_LIST_HEAD(&(root_node.children));
 }
 
-PUBLIC sysfs_node_t* new_node(char* name, int flags)
+sysfs_node_t* new_node(char* name, int flags)
 {
     sysfs_node_t* node = (sysfs_node_t*)malloc(sizeof(sysfs_node_t));
     if (node == NULL) return NULL;
@@ -71,7 +71,7 @@ PUBLIC sysfs_node_t* new_node(char* name, int flags)
     return node;
 }
 
-PUBLIC int free_node(sysfs_node_t* node)
+int free_node(sysfs_node_t* node)
 {
     switch (NODE_TYPE(node)) {
     case SF_TYPE_DYNAMIC:
@@ -86,7 +86,7 @@ PUBLIC int free_node(sysfs_node_t* node)
     return 0;
 }
 
-PUBLIC sysfs_node_t* find_node(sysfs_node_t* parent, char* name)
+sysfs_node_t* find_node(sysfs_node_t* parent, char* name)
 {
     sysfs_node_t* node;
 
@@ -102,7 +102,7 @@ PUBLIC sysfs_node_t* find_node(sysfs_node_t* parent, char* name)
     return NULL;
 }
 
-PUBLIC sysfs_node_t* lookup_node_by_name(char* name)
+sysfs_node_t* lookup_node_by_name(char* name)
 {
     sysfs_node_t* dir_pn = &root_node;
 
@@ -137,7 +137,7 @@ PUBLIC sysfs_node_t* lookup_node_by_name(char* name)
     return dir_pn;
 }
 
-PUBLIC sysfs_node_t* create_node(char* name, int flags)
+sysfs_node_t* create_node(char* name, int flags)
 {
     if (name == NULL) return NULL;
 
@@ -171,7 +171,7 @@ PUBLIC sysfs_node_t* create_node(char* name, int flags)
     return new_pn;
 }
 
-PRIVATE void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
+static void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
 {
     int file_type = 0;
     mode_t bits;
@@ -192,7 +192,7 @@ PRIVATE void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
     stat->st_gid = 0;
 }
 
-PUBLIC int add_node(sysfs_node_t* parent, sysfs_node_t* child)
+int add_node(sysfs_node_t* parent, sysfs_node_t* child)
 {
     struct memfs_stat stat;
     stat_node(&stat, child);

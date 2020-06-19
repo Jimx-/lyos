@@ -36,16 +36,16 @@
 #include "proto.h"
 #include "global.h"
 
-PRIVATE void pid_status(int slot);
-PRIVATE void pid_environ(int slot);
+static void pid_status(int slot);
+static void pid_environ(int slot);
 
-PUBLIC struct procfs_file pid_files[] = {
+struct procfs_file pid_files[] = {
     {"status", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_status},
     {"environ", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_environ},
     {NULL, 0, NULL},
 };
 
-PRIVATE void dump_state(int pst, char* buf)
+static void dump_state(int pst, char* buf)
 {
     int i = 0;
     if (pst == 0) {
@@ -65,7 +65,7 @@ PRIVATE void dump_state(int pst, char* buf)
     ADD_FLAG(PST_STOPPED, 'S');
 }
 
-PRIVATE void pid_status(int slot)
+static void pid_status(int slot)
 {
     int pi = slot - NR_TASKS;
     buf_printf("Name:\t%s\n", proc[slot].name);
@@ -86,7 +86,7 @@ PRIVATE void pid_status(int slot)
     }
 }
 
-PRIVATE void pid_environ(int slot)
+static void pid_environ(int slot)
 {
     printl("environ %d, %x, %x\n", slot, pmproc[slot].frame_addr,
            pmproc[slot].frame_size);

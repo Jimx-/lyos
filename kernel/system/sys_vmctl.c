@@ -38,7 +38,7 @@
 /**
  * <Ring 0> Perform the VMCTL syscall.
  */
-PUBLIC int sys_vmctl(MESSAGE* m, struct proc* p)
+int sys_vmctl(MESSAGE* m, struct proc* p)
 {
     int who = m->VMCTL_WHO, request = m->VMCTL_REQUEST;
     struct proc* target = (who == SELF) ? p : endpt_proc(who);

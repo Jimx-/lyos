@@ -25,14 +25,14 @@
 #include <lyos/service.h>
 #include "libsysfs/libsysfs.h"
 
-PUBLIC endpoint_t __pci_endpoint =
+endpoint_t __pci_endpoint =
 #ifdef __i386__
     TASK_PCI;
 #else
     NO_TASK;
 #endif
 
-PUBLIC int pci_set_acl(struct pci_acl* pci_acl)
+int pci_set_acl(struct pci_acl* pci_acl)
 {
     u32 v;
     int retval;

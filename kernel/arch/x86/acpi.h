@@ -93,11 +93,11 @@ struct acpi_hpet {
 
 #define MAX_RSDT 35
 
-PUBLIC void acpi_init();
-PUBLIC struct acpi_madt_lapic* acpi_get_lapic_next();
-PUBLIC struct acpi_madt_ioapic* acpi_get_ioapic_next();
-PUBLIC struct acpi_madt_int_src* acpi_get_int_src_next();
+void acpi_init();
+struct acpi_madt_lapic* acpi_get_lapic_next();
+struct acpi_madt_ioapic* acpi_get_ioapic_next();
+struct acpi_madt_int_src* acpi_get_int_src_next();
 
-PUBLIC struct acpi_hpet* acpi_get_hpet();
+struct acpi_hpet* acpi_get_hpet();
 
 #endif

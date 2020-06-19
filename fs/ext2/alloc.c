@@ -35,10 +35,10 @@
 /* how many bits in a char */
 #define CHAR_BIT 8
 
-PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
-                                 mode_t mode);
+static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
+                                mode_t mode);
 
-PUBLIC int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
+int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
 {
     int b = -1;
     bitchunk_t *chunk, *limit = &bitmap[(max_bits >> 3) / sizeof(bitchunk_t)];
@@ -73,7 +73,7 @@ PUBLIC int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
     return b;
 }
 
-PUBLIC block_t ext2_alloc_block(ext2_inode_t* pin)
+block_t ext2_alloc_block(ext2_inode_t* pin)
 {
     ext2_superblock_t* psb = pin->i_sb;
     block_t block = 0;
@@ -145,7 +145,7 @@ PUBLIC block_t ext2_alloc_block(ext2_inode_t* pin)
  * @param  mode   Inode mode.
  * @return        The inode allocated.
  */
-PUBLIC ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
+ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
 {
     ext2_superblock_t* psb = parent->i_sb;
     /* Can't allocate inode on readonly filesystem */
@@ -180,8 +180,8 @@ PUBLIC ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
  * @param  mode   Inode mode.
  * @return        Inode number.
  */
-PRIVATE int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
-                                 mode_t mode)
+static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
+                                mode_t mode)
 {
     /* Can't allocate inode on readonly filesystem */
     if (psb->sb_readonly) {

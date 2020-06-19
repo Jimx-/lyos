@@ -36,8 +36,7 @@
 /**
  * <Ring 1> Read/Write init device
  */
-PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length,
-                          void* buf)
+void initfs_rw_dev(int rw_flag, int dev, int position, int length, void* buf)
 {
     if (rw_flag == READ) {
         bdev_read(dev, position, buf, length, TASK_INITFS);

@@ -28,7 +28,7 @@
 #include <lyos/proto.h>
 #include <libdevman/libdevman.h>
 
-PUBLIC device_id_t dm_device_register(struct device_info* devinf)
+device_id_t dm_device_register(struct device_info* devinf)
 {
     MESSAGE msg;
 

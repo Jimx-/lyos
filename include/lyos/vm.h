@@ -79,22 +79,19 @@ struct mem_info {
     size_t vmalloc_used;
 };
 
-PUBLIC int procctl(endpoint_t who, int param);
-PUBLIC int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len,
-                                  int* flags);
-PUBLIC int vmctl_reply_kern_mapping(int index, void* vir_addr);
-PUBLIC int vmctl_getpdbr(endpoint_t who, unsigned* pdbr);
-PUBLIC int vmctl_set_address_space(endpoint_t who, void* pgd_phys,
-                                   void* pgd_vir);
-PUBLIC int umap(endpoint_t ep, void* vir_addr, phys_bytes* phys_addr);
-PUBLIC void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len);
-PUBLIC int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
-                               int* flags, endpoint_t* caller);
-PUBLIC int vmctl_reply_mmreq(endpoint_t who, int result);
-PUBLIC int vmctl_flushtlb(endpoint_t who);
-PUBLIC int get_meminfo(struct mem_info* mem_info);
-PUBLIC int vfs_mmap(endpoint_t who, off_t offset, size_t len, dev_t dev,
-                    ino_t ino, int fd, void* vaddr, int flags, int prot,
-                    size_t clearend);
+int procctl(endpoint_t who, int param);
+int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
+int vmctl_reply_kern_mapping(int index, void* vir_addr);
+int vmctl_getpdbr(endpoint_t who, unsigned* pdbr);
+int vmctl_set_address_space(endpoint_t who, void* pgd_phys, void* pgd_vir);
+int umap(endpoint_t ep, void* vir_addr, phys_bytes* phys_addr);
+void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len);
+int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
+                        int* flags, endpoint_t* caller);
+int vmctl_reply_mmreq(endpoint_t who, int result);
+int vmctl_flushtlb(endpoint_t who);
+int get_meminfo(struct mem_info* mem_info);
+int vfs_mmap(endpoint_t who, off_t offset, size_t len, dev_t dev, ino_t ino,
+             int fd, void* vaddr, int flags, int prot, size_t clearend);
 
 #endif

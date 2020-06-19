@@ -43,7 +43,7 @@
  * @param l   Memory limit of kernel.
  *****************************************************************************/
 #if 0
-PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
+int get_kernel_map(unsigned int * b, unsigned int * l)
 {
 	multiboot_elf_section_header_table_t * shdrs = (multiboot_elf_section_header_table_t *)kernel_file;
 
@@ -75,7 +75,7 @@ PUBLIC int get_kernel_map(unsigned int * b, unsigned int * l)
 /*======================================================================*
                                delay
  *======================================================================*/
-PUBLIC void delay(int time)
+void delay(int time)
 {
     int i, j, k;
     for (k = 0; k < time; k++) {

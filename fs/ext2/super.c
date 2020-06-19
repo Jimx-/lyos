@@ -54,7 +54,7 @@
  *
  * @param dev  From which device the super block comes.
  *****************************************************************************/
-PUBLIC int read_ext2_super_block(dev_t dev)
+int read_ext2_super_block(dev_t dev)
 {
     ssize_t retval;
 
@@ -132,7 +132,7 @@ PUBLIC int read_ext2_super_block(dev_t dev)
     return 0;
 }
 
-PUBLIC int write_ext2_super_block(dev_t dev)
+int write_ext2_super_block(dev_t dev)
 {
     ssize_t retval;
     ext2_superblock_t* psb = get_ext2_super_block(dev);
@@ -144,7 +144,7 @@ PUBLIC int write_ext2_super_block(dev_t dev)
     return 0;
 }
 
-PUBLIC ext2_superblock_t* get_ext2_super_block(dev_t dev)
+ext2_superblock_t* get_ext2_super_block(dev_t dev)
 {
     ext2_superblock_t* psb;
     list_for_each_entry(psb, &ext2_superblock_table, list)
@@ -155,8 +155,8 @@ PUBLIC ext2_superblock_t* get_ext2_super_block(dev_t dev)
     return NULL;
 }
 
-PUBLIC ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
-                                                unsigned int desc_num)
+ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
+                                         unsigned int desc_num)
 {
     if (desc_num >= psb->sb_groups_count) {
         printl("ext2fs: get_group_desc: wrong group descriptor number (%d) "
@@ -174,7 +174,7 @@ PUBLIC ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
  *
  * @return Zero if successful
  */
-PUBLIC int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
+int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
 {
     int readonly = (flags & RF_READONLY) ? 1 : 0;
     int is_root = (flags & RF_ISROOT) ? 1 : 0;
@@ -223,7 +223,7 @@ PUBLIC int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
     return 0;
 }
 
-PUBLIC int ext2_update_group_desc(ext2_superblock_t* psb, int desc)
+int ext2_update_group_desc(ext2_superblock_t* psb, int desc)
 {
     int block_size = psb->sb_block_size;
 

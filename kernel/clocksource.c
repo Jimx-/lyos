@@ -33,9 +33,9 @@
 #include <lyos/time.h>
 #include <asm/div64.h>
 
-PUBLIC struct clocksource* curr_clocksource;
-PUBLIC spinlock_t clocksource_lock;
-PRIVATE struct list_head clocksource_list;
+struct clocksource* curr_clocksource;
+spinlock_t clocksource_lock;
+static struct list_head clocksource_list;
 
 /*****************************************************************************
  *                                init_clocksource
@@ -44,7 +44,7 @@ PRIVATE struct list_head clocksource_list;
  * <Ring 0> Initializes the clocksource subsystem.
  *
  *****************************************************************************/
-PUBLIC void init_clocksource()
+void init_clocksource()
 {
     INIT_LIST_HEAD(&clocksource_list);
     curr_clocksource = NULL;
@@ -58,7 +58,7 @@ PUBLIC void init_clocksource()
  *
  * @param clocksource The clocksource to be put into the queue.
  *****************************************************************************/
-PRIVATE void clocksource_enqueue(struct clocksource* cs)
+static void clocksource_enqueue(struct clocksource* cs)
 {
     spinlock_lock(&clocksource_lock);
     list_add(&cs->list, &clocksource_list);
@@ -72,7 +72,7 @@ PRIVATE void clocksource_enqueue(struct clocksource* cs)
  * <Ring 0> Select the most accurate clocksource as current clocksource.
  *
  *****************************************************************************/
-PRIVATE void clocksource_select()
+static void clocksource_select()
 {
     spinlock_lock(&clocksource_lock);
 
@@ -100,7 +100,7 @@ PRIVATE void clocksource_select()
  *
  * @param clocksource The clocksource to be registered.
  *****************************************************************************/
-PUBLIC void register_clocksource(struct clocksource* cs)
+void register_clocksource(struct clocksource* cs)
 {
     clocksource_enqueue(cs);
     clocksource_select();
@@ -113,8 +113,8 @@ PUBLIC void register_clocksource(struct clocksource* cs)
  * <Ring 0> Calculates the mul and shift value for a clocksource.
  *
  *****************************************************************************/
-PRIVATE void calc_clock_mul_shift(u32* mul, u32* shift, u32 from, u32 to,
-                                  u32 maxsec)
+static void calc_clock_mul_shift(u32* mul, u32* shift, u32 from, u32 to,
+                                 u32 maxsec)
 {
     u64 tmp;
     u32 sft, sftacc = 32;
@@ -145,8 +145,7 @@ PRIVATE void calc_clock_mul_shift(u32* mul, u32* shift, u32 from, u32 to,
  * @param scale Frequency scale(1 or 1000).
  * @param freq The frequency.
  */
-PRIVATE void update_clocksource_freq(struct clocksource* cs, u32 scale,
-                                     u32 freq)
+static void update_clocksource_freq(struct clocksource* cs, u32 scale, u32 freq)
 {
     u64 sec;
     sec = cs->mask - (cs->mask >> 3);
@@ -168,8 +167,8 @@ PRIVATE void update_clocksource_freq(struct clocksource* cs, u32 scale,
  * <Ring 0> Register a clocksource with frequency and scale.
  *
  *****************************************************************************/
-PRIVATE void register_clocksource_scale(struct clocksource* cs, u32 scale,
-                                        u32 freq)
+static void register_clocksource_scale(struct clocksource* cs, u32 scale,
+                                       u32 freq)
 {
     update_clocksource_freq(cs, scale, freq);
     register_clocksource(cs);
@@ -182,7 +181,7 @@ PRIVATE void register_clocksource_scale(struct clocksource* cs, u32 scale,
  * <Ring 0> Register a clocksource with frequency in HZ.
  *
  *****************************************************************************/
-PUBLIC void register_clocksource_hz(struct clocksource* cs, u32 hz)
+void register_clocksource_hz(struct clocksource* cs, u32 hz)
 {
     register_clocksource_scale(cs, 1, hz);
 }
@@ -194,7 +193,7 @@ PUBLIC void register_clocksource_hz(struct clocksource* cs, u32 hz)
  * <Ring 0> Register clocksource with frequency in kHZ.
  *
  *****************************************************************************/
-PUBLIC void register_clocksource_khz(struct clocksource* cs, u32 khz)
+void register_clocksource_khz(struct clocksource* cs, u32 khz)
 {
     register_clocksource_scale(cs, 1000, khz);
 }

@@ -46,15 +46,15 @@ struct exec_loader {
     libexec_exec_loadfunc_t loader;
 };
 
-PUBLIC int libexec_load_elf_dbg(struct exec_info* execi);
+int libexec_load_elf_dbg(struct exec_info* execi);
 
-PRIVATE struct exec_loader exec_loaders[] = {
+static struct exec_loader exec_loaders[] = {
     {libexec_load_elf},
     {NULL},
 };
 
-PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
-                         size_t len)
+static int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                        size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
     data_copy(execi->proc_e, vaddr, SELF, (void*)(execi->header + offset), len);
@@ -62,7 +62,7 @@ PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
     return 0;
 }
 
-PRIVATE char* prepare_stack(char** argv, size_t* frame_size, int* argc)
+static char* prepare_stack(char** argv, size_t* frame_size, int* argc)
 {
     char** p;
     size_t stack_size = 2 * sizeof(void*);
@@ -78,8 +78,8 @@ PRIVATE char* prepare_stack(char** argv, size_t* frame_size, int* argc)
     return (char*)malloc(stack_size);
 }
 
-PUBLIC int serv_exec(endpoint_t target, char* exec, int exec_len,
-                     char* progname, char** argv)
+int serv_exec(endpoint_t target, char* exec, int exec_len, char* progname,
+              char** argv)
 {
     int i;
     int retval;
@@ -146,13 +146,13 @@ PUBLIC int serv_exec(endpoint_t target, char* exec, int exec_len,
 }
 
 #if 0
-PRIVATE int module_argc;
-PRIVATE char module_stack[PROC_ORIGIN_STACK];
-PRIVATE char * module_stp;
-PRIVATE char * module_envp;
-PRIVATE int module_stack_len;
+static int module_argc;
+static char module_stack[PROC_ORIGIN_STACK];
+static char * module_stp;
+static char * module_envp;
+static int module_stack_len;
 
-PUBLIC int serv_prepare_module_stack()
+int serv_prepare_module_stack()
 {
     char arg[STR_DEFAULT_LEN];
     char * argv[MAX_MODULE_PARAMS];

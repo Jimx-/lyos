@@ -29,9 +29,9 @@
 #include <libsysfs/libsysfs.h>
 #include "libinputdriver/libinputdriver.h"
 
-PRIVATE endpoint_t input_endpoint = NO_TASK;
+static endpoint_t input_endpoint = NO_TASK;
 
-PRIVATE void get_input_ep()
+static void get_input_ep()
 {
     if (input_endpoint == NO_TASK) {
         u32 v;
@@ -42,7 +42,7 @@ PRIVATE void get_input_ep()
     }
 }
 
-PUBLIC int inputdriver_send_event(u16 type, u16 code, int value)
+int inputdriver_send_event(u16 type, u16 code, int value)
 {
     if (input_endpoint == NO_TASK) get_input_ep();
 
@@ -58,7 +58,7 @@ PUBLIC int inputdriver_send_event(u16 type, u16 code, int value)
     return msg.RETVAL;
 }
 
-PUBLIC int inputdriver_start(struct inputdriver* inpd)
+int inputdriver_start(struct inputdriver* inpd)
 {
     MESSAGE msg;
 

@@ -16,6 +16,6 @@
 #ifndef _TSC_H_
 #define _TSC_H_
 
-PUBLIC void init_tsc();
+void init_tsc();
 
 #endif

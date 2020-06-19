@@ -19,11 +19,11 @@
 
 #include <libmemfs/libmemfs.h>
 
-PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr,
-                                size_t count, off_t offset, cbdata_t data);
+ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
+                         off_t offset, cbdata_t data);
 
-PUBLIC void init_buf(char* ptr, size_t len, off_t off);
-PUBLIC void buf_printf(char* fmt, ...);
-PUBLIC size_t buf_used();
+void init_buf(char* ptr, size_t len, off_t off);
+void buf_printf(char* fmt, ...);
+size_t buf_used();
 
 #endif

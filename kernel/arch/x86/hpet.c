@@ -38,25 +38,25 @@
 #include <asm/hpet.h>
 #include <asm/div64.h>
 
-PUBLIC void* hpet_addr;
-PUBLIC void* hpet_vaddr;
+void* hpet_addr;
+void* hpet_vaddr;
 
-PRIVATE int hpet_enabled = 0;
-PRIVATE u64 hpet_freq;
+static int hpet_enabled = 0;
+static u64 hpet_freq;
 
-PRIVATE u64 read_hpet(struct clocksource* cs)
+static u64 read_hpet(struct clocksource* cs)
 {
     return hpet_readl(HPET_COUNTER);
 }
 
-PRIVATE struct clocksource hpet_clocksource = {
+static struct clocksource hpet_clocksource = {
     .name = "hpet",
     .rating = 250,
     .read = read_hpet,
     .mask = 0xffffffffffffffff,
 };
 
-PUBLIC int init_hpet()
+int init_hpet()
 {
     struct acpi_hpet* hpet = acpi_get_hpet();
     if (!hpet) return 0;
@@ -81,4 +81,4 @@ PUBLIC int init_hpet()
     return hpet_enabled;
 }
 
-PUBLIC int is_hpet_enabled() { return hpet_enabled; }
+int is_hpet_enabled() { return hpet_enabled; }

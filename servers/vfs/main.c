@@ -61,7 +61,7 @@
  * utime
  */
 
-PUBLIC void init_vfs();
+void init_vfs();
 static void dispatch_work(MESSAGE* msg, void (*func)(void));
 static void do_work(void);
 static void do_reply(struct worker_thread* worker, MESSAGE* msg);
@@ -70,7 +70,7 @@ static void init_root(void);
 /**
  * <Ring 1> Main loop of VFS.
  */
-PUBLIC int main()
+int main()
 {
     MESSAGE msg;
     int txn_id;
@@ -234,7 +234,7 @@ static void do_reply(struct worker_thread* worker, MESSAGE* msg)
     worker_wake(worker);
 }
 
-PUBLIC void init_vfs()
+void init_vfs()
 {
     int i;
 

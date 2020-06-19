@@ -38,9 +38,9 @@
 #include <asm/div64.h>
 #include <lyos/clocksource.h>
 
-PUBLIC u32 tsc_khz;
+u32 tsc_khz;
 
-PRIVATE u64 tsc_read(struct clocksource* cs)
+static u64 tsc_read(struct clocksource* cs)
 {
     u64 tsc;
     unsigned long tsc_hi, tsc_lo;
@@ -51,22 +51,22 @@ PRIVATE u64 tsc_read(struct clocksource* cs)
     return tsc;
 }
 
-PRIVATE struct clocksource tsc_clocksource = {
+static struct clocksource tsc_clocksource = {
     .name = "tsc",
     .rating = 300,
     .read = tsc_read,
     .mask = 0xffffffffffffffff,
 };
 
-PRIVATE u32 calibrate_tsc();
-PRIVATE u32 pit_calibrate_tsc();
+static u32 calibrate_tsc();
+static u32 pit_calibrate_tsc();
 
-PRIVATE void init_tsc_clocksource()
+static void init_tsc_clocksource()
 {
     register_clocksource_khz(&tsc_clocksource, tsc_khz);
 }
 
-PUBLIC void init_tsc()
+void init_tsc()
 {
     tsc_khz = calibrate_tsc();
     init_tsc_clocksource();
@@ -74,7 +74,7 @@ PUBLIC void init_tsc()
 
 #if 0
 /* Calculate TSC frequency from HPET reference */
-PRIVATE u64 hpet_ref_tsc(u64 tsc_delta, u64 hpet1, u64 hpet2)
+static u64 hpet_ref_tsc(u64 tsc_delta, u64 hpet1, u64 hpet2)
 {
     u64 tmp;
 
@@ -89,7 +89,7 @@ PRIVATE u64 hpet_ref_tsc(u64 tsc_delta, u64 hpet1, u64 hpet2)
 }
 #endif
 
-PRIVATE u32 calibrate_tsc()
+static u32 calibrate_tsc()
 {
     u32 pit_tsc_khz = pit_calibrate_tsc();
     if (pit_tsc_khz) return pit_tsc_khz;
@@ -97,11 +97,11 @@ PRIVATE u32 calibrate_tsc()
     return 0;
 }
 
-PRIVATE u32 probe_ticks;
+static u32 probe_ticks;
 #define PROBE_TICKS (system_hz / 10)
-PRIVATE u64 tsc0, tsc1;
+static u64 tsc0, tsc1;
 
-PRIVATE int tsc_calibrate_handler(irq_hook_t* hook)
+static int tsc_calibrate_handler(irq_hook_t* hook)
 {
     u64 tsc;
 
@@ -117,7 +117,7 @@ PRIVATE int tsc_calibrate_handler(irq_hook_t* hook)
     return 1;
 }
 
-PRIVATE u32 pit_calibrate_tsc()
+static u32 pit_calibrate_tsc()
 {
     irq_hook_t calibrate_hook;
 

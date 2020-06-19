@@ -31,10 +31,10 @@
 #include "proto.h"
 #include "const.h"
 
-PRIVATE void pm_init();
-PRIVATE void process_system_notify(MESSAGE* m);
+static void pm_init();
+static void process_system_notify(MESSAGE* m);
 
-PUBLIC int main(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     pm_init();
 
@@ -110,7 +110,7 @@ PUBLIC int main(int argc, char* argv[])
     return 0;
 }
 
-PRIVATE void pm_init()
+static void pm_init()
 {
     int retval = 0;
     struct boot_proc boot_procs[NR_BOOT_PROCS];
@@ -189,7 +189,7 @@ PRIVATE void pm_init()
     if (vfs_msg.RETVAL != 0) panic("pm_init: bad reply from vfs");
 }
 
-PRIVATE void process_system_notify(MESSAGE* m)
+static void process_system_notify(MESSAGE* m)
 {
     sigset_t sigset = m->SIGSET;
 

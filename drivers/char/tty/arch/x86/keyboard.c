@@ -35,24 +35,24 @@
 #include <libsysfs/libsysfs.h>
 #include "proto.h"
 
-PRIVATE struct kb_inbuf kb_in;
-PRIVATE int code_with_E0;
-PRIVATE int shift_l;     /* l shift state	*/
-PRIVATE int shift_r;     /* r shift state	*/
-PRIVATE int alt_l;       /* l alt state		*/
-PRIVATE int alt_r;       /* r left state		*/
-PRIVATE int ctrl_l;      /* l ctrl state		*/
-PRIVATE int ctrl_r;      /* l ctrl state		*/
-PRIVATE int caps_lock;   /* Caps Lock		*/
-PRIVATE int num_lock;    /* Num Lock		*/
-PRIVATE int scroll_lock; /* Scroll Lock		*/
-PRIVATE int column;
-PRIVATE endpoint_t input_endpoint = NO_TASK;
+static struct kb_inbuf kb_in;
+static int code_with_E0;
+static int shift_l;     /* l shift state	*/
+static int shift_r;     /* r shift state	*/
+static int alt_l;       /* l alt state		*/
+static int alt_r;       /* r left state		*/
+static int ctrl_l;      /* l ctrl state		*/
+static int ctrl_r;      /* l ctrl state		*/
+static int caps_lock;   /* Caps Lock		*/
+static int num_lock;    /* Num Lock		*/
+static int scroll_lock; /* Scroll Lock		*/
+static int column;
+static endpoint_t input_endpoint = NO_TASK;
 
-PRIVATE u8 get_byte_from_kb_buf();
-PRIVATE void set_leds();
-PRIVATE void kb_wait();
-PRIVATE void kb_ack();
+static u8 get_byte_from_kb_buf();
+static void set_leds();
+static void kb_wait();
+static void kb_ack();
 
 /*****************************************************************************
  *                                do_input
@@ -62,7 +62,7 @@ PRIVATE void kb_ack();
  *
  * @param msg Ptr to message.
  *****************************************************************************/
-PUBLIC void do_input(MESSAGE* msg)
+void do_input(MESSAGE* msg)
 {
     u32 v;
     int retval;
@@ -103,7 +103,7 @@ PUBLIC void do_input(MESSAGE* msg)
  * <Ring 1> Initialize some variables and set keyboard interrupt handler.
  *
  *****************************************************************************/
-PUBLIC void init_keyboard()
+void init_keyboard()
 {
     kb_in.count = 0;
     kb_in.p_head = kb_in.p_tail = kb_in.buf;
@@ -121,7 +121,7 @@ PUBLIC void init_keyboard()
     set_leds();
 }
 
-PUBLIC void kb_init(TTY* tty) { tty->tty_devread = keyboard_read; }
+void kb_init(TTY* tty) { tty->tty_devread = keyboard_read; }
 
 /*****************************************************************************
  *                                keyboard_read
@@ -131,7 +131,7 @@ PUBLIC void kb_init(TTY* tty) { tty->tty_devread = keyboard_read; }
  *
  * @param tty  Which TTY is reading the keyboard input.
  *****************************************************************************/
-PUBLIC void keyboard_read(TTY* tty)
+void keyboard_read(TTY* tty)
 {
     if (!is_current_console((CONSOLE*)tty->tty_dev)) return;
 
@@ -343,7 +343,7 @@ PUBLIC void keyboard_read(TTY* tty)
  *
  * @return The byte read.
  *****************************************************************************/
-PRIVATE u8 get_byte_from_kb_buf()
+static u8 get_byte_from_kb_buf()
 {
     u8 scan_code;
 
@@ -372,7 +372,7 @@ PRIVATE u8 get_byte_from_kb_buf()
  * Wait until the input buffer of 8042 is empty.
  *
  *****************************************************************************/
-PRIVATE void kb_wait()
+static void kb_wait()
 {
     u8 kb_stat;
 
@@ -388,7 +388,7 @@ PRIVATE void kb_wait()
  * Read from the keyboard controller until a KB_ACK is received.
  *
  *****************************************************************************/
-PRIVATE void kb_ack()
+static void kb_ack()
 {
     u8 kb_read;
 
@@ -404,7 +404,7 @@ PRIVATE void kb_ack()
  * Set the leds according to: caps_lock, num_lock & scroll_lock.
  *
  *****************************************************************************/
-PRIVATE void set_leds()
+static void set_leds()
 {
     u8 leds = (caps_lock << 2) | (num_lock << 1) | scroll_lock;
 

@@ -34,7 +34,7 @@
 #include "pci.h"
 #include <asm/pci_intel.h>
 
-PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset)
+u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset)
 {
     u8 v;
 
@@ -44,7 +44,7 @@ PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset)
     return v;
 }
 
-PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
+u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
 {
     u32 v;
 
@@ -54,7 +54,7 @@ PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset)
     return (u16)((v >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset)
+u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset)
 {
     u32 v;
 
@@ -64,7 +64,7 @@ PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset)
     return v;
 }
 
-PUBLIC void pcii_write_u16(u32 bus, u32 slot, u32 func, u16 offset, u16 value)
+void pcii_write_u16(u32 bus, u32 slot, u32 func, u16 offset, u16 value)
 {
     portio_outl(PCII_CTRL, PCII_SELREG(bus, slot, func, offset));
     portio_outw(PCI_DATA, value);
@@ -76,31 +76,31 @@ void pcii_write_u32(u32 bus, u32 slot, u32 func, u16 offset, u32 value)
     portio_outl(PCI_DATA, value);
 }
 
-PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
+u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u8(pcibus[busind].busnr, pcidev[devind].dev,
                         pcidev[devind].func, port);
 }
 
-PUBLIC u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port)
+u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u16(pcibus[busind].busnr, pcidev[devind].dev,
                          pcidev[devind].func, port);
 }
 
-PUBLIC u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port)
+u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u32(pcibus[busind].busnr, pcidev[devind].dev,
                          pcidev[devind].func, port);
 }
 
-PUBLIC void pcii_wreg_u16(u32 busind, u32 devind, u16 port, u16 value)
+void pcii_wreg_u16(u32 busind, u32 devind, u16 port, u16 value)
 {
     return pcii_write_u16(pcibus[busind].busnr, pcidev[devind].dev,
                           pcidev[devind].func, port, value);
 }
 
-PUBLIC void pcii_wreg_u32(u32 busind, u32 devind, u16 port, u32 value)
+void pcii_wreg_u32(u32 busind, u32 devind, u16 port, u32 value)
 {
     return pcii_write_u32(pcibus[busind].busnr, pcidev[devind].dev,
                           pcidev[devind].func, port, value);

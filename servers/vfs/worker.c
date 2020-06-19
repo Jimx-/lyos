@@ -268,7 +268,7 @@ struct worker_thread* worker_get(thread_t tid)
     return NULL;
 }
 
-PUBLIC void revive_proc(endpoint_t endpoint, MESSAGE* msg)
+void revive_proc(endpoint_t endpoint, MESSAGE* msg)
 {
     send_recv(SEND_NONBLOCK, endpoint, msg);
 }

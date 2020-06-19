@@ -32,14 +32,14 @@
 #include <libsysfs/libsysfs.h>
 #include <libmemfs/libmemfs.h>
 
-PRIVATE void devman_init();
-PRIVATE int devfs_message_hook(MESSAGE* msg);
+static void devman_init();
+static int devfs_message_hook(MESSAGE* msg);
 
 struct memfs_hooks fs_hooks = {
     .message_hook = devfs_message_hook,
 };
 
-PUBLIC int main(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     devman_init();
 
@@ -51,13 +51,13 @@ PUBLIC int main(int argc, char* argv[])
     return memfs_start(NULL, &fs_hooks, &root_stat);
 }
 
-PRIVATE void init_sysfs()
+static void init_sysfs()
 {
     sysfs_publish_domain("bus", SF_PRIV_OVERWRITE);
     sysfs_publish_domain("devices", SF_PRIV_OVERWRITE);
 }
 
-PRIVATE void devman_init()
+static void devman_init()
 {
     printl("DEVMAN: Device manager is running.\n");
 
@@ -71,7 +71,7 @@ PRIVATE void devman_init()
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
 }
 
-PRIVATE int devfs_message_hook(MESSAGE* msg)
+static int devfs_message_hook(MESSAGE* msg)
 {
     int retval = 0;
 

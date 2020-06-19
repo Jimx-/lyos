@@ -21,7 +21,7 @@
 #include <string.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_alarm2(clock_t expire_time, int abs_time, clock_t* time_left)
+int kernel_alarm2(clock_t expire_time, int abs_time, clock_t* time_left)
 {
     MESSAGE m;
     m.EXP_TIME = expire_time;

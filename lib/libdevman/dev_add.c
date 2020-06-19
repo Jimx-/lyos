@@ -29,7 +29,7 @@
 
 #include "libdevman.h"
 
-PUBLIC int dm_bdev_add(dev_t dev)
+int dm_bdev_add(dev_t dev)
 {
     MESSAGE msg;
 
@@ -42,7 +42,7 @@ PUBLIC int dm_bdev_add(dev_t dev)
     return msg.RETVAL;
 }
 
-PUBLIC int dm_cdev_add(dev_t dev)
+int dm_cdev_add(dev_t dev)
 {
     MESSAGE msg;
 

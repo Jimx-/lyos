@@ -39,17 +39,17 @@
 #include "const.h"
 #include "global.h"
 
-PRIVATE phys_bytes free_mem_size;
-PUBLIC unsigned long va_pa_offset;
+static phys_bytes free_mem_size;
+unsigned long va_pa_offset;
 
-PUBLIC void __lyos_init(char* envp[]);
+void __lyos_init(char* envp[]);
 
-PRIVATE void init_mm();
-PRIVATE struct mmproc* init_mmproc(endpoint_t endpoint);
-PRIVATE void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp);
-PRIVATE void print_memmap();
+static void init_mm();
+static struct mmproc* init_mmproc(endpoint_t endpoint);
+static void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp);
+static void print_memmap();
 
-PRIVATE void process_system_notify();
+static void process_system_notify();
 
 /*****************************************************************************
  *                                task_mm
@@ -58,7 +58,7 @@ PRIVATE void process_system_notify();
  * <Ring 1> The main loop of TASK MM.
  *
  *****************************************************************************/
-PUBLIC int main()
+int main()
 {
     init_mm();
 
@@ -135,7 +135,7 @@ PUBLIC int main()
  *
  *
  *****************************************************************************/
-PRIVATE void init_mm()
+static void init_mm()
 {
     int i;
 
@@ -182,7 +182,7 @@ PRIVATE void init_mm()
     }
 }
 
-PRIVATE struct mmproc* init_mmproc(endpoint_t endpoint)
+static struct mmproc* init_mmproc(endpoint_t endpoint)
 {
     struct mmproc* mmp;
     struct boot_proc* bp;
@@ -208,7 +208,7 @@ struct mm_exec_info {
     struct mmproc* mmp;
 };
 
-PRIVATE int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
+static int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
     struct vir_region* vr = NULL;
@@ -223,8 +223,8 @@ PRIVATE int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
-                                 size_t len)
+static int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
+                                size_t len)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
     struct vir_region* vr = NULL;
@@ -238,8 +238,8 @@ PRIVATE int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
-                         size_t len)
+static int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                        size_t len)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
     if (offset + len > mmexeci->bp->len) return ENOEXEC;
@@ -248,7 +248,7 @@ PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
     return 0;
 }
 
-PRIVATE void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp)
+static void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp)
 {
     if (pgd_new(&mmp->mm->pgd)) panic("MM: spawn_bootproc: pgd_new failed");
     if (pgd_bind(mmp, &mmp->mm->pgd))
@@ -306,7 +306,7 @@ PRIVATE void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp)
     vmctl(VMCTL_BOOTINHIBIT_CLEAR, bp->endpoint);
 }
 
-PRIVATE void print_memmap()
+static void print_memmap()
 {
     int usable_memsize = 0;
     int reserved_memsize = 0;
@@ -375,7 +375,7 @@ PRIVATE void print_memmap()
     mem_info.mem_free = free_mem_size;
 }
 
-PRIVATE void process_system_notify()
+static void process_system_notify()
 {
     sigset_t sigset = mm_msg.SIGSET;
 

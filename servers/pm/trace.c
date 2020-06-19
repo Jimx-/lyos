@@ -35,7 +35,7 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int do_ptrace(MESSAGE* m)
+int do_ptrace(MESSAGE* m)
 {
     struct pmproc* pmp = pm_endpt_proc(m->source);
     if (!pmp) return EINVAL;
@@ -106,7 +106,7 @@ PUBLIC int do_ptrace(MESSAGE* m)
     return retval;
 }
 
-PUBLIC void trace_signal(struct pmproc* p_dest, int signo)
+void trace_signal(struct pmproc* p_dest, int signo)
 {
     p_dest->flags |= PMPF_TRACED;
 

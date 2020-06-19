@@ -14,38 +14,38 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* kliba.asm */
-PUBLIC void out_byte(u16 port, u8 value);
-PUBLIC u8 in_byte(u16 port);
-PUBLIC void out_word(u16 port, u16 val);
-PUBLIC u16 in_word(u16 port);
-PUBLIC void out_long(u16 port, u32 val);
-PUBLIC u32 in_long(u16 port);
-PUBLIC void disable_int();
-PUBLIC void enable_int();
-PUBLIC void port_read(u16 port, void* buf, int n);
-PUBLIC void port_write(u16 port, void* buf, int n);
+void out_byte(u16 port, u8 value);
+u8 in_byte(u16 port);
+void out_word(u16 port, u16 val);
+u16 in_word(u16 port);
+void out_long(u16 port, u32 val);
+u32 in_long(u16 port);
+void disable_int();
+void enable_int();
+void port_read(u16 port, void* buf, int n);
+void port_write(u16 port, void* buf, int n);
 
-PUBLIC void read_tsc(unsigned long* high, unsigned long* low);
-PUBLIC void read_tsc_64(u64* v);
+void read_tsc(unsigned long* high, unsigned long* low);
+void read_tsc_64(u64* v);
 
-PUBLIC void switch_address_space(struct proc* p);
+void switch_address_space(struct proc* p);
 
 /* klib.c */
-PUBLIC void delay(int time);
-PUBLIC void disp_int(int input);
+void delay(int time);
+void disp_int(int input);
 
 /* kernel.asm */
-PUBLIC void restore_user_context(struct proc* p);
-PUBLIC void restore_user_context_int(struct proc* p);
-PUBLIC void restore_user_context_sysenter(struct proc* p);
-PUBLIC void restore_user_context_syscall(struct proc* p);
+void restore_user_context(struct proc* p);
+void restore_user_context_int(struct proc* p);
+void restore_user_context_sysenter(struct proc* p);
+void restore_user_context_syscall(struct proc* p);
 
 /* main.c */
-PUBLIC void finish_bsp_booting();
-PUBLIC void panic(const char* fmt, ...);
+void finish_bsp_booting();
+void panic(const char* fmt, ...);
 
 /* system.c */
-PUBLIC void identify_cpu();
+void identify_cpu();
 
 /* fpu.c */
 void fpu_init(void);
@@ -55,57 +55,57 @@ void save_local_fpu(struct proc* p, int retain);
 int restore_fpu(struct proc* p);
 
 /* smp.c */
-PUBLIC void smp_init();
+void smp_init();
 
 /* memory.c */
-PUBLIC void init_memory();
+void init_memory();
 
 /* i8259.c */
-PUBLIC void init_8259A();
+void init_8259A();
 
 /* interrupt.c */
-PUBLIC void init_irq();
-PUBLIC void irq_handle(int irq);
-PUBLIC void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler);
-PUBLIC void rm_irq_handler(irq_hook_t* hook);
-PUBLIC int disable_irq(irq_hook_t* hook);
-PUBLIC void enable_irq(irq_hook_t* hook);
+void init_irq();
+void irq_handle(int irq);
+void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler);
+void rm_irq_handler(irq_hook_t* hook);
+int disable_irq(irq_hook_t* hook);
+void enable_irq(irq_hook_t* hook);
 
 /* clock.c */
-PUBLIC int arch_init_time();
-PUBLIC int init_time();
-PUBLIC int init_bsp_timer(int freq);
-PUBLIC int init_ap_timer(int freq);
-PUBLIC void stop_context(struct proc* p);
-PUBLIC void set_sys_timer(struct timer_list* timer);
-PUBLIC void reset_sys_timer(struct timer_list* timer);
+int arch_init_time();
+int init_time();
+int init_bsp_timer(int freq);
+int init_ap_timer(int freq);
+void stop_context(struct proc* p);
+void set_sys_timer(struct timer_list* timer);
+void reset_sys_timer(struct timer_list* timer);
 
 /* proc.c */
-PUBLIC void init_proc();
-PUBLIC void switch_to_user();
-PUBLIC int verify_endpt(endpoint_t ep, int* proc_nr);
-PUBLIC struct proc* endpt_proc(endpoint_t ep);
-PUBLIC void* va2la(endpoint_t ep, void* va);
-PUBLIC void* la2pa(endpoint_t ep, void* la);
-PUBLIC void* va2pa(endpoint_t ep, void* va);
-PUBLIC int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags);
-PUBLIC int msg_notify(struct proc* p_to_send, endpoint_t dest);
-PUBLIC void reset_msg(MESSAGE* p);
-PUBLIC void dump_msg(const char* title, MESSAGE* m);
-PUBLIC void dump_proc(struct proc* p);
-PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg);
-PUBLIC void enqueue_proc(struct proc* p);
-PUBLIC void dequeue_proc(struct proc* p);
+void init_proc();
+void switch_to_user();
+int verify_endpt(endpoint_t ep, int* proc_nr);
+struct proc* endpt_proc(endpoint_t ep);
+void* va2la(endpoint_t ep, void* va);
+void* la2pa(endpoint_t ep, void* la);
+void* va2pa(endpoint_t ep, void* va);
+int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags);
+int msg_notify(struct proc* p_to_send, endpoint_t dest);
+void reset_msg(MESSAGE* p);
+void dump_msg(const char* title, MESSAGE* m);
+void dump_proc(struct proc* p);
+int send_recv(int function, int src_dest, MESSAGE* msg);
+void enqueue_proc(struct proc* p);
+void dequeue_proc(struct proc* p);
 void copr_not_available_handler(void);
 void release_fpu(struct proc* p);
 
 /* sched.c */
-PUBLIC void init_sched();
+void init_sched();
 
 /* profile.c */
 #if CONFIG_PROFILING
-PUBLIC void init_profile_clock(u32 freq);
-PUBLIC void stop_profile_clock();
+void init_profile_clock(u32 freq);
+void stop_profile_clock();
 void nmi_profile_handler(int in_kernel, void* pc);
 #endif
 
@@ -115,28 +115,27 @@ void stop_profile_nmi(void);
 void nmi_watchdog_handler(int in_kernel, void* pc);
 
 /* direct_tty.c */
-PUBLIC void direct_put_str(const char* str);
-PUBLIC int direct_print(const char* fmt, ...);
-PUBLIC void direct_cls();
+void direct_put_str(const char* str);
+int direct_print(const char* fmt, ...);
+void direct_cls();
 
 /* system.c */
-PUBLIC void init_system();
-PUBLIC int resume_sys_call(struct proc* p);
-PUBLIC int set_priv(struct proc* p, int id);
-PUBLIC void ksig_proc(endpoint_t ep, int signo);
+void init_system();
+int resume_sys_call(struct proc* p);
+int set_priv(struct proc* p, int id);
+void ksig_proc(endpoint_t ep, int signo);
 
 /* lib/misc.c */
-PUBLIC u32 now();
+u32 now();
 
-PUBLIC endpoint_t get_endpoint();
+endpoint_t get_endpoint();
 
-PUBLIC int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
-                     void* src_addr, int len);
-PUBLIC int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
-                     struct vir_addr* src_addr, size_t bytes, int check);
-PUBLIC int _data_vir_copy(struct proc* caller, endpoint_t dest_ep,
-                          void* dest_addr, endpoint_t src_ep, void* src_addr,
-                          int len, int check);
+int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
+              void* src_addr, int len);
+int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
+              struct vir_addr* src_addr, size_t bytes, int check);
+int _data_vir_copy(struct proc* caller, endpoint_t dest_ep, void* dest_addr,
+                   endpoint_t src_ep, void* src_addr, int len, int check);
 #define vir_copy(dest, src, bytes) _vir_copy(NULL, dest, src, bytes, 0)
 #define vir_copy_check(caller, dest, src, bytes) \
     _vir_copy(caller, dest, src, bytes, 1)
@@ -145,47 +144,47 @@ PUBLIC int _data_vir_copy(struct proc* caller, endpoint_t dest_ep,
 #define data_vir_copy_check(caller, dest_ep, dest_addr, src_ep, src_addr, len) \
     _data_vir_copy(caller, dest_ep, dest_addr, src_ep, src_addr, len, 1)
 
-PUBLIC int service_up(const char* name, char* argv[], char* const envp[]);
+int service_up(const char* name, char* argv[], char* const envp[]);
 
 /* System calls */
-PUBLIC int sys_sendrec(MESSAGE* m, struct proc* p);
-PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_datacopy(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_privctl(MESSAGE* m, struct proc* p);
-PUBLIC int sys_getinfo(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_vmctl(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_umap(MESSAGE* m, struct proc* p);
-PUBLIC int sys_portio(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_vportio(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_sportio(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_irqctl(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_fork(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_clear(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_exec(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_sigsend(MESSAGE* m, struct proc* p);
-PUBLIC int sys_sigreturn(MESSAGE* m, struct proc* p);
-PUBLIC int sys_kill(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_getksig(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_endksig(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_times(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_trace(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_alarm(MESSAGE* m, struct proc* p_proc);
-PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc);
+int sys_sendrec(MESSAGE* m, struct proc* p);
+int sys_printx(MESSAGE* m, struct proc* p_proc);
+int sys_datacopy(MESSAGE* m, struct proc* p_proc);
+int sys_privctl(MESSAGE* m, struct proc* p);
+int sys_getinfo(MESSAGE* m, struct proc* p_proc);
+int sys_vmctl(MESSAGE* m, struct proc* p_proc);
+int sys_umap(MESSAGE* m, struct proc* p);
+int sys_portio(MESSAGE* m, struct proc* p_proc);
+int sys_vportio(MESSAGE* m, struct proc* p_proc);
+int sys_sportio(MESSAGE* m, struct proc* p_proc);
+int sys_irqctl(MESSAGE* m, struct proc* p_proc);
+int sys_fork(MESSAGE* m, struct proc* p_proc);
+int sys_clear(MESSAGE* m, struct proc* p_proc);
+int sys_exec(MESSAGE* m, struct proc* p_proc);
+int sys_sigsend(MESSAGE* m, struct proc* p);
+int sys_sigreturn(MESSAGE* m, struct proc* p);
+int sys_kill(MESSAGE* m, struct proc* p_proc);
+int sys_getksig(MESSAGE* m, struct proc* p_proc);
+int sys_endksig(MESSAGE* m, struct proc* p_proc);
+int sys_times(MESSAGE* m, struct proc* p_proc);
+int sys_trace(MESSAGE* m, struct proc* p_proc);
+int sys_alarm(MESSAGE* m, struct proc* p_proc);
+int sys_kprofile(MESSAGE* m, struct proc* p_proc);
 
 /* syscall.asm */
-PUBLIC void sys_call(); /* int_handler */
+void sys_call(); /* int_handler */
 
 /* system call */
-PUBLIC int sendrec(int function, int src_dest, MESSAGE* p_msg);
-PUBLIC int printx(char* s);
-PUBLIC int getinfo(int request, void* buf);
-PUBLIC int vmctl(int request, endpoint_t who);
+int sendrec(int function, int src_dest, MESSAGE* p_msg);
+int printx(char* s);
+int getinfo(int request, void* buf);
+int vmctl(int request, endpoint_t who);
 
-PUBLIC phys_bytes phys_copy(phys_bytes dest, phys_bytes src, phys_bytes len);
-PUBLIC int copy_user_message(MESSAGE* dest, MESSAGE* src);
+phys_bytes phys_copy(phys_bytes dest, phys_bytes src, phys_bytes len);
+int copy_user_message(MESSAGE* dest, MESSAGE* src);
 #define phys_set memset
 
-PUBLIC int printk(const char* fmt, ...);
-PUBLIC int printl(const char* fmt, ...);
-PUBLIC int get_sysinfo(struct sysinfo** sysinfo);
-PUBLIC int get_kinfo(kinfo_t* kinfo);
+int printk(const char* fmt, ...);
+int printl(const char* fmt, ...);
+int get_sysinfo(struct sysinfo** sysinfo);
+int get_kinfo(kinfo_t* kinfo);

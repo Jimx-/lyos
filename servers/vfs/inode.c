@@ -34,7 +34,7 @@
 #include "global.h"
 #include "proto.h"
 
-PUBLIC void init_inode_table()
+void init_inode_table()
 {
     int i;
     for (i = 0; i < INODE_HASH_SIZE; i++) {
@@ -42,16 +42,16 @@ PUBLIC void init_inode_table()
     }
 }
 
-PRIVATE void addhash_inode(struct inode* pin)
+static void addhash_inode(struct inode* pin)
 {
     unsigned int hash = pin->i_num & INODE_HASH_MASK;
 
     list_add(&(pin->list), &vfs_inode_table[hash]);
 }
 
-PRIVATE void unhash_inode(struct inode* pin) { list_del(&(pin->list)); }
+static void unhash_inode(struct inode* pin) { list_del(&(pin->list)); }
 
-PUBLIC void clear_inode(struct inode* pin)
+void clear_inode(struct inode* pin)
 {
     pin->i_cnt = 0;
     pin->i_dev = 0;
@@ -59,7 +59,7 @@ PUBLIC void clear_inode(struct inode* pin)
     rwlock_init(&(pin->i_lock));
 }
 
-PUBLIC struct inode* new_inode(dev_t dev, ino_t num)
+struct inode* new_inode(dev_t dev, ino_t num)
 {
     struct inode* pin = (struct inode*)malloc(sizeof(struct inode));
     if (!pin) return NULL;
@@ -73,7 +73,7 @@ PUBLIC struct inode* new_inode(dev_t dev, ino_t num)
     return pin;
 }
 
-PUBLIC struct inode* find_inode(dev_t dev, ino_t num)
+struct inode* find_inode(dev_t dev, ino_t num)
 {
     int hash = num & INODE_HASH_MASK;
 
@@ -87,7 +87,7 @@ PUBLIC struct inode* find_inode(dev_t dev, ino_t num)
     return NULL;
 }
 
-PUBLIC void put_inode(struct inode* pin)
+void put_inode(struct inode* pin)
 {
     if (!pin) return;
 
@@ -114,14 +114,14 @@ PUBLIC void put_inode(struct inode* pin)
     free(pin);
 }
 
-PUBLIC int lock_inode(struct inode* pin, rwlock_type_t type)
+int lock_inode(struct inode* pin, rwlock_type_t type)
 {
     return rwlock_lock(&(pin->i_lock), type);
 }
 
-PUBLIC void unlock_inode(struct inode* pin) { rwlock_unlock(&(pin->i_lock)); }
+void unlock_inode(struct inode* pin) { rwlock_unlock(&(pin->i_lock)); }
 
-PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num)
+int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num)
 {
     MESSAGE m;
     m.type = FS_PUTINODE;

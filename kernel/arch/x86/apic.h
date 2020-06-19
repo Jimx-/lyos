@@ -109,21 +109,21 @@ static inline void apic_native_msr_eoi_write(void)
     ia32_write_msr(APIC_BASE_MSR + (LAPIC_EOI >> 4), 0, 0);
 }
 
-PUBLIC u32 apicid();
-PUBLIC int lapic_enable(unsigned cpu);
+u32 apicid();
+int lapic_enable(unsigned cpu);
 void apic_set_eoi_write(void (*eoi_write)(void));
-PUBLIC void apic_init_idt(int reset);
+void apic_init_idt(int reset);
 #if CONFIG_SMP
-PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);
-PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline);
+int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);
+int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline);
 #endif
 void lapic_setup_timer_one_shot(void);
 void lapic_setup_timer_periodic(void);
-PUBLIC void lapic_set_timer_one_shot(const u32 usec);
-PUBLIC void lapic_restart_timer();
-PUBLIC void lapic_stop_timer();
-PUBLIC int detect_ioapics();
-PUBLIC int ioapic_enable();
+void lapic_set_timer_one_shot(const u32 usec);
+void lapic_restart_timer();
+void lapic_stop_timer();
+int detect_ioapics();
+int ioapic_enable();
 
 struct apic {
     u32 (*read)(u32 reg);

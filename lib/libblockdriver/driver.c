@@ -29,17 +29,17 @@
 
 #include "libblockdriver/libblockdriver.h"
 
-PRIVATE int do_open(struct blockdriver* bd, MESSAGE* msg)
+static int do_open(struct blockdriver* bd, MESSAGE* msg)
 {
     return bd->bdr_open(msg->u.m_bdev_blockdriver_msg.minor, 0);
 }
 
-PRIVATE int do_close(struct blockdriver* bd, MESSAGE* msg)
+static int do_close(struct blockdriver* bd, MESSAGE* msg)
 {
     return bd->bdr_close(msg->u.m_bdev_blockdriver_msg.minor);
 }
 
-PRIVATE ssize_t do_rdwt(struct blockdriver* bd, MESSAGE* msg)
+static ssize_t do_rdwt(struct blockdriver* bd, MESSAGE* msg)
 {
     int do_write = (msg->type == BDEV_WRITE) ? 1 : 0;
     int minor = msg->u.m_bdev_blockdriver_msg.minor;
@@ -51,7 +51,7 @@ PRIVATE ssize_t do_rdwt(struct blockdriver* bd, MESSAGE* msg)
     return bd->bdr_readwrite(minor, do_write, pos, ep, buf, count);
 }
 
-PRIVATE int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
+static int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
 {
     int minor = msg->u.m_bdev_blockdriver_msg.minor;
     int request = msg->u.m_bdev_blockdriver_msg.request;
@@ -72,7 +72,7 @@ static void blockdriver_reply(MESSAGE* msg, ssize_t reply)
     send_recv(SEND, msg->source, &reply_msg);
 }
 
-PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
+void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
 {
     ssize_t retval;
     int src = msg->source;
@@ -115,7 +115,7 @@ PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
     blockdriver_reply(msg, retval);
 }
 
-PUBLIC void blockdriver_task(struct blockdriver* bd)
+void blockdriver_task(struct blockdriver* bd)
 {
     MESSAGE msg;
     while (TRUE) {

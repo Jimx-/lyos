@@ -39,24 +39,23 @@ extern struct memfs_hooks fs_hooks;
 extern char* memfs_buf;
 extern size_t memfs_bufsize;
 
-PUBLIC int memfs_start(char* name, struct memfs_hooks* hooks,
-                       struct memfs_stat* root_stat);
-PUBLIC int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
-PUBLIC int memfs_lookup(dev_t dev, ino_t start, char* name,
-                        struct fsdriver_node* fn, int* is_mountpoint);
-PUBLIC int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
-PUBLIC int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
-                           struct fsdriver_data* data, u64* rwpos, int* count);
-PUBLIC int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
-                          u64* ppos, size_t* count);
+int memfs_start(char* name, struct memfs_hooks* hooks,
+                struct memfs_stat* root_stat);
+int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+int memfs_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
+                 int* is_mountpoint);
+int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
+int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
+                    struct fsdriver_data* data, u64* rwpos, int* count);
+int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
+                   size_t* count);
 
-PUBLIC int memfs_init_buf();
-PUBLIC int memfs_free_buf();
+int memfs_init_buf();
+int memfs_free_buf();
 
-PUBLIC int memfs_node_index(struct memfs_inode* pin);
-PUBLIC struct memfs_inode* memfs_node_parent(struct memfs_inode* pin);
-PUBLIC struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
-                                           char* name, int index,
-                                           struct memfs_stat* stat,
-                                           cbdata_t data);
+int memfs_node_index(struct memfs_inode* pin);
+struct memfs_inode* memfs_node_parent(struct memfs_inode* pin);
+struct memfs_inode* memfs_add_inode(struct memfs_inode* parent, char* name,
+                                    int index, struct memfs_stat* stat,
+                                    cbdata_t data);
 #endif

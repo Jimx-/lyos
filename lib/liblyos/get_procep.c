@@ -23,7 +23,7 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC int get_procep(pid_t pid, endpoint_t* ep)
+int get_procep(pid_t pid, endpoint_t* ep)
 {
     MESSAGE m;
 

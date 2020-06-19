@@ -31,7 +31,7 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE void pid_read(struct memfs_inode* pin)
+static void pid_read(struct memfs_inode* pin)
 {
     struct memfs_inode* parent = memfs_node_parent(pin);
 
@@ -41,8 +41,8 @@ PRIVATE void pid_read(struct memfs_inode* pin)
     ((void (*)(int))pid_files[index].data)(slot);
 }
 
-PUBLIC ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr,
-                                size_t count, off_t offset, cbdata_t data)
+ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
+                         off_t offset, cbdata_t data)
 {
     init_buf(ptr, count, offset);
 

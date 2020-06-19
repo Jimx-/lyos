@@ -39,18 +39,18 @@
 #include "global.h"
 #include "thread.h"
 
-PRIVATE char __thread_stack[NR_WORKER_THREADS * DEFAULT_THREAD_STACK_SIZE]
+static char __thread_stack[NR_WORKER_THREADS * DEFAULT_THREAD_STACK_SIZE]
     __attribute__((aligned(DEFAULT_THREAD_STACK_SIZE)));
 
-PRIVATE pthread_mutex_t request_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
-PRIVATE pthread_cond_t request_queue_not_empty = PTHREAD_COND_INITIALIZER;
-PRIVATE DEF_LIST(request_queue);
+static pthread_mutex_t request_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t request_queue_not_empty = PTHREAD_COND_INITIALIZER;
+static DEF_LIST(request_queue);
 
-PRIVATE pthread_mutex_t response_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
-PRIVATE DEF_LIST(response_queue);
+static pthread_mutex_t response_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+static DEF_LIST(response_queue);
 
 /* producer-consumer model */
-PUBLIC void enqueue_request(MESSAGE* msg)
+void enqueue_request(MESSAGE* msg)
 {
     struct vfs_message* req =
         (struct vfs_message*)malloc(sizeof(struct vfs_message));
@@ -67,7 +67,7 @@ PUBLIC void enqueue_request(MESSAGE* msg)
     pthread_mutex_unlock(&request_queue_mutex);
 }
 
-PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
+static struct vfs_message* dequeue_request(struct worker_thread* thread)
 {
     struct vfs_message* ret;
 
@@ -95,7 +95,7 @@ PRIVATE struct vfs_message* dequeue_request(struct worker_thread* thread)
     return NULL;
 }
 
-PRIVATE void enqueue_response(struct vfs_message* res)
+static void enqueue_response(struct vfs_message* res)
 {
     pthread_mutex_lock(&response_queue_mutex);
     list_add(&res->list, &response_queue);
@@ -108,14 +108,11 @@ PRIVATE void enqueue_response(struct vfs_message* res)
     }
 }
 
-PUBLIC void lock_response_queue() { pthread_mutex_lock(&response_queue_mutex); }
+void lock_response_queue() { pthread_mutex_lock(&response_queue_mutex); }
 
-PUBLIC void unlock_response_queue()
-{
-    pthread_mutex_unlock(&response_queue_mutex);
-}
+void unlock_response_queue() { pthread_mutex_unlock(&response_queue_mutex); }
 
-PUBLIC struct vfs_message* dequeue_response()
+struct vfs_message* dequeue_response()
 {
     struct vfs_message* ret = NULL;
 
@@ -129,7 +126,7 @@ PUBLIC struct vfs_message* dequeue_response()
     return ret;
 }
 
-PRIVATE void handle_request(MESSAGE* msg)
+static void handle_request(MESSAGE* msg)
 {
     int msgtype = msg->type;
 
@@ -234,7 +231,7 @@ PRIVATE void handle_request(MESSAGE* msg)
     }
 }
 
-PRIVATE int worker_loop(void* arg)
+static int worker_loop(void* arg)
 {
     struct worker_thread* self = (struct worker_thread*)arg;
     struct vfs_message* req;
@@ -248,7 +245,7 @@ PRIVATE int worker_loop(void* arg)
     return 0;
 }
 
-PUBLIC pid_t create_worker(int id)
+pid_t create_worker(int id)
 {
     int retval;
 
@@ -292,7 +289,7 @@ PUBLIC pid_t create_worker(int id)
     return pid;
 }
 
-PUBLIC struct worker_thread* worker_self()
+struct worker_thread* worker_self()
 {
     int tmp;
     int* sp = (int*)(((uintptr_t)&tmp & (~(DEFAULT_THREAD_STACK_SIZE - 1))) +
@@ -300,7 +297,7 @@ PUBLIC struct worker_thread* worker_self()
     return &workers[*sp];
 }
 
-PUBLIC void worker_wait()
+void worker_wait()
 {
     struct worker_thread* thread = worker_self();
 
@@ -309,14 +306,14 @@ PUBLIC void worker_wait()
     pthread_mutex_unlock(&thread->event_mutex);
 }
 
-PUBLIC void worker_wake(struct worker_thread* thread)
+void worker_wake(struct worker_thread* thread)
 {
     pthread_mutex_lock(&thread->event_mutex);
     pthread_cond_signal(&thread->event);
     pthread_mutex_unlock(&thread->event_mutex);
 }
 
-PUBLIC void revive_proc(endpoint_t endpoint, int result)
+void revive_proc(endpoint_t endpoint, int result)
 {
     /* revive a blocked process after returning from a blocking call */
     struct vfs_message* req =

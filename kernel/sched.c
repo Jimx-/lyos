@@ -35,14 +35,14 @@
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
 
-PUBLIC u32 rr_interval_ms;
+u32 rr_interval_ms;
 
 static DEFINE_CPULOCAL(struct list_head[SCHED_QUEUES], run_queues);
 static DEFINE_CPULOCAL(bitchunk_t[BITCHUNKS(SCHED_QUEUES)], run_queue_bitmap);
 
 #define JIFFIES_MS(j) (((j)*MSEC_PER_SEC) / system_hz)
 
-PUBLIC void init_sched()
+void init_sched()
 {
     int i, cpu;
     struct list_head* runqs;
@@ -63,7 +63,7 @@ PUBLIC void init_sched()
  * <Ring 0> Choose one proc to run.
  *
  *****************************************************************************/
-PUBLIC struct proc* pick_proc()
+struct proc* pick_proc()
 {
     struct proc *p, *selected = NULL;
     int q = -1, i, j;
@@ -105,7 +105,7 @@ PUBLIC struct proc* pick_proc()
     return selected;
 }
 
-PRIVATE int proc_queue(struct proc* p)
+static int proc_queue(struct proc* p)
 {
     int queue;
 
@@ -120,7 +120,7 @@ PRIVATE int proc_queue(struct proc* p)
 /**
  * <Ring 0> Insert a process into scheduling queue.
  */
-PUBLIC void enqueue_proc(struct proc* p)
+void enqueue_proc(struct proc* p)
 {
     int queue = proc_queue(p);
     struct list_head* runqs = get_cpulocal_var(run_queues);
@@ -144,7 +144,7 @@ void dequeue_proc(struct proc* p)
 /**
  * <Ring 0> Called when a process has run out its counter.
  */
-PUBLIC void proc_no_time(struct proc* p)
+void proc_no_time(struct proc* p)
 {
     int prio_ratio = p->priority;
 
@@ -157,7 +157,7 @@ PUBLIC void proc_no_time(struct proc* p)
 /**
  * <Ring 0> Update deadline of the process upon clock interrupt.
  */
-PUBLIC void sched_clock(struct proc* p)
+void sched_clock(struct proc* p)
 {
     int prio_ratio = p->priority;
     // u32 time_slice = (u32)p->counter_ns;

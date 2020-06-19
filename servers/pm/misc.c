@@ -32,7 +32,7 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int do_getsetid(MESSAGE* p)
+int do_getsetid(MESSAGE* p)
 {
     int retval = 0;
     struct pmproc *pmp = pm_endpt_proc(p->source), *pmpi;
@@ -146,7 +146,7 @@ PUBLIC int do_getsetid(MESSAGE* p)
     return retval;
 }
 
-PUBLIC int do_getprocep(MESSAGE* p)
+int do_getprocep(MESSAGE* p)
 {
     pid_t pid = p->PID;
     int i;
@@ -162,7 +162,7 @@ PUBLIC int do_getprocep(MESSAGE* p)
     return ESRCH;
 }
 
-PUBLIC int do_pm_getinfo(MESSAGE* p)
+int do_pm_getinfo(MESSAGE* p)
 {
     void* dest = p->BUF;
     size_t len;
@@ -181,7 +181,7 @@ PUBLIC int do_pm_getinfo(MESSAGE* p)
     return data_copy(p->source, (void*)dest, SELF, (void*)src_addr, len);
 }
 
-PUBLIC int do_pm_getepinfo(MESSAGE* p)
+int do_pm_getepinfo(MESSAGE* p)
 {
     endpoint_t endpoint = p->ENDPOINT;
     struct pmproc* pmp = pm_endpt_proc(endpoint);

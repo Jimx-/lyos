@@ -37,7 +37,7 @@
 
 //#define PAGEFAULT_DEBUG
 
-PUBLIC void do_handle_fault()
+void do_handle_fault()
 {
     if (mm_msg.FAULT_NR != 14) {
         printl("MM: unexpected fault type: %d", mm_msg.FAULT_NR);
@@ -112,8 +112,8 @@ PUBLIC void do_handle_fault()
     }
 }
 
-PRIVATE int handle_memory(struct mmproc* mmp, void* start, size_t len,
-                          int wrflag, endpoint_t caller)
+static int handle_memory(struct mmproc* mmp, void* start, size_t len,
+                         int wrflag, endpoint_t caller)
 {
     struct vir_region* vr;
 
@@ -144,7 +144,7 @@ PRIVATE int handle_memory(struct mmproc* mmp, void* start, size_t len,
     return 0;
 }
 
-PUBLIC void do_mmrequest()
+void do_mmrequest()
 {
     endpoint_t target, caller;
     void* start;

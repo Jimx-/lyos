@@ -36,9 +36,9 @@
 
 #define HASHSIZE 1024
 
-PRIVATE struct list_head cache_hash_ino[HASHSIZE];
+static struct list_head cache_hash_ino[HASHSIZE];
 
-PUBLIC void page_cache_init()
+void page_cache_init()
 {
     int i;
     for (i = 0; i < HASHSIZE; i++)
@@ -47,18 +47,17 @@ PUBLIC void page_cache_init()
     mem_info.cached = 0;
 }
 
-PRIVATE int _hash(int ino) { return ino % HASHSIZE; }
+static int _hash(int ino) { return ino % HASHSIZE; }
 
-PRIVATE void cache_add_hash_ino(struct page_cache* cp)
+static void cache_add_hash_ino(struct page_cache* cp)
 {
     INIT_LIST_HEAD(&cp->hash_ino);
     int hash = _hash(cp->ino);
     list_add(&cp->hash_ino, &cache_hash_ino[hash]);
 }
 
-PUBLIC int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino,
-                          off_t ino_offset, void* vir_addr,
-                          struct phys_frame* frame)
+int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offset,
+                   void* vir_addr, struct phys_frame* frame)
 {
     struct page_cache* cache;
     SLABALLOC(cache);
@@ -79,7 +78,7 @@ PUBLIC int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino,
     return 0;
 }
 
-PUBLIC struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino, off_t ino_off)
+struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino, off_t ino_off)
 {
     struct page_cache* cp;
     int hash = _hash(ino);

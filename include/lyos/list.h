@@ -47,9 +47,9 @@ struct list_head {
 #define offsetof(TYPE, MEMBER) ((size_t) & ((TYPE*)0)->MEMBER)
 #endif
 
-PRIVATE inline int list_empty(struct list_head* list);
-PRIVATE inline void list_add(struct list_head* new, struct list_head* head);
-PRIVATE inline void list_del(struct list_head* node);
+static inline int list_empty(struct list_head* list);
+static inline void list_add(struct list_head* new, struct list_head* head);
+static inline void list_del(struct list_head* node);
 
 #define prefetch(x) __builtin_prefetch(&x)
 
@@ -62,13 +62,13 @@ PRIVATE inline void list_del(struct list_head* node);
         n = list_next_entry(pos, member);                    \
          &pos->member != (head); pos = n, n = list_next_entry(n, member))
 
-PRIVATE inline int list_empty(struct list_head* list)
+static inline int list_empty(struct list_head* list)
 {
     return (list->next == list);
 }
 
-PRIVATE inline void __list_add(struct list_head* new, struct list_head* pre,
-                               struct list_head* next)
+static inline void __list_add(struct list_head* new, struct list_head* pre,
+                              struct list_head* next)
 {
     new->prev = pre;
     new->next = next;
@@ -76,12 +76,12 @@ PRIVATE inline void __list_add(struct list_head* new, struct list_head* pre,
     next->prev = new;
 }
 
-PRIVATE inline void list_add(struct list_head* new, struct list_head* head)
+static inline void list_add(struct list_head* new, struct list_head* head)
 {
     __list_add(new, head, head->next);
 }
 
-PRIVATE inline void list_del(struct list_head* node)
+static inline void list_del(struct list_head* node)
 {
     node->prev->next = node->next;
     node->next->prev = node->prev;

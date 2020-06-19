@@ -27,7 +27,7 @@
 
 extern endpoint_t __pci_endpoint;
 
-PUBLIC u8 pci_attr_r8(int devind, u16 port)
+u8 pci_attr_r8(int devind, u16 port)
 {
     u32 v;
     int retval;
@@ -54,7 +54,7 @@ PUBLIC u8 pci_attr_r8(int devind, u16 port)
     return (u8)msg.u.m3.m3i2;
 }
 
-PUBLIC u16 pci_attr_r16(int devind, u16 port)
+u16 pci_attr_r16(int devind, u16 port)
 {
     u32 v;
     int retval;
@@ -81,7 +81,7 @@ PUBLIC u16 pci_attr_r16(int devind, u16 port)
     return (u8)msg.u.m3.m3i2;
 }
 
-PUBLIC u32 pci_attr_r32(int devind, u16 port)
+u32 pci_attr_r32(int devind, u16 port)
 {
     u32 v;
     int retval;
@@ -108,7 +108,7 @@ PUBLIC u32 pci_attr_r32(int devind, u16 port)
     return msg.u.m3.m3i2;
 }
 
-PUBLIC int pci_attr_w16(int devind, u16 port, u16 value)
+int pci_attr_w16(int devind, u16 port, u16 value)
 {
     u32 v;
     int retval;

@@ -43,9 +43,9 @@ struct vfs_request {
     struct vfs_request* next;
 };
 
-PRIVATE struct vfs_request *queue = NULL, *active = NULL;
+static struct vfs_request *queue = NULL, *active = NULL;
 
-PRIVATE void process_queue()
+static void process_queue()
 {
     active = queue;
     queue = queue->next;
@@ -54,9 +54,9 @@ PRIVATE void process_queue()
         panic("async send vfs request failed");
 }
 
-PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd,
-                               void* addr, off_t offset, size_t len,
-                               vfs_callback_t callback, void* arg, int arg_len)
+int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, void* addr,
+                        off_t offset, size_t len, vfs_callback_t callback,
+                        void* arg, int arg_len)
 {
     struct vfs_request* request;
     SLABALLOC(request);
@@ -83,7 +83,7 @@ PUBLIC int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd,
     return 0;
 }
 
-PUBLIC int do_vfs_reply()
+int do_vfs_reply()
 {
     if (!active) return EPERM;
 

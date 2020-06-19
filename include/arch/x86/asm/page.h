@@ -89,14 +89,14 @@ typedef struct {
 #define I386_PF_NOPAGE(x) (!I386_PF_PROT(x))
 #define I386_PF_WRITE(x) ((x)&I386_PG_RW)
 
-PUBLIC void pg_identity(pde_t* pgd);
-PUBLIC void pg_mapkernel(pde_t* pgd);
-PUBLIC void pg_load(pde_t* pgd);
-PUBLIC void enable_paging();
-PUBLIC void disable_paging();
-PUBLIC int read_cr2();
-PUBLIC int read_cr3();
-PUBLIC void reload_cr3();
+void pg_identity(pde_t* pgd);
+void pg_mapkernel(pde_t* pgd);
+void pg_load(pde_t* pgd);
+void enable_paging();
+void disable_paging();
+int read_cr2();
+int read_cr3();
+void reload_cr3();
 
 #define ARCH_PG_PRESENT I386_PG_PRESENT
 #define ARCH_PG_RW I386_PG_RW

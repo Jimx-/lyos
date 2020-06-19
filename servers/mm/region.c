@@ -37,9 +37,9 @@
 #include "cache.h"
 #include "file.h"
 
-PRIVATE int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
-                                     off_t offset, int wrflag);
-PUBLIC int region_cow(struct mmproc* mmp, struct vir_region* vr, off_t offset);
+static int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
+                                    off_t offset, int wrflag);
+int region_cow(struct mmproc* mmp, struct vir_region* vr, off_t offset);
 
 /* Page fault state */
 struct filemap_pf_state {
@@ -60,7 +60,7 @@ struct filemap_pf_state {
  *
  * @param phys_region The physical region to be freed.
  */
-PRIVATE void phys_region_free(struct phys_region* rp)
+static void phys_region_free(struct phys_region* rp)
 {
     struct phys_frame* frame;
     int i;
@@ -84,7 +84,7 @@ PRIVATE void phys_region_free(struct phys_region* rp)
     rp->capacity = 0;
 }
 
-PUBLIC int phys_region_init(struct phys_region* rp, int capacity)
+int phys_region_init(struct phys_region* rp, int capacity)
 {
     int alloc_size = capacity * sizeof(struct phys_frame*);
     if (alloc_size % ARCH_PG_SIZE != 0) {
@@ -102,7 +102,7 @@ PUBLIC int phys_region_init(struct phys_region* rp, int capacity)
     return 0;
 }
 
-PRIVATE int phys_region_realloc(struct phys_region* rp, int new_capacity)
+static int phys_region_realloc(struct phys_region* rp, int new_capacity)
 {
     int alloc_size = new_capacity * sizeof(struct phys_frame*);
     if (alloc_size % ARCH_PG_SIZE != 0) {
@@ -123,7 +123,7 @@ PRIVATE int phys_region_realloc(struct phys_region* rp, int new_capacity)
     return 0;
 }
 
-PRIVATE int phys_region_extend_up_to(struct phys_region* rp, int new_capacity)
+static int phys_region_extend_up_to(struct phys_region* rp, int new_capacity)
 {
     if (rp->capacity >= new_capacity)
         return 0;
@@ -132,7 +132,7 @@ PRIVATE int phys_region_extend_up_to(struct phys_region* rp, int new_capacity)
 }
 
 /*
-PRIVATE int phys_region_right_shift(struct phys_region * rp, int new_start)
+static int phys_region_right_shift(struct phys_region * rp, int new_start)
 {
     struct phys_frame ** start = &(rp->frames[new_start]);
     memmove(start, rp->frames, (rp->capacity - new_start) * sizeof(struct
@@ -142,13 +142,13 @@ phys_frame *)); memset(rp->frames, 0, new_start * sizeof(struct phys_frame *));
 }
 */
 
-PRIVATE inline struct phys_frame* phys_region_get(struct phys_region* rp, int i)
+static inline struct phys_frame* phys_region_get(struct phys_region* rp, int i)
 {
     return rp->frames[i];
 }
 
-PRIVATE struct phys_frame* phys_region_get_or_alloc(struct phys_region* rp,
-                                                    int i)
+static struct phys_frame* phys_region_get_or_alloc(struct phys_region* rp,
+                                                   int i)
 {
     struct phys_frame* pf = phys_region_get(rp, i);
 
@@ -163,8 +163,8 @@ PRIVATE struct phys_frame* phys_region_get_or_alloc(struct phys_region* rp,
     return pf;
 }
 
-PRIVATE inline struct phys_frame* phys_region_set(struct phys_region* rp, int i,
-                                                  struct phys_frame* pf)
+static inline struct phys_frame* phys_region_set(struct phys_region* rp, int i,
+                                                 struct phys_frame* pf)
 {
     struct phys_frame* frame = rp->frames[i];
 
@@ -184,8 +184,7 @@ PRIVATE inline struct phys_frame* phys_region_set(struct phys_region* rp, int i,
  * @param  vir_length Virtual memory length.
  * @return            The memory region created.
  */
-PUBLIC struct vir_region* region_new(vir_bytes vir_base, size_t vir_length,
-                                     int flags)
+struct vir_region* region_new(vir_bytes vir_base, size_t vir_length, int flags)
 {
     struct vir_region* region;
 
@@ -214,7 +213,7 @@ PUBLIC struct vir_region* region_new(vir_bytes vir_base, size_t vir_length,
 /**
  * <Ring 1> Allocate physical memory for rp.
  */
-PUBLIC int region_alloc_phys(struct vir_region* rp)
+int region_alloc_phys(struct vir_region* rp)
 {
     struct phys_region* pregion = &(rp->phys_block);
     phys_bytes contig_mem;
@@ -257,7 +256,7 @@ PUBLIC int region_alloc_phys(struct vir_region* rp)
 /**
  * <Ring 1> Set physical memory for rp.
  */
-PUBLIC int region_set_phys(struct vir_region* rp, phys_bytes phys_addr)
+int region_set_phys(struct vir_region* rp, phys_bytes phys_addr)
 {
     struct phys_region* pregion = &(rp->phys_block);
     int len = rp->length;
@@ -283,7 +282,7 @@ PUBLIC int region_set_phys(struct vir_region* rp, phys_bytes phys_addr)
 /**
  * <Ring 1> Map the physical memory of virtual region rp.
  */
-PUBLIC int region_map_phys(struct mmproc* mmp, struct vir_region* rp)
+int region_map_phys(struct mmproc* mmp, struct vir_region* rp)
 {
 #if REGION_DEBUG
     printl("MM: region_map_phys: mapping virtual memory region(0x%x - 0x%x)\n",
@@ -313,10 +312,9 @@ PUBLIC int region_map_phys(struct mmproc* mmp, struct vir_region* rp)
     return 0;
 }
 
-PUBLIC struct vir_region* region_find_free_region(struct mmproc* mmp,
-                                                  vir_bytes minv,
-                                                  vir_bytes maxv, size_t len,
-                                                  int flags)
+struct vir_region* region_find_free_region(struct mmproc* mmp, vir_bytes minv,
+                                           vir_bytes maxv, size_t len,
+                                           int flags)
 {
     int found = 0;
     vir_bytes vaddr;
@@ -377,7 +375,7 @@ PUBLIC struct vir_region* region_find_free_region(struct mmproc* mmp,
 /**
  * <Ring 1> Unmap the physical memory of virtual region rp.
  */
-PUBLIC int region_unmap_phys(struct mmproc* mmp, struct vir_region* rp)
+int region_unmap_phys(struct mmproc* mmp, struct vir_region* rp)
 {
     /* not mapped */
     if (!(rp->flags & RF_MAPPED)) return 0;
@@ -399,7 +397,7 @@ PUBLIC int region_unmap_phys(struct mmproc* mmp, struct vir_region* rp)
     return 0;
 }
 
-PUBLIC int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
+int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
 {
     unsigned offset = ~0;
     struct vir_region *vr, *rb = NULL;
@@ -432,7 +430,7 @@ PUBLIC int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
 /**
  * <Ring 1> Extend memory region.
  */
-PUBLIC int region_extend(struct vir_region* rp, int increment)
+int region_extend(struct vir_region* rp, int increment)
 {
     if (increment % ARCH_PG_SIZE != 0) {
         increment += ARCH_PG_SIZE - (increment % ARCH_PG_SIZE);
@@ -445,9 +443,8 @@ PUBLIC int region_extend(struct vir_region* rp, int increment)
     return region_alloc_phys(rp);
 }
 
-PUBLIC int region_share(struct mmproc* p_dest, struct vir_region* dest,
-                        struct mmproc* p_src, struct vir_region* src,
-                        int writable)
+int region_share(struct mmproc* p_dest, struct vir_region* dest,
+                 struct mmproc* p_src, struct vir_region* src, int writable)
 {
     int i;
 
@@ -476,7 +473,7 @@ PUBLIC int region_share(struct mmproc* p_dest, struct vir_region* dest,
 }
 
 /*
-PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, void* addr)
+struct vir_region * region_lookup(struct mmproc * mmp, void* addr)
 {
     struct vir_region * vr;
 
@@ -490,8 +487,8 @@ PUBLIC struct vir_region * region_lookup(struct mmproc * mmp, void* addr)
 }
 */
 
-PUBLIC int region_handle_memory(struct mmproc* mmp, struct vir_region* vr,
-                                off_t offset, size_t len, int wrflag)
+int region_handle_memory(struct mmproc* mmp, struct vir_region* vr,
+                         off_t offset, size_t len, int wrflag)
 {
     off_t end = offset + len;
     off_t off;
@@ -506,8 +503,8 @@ PUBLIC int region_handle_memory(struct mmproc* mmp, struct vir_region* vr,
     return 0;
 }
 
-PRIVATE void region_handle_pf_filemap_callback(struct mmproc* mmp, MESSAGE* msg,
-                                               void* arg)
+static void region_handle_pf_filemap_callback(struct mmproc* mmp, MESSAGE* msg,
+                                              void* arg)
 {
     struct filemap_pf_state* state = (struct filemap_pf_state*)arg;
     struct mmproc* fault_proc = state->mmp;
@@ -560,8 +557,8 @@ kill:
         panic("pagefault: vmctl failed");
 }
 
-PRIVATE int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
-                                     off_t offset, int wrflag)
+static int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
+                                    off_t offset, int wrflag)
 {
     struct phys_region* pregion = &vr->phys_block;
     struct phys_frame* frame =
@@ -642,8 +639,8 @@ PRIVATE int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
     return region_cow(mmp, vr, offset);
 }
 
-PUBLIC int region_handle_pf(struct mmproc* mmp, struct vir_region* vr,
-                            off_t offset, int wrflag)
+int region_handle_pf(struct mmproc* mmp, struct vir_region* vr, off_t offset,
+                     int wrflag)
 {
     struct phys_region* pregion = &vr->phys_block;
     struct phys_frame* frame =
@@ -697,7 +694,7 @@ PUBLIC int region_handle_pf(struct mmproc* mmp, struct vir_region* vr,
     return 0;
 }
 
-PUBLIC int region_cow(struct mmproc* mmp, struct vir_region* vr, off_t offset)
+int region_cow(struct mmproc* mmp, struct vir_region* vr, off_t offset)
 {
     struct phys_region* pregion = &vr->phys_block;
     struct phys_frame* frame =
@@ -727,8 +724,8 @@ PUBLIC int region_cow(struct mmproc* mmp, struct vir_region* vr, off_t offset)
                      NO_TASK, (void*)frame->phys_addr, ARCH_PG_SIZE);
 }
 
-PRIVATE int region_split(struct mmproc* mmp, struct vir_region* vr, size_t len,
-                         struct vir_region** v1, struct vir_region** v2)
+static int region_split(struct mmproc* mmp, struct vir_region* vr, size_t len,
+                        struct vir_region** v1, struct vir_region** v2)
 {
     struct vir_region* r1 = region_new(vr->vir_addr, len, vr->flags);
     if (!r1) goto failed;
@@ -784,7 +781,7 @@ failed:
     return ENOMEM;
 }
 
-PRIVATE int region_subfree(struct vir_region* rp, off_t offset, size_t len)
+static int region_subfree(struct vir_region* rp, off_t offset, size_t len)
 {
     struct phys_region* pregion = &rp->phys_block;
     off_t limit = offset + len;
@@ -807,8 +804,8 @@ PRIVATE int region_subfree(struct vir_region* rp, off_t offset, size_t len)
     return 0;
 }
 
-PRIVATE int region_unmap(struct mmproc* mmp, struct vir_region* vr,
-                         off_t offset, size_t len)
+static int region_unmap(struct mmproc* mmp, struct vir_region* vr, off_t offset,
+                        size_t len)
 {
     region_subfree(vr, offset, len);
 
@@ -824,7 +821,7 @@ PRIVATE int region_unmap(struct mmproc* mmp, struct vir_region* vr,
     return 0;
 }
 
-PUBLIC int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
+int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
 {
     off_t offset = start % ARCH_PG_SIZE;
 
@@ -879,7 +876,7 @@ PUBLIC int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
     return 0;
 }
 
-PUBLIC int region_free(struct vir_region* rp)
+int region_free(struct vir_region* rp)
 {
     struct phys_region* pregion = &(rp->phys_block);
 

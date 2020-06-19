@@ -34,7 +34,7 @@
 
 DEF_SPINLOCK(kprofile_lock);
 
-PRIVATE void clear_recorded_flag()
+static void clear_recorded_flag()
 {
     int i;
     for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
@@ -42,7 +42,7 @@ PRIVATE void clear_recorded_flag()
     }
 }
 
-PUBLIC int sys_kprofile(MESSAGE* m, struct proc* p_proc)
+int sys_kprofile(MESSAGE* m, struct proc* p_proc)
 {
     int ret = 0;
     spinlock_lock(&kprofile_lock);

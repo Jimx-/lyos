@@ -29,35 +29,35 @@
 #define mmio_write(a, b) *((volatile unsigned int*)(a)) = (b)
 #define mmio_read(a) (*((volatile unsigned int*)(a)))
 
-PUBLIC int init_tss(unsigned cpu, void* kernel_stack);
+int init_tss(unsigned cpu, void* kernel_stack);
 
-PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp);
+void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
-PUBLIC int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
-                         void** mapped_addr);
+int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
+                  void** mapped_addr);
 
-PRIVATE inline void enable_user_access()
+static inline void enable_user_access()
 {
     __asm__ __volatile__("csrs sstatus, %0" : : "r"(SR_SUM) : "memory");
 }
 
-PRIVATE inline void disable_user_access()
+static inline void disable_user_access()
 {
     __asm__ __volatile__("csrc sstatus, %0" : : "r"(SR_SUM) : "memory");
 }
 
-PRIVATE inline void flush_tlb()
+static inline void flush_tlb()
 {
     __asm__ __volatile__("sfence.vma" : : : "memory");
 }
 
-PRIVATE inline phys_bytes read_ptbr()
+static inline phys_bytes read_ptbr()
 {
     reg_t ptbr = csr_read(sptbr);
     return (phys_bytes)((ptbr & SATP_PPN) << ARCH_PG_SHIFT);
 }
 
-PRIVATE inline void write_ptbr(phys_bytes ptbr)
+static inline void write_ptbr(phys_bytes ptbr)
 {
     flush_tlb();
     csr_write(sptbr, (ptbr >> ARCH_PG_SHIFT) | SATP_MODE);

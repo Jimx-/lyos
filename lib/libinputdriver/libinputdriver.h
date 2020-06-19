@@ -21,7 +21,7 @@ struct inputdriver {
     int (*input_other)(MESSAGE* m);
 };
 
-PUBLIC int inputdriver_start(struct inputdriver* inpd);
-PUBLIC int inputdriver_send_event(u16 type, u16 code, int value);
+int inputdriver_start(struct inputdriver* inpd);
+int inputdriver_send_event(u16 type, u16 code, int value);
 
 #endif

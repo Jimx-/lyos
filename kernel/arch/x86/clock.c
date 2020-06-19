@@ -38,12 +38,12 @@
 #include <asm/div64.h>
 #include <lyos/kvm_para.h>
 
-PRIVATE irq_hook_t timer_irq_hook;
+static irq_hook_t timer_irq_hook;
 
 static u64 tsc_per_tick[CONFIG_SMP_MAX_CPUS];
 static u64 tsc_per_state[CONFIG_SMP_MAX_CPUS][CPU_STATES];
 
-PUBLIC int arch_init_time()
+int arch_init_time()
 {
     init_hpet();
     init_tsc();
@@ -62,7 +62,7 @@ PUBLIC int arch_init_time()
  * <Ring 0> Initialize 8253/8254 PIT (Programmable Interval Timer).
  *
  *****************************************************************************/
-PUBLIC int init_8253_timer(int freq)
+int init_8253_timer(int freq)
 {
     /* 初始化 8253 PIT */
     out_byte(TIMER_MODE, RATE_GENERATOR);
@@ -72,14 +72,14 @@ PUBLIC int init_8253_timer(int freq)
     return 0;
 }
 
-PUBLIC void stop_8253_timer()
+void stop_8253_timer()
 {
     out_byte(TIMER_MODE, 0x36);
     out_byte(TIMER0, 0);
     out_byte(TIMER0, 0);
 }
 
-PUBLIC int init_local_timer(int freq)
+int init_local_timer(int freq)
 {
 #ifdef CONFIG_KVM_GUEST
     kvm_register_clock();
@@ -117,7 +117,7 @@ void setup_local_timer_periodic(void)
 #endif
 }
 
-PUBLIC void restart_local_timer()
+void restart_local_timer()
 {
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
@@ -126,7 +126,7 @@ PUBLIC void restart_local_timer()
 #endif
 }
 
-PUBLIC void stop_local_timer()
+void stop_local_timer()
 {
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {
@@ -139,7 +139,7 @@ PUBLIC void stop_local_timer()
     }
 }
 
-PUBLIC int put_local_timer_handler(irq_handler_t handler)
+int put_local_timer_handler(irq_handler_t handler)
 {
 #if CONFIG_X86_LOCAL_APIC
     if (lapic_addr) {

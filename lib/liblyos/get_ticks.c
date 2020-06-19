@@ -25,7 +25,7 @@
 #include <string.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int get_ticks(clock_t* ticks, clock_t* idle_ticks)
+int get_ticks(clock_t* ticks, clock_t* idle_ticks)
 {
     MESSAGE m;
 

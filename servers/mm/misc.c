@@ -33,7 +33,7 @@
 #include "lyos/vm.h"
 #include "global.h"
 
-PUBLIC int do_procctl()
+int do_procctl()
 {
     endpoint_t who = mm_msg.PCTL_WHO;
     int param = mm_msg.PCTL_PARAM;
@@ -59,7 +59,7 @@ PUBLIC int do_procctl()
     return retval;
 }
 
-PUBLIC int do_mm_getinfo()
+int do_mm_getinfo()
 {
     int request = mm_msg.REQUEST;
     endpoint_t src = mm_msg.source;

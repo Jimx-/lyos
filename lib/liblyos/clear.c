@@ -26,7 +26,7 @@
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int kernel_clear(endpoint_t ep)
+int kernel_clear(endpoint_t ep)
 {
     MESSAGE m;
 

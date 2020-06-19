@@ -34,25 +34,25 @@
 #include "global.h"
 #include "thread.h"
 
-PRIVATE int change_directory(struct fproc* fp, struct inode** ppin,
-                             endpoint_t src, char* pathname, int len);
-PRIVATE int change_node(struct fproc* fp, struct inode** ppin,
-                        struct inode* pin);
+static int change_directory(struct fproc* fp, struct inode** ppin,
+                            endpoint_t src, char* pathname, int len);
+static int change_node(struct fproc* fp, struct inode** ppin,
+                       struct inode* pin);
 
-PUBLIC int vfs_verify_endpt(endpoint_t ep, int* proc_nr)
+int vfs_verify_endpt(endpoint_t ep, int* proc_nr)
 {
     *proc_nr = ENDPOINT_P(ep);
     return 0;
 }
 
-PUBLIC struct fproc* vfs_endpt_proc(endpoint_t ep)
+struct fproc* vfs_endpt_proc(endpoint_t ep)
 {
     int proc_nr;
     if (vfs_verify_endpt(ep, &proc_nr) == 0) return &fproc_table[proc_nr];
     return NULL;
 }
 
-PUBLIC void lock_fproc(struct fproc* fp)
+void lock_fproc(struct fproc* fp)
 {
     int retval;
     struct worker_thread* old_self;
@@ -73,9 +73,9 @@ PUBLIC void lock_fproc(struct fproc* fp)
     worker_resume(old_self);
 }
 
-PUBLIC void unlock_fproc(struct fproc* fp) { mutex_unlock(&fp->lock); }
+void unlock_fproc(struct fproc* fp) { mutex_unlock(&fp->lock); }
 
-PUBLIC int do_fcntl()
+int do_fcntl()
 {
     int fd = self->msg_in.FD;
     int request = self->msg_in.REQUEST;
@@ -116,7 +116,7 @@ PUBLIC int do_fcntl()
 /**
  * <Ring 1> Perform the DUP and DUP2 syscalls.
  */
-PUBLIC int do_dup(void)
+int do_dup(void)
 {
     int fd = self->msg_in.FD;
     int newfd = self->msg_in.NEWFD;
@@ -150,7 +150,7 @@ PUBLIC int do_dup(void)
 /**
  * <Ring 1> Perform the CHDIR syscall.
  */
-PUBLIC int do_chdir(void)
+int do_chdir(void)
 {
     return change_directory(fproc, &fproc->pwd, fproc->endpoint,
                             self->msg_in.PATHNAME, self->msg_in.NAME_LEN);
@@ -159,7 +159,7 @@ PUBLIC int do_chdir(void)
 /**
  * <Ring 1> Perform the FCHDIR syscall.
  */
-PUBLIC int do_fchdir(void)
+int do_fchdir(void)
 {
     struct file_desc* filp = get_filp(fproc, self->msg_in.FD, RWL_READ);
     if (!filp) return EBADF;
@@ -176,8 +176,8 @@ PUBLIC int do_fchdir(void)
  * @param  len      Length of pathname.
  * @return          Zero on success.
  */
-PRIVATE int change_directory(struct fproc* fp, struct inode** ppin,
-                             endpoint_t src, char* string, int len)
+static int change_directory(struct fproc* fp, struct inode** ppin,
+                            endpoint_t src, char* string, int len)
 {
     char pathname[MAX_PATH];
     if (len > MAX_PATH) return ENAMETOOLONG;
@@ -207,8 +207,7 @@ PRIVATE int change_directory(struct fproc* fp, struct inode** ppin,
 /**
  * <Ring 1> Change ppin into pin.
  */
-PRIVATE int change_node(struct fproc* fp, struct inode** ppin,
-                        struct inode* pin)
+static int change_node(struct fproc* fp, struct inode** ppin, struct inode* pin)
 {
     int retval = 0;
 
@@ -232,7 +231,7 @@ PRIVATE int change_node(struct fproc* fp, struct inode** ppin,
     return retval;
 }
 
-PUBLIC int do_mm_request(void)
+int do_mm_request(void)
 {
     int req_type = self->msg_in.MMRTYPE;
     int fd = self->msg_in.MMRFD;
@@ -359,7 +358,7 @@ reply:
 }
 
 /* Perform fs part of fork/exit */
-PUBLIC int fs_fork(void)
+int fs_fork(void)
 {
     int i;
     struct fproc* child = vfs_endpt_proc(self->msg_in.ENDPOINT);
@@ -396,7 +395,7 @@ PUBLIC int fs_fork(void)
     return 0;
 }
 
-PUBLIC int fs_exit()
+int fs_exit()
 {
     int i;
     struct fproc* p = vfs_endpt_proc(self->msg_in.ENDPOINT);

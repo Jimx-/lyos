@@ -35,7 +35,7 @@
 
 #include <libbdev/libbdev.h>
 
-PUBLIC int initfs_readsuper(MESSAGE* p)
+int initfs_readsuper(MESSAGE* p)
 {
     dev_t dev = p->REQ_DEV;
 

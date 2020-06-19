@@ -20,6 +20,6 @@
 
 #include <libdevman/libdevman.h>
 
-PUBLIC ssize_t pci_vendor_show(struct device_attribute* attr, char* buf);
+ssize_t pci_vendor_show(struct device_attribute* attr, char* buf);
 
 #endif

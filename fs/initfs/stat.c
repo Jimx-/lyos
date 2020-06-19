@@ -34,7 +34,7 @@
 #include "tar.h"
 #include <sys/stat.h>
 
-PUBLIC int initfs_stat(MESSAGE* p)
+int initfs_stat(MESSAGE* p)
 {
     dev_t dev = (dev_t)p->STDEV;
     ino_t num = (ino_t)p->STINO;

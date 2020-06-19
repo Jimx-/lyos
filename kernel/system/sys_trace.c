@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <lyos/trace.h>
 
-PUBLIC int sys_trace(MESSAGE* m, struct proc* p_proc)
+int sys_trace(MESSAGE* m, struct proc* p_proc)
 {
     struct proc* target = endpt_proc(m->TRACE_ENDPOINT);
     if (!target) return ESRCH;

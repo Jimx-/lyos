@@ -25,9 +25,9 @@
 #include "arch_proto.h"
 #include "serial.h"
 
-PUBLIC void* uart_base_addr;
+void* uart_base_addr;
 
-PUBLIC void omap3_disp_char(const char c)
+void omap3_disp_char(const char c)
 {
     int i;
     char* base = (char*)uart_base_addr;

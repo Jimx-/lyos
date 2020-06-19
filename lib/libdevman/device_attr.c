@@ -37,12 +37,11 @@
 #define DEVICE_ATTR_HASH_MASK (((unsigned long)1 << DEVICE_ATTR_HASH_LOG2) - 1)
 
 /* device attribute hash table */
-PRIVATE struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
+static struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 
-PUBLIC int dm_init_device_attr(struct device_attribute* attr,
-                               device_id_t device, char* name, mode_t mode,
-                               void* cb_data, device_attr_show_t show,
-                               device_attr_store_t store)
+int dm_init_device_attr(struct device_attribute* attr, device_id_t device,
+                        char* name, mode_t mode, void* cb_data,
+                        device_attr_show_t show, device_attr_store_t store)
 {
     static int initialized = 0;
     if (!initialized) {
@@ -69,7 +68,7 @@ PUBLIC int dm_init_device_attr(struct device_attribute* attr,
     return 0;
 }
 
-PRIVATE void device_attr_addhash(struct device_attribute* attr)
+static void device_attr_addhash(struct device_attribute* attr)
 {
     /* Add a device attribute to hash table */
     unsigned int hash = attr->id & DEVICE_ATTR_HASH_MASK;
@@ -77,13 +76,13 @@ PRIVATE void device_attr_addhash(struct device_attribute* attr)
 }
 
 /*
-PRIVATE void device_attr_unhash(struct device_attribute* attr)
+static void device_attr_unhash(struct device_attribute* attr)
 {
     list_del(&attr->list);
 }
 */
 
-PRIVATE struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
+static struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
 {
     /* Find a dynamic attribute by its attribute id */
     unsigned int hash = id & DEVICE_ATTR_HASH_MASK;
@@ -99,7 +98,7 @@ PRIVATE struct device_attribute* find_device_attr_by_id(dev_attr_id_t id)
     return NULL;
 }
 
-PUBLIC int dm_device_attr_add(struct device_attribute* attr)
+int dm_device_attr_add(struct device_attribute* attr)
 {
     MESSAGE msg;
 
@@ -124,7 +123,7 @@ PUBLIC int dm_device_attr_add(struct device_attribute* attr)
     return 0;
 }
 
-PUBLIC ssize_t dm_device_attr_handle(MESSAGE* msg)
+ssize_t dm_device_attr_handle(MESSAGE* msg)
 {
     /* handle device attribute show/store request */
     int rw_flag = msg->type;

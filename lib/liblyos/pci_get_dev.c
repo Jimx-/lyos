@@ -28,7 +28,7 @@
 
 extern endpoint_t __pci_endpoint;
 
-PUBLIC int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
+int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 {
     u32 v;
     int retval;
@@ -61,7 +61,7 @@ PUBLIC int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
     return msg.RETVAL;
 }
 
-PUBLIC int pci_next_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
+int pci_next_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 {
     u32 v;
     int retval;

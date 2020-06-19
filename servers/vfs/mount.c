@@ -44,12 +44,12 @@
 #include "global.h"
 
 /* find device number of the given pathname */
-PRIVATE dev_t name2dev(struct fproc* fp, char* pathname);
-PRIVATE dev_t get_none_dev();
-// PRIVATE int is_none_dev(dev_t dev);
-PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
+static dev_t name2dev(struct fproc* fp, char* pathname);
+static dev_t get_none_dev();
+// static int is_none_dev(dev_t dev);
+static int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
 
-PUBLIC void clear_vfs_mount(struct vfs_mount* vmnt)
+void clear_vfs_mount(struct vfs_mount* vmnt)
 {
     vmnt->m_fs_ep = NO_TASK;
     vmnt->m_dev = NO_DEV;
@@ -60,7 +60,7 @@ PUBLIC void clear_vfs_mount(struct vfs_mount* vmnt)
     rwlock_init(&(vmnt->m_lock));
 }
 
-PUBLIC struct vfs_mount* get_free_vfs_mount()
+struct vfs_mount* get_free_vfs_mount()
 {
     struct vfs_mount* vmnt =
         (struct vfs_mount*)malloc(sizeof(struct vfs_mount));
@@ -74,7 +74,7 @@ PUBLIC struct vfs_mount* get_free_vfs_mount()
     return vmnt;
 }
 
-PUBLIC struct vfs_mount* find_vfs_mount(dev_t dev)
+struct vfs_mount* find_vfs_mount(dev_t dev)
 {
     struct vfs_mount* vmnt;
     list_for_each_entry(vmnt, &vfs_mount_table, list)
@@ -91,7 +91,7 @@ PUBLIC struct vfs_mount* find_vfs_mount(dev_t dev)
  * Lock the vfs mount.
  * @param vmnt
  */
-PUBLIC int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type)
+int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type)
 {
     return rwlock_lock(&(vmnt->m_lock), type);
 }
@@ -100,12 +100,9 @@ PUBLIC int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type)
  * Unlock the vfs mount.
  * @param vmnt
  */
-PUBLIC void unlock_vmnt(struct vfs_mount* vmnt)
-{
-    rwlock_unlock(&(vmnt->m_lock));
-}
+void unlock_vmnt(struct vfs_mount* vmnt) { rwlock_unlock(&(vmnt->m_lock)); }
 
-PUBLIC int do_mount(void)
+int do_mount(void)
 {
     unsigned long flags = self->msg_in.MFLAGS;
 
@@ -172,7 +169,7 @@ PUBLIC int do_mount(void)
     return retval;
 }
 
-PUBLIC int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
+int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
 {
     if (find_vfs_mount(dev) != NULL) return EBUSY;
     struct vfs_mount* new_pvm = get_free_vfs_mount();
@@ -299,7 +296,7 @@ PUBLIC int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
  *
  * @return The device number of the given pathname.
  */
-PRIVATE dev_t name2dev(struct fproc* fp, char* pathname)
+static dev_t name2dev(struct fproc* fp, char* pathname)
 {
     struct vfs_mount* vmnt = NULL;
     struct inode* pin = NULL;
@@ -326,13 +323,13 @@ PRIVATE dev_t name2dev(struct fproc* fp, char* pathname)
 }
 
 /*
-PRIVATE int is_none_dev(dev_t dev)
+static int is_none_dev(dev_t dev)
 {
     return (MAJOR(dev) == MAJOR_NONE) && (MINOR(dev) < NR_NONEDEVS);
 }
 */
 
-PRIVATE dev_t get_none_dev()
+static dev_t get_none_dev()
 {
     static int none_dev = 1;
 
@@ -341,7 +338,7 @@ PRIVATE dev_t get_none_dev()
     return 0;
 }
 
-PRIVATE int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)
+static int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num)
 {
     MESSAGE m;
     m.type = FS_MOUNTPOINT;

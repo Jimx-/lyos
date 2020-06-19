@@ -39,13 +39,13 @@
 #include "global.h"
 #include "libsysfs/libsysfs.h"
 
-PUBLIC int create_service(struct sproc* sp);
-PUBLIC int start_service(struct sproc* sp);
-PUBLIC int run_service(struct sproc* sp, int init_type);
-PUBLIC int init_service(struct sproc* sp, int init_type);
-PUBLIC int publish_service(struct sproc* sp);
+int create_service(struct sproc* sp);
+int start_service(struct sproc* sp);
+int run_service(struct sproc* sp, int init_type);
+int init_service(struct sproc* sp, int init_type);
+int publish_service(struct sproc* sp);
 
-PUBLIC int check_permission(endpoint_t caller, int request)
+int check_permission(endpoint_t caller, int request)
 {
     // struct proc * p = endpt_proc(caller);
     // if (p->euid != SU_UID) return EPERM;
@@ -53,7 +53,7 @@ PUBLIC int check_permission(endpoint_t caller, int request)
     return 0;
 }
 
-PUBLIC int do_service_up(MESSAGE* msg)
+int do_service_up(MESSAGE* msg)
 {
     /* get parameters from the message */
     int src = msg->source; /* caller proc nr. */
@@ -81,7 +81,7 @@ PUBLIC int do_service_up(MESSAGE* msg)
     return SUSPEND;
 }
 
-PUBLIC int do_service_init_reply(MESSAGE* msg)
+int do_service_init_reply(MESSAGE* msg)
 {
     int slot = ENDPOINT_P(msg->source);
     int result = msg->RETVAL;
@@ -102,7 +102,7 @@ PUBLIC int do_service_init_reply(MESSAGE* msg)
     return SUSPEND;
 }
 
-PUBLIC int start_service(struct sproc* sp)
+int start_service(struct sproc* sp)
 {
     int retval = create_service(sp);
     if (retval) return retval;
@@ -116,7 +116,7 @@ PUBLIC int start_service(struct sproc* sp)
     return 0;
 }
 
-PUBLIC int create_service(struct sproc* sp)
+int create_service(struct sproc* sp)
 {
     int child_pid = fork();
 
@@ -152,7 +152,7 @@ PUBLIC int create_service(struct sproc* sp)
     return 0;
 }
 
-PUBLIC int run_service(struct sproc* sp, int init_type)
+int run_service(struct sproc* sp, int init_type)
 {
     int r;
     if ((r = privctl(sp->endpoint, PRIVCTL_ALLOW, NULL)) != 0) return r;
@@ -162,7 +162,7 @@ PUBLIC int run_service(struct sproc* sp, int init_type)
     return 0;
 }
 
-PUBLIC int init_service(struct sproc* sp, int init_type)
+int init_service(struct sproc* sp, int init_type)
 {
     MESSAGE m;
     m.type = SERVICE_INIT;
@@ -174,7 +174,7 @@ PUBLIC int init_service(struct sproc* sp, int init_type)
     return 0;
 }
 
-PUBLIC int publish_service(struct sproc* sp)
+int publish_service(struct sproc* sp)
 {
     char label[MAX_PATH];
 

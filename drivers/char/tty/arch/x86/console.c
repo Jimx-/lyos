@@ -39,19 +39,19 @@
 #define V_MEM_BASE 0xB8000 /* base of color video memory */
 #define V_MEM_SIZE 0x8000  /* 32K: B8000H -> BFFFFH */
 
-PUBLIC char* console_mem = NULL;
+char* console_mem = NULL;
 
 /* #define __TTY_DEBUG__ */
 
 extern int fbcon_init();
 
 /* local routines */
-PRIVATE void cons_write(TTY* tty);
-PRIVATE void parse_escape(CONSOLE* con, char c);
-PRIVATE void do_escape(CONSOLE* con, char c);
-PRIVATE void flush(CONSOLE* con);
-PRIVATE void w_copy(unsigned int dst, const unsigned int src, int size);
-PRIVATE void clear_screen(int pos, int len);
+static void cons_write(TTY* tty);
+static void parse_escape(CONSOLE* con, char c);
+static void do_escape(CONSOLE* con, char c);
+static void flush(CONSOLE* con);
+static void w_copy(unsigned int dst, const unsigned int src, int size);
+static void clear_screen(int pos, int len);
 
 #define buflen(buf) (sizeof(buf) / sizeof((buf)[0]))
 #define bufend(buf) ((buf) + buflen(buf))
@@ -64,7 +64,7 @@ PRIVATE void clear_screen(int pos, int len);
  *
  * @param tty The TTY struct.
  *****************************************************************************/
-PRIVATE void cons_write(TTY* tty)
+static void cons_write(TTY* tty)
 {
     char buf[4096];
     char* p = tty->tty_outbuf;
@@ -112,7 +112,7 @@ PRIVATE void cons_write(TTY* tty)
  *
  * @param tty  Whose console is to be initialized.
  *****************************************************************************/
-PUBLIC void init_screen(TTY* tty)
+void init_screen(TTY* tty)
 {
     int nr_tty = tty - tty_table;
     CONSOLE* con = console_table + nr_tty;
@@ -167,7 +167,7 @@ PUBLIC void init_screen(TTY* tty)
  * @param con  The console to which the char is printed.
  * @param ch   The char to print.
  *****************************************************************************/
-PUBLIC void out_char(TTY* tty, char ch)
+void out_char(TTY* tty, char ch)
 {
     CONSOLE* con = tty->tty_dev;
 
@@ -254,7 +254,7 @@ PUBLIC void out_char(TTY* tty, char ch)
  * @param pos  Write from here.
  * @param len  How many whitespaces will be written.
  *****************************************************************************/
-PRIVATE void clear_screen(int pos, int len)
+static void clear_screen(int pos, int len)
 {
     u8* pch = (u8*)(console_mem + pos * 2);
     while (--len >= 0) {
@@ -273,7 +273,7 @@ PRIVATE void clear_screen(int pos, int len)
  *
  * @return   TRUE if con is the current console.
  *****************************************************************************/
-PUBLIC int is_current_console(CONSOLE* con)
+int is_current_console(CONSOLE* con)
 {
     return (con == &console_table[current_console]);
 }
@@ -281,7 +281,7 @@ PUBLIC int is_current_console(CONSOLE* con)
 /*****************************************************************************
  *                     parse_escape
  *****************************************************************************/
-PRIVATE void parse_escape(CONSOLE* con, char c)
+static void parse_escape(CONSOLE* con, char c)
 {
 
     switch (con->c_esc_state) {
@@ -321,7 +321,7 @@ PRIVATE void parse_escape(CONSOLE* con, char c)
 /*****************************************************************************
  *                      do_escape
  *****************************************************************************/
-PRIVATE void do_escape(CONSOLE* con, char c)
+static void do_escape(CONSOLE* con, char c)
 {
     int value, m, n, i, bg_color, fg_color;
     unsigned src, dst, count;
@@ -498,7 +498,7 @@ PRIVATE void do_escape(CONSOLE* con, char c)
  *
  * @param nr_console   Console nr, range in [0, NR_CONSOLES-1].
  *****************************************************************************/
-PUBLIC void select_console(int nr_console)
+void select_console(int nr_console)
 {
     if ((nr_console < 0) || (nr_console >= NR_CONSOLES)) return;
 
@@ -524,7 +524,7 @@ PUBLIC void select_console(int nr_console)
  * @param dir   SCR_UP : scroll the screen upwards;
  *              SCR_DN : scroll the screen downwards
  *****************************************************************************/
-PUBLIC void scroll_screen(CONSOLE* con, int dir)
+void scroll_screen(CONSOLE* con, int dir)
 {
     /*
      * variables below are all in-console-offsets (based on con->origin)
@@ -584,7 +584,7 @@ PUBLIC void scroll_screen(CONSOLE* con, int dir)
  *
  * @param con  The console to be set.
  *****************************************************************************/
-PRIVATE void flush(CONSOLE* con)
+static void flush(CONSOLE* con)
 {
     if (is_current_console(con) && con->flush) {
         con->flush(con);
@@ -616,7 +616,7 @@ PRIVATE void flush(CONSOLE* con)
  * @param src   Addr of source.
  * @param size  How many words will be copied.
  *****************************************************************************/
-PRIVATE void w_copy(unsigned int dst, const unsigned int src, int size)
+static void w_copy(unsigned int dst, const unsigned int src, int size)
 {
     memcpy((void*)(console_mem + (dst << 1)), (void*)(console_mem + (src << 1)),
            size << 1);

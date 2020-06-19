@@ -25,7 +25,7 @@
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC int privctl(endpoint_t whom, int request, void* data)
+int privctl(endpoint_t whom, int request, void* data)
 {
     MESSAGE m;
     m.ENDPOINT = whom;

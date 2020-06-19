@@ -24,11 +24,11 @@ struct cpu {
     u32 flags;
 };
 
-PUBLIC void set_cpu_flag(int cpu, u32 flags);
-PUBLIC void clear_cpu_flag(int cpu, u32 flag);
-PUBLIC int test_cpu_flag(int cpu, u32 flag);
+void set_cpu_flag(int cpu, u32 flags);
+void clear_cpu_flag(int cpu, u32 flag);
+int test_cpu_flag(int cpu, u32 flag);
 
-PUBLIC void wait_for_aps_to_finish_booting();
-PUBLIC void ap_finished_booting();
+void wait_for_aps_to_finish_booting();
+void ap_finished_booting();
 
 #endif

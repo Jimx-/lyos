@@ -24,11 +24,11 @@
 #include <lyos/sysutils.h>
 
 #define ASYNC_SIZE 200
-PRIVATE async_message_t async_msg[ASYNC_SIZE];
-PRIVATE int first_slot = 0, next_slot = 0;
-PRIVATE int initialized = 0;
+static async_message_t async_msg[ASYNC_SIZE];
+static int first_slot = 0, next_slot = 0;
+static int initialized = 0;
 
-PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
+int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
 {
     int i;
 
@@ -84,7 +84,7 @@ PUBLIC int asyncsend3(endpoint_t dest, MESSAGE* msg, int flags)
     return send_async(&async_msg[first_slot], len);
 }
 
-PUBLIC int async_sendrec(endpoint_t dest, MESSAGE* msg, int flags)
+int async_sendrec(endpoint_t dest, MESSAGE* msg, int flags)
 {
     int retval = asyncsend3(dest, msg, 0);
     if (retval) {

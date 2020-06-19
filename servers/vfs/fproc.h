@@ -41,7 +41,7 @@ EXTERN struct fproc {
 #define FPF_INUSE 0x1
 #define FPF_PENDING 0x2
 
-PUBLIC void lock_fproc(struct fproc* fp);
-PUBLIC void unlock_fproc(struct fproc* fp);
+void lock_fproc(struct fproc* fp);
+void unlock_fproc(struct fproc* fp);
 
 #endif /* _VFS_FPROC_H_ */

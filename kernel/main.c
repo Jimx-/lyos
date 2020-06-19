@@ -44,7 +44,7 @@
     "Lyos version " UTS_RELEASE " (compiled by " LYOS_COMPILE_BY \
     "@" LYOS_COMPILE_HOST ")(" LYOS_COMPILER ") " UTS_VERSION "\n"
 
-PUBLIC void init_arch();
+void init_arch();
 
 /*****************************************************************************
  *                               kernel_main
@@ -53,7 +53,7 @@ PUBLIC void init_arch();
  * jmp from kernel.asm::_start.
  *
  *****************************************************************************/
-PUBLIC int kernel_main()
+int kernel_main()
 {
     init_arch();
     arch_setup_cpulocals();
@@ -125,7 +125,7 @@ PUBLIC int kernel_main()
     }
 }
 
-PUBLIC void finish_bsp_booting()
+void finish_bsp_booting()
 {
     identify_cpu();
 
@@ -153,7 +153,7 @@ PUBLIC void finish_bsp_booting()
 /*****************************************************************************
  *                                get_ticks
  *****************************************************************************/
-PUBLIC int get_ticks()
+int get_ticks()
 {
     MESSAGE msg;
     reset_msg(&msg);
@@ -165,7 +165,7 @@ PUBLIC int get_ticks()
 /*****************************************************************************
  *                                panic
  *****************************************************************************/
-PUBLIC void panic(const char* fmt, ...)
+void panic(const char* fmt, ...)
 {
     char buf[256];
 

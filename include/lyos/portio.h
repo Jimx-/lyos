@@ -47,8 +47,8 @@ typedef struct {
     u32 value;
 } pl_pair_t;
 
-PUBLIC int portio_in(int port, u32* value, int type);
-PUBLIC int portio_out(int port, u32 value, int type);
+int portio_in(int port, u32* value, int type);
+int portio_out(int port, u32 value, int type);
 
 #define portio_inb(p, v) portio_in(p, (u32*)v, PIO_BYTE)
 #define portio_inw(p, v) portio_in(p, (u32*)v, PIO_WORD)
@@ -64,9 +64,9 @@ PUBLIC int portio_out(int port, u32 value, int type);
         (pair).value = (v); \
     } while (0)
 
-PUBLIC int portio_voutb(pb_pair_t* pairs, int nr_ports);
+int portio_voutb(pb_pair_t* pairs, int nr_ports);
 
-PUBLIC int portio_sin(int port, void* buf, int len);
-PUBLIC int portio_sout(int port, void* buf, int len);
+int portio_sin(int port, void* buf, int len);
+int portio_sout(int port, void* buf, int len);
 
 #endif

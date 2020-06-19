@@ -16,22 +16,22 @@
 #ifndef _CHAR_PROTO_H_
 #define _CHAR_PROTO_H_
 
-PUBLIC void kb_init(TTY* tty);
-PUBLIC void keyboard_read(TTY* p_tty);
-PUBLIC int keyboard_interrupt(MESSAGE* m);
-PUBLIC void handle_events(TTY* tty);
-PUBLIC int in_process(TTY* p_tty, char* buf, int count);
-PUBLIC void dump_tty_buf(); /* for debug only */
-PUBLIC void do_input(MESSAGE* msg);
-PUBLIC void init_keyboard();
+void kb_init(TTY* tty);
+void keyboard_read(TTY* p_tty);
+int keyboard_interrupt(MESSAGE* m);
+void handle_events(TTY* tty);
+int in_process(TTY* p_tty, char* buf, int count);
+void dump_tty_buf(); /* for debug only */
+void do_input(MESSAGE* msg);
+void init_keyboard();
 
-PUBLIC void out_char(TTY* tty, char ch);
-PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
-PUBLIC void select_console(int nr_console);
-PUBLIC void init_screen(TTY* p_tty);
-PUBLIC int is_current_console(CONSOLE* p_con);
+void out_char(TTY* tty, char ch);
+void scroll_screen(CONSOLE* p_con, int direction);
+void select_console(int nr_console);
+void init_screen(TTY* p_tty);
+int is_current_console(CONSOLE* p_con);
 
-PUBLIC int init_rs();
-PUBLIC int rs_interrupt(MESSAGE* m);
+int init_rs();
+int rs_interrupt(MESSAGE* m);
 
 #endif /* _CHAR_PROTO_H_ */

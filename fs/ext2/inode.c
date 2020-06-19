@@ -41,11 +41,11 @@
 #define DEB(x)
 #endif
 
-PRIVATE ext2_inode_t* ext2_alloc_unused_inode();
-PRIVATE void ext2_release_inode(ext2_inode_t* pin);
-PRIVATE int rw_inode(ext2_inode_t* inode, int rw_flag);
+static ext2_inode_t* ext2_alloc_unused_inode();
+static void ext2_release_inode(ext2_inode_t* pin);
+static int rw_inode(ext2_inode_t* inode, int rw_flag);
 
-PUBLIC void ext2_init_inode()
+void ext2_init_inode()
 {
     int i;
     for (i = 0; i < EXT2_INODE_HASH_SIZE; i++) {
@@ -58,7 +58,7 @@ PUBLIC void ext2_init_inode()
     }
 }
 
-PRIVATE ext2_inode_t* ext2_alloc_unused_inode()
+static ext2_inode_t* ext2_alloc_unused_inode()
 {
     if (list_empty(&ext2_unused_inode_list)) panic("ext2: inode table full.");
 
@@ -69,24 +69,21 @@ PRIVATE ext2_inode_t* ext2_alloc_unused_inode()
     return ret;
 }
 
-PRIVATE void ext2_release_inode(ext2_inode_t* pin)
+static void ext2_release_inode(ext2_inode_t* pin)
 {
     list_add(&(pin->list), &ext2_unused_inode_list);
 }
 
-PRIVATE void ext2_addhash_inode(ext2_inode_t* inode)
+static void ext2_addhash_inode(ext2_inode_t* inode)
 {
     unsigned int hash = inode->i_num & EXT2_INODE_HASH_MASK;
 
     list_add(&(inode->list), &ext2_inode_table[hash]);
 }
 
-PRIVATE void ext2_unhash_inode(ext2_inode_t* inode)
-{
-    list_del(&(inode->list));
-}
+static void ext2_unhash_inode(ext2_inode_t* inode) { list_del(&(inode->list)); }
 
-PUBLIC ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num)
+ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num)
 {
     int hash = num & EXT2_INODE_HASH_MASK;
 
@@ -117,7 +114,7 @@ PUBLIC ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num)
     return inode;
 }
 
-PUBLIC ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num)
+ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num)
 {
     int hash = num & EXT2_INODE_HASH_MASK;
 
@@ -131,7 +128,7 @@ PUBLIC ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num)
     return NULL;
 }
 
-PUBLIC void put_ext2_inode(ext2_inode_t* pin)
+void put_ext2_inode(ext2_inode_t* pin)
 {
     if (!pin) return;
     if (pin->i_count < 1) panic("ext2fs: put_inode: pin->i_count already < 1");
@@ -143,7 +140,7 @@ PUBLIC void put_ext2_inode(ext2_inode_t* pin)
     }
 }
 
-PUBLIC int ext2_putinode(dev_t dev, ino_t num)
+int ext2_putinode(dev_t dev, ino_t num)
 {
     ext2_inode_t* pin = get_ext2_inode(dev, num);
     put_ext2_inode(pin);
@@ -151,7 +148,7 @@ PUBLIC int ext2_putinode(dev_t dev, ino_t num)
     return 0;
 }
 
-PRIVATE void update_times(ext2_inode_t* pin)
+static void update_times(ext2_inode_t* pin)
 {
     if (pin->i_update == 0) return;
 
@@ -163,12 +160,12 @@ PRIVATE void update_times(ext2_inode_t* pin)
     pin->i_update = 0;
 }
 
-PUBLIC int ext2_rw_inode(ext2_inode_t* inode, int rw_flag)
+int ext2_rw_inode(ext2_inode_t* inode, int rw_flag)
 {
     return rw_inode(inode, rw_flag);
 }
 
-PRIVATE int rw_inode(ext2_inode_t* inode, int rw_flag)
+static int rw_inode(ext2_inode_t* inode, int rw_flag)
 {
     dev_t dev = inode->i_dev;
 
@@ -208,7 +205,7 @@ PRIVATE int rw_inode(ext2_inode_t* inode, int rw_flag)
  * <Ring 1> Print pin's information.
  * @param pin The inode.
  */
-PUBLIC void ext2_dump_inode(ext2_inode_t* pin)
+void ext2_dump_inode(ext2_inode_t* pin)
 {
     printl("-------------------------\n");
     printl("Ext2 Inode #%d @ dev %x\n", pin->i_num, pin->i_dev);
@@ -223,7 +220,7 @@ PUBLIC void ext2_dump_inode(ext2_inode_t* pin)
 /**
  * <Ring 1> Synchronize all inodes.
  */
-PUBLIC void ext2_sync_inodes()
+void ext2_sync_inodes()
 {
     int i;
     for (i = 0; i < EXT2_INODE_HASH_SIZE; i++) {

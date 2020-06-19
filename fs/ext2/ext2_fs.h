@@ -299,62 +299,61 @@ typedef struct ext2_dir_entry ext2_dir_entry_t;
 #define EXT2_BUFFER_WRITE_IMME \
     0x01 /* write the buffer immediately back to the disk */
 
-PUBLIC int read_ext2_super_block(dev_t dev);
-PUBLIC int write_ext2_super_block(dev_t dev);
-PUBLIC ext2_superblock_t* get_ext2_super_block(dev_t dev);
-PUBLIC ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
-                                                unsigned int desc_num);
+int read_ext2_super_block(dev_t dev);
+int write_ext2_super_block(dev_t dev);
+ext2_superblock_t* get_ext2_super_block(dev_t dev);
+ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
+                                         unsigned int desc_num);
 
-PUBLIC void ext2_init_inode();
-PUBLIC ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num);
-PUBLIC ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num);
-PUBLIC void put_ext2_inode(ext2_inode_t* pin);
-PUBLIC int ext2_putinode(dev_t dev, ino_t num);
-PUBLIC int ext2_rw_inode(ext2_inode_t* inode, int rw_flag);
-PUBLIC void ext2_dump_inode(ext2_inode_t* pin);
+void ext2_init_inode();
+ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num);
+ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num);
+void put_ext2_inode(ext2_inode_t* pin);
+int ext2_putinode(dev_t dev, ino_t num);
+int ext2_rw_inode(ext2_inode_t* inode, int rw_flag);
+void ext2_dump_inode(ext2_inode_t* pin);
 
-PUBLIC int ext2_lookup(dev_t dev, ino_t start, char* name,
-                       struct fsdriver_node* fn, int* is_mountpoint);
-PUBLIC int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char* pathname,
-                           int flags, ext2_inode_t** result, size_t* offsetp);
-PUBLIC ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
-                                  char string[EXT2_NAME_LEN + 1]);
-PUBLIC int ext2_search_dir(ext2_inode_t* dir_pin,
-                           char string[EXT2_NAME_LEN + 1], ino_t* num, int flag,
-                           int ftype);
+int ext2_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
+                int* is_mountpoint);
+int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char* pathname,
+                    int flags, ext2_inode_t** result, size_t* offsetp);
+ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
+                           char string[EXT2_NAME_LEN + 1]);
+int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
+                    ino_t* num, int flag, int ftype);
 
-PUBLIC block_t ext2_read_map(ext2_inode_t* pin, off_t position);
-PUBLIC int ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
-                     struct fsdriver_data* data, u64* rwpos, int* count);
-PUBLIC int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
-                         u64* ppos, size_t* count);
+block_t ext2_read_map(ext2_inode_t* pin, off_t position);
+int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
+              u64* rwpos, int* count);
+int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
+                  size_t* count);
 
-PUBLIC ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block);
-PUBLIC void ext2_put_buffer(ext2_buffer_t* pb);
-PUBLIC void ext2_sync_buffers();
-PUBLIC void ext2_zero_buffer(ext2_buffer_t* pb);
-PUBLIC int ext2_update_group_desc(ext2_superblock_t* psb, int desc);
-PUBLIC void ext2_init_buffer_cache();
-PUBLIC int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block);
+void ext2_put_buffer(ext2_buffer_t* pb);
+void ext2_sync_buffers();
+void ext2_zero_buffer(ext2_buffer_t* pb);
+int ext2_update_group_desc(ext2_superblock_t* psb, int desc);
+void ext2_init_buffer_cache();
+int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
 
-PUBLIC ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position);
-PUBLIC block_t ext2_alloc_block(ext2_inode_t* pin);
-PUBLIC int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp);
-PUBLIC ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode);
+ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position);
+block_t ext2_alloc_block(ext2_inode_t* pin);
+int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp);
+ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode);
 
-PUBLIC int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
+int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
 
-PUBLIC void ext2_sync_inodes();
-PUBLIC int ext2_sync();
+void ext2_sync_inodes();
+int ext2_sync();
 
-PUBLIC int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode,
-                       uid_t uid, gid_t gid, struct fsdriver_node* fn);
-PUBLIC int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode,
-                      uid_t uid, gid_t gid);
+int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
+                gid_t gid, struct fsdriver_node* fn);
+int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
+               gid_t gid);
 
-PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                       size_t* bytes);
-PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
-PUBLIC int ext2_chmod(dev_t dev, ino_t num, mode_t* mode);
+int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
+                size_t* bytes);
+int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
+int ext2_chmod(dev_t dev, ino_t num, mode_t* mode);
 
 #endif

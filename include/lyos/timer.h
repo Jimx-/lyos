@@ -31,9 +31,9 @@ struct timer_list {
 
 #define TIMER_UNSET ((clock_t)0xffffffff)
 
-PUBLIC void timer_remove(struct timer_list* timer);
-PUBLIC void set_timer(struct timer_list* timer, clock_t ticks,
-                      timer_callback_t cb, int arg);
-PUBLIC void expire_timer(clock_t timestamp);
+void timer_remove(struct timer_list* timer);
+void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb,
+               int arg);
+void expire_timer(clock_t timestamp);
 
 #endif

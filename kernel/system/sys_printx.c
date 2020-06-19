@@ -33,8 +33,8 @@
 #include <lyos/sysutils.h>
 #include <lyos/priv.h>
 
-PRIVATE void kputc(char c);
-PRIVATE void kputs(char* s);
+static void kputc(char c);
+static void kputs(char* s);
 
 /*****************************************************************************
  *                                sys_printx
@@ -60,7 +60,7 @@ PRIVATE void kputs(char* s);
  *
  * @return  Zero if success.
  *****************************************************************************/
-PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
+int sys_printx(MESSAGE* m, struct proc* p_proc)
 {
     char buf[80 * 25 + 1];
     int retval;
@@ -89,7 +89,7 @@ PUBLIC int sys_printx(MESSAGE* m, struct proc* p_proc)
 /**
  * <Ring 0> Put a character into kernel log buffer.
  */
-PRIVATE void kputc(char c)
+static void kputc(char c)
 {
     if (c != 0) {
         kern_log.buf[kern_log.next] = c;
@@ -110,7 +110,7 @@ PRIVATE void kputc(char c)
 /**
  * <Ring 0> Put a string into kernel log buffer.
  */
-PRIVATE void kputs(char* s)
+static void kputs(char* s)
 {
     const char* p;
     char ch;
@@ -137,7 +137,7 @@ PRIVATE void kputs(char* s)
  *
  * @return  The number of chars printed.
  *****************************************************************************/
-PUBLIC int printk(const char* fmt, ...)
+int printk(const char* fmt, ...)
 {
     int i;
     char buf[STR_DEFAULT_LEN];

@@ -31,7 +31,7 @@
 
 extern clock_t idle_ticks;
 
-PUBLIC int sys_times(MESSAGE* m, struct proc* p_proc)
+int sys_times(MESSAGE* m, struct proc* p_proc)
 {
     m->BOOT_TICKS = jiffies;
     m->IDLE_TICKS = idle_ticks;

@@ -30,7 +30,7 @@
 #include "proto.h"
 #include "global.h"
 
-PUBLIC int do_ioctl(void)
+int do_ioctl(void)
 {
     int fd = self->msg_in.FD;
     int retval = 0;

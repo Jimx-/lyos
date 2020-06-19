@@ -36,7 +36,7 @@
 #include <asm/type.h>
 
 #ifdef __i386__
-PRIVATE const char* x86_flag[] = {
+static const char* x86_flag[] = {
     "sse3",    "pclmulqdq",  "dtes64",  "monitor", "ds_cpl",
     "vmx",     "smx",        "est",     "tm2",     "ssse3",
     "cnxt_id", "sdbg",       "fma",     "cx16",    "xtpr",
@@ -52,7 +52,7 @@ PRIVATE const char* x86_flag[] = {
     "htt",     "tm",         "ia64",    "pbe",
 };
 
-PRIVATE void print_x86_cpu_flags(u32* flags)
+static void print_x86_cpu_flags(u32* flags)
 {
     int i, j;
 
@@ -66,7 +66,7 @@ PRIVATE void print_x86_cpu_flags(u32* flags)
 }
 #endif
 
-PRIVATE void print_cpu(struct cpu_info* cpu_info, int idx)
+static void print_cpu(struct cpu_info* cpu_info, int idx)
 {
     buf_printf("%-16s: %d\n", "processor", idx);
 
@@ -93,7 +93,7 @@ PRIVATE void print_cpu(struct cpu_info* cpu_info, int idx)
     buf_printf("\n");
 }
 
-PUBLIC void root_cpuinfo()
+void root_cpuinfo()
 {
     struct machine machine;
     struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];

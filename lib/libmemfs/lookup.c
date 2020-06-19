@@ -25,11 +25,11 @@
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
 
-PRIVATE struct memfs_inode* memfs_advance(struct memfs_inode* parent,
-                                          char* name);
+static struct memfs_inode* memfs_advance(struct memfs_inode* parent,
+                                         char* name);
 
-PUBLIC int memfs_lookup(dev_t dev, ino_t start, char* name,
-                        struct fsdriver_node* fn, int* is_mountpoint)
+int memfs_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
+                 int* is_mountpoint)
 {
     struct memfs_inode* dir_pin = memfs_find_inode(start);
     if (!dir_pin) return EINVAL;
@@ -49,8 +49,7 @@ PUBLIC int memfs_lookup(dev_t dev, ino_t start, char* name,
     return 0;
 }
 
-PRIVATE struct memfs_inode* memfs_advance(struct memfs_inode* parent,
-                                          char* name)
+static struct memfs_inode* memfs_advance(struct memfs_inode* parent, char* name)
 {
     struct memfs_inode* node;
 

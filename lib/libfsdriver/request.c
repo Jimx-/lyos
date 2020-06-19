@@ -29,7 +29,7 @@
 #include <libbdev/libbdev.h>
 #include <libfsdriver/libfsdriver.h>
 
-PUBLIC int fsdriver_register(struct fsdriver* fsd)
+int fsdriver_register(struct fsdriver* fsd)
 {
     MESSAGE m;
 
@@ -45,7 +45,7 @@ PUBLIC int fsdriver_register(struct fsdriver* fsd)
     return m.RETVAL;
 }
 
-PUBLIC int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m)
 {
     struct fsdriver_node fn;
     dev_t dev = m->REQ_DEV;
@@ -66,7 +66,7 @@ PUBLIC int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m)
     return retval;
 }
 
-PUBLIC int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->REQ_DEV;
     ino_t num = m->REQ_NUM;
@@ -76,7 +76,7 @@ PUBLIC int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_mountpoint(dev, num);
 }
 
-PUBLIC int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->REQ_DEV;
     ino_t num = m->REQ_NUM;
@@ -86,7 +86,7 @@ PUBLIC int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_putinode(dev, num);
 }
 
-PUBLIC int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
 {
     mode_t mode = (mode_t)(m->CRMODE);
     uid_t uid = (uid_t)(m->CRUID);
@@ -125,7 +125,7 @@ PUBLIC int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
     return retval;
 }
 
-PUBLIC int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
 {
     mode_t mode = (mode_t)(m->CRMODE);
     uid_t uid = (uid_t)(m->CRUID);
@@ -152,7 +152,7 @@ PUBLIC int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
     return retval;
 }
 
-PUBLIC int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (int)m->RWDEV;
     ino_t num = m->RWINO;
@@ -177,7 +177,7 @@ PUBLIC int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
     return 0;
 }
 
-PUBLIC int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (dev_t)m->STDEV;
     ino_t num = (ino_t)m->STINO;
@@ -190,7 +190,7 @@ PUBLIC int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_stat(dev, num, &data);
 }
 
-PUBLIC int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (dev_t)m->REQ_DEV;
     ino_t num = (ino_t)m->REQ_NUM;
@@ -202,7 +202,7 @@ PUBLIC int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_ftrunc(dev, num, start_pos, end_pos);
 }
 
-PUBLIC int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (dev_t)m->REQ_DEV;
     ino_t num = (ino_t)m->REQ_NUM;
@@ -218,7 +218,7 @@ PUBLIC int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m)
     return 0;
 }
 
-PUBLIC int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->RWDEV;
     ino_t num = m->RWINO;
@@ -239,10 +239,10 @@ PUBLIC int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
     return 0;
 }
 
-PUBLIC int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m)
 {
     if (fsd->fs_sync == NULL) return ENOSYS;
     return fsd->fs_sync();
 }
 
-PUBLIC int fsdriver_driver(dev_t dev) { return bdev_driver(dev); }
+int fsdriver_driver(dev_t dev) { return bdev_driver(dev); }

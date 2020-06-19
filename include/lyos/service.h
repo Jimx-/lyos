@@ -57,9 +57,9 @@ struct pci_acl {
 
 typedef int (*serv_init_fresh_callback_t)();
 
-PUBLIC void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb);
-PUBLIC int serv_init();
+void serv_register_init_fresh_callback(serv_init_fresh_callback_t cb);
+int serv_init();
 
-PUBLIC int pci_set_acl(struct pci_acl* pci_acl);
+int pci_set_acl(struct pci_acl* pci_acl);
 
 #endif

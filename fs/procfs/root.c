@@ -36,14 +36,14 @@
 #include "type.h"
 #include "proto.h"
 
-PRIVATE void root_cmdline();
-PRIVATE void root_version();
-PRIVATE void root_uptime();
-PUBLIC void root_cpuinfo();
-PUBLIC void root_meminfo();
+static void root_cmdline();
+static void root_version();
+static void root_uptime();
+void root_cpuinfo();
+void root_meminfo();
 static void root_stat(void);
 
-PUBLIC struct procfs_file root_files[] = {
+struct procfs_file root_files[] = {
     {"cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},
     {"version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version},
     {"uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime},
@@ -53,7 +53,7 @@ PUBLIC struct procfs_file root_files[] = {
     {NULL, 0, NULL},
 };
 
-PRIVATE void root_cmdline()
+static void root_cmdline()
 {
     static char kernel_cmdline[KINFO_CMDLINE_LEN];
     static int kernel_cmdline_init = 0;
@@ -75,7 +75,7 @@ PRIVATE void root_cmdline()
     buf_printf("%s\n", kernel_cmdline);
 }
 
-PRIVATE void root_version()
+static void root_version()
 {
     struct utsname utsname;
     uname(&utsname);
@@ -84,7 +84,7 @@ PRIVATE void root_version()
                utsname.version);
 }
 
-PRIVATE void root_uptime()
+static void root_uptime()
 {
     clock_t ticks, idle_ticks;
     int hz = get_system_hz();

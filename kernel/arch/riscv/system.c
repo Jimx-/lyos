@@ -36,9 +36,9 @@ Lyos is free software: you can redistribute it and/or modify
 #include "libexec/libexec.h"
 #include <asm/type.h>
 
-PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
+struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC struct proc* arch_switch_to_user()
+struct proc* arch_switch_to_user()
 {
     struct proc* p;
     reg_t stk;
@@ -52,7 +52,7 @@ PUBLIC struct proc* arch_switch_to_user()
     return p;
 }
 
-PRIVATE int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
+static int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     enable_user_access();
     memset(vaddr, 0, len);
@@ -61,15 +61,15 @@ PRIVATE int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
+static int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
 
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
-                         size_t len)
+static int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                        size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
 
@@ -80,7 +80,7 @@ PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
     return 0;
 }
 
-PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp)
+void arch_boot_proc(struct proc* p, struct boot_proc* bp)
 {
     /* make MM run */
     if (bp->proc_nr == TASK_MM) {
@@ -119,9 +119,9 @@ PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp)
  * <Ring 0> Identify a cpu.
  *
  *****************************************************************************/
-PUBLIC void identify_cpu() {}
+void identify_cpu() {}
 
-PUBLIC int arch_reset_proc(struct proc* p)
+int arch_reset_proc(struct proc* p)
 {
     memset(&p->regs, 0, sizeof(p->regs));
 
@@ -134,13 +134,13 @@ PUBLIC int arch_reset_proc(struct proc* p)
     return 0;
 }
 
-PUBLIC void arch_set_syscall_result(struct proc* p, int result)
+void arch_set_syscall_result(struct proc* p, int result)
 {
     p->regs.a0 = (reg_t)result;
 }
 
-PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
-                          struct ps_strings* ps, char* name)
+int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
+                   char* name)
 {
     memcpy(p->name, name, PROC_NAME_LEN);
 
@@ -153,10 +153,10 @@ PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
     return 0;
 }
 
-PUBLIC void idle_stop() {}
+void idle_stop() {}
 
-PUBLIC void arch_init_profile_clock() {}
+void arch_init_profile_clock() {}
 
-PUBLIC void arch_stop_profile_clock() {}
+void arch_stop_profile_clock() {}
 
-PUBLIC void arch_ack_profile_clock() {}
+void arch_ack_profile_clock() {}

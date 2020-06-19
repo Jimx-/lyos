@@ -27,7 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-PUBLIC int main()
+int main()
 {
     printl("sched: Userspace scheduler is running.\n");
 

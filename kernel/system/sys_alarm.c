@@ -29,12 +29,12 @@
 #include <lyos/sysutils.h>
 #include <lyos/timer.h>
 
-PRIVATE void sig_alarm(struct timer_list* timer)
+static void sig_alarm(struct timer_list* timer)
 {
     msg_notify(proc_addr(CLOCK), (endpoint_t)timer->arg);
 }
 
-PUBLIC int sys_alarm(MESSAGE* m, struct proc* p_proc)
+int sys_alarm(MESSAGE* m, struct proc* p_proc)
 {
     clock_t expire_time = m->EXP_TIME;
     int absolute_time = m->ABS_TIME;

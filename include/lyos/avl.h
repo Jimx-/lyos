@@ -50,13 +50,13 @@ struct avl_iter {
     struct avl_node* path[AVL_MAX_DEPTH];
 };
 
-PRIVATE inline int avl_tree_height(struct avl_node* node)
+static inline int avl_tree_height(struct avl_node* node)
 {
     if (!node) return 0;
     return node->height;
 }
 
-PRIVATE inline void avl_set_height(struct avl_node* subroot)
+static inline void avl_set_height(struct avl_node* subroot)
 {
     int left_height = avl_tree_height(subroot->left);
     int right_height = avl_tree_height(subroot->right);
@@ -64,12 +64,12 @@ PRIVATE inline void avl_set_height(struct avl_node* subroot)
         ((left_height > right_height) ? left_height : right_height) + 1;
 }
 
-PRIVATE inline int avl_balance_factor(struct avl_node* node)
+static inline int avl_balance_factor(struct avl_node* node)
 {
     return avl_tree_height(node->right) - avl_tree_height(node->left);
 }
 
-PRIVATE inline struct avl_node* avl_left_rotate(struct avl_node* subroot)
+static inline struct avl_node* avl_left_rotate(struct avl_node* subroot)
 {
     struct avl_node* k1 = subroot->right;
     struct avl_node* k2 = k1->left;
@@ -80,7 +80,7 @@ PRIVATE inline struct avl_node* avl_left_rotate(struct avl_node* subroot)
     return k1;
 }
 
-PRIVATE inline struct avl_node* avl_right_rotate(struct avl_node* subroot)
+static inline struct avl_node* avl_right_rotate(struct avl_node* subroot)
 {
     struct avl_node* k1 = subroot->left;
     struct avl_node* k2 = k1->right;
@@ -91,19 +91,19 @@ PRIVATE inline struct avl_node* avl_right_rotate(struct avl_node* subroot)
     return k1;
 }
 
-PRIVATE inline struct avl_node* avl_left_right_rotate(struct avl_node* subroot)
+static inline struct avl_node* avl_left_right_rotate(struct avl_node* subroot)
 {
     subroot->left = avl_left_rotate(subroot->left);
     return avl_right_rotate(subroot);
 }
 
-PRIVATE inline struct avl_node* avl_right_left_rotate(struct avl_node* subroot)
+static inline struct avl_node* avl_right_left_rotate(struct avl_node* subroot)
 {
     subroot->right = avl_right_rotate(subroot->right);
     return avl_left_rotate(subroot);
 }
 
-PRIVATE inline struct avl_node* avl_fixup(int bf, struct avl_node* subroot)
+static inline struct avl_node* avl_fixup(int bf, struct avl_node* subroot)
 {
     if (bf == 2) {
         struct avl_node* r = subroot->right;
@@ -123,9 +123,9 @@ PRIVATE inline struct avl_node* avl_fixup(int bf, struct avl_node* subroot)
     return subroot;
 }
 
-PRIVATE struct avl_node* avl_insert_recur(struct avl_node* node,
-                                          struct avl_node* subroot,
-                                          avl_node_node_compare_t nn_comp)
+static struct avl_node* avl_insert_recur(struct avl_node* node,
+                                         struct avl_node* subroot,
+                                         avl_node_node_compare_t nn_comp)
 {
     if (!subroot) {
         node->left = NULL;
@@ -151,13 +151,13 @@ PRIVATE struct avl_node* avl_insert_recur(struct avl_node* node,
     return subroot;
 }
 
-PRIVATE inline void avl_insert(struct avl_node* node, struct avl_root* root)
+static inline void avl_insert(struct avl_node* node, struct avl_root* root)
 {
     root->node = avl_insert_recur(node, root->node, root->nn_comp);
 }
 
-PRIVATE inline struct avl_node* avl_erase_min(struct avl_node* subroot,
-                                              struct avl_node** it)
+static inline struct avl_node* avl_erase_min(struct avl_node* subroot,
+                                             struct avl_node** it)
 {
     if (!subroot) {
         if (it) *it = NULL;
@@ -173,9 +173,9 @@ PRIVATE inline struct avl_node* avl_erase_min(struct avl_node* subroot,
     return subroot;
 }
 
-PRIVATE inline struct avl_node* avl_erase_recur(struct avl_node* node,
-                                                struct avl_node* subroot,
-                                                avl_node_node_compare_t nn_comp)
+static inline struct avl_node* avl_erase_recur(struct avl_node* node,
+                                               struct avl_node* subroot,
+                                               avl_node_node_compare_t nn_comp)
 {
     if (!subroot) {
         return NULL;
@@ -212,13 +212,13 @@ PRIVATE inline struct avl_node* avl_erase_recur(struct avl_node* node,
     return subroot;
 }
 
-PRIVATE inline void avl_erase(struct avl_node* node, struct avl_root* root)
+static inline void avl_erase(struct avl_node* node, struct avl_root* root)
 {
     root->node = avl_erase_recur(node, root->node, root->nn_comp);
 }
 
-PRIVATE inline void avl_start_iter(struct avl_root* root, struct avl_iter* iter,
-                                   void* key, int flags)
+static inline void avl_start_iter(struct avl_root* root, struct avl_iter* iter,
+                                  void* key, int flags)
 {
     int depth = 0;
     iter->root = root;
@@ -261,13 +261,13 @@ PRIVATE inline void avl_start_iter(struct avl_root* root, struct avl_iter* iter,
     }
 }
 
-PRIVATE inline struct avl_node* avl_get_iter(struct avl_iter* iter)
+static inline struct avl_node* avl_get_iter(struct avl_iter* iter)
 {
     if (iter->depth == ~0) return NULL;
     return (iter->depth == 0) ? iter->root->node : iter->path[iter->depth - 1];
 }
 
-PRIVATE inline void avl_inc_iter(struct avl_iter* iter)
+static inline void avl_inc_iter(struct avl_iter* iter)
 {
     if (iter->depth != ~0) {
         struct avl_node* cur =
@@ -294,7 +294,7 @@ PRIVATE inline void avl_inc_iter(struct avl_iter* iter)
     }
 }
 
-PRIVATE inline void avl_dec_iter(struct avl_iter* iter)
+static inline void avl_dec_iter(struct avl_iter* iter)
 {
     if (iter->depth != ~0) {
         struct avl_node* cur =

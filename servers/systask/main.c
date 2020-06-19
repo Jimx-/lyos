@@ -32,19 +32,19 @@
 #include <lyos/portio.h>
 
 #define MAX_HOSTNAME_LEN 256
-PRIVATE char hostname[MAX_HOSTNAME_LEN];
-PRIVATE struct utsname uname_buf;
+static char hostname[MAX_HOSTNAME_LEN];
+static struct utsname uname_buf;
 
 #ifdef __i386__
-PRIVATE inline int read_register(int reg_addr);
+static inline int read_register(int reg_addr);
 #endif
 
-PRIVATE int get_rtc_time(struct time* t);
-PRIVATE int secs_of_years(int years);
-PRIVATE int secs_of_months(int months, int year);
-PRIVATE int do_gettimeofday(struct timeval* tv, struct timezone* tz);
-PRIVATE int prepare_uname_buf(struct utsname* buf);
-PRIVATE int do_getsethostname(MESSAGE* p);
+static int get_rtc_time(struct time* t);
+static int secs_of_years(int years);
+static int secs_of_months(int months, int year);
+static int do_gettimeofday(struct timeval* tv, struct timezone* tz);
+static int prepare_uname_buf(struct utsname* buf);
+static int do_getsethostname(MESSAGE* p);
 
 #define BCD_TO_DEC(x) ((x >> 4) * 10 + (x & 0x0f))
 
@@ -55,7 +55,7 @@ PRIVATE int do_getsethostname(MESSAGE* p);
  * <Ring 1> The main loop of TASK SYS.
  *
  *****************************************************************************/
-PUBLIC int main()
+int main()
 {
     MESSAGE msg;
     struct timeval tv;
@@ -104,7 +104,7 @@ PUBLIC int main()
  *
  * @return Zero.
  *****************************************************************************/
-PRIVATE int get_rtc_time(struct time* t)
+static int get_rtc_time(struct time* t)
 {
     int retval;
 #ifdef __i386__
@@ -142,7 +142,7 @@ PRIVATE int get_rtc_time(struct time* t)
  *
  * @return
  *****************************************************************************/
-PRIVATE inline int read_register(int reg_addr)
+static inline int read_register(int reg_addr)
 {
     int v;
     portio_outb(CLK_ELE, reg_addr);
@@ -151,7 +151,7 @@ PRIVATE inline int read_register(int reg_addr)
 }
 #endif
 
-PRIVATE int secs_of_years(int years)
+static int secs_of_years(int years)
 {
     int days = 0;
     while (years > 1969) {
@@ -170,7 +170,7 @@ PRIVATE int secs_of_years(int years)
     return days * 86400;
 }
 
-PRIVATE int secs_of_months(int months, int year)
+static int secs_of_months(int months, int year)
 {
     int days = 0;
     switch (months) {
@@ -205,7 +205,7 @@ PRIVATE int secs_of_months(int months, int year)
     return days * 86400;
 }
 
-PRIVATE int do_gettimeofday(struct timeval* tv, struct timezone* tz)
+static int do_gettimeofday(struct timeval* tv, struct timezone* tz)
 {
     struct time t;
     int ret;
@@ -219,7 +219,7 @@ PRIVATE int do_gettimeofday(struct timeval* tv, struct timezone* tz)
     return 0;
 }
 
-PRIVATE int prepare_uname_buf(struct utsname* buf)
+static int prepare_uname_buf(struct utsname* buf)
 {
     memset(buf, 0, sizeof(struct utsname));
     memset(hostname, 0, sizeof(hostname));
@@ -234,7 +234,7 @@ PRIVATE int prepare_uname_buf(struct utsname* buf)
     return 0;
 }
 
-PRIVATE int do_getsethostname(MESSAGE* p)
+static int do_getsethostname(MESSAGE* p)
 {
     int src = p->source;
 

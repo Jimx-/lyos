@@ -29,7 +29,7 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_getksig(MESSAGE* m, struct proc* p_proc)
+int sys_getksig(MESSAGE* m, struct proc* p_proc)
 {
     struct proc* p;
 

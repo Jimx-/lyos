@@ -40,7 +40,7 @@
  *
  *   Adds the file system passed to the list of file systems the kernel
  */
-PUBLIC int do_register_filesystem()
+int do_register_filesystem()
 {
     int name_len = self->msg_in.NAME_LEN;
 
@@ -53,7 +53,7 @@ PUBLIC int do_register_filesystem()
     return add_filesystem(fproc->endpoint, name);
 }
 
-PUBLIC int add_filesystem(endpoint_t fs_ep, char* name)
+int add_filesystem(endpoint_t fs_ep, char* name)
 {
     struct file_system* pfs =
         (struct file_system*)malloc(sizeof(struct file_system));
@@ -73,7 +73,7 @@ PUBLIC int add_filesystem(endpoint_t fs_ep, char* name)
     return 0;
 }
 
-PUBLIC endpoint_t get_filesystem_endpoint(char* name)
+endpoint_t get_filesystem_endpoint(char* name)
 {
     struct file_system* pfs;
     list_for_each_entry(pfs, &filesystem_table, list)
@@ -85,8 +85,8 @@ PUBLIC endpoint_t get_filesystem_endpoint(char* name)
     return -1;
 }
 
-PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly,
-                             int is_root, struct lookup_result* res)
+int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly, int is_root,
+                      struct lookup_result* res)
 {
     MESSAGE m;
     m.type = FS_READSUPER;

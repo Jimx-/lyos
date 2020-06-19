@@ -27,9 +27,9 @@
 #include "lyos/proto.h"
 #include "acpi.h"
 
-PRIVATE struct acpi_rsdp acpi_rsdp;
+static struct acpi_rsdp acpi_rsdp;
 
-PRIVATE struct acpi_rsdt {
+static struct acpi_rsdt {
     struct acpi_sdt_header hdr;
     u32 data[MAX_RSDT];
 } rsdt;
@@ -39,13 +39,13 @@ static struct {
     size_t length;
 } sdt_trans[MAX_RSDT];
 
-PRIVATE int sdt_count;
+static int sdt_count;
 
-PRIVATE int acpi_find_rsdp();
-PRIVATE int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
-                             size_t size, const char* name);
+static int acpi_find_rsdp();
+static int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
+                            size_t size, const char* name);
 
-PUBLIC void acpi_init()
+void acpi_init()
 {
     int s, i;
 
@@ -74,7 +74,7 @@ PUBLIC void acpi_init()
     }
 }
 
-PRIVATE int acpi_checksum(char* ptr, u32 length)
+static int acpi_checksum(char* ptr, u32 length)
 {
     u8 total = 0;
     u32 i;
@@ -83,7 +83,7 @@ PRIVATE int acpi_checksum(char* ptr, u32 length)
     return !total;
 }
 
-PRIVATE int acpi_find_rsdp_ptr(void* start, void* end)
+static int acpi_find_rsdp_ptr(void* start, void* end)
 {
     u32 addr;
     for (addr = (u32)start; addr < (u32)end; addr += 16) {
@@ -95,13 +95,13 @@ PRIVATE int acpi_find_rsdp_ptr(void* start, void* end)
     return 0;
 }
 
-PRIVATE int acpi_check_signature(const char* orig, const char* match)
+static int acpi_check_signature(const char* orig, const char* match)
 {
     return strncmp(orig, match, ACPI_SDT_SIGNATURE_LEN);
 }
 
-PRIVATE int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
-                             size_t size, const char* name)
+static int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
+                            size_t size, const char* name)
 {
     struct acpi_sdt_header hdr;
 
@@ -132,7 +132,7 @@ PRIVATE int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
     return sdt_hdr->length;
 }
 
-PRIVATE int acpi_find_rsdp()
+static int acpi_find_rsdp()
 {
     u16 ebda;
 
@@ -151,7 +151,7 @@ PRIVATE int acpi_find_rsdp()
     return 0;
 }
 
-PUBLIC u32 acpi_get_table_base(const char* name)
+u32 acpi_get_table_base(const char* name)
 {
     int i;
 
@@ -163,8 +163,8 @@ PUBLIC u32 acpi_get_table_base(const char* name)
     return 0;
 }
 
-PRIVATE void* acpi_madt_get_typed_item(struct acpi_madt_hdr* hdr,
-                                       unsigned char type, unsigned idx)
+static void* acpi_madt_get_typed_item(struct acpi_madt_hdr* hdr,
+                                      unsigned char type, unsigned idx)
 {
     u8 *t, *end;
     int i;
@@ -186,7 +186,7 @@ PRIVATE void* acpi_madt_get_typed_item(struct acpi_madt_hdr* hdr,
     return NULL;
 }
 
-PUBLIC struct acpi_madt_lapic* acpi_get_lapic_next()
+struct acpi_madt_lapic* acpi_get_lapic_next()
 {
     static unsigned idx = 0;
     static struct acpi_madt_hdr* madt_hdr;
@@ -212,7 +212,7 @@ PUBLIC struct acpi_madt_lapic* acpi_get_lapic_next()
     return ret;
 }
 
-PUBLIC struct acpi_madt_ioapic* acpi_get_ioapic_next()
+struct acpi_madt_ioapic* acpi_get_ioapic_next()
 {
     static unsigned idx = 0;
     static struct acpi_madt_hdr* madt_hdr;
@@ -231,7 +231,7 @@ PUBLIC struct acpi_madt_ioapic* acpi_get_ioapic_next()
     return ret;
 }
 
-PUBLIC struct acpi_madt_int_src* acpi_get_int_src_next()
+struct acpi_madt_int_src* acpi_get_int_src_next()
 {
     static unsigned idx = 0;
     static struct acpi_madt_hdr* madt_hdr;
@@ -250,7 +250,7 @@ PUBLIC struct acpi_madt_int_src* acpi_get_int_src_next()
     return (struct acpi_madt_int_src*)ret;
 }
 
-PUBLIC struct acpi_hpet* acpi_get_hpet()
+struct acpi_hpet* acpi_get_hpet()
 {
     return (struct acpi_hpet*)acpi_get_table_base("HPET");
 }

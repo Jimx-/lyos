@@ -24,7 +24,7 @@
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 
-PUBLIC int irqctl(int request, int irq, int policy, int* hook_id)
+int irqctl(int request, int irq, int policy, int* hook_id)
 {
     MESSAGE m;
 

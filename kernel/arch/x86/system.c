@@ -40,14 +40,14 @@
 #include <asm/cmos.h>
 #include <asm/fpu.h>
 
-PUBLIC struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
+struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
+void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
 
 /**
  * <Ring 0> Switch back to user.
  */
-PUBLIC struct proc* arch_switch_to_user()
+struct proc* arch_switch_to_user()
 {
     char* stack;
     struct proc* p;
@@ -67,7 +67,7 @@ PUBLIC struct proc* arch_switch_to_user()
 
 static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __attribute__((aligned(16)));
 
-PUBLIC int arch_reset_proc(struct proc* p)
+int arch_reset_proc(struct proc* p)
 {
     char* fpu = NULL;
 
@@ -102,7 +102,7 @@ PUBLIC int arch_reset_proc(struct proc* p)
  *
  * @param proc Which proc to restore.
  */
-PUBLIC void restore_user_context(struct proc* p)
+void restore_user_context(struct proc* p)
 {
     int trap_style = p->seg.trap_style;
     p->seg.trap_style = KTS_NONE;
@@ -124,7 +124,7 @@ PUBLIC void restore_user_context(struct proc* p)
     }
 }
 
-PUBLIC void idle_stop()
+void idle_stop()
 {
 #if CONFIG_SMP
     int cpu = cpuid;
@@ -136,8 +136,8 @@ PUBLIC void idle_stop()
     if (is_idle) restart_local_timer();
 }
 
-PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
-                          struct ps_strings* ps, char* name)
+int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
+                   char* name)
 {
     memcpy(p->name, name, PROC_NAME_LEN);
 
@@ -151,13 +151,13 @@ PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
     return 0;
 }
 
-PRIVATE int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
+static int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     memset(vaddr, 0, len);
     return 0;
 }
 
-PRIVATE int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
+static int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
     reload_cr3();
@@ -166,8 +166,8 @@ PRIVATE int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
     return 0;
 }
 
-PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
-                         size_t len)
+static int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
+                        size_t len)
 {
     if (offset + len > execi->header_len) return ENOEXEC;
     memcpy(vaddr, (void*)(execi->header + offset), len);
@@ -175,7 +175,7 @@ PRIVATE int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
     return 0;
 }
 
-PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp)
+void arch_boot_proc(struct proc* p, struct boot_proc* bp)
 {
     /* make MM run */
     if (bp->proc_nr == TASK_MM) {
@@ -208,7 +208,7 @@ PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp)
     }
 }
 
-PUBLIC void arch_set_syscall_result(struct proc* p, int result)
+void arch_set_syscall_result(struct proc* p, int result)
 {
     p->regs.eax = (u32)result;
 }
@@ -220,7 +220,7 @@ PUBLIC void arch_set_syscall_result(struct proc* p, int result)
  * <Ring 0> Identify a cpu.
  *
  *****************************************************************************/
-PUBLIC void identify_cpu()
+void identify_cpu()
 {
     u32 eax, ebx, ecx, edx;
     u32 cpu = cpuid;
@@ -254,7 +254,7 @@ PUBLIC void identify_cpu()
 
 #if CONFIG_PROFILING
 
-PUBLIC int arch_init_profile_clock(u32 freq)
+int arch_init_profile_clock(u32 freq)
 {
     out_byte(RTC_INDEX, RTC_REG_A);
     out_byte(RTC_IO, RTC_A_DV_OK | freq);
@@ -268,7 +268,7 @@ PUBLIC int arch_init_profile_clock(u32 freq)
     return CMOS_CLOCK_IRQ;
 }
 
-PUBLIC void arch_stop_profile_clock()
+void arch_stop_profile_clock()
 {
     int r;
     out_byte(RTC_INDEX, RTC_REG_B);
@@ -277,7 +277,7 @@ PUBLIC void arch_stop_profile_clock()
     out_byte(RTC_IO, r & ~RTC_B_PIE);
 }
 
-PUBLIC void arch_ack_profile_clock()
+void arch_ack_profile_clock()
 {
     out_byte(RTC_INDEX, RTC_REG_C);
     in_byte(RTC_IO);

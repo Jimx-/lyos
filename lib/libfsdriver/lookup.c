@@ -28,7 +28,7 @@
 #include <sys/syslimits.h>
 #include "libfsdriver/libfsdriver.h"
 
-PRIVATE int get_next_name(char** ptr, char** start, char* name, size_t namesize)
+static int get_next_name(char** ptr, char** start, char* name, size_t namesize)
 {
     char* p;
     int i;
@@ -52,7 +52,7 @@ PRIVATE int get_next_name(char** ptr, char** start, char* name, size_t namesize)
     return 0;
 }
 
-PRIVATE int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
+static int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
 {
     mode_t mask;
 
@@ -71,8 +71,8 @@ PRIVATE int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
     return (fn->fn_mode & mask) ? 0 : EACCES;
 }
 
-PRIVATE int resolve_link(struct fsdriver* fsd, dev_t dev, ino_t num,
-                         char* pathname, int path_len, char* ptr)
+static int resolve_link(struct fsdriver* fsd, dev_t dev, ino_t num,
+                        char* pathname, int path_len, char* ptr)
 {
     struct fsdriver_data data;
     char path[PATH_MAX];
@@ -95,7 +95,7 @@ PRIVATE int resolve_link(struct fsdriver* fsd, dev_t dev, ino_t num,
     return 0;
 }
 
-PUBLIC int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m)
 {
     int src = m->source;
     int dev = m->REQ_DEV;

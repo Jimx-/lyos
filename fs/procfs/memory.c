@@ -37,7 +37,7 @@
 #include "type.h"
 #include "proto.h"
 
-PUBLIC void root_meminfo()
+void root_meminfo()
 {
     struct mem_info mem_info;
 

@@ -33,8 +33,8 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PUBLIC DEF_LIST(ext2_superblock_table);
-PUBLIC u8* ext2fsbuf = (u8*)&_ext2fsbuf;
+DEF_LIST(ext2_superblock_table);
+u8* ext2fsbuf = (u8*)&_ext2fsbuf;
 
-PUBLIC DEF_LIST(ext2_buffer_freelist);
-PUBLIC struct list_head* ext2_buffer_freelist_tail = &ext2_buffer_freelist;
+DEF_LIST(ext2_buffer_freelist);
+struct list_head* ext2_buffer_freelist_tail = &ext2_buffer_freelist;

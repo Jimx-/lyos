@@ -39,24 +39,24 @@
 
 #include "fb.h"
 
-PRIVATE int init_fb();
+static int init_fb();
 
-PRIVATE int fb_open(dev_t minor, int access);
-PRIVATE int fb_close(dev_t minor);
-PRIVATE ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+static int fb_open(dev_t minor, int access);
+static int fb_close(dev_t minor);
+static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                       unsigned int count, cdev_id_t id);
+static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
                         unsigned int count, cdev_id_t id);
-PRIVATE ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                         unsigned int count, cdev_id_t id);
-PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                     cdev_id_t id);
-PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
-                    size_t length, char** retaddr);
+static int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                    cdev_id_t id);
+static int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
+                   size_t length, char** retaddr);
 
-PRIVATE int open_counter[NR_FB_DEVS];
+static int open_counter[NR_FB_DEVS];
 
 static bus_type_id_t fb_subsys_id;
 
-PRIVATE struct chardriver fbdriver = {
+static struct chardriver fbdriver = {
     .cdr_open = fb_open,
     .cdr_close = fb_close,
     .cdr_read = fb_read,
@@ -72,7 +72,7 @@ PRIVATE struct chardriver fbdriver = {
  * <Ring 3> The main loop of framebuffer driver.
  *
  *****************************************************************************/
-PUBLIC int main()
+int main()
 {
     serv_register_init_fresh_callback(init_fb);
     serv_init();
@@ -80,7 +80,7 @@ PUBLIC int main()
     return chardriver_task(&fbdriver);
 }
 
-PRIVATE int init_fb()
+static int init_fb()
 {
     int i;
     struct device_info devinf;
@@ -112,7 +112,7 @@ PRIVATE int init_fb()
     return 0;
 }
 
-PRIVATE int fb_open(dev_t minor, int access)
+static int fb_open(dev_t minor, int access)
 {
     if (minor < 0 || minor >= NR_FB_DEVS) return ENXIO;
 
@@ -125,7 +125,7 @@ PRIVATE int fb_open(dev_t minor, int access)
     return OK;
 }
 
-PRIVATE int fb_close(dev_t minor)
+static int fb_close(dev_t minor)
 {
     if (minor < 0 || minor >= NR_FB_DEVS) return ENXIO;
 
@@ -133,14 +133,14 @@ PRIVATE int fb_close(dev_t minor)
     return OK;
 }
 
-PRIVATE ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                        unsigned int count, cdev_id_t id)
+static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                       unsigned int count, cdev_id_t id)
 {
     return 0;
 }
 
-PRIVATE ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                         unsigned int count, cdev_id_t id)
+static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                        unsigned int count, cdev_id_t id)
 {
     int retval = OK;
     void* base;
@@ -160,14 +160,14 @@ PRIVATE ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
     return count;
 }
 
-PRIVATE int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                     cdev_id_t id)
+static int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                    cdev_id_t id)
 {
     return 0;
 }
 
-PRIVATE int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
-                    size_t length, char** retaddr)
+static int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
+                   size_t length, char** retaddr)
 {
     int retval = OK;
     phys_bytes base, size;

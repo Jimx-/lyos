@@ -27,17 +27,17 @@
 #include <lyos/sysutils.h>
 #include "libmemfs/libmemfs.h"
 
-PUBLIC struct memfs_inode root_inode;
+struct memfs_inode root_inode;
 
 extern struct list_head memfs_inode_table[];
 
-PRIVATE ino_t allocate_inode_num()
+static ino_t allocate_inode_num()
 {
     static ino_t num = 1;
     return num++;
 }
 
-PUBLIC void memfs_init_inode()
+void memfs_init_inode()
 {
     int i;
     for (i = 0; i < MEMFS_INODE_HASH_SIZE; i++) {
@@ -45,7 +45,7 @@ PUBLIC void memfs_init_inode()
     }
 }
 
-PUBLIC void memfs_addhash_inode(struct memfs_inode* inode)
+void memfs_addhash_inode(struct memfs_inode* inode)
 {
     unsigned int hash = inode->i_num & MEMFS_INODE_HASH_MASK;
 
@@ -53,13 +53,13 @@ PUBLIC void memfs_addhash_inode(struct memfs_inode* inode)
 }
 
 /*
-PRIVATE void memfs_unhash_inode(struct memfs_inode * inode)
+static void memfs_unhash_inode(struct memfs_inode * inode)
 {
     list_del(&(inode->i_hash));
 }
 */
 
-PUBLIC struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index)
+struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index)
 {
     struct memfs_inode* pin =
         (struct memfs_inode*)malloc(sizeof(struct memfs_inode));
@@ -77,7 +77,7 @@ PUBLIC struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index)
     return pin;
 }
 
-PUBLIC struct memfs_inode* memfs_find_inode(ino_t num)
+struct memfs_inode* memfs_find_inode(ino_t num)
 {
     int hash = num & MEMFS_INODE_HASH_MASK;
 
@@ -92,8 +92,8 @@ PUBLIC struct memfs_inode* memfs_find_inode(ino_t num)
     return NULL;
 }
 
-PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
-                                                    char* name)
+struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
+                                             char* name)
 {
     struct memfs_inode* node;
 
@@ -107,8 +107,8 @@ PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
     return NULL;
 }
 
-PUBLIC struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
-                                                     int index)
+struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
+                                              int index)
 {
     struct memfs_inode* node;
 
@@ -125,14 +125,14 @@ PUBLIC struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
     return NULL;
 }
 
-PUBLIC struct memfs_inode* memfs_node_parent(struct memfs_inode* pin)
+struct memfs_inode* memfs_node_parent(struct memfs_inode* pin)
 {
     return pin->i_parent;
 }
 
-PUBLIC int memfs_node_index(struct memfs_inode* pin) { return pin->i_index; }
+int memfs_node_index(struct memfs_inode* pin) { return pin->i_index; }
 
-PUBLIC void memfs_update_inode(struct memfs_inode* pin)
+void memfs_update_inode(struct memfs_inode* pin)
 {
     if (pin->i_update == 0) return;
 
@@ -144,20 +144,18 @@ PUBLIC void memfs_update_inode(struct memfs_inode* pin)
     pin->i_update = 0;
 }
 
-PUBLIC struct memfs_inode* memfs_get_root_inode() { return &root_inode; }
+struct memfs_inode* memfs_get_root_inode() { return &root_inode; }
 
-PUBLIC void memfs_set_inode_stat(struct memfs_inode* pin,
-                                 struct memfs_stat* stat)
+void memfs_set_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat)
 {
     if (!pin || !stat) return;
 
     memcpy(&pin->i_stat, stat, sizeof(struct memfs_stat));
 }
 
-PUBLIC struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
-                                           char* name, int index,
-                                           struct memfs_stat* stat,
-                                           cbdata_t data)
+struct memfs_inode* memfs_add_inode(struct memfs_inode* parent, char* name,
+                                    int index, struct memfs_stat* stat,
+                                    cbdata_t data)
 {
     ino_t new_num = allocate_inode_num();
 

@@ -33,7 +33,7 @@
 #include "global.h"
 #include "tar.h"
 
-PUBLIC unsigned int initfs_getsize(const char* in)
+unsigned int initfs_getsize(const char* in)
 {
 
     unsigned int size = 0;
@@ -46,7 +46,7 @@ PUBLIC unsigned int initfs_getsize(const char* in)
     return size;
 }
 
-PUBLIC unsigned int initfs_get8(const char* in)
+unsigned int initfs_get8(const char* in)
 {
 
     unsigned int size = 0;
@@ -59,7 +59,7 @@ PUBLIC unsigned int initfs_get8(const char* in)
     return size;
 }
 
-PUBLIC unsigned int initfs_getmode(struct posix_tar_header* phdr)
+unsigned int initfs_getmode(struct posix_tar_header* phdr)
 {
     unsigned int mode;
 

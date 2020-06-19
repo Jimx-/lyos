@@ -33,9 +33,9 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE int init_procfs();
-PRIVATE int procfs_init_hook();
-PUBLIC int procfs_lookup_hook();
+static int init_procfs();
+static int procfs_init_hook();
+int procfs_lookup_hook();
 
 struct memfs_hooks fs_hooks = {
     .init_hook = procfs_init_hook,
@@ -44,7 +44,7 @@ struct memfs_hooks fs_hooks = {
     .lookup_hook = procfs_lookup_hook,
 };
 
-PUBLIC int main()
+int main()
 {
     serv_register_init_fresh_callback(init_procfs);
     serv_init();
@@ -57,14 +57,14 @@ PUBLIC int main()
     return memfs_start("proc", &fs_hooks, &root_stat);
 }
 
-PRIVATE int init_procfs()
+static int init_procfs()
 {
     printl("procfs: procfs is running.\n");
 
     return 0;
 }
 
-PRIVATE void build_root(struct memfs_inode* root)
+static void build_root(struct memfs_inode* root)
 {
     struct memfs_stat stat;
 
@@ -81,7 +81,7 @@ PRIVATE void build_root(struct memfs_inode* root)
     }
 }
 
-PRIVATE int procfs_init_hook()
+static int procfs_init_hook()
 {
     static int first = 1;
 

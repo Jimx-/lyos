@@ -34,9 +34,8 @@
 #include "proto.h"
 #include "global.h"
 
-PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
-                          ino_t start, ino_t root, struct fproc* fp,
-                          struct lookup_result* ret)
+int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev, ino_t start,
+                   ino_t root, struct fproc* fp, struct lookup_result* ret)
 {
     MESSAGE m;
     int retval;
@@ -84,8 +83,8 @@ PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
     return retval;
 }
 
-PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags,
-                        struct vfs_mount** vmnt, struct inode** inode)
+void init_lookup(struct lookup* lookup, char* pathname, int flags,
+                 struct vfs_mount** vmnt, struct inode** inode)
 {
     lookup->pathname = pathname;
     lookup->flags = flags;
@@ -97,7 +96,7 @@ PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags,
     *inode = NULL;
 }
 
-PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc* fp)
+struct inode* resolve_path(struct lookup* lookup, struct fproc* fp)
 {
     /* start inode: root or pwd */
     if (!fp->root || !fp->pwd) {
@@ -113,8 +112,8 @@ PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc* fp)
 }
 
 /* Resolve a pathname */
-PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
-                                  struct fproc* fp)
+struct inode* advance_path(struct inode* start, struct lookup* lookup,
+                           struct fproc* fp)
 {
     char* pathname = lookup->pathname;
     struct inode *new_pin = NULL, *pin = NULL;
@@ -264,7 +263,7 @@ PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
  * @param  fp       The caller.
  * @return          Inode of the last directory on success. Otherwise NULL.
  */
-PUBLIC struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
+struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
 {
     struct inode* result_pin = NULL;
     char* cp;

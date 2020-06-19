@@ -42,7 +42,7 @@
  *
  * @return  Zero if success, otherwise -1.
  *****************************************************************************/
-PUBLIC int do_fork()
+int do_fork()
 {
     endpoint_t parent_ep = mm_msg.ENDPOINT;
     int child_slot = mm_msg.PROC_NR;
@@ -125,7 +125,7 @@ PUBLIC int do_fork()
     return 0;
 }
 
-PUBLIC int proc_free(struct mmproc* mmp, int clear_proc)
+int proc_free(struct mmproc* mmp, int clear_proc)
 {
     /* free memory */
     struct vir_region* vr;

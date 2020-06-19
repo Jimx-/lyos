@@ -27,16 +27,15 @@
 #include <sys/dirent.h>
 #include "libfsdriver/libfsdriver.h"
 
-PUBLIC void panic(char* msg, ...);
+void panic(char* msg, ...);
 
 #define _DIRENT_NAMEOFF(dp) ((char*)(void*)&(dp)->d_name - (char*)(void*)dp)
 #define _DIRENT_RECLEN(dp, namlen) \
     ((_DIRENT_NAMEOFF(dp) + (namlen) + 1 + 0xf) & ~0xf)
 
-PUBLIC int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
-                                     struct fsdriver_data* data,
-                                     size_t data_size, char* buf,
-                                     size_t buf_size)
+int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
+                              struct fsdriver_data* data, size_t data_size,
+                              char* buf, size_t buf_size)
 {
     list->data = data;
     list->data_size = data_size;
@@ -48,9 +47,8 @@ PUBLIC int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
     return 0;
 }
 
-PUBLIC int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list,
-                                    ino_t num, char* name, size_t name_len,
-                                    int type)
+int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
+                             char* name, size_t name_len, int type)
 {
     int retval = 0;
 
@@ -86,7 +84,7 @@ PUBLIC int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list,
     return len;
 }
 
-PUBLIC int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list)
+int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list)
 {
     int retval;
 

@@ -29,7 +29,7 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_kill(MESSAGE* m, struct proc* p_proc)
+int sys_kill(MESSAGE* m, struct proc* p_proc)
 {
     endpoint_t target = m->ENDPOINT;
     int signo = m->SIGNR;

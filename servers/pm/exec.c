@@ -31,7 +31,7 @@
 #include "global.h"
 #include "proto.h"
 
-PUBLIC int do_exec(MESSAGE* m)
+int do_exec(MESSAGE* m)
 {
     endpoint_t ep = m->source;
     struct pmproc* pmp = pm_endpt_proc(ep);

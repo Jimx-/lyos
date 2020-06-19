@@ -16,9 +16,9 @@
 #ifndef _IPC_PROTO_H_
 #define _IPC_PROTO_H_
 
-PUBLIC int check_perm(struct ipc_perm* perm, endpoint_t source, mode_t mode);
+int check_perm(struct ipc_perm* perm, endpoint_t source, mode_t mode);
 
-PUBLIC int do_shmget(MESSAGE* msg);
-PUBLIC int do_shmat(MESSAGE* msg);
+int do_shmget(MESSAGE* msg);
+int do_shmat(MESSAGE* msg);
 
 #endif

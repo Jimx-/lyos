@@ -33,7 +33,7 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int do_pm_kprofile(MESSAGE* msg)
+int do_pm_kprofile(MESSAGE* msg)
 {
 #if CONFIG_PROFILING
     switch (msg->KP_ACTION) {

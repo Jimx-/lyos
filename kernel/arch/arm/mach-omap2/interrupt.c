@@ -25,9 +25,9 @@
 #include "arch_proto.h"
 #include "interrupt.h"
 
-PUBLIC void* intr_base_addr;
+void* intr_base_addr;
 
-PUBLIC void omap3_handle_irq(void)
+void omap3_handle_irq(void)
 {
     int irq = mmio_read(intr_base_addr + OMAP3_INTCPS_SIR_IRQ) &
               OMAP3_INTR_ACTIVEIRQ_MASK;

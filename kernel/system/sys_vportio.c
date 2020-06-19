@@ -30,12 +30,12 @@
 #include <lyos/portio.h>
 #include <asm/proto.h>
 
-PRIVATE char vportio_buf[VPORTIO_BUF_SIZE];
-PRIVATE pb_pair_t* pbp = (pb_pair_t*)vportio_buf;
-PRIVATE pw_pair_t* pwp = (pw_pair_t*)vportio_buf;
-PRIVATE pl_pair_t* plp = (pl_pair_t*)vportio_buf;
+static char vportio_buf[VPORTIO_BUF_SIZE];
+static pb_pair_t* pbp = (pb_pair_t*)vportio_buf;
+static pw_pair_t* pwp = (pw_pair_t*)vportio_buf;
+static pl_pair_t* plp = (pl_pair_t*)vportio_buf;
 
-PUBLIC int sys_vportio(MESSAGE* m, struct proc* p_proc)
+int sys_vportio(MESSAGE* m, struct proc* p_proc)
 {
     int type = m->PIO_REQUEST & PIO_TYPE_MASK,
         dir = m->PIO_REQUEST & PIO_DIR_MASK;

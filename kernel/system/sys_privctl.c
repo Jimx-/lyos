@@ -34,11 +34,11 @@
 #endif
 #include <lyos/cpulocals.h>
 
-PUBLIC int arch_privctl(MESSAGE* m, struct proc* p);
+int arch_privctl(MESSAGE* m, struct proc* p);
 
-PRIVATE int update_priv(struct proc* p, struct priv* priv);
+static int update_priv(struct proc* p, struct priv* priv);
 
-PUBLIC int sys_privctl(MESSAGE* m, struct proc* p)
+int sys_privctl(MESSAGE* m, struct proc* p)
 {
     endpoint_t whom = m->ENDPOINT;
     int request = m->REQUEST;
@@ -78,7 +78,7 @@ PUBLIC int sys_privctl(MESSAGE* m, struct proc* p)
     return EINVAL;
 }
 
-PRIVATE int update_priv(struct proc* p, struct priv* priv)
+static int update_priv(struct proc* p, struct priv* priv)
 {
     p->priv->flags = priv->flags;
     return 0;

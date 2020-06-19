@@ -32,8 +32,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                       size_t* bytes)
+int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data, size_t* bytes)
 {
     register int retval = 0;
     ext2_inode_t* pin = find_ext2_inode(dev, num);
@@ -72,7 +71,7 @@ PUBLIC int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
  * @param  p Ptr to the message.
  * @return   Zero on success.
  */
-PUBLIC int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos)
+int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos)
 {
     return 0;
 }

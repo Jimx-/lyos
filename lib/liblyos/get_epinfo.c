@@ -23,7 +23,7 @@
 #include "assert.h"
 #include <string.h>
 
-PUBLIC pid_t get_epinfo(endpoint_t ep, uid_t* euid, gid_t* egid)
+pid_t get_epinfo(endpoint_t ep, uid_t* euid, gid_t* egid)
 {
     MESSAGE m;
 

@@ -36,15 +36,15 @@
 
 extern spinlock_t clocksource_lock;
 
-PUBLIC clock_t idle_ticks = 0;
+clock_t idle_ticks = 0;
 
 static DEFINE_CPULOCAL(u64, context_switch_clock);
 
 DEF_LIST(timer_list);
-PUBLIC spinlock_t timers_lock;
-PUBLIC clock_t next_timeout = TIMER_UNSET;
+spinlock_t timers_lock;
+clock_t next_timeout = TIMER_UNSET;
 
-PUBLIC void sched_clock(struct proc* p);
+void sched_clock(struct proc* p);
 
 extern void timer_add(struct list_head* list, struct timer_list* timer);
 extern void timer_expire(struct list_head* list, clock_t timestamp);
@@ -58,11 +58,11 @@ extern void timer_expire(struct list_head* list, clock_t timestamp);
  * @param clocksource The jiffies clocksource.
  * @return The jiffies.
  *****************************************************************************/
-PRIVATE u64 read_jiffies(struct clocksource* cs) { return jiffies; }
+static u64 read_jiffies(struct clocksource* cs) { return jiffies; }
 
 #define NSEC_PER_JIFFY (NSEC_PER_SEC / DEFAULT_HZ)
 #define JIFFY_SHIFT 8
-PRIVATE struct clocksource jiffies_clocksource = {
+static struct clocksource jiffies_clocksource = {
     .name = "jiffies",
     .rating = 1,
     .read = read_jiffies,
@@ -80,7 +80,7 @@ PRIVATE struct clocksource jiffies_clocksource = {
  *
  * @param irq The IRQ nr, unused here.
  *****************************************************************************/
-PUBLIC int clock_handler(irq_hook_t* hook)
+int clock_handler(irq_hook_t* hook)
 {
 #if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
@@ -125,7 +125,7 @@ PUBLIC int clock_handler(irq_hook_t* hook)
  * <Ring 0> This routine initializes time subsystem.
  *
  *****************************************************************************/
-PUBLIC int init_time()
+int init_time()
 {
     jiffies = 0;
 
@@ -145,7 +145,7 @@ PUBLIC int init_time()
  *
  * @param freq Timer frequency.
  *****************************************************************************/
-PUBLIC int init_bsp_timer(int freq)
+int init_bsp_timer(int freq)
 {
     if (init_local_timer(freq)) return -1;
     if (put_local_timer_handler(clock_handler)) return -1;
@@ -161,7 +161,7 @@ PUBLIC int init_bsp_timer(int freq)
  *
  * @param freq Timer frequency.
  *****************************************************************************/
-PUBLIC int init_ap_timer(int freq)
+int init_ap_timer(int freq)
 {
     if (init_local_timer(freq)) return -1;
 
@@ -176,7 +176,7 @@ PUBLIC int init_ap_timer(int freq)
  *
  * @param p Stop context for whom.
  *****************************************************************************/
-PUBLIC void stop_context(struct proc* p)
+void stop_context(struct proc* p)
 {
     u64* ctx_switch_clock = get_cpulocal_var_ptr(context_switch_clock);
 
@@ -200,7 +200,7 @@ PUBLIC void stop_context(struct proc* p)
     *ctx_switch_clock = cycle;
 }
 
-PUBLIC void set_sys_timer(struct timer_list* timer)
+void set_sys_timer(struct timer_list* timer)
 {
     spinlock_lock(&timers_lock);
 
@@ -213,7 +213,7 @@ PUBLIC void set_sys_timer(struct timer_list* timer)
     spinlock_unlock(&timers_lock);
 }
 
-PUBLIC void reset_sys_timer(struct timer_list* timer)
+void reset_sys_timer(struct timer_list* timer)
 {
     spinlock_lock(&timers_lock);
 

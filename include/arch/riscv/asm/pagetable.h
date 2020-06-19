@@ -22,17 +22,17 @@
 #define RISCV_PG_KERNEL __pgprot(_RISCV_PG_KERNEL)
 #define RISCV_PG_KERNLE_EXEC __pgprot(_RISCV_PG_KERNEL | _RISCV_PG_EXEC)
 
-PRIVATE inline pde_t pfn_pde(unsigned long pfn, pgprot_t prot)
+static inline pde_t pfn_pde(unsigned long pfn, pgprot_t prot)
 {
     return __pde((pfn << RISCV_PG_PFN_SHIFT) | pgprot_val(prot));
 }
 
-PRIVATE inline pmd_t pfn_pmd(unsigned long pfn, pgprot_t prot)
+static inline pmd_t pfn_pmd(unsigned long pfn, pgprot_t prot)
 {
     return __pmd((pfn << RISCV_PG_PFN_SHIFT) | pgprot_val(prot));
 }
 
-PRIVATE inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)
+static inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)
 {
     return __pte((pfn << RISCV_PG_PFN_SHIFT) | pgprot_val(prot));
 }

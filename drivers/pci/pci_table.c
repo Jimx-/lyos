@@ -156,7 +156,7 @@ struct pci_device pci_device_table[] = {
     {0x9005, 0x0080, "Adaptec AIC-7892A Ultra160/m PCI SCSI Controller"},
     {0x0000, 0x0000, NULL}};
 
-PUBLIC char* pci_dev_name(int vendor, int device_id)
+char* pci_dev_name(int vendor, int device_id)
 {
     int i;
     for (i = 0; pci_device_table[i].name; i++) {

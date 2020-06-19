@@ -27,8 +27,8 @@
 
 extern void* hpet_addr;
 
-PUBLIC int init_hpet();
-PUBLIC int is_hpet_enabled();
+int init_hpet();
+int is_hpet_enabled();
 
 static __attribute__((always_inline)) inline u32 hpet_read(u32 a)
 {

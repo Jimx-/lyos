@@ -31,10 +31,10 @@
 #include <lyos/input.h>
 #include "libsysfs/libsysfs.h"
 
-PRIVATE int init_input();
-PRIVATE int input_event(MESSAGE* msg);
+static int init_input();
+static int input_event(MESSAGE* msg);
 
-PUBLIC int main()
+int main()
 {
     serv_register_init_fresh_callback(init_input);
     serv_init();
@@ -64,7 +64,7 @@ PUBLIC int main()
     return 0;
 }
 
-PRIVATE int init_input()
+static int init_input()
 {
     /* tell TTY that we're up */
     MESSAGE msg;
@@ -75,7 +75,7 @@ PRIVATE int init_input()
     return 0;
 }
 
-PRIVATE int input_event(MESSAGE* msg)
+static int input_event(MESSAGE* msg)
 {
     MESSAGE msg2tty;
 

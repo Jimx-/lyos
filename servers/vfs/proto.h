@@ -19,90 +19,90 @@
 #include "path.h"
 #include "thread.h"
 
-PUBLIC int vfs_verify_endpt(endpoint_t ep, int* proc_nr);
-PUBLIC struct fproc* vfs_endpt_proc(endpoint_t ep);
+int vfs_verify_endpt(endpoint_t ep, int* proc_nr);
+struct fproc* vfs_endpt_proc(endpoint_t ep);
 
-PUBLIC int do_register_filesystem();
-PUBLIC int add_filesystem(endpoint_t fs_ep, char* name);
-PUBLIC endpoint_t get_filesystem_endpoint(char* name);
+int do_register_filesystem();
+int add_filesystem(endpoint_t fs_ep, char* name);
+endpoint_t get_filesystem_endpoint(char* name);
 
-PUBLIC void init_inode_table();
-PUBLIC struct inode* new_inode(dev_t dev, ino_t num);
-PUBLIC struct inode* find_inode(dev_t dev, ino_t num);
-PUBLIC void put_inode(struct inode* pin);
-PUBLIC int lock_inode(struct inode* pin, rwlock_type_t type);
-PUBLIC void unlock_inode(struct inode* pin);
-PUBLIC void sync_inode(struct inode* p);
+void init_inode_table();
+struct inode* new_inode(dev_t dev, ino_t num);
+struct inode* find_inode(dev_t dev, ino_t num);
+void put_inode(struct inode* pin);
+int lock_inode(struct inode* pin, rwlock_type_t type);
+void unlock_inode(struct inode* pin);
+void sync_inode(struct inode* p);
 
-PUBLIC void init_lookup(struct lookup* lookup, char* pathname, int flags,
+void init_lookup(struct lookup* lookup, char* pathname, int flags,
                         struct vfs_mount** vmnt, struct inode** inode);
-PUBLIC struct inode* resolve_path(struct lookup* lookup, struct fproc* fp);
-PUBLIC struct inode* advance_path(struct inode* start, struct lookup* lookup,
+struct inode* resolve_path(struct lookup* lookup, struct fproc* fp);
+struct inode* advance_path(struct inode* start, struct lookup* lookup,
                                   struct fproc* fp);
-PUBLIC struct inode* last_dir(struct lookup* lookup, struct fproc* fp);
+struct inode* last_dir(struct lookup* lookup, struct fproc* fp);
 
-PUBLIC struct vfs_mount* find_vfs_mount(dev_t dev);
-PUBLIC int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
-PUBLIC void unlock_vmnt(struct vfs_mount* vmnt);
-PUBLIC int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep,
+struct vfs_mount* find_vfs_mount(dev_t dev);
+int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
+void unlock_vmnt(struct vfs_mount* vmnt);
+int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep,
                     int readonly);
-PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access);
-PUBLIC mode_t do_umask(void);
-PUBLIC void clear_vfs_mount(struct vfs_mount* vmnt);
-PUBLIC struct vfs_mount* get_free_vfs_mount();
-PUBLIC int do_vfs_open(MESSAGE* p);
+int forbidden(struct fproc* fp, struct inode* pin, int access);
+mode_t do_umask(void);
+void clear_vfs_mount(struct vfs_mount* vmnt);
+struct vfs_mount* get_free_vfs_mount();
+int do_vfs_open(MESSAGE* p);
 
-PUBLIC int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
-PUBLIC int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
+int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
+int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
                           ino_t start, ino_t root, struct fproc* fp,
                           struct lookup_result* ret);
-PUBLIC int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly,
+int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly,
                              int is_root, struct lookup_result* res);
 
-PUBLIC int do_open(void);
-PUBLIC int common_open(char* pathname, int flags, mode_t mode);
-PUBLIC int do_close(void);
-PUBLIC int close_fd(struct fproc* fp, int fd);
-PUBLIC int do_lseek(void);
-PUBLIC int do_chroot(MESSAGE* p);
-PUBLIC int do_mount(void);
-PUBLIC int do_umount(MESSAGE* p);
-PUBLIC int do_mkdir(void);
+int do_open(void);
+int common_open(char* pathname, int flags, mode_t mode);
+int do_close(void);
+int close_fd(struct fproc* fp, int fd);
+int do_lseek(void);
+int do_chroot(MESSAGE* p);
+int do_mount(void);
+int do_umount(MESSAGE* p);
+int do_mkdir(void);
 
 /* fs/Lyos/read_write.c */
-PUBLIC int do_rdwt(void);
-PUBLIC int do_getdents(void);
+int do_rdwt(void);
+int do_getdents(void);
 
 /* fs/Lyos/link.c */
-PUBLIC int do_unlink(MESSAGE* p);
+int do_unlink(MESSAGE* p);
 
-PUBLIC int truncate_node(struct inode* pin, int newsize);
+int truncate_node(struct inode* pin, int newsize);
 
-PUBLIC int do_dup(void);
-PUBLIC int do_chdir(void);
-PUBLIC int do_fchdir(void);
+int do_dup(void);
+int do_chdir(void);
+int do_fchdir(void);
 
-PUBLIC int do_mm_request(void);
-PUBLIC int fs_exec(void);
+int do_mm_request(void);
+int fs_exec(void);
 
-PUBLIC int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
+int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
                         char* buf);
 
-PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
+int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
                              int rw_flag, endpoint_t src, void* buf,
                              size_t nbytes, u64* newpos, size_t* bytes_rdwt);
 
-PUBLIC int do_stat(void);
-PUBLIC int do_fstat(void);
-PUBLIC int do_access(void);
-PUBLIC int do_chmod(int type);
-PUBLIC int fs_getsetid(void);
+int do_stat(void);
+int do_fstat(void);
+int do_access(void);
+int do_chmod(int type);
+int fs_getsetid(void);
 
-PUBLIC int do_ioctl(void);
-PUBLIC int do_fcntl(void);
+int do_ioctl(void);
+int do_fcntl(void);
 
-PUBLIC int fs_fork(void);
-PUBLIC int fs_exit(void);
+int fs_fork(void);
+int fs_exit(void);
 
 /* worker.c */
 int rwlock_lock(rwlock_t* rwlock, rwlock_type_t lock_type);
@@ -121,27 +121,27 @@ struct worker_thread* worker_get(thread_t tid);
 /* ipc.c */
 int fs_sendrec(endpoint_t fs_e, MESSAGE* msg);
 
-PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
-PUBLIC void unlock_filp(struct file_desc* filp);
-PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd,
+void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
+void unlock_filp(struct file_desc* filp);
+struct file_desc* get_filp(struct fproc* fp, int fd,
                                   rwlock_type_t lock_type);
-PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
+int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
-PUBLIC int cdev_open(dev_t dev);
-PUBLIC int cdev_close(dev_t dev);
-PUBLIC int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
+int cdev_open(dev_t dev);
+int cdev_close(dev_t dev);
+int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
                    size_t count, struct fproc* fp);
-PUBLIC int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
+int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
                      size_t length, struct fproc* fp);
-PUBLIC int cdev_select(dev_t dev, int ops, struct fproc* fp);
-PUBLIC int cdev_reply(MESSAGE* msg);
-PUBLIC struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);
+int cdev_select(dev_t dev, int ops, struct fproc* fp);
+int cdev_reply(MESSAGE* msg);
+struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);
 
-PUBLIC void init_select();
-PUBLIC int do_select(MESSAGE* msg);
-PUBLIC void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor,
+void init_select();
+int do_select(MESSAGE* msg);
+void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor,
                                   int status);
-PUBLIC void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor,
+void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor,
                                   int status);
 
 #endif

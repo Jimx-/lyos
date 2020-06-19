@@ -37,8 +37,8 @@
 #include "const.h"
 #include "global.h"
 
-PUBLIC int init_sproc(struct sproc* sp, struct service_up_req* up_req,
-                      endpoint_t source)
+int init_sproc(struct sproc* sp, struct service_up_req* up_req,
+               endpoint_t source)
 {
     sp->priv.flags = TASK_FLAGS;
 
@@ -67,7 +67,7 @@ PUBLIC int init_sproc(struct sproc* sp, struct service_up_req* up_req,
     return 0;
 }
 
-PRIVATE void set_cmd_args(struct sproc* sp)
+static void set_cmd_args(struct sproc* sp)
 {
     strcpy(sp->cmd_args, sp->cmdline);
     char* p = sp->cmd_args;
@@ -91,8 +91,8 @@ PRIVATE void set_cmd_args(struct sproc* sp)
     sp->argc = argc;
 }
 
-PUBLIC int set_sproc(struct sproc* sp, struct service_up_req* up_req,
-                     endpoint_t source)
+int set_sproc(struct sproc* sp, struct service_up_req* up_req,
+              endpoint_t source)
 {
     if (up_req->cmdlen > CMDLINE_MAX) return E2BIG;
     data_copy(SELF, sp->cmdline, source, up_req->cmdline, up_req->cmdlen);
@@ -119,7 +119,7 @@ PUBLIC int set_sproc(struct sproc* sp, struct service_up_req* up_req,
     return 0;
 }
 
-PUBLIC int alloc_sproc(struct sproc** ppsp)
+int alloc_sproc(struct sproc** ppsp)
 {
     int i;
     for (i = 0; i < NR_PRIV_PROCS; i++) {
@@ -131,14 +131,14 @@ PUBLIC int alloc_sproc(struct sproc** ppsp)
     return ENOMEM;
 }
 
-PUBLIC int free_sproc(struct sproc* sp)
+int free_sproc(struct sproc* sp)
 {
     sp->flags &= ~SPF_INUSE;
 
     return 0;
 }
 
-PUBLIC int read_exec(struct sproc* sp)
+int read_exec(struct sproc* sp)
 {
     char* name = sp->argv[0];
 
@@ -170,7 +170,7 @@ PUBLIC int read_exec(struct sproc* sp)
         return errno;
 }
 
-PUBLIC int late_reply(struct sproc* sp, int retval)
+int late_reply(struct sproc* sp, int retval)
 {
     MESSAGE msg;
 

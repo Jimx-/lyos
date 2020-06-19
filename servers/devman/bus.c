@@ -44,19 +44,19 @@ struct bus_attr_cb_data {
 #define INDEX2ID(idx) (idx + 1)
 
 #define NR_BUS_TYPES 32
-PRIVATE struct bus_type bus_types[NR_BUS_TYPES];
+static struct bus_type bus_types[NR_BUS_TYPES];
 
 #define BUS_ATTR_HASH_LOG2 7
 #define BUS_ATTR_HASH_SIZE ((unsigned long)1 << BUS_ATTR_HASH_LOG2)
 #define BUS_ATTR_HASH_MASK (((unsigned long)1 << BUS_ATTR_HASH_LOG2) - 1)
 
 /* bus attribute hash table */
-PRIVATE struct list_head bus_attr_table[BUS_ATTR_HASH_SIZE];
+static struct list_head bus_attr_table[BUS_ATTR_HASH_SIZE];
 
 /* bus attribute show buffer size */
 #define BUFSIZE 4096
 
-PUBLIC void init_bus()
+void init_bus()
 {
     int i;
     for (i = 0; i < NR_BUS_TYPES; i++) {
@@ -68,7 +68,7 @@ PUBLIC void init_bus()
     }
 }
 
-PRIVATE struct bus_type* alloc_bus_type()
+static struct bus_type* alloc_bus_type()
 {
     int i;
     struct bus_type* type = NULL;
@@ -88,12 +88,12 @@ PRIVATE struct bus_type* alloc_bus_type()
     return type;
 }
 
-PRIVATE void bus_domain_label(struct bus_type* bus, char* buf)
+static void bus_domain_label(struct bus_type* bus, char* buf)
 {
     snprintf(buf, MAX_PATH, SYSFS_BUS_DOMAIN_LABEL, bus->name);
 }
 
-PRIVATE int publish_bus_type(struct bus_type* bus)
+static int publish_bus_type(struct bus_type* bus)
 {
     char label[MAX_PATH];
 
@@ -112,7 +112,7 @@ PRIVATE int publish_bus_type(struct bus_type* bus)
     return retval;
 }
 
-PUBLIC bus_type_id_t do_bus_register(MESSAGE* m)
+bus_type_id_t do_bus_register(MESSAGE* m)
 {
     char name[BUS_NAME_MAX];
 
@@ -132,7 +132,7 @@ PUBLIC bus_type_id_t do_bus_register(MESSAGE* m)
     return bus->id;
 }
 
-PUBLIC struct bus_type* get_bus_type(bus_type_id_t id)
+struct bus_type* get_bus_type(bus_type_id_t id)
 {
     if (id == BUS_TYPE_ERROR) return NULL;
 
@@ -140,7 +140,7 @@ PUBLIC struct bus_type* get_bus_type(bus_type_id_t id)
     return &bus_types[i];
 }
 
-PRIVATE struct bus_attr_cb_data* alloc_bus_attr()
+static struct bus_attr_cb_data* alloc_bus_attr()
 {
     static dev_attr_id_t next_id = 1;
     struct bus_attr_cb_data* attr =
@@ -154,7 +154,7 @@ PRIVATE struct bus_attr_cb_data* alloc_bus_attr()
     return attr;
 }
 
-PRIVATE void bus_attr_addhash(struct bus_attr_cb_data* attr)
+static void bus_attr_addhash(struct bus_attr_cb_data* attr)
 {
     /* Add a bus attribute to hash table */
     unsigned int hash = attr->id & BUS_ATTR_HASH_MASK;
@@ -162,14 +162,14 @@ PRIVATE void bus_attr_addhash(struct bus_attr_cb_data* attr)
 }
 
 /*
-PRIVATE void bus_attr_unhash(struct bus_attr_cb_data* attr)
+static void bus_attr_unhash(struct bus_attr_cb_data* attr)
 {
     \/\* Remove a dynamic attribute from hash table \*\/
     list_del(&attr->list);
 }
 */
 
-PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+static ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
 {
     struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*)sf_attr->cb_data;
 
@@ -191,8 +191,8 @@ PRIVATE ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
     return count;
 }
 
-PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
-                               size_t count)
+static ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
+                              size_t count)
 {
     struct bus_attr_cb_data* attr =
         (struct bus_attr_cb_data*)(sf_attr->cb_data);
@@ -210,7 +210,7 @@ PRIVATE ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
     return msg.CNT;
 }
 
-PUBLIC int do_bus_attr_add(MESSAGE* m)
+int do_bus_attr_add(MESSAGE* m)
 {
     struct bus_attr_info info;
     char bus_root[MAX_PATH];

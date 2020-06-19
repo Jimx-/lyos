@@ -32,18 +32,17 @@
 
 #include <libof/libof.h>
 
-PRIVATE int smp_commenced = 0;
-PRIVATE int __cpu_ready;
-PUBLIC void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
-PUBLIC void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
+static int smp_commenced = 0;
+static int __cpu_ready;
+void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
+void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC struct stackframe
-    init_stackframe; /* used to retrieve the id of the init cpu */
+struct stackframe init_stackframe; /* used to retrieve the id of the init cpu */
 
-PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc);
+static void smp_start_cpu(int hart_id, struct proc* idle_proc);
 
-PRIVATE int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
-                          int depth, void* arg)
+static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
+                         int depth, void* arg)
 {
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     if (!type || strcmp(type, "cpu") != 0) return 0;
@@ -61,7 +60,7 @@ PRIVATE int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
-PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc)
+static void smp_start_cpu(int hart_id, struct proc* idle_proc)
 {
     __cpu_ready = -1;
     idle_proc->regs.cpu = hart_id;
@@ -78,7 +77,7 @@ PRIVATE void smp_start_cpu(int hart_id, struct proc* idle_proc)
     set_cpu_flag(hart_id, CPU_IS_READY);
 }
 
-PUBLIC void smp_init()
+void smp_init()
 {
     init_tss(cpuid, get_k_stack_top(cpuid));
 
@@ -87,7 +86,7 @@ PUBLIC void smp_init()
     finish_bsp_booting();
 }
 
-PUBLIC void smp_boot_ap()
+void smp_boot_ap()
 {
     __cpu_ready = cpuid;
     printk("smp: CPU %d is up\n", cpuid);
@@ -107,4 +106,4 @@ PUBLIC void smp_boot_ap()
     switch_to_user();
 }
 
-PUBLIC void smp_commence() { smp_commenced = 1; }
+void smp_commence() { smp_commenced = 1; }

@@ -47,9 +47,9 @@
  * @param  bytes_rdwt [OUT] How many bytes read/written.
  * @return            Zero on success. Otherwise an error code.
  */
-PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
-                             int rw_flag, endpoint_t src, void* buf,
-                             size_t nbytes, u64* newpos, size_t* bytes_rdwt)
+int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
+                      int rw_flag, endpoint_t src, void* buf, size_t nbytes,
+                      u64* newpos, size_t* bytes_rdwt)
 {
     MESSAGE m;
     m.type = FS_RDWT;
@@ -80,7 +80,7 @@ PUBLIC int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
  * @return   On success, the number of bytes read is returned. Otherwise a
  *           negative error code is returned.
  */
-PUBLIC int do_rdwt()
+int do_rdwt()
 {
     int fd = self->msg_in.FD;
     int rw_flag = self->msg_in.type;
@@ -150,9 +150,9 @@ PUBLIC int do_rdwt()
     return -retval;
 }
 
-PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
-                             u64 position, endpoint_t src, void* buf,
-                             size_t nbytes, u64* newpos)
+static int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
+                            u64 position, endpoint_t src, void* buf,
+                            size_t nbytes, u64* newpos)
 {
     MESSAGE m;
     m.type = FS_GETDENTS;
@@ -173,7 +173,7 @@ PRIVATE int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
     return -m.RET_RETVAL;
 }
 
-PUBLIC int do_getdents(void)
+int do_getdents(void)
 {
     int fd = self->msg_in.FD;
     struct file_desc* filp = get_filp(fproc, fd, RWL_READ);

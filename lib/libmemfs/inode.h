@@ -61,16 +61,15 @@ extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 
 extern struct memfs_inode root_inode;
 
-PUBLIC void memfs_init_inode();
-PUBLIC struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index);
-PUBLIC void memfs_set_inode_stat(struct memfs_inode* pin,
-                                 struct memfs_stat* stat);
-PUBLIC struct memfs_inode* memfs_get_root_inode();
-PUBLIC struct memfs_inode* memfs_find_inode(ino_t num);
-PUBLIC struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
-                                                    char* name);
-PUBLIC struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
-                                                     int index);
-PUBLIC void memfs_addhash_inode(struct memfs_inode* inode);
+void memfs_init_inode();
+struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index);
+void memfs_set_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat);
+struct memfs_inode* memfs_get_root_inode();
+struct memfs_inode* memfs_find_inode(ino_t num);
+struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
+                                             char* name);
+struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
+                                              int index);
+void memfs_addhash_inode(struct memfs_inode* inode);
 
 #endif

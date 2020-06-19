@@ -39,7 +39,7 @@
  * @param  p Ptr to the message.
  * @return   Zero if success. Otherwise -1.
  */
-PUBLIC int do_access(void)
+int do_access(void)
 {
     int namelen = self->msg_in.NAME_LEN + 1;
     char pathname[MAX_PATH];
@@ -66,7 +66,7 @@ PUBLIC int do_access(void)
     return (retval == 0) ? 0 : -1;
 }
 
-PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access)
+int forbidden(struct fproc* fp, struct inode* pin, int access)
 {
     mode_t bits, perm_bits;
     int shift;
@@ -105,15 +105,15 @@ PUBLIC int forbidden(struct fproc* fp, struct inode* pin, int access)
  * @param  p Ptr to the message.
  * @return   Complement of the old mask.
  */
-PUBLIC mode_t do_umask(void)
+mode_t do_umask(void)
 {
     mode_t old = ~(fproc->umask);
     fproc->umask = ~((mode_t)self->msg_in.MODE & RWX_MODES);
     return old;
 }
 
-PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode,
-                          mode_t* result)
+static int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode,
+                         mode_t* result)
 {
     MESSAGE m;
     m.type = FS_CHMOD;
@@ -129,7 +129,7 @@ PRIVATE int request_chmod(endpoint_t fs_ep, dev_t dev, ino_t num, mode_t mode,
     return m.RET_RETVAL;
 }
 
-PUBLIC int do_chmod(int type)
+int do_chmod(int type)
 {
     struct inode* pin = NULL;
     struct vfs_mount* vmnt = NULL;
@@ -189,7 +189,7 @@ PUBLIC int do_chmod(int type)
     return 0;
 }
 
-PUBLIC int fs_getsetid(void)
+int fs_getsetid(void)
 {
     if (fproc->endpoint != TASK_PM) return EPERM;
 

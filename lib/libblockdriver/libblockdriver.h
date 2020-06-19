@@ -24,8 +24,8 @@ struct blockdriver {
     void (*bdr_alarm)(clock_t timestamp);
 };
 
-PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg);
-PUBLIC void blockdriver_task(struct blockdriver* bd);
+void blockdriver_process(struct blockdriver* bd, MESSAGE* msg);
+void blockdriver_task(struct blockdriver* bd);
 
 void partition(struct blockdriver* bd, int device, int style);
 

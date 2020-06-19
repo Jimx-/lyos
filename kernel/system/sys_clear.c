@@ -29,7 +29,7 @@
 #include <asm/proto.h>
 #include <lyos/sysutils.h>
 
-PUBLIC int sys_clear(MESSAGE* m, struct proc* p_proc)
+int sys_clear(MESSAGE* m, struct proc* p_proc)
 {
     endpoint_t ep = m->ENDPOINT;
     int slot;

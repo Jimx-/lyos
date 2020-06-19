@@ -34,7 +34,7 @@
  * @brief Find an unused pid.
  * @return The free pid found.
  */
-PUBLIC pid_t find_free_pid()
+pid_t find_free_pid()
 {
     pid_t pid = INIT_PID + 1;
     int used = 0;
@@ -54,20 +54,20 @@ PUBLIC pid_t find_free_pid()
     return pid;
 }
 
-PUBLIC int pm_verify_endpt(endpoint_t ep, int* proc_nr)
+int pm_verify_endpt(endpoint_t ep, int* proc_nr)
 {
     *proc_nr = ENDPOINT_P(ep);
     return 0;
 }
 
-PUBLIC struct pmproc* pm_endpt_proc(endpoint_t ep)
+struct pmproc* pm_endpt_proc(endpoint_t ep)
 {
     int proc_nr;
     if (pm_verify_endpt(ep, &proc_nr) == 0) return &pmproc_table[proc_nr];
     return NULL;
 }
 
-PUBLIC struct pmproc* pm_pid_proc(pid_t pid)
+struct pmproc* pm_pid_proc(pid_t pid)
 {
     int i;
     struct pmproc* pmp = pmproc_table;

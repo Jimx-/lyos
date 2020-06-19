@@ -30,7 +30,7 @@
 #include <lyos/portio.h>
 #include <asm/proto.h>
 
-PUBLIC int sys_portio(MESSAGE* m, struct proc* p_proc)
+int sys_portio(MESSAGE* m, struct proc* p_proc)
 {
     int type = m->PIO_REQUEST & PIO_TYPE_MASK,
         dir = m->PIO_REQUEST & PIO_DIR_MASK;

@@ -30,7 +30,7 @@
 
 #include "proto.h"
 
-PUBLIC int main()
+int main()
 {
     printl("ipc: IPC server is running.\n");
 

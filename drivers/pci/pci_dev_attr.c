@@ -35,7 +35,7 @@
 #include <asm/pci.h>
 #include "pci.h"
 
-PUBLIC ssize_t pci_vendor_show(struct device_attribute* attr, char* buf)
+ssize_t pci_vendor_show(struct device_attribute* attr, char* buf)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
     return sprintf(buf, "0x%04x", dev->vid);

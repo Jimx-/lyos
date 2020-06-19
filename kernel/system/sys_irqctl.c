@@ -29,9 +29,9 @@
 #include <errno.h>
 #include <lyos/interrupt.h>
 
-PRIVATE int generic_irq_handler(irq_hook_t* hook);
+static int generic_irq_handler(irq_hook_t* hook);
 
-PUBLIC int sys_irqctl(MESSAGE* m, struct proc* p_proc)
+int sys_irqctl(MESSAGE* m, struct proc* p_proc)
 {
     int irq = m->IRQ_IRQ, hook_id = m->IRQ_HOOK_ID - 1,
         notify_id = m->IRQ_HOOK_ID;
@@ -86,7 +86,7 @@ PUBLIC int sys_irqctl(MESSAGE* m, struct proc* p_proc)
     return retval;
 }
 
-PRIVATE int generic_irq_handler(irq_hook_t* hook)
+static int generic_irq_handler(irq_hook_t* hook)
 {
     struct proc* p = endpt_proc(hook->proc_ep);
     if (!p) panic("invalid interrupt handler: %d", hook->proc_ep);

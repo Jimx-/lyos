@@ -23,10 +23,10 @@
 #include <lyos/const.h>
 #include "global.h"
 
-PUBLIC struct sproc sproc_table[NR_PRIV_PROCS];
-PUBLIC struct sproc* sproc_ptr[NR_PROCS];
+struct sproc sproc_table[NR_PRIV_PROCS];
+struct sproc* sproc_ptr[NR_PROCS];
 
-PUBLIC struct boot_priv boot_priv_table[] = {
+struct boot_priv boot_priv_table[] = {
     {TASK_MM, "MM", TASK_FLAGS},
     {TASK_PM, "PM", TASK_FLAGS},
     {TASK_SERVMAN, "SERVMAN", TASK_FLAGS},

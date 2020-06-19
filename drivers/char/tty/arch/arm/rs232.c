@@ -33,8 +33,8 @@
 #include "proto.h"
 #include "global.h"
 
-PUBLIC irq_id_t rs_irq_set;
+irq_id_t rs_irq_set;
 
-PUBLIC int init_rs(TTY* tty) { return 0; }
+int init_rs(TTY* tty) { return 0; }
 
-PUBLIC int rs_interrupt(MESSAGE* m) { return 0; }
+int rs_interrupt(MESSAGE* m) { return 0; }

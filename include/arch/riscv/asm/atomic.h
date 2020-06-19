@@ -29,13 +29,13 @@ typedef struct {
         (v)->counter = i; \
     } while (0)
 
-PRIVATE inline int atomic_get(atomic_t* v) { return v->counter; }
+static inline int atomic_get(atomic_t* v) { return v->counter; }
 
-PRIVATE inline void atomic_inc(atomic_t* v) { v->counter++; }
+static inline void atomic_inc(atomic_t* v) { v->counter++; }
 
-PRIVATE inline void atomic_dec(atomic_t* v) { v->counter--; }
+static inline void atomic_dec(atomic_t* v) { v->counter--; }
 
-PRIVATE inline int atomic_dec_and_test(atomic_t* v)
+static inline int atomic_dec_and_test(atomic_t* v)
 {
     return (--v->counter == 0);
 }

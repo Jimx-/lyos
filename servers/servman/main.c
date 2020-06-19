@@ -34,9 +34,9 @@
 #include "proto.h"
 #include "global.h"
 
-PRIVATE void servman_init();
+static void servman_init();
 
-PUBLIC int main()
+int main()
 {
     servman_init();
 
@@ -73,7 +73,7 @@ PUBLIC int main()
     return 0;
 }
 
-PRIVATE void servman_init()
+static void servman_init()
 {
     printl("SERVMAN: service manager is running.\n");
 

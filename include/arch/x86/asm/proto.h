@@ -18,31 +18,31 @@
 
 #define cmb() __asm__ __volatile__("" ::: "memory")
 
-PUBLIC void x86_lgdt(u8* p_gdt);
-PUBLIC void x86_lidt(u8* p_idt);
-PUBLIC void x86_lldt(u32 ldt);
-PUBLIC void x86_ltr(u32 tss);
-PUBLIC void x86_load_kerncs();
-PUBLIC void x86_load_ds(u32 ds);
-PUBLIC void x86_load_es(u32 es);
-PUBLIC void x86_load_fs(u32 fs);
-PUBLIC void x86_load_gs(u32 gs);
-PUBLIC void x86_load_ss(u32 ss);
+void x86_lgdt(u8* p_gdt);
+void x86_lidt(u8* p_idt);
+void x86_lldt(u32 ldt);
+void x86_ltr(u32 tss);
+void x86_load_kerncs();
+void x86_load_ds(u32 ds);
+void x86_load_es(u32 es);
+void x86_load_fs(u32 fs);
+void x86_load_gs(u32 gs);
+void x86_load_ss(u32 ss);
 
-PUBLIC u32 read_cr0();
-PUBLIC void write_cr0(u32 cr0);
-PUBLIC void write_cr3(u32 cr3);
-PUBLIC u32 read_cr4();
-PUBLIC void write_cr4(u32 cr4);
+u32 read_cr0();
+void write_cr0(u32 cr0);
+void write_cr3(u32 cr3);
+u32 read_cr4();
+void write_cr4(u32 cr4);
 
-PUBLIC void arch_pause();
+void arch_pause();
 
-PUBLIC int init_8253_timer(int freq);
-PUBLIC void stop_8253_timer();
+int init_8253_timer(int freq);
+void stop_8253_timer();
 
-PUBLIC void switch_k_stack(char* esp, void* cont);
+void switch_k_stack(char* esp, void* cont);
 
-PUBLIC reg_t read_ebp();
+reg_t read_ebp();
 
 #ifndef __GNUC__
 /* call a function to read the stack fram pointer (%ebp) */
@@ -52,23 +52,22 @@ PUBLIC reg_t read_ebp();
 #define get_stack_frame(__X) ((reg_t)__builtin_frame_address(0))
 #endif
 
-PUBLIC int arch_init_proc(struct proc* p, void* sp, void* ip,
-                          struct ps_strings* ps, char* name);
-PUBLIC int arch_reset_proc(struct proc* p);
-PUBLIC void arch_boot_proc(struct proc* p, struct boot_proc* bp);
+int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
+                   char* name);
+int arch_reset_proc(struct proc* p);
+void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
-PUBLIC struct proc* arch_switch_to_user();
+struct proc* arch_switch_to_user();
 
-PUBLIC int arch_get_kern_mapping(int index, caddr_t* addr, int* len,
-                                 int* flags);
-PUBLIC int arch_reply_kern_mapping(int index, void* vir_addr);
-PUBLIC int arch_vmctl(MESSAGE* m, struct proc* p);
+int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
+int arch_reply_kern_mapping(int index, void* vir_addr);
+int arch_vmctl(MESSAGE* m, struct proc* p);
 
-PUBLIC void sys_call_sysenter();
+void sys_call_sysenter();
 
-PUBLIC int syscall_int(int syscall_nr, MESSAGE* m);
-PUBLIC int syscall_sysenter(int syscall_nr, MESSAGE* m);
-PUBLIC int syscall_syscall(int syscall_nr, MESSAGE* m);
+int syscall_int(int syscall_nr, MESSAGE* m);
+int syscall_sysenter(int syscall_nr, MESSAGE* m);
+int syscall_syscall(int syscall_nr, MESSAGE* m);
 
 struct exception_frame {
     reg_t vec_no;   /* which interrupt vector was triggered */
@@ -90,32 +89,31 @@ int fxrstor_end(void*);
 int frstor_fault(void*);
 void clts(void);
 
-PUBLIC void ia32_read_msr(u32 reg, u32* hi, u32* lo);
-PUBLIC void ia32_write_msr(u32 reg, u32 hi, u32 lo);
+void ia32_read_msr(u32 reg, u32* hi, u32* lo);
+void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
-PUBLIC void halt_cpu();
+void halt_cpu();
 
-PUBLIC int init_local_timer(int freq);
+int init_local_timer(int freq);
 void setup_local_timer_one_shot(void);
 void setup_local_timer_periodic(void);
-PUBLIC int put_local_timer_handler(irq_handler_t handler);
-PUBLIC void restart_local_timer();
-PUBLIC void stop_local_timer();
+int put_local_timer_handler(irq_handler_t handler);
+void restart_local_timer();
+void stop_local_timer();
 void arch_stop_context(struct proc* p, u64 delta);
 void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]);
 
-PUBLIC void smp_commence();
+void smp_commence();
 
-PUBLIC void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end);
-PUBLIC void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end,
-                   kinfo_t* pk);
-PUBLIC phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages);
-PUBLIC phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size);
+void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end);
+void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk);
+phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages);
+phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size);
 
-PUBLIC void clear_memcache();
+void clear_memcache();
 
-PUBLIC void arch_set_syscall_result(struct proc* p, int result);
+void arch_set_syscall_result(struct proc* p, int result);
 
-PUBLIC void arch_setup_cpulocals(void);
+void arch_setup_cpulocals(void);
 
 #endif

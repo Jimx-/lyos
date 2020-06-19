@@ -21,7 +21,7 @@
 #include "cache.h"
 #include "file.h"
 
-PRIVATE int region_key_node_comp(void* key, struct avl_node* node)
+static int region_key_node_comp(void* key, struct avl_node* node)
 {
     struct vir_region* r1 = (struct vir_region*)key;
     struct vir_region* r2 = avl_entry(node, struct vir_region, avl);
@@ -36,8 +36,7 @@ PRIVATE int region_key_node_comp(void* key, struct avl_node* node)
     return 0;
 }
 
-PRIVATE int region_node_node_comp(struct avl_node* node1,
-                                  struct avl_node* node2)
+static int region_node_node_comp(struct avl_node* node1, struct avl_node* node2)
 {
     struct vir_region* r1 = avl_entry(node1, struct vir_region, avl);
     struct vir_region* r2 = avl_entry(node2, struct vir_region, avl);
@@ -52,12 +51,12 @@ PRIVATE int region_node_node_comp(struct avl_node* node1,
     return 0;
 }
 
-PUBLIC void region_init_avl(struct mm_struct* mm)
+void region_init_avl(struct mm_struct* mm)
 {
     INIT_AVL_ROOT(&mm->mem_avl, region_key_node_comp, region_node_node_comp);
 }
 
-PUBLIC struct vir_region* region_lookup(struct mmproc* mmp, vir_bytes addr)
+struct vir_region* region_lookup(struct mmproc* mmp, vir_bytes addr)
 {
     struct avl_node* node = mmp->active_mm->mem_avl.node;
 
@@ -76,19 +75,19 @@ PUBLIC struct vir_region* region_lookup(struct mmproc* mmp, vir_bytes addr)
     return NULL;
 }
 
-PUBLIC void region_avl_start_iter(struct avl_root* root, struct avl_iter* iter,
-                                  void* key, int flags)
+void region_avl_start_iter(struct avl_root* root, struct avl_iter* iter,
+                           void* key, int flags)
 {
     avl_start_iter(root, iter, key, flags);
 }
 
-PUBLIC struct vir_region* region_avl_get_iter(struct avl_iter* iter)
+struct vir_region* region_avl_get_iter(struct avl_iter* iter)
 {
     struct avl_node* node = avl_get_iter(iter);
     if (!node) return NULL;
     return avl_entry(node, struct vir_region, avl);
 }
 
-PUBLIC void region_avl_inc_iter(struct avl_iter* iter) { avl_inc_iter(iter); }
+void region_avl_inc_iter(struct avl_iter* iter) { avl_inc_iter(iter); }
 
-PUBLIC void region_avl_dec_iter(struct avl_iter* iter) { avl_dec_iter(iter); }
+void region_avl_dec_iter(struct avl_iter* iter) { avl_dec_iter(iter); }

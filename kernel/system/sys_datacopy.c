@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <asm/proto.h>
 
-PUBLIC int sys_datacopy(MESSAGE* m, struct proc* p_proc)
+int sys_datacopy(MESSAGE* m, struct proc* p_proc)
 {
     void* src_addr = m->SRC_ADDR;
     endpoint_t src_ep = m->SRC_EP == SELF ? p_proc->endpoint : m->SRC_EP;

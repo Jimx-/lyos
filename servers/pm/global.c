@@ -22,4 +22,4 @@
 #include "lyos/list.h"
 #include "global.h"
 
-PUBLIC struct pmproc pmproc_table[NR_PROCS];
+struct pmproc pmproc_table[NR_PROCS];

@@ -127,7 +127,7 @@ static const char* parse_number(cJSON* item, const char* num)
     n = sign * n *
         pow(10.0,
             (scale + subscale * signsubscale)); /* number = +/- number.fraction
-                                                   * 10^+/- exponent */
+                                                 * 10^+/- exponent */
 
     item->valuedouble = n;
     item->valueint = (int)n;

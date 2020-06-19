@@ -40,15 +40,15 @@ typedef struct sysfs_dyn_attr {
 
 #define SYSFS_BUS_DOMAIN_LABEL "bus.%s"
 
-PUBLIC int sysfs_publish_domain(char* key, int flags);
-PUBLIC int sysfs_publish_u32(char* key, u32 value, int flags);
+int sysfs_publish_domain(char* key, int flags);
+int sysfs_publish_u32(char* key, u32 value, int flags);
 
-PUBLIC int sysfs_retrieve_u32(char* key, u32* value);
+int sysfs_retrieve_u32(char* key, u32* value);
 
-PUBLIC int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
-                               void* cb_data, sysfs_dyn_attr_show_t show,
-                               sysfs_dyn_attr_store_t store);
-PUBLIC int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr);
-PUBLIC ssize_t sysfs_handle_dyn_attr(MESSAGE* msg);
+int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
+                        void* cb_data, sysfs_dyn_attr_show_t show,
+                        sysfs_dyn_attr_store_t store);
+int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr);
+ssize_t sysfs_handle_dyn_attr(MESSAGE* msg);
 
 #endif /* _LIBSYSFS_H_ */

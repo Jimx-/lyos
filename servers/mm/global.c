@@ -22,5 +22,5 @@
 #include "lyos/list.h"
 #include "global.h"
 
-PUBLIC struct mmproc mmproc_table[NR_PROCS];
+struct mmproc mmproc_table[NR_PROCS];
 int pt_init_done = 0;

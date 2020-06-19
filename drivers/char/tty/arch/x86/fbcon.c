@@ -45,17 +45,17 @@
 #define YRES_DEFAULT 768
 
 int fb_scr_width, fb_scr_height;
-PRIVATE int cursor_state = 0;
+static int cursor_state = 0;
 
 extern int fbcon_init_bochs(int devind, int x_res, int y_res);
 
-PRIVATE void fbcon_outchar(CONSOLE* con, char ch);
-PRIVATE void fbcon_flush(CONSOLE* con);
-PRIVATE void update_cursor(struct timer_list* tp);
+static void fbcon_outchar(CONSOLE* con, char ch);
+static void fbcon_flush(CONSOLE* con);
+static void update_cursor(struct timer_list* tp);
 
-PRIVATE struct timer_list cursor_timer;
+static struct timer_list cursor_timer;
 
-PUBLIC int fbcon_init()
+int fbcon_init()
 {
     int devind;
     u16 vid, did;
@@ -90,7 +90,7 @@ PUBLIC int fbcon_init()
     return 0;
 }
 
-PRIVATE void set_pixel(int x, int y, int val)
+static void set_pixel(int x, int y, int val)
 {
     u32* vmem = (u32*)fb_mem_base;
     u32* pixel = &vmem[y * x_resolution + x];
@@ -103,7 +103,7 @@ PRIVATE void set_pixel(int x, int y, int val)
 #define RGB_RED_BRI 0xff0000
 #define RGB_GREEN_BRI 0x00ff00
 #define RGB_BLUE_BRI 0x0000ff
-PRIVATE void color_to_rgb(u8 color, u8 attr, int* fg, int* bg)
+static void color_to_rgb(u8 color, u8 attr, int* fg, int* bg)
 {
     int r = (attr & BOLD) ? RGB_RED_BRI : RGB_RED;
     int g = (attr & BOLD) ? RGB_GREEN_BRI : RGB_GREEN;
@@ -120,7 +120,7 @@ PRIVATE void color_to_rgb(u8 color, u8 attr, int* fg, int* bg)
     if (bg_color & BLUE) *bg |= b;
 }
 
-PRIVATE void print_char(CONSOLE* con, int x, int y, char ch)
+static void print_char(CONSOLE* con, int x, int y, char ch)
 {
     u8 color = con->color;
     int fg_color, bg_color;
@@ -140,7 +140,7 @@ PRIVATE void print_char(CONSOLE* con, int x, int y, char ch)
     }
 }
 
-PRIVATE void print_cursor(CONSOLE* con, int x, int y, int state)
+static void print_cursor(CONSOLE* con, int x, int y, int state)
 {
     u8 color = state ? con->color
                      : MAKE_COLOR(BG_COLOR(con->color), BG_COLOR(con->color));
@@ -160,7 +160,7 @@ PRIVATE void print_cursor(CONSOLE* con, int x, int y, int state)
     }
 }
 
-PUBLIC void fbcon_init_con(CONSOLE* con)
+void fbcon_init_con(CONSOLE* con)
 {
     con->cols = fb_scr_width;
     con->rows = fb_scr_height;
@@ -177,7 +177,7 @@ PUBLIC void fbcon_init_con(CONSOLE* con)
     update_cursor(&cursor_timer);
 }
 
-PRIVATE void fbcon_outchar(CONSOLE* con, char ch)
+static void fbcon_outchar(CONSOLE* con, char ch)
 {
     int line, col;
     int cursor = con->cursor;
@@ -193,7 +193,7 @@ PRIVATE void fbcon_outchar(CONSOLE* con, char ch)
     print_char(con, col * FONT_WIDTH, line * FONT_HEIGHT, ch);
 }
 
-PRIVATE void fbcon_flush(CONSOLE* con)
+static void fbcon_flush(CONSOLE* con)
 {
     if (con->visible_origin != con->origin) {
         u32 delta = con->visible_origin - con->origin;
@@ -216,7 +216,7 @@ PRIVATE void fbcon_flush(CONSOLE* con)
     }
 }
 
-PRIVATE void update_cursor(struct timer_list* tp)
+static void update_cursor(struct timer_list* tp)
 {
     clock_t ticks = get_system_hz() / CURSOR_BLINK_RATE;
     cursor_state = ~cursor_state;

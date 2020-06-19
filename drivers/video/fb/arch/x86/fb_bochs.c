@@ -57,7 +57,7 @@
 #define VBE_DISPI_NOCLEARMEM 0x80
 
 /*
-PRIVATE u16 bochs_read(u16 reg)
+static u16 bochs_read(u16 reg)
 {
     portio_outw(VBE_DISPI_IOPORT_INDEX, reg);
 
@@ -66,14 +66,14 @@ PRIVATE u16 bochs_read(u16 reg)
     return v;
 }
 
-PRIVATE void bochs_write(u16 reg, u16 val)
+static void bochs_write(u16 reg, u16 val)
 {
     portio_outw(VBE_DISPI_IOPORT_INDEX, reg);
     portio_outw(VBE_DISPI_IOPORT_DATA, val);
 }
 */
 
-PUBLIC int fb_init_bochs(int devind)
+int fb_init_bochs(int devind)
 {
     int x_res = 1024;
     int y_res = 768;

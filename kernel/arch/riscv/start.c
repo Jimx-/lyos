@@ -42,21 +42,21 @@ extern char _VIR_BASE, _KERN_SIZE;
 extern char __global_pointer;
 
 /* paging utilities */
-PRIVATE phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
-PRIVATE phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
+static phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
+static phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern char k_stacks_start;
-PUBLIC void* k_stacks;
+void* k_stacks;
 
-PRIVATE int dt_root_addr_cells, dt_root_size_cells;
+static int dt_root_addr_cells, dt_root_size_cells;
 
-PRIVATE char* env_get(const char* name);
-PRIVATE int kinfo_set_param(char* buf, char* name, char* value);
+static char* env_get(const char* name);
+static int kinfo_set_param(char* buf, char* name, char* value);
 
 /* Scan for root address cells and size cells in FDT */
-PRIVATE int fdt_scan_root(void* blob, unsigned long offset, const char* name,
-                          int depth, void* arg)
+static int fdt_scan_root(void* blob, unsigned long offset, const char* name,
+                         int depth, void* arg)
 {
     if (depth != 0) return 0;
 
@@ -76,8 +76,8 @@ PRIVATE int fdt_scan_root(void* blob, unsigned long offset, const char* name,
 }
 
 /* Scan for memory nodes in FDT */
-PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name,
-                            int depth, void* arg)
+static int fdt_scan_memory(void* blob, unsigned long offset, const char* name,
+                           int depth, void* arg)
 {
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     if (!type || strcmp(type, "memory") != 0) return 0;
@@ -109,7 +109,7 @@ PRIVATE int fdt_scan_memory(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
-PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
+void cstart(unsigned int hart_id, void* dtb_phys)
 {
     initial_boot_params = __va(dtb_phys);
 
@@ -155,7 +155,7 @@ PUBLIC void cstart(unsigned int hart_id, void* dtb_phys)
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
 }
 
-PRIVATE char* get_value(const char* param, const char* key)
+static char* get_value(const char* param, const char* key)
 {
     char* envp = (char*)param;
     const char* name = key;
@@ -171,12 +171,12 @@ PRIVATE char* get_value(const char* param, const char* key)
     return NULL;
 }
 
-PRIVATE char* env_get(const char* name)
+static char* env_get(const char* name)
 {
     return get_value(kinfo.cmdline, name);
 }
 
-PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
+static int kinfo_set_param(char* buf, char* name, char* value)
 {
     char* p = buf;
     char* bufend = buf + KINFO_CMDLINE_LEN;
@@ -212,4 +212,4 @@ PRIVATE int kinfo_set_param(char* buf, char* name, char* value)
     return 0;
 }
 
-PUBLIC void init_arch() { init_prot(); }
+void init_arch() { init_prot(); }

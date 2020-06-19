@@ -32,15 +32,15 @@ char** env_argv = NULL;
 
 #define ENV_BUF_SIZE 32
 
-PUBLIC void panic(const char* fmt, ...);
+void panic(const char* fmt, ...);
 
-PUBLIC void env_setargs(int argc, char* argv[])
+void env_setargs(int argc, char* argv[])
 {
     env_argc = argc;
     env_argv = argv;
 }
 
-PRIVATE char* get_value(const char* param, const char* key)
+static char* get_value(const char* param, const char* key)
 {
     char* envp = (char*)param;
     const char* name = key;
@@ -56,7 +56,7 @@ PRIVATE char* get_value(const char* param, const char* key)
     return NULL;
 }
 
-PUBLIC int env_get_param(const char* key, char* value, int max_len)
+int env_get_param(const char* key, char* value, int max_len)
 {
     static char kernel_cmdline[KINFO_CMDLINE_LEN];
 
@@ -93,15 +93,15 @@ PUBLIC int env_get_param(const char* key, char* value, int max_len)
     return 0;
 }
 
-PUBLIC void env_panic(char* key)
+void env_panic(char* key)
 {
     static char value[ENV_BUF_SIZE] = "<unknown>";
     env_get_param(key, value, sizeof(value));
     panic("bad environment setting: %s = %s\n", key, value);
 }
 
-PUBLIC int env_get_long(char* key, long* value, const char* fmt, int field,
-                        long min, long max)
+int env_get_long(char* key, long* value, const char* fmt, int field, long min,
+                 long max)
 {
     char val_buf[ENV_BUF_SIZE];
     int retval = 0;

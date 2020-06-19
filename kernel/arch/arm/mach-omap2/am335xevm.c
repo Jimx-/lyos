@@ -27,21 +27,21 @@
 #include "serial.h"
 #include "interrupt.h"
 
-PRIVATE void am335x_init_serial(void)
+static void am335x_init_serial(void)
 {
     uart_base_addr = OMAP3_AM335X_DEBUG_UART_BASE;
     kern_map_phys(OMAP3_AM335X_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE,
                   &uart_base_addr);
 }
 
-PRIVATE void am335x_init_interrupt(void)
+static void am335x_init_interrupt(void)
 {
     intr_base_addr = OMAP3_AM335X_INTR_BASE;
     kern_map_phys(OMAP3_AM335X_INTR_BASE, ARCH_PG_SIZE, KMF_WRITE,
                   &intr_base_addr);
 }
 
-PRIVATE void am335x_init_machine(void)
+static void am335x_init_machine(void)
 {
     am335x_init_serial();
     am335x_init_interrupt();

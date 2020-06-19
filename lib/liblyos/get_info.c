@@ -28,7 +28,7 @@
 #include <lyos/sysutils.h>
 #include <asm/type.h>
 
-PUBLIC int getinfo(int request, void* buf)
+int getinfo(int request, void* buf)
 {
     MESSAGE m;
     m.REQUEST = request;
@@ -38,19 +38,19 @@ PUBLIC int getinfo(int request, void* buf)
     return syscall_entry(NR_GETINFO, &m);
 }
 
-PUBLIC int get_sysinfo(struct sysinfo** sysinfo)
+int get_sysinfo(struct sysinfo** sysinfo)
 {
     return getinfo(GETINFO_SYSINFO, sysinfo);
 }
 
-PUBLIC int get_kinfo(kinfo_t* kinfo) { return getinfo(GETINFO_KINFO, kinfo); }
+int get_kinfo(kinfo_t* kinfo) { return getinfo(GETINFO_KINFO, kinfo); }
 
-PUBLIC int get_bootprocs(struct boot_proc* bp)
+int get_bootprocs(struct boot_proc* bp)
 {
     return getinfo(GETINFO_BOOTPROCS, bp);
 }
 
-PUBLIC int get_system_hz()
+int get_system_hz()
 {
     MESSAGE m;
     m.REQUEST = GETINFO_HZ;
@@ -60,7 +60,7 @@ PUBLIC int get_system_hz()
     return m.RETVAL;
 }
 
-PUBLIC int get_kernel_cmdline(char* buf, int buflen)
+int get_kernel_cmdline(char* buf, int buflen)
 {
     MESSAGE m;
     m.REQUEST = GETINFO_CMDLINE;
@@ -70,20 +70,17 @@ PUBLIC int get_kernel_cmdline(char* buf, int buflen)
     return syscall_entry(NR_GETINFO, &m);
 }
 
-PUBLIC int get_machine(struct machine* machine)
+int get_machine(struct machine* machine)
 {
     return getinfo(GETINFO_MACHINE, machine);
 }
 
-PUBLIC int get_cpuinfo(struct cpu_info* cpuinfo)
+int get_cpuinfo(struct cpu_info* cpuinfo)
 {
     return getinfo(GETINFO_CPUINFO, cpuinfo);
 }
 
-PUBLIC int get_proctab(struct proc* proc)
-{
-    return getinfo(GETINFO_PROCTAB, proc);
-}
+int get_proctab(struct proc* proc) { return getinfo(GETINFO_PROCTAB, proc); }
 
 int get_cputicks(unsigned int cpu, u64* ticks)
 {

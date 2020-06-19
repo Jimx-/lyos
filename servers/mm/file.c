@@ -33,9 +33,9 @@
 #include "const.h"
 #include "global.h"
 
-PRIVATE DEF_LIST(file_list);
+static DEF_LIST(file_list);
 
-PRIVATE struct mm_file_desc* alloc_mm_file_desc(int fd, dev_t dev, ino_t ino)
+static struct mm_file_desc* alloc_mm_file_desc(int fd, dev_t dev, ino_t ino)
 {
     struct mm_file_desc* filp;
     SLABALLOC(filp);
@@ -51,7 +51,7 @@ PRIVATE struct mm_file_desc* alloc_mm_file_desc(int fd, dev_t dev, ino_t ino)
     return filp;
 }
 
-PUBLIC struct mm_file_desc* get_mm_file_desc(int fd, dev_t dev, ino_t ino)
+struct mm_file_desc* get_mm_file_desc(int fd, dev_t dev, ino_t ino)
 {
     struct mm_file_desc* filp;
     list_for_each_entry(filp, &file_list, list)
@@ -62,13 +62,13 @@ PUBLIC struct mm_file_desc* get_mm_file_desc(int fd, dev_t dev, ino_t ino)
     return alloc_mm_file_desc(fd, dev, ino);
 }
 
-PUBLIC void file_reference(struct vir_region* vr, struct mm_file_desc* filp)
+void file_reference(struct vir_region* vr, struct mm_file_desc* filp)
 {
     vr->param.file.filp = filp;
     filp->refcnt++;
 }
 
-PUBLIC void file_unreferenced(struct mm_file_desc* filp)
+void file_unreferenced(struct mm_file_desc* filp)
 {
     filp->refcnt--;
     if (filp->refcnt <= 0) {

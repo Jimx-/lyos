@@ -185,16 +185,15 @@ static inline struct descriptor* get_cpu_gdt(unsigned int cpu)
 }
 
 /* protect.c */
-PUBLIC void init_prot();
-PUBLIC void init_desc(struct descriptor* p_desc, u32 base, u32 limit,
-                      u16 attribute);
-PUBLIC void load_direct_gdt(unsigned int cpu);
-PUBLIC void load_prot_selectors(unsigned int cpu);
-PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack);
-PUBLIC void init_idt();
-PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type,
-                          int_handler handler, unsigned char privilege);
+void init_prot();
+void init_desc(struct descriptor* p_desc, u32 base, u32 limit, u16 attribute);
+void load_direct_gdt(unsigned int cpu);
+void load_prot_selectors(unsigned int cpu);
+int init_tss(unsigned cpu, unsigned kernel_stack);
+void init_idt();
+void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler,
+                   unsigned char privilege);
 
-PUBLIC void reload_idt();
+void reload_idt();
 
 #endif /* _PROTECT_H_ */

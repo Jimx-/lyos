@@ -38,7 +38,7 @@
 
 #define MAX_SELECTS 25
 
-PRIVATE struct select_entry {
+static struct select_entry {
     mutex_t lock;
     struct fproc* caller;
     endpoint_t endpoint;
@@ -54,25 +54,25 @@ PRIVATE struct select_entry {
     struct timer_list timer;
 } select_table[MAX_SELECTS];
 
-PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block,
-                                struct fproc* fp);
-PRIVATE int is_char_dev(struct file_desc* filp);
+static int select_request_char(struct file_desc* filp, int* ops, int block,
+                               struct fproc* fp);
+static int is_char_dev(struct file_desc* filp);
 
 #define FDS_COPYIN 1
 #define FDS_COPYOUT 2
-PRIVATE int copy_fdset(struct select_entry* entry, int nfds, int direction);
-PRIVATE int fd_getops(struct select_entry* entry, int fd);
-PRIVATE void fd_setfromops(struct select_entry* entry, int fd, int ops);
-PRIVATE void select_cancel(struct select_entry* entry);
-PRIVATE void select_cancel_filp(struct file_desc* filp);
-PRIVATE void select_lock_filp(struct file_desc* filp, int ops);
-PRIVATE int is_deferred(struct select_entry* entry);
-PRIVATE void update_status(struct file_desc* filp, int status);
-PRIVATE void tell_proc(struct select_entry* entry);
-PRIVATE void select_return(struct select_entry* entry);
-PRIVATE void select_timeout_check(struct timer_list* tp);
+static int copy_fdset(struct select_entry* entry, int nfds, int direction);
+static int fd_getops(struct select_entry* entry, int fd);
+static void fd_setfromops(struct select_entry* entry, int fd, int ops);
+static void select_cancel(struct select_entry* entry);
+static void select_cancel_filp(struct file_desc* filp);
+static void select_lock_filp(struct file_desc* filp, int ops);
+static int is_deferred(struct select_entry* entry);
+static void update_status(struct file_desc* filp, int status);
+static void tell_proc(struct select_entry* entry);
+static void select_return(struct select_entry* entry);
+static void select_timeout_check(struct timer_list* tp);
 
-PRIVATE struct fd_operation {
+static struct fd_operation {
     int (*select_request)(struct file_desc* filp, int* ops, int block,
                           struct fproc* fp);
     int (*match)(struct file_desc* filp);
@@ -90,7 +90,7 @@ PRIVATE struct fd_operation {
 #define lock_select_entry(entry) mutex_lock(&(entry)->lock)
 #define unlock_select_entry(entry) mutex_unlock(&(entry)->lock)
 
-PUBLIC void init_select()
+void init_select()
 {
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
@@ -101,7 +101,7 @@ PUBLIC void init_select()
     }
 }
 
-PUBLIC int do_select(MESSAGE* msg)
+int do_select(MESSAGE* msg)
 {
     int src = msg->source;
     int retval = 0;
@@ -267,7 +267,7 @@ PUBLIC int do_select(MESSAGE* msg)
     return SUSPEND;
 }
 
-PRIVATE void select_timeout_check(struct timer_list* tp)
+static void select_timeout_check(struct timer_list* tp)
 {
     struct select_entry* entry;
     int slot = tp->arg;
@@ -285,7 +285,7 @@ PRIVATE void select_timeout_check(struct timer_list* tp)
     }
 }
 
-PRIVATE int select_filter(struct file_desc* filp, int* ops, int block)
+static int select_filter(struct file_desc* filp, int* ops, int block)
 {
     int rops = *ops;
     *ops = 0;
@@ -315,8 +315,8 @@ PRIVATE int select_filter(struct file_desc* filp, int* ops, int block)
     return rops;
 }
 
-PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block,
-                                struct fproc* fp)
+static int select_request_char(struct file_desc* filp, int* ops, int block,
+                               struct fproc* fp)
 {
     dev_t dev = filp->fd_inode->i_specdev;
 
@@ -339,12 +339,12 @@ PRIVATE int select_request_char(struct file_desc* filp, int* ops, int block,
     return 0;
 }
 
-PRIVATE int is_char_dev(struct file_desc* filp)
+static int is_char_dev(struct file_desc* filp)
 {
     return filp && filp->fd_inode && (filp->fd_inode->i_mode & I_CHAR_SPECIAL);
 }
 
-PRIVATE int copy_fdset(struct select_entry* entry, int nfds, int direction)
+static int copy_fdset(struct select_entry* entry, int nfds, int direction)
 {
     if (nfds < 0 || nfds > OPEN_MAX) return EINVAL;
     int fdset_size = (size_t)(_howmany(nfds, NFDBITS) * sizeof(fd_mask));
@@ -381,7 +381,7 @@ PRIVATE int copy_fdset(struct select_entry* entry, int nfds, int direction)
     return 0;
 }
 
-PRIVATE int fd_getops(struct select_entry* entry, int fd)
+static int fd_getops(struct select_entry* entry, int fd)
 {
     int ops = 0;
 
@@ -392,7 +392,7 @@ PRIVATE int fd_getops(struct select_entry* entry, int fd)
     return ops;
 }
 
-PRIVATE void fd_setfromops(struct select_entry* entry, int fd, int ops)
+static void fd_setfromops(struct select_entry* entry, int fd, int ops)
 {
     if ((ops & SEL_READ) && entry->vir_readfds &&
         FD_ISSET(fd, &entry->readfds) && !FD_ISSET(fd, &entry->ready_readfds)) {
@@ -415,7 +415,7 @@ PRIVATE void fd_setfromops(struct select_entry* entry, int fd, int ops)
     }
 }
 
-PRIVATE void select_cancel(struct select_entry* entry)
+static void select_cancel(struct select_entry* entry)
 {
     int fd;
     struct file_desc* filp;
@@ -435,7 +435,7 @@ PRIVATE void select_cancel(struct select_entry* entry)
     entry->caller = NULL;
 }
 
-PRIVATE void select_cancel_filp(struct file_desc* filp)
+static void select_cancel_filp(struct file_desc* filp)
 {
     filp->fd_selectors--;
     if (filp->fd_selectors == 0) {
@@ -444,7 +444,7 @@ PRIVATE void select_cancel_filp(struct file_desc* filp)
     }
 }
 
-PRIVATE void select_lock_filp(struct file_desc* filp, int ops)
+static void select_lock_filp(struct file_desc* filp, int ops)
 {
     rwlock_type_t lock_type = RWL_READ;
 
@@ -455,7 +455,7 @@ PRIVATE void select_lock_filp(struct file_desc* filp, int ops)
     lock_filp(filp, lock_type);
 }
 
-PRIVATE int is_deferred(struct select_entry* entry)
+static int is_deferred(struct select_entry* entry)
 {
     int fd;
     if (entry->starting) return TRUE;
@@ -468,7 +468,7 @@ PRIVATE int is_deferred(struct select_entry* entry)
     return FALSE;
 }
 
-PRIVATE void update_status(struct file_desc* filp, int status)
+static void update_status(struct file_desc* filp, int status)
 {
     int slot, found;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
@@ -494,7 +494,7 @@ PRIVATE void update_status(struct file_desc* filp, int status)
     }
 }
 
-PRIVATE void tell_proc(struct select_entry* entry)
+static void tell_proc(struct select_entry* entry)
 {
     if ((entry->nreadyfds > 0 || entry->error != 0 || !entry->block) &&
         !is_deferred(entry)) {
@@ -502,7 +502,7 @@ PRIVATE void tell_proc(struct select_entry* entry)
     }
 }
 
-PRIVATE void select_return(struct select_entry* entry)
+static void select_return(struct select_entry* entry)
 {
     select_cancel(entry);
 
@@ -524,7 +524,7 @@ PRIVATE void select_return(struct select_entry* entry)
     /* revive_proc(entry->endpoint, &mess); */
 }
 
-PRIVATE void select_reply1(struct file_desc* filp, int status)
+static void select_reply1(struct file_desc* filp, int status)
 {
     filp->fd_select_flags &= ~SFL_BUSY;
     if (!(filp->fd_select_flags & (SFL_UPDATE | SFL_BLOCKED))) {
@@ -552,7 +552,7 @@ PRIVATE void select_reply1(struct file_desc* filp, int status)
     update_status(filp, status);
 }
 
-PUBLIC void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor, int status)
+void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor, int status)
 {
     /* handle the inital select reply from device driver */
     struct cdmap* pm = cdev_lookup_by_endpoint(driver_ep);
@@ -568,7 +568,7 @@ PUBLIC void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor, int status)
     }
 }
 
-PRIVATE void select_reply2(int is_char, dev_t dev, int status)
+static void select_reply2(int is_char, dev_t dev, int status)
 {
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
@@ -612,7 +612,7 @@ PRIVATE void select_reply2(int is_char, dev_t dev, int status)
     }
 }
 
-PUBLIC void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor, int status)
+void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor, int status)
 {
     /* handle the secondary select reply when the request is blocked and an
      * operation becomes ready */

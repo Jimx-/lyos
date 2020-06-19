@@ -33,7 +33,7 @@
 #include "tar.h"
 #include "global.h"
 
-PUBLIC int main()
+int main()
 {
     printl("initfs: InitFS driver is running\n");
 

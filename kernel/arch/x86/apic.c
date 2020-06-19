@@ -111,12 +111,12 @@ extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
 extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
-PRIVATE u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
+static u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
 
 extern struct apic x2apic_phys;
 
-PUBLIC struct io_apic io_apics[MAX_IOAPICS];
-PUBLIC u32 nr_ioapics;
+struct io_apic io_apics[MAX_IOAPICS];
+u32 nr_ioapics;
 
 struct irq;
 typedef void (*eoi_method_t)(struct irq*);
@@ -130,39 +130,39 @@ struct irq {
     unsigned state;
 };
 
-PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
+static struct irq io_apic_irq[NR_IRQ_VECTORS];
 
 /* ISA IRQ -> Global system interrupt */
-PRIVATE u32 isa_irq_to_gsi[NR_IRQS_LEGACY] = {0, 1, 2,  3,  4,  5,  6,  7,
-                                              8, 9, 10, 11, 12, 13, 14, 15};
+static u32 isa_irq_to_gsi[NR_IRQS_LEGACY] = {0, 1, 2,  3,  4,  5,  6,  7,
+                                             8, 9, 10, 11, 12, 13, 14, 15};
 
-PUBLIC u8 ioapic_enabled = 0;
+u8 ioapic_enabled = 0;
 
-PUBLIC u32 apicid() { return lapic_read(LAPIC_ID); }
+u32 apicid() { return lapic_read(LAPIC_ID); }
 
 #define IOAPIC_IOREGSEL 0x0
 #define IOAPIC_IOWIN 0x10
 
-PRIVATE u32 ioapic_read(void* ioa_base, u32 reg)
+static u32 ioapic_read(void* ioa_base, u32 reg)
 {
     *((volatile u32*)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
     return *(volatile u32*)(ioa_base + IOAPIC_IOWIN);
 }
 
-PRIVATE void ioapic_write(void* ioa_base, u8 reg, u32 val)
+static void ioapic_write(void* ioa_base, u8 reg, u32 val)
 {
     *((volatile u32*)(ioa_base + IOAPIC_IOREGSEL)) = reg;
     *((volatile u32*)(ioa_base + IOAPIC_IOWIN)) = val;
 }
 
-PRIVATE void ioapic_redirt_entry_write(void* ioapic_addr, int entry, u32 hi,
-                                       u32 lo)
+static void ioapic_redirt_entry_write(void* ioapic_addr, int entry, u32 hi,
+                                      u32 lo)
 {
     ioapic_write(ioapic_addr, (u8)(IOAPIC_REDIR_TABLE + entry * 2 + 1), hi);
     ioapic_write(ioapic_addr, (u8)(IOAPIC_REDIR_TABLE + entry * 2), lo);
 }
 
-PRIVATE void ioapic_enable_pin(void* ioapic_addr, int pin)
+static void ioapic_enable_pin(void* ioapic_addr, int pin)
 {
     u32 lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
 
@@ -170,7 +170,7 @@ PRIVATE void ioapic_enable_pin(void* ioapic_addr, int pin)
     ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
 }
 
-PRIVATE void ioapic_disable_pin(void* ioapic_addr, int pin)
+static void ioapic_disable_pin(void* ioapic_addr, int pin)
 {
     u32 lo = ioapic_read(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2);
 
@@ -178,13 +178,13 @@ PRIVATE void ioapic_disable_pin(void* ioapic_addr, int pin)
     ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
 }
 
-PRIVATE u32 lapic_errstatus()
+static u32 lapic_errstatus()
 {
     lapic_write(LAPIC_ESR, 0);
     return lapic_read(LAPIC_ESR);
 }
 
-PRIVATE u32 hpet_ref_ms(u64 hpet1, u64 hpet2)
+static u32 hpet_ref_ms(u64 hpet1, u64 hpet2)
 {
     if (hpet2 < hpet1) hpet2 += 0x100000000ULL;
     hpet2 -= hpet1;
@@ -197,7 +197,7 @@ PRIVATE u32 hpet_ref_ms(u64 hpet1, u64 hpet2)
 
 #define CAL_MS 50
 #define CAL_LATCH (TIMER_FREQ / (1000 / CAL_MS))
-PRIVATE int apic_calibrate(unsigned cpu)
+static int apic_calibrate(unsigned cpu)
 {
     u32 val, lvtt;
     u64 tsc0, tsc1;
@@ -265,7 +265,7 @@ PRIVATE int apic_calibrate(unsigned cpu)
     return 0;
 }
 
-PUBLIC int lapic_enable_msr()
+int lapic_enable_msr()
 {
     u32 hi, lo;
     ia32_read_msr(IA32_APIC_BASE, &hi, &lo);
@@ -292,7 +292,7 @@ void apic_set_eoi_write(void (*eoi_write)(void))
     x2apic_phys.eoi_write = eoi_write;
 }
 
-PUBLIC int lapic_enable(unsigned cpu)
+int lapic_enable(unsigned cpu)
 {
     u32 val, nlvt;
 
@@ -378,7 +378,7 @@ void lapic_setup_timer_periodic(void)
     lapic_setup_timer_one_shot_periodic(FALSE);
 }
 
-PUBLIC void lapic_set_timer_one_shot(const u32 usec)
+void lapic_set_timer_one_shot(const u32 usec)
 {
     u32 ticks_per_us;
 
@@ -387,13 +387,13 @@ PUBLIC void lapic_set_timer_one_shot(const u32 usec)
     lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }
 
-PUBLIC void lapic_restart_timer()
+void lapic_restart_timer()
 {
     if (lapic_read(LAPIC_TIMER_CCR) == 0)
         lapic_set_timer_one_shot(1000000 / system_hz);
 }
 
-PUBLIC void lapic_stop_timer()
+void lapic_stop_timer()
 {
     u32 lvtt;
     lvtt = lapic_read(LAPIC_LVTTR);
@@ -401,7 +401,7 @@ PUBLIC void lapic_stop_timer()
     lapic_write(LAPIC_TIMER_ICR, 0);
 }
 
-PUBLIC void lapic_microsec_sleep(unsigned usec)
+void lapic_microsec_sleep(unsigned usec)
 {
     lapic_set_timer_one_shot(usec);
     while (lapic_read(LAPIC_TIMER_CCR))
@@ -424,7 +424,7 @@ void apic_native_icr_write(u32 id, u32 lo)
     lapic_write(LAPIC_ICR1, lo);
 }
 
-PRIVATE void ioapic_init_legacy_irqs()
+static void ioapic_init_legacy_irqs()
 {
     struct acpi_madt_int_src* acpi_int_src;
 
@@ -434,7 +434,7 @@ PRIVATE void ioapic_init_legacy_irqs()
     }
 }
 
-PUBLIC int ioapic_enable()
+int ioapic_enable()
 {
     ioapic_init_legacy_irqs();
 
@@ -447,7 +447,7 @@ PUBLIC int ioapic_enable()
     return 1;
 }
 
-PRIVATE void ioapic_enable_irq(int irq)
+static void ioapic_enable_irq(int irq)
 {
     if (!(io_apic_irq[irq].ioa)) return;
 
@@ -455,7 +455,7 @@ PRIVATE void ioapic_enable_irq(int irq)
     io_apic_irq[irq].state &= ~IOAPIC_IRQ_STATE_MASKED;
 }
 
-PRIVATE void ioapic_disable_irq(int irq)
+static void ioapic_disable_irq(int irq)
 {
     if (!(io_apic_irq[irq].ioa)) return;
 
@@ -463,7 +463,7 @@ PRIVATE void ioapic_disable_irq(int irq)
     io_apic_irq[irq].state |= IOAPIC_IRQ_STATE_MASKED;
 }
 
-PUBLIC void ioapic_mask(int irq)
+void ioapic_mask(int irq)
 {
     if (ioapic_enabled)
         ioapic_disable_irq(irq);
@@ -471,7 +471,7 @@ PUBLIC void ioapic_mask(int irq)
         i8259_mask(irq);
 }
 
-PUBLIC void ioapic_unmask(int irq)
+void ioapic_unmask(int irq)
 {
     if (ioapic_enabled)
         ioapic_enable_irq(irq);
@@ -479,7 +479,7 @@ PUBLIC void ioapic_unmask(int irq)
         i8259_unmask(irq);
 }
 
-PUBLIC void ioapic_eoi(int irq)
+void ioapic_eoi(int irq)
 {
     if (ioapic_enabled) {
         io_apic_irq[irq].eoi(&io_apic_irq[irq]);
@@ -488,16 +488,16 @@ PUBLIC void ioapic_eoi(int irq)
     }
 }
 
-PRIVATE void ioapic_eoi_edge(struct irq* irq) { apic_eoi(); }
+static void ioapic_eoi_edge(struct irq* irq) { apic_eoi(); }
 
-PRIVATE void ioapic_eoi_level(struct irq* irq) { apic_eoi(); }
+static void ioapic_eoi_level(struct irq* irq) { apic_eoi(); }
 
-PRIVATE eoi_method_t set_eoi_method(int irq)
+static eoi_method_t set_eoi_method(int irq)
 {
     return irq < 16 ? ioapic_eoi_edge : ioapic_eoi_level;
 }
 
-PRIVATE void set_irq_redir_low(int irq, u32* low)
+static void set_irq_redir_low(int irq, u32* low)
 {
     u32 val = 0;
 
@@ -519,7 +519,7 @@ PRIVATE void set_irq_redir_low(int irq, u32* low)
     *low = val;
 }
 
-PUBLIC void ioapic_set_irq(int irq)
+void ioapic_set_irq(int irq)
 {
     /* shared irq */
     if (io_apic_irq[irq].ioa && io_apic_irq[irq].eoi) return;
@@ -544,14 +544,14 @@ PUBLIC void ioapic_set_irq(int irq)
     }
 }
 
-PUBLIC void ioapic_unset_irq(int irq)
+void ioapic_unset_irq(int irq)
 {
     ioapic_disable_irq(irq);
     io_apic_irq[irq].ioa = NULL;
     io_apic_irq[irq].eoi = NULL;
 }
 
-PUBLIC int detect_ioapics()
+int detect_ioapics()
 {
     int n = 0;
     struct acpi_madt_ioapic* acpi_ioa;
@@ -582,78 +582,78 @@ PUBLIC int detect_ioapics()
     return nr_ioapics;
 }
 
-PUBLIC void apic_spurious_int_handler() {}
-PUBLIC void apic_error_int_handler() {}
+void apic_spurious_int_handler() {}
+void apic_error_int_handler() {}
 
-PUBLIC void apic_hwint00();
-PUBLIC void apic_hwint01();
-PUBLIC void apic_hwint02();
-PUBLIC void apic_hwint03();
-PUBLIC void apic_hwint04();
-PUBLIC void apic_hwint05();
-PUBLIC void apic_hwint06();
-PUBLIC void apic_hwint07();
-PUBLIC void apic_hwint08();
-PUBLIC void apic_hwint09();
-PUBLIC void apic_hwint10();
-PUBLIC void apic_hwint11();
-PUBLIC void apic_hwint12();
-PUBLIC void apic_hwint13();
-PUBLIC void apic_hwint14();
-PUBLIC void apic_hwint15();
-PUBLIC void apic_hwint16();
-PUBLIC void apic_hwint17();
-PUBLIC void apic_hwint18();
-PUBLIC void apic_hwint19();
-PUBLIC void apic_hwint20();
-PUBLIC void apic_hwint21();
-PUBLIC void apic_hwint22();
-PUBLIC void apic_hwint23();
-PUBLIC void apic_hwint24();
-PUBLIC void apic_hwint25();
-PUBLIC void apic_hwint26();
-PUBLIC void apic_hwint27();
-PUBLIC void apic_hwint28();
-PUBLIC void apic_hwint29();
-PUBLIC void apic_hwint30();
-PUBLIC void apic_hwint31();
-PUBLIC void apic_hwint32();
-PUBLIC void apic_hwint33();
-PUBLIC void apic_hwint34();
-PUBLIC void apic_hwint35();
-PUBLIC void apic_hwint36();
-PUBLIC void apic_hwint37();
-PUBLIC void apic_hwint38();
-PUBLIC void apic_hwint39();
-PUBLIC void apic_hwint40();
-PUBLIC void apic_hwint41();
-PUBLIC void apic_hwint42();
-PUBLIC void apic_hwint43();
-PUBLIC void apic_hwint44();
-PUBLIC void apic_hwint45();
-PUBLIC void apic_hwint46();
-PUBLIC void apic_hwint47();
-PUBLIC void apic_hwint48();
-PUBLIC void apic_hwint49();
-PUBLIC void apic_hwint50();
-PUBLIC void apic_hwint51();
-PUBLIC void apic_hwint52();
-PUBLIC void apic_hwint53();
-PUBLIC void apic_hwint54();
-PUBLIC void apic_hwint55();
-PUBLIC void apic_hwint56();
-PUBLIC void apic_hwint57();
-PUBLIC void apic_hwint58();
-PUBLIC void apic_hwint59();
-PUBLIC void apic_hwint60();
-PUBLIC void apic_hwint61();
-PUBLIC void apic_hwint62();
-PUBLIC void apic_hwint63();
-PUBLIC void apic_timer_int_handler();
-PUBLIC void apic_spurious_intr();
-PUBLIC void apic_error_intr();
+void apic_hwint00();
+void apic_hwint01();
+void apic_hwint02();
+void apic_hwint03();
+void apic_hwint04();
+void apic_hwint05();
+void apic_hwint06();
+void apic_hwint07();
+void apic_hwint08();
+void apic_hwint09();
+void apic_hwint10();
+void apic_hwint11();
+void apic_hwint12();
+void apic_hwint13();
+void apic_hwint14();
+void apic_hwint15();
+void apic_hwint16();
+void apic_hwint17();
+void apic_hwint18();
+void apic_hwint19();
+void apic_hwint20();
+void apic_hwint21();
+void apic_hwint22();
+void apic_hwint23();
+void apic_hwint24();
+void apic_hwint25();
+void apic_hwint26();
+void apic_hwint27();
+void apic_hwint28();
+void apic_hwint29();
+void apic_hwint30();
+void apic_hwint31();
+void apic_hwint32();
+void apic_hwint33();
+void apic_hwint34();
+void apic_hwint35();
+void apic_hwint36();
+void apic_hwint37();
+void apic_hwint38();
+void apic_hwint39();
+void apic_hwint40();
+void apic_hwint41();
+void apic_hwint42();
+void apic_hwint43();
+void apic_hwint44();
+void apic_hwint45();
+void apic_hwint46();
+void apic_hwint47();
+void apic_hwint48();
+void apic_hwint49();
+void apic_hwint50();
+void apic_hwint51();
+void apic_hwint52();
+void apic_hwint53();
+void apic_hwint54();
+void apic_hwint55();
+void apic_hwint56();
+void apic_hwint57();
+void apic_hwint58();
+void apic_hwint59();
+void apic_hwint60();
+void apic_hwint61();
+void apic_hwint62();
+void apic_hwint63();
+void apic_timer_int_handler();
+void apic_spurious_intr();
+void apic_error_intr();
 
-PUBLIC void apic_init_idt(int reset)
+void apic_init_idt(int reset)
 {
     if (reset) {
         init_idt();
@@ -810,7 +810,7 @@ PUBLIC void apic_init_idt(int reset)
 
 #if CONFIG_SMP
 
-PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
+int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 {
     int timeout;
     u32 errstatus = 0;

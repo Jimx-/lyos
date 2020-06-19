@@ -19,6 +19,6 @@
 extern void* uart_base_addr;
 extern void* intr_base_addr;
 
-PUBLIC void omap3_disp_char(const char c);
+void omap3_disp_char(const char c);
 
 #endif /* _MACH_OMAP2_COMMON_H_ */

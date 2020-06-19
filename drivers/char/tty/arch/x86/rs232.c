@@ -133,15 +133,15 @@ typedef struct rs232 {
     char obuf[RS_OBUFSIZE];
 } rs232_t;
 
-PRIVATE rs232_t rs_lines[NR_SERIALS];
+static rs232_t rs_lines[NR_SERIALS];
 
-PRIVATE port_t com_addr[] = {0x3F8, 0x2F8, 0x3E8, 0x2E8};
+static port_t com_addr[] = {0x3F8, 0x2F8, 0x3E8, 0x2E8};
 
-PUBLIC irq_id_t rs_irq_set;
+irq_id_t rs_irq_set;
 
-PRIVATE void rs_ostart(rs232_t* rs);
+static void rs_ostart(rs232_t* rs);
 
-PRIVATE int rs_inb(port_t port)
+static int rs_inb(port_t port)
 {
     int v;
     portio_inb(port, &v);
@@ -149,10 +149,10 @@ PRIVATE int rs_inb(port_t port)
     return v;
 }
 
-PRIVATE void rs_config(rs232_t* rs)
+static void rs_config(rs232_t* rs)
 {
     TTY* tty = rs->rs_tty;
-    PRIVATE struct speed_divisor {
+    static struct speed_divisor {
         int speed;
         int divisor;
     } sp2d[] = {
@@ -205,7 +205,7 @@ PRIVATE void rs_config(rs232_t* rs)
     rs->ostate = devready(rs) | OSWREADY;
 }
 
-PRIVATE void rs_read(TTY* tty)
+static void rs_read(TTY* tty)
 {
     int count, icount;
     rs232_t* rs = (rs232_t*)tty->tty_dev;
@@ -222,7 +222,7 @@ PRIVATE void rs_read(TTY* tty)
     }
 }
 
-PRIVATE void rs_write(TTY* tty)
+static void rs_write(TTY* tty)
 {
     rs232_t* rs = (rs232_t*)tty->tty_dev;
 
@@ -255,7 +255,7 @@ PRIVATE void rs_write(TTY* tty)
     }
 }
 
-PRIVATE void rs_echo(TTY* tty, char c)
+static void rs_echo(TTY* tty, char c)
 {
     rs232_t* rs = (rs232_t*)tty->tty_dev;
     int ocount;
@@ -270,7 +270,7 @@ PRIVATE void rs_echo(TTY* tty, char c)
         rs->ohead -= buflen(rs->obuf);
 }
 
-PUBLIC int init_rs(TTY* tty)
+int init_rs(TTY* tty)
 {
     int line = tty - &tty_table[NR_CONSOLES];
 
@@ -315,7 +315,7 @@ PUBLIC int init_rs(TTY* tty)
     return 0;
 }
 
-PRIVATE void rs_in_int(rs232_t* rs)
+static void rs_in_int(rs232_t* rs)
 {
     u32 ch;
     portio_inb(rs->recv_port, &ch);
@@ -327,7 +327,7 @@ PRIVATE void rs_in_int(rs232_t* rs)
     if (++rs->ihead >= bufend(rs->ibuf)) rs->ihead = rs->ibuf;
 }
 
-PRIVATE void rs_out_int(rs232_t* rs)
+static void rs_out_int(rs232_t* rs)
 {
     while (txready(rs) && rs->ostate >= (ODEVREADY | OSWREADY | OQUEUED)) {
         portio_outb(rs->xmit_port, *rs->otail);
@@ -339,13 +339,13 @@ PRIVATE void rs_out_int(rs232_t* rs)
     }
 }
 
-PRIVATE void rs_ostart(rs232_t* rs)
+static void rs_ostart(rs232_t* rs)
 {
     rs->ostate |= OQUEUED;
     if (txready(rs)) rs_out_int(rs);
 }
 
-PRIVATE void rs_handle_irq(rs232_t* rs)
+static void rs_handle_irq(rs232_t* rs)
 {
     int i = 1000;
     while (i--) {
@@ -366,7 +366,7 @@ PRIVATE void rs_handle_irq(rs232_t* rs)
     }
 }
 
-PUBLIC int rs_interrupt(MESSAGE* m)
+int rs_interrupt(MESSAGE* m)
 {
     unsigned long irq_set = m->INTERRUPTS;
     rs232_t* rs = rs_lines;

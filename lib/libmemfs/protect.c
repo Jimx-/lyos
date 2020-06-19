@@ -25,4 +25,4 @@
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
 
-PUBLIC int memfs_forbidden(struct memfs_inode* pin, int access) { return 0; }
+int memfs_forbidden(struct memfs_inode* pin, int access) { return 0; }

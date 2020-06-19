@@ -59,11 +59,11 @@ struct slabdata {
     struct slabheader header;
 };
 
-PRIVATE struct list_head slabs[SLABSIZE];
+static struct list_head slabs[SLABSIZE];
 
 #define SLAB_INDEX(bytes) (roundup(bytes, OBJ_ALIGN) - (MINSIZE / OBJ_ALIGN))
 
-PUBLIC void slabs_init()
+void slabs_init()
 {
     int i;
     for (i = 0; i < SLABSIZE; i++) {
@@ -73,7 +73,7 @@ PUBLIC void slabs_init()
     mem_info.slab = 0;
 }
 
-PRIVATE struct slabdata* alloc_slabdata()
+static struct slabdata* alloc_slabdata()
 {
     phys_bytes phys;
     struct slabdata* sd =
@@ -92,7 +92,7 @@ PRIVATE struct slabdata* alloc_slabdata()
     return sd;
 }
 
-PUBLIC void* slaballoc(int bytes)
+void* slaballoc(int bytes)
 {
     if (bytes > MAXSIZE || bytes < MINSIZE) {
         printl("mm: slaballoc: invalid size(%d bytes)\n", bytes);
@@ -163,7 +163,7 @@ PUBLIC void* slaballoc(int bytes)
     return NULL;
 }
 
-PUBLIC void slabfree(void* mem, int bytes)
+void slabfree(void* mem, int bytes)
 {
     if (bytes > MAXSIZE || bytes < MINSIZE) {
         return;

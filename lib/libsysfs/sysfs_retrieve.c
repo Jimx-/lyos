@@ -24,7 +24,7 @@
 #include "string.h"
 #include "libsysfs.h"
 
-PUBLIC int sysfs_retrieve_u32(char* key, u32* value)
+int sysfs_retrieve_u32(char* key, u32* value)
 {
     MESSAGE msg;
 

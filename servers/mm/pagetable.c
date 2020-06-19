@@ -35,30 +35,30 @@
 #include "pagetable.h"
 
 #define MAX_KERN_MAPPINGS 10
-PRIVATE struct kern_mapping {
+static struct kern_mapping {
     phys_bytes phys_addr;
     vir_bytes vir_addr;
     size_t len;
     int flags;
 } kern_mappings[MAX_KERN_MAPPINGS];
-PRIVATE int nr_kern_mappings = 0;
+static int nr_kern_mappings = 0;
 
 #if defined(__i386__)
-PRIVATE int global_bit = 0;
+static int global_bit = 0;
 #endif
 
-PRIVATE struct mmproc* mmprocess = &mmproc_table[TASK_MM];
-PRIVATE struct mm_struct self_mm;
+static struct mmproc* mmprocess = &mmproc_table[TASK_MM];
+static struct mm_struct self_mm;
 //#define PAGETABLE_DEBUG    1
 
 /* before MM has set up page table for its own, we use these pages in page
  * allocation */
-PRIVATE char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES]
+static char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES]
     __attribute__((aligned(ARCH_PG_SIZE)));
 
-PUBLIC void mm_init(struct mm_struct* mm);
+void mm_init(struct mm_struct* mm);
 
-PUBLIC void pt_init()
+void pt_init()
 {
     int i;
 
@@ -162,7 +162,7 @@ PUBLIC void pt_init()
     pt_init_done = 1;
 }
 
-PUBLIC struct mm_struct* mm_allocate()
+struct mm_struct* mm_allocate()
 {
     struct mm_struct* mm;
 
@@ -171,7 +171,7 @@ PUBLIC struct mm_struct* mm_allocate()
     return mm;
 }
 
-PUBLIC void mm_init(struct mm_struct* mm)
+void mm_init(struct mm_struct* mm)
 {
     if (!mm) return;
 
@@ -180,7 +180,7 @@ PUBLIC void mm_init(struct mm_struct* mm)
     INIT_ATOMIC(&mm->refcnt, 1);
 }
 
-PUBLIC void mm_free(struct mm_struct* mm)
+void mm_free(struct mm_struct* mm)
 {
     if (atomic_dec_and_test(&mm->refcnt)) {
         int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
@@ -189,12 +189,12 @@ PUBLIC void mm_free(struct mm_struct* mm)
 }
 
 #ifndef __PAGETABLE_PMD_FOLDED
-PRIVATE void __pmd_create(pde_t* pde, vir_bytes addr) {}
+static void __pmd_create(pde_t* pde, vir_bytes addr) {}
 #else
 #define __pmd_create(pde, addr) NULL
 #endif
 
-PUBLIC pmd_t* pmd_create(pde_t* pde, vir_bytes addr)
+pmd_t* pmd_create(pde_t* pde, vir_bytes addr)
 {
     if (pde_none(*pde)) {
         __pmd_create(pde, addr);
@@ -203,7 +203,7 @@ PUBLIC pmd_t* pmd_create(pde_t* pde, vir_bytes addr)
     return pmd_offset(pde, addr);
 }
 
-PUBLIC int pt_create(pmd_t* pmde)
+int pt_create(pmd_t* pmde)
 {
     if (!pmde_none(*pmde)) {
         /* page table already created */
@@ -237,7 +237,7 @@ PUBLIC int pt_create(pmd_t* pmde)
     return 0;
 }
 
-PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
+pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
 {
     pt_create(pmde);
     return pte_offset(pmde, addr);
@@ -249,8 +249,8 @@ PUBLIC pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
-                      unsigned int flags)
+int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
+               unsigned int flags)
 {
     pde_t* pde;
     pmd_t* pmde;
@@ -265,7 +265,7 @@ PUBLIC int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
     return 0;
 }
 
-PRIVATE int pt_follow(pgdir_t* pgd, vir_bytes addr, pte_t** ptepp)
+static int pt_follow(pgdir_t* pgd, vir_bytes addr, pte_t** ptepp)
 {
     pde_t* pde;
     pmd_t* pmde;
@@ -295,7 +295,7 @@ PRIVATE int pt_follow(pgdir_t* pgd, vir_bytes addr, pte_t** ptepp)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr)
+int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr)
 {
     pte_t* pte;
     int retval;
@@ -314,7 +314,7 @@ PUBLIC int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr)
  * @param  vir_addr  Virtual address.
  * @return           Zero on success.
  */
-PUBLIC int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr)
+int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr)
 {
     pte_t* pte;
     int retval;
@@ -327,8 +327,8 @@ PUBLIC int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr)
     return 0;
 }
 
-PUBLIC int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
-                       size_t length, int flags)
+int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
+                size_t length, int flags)
 {
     /* sanity check */
     if (phys_addr % ARCH_PG_SIZE != 0)
@@ -350,7 +350,7 @@ PUBLIC int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
     return 0;
 }
 
-PUBLIC int pt_wp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
+int pt_wp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
     if (vir_addr % ARCH_PG_SIZE != 0)
@@ -369,7 +369,7 @@ PUBLIC int pt_wp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
     return 0;
 }
 
-PUBLIC int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
+int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
     if (vir_addr % ARCH_PG_SIZE != 0)
@@ -391,7 +391,7 @@ PUBLIC int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 /**
  * <Ring 1> Initial kernel mappings.
  */
-PUBLIC void pt_kern_mapping_init()
+void pt_kern_mapping_init()
 {
     int rindex = 0;
     caddr_t addr;
@@ -442,7 +442,7 @@ PUBLIC void pt_kern_mapping_init()
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_new(pgdir_t* pgd)
+int pgd_new(pgdir_t* pgd)
 {
     phys_bytes pgd_phys;
     /* map the directory so that we can write it */
@@ -472,7 +472,7 @@ PUBLIC int pgd_new(pgdir_t* pgd)
  * @param  pgd The page directory.
  * @return     Zero on success.
  */
-PUBLIC int pgd_mapkernel(pgdir_t* pgd)
+int pgd_mapkernel(pgdir_t* pgd)
 {
     int i;
     int kernel_pde = kernel_info.kernel_start_pde;
@@ -503,21 +503,21 @@ PUBLIC int pgd_mapkernel(pgdir_t* pgd)
 }
 
 /* <Ring 1> */
-PUBLIC int pgd_free(pgdir_t* pgd)
+int pgd_free(pgdir_t* pgd)
 {
     free_vmem(pgd->vir_addr, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
     return 0;
 }
 
-PUBLIC void pt_free_range(pmd_t* pt)
+void pt_free_range(pmd_t* pt)
 {
     pte_t* pte = pte_offset(pt, 0);
     pmde_clear(pt);
     free_vmem(pte, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
 }
 
-PUBLIC void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end,
-                           vir_bytes floor, vir_bytes ceiling)
+void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end, vir_bytes floor,
+                    vir_bytes ceiling)
 {
     vir_bytes start = addr;
     vir_bytes next;
@@ -551,8 +551,8 @@ PUBLIC void pmd_free_range(pde_t* pmd, vir_bytes addr, vir_bytes end,
     free_vmem(pmde, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
 }
 
-PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
-                           vir_bytes floor, vir_bytes ceiling)
+void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
+                    vir_bytes floor, vir_bytes ceiling)
 {
     pde_t* pde = pgd_offset(pgd->vir_addr, addr);
     vir_bytes next;
@@ -572,14 +572,14 @@ PUBLIC void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
     } while (addr != end);
 }
 
-PUBLIC int pgd_bind(struct mmproc* who, pgdir_t* pgd)
+int pgd_bind(struct mmproc* who, pgdir_t* pgd)
 {
     /* make sure that the page directory is in low memory */
     return vmctl_set_address_space(who->endpoint, pgd->phys_addr,
                                    __va(pgd->phys_addr));
 }
 
-PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
+int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
 {
     pte_t* pte;
     int retval;
@@ -598,7 +598,7 @@ PUBLIC int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
     return 0;
 }
 
-PUBLIC int unmap_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
+int unmap_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
 {
     /* sanity check */
     if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0)

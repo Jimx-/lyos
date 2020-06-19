@@ -44,18 +44,18 @@
 #define DBGPRINT(x)
 #endif
 
-PUBLIC struct pcibus pcibus[NR_PCIBUS];
-PRIVATE int nr_pcibus = 0;
+struct pcibus pcibus[NR_PCIBUS];
+static int nr_pcibus = 0;
 
-PUBLIC struct pcidev pcidev[NR_PCIDEV];
-PRIVATE int nr_pcidev = 0;
+struct pcidev pcidev[NR_PCIDEV];
+static int nr_pcidev = 0;
 
-PRIVATE bus_type_id_t pci_bus_id;
+static bus_type_id_t pci_bus_id;
 
-PRIVATE void pci_intel_init();
-PRIVATE void pci_probe_bus(int busind);
+static void pci_intel_init();
+static void pci_probe_bus(int busind);
 
-PRIVATE int get_busind(int busnr)
+static int get_busind(int busnr)
 {
     int i;
     for (i = 0; i < nr_pcibus; i++) {
@@ -67,28 +67,28 @@ PRIVATE int get_busind(int busnr)
     return 1;
 }
 
-PUBLIC u8 pci_read_attr_u8(int devind, int port)
+u8 pci_read_attr_u8(int devind, int port)
 {
     int busnr = pcidev[devind].busnr;
     int busind = get_busind(busnr);
     return pcibus[busind].rreg_u8(busind, devind, port);
 }
 
-PUBLIC u16 pci_read_attr_u16(int devind, int port)
+u16 pci_read_attr_u16(int devind, int port)
 {
     int busnr = pcidev[devind].busnr;
     int busind = get_busind(busnr);
     return pcibus[busind].rreg_u16(busind, devind, port);
 }
 
-PUBLIC u32 pci_read_attr_u32(int devind, int port)
+u32 pci_read_attr_u32(int devind, int port)
 {
     int busnr = pcidev[devind].busnr;
     int busind = get_busind(busnr);
     return pcibus[busind].rreg_u32(busind, devind, port);
 }
 
-PUBLIC void pci_write_attr_u16(int devind, int port, u16 value)
+void pci_write_attr_u16(int devind, int port, u16 value)
 {
     int busnr = pcidev[devind].busnr;
     int busind = get_busind(busnr);
@@ -102,7 +102,7 @@ void pci_write_attr_u32(int devind, int port, u32 value)
     pcibus[busind].wreg_u32(busind, devind, port, value);
 }
 
-PUBLIC int pci_init()
+int pci_init()
 {
     pci_bus_id = dm_bus_register("pci");
     if (pci_bus_id == BUS_TYPE_ERROR) return 1;
@@ -117,7 +117,7 @@ PUBLIC int pci_init()
     return 0;
 }
 
-PRIVATE device_id_t pci_register_bus(int busind)
+static device_id_t pci_register_bus(int busind)
 {
     struct device_info devinf;
     snprintf(devinf.name, sizeof(devinf.name), "pci%02x", pcibus[busind].busnr);
@@ -127,7 +127,7 @@ PRIVATE device_id_t pci_register_bus(int busind)
     return dm_device_register(&devinf);
 }
 
-PRIVATE device_id_t pci_register_device(int devind)
+static device_id_t pci_register_device(int devind)
 {
     int busind = get_busind(pcidev[devind].busnr);
 
@@ -150,7 +150,7 @@ PRIVATE device_id_t pci_register_device(int devind)
     return device_id;
 }
 
-PRIVATE void pci_intel_init()
+static void pci_intel_init()
 {
     u32 bus, dev, func;
 
@@ -244,7 +244,7 @@ static void record_capabilities(int devind)
     }
 }
 
-PRIVATE void pci_probe_bus(int busind)
+static void pci_probe_bus(int busind)
 {
     u8 bus_nr = pcibus[busind].busnr;
 
@@ -315,7 +315,7 @@ PRIVATE void pci_probe_bus(int busind)
     }
 }
 
-PRIVATE int visible(struct pci_acl* acl, int devind)
+static int visible(struct pci_acl* acl, int devind)
 {
     int i;
 
@@ -340,8 +340,8 @@ PRIVATE int visible(struct pci_acl* acl, int devind)
     return FALSE;
 }
 
-PUBLIC int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
-                          device_id_t* dev_id)
+int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
+                   device_id_t* dev_id)
 {
     int i;
 
@@ -360,8 +360,8 @@ PUBLIC int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
     return 0;
 }
 
-PUBLIC int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
-                         device_id_t* dev_id)
+int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
+                  device_id_t* dev_id)
 {
     int i;
 

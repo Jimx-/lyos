@@ -37,11 +37,11 @@
 #define BUS_ATTR_HASH_MASK (((unsigned long)1 << BUS_ATTR_HASH_LOG2) - 1)
 
 /* bus attribute hash table */
-PRIVATE struct list_head bus_attr_table[BUS_ATTR_HASH_SIZE];
+static struct list_head bus_attr_table[BUS_ATTR_HASH_SIZE];
 
-PUBLIC int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus,
-                            char* name, mode_t mode, void* cb_data,
-                            bus_attr_show_t show, bus_attr_store_t store)
+int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name,
+                     mode_t mode, void* cb_data, bus_attr_show_t show,
+                     bus_attr_store_t store)
 {
     static int initialized = 0;
     if (!initialized) {
@@ -68,20 +68,20 @@ PUBLIC int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus,
     return 0;
 }
 
-PRIVATE void bus_attr_addhash(struct bus_attribute* attr)
+static void bus_attr_addhash(struct bus_attribute* attr)
 {
     unsigned int hash = attr->id & BUS_ATTR_HASH_MASK;
     list_add(&attr->list, &bus_attr_table[hash]);
 }
 
 /*
-PRIVATE void bus_attr_unhash(struct bus_attribute* attr)
+static void bus_attr_unhash(struct bus_attribute* attr)
 {
     list_del(&attr->list);
 }
 */
 
-PRIVATE struct bus_attribute* find_bus_attr_by_id(dev_attr_id_t id)
+static struct bus_attribute* find_bus_attr_by_id(dev_attr_id_t id)
 {
     /* Find a dynamic attribute by its attribute id */
     unsigned int hash = id & BUS_ATTR_HASH_MASK;
@@ -97,7 +97,7 @@ PRIVATE struct bus_attribute* find_bus_attr_by_id(dev_attr_id_t id)
     return NULL;
 }
 
-PUBLIC int dm_bus_attr_add(struct bus_attribute* attr)
+int dm_bus_attr_add(struct bus_attribute* attr)
 {
     MESSAGE msg;
 
@@ -122,7 +122,7 @@ PUBLIC int dm_bus_attr_add(struct bus_attribute* attr)
     return 0;
 }
 
-PUBLIC ssize_t dm_bus_attr_handle(MESSAGE* msg)
+ssize_t dm_bus_attr_handle(MESSAGE* msg)
 {
     /* handle bus attribute show/store request */
     int rw_flag = msg->type;

@@ -46,12 +46,12 @@ struct dev_probe {
     {.vid = 0xffff, .did = 0xffff, NULL},
 };
 
-PUBLIC void* fb_mem_vir;
-PUBLIC phys_bytes fb_mem_phys;
-PUBLIC size_t fb_mem_size;
-PRIVATE int initialized = 0;
+void* fb_mem_vir;
+phys_bytes fb_mem_phys;
+size_t fb_mem_size;
+static int initialized = 0;
 
-PUBLIC int arch_init_fb(int minor)
+int arch_init_fb(int minor)
 {
 
     int devind;
@@ -90,7 +90,7 @@ PUBLIC int arch_init_fb(int minor)
     return 0;
 }
 
-PUBLIC int arch_get_device(int minor, void** base, size_t* size)
+int arch_get_device(int minor, void** base, size_t* size)
 {
     if (!initialized || minor != 0) {
         return ENXIO;
@@ -101,8 +101,7 @@ PUBLIC int arch_get_device(int minor, void** base, size_t* size)
     return OK;
 }
 
-PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base,
-                                phys_bytes* size)
+int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size)
 {
     if (!initialized || minor != 0) {
         return ENXIO;

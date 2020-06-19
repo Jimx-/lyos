@@ -34,8 +34,8 @@
 
 // PRIVATE char dot2[2] = "..";
 
-PUBLIC int ext2_lookup(dev_t dev, ino_t start, char* name,
-                       struct fsdriver_node* fn, int* is_mountpoint)
+int ext2_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
+                int* is_mountpoint)
 {
     ext2_inode_t* dir_pin = find_ext2_inode(dev, start);
     if (!dir_pin) return ENOENT;
@@ -58,8 +58,8 @@ PUBLIC int ext2_lookup(dev_t dev, ino_t start, char* name,
 }
 
 /* find component in dir_pin */
-PUBLIC ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
-                                  char string[EXT2_NAME_LEN + 1])
+ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
+                           char string[EXT2_NAME_LEN + 1])
 {
     ino_t num;
     ext2_inode_t* pin;
@@ -97,9 +97,8 @@ PUBLIC ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
  * if flag == SD_DELETE, delete it
  * if flag == SD_LOOK_UP, look it up and return it inode num
  * if flag == SD_IS_EMPTY, check whether this directory is empty */
-PUBLIC int ext2_search_dir(ext2_inode_t* dir_pin,
-                           char string[EXT2_NAME_LEN + 1], ino_t* num, int flag,
-                           int ftype)
+int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
+                    ino_t* num, int flag, int ftype)
 {
     ext2_dir_entry_t *pde, *prev_pde;
     off_t pos;

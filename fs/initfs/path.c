@@ -33,7 +33,7 @@
 #include "global.h"
 #include "tar.h"
 
-PUBLIC int initfs_lookup(MESSAGE* p)
+int initfs_lookup(MESSAGE* p)
 {
     int src = p->source;
     int dev = p->REQ_DEV;

@@ -32,7 +32,7 @@
 #include "fcntl.h"
 #include "global.h"
 
-PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
+void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
 {
     int retval;
     struct worker_thread* old_self;
@@ -55,7 +55,7 @@ PUBLIC void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
     worker_resume(old_self);
 }
 
-PUBLIC void unlock_filp(struct file_desc* filp)
+void unlock_filp(struct file_desc* filp)
 {
     int retval;
 
@@ -69,7 +69,7 @@ PUBLIC void unlock_filp(struct file_desc* filp)
     }
 }
 
-PUBLIC struct file_desc* alloc_filp()
+struct file_desc* alloc_filp()
 {
     int i;
 
@@ -85,7 +85,7 @@ PUBLIC struct file_desc* alloc_filp()
     return NULL;
 }
 
-PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
+int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
 {
     /* find an unused fd in proc's filp table and a free file slot */
     int i;
@@ -114,8 +114,7 @@ PUBLIC int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
     return ENFILE;
 }
 
-PUBLIC struct file_desc* get_filp(struct fproc* fp, int fd,
-                                  rwlock_type_t lock_type)
+struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
 {
     /* retrieve a file descriptor from fp's filp table and lock it */
     struct file_desc* filp = NULL;

@@ -33,7 +33,7 @@
 #include "const.h"
 #include "proto.h"
 
-PUBLIC int check_perm(struct ipc_perm* perm, endpoint_t source, mode_t mode)
+int check_perm(struct ipc_perm* perm, endpoint_t source, mode_t mode)
 {
     uid_t uid;
     gid_t gid;

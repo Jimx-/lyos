@@ -16,33 +16,33 @@
 #ifndef _PM_PROTO_H_
 #define _PM_PROTO_H_
 
-PUBLIC pid_t find_free_pid();
-PUBLIC int pm_verify_endpt(endpoint_t ep, int* proc_nr);
-PUBLIC struct pmproc* pm_endpt_proc(endpoint_t ep);
-PUBLIC struct pmproc* pm_pid_proc(pid_t pid);
+pid_t find_free_pid();
+int pm_verify_endpt(endpoint_t ep, int* proc_nr);
+struct pmproc* pm_endpt_proc(endpoint_t ep);
+struct pmproc* pm_pid_proc(pid_t pid);
 
-PUBLIC int do_fork(MESSAGE* p);
-PUBLIC int do_wait(MESSAGE* p);
-PUBLIC int do_exit(MESSAGE* p);
-PUBLIC int do_sigaction(MESSAGE* p);
-PUBLIC int do_kill(MESSAGE* p);
-PUBLIC int do_getsetid(MESSAGE* p);
-PUBLIC int do_sigprocmask(MESSAGE* p);
-PUBLIC int do_sigsuspend(MESSAGE* p);
-PUBLIC int do_sigreturn(MESSAGE* p);
-PUBLIC int do_ptrace(MESSAGE* m);
-PUBLIC int do_exec(MESSAGE* m);
-PUBLIC int do_pm_getinfo(MESSAGE* p);
-PUBLIC int do_pm_kprofile(MESSAGE* msg);
-PUBLIC int do_getprocep(MESSAGE* p);
-PUBLIC int do_pm_getepinfo(MESSAGE* p);
+int do_fork(MESSAGE* p);
+int do_wait(MESSAGE* p);
+int do_exit(MESSAGE* p);
+int do_sigaction(MESSAGE* p);
+int do_kill(MESSAGE* p);
+int do_getsetid(MESSAGE* p);
+int do_sigprocmask(MESSAGE* p);
+int do_sigsuspend(MESSAGE* p);
+int do_sigreturn(MESSAGE* p);
+int do_ptrace(MESSAGE* m);
+int do_exec(MESSAGE* m);
+int do_pm_getinfo(MESSAGE* p);
+int do_pm_kprofile(MESSAGE* msg);
+int do_getprocep(MESSAGE* p);
+int do_pm_getepinfo(MESSAGE* p);
 
-PUBLIC int waiting_for(struct pmproc* parent, struct pmproc* child);
-PUBLIC void exit_proc(struct pmproc* pmp, int status);
+int waiting_for(struct pmproc* parent, struct pmproc* child);
+void exit_proc(struct pmproc* pmp, int status);
 
-PUBLIC void sig_proc(struct pmproc* p_dest, int signo, int trace);
-PUBLIC int process_ksig(endpoint_t target, int signo);
+void sig_proc(struct pmproc* p_dest, int signo, int trace);
+int process_ksig(endpoint_t target, int signo);
 
-PUBLIC void trace_signal(struct pmproc* p_dest, int signo);
+void trace_signal(struct pmproc* p_dest, int signo);
 
 #endif

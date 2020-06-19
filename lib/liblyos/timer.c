@@ -22,11 +22,11 @@
 #include <lyos/timer.h>
 #include <lyos/sysutils.h>
 
-PRIVATE DEF_LIST(_timer_list);
-PRIVATE DEF_LIST(_timer_list_expiring);
-PRIVATE int expiring = 0;
+static DEF_LIST(_timer_list);
+static DEF_LIST(_timer_list_expiring);
+static int expiring = 0;
 
-PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
+void timer_add(struct list_head* list, struct timer_list* timer)
 {
     struct timer_list* tp;
     struct list_head* target = list;
@@ -45,7 +45,7 @@ PUBLIC void timer_add(struct list_head* list, struct timer_list* timer)
     list_add(&timer->list, target);
 }
 
-PUBLIC void timer_expire(struct list_head* list, clock_t timestamp)
+void timer_expire(struct list_head* list, clock_t timestamp)
 {
     struct timer_list *tp, *n;
     list_for_each_entry_safe(tp, n, list, list)
@@ -57,15 +57,15 @@ PUBLIC void timer_expire(struct list_head* list, clock_t timestamp)
     }
 }
 
-PUBLIC void timer_remove(struct timer_list* timer)
+void timer_remove(struct timer_list* timer)
 {
     timer->expire_time = TIMER_UNSET;
 
     list_del(&timer->list);
 }
 
-PUBLIC void set_timer(struct timer_list* timer, clock_t ticks,
-                      timer_callback_t cb, int arg)
+void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb,
+               int arg)
 {
     clock_t uptime;
 
@@ -99,7 +99,7 @@ PUBLIC void set_timer(struct timer_list* timer, clock_t ticks,
     }
 }
 
-PUBLIC void expire_timer(clock_t timestamp)
+void expire_timer(clock_t timestamp)
 {
     expiring = 1;
     timer_expire(&_timer_list, timestamp);

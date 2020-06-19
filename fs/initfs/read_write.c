@@ -35,7 +35,7 @@
 
 #include <libbdev/libbdev.h>
 
-PUBLIC int initfs_rdwt(MESSAGE* p)
+int initfs_rdwt(MESSAGE* p)
 {
     dev_t dev = (int)p->RWDEV;
     ino_t num = p->RWINO;

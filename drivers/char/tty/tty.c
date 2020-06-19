@@ -44,16 +44,16 @@
 #include <libdevman/libdevman.h>
 #include <libchardriver/libchardriver.h>
 
-PRIVATE struct sysinfo* _sysinfo;
-PRIVATE dev_t cons_minor = CONS_MINOR + 1;
+static struct sysinfo* _sysinfo;
+static dev_t cons_minor = CONS_MINOR + 1;
 
-PRIVATE bus_type_id_t tty_subsys_id;
+static bus_type_id_t tty_subsys_id;
 
 #define TTY_FIRST (tty_table)
 #define TTY_END (tty_table + NR_CONSOLES + NR_SERIALS)
 
 /* Default termios */
-PRIVATE struct termios termios_defaults = {
+static struct termios termios_defaults = {
     TINPUT_DEF,
     TOUTPUT_DEF,
     TCTRL_DEF,
@@ -80,30 +80,30 @@ PRIVATE struct termios termios_defaults = {
     },
 };
 
-PRIVATE void init_tty();
-PRIVATE TTY* minor2tty(dev_t minor);
-PRIVATE void set_console_line(char val[CONS_ARG]);
-PRIVATE void tty_dev_read(TTY* tty);
-PRIVATE void tty_dev_write(TTY* tty);
-PRIVATE void tty_dev_ioctl(TTY* tty);
-PRIVATE void in_transfer(TTY* tty);
-PRIVATE int do_open(dev_t minor, int access);
-PRIVATE ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+static void init_tty();
+static TTY* minor2tty(dev_t minor);
+static void set_console_line(char val[CONS_ARG]);
+static void tty_dev_read(TTY* tty);
+static void tty_dev_write(TTY* tty);
+static void tty_dev_ioctl(TTY* tty);
+static void in_transfer(TTY* tty);
+static int do_open(dev_t minor, int access);
+static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                       unsigned int count, cdev_id_t id);
+static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
                         unsigned int count, cdev_id_t id);
-PRIVATE ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                         unsigned int count, cdev_id_t id);
-PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                     cdev_id_t id);
-PRIVATE int do_select(dev_t minor, int ops, endpoint_t endpoint);
-PRIVATE void tty_do_kern_log();
-PRIVATE void tty_echo(TTY* tty, char c);
-PRIVATE void tty_sigproc(TTY* tty, int signo);
-PRIVATE void erase(TTY* tty);
-PRIVATE int select_try(TTY* tty, int ops);
-PRIVATE int select_retry(TTY* tty);
-PRIVATE void tty_icancel(TTY* tty);
+static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                    cdev_id_t id);
+static int do_select(dev_t minor, int ops, endpoint_t endpoint);
+static void tty_do_kern_log();
+static void tty_echo(TTY* tty, char c);
+static void tty_sigproc(TTY* tty, int signo);
+static void erase(TTY* tty);
+static int select_try(TTY* tty, int ops);
+static int select_retry(TTY* tty);
+static void tty_icancel(TTY* tty);
 
-PRIVATE struct chardriver tty_driver = {
+static struct chardriver tty_driver = {
     .cdr_open = do_open,
     .cdr_read = do_read,
     .cdr_write = do_write,
@@ -117,7 +117,7 @@ PRIVATE struct chardriver tty_driver = {
 /**
  * <Ring 1> Main loop of task TTY.
  *****************************************************************************/
-PUBLIC int main()
+int main()
 {
     TTY* tty;
     MESSAGE msg;
@@ -174,7 +174,7 @@ PUBLIC int main()
  *   -# the corresponding console
  *
  *****************************************************************************/
-PRIVATE void init_tty()
+static void init_tty()
 {
     TTY* tty;
     int i;
@@ -265,7 +265,7 @@ PRIVATE void init_tty()
     kernlog_register();
 }
 
-PRIVATE TTY* minor2tty(dev_t minor)
+static TTY* minor2tty(dev_t minor)
 {
     TTY* ptty = NULL;
 
@@ -279,7 +279,7 @@ PRIVATE TTY* minor2tty(dev_t minor)
     return ptty;
 }
 
-PRIVATE void set_console_line(char val[CONS_ARG])
+static void set_console_line(char val[CONS_ARG])
 {
     if (!strncmp(val, "console", CONS_ARG - 1)) cons_minor = CONS_MINOR;
 
@@ -308,7 +308,7 @@ PRIVATE void set_console_line(char val[CONS_ARG])
  * @param tty  The key press is for whom.
  * @param key  The integer key with metadata.
  *****************************************************************************/
-PUBLIC int in_process(TTY* tty, char* buf, int count)
+int in_process(TTY* tty, char* buf, int count)
 {
     int cnt, key;
 
@@ -411,7 +411,7 @@ PUBLIC int in_process(TTY* tty, char* buf, int count)
  *
  * @param tty  Ptr to TTY.
  *****************************************************************************/
-PRIVATE void tty_dev_read(TTY* tty)
+static void tty_dev_read(TTY* tty)
 {
     if (tty->tty_devread) tty->tty_devread(tty);
 }
@@ -424,7 +424,7 @@ PRIVATE void tty_dev_read(TTY* tty)
  *
  * @param tty   Ptr to a TTY struct.
  *****************************************************************************/
-PRIVATE void tty_dev_write(TTY* tty)
+static void tty_dev_write(TTY* tty)
 {
     if (tty->tty_devwrite) tty->tty_devwrite(tty);
 }
@@ -437,7 +437,7 @@ PRIVATE void tty_dev_write(TTY* tty)
  *
  * @param tty   Ptr to a TTY struct.
  *****************************************************************************/
-PRIVATE void tty_dev_ioctl(TTY* tty)
+static void tty_dev_ioctl(TTY* tty)
 {
     int retval = 0;
     if (tty->tty_outleft > 0) return;
@@ -458,7 +458,7 @@ PRIVATE void tty_dev_ioctl(TTY* tty)
  *
  * @param tty   Ptr to a TTY struct.
  *****************************************************************************/
-PRIVATE void in_transfer(TTY* tty)
+static void in_transfer(TTY* tty)
 {
     char buf[64], *bp;
 
@@ -508,7 +508,7 @@ PRIVATE void in_transfer(TTY* tty)
  *
  * @param tty   Ptr to a TTY struct.
  *****************************************************************************/
-PUBLIC void handle_events(TTY* tty)
+void handle_events(TTY* tty)
 {
     do {
         tty->tty_events = 0;
@@ -531,7 +531,7 @@ PUBLIC void handle_events(TTY* tty)
     }
 }
 
-PRIVATE int do_open(dev_t minor, int access)
+static int do_open(dev_t minor, int access)
 {
     TTY* tty = minor2tty(minor);
 
@@ -557,8 +557,8 @@ PRIVATE int do_open(dev_t minor, int access)
  *
  * @see documentation/tty/
  *****************************************************************************/
-PRIVATE ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                        unsigned int count, cdev_id_t id)
+static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                       unsigned int count, cdev_id_t id)
 {
     TTY* tty = minor2tty(minor);
 
@@ -597,8 +597,8 @@ PRIVATE ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
  * @param tty  To which TTY the calller proc is bound.
  * @param msg  The MESSAGE.
  *****************************************************************************/
-PRIVATE ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                         unsigned int count, cdev_id_t id)
+static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
+                        unsigned int count, cdev_id_t id)
 {
     TTY* tty = minor2tty(minor);
 
@@ -634,8 +634,8 @@ PRIVATE ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
  * @param tty  To which TTY the calller proc is bound.
  * @param msg  The MESSAGE.
  *****************************************************************************/
-PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                     cdev_id_t id)
+static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                    cdev_id_t id)
 {
     int retval = 0;
     int i;
@@ -691,7 +691,7 @@ PRIVATE int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
     return retval;
 }
 
-PRIVATE int select_try(TTY* tty, int ops)
+static int select_try(TTY* tty, int ops)
 {
     int ready_ops = 0;
 
@@ -718,7 +718,7 @@ PRIVATE int select_try(TTY* tty, int ops)
     return ready_ops;
 }
 
-PRIVATE int select_retry(TTY* tty)
+static int select_retry(TTY* tty)
 {
     int ops;
     if (tty->tty_select_ops && (ops = select_try(tty, tty->tty_select_ops))) {
@@ -733,7 +733,7 @@ PRIVATE int select_retry(TTY* tty)
     return 0;
 }
 
-PRIVATE int do_select(dev_t minor, int ops, endpoint_t endpoint)
+static int do_select(dev_t minor, int ops, endpoint_t endpoint)
 {
     TTY* tty = minor2tty(minor);
 
@@ -767,7 +767,7 @@ PRIVATE int do_select(dev_t minor, int ops, endpoint_t endpoint)
  * Invoked when task TTY receives KERN_LOG message.
  *
  *****************************************************************************/
-PRIVATE void tty_do_kern_log()
+static void tty_do_kern_log()
 {
     static int prev_next = 0;
     static char kernel_log_copy[KERN_LOG_SIZE];
@@ -802,7 +802,7 @@ PRIVATE void tty_do_kern_log()
  * Erase last character.
  *
  *****************************************************************************/
-PRIVATE void erase(TTY* tty)
+static void erase(TTY* tty)
 {
     if (tty->ibuf_cnt == 0) return;
 
@@ -824,7 +824,7 @@ PRIVATE void erase(TTY* tty)
  * Echo the character is echoing is on.
  *
  *****************************************************************************/
-PRIVATE void tty_echo(TTY* tty, char c)
+static void tty_echo(TTY* tty, char c)
 {
     int len;
     if ((c & IN_CHAR) < ' ') {
@@ -857,7 +857,7 @@ PRIVATE void tty_echo(TTY* tty, char c)
  * Send a signal to control proc.
  *
  *****************************************************************************/
-PRIVATE void tty_sigproc(TTY* tty, int signo)
+static void tty_sigproc(TTY* tty, int signo)
 {
     endpoint_t ep;
     if (get_procep(tty->tty_pgrp, &ep) != 0) return;
@@ -874,7 +874,7 @@ PRIVATE void tty_sigproc(TTY* tty, int signo)
  * Cancel all pending inputs.
  *
  *****************************************************************************/
-PRIVATE void tty_icancel(TTY* tty)
+static void tty_icancel(TTY* tty)
 {
     tty->tty_trans_cnt = tty->tty_eotcnt = 0;
     tty->ibuf_tail = tty->ibuf_head;

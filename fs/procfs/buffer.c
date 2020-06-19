@@ -30,13 +30,13 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 
-PRIVATE char* buf;
-PRIVATE size_t used, left;
-PRIVATE off_t offset;
+static char* buf;
+static size_t used, left;
+static off_t offset;
 
 #define BUF_SIZE 4096
 
-PUBLIC void init_buf(char* ptr, size_t len, off_t off)
+void init_buf(char* ptr, size_t len, off_t off)
 {
     buf = ptr;
     offset = off;
@@ -44,7 +44,7 @@ PUBLIC void init_buf(char* ptr, size_t len, off_t off)
     used = 0;
 }
 
-PUBLIC void buf_printf(char* fmt, ...)
+void buf_printf(char* fmt, ...)
 {
     va_list args;
     ssize_t len, max;
@@ -83,4 +83,4 @@ PUBLIC void buf_printf(char* fmt, ...)
     left -= len;
 }
 
-PUBLIC size_t buf_used() { return used; }
+size_t buf_used() { return used; }

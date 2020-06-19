@@ -26,7 +26,7 @@
 #include <sys/dirent.h>
 #include "libmemfs/libmemfs.h"
 
-PRIVATE int stat_type(struct memfs_stat* st)
+static int stat_type(struct memfs_stat* st)
 {
     switch (st->st_mode) {
     case I_REGULAR:
@@ -38,8 +38,8 @@ PRIVATE int stat_type(struct memfs_stat* st)
     }
 }
 
-PUBLIC int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
-                          u64* ppos, size_t* count)
+int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
+                   size_t* count)
 {
 #define GETDENTS_BUFSIZE 4096
     static char getdents_buf[GETDENTS_BUFSIZE];

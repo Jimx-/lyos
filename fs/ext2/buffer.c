@@ -38,13 +38,13 @@
 
 //#define EXT2_BUFFER_DEBUG
 
-PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb);
-PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
-                            void* buf);
+static void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb);
+static void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
+                           void* buf);
 
-PRIVATE int nr_buffers;
+static int nr_buffers;
 
-PUBLIC void ext2_init_buffer_cache()
+void ext2_init_buffer_cache()
 {
     int i;
     nr_buffers = 0;
@@ -62,7 +62,7 @@ PUBLIC void ext2_init_buffer_cache()
  *
  * @return Ptr to block buffer if found.
  */
-PUBLIC ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
+ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
 {
 #define REPORT_ERROR_AND_RETURN(e)                                             \
     do {                                                                       \
@@ -142,7 +142,7 @@ PUBLIC ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
     return pb;
 }
 
-PUBLIC void ext2_put_buffer(ext2_buffer_t* pb)
+void ext2_put_buffer(ext2_buffer_t* pb)
 {
     if (!pb) return;
 
@@ -164,8 +164,8 @@ PUBLIC void ext2_put_buffer(ext2_buffer_t* pb)
     }
 }
 
-PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
-                            void* buf)
+static void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
+                           void* buf)
 {
     if (!block_nr) return;
 
@@ -183,7 +183,7 @@ PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
     }
 }
 
-PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb)
+static void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb)
 {
     /*if (rw_flag == BDEV_WRITE) {
         memcpy(ext2fsbuf, pb->b_data, pb->b_size);
@@ -202,7 +202,7 @@ PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb)
  * Clear the buffer.
  * @param pb Ptr to the buffer.
  */
-PUBLIC void ext2_zero_buffer(ext2_buffer_t* pb)
+void ext2_zero_buffer(ext2_buffer_t* pb)
 {
     if (pb == NULL || pb->b_data == NULL) return;
     memset(pb->b_data, 0, pb->b_size);
@@ -213,7 +213,7 @@ PUBLIC void ext2_zero_buffer(ext2_buffer_t* pb)
  *
  * @return
  */
-PUBLIC void ext2_sync_buffers()
+void ext2_sync_buffers()
 {
     ext2_buffer_t* pb;
     list_for_each_entry(pb, &ext2_buffer_freelist, list)

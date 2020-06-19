@@ -33,9 +33,9 @@
 
 extern int exc_vector_table;
 
-PUBLIC struct tss tss[CONFIG_SMP_MAX_CPUS];
+struct tss tss[CONFIG_SMP_MAX_CPUS];
 
-PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
+int init_tss(unsigned cpu, unsigned kernel_stack)
 {
     struct tss* t = &tss[cpu];
 
@@ -45,9 +45,9 @@ PUBLIC int init_tss(unsigned cpu, unsigned kernel_stack)
     return 0;
 }
 
-PUBLIC void init_prot() { write_vbar((reg_t)&exc_vector_table); }
+void init_prot() { write_vbar((reg_t)&exc_vector_table); }
 
-PUBLIC void irq_entry_handle()
+void irq_entry_handle()
 {
     if (machine_desc->handle_irq) machine_desc->handle_irq();
 }

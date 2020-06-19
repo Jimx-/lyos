@@ -32,22 +32,22 @@
 
 #include "keyboard.h"
 
-PRIVATE struct kb_inbuf kb_in;
-PRIVATE int code_with_E0;
-PUBLIC irq_id_t kb_irq_set;
-PRIVATE int kb_hook_id;
+static struct kb_inbuf kb_in;
+static int code_with_E0;
+irq_id_t kb_irq_set;
+static int kb_hook_id;
 
-PRIVATE int processing = 0;
+static int processing = 0;
 
-PRIVATE int init_keyboard();
-PRIVATE void keyboard_process();
-PRIVATE void keyboard_interrupt(unsigned long irq_set);
-PRIVATE u8 get_byte_from_kb_buf();
-PRIVATE void set_leds();
-PRIVATE void kb_wait();
-PRIVATE void kb_ack();
+static int init_keyboard();
+static void keyboard_process();
+static void keyboard_interrupt(unsigned long irq_set);
+static u8 get_byte_from_kb_buf();
+static void set_leds();
+static void kb_wait();
+static void kb_ack();
 
-PRIVATE struct inputdriver keyboard_driver = {
+static struct inputdriver keyboard_driver = {
     .input_interrupt = keyboard_interrupt,
 };
 
@@ -58,7 +58,7 @@ PRIVATE struct inputdriver keyboard_driver = {
  * The main loop.
  *
  *****************************************************************************/
-PUBLIC int main()
+int main()
 {
     serv_register_init_fresh_callback(init_keyboard);
     serv_init();
@@ -74,7 +74,7 @@ PUBLIC int main()
  *
  * @param irq The IRQ corresponding to the keyboard, unused here.
  *****************************************************************************/
-PRIVATE void keyboard_interrupt(unsigned long irq_set)
+static void keyboard_interrupt(unsigned long irq_set)
 {
     u8 scan_code;
     portio_inb(KB_DATA, &scan_code);
@@ -96,7 +96,7 @@ PRIVATE void keyboard_interrupt(unsigned long irq_set)
  * <Ring 1> Initialize some variables and set keyboard interrupt handler.
  *
  *****************************************************************************/
-PRIVATE int init_keyboard()
+static int init_keyboard()
 {
     kb_in.count = 0;
     kb_in.p_head = kb_in.p_tail = kb_in.buf;
@@ -119,7 +119,7 @@ PRIVATE int init_keyboard()
  * Read a character from keyboard.
  *
  *****************************************************************************/
-PRIVATE void keyboard_process()
+static void keyboard_process()
 {
     u8 scan_code;
 
@@ -205,7 +205,7 @@ PRIVATE void keyboard_process()
  *
  * @return The byte read.
  *****************************************************************************/
-PRIVATE u8 get_byte_from_kb_buf()
+static u8 get_byte_from_kb_buf()
 {
     u8 scan_code;
 
@@ -229,7 +229,7 @@ PRIVATE u8 get_byte_from_kb_buf()
  * Wait until the input buffer of 8042 is empty.
  *
  *****************************************************************************/
-PRIVATE void kb_wait()
+static void kb_wait()
 {
     u8 kb_stat;
 
@@ -245,7 +245,7 @@ PRIVATE void kb_wait()
  * Read from the keyboard controller until a KB_ACK is received.
  *
  *****************************************************************************/
-PRIVATE void kb_ack()
+static void kb_ack()
 {
     u8 kb_read;
 
@@ -261,7 +261,7 @@ PRIVATE void kb_ack()
  * Set the leds according to: caps_lock, num_lock & scroll_lock.
  *
  *****************************************************************************/
-PRIVATE void set_leds()
+static void set_leds()
 {
     u8 leds = 0;
     // u8 leds = (caps_lock << 2) | (num_lock << 1) | scroll_lock;

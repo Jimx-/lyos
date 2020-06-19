@@ -33,12 +33,11 @@
 #include <lyos/service.h>
 #include <libchardriver/libchardriver.h>
 
-PUBLIC int arch_init_fb(int minor) { return 0; }
+int arch_init_fb(int minor) { return 0; }
 
-PUBLIC int arch_get_device(int minor, void** base, void** size) { return OK; }
+int arch_get_device(int minor, void** base, void** size) { return OK; }
 
-PUBLIC int arch_get_device_phys(int minor, phys_bytes* phys_base,
-                                phys_bytes* size)
+int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size)
 {
     return OK;
 }
