@@ -70,6 +70,12 @@ PUBLIC void pcii_write_u16(u32 bus, u32 slot, u32 func, u16 offset, u16 value)
     portio_outw(PCI_DATA, value);
 }
 
+void pcii_write_u32(u32 bus, u32 slot, u32 func, u16 offset, u32 value)
+{
+    portio_outl(PCII_CTRL, PCII_SELREG(bus, slot, func, offset));
+    portio_outl(PCI_DATA, value);
+}
+
 PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port)
 {
     return pcii_read_u8(pcibus[busind].busnr, pcidev[devind].dev,
@@ -91,5 +97,11 @@ PUBLIC u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port)
 PUBLIC void pcii_wreg_u16(u32 busind, u32 devind, u16 port, u16 value)
 {
     return pcii_write_u16(pcibus[busind].busnr, pcidev[devind].dev,
+                          pcidev[devind].func, port, value);
+}
+
+PUBLIC void pcii_wreg_u32(u32 busind, u32 devind, u16 port, u32 value)
+{
+    return pcii_write_u32(pcibus[busind].busnr, pcidev[devind].dev,
                           pcidev[devind].func, port, value);
 }

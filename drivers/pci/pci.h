@@ -33,7 +33,26 @@ struct pcidev {
     u8 infclass;
 
     device_id_t dev_id;
+
+    int nr_bars;
+    struct {
+        int nr;
+
+        u32 base;
+        u32 size;
+
+        int flags;
+    } bars[6];
+
+    int nr_caps;
+    struct {
+        u8 type;
+        u8 size;
+        u8 offset;
+    } caps[10];
 };
+
+#define PBF_IO 1
 
 struct pcibus {
     int busnr;
@@ -43,6 +62,7 @@ struct pcibus {
     u16 (*rreg_u16)(u32 busind, u32 devind, u16 port);
     u32 (*rreg_u32)(u32 busind, u32 devind, u16 port);
     void (*wreg_u16)(u32 busind, u32 devind, u16 port, u16 value);
+    void (*wreg_u32)(u32 busind, u32 devind, u16 port, u32 value);
 };
 
 struct pci_device {
@@ -61,15 +81,18 @@ PUBLIC u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset);
 PUBLIC u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset);
 PUBLIC u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset);
 PUBLIC void pcii_write_u16(u32 bus, u32 slot, u32 func, u16 offset, u16 value);
+void pcii_write_u32(u32 bus, u32 slot, u32 func, u16 offset, u32 value);
 PUBLIC u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port);
 PUBLIC u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port);
 PUBLIC u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port);
 PUBLIC void pcii_wreg_u16(u32 busind, u32 devind, u16 port, u16 value);
+void pcii_wreg_u32(u32 busind, u32 devind, u16 port, u32 value);
 
 PUBLIC int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
                           device_id_t* dev_id);
 PUBLIC int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
                          device_id_t* dev_id);
+int _pci_get_bar(int devind, int port, u32* base, u32* size, int* ioflag);
 
 PUBLIC u8 pci_read_attr_u8(int devind, int port);
 PUBLIC u16 pci_read_attr_u16(int devind, int port);

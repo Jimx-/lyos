@@ -3,7 +3,7 @@
 
 #include <lyos/swab.h>
 
-PRIVATE inline u32 __be32_to_cpup(const u32* p) { return (u32)__swab32p(p); }
+static inline u32 __be32_to_cpup(const __be32* p) { return (u32)__swab32p(p); }
 
 #include <lyos/byteorder/generic.h>
 

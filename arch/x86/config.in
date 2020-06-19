@@ -24,6 +24,8 @@ source "drivers/config.in"
 
 source "servers/config.in"
 
+source "lib/config.in"
+
 menu "Power management and ACPI options"
 
 source "drivers/acpi/config.in"

@@ -53,6 +53,7 @@ PRIVATE int do_attr_r8(MESSAGE* m);
 PRIVATE int do_attr_r16(MESSAGE* m);
 PRIVATE int do_attr_r32(MESSAGE* m);
 PRIVATE int do_attr_w16(MESSAGE* m);
+static int do_get_bar(MESSAGE* m);
 
 PUBLIC int main()
 {
@@ -90,6 +91,9 @@ PUBLIC int main()
             break;
         case PCI_ATTR_W16:
             msg.RETVAL = do_attr_w16(&msg);
+            break;
+        case PCI_GET_BAR:
+            msg.RETVAL = do_get_bar(&msg);
             break;
         case DM_BUS_ATTR_SHOW:
         case DM_BUS_ATTR_STORE:
@@ -182,6 +186,25 @@ PRIVATE int do_next_dev(MESSAGE* m)
     m->u.m3.m3i3 = vid;
     m->u.m3.m3i4 = did;
     m->u.m3.m3l1 = dev_id;
+
+    return 0;
+}
+
+static int do_get_bar(MESSAGE* m)
+{
+    int devind = m->u.m3.m3i2;
+    int port = m->u.m3.m3i3;
+
+    u32 base, size;
+    int ioflag;
+
+    int retval = _pci_get_bar(devind, port, &base, &size, &ioflag);
+
+    if (retval) return retval;
+
+    m->u.m3.m3i2 = base;
+    m->u.m3.m3i3 = size;
+    m->u.m3.m3i4 = ioflag;
 
     return 0;
 }

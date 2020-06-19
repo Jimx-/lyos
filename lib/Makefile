@@ -9,4 +9,8 @@ ifeq ($(CONFIG_OF),y)
 	SUBDIRS += libof libfdt
 endif
 
+ifeq ($(CONFIG_VIRTIO),y)
+	SUBDIRS += libvirtio
+endif
+
 include lyos.subdirs.mk

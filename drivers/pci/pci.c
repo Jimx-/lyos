@@ -95,6 +95,13 @@ PUBLIC void pci_write_attr_u16(int devind, int port, u16 value)
     pcibus[busind].wreg_u16(busind, devind, port, value);
 }
 
+void pci_write_attr_u32(int devind, int port, u32 value)
+{
+    int busnr = pcidev[devind].busnr;
+    int busind = get_busind(busnr);
+    pcibus[busind].wreg_u32(busind, devind, port, value);
+}
+
 PUBLIC int pci_init()
 {
     pci_bus_id = dm_bus_register("pci");
@@ -171,8 +178,70 @@ PRIVATE void pci_intel_init()
     pcibus[busind].rreg_u16 = pcii_rreg_u16;
     pcibus[busind].rreg_u32 = pcii_rreg_u32;
     pcibus[busind].wreg_u16 = pcii_wreg_u16;
+    pcibus[busind].wreg_u32 = pcii_wreg_u32;
 
     pci_probe_bus(busind);
+}
+
+static int record_bar(int devind, int bar_nr, int last)
+{
+    int reg, width, nr_bars;
+    u32 bar, bar2;
+
+    width = 1;
+    reg = PCI_BAR + bar_nr * 4;
+
+    bar = pci_read_attr_u32(devind, reg);
+
+    if (bar & PCI_BAR_IO) {
+        /* determine BAR's size */
+        pci_write_attr_u32(devind, reg, 0xffffffff);
+        bar2 = pci_read_attr_u32(devind, reg);
+
+        pci_write_attr_u32(devind, reg, bar);
+
+        bar &= PCI_BAR_IO_MASK;
+        bar2 &= PCI_BAR_IO_MASK;
+        bar2 = (~bar2 & 0xffff) + 1;
+
+        nr_bars = pcidev[devind].nr_bars++;
+        pcidev[devind].bars[nr_bars].base = bar;
+        pcidev[devind].bars[nr_bars].size = bar2;
+        pcidev[devind].bars[nr_bars].nr = bar_nr;
+        pcidev[devind].bars[nr_bars].flags = PBF_IO;
+    }
+
+    return width;
+}
+
+static void record_bars(int devind, int last_reg)
+{
+    int i, reg, width;
+
+    for (i = 0, reg = PCI_BAR; reg <= last_reg; i += width, reg += 4 * width) {
+        width = record_bar(devind, i, reg == last_reg);
+    }
+}
+
+static void record_capabilities(int devind)
+{
+    u8 offset = pci_read_attr_u8(devind, PCI_CAPPTR) & PCI_CP_MASK;
+
+    while (offset) {
+        u8 type = pci_read_attr_u8(devind, offset);
+
+        u8 size = -1;
+        if (type == 0x9) {
+            size = pci_read_attr_u8(devind, offset + 2);
+        }
+
+        int nr_caps = pcidev[devind].nr_caps++;
+        pcidev[devind].caps[nr_caps].type = type;
+        pcidev[devind].caps[nr_caps].size = size;
+        pcidev[devind].caps[nr_caps].offset = offset;
+
+        offset = pci_read_attr_u8(devind, offset + 1) & PCI_CP_MASK;
+    }
 }
 
 PRIVATE void pci_probe_bus(int busind)
@@ -190,6 +259,8 @@ PRIVATE void pci_probe_bus(int busind)
 
             u16 vendor = pci_read_attr_u16(devind, PCI_VID);
             u16 device = pci_read_attr_u16(devind, PCI_DID);
+            u8 headt = pci_read_attr_u8(devind, PCI_HEADT);
+            u16 status = pci_read_attr_u8(devind, PCI_SR);
 
             if (vendor == 0xffff) {
                 if (func == 0) break;
@@ -214,14 +285,29 @@ PRIVATE void pci_probe_bus(int busind)
             pcidev[devind].baseclass = baseclass;
             pcidev[devind].subclass = subclass;
             pcidev[devind].infclass = infclass;
+            pcidev[devind].nr_bars = 0;
 
             char* name = pci_dev_name(vendor, device);
             if (name) {
                 printl("pci %d.%02x.%x: (0x%04x:0x%04x) %s\n", bus_nr, i, func,
                        vendor, device, name);
             } else {
-                printl("pci %d.%02x.%x: Unknown device (0x%04x:0x%04x)\n",
+                printl("pci %d.%02x.%x: (0x%04x:0x%04x) Unknown device\n",
                        bus_nr, i, func, vendor, device);
+            }
+
+            switch (headt & PHT_MASK) {
+            case PHT_NORMAL:
+                record_bars(devind, PCI_BAR_6);
+
+                if (status & PSR_CAPPTR) {
+                    record_capabilities(devind);
+                }
+
+                break;
+            default:
+                printl("pci %d.%02x.%x: unknown header type: %d\n", bus_nr, i,
+                       func, headt);
             }
 
             devind = nr_pcidev;
@@ -231,11 +317,19 @@ PRIVATE void pci_probe_bus(int busind)
 
 PRIVATE int visible(struct pci_acl* acl, int devind)
 {
+    int i;
+
     if (!acl) return TRUE;
+
+    for (i = 0; i < acl->nr_pci_id; i++) {
+        if (acl->pci_id[i].vid == pcidev[devind].vid &&
+            acl->pci_id[i].did == pcidev[devind].did) {
+            return TRUE;
+        }
+    }
 
     if (!acl->nr_pci_class) return FALSE;
 
-    int i;
     u32 classid = (pcidev[devind].baseclass << 16) |
                   (pcidev[devind].subclass << 8) | pcidev[devind].infclass;
     for (i = 0; i < acl->nr_pci_class; i++) {
@@ -284,4 +378,27 @@ PUBLIC int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
     *dev_id = pcidev[i].dev_id;
 
     return 0;
+}
+
+int _pci_get_bar(int devind, int port, u32* base, u32* size, int* ioflag)
+{
+    int i, reg;
+
+    if (devind < 0 || devind >= nr_pcidev) {
+        return EINVAL;
+    }
+
+    for (i = 0; i < pcidev[devind].nr_bars; i++) {
+        reg = PCI_BAR + 4 * pcidev[devind].bars[i].nr;
+
+        if (reg == port) {
+            *base = pcidev[devind].bars[i].base;
+            *size = pcidev[devind].bars[i].size;
+            *ioflag = !!(pcidev[devind].bars[i].flags & PBF_IO);
+
+            return 0;
+        }
+    }
+
+    return EINVAL;
 }

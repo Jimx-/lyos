@@ -408,6 +408,7 @@ enum msgtype {
     PCI_ATTR_R16,
     PCI_ATTR_R32,
     PCI_ATTR_W16,
+    PCI_GET_BAR,
 
     /* INPUT */
     INPUT_SEND_EVENT = INPUT_REQ_BASE,

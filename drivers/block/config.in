@@ -4,21 +4,23 @@
 #
 
 menuconfig BLK_DEV
-	bool "Block devices"
-	default y
-	---help---
-	  Say Y here to get to see options for various different block device
-	  drivers. This option alone does not add any kernel code.
+    bool "Block devices"
+    default y
+    ---help---
+      Say Y here to get to see options for various different block device
+      drivers. This option alone does not add any kernel code.
 
-	  If you say N, all options in this submenu will be skipped and disabled;
-	  only do this if you know what you are doing.
+      If you say N, all options in this submenu will be skipped and disabled;
+      only do this if you know what you are doing.
 
 if BLK_DEV
 
 config BLK_DEV_RAM_COUNT
-	int "Default number of RAM disks"
-	default "8"
-	help
-	  The default value is 8 RAM disks.
+    int "Default number of RAM disks"
+    default "8"
+    help
+      The default value is 8 RAM disks.
+
+source "drivers/block/virtio-blk/config.in"
 
 endif

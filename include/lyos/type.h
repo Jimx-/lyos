@@ -17,6 +17,7 @@
 #define _TYPE_H_
 
 #include <lyos/config.h>
+#include <stddef.h>
 
 /* routine types */
 #define PUBLIC         /* PUBLIC is the opposite of PRIVATE */
@@ -46,6 +47,14 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef char s8;
 typedef unsigned char u8;
+
+typedef u16 __le16;
+typedef u32 __le32;
+typedef u64 __le64;
+
+typedef u16 __be16;
+typedef u32 __be32;
+typedef u64 __be64;
 
 #ifdef CONFIG_PHYS_BYTES_64BIT
 typedef u64 phys_bytes;
@@ -84,6 +93,11 @@ typedef u16 port_t;
 struct vir_addr {
     void* addr;
     endpoint_t proc_ep;
+};
+
+struct umap_phys {
+    phys_bytes phys_addr;
+    size_t size;
 };
 
 struct proc;

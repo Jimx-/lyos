@@ -9,5 +9,6 @@ PUBLIC u8 pci_attr_r8(int devind, u16 port);
 PUBLIC u16 pci_attr_r16(int devind, u16 port);
 PUBLIC u32 pci_attr_r32(int devind, u16 port);
 PUBLIC int pci_attr_w16(int devind, u16 port, u16 value);
+int pci_get_bar(int devind, u16 port, u32* base, u32* size, int* ioflag);
 
 #endif

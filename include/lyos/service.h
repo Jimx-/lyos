@@ -17,6 +17,12 @@
 #define _SERVICE_H_
 
 #define NR_PCI_CLASS 4
+#define NR_PCI_DEVICE 32
+
+struct service_pci_id {
+    u16 vid;
+    u16 did;
+};
 
 struct service_pci_class {
     unsigned classid;
@@ -31,6 +37,8 @@ struct service_up_req {
     char* label;
     int labellen;
 
+    int nr_pci_id;
+    struct service_pci_id pci_id[NR_PCI_DEVICE];
     int nr_pci_class;
     struct service_pci_class pci_class[NR_PCI_CLASS];
 };
@@ -39,6 +47,8 @@ struct pci_acl {
     endpoint_t endpoint;
     unsigned inuse;
 
+    int nr_pci_id;
+    struct service_pci_id pci_id[NR_PCI_DEVICE];
     int nr_pci_class;
     struct service_pci_class pci_class[NR_PCI_CLASS];
 };

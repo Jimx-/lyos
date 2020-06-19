@@ -186,7 +186,7 @@ PUBLIC int publish_service(struct sproc* sp)
     retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE);
 
     sp->pci_acl.endpoint = sp->endpoint;
-    if (sp->pci_acl.nr_pci_class > 0) {
+    if (sp->pci_acl.nr_pci_class > 0 || sp->pci_acl.nr_pci_id > 0) {
         pci_set_acl(&sp->pci_acl);
     }
 

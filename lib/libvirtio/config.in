@@ -1,0 +1,9 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+menuconfig VIRTIO
+    bool "Virtio support"
+    help
+      This option is selected by any driver which implements the virtio bus.

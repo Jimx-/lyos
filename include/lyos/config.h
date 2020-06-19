@@ -18,6 +18,12 @@
 
 #include "config/autoconf.h"
 
+#ifdef CONFIG_CPU_BIG_ENDIAN
+#define __BIG_ENDIAN 4321
+#else
+#define __LITTLE_ENDIAN 1234
+#endif
+
 #ifndef CONFIG_SMP_MAX_CPUS
 #define CONFIG_SMP_MAX_CPUS 1
 #endif

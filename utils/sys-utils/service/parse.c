@@ -52,6 +52,38 @@ static void parse_pci_class(cJSON* root, struct service_up_req* up_req)
     }
 }
 
+static void parse_pci_device(cJSON* root, struct service_up_req* up_req)
+{
+    up_req->nr_pci_id = 0;
+
+    cJSON* devices = cJSON_GetObjectItem(root, PCI_DEVICE);
+    if (!devices) return;
+
+    int i;
+    cJSON* device;
+    for (i = 0; i < cJSON_GetArraySize(devices); i++) {
+        device = cJSON_GetArrayItem(devices, i);
+
+        if (device->type != cJSON_String) continue;
+
+        char* str = device->valuestring;
+        char* check;
+
+        u16 vid = strtoul(str, &check, 0x10);
+        u16 did = 0;
+
+        if (*check == ':') {
+            did = strtoul(check + 1, &check, 0x10);
+        }
+
+        if (*check != '\0') continue;
+
+        up_req->pci_id[up_req->nr_pci_id].vid = vid;
+        up_req->pci_id[up_req->nr_pci_id].did = did;
+        up_req->nr_pci_id++;
+    }
+}
+
 int parse_config(char* progname, char* path, struct service_up_req* up_req)
 {
     struct stat stat_buf;
@@ -72,6 +104,7 @@ int parse_config(char* progname, char* path, struct service_up_req* up_req)
     }
 
     parse_pci_class(root, up_req);
+    parse_pci_device(root, up_req);
 
     cJSON_Delete(root);
     free(buf);

@@ -7,4 +7,6 @@ menu "Libraries"
 
 source "lib/libof/config.in"
 
+source "lib/libvirtio/config.in"
+
 endmenu

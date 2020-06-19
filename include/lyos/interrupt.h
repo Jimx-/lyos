@@ -28,6 +28,7 @@
 #define IRQ_SETPOLICY 1
 #define IRQ_ENABLE 2
 #define IRQ_DISABLE 3
+#define IRQ_RMPOLICY 4
 
 /* irq policy */
 #define IRQ_REENABLE 0x1
@@ -36,5 +37,6 @@ PUBLIC int irqctl(int request, int irq, int policy, int* hook_id);
 #define irq_enable(id) irqctl(IRQ_ENABLE, 0, 0, id)
 #define irq_disable(id) irqctl(IRQ_DISABLE, 0, 0, id)
 #define irq_setpolicy(irq, policy, id) irqctl(IRQ_SETPOLICY, irq, policy, id)
+#define irq_rmpolicy(id) irqctl(IRQ_RMPOLICY, 0, 0, id)
 
 #endif

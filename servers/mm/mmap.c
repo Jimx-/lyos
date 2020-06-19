@@ -51,6 +51,8 @@ PUBLIC struct vir_region* mmap_region(struct mmproc* mmp, void* addr,
         return NULL;
     }
 
+    len = roundup(len, ARCH_PG_SIZE);
+
     /* first unmap the region */
     if (addr && (mmap_flags & MAP_FIXED)) {
         if (region_unmap_range(mmp, (vir_bytes)addr, len)) return NULL;
@@ -267,6 +269,8 @@ PUBLIC int do_munmap()
 
     if (len < 0) return EINVAL;
     if (!mmp) return EINVAL;
+
+    len = roundup(len, ARCH_PG_SIZE);
 
     return region_unmap_range(mmp, (vir_bytes)addr, len);
 }

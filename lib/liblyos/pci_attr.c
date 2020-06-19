@@ -135,3 +135,36 @@ PUBLIC int pci_attr_w16(int devind, u16 port, u16 value)
 
     return msg.RETVAL;
 }
+
+int pci_get_bar(int devind, u16 port, u32* base, u32* size, int* ioflag)
+{
+    u32 v;
+    int retval;
+
+    if (__pci_endpoint == NO_TASK) {
+        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
+        if (retval) return retval;
+
+        __pci_endpoint = (endpoint_t)v;
+    }
+
+    MESSAGE msg;
+
+    msg.type = PCI_GET_BAR;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
+
+#ifdef __i386__
+    send_recv(BOTH, TASK_PCI, &msg);
+#else
+    send_recv(BOTH, __pci_endpoint, &msg);
+#endif
+
+    if (msg.RETVAL == 0) {
+        *base = msg.u.m3.m3i2;
+        *size = msg.u.m3.m3i3;
+        *ioflag = msg.u.m3.m3i4;
+    }
+
+    return msg.RETVAL;
+}

@@ -52,6 +52,16 @@ PUBLIC int init_sproc(struct sproc* sp, struct service_up_req* up_req,
         }
     }
 
+    if (up_req->nr_pci_id > NR_PCI_DEVICE) return EINVAL;
+    if (up_req->nr_pci_id > 0) {
+        sp->pci_acl.nr_pci_id = up_req->nr_pci_id;
+        int i;
+        for (i = 0; i < sp->pci_acl.nr_pci_id; i++) {
+            sp->pci_acl.pci_id[i].vid = up_req->pci_id[i].vid;
+            sp->pci_acl.pci_id[i].did = up_req->pci_id[i].did;
+        }
+    }
+
     sp->label[0] = '\0';
     set_sproc(sp, up_req, source);
     return 0;
