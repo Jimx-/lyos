@@ -371,13 +371,15 @@ enum msgtype {
     PM_KPROFILE,
     PM_GETEPINFO,
 
-    /* message type for drivers */ /* 2001 ~ 2005 */
+    /* message type for drivers */ /* 2001 ~ 2006 */
     BDEV_OPEN = DRV_REQ_BASE,
     BDEV_CLOSE,
     BDEV_READ,
     BDEV_WRITE,
     BDEV_IOCTL,
-    CDEV_OPEN, /* 2006 ~ 2010 */
+    BDEV_REPLY,
+
+    CDEV_OPEN, /* 2007 ~ 2011 */
     CDEV_CLOSE,
     CDEV_READ,
     CDEV_WRITE,

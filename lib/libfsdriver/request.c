@@ -24,9 +24,10 @@
 #include <lyos/fs.h>
 #include "string.h"
 #include <sys/syslimits.h>
-#include <lyos/bdev.h>
 #include <lyos/sysutils.h>
-#include "libfsdriver/libfsdriver.h"
+
+#include <libbdev/libbdev.h>
+#include <libfsdriver/libfsdriver.h>
 
 PUBLIC int fsdriver_register(struct fsdriver* fsd)
 {

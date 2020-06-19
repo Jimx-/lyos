@@ -99,7 +99,7 @@ PUBLIC int bdev_open(dev_t dev)
     MESSAGE driver_msg;
 
     driver_msg.type = BDEV_OPEN;
-    driver_msg.DEVICE = MINOR(dev);
+    driver_msg.u.m_bdev_blockdriver_msg.minor = MINOR(dev);
 
     bdev_sendrec(dev, &driver_msg);
 
@@ -121,11 +121,11 @@ PUBLIC int bdev_close(dev_t dev)
     MESSAGE driver_msg;
 
     driver_msg.type = BDEV_OPEN;
-    driver_msg.DEVICE = MINOR(dev);
+    driver_msg.u.m_bdev_blockdriver_msg.minor = MINOR(dev);
 
     bdev_sendrec(dev, &driver_msg);
 
-    return driver_msg.RETVAL;
+    return driver_msg.u.m_blockdriver_bdev_reply.status;
 }
 
 /*****************************************************************************
@@ -143,21 +143,33 @@ PUBLIC int bdev_close(dev_t dev)
  *
  * @return Bytes read/wrote or a negative error code.
  *****************************************************************************/
-PUBLIC ssize_t bdev_readwrite(int io_type, int dev, u64 pos, int bytes,
-                              int proc_nr, void* buf)
+static ssize_t bdev_readwrite(int io_type, dev_t dev, loff_t pos, size_t bytes,
+                              endpoint_t endpoint, void* buf)
 {
     MESSAGE driver_msg;
 
-    if (proc_nr == SELF) proc_nr = self_ep;
+    if (endpoint == SELF) endpoint = self_ep;
 
     driver_msg.type = io_type;
-    driver_msg.DEVICE = MINOR(dev);
-    driver_msg.POSITION = pos;
-    driver_msg.BUF = buf;
-    driver_msg.CNT = bytes;
-    driver_msg.PROC_NR = proc_nr;
+    driver_msg.u.m_bdev_blockdriver_msg.minor = MINOR(dev);
+    driver_msg.u.m_bdev_blockdriver_msg.pos = pos;
+    driver_msg.u.m_bdev_blockdriver_msg.count = bytes;
+    driver_msg.u.m_bdev_blockdriver_msg.buf = buf;
+    driver_msg.u.m_bdev_blockdriver_msg.endpoint = endpoint;
 
     bdev_sendrec(dev, &driver_msg);
 
-    return driver_msg.RETVAL;
+    return driver_msg.u.m_blockdriver_bdev_reply.status;
+}
+
+ssize_t bdev_read(dev_t dev, loff_t pos, void* buf, size_t count,
+                  endpoint_t endpoint)
+{
+    return bdev_readwrite(BDEV_READ, dev, pos, count, endpoint, buf);
+}
+
+ssize_t bdev_write(dev_t dev, loff_t pos, void* buf, size_t count,
+                   endpoint_t endpoint)
+{
+    return bdev_readwrite(BDEV_WRITE, dev, pos, count, endpoint, buf);
 }

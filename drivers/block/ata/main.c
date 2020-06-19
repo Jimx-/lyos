@@ -44,9 +44,9 @@ PRIVATE int init_hd();
 static struct part_info* hd_part(dev_t device);
 PRIVATE int hd_open(dev_t minor, int access);
 PRIVATE int hd_close(dev_t minor);
-PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
-                        char* buf, unsigned int count);
-PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
+PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
+                        endpoint_t endpoint, void* buf, size_t count);
+PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
 PRIVATE void hd_cmd_out(struct hd_cmd* cmd);
 PRIVATE void print_hdinfo(struct ata_info* hdi);
 PRIVATE int waitfor(int mask, int val, int timeout);
@@ -495,8 +495,8 @@ PRIVATE int setup_dma(int do_write, endpoint_t endpoint, void* buf,
  *
  * @param p Message ptr.
  *****************************************************************************/
-PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
-                        char* buf, unsigned int count)
+PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
+                        endpoint_t endpoint, void* buf, size_t count)
 {
     hd_prepare(minor);
 
@@ -513,7 +513,7 @@ PRIVATE ssize_t hd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
 dma_failed_retry:
     if (do_dma) {
         stop_dma(current_drive);
-        if (!setup_dma(do_write, endpoint, (void*)buf, count)) {
+        if (!setup_dma(do_write, endpoint, buf, count)) {
             do_dma = 0;
         }
     }
@@ -547,8 +547,8 @@ dma_failed_retry:
         }
     }
 
-    int bytes_left = count;
-    int bytes_rdwt = 0;
+    size_t bytes_left = count;
+    size_t bytes_rdwt = 0;
 
     if (do_dma) {
         current_drive->dma_int = 0;
@@ -607,7 +607,7 @@ dma_failed_retry:
  *
  * @param p  Ptr to the MESSAGE.
  *****************************************************************************/
-PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
+PRIVATE int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
 {
     hd_prepare(minor);
 

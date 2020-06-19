@@ -33,8 +33,8 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-#include <libbdev/libbdev.h>
 #include <libdevman/libdevman.h>
+#include <libbdev/libbdev.h>
 
 //#define DEBUG
 #if defined(DEBUG)
@@ -56,19 +56,10 @@
  *****************************************************************************/
 PUBLIC int read_ext2_super_block(dev_t dev)
 {
-    MESSAGE driver_msg;
+    ssize_t retval;
 
-    driver_msg.type = BDEV_READ;
-    driver_msg.DEVICE = MINOR(dev);
-    // byte offset 1024
-    driver_msg.POSITION = 1024;
-    driver_msg.BUF = ext2fsbuf;
-    // size 1024 bytes
-    driver_msg.CNT = EXT2_SUPERBLOCK_SIZE;
-    driver_msg.PROC_NR = ext2_ep;
-    endpoint_t driver_ep = dm_get_bdev_driver(dev);
-    int retval;
-    if ((retval = send_recv(BOTH, driver_ep, &driver_msg)) != 0) return retval;
+    retval = bdev_read(dev, 1024, ext2fsbuf, EXT2_SUPERBLOCK_SIZE, SELF);
+    if (retval < 0) return -retval;
 
     ext2_superblock_t* pext2sb =
         (ext2_superblock_t*)malloc(sizeof(ext2_superblock_t));
@@ -143,20 +134,12 @@ PUBLIC int read_ext2_super_block(dev_t dev)
 
 PUBLIC int write_ext2_super_block(dev_t dev)
 {
+    ssize_t retval;
     ext2_superblock_t* psb = get_ext2_super_block(dev);
     if (!psb) return EINVAL;
 
-    MESSAGE driver_msg;
-    driver_msg.type = BDEV_WRITE;
-    driver_msg.DEVICE = MINOR(dev);
-    // byte offset 1024
-    driver_msg.POSITION = 1024;
-    driver_msg.BUF = psb;
-    // size 1024 bytes
-    driver_msg.CNT = EXT2_SUPERBLOCK_SIZE;
-    driver_msg.PROC_NR = ext2_ep;
-    endpoint_t driver_ep = dm_get_bdev_driver(dev);
-    send_recv(BOTH, driver_ep, &driver_msg);
+    retval = bdev_write(dev, 1024, psb, EXT2_SUPERBLOCK_SIZE, SELF);
+    if (retval < 0) return -retval;
 
     return 0;
 }

@@ -31,43 +31,54 @@
 
 PRIVATE int do_open(struct blockdriver* bd, MESSAGE* msg)
 {
-    return bd->bdr_open(msg->DEVICE, 0);
+    return bd->bdr_open(msg->u.m_bdev_blockdriver_msg.minor, 0);
 }
 
 PRIVATE int do_close(struct blockdriver* bd, MESSAGE* msg)
 {
-    return bd->bdr_close(msg->DEVICE);
+    return bd->bdr_close(msg->u.m_bdev_blockdriver_msg.minor);
 }
 
-PRIVATE int do_rdwt(struct blockdriver* bd, MESSAGE* msg)
+PRIVATE ssize_t do_rdwt(struct blockdriver* bd, MESSAGE* msg)
 {
-    int do_write = 0;
-    if (msg->type == BDEV_WRITE) do_write = 1;
-    int minor = msg->DEVICE;
-    u64 pos = msg->POSITION;
-    endpoint_t ep = msg->PROC_NR;
-    char* buf = msg->BUF;
-    unsigned int count = msg->CNT;
+    int do_write = (msg->type == BDEV_WRITE) ? 1 : 0;
+    int minor = msg->u.m_bdev_blockdriver_msg.minor;
+    loff_t pos = msg->u.m_bdev_blockdriver_msg.pos;
+    endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
+    char* buf = msg->u.m_bdev_blockdriver_msg.buf;
+    size_t count = msg->u.m_bdev_blockdriver_msg.count;
 
     return bd->bdr_readwrite(minor, do_write, pos, ep, buf, count);
 }
 
 PRIVATE int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
 {
-    int minor = msg->DEVICE;
-    int request = msg->REQUEST;
-    endpoint_t ep = msg->PROC_NR;
-    char* buf = msg->BUF;
+    int minor = msg->u.m_bdev_blockdriver_msg.minor;
+    int request = msg->u.m_bdev_blockdriver_msg.request;
+    endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
+    char* buf = msg->u.m_bdev_blockdriver_msg.buf;
 
     return bd->bdr_ioctl(minor, request, ep, buf);
 }
 
+static void blockdriver_reply(MESSAGE* msg, ssize_t reply)
+{
+    MESSAGE reply_msg;
+
+    memset(&reply_msg, 0, sizeof(reply_msg));
+    reply_msg.type = BDEV_REPLY;
+    reply_msg.u.m_blockdriver_bdev_reply.status = reply;
+
+    send_recv(SEND, msg->source, &reply_msg);
+}
+
 PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
 {
+    ssize_t retval;
     int src = msg->source;
 
     if (msg->type == NOTIFY_MSG) {
-        switch (msg->source) {
+        switch (src) {
         case INTERRUPT:
             if (bd->bdr_intr) bd->bdr_intr(msg->INTERRUPTS);
             break;
@@ -80,28 +91,28 @@ PUBLIC void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
 
     switch (msg->type) {
     case BDEV_OPEN:
-        msg->RETVAL = do_open(bd, msg);
+        retval = do_open(bd, msg);
         break;
 
     case BDEV_CLOSE:
-        msg->RETVAL = do_close(bd, msg);
+        retval = do_close(bd, msg);
         break;
 
     case BDEV_READ:
     case BDEV_WRITE:
-        msg->RETVAL = do_rdwt(bd, msg);
+        retval = do_rdwt(bd, msg);
         break;
 
     case BDEV_IOCTL:
-        msg->RETVAL = do_ioctl(bd, msg);
+        retval = do_ioctl(bd, msg);
         break;
 
     default:
-        msg->RETVAL = ENOSYS;
+        retval = ENOSYS;
         break;
     }
 
-    send_recv(SEND, src, msg);
+    blockdriver_reply(msg, retval);
 }
 
 PUBLIC void blockdriver_task(struct blockdriver* bd)

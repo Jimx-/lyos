@@ -54,9 +54,8 @@ struct virtio_feature features[] = {{"barrier", VIRTIO_BLK_F_BARRIER, 0, 0},
                                     {"topology", VIRTIO_BLK_F_TOPOLOGY, 0, 0},
                                     {"idbytes", VIRTIO_BLK_ID_BYTES, 0, 0}};
 
-static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, u64 pos,
-                               endpoint_t endpoint, char* buf,
-                               unsigned int count);
+static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
+                               endpoint_t endpoint, void* buf, size_t count);
 static struct part_info* virtio_blk_part(dev_t device);
 static int virtio_blk_status2error(u8 status);
 static void interrupt_wait();
@@ -76,9 +75,8 @@ static struct part_info* virtio_blk_part(dev_t device)
     return part;
 }
 
-static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, u64 pos,
-                               endpoint_t endpoint, char* buf,
-                               unsigned int count)
+static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
+                               endpoint_t endpoint, void* buf, size_t count)
 {
     struct part_info* part;
     u64 part_end, sector;
@@ -270,8 +268,6 @@ static int virtio_blk_config(void)
         printl("  Block size: %d\n", blk_config.blk_size);
     }
 }
-
-static char vbbuf[512];
 
 static int virtio_blk_probe(int instance)
 {

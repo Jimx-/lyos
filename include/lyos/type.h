@@ -70,6 +70,8 @@ typedef unsigned long priv_map_t;
 
 typedef u32 bitchunk_t;
 
+typedef u64 loff_t;
+
 typedef void (*int_handler)();
 typedef void (*task_f)();
 

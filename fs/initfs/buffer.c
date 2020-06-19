@@ -29,8 +29,9 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
-#include "lyos/bdev.h"
 #include "global.h"
+
+#include <libbdev/libbdev.h>
 
 /**
  * <Ring 1> Read/Write init device
@@ -38,5 +39,9 @@
 PUBLIC void initfs_rw_dev(int rw_flag, int dev, int position, int length,
                           void* buf)
 {
-    bdev_readwrite(rw_flag, dev, position, length, TASK_INITFS, buf);
+    if (rw_flag == READ) {
+        bdev_read(dev, position, buf, length, TASK_INITFS);
+    } else {
+        bdev_write(dev, position, buf, length, TASK_INITFS);
+    }
 }

@@ -251,7 +251,7 @@ PUBLIC int ext2_search_dir(ext2_inode_t* dir_pin,
 
     if (new_slots == 1) {
         dir_pin->i_size += (off_t)(pde->d_rec_len);
-        if (extended) ext2_rw_inode(dir_pin, BDEV_WRITE);
+        if (extended) ext2_rw_inode(dir_pin, WRITE);
     }
     return 0;
 }

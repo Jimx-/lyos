@@ -33,7 +33,8 @@
 #include "ext2_fs.h"
 #include "global.h"
 #include "buffer.h"
-#include "lyos/bdev.h"
+
+#include <libbdev/libbdev.h>
 
 //#define EXT2_BUFFER_DEBUG
 
@@ -120,8 +121,7 @@ PUBLIC ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
         pb = (ext2_buffer_t*)(ext2_buffer_freelist
                                   .next); /* pick the first one */
         if (pb->b_dirt)
-            ext2_rw_buffer(BDEV_WRITE,
-                           pb); /* write back to disk to make it clear */
+            ext2_rw_buffer(WRITE, pb); /* write back to disk to make it clear */
         if (pb->b_size != block_size) { /* realloc */
             free(pb->b_data);
             pb->b_size = block_size;
@@ -137,7 +137,7 @@ PUBLIC ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
 
     pb->b_flags = 0;
 
-    ext2_rw_buffer(BDEV_READ, pb);
+    ext2_rw_buffer(READ, pb);
     list_add(&(pb->hash), &ext2_buffer_cache[hash]);
     return pb;
 }
@@ -160,7 +160,7 @@ PUBLIC void ext2_put_buffer(ext2_buffer_t* pb)
         // ext2_buffer_freelist_tail = &(pb->list);
     }
     if (pb->b_flags & EXT2_BUFFER_WRITE_IMME && pb->b_dirt && pb->b_dev != 0) {
-        ext2_rw_buffer(BDEV_WRITE, pb);
+        ext2_rw_buffer(WRITE, pb);
     }
 }
 
@@ -172,9 +172,15 @@ PRIVATE void rw_ext2_blocks(int rw_flag, int dev, int block_nr, int block_count,
     ext2_superblock_t* psb = get_ext2_super_block(dev);
     unsigned long block_size = psb->sb_block_size;
 
-    if (bdev_readwrite(rw_flag, dev, block_size * block_nr,
-                       block_size * block_count, ext2_ep, buf) < 0)
-        printl("ext2: warning: bdev_readwrite failed!\n");
+    if (rw_flag == READ) {
+        if (bdev_read(dev, block_size * block_nr, buf, block_size * block_count,
+                      SELF) < 0)
+            printl("ext2: warning: bdev_read failed!\n");
+    } else {
+        if (bdev_write(dev, block_size * block_nr, buf,
+                       block_size * block_count, SELF) < 0)
+            printl("ext2: warning: bdev_read failed!\n");
+    }
 }
 
 PRIVATE void ext2_rw_buffer(int rw_flag, ext2_buffer_t* pb)
@@ -216,7 +222,7 @@ PUBLIC void ext2_sync_buffers()
 #ifdef EXT2_BUFFER_DEBUG
             printl("Writing block #%d at dev 0x%x\n", pb->b_block, pb->b_dev);
 #endif
-            ext2_rw_buffer(BDEV_WRITE, pb);
+            ext2_rw_buffer(WRITE, pb);
         }
     }
 }

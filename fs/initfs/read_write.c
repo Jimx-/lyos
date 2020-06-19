@@ -32,7 +32,8 @@
 #include "proto.h"
 #include "global.h"
 #include "tar.h"
-#include "lyos/bdev.h"
+
+#include <libbdev/libbdev.h>
 
 PUBLIC int initfs_rdwt(MESSAGE* p)
 {
@@ -45,7 +46,7 @@ PUBLIC int initfs_rdwt(MESSAGE* p)
     int nbytes = p->RWCNT;
 
     char header[512];
-    initfs_rw_dev(BDEV_READ, dev, initfs_headers[num], 512, header);
+    initfs_rw_dev(READ, dev, initfs_headers[num], 512, header);
     struct posix_tar_header* phdr = (struct posix_tar_header*)header;
 
     off_t filesize = initfs_getsize(phdr->size);
@@ -53,8 +54,12 @@ PUBLIC int initfs_rdwt(MESSAGE* p)
     if (filesize < nbytes + position) {
         nbytes = filesize - position;
     }
-    bdev_readwrite((rw_flag == READ) ? BDEV_READ : BDEV_WRITE, dev,
-                   initfs_headers[num] + 512 + position, nbytes, src, buf);
+
+    if (rw_flag == READ) {
+        bdev_read(dev, initfs_headers[num] + 512 + position, buf, nbytes, src);
+    } else {
+        bdev_write(dev, initfs_headers[num] + 512 + position, buf, nbytes, src);
+    }
 
     p->RWPOS = position + nbytes;
     p->RWCNT = nbytes;

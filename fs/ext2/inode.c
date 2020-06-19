@@ -109,7 +109,7 @@ PUBLIC ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num)
     inode->i_dev = dev;
     inode->i_num = num;
     inode->i_count = 1;
-    rw_inode(inode, BDEV_READ); /* get it from the disk */
+    rw_inode(inode, READ); /* get it from the disk */
 
     /* add it to hash table */
     ext2_addhash_inode(inode);
@@ -137,7 +137,7 @@ PUBLIC void put_ext2_inode(ext2_inode_t* pin)
     if (pin->i_count < 1) panic("ext2fs: put_inode: pin->i_count already < 1");
     /* no one is using it */
     if ((--pin->i_count) == 0) {
-        if (pin->i_dirt == INO_DIRTY) rw_inode(pin, BDEV_WRITE);
+        if (pin->i_dirt == INO_DIRTY) rw_inode(pin, WRITE);
         ext2_unhash_inode(pin);
         ext2_release_inode(pin);
     }
@@ -189,9 +189,9 @@ PRIVATE int rw_inode(ext2_inode_t* inode, int rw_flag)
     ext2_buffer_t* pb = ext2_get_buffer(dev, block_nr);
     if (!pb) return err_code;
 
-    if (rw_flag == BDEV_READ) {
+    if (rw_flag == READ) {
         memcpy(inode, (void*)(pb->b_data + offset), EXT2_GOOD_OLD_INODE_SIZE);
-    } else if (rw_flag == BDEV_WRITE) {
+    } else if (rw_flag == WRITE) {
         if (inode->i_update) update_times(inode);
         memcpy((void*)(pb->b_data + offset), inode, EXT2_GOOD_OLD_INODE_SIZE);
         pb->b_dirt = 1;
@@ -233,7 +233,7 @@ PUBLIC void ext2_sync_inodes()
             if (pin->i_dirt) {
                 DEB(printl("Writing inode #%d at dev 0x%x\n", pin->i_num,
                            pin->i_dev));
-                ext2_rw_inode(pin, BDEV_WRITE);
+                ext2_rw_inode(pin, WRITE);
             }
         }
     }

@@ -78,9 +78,9 @@ PRIVATE bus_type_id_t mem_subsys_id;
 PRIVATE void init_rd(int argc, char* argv[]);
 PRIVATE int rd_open(dev_t minor, int access);
 PRIVATE int rd_close(dev_t minor);
-PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
-                        char* buf, unsigned int count);
-PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf);
+PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
+                        endpoint_t endpoint, void* buf, size_t count);
+PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
 
 PRIVATE int char_open(dev_t minor, int access);
 PRIVATE int char_close(dev_t minor);
@@ -130,8 +130,8 @@ PRIVATE int rd_open(dev_t minor, int access) { return 0; }
 
 PRIVATE int rd_close(dev_t minor) { return 0; }
 
-PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
-                        char* buf, unsigned int count)
+PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
+                        endpoint_t endpoint, void* buf, size_t count)
 {
     struct ramdisk_dev* ramdisk;
     if (minor == MINOR_INITRD)
@@ -139,7 +139,7 @@ PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
     else
         ramdisk = ramdisks + minor;
 
-    char* addr = ramdisk->start + (int)pos;
+    char* addr = ramdisk->start + pos;
 
     if (pos > ramdisk->length) {
         return 0;
@@ -155,7 +155,7 @@ PRIVATE ssize_t rd_rdwt(dev_t minor, int do_write, u64 pos, endpoint_t endpoint,
     return count;
 }
 
-PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf)
+PRIVATE int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
 {
     return 0;
 }

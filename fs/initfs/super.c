@@ -29,10 +29,11 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
-#include <lyos/bdev.h>
 #include "proto.h"
 #include "global.h"
 #include "tar.h"
+
+#include <libbdev/libbdev.h>
 
 PUBLIC int initfs_readsuper(MESSAGE* p)
 {
@@ -45,7 +46,7 @@ PUBLIC int initfs_readsuper(MESSAGE* p)
     bdev_init();
 
     for (i = 0;; i++) {
-        initfs_rw_dev(BDEV_READ, dev, position, 512, buf);
+        initfs_rw_dev(READ, dev, position, 512, buf);
 
         struct posix_tar_header* header = (struct posix_tar_header*)buf;
         if (header->name[0] == '\0') break;
