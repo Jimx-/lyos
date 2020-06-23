@@ -27,7 +27,7 @@
 #include <lyos/proto.h>
 #include <lyos/driver.h>
 
-#include "libblockdriver/libblockdriver.h"
+#include <libblockdriver/libblockdriver.h>
 
 static int do_open(struct blockdriver* bd, MESSAGE* msg)
 {
@@ -118,6 +118,7 @@ void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
 void blockdriver_task(struct blockdriver* bd)
 {
     MESSAGE msg;
+
     while (TRUE) {
         send_recv(RECEIVE, ANY, &msg);
 

@@ -231,6 +231,7 @@ struct virtio_device* virtio_pci_legacy_setup(u16 subdid, const char* name,
     vpdev->vdev.features = features;
     vpdev->vdev.num_features = num_features;
     vpdev->vdev.config = &virtio_pci_config_ops;
+    vpdev->vdev.dev_id = dev_id;
 
     retval = pci_get_bar(devind, PCI_BAR, &base, &size, &ioflag);
     if (retval) goto err;

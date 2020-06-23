@@ -36,7 +36,7 @@
 #include <libdevman/libdevman.h>
 #include <libbdev/libbdev.h>
 
-//#define DEBUG
+/* #define DEBUG */
 #if defined(DEBUG)
 #define DEB(x)          \
     printl("ext2fs: "); \

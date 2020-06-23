@@ -23,3 +23,5 @@ int coro_attr_setstacksize(coro_attr_t* attr, size_t stacksize)
 
     return 0;
 }
+
+int coro_attr_destroy(coro_attr_t* attr) { return 0; }

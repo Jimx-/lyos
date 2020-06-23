@@ -13,6 +13,8 @@
 
 #define CD_SECTOR_SIZE 2048
 
+typedef unsigned int blockdriver_worker_id_t;
+
 struct blockdriver {
     int (*bdr_open)(dev_t minor, int access);
     int (*bdr_close)(dev_t minor);
@@ -26,6 +28,12 @@ struct blockdriver {
 
 void blockdriver_process(struct blockdriver* bd, MESSAGE* msg);
 void blockdriver_task(struct blockdriver* bd);
+
+void blockdriver_async_task(struct blockdriver* bd);
+blockdriver_worker_id_t blockdriver_async_worker_id(void);
+void blockdriver_async_sleep(void);
+void blockdriver_async_wakeup(blockdriver_worker_id_t tid);
+void blockdriver_async_set_workers(size_t num_workers);
 
 void partition(struct blockdriver* bd, int device, int style);
 

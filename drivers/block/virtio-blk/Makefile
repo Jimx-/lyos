@@ -1,6 +1,6 @@
 PROG	= virtio-blk
 
 SRCS	= main.c
-LIBS	= virtio blockdriver devman lyos sysfs
+LIBS	= virtio blockdriver coro devman lyos sysfs
 
 include lyos.service.mk

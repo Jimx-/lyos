@@ -25,7 +25,11 @@
 
 #include "virtio_blk.h"
 
+#define MAX_THREADS 4
+
 static const char* name = "virtio-blk";
+static int instance;
+static int open_count = 0;
 
 static struct part_info primary[NR_PRIM_PER_DRIVE];
 static struct part_info logical[NR_SUB_PER_DRIVE];
@@ -39,7 +43,7 @@ struct virtio_blk_config blk_config;
 static struct virtio_blk_outhdr* hdrs_vir;
 static phys_bytes hdrs_phys;
 
-#define status() ((*status_vir) & 0xff)
+#define mystatus(tid) (status_vir[(tid)] & 0xff)
 static u16* status_vir;
 static phys_bytes status_phys;
 
@@ -54,15 +58,29 @@ struct virtio_feature features[] = {{"barrier", VIRTIO_BLK_F_BARRIER, 0, 0},
                                     {"topology", VIRTIO_BLK_F_TOPOLOGY, 0, 0},
                                     {"idbytes", VIRTIO_BLK_ID_BYTES, 0, 0}};
 
+static int virtio_blk_open(dev_t minor, int access);
+static int virtio_blk_close(dev_t minor);
 static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
-                               endpoint_t endpoint, void* buf, size_t count);
+                               endpoint_t endpoint, void* buf, size_t count,
+                               int async);
+static ssize_t virtio_blk_rdwt_sync(dev_t minor, int do_write, loff_t pos,
+                                    endpoint_t endpoint, void* buf,
+                                    size_t count);
+static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
+                                     endpoint_t endpoint, void* buf,
+                                     size_t count);
 static struct part_info* virtio_blk_part(dev_t device);
+static void virtio_blk_intr(unsigned mask);
 static int virtio_blk_status2error(u8 status);
-static void interrupt_wait();
+
+static void virtio_blk_interrupt_wait();
 
 static struct blockdriver virtio_blk_driver = {
-    .bdr_readwrite = virtio_blk_rdwt,
+    .bdr_open = virtio_blk_open,
+    .bdr_close = virtio_blk_close,
+    .bdr_readwrite = virtio_blk_rdwt_sync,
     .bdr_part = virtio_blk_part,
+    .bdr_intr = virtio_blk_intr,
 };
 
 static struct part_info* virtio_blk_part(dev_t device)
@@ -75,13 +93,32 @@ static struct part_info* virtio_blk_part(dev_t device)
     return part;
 }
 
+static int virtio_blk_open(dev_t minor, int access)
+{
+    open_count++;
+    return 0;
+}
+
+static int virtio_blk_close(dev_t minor)
+{
+    open_count--;
+    return 0;
+}
+
 static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
-                               endpoint_t endpoint, void* buf, size_t count)
+                               endpoint_t endpoint, void* buf, size_t count,
+                               int async)
 {
     struct part_info* part;
     u64 part_end, sector;
     struct umap_phys phys[3];
+    blockdriver_worker_id_t tid;
     int retval;
+
+    tid = 0;
+    if (async) {
+        tid = blockdriver_async_worker_id();
+    }
 
     part = virtio_blk_part(minor);
 
@@ -115,19 +152,19 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
         return -retval;
     }
 
-    memset(hdrs_vir, 0, sizeof(*hdrs_vir));
+    memset(&hdrs_vir[tid], 0, sizeof(*hdrs_vir));
 
     if (do_write) {
-        hdrs_vir->type = VIRTIO_BLK_T_OUT;
+        hdrs_vir[tid].type = VIRTIO_BLK_T_OUT;
     } else {
-        hdrs_vir->type = VIRTIO_BLK_T_IN;
+        hdrs_vir[tid].type = VIRTIO_BLK_T_IN;
     }
 
-    hdrs_vir->ioprio = 0;
-    hdrs_vir->sector = sector;
+    hdrs_vir[tid].ioprio = 0;
+    hdrs_vir[tid].sector = sector;
 
     /* setup header */
-    phys[0].phys_addr = hdrs_phys;
+    phys[0].phys_addr = hdrs_phys + tid * sizeof(*hdrs_vir);
     phys[0].size = sizeof(struct virtio_blk_outhdr);
 
     /* physical buffer */
@@ -135,21 +172,39 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
     phys[1].size = count;
 
     /* status */
-    phys[2].phys_addr = status_phys;
+    phys[2].phys_addr = status_phys + tid * sizeof(*status_vir);
     phys[2].phys_addr |= 1;
     phys[2].size = sizeof(u8);
 
-    virtqueue_add_buffers(vqs[0], phys, 3, NULL);
+    virtqueue_add_buffers(vqs[0], phys, 3, (void*)tid);
 
     virtqueue_kick(vqs[0]);
 
-    interrupt_wait();
+    if (async) {
+        blockdriver_async_sleep();
+    } else {
+        virtio_blk_interrupt_wait();
+    }
 
-    if (status() == VIRTIO_BLK_S_OK) {
+    if (mystatus(tid) == VIRTIO_BLK_S_OK) {
         return count;
     }
 
-    return -virtio_blk_status2error(status());
+    return -virtio_blk_status2error(mystatus(tid));
+}
+
+static ssize_t virtio_blk_rdwt_sync(dev_t minor, int do_write, loff_t pos,
+                                    endpoint_t endpoint, void* buf,
+                                    size_t count)
+{
+    return virtio_blk_rdwt(minor, do_write, pos, endpoint, buf, count, FALSE);
+}
+
+static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
+                                     endpoint_t endpoint, void* buf,
+                                     size_t count)
+{
+    return virtio_blk_rdwt(minor, do_write, pos, endpoint, buf, count, TRUE);
 }
 
 static int virtio_blk_status2error(u8 status)
@@ -166,7 +221,24 @@ static int virtio_blk_status2error(u8 status)
     return 0;
 }
 
-static void interrupt_wait()
+static void virtio_blk_intr(unsigned mask)
+{
+    void* data;
+    blockdriver_worker_id_t tid;
+
+    if (!virtio_had_irq(vdev)) {
+        /* spurious interrupt */
+        return;
+    }
+
+    while (!virtqueue_get_buffer(vqs[0], NULL, &data)) {
+        tid = (blockdriver_worker_id_t)data;
+
+        blockdriver_async_wakeup(tid);
+    }
+}
+
+static void virtio_blk_interrupt_wait()
 {
     MESSAGE msg;
     void* data;
@@ -203,7 +275,7 @@ static int virtio_blk_init_vqs(void)
 static int virtio_blk_alloc_requests(void)
 {
     hdrs_vir =
-        mmap(NULL, sizeof(*hdrs_vir), PROT_READ | PROT_WRITE,
+        mmap(NULL, sizeof(*hdrs_vir) * MAX_THREADS, PROT_READ | PROT_WRITE,
              MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE, -1, 0);
 
     if (hdrs_vir == MAP_FAILED) {
@@ -215,7 +287,7 @@ static int virtio_blk_alloc_requests(void)
     }
 
     status_vir =
-        mmap(NULL, sizeof(*status_vir), PROT_READ | PROT_WRITE,
+        mmap(NULL, sizeof(*status_vir) * MAX_THREADS, PROT_READ | PROT_WRITE,
              MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE, -1, 0);
 
     if (status_vir == MAP_FAILED) {
@@ -293,9 +365,6 @@ static int virtio_blk_probe(int instance)
 
     virtio_device_ready(vdev);
 
-    primary[0].base = 0;
-    primary[0].size = blk_config.capacity * blk_config.blk_size;
-
     return 0;
 
 out_free_vqs:
@@ -307,13 +376,92 @@ out_free_dev:
     return retval;
 }
 
+static void print_disk_info(void)
+{
+    int i;
+    printl("Hard disk information:\n");
+    for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) {
+        if (primary[i].size == 0) continue;
+
+        u32 base_sect = primary[i].base >> SECTOR_SIZE_SHIFT;
+        u32 nr_sects = primary[i].size >> SECTOR_SIZE_SHIFT;
+
+        printl("%spartition %d: base %u(0x%x), size %u(0x%x) (in sectors)\n",
+               i == 0 ? "  " : "     ", i, base_sect, base_sect, nr_sects,
+               nr_sects);
+    }
+    for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
+        if (logical[i].size == 0) continue;
+
+        u32 base_sect = logical[i].base >> SECTOR_SIZE_SHIFT;
+        u32 nr_sects = logical[i].size >> SECTOR_SIZE_SHIFT;
+
+        printl("              "
+               "%d: base %d(0x%x), size %d(0x%x) (in sectors)\n",
+               i, base_sect, base_sect, nr_sects, nr_sects);
+    }
+}
+
+static void virtio_blk_register(void)
+{
+    int i;
+    struct device_info devinf;
+    dev_t devt;
+
+    /* register the device */
+    memset(&devinf, 0, sizeof(devinf));
+    devinf.bus = BUS_TYPE_ERROR;
+    devinf.parent = vdev->dev_id;
+    devinf.type = DT_BLOCKDEV;
+
+    for (i = 0; i < NR_PART_PER_DRIVE + 1; i++) {
+        if (primary[i].size == 0) continue;
+
+        devt = MAKE_DEV(DEV_VD, i);
+        dm_bdev_add(devt);
+
+        snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
+                 'a' + (char)i);
+        devinf.devt = devt;
+        dm_device_register(&devinf);
+    }
+
+    for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
+        if (logical[i].size == 0) continue;
+
+        devt = MAKE_DEV(DEV_VD, NR_PRIM_PER_DRIVE + i);
+        dm_bdev_add(devt);
+
+        snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
+                 'a' + (char)(NR_PRIM_PER_DRIVE + i));
+        devinf.devt = devt;
+        dm_device_register(&devinf);
+    }
+}
+
 static int virtio_blk_init(void)
 {
     int retval;
 
+    instance = 0;
+
     printl("%s: Virtio block driver is running\n", name);
 
-    retval = virtio_blk_probe(0);
+    retval = virtio_blk_probe(instance);
+
+    if (retval == ENXIO) {
+        panic("%s: no virtio-blk device found", name);
+    }
+
+    if (retval == 0) {
+        memset(primary, 0, sizeof(primary));
+        memset(logical, 0, sizeof(logical));
+        primary[0].size = blk_config.capacity * blk_config.blk_size;
+
+        partition(&virtio_blk_driver, 0, P_PRIMARY);
+        print_disk_info();
+        virtio_blk_register();
+    }
 
     return 0;
 }
@@ -323,7 +471,9 @@ int main()
     serv_register_init_fresh_callback(virtio_blk_init);
     serv_init();
 
-    blockdriver_task(&virtio_blk_driver);
+    virtio_blk_driver.bdr_readwrite = virtio_blk_rdwt_async;
+    blockdriver_async_set_workers(MAX_THREADS);
+    blockdriver_async_task(&virtio_blk_driver);
 
     return 0;
 }

@@ -74,9 +74,17 @@ struct virtqueue* vring_create_virtqueue(struct virtio_device* vdev,
     vq->vdev = vdev;
     vq->notify = notify;
 
+    vq->vring.used->flags = 0;
+    vq->vring.avail->flags = 0;
+    vq->vring.used->idx = 0;
+    vq->vring.avail->idx = 0;
+
     for (i = 0; i < vq->num; i++) {
         vq->vring.desc[i].flags = VRING_DESC_F_NEXT;
         vq->vring.desc[i].next = (i + 1) & (vq->num - 1);
+
+        vq->vring.avail->ring[i] = 0xffff;
+        vq->vring.used->ring[i].id = 0xffff;
     }
 
     vq->free_num = vq->num;
@@ -163,13 +171,12 @@ int virtqueue_get_buffer(struct virtqueue* vq, size_t* len, void** data)
     cmb();
 
     used_idx = vring->used->idx;
-
     if (vq->last_used == used_idx) {
         return -1;
     }
 
-    used_elem = &vring->used->ring[vq->last_used];
-    vq->last_used = (vq->last_used + 1) % vq->num;
+    used_elem = &vring->used->ring[vq->last_used % vq->num];
+    vq->last_used = vq->last_used + 1;
 
     vd_idx = used_elem->id % vq->num;
     vd = &vring->desc[vd_idx];
@@ -202,4 +209,12 @@ int virtqueue_get_buffer(struct virtqueue* vq, size_t* len, void** data)
 
 int virtqueue_notify(struct virtqueue* vq) { return vq->notify(vq); }
 
-int virtqueue_kick(struct virtqueue* vq) { return virtqueue_notify(vq); }
+int virtqueue_kick(struct virtqueue* vq)
+{
+    cmb();
+
+    if (!(vq->vring.used->flags & VRING_USED_F_NO_NOTIFY))
+        return virtqueue_notify(vq);
+    else
+        return FALSE;
+}

@@ -46,6 +46,7 @@ int coro_join(coro_thread_t thread, void** value);
 /* attr.c */
 int coro_attr_init(coro_attr_t* attr);
 int coro_attr_setstacksize(coro_attr_t* attr, size_t stacksize);
+int coro_attr_destroy(coro_attr_t* attr);
 
 /* scheduler.c */
 int coro_yield(void);

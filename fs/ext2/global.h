@@ -43,7 +43,7 @@ EXTERN ext2_inode_t ext2_inode_buffer[EXT2_NR_INODES];
 EXTERN struct list_head ext2_unused_inode_list;
 
 /* buffer cache */
-#define MAX_BUFFERS 100
+#define MAX_BUFFERS 8192
 #define EXT2_BUFFER_HASH_SIZE 17
 EXTERN struct list_head ext2_buffer_cache[EXT2_BUFFER_HASH_SIZE];
 extern struct list_head ext2_buffer_freelist, *ext2_buffer_freelist_tail;

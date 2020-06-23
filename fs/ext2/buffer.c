@@ -30,6 +30,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/mman.h>
 #include "ext2_fs.h"
 #include "global.h"
 #include "buffer.h"
@@ -114,8 +115,12 @@ ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
         pb->b_size = block_size;
 
         /* allocate data area */
-        pb->b_data = (char*)malloc(block_size);
-        if (!pb->b_data) REPORT_ERROR_AND_RETURN(ENOMEM);
+        pb->b_data = mmap(0, block_size, PROT_READ | PROT_WRITE,
+                          MAP_POPULATE | MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        if (pb->b_data == MAP_FAILED) {
+            pb->b_data = NULL;
+            REPORT_ERROR_AND_RETURN(ENOMEM);
+        }
         nr_buffers++;
     } else { /* find a buffer in the freelist */
         pb = (ext2_buffer_t*)(ext2_buffer_freelist
@@ -123,10 +128,15 @@ ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block)
         if (pb->b_dirt)
             ext2_rw_buffer(WRITE, pb); /* write back to disk to make it clear */
         if (pb->b_size != block_size) { /* realloc */
-            free(pb->b_data);
+            munmap(pb->b_data, pb->b_size);
             pb->b_size = block_size;
-            pb->b_data = (char*)malloc(pb->b_size);
-            if (!pb->b_data) REPORT_ERROR_AND_RETURN(ENOMEM);
+            pb->b_data =
+                mmap(0, block_size, PROT_READ | PROT_WRITE,
+                     MAP_POPULATE | MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+            if (pb->b_data == MAP_FAILED) {
+                pb->b_data = NULL;
+                REPORT_ERROR_AND_RETURN(ENOMEM);
+            }
         }
         ext2_zero_buffer(pb);
         pb->b_dev = dev;

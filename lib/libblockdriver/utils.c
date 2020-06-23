@@ -12,6 +12,7 @@
 #include <lyos/global.h>
 #include <lyos/proto.h>
 #include <lyos/driver.h>
+#include <sys/mman.h>
 
 #include "libblockdriver/libblockdriver.h"
 
@@ -119,9 +120,14 @@ static void parse_part_table(struct blockdriver* bd, int device, int style,
  *****************************************************************************/
 void partition(struct blockdriver* bd, int device, int style)
 {
-    u8* tmp_buf = (u8*)malloc(CD_SECTOR_SIZE);
+    u8* tmp_buf =
+        mmap(NULL, CD_SECTOR_SIZE, PROT_READ | PROT_WRITE,
+             MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE, -1, 0);
+    if (tmp_buf == MAP_FAILED) {
+        panic("partition: unable to allocate temporary buffer");
+    }
 
     parse_part_table(bd, device, style, tmp_buf);
 
-    free(tmp_buf);
+    munmap(tmp_buf, CD_SECTOR_SIZE);
 }

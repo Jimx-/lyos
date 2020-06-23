@@ -541,13 +541,15 @@ enum msgtype {
 #define SECTOR_BITS (SECTOR_SIZE * 8)
 #define SECTOR_SIZE_SHIFT 9
 
-/* major device numbers (corresponding to kernel/global.c::dd_map[]) */
+/* TODO: device major dynamic allocation */
 #define NO_DEV 0
 #define DEV_RD 1
 #define DEV_FLOPPY 2
 #define DEV_HD 3
 #define DEV_CHAR_TTY 4
 #define DEV_CHAR_FB 29
+#define DEV_VD 112
+
 /* make device number from major and minor numbers */
 #define MAJOR_SHIFT 8
 #define MINOR_MASK ((1U << MAJOR_SHIFT) - 1)

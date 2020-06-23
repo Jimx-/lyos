@@ -1,4 +1,4 @@
-dev(3,1)		/		ext2	defaults	1	1
+dev(112,1)		/		ext2	defaults	1	1
 none            /dev    devfs   defaults    1   1
 none			/sys	sysfs	defaults	1	1
 none			/proc	proc	defaults	1	1

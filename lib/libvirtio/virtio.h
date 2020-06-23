@@ -2,8 +2,8 @@
 #define _VIRTIO_H_
 
 #include <lyos/list.h>
-
 #include <uapi/lyos/virtio_ring.h>
+#include <libdevman/libdevman.h>
 
 struct virtio_device;
 
@@ -34,6 +34,8 @@ struct virtio_device {
 
     struct virtio_feature* features;
     int num_features;
+
+    device_id_t dev_id;
 
     struct list_head vqs;
 
