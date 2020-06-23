@@ -34,6 +34,7 @@
 #include <lyos/vm.h>
 #include <asm/pci.h>
 #include <sys/mman.h>
+#include <asm/page.h>
 
 #include "libblockdriver/libblockdriver.h"
 #include <libdevman/libdevman.h>
@@ -45,7 +46,8 @@ static struct part_info* hd_part(dev_t device);
 static int hd_open(dev_t minor, int access);
 static int hd_close(dev_t minor);
 static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, void* buf, size_t count);
+                       endpoint_t endpoint, const struct iovec* iov,
+                       size_t count);
 static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
 static void hd_cmd_out(struct hd_cmd* cmd);
 static void print_hdinfo(struct ata_info* hdi);
@@ -58,8 +60,8 @@ static void print_identify_info(u16* hdinfo);
 static void hd_register(struct ata_info* hdi);
 static void start_dma(struct ata_info* drive, int do_write);
 static void stop_dma(struct ata_info* drive);
-static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
-                     unsigned int count);
+static int setup_dma(int do_write, endpoint_t endpoint, const struct iovec* iov,
+                     size_t* sizep, size_t addr_offset);
 
 static u8 hdbuf[CD_SECTOR_SIZE];
 static struct ata_info hd_info[MAX_DRIVES], *current_drive;
@@ -98,9 +100,6 @@ static phys_bytes prdt_phys;
 
 #define ERR_BAD_SECTOR 1
 #define ERR_OTHER 2
-
-int getpagesize();
-unsigned int _page_size;
 
 struct blockdriver hd_driver = {
     .bdr_open = hd_open,
@@ -206,8 +205,6 @@ static int init_hd()
             dma_disabled = 1;
         }
     }
-
-    _page_size = getpagesize();
 
     u8 nr_drives = 0;
 
@@ -408,20 +405,28 @@ static int error_dma(struct ata_info* drive)
     return 0;
 }
 
-static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
-                     unsigned int count)
+static int setup_dma(int do_write, endpoint_t endpoint, const struct iovec* iov,
+                     size_t* sizep, size_t addr_offset)
 {
-    size_t n;
+    size_t size, n;
     off_t offset;
+    int iov_idx = 0;
     int prdt_idx = 0;
     phys_bytes user_phys;
     int retval;
 
+    iov_idx = 0;
+    prdt_idx = 0;
+    size = *sizep;
     offset = 0;
-    while (count > 0) {
-        n = count;
 
-        retval = umap(endpoint, buf, &user_phys);
+    while (size > 0) {
+        n = iov[iov_idx].iov_len - offset;
+
+        if (n > size) n = size;
+
+        retval = umap(endpoint, iov[iov_idx].iov_base + offset + addr_offset,
+                      &user_phys);
         if (retval != 0) {
             panic("ata: setup_dma(): failed to map user buffer");
         }
@@ -431,14 +436,8 @@ static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
         }
 
         /* user buffer crosses pages or boundary of 64k */
-        if ((uintptr_t)buf / _page_size !=
-            ((uintptr_t)buf + n - 1) / _page_size) {
-            n = ((uintptr_t)buf / _page_size + 1) * _page_size - (uintptr_t)buf;
-        }
-
-        /* user buffer crosses boundary of 64k */
-        if (user_phys / 0x10000 != (user_phys + n - 1) / 0x10000) {
-            n = min(n, (user_phys / 0x10000 + 1) * 0x10000 - user_phys);
+        if (user_phys / ARCH_PG_SIZE != (user_phys + n - 1) / ARCH_PG_SIZE) {
+            n = (user_phys / ARCH_PG_SIZE + 1) * ARCH_PG_SIZE - user_phys;
         }
 
         if (prdt_idx >= NUM_PRDTES) {
@@ -453,8 +452,14 @@ static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
         prdt_idx++;
 
         offset += n;
-        buf += n;
-        count -= n;
+
+        if (offset >= iov[iov_idx].iov_len) {
+            iov_idx++;
+            offset = 0;
+            addr_offset = 0;
+        }
+
+        size -= n;
     }
 
     if (prdt_idx > NUM_PRDTES || prdt_idx <= 0) {
@@ -496,8 +501,13 @@ static int setup_dma(int do_write, endpoint_t endpoint, void* buf,
  * @param p Message ptr.
  *****************************************************************************/
 static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, void* buf, size_t count)
+                       endpoint_t endpoint, const struct iovec* iov,
+                       size_t count)
 {
+    size_t nbytes, addr_offset = 0;
+    ssize_t total = 0;
+    const struct iovec *iop, *iov_end = iov + count;
+
     hd_prepare(minor);
 
     assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
@@ -510,93 +520,136 @@ static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
     int do_dma = current_drive->dma;
     int errors = 0;
 
-dma_failed_retry:
-    if (do_dma) {
-        stop_dma(current_drive);
-        if (!setup_dma(do_write, endpoint, buf, count)) {
-            do_dma = 0;
+    while (count > 0) {
+        nbytes = 0;
+        for (iop = iov; iop < iov_end; iop++)
+            nbytes += iop->iov_len;
+
+        if (nbytes % SECTOR_SIZE) {
+            return -EINVAL;
         }
-    }
 
-    pos += current_part->base;
-    u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
-
-    struct hd_cmd cmd;
-    cmd.features = 0;
-    cmd.count = count >> SECTOR_SIZE_SHIFT;
-    cmd.lba_low = sect_nr & 0xFF;
-    cmd.lba_mid = (sect_nr >> 8) & 0xFF;
-    cmd.lba_high = (sect_nr >> 16) & 0xFF;
-    cmd.device = MAKE_DEVICE_REG(1, current_drive->ldh, (sect_nr >> 24) & 0xF);
-    if (do_dma) {
-        cmd.command = do_write ? ATA_WRITE_DMA : ATA_READ_DMA;
-    } else {
-        cmd.command = do_write ? ATA_WRITE : ATA_READ;
-    }
-    hd_cmd_out(&cmd);
-
-    if (do_dma) {
-        start_dma(current_drive, do_write);
-    }
-
-    if (do_write) {
-        u32 status;
-        if (portio_inb(current_drive->base_ctl + REG_ALT_STATUS, &status) !=
-            0) {
-            panic("ata: hd_rdwt(): portio_inb failed");
+        if (pos >= current_part->size) {
+            return total;
         }
-    }
 
-    size_t bytes_left = count;
-    size_t bytes_rdwt = 0;
+        if (pos + nbytes > current_part->size) {
+            nbytes = current_part->size - pos;
+        }
 
-    if (do_dma) {
-        current_drive->dma_int = 0;
-
-        int err = interrupt_wait_check();
-        if (err) {
-            errors++;
-            if (err == ERR_BAD_SECTOR || errors > 3) {
-                return -EIO;
+        if (do_dma) {
+            stop_dma(current_drive);
+            if (!setup_dma(do_write, endpoint, iov, &nbytes, addr_offset)) {
+                do_dma = 0;
             }
-            goto dma_failed_retry;
         }
 
-        if (!current_drive->dma_int) {
-            waitfor_dma(DMA_ST_INT, DMA_ST_INT, HD_TIMEOUT);
-            current_drive->dma_int = 1;
-        }
+        u32 sect_nr = (u32)((current_part->base + pos) >>
+                            SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
 
-        if (error_dma(current_drive)) {
-            do_dma = 0;
-            goto dma_failed_retry;
-        }
-
-        stop_dma(current_drive);
-
-        bytes_rdwt += bytes_left;
-        return bytes_rdwt;
-    }
-
-    while (bytes_left) {
-        int bytes = min(SECTOR_SIZE, bytes_left);
-        if (!do_write) {
-            interrupt_wait();
-            portio_sin(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
-            data_copy(endpoint, buf, SELF, hdbuf, bytes);
+        struct hd_cmd cmd;
+        cmd.features = 0;
+        cmd.count = nbytes >> SECTOR_SIZE_SHIFT;
+        cmd.lba_low = sect_nr & 0xFF;
+        cmd.lba_mid = (sect_nr >> 8) & 0xFF;
+        cmd.lba_high = (sect_nr >> 16) & 0xFF;
+        cmd.device =
+            MAKE_DEVICE_REG(1, current_drive->ldh, (sect_nr >> 24) & 0xF);
+        if (do_dma) {
+            cmd.command = do_write ? ATA_WRITE_DMA : ATA_READ_DMA;
         } else {
-            if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
-                panic("hd writing error.");
-
-            data_copy(SELF, hdbuf, endpoint, buf, bytes);
-            portio_sout(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
-            interrupt_wait();
+            cmd.command = do_write ? ATA_WRITE : ATA_READ;
         }
-        bytes_left -= bytes;
-        buf += bytes;
-        bytes_rdwt += bytes;
+        hd_cmd_out(&cmd);
+
+        if (do_dma) {
+            start_dma(current_drive, do_write);
+        }
+
+        if (do_write) {
+            u32 status;
+            if (portio_inb(current_drive->base_ctl + REG_ALT_STATUS, &status) !=
+                0) {
+                panic("ata: hd_rdwt(): portio_inb failed");
+            }
+        }
+
+        if (do_dma) {
+            current_drive->dma_int = 0;
+
+            int err = interrupt_wait_check();
+            if (err) {
+                errors++;
+                if (err == ERR_BAD_SECTOR || errors > 3) {
+                    return -EIO;
+                }
+                continue;
+            }
+
+            if (!current_drive->dma_int) {
+                waitfor_dma(DMA_ST_INT, DMA_ST_INT, HD_TIMEOUT);
+                current_drive->dma_int = 1;
+            }
+
+            if (error_dma(current_drive)) {
+                do_dma = 0;
+                continue;
+            }
+
+            stop_dma(current_drive);
+
+            while (nbytes > 0) {
+                size_t iov_size = iov->iov_len;
+                if (iov_size > nbytes) {
+                    iov_size = nbytes;
+                }
+
+                nbytes -= iov_size;
+                pos += iov_size;
+                total += iov_size;
+                addr_offset += iov_size;
+
+                if (iov_size == iov->iov_len) {
+                    iov++;
+                    count--;
+                    addr_offset = 0;
+                }
+            }
+        }
+
+        while (nbytes > 0) {
+            int bytes = min(SECTOR_SIZE, nbytes);
+
+            if (!do_write) {
+                interrupt_wait();
+                portio_sin(current_drive->base_cmd + REG_DATA, hdbuf,
+                           SECTOR_SIZE);
+                data_copy(endpoint, iov->iov_base + addr_offset, SELF, hdbuf,
+                          bytes);
+            } else {
+                if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
+                    panic("hd writing error.");
+
+                data_copy(SELF, hdbuf, endpoint, iov->iov_base + addr_offset,
+                          SECTOR_SIZE);
+                portio_sout(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
+                interrupt_wait();
+            }
+
+            nbytes -= bytes;
+            pos += bytes;
+            addr_offset += bytes;
+            total += bytes;
+
+            if (iov->iov_len == bytes) {
+                iov++;
+                count--;
+                addr_offset = 0;
+            }
+        }
     }
-    return bytes_rdwt;
+
+    return total;
 }
 
 /*****************************************************************************

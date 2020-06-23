@@ -79,7 +79,8 @@ static void init_rd(int argc, char* argv[]);
 static int rd_open(dev_t minor, int access);
 static int rd_close(dev_t minor);
 static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, void* buf, size_t count);
+                       endpoint_t endpoint, const struct iovec* iov,
+                       size_t count);
 static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
 
 static int char_open(dev_t minor, int access);
@@ -131,28 +132,42 @@ static int rd_open(dev_t minor, int access) { return 0; }
 static int rd_close(dev_t minor) { return 0; }
 
 static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, void* buf, size_t count)
+                       endpoint_t endpoint, const struct iovec* iov,
+                       size_t count)
 {
+    int i;
+    ssize_t total = 0;
+    size_t bytes;
+
     struct ramdisk_dev* ramdisk;
     if (minor == MINOR_INITRD)
         ramdisk = &initramdisk;
     else
         ramdisk = ramdisks + minor;
 
-    char* addr = ramdisk->start + pos;
+    for (i = 0; i < count; i++, iov++) {
+        if (pos > ramdisk->length) {
+            return total;
+        }
 
-    if (pos > ramdisk->length) {
-        return 0;
+        bytes = iov->iov_len;
+        if (pos + bytes > ramdisk->length) {
+            bytes = ramdisk->length - pos;
+        }
+
+        char* addr = ramdisk->start + pos;
+
+        if (do_write) {
+            if (ramdisk->rdonly) return -EROFS;
+            data_copy(SELF, addr, endpoint, iov->iov_base, bytes);
+        } else {
+            data_copy(endpoint, iov->iov_base, SELF, addr, bytes);
+        }
+
+        pos += bytes;
     }
 
-    if (do_write) {
-        if (ramdisk->rdonly) return -EROFS;
-        data_copy(SELF, addr, endpoint, buf, count);
-    } else {
-        data_copy(endpoint, buf, SELF, addr, count);
-    }
-
-    return count;
+    return total;
 }
 
 static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)

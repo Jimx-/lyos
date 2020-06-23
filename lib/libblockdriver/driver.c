@@ -47,8 +47,33 @@ static ssize_t do_rdwt(struct blockdriver* bd, MESSAGE* msg)
     endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
     char* buf = msg->u.m_bdev_blockdriver_msg.buf;
     size_t count = msg->u.m_bdev_blockdriver_msg.count;
+    struct iovec iov;
 
-    return bd->bdr_readwrite(minor, do_write, pos, ep, buf, count);
+    iov.iov_base = buf;
+    iov.iov_len = count;
+
+    return bd->bdr_readwrite(minor, do_write, pos, ep, &iov, 1);
+}
+
+static ssize_t do_vrdwt(struct blockdriver* bd, MESSAGE* msg)
+{
+    struct iovec iovec[NR_IOREQS];
+    int do_write = (msg->type == BDEV_WRITEV) ? 1 : 0;
+    int minor = msg->u.m_bdev_blockdriver_msg.minor;
+    loff_t pos = msg->u.m_bdev_blockdriver_msg.pos;
+    endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
+    size_t count = msg->u.m_bdev_blockdriver_msg.count;
+
+    if (count > NR_IOREQS) {
+        count = NR_IOREQS;
+    }
+
+    if (data_copy(SELF, iovec, msg->source, msg->u.m_bdev_blockdriver_msg.buf,
+                  count * sizeof(struct iovec)) != 0) {
+        return -EINVAL;
+    }
+
+    return bd->bdr_readwrite(minor, do_write, pos, ep, iovec, count);
 }
 
 static int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
@@ -102,6 +127,10 @@ void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
     case BDEV_WRITE:
         retval = do_rdwt(bd, msg);
         break;
+
+    case BDEV_READV:
+    case BDEV_WRITEV:
+        retval = do_vrdwt(bd, msg);
 
     case BDEV_IOCTL:
         retval = do_ioctl(bd, msg);

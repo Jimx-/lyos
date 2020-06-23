@@ -27,6 +27,7 @@
 #include <lyos/driver.h>
 #include <lyos/proto.h>
 
+#include <libbdev/libbdev.h>
 #include <libdevman/libdevman.h>
 
 static endpoint_t driver_table[NR_DEVICES];
@@ -172,4 +173,36 @@ ssize_t bdev_write(dev_t dev, loff_t pos, void* buf, size_t count,
                    endpoint_t endpoint)
 {
     return bdev_readwrite(BDEV_WRITE, dev, pos, count, endpoint, buf);
+}
+
+static ssize_t bdev_vreadwrite(int io_type, dev_t dev, loff_t pos,
+                               endpoint_t endpoint, const struct iovec* iov,
+                               size_t count)
+{
+    MESSAGE driver_msg;
+
+    if (endpoint == SELF) endpoint = self_ep;
+
+    driver_msg.type = io_type;
+    driver_msg.u.m_bdev_blockdriver_msg.minor = MINOR(dev);
+    driver_msg.u.m_bdev_blockdriver_msg.pos = pos;
+    driver_msg.u.m_bdev_blockdriver_msg.count = count;
+    driver_msg.u.m_bdev_blockdriver_msg.buf = (void*)iov;
+    driver_msg.u.m_bdev_blockdriver_msg.endpoint = endpoint;
+
+    bdev_sendrec(dev, &driver_msg);
+
+    return driver_msg.u.m_blockdriver_bdev_reply.status;
+}
+
+ssize_t bdev_readv(dev_t dev, loff_t pos, endpoint_t endpoint,
+                   const struct iovec* iov, size_t count)
+{
+    return bdev_vreadwrite(BDEV_READV, dev, pos, endpoint, iov, count);
+}
+
+ssize_t bdev_writev(dev_t dev, loff_t pos, endpoint_t endpoint,
+                    const struct iovec* iov, size_t count)
+{
+    return bdev_vreadwrite(BDEV_WRITEV, dev, pos, endpoint, iov, count);
 }

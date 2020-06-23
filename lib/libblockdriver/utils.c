@@ -32,8 +32,12 @@ static int get_part_table(struct blockdriver* bd, int device,
 {
     int retval;
 
+    struct iovec iov;
+    iov.iov_base = tmp_buf;
+    iov.iov_len = CD_SECTOR_SIZE;
     retval = bd->bdr_readwrite(device, FALSE, sect_nr << SECTOR_SIZE_SHIFT,
-                               SELF, (char*)tmp_buf, CD_SECTOR_SIZE);
+                               SELF, &iov, 1);
+
     if (retval != CD_SECTOR_SIZE) {
         return 0;
     }

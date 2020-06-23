@@ -61,14 +61,14 @@ struct virtio_feature features[] = {{"barrier", VIRTIO_BLK_F_BARRIER, 0, 0},
 static int virtio_blk_open(dev_t minor, int access);
 static int virtio_blk_close(dev_t minor);
 static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
-                               endpoint_t endpoint, void* buf, size_t count,
-                               int async);
+                               endpoint_t endpoint, const struct iovec* iov,
+                               size_t count, int async);
 static ssize_t virtio_blk_rdwt_sync(dev_t minor, int do_write, loff_t pos,
-                                    endpoint_t endpoint, void* buf,
-                                    size_t count);
+                                    endpoint_t endpoint,
+                                    const struct iovec* iov, size_t count);
 static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
-                                     endpoint_t endpoint, void* buf,
-                                     size_t count);
+                                     endpoint_t endpoint,
+                                     const struct iovec* iov, size_t count);
 static struct part_info* virtio_blk_part(dev_t device);
 static void virtio_blk_intr(unsigned mask);
 static int virtio_blk_status2error(u8 status);
@@ -105,15 +105,41 @@ static int virtio_blk_close(dev_t minor)
     return 0;
 }
 
-static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
-                               endpoint_t endpoint, void* buf, size_t count,
-                               int async)
+static int fill_buffers(struct iovec* iov, struct umap_phys* phys, size_t count,
+                        endpoint_t endpoint, int do_write)
 {
+    int i, retval;
+
+    for (i = 0; i < count; i++) {
+        if ((retval = umap(endpoint, iov[i].iov_base, &phys[i].phys_addr)) !=
+            0) {
+            return -retval;
+        }
+
+        /* physical buffer */
+        phys[i].phys_addr |= !do_write;
+        phys[i].size = iov[i].iov_len;
+    }
+
+    return 0;
+}
+
+static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
+                               endpoint_t endpoint, const struct iovec* iov,
+                               size_t count, int async)
+{
+    int i;
     struct part_info* part;
     u64 part_end, sector;
-    struct umap_phys phys[3];
+    struct iovec virs[NR_IOREQS];
+    struct umap_phys phys[NR_IOREQS + 2];
     blockdriver_worker_id_t tid;
+    size_t size, tmp_size;
     int retval;
+
+    if (count > NR_IOREQS) {
+        return -EINVAL;
+    }
 
     tid = 0;
     if (async) {
@@ -138,19 +164,37 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
         return 0;
     }
 
-    if (pos + count >= part_end) {
-        count = part_end - pos;
+    size = 0;
+    for (i = 0; i < count; i++) {
+        size += iov[i].iov_len;
     }
 
-    if (count % blk_config.blk_size) {
+    if (pos + size >= part_end) {
+        size = part_end - pos;
+        tmp_size = 0;
+        count = 0;
+    } else {
+        tmp_size = size;
+    }
+
+    while (tmp_size < size) {
+        tmp_size += iov[count++].iov_len;
+    }
+
+    for (i = 0; i < count; i++) {
+        virs[i].iov_base = iov[i].iov_base;
+        virs[i].iov_len = iov[i].iov_len;
+    }
+
+    if (tmp_size > size) {
+        virs[count - 1].iov_len -= (tmp_size - size);
+    }
+
+    if (size % blk_config.blk_size) {
         return -EINVAL;
     }
 
     sector = pos / blk_config.blk_size;
-
-    if ((retval = umap(endpoint, buf, &phys[1].phys_addr)) != 0) {
-        return -retval;
-    }
 
     memset(&hdrs_vir[tid], 0, sizeof(*hdrs_vir));
 
@@ -167,16 +211,15 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
     phys[0].phys_addr = hdrs_phys + tid * sizeof(*hdrs_vir);
     phys[0].size = sizeof(struct virtio_blk_outhdr);
 
-    /* physical buffer */
-    phys[1].phys_addr |= !do_write;
-    phys[1].size = count;
+    retval = fill_buffers(virs, &phys[1], count, endpoint, do_write);
+    if (retval) return -retval;
 
     /* status */
-    phys[2].phys_addr = status_phys + tid * sizeof(*status_vir);
-    phys[2].phys_addr |= 1;
-    phys[2].size = sizeof(u8);
+    phys[count + 1].phys_addr = status_phys + tid * sizeof(*status_vir);
+    phys[count + 1].phys_addr |= 1;
+    phys[count + 1].size = sizeof(u8);
 
-    virtqueue_add_buffers(vqs[0], phys, 3, (void*)tid);
+    virtqueue_add_buffers(vqs[0], phys, count + 2, (void*)tid);
 
     virtqueue_kick(vqs[0]);
 
@@ -187,24 +230,24 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
     }
 
     if (mystatus(tid) == VIRTIO_BLK_S_OK) {
-        return count;
+        return size;
     }
 
     return -virtio_blk_status2error(mystatus(tid));
 }
 
 static ssize_t virtio_blk_rdwt_sync(dev_t minor, int do_write, loff_t pos,
-                                    endpoint_t endpoint, void* buf,
-                                    size_t count)
+                                    endpoint_t endpoint,
+                                    const struct iovec* iov, size_t count)
 {
-    return virtio_blk_rdwt(minor, do_write, pos, endpoint, buf, count, FALSE);
+    return virtio_blk_rdwt(minor, do_write, pos, endpoint, iov, count, FALSE);
 }
 
 static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
-                                     endpoint_t endpoint, void* buf,
-                                     size_t count)
+                                     endpoint_t endpoint,
+                                     const struct iovec* iov, size_t count)
 {
-    return virtio_blk_rdwt(minor, do_write, pos, endpoint, buf, count, TRUE);
+    return virtio_blk_rdwt(minor, do_write, pos, endpoint, iov, count, TRUE);
 }
 
 static int virtio_blk_status2error(u8 status)

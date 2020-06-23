@@ -40,6 +40,8 @@
 
 #define STR_DEFAULT_LEN 1024
 
+#define NR_IOREQS 64
+
 /* 8253/8254 PIT (Programmable Interval Timer) */
 #define TIMER0 0x40     /* I/O port for timer channel 0 */
 #define TIMER2 0x42     /* I/O port for timer channel 2 */
@@ -376,6 +378,8 @@ enum msgtype {
     BDEV_CLOSE,
     BDEV_READ,
     BDEV_WRITE,
+    BDEV_READV,
+    BDEV_WRITEV,
     BDEV_IOCTL,
     BDEV_REPLY,
 

@@ -3,6 +3,7 @@
 
 #include <lyos/partition.h>
 #include <lyos/driver.h>
+#include <sys/uio.h>
 
 #define NR_SUB_PER_PART 16
 #define NR_SUB_PER_DRIVE (NR_SUB_PER_PART * NR_PART_PER_DRIVE)
@@ -19,7 +20,8 @@ struct blockdriver {
     int (*bdr_open)(dev_t minor, int access);
     int (*bdr_close)(dev_t minor);
     ssize_t (*bdr_readwrite)(dev_t minor, int do_write, loff_t pos,
-                             endpoint_t endpoint, void* buf, size_t count);
+                             endpoint_t endpoint, const struct iovec* iov,
+                             size_t count);
     int (*bdr_ioctl)(dev_t minor, int request, endpoint_t endpoint, void* buf);
     struct part_info* (*bdr_part)(dev_t minor);
     void (*bdr_intr)(unsigned mask);
