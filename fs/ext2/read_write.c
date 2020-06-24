@@ -250,17 +250,17 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
     int retval;
     block_t b1, b2, b3;
     int index1, index2, index3 = 0;
-    char new_dbl = 0, new_triple = 0;
+    int new_ind = 0, new_dbl = 0, new_triple = 0;
     int single = 0, triple = 0;
     unsigned long excess, block_pos;
-    static char first_time = 1;
-    static long addr_in_block;
-    static long addr_in_block2;
+    static int first_time = TRUE;
+    static loff_t addr_in_block;
+    static loff_t addr_in_block2;
     /* double indirect slots */
-    static long doub_ind_s;
+    static loff_t doub_ind_s;
     /* triple indirect slots */
-    static long triple_ind_s;
-    static long out_range_s;
+    static loff_t triple_ind_s;
+    static loff_t out_range_s;
 
     struct fsd_buffer *bp = NULL, *bp_dindir = NULL, *bp_tindir = NULL;
 
@@ -270,10 +270,11 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
         doub_ind_s = EXT2_NDIR_BLOCKS + addr_in_block;
         triple_ind_s = doub_ind_s + addr_in_block2;
         out_range_s = triple_ind_s + addr_in_block2 * addr_in_block;
-        first_time = 0;
+        first_time = FALSE;
     }
 
     block_pos = position / pin->i_sb->sb_block_size;
+    pin->i_dirt = 1;
 
     if (block_pos < EXT2_NDIR_BLOCKS) {
         pin->i_block[block_pos] = new_block;
@@ -290,6 +291,7 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
     else {
         excess = block_pos - doub_ind_s;
         b2 = pin->i_block[EXT2_DIND_BLOCK];
+
         if (block_pos >= triple_ind_s) {
             b3 = pin->i_block[EXT2_TIND_BLOCK];
             if (b3 == 0) {
@@ -338,31 +340,37 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
             index1 = excess % addr_in_block;
         }
         single = FALSE;
+    }
 
-        if (b1 == 0) {
-            if ((b1 = ext2_alloc_block(pin)) == 0) {
-                fsd_put_block(bp_dindir);
-                fsd_put_block(bp_tindir);
-                return ENOSPC;
-            }
-            if (single) {
-                pin->i_block[EXT2_NDIR_BLOCKS] =
-                    b1; /* update inode single indirect */
-            } else {
-                *(block_t*)(bp_dindir + sizeof(block_t) * index2) =
-                    b1; /* update dbl indir */
-                fsd_mark_dirty(bp_dindir);
-            }
-            pin->i_blocks += pin->i_sb->sb_block_size / 512;
+    if (b1 == 0) {
+        if ((b1 = ext2_alloc_block(pin)) == 0) {
+            fsd_put_block(bp_dindir);
+            fsd_put_block(bp_tindir);
+            return ENOSPC;
         }
+        if (single) {
+            pin->i_block[EXT2_NDIR_BLOCKS] =
+                b1; /* update inode single indirect */
+        } else {
+            *(block_t*)(bp_dindir + sizeof(block_t) * index2) =
+                b1; /* update dbl indir */
+            fsd_mark_dirty(bp_dindir);
+        }
+        pin->i_blocks += pin->i_sb->sb_block_size / 512;
+        new_ind = 1;
+    }
+
+    if (b1 != 0) {
+        retval = fsd_get_block(&bp, pin->i_dev, b1);
+
+        if (new_ind) {
+            memset(bp->data, 0, bp->size);
+        }
+
+        *(block_t*)(bp->data + sizeof(block_t) * index1) = new_block;
+        pin->i_blocks += pin->i_sb->sb_block_size / 512;
 
         if (b1 != 0) {
-            retval = fsd_get_block(&bp, pin->i_dev, b1);
-        } else {
-            *(block_t*)(bp + sizeof(block_t) * index1) = new_block;
-            pin->i_blocks += pin->i_sb->sb_block_size / 512;
-        }
-        if (b1 == 0) {
             fsd_mark_dirty(bp);
         }
 
