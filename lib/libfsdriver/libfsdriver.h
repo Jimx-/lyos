@@ -16,6 +16,8 @@
 #ifndef _LIBFSDRIVER_H_
 #define _LIBFSDRIVER_H_
 
+#include <libfsdriver/buffer.h>
+
 struct fsdriver_node {
     dev_t fn_device;
     ino_t fn_num;

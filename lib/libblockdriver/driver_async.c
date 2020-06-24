@@ -18,7 +18,7 @@
 #include "mq.h"
 
 #define MAX_THREADS 32
-#define WORKER_STACKSIZE ((size_t)0x2000)
+#define WORKER_STACKSIZE ((size_t)0x4000)
 
 typedef unsigned int worker_id_t;
 

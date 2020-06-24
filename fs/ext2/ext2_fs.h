@@ -1,7 +1,6 @@
 #ifndef _EXT2_FS_H_
 #define _EXT2_FS_H_
 
-#include "buffer.h"
 #include "libfsdriver/libfsdriver.h"
 
 #define EXT2FS_MAGIC 0xEF53
@@ -328,15 +327,11 @@ int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
 int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
                   size_t* count);
 
-ext2_buffer_t* ext2_get_buffer(dev_t dev, block_t block);
-void ext2_put_buffer(ext2_buffer_t* pb);
-void ext2_sync_buffers();
-void ext2_zero_buffer(ext2_buffer_t* pb);
 int ext2_update_group_desc(ext2_superblock_t* psb, int desc);
 void ext2_init_buffer_cache();
 int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
 
-ext2_buffer_t* ext2_new_block(ext2_inode_t* pin, off_t position);
+struct fsd_buffer* ext2_new_block(ext2_inode_t* pin, off_t position);
 block_t ext2_alloc_block(ext2_inode_t* pin);
 int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp);
 ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode);

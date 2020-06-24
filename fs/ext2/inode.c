@@ -168,6 +168,8 @@ int ext2_rw_inode(ext2_inode_t* inode, int rw_flag)
 static int rw_inode(ext2_inode_t* inode, int rw_flag)
 {
     dev_t dev = inode->i_dev;
+    struct fsd_buffer* bp;
+    int retval;
 
     ext2_superblock_t* psb = get_ext2_super_block(dev);
     inode->i_sb = psb;
@@ -181,22 +183,23 @@ static int rw_inode(ext2_inode_t* inode, int rw_flag)
         ((inode->i_num - 1) % psb->sb_inodes_per_group) * EXT2_INODE_SIZE(psb);
     block_t block_nr =
         (block_t)bgdesc->inode_table + (offset >> psb->sb_blocksize_bits);
+
     /* read the inode table */
     offset &= (psb->sb_block_size - 1);
-    ext2_buffer_t* pb = ext2_get_buffer(dev, block_nr);
-    if (!pb) return err_code;
+    retval = fsd_get_block(&bp, dev, block_nr);
+    if (retval) return retval;
 
     if (rw_flag == READ) {
-        memcpy(inode, (void*)(pb->b_data + offset), EXT2_GOOD_OLD_INODE_SIZE);
+        memcpy(inode, bp->data + offset, EXT2_GOOD_OLD_INODE_SIZE);
     } else if (rw_flag == WRITE) {
         if (inode->i_update) update_times(inode);
-        memcpy((void*)(pb->b_data + offset), inode, EXT2_GOOD_OLD_INODE_SIZE);
-        pb->b_dirt = 1;
+        memcpy(bp->data + offset, inode, EXT2_GOOD_OLD_INODE_SIZE);
+        fsd_mark_dirty(bp);
         /* write back to the device */
     } else
         return EINVAL;
 
-    ext2_put_buffer(pb);
+    fsd_put_block(bp);
 
     return 0;
 }

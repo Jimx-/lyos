@@ -100,6 +100,8 @@ ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
 int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype)
 {
+    int retval;
+    struct fsd_buffer* bp;
     ext2_dir_entry_t *pde, *prev_pde;
     off_t pos;
     block_t b;
@@ -131,15 +133,15 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
             pos = dir_pin->i_last_dpos;
     }
 
-    ext2_buffer_t* pb = NULL;
     for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
         b = ext2_read_map(dir_pin, pos);
 
-        if ((pb = ext2_get_buffer(dir_pin->i_dev, b)) == NULL) return err_code;
+        if ((retval = fsd_get_block(&bp, dir_pin->i_dev, b)) != 0)
+            return retval;
         prev_pde = NULL;
 
-        for (pde = (ext2_dir_entry_t*)pb->b_data;
-             ((char*)pde - (char*)pb->b_data) < dir_pin->i_sb->sb_block_size;
+        for (pde = (ext2_dir_entry_t*)bp->data;
+             ((char*)pde - (char*)bp->data) < dir_pin->i_sb->sb_block_size;
              pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len)) {
 
             match = 0;
@@ -184,7 +186,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                 } else {
                     *num = (ino_t)pde->d_inode;
                 }
-                ext2_put_buffer(pb);
+                fsd_put_block(bp);
                 return ret;
             }
 
@@ -214,7 +216,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
             prev_pde = pde;
         }
         if (hit) break;
-        ext2_put_buffer(pb);
+        fsd_put_block(bp);
     }
 
     /* the whole directory has been searched */
@@ -229,10 +231,10 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
     if (!hit) {
         new_slots++;
         /* no free block, create one */
-        pb = ext2_new_block(dir_pin, dir_pin->i_size);
-        if (!pb) return err_code;
+        bp = ext2_new_block(dir_pin, dir_pin->i_size);
+        if (!bp) return err_code;
 
-        pde = (ext2_dir_entry_t*)pb->b_data;
+        pde = (ext2_dir_entry_t*)bp->data;
         pde->d_rec_len = dir_pin->i_sb->sb_block_size;
         extended = 1;
     }
@@ -243,8 +245,8 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
         pde->d_name[i] = string[i];
     pde->d_inode = *num;
 
-    pb->b_dirt = 1;
-    ext2_put_buffer(pb);
+    fsd_mark_dirty(bp);
+    fsd_put_block(bp);
     dir_pin->i_update |= CTIME | MTIME;
     dir_pin->i_dirt = 1;
 

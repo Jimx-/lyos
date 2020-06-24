@@ -75,6 +75,7 @@ int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
 
 block_t ext2_alloc_block(ext2_inode_t* pin)
 {
+    int retval;
     ext2_superblock_t* psb = pin->i_sb;
     block_t block = 0;
 
@@ -93,7 +94,7 @@ block_t ext2_alloc_block(ext2_inode_t* pin)
 
     int i;
     for (i = 0; i <= psb->sb_groups_count; i++, group++) {
-        ext2_buffer_t* pb;
+        struct fsd_buffer* bp;
         ext2_bgdescriptor_t* gd;
 
         if (group >= psb->sb_groups_count) group = 0;
@@ -108,9 +109,9 @@ block_t ext2_alloc_block(ext2_inode_t* pin)
             continue;
         }
 
-        pb = ext2_get_buffer(psb->sb_dev, gd->block_bitmap);
+        retval = fsd_get_block(&bp, psb->sb_dev, gd->block_bitmap);
 
-        int bit = ext2_setbit((bitchunk_t*)pb->b_data, psb->sb_blocks_per_group,
+        int bit = ext2_setbit((bitchunk_t*)bp->data, psb->sb_blocks_per_group,
                               startp);
 
         if (bit == -1) {
@@ -126,8 +127,8 @@ block_t ext2_alloc_block(ext2_inode_t* pin)
         block =
             psb->sb_first_data_block + group * psb->sb_blocks_per_group + bit;
 
-        pb->b_dirt = 1;
-        ext2_put_buffer(pb);
+        fsd_mark_dirty(bp);
+        fsd_put_block(bp);
 
         gd->free_blocks_count--;
         psb->sb_free_blocks_count--;
@@ -183,6 +184,8 @@ ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
 static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
                                 mode_t mode)
 {
+    int retval;
+
     /* Can't allocate inode on readonly filesystem */
     if (psb->sb_readonly) {
         panic("ext2fs: ext2_alloc_inode_bit: can't allocate inode on readonly "
@@ -201,9 +204,9 @@ static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
 
     /* No space */
     if (group == NULL) return 0;
-    ext2_buffer_t* pb = ext2_get_buffer(psb->sb_dev, group->inode_bitmap);
-    int bit =
-        ext2_setbit((bitchunk_t*)(pb->b_data), psb->sb_inodes_per_group, 0);
+    struct fsd_buffer* bp;
+    retval = fsd_get_block(&bp, psb->sb_dev, group->inode_bitmap);
+    int bit = ext2_setbit((bitchunk_t*)bp->data, psb->sb_inodes_per_group, 0);
 
     ino_t num = (group - psb->sb_bgdescs) * psb->sb_inodes_per_group + bit + 1;
 
@@ -214,8 +217,8 @@ static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
         panic("ext2fs: ext2_alloc_inode_bit: try to allocate reserved inode.");
     }
 
-    pb->b_dirt = 1;
-    ext2_put_buffer(pb);
+    fsd_mark_dirty(bp);
+    fsd_put_block(bp);
 
     psb->sb_free_inodes_count--;
     group->free_inodes_count--;

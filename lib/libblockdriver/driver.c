@@ -131,6 +131,7 @@ void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
     case BDEV_READV:
     case BDEV_WRITEV:
         retval = do_vrdwt(bd, msg);
+        break;
 
     case BDEV_IOCTL:
         retval = do_ioctl(bd, msg);

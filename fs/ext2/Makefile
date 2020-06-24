@@ -1,5 +1,4 @@
-
-SRCS 	= main.c super.c global.c inode.c protect.c path.c read_write.c buffer.c \
+SRCS	= main.c super.c global.c inode.c protect.c path.c read_write.c \
 			alloc.c stat.c open.c link.c
 LIBS	=  fsdriver bdev devman lyos
 
