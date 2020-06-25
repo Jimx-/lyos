@@ -9,6 +9,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
 : ${BUILD_NEWLIB:=false}
+: ${BUILD_LIBSTDCPP:=false}
 : ${BUILD_NATIVE_BINUTILS:=false}
 : ${BUILD_NATIVE_GCC:=false}
 : ${BUILD_BASH:=false}
@@ -21,11 +22,13 @@ if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
     BUILD_GCC=true
     BUILD_NEWLIB=true
+    BUILD_LIBSTDCPP=true
     BUILD_NATIVE_BINUTILS=true
     BUILD_NATIVE_GCC=true
     BUILD_BASH=true
     BUILD_COREUTILS=true
     BUILD_DASH=true
+    BUILD_NCURSES=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -63,8 +66,7 @@ if $BUILD_GCC; then
     $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
     make all-gcc all-target-libgcc -j || cmd_error
     make install-gcc install-target-libgcc || cmd_error
-    # make all-target-libstdc++-v3 -j8 || cmd_error
-    # make install-target-libstdc++-v3 || cmd_error
+
     popd
 fi
 
@@ -99,6 +101,13 @@ if $BUILD_NEWLIB; then
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libg.so -Wl,--whole-archive $SYSROOT/usr/lib/libg.a -Wl,--no-whole-archive || cmd_error
+    popd > /dev/null
+fi
+
+if $BUILD_LIBSTDCPP; then
+    pushd gcc-$SUBARCH > /dev/null
+    make all-target-libstdc++-v3 -j || cmd_error
+    make install-target-libstdc++-v3 || cmd_error
     popd > /dev/null
 fi
 
