@@ -3,7 +3,7 @@
 * Lyos
 #+HTML: <a href="https://ci2.jimx.site:8080/job/lyos/"><img src="https://ci2.jimx.site:8080/buildStatus/icon?job=lyos"></a>
 
-#+HTML: <a href="https://github.com/Jimx-/lyos"><img alt="screenshot"  height="768" width="1024" src="https://i.imgur.com/xRTPGRJ.png"></a>
+#+HTML: <a href="https://github.com/Jimx-/lyos"><img alt="screenshot"  height="768" width="1024" src="https://i.imgur.com/jK7dBid.png"></a>
 
 #+HTML:</div>
 
@@ -16,7 +16,7 @@ Lyos has many standard features:
 
 - Microkernel
   + Kernel only handles message passing, interrupts and task scheduling, other things like reading/writing files, memory managing and device operations are handled by servers.
-  +Servers are single executables(not modules) that are loaded by kernel at boot time, running in user privilege level and their own address space.
+  + Servers are single executables(not modules) that are loaded by kernel at boot time, running in user privilege level and their own address space.
 - Multitasking
   + BFS scheduler
 - Symmetric multiprocessing
