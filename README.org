@@ -1,0 +1,9 @@
+#+HTML:<div align=center><a href="https://github.com/Jimx-/lyos"><img alt="screenshot" width="240" height="240" src="https://i.imgur.com/xRTPGRJ.png"></a>
+
+* Lyos
+[[https://ci2.jimx.site:8080/job/lyos/][file:https://ci2.jimx.site:8080/buildStatus/icon?job=lyos]]
+
+#+HTML:</div>
+
+Lyos is an open source microkernel multitasking operating system, it runs
+on 32-bit x86-based PCs. It is distributed under the GNU General Public License.

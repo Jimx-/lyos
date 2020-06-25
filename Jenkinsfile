@@ -2,6 +2,12 @@ pipeline {
     agent none
     
     stages {
+        stage('Checkout') {
+            steps {
+                scmSkip(deleteBuild: true, skipPattern:'.*\\[ci skip\\].*')
+            }
+        }
+            
         stage('Build') {
             parallel {
                 stage('i686') {
