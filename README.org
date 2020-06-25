@@ -1,7 +1,9 @@
-#+HTML:<div align=center><a href="https://github.com/Jimx-/lyos"><img alt="screenshot" width="240" height="240" src="https://i.imgur.com/xRTPGRJ.png"></a>
+#+HTML:<div align=center>
 
 * Lyos
-[[https://ci2.jimx.site:8080/job/lyos/][file:https://ci2.jimx.site:8080/buildStatus/icon?job=lyos]]
+#+HTML: <a href="https://ci2.jimx.site:8080/job/lyos/"><img src="https://ci2.jimx.site:8080/buildStatus/icon?job=lyos"></a>
+
+#+HTML: <a href="https://github.com/Jimx-/lyos"><img alt="screenshot" src="https://i.imgur.com/xRTPGRJ.png"></a>
 
 #+HTML:</div>
 
