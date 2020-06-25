@@ -23,6 +23,7 @@ download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd
 download "dash" "http://gondor.apana.org.au/~herbert/dash/files/" "dash-0.5.10.tar.gz" || cmd_error
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
 download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz"
+download "ncurses" "https://ftp.gnu.org/pub/gnu/ncurses/" "ncurses-6.2.tar.gz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -35,6 +36,7 @@ unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
 unzip "dash-0.5.10.tar.gz" "dash-0.5.10"
 unzip "coreutils-8.13.tar.xz" "coreutils-8.13"
 unzip "bash-4.3.tar.gz" "bash-4.3"
+unzip "ncurses-6.2.tar.gz" "ncurses-6.2"
 
 echo "Patching..."
 patc "binutils-2.31"
@@ -47,6 +49,7 @@ patc "newlib-3.0.0"
 patc "coreutils-8.13"
 patc "bash-4.3"
 patc "dash-0.5.10"
+patc "ncurses-6.2"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"
