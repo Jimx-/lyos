@@ -88,16 +88,12 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
     ext2_inode_t* pin = ext2_advance(pin_dir, pathname);
 
     if (pin == NULL && err_code == ENOENT) {
-        pin = ext2_alloc_inode(pin_dir, mode);
+        pin = ext2_alloc_inode(pin_dir, mode, uid, gid);
         if (pin == NULL) return NULL;
     }
 
-    pin->i_uid = uid;
-    pin->i_gid = gid;
     pin->i_links_count++;
     pin->i_block[0] = initial_block;
-    /* update all times */
-    pin->i_update = ATIME | CTIME | MTIME;
 
     ext2_rw_inode(pin, WRITE);
 

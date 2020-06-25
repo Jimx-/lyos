@@ -139,7 +139,7 @@ void idle_stop()
 int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
                    char* name)
 {
-    memcpy(p->name, name, PROC_NAME_LEN);
+    strlcpy(p->name, name, sizeof(p->name));
 
     p->regs.esp = (reg_t)sp;
     p->regs.eip = (reg_t)ip;

@@ -334,7 +334,8 @@ int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
 struct fsd_buffer* ext2_new_block(ext2_inode_t* pin, off_t position);
 block_t ext2_alloc_block(ext2_inode_t* pin);
 int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp);
-ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode);
+ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode, uid_t uid,
+                               gid_t gid);
 
 int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
 

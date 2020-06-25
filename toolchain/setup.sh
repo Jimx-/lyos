@@ -45,7 +45,7 @@ if $BUILD_BINUTILS; then
 
     pushd binutils-$SUBARCH
     $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
-    make -j || cmd_error
+    make -j8 || cmd_error
     make install || cmd_error
     popd
 fi
@@ -62,8 +62,8 @@ if $BUILD_GCC; then
     $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
     make all-gcc all-target-libgcc -j || cmd_error
     make install-gcc install-target-libgcc || cmd_error
-    make all-target-libstdc++-v3 -j || cmd_error
-    make install-target-libstdc++-v3 || cmd_error
+    # make all-target-libstdc++-v3 -j8 || cmd_error
+    # make install-target-libstdc++-v3 || cmd_error
     popd
 fi
 

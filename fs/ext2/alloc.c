@@ -37,6 +37,7 @@
 
 static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
                                 mode_t mode);
+static void wipe_inode(ext2_inode_t* pin);
 
 int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
 {
@@ -151,7 +152,8 @@ block_t ext2_alloc_block(ext2_inode_t* pin)
  * @param  mode   Inode mode.
  * @return        The inode allocated.
  */
-ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
+ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode, uid_t uid,
+                               gid_t gid)
 {
     ext2_superblock_t* psb = parent->i_sb;
     /* Can't allocate inode on readonly filesystem */
@@ -172,8 +174,12 @@ ext2_inode_t* ext2_alloc_inode(ext2_inode_t* parent, mode_t mode)
     if (pin) {
         pin->i_mode = mode;
         pin->i_links_count = 0;
+        pin->i_uid = uid;
+        pin->i_gid = gid;
         pin->i_dev = parent->i_dev;
         pin->i_sb = psb;
+
+        wipe_inode(pin);
     }
 
     return pin;
@@ -238,4 +244,24 @@ static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
     ext2_update_group_desc(psb, group - psb->sb_bgdescs);
 
     return num;
+}
+
+static void wipe_inode(ext2_inode_t* pin)
+{
+    int i;
+
+    pin->i_size = 0;
+    pin->i_update = ATIME | CTIME | MTIME;
+    pin->i_blocks = 0;
+    pin->i_flags = 0;
+    pin->i_generation = 0;
+    pin->i_file_acl = 0;
+    pin->i_dir_acl = 0;
+    pin->i_faddr = 0;
+
+    for (i = 0; i < EXT2_N_BLOCKS; i++) {
+        pin->i_block[i] = NO_BLOCK;
+    }
+
+    pin->i_dirt = INO_DIRTY;
 }
