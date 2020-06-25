@@ -34,6 +34,7 @@
 #include "proto.h"
 #include <elf.h>
 #include "lyos/param.h"
+#include <lyos/timer.h>
 #include <lyos/sysutils.h>
 #include <libcoro/libcoro.h>
 #include "global.h"
@@ -98,6 +99,14 @@ int main()
 
             msg.type = VFS_TXN_GET_TYPE(msg.type);
             do_reply(wp, &msg);
+            continue;
+        } else if (msg.type == NOTIFY_MSG) {
+            switch (msg.source) {
+            case CLOCK:
+                expire_timer(msg.TIMESTAMP); /* select() needs this */
+                break;
+            }
+
             continue;
         }
 
@@ -188,6 +197,9 @@ static void do_work(void)
         break;
     case GETDENTS:
         self->msg_out.RETVAL = do_getdents();
+        break;
+    case SELECT:
+        self->msg_out.RETVAL = do_select();
         break;
     case PM_VFS_GETSETID:
         self->msg_out.RETVAL = fs_getsetid();

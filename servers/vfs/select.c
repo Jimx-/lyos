@@ -39,7 +39,6 @@
 #define MAX_SELECTS 25
 
 static struct select_entry {
-    mutex_t lock;
     struct fproc* caller;
     endpoint_t endpoint;
     fd_set readfds, writefds, exceptfds;
@@ -87,50 +86,41 @@ static struct fd_operation {
 #define SEL_EXCEPT CDEV_SEL_EXC
 #define SEL_NOTIFY CDEV_NOTIFY
 
-#define lock_select_entry(entry) mutex_lock(&(entry)->lock)
-#define unlock_select_entry(entry) mutex_unlock(&(entry)->lock)
-
-void init_select()
+void init_select(void)
 {
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
         int i;
         for (i = 0; i < OPEN_MAX; i++)
             select_table[slot].filps[i] = NULL;
-        mutex_init(&select_table[slot].lock, NULL);
     }
 }
 
-int do_select(MESSAGE* msg)
+int do_select(void)
 {
-    int src = msg->source;
+    int src = self->msg_in.source;
     int retval = 0;
-    int nfds = msg->u.m_vfs_select.nfds;
-    void* vtimeout = msg->u.m_vfs_select.timeout;
+    int nfds = self->msg_in.u.m_vfs_select.nfds;
+    void* vtimeout = self->msg_in.u.m_vfs_select.timeout;
     struct timeval timeout;
-    struct fproc* pcaller = vfs_endpt_proc(src);
-    if (!pcaller) return EINVAL;
 
     if (nfds < 0 || nfds > OPEN_MAX) return EINVAL;
     int slot;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
-        if (select_table[slot].caller == NULL &&
-            !mutex_trylock(&select_table[slot].lock))
-            break;
+        if (select_table[slot].caller == NULL) break;
     }
     if (slot == MAX_SELECTS) return ENOSPC;
 
     struct select_entry* entry = &select_table[slot];
     memset(entry, 0, sizeof(*entry));
-    entry->caller = pcaller;
+    entry->caller = fproc;
     entry->endpoint = src;
-    entry->vir_readfds = msg->u.m_vfs_select.readfds;
-    entry->vir_writefds = msg->u.m_vfs_select.writefds;
-    entry->vir_exceptfds = msg->u.m_vfs_select.exceptfds;
+    entry->vir_readfds = self->msg_in.u.m_vfs_select.readfds;
+    entry->vir_writefds = self->msg_in.u.m_vfs_select.writefds;
+    entry->vir_exceptfds = self->msg_in.u.m_vfs_select.exceptfds;
 
     if ((retval = copy_fdset(entry, nfds, FDS_COPYIN)) != 0) {
         entry->caller = NULL;
-        unlock_select_entry(entry);
         return retval;
     }
 
@@ -144,7 +134,6 @@ int do_select(MESSAGE* msg)
         }
         if (retval) {
             entry->caller = NULL;
-            unlock_select_entry(entry);
             return retval;
         }
 
@@ -167,7 +156,7 @@ int do_select(MESSAGE* msg)
         if (!ops) continue;
 
         struct file_desc* filp;
-        filp = entry->filps[fd] = get_filp(pcaller, fd, RWL_READ);
+        filp = entry->filps[fd] = get_filp(fproc, fd, RWL_READ);
         if (!filp && errno != EIO) {
             entry->error = EBADF;
             break;
@@ -197,7 +186,6 @@ int do_select(MESSAGE* msg)
         entry->caller = NULL;
         retval = entry->error;
 
-        unlock_select_entry(entry);
         return retval;
     }
 
@@ -225,7 +213,7 @@ int do_select(MESSAGE* msg)
             newops = filp->fd_select_ops | ops;
             select_lock_filp(filp, newops);
             retval = fd_operations[entry->type[fd]].select_request(
-                filp, &newops, entry->block, pcaller);
+                filp, &newops, entry->block, fproc);
             unlock_filp(filp);
             if (retval && retval != SUSPEND) {
                 entry->error = retval;
@@ -251,7 +239,6 @@ int do_select(MESSAGE* msg)
 
         if (!retval) retval = entry->nreadyfds;
 
-        unlock_select_entry(entry);
         return retval;
     }
 
@@ -263,7 +250,6 @@ int do_select(MESSAGE* msg)
         set_timer(&entry->timer, ticks, select_timeout_check, slot);
     }
 
-    unlock_select_entry(entry);
     return SUSPEND;
 }
 
@@ -521,7 +507,7 @@ static void select_return(struct select_entry* entry)
     memset(&mess, 0, sizeof(mess));
     mess.type = SYSCALL_RET;
     mess.RETVAL = retval;
-    /* revive_proc(entry->endpoint, &mess); */
+    revive_proc(entry->endpoint, &mess);
 }
 
 static void select_reply1(struct file_desc* filp, int status)

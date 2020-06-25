@@ -454,6 +454,11 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
  *======================================================================*/
 void exception_handler(int in_kernel, struct exception_frame* frame)
 {
+    if (frame->vec_no == 7 && !in_kernel) {
+        copr_not_available_handler();
+        return;
+    }
+
     struct proc* fault_proc = get_cpulocal_var(proc_ptr);
 
 #ifdef PROTECT_DEBUG
@@ -470,11 +475,6 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
 
     if (frame->vec_no == 2) {
         nmi_watchdog_handler(in_kernel, (void*)frame->eip);
-        return;
-    }
-
-    if (frame->vec_no == 7 && !in_kernel) {
-        copr_not_available_handler();
         return;
     }
 

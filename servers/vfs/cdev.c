@@ -166,14 +166,19 @@ int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
 
 int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
-    /* MESSAGE driver_msg; */
-    /* memset(&driver_msg, 0, sizeof(MESSAGE)); */
-    /* driver_msg.type = CDEV_SELECT; */
-    /* driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev); */
-    /* driver_msg.u.m_vfs_cdev_select.ops = ops; */
+    struct fproc* driver = cdev_get(dev);
+    if (!driver) return ENXIO;
 
-    /* return cdev_send(dev, &driver_msg); */
-    return SUSPEND;
+    MESSAGE driver_msg;
+    driver_msg.type = CDEV_SELECT;
+    driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev);
+    driver_msg.u.m_vfs_cdev_select.ops = ops;
+
+    if (asyncsend3(driver->endpoint, &driver_msg, 0) != 0) {
+        panic("vfs: cdev_io send message failed");
+    }
+
+    return 0;
 }
 
 static void cdev_reply_generic(MESSAGE* msg)

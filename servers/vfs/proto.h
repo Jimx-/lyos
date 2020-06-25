@@ -35,17 +35,16 @@ void unlock_inode(struct inode* pin);
 void sync_inode(struct inode* p);
 
 void init_lookup(struct lookup* lookup, char* pathname, int flags,
-                        struct vfs_mount** vmnt, struct inode** inode);
+                 struct vfs_mount** vmnt, struct inode** inode);
 struct inode* resolve_path(struct lookup* lookup, struct fproc* fp);
 struct inode* advance_path(struct inode* start, struct lookup* lookup,
-                                  struct fproc* fp);
+                           struct fproc* fp);
 struct inode* last_dir(struct lookup* lookup, struct fproc* fp);
 
 struct vfs_mount* find_vfs_mount(dev_t dev);
 int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
 void unlock_vmnt(struct vfs_mount* vmnt);
-int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep,
-                    int readonly);
+int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly);
 int forbidden(struct fproc* fp, struct inode* pin, int access);
 mode_t do_umask(void);
 void clear_vfs_mount(struct vfs_mount* vmnt);
@@ -53,11 +52,10 @@ struct vfs_mount* get_free_vfs_mount();
 int do_vfs_open(MESSAGE* p);
 
 int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
-int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev,
-                          ino_t start, ino_t root, struct fproc* fp,
-                          struct lookup_result* ret);
-int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly,
-                             int is_root, struct lookup_result* res);
+int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev, ino_t start,
+                   ino_t root, struct fproc* fp, struct lookup_result* ret);
+int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly, int is_root,
+                      struct lookup_result* res);
 
 int do_open(void);
 int common_open(char* pathname, int flags, mode_t mode);
@@ -85,12 +83,11 @@ int do_fchdir(void);
 int do_mm_request(void);
 int fs_exec(void);
 
-int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src,
-                        char* buf);
+int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char* buf);
 
 int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
-                             int rw_flag, endpoint_t src, void* buf,
-                             size_t nbytes, u64* newpos, size_t* bytes_rdwt);
+                      int rw_flag, endpoint_t src, void* buf, size_t nbytes,
+                      u64* newpos, size_t* bytes_rdwt);
 
 int do_stat(void);
 int do_fstat(void);
@@ -100,6 +97,8 @@ int fs_getsetid(void);
 
 int do_ioctl(void);
 int do_fcntl(void);
+
+int do_sync(void);
 
 int fs_fork(void);
 int fs_exit(void);
@@ -123,25 +122,22 @@ int fs_sendrec(endpoint_t fs_e, MESSAGE* msg);
 
 void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 void unlock_filp(struct file_desc* filp);
-struct file_desc* get_filp(struct fproc* fp, int fd,
-                                  rwlock_type_t lock_type);
+struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
 int cdev_open(dev_t dev);
 int cdev_close(dev_t dev);
 int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-                   size_t count, struct fproc* fp);
+            size_t count, struct fproc* fp);
 int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
-                     size_t length, struct fproc* fp);
+              size_t length, struct fproc* fp);
 int cdev_select(dev_t dev, int ops, struct fproc* fp);
 int cdev_reply(MESSAGE* msg);
 struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);
 
-void init_select();
-int do_select(MESSAGE* msg);
-void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor,
-                                  int status);
-void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor,
-                                  int status);
+void init_select(void);
+int do_select(void);
+void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor, int status);
+void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor, int status);
 
 #endif

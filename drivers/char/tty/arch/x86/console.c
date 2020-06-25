@@ -66,17 +66,17 @@ static void clear_screen(int pos, int len);
  *****************************************************************************/
 static void cons_write(TTY* tty)
 {
-    char buf[4096];
+    static char buf[4096];
     char* p = tty->tty_outbuf;
     size_t count;
     int j;
 
-    count = tty->tty_outleft;
     /* Nothing to write */
-    if (count == 0) return;
+    if (tty->tty_outleft == 0) return;
 
     do {
-        if (count > sizeof(buf)) count = sizeof(buf);
+        count = min(sizeof(buf), tty->tty_outleft);
+
         if (tty->tty_outcaller == TASK_TTY) {
             memcpy(buf, p, count);
         } else {
@@ -84,14 +84,13 @@ static void cons_write(TTY* tty)
         }
 
         for (j = 0; j < count; j++) {
-            tty->tty_outcnt++;
             out_char(tty, buf[j]);
         }
+
+        tty->tty_outcnt += count;
         tty->tty_outleft -= count;
         p += count;
-
-        count = tty->tty_outleft;
-    } while (count > 0);
+    } while (tty->tty_outleft > 0);
 
     flush((CONSOLE*)tty->tty_dev);
 
@@ -369,8 +368,8 @@ static void do_escape(CONSOLE* con, char c)
             flush(con);
             break;
         case 'H': /* ESC [m;nH" moves cursor to (m,n) */
-            m = con->c_esc_params[0] - 1;
-            n = con->c_esc_params[1] - 1;
+            m = con->c_esc_params[0] ? con->c_esc_params[0] - 1 : 0;
+            n = con->c_esc_params[1] ? con->c_esc_params[1] - 1 : 0;
             con->cursor = con->origin + con->cols * m + n;
             flush(con);
             break;

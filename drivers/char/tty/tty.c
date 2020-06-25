@@ -730,6 +730,7 @@ static int select_retry(TTY* tty)
         send_recv(SEND, TASK_FS, &msg);
         tty->tty_select_ops &= ~ops;
     }
+
     return 0;
 }
 

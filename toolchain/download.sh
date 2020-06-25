@@ -24,6 +24,7 @@ download "dash" "http://gondor.apana.org.au/~herbert/dash/files/" "dash-0.5.10.t
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
 download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz"
 download "ncurses" "https://ftp.gnu.org/pub/gnu/ncurses/" "ncurses-6.2.tar.gz"
+download "vim" "ftp://ftp.vim.org/pub/vim/unix" "vim-7.4.tar.bz2"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -37,6 +38,7 @@ unzip "dash-0.5.10.tar.gz" "dash-0.5.10"
 unzip "coreutils-8.13.tar.xz" "coreutils-8.13"
 unzip "bash-4.3.tar.gz" "bash-4.3"
 unzip "ncurses-6.2.tar.gz" "ncurses-6.2"
+unzip "vim-7.4.tar.bz2" "vim74"
 
 echo "Patching..."
 patc "binutils-2.31"
