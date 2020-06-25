@@ -110,6 +110,7 @@ block_t ext2_alloc_block(ext2_inode_t* pin)
         }
 
         retval = fsd_get_block(&bp, psb->sb_dev, gd->block_bitmap);
+        if (retval) continue;
 
         int bit = ext2_setbit((bitchunk_t*)bp->data, psb->sb_blocks_per_group,
                               startp);
@@ -135,6 +136,10 @@ block_t ext2_alloc_block(ext2_inode_t* pin)
         ext2_update_group_desc(psb, group);
 
         return block;
+    }
+
+    if (retval) {
+        err_code = retval;
     }
 
     return block;
@@ -204,10 +209,15 @@ static int ext2_alloc_inode_bit(ext2_superblock_t* psb, ext2_inode_t* parent,
 
     /* No space */
     if (group == NULL) return 0;
+
     struct fsd_buffer* bp;
     retval = fsd_get_block(&bp, psb->sb_dev, group->inode_bitmap);
-    int bit = ext2_setbit((bitchunk_t*)bp->data, psb->sb_inodes_per_group, 0);
+    if (retval) {
+        err_code = retval;
+        return 0;
+    }
 
+    int bit = ext2_setbit((bitchunk_t*)bp->data, psb->sb_inodes_per_group, 0);
     ino_t num = (group - psb->sb_bgdescs) * psb->sb_inodes_per_group + bit + 1;
 
     if (num > psb->sb_inodes_count) {

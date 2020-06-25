@@ -137,7 +137,7 @@ static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
     dev = pin->i_dev;
 
     retval = 0;
-    if (b == 0) {
+    if (b == NO_BLOCK) {
         if (rw_flag == READ) {
             /* Reading from a block that doesn't exist. Return empty buffer. */
             bp = NULL;
@@ -156,7 +156,7 @@ static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
 
     if (retval) return retval;
 
-    if (bp == NULL && b != 0) {
+    if (bp == NULL && b != NO_BLOCK) {
         panic("ext2fs: ext2_rw_chunk: bp == NULL!");
     }
 
@@ -182,14 +182,14 @@ block_t ext2_read_map(ext2_inode_t* pin, off_t position)
     int index, retval;
     block_t b;
     unsigned long excess, block_pos;
-    static char first_time = 1;
-    static long addr_in_block;
-    static long addr_in_block2;
+    static int first_time = TRUE;
+    static loff_t addr_in_block;
+    static loff_t addr_in_block2;
     /* double indirect slots */
-    static long doub_ind_s;
+    static loff_t doub_ind_s;
     /* triple indirect slots */
-    static long triple_ind_s;
-    static long out_range_s;
+    static loff_t triple_ind_s;
+    static loff_t out_range_s;
     struct fsd_buffer* bp;
 
     if (first_time) {
@@ -198,13 +198,13 @@ block_t ext2_read_map(ext2_inode_t* pin, off_t position)
         doub_ind_s = EXT2_NDIR_BLOCKS + addr_in_block;
         triple_ind_s = doub_ind_s + addr_in_block2;
         out_range_s = triple_ind_s + addr_in_block2 * addr_in_block;
-        first_time = 0;
+        first_time = FALSE;
     }
 
     block_pos = position / pin->i_sb->sb_block_size;
 
     /* block number is in the inode */
-    if (block_pos < EXT2_NDIR_BLOCKS) return (pin->i_block[block_pos]);
+    if (block_pos < EXT2_NDIR_BLOCKS) return pin->i_block[block_pos];
 
     /* single indirect */
     if (block_pos < doub_ind_s) {
@@ -212,7 +212,7 @@ block_t ext2_read_map(ext2_inode_t* pin, off_t position)
                                              */
         index = block_pos - EXT2_NDIR_BLOCKS;
     } else if (block_pos >= out_range_s) {
-        return 0;
+        return NO_BLOCK;
     } else {
         /* double or triple indirect block. At first if it's triple,
          * find double indirect block.
@@ -221,8 +221,14 @@ block_t ext2_read_map(ext2_inode_t* pin, off_t position)
         b = pin->i_block[EXT2_DIND_BLOCK];
         if (block_pos >= triple_ind_s) {
             b = pin->i_block[EXT2_TIND_BLOCK];
-            if (b == 0) return b;
+            if (b == NO_BLOCK) return b;
+
             retval = fsd_get_block(&bp, pin->i_dev, b);
+            if (retval) {
+                err_code = retval;
+                return NO_BLOCK;
+            }
+
             excess = block_pos - triple_ind_s;
             index = excess / addr_in_block2;
             b = *(block_t*)(bp->data + sizeof(block_t) *
@@ -239,9 +245,18 @@ block_t ext2_read_map(ext2_inode_t* pin, off_t position)
         index = excess % addr_in_block; /* index into single ind blk */
         fsd_put_block(bp);
     }
-    if (b == 0) return b;
+
+    if (b == NO_BLOCK) return b;
+
     retval = fsd_get_block(&bp, pin->i_dev, b);
+    if (retval) {
+        err_code = retval;
+        return NO_BLOCK;
+    }
+
     b = *(block_t*)(bp->data + sizeof(block_t) * index);
+    fsd_put_block(bp);
+
     return b;
 }
 
@@ -274,7 +289,7 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
     }
 
     block_pos = position / pin->i_sb->sb_block_size;
-    pin->i_dirt = 1;
+    pin->i_dirt = INO_DIRTY; /* inode will be dirty anyway */
 
     if (block_pos < EXT2_NDIR_BLOCKS) {
         pin->i_block[block_pos] = new_block;
@@ -342,7 +357,7 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
         single = FALSE;
     }
 
-    if (b1 == 0) {
+    if (b1 == NO_BLOCK) {
         if ((b1 = ext2_alloc_block(pin)) == 0) {
             fsd_put_block(bp_dindir);
             fsd_put_block(bp_tindir);
@@ -352,7 +367,7 @@ int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
             pin->i_block[EXT2_NDIR_BLOCKS] =
                 b1; /* update inode single indirect */
         } else {
-            *(block_t*)(bp_dindir + sizeof(block_t) * index2) =
+            *(block_t*)(bp_dindir->data + sizeof(block_t) * index2) =
                 b1; /* update dbl indir */
             fsd_mark_dirty(bp_dindir);
         }

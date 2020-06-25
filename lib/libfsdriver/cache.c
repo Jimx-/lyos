@@ -324,6 +324,9 @@ void fsd_flush_dev(dev_t dev)
     }
 
     for (bp = bufs; bp < &bufs[cache_size]; bp++) {
+        if (!fsd_is_clean(bp) && bp->refcnt > 0) {
+            printl("buffer not flushed due to refcnt\n");
+        }
         if (!fsd_is_clean(bp) && bp->dev == dev && bp->refcnt == 0) {
             dirty_list[count++] = bp;
         }

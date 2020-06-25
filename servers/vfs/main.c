@@ -204,6 +204,9 @@ static void do_work(void)
     case MM_VFS_REQUEST:
         self->msg_out.RETVAL = do_mm_request();
         break;
+    case SYNC:
+        self->msg_out.RETVAL = do_sync();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

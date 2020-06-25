@@ -201,6 +201,8 @@ static int rw_inode(ext2_inode_t* inode, int rw_flag)
 
     fsd_put_block(bp);
 
+    inode->i_dirt = INO_CLEAN;
+
     return 0;
 }
 

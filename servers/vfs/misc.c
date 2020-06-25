@@ -416,3 +416,33 @@ int fs_exit()
 
     return 0;
 }
+
+int request_sync(endpoint_t fs_ep)
+{
+    MESSAGE m;
+
+    m.type = FS_SYNC;
+
+    return fs_sendrec(fs_ep, &m);
+}
+
+int do_sync(void)
+{
+    int retval = 0;
+    struct vfs_mount* vmnt;
+
+    list_for_each_entry(vmnt, &vfs_mount_table, list)
+    {
+        retval = lock_vmnt(vmnt, RWL_READ);
+        if (retval) break;
+
+        if (vmnt->m_dev != NO_DEV && vmnt->m_fs_ep != NO_TASK &&
+            vmnt->m_root_node != NULL) {
+            request_sync(vmnt->m_fs_ep);
+        }
+
+        unlock_vmnt(vmnt);
+    }
+
+    return retval;
+}

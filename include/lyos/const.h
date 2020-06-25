@@ -320,6 +320,7 @@ enum msgtype {
     MUNMAP,
     FUTEX,
     SELECT, /* 58 */
+    SYNC,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -571,6 +572,8 @@ enum msgtype {
 #define NR_FILE_DESC 64 /* FIXME */
 #define NR_INODE 64     /* FIXME */
 #define NR_VFS_MOUNT 16
+
+#define NO_BLOCK ((block_t)0)
 
 /* INODE::i_mode (octal, lower 12 bits reserved) */
 /* Flag bits for i_mode in the inode. */

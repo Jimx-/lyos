@@ -45,7 +45,7 @@ if $BUILD_BINUTILS; then
 
     pushd binutils-$SUBARCH
     $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
-    make -j8 || cmd_error
+    make -j || cmd_error
     make install || cmd_error
     popd
 fi
@@ -60,8 +60,10 @@ if $BUILD_GCC; then
 
     pushd gcc-$SUBARCH
     $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
-    make -j8 all-gcc all-target-libgcc || cmd_error
+    make all-gcc all-target-libgcc -j || cmd_error
     make install-gcc install-target-libgcc || cmd_error
+    make all-target-libstdc++-v3 -j || cmd_error
+    make install-target-libstdc++-v3 || cmd_error
     popd
 fi
 
@@ -107,7 +109,7 @@ if $BUILD_NATIVE_BINUTILS; then
 
     pushd binutils-native-$SUBARCH > /dev/null
     $DIR/sources/binutils-2.31/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-werror || cmd_error
-    make -j8 || cmd_error
+    make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -131,10 +133,10 @@ if $BUILD_NATIVE_GCC; then
 
     pushd gcc-native-$SUBARCH > /dev/null
     $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib || cmd_error
-    make DESTDIR=$SYSROOT all-gcc -j8 || cmd_error
-    make DESTDIR=$SYSROOT install-gcc -j || cmd_error
-    make DESTDIR=$SYSROOT all-target-libgcc -j8 || cmd_error
-    make DESTDIR=$SYSROOT install-target-libgcc -j || cmd_error
+    make DESTDIR=$SYSROOT all-gcc -j || cmd_error
+    make DESTDIR=$SYSROOT install-gcc || cmd_error
+    make DESTDIR=$SYSROOT all-target-libgcc -j || cmd_error
+    make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
     touch $SYSROOT/usr/include/fenv.h
     # make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
     # make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error

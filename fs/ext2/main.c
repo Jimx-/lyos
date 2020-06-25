@@ -89,7 +89,7 @@ int init_ext2fs()
     printl("ext2fs: Ext2 filesystem driver is running\n");
 
     ext2_init_inode();
-    fsd_init_buffer_cache(512);
+    fsd_init_buffer_cache(1024);
 
     err_code = 0;
 

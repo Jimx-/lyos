@@ -1230,7 +1230,16 @@ int pipe(int pipefd[2]) { printf("pipe: not implemented\n"); }
 
 int __dirfd(DIR* dirp) { return dirp->fd; }
 
-void sync(void) { puts("sync: not implemented"); }
+void sync(void)
+{
+    MESSAGE msg;
+
+    msg.type = SYNC;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+}
 
 int fsync(int fd)
 {
