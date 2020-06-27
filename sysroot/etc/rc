@@ -5,7 +5,7 @@ service up /sbin/virtio-blk
 service up /sbin/ext2fs
 service up /sbin/procfs
 service up /sbin/input
-service up /sbin/keyboard
+service up /sbin/atkbd
 service up /sbin/fb
 
 mount -a

@@ -12,3 +12,5 @@ export PS1
 
 LSCOLORS=Gxfxcxdxbxegedabagacad
 export LSCOLORS
+
+alias ls="ls --color=tty"

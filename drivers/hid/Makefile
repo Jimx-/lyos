@@ -1,6 +1,6 @@
 #
 # Makefile for the Lyos HID device drivers
 
-SUBDIRS	= keyboard
+SUBDIRS	= atkbd
 
 include lyos.subdirs.mk
