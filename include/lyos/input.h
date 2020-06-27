@@ -36,11 +36,11 @@ struct input_event {
  */
 #define EV_SYN 0x00
 #define EV_KEY 0x01
+#define EV_MSC 0x04
 
 /*
  * Keys and buttons
  */
-
 #define KEY_RESERVED 0
 #define KEY_ESC 1
 #define KEY_1 2
@@ -162,5 +162,11 @@ struct input_event {
 #define KEY_KPPLUSMINUS 118
 #define KEY_PAUSE 119
 #define KEY_SCALE 120 /* AL Compiz Scale (Expose) */
+
+/*
+ * Misc events
+ */
+#define MSC_RAW 0x03
+#define MSC_SCAN 0x04
 
 #endif

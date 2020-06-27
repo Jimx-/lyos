@@ -54,19 +54,6 @@
 #define HZ 100              /* clock freq (software settable on IBM-PC) */
 #define DEFAULT_HZ 100      /* clock freq (software settable on IBM-PC) */
 
-/* AT keyboard */
-/* 8042 ports */
-#define KB_DATA                        \
-    0x60 /* I/O port for keyboard data \
- Read : Read Output Buffer             \
- Write: Write Input Buffer(8042 Data&8048 Command) */
-#define KB_CMD                            \
-    0x64 /* I/O port for keyboard command \
- Read : Read Status Register              \
- Write: Write Input Buffer(8042 Command) */
-#define LED_CODE 0xED
-#define KB_ACK 0xFA
-
 /* VGA */
 #define CRTC_ADDR_REG 0x3D4 /* CRT Controller Registers - Addr Register */
 #define CRTC_DATA_REG 0x3D5 /* CRT Controller Registers - Data Register */

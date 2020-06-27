@@ -27,7 +27,6 @@
 #include "tty.h"
 #include "console.h"
 #include "lyos/global.h"
-#include "keyboard.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/sysutils.h>

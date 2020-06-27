@@ -30,7 +30,6 @@
 #include "tty.h"
 #include "console.h"
 #include "lyos/global.h"
-#include "keyboard.h"
 #include "lyos/proto.h"
 #include "termios.h"
 #include "proto.h"
