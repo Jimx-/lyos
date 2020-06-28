@@ -17,6 +17,7 @@ struct chardriver {
     int (*cdr_select)(dev_t minor, int ops, endpoint_t endpoint);
     void (*cdr_intr)(unsigned mask);
     void (*cdr_alarm)(clock_t timestamp);
+    void (*cdr_other)(MESSAGE* msg);
 };
 
 void chardriver_process(struct chardriver* cd, MESSAGE* msg);

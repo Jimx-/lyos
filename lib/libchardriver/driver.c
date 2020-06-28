@@ -137,7 +137,12 @@ void chardriver_process(struct chardriver* cd, MESSAGE* msg)
         retval = do_select(cd, msg);
         break;
     default:
-        retval = ENOSYS;
+        if (cd->cdr_other) {
+            cd->cdr_other(msg);
+            return; /* no reply */
+        } else {
+            retval = ENOSYS;
+        }
         break;
     }
 

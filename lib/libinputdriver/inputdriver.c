@@ -49,13 +49,11 @@ int inputdriver_send_event(u16 type, u16 code, int value)
     MESSAGE msg;
 
     msg.type = INPUT_SEND_EVENT;
-    msg.IEV_TYPE = type;
-    msg.IEV_CODE = code;
-    msg.IEV_VALUE = value;
+    msg.u.m_inputdriver_input_event.type = type;
+    msg.u.m_inputdriver_input_event.code = code;
+    msg.u.m_inputdriver_input_event.value = value;
 
-    send_recv(BOTH, input_endpoint, &msg);
-
-    return msg.RETVAL;
+    return send_recv(SEND, input_endpoint, &msg);
 }
 
 int inputdriver_start(struct inputdriver* inpd)

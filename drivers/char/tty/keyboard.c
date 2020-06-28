@@ -96,10 +96,10 @@ void do_input(MESSAGE* msg)
 
     case INPUT_TTY_EVENT:
         if (msg->source != input_endpoint) return;
-        if (msg->IEV_TYPE != EV_KEY) return;
+        if (msg->u.m_input_tty_event.type != EV_KEY) return;
 
-        keycode = msg->IEV_CODE;
-        release = !(msg->IEV_VALUE);
+        keycode = msg->u.m_input_tty_event.code;
+        release = !(msg->u.m_input_tty_event.value);
 
         if (kb_in.count < KB_INBUF_SIZE) {
             *(kb_in.p_head) = keycode | (release ? RELEASE_BIT : 0);

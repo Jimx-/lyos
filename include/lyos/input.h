@@ -25,13 +25,6 @@ struct input_event {
 };
 
 /*
- * Message fields
- */
-#define IEV_TYPE u.m3.m3i1
-#define IEV_CODE u.m3.m3i2
-#define IEV_VALUE u.m3.m3i3
-
-/*
  * Event types
  */
 #define EV_SYN 0x00

@@ -226,6 +226,26 @@ struct mess_blockdriver_bdev_reply {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_blockdriver_bdev_reply);
 
+struct mess_inputdriver_input_event {
+    int id;
+    u16 type;
+    u16 code;
+    s32 value;
+
+    u8 _pad[44];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_inputdriver_input_event);
+
+struct mess_input_tty_event {
+    int id;
+    u16 type;
+    u16 code;
+    s32 value;
+
+    u8 _pad[44];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_input_tty_event);
+
 typedef struct {
     int source;
     int type;
@@ -248,6 +268,8 @@ typedef struct {
         struct mess_vfs_cdev_mmap_reply m_vfs_cdev_mmap_reply;
         struct mess_bdev_blockdriver_msg m_bdev_blockdriver_msg;
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;
+        struct mess_inputdriver_input_event m_inputdriver_input_event;
+        struct mess_input_tty_event m_input_tty_event;
 
         u8 _pad[56];
     } u;
