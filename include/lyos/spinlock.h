@@ -39,13 +39,19 @@ typedef struct spinlock {
         (l)->lock = 0;   \
     } while (0)
 
-void arch_spinlock_lock(unsigned int* lock);
-void arch_spinlock_unlock(unsigned int* lock);
+void arch_spinlock_lock(volatile unsigned int* lock);
+void arch_spinlock_unlock(volatile unsigned int* lock);
 
-#define spinlock_lock(l) arch_spinlock_lock((unsigned int*)l)
-#define spinlock_unlock(l) arch_spinlock_unlock((unsigned int*)l)
+static inline void spinlock_lock(spinlock_t* lock)
+{
+    arch_spinlock_lock(&lock->lock);
+}
+static inline void spinlock_unlock(spinlock_t* lock)
+{
+    arch_spinlock_unlock(&lock->lock);
+}
+
 #define spinlock_locked(l) ((l)->lock != 0)
-
 #endif /* CONFIG_SMP */
 
 #endif /* _SPINLOCK_H_ */

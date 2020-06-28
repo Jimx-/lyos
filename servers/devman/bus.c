@@ -213,7 +213,7 @@ static ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
 int do_bus_attr_add(MESSAGE* m)
 {
     struct bus_attr_info info;
-    char bus_root[MAX_PATH];
+    char bus_root[MAX_PATH - BUS_NAME_MAX - 1];
     char label[MAX_PATH];
 
     if (m->BUF_LEN != sizeof(info)) return EINVAL;

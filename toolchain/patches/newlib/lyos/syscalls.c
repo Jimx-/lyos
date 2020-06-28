@@ -853,7 +853,8 @@ int fstat(int fd, struct stat* buf)
     return msg.RETVAL;
 }
 
-int _stat(const char* path, mode_t mode) __attribute__((weak, alias("stat")));
+int _stat(const char* path, struct stat* buf)
+    __attribute__((weak, alias("stat")));
 int _fstat(int fd, struct stat* buf) __attribute__((weak, alias("fstat")));
 
 int lstat(const char* path, struct stat* buf) { return stat(path, buf); }

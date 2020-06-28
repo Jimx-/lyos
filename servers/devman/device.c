@@ -92,9 +92,9 @@ static struct device* alloc_device()
 
 static void device_domain_label(struct device* dev, char* buf)
 {
-    char name[MAX_PATH];
+    char name[DEVICE_NAME_MAX];
 
-    snprintf(name, MAX_PATH, "%s", dev->name);
+    snprintf(name, DEVICE_NAME_MAX, "%s", dev->name);
     dev = dev->parent;
 
     int len = strlen(name) + 1;
@@ -243,7 +243,7 @@ static ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
 int do_device_attr_add(MESSAGE* m)
 {
     struct device_attr_info info;
-    char device_root[MAX_PATH];
+    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
     char label[MAX_PATH];
 
     if (m->BUF_LEN != sizeof(info)) return EINVAL;

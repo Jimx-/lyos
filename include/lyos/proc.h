@@ -58,9 +58,6 @@
 #define proc_addr(n) (&proc_table[(n) + NR_TASKS])
 #define is_kerntaske(e) (e < 0)
 
-#define lock_proc(proc) spinlock_lock(&((proc)->lock))
-#define unlock_proc(proc) spinlock_unlock(&((proc)->lock))
-
 #define pst_is_runnable(pst) ((pst) == 0)
 #define proc_is_runnable(proc) (pst_is_runnable((proc)->state))
 
@@ -230,5 +227,8 @@ DECLARE_CPULOCAL(volatile int, cpu_is_idle);
 #define CPS_INTR 3
 #define CPS_STEAL 4
 #define CPU_STATES 5
+
+static inline void lock_proc(struct proc* p) { spinlock_lock(&p->lock); }
+static inline void unlock_proc(struct proc* p) { spinlock_lock(&p->lock); }
 
 #endif
