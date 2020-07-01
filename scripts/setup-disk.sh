@@ -11,6 +11,7 @@ fi
 DISK=lyos-disk.img
 SRCDIR=./
 SIZE=262144
+# SIZE=524288
 MOUNT_POINT=/mnt/lyos-root
 LOOP_DEVICE=loop2
 
@@ -47,8 +48,8 @@ chown 1000:1000 /$MOUNT_POINT/home/jimx
 chmod 0777 /$MOUNT_POINT/tmp
 sync
 
-echo "Creating devices..."
-debugfs -f ./scripts/create-dev.conf -w $LOOPMAP
+# echo "Creating devices..."
+# debugfs -f ./scripts/create-dev.conf -w $LOOPMAP
 
 echo "Installing grub..."
 grub-install --target=i386-pc --boot-directory=$MOUNT_POINT/boot $LOOPRAW

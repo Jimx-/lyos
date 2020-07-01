@@ -42,6 +42,8 @@ int sys_vmctl(MESSAGE* m, struct proc* p)
 {
     int who = m->VMCTL_WHO, request = m->VMCTL_REQUEST;
     struct proc* target = (who == SELF) ? p : endpt_proc(who);
+    caddr_t addr;
+    int len, flags;
     int type;
 
     switch (request) {
@@ -55,8 +57,10 @@ int sys_vmctl(MESSAGE* m, struct proc* p)
         return 0;
     case VMCTL_GET_KERN_MAPPING:
         m->VMCTL_GET_KM_RETVAL = arch_get_kern_mapping(
-            m->VMCTL_GET_KM_INDEX, (caddr_t*)&m->VMCTL_GET_KM_ADDR,
-            &m->VMCTL_GET_KM_LEN, &m->VMCTL_GET_KM_FLAGS);
+            m->VMCTL_GET_KM_INDEX, (caddr_t*)&addr, &len, &flags);
+        m->VMCTL_GET_KM_ADDR = addr;
+        m->VMCTL_GET_KM_LEN = len;
+        m->VMCTL_GET_KM_FLAGS = flags;
         return 0;
     case VMCTL_REPLY_KERN_MAPPING:
         m->VMCTL_REPLY_KM_RETVAL = arch_reply_kern_mapping(

@@ -106,7 +106,7 @@ fi
 
 if $BUILD_LIBSTDCPP; then
     pushd gcc-$SUBARCH > /dev/null
-    make all-target-libstdc++-v3 -j || cmd_error
+    make all-target-libstdc++-v3 -j4 || cmd_error
     make install-target-libstdc++-v3 || cmd_error
     popd > /dev/null
 fi
@@ -152,6 +152,34 @@ if $BUILD_NATIVE_GCC; then
     # make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
     popd > /dev/null
 fi
+
+# Build native gcc
+# if $BUILD_NATIVE_GCC1; then
+#     if [ ! -d "gcc1-native-$SUBARCH" ]; then
+#         mkdir gcc1-native-$SUBARCH
+#     fi
+
+#     if [ ! -e $DIR/sources/gcc-9.2.0/mpfr ]; then
+#         ln -s $DIR/sources/mpfr-3.1.4 $DIR/sources/gcc-9.2.0/mpfr
+#     fi
+#     if [ ! -e $DIR/sources/gcc-9.2.0/mpc ]; then
+#         ln -s $DIR/sources/mpc-1.0.3 $DIR/sources/gcc-9.2.0/mpc
+#     fi
+#     if [ ! -e $DIR/sources/gcc-9.2.0/gmp ]; then
+#         ln -s $DIR/sources/gmp-6.1.0 $DIR/sources/gcc-9.2.0/gmp
+#     fi
+
+#     pushd gcc1-native-$SUBARCH > /dev/null
+#     $DIR/sources/gcc-9.2.0/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc CFLAGS=-O2 CXXFLAGS=-O2 || cmd_error
+#     make DESTDIR=$SYSROOT all-gcc -j4 || cmd_error
+#     make DESTDIR=$SYSROOT install-gcc || cmd_error
+#     make DESTDIR=$SYSROOT all-target-libgcc -j4 || cmd_error
+#     make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
+#     touch $SYSROOT/usr/include/fenv.h
+#     make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
+#     make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
+#     popd > /dev/null
+# fi
 
 # Build bash
 if $BUILD_BASH; then

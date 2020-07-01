@@ -100,17 +100,17 @@ ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
 int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype)
 {
-    int retval;
     struct fsd_buffer* bp;
     ext2_dir_entry_t *pde, *prev_pde;
-    off_t pos;
+    loff_t pos;
     block_t b;
     int hit = 0;
     int match = 0;
     unsigned new_slots = 0;
     int required_space = 0;
-    if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
     int ret = 0;
+
+    if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
     if (flag != SD_IS_EMPTY) {
         if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
             if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;
@@ -136,8 +136,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
     for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
         b = ext2_read_map(dir_pin, pos);
 
-        if ((retval = fsd_get_block(&bp, dir_pin->i_dev, b)) != 0)
-            return retval;
+        if ((ret = fsd_get_block(&bp, dir_pin->i_dev, b)) != 0) return ret;
         prev_pde = NULL;
 
         for (pde = (ext2_dir_entry_t*)bp->data;
@@ -215,6 +214,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
 
             prev_pde = pde;
         }
+
         if (hit) break;
         fsd_put_block(bp);
     }

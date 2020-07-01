@@ -33,9 +33,9 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
-                         int offset, int rw_flag, struct fsdriver_data* data,
-                         off_t data_offset);
+static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
+                         size_t left, off_t offset, int rw_flag,
+                         struct fsdriver_data* data, off_t data_offset);
 
 /**
  * Ext2 read/write syscall.
@@ -43,10 +43,10 @@ static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
  * @return   Zero on success.
  */
 int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-              u64* rwpos, int* count)
+              loff_t* rwpos, size_t* count)
 {
-    u64 position = *rwpos;
-    int nbytes = *count;
+    loff_t position = *rwpos;
+    size_t nbytes = *count;
     off_t data_offset = 0;
 
     int retval = 0;
@@ -123,13 +123,12 @@ int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
  * @param  buf      Buffer.
  * @return          Zero on success.
  */
-static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
-                         int offset, int rw_flag, struct fsdriver_data* data,
-                         off_t data_offset)
+static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
+                         size_t left, off_t offset, int rw_flag,
+                         struct fsdriver_data* data, off_t data_offset)
 {
-
-    int b = 0;
-    int dev = 0;
+    block_t b = 0;
+    dev_t dev = 0;
     struct fsd_buffer* bp;
     int retval;
 
@@ -177,7 +176,7 @@ static int ext2_rw_chunk(ext2_inode_t* pin, u64 position, int chunk, int left,
 }
 
 /* locate the block number where the position can be found */
-block_t ext2_read_map(ext2_inode_t* pin, off_t position)
+block_t ext2_read_map(ext2_inode_t* pin, loff_t position)
 {
     int index, retval;
     block_t b;
@@ -260,7 +259,7 @@ block_t ext2_read_map(ext2_inode_t* pin, off_t position)
     return b;
 }
 
-int ext2_write_map(ext2_inode_t* pin, off_t position, block_t new_block)
+int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
 {
     int retval;
     block_t b1, b2, b3;

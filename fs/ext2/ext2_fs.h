@@ -80,12 +80,13 @@ struct ext2_superblock {
     struct ext2_bgdescriptor* sb_bgdescs;
 
     dev_t sb_dev;
-    u32 sb_block_size;
-    u32 sb_groups_count;
-    u32 sb_blocksize_bits;
-    u8 sb_is_root;
-    u8 sb_readonly;
-    u8 sb_bgd_dirty;
+    size_t sb_block_size;
+    size_t sb_groups_count;
+    size_t sb_blocksize_bits;
+    size_t sb_inodes_per_block;
+    size_t sb_desc_per_block;
+    block_t sb_bsearch;
+    int sb_is_root : 1, sb_readonly : 1, sb_bgd_dirty : 1;
 } __attribute__((packed));
 
 typedef struct ext2_superblock ext2_superblock_t;
@@ -321,9 +322,9 @@ ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
 int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype);
 
-block_t ext2_read_map(ext2_inode_t* pin, off_t position);
+block_t ext2_read_map(ext2_inode_t* pin, loff_t position);
 int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-              u64* rwpos, int* count);
+              loff_t* rwpos, size_t* count);
 int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
                   size_t* count);
 

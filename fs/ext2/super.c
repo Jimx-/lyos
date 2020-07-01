@@ -30,6 +30,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/mman.h>
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -61,73 +62,85 @@ int read_ext2_super_block(dev_t dev)
     retval = bdev_read(dev, 1024, ext2fsbuf, EXT2_SUPERBLOCK_SIZE, SELF);
     if (retval < 0) return -retval;
 
-    ext2_superblock_t* pext2sb =
-        (ext2_superblock_t*)malloc(sizeof(ext2_superblock_t));
-    if (!pext2sb) return ENOMEM;
+    ext2_superblock_t* psb =
+        mmap(NULL, sizeof(ext2_superblock_t), PROT_READ | PROT_WRITE,
+             MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE, -1, 0);
+    if (psb == MAP_FAILED) return ENOMEM;
 
-    DEB(printl("Allocated super block at 0x%x\n", (unsigned int)pext2sb));
-    memcpy((void*)pext2sb, ext2fsbuf, EXT2_SUPERBLOCK_SIZE);
+    DEB(printl("Allocated super block at 0x%x\n", (unsigned int)psb));
+    memcpy((void*)psb, ext2fsbuf, EXT2_SUPERBLOCK_SIZE);
 
     DEB(printl("File system information:\n"));
-    DEB(printl("  Magic: 0x%x\n", pext2sb->sb_magic));
-    if (pext2sb->sb_magic != EXT2FS_MAGIC) {
-        free(pext2sb);
+    DEB(printl("  Magic: 0x%x\n", psb->sb_magic));
+
+    if (psb->sb_magic != EXT2FS_MAGIC) {
+        munmap(psb, sizeof(ext2_superblock_t));
         return EINVAL;
     }
-    DEB(printl("  Inodes: %d\n", pext2sb->sb_inodes_count));
-    DEB(printl("  Blocks: %d\n", pext2sb->sb_blocks_count));
-    pext2sb->sb_block_size = 1 << (pext2sb->sb_log_block_size + 10);
-    DEB(printl("  Block size: %d bytes\n", pext2sb->sb_block_size));
-    pext2sb->sb_groups_count =
-        (pext2sb->sb_blocks_count - pext2sb->sb_first_data_block - 1) /
-            pext2sb->sb_blocks_per_group +
+
+    DEB(printl("  Inodes: %d\n", psb->sb_inodes_count));
+    DEB(printl("  Blocks: %d\n", psb->sb_blocks_count));
+    psb->sb_block_size = 1 << (psb->sb_log_block_size + 10);
+    DEB(printl("  Inode size: %d bytes\n", EXT2_INODE_SIZE(psb)));
+    DEB(printl("  Block size: %d bytes\n", psb->sb_block_size));
+    DEB(printl("  First Inode: %d\n", EXT2_FIRST_INO(psb)));
+    DEB(printl("  Rev. level: %d.%d\n", psb->sb_rev_level,
+               psb->sb_minor_rev_level));
+
+    psb->sb_groups_count =
+        (psb->sb_blocks_count - psb->sb_first_data_block - 1) /
+            psb->sb_blocks_per_group +
         1;
-    pext2sb->sb_blocksize_bits = pext2sb->sb_log_block_size + 10;
-    pext2sb->sb_dev = dev;
-    list_add(&(pext2sb->list), &ext2_superblock_table);
+    psb->sb_blocksize_bits = psb->sb_log_block_size + 10;
+    psb->sb_inodes_per_block = psb->sb_block_size / EXT2_INODE_SIZE(psb);
+    psb->sb_desc_per_block = psb->sb_block_size / sizeof(ext2_bgdescriptor_t);
+    psb->sb_dev = dev;
+    list_add(&(psb->list), &ext2_superblock_table);
 
-    int block_size = pext2sb->sb_block_size;
+    size_t block_size = psb->sb_block_size;
 
-    int nr_groups = pext2sb->sb_groups_count;
+    int nr_groups = psb->sb_groups_count;
     DEB(printl("Total block groups: %d\n", nr_groups));
-    DEB(printl("Inodes per groups: %d\n",
-               pext2sb->sb_inodes_count / nr_groups));
+    DEB(printl("Inodes per groups: %d\n", psb->sb_inodes_count / nr_groups));
     int bgdesc_blocks =
-        sizeof(ext2_bgdescriptor_t) * nr_groups / block_size + 1;
+        ((nr_groups + psb->sb_desc_per_block - 1) / psb->sb_desc_per_block);
     int bgdesc_offset = 1024 / block_size + 1;
 
-    pext2sb->sb_bgdescs =
-        (ext2_bgdescriptor_t*)malloc(bgdesc_blocks * block_size);
-    if (!(pext2sb->sb_bgdescs)) {
-        free(pext2sb);
+    psb->sb_bgdescs =
+        mmap(NULL, bgdesc_blocks * block_size, PROT_READ | PROT_WRITE,
+             MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE, -1, 0);
+    if (psb->sb_bgdescs == MAP_FAILED) {
+        munmap(psb, sizeof(ext2_superblock_t));
         return ENOMEM;
     }
+
     DEB(printl(
         "Allocated block group descriptors memory: 0x%x, size: %d bytes\n",
-        pext2sb->sb_bgdescs, bgdesc_blocks * block_size));
+        psb->sb_bgdescs,
+        bgdesc_blocks * block_size * sizeof(ext2_bgdescriptor_t)));
 
     int i;
     struct fsd_buffer* bp;
     for (i = 0; i < bgdesc_blocks; i++) {
         if ((retval = fsd_get_block(&bp, dev, bgdesc_offset + i)) != 0)
             return retval;
-        memcpy((char*)pext2sb->sb_bgdescs + block_size * i, bp->data,
-               block_size);
+        memcpy((char*)psb->sb_bgdescs + block_size * i, bp->data, block_size);
         fsd_put_block(bp);
     }
 
-//#define EXT2_BGDESCRIPTORS_DEBUG
+/* #define EXT2_BGDESCRIPTORS_DEBUG */
 #ifdef EXT2_BGDESCRIPTORS_DEBUG
     printl("Block group descriptors:\n");
     for (i = 0; i < nr_groups; i++) {
         printl("  Block group #%d\n", i);
-        printl("    Inode table: %d\n", pext2sb->sb_bgdescs[i].inode_table);
-        printl("    Free blocks: %d\n",
-               pext2sb->sb_bgdescs[i].free_blocks_count);
-        printl("    Free inodes: %d\n",
-               pext2sb->sb_bgdescs[i].free_inodes_count);
+        printl("    Inode table: %d\n", psb->sb_bgdescs[i].inode_table);
+        printl("    Free blocks: %d\n", psb->sb_bgdescs[i].free_blocks_count);
+        printl("    Free inodes: %d\n", psb->sb_bgdescs[i].free_inodes_count);
     }
 #endif
+
+    psb->sb_bsearch = psb->sb_first_data_block + 1 + psb->sb_groups_count + 2 +
+                      psb->sb_inodes_per_group / psb->sb_inodes_per_block;
 
     return 0;
 }
@@ -164,7 +177,8 @@ ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
                desc_num);
         return NULL;
     }
-    return &(psb->sb_bgdescs[desc_num]);
+
+    return &psb->sb_bgdescs[desc_num];
 }
 
 /**

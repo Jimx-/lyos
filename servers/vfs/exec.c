@@ -184,8 +184,9 @@ static int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
 int fs_exec(void)
 {
     int retval;
-
     struct vfs_exec_info execi;
+    int fd;
+    struct file_desc* filp = NULL;
 
     /* get parameters from the message */
     int name_len = self->msg_in.NAME_LEN; /* length of filename */
@@ -256,8 +257,6 @@ int fs_exec(void)
 
     /* find an fd for MM */
     /* find a free slot in PROCESS::filp[] */
-    int fd;
-    struct file_desc* filp = NULL;
     retval = get_fd(mm_task, 0, &fd, &filp);
     if (retval) return retval;
 

@@ -12,8 +12,6 @@ struct rusage {
     struct timeval ru_stime; /* system time used */
 };
 
-int getrusage(int, struct rusage*);
-
 /*
  * Resource limits
  */
@@ -40,7 +38,17 @@ struct rlimit {
     rlim_t rlim_max; /* Hard limit (ceiling for rlim_cur) */
 };
 
-int getrlimit(int resource, struct rlimit* rlim);
-int setrlimit(int resource, const struct rlimit* rlim);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    int getrusage(int, struct rusage*);
+    int getrlimit(int resource, struct rlimit* rlim);
+    int setrlimit(int resource, const struct rlimit* rlim);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

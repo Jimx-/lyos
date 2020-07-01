@@ -215,7 +215,7 @@ void ext2_dump_inode(ext2_inode_t* pin)
     printl("-------------------------\n");
     printl("Ext2 Inode #%d @ dev %x\n", pin->i_num, pin->i_dev);
     printl("  Mode: 0x%x, Size: %d\n", pin->i_mode, pin->i_size);
-    printl("  atime: 0x%x\n  ctime: 0x%x\n  mtime: 0x%x\n", pin->i_atime,
+    printl("  atime: %lu\n  ctime: %lu\n  mtime: %lu\n", pin->i_atime,
            pin->i_ctime, pin->i_mtime);
     printl("  User: %d, Group: %d\n", pin->i_uid, pin->i_gid);
     printl("  Blocks: %d, Links: %d\n", pin->i_blocks, pin->i_links_count);
