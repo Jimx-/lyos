@@ -20,11 +20,11 @@ download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-4.3.2.tar.bz2"
 download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz" || cmd_error
 download "gcc-native" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-4.7.3" "gcc-4.7.3.tar.bz2" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
-download "dash" "http://gondor.apana.org.au/~herbert/dash/files/" "dash-0.5.10.tar.gz" || cmd_error
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
 download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz"
 download "ncurses" "https://ftp.gnu.org/pub/gnu/ncurses/" "ncurses-6.2.tar.gz"
 download "vim" "ftp://ftp.vim.org/pub/vim/unix" "vim-7.4.tar.bz2"
+download "readline" "https://mirrors.ustc.edu.cn/gnu/readline" "readline-8.0.tar.gz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -34,11 +34,11 @@ unzip "mpc-0.8.1.tar.gz" "mpc-0.8.1"
 unzip "gcc-9.2.0.tar.gz" "gcc-9.2.0"
 unzip "gcc-4.7.3.tar.bz2" "gcc-4.7.3"
 unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
-unzip "dash-0.5.10.tar.gz" "dash-0.5.10"
 unzip "coreutils-8.13.tar.xz" "coreutils-8.13"
 unzip "bash-4.3.tar.gz" "bash-4.3"
 unzip "ncurses-6.2.tar.gz" "ncurses-6.2"
 unzip "vim-7.4.tar.bz2" "vim74"
+unzip "readline-8.0.tar.gz" "readline-8.0"
 
 echo "Patching..."
 patc "binutils-2.31"
@@ -50,8 +50,8 @@ patc "gcc-4.7.3"
 patc "newlib-3.0.0"
 patc "coreutils-8.13"
 patc "bash-4.3"
-patc "dash-0.5.10"
 patc "ncurses-6.2"
+patc "readline-8.0"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

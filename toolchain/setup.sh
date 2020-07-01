@@ -12,9 +12,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBSTDCPP:=false}
 : ${BUILD_NATIVE_BINUTILS:=false}
 : ${BUILD_NATIVE_GCC:=false}
+: ${BUILD_READLINE:=false}
 : ${BUILD_BASH:=false}
 : ${BUILD_COREUTILS:=false}
-: ${BUILD_DASH:=false}
 : ${BUILD_NCURSES:=false}
 : ${BUILD_VIM:=false}
 
@@ -27,7 +27,6 @@ if $BUILD_EVERYTHING; then
     BUILD_NATIVE_GCC=true
     BUILD_BASH=true
     BUILD_COREUTILS=true
-    BUILD_DASH=true
     BUILD_NCURSES=true
 fi
 
@@ -181,6 +180,18 @@ fi
 #     popd > /dev/null
 # fi
 
+# if $BUILD_READLINE; then
+#     if [ ! -d "readline-$SUBARCH" ]; then
+#         mkdir readline-$SUBARCH
+#     fi
+
+#     pushd readline-$SUBARCH > /dev/null
+#     $DIR/sources/readline-8.0/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-static --enable-multibyte || cmd_error
+#     make -j || cmd_error
+#     make DESTDIR=$SYSROOT install || cmd_error
+#     popd > /dev/null
+# fi
+
 # Build bash
 if $BUILD_BASH; then
     if [ ! -d "bash-$SUBARCH" ]; then
@@ -191,7 +202,7 @@ if $BUILD_BASH; then
     $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
-    cp $SYSROOT/usr/bin/bash $SYSROOT/bin/bash
+    cp $SYSROOT/usr/bin/bash $SYSROOT/bin/sh
     popd > /dev/null
 fi
 
@@ -207,21 +218,6 @@ if $BUILD_COREUTILS; then
     $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
-    popd > /dev/null
-fi
-
-# Build dash
-if $BUILD_DASH; then
-    if [ ! -d "dash-$SUBARCH" ]; then
-        mkdir dash-$SUBARCH
-    fi
-
-    pushd dash-$SUBARCH > /dev/null
-    $DIR/sources/dash-0.5.10/configure --host=$TARGET --prefix=$CROSSPREFIX || cmd_error
-    sed -i '/# define _GNU_SOURCE 1/d' config.h
-    make -j || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
-    cp $SYSROOT/usr/bin/dash $SYSROOT/bin/sh
     popd > /dev/null
 fi
 
