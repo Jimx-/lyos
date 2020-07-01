@@ -138,6 +138,11 @@ void blockdriver_process(struct blockdriver* bd, MESSAGE* msg)
         break;
 
     default:
+        if (bd->bdr_other) {
+            bd->bdr_other(msg);
+            return;
+        }
+
         retval = ENOSYS;
         break;
     }

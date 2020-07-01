@@ -26,6 +26,7 @@ struct blockdriver {
     struct part_info* (*bdr_part)(dev_t minor);
     void (*bdr_intr)(unsigned mask);
     void (*bdr_alarm)(clock_t timestamp);
+    void (*bdr_other)(MESSAGE* msg);
 };
 
 void blockdriver_process(struct blockdriver* bd, MESSAGE* msg);

@@ -22,6 +22,7 @@
 
 #include <libblockdriver/libblockdriver.h>
 #include <libvirtio/libvirtio.h>
+#include <libsysfs/libsysfs.h>
 
 #include "virtio_blk.h"
 
@@ -70,10 +71,14 @@ static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
                                      endpoint_t endpoint,
                                      const struct iovec* iov, size_t count);
 static struct part_info* virtio_blk_part(dev_t device);
+static void virtio_blk_other(MESSAGE* msg);
 static void virtio_blk_intr(unsigned mask);
 static int virtio_blk_status2error(u8 status);
 
-static void virtio_blk_interrupt_wait();
+static int virtio_blk_get_id(char* id_str);
+static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf);
+
+static void virtio_blk_interrupt_wait(void);
 
 static struct blockdriver virtio_blk_driver = {
     .bdr_open = virtio_blk_open,
@@ -81,6 +86,7 @@ static struct blockdriver virtio_blk_driver = {
     .bdr_readwrite = virtio_blk_rdwt_sync,
     .bdr_part = virtio_blk_part,
     .bdr_intr = virtio_blk_intr,
+    .bdr_other = virtio_blk_other,
 };
 
 static struct part_info* virtio_blk_part(dev_t device)
@@ -281,7 +287,68 @@ static void virtio_blk_intr(unsigned mask)
     }
 }
 
-static void virtio_blk_interrupt_wait()
+static int virtio_blk_get_id(char* id_str)
+{
+    struct umap_phys phys[3];
+    blockdriver_worker_id_t tid;
+    int retval;
+
+    tid = blockdriver_async_worker_id();
+
+    memset(&hdrs_vir[tid], 0, sizeof(*hdrs_vir));
+
+    hdrs_vir[tid].type = VIRTIO_BLK_T_GET_ID;
+    hdrs_vir[tid].ioprio = 0;
+    hdrs_vir[tid].sector = 0;
+
+    /* setup header */
+    phys[0].phys_addr = hdrs_phys + tid * sizeof(*hdrs_vir);
+    phys[0].size = sizeof(struct virtio_blk_outhdr);
+
+    /* id string */
+    if ((retval = umap(SELF, id_str, &phys[1].phys_addr)) != 0) {
+        return retval;
+    }
+    phys[1].phys_addr |= 1;
+    phys[1].size = VIRTIO_BLK_ID_BYTES;
+
+    /* status */
+    phys[2].phys_addr = status_phys + tid * sizeof(*status_vir);
+    phys[2].phys_addr |= 1;
+    phys[2].size = sizeof(u8);
+
+    virtqueue_add_buffers(vqs[0], phys, 3, (void*)tid);
+
+    virtqueue_kick(vqs[0]);
+
+    blockdriver_async_sleep();
+
+    if (mystatus(tid) == VIRTIO_BLK_S_OK) {
+        return 0;
+    }
+
+    return virtio_blk_status2error(mystatus(tid));
+}
+
+static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf)
+{
+    int retval;
+
+    buf[VIRTIO_BLK_ID_BYTES] = 0;
+    retval = virtio_blk_get_id(buf);
+
+    if (retval == 0) {
+        return strlen(buf);
+    }
+
+    if (retval == EIO) {
+        return 0;
+    }
+
+    return -retval;
+}
+
+static void virtio_blk_interrupt_wait(void)
 {
     MESSAGE msg;
     void* data;
@@ -449,7 +516,9 @@ static void virtio_blk_register(void)
 {
     int i;
     struct device_info devinf;
+    struct device_attribute attr;
     dev_t devt;
+    device_id_t dev_id;
 
     /* register the device */
     memset(&devinf, 0, sizeof(devinf));
@@ -466,7 +535,13 @@ static void virtio_blk_register(void)
         snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
                  'a' + (char)i);
         devinf.devt = devt;
-        dm_device_register(&devinf);
+        dev_id = dm_device_register(&devinf);
+
+        if (dev_id != NO_DEVICE_ID) {
+            dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,
+                                NULL, virtio_blk_serial_show, NULL);
+            dm_device_attr_add(&attr);
+        }
     }
 
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
@@ -507,6 +582,28 @@ static int virtio_blk_init(void)
     }
 
     return 0;
+}
+
+static void virtio_blk_other(MESSAGE* msg)
+{
+    switch (msg->type) {
+    case DM_BUS_ATTR_SHOW:
+    case DM_BUS_ATTR_STORE:
+        msg->CNT = dm_bus_attr_handle(msg);
+        break;
+    case DM_DEVICE_ATTR_SHOW:
+    case DM_DEVICE_ATTR_STORE:
+        msg->CNT = dm_device_attr_handle(msg);
+        break;
+    default:
+        msg->RETVAL = ENOSYS;
+        break;
+    }
+
+    if (msg->RETVAL != SUSPEND) {
+        msg->type = SYSCALL_RET;
+        send_recv(SEND_NONBLOCK, msg->source, msg);
+    }
 }
 
 int main()
