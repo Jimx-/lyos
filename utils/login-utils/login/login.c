@@ -103,6 +103,6 @@ int main(int argc, char* argv[])
         pwd->pw_shell = _PATH_BSHELL;
     }
 
-    char* shell_argv[] = {pwd->pw_shell, "--login", "--noediting", NULL};
+    char* shell_argv[] = {pwd->pw_shell, "--login", NULL};
     exit(execv(pwd->pw_shell, shell_argv));
 }

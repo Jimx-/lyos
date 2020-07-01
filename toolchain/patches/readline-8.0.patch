@@ -1,0 +1,46 @@
+diff -rupN old/rltty.h new/rltty.h
+--- old/rltty.h	2009-01-05 03:32:33.000000000 +0800
++++ new/rltty.h	2020-07-01 21:19:29.625588084 +0800
+@@ -22,6 +22,9 @@
+ #if !defined (_RLTTY_H_)
+ #define _RLTTY_H_
+ 
++#undef NEW_TTY_DRIVER
++#define TERMIOS_TTY_DRIVER
++
+ /* Posix systems use termios and the Posix signal functions. */
+ #if defined (TERMIOS_TTY_DRIVER)
+ #  include <termios.h>
+diff -rupN old/support/config.sub new/support/config.sub
+--- old/support/config.sub	2018-11-17 04:34:44.000000000 +0800
++++ new/support/config.sub	2020-07-01 16:17:22.857038308 +0800
+@@ -1360,7 +1360,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd*)
++	     | midnightbsd* | lyos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+diff -rupN old/support/shlib-install new/support/shlib-install
+--- old/support/shlib-install	2018-05-04 21:45:39.000000000 +0800
++++ new/support/shlib-install	2020-07-01 16:17:15.640484951 +0800
+@@ -71,7 +71,7 @@ fi
+ # Cygwin installs both a dll (which must go in $BINDIR) and an implicit
+ # link library (in $libdir)
+ case "$host_os" in
+-hpux*|darwin*|macosx*|linux*|solaris2*)
++hpux*|darwin*|macosx*|linux*|solaris2*|lyos*)
+ 	if [ -z "$uninstall" ]; then
+ 		chmod 755 ${INSTALLDIR}/${LIBNAME}
+ 	fi ;;
+@@ -146,7 +146,7 @@ bsdi4*|*gnu*|darwin*|macosx*|netbsd*|mir
+ 	fi
+ 	;;
+ 
+-solaris2*|aix4.[2-9]*|aix[5-9]*|osf*|irix[56]*|sysv[45]*|dgux*|interix*)
++solaris2*|aix4.[2-9]*|aix[5-9]*|osf*|irix[56]*|sysv[45]*|dgux*|interix*|lyos*)
+ 	# libname.so -> libname.so.M
+ 	${echo} ${RM} ${INSTALLDIR}/$LINK1
+ 	if [ -z "$uninstall" ]; then

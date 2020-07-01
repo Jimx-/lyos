@@ -25,6 +25,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBSTDCPP=true
     BUILD_NATIVE_BINUTILS=true
     BUILD_NATIVE_GCC=true
+    BUILD_READLINE=true
     BUILD_BASH=true
     BUILD_COREUTILS=true
     BUILD_NCURSES=true
@@ -180,17 +181,17 @@ fi
 #     popd > /dev/null
 # fi
 
-# if $BUILD_READLINE; then
-#     if [ ! -d "readline-$SUBARCH" ]; then
-#         mkdir readline-$SUBARCH
-#     fi
+if $BUILD_READLINE; then
+    if [ ! -d "readline-$SUBARCH" ]; then
+        mkdir readline-$SUBARCH
+    fi
 
-#     pushd readline-$SUBARCH > /dev/null
-#     $DIR/sources/readline-8.0/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-static --enable-multibyte || cmd_error
-#     make -j || cmd_error
-#     make DESTDIR=$SYSROOT install || cmd_error
-#     popd > /dev/null
-# fi
+    pushd readline-$SUBARCH > /dev/null
+    $DIR/sources/readline-8.0/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-static --enable-multibyte || cmd_error
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
 
 # Build bash
 if $BUILD_BASH; then
@@ -199,10 +200,11 @@ if $BUILD_BASH; then
     fi
 
     pushd bash-$SUBARCH > /dev/null
-    $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
+    $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls --with-installed-readline || cmd_error
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/sh
+    cp $SYSROOT/usr/bin/bash $SYSROOT/bin/bash
     popd > /dev/null
 fi
 
