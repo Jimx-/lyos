@@ -21,5 +21,7 @@
 #include <libdevman/libdevman.h>
 
 ssize_t pci_vendor_show(struct device_attribute* attr, char* buf);
+ssize_t pci_device_show(struct device_attribute* attr, char* buf);
+ssize_t pci_class_show(struct device_attribute* attr, char* buf);
 
 #endif

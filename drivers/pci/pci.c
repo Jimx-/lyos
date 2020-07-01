@@ -147,6 +147,14 @@ static device_id_t pci_register_device(int devind)
                         (void*)&pcidev[devind], pci_vendor_show, NULL);
     dm_device_attr_add(&attr);
 
+    dm_init_device_attr(&attr, device_id, "device", SF_PRIV_OVERWRITE,
+                        (void*)&pcidev[devind], pci_device_show, NULL);
+    dm_device_attr_add(&attr);
+
+    dm_init_device_attr(&attr, device_id, "class", SF_PRIV_OVERWRITE,
+                        (void*)&pcidev[devind], pci_class_show, NULL);
+    dm_device_attr_add(&attr);
+
     return device_id;
 }
 

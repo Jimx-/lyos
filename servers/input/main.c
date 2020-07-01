@@ -33,9 +33,16 @@
 #include <libsysfs/libsysfs.h>
 #include <libchardriver/libchardriver.h>
 
+#include "input.h"
+
+#define INVALID_INPUT_ID (-1)
+
 static int init_input();
+static int input_get_new_minor(endpoint_t owner);
 static int input_event(MESSAGE* msg);
 static void input_other(MESSAGE* msg);
+
+static struct input_dev devs[INPUT_DEV_MAX];
 
 static struct chardriver input_driver = {
     .cdr_other = input_other,
@@ -53,6 +60,12 @@ int main()
 
 static int init_input()
 {
+    int i;
+
+    for (i = 0; i < INPUT_DEV_MAX; i++) {
+        devs[i].owner = NO_TASK;
+    }
+
     /* tell TTY that we're up */
     MESSAGE msg;
     msg.type = INPUT_TTY_UP;
@@ -60,6 +73,25 @@ static int init_input()
     send_recv(SEND, TASK_TTY, &msg);
 
     return 0;
+}
+
+static int input_get_new_minor(endpoint_t owner)
+{
+    int i;
+
+    for (i = 0; i < INPUT_DEV_MAX; i++) {
+        if (devs[i].owner == NO_TASK) {
+            break;
+        }
+    }
+
+    if (i != INPUT_DEV_MAX) {
+        devs[i].owner = owner;
+
+        return i;
+    }
+
+    return INVALID_INPUT_ID;
 }
 
 static int input_event(MESSAGE* msg)

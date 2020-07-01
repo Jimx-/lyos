@@ -16,7 +16,7 @@
 #ifndef _TTY_H_
 #define _TTY_H_
 
-#include "termios.h"
+#include <termios.h>
 #include <sys/types.h>
 #include <libdevman/libdevman.h>
 
