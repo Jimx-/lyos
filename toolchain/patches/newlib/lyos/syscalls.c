@@ -774,6 +774,12 @@ int read(int fd, void* buf, int count)
     return msg.RETVAL;
 }
 
+ssize_t readlink(const char* pathname, char* buf, size_t bufsiz)
+{
+    printf("readlink: not implemented\n");
+    return -ENOSYS;
+}
+
 int ioctl(int fd, int request, void* data)
 {
     MESSAGE msg;

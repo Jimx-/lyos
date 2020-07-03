@@ -409,6 +409,8 @@ enum msgtype {
     INPUT_TTY_UP,
     INPUT_TTY_EVENT,
     INPUT_SETLEDS,
+    INPUT_CONNECT,
+    INPUT_CONF,
 
     /* IPC */
     IPC_SHMGET = IPC_REQ_BASE,

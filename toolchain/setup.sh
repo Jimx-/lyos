@@ -63,8 +63,8 @@ if $BUILD_GCC; then
     unset PKG_CONFIG_LIBDIR
 
     pushd gcc-$SUBARCH
-    $DIR/sources/gcc-9.2.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
-    make all-gcc all-target-libgcc -j4 || cmd_error
+    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
+    make all-gcc all-target-libgcc -j || cmd_error
     make install-gcc install-target-libgcc || cmd_error
 
     popd

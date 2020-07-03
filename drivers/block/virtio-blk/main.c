@@ -449,6 +449,8 @@ static int virtio_blk_config(void)
 
         printl("  Block size: %d\n", blk_config.blk_size);
     }
+
+    return 0;
 }
 
 static int virtio_blk_probe(int instance)

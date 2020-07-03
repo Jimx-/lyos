@@ -69,8 +69,10 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
                 sym = ldso_find_sym(si, symnum, &def_obj, 0);
                 if (!sym) continue;
                 *where += (Elf32_Addr)(def_obj->relocbase + sym->st_value);
-                // xprintf("GLOB_DAT: %s in %s -> %x in %s\n", (def_obj->strtab
-                // + sym->st_name), si->name, *where, def_obj->name);
+                /* xprintf("GLOB_DAT: %s in %s -> %x in %s\n", */
+                /*         (def_obj->strtab + sym->st_name), si->name, *where,
+                 */
+                /*         def_obj->name); */
                 break;
             case R_386_RELATIVE:
                 *where += (Elf32_Addr)si->relocbase;

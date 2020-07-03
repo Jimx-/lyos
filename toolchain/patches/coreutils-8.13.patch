@@ -361,33 +361,6 @@ diff -rupN old/lib/getdtablesize.c new/lib/getdtablesize.c
  }
  
 -#endif
-diff -rupN old/lib/readlink.c new/lib/readlink.c
---- old/lib/readlink.c	2011-04-25 01:21:45.000000000 +0800
-+++ new/lib/readlink.c	2020-05-05 17:46:16.977787597 +0800
-@@ -23,7 +23,6 @@
- #include <string.h>
- #include <sys/stat.h>
- 
--#if !HAVE_READLINK
- 
- /* readlink() substitute for systems that don't have a readlink() function,
-    such as DJGPP 2.03 and mingw32.  */
-@@ -42,9 +41,6 @@ readlink (const char *name, char *buf _G
-   return -1;
- }
- 
--#else /* HAVE_READLINK */
--
--# undef readlink
- 
- /* readlink() wrapper that uses correct types, for systems like cygwin
-    1.5.x where readlink returns int, and which rejects trailing slash,
-@@ -70,5 +66,3 @@ rpl_readlink (const char *name, char *bu
- # endif /* READLINK_TRAILING_SLASH_BUG */
-   return readlink (name, buf, bufsize);
- }
--
--#endif /* HAVE_READLINK */
 diff -rupN old/lib/save-cwd.c new/lib/save-cwd.c
 --- old/lib/save-cwd.c	2011-04-30 03:39:05.000000000 +0800
 +++ new/lib/save-cwd.c	2020-05-05 17:50:44.215666175 +0800

@@ -246,6 +246,14 @@ struct mess_input_tty_event {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_input_tty_event);
 
+struct mess_input_conf {
+    int status;
+    int id;
+
+    u8 _pad[48];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_input_conf);
+
 typedef struct {
     int source;
     int type;
@@ -270,6 +278,7 @@ typedef struct {
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;
         struct mess_inputdriver_input_event m_inputdriver_input_event;
         struct mess_input_tty_event m_input_tty_event;
+        struct mess_input_conf m_input_conf;
 
         u8 _pad[56];
     } u;

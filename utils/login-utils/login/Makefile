@@ -1,7 +1,6 @@
-
-CFLAGS 	=
-SRCS 	= login.c
-PROG 	= login
+CFLAGS	=
+SRCS	= login.c
+PROG	= login
 
 INSTALL_PREFIX=/usr/bin
 

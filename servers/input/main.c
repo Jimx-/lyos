@@ -63,6 +63,7 @@ static int init_input()
     int i;
 
     for (i = 0; i < INPUT_DEV_MAX; i++) {
+        devs[i].minor = i;
         devs[i].owner = NO_TASK;
     }
 
@@ -94,6 +95,8 @@ static int input_get_new_minor(endpoint_t owner)
     return INVALID_INPUT_ID;
 }
 
+static int input_connect(MESSAGE* msg) { return SUSPEND; }
+
 static int input_event(MESSAGE* msg)
 {
     MESSAGE msg2tty;
@@ -113,6 +116,9 @@ static void input_other(MESSAGE* msg)
     int src = msg->source;
 
     switch (msg->type) {
+    case INPUT_CONNECT:
+        msg->RETVAL = input_connect(msg);
+        break;
     case INPUT_SEND_EVENT:
         msg->RETVAL = input_event(msg);
         break;
@@ -123,6 +129,6 @@ static void input_other(MESSAGE* msg)
 
     if (msg->RETVAL != SUSPEND) {
         msg->type = SYSCALL_RET;
-        send_recv(SEND, src, msg);
+        send_recv(SEND_NONBLOCK, src, msg);
     }
 }
