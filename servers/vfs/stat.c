@@ -90,6 +90,36 @@ int do_stat(void)
     return retval;
 }
 
+int do_lstat(void)
+{
+    int namelen = self->msg_in.NAME_LEN + 1;
+    char pathname[MAX_PATH];
+    if (namelen > MAX_PATH) return ENAMETOOLONG;
+
+    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
+    pathname[namelen] = 0;
+
+    struct lookup lookup;
+    struct inode* pin = NULL;
+    struct vfs_mount* vmnt = NULL;
+
+    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_READ;
+    pin = resolve_path(&lookup, fproc);
+
+    if (!pin) return ENOENT;
+
+    int retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                              fproc->endpoint, self->msg_in.BUF);
+
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
+    put_inode(pin);
+
+    return retval;
+}
+
 /**
  * <Ring 1> Perform the fstat syscall.
  * @param  p Ptr to the message.

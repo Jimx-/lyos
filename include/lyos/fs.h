@@ -24,6 +24,11 @@
 #define MAX_PATH 512
 #define FS_LABEL_MAX 15
 
+/* VFS/FS flags */
+
+/* Lookup flags */
+#define LKF_SYMLINK 0x01 /* Return a symbolic link node */
+
 /* VFS/FS error messages */
 #define EENTERMOUNT (-301)
 #define ELEAVEMOUNT (-302)

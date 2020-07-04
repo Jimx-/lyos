@@ -52,8 +52,9 @@ struct vfs_mount* get_free_vfs_mount();
 int do_vfs_open(MESSAGE* p);
 
 int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
-int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev, ino_t start,
-                   ino_t root, struct fproc* fp, struct lookup_result* ret);
+int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
+                   struct lookup* lookup, struct fproc* fp,
+                   struct lookup_result* ret);
 int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly, int is_root,
                       struct lookup_result* res);
 
@@ -90,6 +91,7 @@ int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
                       u64* newpos, size_t* bytes_rdwt);
 
 int do_stat(void);
+int do_lstat(void);
 int do_fstat(void);
 int do_access(void);
 int do_chmod(int type);

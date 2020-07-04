@@ -77,7 +77,7 @@ int do_rdlink(void)
               self->msg_in.NAME_LEN);
     pathname[self->msg_in.NAME_LEN] = '\0';
 
-    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
     pin = resolve_path(&lookup, fproc);

@@ -34,8 +34,9 @@
 #include "proto.h"
 #include "global.h"
 
-int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev, ino_t start,
-                   ino_t root, struct fproc* fp, struct lookup_result* ret)
+int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
+                   struct lookup* lookup, struct fproc* fp,
+                   struct lookup_result* ret)
 {
     MESSAGE m;
     int retval;
@@ -48,9 +49,9 @@ int request_lookup(endpoint_t fs_e, char* pathname, dev_t dev, ino_t start,
     m.REQ_DEV = dev;
     m.REQ_START_INO = start;
     m.REQ_ROOT_INO = root;
-    m.REQ_NAMELEN = strlen(pathname);
-    m.REQ_PATHNAME = pathname;
-    m.REQ_FLAGS = 0;
+    m.REQ_NAMELEN = strlen(lookup->pathname);
+    m.REQ_PATHNAME = lookup->pathname;
+    m.REQ_FLAGS = lookup->flags;
     m.REQ_UCRED = &ucred;
 
     memset(ret, 0, sizeof(struct lookup_result));
@@ -148,8 +149,7 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
 
     if (fp->root->i_dev == fp->pwd->i_dev) root_ino = fp->root->i_num;
 
-    ret =
-        request_lookup(start->i_fs_ep, pathname, dev, num, root_ino, fp, &res);
+    ret = request_lookup(start->i_fs_ep, dev, num, root_ino, lookup, fp, &res);
     if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
         if (vmnt) unlock_vmnt(vmnt);
         *(lookup->vmnt) = NULL;
@@ -212,7 +212,7 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
         }
         *lookup->vmnt = vmnt;
 
-        ret = request_lookup(fs_e, pathname, dir_pin->i_dev, dir_num, root_ino,
+        ret = request_lookup(fs_e, dir_pin->i_dev, dir_num, root_ino, lookup,
                              fp, &res);
 
         if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {

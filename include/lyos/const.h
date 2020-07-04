@@ -309,6 +309,7 @@ enum msgtype {
     SELECT, /* 58 */
     SYNC,
     READLINK,
+    LSTAT, /* 61 */
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

@@ -105,7 +105,7 @@ int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m)
     int dev = m->REQ_DEV;
     int start = m->REQ_START_INO;
     int root = m->REQ_ROOT_INO;
-    // int flags = (int)m->REQ_FLAGS;
+    int flags = m->REQ_FLAGS;
     int name_len = m->REQ_NAMELEN;
     // off_t offset;
     struct fsdriver_node cur_node, next_node;
@@ -163,7 +163,7 @@ int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m)
             break;
 
         /* resolve symlink */
-        if (S_ISLNK(next_node.fn_mode) && (*cp)) {
+        if (S_ISLNK(next_node.fn_mode) && (*cp || !(flags & LKF_SYMLINK))) {
             if (++symloop < _POSIX_SYMLOOP_MAX) {
                 retval = resolve_link(fsd, dev, next_node.fn_num, pathname,
                                       sizeof(pathname), cp);

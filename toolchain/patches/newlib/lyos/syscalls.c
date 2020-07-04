@@ -879,7 +879,28 @@ int _stat(const char* path, struct stat* buf)
     __attribute__((weak, alias("stat")));
 int _fstat(int fd, struct stat* buf) __attribute__((weak, alias("fstat")));
 
-int lstat(const char* path, struct stat* buf) { return stat(path, buf); }
+int lstat(const char* path, struct stat* buf)
+{
+    MESSAGE msg;
+
+    msg.type = LSTAT;
+
+    msg.PATHNAME = (void*)path;
+    msg.BUF = (void*)buf;
+    msg.NAME_LEN = strlen(path);
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+    // assert(msg.type == SYSCALL_RET);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return msg.RETVAL;
+}
 
 int write(int fd, const void* buf, int count)
 {

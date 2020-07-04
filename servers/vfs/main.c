@@ -164,6 +164,9 @@ static void do_work(void)
     case FSTAT:
         self->msg_out.RETVAL = do_fstat();
         break;
+    case LSTAT:
+        self->msg_out.RETVAL = do_lstat();
+        break;
     case ACCESS:
         self->msg_out.RETVAL = do_access();
         break;
