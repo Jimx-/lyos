@@ -54,3 +54,18 @@ int sysfs_publish_u32(char* key, u32 value, int flags)
 
     return msg.RETVAL;
 }
+
+int sysfs_publish_link(char* target, char* linkpath)
+{
+    MESSAGE msg;
+
+    msg.type = SYSFS_PUBLISH_LINK;
+    msg.u.m_sysfs_publish_link.target = target;
+    msg.u.m_sysfs_publish_link.target_len = strlen(target);
+    msg.u.m_sysfs_publish_link.link_path = linkpath;
+    msg.u.m_sysfs_publish_link.link_path_len = strlen(linkpath);
+
+    send_recv(BOTH, TASK_SYSFS, &msg);
+
+    return msg.RETVAL;
+}

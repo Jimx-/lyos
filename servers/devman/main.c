@@ -33,7 +33,7 @@
 #include <libmemfs/libmemfs.h>
 
 static void devman_init();
-static int devfs_message_hook(MESSAGE* msg);
+static void devfs_message_hook(MESSAGE* msg);
 
 struct memfs_hooks fs_hooks = {
     .message_hook = devfs_message_hook,
@@ -71,37 +71,38 @@ static void devman_init()
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
 }
 
-static int devfs_message_hook(MESSAGE* msg)
+static void devfs_message_hook(MESSAGE* msg)
 {
-    int retval = 0;
-
     switch (msg->type) {
     case DM_DEVICE_ADD:
-        retval = do_device_add(msg);
+        msg->RETVAL = do_device_add(msg);
         break;
     case DM_GET_DRIVER:
-        retval = do_get_driver(msg);
+        msg->RETVAL = do_get_driver(msg);
         break;
     case DM_BUS_REGISTER:
-        retval = do_bus_register(msg);
+        msg->RETVAL = do_bus_register(msg);
         break;
     case DM_DEVICE_REGISTER:
-        retval = do_device_register(msg);
+        msg->RETVAL = do_device_register(msg);
         break;
     case DM_BUS_ATTR_ADD:
-        retval = do_bus_attr_add(msg);
+        msg->RETVAL = do_bus_attr_add(msg);
         break;
     case DM_DEVICE_ATTR_ADD:
-        retval = do_device_attr_add(msg);
+        msg->RETVAL = do_device_attr_add(msg);
         break;
     case SYSFS_DYN_SHOW:
     case SYSFS_DYN_STORE:
         msg->CNT = sysfs_handle_dyn_attr(msg);
         break;
     default:
-        retval = ENOSYS;
+        msg->RETVAL = ENOSYS;
         break;
     }
 
-    return retval;
+    if (msg->RETVAL != SUSPEND) {
+        msg->type = SYSCALL_RET;
+        send_recv(SEND_NONBLOCK, msg->source, msg);
+    }
 }

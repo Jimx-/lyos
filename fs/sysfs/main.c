@@ -36,14 +36,12 @@
 #include "proto.h"
 
 static int sysfs_init();
-static int sysfs_message_hook(MESSAGE* m);
+static void sysfs_message_hook(MESSAGE* m);
 
 struct memfs_hooks fs_hooks = {
-    .init_hook = NULL,
     .message_hook = sysfs_message_hook,
     .read_hook = sysfs_read_hook,
     .write_hook = sysfs_write_hook,
-    .getdents_hook = NULL,
 };
 
 int main()
@@ -67,21 +65,27 @@ static int sysfs_init()
     return 0;
 }
 
-static int sysfs_message_hook(MESSAGE* m)
+static void sysfs_message_hook(MESSAGE* m)
 {
     int msgtype = m->type;
-    int retval = 0;
 
     switch (msgtype) {
     case SYSFS_PUBLISH:
-        retval = do_publish(m);
+        m->RETVAL = do_publish(m);
+        break;
+    case SYSFS_PUBLISH_LINK:
+        m->RETVAL = do_publish_link(m);
         break;
     case SYSFS_RETRIEVE:
-        retval = do_retrieve(m);
+        m->RETVAL = do_retrieve(m);
         break;
     default:
-        return ENOSYS;
+        m->RETVAL = ENOSYS;
+        break;
     }
 
-    return retval;
+    if (m->RETVAL != SUSPEND) {
+        m->type = SYSCALL_RET;
+        send_recv(SEND_NONBLOCK, m->source, m);
+    }
 }

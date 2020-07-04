@@ -1,8 +1,9 @@
 #ifndef _LIBSYSFS_H_
 #define _LIBSYSFS_H_
 
-#include <lyos/list.h>
+#include <sys/types.h>
 #include <sys/syslimits.h>
+#include <lyos/list.h>
 
 /* dynamic attribute */
 typedef int sysfs_dyn_attr_id_t;
@@ -22,10 +23,12 @@ typedef struct sysfs_dyn_attr {
     sysfs_dyn_attr_store_t store;
 } __attribute__((packed)) sysfs_dyn_attr_t;
 
-/* privilege */
+/* Privilege */
 #define SF_PRIV_RETRIEVE 0x1
 #define SF_PRIV_OVERWRITE 0x2
 #define SF_PRIV_DELETE 0x4
+
+/* Node types */
 #define SF_TYPE_DOMAIN 0x10
 #define SF_TYPE_U32 0x20
 #define SF_TYPE_DEVNO 0x40
@@ -42,6 +45,7 @@ typedef struct sysfs_dyn_attr {
 
 int sysfs_publish_domain(char* key, int flags);
 int sysfs_publish_u32(char* key, u32 value, int flags);
+int sysfs_publish_link(char* target, char* linkpath);
 
 int sysfs_retrieve_u32(char* key, u32* value);
 

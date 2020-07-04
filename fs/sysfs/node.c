@@ -59,6 +59,7 @@ sysfs_node_t* new_node(char* name, int flags)
     strlcpy(node->name, name, NAME_MAX);
     node->flags = flags;
     node->parent = NULL;
+    node->link_target = NULL;
 
     switch (NODE_TYPE(node)) {
     case SF_TYPE_DYNAMIC:
@@ -180,6 +181,10 @@ static void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
     case SF_TYPE_DOMAIN:
         bits = 0755;
         file_type = I_DIRECTORY;
+        break;
+    case SF_TYPE_LINK:
+        bits = 0777;
+        file_type = I_SYMBOLIC_LINK;
         break;
     default:
         bits = 0644;

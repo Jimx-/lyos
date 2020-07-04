@@ -25,7 +25,7 @@
 
 struct memfs_hooks {
     int (*init_hook)();
-    int (*message_hook)(MESSAGE* m);
+    void (*message_hook)(MESSAGE* m);
     ssize_t (*read_hook)(struct memfs_inode* inode, char* ptr, size_t count,
                          off_t offset, cbdata_t data);
     ssize_t (*write_hook)(struct memfs_inode* inode, char* ptr, size_t count,

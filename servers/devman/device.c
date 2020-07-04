@@ -58,6 +58,8 @@ static struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 
 static struct device devices[NR_DEVICES];
 
+static int bus_add_device(struct device* dev);
+
 void init_device()
 {
     int i;
@@ -114,8 +116,13 @@ static int publish_device(struct device* dev)
 {
     char label[MAX_PATH];
     device_domain_label(dev, label);
-    int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
+    int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+    if (retval) {
+        return retval;
+    }
+
+    retval = bus_add_device(dev);
     if (retval) {
         return retval;
     }
@@ -134,6 +141,32 @@ static int publish_device(struct device* dev)
         if (!pin) {
             return ENOMEM;
         }
+    }
+
+    return 0;
+}
+
+static int bus_add_device(struct device* dev)
+{
+    char bus_root[MAX_PATH - BUS_NAME_MAX - 1];
+    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
+    char label[MAX_PATH];
+    int retval;
+
+    device_domain_label(dev, device_root);
+
+    if (dev->bus) {
+        bus_domain_label(dev->bus, bus_root);
+
+        /* bus -> device */
+        snprintf(label, MAX_PATH, "%s.devices.%s", bus_root, dev->name);
+        retval = sysfs_publish_link(device_root, label);
+        if (retval) return retval;
+
+        /* device -> bus */
+        snprintf(label, MAX_PATH, "%s.subsystem", device_root);
+        retval = sysfs_publish_link(bus_root, label);
+        if (retval) return retval;
     }
 
     return 0;

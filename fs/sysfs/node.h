@@ -37,6 +37,7 @@ typedef struct sysfs_node {
     int flags;
 
     struct sysfs_node* parent;
+    struct sysfs_node* link_target;
 
     union {
         char* str;

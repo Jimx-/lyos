@@ -69,6 +69,36 @@ int do_publish(MESSAGE* m)
     return 0;
 }
 
+int do_publish_link(MESSAGE* m)
+{
+    endpoint_t src = m->source;
+    size_t target_len, link_path_len;
+    char target[PATH_MAX + 1], link_path[PATH_MAX + 1];
+    sysfs_node_t *target_node, *link_node;
+
+    target_len = m->u.m_sysfs_publish_link.target_len;
+    link_path_len = m->u.m_sysfs_publish_link.link_path_len;
+
+    if (target_len > PATH_MAX || link_path_len > PATH_MAX) return ENAMETOOLONG;
+
+    data_copy(SELF, target, src, m->u.m_sysfs_publish_link.target, target_len);
+    target[target_len] = '\0';
+
+    data_copy(SELF, link_path, src, m->u.m_sysfs_publish_link.link_path,
+              link_path_len);
+    link_path[link_path_len] = '\0';
+
+    target_node = lookup_node_by_name(target);
+    if (!target_node) return errno;
+
+    link_node = create_node(link_path, SF_TYPE_LINK | SF_PRIV_OVERWRITE);
+    if (!link_node) return errno;
+
+    link_node->link_target = target_node;
+
+    return 0;
+}
+
 int do_retrieve(MESSAGE* m)
 {
     endpoint_t src = m->source;

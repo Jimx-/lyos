@@ -86,9 +86,10 @@ int fsdriver_start(struct fsdriver* fsd)
             m.RET_RETVAL = fsdriver_symlink(fsd, &m);
             break;
         default:
-            if (fsd->fs_other)
-                m.RET_RETVAL = fsd->fs_other(&m);
-            else
+            if (fsd->fs_other) {
+                fsd->fs_other(&m);
+                reply = 0;
+            } else
                 m.RET_RETVAL = ENOSYS;
             break;
         }

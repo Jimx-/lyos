@@ -16,7 +16,10 @@
 #ifndef _DEVMAN_PROTO_H_
 #define _DEVMAN_PROTO_H_
 
+#include <lyos/type.h>
 #include <libdevman/libdevman.h>
+
+#include "type.h"
 
 void init_dd_map();
 int map_driver(dev_t dev, int type, endpoint_t drv_ep);
@@ -24,6 +27,7 @@ int do_device_add(MESSAGE* m);
 int do_get_driver(MESSAGE* m);
 
 void init_bus();
+void bus_domain_label(struct bus_type* bus, char* buf);
 bus_type_id_t do_bus_register(MESSAGE* m);
 struct bus_type* get_bus_type(bus_type_id_t id);
 int do_bus_attr_add(MESSAGE* m);

@@ -88,7 +88,7 @@ static struct bus_type* alloc_bus_type()
     return type;
 }
 
-static void bus_domain_label(struct bus_type* bus, char* buf)
+void bus_domain_label(struct bus_type* bus, char* buf)
 {
     snprintf(buf, MAX_PATH, SYSFS_BUS_DOMAIN_LABEL, bus->name);
 }

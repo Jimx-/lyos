@@ -27,7 +27,7 @@
 
 struct memfs_hooks fs_hooks;
 
-static int memfs_other(MESSAGE* m);
+static void memfs_other(MESSAGE* m);
 
 struct fsdriver fsd = {
     .name = NULL,
@@ -67,10 +67,7 @@ int memfs_start(char* name, struct memfs_hooks* hooks,
     return fsdriver_start(&fsd);
 }
 
-static int memfs_other(MESSAGE* m)
+static void memfs_other(MESSAGE* m)
 {
-    if (fs_hooks.message_hook)
-        return fs_hooks.message_hook(m);
-    else
-        return ENOSYS;
+    if (fs_hooks.message_hook) fs_hooks.message_hook(m);
 }

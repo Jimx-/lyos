@@ -69,7 +69,7 @@ struct fsdriver {
     int (*fs_driver)(dev_t dev);
     int (*fs_sync)();
 
-    int (*fs_other)(MESSAGE* m);
+    void (*fs_other)(MESSAGE* m);
 } __attribute__((packed));
 
 int fsdriver_start(struct fsdriver* fsd);
