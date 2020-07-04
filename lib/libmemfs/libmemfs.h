@@ -45,10 +45,10 @@ int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
 int memfs_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
                  int* is_mountpoint);
 int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
-int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
-                    struct fsdriver_data* data, u64* rwpos, int* count);
-int memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
-                   size_t* count);
+ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
+                        struct fsdriver_data* data, loff_t rwpos, size_t count);
+ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
+                       loff_t* ppos, size_t count);
 
 int memfs_init_buf();
 int memfs_free_buf();

@@ -42,21 +42,21 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
  * @param  p Ptr to message.
  * @return   Zero on success.
  */
-int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-              loff_t* rwpos, size_t* count)
+ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
+                  loff_t rwpos, size_t count)
 {
-    loff_t position = *rwpos;
-    size_t nbytes = *count;
+    loff_t position = rwpos;
+    size_t nbytes = count;
     off_t data_offset = 0;
 
-    int retval = 0;
+    ssize_t retval = 0;
     ext2_inode_t* pin = find_ext2_inode(dev, num);
-    if (!pin) return EINVAL;
+    if (!pin) return -EINVAL;
 
-    int file_size = pin->i_size;
-    int block_size = pin->i_sb->sb_block_size;
+    size_t file_size = pin->i_size;
+    size_t block_size = pin->i_sb->sb_block_size;
 
-    int bytes_rdwt = 0;
+    ssize_t bytes_rdwt = 0;
 
     while (nbytes > 0) {
         /* split */
@@ -87,8 +87,6 @@ int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
         data_offset += chunk;
     }
 
-    *rwpos = position;
-
     /* update things */
     int file_type = pin->i_mode & I_TYPE;
     if (rw_flag == WRITE) {
@@ -104,11 +102,11 @@ int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
             pin->i_update = CTIME | MTIME;
         }
         pin->i_dirt = 1;
+
+        return bytes_rdwt;
     }
 
-    *count = bytes_rdwt;
-
-    return 0;
+    return -retval;
 }
 
 /**
@@ -449,19 +447,20 @@ static int dirent_type(ext2_dir_entry_t* dp)
     }
 }
 
-int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
-                  size_t* count)
+ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
+                      loff_t* ppos, size_t count)
 {
 #define GETDENTS_BUFSIZE (sizeof(struct dirent) + EXT2_NAME_LEN + 1)
 #define GETDENTS_ENTRIES 8
     static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
 
-    int retval = 0;
+    struct fsd_buffer* bp;
+    ssize_t retval = 0;
     int done = 0;
-    off_t pos = *ppos;
+    loff_t pos = *ppos;
 
     ext2_inode_t* pin = find_ext2_inode(dev, num);
-    if (!pin) return EINVAL;
+    if (!pin) return -EINVAL;
 
     size_t block_size = pin->i_sb->sb_block_size;
     off_t block_off = pos % block_size; /* offset in block */
@@ -470,32 +469,33 @@ int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
     off_t newpos = pin->i_size;
 
     struct fsdriver_dentry_list list;
-    fsdriver_dentry_list_init(&list, data, *count, getdents_buf,
+    fsdriver_dentry_list_init(&list, data, count, getdents_buf,
                               sizeof(getdents_buf));
 
     for (; block_pos < pin->i_size; block_pos += block_size) {
         block_t b = ext2_read_map(pin, block_pos);
-        struct fsd_buffer* bp;
+
         retval = fsd_get_block(&bp, pin->i_dev, b);
-        if (retval) return retval;
+        if (retval) return -retval;
 
         ext2_dir_entry_t* dp = (ext2_dir_entry_t*)bp->data;
 
         off_t cur_pos = block_pos;
+
         for (; cur_pos + dp->d_rec_len <= pos &&
                (char*)EXT2_NEXT_DIR_ENTRY(dp) - bp->data < block_size;
              dp = EXT2_NEXT_DIR_ENTRY(dp)) {
             cur_pos += dp->d_rec_len;
         }
+
         for (; (char*)dp - (char*)bp->data < block_size;
              dp = EXT2_NEXT_DIR_ENTRY(dp)) {
             if (dp->d_inode == 0) continue;
 
             off_t ent_pos = block_pos + ((char*)dp - bp->data);
 
-            int retval =
-                fsdriver_dentry_list_add(&list, dp->d_inode, dp->d_name,
-                                         dp->d_name_len, dirent_type(dp));
+            retval = fsdriver_dentry_list_add(&list, dp->d_inode, dp->d_name,
+                                              dp->d_name_len, dirent_type(dp));
 
             if (retval <= 0) {
                 newpos = ent_pos;
@@ -508,15 +508,11 @@ int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
         if (done) break;
     }
 
-    int bytes = fsdriver_dentry_list_finish(&list);
-    if (bytes < 0)
-        retval = -bytes;
-    else
-        *count = bytes;
-
-    *ppos = newpos;
-    pin->i_update |= ATIME;
-    pin->i_dirt = 1;
+    if (retval >= 0 && (retval = fsdriver_dentry_list_finish(&list)) >= 0) {
+        *ppos = newpos;
+        pin->i_update |= ATIME;
+        pin->i_dirt = 1;
+    }
 
     put_ext2_inode(pin);
 

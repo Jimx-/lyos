@@ -308,6 +308,7 @@ enum msgtype {
     FUTEX,
     SELECT, /* 58 */
     SYNC,
+    READLINK,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -338,6 +339,7 @@ enum msgtype {
     FS_GETDENTS,
     FS_THREAD_WAKEUP,
     FS_MKDIR,
+    FS_RDLINK,
 
     FS_TXN_ID = VFS_TXN_BASE,
 

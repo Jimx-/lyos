@@ -76,7 +76,7 @@ static int resolve_link(struct fsdriver* fsd, dev_t dev, ino_t num,
 {
     struct fsdriver_data data;
     char path[PATH_MAX];
-    int retval;
+    ssize_t retval;
 
     data.src = SELF;
     data.buf = path;
@@ -84,7 +84,11 @@ static int resolve_link(struct fsdriver* fsd, dev_t dev, ino_t num,
 
     if (fsd->fs_rdlink == NULL) return ENOSYS;
 
-    if ((retval = fsd->fs_rdlink(dev, num, &data, &size)) != 0) return retval;
+    if ((retval = fsd->fs_rdlink(dev, num, &data, size)) < 0) {
+        return -retval;
+    } else {
+        size = retval;
+    }
 
     if (size + strlen(ptr) >= sizeof(path)) return ENAMETOOLONG;
 

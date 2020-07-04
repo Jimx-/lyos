@@ -193,10 +193,13 @@ static void do_work(void)
         break;
     case CHMOD:
     case FCHMOD:
-        self->msg_in.RETVAL = do_chmod(msgtype);
+        self->msg_out.RETVAL = do_chmod(msgtype);
         break;
     case GETDENTS:
         self->msg_out.RETVAL = do_getdents();
+        break;
+    case READLINK:
+        self->msg_out.RETVAL = do_rdlink();
         break;
     case SELECT:
         self->msg_out.RETVAL = do_select();

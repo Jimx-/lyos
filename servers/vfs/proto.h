@@ -73,7 +73,7 @@ int do_getdents(void);
 
 /* fs/Lyos/link.c */
 int do_unlink(MESSAGE* p);
-
+int do_rdlink(void);
 int truncate_node(struct inode* pin, int newsize);
 
 int do_dup(void);

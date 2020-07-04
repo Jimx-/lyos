@@ -54,15 +54,16 @@ struct fsdriver {
                      uid_t uid, gid_t gid, struct fsdriver_node* fn);
     int (*fs_mkdir)(dev_t dev, ino_t dir_num, char* name, mode_t mode,
                     uid_t uid, gid_t gid);
-    int (*fs_readwrite)(dev_t dev, ino_t num, int rw_flag,
-                        struct fsdriver_data* data, u64* rwpos, int* count);
-    int (*fs_rdlink)(dev_t dev, ino_t num, struct fsdriver_data* data,
-                     size_t* bytes);
+    ssize_t (*fs_readwrite)(dev_t dev, ino_t num, int rw_flag,
+                            struct fsdriver_data* data, loff_t rwpos,
+                            size_t count);
+    ssize_t (*fs_rdlink)(dev_t dev, ino_t num, struct fsdriver_data* data,
+                         size_t bytes);
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data* data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t* mode);
-    int (*fs_getdents)(dev_t dev, ino_t num, struct fsdriver_data* data,
-                       u64* position, size_t* count);
+    ssize_t (*fs_getdents)(dev_t dev, ino_t num, struct fsdriver_data* data,
+                           loff_t* position, size_t count);
     int (*fs_driver)(dev_t dev);
     int (*fs_sync)();
 
@@ -96,6 +97,7 @@ int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_create(struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_rdlink(struct fsdriver* fsd, MESSAGE* m);
 
 int fsdriver_driver(dev_t dev);
 

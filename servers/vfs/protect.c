@@ -149,7 +149,6 @@ int do_chmod(int type)
         lookup.vmnt_lock = RWL_READ;
         lookup.inode_lock = RWL_WRITE;
         pin = resolve_path(&lookup, fproc);
-
     } else if (type == FCHMOD) {
         filp = get_filp(fproc, self->msg_in.FD, RWL_WRITE);
         if (!filp) return EBADF;

@@ -156,11 +156,11 @@ int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (int)m->RWDEV;
     ino_t num = m->RWINO;
-    u64 rwpos = m->RWPOS;
+    loff_t rwpos = m->RWPOS;
     int src = m->RWSRC;
     int rw_flag = m->RWFLAG;
     void* buf = m->RWBUF;
-    int nbytes = m->RWCNT;
+    size_t nbytes = m->RWCNT;
 
     if (fsd->fs_readwrite == NULL) return ENOSYS;
 
@@ -168,13 +168,41 @@ int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
     data.src = src;
     data.buf = buf;
 
-    int retval = fsd->fs_readwrite(dev, num, rw_flag, &data, &rwpos, &nbytes);
-    if (retval) return retval;
+    ssize_t retval = fsd->fs_readwrite(dev, num, rw_flag, &data, rwpos, nbytes);
 
-    m->RWPOS = rwpos;
-    m->RWCNT = nbytes;
+    if (retval >= 0) {
+        rwpos += retval;
 
-    return 0;
+        m->RWPOS = rwpos;
+        m->RWCNT = retval;
+
+        return 0;
+    }
+
+    return -retval;
+}
+
+int fsdriver_rdlink(struct fsdriver* fsd, MESSAGE* m)
+{
+    struct fsdriver_data data;
+    dev_t dev = m->RWDEV;
+    ino_t num = m->RWINO;
+    size_t size = m->RWCNT;
+    ssize_t retval;
+
+    if (!fsd->fs_rdlink) return ENOSYS;
+
+    data.src = m->RWSRC;
+    data.buf = m->RWBUF;
+
+    retval = fsd->fs_rdlink(dev, num, &data, size);
+
+    if (retval >= 0) {
+        m->RWCNT = retval;
+        return 0;
+    }
+
+    return -retval;
 }
 
 int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m)
@@ -220,23 +248,27 @@ int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m)
 
 int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
 {
+    struct fsdriver_data data;
     dev_t dev = m->RWDEV;
     ino_t num = m->RWINO;
-    u64 position = m->RWPOS;
+    loff_t position = m->RWPOS;
     size_t nbytes = m->RWCNT;
-    struct fsdriver_data data;
+    ssize_t retval;
+
     data.src = m->RWSRC;
     data.buf = m->RWBUF;
 
     if (fsd->fs_getdents == NULL) return ENOSYS;
 
-    int retval = fsd->fs_getdents(dev, num, &data, &position, &nbytes);
-    if (retval) return retval;
+    retval = fsd->fs_getdents(dev, num, &data, &position, nbytes);
+    if (retval >= 0) {
+        m->RWPOS = position;
+        m->RWCNT = retval;
 
-    m->RWPOS = position;
-    m->RWCNT = nbytes;
+        return 0;
+    }
 
-    return 0;
+    return -retval;
 }
 
 int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m)

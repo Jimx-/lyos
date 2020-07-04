@@ -50,20 +50,18 @@ int memfs_free_buf()
     return 0;
 }
 
-int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
-                    struct fsdriver_data* data, u64* rwpos, int* count)
+ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
+                        struct fsdriver_data* data, loff_t rwpos, size_t count)
 {
     struct memfs_inode* pin = memfs_find_inode(num);
-    if (!pin) return ENOENT;
+    if (!pin) return -ENOENT;
 
-    if (!S_ISREG(pin->i_stat.st_mode)) return EINVAL;
+    if (!S_ISREG(pin->i_stat.st_mode)) return -EINVAL;
 
     if (rw_flag == READ && fs_hooks.read_hook == NULL) {
-        *count = 0;
         return 0;
     }
     if (rw_flag == WRITE && fs_hooks.write_hook == NULL) {
-        *count = 0;
         return 0;
     }
 
@@ -71,8 +69,9 @@ int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
     size_t chunk;
     ssize_t len;
     int retval = 0;
-    for (off = 0; off < *count;) {
-        chunk = *count - off;
+
+    for (off = 0; off < count;) {
+        chunk = count - off;
         if (chunk > memfs_bufsize) chunk = memfs_bufsize;
 
         if (rw_flag == WRITE) {
@@ -80,9 +79,9 @@ int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
         }
 
         if (rw_flag == READ) {
-            len = fs_hooks.read_hook(pin, memfs_buf, chunk, *rwpos, pin->data);
+            len = fs_hooks.read_hook(pin, memfs_buf, chunk, rwpos, pin->data);
         } else {
-            len = fs_hooks.write_hook(pin, memfs_buf, chunk, *rwpos, pin->data);
+            len = fs_hooks.write_hook(pin, memfs_buf, chunk, rwpos, pin->data);
         }
 
         if (len > 0) {
@@ -94,18 +93,16 @@ int memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
 
         if (retval) {
             if (off > 0) {
-                *count = off;
-                return 0;
+                return off;
             } else
-                return retval;
+                return -retval;
         }
 
         off += len;
-        *rwpos += len;
+        rwpos += len;
 
         if (len < memfs_bufsize) break;
     }
 
-    *count = off;
-    return 0;
+    return off;
 }

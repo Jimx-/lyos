@@ -323,10 +323,10 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype);
 
 block_t ext2_read_map(ext2_inode_t* pin, loff_t position);
-int ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-              loff_t* rwpos, size_t* count);
-int ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data, u64* ppos,
-                  size_t* count);
+ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
+                  loff_t rwpos, size_t count);
+ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
+                      loff_t* ppos, size_t count);
 
 int ext2_update_group_desc(ext2_superblock_t* psb, int desc);
 void ext2_init_buffer_cache();
@@ -348,8 +348,8 @@ int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
 int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
                gid_t gid);
 
-int ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                size_t* bytes);
+ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
+                    size_t bytes);
 int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
 int ext2_chmod(dev_t dev, ino_t num, mode_t* mode);
 
