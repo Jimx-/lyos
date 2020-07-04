@@ -90,7 +90,7 @@ int init_ext2fs()
     printl("ext2fs: Ext2 filesystem driver is running\n");
 
     ext2_init_inode();
-    fsd_init_buffer_cache(1024);
+    fsdriver_init_buffer_cache(1024);
 
     err_code = 0;
 
@@ -118,7 +118,7 @@ static int ext2_mountpoint(dev_t dev, ino_t num)
 int ext2_sync()
 {
     ext2_sync_inodes();
-    fsd_flush_all();
+    fsdriver_flush_all();
 
     return 0;
 }

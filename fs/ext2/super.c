@@ -120,12 +120,12 @@ int read_ext2_super_block(dev_t dev)
         bgdesc_blocks * block_size * sizeof(ext2_bgdescriptor_t)));
 
     int i;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     for (i = 0; i < bgdesc_blocks; i++) {
-        if ((retval = fsd_get_block(&bp, dev, bgdesc_offset + i)) != 0)
+        if ((retval = fsdriver_get_block(&bp, dev, bgdesc_offset + i)) != 0)
             return retval;
         memcpy((char*)psb->sb_bgdescs + block_size * i, bp->data, block_size);
-        fsd_put_block(bp);
+        fsdriver_put_block(bp);
     }
 
 /* #define EXT2_BGDESCRIPTORS_DEBUG */
@@ -240,20 +240,20 @@ int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
 int ext2_update_group_desc(ext2_superblock_t* psb, int desc)
 {
     int retval;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     int block_size = psb->sb_block_size;
     int bgdesc_offset = 1024 / block_size + 1;
     int i = (&psb->sb_bgdescs[desc] - &psb->sb_bgdescs[0]) / block_size;
 
     bgdesc_offset += i;
 
-    if ((retval = fsd_get_block(&bp, psb->sb_dev, bgdesc_offset)) != 0)
+    if ((retval = fsdriver_get_block(&bp, psb->sb_dev, bgdesc_offset)) != 0)
         return retval;
 
     memcpy(bp->data, (char*)psb->sb_bgdescs + block_size * i, block_size);
 
-    fsd_mark_dirty(bp);
-    fsd_put_block(bp);
+    fsdriver_mark_dirty(bp);
+    fsdriver_put_block(bp);
 
     return 0;
 }

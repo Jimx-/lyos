@@ -100,7 +100,7 @@ ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
 int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype)
 {
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     ext2_dir_entry_t *pde, *prev_pde;
     loff_t pos;
     block_t b;
@@ -136,7 +136,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
     for (; pos < dir_pin->i_size; pos += dir_pin->i_sb->sb_block_size) {
         b = ext2_read_map(dir_pin, pos);
 
-        if ((ret = fsd_get_block(&bp, dir_pin->i_dev, b)) != 0) return ret;
+        if ((ret = fsdriver_get_block(&bp, dir_pin->i_dev, b)) != 0) return ret;
         prev_pde = NULL;
 
         for (pde = (ext2_dir_entry_t*)bp->data;
@@ -185,7 +185,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
                 } else {
                     *num = (ino_t)pde->d_inode;
                 }
-                fsd_put_block(bp);
+                fsdriver_put_block(bp);
                 return ret;
             }
 
@@ -216,7 +216,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
         }
 
         if (hit) break;
-        fsd_put_block(bp);
+        fsdriver_put_block(bp);
     }
 
     /* the whole directory has been searched */
@@ -245,8 +245,8 @@ int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
         pde->d_name[i] = string[i];
     pde->d_inode = *num;
 
-    fsd_mark_dirty(bp);
-    fsd_put_block(bp);
+    fsdriver_mark_dirty(bp);
+    fsdriver_put_block(bp);
     dir_pin->i_update |= CTIME | MTIME;
     dir_pin->i_dirt = 1;
 

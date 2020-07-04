@@ -127,7 +127,7 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
 {
     block_t b = 0;
     dev_t dev = 0;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     int retval;
 
     b = ext2_read_map(pin, position);
@@ -145,10 +145,10 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
         }
     } else if (rw_flag == READ) {
         /* Read that block */
-        retval = fsd_get_block(&bp, dev, b);
+        retval = fsdriver_get_block(&bp, dev, b);
     } else if (rw_flag == WRITE) {
         /* TODO: Don't read in full block */
-        retval = fsd_get_block(&bp, dev, b);
+        retval = fsdriver_get_block(&bp, dev, b);
     }
 
     if (retval) return retval;
@@ -165,10 +165,10 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
     } else {
         /* copy the data from userspace */
         fsdriver_copyin(data, data_offset, (char*)bp->data + offset, chunk);
-        fsd_mark_dirty(bp);
+        fsdriver_mark_dirty(bp);
     }
 
-    if (bp != NULL) fsd_put_block(bp);
+    if (bp != NULL) fsdriver_put_block(bp);
 
     return 0;
 }
@@ -187,7 +187,7 @@ block_t ext2_read_map(ext2_inode_t* pin, loff_t position)
     /* triple indirect slots */
     static loff_t triple_ind_s;
     static loff_t out_range_s;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
 
     if (first_time) {
         addr_in_block = pin->i_sb->sb_block_size / EXT2_BLOCK_ADDRESS_BYTES;
@@ -220,7 +220,7 @@ block_t ext2_read_map(ext2_inode_t* pin, loff_t position)
             b = pin->i_block[EXT2_TIND_BLOCK];
             if (b == NO_BLOCK) return b;
 
-            retval = fsd_get_block(&bp, pin->i_dev, b);
+            retval = fsdriver_get_block(&bp, pin->i_dev, b);
             if (retval) {
                 err_code = retval;
                 return NO_BLOCK;
@@ -231,28 +231,28 @@ block_t ext2_read_map(ext2_inode_t* pin, loff_t position)
             b = *(block_t*)(bp->data + sizeof(block_t) *
                                            index); /* num of double ind block */
             excess = excess % addr_in_block2;
-            fsd_put_block(bp);
+            fsdriver_put_block(bp);
         }
 
         if (b == 0) return b;
-        retval = fsd_get_block(&bp, pin->i_dev, b);
+        retval = fsdriver_get_block(&bp, pin->i_dev, b);
         index = excess / addr_in_block;
         b = *(block_t*)(bp->data +
                         sizeof(block_t) * index); /* num of single ind block */
         index = excess % addr_in_block; /* index into single ind blk */
-        fsd_put_block(bp);
+        fsdriver_put_block(bp);
     }
 
     if (b == NO_BLOCK) return b;
 
-    retval = fsd_get_block(&bp, pin->i_dev, b);
+    retval = fsdriver_get_block(&bp, pin->i_dev, b);
     if (retval) {
         err_code = retval;
         return NO_BLOCK;
     }
 
     b = *(block_t*)(bp->data + sizeof(block_t) * index);
-    fsd_put_block(bp);
+    fsdriver_put_block(bp);
 
     return b;
 }
@@ -274,7 +274,7 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
     static loff_t triple_ind_s;
     static loff_t out_range_s;
 
-    struct fsd_buffer *bp = NULL, *bp_dindir = NULL, *bp_tindir = NULL;
+    struct fsdriver_buffer *bp = NULL, *bp_dindir = NULL, *bp_tindir = NULL;
 
     if (first_time) {
         addr_in_block = pin->i_sb->sb_block_size / EXT2_BLOCK_ADDRESS_BYTES;
@@ -314,9 +314,9 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
                 pin->i_blocks += pin->i_sb->sb_block_size / 512;
                 new_triple = TRUE;
             } else {
-                retval = fsd_get_block(&bp_tindir, pin->i_dev, b3);
+                retval = fsdriver_get_block(&bp_tindir, pin->i_dev, b3);
                 if (new_triple) {
-                    fsd_mark_dirty(bp);
+                    fsdriver_mark_dirty(bp);
                 }
                 excess = block_pos - triple_ind_s;
                 index3 = excess / addr_in_block2;
@@ -328,13 +328,13 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
 
         if (b2 == 0) {
             if ((b2 = ext2_alloc_block(pin)) == 0) {
-                fsd_put_block(bp_tindir);
+                fsdriver_put_block(bp_tindir);
                 return (ENOSPC);
             }
             if (triple) {
                 *(block_t*)(bp_tindir->data + sizeof(block_t) * index3) =
                     b2; /* update triple indir */
-                fsd_mark_dirty(bp_tindir);
+                fsdriver_mark_dirty(bp_tindir);
             } else {
                 pin->i_block[EXT2_DIND_BLOCK] = b2;
             }
@@ -343,9 +343,9 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
         }
 
         if (b2 != 0) {
-            retval = fsd_get_block(&bp_dindir, pin->i_dev, b2);
+            retval = fsdriver_get_block(&bp_dindir, pin->i_dev, b2);
             if (new_dbl) {
-                fsd_mark_dirty(bp_dindir);
+                fsdriver_mark_dirty(bp_dindir);
             }
             index2 = excess / addr_in_block;
             b1 = *(block_t*)(bp_dindir->data + sizeof(block_t) * index2);
@@ -356,8 +356,8 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
 
     if (b1 == NO_BLOCK) {
         if ((b1 = ext2_alloc_block(pin)) == 0) {
-            fsd_put_block(bp_dindir);
-            fsd_put_block(bp_tindir);
+            fsdriver_put_block(bp_dindir);
+            fsdriver_put_block(bp_tindir);
             return ENOSPC;
         }
         if (single) {
@@ -366,14 +366,14 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
         } else {
             *(block_t*)(bp_dindir->data + sizeof(block_t) * index2) =
                 b1; /* update dbl indir */
-            fsd_mark_dirty(bp_dindir);
+            fsdriver_mark_dirty(bp_dindir);
         }
         pin->i_blocks += pin->i_sb->sb_block_size / 512;
         new_ind = 1;
     }
 
     if (b1 != 0) {
-        retval = fsd_get_block(&bp, pin->i_dev, b1);
+        retval = fsdriver_get_block(&bp, pin->i_dev, b1);
 
         if (new_ind) {
             memset(bp->data, 0, bp->size);
@@ -383,22 +383,22 @@ int ext2_write_map(ext2_inode_t* pin, loff_t position, block_t new_block)
         pin->i_blocks += pin->i_sb->sb_block_size / 512;
 
         if (b1 != 0) {
-            fsd_mark_dirty(bp);
+            fsdriver_mark_dirty(bp);
         }
 
-        fsd_put_block(bp);
+        fsdriver_put_block(bp);
     }
 
-    fsd_put_block(bp_dindir);
-    fsd_put_block(bp_tindir);
+    fsdriver_put_block(bp_dindir);
+    fsdriver_put_block(bp_tindir);
 
     return 0;
 }
 
-struct fsd_buffer* ext2_new_block(ext2_inode_t* pin, off_t position)
+struct fsdriver_buffer* ext2_new_block(ext2_inode_t* pin, off_t position)
 {
     int retval;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     block_t b = ext2_read_map(pin, position);
 
     if (b == 0) {
@@ -417,7 +417,7 @@ struct fsd_buffer* ext2_new_block(ext2_inode_t* pin, off_t position)
         }
     }
 
-    retval = fsd_get_block(&bp, pin->i_dev, b);
+    retval = fsdriver_get_block(&bp, pin->i_dev, b);
 
     if (retval) {
         err_code = retval;
@@ -454,7 +454,7 @@ ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
 #define GETDENTS_ENTRIES 8
     static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
 
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     ssize_t retval = 0;
     int done = 0;
     loff_t pos = *ppos;
@@ -475,7 +475,7 @@ ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
     for (; block_pos < pin->i_size; block_pos += block_size) {
         block_t b = ext2_read_map(pin, block_pos);
 
-        retval = fsd_get_block(&bp, pin->i_dev, b);
+        retval = fsdriver_get_block(&bp, pin->i_dev, b);
         if (retval) return -retval;
 
         ext2_dir_entry_t* dp = (ext2_dir_entry_t*)bp->data;
@@ -504,7 +504,7 @@ ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
             }
         }
 
-        fsd_put_block(bp);
+        fsdriver_put_block(bp);
         if (done) break;
     }
 

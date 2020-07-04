@@ -23,29 +23,29 @@
 #define BUFFER_HASH_SIZE ((unsigned long)1 << BUFFER_HASH_LOG2)
 #define BUFFER_HASH_MASK (BUFFER_HASH_SIZE - 1)
 
-static struct fsd_buffer* bufs;
+static struct fsdriver_buffer* bufs;
 static struct list_head buf_hash[BUFFER_HASH_SIZE];
 static struct list_head lru_head;
 static size_t cache_size = 0;
 static size_t fs_block_size = ARCH_PG_SIZE;
 
-void fsd_mark_dirty(struct fsd_buffer* bp) { bp->flags |= BF_DIRTY; }
+void fsdriver_mark_dirty(struct fsdriver_buffer* bp) { bp->flags |= BF_DIRTY; }
 
-void fsd_mark_clean(struct fsd_buffer* bp) { bp->flags &= ~BF_DIRTY; }
+void fsdriver_mark_clean(struct fsdriver_buffer* bp) { bp->flags &= ~BF_DIRTY; }
 
-int fsd_is_clean(struct fsd_buffer* bp) { return !(bp->flags & BF_DIRTY); }
+int fsdriver_is_clean(struct fsdriver_buffer* bp) { return !(bp->flags & BF_DIRTY); }
 
-static inline void remove_lru(struct fsd_buffer* bp) { list_del(&bp->list); }
+static inline void remove_lru(struct fsdriver_buffer* bp) { list_del(&bp->list); }
 
-static int get_block(struct fsd_buffer** bpp, dev_t dev, block_t block,
+static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
                      size_t block_size);
-static void put_block(struct fsd_buffer* bp);
-static int read_block(struct fsd_buffer* bp, size_t block_size);
+static void put_block(struct fsdriver_buffer* bp);
+static int read_block(struct fsdriver_buffer* bp, size_t block_size);
 
-static struct fsd_buffer* find_block(dev_t dev, block_t block)
+static struct fsdriver_buffer* find_block(dev_t dev, block_t block)
 {
     size_t hash = block & BUFFER_HASH_MASK;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     list_for_each_entry(bp, &buf_hash[hash], hash)
     {
         if (bp->dev == dev && bp->block == block) {
@@ -56,7 +56,7 @@ static struct fsd_buffer* find_block(dev_t dev, block_t block)
     return NULL;
 }
 
-static int alloc_block(struct fsd_buffer* bp, size_t block_size)
+static int alloc_block(struct fsdriver_buffer* bp, size_t block_size)
 {
     if (bp->data) {
         if (bp->size == block_size) {
@@ -81,10 +81,10 @@ static int alloc_block(struct fsd_buffer* bp, size_t block_size)
     return 0;
 }
 
-static int get_block(struct fsd_buffer** bpp, dev_t dev, block_t block,
+static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
                      size_t block_size)
 {
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     size_t hash;
     int retval;
 
@@ -110,13 +110,13 @@ static int get_block(struct fsd_buffer** bpp, dev_t dev, block_t block,
     }
 
     /* get a free block from LRU */
-    bp = list_entry(lru_head.prev, struct fsd_buffer, list);
+    bp = list_entry(lru_head.prev, struct fsdriver_buffer, list);
     remove_lru(bp);
     list_del(&bp->hash);
 
     if (bp->dev != NO_DEV) {
-        if (!fsd_is_clean(bp)) {
-            fsd_flush_dev(bp->dev);
+        if (!fsdriver_is_clean(bp)) {
+            fsdriver_flush_dev(bp->dev);
         }
     }
 
@@ -148,7 +148,7 @@ static int get_block(struct fsd_buffer** bpp, dev_t dev, block_t block,
     return 0;
 }
 
-static void put_block(struct fsd_buffer* bp)
+static void put_block(struct fsdriver_buffer* bp)
 {
     bp->refcnt--;
 
@@ -163,7 +163,7 @@ static void put_block(struct fsd_buffer* bp)
     }
 }
 
-static int read_block(struct fsd_buffer* bp, size_t block_size)
+static int read_block(struct fsdriver_buffer* bp, size_t block_size)
 {
     loff_t pos;
     ssize_t retval;
@@ -184,16 +184,16 @@ static int read_block(struct fsd_buffer* bp, size_t block_size)
 
 static int block_cmp_fn(const void* a, const void* b)
 {
-    struct fsd_buffer* lhs = *(struct fsd_buffer**)a;
-    struct fsd_buffer* rhs = *(struct fsd_buffer**)b;
+    struct fsdriver_buffer* lhs = *(struct fsdriver_buffer**)a;
+    struct fsdriver_buffer* rhs = *(struct fsdriver_buffer**)b;
 
     return (int)lhs->block - (int)rhs->block;
 }
 
-static void scatter_gather(dev_t dev, struct fsd_buffer** buffers, size_t count,
+static void scatter_gather(dev_t dev, struct fsdriver_buffer** buffers, size_t count,
                            int do_write)
 {
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     struct iovec* iov;
     struct iovec iovec[NR_IOREQS];
     size_t nbufs, niovs;
@@ -237,7 +237,7 @@ static void scatter_gather(dev_t dev, struct fsd_buffer** buffers, size_t count,
             }
 
             if (do_write) {
-                fsd_mark_clean(bp);
+                fsdriver_mark_clean(bp);
             }
 
             retval -= bp->size;
@@ -252,10 +252,10 @@ static void scatter_gather(dev_t dev, struct fsd_buffer** buffers, size_t count,
     }
 }
 
-void fsd_init_buffer_cache(size_t new_size)
+void fsdriver_init_buffer_cache(size_t new_size)
 {
     int i;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
 
     if (cache_size > 0) {
         for (bp = bufs; bp < &bufs[cache_size]; bp++) {
@@ -295,22 +295,22 @@ void fsd_init_buffer_cache(size_t new_size)
     }
 }
 
-int fsd_get_block(struct fsd_buffer** bpp, dev_t dev, block_t block)
+int fsdriver_get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block)
 {
     return get_block(bpp, dev, block, fs_block_size);
 }
 
-void fsd_put_block(struct fsd_buffer* bp)
+void fsdriver_put_block(struct fsdriver_buffer* bp)
 {
     if (!bp) return;
 
     put_block(bp);
 }
 
-void fsd_flush_dev(dev_t dev)
+void fsdriver_flush_dev(dev_t dev)
 {
-    struct fsd_buffer* bp;
-    static struct fsd_buffer** dirty_list;
+    struct fsdriver_buffer* bp;
+    static struct fsdriver_buffer** dirty_list;
     static size_t dirty_list_size = 0;
     size_t count = 0;
 
@@ -324,10 +324,10 @@ void fsd_flush_dev(dev_t dev)
     }
 
     for (bp = bufs; bp < &bufs[cache_size]; bp++) {
-        if (!fsd_is_clean(bp) && bp->refcnt > 0) {
+        if (!fsdriver_is_clean(bp) && bp->refcnt > 0) {
             printl("buffer not flushed due to refcnt\n");
         }
-        if (!fsd_is_clean(bp) && bp->dev == dev && bp->refcnt == 0) {
+        if (!fsdriver_is_clean(bp) && bp->dev == dev && bp->refcnt == 0) {
             dirty_list[count++] = bp;
         }
     }
@@ -335,13 +335,13 @@ void fsd_flush_dev(dev_t dev)
     scatter_gather(dev, dirty_list, count, 1);
 }
 
-void fsd_flush_all(void)
+void fsdriver_flush_all(void)
 {
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
 
     for (bp = bufs; bp < &bufs[cache_size]; bp++) {
-        if (bp->dev != NO_DEV && !fsd_is_clean(bp)) {
-            fsd_flush_dev(bp->dev);
+        if (bp->dev != NO_DEV && !fsdriver_is_clean(bp)) {
+            fsdriver_flush_dev(bp->dev);
         }
     }
 }

@@ -168,7 +168,7 @@ int ext2_rw_inode(ext2_inode_t* inode, int rw_flag)
 static int rw_inode(ext2_inode_t* inode, int rw_flag)
 {
     dev_t dev = inode->i_dev;
-    struct fsd_buffer* bp;
+    struct fsdriver_buffer* bp;
     int retval;
 
     ext2_superblock_t* psb = get_ext2_super_block(dev);
@@ -186,7 +186,7 @@ static int rw_inode(ext2_inode_t* inode, int rw_flag)
 
     /* read the inode table */
     offset &= (psb->sb_block_size - 1);
-    retval = fsd_get_block(&bp, dev, block_nr);
+    retval = fsdriver_get_block(&bp, dev, block_nr);
     if (retval) return retval;
 
     if (rw_flag == READ) {
@@ -194,12 +194,12 @@ static int rw_inode(ext2_inode_t* inode, int rw_flag)
     } else if (rw_flag == WRITE) {
         if (inode->i_update) update_times(inode);
         memcpy(bp->data + offset, inode, EXT2_GOOD_OLD_INODE_SIZE);
-        fsd_mark_dirty(bp);
+        fsdriver_mark_dirty(bp);
         /* write back to the device */
     } else
         return EINVAL;
 
-    fsd_put_block(bp);
+    fsdriver_put_block(bp);
 
     inode->i_dirt = INO_CLEAN;
 

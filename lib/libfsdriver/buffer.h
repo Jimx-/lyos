@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <lyos/list.h>
 
-struct fsd_buffer {
+struct fsdriver_buffer {
     struct list_head list;
     struct list_head hash;
 
@@ -18,14 +18,14 @@ struct fsd_buffer {
     int flags;
 };
 
-void fsd_mark_dirty(struct fsd_buffer* bp);
-void fsd_mark_clean(struct fsd_buffer* bp);
-int fsd_is_clean(struct fsd_buffer* bp);
+void fsdriver_mark_dirty(struct fsdriver_buffer* bp);
+void fsdriver_mark_clean(struct fsdriver_buffer* bp);
+int fsdriver_is_clean(struct fsdriver_buffer* bp);
 
-void fsd_init_buffer_cache(size_t new_size);
-int fsd_get_block(struct fsd_buffer** bpp, dev_t dev, block_t block);
-void fsd_put_block(struct fsd_buffer* bp);
-void fsd_flush_dev(dev_t dev);
-void fsd_flush_all(void);
+void fsdriver_init_buffer_cache(size_t new_size);
+int fsdriver_get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block);
+void fsdriver_put_block(struct fsdriver_buffer* bp);
+void fsdriver_flush_dev(dev_t dev);
+void fsdriver_flush_all(void);
 
 #endif

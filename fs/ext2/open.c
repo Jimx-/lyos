@@ -170,7 +170,7 @@ int ext2_symlink(dev_t dev, ino_t dir_num, char* name, uid_t uid, gid_t gid,
 {
     ext2_inode_t *pin, *pin_dir;
     char* link_buf = NULL;
-    struct fsd_buffer* bp = NULL;
+    struct fsdriver_buffer* bp = NULL;
     int retval = 0;
 
     pin_dir = get_ext2_inode(dev, dir_num);
@@ -195,7 +195,7 @@ int ext2_symlink(dev_t dev, ino_t dir_num, char* name, uid_t uid, gid_t gid,
             if (bp) {
                 link_buf = bp->data;
                 retval = fsdriver_copyin(data, 0, link_buf, bytes);
-                fsd_mark_dirty(bp);
+                fsdriver_mark_dirty(bp);
             } else {
                 retval = err_code;
             }
@@ -211,7 +211,7 @@ int ext2_symlink(dev_t dev, ino_t dir_num, char* name, uid_t uid, gid_t gid,
         }
 
         if (bp) {
-            fsd_put_block(bp);
+            fsdriver_put_block(bp);
         }
     } else {
         retval = err_code;

@@ -38,13 +38,13 @@ ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
     ssize_t retval = 0;
     ext2_inode_t* pin = find_ext2_inode(dev, num);
     char* text = NULL;
-    struct fsd_buffer* bp = NULL;
+    struct fsdriver_buffer* bp = NULL;
 
     if (!pin) return -EINVAL;
 
     if (pin->i_size >= EXT2_MAX_FAST_SYMLINK_LENGTH) {
         block_t b = ext2_read_map(pin, 0);
-        retval = fsd_get_block(&bp, dev, b);
+        retval = fsdriver_get_block(&bp, dev, b);
 
         if (retval) {
             return -retval;
@@ -57,7 +57,7 @@ ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
 
     if (bytes >= pin->i_size) bytes = pin->i_size;
     retval = fsdriver_copyout(data, 0, text, bytes);
-    if (bp) fsd_put_block(bp);
+    if (bp) fsdriver_put_block(bp);
 
     if (retval == 0) {
         retval = bytes;
