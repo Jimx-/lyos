@@ -82,6 +82,9 @@ int fsdriver_start(struct fsdriver* fsd)
         case FS_RDLINK:
             m.RWRET = fsdriver_rdlink(fsd, &m);
             break;
+        case FS_SYMLINK:
+            m.RET_RETVAL = fsdriver_symlink(fsd, &m);
+            break;
         default:
             if (fsd->fs_other)
                 m.RET_RETVAL = fsd->fs_other(&m);

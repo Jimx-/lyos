@@ -50,8 +50,11 @@ int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
     ext2_inode_t* pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
     int retval = err_code;
 
-    if (pin == NULL) {
-        // put_ext2_inode(pin);
+    if (retval) {
+        if (pin) {
+            put_ext2_inode(pin);
+        }
+
         put_ext2_inode(pin_dir);
         return retval;
     }
@@ -78,6 +81,8 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
                                     mode_t mode, block_t initial_block,
                                     uid_t uid, gid_t gid)
 {
+    int retval = 0;
+
     /* the directory does not actually exist */
     if (pin_dir->i_links_count == 0) {
         err_code = ENOENT;
@@ -90,27 +95,29 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
     if (pin == NULL && err_code == ENOENT) {
         pin = ext2_alloc_inode(pin_dir, mode, uid, gid);
         if (pin == NULL) return NULL;
-    }
 
-    pin->i_links_count++;
-    pin->i_block[0] = initial_block;
+        pin->i_links_count++;
+        pin->i_block[0] = initial_block;
 
-    ext2_rw_inode(pin, WRITE);
+        ext2_rw_inode(pin, WRITE);
 
-    /* create the directory entry */
-    int retval = ext2_search_dir(pin_dir, pathname, &pin->i_num, SD_MAKE,
+        /* create the directory entry */
+        retval = ext2_search_dir(pin_dir, pathname, &pin->i_num, SD_MAKE,
                                  pin->i_mode & I_TYPE);
 
-    if (retval != 0) {
-        pin->i_links_count--;
-        pin->i_dirt = 1;
-        put_ext2_inode(pin);
-        err_code = retval;
-        return NULL;
-    }
-
-    if (err_code == EENTERMOUNT || err_code == ELEAVEMOUNT) {
-        retval = EEXIST;
+        if (retval != 0) {
+            pin->i_links_count--;
+            pin->i_dirt = 1;
+            put_ext2_inode(pin);
+            err_code = retval;
+            return NULL;
+        }
+    } else {
+        if (pin) {
+            retval = EEXIST;
+        } else {
+            retval = err_code;
+        }
     }
 
     err_code = retval;
@@ -120,13 +127,14 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
 int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
                gid_t gid)
 {
+    int retval, r1, r2;
     ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;
 
     ext2_inode_t* pin = ext2_new_inode(pin_dir, name, mode, 0, uid, gid);
-    int retval = err_code, r1, r2;
+    retval = err_code;
 
-    if (pin == NULL || retval == EEXIST) {
+    if (pin == NULL || retval != 0) {
         if (pin) put_ext2_inode(pin);
         put_ext2_inode(pin_dir);
         return retval;
@@ -155,4 +163,62 @@ int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
     put_ext2_inode(pin_dir);
     put_ext2_inode(pin);
     return errno;
+}
+
+int ext2_symlink(dev_t dev, ino_t dir_num, char* name, uid_t uid, gid_t gid,
+                 struct fsdriver_data* data, size_t bytes)
+{
+    ext2_inode_t *pin, *pin_dir;
+    char* link_buf = NULL;
+    struct fsd_buffer* bp = NULL;
+    int retval = 0;
+
+    pin_dir = get_ext2_inode(dev, dir_num);
+    if (!pin_dir) {
+        return EINVAL;
+    }
+
+    pin = ext2_new_inode(pin_dir, name, (I_SYMBOLIC_LINK | RWX_MODES), 0, uid,
+                         gid);
+    retval = err_code;
+
+    if (retval == 0) {
+        if (bytes >= pin->i_sb->sb_block_size) {
+            retval = ENAMETOOLONG;
+        } else if (bytes < EXT2_MAX_FAST_SYMLINK_LENGTH) {
+            link_buf = (char*)pin->i_block;
+            retval = fsdriver_copyin(data, 0, link_buf, bytes);
+            pin->i_dirt = INO_DIRTY;
+        } else {
+            bp = ext2_new_block(pin, 0);
+
+            if (bp) {
+                link_buf = bp->data;
+                retval = fsdriver_copyin(data, 0, link_buf, bytes);
+                fsd_mark_dirty(bp);
+            } else {
+                retval = err_code;
+            }
+        }
+
+        if (retval == 0) {
+            link_buf[bytes] = '\0';
+            pin->i_size = strlen(link_buf);
+
+            if (pin->i_size != bytes) {
+                retval = ENAMETOOLONG;
+            }
+        }
+
+        if (bp) {
+            fsd_put_block(bp);
+        }
+    } else {
+        retval = err_code;
+    }
+
+    put_ext2_inode(pin);
+    put_ext2_inode(pin_dir);
+
+    return retval;
 }

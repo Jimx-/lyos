@@ -59,6 +59,8 @@ struct fsdriver {
                             size_t count);
     ssize_t (*fs_rdlink)(dev_t dev, ino_t num, struct fsdriver_data* data,
                          size_t bytes);
+    int (*fs_symlink)(dev_t dev, ino_t dir_num, char* name, uid_t uid,
+                      gid_t gid, struct fsdriver_data* data, size_t bytes);
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data* data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t* mode);
@@ -98,6 +100,7 @@ int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_create(struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_rdlink(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_symlink(struct fsdriver* fsd, MESSAGE* m);
 
 int fsdriver_driver(dev_t dev);
 

@@ -105,7 +105,7 @@ int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
     int len = m->CRNAMELEN;
 
     /* error: name too long */
-    if (len > NAME_MAX + 1) {
+    if (len > NAME_MAX) {
         return ENAMETOOLONG;
     }
 
@@ -141,7 +141,7 @@ int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
     int len = m->CRNAMELEN;
 
     /* error: name too long */
-    if (len > NAME_MAX + 1) {
+    if (len > NAME_MAX) {
         return ENAMETOOLONG;
     }
 
@@ -269,6 +269,42 @@ int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
     }
 
     return -retval;
+}
+
+int fsdriver_symlink(struct fsdriver* fsd, MESSAGE* m)
+{
+    char name[NAME_MAX + 1];
+    size_t name_len, target_len;
+    struct fsdriver_data data;
+    dev_t dev;
+    ino_t dir_num;
+    uid_t uid;
+    gid_t gid;
+
+    if (!fsd->fs_symlink) return ENOSYS;
+
+    dev = m->u.m_vfs_fs_symlink.dev;
+    dir_num = m->u.m_vfs_fs_symlink.dir_ino;
+    uid = m->u.m_vfs_fs_symlink.uid;
+    gid = m->u.m_vfs_fs_symlink.gid;
+    target_len = m->u.m_vfs_fs_symlink.target_len;
+    name_len = m->u.m_vfs_fs_symlink.name_len;
+
+    if (name_len > NAME_MAX) {
+        return ENAMETOOLONG;
+    }
+
+    data_copy(SELF, name, m->source, m->u.m_vfs_fs_symlink.name, name_len);
+    name[name_len] = '\0';
+
+    if (!strcmp(name, ".") || !strcmp(name, "..")) {
+        return EEXIST;
+    }
+
+    data.src = m->u.m_vfs_fs_symlink.src;
+    data.buf = m->u.m_vfs_fs_symlink.target;
+
+    return fsd->fs_symlink(dev, dir_num, name, uid, gid, &data, target_len);
 }
 
 int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m)

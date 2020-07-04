@@ -213,6 +213,15 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
     case GETSETID:
         printf("getsetid(%d)", msg.REQUEST);
         break;
+    case SYMLINK:
+        printf("symlink(");
+        print_str(child, msg.u.m_vfs_link.old_path,
+                  msg.u.m_vfs_link.old_path_len);
+        printf(", ");
+        print_str(child, msg.u.m_vfs_link.new_path,
+                  msg.u.m_vfs_link.new_path_len);
+        printf(")");
+        break;
     default:
         printf("syscall(%d)", type);
         break;

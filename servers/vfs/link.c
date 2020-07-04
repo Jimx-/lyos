@@ -31,6 +31,7 @@
 #include "fcntl.h"
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 
 #include "global.h"
 
@@ -130,5 +131,75 @@ int truncate_node(struct inode* pin, int newsize)
     if (retval == 0) {
         pin->i_size = newsize;
     }
+    return retval;
+}
+
+static int request_symlink(endpoint_t fs_ep, dev_t dev, ino_t dir_ino,
+                           char* last_component, endpoint_t src, void* target,
+                           size_t target_len, struct fproc* fp)
+{
+    MESSAGE m;
+
+    m.type = FS_SYMLINK;
+    m.u.m_vfs_fs_symlink.dev = dev;
+    m.u.m_vfs_fs_symlink.dir_ino = dir_ino;
+    m.u.m_vfs_fs_symlink.name = last_component;
+    m.u.m_vfs_fs_symlink.name_len = strlen(last_component);
+    m.u.m_vfs_fs_symlink.src = src;
+    m.u.m_vfs_fs_symlink.target = target;
+    m.u.m_vfs_fs_symlink.target_len = target_len;
+    m.u.m_vfs_fs_symlink.uid = fp->effuid;
+    m.u.m_vfs_fs_symlink.gid = fp->effgid;
+
+    fs_sendrec(fs_ep, &m);
+
+    return m.RET_RETVAL;
+}
+
+int do_symlink(void)
+{
+    char pathname[PATH_MAX + 1];
+    void *oldpath, *newpath;
+    size_t oldpath_len, newpath_len;
+    struct lookup lookup;
+    struct inode* pin;
+    struct vfs_mount* vmnt;
+    int retval;
+
+    oldpath = self->msg_in.u.m_vfs_link.old_path;
+    newpath = self->msg_in.u.m_vfs_link.new_path;
+    oldpath_len = self->msg_in.u.m_vfs_link.old_path_len;
+    newpath_len = self->msg_in.u.m_vfs_link.new_path_len;
+
+    if (oldpath_len == 0) {
+        return ENOENT;
+    } else if (oldpath_len > PATH_MAX) {
+        return ENAMETOOLONG;
+    }
+
+    if (newpath_len > PATH_MAX) {
+        return ENAMETOOLONG;
+    }
+
+    data_copy(SELF, pathname, fproc->endpoint, newpath, newpath_len);
+    pathname[newpath_len] = 0;
+
+    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_WRITE;
+    lookup.inode_lock = RWL_WRITE;
+    if ((pin = last_dir(&lookup, fproc)) == NULL) {
+        return err_code;
+    }
+
+    retval = forbidden(fproc, pin, W_BIT | X_BIT);
+    if (retval == 0) {
+        retval = request_symlink(pin->i_fs_ep, pin->i_dev, pin->i_num, pathname,
+                                 fproc->endpoint, oldpath, oldpath_len, fproc);
+    }
+
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
+    put_inode(pin);
+
     return retval;
 }

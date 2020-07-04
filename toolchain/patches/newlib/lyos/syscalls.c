@@ -1001,6 +1001,22 @@ int closedir(DIR* dirp)
     return close(fd);
 }
 
+int symlink(const char* target, const char* linkpath)
+{
+    MESSAGE msg;
+    msg.type = SYMLINK;
+    msg.u.m_vfs_link.old_path = (char*)target;
+    msg.u.m_vfs_link.new_path = (char*)linkpath;
+    msg.u.m_vfs_link.old_path_len = strlen(target);
+    msg.u.m_vfs_link.new_path_len = strlen(linkpath);
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    return msg.RETVAL;
+}
+
 extern char* getcwd(char*, size_t);
 char* getwd(char* buf)
 {

@@ -68,13 +68,14 @@ int do_mount(void);
 int do_umount(MESSAGE* p);
 int do_mkdir(void);
 
-/* fs/Lyos/read_write.c */
+/* vfs/read_write.c */
 int do_rdwt(void);
 int do_getdents(void);
 
-/* fs/Lyos/link.c */
+/* vfs/link.c */
 int do_unlink(MESSAGE* p);
 int do_rdlink(void);
+int do_symlink(void);
 int truncate_node(struct inode* pin, int newsize);
 
 int do_dup(void);
@@ -105,7 +106,7 @@ int do_sync(void);
 int fs_fork(void);
 int fs_exit(void);
 
-/* worker.c */
+/* vfs/worker.c */
 int rwlock_lock(rwlock_t* rwlock, rwlock_type_t lock_type);
 
 void worker_init(void);
@@ -119,7 +120,7 @@ void worker_resume(struct worker_thread* worker);
 void revive_proc(endpoint_t endpoint, MESSAGE* msg);
 struct worker_thread* worker_get(thread_t tid);
 
-/* ipc.c */
+/* vfs/ipc.c */
 int fs_sendrec(endpoint_t fs_e, MESSAGE* msg);
 
 void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);

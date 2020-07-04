@@ -310,6 +310,7 @@ enum msgtype {
     SYNC,
     READLINK,
     LSTAT, /* 61 */
+    SYMLINK,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -341,6 +342,7 @@ enum msgtype {
     FS_THREAD_WAKEUP,
     FS_MKDIR,
     FS_RDLINK,
+    FS_SYMLINK,
 
     FS_TXN_ID = VFS_TXN_BASE,
 

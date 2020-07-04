@@ -148,6 +148,33 @@ struct mess_vfs_select {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_select);
 
+struct mess_vfs_link {
+    void* old_path;
+    void* new_path;
+    size_t old_path_len;
+    size_t new_path_len;
+
+    u8 _pad[56 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_link);
+
+struct mess_vfs_fs_symlink {
+    dev_t dev;
+    ino_t dir_ino;
+    void* name;
+    size_t name_len;
+    endpoint_t src;
+    void* target;
+    size_t target_len;
+    uid_t uid;
+    gid_t gid;
+
+    u8 _pad[56 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(void*) -
+            2 * sizeof(size_t) - sizeof(endpoint_t) - sizeof(uid_t) -
+            sizeof(gid_t)];
+} __attribute((packed));
+VERIFY_MESS_SIZE(mess_vfs_fs_symlink);
+
 struct mess_vfs_cdev_openclose {
     u64 minor;
     u32 id;
@@ -268,6 +295,8 @@ typedef struct {
         struct mess_mm_remap m_mm_remap;
         struct mess_pm_signal m_pm_signal;
         struct mess_vfs_select m_vfs_select;
+        struct mess_vfs_link m_vfs_link;
+        struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;
