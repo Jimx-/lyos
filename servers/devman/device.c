@@ -33,7 +33,9 @@
 #include <libsysfs/libsysfs.h>
 #include <libdevman/libdevman.h>
 #include <libmemfs/libmemfs.h>
+
 #include "type.h"
+#include "global.h"
 
 struct device_attr_cb_data {
     struct list_head list;
@@ -60,6 +62,14 @@ static struct device devices[NR_DEVICES];
 
 static int add_class_symlinks(struct device* dev);
 static int bus_add_device(struct device* dev);
+static int create_sys_dev_entry(struct device* dev);
+static int add_device_node(struct device* dev);
+
+static ssize_t device_dev_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+{
+    struct device* dev = (struct device*)sf_attr->cb_data;
+    return sprintf(buf, "%u:%u", MAJOR(dev->devt), MINOR(dev->devt));
+}
 
 void init_device()
 {
@@ -116,9 +126,10 @@ static void device_domain_label(struct device* dev, char* buf)
 static int publish_device(struct device* dev)
 {
     char label[MAX_PATH];
-    device_domain_label(dev, label);
+    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
+    device_domain_label(dev, device_root);
 
-    int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+    int retval = sysfs_publish_domain(device_root, SF_PRIV_OVERWRITE);
     if (retval) {
         return retval;
     }
@@ -130,19 +141,22 @@ static int publish_device(struct device* dev)
     if (retval) return retval;
 
     if (dev->devt != NO_DEV) {
-        struct memfs_stat stat;
-        stat.st_mode =
-            ((dev->type == DT_BLOCKDEV ? I_BLOCK_SPECIAL : I_CHAR_SPECIAL) |
-             0644);
-        stat.st_uid = SU_UID;
-        stat.st_gid = 0;
-        stat.st_device = dev->devt;
-        struct memfs_inode* pin = memfs_add_inode(
-            memfs_get_root_inode(), dev->name, NO_INDEX, &stat, NULL);
+        /* add dev attribute */
+        snprintf(label, MAX_PATH, "%s.dev", device_root);
 
-        if (!pin) {
-            return ENOMEM;
-        }
+        sysfs_dyn_attr_t dev_attr;
+        int retval = sysfs_init_dyn_attr(&dev_attr, label, SF_PRIV_OVERWRITE,
+                                         (void*)dev, device_dev_show, NULL);
+        if (retval) return retval;
+        retval = sysfs_publish_dyn_attr(&dev_attr);
+        if (retval < 0) return -retval;
+
+        retval = create_sys_dev_entry(dev);
+        if (retval) return retval;
+
+        /* add /dev node */
+        retval = add_device_node(dev);
+        if (retval) return retval;
     }
 
     return 0;
@@ -203,6 +217,41 @@ static int bus_add_device(struct device* dev)
         snprintf(label, MAX_PATH, "%s.subsystem", device_root);
         retval = sysfs_publish_link(bus_root, label);
         if (retval) return retval;
+    }
+
+    return 0;
+}
+
+static int create_sys_dev_entry(struct device* dev)
+{
+    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
+    char label[MAX_PATH];
+    int retval;
+
+    device_domain_label(dev, device_root);
+
+    snprintf(label, MAX_PATH, "dev.%s.%u:%u",
+             (dev->type == DT_BLOCKDEV ? "block" : "char"), MAJOR(dev->devt),
+             MINOR(dev->devt));
+    retval = sysfs_publish_link(device_root, label);
+    if (retval) return retval;
+
+    return 0;
+}
+
+static int add_device_node(struct device* dev)
+{
+    struct memfs_stat stat;
+    stat.st_mode =
+        ((dev->type == DT_BLOCKDEV ? I_BLOCK_SPECIAL : I_CHAR_SPECIAL) | 0644);
+    stat.st_uid = SU_UID;
+    stat.st_gid = 0;
+    stat.st_device = dev->devt;
+    struct memfs_inode* pin = memfs_add_inode(memfs_get_root_inode(), dev->name,
+                                              NO_INDEX, &stat, NULL);
+
+    if (!pin) {
+        return ENOMEM;
     }
 
     return 0;

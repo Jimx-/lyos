@@ -1,7 +1,6 @@
 #!/bin/sh
 
 echo "Starting system services..."
-service up /sbin/ata
 service up /sbin/virtio-blk
 service up /sbin/ext2fs
 service up /sbin/procfs

@@ -56,6 +56,10 @@ static void init_sysfs()
     sysfs_publish_domain("bus", SF_PRIV_OVERWRITE);
     sysfs_publish_domain("class", SF_PRIV_OVERWRITE);
     sysfs_publish_domain("devices", SF_PRIV_OVERWRITE);
+
+    sysfs_publish_domain("dev", SF_PRIV_OVERWRITE);
+    sysfs_publish_domain("dev.block", SF_PRIV_OVERWRITE);
+    sysfs_publish_domain("dev.char", SF_PRIV_OVERWRITE);
 }
 
 static void devman_init()

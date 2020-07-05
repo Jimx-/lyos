@@ -34,7 +34,8 @@ int do_bus_attr_add(MESSAGE* m);
 
 void init_class();
 void class_domain_label(struct class* bus, char* buf);
-class_id_t do_class_register(MESSAGE* m);
+int class_register(const char* name, endpoint_t owner, class_id_t* id);
+int do_class_register(MESSAGE* m);
 struct class* get_class(class_id_t id);
 
 void init_device();

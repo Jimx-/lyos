@@ -67,9 +67,26 @@ static int publish_class(struct class* class)
     return retval;
 }
 
-class_id_t do_class_register(MESSAGE* m)
+int class_register(const char* name, endpoint_t owner, class_id_t* id)
+{
+    int retval;
+    struct class* class = alloc_class();
+    if (!class) return ENOMEM;
+
+    strlcpy(class->name, name, sizeof(class->name));
+    class->owner = owner;
+
+    retval = publish_class(class);
+    if (retval) return retval;
+
+    *id = class->id;
+    return 0;
+}
+
+int do_class_register(MESSAGE* m)
 {
     char name[CLASS_NAME_MAX];
+    class_id_t class_id;
     int retval;
 
     if (m->NAME_LEN >= CLASS_NAME_MAX) return ENAMETOOLONG;
@@ -77,16 +94,10 @@ class_id_t do_class_register(MESSAGE* m)
     data_copy(SELF, name, m->source, m->BUF, m->NAME_LEN);
     name[m->NAME_LEN] = '\0';
 
-    struct class* class = alloc_class();
-    if (!class) return ENOMEM;
-
-    strlcpy(class->name, name, sizeof(class->name));
-    class->owner = m->source;
-
-    retval = publish_class(class);
+    retval = class_register(name, m->source, &class_id);
     if (retval) return retval;
 
-    m->u.m_devman_register_reply.id = class->id;
+    m->u.m_devman_register_reply.id = class_id;
     return 0;
 }
 
