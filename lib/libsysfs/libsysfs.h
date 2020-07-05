@@ -42,6 +42,7 @@ typedef struct sysfs_dyn_attr {
 #define SYSFS_SERVICE_ENDPOINT_LABEL SYSFS_SERVICE_DOMAIN_LABEL ".endpoint"
 
 #define SYSFS_BUS_DOMAIN_LABEL "bus.%s"
+#define SYSFS_CLASS_DOMAIN_LABEL "class.%s"
 
 int sysfs_publish_domain(char* key, int flags);
 int sysfs_publish_u32(char* key, u32 value, int flags);

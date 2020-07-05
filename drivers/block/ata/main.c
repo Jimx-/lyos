@@ -89,6 +89,9 @@ static struct prdte* prdt;
 static phys_bytes prdt_phys;
 #define PRDTE_FL_EOT 0x80 /* End of PRDT */
 
+static class_id_t ata_port_class;
+static class_id_t ata_device_class;
+
 // #define ATA_DEBUG
 #ifdef ATA_DEBUG
 #define DEB(x)       \
@@ -214,8 +217,15 @@ static int init_hd()
     int port_id = 0;
     device_id_t port_dev_id;
     struct device_info devinf;
+    int retval;
 
-    int retval = pci_first_dev(&devind, &vid, &did, &dev_id);
+    retval = dm_class_register("ata_port", &ata_port_class);
+    if (retval) return retval;
+
+    retval = dm_class_register("ata_device", &ata_device_class);
+    if (retval) return retval;
+
+    retval = pci_first_dev(&devind, &vid, &did, &dev_id);
     while (retval == 0) {
         u8 baseclass, subclass, interface;
 
@@ -239,12 +249,13 @@ static int init_hd()
         /* register the port */
         memset(&devinf, 0, sizeof(devinf));
         snprintf(devinf.name, sizeof(devinf.name), "ata%d", port_id);
-        devinf.bus = BUS_TYPE_ERROR;
+        devinf.bus = NO_BUS_ID;
+        devinf.class = ata_port_class;
         devinf.parent = dev_id;
         devinf.devt = NO_DEV;
 
-        port_dev_id = dm_device_register(&devinf);
-        if (port_dev_id == NO_DEVICE_ID) panic("cannot register ata port");
+        retval = dm_device_register(&devinf, &port_dev_id);
+        if (retval) panic("cannot register ata port");
 
         u32 base_cmd, base_ctl, base_dma;
         base_dma = pci_attr_r32(devind, PCI_BAR_5) & PCI_BAR_IO_MASK;
@@ -718,10 +729,12 @@ static void hd_register(struct ata_info* hdi)
     int i, drive = hdi - hd_info;
     struct device_info devinf;
     dev_t devt;
+    device_id_t dev_id;
 
     /* register the device */
     memset(&devinf, 0, sizeof(devinf));
-    devinf.bus = BUS_TYPE_ERROR;
+    devinf.bus = NO_BUS_ID;
+    devinf.class = ata_device_class;
     devinf.parent = hdi->port_dev_id;
     devinf.type = DT_BLOCKDEV;
 
@@ -734,7 +747,7 @@ static void hd_register(struct ata_info* hdi)
         snprintf(devinf.name, sizeof(devinf.name), "hd%d%c", drive + 1,
                  'a' + (char)i);
         devinf.devt = devt;
-        dm_device_register(&devinf);
+        dm_device_register(&devinf, &dev_id);
     }
 
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
@@ -747,7 +760,7 @@ static void hd_register(struct ata_info* hdi)
         snprintf(devinf.name, sizeof(devinf.name), "hd%d%c", drive + 1,
                  'a' + (char)(NR_PRIM_PER_DRIVE + i));
         devinf.devt = devt;
-        dm_device_register(&devinf);
+        dm_device_register(&devinf, &dev_id);
     }
 }
 

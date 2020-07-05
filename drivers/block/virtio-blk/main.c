@@ -521,10 +521,12 @@ static void virtio_blk_register(void)
     struct device_attribute attr;
     dev_t devt;
     device_id_t dev_id;
+    int retval;
 
     /* register the device */
     memset(&devinf, 0, sizeof(devinf));
-    devinf.bus = BUS_TYPE_ERROR;
+    devinf.bus = NO_BUS_ID;
+    devinf.class = NO_CLASS_ID;
     devinf.parent = vdev->dev_id;
     devinf.type = DT_BLOCKDEV;
 
@@ -537,9 +539,9 @@ static void virtio_blk_register(void)
         snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
                  'a' + (char)i);
         devinf.devt = devt;
-        dev_id = dm_device_register(&devinf);
+        retval = dm_device_register(&devinf, &dev_id);
 
-        if (dev_id != NO_DEVICE_ID) {
+        if (retval == 0) {
             dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,
                                 NULL, virtio_blk_serial_show, NULL);
             dm_device_attr_add(&attr);
@@ -555,7 +557,13 @@ static void virtio_blk_register(void)
         snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
                  'a' + (char)(NR_PRIM_PER_DRIVE + i));
         devinf.devt = devt;
-        dm_device_register(&devinf);
+        retval = dm_device_register(&devinf, &dev_id);
+
+        if (retval == 0) {
+            dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,
+                                NULL, virtio_blk_serial_show, NULL);
+            dm_device_attr_add(&attr);
+        }
     }
 }
 

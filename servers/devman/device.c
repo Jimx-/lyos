@@ -58,6 +58,7 @@ static struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 
 static struct device devices[NR_DEVICES];
 
+static int add_class_symlinks(struct device* dev);
 static int bus_add_device(struct device* dev);
 
 void init_device()
@@ -122,10 +123,11 @@ static int publish_device(struct device* dev)
         return retval;
     }
 
+    retval = add_class_symlinks(dev);
+    if (retval) return retval;
+
     retval = bus_add_device(dev);
-    if (retval) {
-        return retval;
-    }
+    if (retval) return retval;
 
     if (dev->devt != NO_DEV) {
         struct memfs_stat stat;
@@ -141,6 +143,40 @@ static int publish_device(struct device* dev)
         if (!pin) {
             return ENOMEM;
         }
+    }
+
+    return 0;
+}
+
+static int add_class_symlinks(struct device* dev)
+{
+    char class_root[MAX_PATH - CLASS_NAME_MAX - 1];
+    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
+    char label[MAX_PATH];
+    int retval;
+
+    device_domain_label(dev, device_root);
+
+    if (!dev->class) return 0;
+
+    class_domain_label(dev->class, class_root);
+
+    /* class -> device */
+    snprintf(label, MAX_PATH, "%s.%s", class_root, dev->name);
+    retval = sysfs_publish_link(device_root, label);
+    if (retval) return retval;
+
+    /* device -> class */
+    snprintf(label, MAX_PATH, "%s.subsystem", device_root);
+    retval = sysfs_publish_link(class_root, label);
+    if (retval) return retval;
+
+    /* device -> parent */
+    if (dev->parent) {
+        snprintf(label, MAX_PATH, "%s.device", device_root);
+        device_domain_label(dev->parent, device_root);
+        retval = sysfs_publish_link(device_root, label);
+        if (retval) return retval;
     }
 
     return 0;
@@ -175,24 +211,28 @@ static int bus_add_device(struct device* dev)
 device_id_t do_device_register(MESSAGE* m)
 {
     struct device_info devinf;
+    int retval;
 
-    if (m->BUF_LEN != sizeof(devinf)) return NO_DEVICE_ID;
+    if (m->BUF_LEN != sizeof(devinf)) return EINVAL;
 
     data_copy(SELF, &devinf, m->source, m->BUF, m->BUF_LEN);
 
     struct device* dev = alloc_device();
-    if (!dev) return NO_DEVICE_ID;
+    if (!dev) return ENOMEM;
 
     strlcpy(dev->name, devinf.name, sizeof(dev->name));
     dev->owner = m->source;
     dev->bus = get_bus_type(devinf.bus);
+    dev->class = get_class(devinf.class);
     dev->parent = get_device(devinf.parent);
     dev->devt = devinf.devt;
     dev->type = devinf.type;
 
-    if (publish_device(dev) != 0) return NO_DEVICE_ID;
+    retval = publish_device(dev);
+    if (retval) return retval;
 
-    return dev->id;
+    m->u.m_devman_register_reply.id = dev->id;
+    return 0;
 }
 
 struct device* get_device(device_id_t id)

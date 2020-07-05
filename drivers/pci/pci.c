@@ -104,8 +104,10 @@ void pci_write_attr_u32(int devind, int port, u32 value)
 
 int pci_init()
 {
-    pci_bus_id = dm_bus_register("pci");
-    if (pci_bus_id == BUS_TYPE_ERROR) return 1;
+    int retval;
+
+    retval = dm_bus_register("pci", &pci_bus_id);
+    if (retval) return retval;
 
     pci_intel_init();
 
@@ -117,30 +119,35 @@ int pci_init()
     return 0;
 }
 
-static device_id_t pci_register_bus(int busind)
+static int pci_register_bus(int busind)
 {
     struct device_info devinf;
     snprintf(devinf.name, sizeof(devinf.name), "pci%02x", pcibus[busind].busnr);
-    devinf.bus = BUS_TYPE_ERROR;
+    devinf.bus = NO_BUS_ID;
+    devinf.class = NO_CLASS_ID;
     devinf.parent = NO_DEVICE_ID;
 
-    return dm_device_register(&devinf);
+    return dm_device_register(&devinf, &pcibus[busind].dev_id);
 }
 
-static device_id_t pci_register_device(int devind)
+static int pci_register_device(int devind)
 {
     int busind = get_busind(pcidev[devind].busnr);
-
+    int retval;
+    device_id_t device_id;
     struct device_info devinf;
+
     memset(&devinf, 0, sizeof(devinf));
     snprintf(devinf.name, sizeof(devinf.name), "pci%02x:%02x:%x",
              pcidev[devind].busnr, pcidev[devind].dev, pcidev[devind].func);
     devinf.bus = pci_bus_id;
+    devinf.class = NO_CLASS_ID;
     devinf.parent = pcibus[busind].dev_id;
     devinf.devt = NO_DEV;
 
-    device_id_t device_id = dm_device_register(&devinf);
-    if (device_id == NO_DEVICE_ID) return NO_DEVICE_ID;
+    retval = dm_device_register(&devinf, &device_id);
+    if (retval) return retval;
+    pcidev[devind].dev_id = device_id;
 
     struct device_attribute attr;
     dm_init_device_attr(&attr, device_id, "vendor", SF_PRIV_OVERWRITE,
@@ -155,12 +162,13 @@ static device_id_t pci_register_device(int devind)
                         (void*)&pcidev[devind], pci_class_show, NULL);
     dm_device_attr_add(&attr);
 
-    return device_id;
+    return 0;
 }
 
 static void pci_intel_init()
 {
     u32 bus, dev, func;
+    int retval;
 
     bus = 0;
     dev = 0;
@@ -176,8 +184,8 @@ static void pci_intel_init()
     int busind = nr_pcibus++;
 
     pcibus[busind].busnr = 0;
-    pcibus[busind].dev_id = pci_register_bus(busind);
-    if (pcibus[busind].dev_id == NO_DEVICE_ID) {
+    retval = pci_register_bus(busind);
+    if (retval) {
         nr_pcibus--;
         return;
     }
@@ -255,7 +263,7 @@ static void record_capabilities(int devind)
 static void pci_probe_bus(int busind)
 {
     u8 bus_nr = pcibus[busind].busnr;
-
+    int retval;
     int devind = nr_pcidev;
 
     int i = 0, func = 0;
@@ -282,9 +290,7 @@ static void pci_probe_bus(int busind)
 
             devind = nr_pcidev;
 
-            if ((pcidev[devind].dev_id = pci_register_device(devind)) ==
-                NO_DEVICE_ID)
-                continue;
+            if ((retval = pci_register_device(devind)) != 0) continue;
 
             nr_pcidev++;
 

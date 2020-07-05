@@ -46,7 +46,7 @@
 static struct sysinfo* _sysinfo;
 static dev_t cons_minor = CONS_MINOR + 1;
 
-static bus_type_id_t tty_subsys_id;
+static class_id_t tty_subsys_id;
 
 #define TTY_FIRST (tty_table)
 #define TTY_END (tty_table + NR_CONSOLES + NR_SERIALS)
@@ -180,6 +180,7 @@ static void init_tty()
     struct device_info devinf;
     device_id_t device_id;
     dev_t devt;
+    int retval;
 
     get_sysinfo(&_sysinfo);
 
@@ -188,9 +189,8 @@ static void init_tty()
         set_console_line(val);
     }
 
-    tty_subsys_id = dm_bus_register("tty");
-    if (tty_subsys_id == BUS_TYPE_ERROR)
-        panic("tty: cannot register tty subsystem");
+    retval = dm_class_register("tty", &tty_subsys_id);
+    if (retval) panic("tty: cannot register tty subsystem");
 
     init_keyboard();
 
@@ -200,13 +200,14 @@ static void init_tty()
 
     memset(&devinf, 0, sizeof(devinf));
     strlcpy(devinf.name, "console", sizeof(devinf.name));
-    devinf.bus = tty_subsys_id;
+    devinf.bus = NO_BUS_ID;
+    devinf.class = tty_subsys_id;
     devinf.parent = NO_DEVICE_ID;
     devinf.devt = devt;
     devinf.type = DT_CHARDEV;
 
-    device_id = dm_device_register(&devinf);
-    if (device_id == NO_DEVICE_ID) panic("tty: cannot register console device");
+    retval = dm_device_register(&devinf, &device_id);
+    if (retval) panic("tty: cannot register console device");
 
     for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
         tty->ibuf_cnt = tty->tty_eotcnt = 0;
@@ -222,7 +223,8 @@ static void init_tty()
         tty->tty_ioreq = 0;
 
         memset(&devinf, 0, sizeof(devinf));
-        devinf.bus = tty_subsys_id;
+        devinf.bus = NO_BUS_ID;
+        devinf.class = tty_subsys_id;
         devinf.parent = NO_DEVICE_ID;
         devinf.type = DT_CHARDEV;
 
@@ -235,9 +237,8 @@ static void init_tty()
             snprintf(devinf.name, sizeof(devinf.name), "tty%d", i + 1);
             devinf.devt = devt;
 
-            tty->tty_device_id = dm_device_register(&devinf);
-            if (tty->tty_device_id == NO_DEVICE_ID)
-                panic("tty: cannot register tty device");
+            retval = dm_device_register(&devinf, &tty->tty_device_id);
+            if (retval) panic("tty: cannot register tty device");
         } else { /* serial ports */
             init_rs(tty);
 
@@ -248,9 +249,8 @@ static void init_tty()
                      i - NR_CONSOLES);
             devinf.devt = devt;
 
-            tty->tty_device_id = dm_device_register(&devinf);
-            if (tty->tty_device_id == NO_DEVICE_ID)
-                panic("tty: cannot register tty device");
+            retval = dm_device_register(&devinf, &tty->tty_device_id);
+            if (retval) panic("tty: cannot register tty device");
         }
 
         tty->tty_select_ops = 0;

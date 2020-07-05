@@ -28,7 +28,7 @@
 #include <lyos/proto.h>
 #include <libdevman/libdevman.h>
 
-device_id_t dm_device_register(struct device_info* devinf)
+int dm_device_register(struct device_info* devinf, device_id_t* id)
 {
     MESSAGE msg;
 
@@ -38,5 +38,9 @@ device_id_t dm_device_register(struct device_info* devinf)
 
     send_recv(BOTH, TASK_DEVMAN, &msg);
 
-    return msg.RETVAL;
+    if (msg.u.m_devman_register_reply.status == 0) {
+        *id = msg.u.m_devman_register_reply.id;
+    }
+
+    return msg.u.m_devman_register_reply.status;
 }

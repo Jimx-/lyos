@@ -22,6 +22,12 @@ struct bus_type {
     endpoint_t owner;
 };
 
+struct class {
+    class_id_t id;
+    char name[CLASS_NAME_MAX];
+    endpoint_t owner;
+};
+
 struct device {
     device_id_t id;
     struct device* parent;
@@ -31,6 +37,7 @@ struct device {
     int type;
 
     struct bus_type* bus;
+    struct class* class;
 };
 
 #endif

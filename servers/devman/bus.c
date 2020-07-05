@@ -60,7 +60,7 @@ void init_bus()
 {
     int i;
     for (i = 0; i < NR_BUS_TYPES; i++) {
-        bus_types[i].id = BUS_TYPE_ERROR;
+        bus_types[i].id = NO_BUS_ID;
     }
 
     for (i = 0; i < BUS_ATTR_HASH_SIZE; i++) {
@@ -74,7 +74,7 @@ static struct bus_type* alloc_bus_type()
     struct bus_type* type = NULL;
 
     for (i = 0; i < NR_BUS_TYPES; i++) {
-        if (bus_types[i].id == BUS_TYPE_ERROR) {
+        if (bus_types[i].id == NO_BUS_ID) {
             type = &bus_types[i];
             break;
         }
@@ -112,9 +112,10 @@ static int publish_bus_type(struct bus_type* bus)
     return retval;
 }
 
-bus_type_id_t do_bus_register(MESSAGE* m)
+int do_bus_register(MESSAGE* m)
 {
     char name[BUS_NAME_MAX];
+    int retval;
 
     if (m->NAME_LEN >= BUS_NAME_MAX) return ENAMETOOLONG;
 
@@ -122,19 +123,21 @@ bus_type_id_t do_bus_register(MESSAGE* m)
     name[m->NAME_LEN] = '\0';
 
     struct bus_type* bus = alloc_bus_type();
-    if (!bus) return BUS_TYPE_ERROR;
+    if (!bus) return NO_BUS_ID;
 
     strlcpy(bus->name, name, sizeof(bus->name));
     bus->owner = m->source;
 
-    if (publish_bus_type(bus) != 0) return BUS_TYPE_ERROR;
+    retval = publish_bus_type(bus);
+    if (retval) return retval;
 
-    return bus->id;
+    m->u.m_devman_register_reply.id = bus->id;
+    return 0;
 }
 
 struct bus_type* get_bus_type(bus_type_id_t id)
 {
-    if (id == BUS_TYPE_ERROR) return NULL;
+    if (id == NO_BUS_ID) return NULL;
 
     int i = ID2INDEX(id);
     return &bus_types[i];

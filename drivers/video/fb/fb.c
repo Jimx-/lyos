@@ -54,7 +54,7 @@ static int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
 
 static int open_counter[NR_FB_DEVS];
 
-static bus_type_id_t fb_subsys_id;
+static class_id_t fb_subsys_id;
 
 static struct chardriver fbdriver = {
     .cdr_open = fb_open,
@@ -86,12 +86,12 @@ static int init_fb()
     struct device_info devinf;
     device_id_t device_id;
     dev_t devt;
+    int retval;
 
     printl("fb: framebuffer driver is running\n");
 
-    fb_subsys_id = dm_bus_register("fb");
-    if (fb_subsys_id == BUS_TYPE_ERROR)
-        panic("tty: cannot register tty subsystem");
+    retval = dm_class_register("fb", &fb_subsys_id);
+    if (retval) panic("fb: cannot register framebuffer subsystem");
 
     for (i = 0; i < NR_FB_DEVS; i++) {
         open_counter[i] = 0;
@@ -100,14 +100,14 @@ static int init_fb()
 
         memset(&devinf, 0, sizeof(devinf));
         snprintf(devinf.name, sizeof(devinf.name), "fb%d", i);
-        devinf.bus = fb_subsys_id;
+        devinf.bus = NO_BUS_ID;
+        devinf.class = fb_subsys_id;
         devinf.parent = NO_DEVICE_ID;
         devinf.devt = devt;
         devinf.type = DT_CHARDEV;
 
-        device_id = dm_device_register(&devinf);
-        if (device_id == NO_DEVICE_ID)
-            panic("tty: cannot register console device");
+        retval = dm_device_register(&devinf, &device_id);
+        if (retval) panic("fb: cannot register framebuffer device");
     }
     return 0;
 }

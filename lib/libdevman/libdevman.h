@@ -20,16 +20,21 @@
 
 typedef int bus_type_id_t;
 #define BUS_NAME_MAX 32
-#define BUS_TYPE_ERROR -1
+#define NO_BUS_ID -1
+
+typedef int class_id_t;
+#define CLASS_NAME_MAX 32
+#define NO_CLASS_ID -1
 
 typedef int device_id_t;
+#define DEVICE_NAME_MAX 32
 #define NO_DEVICE_ID -1
 
-#define DEVICE_NAME_MAX 32
 struct device_info {
     char name[DEVICE_NAME_MAX];
     device_id_t parent;
     bus_type_id_t bus;
+    class_id_t class;
     dev_t devt;
     int type;
 } __attribute__((packed));
@@ -82,8 +87,9 @@ int dm_cdev_add(dev_t dev);
 endpoint_t dm_get_bdev_driver(dev_t dev);
 endpoint_t dm_get_cdev_driver(dev_t dev);
 
-bus_type_id_t dm_bus_register(char* name);
-device_id_t dm_device_register(struct device_info* devinf);
+int dm_bus_register(char* name, bus_type_id_t* id);
+int dm_class_register(char* name, class_id_t* id);
+int dm_device_register(struct device_info* devinf, device_id_t* id);
 
 int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name,
                      mode_t mode, void* cb_data, bus_attr_show_t show,

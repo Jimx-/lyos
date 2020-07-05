@@ -35,6 +35,7 @@ int sysfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
                       struct memfs_inode** target);
 
 int do_publish(MESSAGE* m);
+int do_publish_link(MESSAGE* m);
 int do_retrieve(MESSAGE* m);
 
 #endif

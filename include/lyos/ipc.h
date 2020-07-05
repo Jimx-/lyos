@@ -291,6 +291,14 @@ struct mess_input_conf {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_input_conf);
 
+struct mess_devman_register_reply {
+    int status;
+    int id;
+
+    u8 _pad[48];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_devman_register_reply);
+
 typedef struct {
     int source;
     int type;
@@ -319,6 +327,7 @@ typedef struct {
         struct mess_inputdriver_input_event m_inputdriver_input_event;
         struct mess_input_tty_event m_input_tty_event;
         struct mess_input_conf m_input_conf;
+        struct mess_devman_register_reply m_devman_register_reply;
 
         u8 _pad[56];
     } u;

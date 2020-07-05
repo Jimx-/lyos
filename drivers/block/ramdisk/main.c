@@ -73,7 +73,7 @@ struct ramdisk_dev {
 static struct ramdisk_dev ramdisks[MAX_RAMDISKS];
 static struct ramdisk_dev initramdisk;
 
-static bus_type_id_t mem_subsys_id;
+static class_id_t mem_subsys_id;
 
 static void init_rd(int argc, char* argv[]);
 static int rd_open(dev_t minor, int access);
@@ -234,6 +234,8 @@ static void init_rd(int argc, char* argv[])
 {
     long base, len;
     struct device_info devinf;
+    device_id_t dev_id;
+    int retval;
 
     env_get_long("initrd_base", &base, "u", 0, -1, -1);
     env_get_long("initrd_len", &len, "d", 0, -1, -1);
@@ -245,32 +247,32 @@ static void init_rd(int argc, char* argv[])
     printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", len, len / 1024,
            base);
 
-    mem_subsys_id = dm_bus_register("mem");
-    if (mem_subsys_id == BUS_TYPE_ERROR)
-        panic("ramdisk: cannot register mem subsystem");
+    retval = dm_class_register("mem", &mem_subsys_id);
+    if (retval) panic("ramdisk: cannot register mem subsystem");
 
     memset(&devinf, 0, sizeof(devinf));
-    devinf.bus = mem_subsys_id;
+    devinf.bus = NO_BUS_ID;
+    devinf.class = mem_subsys_id;
     devinf.parent = NO_DEVICE_ID;
     devinf.type = DT_CHARDEV;
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_MEM);
     strlcpy(devinf.name, "mem", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
-    dm_device_register(&devinf);
+    dm_device_register(&devinf, &dev_id);
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_KMEM);
     strlcpy(devinf.name, "kmem", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
-    dm_device_register(&devinf);
+    dm_device_register(&devinf, &dev_id);
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_NULL);
     strlcpy(devinf.name, "null", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
-    dm_device_register(&devinf);
+    dm_device_register(&devinf, &dev_id);
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_ZERO);
     strlcpy(devinf.name, "zero", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
-    dm_device_register(&devinf);
+    dm_device_register(&devinf, &dev_id);
 }

@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
 static void init_sysfs()
 {
     sysfs_publish_domain("bus", SF_PRIV_OVERWRITE);
+    sysfs_publish_domain("class", SF_PRIV_OVERWRITE);
     sysfs_publish_domain("devices", SF_PRIV_OVERWRITE);
 }
 
@@ -63,6 +64,7 @@ static void devman_init()
 
     init_dd_map();
     init_bus();
+    init_class();
     init_device();
 
     init_sysfs();
@@ -73,6 +75,8 @@ static void devman_init()
 
 static void devfs_message_hook(MESSAGE* msg)
 {
+    int reply = 1;
+
     switch (msg->type) {
     case DM_DEVICE_ADD:
         msg->RETVAL = do_device_add(msg);
@@ -81,10 +85,13 @@ static void devfs_message_hook(MESSAGE* msg)
         msg->RETVAL = do_get_driver(msg);
         break;
     case DM_BUS_REGISTER:
-        msg->RETVAL = do_bus_register(msg);
+        msg->u.m_devman_register_reply.status = do_bus_register(msg);
+        break;
+    case DM_CLASS_REGISTER:
+        msg->u.m_devman_register_reply.status = do_class_register(msg);
         break;
     case DM_DEVICE_REGISTER:
-        msg->RETVAL = do_device_register(msg);
+        msg->u.m_devman_register_reply.status = do_device_register(msg);
         break;
     case DM_BUS_ATTR_ADD:
         msg->RETVAL = do_bus_attr_add(msg);
@@ -101,7 +108,7 @@ static void devfs_message_hook(MESSAGE* msg)
         break;
     }
 
-    if (msg->RETVAL != SUSPEND) {
+    if (reply) {
         msg->type = SYSCALL_RET;
         send_recv(SEND_NONBLOCK, msg->source, msg);
     }

@@ -28,12 +28,17 @@ int do_get_driver(MESSAGE* m);
 
 void init_bus();
 void bus_domain_label(struct bus_type* bus, char* buf);
-bus_type_id_t do_bus_register(MESSAGE* m);
+int do_bus_register(MESSAGE* m);
 struct bus_type* get_bus_type(bus_type_id_t id);
 int do_bus_attr_add(MESSAGE* m);
 
+void init_class();
+void class_domain_label(struct class* bus, char* buf);
+class_id_t do_class_register(MESSAGE* m);
+struct class* get_class(class_id_t id);
+
 void init_device();
-device_id_t do_device_register(MESSAGE* m);
+int do_device_register(MESSAGE* m);
 struct device* get_device(device_id_t id);
 int do_device_attr_add(MESSAGE* m);
 
