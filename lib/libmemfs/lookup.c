@@ -58,8 +58,17 @@ static struct memfs_inode* memfs_advance(struct memfs_inode* parent, char* name)
         return NULL;
     }
 
-    if (strcmp(name, ".") == 0) return parent;
+    if (!strcmp(name, ".")) return parent;
     if (*name == '\0') return parent;
+
+    if (!strcmp(name, "..")) {
+        if (parent->i_parent == NULL) {
+            errno = ENOENT;
+            return NULL;
+        }
+
+        return parent->i_parent;
+    }
 
     if (fs_hooks.lookup_hook) {
         int r;

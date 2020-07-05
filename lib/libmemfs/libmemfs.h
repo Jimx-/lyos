@@ -32,6 +32,8 @@ struct memfs_hooks {
                           off_t offset, cbdata_t data);
     ssize_t (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
     int (*lookup_hook)(struct memfs_inode* parent, char* name, cbdata_t data);
+    int (*rdlink_hook)(struct memfs_inode* inode, cbdata_t data,
+                       struct memfs_inode** target);
 };
 
 extern struct memfs_hooks fs_hooks;
@@ -49,6 +51,8 @@ ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
                         struct fsdriver_data* data, loff_t rwpos, size_t count);
 ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
                        loff_t* ppos, size_t count);
+ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
+                     size_t bytes);
 
 int memfs_init_buf();
 int memfs_free_buf();

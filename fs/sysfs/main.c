@@ -42,6 +42,7 @@ struct memfs_hooks fs_hooks = {
     .message_hook = sysfs_message_hook,
     .read_hook = sysfs_read_hook,
     .write_hook = sysfs_write_hook,
+    .rdlink_hook = sysfs_rdlink_hook,
 };
 
 int main()

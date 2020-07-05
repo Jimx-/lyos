@@ -31,6 +31,8 @@ ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
                         off_t offset, cbdata_t data);
 ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
                          off_t offset, cbdata_t data);
+int sysfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
+                      struct memfs_inode** target);
 
 int do_publish(MESSAGE* m);
 int do_retrieve(MESSAGE* m);

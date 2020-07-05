@@ -38,6 +38,7 @@ struct fsdriver fsd = {
     .fs_stat = memfs_stat,
     .fs_readwrite = memfs_readwrite,
     .fs_getdents = memfs_getdents,
+    .fs_rdlink = memfs_rdlink,
     .fs_other = memfs_other,
 };
 

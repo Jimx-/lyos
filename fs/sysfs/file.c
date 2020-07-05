@@ -110,3 +110,16 @@ ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
 
     return retval;
 }
+
+int sysfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
+                      struct memfs_inode** target)
+{
+    sysfs_node_t* node = (sysfs_node_t*)data;
+
+    if (NODE_TYPE(node) != SF_TYPE_LINK) {
+        return EINVAL;
+    }
+
+    *target = node->link_target->inode;
+    return 0;
+}
