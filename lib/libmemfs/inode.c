@@ -29,7 +29,7 @@
 
 struct memfs_inode root_inode;
 
-extern struct list_head memfs_inode_table[];
+extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 
 static ino_t allocate_inode_num()
 {

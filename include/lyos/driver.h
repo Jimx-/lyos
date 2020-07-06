@@ -18,7 +18,7 @@
 
 #define NR_DEVICES 135
 
-#define MAJOR_MAX 64
+#define MAJOR_MAX 128
 
 struct part_info {
     u64 base; /* byte offset of start sector */
