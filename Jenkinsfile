@@ -6,7 +6,10 @@ pipeline {
             parallel {
                 stage('i686') {
                     agent {
-                        dockerfile true
+                        dockerfile {
+                            filename 'Dockerfile'
+                            args '--privileged'
+                        }
                     }
 
                     stages {
