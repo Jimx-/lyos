@@ -4,7 +4,7 @@ FROM debian-cse
 
 USER root
 
-RUN apt-get update && apt-get install -y sudo python nasm build-essential wget libmpfr-dev libmpc-dev libgmp3-dev texinfo m4 kpartx grub-pc
+RUN apt-get update && apt-get install -y sudo python nasm build-essential wget libmpfr-dev libmpc-dev libgmp3-dev texinfo m4 kpartx grub2-common
 
 RUN wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.65.tar.gz && \
     tar xf autoconf-2.65.tar.gz && \
