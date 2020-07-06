@@ -24,7 +24,7 @@ RUN wget https://ftp.gnu.org/gnu/gcc/gcc-7.4.0/gcc-7.4.0.tar.gz && \
     tar xf gcc-7.4.0.tar.gz && \
     cd gcc-7.4.0 && \
     ./contrib/download_prerequisites && \
-    mkdir build && cd build &&
+    mkdir build && cd build && \
     ../configure --prefix=/usr/local --disable-bootstrap --disable-nls --enable-languages=c,c++ && \
     make -j && make install && \
     cd ../.. && rm -rf gcc-7.4.0 gcc-7.4.0.tar.gz
