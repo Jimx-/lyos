@@ -3,6 +3,8 @@
 * Lyos
 #+HTML: <a href="https://ci2.jimx.site:8080/job/lyos/"><img src="https://ci2.jimx.site:8080/buildStatus/icon?job=lyos"></a>
 
+#+HTML: Nightly build: <a href="https://ci2.jimx.site:8080/job/lyos-nightly/"><img src="https://ci2.jimx.site:8080/buildStatus/icon?job=lyos-nightly"></a>
+
 #+HTML: <a href="https://github.com/Jimx-/lyos"><img alt="screenshot" src="https://i.imgur.com/jK7dBid.png"></a>
 
 #+HTML:</div>
@@ -34,3 +36,10 @@ Lyos has many standard features:
 - Userspace
   + Newlib
   + Dash, GNU Binutils, gcc, GNU Bash...
+
+** Trying out Lyos
+To try out Lyos without building the whole system, you can download a xz-compressed [[https://lyos.jimx.site:8080/nightly/lyos-i686.img.xz][nightly image]], uncompress the image and run it with QEMU:
+
+#+BEGIN_SRC shell
+qemu-system-x86_64 -smp 2 -drive id=hda,file=lyos-i686.img,format=raw,if=none -device virtio-blk-pci,drive=hda -m 2048 -serial stdio -vga std -sdl -cpu host,pmu=true --enable-kvm
+#+END_SRC
