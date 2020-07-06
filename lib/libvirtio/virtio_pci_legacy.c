@@ -95,6 +95,14 @@ static void vp_set_status(struct virtio_device* vdev, u8 status)
     vp_write8(vpdev, VIRTIO_PCI_STATUS, status);
 }
 
+static void vp_reset(struct virtio_device* vdev)
+{
+    /* 0 = reset */
+    vp_set_status(vdev, 0);
+    /* flush out the status write */
+    (void)vp_get_status(vdev);
+}
+
 static int vp_get_features(struct virtio_device* vdev)
 {
     u32 features;
@@ -144,6 +152,7 @@ static const struct virtio_config_ops virtio_pci_config_ops = {
     .set = vp_set,
     .get_status = vp_get_status,
     .set_status = vp_set_status,
+    .reset = vp_reset,
     .had_irq = vp_had_irq,
     .get_features = vp_get_features,
     .finalize_features = vp_finalize_features,
@@ -169,7 +178,7 @@ static int setup_vq(struct virtio_pci_device* vpdev, unsigned index,
     vp_write16(vpdev, VIRTIO_PCI_QUEUE_SEL, index);
     num = vp_read16(vpdev, VIRTIO_PCI_QUEUE_NUM);
 
-    if (!num) {
+    if (!num || vp_read32(vpdev, VIRTIO_PCI_QUEUE_PFN)) {
         return ENOENT;
     }
 
@@ -238,14 +247,13 @@ struct virtio_device* virtio_pci_legacy_setup(u16 subdid, const char* name,
     if (!ioflag) goto err;
 
     vpdev->port = (u16)base;
+
     vpdev->irq = pci_attr_r8(devind, PCI_ILR);
     vpdev->msix_enabled = 0;
     vpdev->intx_enabled = 0;
 
     vpdev->setup_vq = setup_vq;
     vpdev->del_vq = del_vq;
-
-    virtio_add_status(&vpdev->vdev, VIRTIO_CONFIG_S_ACKNOWLEDGE);
 
     printl("virtio: discovered PCI legacy device, base 0x%x, irq %d\n",
            vpdev->port, vpdev->irq);

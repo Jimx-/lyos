@@ -12,6 +12,7 @@ struct virtio_config_ops {
                 unsigned len);
     u8 (*get_status)(struct virtio_device* vdev);
     void (*set_status)(struct virtio_device* vdev, u8 status);
+    void (*reset)(struct virtio_device* dev);
     int (*had_irq)(struct virtio_device* vdev);
     int (*get_features)(struct virtio_device* vdev);
     int (*finalize_features)(struct virtio_device* vdev);

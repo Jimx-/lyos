@@ -71,6 +71,9 @@ struct virtio_device* virtio_probe_device(u16 subdid, const char* name,
 
     if (!vdev) return NULL;
 
+    vdev->config->reset(vdev);
+    virtio_add_status(vdev, VIRTIO_CONFIG_S_ACKNOWLEDGE);
+
     retval = virtio_exchange_features(vdev);
     if (retval) goto out_free;
 
