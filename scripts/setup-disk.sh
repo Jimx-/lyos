@@ -17,7 +17,7 @@ LOOP_DEVICE=loop2
 
 source $SRCDIR/.config
 
-type kpartx >/dev/null 2>&1 || { echo "Trying to install kpartx..."; apt-get install kpartx; }
+type kpartx >/dev/null 2>&1 || { echo "Trying to install kpartx..."; apt-get install -y kpartx; }
 
 # Create a 1GiB blank disk image.
 dd if=/dev/zero of=$DISK bs=4096 count=$SIZE
@@ -39,13 +39,15 @@ LOOPMAP=/dev/mapper/${LOOP}p1
 
 mkfs.ext2 $LOOPMAP
 
-mount $LOOPMAP /$MOUNT_POINT
+mkdir -p $MOUNT_POINT
+
+mount $LOOPMAP $MOUNT_POINT
 
 echo "Installing sysroot..."
-cp -rf $SRCDIR/sysroot/* /$MOUNT_POINT/
-cp -rf $SRCDIR/obj/destdir.x86/* /$MOUNT_POINT/
-chown 1000:1000 /$MOUNT_POINT/home/jimx
-chmod 0777 /$MOUNT_POINT/tmp
+cp -rf $SRCDIR/sysroot/* $MOUNT_POINT/
+cp -rf $SRCDIR/obj/destdir.x86/* $MOUNT_POINT/
+chown 1000:1000 $MOUNT_POINT/home/jimx
+chmod 0777 $MOUNT_POINT/tmp
 sync
 
 # echo "Creating devices..."
