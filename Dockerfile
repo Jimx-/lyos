@@ -6,6 +6,10 @@ USER root
 
 RUN apt-get update && apt-get install -y sudo python nasm build-essential wget libmpfr-dev libmpc-dev libgmp3-dev texinfo m4 kpartx grub2-common
 
+RUN echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
+RUN apt update -y
+RUN apt install -y gcc g++
+
 RUN wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.65.tar.gz && \
     tar xf autoconf-2.65.tar.gz && \
     cd autoconf-2.65 && \
