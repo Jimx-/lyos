@@ -247,6 +247,7 @@ objdirs:
 	@(mkdir -p $(DESTDIR)/boot)
 	@(mkdir -p $(DESTDIR)/lib)
 	@(mkdir -p $(DESTDIR)/sbin)
+	@(mkdir -p $(DESTDIR)/usr/include)
 	@(mkdir -p $(DESTDIR)/usr/bin)
 	@(mkdir -p $(DESTDIR)/usr/sbin)
 
