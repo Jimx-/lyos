@@ -15,7 +15,7 @@ endif
 SUBLIBS = ${LYOS_MACHINE_LIB}
 
 lib_a_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c ttyname.c \
-				mntent.c err.c progname.c crypt3.c sysconf.c regex.c ucontext.c
+				mntent.c err.c progname.c crypt3.c sysconf.c regex.c ucontext.c poll.c
 lib_a_LIBADD = $(extra_objs) machine/lib.a
 lib_a_DEPENDENCIES = $(extra_objs) machine/lib.a
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)

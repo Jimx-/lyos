@@ -262,8 +262,8 @@ install-libraries:
 install-headers:
 	@echo -e '$(COLORGREEN)Installing headers...$(COLORDEFAULT)'
 	@cp -rf include/uapi/lyos $(DESTDIR)/usr/include
-	@cp -rf include/asm-generic $(DESTDIR)/usr/include
-	@cp -rf $(ARCHINCDIR)/asm $(DESTDIR)/usr/include
+	@cp -rf include/uapi/asm-generic $(DESTDIR)/usr/include
+	@cp -rf $(ARCHINCDIR)/uapi/asm $(DESTDIR)/usr/include
 
 kernel:
 	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'

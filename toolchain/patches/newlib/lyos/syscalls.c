@@ -796,9 +796,16 @@ ssize_t readlink(const char* pathname, char* buf, size_t bufsiz)
     return msg.RETVAL;
 }
 
-int ioctl(int fd, int request, void* data)
+int ioctl(int fd, unsigned long request, ...)
 {
     MESSAGE msg;
+    va_list ap;
+    void* data;
+
+    va_start(ap, request);
+    data = va_arg(ap, void*);
+    va_end(ap);
+
     msg.type = IOCTL;
     msg.FD = fd;
     msg.REQUEST = request;

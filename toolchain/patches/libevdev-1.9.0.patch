@@ -1,0 +1,147 @@
+diff -rupN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2020-03-02 12:17:14.000000000 +0800
++++ new/build-aux/config.sub	2020-07-10 18:29:22.714652734 +0800
+@@ -1338,7 +1338,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* | kopensolaris* | plan9* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+-	     | aos* | aros* | cloudabi* | sortix* \
++	     | aos* | aros* | cloudabi* | sortix* | lyos* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+ 	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
+ 	     | knetbsd* | mirbsd* | netbsd* \
+diff -rupN old/libevdev/libevdev.h new/libevdev/libevdev.h
+--- old/libevdev/libevdev.h	2020-03-02 12:17:04.000000000 +0800
++++ new/libevdev/libevdev.h	2020-07-10 18:52:17.557829727 +0800
+@@ -27,7 +27,7 @@
+ extern "C" {
+ #endif
+ 
+-#include <linux/input.h>
++#include <lyos/input.h>
+ #include <stdarg.h>
+ 
+ #define LIBEVDEV_ATTRIBUTE_PRINTF(_format, _args) __attribute__ ((format (printf, _format, _args)))
+diff -rupN old/libevdev/libevdev-uinput.c new/libevdev/libevdev-uinput.c
+--- old/libevdev/libevdev-uinput.c	2020-03-02 12:17:04.000000000 +0800
++++ new/libevdev/libevdev-uinput.c	2020-07-10 18:54:14.706954620 +0800
+@@ -30,7 +30,7 @@
+ #include <dirent.h>
+ #include <sys/stat.h>
+ #include <time.h>
+-#include <linux/uinput.h>
++#include <lyos/uinput.h>
+ 
+ #include "libevdev.h"
+ #include "libevdev-int.h"
+@@ -193,7 +193,7 @@ fetch_device_node(const char *path)
+ 	struct dirent **namelist;
+ 	int ndev, i;
+ 
+-	ndev = scandir(path, &namelist, is_event_device, alphasort);
++    ndev = 0;
+ 	if (ndev <= 0)
+ 		return NULL;
+ 
+@@ -231,7 +231,7 @@ fetch_syspath_and_devnode(struct libevde
+ 		return 0;
+ 	}
+ 
+-	ndev = scandir(SYS_INPUT_DIR, &namelist, is_input_device, alphasort);
++    ndev = 0;
+ 	if (ndev <= 0)
+ 		return -1;
+ 
+@@ -365,7 +365,7 @@ libevdev_uinput_create_from_device(const
+ 		return -ENOMEM;
+ 
+ 	if (fd == LIBEVDEV_UINPUT_OPEN_MANAGED) {
+-		fd = open("/dev/uinput", O_RDWR|O_CLOEXEC);
++		fd = open("/dev/uinput", O_RDWR);
+ 		if (fd < 0)
+ 			goto error;
+ 
+diff -rupN old/tools/libevdev-events.c new/tools/libevdev-events.c
+--- old/tools/libevdev-events.c	2020-03-02 12:17:04.000000000 +0800
++++ new/tools/libevdev-events.c	2020-07-10 18:55:48.116258361 +0800
+@@ -29,7 +29,7 @@
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <assert.h>
+-#include <linux/input.h>
++#include <lyos/input.h>
+ 
+ #include "libevdev/libevdev.h"
+ 
+diff -rupN old/tools/libevdev-tweak-device.c new/tools/libevdev-tweak-device.c
+--- old/tools/libevdev-tweak-device.c	2020-03-02 12:17:04.000000000 +0800
++++ new/tools/libevdev-tweak-device.c	2020-07-10 18:59:20.318014694 +0800
+@@ -34,10 +34,11 @@
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <assert.h>
+-#include <linux/input.h>
+ 
+ #include "libevdev/libevdev.h"
+ 
++static const char* program_invocation_short_name = "libevdev-tweak-device";
++
+ static void
+ usage(void)
+ {
+diff -rupN old/tools/mouse-dpi-tool.c new/tools/mouse-dpi-tool.c
+--- old/tools/mouse-dpi-tool.c	2020-03-02 12:17:04.000000000 +0800
++++ new/tools/mouse-dpi-tool.c	2020-07-10 18:57:34.045470329 +0800
+@@ -23,7 +23,6 @@
+ 
+ #include "config.h"
+ 
+-#include <sys/signalfd.h>
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <limits.h>
+@@ -51,7 +50,7 @@ struct measurements {
+ 
+ static int
+ usage(void) {
+-	printf("Usage: %s /dev/input/event0\n", program_invocation_short_name);
++	printf("Usage: mouse-dpi-tool /dev/input/event0\n");
+ 	printf("\n");
+ 	printf("This tool reads relative events from the kernel and calculates\n"
+ 	       "the distance covered and maximum frequency of the incoming events.\n"
+@@ -148,7 +147,6 @@ mainloop(struct libevdev *dev, struct me
+ 
+ 	sigemptyset(&mask);
+ 	sigaddset(&mask, SIGINT);
+-	fds[1].fd = signalfd(-1, &mask, SFD_NONBLOCK);
+ 	fds[1].events = POLLIN;
+ 
+ 	sigprocmask(SIG_BLOCK, &mask, NULL);
+diff -rupN old/tools/touchpad-edge-detector.c new/tools/touchpad-edge-detector.c
+--- old/tools/touchpad-edge-detector.c	2020-03-02 12:17:04.000000000 +0800
++++ new/tools/touchpad-edge-detector.c	2020-07-10 18:58:30.908381313 +0800
+@@ -23,7 +23,6 @@
+ 
+ #include "config.h"
+ 
+-#include <sys/signalfd.h>
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <limits.h>
+@@ -43,7 +42,7 @@
+ 
+ static int
+ usage(void) {
+-	printf("Usage: %s 12x34 /dev/input/event0\n", program_invocation_short_name);
++	printf("Usage: touchpad-edge-detector 12x34 /dev/input/event0\n");
+ 	printf("\n");
+ 	printf("This tool reads the touchpad events from the kernel and calculates\n "
+ 	       "the minimum and maximum for the x and y coordinates, respectively.\n"
+@@ -112,7 +111,6 @@ mainloop(struct libevdev *dev, struct di
+ 
+ 	sigemptyset(&mask);
+ 	sigaddset(&mask, SIGINT);
+-	fds[1].fd = signalfd(-1, &mask, SFD_NONBLOCK);
+ 	fds[1].events = POLLIN;
+ 
+ 	sigprocmask(SIG_BLOCK, &mask, NULL);

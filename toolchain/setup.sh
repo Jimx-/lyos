@@ -17,6 +17,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_COREUTILS:=false}
 : ${BUILD_NCURSES:=false}
 : ${BUILD_VIM:=false}
+: ${BUILD_LIBEVDEV:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -241,6 +242,19 @@ fi
 if $BUILD_VIM; then
     pushd $DIR/sources/vim74 > /dev/null
     ac_cv_sizeof_int=4 vim_cv_getcwd_broken=no vim_cv_memmove_handles_overlap=yes vim_cv_stat_ignores_slash=no vim_cv_tgetent=zero vim_cv_terminfo=yes vim_cv_toupper_broken=no vim_cv_tty_group=world $DIR/sources/vim74/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-tlib=ncurses --enable-gui=no --disable-gtktest --disable-xim --with-features=normal --disable-gpm --without-x --disable-netbeans --enable-multibyte || cmd_error
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libevdev
+if $BUILD_LIBEVDEV; then
+    if [ ! -d "libevdev-$SUBARCH" ]; then
+        mkdir libevdev-$SUBARCH
+    fi
+
+    pushd libevdev-$SUBARCH > /dev/null
+    $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=/usr --with-build-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
