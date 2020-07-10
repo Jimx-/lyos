@@ -16,7 +16,7 @@
 #ifndef _PROFILE_H_
 #define _PROFILE_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/proc.h>
 

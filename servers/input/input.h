@@ -2,7 +2,7 @@
 #define _INPUT_INPUT_H_
 
 #include <sys/types.h>
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 struct input_handle;
 

@@ -13,15 +13,22 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _TYPE_H_
-#define _TYPE_H_
+#ifndef _TYPES_H_
+#define _TYPES_H_
 
 #include <lyos/config.h>
+#include <uapi/lyos/types.h>
 #include <stddef.h>
 
 #define EXTERN extern
 
-typedef unsigned long long u64;
+typedef __u64 u64;
+typedef __s32 s32;
+typedef __u32 u32;
+typedef __u16 u16;
+typedef __s8 s8;
+typedef __u8 u8;
+
 static __attribute__((always_inline)) inline u64 make64(unsigned long hi,
                                                         unsigned long lo)
 {
@@ -38,20 +45,6 @@ static __attribute__((always_inline)) inline unsigned long ex64hi(u64 i)
     return (unsigned long)(i >> 32);
 }
 
-typedef int s32;
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef char s8;
-typedef unsigned char u8;
-
-typedef u16 __le16;
-typedef u32 __le32;
-typedef u64 __le64;
-
-typedef u16 __be16;
-typedef u32 __be32;
-typedef u64 __be64;
-
 #ifdef CONFIG_PHYS_BYTES_64BIT
 typedef u64 phys_bytes;
 #else
@@ -61,7 +54,6 @@ typedef unsigned long vir_bytes;
 
 typedef unsigned int block_t;
 
-typedef int endpoint_t;
 typedef unsigned long priv_map_t;
 
 typedef u32 bitchunk_t;

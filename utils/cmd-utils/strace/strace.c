@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <string.h>
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 

@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 
 #include <sys/stat.h>
@@ -1465,8 +1465,8 @@ int futex(int* uaddr, int futex_op, int val,
     m.FUTEX_UADDR = uaddr;
     m.FUTEX_OP = futex_op;
     m.FUTEX_VAL = val;
-    m.FUTEX_VAL2 = (u32)timeout;
-    m.FUTEX_TIMEOUT = (u32)timeout;
+    m.FUTEX_VAL2 = (__u32)timeout;
+    m.FUTEX_TIMEOUT = (__u32)timeout;
     m.FUTEX_UADDR2 = uaddr2;
     m.FUTEX_VAL3 = val3;
 

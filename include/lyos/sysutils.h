@@ -18,7 +18,7 @@
 
 #include <signal.h>
 #include <lyos/param.h>
-#include <asm/type.h>
+#include <asm/cpu_info.h>
 
 #define SYS_CALL_MASK_SIZE BITCHUNKS(NR_SYS_CALL)
 

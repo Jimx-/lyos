@@ -16,7 +16,7 @@
 #ifndef _DEVMAN_PROTO_H_
 #define _DEVMAN_PROTO_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <libdevman/libdevman.h>
 
 #include "type.h"

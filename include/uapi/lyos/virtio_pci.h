@@ -39,7 +39,7 @@
 #ifndef _LINUX_VIRTIO_PCI_H
 #define _LINUX_VIRTIO_PCI_H
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 #ifndef VIRTIO_PCI_NO_LEGACY
 

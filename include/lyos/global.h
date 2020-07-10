@@ -28,7 +28,7 @@
 #include <asm/page.h>
 #endif
 
-#include <asm/type.h>
+#include <asm/types.h>
 
 #include <lyos/param.h>
 #include <lyos/priv.h>

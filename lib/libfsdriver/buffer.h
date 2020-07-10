@@ -1,7 +1,7 @@
 #ifndef _LIBFSDRIVER_BUFFER_H_
 #define _LIBFSDRIVER_BUFFER_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <sys/types.h>
 #include <lyos/list.h>
 

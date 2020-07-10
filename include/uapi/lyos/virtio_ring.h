@@ -34,8 +34,8 @@
 #ifndef __KERNEL__
 #include <stdint.h>
 #endif
-#include <lyos/type.h>
-#include <uapi/lyos/virtio_types.h>
+#include <lyos/types.h>
+#include <lyos/virtio_types.h>
 
 /* This marks a buffer as continuing via the next field. */
 #define VRING_DESC_F_NEXT 1

@@ -1,7 +1,7 @@
 #ifndef _LIBCORO_GLOBAL_H_
 #define _LIBCORO_GLOBAL_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 /* EXTERN is extern except for global.c */
 #ifdef _LIBCORO_GLOBAL_VARIABLE_HERE_

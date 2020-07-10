@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE. */
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 /* Feature bits */
 #define VIRTIO_BLK_F_SIZE_MAX 1      /* Indicates maximum segment size */

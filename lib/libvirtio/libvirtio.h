@@ -1,7 +1,7 @@
 #ifndef _LIBVIRTIO_H_
 #define _LIBVIRTIO_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <uapi/lyos/virtio_pci.h>
 
 #include <libvirtio/virtio_config.h>

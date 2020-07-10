@@ -1,4 +1,4 @@
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/sysutils.h>
 #include <lyos/const.h>

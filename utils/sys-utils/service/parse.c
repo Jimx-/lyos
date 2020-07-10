@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <lyos/const.h>
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/service.h>
 
 #include "cJSON.h"

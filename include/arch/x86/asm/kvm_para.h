@@ -1,7 +1,7 @@
 #ifndef _ARCH_KVM_PARA_H_
 #define _ARCH_KVM_PARA_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 #define KVM_CPUID_FEATURES 0x40000001
 #define KVM_FEATURE_CLOCKSOURCE 0

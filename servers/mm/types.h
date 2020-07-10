@@ -1,7 +1,7 @@
 #ifndef _MM_TYPES_H_
 #define _MM_TYPES_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 struct hole {
     struct hole* h_next;

@@ -21,7 +21,7 @@
  * alloc_vmpages/free_vmpages: allocate/free only virtual memory.
  */
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/config.h"

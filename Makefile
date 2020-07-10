@@ -126,15 +126,15 @@ export Q
 
 # All Phony Targets
 .PHONY : all everything disasm clean realclean mrproper install help config menuconfig \
-	setup-toolchain libraries install-libraries kernel fs install-fs drivers install-drivers servers install-servers \
-	objdirs kvm kvm-debug
+	setup-toolchain libraries install-libraries kernel fs install-fs drivers install-drivers \
+	servers install-servers objdirs kvm kvm-debug install-headers
 
 # Default entry point
 all : clean everything
 
 include $(ARCHDIR)/Makefile
 
-everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs libraries install-libraries fs install-fs drivers \
+everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs install-headers libraries install-libraries fs install-fs drivers \
 		install-drivers servers install-servers kernel initrd
 
 setup-toolchain:
@@ -257,6 +257,12 @@ libraries:
 install-libraries:
 	@echo -e '$(COLORGREEN)Installing libraries...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C lib $(MAKEFLAGS) install
+
+install-headers:
+	@echo -e '$(COLORGREEN)Installing headers...$(COLORDEFAULT)'
+	@cp -rf include/uapi/lyos $(DESTDIR)/usr/include
+	@cp -rf include/asm-generic $(DESTDIR)/usr/include
+	@cp -rf $(ARCHINCDIR)/asm $(DESTDIR)/usr/include
 
 kernel:
 	@echo -e '$(COLORGREEN)Compiling the kernel...$(COLORDEFAULT)'

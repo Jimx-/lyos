@@ -14,7 +14,7 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
 #include <lyos/config.h>
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"

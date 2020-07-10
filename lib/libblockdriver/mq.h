@@ -1,7 +1,7 @@
 #ifndef _LIBBLOCKDRIVER_MQ_H_
 #define _LIBBLOCKDRIVER_MQ_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 
 void mq_init(void);

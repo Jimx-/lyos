@@ -32,8 +32,8 @@ function patc() {
 
 function install_newlib () {
     cp -rf $DIR/patches/newlib/lyos $1/newlib/libc/sys/
-    #cp $DIR/../include/lyos/{type.h,const.h,ipc.h} $1/newlib/libc/sys/lyos/
-    cp -rf $DIR/../include/{lyos,config} $1/newlib/libc/include
+    mkdir -p $1/newlib/libc/include/lyos
+    cp $DIR/../include/lyos/const.h $1/newlib/libc/include/lyos/
 }
 
 function cmd_error() {

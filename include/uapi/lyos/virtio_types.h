@@ -31,7 +31,7 @@
  * Copyright (C) 2014 Red Hat, Inc.
  * Author: Michael S. Tsirkin <mst@redhat.com>
  */
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 /*
  * __virtio{16,32,64} have the following meaning:

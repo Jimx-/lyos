@@ -13,7 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
@@ -39,7 +39,7 @@
 #include <lyos/time.h>
 #include <asm/hpet.h>
 #include <asm/div64.h>
-#include <asm/type.h>
+#include <asm/cpu_info.h>
 
 #define APIC_ENABLE 0x100
 #define APIC_FOCUS_DISABLED (1 << 9)

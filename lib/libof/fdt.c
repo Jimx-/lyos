@@ -1,6 +1,6 @@
 #include <lyos/config.h>
 #include <lyos/const.h>
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 #include <libfdt/libfdt.h>
 

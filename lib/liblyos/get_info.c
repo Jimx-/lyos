@@ -13,7 +13,7 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
@@ -26,7 +26,7 @@
 #include <lyos/param.h>
 #include <lyos/proc.h>
 #include <lyos/sysutils.h>
-#include <asm/type.h>
+#include <asm/cpu_info.h>
 
 int getinfo(int request, void* buf)
 {

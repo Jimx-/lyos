@@ -1,4 +1,4 @@
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
@@ -24,7 +24,6 @@
 #include <lyos/time.h>
 #include <asm/hpet.h>
 #include <asm/div64.h>
-#include <asm/type.h>
 
 struct apic x2apic_phys = {
     .read = apic_native_msr_read,

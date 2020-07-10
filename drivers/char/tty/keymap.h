@@ -21,7 +21,7 @@
 #ifndef _KEYMAP_H_
 #define _KEYMAP_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 #include <lyos/input.h>
 
 /************************************************************************/

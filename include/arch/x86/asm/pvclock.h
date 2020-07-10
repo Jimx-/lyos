@@ -1,7 +1,7 @@
 #ifndef _ARCH_PVCLOCK_H_
 #define _ARCH_PVCLOCK_H_
 
-#include <lyos/type.h>
+#include <lyos/types.h>
 
 struct pvclock_vcpu_time_info {
     u32 version;
