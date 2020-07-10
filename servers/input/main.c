@@ -53,6 +53,8 @@ static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
                           unsigned int count, cdev_id_t id);
 static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
                            unsigned int count, cdev_id_t id);
+static int input_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                       cdev_id_t id);
 static void input_other(MESSAGE* msg);
 
 static const char* name = "input";
@@ -67,6 +69,7 @@ static struct chardriver input_driver = {
     .cdr_close = input_close,
     .cdr_read = input_read,
     .cdr_write = input_write,
+    .cdr_ioctl = input_ioctl,
     .cdr_other = input_other,
 };
 
@@ -111,6 +114,12 @@ static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
                            unsigned int count, cdev_id_t id)
 {
     return -ENOSYS;
+}
+
+static int input_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+                       cdev_id_t id)
+{
+    return ENOSYS;
 }
 
 static struct input_dev* input_allocate_dev(endpoint_t owner)

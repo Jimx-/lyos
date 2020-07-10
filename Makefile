@@ -127,7 +127,7 @@ export Q
 # All Phony Targets
 .PHONY : all everything disasm clean realclean mrproper install help config menuconfig \
 	setup-toolchain libraries install-libraries kernel fs install-fs drivers install-drivers \
-	servers install-servers objdirs kvm kvm-debug install-headers
+	servers install-servers objdirs kvm kvm-debug install-headers tests
 
 # Default entry point
 all : clean everything
@@ -188,6 +188,7 @@ realclean :
 	$(Q)$(MAKE) -C fs $(MAKEFLAGS) realclean
 	$(Q)$(MAKE) -C drivers $(MAKEFLAGS) realclean
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) realclean
+	$(Q)$(MAKE) -C tests $(MAKEFLAGS) realclean
 	$(Q)$(MAKE) -C utils $(MAKEFLAGS) realclean
 
 mrproper:
@@ -299,6 +300,11 @@ servers:
 install-servers:
 	@echo -e '$(COLORGREEN)Installing servers...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) install
+
+tests:
+	@echo -e '$(COLORGREEN)Compiling and installing servers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C tests $(MAKEFLAGS)
+	$(Q)$(MAKE) -C tests $(MAKEFLAGS) install
 
 libc.so:
 	${CC} -shared -o ${DESTDIR}/usr/lib/libc.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libc.a -Wl,--no-whole-archive
