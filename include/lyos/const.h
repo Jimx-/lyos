@@ -416,7 +416,7 @@ enum msgtype {
     INPUT_TTY_UP,
     INPUT_TTY_EVENT,
     INPUT_SETLEDS,
-    INPUT_CONNECT,
+    INPUT_REGISTER_DEVICE,
     INPUT_CONF,
 
     /* IPC */
@@ -548,6 +548,7 @@ enum msgtype {
 #define DEV_FLOPPY 2
 #define DEV_HD 3
 #define DEV_CHAR_TTY 4
+#define DEV_INPUT 13
 #define DEV_CHAR_FB 29
 #define DEV_VD 112
 

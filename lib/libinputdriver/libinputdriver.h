@@ -16,12 +16,21 @@
 #ifndef _LIBINPUTDRIVER_H_
 #define _LIBINPUTDRIVER_H_
 
+#include <libdevman/libdevman.h>
+
 struct inputdriver {
     void (*input_interrupt)(unsigned long irq_set);
-    int (*input_other)(MESSAGE* m);
+    void (*input_other)(MESSAGE* m);
 };
 
 int inputdriver_start(struct inputdriver* inpd);
-int inputdriver_send_event(u16 type, u16 code, int value);
+int inputdriver_register_device(device_id_t dev_id, input_dev_id_t* input_id);
+int inputdriver_send_event(input_dev_id_t input_id, u16 type, u16 code,
+                           int value);
+
+static inline int inputdriver_sync(input_dev_id_t input_id)
+{
+    return inputdriver_send_event(input_id, EV_SYN, SYN_REPORT, 0);
+}
 
 #endif

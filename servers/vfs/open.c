@@ -141,7 +141,7 @@ int common_open(char* pathname, int flags, mode_t mode)
                 break;
             case I_CHAR_SPECIAL: /* open char device */
             {
-                int dev = pin->i_specdev;
+                dev_t dev = pin->i_specdev;
                 retval = cdev_open(dev);
                 break;
             }
@@ -173,7 +173,10 @@ int common_open(char* pathname, int flags, mode_t mode)
 int close_fd(struct fproc* fp, int fd)
 {
     struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
+    struct inode* pin;
+
     if (!filp) return EBADF;
+
     if (filp->fd_inode == NULL) {
         unlock_filp(filp);
         return EBADF;
@@ -184,7 +187,14 @@ int close_fd(struct fproc* fp, int fd)
                fd, fp->endpoint, fp->filp[fd]->fd_inode->i_num,
                fp->filp[fd]->fd_cnt, fp->filp[fd]->fd_inode->i_cnt));
 
-    struct inode* pin = filp->fd_inode;
+    pin = filp->fd_inode;
+
+    switch (pin->i_mode & I_TYPE) {
+    case I_CHAR_SPECIAL:
+        cdev_close(pin->i_specdev);
+        break;
+    }
+
     if (--filp->fd_cnt == 0) {
         unlock_inode(pin);
         put_inode(pin);

@@ -273,6 +273,14 @@ struct mess_inputdriver_input_event {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_inputdriver_input_event);
 
+struct mess_inputdriver_register_device {
+    int evbit;
+    int device_id;
+
+    u8 _pad[48];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_inputdriver_register_device);
+
 struct mess_input_tty_event {
     int id;
     u16 type;
@@ -324,6 +332,7 @@ typedef struct {
         struct mess_sysfs_publish_link m_sysfs_publish_link;
         struct mess_bdev_blockdriver_msg m_bdev_blockdriver_msg;
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;
+        struct mess_inputdriver_register_device m_inputdriver_register_device;
         struct mess_inputdriver_input_event m_inputdriver_input_event;
         struct mess_input_tty_event m_input_tty_event;
         struct mess_input_conf m_input_conf;

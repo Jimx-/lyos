@@ -25,35 +25,66 @@
 #include <lyos/fs.h>
 #include "string.h"
 #include <limits.h>
+#include <lyos/sysutils.h>
 #include <lyos/input.h>
 #include <libsysfs/libsysfs.h>
-#include "libinputdriver/libinputdriver.h"
+#include <libdevman/libdevman.h>
+#include <libinputdriver/libinputdriver.h>
 
-static endpoint_t input_endpoint = NO_TASK;
+static endpoint_t __input_endpoint = NO_TASK;
 
 static void get_input_ep()
 {
-    if (input_endpoint == NO_TASK) {
-        u32 v;
+    u32 v;
+    int retval;
 
-        int retval = sysfs_retrieve_u32("services.input.endpoint", &v);
+    if (__input_endpoint == NO_TASK) {
+        retval = sysfs_retrieve_u32("services.input.endpoint", &v);
+        if (retval) {
+            panic("failed to retrieve input endpoint (%d)", retval);
+        }
 
-        if (retval == 0) input_endpoint = (endpoint_t)v;
+        __input_endpoint = (endpoint_t)v;
     }
 }
 
-int inputdriver_send_event(u16 type, u16 code, int value)
+static int input_sendrec(int function, MESSAGE* msg)
 {
-    if (input_endpoint == NO_TASK) get_input_ep();
+    if (__input_endpoint == NO_TASK) get_input_ep();
 
+    return send_recv(function, __input_endpoint, msg);
+}
+
+int inputdriver_register_device(device_id_t dev_id, input_dev_id_t* input_id)
+{
+    MESSAGE msg;
+
+    msg.type = INPUT_REGISTER_DEVICE;
+    msg.u.m_inputdriver_register_device.device_id = dev_id;
+    msg.u.m_inputdriver_register_device.evbit = 0;
+
+    input_sendrec(BOTH, &msg);
+
+    if (msg.u.m_input_conf.status) {
+        return msg.u.m_input_conf.status;
+    }
+
+    *input_id = msg.u.m_input_conf.id;
+    return 0;
+}
+
+int inputdriver_send_event(input_dev_id_t input_id, u16 type, u16 code,
+                           int value)
+{
     MESSAGE msg;
 
     msg.type = INPUT_SEND_EVENT;
+    msg.u.m_inputdriver_input_event.id = input_id;
     msg.u.m_inputdriver_input_event.type = type;
     msg.u.m_inputdriver_input_event.code = code;
     msg.u.m_inputdriver_input_event.value = value;
 
-    return send_recv(SEND, input_endpoint, &msg);
+    return input_sendrec(SEND, &msg);
 }
 
 int inputdriver_start(struct inputdriver* inpd)
@@ -78,9 +109,11 @@ int inputdriver_start(struct inputdriver* inpd)
 
         switch (msg.type) {
         default:
-            if (inpd->input_other)
-                msg.RETVAL = inpd->input_other(&msg);
-            else
+            if (inpd->input_other) {
+                inpd->input_other(&msg);
+
+                continue;
+            } else
                 msg.RETVAL = ENOSYS;
             break;
         }

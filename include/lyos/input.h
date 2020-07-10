@@ -16,9 +16,21 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
+#include <sys/time.h>
+
+typedef int input_dev_id_t;
+
 /* The event structure */
 struct input_event {
-    // struct timeval tv;
+    struct timeval time;
+#define input_event_sec time.tv_sec
+#define input_event_usec time.tv_usec
+    u16 type;
+    u16 code;
+    s32 value;
+};
+
+struct input_value {
     u16 type;
     u16 code;
     s32 value;
@@ -30,6 +42,12 @@ struct input_event {
 #define EV_SYN 0x00
 #define EV_KEY 0x01
 #define EV_MSC 0x04
+
+/*
+ * Synchronization events.
+ */
+#define SYN_REPORT 0
+#define SYN_DROPPED 3
 
 /*
  * Keys and buttons
