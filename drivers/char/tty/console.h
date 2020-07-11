@@ -28,6 +28,8 @@ typedef struct s_console {
     unsigned short* screenbuf;
     unsigned int screenbuf_size;
     unsigned int cursor;
+    unsigned int last_cursor;
+    int last_cursor_state;
 
     /* size */
     unsigned int row_size; /* bytes per row */
@@ -92,7 +94,7 @@ typedef struct s_console {
 #define GRAY_CHAR (MAKE_COLOR(BLACK, BLACK) | BRIGHT)
 #define RED_CHAR (MAKE_COLOR(BLUE, RED) | BRIGHT)
 
-#define CURSOR_BLINK_RATE 2 /* cursor blink rate (hz) */
+#define CURSOR_BLINK_RATE 3 /* cursor blink rate (hz) */
 
 void vgacon_init_con(CONSOLE* con);
 void fbcon_init_con(CONSOLE* con);

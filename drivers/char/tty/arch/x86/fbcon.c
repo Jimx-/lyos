@@ -44,7 +44,6 @@
 #define YRES_DEFAULT 768
 
 int fb_scr_width, fb_scr_height;
-static int cursor_state = 0;
 
 extern int fbcon_init_bochs(int devind, int x_res, int y_res);
 
@@ -87,6 +86,12 @@ int fbcon_init()
     }
 
     return 0;
+}
+
+static u32 get_pixel(int x, int y)
+{
+    u32* vmem = (u32*)fb_mem_base;
+    return vmem[y * x_resolution + x];
 }
 
 static void set_pixel(int x, int y, int val)
@@ -139,22 +144,26 @@ static void print_char(CONSOLE* con, int x, int y, char ch)
     }
 }
 
-static void print_cursor(CONSOLE* con, int x, int y, int state)
+static void print_cursor(CONSOLE* con, int x, int y)
 {
-    u8 color = state ? con->color
-                     : MAKE_COLOR(BG_COLOR(con->color), BG_COLOR(con->color));
+    u8 color = con->color;
     int fg_color, bg_color;
+    u32 pixel;
     int i, j;
 
     color_to_rgb(color, con->attributes, &fg_color, &bg_color);
 
     for (i = 0; i < FONT_HEIGHT; i++) {
         for (j = 0; j < FONT_WIDTH; j++) {
-            if (i > FONT_HEIGHT - CURSOR_HEIGHT) {
-                set_pixel(x + j, y + i, fg_color);
+            pixel = get_pixel(x + j, y + i);
+
+            if (pixel == bg_color) {
+                pixel = fg_color;
             } else {
-                set_pixel(x + j, y + i, bg_color);
+                pixel = bg_color;
             }
+
+            set_pixel(x + j, y + i, pixel);
         }
     }
 }
@@ -167,7 +176,8 @@ void fbcon_init_con(CONSOLE* con)
     con->ypixel = y_resolution;
 
     con->origin = 0;
-    con->visible_origin = con->cursor = con->origin;
+    con->visible_origin = con->cursor = con->last_cursor = con->origin;
+    con->last_cursor_state = 0;
     con->scr_end = con->origin + fb_scr_width * fb_scr_height;
     con->con_size =
         fb_scr_width * fb_scr_height * 2; /* * 2: extra space for scrolling */
@@ -190,6 +200,10 @@ static void fbcon_outchar(CONSOLE* con, char ch)
 
     line = cursor / con->cols;
     col = cursor % con->cols;
+
+    if (cursor == con->last_cursor) {
+        con->last_cursor_state = 0;
+    }
 
     print_char(con, col * FONT_WIDTH, line * FONT_HEIGHT, ch);
 }
@@ -220,16 +234,32 @@ static void fbcon_flush(CONSOLE* con)
 static void update_cursor(struct timer_list* tp)
 {
     clock_t ticks = get_system_hz() / CURSOR_BLINK_RATE;
-    cursor_state = ~cursor_state;
 
     int line, col;
     CONSOLE* con = &console_table[current_console];
     int cursor = con->cursor;
+    int last_cursor = con->last_cursor;
+    int cursor_state = 0;
+
+    if (cursor == last_cursor) {
+        cursor_state = !con->last_cursor_state;
+    } else {
+        cursor_state = 1;
+
+        if (con->last_cursor_state) {
+            line = last_cursor / con->cols;
+            col = last_cursor % con->cols;
+            print_cursor(con, col * FONT_WIDTH, line * FONT_HEIGHT);
+        }
+    }
+
+    con->last_cursor = cursor;
+    con->last_cursor_state = cursor_state;
 
     line = cursor / con->cols;
     col = cursor % con->cols;
 
-    print_cursor(con, col * FONT_WIDTH, line * FONT_HEIGHT, cursor_state);
+    print_cursor(con, col * FONT_WIDTH, line * FONT_HEIGHT);
 
     set_timer(tp, ticks, update_cursor, 0);
 }

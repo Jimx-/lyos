@@ -641,7 +641,7 @@ static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
     TTY* tty = minor2tty(minor);
 
     if (tty == NULL) {
-        return -ENXIO;
+        return ENXIO;
     }
 
     switch (request) {
