@@ -46,6 +46,8 @@ void vgacon_init_con(CONSOLE* con)
     con->origin = (con - console_table) * size_per_con;
     con->cols = SCR_WIDTH;
     con->rows = SCR_SIZE / SCR_WIDTH;
+    con->xpixel = con->cols * 8;
+    con->ypixel = con->cols * 16;
     con->con_size = size_per_con / con->cols * con->cols;
     con->cursor = con->visible_origin = con->origin;
     con->scr_end = con->origin + SCR_SIZE;

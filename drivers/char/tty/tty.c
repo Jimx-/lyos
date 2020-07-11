@@ -682,6 +682,10 @@ static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
         retval = data_copy(SELF, &tty->tty_pgrp, endpoint, buf,
                            sizeof(tty->tty_pgrp));
         break;
+    case TIOCGWINSZ:
+        retval = data_copy(endpoint, buf, SELF, &tty->tty_winsize,
+                           sizeof(struct winsize));
+        break;
     default:
         retval = EINVAL;
         break;

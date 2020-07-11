@@ -10,6 +10,8 @@
 #define TIOCGPGRP 0x4004
 #define TIOCSPGRP 0x4005
 #define TCFLSH 0x4006
+#define TIOCGWINSZ 0x4007
+#define TIOCSWINSZ 0x4008
 
 #ifdef __cplusplus
 extern "C"

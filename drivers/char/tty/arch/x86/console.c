@@ -148,6 +148,11 @@ void init_screen(TTY* tty)
     con->is_full = 0;
     con->default_color = con->color = DEFAULT_CHAR_COLOR;
 
+    tty->tty_winsize.ws_row = con->rows;
+    tty->tty_winsize.ws_col = con->cols;
+    tty->tty_winsize.ws_xpixel = con->xpixel;
+    tty->tty_winsize.ws_ypixel = con->ypixel;
+
     tty->tty_dev = con;
     if (nr_tty == 0) {
         ((CONSOLE*)tty->tty_dev)->cursor = 0;

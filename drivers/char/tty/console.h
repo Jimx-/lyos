@@ -33,6 +33,8 @@ typedef struct s_console {
     unsigned int row_size; /* bytes per row */
     unsigned int rows;     /* screen height in characters */
     unsigned int cols;     /* screen width in characters */
+    unsigned int xpixel;   /* screen width in pixels */
+    unsigned int ypixel;   /* screen height in pixels */
 
     /* attributes */
     unsigned char attributes;

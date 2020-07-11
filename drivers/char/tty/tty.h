@@ -77,6 +77,7 @@ typedef struct s_tty {
     dev_t tty_select_minor;
 
     struct termios tty_termios;
+    struct winsize tty_winsize;
 
     int tty_escaped;
 

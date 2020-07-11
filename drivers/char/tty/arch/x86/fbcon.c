@@ -163,6 +163,8 @@ void fbcon_init_con(CONSOLE* con)
 {
     con->cols = fb_scr_width;
     con->rows = fb_scr_height;
+    con->xpixel = x_resolution;
+    con->ypixel = y_resolution;
 
     con->origin = 0;
     con->visible_origin = con->cursor = con->origin;
