@@ -21,6 +21,11 @@ int main()
         exit(1);
     }
 
+    printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
+    printf("Input device ID: bus %#x vendor %#x product %#x\n",
+           libevdev_get_id_bustype(dev), libevdev_get_id_vendor(dev),
+           libevdev_get_id_product(dev));
+
     do {
         struct input_event ev;
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);

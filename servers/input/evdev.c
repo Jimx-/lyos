@@ -163,10 +163,148 @@ static ssize_t evdev_read(struct input_handle* handle, endpoint_t endpoint,
     return evdev_copy_events(client, endpoint, buf, count);
 }
 
+static int handle_eviocgbit(struct input_dev* dev, unsigned int type,
+                            size_t size, endpoint_t endpoint, void* buf)
+{
+    bitchunk_t* bits;
+    size_t len;
+
+    switch (type) {
+    case 0:
+        bits = dev->evbit;
+        len = EV_MAX;
+        break;
+    case EV_KEY:
+        bits = dev->keybit;
+        len = KEY_MAX;
+        break;
+    case EV_REL:
+        bits = dev->relbit;
+        len = REL_MAX;
+        break;
+    case EV_ABS:
+        bits = dev->absbit;
+        len = ABS_MAX;
+        break;
+    case EV_MSC:
+        bits = dev->mscbit;
+        len = MSC_MAX;
+        break;
+    case EV_LED:
+        bits = dev->ledbit;
+        len = LED_MAX;
+        break;
+    case EV_SND:
+        bits = dev->sndbit;
+        len = SND_MAX;
+        break;
+    case EV_FF:
+        bits = dev->ffbit;
+        len = FF_MAX;
+        break;
+    case EV_SW:
+        bits = dev->swbit;
+        len = SW_MAX;
+        break;
+    default:
+        return EINVAL;
+    }
+
+    len = BITCHUNKS(len) * sizeof(bitchunk_t);
+    if (len > size) {
+        len = size;
+    }
+
+    return data_copy(endpoint, buf, SELF, bits, len);
+}
+
+static int str_to_user(const char* str, size_t maxlen, endpoint_t endpoint,
+                       void* buf)
+{
+    int len;
+
+    if (!str) return -ENOENT;
+
+    len = strlen(str) + 1;
+    if (len > maxlen) len = maxlen;
+
+    return data_copy(endpoint, buf, SELF, (void*)str, len);
+}
+
+long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
+                 char* buf, cdev_id_t id)
+{
+    struct input_dev* dev = handle->dev;
+    size_t size, len;
+    char empty_str = '\0';
+    int version = EV_VERSION;
+
+    switch (request) {
+    case EVIOCGVERSION:
+        return data_copy(endpoint, buf, SELF, &version, sizeof(version));
+    case EVIOCGID:
+        return data_copy(endpoint, buf, SELF, &dev->input_id,
+                         sizeof(struct input_id));
+    }
+
+    size = _IOC_SIZE(request);
+
+#define EVIOC_MASK_SIZE(nr) ((nr) & ~(_IOC_SIZEMASK << _IOC_SIZESHIFT))
+    switch (EVIOC_MASK_SIZE(request)) {
+    case EVIOCGKEY(0):
+        len = BITCHUNKS(KEY_MAX) * sizeof(bitchunk_t);
+        if (size < len) {
+            len = size;
+        }
+
+        return data_copy(endpoint, buf, SELF, &dev->key, len);
+
+    case EVIOCGLED(0):
+        len = BITCHUNKS(LED_MAX) * sizeof(bitchunk_t);
+        if (size < len) {
+            len = size;
+        }
+
+        return data_copy(endpoint, buf, SELF, &dev->led, len);
+
+    case EVIOCGSND(0):
+        len = BITCHUNKS(SND_MAX) * sizeof(bitchunk_t);
+        if (size < len) {
+            len = size;
+        }
+
+        return data_copy(endpoint, buf, SELF, &dev->snd, len);
+
+    case EVIOCGSW(0):
+        len = BITCHUNKS(SW_MAX) * sizeof(bitchunk_t);
+        if (size < len) {
+            len = size;
+        }
+
+        return data_copy(endpoint, buf, SELF, &dev->sw, len);
+
+    case EVIOCGNAME(0):
+        return str_to_user(dev->name, size, endpoint, buf);
+    case EVIOCGPHYS(0):
+        return str_to_user(&empty_str, size, endpoint, buf);
+    case EVIOCGUNIQ(0):
+        return str_to_user(&empty_str, size, endpoint, buf);
+    }
+
+    if (_IOC_DIR(request) == _IOC_READ) {
+        if ((_IOC_NR(request) & ~EV_MAX) == _IOC_NR(EVIOCGBIT(0, 0)))
+            return handle_eviocgbit(dev, _IOC_NR(request) & EV_MAX, size,
+                                    endpoint, buf);
+    }
+
+    return EINVAL;
+}
+
 static struct input_handle_ops evdev_handle_ops = {
     .open = evdev_open,
     .close = evdev_close,
     .read = evdev_read,
+    .ioctl = evdev_ioctl,
 };
 
 static void __pass_event(struct evdev_client* client,

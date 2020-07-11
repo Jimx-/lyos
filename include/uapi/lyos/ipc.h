@@ -258,10 +258,11 @@ struct mess_inputdriver_input_event {
 VERIFY_MESS_SIZE(mess_inputdriver_input_event);
 
 struct mess_inputdriver_register_device {
-    int evbit;
-    int device_id;
+    int dev_id;
+    void* dev_bits;
+    void* input_id;
 
-    __u8 _pad[48];
+    __u8 _pad[52 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_inputdriver_register_device);
 

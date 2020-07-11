@@ -119,7 +119,14 @@ static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
 static int input_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
                        cdev_id_t id)
 {
-    return ENOSYS;
+    struct input_handle* handle;
+
+    handle = input_get_handle(minor);
+    if (!handle) {
+        return ENXIO;
+    }
+
+    return handle->ops->ioctl(handle, request, endpoint, buf, id);
 }
 
 static struct input_dev* input_allocate_dev(endpoint_t owner)
@@ -129,6 +136,7 @@ static struct input_dev* input_allocate_dev(endpoint_t owner)
 
     dev = malloc(sizeof(*dev));
     if (dev) {
+        memset(dev, 0, sizeof(*dev));
         dev->id = input_id++;
         dev->owner = owner;
 
@@ -138,12 +146,38 @@ static struct input_dev* input_allocate_dev(endpoint_t owner)
     return dev;
 }
 
+static int input_copy_bits(struct input_dev* dev, endpoint_t endpoint,
+                           struct input_dev_bits* bits)
+{
+    int retval;
+
+#define COPY_BIT(name)                                            \
+    do {                                                          \
+        retval = data_copy(SELF, dev->name, endpoint, bits->name, \
+                           sizeof(dev->name));                    \
+        if (retval) return retval;                                \
+    } while (0)
+
+    COPY_BIT(evbit);
+    COPY_BIT(keybit);
+    COPY_BIT(relbit);
+    COPY_BIT(absbit);
+    COPY_BIT(mscbit);
+    COPY_BIT(ledbit);
+    COPY_BIT(sndbit);
+    COPY_BIT(ffbit);
+    COPY_BIT(swbit);
+
+    return retval;
+}
+
 static int input_register_device(MESSAGE* msg)
 {
     struct input_dev* dev;
     struct input_handler* handler;
     MESSAGE conf_msg;
     struct device_info devinf;
+    struct input_dev_bits dev_bits;
     int retval = 0;
 
     dev = input_allocate_dev(msg->source);
@@ -152,9 +186,23 @@ static int input_register_device(MESSAGE* msg)
         goto reply;
     }
 
-    dev->dev_id = msg->u.m_inputdriver_register_device.device_id;
+    dev->dev_id = msg->u.m_inputdriver_register_device.dev_id;
+
+    retval = data_copy(SELF, &dev_bits, msg->source,
+                       msg->u.m_inputdriver_register_device.dev_bits,
+                       sizeof(dev_bits));
+    if (retval) goto reply_free_dev;
+
+    retval = input_copy_bits(dev, msg->source, &dev_bits);
+    if (retval) goto reply_free_dev;
+
+    retval = data_copy(SELF, &dev->input_id, msg->source,
+                       msg->u.m_inputdriver_register_device.input_id,
+                       sizeof(dev->input_id));
+    if (retval) goto reply_free_dev;
 
     memset(&devinf, 0, sizeof(devinf));
+    snprintf(dev->name, sizeof(dev->name), "input%d", dev->id);
     snprintf(devinf.name, sizeof(devinf.name), "input%d", dev->id);
     devinf.bus = NO_BUS_ID;
     devinf.class = input_class;
@@ -162,10 +210,7 @@ static int input_register_device(MESSAGE* msg)
     devinf.devt = NO_DEV;
 
     retval = dm_device_register(&devinf, &dev->input_dev_id);
-    if (retval) {
-        free(dev);
-        goto reply;
-    }
+    if (retval) goto reply_free_dev;
 
     list_add(&dev->node, &input_dev_list);
 
@@ -174,6 +219,8 @@ static int input_register_device(MESSAGE* msg)
         input_attach_handler(dev, handler);
     }
 
+reply_free_dev:
+    free(dev);
 reply:
     conf_msg.u.m_input_conf.status = retval;
 

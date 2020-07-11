@@ -26,4 +26,16 @@ struct input_value {
     s32 value;
 };
 
+struct input_dev_bits {
+    bitchunk_t* evbit;
+    bitchunk_t* keybit;
+    bitchunk_t* relbit;
+    bitchunk_t* absbit;
+    bitchunk_t* mscbit;
+    bitchunk_t* ledbit;
+    bitchunk_t* sndbit;
+    bitchunk_t* ffbit;
+    bitchunk_t* swbit;
+};
+
 #endif

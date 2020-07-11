@@ -16,6 +16,8 @@
 #ifndef _LIBINPUTDRIVER_H_
 #define _LIBINPUTDRIVER_H_
 
+#include <lyos/types.h>
+#include <lyos/bitmap.h>
 #include <libdevman/libdevman.h>
 
 struct inputdriver {
@@ -23,14 +25,34 @@ struct inputdriver {
     void (*input_other)(MESSAGE* m);
 };
 
+struct inputdriver_dev {
+    input_dev_id_t id;
+    device_id_t dev_id;
+    struct input_id input_id;
+    int registered;
+
+    bitchunk_t evbit[BITCHUNKS(EV_CNT)];
+    bitchunk_t keybit[BITCHUNKS(KEY_CNT)];
+    bitchunk_t relbit[BITCHUNKS(REL_CNT)];
+    bitchunk_t absbit[BITCHUNKS(ABS_CNT)];
+    bitchunk_t mscbit[BITCHUNKS(MSC_CNT)];
+    bitchunk_t ledbit[BITCHUNKS(LED_CNT)];
+    bitchunk_t sndbit[BITCHUNKS(SND_CNT)];
+    bitchunk_t ffbit[BITCHUNKS(FF_CNT)];
+    bitchunk_t swbit[BITCHUNKS(SW_CNT)];
+};
+
 int inputdriver_start(struct inputdriver* inpd);
-int inputdriver_register_device(device_id_t dev_id, input_dev_id_t* input_id);
-int inputdriver_send_event(input_dev_id_t input_id, u16 type, u16 code,
+
+struct inputdriver_dev* inputdriver_allocate_device(void);
+int inputdriver_register_device(struct inputdriver_dev* dev);
+
+int inputdriver_send_event(struct inputdriver_dev* dev, u16 type, u16 code,
                            int value);
 
-static inline int inputdriver_sync(input_dev_id_t input_id)
+static inline int inputdriver_sync(struct inputdriver_dev* dev)
 {
-    return inputdriver_send_event(input_id, EV_SYN, SYN_REPORT, 0);
+    return inputdriver_send_event(dev, EV_SYN, SYN_REPORT, 0);
 }
 
 #endif

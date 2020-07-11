@@ -18,6 +18,7 @@
 #include <lyos/config.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "assert.h"
 #include "unistd.h"
 #include "errno.h"
@@ -55,13 +56,42 @@ static int input_sendrec(int function, MESSAGE* msg)
     return send_recv(function, __input_endpoint, msg);
 }
 
-int inputdriver_register_device(device_id_t dev_id, input_dev_id_t* input_id)
+struct inputdriver_dev* inputdriver_allocate_device(void)
+{
+    struct inputdriver_dev* dev;
+
+    dev = malloc(sizeof(*dev));
+    if (dev) {
+        memset(dev, 0, sizeof(*dev));
+        dev->dev_id = NO_DEVICE_ID;
+    }
+
+    return dev;
+}
+
+int inputdriver_register_device(struct inputdriver_dev* dev)
 {
     MESSAGE msg;
+    struct input_dev_bits dev_bits;
+
+    if (dev->registered) {
+        return EINVAL;
+    }
+
+    dev_bits.evbit = dev->evbit;
+    dev_bits.keybit = dev->keybit;
+    dev_bits.relbit = dev->relbit;
+    dev_bits.absbit = dev->absbit;
+    dev_bits.mscbit = dev->mscbit;
+    dev_bits.ledbit = dev->ledbit;
+    dev_bits.sndbit = dev->sndbit;
+    dev_bits.ffbit = dev->ffbit;
+    dev_bits.swbit = dev->swbit;
 
     msg.type = INPUT_REGISTER_DEVICE;
-    msg.u.m_inputdriver_register_device.device_id = dev_id;
-    msg.u.m_inputdriver_register_device.evbit = 0;
+    msg.u.m_inputdriver_register_device.dev_id = dev->dev_id;
+    msg.u.m_inputdriver_register_device.dev_bits = &dev_bits;
+    msg.u.m_inputdriver_register_device.input_id = &dev->input_id;
 
     input_sendrec(BOTH, &msg);
 
@@ -69,17 +99,23 @@ int inputdriver_register_device(device_id_t dev_id, input_dev_id_t* input_id)
         return msg.u.m_input_conf.status;
     }
 
-    *input_id = msg.u.m_input_conf.id;
+    dev->id = msg.u.m_input_conf.id;
+    dev->registered = TRUE;
+
     return 0;
 }
 
-int inputdriver_send_event(input_dev_id_t input_id, u16 type, u16 code,
+int inputdriver_send_event(struct inputdriver_dev* dev, u16 type, u16 code,
                            int value)
 {
     MESSAGE msg;
 
+    if (!dev->registered) {
+        return EINVAL;
+    }
+
     msg.type = INPUT_SEND_EVENT;
-    msg.u.m_inputdriver_input_event.id = input_id;
+    msg.u.m_inputdriver_input_event.id = dev->id;
     msg.u.m_inputdriver_input_event.type = type;
     msg.u.m_inputdriver_input_event.code = code;
     msg.u.m_inputdriver_input_event.value = value;
