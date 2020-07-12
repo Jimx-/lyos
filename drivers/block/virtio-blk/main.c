@@ -16,7 +16,6 @@
 #include <lyos/interrupt.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
-#include <lyos/pci_utils.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
 

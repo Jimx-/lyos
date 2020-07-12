@@ -3,12 +3,8 @@
 # see documentation/config/kconfig-language.txt.
 #
 
-menu "Device Drivers"
+menu "Graphics support"
 
-source "drivers/block/config.in"
-
-source "drivers/pci/config.in"
-
-source "drivers/video/config.in"
+source "drivers/gpu/drm/config.in"
 
 endmenu

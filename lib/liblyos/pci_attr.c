@@ -22,104 +22,51 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
+#include <lyos/pci_utils.h>
 #include <lyos/service.h>
 #include "libsysfs/libsysfs.h"
 
-extern endpoint_t __pci_endpoint;
-
 u8 pci_attr_r8(int devind, u16 port)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_ATTR_R8;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     return (u8)msg.u.m3.m3i2;
 }
 
 u16 pci_attr_r16(int devind, u16 port)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_ATTR_R16;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     return (u8)msg.u.m3.m3i2;
 }
 
 u32 pci_attr_r32(int devind, u16 port)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_ATTR_R32;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     return msg.u.m3.m3i2;
 }
 
 int pci_attr_w16(int devind, u16 port, u16 value)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_ATTR_W16;
@@ -127,44 +74,53 @@ int pci_attr_w16(int devind, u16 port, u16 value)
     msg.u.m3.m3i3 = port;
     msg.u.m3.m3i4 = value;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     return msg.RETVAL;
 }
 
 int pci_get_bar(int devind, u16 port, u32* base, u32* size, int* ioflag)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_GET_BAR;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     if (msg.RETVAL == 0) {
         *base = msg.u.m3.m3i2;
         *size = msg.u.m3.m3i3;
         *ioflag = msg.u.m3.m3i4;
     }
+
+    return msg.RETVAL;
+}
+
+int pci_find_capability(int devind, int cap)
+{
+    MESSAGE msg;
+
+    msg.type = PCI_FIND_CAPABILITY;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = cap;
+
+    pci_sendrec(BOTH, &msg);
+
+    return msg.RETVAL;
+}
+
+int pci_find_next_capability(int devind, int pos, int cap)
+{
+    MESSAGE msg;
+
+    msg.type = PCI_FIND_NEXT_CAPABILITY;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = cap;
+    msg.u.m3.m3i4 = pos;
+
+    pci_sendrec(BOTH, &msg);
 
     return msg.RETVAL;
 }

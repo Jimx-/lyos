@@ -44,6 +44,7 @@ struct virtqueue* vring_create_virtqueue(struct virtio_device* vdev,
     vq = malloc(sizeof(*vq));
     if (!vq) return NULL;
 
+    memset(vq, 0, sizeof(*vq));
     vq->index = index;
     vq->num = num;
     vq->ring_size = vring_size(vq->num, ARCH_PG_SIZE);

@@ -66,10 +66,13 @@ struct virtio_device* virtio_probe_device(u16 subdid, const char* name,
                                           int num_features, int skip)
 {
     int retval;
-    struct virtio_device* vdev =
-        virtio_pci_legacy_setup(subdid, name, features, num_features, skip);
+    struct virtio_device* vdev = virtio_pci_setup(subdid, skip);
 
     if (!vdev) return NULL;
+
+    vdev->name = name;
+    vdev->features = features;
+    vdev->num_features = num_features;
 
     vdev->config->reset(vdev);
     virtio_add_status(vdev, VIRTIO_CONFIG_S_ACKNOWLEDGE);

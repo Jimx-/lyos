@@ -1,0 +1,12 @@
+menuconfig DRM
+    bool "Direct Rendering Manager (XFree86 4.1.0 and higher DRI support)"
+    default y
+    ---help---
+      Kernel-level support for the Direct Rendering Infrastructure (DRI)
+      introduced in XFree86 4.0.
+
+if DRM
+
+source "drivers/gpu/drm/virtio-gpu/config.in"
+
+endif

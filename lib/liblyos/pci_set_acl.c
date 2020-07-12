@@ -32,10 +32,10 @@ endpoint_t __pci_endpoint =
     NO_TASK;
 #endif
 
-int pci_set_acl(struct pci_acl* pci_acl)
+int pci_sendrec(int function, MESSAGE* msg)
 {
-    u32 v;
     int retval;
+    u32 v;
 
     if (__pci_endpoint == NO_TASK) {
         retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
@@ -44,16 +44,17 @@ int pci_set_acl(struct pci_acl* pci_acl)
         __pci_endpoint = (endpoint_t)v;
     }
 
+    return send_recv(function, __pci_endpoint, msg);
+}
+
+int pci_set_acl(struct pci_acl* pci_acl)
+{
     MESSAGE msg;
 
     msg.type = PCI_SET_ACL;
     msg.BUF = pci_acl;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     return msg.RETVAL;
 }

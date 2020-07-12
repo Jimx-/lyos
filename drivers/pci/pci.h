@@ -32,6 +32,8 @@ struct pcidev {
     u8 subclass;
     u8 infclass;
 
+    u8 headt;
+
     device_id_t dev_id;
 
     int nr_bars;
@@ -43,13 +45,6 @@ struct pcidev {
 
         int flags;
     } bars[6];
-
-    int nr_caps;
-    struct {
-        u8 type;
-        u8 size;
-        u8 offset;
-    } caps[10];
 };
 
 #define PBF_IO 1
@@ -93,6 +88,8 @@ int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
 int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
                   device_id_t* dev_id);
 int _pci_get_bar(int devind, int port, u32* base, u32* size, int* ioflag);
+int _pci_find_capability(int devind, int cap);
+int _pci_find_next_capability(int devind, u8 pos, int cap);
 
 u8 pci_read_attr_u8(int devind, int port);
 u16 pci_read_attr_u16(int devind, int port);

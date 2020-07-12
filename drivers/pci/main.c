@@ -54,6 +54,8 @@ static int do_attr_r16(MESSAGE* m);
 static int do_attr_r32(MESSAGE* m);
 static int do_attr_w16(MESSAGE* m);
 static int do_get_bar(MESSAGE* m);
+static int do_find_capability(MESSAGE* m);
+static int do_find_next_capability(MESSAGE* m);
 
 int main()
 {
@@ -94,6 +96,12 @@ int main()
             break;
         case PCI_GET_BAR:
             msg.RETVAL = do_get_bar(&msg);
+            break;
+        case PCI_FIND_CAPABILITY:
+            msg.RETVAL = do_find_capability(&msg);
+            break;
+        case PCI_FIND_NEXT_CAPABILITY:
+            msg.RETVAL = do_find_next_capability(&msg);
             break;
         case DM_BUS_ATTR_SHOW:
         case DM_BUS_ATTR_STORE:
@@ -207,6 +215,23 @@ static int do_get_bar(MESSAGE* m)
     m->u.m3.m3i4 = ioflag;
 
     return 0;
+}
+
+static int do_find_capability(MESSAGE* m)
+{
+    int devind = m->u.m3.m3i2;
+    int cap = m->u.m3.m3i3;
+
+    return _pci_find_capability(devind, cap);
+}
+
+static int do_find_next_capability(MESSAGE* m)
+{
+    int devind = m->u.m3.m3i2;
+    int cap = m->u.m3.m3i3;
+    int pos = m->u.m3.m3i4;
+
+    return _pci_find_next_capability(devind, pos, cap);
 }
 
 static int do_attr_r8(MESSAGE* m)

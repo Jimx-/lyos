@@ -23,32 +23,17 @@
 #include <unistd.h>
 #include <assert.h>
 #include <lyos/service.h>
+#include <lyos/pci_utils.h>
 #include "libsysfs/libsysfs.h"
 #include <libdevman/libdevman.h>
 
-extern endpoint_t __pci_endpoint;
-
 int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_FIRST_DEV;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     *devind = msg.u.m3.m3i2;
     *vid = msg.u.m3.m3i3;
@@ -63,26 +48,12 @@ int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 
 int pci_next_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)
 {
-    u32 v;
-    int retval;
-
-    if (__pci_endpoint == NO_TASK) {
-        retval = sysfs_retrieve_u32("services.pci.endpoint", &v);
-        if (retval) return retval;
-
-        __pci_endpoint = (endpoint_t)v;
-    }
-
     MESSAGE msg;
 
     msg.type = PCI_NEXT_DEV;
     msg.u.m3.m3i2 = *devind;
 
-#ifdef __i386__
-    send_recv(BOTH, TASK_PCI, &msg);
-#else
-    send_recv(BOTH, __pci_endpoint, &msg);
-#endif
+    pci_sendrec(BOTH, &msg);
 
     *devind = msg.u.m3.m3i2;
     *vid = msg.u.m3.m3i3;

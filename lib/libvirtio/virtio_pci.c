@@ -85,3 +85,17 @@ int vp_find_vqs(struct virtio_device* vdev, unsigned nvqs,
 {
     return vp_find_vqs_intx(vdev, nvqs, vqs);
 }
+
+struct virtio_device* virtio_pci_setup(u16 subdid, int skip)
+{
+    struct virtio_device* vdev;
+
+    vdev = virtio_pci_modern_setup(subdid, skip);
+
+    if (!vdev) {
+        /* fallback to legacy */
+        vdev = virtio_pci_legacy_setup(subdid, skip);
+    }
+
+    return vdev;
+}

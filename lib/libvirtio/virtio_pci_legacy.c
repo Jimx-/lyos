@@ -19,7 +19,7 @@
 #include <lyos/pci_utils.h>
 #include <lyos/vm.h>
 #include <asm/pci.h>
-#include <uapi/lyos/virtio_ring.h>
+#include <lyos/virtio_ring.h>
 
 #include <libvirtio/libvirtio.h>
 
@@ -28,7 +28,7 @@
 #include "virtio_config.h"
 
 #define VP_READ_IO(bits, suffix)                                           \
-    u##bits vp_read##bits(struct virtio_pci_device* vpdev, int off)        \
+    static u##bits vp_read##bits(struct virtio_pci_device* vpdev, int off) \
     {                                                                      \
         u32 val;                                                           \
         int retval;                                                        \
@@ -43,22 +43,23 @@ VP_READ_IO(32, l)
 VP_READ_IO(16, w)
 VP_READ_IO(8, b)
 
-#define VP_WRITE_IO(bits, suffix)                                              \
-    void vp_write##bits(struct virtio_pci_device* vpdev, int off, u##bits val) \
-    {                                                                          \
-        int retval;                                                            \
-        if ((retval = portio_out##suffix(vpdev->port + off, val)) != 0) {      \
-            panic("%s: vp_write" #bits " failed %d (%d)", vpdev->vdev.name,    \
-                  vpdev->port, retval);                                        \
-        }                                                                      \
+#define VP_WRITE_IO(bits, suffix)                                           \
+    static void vp_write##bits(struct virtio_pci_device* vpdev, int off,    \
+                               u##bits val)                                 \
+    {                                                                       \
+        int retval;                                                         \
+        if ((retval = portio_out##suffix(vpdev->port + off, val)) != 0) {   \
+            panic("%s: vp_write" #bits " failed %d (%d)", vpdev->vdev.name, \
+                  vpdev->port, retval);                                     \
+        }                                                                   \
     }
 
 VP_WRITE_IO(32, l)
 VP_WRITE_IO(16, w)
 VP_WRITE_IO(8, b)
 
-void vp_get(struct virtio_device* vdev, unsigned offset, void* buf,
-            unsigned len)
+static void vp_get(struct virtio_device* vdev, unsigned offset, void* buf,
+                   unsigned len)
 {
     struct virtio_pci_device* vpdev = to_vp_device(vdev);
     unsigned addr = VIRTIO_PCI_CONFIG_OFF(vpdev->msix_enabled) + offset;
@@ -69,8 +70,8 @@ void vp_get(struct virtio_device* vdev, unsigned offset, void* buf,
         ptr[i] = vp_read8(vpdev, addr + i);
 }
 
-void vp_set(struct virtio_device* vdev, unsigned offset, const void* buf,
-            unsigned len)
+static void vp_set(struct virtio_device* vdev, unsigned offset, const void* buf,
+                   unsigned len)
 {
     struct virtio_pci_device* vpdev = to_vp_device(vdev);
     unsigned addr = VIRTIO_PCI_CONFIG_OFF(vpdev->msix_enabled) + offset;
@@ -200,9 +201,7 @@ static void del_vq(struct virtio_pci_device* vpdev, struct virtqueue* vq)
     vring_del_virtqueue(vq);
 }
 
-struct virtio_device* virtio_pci_legacy_setup(u16 subdid, const char* name,
-                                              struct virtio_feature* features,
-                                              int num_features, int skip)
+struct virtio_device* virtio_pci_legacy_setup(u16 subdid, int skip)
 {
     int retval;
     int devind;
@@ -212,7 +211,7 @@ struct virtio_device* virtio_pci_legacy_setup(u16 subdid, const char* name,
     int ioflag;
     struct virtio_pci_device* vpdev;
 
-    if (skip < 0 || name == NULL) {
+    if (skip < 0) {
         return NULL;
     }
 
@@ -236,9 +235,6 @@ struct virtio_device* virtio_pci_legacy_setup(u16 subdid, const char* name,
     if (!vpdev) return NULL;
 
     memset(vpdev, 0, sizeof(*vpdev));
-    vpdev->vdev.name = name;
-    vpdev->vdev.features = features;
-    vpdev->vdev.num_features = num_features;
     vpdev->vdev.config = &virtio_pci_config_ops;
     vpdev->vdev.dev_id = dev_id;
 

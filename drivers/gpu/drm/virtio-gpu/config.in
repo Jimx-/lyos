@@ -1,0 +1,9 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+config VIRTIO_GPU
+    bool "Virtio GPU driver"
+    help
+      This is the virtual GPU driver for virtio.  It can be used with QEMU based VMMs (like KVM or Xen).

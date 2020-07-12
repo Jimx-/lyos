@@ -13,6 +13,7 @@ struct virtqueue {
     void* vaddr;
     phys_bytes paddr;
     struct virtio_device* vdev;
+    void* priv;
 
     unsigned int index;
     u16 num;
@@ -48,5 +49,7 @@ struct virtqueue* vring_create_virtqueue(struct virtio_device* vdev,
                                          unsigned int index, unsigned int num,
                                          int (*notify)(struct virtqueue*));
 void vring_del_virtqueue(struct virtqueue* vq);
+
+struct virtio_device* virtio_pci_setup(u16 subdid, int skip);
 
 #endif

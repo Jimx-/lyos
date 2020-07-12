@@ -201,7 +201,7 @@ static void pci_intel_init()
 
 static int record_bar(int devind, int bar_nr, int last)
 {
-    int reg, width, nr_bars;
+    int reg, width, nr_bars, type;
     u32 bar, bar2;
 
     width = 1;
@@ -225,6 +225,49 @@ static int record_bar(int devind, int bar_nr, int last)
         pcidev[devind].bars[nr_bars].size = bar2;
         pcidev[devind].bars[nr_bars].nr = bar_nr;
         pcidev[devind].bars[nr_bars].flags = PBF_IO;
+    } else {
+        type = (bar & PCI_BAR_TYPE);
+
+        switch (type) {
+        case PCI_TYPE_32:
+        case PCI_TYPE_32_1M:
+            break;
+
+        case PCI_TYPE_64:
+            if (last) {
+                return width;
+            }
+
+            width++;
+            bar2 = pci_read_attr_u32(devind, reg + 4);
+
+            if (bar2) {
+                return width;
+            }
+            break;
+
+        default:
+            return width;
+        }
+
+        pci_write_attr_u32(devind, reg, 0xffffffff);
+        bar2 = pci_read_attr_u32(devind, reg);
+
+        pci_write_attr_u32(devind, reg, bar);
+
+        if (bar2 == 0) {
+            return width;
+        }
+
+        bar &= PCI_BAR_MEM_MASK;
+        bar2 &= PCI_BAR_MEM_MASK;
+        bar2 = (~bar2 & 0xffff) + 1;
+
+        nr_bars = pcidev[devind].nr_bars++;
+        pcidev[devind].bars[nr_bars].base = bar;
+        pcidev[devind].bars[nr_bars].size = bar2;
+        pcidev[devind].bars[nr_bars].nr = bar_nr;
+        pcidev[devind].bars[nr_bars].flags = 0;
     }
 
     return width;
@@ -236,27 +279,6 @@ static void record_bars(int devind, int last_reg)
 
     for (i = 0, reg = PCI_BAR; reg <= last_reg; i += width, reg += 4 * width) {
         width = record_bar(devind, i, reg == last_reg);
-    }
-}
-
-static void record_capabilities(int devind)
-{
-    u8 offset = pci_read_attr_u8(devind, PCI_CAPPTR) & PCI_CP_MASK;
-
-    while (offset) {
-        u8 type = pci_read_attr_u8(devind, offset);
-
-        u8 size = -1;
-        if (type == 0x9) {
-            size = pci_read_attr_u8(devind, offset + 2);
-        }
-
-        int nr_caps = pcidev[devind].nr_caps++;
-        pcidev[devind].caps[nr_caps].type = type;
-        pcidev[devind].caps[nr_caps].size = size;
-        pcidev[devind].caps[nr_caps].offset = offset;
-
-        offset = pci_read_attr_u8(devind, offset + 1) & PCI_CP_MASK;
     }
 }
 
@@ -276,7 +298,6 @@ static void pci_probe_bus(int busind)
             u16 vendor = pci_read_attr_u16(devind, PCI_VID);
             u16 device = pci_read_attr_u16(devind, PCI_DID);
             u8 headt = pci_read_attr_u8(devind, PCI_HEADT);
-            u16 status = pci_read_attr_u8(devind, PCI_SR);
 
             if (vendor == 0xffff) {
                 if (func == 0) break;
@@ -299,6 +320,7 @@ static void pci_probe_bus(int busind)
             pcidev[devind].baseclass = baseclass;
             pcidev[devind].subclass = subclass;
             pcidev[devind].infclass = infclass;
+            pcidev[devind].headt = headt;
             pcidev[devind].nr_bars = 0;
 
             char* name = pci_dev_name(vendor, device);
@@ -313,10 +335,6 @@ static void pci_probe_bus(int busind)
             switch (headt & PHT_MASK) {
             case PHT_NORMAL:
                 record_bars(devind, PCI_BAR_6);
-
-                if (status & PSR_CAPPTR) {
-                    record_capabilities(devind);
-                }
 
                 break;
             default:
@@ -415,4 +433,57 @@ int _pci_get_bar(int devind, int port, u32* base, u32* size, int* ioflag)
     }
 
     return EINVAL;
+}
+
+static int pci_find_cap_start(int devind)
+{
+    u16 status = pci_read_attr_u8(devind, PCI_SR);
+
+    if (!(status & PSR_CAPPTR)) {
+        return 0;
+    }
+
+    switch (pcidev[devind].headt) {
+    case PHT_NORMAL:
+    case PHT_BRIDGE:
+        return PCI_CAPPTR;
+    }
+
+    return 0;
+}
+
+static int pci_find_next_cap(int devind, u8 pos, int cap)
+{
+    u8 id;
+    u16 ent;
+
+    pos = pci_read_attr_u8(devind, pos);
+
+    while (TRUE) {
+        if (pos < 0x40) break;
+        pos &= PCI_CP_MASK;
+        ent = pci_read_attr_u16(devind, pos);
+
+        id = ent & 0xff;
+        if (id == 0xff) break;
+        if (id == cap) return pos;
+        pos = (ent >> 8);
+    }
+
+    return 0;
+}
+
+int _pci_find_capability(int devind, int cap)
+{
+    int pos;
+
+    pos = pci_find_cap_start(devind);
+    if (pos) pos = pci_find_next_cap(devind, pos, cap);
+
+    return pos;
+}
+
+int _pci_find_next_capability(int devind, u8 pos, int cap)
+{
+    return pci_find_next_cap(devind, pos + PCI_CAP_LIST_NEXT, cap);
 }

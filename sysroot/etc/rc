@@ -8,5 +8,6 @@ service up /sbin/procfs
 service up /sbin/input
 service up /sbin/atkbd
 service up /sbin/fb
+service up /sbin/virtio-gpu
 
 mount -a
