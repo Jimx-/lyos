@@ -1,6 +1,6 @@
 diff -rupN old/config.sub new/config.sub
---- old/config.sub	2016-12-29 19:04:53.000000000 +0800
-+++ new/config.sub	2018-08-26 23:27:32.249199601 +0800
+--- old/config.sub	2020-07-18 18:31:10.278800989 +0800
++++ new/config.sub	2020-07-18 18:31:28.595304450 +0800
 @@ -2,7 +2,7 @@
  # Configuration validation subroutine script.
  #   Copyright 1992-2016 Free Software Foundation, Inc.
@@ -20,7 +20,7 @@ diff -rupN old/config.sub new/config.sub
  	# Remember, each alternative MUST END IN *, to match a version number.
 diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 --- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2018-08-26 23:28:12.175866128 +0800
++++ new/gcc/config/lyos.h	2020-07-18 18:31:28.598637754 +0800
 @@ -0,0 +1,24 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -47,8 +47,8 @@ diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +      %{!dynamic-linker:-dynamic-linker " "/lib/ld-lyos.so" "}} \
 +    %{static:-static}}"
 diff -rupN old/gcc/config.gcc new/gcc/config.gcc
---- old/gcc/config.gcc	2017-03-24 21:59:51.000000000 +0800
-+++ new/gcc/config.gcc	2018-08-26 23:36:40.469197676 +0800
+--- old/gcc/config.gcc	2020-07-18 18:31:08.485483634 +0800
++++ new/gcc/config.gcc	2020-07-18 18:32:23.574814516 +0800
 @@ -910,6 +910,11 @@ case ${target} in
      *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
    esac
@@ -61,18 +61,19 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
  *-*-elf|arc*-*-elf*)
    # Assume that newlib is being used and so __cxa_atexit is provided.
    default_use_cxa_atexit=yes
-@@ -1063,6 +1068,10 @@ arm-wrs-vxworks)
+@@ -1063,6 +1068,11 @@ arm-wrs-vxworks)
  	tmake_file="${tmake_file} arm/t-arm arm/t-vxworks"
  	target_cpu_cname="arm6"
  	;;
 +arm-*-lyos*)
 +	tm_file="dbxelf.h elfos.h newlib-stdint.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h lyos.h"
 +	tmake_file="arm/t-arm arm/t-arm-elf"
++   # thread_file="posix"
 +	;;
  arm*-*-freebsd*)                # ARM FreeBSD EABI
  	tm_file="dbxelf.h elfos.h ${fbsd_tm_file} arm/elf.h"
  	case $target in
-@@ -1427,6 +1436,11 @@ hppa[12]*-*-hpux11*)
+@@ -1427,6 +1437,12 @@ hppa[12]*-*-hpux11*)
  		dwarf2=no
  	fi
  	;;
@@ -80,27 +81,29 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 +	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h newlib-stdint.h i386/i386elf.h lyos.h"
 +	tmake_file="${tmake_file} i386/t-i386elf t-svr4 i386/t-crtstuff"
 +	use_fixproto=yes
++   # thread_file="posix"
 +	;;
  i[34567]86-*-darwin*)
  	need_64bit_isa=yes
  	# Baseline choice for a machine that allows m64 support.
-@@ -2030,6 +2044,13 @@ riscv*-*-linux*)
- 	# Force .init_array support.  The configure script cannot always
+@@ -2031,6 +2047,14 @@ riscv*-*-linux*)
  	# automatically detect that GAS supports it, yet we require it.
  	gcc_cv_initfini_array=yes
-+	;;
+ 	;;
 +riscv*-*-lyos*)
 +	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h lyos.h"
 +	tmake_file="${tmake_file} riscv/t-riscv"
 +	# Force .init_array support.  The configure script cannot always
 +	# automatically detect that GAS supports it, yet we require it.
 +	gcc_cv_initfini_array=yes
- 	;;
++   # thread_file="posix"
++	;;
  riscv*-*-elf*)
  	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
+ 	case "x${enable_multilib}" in
 diff -rupN old/libgcc/config.host new/libgcc/config.host
---- old/libgcc/config.host	2017-03-11 03:33:27.000000000 +0800
-+++ new/libgcc/config.host	2018-08-26 23:38:49.309197238 +0800
+--- old/libgcc/config.host	2020-07-18 18:31:07.992154697 +0800
++++ new/libgcc/config.host	2020-07-18 18:31:28.601971057 +0800
 @@ -438,6 +438,9 @@ arm*-*-eabi* | arm*-*-symbianelf* | arm*
  	extra_parts="$extra_parts crtfastmath.o"
  	unwind_header=config/arm/unwind-arm.h
@@ -123,8 +126,8 @@ diff -rupN old/libgcc/config.host new/libgcc/config.host
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
 diff -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
---- old/libstdc++-v3/crossconfig.m4	2017-01-18 07:36:12.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2018-08-26 23:39:53.915863686 +0800
+--- old/libstdc++-v3/crossconfig.m4	2020-07-18 18:31:08.358818097 +0800
++++ new/libstdc++-v3/crossconfig.m4	2020-07-18 18:31:28.601971057 +0800
 @@ -193,6 +193,12 @@ case "${host}" in
      AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
      AM_ICONV

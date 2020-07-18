@@ -1,4 +1,4 @@
-#include "pthread.h"
+#include <pthread.h>
 
 #include "pthread_internal.h"
 
@@ -8,9 +8,9 @@
 
 #define RWS_PD_WRITERS (1 << 0)
 #define RWS_PD_READERS (1 << 1)
-#define RCNT_SHIFT 2
-#define RCNT_INC_STEP (1 << RCNT_SHIFT)
-#define RWS_WRLOCKED (1 << 31)
+#define RCNT_SHIFT     2
+#define RCNT_INC_STEP  (1 << RCNT_SHIFT)
+#define RWS_WRLOCKED   (1 << 31)
 
 #define RW_RDLOCKED(l) ((l) >= RCNT_INC_STEP)
 #define RW_WRLOCKED(l) ((l)&RWS_WRLOCKED)
@@ -22,6 +22,17 @@ int pthread_rwlock_init(pthread_rwlock_t* lock,
     pthread_mutex_init(&lock->pending_mutex, NULL);
 
     lock->pending_reader_serial = 0;
+    return 0;
+}
+
+int pthread_rwlock_destroy(pthread_rwlock_t* lock)
+{
+    int state = __atomic_load_n(&lock->state, __ATOMIC_RELAXED);
+
+    if (RW_RDLOCKED(state) || RW_WRLOCKED(state)) {
+        return EBUSY;
+    }
+
     return 0;
 }
 

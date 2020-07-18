@@ -1,4 +1,4 @@
-#include "pthread.h"
+#include <pthread.h>
 
 #include "pthread_internal.h"
 
@@ -16,6 +16,8 @@ int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr)
 
     return 0;
 }
+
+int pthread_cond_destroy(pthread_cond_t* cond) { return 0; }
 
 static int __pthread_cond_pulse(pthread_cond_t* cond, int count)
 {

@@ -1,4 +1,4 @@
-#include "pthread.h"
+#include <pthread.h>
 
 #include "pthread_internal.h"
 
@@ -11,13 +11,13 @@ typedef struct {
     unsigned int owner;
 } pthread_mutex_internal_t;
 
-#define MUTEX_TYPE_MASK (3 << 14)
+#define MUTEX_TYPE_MASK   (3 << 14)
 #define MUTEX_TYPE_NORMAL (0 << 14)
 
-#define MUTEX_STATE_MASK 3
-#define MUTEX_STATE_UNLOCKED 0
+#define MUTEX_STATE_MASK               3
+#define MUTEX_STATE_UNLOCKED           0
 #define MUTEX_STATE_LOCKED_UNCONTENDED 1
-#define MUTEX_STATE_LOCKED_CONTENDED 2
+#define MUTEX_STATE_LOCKED_CONTENDED   2
 
 int pthread_mutex_init(pthread_mutex_t* pmutex, const pthread_mutexattr_t* attr)
 {
@@ -27,6 +27,18 @@ int pthread_mutex_init(pthread_mutex_t* pmutex, const pthread_mutexattr_t* attr)
     if (!attr) {
         mutex->state = 0;
         return 0;
+    }
+
+    return 0;
+}
+
+int pthread_mutex_destroy(pthread_mutex_t* pmutex)
+{
+    pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*)pmutex;
+    unsigned int state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+
+    if (state != MUTEX_STATE_UNLOCKED) {
+        return EBUSY;
     }
 
     return 0;
