@@ -1,6 +1,6 @@
 PROG	= virtio-gpu
 
 SRCS	= main.c
-LIBS	= virtio lyos sysfs
+LIBS	= drmdriver chardriver devman virtio lyos sysfs
 
 include lyos.service.mk

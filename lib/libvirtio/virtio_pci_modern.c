@@ -29,7 +29,7 @@
 #include "virtio_config.h"
 
 static u8 vp_read8(u8* addr) { return *(volatile u8*)addr; }
-static u8 vp_write8(u8* addr, u8 val) { *(volatile u8*)addr = val; }
+static void vp_write8(u8* addr, u8 val) { *(volatile u8*)addr = val; }
 
 #define VP_READ_IO(bits)                           \
     static u##bits vp_read##bits(__le##bits* addr) \

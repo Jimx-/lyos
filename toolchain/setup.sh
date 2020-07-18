@@ -18,6 +18,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_NCURSES:=false}
 : ${BUILD_VIM:=false}
 : ${BUILD_LIBEVDEV:=false}
+: ${BUILD_LIBDRM:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -65,7 +66,7 @@ if $BUILD_GCC; then
     unset PKG_CONFIG_LIBDIR
 
     pushd gcc-$SUBARCH
-    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc || cmd_error
+    $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib --enable-shared=libgcc || cmd_error
     make all-gcc all-target-libgcc -j || cmd_error
     make install-gcc install-target-libgcc || cmd_error
 
@@ -144,7 +145,7 @@ if $BUILD_NATIVE_GCC; then
     fi
 
     pushd gcc-native-$SUBARCH > /dev/null
-    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib || cmd_error
+    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j || cmd_error
     make DESTDIR=$SYSROOT install-gcc || cmd_error
     make DESTDIR=$SYSROOT all-target-libgcc -j || cmd_error
@@ -254,7 +255,7 @@ if $BUILD_LIBEVDEV; then
     fi
 
     pushd libevdev-$SUBARCH > /dev/null
-    $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=/usr --with-build-sysroot=$SYSROOT
+    $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

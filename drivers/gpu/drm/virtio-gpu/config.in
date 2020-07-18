@@ -5,5 +5,6 @@
 
 config VIRTIO_GPU
     bool "Virtio GPU driver"
+    depends on DRM && VIRTIO
     help
       This is the virtual GPU driver for virtio.  It can be used with QEMU based VMMs (like KVM or Xen).

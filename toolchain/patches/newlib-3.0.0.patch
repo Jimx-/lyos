@@ -1,36 +1,31 @@
 diff -rupN old/config.sub new/config.sub
 --- old/config.sub	2018-01-19 02:07:45.000000000 +0800
-+++ new/config.sub	2018-08-27 11:12:06.796060310 +0800
-@@ -2,7 +2,7 @@
- # Configuration validation subroutine script.
- #   Copyright 1992-2016 Free Software Foundation, Inc.
-
--timestamp='2016-05-10'
-+timestamp='2018-08-26'
-
- # This file is free software; you can redistribute it and/or modify it
- # under the terms of the GNU General Public License as published by
++++ new/config.sub	2020-07-13 13:21:49.116281587 +0800
 @@ -1398,6 +1398,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
  	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
-+            | -lyos* \
++          | -lyos* \
  	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
  	      | -onefs* | -tirtos* | -phoenix*)
  	# Remember, each alternative MUST END IN *, to match a version number.
 diff -rupN old/newlib/configure.host new/newlib/configure.host
 --- old/newlib/configure.host	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/configure.host	2018-08-27 11:12:06.796060310 +0800
-@@ -372,6 +372,8 @@ case "${host}" in
++++ new/newlib/configure.host	2020-07-13 15:04:49.422233826 +0800
+@@ -372,6 +372,12 @@ case "${host}" in
      oext=lo
      lpfx=
      aext=la ;;
 +  *-*-lyos)
++    #use_libtool=yes
++    #oext=lo
++    #lpfx=
++    #aext=la
 +    have_sys_mach_dir=yes ;;
    *) ;; #shared library not supported for ${host}
  esac
-
-@@ -409,6 +411,9 @@ case "${host}" in
+ 
+@@ -409,6 +415,9 @@ case "${host}" in
  	sys_dir=a29khif
  	signal_dir=
  	;;
@@ -40,7 +35,7 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
    arm*-*-*)
  	sys_dir=arm
  	if [ "x${newlib_may_supply_syscalls}" = "xno" ] ; then
-@@ -468,6 +473,14 @@ case "${host}" in
+@@ -468,6 +477,14 @@ case "${host}" in
  	sys_dir=sysvi386
  	unix_dir=unix
  	;;
@@ -55,9 +50,9 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
    i[34567]86-pc-linux-*)
  	sys_dir=linux
  	unix_dir=unix
-@@ -578,6 +587,9 @@ esac
+@@ -578,6 +595,9 @@ esac
  # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
-
+ 
  case "${host}" in
 +  *-*-lyos)
 +	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES -DSIGNAL_PROVIDED"
@@ -65,74 +60,28 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
    *-*-cygwin*)
  	test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`
  	export cygwin_srcdir
-diff -rupN old/newlib/libc/include/err.h new/newlib/libc/include/err.h
---- old/newlib/libc/include/err.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/newlib/libc/include/err.h	2018-08-27 11:12:06.796060310 +0800
-@@ -0,0 +1,16 @@
-+#ifndef _ERR_H_
-+#define _ERR_H_
-+
-+#include <stdarg.h>
-+
-+void err(int eval, const char *fmt, ...);
-+void errx(int eval, const char *fmt, ...);
-+void warn(const char *fmt, ...);
-+void warnx(const char *fmt, ...);
-+
-+void verr(int eval, const char *fmt, va_list args);
-+void verrx(int eval, const char *fmt, va_list args);
-+void vwarn(const char *fmt, va_list args);
-+void vwarnx(const char *fmt, va_list args);
-+
-+#endif
-diff -rupN old/newlib/libc/include/mntent.h new/newlib/libc/include/mntent.h
---- old/newlib/libc/include/mntent.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/newlib/libc/include/mntent.h	2018-08-27 11:12:06.796060310 +0800
-@@ -0,0 +1,22 @@
-+#ifndef _MNTENT_H_
-+#define _MNTENT_H_
-+
-+#define _PATH_MNTTAB "/etc/fstab"
-+#define _PATH_MOUNTED "/etc/mtab"
-+
-+struct mntent {
-+	char    *mnt_fsname;    /* name of mounted file system */
-+	char    *mnt_dir;       /* file system path prefix */
-+	char    *mnt_type;      /* mount type (see mntent.h) */
-+	char    *mnt_opts;      /* mount options (see mntent.h) */
-+	int     mnt_freq;       /* dump frequency in days */
-+	int     mnt_passno;     /* pass number on parallel fsck */
-+};
-+
-+FILE *setmntent(const char *filename, const char *type);
-+struct mntent *getmntent(FILE *stream);
-+int addmntent(FILE *stream, const struct mntent *mnt);
-+int endmntent(FILE *streamp);
-+char *hasmntopt(const struct mntent *mnt, const char *opt);
-+
-+#endif
 diff -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
 --- old/newlib/libc/machine/i386/setjmp.S	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/machine/i386/setjmp.S	2018-08-27 11:12:06.796060310 +0800
++++ new/newlib/libc/machine/i386/setjmp.S	2020-07-13 13:24:31.889850453 +0800
 @@ -115,7 +115,6 @@ SYM (longjmp):
-
+ 
  	movl	24(edi),ebp
-
+ 
 -       __CLI
  	movl	28(edi),esp
-
- 	pushl	32(edi)
+ 	
+ 	pushl	32(edi)	
 @@ -126,7 +125,6 @@ SYM (longjmp):
  	movl	12(edi),edx
  	movl	16(edi),esi
  	movl	20(edi),edi
 -       __STI
  #endif
-
+ 
  	ret
 diff -rupN old/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
 --- old/newlib/libc/sys/configure.in	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/sys/configure.in	2018-08-27 11:12:06.796060310 +0800
++++ new/newlib/libc/sys/configure.in	2020-07-13 13:25:10.616574061 +0800
 @@ -30,6 +30,7 @@ if test -n "${sys_dir}"; then
  	h8300hms) AC_CONFIG_SUBDIRS(h8300hms) ;;
  	h8500hms) AC_CONFIG_SUBDIRS(h8500hms) ;;

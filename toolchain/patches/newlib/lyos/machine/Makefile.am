@@ -39,5 +39,7 @@ $(machine_dir)/crtn.o: ; @true
 
 CLEANFILES = crt0.o crti.o crtn.o
 
+doc:
+
 ACLOCAL_AMFLAGS = -I ../../../.. -I ../../../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

@@ -13,4 +13,8 @@ ifeq ($(CONFIG_VIRTIO),y)
 	SUBDIRS += libvirtio
 endif
 
+ifeq ($(CONFIG_DRM),y)
+	SUBDIRS += libdrmdriver
+endif
+
 include lyos.subdirs.mk

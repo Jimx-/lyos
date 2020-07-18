@@ -1,0 +1,52 @@
+diff -rupN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2020-07-18 16:32:02.118288918 +0800
++++ new/build-aux/config.sub	2020-07-18 16:34:57.449982864 +0800
+@@ -1373,7 +1373,7 @@ case $os in
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+ 	      | -sym* | -kopensolaris* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+-	      | -aos* | -aros* \
++	      | -aos* | -aros* | -lyos* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+ 	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
+diff -rupN old/configure.ac new/configure.ac
+--- old/configure.ac	2020-07-18 16:32:02.108289011 +0800
++++ new/configure.ac	2020-07-18 16:36:22.725852678 +0800
+@@ -68,7 +68,7 @@ LT_INIT([disable-static])
+ dnl pthread-stubs is mandatory on BSD platforms, due to the nature of the
+ dnl project. Even then there's a notable issue as described in the project README
+ case "$host_os" in
+-linux* | cygwin* | darwin* | solaris* | *-gnu* | gnu*)
++linux* | cygwin* | darwin* | solaris* | *-gnu* | gnu* | lyos* )
+     pthread_stubs_possible="no"
+     ;;
+ * )
+diff -rupN old/include/drm/drm.h new/include/drm/drm.h
+--- old/include/drm/drm.h	2020-07-18 16:32:02.118288918 +0800
++++ new/include/drm/drm.h	2020-07-18 16:37:21.491970392 +0800
+@@ -42,6 +42,12 @@
+ #include <asm/ioctl.h>
+ typedef unsigned int drm_handle_t;
+ 
++#elif   defined(__lyos__)
++
++#include <lyos/types.h>
++#include <asm/ioctl.h>
++typedef unsigned int drm_handle_t;
++
+ #else /* One of the BSDs */
+ 
+ #include <sys/ioccom.h>
+diff -rupN old/xf86drm.h new/xf86drm.h
+--- old/xf86drm.h	2020-07-18 16:32:02.124955522 +0800
++++ new/xf86drm.h	2020-07-18 16:36:53.445565697 +0800
+@@ -47,7 +47,7 @@ extern "C" {
+ #define DRM_MAX_MINOR   16
+ #endif
+ 
+-#if defined(__linux__)
++#if defined(__linux__) || defined(__lyos__)
+ 
+ #define DRM_IOCTL_NR(n)		_IOC_NR(n)
+ #define DRM_IOC_VOID		_IOC_NONE
