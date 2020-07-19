@@ -303,7 +303,7 @@ int region_map_phys(struct mmproc* mmp, struct vir_region* rp)
 #endif
         int flags = ARCH_PG_PRESENT | ARCH_PG_USER;
         if (frame->flags & PFF_WRITABLE) flags |= ARCH_PG_RW;
-        pt_mappage(&mmp->active_mm->pgd, frame->phys_addr, base, flags);
+        pt_mappage(&mmp->mm->pgd, frame->phys_addr, base, flags);
         frame->flags |= PFF_MAPPED;
     }
 
@@ -325,8 +325,7 @@ struct vir_region* region_find_free_region(struct mmproc* mmp, vir_bytes minv,
     struct avl_iter iter;
     struct vir_region vr_max;
     vr_max.vir_addr = maxv;
-    region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_max,
-                          AVL_GREATER_EQUAL);
+    region_avl_start_iter(&mmp->mm->mem_avl, &iter, &vr_max, AVL_GREATER_EQUAL);
     struct vir_region* last = region_avl_get_iter(&iter);
 
 #define TRY_ALLOC_REGION(start, end)                          \
@@ -348,8 +347,7 @@ struct vir_region* region_find_free_region(struct mmproc* mmp, vir_bytes minv,
     } while (0)
 
     if (!last) {
-        region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_max,
-                              AVL_LESS);
+        region_avl_start_iter(&mmp->mm->mem_avl, &iter, &vr_max, AVL_LESS);
         last = region_avl_get_iter(&iter);
         ALLOC_REGION(last ? (last->vir_addr + last->length) : 0, VM_STACK_TOP);
     }
@@ -380,7 +378,7 @@ int region_unmap_phys(struct mmproc* mmp, struct vir_region* rp)
     /* not mapped */
     if (!(rp->flags & RF_MAPPED)) return 0;
 
-    unmap_memory(&mmp->active_mm->pgd, rp->vir_addr, rp->length);
+    unmap_memory(&mmp->mm->pgd, rp->vir_addr, rp->length);
 
     struct phys_region* pregion = &(rp->phys_block);
     int i;
@@ -401,7 +399,7 @@ int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
 {
     unsigned offset = ~0;
     struct vir_region *vr, *rb = NULL;
-    list_for_each_entry(vr, &mmp->active_mm->mem_regions, list)
+    list_for_each_entry(vr, &mmp->mm->mem_regions, list)
     {
         /* need no extend */
         if (addr >= vr->vir_addr && addr <= vr->vir_addr + vr->length) {
@@ -761,13 +759,13 @@ static int region_split(struct mmproc* mmp, struct vir_region* vr, size_t len,
     }
 
     list_del(&vr->list);
-    avl_erase(&vr->avl, &mmp->active_mm->mem_avl);
+    avl_erase(&vr->avl, &mmp->mm->mem_avl);
     region_free(vr);
 
-    list_add(&r1->list, &mmp->active_mm->mem_regions);
-    avl_insert(&r1->avl, &mmp->active_mm->mem_avl);
-    list_add(&r2->list, &mmp->active_mm->mem_regions);
-    avl_insert(&r2->avl, &mmp->active_mm->mem_avl);
+    list_add(&r1->list, &mmp->mm->mem_regions);
+    avl_insert(&r1->avl, &mmp->mm->mem_avl);
+    list_add(&r2->list, &mmp->mm->mem_regions);
+    avl_insert(&r2->avl, &mmp->mm->mem_avl);
 
     *v1 = r1;
     *v2 = r2;
@@ -811,13 +809,13 @@ static int region_unmap(struct mmproc* mmp, struct vir_region* vr, off_t offset,
 
     if (len == vr->length) {
         list_del(&vr->list);
-        avl_erase(&vr->avl, &mmp->active_mm->mem_avl);
+        avl_erase(&vr->avl, &mmp->mm->mem_avl);
         region_free(vr);
     } else if (offset + len == vr->length) {
         vr->length -= len;
     }
 
-    unmap_memory(&mmp->active_mm->pgd, vr->vir_addr + offset, len);
+    unmap_memory(&mmp->mm->pgd, vr->vir_addr + offset, len);
     return 0;
 }
 
@@ -833,11 +831,9 @@ int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
     struct avl_iter iter;
     struct vir_region vr_start;
     vr_start.vir_addr = start;
-    region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_start,
-                          AVL_LESS_EQUAL);
+    region_avl_start_iter(&mmp->mm->mem_avl, &iter, &vr_start, AVL_LESS_EQUAL);
     if (!(vr = region_avl_get_iter(&iter))) {
-        region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, &vr_start,
-                              AVL_GREATER);
+        region_avl_start_iter(&mmp->mm->mem_avl, &iter, &vr_start, AVL_GREATER);
         if (!(vr = region_avl_get_iter(&iter))) {
             return 0;
         }
@@ -868,8 +864,7 @@ int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
         if (retval) return retval;
 
         if (next_vr) {
-            region_avl_start_iter(&mmp->active_mm->mem_avl, &iter, next_vr,
-                                  AVL_EQUAL);
+            region_avl_start_iter(&mmp->mm->mem_avl, &iter, next_vr, AVL_EQUAL);
         }
     }
 

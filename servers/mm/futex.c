@@ -66,7 +66,7 @@ static int futex_get_key(struct mmproc* mmp, u32* uaddr, int shared,
 {
     /* set the parameters properly in key */
     unsigned long addr = (unsigned long)uaddr;
-    struct mm_struct* mm = mmp->active_mm;
+    struct mm_struct* mm = mmp->mm;
 
     key->both.offset = addr % ARCH_PG_SIZE;
     addr -= key->both.offset;
@@ -106,7 +106,7 @@ static int futex_wait_setup(struct mmproc* mmp, u32* uaddr, unsigned int flags,
     off_t offset = (uintptr_t)uaddr % ARCH_PG_SIZE;
     uaddr = (u32*)((uintptr_t)uaddr - offset);
     phys_bytes phys_addr;
-    ret = pgd_va2pa(&mmp->active_mm->pgd, (vir_bytes)uaddr, &phys_addr);
+    ret = pgd_va2pa(&mmp->mm->pgd, (vir_bytes)uaddr, &phys_addr);
     if (ret) {
         return ret;
     }

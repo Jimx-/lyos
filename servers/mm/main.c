@@ -174,7 +174,6 @@ static void init_mm()
             panic("cannot allocate mm struct for %d", bp->endpoint);
         mm_init(mmp->mm);
         mmp->mm->slot = i;
-        mmp->active_mm = mmp->mm;
 
         spawn_bootproc(mmp, bp);
 
@@ -217,8 +216,8 @@ static int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
                            MAP_ANONYMOUS | MAP_FIXED | MAP_POPULATE, len,
                            RF_WRITABLE)))
         return ENOMEM;
-    list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
-    avl_insert(&vr->avl, &mmexeci->mmp->active_mm->mem_avl);
+    list_add(&vr->list, &mmexeci->mmp->mm->mem_regions);
+    avl_insert(&vr->avl, &mmexeci->mmp->mm->mem_avl);
 
     return 0;
 }
@@ -232,8 +231,8 @@ static int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
     if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS | MAP_FIXED, len,
                            RF_WRITABLE)))
         return ENOMEM;
-    list_add(&(vr->list), &mmexeci->mmp->active_mm->mem_regions);
-    avl_insert(&vr->avl, &mmexeci->mmp->active_mm->mem_avl);
+    list_add(&vr->list, &mmexeci->mmp->mm->mem_regions);
+    avl_insert(&vr->avl, &mmexeci->mmp->mm->mem_avl);
 
     return 0;
 }

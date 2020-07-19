@@ -58,7 +58,7 @@ void region_init_avl(struct mm_struct* mm)
 
 struct vir_region* region_lookup(struct mmproc* mmp, vir_bytes addr)
 {
-    struct avl_node* node = mmp->active_mm->mem_avl.node;
+    struct avl_node* node = mmp->mm->mem_avl.node;
 
     while (node) {
         struct vir_region* vr = avl_entry(node, struct vir_region, avl);

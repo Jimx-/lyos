@@ -146,9 +146,9 @@ if $BUILD_NATIVE_GCC; then
 
     pushd gcc-native-$SUBARCH > /dev/null
     $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib || cmd_error
-    make DESTDIR=$SYSROOT all-gcc -j || cmd_error
+    make DESTDIR=$SYSROOT all-gcc -j4 || cmd_error
     make DESTDIR=$SYSROOT install-gcc || cmd_error
-    make DESTDIR=$SYSROOT all-target-libgcc -j || cmd_error
+    make DESTDIR=$SYSROOT all-target-libgcc -j4 || cmd_error
     make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
     # touch $SYSROOT/usr/include/fenv.h
     # make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error

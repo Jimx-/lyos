@@ -35,7 +35,6 @@ struct mm_struct {
 struct mmproc {
     int flags;
 
-    struct mm_struct* active_mm;
     struct mm_struct* mm;
 
     struct mmproc* group_leader;
@@ -49,5 +48,8 @@ struct mmproc {
 #define MMPF_INUSE 0x01
 
 #define mmproc2ep(mmp) ((mmp)-mmproc_table)
+
+static inline void mmget(struct mm_struct* mm) { atomic_inc(&mm->refcnt); }
+void mmput(struct mm_struct* mm);
 
 #endif

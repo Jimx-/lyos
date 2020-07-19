@@ -81,7 +81,6 @@ void pt_init()
     mmprocess->mm = &self_mm;
     mm_init(mmprocess->mm);
     mmprocess->mm->slot = TASK_MM;
-    mmprocess->active_mm = mmprocess->mm;
 
     pt_kern_mapping_init();
 
