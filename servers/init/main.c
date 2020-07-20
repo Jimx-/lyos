@@ -12,7 +12,7 @@
 #include <sys/wait.h>
 #include <sys/shm.h>
 
-#define GETTY "/usr/bin/getty"
+#define GETTY  "/usr/bin/getty"
 #define NR_TTY 4
 
 int main(int argc, char* argv[])

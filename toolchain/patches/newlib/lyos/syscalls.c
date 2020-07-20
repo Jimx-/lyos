@@ -28,6 +28,7 @@
 #include <sys/futex.h>
 #include <sys/shm.h>
 #include <grp.h>
+#include <asm/sigcontext.h>
 
 #include <lyos/const.h>
 
@@ -337,11 +338,12 @@ int killpg(int pgrp, int signo) { return kill(-pgrp, signo); }
 
 void __sigreturn();
 
-void sigreturn(void* scp)
+void sigreturn(struct sigcontext* scp)
 {
     MESSAGE msg;
 
     msg.type = PM_SIGRETURN;
+    msg.MASK = scp->mask;
     msg.BUF = scp;
 
     cmb();
@@ -382,11 +384,12 @@ int sigprocmask(int how, const sigset_t* set, sigset_t* oldset)
 {
     MESSAGE msg;
     msg.type = SIGPROCMASK;
+    msg.HOW = how;
 
     if (set)
         msg.MASK = *set;
     else
-        set = 0;
+        msg.MASK = 0;
 
     cmb();
 

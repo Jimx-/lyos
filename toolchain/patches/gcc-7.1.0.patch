@@ -48,7 +48,7 @@ diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +    %{static:-static}}"
 diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2020-07-18 18:31:08.485483634 +0800
-+++ new/gcc/config.gcc	2020-07-18 18:32:23.574814516 +0800
++++ new/gcc/config.gcc	2020-07-19 20:31:16.592123716 +0800
 @@ -910,6 +910,11 @@ case ${target} in
      *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
    esac
@@ -68,7 +68,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 +arm-*-lyos*)
 +	tm_file="dbxelf.h elfos.h newlib-stdint.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h lyos.h"
 +	tmake_file="arm/t-arm arm/t-arm-elf"
-+   # thread_file="posix"
++    # thread_file="posix"
 +	;;
  arm*-*-freebsd*)                # ARM FreeBSD EABI
  	tm_file="dbxelf.h elfos.h ${fbsd_tm_file} arm/elf.h"
@@ -81,7 +81,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 +	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h newlib-stdint.h i386/i386elf.h lyos.h"
 +	tmake_file="${tmake_file} i386/t-i386elf t-svr4 i386/t-crtstuff"
 +	use_fixproto=yes
-+   # thread_file="posix"
++    # thread_file="posix"
 +	;;
  i[34567]86-*-darwin*)
  	need_64bit_isa=yes
@@ -96,7 +96,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 +	# Force .init_array support.  The configure script cannot always
 +	# automatically detect that GAS supports it, yet we require it.
 +	gcc_cv_initfini_array=yes
-+   # thread_file="posix"
++    # thread_file="posix"
 +	;;
  riscv*-*-elf*)
  	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"

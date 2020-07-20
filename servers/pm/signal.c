@@ -83,11 +83,11 @@ int do_sigaction(MESSAGE* p)
 
 int do_sigprocmask(MESSAGE* p)
 {
-    struct pmproc* pmp = pm_endpt_proc(p->source);
-    if (pmp == NULL) return EINVAL;
-
     sigset_t set;
     int i;
+
+    struct pmproc* pmp = pm_endpt_proc(p->source);
+    if (pmp == NULL) return EINVAL;
 
     set = p->MASK;
     p->MASK = pmp->sig_mask;
@@ -128,7 +128,7 @@ int do_sigsuspend(MESSAGE* p)
     pmp->sig_mask = p->MASK;
     sigdelset(&pmp->sig_mask, SIGKILL);
     sigdelset(&pmp->sig_mask, SIGSTOP);
-    pmp->flags &= PMPF_SIGSUSPENDED;
+    pmp->flags |= PMPF_SIGSUSPENDED;
 
     check_pending(pmp);
     return SUSPEND;
@@ -150,6 +150,7 @@ int do_kill(MESSAGE* p)
 
     int sig = p->SIGNR;
     int pid = p->PID;
+
     return kill_sig(pmp, pid, sig);
 }
 
@@ -159,6 +160,13 @@ static int send_sig(struct pmproc* p_dest, int signo)
     int retval;
 
     si.signo = signo;
+
+    if (p_dest->flags & PMPF_SIGSUSPENDED) {
+        si.mask = p_dest->sig_mask_saved;
+    } else {
+        si.mask = p_dest->sig_mask;
+    }
+
     si.sig_handler = p_dest->sigaction[signo].sa_handler;
     si.sig_return = p_dest->sigreturn_f;
 
@@ -273,7 +281,14 @@ static int kill_sig(struct pmproc* pmp, pid_t dest, int signo)
 
 int do_sigreturn(MESSAGE* p)
 {
+    struct pmproc* pmp = pm_endpt_proc(p->source);
     int retval;
+
+    if (pmp == NULL) return EINVAL;
+
+    pmp->sig_mask = p->MASK;
+    sigdelset(&pmp->sig_mask, SIGKILL);
+    sigdelset(&pmp->sig_mask, SIGSTOP);
 
     retval = kernel_sigreturn(p->source, p->BUF);
 

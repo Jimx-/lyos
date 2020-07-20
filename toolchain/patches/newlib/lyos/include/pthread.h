@@ -5,6 +5,10 @@
 #include <sys/cdefs.h>
 #include <bits/pthreadtypes.h>
 
+#define PTHREAD_MUTEX_NORMAL     0
+#define PTHREAD_MUTEX_RECURSIVE  1
+#define PTHREAD_MUTEX_ERRORCHECK 2
+
 #define PTHREAD_MUTEX_INITIALIZER          \
     {                                      \
         ((PTHREAD_MUTEX_NORMAL & 3) << 14) \
@@ -32,9 +36,11 @@
 __BEGIN_DECLS
 
 int pthread_attr_init(pthread_attr_t*);
+pthread_t pthread_self(void);
 int pthread_create(pthread_t*, const pthread_attr_t*,
                    void* (*start_routine)(void*), void*);
-int pthread_exit(void* value_ptr);
+void pthread_exit(void*);
+int pthread_join(pthread_t thread, void** retval);
 
 int pthread_cond_init(pthread_cond_t*, const pthread_condattr_t*);
 int pthread_cond_wait(pthread_cond_t*, pthread_mutex_t*);

@@ -80,6 +80,7 @@ int sys_printx(MESSAGE* m, struct proc* p_proc)
         break;
     case PRX_REGISTER:
         p_proc->priv->kernlog_request = TRUE;
+        kputc(0);
         break;
     }
 

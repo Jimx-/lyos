@@ -49,7 +49,7 @@ static dev_t cons_minor = CONS_MINOR + 1;
 static class_id_t tty_subsys_id;
 
 #define TTY_FIRST (tty_table)
-#define TTY_END (tty_table + NR_CONSOLES + NR_SERIALS)
+#define TTY_END   (tty_table + NR_CONSOLES + NR_SERIALS)
 
 /* Default termios */
 static struct termios termios_defaults = {

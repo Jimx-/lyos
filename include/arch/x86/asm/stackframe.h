@@ -16,6 +16,8 @@
 #ifndef _STACKFRAME_H_
 #define _STACKFRAME_H_
 
+#include <asm/sigcontext.h>
+
 typedef u32 reg_t;
 
 struct stackframe {
@@ -45,34 +47,6 @@ struct segframe {
     u32 cr3_phys;
     u32* cr3_vir;
     char* fpu_state;
-};
-
-struct sigcontext {
-    int gs;
-    int fs;
-    int es;
-    int ds;
-    int edi;
-    int esi;
-    int ebp;
-    int ebx;
-    int edx;
-    int ecx;
-    int eax;
-    int eip;
-    int cs;
-    int eflags;
-    int esp;
-    int ss;
-
-    int onstack;
-    int __mask13;
-
-    int trapno;
-    int err;
-
-    sigset_t mask;
-    int trap_style;
 };
 
 struct sigframe {

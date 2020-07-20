@@ -108,7 +108,7 @@ struct ps_strings {
 };
 
 struct siginfo {
-    int mask;
+    unsigned long mask;
     int signo;
     void* sig_handler;
     void* sig_return;

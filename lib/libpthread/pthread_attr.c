@@ -4,7 +4,7 @@
 
 const pthread_attr_t __pthread_default_attr = {
     schedparam : {sched_priority : 0},
-    stacksize : PTHREAD_STACK_SIZE_DEFAULT,
+    stacksize : PTHREAD_STACK_SIZE_DEFAULT - PTHREAD_GUARD_SIZE_DEFAULT,
     stackaddr : NULL,
     guardsize : PTHREAD_GUARD_SIZE_DEFAULT,
     detachstate : PTHREAD_CREATE_JOINABLE,

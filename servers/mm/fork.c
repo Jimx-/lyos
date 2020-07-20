@@ -34,7 +34,7 @@
 #include "global.h"
 #include <lyos/sysutils.h>
 
-static void __mmput(struct mm_struct* mm)
+static inline void __mmput(struct mm_struct* mm)
 {
     struct vir_region *vr, *tmp;
 
