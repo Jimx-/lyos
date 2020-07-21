@@ -79,3 +79,5 @@ int pthread_detach(pthread_t thread)
 
     return EINVAL;
 }
+
+int pthread_cancel(pthread_t thread) { return ENOSYS; }

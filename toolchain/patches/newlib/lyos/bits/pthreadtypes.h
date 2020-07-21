@@ -47,4 +47,8 @@ typedef struct {
 
 typedef long pthread_rwlockattr_t;
 
+typedef int pthread_key_t;
+
+typedef int pthread_once_t;
+
 #endif

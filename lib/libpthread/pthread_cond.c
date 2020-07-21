@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <sys/futex.h>
 
 #define COND_INC_STEP 0x4
@@ -54,4 +55,9 @@ int pthread_cond_timedwait(pthread_cond_t* cond, pthread_mutex_t* mutex,
 int pthread_cond_signal(pthread_cond_t* cond)
 {
     return __pthread_cond_pulse(cond, 1);
+}
+
+int pthread_cond_broadcast(pthread_cond_t* cond)
+{
+    return __pthread_cond_pulse(cond, INT_MAX);
 }

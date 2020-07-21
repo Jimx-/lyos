@@ -101,6 +101,8 @@ struct sched_param {
 #endif
 };
 
+int sched_yield(void);
+
 __END_DECLS
 
 #endif

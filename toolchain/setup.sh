@@ -69,8 +69,8 @@ if $BUILD_GCC; then
 
     pushd gcc-$SUBARCH
     $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib --enable-shared=libgcc || cmd_error
-    make all-gcc all-target-libgcc -j4 || cmd_error
-    make install-gcc install-target-libgcc || cmd_error
+    make all-gcc -j || cmd_error
+    make install-gcc || cmd_error
 
     popd
 fi
@@ -111,14 +111,14 @@ fi
 
 if $BUILD_LIBGCC; then
     pushd gcc-$SUBARCH > /dev/null
-    make all-target-libgcc -j4 || cmd_error
+    make all-target-libgcc -j || cmd_error
     make install-target-libgcc || cmd_error
     popd > /dev/null
 fi
 
 if $BUILD_LIBSTDCPP; then
     pushd gcc-$SUBARCH > /dev/null
-    make all-target-libstdc++-v3 -j4 || cmd_error
+    make all-target-libstdc++-v3 -j || cmd_error
     make install-target-libstdc++-v3 || cmd_error
     popd > /dev/null
 fi
