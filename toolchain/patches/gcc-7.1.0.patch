@@ -20,8 +20,8 @@ diff -rupN old/config.sub new/config.sub
  	# Remember, each alternative MUST END IN *, to match a version number.
 diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 --- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2020-07-18 18:31:28.598637754 +0800
-@@ -0,0 +1,24 @@
++++ new/gcc/config/lyos.h	2020-07-21 17:48:39.925340030 +0800
+@@ -0,0 +1,27 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
 +  do { \
@@ -46,6 +46,9 @@ diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +      %{rdynamic:-export-dynamic} \
 +      %{!dynamic-linker:-dynamic-linker " "/lib/ld-lyos.so" "}} \
 +    %{static:-static}}"
++
++#undef  LIB_SPEC
++#define LIB_SPEC "%{pthread:-lpthread} %{!shared:%{g*:-lg} %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
 diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2020-07-18 18:31:08.485483634 +0800
 +++ new/gcc/config.gcc	2020-07-21 17:05:21.587211041 +0800
