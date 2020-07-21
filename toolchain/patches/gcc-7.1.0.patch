@@ -48,12 +48,13 @@ diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +    %{static:-static}}"
 diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2020-07-18 18:31:08.485483634 +0800
-+++ new/gcc/config.gcc	2020-07-19 20:31:16.592123716 +0800
-@@ -910,6 +910,11 @@ case ${target} in
++++ new/gcc/config.gcc	2020-07-21 17:05:21.587211041 +0800
+@@ -910,6 +910,12 @@ case ${target} in
      *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
    esac
    ;;
 +*-*-lyos*)
++  extra_options="$extra_options gnu-user.opt"
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
@@ -61,7 +62,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
  *-*-elf|arc*-*-elf*)
    # Assume that newlib is being used and so __cxa_atexit is provided.
    default_use_cxa_atexit=yes
-@@ -1063,6 +1068,11 @@ arm-wrs-vxworks)
+@@ -1063,6 +1069,11 @@ arm-wrs-vxworks)
  	tmake_file="${tmake_file} arm/t-arm arm/t-vxworks"
  	target_cpu_cname="arm6"
  	;;
@@ -73,7 +74,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
  arm*-*-freebsd*)                # ARM FreeBSD EABI
  	tm_file="dbxelf.h elfos.h ${fbsd_tm_file} arm/elf.h"
  	case $target in
-@@ -1427,6 +1437,12 @@ hppa[12]*-*-hpux11*)
+@@ -1427,6 +1438,12 @@ hppa[12]*-*-hpux11*)
  		dwarf2=no
  	fi
  	;;
@@ -81,12 +82,12 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 +	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h newlib-stdint.h i386/i386elf.h lyos.h"
 +	tmake_file="${tmake_file} i386/t-i386elf t-svr4 i386/t-crtstuff"
 +	use_fixproto=yes
-+   thread_file="posix"
++    # thread_file="posix"
 +	;;
  i[34567]86-*-darwin*)
  	need_64bit_isa=yes
  	# Baseline choice for a machine that allows m64 support.
-@@ -2031,6 +2047,14 @@ riscv*-*-linux*)
+@@ -2031,6 +2048,14 @@ riscv*-*-linux*)
  	# automatically detect that GAS supports it, yet we require it.
  	gcc_cv_initfini_array=yes
  	;;

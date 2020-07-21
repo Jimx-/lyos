@@ -9,7 +9,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
 : ${BUILD_NEWLIB:=false}
-: ${BUILD_LIBGCC:=false}
 : ${BUILD_LIBSTDCPP:=false}
 : ${BUILD_NATIVE_BINUTILS:=false}
 : ${BUILD_NATIVE_GCC:=false}
@@ -19,13 +18,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_NCURSES:=false}
 : ${BUILD_VIM:=false}
 : ${BUILD_LIBEVDEV:=false}
-: ${BUILD_LIBDRM:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
     BUILD_GCC=true
     BUILD_NEWLIB=true
-    BUILD_LIBGCC=true
     BUILD_LIBSTDCPP=true
     BUILD_NATIVE_BINUTILS=true
     BUILD_NATIVE_GCC=true
@@ -69,8 +66,8 @@ if $BUILD_GCC; then
 
     pushd gcc-$SUBARCH
     $DIR/sources/gcc-7.1.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib --enable-shared=libgcc || cmd_error
-    make all-gcc -j || cmd_error
-    make install-gcc || cmd_error
+    make all-gcc all-target-libgcc -j || cmd_error
+    make install-gcc install-target-libgcc || cmd_error
 
     popd
 fi
@@ -106,13 +103,6 @@ if $BUILD_NEWLIB; then
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libg.so -Wl,--whole-archive $SYSROOT/usr/lib/libg.a -Wl,--no-whole-archive || cmd_error
-    popd > /dev/null
-fi
-
-if $BUILD_LIBGCC; then
-    pushd gcc-$SUBARCH > /dev/null
-    make all-target-libgcc -j || cmd_error
-    make install-target-libgcc || cmd_error
     popd > /dev/null
 fi
 
