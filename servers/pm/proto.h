@@ -47,5 +47,7 @@ int process_ksig(endpoint_t target, int signo);
 void trace_signal(struct pmproc* p_dest, int signo);
 
 void futex_init(void);
+int futex_wake(struct pmproc* pmp, u32* uaddr, unsigned int flags, int nr_wake,
+               u32 bitset);
 
 #endif

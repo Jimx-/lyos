@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <pthread.h>
+#include <sched.h>
 
 #include "pthread_internal.h"
 
@@ -94,6 +95,7 @@ static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
     new_thread->tid = slot;
     new_thread->guard_size = guard_size;
     new_thread->guard_addr = guard_addr;
+    new_thread->join_state = THREAD_NOT_JOINED;
 
     __thread_handles[slot] = new_thread;
 
@@ -106,8 +108,6 @@ static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
 static int __pthread_start(void* arg)
 {
     pthread_internal_t* thread = (pthread_internal_t*)arg;
-
-    thread->pid = getpid();
 
     void* result = thread->start_routine(thread->start_arg);
 
@@ -122,6 +122,7 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
     char* child_sp;
     pthread_attr_t th_attr;
     pid_t pid;
+    int clone_flags;
     int retval;
 
     if (attr == NULL) {
@@ -136,8 +137,10 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
     thread->start_routine = start_routine;
     thread->start_arg = arg;
 
-    pid = clone(__pthread_start, child_sp, CLONE_VM | CLONE_THREAD,
-                (void*)thread);
+    clone_flags =
+        CLONE_VM | CLONE_THREAD | CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID;
+    pid = clone(__pthread_start, child_sp, clone_flags, (void*)thread,
+                &thread->pid, NULL, &thread->pid);
     if (pid < 0) {
         if (thread->guard_size) {
             munmap(thread->guard_addr,
@@ -147,7 +150,6 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
         return pid;
     }
 
-    thread->pid = pid;
     *thread_out = thread->tid;
 
     return 0;

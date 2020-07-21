@@ -309,8 +309,8 @@ int fork()
 {
     MESSAGE msg;
     msg.type = FORK;
-    msg.FLAGS = 0;
-    msg.BUF = NULL;
+    msg.u.m_pm_clone.flags = 0;
+    msg.u.m_pm_clone.stack = NULL;
 
     cmb();
 

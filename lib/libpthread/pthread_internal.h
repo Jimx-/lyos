@@ -16,13 +16,18 @@ typedef struct pthread_internal {
     int signal;
 
     void* retval;
-    int detached;
-    int terminated;
-    struct pthread_internal* joining;
+    int join_state;
 
     void* (*start_routine)(void*);
     void* start_arg;
 } pthread_internal_t;
+
+enum thread_join_state {
+    THREAD_NOT_JOINED,
+    THREAD_EXITED_NOT_JOINED,
+    THREAD_DETACHED,
+    THREAD_JOINED,
+};
 
 #define CURRENT_SP  \
     ({              \

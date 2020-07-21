@@ -30,6 +30,7 @@
 #include <lyos/sysutils.h>
 #include <sys/wait.h>
 #include <lyos/vm.h>
+#include <sys/futex.h>
 #include "global.h"
 #include "proto.h"
 
@@ -44,10 +45,13 @@ static void check_parent(struct pmproc* pmp, int try_cleanup);
 int do_fork(MESSAGE* p)
 {
     int child_slot = 0, n = 0;
-    void* newsp = p->BUF;
-    int flags = p->FLAGS;
+    void* newsp = p->u.m_pm_clone.stack;
+    int flags = p->u.m_pm_clone.flags;
+    void* parent_tid = p->u.m_pm_clone.parent_tid;
+    void* child_tid = p->u.m_pm_clone.child_tid;
     endpoint_t parent_ep = p->source, child_ep;
     struct pmproc* pm_parent = pm_endpt_proc(parent_ep);
+
     if (!pm_parent) return EINVAL;
 
     if (procs_in_use >= NR_PROCS) return EAGAIN; /* proc table full */
@@ -77,17 +81,22 @@ int do_fork(MESSAGE* p)
 
     pmp->parent = parent_ep;
     pmp->endpoint = child_ep;
+
+    pmp->clear_child_tid = (flags & CLONE_CHILD_CLEARTID) ? child_tid : NULL;
+
     pmp->pid = find_free_pid();
 
-    /* thread-related */
-    pmp->tgid = pmp->pid;
-    if (flags & CLONE_THREAD) {
-        pmp->tgid = pm_parent->tgid;
+    if (flags & CLONE_PARENT_SETTID) {
+        data_copy(parent_ep, parent_tid, SELF, &pmp->pid, sizeof(pmp->pid));
     }
 
+    pmp->tgid = pmp->pid;
     pmp->group_leader = pmp;
     INIT_LIST_HEAD(&pmp->thread_group);
+
     if (flags & CLONE_THREAD) {
+        pmp->tgid = pm_parent->tgid;
+
         pmp->group_leader = pm_parent->group_leader;
         list_add(&pmp->thread_group, &pm_parent->group_leader->thread_group);
     }
@@ -174,6 +183,7 @@ void exit_proc(struct pmproc* pmp, int status)
 {
     int i;
     endpoint_t ep = pmp->endpoint;
+    pid_t clear_tid = 0;
 
     kernel_clear(ep);
 
@@ -183,6 +193,15 @@ void exit_proc(struct pmproc* pmp, int status)
     msg2fs.ENDPOINT = ep;
     send_recv(BOTH, TASK_FS, &msg2fs);
 
+    /* signal userspace if CLONE_CHILD_CLEARTID is set */
+    if (pmp->clear_child_tid) {
+        data_copy(pmp->endpoint, pmp->clear_child_tid, SELF, &clear_tid,
+                  sizeof(clear_tid));
+        futex_wake(pmp, pmp->clear_child_tid, 0, 1, FUTEX_BITSET_MATCH_ANY);
+        pmp->clear_child_tid = NULL;
+    }
+
+    /* tell MM, see proc_free() */
     procctl(ep, PCTL_CLEARPROC);
 
     pmp->exit_status = status;

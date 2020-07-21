@@ -140,8 +140,8 @@ static void wakeup_proc(struct pmproc* pmp)
     send_recv(SEND_NONBLOCK, pmp->endpoint, &msg);
 }
 
-static int futex_wake(struct pmproc* pmp, u32* uaddr, unsigned int flags,
-                      int nr_wake, u32 bitset)
+int futex_wake(struct pmproc* pmp, u32* uaddr, unsigned int flags, int nr_wake,
+               u32 bitset)
 {
     union futex_key key;
     int ret;

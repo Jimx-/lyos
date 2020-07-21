@@ -53,6 +53,7 @@ struct pmproc {
     void* frame_addr;
     size_t frame_size;
 
+    void* clear_child_tid;
     struct futex_entry futex_entry;
 
     int exit_status;

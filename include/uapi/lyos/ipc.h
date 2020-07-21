@@ -121,6 +121,17 @@ struct mess_pm_signal {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_signal);
 
+struct mess_pm_clone {
+    int flags;
+    void* stack;
+    void* parent_tid;
+    void* tls;
+    void* child_tid;
+
+    __u8 _pad[52 - 4 * sizeof(void*)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_pm_clone);
+
 struct mess_vfs_select {
     __u32 nfds;
     void* readfds;
@@ -305,6 +316,7 @@ typedef struct {
         struct mess_mm_mmap_reply m_mm_mmap_reply;
         struct mess_mm_remap m_mm_remap;
         struct mess_pm_signal m_pm_signal;
+        struct mess_pm_clone m_pm_clone;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_link m_vfs_link;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
