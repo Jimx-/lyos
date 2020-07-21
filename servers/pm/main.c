@@ -75,6 +75,9 @@ int main(int argc, char* argv[])
         case PTRACE:
             msg.RETVAL = do_ptrace(&msg);
             break;
+        case FUTEX:
+            msg.RETVAL = do_futex(&msg);
+            break;
         case PM_SIGRETURN:
             msg.RETVAL = do_sigreturn(&msg);
             break;
@@ -118,6 +121,8 @@ static void pm_init()
     MESSAGE vfs_msg;
 
     printl("PM: process manager is running.\n");
+
+    futex_init();
 
     /* signal sets */
     static char core_sigs[] = {SIGQUIT, SIGILL, SIGTRAP, SIGABRT,

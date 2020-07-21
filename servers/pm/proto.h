@@ -32,6 +32,7 @@ int do_sigsuspend(MESSAGE* p);
 int do_sigreturn(MESSAGE* p);
 int do_ptrace(MESSAGE* m);
 int do_exec(MESSAGE* m);
+int do_futex(MESSAGE* m);
 int do_pm_getinfo(MESSAGE* p);
 int do_pm_kprofile(MESSAGE* msg);
 int do_getprocep(MESSAGE* p);
@@ -44,5 +45,7 @@ void sig_proc(struct pmproc* p_dest, int signo, int trace);
 int process_ksig(endpoint_t target, int signo);
 
 void trace_signal(struct pmproc* p_dest, int signo);
+
+void futex_init(void);
 
 #endif

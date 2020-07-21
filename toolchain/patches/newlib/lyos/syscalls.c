@@ -1482,7 +1482,7 @@ int futex(int* uaddr, int futex_op, int val,
 
     cmb();
 
-    send_recv(BOTH, TASK_MM, &m);
+    send_recv(BOTH, TASK_PM, &m);
 
     return m.RETVAL;
 }

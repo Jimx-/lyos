@@ -20,8 +20,6 @@
 #include <asm/page.h>
 #include <lyos/avl.h>
 
-#include "futex.h"
-
 struct mm_struct {
     atomic_t refcnt;
 
@@ -41,8 +39,6 @@ struct mmproc {
     struct list_head group_list;
 
     endpoint_t endpoint;
-
-    struct futex_entry futex_entry;
 };
 
 #define MMPF_INUSE 0x01

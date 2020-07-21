@@ -18,6 +18,8 @@
 
 #include <signal.h>
 
+#include "futex.h"
+
 /* Information of a process used in PM */
 struct pmproc {
     int flags;
@@ -51,13 +53,15 @@ struct pmproc {
     void* frame_addr;
     size_t frame_size;
 
+    struct futex_entry futex_entry;
+
     int exit_status;
 };
 
-#define PMPF_INUSE 0x01
-#define PMPF_WAITING 0x02
-#define PMPF_HANGING 0x04
+#define PMPF_INUSE        0x01
+#define PMPF_WAITING      0x02
+#define PMPF_HANGING      0x04
 #define PMPF_SIGSUSPENDED 0x08
-#define PMPF_TRACED 0x10
+#define PMPF_TRACED       0x10
 
 #endif

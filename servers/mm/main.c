@@ -102,9 +102,6 @@ int main()
         case MM_GETINFO:
             mm_msg.RETVAL = do_mm_getinfo();
             break;
-        case FUTEX:
-            mm_msg.RETVAL = do_futex();
-            break;
         case FAULT:
             do_handle_fault();
             reply = 0;
@@ -157,8 +154,6 @@ static void init_mm()
     __lyos_init(NULL);
 
     init_mmproc(TASK_MM);
-
-    futex_init();
 
     struct boot_proc* bp;
     for (i = -NR_TASKS, bp = kernel_info.boot_procs;

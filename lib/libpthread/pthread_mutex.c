@@ -11,6 +11,10 @@ typedef struct {
     unsigned int owner;
 } pthread_mutex_internal_t;
 
+#define MUTEXATTR_TYPE_MASK     0x000f
+#define MUTEXATTR_SHARED_MASK   0x0010
+#define MUTEXATTR_PROTOCOL_MASK 0x0020
+
 #define MUTEX_TYPE_MASK   (3 << 14)
 #define MUTEX_TYPE_NORMAL (0 << 14)
 
@@ -18,6 +22,40 @@ typedef struct {
 #define MUTEX_STATE_UNLOCKED           0
 #define MUTEX_STATE_LOCKED_UNCONTENDED 1
 #define MUTEX_STATE_LOCKED_CONTENDED   2
+
+int pthread_mutexattr_init(pthread_mutexattr_t* attr)
+{
+    *attr = PTHREAD_MUTEX_NORMAL;
+    return 0;
+}
+
+int pthread_mutexattr_destroy(pthread_mutexattr_t* attr)
+{
+    *attr = -1;
+    return 0;
+}
+
+int pthread_mutexattr_gettype(const pthread_mutexattr_t* attr, int* type_p)
+{
+    int type = (*attr & MUTEXATTR_TYPE_MASK);
+
+    if (type < PTHREAD_MUTEX_NORMAL || type > PTHREAD_MUTEX_ERRORCHECK) {
+        return EINVAL;
+    }
+
+    *type_p = type;
+    return 0;
+}
+
+int pthread_mutexattr_settype(pthread_mutexattr_t* attr, int type)
+{
+    if (type < PTHREAD_MUTEX_NORMAL || type > PTHREAD_MUTEX_ERRORCHECK) {
+        return EINVAL;
+    }
+
+    *attr = (*attr & ~MUTEXATTR_TYPE_MASK) | type;
+    return 0;
+}
 
 int pthread_mutex_init(pthread_mutex_t* pmutex, const pthread_mutexattr_t* attr)
 {
@@ -35,13 +73,13 @@ int pthread_mutex_init(pthread_mutex_t* pmutex, const pthread_mutexattr_t* attr)
 int pthread_mutex_destroy(pthread_mutex_t* pmutex)
 {
     pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*)pmutex;
-    unsigned int state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
 
-    if (state != MUTEX_STATE_UNLOCKED) {
-        return EBUSY;
+    if (__sync_bool_compare_and_swap(&mutex->state, MUTEX_STATE_UNLOCKED,
+                                     0xffffffff)) {
+        return 0;
     }
 
-    return 0;
+    return EBUSY;
 }
 
 static inline int
@@ -112,6 +150,21 @@ int pthread_mutex_lock(pthread_mutex_t* pmutex)
     }
 
     return __pthread_mutex_lock_timeout(mutex, NULL);
+}
+
+int pthread_mutex_timedlock(pthread_mutex_t* pmutex,
+                            const struct timespec* abs_time)
+{
+    pthread_mutex_internal_t* mutex = (pthread_mutex_internal_t*)pmutex;
+
+    unsigned int old_state = __atomic_load_n(&mutex->state, __ATOMIC_RELAXED);
+    unsigned int type = old_state & MUTEX_TYPE_MASK;
+
+    if (type == MUTEX_TYPE_NORMAL) {
+        if (__pthread_normal_mutex_trylock(mutex) == 0) return 0;
+    }
+
+    return __pthread_mutex_lock_timeout(mutex, abs_time);
 }
 
 int pthread_mutex_unlock(pthread_mutex_t* pmutex)

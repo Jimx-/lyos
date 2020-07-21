@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <sys/time.h>
 #include <bits/pthreadtypes.h>
 
 #define PTHREAD_MUTEX_NORMAL     0
@@ -35,29 +36,41 @@
 
 __BEGIN_DECLS
 
-int pthread_attr_init(pthread_attr_t*);
+int pthread_attr_init(pthread_attr_t* attr);
 pthread_t pthread_self(void);
-int pthread_create(pthread_t*, const pthread_attr_t*,
-                   void* (*start_routine)(void*), void*);
-void pthread_exit(void*);
+int pthread_equal(pthread_t t1, pthread_t t2);
+int pthread_create(pthread_t* thread, const pthread_attr_t* attr,
+                   void* (*start_routine)(void*), void* arg);
+void pthread_exit(void* retval);
 int pthread_join(pthread_t thread, void** retval);
+int pthread_detach(pthread_t thread);
 
-int pthread_cond_init(pthread_cond_t*, const pthread_condattr_t*);
-int pthread_cond_wait(pthread_cond_t*, pthread_mutex_t*);
-int pthread_cond_signal(pthread_cond_t*);
-int pthread_cond_destroy(pthread_cond_t*);
+int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr);
+int pthread_cond_wait(pthread_cond_t* cond, pthread_mutex_t* mutex);
+int pthread_cond_timedwait(pthread_cond_t* cond, pthread_mutex_t* mutex,
+                           const struct timespec* abs_time);
+int pthread_cond_signal(pthread_cond_t* cond);
+int pthread_cond_destroy(pthread_cond_t* cond);
 
-int pthread_mutex_init(pthread_mutex_t*, const pthread_mutexattr_t*);
-int pthread_mutex_lock(pthread_mutex_t*);
-int pthread_mutex_unlock(pthread_mutex_t*);
-int pthread_mutex_trylock(pthread_mutex_t*);
-int pthread_mutex_destroy(pthread_mutex_t*);
+int pthread_mutexattr_init(pthread_mutexattr_t* attr);
+int pthread_mutexattr_gettype(const pthread_mutexattr_t* attr, int* type_p);
+int pthread_mutexattr_settype(pthread_mutexattr_t* attr, int type);
+int pthread_mutexattr_destroy(pthread_mutexattr_t* attr);
 
-int pthread_rwlock_init(pthread_rwlock_t*, const pthread_rwlockattr_t*);
-int pthread_rwlock_rdlock(pthread_rwlock_t*);
-int pthread_rwlock_wrlock(pthread_rwlock_t*);
-int pthread_rwlock_unlock(pthread_rwlock_t*);
-int pthread_rwlock_destroy(pthread_rwlock_t*);
+int pthread_mutex_init(pthread_mutex_t* mutex, const pthread_mutexattr_t* attr);
+int pthread_mutex_lock(pthread_mutex_t* mutex);
+int pthread_mutex_unlock(pthread_mutex_t* mutex);
+int pthread_mutex_trylock(pthread_mutex_t* mutex);
+int pthread_mutex_timedlock(pthread_mutex_t* mutex,
+                            const struct timespec* abs_time);
+int pthread_mutex_destroy(pthread_mutex_t* mutex);
+
+int pthread_rwlock_init(pthread_rwlock_t* rwlock,
+                        const pthread_rwlockattr_t* attr);
+int pthread_rwlock_rdlock(pthread_rwlock_t* rwlock);
+int pthread_rwlock_wrlock(pthread_rwlock_t* rwlock);
+int pthread_rwlock_unlock(pthread_rwlock_t* rwlock);
+int pthread_rwlock_destroy(pthread_rwlock_t* rwlock);
 
 __END_DECLS
 

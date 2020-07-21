@@ -37,3 +37,20 @@ int pthread_join(pthread_t thread, void** retval)
 
     return 0;
 }
+
+int pthread_detach(pthread_t thread)
+{
+    pthread_internal_t* tcb = thread_handle(thread);
+
+    if (tcb->detached) {
+        return EINVAL;
+    }
+
+    if (tcb->joining) {
+        return 0;
+    }
+
+    tcb->detached = 1;
+
+    return 0;
+}

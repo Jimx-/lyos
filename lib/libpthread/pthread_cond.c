@@ -45,6 +45,12 @@ int pthread_cond_wait(pthread_cond_t* cond, pthread_mutex_t* mutex)
     return __pthread_cond_timedwait(cond, mutex, NULL);
 }
 
+int pthread_cond_timedwait(pthread_cond_t* cond, pthread_mutex_t* mutex,
+                           const struct timespec* abs_time)
+{
+    return __pthread_cond_timedwait(cond, mutex, abs_time);
+}
+
 int pthread_cond_signal(pthread_cond_t* cond)
 {
     return __pthread_cond_pulse(cond, 1);
