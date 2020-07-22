@@ -33,9 +33,15 @@ void fsdriver_mark_dirty(struct fsdriver_buffer* bp) { bp->flags |= BF_DIRTY; }
 
 void fsdriver_mark_clean(struct fsdriver_buffer* bp) { bp->flags &= ~BF_DIRTY; }
 
-int fsdriver_is_clean(struct fsdriver_buffer* bp) { return !(bp->flags & BF_DIRTY); }
+int fsdriver_is_clean(struct fsdriver_buffer* bp)
+{
+    return !(bp->flags & BF_DIRTY);
+}
 
-static inline void remove_lru(struct fsdriver_buffer* bp) { list_del(&bp->list); }
+static inline void remove_lru(struct fsdriver_buffer* bp)
+{
+    list_del(&bp->list);
+}
 
 static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
                      size_t block_size);
@@ -157,7 +163,7 @@ static void put_block(struct fsdriver_buffer* bp)
     }
 
     if (bp->dev == NO_DEV) {
-        list_add(&bp->list, lru_head.prev);
+        list_add_tail(&bp->list, &lru_head);
     } else {
         list_add(&bp->list, &lru_head);
     }
@@ -190,8 +196,8 @@ static int block_cmp_fn(const void* a, const void* b)
     return (int)lhs->block - (int)rhs->block;
 }
 
-static void scatter_gather(dev_t dev, struct fsdriver_buffer** buffers, size_t count,
-                           int do_write)
+static void scatter_gather(dev_t dev, struct fsdriver_buffer** buffers,
+                           size_t count, int do_write)
 {
     struct fsdriver_buffer* bp;
     struct iovec* iov;

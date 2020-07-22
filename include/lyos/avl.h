@@ -37,11 +37,11 @@ struct avl_root {
 
 #define AVL_MAX_DEPTH 32
 
-#define AVL_LESS 0x1
-#define AVL_EQUAL 0x2
-#define AVL_GREATER 0x4
+#define AVL_LESS          0x1
+#define AVL_EQUAL         0x2
+#define AVL_GREATER       0x4
 #define AVL_GREATER_EQUAL (AVL_GREATER | AVL_EQUAL)
-#define AVL_LESS_EQUAL (AVL_LESS | AVL_EQUAL)
+#define AVL_LESS_EQUAL    (AVL_LESS | AVL_EQUAL)
 
 struct avl_iter {
     struct avl_root* root;
@@ -223,6 +223,7 @@ static inline void avl_start_iter(struct avl_root* root, struct avl_iter* iter,
     int depth = 0;
     iter->root = root;
     iter->depth = ~0;
+    iter->branch = 0;
 
     struct avl_node* cur = root->node;
     if (!cur) return;

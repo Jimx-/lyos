@@ -55,7 +55,7 @@ static struct list_head device_attr_table[DEVICE_ATTR_HASH_SIZE];
 /* device attribute show buffer size */
 #define BUFSIZE 4096
 
-#define ID2INDEX(id) (id - 1)
+#define ID2INDEX(id)  (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
 static struct device devices[NR_DEVICES];
