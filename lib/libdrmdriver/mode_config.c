@@ -39,6 +39,34 @@ void drm_mode_config_init(struct drm_device* dev)
     config->num_total_plane = 0;
 }
 
+void drm_mode_config_reset(struct drm_device* dev)
+{
+    struct drm_crtc* crtc;
+    struct drm_plane* plane;
+
+    drm_for_each_plane(plane, dev)
+    {
+        if (plane->state) {
+            free(plane->state);
+        }
+
+        plane->state = malloc(sizeof(*plane->state));
+        memset(plane->state, 0, sizeof(*plane->state));
+    }
+
+    drm_for_each_crtc(crtc, dev)
+    {
+        if (crtc->state) {
+            free(crtc->state);
+        }
+
+        crtc->state = malloc(sizeof(*crtc->state));
+        memset(crtc->state, 0, sizeof(*crtc->state));
+
+        crtc->state->crtc = crtc;
+    }
+}
+
 int drm_mode_getresources(struct drm_device* dev, endpoint_t endpoint,
                           void* data)
 {

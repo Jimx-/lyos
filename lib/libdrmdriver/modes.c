@@ -388,6 +388,15 @@ static const struct drm_display_mode drm_dmt_modes[] = {
               DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
 };
 
+void drm_mode_copy(struct drm_display_mode* dst,
+                   const struct drm_display_mode* src)
+{
+    struct list_head head = dst->head;
+
+    *dst = *src;
+    dst->head = head;
+}
+
 int drm_add_dmt_modes(struct drm_connector* connector, int hdisplay,
                       int vdisplay)
 {
@@ -411,7 +420,7 @@ int drm_add_dmt_modes(struct drm_connector* connector, int hdisplay,
 
         dup_mode = malloc(sizeof(*dup_mode));
         if (dup_mode) {
-            *dup_mode = *mode;
+            drm_mode_copy(dup_mode, mode);
             list_add_tail(&dup_mode->head, &connector->modes);
             num_modes++;
         }

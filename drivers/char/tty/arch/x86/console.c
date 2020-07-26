@@ -40,6 +40,8 @@
 
 char* console_mem = NULL;
 
+static int ansi_colors[8] = {0, 4, 2, 6, 1, 5, 3, 7};
+
 /* #define __TTY_DEBUG__ */
 
 extern int fbcon_init();
@@ -447,10 +449,10 @@ static void do_escape(CONSOLE* con, char c)
 
                 if (value >= 30 &&
                     value <= 37) { /* 30 ~ 37: foreground colors */
-                    fg_color = value - 30;
+                    fg_color = ansi_colors[value - 30];
                 } else if (value >= 40 &&
                            value <= 47) { /* 40 ~ 47: background colors */
-                    bg_color = value - 40;
+                    bg_color = ansi_colors[value - 40];
                 } else {
                     switch (value) {
                     case 0:

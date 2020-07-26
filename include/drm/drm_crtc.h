@@ -9,18 +9,45 @@
 #include <drm/drm_connector.h>
 #include <drm/drm_modes.h>
 
+struct drm_device;
 struct drm_plane;
 struct drm_mode_set;
 
-struct drm_crtc_funcs {
-    int (*set_config)(struct drm_mode_set* set);
+struct drm_crtc;
+
+struct drm_crtc_state {
+    struct drm_crtc* crtc;
+
+    int enable;
+
+    struct drm_display_mode mode;
+};
+
+struct __drm_planes_state {
+    struct drm_plane* ptr;
+    struct drm_plane_state *state, *old_state, *new_state;
+};
+
+struct __drm_crtcs_state {
+    struct drm_crtc* ptr;
+    struct drm_crtc_state *state, *old_state, *new_state;
+};
+
+struct drm_atomic_state {
+    struct drm_device* dev;
+
+    struct __drm_planes_state* planes;
+    struct __drm_crtcs_state* crtcs;
 };
 
 struct drm_crtc {
     struct list_head head;
     struct drm_mode_object base;
+    struct drm_device* dev;
+
     unsigned index;
-    const struct drm_crtc_funcs* funcs;
+
+    struct drm_crtc_state* state;
 
     struct drm_plane* primary;
     struct drm_plane* cursor;
@@ -40,8 +67,7 @@ struct drm_mode_set {
 
 int drm_crtc_init_with_planes(struct drm_device* dev, struct drm_crtc* crtc,
                               struct drm_plane* primary,
-                              struct drm_plane* cursor,
-                              const struct drm_crtc_funcs* funcs);
+                              struct drm_plane* cursor);
 
 #define obj_to_crtc(x) list_entry(x, struct drm_crtc, base)
 static inline struct drm_crtc* drm_crtc_lookup(struct drm_device* dev,

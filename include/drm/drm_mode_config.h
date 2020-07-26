@@ -8,10 +8,13 @@
 struct drm_device;
 struct drm_mode_fb_cmd2;
 struct drm_framebuffer;
+struct drm_atomic_state;
 
 struct drm_mode_config_funcs {
     int (*fb_create)(struct drm_device* dev, const struct drm_mode_fb_cmd2* cmd,
                      struct drm_framebuffer** fbp);
+
+    void (*commit)(struct drm_atomic_state* state);
 };
 
 struct drm_mode_config {
@@ -37,6 +40,7 @@ struct drm_mode_config {
     struct idr object_idr;
 };
 
-void drm_mode_config_init(struct drm_device* drm_device);
+void drm_mode_config_init(struct drm_device* dev);
+void drm_mode_config_reset(struct drm_device* dev);
 
 #endif

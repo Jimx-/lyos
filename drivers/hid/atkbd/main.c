@@ -69,9 +69,9 @@ static const unsigned short set1_scancode[128] = {
 
 #define KEYCODE_NULL 255
 
-static const char* name = "atkbd";
+/* static const char* name = "atkbd"; */
 
-static struct inputdriver_dev* input_dev;
+static struct inputdriver_dev input_dev;
 
 static irq_id_t kb_irq_set;
 static int kb_hook_id;
@@ -82,7 +82,8 @@ static int emul = 0;
 static int release = FALSE;
 
 static int init_keyboard();
-static void keyboard_interrupt(unsigned long irq_set);
+static void keyboard_interrupt(struct inputdriver_dev* dev,
+                               unsigned long irq_set);
 static void set_leds();
 static void kb_wait();
 static void kb_ack();
@@ -103,7 +104,7 @@ int main()
     serv_register_init_fresh_callback(init_keyboard);
     serv_init();
 
-    return inputdriver_start(&keyboard_driver);
+    return inputdriver_start(&input_dev);
 }
 
 /*****************************************************************************
@@ -114,7 +115,8 @@ int main()
  *
  * @param irq The IRQ corresponding to the keyboard, unused here.
  *****************************************************************************/
-static void keyboard_interrupt(unsigned long irq_set)
+static void keyboard_interrupt(struct inputdriver_dev* dev,
+                               unsigned long irq_set)
 {
     u8 scancode;
     u16 keycode;
@@ -122,7 +124,7 @@ static void keyboard_interrupt(unsigned long irq_set)
 
     portio_inb(KB_DATA, &scancode);
 
-    inputdriver_send_event(input_dev, EV_MSC, MSC_RAW, scancode);
+    inputdriver_send_event(dev, EV_MSC, MSC_RAW, scancode);
 
     /* extract the release bit from scancode */
     if (emul || (scancode != 0xE0 && scancode != 0xE1)) {
@@ -146,7 +148,7 @@ static void keyboard_interrupt(unsigned long irq_set)
     keycode = keycode_table[scancode];
 
     if (keycode != KEYCODE_NULL) {
-        inputdriver_send_event(input_dev, EV_MSC, MSC_SCAN, scancode);
+        inputdriver_send_event(dev, EV_MSC, MSC_SCAN, scancode);
     }
 
     switch (keycode) {
@@ -159,8 +161,8 @@ static void keyboard_interrupt(unsigned long irq_set)
             value = 1;
         }
 
-        inputdriver_send_event(input_dev, EV_KEY, keycode, value);
-        inputdriver_sync(input_dev);
+        inputdriver_send_event(dev, EV_KEY, keycode, value);
+        inputdriver_sync(dev);
         break;
     }
 
@@ -194,29 +196,26 @@ static int init_keyboard()
     irq_setpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &kb_hook_id);
     irq_enable(&kb_hook_id);
 
-    input_dev = inputdriver_allocate_device();
-    if (!input_dev) {
-        panic("%s: failed to allocate input device", name);
-    }
+    inputdriver_device_init(&input_dev, &keyboard_driver, NO_DEVICE_ID);
 
-    input_dev->input_id.bustype = BUS_I8042;
-    input_dev->input_id.vendor = 0x0001;
-    input_dev->input_id.product = 1;
-    input_dev->input_id.version = 1;
+    input_dev.input_id.bustype = BUS_I8042;
+    input_dev.input_id.vendor = 0x0001;
+    input_dev.input_id.product = 1;
+    input_dev.input_id.version = 1;
 
-    SET_BIT(input_dev->evbit, EV_KEY);
-    SET_BIT(input_dev->evbit, EV_MSC);
+    SET_BIT(input_dev.evbit, EV_KEY);
+    SET_BIT(input_dev.evbit, EV_MSC);
 
     for (i = 0; i < KEYMAP_SIZE; i++) {
         if (keycode_table[i] != KEYCODE_NULL) {
-            SET_BIT(input_dev->keybit, keycode_table[i]);
+            SET_BIT(input_dev.keybit, keycode_table[i]);
         }
     }
 
-    SET_BIT(input_dev->mscbit, MSC_SCAN);
-    SET_BIT(input_dev->mscbit, MSC_RAW);
+    SET_BIT(input_dev.mscbit, MSC_SCAN);
+    SET_BIT(input_dev.mscbit, MSC_RAW);
 
-    inputdriver_register_device(input_dev);
+    inputdriver_register_device(&input_dev);
 
     return 0;
 }

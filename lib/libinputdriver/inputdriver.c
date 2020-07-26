@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <lyos/sysutils.h>
 #include <lyos/input.h>
+
 #include <libsysfs/libsysfs.h>
 #include <libdevman/libdevman.h>
 #include <libinputdriver/libinputdriver.h>
@@ -56,17 +57,14 @@ static int input_sendrec(int function, MESSAGE* msg)
     return send_recv(function, __input_endpoint, msg);
 }
 
-struct inputdriver_dev* inputdriver_allocate_device(void)
+int inputdriver_device_init(struct inputdriver_dev* dev,
+                            struct inputdriver* drv, device_id_t parent)
 {
-    struct inputdriver_dev* dev;
+    memset(dev, 0, sizeof(*dev));
+    dev->dev_id = parent;
+    dev->driver = drv;
 
-    dev = malloc(sizeof(*dev));
-    if (dev) {
-        memset(dev, 0, sizeof(*dev));
-        dev->dev_id = NO_DEVICE_ID;
-    }
-
-    return dev;
+    return 0;
 }
 
 int inputdriver_register_device(struct inputdriver_dev* dev)
@@ -123,7 +121,7 @@ int inputdriver_send_event(struct inputdriver_dev* dev, u16 type, u16 code,
     return input_sendrec(SEND, &msg);
 }
 
-int inputdriver_start(struct inputdriver* inpd)
+int inputdriver_start(struct inputdriver_dev* dev)
 {
     MESSAGE msg;
 
@@ -136,8 +134,8 @@ int inputdriver_start(struct inputdriver* inpd)
         if (msg.type == NOTIFY_MSG) {
             switch (src) {
             case INTERRUPT:
-                if (inpd->input_interrupt)
-                    inpd->input_interrupt(msg.INTERRUPTS);
+                if (dev->driver->input_interrupt)
+                    dev->driver->input_interrupt(dev, msg.INTERRUPTS);
                 break;
             }
             continue;
@@ -145,8 +143,8 @@ int inputdriver_start(struct inputdriver* inpd)
 
         switch (msg.type) {
         default:
-            if (inpd->input_other) {
-                inpd->input_other(&msg);
+            if (dev->driver->input_other) {
+                dev->driver->input_other(dev, &msg);
 
                 continue;
             } else

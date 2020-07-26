@@ -37,3 +37,19 @@ int drm_plane_init(struct drm_device* dev, struct drm_plane* plane,
 
     return 0;
 }
+
+void drm_helper_commit_planes(struct drm_device* dev,
+                              struct drm_atomic_state* old_state)
+{
+    struct drm_plane* plane;
+    int i;
+
+    for (i = 0; i < dev->mode_config.num_total_plane; i++) {
+        struct drm_plane_helper_funcs* funcs;
+
+        plane = old_state->planes[i].ptr;
+        funcs = plane->helper_funcs;
+
+        funcs->update(plane, old_state->planes[i].old_state);
+    }
+}

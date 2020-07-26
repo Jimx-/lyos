@@ -39,7 +39,7 @@
 
 #include "fbcon_font.h"
 
-#define VID_ARG 10
+#define VID_ARG      10
 #define XRES_DEFAULT 1024
 #define YRES_DEFAULT 768
 
@@ -101,12 +101,13 @@ static void set_pixel(int x, int y, int val)
     *pixel = val;
 }
 
-#define RGB_RED 0xaa0000
-#define RGB_GREEN 0x00aa00
-#define RGB_BLUE 0x0000aa
-#define RGB_RED_BRI 0xff0000
+#define RGB_RED       0x0000aa
+#define RGB_GREEN     0x00aa00
+#define RGB_BLUE      0xaa0000
+#define RGB_RED_BRI   0x0000ff
 #define RGB_GREEN_BRI 0x00ff00
-#define RGB_BLUE_BRI 0x0000ff
+#define RGB_BLUE_BRI  0xff0000
+
 static void color_to_rgb(u8 color, u8 attr, int* fg, int* bg)
 {
     int r = (attr & BOLD) ? RGB_RED_BRI : RGB_RED;

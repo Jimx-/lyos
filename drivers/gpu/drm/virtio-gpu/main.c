@@ -560,19 +560,66 @@ static int virtio_gpu_alloc_requests(void)
     return 0;
 }
 
+static void virtio_gpu_primary_plane_update(struct drm_plane* plane,
+                                            struct drm_plane_state* old_state)
+{
+    struct virtio_gpu_output* output = NULL;
+    struct virtio_gpu_object* bo = NULL;
+
+    if (plane->state->crtc) {
+        output = drm_crtc_to_virtio_gpu_output(plane->state->crtc);
+    }
+    if (old_state->crtc) {
+        output = drm_crtc_to_virtio_gpu_output(old_state->crtc);
+    }
+    if (!output) return;
+
+    if (!plane->state->fb) {
+        virtio_gpu_cmd_set_scanout(output->index, 0, plane->state->src_w >> 16,
+                                   plane->state->src_h >> 16, 0, 0);
+        return;
+    }
+
+    bo = gem_to_virtio_gpu_obj(plane->state->fb->obj[0]);
+
+    virtio_gpu_cmd_transfer_to_host_2d(bo, 0, plane->state->src_w >> 16,
+                                       plane->state->src_h >> 16, 0, 0);
+
+    virtio_gpu_cmd_set_scanout(
+        output->index, bo->hw_res_handle, plane->state->src_w >> 16,
+        plane->state->src_h >> 16, plane->state->src_x >> 16,
+        plane->state->src_y >> 16);
+    virtio_gpu_cmd_resource_flush(
+        bo->hw_res_handle, plane->state->src_w >> 16, plane->state->src_h >> 16,
+        plane->state->src_x >> 16, plane->state->src_y >> 16);
+}
+
+static struct drm_plane_helper_funcs virtio_gpu_primary_helper_funcs = {
+    .update = virtio_gpu_primary_plane_update,
+};
+
 static int virtio_gpu_plane_init(enum drm_plane_type type, int index,
                                  struct drm_plane** pplane)
 {
     struct drm_plane* plane;
+    struct drm_plane_helper_funcs* funcs;
     int retval;
+
+    if (type == DRM_PLANE_TYPE_PRIMARY) {
+        funcs = &virtio_gpu_primary_helper_funcs;
+    }
 
     plane = malloc(sizeof(*plane));
     if (!plane) {
         return ENOMEM;
     }
 
+    memset(plane, 0, sizeof(*plane));
+
     retval = drm_plane_init(&drm_dev, plane, 1U << index, type);
     if (retval) goto err_free_plane;
+
+    drm_plane_add_helper_funcs(plane, funcs);
 
     *pplane = plane;
 
@@ -582,25 +629,6 @@ err_free_plane:
     free(plane);
     return retval;
 }
-
-static int virtio_gpu_set_config(struct drm_mode_set* set)
-{
-    struct virtio_gpu_output* output = drm_crtc_to_virtio_gpu_output(set->crtc);
-    struct virtio_gpu_object* bo = gem_to_virtio_gpu_obj(set->fb->obj[0]);
-
-    virtio_gpu_cmd_transfer_to_host_2d(bo, 0, set->mode->hdisplay,
-                                       set->mode->vdisplay, 0, 0);
-    virtio_gpu_cmd_set_scanout(output->index, bo->hw_res_handle,
-                               set->mode->hdisplay, set->mode->vdisplay, 0, 0);
-    virtio_gpu_cmd_resource_flush(bo->hw_res_handle, set->mode->hdisplay,
-                                  set->mode->vdisplay, 0, 0);
-
-    return EINVAL;
-}
-
-static const struct drm_crtc_funcs virtio_gpu_crtc_funcs = {
-    .set_config = virtio_gpu_set_config,
-};
 
 static int virtio_output_init(int index)
 {
@@ -613,8 +641,7 @@ static int virtio_output_init(int index)
     retval = virtio_gpu_plane_init(DRM_PLANE_TYPE_PRIMARY, index, &primary);
     if (retval) return retval;
 
-    drm_crtc_init_with_planes(&drm_dev, &output->crtc, primary, NULL,
-                              &virtio_gpu_crtc_funcs);
+    drm_crtc_init_with_planes(&drm_dev, &output->crtc, primary, NULL);
 
     drm_connector_init(&drm_dev, &output->connector,
                        DRM_MODE_CONNECTOR_VIRTUAL);
@@ -666,8 +693,15 @@ err_free_fb:
     return retval;
 }
 
-struct drm_mode_config_funcs virtio_gpu_mode_funcs = {.fb_create =
-                                                          virtio_gpu_fb_create};
+static void virtio_gpu_mode_commit(struct drm_atomic_state* state)
+{
+    struct drm_device* dev = state->dev;
+
+    drm_helper_commit_planes(dev, state);
+}
+
+struct drm_mode_config_funcs virtio_gpu_mode_funcs = {
+    .fb_create = virtio_gpu_fb_create, .commit = virtio_gpu_mode_commit};
 
 static void virtio_gpu_modeset_init(void)
 {
@@ -686,6 +720,8 @@ static void virtio_gpu_modeset_init(void)
     for (i = 0; i < gpu_config.num_scanouts; i++) {
         virtio_output_init(i);
     }
+
+    drm_mode_config_reset(&drm_dev);
 }
 
 static int virtio_gpu_init(void)

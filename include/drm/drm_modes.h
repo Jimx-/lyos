@@ -74,6 +74,9 @@ struct drm_display_mode {
     int vrefresh;
 };
 
+void drm_mode_copy(struct drm_display_mode* dst,
+                   const struct drm_display_mode* src);
+
 int drm_add_dmt_modes(struct drm_connector* connector, int hdisplay,
                       int vdisplay);
 

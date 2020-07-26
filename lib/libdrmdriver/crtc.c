@@ -21,10 +21,14 @@
 
 #include "libdrmdriver.h"
 
+static int drm_crtc_set_config(struct drm_mode_set* set);
+static int drm_atomic_set_config(struct drm_mode_set* set,
+                                 struct drm_atomic_state* state);
+static int drm_atomic_commit(struct drm_atomic_state* state);
+
 int drm_crtc_init_with_planes(struct drm_device* dev, struct drm_crtc* crtc,
                               struct drm_plane* primary,
-                              struct drm_plane* cursor,
-                              const struct drm_crtc_funcs* funcs)
+                              struct drm_plane* cursor)
 {
     struct drm_mode_config* config = &dev->mode_config;
     int retval;
@@ -33,7 +37,7 @@ int drm_crtc_init_with_planes(struct drm_device* dev, struct drm_crtc* crtc,
         return EINVAL;
     }
 
-    crtc->funcs = funcs;
+    crtc->dev = dev;
 
     retval = drm_mode_object_add(dev, &crtc->base, DRM_MODE_OBJECT_CRTC);
     if (retval) return retval;
@@ -56,6 +60,38 @@ int drm_crtc_init_with_planes(struct drm_device* dev, struct drm_crtc* crtc,
 
 int drm_mode_getcrtc(struct drm_device* dev, endpoint_t endpoint, void* data)
 {
+    struct drm_mode_crtc* crtc_resp = data;
+    struct drm_crtc* crtc;
+    struct drm_plane* plane;
+
+    crtc = drm_crtc_lookup(dev, crtc_resp->crtc_id);
+    if (!crtc) return ENOENT;
+
+    plane = crtc->primary;
+
+    if (plane->state && plane->state->fb)
+        crtc_resp->fb_id = plane->state->fb->base.id;
+    else
+        crtc_resp->fb_id = 0;
+
+    if (plane->state) {
+        crtc_resp->x = plane->state->src_x >> 16;
+        crtc_resp->y = plane->state->src_y >> 16;
+    }
+
+    if (crtc->state) {
+        if (crtc->state->enable) {
+            drm_mode_convert_to_umode(&crtc_resp->mode, &crtc->state->mode);
+            crtc_resp->mode_valid = 1;
+        } else {
+            crtc_resp->mode_valid = 0;
+        }
+    } else {
+        crtc_resp->x = 0;
+        crtc_resp->y = 0;
+        crtc_resp->mode_valid = 0;
+    }
+
     return 0;
 }
 
@@ -156,7 +192,7 @@ int drm_mode_setcrtc(struct drm_device* dev, endpoint_t endpoint, void* data)
     set.num_connectors = crtc_req->count_connectors;
     set.fb = fb;
 
-    retval = crtc->funcs->set_config(&set);
+    retval = drm_crtc_set_config(&set);
 
 out:
     if (connectors) free(connectors);
@@ -164,4 +200,207 @@ out:
     if (mode) free(mode);
 
     return retval;
+}
+
+static void drm_atomic_state_clear(struct drm_atomic_state* state)
+{
+    struct drm_device* dev = state->dev;
+    struct drm_mode_config* config = &dev->mode_config;
+    int i;
+
+    for (i = 0; i < config->num_crtc; i++) {
+        if (!state->crtcs[i].ptr) {
+            continue;
+        }
+
+        free(state->crtcs[i].state);
+        memset(&state->crtcs[i], 0, sizeof(state->crtcs[i]));
+    }
+
+    for (i = 0; i < config->num_total_plane; i++) {
+        if (!state->planes[i].ptr) {
+            continue;
+        }
+
+        free(state->planes[i].state);
+        memset(&state->planes[i], 0, sizeof(state->planes[i]));
+    }
+}
+
+static void drm_atomic_state_release(struct drm_atomic_state* state)
+{
+    if (state->crtcs) free(state->crtcs);
+    if (state->planes) free(state->planes);
+}
+
+static int drm_atomic_state_init(struct drm_device* dev,
+                                 struct drm_atomic_state* state)
+{
+    state->crtcs = calloc(sizeof(*state->crtcs), dev->mode_config.num_crtc);
+    if (!state->crtcs) goto err;
+
+    state->planes =
+        calloc(sizeof(*state->planes), dev->mode_config.num_total_plane);
+    if (!state->planes) goto err;
+
+    state->dev = dev;
+
+    return 0;
+err:
+    drm_atomic_state_release(state);
+    return ENOMEM;
+}
+
+static int drm_crtc_set_config(struct drm_mode_set* set)
+{
+    struct drm_atomic_state state;
+    struct drm_crtc* crtc = set->crtc;
+    int retval;
+
+    retval = drm_atomic_state_init(crtc->dev, &state);
+    if (retval) return retval;
+
+    retval = drm_atomic_set_config(set, &state);
+    if (retval) goto out;
+
+    retval = drm_atomic_commit(&state);
+
+out:
+    drm_atomic_state_clear(&state);
+    drm_atomic_state_release(&state);
+
+    return retval;
+}
+
+static int drm_atomic_get_crtc_state(struct drm_atomic_state* state,
+                                     struct drm_crtc* crtc,
+                                     struct drm_crtc_state** crtc_statep)
+{
+    struct drm_crtc_state* crtc_state;
+    int index = crtc->index;
+
+    crtc_state = state->crtcs[index].state;
+    if (crtc_state) {
+        *crtc_statep = crtc_state;
+        return 0;
+    }
+
+    crtc_state = malloc(sizeof(*crtc_state));
+    if (!crtc_state) return ENOMEM;
+
+    assert(crtc->state);
+    memcpy(crtc_state, crtc->state, sizeof(*crtc_state));
+
+    state->crtcs[index].ptr = crtc;
+    state->crtcs[index].state = crtc_state;
+    state->crtcs[index].old_state = crtc->state;
+    state->crtcs[index].new_state = crtc_state;
+
+    *crtc_statep = crtc_state;
+    return 0;
+}
+
+static int drm_atomic_get_plane_state(struct drm_atomic_state* state,
+                                      struct drm_plane* plane,
+                                      struct drm_plane_state** plane_statep)
+{
+    struct drm_plane_state* plane_state;
+    int index = plane->index;
+
+    plane_state = state->planes[index].state;
+    if (plane_state) {
+        *plane_statep = plane_state;
+        return 0;
+    }
+
+    plane_state = malloc(sizeof(*plane_state));
+    if (!plane_state) return ENOMEM;
+
+    assert(plane->state);
+    memcpy(plane_state, plane->state, sizeof(*plane_state));
+
+    state->planes[index].ptr = plane;
+    state->planes[index].state = plane_state;
+    state->planes[index].old_state = plane->state;
+    state->planes[index].new_state = plane_state;
+
+    *plane_statep = plane_state;
+    return 0;
+}
+
+static int drm_atomic_set_mode_for_crtc(struct drm_crtc_state* state,
+                                        const struct drm_display_mode* mode)
+{
+    if (mode) {
+        drm_mode_copy(&state->mode, mode);
+        state->enable = TRUE;
+    } else {
+        memset(&state->mode, 0, sizeof(state->mode));
+        state->enable = FALSE;
+    }
+
+    return 0;
+}
+
+static int drm_atomic_set_config(struct drm_mode_set* set,
+                                 struct drm_atomic_state* state)
+{
+    struct drm_crtc_state* crtc_state;
+    struct drm_plane_state* primary_state;
+    struct drm_crtc* crtc = set->crtc;
+    int retval;
+
+    retval = drm_atomic_get_crtc_state(state, crtc, &crtc_state);
+    if (retval) return retval;
+
+    retval = drm_atomic_get_plane_state(state, crtc->primary, &primary_state);
+    if (retval) return retval;
+
+    retval = drm_atomic_set_mode_for_crtc(crtc_state, set->mode);
+    if (retval) return retval;
+
+    primary_state->crtc = crtc;
+    primary_state->fb = set->fb;
+
+    primary_state->crtc_x = 0;
+    primary_state->crtc_y = 0;
+    primary_state->crtc_w = set->mode->hdisplay;
+    primary_state->crtc_h = set->mode->vdisplay;
+    primary_state->src_x = set->x << 16;
+    primary_state->src_y = set->y << 16;
+    primary_state->src_w = set->mode->hdisplay << 16;
+    primary_state->src_h = set->mode->vdisplay << 16;
+
+    return 0;
+}
+
+static int drm_atomic_swap_state(struct drm_atomic_state* state)
+{
+    struct drm_device* dev = state->dev;
+    int i;
+
+    for (i = 0; i < dev->mode_config.num_crtc; i++) {
+        state->crtcs[i].state = state->crtcs[i].old_state;
+        state->crtcs[i].ptr->state = state->crtcs[i].new_state;
+    }
+
+    for (i = 0; i < dev->mode_config.num_total_plane; i++) {
+        state->planes[i].state = state->planes[i].old_state;
+        state->planes[i].ptr->state = state->planes[i].new_state;
+    }
+
+    return 0;
+}
+
+static int drm_atomic_commit(struct drm_atomic_state* state)
+{
+    struct drm_mode_config* config = &state->dev->mode_config;
+    int retval;
+
+    retval = drm_atomic_swap_state(state);
+    if (retval) return retval;
+
+    config->funcs->commit(state);
+
+    return 0;
 }

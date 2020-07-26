@@ -41,5 +41,5 @@ Lyos has many standard features:
 To try out Lyos without building the whole system, you can download a xz-compressed [[https://lyos.jimx.site:8080/nightly/lyos-i686.img.xz][nightly image]], uncompress the image and run it with QEMU:
 
 #+BEGIN_SRC shell
-qemu-system-x86_64 -smp 2 -drive id=hda,file=lyos-i686.img,format=raw,if=none -device virtio-blk-pci,drive=hda -m 2048 -serial stdio -vga std -sdl -cpu host,pmu=true --enable-kvm
+qemu-system-x86_64 -smp 2 -drive id=hda,file=lyos-i686.img,format=raw,if=none -device virtio-blk-pci,drive=hda -m 2048 -serial stdio -vga virtio -sdl -cpu host,pmu=true --enable-kvm
 #+END_SRC

@@ -20,14 +20,17 @@
 #include <lyos/bitmap.h>
 #include <libdevman/libdevman.h>
 
+struct inputdriver_dev;
+
 struct inputdriver {
-    void (*input_interrupt)(unsigned long irq_set);
-    void (*input_other)(MESSAGE* m);
+    void (*input_interrupt)(struct inputdriver_dev* dev, unsigned long irq_set);
+    void (*input_other)(struct inputdriver_dev* dev, MESSAGE* m);
 };
 
 struct inputdriver_dev {
     input_dev_id_t id;
     device_id_t dev_id;
+    struct inputdriver* driver;
     struct input_id input_id;
     int registered;
 
@@ -42,13 +45,14 @@ struct inputdriver_dev {
     bitchunk_t swbit[BITCHUNKS(SW_CNT)];
 };
 
-int inputdriver_start(struct inputdriver* inpd);
-
-struct inputdriver_dev* inputdriver_allocate_device(void);
+int inputdriver_device_init(struct inputdriver_dev* dev,
+                            struct inputdriver* drv, device_id_t parent);
 int inputdriver_register_device(struct inputdriver_dev* dev);
 
 int inputdriver_send_event(struct inputdriver_dev* dev, u16 type, u16 code,
                            int value);
+
+int inputdriver_start(struct inputdriver_dev* dev);
 
 static inline int inputdriver_sync(struct inputdriver_dev* dev)
 {
