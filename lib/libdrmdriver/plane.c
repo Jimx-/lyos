@@ -20,21 +20,20 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-int drm_plane_init(struct drm_driver* drv, struct drm_plane* plane,
+int drm_plane_init(struct drm_device* dev, struct drm_plane* plane,
                    uint32_t possible_crtcs, enum drm_plane_type type)
 {
     int retval;
 
-    retval = drm_mode_object_add(drv, &plane->base, DRM_MODE_OBJECT_PLANE);
+    retval = drm_mode_object_add(dev, &plane->base, DRM_MODE_OBJECT_PLANE);
     if (retval) return retval;
 
     plane->possible_crtcs = possible_crtcs;
     plane->type = type;
 
-    list_add_tail(&plane->head, &drv->mode_config.plane_list);
-    plane->index = drv->mode_config.num_total_plane++;
+    list_add_tail(&plane->head, &dev->mode_config.plane_list);
+    plane->index = dev->mode_config.num_total_plane++;
 
     return 0;
 }

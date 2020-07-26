@@ -20,14 +20,13 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-int drm_crtc_init_with_planes(struct drm_driver* drv, struct drm_crtc* crtc,
+int drm_crtc_init_with_planes(struct drm_device* dev, struct drm_crtc* crtc,
                               struct drm_plane* primary,
                               struct drm_plane* cursor,
                               const struct drm_crtc_funcs* funcs)
 {
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     int retval;
 
     if (config->num_crtc >= 32) {
@@ -36,11 +35,11 @@ int drm_crtc_init_with_planes(struct drm_driver* drv, struct drm_crtc* crtc,
 
     crtc->funcs = funcs;
 
-    retval = drm_mode_object_add(drv, &crtc->base, DRM_MODE_OBJECT_CRTC);
+    retval = drm_mode_object_add(dev, &crtc->base, DRM_MODE_OBJECT_CRTC);
     if (retval) return retval;
 
-    list_add_tail(&crtc->head, &drv->mode_config.crtc_list);
-    crtc->index = drv->mode_config.num_crtc++;
+    list_add_tail(&crtc->head, &dev->mode_config.crtc_list);
+    crtc->index = dev->mode_config.num_crtc++;
 
     crtc->primary = primary;
     if (primary && !primary->possible_crtcs) {
@@ -55,13 +54,15 @@ int drm_crtc_init_with_planes(struct drm_driver* drv, struct drm_crtc* crtc,
     return 0;
 }
 
-int drm_mode_getcrtc(endpoint_t endpoint, void* data) { return 0; }
+int drm_mode_getcrtc(struct drm_device* dev, endpoint_t endpoint, void* data)
+{
+    return 0;
+}
 
-int drm_mode_setcrtc(endpoint_t endpoint, void* data)
+int drm_mode_setcrtc(struct drm_device* dev, endpoint_t endpoint, void* data)
 {
     struct drm_mode_crtc* crtc_req = data;
-    struct drm_driver* drv = drm_driver_tab;
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     struct drm_crtc* crtc;
     struct drm_framebuffer* fb = NULL;
     struct drm_connector* connector;
@@ -72,7 +73,7 @@ int drm_mode_setcrtc(endpoint_t endpoint, void* data)
     uint32_t* conn_ids = NULL;
     int i, retval;
 
-    crtc = drm_crtc_lookup(drv, crtc_req->crtc_id);
+    crtc = drm_crtc_lookup(dev, crtc_req->crtc_id);
     if (!crtc) return ENOENT;
 
     if (crtc_req->mode_valid) {
@@ -80,7 +81,7 @@ int drm_mode_setcrtc(endpoint_t endpoint, void* data)
             retval = EINVAL;
             goto out;
         } else {
-            fb = drm_framebuffer_lookup(drv, crtc_req->fb_id);
+            fb = drm_framebuffer_lookup(dev, crtc_req->fb_id);
             if (!fb) {
                 retval = EINVAL;
                 goto out;
@@ -136,7 +137,7 @@ int drm_mode_setcrtc(endpoint_t endpoint, void* data)
         for (i = 0; i < crtc_req->count_connectors; i++) {
             connectors[i] = NULL;
 
-            connector = drm_connector_lookup(drv, conn_ids[i]);
+            connector = drm_connector_lookup(dev, conn_ids[i]);
             if (!connector) {
                 retval = ENOENT;
                 free(conn_ids);

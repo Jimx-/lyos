@@ -21,10 +21,10 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 #include "proto.h"
 
-typedef int drm_ioctl_t(endpoint_t endpoint, void* data);
+typedef int drm_ioctl_t(struct drm_device* dev, endpoint_t endpoint,
+                        void* data);
 
 struct drm_ioctl_desc {
     unsigned int cmd;
@@ -37,16 +37,15 @@ struct drm_ioctl_desc {
     [_IOC_NR(ioctl)] = {                    \
         .cmd = ioctl, .func = _func, .flags = _flags, .name = #ioctl}
 
-static int drm_getcap(endpoint_t endpoint, void* data)
+static int drm_getcap(struct drm_device* dev, endpoint_t endpoint, void* data)
 {
-    struct drm_driver* drv = drm_driver_tab;
     struct drm_get_cap* req = data;
 
     req->value = 0;
 
     switch (req->capability) {
     case DRM_CAP_DUMB_BUFFER:
-        if (drv->dumb_create) {
+        if (dev->driver->dumb_create) {
             req->value = 1;
         }
         break;
@@ -71,7 +70,8 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 
 #define DRM_CORE_IOCTL_COUNT (sizeof(drm_ioctls) / sizeof(drm_ioctls[0]))
 
-int drm_do_ioctl(int request, endpoint_t endpoint, char* buf, cdev_id_t id)
+int drm_do_ioctl(struct drm_device* dev, int request, endpoint_t endpoint,
+                 char* buf, cdev_id_t id)
 {
     unsigned int nr = _IOC_NR(request);
     const struct drm_ioctl_desc* ioctl = NULL;
@@ -112,7 +112,7 @@ int drm_do_ioctl(int request, endpoint_t endpoint, char* buf, cdev_id_t id)
 
     if (ksize > in_size) memset(data + in_size, 0, ksize - in_size);
 
-    retval = ioctl->func(endpoint, data);
+    retval = ioctl->func(dev, endpoint, data);
     if (retval) goto err;
 
     retval = data_copy(endpoint, buf, SELF, data, out_size);

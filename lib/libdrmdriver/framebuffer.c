@@ -21,7 +21,6 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
 static uint32_t drm_mode_legacy_fb_format(uint32_t bpp, uint32_t depth)
 {
@@ -72,12 +71,12 @@ static uint32_t drm_mode_legacy_fb_format(uint32_t bpp, uint32_t depth)
     return fmt;
 }
 
-int drm_framebuffer_init(struct drm_driver* drv, struct drm_framebuffer* fb)
+int drm_framebuffer_init(struct drm_device* dev, struct drm_framebuffer* fb)
 {
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     int retval;
 
-    retval = drm_mode_object_add(drv, &fb->base, DRM_MODE_OBJECT_FB);
+    retval = drm_mode_object_add(dev, &fb->base, DRM_MODE_OBJECT_FB);
     if (retval) return retval;
 
     list_add_tail(&fb->head, &config->fb_list);
@@ -86,11 +85,11 @@ int drm_framebuffer_init(struct drm_driver* drv, struct drm_framebuffer* fb)
     return 0;
 }
 
-static int drm_framebuffer_create(const struct drm_mode_fb_cmd2* r,
+static int drm_framebuffer_create(struct drm_device* dev,
+                                  const struct drm_mode_fb_cmd2* r,
                                   struct drm_framebuffer** fbp)
 {
-    struct drm_driver* drv = drm_driver_tab;
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
 
     if (r->flags & ~(DRM_MODE_FB_INTERLACED | DRM_MODE_FB_MODIFIERS)) {
         return EINVAL;
@@ -103,16 +102,17 @@ static int drm_framebuffer_create(const struct drm_mode_fb_cmd2* r,
         return EINVAL;
     }
 
-    return config->funcs->fb_create(r, fbp);
+    return config->funcs->fb_create(dev, r, fbp);
 }
 
-static int drm_mode_addfb2(endpoint_t endpoint, void* data)
+static int drm_mode_addfb2(struct drm_device* dev, endpoint_t endpoint,
+                           void* data)
 {
     struct drm_mode_fb_cmd2* r = data;
     struct drm_framebuffer* fb;
     int retval;
 
-    retval = drm_framebuffer_create(r, &fb);
+    retval = drm_framebuffer_create(dev, r, &fb);
     if (retval) return retval;
 
     r->fb_id = fb->base.id;
@@ -120,7 +120,8 @@ static int drm_mode_addfb2(endpoint_t endpoint, void* data)
     return 0;
 }
 
-int drm_mode_addfb_ioctl(endpoint_t endpoint, void* data)
+int drm_mode_addfb_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                         void* data)
 {
     struct drm_mode_fb_cmd* or = data;
     struct drm_mode_fb_cmd2 r = {};
@@ -137,7 +138,7 @@ int drm_mode_addfb_ioctl(endpoint_t endpoint, void* data)
     r.pitches[0] = or->pitch;
     r.handles[0] = or->handle;
 
-    retval = drm_mode_addfb2(endpoint, &r);
+    retval = drm_mode_addfb2(dev, endpoint, &r);
     if (retval) return retval;
 
     or->fb_id = r.fb_id;

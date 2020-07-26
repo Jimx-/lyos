@@ -21,7 +21,6 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
 #define DRM_MODE(nm, t, c, hd, hss, hse, ht, hsk, vd, vss, vse, vt, vs, f)    \
     .name = nm, .status = 0, .type = (t), .clock = (c), .hdisplay = (hd),     \

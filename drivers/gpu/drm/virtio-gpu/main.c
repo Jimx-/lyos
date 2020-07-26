@@ -40,6 +40,7 @@
 static const char* name = DRIVER_NAME;
 static int instance;
 static struct virtio_device* vdev;
+static struct drm_device drm_dev;
 
 static struct virtio_gpu_config gpu_config;
 static int has_virgl;
@@ -71,7 +72,7 @@ struct virtio_gpu_framebuffer {
     struct drm_framebuffer base;
 };
 #define to_virtio_gpu_framebuffer(x) \
-    container_of(x, struct virtio_gpu_framebuffer, base)
+    list_entry(x, struct virtio_gpu_framebuffer, base)
 
 struct virtio_gpu_object_params {
     uint32_t format;
@@ -94,11 +95,11 @@ struct virtio_gpu_object {
 
 static void virtio_gpu_interrupt_wait(void);
 
-static int virtio_gpu_mode_dumb_create(struct drm_mode_create_dumb* args);
+static int virtio_gpu_mode_dumb_create(struct drm_device* dev,
+                                       struct drm_mode_create_dumb* args);
 
 static struct drm_driver virtio_gpu_driver = {
     .name = DRIVER_NAME,
-
     .dumb_create = virtio_gpu_mode_dumb_create,
 };
 
@@ -433,7 +434,8 @@ err_free_obj:
     return retval;
 }
 
-static int virtio_gpu_gem_create(struct virtio_gpu_object_params* params,
+static int virtio_gpu_gem_create(struct drm_device* dev,
+                                 struct virtio_gpu_object_params* params,
                                  struct drm_gem_object** obj_p,
                                  unsigned int* handle_p)
 {
@@ -444,7 +446,7 @@ static int virtio_gpu_gem_create(struct virtio_gpu_object_params* params,
     retval = virtio_gpu_object_create(params, &obj);
     if (retval) return retval;
 
-    retval = drm_gem_handle_create(&obj->base, &handle);
+    retval = drm_gem_handle_create(dev, &obj->base, &handle);
     if (retval) return retval;
 
     *obj_p = &obj->base;
@@ -453,7 +455,8 @@ static int virtio_gpu_gem_create(struct virtio_gpu_object_params* params,
     return 0;
 }
 
-static int virtio_gpu_mode_dumb_create(struct drm_mode_create_dumb* args)
+static int virtio_gpu_mode_dumb_create(struct drm_device* dev,
+                                       struct drm_mode_create_dumb* args)
 {
     struct virtio_gpu_object_params params = {0};
     struct drm_gem_object* gobj;
@@ -471,7 +474,7 @@ static int virtio_gpu_mode_dumb_create(struct drm_mode_create_dumb* args)
     params.height = args->height;
     params.size = args->size;
     params.dumb = TRUE;
-    retval = virtio_gpu_gem_create(&params, &gobj, &args->handle);
+    retval = virtio_gpu_gem_create(dev, &params, &gobj, &args->handle);
     if (retval) return retval;
 
     args->pitch = pitch;
@@ -500,8 +503,6 @@ static int virtio_gpu_probe(int instance)
                             sizeof(features) / sizeof(features[0]), instance);
 
     if (!vdev) return ENXIO;
-
-    virtio_gpu_driver.device_id = vdev->dev_id;
 
     return retval;
 }
@@ -570,7 +571,7 @@ static int virtio_gpu_plane_init(enum drm_plane_type type, int index,
         return ENOMEM;
     }
 
-    retval = drm_plane_init(&virtio_gpu_driver, plane, 1U << index, type);
+    retval = drm_plane_init(&drm_dev, plane, 1U << index, type);
     if (retval) goto err_free_plane;
 
     *pplane = plane;
@@ -612,14 +613,13 @@ static int virtio_output_init(int index)
     retval = virtio_gpu_plane_init(DRM_PLANE_TYPE_PRIMARY, index, &primary);
     if (retval) return retval;
 
-    drm_crtc_init_with_planes(&virtio_gpu_driver, &output->crtc, primary, NULL,
+    drm_crtc_init_with_planes(&drm_dev, &output->crtc, primary, NULL,
                               &virtio_gpu_crtc_funcs);
 
-    drm_connector_init(&virtio_gpu_driver, &output->connector,
+    drm_connector_init(&drm_dev, &output->connector,
                        DRM_MODE_CONNECTOR_VIRTUAL);
 
-    drm_encoder_init(&virtio_gpu_driver, &output->encoder,
-                     DRM_MODE_ENCODER_VIRTUAL);
+    drm_encoder_init(&drm_dev, &output->encoder, DRM_MODE_ENCODER_VIRTUAL);
     output->encoder.possible_crtcs = 1U << index;
     output->encoder.crtc = &output->crtc;
 
@@ -629,7 +629,8 @@ static int virtio_output_init(int index)
     return 0;
 }
 
-static int virtio_gpu_fb_create(const struct drm_mode_fb_cmd2* cmd,
+static int virtio_gpu_fb_create(struct drm_device* dev,
+                                const struct drm_mode_fb_cmd2* cmd,
                                 struct drm_framebuffer** fbp)
 {
     struct drm_gem_object* obj = NULL;
@@ -640,7 +641,7 @@ static int virtio_gpu_fb_create(const struct drm_mode_fb_cmd2* cmd,
         cmd->pixel_format != DRM_FORMAT_ARGB8888)
         return ENOENT;
 
-    obj = drm_gem_object_lookup(cmd->handles[0]);
+    obj = drm_gem_object_lookup(dev, cmd->handles[0]);
     if (!obj) return EINVAL;
 
     fb = malloc(sizeof(*fb));
@@ -650,7 +651,7 @@ static int virtio_gpu_fb_create(const struct drm_mode_fb_cmd2* cmd,
 
     fb->base.obj[0] = obj;
 
-    retval = drm_framebuffer_init(&virtio_gpu_driver, &fb->base);
+    retval = drm_framebuffer_init(dev, &fb->base);
     if (retval) {
         fb->base.obj[0] = NULL;
         goto err_free_fb;
@@ -670,10 +671,10 @@ struct drm_mode_config_funcs virtio_gpu_mode_funcs = {.fb_create =
 
 static void virtio_gpu_modeset_init(void)
 {
-    struct drm_mode_config* config = &virtio_gpu_driver.mode_config;
+    struct drm_mode_config* config = &drm_dev.mode_config;
     int i;
 
-    drm_mode_config_init(&virtio_gpu_driver);
+    drm_mode_config_init(&drm_dev);
 
     config->max_width = XRES_MAX;
     config->min_width = XRES_MIN;
@@ -727,6 +728,13 @@ static int virtio_gpu_init(void)
 
     virtio_gpu_cmd_get_display_info();
 
+    drm_device_init(&drm_dev, &virtio_gpu_driver, vdev->dev_id);
+
+    retval = drmdriver_register_device(&drm_dev);
+    if (retval) {
+        goto out_free_vqs;
+    }
+
     return 0;
 
 out_free_vqs:
@@ -745,7 +753,7 @@ int main()
     serv_register_init_fresh_callback(virtio_gpu_init);
     serv_init();
 
-    retval = drmdriver_task(&virtio_gpu_driver);
+    retval = drmdriver_task(&drm_dev);
     if (retval) {
         panic("%s: failed to start DRM driver task");
     }

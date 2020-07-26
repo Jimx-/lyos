@@ -21,9 +21,8 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-int drm_connector_init(struct drm_driver* drv, struct drm_connector* connector,
+int drm_connector_init(struct drm_device* dev, struct drm_connector* connector,
                        int connector_type)
 {
     int retval;
@@ -34,13 +33,13 @@ int drm_connector_init(struct drm_driver* drv, struct drm_connector* connector,
     connector->connector_type_id = 0;
 
     retval =
-        drm_mode_object_add(drv, &connector->base, DRM_MODE_OBJECT_CONNECTOR);
+        drm_mode_object_add(dev, &connector->base, DRM_MODE_OBJECT_CONNECTOR);
     if (retval) return retval;
 
     INIT_LIST_HEAD(&connector->modes);
 
-    list_add_tail(&connector->head, &drv->mode_config.connector_list);
-    connector->index = drv->mode_config.num_connector++;
+    list_add_tail(&connector->head, &dev->mode_config.connector_list);
+    connector->index = dev->mode_config.num_connector++;
 
     return 0;
 }
@@ -53,11 +52,11 @@ int drm_connector_attach_encoder(struct drm_connector* connector,
     return 0;
 }
 
-int drm_mode_getconnector(endpoint_t endpoint, void* data)
+int drm_mode_getconnector(struct drm_device* dev, endpoint_t endpoint,
+                          void* data)
 {
     struct drm_mode_get_connector* out_resp = data;
-    struct drm_driver* drv = drm_driver_tab;
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     struct drm_connector* connector;
     struct drm_encoder* encoder;
     struct drm_display_mode* mode;
@@ -68,7 +67,7 @@ int drm_mode_getconnector(endpoint_t endpoint, void* data)
     uint32_t encoder_ids[32];
     int i, retval;
 
-    connector = drm_connector_lookup(drv, out_resp->connector_id);
+    connector = drm_connector_lookup(dev, out_resp->connector_id);
     if (!connector) {
         return ENOENT;
     }
@@ -82,7 +81,7 @@ int drm_mode_getconnector(endpoint_t endpoint, void* data)
 
     copy_count = 0;
     if ((out_resp->count_encoders >= encoders_count) && encoders_count) {
-        drm_for_each_encoder(encoder, drv)
+        drm_for_each_encoder(encoder, dev)
         {
             if (connector->possible_encoders & (1U << encoder->index)) {
                 encoder_ids[copy_count++] = encoder->base.id;

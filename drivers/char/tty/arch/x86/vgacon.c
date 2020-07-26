@@ -67,7 +67,7 @@ static void vga_outchar(CONSOLE* con, char ch)
         break;
     default:
         *pch++ = ch;
-        *pch++ = DEFAULT_CHAR_COLOR;
+        *pch++ = con->color;
         break;
     }
 }

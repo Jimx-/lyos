@@ -20,23 +20,24 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-static struct idr gem_object_idr;
-
-struct drm_gem_object* drm_gem_object_lookup(u32 handle)
+struct drm_gem_object* drm_gem_object_lookup(struct drm_device* dev, u32 handle)
 {
-    return idr_find(&gem_object_idr, handle);
+    return idr_find(&dev->gem_object_idr, handle);
 }
 
-void drm_gem_open(void) { idr_init_base(&gem_object_idr, 1); }
+void drm_gem_open(struct drm_device* dev)
+{
+    idr_init_base(&dev->gem_object_idr, 1);
+}
 
-int drm_gem_handle_create(struct drm_gem_object* obj, unsigned int* handlep)
+int drm_gem_handle_create(struct drm_device* dev, struct drm_gem_object* obj,
+                          unsigned int* handlep)
 {
     unsigned int handle;
     int retval;
 
-    retval = idr_alloc(&gem_object_idr, obj, 1, 0);
+    retval = idr_alloc(&dev->gem_object_idr, obj, 1, 0);
 
     if (retval < 0) return -retval;
 
@@ -53,11 +54,11 @@ int drm_gem_object_init(struct drm_gem_object* obj, size_t size)
     return 0;
 }
 
-int drm_gem_dumb_map_offset(u32 handle, u64* offset)
+int drm_gem_dumb_map_offset(struct drm_device* dev, u32 handle, u64* offset)
 {
     struct drm_gem_object* obj;
 
-    obj = drm_gem_object_lookup(handle);
+    obj = drm_gem_object_lookup(dev, handle);
     if (!obj) return ENOENT;
 
     *offset = handle << ARCH_PG_SHIFT;
@@ -65,8 +66,9 @@ int drm_gem_dumb_map_offset(u32 handle, u64* offset)
     return 0;
 }
 
-static int drm_gem_mmap_obj(struct drm_gem_object* obj, endpoint_t endpoint,
-                            char* addr, size_t length, char** retaddr)
+static int drm_gem_mmap_obj(struct drm_device* dev, struct drm_gem_object* obj,
+                            endpoint_t endpoint, char* addr, size_t length,
+                            char** retaddr)
 {
     if (obj->size < length) {
         return EINVAL;
@@ -79,14 +81,14 @@ static int drm_gem_mmap_obj(struct drm_gem_object* obj, endpoint_t endpoint,
     return EINVAL;
 }
 
-int drm_gem_mmap(endpoint_t endpoint, char* addr, off_t offset, size_t length,
-                 char** retaddr)
+int drm_gem_mmap(struct drm_device* dev, endpoint_t endpoint, char* addr,
+                 off_t offset, size_t length, char** retaddr)
 {
     struct drm_gem_object* obj;
     unsigned int handle = offset >> ARCH_PG_SHIFT;
 
-    obj = drm_gem_object_lookup(handle);
+    obj = drm_gem_object_lookup(dev, handle);
     if (!obj) return EINVAL;
 
-    return drm_gem_mmap_obj(obj, endpoint, addr, length, retaddr);
+    return drm_gem_mmap_obj(dev, obj, endpoint, addr, length, retaddr);
 }

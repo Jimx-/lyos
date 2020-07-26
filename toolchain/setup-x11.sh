@@ -34,4 +34,21 @@ if $BUILD_LIBDRM; then
     popd > /dev/null
 fi
 
+# Build kmscube
+if $BUILD_KMSCUBE; then
+    if [ ! -d "kmscube-$SUBARCH" ]; then
+        mkdir kmscube-$SUBARCH
+    fi
+
+    pushd $DIR/sources/kmscube > /dev/null
+    ./autogen.sh
+    popd > /dev/null
+
+    pushd kmscube-$SUBARCH > /dev/null
+    $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
 popd > /dev/null

@@ -20,12 +20,11 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-int drm_encoder_init(struct drm_driver* drv, struct drm_encoder* encoder,
+int drm_encoder_init(struct drm_device* dev, struct drm_encoder* encoder,
                      int encoder_type)
 {
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     int retval;
 
     if (config->num_encoder >= 32) {
@@ -35,23 +34,22 @@ int drm_encoder_init(struct drm_driver* drv, struct drm_encoder* encoder,
     encoder->encoder_type = encoder_type;
     encoder->encoder_type_id = 0;
 
-    retval = drm_mode_object_add(drv, &encoder->base, DRM_MODE_OBJECT_ENCODER);
+    retval = drm_mode_object_add(dev, &encoder->base, DRM_MODE_OBJECT_ENCODER);
     if (retval) return retval;
 
-    list_add_tail(&encoder->head, &drv->mode_config.encoder_list);
-    encoder->index = drv->mode_config.num_encoder++;
+    list_add_tail(&encoder->head, &dev->mode_config.encoder_list);
+    encoder->index = dev->mode_config.num_encoder++;
 
     return 0;
 }
 
-int drm_mode_getencoder(endpoint_t endpoint, void* data)
+int drm_mode_getencoder(struct drm_device* dev, endpoint_t endpoint, void* data)
 {
     struct drm_mode_get_encoder* enc_resp = data;
-    struct drm_driver* drv = drm_driver_tab;
     struct drm_encoder* encoder;
     struct drm_crtc* crtc;
 
-    encoder = drm_encoder_find(drv, enc_resp->encoder_id);
+    encoder = drm_encoder_find(dev, enc_resp->encoder_id);
     if (!encoder) {
         return ENOENT;
     }

@@ -1,0 +1,58 @@
+#ifndef _DRM_DRM_CRTC_H_
+#define _DRM_DRM_CRTC_H_
+
+#include <stdint.h>
+#include <lyos/list.h>
+#include <drm/drm_mode_object.h>
+#include <drm/drm_plane.h>
+#include <drm/drm_framebuffer.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_modes.h>
+
+struct drm_plane;
+struct drm_mode_set;
+
+struct drm_crtc_funcs {
+    int (*set_config)(struct drm_mode_set* set);
+};
+
+struct drm_crtc {
+    struct list_head head;
+    struct drm_mode_object base;
+    unsigned index;
+    const struct drm_crtc_funcs* funcs;
+
+    struct drm_plane* primary;
+    struct drm_plane* cursor;
+};
+
+struct drm_mode_set {
+    struct drm_framebuffer* fb;
+    struct drm_crtc* crtc;
+    struct drm_display_mode* mode;
+
+    uint32_t x;
+    uint32_t y;
+
+    struct drm_connector** connectors;
+    size_t num_connectors;
+};
+
+int drm_crtc_init_with_planes(struct drm_device* dev, struct drm_crtc* crtc,
+                              struct drm_plane* primary,
+                              struct drm_plane* cursor,
+                              const struct drm_crtc_funcs* funcs);
+
+#define obj_to_crtc(x) list_entry(x, struct drm_crtc, base)
+static inline struct drm_crtc* drm_crtc_lookup(struct drm_device* dev,
+                                               unsigned int id)
+{
+    struct drm_mode_object* mo;
+    mo = drm_mode_object_find(dev, id, DRM_MODE_OBJECT_CRTC);
+    return mo ? obj_to_crtc(mo) : NULL;
+}
+
+#define drm_for_each_crtc(crtc, dev) \
+    list_for_each_entry(crtc, &(dev)->mode_config.crtc_list, head)
+
+#endif

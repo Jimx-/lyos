@@ -20,34 +20,33 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-int drm_mode_create_dumb(struct drm_mode_create_dumb* args)
+int drm_mode_create_dumb(struct drm_device* dev,
+                         struct drm_mode_create_dumb* args)
 {
-    struct drm_driver* drv = drm_driver_tab;
-
-    if (!drv->dumb_create) {
+    if (!dev->driver->dumb_create) {
         return ENOSYS;
     }
 
     if (!args->width || !args->height || !args->bpp) return EINVAL;
 
-    return drv->dumb_create(args);
+    return dev->driver->dumb_create(dev, args);
 }
 
-int drm_mode_create_dumb_ioctl(endpoint_t endpoint, void* data)
+int drm_mode_create_dumb_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                               void* data)
 {
-    return drm_mode_create_dumb(data);
+    return drm_mode_create_dumb(dev, data);
 }
 
-int drm_mode_mmap_dumb_ioctl(endpoint_t endpoint, void* data)
+int drm_mode_mmap_dumb_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                             void* data)
 {
     struct drm_mode_map_dumb* args = data;
-    struct drm_driver* drv = drm_driver_tab;
 
-    if (!drv->dumb_create) {
+    if (!dev->driver->dumb_create) {
         return ENOSYS;
     }
 
-    return drm_gem_dumb_map_offset(args->handle, &args->offset);
+    return drm_gem_dumb_map_offset(dev, args->handle, &args->offset);
 }

@@ -21,11 +21,10 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
-#include "global.h"
 
-void drm_mode_config_init(struct drm_driver* drv)
+void drm_mode_config_init(struct drm_device* dev)
 {
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     INIT_LIST_HEAD(&config->fb_list);
     INIT_LIST_HEAD(&config->crtc_list);
     INIT_LIST_HEAD(&config->connector_list);
@@ -40,11 +39,11 @@ void drm_mode_config_init(struct drm_driver* drv)
     config->num_total_plane = 0;
 }
 
-int drm_mode_getresources(endpoint_t endpoint, void* data)
+int drm_mode_getresources(struct drm_device* dev, endpoint_t endpoint,
+                          void* data)
 {
     struct drm_mode_card_res* card_res = data;
-    struct drm_driver* drv = drm_driver_tab;
-    struct drm_mode_config* config = &drv->mode_config;
+    struct drm_mode_config* config = &dev->mode_config;
     struct drm_crtc* crtc;
     struct drm_encoder* encoder;
     struct drm_connector* connector;
@@ -63,7 +62,7 @@ int drm_mode_getresources(endpoint_t endpoint, void* data)
 
     count = copy_count = 0;
     crtc_id = (void*)((uintptr_t)card_res->crtc_id_ptr);
-    drm_for_each_crtc(crtc, drv)
+    drm_for_each_crtc(crtc, dev)
     {
         if (count < card_res->count_crtcs) {
             id_buf[copy_count++] = crtc->base.id;
@@ -90,7 +89,7 @@ int drm_mode_getresources(endpoint_t endpoint, void* data)
 
     count = copy_count = 0;
     encoder_id = (void*)((uintptr_t)card_res->encoder_id_ptr);
-    drm_for_each_encoder(encoder, drv)
+    drm_for_each_encoder(encoder, dev)
     {
         if (count < card_res->count_encoders) {
             id_buf[copy_count++] = encoder->base.id;
@@ -117,7 +116,7 @@ int drm_mode_getresources(endpoint_t endpoint, void* data)
 
     count = copy_count = 0;
     connector_id = (void*)((uintptr_t)card_res->connector_id_ptr);
-    drm_for_each_connector(connector, drv)
+    drm_for_each_connector(connector, dev)
     {
         if (count < card_res->count_connectors) {
             id_buf[copy_count++] = connector->base.id;

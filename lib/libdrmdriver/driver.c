@@ -21,10 +21,7 @@
 #include "libdrmdriver.h"
 #include "proto.h"
 
-static int primary_index = 0;
-static device_id_t device_id = NO_DEVICE_ID;
-
-struct drm_driver* drm_driver_tab;
+static struct drm_device* drm_device;
 
 static int drm_open(dev_t minor, int access);
 static int drm_close(dev_t minor);
@@ -40,11 +37,11 @@ static struct chardriver drm_chrdrv = {.cdr_open = drm_open,
 
 static int drm_open(dev_t minor, int access)
 {
-    if (minor != primary_index) {
+    if (minor != drm_device->primary.index) {
         return ENXIO;
     }
 
-    drm_gem_open();
+    drm_gem_open(drm_device);
 
     return 0;
 }
@@ -54,54 +51,60 @@ static int drm_close(dev_t minor) { return 0; }
 static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
                      cdev_id_t id)
 {
-    if (minor != primary_index) {
+    if (minor != drm_device->primary.index) {
         return ENXIO;
     }
 
-    return drm_do_ioctl(request, endpoint, buf, id);
+    return drm_do_ioctl(drm_device, request, endpoint, buf, id);
 }
 
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
                     size_t length, char** retaddr)
 {
-    if (minor != primary_index) {
+    if (minor != drm_device->primary.index) {
         return ENXIO;
     }
 
-    return drm_gem_mmap(endpoint, addr, offset, length, retaddr);
+    return drm_gem_mmap(drm_device, endpoint, addr, offset, length, retaddr);
 }
 
-static int drm_register_device(device_id_t dev_id)
+int drm_device_init(struct drm_device* dev, struct drm_driver* drv,
+                    device_id_t parent)
+{
+    dev->driver = drv;
+    dev->device_id = parent;
+
+    dev->primary.index = 0;
+
+    return 0;
+}
+
+int drmdriver_register_device(struct drm_device* dev)
 {
     dev_t devt;
     struct device_info devinf;
     int retval;
 
     /* add primary node */
-    devt = MAKE_DEV(DEV_DRM, primary_index);
+    devt = MAKE_DEV(DEV_DRM, dev->primary.index);
     dm_cdev_add(devt);
 
     memset(&devinf, 0, sizeof(devinf));
-    snprintf(devinf.name, sizeof(devinf.name), "card%d", primary_index);
+    snprintf(devinf.name, sizeof(devinf.name), "card%d", dev->primary.index);
     devinf.bus = NO_BUS_ID;
     devinf.class = NO_CLASS_ID;
-    devinf.parent = dev_id;
+    devinf.parent = dev->device_id;
     devinf.devt = devt;
     devinf.type = DT_CHARDEV;
 
-    retval = dm_device_register(&devinf, &device_id);
+    retval = dm_device_register(&devinf, &dev->primary.device_id);
 
     return retval;
 }
 
-int drmdriver_task(struct drm_driver* drm_driver)
+int drmdriver_task(struct drm_device* drm_dev)
 {
-    int retval;
-
-    retval = drm_register_device(drm_driver->device_id);
-    if (retval) return retval;
-
-    drm_driver_tab = drm_driver;
+    drm_device = drm_dev;
 
     return chardriver_task(&drm_chrdrv);
 }
