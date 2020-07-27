@@ -64,7 +64,7 @@ typedef quad_t* qaddr_t;
 #if __BSD_VISIBLE
 #include <machine/endian.h>
 #define physadr physadr_t
-#define quad quad_t
+#define quad    quad_t
 
 #ifndef _IN_ADDR_T_DECLARED
 typedef __uint32_t in_addr_t; /* base type for internet address */
@@ -149,7 +149,7 @@ typedef __id_t id_t; /* can hold a uid_t or pid_t */
 #endif
 
 #ifndef _INO_T_DECLARED
-typedef __ino_t ino_t; /* inode number */
+typedef unsigned long ino_t; /* inode number */
 #define _INO_T_DECLARED
 #endif
 

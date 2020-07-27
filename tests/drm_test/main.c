@@ -106,7 +106,7 @@ static int drmmodeset_open(int* out, const char* node)
     int fd, ret;
     uint64_t has_dumb;
 
-    fd = open(node, O_RDWR);
+    fd = open(node, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
         ret = -errno;
         fprintf(stderr, "cannot open '%s': %s\n", node, strerror(errno));
