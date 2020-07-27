@@ -582,13 +582,22 @@ static void virtio_gpu_primary_plane_update(struct drm_plane* plane,
 
     bo = gem_to_virtio_gpu_obj(plane->state->fb->obj[0]);
 
-    virtio_gpu_cmd_transfer_to_host_2d(bo, 0, plane->state->src_w >> 16,
-                                       plane->state->src_h >> 16, 0, 0);
+    if (bo->dumb) {
+        virtio_gpu_cmd_transfer_to_host_2d(bo, 0, plane->state->src_w >> 16,
+                                           plane->state->src_h >> 16, 0, 0);
+    }
 
-    virtio_gpu_cmd_set_scanout(
-        output->index, bo->hw_res_handle, plane->state->src_w >> 16,
-        plane->state->src_h >> 16, plane->state->src_x >> 16,
-        plane->state->src_y >> 16);
+    if (plane->state->fb != old_state->fb ||
+        plane->state->src_w != old_state->src_w ||
+        plane->state->src_h != old_state->src_h ||
+        plane->state->src_x != old_state->src_x ||
+        plane->state->src_y != old_state->src_y) {
+        virtio_gpu_cmd_set_scanout(
+            output->index, bo->hw_res_handle, plane->state->src_w >> 16,
+            plane->state->src_h >> 16, plane->state->src_x >> 16,
+            plane->state->src_y >> 16);
+    }
+
     virtio_gpu_cmd_resource_flush(
         bo->hw_res_handle, plane->state->src_w >> 16, plane->state->src_h >> 16,
         plane->state->src_x >> 16, plane->state->src_y >> 16);

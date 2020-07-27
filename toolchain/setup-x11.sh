@@ -6,6 +6,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/utils.sh
 
 : ${BUILD_LIBDRM:=false}
+: ${BUILD_KMSCUBE:=false}
+: ${BUILD_LIBEXPAT:=false}
+: ${BUILD_LIBFFI:=false}
+: ${BUILD_WAYLAND:=false}
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
@@ -46,6 +50,49 @@ if $BUILD_KMSCUBE; then
 
     pushd kmscube-$SUBARCH > /dev/null
     $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libexpat
+if $BUILD_LIBEXPAT; then
+    if [ ! -d "libexpat-$SUBARCH" ]; then
+        mkdir libexpat-$SUBARCH
+    fi
+
+    pushd libexpat-$SUBARCH > /dev/null
+    $DIR/sources/expat-2.2.9/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --without-xmlwf
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libffi
+if $BUILD_LIBFFI; then
+    if [ ! -d "libffi-$SUBARCH" ]; then
+        mkdir libffi-$SUBARCH
+    fi
+
+    pushd libffi-$SUBARCH > /dev/null
+    $DIR/sources/libffi-3.3/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build wayland
+if $BUILD_WAYLAND; then
+    if [ ! -d "wayland-$SUBARCH" ]; then
+        mkdir wayland-$SUBARCH
+    fi
+
+    pushd $DIR/sources/wayland-1.18.0 > /dev/null
+    # ./autogen.sh
+    popd > /dev/null
+
+    pushd wayland-$SUBARCH > /dev/null
+    $DIR/sources/wayland-1.18.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --with-host-scanner --disable-dtd-validation --disable-documentation
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

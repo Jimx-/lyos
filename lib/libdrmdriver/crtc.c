@@ -404,3 +404,43 @@ static int drm_atomic_commit(struct drm_atomic_state* state)
 
     return 0;
 }
+
+static int drm_atomic_page_flip_set(struct drm_atomic_state* state,
+                                    struct drm_crtc* crtc,
+                                    struct drm_framebuffer* fb)
+{
+    struct drm_crtc_state* crtc_state;
+    struct drm_plane_state* primary_state;
+    int retval;
+
+    retval = drm_atomic_get_crtc_state(state, crtc, &crtc_state);
+    if (retval) return retval;
+
+    retval = drm_atomic_get_plane_state(state, crtc->primary, &primary_state);
+    if (retval) return retval;
+
+    primary_state->crtc = crtc;
+    primary_state->fb = fb;
+
+    return 0;
+}
+
+int drm_atomic_page_flip(struct drm_crtc* crtc, struct drm_framebuffer* fb)
+{
+    struct drm_atomic_state state;
+    int retval;
+
+    retval = drm_atomic_state_init(crtc->dev, &state);
+    if (retval) return retval;
+
+    retval = drm_atomic_page_flip_set(&state, crtc, fb);
+    if (retval) goto out;
+
+    retval = drm_atomic_commit(&state);
+
+out:
+    drm_atomic_state_clear(&state);
+    drm_atomic_state_release(&state);
+
+    return retval;
+}

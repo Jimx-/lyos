@@ -73,7 +73,7 @@ static int drmmodeset_setup_dev(int fd, drmModeRes* res, drmModeConnector* conn,
                                 struct drmmodeset_dev* dev);
 static int drmmodeset_open(int* out, const char* node);
 static int drmmodeset_prepare(int fd);
-static void drmmodeset_draw(void);
+static void drmmodeset_draw(int fd);
 static void drmmodeset_cleanup(int fd);
 
 /*
@@ -595,7 +595,7 @@ int main(int argc, char** argv)
     }
 
     /* draw some colors for 5seconds */
-    drmmodeset_draw();
+    drmmodeset_draw(fd);
 
     /* cleanup everything */
     drmmodeset_cleanup(fd);
@@ -653,7 +653,7 @@ static uint8_t next_color(bool* up, uint8_t cur, unsigned int mod)
  * beyond the scope of this document.
  */
 
-static void drmmodeset_draw(void)
+static void drmmodeset_draw(int fd)
 {
     uint8_t r, g, b;
     bool r_up, g_up, b_up;
@@ -678,6 +678,10 @@ static void drmmodeset_draw(void)
                     *(uint32_t*)&iter->map[off] = (r << 16) | (g << 8) | b;
                 }
             }
+
+            drmModePageFlip(fd, iter->crtc, iter->fb, 0, NULL);
+            /* drmModeSetCrtc(fd, iter->crtc, iter->fb, 0, 0, &iter->conn, 1, */
+            /*                &iter->mode); */
         }
 
         usleep(100000);
@@ -687,7 +691,8 @@ static void drmmodeset_draw(void)
 /*
  * drmmodeset_cleanup(fd): This cleans up all the devices we created during
  * drmmodeset_prepare(). It resets the CRTCs to their saved states and
- * deallocates all memory. It should be pretty obvious how all of this works.
+ * deallocates all memory. It should be pretty obvious how all of this
+ * works.
  */
 
 static void drmmodeset_cleanup(int fd)

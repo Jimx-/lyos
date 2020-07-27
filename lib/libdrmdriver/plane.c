@@ -20,6 +20,7 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
+#include "proto.h"
 
 int drm_plane_init(struct drm_device* dev, struct drm_plane* plane,
                    uint32_t possible_crtcs, enum drm_plane_type type)
@@ -52,4 +53,22 @@ void drm_helper_commit_planes(struct drm_device* dev,
 
         funcs->update(plane, old_state->planes[i].old_state);
     }
+}
+
+int drm_mode_page_flip_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                             void* data)
+{
+    struct drm_mode_crtc_page_flip_target* page_flip = data;
+    struct drm_crtc* crtc;
+    struct drm_framebuffer* fb;
+
+    if (page_flip->flags & ~DRM_MODE_PAGE_FLIP_FLAGS) return EINVAL;
+
+    crtc = drm_crtc_lookup(dev, page_flip->crtc_id);
+    if (!crtc) return ENOENT;
+
+    fb = drm_framebuffer_lookup(dev, page_flip->fb_id);
+    if (!fb) return ENOENT;
+
+    return drm_atomic_page_flip(crtc, fb);
 }
