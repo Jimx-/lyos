@@ -32,6 +32,51 @@
 #include "fcntl.h"
 #include "global.h"
 
+static ssize_t vfs_read(struct file_desc* filp, char* buf, size_t count,
+                        loff_t* ppos, struct fproc* fp)
+{
+    size_t bytes = 0;
+    int retval;
+    struct inode* pin = filp->fd_inode;
+
+    retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, *ppos,
+                               READ /* rw_flag */, fp->endpoint, buf, count,
+                               ppos, &bytes);
+
+    if (retval) {
+        return -retval;
+    }
+
+    return bytes;
+}
+
+static ssize_t vfs_write(struct file_desc* filp, const char* buf, size_t count,
+                         loff_t* ppos, struct fproc* fp)
+{
+    size_t bytes = 0;
+    int retval;
+    struct inode* pin = filp->fd_inode;
+    loff_t position = *ppos;
+
+    /* check for O_APPEND */
+    if (filp->fd_mode & O_APPEND) position = pin->i_size;
+
+    retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position,
+                               WRITE /* rw_flag */, fp->endpoint, buf, count,
+                               ppos, &bytes);
+
+    if (retval) {
+        return -retval;
+    }
+
+    return bytes;
+}
+
+const struct file_operations vfs_fops = {
+    .read = vfs_read,
+    .write = vfs_write,
+};
+
 void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
 {
     int retval;

@@ -19,6 +19,19 @@
 #include <lyos/spinlock.h>
 #include "thread.h"
 
+struct inode;
+struct file_desc;
+
+struct file_operations {
+    ssize_t (*read)(struct file_desc*, char*, size_t, loff_t*, struct fproc*);
+    ssize_t (*write)(struct file_desc*, const char*, size_t, loff_t*,
+                     struct fproc*);
+    int (*ioctl)(struct inode*, struct file_desc*, unsigned int, unsigned long,
+                 struct fproc*);
+    int (*open)(struct inode*, struct file_desc*);
+    int (*release)(struct inode*, struct file_desc*);
+};
+
 /**
  * @struct inode
  * @brief  i-node
@@ -46,6 +59,7 @@ struct inode {
     rwlock_t i_lock;
 
     struct vfs_mount* i_vmnt;
+    const struct file_operations* i_fops;
 };
 
 struct vfs_mount {
@@ -75,15 +89,16 @@ struct file_desc {
     int fd_pos;             /**< Current position for R/W. */
     int fd_cnt;             /**< How many procs share this desc */
     struct inode* fd_inode; /**< Ptr to the i-node */
+    const struct file_operations* fd_fops;
     mutex_t fd_lock;
 
     int fd_selectors; /**< How many selectors blocked on this desc */
     int fd_select_ops;
-#define SFL_UPDATE 0x1
-#define SFL_BUSY 0x2
-#define SFL_BLOCKED 0x4
-#define SFL_RD_BLOCK 0x8
-#define SFL_WR_BLOCK 0x10
+#define SFL_UPDATE    0x1
+#define SFL_BUSY      0x2
+#define SFL_BLOCKED   0x4
+#define SFL_RD_BLOCK  0x8
+#define SFL_WR_BLOCK  0x10
 #define SFL_EXC_BLOCK 0x20
     int fd_select_flags;
     dev_t fd_select_dev;

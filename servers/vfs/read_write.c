@@ -47,9 +47,9 @@
  * @param  bytes_rdwt [OUT] How many bytes read/written.
  * @return            Zero on success. Otherwise an error code.
  */
-int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
-                      int rw_flag, endpoint_t src, void* buf, size_t nbytes,
-                      u64* newpos, size_t* bytes_rdwt)
+int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, loff_t pos,
+                      int rw_flag, endpoint_t src, const void* buf,
+                      size_t nbytes, loff_t* newpos, size_t* bytes_rdwt)
 {
     MESSAGE m;
     m.type = FS_RDWT;
@@ -58,7 +58,7 @@ int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
     m.RWPOS = pos;
     m.RWFLAG = rw_flag;
     m.RWSRC = src;
-    m.RWBUF = buf;
+    m.RWBUF = (void*)buf;
     m.RWCNT = nbytes;
 
     fs_sendrec(fs_ep, &m);
@@ -80,7 +80,7 @@ int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
  * @return   On success, the number of bytes read is returned. Otherwise a
  *           negative error code is returned.
  */
-int do_rdwt()
+int do_rdwt(void)
 {
     int fd = self->msg_in.FD;
     int rw_flag = self->msg_in.type;
@@ -89,14 +89,11 @@ int do_rdwt()
     char* buf = self->msg_in.BUF;
     int len = self->msg_in.CNT;
 
-    size_t bytes_rdwt = 0;
-    int retval = 0;
-    u64 newpos;
+    ssize_t retval = 0;
 
     if (!filp) return -EBADF;
 
-    int position = filp->fd_pos;
-    int flags = (mode_t)filp->fd_mode;
+    loff_t position = filp->fd_pos;
     struct inode* pin = filp->fd_inode;
 
     /* TODO: pipe goes here */
@@ -107,47 +104,31 @@ int do_rdwt()
     }
     int file_type = pin->i_mode & I_TYPE;
 
-    /* TODO: read/write for block special */
-    if (file_type == I_CHAR_SPECIAL) {
-        int t = self->msg_in.type == READ ? CDEV_READ : CDEV_WRITE;
-        int dev = pin->i_specdev;
-
-        retval = cdev_io(t, dev, fproc->endpoint, buf, position, len, fproc);
-
-        unlock_filp(filp);
-        return retval;
-    } else if (file_type == I_REGULAR) {
-        /* check for O_APPEND */
-        if (rw_flag == WRITE) {
-            if (flags & O_APPEND) position = pin->i_size;
+    if (file_type == I_DIRECTORY) {
+        retval = -EISDIR;
+    } else if (filp->fd_fops == NULL) {
+        retval = -EBADF;
+    } else {
+        if (rw_flag == READ) {
+            retval = filp->fd_fops->read(filp, buf, len, &position, fproc);
+        } else {
+            retval = filp->fd_fops->write(filp, buf, len, &position, fproc);
         }
 
-        /* issue the request */
-        size_t bytes = 0;
-        retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num,
-                                   position, rw_flag, fproc->endpoint, buf, len,
-                                   &newpos, &bytes);
+        if (retval < 0) {
+            goto err;
+        }
 
-        bytes_rdwt += bytes;
-        position = newpos;
-    } else if (file_type == I_DIRECTORY) {
-        unlock_filp(filp);
-        return -EISDIR;
-    } else {
-        printl("VFS: do_rdwt: unknown file type: %x\n", file_type);
-    }
-
-    if (rw_flag == WRITE) {
-        if (position > pin->i_size) pin->i_size = position;
+        if (rw_flag == WRITE) {
+            if (position > pin->i_size) pin->i_size = position;
+        }
     }
 
     filp->fd_pos = position;
 
+err:
     unlock_filp(filp);
-    if (!retval) {
-        return bytes_rdwt;
-    }
-    return -retval;
+    return retval;
 }
 
 static int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,

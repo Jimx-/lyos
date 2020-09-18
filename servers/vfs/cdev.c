@@ -109,12 +109,8 @@ static int cdev_opcl(int op, dev_t dev)
     return driver_msg.u.m_vfs_cdev_reply.status;
 }
 
-int cdev_open(dev_t dev) { return cdev_opcl(CDEV_OPEN, dev); }
-
-int cdev_close(dev_t dev) { return cdev_opcl(CDEV_CLOSE, dev); }
-
-int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-            size_t count, struct fproc* fp)
+static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
+                   size_t count, struct fproc* fp)
 {
     struct fproc* driver = cdev_get(dev);
     if (!driver) return ENXIO;
@@ -237,3 +233,46 @@ int cdev_reply(MESSAGE* msg)
 
     return 0;
 }
+
+static ssize_t cdev_read(struct file_desc* filp, char* buf, size_t count,
+                         loff_t* ppos, struct fproc* fp)
+{
+    struct inode* pin = filp->fd_inode;
+
+    return cdev_io(CDEV_READ, pin->i_specdev, fp->endpoint, buf, *ppos, count,
+                   fp);
+}
+
+static ssize_t cdev_write(struct file_desc* filp, const char* buf, size_t count,
+                          loff_t* ppos, struct fproc* fp)
+{
+    struct inode* pin = filp->fd_inode;
+
+    return cdev_io(CDEV_WRITE, pin->i_specdev, fp->endpoint, (char*)buf, *ppos,
+                   count, fp);
+}
+
+static int cdev_ioctl(struct inode* pin, struct file_desc* filp,
+                      unsigned int cmd, unsigned long arg, struct fproc* fp)
+{
+    return cdev_io(CDEV_IOCTL, pin->i_specdev, fp->endpoint, (void*)arg, 0, cmd,
+                   fp);
+}
+
+static int cdev_open(struct inode* pin, struct file_desc* filp)
+{
+    return cdev_opcl(CDEV_OPEN, pin->i_specdev);
+}
+
+static int cdev_release(struct inode* pin, struct file_desc* filp)
+{
+    return cdev_opcl(CDEV_CLOSE, pin->i_specdev);
+}
+
+const struct file_operations cdev_fops = {
+    .read = cdev_read,
+    .write = cdev_write,
+    .ioctl = cdev_ioctl,
+    .open = cdev_open,
+    .release = cdev_release,
+};

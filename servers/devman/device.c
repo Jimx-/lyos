@@ -243,7 +243,7 @@ static int add_device_node(struct device* dev)
 {
     struct memfs_stat stat;
     stat.st_mode =
-        ((dev->type == DT_BLOCKDEV ? I_BLOCK_SPECIAL : I_CHAR_SPECIAL) | 0644);
+        ((dev->type == DT_BLOCKDEV ? I_BLOCK_SPECIAL : I_CHAR_SPECIAL) | 0666);
     stat.st_uid = SU_UID;
     stat.st_gid = 0;
     stat.st_device = dev->devt;

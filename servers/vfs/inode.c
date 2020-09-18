@@ -34,6 +34,19 @@
 #include "global.h"
 #include "proto.h"
 
+static void set_inode_fops(struct inode* pin)
+{
+    int file_type = pin->i_mode & I_TYPE;
+
+    if (file_type == I_CHAR_SPECIAL) {
+        pin->i_fops = &cdev_fops;
+    } else if (file_type == I_REGULAR) {
+        pin->i_fops = &vfs_fops;
+    } else {
+        pin->i_fops = NULL;
+    }
+}
+
 void init_inode_table()
 {
     int i;
@@ -59,7 +72,7 @@ void clear_inode(struct inode* pin)
     rwlock_init(&(pin->i_lock));
 }
 
-struct inode* new_inode(dev_t dev, ino_t num)
+struct inode* new_inode(dev_t dev, ino_t num, mode_t mode)
 {
     struct inode* pin = (struct inode*)malloc(sizeof(struct inode));
     if (!pin) return NULL;
@@ -68,6 +81,9 @@ struct inode* new_inode(dev_t dev, ino_t num)
 
     pin->i_dev = dev;
     pin->i_num = num;
+    pin->i_mode = mode;
+
+    set_inode_fops(pin);
 
     addhash_inode(pin);
     return pin;

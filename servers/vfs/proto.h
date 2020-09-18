@@ -27,7 +27,7 @@ int add_filesystem(endpoint_t fs_ep, char* name);
 endpoint_t get_filesystem_endpoint(char* name);
 
 void init_inode_table();
-struct inode* new_inode(dev_t dev, ino_t num);
+struct inode* new_inode(dev_t dev, ino_t num, mode_t mode);
 struct inode* find_inode(dev_t dev, ino_t num);
 void put_inode(struct inode* pin);
 int lock_inode(struct inode* pin, rwlock_type_t type);
@@ -87,9 +87,9 @@ int fs_exec(void);
 
 int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char* buf);
 
-int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, u64 pos,
-                      int rw_flag, endpoint_t src, void* buf, size_t nbytes,
-                      u64* newpos, size_t* bytes_rdwt);
+int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, loff_t pos,
+                      int rw_flag, endpoint_t src, const void* buf,
+                      size_t nbytes, loff_t* newpos, size_t* bytes_rdwt);
 
 int do_stat(void);
 int do_lstat(void);
@@ -128,10 +128,6 @@ void unlock_filp(struct file_desc* filp);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
-int cdev_open(dev_t dev);
-int cdev_close(dev_t dev);
-int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-            size_t count, struct fproc* fp);
 int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
               size_t length, struct fproc* fp);
 int cdev_select(dev_t dev, int ops, struct fproc* fp);

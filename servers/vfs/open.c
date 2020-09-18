@@ -123,6 +123,7 @@ int common_open(char* pathname, int flags, mode_t mode)
     filp->fd_pos = 0;
     filp->fd_inode = pin;
     filp->fd_mode = flags;
+    filp->fd_fops = pin->i_fops;
 
     if (exist) {
         if ((retval = forbidden(fproc, pin, bits)) == 0) {
@@ -141,8 +142,7 @@ int common_open(char* pathname, int flags, mode_t mode)
                 break;
             case I_CHAR_SPECIAL: /* open char device */
             {
-                dev_t dev = pin->i_specdev;
-                retval = cdev_open(dev);
+                retval = filp->fd_fops->open(pin, filp);
                 break;
             }
             case I_BLOCK_SPECIAL:
@@ -163,6 +163,7 @@ int common_open(char* pathname, int flags, mode_t mode)
         filp->fd_cnt = 0;
         filp->fd_mode = 0;
         filp->fd_inode = 0;
+        filp->fd_fops = NULL;
         put_inode(pin);
         return -retval;
     }
@@ -189,10 +190,8 @@ int close_fd(struct fproc* fp, int fd)
 
     pin = filp->fd_inode;
 
-    switch (pin->i_mode & I_TYPE) {
-    case I_CHAR_SPECIAL:
-        cdev_close(pin->i_specdev);
-        break;
+    if (filp->fd_fops && filp->fd_fops->release) {
+        filp->fd_fops->release(pin, filp);
     }
 
     if (--filp->fd_cnt == 0) {
@@ -273,11 +272,10 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
         return pin;
     }
 
-    pin = new_inode(pin_dir->i_dev, res.inode_nr);
+    pin = new_inode(pin_dir->i_dev, res.inode_nr, res.mode);
     lock_inode(pin, RWL_WRITE);
     pin->i_fs_ep = pin_dir->i_fs_ep;
     pin->i_size = res.size;
-    pin->i_mode = res.mode;
     pin->i_uid = res.uid;
     pin->i_gid = res.gid;
     pin->i_vmnt = pin_dir->i_vmnt;

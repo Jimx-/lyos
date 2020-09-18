@@ -233,7 +233,7 @@ int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
         return retval;
     }
 
-    struct inode* root_inode = new_inode(dev, res.inode_nr);
+    struct inode* root_inode = new_inode(dev, res.inode_nr, res.mode);
 
     if (!root_inode) {
         if (pmp) {
@@ -246,7 +246,6 @@ int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
 
     lock_inode(root_inode, RWL_WRITE);
     root_inode->i_fs_ep = fs_ep;
-    root_inode->i_mode = res.mode;
     root_inode->i_gid = res.gid;
     root_inode->i_uid = res.uid;
     root_inode->i_size = res.size;

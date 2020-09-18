@@ -235,12 +235,12 @@ int do_mm_request(void)
 {
     int req_type = self->msg_in.MMRTYPE;
     int fd = self->msg_in.MMRFD;
-    int result = 0;
+    ssize_t result = 0;
     endpoint_t ep = self->msg_in.MMRENDPOINT;
     struct fproc* fp = vfs_endpt_proc(ep);
     struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
     size_t len = self->msg_in.MMRLENGTH;
-    off_t offset = self->msg_in.MMROFFSET;
+    loff_t offset = self->msg_in.MMROFFSET;
     phys_bytes buf = (phys_bytes)self->msg_in.MMRBUF;
     void* vaddr = self->msg_in.MMRBUF;
 
@@ -292,14 +292,17 @@ int do_mm_request(void)
         int file_type = pin->i_mode & I_TYPE;
 
         if (file_type == I_CHAR_SPECIAL) {
-            cdev_io(CDEV_READ, pin->i_specdev, KERNEL, (void*)buf, offset, len,
-                    fp);
+            filp->fd_fops->read(filp, (void*)buf, len, &offset, mm_task);
         } else if (file_type == I_REGULAR) {
-            size_t count;
             result =
-                request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, offset,
-                                  READ, TASK_MM, (void*)buf, len, NULL, &count);
-            self->msg_out.MMRLENGTH = count;
+                filp->fd_fops->read(filp, (void*)buf, len, &offset, mm_task);
+
+            if (result < 0) {
+                result = -result;
+            } else {
+                self->msg_out.MMRLENGTH = result;
+                result = 0;
+            }
         } else if (file_type == I_DIRECTORY) {
             unlock_filp(filp);
             result = EISDIR;

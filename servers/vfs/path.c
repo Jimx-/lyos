@@ -230,7 +230,7 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
     }
 
     if ((pin = find_inode(res.dev, res.inode_nr)) == NULL) { /* not found */
-        new_pin = new_inode(res.dev, res.inode_nr);
+        new_pin = new_inode(res.dev, res.inode_nr, res.mode);
 
         if (new_pin == NULL) return NULL;
 
@@ -239,7 +239,6 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
         new_pin->i_num = res.inode_nr;
         new_pin->i_gid = res.gid;
         new_pin->i_uid = res.uid;
-        new_pin->i_mode = res.mode;
         new_pin->i_size = res.size;
         new_pin->i_fs_ep = res.fs_ep;
         new_pin->i_specdev = res.spec_dev;

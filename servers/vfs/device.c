@@ -43,20 +43,13 @@ int do_ioctl(void)
         return EBADF;
     }
 
-    int file_type = pin->i_mode & I_TYPE;
-    if (file_type != I_CHAR_SPECIAL && file_type != I_BLOCK_SPECIAL) {
+    if (filp->fd_fops->ioctl == NULL) {
         unlock_filp(filp);
         return ENOTTY;
     }
 
-    dev_t dev = pin->i_specdev;
-
-    if (file_type == I_BLOCK_SPECIAL) {
-
-    } else {
-        retval = cdev_io(CDEV_IOCTL, dev, fproc->endpoint, self->msg_in.BUF, 0,
-                         self->msg_in.REQUEST, fproc);
-    }
+    retval = filp->fd_fops->ioctl(pin, filp, self->msg_in.REQUEST,
+                                  (unsigned long)self->msg_in.BUF, fproc);
 
     unlock_filp(filp);
 

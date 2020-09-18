@@ -59,4 +59,7 @@ EXTERN struct sysinfo* sysinfo;
 
 extern struct cdmap cdmap[];
 
+extern const struct file_operations vfs_fops;
+extern const struct file_operations cdev_fops;
+
 #endif

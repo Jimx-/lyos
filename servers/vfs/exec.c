@@ -270,6 +270,7 @@ int fs_exec(void)
         filp->fd_inode = execi.pin;
         filp->fd_inode->i_cnt++;
         filp->fd_mode = O_RDONLY;
+        filp->fd_fops = &vfs_fops;
         execi.mmfd = fd;
         execi.args.memmap = request_vfs_mmap;
     }
