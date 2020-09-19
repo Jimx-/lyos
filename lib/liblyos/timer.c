@@ -65,7 +65,7 @@ void timer_remove(struct timer_list* timer)
 }
 
 void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb,
-               int arg)
+               void* arg)
 {
     clock_t uptime;
 
@@ -123,3 +123,5 @@ void expire_timer(clock_t timestamp)
         if (kernel_alarm(next_timeout, 1) != 0) panic("can't set timer");
     }
 }
+
+void cancel_timer(struct timer_list* timer) { list_del(&timer->list); }

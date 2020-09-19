@@ -201,9 +201,9 @@ void chardriver_reply(MESSAGE* msg, int retval)
         reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_mmap.id;
         break;
     case CDEV_SELECT:
-        reply_msg.type = CDEV_SELECT_REPLY1;
-        reply_msg.RETVAL = retval;
-        reply_msg.DEVICE = msg->u.m_vfs_cdev_select.minor;
+        reply_msg.type = CDEV_REPLY;
+        reply_msg.u.m_vfs_cdev_reply.status = retval;
+        reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_select.id;
         break;
     }
 
@@ -220,6 +220,20 @@ void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval)
     msg.u.m_vfs_cdev_reply.id = id;
 
     if (send_recv(SEND, endpoint, &msg) != 0) {
+        panic("chardriver: failed to reply to vfs");
+    }
+}
+
+void chardriver_poll_notify(dev_t minor, __poll_t status)
+{
+    MESSAGE msg;
+    memset(&msg, 0, sizeof(MESSAGE));
+
+    msg.type = CDEV_POLL_NOTIFY;
+    msg.u.m_vfs_cdev_poll_notify.status = status;
+    msg.u.m_vfs_cdev_poll_notify.minor = minor;
+
+    if (send_recv(SEND, TASK_FS, &msg) != 0) {
         panic("chardriver: failed to reply to vfs");
     }
 }

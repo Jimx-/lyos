@@ -26,14 +26,15 @@ struct timer_list {
     struct list_head list;
     clock_t expire_time;
     timer_callback_t callback;
-    unsigned long arg;
+    void* arg;
 };
 
 #define TIMER_UNSET ((clock_t)0xffffffff)
 
 void timer_remove(struct timer_list* timer);
 void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb,
-               int arg);
+               void* arg);
+void cancel_timer(struct timer_list* timer);
 void expire_timer(clock_t timestamp);
 
 #endif

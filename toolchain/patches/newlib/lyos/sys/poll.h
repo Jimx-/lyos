@@ -9,11 +9,11 @@ struct pollfd {
     short revents;
 };
 
-#define POLLIN 0x0001
-#define POLLPRI 0x0002
-#define POLLOUT 0x0004
-#define POLLERR 0x0008
-#define POLLHUP 0x0010
+#define POLLIN   0x0001
+#define POLLPRI  0x0002
+#define POLLOUT  0x0004
+#define POLLERR  0x0008
+#define POLLHUP  0x0010
 #define POLLNVAL 0x0020
 
 #define POLLRDNORM 0x0040
@@ -33,6 +33,8 @@ struct pollfd {
 #ifndef POLLRDHUP
 #define POLLRDHUP 0x2000
 #endif
+
+#define POLL_NOTIFY 0x8000
 
 #ifdef __cplusplus
 extern "C"

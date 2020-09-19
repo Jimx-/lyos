@@ -39,6 +39,7 @@
 #include <lyos/sysutils.h>
 #include <lyos/timer.h>
 #include <lyos/eventpoll.h>
+#include <poll.h>
 
 #include "global.h"
 
@@ -727,12 +728,7 @@ static int select_retry(TTY* tty)
 {
     int ops;
     if (tty->tty_select_ops && (ops = select_try(tty, tty->tty_select_ops))) {
-        MESSAGE msg;
-        memset(&msg, 0, sizeof(MESSAGE));
-        msg.type = CDEV_SELECT_REPLY2;
-        msg.RETVAL = ops;
-        msg.DEVICE = tty->tty_select_minor;
-        send_recv(SEND, TASK_FS, &msg);
+        chardriver_poll_notify(tty->tty_select_minor, ops);
         tty->tty_select_ops &= ~ops;
     }
 
@@ -747,12 +743,13 @@ static int do_select(dev_t minor, int ops, endpoint_t endpoint)
         return -ENXIO;
     }
 
+    int watch = ops & POLL_NOTIFY;
     ops &= (EPOLLIN | EPOLLOUT);
 
     int ready_ops = select_try(tty, ops);
 
     ops &= ~ready_ops;
-    if (ops) {
+    if (ops && watch) {
         if (tty->tty_select_ops != 0 && tty->tty_select_minor != minor) {
             ready_ops = -EBADF;
         } else {

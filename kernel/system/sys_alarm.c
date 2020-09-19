@@ -43,7 +43,7 @@ int sys_alarm(MESSAGE* m, struct proc* p_proc)
 
     struct timer_list* tp;
     tp = &(p_proc->priv->timer);
-    tp->arg = (unsigned long)p_proc->endpoint;
+    tp->arg = (void*)p_proc->endpoint;
     tp->callback = sig_alarm;
 
     if ((tp->expire_time != TIMER_UNSET) && (tp->expire_time > jiffies))

@@ -1,6 +1,8 @@
 #ifndef _LIBCHARDRIVER_H_
 #define _LIBCHARDRIVER_H_
 
+#include <lyos/types.h>
+
 typedef unsigned int cdev_id_t;
 
 struct chardriver {
@@ -24,6 +26,7 @@ void chardriver_process(struct chardriver* cd, MESSAGE* msg);
 int chardriver_task(struct chardriver* cd);
 void chardriver_reply(MESSAGE* msg, int retval);
 void chardriver_reply_io(endpoint_t endpoint, cdev_id_t id, int retval);
+void chardriver_poll_notify(dev_t minor, __poll_t ops);
 int chardriver_get_minor(MESSAGE* msg, dev_t* minor);
 
 #endif

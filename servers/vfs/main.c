@@ -112,8 +112,7 @@ int main()
 
         switch (msg.type) {
         case CDEV_REPLY:
-        case CDEV_SELECT_REPLY1:
-        case CDEV_SELECT_REPLY2:
+        case CDEV_POLL_NOTIFY:
             cdev_reply(&msg);
             break;
         case PM_VFS_EXEC:

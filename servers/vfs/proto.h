@@ -130,13 +130,9 @@ int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
 int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
               size_t length, void** retaddr, struct fproc* fp);
-int cdev_select(dev_t dev, int ops, struct fproc* fp);
 int cdev_reply(MESSAGE* msg);
-struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);
 
 void init_select(void);
 int do_select(void);
-void do_select_cdev_reply1(endpoint_t driver_ep, dev_t minor, int status);
-void do_select_cdev_reply2(endpoint_t driver_ep, dev_t minor, int status);
 
 #endif

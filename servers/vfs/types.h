@@ -17,10 +17,13 @@
 #define _VFS_TYPES_H_
 
 #include <lyos/spinlock.h>
+#include <lyos/wait_queue.h>
+#include <lyos/types.h>
 #include "thread.h"
 
 struct inode;
 struct file_desc;
+struct poll_table;
 
 struct file_operations {
     ssize_t (*read)(struct file_desc*, char*, size_t, loff_t*, struct fproc*);
@@ -28,6 +31,8 @@ struct file_operations {
                      struct fproc*);
     int (*ioctl)(struct inode*, struct file_desc*, unsigned int, unsigned long,
                  struct fproc*);
+    __poll_t (*poll)(struct file_desc*, __poll_t, struct poll_table*,
+                     struct fproc*);
     int (*open)(struct inode*, struct file_desc*);
     int (*release)(struct inode*, struct file_desc*);
 };
@@ -92,24 +97,12 @@ struct file_desc {
     const struct file_operations* fd_fops;
     void* fd_private_data;
     mutex_t fd_lock;
-
-    int fd_selectors; /**< How many selectors blocked on this desc */
-    int fd_select_ops;
-#define SFL_UPDATE    0x1
-#define SFL_BUSY      0x2
-#define SFL_BLOCKED   0x4
-#define SFL_RD_BLOCK  0x8
-#define SFL_WR_BLOCK  0x10
-#define SFL_EXC_BLOCK 0x20
-    int fd_select_flags;
-    dev_t fd_select_dev;
 };
 
 /* character device mapping */
 struct cdmap {
     endpoint_t driver;
-    int select_busy;
-    struct file_desc* select_filp;
+    struct wait_queue_head wait;
 };
 
 struct file_system {

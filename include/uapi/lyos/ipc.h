@@ -206,8 +206,9 @@ VERIFY_MESS_SIZE(mess_vfs_cdev_mmap);
 struct mess_vfs_cdev_select {
     __u64 minor;
     __u32 ops;
+    __u32 id;
 
-    __u8 _pad[44];
+    __u8 _pad[40];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 
@@ -219,6 +220,14 @@ struct mess_vfs_cdev_reply {
     __u8 _pad[48 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
+
+struct mess_vfs_cdev_poll_notify {
+    __u64 minor;
+    __u32 status;
+
+    __u8 _pad[44];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_cdev_poll_notify);
 
 struct mess_sysfs_publish_link {
     void* target;
@@ -318,6 +327,7 @@ typedef struct {
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;
         struct mess_vfs_cdev_select m_vfs_cdev_select;
         struct mess_vfs_cdev_reply m_vfs_cdev_reply;
+        struct mess_vfs_cdev_poll_notify m_vfs_cdev_poll_notify;
         struct mess_sysfs_publish_link m_sysfs_publish_link;
         struct mess_bdev_blockdriver_msg m_bdev_blockdriver_msg;
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;

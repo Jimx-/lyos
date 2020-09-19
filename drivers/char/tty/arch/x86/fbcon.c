@@ -262,5 +262,5 @@ static void update_cursor(struct timer_list* tp)
 
     print_cursor(con, col * FONT_WIDTH, line * FONT_HEIGHT);
 
-    set_timer(tp, ticks, update_cursor, 0);
+    set_timer(tp, ticks, update_cursor, NULL);
 }

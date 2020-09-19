@@ -385,8 +385,7 @@ enum msgtype {
     CDEV_MMAP,
     CDEV_SELECT,
     CDEV_REPLY,
-    CDEV_SELECT_REPLY1,
-    CDEV_SELECT_REPLY2,
+    CDEV_POLL_NOTIFY,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE, /* 2100 */

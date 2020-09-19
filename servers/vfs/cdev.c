@@ -26,10 +26,12 @@
 #include <lyos/driver.h>
 #include <lyos/fs.h>
 #include <lyos/sysutils.h>
+
 #include "const.h"
 #include "types.h"
 #include "global.h"
 #include "proto.h"
+#include "poll.h"
 
 #include <libdevman/libdevman.h>
 
@@ -40,8 +42,8 @@ static void init_cdev()
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
         cdmap[i].driver = NO_TASK;
-        cdmap[i].select_busy = 0;
-        cdmap[i].select_filp = NULL;
+
+        init_waitqueue_head(&cdmap[i].wait);
     }
 }
 
@@ -63,7 +65,7 @@ static void cdev_recv(endpoint_t src, MESSAGE* msg)
     self->recv_from = NO_TASK;
 }
 
-struct fproc* cdev_get(dev_t dev)
+static struct cdmap* cdev_lookup(dev_t dev)
 {
     static int first = 1;
 
@@ -76,10 +78,10 @@ struct fproc* cdev_get(dev_t dev)
     if (cdmap[major].driver == NO_TASK)
         if (!cdev_update(dev)) return NULL;
 
-    return vfs_endpt_proc(cdmap[major].driver);
+    return &cdmap[major];
 }
 
-struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
+static struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
@@ -89,6 +91,14 @@ struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep)
     }
 
     return NULL;
+}
+
+static struct fproc* cdev_get(dev_t dev)
+{
+    struct cdmap* pm = cdev_lookup(dev);
+    if (!pm) return NULL;
+
+    return vfs_endpt_proc(pm->driver);
 }
 
 static int cdev_opcl(int op, dev_t dev)
@@ -180,7 +190,7 @@ int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
     return driver_msg.u.m_vfs_cdev_reply.status;
 }
 
-int cdev_select(dev_t dev, int ops, struct fproc* fp)
+static int cdev_select(dev_t dev, int ops, struct fproc* fp)
 {
     struct fproc* driver = cdev_get(dev);
     if (!driver) return ENXIO;
@@ -189,12 +199,15 @@ int cdev_select(dev_t dev, int ops, struct fproc* fp)
     driver_msg.type = CDEV_SELECT;
     driver_msg.u.m_vfs_cdev_select.minor = MINOR(dev);
     driver_msg.u.m_vfs_cdev_select.ops = ops;
+    driver_msg.u.m_vfs_cdev_select.id = fp->endpoint;
 
     if (asyncsend3(driver->endpoint, &driver_msg, 0) != 0) {
         panic("vfs: cdev_io send message failed");
     }
 
-    return 0;
+    cdev_recv(driver->endpoint, &driver_msg);
+
+    return driver_msg.u.m_vfs_cdev_reply.status;
 }
 
 static void cdev_reply_generic(MESSAGE* msg)
@@ -212,17 +225,23 @@ static void cdev_reply_generic(MESSAGE* msg)
     }
 }
 
+static void cdev_poll_notify(endpoint_t driver_ep, dev_t minor, int status)
+{
+    struct cdmap* pm = cdev_lookup_by_endpoint(driver_ep);
+    if (!pm) return;
+
+    waitqueue_wakeup_all(&pm->wait, (void*)status);
+}
+
 int cdev_reply(MESSAGE* msg)
 {
     switch (msg->type) {
     case CDEV_REPLY:
         cdev_reply_generic(msg);
         break;
-    case CDEV_SELECT_REPLY1:
-        do_select_cdev_reply1(msg->source, msg->DEVICE, msg->RETVAL);
-        break;
-    case CDEV_SELECT_REPLY2:
-        do_select_cdev_reply2(msg->source, msg->DEVICE, msg->RETVAL);
+    case CDEV_POLL_NOTIFY:
+        cdev_poll_notify(msg->source, msg->u.m_vfs_cdev_poll_notify.minor,
+                         msg->u.m_vfs_cdev_poll_notify.status);
         break;
     }
 
@@ -254,6 +273,23 @@ static int cdev_ioctl(struct inode* pin, struct file_desc* filp,
                    fp);
 }
 
+static __poll_t cdev_poll(struct file_desc* filp, __poll_t mask,
+                          struct poll_table* wait, struct fproc* fp)
+{
+    struct inode* pin = filp->fd_inode;
+    struct cdmap* pm = cdev_lookup(pin->i_specdev);
+    int retval;
+
+    if (!pm) return 0;
+
+    poll_wait(filp, &pm->wait, wait);
+
+    retval = cdev_select(pin->i_specdev, mask, fp);
+
+    if (retval < 0) return 0;
+    return retval;
+}
+
 static int cdev_open(struct inode* pin, struct file_desc* filp)
 {
     return cdev_opcl(CDEV_OPEN, pin->i_specdev);
@@ -268,6 +304,7 @@ const struct file_operations cdev_fops = {
     .read = cdev_read,
     .write = cdev_write,
     .ioctl = cdev_ioctl,
+    .poll = cdev_poll,
     .open = cdev_open,
     .release = cdev_release,
 };
