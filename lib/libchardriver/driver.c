@@ -195,11 +195,10 @@ void chardriver_reply(MESSAGE* msg, int retval)
         reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_readwrite.id;
         break;
     case CDEV_MMAP:
-        reply_msg.type = CDEV_MMAP_REPLY;
-        reply_msg.u.m_vfs_cdev_mmap_reply.status = retval;
-        reply_msg.u.m_vfs_cdev_mmap_reply.endpoint =
-            msg->u.m_vfs_cdev_mmap.endpoint;
-        reply_msg.u.m_vfs_cdev_mmap_reply.retaddr = msg->u.m_vfs_cdev_mmap.addr;
+        reply_msg.type = CDEV_REPLY;
+        reply_msg.u.m_vfs_cdev_reply.status = retval;
+        reply_msg.u.m_vfs_cdev_reply.retaddr = msg->u.m_vfs_cdev_mmap.addr;
+        reply_msg.u.m_vfs_cdev_reply.id = msg->u.m_vfs_cdev_mmap.id;
         break;
     case CDEV_SELECT:
         reply_msg.type = CDEV_SELECT_REPLY1;

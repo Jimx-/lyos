@@ -291,9 +291,15 @@ int do_mm_request(void)
         struct inode* pin = filp->fd_inode;
         int file_type = pin->i_mode & I_TYPE;
 
-        if (file_type == I_CHAR_SPECIAL) {
-            filp->fd_fops->read(filp, (void*)buf, len, &offset, mm_task);
-        } else if (file_type == I_REGULAR) {
+        if (file_type == I_DIRECTORY) {
+            unlock_filp(filp);
+            result = EISDIR;
+            goto reply;
+        } else if (!filp->fd_fops || !filp->fd_fops->read) {
+            unlock_filp(filp);
+            result = EBADF;
+            goto reply;
+        } else {
             result =
                 filp->fd_fops->read(filp, (void*)buf, len, &offset, mm_task);
 
@@ -303,14 +309,6 @@ int do_mm_request(void)
                 self->msg_out.MMRLENGTH = result;
                 result = 0;
             }
-        } else if (file_type == I_DIRECTORY) {
-            unlock_filp(filp);
-            result = EISDIR;
-            goto reply;
-        } else {
-            unlock_filp(filp);
-            result = EBADF;
-            goto reply;
         }
 
         unlock_filp(filp);
@@ -325,13 +323,17 @@ int do_mm_request(void)
 
         struct inode* pin = filp->fd_inode;
         int file_type = pin->i_mode & I_TYPE;
+        void* retaddr;
 
         if (file_type == I_CHAR_SPECIAL) {
-            result = cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, fp);
+            result =
+                cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr, fp);
             if (result) {
                 unlock_filp(filp);
                 goto reply;
             }
+
+            self->msg_out.MMRBUF = retaddr;
         } else { /* error if MM is trying to map a non-device file */
             unlock_filp(filp);
             result = EBADF;

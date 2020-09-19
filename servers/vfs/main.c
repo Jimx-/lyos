@@ -112,7 +112,6 @@ int main()
 
         switch (msg.type) {
         case CDEV_REPLY:
-        case CDEV_MMAP_REPLY:
         case CDEV_SELECT_REPLY1:
         case CDEV_SELECT_REPLY2:
             cdev_reply(&msg);
@@ -233,7 +232,7 @@ static void do_work(void)
         break;
     }
 
-    if (self->msg_out.type != SUSPEND_PROC && self->msg_out.RETVAL != SUSPEND) {
+    if (self->msg_out.RETVAL != SUSPEND) {
         self->msg_out.type = SYSCALL_RET;
         send_recv(SEND_NONBLOCK, self->msg_in.source, &self->msg_out);
     }

@@ -90,6 +90,7 @@ struct file_desc {
     int fd_cnt;             /**< How many procs share this desc */
     struct inode* fd_inode; /**< Ptr to the i-node */
     const struct file_operations* fd_fops;
+    void* fd_private_data;
     mutex_t fd_lock;
 
     int fd_selectors; /**< How many selectors blocked on this desc */

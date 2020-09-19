@@ -129,7 +129,7 @@ struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
 int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
-              size_t length, struct fproc* fp);
+              size_t length, void** retaddr, struct fproc* fp);
 int cdev_select(dev_t dev, int ops, struct fproc* fp);
 int cdev_reply(MESSAGE* msg);
 struct cdmap* cdev_lookup_by_endpoint(endpoint_t driver_ep);

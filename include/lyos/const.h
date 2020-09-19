@@ -288,8 +288,8 @@ enum msgtype {
     CHMOD,
     FCHMOD,
     GETDENTS, /* 39 */
-    SUSPEND_PROC,
-    RESUME_PROC,
+    _SUSPEND_PROC,
+    _RESUME_PROC,
     EXEC,
     WAIT,
     KILL,
@@ -385,7 +385,6 @@ enum msgtype {
     CDEV_MMAP,
     CDEV_SELECT,
     CDEV_REPLY,
-    CDEV_MMAP_REPLY,
     CDEV_SELECT_REPLY1,
     CDEV_SELECT_REPLY2,
 

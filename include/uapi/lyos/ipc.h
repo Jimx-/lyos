@@ -193,12 +193,13 @@ VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 
 struct mess_vfs_cdev_mmap {
     __u64 minor;
+    __u32 id;
     void* addr;
     endpoint_t endpoint;
     off_t pos;
     size_t count;
 
-    __u8 _pad[44 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
+    __u8 _pad[40 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap);
 
@@ -213,19 +214,11 @@ VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 struct mess_vfs_cdev_reply {
     __s32 status;
     __u32 id;
-
-    __u8 _pad[48];
-} __attribute__((packed));
-VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
-
-struct mess_vfs_cdev_mmap_reply {
-    __u32 status;
-    endpoint_t endpoint;
     void* retaddr;
 
     __u8 _pad[48 - sizeof(void*)];
 } __attribute__((packed));
-VERIFY_MESS_SIZE(mess_vfs_cdev_mmap_reply);
+VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
 
 struct mess_sysfs_publish_link {
     void* target;
@@ -325,7 +318,6 @@ typedef struct {
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;
         struct mess_vfs_cdev_select m_vfs_cdev_select;
         struct mess_vfs_cdev_reply m_vfs_cdev_reply;
-        struct mess_vfs_cdev_mmap_reply m_vfs_cdev_mmap_reply;
         struct mess_sysfs_publish_link m_sysfs_publish_link;
         struct mess_bdev_blockdriver_msg m_bdev_blockdriver_msg;
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;
