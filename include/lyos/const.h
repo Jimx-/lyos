@@ -532,12 +532,6 @@ enum msgtype {
 /* ioctl requests */
 #define DIOCTL_GET_GEO 1
 
-/* cdev select ops */
-#define CDEV_SEL_RD  0x1
-#define CDEV_SEL_WR  0x2
-#define CDEV_SEL_EXC 0x4
-#define CDEV_NOTIFY  0x8
-
 /* Hard Drive */
 #define SECTOR_SIZE       512
 #define SECTOR_BITS       (SECTOR_SIZE * 8)

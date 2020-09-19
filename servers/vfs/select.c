@@ -29,6 +29,7 @@
 #include <sys/syslimits.h>
 #include <sys/time.h>
 #include <lyos/timer.h>
+#include <lyos/eventpoll.h>
 
 #include "types.h"
 #include "path.h"
@@ -57,7 +58,7 @@ static int select_request_char(struct file_desc* filp, int* ops, int block,
                                struct fproc* fp);
 static int is_char_dev(struct file_desc* filp);
 
-#define FDS_COPYIN 1
+#define FDS_COPYIN  1
 #define FDS_COPYOUT 2
 static int copy_fdset(struct select_entry* entry, int nfds, int direction);
 static int fd_getops(struct select_entry* entry, int fd);
@@ -81,10 +82,9 @@ static struct fd_operation {
 
 #define FD_TYPES (sizeof(fd_operations) / sizeof(fd_operations[0]))
 
-#define SEL_READ CDEV_SEL_RD
-#define SEL_WRITE CDEV_SEL_WR
-#define SEL_EXCEPT CDEV_SEL_EXC
-#define SEL_NOTIFY CDEV_NOTIFY
+#define SEL_READ   EPOLLIN
+#define SEL_WRITE  EPOLLOUT
+#define SEL_EXCEPT EPOLLPRI
 
 void init_select(void)
 {
@@ -291,7 +291,6 @@ static int select_filter(struct file_desc* filp, int* ops, int block)
 
     filp->fd_select_flags |= SFL_UPDATE;
     if (block) {
-        rops |= SEL_NOTIFY;
         if (rops & SEL_READ) filp->fd_select_flags |= SFL_RD_BLOCK;
         if (rops & SEL_WRITE) filp->fd_select_flags |= SFL_WR_BLOCK;
         if (rops & SEL_EXCEPT) filp->fd_select_flags |= SFL_EXC_BLOCK;
@@ -456,13 +455,12 @@ static int is_deferred(struct select_entry* entry)
 
 static void update_status(struct file_desc* filp, int status)
 {
-    int slot, found;
+    int slot, found, fd;
     for (slot = 0; slot < MAX_SELECTS; slot++) {
         struct select_entry* entry = &select_table[slot];
         if (entry->caller == NULL) continue;
 
         found = 0;
-        int fd;
         for (fd = 0; fd < entry->nfds; fd++) {
             if (entry->filps[fd] != filp) continue;
 

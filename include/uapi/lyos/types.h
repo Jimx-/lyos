@@ -13,4 +13,6 @@ typedef __u64 __be64;
 
 typedef int endpoint_t;
 
+typedef unsigned __poll_t;
+
 #endif

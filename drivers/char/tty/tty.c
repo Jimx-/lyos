@@ -38,6 +38,8 @@
 #include <lyos/log.h>
 #include <lyos/sysutils.h>
 #include <lyos/timer.h>
+#include <lyos/eventpoll.h>
+
 #include "global.h"
 
 #include <libdevman/libdevman.h>
@@ -702,19 +704,19 @@ static int select_try(TTY* tty, int ops)
         ready_ops |= ops;
     }
 
-    if (ops & CDEV_SEL_RD) {
+    if (ops & EPOLLIN) {
         if (tty->tty_inleft > 0) {
-            ready_ops |= CDEV_SEL_RD;
+            ready_ops |= EPOLLIN;
         } else if (tty->ibuf_cnt > 0) {
             if (!(tty->tty_termios.c_lflag & ICANON) || tty->tty_eotcnt > 0) {
-                ready_ops |= CDEV_SEL_RD;
+                ready_ops |= EPOLLIN;
             }
         }
     }
 
-    if (ops & CDEV_SEL_WR) {
+    if (ops & EPOLLOUT) {
         if (tty->tty_outleft > 0) {
-            ready_ops |= CDEV_SEL_WR;
+            ready_ops |= EPOLLOUT;
         }
     }
 
@@ -745,13 +747,12 @@ static int do_select(dev_t minor, int ops, endpoint_t endpoint)
         return -ENXIO;
     }
 
-    int watch = ops & CDEV_NOTIFY;
-    ops &= (CDEV_SEL_RD | CDEV_SEL_WR | CDEV_SEL_EXC);
+    ops &= (EPOLLIN | EPOLLOUT);
 
     int ready_ops = select_try(tty, ops);
 
     ops &= ~ready_ops;
-    if (ops && watch) {
+    if (ops) {
         if (tty->tty_select_ops != 0 && tty->tty_select_minor != minor) {
             ready_ops = -EBADF;
         } else {
