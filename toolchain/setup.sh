@@ -76,11 +76,18 @@ fi
 
 # Build newlib
 if $BUILD_NEWLIB; then
-    if [ ! -d "newlib-$SUBARCH" ]; then
-        mkdir newlib-$SUBARCH
+    if [ ! -d "newlib-static-$SUBARCH" ]; then
+        mkdir newlib-static-$SUBARCH
     else
-        rm -rf newlib-$SUBARCH
-        mkdir newlib-$SUBARCH
+        rm -rf newlib-static-$SUBARCH
+        mkdir newlib-static-$SUBARCH
+    fi
+
+    if [ ! -d "newlib-dynamic-$SUBARCH" ]; then
+        mkdir newlib-dynamic-$SUBARCH
+    else
+        rm -rf newlib-dynamic-$SUBARCH
+        mkdir newlib-dynamic-$SUBARCH
     fi
 
     pushd $DIR/sources/newlib-3.0.0 > /dev/null
@@ -94,15 +101,28 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
     popd > /dev/null
 
-    pushd newlib-$SUBARCH > /dev/null
+    # Build dynamic library with -fPIC
+    pushd newlib-dynamic-$SUBARCH > /dev/null
     $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
-    make -j || cmd_error
+
+    TARGET_CFLAGS=-fPIC make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
     $TARGET-gcc -shared -o $SYSROOT/usr/lib/libg.so -Wl,--whole-archive $SYSROOT/usr/lib/libg.a -Wl,--no-whole-archive || cmd_error
+    popd > /dev/null
+
+    # Build static library without -fPIC
+    pushd newlib-static-$SUBARCH > /dev/null
+    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
+    sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
+    mv Makefile.bak Makefile
+
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     popd > /dev/null
 fi
 

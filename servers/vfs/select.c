@@ -203,8 +203,9 @@ int do_select(void)
             if (!filp->fd_fops->poll) {
                 mask = DEFAULT_POLLMASK;
             } else {
-                mask = filp->fd_fops->poll(filp, wait->mask | POLL_NOTIFY, wait,
-                                           fproc);
+                mask = filp->fd_fops->poll(
+                    filp, wait->mask | (timed_out ? 0 : POLL_NOTIFY), wait,
+                    fproc);
             }
 
             unlock_filp(filp);

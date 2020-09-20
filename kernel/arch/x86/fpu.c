@@ -45,7 +45,7 @@ static int has_osfxsr = 0;
 #define CR0_NE (1L << 5) /* Numeric error */
 
 /* CR4 Flags */
-#define CR4_OSFXSR (1L << 9)
+#define CR4_OSFXSR   (1L << 9)
 #define CR4_XMMEXCPT (1L << 10)
 
 /**

@@ -6,8 +6,6 @@
 #include "ldso.h"
 #include "env.h"
 
-int __errno;
-
 #define NR_SO_INFO 64
 struct so_info si_pool[NR_SO_INFO];
 struct so_info si_self;
@@ -17,6 +15,12 @@ struct search_paths ld_paths;
 struct search_paths ld_default_paths;
 
 extern char _DYNAMIC;
+
+int* __errno(void)
+{
+    static int _e = 0;
+    return &_e;
+}
 
 void ldso_die(char* reason)
 {

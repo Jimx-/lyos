@@ -311,6 +311,7 @@ enum msgtype {
     READLINK,
     LSTAT, /* 61 */
     SYMLINK,
+    SIGNALFD,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
