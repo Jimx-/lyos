@@ -32,6 +32,7 @@ download "libffi" "https://github.com/libffi/libffi/releases/download/v3.3/" "li
 download "wayland" "https://github.com/wayland-project/wayland/archive/" "1.18.0.tar.gz" && cp 1.18.0.tar.gz wayland-1.18.0.tar.gz
 download "pcre" "https://ftp.pcre.org/pub/pcre/" "pcre-8.44.tar.gz"
 download "grep" "https://mirrors.ustc.edu.cn/gnu/grep" "grep-3.4.tar.xz"
+download "less" "http://www.greenwoodsoftware.com/less" "less-551.tar.gz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -53,6 +54,7 @@ unzip "libffi-3.3.tar.gz" "libffi-3.3"
 unzip "wayland-1.18.0.tar.gz" "wayland-1.18.0"
 unzip "pcre-8.44.tar.gz" "pcre-8.44"
 unzip "grep-3.4.tar.xz" "grep-3.4"
+unzip "less-551.tar.gz" "less-551"
 
 echo "Patching..."
 patc "binutils-2.31"

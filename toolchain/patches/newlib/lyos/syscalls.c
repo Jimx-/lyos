@@ -305,7 +305,7 @@ pid_t getpgrp(void)
     return msg.PID;
 }
 
-int fork()
+int fork(void)
 {
     MESSAGE msg;
     msg.type = FORK;
@@ -318,6 +318,8 @@ int fork()
 
     return msg.PID;
 }
+
+int vfork(void) { return fork(); }
 
 int kill(int pid, int signo)
 {

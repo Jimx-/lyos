@@ -20,6 +20,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBEVDEV:=false}
 : ${BUILD_PCRE:=false}
 : ${BUILD_GREP:=false}
+: ${BUILD_LESS:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -302,6 +303,19 @@ if $BUILD_GREP; then
 
     pushd grep-$SUBARCH > /dev/null
     $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=/usr --disable-nls
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build less
+if $BUILD_LESS; then
+    if [ ! -d "less-$SUBARCH" ]; then
+        mkdir less-$SUBARCH
+    fi
+
+    pushd less-$SUBARCH > /dev/null
+    $DIR/sources/less-551/configure --host=$TARGET --prefix=/usr --sysconfdir=/etc
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
