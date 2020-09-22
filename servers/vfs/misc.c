@@ -140,6 +140,10 @@ int do_dup(void)
         close_fd(fproc, newfd);
     }
 
+    if (filp->fd_fops && filp->fd_fops->open) {
+        filp->fd_fops->open(filp->fd_inode, filp);
+    }
+
     filp->fd_cnt++;
     fproc->filp[newfd] = filp;
     unlock_filp(filp);

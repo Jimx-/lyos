@@ -182,7 +182,6 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
     ssize_t retval;
 
     cum_io = 0;
-
     while (count > 0) {
         pos = pin->i_size;
 
@@ -332,6 +331,7 @@ static int pipe_release(struct inode* pin, struct file_desc* filp)
     }
 
     put_pipe_info(pin, pipe);
+
     return 0;
 }
 
