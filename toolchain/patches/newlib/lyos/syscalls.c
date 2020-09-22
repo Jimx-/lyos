@@ -1296,7 +1296,29 @@ int tcflush(int fd, int which)
     return ioctl(fd, TCFLSH, &selector);
 }
 
-int pipe(int pipefd[2]) { printf("pipe: not implemented\n"); }
+int pipe2(int pipefd[2], int flags)
+{
+    MESSAGE msg;
+    memset(&msg, 0, sizeof(MESSAGE));
+    msg.type = PIPE2;
+    msg.FLAGS = flags;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.u.m_vfs_fdpair.retval != 0) {
+        errno = msg.u.m_vfs_fdpair.retval;
+        return -1;
+    }
+
+    pipefd[0] = msg.u.m_vfs_fdpair.fd0;
+    pipefd[1] = msg.u.m_vfs_fdpair.fd1;
+
+    return 0;
+}
+
+int pipe(int pipefd[2]) { return pipe2(pipefd, 0); }
 
 int __dirfd(DIR* dirp) { return dirp->fd; }
 

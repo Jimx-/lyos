@@ -152,7 +152,6 @@ if $BUILD_NATIVE_GCC; then
         mkdir gcc-native-$SUBARCH
     fi
 
-
     if [ ! -e $DIR/sources/gcc-4.7.3/mpfr ]; then
         ln -s $DIR/sources/mpfr-2.4.2 $DIR/sources/gcc-4.7.3/mpfr
     fi

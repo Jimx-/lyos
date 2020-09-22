@@ -42,13 +42,13 @@ extern int syscall_style;
 
 /* temporary mappings */
 #define MAX_TEMPPDES 2
-#define TEMPPDE_SRC 0
-#define TEMPPDE_DST 1
+#define TEMPPDE_SRC  0
+#define TEMPPDE_DST  1
 static u32 temppdes[MAX_TEMPPDES];
 
-#define _SRC_ 0
-#define _DEST_ 1
-#define EFAULT_SRC 1
+#define _SRC_       0
+#define _DEST_      1
+#define EFAULT_SRC  1
 #define EFAULT_DEST 2
 
 int send_sig(endpoint_t ep, int signo);
@@ -225,8 +225,8 @@ void* la2pa(endpoint_t ep, void* la)
  *****************************************************************************/
 void* va2pa(endpoint_t ep, void* va) { return la2pa(ep, va2la(ep, va)); }
 
-#define KM_USERMAPPED 0
-#define KM_LAPIC 1
+#define KM_USERMAPPED   0
+#define KM_LAPIC        1
 #define KM_IOAPIC_FIRST 2
 
 extern char _usermapped[], _eusermapped[];
@@ -399,6 +399,11 @@ int arch_vmctl(MESSAGE* m, struct proc* p)
 void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
                 size_t bytes, int write, int type)
 {
+    if (caller->endpoint == TASK_MM) {
+        panic("mm_suspend: mm suspended target=%d laddr=%lx bytes=%d write=%d",
+              target, laddr, bytes, write);
+    }
+
     PST_SET_LOCKED(caller, PST_MMREQUEST);
 
     caller->mm_request.req_type = MMREQ_CHECK;

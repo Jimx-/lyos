@@ -226,6 +226,9 @@ static void do_work(void)
     case SYNC:
         self->msg_out.RETVAL = do_sync();
         break;
+    case PIPE2:
+        self->msg_out.RETVAL = do_pipe2();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;
@@ -323,6 +326,8 @@ void init_vfs()
 static void init_root(void)
 {
     worker_allow(FALSE);
+
+    mount_pipefs();
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root

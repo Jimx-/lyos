@@ -96,8 +96,6 @@ int do_rdwt(void)
     loff_t position = filp->fd_pos;
     struct inode* pin = filp->fd_inode;
 
-    /* TODO: pipe goes here */
-    /* if (PIPE) ... */
     if (pin == NULL) {
         unlock_filp(filp);
         return -ENOENT;

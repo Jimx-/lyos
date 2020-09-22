@@ -45,7 +45,6 @@
 
 /* find device number of the given pathname */
 static dev_t name2dev(struct fproc* fp, char* pathname);
-static dev_t get_none_dev();
 // static int is_none_dev(dev_t dev);
 static int request_mountpoint(endpoint_t fs_ep, dev_t dev, ino_t num);
 
@@ -328,7 +327,7 @@ static int is_none_dev(dev_t dev)
 }
 */
 
-static dev_t get_none_dev()
+dev_t get_none_dev(void)
 {
     static int none_dev = 1;
 

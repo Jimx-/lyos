@@ -312,6 +312,7 @@ enum msgtype {
     LSTAT, /* 61 */
     SYMLINK,
     SIGNALFD,
+    PIPE2,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

@@ -388,7 +388,15 @@ int fs_fork(void)
     for (i = 0; i < NR_FILES; i++) {
         struct file_desc* filp = child->filp[i];
         if (filp) {
+            lock_filp(filp, RWL_WRITE);
+
+            if (filp->fd_fops && filp->fd_fops->open) {
+                filp->fd_fops->open(filp->fd_inode, filp);
+            }
+
             filp->fd_cnt++;
+
+            unlock_filp(filp);
         }
     }
 

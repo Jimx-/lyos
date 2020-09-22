@@ -65,6 +65,8 @@ struct inode {
 
     struct vfs_mount* i_vmnt;
     const struct file_operations* i_fops;
+
+    void* i_private;
 };
 
 struct vfs_mount {

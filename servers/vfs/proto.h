@@ -44,6 +44,7 @@ struct inode* last_dir(struct lookup* lookup, struct fproc* fp);
 struct vfs_mount* find_vfs_mount(dev_t dev);
 int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
 void unlock_vmnt(struct vfs_mount* vmnt);
+dev_t get_none_dev(void);
 int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly);
 int forbidden(struct fproc* fp, struct inode* pin, int access);
 mode_t do_umask(void);
@@ -108,7 +109,6 @@ int fs_exit(void);
 
 /* vfs/worker.c */
 int rwlock_lock(rwlock_t* rwlock, rwlock_type_t lock_type);
-
 void worker_init(void);
 void worker_yield(void);
 void worker_wait(void);
@@ -123,16 +123,24 @@ struct worker_thread* worker_get(thread_t tid);
 /* vfs/ipc.c */
 int fs_sendrec(endpoint_t fs_e, MESSAGE* msg);
 
+/* vfs/file.c */
 void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 void unlock_filp(struct file_desc* filp);
+void unlock_filps(struct file_desc* filp1, struct file_desc* filp2);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
+/* vfs/mmap.c */
 int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
               size_t length, void** retaddr, struct fproc* fp);
 int cdev_reply(MESSAGE* msg);
 
+/* vfs/select.c */
 void init_select(void);
 int do_select(void);
+
+/* vfs/pipe.c*/
+int do_pipe2(void);
+void mount_pipefs(void);
 
 #endif

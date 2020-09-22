@@ -153,6 +153,15 @@ struct mess_vfs_link {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_link);
 
+struct mess_vfs_fdpair {
+    int retval;
+    int fd0;
+    int fd1;
+
+    __u8 pad[44];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_fdpair);
+
 struct mess_vfs_fs_symlink {
     dev_t dev;
     ino_t dir_ino;
@@ -321,6 +330,7 @@ typedef struct {
         struct mess_pm_clone m_pm_clone;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_link m_vfs_link;
+        struct mess_vfs_fdpair m_vfs_fdpair;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;

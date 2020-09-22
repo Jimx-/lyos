@@ -582,7 +582,6 @@ static int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
         cp = find_cache_by_ino(vr->param.file.filp->dev,
                                vr->param.file.filp->ino, file_offset);
         if (cp) { /* cache hit */
-
             cp->page->refcnt++;
             phys_region_set(pregion, offset / ARCH_PG_SIZE, cp->page);
 
@@ -644,8 +643,9 @@ int region_handle_pf(struct mmproc* mmp, struct vir_region* vr, off_t offset,
     struct phys_frame* frame =
         phys_region_get_or_alloc(pregion, offset / ARCH_PG_SIZE);
 
-    if (vr->flags & RF_FILEMAP && !frame->phys_addr)
+    if (vr->flags & RF_FILEMAP && !frame->phys_addr) {
         return region_handle_pf_filemap(mmp, vr, offset, wrflag);
+    }
 
     if (wrflag && frame->flags & PFF_SHARED) {
         /* writing to write-protected page */
@@ -718,8 +718,8 @@ int region_cow(struct mmproc* mmp, struct vir_region* vr, off_t offset)
     region_map_phys(mmp, vr);
 
     /* copy the data to the new frame */
-    return data_copy(mmp->endpoint, (void*)((void*)vr->vir_addr + offset),
-                     NO_TASK, (void*)frame->phys_addr, ARCH_PG_SIZE);
+    return data_copy(NO_TASK, (void*)new_frame->phys_addr, NO_TASK,
+                     (void*)frame->phys_addr, ARCH_PG_SIZE);
 }
 
 static int region_split(struct mmproc* mmp, struct vir_region* vr, size_t len,

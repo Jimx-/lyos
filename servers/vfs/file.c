@@ -114,6 +114,25 @@ void unlock_filp(struct file_desc* filp)
     }
 }
 
+void unlock_filps(struct file_desc* filp1, struct file_desc* filp2)
+{
+    int retval;
+
+    if (filp1->fd_cnt > 0 && filp2->fd_cnt > 0) {
+        unlock_inode(filp1->fd_inode);
+    }
+
+    retval = mutex_unlock(&filp1->fd_lock);
+    if (retval != 0) {
+        panic("failed to unlock filp: %d", retval);
+    }
+
+    retval = mutex_unlock(&filp2->fd_lock);
+    if (retval != 0) {
+        panic("failed to unlock filp: %d", retval);
+    }
+}
+
 struct file_desc* alloc_filp()
 {
     int i;

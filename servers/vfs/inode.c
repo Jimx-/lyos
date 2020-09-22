@@ -82,6 +82,8 @@ struct inode* new_inode(dev_t dev, ino_t num, mode_t mode)
     pin->i_dev = dev;
     pin->i_num = num;
     pin->i_mode = mode;
+    pin->i_fs_ep = NO_TASK;
+    pin->i_private = NULL;
 
     set_inode_fops(pin);
 
@@ -105,6 +107,8 @@ struct inode* find_inode(dev_t dev, ino_t num)
 
 void put_inode(struct inode* pin)
 {
+    int ret;
+
     if (!pin) return;
 
     lock_inode(pin, RWL_WRITE);
@@ -117,8 +121,9 @@ void put_inode(struct inode* pin)
 
     if (pin->i_cnt <= 0) panic("VFS: put_inode: pin->i_cnt is already <= 0");
 
-    int ret;
-    if ((ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num)) != 0) {
+    // tell FS driver if necessary
+    if (pin->i_fs_ep != NO_TASK &&
+        (ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num)) != 0) {
         err_code = ret;
         unlock_inode(pin);
         return;

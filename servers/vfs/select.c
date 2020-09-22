@@ -359,7 +359,7 @@ static int pollwake(struct wait_queue_entry* wq_entry, void* arg)
 
     worker_wake(pwq->polling_worker);
 
-    return 0;
+    return 1;
 }
 
 static void __pollwait(struct file_desc* filp, struct wait_queue_head* wq,
