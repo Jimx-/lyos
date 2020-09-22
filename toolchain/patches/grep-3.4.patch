@@ -1,0 +1,21 @@
+diff -rupN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2019-10-13 07:38:16.000000000 +0800
++++ new/build-aux/config.sub	2020-09-22 17:19:40.500642643 +0800
+@@ -2,7 +2,7 @@
+ # Configuration validation subroutine script.
+ #   Copyright 1992-2019 Free Software Foundation, Inc.
+ 
+-timestamp='2019-06-30'
++timestamp='2020-09-22'
+ 
+ # This file is free software; you can redistribute it and/or modify it
+ # under the terms of the GNU General Public License as published by
+@@ -1343,7 +1343,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* | kopensolaris* | plan9* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+-	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
++	     | aos* | aros* | cloudabi* | sortix* | twizzler* | lyos* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+ 	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
+ 	     | knetbsd* | mirbsd* | netbsd* \

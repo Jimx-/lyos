@@ -18,6 +18,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_NCURSES:=false}
 : ${BUILD_VIM:=false}
 : ${BUILD_LIBEVDEV:=false}
+: ${BUILD_PCRE:=false}
+: ${BUILD_GREP:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -274,6 +276,32 @@ if $BUILD_LIBEVDEV; then
 
     pushd libevdev-$SUBARCH > /dev/null
     $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build PCRE
+if $BUILD_PCRE; then
+    if [ ! -d "pcre-$SUBARCH" ]; then
+        mkdir pcre-$SUBARCH
+    fi
+
+    pushd pcre-$SUBARCH > /dev/null
+    $DIR/sources/pcre-8.44/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build grep
+if $BUILD_GREP; then
+    if [ ! -d "grep-$SUBARCH" ]; then
+        mkdir grep-$SUBARCH
+    fi
+
+    pushd grep-$SUBARCH > /dev/null
+    $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=/usr --disable-nls
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
