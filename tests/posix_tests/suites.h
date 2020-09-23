@@ -2,5 +2,6 @@
 #define _POSIX_TESTS_SUITES_H_
 
 extern MunitTest pipe_tests[];
+extern MunitTest eventfd_tests[];
 
 #endif

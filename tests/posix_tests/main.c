@@ -7,6 +7,7 @@ static MunitTest test_suite_tests[] = {
 
 static const MunitSuite all_suites[] = {
     {(char*)"/pipe", pipe_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
+    {(char*)"/eventfd", eventfd_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {NULL, NULL, NULL, 0, MUNIT_SUITE_OPTION_NONE},
 };
 

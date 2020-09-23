@@ -29,6 +29,11 @@ static inline void init_waitqueue_entry_func(struct wait_queue_entry* entry,
     entry->func = func;
 }
 
+static inline int waitqueue_active(struct wait_queue_head* head)
+{
+    return !list_empty(&head->head);
+}
+
 static inline void waitqueue_add(struct wait_queue_head* head,
                                  struct wait_queue_entry* entry)
 {

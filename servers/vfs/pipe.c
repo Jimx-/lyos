@@ -89,7 +89,7 @@ void mount_pipefs(void)
     pipefs_vmnt->m_root_node = NULL;
 }
 
-static int pipewake(struct wait_queue_entry* wq_entry, void* arg)
+static int pipe_wake(struct wait_queue_entry* wq_entry, void* arg)
 {
     struct worker_thread* worker = wq_entry->private;
 
@@ -114,7 +114,7 @@ static void pipe_wait(struct pipe_inode_info* pipe, int rw_flag)
         wq = &pipe->wr_wait;
     }
 
-    init_waitqueue_entry_func(&wait, pipewake);
+    init_waitqueue_entry_func(&wait, pipe_wake);
     wait.private = self;
     waitqueue_add(wq, &wait);
 
@@ -135,7 +135,8 @@ static ssize_t pipe_read(struct file_desc* filp, char* buf, size_t count,
     for (;;) {
         if (!pin->i_size) {
             if (pipe->writers) {
-                waitqueue_wakeup_all(&pipe->wr_wait, NULL);
+                waitqueue_wakeup_all(&pipe->wr_wait,
+                                     (void*)(EPOLLOUT | EPOLLWRNORM));
 
                 if (filp->fd_mode & O_NONBLOCK) {
                     return -EAGAIN;
@@ -197,7 +198,8 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
 
                 if (size) {
                     // partial write, wake up readers
-                    waitqueue_wakeup_all(&pipe->rd_wait, NULL);
+                    waitqueue_wakeup_all(&pipe->rd_wait,
+                                         (void*)(EPOLLIN | EPOLLRDNORM));
                 } else {
                     return -EAGAIN;
                 }
@@ -208,7 +210,8 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
 
                 if (size) {
                     // partial write, wake up readers
-                    waitqueue_wakeup_all(&pipe->rd_wait, NULL);
+                    waitqueue_wakeup_all(&pipe->rd_wait,
+                                         (void*)(EPOLLIN | EPOLLRDNORM));
                 } else {
                     // pipe full
                     goto wait;
@@ -220,7 +223,8 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
         }
 
         if (pos == 0) {
-            waitqueue_wakeup_all(&pipe->rd_wait, NULL);
+            waitqueue_wakeup_all(&pipe->rd_wait,
+                                 (void*)(EPOLLIN | EPOLLRDNORM));
         }
 
         if (pipe->start > 0) {
@@ -376,8 +380,13 @@ static int pipe_release(struct inode* pin, struct file_desc* filp)
 
     if (!pipe->readers != !pipe->writers) {
         // wake up the other end
-        waitqueue_wakeup_all(&pipe->rd_wait, NULL);
-        waitqueue_wakeup_all(&pipe->wr_wait, NULL);
+        if (!pipe->writers) {
+            waitqueue_wakeup_all(&pipe->rd_wait, (void*)EPOLLHUP);
+        }
+
+        if (!pipe->readers) {
+            waitqueue_wakeup_all(&pipe->wr_wait, (void*)EPOLLERR);
+        }
     }
 
     put_pipe_info(pin, pipe);

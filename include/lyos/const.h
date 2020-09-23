@@ -315,6 +315,7 @@ enum msgtype {
     PIPE2,
     GETRUSAGE,
     POLL,
+    EVENTFD,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

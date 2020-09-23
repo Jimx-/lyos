@@ -232,6 +232,9 @@ static void do_work(void)
     case POLL:
         self->msg_out.RETVAL = do_poll();
         break;
+    case EVENTFD:
+        self->msg_out.FD = do_eventfd();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;
@@ -331,6 +334,7 @@ static void init_root(void)
     worker_allow(FALSE);
 
     mount_pipefs();
+    mount_anonfs();
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root

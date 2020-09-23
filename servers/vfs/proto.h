@@ -144,4 +144,13 @@ int do_poll(void);
 int do_pipe2(void);
 void mount_pipefs(void);
 
+/* vfs/eventfd.c */
+int do_eventfd(void);
+
+/* vfs/anon_inodes.c */
+void mount_anonfs(void);
+int anon_inode_get_fd(struct fproc* fproc, int start,
+                      const struct file_operations* fops, void* private,
+                      int flags);
+
 #endif
