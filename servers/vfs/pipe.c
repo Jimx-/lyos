@@ -37,6 +37,7 @@
 #include "path.h"
 #include "proto.h"
 #include "global.h"
+#include "poll.h"
 
 struct pipe_inode_info {
     struct wait_queue_head rd_wait, wr_wait;
@@ -258,6 +259,47 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
     return cum_io;
 }
 
+static __poll_t pipe_poll(struct file_desc* filp, __poll_t mask,
+                          struct poll_table* wait, struct fproc* fp)
+{
+    struct pipe_inode_info* pipe = filp->fd_private_data;
+    struct inode* pin = filp->fd_inode;
+
+    switch (filp->fd_mode & O_ACCMODE) {
+    case O_WRONLY:
+        poll_wait(filp, &pipe->wr_wait, wait);
+        break;
+    case O_RDONLY:
+        poll_wait(filp, &pipe->rd_wait, wait);
+        break;
+    }
+
+    mask = 0;
+
+    switch (filp->fd_mode & O_ACCMODE) {
+    case O_WRONLY:
+        if (pin->i_size < PIPE_BUF) {
+            mask |= EPOLLOUT | EPOLLWRNORM;
+        }
+
+        if (!pipe->readers) {
+            mask |= EPOLLERR;
+        }
+        break;
+    case O_RDONLY:
+        if (pin->i_size) {
+            mask |= EPOLLIN | EPOLLRDNORM;
+        }
+
+        if (!pipe->writers) {
+            mask |= EPOLLHUP;
+        }
+        break;
+    }
+
+    return mask;
+}
+
 static ino_t get_next_ino(void)
 {
     static ino_t last_ino = 1;
@@ -307,11 +349,13 @@ static int pipe_open(struct inode* pin, struct file_desc* filp)
 
     pipe->files++;
 
-    if ((filp->fd_mode & O_ACCMODE) == O_WRONLY) {
+    switch (filp->fd_mode & O_ACCMODE) {
+    case O_WRONLY:
         pipe->writers++;
-    }
-    if ((filp->fd_mode & O_ACCMODE) == O_RDONLY) {
+        break;
+    case O_RDONLY:
         pipe->readers++;
+        break;
     }
 
     return 0;
@@ -321,11 +365,13 @@ static int pipe_release(struct inode* pin, struct file_desc* filp)
 {
     struct pipe_inode_info* pipe = filp->fd_private_data;
 
-    if ((filp->fd_mode & O_ACCMODE) == O_WRONLY) {
+    switch (filp->fd_mode & O_ACCMODE) {
+    case O_WRONLY:
         pipe->writers--;
-    }
-    if ((filp->fd_mode & O_ACCMODE) == O_RDONLY) {
+        break;
+    case O_RDONLY:
         pipe->readers--;
+        break;
     }
 
     if (!pipe->readers != !pipe->writers) {
@@ -342,6 +388,7 @@ static int pipe_release(struct inode* pin, struct file_desc* filp)
 static struct file_operations pipe_fops = {
     .read = pipe_read,
     .write = pipe_write,
+    .poll = pipe_poll,
     .open = pipe_open,
     .release = pipe_release,
 };

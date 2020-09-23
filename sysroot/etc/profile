@@ -14,3 +14,4 @@ LSCOLORS=Gxfxcxdxbxegedabagacad
 export LSCOLORS
 
 alias ls="ls --color=tty"
+alias grep="grep --color"

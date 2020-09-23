@@ -247,9 +247,11 @@ int do_select(void)
 
             worker_wait();
 
-            timed_out = timer_cb.expired;
-            if (!timed_out) {
-                cancel_timer(&timer);
+            if (has_timeout) {
+                timed_out = timer_cb.expired;
+                if (!timed_out) {
+                    cancel_timer(&timer);
+                }
             }
         }
     }

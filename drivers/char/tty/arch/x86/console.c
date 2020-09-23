@@ -463,6 +463,12 @@ static void do_escape(CONSOLE* con, char c)
                     case 1:
                         con->attributes |= BOLD;
                         break;
+                    case 39:
+                        fg_color = FG_COLOR(con->default_color);
+                        break;
+                    case 49:
+                        bg_color = BG_COLOR(con->default_color);
+                        break;
                     }
                 }
             }

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <string.h>
+#include <sys/select.h>
+#include <lyos/limits.h>
 
 #include "munit/munit.h"
 
@@ -10,9 +13,16 @@ static MunitResult test_pipe_read_write(const MunitParameter params[],
 {
     int fds[2];
     pid_t cpid;
-    char wstr[] = "hello";
-    char rstr[10], *prstr = rstr;
-    char buf;
+    static char wbuf[2 * PIPE_BUF];
+    static char rbuf[2 * PIPE_BUF];
+    off_t roff = 0;
+    size_t rsize;
+    int i;
+
+    memset(rbuf, 0, sizeof(rbuf));
+    for (i = 0; i < sizeof(wbuf); i++) {
+        wbuf[i] = i & 0xff;
+    }
 
     pipe(fds);
 
@@ -21,18 +31,56 @@ static MunitResult test_pipe_read_write(const MunitParameter params[],
 
     if (cpid == 0) {
         close(fds[0]);
-        write(fds[1], wstr, 5);
+        write(fds[1], wbuf, sizeof(wbuf));
         close(fds[1]);
 
         _exit(0);
     } else {
         close(fds[1]);
 
-        while (read(fds[0], &buf, 1) > 0)
-            *prstr++ = buf;
-        *prstr = 0;
+        while ((rsize = read(fds[0], rbuf, sizeof(rbuf))) > 0) {
+            for (i = 0; i < rsize; i++) {
+                munit_assert_char(wbuf[i + roff], ==, rbuf[i]);
+            }
+            roff += rsize;
+        }
 
-        munit_assert_string_equal(rstr, wstr);
+        munit_assert_int(roff, ==, sizeof(wbuf));
+
+        close(fds[0]);
+        wait(NULL);
+    }
+
+    return MUNIT_OK;
+}
+
+static MunitResult test_pipe_close_reader(const MunitParameter params[],
+                                          void* data)
+{
+    int fds[2];
+    pid_t cpid;
+    int retval;
+
+    pipe(fds);
+
+    cpid = fork();
+    munit_assert_int(cpid, >=, 0);
+
+    if (cpid == 0) {
+        close(fds[1]);
+        close(fds[0]);
+
+        _exit(0);
+    } else {
+        close(fds[1]);
+
+        fd_set rset;
+        FD_ZERO(&rset);
+        FD_SET(fds[0], &rset);
+
+        retval = select(fds[0] + 1, &rset, NULL, NULL, NULL);
+        munit_assert_int(retval, ==, 1);
+        munit_assert(FD_ISSET(fds[0], &rset));
 
         close(fds[0]);
         wait(NULL);
@@ -43,5 +91,7 @@ static MunitResult test_pipe_read_write(const MunitParameter params[],
 
 MunitTest pipe_tests[] = {
     {(char*)"/read-write", test_pipe_read_write, NULL, NULL,
+     MUNIT_TEST_OPTION_NONE, NULL},
+    {(char*)"/close-reader", test_pipe_close_reader, NULL, NULL,
      MUNIT_TEST_OPTION_NONE, NULL},
     {NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL}};
