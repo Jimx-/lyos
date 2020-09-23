@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <utime.h>
 #include <sys/fcntl.h>
 #include <sys/times.h>
@@ -87,9 +88,9 @@ void _exit(int status)
         ;
 }
 
-int execve(const char* name, char* argv[], char* const envp[])
+int execve(const char* name, char* const argv[], char* const envp[])
 {
-    char **p = argv, **q = NULL;
+    char **p = (char**)argv, **q = NULL;
     char arg_stack[ARG_MAX];
     int stack_len = 0;
 
@@ -118,7 +119,7 @@ int execve(const char* name, char* argv[], char* const envp[])
 
     if (argv) {
         q = (char**)arg_stack;
-        for (p = argv; *p != 0; p++) {
+        for (p = (char**)argv; *p != 0; p++) {
             *q++ = &arg_stack[stack_len];
 
             strcpy(&arg_stack[stack_len], *p);
@@ -155,12 +156,12 @@ int execve(const char* name, char* argv[], char* const envp[])
     return msg.RETVAL;
 }
 
-int execv(const char* path, char* argv[])
+int execv(const char* path, char* const argv[])
 {
     return execve(path, argv, environ);
 }
 
-int execvp(const char* file, char* argv[]) { return execv(file, argv); }
+int execvp(const char* file, char* const argv[]) { return execv(file, argv); }
 
 int execlp(const char* file, const char* arg, ...)
 {
@@ -524,7 +525,7 @@ int mknod(const char* pathname, mode_t mode, dev_t dev)
     return ENOSYS;
 }
 
-int link(char* old, char* new)
+int link(const char* old, const char* new)
 {
     puts("link: not implemented");
     return 0;
@@ -708,7 +709,7 @@ int access(const char* pathname, int mode)
     return msg.RETVAL;
 }
 
-int lseek(int fd, int offset, int whence)
+off_t lseek(int fd, off_t offset, int whence)
 {
     MESSAGE msg;
     msg.type = LSEEK;
@@ -726,7 +727,7 @@ int lseek(int fd, int offset, int whence)
         return -1;
     }
 
-    return msg.OFFSET;
+    return (off_t)msg.OFFSET;
 }
 
 int open(const char* pathname, int flags, ...)
@@ -760,7 +761,7 @@ int open(const char* pathname, int flags, ...)
     return msg.FD;
 }
 
-int read(int fd, void* buf, int count)
+int read(int fd, void* buf, size_t count)
 {
     MESSAGE msg;
     msg.type = READ;
@@ -914,7 +915,7 @@ int lstat(const char* path, struct stat* buf)
     return msg.RETVAL;
 }
 
-int write(int fd, const void* buf, int count)
+int write(int fd, const void* buf, size_t count)
 {
     MESSAGE msg;
     msg.type = WRITE;
@@ -1074,16 +1075,16 @@ int brk(void* addr)
     return 0;
 }
 
-caddr_t sbrk(int nbytes)
+void* sbrk(ptrdiff_t nbytes)
 {
     char *oldsize = _brksize, *newsize = _brksize + nbytes;
 
     if ((nbytes < 0 && newsize > oldsize) || (nbytes > 0 && newsize < oldsize))
-        return (caddr_t)(-1);
+        return (void*)(-1);
     if (brk(newsize) == 0)
-        return (caddr_t)oldsize;
+        return (void*)oldsize;
     else
-        return (caddr_t)(-1);
+        return (void*)(-1);
 }
 
 int gettimeofday(struct timeval* tv, void* tz)
@@ -1100,7 +1101,7 @@ int gettimeofday(struct timeval* tv, void* tz)
     return msg.RETVAL;
 }
 
-int getuid()
+uid_t getuid(void)
 {
     MESSAGE msg;
 
@@ -1111,7 +1112,7 @@ int getuid()
 
     send_recv(BOTH, TASK_PM, &msg);
 
-    return msg.RETVAL;
+    return (uid_t)msg.RETVAL;
 }
 
 int setuid(uid_t uid)
@@ -1129,7 +1130,7 @@ int setuid(uid_t uid)
     return msg.RETVAL;
 }
 
-int getgid()
+gid_t getgid(void)
 {
     MESSAGE msg;
 
@@ -1140,7 +1141,7 @@ int getgid()
 
     send_recv(BOTH, TASK_PM, &msg);
 
-    return msg.RETVAL;
+    return (gid_t)msg.RETVAL;
 }
 
 int setgid(gid_t gid)
@@ -1162,7 +1163,7 @@ int setreuid(uid_t ruid, uid_t euid) { return setuid(ruid); }
 
 int setregid(uid_t rgid, uid_t egid) { return setgid(rgid); }
 
-int geteuid()
+uid_t geteuid(void)
 {
     MESSAGE msg;
 
@@ -1173,10 +1174,10 @@ int geteuid()
 
     send_recv(BOTH, TASK_PM, &msg);
 
-    return msg.RETVAL;
+    return (uid_t)msg.RETVAL;
 }
 
-int getegid()
+gid_t getegid(void)
 {
     MESSAGE msg;
 
@@ -1187,7 +1188,7 @@ int getegid()
 
     send_recv(BOTH, TASK_PM, &msg);
 
-    return msg.RETVAL;
+    return (gid_t)msg.RETVAL;
 }
 
 int gethostname(char* name, size_t len)
@@ -1347,21 +1348,48 @@ unsigned int alarm(unsigned int seconds)
     return 0;
 }
 
-unsigned int sleep(unsigned int seconds)
+clock_t times(struct tms* tp)
 {
-    puts("sleep: not implemented");
-    return 0;
-}
+    struct rusage ru;
+    struct timeval t;
+    static clock_t clk_tck = 0;
 
-clock_t times(struct tms* buf)
-{
-    puts("times: not implemented");
-    return 0;
+    if (clk_tck == 0) {
+        clk_tck = (clock_t)sysconf(_SC_CLK_TCK);
+    }
+
+#define CONVTCK(r) \
+    (clock_t)(r.tv_sec * clk_tck + r.tv_usec / (1000000 / (uint)clk_tck))
+
+    if (getrusage(RUSAGE_SELF, &ru) < 0) return (clock_t)-1;
+    tp->tms_utime = CONVTCK(ru.ru_utime);
+    tp->tms_stime = CONVTCK(ru.ru_stime);
+
+    if (getrusage(RUSAGE_CHILDREN, &ru) < 0) return ((clock_t)-1);
+    tp->tms_cutime = CONVTCK(ru.ru_utime);
+    tp->tms_cstime = CONVTCK(ru.ru_stime);
+
+    if (gettimeofday(&t, NULL)) return ((clock_t)-1);
+    return ((clock_t)(CONVTCK(t)));
 }
 
 int getrusage(int who, struct rusage* usage)
 {
-    puts("getrusage: not implemented");
+    MESSAGE msg;
+
+    msg.type = GETRUSAGE;
+    msg.u.m3.m3i1 = who;
+    msg.u.m3.m3p1 = usage;
+
+    cmb();
+
+    send_recv(BOTH, TASK_PM, &msg);
+
+    if (msg.RETVAL) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
     return 0;
 }
 

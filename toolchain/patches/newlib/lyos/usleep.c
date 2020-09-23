@@ -17,3 +17,10 @@ int usleep(useconds_t usec)
     ts.tv_nsec = (usec % USEC_PER_SEC) * NSEC_PER_USEC;
     return nanosleep(&ts, NULL);
 }
+
+unsigned int sleep(unsigned int seconds)
+{
+    usleep(seconds * USEC_PER_SEC);
+
+    return 0;
+}

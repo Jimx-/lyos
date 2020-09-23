@@ -15,6 +15,8 @@ long sysconf(int name)
         return getpagesize();
     case _SC_OPEN_MAX:
         return (getrlimit(RLIMIT_NOFILE, &rl) == 0 ? rl.rlim_cur : -1);
+    case _SC_CLK_TCK:
+        return 100;
     default:
         printf("sysconf %d not implemented\n", name);
         break;

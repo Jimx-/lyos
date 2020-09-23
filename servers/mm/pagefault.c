@@ -57,10 +57,11 @@ void do_handle_fault()
 
     if (!vr) {
         if (ARCH_PF_PROT(err_code)) {
-            printl("MM: SIGSEGV %d protected address %x\n", mm_msg.FAULT_PROC,
-                   pfla);
+            printl("MM: SIGSEGV %d protected address %x, pc=%x\n",
+                   mm_msg.FAULT_PROC, mm_msg.FAULT_ADDR, mm_msg.FAULT_PC);
         } else if (ARCH_PF_NOPAGE(err_code)) {
-            printl("MM: SIGSEGV %d bad address %x\n", mm_msg.FAULT_PROC, pfla);
+            printl("MM: SIGSEGV %d bad address %x, pc=%x\n", mm_msg.FAULT_PROC,
+                   mm_msg.FAULT_ADDR, mm_msg.FAULT_PC);
         }
 
         if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0)

@@ -313,6 +313,7 @@ enum msgtype {
     SYMLINK,
     SIGNALFD,
     PIPE2,
+    GETRUSAGE,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -499,6 +500,7 @@ enum msgtype {
 #define FAULT_ADDR    u.m3.m3p1
 #define FAULT_PROC    u.m3.m3i3
 #define FAULT_ERRCODE u.m3.m3i4
+#define FAULT_PC      u.m3.m3p2
 
 /* macros for futex */
 #define FUTEX_OP      u.m3.m3i1

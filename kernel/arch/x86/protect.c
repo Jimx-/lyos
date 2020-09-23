@@ -440,6 +440,7 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
     msg.FAULT_ADDR = (void*)pfla;
     msg.FAULT_PROC = fault_proc->endpoint;
     msg.FAULT_ERRCODE = frame->err_code;
+    msg.FAULT_PC = (void*)frame->eip;
 
     msg_send(fault_proc, TASK_MM, &msg, IPCF_FROMKERNEL);
 

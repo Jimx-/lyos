@@ -206,15 +206,15 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
                 size = PIPE_BUF - pos;
 
                 if (size) {
-                    // wake up readers
+                    // partial write, wake up readers
                     waitqueue_wakeup_all(&pipe->rd_wait, NULL);
                 } else {
                     // pipe full
-                    unlock_filp(filp);
-                    pipe_wait(pipe, WRITE);
-                    lock_filp(filp, RWL_WRITE);
-                    continue;
+                    goto wait;
                 }
+            } else {
+                // cannot do a partial write, wait for the readers
+                goto wait;
             }
         }
 
@@ -242,14 +242,17 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
         cum_io += size;
 
         if (count > 0) {
-            if (!(filp->fd_mode & O_NONBLOCK)) {
-                unlock_filp(filp);
-                pipe_wait(pipe, WRITE);
-                lock_filp(filp, RWL_WRITE);
-            } else {
+            if (filp->fd_mode & O_NONBLOCK) {
                 break;
             }
+        } else {
+            break;
         }
+
+    wait:
+        unlock_filp(filp);
+        pipe_wait(pipe, WRITE);
+        lock_filp(filp, RWL_WRITE);
     }
 
     return cum_io;
@@ -326,6 +329,7 @@ static int pipe_release(struct inode* pin, struct file_desc* filp)
     }
 
     if (!pipe->readers != !pipe->writers) {
+        // wake up the other end
         waitqueue_wakeup_all(&pipe->rd_wait, NULL);
         waitqueue_wakeup_all(&pipe->wr_wait, NULL);
     }
