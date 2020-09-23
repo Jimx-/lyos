@@ -190,11 +190,11 @@ int close_fd(struct fproc* fp, int fd)
 
     pin = filp->fd_inode;
 
-    if (filp->fd_fops && filp->fd_fops->release) {
-        filp->fd_fops->release(pin, filp);
-    }
-
     if (--filp->fd_cnt == 0) {
+        if (filp->fd_fops && filp->fd_fops->release) {
+            filp->fd_fops->release(pin, filp);
+        }
+
         unlock_inode(pin);
         put_inode(pin);
         filp->fd_inode = NULL;
