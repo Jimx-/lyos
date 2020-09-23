@@ -138,6 +138,7 @@ int cdev_reply(MESSAGE* msg);
 /* vfs/select.c */
 void init_select(void);
 int do_select(void);
+int do_poll(void);
 
 /* vfs/pipe.c*/
 int do_pipe2(void);

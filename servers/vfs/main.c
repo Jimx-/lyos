@@ -229,6 +229,9 @@ static void do_work(void)
     case PIPE2:
         self->msg_out.RETVAL = do_pipe2();
         break;
+    case POLL:
+        self->msg_out.RETVAL = do_poll();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

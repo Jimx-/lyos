@@ -162,6 +162,15 @@ struct mess_vfs_fdpair {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_fdpair);
 
+struct mess_vfs_poll {
+    void* fds;
+    unsigned int nfds;
+    int timeout_msecs;
+
+    __u8 pad[48 - sizeof(void*)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_poll);
+
 struct mess_vfs_fs_symlink {
     dev_t dev;
     ino_t dir_ino;
@@ -331,6 +340,7 @@ typedef struct {
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_link m_vfs_link;
         struct mess_vfs_fdpair m_vfs_fdpair;
+        struct mess_vfs_poll m_vfs_poll;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;

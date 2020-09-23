@@ -4,6 +4,7 @@
 #include <lyos/types.h>
 #include <lyos/wait_queue.h>
 #include <uapi/lyos/eventpoll.h>
+#include <poll.h>
 
 #include "types.h"
 
@@ -25,5 +26,27 @@ static inline void poll_wait(struct file_desc* filp, struct wait_queue_head* wq,
         wait->qproc(filp, wq, wait);
     }
 }
+
+#define __MAP(v, from, to) ((v) & (from) ? (to) : 0)
+
+static inline u16 mangle_poll(__poll_t val)
+{
+    u16 v = (u16)val;
+#define M(x) __MAP(v, EPOLL##x, POLL##x)
+    return M(IN) | M(OUT) | M(PRI) | M(ERR) | M(NVAL) | M(RDNORM) | M(RDBAND) |
+           M(WRNORM) | M(WRBAND) | M(HUP) | M(RDHUP) | M(MSG);
+#undef M
+}
+
+static inline __poll_t demangle_poll(u16 val)
+{
+    __poll_t v = (__poll_t)val;
+#define M(x) __MAP(v, POLL##x, EPOLL##x)
+    return M(IN) | M(OUT) | M(PRI) | M(ERR) | M(NVAL) | M(RDNORM) | M(RDBAND) |
+           M(WRNORM) | M(WRBAND) | M(HUP) | M(RDHUP) | M(MSG);
+#undef M
+}
+
+#undef __MAP
 
 #endif

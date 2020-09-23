@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
 #include <stddef.h>
@@ -140,7 +141,7 @@ int do_select(void)
     struct select_timer_cb_data timer_cb;
     int timed_out = 0;
 
-    if (nfds < 0 || nfds > OPEN_MAX) return EINVAL;
+    if (nfds < 0 || nfds > OPEN_MAX) return -EINVAL;
 
     struct select_fdset fdset;
     memset(&fdset, 0, sizeof(fdset));
@@ -153,7 +154,7 @@ int do_select(void)
     poll_initwait(&pwq);
 
     if ((retval = copy_fdset(&fdset, nfds, FDS_COPYIN)) != 0) {
-        return retval;
+        return -retval;
     }
 
     int has_timeout = 0;
@@ -165,7 +166,7 @@ int do_select(void)
             retval = EINVAL;
         }
         if (retval) {
-            return retval;
+            return -retval;
         }
 
         has_timeout = 1;
@@ -198,6 +199,7 @@ int do_select(void)
             }
 
             filp = get_filp(fproc, fd, filp_lock_type);
+            if (!filp) continue;
 
             wait_set_key(wait, ops);
             if (!filp->fd_fops->poll) {
@@ -261,7 +263,10 @@ int do_select(void)
     if (fdset.nreadyfds > 0) {
         retval = copy_fdset(&fdset, fdset.nfds, FDS_COPYOUT);
 
-        if (!retval) retval = fdset.nreadyfds;
+        if (!retval)
+            retval = fdset.nreadyfds;
+        else
+            retval = -retval;
     }
 
     return retval;
@@ -380,4 +385,126 @@ static void __pollwait(struct file_desc* filp, struct wait_queue_head* wq,
     init_waitqueue_entry_func(&entry->wait, pollwake);
     entry->wait.private = pwd;
     waitqueue_add(wq, &entry->wait);
+}
+
+int do_poll(void)
+{
+    int src = self->msg_in.source;
+    int retval = 0;
+    int nfds = self->msg_in.u.m_vfs_poll.nfds;
+    struct poll_wqueues pwq;
+    struct poll_table* wait = &pwq.pt;
+    int timeout_msecs = self->msg_in.u.m_vfs_poll.timeout_msecs;
+    struct timer_list timer;
+    struct select_timer_cb_data timer_cb;
+    int timed_out = 0;
+    struct pollfd* ufds = self->msg_in.u.m_vfs_poll.fds;
+    struct pollfd* fds = NULL;
+    size_t count = 0;
+
+    if (nfds < 0 || nfds > OPEN_MAX) return -EINVAL;
+
+    fds = calloc(nfds, sizeof(*fds));
+    if (!fds) {
+        return -ENOMEM;
+    }
+
+    retval = data_copy(SELF, fds, src, ufds, sizeof(*fds) * nfds);
+    if (retval) {
+        retval = -retval;
+        goto free_fds;
+    }
+
+    poll_initwait(&pwq);
+
+    if (timeout_msecs == 0) {
+        wait->qproc = NULL;
+        timed_out = TRUE;
+    }
+
+    for (;;) {
+        int i;
+
+        // poll each fd
+        for (i = 0; i < nfds; i++) {
+            struct file_desc* filp;
+            int fd = fds[i].fd;
+            __poll_t filter =
+                demangle_poll(fds[i].events) | EPOLLERR | EPOLLHUP;
+            __poll_t mask = 0;
+
+            if (fd < 0) {
+                fds[i].revents = mangle_poll(mask);
+                continue;
+            }
+
+            mask = EPOLLNVAL;
+
+            filp = get_filp(fproc, fd, RWL_WRITE);
+            if (!filp) {
+                fds[i].revents = mangle_poll(mask);
+                continue;
+            }
+
+            wait->mask = filter;
+            if (!filp->fd_fops->poll) {
+                mask = DEFAULT_POLLMASK;
+            } else {
+                mask = filp->fd_fops->poll(
+                    filp, filter | (timed_out ? 0 : POLL_NOTIFY), wait, fproc);
+            }
+
+            mask &= filter;
+            fds[i].revents = mangle_poll(mask);
+
+            unlock_filp(filp);
+
+            if (mask) {
+                count++;
+                wait->qproc = NULL;
+            }
+        }
+
+        wait->qproc = NULL;
+
+        // got something
+        if (count || timed_out) {
+            break;
+        }
+
+        // prepare to sleep
+        if (!pwq.triggered) {
+            if (timeout_msecs > 0) {
+                timer_cb.expired = FALSE;
+                timer_cb.worker = self;
+
+                clock_t ticks;
+                ticks = (timeout_msecs * system_hz + 1000L - 1) / 1000L;
+                set_timer(&timer, ticks, select_timeout_check, &timer_cb);
+            }
+
+            worker_wait();
+
+            if (timeout_msecs > 0) {
+                timed_out = timer_cb.expired;
+                if (!timed_out) {
+                    cancel_timer(&timer);
+                }
+            }
+        }
+    }
+
+    poll_freewait(&pwq);
+
+    retval = data_copy(src, ufds, SELF, fds, sizeof(*fds) * nfds);
+    if (retval) {
+        retval = -retval;
+        goto free_fds;
+    }
+
+    retval = count;
+
+free_fds:
+    free(fds);
+    return retval;
 }

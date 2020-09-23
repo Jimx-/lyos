@@ -7,7 +7,7 @@
 int signalfd(int fd, const sigset_t* mask, int flags)
 {
     MESSAGE msg;
-    msg.type = SIGPROCMASK;
+    msg.type = SIGNALFD;
     msg.u.m3.m3i1 = fd;
     msg.u.m3.m3l1 = *mask;
     msg.u.m3.m3i2 = fd;
