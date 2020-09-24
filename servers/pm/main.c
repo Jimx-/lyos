@@ -99,6 +99,12 @@ int main(int argc, char* argv[])
         case EXEC:
             msg.RETVAL = do_exec(&msg);
             break;
+        case PM_SIGNALFD_DEQUEUE:
+            msg.RETVAL = do_signalfd_dequeue(&msg);
+            break;
+        case PM_SIGNALFD_GETNEXT:
+            msg.RETVAL = do_signalfd_getnext(&msg);
+            break;
         default:
             msg.RETVAL = ENOSYS;
             break;

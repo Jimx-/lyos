@@ -33,12 +33,14 @@ EXTERN struct fproc {
     struct file_desc* filp[NR_FILES];
     mutex_t lock;
 
+    struct wait_queue_head signalfd_wq;
+
     MESSAGE msg;
     void (*func)(void);
     struct worker_thread* worker;
 } fproc_table[NR_PROCS];
 
-#define FPF_INUSE 0x1
+#define FPF_INUSE   0x1
 #define FPF_PENDING 0x2
 
 void lock_fproc(struct fproc* fp);

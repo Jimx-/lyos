@@ -17,9 +17,9 @@
 #define _VFS_TYPES_H_
 
 #include <lyos/spinlock.h>
-#include <lyos/wait_queue.h>
 #include <lyos/types.h>
 #include "thread.h"
+#include "wait_queue.h"
 
 struct inode;
 struct file_desc;

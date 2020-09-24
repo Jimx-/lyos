@@ -43,6 +43,8 @@ void exit_proc(struct pmproc* pmp, int status);
 
 void sig_proc(struct pmproc* p_dest, int signo, int trace);
 int process_ksig(endpoint_t target, int signo);
+int do_signalfd_dequeue(MESSAGE* msg);
+int do_signalfd_getnext(MESSAGE* msg);
 
 void trace_signal(struct pmproc* p_dest, int signo);
 

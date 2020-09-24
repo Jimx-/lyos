@@ -49,26 +49,6 @@ struct eventfd_ctx {
 
 #define EFD_SEMAPHORE (1 << 0)
 
-static int eventfd_wake(struct wait_queue_entry* wq_entry, void* arg)
-{
-    struct worker_thread* worker = wq_entry->private;
-
-    if (worker) {
-        worker_wake(worker);
-
-        wq_entry->private = NULL;
-        return 1;
-    }
-
-    return 0;
-}
-
-static void init_eventfd_wait_entry(struct wait_queue_entry* wait)
-{
-    init_waitqueue_entry_func(wait, eventfd_wake);
-    wait->private = self;
-}
-
 static void eventfd_ctx_do_read(struct eventfd_ctx* ctx, u64* cnt)
 {
     *cnt = (ctx->flags & EFD_SEMAPHORE) ? 1 : ctx->count;
@@ -79,11 +59,9 @@ static ssize_t eventfd_read(struct file_desc* filp, char* buf, size_t count,
                             loff_t* ppos, struct fproc* fp)
 {
     struct eventfd_ctx* ctx = filp->fd_private_data;
-    struct wait_queue_entry wait;
+    DECLARE_WAITQUEUE(wait, self);
     u64 ucount;
     ssize_t retval;
-
-    init_eventfd_wait_entry(&wait);
 
     if (count < sizeof(ucount)) {
         return -EINVAL;
@@ -129,11 +107,9 @@ static ssize_t eventfd_write(struct file_desc* filp, const char* buf,
                              size_t count, loff_t* ppos, struct fproc* fp)
 {
     struct eventfd_ctx* ctx = filp->fd_private_data;
-    struct wait_queue_entry wait;
+    DECLARE_WAITQUEUE(wait, self);
     u64 ucount;
     ssize_t retval;
-
-    init_eventfd_wait_entry(&wait);
 
     if (count < sizeof(ucount)) {
         return -EINVAL;

@@ -2,7 +2,6 @@
 #define _VFS_POLL_H_
 
 #include <lyos/types.h>
-#include <lyos/wait_queue.h>
 #include <uapi/lyos/eventpoll.h>
 #include <poll.h>
 

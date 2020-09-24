@@ -26,6 +26,8 @@
 #include "lyos/proto.h"
 #include <lyos/sysutils.h>
 #include <signal.h>
+#include <sys/signalfd.h>
+
 #include "errno.h"
 #include "pmproc.h"
 #include "proto.h"
@@ -330,4 +332,92 @@ int process_ksig(endpoint_t target, int signo)
     if (!(pmp->flags & PMPF_INUSE)) return EINVAL;
 
     return 0;
+}
+
+static void signalfd_reply(endpoint_t endpoint, int status)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = PM_SIGNALFD_REPLY;
+    msg.u.m_pm_vfs_signalfd_reply.endpoint = endpoint;
+    msg.u.m_pm_vfs_signalfd_reply.status = status;
+
+    send_recv(SEND, TASK_FS, &msg);
+}
+
+int do_signalfd_dequeue(MESSAGE* msg)
+{
+    int endpoint = msg->u.m_vfs_pm_signalfd.endpoint;
+    sigset_t sigmask = (sigset_t)msg->u.m_vfs_pm_signalfd.sigmask;
+    void* buf = msg->u.m_vfs_pm_signalfd.buf;
+    struct pmproc* pmp = pm_endpt_proc(endpoint);
+    struct signalfd_siginfo new;
+    int retval, i, signo = 0;
+
+    if (msg->source != TASK_FS) {
+        return -EPERM;
+    }
+
+    if (!pmp) {
+        retval = -EINVAL;
+        goto reply;
+    }
+
+    for (i = 0; i < NSIG; i++) {
+        if (sigismember(&pmp->sig_pending, i) && sigismember(&sigmask, i)) {
+            sigdelset(&pmp->sig_pending, i);
+            signo = i;
+            break;
+        }
+    }
+
+    if (signo) {
+        memset(&new, 0, sizeof(new));
+        new.ssi_signo = signo;
+
+        retval = data_copy(endpoint, buf, SELF, &new, sizeof(new));
+        if (retval) {
+            retval = -retval;
+            goto reply;
+        }
+    }
+
+    retval = signo;
+
+reply:
+    signalfd_reply(endpoint, retval);
+
+    return SUSPEND;
+}
+
+int do_signalfd_getnext(MESSAGE* msg)
+{
+    int endpoint = msg->u.m_vfs_pm_signalfd.endpoint;
+    sigset_t sigmask = (sigset_t)msg->u.m_vfs_pm_signalfd.sigmask;
+    struct pmproc* pmp = pm_endpt_proc(endpoint);
+    int retval, i;
+
+    if (msg->source != TASK_FS) {
+        return -EPERM;
+    }
+
+    if (!pmp) {
+        retval = -EINVAL;
+        goto reply;
+    }
+
+    retval = 0;
+    for (i = 0; i < NSIG; i++) {
+        if (sigismember(&pmp->sig_pending, i) && sigismember(&sigmask, i)) {
+            sigdelset(&pmp->sig_pending, i);
+            retval = i;
+            break;
+        }
+    }
+
+reply:
+    signalfd_reply(endpoint, retval);
+
+    return SUSPEND;
 }

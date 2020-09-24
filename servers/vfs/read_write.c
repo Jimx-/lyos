@@ -107,10 +107,16 @@ int do_rdwt(void)
     } else if (filp->fd_fops == NULL) {
         retval = -EBADF;
     } else {
+        retval = -EINVAL;
+
         if (rw_flag == READ) {
-            retval = filp->fd_fops->read(filp, buf, len, &position, fproc);
+            if (filp->fd_fops->read) {
+                retval = filp->fd_fops->read(filp, buf, len, &position, fproc);
+            }
         } else {
-            retval = filp->fd_fops->write(filp, buf, len, &position, fproc);
+            if (filp->fd_fops->write) {
+                retval = filp->fd_fops->write(filp, buf, len, &position, fproc);
+            }
         }
 
         if (retval < 0) {

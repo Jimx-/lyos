@@ -89,24 +89,10 @@ void mount_pipefs(void)
     pipefs_vmnt->m_root_node = NULL;
 }
 
-static int pipe_wake(struct wait_queue_entry* wq_entry, void* arg)
-{
-    struct worker_thread* worker = wq_entry->private;
-
-    if (worker) {
-        worker_wake(worker);
-
-        wq_entry->private = NULL;
-        return 1;
-    }
-
-    return 0;
-}
-
 static void pipe_wait(struct pipe_inode_info* pipe, int rw_flag)
 {
     struct wait_queue_head* wq;
-    struct wait_queue_entry wait;
+    DECLARE_WAITQUEUE(wait, self);
 
     if (rw_flag == READ) {
         wq = &pipe->rd_wait;
@@ -114,8 +100,6 @@ static void pipe_wait(struct pipe_inode_info* pipe, int rw_flag)
         wq = &pipe->wr_wait;
     }
 
-    init_waitqueue_entry_func(&wait, pipe_wake);
-    wait.private = self;
     waitqueue_add(wq, &wait);
 
     worker_wait();

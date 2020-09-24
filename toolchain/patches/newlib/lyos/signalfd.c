@@ -8,9 +8,9 @@ int signalfd(int fd, const sigset_t* mask, int flags)
 {
     MESSAGE msg;
     msg.type = SIGNALFD;
-    msg.u.m3.m3i1 = fd;
-    msg.u.m3.m3l1 = *mask;
-    msg.u.m3.m3i2 = fd;
+    msg.u.m_vfs_signalfd.fd = fd;
+    msg.u.m_vfs_signalfd.mask = *mask;
+    msg.u.m_vfs_signalfd.flags = flags;
 
     __asm__ __volatile__("" ::: "memory");
 

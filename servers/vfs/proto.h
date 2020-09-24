@@ -153,4 +153,8 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
                       const struct file_operations* fops, void* private,
                       int flags);
 
+/* vfs/signalfd.c */
+int do_signalfd(void);
+int do_pm_signalfd_reply(MESSAGE* msg);
+
 #endif

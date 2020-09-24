@@ -119,6 +119,9 @@ int main()
             fproc = vfs_endpt_proc(msg.ENDPOINT);
             dispatch_work(&msg, do_work);
             break;
+        case PM_SIGNALFD_REPLY:
+            do_pm_signalfd_reply(&msg);
+            break;
         default:
             dispatch_work(&msg, do_work);
             break;
@@ -235,6 +238,9 @@ static void do_work(void)
     case EVENTFD:
         self->msg_out.FD = do_eventfd();
         break;
+    case SIGNALFD:
+        self->msg_out.FD = do_signalfd();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;
@@ -284,6 +290,7 @@ void init_vfs()
         mutex_init(&fproc_table[i].lock, NULL);
         fproc_table[i].worker = NULL;
         fproc_table[i].flags = 0;
+        init_waitqueue_head(&fproc_table[i].signalfd_wq);
     }
 
     init_inode_table();

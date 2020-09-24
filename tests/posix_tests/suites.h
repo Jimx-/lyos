@@ -3,5 +3,6 @@
 
 extern MunitTest pipe_tests[];
 extern MunitTest eventfd_tests[];
+extern MunitTest signalfd_tests[];
 
 #endif

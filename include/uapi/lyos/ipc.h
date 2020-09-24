@@ -158,7 +158,7 @@ struct mess_vfs_fdpair {
     int fd0;
     int fd1;
 
-    __u8 pad[44];
+    __u8 _pad[44];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_fdpair);
 
@@ -167,9 +167,18 @@ struct mess_vfs_poll {
     unsigned int nfds;
     int timeout_msecs;
 
-    __u8 pad[48 - sizeof(void*)];
+    __u8 _pad[48 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_poll);
+
+struct mess_vfs_signalfd {
+    int fd;
+    unsigned int mask;
+    int flags;
+
+    __u8 _pad[44];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_signalfd);
 
 struct mess_vfs_fs_symlink {
     dev_t dev;
@@ -246,6 +255,23 @@ struct mess_vfs_cdev_poll_notify {
     __u8 _pad[44];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_poll_notify);
+
+struct mess_vfs_pm_signalfd {
+    endpoint_t endpoint;
+    unsigned int sigmask;
+    void* buf;
+
+    __u8 _pad[48 - sizeof(void*)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_pm_signalfd);
+
+struct mess_pm_vfs_signalfd_reply {
+    int status;
+    endpoint_t endpoint;
+
+    __u8 _pad[48];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_pm_vfs_signalfd_reply);
 
 struct mess_sysfs_publish_link {
     void* target;
@@ -341,6 +367,7 @@ typedef struct {
         struct mess_vfs_link m_vfs_link;
         struct mess_vfs_fdpair m_vfs_fdpair;
         struct mess_vfs_poll m_vfs_poll;
+        struct mess_vfs_signalfd m_vfs_signalfd;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
@@ -348,6 +375,8 @@ typedef struct {
         struct mess_vfs_cdev_select m_vfs_cdev_select;
         struct mess_vfs_cdev_reply m_vfs_cdev_reply;
         struct mess_vfs_cdev_poll_notify m_vfs_cdev_poll_notify;
+        struct mess_vfs_pm_signalfd m_vfs_pm_signalfd;
+        struct mess_pm_vfs_signalfd_reply m_pm_vfs_signalfd_reply;
         struct mess_sysfs_publish_link m_sysfs_publish_link;
         struct mess_bdev_blockdriver_msg m_bdev_blockdriver_msg;
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;

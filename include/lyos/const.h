@@ -371,6 +371,9 @@ enum msgtype {
     PM_GETINFO,
     PM_KPROFILE,
     PM_GETEPINFO,
+    PM_SIGNALFD_REPLY,
+    PM_SIGNALFD_DEQUEUE,
+    PM_SIGNALFD_GETNEXT,
 
     /* message type for drivers */ /* 2001 ~ 2006 */
     BDEV_OPEN = DRV_REQ_BASE,

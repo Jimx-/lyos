@@ -369,6 +369,7 @@ int fs_fork(void)
     struct fproc* child = vfs_endpt_proc(self->msg_in.ENDPOINT);
     struct fproc* parent = vfs_endpt_proc(self->msg_in.PENDPOINT);
     mutex_t cmutex;
+    struct wait_queue_head signalfd_wq;
 
     if (child == NULL || parent == NULL) {
         return EINVAL;
@@ -378,7 +379,9 @@ int fs_fork(void)
     lock_fproc(child);
 
     cmutex = child->lock;
+    signalfd_wq = child->signalfd_wq;
     *child = *parent;
+    child->signalfd_wq = signalfd_wq;
     child->lock = cmutex;
 
     child->pid = self->msg_in.PID;
