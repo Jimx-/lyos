@@ -68,21 +68,15 @@ int main()
 
         switch (msg.type) {
         case UNAME:
-            // printl(">>>>>>>> enter UNAME\n");
             msg.RETVAL = data_copy(src, msg.BUF, TASK_SYS, &uname_buf,
                                    sizeof(struct utsname));
-            // printl("<<<<<<<< exit UNAME\n");
             break;
         case GET_TIME_OF_DAY:
-            // printl(">>>>>>>> enter GET_TIME_OF_DAY\n");
             msg.RETVAL = do_gettimeofday(&tv, NULL);
             data_copy(src, msg.BUF, TASK_SYS, &tv, sizeof(tv));
-            // printl("<<<<<<<< exit GET_TIME_OF_DAY\n");
             break;
         case GETSETHOSTNAME:
-            // printl(">>>>>>>> enter GET_SET_HOSTNAME\n");
             msg.RETVAL = do_getsethostname(&msg);
-            // printl("<<<<<<<< exit GET_SET_HOSTNAME\n");
             break;
         default:
             msg.RETVAL = ENOSYS;

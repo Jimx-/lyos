@@ -61,7 +61,7 @@ extern void timer_expire(struct list_head* list, clock_t timestamp);
 static u64 read_jiffies(struct clocksource* cs) { return jiffies; }
 
 #define NSEC_PER_JIFFY (NSEC_PER_SEC / DEFAULT_HZ)
-#define JIFFY_SHIFT 8
+#define JIFFY_SHIFT    8
 static struct clocksource jiffies_clocksource = {
     .name = "jiffies",
     .rating = 1,
@@ -85,6 +85,9 @@ int clock_handler(irq_hook_t* hook)
 #if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
 #endif
+        kclockinfo.realtime++;
+        kclockinfo.uptime++;
+
         if (++jiffies >= MAX_TICKS) jiffies = 0;
 #if CONFIG_SMP
     }
@@ -133,6 +136,9 @@ int init_time()
     arch_init_time();
     register_clocksource(&jiffies_clocksource);
     spinlock_init(&timers_lock);
+
+    memset(&kclockinfo, 0, sizeof(kclockinfo));
+    kclockinfo.hz = system_hz;
 
     return 0;
 }
@@ -217,7 +223,7 @@ void reset_sys_timer(struct timer_list* timer)
 {
     spinlock_lock(&timers_lock);
 
-    timer_remove(timer);
+    cancel_timer(timer);
     if (list_empty(&timer_list))
         next_timeout = TIMER_UNSET;
     else

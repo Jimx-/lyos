@@ -51,17 +51,37 @@ void timer_expire(struct list_head* list, clock_t timestamp)
     list_for_each_entry_safe(tp, n, list, list)
     {
         if (tp->expire_time <= timestamp) {
-            timer_remove(tp);
+            cancel_timer(tp);
             (*tp->callback)(tp);
         }
     }
 }
 
-void timer_remove(struct timer_list* timer)
+void init_timer(struct timer_list* timer)
 {
     timer->expire_time = TIMER_UNSET;
+    timer->callback = NULL;
+    timer->arg = NULL;
+}
 
-    list_del(&timer->list);
+/**
+ * cancel_timer - Tries to cancel an timer
+ * @timer: ptr to timer to be canceled
+ *
+ * Returns 1 if the timer was canceled or 0 if it was not running.
+ */
+int cancel_timer(struct timer_list* timer)
+{
+    if (timer->expire_time == TIMER_UNSET) {
+        return 0;
+    } else {
+        timer->expire_time = TIMER_UNSET;
+        list_del(&timer->list);
+
+        return 1;
+    }
+
+    return 0;
 }
 
 void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb,
@@ -124,4 +144,17 @@ void expire_timer(clock_t timestamp)
     }
 }
 
-void cancel_timer(struct timer_list* timer) { list_del(&timer->list); }
+clock_t timer_expires_remaining(struct timer_list* tp)
+{
+    clock_t uptime;
+
+    if (tp->expire_time != TIMER_UNSET) {
+        if (get_ticks(&uptime, NULL) != 0) panic("can't get uptime\n");
+
+        if (tp->expire_time > uptime) {
+            return tp->expire_time - uptime;
+        }
+    }
+
+    return 0;
+}

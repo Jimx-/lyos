@@ -31,10 +31,11 @@ struct timer_list {
 
 #define TIMER_UNSET ((clock_t)0xffffffff)
 
-void timer_remove(struct timer_list* timer);
+void init_timer(struct timer_list* timer);
 void set_timer(struct timer_list* timer, clock_t ticks, timer_callback_t cb,
                void* arg);
-void cancel_timer(struct timer_list* timer);
+int cancel_timer(struct timer_list* timer);
 void expire_timer(clock_t timestamp);
+clock_t timer_expires_remaining(struct timer_list* tp);
 
 #endif

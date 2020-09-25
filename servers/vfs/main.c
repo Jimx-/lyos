@@ -241,6 +241,15 @@ static void do_work(void)
     case SIGNALFD:
         self->msg_out.FD = do_signalfd();
         break;
+    case TIMERFD_CREATE:
+        self->msg_out.FD = do_timerfd_create();
+        break;
+    case TIMERFD_SETTIME:
+        self->msg_out.RETVAL = do_timerfd_settime();
+        break;
+    case TIMERFD_GETTIME:
+        self->msg_out.RETVAL = do_timerfd_gettime();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

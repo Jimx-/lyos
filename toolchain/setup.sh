@@ -113,8 +113,7 @@ if $BUILD_NEWLIB; then
     TARGET_CFLAGS=-fPIC make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
-    $TARGET-gcc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
-    $TARGET-gcc -shared -o $SYSROOT/usr/lib/libg.so -Wl,--whole-archive $SYSROOT/usr/lib/libg.a -Wl,--no-whole-archive || cmd_error
+    $TARGET-gcc -shared -fPIC -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
     popd > /dev/null
 
     # Build static library without -fPIC
@@ -166,7 +165,7 @@ if $BUILD_NATIVE_GCC; then
     fi
 
     pushd gcc-native-$SUBARCH > /dev/null
-    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib || cmd_error
+    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib CFLAGS=-fPIC || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j4 || cmd_error
     make DESTDIR=$SYSROOT install-gcc || cmd_error
     make DESTDIR=$SYSROOT all-target-libgcc -j4 || cmd_error
@@ -264,6 +263,7 @@ fi
 if $BUILD_VIM; then
     pushd $DIR/sources/vim74 > /dev/null
     ac_cv_sizeof_int=4 vim_cv_getcwd_broken=no vim_cv_memmove_handles_overlap=yes vim_cv_stat_ignores_slash=no vim_cv_tgetent=zero vim_cv_terminfo=yes vim_cv_toupper_broken=no vim_cv_tty_group=world $DIR/sources/vim74/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-tlib=ncurses --enable-gui=no --disable-gtktest --disable-xim --with-features=normal --disable-gpm --without-x --disable-netbeans --enable-multibyte || cmd_error
+    make clean
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

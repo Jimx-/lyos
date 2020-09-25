@@ -157,4 +157,9 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
 int do_signalfd(void);
 int do_pm_signalfd_reply(MESSAGE* msg);
 
+/* vfs/timerfd.c */
+int do_timerfd_create(void);
+int do_timerfd_settime(void);
+int do_timerfd_gettime(void);
+
 #endif

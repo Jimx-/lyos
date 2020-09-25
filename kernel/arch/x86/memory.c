@@ -306,20 +306,25 @@ int arch_reply_kern_mapping(int index, void* vir_addr)
 
     if (index == KM_USERMAPPED) {
         usermapped_offset = (char*)vir_addr - usermapped_start;
-        sysinfo.magic = SYSINFO_MAGIC;
+        sysinfo.user_info.magic = SYSINFO_MAGIC;
         sysinfo_user = (struct sysinfo*)USER_PTR(&sysinfo);
         sysinfo.kinfo = (kinfo_t*)USER_PTR(&kinfo);
         sysinfo.kern_log = (struct kern_log*)USER_PTR(&kern_log);
         sysinfo.machine = (struct machine*)USER_PTR(&machine);
+        sysinfo.user_info.clock_info =
+            (struct kclockinfo*)USER_PTR(&kclockinfo);
 
         if (syscall_style & SST_AMD_SYSCALL) {
             printk("kernel: selecting AMD SYSCALL syscall style\n");
-            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_syscall);
+            sysinfo.user_info.syscall_gate =
+                (syscall_gate_t)USER_PTR(syscall_syscall);
         } else if (syscall_style & SST_INTEL_SYSENTER) {
             printk("kernel: selecting intel SYSENTER syscall style\n");
-            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_sysenter);
+            sysinfo.user_info.syscall_gate =
+                (syscall_gate_t)USER_PTR(syscall_sysenter);
         } else {
-            sysinfo.syscall_gate = (syscall_gate_t)USER_PTR(syscall_int);
+            sysinfo.user_info.syscall_gate =
+                (syscall_gate_t)USER_PTR(syscall_int);
         }
         return 0;
     }

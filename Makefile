@@ -304,7 +304,3 @@ tests:
 	@echo -e '$(COLORGREEN)Compiling and installing tests...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C tests $(MAKEFLAGS)
 	$(Q)$(MAKE) -C tests $(MAKEFLAGS) install
-
-libc.so:
-	${CC} -shared -o ${DESTDIR}/usr/lib/libc.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libc.a -Wl,--no-whole-archive
-	${CC} -shared -o ${DESTDIR}/usr/lib/libg.so -Wl,--whole-archive ${DESTDIR}/usr/lib/libg.a -Wl,--no-whole-archive

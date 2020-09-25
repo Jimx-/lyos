@@ -111,7 +111,7 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
 
     filp->fd_inode = anon_inode;
     anon_inode->i_cnt++;
-    filp->fd_mode = flags | (O_ACCMODE | O_NONBLOCK);
+    filp->fd_mode = flags & (O_ACCMODE | O_NONBLOCK);
 
     filp->fd_fops = fops;
     filp->fd_private_data = private;

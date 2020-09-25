@@ -180,6 +180,18 @@ struct mess_vfs_signalfd {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_signalfd);
 
+struct mess_vfs_timerfd {
+    int clock_id;
+    int flags;
+    int fd;
+
+    void* new_value;
+    void* old_value;
+
+    __u8 pad[44 - 2 * sizeof(void*)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_timerfd);
+
 struct mess_vfs_fs_symlink {
     dev_t dev;
     ino_t dir_ino;
@@ -368,6 +380,7 @@ typedef struct {
         struct mess_vfs_fdpair m_vfs_fdpair;
         struct mess_vfs_poll m_vfs_poll;
         struct mess_vfs_signalfd m_vfs_signalfd;
+        struct mess_vfs_timerfd m_vfs_timerfd;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;

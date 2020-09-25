@@ -69,7 +69,6 @@ cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
 cp -rf obj/destdir.$ARCH/usr/bin/vim /$MOUNT_POINT/usr/bin/
 cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
 #cp -rf obj/destdir.$ARCH/usr/ /$MOUNT_POINT/
-cp -rf obj/destdir.$ARCH/usr/lib/libg.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/

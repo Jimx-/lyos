@@ -1,48 +1,41 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
-
+#include <lyos/param.h>
 #include <elf.h>
 
 extern char _end[];
 extern char** environ;
 
-char* _brksize = (char*)0;
-
-typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE* m);
+char* _brksize = NULL;
 
 int syscall_gate_intr(int syscall_nr, MESSAGE* m);
 
-syscall_gate_t _syscall_gate = (syscall_gate_t)0;
+syscall_gate_t _syscall_gate = NULL;
 
-struct sysinfo {
-#define SYSINFO_MAGIC 0x534946
-    int magic;
+struct sysinfo_user* __lyos_sysinfo = NULL;
 
-    syscall_gate_t syscall_gate;
-};
-
-static struct sysinfo* parse_auxv(char* envp[])
+static struct sysinfo_user* parse_auxv(char* envp[])
 {
     Elf32_auxv_t* auxv;
 
-    if (!envp) return (struct sysinfo*)0;
+    if (!envp) return NULL;
 
     while (*envp++)
         ;
 
     for (auxv = (Elf32_auxv_t*)envp; auxv->a_type != AT_NULL; auxv++) {
         if (auxv->a_type == AT_SYSINFO) {
-            return (struct sysinfo*)auxv->a_un.a_val;
+            return (struct sysinfo_user*)auxv->a_un.a_val;
         }
     }
 
-    return (struct sysinfo*)0;
+    return NULL;
 }
 
-static struct sysinfo* get_sysinfo()
+static struct sysinfo_user* get_sysinfo()
 {
-    struct sysinfo* sysinfo;
+    struct sysinfo_user* sysinfo;
     MESSAGE m;
 
     m.type = NR_GETINFO;
@@ -51,8 +44,7 @@ static struct sysinfo* get_sysinfo()
 
     __asm__ __volatile__("" ::: "memory");
 
-    return (syscall_gate_intr(NR_GETINFO, &m) == 0) ? sysinfo
-                                                    : (struct sysinfo*)0;
+    return (syscall_gate_intr(NR_GETINFO, &m) == 0) ? sysinfo : NULL;
 }
 
 void pthread_initialize(void) __attribute__((weak));
@@ -62,11 +54,11 @@ void __lyos_init(char* envp[])
     environ = envp;
     _syscall_gate = syscall_gate_intr;
 
-    struct sysinfo* si = parse_auxv(envp);
-    if (!si) si = get_sysinfo();
+    __lyos_sysinfo = parse_auxv(envp);
+    if (!__lyos_sysinfo) __lyos_sysinfo = get_sysinfo();
 
-    if (si && si->magic == SYSINFO_MAGIC) {
-        _syscall_gate = si->syscall_gate;
+    if (__lyos_sysinfo && __lyos_sysinfo->magic == SYSINFO_MAGIC) {
+        _syscall_gate = __lyos_sysinfo->syscall_gate;
     }
 
     _brksize = (char*)*(&_end);

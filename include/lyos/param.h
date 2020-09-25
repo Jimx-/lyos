@@ -17,17 +17,18 @@
 #define _PARAM_H_
 
 #include <lyos/config.h>
+#include <uapi/lyos/param.h>
 
 #define KINFO_MAGIC 0x4B494E
 
 #define KINFO_CMDLINE_LEN 1024
-#define KINFO_MAXMEMMAP 40
+#define KINFO_MAXMEMMAP   40
 
 struct kinfo_mmap_entry {
     u64 addr;
     u64 len;
 #define KINFO_MEMORY_AVAILABLE 1
-#define KINFO_MEMORY_RESERVED 2
+#define KINFO_MEMORY_RESERVED  2
     u32 type;
 } __attribute__((packed));
 
@@ -58,17 +59,12 @@ typedef struct kinfo {
     struct boot_proc boot_procs[NR_BOOT_PROCS];
 } __attribute__((packed)) kinfo_t;
 
-typedef int (*syscall_gate_t)(int syscall_nr, MESSAGE* m);
-
 struct machine {
     unsigned long cpu_count;
 };
 
 struct sysinfo {
-#define SYSINFO_MAGIC 0x534946
-    int magic;
-
-    syscall_gate_t syscall_gate;
+    struct sysinfo_user user_info;
 
     kinfo_t* kinfo;
     struct kern_log* kern_log;

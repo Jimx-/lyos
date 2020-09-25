@@ -93,6 +93,8 @@ extern struct kern_log kern_log;
 
 extern struct machine machine;
 
+extern struct kclockinfo kclockinfo;
+
 #if CONFIG_PROFILING
 #include <lyos/profile.h>
 

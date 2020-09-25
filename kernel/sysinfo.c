@@ -31,3 +31,5 @@ kinfo_t kinfo __attribute__((section(".usermapped")));
 struct kern_log kern_log __attribute__((section(".usermapped")));
 
 struct machine machine __attribute__((section(".usermapped")));
+
+struct kclockinfo kclockinfo __attribute__((section(".usermapped")));

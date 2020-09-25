@@ -73,7 +73,8 @@ void do_handle_fault()
     }
 
     if (!(vr->flags & RF_WRITABLE) && wrflag) {
-        printl("MM: SIGSEGV %d ro address %x\n", mm_msg.FAULT_PROC, pfla);
+        printl("MM: SIGSEGV %d ro address %x, pc=%x\n", mm_msg.FAULT_PROC,
+               mm_msg.FAULT_ADDR, mm_msg.FAULT_PC);
 
         if (kernel_kill(mm_msg.FAULT_PROC, SIGSEGV) != 0)
             panic("pagefault: unable to kill proc");

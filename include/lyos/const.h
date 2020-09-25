@@ -316,6 +316,9 @@ enum msgtype {
     GETRUSAGE,
     POLL,
     EVENTFD,
+    TIMERFD_CREATE,
+    TIMERFD_SETTIME,
+    TIMERFD_GETTIME,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
