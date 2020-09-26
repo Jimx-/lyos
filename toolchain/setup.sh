@@ -113,7 +113,7 @@ if $BUILD_NEWLIB; then
     TARGET_CFLAGS=-fPIC make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
-    $TARGET-gcc -shared -fPIC -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
+    $TARGET-gcc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
     popd > /dev/null
 
     # Build static library without -fPIC
@@ -165,7 +165,7 @@ if $BUILD_NATIVE_GCC; then
     fi
 
     pushd gcc-native-$SUBARCH > /dev/null
-    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib CFLAGS=-fPIC || cmd_error
+    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j4 || cmd_error
     make DESTDIR=$SYSROOT install-gcc || cmd_error
     make DESTDIR=$SYSROOT all-target-libgcc -j4 || cmd_error

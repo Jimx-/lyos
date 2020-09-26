@@ -16,7 +16,7 @@ static MunitResult test_timerfd_read(const MunitParameter params[], void* data)
 {
     struct timespec now;
     struct itimerspec curr_value, new_value;
-    unsigned long sleep_nsecs = 100000000ULL; /* 100m */
+    unsigned long sleep_nsecs = 100000000ULL; /* 100ms */
     int fd;
     uint64_t exp;
     int retval, n;

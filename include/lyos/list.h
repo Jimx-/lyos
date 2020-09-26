@@ -47,7 +47,7 @@ struct list_head {
 #define offsetof(TYPE, MEMBER) ((size_t) & ((TYPE*)0)->MEMBER)
 #endif
 
-static inline int list_empty(struct list_head* list);
+static inline int list_empty(const struct list_head* list);
 static inline void list_add(struct list_head* new, struct list_head* head);
 static inline void list_del(struct list_head* node);
 
@@ -62,7 +62,7 @@ static inline void list_del(struct list_head* node);
         n = list_next_entry(pos, member);                    \
          &pos->member != (head); pos = n, n = list_next_entry(n, member))
 
-static inline int list_empty(struct list_head* list)
+static inline int list_empty(const struct list_head* list)
 {
     return (list->next == list);
 }
@@ -93,6 +93,34 @@ static inline void list_del(struct list_head* node)
 
     node->prev = node;
     node->next = node;
+}
+
+static inline void __list_splice(const struct list_head* list,
+                                 struct list_head* prev, struct list_head* next)
+{
+    struct list_head* first = list->next;
+    struct list_head* last = list->prev;
+
+    first->prev = prev;
+    prev->next = first;
+
+    last->next = next;
+    next->prev = last;
+}
+
+static inline void list_splice(const struct list_head* list,
+                               struct list_head* head)
+{
+    if (!list_empty(list)) __list_splice(list, head, head->next);
+}
+
+static inline void list_splice_init(struct list_head* list,
+                                    struct list_head* head)
+{
+    if (!list_empty(list)) {
+        __list_splice(list, head, head->next);
+        INIT_LIST_HEAD(list);
+    }
 }
 
 #endif

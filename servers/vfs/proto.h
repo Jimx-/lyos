@@ -162,4 +162,9 @@ int do_timerfd_create(void);
 int do_timerfd_settime(void);
 int do_timerfd_gettime(void);
 
+/* vfs/eventpoll.c */
+int do_epoll_create1(void);
+int do_epoll_ctl(void);
+int do_epoll_wait(void);
+
 #endif

@@ -1,4 +1,4 @@
-SRCS	= main.c pipe.c eventfd.c signalfd.c timerfd.c
+SRCS	= main.c pipe.c eventfd.c signalfd.c timerfd.c epoll.c
 PROG	= posix_tests
 
 CFLAGS  = -I..

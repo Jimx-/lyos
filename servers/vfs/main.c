@@ -250,6 +250,15 @@ static void do_work(void)
     case TIMERFD_GETTIME:
         self->msg_out.RETVAL = do_timerfd_gettime();
         break;
+    case EPOLL_CREATE1:
+        self->msg_out.FD = do_epoll_create1();
+        break;
+    case EPOLL_CTL:
+        self->msg_out.RETVAL = do_epoll_ctl();
+        break;
+    case EPOLL_WAIT:
+        self->msg_out.RETVAL = do_epoll_wait();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

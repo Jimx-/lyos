@@ -319,6 +319,9 @@ enum msgtype {
     TIMERFD_CREATE,
     TIMERFD_SETTIME,
     TIMERFD_GETTIME,
+    EPOLL_CREATE1,
+    EPOLL_CTL,
+    EPOLL_WAIT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

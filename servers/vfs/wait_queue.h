@@ -7,6 +7,7 @@ struct wait_queue_entry;
 
 typedef int (*wait_queue_func_t)(struct wait_queue_entry* wq_entry, void* arg);
 int default_wake_function(struct wait_queue_entry* wq_entry, void* arg);
+int autoremove_wake_function(struct wait_queue_entry* wq_entry, void* arg);
 
 struct wait_queue_entry {
     void* private;
@@ -59,5 +60,12 @@ static inline void waitqueue_remove(struct wait_queue_head* head,
 }
 
 void waitqueue_wakeup_all(struct wait_queue_head* head, void* arg);
+
+#define init_wait(wait, worker)                  \
+    do {                                         \
+        (wait)->private = worker;                \
+        (wait)->func = autoremove_wake_function; \
+        INIT_LIST_HEAD(&(wait)->entry);          \
+    } while (0)
 
 #endif

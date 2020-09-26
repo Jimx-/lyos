@@ -26,6 +26,20 @@ static inline void poll_wait(struct file_desc* filp, struct wait_queue_head* wq,
     }
 }
 
+static inline int file_can_poll(struct file_desc* filp)
+{
+    return filp->fd_fops && filp->fd_fops->poll;
+}
+
+static inline __poll_t vfs_poll(struct file_desc* filp, __poll_t mask,
+                                struct poll_table* pt, struct fproc* fp)
+{
+    if (!file_can_poll(filp)) {
+        return DEFAULT_POLLMASK;
+    }
+    return filp->fd_fops->poll(filp, mask, pt, fp);
+}
+
 #define __MAP(v, from, to) ((v) & (from) ? (to) : 0)
 
 static inline u16 mangle_poll(__poll_t val)

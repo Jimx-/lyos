@@ -53,6 +53,17 @@ int default_wake_function(struct wait_queue_entry* wq_entry, void* arg)
     return 0;
 }
 
+int autoremove_wake_function(struct wait_queue_entry* wq_entry, void* arg)
+{
+    int retval = default_wake_function(wq_entry, arg);
+
+    if (retval) {
+        list_del(&wq_entry->entry);
+    }
+
+    return retval;
+}
+
 void waitqueue_wakeup_all(struct wait_queue_head* head, void* arg)
 {
     struct wait_queue_entry *curr, *next;

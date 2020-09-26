@@ -202,13 +202,8 @@ int do_select(void)
             if (!filp) continue;
 
             wait_set_key(wait, ops);
-            if (!filp->fd_fops->poll) {
-                mask = DEFAULT_POLLMASK;
-            } else {
-                mask = filp->fd_fops->poll(
-                    filp, wait->mask | (timed_out ? 0 : POLL_NOTIFY), wait,
-                    fproc);
-            }
+            mask = vfs_poll(filp, wait->mask | (timed_out ? 0 : POLL_NOTIFY),
+                            wait, fproc);
 
             unlock_filp(filp);
 
@@ -447,12 +442,8 @@ int do_poll(void)
             }
 
             wait->mask = filter;
-            if (!filp->fd_fops->poll) {
-                mask = DEFAULT_POLLMASK;
-            } else {
-                mask = filp->fd_fops->poll(
-                    filp, filter | (timed_out ? 0 : POLL_NOTIFY), wait, fproc);
-            }
+            mask = vfs_poll(filp, filter | (timed_out ? 0 : POLL_NOTIFY), wait,
+                            fproc);
 
             mask &= filter;
             fds[i].revents = mangle_poll(mask);
