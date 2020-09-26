@@ -9,5 +9,6 @@ service up /sbin/input
 service up /sbin/atkbd
 service up /sbin/fb
 service up /sbin/virtio-gpu
+service up /sbin/uds
 
 mount -a

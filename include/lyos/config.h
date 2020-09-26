@@ -35,12 +35,12 @@
 #else
 #define NR_BOOT_PROCS (NR_TASKS + 13)
 #endif
-#define NR_PROCS 256
+#define NR_PROCS      256
 #define NR_PRIV_PROCS 64
 
 #define NR_SCHED_QUEUES 16
-#define MIN_USER_PRIO (NR_SCHED_QUEUES - 1) /* min user priority */
-#define MAX_USER_PRIO 0                     /* max user priority */
+#define MIN_USER_PRIO   (NR_SCHED_QUEUES - 1) /* min user priority */
+#define MAX_USER_PRIO   0                     /* max user priority */
 #define USER_PRIO                          \
     ((MIN_USER_PRIO - MAX_USER_PRIO) / 2 + \
      MAX_USER_PRIO)               /* default user priority */
@@ -59,10 +59,12 @@
 
 /* TTY */
 #define NR_CONSOLES 6 /* consoles */
-#define NR_SERIALS 3  /* serial ports */
+#define NR_SERIALS  3 /* serial ports */
 
 /* PCI */
 #define NR_PCIBUS 4
 #define NR_PCIDEV 50
+
+#define NR_DOMAIN 8
 
 #endif

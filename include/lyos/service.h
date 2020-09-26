@@ -16,7 +16,11 @@
 #ifndef _SERVICE_H_
 #define _SERVICE_H_
 
-#define NR_PCI_CLASS 4
+#include <lyos/config.h>
+#include <lyos/const.h>
+#include <lyos/bitmap.h>
+
+#define NR_PCI_CLASS  4
 #define NR_PCI_DEVICE 32
 
 struct service_pci_id {
@@ -37,10 +41,18 @@ struct service_up_req {
     char* label;
     int labellen;
 
+    int flags;
+#define SUR_BASIC_SYSCALLS 0x01
+
     int nr_pci_id;
     struct service_pci_id pci_id[NR_PCI_DEVICE];
     int nr_pci_class;
     struct service_pci_class pci_class[NR_PCI_CLASS];
+
+    bitchunk_t syscall_mask[BITCHUNKS(NR_SYS_CALLS)];
+
+    int nr_domain;
+    int domain[NR_DOMAIN];
 };
 
 struct pci_acl {

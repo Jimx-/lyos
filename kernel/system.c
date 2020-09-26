@@ -111,7 +111,24 @@ static int finish_sys_call(struct proc* p_proc, MESSAGE* msg, int result)
 
 static int dispatch_sys_call(int call_nr, MESSAGE* msg, struct proc* p_proc)
 {
+    int allowed = FALSE;
     int retval;
+
+    if (p_proc->priv && (p_proc->priv->flags & PRF_PRIV_PROC)) {
+        allowed = !!GET_BIT(p_proc->priv->syscall_mask, call_nr);
+    } else {
+        /* only these two calls are allowed for user processes */
+        switch (call_nr) {
+        case NR_SENDREC:
+        case NR_GETINFO:
+            allowed = TRUE;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (!allowed) return EPERM;
 
     if (sys_call_table[call_nr]) {
         sys_call_handler_t handler = sys_call_table[call_nr];

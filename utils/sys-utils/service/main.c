@@ -16,9 +16,9 @@ char* req_label = NULL;
 char* config_path = NULL;
 char cmdline[4096];
 
-#define ARG_ARGS "--args"
+#define ARG_ARGS   "--args"
 #define ARG_CONFIG "--config"
-#define ARG_LABEL "--label"
+#define ARG_LABEL  "--label"
 
 static char* requests[] = {"up", NULL};
 
@@ -97,10 +97,14 @@ int main(int argc, char* argv[])
     char* progname;
     struct service_up_req up_req;
     char config_dfl[PATH_MAX];
+
     memset(&msg, 0, sizeof(msg));
     msg.type = request;
+
     switch (request) {
     case SERVICE_UP:
+        memset(&up_req, 0, sizeof(up_req));
+
         progname = strrchr(req_path, '/');
         if (progname == NULL) die(argv[0], "absolute path required");
         progname++;

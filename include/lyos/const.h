@@ -165,6 +165,8 @@
 #define NR_ALARM     21
 #define NR_KPROFILE  22
 
+#define BASIC_SYSCALLS NR_PRINTX, NR_SENDREC, NR_GETINFO
+
 /* kernel signals */
 #define SIGKSIG SIGUSR1
 #define SIGKMEM SIGUSR2

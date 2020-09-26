@@ -37,15 +37,17 @@
 #include "const.h"
 #include "global.h"
 
+static int basic_syscalls[] = {BASIC_SYSCALLS, -1};
+
 int init_sproc(struct sproc* sp, struct service_up_req* up_req,
                endpoint_t source)
 {
+    int i;
     sp->priv.flags = TASK_FLAGS;
 
     if (up_req->nr_pci_class > NR_PCI_CLASS) return EINVAL;
     if (up_req->nr_pci_class > 0) {
         sp->pci_acl.nr_pci_class = up_req->nr_pci_class;
-        int i;
         for (i = 0; i < sp->pci_acl.nr_pci_class; i++) {
             sp->pci_acl.pci_class[i].classid = up_req->pci_class[i].classid;
             sp->pci_acl.pci_class[i].mask = up_req->pci_class[i].mask;
@@ -55,10 +57,26 @@ int init_sproc(struct sproc* sp, struct service_up_req* up_req,
     if (up_req->nr_pci_id > NR_PCI_DEVICE) return EINVAL;
     if (up_req->nr_pci_id > 0) {
         sp->pci_acl.nr_pci_id = up_req->nr_pci_id;
-        int i;
         for (i = 0; i < sp->pci_acl.nr_pci_id; i++) {
             sp->pci_acl.pci_id[i].vid = up_req->pci_id[i].vid;
             sp->pci_acl.pci_id[i].did = up_req->pci_id[i].did;
+        }
+    }
+
+    memcpy(&sp->priv.syscall_mask, &up_req->syscall_mask,
+           sizeof(sp->priv.syscall_mask));
+    if (up_req->flags & SUR_BASIC_SYSCALLS) {
+        for (i = 0; basic_syscalls[i] >= 0; i++) {
+            SET_BIT(sp->priv.syscall_mask, basic_syscalls[i]);
+        }
+    }
+
+    if (up_req->nr_domain > NR_DOMAIN) return EINVAL;
+    sp->nr_domain = 0;
+    if (up_req->nr_domain > 0) {
+        sp->nr_domain = up_req->nr_domain;
+        for (i = 0; i < sp->nr_domain; i++) {
+            sp->domain[i] = up_req->domain[i];
         }
     }
 

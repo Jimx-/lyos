@@ -42,6 +42,9 @@ struct sproc {
     char proc_name[PROC_NAME_LEN];
     char label[PROC_NAME_LEN];
     struct pci_acl pci_acl;
+
+    int nr_domain;
+    int domain[NR_DOMAIN];
 };
 
 struct boot_priv {

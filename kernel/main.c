@@ -91,10 +91,7 @@ int kernel_main()
             p->priv->flags |= PRF_PRIV_PROC;
 
             int allowed_calls;
-            if (bp->endpoint == TASK_MM) {
-                allowed_calls = TASK_CALLS;
-            }
-            if (bp->endpoint == TASK_SERVMAN) {
+            if (bp->endpoint == TASK_MM || bp->endpoint == TASK_SERVMAN) {
                 allowed_calls = TASK_CALLS;
             } else {
                 allowed_calls = KERNTASK_CALLS;

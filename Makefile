@@ -127,7 +127,7 @@ export Q
 # All Phony Targets
 .PHONY : all everything disasm clean realclean mrproper install help config menuconfig \
 	setup-toolchain libraries install-libraries kernel fs install-fs drivers install-drivers \
-	servers install-servers objdirs kvm kvm-debug install-headers tests
+	servers install-servers net install-net objdirs kvm kvm-debug install-headers tests
 
 # Default entry point
 all : clean everything
@@ -135,7 +135,7 @@ all : clean everything
 include $(ARCHDIR)/Makefile
 
 everything : $(CONFIGINC) $(AUTOCONFINC) genconf objdirs install-headers libraries install-libraries fs install-fs drivers \
-		install-drivers servers install-servers kernel initrd
+		install-drivers servers install-servers net install-net kernel initrd
 
 setup-toolchain:
 	@echo -e '$(COLORGREEN)Setting up toolchain...$(COLORDEFAULT)'
@@ -299,6 +299,14 @@ servers:
 install-servers:
 	@echo -e '$(COLORGREEN)Installing servers...$(COLORDEFAULT)'
 	$(Q)$(MAKE) -C servers $(MAKEFLAGS) install
+
+net:
+	@echo -e '$(COLORGREEN)Compiling network drivers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C net $(MAKEFLAGS)
+
+install-net:
+	@echo -e '$(COLORGREEN)Installing network drivers...$(COLORDEFAULT)'
+	$(Q)$(MAKE) -C net $(MAKEFLAGS) install
 
 tests:
 	@echo -e '$(COLORGREEN)Compiling and installing tests...$(COLORDEFAULT)'

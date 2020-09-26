@@ -55,7 +55,8 @@ int sys_privctl(MESSAGE* m, struct proc* p)
 
         priv_id = PRIV_ID_NULL;
         if (m->BUF) {
-            memcpy(&priv, m->BUF, sizeof(struct priv));
+            data_vir_copy_check(p, KERNEL, &priv, p->endpoint, m->BUF,
+                                sizeof(struct priv));
 
             if (!(priv.flags & PRF_DYN_ID)) priv_id = priv.id;
         }
@@ -81,5 +82,9 @@ int sys_privctl(MESSAGE* m, struct proc* p)
 static int update_priv(struct proc* p, struct priv* priv)
 {
     p->priv->flags = priv->flags;
+
+    memcpy(&p->priv->syscall_mask, priv->syscall_mask,
+           sizeof(priv->syscall_mask));
+
     return 0;
 }
