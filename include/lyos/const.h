@@ -324,6 +324,7 @@ enum msgtype {
     EPOLL_CREATE1,
     EPOLL_CTL,
     EPOLL_WAIT,
+    SOCKET,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -357,6 +358,8 @@ enum msgtype {
     FS_MKDIR,
     FS_RDLINK,
     FS_SYMLINK,
+
+    VFS_MAPDRIVER,
 
     FS_TXN_ID = VFS_TXN_BASE,
 
@@ -402,6 +405,10 @@ enum msgtype {
     CDEV_SELECT,
     CDEV_REPLY,
     CDEV_POLL_NOTIFY,
+
+    SDEV_SOCKET,
+    SDEV_SOCKETPAIR,
+    SDEV_SOCKET_REPLY,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE, /* 2100 */

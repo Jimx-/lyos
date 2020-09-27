@@ -121,7 +121,7 @@ void put_inode(struct inode* pin)
 
     if (pin->i_cnt <= 0) panic("VFS: put_inode: pin->i_cnt is already <= 0");
 
-    // tell FS driver if necessary
+    // TODO: handle this with vmnt operation
     if (pin->i_fs_ep != NO_TASK &&
         (ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num)) != 0) {
         err_code = ret;

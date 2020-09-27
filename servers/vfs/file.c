@@ -149,6 +149,21 @@ struct file_desc* alloc_filp()
     return NULL;
 }
 
+int check_fds(struct fproc* fp, int nfds)
+{
+    int i;
+
+    for (i = 0; i < NR_FILES; i++) {
+        if (fp->filp[i] == NULL) {
+            if (--nfds == 0) {
+                return 0;
+            }
+        }
+    }
+
+    return EMFILE;
+}
+
 int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
 {
     /* find an unused fd in proc's filp table and a free file slot */

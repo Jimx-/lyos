@@ -177,10 +177,11 @@ int init_service(struct sproc* sp, int init_type)
 int publish_service(struct sproc* sp)
 {
     char label[MAX_PATH];
+    int retval;
 
     char* name = sp->label;
     sprintf(label, SYSFS_SERVICE_DOMAIN_LABEL, name);
-    int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+    retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
     sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
     retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE);
@@ -188,6 +189,11 @@ int publish_service(struct sproc* sp)
     sp->pci_acl.endpoint = sp->endpoint;
     if (sp->pci_acl.nr_pci_class > 0 || sp->pci_acl.nr_pci_id > 0) {
         pci_set_acl(&sp->pci_acl);
+    }
+
+    if (sp->nr_domain) {
+        retval = mapdriver(sp->label, sp->domain, sp->nr_domain);
+        if (retval) return retval;
     }
 
     return retval;

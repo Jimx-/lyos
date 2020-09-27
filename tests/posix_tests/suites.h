@@ -6,5 +6,6 @@ extern MunitTest eventfd_tests[];
 extern MunitTest signalfd_tests[];
 extern MunitTest timerfd_tests[];
 extern MunitTest epoll_tests[];
+extern MunitTest uds_tests[];
 
 #endif

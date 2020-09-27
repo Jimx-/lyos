@@ -1,10 +1,15 @@
-#ifndef _UAPI_IPC_H_
-#define _UAPI_IPC_H_
+#ifndef _UAPI_LYOS_IPC_H_
+#define _UAPI_LYOS_IPC_H_
 
 #include <sys/types.h>
 
 #define VERIFY_MESS_SIZE(msg_type) \
     typedef int _VERIFY_##msg_type[sizeof(struct msg_type) == 56 ? 1 : -1]
+
+#define BEGIN_MESS_DECL(name) struct name
+#define END_MESS_DECL(name)  \
+    __attribute__((packed)); \
+    VERIFY_MESS_SIZE(name);
 
 /**
  * MESSAGE mechanism is borrowed from MINIX
@@ -188,7 +193,7 @@ struct mess_vfs_timerfd {
     void* new_value;
     void* old_value;
 
-    __u8 pad[44 - 2 * sizeof(void*)];
+    __u8 _pad[44 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_timerfd);
 
@@ -201,9 +206,29 @@ struct mess_vfs_epoll {
     int timeout;
     void* events;
 
-    __u8 pad[32 - sizeof(void*)];
-};
+    __u8 _pad[32 - sizeof(void*)];
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_epoll);
+
+struct mess_vfs_mapdriver {
+    void* label;
+    int label_len;
+    int* domains;
+    int nr_domains;
+
+    __u8 _pad[48 - 2 * sizeof(void*)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_mapdriver);
+
+BEGIN_MESS_DECL(mess_vfs_socket)
+{
+    int domain;
+    int type;
+    int protocol;
+
+    __u8 _pad[44];
+}
+END_MESS_DECL(mess_vfs_socket)
 
 struct mess_vfs_fs_symlink {
     dev_t dev;
@@ -374,6 +399,29 @@ struct mess_devman_register_reply {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_devman_register_reply);
 
+BEGIN_MESS_DECL(mess_sockdriver_socket)
+{
+    int req_id;
+    endpoint_t endpoint;
+    int domain;
+    int type;
+    int protocol;
+
+    __u8 _pad[36];
+}
+END_MESS_DECL(mess_sockdriver_socket)
+
+BEGIN_MESS_DECL(mess_sockdriver_socket_reply)
+{
+    int req_id;
+    int status;
+    int sock_id;
+    int sock_id2;
+
+    __u8 _pad[40];
+}
+END_MESS_DECL(mess_sockdriver_socket_reply)
+
 typedef struct {
     int source;
     int type;
@@ -395,6 +443,8 @@ typedef struct {
         struct mess_vfs_signalfd m_vfs_signalfd;
         struct mess_vfs_timerfd m_vfs_timerfd;
         struct mess_vfs_epoll m_vfs_epoll;
+        struct mess_vfs_mapdriver m_vfs_mapdriver;
+        struct mess_vfs_socket m_vfs_socket;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
@@ -412,6 +462,8 @@ typedef struct {
         struct mess_input_tty_event m_input_tty_event;
         struct mess_input_conf m_input_conf;
         struct mess_devman_register_reply m_devman_register_reply;
+        struct mess_sockdriver_socket m_sockdriver_socket;
+        struct mess_sockdriver_socket_reply m_sockdriver_socket_reply;
 
         __u8 _pad[56];
     } u;
@@ -419,5 +471,9 @@ typedef struct {
 typedef int _VERIFY_MESSAGE[sizeof(MESSAGE) == 64 ? 1 : -1];
 
 int send_recv(int function, int src_dest, MESSAGE* msg);
+
+#undef VERIFY_MESS_SIZE
+#undef BEGIN_MESS_DECL
+#undef END_MESS_DECL
 
 #endif

@@ -29,4 +29,6 @@
 
 #define NR_WORKER_THREADS 8
 
+#define NR_SOCKDEVS 8
+
 #endif

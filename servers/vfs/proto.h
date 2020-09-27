@@ -128,9 +128,11 @@ void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 void unlock_filp(struct file_desc* filp);
 void unlock_filps(struct file_desc* filp1, struct file_desc* filp2);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
+int check_fds(struct fproc* fp, int nfds);
 int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
 
-/* vfs/mmap.c */
+/* vfs/cdev.c */
+void init_cdev(void);
 int cdev_mmap(dev_t dev, endpoint_t src, void* vaddr, off_t offset,
               size_t length, void** retaddr, struct fproc* fp);
 int cdev_reply(MESSAGE* msg);
@@ -166,5 +168,21 @@ int do_timerfd_gettime(void);
 int do_epoll_create1(void);
 int do_epoll_ctl(void);
 int do_epoll_wait(void);
+
+/* vfs/driver.c */
+int do_mapdriver(void);
+
+/* vfs/sdev.c */
+void init_sdev(void);
+int sdev_mapdriver(const char* label, endpoint_t endpoint, const int* domains,
+                   int nr_domains);
+int sdev_socket(endpoint_t src, int domain, int type, int protocol, dev_t* dev,
+                int pair);
+int sdev_close(dev_t dev);
+void sdev_reply(MESSAGE* msg);
+
+/* vfs/socket.c */
+void mount_sockfs(void);
+int do_socket(void);
 
 #endif

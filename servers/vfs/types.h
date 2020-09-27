@@ -113,4 +113,6 @@ struct file_system {
     int fs_ep;
 };
 
+typedef int32_t sockid_t;
+
 #endif

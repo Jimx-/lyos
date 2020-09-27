@@ -115,6 +115,9 @@ int main()
         case CDEV_POLL_NOTIFY:
             cdev_reply(&msg);
             break;
+        case SDEV_SOCKET_REPLY:
+            sdev_reply(&msg);
+            break;
         case PM_VFS_EXEC:
             fproc = vfs_endpt_proc(msg.ENDPOINT);
             dispatch_work(&msg, do_work);
@@ -259,6 +262,12 @@ static void do_work(void)
     case EPOLL_WAIT:
         self->msg_out.RETVAL = do_epoll_wait();
         break;
+    case VFS_MAPDRIVER:
+        self->msg_out.RETVAL = do_mapdriver();
+        break;
+    case SOCKET:
+        self->msg_out.RETVAL = do_socket();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;
@@ -311,6 +320,8 @@ void init_vfs()
         init_waitqueue_head(&fproc_table[i].signalfd_wq);
     }
 
+    init_cdev();
+    init_sdev();
     init_inode_table();
     init_select();
 
@@ -360,6 +371,7 @@ static void init_root(void)
 
     mount_pipefs();
     mount_anonfs();
+    mount_sockfs();
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root

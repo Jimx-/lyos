@@ -16,13 +16,16 @@
 #ifndef _SYSUTILS_H_
 #define _SYSUTILS_H_
 
-#include <signal.h>
+#include <sys/types.h>
+#include <lyos/types.h>
+#include <lyos/ipc.h>
 #include <lyos/param.h>
+#include <signal.h>
 #include <asm/cpu_info.h>
 
 #define SYS_CALL_MASK_SIZE BITCHUNKS(NR_SYS_CALL)
 
-#define PRX_OUTPUT 1
+#define PRX_OUTPUT   1
 #define PRX_REGISTER 2
 int printl(const char* fmt, ...);
 int kernlog_register();
@@ -57,10 +60,10 @@ int kernel_fork(endpoint_t parent_ep, int child_proc, endpoint_t* child_ep,
 int kernel_clear(endpoint_t ep);
 
 #define KEXEC_ENDPOINT u.m4.m4i1
-#define KEXEC_SP u.m4.m4p1
-#define KEXEC_NAME u.m4.m4p2
-#define KEXEC_IP u.m4.m4p3
-#define KEXEC_PSSTR u.m4.m4p4
+#define KEXEC_SP       u.m4.m4p1
+#define KEXEC_NAME     u.m4.m4p2
+#define KEXEC_IP       u.m4.m4p3
+#define KEXEC_PSSTR    u.m4.m4p4
 int kernel_exec(endpoint_t ep, void* sp, char* name, void* ip,
                 struct ps_strings* ps);
 
@@ -78,8 +81,8 @@ int get_system_hz();
 #define IDLE_TICKS u.m3.m3l2
 int get_ticks(clock_t* ticks, clock_t* idle_ticks);
 
-#define EXP_TIME u.m3.m3l1
-#define ABS_TIME u.m3.m3i2
+#define EXP_TIME  u.m3.m3l1
+#define ABS_TIME  u.m3.m3i2
 #define TIME_LEFT u.m3.m3l1
 #define kernel_alarm(expire_time, abs_time) \
     kernel_alarm2(expire_time, abs_time, NULL)
@@ -101,5 +104,7 @@ void* mm_remap(endpoint_t dest, endpoint_t src, void* dest_addr, void* src_addr,
                size_t size);
 
 pid_t get_epinfo(endpoint_t ep, uid_t* euid, gid_t* egid);
+
+int mapdriver(const char* label, const int* domains, int nr_domains);
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef _UAPI_TYPES_H_
-#define _UAPI_TYPES_H_
+#ifndef _UAPI_LYOS_TYPES_H_
+#define _UAPI_LYOS_TYPES_H_
 
 #include <asm/types.h>
 

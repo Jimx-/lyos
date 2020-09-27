@@ -13,8 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _TYPES_H_
-#define _TYPES_H_
+#ifndef _LYOS_TYPES_H_
+#define _LYOS_TYPES_H_
 
 #include <lyos/config.h>
 #include <uapi/lyos/types.h>

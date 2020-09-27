@@ -40,8 +40,9 @@ EXTERN struct fproc {
     struct worker_thread* worker;
 } fproc_table[NR_PROCS];
 
-#define FPF_INUSE   0x1
-#define FPF_PENDING 0x2
+#define FPF_INUSE    0x01
+#define FPF_PENDING  0x02
+#define FPF_DRV_PROC 0x04
 
 void lock_fproc(struct fproc* fp);
 void unlock_fproc(struct fproc* fp);

@@ -171,7 +171,7 @@ typedef __off_t off_t; /* file offset */
 #define _OFF_T_DECLARED
 #endif
 #ifndef _DEV_T_DECLARED
-typedef __dev_t dev_t; /* device number or struct cdev */
+typedef unsigned long dev_t; /* device number or struct cdev */
 #define _DEV_T_DECLARED
 #endif
 #ifndef _UID_T_DECLARED

@@ -37,7 +37,7 @@
 
 struct cdmap cdmap[NR_DEVICES];
 
-static void init_cdev()
+void init_cdev(void)
 {
     int i;
     for (i = 0; i < NR_DEVICES; i++) {
@@ -67,13 +67,6 @@ static void cdev_recv(endpoint_t src, MESSAGE* msg)
 
 static struct cdmap* cdev_lookup(dev_t dev)
 {
-    static int first = 1;
-
-    if (first) {
-        init_cdev();
-        first = 0;
-    }
-
     dev_t major = MAJOR(dev);
     if (cdmap[major].driver == NO_TASK)
         if (!cdev_update(dev)) return NULL;
@@ -252,25 +245,41 @@ static ssize_t cdev_read(struct file_desc* filp, char* buf, size_t count,
                          loff_t* ppos, struct fproc* fp)
 {
     struct inode* pin = filp->fd_inode;
+    ssize_t retval;
 
-    return cdev_io(CDEV_READ, pin->i_specdev, fp->endpoint, buf, *ppos, count,
-                   fp);
+    unlock_filp(filp);
+    retval =
+        cdev_io(CDEV_READ, pin->i_specdev, fp->endpoint, buf, *ppos, count, fp);
+    lock_filp(filp, RWL_READ);
+
+    return retval;
 }
 
 static ssize_t cdev_write(struct file_desc* filp, const char* buf, size_t count,
                           loff_t* ppos, struct fproc* fp)
 {
     struct inode* pin = filp->fd_inode;
+    ssize_t retval;
 
-    return cdev_io(CDEV_WRITE, pin->i_specdev, fp->endpoint, (char*)buf, *ppos,
-                   count, fp);
+    unlock_filp(filp);
+    retval = cdev_io(CDEV_WRITE, pin->i_specdev, fp->endpoint, (char*)buf,
+                     *ppos, count, fp);
+    lock_filp(filp, RWL_WRITE);
+
+    return retval;
 }
 
 static int cdev_ioctl(struct inode* pin, struct file_desc* filp,
                       unsigned int cmd, unsigned long arg, struct fproc* fp)
 {
-    return cdev_io(CDEV_IOCTL, pin->i_specdev, fp->endpoint, (void*)arg, 0, cmd,
-                   fp);
+    int retval;
+
+    unlock_filp(filp);
+    retval = cdev_io(CDEV_IOCTL, pin->i_specdev, fp->endpoint, (void*)arg, 0,
+                     cmd, fp);
+    lock_filp(filp, RWL_WRITE);
+
+    return retval;
 }
 
 static __poll_t cdev_poll(struct file_desc* filp, __poll_t mask,
