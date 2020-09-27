@@ -15,16 +15,18 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
-#include "stddef.h"
-#include "lyos/const.h"
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <stddef.h>
+#include <lyos/const.h>
 #include <lyos/sysutils.h>
-#include "string.h"
-#include "lyos/fs.h"
-#include "lyos/proc.h"
+#include <string.h>
+#include <lyos/fs.h>
+#include <lyos/proc.h>
+#include <lyos/mgrant.h>
+
 #include "types.h"
 #include "errno.h"
 #include "path.h"
@@ -304,25 +306,38 @@ static int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
                           struct lookup_result* res)
 {
     MESSAGE m;
+    size_t name_len;
+    mgrant_id_t grant;
+    int retval;
+
+    name_len = strlen(pathname);
+    grant = mgrant_set_direct(fs_ep, (vir_bytes)pathname, name_len, MGF_READ);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_create cannot create grant");
 
     m.type = FS_CREATE;
-    m.CRDEV = (int)dev;
-    m.CRINO = (int)num;
-    m.CRUID = (int)uid;
-    m.CRGID = (int)gid;
-    m.CRPATHNAME = pathname;
-    m.CRNAMELEN = strlen(pathname);
-    m.CRMODE = (int)mode;
+    m.u.m_vfs_fs_create.dev = dev;
+    m.u.m_vfs_fs_create.num = num;
+    m.u.m_vfs_fs_create.uid = uid;
+    m.u.m_vfs_fs_create.gid = gid;
+    m.u.m_vfs_fs_create.grant = grant;
+    m.u.m_vfs_fs_create.name_len = name_len;
+    m.u.m_vfs_fs_create.mode = mode;
 
     fs_sendrec(fs_ep, &m);
+    retval = m.u.m_vfs_fs_create_reply.status;
+    mgrant_revoke(grant);
+
+    if (retval) return retval;
 
     res->fs_ep = fs_ep;
-    res->inode_nr = m.CRINO;
-    res->mode = m.CRMODE;
-    res->uid = m.CRUID;
-    res->gid = m.CRGID;
-    res->size = m.CRFILESIZE;
-    return m.CRRET;
+    res->inode_nr = m.u.m_vfs_fs_create_reply.num;
+    res->mode = m.u.m_vfs_fs_create_reply.mode;
+    res->uid = m.u.m_vfs_fs_create_reply.uid;
+    res->gid = m.u.m_vfs_fs_create_reply.gid;
+    res->size = m.u.m_vfs_fs_create_reply.size;
+
+    return 0;
 }
 
 /**
@@ -373,20 +388,28 @@ static int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
                          gid_t gid, char* pathname, mode_t mode)
 {
     MESSAGE m;
+    size_t name_len;
+    mgrant_id_t grant;
+
+    name_len = strlen(pathname);
+    grant = mgrant_set_direct(fs_ep, (vir_bytes)pathname, name_len, MGF_READ);
+    if (grant == GRANT_INVALID) panic("vfs: request_mkdir cannot create grant");
 
     memset(&m, 0, sizeof(MESSAGE));
     m.type = FS_MKDIR;
-    m.CRDEV = (int)dev;
-    m.CRINO = (int)num;
-    m.CRUID = (int)uid;
-    m.CRGID = (int)gid;
-    m.CRPATHNAME = pathname;
-    m.CRNAMELEN = strlen(pathname);
-    m.CRMODE = (int)mode;
+    m.u.m_vfs_fs_create.dev = dev;
+    m.u.m_vfs_fs_create.num = num;
+    m.u.m_vfs_fs_create.uid = uid;
+    m.u.m_vfs_fs_create.gid = gid;
+    m.u.m_vfs_fs_create.grant = grant;
+    m.u.m_vfs_fs_create.name_len = name_len;
+    m.u.m_vfs_fs_create.mode = mode;
 
     fs_sendrec(fs_ep, &m);
 
-    return m.CRRET;
+    mgrant_revoke(grant);
+
+    return m.u.m_vfs_fs_create_reply.status;
 }
 
 int do_mkdir(void)

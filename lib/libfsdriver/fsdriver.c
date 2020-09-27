@@ -62,10 +62,10 @@ int fsdriver_start(struct fsdriver* fsd)
             m.RWRET = fsdriver_readwrite(fsd, &m);
             break;
         case FS_CREATE:
-            m.CRRET = fsdriver_create(fsd, &m);
+            m.u.m_vfs_fs_create_reply.status = fsdriver_create(fsd, &m);
             break;
         case FS_MKDIR:
-            m.CRRET = fsdriver_mkdir(fsd, &m);
+            m.u.m_vfs_fs_create_reply.status = fsdriver_mkdir(fsd, &m);
             break;
         case FS_FTRUNC:
             m.RET_RETVAL = fsdriver_ftrunc(fsd, &m);

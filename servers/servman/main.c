@@ -89,7 +89,7 @@ static void servman_init()
 
         /* syscall mask */
         int j;
-        if (sp->priv.flags == TASK_FLAGS) {
+        if (sp->priv.flags & TASK_FLAGS) {
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
                 sp->priv.syscall_mask[j] = ~0;
             }
@@ -97,6 +97,10 @@ static void servman_init()
             for (j = 0; j < BITCHUNKS(NR_SYS_CALLS); j++) {
                 sp->priv.syscall_mask[j] = 0;
             }
+
+            /* allow these calls for user processes */
+            SET_BIT(sp->priv.syscall_mask, NR_SENDREC);
+            SET_BIT(sp->priv.syscall_mask, NR_GETINFO);
         }
 
         /* set privilege */

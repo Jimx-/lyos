@@ -32,7 +32,7 @@ struct boot_priv boot_priv_table[] = {
     {TASK_SERVMAN, "SERVMAN", TASK_FLAGS},
     {TASK_DEVMAN, "DEVMAN", TASK_FLAGS},
     {TASK_SCHED, "SCHED", TASK_FLAGS},
-    {TASK_FS, "VFS", TASK_FLAGS},
+    {TASK_FS, "VFS", TASK_FLAGS | PRF_ALLOW_PROXY_GRANT},
     {TASK_SYS, "SYS", TASK_FLAGS},
     {TASK_TTY, "TTY", TASK_FLAGS},
     {TASK_RD, "RD", TASK_FLAGS},

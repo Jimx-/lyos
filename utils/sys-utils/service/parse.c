@@ -12,10 +12,11 @@
 
 #include "cJSON.h"
 
-#define PCI_CLASS  "pci_class"
-#define PCI_DEVICE "pci_device"
-#define DOMAIN     "domain"
-#define SYSCALL    "syscall"
+#define PCI_CLASS         "pci_class"
+#define PCI_DEVICE        "pci_device"
+#define DOMAIN            "domain"
+#define SYSCALL           "syscall"
+#define ALLOW_PROXY_GRANT "allow_proxy_grant"
 
 #define SYSCALL_BASIC "basic"
 #define SYSCALL_ALL   "all"
@@ -96,18 +97,33 @@ static struct {
     char* name;
     int call_nr;
 } system_tab[] = {
-    {"printx", NR_PRINTX},     {"sendrec", NR_SENDREC},
-    {"datacopy", NR_DATACOPY}, {"privctl", NR_PRIVCTL},
-    {"getinfo", NR_GETINFO},   {"vmctl", NR_VMCTL},
-    {"umap", NR_UMAP},         {"portio", NR_PORTIO},
-    {"vportio", NR_VPORTIO},   {"sportio", NR_SPORTIO},
-    {"irqctl", NR_IRQCTL},     {"fork", NR_FORK},
-    {"clear", NR_CLEAR},       {"exec", NR_EXEC},
-    {"sigsend", NR_SIGSEND},   {"sigreturn", NR_SIGRETURN},
-    {"kill", NR_KILL},         {"getksig", NR_GETKSIG},
-    {"endksig", NR_ENDKSIG},   {"times", NR_TIMES},
-    {"trace", NR_TRACE},       {"alarm", NR_ALARM},
-    {"kprofile", NR_KPROFILE}, {NULL, 0},
+    {"printx", NR_PRINTX},
+    {"sendrec", NR_SENDREC},
+    {"datacopy", NR_DATACOPY},
+    {"privctl", NR_PRIVCTL},
+    {"getinfo", NR_GETINFO},
+    {"vmctl", NR_VMCTL},
+    {"umap", NR_UMAP},
+    {"portio", NR_PORTIO},
+    {"vportio", NR_VPORTIO},
+    {"sportio", NR_SPORTIO},
+    {"irqctl", NR_IRQCTL},
+    {"fork", NR_FORK},
+    {"clear", NR_CLEAR},
+    {"exec", NR_EXEC},
+    {"sigsend", NR_SIGSEND},
+    {"sigreturn", NR_SIGRETURN},
+    {"kill", NR_KILL},
+    {"getksig", NR_GETKSIG},
+    {"endksig", NR_ENDKSIG},
+    {"times", NR_TIMES},
+    {"trace", NR_TRACE},
+    {"alarm", NR_ALARM},
+    {"kprofile", NR_KPROFILE},
+    {"setgrant", NR_SETGRANT},
+    {"safecopyfrom", NR_SAFECOPYFROM},
+    {"safecopyto", NR_SAFECOPYTO},
+    {NULL, 0},
 };
 
 static int parse_syscall(cJSON* root, struct service_up_req* up_req)
@@ -152,6 +168,18 @@ static int parse_syscall(cJSON* root, struct service_up_req* up_req)
     } else {
         return EINVAL;
     }
+
+    return 0;
+}
+
+static int parse_grant(cJSON* root, struct service_up_req* up_req)
+{
+    cJSON* allow_proxy_grant = cJSON_GetObjectItem(root, ALLOW_PROXY_GRANT);
+    if (!allow_proxy_grant) return 0;
+
+    if (allow_proxy_grant->type != cJSON_Number) return EINVAL;
+
+    if (allow_proxy_grant->valueint) up_req->flags |= SUR_ALLOW_PROXY_GRANT;
 
     return 0;
 }
@@ -229,6 +257,9 @@ int parse_config(char* progname, char* path, struct service_up_req* up_req)
     parse_pci_device(root, up_req);
 
     r = parse_syscall(root, up_req);
+    if (r) return r;
+
+    r = parse_grant(root, up_req);
     if (r) return r;
 
     r = parse_domain(root, up_req);

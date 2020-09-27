@@ -40,8 +40,13 @@ int get_proctab(struct proc* proc);
 int get_cputicks(unsigned int cpu, u64* ticks);
 int privctl(int whom, int request, void* data);
 
-int data_copy(endpoint_t dest_pid, void* dest_addr, endpoint_t src_pid,
+int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
               void* src_addr, int len);
+
+int safecopy_from(endpoint_t src_ep, mgrant_id_t grant, loff_t offset,
+                  void* addr, size_t len);
+int safecopy_to(endpoint_t dest_ep, mgrant_id_t grant, loff_t offset,
+                void* addr, size_t len);
 
 /* env.c */
 void env_setargs(int argc, char* argv[]);

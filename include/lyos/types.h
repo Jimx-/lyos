@@ -29,6 +29,8 @@ typedef __u16 u16;
 typedef __s8 s8;
 typedef __u8 u8;
 
+typedef __endpoint_t endpoint_t;
+
 static __attribute__((always_inline)) inline u64 make64(unsigned long hi,
                                                         unsigned long lo)
 {
@@ -79,6 +81,8 @@ typedef struct irq_hook {
 typedef int (*irq_handler_t)(irq_hook_t* irq_hook);
 
 typedef u16 port_t;
+
+typedef __mgrant_id_t mgrant_id_t;
 
 struct vir_addr {
     void* addr;

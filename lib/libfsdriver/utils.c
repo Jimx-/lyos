@@ -37,3 +37,18 @@ int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
 {
     return data_copy(data->src, (void*)(data->buf + offset), SELF, buf, len);
 }
+
+int fsdriver_copy_name(endpoint_t endpoint, mgrant_id_t grant, size_t len,
+                       char* name, size_t size, int non_empty)
+{
+    int retval;
+
+    if (non_empty && !len) return EINVAL;
+    if (len > size) return ENAMETOOLONG;
+
+    if ((retval = safecopy_from(endpoint, grant, 0, name, len)) != 0)
+        return retval;
+    name[len] = '\0';
+
+    return 0;
+}

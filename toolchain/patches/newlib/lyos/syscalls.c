@@ -175,7 +175,7 @@ int execl(const char* path, const char* arg, ...)
     return ENOSYS;
 }
 
-endpoint_t get_endpoint()
+__endpoint_t get_endpoint()
 {
     MESSAGE msg;
     msg.type = GETSETID;

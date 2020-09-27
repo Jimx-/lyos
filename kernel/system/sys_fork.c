@@ -53,8 +53,8 @@ int sys_fork(MESSAGE* m, struct proc* p_proc)
     child->p_parent = parent_ep;
 
     /* child of priv proc, reset its priv structure and block it */
-    if (!child->priv || child->priv->flags & PRF_PRIV_PROC) {
-        child->priv = NULL;
+    if (child->priv->flags & PRF_PRIV_PROC) {
+        child->priv = priv_addr(PRIV_ID_USER);
         PST_SET_LOCKED(child, PST_NO_PRIV);
     }
 

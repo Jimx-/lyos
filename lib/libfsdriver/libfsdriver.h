@@ -78,6 +78,8 @@ int fsdriver_copyin(struct fsdriver_data* data, size_t offset, void* buf,
                     size_t len);
 int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
                      size_t len);
+int fsdriver_copy_name(endpoint_t endpoint, mgrant_id_t grant, size_t len,
+                       char* name, size_t size, int non_empty);
 
 int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
                               struct fsdriver_data* data, size_t data_size,

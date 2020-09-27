@@ -158,7 +158,7 @@ void arch_stop_context(struct proc* p, u64 delta)
     int counter;
 
     if (p->endpoint >= 0) {
-        if (p->priv->flags == TASK_FLAGS) {
+        if (p->priv != priv_addr(PRIV_ID_USER)) {
             counter = CPS_SYS;
         } else {
             counter = CPS_USER;

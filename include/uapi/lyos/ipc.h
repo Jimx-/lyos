@@ -2,6 +2,7 @@
 #define _UAPI_LYOS_IPC_H_
 
 #include <sys/types.h>
+#include <lyos/types.h>
 
 #define VERIFY_MESS_SIZE(msg_type) \
     typedef int _VERIFY_##msg_type[sizeof(struct msg_type) == 56 ? 1 : -1]
@@ -73,8 +74,20 @@ struct mess5 { /* 40 bytes */
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess5);
 
+BEGIN_MESS_DECL(mess_safecopy)
+{
+    __endpoint_t src_dest;
+    __mgrant_id_t grant;
+    __u64 offset;
+    void* addr;
+    size_t len;
+
+    __u8 _pad[40 - sizeof(void*) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_safecopy)
+
 struct mess_mm_mmap {
-    endpoint_t who;
+    __endpoint_t who;
     size_t offset;
     size_t length;
 
@@ -104,8 +117,8 @@ struct mess_mm_mmap_reply {
 VERIFY_MESS_SIZE(mess_mm_mmap_reply);
 
 struct mess_mm_remap {
-    endpoint_t src;
-    endpoint_t dest;
+    __endpoint_t src;
+    __endpoint_t dest;
     void* src_addr;
     void* dest_addr;
     size_t size;
@@ -235,17 +248,46 @@ struct mess_vfs_fs_symlink {
     ino_t dir_ino;
     void* name;
     size_t name_len;
-    endpoint_t src;
+    __endpoint_t src;
     void* target;
     size_t target_len;
     uid_t uid;
     gid_t gid;
 
     __u8 _pad[56 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(void*) -
-              2 * sizeof(size_t) - sizeof(endpoint_t) - sizeof(uid_t) -
+              2 * sizeof(size_t) - sizeof(__endpoint_t) - sizeof(uid_t) -
               sizeof(gid_t)];
 } __attribute((packed));
 VERIFY_MESS_SIZE(mess_vfs_fs_symlink);
+
+BEGIN_MESS_DECL(mess_vfs_fs_create)
+{
+    dev_t dev;
+    ino_t num;
+    uid_t uid;
+    gid_t gid;
+    __mgrant_id_t grant;
+    int name_len;
+    mode_t mode;
+
+    __u8 _pad[48 - sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
+              sizeof(gid_t) - sizeof(mode_t)];
+}
+END_MESS_DECL(mess_vfs_fs_create)
+
+BEGIN_MESS_DECL(mess_vfs_fs_create_reply)
+{
+    int status;
+    ino_t num;
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+    size_t size;
+
+    __u8 _pad[52 - sizeof(ino_t) - sizeof(uid_t) - sizeof(gid_t) -
+              sizeof(size_t) - sizeof(mode_t)];
+}
+END_MESS_DECL(mess_vfs_fs_create_reply)
 
 struct mess_vfs_cdev_openclose {
     __u64 minor;
@@ -257,7 +299,7 @@ VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
 
 struct mess_vfs_cdev_readwrite {
     __u64 minor;
-    endpoint_t endpoint;
+    __endpoint_t endpoint;
     __u32 id;
     void* buf;
     __u32 request;
@@ -272,7 +314,7 @@ struct mess_vfs_cdev_mmap {
     __u64 minor;
     __u32 id;
     void* addr;
-    endpoint_t endpoint;
+    __endpoint_t endpoint;
     off_t pos;
     size_t count;
 
@@ -307,7 +349,7 @@ struct mess_vfs_cdev_poll_notify {
 VERIFY_MESS_SIZE(mess_vfs_cdev_poll_notify);
 
 struct mess_vfs_pm_signalfd {
-    endpoint_t endpoint;
+    __endpoint_t endpoint;
     unsigned int sigmask;
     void* buf;
 
@@ -317,7 +359,7 @@ VERIFY_MESS_SIZE(mess_vfs_pm_signalfd);
 
 struct mess_pm_vfs_signalfd_reply {
     int status;
-    endpoint_t endpoint;
+    __endpoint_t endpoint;
 
     __u8 _pad[48];
 } __attribute__((packed));
@@ -340,7 +382,7 @@ struct mess_bdev_blockdriver_msg {
     size_t count;
     void* buf;
 
-    endpoint_t endpoint;
+    __endpoint_t endpoint;
     int request;
 
     __u8 _pad[36 - sizeof(void*) - sizeof(size_t)];
@@ -402,7 +444,7 @@ VERIFY_MESS_SIZE(mess_devman_register_reply);
 BEGIN_MESS_DECL(mess_sockdriver_socket)
 {
     int req_id;
-    endpoint_t endpoint;
+    __endpoint_t endpoint;
     int domain;
     int type;
     int protocol;
@@ -431,6 +473,7 @@ typedef struct {
         struct mess3 m3;
         struct mess4 m4;
         struct mess5 m5;
+        struct mess_safecopy m_safecopy;
         struct mess_mm_mmap m_mm_mmap;
         struct mess_mm_mmap_reply m_mm_mmap_reply;
         struct mess_mm_remap m_mm_remap;
@@ -446,6 +489,8 @@ typedef struct {
         struct mess_vfs_mapdriver m_vfs_mapdriver;
         struct mess_vfs_socket m_vfs_socket;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
+        struct mess_vfs_fs_create m_vfs_fs_create;
+        struct mess_vfs_fs_create_reply m_vfs_fs_create_reply;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;

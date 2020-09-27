@@ -65,17 +65,6 @@
 #define RWCNT  u.m3.m3i4
 #define RWRET  u.m3.m3l2
 
-/* for create */
-#define CRDEV      u.m3.m3i1
-#define CRRET      u.m3.m3i1
-#define CRINO      u.m3.m3i2
-#define CRUID      u.m3.m3i3
-#define CRGID      u.m3.m3i4
-#define CRNAMELEN  u.m3.m3l1
-#define CRFILESIZE u.m3.m3l1
-#define CRMODE     u.m3.m3l2
-#define CRPATHNAME u.m3.m3p1
-
 /* for mm request */
 #define MMRTYPE      u.m3.m3i1
 #define MMRRESULT    u.m3.m3i1

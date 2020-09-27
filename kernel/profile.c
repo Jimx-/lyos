@@ -80,8 +80,7 @@ static void profile_sample(struct proc* p, void* pc)
     lock_proc(p);
     if (p == get_cpulocal_var_ptr(idle_proc)) {
         kprof_info.idle_samples++;
-    } else if ((p->priv && (p->priv->flags & PRF_PRIV_PROC)) ||
-               p->endpoint == KERNEL) {
+    } else if (p->priv->flags & PRF_PRIV_PROC || p->endpoint == KERNEL) {
         kprof_info.system_samples++;
 
         if (!(p->flags & PF_PROFILE_RECORDED)) {

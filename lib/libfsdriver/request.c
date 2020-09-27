@@ -88,68 +88,57 @@ int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m)
 
 int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
 {
-    mode_t mode = (mode_t)(m->CRMODE);
-    uid_t uid = (uid_t)(m->CRUID);
-    gid_t gid = (gid_t)(m->CRGID);
-    int src = m->source;
-
-    dev_t dev = m->CRDEV;
-    ino_t num = (ino_t)(m->CRINO);
+    mode_t mode = m->u.m_vfs_fs_create.mode;
+    uid_t uid = m->u.m_vfs_fs_create.uid;
+    gid_t gid = m->u.m_vfs_fs_create.gid;
+    endpoint_t src = m->source;
+    dev_t dev = m->u.m_vfs_fs_create.dev;
+    ino_t num = m->u.m_vfs_fs_create.num;
+    size_t len = m->u.m_vfs_fs_create.name_len;
+    char pathname[NAME_MAX + 1];
+    int retval;
 
     if (fsd->fs_create == NULL) return ENOSYS;
 
     struct fsdriver_node fn;
     memset(&fn, 0, sizeof(fn));
 
-    char pathname[NAME_MAX + 1];
-    int len = m->CRNAMELEN;
+    if ((retval = fsdriver_copy_name(src, m->u.m_vfs_fs_create.grant, len,
+                                     pathname, NAME_MAX, TRUE)) != 0)
+        return retval;
 
-    /* error: name too long */
-    if (len > NAME_MAX) {
-        return ENAMETOOLONG;
-    }
-
-    data_copy(SELF, pathname, src, m->CRPATHNAME, len);
-    pathname[len] = '\0';
-
-    int retval = fsd->fs_create(dev, num, pathname, mode, uid, gid, &fn);
+    retval = fsd->fs_create(dev, num, pathname, mode, uid, gid, &fn);
     if (retval) return retval;
 
     memset(m, 0, sizeof(MESSAGE));
-    m->CRINO = fn.fn_num;
-    m->CRMODE = fn.fn_mode;
-    m->CRFILESIZE = fn.fn_size;
-    m->CRUID = fn.fn_uid;
-    m->CRGID = fn.fn_gid;
+    m->u.m_vfs_fs_create_reply.num = fn.fn_num;
+    m->u.m_vfs_fs_create_reply.mode = fn.fn_mode;
+    m->u.m_vfs_fs_create_reply.size = fn.fn_size;
+    m->u.m_vfs_fs_create_reply.uid = fn.fn_uid;
+    m->u.m_vfs_fs_create_reply.gid = fn.fn_gid;
 
     return retval;
 }
 
 int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
 {
-    mode_t mode = (mode_t)(m->CRMODE);
-    uid_t uid = (uid_t)(m->CRUID);
-    gid_t gid = (gid_t)(m->CRGID);
-    int src = m->source;
-
-    dev_t dev = m->CRDEV;
-    ino_t num = (ino_t)(m->CRINO);
+    mode_t mode = m->u.m_vfs_fs_create.mode;
+    uid_t uid = m->u.m_vfs_fs_create.uid;
+    gid_t gid = m->u.m_vfs_fs_create.gid;
+    endpoint_t src = m->source;
+    dev_t dev = m->u.m_vfs_fs_create.dev;
+    ino_t num = m->u.m_vfs_fs_create.num;
+    size_t len = m->u.m_vfs_fs_create.name_len;
+    char pathname[NAME_MAX + 1];
+    int retval;
 
     if (fsd->fs_mkdir == NULL) return ENOSYS;
 
-    char pathname[NAME_MAX + 1];
-    int len = m->CRNAMELEN;
+    if ((retval = fsdriver_copy_name(src, m->u.m_vfs_fs_create.grant, len,
+                                     pathname, NAME_MAX, TRUE)) != 0)
+        return retval;
 
-    /* error: name too long */
-    if (len > NAME_MAX) {
-        return ENAMETOOLONG;
-    }
-
-    data_copy(SELF, pathname, src, m->CRPATHNAME, len);
-    pathname[len] = '\0';
-
-    int retval = fsd->fs_mkdir(dev, num, pathname, mode, uid, gid);
-    return retval;
+    return fsd->fs_mkdir(dev, num, pathname, mode, uid, gid);
 }
 
 int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)

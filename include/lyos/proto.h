@@ -170,6 +170,9 @@ int sys_times(MESSAGE* m, struct proc* p_proc);
 int sys_trace(MESSAGE* m, struct proc* p_proc);
 int sys_alarm(MESSAGE* m, struct proc* p_proc);
 int sys_kprofile(MESSAGE* m, struct proc* p_proc);
+int sys_setgrant(MESSAGE* m, struct proc* p_proc);
+int sys_safecopyfrom(MESSAGE* msg, struct proc* p_proc);
+int sys_safecopyto(MESSAGE* msg, struct proc* p_proc);
 
 /* syscall.asm */
 void sys_call(); /* int_handler */

@@ -44,6 +44,9 @@ int init_sproc(struct sproc* sp, struct service_up_req* up_req,
 {
     int i;
     sp->priv.flags = TASK_FLAGS;
+    if (up_req->flags & SUR_ALLOW_PROXY_GRANT) {
+        sp->priv.flags |= PRF_ALLOW_PROXY_GRANT;
+    }
 
     if (up_req->nr_pci_class > NR_PCI_CLASS) return EINVAL;
     if (up_req->nr_pci_class > 0) {

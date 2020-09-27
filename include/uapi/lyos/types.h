@@ -11,7 +11,9 @@ typedef __u16 __be16;
 typedef __u32 __be32;
 typedef __u64 __be64;
 
-typedef int endpoint_t;
+typedef int __endpoint_t;
+
+typedef __u32 __mgrant_id_t;
 
 typedef unsigned __poll_t;
 

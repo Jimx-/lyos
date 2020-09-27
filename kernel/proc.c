@@ -98,6 +98,7 @@ void init_proc()
 
         p->state = 0;
         p->flags = 0;
+        p->priv = NULL;
 
         if (i != TASK_MM) {
             PST_SET(p, PST_BOOTINHIBIT);

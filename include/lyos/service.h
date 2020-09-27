@@ -42,7 +42,8 @@ struct service_up_req {
     int labellen;
 
     int flags;
-#define SUR_BASIC_SYSCALLS 0x01
+#define SUR_BASIC_SYSCALLS    0x01
+#define SUR_ALLOW_PROXY_GRANT 0x02
 
     int nr_pci_id;
     struct service_pci_id pci_id[NR_PCI_DEVICE];
