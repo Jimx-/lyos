@@ -147,6 +147,7 @@ static int parse_syscall(cJSON* root, struct service_up_req* up_req)
             }
 
             if (!system_tab[j].name) {
+                fprintf(stderr, "service: unknown system call name %s\n", str);
                 return EINVAL;
             } else {
                 SET_BIT(up_req->syscall_mask, system_tab[j].call_nr);
@@ -163,9 +164,11 @@ static int parse_syscall(cJSON* root, struct service_up_req* up_req)
                 SET_BIT(up_req->syscall_mask, i);
             }
         } else {
+            fprintf(stderr, "service: unknown system call keyword %s\n", str);
             return EINVAL;
         }
     } else {
+        fprintf(stderr, "service: unknown system call value type\n");
         return EINVAL;
     }
 
@@ -177,9 +180,7 @@ static int parse_grant(cJSON* root, struct service_up_req* up_req)
     cJSON* allow_proxy_grant = cJSON_GetObjectItem(root, ALLOW_PROXY_GRANT);
     if (!allow_proxy_grant) return 0;
 
-    if (allow_proxy_grant->type != cJSON_Number) return EINVAL;
-
-    if (allow_proxy_grant->valueint) up_req->flags |= SUR_ALLOW_PROXY_GRANT;
+    if (cJSON_IsTrue(allow_proxy_grant)) up_req->flags |= SUR_ALLOW_PROXY_GRANT;
 
     return 0;
 }
@@ -223,6 +224,7 @@ static int parse_domain(cJSON* root, struct service_up_req* up_req)
         }
 
         if (domain <= 0 || domain >= PF_MAX) {
+            fprintf(stderr, "service: invalid domain %d\n", domain);
             return EINVAL;
         }
 
