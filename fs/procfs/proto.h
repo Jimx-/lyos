@@ -21,6 +21,8 @@
 
 ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
                          off_t offset, cbdata_t data);
+int procfs_lookup_hook(struct memfs_inode* parent, const char* name,
+                       cbdata_t data);
 
 void init_buf(char* ptr, size_t len, off_t off);
 void buf_printf(char* fmt, ...);

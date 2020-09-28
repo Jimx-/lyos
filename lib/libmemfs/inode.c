@@ -59,7 +59,7 @@ static void memfs_unhash_inode(struct memfs_inode * inode)
 }
 */
 
-struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index)
+struct memfs_inode* memfs_new_inode(ino_t num, const char* name, int index)
 {
     struct memfs_inode* pin =
         (struct memfs_inode*)malloc(sizeof(struct memfs_inode));
@@ -93,7 +93,7 @@ struct memfs_inode* memfs_find_inode(ino_t num)
 }
 
 struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
-                                             char* name)
+                                             const char* name)
 {
     struct memfs_inode* node;
 
@@ -153,9 +153,9 @@ void memfs_set_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat)
     memcpy(&pin->i_stat, stat, sizeof(struct memfs_stat));
 }
 
-struct memfs_inode* memfs_add_inode(struct memfs_inode* parent, char* name,
-                                    int index, struct memfs_stat* stat,
-                                    cbdata_t data)
+struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
+                                    const char* name, int index,
+                                    struct memfs_stat* stat, cbdata_t data)
 {
     ino_t new_num = allocate_inode_num();
 

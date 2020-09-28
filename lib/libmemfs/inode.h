@@ -62,12 +62,12 @@ extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 extern struct memfs_inode root_inode;
 
 void memfs_init_inode();
-struct memfs_inode* memfs_new_inode(ino_t num, char* name, int index);
+struct memfs_inode* memfs_new_inode(ino_t num, const char* name, int index);
 void memfs_set_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat);
 struct memfs_inode* memfs_get_root_inode();
 struct memfs_inode* memfs_find_inode(ino_t num);
 struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
-                                             char* name);
+                                             const char* name);
 struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
                                               int index);
 void memfs_addhash_inode(struct memfs_inode* inode);

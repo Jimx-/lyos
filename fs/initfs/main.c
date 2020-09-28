@@ -33,50 +33,38 @@
 #include "tar.h"
 #include "global.h"
 
-int main()
+#include <libfsdriver/libfsdriver.h>
+
+static int initfs_putinode(dev_t dev, ino_t num);
+static int initfs_sync(void);
+
+static const struct fsdriver initfs_fsd = {
+    .root_num = 0,
+
+    .fs_readsuper = initfs_readsuper,
+    .fs_putinode = initfs_putinode,
+    .fs_lookup = initfs_lookup,
+    .fs_readwrite = initfs_rdwt,
+    .fs_getdents = initfs_getdents,
+    .fs_stat = initfs_stat,
+    .fs_driver = fsdriver_driver,
+    .fs_sync = initfs_sync,
+};
+
+static void init_initfs(void)
 {
     printl("initfs: InitFS driver is running\n");
 
-    MESSAGE m;
-
-    int reply;
-
-    while (1) {
-        send_recv(RECEIVE_ASYNC, ANY, &m);
-
-        int txn_id = VFS_TXN_GET_ID(m.type);
-        int msgtype = VFS_TXN_GET_TYPE(m.type);
-        int src = m.source;
-        reply = 1;
-
-        switch (msgtype) {
-        case FS_LOOKUP:
-            m.RET_RETVAL = initfs_lookup(&m);
-            break;
-        case FS_PUTINODE:
-            break;
-        case FS_READSUPER:
-            m.RET_RETVAL = initfs_readsuper(&m);
-            break;
-        case FS_STAT:
-            m.STRET = initfs_stat(&m);
-            break;
-        case FS_RDWT:
-            m.RWRET = initfs_rdwt(&m);
-            break;
-        case FS_SYNC:
-            break;
-        default:
-            m.RET_RETVAL = ENOSYS;
-            break;
-        }
-
-        /* reply */
-        if (reply) {
-            m.type = VFS_TXN_TYPE_ID(FSREQ_RET, txn_id);
-            send_recv(SEND, src, &m);
-        }
-    }
-
-    return 0;
+    fsdriver_init_buffer_cache(1024);
 }
+
+int main()
+{
+    init_initfs();
+
+    return fsdriver_start(&initfs_fsd);
+}
+
+static int initfs_putinode(dev_t dev, ino_t num) { return 0; }
+
+static int initfs_sync(void) { return 0; }

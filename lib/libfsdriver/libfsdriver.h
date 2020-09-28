@@ -48,18 +48,18 @@ struct fsdriver {
     int (*fs_readsuper)(dev_t dev, int flags, struct fsdriver_node* node);
     int (*fs_mountpoint)(dev_t dev, ino_t num);
     int (*fs_putinode)(dev_t dev, ino_t num);
-    int (*fs_lookup)(dev_t dev, ino_t start, char* name,
+    int (*fs_lookup)(dev_t dev, ino_t start, const char* name,
                      struct fsdriver_node* fn, int* is_mountpoint);
-    int (*fs_create)(dev_t dev, ino_t dir_num, char* name, mode_t mode,
+    int (*fs_create)(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                      uid_t uid, gid_t gid, struct fsdriver_node* fn);
-    int (*fs_mkdir)(dev_t dev, ino_t dir_num, char* name, mode_t mode,
+    int (*fs_mkdir)(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                     uid_t uid, gid_t gid);
     ssize_t (*fs_readwrite)(dev_t dev, ino_t num, int rw_flag,
                             struct fsdriver_data* data, loff_t rwpos,
                             size_t count);
     ssize_t (*fs_rdlink)(dev_t dev, ino_t num, struct fsdriver_data* data,
                          size_t bytes);
-    int (*fs_symlink)(dev_t dev, ino_t dir_num, char* name, uid_t uid,
+    int (*fs_symlink)(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
                       gid_t gid, struct fsdriver_data* data, size_t bytes);
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data* data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
@@ -85,7 +85,7 @@ int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
                               struct fsdriver_data* data, size_t data_size,
                               char* buf, size_t buf_size);
 int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
-                             char* name, size_t name_len, int type);
+                             const char* name, size_t name_len, int type);
 int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list);
 
 int fsdriver_register(struct fsdriver* fsd);

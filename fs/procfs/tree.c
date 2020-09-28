@@ -100,7 +100,7 @@ static int is_pid_dir(struct memfs_inode* pin)
            (memfs_node_index(pin) != NO_INDEX);
 }
 
-static void build_one_pid_entry(struct memfs_inode* parent, char* name,
+static void build_one_pid_entry(struct memfs_inode* parent, const char* name,
                                 int slot)
 {
     if (memfs_find_inode_by_name(parent, name)) return;
@@ -116,7 +116,7 @@ static void build_one_pid_entry(struct memfs_inode* parent, char* name,
     }
 }
 
-static void build_pid_entries(struct memfs_inode* pin, char* name)
+static void build_pid_entries(struct memfs_inode* pin, const char* name)
 {
     int slot = memfs_node_index(pin);
 
@@ -125,7 +125,8 @@ static void build_pid_entries(struct memfs_inode* pin, char* name)
     }
 }
 
-int procfs_lookup_hook(struct memfs_inode* parent, char* name, cbdata_t data)
+int procfs_lookup_hook(struct memfs_inode* parent, const char* name,
+                       cbdata_t data)
 {
     static clock_t last_update = 0;
 

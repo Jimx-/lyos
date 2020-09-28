@@ -32,7 +32,7 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
+static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, const char* pathname,
                                     mode_t mode, block_t initial_block,
                                     uid_t uid, gid_t gid);
 
@@ -41,8 +41,8 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
  * @param p Ptr to the message.
  * @return  Zero on success.
  */
-int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
-                gid_t gid, struct fsdriver_node* fn)
+int ext2_create(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+                uid_t uid, gid_t gid, struct fsdriver_node* fn)
 {
     ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
     if (pin_dir == NULL) return ENOENT;
@@ -77,7 +77,7 @@ int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
  * @param  b        Block to start searching.
  * @return          Zero on success.
  */
-static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
+static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, const char* pathname,
                                     mode_t mode, block_t initial_block,
                                     uid_t uid, gid_t gid)
 {
@@ -124,8 +124,8 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, char* pathname,
     return pin;
 }
 
-int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
-               gid_t gid)
+int ext2_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+               uid_t uid, gid_t gid)
 {
     int retval, r1, r2;
     ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
@@ -165,8 +165,8 @@ int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
     return errno;
 }
 
-int ext2_symlink(dev_t dev, ino_t dir_num, char* name, uid_t uid, gid_t gid,
-                 struct fsdriver_data* data, size_t bytes)
+int ext2_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
+                 gid_t gid, struct fsdriver_data* data, size_t bytes)
 {
     ext2_inode_t *pin, *pin_dir;
     char* link_buf = NULL;

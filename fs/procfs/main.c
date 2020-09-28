@@ -35,7 +35,6 @@
 
 static int init_procfs();
 static int procfs_init_hook();
-int procfs_lookup_hook();
 
 struct memfs_hooks fs_hooks = {
     .init_hook = procfs_init_hook,

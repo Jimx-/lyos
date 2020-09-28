@@ -34,19 +34,18 @@
 #include "tar.h"
 #include <sys/stat.h>
 
-int initfs_stat(MESSAGE* p)
+int initfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data)
 {
-    dev_t dev = (dev_t)p->STDEV;
-    ino_t num = (ino_t)p->STINO;
-    int src = p->STSRC;
-    char* buf = p->STBUF;
-
     struct stat sbuf;
-    memset(&sbuf, 0, sizeof(struct stat));
-
     char header[512];
-    initfs_rw_dev(READ, dev, initfs_headers[num], 512, header);
     struct posix_tar_header* phdr = (struct posix_tar_header*)header;
+    int retval;
+
+    if (num >= initfs_headers_count) return -EINVAL;
+
+    memset(&sbuf, 0, sizeof(struct stat));
+    if ((retval = initfs_read_header(dev, num, header, sizeof(header))) != 0)
+        return retval;
 
     /* fill in the information */
     sbuf.st_dev = dev;
@@ -67,7 +66,5 @@ int initfs_stat(MESSAGE* p)
     sbuf.st_blocks = 0;
 
     /* copy the information */
-    data_copy(src, buf, SELF, &sbuf, sizeof(struct stat));
-
-    return 0;
+    return fsdriver_copyout(data, 0, &sbuf, sizeof(struct stat));
 }

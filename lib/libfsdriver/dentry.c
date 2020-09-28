@@ -48,7 +48,7 @@ int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
 }
 
 int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
-                             char* name, size_t name_len, int type)
+                             const char* name, size_t name_len, int type)
 {
     int retval = 0;
 

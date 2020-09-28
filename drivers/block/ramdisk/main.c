@@ -55,7 +55,7 @@
 
 #define MAX_RAMDISKS CONFIG_BLK_DEV_RAM_COUNT
 
-#define DEV_MEM 1
+#define DEV_MEM  1
 #define DEV_KMEM 2
 #define DEV_NULL 3
 #define DEV_ZERO 5
@@ -151,6 +151,7 @@ static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
         }
 
         bytes = iov->iov_len;
+
         if (pos + bytes > ramdisk->length) {
             bytes = ramdisk->length - pos;
         }

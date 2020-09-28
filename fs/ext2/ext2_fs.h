@@ -94,10 +94,10 @@ typedef struct ext2_superblock ext2_superblock_t;
 #define EXT2_BLOCK_ADDRESS_BYTES 4
 
 #define EXT2_NDIR_BLOCKS 12
-#define EXT2_IND_BLOCK EXT2_NDIR_BLOCKS
-#define EXT2_DIND_BLOCK (EXT2_IND_BLOCK + 1)
-#define EXT2_TIND_BLOCK (EXT2_DIND_BLOCK + 1)
-#define EXT2_N_BLOCKS (EXT2_TIND_BLOCK + 1)
+#define EXT2_IND_BLOCK   EXT2_NDIR_BLOCKS
+#define EXT2_DIND_BLOCK  (EXT2_IND_BLOCK + 1)
+#define EXT2_TIND_BLOCK  (EXT2_DIND_BLOCK + 1)
+#define EXT2_N_BLOCKS    (EXT2_TIND_BLOCK + 1)
 
 /* Block group descriptor. */
 struct ext2_bgdescriptor {
@@ -115,12 +115,12 @@ typedef struct ext2_bgdescriptor ext2_bgdescriptor_t;
 
 /* File Types */
 #define EXT2_S_IFSOCK 0xC000
-#define EXT2_S_IFLNK 0xA000
-#define EXT2_S_IFREG 0x8000
-#define EXT2_S_IFBLK 0x6000
-#define EXT2_S_IFDIR 0x4000
-#define EXT2_S_IFCHR 0x2000
-#define EXT2_S_IFIFO 0x1000
+#define EXT2_S_IFLNK  0xA000
+#define EXT2_S_IFREG  0x8000
+#define EXT2_S_IFBLK  0x6000
+#define EXT2_S_IFDIR  0x4000
+#define EXT2_S_IFCHR  0x2000
+#define EXT2_S_IFIFO  0x1000
 
 /* setuid, etc. */
 #define EXT2_S_ISUID 0x0800
@@ -139,10 +139,10 @@ typedef struct ext2_bgdescriptor ext2_bgdescriptor_t;
 #define EXT2_S_IXOTH 0x0001
 
 #define EXT2_GOOD_OLD_INODE_SIZE 128
-#define EXT2_GOOD_OLD_FIRST_INO 11
+#define EXT2_GOOD_OLD_FIRST_INO  11
 
 #define EXT2_GOOD_OLD_REV 0 /* The good old (original) format */
-#define EXT2_DYNAMIC_REV 1  /* V2 format w/ dynamic inode sizes */
+#define EXT2_DYNAMIC_REV  1 /* V2 format w/ dynamic inode sizes */
 
 #define EXT2_INODE_SIZE(s)                                               \
     (((s)->sb_rev_level == EXT2_GOOD_OLD_REV) ? EXT2_GOOD_OLD_INODE_SIZE \
@@ -227,13 +227,13 @@ typedef struct ext2_inode ext2_inode_t;
 
 #define EXT2_NAME_LEN 255
 
-#define SD_LOOK_UP 0  /* tells search_dir to lookup string */
-#define SD_MAKE 1     /* tells search_dir to make dir entry */
-#define SD_DELETE 2   /* tells search_dir to delete entry */
+#define SD_LOOK_UP  0 /* tells search_dir to lookup string */
+#define SD_MAKE     1 /* tells search_dir to make dir entry */
+#define SD_DELETE   2 /* tells search_dir to delete entry */
 #define SD_IS_EMPTY 3 /* tells search_dir to check if directory is empty */
 
 #define EXT2_MIN_DIR_ENTRY_SIZE 8
-#define EXT2_DIR_ENTRY_ALIGN 4
+#define EXT2_DIR_ENTRY_ALIGN    4
 
 #define EXT2_DIR_ENTRY_CONTENTS_SIZE(d) \
     (EXT2_MIN_DIR_ENTRY_SIZE + (d)->d_name_len)
@@ -260,25 +260,25 @@ struct ext2_dir_entry {
 
 typedef struct ext2_dir_entry ext2_dir_entry_t;
 
-#define EXT2_FT_UNKNOWN 0
+#define EXT2_FT_UNKNOWN  0
 #define EXT2_FT_REG_FILE 1
-#define EXT2_FT_DIR 2
-#define EXT2_FT_CHRDEV 3
-#define EXT2_FT_BLKDEV 4
-#define EXT2_FT_FIFO 5
-#define EXT2_FT_SOCK 6
-#define EXT2_FT_SYMLINK 7
+#define EXT2_FT_DIR      2
+#define EXT2_FT_CHRDEV   3
+#define EXT2_FT_BLKDEV   4
+#define EXT2_FT_FIFO     5
+#define EXT2_FT_SOCK     6
+#define EXT2_FT_SYMLINK  7
 
 #define EXT2_NEXT_DIR_ENTRY(entry) \
     (ext2_dir_entry_t*)((char*)entry + entry->d_rec_len)
 
-#define EXT2_COMPAT_DIR_PREALLOC 0x0001
+#define EXT2_COMPAT_DIR_PREALLOC  0x0001
 #define EXT2_COMPAT_IMAGIC_INODES 0x0002
-#define EXT2_COMPAT_HAS_JOURNAL 0x0004
-#define EXT2_COMPAT_EXT_ATTR 0x0008
-#define EXT2_COMPAT_RESIZE_INO 0x0010
-#define EXT2_COMPAT_DIR_INDEX 0x0020
-#define EXT2_COMPAT_ANY 0xffffffff
+#define EXT2_COMPAT_HAS_JOURNAL   0x0004
+#define EXT2_COMPAT_EXT_ATTR      0x0008
+#define EXT2_COMPAT_RESIZE_INO    0x0010
+#define EXT2_COMPAT_DIR_INDEX     0x0020
+#define EXT2_COMPAT_ANY           0xffffffff
 
 #define EXT2_HAS_COMPAT_FEATURE(sb, mask) ((sb)->sb_feature_compat & (mask))
 
@@ -313,13 +313,13 @@ int ext2_putinode(dev_t dev, ino_t num);
 int ext2_rw_inode(ext2_inode_t* inode, int rw_flag);
 void ext2_dump_inode(ext2_inode_t* pin);
 
-int ext2_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
-                int* is_mountpoint);
+int ext2_lookup(dev_t dev, ino_t start, const char* name,
+                struct fsdriver_node* fn, int* is_mountpoint);
 int ext2_parse_path(dev_t dev, ino_t start, ino_t root, char* pathname,
                     int flags, ext2_inode_t** result, size_t* offsetp);
 ext2_inode_t* ext2_advance(ext2_inode_t* dir_pin,
-                           char string[EXT2_NAME_LEN + 1]);
-int ext2_search_dir(ext2_inode_t* dir_pin, char string[EXT2_NAME_LEN + 1],
+                           const char string[EXT2_NAME_LEN + 1]);
+int ext2_search_dir(ext2_inode_t* dir_pin, const char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype);
 
 block_t ext2_read_map(ext2_inode_t* pin, loff_t position);
@@ -343,12 +343,12 @@ int ext2_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
 void ext2_sync_inodes();
 int ext2_sync();
 
-int ext2_create(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
-                gid_t gid, struct fsdriver_node* fn);
-int ext2_mkdir(dev_t dev, ino_t dir_num, char* name, mode_t mode, uid_t uid,
-               gid_t gid);
-int ext2_symlink(dev_t dev, ino_t dir_num, char* name, uid_t uid, gid_t gid,
-                 struct fsdriver_data* data, size_t bytes);
+int ext2_create(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+                uid_t uid, gid_t gid, struct fsdriver_node* fn);
+int ext2_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+               uid_t uid, gid_t gid);
+int ext2_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
+                 gid_t gid, struct fsdriver_data* data, size_t bytes);
 
 ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
                     size_t bytes);

@@ -26,10 +26,10 @@
 #include "libmemfs/libmemfs.h"
 
 static struct memfs_inode* memfs_advance(struct memfs_inode* parent,
-                                         char* name);
+                                         const char* name);
 
-int memfs_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
-                 int* is_mountpoint)
+int memfs_lookup(dev_t dev, ino_t start, const char* name,
+                 struct fsdriver_node* fn, int* is_mountpoint)
 {
     struct memfs_inode* dir_pin = memfs_find_inode(start);
     if (!dir_pin) return EINVAL;
@@ -49,7 +49,8 @@ int memfs_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
     return 0;
 }
 
-static struct memfs_inode* memfs_advance(struct memfs_inode* parent, char* name)
+static struct memfs_inode* memfs_advance(struct memfs_inode* parent,
+                                         const char* name)
 {
     struct memfs_inode* node;
 

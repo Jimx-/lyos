@@ -31,7 +31,8 @@ struct memfs_hooks {
     ssize_t (*write_hook)(struct memfs_inode* inode, char* ptr, size_t count,
                           off_t offset, cbdata_t data);
     ssize_t (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
-    int (*lookup_hook)(struct memfs_inode* parent, char* name, cbdata_t data);
+    int (*lookup_hook)(struct memfs_inode* parent, const char* name,
+                       cbdata_t data);
     int (*rdlink_hook)(struct memfs_inode* inode, cbdata_t data,
                        struct memfs_inode** target);
 };
@@ -44,8 +45,8 @@ extern size_t memfs_bufsize;
 int memfs_start(char* name, struct memfs_hooks* hooks,
                 struct memfs_stat* root_stat);
 int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
-int memfs_lookup(dev_t dev, ino_t start, char* name, struct fsdriver_node* fn,
-                 int* is_mountpoint);
+int memfs_lookup(dev_t dev, ino_t start, const char* name,
+                 struct fsdriver_node* fn, int* is_mountpoint);
 int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
 ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
                         struct fsdriver_data* data, loff_t rwpos, size_t count);
@@ -59,7 +60,7 @@ int memfs_free_buf();
 
 int memfs_node_index(struct memfs_inode* pin);
 struct memfs_inode* memfs_node_parent(struct memfs_inode* pin);
-struct memfs_inode* memfs_add_inode(struct memfs_inode* parent, char* name,
-                                    int index, struct memfs_stat* stat,
-                                    cbdata_t data);
+struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
+                                    const char* name, int index,
+                                    struct memfs_stat* stat, cbdata_t data);
 #endif

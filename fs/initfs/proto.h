@@ -16,20 +16,26 @@
 #ifndef _INITFS_PROTO_H_
 #define _INITFS_PROTO_H_
 
+#include <sys/types.h>
+#include <lyos/types.h>
+#include <lyos/ipc.h>
+
+#include <libfsdriver/libfsdriver.h>
+
 #include "tar.h"
 
-void initfs_rw_dev(int rw_flag, int dev, int position, int length, void* buf);
-
-int initfs_readsuper(MESSAGE* p);
-
-int initfs_lookup(MESSAGE* p);
+int initfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+int initfs_lookup(dev_t dev, ino_t start, const char* name,
+                  struct fsdriver_node* fn, int* is_mountpoint);
+ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
+                    struct fsdriver_data* data, loff_t rwpos, size_t count);
+ssize_t initfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
+                        loff_t* ppos, size_t count);
+int initfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
 
 unsigned int initfs_getsize(const char* in);
 unsigned int initfs_get8(const char* in);
-unsigned int initfs_getmode(struct posix_tar_header* phdr);
-
-int initfs_stat(MESSAGE* p);
-
-int initfs_rdwt(MESSAGE* p);
+unsigned int initfs_getmode(const struct posix_tar_header* phdr);
+int initfs_read_header(dev_t dev, ino_t num, char* header, size_t header_size);
 
 #endif

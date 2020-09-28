@@ -29,42 +29,84 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <fcntl.h>
+
 #include "proto.h"
 #include "global.h"
 #include "tar.h"
 
-int initfs_lookup(MESSAGE* p)
+static void fill_node(ino_t num, struct fsdriver_node* fn,
+                      const struct posix_tar_header* phdr)
 {
-    int src = p->source;
-    int dev = p->REQ_DEV;
-    int name_len = p->REQ_NAMELEN;
+    dev_t major, minor;
 
-    char string[TAR_MAX_PATH];
+    fn->fn_num = num;
+    fn->fn_uid = initfs_get8(phdr->uid);
+    fn->fn_gid = initfs_get8(phdr->gid);
+    fn->fn_size = initfs_getsize(phdr->size);
 
-    data_copy(SELF, string, src, p->REQ_PATHNAME, name_len);
-    string[name_len] = '\0';
-
-    char* pathname = string;
-    while (*pathname == '/') {
-        pathname++;
+    if (!num) {
+        /* special hack for root inode */
+        fn->fn_mode = I_DIRECTORY | S_IRWXU;
+    } else {
+        fn->fn_mode = initfs_getmode(phdr);
     }
 
-    int i;
-    char filename[TAR_MAX_PATH];
+    major = initfs_get8(phdr->devmajor);
+    minor = initfs_get8(phdr->devminor);
+    fn->fn_device = MAKE_DEV(major, minor);
+}
+
+int initfs_lookup(dev_t dev, ino_t start, const char* name,
+                  struct fsdriver_node* fn, int* is_mountpoint)
+{
+    char header[512];
+    struct posix_tar_header* phdr = (struct posix_tar_header*)header;
+    char string[TAR_MAX_PATH], *p, filename[TAR_MAX_PATH];
+    size_t base_len, name_len;
+    int i, retval;
+
+    *is_mountpoint = FALSE;
+
+    if ((retval = initfs_read_header(dev, start, header, sizeof(header))) != 0)
+        return retval;
+
+    if (!strcmp(name, ".")) {
+        fill_node(start, fn, phdr);
+        return 0;
+    }
+
+    if (!start) {
+        /* do not include the file name for root inode */
+        base_len = 0;
+    } else {
+        /* include the parent name */
+        base_len = strlen(phdr->name);
+        strlcpy(string, phdr->name, TAR_MAX_PATH);
+    }
+
+    strlcpy(string + base_len, name, TAR_MAX_PATH - base_len);
+
+    /* skip leading slashes */
+    p = string;
+    while (*p && *p == '/')
+        p++;
+
     for (i = 0; i < initfs_headers_count; i++) {
-        initfs_rw_dev(READ, dev, initfs_headers[i], TAR_MAX_PATH, filename);
-        if (strcmp(filename, pathname) == 0) {
-            char header[512];
-            initfs_rw_dev(READ, dev, initfs_headers[i], 512, header);
-            struct posix_tar_header* phdr = (struct posix_tar_header*)header;
-            p->RET_NUM = i;
-            p->RET_UID = initfs_get8(phdr->uid);
-            p->RET_GID = initfs_get8(phdr->gid);
-            p->RET_FILESIZE = initfs_getsize(phdr->size);
-            p->RET_MODE = initfs_getmode(phdr);
-            int major = initfs_get8(phdr->devmajor);
-            int minor = initfs_get8(phdr->devminor);
-            p->RET_SPECDEV = MAKE_DEV(major, minor);
+        if ((retval = initfs_read_header(dev, i, header, sizeof(header))) != 0)
+            return retval;
+
+        strlcpy(filename, phdr->name, TAR_MAX_PATH);
+        name_len = strlen(filename);
+
+        /* remove trailing slashes */
+        while (name_len && filename[name_len - 1] == '/') {
+            filename[name_len - 1] = '\0';
+            name_len--;
+        }
+
+        if (!strcmp(p, filename)) {
+            fill_node(i, fn, phdr);
             return 0;
         }
     }
