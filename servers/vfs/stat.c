@@ -31,6 +31,8 @@
 #include "proto.h"
 #include "fcntl.h"
 #include <sys/stat.h>
+#include <lyos/mgrant.h>
+
 #include "global.h"
 
 /**
@@ -41,19 +43,27 @@
  * @param  buf   Buffer.
  * @return       Zero on success.
  */
-int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char* buf)
+int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, endpoint_t src,
+                 char* buf)
 {
     MESSAGE m;
+    mgrant_id_t grant;
+
+    grant = mgrant_set_proxy(fs_ep, src, (vir_bytes)buf, sizeof(struct stat),
+                             MGF_WRITE);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_stat failed to create stat grant");
 
     m.type = FS_STAT;
-    m.STDEV = dev;
-    m.STINO = num;
-    m.STSRC = src;
-    m.STBUF = buf;
+    m.u.m_vfs_fs_stat.dev = dev;
+    m.u.m_vfs_fs_stat.num = num;
+    m.u.m_vfs_fs_stat.grant = grant;
 
     fs_sendrec(fs_ep, &m);
 
-    return m.STRET;
+    mgrant_revoke(grant);
+
+    return m.RETVAL;
 }
 
 static void generic_fill_stat(struct inode* pin, struct stat* stat)

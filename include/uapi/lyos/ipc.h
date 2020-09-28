@@ -243,20 +243,66 @@ BEGIN_MESS_DECL(mess_vfs_socket)
 }
 END_MESS_DECL(mess_vfs_socket)
 
+BEGIN_MESS_DECL(mess_vfs_fs_lookup)
+{
+    dev_t dev;
+    ino_t start;
+    ino_t root;
+    __mgrant_id_t path_grant;
+    size_t name_len;
+    uid_t uid;
+    gid_t gid;
+    int flags;
+
+    __u8 _pad[48 - sizeof(dev_t) - 2 * sizeof(ino_t) - sizeof(size_t) -
+              sizeof(uid_t) - sizeof(gid_t)];
+}
+END_MESS_DECL(mess_vfs_fs_lookup)
+
+BEGIN_MESS_DECL(mess_fs_vfs_lookup_reply)
+{
+    int status;
+    ino_t num;
+
+    union {
+        struct {
+            uid_t uid;
+            gid_t gid;
+            size_t size;
+            mode_t mode;
+            dev_t spec_dev;
+        } node;
+
+        off_t offset;
+    };
+
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - sizeof(size_t) -
+              sizeof(uid_t) - sizeof(gid_t) - sizeof(mode_t)];
+}
+END_MESS_DECL(mess_fs_vfs_lookup_reply)
+
+BEGIN_MESS_DECL(mess_vfs_fs_stat)
+{
+    dev_t dev;
+    ino_t num;
+    __mgrant_id_t grant;
+
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t)];
+}
+END_MESS_DECL(mess_vfs_fs_stat)
+
 struct mess_vfs_fs_symlink {
     dev_t dev;
     ino_t dir_ino;
-    void* name;
+    __mgrant_id_t name_grant;
     size_t name_len;
-    __endpoint_t src;
-    void* target;
+    __mgrant_id_t target_grant;
     size_t target_len;
     uid_t uid;
     gid_t gid;
 
-    __u8 _pad[56 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(void*) -
-              2 * sizeof(size_t) - sizeof(__endpoint_t) - sizeof(uid_t) -
-              sizeof(gid_t)];
+    __u8 _pad[48 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t) -
+              sizeof(uid_t) - sizeof(gid_t)];
 } __attribute((packed));
 VERIFY_MESS_SIZE(mess_vfs_fs_symlink);
 
@@ -275,7 +321,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_create)
 }
 END_MESS_DECL(mess_vfs_fs_create)
 
-BEGIN_MESS_DECL(mess_vfs_fs_create_reply)
+BEGIN_MESS_DECL(mess_fs_vfs_create_reply)
 {
     int status;
     ino_t num;
@@ -287,7 +333,21 @@ BEGIN_MESS_DECL(mess_vfs_fs_create_reply)
     __u8 _pad[52 - sizeof(ino_t) - sizeof(uid_t) - sizeof(gid_t) -
               sizeof(size_t) - sizeof(mode_t)];
 }
-END_MESS_DECL(mess_vfs_fs_create_reply)
+END_MESS_DECL(mess_fs_vfs_create_reply)
+
+BEGIN_MESS_DECL(mess_vfs_fs_readwrite)
+{
+    ssize_t status;
+    dev_t dev;
+    ino_t num;
+    __u64 position;
+    int rw_flag;
+    __mgrant_id_t grant;
+    size_t count;
+
+    __u8 _pad[40 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t)];
+}
+END_MESS_DECL(mess_vfs_fs_readwrite)
 
 struct mess_vfs_cdev_openclose {
     __u64 minor;
@@ -488,9 +548,13 @@ typedef struct {
         struct mess_vfs_epoll m_vfs_epoll;
         struct mess_vfs_mapdriver m_vfs_mapdriver;
         struct mess_vfs_socket m_vfs_socket;
+        struct mess_vfs_fs_lookup m_vfs_fs_lookup;
+        struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
+        struct mess_vfs_fs_stat m_vfs_fs_stat;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_fs_create m_vfs_fs_create;
-        struct mess_vfs_fs_create_reply m_vfs_fs_create_reply;
+        struct mess_fs_vfs_create_reply m_fs_vfs_create_reply;
+        struct mess_vfs_fs_readwrite m_vfs_fs_readwrite;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;

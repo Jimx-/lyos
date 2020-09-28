@@ -28,6 +28,7 @@
 #include "errno.h"
 #include "fcntl.h"
 #include <sys/syslimits.h>
+#include <lyos/mgrant.h>
 
 #include "types.h"
 #include "path.h"
@@ -39,43 +40,51 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
                    struct lookup_result* ret)
 {
     MESSAGE m;
+    mgrant_id_t path_grant;
+    size_t name_len;
     int retval;
 
-    struct vfs_ucred ucred;
-    ucred.uid = fp->effuid;
-    ucred.gid = fp->effgid;
+    name_len = strlen(lookup->pathname);
+    path_grant = mgrant_set_direct(fs_e, (vir_bytes)lookup->pathname, name_len,
+                                   MGF_READ | MGF_WRITE);
+    if (path_grant == GRANT_INVALID)
+        panic("vfs: request_lookup cannot create path grant");
 
     m.type = FS_LOOKUP;
-    m.REQ_DEV = dev;
-    m.REQ_START_INO = start;
-    m.REQ_ROOT_INO = root;
-    m.REQ_NAMELEN = strlen(lookup->pathname);
-    m.REQ_PATHNAME = lookup->pathname;
-    m.REQ_FLAGS = lookup->flags;
-    m.REQ_UCRED = &ucred;
+    m.u.m_vfs_fs_lookup.dev = dev;
+    m.u.m_vfs_fs_lookup.start = start;
+    m.u.m_vfs_fs_lookup.root = root;
+    m.u.m_vfs_fs_lookup.name_len = name_len;
+    m.u.m_vfs_fs_lookup.path_grant = path_grant;
+    m.u.m_vfs_fs_lookup.flags = lookup->flags;
+
+    m.u.m_vfs_fs_lookup.uid = fp->effuid;
+    m.u.m_vfs_fs_lookup.gid = fp->effgid;
 
     memset(ret, 0, sizeof(struct lookup_result));
     fs_sendrec(fs_e, &m);
 
-    retval = m.RET_RETVAL;
+    mgrant_revoke(path_grant);
+
+    retval = m.u.m_fs_vfs_lookup_reply.status;
     ret->fs_ep = m.source;
 
     switch (retval) {
     case 0:
-        ret->inode_nr = m.RET_NUM;
-        ret->uid = m.RET_UID;
-        ret->gid = m.RET_GID;
-        ret->size = m.RET_FILESIZE;
-        ret->mode = m.RET_MODE;
-        ret->spec_dev = m.RET_SPECDEV;
+        ret->inode_nr = m.u.m_fs_vfs_lookup_reply.num;
+        ret->uid = m.u.m_fs_vfs_lookup_reply.node.uid;
+        ret->gid = m.u.m_fs_vfs_lookup_reply.node.gid;
+        ret->size = m.u.m_fs_vfs_lookup_reply.node.size;
+        ret->mode = m.u.m_fs_vfs_lookup_reply.node.mode;
+        ret->spec_dev = m.u.m_fs_vfs_lookup_reply.node.spec_dev;
         ret->dev = dev;
         break;
     case EENTERMOUNT:
-        ret->offsetp = m.RET_OFFSET;
-        ret->inode_nr = m.RET_NUM;
+        ret->offsetp = m.u.m_fs_vfs_lookup_reply.offset;
+        ret->inode_nr = m.u.m_fs_vfs_lookup_reply.num;
         break;
     case ELEAVEMOUNT:
-        ret->offsetp = m.RET_OFFSET;
+        ret->offsetp = m.u.m_fs_vfs_lookup_reply.offset;
         break;
     default:
         break;

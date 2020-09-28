@@ -72,11 +72,11 @@ ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
 
         if (rw_flag == READ) {
             if ((retval = fsdriver_copyout(data, cum_io, bp->data + block_off,
-                                           bytes_rdwt)) != 0)
+                                            bytes_rdwt)) != 0)
                 return -retval;
         } else {
             if ((retval = fsdriver_copyin(data, cum_io, bp->data + block_off,
-                                          bytes_rdwt)) != 0)
+                                           bytes_rdwt)) != 0)
                 return -retval;
             fsdriver_mark_dirty(bp);
         }

@@ -32,6 +32,7 @@
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
+#include <lyos/mgrant.h>
 
 #include "global.h"
 
@@ -41,24 +42,29 @@ static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
                               endpoint_t src, void* buf, size_t nbytes)
 {
     MESSAGE m;
+    mgrant_id_t grant;
+    ssize_t retval;
+
+    grant = mgrant_set_proxy(fs_ep, src, (vir_bytes)buf, nbytes, MGF_WRITE);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_rdlink failed to create proxy grant");
+
     m.type = FS_RDLINK;
-    m.RWDEV = dev;
-    m.RWINO = num;
-    m.RWSRC = src;
-    m.RWBUF = buf;
-    m.RWCNT = nbytes;
+    m.u.m_vfs_fs_readwrite.dev = dev;
+    m.u.m_vfs_fs_readwrite.num = num;
+    m.u.m_vfs_fs_readwrite.grant = grant;
+    m.u.m_vfs_fs_readwrite.count = nbytes;
 
     fs_sendrec(fs_ep, &m);
+    retval = m.u.m_vfs_fs_readwrite.status;
 
-    if (m.type != FSREQ_RET) {
-        return -EINVAL;
+    mgrant_revoke(grant);
+
+    if (retval == 0) {
+        return m.u.m_vfs_fs_readwrite.count;
     }
 
-    if (m.RWRET == 0) {
-        return m.RWCNT;
-    }
-
-    return -m.RWRET;
+    return -retval;
 }
 
 int do_rdlink(void)
@@ -139,21 +145,36 @@ static int request_symlink(endpoint_t fs_ep, dev_t dev, ino_t dir_ino,
                            size_t target_len, struct fproc* fp)
 {
     MESSAGE m;
+    mgrant_id_t name_grant, target_grant;
+    size_t name_len;
+
+    name_len = strlen(last_component);
+    name_grant =
+        mgrant_set_direct(fs_ep, (vir_bytes)last_component, name_len, MGF_READ);
+    if (name_grant == GRANT_INVALID)
+        panic("vfs: request_rdlink failed to create name grant");
+
+    target_grant =
+        mgrant_set_proxy(fs_ep, src, (vir_bytes)target, target_len, MGF_READ);
+    if (name_grant == GRANT_INVALID)
+        panic("vfs: request_rdlink failed to create name grant");
 
     m.type = FS_SYMLINK;
     m.u.m_vfs_fs_symlink.dev = dev;
     m.u.m_vfs_fs_symlink.dir_ino = dir_ino;
-    m.u.m_vfs_fs_symlink.name = last_component;
-    m.u.m_vfs_fs_symlink.name_len = strlen(last_component);
-    m.u.m_vfs_fs_symlink.src = src;
-    m.u.m_vfs_fs_symlink.target = target;
+    m.u.m_vfs_fs_symlink.name_grant = name_grant;
+    m.u.m_vfs_fs_symlink.name_len = name_len;
+    m.u.m_vfs_fs_symlink.target_grant = target_grant;
     m.u.m_vfs_fs_symlink.target_len = target_len;
     m.u.m_vfs_fs_symlink.uid = fp->effuid;
     m.u.m_vfs_fs_symlink.gid = fp->effgid;
 
     fs_sendrec(fs_ep, &m);
 
-    return m.RET_RETVAL;
+    mgrant_revoke(target_grant);
+    mgrant_revoke(name_grant);
+
+    return m.RETVAL;
 }
 
 int do_symlink(void)

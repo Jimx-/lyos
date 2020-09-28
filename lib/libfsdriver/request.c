@@ -29,7 +29,7 @@
 #include <libbdev/libbdev.h>
 #include <libfsdriver/libfsdriver.h>
 
-int fsdriver_register(struct fsdriver* fsd)
+int fsdriver_register(const struct fsdriver* fsd)
 {
     MESSAGE m;
 
@@ -45,7 +45,7 @@ int fsdriver_register(struct fsdriver* fsd)
     return m.RETVAL;
 }
 
-int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_readsuper(const struct fsdriver* fsd, MESSAGE* m)
 {
     struct fsdriver_node fn;
     dev_t dev = m->REQ_DEV;
@@ -66,7 +66,7 @@ int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m)
     return retval;
 }
 
-int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_mountpoint(const struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->REQ_DEV;
     ino_t num = m->REQ_NUM;
@@ -76,7 +76,7 @@ int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_mountpoint(dev, num);
 }
 
-int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_putinode(const struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->REQ_DEV;
     ino_t num = m->REQ_NUM;
@@ -86,7 +86,7 @@ int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_putinode(dev, num);
 }
 
-int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_create(const struct fsdriver* fsd, MESSAGE* m)
 {
     mode_t mode = m->u.m_vfs_fs_create.mode;
     uid_t uid = m->u.m_vfs_fs_create.uid;
@@ -111,16 +111,16 @@ int fsdriver_create(struct fsdriver* fsd, MESSAGE* m)
     if (retval) return retval;
 
     memset(m, 0, sizeof(MESSAGE));
-    m->u.m_vfs_fs_create_reply.num = fn.fn_num;
-    m->u.m_vfs_fs_create_reply.mode = fn.fn_mode;
-    m->u.m_vfs_fs_create_reply.size = fn.fn_size;
-    m->u.m_vfs_fs_create_reply.uid = fn.fn_uid;
-    m->u.m_vfs_fs_create_reply.gid = fn.fn_gid;
+    m->u.m_fs_vfs_create_reply.num = fn.fn_num;
+    m->u.m_fs_vfs_create_reply.mode = fn.fn_mode;
+    m->u.m_fs_vfs_create_reply.size = fn.fn_size;
+    m->u.m_fs_vfs_create_reply.uid = fn.fn_uid;
+    m->u.m_fs_vfs_create_reply.gid = fn.fn_gid;
 
     return retval;
 }
 
-int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_mkdir(const struct fsdriver* fsd, MESSAGE* m)
 {
     mode_t mode = m->u.m_vfs_fs_create.mode;
     uid_t uid = m->u.m_vfs_fs_create.uid;
@@ -141,29 +141,29 @@ int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_mkdir(dev, num, pathname, mode, uid, gid);
 }
 
-int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_readwrite(const struct fsdriver* fsd, MESSAGE* m)
 {
-    dev_t dev = (int)m->RWDEV;
-    ino_t num = m->RWINO;
-    loff_t rwpos = m->RWPOS;
-    int src = m->RWSRC;
-    int rw_flag = m->RWFLAG;
-    void* buf = m->RWBUF;
-    size_t nbytes = m->RWCNT;
+    dev_t dev = m->u.m_vfs_fs_readwrite.dev;
+    ino_t num = m->u.m_vfs_fs_readwrite.num;
+    loff_t position = m->u.m_vfs_fs_readwrite.position;
+    size_t nbytes = m->u.m_vfs_fs_readwrite.count;
+    int rw_flag = m->u.m_vfs_fs_readwrite.rw_flag;
+    mgrant_id_t grant = m->u.m_vfs_fs_readwrite.grant;
+    struct fsdriver_data data;
 
     if (fsd->fs_readwrite == NULL) return ENOSYS;
 
-    struct fsdriver_data data;
-    data.src = src;
-    data.buf = buf;
+    data.granter = m->source;
+    data.grant = grant;
 
-    ssize_t retval = fsd->fs_readwrite(dev, num, rw_flag, &data, rwpos, nbytes);
+    ssize_t retval =
+        fsd->fs_readwrite(dev, num, rw_flag, &data, position, nbytes);
 
     if (retval >= 0) {
-        rwpos += retval;
+        position += retval;
 
-        m->RWPOS = rwpos;
-        m->RWCNT = retval;
+        m->u.m_vfs_fs_readwrite.position = position;
+        m->u.m_vfs_fs_readwrite.count = retval;
 
         return 0;
     }
@@ -171,43 +171,44 @@ int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m)
     return -retval;
 }
 
-int fsdriver_rdlink(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m)
 {
     struct fsdriver_data data;
-    dev_t dev = m->RWDEV;
-    ino_t num = m->RWINO;
-    size_t size = m->RWCNT;
+    dev_t dev = m->u.m_vfs_fs_readwrite.dev;
+    ino_t num = m->u.m_vfs_fs_readwrite.num;
+    size_t size = m->u.m_vfs_fs_readwrite.count;
     ssize_t retval;
 
     if (!fsd->fs_rdlink) return ENOSYS;
 
-    data.src = m->RWSRC;
-    data.buf = m->RWBUF;
+    data.granter = m->source;
+    data.grant = m->u.m_vfs_fs_readwrite.grant;
 
     retval = fsd->fs_rdlink(dev, num, &data, size);
 
     if (retval >= 0) {
-        m->RWCNT = retval;
+        m->u.m_vfs_fs_readwrite.count = retval;
         return 0;
     }
 
     return -retval;
 }
 
-int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_stat(const struct fsdriver* fsd, MESSAGE* m)
 {
-    dev_t dev = (dev_t)m->STDEV;
-    ino_t num = (ino_t)m->STINO;
+    dev_t dev = m->u.m_vfs_fs_stat.dev;
+    ino_t num = m->u.m_vfs_fs_stat.num;
     struct fsdriver_data data;
-    data.src = m->STSRC;
-    data.buf = m->STBUF;
+
+    data.granter = m->source;
+    data.grant = m->u.m_vfs_fs_stat.grant;
 
     if (fsd->fs_stat == NULL) return ENOSYS;
 
     return fsd->fs_stat(dev, num, &data);
 }
 
-int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_ftrunc(const struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (dev_t)m->REQ_DEV;
     ino_t num = (ino_t)m->REQ_NUM;
@@ -219,7 +220,7 @@ int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_ftrunc(dev, num, start_pos, end_pos);
 }
 
-int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_chmod(const struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = (dev_t)m->REQ_DEV;
     ino_t num = (ino_t)m->REQ_NUM;
@@ -235,24 +236,24 @@ int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m)
     return 0;
 }
 
-int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m)
 {
     struct fsdriver_data data;
-    dev_t dev = m->RWDEV;
-    ino_t num = m->RWINO;
-    loff_t position = m->RWPOS;
-    size_t nbytes = m->RWCNT;
+    dev_t dev = m->u.m_vfs_fs_readwrite.dev;
+    ino_t num = m->u.m_vfs_fs_readwrite.num;
+    loff_t position = m->u.m_vfs_fs_readwrite.position;
+    size_t nbytes = m->u.m_vfs_fs_readwrite.count;
     ssize_t retval;
 
-    data.src = m->RWSRC;
-    data.buf = m->RWBUF;
+    data.granter = m->source;
+    data.grant = m->u.m_vfs_fs_readwrite.grant;
 
     if (fsd->fs_getdents == NULL) return ENOSYS;
 
     retval = fsd->fs_getdents(dev, num, &data, &position, nbytes);
     if (retval >= 0) {
-        m->RWPOS = position;
-        m->RWCNT = retval;
+        m->u.m_vfs_fs_readwrite.position = position;
+        m->u.m_vfs_fs_readwrite.count = retval;
 
         return 0;
     }
@@ -260,15 +261,18 @@ int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m)
     return -retval;
 }
 
-int fsdriver_symlink(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m)
 {
     char name[NAME_MAX + 1];
     size_t name_len, target_len;
     struct fsdriver_data data;
+    endpoint_t src = m->source;
     dev_t dev;
     ino_t dir_num;
     uid_t uid;
     gid_t gid;
+    mgrant_id_t name_grant;
+    int retval;
 
     if (!fsd->fs_symlink) return ENOSYS;
 
@@ -278,25 +282,23 @@ int fsdriver_symlink(struct fsdriver* fsd, MESSAGE* m)
     gid = m->u.m_vfs_fs_symlink.gid;
     target_len = m->u.m_vfs_fs_symlink.target_len;
     name_len = m->u.m_vfs_fs_symlink.name_len;
+    name_grant = m->u.m_vfs_fs_symlink.name_grant;
 
-    if (name_len > NAME_MAX) {
-        return ENAMETOOLONG;
-    }
-
-    data_copy(SELF, name, m->source, m->u.m_vfs_fs_symlink.name, name_len);
-    name[name_len] = '\0';
+    if ((retval = fsdriver_copy_name(src, name_grant, name_len, name, NAME_MAX,
+                                     TRUE)) != 0)
+        return retval;
 
     if (!strcmp(name, ".") || !strcmp(name, "..")) {
         return EEXIST;
     }
 
-    data.src = m->u.m_vfs_fs_symlink.src;
-    data.buf = m->u.m_vfs_fs_symlink.target;
+    data.granter = src;
+    data.grant = m->u.m_vfs_fs_symlink.target_grant;
 
     return fsd->fs_symlink(dev, dir_num, name, uid, gid, &data, target_len);
 }
 
-int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m)
+int fsdriver_sync(const struct fsdriver* fsd, MESSAGE* m)
 {
     if (fsd->fs_sync == NULL) return ENOSYS;
     return fsd->fs_sync();

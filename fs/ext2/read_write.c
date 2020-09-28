@@ -42,8 +42,8 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
  * @param  p Ptr to message.
  * @return   Zero on success.
  */
-ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-                  loff_t rwpos, size_t count)
+ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
+                  struct fsdriver_data* data, loff_t rwpos, size_t count)
 {
     loff_t position = rwpos;
     size_t nbytes = count;
@@ -161,7 +161,7 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
         /* copy the data to userspace */
         if (b != 0)
             fsdriver_copyout(data, data_offset, (char*)bp->data + offset,
-                             chunk);
+                              chunk);
     } else {
         /* copy the data from userspace */
         fsdriver_copyin(data, data_offset, (char*)bp->data + offset, chunk);

@@ -65,6 +65,8 @@ static int verify_grant(endpoint_t granter, endpoint_t grantee,
         }
     } while (grant_entry.flags & MGF_INDIRECT);
 
+    if ((grant_entry.flags & access) != access) return EPERM;
+
     if (grant_entry.flags & MGF_DIRECT) {
         if (KERNEL_VMA - grant_entry.u.direct.len + 1 <
             grant_entry.u.direct.addr)

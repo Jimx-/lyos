@@ -36,7 +36,8 @@ static int memfs_stat_inode(struct memfs_inode* pin,
  * @param  buf Buffer.
  * @return     Zero on success.
  */
-static int memfs_stat_inode(struct memfs_inode* pin, struct fsdriver_data* data)
+static int memfs_stat_inode(struct memfs_inode* pin,
+                            struct fsdriver_data* data)
 {
     struct stat sbuf;
 

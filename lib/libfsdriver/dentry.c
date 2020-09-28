@@ -64,8 +64,8 @@ int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
     if (list->buf_offset + len > list->buf_size) {
         if (list->buf_offset == 0) panic("fsdriver: getdents buffer too small");
 
-        if ((retval = fsdriver_copyout(list->data, list->data_offset, list->buf,
-                                       list->buf_offset)) != 0)
+        if ((retval = fsdriver_copyout(list->data, list->data_offset,
+                                        list->buf, list->buf_offset)) != 0)
             return retval;
 
         list->data_offset += list->buf_offset;
@@ -89,8 +89,8 @@ int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list)
     int retval;
 
     if (list->buf_offset > 0) {
-        if ((retval = fsdriver_copyout(list->data, list->data_offset, list->buf,
-                                       list->buf_offset)) != 0)
+        if ((retval = fsdriver_copyout(list->data, list->data_offset,
+                                        list->buf, list->buf_offset)) != 0)
             return -retval;
 
         list->data_offset += list->buf_offset;

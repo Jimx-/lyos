@@ -27,6 +27,8 @@
 #include <sys/stat.h>
 #include <lyos/sysutils.h>
 #include "errno.h"
+#include <lyos/mgrant.h>
+
 #include "types.h"
 #include "path.h"
 #include "proto.h"
@@ -52,26 +54,33 @@ int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, loff_t pos,
                       size_t nbytes, loff_t* newpos, size_t* bytes_rdwt)
 {
     MESSAGE m;
+    mgrant_id_t grant;
+    int retval;
+
+    grant = mgrant_set_proxy(fs_ep, src, (vir_bytes)buf, nbytes,
+                             (rw_flag == READ) ? MGF_WRITE : MGF_READ);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_getdents failed to create proxy grant");
+
     m.type = FS_RDWT;
-    m.RWDEV = dev;
-    m.RWINO = num;
-    m.RWPOS = pos;
-    m.RWFLAG = rw_flag;
-    m.RWSRC = src;
-    m.RWBUF = (void*)buf;
-    m.RWCNT = nbytes;
+    m.u.m_vfs_fs_readwrite.dev = dev;
+    m.u.m_vfs_fs_readwrite.num = num;
+    m.u.m_vfs_fs_readwrite.position = pos;
+    m.u.m_vfs_fs_readwrite.rw_flag = rw_flag;
+    m.u.m_vfs_fs_readwrite.grant = grant;
+    m.u.m_vfs_fs_readwrite.count = nbytes;
 
     fs_sendrec(fs_ep, &m);
+    retval = m.u.m_vfs_fs_readwrite.status;
 
-    if (m.type != FSREQ_RET) {
-        printl("VFS: request_readwrite: received invalid message.");
-        return EINVAL;
+    mgrant_revoke(grant);
+
+    if (retval == 0) {
+        if (newpos) *newpos = m.u.m_vfs_fs_readwrite.position;
+        if (bytes_rdwt) *bytes_rdwt = m.u.m_vfs_fs_readwrite.count;
     }
 
-    if (newpos) *newpos = m.RWPOS;
-    if (bytes_rdwt) *bytes_rdwt = m.RWCNT;
-
-    return m.RWRET;
+    return retval;
 }
 
 /**
@@ -140,22 +149,31 @@ static int request_getdents(endpoint_t fs_ep, dev_t dev, ino_t num,
                             size_t nbytes, u64* newpos)
 {
     MESSAGE m;
+    mgrant_id_t grant;
+    int retval;
+
+    grant = mgrant_set_proxy(fs_ep, src, (vir_bytes)buf, nbytes, MGF_WRITE);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_getdents failed to create proxy grant");
+
     m.type = FS_GETDENTS;
-    m.RWDEV = dev;
-    m.RWINO = num;
-    m.RWPOS = position;
-    m.RWSRC = src;
-    m.RWBUF = buf;
-    m.RWCNT = nbytes;
+    m.u.m_vfs_fs_readwrite.dev = dev;
+    m.u.m_vfs_fs_readwrite.num = num;
+    m.u.m_vfs_fs_readwrite.position = position;
+    m.u.m_vfs_fs_readwrite.grant = grant;
+    m.u.m_vfs_fs_readwrite.count = nbytes;
 
     fs_sendrec(fs_ep, &m);
+    retval = m.u.m_vfs_fs_readwrite.status;
 
-    if (m.RET_RETVAL == 0) {
-        *newpos = m.RWPOS;
-        return m.RWCNT;
+    mgrant_revoke(grant);
+
+    if (retval == 0) {
+        *newpos = m.u.m_vfs_fs_readwrite.position;
+        return m.u.m_vfs_fs_readwrite.count;
     }
 
-    return -m.RET_RETVAL;
+    return -retval;
 }
 
 int do_getdents(void)

@@ -323,8 +323,8 @@ int ext2_search_dir(ext2_inode_t* dir_pin, const char string[EXT2_NAME_LEN + 1],
                     ino_t* num, int flag, int ftype);
 
 block_t ext2_read_map(ext2_inode_t* pin, loff_t position);
-ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-                  loff_t rwpos, size_t count);
+ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
+                  struct fsdriver_data* data, loff_t rwpos, size_t count);
 ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
                       loff_t* ppos, size_t count);
 

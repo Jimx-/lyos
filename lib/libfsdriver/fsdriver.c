@@ -26,7 +26,7 @@
 #include "string.h"
 #include "libfsdriver/libfsdriver.h"
 
-int fsdriver_start(struct fsdriver* fsd)
+int fsdriver_start(const struct fsdriver* fsd)
 {
     int retval = fsdriver_register(fsd);
     if (retval != 0) return retval;
@@ -44,7 +44,7 @@ int fsdriver_start(struct fsdriver* fsd)
 
         switch (msgtype) {
         case FS_LOOKUP:
-            m.RET_RETVAL = fsdriver_lookup(fsd, &m);
+            m.u.m_fs_vfs_lookup_reply.status = fsdriver_lookup(fsd, &m);
             break;
         case FS_PUTINODE:
             m.RET_RETVAL = fsdriver_putinode(fsd, &m);
@@ -56,16 +56,16 @@ int fsdriver_start(struct fsdriver* fsd)
             m.RET_RETVAL = fsdriver_readsuper(fsd, &m);
             break;
         case FS_STAT:
-            m.STRET = fsdriver_stat(fsd, &m);
+            m.RETVAL = fsdriver_stat(fsd, &m);
             break;
         case FS_RDWT:
-            m.RWRET = fsdriver_readwrite(fsd, &m);
+            m.u.m_vfs_fs_readwrite.status = fsdriver_readwrite(fsd, &m);
             break;
         case FS_CREATE:
-            m.u.m_vfs_fs_create_reply.status = fsdriver_create(fsd, &m);
+            m.u.m_fs_vfs_create_reply.status = fsdriver_create(fsd, &m);
             break;
         case FS_MKDIR:
-            m.u.m_vfs_fs_create_reply.status = fsdriver_mkdir(fsd, &m);
+            m.u.m_fs_vfs_create_reply.status = fsdriver_mkdir(fsd, &m);
             break;
         case FS_FTRUNC:
             m.RET_RETVAL = fsdriver_ftrunc(fsd, &m);
@@ -74,16 +74,16 @@ int fsdriver_start(struct fsdriver* fsd)
             m.RET_RETVAL = fsdriver_chmod(fsd, &m);
             break;
         case FS_GETDENTS:
-            m.RET_RETVAL = fsdriver_getdents(fsd, &m);
+            m.u.m_vfs_fs_readwrite.status = fsdriver_getdents(fsd, &m);
             break;
         case FS_SYNC:
             m.RET_RETVAL = fsdriver_sync(fsd, &m);
             break;
         case FS_RDLINK:
-            m.RWRET = fsdriver_rdlink(fsd, &m);
+            m.u.m_vfs_fs_readwrite.status = fsdriver_rdlink(fsd, &m);
             break;
         case FS_SYMLINK:
-            m.RET_RETVAL = fsdriver_symlink(fsd, &m);
+            m.RETVAL = fsdriver_symlink(fsd, &m);
             break;
         default:
             if (fsd->fs_other) {

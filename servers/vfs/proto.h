@@ -86,7 +86,8 @@ int do_fchdir(void);
 int do_mm_request(void);
 int fs_exec(void);
 
-int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, int src, char* buf);
+int request_stat(endpoint_t fs_ep, dev_t dev, ino_t num, endpoint_t src,
+                 char* buf);
 
 int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, loff_t pos,
                       int rw_flag, endpoint_t src, const void* buf,

@@ -33,6 +33,6 @@ $(INITRD):
 	@cp -f $(DESTDIR)/usr/lib/libc.so usr/lib
 	@cp -rf ../sysroot/etc/* etc/
 	@touch .root
-	@tar -cvf $(INITRD) .root bin dev lib sbin etc usr > /dev/null
+	@tar -cvf $(INITRD) .root bin lib sbin etc usr > /dev/null
 	@rm .root
 	@cp -f $(INITRD) $(DESTDIR)/boot/

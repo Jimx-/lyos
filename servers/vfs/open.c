@@ -325,17 +325,17 @@ static int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
     m.u.m_vfs_fs_create.mode = mode;
 
     fs_sendrec(fs_ep, &m);
-    retval = m.u.m_vfs_fs_create_reply.status;
+    retval = m.u.m_fs_vfs_create_reply.status;
     mgrant_revoke(grant);
 
     if (retval) return retval;
 
     res->fs_ep = fs_ep;
-    res->inode_nr = m.u.m_vfs_fs_create_reply.num;
-    res->mode = m.u.m_vfs_fs_create_reply.mode;
-    res->uid = m.u.m_vfs_fs_create_reply.uid;
-    res->gid = m.u.m_vfs_fs_create_reply.gid;
-    res->size = m.u.m_vfs_fs_create_reply.size;
+    res->inode_nr = m.u.m_fs_vfs_create_reply.num;
+    res->mode = m.u.m_fs_vfs_create_reply.mode;
+    res->uid = m.u.m_fs_vfs_create_reply.uid;
+    res->gid = m.u.m_fs_vfs_create_reply.gid;
+    res->size = m.u.m_fs_vfs_create_reply.size;
 
     return 0;
 }
@@ -409,7 +409,7 @@ static int request_mkdir(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
 
     mgrant_revoke(grant);
 
-    return m.u.m_vfs_fs_create_reply.status;
+    return m.u.m_fs_vfs_create_reply.status;
 }
 
 int do_mkdir(void)

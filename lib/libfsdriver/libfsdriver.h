@@ -16,6 +16,7 @@
 #ifndef _LIBFSDRIVER_H_
 #define _LIBFSDRIVER_H_
 
+#include <lyos/mgrant.h>
 #include <libfsdriver/buffer.h>
 
 struct fsdriver_node {
@@ -28,8 +29,11 @@ struct fsdriver_node {
 };
 
 struct fsdriver_data {
-    endpoint_t src;
-    void* buf;
+    endpoint_t granter;
+    union {
+        mgrant_id_t grant;
+        char* ptr;
+    };
 };
 
 struct fsdriver_dentry_list {
@@ -72,12 +76,12 @@ struct fsdriver {
     void (*fs_other)(MESSAGE* m);
 } __attribute__((packed));
 
-int fsdriver_start(struct fsdriver* fsd);
+int fsdriver_start(const struct fsdriver* fsd);
 
 int fsdriver_copyin(struct fsdriver_data* data, size_t offset, void* buf,
-                    size_t len);
-int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
                      size_t len);
+int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
+                      size_t len);
 int fsdriver_copy_name(endpoint_t endpoint, mgrant_id_t grant, size_t len,
                        char* name, size_t size, int non_empty);
 
@@ -88,21 +92,21 @@ int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
                              const char* name, size_t name_len, int type);
 int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list);
 
-int fsdriver_register(struct fsdriver* fsd);
-int fsdriver_readsuper(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_mountpoint(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_putinode(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_readwrite(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_stat(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_ftrunc(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_chmod(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_sync(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_getdents(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_lookup(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_create(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_mkdir(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_rdlink(struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_symlink(struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_register(const struct fsdriver* fsd);
+int fsdriver_readsuper(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_mountpoint(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_putinode(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_readwrite(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_stat(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_ftrunc(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_chmod(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_sync(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_create(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_mkdir(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m);
 
 int fsdriver_driver(dev_t dev);
 

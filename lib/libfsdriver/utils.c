@@ -27,15 +27,25 @@
 #include "libfsdriver/libfsdriver.h"
 
 int fsdriver_copyin(struct fsdriver_data* data, size_t offset, void* buf,
-                    size_t len)
+                     size_t len)
 {
-    return data_copy(SELF, buf, data->src, (void*)(data->buf + offset), len);
+    if (data->granter == SELF) {
+        memcpy(buf, data->ptr + offset, len);
+        return 0;
+    }
+
+    return safecopy_from(data->granter, data->grant, offset, buf, len);
 }
 
 int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
-                     size_t len)
+                      size_t len)
 {
-    return data_copy(data->src, (void*)(data->buf + offset), SELF, buf, len);
+    if (data->granter == SELF) {
+        memcpy(data->ptr + offset, buf, len);
+        return 0;
+    }
+
+    return safecopy_to(data->granter, data->grant, offset, buf, len);
 }
 
 int fsdriver_copy_name(endpoint_t endpoint, mgrant_id_t grant, size_t len,
