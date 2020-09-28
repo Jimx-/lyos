@@ -30,6 +30,8 @@
 #include <lyos/vm.h>
 #include <lyos/fs.h>
 #include <sys/mman.h>
+#include <sys/syslimits.h>
+
 #include "libexec/libexec.h"
 #include "multiboot.h"
 #include <asm/page.h>
@@ -275,7 +277,7 @@ static void spawn_bootproc(struct mmproc* mmp, struct boot_proc* bp)
     execi->proc_e = bp->endpoint;
     execi->filesize = bp->len;
 
-    char interp[MAX_PATH];
+    char interp[PATH_MAX];
     if (elf_is_dynamic(execi->header, execi->header_len, interp,
                        sizeof(interp)) > 0) {
         printl("%s\n", interp);

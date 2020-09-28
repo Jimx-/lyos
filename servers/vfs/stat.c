@@ -32,6 +32,7 @@
 #include "fcntl.h"
 #include <sys/stat.h>
 #include <lyos/mgrant.h>
+#include <sys/syslimits.h>
 
 #include "global.h"
 
@@ -85,9 +86,9 @@ static void generic_fill_stat(struct inode* pin, struct stat* stat)
 int do_stat(void)
 {
     int namelen = self->msg_in.NAME_LEN + 1;
-    char pathname[MAX_PATH];
+    char pathname[PATH_MAX];
     int retval;
-    if (namelen > MAX_PATH) return ENAMETOOLONG;
+    if (namelen > PATH_MAX) return ENAMETOOLONG;
 
     data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
     pathname[namelen] = 0;
@@ -122,9 +123,9 @@ int do_stat(void)
 int do_lstat(void)
 {
     int namelen = self->msg_in.NAME_LEN + 1;
-    char pathname[MAX_PATH];
+    char pathname[PATH_MAX];
     int retval;
-    if (namelen > MAX_PATH) return ENAMETOOLONG;
+    if (namelen > PATH_MAX) return ENAMETOOLONG;
 
     data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
     pathname[namelen] = 0;

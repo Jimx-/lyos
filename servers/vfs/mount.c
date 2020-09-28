@@ -33,6 +33,7 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
+#include <sys/syslimits.h>
 #define __LINUX_ERRNO_EXTENSIONS__ /* we want ENOTBLK */
 #include "errno.h"
 #include "fcntl.h"
@@ -120,11 +121,11 @@ int do_mount(void)
     int source_len = self->msg_in.MNAMELEN1;
     int target_len = self->msg_in.MNAMELEN2;
 
-    char source[MAX_PATH];
-    if (source_len > MAX_PATH) return ENAMETOOLONG;
+    char source[PATH_MAX];
+    if (source_len > PATH_MAX) return ENAMETOOLONG;
 
-    char target[MAX_PATH];
-    if (target_len > MAX_PATH) return ENAMETOOLONG;
+    char target[PATH_MAX];
+    if (target_len > PATH_MAX) return ENAMETOOLONG;
 
     data_copy(SELF, target, fproc->endpoint, self->msg_in.MTARGET, target_len);
     target[target_len] = '\0';

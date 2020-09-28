@@ -31,6 +31,7 @@
 #include "lyos/list.h"
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include "ext2_fs.h"
 #include "global.h"
 

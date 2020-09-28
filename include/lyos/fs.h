@@ -21,7 +21,6 @@
 #define MAJOR_NONE  0
 #define NR_NONEDEVS 64
 
-#define MAX_PATH     512
 #define FS_LABEL_MAX 16
 
 /* VFS/FS flags */

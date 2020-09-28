@@ -81,13 +81,6 @@ struct vfs_mount {
 };
 
 /**
- * @def   MAX_FILENAME_LEN
- * @brief Max len of a filename
- * @see   dir_entry
- */
-#define MAX_FILENAME_LEN 12
-
-/**
  * @struct file_desc
  * @brief  File Descriptor
  */

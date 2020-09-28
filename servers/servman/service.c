@@ -33,6 +33,8 @@
 #include "lyos/proto.h"
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <sys/syslimits.h>
+
 #include "proto.h"
 #include "const.h"
 #include "type.h"
@@ -176,7 +178,7 @@ int init_service(struct sproc* sp, int init_type)
 
 int publish_service(struct sproc* sp)
 {
-    char label[MAX_PATH];
+    char label[PATH_MAX];
     int retval;
 
     char* name = sp->label;

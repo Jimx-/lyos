@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <poll.h>
-#include <lyos/limits.h>
+#include <sys/syslimits.h>
 
 #include "munit/munit.h"
 

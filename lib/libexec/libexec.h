@@ -1,6 +1,8 @@
 #ifndef _LIBEXEC_H_
 #define _LIBEXEC_H_
 
+#include <sys/syslimits.h>
+
 struct exec_info;
 
 typedef int (*libexec_exec_loadfunc_t)(struct exec_info* execi);
@@ -21,7 +23,7 @@ struct exec_info {
     char* header;
     size_t header_len;
 
-    char prog_name[MAX_PATH];
+    char prog_name[PATH_MAX];
     size_t filesize;
 
     libexec_allocator_t allocmem;

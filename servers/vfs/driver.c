@@ -25,6 +25,7 @@
 #include <lyos/fs.h>
 #include <lyos/proc.h>
 #include <lyos/sysutils.h>
+#include <sys/syslimits.h>
 #include <errno.h>
 #include <libsysfs/libsysfs.h>
 
@@ -41,7 +42,7 @@ int do_mapdriver(void)
     void* domains_user = self->msg_in.u.m_vfs_mapdriver.domains;
     int nr_domains = self->msg_in.u.m_vfs_mapdriver.nr_domains;
     char label[PROC_NAME_LEN + 1];
-    char endpoint_label[MAX_PATH];
+    char endpoint_label[PATH_MAX];
     endpoint_t driver_ep;
     struct fproc* fp;
     int domains[NR_DOMAIN];

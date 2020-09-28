@@ -70,14 +70,14 @@ static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
 int do_rdlink(void)
 {
     struct lookup lookup;
-    char pathname[MAX_PATH];
+    char pathname[PATH_MAX];
     struct vfs_mount* vmnt;
     struct inode* pin;
     void* buf = self->msg_in.BUF;
     size_t size = self->msg_in.BUF_LEN;
     ssize_t retval;
 
-    if (self->msg_in.NAME_LEN >= MAX_PATH) return -ENAMETOOLONG;
+    if (self->msg_in.NAME_LEN >= PATH_MAX) return -ENAMETOOLONG;
 
     /* fetch the name */
     data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME,

@@ -43,8 +43,8 @@
 
 struct vfs_exec_info {
     struct exec_info args;
-    char prog_name[MAX_PATH];
-    char dyn_prog_name[MAX_PATH];
+    char prog_name[PATH_MAX];
+    char dyn_prog_name[PATH_MAX];
     struct inode* pin;
     struct vfs_mount* vmnt;
     struct stat sbuf;
@@ -96,8 +96,8 @@ static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
         execi->pin = NULL;
     }
 
-    memcpy(execi->prog_name, lookup->pathname, MAX_PATH);
-    memcpy(execi->args.prog_name, lookup->pathname, MAX_PATH);
+    strlcpy(execi->prog_name, lookup->pathname, PATH_MAX);
+    strlcpy(execi->args.prog_name, lookup->pathname, PATH_MAX);
 
     if ((execi->pin = resolve_path(lookup, fp)) == NULL) return err_code;
     execi->vmnt = execi->pin->i_vmnt;

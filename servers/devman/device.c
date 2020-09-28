@@ -30,6 +30,7 @@
 #include "lyos/proc.h"
 #include "lyos/driver.h"
 #include <lyos/sysutils.h>
+#include <sys/syslimits.h>
 #include <fcntl.h>
 
 #include <libsysfs/libsysfs.h>
@@ -122,13 +123,13 @@ static void device_domain_label(struct device* dev, char* buf)
         dev = dev->parent;
     }
 
-    snprintf(buf, MAX_PATH, "devices.%s", name);
+    snprintf(buf, PATH_MAX, "devices.%s", name);
 }
 
 static int publish_device(struct device* dev)
 {
-    char label[MAX_PATH];
-    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
+    char label[PATH_MAX];
+    char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
     device_domain_label(dev, device_root);
 
     int retval = sysfs_publish_domain(device_root, SF_PRIV_OVERWRITE);
@@ -144,7 +145,7 @@ static int publish_device(struct device* dev)
 
     if (dev->devt != NO_DEV) {
         /* add dev attribute */
-        snprintf(label, MAX_PATH, "%s.dev", device_root);
+        snprintf(label, PATH_MAX, "%s.dev", device_root);
 
         sysfs_dyn_attr_t dev_attr;
         int retval = sysfs_init_dyn_attr(&dev_attr, label, SF_PRIV_OVERWRITE,
@@ -166,9 +167,9 @@ static int publish_device(struct device* dev)
 
 static int add_class_symlinks(struct device* dev)
 {
-    char class_root[MAX_PATH - CLASS_NAME_MAX - 1];
-    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
-    char label[MAX_PATH];
+    char class_root[PATH_MAX - CLASS_NAME_MAX - 1];
+    char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
+    char label[PATH_MAX];
     int retval;
 
     device_domain_label(dev, device_root);
@@ -178,18 +179,18 @@ static int add_class_symlinks(struct device* dev)
     class_domain_label(dev->class, class_root);
 
     /* class -> device */
-    snprintf(label, MAX_PATH, "%s.%s", class_root, dev->name);
+    snprintf(label, PATH_MAX, "%s.%s", class_root, dev->name);
     retval = sysfs_publish_link(device_root, label);
     if (retval) return retval;
 
     /* device -> class */
-    snprintf(label, MAX_PATH, "%s.subsystem", device_root);
+    snprintf(label, PATH_MAX, "%s.subsystem", device_root);
     retval = sysfs_publish_link(class_root, label);
     if (retval) return retval;
 
     /* device -> parent */
     if (dev->parent) {
-        snprintf(label, MAX_PATH, "%s.device", device_root);
+        snprintf(label, PATH_MAX, "%s.device", device_root);
         device_domain_label(dev->parent, device_root);
         retval = sysfs_publish_link(device_root, label);
         if (retval) return retval;
@@ -200,9 +201,9 @@ static int add_class_symlinks(struct device* dev)
 
 static int bus_add_device(struct device* dev)
 {
-    char bus_root[MAX_PATH - BUS_NAME_MAX - 1];
-    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
-    char label[MAX_PATH];
+    char bus_root[PATH_MAX - BUS_NAME_MAX - 1];
+    char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
+    char label[PATH_MAX];
     int retval;
 
     device_domain_label(dev, device_root);
@@ -211,12 +212,12 @@ static int bus_add_device(struct device* dev)
         bus_domain_label(dev->bus, bus_root);
 
         /* bus -> device */
-        snprintf(label, MAX_PATH, "%s.devices.%s", bus_root, dev->name);
+        snprintf(label, PATH_MAX, "%s.devices.%s", bus_root, dev->name);
         retval = sysfs_publish_link(device_root, label);
         if (retval) return retval;
 
         /* device -> bus */
-        snprintf(label, MAX_PATH, "%s.subsystem", device_root);
+        snprintf(label, PATH_MAX, "%s.subsystem", device_root);
         retval = sysfs_publish_link(bus_root, label);
         if (retval) return retval;
     }
@@ -226,13 +227,13 @@ static int bus_add_device(struct device* dev)
 
 static int create_sys_dev_entry(struct device* dev)
 {
-    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
-    char label[MAX_PATH];
+    char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
+    char label[PATH_MAX];
     int retval;
 
     device_domain_label(dev, device_root);
 
-    snprintf(label, MAX_PATH, "dev.%s.%u:%u",
+    snprintf(label, PATH_MAX, "dev.%s.%u:%u",
              (dev->type == DT_BLOCKDEV ? "block" : "char"), MAJOR(dev->devt),
              MINOR(dev->devt));
     retval = sysfs_publish_link(device_root, label);
@@ -366,8 +367,8 @@ static ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
 int do_device_attr_add(MESSAGE* m)
 {
     struct device_attr_info info;
-    char device_root[MAX_PATH - DEVICE_NAME_MAX - 1];
-    char label[MAX_PATH];
+    char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
+    char label[PATH_MAX];
 
     if (m->BUF_LEN != sizeof(info)) return EINVAL;
 
@@ -378,7 +379,7 @@ int do_device_attr_add(MESSAGE* m)
     attr->owner = m->source;
 
     device_domain_label(attr->device, device_root);
-    snprintf(label, MAX_PATH, "%s.%s", device_root, info.name);
+    snprintf(label, PATH_MAX, "%s.%s", device_root, info.name);
 
     sysfs_dyn_attr_t sysfs_attr;
     int retval =

@@ -29,6 +29,8 @@
 #include "lyos/proc.h"
 #include "lyos/driver.h"
 #include <lyos/sysutils.h>
+#include <sys/syslimits.h>
+
 #include <libsysfs/libsysfs.h>
 #include <libdevman/libdevman.h>
 #include "type.h"
@@ -40,7 +42,7 @@ struct bus_attr_cb_data {
     struct bus_type* bus;
 };
 
-#define ID2INDEX(id) (id - 1)
+#define ID2INDEX(id)  (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
 #define NR_BUS_TYPES 32
@@ -90,23 +92,23 @@ static struct bus_type* alloc_bus_type()
 
 void bus_domain_label(struct bus_type* bus, char* buf)
 {
-    snprintf(buf, MAX_PATH, SYSFS_BUS_DOMAIN_LABEL, bus->name);
+    snprintf(buf, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL, bus->name);
 }
 
 static int publish_bus_type(struct bus_type* bus)
 {
-    char label[MAX_PATH];
+    char label[PATH_MAX];
 
     char* name = bus->name;
-    snprintf(label, MAX_PATH, SYSFS_BUS_DOMAIN_LABEL, name);
+    snprintf(label, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL, name);
     int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
     if (retval) return retval;
 
-    snprintf(label, MAX_PATH, SYSFS_BUS_DOMAIN_LABEL ".drivers", name);
+    snprintf(label, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL ".drivers", name);
     retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
     if (retval) return retval;
 
-    snprintf(label, MAX_PATH, SYSFS_BUS_DOMAIN_LABEL ".devices", name);
+    snprintf(label, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL ".devices", name);
     retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
     return retval;
@@ -216,8 +218,8 @@ static ssize_t bus_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
 int do_bus_attr_add(MESSAGE* m)
 {
     struct bus_attr_info info;
-    char bus_root[MAX_PATH - BUS_NAME_MAX - 1];
-    char label[MAX_PATH];
+    char bus_root[PATH_MAX - BUS_NAME_MAX - 1];
+    char label[PATH_MAX];
 
     if (m->BUF_LEN != sizeof(info)) return EINVAL;
 
@@ -227,7 +229,7 @@ int do_bus_attr_add(MESSAGE* m)
     attr->bus = get_bus_type(info.bus);
 
     bus_domain_label(attr->bus, bus_root);
-    snprintf(label, MAX_PATH, "%s.%s", bus_root, info.name);
+    snprintf(label, PATH_MAX, "%s.%s", bus_root, info.name);
 
     sysfs_dyn_attr_t sysfs_attr;
     int retval =

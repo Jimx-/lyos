@@ -33,6 +33,7 @@
 #include "global.h"
 #include "proto.h"
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 
 /**
  * <Ring 1> Perform the access syscall.
@@ -42,8 +43,8 @@
 int do_access(void)
 {
     int namelen = self->msg_in.NAME_LEN + 1;
-    char pathname[MAX_PATH];
-    if (namelen > MAX_PATH) return ENAMETOOLONG;
+    char pathname[PATH_MAX];
+    if (namelen > PATH_MAX) return ENAMETOOLONG;
 
     data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
     pathname[namelen] = 0;
@@ -136,8 +137,8 @@ int do_chmod(int type)
 
     struct lookup lookup;
     if (type == CHMOD) {
-        char pathname[MAX_PATH];
-        if (self->msg_in.NAME_LEN > MAX_PATH) return ENAMETOOLONG;
+        char pathname[PATH_MAX];
+        if (self->msg_in.NAME_LEN > PATH_MAX) return ENAMETOOLONG;
 
         /* fetch the name */
         data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME,

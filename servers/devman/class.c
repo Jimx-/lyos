@@ -17,7 +17,7 @@
 #include <libdevman/libdevman.h>
 #include "type.h"
 
-#define ID2INDEX(id) (id - 1)
+#define ID2INDEX(id)  (id - 1)
 #define INDEX2ID(idx) (idx + 1)
 
 #define NR_CLASSES 32
@@ -53,12 +53,12 @@ static struct class* alloc_class()
 
 void class_domain_label(struct class* class, char* buf)
 {
-    snprintf(buf, MAX_PATH, SYSFS_CLASS_DOMAIN_LABEL, class->name);
+    snprintf(buf, PATH_MAX, SYSFS_CLASS_DOMAIN_LABEL, class->name);
 }
 
 static int publish_class(struct class* class)
 {
-    char label[MAX_PATH];
+    char label[PATH_MAX];
     int retval;
 
     class_domain_label(class, label);

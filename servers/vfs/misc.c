@@ -26,6 +26,7 @@
 #include "lyos/fs.h"
 #include "lyos/proc.h"
 #include "errno.h"
+#include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <asm/page.h>
 #include "types.h"
@@ -180,8 +181,8 @@ int do_fchdir(void)
 static int change_directory(struct fproc* fp, struct inode** ppin,
                             endpoint_t src, char* string, int len)
 {
-    char pathname[MAX_PATH];
-    if (len > MAX_PATH) return ENAMETOOLONG;
+    char pathname[PATH_MAX];
+    if (len > PATH_MAX) return ENAMETOOLONG;
 
     /* fetch the name */
     data_copy(SELF, pathname, src, string, len);

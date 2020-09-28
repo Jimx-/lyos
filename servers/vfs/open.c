@@ -27,6 +27,7 @@
 #include <lyos/proc.h>
 #include <lyos/mgrant.h>
 #include <fcntl.h>
+#include <sys/syslimits.h>
 
 #include "types.h"
 #include "errno.h"
@@ -65,8 +66,8 @@ int do_open(void)
     int src = self->msg_in.source;        /* caller proc nr. */
     mode_t mode = self->msg_in.MODE;      /* access mode */
 
-    char pathname[MAX_PATH];
-    if (name_len > MAX_PATH) {
+    char pathname[PATH_MAX];
+    if (name_len > PATH_MAX) {
         return -ENAMETOOLONG;
     }
 
@@ -408,8 +409,8 @@ int do_mkdir(void)
     int name_len = self->msg_in.NAME_LEN; /* length of filename */
     mode_t mode = self->msg_in.MODE;      /* access mode */
 
-    char pathname[MAX_PATH + 1];
-    if (name_len > MAX_PATH) {
+    char pathname[PATH_MAX + 1];
+    if (name_len > PATH_MAX) {
         return -ENAMETOOLONG;
     }
 
