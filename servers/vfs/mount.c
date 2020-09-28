@@ -309,7 +309,7 @@ static dev_t name2dev(struct fproc* fp, char* pathname)
     }
 
     dev_t retval = 0;
-    if ((pin->i_mode & I_TYPE) == I_BLOCK_SPECIAL)
+    if (S_ISBLK(pin->i_mode))
         retval = pin->i_specdev;
     else
         err_code = ENOTBLK;

@@ -44,12 +44,12 @@ void root_meminfo();
 static void root_stat(void);
 
 struct procfs_file root_files[] = {
-    {"cmdline", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},
-    {"version", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_version},
-    {"uptime", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_uptime},
-    {"cpuinfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo},
-    {"meminfo", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_meminfo},
-    {"stat", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, root_stat},
+    {"cmdline", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},
+    {"version", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_version},
+    {"uptime", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_uptime},
+    {"cpuinfo", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo},
+    {"meminfo", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_meminfo},
+    {"stat", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_stat},
     {NULL, 0, NULL},
 };
 

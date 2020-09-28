@@ -29,6 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <fcntl.h>
 
 #include "proto.h"
 #include "global.h"
@@ -69,22 +70,22 @@ unsigned int initfs_getmode(const struct posix_tar_header* phdr)
     switch (phdr->typeflag) {
     case REGTYPE:
     case AREGTYPE:
-        mode = I_REGULAR;
+        mode = S_IFREG;
         break;
     case SYMTYPE:
-        mode = I_SYMBOLIC_LINK;
+        mode = S_IFLNK;
         break;
     case CHRTYPE:
-        mode = I_CHAR_SPECIAL;
+        mode = S_IFCHR;
         break;
     case BLKTYPE:
-        mode = I_BLOCK_SPECIAL;
+        mode = S_IFBLK;
         break;
     case DIRTYPE:
-        mode = I_DIRECTORY;
+        mode = S_IFDIR;
         break;
     case FIFOTYPE:
-        mode = I_NAMED_PIPE;
+        mode = S_IFIFO;
         break;
     }
 

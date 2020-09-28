@@ -131,8 +131,7 @@ static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
 
 int truncate_node(struct inode* pin, int newsize)
 {
-    int file_type = pin->i_mode & I_TYPE;
-    if (file_type != I_REGULAR) return EINVAL;
+    if (!S_ISREG(pin->i_mode)) return EINVAL;
     int retval = request_ftrunc(pin->i_fs_ep, pin->i_dev, pin->i_num, newsize);
     if (retval == 0) {
         pin->i_size = newsize;

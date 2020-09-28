@@ -50,7 +50,8 @@ int main()
     sysfs_init();
 
     struct memfs_stat root_stat;
-    root_stat.st_mode = (I_DIRECTORY | 0755);
+    root_stat.st_mode =
+        S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
     root_stat.st_uid = SU_UID;
     root_stat.st_gid = 0;
 

@@ -391,7 +391,7 @@ static struct inode* get_pipe_inode(struct fproc* fp)
     ino_t ino = get_next_ino();
 
     struct inode* pin =
-        new_inode(pipefs_vmnt->m_dev, ino, I_NAMED_PIPE | S_IRUSR | S_IWUSR);
+        new_inode(pipefs_vmnt->m_dev, ino, S_IFIFO | S_IRUSR | S_IWUSR);
 
     if (!pin) {
         err_code = ENOMEM;

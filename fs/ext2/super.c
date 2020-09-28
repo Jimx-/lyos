@@ -31,6 +31,7 @@
 #include "lyos/proto.h"
 #include "lyos/list.h"
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -211,7 +212,7 @@ int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
         return EINVAL;
     }
 
-    if ((pin->i_mode & I_TYPE) != I_DIRECTORY) {
+    if (!S_ISDIR(pin->i_mode)) {
         printl("ext2fs: ext2_readsuper(): root inode is not a directory\n");
         bdev_close(dev);
         return EINVAL;

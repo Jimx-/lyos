@@ -23,6 +23,7 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
+#include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
 
 static struct memfs_inode* memfs_advance(struct memfs_inode* parent,
@@ -54,7 +55,7 @@ static struct memfs_inode* memfs_advance(struct memfs_inode* parent,
 {
     struct memfs_inode* node;
 
-    if (!(parent->i_stat.st_mode & I_DIRECTORY)) {
+    if (!S_ISDIR(parent->i_stat.st_mode)) {
         errno = ENOTDIR;
         return NULL;
     }

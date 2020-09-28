@@ -29,6 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/stat.h>
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -110,7 +111,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, const char string[EXT2_NAME_LEN + 1],
     int required_space = 0;
     int ret = 0;
 
-    if ((dir_pin->i_mode & I_TYPE) != I_DIRECTORY) return ENOTDIR;
+    if (!S_ISDIR(dir_pin->i_mode)) return ENOTDIR;
     if (flag != SD_IS_EMPTY) {
         if ((strcmp(string, ".") == 0) || (strcmp(string, "..") == 0)) {
             if (flag != SD_LOOK_UP) ret = dir_pin->i_sb->sb_readonly;

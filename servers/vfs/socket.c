@@ -28,6 +28,7 @@
 #include <lyos/sysutils.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include "const.h"
 #include "types.h"
@@ -71,7 +72,7 @@ static int get_sock_inode(struct fproc* fp, dev_t dev, struct inode** ppin)
     ino_t ino = get_next_ino();
 
     struct inode* pin = new_inode(sockfs_vmnt->m_dev, ino,
-                                  I_UNIX_SOCKET | S_IRWXU | S_IRWXG | S_IRWXO);
+                                  S_IFSOCK | S_IRWXU | S_IRWXG | S_IRWXO);
 
     if (!pin) {
         return ENOMEM;

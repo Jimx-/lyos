@@ -25,6 +25,7 @@
 #include <lyos/fs.h>
 #include <lyos/const.h>
 #include <lyos/sysutils.h>
+#include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
 
 struct memfs_inode root_inode;
@@ -112,7 +113,7 @@ struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
 {
     struct memfs_inode* node;
 
-    if (!(parent->i_stat.st_mode & I_DIRECTORY)) {
+    if (!S_ISDIR(parent->i_stat.st_mode)) {
         errno = ENOTDIR;
         return NULL;
     }

@@ -30,6 +30,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/sysutils.h>
+#include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
 #include "global.h"
 #include "proto.h"
@@ -60,7 +61,8 @@ static int update_tables()
 static void make_stat(struct memfs_stat* stat, int slot, int index)
 {
     if (index == NO_INDEX)
-        stat->st_mode = (I_DIRECTORY | 0755);
+        stat->st_mode =
+            S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
     else
         stat->st_mode = pid_files[index].mode;
     stat->st_uid = SU_UID;

@@ -30,6 +30,8 @@
 #include "lyos/proto.h"
 #include "lyos/list.h"
 #include <lyos/service.h>
+#include <fcntl.h>
+
 #include "libfsdriver/libfsdriver.h"
 #include "ext2_fs.h"
 #include "global.h"
@@ -106,8 +108,7 @@ static int ext2_mountpoint(dev_t dev, ino_t num)
     if (pin->i_mountpoint) return EBUSY;
 
     int retval = 0;
-    mode_t bits = pin->i_mode & I_TYPE;
-    if (bits == I_BLOCK_SPECIAL || bits == I_CHAR_SPECIAL) retval = ENOTDIR;
+    if (!S_ISDIR(pin->i_mode)) retval = ENOTDIR;
 
     if (!retval) pin->i_mountpoint = 1;
     put_ext2_inode(pin);

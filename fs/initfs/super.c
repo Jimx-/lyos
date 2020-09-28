@@ -76,7 +76,7 @@ int initfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
     node->fn_uid = 0;
     node->fn_gid = 0;
     node->fn_size = 0;
-    node->fn_mode = I_DIRECTORY | S_IRWXU;
+    node->fn_mode = S_IFDIR | S_IRWXU;
 
     return 0;
 }

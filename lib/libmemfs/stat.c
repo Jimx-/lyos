@@ -36,15 +36,13 @@ static int memfs_stat_inode(struct memfs_inode* pin,
  * @param  buf Buffer.
  * @return     Zero on success.
  */
-static int memfs_stat_inode(struct memfs_inode* pin,
-                            struct fsdriver_data* data)
+static int memfs_stat_inode(struct memfs_inode* pin, struct fsdriver_data* data)
 {
     struct stat sbuf;
 
     memset(&sbuf, 0, sizeof(struct stat));
 
-    int mode = pin->i_stat.st_mode & I_TYPE;
-    int special = (mode == I_CHAR_SPECIAL) || (mode == I_BLOCK_SPECIAL);
+    int special = S_ISCHR(pin->i_stat.st_mode) || S_ISBLK(pin->i_stat.st_mode);
 
     /* fill in the information */
     sbuf.st_dev = pin->i_stat.st_dev;

@@ -109,9 +109,8 @@ int do_rdwt(void)
         unlock_filp(filp);
         return -ENOENT;
     }
-    int file_type = pin->i_mode & I_TYPE;
 
-    if (file_type == I_DIRECTORY) {
+    if (S_ISDIR(pin->i_mode)) {
         retval = -EISDIR;
     } else if (filp->fd_fops == NULL) {
         retval = -EBADF;

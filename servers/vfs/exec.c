@@ -103,7 +103,7 @@ static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
     execi->vmnt = execi->pin->i_vmnt;
     unlock_vmnt(execi->vmnt);
 
-    if ((execi->pin->i_mode & I_TYPE) != I_REGULAR) return ENOEXEC;
+    if (!S_ISREG(execi->pin->i_mode)) return ENOEXEC;
     if ((retval = forbidden(fp, execi->pin, X_BIT)) != 0) return retval;
 
     retval = request_stat(execi->pin->i_fs_ep, execi->pin->i_dev,

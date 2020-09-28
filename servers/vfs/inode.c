@@ -36,11 +36,9 @@
 
 static void set_inode_fops(struct inode* pin)
 {
-    int file_type = pin->i_mode & I_TYPE;
-
-    if (file_type == I_CHAR_SPECIAL) {
+    if (S_ISCHR(pin->i_mode)) {
         pin->i_fops = &cdev_fops;
-    } else if (file_type == I_REGULAR) {
+    } else if (S_ISREG(pin->i_mode)) {
         pin->i_fops = &vfs_fops;
     } else {
         pin->i_fops = NULL;

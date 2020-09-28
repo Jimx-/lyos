@@ -28,6 +28,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/fs.h>
+#include <fcntl.h>
 #include "region.h"
 #include "proto.h"
 #include "const.h"
@@ -133,7 +134,7 @@ static void mmap_file_callback(struct mmproc* mmp, MESSAGE* msg, void* arg)
         result = msg->MMRRESULT;
     } else {
         mode_t file_mode = msg->MMRMODE;
-        if ((file_mode & I_TYPE) == I_CHAR_SPECIAL) { /* map device */
+        if (S_ISCHR(file_mode)) { /* map device */
             if (enqueue_vfs_request(
                     mmp, MMR_FDMMAP, msg->MMRFD, mmap_msg->u.m_mm_mmap.vaddr,
                     mmap_msg->u.m_mm_mmap.offset, mmap_msg->u.m_mm_mmap.length,

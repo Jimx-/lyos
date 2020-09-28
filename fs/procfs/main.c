@@ -29,6 +29,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/service.h>
+#include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
 #include "global.h"
 #include "proto.h"
@@ -49,7 +50,8 @@ int main()
     serv_init();
 
     struct memfs_stat root_stat;
-    root_stat.st_mode = (I_DIRECTORY | 0755);
+    root_stat.st_mode =
+        (S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
     root_stat.st_uid = SU_UID;
     root_stat.st_gid = 0;
 

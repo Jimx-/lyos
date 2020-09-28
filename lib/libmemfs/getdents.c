@@ -23,19 +23,18 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
+#include <sys/stat.h>
 #include <sys/dirent.h>
 #include "libmemfs/libmemfs.h"
 
 static int stat_type(struct memfs_stat* st)
 {
-    switch (st->st_mode) {
-    case I_REGULAR:
+    if (S_ISREG(st->st_mode)) {
         return DT_REG;
-    case I_DIRECTORY:
+    } else if (S_ISDIR(st->st_mode)) {
         return DT_DIR;
-    default:
-        return DT_UNKNOWN;
     }
+    return DT_UNKNOWN;
 }
 
 ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,

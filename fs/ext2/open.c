@@ -29,6 +29,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/stat.h>
+
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -103,7 +105,7 @@ static ext2_inode_t* ext2_new_inode(ext2_inode_t* pin_dir, const char* pathname,
 
         /* create the directory entry */
         retval = ext2_search_dir(pin_dir, pathname, &pin->i_num, SD_MAKE,
-                                 pin->i_mode & I_TYPE);
+                                 pin->i_mode & S_IFMT);
 
         if (retval != 0) {
             pin->i_links_count--;
@@ -145,8 +147,8 @@ int ext2_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
     dot = pin->i_num;
 
     /* create '..' and '.' in the new directory */
-    r1 = ext2_search_dir(pin, "..", &dotdot, SD_MAKE, I_DIRECTORY);
-    r2 = ext2_search_dir(pin, ".", &dot, SD_MAKE, I_DIRECTORY);
+    r1 = ext2_search_dir(pin, "..", &dotdot, SD_MAKE, S_IFDIR);
+    r2 = ext2_search_dir(pin, ".", &dot, SD_MAKE, S_IFDIR);
 
     if (!r1 && !r2) {
         pin->i_links_count++;
@@ -178,8 +180,7 @@ int ext2_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
         return EINVAL;
     }
 
-    pin = ext2_new_inode(pin_dir, name, (I_SYMBOLIC_LINK | RWX_MODES), 0, uid,
-                         gid);
+    pin = ext2_new_inode(pin_dir, name, (S_IFLNK | RWX_MODES), 0, uid, gid);
     retval = err_code;
 
     if (retval == 0) {

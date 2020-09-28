@@ -22,6 +22,7 @@
 #ifdef __i386__
 #include <asm/protect.h>
 #include <asm/page.h>
+#include <asm/const.h>
 #endif
 
 #ifdef __arm__

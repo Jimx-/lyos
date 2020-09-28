@@ -75,8 +75,7 @@ int forbidden(struct fproc* fp, struct inode* pin, int access)
     bits = pin->i_mode;
 
     if (fp->realuid == SU_UID) {
-        if ((bits & I_TYPE) == I_DIRECTORY ||
-            bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
+        if (S_ISDIR(bits) || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
             perm_bits = R_BIT | W_BIT | X_BIT;
         else
             perm_bits = R_BIT | W_BIT;

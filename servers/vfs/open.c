@@ -26,6 +26,7 @@
 #include <lyos/fs.h>
 #include <lyos/proc.h>
 #include <lyos/mgrant.h>
+#include <fcntl.h>
 
 #include "types.h"
 #include "errno.h"
@@ -95,7 +96,7 @@ int common_open(char* pathname, int flags, mode_t mode)
     init_lookup(&lookup, pathname, 0, &vmnt, &pin);
 
     if (flags & O_CREAT) {
-        mode = I_REGULAR | (mode & ALL_MODES & fproc->umask);
+        mode = S_IFREG | (mode & ALL_MODES & fproc->umask);
         err_code = 0;
         pin = new_node(fproc, &lookup, flags, mode);
         retval = err_code;
@@ -129,29 +130,19 @@ int common_open(char* pathname, int flags, mode_t mode)
 
     if (exist) {
         if ((retval = forbidden(fproc, pin, bits)) == 0) {
-            switch (pin->i_mode & I_TYPE) {
-            case I_REGULAR:
+            if (S_ISREG(pin->i_mode)) {
                 /* truncate the inode */
                 if (flags & O_TRUNC) {
-                    if ((retval = forbidden(fproc, pin, W_BIT)) != 0) {
-                        break;
+                    if ((retval = forbidden(fproc, pin, W_BIT)) == OK) {
+                        truncate_node(pin, 0);
                     }
-                    truncate_node(pin, 0);
                 }
-                break;
-            case I_DIRECTORY: /* directory may not be written */
+            } else if (S_ISDIR(pin->i_mode)) {
                 retval = (bits & W_BIT) ? EISDIR : 0;
-                break;
-            case I_CHAR_SPECIAL: /* open char device */
-            {
+            } else if (S_ISCHR(pin->i_mode)) {
                 retval = filp->fd_fops->open(pin, filp);
-                break;
-            }
-            case I_BLOCK_SPECIAL:
-                /* TODO: handle block special file */
-                break;
-            default:
-                break;
+            } else {
+                /* TODO: handle other file types */
             }
         }
     }
@@ -434,12 +425,12 @@ int do_mkdir(void)
     lookup.vmnt_lock = RWL_WRITE;
     lookup.inode_lock = RWL_WRITE;
 
-    mode_t bits = I_DIRECTORY | (mode & ALL_MODES & fproc->umask);
+    mode_t bits = S_IFDIR | (mode & ALL_MODES & fproc->umask);
     if ((pin = last_dir(&lookup, fproc)) == NULL) {
         return errno;
     }
 
-    if (!(pin->i_mode & I_DIRECTORY)) {
+    if (!S_ISDIR(pin->i_mode)) {
         retval = ENOTDIR;
     } else if ((retval = forbidden(fproc, pin, W_BIT | X_BIT)) == 0) {
         retval =

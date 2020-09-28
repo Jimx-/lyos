@@ -26,6 +26,7 @@
 #include "lyos/fs.h"
 #include "lyos/proc.h"
 #include "errno.h"
+#include <sys/stat.h>
 #include <asm/page.h>
 #include "types.h"
 #include "path.h"
@@ -215,7 +216,7 @@ static int change_node(struct fproc* fp, struct inode** ppin, struct inode* pin)
     if (*ppin == pin) return 0;
 
     /* must be a directory */
-    if ((pin->i_mode & I_TYPE) != I_DIRECTORY) {
+    if (!S_ISDIR(pin->i_mode)) {
         retval = ENOTDIR;
     } else {
         /* must be searchable */
@@ -289,9 +290,8 @@ int do_mm_request(void)
         }
 
         struct inode* pin = filp->fd_inode;
-        int file_type = pin->i_mode & I_TYPE;
 
-        if (file_type == I_DIRECTORY) {
+        if (S_ISDIR(pin->i_mode)) {
             unlock_filp(filp);
             result = EISDIR;
             goto reply;
@@ -322,10 +322,9 @@ int do_mm_request(void)
         }
 
         struct inode* pin = filp->fd_inode;
-        int file_type = pin->i_mode & I_TYPE;
         void* retaddr;
 
-        if (file_type == I_CHAR_SPECIAL) {
+        if (S_ISCHR(pin->i_mode)) {
             result =
                 cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr, fp);
             if (result) {

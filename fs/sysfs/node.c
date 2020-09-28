@@ -30,6 +30,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/stat.h>
 #include "libsysfs/libsysfs.h"
 #include <sys/syslimits.h>
 #include "node.h"
@@ -180,15 +181,15 @@ static void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
     switch (NODE_TYPE(node)) {
     case SF_TYPE_DOMAIN:
         bits = 0755;
-        file_type = I_DIRECTORY;
+        file_type = S_IFDIR;
         break;
     case SF_TYPE_LINK:
         bits = 0777;
-        file_type = I_SYMBOLIC_LINK;
+        file_type = S_IFLNK;
         break;
     default:
         bits = 0644;
-        file_type = I_REGULAR;
+        file_type = S_IFREG;
         break;
     }
 

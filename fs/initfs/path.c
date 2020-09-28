@@ -47,7 +47,7 @@ static void fill_node(ino_t num, struct fsdriver_node* fn,
 
     if (!num) {
         /* special hack for root inode */
-        fn->fn_mode = I_DIRECTORY | S_IRWXU;
+        fn->fn_mode = S_IFDIR | S_IRWXU;
     } else {
         fn->fn_mode = initfs_getmode(phdr);
     }

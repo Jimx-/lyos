@@ -40,8 +40,8 @@ static void pid_status(int slot);
 static void pid_environ(int slot);
 
 struct procfs_file pid_files[] = {
-    {"status", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_status},
-    {"environ", I_REGULAR | S_IRUSR | S_IRGRP | S_IROTH, pid_environ},
+    {"status", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, pid_status},
+    {"environ", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, pid_environ},
     {NULL, 0, NULL},
 };
 

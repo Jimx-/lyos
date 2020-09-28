@@ -48,23 +48,6 @@
 #define REQ_ENDPOS    u.m3.m3i4
 #define REQ_UCRED     u.m3.m3p2
 
-/* for stat */
-#define STDEV u.m3.m3i1
-#define STINO u.m3.m3i2
-#define STBUF u.m3.m3p1
-#define STSRC u.m3.m3i3
-#define STRET u.m3.m3i4
-
-/* for rdwt */
-#define RWDEV  u.m3.m3l2
-#define RWINO  u.m3.m3i1
-#define RWPOS  u.m3.m3l1
-#define RWFLAG u.m3.m3i2
-#define RWSRC  u.m3.m3i3
-#define RWBUF  u.m3.m3p1
-#define RWCNT  u.m3.m3i4
-#define RWRET  u.m3.m3l2
-
 /* for mm request */
 #define MMRTYPE      u.m3.m3i1
 #define MMRRESULT    u.m3.m3i1

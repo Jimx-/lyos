@@ -48,8 +48,7 @@ static int ext2_stat_inode(ext2_inode_t* pin, struct fsdriver_data* data)
 
     memset(&sbuf, 0, sizeof(struct stat));
 
-    int mode = pin->i_mode & I_TYPE;
-    int special = (mode == I_CHAR_SPECIAL) || (mode == I_BLOCK_SPECIAL);
+    int special = S_ISCHR(pin->i_mode) || S_ISBLK(pin->i_mode);
 
     /* fill in the information */
     sbuf.st_dev = pin->i_dev;
