@@ -26,6 +26,7 @@
 #include <lyos/global.h>
 #include <lyos/driver.h>
 #include <lyos/proto.h>
+#include <lyos/mgrant.h>
 
 #include <libbdev/libbdev.h>
 #include <libdevman/libdevman.h>
@@ -66,6 +67,12 @@ int bdev_driver(dev_t dev)
     return 0;
 }
 
+static inline endpoint_t bdev_get_driver(dev_t dev)
+{
+    dev_t major = MAJOR(dev);
+    return driver_table[major];
+}
+
 /*****************************************************************************
  *                                bdev_sendrec
  *****************************************************************************/
@@ -79,10 +86,13 @@ int bdev_driver(dev_t dev)
  *****************************************************************************/
 int bdev_sendrec(dev_t dev, MESSAGE* msg)
 {
-    dev_t major = MAJOR(dev);
-    if (driver_table[major] == NO_TASK) bdev_update(dev);
+    endpoint_t driver_ep = bdev_get_driver(dev);
+    if (driver_ep == NO_TASK) {
+        bdev_update(dev);
+        driver_ep = bdev_get_driver(dev);
+    }
 
-    return send_recv(BOTH, driver_table[major], msg);
+    return send_recv(BOTH, driver_ep, msg);
 }
 
 /*****************************************************************************
@@ -145,64 +155,102 @@ int bdev_close(dev_t dev)
  * @return Bytes read/wrote or a negative error code.
  *****************************************************************************/
 static ssize_t bdev_readwrite(int io_type, dev_t dev, loff_t pos, size_t bytes,
-                              endpoint_t endpoint, void* buf)
+                              void* buf)
 {
     MESSAGE driver_msg;
+    endpoint_t driver_ep;
+    mgrant_id_t grant;
+    int access;
 
-    if (endpoint == SELF) endpoint = self_ep;
+    if ((driver_ep = bdev_get_driver(dev)) == NO_TASK) return -EIO;
+
+    access = (io_type == BDEV_READ) ? MGF_WRITE : MGF_READ;
+
+    grant = mgrant_set_direct(driver_ep, (vir_bytes)buf, bytes, access);
+    if (grant == GRANT_INVALID) return -EINVAL;
 
     driver_msg.type = io_type;
     driver_msg.u.m_bdev_blockdriver_msg.minor = MINOR(dev);
     driver_msg.u.m_bdev_blockdriver_msg.pos = pos;
     driver_msg.u.m_bdev_blockdriver_msg.count = bytes;
-    driver_msg.u.m_bdev_blockdriver_msg.buf = buf;
-    driver_msg.u.m_bdev_blockdriver_msg.endpoint = endpoint;
+    driver_msg.u.m_bdev_blockdriver_msg.grant = grant;
 
     bdev_sendrec(dev, &driver_msg);
+
+    mgrant_revoke(grant);
 
     return driver_msg.u.m_blockdriver_bdev_reply.status;
 }
 
-ssize_t bdev_read(dev_t dev, loff_t pos, void* buf, size_t count,
-                  endpoint_t endpoint)
+ssize_t bdev_read(dev_t dev, loff_t pos, void* buf, size_t count)
 {
-    return bdev_readwrite(BDEV_READ, dev, pos, count, endpoint, buf);
+    return bdev_readwrite(BDEV_READ, dev, pos, count, buf);
 }
 
-ssize_t bdev_write(dev_t dev, loff_t pos, void* buf, size_t count,
-                   endpoint_t endpoint)
+ssize_t bdev_write(dev_t dev, loff_t pos, void* buf, size_t count)
 {
-    return bdev_readwrite(BDEV_WRITE, dev, pos, count, endpoint, buf);
+    return bdev_readwrite(BDEV_WRITE, dev, pos, count, buf);
 }
 
 static ssize_t bdev_vreadwrite(int io_type, dev_t dev, loff_t pos,
-                               endpoint_t endpoint, const struct iovec* iov,
-                               size_t count)
+                               const struct iovec* iov, size_t count)
 {
     MESSAGE driver_msg;
+    endpoint_t driver_ep;
+    mgrant_id_t grant;
+    struct iovec_grant giov[NR_IOREQS];
+    int i, access;
 
-    if (endpoint == SELF) endpoint = self_ep;
+    if ((driver_ep = bdev_get_driver(dev)) == NO_TASK) return -EIO;
+
+    access = (io_type == BDEV_READV) ? MGF_WRITE : MGF_READ;
+
+    for (i = 0; i < count; i++) {
+        grant = mgrant_set_direct(driver_ep, (vir_bytes)iov[i].iov_base,
+                                  iov[i].iov_len, access);
+        if (grant == GRANT_INVALID) {
+            for (i--; i >= 0; i--) {
+                mgrant_revoke(giov[i].iov_grant);
+            }
+            return -EINVAL;
+        }
+
+        giov->iov_grant = grant;
+        giov->iov_len = iov->iov_len;
+    }
+
+    grant = mgrant_set_direct(driver_ep, (vir_bytes)giov,
+                              sizeof(giov[0]) * count, MGF_READ);
+    if (grant == GRANT_INVALID) {
+        for (i = 0; i < count; i++) {
+            mgrant_revoke(giov[i].iov_grant);
+        }
+        return -EINVAL;
+    }
 
     driver_msg.type = io_type;
     driver_msg.u.m_bdev_blockdriver_msg.minor = MINOR(dev);
     driver_msg.u.m_bdev_blockdriver_msg.pos = pos;
     driver_msg.u.m_bdev_blockdriver_msg.count = count;
-    driver_msg.u.m_bdev_blockdriver_msg.buf = (void*)iov;
-    driver_msg.u.m_bdev_blockdriver_msg.endpoint = endpoint;
+    driver_msg.u.m_bdev_blockdriver_msg.grant = grant;
 
     bdev_sendrec(dev, &driver_msg);
+
+    mgrant_revoke(grant);
+    for (i = 0; i < count; i++) {
+        mgrant_revoke(giov[i].iov_grant);
+    }
 
     return driver_msg.u.m_blockdriver_bdev_reply.status;
 }
 
-ssize_t bdev_readv(dev_t dev, loff_t pos, endpoint_t endpoint,
-                   const struct iovec* iov, size_t count)
+ssize_t bdev_readv(dev_t dev, loff_t pos, const struct iovec* iov, size_t count)
 {
-    return bdev_vreadwrite(BDEV_READV, dev, pos, endpoint, iov, count);
+    return bdev_vreadwrite(BDEV_READV, dev, pos, iov, count);
 }
 
-ssize_t bdev_writev(dev_t dev, loff_t pos, endpoint_t endpoint,
-                    const struct iovec* iov, size_t count)
+ssize_t bdev_writev(dev_t dev, loff_t pos, const struct iovec* iov,
+                    size_t count)
 {
-    return bdev_vreadwrite(BDEV_WRITEV, dev, pos, endpoint, iov, count);
+    return bdev_vreadwrite(BDEV_WRITEV, dev, pos, iov, count);
 }

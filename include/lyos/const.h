@@ -48,7 +48,7 @@
 
 #define BASIC_SYSCALLS                                               \
     NR_PRINTX, NR_SENDREC, NR_GETINFO, NR_SETGRANT, NR_SAFECOPYFROM, \
-        NR_SAFECOPYTO
+        NR_SAFECOPYTO, NR_TIMES
 
 /* kernel signals */
 #define SIGKSIG SIGUSR1

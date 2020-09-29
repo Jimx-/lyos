@@ -79,9 +79,10 @@ static void init_rd(int argc, char* argv[]);
 static int rd_open(dev_t minor, int access);
 static int rd_close(dev_t minor);
 static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, const struct iovec* iov,
+                       endpoint_t endpoint, const struct iovec_grant* iov,
                        size_t count);
-static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
+static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint);
 
 static int char_open(dev_t minor, int access);
 static int char_close(dev_t minor);
@@ -132,10 +133,10 @@ static int rd_open(dev_t minor, int access) { return 0; }
 static int rd_close(dev_t minor) { return 0; }
 
 static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, const struct iovec* iov,
+                       endpoint_t endpoint, const struct iovec_grant* iov,
                        size_t count)
 {
-    int i;
+    int i, retval;
     ssize_t total = 0;
     size_t bytes;
 
@@ -160,9 +161,22 @@ static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
 
         if (do_write) {
             if (ramdisk->rdonly) return -EROFS;
-            data_copy(SELF, addr, endpoint, iov->iov_base, bytes);
+
+            if (endpoint == SELF) {
+                memcpy(addr, (void*)iov->iov_addr, bytes);
+            } else {
+                if ((retval = safecopy_from(endpoint, iov->iov_grant, 0, addr,
+                                            bytes)) != 0)
+                    return -retval;
+            }
         } else {
-            data_copy(endpoint, iov->iov_base, SELF, addr, bytes);
+            if (endpoint == SELF) {
+                memcpy((void*)iov->iov_addr, addr, bytes);
+            } else {
+                if ((retval = safecopy_to(endpoint, iov->iov_grant, 0, addr,
+                                          bytes)) != 0)
+                    return -retval;
+            }
         }
 
         pos += bytes;
@@ -171,7 +185,8 @@ static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
     return total;
 }
 
-static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
+static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint)
 {
     return 0;
 }

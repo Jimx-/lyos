@@ -16,57 +16,65 @@
 #ifndef _VM_H_
 #define _VM_H_
 
+#include <sys/types.h>
+#include <lyos/types.h>
+
 #define MMSUSPEND -1001
 
-#define PCTL_WHO u.m3.m3i1
+#define PCTL_WHO   u.m3.m3i1
 #define PCTL_PARAM u.m3.m3i2
 
 #define PCTL_CLEARPROC 1
-#define PCTL_CLEARMEM 2
+#define PCTL_CLEARMEM  2
 
 /* vmctl request */
-#define VMCTL_BOOTINHIBIT_CLEAR 1
-#define VMCTL_MMINHIBIT_CLEAR 2
-#define VMCTL_GET_KERN_MAPPING 3
+#define VMCTL_BOOTINHIBIT_CLEAR  1
+#define VMCTL_MMINHIBIT_CLEAR    2
+#define VMCTL_GET_KERN_MAPPING   3
 #define VMCTL_REPLY_KERN_MAPPING 4
-#define VMCTL_PAGEFAULT_CLEAR 5
-#define VMCTL_GETPDBR 6
-#define VMCTL_SET_ADDRESS_SPACE 7
-#define VMCTL_CLEAR_MEMCACHE 8
-#define VMCTL_GET_MMREQ 9
-#define VMCTL_REPLY_MMREQ 10
-#define VMCTL_FLUSHTLB 11
+#define VMCTL_PAGEFAULT_CLEAR    5
+#define VMCTL_GETPDBR            6
+#define VMCTL_SET_ADDRESS_SPACE  7
+#define VMCTL_CLEAR_MEMCACHE     8
+#define VMCTL_GET_MMREQ          9
+#define VMCTL_REPLY_MMREQ        10
+#define VMCTL_FLUSHTLB           11
 
-#define VMCTL_GET_KM_INDEX u.m3.m3i2
+#define VMCTL_GET_KM_INDEX  u.m3.m3i2
 #define VMCTL_GET_KM_RETVAL u.m3.m3i2
-#define VMCTL_GET_KM_ADDR u.m3.m3p1
-#define VMCTL_GET_KM_LEN u.m3.m3i3
-#define VMCTL_GET_KM_FLAGS u.m3.m3i4
+#define VMCTL_GET_KM_ADDR   u.m3.m3p1
+#define VMCTL_GET_KM_LEN    u.m3.m3i3
+#define VMCTL_GET_KM_FLAGS  u.m3.m3i4
 
-#define VMCTL_REPLY_KM_INDEX u.m3.m3i2
+#define VMCTL_REPLY_KM_INDEX  u.m3.m3i2
 #define VMCTL_REPLY_KM_RETVAL u.m3.m3i2
-#define VMCTL_REPLY_KM_ADDR u.m3.m3p1
+#define VMCTL_REPLY_KM_ADDR   u.m3.m3p1
 
-#define VMCTL_REQUEST u.m3.m3i1
-#define VMCTL_WHO u.m3.m3i2
-#define VMCTL_VALUE u.m3.m3i3
+#define VMCTL_REQUEST   u.m3.m3i1
+#define VMCTL_WHO       u.m3.m3i2
+#define VMCTL_VALUE     u.m3.m3i3
 #define VMCTL_PHYS_ADDR u.m3.m3p1
-#define VMCTL_VIR_ADDR u.m3.m3p2
+#define VMCTL_VIR_ADDR  u.m3.m3p2
 
 #define VMCTL_MMREQ_TARGET u.m3.m3i1
-#define VMCTL_MMREQ_ADDR u.m3.m3p1
-#define VMCTL_MMREQ_LEN u.m3.m3i2
-#define VMCTL_MMREQ_FLAGS u.m3.m3i3
+#define VMCTL_MMREQ_ADDR   u.m3.m3p1
+#define VMCTL_MMREQ_LEN    u.m3.m3i2
+#define VMCTL_MMREQ_FLAGS  u.m3.m3i3
 #define VMCTL_MMREQ_CALLER u.m3.m3i4
 #define MMREQ_TYPE_SYSCALL 1
-#define MMREQ_CHECK 1
+#define MMREQ_CHECK        1
 
-#define UMAP_WHO u.m3.m3i1
+#define UMAP_WHO     u.m3.m3i1
+#define UMAP_TYPE    u.m3.m3i2
+#define UMAP_SIZE    u.m3.m3l1
 #define UMAP_SRCADDR u.m3.m3p1
 #define UMAP_DSTADDR u.m3.m3p2
 
+#define UMT_GRANT 1
+#define UMT_VADDR 2
+
 #define KMF_WRITE 0x1
-#define KMF_USER 0x2
+#define KMF_USER  0x2
 
 #define MM_GET_MEMINFO 1
 
@@ -84,7 +92,8 @@ int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
 int vmctl_reply_kern_mapping(int index, void* vir_addr);
 int vmctl_getpdbr(endpoint_t who, unsigned* pdbr);
 int vmctl_set_address_space(endpoint_t who, void* pgd_phys, void* pgd_vir);
-int umap(endpoint_t ep, void* vir_addr, phys_bytes* phys_addr);
+int umap(endpoint_t ep, int type, vir_bytes vir_addr, vir_bytes size,
+         phys_bytes* phys_addr);
 void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len);
 int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
                         int* flags, endpoint_t* caller);

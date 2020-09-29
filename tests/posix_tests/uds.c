@@ -7,7 +7,6 @@
 #include <sys/eventfd.h>
 #include <string.h>
 #include <poll.h>
-#include <lyos/limits.h>
 
 #include "munit/munit.h"
 

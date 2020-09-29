@@ -151,7 +151,8 @@ static int virtio_gpu_cmd_get_display_info(void)
     phys[0].size = sizeof(struct virtio_gpu_ctrl_hdr);
 
     /* resp buffer */
-    if ((retval = umap(SELF, &resp, &phys[1].phys_addr)) != 0) {
+    if ((retval = umap(SELF, UMT_VADDR, (vir_bytes)&resp, sizeof(resp),
+                       &phys[1].phys_addr)) != 0) {
         return retval;
     }
     phys[1].phys_addr |= 1;
@@ -186,7 +187,8 @@ static int virtio_gpu_cmd_get_edids(void)
     phys[0].size = sizeof(struct virtio_gpu_cmd_get_edid);
 
     /* resp buffer */
-    if ((retval = umap(SELF, &resp, &phys[1].phys_addr)) != 0) {
+    if ((retval = umap(SELF, UMT_VADDR, (vir_bytes)&resp, sizeof(resp),
+                       &phys[1].phys_addr)) != 0) {
         return retval;
     }
     phys[1].phys_addr |= 1;
@@ -252,7 +254,8 @@ static int virtio_gpu_cmd_resource_attach_backing(
     phys[0].size = sizeof(struct virtio_gpu_resource_attach_backing);
 
     /* resp buffer */
-    if ((retval = umap(SELF, ents, &phys[1].phys_addr)) != 0) {
+    if ((retval = umap(SELF, UMT_VADDR, (vir_bytes)ents, sizeof(*ents) * nents,
+                       &phys[1].phys_addr)) != 0) {
         return retval;
     }
     phys[1].size = sizeof(*ents) * nents;
@@ -406,7 +409,8 @@ static int virtio_gpu_object_create(struct virtio_gpu_object_params* params,
         goto err_free_obj;
     }
 
-    if ((retval = umap(SELF, bo->vaddr, &bo->paddr)) != 0) {
+    if ((retval = umap(SELF, UMT_VADDR, (vir_bytes)bo->vaddr, params->size,
+                       &bo->paddr)) != 0) {
         goto err_free_mem;
     }
 
@@ -553,7 +557,8 @@ static int virtio_gpu_alloc_requests(void)
         return ENOMEM;
     }
 
-    if (umap(SELF, hdrs_vir, &hdrs_phys) != 0) {
+    if (umap(SELF, UMT_VADDR, (vir_bytes)hdrs_vir, sizeof(*hdrs_vir),
+             &hdrs_phys) != 0) {
         panic("%s: umap failed", name);
     }
 

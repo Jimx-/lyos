@@ -60,7 +60,7 @@ int read_ext2_super_block(dev_t dev)
 {
     ssize_t retval;
 
-    retval = bdev_read(dev, 1024, ext2fsbuf, EXT2_SUPERBLOCK_SIZE, SELF);
+    retval = bdev_read(dev, 1024, ext2fsbuf, EXT2_SUPERBLOCK_SIZE);
     if (retval < 0) return -retval;
 
     ext2_superblock_t* psb =
@@ -152,7 +152,7 @@ int write_ext2_super_block(dev_t dev)
     ext2_superblock_t* psb = get_ext2_super_block(dev);
     if (!psb) return EINVAL;
 
-    retval = bdev_write(dev, 1024, psb, EXT2_SUPERBLOCK_SIZE, SELF);
+    retval = bdev_write(dev, 1024, psb, EXT2_SUPERBLOCK_SIZE);
     if (retval < 0) return -retval;
 
     return 0;

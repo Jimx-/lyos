@@ -1,15 +1,16 @@
 #ifndef _LIBBLOCKDRIVER_H_
 #define _LIBBLOCKDRIVER_H_
 
+#include <lyos/types.h>
 #include <lyos/partition.h>
 #include <lyos/driver.h>
 #include <sys/uio.h>
 
-#define NR_SUB_PER_PART 16
-#define NR_SUB_PER_DRIVE (NR_SUB_PER_PART * NR_PART_PER_DRIVE)
+#define NR_SUB_PER_PART   16
+#define NR_SUB_PER_DRIVE  (NR_SUB_PER_PART * NR_PART_PER_DRIVE)
 #define NR_PRIM_PER_DRIVE (NR_PART_PER_DRIVE + 1)
 
-#define P_PRIMARY 0
+#define P_PRIMARY  0
 #define P_EXTENDED 1
 
 #define CD_SECTOR_SIZE 2048
@@ -20,9 +21,10 @@ struct blockdriver {
     int (*bdr_open)(dev_t minor, int access);
     int (*bdr_close)(dev_t minor);
     ssize_t (*bdr_readwrite)(dev_t minor, int do_write, loff_t pos,
-                             endpoint_t endpoint, const struct iovec* iov,
+                             endpoint_t endpoint, const struct iovec_grant* iov,
                              size_t count);
-    int (*bdr_ioctl)(dev_t minor, int request, endpoint_t endpoint, void* buf);
+    int (*bdr_ioctl)(dev_t minor, int request, endpoint_t endpoint,
+                     mgrant_id_t grant, endpoint_t user_endpoint);
     struct part_info* (*bdr_part)(dev_t minor);
     void (*bdr_intr)(unsigned mask);
     void (*bdr_alarm)(clock_t timestamp);

@@ -57,7 +57,8 @@ struct virtqueue* vring_create_virtqueue(struct virtio_device* vdev,
         goto out_free_vq;
     }
 
-    if (umap(SELF, vq->vaddr, &vq->paddr) != 0) {
+    if (umap(SELF, UMT_VADDR, (vir_bytes)vq->vaddr, vq->ring_size,
+             &vq->paddr) != 0) {
         panic("%s: umap failed", vdev->name);
     }
 

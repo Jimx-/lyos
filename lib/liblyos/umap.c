@@ -25,11 +25,14 @@
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 
-int umap(endpoint_t ep, void* vir_addr, phys_bytes* phys_addr)
+int umap(endpoint_t ep, int type, vir_bytes vir_addr, vir_bytes size,
+         phys_bytes* phys_addr)
 {
     MESSAGE m;
     m.UMAP_WHO = ep;
-    m.UMAP_SRCADDR = vir_addr;
+    m.UMAP_TYPE = type;
+    m.UMAP_SIZE = size;
+    m.UMAP_SRCADDR = (void*)vir_addr;
 
     int ret = syscall_entry(NR_UMAP, &m);
     if (ret) return ret;

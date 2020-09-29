@@ -113,11 +113,12 @@ static int drmmodeset_open(int* out, const char* node)
         return ret;
     }
 
-    if (drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &has_dumb) < 0 || !has_dumb) {
+    if ((ret = drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &has_dumb)) < 0 ||
+        !has_dumb) {
         fprintf(stderr, "drm device '%s' does not support dumb buffers\n",
                 node);
         close(fd);
-        return -EOPNOTSUPP;
+        return ret;
     }
 
     *out = fd;

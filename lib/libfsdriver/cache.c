@@ -175,7 +175,7 @@ static int read_block(struct fsdriver_buffer* bp, size_t block_size)
     ssize_t retval;
 
     pos = (loff_t)fs_block_size * bp->block;
-    retval = bdev_read(bp->dev, pos, bp->data, block_size, SELF);
+    retval = bdev_read(bp->dev, pos, bp->data, block_size);
 
     if (retval != block_size) {
         if (retval > 0) {
@@ -230,9 +230,9 @@ static void scatter_gather(dev_t dev, struct fsdriver_buffer** buffers,
 
         pos = (loff_t)buffers[0]->block * fs_block_size;
         if (do_write) {
-            retval = bdev_writev(dev, pos, SELF, iovec, niovs);
+            retval = bdev_writev(dev, pos, iovec, niovs);
         } else {
-            retval = bdev_readv(dev, pos, SELF, iovec, niovs);
+            retval = bdev_readv(dev, pos, iovec, niovs);
         }
 
         for (i = 0; i < nbufs; i++) {

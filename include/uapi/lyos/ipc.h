@@ -437,15 +437,13 @@ VERIFY_MESS_SIZE(mess_sysfs_publish_link);
 
 struct mess_bdev_blockdriver_msg {
     int minor;
-
     __u64 pos;
     size_t count;
-    void* buf;
-
-    __endpoint_t endpoint;
+    __mgrant_id_t grant;
+    __endpoint_t user_endpoint;
     int request;
 
-    __u8 _pad[36 - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[32 - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_bdev_blockdriver_msg);
 

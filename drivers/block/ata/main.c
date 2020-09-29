@@ -46,9 +46,10 @@ static struct part_info* hd_part(dev_t device);
 static int hd_open(dev_t minor, int access);
 static int hd_close(dev_t minor);
 static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, const struct iovec* iov,
+                       endpoint_t endpoint, const struct iovec_grant* iov,
                        size_t count);
-static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf);
+static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint);
 static void hd_cmd_out(struct hd_cmd* cmd);
 static void print_hdinfo(struct ata_info* hdi);
 static int waitfor(int mask, int val, int timeout);
@@ -60,8 +61,9 @@ static void print_identify_info(u16* hdinfo);
 static void hd_register(struct ata_info* hdi);
 static void start_dma(struct ata_info* drive, int do_write);
 static void stop_dma(struct ata_info* drive);
-static int setup_dma(int do_write, endpoint_t endpoint, const struct iovec* iov,
-                     size_t* sizep, size_t addr_offset);
+static int setup_dma(int do_write, endpoint_t endpoint,
+                     const struct iovec_grant* iov, size_t* sizep,
+                     size_t addr_offset);
 
 static u8 hdbuf[CD_SECTOR_SIZE];
 static struct ata_info hd_info[MAX_DRIVES], *current_drive;
@@ -84,7 +86,7 @@ struct prdte {
     u8 prdte_flags;
 };
 #define NUM_PRDTES 1024
-#define PRDT_SIZE (sizeof(struct prdte) * NUM_PRDTES)
+#define PRDT_SIZE  (sizeof(struct prdte) * NUM_PRDTES)
 static struct prdte* prdt;
 static phys_bytes prdt_phys;
 #define PRDTE_FL_EOT 0x80 /* End of PRDT */
@@ -102,7 +104,7 @@ static class_id_t ata_device_class;
 #endif
 
 #define ERR_BAD_SECTOR 1
-#define ERR_OTHER 2
+#define ERR_OTHER      2
 
 struct blockdriver hd_driver = {
     .bdr_open = hd_open,
@@ -204,7 +206,8 @@ static int init_hd()
             dma_disabled = 1;
             printl("ata: failed to allocate PRDT\n");
         }
-        if (umap(SELF, prdt, &prdt_phys) != 0) {
+        if (umap(SELF, UMT_VADDR, (vir_bytes)prdt, PRDT_SIZE, &prdt_phys) !=
+            0) {
             dma_disabled = 1;
         }
     }
@@ -416,8 +419,9 @@ static int error_dma(struct ata_info* drive)
     return 0;
 }
 
-static int setup_dma(int do_write, endpoint_t endpoint, const struct iovec* iov,
-                     size_t* sizep, size_t addr_offset)
+static int setup_dma(int do_write, endpoint_t endpoint,
+                     const struct iovec_grant* iov, size_t* sizep,
+                     size_t addr_offset)
 {
     size_t size, n;
     off_t offset;
@@ -436,8 +440,16 @@ static int setup_dma(int do_write, endpoint_t endpoint, const struct iovec* iov,
 
         if (n > size) n = size;
 
-        retval = umap(endpoint, iov[iov_idx].iov_base + offset + addr_offset,
-                      &user_phys);
+        if (endpoint == SELF) {
+            retval = umap(endpoint, UMT_VADDR,
+                          iov[iov_idx].iov_addr + offset + addr_offset, n,
+                          &user_phys);
+        } else {
+            retval = umap(endpoint, UMT_GRANT, iov[iov_idx].iov_grant, n,
+                          &user_phys);
+            user_phys += offset + addr_offset;
+        }
+
         if (retval != 0) {
             panic("ata: setup_dma(): failed to map user buffer");
         }
@@ -512,12 +524,13 @@ static int setup_dma(int do_write, endpoint_t endpoint, const struct iovec* iov,
  * @param p Message ptr.
  *****************************************************************************/
 static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
-                       endpoint_t endpoint, const struct iovec* iov,
+                       endpoint_t endpoint, const struct iovec_grant* iov,
                        size_t count)
 {
     size_t nbytes, addr_offset = 0;
     ssize_t total = 0;
-    const struct iovec *iop, *iov_end = iov + count;
+    const struct iovec_grant *iop, *iov_end = iov + count;
+    int retval;
 
     hd_prepare(minor);
 
@@ -635,14 +648,18 @@ static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
                 interrupt_wait();
                 portio_sin(current_drive->base_cmd + REG_DATA, hdbuf,
                            SECTOR_SIZE);
-                data_copy(endpoint, iov->iov_base + addr_offset, SELF, hdbuf,
-                          bytes);
+                if ((retval = safecopy_to(endpoint, iov->iov_grant, addr_offset,
+                                          hdbuf, bytes)) != 0)
+                    return -retval;
             } else {
                 if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
                     panic("hd writing error.");
 
-                data_copy(SELF, hdbuf, endpoint, iov->iov_base + addr_offset,
-                          SECTOR_SIZE);
+                if ((retval = safecopy_from(endpoint, iov->iov_grant,
+                                            addr_offset, hdbuf, SECTOR_SIZE)) !=
+                    0)
+                    return -retval;
+
                 portio_sout(current_drive->base_cmd + REG_DATA, hdbuf, bytes);
                 interrupt_wait();
             }
@@ -671,17 +688,21 @@ static ssize_t hd_rdwt(dev_t minor, int do_write, loff_t pos,
  *
  * @param p  Ptr to the MESSAGE.
  *****************************************************************************/
-static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint, void* buf)
+static int hd_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint)
 {
+    int retval;
+
     hd_prepare(minor);
 
     if (request == DIOCTL_GET_GEO) {
-        data_copy(endpoint, buf, SELF, current_part, sizeof(struct part_info));
+        retval = safecopy_to(endpoint, grant, 0, current_part,
+                             sizeof(struct part_info));
     } else {
         return EINVAL;
     }
 
-    return 0;
+    return retval;
 }
 
 /*****************************************************************************

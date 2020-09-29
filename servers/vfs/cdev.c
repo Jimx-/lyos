@@ -277,7 +277,7 @@ static int cdev_ioctl(struct inode* pin, struct file_desc* filp,
     unlock_filp(filp);
     retval = cdev_io(CDEV_IOCTL, pin->i_specdev, fp->endpoint, (void*)arg, 0,
                      cmd, fp);
-    lock_filp(filp, RWL_WRITE);
+    lock_filp(filp, RWL_READ);
 
     return retval;
 }

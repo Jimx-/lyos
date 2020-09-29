@@ -66,7 +66,8 @@ void pt_init()
     for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
         void* v = (void*)(bootstrap_pages_mem + i * ARCH_PG_SIZE);
         phys_bytes bootstrap_phys_addr;
-        if (umap(SELF, v, &bootstrap_phys_addr))
+        if (umap(SELF, UMT_VADDR, (vir_bytes)v, ARCH_PG_SIZE,
+                 &bootstrap_phys_addr))
             panic("MM: can't get phys addr for bootstrap page");
         bootstrap_pages[i].phys_addr = bootstrap_phys_addr;
         bootstrap_pages[i].vir_addr = v;

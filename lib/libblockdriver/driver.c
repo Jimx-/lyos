@@ -26,6 +26,8 @@
 #include <lyos/global.h>
 #include <lyos/proto.h>
 #include <lyos/driver.h>
+#include <lyos/sysutils.h>
+#include <lyos/mgrant.h>
 
 #include <libblockdriver/libblockdriver.h>
 
@@ -41,49 +43,51 @@ static int do_close(struct blockdriver* bd, MESSAGE* msg)
 
 static ssize_t do_rdwt(struct blockdriver* bd, MESSAGE* msg)
 {
-    int do_write = (msg->type == BDEV_WRITE) ? 1 : 0;
+    endpoint_t src = msg->source;
+    int do_write = msg->type == BDEV_WRITE;
     int minor = msg->u.m_bdev_blockdriver_msg.minor;
     loff_t pos = msg->u.m_bdev_blockdriver_msg.pos;
-    endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
-    char* buf = msg->u.m_bdev_blockdriver_msg.buf;
+    mgrant_id_t grant = msg->u.m_bdev_blockdriver_msg.grant;
     size_t count = msg->u.m_bdev_blockdriver_msg.count;
-    struct iovec iov;
+    struct iovec_grant iov;
 
-    iov.iov_base = buf;
+    iov.iov_grant = grant;
     iov.iov_len = count;
 
-    return bd->bdr_readwrite(minor, do_write, pos, ep, &iov, 1);
+    return bd->bdr_readwrite(minor, do_write, pos, src, &iov, 1);
 }
 
 static ssize_t do_vrdwt(struct blockdriver* bd, MESSAGE* msg)
 {
-    struct iovec iovec[NR_IOREQS];
-    int do_write = (msg->type == BDEV_WRITEV) ? 1 : 0;
+    struct iovec_grant iovec[NR_IOREQS];
+    endpoint_t src = msg->source;
+    int do_write = msg->type == BDEV_WRITEV;
     int minor = msg->u.m_bdev_blockdriver_msg.minor;
     loff_t pos = msg->u.m_bdev_blockdriver_msg.pos;
-    endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
     size_t count = msg->u.m_bdev_blockdriver_msg.count;
+    mgrant_id_t grant = msg->u.m_bdev_blockdriver_msg.grant;
+    int retval;
 
     if (count > NR_IOREQS) {
         count = NR_IOREQS;
     }
 
-    if (data_copy(SELF, iovec, msg->source, msg->u.m_bdev_blockdriver_msg.buf,
-                  count * sizeof(struct iovec)) != 0) {
+    if ((retval = safecopy_from(src, grant, 0, iovec,
+                                sizeof(iovec[0]) * count)) != 0)
         return -EINVAL;
-    }
 
-    return bd->bdr_readwrite(minor, do_write, pos, ep, iovec, count);
+    return bd->bdr_readwrite(minor, do_write, pos, src, iovec, count);
 }
 
 static int do_ioctl(struct blockdriver* bd, MESSAGE* msg)
 {
+    endpoint_t src = msg->source;
     int minor = msg->u.m_bdev_blockdriver_msg.minor;
     int request = msg->u.m_bdev_blockdriver_msg.request;
-    endpoint_t ep = msg->u.m_bdev_blockdriver_msg.endpoint;
-    char* buf = msg->u.m_bdev_blockdriver_msg.buf;
+    mgrant_id_t grant = msg->u.m_bdev_blockdriver_msg.grant;
+    endpoint_t user_endpoint = msg->u.m_bdev_blockdriver_msg.user_endpoint;
 
-    return bd->bdr_ioctl(minor, request, ep, buf);
+    return bd->bdr_ioctl(minor, request, src, grant, user_endpoint);
 }
 
 static void blockdriver_reply(MESSAGE* msg, ssize_t reply)

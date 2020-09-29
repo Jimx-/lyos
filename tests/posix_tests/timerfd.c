@@ -6,7 +6,6 @@
 #include <string.h>
 #include <poll.h>
 #include <limits.h>
-#include <lyos/limits.h>
 
 #include "munit/munit.h"
 

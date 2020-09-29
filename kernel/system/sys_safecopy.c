@@ -12,10 +12,9 @@
 
 #define MAX_INDIRECT_DEPTH 5
 
-static int verify_grant(endpoint_t granter, endpoint_t grantee,
-                        mgrant_id_t grant, size_t bytes, int access,
-                        vir_bytes offset, vir_bytes* voffset,
-                        endpoint_t* new_granter)
+int verify_grant(endpoint_t granter, endpoint_t grantee, mgrant_id_t grant,
+                 size_t bytes, int access, vir_bytes offset, vir_bytes* voffset,
+                 endpoint_t* new_granter)
 {
     struct proc* granter_proc;
     struct priv* granter_priv;

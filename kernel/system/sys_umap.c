@@ -37,12 +37,41 @@
 
 int sys_umap(MESSAGE* m, struct proc* p)
 {
-    endpoint_t ep = m->UMAP_WHO;
-    void* srcaddr = m->UMAP_SRCADDR;
+    endpoint_t grantee, new_granter, ep = m->UMAP_WHO;
+    int type = m->UMAP_TYPE;
+    vir_bytes offset = (vir_bytes)m->UMAP_SRCADDR;
+    vir_bytes count = (vir_bytes)m->UMAP_SIZE;
+    vir_bytes src_addr, new_offset;
+    struct proc* target_proc;
+    mgrant_id_t grant;
+    int retval;
 
     if (ep == SELF) ep = p->endpoint;
+    grantee = p->endpoint;
 
-    m->UMAP_DSTADDR = va2pa(ep, (void*)srcaddr);
+    target_proc = endpt_proc(ep);
+    if (!target_proc) return EINVAL;
+
+    switch (type) {
+    case UMT_GRANT:
+        grant = (mgrant_id_t)offset;
+        if ((retval = verify_grant(target_proc->endpoint, grantee, grant, count,
+                                   0, 0, &new_offset, &new_granter)) != 0)
+            return retval;
+
+        target_proc = endpt_proc(new_granter);
+        if (!target_proc) return EFAULT;
+
+        offset = new_offset;
+        /* fall through */
+    case UMT_VADDR:
+        src_addr = offset;
+        break;
+    default:
+        return EINVAL;
+    }
+
+    m->UMAP_DSTADDR = va2pa(target_proc->endpoint, (void*)src_addr);
 
     return 0;
 }

@@ -119,4 +119,12 @@ struct siginfo {
     void* stackptr;
 };
 
+struct iovec_grant {
+    union {
+        vir_bytes iov_addr;
+        mgrant_id_t iov_grant;
+    };
+    size_t iov_len;
+};
+
 #endif /* _TYPE_H_ */

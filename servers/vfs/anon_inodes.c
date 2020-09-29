@@ -28,7 +28,6 @@
 #include <lyos/proc.h>
 #include <errno.h>
 #include <sys/syslimits.h>
-#include <lyos/limits.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 

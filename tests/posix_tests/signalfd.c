@@ -5,7 +5,6 @@
 #include <string.h>
 #include <poll.h>
 #include <sys/signalfd.h>
-#include <lyos/limits.h>
 
 #include "munit/munit.h"
 

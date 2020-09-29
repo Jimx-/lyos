@@ -13,6 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef _LYOS_PROTO_H_
+#define _LYOS_PROTO_H_
+
+#include <lyos/types.h>
+
 /* kliba.asm */
 void out_byte(u16 port, u8 value);
 u8 in_byte(u16 port);
@@ -191,3 +196,9 @@ int printk(const char* fmt, ...);
 int printl(const char* fmt, ...);
 int get_sysinfo(struct sysinfo** sysinfo);
 int get_kinfo(kinfo_t* kinfo);
+
+int verify_grant(endpoint_t granter, endpoint_t grantee, mgrant_id_t grant,
+                 size_t bytes, int access, vir_bytes offset, vir_bytes* voffset,
+                 endpoint_t* new_granter);
+
+#endif
