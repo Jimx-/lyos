@@ -99,6 +99,8 @@ int main(int argc, char* argv[])
     setenv("USER", pwd->pw_name, 1);
     setenv("PATH", "/usr/bin:/bin", 1);
 
+    umask(S_IWGRP | S_IWOTH);
+
     if (*pwd->pw_shell == '\0') {
         pwd->pw_shell = _PATH_BSHELL;
     }
