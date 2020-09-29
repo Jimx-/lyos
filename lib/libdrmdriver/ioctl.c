@@ -16,6 +16,7 @@
 #include <drm/drm.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <lyos/mgrant.h>
 
 #include <libchardriver/libchardriver.h>
 #include <libdevman/libdevman.h>
@@ -72,7 +73,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 #define DRM_CORE_IOCTL_COUNT (sizeof(drm_ioctls) / sizeof(drm_ioctls[0]))
 
 int drm_do_ioctl(struct drm_device* dev, int request, endpoint_t endpoint,
-                 char* buf, cdev_id_t id)
+                 mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
 {
     unsigned int nr = _IOC_NR(request);
     const struct drm_ioctl_desc* ioctl = NULL;
@@ -106,17 +107,21 @@ int drm_do_ioctl(struct drm_device* dev, int request, endpoint_t endpoint,
         }
     }
 
-    retval = data_copy(SELF, data, endpoint, buf, in_size);
-    if (retval) {
-        goto err;
+    if (in_size > 0) {
+        retval = safecopy_from(endpoint, grant, 0, data, in_size);
+        if (retval) {
+            goto err;
+        }
     }
 
     if (ksize > in_size) memset(data + in_size, 0, ksize - in_size);
 
-    retval = ioctl->func(dev, endpoint, data);
+    retval = ioctl->func(dev, user_endpoint, data);
     if (retval) goto err;
 
-    retval = data_copy(endpoint, buf, SELF, data, out_size);
+    if (out_size > 0) {
+        retval = safecopy_to(endpoint, grant, 0, data, out_size);
+    }
 
 err:
     if (data != NULL && data != stack_data) {

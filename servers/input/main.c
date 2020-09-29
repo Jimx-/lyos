@@ -49,11 +49,12 @@ static void input_event(MESSAGE* msg);
 
 static int input_open(dev_t minor, int access);
 static int input_close(dev_t minor);
-static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                          unsigned int count, cdev_id_t id);
-static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                           unsigned int count, cdev_id_t id);
-static int input_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                          mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                           mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static int input_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                       mgrant_id_t grant, endpoint_t user_endpoint,
                        cdev_id_t id);
 static void input_other(MESSAGE* msg);
 
@@ -97,8 +98,8 @@ static int input_close(dev_t minor)
     return handle->ops->close(handle);
 }
 
-static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                          unsigned int count, cdev_id_t id)
+static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                          mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     struct input_handle* handle;
 
@@ -107,26 +108,26 @@ static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
         return ENXIO;
     }
 
-    return handle->ops->read(handle, endpoint, buf, count, id);
+    return handle->ops->read(handle, endpoint, grant, count, id);
 }
 
-static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                           unsigned int count, cdev_id_t id)
+static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                           mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     return -ENOSYS;
 }
 
-static int input_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+static int input_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                       mgrant_id_t grant, endpoint_t user_endpoint,
                        cdev_id_t id)
 {
     struct input_handle* handle;
 
     handle = input_get_handle(minor);
-    if (!handle) {
-        return ENXIO;
-    }
+    if (!handle) return ENXIO;
 
-    return handle->ops->ioctl(handle, request, endpoint, buf, id);
+    return handle->ops->ioctl(handle, request, endpoint, grant, user_endpoint,
+                              id);
 }
 
 static struct input_dev* input_allocate_dev(endpoint_t owner)

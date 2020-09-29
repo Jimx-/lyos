@@ -14,6 +14,8 @@
 #include <lyos/proto.h>
 #include <lyos/service.h>
 #include <lyos/input.h>
+#include <lyos/sysutils.h>
+#include <lyos/mgrant.h>
 
 #include <libsysfs/libsysfs.h>
 #include <libchardriver/libchardriver.h>
@@ -22,7 +24,7 @@
 #include "input.h"
 
 #define EVDEV_MINOR_BASE 32
-#define EVDEV_MINORS 32
+#define EVDEV_MINORS     32
 
 #define EVDEV_MIN_BUFFER_SIZE 64 /* must be power of 2 */
 
@@ -35,7 +37,7 @@ struct evdev_client {
 
     int suspended;
     endpoint_t caller;
-    void* req_buf;
+    mgrant_id_t req_grant;
     size_t req_size;
     cdev_id_t req_id;
 };
@@ -60,11 +62,14 @@ static int evdev_get_new_minor(void)
 }
 
 static ssize_t evdev_copy_events(struct evdev_client* client,
-                                 endpoint_t endpoint, char* buf, size_t size)
+                                 endpoint_t endpoint, mgrant_id_t grant,
+                                 size_t size)
 {
     size_t event_size = sizeof(struct input_event);
     size_t event_count, nbytes = 0, copy_count = 0;
+    off_t copy_offset = 0;
     size_t tail;
+    int retval;
 
     event_count = size / event_size;
     assert(event_count > 0);
@@ -76,9 +81,12 @@ static ssize_t evdev_copy_events(struct evdev_client* client,
         tail = (tail + 1) & (client->bufsize - 1);
     }
 
-    data_copy(endpoint, buf, SELF, &client->buffer[client->tail],
-              copy_count * event_size);
-    buf += copy_count * event_size;
+    if ((retval = safecopy_to(endpoint, grant, copy_offset,
+                              &client->buffer[client->tail],
+                              copy_count * event_size)) != 0)
+        return -retval;
+
+    copy_offset += copy_count * event_size;
     nbytes += copy_count * event_size;
     event_count -= copy_count;
 
@@ -93,7 +101,9 @@ static ssize_t evdev_copy_events(struct evdev_client* client,
             tail = (tail + 1) & (client->bufsize - 1);
         }
 
-        data_copy(endpoint, buf, SELF, client->buffer, copy_count * event_size);
+        if ((retval = safecopy_to(endpoint, grant, copy_offset, client->buffer,
+                                  copy_count * event_size)) != 0)
+            return -retval;
         nbytes += copy_count * event_size;
     }
 
@@ -135,7 +145,7 @@ static int evdev_close(struct input_handle* handle)
 }
 
 static ssize_t evdev_read(struct input_handle* handle, endpoint_t endpoint,
-                          char* buf, unsigned int count, cdev_id_t id)
+                          mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     struct evdev* evdev = (struct evdev*)handle->private;
     struct evdev_client* client = &evdev->client;
@@ -153,18 +163,18 @@ static ssize_t evdev_read(struct input_handle* handle, endpoint_t endpoint,
         /* no event */
         client->suspended = TRUE;
         client->caller = endpoint;
-        client->req_buf = buf;
+        client->req_grant = grant;
         client->req_size = count;
         client->req_id = id;
 
         return SUSPEND;
     }
 
-    return evdev_copy_events(client, endpoint, buf, count);
+    return evdev_copy_events(client, endpoint, grant, count);
 }
 
 static int handle_eviocgbit(struct input_dev* dev, unsigned int type,
-                            size_t size, endpoint_t endpoint, void* buf)
+                            size_t size, endpoint_t endpoint, mgrant_id_t grant)
 {
     bitchunk_t* bits;
     size_t len;
@@ -215,11 +225,11 @@ static int handle_eviocgbit(struct input_dev* dev, unsigned int type,
         len = size;
     }
 
-    return data_copy(endpoint, buf, SELF, bits, len);
+    return safecopy_to(endpoint, grant, 0, bits, len);
 }
 
 static int str_to_user(const char* str, size_t maxlen, endpoint_t endpoint,
-                       void* buf)
+                       mgrant_id_t grant)
 {
     int len;
 
@@ -228,11 +238,11 @@ static int str_to_user(const char* str, size_t maxlen, endpoint_t endpoint,
     len = strlen(str) + 1;
     if (len > maxlen) len = maxlen;
 
-    return data_copy(endpoint, buf, SELF, (void*)str, len);
+    return safecopy_to(endpoint, grant, 0, (void*)str, len);
 }
 
 long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
-                 char* buf, cdev_id_t id)
+                 mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
 {
     struct input_dev* dev = handle->dev;
     size_t size, len;
@@ -241,10 +251,10 @@ long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
 
     switch (request) {
     case EVIOCGVERSION:
-        return data_copy(endpoint, buf, SELF, &version, sizeof(version));
+        return safecopy_to(endpoint, grant, 0, &version, sizeof(version));
     case EVIOCGID:
-        return data_copy(endpoint, buf, SELF, &dev->input_id,
-                         sizeof(struct input_id));
+        return safecopy_to(endpoint, grant, 0, &dev->input_id,
+                           sizeof(struct input_id));
     }
 
     size = _IOC_SIZE(request);
@@ -257,7 +267,7 @@ long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
             len = size;
         }
 
-        return data_copy(endpoint, buf, SELF, &dev->key, len);
+        return safecopy_to(endpoint, grant, 0, &dev->key, len);
 
     case EVIOCGLED(0):
         len = BITCHUNKS(LED_MAX) * sizeof(bitchunk_t);
@@ -265,7 +275,7 @@ long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
             len = size;
         }
 
-        return data_copy(endpoint, buf, SELF, &dev->led, len);
+        return safecopy_to(endpoint, grant, 0, &dev->led, len);
 
     case EVIOCGSND(0):
         len = BITCHUNKS(SND_MAX) * sizeof(bitchunk_t);
@@ -273,7 +283,7 @@ long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
             len = size;
         }
 
-        return data_copy(endpoint, buf, SELF, &dev->snd, len);
+        return safecopy_to(endpoint, grant, 0, &dev->snd, len);
 
     case EVIOCGSW(0):
         len = BITCHUNKS(SW_MAX) * sizeof(bitchunk_t);
@@ -281,20 +291,20 @@ long evdev_ioctl(struct input_handle* handle, int request, endpoint_t endpoint,
             len = size;
         }
 
-        return data_copy(endpoint, buf, SELF, &dev->sw, len);
+        return safecopy_to(endpoint, grant, 0, &dev->sw, len);
 
     case EVIOCGNAME(0):
-        return str_to_user(dev->name, size, endpoint, buf);
+        return str_to_user(dev->name, size, endpoint, grant);
     case EVIOCGPHYS(0):
-        return str_to_user(&empty_str, size, endpoint, buf);
+        return str_to_user(&empty_str, size, endpoint, grant);
     case EVIOCGUNIQ(0):
-        return str_to_user(&empty_str, size, endpoint, buf);
+        return str_to_user(&empty_str, size, endpoint, grant);
     }
 
     if (_IOC_DIR(request) == _IOC_READ) {
         if ((_IOC_NR(request) & ~EV_MAX) == _IOC_NR(EVIOCGBIT(0, 0)))
             return handle_eviocgbit(dev, _IOC_NR(request) & EV_MAX, size,
-                                    endpoint, buf);
+                                    endpoint, grant);
     }
 
     return EINVAL;
@@ -356,13 +366,13 @@ void evdev_events(struct input_handle* handle, const struct input_value* vals,
     if (wakeup) {
         if (client->suspended) {
             /* wake up suspended request */
-            retval = evdev_copy_events(client, client->caller, client->req_buf,
-                                       client->req_size);
-            chardriver_reply_io(TASK_FS, client->req_id, retval);
+            retval = evdev_copy_events(client, client->caller,
+                                       client->req_grant, client->req_size);
+            chardriver_reply_io(client->caller, client->req_id, retval);
 
             client->suspended = FALSE;
             client->caller = NO_TASK;
-            client->req_buf = NULL;
+            client->req_grant = GRANT_INVALID;
             client->req_size = 0;
         }
     }

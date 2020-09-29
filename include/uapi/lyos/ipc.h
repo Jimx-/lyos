@@ -78,11 +78,11 @@ BEGIN_MESS_DECL(mess_safecopy)
 {
     __endpoint_t src_dest;
     __mgrant_id_t grant;
-    __u64 offset;
+    off_t offset;
     void* addr;
     size_t len;
 
-    __u8 _pad[40 - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[48 - sizeof(off_t) - sizeof(void*) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_safecopy)
 
@@ -362,11 +362,12 @@ struct mess_vfs_cdev_readwrite {
     __endpoint_t endpoint;
     __u32 id;
     void* buf;
+    __mgrant_id_t grant;
     __u32 request;
     off_t pos;
     size_t count;
 
-    __u8 _pad[36 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
+    __u8 _pad[32 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 

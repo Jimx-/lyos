@@ -24,7 +24,10 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/proc.h>
+#include <lyos/sysutils.h>
 #include <errno.h>
+#include <sys/ioctl.h>
+#include <lyos/mgrant.h>
 
 #include "types.h"
 #include "path.h"
@@ -55,4 +58,21 @@ int do_ioctl(void)
     unlock_filp(filp);
 
     return retval;
+}
+
+mgrant_id_t make_ioctl_grant(endpoint_t driver_ep, endpoint_t user_ep,
+                             int request, void* buf)
+{
+    mgrant_id_t grant;
+    int access = 0;
+    size_t size;
+
+    if (request & IOC_IN) access |= MGF_READ;
+    if (request & IOC_OUT) access |= MGF_WRITE;
+    size = _IOC_SIZE(request);
+
+    grant = mgrant_set_proxy(driver_ep, user_ep, (vir_bytes)buf, size, access);
+    if (grant == GRANT_INVALID) panic("vfs: failed to make ioctl grant");
+
+    return grant;
 }

@@ -26,6 +26,7 @@
 #include <lyos/driver.h>
 #include <lyos/fs.h>
 #include <lyos/sysutils.h>
+#include <lyos/mgrant.h>
 
 #include "const.h"
 #include "types.h"
@@ -120,6 +121,7 @@ static int cdev_opcl(int op, dev_t dev)
 static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
                    size_t count, struct fproc* fp)
 {
+    mgrant_id_t grant;
     struct fproc* driver = cdev_get(dev);
     int retval;
     if (!driver) return ENXIO;
@@ -128,13 +130,22 @@ static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
         return EINVAL;
     }
 
+    if (op == CDEV_IOCTL) {
+        grant = make_ioctl_grant(driver->endpoint, src, count, buf);
+    } else {
+        grant = mgrant_set_proxy(driver->endpoint, src, (vir_bytes)buf, count,
+                                 (op == CDEV_READ) ? MGF_WRITE : MGF_READ);
+        if (grant == GRANT_INVALID)
+            panic("vfs: cdev_io failed to create proxy grant");
+    }
+
     MESSAGE driver_msg;
     driver_msg.type = op;
     driver_msg.u.m_vfs_cdev_readwrite.minor = MINOR(dev);
-    driver_msg.u.m_vfs_cdev_readwrite.buf = buf;
-    driver_msg.u.m_vfs_cdev_readwrite.endpoint = src;
+    driver_msg.u.m_vfs_cdev_readwrite.grant = grant;
     driver_msg.u.m_vfs_cdev_readwrite.id = src;
     if (op == CDEV_IOCTL) {
+        driver_msg.u.m_vfs_cdev_readwrite.endpoint = src;
         driver_msg.u.m_vfs_cdev_readwrite.request = count;
     } else {
         driver_msg.u.m_vfs_cdev_readwrite.pos = pos;
@@ -146,6 +157,8 @@ static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
     }
 
     cdev_recv(driver->endpoint, &driver_msg);
+
+    mgrant_revoke(grant);
 
     retval = driver_msg.u.m_vfs_cdev_reply.status;
     if (retval == -EINTR) {

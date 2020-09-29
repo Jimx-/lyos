@@ -1,17 +1,17 @@
-#ifndef _IOCTL_H_
-#define _IOCTL_H_
+#ifndef _SYS_IOCTL_H_
+#define _SYS_IOCTL_H_
 
 #include <asm/ioctls.h>
 
-#define TCGETS 0x4000
-#define TCSETS 0x4001
-#define TCSETSW 0x4002
-#define TCSETSF 0x4003
-#define TIOCGPGRP 0x4004
-#define TIOCSPGRP 0x4005
-#define TCFLSH 0x4006
-#define TIOCGWINSZ 0x4007
-#define TIOCSWINSZ 0x4008
+#define TCGETS     _IOR('T', 0x01, struct termios)
+#define TCSETS     _IOW('T', 0x02, struct termios)
+#define TCSETSW    _IOW('T', 0x03, struct termios)
+#define TCSETSF    _IOW('T', 0x04, struct termios)
+#define TIOCGPGRP  _IOR('T', 0x05, int)
+#define TIOCSPGRP  _IOW('T', 0x06, int)
+#define TCFLSH     _IOW('T', 0x07, int)
+#define TIOCGWINSZ _IOR('T', 0x08, struct winsize)
+#define TIOCSWINSZ _IOR('T', 0x09, struct winsize)
 
 #ifdef __cplusplus
 extern "C"

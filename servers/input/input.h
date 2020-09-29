@@ -53,10 +53,10 @@ struct input_handler {
 struct input_handle_ops {
     int (*open)(struct input_handle* handle);
     int (*close)(struct input_handle* handle);
-    ssize_t (*read)(struct input_handle* handle, endpoint_t endpoint, char* buf,
-                    unsigned int count, cdev_id_t id);
+    ssize_t (*read)(struct input_handle* handle, endpoint_t endpoint,
+                    mgrant_id_t grant, unsigned int count, cdev_id_t id);
     long (*ioctl)(struct input_handle* handle, int request, endpoint_t endpoint,
-                  char* buf, cdev_id_t id);
+                  mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
 };
 
 struct input_handle {

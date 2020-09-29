@@ -16,6 +16,8 @@
 #ifndef _VFS_PROTO_H_
 #define _VFS_PROTO_H_
 
+#include <lyos/types.h>
+
 #include "path.h"
 #include "thread.h"
 
@@ -100,7 +102,11 @@ int do_access(void);
 int do_chmod(int type);
 int fs_getsetid(void);
 
+/* vfs/device.c */
 int do_ioctl(void);
+mgrant_id_t make_ioctl_grant(endpoint_t driver_ep, endpoint_t user_ep,
+                             int request, void* buf);
+
 int do_fcntl(void);
 
 int do_sync(void);

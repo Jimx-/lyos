@@ -30,6 +30,7 @@
 #include <lyos/portio.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
+#include <lyos/sysutils.h>
 #include "proto.h"
 #include "global.h"
 
@@ -68,7 +69,7 @@ static void clear_screen(int pos, int len);
 static void cons_write(TTY* tty)
 {
     static char buf[4096];
-    char* p = tty->tty_outbuf;
+    off_t offset = 0;
     size_t count;
     int j;
 
@@ -79,9 +80,10 @@ static void cons_write(TTY* tty)
         count = min(sizeof(buf), tty->tty_outleft);
 
         if (tty->tty_outcaller == TASK_TTY) {
-            memcpy(buf, p, count);
+            memcpy(buf, (char*)tty->tty_outbuf + offset, count);
         } else {
-            data_copy(TASK_TTY, buf, tty->tty_outcaller, p, count);
+            safecopy_from(tty->tty_outcaller, tty->tty_outgrant, offset, buf,
+                          count);
         }
 
         for (j = 0; j < count; j++) {
@@ -90,14 +92,15 @@ static void cons_write(TTY* tty)
 
         tty->tty_outcnt += count;
         tty->tty_outleft -= count;
-        p += count;
+        offset += count;
     } while (tty->tty_outleft > 0);
 
     flush((CONSOLE*)tty->tty_dev);
 
     if (tty->tty_outleft == 0) {
         if (tty->tty_outcaller != TASK_TTY) { /* done, reply to caller */
-            chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
+            chardriver_reply_io(tty->tty_outcaller, tty->tty_outid,
+                                tty->tty_outcnt);
         }
         tty->tty_outcaller = NO_TASK;
         tty->tty_outcnt = 0;

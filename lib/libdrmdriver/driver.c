@@ -25,8 +25,8 @@ static struct drm_device* drm_device;
 
 static int drm_open(dev_t minor, int access);
 static int drm_close(dev_t minor);
-static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                     cdev_id_t id);
+static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                     mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
                     size_t length, char** retaddr);
 
@@ -48,14 +48,15 @@ static int drm_open(dev_t minor, int access)
 
 static int drm_close(dev_t minor) { return 0; }
 
-static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                     cdev_id_t id)
+static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                     mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
 {
     if (minor != drm_device->primary.index) {
         return ENXIO;
     }
 
-    return drm_do_ioctl(drm_device, request, endpoint, buf, id);
+    return drm_do_ioctl(drm_device, request, endpoint, grant, user_endpoint,
+                        id);
 }
 
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,

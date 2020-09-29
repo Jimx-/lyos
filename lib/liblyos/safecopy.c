@@ -10,7 +10,7 @@
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
 
-int safecopy_from(endpoint_t src_ep, mgrant_id_t grant, loff_t offset,
+int safecopy_from(endpoint_t src_ep, mgrant_id_t grant, off_t offset,
                   void* addr, size_t len)
 {
     MESSAGE msg;
@@ -25,8 +25,8 @@ int safecopy_from(endpoint_t src_ep, mgrant_id_t grant, loff_t offset,
     return syscall_entry(NR_SAFECOPYFROM, &msg);
 }
 
-int safecopy_to(endpoint_t dest_ep, mgrant_id_t grant, loff_t offset,
-                void* addr, size_t len)
+int safecopy_to(endpoint_t dest_ep, mgrant_id_t grant, off_t offset, void* addr,
+                size_t len)
 {
     MESSAGE msg;
 

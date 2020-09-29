@@ -4,7 +4,7 @@
 #include <libchardriver/libchardriver.h>
 
 int drm_do_ioctl(struct drm_device* dev, int request, endpoint_t endpoint,
-                 char* buf, cdev_id_t id);
+                 mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
 
 /* connector.c */
 int drm_mode_getconnector(struct drm_device* dev, endpoint_t enpoint,

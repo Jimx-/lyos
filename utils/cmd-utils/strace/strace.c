@@ -288,8 +288,8 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     printf("\n");
 }
 
-#define EBX 8
-#define EAX 11
+#define EBX      8
+#define EAX      11
 #define ORIG_EAX 18
 static void trace_call_in(pid_t child)
 {
@@ -307,6 +307,8 @@ static void trace_call_in(pid_t child)
         trace_sendrec_in(child, &msg);
         break;
     }
+
+    fflush(stdout);
 }
 
 static void trace_call_out(pid_t child)

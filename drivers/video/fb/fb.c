@@ -43,12 +43,12 @@ static int init_fb();
 
 static int fb_open(dev_t minor, int access);
 static int fb_close(dev_t minor);
-static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                       unsigned int count, cdev_id_t id);
-static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                        unsigned int count, cdev_id_t id);
-static int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                    cdev_id_t id);
+static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                       mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static int fb_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
 static int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
                    size_t length, char** retaddr);
 
@@ -133,14 +133,14 @@ static int fb_close(dev_t minor)
     return OK;
 }
 
-static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                       unsigned int count, cdev_id_t id)
+static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                       mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     return 0;
 }
 
-static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                        unsigned int count, cdev_id_t id)
+static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                        mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     int retval = OK;
     void* base;
@@ -155,13 +155,13 @@ static ssize_t fb_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
         count = size - pos;
     }
 
-    data_copy(SELF, (void*)(base + (size_t)pos), endpoint, buf, count);
+    safecopy_from(endpoint, grant, 0, (void*)(base + (size_t)pos), count);
 
     return count;
 }
 
-static int fb_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                    cdev_id_t id)
+static int fb_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
 {
     return 0;
 }

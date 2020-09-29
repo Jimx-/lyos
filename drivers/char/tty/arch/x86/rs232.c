@@ -29,6 +29,7 @@
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/interrupt.h>
+#include <lyos/sysutils.h>
 #include "proto.h"
 #include "global.h"
 
@@ -38,54 +39,54 @@
 #define UART_FREQ 115200L /* timer frequency */
 
 #define RS_IBUFSIZE 1024 /* RS232 input buffer size */
-#define RS_IBUFLOW (RS_IBUFSIZE / 4)
+#define RS_IBUFLOW  (RS_IBUFSIZE / 4)
 #define RS_IBUFHIGH (RS_IBUFSIZE * 3 / 4)
 #define RS_OBUFSIZE 1024 /* RS232 output buffer size */
 
 /* Interrupt enable bits */
-#define IE_RECEIVER_READY 1
-#define IE_TRANSMITTER_READY 2
-#define IE_LINE_STATUS_CHANGE 4
+#define IE_RECEIVER_READY      1
+#define IE_TRANSMITTER_READY   2
+#define IE_LINE_STATUS_CHANGE  4
 #define IE_MODEM_STATUS_CHANGE 8
 
 /* Line control bits */
-#define LC_CS5 0x00 /* LSB0 and LSB1 encoding for CS5 */
-#define LC_CS6 0x01 /* LSB0 and LSB1 encoding for CS6 */
-#define LC_CS7 0x02 /* LSB0 and LSB1 encoding for CS7 */
-#define LC_CS8 0x03 /* LSB0 and LSB1 encoding for CS8 */
-#define LC_2STOP_BITS 0x04
-#define LC_PARITY 0x08
-#define LC_PAREVEN 0x10
-#define LC_BREAK 0x40
+#define LC_CS5             0x00 /* LSB0 and LSB1 encoding for CS5 */
+#define LC_CS6             0x01 /* LSB0 and LSB1 encoding for CS6 */
+#define LC_CS7             0x02 /* LSB0 and LSB1 encoding for CS7 */
+#define LC_CS8             0x03 /* LSB0 and LSB1 encoding for CS8 */
+#define LC_2STOP_BITS      0x04
+#define LC_PARITY          0x08
+#define LC_PAREVEN         0x10
+#define LC_BREAK           0x40
 #define LC_ADDRESS_DIVISOR 0x80
 
 /* Interrupt status bits */
 #define IS_MODEM_STATUS_CHANGE 0
-#define IS_NOTPENDING 1
-#define IS_TRANSMITTER_READY 2
-#define IS_RECEIVER_READY 4
-#define IS_LINE_STATUS_CHANGE 6
-#define IS_IDBITS 6
+#define IS_NOTPENDING          1
+#define IS_TRANSMITTER_READY   2
+#define IS_RECEIVER_READY      4
+#define IS_LINE_STATUS_CHANGE  6
+#define IS_IDBITS              6
 
 /* Line status bits */
-#define LS_OVERRUN_ERR 2
-#define LS_PARITY_ERR 4
-#define LS_FRAMING_ERR 8
-#define LS_BREAK_INTERRUPT 0x10
+#define LS_OVERRUN_ERR       2
+#define LS_PARITY_ERR        4
+#define LS_FRAMING_ERR       8
+#define LS_BREAK_INTERRUPT   0x10
 #define LS_TRANSMITTER_READY 0x20
 
 /* Modem control bits */
-#define MC_DTR 1
-#define MC_RTS 2
+#define MC_DTR  1
+#define MC_RTS  2
 #define MC_OUT2 8 /* required for PC & AT interrupts */
 
 /* Modem status bits */
-#define MS_CTS 0x10
-#define MS_RLSD 0x80  /* Received Line Signal Detect */
+#define MS_CTS   0x10
+#define MS_RLSD  0x80 /* Received Line Signal Detect */
 #define MS_DRLSD 0x08 /* RLSD Delta */
 
 #define devready(rs) ((rs_inb(rs->modem_status_port) | rs->cts) & MS_CTS)
-#define txready(rs) (rs_inb(rs->line_status_port) & LS_TRANSMITTER_READY)
+#define txready(rs)  (rs_inb(rs->line_status_port) & LS_TRANSMITTER_READY)
 
 #define istart(rs)                                                 \
     (portio_outb((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR), \
@@ -100,13 +101,13 @@ typedef struct rs232 {
     int cts;
 
     unsigned char ostate;
-#define ODONE 1
-#define ORAW 2
-#define OWAKEUP 4
+#define ODONE     1
+#define ORAW      2
+#define OWAKEUP   4
 #define ODEVREADY MS_CTS
-#define OQUEUED 0x20
-#define OSWREADY 0x40
-#define ODEVHUP MS_RLSD
+#define OQUEUED   0x20
+#define OSWREADY  0x40
+#define ODEVHUP   MS_RLSD
 
     char *ihead, *itail;
     char *ohead, *otail;
@@ -233,8 +234,11 @@ static void rs_write(TTY* tty)
 
         if (count == 0) break;
 
-        data_copy(SELF, rs->ohead, tty->tty_outcaller,
-                  (char*)tty->tty_outbuf + tty->tty_outcnt, count);
+        if (tty->tty_outcaller == TASK_TTY)
+            memcpy(rs->ohead, (char*)tty->tty_outbuf + tty->tty_outcnt, count);
+        else
+            safecopy_from(tty->tty_outcaller, tty->tty_outgrant,
+                          tty->tty_outcnt, rs->ohead, count);
 
         ocount = count;
         rs->ocount += ocount;
@@ -246,7 +250,8 @@ static void rs_write(TTY* tty)
 
         if ((tty->tty_outleft -= count) == 0) {
             if (tty->tty_outcaller != TASK_TTY) {
-                chardriver_reply_io(TASK_FS, tty->tty_outid, tty->tty_outcnt);
+                chardriver_reply_io(tty->tty_outcaller, tty->tty_outid,
+                                    tty->tty_outcnt);
             }
             tty->tty_outcaller = NO_TASK;
             tty->tty_outcnt = 0;

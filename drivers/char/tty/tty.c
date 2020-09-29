@@ -90,12 +90,12 @@ static void tty_dev_write(TTY* tty);
 static void tty_dev_ioctl(TTY* tty);
 static void in_transfer(TTY* tty);
 static int do_open(dev_t minor, int access);
-static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                       unsigned int count, cdev_id_t id);
-static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                        unsigned int count, cdev_id_t id);
-static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                    cdev_id_t id);
+static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                       mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
 static int do_select(dev_t minor, int ops, endpoint_t endpoint);
 static void tty_do_kern_log();
 static void tty_echo(TTY* tty, char c);
@@ -445,10 +445,10 @@ static void tty_dev_ioctl(TTY* tty)
     if (tty->tty_outleft > 0) return;
 
     if (tty->tty_ioreq == TCSETSF) tty_icancel(tty);
-    retval = data_copy(SELF, &(tty->tty_termios), tty->tty_iocaller,
-                       tty->tty_iobuf, sizeof(struct termios));
+    retval = safecopy_from(tty->tty_iocaller, tty->tty_iogrant, 0,
+                           &tty->tty_termios, sizeof(struct termios));
     tty->tty_ioreq = 0;
-    chardriver_reply_io(TASK_FS, tty->tty_ioid, retval);
+    chardriver_reply_io(tty->tty_iocaller, tty->tty_ioid, retval);
     tty->tty_iocaller = NO_TASK;
 }
 
@@ -476,8 +476,8 @@ static void in_transfer(TTY* tty)
         *bp = ch & IN_CHAR;
         tty->tty_inleft--;
         if (++bp == buf + sizeof(buf)) { /* buffer full */
-            void* p = tty->tty_inbuf + tty->tty_trans_cnt;
-            data_copy(tty->tty_incaller, p, TASK_TTY, buf, sizeof(buf));
+            safecopy_to(tty->tty_incaller, tty->tty_ingrant, tty->tty_trans_cnt,
+                        buf, sizeof(buf));
             tty->tty_trans_cnt += sizeof(buf);
             bp = buf;
         }
@@ -490,13 +490,14 @@ static void in_transfer(TTY* tty)
 
     if (bp > buf) {
         int count = bp - buf;
-        void* p = tty->tty_inbuf + tty->tty_trans_cnt;
-        data_copy(tty->tty_incaller, p, TASK_TTY, buf, count);
+        safecopy_to(tty->tty_incaller, tty->tty_ingrant, tty->tty_trans_cnt,
+                    buf, count);
         tty->tty_trans_cnt += count;
     }
 
     if (tty->tty_inleft == 0) {
-        chardriver_reply_io(TASK_FS, tty->tty_inid, tty->tty_trans_cnt);
+        chardriver_reply_io(tty->tty_incaller, tty->tty_inid,
+                            tty->tty_trans_cnt);
         tty->tty_incaller = NO_TASK;
         tty->tty_trans_cnt = 0;
     }
@@ -523,7 +524,8 @@ void handle_events(TTY* tty)
 
     /* return to caller if bytes are available */
     if (tty->tty_trans_cnt >= tty->tty_min && tty->tty_inleft > 0) {
-        chardriver_reply_io(TASK_FS, tty->tty_inid, tty->tty_trans_cnt);
+        chardriver_reply_io(tty->tty_incaller, tty->tty_inid,
+                            tty->tty_trans_cnt);
         tty->tty_inleft = tty->tty_trans_cnt = 0;
         tty->tty_incaller = NO_TASK;
     }
@@ -559,8 +561,8 @@ static int do_open(dev_t minor, int access)
  *
  * @see documentation/tty/
  *****************************************************************************/
-static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                       unsigned int count, cdev_id_t id)
+static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                       mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     TTY* tty = minor2tty(minor);
 
@@ -574,7 +576,7 @@ static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
     /* tell the tty: */
     tty->tty_incaller = endpoint; /* who wants the char */
     tty->tty_inid = id;           /* task id */
-    tty->tty_inbuf = buf;         /* where the chars should be put */
+    tty->tty_ingrant = grant;     /* where the chars should be put */
     tty->tty_inleft = count;      /* how many chars are requested */
     tty->tty_trans_cnt = 0;       /* how many chars have been transferred */
 
@@ -599,8 +601,8 @@ static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
  * @param tty  To which TTY the calller proc is bound.
  * @param msg  The MESSAGE.
  *****************************************************************************/
-static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                        unsigned int count, cdev_id_t id)
+static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                        mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     TTY* tty = minor2tty(minor);
 
@@ -612,7 +614,7 @@ static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
 
     tty->tty_outcaller = endpoint;
     tty->tty_outid = id;
-    tty->tty_outbuf = buf;
+    tty->tty_outgrant = grant;
     tty->tty_outleft = count;
     tty->tty_outcnt = 0;
 
@@ -636,8 +638,8 @@ static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
  * @param tty  To which TTY the calller proc is bound.
  * @param msg  The MESSAGE.
  *****************************************************************************/
-static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                    cdev_id_t id)
+static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
 {
     int retval = 0;
     int i;
@@ -649,27 +651,28 @@ static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
 
     switch (request) {
     case TCGETS: /* get termios attributes */
-        retval = data_copy(endpoint, buf, SELF, &(tty->tty_termios),
-                           sizeof(struct termios));
+        retval = safecopy_to(endpoint, grant, 0, &tty->tty_termios,
+                             sizeof(struct termios));
         break;
     case TCSETSW:
     case TCSETSF:
         if (tty->tty_outleft > 0) {
             /* wait for output process to finish */
             tty->tty_iocaller = endpoint;
-            tty->tty_iobuf = buf;
+            tty->tty_iogrant = grant;
             tty->tty_ioid = id;
             tty->tty_ioreq = request;
             return SUSPEND;
         }
         if (request == TCSETSF) tty_icancel(tty);
+        /* fall through */
     case TCSETS: /* set termios attributes */
-        retval = data_copy(SELF, &(tty->tty_termios), endpoint, buf,
-                           sizeof(struct termios));
+        retval = safecopy_from(endpoint, grant, 0, &tty->tty_termios,
+                               sizeof(struct termios));
         if (retval != 0) break;
         break;
     case TCFLSH:
-        retval = data_copy(SELF, &i, endpoint, buf, sizeof(i));
+        retval = safecopy_from(endpoint, grant, 0, &i, sizeof(i));
         if (retval != 0) break;
         if (i == TCIFLUSH || i == TCIOFLUSH) {
             tty_icancel(tty);
@@ -678,16 +681,21 @@ static int do_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
         }
         break;
     case TIOCGPGRP: /* get/set process group */
-        retval = data_copy(endpoint, buf, SELF, &tty->tty_pgrp,
-                           sizeof(tty->tty_pgrp));
+        retval = safecopy_to(endpoint, grant, 0, &tty->tty_pgrp,
+                             sizeof(tty->tty_pgrp));
         break;
     case TIOCSPGRP:
-        retval = data_copy(SELF, &tty->tty_pgrp, endpoint, buf,
-                           sizeof(tty->tty_pgrp));
+        retval = safecopy_from(endpoint, grant, 0, &tty->tty_pgrp,
+                               sizeof(tty->tty_pgrp));
         break;
     case TIOCGWINSZ:
-        retval = data_copy(endpoint, buf, SELF, &tty->tty_winsize,
-                           sizeof(struct winsize));
+        retval = safecopy_to(endpoint, grant, 0, &tty->tty_winsize,
+                             sizeof(struct winsize));
+        break;
+    case TIOCSWINSZ:
+        retval = safecopy_from(endpoint, grant, 0, &tty->tty_winsize,
+                               sizeof(struct winsize));
+        tty_sigproc(tty, SIGWINCH);
         break;
     default:
         retval = EINVAL;

@@ -86,11 +86,12 @@ static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint,
 
 static int char_open(dev_t minor, int access);
 static int char_close(dev_t minor);
-static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                         unsigned int count, cdev_id_t id);
-static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                          unsigned int count, cdev_id_t id);
-static int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
+static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                         mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                          mgrant_id_t grant, unsigned int count, cdev_id_t id);
+static int char_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                      mgrant_id_t grant, endpoint_t user_endpoint,
                       cdev_id_t id);
 
 struct blockdriver rd_driver = {
@@ -207,8 +208,8 @@ static int char_close(dev_t minor)
     return 0;
 }
 
-static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                         unsigned int count, cdev_id_t id)
+static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                         mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     ssize_t retval;
 
@@ -223,8 +224,8 @@ static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
     return retval;
 }
 
-static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
-                          unsigned int count, cdev_id_t id)
+static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint,
+                          mgrant_id_t grant, unsigned int count, cdev_id_t id)
 {
     ssize_t retval;
 
@@ -240,8 +241,8 @@ static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint, char* buf,
     return retval;
 }
 
-static int char_ioctl(dev_t minor, int request, endpoint_t endpoint, char* buf,
-                      cdev_id_t id)
+static int char_ioctl(dev_t minor, int request, endpoint_t endpoint,
+                      mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
 {
     return 0;
 }

@@ -13,9 +13,9 @@
 #include <sys/times.h>
 #include <sys/errno.h>
 #include <sys/time.h>
-#include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <sys/termios.h>
+#include <sys/ioctl.h>
 #include <sys/syslimits.h>
 #include <sys/mman.h>
 #include <stdio.h>

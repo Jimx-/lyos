@@ -49,28 +49,29 @@ static ssize_t do_rdwt(struct chardriver* cd, MESSAGE* msg)
     int minor = msg->u.m_vfs_cdev_readwrite.minor;
     cdev_id_t id = msg->u.m_vfs_cdev_readwrite.id;
     u64 pos = msg->u.m_vfs_cdev_readwrite.pos;
-    endpoint_t ep = msg->u.m_vfs_cdev_readwrite.endpoint;
-    char* buf = msg->u.m_vfs_cdev_readwrite.buf;
+    endpoint_t ep = msg->source;
+    mgrant_id_t grant = msg->u.m_vfs_cdev_readwrite.grant;
     unsigned int count = msg->u.m_vfs_cdev_readwrite.count;
 
     if (do_write && cd->cdr_write)
-        return cd->cdr_write(minor, pos, ep, buf, count, id);
+        return cd->cdr_write(minor, pos, ep, grant, count, id);
     else if (!do_write && cd->cdr_read)
-        return cd->cdr_read(minor, pos, ep, buf, count, id);
+        return cd->cdr_read(minor, pos, ep, grant, count, id);
     return -EIO;
 }
 
 static int do_ioctl(struct chardriver* cd, MESSAGE* msg)
 {
+    endpoint_t src = msg->source;
     int minor = msg->u.m_vfs_cdev_readwrite.minor;
     cdev_id_t id = msg->u.m_vfs_cdev_readwrite.id;
     int request = msg->u.m_vfs_cdev_readwrite.request;
-    endpoint_t ep = msg->u.m_vfs_cdev_readwrite.endpoint;
-    char* buf = msg->u.m_vfs_cdev_readwrite.buf;
+    endpoint_t user_ep = msg->u.m_vfs_cdev_readwrite.endpoint;
+    mgrant_id_t grant = msg->u.m_vfs_cdev_readwrite.grant;
 
     if (cd->cdr_ioctl == NULL) return ENOTTY;
 
-    return cd->cdr_ioctl(minor, request, ep, buf, id);
+    return cd->cdr_ioctl(minor, request, src, grant, user_ep, id);
 }
 
 static int do_mmap(struct chardriver* cd, MESSAGE* msg)
