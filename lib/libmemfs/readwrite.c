@@ -50,8 +50,9 @@ int memfs_free_buf()
     return 0;
 }
 
-ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
-                        struct fsdriver_data* data, loff_t rwpos, size_t count)
+static ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
+                               struct fsdriver_data* data, loff_t rwpos,
+                               size_t count)
 {
     struct memfs_inode* pin = memfs_find_inode(num);
     if (!pin) return -ENOENT;
@@ -105,4 +106,16 @@ ssize_t memfs_readwrite(dev_t dev, ino_t num, int rw_flag,
     }
 
     return off;
+}
+
+ssize_t memfs_read(dev_t dev, ino_t num, struct fsdriver_data* data,
+                   loff_t rwpos, size_t count)
+{
+    return memfs_readwrite(dev, num, READ, data, rwpos, count);
+}
+
+ssize_t memfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
+                    loff_t rwpos, size_t count)
+{
+    return memfs_readwrite(dev, num, WRITE, data, rwpos, count);
 }

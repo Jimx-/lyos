@@ -37,8 +37,9 @@
 
 #include <libfsdriver/libfsdriver.h>
 
-ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
-                    struct fsdriver_data* data, loff_t rwpos, size_t count)
+static ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
+                           struct fsdriver_data* data, loff_t rwpos,
+                           size_t count)
 {
     char header[512];
     struct posix_tar_header* phdr = (struct posix_tar_header*)header;
@@ -72,11 +73,11 @@ ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
 
         if (rw_flag == READ) {
             if ((retval = fsdriver_copyout(data, cum_io, bp->data + block_off,
-                                            bytes_rdwt)) != 0)
+                                           bytes_rdwt)) != 0)
                 return -retval;
         } else {
             if ((retval = fsdriver_copyin(data, cum_io, bp->data + block_off,
-                                           bytes_rdwt)) != 0)
+                                          bytes_rdwt)) != 0)
                 return -retval;
             fsdriver_mark_dirty(bp);
         }
@@ -89,6 +90,18 @@ ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
     }
 
     return cum_io;
+}
+
+ssize_t initfs_read(dev_t dev, ino_t num, struct fsdriver_data* data,
+                    loff_t rwpos, size_t count)
+{
+    return initfs_rdwt(dev, num, READ, data, rwpos, count);
+}
+
+ssize_t initfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
+                     loff_t rwpos, size_t count)
+{
+    return initfs_rdwt(dev, num, WRITE, data, rwpos, count);
 }
 
 static int match_dirname(const char* dirname, const char* pathname)

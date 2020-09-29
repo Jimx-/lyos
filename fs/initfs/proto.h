@@ -27,8 +27,10 @@
 int initfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
 int initfs_lookup(dev_t dev, ino_t start, const char* name,
                   struct fsdriver_node* fn, int* is_mountpoint);
-ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
-                    struct fsdriver_data* data, loff_t rwpos, size_t count);
+ssize_t initfs_read(dev_t dev, ino_t num, struct fsdriver_data* data,
+                    loff_t rwpos, size_t count);
+ssize_t initfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
+                     loff_t rwpos, size_t count);
 ssize_t initfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
                         loff_t* ppos, size_t count);
 int initfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);

@@ -44,8 +44,8 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
  * @param  p Ptr to message.
  * @return   Zero on success.
  */
-ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
-                  loff_t rwpos, size_t count)
+static ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag,
+                         struct fsdriver_data* data, loff_t rwpos, size_t count)
 {
     loff_t position = rwpos;
     size_t nbytes = count;
@@ -108,6 +108,18 @@ ssize_t ext2_rdwt(dev_t dev, ino_t num, int rw_flag, struct fsdriver_data* data,
     }
 
     return -retval;
+}
+
+ssize_t ext2_read(dev_t dev, ino_t num, struct fsdriver_data* data,
+                  loff_t rwpos, size_t count)
+{
+    return ext2_rdwt(dev, num, READ, data, rwpos, count);
+}
+
+ssize_t ext2_write(dev_t dev, ino_t num, struct fsdriver_data* data,
+                   loff_t rwpos, size_t count)
+{
+    return ext2_rdwt(dev, num, WRITE, data, rwpos, count);
 }
 
 /**

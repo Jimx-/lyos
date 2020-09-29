@@ -58,9 +58,10 @@ struct fsdriver {
                      uid_t uid, gid_t gid, struct fsdriver_node* fn);
     int (*fs_mkdir)(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                     uid_t uid, gid_t gid);
-    ssize_t (*fs_readwrite)(dev_t dev, ino_t num, int rw_flag,
-                            struct fsdriver_data* data, loff_t rwpos,
-                            size_t count);
+    ssize_t (*fs_read)(dev_t dev, ino_t num, struct fsdriver_data* data,
+                       loff_t rwpos, size_t count);
+    ssize_t (*fs_write)(dev_t dev, ino_t num, struct fsdriver_data* data,
+                        loff_t rwpos, size_t count);
     ssize_t (*fs_rdlink)(dev_t dev, ino_t num, struct fsdriver_data* data,
                          size_t bytes);
     int (*fs_symlink)(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
@@ -79,9 +80,9 @@ struct fsdriver {
 int fsdriver_start(const struct fsdriver* fsd);
 
 int fsdriver_copyin(struct fsdriver_data* data, size_t offset, void* buf,
-                     size_t len);
+                    size_t len);
 int fsdriver_copyout(struct fsdriver_data* data, size_t offset, void* buf,
-                      size_t len);
+                     size_t len);
 int fsdriver_copy_name(endpoint_t endpoint, mgrant_id_t grant, size_t len,
                        char* name, size_t size, int non_empty);
 

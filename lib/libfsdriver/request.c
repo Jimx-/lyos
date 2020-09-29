@@ -150,14 +150,16 @@ int fsdriver_readwrite(const struct fsdriver* fsd, MESSAGE* m)
     int rw_flag = m->u.m_vfs_fs_readwrite.rw_flag;
     mgrant_id_t grant = m->u.m_vfs_fs_readwrite.grant;
     struct fsdriver_data data;
-
-    if (fsd->fs_readwrite == NULL) return ENOSYS;
+    ssize_t retval;
 
     data.granter = m->source;
     data.grant = grant;
 
-    ssize_t retval =
-        fsd->fs_readwrite(dev, num, rw_flag, &data, position, nbytes);
+    retval = -ENOSYS;
+    if (rw_flag == READ && fsd->fs_read)
+        retval = fsd->fs_read(dev, num, &data, position, nbytes);
+    else if (rw_flag == WRITE && fsd->fs_write)
+        retval = fsd->fs_write(dev, num, &data, position, nbytes);
 
     if (retval >= 0) {
         position += retval;
