@@ -24,7 +24,9 @@
 #include "lyos/const.h"
 #include <lyos/fs.h>
 #include "string.h"
-#include "libfsdriver/libfsdriver.h"
+#include <libfsdriver/libfsdriver.h>
+
+#include "proto.h"
 
 int fsdriver_start(const struct fsdriver* fsd)
 {

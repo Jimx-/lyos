@@ -93,22 +93,6 @@ int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
                              const char* name, size_t name_len, int type);
 int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list);
 
-int fsdriver_register(const struct fsdriver* fsd);
-int fsdriver_readsuper(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_mountpoint(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_putinode(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_readwrite(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_stat(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_ftrunc(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_chmod(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_sync(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_create(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_mkdir(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m);
-int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m);
-
 int fsdriver_driver(dev_t dev);
 
 #endif
