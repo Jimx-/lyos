@@ -66,6 +66,8 @@ struct fsdriver {
                          size_t bytes);
     int (*fs_symlink)(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
                       gid_t gid, struct fsdriver_data* data, size_t bytes);
+    int (*fs_unlink)(dev_t dev, ino_t dir_num, const char* name);
+    int (*fs_rmdir)(dev_t dev, ino_t dir_num, const char* name);
     int (*fs_stat)(dev_t dev, ino_t num, struct fsdriver_data* data);
     int (*fs_ftrunc)(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t* mode);

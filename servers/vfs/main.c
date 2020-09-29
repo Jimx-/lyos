@@ -51,11 +51,10 @@
 
 /**
  * Missing filesystem syscalls:
- * link/unlink
+ * link
  * chown/chroot
  * fcntl
- * mkdir/mknod/rmdir
- * pipe
+ * mknod
  * rename
  * stime
  * umount
@@ -210,6 +209,10 @@ static void do_work(void)
         break;
     case READLINK:
         self->msg_out.RETVAL = do_rdlink();
+        break;
+    case UNLINK:
+    case RMDIR:
+        self->msg_out.RETVAL = do_unlink();
         break;
     case SELECT:
         self->msg_out.RETVAL = do_select();

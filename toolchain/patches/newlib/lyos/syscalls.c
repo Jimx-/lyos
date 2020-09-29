@@ -865,10 +865,19 @@ int fstatfs(int fd, struct statfs* buf)
     return ENOSYS;
 }
 
-int rmdir(const char* path)
+int rmdir(const char* pathname)
 {
-    puts("rmdir: not implemented");
-    return 0;
+    MESSAGE msg;
+    msg.type = RMDIR;
+
+    msg.PATHNAME = (void*)pathname;
+    msg.NAME_LEN = strlen(pathname);
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    return msg.RETVAL;
 }
 
 int fstat(int fd, struct stat* buf)

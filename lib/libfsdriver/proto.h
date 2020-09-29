@@ -16,5 +16,7 @@ int fsdriver_create(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_mkdir(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_unlink(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_rmdir(const struct fsdriver* fsd, MESSAGE* m);
 
 #endif

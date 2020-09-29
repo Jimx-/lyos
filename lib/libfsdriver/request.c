@@ -300,6 +300,47 @@ int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_symlink(dev, dir_num, name, uid, gid, &data, target_len);
 }
 
+int fsdriver_unlink(const struct fsdriver* fsd, MESSAGE* m)
+{
+    endpoint_t src = m->source;
+    dev_t dev = m->u.m_vfs_fs_unlink.dev;
+    ino_t num = m->u.m_vfs_fs_unlink.num;
+    mgrant_id_t grant = m->u.m_vfs_fs_unlink.grant;
+    size_t len = m->u.m_vfs_fs_unlink.name_len;
+    char name[NAME_MAX + 1];
+    int retval;
+
+    if (!fsd->fs_unlink) return ENOSYS;
+    if ((retval = fsdriver_copy_name(src, grant, len, name, NAME_MAX, TRUE)) !=
+        0)
+        return retval;
+
+    if (!strcmp(name, ".") || !strcmp(name, "..")) return EPERM;
+
+    return fsd->fs_unlink(dev, num, name);
+}
+
+int fsdriver_rmdir(const struct fsdriver* fsd, MESSAGE* m)
+{
+    endpoint_t src = m->source;
+    dev_t dev = m->u.m_vfs_fs_unlink.dev;
+    ino_t num = m->u.m_vfs_fs_unlink.num;
+    mgrant_id_t grant = m->u.m_vfs_fs_unlink.grant;
+    size_t len = m->u.m_vfs_fs_unlink.name_len;
+    char name[NAME_MAX + 1];
+    int retval;
+
+    if (!fsd->fs_unlink) return ENOSYS;
+    if ((retval = fsdriver_copy_name(src, grant, len, name, NAME_MAX, TRUE)) !=
+        0)
+        return retval;
+
+    if (!strcmp(name, ".")) return EINVAL;
+    if (!strcmp(name, "..")) return ENOTEMPTY;
+
+    return fsd->fs_rmdir(dev, num, name);
+}
+
 int fsdriver_sync(const struct fsdriver* fsd, MESSAGE* m)
 {
     if (fsd->fs_sync == NULL) return ENOSYS;

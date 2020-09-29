@@ -29,14 +29,108 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/stat.h>
+
 #include "ext2_fs.h"
 #include "global.h"
+
+static int unlink_file(ext2_inode_t* pin_dir, ext2_inode_t* pin,
+                       const char* name)
+{
+    int retval;
+    ino_t num;
+
+    if (!pin) {
+        retval = ext2_search_dir(pin_dir, name, &num, SD_LOOK_UP, 0);
+        if (!retval)
+            pin = get_ext2_inode(pin_dir->i_dev, num);
+        else
+            return retval;
+
+        if (!pin) return err_code;
+    } else {
+        pin->i_count++;
+    }
+
+    retval = ext2_search_dir(pin_dir, name, NULL, SD_DELETE, 0);
+
+    if (!retval) {
+        pin->i_links_count--;
+        pin->i_update |= CTIME;
+        pin->i_dirt = INO_DIRTY;
+    }
+
+    put_ext2_inode(pin);
+    return retval;
+}
+
+static int remove_dir(ext2_inode_t* pin_dir, ext2_inode_t* pin,
+                      const char* name)
+{
+    int retval;
+
+    if ((retval = ext2_search_dir(pin, "", NULL, SD_IS_EMPTY, 0)) != OK)
+        return retval;
+
+    if (pin->i_num == EXT2_ROOT_INODE) return EBUSY;
+
+    if ((retval = unlink_file(pin_dir, pin, name)) != OK) return retval;
+
+    unlink_file(pin, NULL, ".");
+    unlink_file(pin, NULL, "..");
+    return OK;
+}
+
+static int do_unlink(dev_t dev, ino_t dir_num, const char* name, int is_rmdir)
+{
+    ext2_inode_t *pin_dir, *pin;
+    int retval = OK;
+
+    pin_dir = get_ext2_inode(dev, dir_num);
+    if (!pin_dir) return EINVAL;
+
+    pin = ext2_advance(pin_dir, name);
+    if (!pin) {
+        put_ext2_inode(pin_dir);
+        return err_code;
+    }
+
+    if (pin->i_mountpoint) {
+        put_ext2_inode(pin);
+        put_ext2_inode(pin_dir);
+        return EBUSY;
+    }
+
+    if (is_rmdir) {
+        retval = remove_dir(pin_dir, pin, name);
+    } else {
+        if (S_ISDIR(pin->i_mode)) {
+            retval = EPERM;
+        }
+
+        if (retval == OK) retval = unlink_file(pin_dir, pin, name);
+    }
+
+    put_ext2_inode(pin);
+    put_ext2_inode(pin_dir);
+    return retval;
+}
+
+int ext2_unlink(dev_t dev, ino_t dir_num, const char* name)
+{
+    return do_unlink(dev, dir_num, name, FALSE /* is_rmdir */);
+}
+
+int ext2_rmdir(dev_t dev, ino_t dir_num, const char* name)
+{
+    return do_unlink(dev, dir_num, name, TRUE /* is_rmdir */);
+}
 
 ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
                     size_t bytes)
 {
     ssize_t retval = 0;
-    ext2_inode_t* pin = find_ext2_inode(dev, num);
+    ext2_inode_t* pin = get_ext2_inode(dev, num);
     char* text = NULL;
     struct fsdriver_buffer* bp = NULL;
 

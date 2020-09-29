@@ -38,6 +38,56 @@
 
 static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize);
 
+static int request_unlink(endpoint_t fs_ep, dev_t dev, ino_t num,
+                          const char* last_component)
+{
+    MESSAGE m;
+    size_t name_len;
+    mgrant_id_t grant;
+
+    name_len = strlen(last_component);
+    grant =
+        mgrant_set_direct(fs_ep, (vir_bytes)last_component, name_len, MGF_READ);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_unlink cannot create grant");
+
+    m.type = FS_UNLINK;
+    m.u.m_vfs_fs_unlink.dev = dev;
+    m.u.m_vfs_fs_unlink.num = num;
+    m.u.m_vfs_fs_unlink.grant = grant;
+    m.u.m_vfs_fs_unlink.name_len = name_len;
+
+    fs_sendrec(fs_ep, &m);
+    mgrant_revoke(grant);
+
+    return m.RETVAL;
+}
+
+static int request_rmdir(endpoint_t fs_ep, dev_t dev, ino_t num,
+                         const char* last_component)
+{
+    MESSAGE m;
+    size_t name_len;
+    mgrant_id_t grant;
+
+    name_len = strlen(last_component);
+    grant =
+        mgrant_set_direct(fs_ep, (vir_bytes)last_component, name_len, MGF_READ);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_unlink cannot create grant");
+
+    m.type = FS_RMDIR;
+    m.u.m_vfs_fs_unlink.dev = dev;
+    m.u.m_vfs_fs_unlink.num = num;
+    m.u.m_vfs_fs_unlink.grant = grant;
+    m.u.m_vfs_fs_unlink.name_len = name_len;
+
+    fs_sendrec(fs_ep, &m);
+    mgrant_revoke(grant);
+
+    return m.RETVAL;
+}
+
 static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
                               endpoint_t src, void* buf, size_t nbytes)
 {
@@ -65,6 +115,54 @@ static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
     }
 
     return -retval;
+}
+
+int do_unlink(void)
+{
+    char pathname[PATH_MAX];
+    struct lookup lookup;
+    struct vfs_mount* vmnt;
+    struct inode* pin_dir;
+    int retval;
+
+    if (self->msg_in.NAME_LEN >= PATH_MAX) return -ENAMETOOLONG;
+
+    /* fetch the name */
+    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME,
+              self->msg_in.NAME_LEN);
+    pathname[self->msg_in.NAME_LEN] = '\0';
+
+    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin_dir);
+    lookup.vmnt_lock = RWL_WRITE;
+    lookup.inode_lock = RWL_WRITE;
+
+    if ((pin_dir = last_dir(&lookup, fproc)) == NULL) return err_code;
+
+    if (!S_ISDIR(pin_dir->i_mode)) {
+        unlock_inode(pin_dir);
+        unlock_vmnt(vmnt);
+        put_inode(pin_dir);
+        return ENOTDIR;
+    }
+
+    if ((retval = forbidden(fproc, pin_dir, W_BIT | X_BIT)) != 0) {
+        unlock_inode(pin_dir);
+        unlock_vmnt(vmnt);
+        put_inode(pin_dir);
+        return retval;
+    }
+
+    if (self->msg_in.type == UNLINK)
+        retval = request_unlink(pin_dir->i_fs_ep, pin_dir->i_dev,
+                                pin_dir->i_num, pathname);
+    else
+        retval = request_rmdir(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
+                               pathname);
+
+    unlock_inode(pin_dir);
+    unlock_vmnt(vmnt);
+    put_inode(pin_dir);
+    return retval;
 }
 
 int do_rdlink(void)

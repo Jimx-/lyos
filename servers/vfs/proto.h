@@ -76,7 +76,7 @@ int do_rdwt(void);
 int do_getdents(void);
 
 /* vfs/link.c */
-int do_unlink(MESSAGE* p);
+int do_unlink(void);
 int do_rdlink(void);
 int do_symlink(void);
 int truncate_node(struct inode* pin, int newsize);

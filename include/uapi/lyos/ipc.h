@@ -349,6 +349,17 @@ BEGIN_MESS_DECL(mess_vfs_fs_readwrite)
 }
 END_MESS_DECL(mess_vfs_fs_readwrite)
 
+BEGIN_MESS_DECL(mess_vfs_fs_unlink)
+{
+    dev_t dev;
+    ino_t num;
+    __mgrant_id_t grant;
+    size_t name_len;
+
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_vfs_fs_unlink)
+
 struct mess_vfs_cdev_openclose {
     __u64 minor;
     __u32 id;
@@ -554,6 +565,7 @@ typedef struct {
         struct mess_vfs_fs_create m_vfs_fs_create;
         struct mess_fs_vfs_create_reply m_fs_vfs_create_reply;
         struct mess_vfs_fs_readwrite m_vfs_fs_readwrite;
+        struct mess_vfs_fs_unlink m_vfs_fs_unlink;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;
@@ -573,7 +585,7 @@ typedef struct {
         struct mess_sockdriver_socket m_sockdriver_socket;
         struct mess_sockdriver_socket_reply m_sockdriver_socket_reply;
 
-        __u8 _pad[56];
+        __u8 m_payload[56];
     } u;
 } __attribute__((packed)) MESSAGE;
 typedef int _VERIFY_MESSAGE[sizeof(MESSAGE) == 64 ? 1 : -1];

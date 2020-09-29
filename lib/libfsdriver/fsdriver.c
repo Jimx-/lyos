@@ -87,6 +87,12 @@ int fsdriver_start(const struct fsdriver* fsd)
         case FS_SYMLINK:
             m.RETVAL = fsdriver_symlink(fsd, &m);
             break;
+        case FS_UNLINK:
+            m.RETVAL = fsdriver_unlink(fsd, &m);
+            break;
+        case FS_RMDIR:
+            m.RETVAL = fsdriver_rmdir(fsd, &m);
+            break;
         default:
             if (fsd->fs_other) {
                 fsd->fs_other(&m);

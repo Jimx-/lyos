@@ -138,58 +138,58 @@ enum msgtype {
     BREAK,
     PTRACE,
     GTTY,
-    STTY,
-    UNAME, /* 11 */
+    STTY, /* 10 */
+    UNAME,
     PROF,
     PHYS,
     LOCK,
     MPX,
     GET_TIME_OF_DAY,
-    GETSETHOSTNAME, /* 17 */
+    GETSETHOSTNAME,
     OPEN,
     CLOSE,
-    READ,
+    READ, /* 20 */
     WRITE,
     LSEEK,
     STAT,
     FSTAT,
-    UNLINK, /* 25 */
+    UNLINK,
     MOUNT,
     UMOUNT,
     MKDIR,
     CHROOT,
-    CHDIR,
+    CHDIR, /* 30 */
     FCHDIR,
-    ACCESS, /* 32 */
+    ACCESS,
     UMASK,
     DUP,
     IOCTL,
     FCNTL,
     CHMOD,
     FCHMOD,
-    GETDENTS, /* 39 */
-    _SUSPEND_PROC,
+    GETDENTS,
+    _SUSPEND_PROC, /* 40 */
     _RESUME_PROC,
     EXEC,
     WAIT,
     KILL,
-    ACCT, /* 45 */
+    ACCT,
     BRK,
     GETSETID,
     ALARM,
     SIGACTION,
-    SIGPROCMASK,
-    SIGSUSPEND, /* 51 */
+    SIGPROCMASK, /* 50 */
+    SIGSUSPEND,
     PROCCTL,
     MMAP,
     FORK,
     EXIT,
     MUNMAP,
     FUTEX,
-    SELECT, /* 58 */
+    SELECT,
     SYNC,
-    READLINK,
-    LSTAT, /* 61 */
+    READLINK, /* 60 */
+    LSTAT,
     SYMLINK,
     SIGNALFD,
     PIPE2,
@@ -198,11 +198,12 @@ enum msgtype {
     EVENTFD,
     TIMERFD_CREATE,
     TIMERFD_SETTIME,
-    TIMERFD_GETTIME,
+    TIMERFD_GETTIME, /* 70 */
     EPOLL_CREATE1,
     EPOLL_CTL,
     EPOLL_WAIT,
     SOCKET,
+    RMDIR,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -236,6 +237,8 @@ enum msgtype {
     FS_MKDIR,
     FS_RDLINK,
     FS_SYMLINK,
+    FS_UNLINK,
+    FS_RMDIR,
 
     VFS_MAPDRIVER,
 
