@@ -24,18 +24,21 @@
 #include <lyos/fs.h>
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
 static int mounted = 0;
 
 int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
 {
+    struct memfs_inode* root = memfs_get_root_inode();
+
     if (mounted) return EBUSY;
 
-    node->fn_num = root_inode.i_num;
-    node->fn_mode = root_inode.i_stat.st_mode;
-    node->fn_size = root_inode.i_stat.st_size;
-    node->fn_uid = root_inode.i_stat.st_uid;
-    node->fn_gid = root_inode.i_stat.st_gid;
+    node->fn_num = root->i_num;
+    node->fn_mode = root->i_stat.st_mode;
+    node->fn_size = root->i_stat.st_size;
+    node->fn_uid = root->i_stat.st_uid;
+    node->fn_gid = root->i_stat.st_gid;
     node->fn_device = 0;
 
     mounted = 1;

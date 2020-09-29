@@ -17,7 +17,7 @@
 #define _LIBMEMFS_H_
 
 #include <lyos/list.h>
-#include "libfsdriver/libfsdriver.h"
+#include <libfsdriver/libfsdriver.h>
 
 #include "inode.h"
 
@@ -39,30 +39,18 @@ struct memfs_hooks {
 
 extern struct memfs_hooks fs_hooks;
 
-extern char* memfs_buf;
-extern size_t memfs_bufsize;
-
 int memfs_start(char* name, struct memfs_hooks* hooks,
                 struct memfs_stat* root_stat);
-int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
-int memfs_lookup(dev_t dev, ino_t start, const char* name,
-                 struct fsdriver_node* fn, int* is_mountpoint);
-int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
-ssize_t memfs_read(dev_t dev, ino_t num, struct fsdriver_data* data,
-                   loff_t rwpos, size_t count);
-ssize_t memfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
-                    loff_t rwpos, size_t count);
-ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
-                       loff_t* ppos, size_t count);
-ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                     size_t bytes);
-
-int memfs_init_buf();
-int memfs_free_buf();
 
 int memfs_node_index(struct memfs_inode* pin);
 struct memfs_inode* memfs_node_parent(struct memfs_inode* pin);
 struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,
                                     const char* name, int index,
                                     struct memfs_stat* stat, cbdata_t data);
+struct memfs_inode* memfs_get_root_inode();
+struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
+                                             const char* name);
+struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
+                                              int index);
+
 #endif

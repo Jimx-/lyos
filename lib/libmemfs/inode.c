@@ -27,10 +27,15 @@
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
-struct memfs_inode root_inode;
+#define MEMFS_INODE_HASH_LOG2 7
+#define MEMFS_INODE_HASH_SIZE ((unsigned long)1 << MEMFS_INODE_HASH_LOG2)
+#define MEMFS_INODE_HASH_MASK (((unsigned long)1 << MEMFS_INODE_HASH_LOG2) - 1)
 
-extern struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
+static struct memfs_inode root_inode;
+
+static struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 
 static ino_t allocate_inode_num()
 {

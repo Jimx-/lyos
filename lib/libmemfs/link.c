@@ -10,6 +10,7 @@
 #include <lyos/const.h>
 
 #include <libmemfs/libmemfs.h>
+#include "proto.h"
 
 static ssize_t get_target_path(struct memfs_inode* parent,
                                struct memfs_inode* target, char* path);

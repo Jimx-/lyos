@@ -26,13 +26,14 @@
 #include <lyos/fs.h>
 #include <lyos/const.h>
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
 #define BUFSIZE 1024
 
 char* memfs_buf;
 size_t memfs_bufsize;
 
-int memfs_init_buf()
+int memfs_init_buf(void)
 {
     memfs_buf = (char*)malloc(BUFSIZE);
     if (memfs_buf == NULL) return ENOMEM;
@@ -41,7 +42,7 @@ int memfs_init_buf()
     return 0;
 }
 
-int memfs_free_buf()
+int memfs_free_buf(void)
 {
     free(memfs_buf);
     memfs_buf = NULL;

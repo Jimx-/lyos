@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <sys/dirent.h>
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
 static int stat_type(struct memfs_stat* st)
 {

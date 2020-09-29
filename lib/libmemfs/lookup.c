@@ -25,6 +25,7 @@
 #include <lyos/const.h>
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
 static struct memfs_inode* memfs_advance(struct memfs_inode* parent,
                                          const char* name);

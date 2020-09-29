@@ -23,7 +23,9 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
+
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
 struct memfs_hooks fs_hooks;
 
@@ -46,6 +48,8 @@ struct fsdriver fsd = {
 int memfs_start(char* name, struct memfs_hooks* hooks,
                 struct memfs_stat* root_stat)
 {
+    struct memfs_inode* root = memfs_get_root_inode();
+
     fsd.name = name;
 
     if (!hooks) return EINVAL;
@@ -55,14 +59,14 @@ int memfs_start(char* name, struct memfs_hooks* hooks,
 
     memfs_init_inode();
 
-    root_inode.i_num = 0;
-    root_inode.i_index = NO_INDEX;
-    root_inode.i_parent = NULL;
-    INIT_LIST_HEAD(&root_inode.i_hash);
-    INIT_LIST_HEAD(&root_inode.i_list);
-    INIT_LIST_HEAD(&root_inode.i_children);
-    memfs_set_inode_stat(&root_inode, root_stat);
-    memfs_addhash_inode(&root_inode);
+    root->i_num = 0;
+    root->i_index = NO_INDEX;
+    root->i_parent = NULL;
+    INIT_LIST_HEAD(&root->i_hash);
+    INIT_LIST_HEAD(&root->i_list);
+    INIT_LIST_HEAD(&root->i_children);
+    memfs_set_inode_stat(root, root_stat);
+    memfs_addhash_inode(root);
 
     if (fs_hooks.init_hook) fs_hooks.init_hook();
 

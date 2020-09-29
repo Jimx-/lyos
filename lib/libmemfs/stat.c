@@ -24,7 +24,9 @@
 #include <lyos/fs.h>
 #include <lyos/const.h>
 #include <sys/stat.h>
+
 #include "libmemfs/libmemfs.h"
+#include "proto.h"
 
 static int memfs_stat_inode(struct memfs_inode* pin,
                             struct fsdriver_data* data);
