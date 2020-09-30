@@ -595,14 +595,19 @@ mode_t umask(mode_t mask)
 int dup2(int fd, int fd2)
 {
     MESSAGE msg;
-    msg.type = DUP;
 
+    msg.type = DUP;
     msg.FD = fd;
     msg.NEWFD = fd2;
 
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL < 0) {
+        errno = -msg.RETVAL;
+        return -1;
+    }
 
     return msg.RETVAL;
 }

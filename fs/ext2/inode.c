@@ -142,7 +142,7 @@ void put_ext2_inode(ext2_inode_t* pin)
 
 int ext2_putinode(dev_t dev, ino_t num)
 {
-    ext2_inode_t* pin = get_ext2_inode(dev, num);
+    ext2_inode_t* pin = find_ext2_inode(dev, num);
     put_ext2_inode(pin);
 
     return 0;

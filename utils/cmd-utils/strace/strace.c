@@ -1,6 +1,6 @@
 #include <sys/types.h>
-#include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/ptrace.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -11,6 +11,9 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
+
+#include "types.h"
+#include "proto.h"
 
 static void do_trace(pid_t child, int s);
 
@@ -33,13 +36,13 @@ int main(int argc, char* argv[], char* envp[])
     return 0;
 }
 
-static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
+static int copy_message_from(struct tcb* tcp, void* src_msg, void* dest_msg)
 {
     long* src = (long*)src_msg;
     long* dest = (long*)dest_msg;
 
     while (src < (long*)((char*)src_msg + sizeof(MESSAGE))) {
-        long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
+        long data = ptrace(PTRACE_PEEKDATA, tcp->pid, src, 0);
         if (data == -1) return -1;
         *dest = data;
         src++;
@@ -48,61 +51,6 @@ static int copy_message_from(pid_t pid, void* src_msg, MESSAGE* dest_msg)
 
     return 0;
 }
-
-static void print_path(pid_t pid, char* string, int len)
-{
-    char* buf = (char*)malloc(len + 5);
-    if (!buf) return;
-
-    long* src = (long*)string;
-    long* dest = (long*)buf;
-
-    while (src < (long*)(string + len)) {
-        long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
-        if (data == -1) return;
-        *dest = data;
-        src++;
-        dest++;
-    }
-
-    buf[len] = '\0';
-
-    printf("\"%s\"", buf);
-
-    free(buf);
-}
-
-static void print_str(pid_t pid, char* str, int len)
-{
-#define DEFAULT_BUF_LEN 32
-    int truncated = 0;
-    if (len > DEFAULT_BUF_LEN) {
-        truncated = 1;
-        len = DEFAULT_BUF_LEN;
-    }
-
-    char* buf = malloc(len + 1);
-    if (!buf) return;
-
-    long* src = (long*)str;
-    long* dest = (long*)buf;
-
-    while (src < (long*)(str + len)) {
-        long data = ptrace(PTRACE_PEEKDATA, pid, src, 0);
-        if (data == -1) goto out;
-        *dest = data;
-        src++;
-        dest++;
-    }
-
-    buf[len] = '\0';
-    printf("\"%s\"%s", buf, truncated ? "..." : "");
-
-out:
-    free(buf);
-}
-
-static void print_err(int err) { printf("%d %s", err, strerror(err)); }
 
 /*
 static void print_msg(MESSAGE* m)
@@ -124,102 +72,109 @@ static void print_msg(MESSAGE* m)
 }
 */
 
-static void trace_open_in(pid_t child, MESSAGE* msg)
+static void trace_open_in(struct tcb* tcp)
 {
+    MESSAGE* msg = &tcp->msg_in;
+
     printf("open(");
-    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
     printf(", %d)", msg->FLAGS);
 }
 
-static void trace_write_in(pid_t child, MESSAGE* msg)
+static void trace_write_in(struct tcb* tcp)
 {
+    MESSAGE* msg = &tcp->msg_in;
+
     printf("write(%d, ", msg->FD);
-    print_str(child, msg->BUF, msg->CNT);
+    print_str(tcp, msg->BUF, msg->CNT);
     printf(", %d)", msg->CNT);
 }
 
-static void trace_exec_in(pid_t child, MESSAGE* msg)
+static void trace_exec_in(struct tcb* tcp)
 {
+    MESSAGE* msg = &tcp->msg_in;
+
     printf("execve(");
-    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
     printf(", %p)", msg->BUF);
 }
 
-static void trace_stat_in(pid_t child, MESSAGE* msg)
+static void trace_chmod_in(struct tcb* tcp)
 {
-    printf("stat(");
-    print_path(child, msg->PATHNAME, msg->NAME_LEN);
-    printf(", %p)", msg->BUF);
-}
+    MESSAGE* msg = &tcp->msg_in;
 
-static void trace_chmod_in(pid_t child, MESSAGE* msg)
-{
     printf("chmod(");
-    print_path(child, msg->PATHNAME, msg->NAME_LEN);
+    print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
     printf(", 0%o)", msg->MODE);
 }
 
-static int recorded_sendrec_type;
-static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
+static void trace_sendrec_in(struct tcb* tcp)
 {
-    MESSAGE msg;
-    copy_message_from(child, req_msg->SR_MSG, &msg);
+    copy_message_from(tcp, tcp->msg_in.SR_MSG, &tcp->msg_in);
 
-    int type = msg.type;
-    recorded_sendrec_type = type;
+    int type = tcp->msg_in.type;
+
+    tcp->msg_type_in = type;
+
     switch (type) {
     case OPEN:
-        trace_open_in(child, &msg);
+        trace_open_in(tcp);
         break;
     case CLOSE:
-        printf("close(%d)", msg.FD);
+        printf("close(%d)", tcp->msg_in.FD);
         break;
     case READ:
-        printf("read(%d, %p, %d)", msg.FD, msg.BUF, msg.CNT);
+        printf("read(%d, %p, %d)", tcp->msg_in.FD, tcp->msg_in.BUF,
+               tcp->msg_in.CNT);
         break;
     case WRITE:
-        trace_write_in(child, &msg);
+        trace_write_in(tcp);
         break;
     case STAT:
-        trace_stat_in(child, &msg);
+        tcp->sys_trace_ret = trace_stat(tcp);
         break;
     case FSTAT:
-        printf("fstat(%d, %p)", msg.FD, msg.BUF);
+        tcp->sys_trace_ret = trace_fstat(tcp);
         break;
     case EXEC:
-        trace_exec_in(child, &msg);
+        trace_exec_in(tcp);
         break;
     case BRK:
-        printf("brk(%p)", msg.ADDR);
+        tcp->sys_trace_ret = trace_brk(tcp);
         break;
     case GETDENTS:
-        printf("getdents(%d, %p, %d)", msg.FD, msg.BUF, msg.CNT);
+        printf("getdents(%d, %p, %d)", tcp->msg_in.FD, tcp->msg_in.BUF,
+               tcp->msg_in.CNT);
         break;
     case EXIT:
-        printf("exit(%d) = ?\n", msg.STATUS); /* exit has no return value */
+        printf("exit(%d) = ?\n",
+               tcp->msg_in.STATUS); /* exit has no return value */
         break;
     case MMAP:
-        printf("mmap(%p, %ld, %d, %d, %d, %ld)", msg.u.m_mm_mmap.vaddr,
-               msg.u.m_mm_mmap.length, msg.u.m_mm_mmap.prot,
-               msg.u.m_mm_mmap.flags, msg.u.m_mm_mmap.fd,
-               msg.u.m_mm_mmap.offset);
+        tcp->sys_trace_ret = trace_mmap(tcp);
+        break;
+    case MUNMAP:
+        tcp->sys_trace_ret = trace_munmap(tcp);
+        break;
+    case DUP:
+        tcp->sys_trace_ret = trace_dup(tcp);
         break;
     case UMASK:
-        printf("umask(0%o)", msg.MODE);
+        printf("umask(0%o)", tcp->msg_in.MODE);
         break;
     case CHMOD:
-        trace_chmod_in(child, &msg);
+        trace_chmod_in(tcp);
         break;
     case GETSETID:
-        printf("getsetid(%d)", msg.REQUEST);
+        printf("getsetid(%d)", tcp->msg_in.REQUEST);
         break;
     case SYMLINK:
         printf("symlink(");
-        print_str(child, msg.u.m_vfs_link.old_path,
-                  msg.u.m_vfs_link.old_path_len);
+        print_str(tcp, tcp->msg_in.u.m_vfs_link.old_path,
+                  tcp->msg_in.u.m_vfs_link.old_path_len);
         printf(", ");
-        print_str(child, msg.u.m_vfs_link.new_path,
-                  msg.u.m_vfs_link.new_path_len);
+        print_str(tcp, tcp->msg_in.u.m_vfs_link.new_path,
+                  tcp->msg_in.u.m_vfs_link.new_path_len);
         printf(")");
         break;
     default:
@@ -228,19 +183,18 @@ static void trace_sendrec_in(pid_t child, MESSAGE* req_msg)
     }
 }
 
-static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
+static void trace_sendrec_out(struct tcb* tcp)
 {
-    MESSAGE msg;
-    copy_message_from(child, req_msg->SR_MSG, &msg);
+    copy_message_from(tcp, tcp->msg_out.SR_MSG, &tcp->msg_out);
 
-    int type = recorded_sendrec_type;
+    int type = tcp->msg_type_in;
     int retval = 0;
     int base = 10;
     int err = 0;
 
     switch (type) {
     case OPEN:
-        retval = msg.FD;
+        retval = tcp->msg_out.FD;
         if (retval < 0) {
             err = -retval;
             retval = -1;
@@ -248,11 +202,19 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
         break;
     case READ:
     case WRITE:
-        retval = msg.CNT;
+        retval = tcp->msg_out.CNT;
         break;
     case STAT:
     case FSTAT:
-        retval = msg.RETVAL;
+        if (!(tcp->sys_trace_ret & RVAL_DECODED)) {
+            if (type == STAT) {
+                trace_stat(tcp);
+            } else {
+                trace_fstat(tcp);
+            }
+        }
+
+        retval = tcp->msg_out.RETVAL;
         if (retval > 0) {
             err = retval;
             retval = -1;
@@ -264,11 +226,13 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
     case CHMOD:
     case GETSETID:
     case SELECT:
-        retval = msg.RETVAL;
+    case MUNMAP:
+    case DUP:
+        retval = tcp->msg_out.RETVAL;
         break;
     case MMAP:
         base = 16;
-        retval = (int)msg.u.m_mm_mmap_reply.retaddr;
+        retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
         break;
     }
 
@@ -291,41 +255,42 @@ static void trace_sendrec_out(pid_t child, MESSAGE* req_msg)
 #define EBX      8
 #define EAX      11
 #define ORIG_EAX 18
-static void trace_call_in(pid_t child)
+static void trace_call_in(struct tcb* tcp)
 {
-    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*)(ORIG_EAX * 4), 0);
+    long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
 
-    void* src_msg = (void*)ptrace(PTRACE_PEEKUSER, child, (void*)(EBX * 4), 0);
-    MESSAGE msg;
-    copy_message_from(child, src_msg, &msg);
+    void* src_msg =
+        (void*)ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EBX * 4), 0);
+    copy_message_from(tcp, src_msg, &tcp->msg_in);
 
     switch (call_nr) {
     case NR_GETINFO:
         printf("get_sysinfo()");
         break;
     case NR_SENDREC:
-        trace_sendrec_in(child, &msg);
+        trace_sendrec_in(tcp);
         break;
     }
 
     fflush(stdout);
 }
 
-static void trace_call_out(pid_t child)
+static void trace_call_out(struct tcb* tcp)
 {
-    long call_nr = ptrace(PTRACE_PEEKUSER, child, (void*)(ORIG_EAX * 4), 0);
-    long eax = ptrace(PTRACE_PEEKUSER, child, (void*)(EAX * 4), 0);
+    long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
+    long eax = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EAX * 4), 0);
 
-    void* src_msg = (void*)ptrace(PTRACE_PEEKUSER, child, (void*)(EBX * 4), 0);
-    MESSAGE msg;
-    copy_message_from(child, src_msg, &msg);
+    void* src_msg =
+        (void*)ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EBX * 4), 0);
+    copy_message_from(tcp, src_msg, &tcp->msg_out);
 
     switch (call_nr) {
     case NR_GETINFO:
-        printf(" = 0x%lx\n", ptrace(PTRACE_PEEKDATA, child, msg.BUF, 0));
+        printf(" = 0x%lx\n",
+               ptrace(PTRACE_PEEKDATA, tcp->pid, tcp->msg_out.BUF, 0));
         return;
     case NR_SENDREC:
-        trace_sendrec_out(child, &msg);
+        trace_sendrec_out(tcp);
         return;
     }
 
@@ -335,8 +300,10 @@ static void trace_call_out(pid_t child)
 static void do_trace(pid_t child, int s)
 {
     int status = s;
+    struct tcb tcb;
 
-    int call_in = 0;
+    tcb.pid = child;
+    tcb.flags = 0;
 
     while (1) {
         if (WIFEXITED(status)) break;
@@ -350,11 +317,12 @@ static void do_trace(pid_t child, int s)
         int stopsig = WSTOPSIG(status);
         switch (stopsig) {
         case SIGTRAP:
-            call_in = ~call_in;
-            if (call_in)
-                trace_call_in(child);
+            tcb.flags ^= TCB_ENTERING;
+
+            if (entering(&tcb))
+                trace_call_in(&tcb);
             else
-                trace_call_out(child);
+                trace_call_out(&tcb);
             break;
         }
     }

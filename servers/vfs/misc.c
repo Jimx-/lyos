@@ -125,14 +125,19 @@ int do_dup(void)
     int retval = 0;
 
     struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
-    if (!filp) return EBADF;
+    if (!filp) return -EBADF;
+
+    if (newfd != -1 && fd == newfd) {
+        unlock_filp(filp);
+        return newfd;
+    }
 
     if (newfd == -1) {
         /* find a free slot in PROCESS::filp[] */
         retval = get_fd(fproc, 0, &newfd, NULL);
         if (retval) {
             unlock_filp(filp);
-            return retval;
+            return -retval;
         }
     }
 
