@@ -638,8 +638,7 @@ int main()
     serv_init();
 
     virtio_blk_driver.bdr_readwrite = virtio_blk_rdwt_async;
-    blockdriver_async_set_workers(MAX_THREADS);
-    blockdriver_async_task(&virtio_blk_driver);
+    blockdriver_async_task(&virtio_blk_driver, MAX_THREADS);
 
     return 0;
 }

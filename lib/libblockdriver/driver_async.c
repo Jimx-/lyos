@@ -17,7 +17,7 @@
 
 #include "mq.h"
 
-#define MAX_THREADS 32
+#define MAX_THREADS      32
 #define WORKER_STACKSIZE ((size_t)0x4000)
 
 typedef unsigned int worker_id_t;
@@ -97,7 +97,7 @@ static int dequeue(struct worker_thread* wp, MESSAGE* msg)
     return TRUE;
 }
 
-static void init_main_thread(struct blockdriver* bd)
+static void init_main_thread(struct blockdriver* bd, size_t num_workers)
 {
     int i;
 
@@ -118,7 +118,7 @@ static void init_main_thread(struct blockdriver* bd)
         threads[i].state = WS_DEAD;
     }
 
-    num_threads = 1;
+    num_threads = num_workers;
 
     self = NULL;
 }
@@ -258,12 +258,12 @@ blockdriver_worker_id_t blockdriver_async_worker_id(void)
     return self->id;
 }
 
-void blockdriver_async_task(struct blockdriver* bd)
+void blockdriver_async_task(struct blockdriver* bd, size_t num_workers)
 {
     MESSAGE msg;
 
     if (!running) {
-        init_main_thread(bd);
+        init_main_thread(bd, num_workers);
         running = TRUE;
     }
 

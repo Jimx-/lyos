@@ -333,6 +333,48 @@ static int request_create(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
 }
 
 /**
+ * <Ring 1> Issue the mknod request.
+ * @param  fs_ep    Filesystem endpoint.
+ * @param  dev      Device number.
+ * @param  num      Inode number.
+ * @param  uid      UID of the caller.
+ * @param  gid      GID of the caller.
+ * @param  pathname The pathname.
+ * @param  mode     Inode mode.
+ * @param  sdev     Special device number.
+ * @return          Zero on success.
+ */
+int request_mknod(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
+                  char* last_component, mode_t mode, dev_t sdev)
+{
+    MESSAGE m;
+    size_t name_len;
+    mgrant_id_t grant;
+
+    name_len = strlen(last_component);
+    grant =
+        mgrant_set_direct(fs_ep, (vir_bytes)last_component, name_len, MGF_READ);
+    if (grant == GRANT_INVALID)
+        panic("vfs: request_create cannot create grant");
+
+    m.type = FS_MKNOD;
+    m.u.m_vfs_fs_mknod.dev = dev;
+    m.u.m_vfs_fs_mknod.num = num;
+    m.u.m_vfs_fs_mknod.uid = uid;
+    m.u.m_vfs_fs_mknod.gid = gid;
+    m.u.m_vfs_fs_mknod.grant = grant;
+    m.u.m_vfs_fs_mknod.name_len = name_len;
+    m.u.m_vfs_fs_mknod.mode = mode;
+    m.u.m_vfs_fs_mknod.dev = dev;
+
+    fs_sendrec(fs_ep, &m);
+
+    mgrant_revoke(grant);
+
+    return m.RETVAL;
+}
+
+/**
  * <Ring 1> Perform the LSEEK syscall.
  * @param  p Ptr to the message.
  * @return   Zero on success.

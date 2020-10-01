@@ -69,6 +69,9 @@ int fsdriver_start(const struct fsdriver* fsd)
         case FS_MKDIR:
             m.u.m_fs_vfs_create_reply.status = fsdriver_mkdir(fsd, &m);
             break;
+        case FS_MKNOD:
+            m.RETVAL = fsdriver_mknod(fsd, &m);
+            break;
         case FS_FTRUNC:
             m.RET_RETVAL = fsdriver_ftrunc(fsd, &m);
             break;

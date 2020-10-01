@@ -243,6 +243,39 @@ BEGIN_MESS_DECL(mess_vfs_socket)
 }
 END_MESS_DECL(mess_vfs_socket)
 
+BEGIN_MESS_DECL(mess_vfs_socketpath)
+{
+    int status;
+    __endpoint_t endpoint;
+    __mgrant_id_t grant;
+    size_t size;
+    int request;
+    dev_t dev;
+    ino_t num;
+
+    __u8 _pad[40 - sizeof(size_t) - sizeof(dev_t) - sizeof(ino_t)];
+}
+END_MESS_DECL(mess_vfs_socketpath)
+
+BEGIN_MESS_DECL(mess_vfs_bindconn)
+{
+    int sock_fd;
+    void* addr;
+    size_t addr_len;
+
+    __u8 _pad[52 - sizeof(void*) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_vfs_bindconn)
+
+BEGIN_MESS_DECL(mess_vfs_listen)
+{
+    int sock_fd;
+    int backlog;
+
+    __u8 _pad[48];
+}
+END_MESS_DECL(mess_vfs_listen)
+
 BEGIN_MESS_DECL(mess_vfs_fs_lookup)
 {
     dev_t dev;
@@ -334,6 +367,22 @@ BEGIN_MESS_DECL(mess_fs_vfs_create_reply)
               sizeof(size_t) - sizeof(mode_t)];
 }
 END_MESS_DECL(mess_fs_vfs_create_reply)
+
+BEGIN_MESS_DECL(mess_vfs_fs_mknod)
+{
+    dev_t dev;
+    ino_t num;
+    uid_t uid;
+    gid_t gid;
+    __mgrant_id_t grant;
+    int name_len;
+    mode_t mode;
+    dev_t sdev;
+
+    __u8 _pad[48 - 2 * sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
+              sizeof(gid_t) - sizeof(mode_t)];
+}
+END_MESS_DECL(mess_vfs_fs_mknod)
 
 BEGIN_MESS_DECL(mess_vfs_fs_readwrite)
 {
@@ -511,6 +560,25 @@ struct mess_devman_register_reply {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_devman_register_reply);
 
+BEGIN_MESS_DECL(mess_sockdriver_simple)
+{
+    int req_id;
+    int sock_id;
+    int param;
+
+    __u8 _pad[44];
+}
+END_MESS_DECL(mess_sockdriver_simple)
+
+BEGIN_MESS_DECL(mess_sockdriver_reply)
+{
+    int req_id;
+    int status;
+
+    __u8 _pad[48];
+}
+END_MESS_DECL(mess_sockdriver_reply)
+
 BEGIN_MESS_DECL(mess_sockdriver_socket)
 {
     int req_id;
@@ -533,6 +601,30 @@ BEGIN_MESS_DECL(mess_sockdriver_socket_reply)
     __u8 _pad[40];
 }
 END_MESS_DECL(mess_sockdriver_socket_reply)
+
+BEGIN_MESS_DECL(mess_sockdriver_bindconn)
+{
+    int req_id;
+    int sock_id;
+    __mgrant_id_t grant;
+    size_t len;
+    __endpoint_t user_endpoint;
+    int flags;
+
+    __u8 _pad[36 - sizeof(size_t)];
+}
+END_MESS_DECL(mess_sockdriver_bindconn)
+
+BEGIN_MESS_DECL(mess_sockdriver_accept_reply)
+{
+    int req_id;
+    int status;
+    int sock_id;
+    size_t len;
+
+    __u8 _pad[44 - sizeof(size_t)];
+}
+END_MESS_DECL(mess_sockdriver_accept_reply)
 
 typedef struct {
     int source;
@@ -558,11 +650,15 @@ typedef struct {
         struct mess_vfs_epoll m_vfs_epoll;
         struct mess_vfs_mapdriver m_vfs_mapdriver;
         struct mess_vfs_socket m_vfs_socket;
+        struct mess_vfs_socketpath m_vfs_socketpath;
+        struct mess_vfs_bindconn m_vfs_bindconn;
+        struct mess_vfs_listen m_vfs_listen;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
         struct mess_vfs_fs_stat m_vfs_fs_stat;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
         struct mess_vfs_fs_create m_vfs_fs_create;
+        struct mess_vfs_fs_mknod m_vfs_fs_mknod;
         struct mess_fs_vfs_create_reply m_fs_vfs_create_reply;
         struct mess_vfs_fs_readwrite m_vfs_fs_readwrite;
         struct mess_vfs_fs_unlink m_vfs_fs_unlink;
@@ -582,8 +678,12 @@ typedef struct {
         struct mess_input_tty_event m_input_tty_event;
         struct mess_input_conf m_input_conf;
         struct mess_devman_register_reply m_devman_register_reply;
+        struct mess_sockdriver_simple m_sockdriver_simple;
+        struct mess_sockdriver_reply m_sockdriver_reply;
         struct mess_sockdriver_socket m_sockdriver_socket;
         struct mess_sockdriver_socket_reply m_sockdriver_socket_reply;
+        struct mess_sockdriver_bindconn m_sockdriver_bindconn;
+        struct mess_sockdriver_accept_reply m_sockdriver_accept_reply;
 
         __u8 m_payload[56];
     } u;

@@ -14,6 +14,7 @@ int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_create(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_mkdir(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_mknod(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_unlink(const struct fsdriver* fsd, MESSAGE* m);

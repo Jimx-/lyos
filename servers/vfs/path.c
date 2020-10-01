@@ -29,6 +29,7 @@
 #include "fcntl.h"
 #include <sys/syslimits.h>
 #include <lyos/mgrant.h>
+#include <sys/stat.h>
 
 #include "types.h"
 #include "path.h"
@@ -148,7 +149,7 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
 
     int ret = lock_vmnt(vmnt, RWL_WRITE);
     if (ret) {
-        if (ret == EBUSY) {
+        if (ret == EBUSY || ret == EDEADLK) {
             vmnt = NULL;
         } else {
             return NULL;
@@ -213,7 +214,7 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
 
         ret = lock_vmnt(vmnt, RWL_WRITE);
         if (ret) {
-            if (ret == EBUSY) {
+            if (ret == EBUSY || ret == EDEADLK) {
                 vmnt = NULL;
             } else {
                 return NULL;
@@ -251,8 +252,10 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
         new_pin->i_size = res.size;
         new_pin->i_fs_ep = res.fs_ep;
         new_pin->i_specdev = res.spec_dev;
+
+        if ((vmnt = find_vfs_mount(new_pin->i_dev)) == NULL)
+            panic("VFS: resolve_path: vmnt not found");
         new_pin->i_vmnt = vmnt;
-        if (!new_pin->i_vmnt) panic("VFS: resolve_path: vmnt not found");
 
         pin = new_pin;
     } else {
@@ -330,4 +333,95 @@ struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
     } while (0);
 
     return result_pin;
+}
+
+int do_socketpath(void)
+{
+    endpoint_t endpoint = self->msg_in.u.m_vfs_socketpath.endpoint;
+    mgrant_id_t grant = self->msg_in.u.m_vfs_socketpath.grant;
+    size_t size = self->msg_in.u.m_vfs_socketpath.size;
+    int request = self->msg_in.u.m_vfs_socketpath.request;
+    char path[PATH_MAX + 1];
+    struct fproc* fp;
+    struct lookup lookup, lookup2;
+    struct vfs_mount *vmnt, *vmnt2;
+    struct inode *dir_pin, *pin;
+    mode_t mode;
+    int retval;
+
+    if (fproc->realgid != SU_UID) return EPERM;
+
+    if ((fp = vfs_endpt_proc(endpoint)) == NULL) return EINVAL;
+
+    if (size == 0 || size > PATH_MAX) return EINVAL;
+    if ((retval = safecopy_from(fproc->endpoint, grant, 0, path, size)) != OK)
+        return retval;
+    path[size] = '\0';
+
+    switch (request) {
+    case SKP_CREATE:
+        init_lookup(&lookup, path, LKF_SYMLINK, &vmnt, &dir_pin);
+        lookup.vmnt_lock = RWL_WRITE;
+        lookup.inode_lock = RWL_WRITE;
+
+        if ((dir_pin = last_dir(&lookup, fp)) == NULL) return err_code;
+
+        mode = S_IFSOCK | (ACCESSPERMS & fp->umask);
+
+        if (!S_ISDIR(dir_pin->i_mode))
+            retval = ENOTDIR;
+        else if ((retval = forbidden(fp, dir_pin, W_BIT | X_BIT)) == 0) {
+            retval =
+                request_mknod(dir_pin->i_fs_ep, dir_pin->i_dev, dir_pin->i_num,
+                              fp->effuid, fp->effgid, path, mode, NO_DEV);
+
+            if (retval == 0) {
+                init_lookup(&lookup2, path, LKF_SYMLINK, &vmnt2, &pin);
+                lookup2.vmnt_lock = RWL_READ;
+                lookup2.inode_lock = RWL_READ;
+                pin = advance_path(dir_pin, &lookup2, fp);
+
+                if (pin) {
+                    self->msg_out.u.m_vfs_socketpath.dev = pin->i_dev;
+                    self->msg_out.u.m_vfs_socketpath.num = pin->i_num;
+
+                    unlock_inode(pin);
+                    put_inode(pin);
+                } else {
+                    retval = err_code;
+                }
+            } else if (retval == EEXIST)
+                retval = EADDRINUSE;
+        }
+
+        unlock_inode(dir_pin);
+        unlock_vmnt(vmnt);
+        put_inode(dir_pin);
+        break;
+    case SKP_LOOK_UP:
+        init_lookup(&lookup, path, 0, &vmnt, &pin);
+        lookup.vmnt_lock = RWL_READ;
+        lookup.inode_lock = RWL_READ;
+
+        if ((pin = resolve_path(&lookup, fp)) == NULL) return err_code;
+
+        if (!S_ISSOCK(pin->i_mode))
+            retval = ENOTSOCK;
+        else
+            retval = forbidden(fp, pin, R_BIT | W_BIT);
+
+        if (retval == OK) {
+            self->msg_out.u.m_vfs_socketpath.dev = pin->i_dev;
+            self->msg_out.u.m_vfs_socketpath.num = pin->i_num;
+        }
+
+        unlock_inode(pin);
+        unlock_vmnt(vmnt);
+        put_inode(pin);
+        break;
+    default:
+        return EINVAL;
+    }
+
+    return retval;
 }

@@ -34,7 +34,7 @@ struct blockdriver {
 void blockdriver_process(struct blockdriver* bd, MESSAGE* msg);
 void blockdriver_task(struct blockdriver* bd);
 
-void blockdriver_async_task(struct blockdriver* bd);
+void blockdriver_async_task(struct blockdriver* bd, size_t num_workers);
 blockdriver_worker_id_t blockdriver_async_worker_id(void);
 void blockdriver_async_sleep(void);
 void blockdriver_async_wakeup(blockdriver_worker_id_t tid);

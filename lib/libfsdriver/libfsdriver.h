@@ -58,6 +58,8 @@ struct fsdriver {
                      uid_t uid, gid_t gid, struct fsdriver_node* fn);
     int (*fs_mkdir)(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                     uid_t uid, gid_t gid);
+    int (*fs_mknod)(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+                    uid_t uid, gid_t gid, dev_t sdev);
     ssize_t (*fs_read)(dev_t dev, ino_t num, struct fsdriver_data* data,
                        loff_t rwpos, size_t count);
     ssize_t (*fs_write)(dev_t dev, ino_t num, struct fsdriver_data* data,

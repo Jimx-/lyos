@@ -28,6 +28,8 @@
 #include <lyos/fs.h>
 #include <lyos/sysutils.h>
 #include <sys/socket.h>
+#include <lyos/mgrant.h>
+#include <fcntl.h>
 
 #include "const.h"
 #include "types.h"
@@ -113,6 +115,20 @@ static dev_t make_sdmap_dev(struct sdmap* sdp, sockid_t sockid)
     return (dev_t)(((uint32_t)sdp->num << 24) | ((uint32_t)sockid & 0xffffff));
 }
 
+static struct sdmap* get_sdmap_by_dev(dev_t dev, sockid_t* sockidp)
+{
+    struct sdmap* sdp;
+    int num = (dev >> 24) & 0xff;
+    sockid_t id = (sockid_t)(dev & 0xffffff);
+    if (!num || num > sizeof(sdmap) / sizeof(sdmap[0]) || id < 0) return NULL;
+
+    sdp = &sdmap[num - 1];
+    if (sdp->endpoint == NO_TASK) return NULL;
+
+    if (sockidp) *sockidp = id;
+    return sdp;
+}
+
 static int sdev_sendrec(struct sdmap* sdp, MESSAGE* msg)
 {
     int retval;
@@ -126,6 +142,27 @@ static int sdev_sendrec(struct sdmap* sdp, MESSAGE* msg)
     self->recv_from = NO_TASK;
 
     return 0;
+}
+
+static int sdev_simple(int type, endpoint_t src, dev_t dev, int param)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    MESSAGE msg;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = type;
+    msg.u.m_sockdriver_simple.req_id = src;
+    msg.u.m_sockdriver_simple.sock_id = sockid;
+    msg.u.m_sockdriver_simple.param = param;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_simple failed to send request");
+    }
+
+    return msg.u.m_sockdriver_reply.status;
 }
 
 int sdev_socket(endpoint_t src, int domain, int type, int protocol, dev_t* dev,
@@ -163,16 +200,122 @@ int sdev_socket(endpoint_t src, int domain, int type, int protocol, dev_t* dev,
     return 0;
 }
 
+static int sdev_bindconn(int type, endpoint_t src, dev_t dev, void* addr,
+                         size_t addrlen, int flags)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    mgrant_id_t grant;
+    MESSAGE msg;
+    int retval;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)addr, addrlen,
+                             MGF_READ);
+    if (grant == GRANT_INVALID)
+        panic("vfs: sdev_bind failed to create proxy grant");
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = type;
+    msg.u.m_sockdriver_bindconn.req_id = src;
+    msg.u.m_sockdriver_bindconn.sock_id = sockid;
+    msg.u.m_sockdriver_bindconn.grant = grant;
+    msg.u.m_sockdriver_bindconn.len = addrlen;
+    msg.u.m_sockdriver_bindconn.user_endpoint = src;
+    msg.u.m_sockdriver_bindconn.flags =
+        (flags & O_NONBLOCK) ? SDEV_NONBLOCK : 0;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_socket failed to send request");
+    }
+
+    retval = msg.u.m_sockdriver_reply.status;
+
+    mgrant_revoke(grant);
+
+    return retval;
+}
+
+int sdev_bind(endpoint_t src, dev_t dev, void* addr, size_t addrlen, int flags)
+{
+    return sdev_bindconn(SDEV_BIND, src, dev, addr, addrlen, flags);
+}
+
+int sdev_connect(endpoint_t src, dev_t dev, void* addr, size_t addrlen,
+                 int flags)
+{
+    return sdev_bindconn(SDEV_CONNECT, src, dev, addr, addrlen, flags);
+}
+
+int sdev_listen(endpoint_t src, dev_t dev, int backlog)
+{
+    return sdev_simple(SDEV_LISTEN, src, dev, backlog);
+}
+
+int sdev_accept(endpoint_t src, dev_t dev, void* addr, size_t* addrlen,
+                int flags, dev_t* newdev)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    mgrant_id_t grant;
+    size_t len = *addrlen;
+    MESSAGE msg;
+    int retval;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    grant =
+        mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)addr, len, MGF_WRITE);
+    if (grant == GRANT_INVALID)
+        panic("vfs: sdev_bind failed to create proxy grant");
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SDEV_ACCEPT;
+    msg.u.m_sockdriver_bindconn.req_id = src;
+    msg.u.m_sockdriver_bindconn.sock_id = sockid;
+    msg.u.m_sockdriver_bindconn.grant = grant;
+    msg.u.m_sockdriver_bindconn.len = len;
+    msg.u.m_sockdriver_bindconn.user_endpoint = src;
+    msg.u.m_sockdriver_bindconn.flags =
+        (flags & O_NONBLOCK) ? SDEV_NONBLOCK : 0;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_socket failed to send request");
+    }
+    retval = msg.u.m_sockdriver_accept_reply.status;
+
+    mgrant_revoke(grant);
+
+    sockid = msg.u.m_sockdriver_accept_reply.sock_id;
+    if (sockid >= 0)
+        *newdev = make_sdmap_dev(sdp, sockid);
+    else
+        *newdev = NO_DEV;
+
+    if (retval != OK) return retval;
+
+    *addrlen = msg.u.m_sockdriver_accept_reply.len;
+
+    return 0;
+}
+
 int sdev_close(dev_t dev) { return 0; }
 
 void sdev_reply(MESSAGE* msg)
 {
-    int req_id;
+    int req_id = NO_TASK;
     struct fproc* fp;
 
     switch (msg->type) {
+    case SDEV_REPLY:
+        req_id = msg->u.m_sockdriver_reply.req_id;
+        break;
     case SDEV_SOCKET_REPLY:
         req_id = msg->u.m_sockdriver_socket_reply.req_id;
+        break;
+    case SDEV_ACCEPT_REPLY:
+        req_id = msg->u.m_sockdriver_accept_reply.req_id;
         break;
     }
 

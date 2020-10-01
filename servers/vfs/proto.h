@@ -42,6 +42,7 @@ struct inode* resolve_path(struct lookup* lookup, struct fproc* fp);
 struct inode* advance_path(struct inode* start, struct lookup* lookup,
                            struct fproc* fp);
 struct inode* last_dir(struct lookup* lookup, struct fproc* fp);
+int do_socketpath(void);
 
 struct vfs_mount* find_vfs_mount(dev_t dev);
 int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
@@ -66,6 +67,9 @@ int common_open(char* pathname, int flags, mode_t mode);
 int do_close(void);
 int close_fd(struct fproc* fp, int fd);
 int do_lseek(void);
+int request_mknod(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
+                  char* last_component, mode_t mode, dev_t sdev);
+
 int do_chroot(MESSAGE* p);
 int do_mount(void);
 int do_umount(MESSAGE* p);
@@ -185,11 +189,21 @@ int sdev_mapdriver(const char* label, endpoint_t endpoint, const int* domains,
                    int nr_domains);
 int sdev_socket(endpoint_t src, int domain, int type, int protocol, dev_t* dev,
                 int pair);
+int sdev_bind(endpoint_t src, dev_t dev, void* addr, size_t addrlen, int flags);
+int sdev_connect(endpoint_t src, dev_t dev, void* addr, size_t addrlen,
+                 int flags);
+int sdev_listen(endpoint_t src, dev_t dev, int backlog);
+int sdev_accept(endpoint_t src, dev_t dev, void* addr, size_t* addrlen,
+                int flags, dev_t* newdev);
 int sdev_close(dev_t dev);
 void sdev_reply(MESSAGE* msg);
 
 /* vfs/socket.c */
 void mount_sockfs(void);
 int do_socket(void);
+int do_bind(void);
+int do_connect(void);
+int do_listen(void);
+int do_accept(void);
 
 #endif

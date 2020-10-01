@@ -9,7 +9,7 @@
 
 void print_mode_t(unsigned int mode)
 {
-    const char* fmt;
+    const char* fmt = NULL;
 
     if (mode & S_IFMT) {
         fmt = xlookup(&modetypes, mode & S_IFMT);

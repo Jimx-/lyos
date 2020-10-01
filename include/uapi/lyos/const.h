@@ -204,6 +204,10 @@ enum msgtype {
     EPOLL_WAIT,
     SOCKET,
     RMDIR,
+    BIND,
+    CONNECT,
+    LISTEN,
+    ACCEPT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -239,8 +243,10 @@ enum msgtype {
     FS_SYMLINK,
     FS_UNLINK,
     FS_RMDIR,
+    FS_MKNOD,
 
     VFS_MAPDRIVER,
+    VFS_SOCKETPATH,
 
     FS_TXN_ID = VFS_TXN_BASE,
 
@@ -289,7 +295,13 @@ enum msgtype {
 
     SDEV_SOCKET,
     SDEV_SOCKETPAIR,
+    SDEV_BIND,
+    SDEV_CONNECT,
+    SDEV_LISTEN,
+    SDEV_ACCEPT,
+    SDEV_REPLY,
     SDEV_SOCKET_REPLY,
+    SDEV_ACCEPT_REPLY,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE, /* 2100 */

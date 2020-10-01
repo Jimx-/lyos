@@ -1,5 +1,5 @@
 SRCS	+= main.c
-LIBS	= lyos sockdriver coro
+LIBS	= sockdriver lyos coro
 
 PROG	= uds
 

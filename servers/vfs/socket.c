@@ -141,6 +141,25 @@ static int get_sock_flags(int type)
     return flags;
 }
 
+static int get_sock_fd(int fd, dev_t* dev, int* flags)
+{
+    struct file_desc* filp;
+
+    filp = get_filp(fproc, fd, RWL_READ);
+    if (!filp) return EBADF;
+
+    if (!S_ISSOCK(filp->fd_inode->i_mode)) {
+        unlock_filp(filp);
+        return ENOTSOCK;
+    }
+
+    *dev = filp->fd_inode->i_specdev;
+    if (flags) *flags = filp->fd_mode;
+
+    unlock_filp(filp);
+    return 0;
+}
+
 int do_socket(void)
 {
     endpoint_t src = self->msg_in.source;
@@ -160,6 +179,74 @@ int do_socket(void)
     if ((retval = create_sock_fd(dev, flags)) < 0) {
         sdev_close(dev);
     }
+
+    return retval;
+}
+
+int do_bind(void)
+{
+    int fd = self->msg_in.u.m_vfs_bindconn.sock_fd;
+    void* addr = self->msg_in.u.m_vfs_bindconn.addr;
+    size_t addrlen = self->msg_in.u.m_vfs_bindconn.addr_len;
+    dev_t dev;
+    int flags, retval;
+
+    if ((retval = get_sock_fd(fd, &dev, &flags)) != OK) return retval;
+
+    return sdev_bind(fproc->endpoint, dev, addr, addrlen, flags);
+}
+
+int do_connect(void)
+{
+    int fd = self->msg_in.u.m_vfs_bindconn.sock_fd;
+    void* addr = self->msg_in.u.m_vfs_bindconn.addr;
+    size_t addrlen = self->msg_in.u.m_vfs_bindconn.addr_len;
+    dev_t dev;
+    int flags, retval;
+
+    if ((retval = get_sock_fd(fd, &dev, &flags)) != OK) return retval;
+
+    return sdev_connect(fproc->endpoint, dev, addr, addrlen, flags);
+}
+
+int do_listen(void)
+{
+    int fd = self->msg_in.u.m_vfs_listen.sock_fd;
+    int backlog = self->msg_in.u.m_vfs_listen.backlog;
+    dev_t dev;
+    int retval;
+
+    if (backlog < 0) backlog = 0;
+
+    if ((retval = get_sock_fd(fd, &dev, NULL)) != OK) return retval;
+
+    return sdev_listen(fproc->endpoint, dev, backlog);
+}
+
+int do_accept(void)
+{
+    int fd = self->msg_in.u.m_vfs_bindconn.sock_fd;
+    void* addr = self->msg_in.u.m_vfs_bindconn.addr;
+    size_t addrlen = self->msg_in.u.m_vfs_bindconn.addr_len;
+    dev_t dev, newdev;
+    int flags;
+    int retval;
+
+    if ((retval = get_sock_fd(fd, &dev, &flags)) != OK) return retval;
+
+    if ((retval = check_fds(fproc, 1)) != OK) return retval;
+
+    retval = sdev_accept(fproc->endpoint, dev, addr, &addrlen, flags, &newdev);
+
+    if (retval != OK && newdev == NO_DEV) return -retval;
+
+    if (retval != OK) {
+        sdev_close(newdev);
+        return -retval;
+    }
+
+    flags &= O_CLOEXEC | O_NONBLOCK;
+    if ((retval = create_sock_fd(dev, flags)) < 0) sdev_close(newdev);
 
     return retval;
 }

@@ -223,3 +223,19 @@ int ext2_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
 
     return retval;
 }
+
+int ext2_mknod(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+               uid_t uid, gid_t gid, dev_t sdev)
+{
+    ext2_inode_t* pin_dir = get_ext2_inode(dev, dir_num);
+    if (pin_dir == NULL) return ENOENT;
+
+    ext2_inode_t* pin = ext2_new_inode(pin_dir, name, mode, sdev, uid, gid);
+
+    if (pin) {
+        put_ext2_inode(pin);
+    }
+
+    put_ext2_inode(pin_dir);
+    return err_code;
+}

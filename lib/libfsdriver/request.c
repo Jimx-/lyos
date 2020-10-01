@@ -141,6 +141,30 @@ int fsdriver_mkdir(const struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_mkdir(dev, num, pathname, mode, uid, gid);
 }
 
+int fsdriver_mknod(const struct fsdriver* fsd, MESSAGE* m)
+{
+    mode_t mode = m->u.m_vfs_fs_mknod.mode;
+    uid_t uid = m->u.m_vfs_fs_mknod.uid;
+    gid_t gid = m->u.m_vfs_fs_mknod.gid;
+    endpoint_t src = m->source;
+    dev_t dev = m->u.m_vfs_fs_mknod.dev;
+    ino_t num = m->u.m_vfs_fs_mknod.num;
+    size_t len = m->u.m_vfs_fs_mknod.name_len;
+    dev_t sdev = m->u.m_vfs_fs_mknod.sdev;
+    char pathname[NAME_MAX + 1];
+    int retval;
+
+    if (fsd->fs_mkdir == NULL) return ENOSYS;
+
+    if ((retval = fsdriver_copy_name(src, m->u.m_vfs_fs_mknod.grant, len,
+                                     pathname, NAME_MAX, TRUE)) != 0)
+        return retval;
+
+    if (!strcmp(pathname, ".") || !strcmp(pathname, "..")) return EEXIST;
+
+    return fsd->fs_mknod(dev, num, pathname, mode, uid, gid, sdev);
+}
+
 int fsdriver_readwrite(const struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->u.m_vfs_fs_readwrite.dev;

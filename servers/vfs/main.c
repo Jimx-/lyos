@@ -114,7 +114,9 @@ int main()
         case CDEV_POLL_NOTIFY:
             cdev_reply(&msg);
             break;
+        case SDEV_REPLY:
         case SDEV_SOCKET_REPLY:
+        case SDEV_ACCEPT_REPLY:
             sdev_reply(&msg);
             break;
         case PM_VFS_EXEC:
@@ -269,7 +271,22 @@ static void do_work(void)
         self->msg_out.RETVAL = do_mapdriver();
         break;
     case SOCKET:
-        self->msg_out.RETVAL = do_socket();
+        self->msg_out.FD = do_socket();
+        break;
+    case VFS_SOCKETPATH:
+        self->msg_out.u.m_vfs_socketpath.status = do_socketpath();
+        break;
+    case BIND:
+        self->msg_out.RETVAL = do_bind();
+        break;
+    case CONNECT:
+        self->msg_out.RETVAL = do_connect();
+        break;
+    case LISTEN:
+        self->msg_out.RETVAL = do_listen();
+        break;
+    case ACCEPT:
+        self->msg_out.FD = do_accept();
         break;
     default:
         self->msg_out.RETVAL = ENOSYS;

@@ -7,7 +7,7 @@
 const char* xlookup(const struct xlat* xlat, uint64_t val);
 
 void print_path(struct tcb* tcp, char* string, int len);
-static void print_str(struct tcb* tcp, char* str, int len);
+void print_str(struct tcb* tcp, char* str, int len);
 void print_err(int err);
 int print_flags(uint64_t flags, const struct xlat* xlat);
 void print_addr(const uint64_t addr);

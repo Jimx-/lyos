@@ -173,7 +173,6 @@ int do_exit(MESSAGE* p)
     if ((retval = pm_verify_endpt(src, &src_slot)) != 0) return retval;
     struct pmproc* pmp = &pmproc_table[src_slot];
 
-    status = W_EXITCODE(status, 0);
     exit_proc(pmp, status);
 
     return SUSPEND;

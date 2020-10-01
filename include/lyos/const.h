@@ -116,4 +116,7 @@
 /* super user uid */
 #define SU_UID ((uid_t)0)
 
+/* Socket driver flags */
+#define SDEV_NONBLOCK 0x01
+
 #endif /* _CONST_H_ */

@@ -61,6 +61,7 @@ struct fsdriver ext2fsdriver = {
     .fs_lookup = ext2_lookup,
     .fs_create = ext2_create,
     .fs_mkdir = ext2_mkdir,
+    .fs_mknod = ext2_mknod,
     .fs_read = ext2_read,
     .fs_write = ext2_write,
     .fs_rdlink = ext2_rdlink,

@@ -112,4 +112,9 @@ pid_t get_epinfo(endpoint_t ep, uid_t* euid, gid_t* egid);
 
 int mapdriver(const char* label, const int* domains, int nr_domains);
 
+int socketpath(endpoint_t endpoint, const char* path, size_t size, int request,
+               dev_t* dev, ino_t* ino);
+#define SKP_CREATE  1
+#define SKP_LOOK_UP 2
+
 #endif

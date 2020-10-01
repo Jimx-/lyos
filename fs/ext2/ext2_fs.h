@@ -349,6 +349,8 @@ int ext2_create(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                 uid_t uid, gid_t gid, struct fsdriver_node* fn);
 int ext2_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                uid_t uid, gid_t gid);
+int ext2_mknod(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+               uid_t uid, gid_t gid, dev_t sdev);
 int ext2_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
                  gid_t gid, struct fsdriver_data* data, size_t bytes);
 

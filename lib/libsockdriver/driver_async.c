@@ -12,29 +12,13 @@
 #include <lyos/proto.h>
 #include <lyos/driver.h>
 
-#include <libcoro/libcoro.h>
-
 #include "libsockdriver.h"
 #include "mq.h"
+#include "proto.h"
+#include "worker.h"
 
-#define MAX_THREADS      32
+#define MAX_THREADS      128
 #define WORKER_STACKSIZE ((size_t)0x4000)
-
-typedef unsigned int worker_id_t;
-
-typedef enum {
-    WS_DEAD,
-    WS_RUNNING,
-    WS_BUSY,
-} worker_state_t;
-
-struct worker_thread {
-    worker_id_t id;
-    worker_state_t state;
-    coro_thread_t thread;
-    coro_mutex_t event_mutex;
-    coro_cond_t event;
-};
 
 static const char* name = "sockdriver_async";
 
@@ -95,7 +79,7 @@ static int dequeue(struct worker_thread* wp, MESSAGE* msg)
     return TRUE;
 }
 
-static void init_main_thread(void)
+static void init_main_thread(size_t num_workers)
 {
     int i;
 
@@ -114,7 +98,7 @@ static void init_main_thread(void)
         threads[i].state = WS_DEAD;
     }
 
-    num_threads = 1;
+    num_threads = num_workers;
 
     self = NULL;
 }
@@ -200,7 +184,7 @@ static void yield_all(void)
     self = NULL;
 }
 
-void sockdriver_async_sleep(void)
+void sockdriver_sleep(void)
 {
     struct worker_thread* thread = self;
 
@@ -219,10 +203,8 @@ void sockdriver_async_sleep(void)
     self = thread;
 }
 
-void sockdriver_async_wakeup(sockdriver_worker_id_t tid)
+void sockdriver_wakeup_worker(struct worker_thread* wp)
 {
-    struct worker_thread* wp = &threads[tid];
-
     if (coro_mutex_lock(&wp->event_mutex) != 0) {
         panic("%s: failed to lock event mutex", name);
     }
@@ -236,7 +218,23 @@ void sockdriver_async_wakeup(sockdriver_worker_id_t tid)
     }
 }
 
-void sockdriver_async_set_workers(size_t num_workers)
+void sockdriver_wakeup(sockdriver_worker_id_t tid)
+{
+    struct worker_thread* wp = &threads[tid];
+
+    sockdriver_wakeup_worker(wp);
+}
+
+void sockdriver_yield(void)
+{
+    struct worker_thread* thread = self;
+
+    coro_yield();
+
+    self = thread;
+}
+
+void sockdriver_set_workers(size_t num_workers)
 {
     if (num_workers > MAX_THREADS) {
         num_workers = MAX_THREADS;
@@ -245,7 +243,16 @@ void sockdriver_async_set_workers(size_t num_workers)
     num_threads = num_workers;
 }
 
-sockdriver_worker_id_t sockdriver_async_worker_id(void)
+struct worker_thread* sockdriver_worker(void)
+{
+    if (!self) {
+        panic("%s: try to get worker on main thread");
+    }
+
+    return self;
+}
+
+sockdriver_worker_id_t sockdriver_worker_id(void)
 {
     if (!self) {
         panic("%s: try to query worker ID on main thread");
@@ -254,12 +261,12 @@ sockdriver_worker_id_t sockdriver_async_worker_id(void)
     return self->id;
 }
 
-void sockdriver_async_task(void)
+void sockdriver_task(size_t num_workers)
 {
     MESSAGE msg;
 
     if (!running) {
-        init_main_thread();
+        init_main_thread(num_workers);
         running = TRUE;
     }
 
