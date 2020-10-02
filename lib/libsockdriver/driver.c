@@ -18,23 +18,21 @@ static const char* name = "sockdriver";
 
 static struct list_head sock_hash_table[SOCK_HASH_SIZE];
 
-static sockdriver_socket_cb_t sockdriver_socket_cb;
-
 static inline int sock_gethash(sockid_t id) { return id & SOCK_HASH_MASK; }
 
-static void sock_addhash(struct sockdriver_sock* sock)
+static void sock_addhash(struct sock* sock)
 {
     unsigned int hash = sock_gethash(sock->id);
 
     list_add(&sock->hash, &sock_hash_table[hash]);
 }
 
-static void sock_unhash(struct sockdriver_sock* sock) { list_del(&sock->hash); }
+static void sock_unhash(struct sock* sock) { list_del(&sock->hash); }
 
-static inline struct sockdriver_sock* sock_get(sockid_t id)
+static inline struct sock* sock_get(sockid_t id)
 {
     unsigned int hash = sock_gethash(id);
-    struct sockdriver_sock* sock;
+    struct sock* sock;
 
     list_for_each_entry(sock, &sock_hash_table[hash], hash)
     {
@@ -43,9 +41,8 @@ static inline struct sockdriver_sock* sock_get(sockid_t id)
     return NULL;
 }
 
-static void sockdriver_reset(struct sockdriver_sock* sock, sockid_t id,
-                             int domain, int type,
-                             const struct sockdriver_ops* ops)
+static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
+                             int type, const struct sockdriver_ops* ops)
 {
 
     memset(sock, 0, sizeof(*sock));
@@ -53,32 +50,35 @@ static void sockdriver_reset(struct sockdriver_sock* sock, sockid_t id,
     sock->id = id;
     sock->domain = domain;
     sock->type = type;
+
+    sock->rcvlowat = 1;
+
     sock->ops = ops;
 
     INIT_LIST_HEAD(&sock->wq);
+    skb_queue_init(&sock->recvq);
 
     sock_addhash(sock);
 }
 
-void sockdriver_clone(struct sockdriver_sock* sock,
-                      struct sockdriver_sock* newsock, sockid_t newid)
+void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid)
 {
     sockdriver_reset(newsock, newid, sock->domain, sock->type, sock->ops);
 
     newsock->sock_opt = sock->sock_opt & ~SO_ACCEPTCONN;
 }
 
-static int socket_create(endpoint_t endpoint, int domain, int type,
-                         int protocol, struct sockdriver_sock** spp)
+static int socket_create(const struct sockdriver* sd, endpoint_t endpoint,
+                         int domain, int type, int protocol, struct sock** spp)
 {
     sockid_t sock_id;
-    struct sockdriver_sock* sock;
+    struct sock* sock;
     const struct sockdriver_ops* ops;
 
     if (domain <= 0 || domain >= PF_MAX) return EAFNOSUPPORT;
 
-    if ((sock_id = sockdriver_socket_cb(endpoint, domain, type, protocol, &sock,
-                                        &ops)) < 0)
+    if ((sock_id =
+             sd->sd_create(endpoint, domain, type, protocol, &sock, &ops)) < 0)
         return -sock_id;
 
     sockdriver_reset(sock, sock_id, domain, type, ops);
@@ -87,13 +87,14 @@ static int socket_create(endpoint_t endpoint, int domain, int type,
     return 0;
 }
 
-static sockid_t socket_socket(endpoint_t endpoint, int domain, int type,
-                              int protocol)
+static sockid_t socket_socket(const struct sockdriver* sd, endpoint_t endpoint,
+                              int domain, int type, int protocol)
 {
-    struct sockdriver_sock* sock;
+    struct sock* sock;
     int retval;
 
-    if ((retval = socket_create(endpoint, domain, type, protocol, &sock)) != 0)
+    if ((retval = socket_create(sd, endpoint, domain, type, protocol, &sock)) !=
+        0)
         return -retval;
 
     return sock->id;
@@ -165,13 +166,14 @@ static void send_accept_reply(endpoint_t src, int req_id, int status,
     send_recv(SEND, src, &msg);
 }
 
-static void do_socket(MESSAGE* msg)
+static void do_socket(const struct sockdriver* sd, MESSAGE* msg)
 {
     sockid_t sock_id;
 
-    sock_id = socket_socket(
-        msg->u.m_sockdriver_socket.endpoint, msg->u.m_sockdriver_socket.domain,
-        msg->u.m_sockdriver_socket.type, msg->u.m_sockdriver_socket.protocol);
+    sock_id = socket_socket(sd, msg->u.m_sockdriver_socket.endpoint,
+                            msg->u.m_sockdriver_socket.domain,
+                            msg->u.m_sockdriver_socket.type,
+                            msg->u.m_sockdriver_socket.protocol);
 
     send_socket_reply(msg->source, msg->u.m_sockdriver_socket.req_id, sock_id,
                       0);
@@ -180,7 +182,7 @@ static void do_socket(MESSAGE* msg)
 static int do_bind(sockid_t id, struct sockaddr* addr, size_t addrlen,
                    endpoint_t user_endpoint, int flags)
 {
-    struct sockdriver_sock* sock;
+    struct sock* sock;
 
     if ((sock = sock_get(id)) == NULL) return EINVAL;
     if (!sock->ops->sop_bind) return EOPNOTSUPP;
@@ -192,7 +194,7 @@ static int do_bind(sockid_t id, struct sockaddr* addr, size_t addrlen,
 static int do_connect(sockid_t id, struct sockaddr* addr, size_t addrlen,
                       endpoint_t user_endpoint, int flags)
 {
-    struct sockdriver_sock* sock;
+    struct sock* sock;
     int retval;
 
     if ((sock = sock_get(id)) == NULL) return EINVAL;
@@ -218,7 +220,7 @@ static void do_bindconn(MESSAGE* msg)
     char buf[SOCKADDR_MAX];
     int retval;
 
-    if (grant == GRANT_INVALID || len == 0 || len > buf) {
+    if (grant == GRANT_INVALID || len == 0 || len > sizeof(buf)) {
         retval = EINVAL;
         goto reply;
     }
@@ -243,7 +245,7 @@ reply:
 
 static void do_listen(MESSAGE* msg)
 {
-    struct sockdriver_sock* sock;
+    struct sock* sock;
     endpoint_t src = msg->source;
     int req_id = msg->u.m_sockdriver_simple.req_id;
     sockid_t sock_id = msg->u.m_sockdriver_simple.sock_id;
@@ -274,7 +276,7 @@ reply:
 
 static void do_accept(MESSAGE* msg)
 {
-    struct sockdriver_sock *sock, *newsock;
+    struct sock *sock, *newsock;
     endpoint_t src = msg->source;
     int req_id = msg->u.m_sockdriver_bindconn.req_id;
     sockid_t sock_id = msg->u.m_sockdriver_bindconn.sock_id;
@@ -307,7 +309,232 @@ reply:
     send_accept_reply(src, req_id, retval, grant, grant_len, addr, len);
 }
 
-void sockdriver_suspend(struct sockdriver_sock* sock, unsigned int event)
+static void sockdriver_sigpipe(struct sock* sock, endpoint_t user_endpt,
+                               int flags)
+{
+    if (sock->type != SOCK_STREAM) return;
+    if (flags & MSG_NOSIGNAL) return;
+
+    kernel_kill(user_endpt, SIGPIPE);
+}
+
+static int sockdriver_has_suspended(struct sock* sock, int mask)
+{
+    struct worker_thread* wp;
+    list_for_each_entry(wp, &sock->wq, list)
+    {
+        if (wp->events & mask) return TRUE;
+    }
+    return FALSE;
+}
+
+static ssize_t sockdriver_send(sockid_t id, struct iov_grant_iter* data_iter,
+                               size_t data_len,
+                               const struct sockdriver_data* ctl_data,
+                               size_t ctl_len, struct sockaddr* addr,
+                               socklen_t addr_len, endpoint_t user_endpt,
+                               int flags)
+{
+    struct sock* sock;
+    ssize_t retval;
+
+    if ((sock = sock_get(id)) == NULL) return -EINVAL;
+
+    if ((retval = sock->err) != OK) {
+        sock->err = OK;
+        return -retval;
+    }
+
+    if (sock->flags & SFL_SHUT_WR) {
+        sockdriver_sigpipe(sock, user_endpt, flags);
+        return -EPIPE;
+    }
+
+    if (sock->sock_opt & SO_DONTROUTE) flags |= MSG_DONTROUTE;
+
+    if (sock->ops->sop_send_check &&
+        (retval =
+             sock->ops->sop_send_check(sock, data_len, ctl_len, addr, addr_len,
+                                       user_endpt, flags & ~MSG_DONTWAIT)) != 0)
+        return -retval;
+
+    if (!sock->ops->sop_send) return -EOPNOTSUPP;
+
+    do {
+        if (!sockdriver_has_suspended(sock, SEV_SEND)) {
+            /* try if there is no suspended sender */
+            retval =
+                sock->ops->sop_send(sock, data_iter, data_len, ctl_data,
+                                    ctl_len, addr, addr_len, user_endpt, flags);
+            break;
+        }
+
+        if (flags & MSG_DONTWAIT) {
+            retval = -EAGAIN;
+            break;
+        }
+
+        sockdriver_suspend(sock, SEV_SEND);
+
+        /* check again */
+        if ((retval = sock->err) != OK) {
+            sock->err = OK;
+            return -retval;
+        }
+
+        if (sock->flags & SFL_SHUT_WR) {
+            sockdriver_sigpipe(sock, user_endpt, flags);
+            return -EPIPE;
+        }
+    } while (TRUE);
+
+    if (retval == -EPIPE) sockdriver_sigpipe(sock, user_endpt, flags);
+    return retval;
+}
+
+static void do_send(MESSAGE* msg)
+{
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_sendrecv.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_sendrecv.sock_id;
+    mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
+    size_t data_len = msg->u.m_sockdriver_sendrecv.data_len;
+    mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
+    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
+    mgrant_id_t addr_grant = msg->u.m_sockdriver_sendrecv.addr_grant;
+    size_t addr_len = msg->u.m_sockdriver_sendrecv.addr_len;
+    endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
+    int flags = msg->u.m_sockdriver_sendrecv.flags;
+    struct iovec_grant data_iov;
+    struct iov_grant_iter data_iter;
+    struct sockdriver_data ctl_data;
+    char buf[SOCKADDR_MAX];
+    struct sockaddr* addr;
+    ssize_t retval = OK;
+
+    data_iov.iov_grant = data_grant;
+    data_iov.iov_len = data_len;
+    iov_grant_iter_init(&data_iter, src, &data_iov, 1, data_len);
+
+    ctl_data.endpoint = src;
+    ctl_data.grant = ctl_grant;
+    ctl_data.len = ctl_len;
+
+    if (addr_grant != GRANT_INVALID) {
+        if (addr_len == 0 || addr_len > sizeof(buf)) {
+            retval = -EINVAL;
+            goto reply;
+        }
+
+        retval = safecopy_from(src, addr_grant, 0, buf, addr_len);
+        addr = (struct sockaddr*)buf;
+    } else {
+        addr = NULL;
+        addr_len = 0;
+    }
+
+    if (retval != OK) goto reply;
+
+    retval = sockdriver_send(sock_id, &data_iter, data_len, &ctl_data, ctl_len,
+                             addr, addr_len, user_endpt, flags);
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
+static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
+                               size_t data_len,
+                               const struct sockdriver_data* ctl_data,
+                               size_t ctl_len, struct sockaddr* addr,
+                               socklen_t* addr_len, endpoint_t user_endpt,
+                               int* flags)
+{
+    struct sock* sock;
+    int inflags;
+    int oob;
+    int check_error = FALSE;
+    ssize_t retval;
+
+    inflags = *flags;
+
+    if ((sock = sock_get(id)) == NULL) return -EINVAL;
+
+    if (sock->ops->sop_recv_check &&
+        (retval = sock->ops->sop_recv_check(sock, user_endpt,
+                                            inflags & ~MSG_DONTWAIT)) != 0)
+        return -retval;
+
+    if (sock->flags & SFL_SHUT_RD) return 0;
+
+    if (!sock->ops->sop_recv) return -EOPNOTSUPP;
+
+    oob = inflags & MSG_OOB;
+    if (oob && (sock->sock_opt & SO_OOBINLINE)) return -EINVAL;
+
+    do {
+        if (oob || !sockdriver_has_suspended(sock, SEV_RECV)) {
+            /* try if there is no suspended receiver */
+            retval = sock->ops->sop_recv(sock, data_iter, data_len, ctl_data,
+                                         ctl_len, addr, addr_len, user_endpt,
+                                         inflags, flags);
+            break;
+        }
+
+        if (inflags & MSG_DONTWAIT) {
+            retval = -EAGAIN;
+            break;
+        }
+
+        sockdriver_suspend(sock, SEV_RECV);
+
+        /* check again */
+        if (sock->flags & SFL_SHUT_RD) return 0;
+
+        if (check_error && sock->err != OK) return -sock->err;
+
+        check_error = TRUE;
+    } while (TRUE);
+
+    return retval;
+}
+
+static void do_recv(MESSAGE* msg)
+{
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_sendrecv.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_sendrecv.sock_id;
+    mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
+    size_t data_len = msg->u.m_sockdriver_sendrecv.data_len;
+    mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
+    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
+    endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
+    int flags = msg->u.m_sockdriver_sendrecv.flags;
+    struct iovec_grant iov;
+    struct iov_grant_iter data_iter;
+    struct sockdriver_data ctl_data;
+    char buf[SOCKADDR_MAX];
+    struct sockaddr* addr;
+    socklen_t addr_len;
+    ssize_t retval = OK;
+
+    iov.iov_grant = data_grant;
+    iov.iov_len = data_len;
+    iov_grant_iter_init(&data_iter, src, &iov, 1, data_len);
+
+    ctl_data.endpoint = src;
+    ctl_data.grant = ctl_grant;
+    ctl_data.len = ctl_len;
+
+    addr = (struct sockaddr*)buf;
+    addr_len = 0;
+
+    retval = sockdriver_recv(sock_id, &data_iter, data_len, &ctl_data, ctl_len,
+                             addr, &addr_len, user_endpt, &flags);
+
+    send_generic_reply(src, req_id, retval);
+}
+
+void sockdriver_suspend(struct sock* sock, unsigned int event)
 {
     struct worker_thread* wp = sockdriver_worker();
 
@@ -317,7 +544,7 @@ void sockdriver_suspend(struct sockdriver_sock* sock, unsigned int event)
     sockdriver_sleep();
 }
 
-void sockdriver_fire(struct sockdriver_sock* sock, unsigned int mask)
+void sockdriver_fire(struct sock* sock, unsigned int mask)
 {
     struct worker_thread *wp, *tmp;
 
@@ -332,22 +559,20 @@ void sockdriver_fire(struct sockdriver_sock* sock, unsigned int mask)
     }
 }
 
-void sockdriver_init(sockdriver_socket_cb_t socket_cb)
+void sockdriver_init(void)
 {
     int i;
-
-    sockdriver_socket_cb = socket_cb;
 
     for (i = 0; i < SOCK_HASH_SIZE; i++) {
         INIT_LIST_HEAD(&sock_hash_table[i]);
     }
 }
 
-void sockdriver_process(MESSAGE* msg)
+void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
 {
     switch (msg->type) {
     case SDEV_SOCKET:
-        do_socket(msg);
+        do_socket(sd, msg);
         break;
     case SDEV_BIND:
     case SDEV_CONNECT:
@@ -359,5 +584,27 @@ void sockdriver_process(MESSAGE* msg)
     case SDEV_ACCEPT:
         do_accept(msg);
         break;
+    case SDEV_SEND:
+        do_send(msg);
+        break;
+    case SDEV_RECV:
+        do_recv(msg);
+        break;
+    default:
+        if (sd->sd_other) {
+            sd->sd_other(msg);
+        }
     }
+}
+
+int sockdriver_copyin(const struct sockdriver_data* data, size_t off, void* ptr,
+                      size_t len)
+{
+    return safecopy_from(data->endpoint, data->grant, off, ptr, len);
+}
+
+int sockdriver_copyout(const struct sockdriver_data* data, size_t off,
+                       void* ptr, size_t len)
+{
+    return safecopy_to(data->endpoint, data->grant, off, ptr, len);
 }

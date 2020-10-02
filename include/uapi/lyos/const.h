@@ -208,6 +208,8 @@ enum msgtype {
     CONNECT,
     LISTEN,
     ACCEPT,
+    SENDTO,
+    RECVFROM,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -299,6 +301,8 @@ enum msgtype {
     SDEV_CONNECT,
     SDEV_LISTEN,
     SDEV_ACCEPT,
+    SDEV_SEND,
+    SDEV_RECV,
     SDEV_REPLY,
     SDEV_SOCKET_REPLY,
     SDEV_ACCEPT_REPLY,

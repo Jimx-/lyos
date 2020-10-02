@@ -195,7 +195,11 @@ int sdev_connect(endpoint_t src, dev_t dev, void* addr, size_t addrlen,
 int sdev_listen(endpoint_t src, dev_t dev, int backlog);
 int sdev_accept(endpoint_t src, dev_t dev, void* addr, size_t* addrlen,
                 int flags, dev_t* newdev);
-int sdev_close(dev_t dev);
+ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
+                       size_t data_len, void* ctl_buf, unsigned int ctl_len,
+                       void* addr_buf, unsigned int* addr_len, int flags,
+                       int rw_flag, int filp_flags, void* user_buf);
+int sdev_close(dev_t dev, int may_block);
 void sdev_reply(MESSAGE* msg);
 
 /* vfs/socket.c */
@@ -205,5 +209,7 @@ int do_bind(void);
 int do_connect(void);
 int do_listen(void);
 int do_accept(void);
+ssize_t do_sendto(void);
+ssize_t do_recvfrom(void);
 
 #endif

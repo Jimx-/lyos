@@ -122,3 +122,73 @@ int accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
 
     return msg.FD;
 }
+
+ssize_t send(int sock, const void* msg, size_t len, int flags)
+{
+    return sendto(sock, msg, len, flags, NULL, 0);
+}
+
+ssize_t recv(int sock, void* buf, size_t len, int flags)
+{
+    return recvfrom(sock, buf, len, flags, NULL, NULL);
+}
+
+ssize_t sendto(int sock, const void* buf, size_t len, int flags,
+               const struct sockaddr* addr, socklen_t addr_len)
+{
+    MESSAGE msg;
+    int retval;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SENDTO;
+    msg.u.m_vfs_sendrecv.sock_fd = sock;
+    msg.u.m_vfs_sendrecv.buf = (void*)buf;
+    msg.u.m_vfs_sendrecv.len = len;
+    msg.u.m_vfs_sendrecv.flags = flags;
+    msg.u.m_vfs_sendrecv.addr = (void*)addr;
+    msg.u.m_vfs_sendrecv.addr_len = addr_len;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    retval = msg.u.m_vfs_sendrecv.status;
+
+    if (retval < 0) {
+        errno = -retval;
+        return -1;
+    }
+
+    return retval;
+}
+
+ssize_t recvfrom(int sock, void* buf, size_t len, int flags,
+                 struct sockaddr* addr, socklen_t* addr_len)
+{
+    MESSAGE msg;
+    int retval;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = RECVFROM;
+    msg.u.m_vfs_sendrecv.sock_fd = sock;
+    msg.u.m_vfs_sendrecv.buf = (void*)buf;
+    msg.u.m_vfs_sendrecv.len = len;
+    msg.u.m_vfs_sendrecv.flags = flags;
+    msg.u.m_vfs_sendrecv.addr = (void*)addr;
+    msg.u.m_vfs_sendrecv.addr_len = addr_len != NULL ? *addr_len : 0;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    retval = msg.u.m_vfs_sendrecv.status;
+
+    if (retval < 0) {
+        errno = -retval;
+        return -1;
+    }
+
+    if (addr_len) *addr_len = msg.u.m_vfs_sendrecv.addr_len;
+
+    return retval;
+}

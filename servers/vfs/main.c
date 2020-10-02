@@ -288,6 +288,12 @@ static void do_work(void)
     case ACCEPT:
         self->msg_out.FD = do_accept();
         break;
+    case SENDTO:
+        self->msg_out.u.m_vfs_sendrecv.status = do_sendto();
+        break;
+    case RECVFROM:
+        self->msg_out.u.m_vfs_sendrecv.status = do_recvfrom();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

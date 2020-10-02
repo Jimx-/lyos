@@ -300,7 +300,67 @@ int sdev_accept(endpoint_t src, dev_t dev, void* addr, size_t* addrlen,
     return 0;
 }
 
-int sdev_close(dev_t dev) { return 0; }
+ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
+                       size_t data_len, void* ctl_buf, unsigned int ctl_len,
+                       void* addr_buf, unsigned int* addr_len, int flags,
+                       int rw_flag, int filp_flags, void* msghdr_buf)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    mgrant_id_t data_grant, ctl_grant, addr_grant;
+    int access;
+    MESSAGE msg;
+
+    data_grant = ctl_grant = addr_grant = GRANT_INVALID;
+    access = (rw_flag == READ) ? MGF_WRITE : MGF_READ;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    if (data_buf) {
+        data_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)data_buf,
+                                      data_len, access);
+        if (data_grant == GRANT_INVALID)
+            panic("vfs: sdev_readwrite() failed to create data grant");
+    }
+    if (ctl_buf) {
+        ctl_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)ctl_buf,
+                                     ctl_len, access);
+        if (ctl_grant == GRANT_INVALID)
+            panic("vfs: sdev_readwrite() failed to create data grant");
+    }
+    if (addr_buf) {
+        addr_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)addr_buf,
+                                      *addr_len, access);
+        if (addr_grant == GRANT_INVALID)
+            panic("vfs: sdev_readwrite() failed to create data grant");
+    }
+
+    msg.type = (rw_flag == READ) ? SDEV_RECV : SDEV_SEND;
+    msg.u.m_sockdriver_sendrecv.req_id = src;
+    msg.u.m_sockdriver_sendrecv.sock_id = sockid;
+    msg.u.m_sockdriver_sendrecv.data_grant = data_grant;
+    msg.u.m_sockdriver_sendrecv.data_len = data_len;
+    msg.u.m_sockdriver_sendrecv.ctl_grant = ctl_grant;
+    msg.u.m_sockdriver_sendrecv.ctl_len = ctl_len;
+    msg.u.m_sockdriver_sendrecv.addr_grant = addr_grant;
+    msg.u.m_sockdriver_sendrecv.addr_len = addr_len ? *addr_len : 0;
+    msg.u.m_sockdriver_sendrecv.user_endpoint = src;
+
+    if (filp_flags & O_NONBLOCK) flags |= MSG_DONTWAIT;
+    msg.u.m_sockdriver_sendrecv.flags = flags;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_readwrite failed to send request");
+    }
+
+    if (data_grant != GRANT_INVALID) mgrant_revoke(data_grant);
+    if (ctl_grant != GRANT_INVALID) mgrant_revoke(ctl_grant);
+    if (addr_grant != GRANT_INVALID) mgrant_revoke(addr_grant);
+
+    return msg.u.m_sockdriver_reply.status;
+}
+
+int sdev_close(dev_t dev, int may_block) { return 0; }
 
 void sdev_reply(MESSAGE* msg)
 {

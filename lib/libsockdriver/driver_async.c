@@ -22,6 +22,8 @@
 
 static const char* name = "sockdriver_async";
 
+static const struct sockdriver* sdrv;
+
 static coro_mutex_t queue_event_mutex;
 static coro_cond_t queue_event;
 
@@ -117,7 +119,7 @@ static void* worker_main(void* arg)
 
         self->state = WS_BUSY;
 
-        sockdriver_process(&msg);
+        sockdriver_process(sdrv, &msg);
 
         self->state = WS_RUNNING;
     }
@@ -155,7 +157,7 @@ static void dispatch_message(MESSAGE* msg)
     struct worker_thread* wp;
 
     if (msg->type == NOTIFY_MSG) {
-        sockdriver_process(msg);
+        sockdriver_process(sdrv, msg);
 
         return;
     }
@@ -261,9 +263,11 @@ sockdriver_worker_id_t sockdriver_worker_id(void)
     return self->id;
 }
 
-void sockdriver_task(size_t num_workers)
+void sockdriver_task(const struct sockdriver* sd, size_t num_workers)
 {
     MESSAGE msg;
+
+    sdrv = sd;
 
     if (!running) {
         init_main_thread(num_workers);

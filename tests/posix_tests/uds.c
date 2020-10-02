@@ -14,12 +14,14 @@
 
 static const char* server_path = "server.socket";
 static const char* client_path = "client.socket";
+static const char test_string[] = "Hello, world!";
 
 static int run_client(int event_fd)
 {
     int sock_fd;
     struct sockaddr_un cliun, serun;
     size_t addrlen, len;
+    char buf[100];
     int retval, n;
     uint64_t count;
 
@@ -43,6 +45,20 @@ static int run_client(int event_fd)
     retval = connect(sock_fd, (struct sockaddr*)&serun, len);
     if (retval < 0) return errno;
 
+    /* client -> server */
+    n = send(sock_fd, test_string, sizeof(test_string), 0);
+    if (n != sizeof(test_string)) return errno;
+
+    /* server -> client */
+    n = recv(sock_fd, buf, sizeof(test_string), 0);
+    munit_assert_int(n, ==, sizeof(test_string));
+    buf[n] = '\0';
+    munit_assert_string_equal(buf, test_string);
+
+    close(sock_fd);
+
+    unlink(client_path);
+
     return 0;
 }
 
@@ -53,6 +69,7 @@ static MunitResult run_server(int event_fd)
     socklen_t cliun_len;
     size_t addrlen;
     int retval, n;
+    char buf[100];
     uint64_t count = 1;
 
     listen_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -75,6 +92,21 @@ static MunitResult run_server(int event_fd)
     conn_fd = accept(listen_fd, (struct sockaddr*)&cliun, &cliun_len);
     munit_assert_int(conn_fd, >=, 0);
     munit_assert_string_equal(cliun.sun_path, client_path);
+
+    /* client -> server */
+    n = recv(conn_fd, buf, sizeof(test_string), 0);
+    munit_assert_int(n, ==, sizeof(test_string));
+    buf[n] = '\0';
+    munit_assert_string_equal(buf, test_string);
+
+    /* server -> client */
+    n = send(conn_fd, test_string, sizeof(test_string), 0);
+    munit_assert_int(n, ==, sizeof(test_string));
+
+    close(conn_fd);
+    close(listen_fd);
+
+    unlink(server_path);
 
     return MUNIT_OK;
 }

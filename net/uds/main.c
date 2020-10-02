@@ -30,26 +30,31 @@ static struct idr sock_idr;
 
 static struct list_head uds_hash_table[UDS_HASH_SIZE];
 
-static int uds_bind(struct sockdriver_sock* sock, struct sockaddr* addr,
-                    size_t addrlen, endpoint_t user_endpt, int flags);
-static int uds_connect(struct sockdriver_sock* sock, struct sockaddr* addr,
-                       size_t addrlen, endpoint_t user_endpt, int flags);
-static int uds_listen(struct sockdriver_sock* sock, int backlog);
-static int uds_accept(struct sockdriver_sock* sock, struct sockaddr* addr,
+static sockid_t uds_socket(endpoint_t src, int domain, int type, int protocol,
+                           struct sock** sock,
+                           const struct sockdriver_ops** ops);
+
+static int uds_bind(struct sock* sock, struct sockaddr* addr, size_t addrlen,
+                    endpoint_t user_endpt, int flags);
+static int uds_connect(struct sock* sock, struct sockaddr* addr, size_t addrlen,
+                       endpoint_t user_endpt, int flags);
+static int uds_listen(struct sock* sock, int backlog);
+static int uds_accept(struct sock* sock, struct sockaddr* addr,
                       socklen_t* addrlen, endpoint_t user_endpt, int flags,
-                      struct sockdriver_sock** newsockp);
+                      struct sock** newsockp);
+
+static const struct sockdriver uds_driver = {
+    .sd_create = uds_socket,
+};
 
 static const struct sockdriver_ops uds_ops = {
     .sop_bind = uds_bind,
     .sop_connect = uds_connect,
     .sop_listen = uds_listen,
     .sop_accept = uds_accept,
+    .sop_send = uds_send,
+    .sop_recv = uds_recv,
 };
-
-static inline struct udssock* to_udssock(struct sockdriver_sock* sock)
-{
-    return list_entry(sock, struct udssock, sock);
-}
 
 static inline unsigned int udssock_gethash(dev_t dev, ino_t ino)
 {
@@ -87,9 +92,15 @@ static void uds_clear_cred(struct udssock* uds)
 static int uds_alloc(struct udssock** udsp)
 {
     struct udssock* uds;
+    int retval;
 
     uds = malloc(sizeof(*uds));
     if (!uds) return ENOMEM;
+
+    if ((retval = uds_io_alloc(uds)) != OK) {
+        free(uds);
+        return retval;
+    }
 
     memset(uds, 0, sizeof(*uds));
     uds->conn = NULL;
@@ -101,7 +112,12 @@ static int uds_alloc(struct udssock** udsp)
     return 0;
 }
 
-static void uds_free(struct udssock* uds) { free(uds); }
+static void uds_free(struct udssock* uds)
+{
+    uds_io_free(uds);
+
+    free(uds);
+}
 
 static void uds_get_cred(struct udssock* uds, endpoint_t endpoint)
 {
@@ -186,7 +202,7 @@ static void uds_clear_queue(struct udssock* uds, struct udssock* except)
 
         uds_dequeue(uds, peer);
 
-        if (uds != peer) peer->err = ECONNRESET;
+        if (uds != peer) sock_set_error(&peer->sock, ECONNRESET);
 
         if (uds_get_type(peer) != SOCK_DGRAM) {
             if (uds_is_connected(peer))
@@ -198,7 +214,7 @@ static void uds_clear_queue(struct udssock* uds, struct udssock* except)
 }
 
 static sockid_t uds_socket(endpoint_t src, int domain, int type, int protocol,
-                           struct sockdriver_sock** sock,
+                           struct sock** sock,
                            const struct sockdriver_ops** ops)
 {
     struct udssock* uds;
@@ -231,8 +247,8 @@ static sockid_t uds_socket(endpoint_t src, int domain, int type, int protocol,
     return id;
 }
 
-static int uds_bind(struct sockdriver_sock* sock, struct sockaddr* addr,
-                    size_t addrlen, endpoint_t user_endpt, int flags)
+static int uds_bind(struct sock* sock, struct sockaddr* addr, size_t addrlen,
+                    endpoint_t user_endpt, int flags)
 {
     struct udssock *uds = to_udssock(sock), *uds2;
     const char* path;
@@ -265,7 +281,7 @@ static int uds_bind(struct sockdriver_sock* sock, struct sockaddr* addr,
     return 0;
 }
 
-static int uds_listen(struct sockdriver_sock* sock, int backlog)
+static int uds_listen(struct sock* sock, int backlog)
 {
     struct udssock* uds = to_udssock(sock);
 
@@ -279,9 +295,8 @@ static int uds_listen(struct sockdriver_sock* sock, int backlog)
     return 0;
 }
 
-static int uds_lookup(struct udssock* uds, struct sockaddr* addr,
-                      size_t addrlen, endpoint_t user_endpt,
-                      struct udssock** peerp)
+int uds_lookup(struct udssock* uds, const struct sockaddr* addr, size_t addrlen,
+               endpoint_t user_endpt, struct udssock** peerp)
 {
     const char* path;
     size_t path_len;
@@ -329,8 +344,8 @@ static int uds_attach(struct udssock* uds, struct udssock* link)
     return 0;
 }
 
-static int uds_connect(struct sockdriver_sock* sock, struct sockaddr* addr,
-                       size_t addrlen, endpoint_t user_endpt, int flags)
+static int uds_connect(struct sock* sock, struct sockaddr* addr, size_t addrlen,
+                       endpoint_t user_endpt, int flags)
 {
     struct udssock* uds = to_udssock(sock);
     struct udssock* peer;
@@ -339,6 +354,8 @@ static int uds_connect(struct sockdriver_sock* sock, struct sockaddr* addr,
     int retval;
 
 restart:
+    retval = 0;
+
     if (uds_get_type(uds) != SOCK_DGRAM) {
         if (uds_is_listening(uds)) return EOPNOTSUPP;
         if (uds_is_connecting(uds)) return EALREADY;
@@ -387,7 +404,7 @@ restart:
 
     if (need_wait) {
         if (flags & SDEV_NONBLOCK) {
-            uds->err = EAGAIN;
+            retval = EAGAIN;
 
             if (check_again) {
                 /* Yield to (possibly) other workers that are blocked on
@@ -402,18 +419,16 @@ restart:
             }
         } else {
             sockdriver_suspend(&uds->sock, SEV_CONNECT);
+            if ((retval = sock_error(&uds->sock)) == OK) goto restart;
         }
-
-        retval = uds->err;
-        uds->err = 0;
     }
 
     return retval;
 }
 
-static int uds_accept(struct sockdriver_sock* sock, struct sockaddr* addr,
+static int uds_accept(struct sock* sock, struct sockaddr* addr,
                       socklen_t* addrlen, endpoint_t user_endpt, int flags,
-                      struct sockdriver_sock** newsockp)
+                      struct sock** newsockp)
 {
     struct udssock* uds = to_udssock(sock);
     struct udssock *peer, *conn;
@@ -438,7 +453,6 @@ restart:
     if (uds_is_connecting(peer)) {
         if ((retval = uds_attach(uds, peer)) != OK) return -retval;
 
-        peer->err = OK;
         sockdriver_fire(&peer->sock, SEV_CONNECT);
     }
 
@@ -448,7 +462,7 @@ restart:
     conn = peer->conn;
 
     *newsockp = NULL;
-    return sockdriver_get_sockid(&conn->sock);
+    return sock_sockid(&conn->sock);
 }
 
 int uds_init(void)
@@ -457,7 +471,7 @@ int uds_init(void)
 
     printl("uds: UNIX domain socket driver is running.\n");
 
-    sockdriver_init(uds_socket);
+    sockdriver_init();
 
     idr_init(&sock_idr);
 
@@ -473,7 +487,7 @@ int main()
     serv_register_init_fresh_callback(uds_init);
     serv_init();
 
-    sockdriver_task(MAX_THREADS);
+    sockdriver_task(&uds_driver, MAX_THREADS);
 
     return 0;
 }

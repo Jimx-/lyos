@@ -38,7 +38,17 @@
 
 static struct vfs_mount* sockfs_vmnt;
 
-static const struct file_operations sock_fops = {};
+static ssize_t sock_read(struct file_desc*, char*, size_t, loff_t*,
+                         struct fproc*);
+static ssize_t sock_write(struct file_desc*, const char*, size_t, loff_t*,
+                          struct fproc*);
+static int sock_release(struct inode* pin, struct file_desc* filp);
+
+static const struct file_operations sock_fops = {
+    .read = sock_read,
+    .write = sock_write,
+    .release = sock_release,
+};
 
 static ino_t get_next_ino(void)
 {
@@ -177,7 +187,7 @@ int do_socket(void)
 
     flags = get_sock_flags(type);
     if ((retval = create_sock_fd(dev, flags)) < 0) {
-        sdev_close(dev);
+        sdev_close(dev, FALSE);
     }
 
     return retval;
@@ -241,12 +251,76 @@ int do_accept(void)
     if (retval != OK && newdev == NO_DEV) return -retval;
 
     if (retval != OK) {
-        sdev_close(newdev);
+        sdev_close(newdev, FALSE);
         return -retval;
     }
 
     flags &= O_CLOEXEC | O_NONBLOCK;
-    if ((retval = create_sock_fd(dev, flags)) < 0) sdev_close(newdev);
+    if ((retval = create_sock_fd(newdev, flags)) < 0) sdev_close(newdev, FALSE);
 
     return retval;
+}
+
+ssize_t do_sendto(void)
+{
+    int fd = self->msg_in.u.m_vfs_sendrecv.sock_fd;
+    void* buf = self->msg_in.u.m_vfs_sendrecv.buf;
+    size_t len = self->msg_in.u.m_vfs_sendrecv.len;
+    int flags = self->msg_in.u.m_vfs_sendrecv.flags;
+    void* addr = self->msg_in.u.m_vfs_sendrecv.addr;
+    unsigned int addr_len = self->msg_in.u.m_vfs_sendrecv.addr_len;
+    dev_t dev;
+    int filp_flags;
+    int retval;
+
+    if ((retval = get_sock_fd(fd, &dev, &filp_flags)) != OK) return -retval;
+
+    return sdev_readwrite(fproc->endpoint, dev, buf, len, NULL, 0, addr,
+                          &addr_len, flags, WRITE, filp_flags, NULL);
+}
+
+ssize_t do_recvfrom(void)
+{
+    int fd = self->msg_in.u.m_vfs_sendrecv.sock_fd;
+    void* buf = self->msg_in.u.m_vfs_sendrecv.buf;
+    size_t len = self->msg_in.u.m_vfs_sendrecv.len;
+    int flags = self->msg_in.u.m_vfs_sendrecv.flags;
+    void* addr = self->msg_in.u.m_vfs_sendrecv.addr;
+    unsigned int addr_len = self->msg_in.u.m_vfs_sendrecv.addr_len;
+    dev_t dev;
+    int filp_flags;
+    int retval;
+
+    if ((retval = get_sock_fd(fd, &dev, &filp_flags)) != OK) return -retval;
+
+    retval = sdev_readwrite(fproc->endpoint, dev, buf, len, NULL, 0, addr,
+                            &addr_len, flags, READ, filp_flags, NULL);
+
+    if (retval >= 0) self->msg_out.u.m_vfs_sendrecv.addr_len = addr_len;
+
+    return retval;
+}
+
+static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
+                         loff_t* ppos, struct fproc* fp)
+{
+    struct inode* pin = filp->fd_inode;
+
+    return sdev_readwrite(fp->endpoint, pin->i_specdev, buf, count, NULL, 0,
+                          NULL, NULL, 0, READ, filp->fd_mode, NULL);
+}
+
+static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
+                          loff_t* ppos, struct fproc* fp)
+{
+    struct inode* pin = filp->fd_inode;
+
+    return sdev_readwrite(fp->endpoint, pin->i_specdev, (void*)buf, count, NULL,
+                          0, NULL, NULL, 0, WRITE, filp->fd_mode, NULL);
+}
+
+static int sock_release(struct inode* pin, struct file_desc* filp)
+{
+    sdev_close(pin->i_specdev, !(filp->fd_mode & O_NONBLOCK));
+    return 0;
 }
