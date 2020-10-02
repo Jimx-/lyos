@@ -294,6 +294,10 @@ static void do_work(void)
     case RECVFROM:
         self->msg_out.u.m_vfs_sendrecv.status = do_recvfrom();
         break;
+    case SENDMSG:
+    case RECVMSG:
+        self->msg_out.u.m_vfs_sendrecv.status = do_sockmsg();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

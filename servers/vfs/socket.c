@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include "const.h"
 #include "types.h"
@@ -275,8 +276,8 @@ ssize_t do_sendto(void)
 
     if ((retval = get_sock_fd(fd, &dev, &filp_flags)) != OK) return -retval;
 
-    return sdev_readwrite(fproc->endpoint, dev, buf, len, NULL, 0, addr,
-                          &addr_len, flags, WRITE, filp_flags, NULL);
+    return sdev_readwrite(fproc->endpoint, dev, buf, len, addr, &addr_len,
+                          flags, WRITE, filp_flags);
 }
 
 ssize_t do_recvfrom(void)
@@ -293,12 +294,45 @@ ssize_t do_recvfrom(void)
 
     if ((retval = get_sock_fd(fd, &dev, &filp_flags)) != OK) return -retval;
 
-    retval = sdev_readwrite(fproc->endpoint, dev, buf, len, NULL, 0, addr,
-                            &addr_len, flags, READ, filp_flags, NULL);
+    retval = sdev_readwrite(fproc->endpoint, dev, buf, len, addr, &addr_len,
+                            flags, READ, filp_flags);
 
     if (retval >= 0) self->msg_out.u.m_vfs_sendrecv.addr_len = addr_len;
 
     return retval;
+}
+
+ssize_t do_sockmsg(void)
+{
+    endpoint_t src = fproc->endpoint;
+    int fd = self->msg_in.u.m_vfs_sendrecv.sock_fd;
+    void* buf = self->msg_in.u.m_vfs_sendrecv.buf;
+    int flags = self->msg_in.u.m_vfs_sendrecv.flags;
+    unsigned int addrlen;
+    struct msghdr msg;
+    struct iovec iov[NR_IOREQS];
+    dev_t dev;
+    int filp_flags, retval;
+
+    if ((retval = get_sock_fd(fd, &dev, &filp_flags)) != OK) return -retval;
+
+    if ((retval = data_copy(SELF, &msg, src, buf, sizeof(msg))) != OK)
+        return -retval;
+
+    if (msg.msg_iovlen > 0) {
+        if (msg.msg_iovlen > NR_IOREQS) return -EMSGSIZE;
+
+        if ((retval = data_copy(SELF, iov, src, msg.msg_iov,
+                                sizeof(iov[0]) * msg.msg_iovlen)) != OK)
+            return -retval;
+    }
+
+    addrlen = msg.msg_namelen;
+
+    return sdev_vreadwrite(src, dev, iov, msg.msg_iovlen, msg.msg_control,
+                           msg.msg_controllen, msg.msg_name, &addrlen, flags,
+                           (self->msg_in.type == SENDMSG ? WRITE : READ),
+                           filp_flags);
 }
 
 static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
@@ -306,8 +340,8 @@ static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
 {
     struct inode* pin = filp->fd_inode;
 
-    return sdev_readwrite(fp->endpoint, pin->i_specdev, buf, count, NULL, 0,
-                          NULL, NULL, 0, READ, filp->fd_mode, NULL);
+    return sdev_readwrite(fp->endpoint, pin->i_specdev, buf, count, NULL, NULL,
+                          0, READ, filp->fd_mode);
 }
 
 static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
@@ -316,7 +350,7 @@ static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
     struct inode* pin = filp->fd_inode;
 
     return sdev_readwrite(fp->endpoint, pin->i_specdev, (void*)buf, count, NULL,
-                          0, NULL, NULL, 0, WRITE, filp->fd_mode, NULL);
+                          NULL, 0, WRITE, filp->fd_mode);
 }
 
 static int sock_release(struct inode* pin, struct file_desc* filp)

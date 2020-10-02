@@ -29,6 +29,7 @@
 #include <lyos/sysutils.h>
 #include <sys/socket.h>
 #include <lyos/mgrant.h>
+#include <sys/uio.h>
 #include <fcntl.h>
 
 #include "const.h"
@@ -301,17 +302,16 @@ int sdev_accept(endpoint_t src, dev_t dev, void* addr, size_t* addrlen,
 }
 
 ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
-                       size_t data_len, void* ctl_buf, unsigned int ctl_len,
-                       void* addr_buf, unsigned int* addr_len, int flags,
-                       int rw_flag, int filp_flags, void* msghdr_buf)
+                       size_t data_len, void* addr_buf, unsigned int* addr_len,
+                       int flags, int rw_flag, int filp_flags)
 {
     struct sdmap* sdp;
     sockid_t sockid;
-    mgrant_id_t data_grant, ctl_grant, addr_grant;
+    mgrant_id_t data_grant, addr_grant;
     int access;
     MESSAGE msg;
 
-    data_grant = ctl_grant = addr_grant = GRANT_INVALID;
+    data_grant = addr_grant = GRANT_INVALID;
     access = (rw_flag == READ) ? MGF_WRITE : MGF_READ;
 
     if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
@@ -322,17 +322,11 @@ ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
         if (data_grant == GRANT_INVALID)
             panic("vfs: sdev_readwrite() failed to create data grant");
     }
-    if (ctl_buf) {
-        ctl_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)ctl_buf,
-                                     ctl_len, access);
-        if (ctl_grant == GRANT_INVALID)
-            panic("vfs: sdev_readwrite() failed to create data grant");
-    }
     if (addr_buf) {
         addr_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)addr_buf,
                                       *addr_len, access);
         if (addr_grant == GRANT_INVALID)
-            panic("vfs: sdev_readwrite() failed to create data grant");
+            panic("vfs: sdev_readwrite() failed to create addr grant");
     }
 
     msg.type = (rw_flag == READ) ? SDEV_RECV : SDEV_SEND;
@@ -340,6 +334,101 @@ ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
     msg.u.m_sockdriver_sendrecv.sock_id = sockid;
     msg.u.m_sockdriver_sendrecv.data_grant = data_grant;
     msg.u.m_sockdriver_sendrecv.data_len = data_len;
+    msg.u.m_sockdriver_sendrecv.addr_grant = addr_grant;
+    msg.u.m_sockdriver_sendrecv.addr_len = addr_len ? *addr_len : 0;
+    msg.u.m_sockdriver_sendrecv.user_endpoint = src;
+
+    if (filp_flags & O_NONBLOCK) flags |= MSG_DONTWAIT;
+    msg.u.m_sockdriver_sendrecv.flags = flags;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_readwrite failed to send request");
+    }
+
+    if (data_grant != GRANT_INVALID) mgrant_revoke(data_grant);
+    if (addr_grant != GRANT_INVALID) mgrant_revoke(addr_grant);
+
+    return msg.u.m_sockdriver_reply.status;
+}
+
+static int sdev_vsetup(const struct iovec* iov, endpoint_t to, endpoint_t from,
+                       struct iovec_grant* giov, size_t count, int access)
+{
+    int i;
+    mgrant_id_t grant;
+
+    for (i = 0; i < count; i++) {
+        grant = mgrant_set_proxy(to, from, (vir_bytes)iov[i].iov_base,
+                                 iov[i].iov_len, access);
+
+        if (grant == GRANT_INVALID) {
+            for (i--; i >= 0; i--) {
+                mgrant_revoke(giov[i].iov_grant);
+            }
+            return EINVAL;
+        }
+
+        giov[i].iov_grant = grant;
+        giov[i].iov_len = iov[i].iov_len;
+    }
+
+    return 0;
+}
+
+static void sdev_vcleanup(struct iovec_grant* giov, size_t count)
+{
+    int i;
+    for (i = 0; i < count; i++) {
+        mgrant_revoke(giov[i].iov_grant);
+    }
+}
+
+ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
+                        size_t iov_len, void* ctl_buf, unsigned int ctl_len,
+                        void* addr_buf, unsigned int* addr_len, int flags,
+                        int rw_flag, int filp_flags)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    mgrant_id_t data_grant, ctl_grant, addr_grant;
+    struct iovec_grant giov[NR_IOREQS];
+    int access;
+    MESSAGE msg;
+    int retval;
+
+    data_grant = ctl_grant = addr_grant = GRANT_INVALID;
+    access = (rw_flag == READ) ? MGF_WRITE : MGF_READ;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    if (iov_len > 0) {
+        if ((retval = sdev_vsetup(iov, sdp->endpoint, src, giov, iov_len,
+                                  access)) != OK)
+            return -retval;
+
+        data_grant = mgrant_set_direct(sdp->endpoint, (vir_bytes)giov,
+                                       sizeof(giov[0]) * iov_len, MGF_READ);
+        if (data_grant == GRANT_INVALID)
+            panic("vfs: sdev_readwrite() failed to create data grant");
+    }
+    if (ctl_buf) {
+        ctl_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)ctl_buf,
+                                     ctl_len, access);
+        if (ctl_grant == GRANT_INVALID)
+            panic("vfs: sdev_readwrite() failed to create control grant");
+    }
+    if (addr_buf) {
+        addr_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)addr_buf,
+                                      *addr_len, access);
+        if (addr_grant == GRANT_INVALID)
+            panic("vfs: sdev_readwrite() failed to create addr grant");
+    }
+
+    msg.type = (rw_flag == READ) ? SDEV_VRECV : SDEV_VSEND;
+    msg.u.m_sockdriver_sendrecv.req_id = src;
+    msg.u.m_sockdriver_sendrecv.sock_id = sockid;
+    msg.u.m_sockdriver_sendrecv.data_grant = data_grant;
+    msg.u.m_sockdriver_sendrecv.data_len = iov_len;
     msg.u.m_sockdriver_sendrecv.ctl_grant = ctl_grant;
     msg.u.m_sockdriver_sendrecv.ctl_len = ctl_len;
     msg.u.m_sockdriver_sendrecv.addr_grant = addr_grant;
@@ -353,6 +442,7 @@ ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
         panic("vfs: sdev_readwrite failed to send request");
     }
 
+    sdev_vcleanup(giov, iov_len);
     if (data_grant != GRANT_INVALID) mgrant_revoke(data_grant);
     if (ctl_grant != GRANT_INVALID) mgrant_revoke(ctl_grant);
     if (addr_grant != GRANT_INVALID) mgrant_revoke(addr_grant);

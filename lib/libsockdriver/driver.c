@@ -399,15 +399,12 @@ static void do_send(MESSAGE* msg)
     sockid_t sock_id = msg->u.m_sockdriver_sendrecv.sock_id;
     mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
     size_t data_len = msg->u.m_sockdriver_sendrecv.data_len;
-    mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
-    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
     mgrant_id_t addr_grant = msg->u.m_sockdriver_sendrecv.addr_grant;
     size_t addr_len = msg->u.m_sockdriver_sendrecv.addr_len;
     endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
     int flags = msg->u.m_sockdriver_sendrecv.flags;
     struct iovec_grant data_iov;
     struct iov_grant_iter data_iter;
-    struct sockdriver_data ctl_data;
     char buf[SOCKADDR_MAX];
     struct sockaddr* addr;
     ssize_t retval = OK;
@@ -415,10 +412,6 @@ static void do_send(MESSAGE* msg)
     data_iov.iov_grant = data_grant;
     data_iov.iov_len = data_len;
     iov_grant_iter_init(&data_iter, src, &data_iov, 1, data_len);
-
-    ctl_data.endpoint = src;
-    ctl_data.grant = ctl_grant;
-    ctl_data.len = ctl_len;
 
     if (addr_grant != GRANT_INVALID) {
         if (addr_len == 0 || addr_len > sizeof(buf)) {
@@ -435,8 +428,8 @@ static void do_send(MESSAGE* msg)
 
     if (retval != OK) goto reply;
 
-    retval = sockdriver_send(sock_id, &data_iter, data_len, &ctl_data, ctl_len,
-                             addr, addr_len, user_endpt, flags);
+    retval = sockdriver_send(sock_id, &data_iter, data_len, NULL, 0, addr,
+                             addr_len, user_endpt, flags);
 
 reply:
     send_generic_reply(src, req_id, retval);
@@ -505,13 +498,10 @@ static void do_recv(MESSAGE* msg)
     sockid_t sock_id = msg->u.m_sockdriver_sendrecv.sock_id;
     mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
     size_t data_len = msg->u.m_sockdriver_sendrecv.data_len;
-    mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
-    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
     endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
     int flags = msg->u.m_sockdriver_sendrecv.flags;
     struct iovec_grant iov;
     struct iov_grant_iter data_iter;
-    struct sockdriver_data ctl_data;
     char buf[SOCKADDR_MAX];
     struct sockaddr* addr;
     socklen_t addr_len;
@@ -520,6 +510,120 @@ static void do_recv(MESSAGE* msg)
     iov.iov_grant = data_grant;
     iov.iov_len = data_len;
     iov_grant_iter_init(&data_iter, src, &iov, 1, data_len);
+
+    addr = (struct sockaddr*)buf;
+    addr_len = 0;
+
+    retval = sockdriver_recv(sock_id, &data_iter, data_len, NULL, 0, addr,
+                             &addr_len, user_endpt, &flags);
+
+    send_generic_reply(src, req_id, retval);
+}
+
+static void do_vsend(MESSAGE* msg)
+{
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_sendrecv.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_sendrecv.sock_id;
+    mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
+    size_t iov_len = msg->u.m_sockdriver_sendrecv.data_len;
+    mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
+    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
+    mgrant_id_t addr_grant = msg->u.m_sockdriver_sendrecv.addr_grant;
+    size_t addr_len = msg->u.m_sockdriver_sendrecv.addr_len;
+    endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
+    int flags = msg->u.m_sockdriver_sendrecv.flags;
+    struct iovec_grant data_iov[NR_IOREQS];
+    struct iov_grant_iter data_iter;
+    size_t data_len = 0;
+    struct sockdriver_data ctl_data;
+    char buf[SOCKADDR_MAX];
+    struct sockaddr* addr;
+    int i;
+    ssize_t retval = OK;
+
+    if (iov_len > 0) {
+        if (iov_len > NR_IOREQS) {
+            retval = -EINVAL;
+            goto reply;
+        }
+
+        if ((retval = safecopy_from(src, data_grant, 0, data_iov,
+                                    sizeof(data_iov[0]) * iov_len)) != OK) {
+            retval = -retval;
+            goto reply;
+        }
+
+        for (i = 0; i < iov_len; i++)
+            data_len += data_iov[i].iov_len;
+    }
+
+    iov_grant_iter_init(&data_iter, src, data_iov, iov_len, data_len);
+
+    ctl_data.endpoint = src;
+    ctl_data.grant = ctl_grant;
+    ctl_data.len = ctl_len;
+
+    if (addr_grant != GRANT_INVALID) {
+        if (addr_len == 0 || addr_len > sizeof(buf)) {
+            retval = -EINVAL;
+            goto reply;
+        }
+
+        retval = safecopy_from(src, addr_grant, 0, buf, addr_len);
+        addr = (struct sockaddr*)buf;
+    } else {
+        addr = NULL;
+        addr_len = 0;
+    }
+
+    if (retval != OK) goto reply;
+
+    retval = sockdriver_send(sock_id, &data_iter, data_len, &ctl_data, ctl_len,
+                             addr, addr_len, user_endpt, flags);
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
+static void do_vrecv(MESSAGE* msg)
+{
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_sendrecv.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_sendrecv.sock_id;
+    mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
+    size_t iov_len = msg->u.m_sockdriver_sendrecv.data_len;
+    mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
+    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
+    endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
+    int flags = msg->u.m_sockdriver_sendrecv.flags;
+    struct iovec_grant data_iov[NR_IOREQS];
+    struct iov_grant_iter data_iter;
+    struct sockdriver_data ctl_data;
+    char buf[SOCKADDR_MAX];
+    struct sockaddr* addr;
+    socklen_t addr_len;
+    size_t data_len = 0;
+    int i;
+    ssize_t retval = OK;
+
+    if (iov_len > 0) {
+        if (iov_len > NR_IOREQS) {
+            retval = -EINVAL;
+            goto reply;
+        }
+
+        if ((retval = safecopy_from(src, data_grant, 0, data_iov,
+                                    sizeof(data_iov[0]) * iov_len)) != OK) {
+            retval = -retval;
+            goto reply;
+        }
+
+        for (i = 0; i < iov_len; i++)
+            data_len += data_iov[i].iov_len;
+    }
+
+    iov_grant_iter_init(&data_iter, src, data_iov, iov_len, data_len);
 
     ctl_data.endpoint = src;
     ctl_data.grant = ctl_grant;
@@ -531,6 +635,7 @@ static void do_recv(MESSAGE* msg)
     retval = sockdriver_recv(sock_id, &data_iter, data_len, &ctl_data, ctl_len,
                              addr, &addr_len, user_endpt, &flags);
 
+reply:
     send_generic_reply(src, req_id, retval);
 }
 
@@ -589,6 +694,12 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_RECV:
         do_recv(msg);
+        break;
+    case SDEV_VSEND:
+        do_vsend(msg);
+        break;
+    case SDEV_VRECV:
+        do_vrecv(msg);
         break;
     default:
         if (sd->sd_other) {

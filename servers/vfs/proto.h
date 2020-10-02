@@ -17,6 +17,7 @@
 #define _VFS_PROTO_H_
 
 #include <lyos/types.h>
+#include <sys/uio.h>
 
 #include "path.h"
 #include "thread.h"
@@ -196,9 +197,12 @@ int sdev_listen(endpoint_t src, dev_t dev, int backlog);
 int sdev_accept(endpoint_t src, dev_t dev, void* addr, size_t* addrlen,
                 int flags, dev_t* newdev);
 ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
-                       size_t data_len, void* ctl_buf, unsigned int ctl_len,
-                       void* addr_buf, unsigned int* addr_len, int flags,
-                       int rw_flag, int filp_flags, void* user_buf);
+                       size_t data_len, void* addr_buf, unsigned int* addr_len,
+                       int flags, int rw_flag, int filp_flags);
+ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
+                        size_t iov_len, void* ctl_buf, unsigned int ctl_len,
+                        void* addr_buf, unsigned int* addr_len, int flags,
+                        int rw_flag, int filp_flags);
 int sdev_close(dev_t dev, int may_block);
 void sdev_reply(MESSAGE* msg);
 
@@ -211,5 +215,6 @@ int do_listen(void);
 int do_accept(void);
 ssize_t do_sendto(void);
 ssize_t do_recvfrom(void);
+ssize_t do_sockmsg(void);
 
 #endif

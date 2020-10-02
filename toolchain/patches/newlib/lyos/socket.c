@@ -192,3 +192,53 @@ ssize_t recvfrom(int sock, void* buf, size_t len, int flags,
 
     return retval;
 }
+
+ssize_t sendmsg(int sock, const struct msghdr* msg, int flags)
+{
+    MESSAGE m;
+    int retval;
+
+    memset(&m, 0, sizeof(m));
+    m.type = SENDMSG;
+    m.u.m_vfs_sendrecv.sock_fd = sock;
+    m.u.m_vfs_sendrecv.buf = (void*)msg;
+    m.u.m_vfs_sendrecv.flags = flags;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &m);
+
+    retval = m.u.m_vfs_sendrecv.status;
+
+    if (retval < 0) {
+        errno = -retval;
+        return -1;
+    }
+
+    return retval;
+}
+
+ssize_t recvmsg(int sock, struct msghdr* msg, int flags)
+{
+    MESSAGE m;
+    int retval;
+
+    memset(&m, 0, sizeof(m));
+    m.type = RECVMSG;
+    m.u.m_vfs_sendrecv.sock_fd = sock;
+    m.u.m_vfs_sendrecv.buf = (void*)msg;
+    m.u.m_vfs_sendrecv.flags = flags;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &m);
+
+    retval = m.u.m_vfs_sendrecv.status;
+
+    if (retval < 0) {
+        errno = -retval;
+        return -1;
+    }
+
+    return retval;
+}
