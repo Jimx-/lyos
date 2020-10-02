@@ -310,6 +310,7 @@ enum msgtype {
     SDEV_REPLY,
     SDEV_SOCKET_REPLY,
     SDEV_ACCEPT_REPLY,
+    SDEV_RECV_REPLY,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE, /* 2100 */

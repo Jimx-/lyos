@@ -37,7 +37,7 @@ struct sockdriver_ops {
     int (*sop_recv_check)(struct sock* sock, endpoint_t user_endpt, int flags);
     ssize_t (*sop_recv)(struct sock* sock, struct iov_grant_iter* iter,
                         size_t len, const struct sockdriver_data* ctl,
-                        socklen_t ctl_len, struct sockaddr* addr,
+                        socklen_t* ctl_len, struct sockaddr* addr,
                         socklen_t* addr_len, endpoint_t user_endpt, int flags,
                         int* rflags);
 };

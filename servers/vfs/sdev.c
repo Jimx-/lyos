@@ -310,6 +310,7 @@ ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
     mgrant_id_t data_grant, addr_grant;
     int access;
     MESSAGE msg;
+    int retval;
 
     data_grant = addr_grant = GRANT_INVALID;
     access = (rw_flag == READ) ? MGF_WRITE : MGF_READ;
@@ -348,7 +349,16 @@ ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
     if (data_grant != GRANT_INVALID) mgrant_revoke(data_grant);
     if (addr_grant != GRANT_INVALID) mgrant_revoke(addr_grant);
 
-    return msg.u.m_sockdriver_reply.status;
+    if (rw_flag == READ) {
+        retval = msg.u.m_sockdriver_recv_reply.status;
+
+        if (retval >= 0 && addr_len)
+            *addr_len = msg.u.m_sockdriver_recv_reply.addr_len;
+    } else {
+        retval = msg.u.m_sockdriver_reply.status;
+    }
+
+    return retval;
 }
 
 static int sdev_vsetup(const struct iovec* iov, endpoint_t to, endpoint_t from,
@@ -384,7 +394,7 @@ static void sdev_vcleanup(struct iovec_grant* giov, size_t count)
 }
 
 ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
-                        size_t iov_len, void* ctl_buf, unsigned int ctl_len,
+                        size_t iov_len, void* ctl_buf, unsigned int* ctl_len,
                         void* addr_buf, unsigned int* addr_len, int flags,
                         int rw_flag, int filp_flags)
 {
@@ -413,7 +423,7 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
     }
     if (ctl_buf) {
         ctl_grant = mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)ctl_buf,
-                                     ctl_len, access);
+                                     *ctl_len, access);
         if (ctl_grant == GRANT_INVALID)
             panic("vfs: sdev_readwrite() failed to create control grant");
     }
@@ -430,7 +440,7 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
     msg.u.m_sockdriver_sendrecv.data_grant = data_grant;
     msg.u.m_sockdriver_sendrecv.data_len = iov_len;
     msg.u.m_sockdriver_sendrecv.ctl_grant = ctl_grant;
-    msg.u.m_sockdriver_sendrecv.ctl_len = ctl_len;
+    msg.u.m_sockdriver_sendrecv.ctl_len = ctl_len ? *ctl_len : 0;
     msg.u.m_sockdriver_sendrecv.addr_grant = addr_grant;
     msg.u.m_sockdriver_sendrecv.addr_len = addr_len ? *addr_len : 0;
     msg.u.m_sockdriver_sendrecv.user_endpoint = src;
@@ -447,7 +457,18 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
     if (ctl_grant != GRANT_INVALID) mgrant_revoke(ctl_grant);
     if (addr_grant != GRANT_INVALID) mgrant_revoke(addr_grant);
 
-    return msg.u.m_sockdriver_reply.status;
+    if (rw_flag == READ) {
+        retval = msg.u.m_sockdriver_recv_reply.status;
+
+        if (retval >= 0) {
+            if (ctl_len) *ctl_len = msg.u.m_sockdriver_recv_reply.ctl_len;
+            if (addr_len) *addr_len = msg.u.m_sockdriver_recv_reply.addr_len;
+        }
+    } else {
+        retval = msg.u.m_sockdriver_reply.status;
+    }
+
+    return retval;
 }
 
 int sdev_close(dev_t dev, int may_block) { return 0; }
@@ -466,6 +487,9 @@ void sdev_reply(MESSAGE* msg)
         break;
     case SDEV_ACCEPT_REPLY:
         req_id = msg->u.m_sockdriver_accept_reply.req_id;
+        break;
+    case SDEV_RECV_REPLY:
+        req_id = msg->u.m_sockdriver_recv_reply.req_id;
         break;
     }
 

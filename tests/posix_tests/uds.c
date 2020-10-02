@@ -95,13 +95,23 @@ static MunitResult run_server_simple(int event_fd)
     cliun_len = sizeof(cliun);
     conn_fd = accept(listen_fd, (struct sockaddr*)&cliun, &cliun_len);
     munit_assert_int(conn_fd, >=, 0);
+    munit_assert_int(cliun_len, ==,
+                     offsetof(struct sockaddr_un, sun_path) +
+                         strlen(client_path) + 1);
     munit_assert_string_equal(cliun.sun_path, client_path);
 
     /* client -> server */
-    n = recv(conn_fd, buf, strlen(test_string), 0);
+    cliun_len = sizeof(cliun);
+    memset(&cliun, 0, cliun_len);
+    n = recvfrom(conn_fd, buf, strlen(test_string), 0, (struct sockaddr*)&cliun,
+                 &cliun_len);
     munit_assert_int(n, ==, strlen(test_string));
     buf[n] = '\0';
     munit_assert_string_equal(buf, test_string);
+    munit_assert_int(cliun_len, ==,
+                     offsetof(struct sockaddr_un, sun_path) +
+                         strlen(client_path) + 1);
+    munit_assert_string_equal(cliun.sun_path, client_path);
 
     /* server -> client */
     n = send(conn_fd, test_string, strlen(test_string), 0);
@@ -232,13 +242,17 @@ static MunitResult run_server_msg(int event_fd)
     cliun_len = sizeof(cliun);
     conn_fd = accept(listen_fd, (struct sockaddr*)&cliun, &cliun_len);
     munit_assert_int(conn_fd, >=, 0);
+    munit_assert_int(cliun_len, ==,
+                     offsetof(struct sockaddr_un, sun_path) +
+                         strlen(client_path) + 1);
     munit_assert_string_equal(cliun.sun_path, client_path);
 
     iov.iov_base = buf;
     iov.iov_len = strlen(test_string);
 
-    msghdr.msg_name = NULL;
-    msghdr.msg_namelen = 0;
+    memset(&cliun, 0, sizeof(cliun));
+    msghdr.msg_name = &cliun;
+    msghdr.msg_namelen = sizeof(cliun);
     msghdr.msg_iov = &iov;
     msghdr.msg_iovlen = 1;
     msghdr.msg_control = NULL;
@@ -248,6 +262,11 @@ static MunitResult run_server_msg(int event_fd)
     munit_assert_int(n, ==, iov.iov_len);
     buf[iov.iov_len] = '\0';
     munit_assert_string_equal(buf, test_string);
+
+    munit_assert_int(msghdr.msg_namelen, ==,
+                     offsetof(struct sockaddr_un, sun_path) +
+                         strlen(client_path) + 1);
+    munit_assert_string_equal(cliun.sun_path, client_path);
 
     close(conn_fd);
     close(listen_fd);

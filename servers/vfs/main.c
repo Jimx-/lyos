@@ -117,6 +117,7 @@ int main()
         case SDEV_REPLY:
         case SDEV_SOCKET_REPLY:
         case SDEV_ACCEPT_REPLY:
+        case SDEV_RECV_REPLY:
             sdev_reply(&msg);
             break;
         case PM_VFS_EXEC:

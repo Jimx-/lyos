@@ -200,7 +200,7 @@ ssize_t sdev_readwrite(endpoint_t src, dev_t dev, void* data_buf,
                        size_t data_len, void* addr_buf, unsigned int* addr_len,
                        int flags, int rw_flag, int filp_flags);
 ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
-                        size_t iov_len, void* ctl_buf, unsigned int ctl_len,
+                        size_t iov_len, void* ctl_buf, unsigned int* ctl_len,
                         void* addr_buf, unsigned int* addr_len, int flags,
                         int rw_flag, int filp_flags);
 int sdev_close(dev_t dev, int may_block);

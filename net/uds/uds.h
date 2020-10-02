@@ -69,6 +69,8 @@ static inline struct udssock* to_udssock(struct sock* sock)
 
 int uds_lookup(struct udssock* uds, const struct sockaddr* addr, size_t addrlen,
                endpoint_t user_endpt, struct udssock** peerp);
+void uds_make_addr(const char* path, size_t path_len, struct sockaddr* addr,
+                   socklen_t* addr_len);
 
 int uds_io_alloc(struct udssock* uds);
 void uds_io_free(struct udssock* uds);
@@ -77,7 +79,7 @@ ssize_t uds_send(struct sock* sock, struct iov_grant_iter* iter, size_t len,
                  const struct sockaddr* addr, socklen_t addr_len,
                  endpoint_t user_endpt, int flags);
 ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
-                 const struct sockdriver_data* ctl, socklen_t ctl_len,
+                 const struct sockdriver_data* ctl, socklen_t* ctl_len,
                  struct sockaddr* addr, socklen_t* addr_len,
                  endpoint_t user_endpt, int flags, int* rflags);
 

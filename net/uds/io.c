@@ -135,11 +135,11 @@ out_free_skb:
 }
 
 ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
-                 const struct sockdriver_data* ctl, socklen_t ctl_len,
+                 const struct sockdriver_data* ctl, socklen_t* ctl_len,
                  struct sockaddr* addr, socklen_t* addr_len,
                  endpoint_t user_endpt, int flags, int* rflags)
 {
-    struct udssock* uds = to_udssock(sock);
+    struct udssock *uds = to_udssock(sock), *other;
     struct sk_buff* skb;
     size_t target, chunk, copied = 0;
     int retval;
@@ -170,6 +170,13 @@ ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
 
             sockdriver_suspend(&uds->sock, SEV_RECV);
             continue;
+        }
+
+        /* copy address only once */
+        if (addr) {
+            other = to_udssock(skb->sock);
+            uds_make_addr(other->path, other->path_len, addr, addr_len);
+            addr = NULL;
         }
 
         chunk = min(uds_skb_len(skb), len);

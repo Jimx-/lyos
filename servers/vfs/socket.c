@@ -259,6 +259,8 @@ int do_accept(void)
     flags &= O_CLOEXEC | O_NONBLOCK;
     if ((retval = create_sock_fd(newdev, flags)) < 0) sdev_close(newdev, FALSE);
 
+    if (retval >= 0) self->msg_out.CNT = addrlen;
+
     return retval;
 }
 
@@ -308,11 +310,12 @@ ssize_t do_sockmsg(void)
     int fd = self->msg_in.u.m_vfs_sendrecv.sock_fd;
     void* buf = self->msg_in.u.m_vfs_sendrecv.buf;
     int flags = self->msg_in.u.m_vfs_sendrecv.flags;
-    unsigned int addrlen;
+    unsigned int ctl_len, addr_len;
     struct msghdr msg;
     struct iovec iov[NR_IOREQS];
     dev_t dev;
-    int filp_flags, retval;
+    int filp_flags;
+    ssize_t retval;
 
     if ((retval = get_sock_fd(fd, &dev, &filp_flags)) != OK) return -retval;
 
@@ -327,12 +330,22 @@ ssize_t do_sockmsg(void)
             return -retval;
     }
 
-    addrlen = msg.msg_namelen;
+    addr_len = msg.msg_namelen;
+    ctl_len = msg.msg_controllen;
 
-    return sdev_vreadwrite(src, dev, iov, msg.msg_iovlen, msg.msg_control,
-                           msg.msg_controllen, msg.msg_name, &addrlen, flags,
-                           (self->msg_in.type == SENDMSG ? WRITE : READ),
-                           filp_flags);
+    retval = sdev_vreadwrite(src, dev, iov, msg.msg_iovlen, msg.msg_control,
+                             &ctl_len, msg.msg_name, &addr_len, flags,
+                             (self->msg_in.type == SENDMSG ? WRITE : READ),
+                             filp_flags);
+
+    if (retval >= 0) {
+        msg.msg_controllen = ctl_len;
+        if (addr_len) msg.msg_namelen = addr_len;
+
+        if (data_copy(src, buf, SELF, &msg, sizeof(msg)) != OK) return -EFAULT;
+    }
+
+    return retval;
 }
 
 static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
