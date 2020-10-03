@@ -1,9 +1,10 @@
-SRCS	= main.c pipe.c eventfd.c signalfd.c timerfd.c epoll.c uds.c
+SRCS	= main.c pipe.c eventfd.c signalfd.c timerfd.c epoll.c uds.c dl.c
 PROG	= posix_tests
 
 CFLAGS  = -I..
 
 EXTRAOBJS = $(BUILD_PATH)/munit.o
+EXTRALIBS = -ldl
 
 include lyos.prog.mk
 

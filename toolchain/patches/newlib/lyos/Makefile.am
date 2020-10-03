@@ -12,7 +12,7 @@ GENERAL_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c tt
 				mntent.c err.c progname.c crypt3.c sysconf.c regex.c ucontext.c poll.c \
 				clock_gettime.c clock_settime.c clock_getres.c sched_yield.c usleep.c \
 				nanosleep.c signalfd.c flockfile.c popen.c eventfd.c timerfd.c epoll.c \
-				socket.c
+				socket.c dl.c
 
 ADD_OBJS = $(LYOS_MACHINE_LIB)
 

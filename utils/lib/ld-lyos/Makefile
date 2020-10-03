@@ -1,9 +1,8 @@
-
 LDLYOS			= ld-lyos.so
-LDLYOSOBJS 		= arch/$(ARCH)/arch-ldso.o ldso.o env.o xprintf.o elf.o paths.o load.o map.o reloc.o \
-					symbol.o
+LDLYOSOBJS		= arch/$(ARCH)/arch-ldso.o ldso.o env.o xprintf.o elf.o paths.o load.o map.o \
+					reloc.o symbol.o
 
-CFLAGS			= -I$(SRCDIR)/include/ -I$(SRCDIR)/include/lyos/ -I$(CURDIR) -g -static
+CFLAGS			= -I$(SRCDIR)/include/ -I$(SRCDIR)/include/lyos/ -I$(CURDIR) -g
 
 .PHONY : everything realclean install
 
@@ -19,7 +18,7 @@ $(LDLYOS): $(LDLYOSOBJS)
 	@$(CC) -Wl,-Bsymbolic -shared -nostartfiles -nodefaultlibs -o $@ $^
 
 %.o: %.c
-	@$(CC) -c -g $<
+	@$(CC) -c -fPIC -g $<
 
 arch/$(ARCH)/arch-ldso.o:
 	@(cd arch/$(ARCH)/; make)

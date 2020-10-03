@@ -10,13 +10,9 @@
 #include "ldso.h"
 #include "env.h"
 
-#define roundup(x) \
-    (((x) % pagesz == 0) ? (x) : (((x) + pagesz) - ((x) % pagesz)))
-#define rounddown(x) ((x) - ((x) % pagesz))
-
 struct so_info* ldso_map_object(char* pathname, int fd)
 {
-    struct so_info* si = alloc_info(pathname);
+    struct so_info* si = ldso_alloc_info(pathname);
     if (!si) return NULL;
 
     si->ehdr = mmap(NULL, pagesz, PROT_READ, MAP_SHARED, fd, 0);
@@ -105,6 +101,7 @@ struct so_info* ldso_map_object(char* pathname, int fd)
     memset((void*)clear_addr, 0, clear_size);
 
     si->mapbase = mapbase;
+    si->mapsize = map_size;
     si->relocbase = mapbase - base_addr;
 
     if (si->dynamic)

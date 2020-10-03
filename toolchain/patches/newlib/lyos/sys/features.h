@@ -259,6 +259,7 @@ extern "C"
 #endif
 
 #ifdef _GNU_SOURCE
+#define __USE_GNU     1
 #define __GNU_VISIBLE 1
 #else
 #define __GNU_VISIBLE 0

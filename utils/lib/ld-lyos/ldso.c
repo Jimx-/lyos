@@ -15,6 +15,7 @@ struct search_paths ld_paths;
 struct search_paths ld_default_paths;
 
 extern char _DYNAMIC;
+extern char _GLOBAL_OFFSET_TABLE_;
 
 int* __errno(void)
 {
@@ -36,7 +37,7 @@ static void init_si_pool()
     }
 }
 
-struct so_info* alloc_info(const char* name)
+struct so_info* ldso_alloc_info(const char* name)
 {
     int i;
     struct so_info* si = NULL;
@@ -71,6 +72,7 @@ struct so_info* alloc_info(const char* name)
 static void ldso_init_self(char* interp_base, char* relocbase)
 {
     char* self_name = LDSO_PATH;
+
     memcpy((char*)si_self.name, self_name, strlen(self_name));
 
     si_self.mapbase = interp_base;
@@ -78,13 +80,38 @@ static void ldso_init_self(char* interp_base, char* relocbase)
     si_self.dynamic = (Elf32_Dyn*)&_DYNAMIC;
     si_self.next = NULL;
 
+    ldso_process_dynamic(&si_self);
+
     ldso_init_paths(&ld_default_paths);
     ldso_init_paths(&ld_paths);
     ldso_add_paths(&ld_default_paths, DEFAULT_LD_PATHS);
 }
 
+struct so_info* ldso_get_obj_from_addr(const void* addr)
+{
+    struct so_info* si;
+
+    for (si = si_list; si != NULL; si = si->next) {
+        if (addr < (void*)si->mapbase) continue;
+        if (addr < (void*)(si->mapbase + si->mapsize)) return si;
+    }
+    return NULL;
+}
+
+struct so_info* ldso_check_handle(void* handle)
+{
+    struct so_info* si;
+
+    for (si = si_list; si != NULL; si = si->next) {
+        if (handle == (void*)si) break;
+    }
+    return si;
+}
+
 int ldso_main(int argc, char* argv[], char* envp[])
 {
+    Elf32_Addr got0;
+
     init_si_pool();
     /* parse environments and aux vectors */
     setenv(envp);
@@ -102,7 +129,7 @@ int ldso_main(int argc, char* argv[], char* envp[])
         bind_now = bind_now_env[0] - '0';
     }
 
-    struct so_info* si = alloc_info("Main executable");
+    struct so_info* si = ldso_alloc_info("Main executable");
     if (si == NULL) return -1;
     si->flags |= SI_EXEC;
 
@@ -110,7 +137,8 @@ int ldso_main(int argc, char* argv[], char* envp[])
     parse_auxv(envp, si, show_auxv, &interp_base);
     if (interp_base == (char*)-1) ldso_die("AT_BASE not set");
 
-    ldso_init_self(interp_base, &_DYNAMIC);
+    got0 = *(Elf32_Addr*)&_GLOBAL_OFFSET_TABLE_;
+    ldso_init_self(interp_base, &_DYNAMIC - got0);
 
     if (ld_library_path) ldso_add_paths(&ld_paths, ld_library_path);
 

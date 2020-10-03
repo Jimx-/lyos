@@ -99,20 +99,36 @@ int ldso_process_dynamic(struct so_info* si)
 int ldso_process_phdr(struct so_info* si, Elf32_Phdr* phdr, int phnum)
 {
     Elf32_Phdr* hdr;
+    Elf32_Addr vaddr;
+    int nsegs = 0;
+
+    si->phnum = phnum;
 
     for (hdr = phdr; hdr < phdr + phnum; hdr++) {
         if (hdr->p_type == PT_PHDR) {
             si->phdr = (Elf32_Phdr*)hdr->p_vaddr;
             si->relocbase = (char*)((char*)phdr - (char*)si->phdr);
-            si->phnum = si->phnum;
             break;
         }
     }
 
     for (hdr = phdr; hdr < phdr + phnum; hdr++) {
-        Elf32_Addr vaddr = (Elf32_Addr)(si->relocbase + hdr->p_vaddr);
-        if (hdr->p_type == PT_DYNAMIC) {
+        vaddr = (Elf32_Addr)(si->relocbase + hdr->p_vaddr);
+        switch (hdr->p_type) {
+        case PT_LOAD:
+            if (nsegs == 0) {
+                si->mapbase = (void*)vaddr;
+            } else {
+                si->mapsize =
+                    roundup(vaddr + hdr->p_memsz) - (uintptr_t)si->mapsize;
+            }
+            nsegs++;
+            break;
+        case PT_DYNAMIC:
             si->dynamic = (Elf32_Dyn*)vaddr;
+            break;
         }
     }
+
+    return 0;
 }
