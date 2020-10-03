@@ -6,6 +6,7 @@
 #include <string.h>
 #include <lyos/mgrant.h>
 #include <lyos/sysutils.h>
+#include <poll.h>
 
 #include "libsockdriver.h"
 #include "proto.h"
@@ -673,6 +674,32 @@ reply:
                     addr, addr_len);
 }
 
+static void do_select(MESSAGE* msg)
+{
+    struct sock* sock;
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_select.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_select.sock_id;
+    __poll_t ops = msg->u.m_sockdriver_select.ops;
+    int notify;
+    __poll_t retval;
+
+    if ((sock = sock_get(sock_id)) == NULL) {
+        retval = -EINVAL;
+        goto reply;
+    }
+
+    notify = ops & POLL_NOTIFY;
+    ops &= ~POLL_NOTIFY;
+
+    retval = sock->ops->sop_poll(sock) & ops;
+
+    ops &= ~retval;
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
 void sockdriver_suspend(struct sock* sock, unsigned int event)
 {
     struct worker_thread* wp = sockdriver_worker();
@@ -734,6 +761,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_VRECV:
         do_vrecv(msg);
+        break;
+    case SDEV_SELECT:
+        do_select(msg);
         break;
     default:
         if (sd->sd_other) {

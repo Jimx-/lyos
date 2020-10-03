@@ -204,6 +204,8 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
                         void* addr_buf, unsigned int* addr_len, int flags,
                         int rw_flag, int filp_flags);
 int sdev_close(dev_t dev, int may_block);
+__poll_t sock_poll(struct file_desc* filp, __poll_t mask,
+                   struct poll_table* wait, struct fproc* fp);
 void sdev_reply(MESSAGE* msg);
 
 /* vfs/socket.c */

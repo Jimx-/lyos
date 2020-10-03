@@ -48,6 +48,7 @@ static int sock_release(struct inode* pin, struct file_desc* filp);
 static const struct file_operations sock_fops = {
     .read = sock_read,
     .write = sock_write,
+    .poll = sock_poll,
     .release = sock_release,
 };
 

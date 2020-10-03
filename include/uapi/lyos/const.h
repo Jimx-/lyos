@@ -307,6 +307,7 @@ enum msgtype {
     SDEV_RECV,
     SDEV_VSEND,
     SDEV_VRECV,
+    SDEV_SELECT,
     SDEV_REPLY,
     SDEV_SOCKET_REPLY,
     SDEV_ACCEPT_REPLY,

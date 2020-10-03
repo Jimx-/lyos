@@ -40,6 +40,7 @@ struct sockdriver_ops {
                         socklen_t* ctl_len, struct sockaddr* addr,
                         socklen_t* addr_len, endpoint_t user_endpt, int flags,
                         int* rflags);
+    __poll_t (*sop_poll)(struct sock* sock);
 };
 
 struct sockdriver {

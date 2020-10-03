@@ -28,6 +28,11 @@ static inline void skb_queue_init(struct sk_buff_head* list)
     list->qlen = 0;
 }
 
+static inline int skb_queue_empty(struct sk_buff_head* list)
+{
+    return list_empty(&list->head);
+}
+
 static inline void skb_queue_tail(struct sk_buff_head* list,
                                   struct sk_buff* skb)
 {

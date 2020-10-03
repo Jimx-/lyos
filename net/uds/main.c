@@ -54,6 +54,7 @@ static const struct sockdriver_ops uds_ops = {
     .sop_accept = uds_accept,
     .sop_send = uds_send,
     .sop_recv = uds_recv,
+    .sop_poll = uds_poll,
 };
 
 static inline unsigned int udssock_gethash(dev_t dev, ino_t ino)

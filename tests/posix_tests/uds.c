@@ -27,31 +27,44 @@ static int run_client_simple(int event_fd)
     size_t addrlen, len;
     char buf[100];
     int retval, n;
+    struct pollfd pfd;
     uint64_t count;
 
     sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock_fd < 0) return errno;
+    munit_assert_int(sock_fd, >=, 0);
 
     memset(&cliun, 0, sizeof(cliun));
     cliun.sun_family = AF_UNIX;
     strcpy(cliun.sun_path, client_path);
     addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(cliun.sun_path);
     retval = bind(sock_fd, (struct sockaddr*)&cliun, addrlen);
-    if (retval) return retval;
+    munit_assert_int(retval, ==, 0);
 
     n = read(event_fd, &count, sizeof(count));
-    if (n < 0) return errno;
+    munit_assert_int(n, ==, sizeof(count));
 
     memset(&serun, 0, sizeof(serun));
     serun.sun_family = AF_UNIX;
     strcpy(serun.sun_path, server_path);
     len = offsetof(struct sockaddr_un, sun_path) + strlen(serun.sun_path);
     retval = connect(sock_fd, (struct sockaddr*)&serun, len);
-    if (retval < 0) return errno;
+    munit_assert_int(retval, ==, 0);
+
+    n = read(event_fd, &count, sizeof(count));
+    munit_assert_int(n, ==, sizeof(count));
 
     /* client -> server */
     n = send(sock_fd, test_string, strlen(test_string), 0);
-    if (n != strlen(test_string)) return errno;
+    munit_assert_int(n, ==, strlen(test_string));
+
+    n = read(event_fd, &count, sizeof(count));
+    munit_assert_int(n, ==, sizeof(count));
+
+    pfd.fd = sock_fd;
+    pfd.events = POLLIN;
+    n = poll(&pfd, 1, 0);
+    munit_assert_int(n, ==, 1);
+    munit_assert(pfd.revents & POLLIN);
 
     /* server -> client */
     n = recv(sock_fd, buf, strlen(test_string), 0);
@@ -74,6 +87,7 @@ static MunitResult run_server_simple(int event_fd)
     size_t addrlen;
     int retval, n;
     char buf[100];
+    struct pollfd pfd;
     uint64_t count = 1;
 
     listen_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -100,6 +114,14 @@ static MunitResult run_server_simple(int event_fd)
                          strlen(client_path) + 1);
     munit_assert_string_equal(cliun.sun_path, client_path);
 
+    pfd.fd = conn_fd;
+    pfd.events = POLLIN;
+    n = poll(&pfd, 1, 0);
+    munit_assert_int(n, ==, 0);
+
+    n = write(event_fd, &count, sizeof(count));
+    munit_assert_int(n, ==, sizeof(count));
+
     /* client -> server */
     cliun_len = sizeof(cliun);
     memset(&cliun, 0, cliun_len);
@@ -116,6 +138,9 @@ static MunitResult run_server_simple(int event_fd)
     /* server -> client */
     n = send(conn_fd, test_string, strlen(test_string), 0);
     munit_assert_int(n, ==, strlen(test_string));
+
+    n = write(event_fd, &count, sizeof(count));
+    munit_assert_int(n, ==, sizeof(count));
 
     close(conn_fd);
     close(listen_fd);

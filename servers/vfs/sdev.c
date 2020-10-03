@@ -42,6 +42,7 @@ struct sdmap {
     char label[FS_LABEL_MAX + 1];
     unsigned int num;
     endpoint_t endpoint;
+    struct wait_queue_head wait;
 };
 
 static struct sdmap sdmap[NR_SOCKDEVS];
@@ -53,6 +54,7 @@ void init_sdev(void)
     for (i = 0; i < NR_SOCKDEVS; i++) {
         sdmap[i].num = i + 1;
         sdmap[i].endpoint = NO_TASK;
+        init_waitqueue_head(&sdmap[i].wait);
     }
 
     memset(pfmap, 0, sizeof(pfmap));
@@ -471,7 +473,43 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
     return retval;
 }
 
+static int sdev_select(endpoint_t src, struct sdmap* sdp, sockid_t sockid,
+                       int ops)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SDEV_SELECT;
+    msg.u.m_sockdriver_select.req_id = src;
+    msg.u.m_sockdriver_select.sock_id = sockid;
+    msg.u.m_sockdriver_select.ops = ops;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_select failed to send request");
+    }
+
+    return msg.u.m_sockdriver_reply.status;
+}
+
 int sdev_close(dev_t dev, int may_block) { return 0; }
+
+__poll_t sock_poll(struct file_desc* filp, __poll_t mask,
+                   struct poll_table* wait, struct fproc* fp)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    __poll_t retval;
+    dev_t dev = filp->fd_inode->i_specdev;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    poll_wait(filp, &sdp->wait, wait);
+
+    retval = sdev_select(fp->endpoint, sdp, sockid, mask);
+
+    if (retval < 0) return 0;
+    return retval;
+}
 
 void sdev_reply(MESSAGE* msg)
 {

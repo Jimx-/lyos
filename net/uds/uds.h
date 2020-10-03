@@ -82,5 +82,6 @@ ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
                  const struct sockdriver_data* ctl, socklen_t* ctl_len,
                  struct sockaddr* addr, socklen_t* addr_len,
                  endpoint_t user_endpt, int flags, int* rflags);
+__poll_t uds_poll(struct sock* sock);
 
 #endif

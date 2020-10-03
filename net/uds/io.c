@@ -18,6 +18,7 @@
 #include <lyos/idr.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
+#include <lyos/eventpoll.h>
 
 #include "uds.h"
 
@@ -201,4 +202,22 @@ ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
     } while (len);
 
     return copied;
+}
+
+__poll_t uds_poll(struct sock* sock)
+{
+    struct udssock* uds = to_udssock(sock);
+    __poll_t mask = 0;
+
+    if (uds->sock.err) mask |= EPOLLERR;
+    if (uds_is_shutdown(uds, SFL_SHUT_RD) && uds_is_shutdown(uds, SFL_SHUT_WR))
+        mask |= EPOLLHUP;
+    if (uds_is_shutdown(uds, SFL_SHUT_RD))
+        mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
+
+    if (!skb_queue_empty(&uds->sock.recvq)) mask |= EPOLLIN | EPOLLRDNORM;
+
+    if (!uds_is_listening(uds)) mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
+
+    return mask;
 }

@@ -669,6 +669,17 @@ BEGIN_MESS_DECL(mess_sockdriver_recv_reply)
 }
 END_MESS_DECL(mess_sockdriver_recv_reply)
 
+BEGIN_MESS_DECL(mess_sockdriver_select)
+{
+    int status;
+    int req_id;
+    int sock_id;
+    __u32 ops;
+
+    __u8 _pad[40];
+}
+END_MESS_DECL(mess_sockdriver_select)
+
 typedef struct {
     int source;
     int type;
@@ -730,6 +741,7 @@ typedef struct {
         struct mess_sockdriver_accept_reply m_sockdriver_accept_reply;
         struct mess_sockdriver_sendrecv m_sockdriver_sendrecv;
         struct mess_sockdriver_recv_reply m_sockdriver_recv_reply;
+        struct mess_sockdriver_select m_sockdriver_select;
 
         __u8 m_payload[56];
     } u;
