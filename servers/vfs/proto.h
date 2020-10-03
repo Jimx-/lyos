@@ -203,6 +203,8 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
                         size_t iov_len, void* ctl_buf, unsigned int* ctl_len,
                         void* addr_buf, unsigned int* addr_len, int flags,
                         int rw_flag, int filp_flags);
+int sdev_getsockopt(endpoint_t src, dev_t dev, int level, int name, void* addr,
+                    size_t* len);
 int sdev_close(dev_t dev, int may_block);
 __poll_t sock_poll(struct file_desc* filp, __poll_t mask,
                    struct poll_table* wait, struct fproc* fp);
@@ -218,5 +220,6 @@ int do_accept(void);
 ssize_t do_sendto(void);
 ssize_t do_recvfrom(void);
 ssize_t do_sockmsg(void);
+int do_getsockopt(void);
 
 #endif

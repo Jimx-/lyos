@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
@@ -53,6 +54,10 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
     sock->type = type;
 
     sock->rcvlowat = 1;
+
+    sock->peercred.pid = -1;
+    sock->peercred.uid = -1;
+    sock->peercred.gid = -1;
 
     sock->ops = ops;
 
@@ -700,6 +705,80 @@ reply:
     send_generic_reply(src, req_id, retval);
 }
 
+static void do_getsockopt(MESSAGE* msg)
+{
+    struct sock* sock;
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_getset.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_getset.sock_id;
+    int level = msg->u.m_sockdriver_getset.level;
+    int name = msg->u.m_sockdriver_getset.name;
+    mgrant_id_t grant = msg->u.m_sockdriver_getset.grant;
+    socklen_t len = msg->u.m_sockdriver_getset.len;
+    struct sockdriver_data data;
+    int val;
+    int retval;
+
+    if ((sock = sock_get(sock_id)) == NULL) {
+        retval = -EINVAL;
+        goto reply;
+    }
+
+    data.endpoint = src;
+    data.grant = grant;
+    data.len = len;
+
+    if (level == SOL_SOCKET) {
+        switch (name) {
+        case SO_DEBUG:
+        case SO_ACCEPTCONN:
+        case SO_REUSEADDR:
+        case SO_KEEPALIVE:
+        case SO_DONTROUTE:
+        case SO_BROADCAST:
+        case SO_OOBINLINE:
+            val = !!(sock->sock_opt & (unsigned int)name);
+            len = sizeof(val);
+            retval = sockdriver_copyout(&data, 0, &val, len);
+            break;
+        case SO_ERROR:
+            val = sock_error(sock);
+            len = sizeof(val);
+            retval = sockdriver_copyout(&data, 0, &val, len);
+            break;
+        case SO_TYPE:
+            val = sock_type(sock);
+            len = sizeof(val);
+            retval = sockdriver_copyout(&data, 0, &val, len);
+            break;
+        case SO_PEERCRED: {
+            struct ucred peercred;
+            if (len > sizeof(peercred)) len = sizeof(peercred);
+            peercred.pid = sock_peercred(sock).pid;
+            peercred.uid = sock_peercred(sock).uid;
+            peercred.gid = sock_peercred(sock).gid;
+            retval = sockdriver_copyout(&data, 0, &peercred, len);
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        if (sock->ops->sop_getsockopt == NULL)
+            retval = ENOPROTOOPT;
+        else
+            retval = sock->ops->sop_getsockopt(sock, level, name, &data, &len);
+    }
+
+    if (retval == OK)
+        retval = len;
+    else
+        retval = -retval;
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
 void sockdriver_suspend(struct sock* sock, unsigned int event)
 {
     struct worker_thread* wp = sockdriver_worker();
@@ -764,6 +843,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_SELECT:
         do_select(msg);
+        break;
+    case SDEV_GETSOCKOPT:
+        do_getsockopt(msg);
         break;
     default:
         if (sd->sd_other) {

@@ -349,6 +349,25 @@ ssize_t do_sockmsg(void)
     return retval;
 }
 
+int do_getsockopt(void)
+{
+    endpoint_t src = self->msg_in.source;
+    int fd = self->msg_in.u.m_vfs_sockopt.sock_fd;
+    int level = self->msg_in.u.m_vfs_sockopt.level;
+    int name = self->msg_in.u.m_vfs_sockopt.name;
+    void* buf = self->msg_in.u.m_vfs_sockopt.buf;
+    size_t len = self->msg_in.u.m_vfs_sockopt.len;
+    dev_t dev;
+    int retval;
+
+    if ((retval = get_sock_fd(fd, &dev, NULL)) != OK) return retval;
+
+    retval = sdev_getsockopt(src, dev, level, name, buf, &len);
+    if (retval == OK) self->msg_out.u.m_vfs_sockopt.len = len;
+
+    return retval;
+}
+
 static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
                          loff_t* ppos, struct fproc* fp)
 {

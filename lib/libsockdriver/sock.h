@@ -17,6 +17,12 @@ typedef int32_t sockid_t;
 #define SFL_SHUT_RD 0x01
 #define SFL_SHUT_WR 0x02
 
+struct sock_cred {
+    pid_t pid;
+    uid_t uid;
+    gid_t gid;
+};
+
 struct sock {
     sockid_t id;
     unsigned int flags;
@@ -27,6 +33,8 @@ struct sock {
 
     int peek_off;
     int rcvlowat;
+
+    struct sock_cred peercred;
 
     struct list_head hash;
     struct list_head wq;
@@ -44,6 +52,7 @@ struct sockdriver_data {
 #define sock_sockid(sock)            ((sock)->id)
 #define sock_type(sock)              ((sock)->type)
 #define sock_recvq(sock)             ((sock)->recvq)
+#define sock_peercred(sock)          ((sock)->peercred)
 #define sock_is_listening(sock)      (!!((sock)->sock_opt & SO_ACCEPTCONN))
 #define sock_is_shutdown(sock, mask) ((sock)->flags & (mask))
 

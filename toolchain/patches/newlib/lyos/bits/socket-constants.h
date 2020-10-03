@@ -46,4 +46,5 @@
 #else
 #define SO_SNDTIMEO 21
 #endif
-#define SO_TYPE 3
+#define SO_PEERCRED 17
+#define SO_TYPE     3

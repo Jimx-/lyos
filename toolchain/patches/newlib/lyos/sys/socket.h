@@ -19,6 +19,7 @@
 #ifndef _SYS_SOCKET_H
 #define _SYS_SOCKET_H 1
 
+#include <sys/features.h>
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

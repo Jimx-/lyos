@@ -128,6 +128,25 @@ static void uds_get_cred(struct udssock* uds, endpoint_t endpoint)
     }
 }
 
+static void uds_init_peercred(struct udssock* uds, endpoint_t endpoint)
+{
+    struct sock_cred* cred = &sock_peercred(&uds->sock);
+
+    if ((cred->pid = get_epinfo(endpoint, &cred->uid, &cred->gid)) < 0) {
+        cred->pid = -1;
+        cred->uid = -1;
+        cred->gid = -1;
+    }
+}
+
+static void uds_copy_peercred(struct udssock* uds, struct udssock* peer)
+{
+    struct sock_cred* dest_cred = &sock_peercred(&uds->sock);
+    struct sock_cred* src_cred = &sock_peercred(&peer->sock);
+
+    memcpy(dest_cred, src_cred, sizeof(*dest_cred));
+}
+
 static int uds_check_addr(const struct sockaddr* addr, size_t addrlen,
                           const char** pathp)
 {
@@ -273,6 +292,10 @@ static int uds_bind(struct sock* sock, struct sockaddr* addr, size_t addrlen,
         uds2->ino = 0;
     }
 
+    if (uds_get_type(uds) != SOCK_DGRAM && !uds_is_connecting(uds) &&
+        !uds_is_connected(uds))
+        uds_init_peercred(uds, user_endpt);
+
     uds->path_len = path_len;
     memcpy(uds->path, path, path_len);
     uds->dev = dev;
@@ -334,6 +357,7 @@ static int uds_attach(struct udssock* uds, struct udssock* link)
 
     link->conn = conn;
     link->flags |= UDSF_CONNECTED;
+    uds_copy_peercred(link, uds);
 
     conn->conn = link;
     conn->flags = uds->flags & (UDSF_PASSCRED | UDSF_CONNWAIT);
@@ -393,6 +417,8 @@ restart:
 
     if (!((uds->flags | peer->flags) & UDSF_CONNWAIT)) {
         if ((retval = uds_attach(peer, uds)) != OK) return retval;
+
+        uds_init_peercred(uds->conn, user_endpt);
     } else {
         uds->flags &= ~UDSF_CONNECTED;
         need_wait = TRUE;

@@ -41,6 +41,8 @@ struct sockdriver_ops {
                         socklen_t* addr_len, endpoint_t user_endpt, int flags,
                         int* rflags);
     __poll_t (*sop_poll)(struct sock* sock);
+    int (*sop_getsockopt)(struct sock* sock, int level, int name,
+                          const struct sockdriver_data* data, socklen_t* len);
 };
 
 struct sockdriver {

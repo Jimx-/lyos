@@ -491,6 +491,50 @@ static int sdev_select(endpoint_t src, struct sdmap* sdp, sockid_t sockid,
     return msg.u.m_sockdriver_reply.status;
 }
 
+static int sdev_get(endpoint_t src, int type, dev_t dev, int level, int name,
+                    void* addr, size_t* len)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    mgrant_id_t grant;
+    MESSAGE msg;
+    int retval;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    grant =
+        mgrant_set_proxy(sdp->endpoint, src, (vir_bytes)addr, *len, MGF_WRITE);
+    if (grant == GRANT_INVALID)
+        panic("vfs: sdev_get failed to create proxy grant");
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = type;
+    msg.u.m_sockdriver_getset.req_id = src;
+    msg.u.m_sockdriver_getset.sock_id = sockid;
+    msg.u.m_sockdriver_getset.level = level;
+    msg.u.m_sockdriver_getset.name = name;
+    msg.u.m_sockdriver_getset.grant = grant;
+    msg.u.m_sockdriver_getset.len = *len;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_socket failed to send request");
+    }
+    retval = msg.u.m_sockdriver_reply.status;
+
+    mgrant_revoke(grant);
+
+    if (retval < 0) return -retval;
+
+    *len = retval;
+    return 0;
+}
+
+int sdev_getsockopt(endpoint_t src, dev_t dev, int level, int name, void* addr,
+                    size_t* len)
+{
+    return sdev_get(src, SDEV_GETSOCKOPT, dev, level, name, addr, len);
+}
+
 int sdev_close(dev_t dev, int may_block) { return 0; }
 
 __poll_t sock_poll(struct file_desc* filp, __poll_t mask,

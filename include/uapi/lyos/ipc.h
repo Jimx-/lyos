@@ -291,6 +291,20 @@ BEGIN_MESS_DECL(mess_vfs_sendrecv)
 }
 END_MESS_DECL(mess_vfs_sendrecv)
 
+BEGIN_MESS_DECL(mess_vfs_sockopt)
+{
+    int status;
+
+    int sock_fd;
+    int level;
+    int name;
+    void* buf;
+    size_t len;
+
+    __u8 _pad[40 - sizeof(void*) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_vfs_sockopt)
+
 BEGIN_MESS_DECL(mess_vfs_fs_lookup)
 {
     dev_t dev;
@@ -680,6 +694,19 @@ BEGIN_MESS_DECL(mess_sockdriver_select)
 }
 END_MESS_DECL(mess_sockdriver_select)
 
+BEGIN_MESS_DECL(mess_sockdriver_getset)
+{
+    int req_id;
+    int sock_id;
+    int level;
+    int name;
+    __mgrant_id_t grant;
+    size_t len;
+
+    __u8 _pad[36 - sizeof(size_t)];
+}
+END_MESS_DECL(mess_sockdriver_getset)
+
 typedef struct {
     int source;
     int type;
@@ -708,6 +735,7 @@ typedef struct {
         struct mess_vfs_bindconn m_vfs_bindconn;
         struct mess_vfs_listen m_vfs_listen;
         struct mess_vfs_sendrecv m_vfs_sendrecv;
+        struct mess_vfs_sockopt m_vfs_sockopt;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
         struct mess_vfs_fs_stat m_vfs_fs_stat;
@@ -742,6 +770,7 @@ typedef struct {
         struct mess_sockdriver_sendrecv m_sockdriver_sendrecv;
         struct mess_sockdriver_recv_reply m_sockdriver_recv_reply;
         struct mess_sockdriver_select m_sockdriver_select;
+        struct mess_sockdriver_getset m_sockdriver_getset;
 
         __u8 m_payload[56];
     } u;
