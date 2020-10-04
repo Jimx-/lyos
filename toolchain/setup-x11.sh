@@ -5,11 +5,15 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/config.sh
 . $DIR/utils.sh
 
+PKG_CONFIG_SYSROOT_DIR=$SYSROOT
+PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig
+
 : ${BUILD_LIBDRM:=false}
 : ${BUILD_KMSCUBE:=false}
 : ${BUILD_LIBEXPAT:=false}
 : ${BUILD_LIBFFI:=false}
 : ${BUILD_WAYLAND:=false}
+: ${BUILD_MESA:=false}
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
@@ -95,6 +99,16 @@ if $BUILD_WAYLAND; then
     $DIR/sources/wayland-1.18.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --with-host-scanner --disable-dtd-validation --disable-documentation
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+if $BUILD_MESA; then
+    if [ ! -d "mesa-$SUBARCH" ]; then
+        mkdir mesa-$SUBARCH
+    fi
+
+    pushd mesa-$SUBARCH > /dev/null
+    meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=drm -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-20.0.5
     popd > /dev/null
 fi
 

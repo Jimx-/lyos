@@ -21,6 +21,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_PCRE:=false}
 : ${BUILD_GREP:=false}
 : ${BUILD_LESS:=false}
+: ${BUILD_ZLIB:=false}
+: ${BUILD_GLIB:=false}
+: ${BUILD_PKGCONFIG:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -113,7 +116,7 @@ if $BUILD_NEWLIB; then
     TARGET_CFLAGS=-fPIC make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
-    $TARGET-gcc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
+    $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
     popd > /dev/null
 
     # Build static library without -fPIC
@@ -316,6 +319,45 @@ if $BUILD_LESS; then
 
     pushd less-$SUBARCH > /dev/null
     $DIR/sources/less-551/configure --host=$TARGET --prefix=/usr --sysconfdir=/etc
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build zlib
+if $BUILD_ZLIB; then
+    if [ ! -d "zlib-$SUBARCH" ]; then
+        mkdir zlib-$SUBARCH
+    fi
+
+    pushd zlib-$SUBARCH > /dev/null
+    CHOST=$TARGET prefix=/usr $DIR/sources/zlib-1.2.11/configure
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build glib
+if $BUILD_GLIB; then
+    if [ ! -d "glib-$SUBARCH" ]; then
+        mkdir glib-$SUBARCH
+    fi
+
+    pushd glib-$SUBARCH > /dev/null
+    PKG_CONFIG_SYSROOT_DIR=$SYSROOT PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dxattr=false $DIR/sources/glib-2.59.2
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja intstall || cmd_error
+    popd > /dev/null
+fi
+
+# Build pkg-config
+if $BUILD_PKGCONFIG; then
+    if [ ! -d "pkg-config-$SUBARCH" ]; then
+        mkdir pkg-config-$SUBARCH
+    fi
+
+    pushd pkg-config-$SUBARCH > /dev/null
+    $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=/usr --with-internal-glib --disable-static
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

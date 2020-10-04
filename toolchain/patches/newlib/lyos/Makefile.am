@@ -12,7 +12,7 @@ GENERAL_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c tt
 				mntent.c err.c progname.c crypt3.c sysconf.c regex.c ucontext.c poll.c \
 				clock_gettime.c clock_settime.c clock_getres.c sched_yield.c usleep.c \
 				nanosleep.c signalfd.c flockfile.c popen.c eventfd.c timerfd.c epoll.c \
-				socket.c dl.c
+				socket.c dl.c iconv.c
 
 ADD_OBJS = $(LYOS_MACHINE_LIB)
 
@@ -78,6 +78,16 @@ machine/crt0.o:; @true
 machine/crti.o:; @true
 machine/crtn.o:; @true
 machine/lib.a:; @true
+
+install-data-local:
+	$(mkinstalldirs) $(DESTDIR)$(tooldir)/include/arpa; \
+	for i in $(srcdir)/include/arpa/*.h; do \
+	  $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/arpa/`basename $$i`; \
+	done; \
+	$(mkinstalldirs) $(DESTDIR)$(tooldir)/include/netinet; \
+	for i in $(srcdir)/include/netinet/*.h; do \
+	  $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/netinet/`basename $$i`; \
+	done;
 
 AM_CFLAGS = -I $(srcdir)/../../stdio
 ACLOCAL_AMFLAGS = -I ../../.. -I ../../../..

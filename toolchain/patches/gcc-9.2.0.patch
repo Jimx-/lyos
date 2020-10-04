@@ -48,7 +48,7 @@ diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +    %{static:-static}}"
 +
 +#undef  LIB_SPEC
-+#define LIB_SPEC "%{pthread:-lpthread} %{!shared:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
++#define LIB_SPEC "%{pthread:-lpthread} %{shared:-lc} %{!shared:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
 diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2019-08-04 04:16:22.000000000 +0800
 +++ new/gcc/config.gcc	2020-09-21 13:19:32.208417297 +0800
