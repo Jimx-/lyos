@@ -861,6 +861,7 @@ int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
 
         int retval = region_unmap(mmp, vr, cur_start - vr->vir_addr,
                                   cur_limit - cur_start);
+
         if (retval) return retval;
 
         if (next_vr) {

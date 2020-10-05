@@ -2,6 +2,7 @@
 #include <elf.h>
 #include <unistd.h>
 #include <string.h>
+#include <dlfcn.h>
 
 #include "ldso.h"
 #include "env.h"
@@ -56,8 +57,8 @@ struct so_info* ldso_alloc_info(const char* name)
     si->name[name_len] = '\0';
     si->name_len = name_len;
     si->flags = SI_USED;
+    si->init_called = 0;
     si->next = NULL;
-    si->list = NULL;
 
     if (si_list == NULL) {
         si_list_tail = si_list = si;
@@ -108,6 +109,58 @@ struct so_info* ldso_check_handle(void* handle)
     return si;
 }
 
+static void ldso_init_tpsort_visit(struct list_head* head, struct so_info* si,
+                                   int rev)
+{
+    struct needed_entry* entry;
+
+    if (si->init_done) return;
+    si->init_done = 1;
+
+    for (entry = si->needed; entry; entry = entry->next) {
+        if (entry->si) ldso_init_tpsort_visit(head, entry->si, rev);
+    }
+
+    if (rev)
+        list_add(&si->list, head);
+    else
+        list_add_tail(&si->list, head);
+}
+
+static void ldso_init_tpsort(struct list_head* head, int rev)
+{
+    struct so_info* si;
+
+    for (si = si_list; si; si = si->next) {
+        si->init_done = 0;
+    }
+
+    for (si = si_list; si; si = si->next) {
+        ldso_init_tpsort_visit(head, si, rev);
+    }
+}
+
+static void ldso_call_init_function(struct so_info* si)
+{
+    if (si->init_array_size == 0 && (si->init_called || !si->init)) return;
+
+    if (!si->init_called && si->init) {
+        si->init_called = 1;
+        si->init();
+    }
+}
+
+static void ldso_call_init_functions(void)
+{
+    struct list_head init_list;
+    struct so_info* si;
+
+    INIT_LIST_HEAD(&init_list);
+    ldso_init_tpsort(&init_list, 0);
+
+    list_for_each_entry(si, &init_list, list) { ldso_call_init_function(si); }
+}
+
 int ldso_main(int argc, char* argv[], char* envp[])
 {
     Elf32_Addr got0;
@@ -151,5 +204,35 @@ int ldso_main(int argc, char* argv[], char* envp[])
 
     ldso_do_copy_relocations(si);
 
+    ldso_call_init_functions();
+
     return (int)si->entry;
+}
+
+void* dlopen(const char* filename, int flags)
+{
+    struct so_info* si;
+    struct so_info** old_tail = &si_list_tail->next;
+    int retval;
+
+    if (filename == NULL) {
+        si = si_list;
+    } else {
+        si = ldso_load_library(filename, si_list);
+    }
+
+    if (si) {
+        if (*old_tail) {
+            retval = ldso_load_needed(si);
+
+            if (retval == -1 ||
+                ldso_relocate_objects(si, flags & RTLD_NOW) == -1) {
+                si = NULL;
+            } else {
+                ldso_call_init_functions();
+            }
+        }
+    }
+
+    return si;
 }

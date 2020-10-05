@@ -1,0 +1,12 @@
+[binaries]
+c = 'i686-elf-lyos-gcc'
+cpp = 'i686-elf-lyos-g++'
+ar = 'i686-elf-lyos-ar'
+strip = 'i686-elf-lyos-strip'
+pkgconfig = 'i686-elf-lyos-pkg-config'
+
+[host_machine]
+system = 'lyos'
+cpu_family = 'x86'
+cpu = 'i686'
+endian = 'little'

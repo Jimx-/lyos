@@ -10,7 +10,7 @@
 #include "ldso.h"
 #include "env.h"
 
-struct so_info* ldso_map_object(char* pathname, int fd)
+struct so_info* ldso_map_object(const char* pathname, int fd)
 {
     struct so_info* si = ldso_alloc_info(pathname);
     if (!si) return NULL;
@@ -34,6 +34,8 @@ struct so_info* ldso_map_object(char* pathname, int fd)
 
     Elf32_Ehdr* ehdr = si->ehdr;
     Elf32_Phdr* phdr = (Elf32_Phdr*)((char*)ehdr + ehdr->e_phoff);
+    Elf32_Phdr* phdr_tls = NULL;
+    Elf32_Addr tls_vaddr = 0;
     size_t phsize = ehdr->e_phnum * sizeof(Elf32_Phdr);
     char* phend = (char*)phdr + phsize;
 
@@ -47,6 +49,9 @@ struct so_info* ldso_map_object(char* pathname, int fd)
             break;
         case PT_DYNAMIC:
             si->dynamic = (Elf32_Dyn*)phdr->p_vaddr;
+            break;
+        case PT_TLS:
+            phdr_tls = phdr;
             break;
         }
     }
@@ -73,8 +78,17 @@ struct so_info* ldso_map_object(char* pathname, int fd)
     Elf32_Addr data_vaddr = rounddown(segs[1]->p_vaddr);
     size_t data_size = roundup(segs[1]->p_memsz);
     off_t data_offset = rounddown(segs[1]->p_offset);
-    Elf32_Addr clear_vaddr = data_vaddr + segs[1]->p_filesz;
+    Elf32_Addr clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
     size_t clear_size = segs[1]->p_memsz - segs[1]->p_filesz;
+
+    if (phdr_tls) {
+        ++ldso_tls_dtv_generation;
+        si->tls_index = ++ldso_tls_max_index;
+        si->tls_size = phdr_tls->p_memsz;
+        si->tls_align = phdr_tls->p_align;
+        si->tls_init_size = phdr_tls->p_filesz;
+        tls_vaddr = phdr_tls->p_vaddr;
+    }
 
     if (base_offset < pagesz) {
         munmap(ehdr, pagesz);
@@ -107,6 +121,10 @@ struct so_info* ldso_map_object(char* pathname, int fd)
     if (si->dynamic)
         si->dynamic = (Elf32_Dyn*)(si->relocbase + (Elf32_Addr)si->dynamic);
     if (si->entry) si->entry = (char*)(si->relocbase + (Elf32_Addr)si->entry);
+
+    if (phdr_tls) {
+        si->tls_init = mapbase + tls_vaddr;
+    }
 
     return si;
 

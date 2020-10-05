@@ -82,7 +82,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
  	echo "Error: 32bit target is not supported after Darwin17" 1>&2
  	;;
 +i[34567]86-*-lyos*)
-+	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h newlib-stdint.h i386/i386elf.h lyos.h"
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h glibc-stdint.h elfos.h i386/i386elf.h lyos.h"
 +	tmake_file="${tmake_file} i386/t-i386elf t-svr4 i386/t-crtstuff"
 +	use_fixproto=yes
 +    # thread_file="posix"

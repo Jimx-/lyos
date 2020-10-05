@@ -9,6 +9,13 @@
 
 #define COND_INC_STEP 0x4
 
+int pthread_condattr_init(pthread_condattr_t* attr) { return 0; }
+
+int pthread_condattr_setclock(pthread_condattr_t* attr, clockid_t clockid)
+{
+    return 0;
+}
+
 int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr)
 {
     if (!attr) {

@@ -27,3 +27,14 @@ pthread_t pthread_self(void)
 }
 
 int pthread_equal(pthread_t t1, pthread_t t2) { return t1 == t2; }
+
+int pthread_getcpuclockid(pthread_t thread, clockid_t* clockid)
+{
+    *clockid = CLOCK_REALTIME;
+    return 0;
+}
+
+int pthread_sigmask(int how, const sigset_t* set, sigset_t* oldset)
+{
+    return sigprocmask(how, set, oldset);
+}

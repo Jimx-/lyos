@@ -31,6 +31,7 @@ $(INITRD):
 	@cp -f $(DESTDIR)/bin/mount bin/
 	@cp -f $(DESTDIR)/lib/ld-lyos.so lib/
 	@cp -f $(DESTDIR)/usr/lib/libc.so usr/lib
+	@cp -f $(DESTDIR)/usr/lib/libm.so usr/lib
 	@cp -rf ../sysroot/etc/* etc/
 	@touch .root
 	@tar -cvf $(INITRD) .root bin lib sbin etc usr > /dev/null

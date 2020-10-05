@@ -48,6 +48,11 @@ int pthread_join(pthread_t thread, void** retval);
 int pthread_detach(pthread_t thread);
 int pthread_cancel(pthread_t thread);
 
+int pthread_getcpuclockid(pthread_t thread, clockid_t* clockid);
+
+int pthread_condattr_init(pthread_condattr_t* attr);
+int pthread_condattr_setclock(pthread_condattr_t* attr, clockid_t clockid);
+
 int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr);
 int pthread_cond_wait(pthread_cond_t* cond, pthread_mutex_t* mutex);
 int pthread_cond_timedwait(pthread_cond_t* cond, pthread_mutex_t* mutex,
@@ -82,6 +87,12 @@ int pthread_key_create(pthread_key_t* key, void (*destructor)(void*));
 void* pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void* value);
 int pthread_key_delete(pthread_key_t key);
+
+int pthread_barrier_init(pthread_barrier_t* restrict barrier,
+                         const pthread_barrierattr_t* restrict attr,
+                         unsigned count);
+int pthread_barrier_wait(pthread_barrier_t* barrier);
+int pthread_barrier_destroy(pthread_barrier_t* barrier);
 
 __END_DECLS
 

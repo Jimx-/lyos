@@ -101,7 +101,7 @@ ssize_t initfs_read(dev_t dev, ino_t num, struct fsdriver_data* data,
 ssize_t initfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
                      loff_t rwpos, size_t count)
 {
-    return initfs_rdwt(dev, num, WRITE, data, rwpos, count);
+    return -EROFS;
 }
 
 static int match_dirname(const char* dirname, const char* pathname)

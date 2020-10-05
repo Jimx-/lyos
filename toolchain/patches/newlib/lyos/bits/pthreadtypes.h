@@ -20,7 +20,8 @@ typedef struct {
 } pthread_attr_t;
 
 typedef struct {
-    int private;
+    unsigned int state;
+    unsigned int owner;
 } pthread_mutex_t;
 
 typedef long pthread_mutexattr_t;
@@ -46,6 +47,13 @@ typedef struct {
 } pthread_rwlock_t;
 
 typedef long pthread_rwlockattr_t;
+
+typedef struct {
+    unsigned int waiting;
+    unsigned int count;
+} pthread_barrier_t;
+
+typedef long pthread_barrierattr_t;
 
 typedef int pthread_key_t;
 

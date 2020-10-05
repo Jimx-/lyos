@@ -17,7 +17,7 @@ static int __strcmp(const char* s1, const char* s2)
 
 static int ldso_is_exported(const Elf32_Sym* sym)
 {
-    static const void* ldso_exports[] = {dlsym, NULL};
+    static const void* ldso_exports[] = {dlopen, dlsym, NULL};
     int i;
     void* value;
 
@@ -51,6 +51,10 @@ Elf32_Sym* ldso_lookup_symbol_obj(const char* name, unsigned long hash,
                                   struct so_info* si, int in_plt)
 {
     unsigned long symnum;
+
+    if (!si->nbuckets) {
+        return NULL;
+    }
 
     for (symnum = si->buckets[hash % si->nbuckets]; symnum != 0;
          symnum = si->chains[symnum]) {
@@ -188,6 +192,7 @@ void* do_dlsym(void* handle, const char* name, void* retaddr)
     if (def != NULL) {
         void* p;
         p = def_obj->relocbase + def->st_value;
+
         return p;
     }
 
@@ -197,7 +202,6 @@ void* do_dlsym(void* handle, const char* name, void* retaddr)
 void* dlsym(void* handle, const char* name)
 {
     void* retaddr;
-
     retaddr = __builtin_return_address(0);
     return do_dlsym(handle, name, retaddr);
 }

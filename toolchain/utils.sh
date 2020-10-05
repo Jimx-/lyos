@@ -32,6 +32,11 @@ function patc() {
 
 function install_newlib () {
     cp -rf $DIR/patches/newlib/lyos $1/newlib/libc/sys/
+
+    for f in 'atan2l' 'sinl' 'fabsl' 'copysignl' 'logl' 'coshl' 'cosl' 'expl' 'powl' 'sinhl'
+    do
+        sed -i 's/#ifdef _LDBL_EQ_DBL/#if 1/g' $1/newlib/libm/common/$f.c
+    done
 }
 
 function cmd_error() {

@@ -373,6 +373,37 @@ void init_desc(struct descriptor* p_desc, u32 base, u32 limit, u16 attribute)
     p_desc->base_high = (base >> 24) & 0x0FF; /* 段基址 3		(1 字节) */
 }
 
+static void print_stacktrace(struct proc* p)
+{
+    unsigned long bp, hbp, pc;
+    int retval;
+
+    printk("proc %d: 0x%x ", p->endpoint, p->regs.eip);
+
+    bp = p->regs.ebp;
+
+    while (bp) {
+        retval = data_vir_copy(KERNEL, &pc, p->endpoint,
+                               &((unsigned long*)bp)[1], sizeof(pc));
+        if (retval != OK) break;
+
+        retval = data_vir_copy(KERNEL, &hbp, p->endpoint,
+                               &((unsigned long*)bp)[0], sizeof(hbp));
+        if (retval != OK) break;
+
+        printk("0x%lx ", (unsigned long)pc);
+
+        if (hbp != 0 && hbp <= bp) {
+            pc = -1;
+            printk("0x%lx ", (unsigned long)pc);
+            break;
+        }
+        bp = hbp;
+    }
+
+    printk("\n");
+}
+
 /**
  * <Ring 0> Handle page fault.
  */
@@ -510,6 +541,7 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
         panic("unhandled exception in kernel %d, eip: %x", frame->vec_no,
               frame->eip);
     } else {
+        print_stacktrace(fault_proc);
         ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);
     }
 }

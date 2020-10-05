@@ -1,26 +1,21 @@
-#ifndef DIRENT_H_
-#define DIRENT_H_
+#ifndef _BITS_DIRENT_H_
+#define _BITS_DIRENT_H_
 
-
-struct dirent   {   
-	long d_ino; /* inode number */  
-	off_t d_off; /* offset to this dirent */  
-	unsigned short d_reclen; /* length of this d_name */  
-	unsigned char d_type; /* the type of d_name */  
-	char d_name [256]; /* file name (null-terminated) */  
+struct dirent   {
+    long d_ino; /* inode number */
+    off_t d_off; /* offset to this dirent */
+    unsigned short d_reclen; /* length of this d_name */
+    unsigned char d_type; /* the type of d_name */
+    char d_name [256]; /* file name (null-terminated) */
 };
 
 typedef struct DIR {
-	int fd;
-	void * buf;
-	size_t size;
-	size_t len;
-	size_t loc;
+    int fd;
+    void * buf;
+    size_t size;
+    size_t len;
+    size_t loc;
 } DIR;
-
-DIR * opendir (const char * dirname);
-int closedir (DIR * dir);
-struct dirent * readdir (DIR * dirp);
 
 enum
 {

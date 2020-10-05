@@ -5,9 +5,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/config.sh
 . $DIR/utils.sh
 
-PKG_CONFIG_SYSROOT_DIR=$SYSROOT
-PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig
-
 : ${BUILD_LIBDRM:=false}
 : ${BUILD_KMSCUBE:=false}
 : ${BUILD_LIBEXPAT:=false}
@@ -37,23 +34,6 @@ if $BUILD_LIBDRM; then
 
     pushd libdrm-$SUBARCH > /dev/null
     $DIR/sources/libdrm-2.4.89/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-intel --disable-vmwgfx --disable-radeon --disable-amdgpu --disable-nouveau --disable-cairo-tests
-    make -j || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
-    popd > /dev/null
-fi
-
-# Build kmscube
-if $BUILD_KMSCUBE; then
-    if [ ! -d "kmscube-$SUBARCH" ]; then
-        mkdir kmscube-$SUBARCH
-    fi
-
-    pushd $DIR/sources/kmscube > /dev/null
-    ./autogen.sh
-    popd > /dev/null
-
-    pushd kmscube-$SUBARCH > /dev/null
-    $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -109,6 +89,26 @@ if $BUILD_MESA; then
 
     pushd mesa-$SUBARCH > /dev/null
     meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=drm -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-20.0.5
+    ninja -v || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
+    popd > /dev/null
+fi
+
+# Build kmscube
+if $BUILD_KMSCUBE; then
+    if [ ! -d "kmscube-$SUBARCH" ]; then
+        mkdir kmscube-$SUBARCH
+    fi
+
+    pushd $DIR/sources/kmscube > /dev/null
+    # ./autogen.sh
+    make distclean
+    popd > /dev/null
+
+    pushd kmscube-$SUBARCH > /dev/null
+    $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 

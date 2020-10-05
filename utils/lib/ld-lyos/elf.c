@@ -58,8 +58,20 @@ int ldso_process_dynamic(struct so_info* si)
         case DT_INIT:
             init = dp->d_un.d_ptr;
             break;
+        case DT_INIT_ARRAY:
+            si->init_array = (Elf32_Addr*)(si->relocbase + dp->d_un.d_ptr);
+            break;
+        case DT_INIT_ARRAYSZ:
+            si->init_array_size = dp->d_un.d_val / sizeof(Elf32_Addr);
+            break;
         case DT_FINI:
             fini = dp->d_un.d_ptr;
+            break;
+        case DT_FINI_ARRAY:
+            si->fini_array = (Elf32_Addr*)(si->relocbase + dp->d_un.d_ptr);
+            break;
+        case DT_FINI_ARRAYSZ:
+            si->fini_array_size = dp->d_un.d_val / sizeof(Elf32_Addr);
             break;
         case DT_NEEDED:
             needed = alloc_needed_entry();
@@ -126,6 +138,13 @@ int ldso_process_phdr(struct so_info* si, Elf32_Phdr* phdr, int phnum)
             break;
         case PT_DYNAMIC:
             si->dynamic = (Elf32_Dyn*)vaddr;
+            break;
+        case PT_TLS:
+            si->tls_index = 1;
+            si->tls_size = hdr->p_memsz;
+            si->tls_align = hdr->p_align;
+            si->tls_init_size = hdr->p_filesz;
+            si->tls_init = (void*)(uintptr_t)hdr->p_vaddr;
             break;
         }
     }

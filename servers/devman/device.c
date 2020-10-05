@@ -244,13 +244,15 @@ static int create_sys_dev_entry(struct device* dev)
 
 static int add_device_node(struct device* dev)
 {
+    struct memfs_inode* dir_pin = memfs_get_root_inode();
     struct memfs_stat stat;
+    struct memfs_inode* pin;
+
     stat.st_mode = ((dev->type == DT_BLOCKDEV ? S_IFBLK : S_IFCHR) | 0666);
     stat.st_uid = SU_UID;
     stat.st_gid = 0;
     stat.st_device = dev->devt;
-    struct memfs_inode* pin = memfs_add_inode(memfs_get_root_inode(), dev->name,
-                                              NO_INDEX, &stat, NULL);
+    pin = memfs_add_inode(dir_pin, dev->name, NO_INDEX, &stat, NULL);
 
     if (!pin) {
         return ENOMEM;

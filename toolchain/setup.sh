@@ -117,6 +117,7 @@ if $BUILD_NEWLIB; then
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
+    $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libm.so -Wl,--whole-archive $SYSROOT/usr/lib/libm.a -Wl,--no-whole-archive || cmd_error
     popd > /dev/null
 
     # Build static library without -fPIC

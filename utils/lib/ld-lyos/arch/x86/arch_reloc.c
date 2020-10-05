@@ -41,7 +41,7 @@ int ldso_relocate_plt_object(struct so_info* si, Elf32_Rel* rel,
 
     if (*where != addr) *where = addr;
     if (new_addr) *new_addr = addr;
-    // xprintf("%s -> %x\n", obj->strtab + sym->st_name, addr);
+    /* xprintf("%s -> %x\n", obj->strtab + sym->st_name, addr); */
 
     return 0;
 }
@@ -59,6 +59,8 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
             struct so_info* def_obj = NULL;
 
             switch (ELF32_R_TYPE(rel->r_info)) {
+            case R_386_NONE:
+                break;
             case R_386_PC32:
                 sym = ldso_find_sym(si, symnum, &def_obj, 0);
                 *where += (Elf32_Addr)(def_obj->relocbase + sym->st_value) -
@@ -82,6 +84,16 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
                     ldso_die("copy relocation in shared library");
                 }
                 break;
+            case R_386_TLS_TPOFF:
+                sym = ldso_find_sym(si, symnum, &def_obj, 0);
+                if (!sym) continue;
+
+                *where += (Elf32_Addr)(sym->st_value);
+                /* xprintf("TLS_TPOFF: %s in %s -> %x in %s\n", */
+                /*         (def_obj->strtab + sym->st_name), si->name, *where,
+                 */
+                /*         def_obj->name); */
+                break;
             default:
                 xprintf("Unknown relocation type: %d\n",
                         ELF32_R_TYPE(rel->r_info));
@@ -99,7 +111,13 @@ char* ldso_bind(struct so_info* si, Elf32_Word reloff)
     Elf32_Addr new_addr;
     int retval = ldso_relocate_plt_object(si, rel, &new_addr);
 
-    if (retval) ldso_die("can't lookup symbol\n");
+    if (retval) {
+        Elf32_Sym* sym = si->symtab + ELF32_R_SYM(rel->r_info);
+        char* name = si->strtab + sym->st_name;
+
+        xprintf("can't lookup symbol %s\n", name);
+        ldso_die("bind");
+    }
 
     return (char*)new_addr;
 }

@@ -1337,7 +1337,7 @@ int pipe2(int pipefd[2], int flags)
 
 int pipe(int pipefd[2]) { return pipe2(pipefd, 0); }
 
-int __dirfd(DIR* dirp) { return dirp->fd; }
+int dirfd(DIR* dirp) { return dirp->fd; }
 
 void sync(void)
 {
@@ -1602,6 +1602,18 @@ void* shmat(int shmid, const void* shmaddr, int shmflg)
     send_recv(BOTH, TASK_IPC, &m);
 
     return m.IPC_RETADDR;
+}
+
+int shmctl(int shmid, int cmd, struct shmid_ds* buf)
+{
+    errno = ENOSYS;
+    return -1;
+}
+
+int shmdt(const void* shmaddr)
+{
+    errno = ENOSYS;
+    return -1;
 }
 
 int getentropy(void* buffer, size_t length)
