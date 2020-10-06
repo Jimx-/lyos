@@ -3,13 +3,30 @@
 
 #include "pthread_internal.h"
 
+typedef struct {
+    void* value;
+} pthread_key_internal_t;
+
 int pthread_key_create(pthread_key_t* key, void (*destructor)(void*))
 {
-    return ENOSYS;
+    pthread_key_internal_t* pk = (pthread_key_internal_t*)key;
+    pk->value = NULL;
+
+    return 0;
 }
 
-void* pthread_getspecific(pthread_key_t key) { return NULL; }
+void* pthread_getspecific(pthread_key_t key)
+{
+    pthread_key_internal_t* pk = (pthread_key_internal_t*)key;
+    return pk->value;
+}
 
-int pthread_setspecific(pthread_key_t key, const void* value) { return ENOSYS; }
+int pthread_setspecific(pthread_key_t key, const void* value)
+{
+    pthread_key_internal_t* pk = (pthread_key_internal_t*)key;
+    pk->value = value;
 
-int pthread_key_delete(pthread_key_t key) { return ENOSYS; }
+    return 0;
+}
+
+int pthread_key_delete(pthread_key_t key) { return 0; }

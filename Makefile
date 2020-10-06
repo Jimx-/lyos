@@ -225,6 +225,8 @@ disk-image:
 	@sudo bash scripts/setup-disk.sh
 
 initrd:
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS)
+	$(Q)$(MAKE) -C utils $(MAKEFLAGS) install
 	@(cd ramdisk; make)
 
 disasm :

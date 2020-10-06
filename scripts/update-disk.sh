@@ -71,6 +71,8 @@ cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
 #cp -rf obj/destdir.$ARCH/usr/ /$MOUNT_POINT/
 cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
 cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/
+# cp -rf obj/destdir.$ARCH/usr/lib/libEGL.so.1.0.0 /$MOUNT_POINT/usr/lib/
+# cp -rf obj/destdir.$ARCH/usr/lib/dri/* /$MOUNT_POINT/usr/lib/dri/
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 # cp -rf /$MOUNT_POINT/home/jimx/profile.out .
 #cp -rf sysroot/boot/* /$MOUNT_POINT/boot/

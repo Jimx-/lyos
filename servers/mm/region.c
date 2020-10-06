@@ -75,6 +75,7 @@ static void phys_region_free(struct phys_region* rp)
                 if (frame->phys_addr && !(frame->flags & PFF_DIRECT))
                     free_mem(frame->phys_addr, ARCH_PG_SIZE);
                 SLABFREE(frame);
+                rp->frames[i] = NULL;
             }
         }
     }
@@ -168,8 +169,12 @@ static inline struct phys_frame* phys_region_set(struct phys_region* rp, int i,
 {
     struct phys_frame* frame = rp->frames[i];
 
+    if (frame == pf) return pf;
+
     if (frame != NULL) {
-        if (frame->refcnt == 0) SLABFREE(frame);
+        if (frame->refcnt == 0) {
+            SLABFREE(frame);
+        }
     }
 
     rp->frames[i] = pf;
@@ -196,16 +201,14 @@ struct vir_region* region_new(vir_bytes vir_base, size_t vir_length, int flags)
            (int)region);
 #endif
 
-    if (region) {
-        region->vir_addr = vir_base;
-        region->length = vir_length;
-        region->flags = flags;
-        region->refcnt = 1;
-        struct phys_region* pr = &(region->phys_block);
-        pr->capacity = 0;
-        if (phys_region_init(pr, region->length / ARCH_PG_SIZE) != 0)
-            return NULL;
-    }
+    memset(region, 0, sizeof(*region));
+    region->vir_addr = vir_base;
+    region->length = vir_length;
+    region->flags = flags;
+    region->refcnt = 1;
+    struct phys_region* pr = &(region->phys_block);
+    pr->capacity = 0;
+    if (phys_region_init(pr, region->length / ARCH_PG_SIZE) != 0) return NULL;
 
     return region;
 }
@@ -244,6 +247,7 @@ int region_alloc_phys(struct vir_region* rp)
         frame->phys_addr = paddr;
         frame->refcnt = 1;
     }
+
 #if REGION_DEBUG
     printl("MM: region_alloc_phys: allocated physical memory for region: v: "
            "0x%x ~ 0x%x(%x bytes)\n",
@@ -639,15 +643,23 @@ static int region_handle_pf_filemap(struct mmproc* mmp, struct vir_region* vr,
 int region_handle_pf(struct mmproc* mmp, struct vir_region* vr, off_t offset,
                      int wrflag)
 {
+    static char zero_page[ARCH_PG_SIZE];
+    static int first = 1;
+
     struct phys_region* pregion = &vr->phys_block;
     struct phys_frame* frame =
         phys_region_get_or_alloc(pregion, offset / ARCH_PG_SIZE);
+
+    if (first) {
+        memset((char*)zero_page, 0, ARCH_PG_SIZE);
+        first = 0;
+    }
 
     if (vr->flags & RF_FILEMAP && !frame->phys_addr) {
         return region_handle_pf_filemap(mmp, vr, offset, wrflag);
     }
 
-    if (wrflag && frame->flags & PFF_SHARED) {
+    if (wrflag && (frame->flags & PFF_SHARED)) {
         /* writing to write-protected page */
         if (frame->refcnt == 1) {
             frame->flags &= ~PFF_SHARED;
@@ -681,6 +693,7 @@ int region_handle_pf(struct mmproc* mmp, struct vir_region* vr, off_t offset,
     new_frame->flags = (vr->flags & RF_WRITABLE) ? PFF_WRITABLE : 0;
     new_frame->phys_addr = paddr;
     new_frame->refcnt = 1;
+    data_copy(NO_TASK, (void*)paddr, SELF, zero_page, ARCH_PG_SIZE);
 
     phys_region_set(pregion, offset / ARCH_PG_SIZE, new_frame);
 
@@ -736,16 +749,16 @@ static int region_split(struct mmproc* mmp, struct vir_region* vr, size_t len,
     struct phys_region* pr1 = &r1->phys_block;
     int i;
     for (i = 0; i < r1->length / ARCH_PG_SIZE; i++) {
-        struct phys_frame* frame = phys_region_get_or_alloc(pr, i);
-        frame->refcnt++;
+        struct phys_frame* frame = phys_region_get(pr, i);
+        if (frame) frame->refcnt++;
         phys_region_set(pr1, i, frame);
     }
 
     struct phys_region* pr2 = &r1->phys_block;
     off_t poff = len / ARCH_PG_SIZE;
     for (i = 0; i < r2->length / ARCH_PG_SIZE; i++) {
-        struct phys_frame* frame = phys_region_get_or_alloc(pr, i + poff);
-        frame->refcnt++;
+        struct phys_frame* frame = phys_region_get(pr, i + poff);
+        if (frame) frame->refcnt++;
         phys_region_set(pr2, i, frame);
     }
 

@@ -192,7 +192,6 @@ void* do_dlsym(void* handle, const char* name, void* retaddr)
     if (def != NULL) {
         void* p;
         p = def_obj->relocbase + def->st_value;
-
         return p;
     }
 
@@ -202,6 +201,7 @@ void* do_dlsym(void* handle, const char* name, void* retaddr)
 void* dlsym(void* handle, const char* name)
 {
     void* retaddr;
+
     retaddr = __builtin_return_address(0);
     return do_dlsym(handle, name, retaddr);
 }

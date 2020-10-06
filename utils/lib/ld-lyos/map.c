@@ -68,18 +68,14 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         goto failed;
     }
 
-    Elf32_Addr base_vaddr = rounddown(segs[0]->p_vaddr);
-    Elf32_Addr base_addr = (Elf32_Addr)(si->is_dynamic ? 0 : base_vaddr);
-    size_t text_size = roundup(segs[0]->p_memsz);
-    size_t map_size = roundup(segs[1]->p_vaddr + segs[1]->p_memsz) - base_vaddr;
     off_t base_offset = rounddown(segs[0]->p_offset);
-
-    /* Map data segment */
-    Elf32_Addr data_vaddr = rounddown(segs[1]->p_vaddr);
-    size_t data_size = roundup(segs[1]->p_memsz);
+    Elf32_Addr base_vaddr = rounddown(segs[0]->p_vaddr);
+    Elf32_Addr base_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_memsz);
+    Elf32_Addr text_vlimit = roundup(segs[0]->p_vaddr + segs[0]->p_memsz);
     off_t data_offset = rounddown(segs[1]->p_offset);
+    Elf32_Addr data_vaddr = rounddown(segs[1]->p_vaddr);
+    Elf32_Addr data_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_filesz);
     Elf32_Addr clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
-    size_t clear_size = segs[1]->p_memsz - segs[1]->p_filesz;
 
     if (phdr_tls) {
         ++ldso_tls_dtv_generation;
@@ -95,6 +91,9 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         ehdr = MAP_FAILED;
     }
 
+    Elf32_Addr base_addr = (Elf32_Addr)(si->is_dynamic ? 0 : base_vaddr);
+    size_t map_size = base_vlimit - base_vaddr;
+
     /* Map text segment */
     char* mapbase =
         mmap((void*)base_addr, map_size, PROT_READ | PROT_WRITE | PROT_EXEC,
@@ -104,19 +103,34 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         goto failed;
     }
 
-    Elf32_Addr clear_addr = (Elf32_Addr)(mapbase + (clear_vaddr - base_addr));
-    Elf32_Addr data_addr = (Elf32_Addr)(mapbase + (data_vaddr - base_addr));
-
-    if (mmap((void*)data_addr, data_size, PROT_READ | PROT_WRITE,
+    /* data_vlimit = base_vlimit; */
+    void* data_addr = mapbase + (data_vaddr - base_vaddr);
+    if (mmap(data_addr, data_vlimit - data_vaddr, PROT_READ | PROT_WRITE,
              MAP_PRIVATE | MAP_FIXED, fd, data_offset) == MAP_FAILED) {
         xprintf("%s: failed to map data segment\n", pathname);
         goto failed;
     }
-    memset((void*)clear_addr, 0, clear_size);
+
+    if (base_vlimit > data_vlimit) {
+        if (mmap(mapbase + (data_vlimit - base_vaddr),
+                 base_vlimit - data_vlimit, PROT_READ | PROT_WRITE,
+                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1,
+                 0) == MAP_FAILED) {
+            xprintf("%s: failed to map data segment\n", pathname);
+            goto failed;
+        }
+    }
+
+    data_vlimit = base_vlimit;
+    void* clear_addr = mapbase + (clear_vaddr - base_vaddr);
+    size_t clear_size = data_vlimit - clear_vaddr;
+    if (data_vlimit > clear_vaddr) {
+        memset(clear_addr, 0, clear_size);
+    }
 
     si->mapbase = mapbase;
     si->mapsize = map_size;
-    si->relocbase = mapbase - base_addr;
+    si->relocbase = mapbase - base_vaddr;
 
     if (si->dynamic)
         si->dynamic = (Elf32_Dyn*)(si->relocbase + (Elf32_Addr)si->dynamic);

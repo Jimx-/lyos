@@ -1622,7 +1622,11 @@ int getentropy(void* buffer, size_t length)
     return ENOSYS;
 }
 
-int posix_memalign(void** memptr, size_t alignment, size_t size) { return 0; }
+int posix_memalign(void** memptr, size_t alignment, size_t size)
+{
+    *memptr = malloc(size);
+    return 0;
+}
 
 int getrlimit(int resource, struct rlimit* rlim)
 {

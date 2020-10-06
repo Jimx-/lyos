@@ -38,8 +38,8 @@
 #define OBJ_ALIGN 4
 
 #define SLABSIZE 200
-#define MINSIZE 8
-#define MAXSIZE ((SLABSIZE - 1 + MINSIZE / OBJ_ALIGN) * OBJ_ALIGN)
+#define MINSIZE  8
+#define MAXSIZE  ((SLABSIZE - 1 + MINSIZE / OBJ_ALIGN) * OBJ_ALIGN)
 
 struct slabdata;
 
@@ -61,7 +61,7 @@ struct slabdata {
 
 static struct list_head slabs[SLABSIZE];
 
-#define SLAB_INDEX(bytes) (roundup(bytes, OBJ_ALIGN) - (MINSIZE / OBJ_ALIGN))
+#define SLAB_INDEX(bytes) ((roundup(bytes, OBJ_ALIGN) - MINSIZE) / OBJ_ALIGN)
 
 void slabs_init()
 {

@@ -26,8 +26,8 @@ static int ldso_do_copy_relocation(struct so_info* si, Elf32_Rela* rela)
     void* src_addr = (void*)(src_obj->relocbase + src_sym->st_value);
     memcpy(dest_addr, src_addr, size);
 
-    // xprintf("COPY %s %x in %s -> %x in %s, size %d\n", name, src_addr,
-    // src_obj->name, dest_addr, si->name, size);
+    /* xprintf("COPY %s %x in %s -> %x in %s, size %d\n", name, src_addr, */
+    /*         src_obj->name, dest_addr, si->name, size); */
     return 0;
 }
 
