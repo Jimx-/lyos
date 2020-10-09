@@ -74,6 +74,18 @@ void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid)
     newsock->sock_opt = sock->sock_opt & ~SO_ACCEPTCONN;
 }
 
+void sockdriver_free(struct sock* sock)
+{
+    const struct sockdriver_ops* ops;
+
+    sock_unhash(sock);
+
+    ops = sock->ops;
+    sock->ops = NULL;
+
+    ops->sop_free(sock);
+}
+
 static int socket_create(const struct sockdriver* sd, endpoint_t endpoint,
                          int domain, int type, int protocol, struct sock** spp)
 {
@@ -211,6 +223,52 @@ static void do_socket(const struct sockdriver* sd, MESSAGE* msg)
 
     send_socket_reply(msg->source, msg->u.m_sockdriver_socket.req_id, sock_id,
                       0);
+}
+
+static void do_socketpair(const struct sockdriver* sd, MESSAGE* msg)
+{
+    endpoint_t endpoint = msg->u.m_sockdriver_socket.endpoint;
+    int domain = msg->u.m_sockdriver_socket.domain;
+    int type = msg->u.m_sockdriver_socket.type;
+    int protocol = msg->u.m_sockdriver_socket.protocol;
+    struct sock *sock1, *sock2;
+    sockid_t sock_id, sock_id2;
+    int retval;
+
+    if ((retval = socket_create(sd, endpoint, domain, type, protocol,
+                                &sock1)) != 0) {
+        sock_id = -retval;
+        sock_id2 = -1;
+        goto reply;
+    }
+
+    if (sock1->ops->sop_pair == NULL) {
+        sockdriver_free(sock1);
+        sock_id = -EOPNOTSUPP;
+        goto reply;
+    }
+
+    if ((retval = socket_create(sd, endpoint, domain, type, protocol,
+                                &sock2)) != 0) {
+        sockdriver_free(sock1);
+        sock_id = -retval;
+        sock_id2 = -1;
+        goto reply;
+    }
+
+    if ((retval = sock1->ops->sop_pair(sock1, sock2, endpoint)) != OK) {
+        sockdriver_free(sock1);
+        sockdriver_free(sock2);
+        sock_id = -retval;
+        goto reply;
+    }
+
+    sock_id = sock1->id;
+    sock_id2 = sock2->id;
+
+reply:
+    send_socket_reply(msg->source, msg->u.m_sockdriver_socket.req_id, sock_id,
+                      sock_id2);
 }
 
 static int do_bind(sockid_t id, struct sockaddr* addr, size_t addrlen,
@@ -818,6 +876,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
     switch (msg->type) {
     case SDEV_SOCKET:
         do_socket(sd, msg);
+        break;
+    case SDEV_SOCKETPAIR:
+        do_socketpair(sd, msg);
         break;
     case SDEV_BIND:
     case SDEV_CONNECT:

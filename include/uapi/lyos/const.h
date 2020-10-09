@@ -213,6 +213,7 @@ enum msgtype {
     SENDMSG,
     RECVMSG,
     GETSOCKOPT,
+    SOCKETPAIR,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

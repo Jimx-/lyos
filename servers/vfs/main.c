@@ -239,7 +239,7 @@ static void do_work(void)
         self->msg_out.RETVAL = do_sync();
         break;
     case PIPE2:
-        self->msg_out.RETVAL = do_pipe2();
+        self->msg_out.u.m_vfs_fdpair.retval = do_pipe2();
         break;
     case POLL:
         self->msg_out.RETVAL = do_poll();
@@ -276,6 +276,9 @@ static void do_work(void)
         break;
     case VFS_SOCKETPATH:
         self->msg_out.u.m_vfs_socketpath.status = do_socketpath();
+        break;
+    case SOCKETPAIR:
+        self->msg_out.u.m_vfs_fdpair.retval = do_socketpair();
         break;
     case BIND:
         self->msg_out.RETVAL = do_bind();

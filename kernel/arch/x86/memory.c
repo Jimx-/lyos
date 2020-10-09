@@ -426,11 +426,21 @@ void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
     }
 }
 
+static int check_mm_result(struct proc* caller)
+{
+    if (caller && (caller->flags & PF_RESUME_SYSCALL)) {
+        return caller->mm_request.result;
+    }
+
+    return 0;
+}
+
 int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
               struct vir_addr* src_addr, size_t bytes, int check)
 {
     struct vir_addr* vir_addrs[2];
     struct proc* procs[2];
+    int retval;
 
     if (bytes < 0) return EINVAL;
 
@@ -446,8 +456,10 @@ int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,
         if (proc_ep != NO_TASK && procs[i] == NULL) return ESRCH;
     }
 
-    int retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr,
-                            procs[_SRC_], vir_addrs[_SRC_]->addr, bytes);
+    if ((retval = check_mm_result(caller)) != OK) return retval;
+
+    retval = la_la_copy(procs[_DEST_], vir_addrs[_DEST_]->addr, procs[_SRC_],
+                        vir_addrs[_SRC_]->addr, bytes);
 
     if (retval) {
         if (retval == EFAULT) return EFAULT;

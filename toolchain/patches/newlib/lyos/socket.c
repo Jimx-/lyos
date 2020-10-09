@@ -27,6 +27,31 @@ int socket(int domain, int type, int protocol)
     return msg.FD;
 }
 
+int socketpair(int domain, int type, int protocol, int fds[2])
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SOCKETPAIR;
+    msg.u.m_vfs_socket.domain = domain;
+    msg.u.m_vfs_socket.type = type;
+    msg.u.m_vfs_socket.protocol = protocol;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.u.m_vfs_fdpair.retval > 0) {
+        errno = msg.u.m_vfs_fdpair.retval;
+        return -1;
+    }
+
+    fds[0] = msg.u.m_vfs_fdpair.fd0;
+    fds[1] = msg.u.m_vfs_fdpair.fd1;
+
+    return 0;
+}
+
 int bind(int sockfd, const struct sockaddr* addr, socklen_t addrlen)
 {
     MESSAGE msg;

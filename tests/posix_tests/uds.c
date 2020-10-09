@@ -463,6 +463,30 @@ static MunitResult test_uds_send_recv_cred(const MunitParameter params[],
     return res;
 }
 
+static MunitResult test_socketpair(const MunitParameter params[], void* data)
+{
+    char rbuf[100];
+    int fds[2];
+    int retval;
+    size_t n;
+
+    retval = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
+    munit_assert_int(retval, ==, 0);
+
+    n = write(fds[0], test_string, strlen(test_string));
+    munit_assert_int(n, ==, strlen(test_string));
+
+    n = read(fds[1], rbuf, sizeof(rbuf));
+    munit_assert_int(n, ==, strlen(test_string));
+    rbuf[n] = '\0';
+    munit_assert_string_equal(rbuf, test_string);
+
+    close(fds[0]);
+    close(fds[1]);
+
+    return MUNIT_OK;
+}
+
 MunitTest uds_tests[] = {
     {(char*)"/send-recv-simple", test_uds_send_recv_simple, NULL, NULL,
      MUNIT_TEST_OPTION_NONE, NULL},
@@ -470,4 +494,6 @@ MunitTest uds_tests[] = {
      MUNIT_TEST_OPTION_NONE, NULL},
     {(char*)"/send-recv-cred", test_uds_send_recv_cred, NULL, NULL,
      MUNIT_TEST_OPTION_NONE, NULL},
+    {(char*)"/socketpair", test_socketpair, NULL, NULL, MUNIT_TEST_OPTION_NONE,
+     NULL},
     {NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL}};

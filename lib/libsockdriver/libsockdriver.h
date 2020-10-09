@@ -19,6 +19,8 @@ typedef unsigned int sockdriver_worker_id_t;
 struct sockdriver_ops;
 
 struct sockdriver_ops {
+    int (*sop_pair)(struct sock* sock1, struct sock* sock2,
+                    endpoint_t user_endpt);
     int (*sop_bind)(struct sock* sock, struct sockaddr* addr, size_t addrlen,
                     endpoint_t user_endpt, int flags);
     int (*sop_connect)(struct sock* sock, struct sockaddr* addr, size_t addrlen,
@@ -43,6 +45,7 @@ struct sockdriver_ops {
     __poll_t (*sop_poll)(struct sock* sock);
     int (*sop_getsockopt)(struct sock* sock, int level, int name,
                           const struct sockdriver_data* data, socklen_t* len);
+    void (*sop_free)(struct sock* sock);
 };
 
 struct sockdriver {

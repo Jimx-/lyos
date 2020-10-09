@@ -1422,15 +1422,22 @@ void setgrent(void) { puts("setgrent: not implemented"); }
 
 void endgrent(void) { puts("endgrent: not implemented"); }
 
-long ptrace(int request, pid_t pid, void* addr, void* data)
+long ptrace(int request, ...)
 {
     MESSAGE msg;
+    va_list argp;
 
+    va_start(argp, request);
+
+    memset(&msg, 0, sizeof(msg));
     msg.type = PTRACE;
     msg.PTRACE_REQ = request;
-    msg.PTRACE_PID = pid;
-    msg.PTRACE_ADDR = addr;
-    msg.PTRACE_DATA = data;
+    msg.PTRACE_PID = va_arg(argp, pid_t);
+    msg.PTRACE_ADDR = va_arg(argp, void*);
+
+    if (request != PTRACE_CONT) msg.PTRACE_DATA = va_arg(argp, void*);
+
+    va_end(argp);
 
     cmb();
 

@@ -33,7 +33,8 @@ static struct list_head uds_hash_table[UDS_HASH_SIZE];
 static sockid_t uds_socket(endpoint_t src, int domain, int type, int protocol,
                            struct sock** sock,
                            const struct sockdriver_ops** ops);
-
+static int uds_pair(struct sock* sock1, struct sock* sock2,
+                    endpoint_t user_endpt);
 static int uds_bind(struct sock* sock, struct sockaddr* addr, size_t addrlen,
                     endpoint_t user_endpt, int flags);
 static int uds_connect(struct sock* sock, struct sockaddr* addr, size_t addrlen,
@@ -42,12 +43,14 @@ static int uds_listen(struct sock* sock, int backlog);
 static int uds_accept(struct sock* sock, struct sockaddr* addr,
                       socklen_t* addrlen, endpoint_t user_endpt, int flags,
                       struct sock** newsockp);
+static void uds_free(struct sock* sock);
 
 static const struct sockdriver uds_driver = {
     .sd_create = uds_socket,
 };
 
 static const struct sockdriver_ops uds_ops = {
+    .sop_pair = uds_pair,
     .sop_bind = uds_bind,
     .sop_connect = uds_connect,
     .sop_listen = uds_listen,
@@ -55,6 +58,7 @@ static const struct sockdriver_ops uds_ops = {
     .sop_send = uds_send,
     .sop_recv = uds_recv,
     .sop_poll = uds_poll,
+    .sop_free = uds_free,
 };
 
 static inline unsigned int udssock_gethash(dev_t dev, ino_t ino)
@@ -113,10 +117,11 @@ static int uds_alloc(struct udssock** udsp)
     return 0;
 }
 
-static void uds_free(struct udssock* uds)
+static void uds_free(struct sock* sock)
 {
-    uds_io_free(uds);
+    struct udssock* uds = to_udssock(sock);
 
+    uds_io_free(uds);
     free(uds);
 }
 
@@ -258,13 +263,35 @@ static sockid_t uds_socket(endpoint_t src, int domain, int type, int protocol,
 
     id = idr_alloc(&sock_idr, NULL, 1, 0);
     if (id < 0) {
-        uds_free(uds);
+        uds_free(&uds->sock);
     } else {
         *sock = &uds->sock;
         *ops = &uds_ops;
     }
 
     return id;
+}
+
+static int uds_pair(struct sock* sock1, struct sock* sock2,
+                    endpoint_t user_endpt)
+{
+    struct udssock* uds1 = to_udssock(sock1);
+    struct udssock* uds2 = to_udssock(sock2);
+
+    if (uds_get_type(uds1) == SOCK_DGRAM) return EOPNOTSUPP;
+
+    uds1->conn = uds2;
+    uds2->conn = uds1;
+    uds1->flags |= UDSF_CONNECTED;
+    uds2->flags |= UDSF_CONNECTED;
+
+    uds_get_cred(uds1, user_endpt);
+    memcpy(&uds2->cred, &uds1->cred, sizeof(uds2->cred));
+
+    uds_init_peercred(uds1, user_endpt);
+    uds_init_peercred(uds2, user_endpt);
+
+    return 0;
 }
 
 static int uds_bind(struct sock* sock, struct sockaddr* addr, size_t addrlen,

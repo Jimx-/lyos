@@ -213,6 +213,7 @@ void sdev_reply(MESSAGE* msg);
 /* vfs/socket.c */
 void mount_sockfs(void);
 int do_socket(void);
+int do_socketpair(void);
 int do_bind(void);
 int do_connect(void);
 int do_listen(void);

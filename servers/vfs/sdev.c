@@ -200,6 +200,15 @@ int sdev_socket(endpoint_t src, int domain, int type, int protocol, dev_t* dev,
 
     dev[0] = make_sdmap_dev(sdp, sock_id);
 
+    if (pair) {
+        if (sock_id2 < 0) {
+            sdev_close(dev[0], FALSE);
+            return EIO;
+        }
+
+        dev[1] = make_sdmap_dev(sdp, sock_id2);
+    }
+
     return 0;
 }
 

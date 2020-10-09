@@ -195,6 +195,40 @@ int do_socket(void)
     return retval;
 }
 
+int do_socketpair(void)
+{
+    endpoint_t src = self->msg_in.source;
+    int domain = self->msg_in.u.m_vfs_socket.domain;
+    int type = self->msg_in.u.m_vfs_socket.type;
+    int protocol = self->msg_in.u.m_vfs_socket.protocol;
+    int flags;
+    dev_t dev[2];
+    int fd0, fd1, retval;
+
+    if ((retval = check_fds(fproc, 2)) != 0) return retval;
+
+    if ((retval = sdev_socket(src, domain, type, protocol, dev, TRUE)) != 0)
+        return retval;
+
+    flags = get_sock_flags(type);
+    if ((fd0 = create_sock_fd(dev[0], flags)) < 0) {
+        sdev_close(dev[0], FALSE);
+        sdev_close(dev[1], FALSE);
+        return -fd0;
+    }
+
+    if ((fd1 = create_sock_fd(dev[1], flags)) < 0) {
+        sdev_close(dev[0], FALSE);
+        sdev_close(dev[1], FALSE);
+        return -fd1;
+    }
+
+    self->msg_out.u.m_vfs_fdpair.fd0 = fd0;
+    self->msg_out.u.m_vfs_fdpair.fd1 = fd1;
+
+    return 0;
+}
+
 int do_bind(void)
 {
     int fd = self->msg_in.u.m_vfs_bindconn.sock_fd;

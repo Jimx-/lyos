@@ -1,6 +1,7 @@
 #ifndef _SYS_MMAN_H_
 #define _SYS_MMAN_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #define PROT_NONE  0x00 /* no permissions */
@@ -30,17 +31,19 @@
  */
 #define MAP_FAILED ((void*)-1) /* mmap() failed */
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+/*
+ * Linux extension
+ */
+#define MREMAP_MAYMOVE 1
+#define MREMAP_FIXED   2
 
-    void* mmap(void* addr, size_t len, int prot, int flags, int fd,
-               off_t offset);
-    int munmap(void* addr, size_t len);
+__BEGIN_DECLS
 
-#ifdef __cplusplus
-}
-#endif
+void* mmap(void* addr, size_t len, int prot, int flags, int fd, off_t offset);
+int munmap(void* addr, size_t len);
+
+void* mremap(void*, size_t, size_t, int, ...);
+
+__END_DECLS
 
 #endif

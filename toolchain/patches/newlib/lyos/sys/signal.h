@@ -2,10 +2,6 @@
 
 #ifndef _SYS_SIGNAL_H
 #define _SYS_SIGNAL_H
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 #include "_ansi.h"
 #include <sys/cdefs.h>
@@ -14,15 +10,17 @@ extern "C"
 #include <sys/_sigset.h>
 #include <sys/_timespec.h>
 
+__BEGIN_DECLS
+
 #if !defined(_SIGSET_T_DECLARED)
 #define _SIGSET_T_DECLARED
-    typedef __sigset_t sigset_t;
+typedef __sigset_t sigset_t;
 #endif
 
 #if defined(_POSIX_REALTIME_SIGNALS) || __POSIX_VISIBLE >= 199309
 
-    /* sigev_notify values
-       NOTE: P1003.1c/D10, p. 34 adds SIGEV_THREAD.  */
+/* sigev_notify values
+   NOTE: P1003.1c/D10, p. 34 adds SIGEV_THREAD.  */
 
 #define SIGEV_NONE 1   /* No asynchronous notification shall be delivered */
                        /*   when the event of interest occurs. */
@@ -32,29 +30,29 @@ extern "C"
 #define SIGEV_THREAD 3 /* A notification function shall be called to */
                        /*   perform notification. */
 
-    /*  Signal Generation and Delivery, P1003.1b-1993, p. 63
-        NOTE: P1003.1c/D10, p. 34 adds sigev_notify_function and
-              sigev_notify_attributes to the sigevent structure.  */
+/*  Signal Generation and Delivery, P1003.1b-1993, p. 63
+    NOTE: P1003.1c/D10, p. 34 adds sigev_notify_function and
+          sigev_notify_attributes to the sigevent structure.  */
 
-    union sigval {
-        int sival_int;   /* Integer signal value */
-        void* sival_ptr; /* Pointer signal value */
-    };
+union sigval {
+    int sival_int;   /* Integer signal value */
+    void* sival_ptr; /* Pointer signal value */
+};
 
-    struct sigevent {
-        int sigev_notify;         /* Notification type */
-        int sigev_signo;          /* Signal number */
-        union sigval sigev_value; /* Signal value */
+struct sigevent {
+    int sigev_notify;         /* Notification type */
+    int sigev_signo;          /* Signal number */
+    union sigval sigev_value; /* Signal value */
 
 #if defined(_POSIX_THREADS)
-        void (*sigev_notify_function)(union sigval);
-        /* Notification function */
-        pthread_attr_t* sigev_notify_attributes; /* Notification Attributes */
+    void (*sigev_notify_function)(union sigval);
+    /* Notification function */
+    pthread_attr_t* sigev_notify_attributes; /* Notification Attributes */
 #endif
-    };
+};
 
-    /* Signal Actions, P1003.1b-1993, p. 64 */
-    /* si_code values, p. 66 */
+/* Signal Actions, P1003.1b-1993, p. 64 */
+/* si_code values, p. 66 */
 
 #define SI_USER    1 /* Sent by a user. kill(), abort(), etc */
 #define SI_QUEUE   2 /* Sent by sigqueue() */
@@ -62,16 +60,27 @@ extern "C"
 #define SI_ASYNCIO 4 /* Indicates completion of asycnhronous IO */
 #define SI_MESGQ   5 /* Indicates arrival of a message at an empty queue */
 
-    typedef struct {
-        int si_signo;          /* Signal number */
-        int si_code;           /* Cause of the signal */
-        union sigval si_value; /* Signal value */
+typedef struct {
+    int si_signo;
+    int si_code;
+    int si_errno;
+    pid_t si_pid;
+    uid_t si_uid;
+    void* si_addr;
+    int si_status;
+    union sigval si_value;
+} siginfo_t;
 
-        void* si_addr;
-    } siginfo_t;
+#define CLD_EXITED    1
+#define CLD_KILLED    2
+#define CLD_DUMPED    3
+#define CLD_TRAPPED   4
+#define CLD_STOPPED   5
+#define CLD_CONTINUED 6
+
 #endif /* defined(_POSIX_REALTIME_SIGNALS) || __POSIX_VISIBLE >= 199309 */
 
-    /* Bits in `sa_flags'.  */
+/* Bits in `sa_flags'.  */
 #define SA_NOCLDSTOP 1 /* Don't send SIGCHLD when children stop.  */
 #define SA_NOCLDWAIT 2 /* Don't create zombie on child death.  */
 #define SA_SIGINFO                            \
@@ -96,32 +105,32 @@ three arguments instead of one.  */
 #define SA_STACK   SA_ONSTACK
 #endif
 
-    typedef void (*_sig_func_ptr)(int);
+typedef void (*_sig_func_ptr)(int);
 
-    struct sigaction {
-        /* Signal handler.  */
+struct sigaction {
+    /* Signal handler.  */
 #if __POSIX_VISIBLE >= 199309
-        union {
-            /* Used if SA_SIGINFO is not set.  */
-            _sig_func_ptr sa_handler;
-            /* Used if SA_SIGINFO is set.  */
-            void (*sa_sigaction)(int, siginfo_t*, void*);
-        } __sigaction_handler;
+    union {
+        /* Used if SA_SIGINFO is not set.  */
+        _sig_func_ptr sa_handler;
+        /* Used if SA_SIGINFO is set.  */
+        void (*sa_sigaction)(int, siginfo_t*, void*);
+    } __sigaction_handler;
 #define sa_handler   __sigaction_handler.sa_handler
 #define sa_sigaction __sigaction_handler.sa_sigaction
 #else
     _sig_func_ptr sa_handler;
 #endif
 
-        /* Additional set of signals to be blocked.  */
-        __sigset_t sa_mask;
+    /* Additional set of signals to be blocked.  */
+    __sigset_t sa_mask;
 
-        /* Special flags.  */
-        int sa_flags;
+    /* Special flags.  */
+    int sa_flags;
 
-        /* Restore handler.  */
-        void (*sa_restorer)(void);
-    };
+    /* Restore handler.  */
+    void (*sa_restorer)(void);
+};
 
 #if __BSD_VISIBLE || __XSI_VISIBLE >= 4 || __POSIX_VISIBLE >= 200809
 /*
@@ -143,48 +152,48 @@ three arguments instead of one.  */
 
 #endif
 
-    /*
-     * Structure used in sigaltstack call.
-     */
-    typedef struct sigaltstack {
-        void* ss_sp;    /* Stack base or pointer.  */
-        int ss_flags;   /* Flags.  */
-        size_t ss_size; /* Stack size.  */
-    } stack_t;
+/*
+ * Structure used in sigaltstack call.
+ */
+typedef struct sigaltstack {
+    void* ss_sp;    /* Stack base or pointer.  */
+    int ss_flags;   /* Flags.  */
+    size_t ss_size; /* Stack size.  */
+} stack_t;
 
 #if __POSIX_VISIBLE
 #define SIG_SETMASK 0 /* set mask with sigprocmask() */
 #define SIG_BLOCK   1 /* set of signals to block */
 #define SIG_UNBLOCK 2 /* set of signals to, well, unblock */
 
-    int sigprocmask(int how, const sigset_t* set, sigset_t* oset);
+int sigprocmask(int how, const sigset_t* set, sigset_t* oset);
 #endif
 
 #if __POSIX_VISIBLE >= 199506
-    int pthread_sigmask(int how, const sigset_t* set, sigset_t* oset);
+int pthread_sigmask(int how, const sigset_t* set, sigset_t* oset);
 #endif
 
 #ifdef _COMPILING_NEWLIB
-    int _kill(pid_t, int);
+int _kill(pid_t, int);
 #endif /* _COMPILING_NEWLIB */
 
 #if __POSIX_VISIBLE
-    int kill(pid_t, int);
+int kill(pid_t, int);
 #endif
 
 #if __BSD_VISIBLE || __XSI_VISIBLE >= 4
-    int killpg(pid_t, int);
+int killpg(pid_t, int);
 #endif
 #if __POSIX_VISIBLE
-    int sigaction(int, const struct sigaction*, struct sigaction*);
-    int sigaddset(sigset_t*, const int);
-    int sigdelset(sigset_t*, const int);
-    int sigismember(const sigset_t*, int);
-    int sigfillset(sigset_t*);
-    int sigemptyset(sigset_t*);
-    int sigpending(sigset_t*);
-    int sigsuspend(const sigset_t*);
-    int sigwait(const sigset_t* set, int* sig);
+int sigaction(int, const struct sigaction*, struct sigaction*);
+int sigaddset(sigset_t*, const int);
+int sigdelset(sigset_t*, const int);
+int sigismember(const sigset_t*, int);
+int sigfillset(sigset_t*);
+int sigemptyset(sigset_t*);
+int sigpending(sigset_t*);
+int sigsuspend(const sigset_t*);
+int sigwait(const sigset_t* set, int* sig);
 
 #if !defined(__CYGWIN__) && !defined(__rtems__)
 /* These depend upon the type of sigset_t, which right now
@@ -205,9 +214,9 @@ three arguments instead of one.  */
    value. */
 #if __XSI_VISIBLE && !defined(__INSIDE_CYGWIN__)
 #ifdef __GNUC__
-    int sigpause(int) __asm__(__ASMNAME("__xpg_sigpause"));
+int sigpause(int) __asm__(__ASMNAME("__xpg_sigpause"));
 #else
-    int __xpg_sigpause(int);
+int __xpg_sigpause(int);
 #define sigpause __xpg_sigpause
 #endif
 #elif __BSD_VISIBLE
@@ -215,23 +224,23 @@ int sigpause(int);
 #endif
 
 #if __BSD_VISIBLE || __XSI_VISIBLE >= 4 || __POSIX_VISIBLE >= 200809
-    int sigaltstack(const stack_t* __restrict, stack_t* __restrict);
+int sigaltstack(const stack_t* __restrict, stack_t* __restrict);
 #endif
 
 #if __POSIX_VISIBLE >= 199506
-    int pthread_kill(pthread_t thread, int sig);
+int pthread_kill(pthread_t thread, int sig);
 #endif
 
 #if __POSIX_VISIBLE >= 199309
 
-    /*  3.3.8 Synchronously Accept a Signal, P1003.1b-1993, p. 76
-        NOTE: P1003.1c/D10, p. 39 adds sigwait().  */
+/*  3.3.8 Synchronously Accept a Signal, P1003.1b-1993, p. 76
+    NOTE: P1003.1c/D10, p. 39 adds sigwait().  */
 
-    int sigwaitinfo(const sigset_t* set, siginfo_t* info);
-    int sigtimedwait(const sigset_t* set, siginfo_t* info,
-                     const struct timespec* timeout);
-    /*  3.3.9 Queue a Signal to a Process, P1003.1b-1993, p. 78 */
-    int sigqueue(pid_t pid, int signo, const union sigval value);
+int sigwaitinfo(const sigset_t* set, siginfo_t* info);
+int sigtimedwait(const sigset_t* set, siginfo_t* info,
+                 const struct timespec* timeout);
+/*  3.3.9 Queue a Signal to a Process, P1003.1b-1993, p. 78 */
+int sigqueue(pid_t pid, int signo, const union sigval value);
 
 #endif /* __POSIX_VISIBLE >= 199309 */
 
@@ -350,9 +359,7 @@ int sigpause(int);
 #endif
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #if defined(__CYGWIN__)
 #if __XSI_VISIBLE >= 4 || __POSIX_VISIBLE >= 200809
