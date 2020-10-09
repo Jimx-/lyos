@@ -30,7 +30,7 @@ int trace_mmap(struct tcb* tcp)
     printf(", ");
     print_flags(msg->u.m_mm_mmap.flags, &mmap_flags);
     printf(", ");
-    printf("%d, %d, %ld)", msg->u.m_mm_mmap.fd, msg->u.m_mm_mmap.offset);
+    printf("%d, %ld)", msg->u.m_mm_mmap.fd, msg->u.m_mm_mmap.offset);
 
     return RVAL_DECODED | RVAL_HEX;
 }

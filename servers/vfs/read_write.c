@@ -179,15 +179,15 @@ int do_getdents(void)
 {
     int fd = self->msg_in.FD;
     struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
-    if (!filp) return EBADF;
+    if (!filp) return -EBADF;
 
     if (!(filp->fd_inode->i_mode & R_BIT)) {
         unlock_filp(filp);
-        return EBADF;
+        return -EBADF;
     }
     if (!S_ISDIR(filp->fd_inode->i_mode)) {
         unlock_filp(filp);
-        return EBADF;
+        return -EBADF;
     }
 
     u64 newpos;

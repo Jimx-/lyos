@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
@@ -38,16 +39,27 @@ int main(int argc, char* argv[], char* envp[])
 
 static int copy_message_from(struct tcb* tcp, void* src_msg, void* dest_msg)
 {
-    long* src = (long*)src_msg;
-    long* dest = (long*)dest_msg;
+    char dest_buf[100];
+    uintptr_t src_ptr = (uintptr_t)src_msg;
+    long *src, *dest = (long*)dest_buf;
+    off_t offset, len;
 
-    while (src < (long*)((char*)src_msg + sizeof(MESSAGE))) {
+    len = sizeof(MESSAGE);
+    offset = src_ptr % sizeof(long);
+    src_ptr -= offset;
+    len += offset;
+    if (len % sizeof(long)) len += sizeof(long) - (len % sizeof(long));
+    src = (long*)src_ptr;
+
+    while (src < (long*)(src_ptr + len)) {
         long data = ptrace(PTRACE_PEEKDATA, tcp->pid, src, 0);
-        if (data == -1) return -1;
+        if (data == -1 && errno != 0) return -1;
         *dest = data;
         src++;
         dest++;
     }
+
+    memcpy(dest_msg, &dest_buf[offset], sizeof(MESSAGE));
 
     return 0;
 }

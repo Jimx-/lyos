@@ -960,6 +960,11 @@ int getdents(unsigned int fd, struct dirent* dirp, unsigned int count)
 
     send_recv(BOTH, TASK_FS, &msg);
 
+    if (msg.RETVAL < 0) {
+        errno = -msg.RETVAL;
+        return -1;
+    }
+
     return msg.RETVAL;
 }
 
@@ -1436,6 +1441,7 @@ long ptrace(int request, pid_t pid, void* addr, void* data)
         return -1;
     }
 
+    errno = 0;
     return msg.PTRACE_RET;
 }
 

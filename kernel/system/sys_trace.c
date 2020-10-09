@@ -59,7 +59,7 @@ int sys_trace(MESSAGE* m, struct proc* p_proc)
         dest.addr = &data;
         dest.proc_ep = KERNEL;
 
-        retval = vir_copy(&dest, &src, sizeof(data));
+        retval = vir_copy_check(p_proc, &dest, &src, sizeof(data));
         if (retval != 0) return EFAULT;
 
         m->TRACE_RET = data;

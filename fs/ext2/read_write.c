@@ -472,7 +472,7 @@ ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
     int done = 0;
     loff_t pos = *ppos;
 
-    ext2_inode_t* pin = find_ext2_inode(dev, num);
+    ext2_inode_t* pin = get_ext2_inode(dev, num);
     if (!pin) return -EINVAL;
 
     size_t block_size = pin->i_sb->sb_block_size;
