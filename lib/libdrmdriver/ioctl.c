@@ -38,11 +38,38 @@ struct drm_ioctl_desc {
     [_IOC_NR(ioctl)] = {                    \
         .cmd = ioctl, .func = _func, .flags = _flags, .name = #ioctl}
 
+static int drm_copy_field(endpoint_t endpoint, char* user_buf, size_t* buf_len,
+                          const char* value)
+{
+    int len;
+
+    len = strlen(value);
+    if (len > *buf_len) len = *buf_len;
+
+    *buf_len = strlen(value);
+
+    if (len && user_buf)
+        if (data_copy(endpoint, user_buf, SELF, (void*)value, len))
+            return EFAULT;
+    return 0;
+}
+
 static int drm_version(struct drm_device* dev, endpoint_t endpoint, void* data)
 {
     struct drm_version* version = data;
-    version->version_major = 1;
-    version->version_minor = 0;
+    int retval;
+
+    version->version_major = dev->driver->major;
+    version->version_minor = dev->driver->minor;
+    version->version_patchlevel = dev->driver->patchlevel;
+    retval = drm_copy_field(endpoint, version->name, &version->name_len,
+                            dev->driver->name);
+    if (!retval)
+        retval = drm_copy_field(endpoint, version->date, &version->date_len,
+                                dev->driver->date);
+    if (!retval)
+        retval = drm_copy_field(endpoint, version->desc, &version->desc_len,
+                                dev->driver->desc);
 
     return 0;
 }
@@ -54,6 +81,12 @@ static int drm_getcap(struct drm_device* dev, endpoint_t endpoint, void* data)
     req->value = 0;
 
     switch (req->capability) {
+    case DRM_CAP_TIMESTAMP_MONOTONIC:
+        req->value = 1;
+        break;
+    case DRM_CAP_PRIME:
+        req->value = 0;
+        break;
     case DRM_CAP_DUMB_BUFFER:
         if (dev->driver->dumb_create) {
             req->value = 1;
@@ -75,6 +108,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETENCODER, drm_mode_getencoder, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCONNECTOR, drm_mode_getconnector, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB, drm_mode_addfb_ioctl, 0),
+    DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB2, drm_mode_addfb2_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_PAGE_FLIP, drm_mode_page_flip_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_CREATE_DUMB, drm_mode_create_dumb_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, 0),

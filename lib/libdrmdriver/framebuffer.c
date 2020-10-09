@@ -145,3 +145,9 @@ int drm_mode_addfb_ioctl(struct drm_device* dev, endpoint_t endpoint,
 
     return 0;
 }
+
+int drm_mode_addfb2_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                          void* data)
+{
+    return drm_mode_addfb2(dev, endpoint, data);
+}

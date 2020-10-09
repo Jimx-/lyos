@@ -26,7 +26,13 @@
 
 #include "virtio_gpu.h"
 
-#define DRIVER_NAME "virtio-gpu"
+#define DRIVER_NAME "virtio_gpu"
+#define DRIVER_DESC "virtio GPU"
+#define DRIVER_DATE "0"
+
+#define DRIVER_MAJOR 0
+#define DRIVER_MINOR 1
+#define DRIVER_PATCHLEVEL 0
 
 #define XRES_MIN 32
 #define YRES_MIN 32
@@ -100,6 +106,13 @@ static int virtio_gpu_mode_dumb_create(struct drm_device* dev,
 
 static struct drm_driver virtio_gpu_driver = {
     .name = DRIVER_NAME,
+    .desc = DRIVER_DESC,
+    .date = DRIVER_DATE,
+
+    .major = DRIVER_MAJOR,
+    .minor = DRIVER_MINOR,
+    .patchlevel = DRIVER_PATCHLEVEL,
+
     .dumb_create = virtio_gpu_mode_dumb_create,
 };
 

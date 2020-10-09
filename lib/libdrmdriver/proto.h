@@ -28,6 +28,8 @@ int drm_mode_getencoder(struct drm_device* dev, endpoint_t endpoint,
 /* framebuffer.c */
 int drm_mode_addfb_ioctl(struct drm_device* dev, endpoint_t endpoint,
                          void* data);
+int drm_mode_addfb2_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                          void* data);
 
 /* mode_config.c */
 int drm_mode_getresources(struct drm_device* dev, endpoint_t endpoint,

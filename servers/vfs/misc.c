@@ -90,6 +90,7 @@ int do_fcntl()
     int newfd;
     switch (request) {
     case F_DUPFD:
+    case F_DUPFD_CLOEXEC:
         if (argx < 0 || argx >= NR_FILES) return -EINVAL;
 
         newfd = -1;
@@ -108,6 +109,7 @@ int do_fcntl()
         filp->fd_mode = argx;
         break;
     default:
+        retval = -EINVAL;
         break;
     }
 

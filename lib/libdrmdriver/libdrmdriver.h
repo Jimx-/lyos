@@ -14,6 +14,12 @@
 
 struct drm_driver {
     const char* name;
+    const char* desc;
+    const char* date;
+
+    int major;
+    int minor;
+    int patchlevel;
 
     int (*dumb_create)(struct drm_device* dev,
                        struct drm_mode_create_dumb* args);
