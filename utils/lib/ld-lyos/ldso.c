@@ -140,6 +140,11 @@ static void ldso_init_tpsort(struct list_head* head, int rev)
     }
 }
 
+static void ldso_call_initfini_function(Elf32_Addr func)
+{
+    ((void (*)(void))(uintptr_t)func)();
+}
+
 static void ldso_call_init_function(struct so_info* si)
 {
     if (si->init_array_size == 0 && (si->init_called || !si->init)) return;
@@ -147,6 +152,12 @@ static void ldso_call_init_function(struct so_info* si)
     if (!si->init_called && si->init) {
         si->init_called = 1;
         si->init();
+    }
+
+    while (si->init_array_size > 0) {
+        Elf32_Addr init = *si->init_array++;
+        si->init_array_size--;
+        ldso_call_initfini_function(init);
     }
 }
 
