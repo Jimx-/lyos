@@ -1,0 +1,168 @@
+diff -rup old/include/c99_alloca.h new/include/c99_alloca.h
+--- old/include/c99_alloca.h	2020-04-23 05:36:58.000000000 +0800
++++ new/include/c99_alloca.h	2020-10-04 16:53:42.809267000 +0800
+@@ -41,6 +41,7 @@
+ 
+ #else /* !defined(_MSC_VER) */
+ 
++#  include <alloca.h>
+ #  include <stdlib.h>
+ 
+ #endif /* !defined(_MSC_VER) */
+diff -rup old/include/drm-uapi/drm.h new/include/drm-uapi/drm.h
+--- old/include/drm-uapi/drm.h	2020-04-23 05:36:58.000000000 +0800
++++ new/include/drm-uapi/drm.h	2020-10-04 16:57:04.326677000 +0800
+@@ -42,7 +42,13 @@
+ #include <asm/ioctl.h>
+ typedef unsigned int drm_handle_t;
+ 
+-#else /* One of the BSDs */
++#elif defined(__lyos__)
++
++#include <lyos/types.h>
++#include <asm/ioctl.h>
++typedef unsigned int drm_handle_t;
++
++#else/* One of the BSDs */
+ 
+ #include <stdint.h>
+ #include <sys/ioccom.h>
+diff -rup old/meson.build new/meson.build
+--- old/meson.build	2020-04-23 05:36:58.000000000 +0800
++++ new/meson.build	2020-10-08 22:03:03.113949000 +0800
+@@ -128,7 +128,7 @@ with_any_opengl = with_opengl or with_gl
+ # Only build shared_glapi if at least one OpenGL API is enabled
+ with_shared_glapi = with_shared_glapi and with_any_opengl
+ 
+-system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux', 'sunos'].contains(host_machine.system())
++system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux', 'sunos', 'lyos'].contains(host_machine.system())
+ 
+ dri_drivers = get_option('dri-drivers')
+ if dri_drivers.contains('auto')
+@@ -393,7 +393,7 @@ endif
+ 
+ # Android uses emutls for versions <= P/28. For USE_ELF_TLS we need ELF TLS.
+ if host_machine.system() != 'windows' and (not with_platform_android or get_option('platform-sdk-version') >= 29)
+-  pre_args += '-DUSE_ELF_TLS'
++  # pre_args += '-DUSE_ELF_TLS'
+ endif
+ 
+ if with_glx != 'disabled'
+@@ -890,7 +890,7 @@ if cc.compiles('__uint128_t foo(void) {
+ endif
+ 
+ # TODO: this is very incomplete
+-if ['linux', 'cygwin', 'gnu', 'freebsd', 'gnu/kfreebsd'].contains(host_machine.system())
++if ['linux', 'cygwin', 'gnu', 'freebsd', 'gnu/kfreebsd', 'lyos'].contains(host_machine.system())
+   pre_args += '-D_GNU_SOURCE'
+ elif host_machine.system() == 'sunos'
+   pre_args += '-D__EXTENSIONS__'
+@@ -947,11 +947,9 @@ if cc.get_id() == 'msvc'
+   endif
+ else
+   _trial = [
+-    '-Werror=implicit-function-declaration',
+     '-Werror=missing-prototypes',
+     '-Werror=return-type',
+     '-Werror=empty-body',
+-    '-Werror=incompatible-pointer-types',
+     '-Werror=int-conversion',
+     '-Wno-missing-field-initializers',
+     '-Wno-format-truncation',
+diff -rup old/src/compiler/glsl/glsl_lexer.ll new/src/compiler/glsl/glsl_lexer.ll
+--- old/src/compiler/glsl/glsl_lexer.ll	2020-04-23 05:36:58.000000000 +0800
++++ new/src/compiler/glsl/glsl_lexer.ll	2020-10-09 17:25:36.902052000 +0800
+@@ -22,7 +22,7 @@
+  * DEALINGS IN THE SOFTWARE.
+  */
+ #include <ctype.h>
+-#include <limits.h>
++#include <climits>
+ #include "util/strtod.h"
+ #include "ast.h"
+ #include "glsl_parser_extras.h"
+diff -rup old/src/gallium/include/pipe/p_config.h new/src/gallium/include/pipe/p_config.h
+--- old/src/gallium/include/pipe/p_config.h	2020-04-23 05:36:58.000000000 +0800
++++ new/src/gallium/include/pipe/p_config.h	2020-10-04 17:24:34.382686000 +0800
+@@ -137,6 +137,10 @@
+ #define PIPE_OS_LINUX
+ #endif
+ 
++#if DETECT_OS_LYOS
++#define PIPE_OS_LYOS
++#endif
++
+ #if DETECT_OS_UNIX
+ #define PIPE_OS_UNIX
+ #endif
+diff -rup old/src/util/detect_os.h new/src/util/detect_os.h
+--- old/src/util/detect_os.h	2020-04-23 05:36:59.000000000 +0800
++++ new/src/util/detect_os.h	2020-10-04 17:25:22.049505000 +0800
+@@ -81,6 +81,10 @@
+ #define DETECT_OS_UNIX 1
+ #endif
+ 
++#if defined(__lyos__)
++#define DETECT_OS_LYOS 1
++#define DETECT_OS_UNIX 1
++#endif
+ 
+ /*
+  * Make sure DETECT_OS_* are always defined, so that they can be used with #if
+@@ -127,5 +131,8 @@
+ #ifndef DETECT_OS_WINDOWS
+ #define DETECT_OS_WINDOWS 0
+ #endif
++#ifndef DETECT_OS_LYOS
++#define DETECT_OS_LYOS 0
++#endif
+ 
+ #endif /* DETECT_OS_H */
+diff -rup old/src/util/disk_cache.c new/src/util/disk_cache.c
+--- old/src/util/disk_cache.c	2020-04-23 05:36:59.000000000 +0800
++++ new/src/util/disk_cache.c	2020-10-05 14:00:23.755222000 +0800
+@@ -502,6 +502,11 @@ make_cache_file_directory(struct disk_ca
+    free(dir);
+ }
+ 
++int fstatat(int dirfd, const char* pathname, struct stat* statbuf, int flags)
++{
++    return stat(pathname, statbuf);
++}
++
+ /* Given a directory path and predicate function, find the entry with
+  * the oldest access time in that directory for which the predicate
+  * returns true.
+diff -rup old/src/util/os_file.c new/src/util/os_file.c
+--- old/src/util/os_file.c	2020-04-23 05:36:59.000000000 +0800
++++ new/src/util/os_file.c	2020-10-04 15:45:43.658713000 +0800
+@@ -27,7 +27,7 @@ os_file_create_unique(const char *filena
+    int fd = open(filename, O_CREAT | O_EXCL | O_WRONLY, filemode);
+    if (fd == -1)
+       return NULL;
+-   return fdopen(fd, "w");
++   return _fdopen_r(_REENT, fd, "w");
+ }
+ 
+ 
+diff -rup old/src/util/os_misc.c new/src/util/os_misc.c
+--- old/src/util/os_misc.c	2020-04-23 05:36:59.000000000 +0800
++++ new/src/util/os_misc.c	2020-10-04 15:41:29.840925000 +0800
+@@ -52,7 +52,7 @@
+ #  define LOG_TAG "MESA"
+ #  include <unistd.h>
+ #  include <log/log.h>
+-#elif DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD
++#elif DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD || DETECT_OS_LYOS
+ #  include <unistd.h>
+ #elif DETECT_OS_APPLE || DETECT_OS_BSD
+ #  include <sys/sysctl.h>
+@@ -132,7 +132,7 @@ os_get_option(const char *name)
+ bool
+ os_get_total_physical_memory(uint64_t *size)
+ {
+-#if DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD
++#if DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD || DETECT_OS_LYOS
+    const long phys_pages = sysconf(_SC_PHYS_PAGES);
+    const long page_size = sysconf(_SC_PAGE_SIZE);
+ 

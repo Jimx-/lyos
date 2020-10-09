@@ -81,6 +81,7 @@ patc "libdrm-2.4.89"
 patc "expat-2.2.9"
 patc "libffi-3.3"
 patc "pcre-8.44"
+patc "mesa-20.0.5"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"
