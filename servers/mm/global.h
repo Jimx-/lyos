@@ -46,4 +46,10 @@ EXTERN MESSAGE mm_msg;
 
 EXTERN struct mem_info mem_info;
 
+extern const struct region_operations anon_map_ops;
+extern const struct region_operations anon_contig_map_ops;
+extern const struct region_operations file_map_ops;
+extern const struct region_operations direct_phys_map_ops;
+extern const struct region_operations shared_map_ops;
+
 #endif

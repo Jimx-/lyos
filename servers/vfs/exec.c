@@ -199,7 +199,8 @@ int fs_exec(void)
 
     /* stack info */
     execi.args.stack_top = (void*)VM_STACK_TOP;
-    execi.args.stack_size = PROC_ORIGIN_STACK;
+    /* execi.args.stack_size = PROC_ORIGIN_STACK; */
+    execi.args.stack_size = 1 << 20;
 
     /* uid & gid */
     execi.args.new_uid = fproc->realuid;

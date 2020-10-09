@@ -57,19 +57,23 @@ static void cache_add_hash_ino(struct page_cache* cp)
 }
 
 int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offset,
-                   void* vir_addr, struct phys_frame* frame)
+                   struct page* page)
 {
     struct page_cache* cache;
+
+    if (page->flags & PFF_INCACHE) return EINVAL;
+
     SLABALLOC(cache);
     if (!cache) return ENOMEM;
+
+    assert(dev != NO_DEV);
 
     cache->dev = dev;
     cache->dev_offset = dev_offset;
     cache->ino = ino;
     cache->ino_offset = ino_offset;
-    cache->vir_addr = vir_addr;
-    cache->page = frame;
-    cache->page->refcnt++;
+    cache->page = page;
+    cache->page->refcount++;
 
     mem_info.cached += ARCH_PG_SIZE;
 

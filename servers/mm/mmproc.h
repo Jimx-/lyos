@@ -23,6 +23,8 @@
 struct mm_struct {
     atomic_t refcnt;
 
+    vir_bytes vm_total;
+
     int slot;
     pgdir_t pgd;
     struct list_head mem_regions;

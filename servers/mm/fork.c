@@ -36,15 +36,7 @@
 
 static inline void __mmput(struct mm_struct* mm)
 {
-    struct vir_region *vr, *tmp;
-
-    if (!list_empty(&mm->mem_regions)) {
-        list_for_each_entry_safe(vr, tmp, &mm->mem_regions, list)
-        {
-            region_free(vr);
-        }
-    }
-
+    region_free_mm(mm);
     pgd_free(&mm->pgd);
     mm_free(mm);
 }
@@ -104,28 +96,15 @@ int do_fork()
             return -ENOMEM;
         }
 
+        if (region_copy_proc(mmp, mmparent) != OK) {
+            pgd_free(&mmp->mm->pgd);
+            mmput(mmp->mm);
+            mmp->mm = NULL;
+            return ENOMEM;
+        }
+
         if (pgd_bind(mmp, &mmp->mm->pgd))
             panic("MM: fork: cannot bind new pgdir");
-
-        /* copy regions */
-        struct vir_region* vr;
-        list_for_each_entry(vr, &mmparent->mm->mem_regions, list)
-        {
-            struct vir_region* new_region =
-                region_new(vr->vir_addr, vr->length, vr->flags);
-            list_add(&(new_region->list), &mmp->mm->mem_regions);
-            avl_insert(&new_region->avl, &mmp->mm->mem_avl);
-
-            if (vr->flags & RF_FILEMAP) {
-                new_region->param.file = vr->param.file;
-                file_reference(new_region, vr->param.file.filp);
-            }
-
-            if (!(vr->flags & RF_MAPPED)) continue;
-
-            region_share(mmp, new_region, mmparent, vr, FALSE);
-            region_map_phys(mmp, new_region);
-        }
     }
 
     mmp->group_leader = mmp;
@@ -147,8 +126,6 @@ int do_fork()
 
 int proc_free(struct mmproc* mmp, int clear_proc)
 {
-    struct vir_region* vr;
-
     /* free memory */
     if (clear_proc) {
         mmput(mmp->mm);
@@ -156,24 +133,16 @@ int proc_free(struct mmproc* mmp, int clear_proc)
 
         mmp->flags &= ~MMPF_INUSE;
     } else { /* clear mem regions only */
+        if (atomic_get(&mmp->mm->refcnt) != 1) return EPERM;
 
-        /*pgd_clear(&mmp->mm->pgd);
-        pgd_mapkernel(&mmp->mm->pgd);*/
+        region_free_mm(mmp->mm);
 
-        if (!list_empty(&mmp->mm->mem_regions)) {
-            struct vir_region* tmp;
-            list_for_each_entry_safe(vr, tmp, &mmp->mm->mem_regions, list)
-            {
-                region_unmap_phys(mmp, vr);
-                pgd_free_range(&mmp->mm->pgd, vr->vir_addr,
-                               vr->vir_addr + vr->length, vr->vir_addr,
-                               vr->vir_addr + vr->length);
-                region_free(vr);
-            }
-        }
-
-        INIT_LIST_HEAD(&mmp->mm->mem_regions);
-        region_init_avl(mmp->mm);
+        /* clear page table */
+        pgd_free(&mmp->mm->pgd);
+        if (pgd_new(&mmp->mm->pgd) != OK)
+            panic("mm: proc_free failed to allocate page table");
+        if (pgd_bind(mmp, &mmp->mm->pgd))
+            panic("mm: proc_free failed to bind new page table");
     }
 
     return 0;

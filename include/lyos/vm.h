@@ -21,6 +21,8 @@
 
 #define MMSUSPEND -1001
 
+#define PHYS_NONE ((phys_bytes)-2)
+
 #define PCTL_WHO   u.m3.m3i1
 #define PCTL_PARAM u.m3.m3i2
 

@@ -91,20 +91,17 @@ struct mess_mm_mmap {
     size_t offset;
     size_t length;
 
-    union {
-        struct {
-            __u64 dev;
-            __u32 ino;
-        } __attribute__((packed)) devino;
-        int fd;
-    };
+    dev_t dev;
+    ino_t ino;
+    int fd;
 
     int flags;
     int prot;
     void* vaddr;
     size_t clearend;
 
-    __u8 _pad[32 - 3 * sizeof(size_t) - sizeof(void*)];
+    __u8 _pad[40 - sizeof(dev_t) - sizeof(ino_t) - 3 * sizeof(size_t) -
+              sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap);
 

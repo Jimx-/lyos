@@ -19,7 +19,7 @@ int ldso_process_dynamic(struct so_info* si)
     int use_pltrel = 0, use_pltrela = 0;
     Elf32_Addr pltrel, pltrelsz;
     Elf32_Addr relsz;
-    Elf32_Addr init, fini;
+    Elf32_Addr init = 0, fini = 0;
     struct needed_entry* needed;
     struct needed_entry** needed_tail = &si->needed;
 

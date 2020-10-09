@@ -207,14 +207,10 @@ struct mm_exec_info {
 static int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
-    struct vir_region* vr = NULL;
 
-    if (!(vr = mmap_region(mmexeci->mmp, vaddr,
-                           MAP_ANONYMOUS | MAP_FIXED | MAP_POPULATE, len,
-                           RF_WRITABLE)))
-        return ENOMEM;
-    list_add(&vr->list, &mmexeci->mmp->mm->mem_regions);
-    avl_insert(&vr->avl, &mmexeci->mmp->mm->mem_avl);
+    if (!region_map(mmexeci->mmp, (vir_bytes)vaddr, 0, len,
+                    RF_WRITABLE | RF_ANON, MRF_PREALLOC, &anon_map_ops))
+        panic("vm: mm_allocmem for boot process failed");
 
     return 0;
 }
@@ -223,13 +219,10 @@ static int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
                                 size_t len)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
-    struct vir_region* vr = NULL;
 
-    if (!(vr = mmap_region(mmexeci->mmp, vaddr, MAP_ANONYMOUS | MAP_FIXED, len,
-                           RF_WRITABLE)))
-        return ENOMEM;
-    list_add(&vr->list, &mmexeci->mmp->mm->mem_regions);
-    avl_insert(&vr->avl, &mmexeci->mmp->mm->mem_avl);
+    if (!region_map(mmexeci->mmp, (vir_bytes)vaddr, 0, len,
+                    RF_WRITABLE | RF_ANON, 0, &anon_map_ops))
+        panic("vm: mm_allocmem for boot process failed");
 
     return 0;
 }
@@ -238,6 +231,7 @@ static int read_segment(struct exec_info* execi, off_t offset, void* vaddr,
                         size_t len)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
+
     if (offset + len > mmexeci->bp->len) return ENOEXEC;
     data_copy(execi->proc_e, vaddr, NO_TASK,
               (void*)((phys_bytes)mmexeci->bp->base + offset), len);

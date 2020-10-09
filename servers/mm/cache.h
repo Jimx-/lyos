@@ -16,6 +16,8 @@
 #ifndef _MM_CACHE_H_
 #define _MM_CACHE_H_
 
+struct page;
+
 struct page_cache {
     dev_t dev;
     off_t dev_offset;
@@ -24,13 +26,12 @@ struct page_cache {
     off_t ino_offset;
 
     void* vir_addr;
-    struct phys_frame* page;
+    struct page* page;
 
     struct list_head hash_dev;
     struct list_head hash_ino;
 };
 
-struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino,
-                                            off_t ino_off);
+struct page_cache* find_cache_by_ino(dev_t dev, ino_t ino, off_t ino_off);
 
 #endif

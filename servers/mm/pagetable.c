@@ -175,6 +175,8 @@ void mm_init(struct mm_struct* mm)
 {
     if (!mm) return;
 
+    memset(mm, 0, sizeof(*mm));
+
     INIT_LIST_HEAD(&mm->mem_regions);
     region_init_avl(mm);
     INIT_ATOMIC(&mm->refcnt, 1);
@@ -331,20 +333,16 @@ int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
                 size_t length, int flags)
 {
     /* sanity check */
-    if (phys_addr % ARCH_PG_SIZE != 0)
-        printl("MM: pt_writemap: phys_addr is not page-aligned!\n");
-    if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0)
-        printl("MM: pt_writemap: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0)
-        printl("MM: pt_writemap: length is not page-aligned!\n");
+    if (phys_addr % ARCH_PG_SIZE != 0) return EINVAL;
+    if ((uintptr_t)vir_addr % ARCH_PG_SIZE != 0) return EINVAL;
+    if (length % ARCH_PG_SIZE != 0) return EINVAL;
 
-    while (1) {
+    while (length > 0) {
         pt_mappage(pgd, phys_addr, vir_addr, flags);
 
         length -= ARCH_PG_SIZE;
         phys_addr = phys_addr + ARCH_PG_SIZE;
         vir_addr = vir_addr + ARCH_PG_SIZE;
-        if (length <= 0) break;
     }
 
     return 0;
@@ -606,12 +604,11 @@ int unmap_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
     if (length % ARCH_PG_SIZE != 0)
         printl("MM: map_memory: length is not page-aligned!\n");
 
-    while (1) {
+    while (length > 0) {
         pt_mappage(pgd, 0, vir_addr, 0);
 
         length -= ARCH_PG_SIZE;
         vir_addr += ARCH_PG_SIZE;
-        if (length <= 0) break;
     }
 
     return 0;

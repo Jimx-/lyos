@@ -33,7 +33,7 @@
 #include "proto.h"
 #include "global.h"
 
-#define ARG_SIZE_MAX 64
+#define ARG_SIZE_MAX 80
 
 struct vfs_request {
     MESSAGE req_msg;

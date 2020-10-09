@@ -57,8 +57,8 @@ int vfs_mmap(endpoint_t who, off_t offset, size_t len, dev_t dev, ino_t ino,
     m.u.m_mm_mmap.who = who;
     m.u.m_mm_mmap.offset = offset;
     m.u.m_mm_mmap.length = len;
-    m.u.m_mm_mmap.devino.dev = dev;
-    m.u.m_mm_mmap.devino.ino = ino;
+    m.u.m_mm_mmap.dev = dev;
+    m.u.m_mm_mmap.ino = ino;
     m.u.m_mm_mmap.fd = fd;
     m.u.m_mm_mmap.vaddr = vaddr;
     m.u.m_mm_mmap.flags = flags;

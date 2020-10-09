@@ -34,7 +34,7 @@
 int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 {
     if (mmap_for(execi->proc_e, vaddr, len, PROT_READ | PROT_WRITE | PROT_EXEC,
-                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED | MAP_POPULATE, -1,
+                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1,
                  0) == MAP_FAILED) {
         return ENOMEM;
     }
@@ -45,7 +45,7 @@ int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len)
 int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len)
 {
     if (mmap_for(execi->proc_e, vaddr, len, PROT_READ | PROT_WRITE | PROT_EXEC,
-                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1,
+                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED | MAP_POPULATE, -1,
                  0) == MAP_FAILED) {
         return ENOMEM;
     }
@@ -55,7 +55,7 @@ int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len)
 
 int libexec_clearmem(struct exec_info* execi, void* vaddr, size_t len)
 {
-#define _ZERO_BUF_LEN 512
+#define _ZERO_BUF_LEN 4096
     char zerobuf[_ZERO_BUF_LEN];
     memset(zerobuf, 0, sizeof(zerobuf));
 

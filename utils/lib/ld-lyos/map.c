@@ -103,7 +103,6 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         goto failed;
     }
 
-    /* data_vlimit = base_vlimit; */
     void* data_addr = mapbase + (data_vaddr - base_vaddr);
     if (mmap(data_addr, data_vlimit - data_vaddr, PROT_READ | PROT_WRITE,
              MAP_PRIVATE | MAP_FIXED, fd, data_offset) == MAP_FAILED) {
@@ -121,7 +120,6 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         }
     }
 
-    data_vlimit = base_vlimit;
     void* clear_addr = mapbase + (clear_vaddr - base_vaddr);
     size_t clear_size = data_vlimit - clear_vaddr;
     if (data_vlimit > clear_vaddr) {
