@@ -51,6 +51,8 @@ static int read_block(struct fsdriver_buffer* bp, size_t block_size);
 static struct fsdriver_buffer* find_block(dev_t dev, block_t block)
 {
     size_t hash = block & BUFFER_HASH_MASK;
+    assert(hash < BUFFER_HASH_SIZE);
+
     struct fsdriver_buffer* bp;
     list_for_each_entry(bp, &buf_hash[hash], hash)
     {
@@ -106,6 +108,7 @@ static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
         }
 
         bp->refcnt++;
+        assert(bp->refcnt > 0);
 
         *bpp = bp;
         return 0;
@@ -147,6 +150,7 @@ static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
     }
 
     hash = block & BUFFER_HASH_MASK;
+    assert(hash < BUFFER_HASH_SIZE);
     list_add(&bp->hash, &buf_hash[hash]);
 
     *bpp = bp;
@@ -156,6 +160,7 @@ static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
 
 static void put_block(struct fsdriver_buffer* bp)
 {
+    assert(bp->refcnt > 0);
     bp->refcnt--;
 
     if (bp->refcnt > 0) {
@@ -222,11 +227,16 @@ static void scatter_gather(dev_t dev, struct fsdriver_buffer** buffers,
                 break;
             }
 
+            if (niovs >= NR_IOREQS) break;
+
             iov->iov_base = bp->data;
             iov->iov_len = bp->size;
             iov++;
             niovs++;
         }
+
+        assert(nbufs > 0);
+        assert(niovs > 0 && niovs <= NR_IOREQS);
 
         pos = (loff_t)buffers[0]->block * fs_block_size;
         if (do_write) {
@@ -239,6 +249,9 @@ static void scatter_gather(dev_t dev, struct fsdriver_buffer** buffers,
             bp = buffers[i];
 
             if (retval < bp->size) {
+                if (i == 0) {
+                    bp->dev = NO_DEV;
+                }
                 break;
             }
 
@@ -275,7 +288,7 @@ void fsdriver_init_buffer_cache(size_t new_size)
         free(bufs);
     }
 
-    bufs = calloc(sizeof(bufs[0]), new_size);
+    bufs = calloc(new_size, sizeof(bufs[0]));
     if (!bufs) {
         panic("cannot allocate buffer list");
     }

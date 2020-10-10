@@ -7,11 +7,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 #include <errno.h>
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
 
-#define NR_STATIC_GRANTS 10
+#define NR_STATIC_GRANTS 20
 static mgrant_t static_grants[NR_STATIC_GRANTS];
 static mgrant_t* grants;
 static size_t grant_size;
@@ -47,7 +48,7 @@ static void alloc_grants(size_t count)
     if (grant_size > 0)
         memcpy(new_grants, grants, sizeof(*grants) * grant_size);
 
-    for (g = new_grants; g < &new_grants[new_size]; g++) {
+    for (g = &new_grants[grant_size]; g < &new_grants[new_size]; g++) {
         g->flags = 0;
         g->seq = 0;
         list_add(&g->u.list, &free_list);
@@ -76,6 +77,7 @@ static mgrant_t* alloc_slot(void)
     }
 
     g = list_entry(free_list.next, mgrant_t, u.list);
+    assert(g->u.list.prev == &free_list);
     list_del(&g->u.list);
 
     return g;

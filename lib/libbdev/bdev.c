@@ -215,8 +215,8 @@ static ssize_t bdev_vreadwrite(int io_type, dev_t dev, loff_t pos,
             return -EINVAL;
         }
 
-        giov->iov_grant = grant;
-        giov->iov_len = iov->iov_len;
+        giov[i].iov_grant = grant;
+        giov[i].iov_len = iov[i].iov_len;
     }
 
     grant = mgrant_set_direct(driver_ep, (vir_bytes)giov,
