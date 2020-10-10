@@ -118,12 +118,31 @@ static void build_one_pid_entry(struct memfs_inode* parent, const char* name,
     }
 }
 
+static void build_all_pid_entries(struct memfs_inode* parent, int slot)
+{
+    int i;
+    struct memfs_inode* node;
+    struct memfs_stat stat;
+
+    for (i = 0; pid_files[i].name != NULL; i++) {
+        node = memfs_find_inode_by_index(parent, i);
+        if (node) continue;
+
+        make_stat(&stat, slot, i);
+
+        node =
+            memfs_add_inode(parent, pid_files[i].name, i, &stat, (cbdata_t)0);
+    }
+}
+
 static void build_pid_entries(struct memfs_inode* pin, const char* name)
 {
     int slot = memfs_node_index(pin);
 
     if (name) {
         build_one_pid_entry(pin, name, slot);
+    } else {
+        build_all_pid_entries(pin, slot);
     }
 }
 
@@ -147,5 +166,43 @@ int procfs_lookup_hook(struct memfs_inode* parent, const char* name,
         build_pid_entries(parent, name);
     }
 
+    return 0;
+}
+
+int procfs_getdents_hook(struct memfs_inode* inode, cbdata_t data)
+{
+    if (inode == memfs_get_root_inode()) {
+        update_tables();
+
+        build_pid_dirs();
+    } else if (is_pid_dir(inode)) {
+        build_pid_entries(inode, NULL);
+    }
+
+    return 0;
+}
+
+int procfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
+                       struct memfs_inode** target, endpoint_t user_endpt)
+{
+    int retval = EINVAL;
+
+    if (memfs_node_index(inode) == NO_INDEX) {
+        retval = ((int (*)(endpoint_t, struct memfs_inode**))data)(user_endpt,
+                                                                   target);
+    }
+
+    return retval;
+}
+
+int root_self(endpoint_t user_endpt, struct memfs_inode** target)
+{
+    int proc_nr = ENDPOINT_P(user_endpt);
+
+    if (proc_nr < 0 || proc_nr >= NR_PROCS) return EINVAL;
+    if (!slot_in_use(proc_nr)) return EINVAL;
+
+    *target =
+        memfs_find_inode_by_index(memfs_get_root_inode(), proc_nr + NR_TASKS);
     return 0;
 }

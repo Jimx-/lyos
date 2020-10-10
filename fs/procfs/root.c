@@ -36,12 +36,13 @@
 #include "type.h"
 #include "proto.h"
 
-static void root_cmdline();
-static void root_version();
-static void root_uptime();
-void root_cpuinfo();
-void root_meminfo();
+static void root_cmdline(void);
+static void root_version(void);
+static void root_uptime(void);
+void root_cpuinfo(void);
+void root_meminfo(void);
 static void root_stat(void);
+int root_self(endpoint_t user_endpt, struct memfs_inode** target);
 
 struct procfs_file root_files[] = {
     {"cmdline", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},
@@ -50,10 +51,11 @@ struct procfs_file root_files[] = {
     {"cpuinfo", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_cpuinfo},
     {"meminfo", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_meminfo},
     {"stat", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_stat},
+    {"self", S_IFLNK | S_IRWXU | S_IRWXG | S_IRWXO, root_self},
     {NULL, 0, NULL},
 };
 
-static void root_cmdline()
+static void root_cmdline(void)
 {
     static char kernel_cmdline[KINFO_CMDLINE_LEN];
     static int kernel_cmdline_init = 0;
@@ -75,7 +77,7 @@ static void root_cmdline()
     buf_printf("%s\n", kernel_cmdline);
 }
 
-static void root_version()
+static void root_version(void)
 {
     struct utsname utsname;
     uname(&utsname);
@@ -84,7 +86,7 @@ static void root_version()
                utsname.version);
 }
 
-static void root_uptime()
+static void root_uptime(void)
 {
     clock_t ticks, idle_ticks;
     int hz = get_system_hz();

@@ -203,6 +203,7 @@ int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m)
     dev_t dev = m->u.m_vfs_fs_readwrite.dev;
     ino_t num = m->u.m_vfs_fs_readwrite.num;
     size_t size = m->u.m_vfs_fs_readwrite.count;
+    endpoint_t user_endpt = m->u.m_vfs_fs_readwrite.user_endpt;
     ssize_t retval;
 
     if (!fsd->fs_rdlink) return ENOSYS;
@@ -210,7 +211,7 @@ int fsdriver_rdlink(const struct fsdriver* fsd, MESSAGE* m)
     data.granter = m->source;
     data.grant = m->u.m_vfs_fs_readwrite.grant;
 
-    retval = fsd->fs_rdlink(dev, num, &data, size);
+    retval = fsd->fs_rdlink(dev, num, &data, size, user_endpt);
 
     if (retval >= 0) {
         m->u.m_vfs_fs_readwrite.count = retval;

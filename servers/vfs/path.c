@@ -57,6 +57,7 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
     m.u.m_vfs_fs_lookup.root = root;
     m.u.m_vfs_fs_lookup.name_len = name_len;
     m.u.m_vfs_fs_lookup.path_grant = path_grant;
+    m.u.m_vfs_fs_lookup.user_endpt = fp->endpoint;
     m.u.m_vfs_fs_lookup.flags = lookup->flags;
 
     m.u.m_vfs_fs_lookup.uid = fp->effuid;

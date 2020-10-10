@@ -112,7 +112,7 @@ ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
 }
 
 int sysfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
-                      struct memfs_inode** target)
+                      struct memfs_inode** target, endpoint_t user_endpt)
 {
     sysfs_node_t* node = (sysfs_node_t*)data;
 

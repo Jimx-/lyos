@@ -93,7 +93,7 @@ static void print_cpu(struct cpu_info* cpu_info, int idx)
     buf_printf("\n");
 }
 
-void root_cpuinfo()
+void root_cpuinfo(void)
 {
     struct machine machine;
     struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];

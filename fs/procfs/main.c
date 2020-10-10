@@ -40,8 +40,9 @@ static int procfs_init_hook();
 struct memfs_hooks fs_hooks = {
     .init_hook = procfs_init_hook,
     .read_hook = procfs_read_hook,
-    .getdents_hook = NULL,
+    .getdents_hook = procfs_getdents_hook,
     .lookup_hook = procfs_lookup_hook,
+    .rdlink_hook = procfs_rdlink_hook,
 };
 
 int main()

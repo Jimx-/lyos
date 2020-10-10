@@ -16,7 +16,7 @@ static ssize_t get_target_path(struct memfs_inode* parent,
                                struct memfs_inode* target, char* path);
 
 ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                     size_t bytes)
+                     size_t bytes, endpoint_t user_endpt)
 {
     char path[PATH_MAX];
     struct memfs_inode *pin, *target;
@@ -32,7 +32,7 @@ ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
         return -EINVAL;
     }
 
-    retval = fs_hooks.rdlink_hook(pin, pin->data, &target);
+    retval = fs_hooks.rdlink_hook(pin, pin->data, &target, user_endpt);
     if (retval) return retval;
 
     len = get_target_path(pin->i_parent, target, path);

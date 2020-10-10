@@ -12,7 +12,7 @@ ssize_t memfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
 ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
                        loff_t* ppos, size_t count);
 ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                     size_t bytes);
+                     size_t bytes, endpoint_t user_endpt);
 
 void memfs_init_inode();
 struct memfs_inode* memfs_new_inode(ino_t num, const char* name, int index);

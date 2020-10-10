@@ -72,7 +72,8 @@ static int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
 }
 
 static int resolve_link(const struct fsdriver* fsd, dev_t dev, ino_t num,
-                        char* pathname, int path_len, char* ptr)
+                        char* pathname, int path_len, char* ptr,
+                        endpoint_t user_endpt)
 {
     struct fsdriver_data data;
     char path[PATH_MAX];
@@ -84,7 +85,7 @@ static int resolve_link(const struct fsdriver* fsd, dev_t dev, ino_t num,
 
     if (fsd->fs_rdlink == NULL) return ENOSYS;
 
-    if ((retval = fsd->fs_rdlink(dev, num, &data, size)) < 0) {
+    if ((retval = fsd->fs_rdlink(dev, num, &data, size, user_endpt)) < 0) {
         return -retval;
     } else {
         size = retval;
@@ -108,6 +109,7 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
     int flags = m->u.m_vfs_fs_lookup.flags;
     size_t name_len = m->u.m_vfs_fs_lookup.name_len;
     mgrant_id_t path_grant = m->u.m_vfs_fs_lookup.path_grant;
+    endpoint_t user_endpt = m->u.m_vfs_fs_lookup.user_endpt;
     struct fsdriver_node cur_node, next_node;
     int retval = 0, is_mountpoint;
     struct vfs_ucred ucred;
@@ -166,7 +168,7 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
         if (S_ISLNK(next_node.fn_mode) && (*cp || !(flags & LKF_SYMLINK))) {
             if (++symloop < _POSIX_SYMLOOP_MAX) {
                 retval = resolve_link(fsd, dev, next_node.fn_num, pathname,
-                                      sizeof(pathname), cp);
+                                      sizeof(pathname), cp, user_endpt);
             } else
                 retval = ELOOP;
 

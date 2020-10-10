@@ -30,11 +30,11 @@ struct memfs_hooks {
                          off_t offset, cbdata_t data);
     ssize_t (*write_hook)(struct memfs_inode* inode, char* ptr, size_t count,
                           off_t offset, cbdata_t data);
-    ssize_t (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
+    int (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
     int (*lookup_hook)(struct memfs_inode* parent, const char* name,
                        cbdata_t data);
     int (*rdlink_hook)(struct memfs_inode* inode, cbdata_t data,
-                       struct memfs_inode** target);
+                       struct memfs_inode** target, endpoint_t user_endpt);
 };
 
 extern struct memfs_hooks fs_hooks;

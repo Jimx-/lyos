@@ -104,6 +104,7 @@ static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
     m.u.m_vfs_fs_readwrite.num = num;
     m.u.m_vfs_fs_readwrite.grant = grant;
     m.u.m_vfs_fs_readwrite.count = nbytes;
+    m.u.m_vfs_fs_readwrite.user_endpt = src;
 
     fs_sendrec(fs_ep, &m);
     retval = m.u.m_vfs_fs_readwrite.status;

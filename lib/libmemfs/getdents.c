@@ -51,11 +51,17 @@ ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
     struct memfs_inode* pin = memfs_find_inode(num);
     if (!pin) return -EINVAL;
 
+    if (fs_hooks.getdents_hook) {
+        retval = fs_hooks.getdents_hook(pin, pin->data);
+        if (retval != OK) return -retval;
+    }
+
     struct fsdriver_dentry_list list;
     fsdriver_dentry_list_init(&list, data, count, getdents_buf,
                               sizeof(getdents_buf));
 
     struct memfs_inode* node;
+
     list_for_each_entry(node, &pin->i_children, i_list)
     {
         if (i >= pos) {

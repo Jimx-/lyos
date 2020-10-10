@@ -127,7 +127,7 @@ int ext2_rmdir(dev_t dev, ino_t dir_num, const char* name)
 }
 
 ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
-                    size_t bytes)
+                    size_t bytes, endpoint_t user_endpt)
 {
     ssize_t retval = 0;
     ext2_inode_t* pin = get_ext2_inode(dev, num);
