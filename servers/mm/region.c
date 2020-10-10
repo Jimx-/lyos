@@ -107,6 +107,32 @@ void phys_region_set(struct vir_region* vr, vir_bytes offset,
     vr->phys_regions[i] = pr;
 }
 
+int phys_region_resize(struct vir_region* vr, vir_bytes new_length)
+{
+    size_t cur_slots, new_slots;
+    struct phys_region** new_prs;
+
+    assert(vr->length);
+    assert(new_length);
+
+    cur_slots = phys_slot(vr->length);
+    new_slots = phys_slot(new_length);
+
+    new_prs = alloc_vmem(NULL, new_slots * sizeof(struct phys_region*), 0);
+    if (!new_prs) return ENOMEM;
+
+    memcpy(new_prs, vr->phys_regions,
+           min(cur_slots, new_slots) * sizeof(struct phys_region*));
+    if (new_slots > cur_slots)
+        memset(new_prs + cur_slots, 0,
+               (new_slots - cur_slots) * sizeof(struct phys_region*));
+
+    free_vmem(vr->phys_regions, cur_slots * sizeof(struct phys_region*));
+    vr->phys_regions = new_prs;
+
+    return 0;
+}
+
 /**
  * <Ring 3> Create a new virtual memory region.
  * @param  mp         Process the region belongs to.
@@ -292,8 +318,7 @@ int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
     unsigned offset = ~0;
     struct vir_region *vr, *rb = NULL;
     vir_bytes limit, extra;
-    struct phys_region** new_prs;
-    size_t cur_slots, new_slots;
+    int retval;
 
     addr = roundup(addr, ARCH_PG_SIZE);
 
@@ -317,9 +342,6 @@ int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
     limit = rb->vir_addr + rb->length;
     extra = addr - limit;
 
-    cur_slots = phys_slot(rb->length);
-    new_slots = phys_slot(addr - rb->vir_addr);
-
     if (!rb->rops->rop_resize) {
         if (!region_map(mmp, limit, 0, extra, RF_WRITABLE | RF_ANON, 0,
                         &anon_map_ops))
@@ -327,14 +349,8 @@ int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
         return 0;
     }
 
-    new_prs = alloc_vmem(NULL, new_slots * sizeof(struct phys_region*), 0);
-    if (!new_prs) return ENOMEM;
-
-    memcpy(new_prs, rb->phys_regions, cur_slots * sizeof(struct phys_region*));
-    memset(new_prs + cur_slots, 0,
-           (new_slots - cur_slots) * sizeof(struct phys_region*));
-    free_vmem(rb->phys_regions, cur_slots * sizeof(struct phys_region*));
-    rb->phys_regions = new_prs;
+    if ((retval = phys_region_resize(rb, addr - rb->vir_addr)) != OK)
+        return retval;
 
     return rb->rops->rop_resize(mmp, rb, addr - rb->vir_addr);
 }
@@ -558,12 +574,15 @@ static int region_unmap(struct mmproc* mmp, struct vir_region* vr, off_t offset,
     struct phys_region* pr;
     struct phys_region** new_prs;
     size_t free_slots = phys_slot(len);
+    vir_bytes unmap_start;
     off_t voff;
 
     assert(offset + len <= vr->length);
     assert(!(len % ARCH_PG_SIZE));
 
     region_subfree(vr, offset, len);
+
+    unmap_start = vr->vir_addr + offset;
 
     if (len == vr->length) {
         list_del(&vr->list);
@@ -601,10 +620,13 @@ static int region_unmap(struct mmproc* mmp, struct vir_region* vr, off_t offset,
 
         vr->length -= len;
     } else if (offset + len == vr->length) {
+        if ((retval = phys_region_resize(vr, vr->length - len)) != OK)
+            return retval;
+
         vr->length -= len;
     }
 
-    unmap_memory(&mmp->mm->pgd, vr->vir_addr + offset, len);
+    unmap_memory(&mmp->mm->pgd, unmap_start, len);
 
     return 0;
 }

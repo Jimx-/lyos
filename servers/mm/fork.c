@@ -97,7 +97,6 @@ int do_fork()
         }
 
         if (region_copy_proc(mmp, mmparent) != OK) {
-            pgd_free(&mmp->mm->pgd);
             mmput(mmp->mm);
             mmp->mm = NULL;
             return ENOMEM;

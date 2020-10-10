@@ -41,7 +41,7 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
  	;;
 +  i[34567]86-*-lyos*)
 +    sys_dir=lyos
-+    newlib_cflags="${newlib_cflags} -D_NO_GETPWENT -D_I386MACH_NEED_SOTYPE_FUNCTION"
++    newlib_cflags="${newlib_cflags} -D_NO_GETPWENT -D_I386MACH_NEED_SOTYPE_FUNCTION -DHAVE_MKDIR"
 +	;;
 +  riscv*-*-lyos*)
 +    sys_dir=lyos

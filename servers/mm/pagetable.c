@@ -166,8 +166,7 @@ struct mm_struct* mm_allocate()
 {
     struct mm_struct* mm;
 
-    int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
-    mm = (struct mm_struct*)alloc_vmem(NULL, len, 0);
+    mm = (struct mm_struct*)alloc_vmem(NULL, sizeof(*mm), 0);
     return mm;
 }
 
@@ -185,8 +184,7 @@ void mm_init(struct mm_struct* mm)
 void mm_free(struct mm_struct* mm)
 {
     if (atomic_dec_and_test(&mm->refcnt)) {
-        int len = roundup(sizeof(struct mm_struct), ARCH_PG_SIZE);
-        free_vmem(mm, len);
+        free_vmem(mm, sizeof(*mm));
     }
 }
 

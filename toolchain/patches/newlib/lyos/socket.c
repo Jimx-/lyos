@@ -302,3 +302,31 @@ int getsockopt(int fd, int level, int option_name, void* option_value,
 
     return 0;
 }
+
+int setsockopt(int fd, int level, int option_name, const void* option_value,
+               socklen_t option_len)
+{
+    MESSAGE msg;
+    int retval;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SETSOCKOPT;
+    msg.u.m_vfs_sockopt.sock_fd = fd;
+    msg.u.m_vfs_sockopt.level = level;
+    msg.u.m_vfs_sockopt.name = option_name;
+    msg.u.m_vfs_sockopt.buf = option_value;
+    msg.u.m_vfs_sockopt.len = option_len;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    retval = msg.u.m_vfs_sockopt.status;
+
+    if (retval != 0) {
+        errno = retval;
+        return -1;
+    }
+
+    return 0;
+}

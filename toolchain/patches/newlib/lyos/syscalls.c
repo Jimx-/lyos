@@ -835,7 +835,7 @@ int creat(const char* path, mode_t mode)
     return open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
 }
 
-int stat(const char* path, struct stat* buf)
+int _stat(const char* path, struct stat* buf)
 {
     MESSAGE msg;
 
@@ -885,7 +885,7 @@ int rmdir(const char* pathname)
     return msg.RETVAL;
 }
 
-int fstat(int fd, struct stat* buf)
+int _fstat(int fd, struct stat* buf)
 {
     MESSAGE msg;
 
@@ -902,9 +902,13 @@ int fstat(int fd, struct stat* buf)
     return msg.RETVAL;
 }
 
-int _stat(const char* path, struct stat* buf)
-    __attribute__((weak, alias("stat")));
-int _fstat(int fd, struct stat* buf) __attribute__((weak, alias("fstat")));
+int stat(const char* path, struct stat* buf) { return _stat(path, buf); }
+
+int fstat(int fd, struct stat* buf) { return _fstat(fd, buf); }
+
+int _stat64(const char* path, struct stat* buf) { return _stat(path, buf); }
+
+int _fstat64(int fd, struct stat* buf) { return _fstat(fd, buf); }
 
 int lstat(const char* path, struct stat* buf)
 {
