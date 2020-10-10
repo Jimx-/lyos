@@ -307,7 +307,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_lookup)
     dev_t dev;
     ino_t start;
     ino_t root;
-    endpoint_t user_endpt;
+    __endpoint_t user_endpt;
     __mgrant_id_t path_grant;
     size_t name_len;
     uid_t uid;
@@ -420,7 +420,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_readwrite)
     int rw_flag;
     __mgrant_id_t grant;
     size_t count;
-    endpoint_t user_endpt; /* for rdlink only */
+    __endpoint_t user_endpt; /* for rdlink only */
 
     __u8 _pad[36 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t)];
 }

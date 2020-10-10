@@ -46,7 +46,7 @@ ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
 
     ssize_t retval = 0;
     // int done = 0;
-    loff_t pos = *ppos, i = 0;
+    loff_t pos = *ppos, i = 2;
 
     struct memfs_inode* pin = memfs_find_inode(num);
     if (!pin) return -EINVAL;
@@ -60,13 +60,34 @@ ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
     fsdriver_dentry_list_init(&list, data, count, getdents_buf,
                               sizeof(getdents_buf));
 
-    struct memfs_inode* node;
+    struct memfs_inode *parent, *node;
+
+    if (pos == 0) {
+        retval = fsdriver_dentry_list_add(&list, pin->i_num, ".", 1,
+                                          stat_type(&pin->i_stat));
+        if (retval < 0) return retval;
+        if (retval == 0) goto out;
+
+        pos++;
+    }
+
+    if (pos == 1) {
+        parent = memfs_node_parent(pin);
+        if (!parent) parent = pin;
+
+        retval = fsdriver_dentry_list_add(&list, parent->i_num, "..", 2,
+                                          stat_type(&parent->i_stat));
+        if (retval < 0) return retval;
+        if (retval == 0) goto out;
+
+        pos++;
+    }
 
     list_for_each_entry(node, &pin->i_children, i_list)
     {
         if (i >= pos) {
             retval = fsdriver_dentry_list_add(&list, node->i_num, node->i_name,
-                                              strlen(node->i_name) + 1,
+                                              strlen(node->i_name),
                                               stat_type(&node->i_stat));
 
             if (retval < 0) return retval;
@@ -75,6 +96,7 @@ ssize_t memfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
         i++;
     }
 
+out:
     if (retval >= 0 && (retval = fsdriver_dentry_list_finish(&list)) >= 0) {
         *ppos = i;
     }

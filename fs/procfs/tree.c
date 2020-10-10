@@ -38,6 +38,7 @@
 struct proc proc[NR_TASKS + NR_PROCS];
 struct pmproc pmproc[NR_PROCS];
 
+/* slot == NR_TASKS + proc_nr */
 static int slot_in_use(int slot) { return !(proc[slot].state & PST_FREE_SLOT); }
 
 static int update_proc_table() { return get_proctab(proc); }
@@ -65,8 +66,8 @@ static void make_stat(struct memfs_stat* stat, int slot, int index)
             S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
     else
         stat->st_mode = pid_files[index].mode;
-    stat->st_uid = SU_UID;
-    stat->st_gid = 0;
+    stat->st_uid = pmproc[slot - NR_TASKS].realuid;
+    stat->st_gid = pmproc[slot - NR_TASKS].realgid;
 }
 
 static void build_pid_dirs()
@@ -79,7 +80,6 @@ static void build_pid_dirs()
         if (!slot_in_use(i)) continue;
 
         if (memfs_find_inode_by_index(root, i) != NULL) continue;
-
         pid_t pid;
         if (i < NR_TASKS) {
             pid = i - NR_TASKS;
