@@ -12,6 +12,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_WAYLAND:=false}
 : ${BUILD_MESA:=false}
 : ${BUILD_FREETYPE:=false}
+: ${BUILD_PIXMAN:=false}
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
@@ -121,6 +122,19 @@ if $BUILD_FREETYPE; then
 
     pushd freetype-$SUBARCH > /dev/null
     $DIR/sources/freetype-2.10.2/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-static
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build pixman
+if $BUILD_PIXMAN; then
+    if [ ! -d "pixman-$SUBARCH" ]; then
+        mkdir pixman-$SUBARCH
+    fi
+
+    pushd pixman-$SUBARCH > /dev/null
+    $DIR/sources/pixman-0.40.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
