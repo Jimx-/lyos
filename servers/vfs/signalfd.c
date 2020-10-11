@@ -182,6 +182,16 @@ static const struct file_operations signalfd_fops = {
     .release = signalfd_release,
 };
 
+static int get_signalfd_flags(int sflags)
+{
+    int flags = 0;
+
+    if (sflags & SFD_CLOEXEC) flags |= O_CLOEXEC;
+    if (sflags & SFD_NONBLOCK) flags |= O_NONBLOCK;
+
+    return flags;
+}
+
 int do_signalfd(void)
 {
     int fd = self->msg_in.u.m_vfs_signalfd.fd;
@@ -189,6 +199,9 @@ int do_signalfd(void)
     int flags = self->msg_in.u.m_vfs_signalfd.flags;
     struct signalfd_ctx* ctx;
     struct file_desc* filp;
+
+    if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)) return -EINVAL;
+    flags = get_signalfd_flags(flags);
 
     sigdelset(&mask, SIGKILL);
     sigdelset(&mask, SIGSTOP);

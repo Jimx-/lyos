@@ -182,6 +182,9 @@ static int timerfd_release(struct inode* pin, struct file_desc* filp)
 {
     struct timerfd_ctx* ctx = filp->fd_private_data;
 
+    if (waitqueue_active(&ctx->wq))
+        waitqueue_wakeup_all(&ctx->wq, (void*)POLLFREE);
+
     cancel_timer(&ctx->timer);
     free(ctx);
 
@@ -194,10 +197,21 @@ static const struct file_operations timerfd_fops = {
     .release = timerfd_release,
 };
 
+static int get_timerfd_flags(int tflags)
+{
+    int flags = 0;
+
+    if (tflags & TFD_CLOEXEC) flags |= O_CLOEXEC;
+    if (tflags & TFD_NONBLOCK) flags |= O_NONBLOCK;
+
+    return flags;
+}
+
 int do_timerfd_create(void)
 {
     int clock_id = self->msg_in.u.m_vfs_timerfd.clock_id;
     int flags = self->msg_in.u.m_vfs_timerfd.flags;
+    int filp_flags = get_timerfd_flags(flags);
     struct timerfd_ctx* ctx;
     int fd;
 
@@ -216,7 +230,7 @@ int do_timerfd_create(void)
     ctx->clock_id = clock_id;
 
     fd = anon_inode_get_fd(fproc, 0, &timerfd_fops, ctx,
-                           O_RDWR | (flags & (O_NONBLOCK | O_CLOEXEC)));
+                           O_RDWR | (filp_flags & (O_NONBLOCK | O_CLOEXEC)));
 
     if (fd < 0) {
         free(ctx);
@@ -253,6 +267,8 @@ int do_timerfd_settime(void)
     ticks_to_timespec(timer_expires_remaining(&ctx->timer),
                       &old_value.it_value);
     ticks_to_timespec(ctx->tintv, &old_value.it_interval);
+
+    cancel_timer(&ctx->timer);
 
     retval = timerfd_setup(ctx, flags, &new_value);
     if (retval) goto err;

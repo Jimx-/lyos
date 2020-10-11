@@ -178,16 +178,19 @@ int do_socket(void)
     int domain = self->msg_in.u.m_vfs_socket.domain;
     int type = self->msg_in.u.m_vfs_socket.type;
     int protocol = self->msg_in.u.m_vfs_socket.protocol;
-    int flags;
+    int sock_type, flags;
     dev_t dev;
     int retval;
 
     if ((retval = check_fds(fproc, 1)) != 0) return -retval;
 
-    if ((retval = sdev_socket(src, domain, type, protocol, &dev, FALSE)) != 0)
+    sock_type = type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
+    flags = get_sock_flags(type);
+
+    if ((retval = sdev_socket(src, domain, sock_type, protocol, &dev, FALSE)) !=
+        0)
         return -retval;
 
-    flags = get_sock_flags(type);
     if ((retval = create_sock_fd(dev, flags)) < 0) {
         sdev_close(dev, FALSE);
     }
@@ -201,16 +204,19 @@ int do_socketpair(void)
     int domain = self->msg_in.u.m_vfs_socket.domain;
     int type = self->msg_in.u.m_vfs_socket.type;
     int protocol = self->msg_in.u.m_vfs_socket.protocol;
-    int flags;
+    int sock_type, flags;
     dev_t dev[2];
     int fd0, fd1, retval;
 
     if ((retval = check_fds(fproc, 2)) != 0) return retval;
 
-    if ((retval = sdev_socket(src, domain, type, protocol, dev, TRUE)) != 0)
+    sock_type = type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
+    flags = get_sock_flags(type);
+
+    if ((retval = sdev_socket(src, domain, sock_type, protocol, dev, TRUE)) !=
+        0)
         return retval;
 
-    flags = get_sock_flags(type);
     if ((fd0 = create_sock_fd(dev[0], flags)) < 0) {
         sdev_close(dev[0], FALSE);
         sdev_close(dev[1], FALSE);

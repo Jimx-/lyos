@@ -47,7 +47,9 @@ struct eventfd_ctx {
     unsigned int flags;
 };
 
-#define EFD_SEMAPHORE (1 << 0)
+#define EFD_SEMAPHORE 00000001
+#define EFD_CLOEXEC   02000000
+#define EFD_NONBLOCK  00004000
 
 static void eventfd_ctx_do_read(struct eventfd_ctx* ctx, u64* cnt)
 {
@@ -199,10 +201,21 @@ static const struct file_operations eventfd_fops = {
     .release = eventfd_release,
 };
 
+static int get_eventfd_flags(int eflags)
+{
+    int flags = 0;
+
+    if (eflags & EFD_CLOEXEC) flags |= O_CLOEXEC;
+    if (eflags & EFD_NONBLOCK) flags |= O_NONBLOCK;
+
+    return flags;
+}
+
 int do_eventfd(void)
 {
     int count = self->msg_in.CNT;
     int flags = self->msg_in.FLAGS;
+    int filp_flags = get_eventfd_flags(flags);
     int fd;
     struct eventfd_ctx* ctx;
 
@@ -217,7 +230,7 @@ int do_eventfd(void)
     ctx->flags = flags;
 
     fd = anon_inode_get_fd(fproc, 0, &eventfd_fops, ctx,
-                           O_RDWR | (flags & (O_NONBLOCK | O_CLOEXEC)));
+                           O_RDWR | (filp_flags & (O_NONBLOCK | O_CLOEXEC)));
 
     if (fd < 0) {
         free(ctx);

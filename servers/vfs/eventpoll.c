@@ -456,8 +456,21 @@ static void ep_unregister_pollwait(struct eventpoll* ep, struct epitem* epi)
         if (pwq->wq) {
             waitqueue_remove(pwq->wq, &pwq->wait);
         }
+
         free(pwq);
     }
+}
+
+static int ep_remove(struct eventpoll* ep, struct epitem* epi)
+{
+    ep_unregister_pollwait(ep, epi);
+
+    avl_erase(&epi->avl, &ep->avl_root);
+    if (ep_is_linked(epi)) list_del(&epi->rdllink);
+
+    free(epi);
+
+    return 0;
 }
 
 static void ep_free(struct eventpoll* ep)
@@ -491,6 +504,7 @@ static void ep_free(struct eventpoll* ep)
     list_for_each_entry_safe(epi, tmp, &remove_list, rdllink)
     {
         list_del(&epi->rdllink);
+
         free(epi);
     }
 
@@ -505,9 +519,19 @@ static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp)
     return 0;
 }
 
+static int get_epoll_flags(int eflags)
+{
+    int flags = 0;
+
+    if (eflags & EPOLL_CLOEXEC) flags |= O_CLOEXEC;
+
+    return flags;
+}
+
 int do_epoll_create1(void)
 {
     int flags = self->msg_in.u.m_vfs_epoll.flags;
+    int filp_flags = get_epoll_flags(flags);
     struct eventpoll* ep;
     int fd;
     int retval;
@@ -522,7 +546,7 @@ int do_epoll_create1(void)
     }
 
     fd = anon_inode_get_fd(fproc, 0, &eventpoll_fops, ep,
-                           O_RDWR | (flags & O_CLOEXEC));
+                           O_RDWR | (filp_flags & O_CLOEXEC));
 
     if (fd < 0) {
         ep_free(ep);
@@ -578,12 +602,18 @@ int do_epoll_ctl(void)
     retval = -EINVAL;
     switch (op) {
     case EPOLL_CTL_ADD:
-        if (epi) {
+        if (epi)
             retval = -EEXIST;
-        } else {
+        else {
             epds.events |= EPOLLERR | EPOLLHUP;
             retval = ep_insert(ep, &epds, tf, fd);
         }
+        break;
+    case EPOLL_CTL_DEL:
+        if (epi)
+            retval = ep_remove(ep, epi);
+        else
+            retval = -ENOENT;
         break;
     }
 

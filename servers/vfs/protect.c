@@ -64,7 +64,7 @@ int do_access(void)
     unlock_vmnt(vmnt);
     put_inode(pin);
 
-    return (retval == 0) ? 0 : -1;
+    return retval;
 }
 
 int forbidden(struct fproc* fp, struct inode* pin, int access)

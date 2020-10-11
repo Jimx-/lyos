@@ -711,7 +711,12 @@ int access(const char* pathname, int mode)
 
     send_recv(BOTH, TASK_FS, &msg);
 
-    return msg.RETVAL;
+    if (msg.RETVAL != 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
 }
 
 off_t lseek(int fd, off_t offset, int whence)

@@ -103,6 +103,9 @@ int do_fcntl()
         fproc->filp[newfd] = filp;
         retval = newfd;
         break;
+    case F_GETFD:
+        retval = 0;
+        break;
     case F_SETFD:
         break;
     case F_SETFL:
