@@ -313,10 +313,12 @@ enum msgtype {
     SDEV_VRECV,
     SDEV_SELECT,
     SDEV_GETSOCKOPT,
+    SDEV_CLOSE,
     SDEV_REPLY,
     SDEV_SOCKET_REPLY,
     SDEV_ACCEPT_REPLY,
     SDEV_RECV_REPLY,
+    SDEV_POLL_NOTIFY,
 
     /* message for sysfs */
     SYSFS_PUBLISH = SYSFS_REQ_BASE, /* 2100 */

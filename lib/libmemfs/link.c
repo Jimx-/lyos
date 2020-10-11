@@ -34,6 +34,7 @@ ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
 
     retval = fs_hooks.rdlink_hook(pin, pin->data, &target, user_endpt);
     if (retval) return retval;
+    assert(target != NULL);
 
     len = get_target_path(pin->i_parent, target, path);
     if (len < 0) return len;

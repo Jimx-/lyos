@@ -215,6 +215,10 @@ __poll_t uds_poll(struct sock* sock)
     if (uds_is_shutdown(uds, SFL_SHUT_RD))
         mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
 
+    /* check for termination for connection-based sockets */
+    if (uds_get_type(uds) != SOCK_DGRAM && uds_is_disconnected(uds))
+        mask |= EPOLLHUP;
+
     if (!skb_queue_empty(&uds->sock.recvq)) mask |= EPOLLIN | EPOLLRDNORM;
 
     if (!uds_is_listening(uds)) mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;

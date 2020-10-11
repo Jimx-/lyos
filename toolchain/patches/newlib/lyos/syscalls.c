@@ -562,9 +562,15 @@ int fcntl(int fd, int cmd, ...)
 
     switch (cmd) {
     case F_DUPFD:
+    case F_DUPFD_CLOEXEC:
     case F_SETFD:
     case F_SETFL:
         msg.BUF_LEN = va_arg(argp, int);
+        break;
+    case F_GETLK:
+    case F_SETLK:
+    case F_SETLKW:
+        msg.BUF = va_arg(argp, void*);
         break;
     }
 

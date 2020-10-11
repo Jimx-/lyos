@@ -198,11 +198,17 @@ int procfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
 int root_self(endpoint_t user_endpt, struct memfs_inode** target)
 {
     int proc_nr = ENDPOINT_P(user_endpt);
+    struct memfs_inode* pin;
+
+    update_tables();
 
     if (proc_nr < 0 || proc_nr >= NR_PROCS) return EINVAL;
     if (!slot_in_use(proc_nr)) return EINVAL;
 
-    *target =
-        memfs_find_inode_by_index(memfs_get_root_inode(), proc_nr + NR_TASKS);
+    pin = memfs_find_inode_by_index(memfs_get_root_inode(), proc_nr + NR_TASKS);
+
+    if (!pin) return ENOENT;
+
+    *target = pin;
     return 0;
 }

@@ -97,7 +97,8 @@ struct ep_send_events_data {
     int retval;
 };
 
-static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt);
+static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
+                             int notify);
 static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp);
 
 static const struct file_operations eventpoll_fops = {
@@ -155,7 +156,7 @@ static __poll_t ep_send_events_proc(struct eventpoll* ep,
 
         list_del(&epi->rdllink);
 
-        revents = ep_item_poll(epi, &pt);
+        revents = ep_item_poll(epi, &pt, FALSE /* notify */);
         if (!revents) continue;
 
         revent.events = revents;
@@ -275,14 +276,17 @@ static void ep_ptable_queue_proc(struct file_desc* filp,
     }
 }
 
-static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt)
+static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
+                             int notify)
 {
     struct file_desc* filp = epi->ffd.file;
     __poll_t mask;
+    int oneshot = (epi->event.events & EPOLLONESHOT) ? POLL_ONESHOT : 0;
 
     pt->mask = epi->event.events;
     if (filp->fd_fops != &eventpoll_fops) {
-        mask = vfs_poll(filp, pt->mask, pt, fproc);
+        mask = vfs_poll(filp, pt->mask | (notify ? POLL_NOTIFY : 0) | oneshot,
+                        pt, fproc);
 
         return mask & epi->event.events;
     }
@@ -311,7 +315,7 @@ static int ep_insert(struct eventpoll* ep, struct epoll_event* event,
     epq.epi = epi;
     epq.pt.qproc = ep_ptable_queue_proc;
 
-    revents = ep_item_poll(epi, &epq.pt);
+    revents = ep_item_poll(epi, &epq.pt, TRUE /* notify */);
 
     avl_insert(&epi->avl, &ep->avl_root);
 
@@ -614,6 +618,9 @@ int do_epoll_ctl(void)
             retval = ep_remove(ep, epi);
         else
             retval = -ENOENT;
+        break;
+    case EPOLL_CTL_MOD:
+        printl("ctl mod\n");
         break;
     }
 

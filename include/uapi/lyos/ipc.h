@@ -694,6 +694,15 @@ BEGIN_MESS_DECL(mess_sockdriver_select)
 }
 END_MESS_DECL(mess_sockdriver_select)
 
+BEGIN_MESS_DECL(mess_sockdriver_poll_notify)
+{
+    int sock_id;
+    __poll_t ops;
+
+    __u8 _pad[48];
+}
+END_MESS_DECL(mess_sockdriver_poll_notify)
+
 BEGIN_MESS_DECL(mess_sockdriver_getset)
 {
     int req_id;
@@ -769,6 +778,7 @@ typedef struct {
         struct mess_sockdriver_accept_reply m_sockdriver_accept_reply;
         struct mess_sockdriver_sendrecv m_sockdriver_sendrecv;
         struct mess_sockdriver_recv_reply m_sockdriver_recv_reply;
+        struct mess_sockdriver_poll_notify m_sockdriver_poll_notify;
         struct mess_sockdriver_select m_sockdriver_select;
         struct mess_sockdriver_getset m_sockdriver_getset;
 

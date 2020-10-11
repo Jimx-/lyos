@@ -192,7 +192,7 @@ int do_socket(void)
         return -retval;
 
     if ((retval = create_sock_fd(dev, flags)) < 0) {
-        sdev_close(dev, FALSE);
+        sdev_close(src, dev, FALSE);
     }
 
     return retval;
@@ -218,14 +218,14 @@ int do_socketpair(void)
         return retval;
 
     if ((fd0 = create_sock_fd(dev[0], flags)) < 0) {
-        sdev_close(dev[0], FALSE);
-        sdev_close(dev[1], FALSE);
+        sdev_close(src, dev[0], FALSE);
+        sdev_close(src, dev[1], FALSE);
         return -fd0;
     }
 
     if ((fd1 = create_sock_fd(dev[1], flags)) < 0) {
-        sdev_close(dev[0], FALSE);
-        sdev_close(dev[1], FALSE);
+        sdev_close(src, dev[0], FALSE);
+        sdev_close(src, dev[1], FALSE);
         return -fd1;
     }
 
@@ -293,12 +293,13 @@ int do_accept(void)
     if (retval != OK && newdev == NO_DEV) return -retval;
 
     if (retval != OK) {
-        sdev_close(newdev, FALSE);
+        sdev_close(fproc->endpoint, newdev, FALSE);
         return -retval;
     }
 
     flags &= O_CLOEXEC | O_NONBLOCK;
-    if ((retval = create_sock_fd(newdev, flags)) < 0) sdev_close(newdev, FALSE);
+    if ((retval = create_sock_fd(newdev, flags)) < 0)
+        sdev_close(fproc->endpoint, newdev, FALSE);
 
     if (retval >= 0) self->msg_out.CNT = addrlen;
 
@@ -428,6 +429,6 @@ static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
 
 static int sock_release(struct inode* pin, struct file_desc* filp)
 {
-    sdev_close(pin->i_specdev, !(filp->fd_flags & O_NONBLOCK));
+    sdev_close(fproc->endpoint, pin->i_specdev, !(filp->fd_flags & O_NONBLOCK));
     return 0;
 }

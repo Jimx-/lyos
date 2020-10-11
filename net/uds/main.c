@@ -43,6 +43,7 @@ static int uds_listen(struct sock* sock, int backlog);
 static int uds_accept(struct sock* sock, struct sockaddr* addr,
                       socklen_t* addrlen, endpoint_t user_endpt, int flags,
                       struct sock** newsockp);
+static int uds_close(struct sock* sock, int force, int non_block);
 static void uds_free(struct sock* sock);
 
 static const struct sockdriver uds_driver = {
@@ -58,6 +59,7 @@ static const struct sockdriver_ops uds_ops = {
     .sop_send = uds_send,
     .sop_recv = uds_recv,
     .sop_poll = uds_poll,
+    .sop_close = uds_close,
     .sop_free = uds_free,
 };
 
@@ -462,7 +464,7 @@ restart:
 
             if (check_again) {
                 /* Yield to (possibly) other workers that are blocked on
-                 * accept() on the peer socket to see if they can  accept us
+                 * accept() on the peer socket to see if they can accept us
                  * before we report EAGAIN to non-blocking requests. If there is
                  * none, we will be scheduled again right away and fail with
                  * EAGAIN.
@@ -517,6 +519,31 @@ restart:
 
     *newsockp = NULL;
     return sock_sockid(&conn->sock);
+}
+
+static int uds_close(struct sock* sock, int force, int non_block)
+{
+    struct udssock* uds = to_udssock(sock);
+
+    if (uds_get_type(uds) == SOCK_DGRAM) {
+        if (uds_has_link(uds)) uds_dequeue(uds->link, uds);
+
+        uds_clear_queue(uds, NULL);
+    } else if (uds_is_listening(uds)) {
+        uds_clear_queue(uds, NULL);
+    } else if (uds_has_link(uds)) {
+        assert(uds_is_listening(uds->link));
+
+        uds_dequeue(uds->link, uds);
+
+        if (uds_is_connected(uds)) uds_disconnect(uds, TRUE);
+    } else if (uds_is_connected(uds)) {
+        uds_disconnect(uds, FALSE);
+    }
+
+    if (uds->dev != NO_DEV) udssock_unhash(uds);
+
+    return 0;
 }
 
 int uds_init(void)

@@ -81,6 +81,7 @@ int do_fcntl()
 {
     int fd = self->msg_in.FD;
     int request = self->msg_in.REQUEST;
+    void* arg = self->msg_in.BUF;
     int argx = self->msg_in.BUF_LEN;
     int retval = 0;
 
@@ -110,6 +111,12 @@ int do_fcntl()
         break;
     case F_SETFL:
         filp->fd_flags = argx;
+        break;
+
+    case F_GETLK:
+    case F_SETLK:
+    case F_SETLKW:
+        retval = do_lock(fd, request, arg);
         break;
     default:
         retval = -EINVAL;

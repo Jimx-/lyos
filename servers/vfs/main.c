@@ -118,6 +118,7 @@ int main()
         case SDEV_SOCKET_REPLY:
         case SDEV_ACCEPT_REPLY:
         case SDEV_RECV_REPLY:
+        case SDEV_POLL_NOTIFY:
             sdev_reply(&msg);
             break;
         case PM_VFS_EXEC:

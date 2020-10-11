@@ -59,6 +59,10 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
     sock->peercred.uid = -1;
     sock->peercred.gid = -1;
 
+    sock->sel_endpoint = NO_TASK;
+    sock->sel_mask = 0;
+    sock->sel_flags = 0;
+
     sock->ops = ops;
 
     INIT_LIST_HEAD(&sock->wq);
@@ -212,6 +216,19 @@ static void send_recv_reply(endpoint_t src, int req_id, int status,
     send_recv(SEND, src, &msg);
 }
 
+static void send_poll_notify(endpoint_t src, sockid_t id, __poll_t ops)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SDEV_POLL_NOTIFY;
+
+    msg.u.m_sockdriver_poll_notify.sock_id = id;
+    msg.u.m_sockdriver_poll_notify.ops = ops;
+
+    send_recv(SEND, src, &msg);
+}
+
 static void do_socket(const struct sockdriver* sd, MESSAGE* msg)
 {
     sockid_t sock_id;
@@ -232,13 +249,12 @@ static void do_socketpair(const struct sockdriver* sd, MESSAGE* msg)
     int type = msg->u.m_sockdriver_socket.type;
     int protocol = msg->u.m_sockdriver_socket.protocol;
     struct sock *sock1, *sock2;
-    sockid_t sock_id, sock_id2;
+    sockid_t sock_id, sock_id2 = -1;
     int retval;
 
     if ((retval = socket_create(sd, endpoint, domain, type, protocol,
                                 &sock1)) != 0) {
         sock_id = -retval;
-        sock_id2 = -1;
         goto reply;
     }
 
@@ -252,7 +268,6 @@ static void do_socketpair(const struct sockdriver* sd, MESSAGE* msg)
                                 &sock2)) != 0) {
         sockdriver_free(sock1);
         sock_id = -retval;
-        sock_id2 = -1;
         goto reply;
     }
 
@@ -530,7 +545,7 @@ reply:
 static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
                                size_t data_len,
                                const struct sockdriver_data* ctl_data,
-                               size_t* ctl_len, struct sockaddr* addr,
+                               socklen_t* ctl_len, struct sockaddr* addr,
                                socklen_t* addr_len, endpoint_t user_endpt,
                                int* flags)
 {
@@ -689,7 +704,7 @@ static void do_vrecv(MESSAGE* msg)
     mgrant_id_t data_grant = msg->u.m_sockdriver_sendrecv.data_grant;
     size_t iov_len = msg->u.m_sockdriver_sendrecv.data_len;
     mgrant_id_t ctl_grant = msg->u.m_sockdriver_sendrecv.ctl_grant;
-    size_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
+    socklen_t ctl_len = msg->u.m_sockdriver_sendrecv.ctl_len;
     mgrant_id_t addr_grant = msg->u.m_sockdriver_sendrecv.addr_grant;
     size_t addr_grant_len = msg->u.m_sockdriver_sendrecv.addr_len;
     endpoint_t user_endpt = msg->u.m_sockdriver_sendrecv.user_endpoint;
@@ -744,7 +759,7 @@ static void do_select(MESSAGE* msg)
     int req_id = msg->u.m_sockdriver_select.req_id;
     sockid_t sock_id = msg->u.m_sockdriver_select.sock_id;
     __poll_t ops = msg->u.m_sockdriver_select.ops;
-    int notify;
+    int notify, oneshot;
     __poll_t retval;
 
     if ((sock = sock_get(sock_id)) == NULL) {
@@ -753,11 +768,28 @@ static void do_select(MESSAGE* msg)
     }
 
     notify = ops & POLL_NOTIFY;
-    ops &= ~POLL_NOTIFY;
+    oneshot = ops & POLL_ONESHOT;
+    ops &= ~(POLL_NOTIFY | POLL_ONESHOT);
 
     retval = sock->ops->sop_poll(sock) & ops;
 
     ops &= ~retval;
+
+    if (notify && ops) {
+        if (sock->sel_endpoint != NO_TASK) {
+            if (sock->sel_endpoint != src) {
+                retval = -EIO;
+                goto reply;
+            }
+
+            sock->sel_mask |= ops;
+        } else {
+            sock->sel_endpoint = src;
+            sock->sel_mask = ops;
+        }
+
+        if (oneshot) sock->sel_flags |= SSEL_ONESHOT;
+    }
 
 reply:
     send_generic_reply(src, req_id, retval);
@@ -837,6 +869,35 @@ reply:
     send_generic_reply(src, req_id, retval);
 }
 
+static void do_close(MESSAGE* msg)
+{
+    struct sock* sock;
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_simple.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_simple.sock_id;
+    int flags = msg->u.m_sockdriver_simple.param;
+    int force, retval;
+
+    if ((sock = sock_get(sock_id)) == NULL) {
+        retval = EINVAL;
+        goto reply;
+    }
+
+    sock->sel_endpoint = NO_TASK;
+
+    force = ((sock->sock_opt & SO_LINGER) && sock->linger == 0);
+
+    if (sock->ops->sop_close)
+        retval = sock->ops->sop_close(sock, force, !!(flags & SDEV_NONBLOCK));
+    else
+        retval = 0;
+
+    if (retval == OK) sockdriver_free(sock);
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
 void sockdriver_suspend(struct sock* sock, unsigned int event)
 {
     struct worker_thread* wp = sockdriver_worker();
@@ -850,6 +911,7 @@ void sockdriver_suspend(struct sock* sock, unsigned int event)
 void sockdriver_fire(struct sock* sock, unsigned int mask)
 {
     struct worker_thread *wp, *tmp;
+    __poll_t ops, retval;
 
     if (mask & SEV_CONNECT) mask |= SEV_SEND;
 
@@ -858,6 +920,22 @@ void sockdriver_fire(struct sock* sock, unsigned int mask)
         if (wp->events & mask) {
             list_del(&wp->list);
             sockdriver_wakeup_worker(wp);
+        }
+    }
+
+    if (sock->sel_endpoint != NO_TASK) {
+        ops = sock->sel_mask;
+
+        retval = sock->ops->sop_poll(sock) & ops;
+
+        if (retval != 0) {
+            send_poll_notify(sock->sel_endpoint, sock_sockid(sock), retval);
+
+            if (sock->sel_flags & SSEL_ONESHOT) {
+                sock->sel_mask &= ~retval;
+
+                if (sock->sel_mask == 0) sock->sel_endpoint = NO_TASK;
+            }
         }
     }
 }
@@ -907,6 +985,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_GETSOCKOPT:
         do_getsockopt(msg);
+        break;
+    case SDEV_CLOSE:
+        do_close(msg);
         break;
     default:
         if (sd->sd_other) {

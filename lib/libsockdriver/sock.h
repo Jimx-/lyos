@@ -2,6 +2,9 @@
 #define _LIBSOCKDRIVER_SOCK_H_
 
 #include <lyos/const.h>
+#include <lyos/types.h>
+#include <lyos/list.h>
+#include <time.h>
 
 typedef int32_t sockid_t;
 
@@ -16,6 +19,9 @@ typedef int32_t sockid_t;
 /* Socket flags. */
 #define SFL_SHUT_RD 0x01
 #define SFL_SHUT_WR 0x02
+
+/* Socket select flags */
+#define SSEL_ONESHOT 0x01
 
 struct sock_cred {
     pid_t pid;
@@ -33,12 +39,17 @@ struct sock {
 
     int peek_off;
     int rcvlowat;
+    clock_t linger;
 
     struct sock_cred peercred;
 
     struct list_head hash;
     struct list_head wq;
     struct sk_buff_head recvq;
+
+    endpoint_t sel_endpoint;
+    __poll_t sel_mask;
+    int sel_flags;
 
     const struct sockdriver_ops* ops;
 };

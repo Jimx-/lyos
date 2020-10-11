@@ -45,6 +45,7 @@ struct sockdriver_ops {
     __poll_t (*sop_poll)(struct sock* sock);
     int (*sop_getsockopt)(struct sock* sock, int level, int name,
                           const struct sockdriver_data* data, socklen_t* len);
+    int (*sop_close)(struct sock* sock, int force, int non_block);
     void (*sop_free)(struct sock* sock);
 };
 

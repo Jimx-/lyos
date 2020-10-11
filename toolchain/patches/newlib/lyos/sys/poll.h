@@ -34,8 +34,9 @@ struct pollfd {
 #define POLLRDHUP 0x2000
 #endif
 
-#define POLLFREE    0x4000
-#define POLL_NOTIFY 0x8000
+#define POLLFREE     0x4000
+#define POLL_NOTIFY  0x8000
+#define POLL_ONESHOT 0x10000
 
 #ifdef __cplusplus
 extern "C"

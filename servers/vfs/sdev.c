@@ -132,6 +132,15 @@ static struct sdmap* get_sdmap_by_dev(dev_t dev, sockid_t* sockidp)
     return sdp;
 }
 
+static struct sdmap* get_sdmap_by_endpoint(endpoint_t endpoint)
+{
+    int i;
+    for (i = 0; i < sizeof(sdmap) / sizeof(sdmap[0]); i++)
+        if (sdmap[i].endpoint == endpoint) return &sdmap[i];
+
+    return NULL;
+}
+
 static int sdev_sendrec(struct sdmap* sdp, MESSAGE* msg)
 {
     int retval;
@@ -202,7 +211,7 @@ int sdev_socket(endpoint_t src, int domain, int type, int protocol, dev_t* dev,
 
     if (pair) {
         if (sock_id2 < 0) {
-            sdev_close(dev[0], FALSE);
+            sdev_close(src, dev[0], FALSE);
             return EIO;
         }
 
@@ -544,7 +553,10 @@ int sdev_getsockopt(endpoint_t src, dev_t dev, int level, int name, void* addr,
     return sdev_get(src, SDEV_GETSOCKOPT, dev, level, name, addr, len);
 }
 
-int sdev_close(dev_t dev, int may_block) { return 0; }
+int sdev_close(endpoint_t src, dev_t dev, int may_block)
+{
+    return sdev_simple(SDEV_CLOSE, src, dev, may_block ? 0 : SDEV_NONBLOCK);
+}
 
 __poll_t sock_poll(struct file_desc* filp, __poll_t mask,
                    struct poll_table* wait, struct fproc* fp)
@@ -564,10 +576,19 @@ __poll_t sock_poll(struct file_desc* filp, __poll_t mask,
     return retval;
 }
 
+static void sdev_poll_notify(struct sdmap* sdp, sockid_t sock_id, __poll_t ops)
+{
+    if (waitqueue_active(&sdp->wait))
+        waitqueue_wakeup_all(&sdp->wait, (void*)ops);
+}
+
 void sdev_reply(MESSAGE* msg)
 {
     int req_id = NO_TASK;
     struct fproc* fp;
+    struct sdmap* sdp;
+
+    if ((sdp = get_sdmap_by_endpoint(msg->source)) == NULL) return;
 
     switch (msg->type) {
     case SDEV_REPLY:
@@ -582,6 +603,10 @@ void sdev_reply(MESSAGE* msg)
     case SDEV_RECV_REPLY:
         req_id = msg->u.m_sockdriver_recv_reply.req_id;
         break;
+    case SDEV_POLL_NOTIFY:
+        sdev_poll_notify(sdp, msg->u.m_sockdriver_poll_notify.sock_id,
+                         msg->u.m_sockdriver_poll_notify.ops);
+        return;
     }
 
     fp = vfs_endpt_proc(req_id);
