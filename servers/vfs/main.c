@@ -125,6 +125,7 @@ int main()
             dispatch_work(&msg, do_work);
             break;
         case PM_SIGNALFD_REPLY:
+        case PM_SIGNALFD_POLL_NOTIFY:
             do_pm_signalfd_reply(&msg);
             break;
         default:

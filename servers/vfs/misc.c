@@ -389,10 +389,10 @@ int fs_fork(void)
     lock_fproc(child);
 
     cmutex = child->lock;
-    signalfd_wq = child->signalfd_wq;
     *child = *parent;
-    child->signalfd_wq = signalfd_wq;
     child->lock = cmutex;
+
+    init_waitqueue_head(&child->signalfd_wq);
 
     child->pid = self->msg_in.PID;
     child->endpoint = self->msg_in.ENDPOINT;

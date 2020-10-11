@@ -39,6 +39,7 @@ struct pmproc {
     sigset_t sig_ignore;
     sigset_t sig_catch;
     sigset_t sig_trace;
+    sigset_t sig_poll; /* signalfd mask for vfs polling */
     int sig_status;
     struct sigaction sigaction[NSIG];
     void* sigreturn_f;

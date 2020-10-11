@@ -101,6 +101,8 @@ int do_fork(MESSAGE* p)
         list_add(&pmp->thread_group, &pm_parent->group_leader->thread_group);
     }
 
+    sigemptyset(&pmp->sig_poll);
+
     p->PID = pmp->pid;
 
     /* tell FS, see fs_fork() */

@@ -36,6 +36,7 @@
 
 static int kill_sig(struct pmproc* pmp, pid_t dest, int signo);
 static void check_pending(struct pmproc* pmp);
+static void signalfd_poll_notify(endpoint_t endpoint, int status);
 
 int do_sigaction(MESSAGE* p)
 {
@@ -223,6 +224,11 @@ void sig_proc(struct pmproc* p_dest, int signo, int trace)
     /* the signal is blocked */
     if (!bad_ignore && sigismember(&p_dest->sig_mask, signo)) {
         sigaddset(&p_dest->sig_pending, signo);
+
+        /* notify vfs */
+        if (sigismember(&p_dest->sig_poll, signo))
+            signalfd_poll_notify(p_dest->endpoint, signo);
+
         return;
     }
 
@@ -346,11 +352,24 @@ static void signalfd_reply(endpoint_t endpoint, int status)
     send_recv(SEND, TASK_FS, &msg);
 }
 
+static void signalfd_poll_notify(endpoint_t endpoint, int status)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = PM_SIGNALFD_POLL_NOTIFY;
+    msg.u.m_pm_vfs_signalfd_reply.endpoint = endpoint;
+    msg.u.m_pm_vfs_signalfd_reply.status = status;
+
+    send_recv(SEND, TASK_FS, &msg);
+}
+
 int do_signalfd_dequeue(MESSAGE* msg)
 {
     int endpoint = msg->u.m_vfs_pm_signalfd.endpoint;
     sigset_t sigmask = (sigset_t)msg->u.m_vfs_pm_signalfd.sigmask;
     void* buf = msg->u.m_vfs_pm_signalfd.buf;
+    int notify = msg->u.m_vfs_pm_signalfd.notify;
     struct pmproc* pmp = pm_endpt_proc(endpoint);
     struct signalfd_siginfo new;
     int retval, i, signo = 0;
@@ -381,6 +400,11 @@ int do_signalfd_dequeue(MESSAGE* msg)
             retval = -retval;
             goto reply;
         }
+    } else if (notify) {
+        /* add signals to signalfd poll set */
+        for (i = 0; i < NSIG; i++) {
+            if (sigismember(&sigmask, i)) sigaddset(&pmp->sig_poll, i);
+        }
     }
 
     retval = signo;
@@ -395,6 +419,7 @@ int do_signalfd_getnext(MESSAGE* msg)
 {
     int endpoint = msg->u.m_vfs_pm_signalfd.endpoint;
     sigset_t sigmask = (sigset_t)msg->u.m_vfs_pm_signalfd.sigmask;
+    int notify = msg->u.m_vfs_pm_signalfd.notify;
     struct pmproc* pmp = pm_endpt_proc(endpoint);
     int retval, i;
 
@@ -410,9 +435,15 @@ int do_signalfd_getnext(MESSAGE* msg)
     retval = 0;
     for (i = 0; i < NSIG; i++) {
         if (sigismember(&pmp->sig_pending, i) && sigismember(&sigmask, i)) {
-            sigdelset(&pmp->sig_pending, i);
             retval = i;
             break;
+        }
+    }
+
+    if (retval == 0 && notify) {
+        /* add signals to signalfd poll set */
+        for (i = 0; i < NSIG; i++) {
+            if (sigismember(&sigmask, i)) sigaddset(&pmp->sig_poll, i);
         }
     }
 

@@ -55,13 +55,14 @@ static void signalfd_recv(MESSAGE* msg)
 }
 
 static int request_signalfd_dequeue(struct signalfd_ctx* ctx, void* buf,
-                                    struct fproc* fp)
+                                    struct fproc* fp, int notify)
 {
     MESSAGE msg;
     msg.type = PM_SIGNALFD_DEQUEUE;
     msg.u.m_vfs_pm_signalfd.endpoint = fp->endpoint;
     msg.u.m_vfs_pm_signalfd.sigmask = ctx->sigmask;
     msg.u.m_vfs_pm_signalfd.buf = buf;
+    msg.u.m_vfs_pm_signalfd.notify = notify;
 
     if (asyncsend3(TASK_PM, &msg, 0)) {
         panic("vfs: signalfd_dequeue send message failed");
@@ -73,12 +74,13 @@ static int request_signalfd_dequeue(struct signalfd_ctx* ctx, void* buf,
 }
 
 static int request_signalfd_get_pending(struct signalfd_ctx* ctx,
-                                        struct fproc* fp)
+                                        struct fproc* fp, int notify)
 {
     MESSAGE msg;
     msg.type = PM_SIGNALFD_GETNEXT;
     msg.u.m_vfs_pm_signalfd.endpoint = fp->endpoint;
     msg.u.m_vfs_pm_signalfd.sigmask = ctx->sigmask;
+    msg.u.m_vfs_pm_signalfd.notify = notify;
 
     if (asyncsend3(TASK_PM, &msg, 0)) {
         panic("vfs: signalfd_dequeue send message failed");
@@ -96,7 +98,7 @@ static ssize_t signalfd_dequeue(struct file_desc* filp, void* buf,
     int retval;
     DECLARE_WAITQUEUE(wait, self);
 
-    retval = request_signalfd_dequeue(ctx, buf, fp);
+    retval = request_signalfd_dequeue(ctx, buf, fp, !nonblock);
 
     if (!retval) {
         if (nonblock) {
@@ -112,7 +114,7 @@ static ssize_t signalfd_dequeue(struct file_desc* filp, void* buf,
         worker_wait();
         lock_filp(filp, RWL_READ);
 
-        retval = request_signalfd_dequeue(ctx, buf, fp);
+        retval = request_signalfd_dequeue(ctx, buf, fp, !nonblock);
 
         if (retval) break;
     }
@@ -151,7 +153,7 @@ static __poll_t signalfd_poll(struct file_desc* filp, __poll_t mask,
     struct signalfd_ctx* ctx = filp->fd_private_data;
     int signo;
 
-    signo = request_signalfd_get_pending(ctx, fp);
+    signo = request_signalfd_get_pending(ctx, fp, TRUE /* notify */);
     if (signo < 0) {
         return 0;
     }
@@ -258,11 +260,23 @@ static void signalfd_reply_generic(MESSAGE* msg)
     }
 }
 
+static void signalfd_poll_notify(MESSAGE* msg)
+{
+    endpoint_t endpoint = msg->u.m_pm_vfs_signalfd_reply.endpoint;
+    struct fproc* fp = vfs_endpt_proc(endpoint);
+    if (fp == NULL) return;
+
+    waitqueue_wakeup_all(&fp->signalfd_wq, (void*)EPOLLIN);
+}
+
 int do_pm_signalfd_reply(MESSAGE* msg)
 {
     switch (msg->type) {
     case PM_SIGNALFD_REPLY:
         signalfd_reply_generic(msg);
+        break;
+    case PM_SIGNALFD_POLL_NOTIFY:
+        signalfd_poll_notify(msg);
         break;
     }
 

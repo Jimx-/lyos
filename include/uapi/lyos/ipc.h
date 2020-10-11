@@ -501,8 +501,9 @@ struct mess_vfs_pm_signalfd {
     __endpoint_t endpoint;
     unsigned int sigmask;
     void* buf;
+    int notify;
 
-    __u8 _pad[48 - sizeof(void*)];
+    __u8 _pad[44 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_pm_signalfd);
 

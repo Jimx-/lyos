@@ -279,6 +279,7 @@ enum msgtype {
     PM_SIGNALFD_REPLY,
     PM_SIGNALFD_DEQUEUE,
     PM_SIGNALFD_GETNEXT,
+    PM_SIGNALFD_POLL_NOTIFY,
 
     /* message type for drivers */ /* 2001 ~ 2006 */
     BDEV_OPEN = DRV_REQ_BASE,
