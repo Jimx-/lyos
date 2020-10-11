@@ -54,6 +54,7 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
     sock->type = type;
 
     sock->rcvlowat = 1;
+    sock->sndbuf = 262144;
 
     sock->peercred.pid = -1;
     sock->peercred.uid = -1;
@@ -869,6 +870,73 @@ reply:
     send_generic_reply(src, req_id, retval);
 }
 
+static void do_setsockopt(MESSAGE* msg)
+{
+    struct sock* sock;
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_getset.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_getset.sock_id;
+    int level = msg->u.m_sockdriver_getset.level;
+    int name = msg->u.m_sockdriver_getset.name;
+    mgrant_id_t grant = msg->u.m_sockdriver_getset.grant;
+    socklen_t len = msg->u.m_sockdriver_getset.len;
+    struct sockdriver_data data;
+    int val;
+    int retval;
+
+    if ((sock = sock_get(sock_id)) == NULL) {
+        retval = EINVAL;
+        goto reply;
+    }
+
+    data.endpoint = src;
+    data.grant = grant;
+    data.len = len;
+
+    if (level == SOL_SOCKET) {
+        switch (name) {
+        case SO_DEBUG:
+        case SO_REUSEADDR:
+        case SO_KEEPALIVE:
+        case SO_DONTROUTE:
+        case SO_BROADCAST:
+        case SO_OOBINLINE:
+            if ((retval = sockdriver_copyin(&data, 0, &val, len)) != OK)
+                goto reply;
+
+            if (val)
+                sock->sock_opt |= (unsigned int)name;
+            else
+                sock->sock_opt &= ~(unsigned int)name;
+            break;
+        case SO_SNDBUF:
+            if ((retval = sockdriver_copyin(&data, 0, &val, len)) != OK)
+                goto reply;
+            val = min(val, INT_MAX / 2);
+            sock->sndbuf = val * 2;
+            sockdriver_fire(sock, SEV_SEND);
+            break;
+        case SO_ACCEPTCONN:
+        case SO_ERROR:
+        case SO_TYPE:
+        case SO_PEERCRED: {
+            retval = ENOPROTOOPT;
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        if (sock->ops->sop_setsockopt == NULL)
+            retval = ENOPROTOOPT;
+        else
+            retval = sock->ops->sop_setsockopt(sock, level, name, &data, len);
+    }
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
 static void do_close(MESSAGE* msg)
 {
     struct sock* sock;
@@ -985,6 +1053,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_GETSOCKOPT:
         do_getsockopt(msg);
+        break;
+    case SDEV_SETSOCKOPT:
+        do_setsockopt(msg);
         break;
     case SDEV_CLOSE:
         do_close(msg);

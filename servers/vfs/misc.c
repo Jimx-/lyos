@@ -426,6 +426,7 @@ int fs_exit()
     struct fproc* p = vfs_endpt_proc(self->msg_in.ENDPOINT);
 
     p->flags &= ~FPF_INUSE;
+
     for (i = 0; i < NR_FILES; i++) {
         close_fd(p, i);
     }

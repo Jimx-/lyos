@@ -39,6 +39,7 @@ struct sock {
 
     int peek_off;
     int rcvlowat;
+    int sndbuf;
     clock_t linger;
 
     struct sock_cred peercred;
