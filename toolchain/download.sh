@@ -39,6 +39,7 @@ download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-
 download "mesa" "https://mesa.freedesktop.org/archive/" "mesa-20.0.5.tar.xz"
 download "libpng" "https://download.sourceforge.net/libpng/" "libpng-1.6.37.tar.xz"
 download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz"
+download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -67,6 +68,7 @@ unzip "pkg-config-0.29.2.tar.gz" "pkg-config-0.29.2"
 unzip "mesa-20.0.5.tar.xz" "mesa-20.0.5"
 unzip "libpng-1.6.37.tar.xz" "libpng-1.6.37"
 unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
+unzip "freetype-2.10.2.tar.xz" "freetype-2.10.2"
 
 echo "Patching..."
 patc "binutils-2.31"
@@ -87,6 +89,7 @@ patc "libffi-3.3"
 patc "pcre-8.44"
 patc "mesa-20.0.5"
 patc "libpng-1.6.37"
+patc "freetype-2.10.2"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

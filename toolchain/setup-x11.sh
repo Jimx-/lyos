@@ -11,6 +11,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBFFI:=false}
 : ${BUILD_WAYLAND:=false}
 : ${BUILD_MESA:=false}
+: ${BUILD_FREETYPE:=false}
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
@@ -107,6 +108,19 @@ if $BUILD_KMSCUBE; then
 
     pushd kmscube-$SUBARCH > /dev/null
     $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build freetype
+if $BUILD_FREETYPE; then
+    if [ ! -d "freetype-$SUBARCH" ]; then
+        mkdir freetype-$SUBARCH
+    fi
+
+    pushd freetype-$SUBARCH > /dev/null
+    $DIR/sources/freetype-2.10.2/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-static
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

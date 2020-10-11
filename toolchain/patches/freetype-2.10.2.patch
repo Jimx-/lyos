@@ -1,0 +1,12 @@
+diff -rupN old/builds/unix/config.sub new/builds/unix/config.sub
+--- old/builds/unix/config.sub	2020-05-09 13:14:36.000000000 +0800
++++ new/builds/unix/config.sub	2020-10-11 23:01:47.518379302 +0800
+@@ -1343,7 +1343,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* | kopensolaris* | plan9* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+-	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
++	     | aos* | aros* | cloudabi* | sortix* | twizzler* | lyos* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+ 	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
+ 	     | knetbsd* | mirbsd* | netbsd* \
