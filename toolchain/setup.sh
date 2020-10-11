@@ -24,6 +24,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_ZLIB:=false}
 : ${BUILD_GLIB:=false}
 : ${BUILD_PKGCONFIG:=false}
+: ${BUILD_LIBPNG:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -359,6 +360,19 @@ if $BUILD_PKGCONFIG; then
 
     pushd pkg-config-$SUBARCH > /dev/null
     $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=/usr --with-internal-glib --disable-static
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libpng
+if $BUILD_LIBPNG; then
+    if [ ! -d "libpng-$SUBARCH" ]; then
+        mkdir libpng-$SUBARCH
+    fi
+
+    pushd libpng-$SUBARCH > /dev/null
+    $DIR/sources/libpng-1.6.37/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
