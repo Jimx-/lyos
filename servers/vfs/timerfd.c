@@ -132,7 +132,7 @@ static ssize_t timerfd_read(struct file_desc* filp, char* buf, size_t count,
         return -EINVAL;
     }
 
-    if (filp->fd_mode & O_NONBLOCK) {
+    if (filp->fd_flags & O_NONBLOCK) {
         retval = -EAGAIN;
     } else {
         if (!ctx->ticks) {

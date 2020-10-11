@@ -94,7 +94,7 @@ int do_fcntl()
         if (argx < 0 || argx >= NR_FILES) return -EINVAL;
 
         newfd = -1;
-        retval = get_fd(fproc, argx, &newfd, NULL);
+        retval = get_fd(fproc, argx, 0, &newfd, NULL);
         if (retval) {
             unlock_filp(filp);
             return retval;
@@ -106,7 +106,7 @@ int do_fcntl()
     case F_SETFD:
         break;
     case F_SETFL:
-        filp->fd_mode = argx;
+        filp->fd_flags = argx;
         break;
     default:
         retval = -EINVAL;
@@ -136,7 +136,7 @@ int do_dup(void)
 
     if (newfd == -1) {
         /* find a free slot in PROCESS::filp[] */
-        retval = get_fd(fproc, 0, &newfd, NULL);
+        retval = get_fd(fproc, 0, 0, &newfd, NULL);
         if (retval) {
             unlock_filp(filp);
             return -retval;
@@ -271,7 +271,7 @@ int do_mm_request(void)
         }
 
         int mmfd;
-        result = get_fd(mm_task, 0, &mmfd, NULL);
+        result = get_fd(mm_task, 0, 0, &mmfd, NULL);
         if (result) {
             goto reply;
         }

@@ -86,8 +86,11 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
                       const struct file_operations* fops, void* private,
                       int flags)
 {
+    static char mode_map[] = {R_BIT, W_BIT, R_BIT | W_BIT, 0};
+
     int retval;
     int fd;
+    mode_t bits = mode_map[flags & O_ACCMODE];
     struct file_desc* filp;
 
     retval = lock_vmnt(anon_vmnt, RWL_READ);
@@ -99,7 +102,7 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
         return -retval;
     }
 
-    if ((retval = get_fd(fproc, 0, &fd, &filp)) != 0) {
+    if ((retval = get_fd(fproc, 0, bits, &fd, &filp)) != 0) {
         unlock_inode(anon_inode);
         unlock_vmnt(anon_vmnt);
         return -retval;
@@ -110,7 +113,7 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
 
     filp->fd_inode = anon_inode;
     anon_inode->i_cnt++;
-    filp->fd_mode = flags & (O_ACCMODE | O_NONBLOCK);
+    filp->fd_flags = flags & (O_ACCMODE | O_NONBLOCK);
 
     filp->fd_fops = fops;
     filp->fd_private_data = private;

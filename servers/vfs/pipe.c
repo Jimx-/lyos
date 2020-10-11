@@ -121,7 +121,7 @@ static ssize_t pipe_read(struct file_desc* filp, char* buf, size_t count,
                 waitqueue_wakeup_all(&pipe->wr_wait,
                                      (void*)(EPOLLOUT | EPOLLWRNORM));
 
-                if (filp->fd_mode & O_NONBLOCK) {
+                if (filp->fd_flags & O_NONBLOCK) {
                     return -EAGAIN;
                 } else {
                     unlock_filp(filp);
@@ -172,7 +172,7 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
 
         size = count;
         if (pos + size > PIPE_BUF) {
-            if (filp->fd_mode & O_NONBLOCK) {
+            if (filp->fd_flags & O_NONBLOCK) {
                 if (size <= PIPE_BUF) {
                     return -EAGAIN;
                 }
@@ -230,7 +230,7 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
         cum_io += size;
 
         if (count > 0) {
-            if (filp->fd_mode & O_NONBLOCK) {
+            if (filp->fd_flags & O_NONBLOCK) {
                 break;
             }
         } else {
@@ -252,19 +252,12 @@ static __poll_t pipe_poll(struct file_desc* filp, __poll_t mask,
     struct pipe_inode_info* pipe = filp->fd_private_data;
     struct inode* pin = filp->fd_inode;
 
-    switch (filp->fd_mode & O_ACCMODE) {
-    case O_WRONLY:
-        poll_wait(filp, &pipe->wr_wait, wait);
-        break;
-    case O_RDONLY:
-        poll_wait(filp, &pipe->rd_wait, wait);
-        break;
-    }
+    if (filp->fd_mode & W_BIT) poll_wait(filp, &pipe->wr_wait, wait);
+    if (filp->fd_mode & R_BIT) poll_wait(filp, &pipe->rd_wait, wait);
 
     mask = 0;
 
-    switch (filp->fd_mode & O_ACCMODE) {
-    case O_WRONLY:
+    if (filp->fd_mode & W_BIT) {
         if (pin->i_size < PIPE_BUF) {
             mask |= EPOLLOUT | EPOLLWRNORM;
         }
@@ -272,8 +265,9 @@ static __poll_t pipe_poll(struct file_desc* filp, __poll_t mask,
         if (!pipe->readers) {
             mask |= EPOLLERR;
         }
-        break;
-    case O_RDONLY:
+    }
+
+    if (filp->fd_mode & R_BIT) {
         if (pin->i_size) {
             mask |= EPOLLIN | EPOLLRDNORM;
         }
@@ -281,7 +275,6 @@ static __poll_t pipe_poll(struct file_desc* filp, __poll_t mask,
         if (!pipe->writers) {
             mask |= EPOLLHUP;
         }
-        break;
     }
 
     return mask;
@@ -336,14 +329,8 @@ static int pipe_open(struct inode* pin, struct file_desc* filp)
 
     pipe->files++;
 
-    switch (filp->fd_mode & O_ACCMODE) {
-    case O_WRONLY:
-        pipe->writers++;
-        break;
-    case O_RDONLY:
-        pipe->readers++;
-        break;
-    }
+    if (filp->fd_mode & W_BIT) pipe->writers++;
+    if (filp->fd_mode & R_BIT) pipe->readers++;
 
     return 0;
 }
@@ -352,14 +339,8 @@ static int pipe_release(struct inode* pin, struct file_desc* filp)
 {
     struct pipe_inode_info* pipe = filp->fd_private_data;
 
-    switch (filp->fd_mode & O_ACCMODE) {
-    case O_WRONLY:
-        pipe->writers--;
-        break;
-    case O_RDONLY:
-        pipe->readers--;
-        break;
-    }
+    if (filp->fd_mode & W_BIT) pipe->writers--;
+    if (filp->fd_mode & R_BIT) pipe->readers--;
 
     if (!pipe->readers != !pipe->writers) {
         // wake up the other end
@@ -439,7 +420,7 @@ static int create_pipe(int* fds, int flags)
 
     lock_inode(pin, RWL_READ);
 
-    if ((retval = get_fd(fproc, 0, &fds[0], &filp0)) != 0) {
+    if ((retval = get_fd(fproc, 0, R_BIT, &fds[0], &filp0)) != 0) {
         unlock_inode(pin);
         put_inode(pin);
         unlock_vmnt(pipefs_vmnt);
@@ -448,7 +429,7 @@ static int create_pipe(int* fds, int flags)
     fproc->filp[fds[0]] = filp0;
     filp0->fd_cnt = 1;
 
-    if ((retval = get_fd(fproc, 0, &fds[1], &filp1)) != 0) {
+    if ((retval = get_fd(fproc, 0, W_BIT, &fds[1], &filp1)) != 0) {
         fproc->filp[fds[0]] = NULL;
         filp0->fd_cnt = 0;
         unlock_filp(filp0);
@@ -463,8 +444,8 @@ static int create_pipe(int* fds, int flags)
     filp0->fd_inode = pin;
     pin->i_cnt++;
     filp1->fd_inode = pin;
-    filp0->fd_mode = O_RDONLY | (flags & ~O_ACCMODE);
-    filp1->fd_mode = O_WRONLY | (flags & ~O_ACCMODE);
+    filp0->fd_flags = O_RDONLY | (flags & ~O_ACCMODE);
+    filp1->fd_flags = O_WRONLY | (flags & ~O_ACCMODE);
 
     filp0->fd_fops = filp1->fd_fops = pin->i_fops;
     filp0->fd_private_data = filp1->fd_private_data = pin->i_private;

@@ -70,7 +70,7 @@ static ssize_t eventfd_read(struct file_desc* filp, char* buf, size_t count,
     retval = -EAGAIN;
     if (ctx->count > 0) {
         retval = sizeof(ucount);
-    } else if (!(filp->fd_mode & O_NONBLOCK)) {
+    } else if (!(filp->fd_flags & O_NONBLOCK)) {
         waitqueue_add(&ctx->wq, &wait);
         retval = 0;
 
@@ -126,7 +126,7 @@ static ssize_t eventfd_write(struct file_desc* filp, const char* buf,
     retval = -EAGAIN;
     if (ULLONG_MAX - ctx->count > ucount) {
         retval = sizeof(ucount);
-    } else if (!(filp->fd_mode & O_NONBLOCK)) {
+    } else if (!(filp->fd_flags & O_NONBLOCK)) {
         waitqueue_add(&ctx->wq, &wait);
         retval = 0;
 

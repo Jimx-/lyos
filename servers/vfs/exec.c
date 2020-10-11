@@ -258,7 +258,7 @@ int fs_exec(void)
 
     /* find an fd for MM */
     /* find a free slot in PROCESS::filp[] */
-    retval = get_fd(mm_task, 0, &fd, &filp);
+    retval = get_fd(mm_task, 0, R_BIT, &fd, &filp);
     if (retval) return retval;
 
     if (!filp || fd < 0) {
@@ -270,7 +270,7 @@ int fs_exec(void)
         filp->fd_pos = 0;
         filp->fd_inode = execi.pin;
         filp->fd_inode->i_cnt++;
-        filp->fd_mode = O_RDONLY;
+        filp->fd_flags = O_RDONLY;
         filp->fd_fops = &vfs_fops;
         execi.mmfd = fd;
         execi.args.memmap = request_vfs_mmap;

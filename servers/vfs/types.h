@@ -85,6 +85,7 @@ struct vfs_mount {
  * @brief  File Descriptor
  */
 struct file_desc {
+    int fd_flags;           /**< Flags from open() */
     int fd_mode;            /**< R or W */
     int fd_pos;             /**< Current position for R/W. */
     int fd_cnt;             /**< How many procs share this desc */

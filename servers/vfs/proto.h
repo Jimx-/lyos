@@ -141,7 +141,8 @@ void unlock_filp(struct file_desc* filp);
 void unlock_filps(struct file_desc* filp1, struct file_desc* filp2);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 int check_fds(struct fproc* fp, int nfds);
-int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp);
+int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
+           struct file_desc** fpp);
 
 /* vfs/cdev.c */
 void init_cdev(void);

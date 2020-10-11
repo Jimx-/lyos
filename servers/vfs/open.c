@@ -89,7 +89,7 @@ int common_open(char* pathname, int flags, mode_t mode)
 
     /* find a free slot in PROCESS::filp[] */
     struct file_desc* filp = NULL;
-    retval = get_fd(fproc, 0, &fd, &filp);
+    retval = get_fd(fproc, 0, bits, &fd, &filp);
     if (retval) return retval;
 
     struct inode* pin = NULL;
@@ -126,7 +126,7 @@ int common_open(char* pathname, int flags, mode_t mode)
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
     filp->fd_inode = pin;
-    filp->fd_mode = flags;
+    filp->fd_flags = flags;
     filp->fd_fops = pin->i_fops;
 
     if (exist) {
@@ -155,7 +155,7 @@ int common_open(char* pathname, int flags, mode_t mode)
     if (retval != 0) {
         fproc->filp[fd] = NULL;
         filp->fd_cnt = 0;
-        filp->fd_mode = 0;
+        filp->fd_flags = 0;
         filp->fd_inode = 0;
         filp->fd_fops = NULL;
         put_inode(pin);

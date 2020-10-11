@@ -124,7 +124,7 @@ static ssize_t signalfd_dequeue(struct file_desc* filp, void* buf,
 static ssize_t signalfd_read(struct file_desc* filp, char* buf, size_t count,
                              loff_t* ppos, struct fproc* fp)
 {
-    int nonblock = filp->fd_mode & O_NONBLOCK;
+    int nonblock = filp->fd_flags & O_NONBLOCK;
     int retval;
     ssize_t total;
 

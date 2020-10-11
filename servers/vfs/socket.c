@@ -122,7 +122,7 @@ static int create_sock_fd(dev_t dev, int flags)
 
     lock_inode(pin, RWL_READ);
 
-    if ((retval = get_fd(fproc, 0, &fd, &filp)) != 0) {
+    if ((retval = get_fd(fproc, 0, R_BIT | W_BIT, &fd, &filp)) != 0) {
         unlock_inode(pin);
         put_inode(pin);
         unlock_vmnt(sockfs_vmnt);
@@ -132,7 +132,7 @@ static int create_sock_fd(dev_t dev, int flags)
     fproc->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_inode = pin;
-    filp->fd_mode = O_RDWR | (flags & ~O_ACCMODE);
+    filp->fd_flags = O_RDWR | (flags & ~O_ACCMODE);
 
     filp->fd_fops = pin->i_fops;
 
@@ -166,7 +166,7 @@ static int get_sock_fd(int fd, dev_t* dev, int* flags)
     }
 
     *dev = filp->fd_inode->i_specdev;
-    if (flags) *flags = filp->fd_mode;
+    if (flags) *flags = filp->fd_flags;
 
     unlock_filp(filp);
     return 0;
@@ -408,7 +408,7 @@ static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
     struct inode* pin = filp->fd_inode;
 
     return sdev_readwrite(fp->endpoint, pin->i_specdev, buf, count, NULL, NULL,
-                          0, READ, filp->fd_mode);
+                          0, READ, filp->fd_flags);
 }
 
 static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
@@ -417,11 +417,11 @@ static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
     struct inode* pin = filp->fd_inode;
 
     return sdev_readwrite(fp->endpoint, pin->i_specdev, (void*)buf, count, NULL,
-                          NULL, 0, WRITE, filp->fd_mode);
+                          NULL, 0, WRITE, filp->fd_flags);
 }
 
 static int sock_release(struct inode* pin, struct file_desc* filp)
 {
-    sdev_close(pin->i_specdev, !(filp->fd_mode & O_NONBLOCK));
+    sdev_close(pin->i_specdev, !(filp->fd_flags & O_NONBLOCK));
     return 0;
 }

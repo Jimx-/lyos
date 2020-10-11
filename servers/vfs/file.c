@@ -59,7 +59,7 @@ static ssize_t vfs_write(struct file_desc* filp, const char* buf, size_t count,
     loff_t position = *ppos;
 
     /* check for O_APPEND */
-    if (filp->fd_mode & O_APPEND) position = pin->i_size;
+    if (filp->fd_flags & O_APPEND) position = pin->i_size;
 
     retval = request_readwrite(pin->i_fs_ep, pin->i_dev, pin->i_num, position,
                                WRITE /* rw_flag */, fp->endpoint, buf, count,
@@ -164,7 +164,8 @@ int check_fds(struct fproc* fp, int nfds)
     return EMFILE;
 }
 
-int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
+int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
+           struct file_desc** fpp)
 {
     /* find an unused fd in proc's filp table and a free file slot */
     int i;
@@ -185,6 +186,7 @@ int get_fd(struct fproc* fp, int start, int* fd, struct file_desc** fpp)
         struct file_desc* filp = &f_desc_table[i];
 
         if (filp->fd_inode == 0 && !mutex_trylock(&filp->fd_lock)) {
+            filp->fd_mode = bits;
             *fpp = filp;
             return 0;
         }
