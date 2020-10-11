@@ -38,7 +38,7 @@ download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.
 download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz"
 download "mesa" "https://mesa.freedesktop.org/archive/" "mesa-20.0.5.tar.xz"
 download "libpng" "https://download.sourceforge.net/libpng/" "libpng-1.6.37.tar.xz"
-# download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz"
+download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -66,7 +66,7 @@ unzip "glib-2.59.2.tar.xz" "glib-2.59.2"
 unzip "pkg-config-0.29.2.tar.gz" "pkg-config-0.29.2"
 unzip "mesa-20.0.5.tar.xz" "mesa-20.0.5"
 unzip "libpng-1.6.37.tar.xz" "libpng-1.6.37"
-# unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
+unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
 
 echo "Patching..."
 patc "binutils-2.31"

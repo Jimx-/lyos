@@ -1089,6 +1089,12 @@ int chown(const char* path, uid_t owner, gid_t group)
     return 0;
 }
 
+int fchown(int fd, uid_t owner, gid_t group)
+{
+    printf("fchown: not implemented\n");
+    return 0;
+}
+
 int brk(void* addr)
 {
     MESSAGE msg;

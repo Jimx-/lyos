@@ -25,6 +25,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_GLIB:=false}
 : ${BUILD_PKGCONFIG:=false}
 : ${BUILD_LIBPNG:=false}
+: ${BUILD_BZIP2:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -375,6 +376,24 @@ if $BUILD_LIBPNG; then
     $DIR/sources/libpng-1.6.37/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build bzip2
+if $BUILD_BZIP2; then
+    if [ -d "bzip2-$SUBARCH" ]; then
+        rm -rf bzip2-$SUBARCH
+    fi
+
+    cp -rf $DIR/sources/bzip2-1.0.8 bzip2-$SUBARCH
+
+    pushd bzip2-$SUBARCH > /dev/null
+    sed -i s/"all: libbz2.a bzip2 bzip2recover test"/"all: libbz2.a bzip2 bzip2recover"/ Makefile
+
+    make CC=$TARGET-gcc CFLAGS=-fPIC -f Makefile-libbz2_so || cmd_error
+    make clean || cmd_error
+    make CC=$TARGET-gcc CFLAGS=-fPIC -j || cmd_error
+    make PREFIX=$SYSROOT/usr install || cmd_error
     popd > /dev/null
 fi
 
