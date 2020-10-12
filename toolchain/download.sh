@@ -41,7 +41,7 @@ download "libpng" "https://download.sourceforge.net/libpng/" "libpng-1.6.37.tar.
 download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz"
 download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz"
 download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.gz"
-
+download "cairo" "https://www.cairographics.org/releases/" "cairo-1.16.0.tar.xz"
 
 echo "Decompressing packages..."
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
@@ -72,6 +72,7 @@ unzip "libpng-1.6.37.tar.xz" "libpng-1.6.37"
 unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
 unzip "freetype-2.10.2.tar.xz" "freetype-2.10.2"
 unzip "pixman-0.40.0.tar.gz" "pixman-0.40.0"
+unzip "cairo-1.16.0.tar.xz" "cairo-1.16.0"
 
 echo "Patching..."
 patc "binutils-2.31"
@@ -94,6 +95,7 @@ patc "mesa-20.0.5"
 patc "libpng-1.6.37"
 patc "freetype-2.10.2"
 patc "pixman-0.40.0"
+patc "cairo-1.16.0"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

@@ -140,4 +140,17 @@ if $BUILD_PIXMAN; then
     popd > /dev/null
 fi
 
+# Build cairo
+if $BUILD_CAIRO; then
+    if [ ! -d "cairo-$SUBARCH" ]; then
+        mkdir cairo-$SUBARCH
+    fi
+
+    pushd cairo-$SUBARCH > /dev/null
+    $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-xlib
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
 popd > /dev/null

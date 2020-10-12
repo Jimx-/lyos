@@ -39,6 +39,10 @@
 __BEGIN_DECLS
 
 int pthread_attr_init(pthread_attr_t* attr);
+int pthread_attr_setdetachstate(pthread_attr_t* attr, int detachstate);
+int pthread_attr_getdetachstate(const pthread_attr_t* attr, int* detachstate);
+int pthread_attr_destroy(pthread_attr_t* attr);
+
 pthread_t pthread_self(void);
 int pthread_equal(pthread_t t1, pthread_t t2);
 int pthread_create(pthread_t* thread, const pthread_attr_t* attr,
@@ -47,6 +51,9 @@ void pthread_exit(void* retval);
 int pthread_join(pthread_t thread, void** retval);
 int pthread_detach(pthread_t thread);
 int pthread_cancel(pthread_t thread);
+
+void pthread_cleanup_push(void (*routine)(void*), void* arg);
+void pthread_cleanup_pop(int execute);
 
 int pthread_getcpuclockid(pthread_t thread, clockid_t* clockid);
 
