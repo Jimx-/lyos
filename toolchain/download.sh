@@ -13,6 +13,7 @@ fi
 pushd sources > /dev/null
 
 echo "Donwloading packages..."
+download "libtool" "https://ftp.gnu.org/gnu/libtool" "libtool-2.4.5.tar.gz"
 download "binutils" "https://mirrors.ustc.edu.cn/gnu/binutils" "binutils-2.31.tar.gz" || cmd_error
 download "mpc"  "http://www.multiprecision.org/downloads" "mpc-0.8.1.tar.gz"
 download "mpfr" "http://www.mpfr.org/mpfr-2.4.2" "mpfr-2.4.2.tar.gz"
@@ -21,29 +22,30 @@ download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz
 download "gcc-native" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-4.7.3" "gcc-4.7.3.tar.bz2" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
-download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz"
-download "ncurses" "https://ftp.gnu.org/pub/gnu/ncurses/" "ncurses-6.2.tar.gz"
-download "vim" "ftp://ftp.vim.org/pub/vim/unix" "vim-7.4.tar.bz2"
-download "readline" "https://mirrors.ustc.edu.cn/gnu/readline" "readline-8.0.tar.gz"
-download "libevdev" "https://www.freedesktop.org/software/libevdev" "libevdev-1.9.0.tar.xz"
-download "libdrm" "https://dri.freedesktop.org/libdrm/" "libdrm-2.4.89.tar.bz2"
-download "libexpat" "https://github.com/libexpat/libexpat/releases/download/R_2_2_9/" "expat-2.2.9.tar.bz2"
-download "libffi" "https://github.com/libffi/libffi/releases/download/v3.3/" "libffi-3.3.tar.gz"
-download "wayland" "https://github.com/wayland-project/wayland/archive/" "1.18.0.tar.gz" && cp 1.18.0.tar.gz wayland-1.18.0.tar.gz
-download "pcre" "https://ftp.pcre.org/pub/pcre/" "pcre-8.44.tar.gz"
-download "grep" "https://mirrors.ustc.edu.cn/gnu/grep" "grep-3.4.tar.xz"
-download "less" "http://www.greenwoodsoftware.com/less" "less-551.tar.gz"
-download "zlib" "https://zlib.net/fossils/" "zlib-1.2.11.tar.gz"
-download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.2.tar.xz"
-download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz"
-download "mesa" "https://mesa.freedesktop.org/archive/" "mesa-20.0.5.tar.xz"
-download "libpng" "https://download.sourceforge.net/libpng/" "libpng-1.6.37.tar.xz"
-download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz"
-download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz"
-download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.gz"
-download "cairo" "https://www.cairographics.org/releases/" "cairo-1.16.0.tar.xz"
+download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz" || cmd_error
+download "ncurses" "https://ftp.gnu.org/pub/gnu/ncurses/" "ncurses-6.2.tar.gz" || cmd_error
+download "vim" "ftp://ftp.vim.org/pub/vim/unix" "vim-7.4.tar.bz2" || cmd_error
+download "readline" "https://mirrors.ustc.edu.cn/gnu/readline" "readline-8.0.tar.gz" || cmd_error
+download "libevdev" "https://www.freedesktop.org/software/libevdev" "libevdev-1.9.0.tar.xz" || cmd_error
+download "libdrm" "https://dri.freedesktop.org/libdrm/" "libdrm-2.4.89.tar.bz2" || cmd_error
+download "libexpat" "https://github.com/libexpat/libexpat/releases/download/R_2_2_9/" "expat-2.2.9.tar.bz2" || cmd_error
+download "libffi" "https://github.com/libffi/libffi/releases/download/v3.3/" "libffi-3.3.tar.gz" || cmd_error
+download "wayland" "https://github.com/wayland-project/wayland/archive/" "1.18.0.tar.gz" && cp 1.18.0.tar.gz wayland-1.18.0.tar.gz || cmd_error
+download "pcre" "https://ftp.pcre.org/pub/pcre/" "pcre-8.44.tar.gz" || cmd_error
+download "grep" "https://mirrors.ustc.edu.cn/gnu/grep" "grep-3.4.tar.xz" || cmd_error
+download "less" "http://www.greenwoodsoftware.com/less" "less-551.tar.gz" || cmd_error
+download "zlib" "https://zlib.net/fossils/" "zlib-1.2.11.tar.gz" || cmd_error
+download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.2.tar.xz" || cmd_error
+download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz" || cmd_error
+download "mesa" "https://mesa.freedesktop.org/archive/" "mesa-20.0.5.tar.xz" || cmd_error
+download "libpng" "https://download.sourceforge.net/libpng/" "libpng-1.6.37.tar.xz" || cmd_error
+download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz" || cmd_error
+download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz" || cmd_error
+download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.gz" || cmd_error
+download "cairo" "https://www.cairographics.org/releases/" "cairo-1.16.0.tar.xz" || cmd_error
 
 echo "Decompressing packages..."
+unzip "libtool-2.4.5.tar.gz" "libtool-2.4.5"
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
 unzip "gmp-4.3.2.tar.bz2" "gmp-4.3.2"
 unzip "mpfr-2.4.2.tar.gz" "mpfr-2.4.2"

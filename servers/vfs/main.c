@@ -310,6 +310,9 @@ static void do_work(void)
     case SETSOCKOPT:
         self->msg_out.u.m_vfs_sockopt.status = do_setsockopt();
         break;
+    case VFS_COPYFD:
+        self->msg_out.RETVAL = do_copyfd();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

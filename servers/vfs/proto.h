@@ -143,6 +143,7 @@ struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 int check_fds(struct fproc* fp, int nfds);
 int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
            struct file_desc** fpp);
+int do_copyfd(void);
 
 /* vfs/cdev.c */
 void init_cdev(void);

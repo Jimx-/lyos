@@ -10,6 +10,7 @@ struct sk_buff {
     struct list_head list;
     struct sock* sock;
     unsigned int users;
+    void (*destructor)(struct sk_buff* skb);
 
     char cb[48] __attribute__((aligned(8)));
 

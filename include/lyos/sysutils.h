@@ -117,4 +117,11 @@ int socketpath(endpoint_t endpoint, const char* path, size_t size, int request,
 #define SKP_CREATE  1
 #define SKP_LOOK_UP 2
 
+int copyfd(endpoint_t who, int fd, int how);
+#define COPYFD_FROM       1
+#define COPYFD_TO         2
+#define COPYFD_CLOSE      3
+#define COPYFD_CLOEXEC    0x1000
+#define COPYFD_FLAGS_MASK 0xf000
+
 #endif

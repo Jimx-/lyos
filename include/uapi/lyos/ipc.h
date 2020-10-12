@@ -302,6 +302,16 @@ BEGIN_MESS_DECL(mess_vfs_sockopt)
 }
 END_MESS_DECL(mess_vfs_sockopt)
 
+BEGIN_MESS_DECL(mess_vfs_copyfd)
+{
+    __endpoint_t endpoint;
+    int fd;
+    int how;
+
+    __u8 _pad[44];
+}
+END_MESS_DECL(mess_vfs_copyfd)
+
 BEGIN_MESS_DECL(mess_vfs_fs_lookup)
 {
     dev_t dev;
@@ -745,6 +755,7 @@ typedef struct {
         struct mess_vfs_listen m_vfs_listen;
         struct mess_vfs_sendrecv m_vfs_sendrecv;
         struct mess_vfs_sockopt m_vfs_sockopt;
+        struct mess_vfs_copyfd m_vfs_copyfd;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
         struct mess_vfs_fs_stat m_vfs_fs_stat;

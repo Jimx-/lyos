@@ -254,6 +254,7 @@ enum msgtype {
 
     VFS_MAPDRIVER,
     VFS_SOCKETPATH,
+    VFS_COPYFD,
 
     FS_TXN_ID = VFS_TXN_BASE,
 

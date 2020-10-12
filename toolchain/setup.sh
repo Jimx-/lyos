@@ -6,6 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/utils.sh
 
 : ${BUILD_EVERYTHING:=false}
+: ${BUILD_LIBTOOL:=false}
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
 : ${BUILD_NEWLIB:=false}
@@ -48,6 +49,23 @@ if [ ! -d "build" ]; then
 fi
 
 pushd build > /dev/null
+
+# Build libtool
+if $BUILD_LIBTOOL; then
+    if [ ! -d "libtool-$SUBARCH" ]; then
+        mkdir libtool-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libtool-2.4.5
+    ./bootstrap
+    popd
+
+    pushd libtool-$SUBARCH
+    $DIR/sources/libtool-2.4.5/configure --prefix=$PREFIX || cmd_error
+    make -j8 || cmd_error
+    make install || cmd_error
+    popd
+fi
 
 # Build binutils
 if $BUILD_BINUTILS; then

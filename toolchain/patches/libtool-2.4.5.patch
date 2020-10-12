@@ -1,0 +1,45 @@
+diff -rupN old/build-aux/ltmain.in new/build-aux/ltmain.in
+--- old/build-aux/ltmain.in	2015-01-17 02:52:04.000000000 +0800
++++ new/build-aux/ltmain.in	2020-10-12 10:47:02.468760145 +0800
+@@ -6442,7 +6442,7 @@ func_mode_link ()
+ 	      fi
+ 	    else
+ 	      # We cannot seem to hardcode it, guess we'll fake it.
+-	      add_dir=-L$libdir
++	      add_dir=-L$lt_sysroot$libdir
+ 	      # Try looking first in the location we're being installed to.
+ 	      if test -n "$inst_prefix_dir"; then
+ 		case $libdir in
+diff -rupN old/m4/libtool.m4 new/m4/libtool.m4
+--- old/m4/libtool.m4	2015-01-17 02:52:04.000000000 +0800
++++ new/m4/libtool.m4	2020-10-12 10:48:13.535344820 +0800
+@@ -2911,6 +2911,18 @@ newsos6)
+   shlibpath_overrides_runpath=yes
+   ;;
+ 
++lyos*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  dynamic_linker='ld-lyos.so'
++  ;;
++
+ *nto* | *qnx*)
+   version_type=qnx
+   need_lib_prefix=no
+@@ -3541,6 +3553,10 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++lyos*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ netbsd*)
+   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
+     lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|_pic\.a)$'

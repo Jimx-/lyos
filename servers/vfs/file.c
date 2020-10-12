@@ -213,3 +213,53 @@ struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
     }
     return filp;
 }
+
+int do_copyfd(void)
+{
+    endpoint_t endpoint = self->msg_in.u.m_vfs_copyfd.endpoint;
+    int fd = self->msg_in.u.m_vfs_copyfd.fd;
+    int how = self->msg_in.u.m_vfs_copyfd.how;
+    int flags, retval;
+    struct file_desc* filp;
+    struct fproc* fp_dest;
+
+    if ((fp_dest = vfs_endpt_proc(endpoint)) == NULL) return -EINVAL;
+
+    flags = how & COPYFD_FLAGS_MASK;
+    how &= ~COPYFD_FLAGS_MASK;
+
+    filp = get_filp((how == COPYFD_TO) ? fproc : fp_dest, fd, RWL_READ);
+    if (!filp) return -EBADF;
+
+    switch (how) {
+    case COPYFD_FROM:
+        fp_dest = fproc;
+        flags &= !COPYFD_CLOEXEC;
+    /* fall-through */
+    case COPYFD_TO:
+        for (fd = 0; fd < NR_FILES; fd++)
+            if (fp_dest->filp[fd] == NULL) break;
+
+        if (fd < NR_FILES) {
+            fp_dest->filp[fd] = filp;
+            filp->fd_cnt++;
+            retval = fd;
+        } else
+            retval = -EMFILE;
+        break;
+
+    case COPYFD_CLOSE:
+        if (filp->fd_cnt > 1) {
+            filp->fd_cnt--;
+            fp_dest->filp[fd] = NULL;
+            retval = 0;
+        } else
+            retval = -EBADF;
+        break;
+    default:
+        retval = -EINVAL;
+    }
+
+    unlock_filp(filp);
+    return retval;
+}
