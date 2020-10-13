@@ -201,9 +201,10 @@ int root_self(endpoint_t user_endpt, struct memfs_inode** target)
     struct memfs_inode* pin;
 
     update_tables();
+    build_pid_dirs();
 
     if (proc_nr < 0 || proc_nr >= NR_PROCS) return EINVAL;
-    if (!slot_in_use(proc_nr)) return EINVAL;
+    if (!slot_in_use(proc_nr + NR_TASKS)) return EINVAL;
 
     pin = memfs_find_inode_by_index(memfs_get_root_inode(), proc_nr + NR_TASKS);
 

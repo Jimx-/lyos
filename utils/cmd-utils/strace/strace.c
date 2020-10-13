@@ -16,11 +16,46 @@
 #include "types.h"
 #include "proto.h"
 
+#define TCB_MAX 20
+static struct tcb tcbs[TCB_MAX];
+static struct tcb* last_tcb;
+
+static int exit_tcb(struct tcb* tcp, int status);
 static void do_trace(pid_t child, int s);
+
+static struct tcb* alloc_tcb(pid_t pid)
+{
+    int i;
+
+    for (i = 0; i < TCB_MAX; i++)
+        if (tcbs[i].pid == -1) break;
+
+    if (i == TCB_MAX) return NULL;
+
+    memset(&tcbs[i], 0, sizeof(tcbs[i]));
+    tcbs[i].pid = pid;
+
+    return &tcbs[i];
+}
+
+static struct tcb* get_tcb(pid_t pid)
+{
+    int i;
+
+    for (i = 0; i < TCB_MAX; i++)
+        if (tcbs[i].pid == pid) return &tcbs[i];
+
+    return NULL;
+}
 
 int main(int argc, char* argv[], char* envp[])
 {
+    int i;
+
     if (argc == 1) return 0;
+
+    for (i = 0; i < TCB_MAX; i++)
+        tcbs[i].pid = -1;
 
     pid_t child;
     child = fork();
@@ -84,15 +119,6 @@ static void print_msg(MESSAGE* m)
 }
 */
 
-static void trace_open_in(struct tcb* tcp)
-{
-    MESSAGE* msg = &tcp->msg_in;
-
-    printf("open(");
-    print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
-    printf(", %d)", msg->FLAGS);
-}
-
 static void trace_write_in(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
@@ -130,7 +156,7 @@ static void trace_sendrec_in(struct tcb* tcp)
 
     switch (type) {
     case OPEN:
-        trace_open_in(tcp);
+        tcp->sys_trace_ret = trace_open(tcp);
         break;
     case CLOSE:
         printf("close(%d)", tcp->msg_in.FD);
@@ -161,6 +187,7 @@ static void trace_sendrec_in(struct tcb* tcp)
     case EXIT:
         printf("exit(%d) = ?\n",
                tcp->msg_in.STATUS); /* exit has no return value */
+        exit_tcb(tcp, W_EXITCODE(tcp->msg_in.STATUS, 0));
         break;
     case MMAP:
         tcp->sys_trace_ret = trace_mmap(tcp);
@@ -189,6 +216,18 @@ static void trace_sendrec_in(struct tcb* tcp)
                   tcp->msg_in.u.m_vfs_link.new_path_len);
         printf(")");
         break;
+    case IOCTL:
+        tcp->sys_trace_ret = trace_ioctl(tcp);
+        break;
+    case UNLINK:
+        tcp->sys_trace_ret = trace_unlink(tcp);
+        break;
+    case PIPE2:
+        tcp->sys_trace_ret = trace_pipe2(tcp);
+        break;
+    case FORK:
+        tcp->sys_trace_ret = trace_fork(tcp);
+        break;
     default:
         printf("syscall(%d)", type);
         break;
@@ -204,6 +243,32 @@ static void trace_sendrec_out(struct tcb* tcp)
     int base = 10;
     int err = 0;
 
+    if (type == FORK) {
+        pid_t new_pid = tcp->msg_out.PID;
+        struct tcb* new_tcp;
+
+        if (new_pid > 0 && !get_tcb(new_pid)) {
+            new_tcp = alloc_tcb(new_pid);
+            new_tcp->flags = TCB_ENTERING;
+            new_tcp->msg_type_in = FORK;
+            ptrace(PTRACE_SYSCALL, new_tcp->pid, 0, 0);
+        }
+    }
+
+    if (!(tcp->sys_trace_ret & RVAL_DECODED)) {
+        switch (type) {
+        case STAT:
+            trace_stat(tcp);
+            break;
+        case FSTAT:
+            trace_fstat(tcp);
+            break;
+        case PIPE2:
+            trace_pipe2(tcp);
+            break;
+        }
+    }
+
     switch (type) {
     case OPEN:
         retval = tcp->msg_out.FD;
@@ -218,33 +283,32 @@ static void trace_sendrec_out(struct tcb* tcp)
         break;
     case STAT:
     case FSTAT:
-        if (!(tcp->sys_trace_ret & RVAL_DECODED)) {
-            if (type == STAT) {
-                trace_stat(tcp);
-            } else {
-                trace_fstat(tcp);
-            }
-        }
-
-        retval = tcp->msg_out.RETVAL;
-        if (retval > 0) {
-            err = retval;
-            retval = -1;
-        }
     case CLOSE:
-    case BRK:
     case GETDENTS:
-    case UMASK:
     case CHMOD:
-    case GETSETID:
     case SELECT:
     case MUNMAP:
     case DUP:
+    case IOCTL:
+    case PIPE2:
+        retval = tcp->msg_out.RETVAL;
+
+        if (retval < 0) {
+            err = -retval;
+            retval = -1;
+        }
+        break;
+    case GETSETID:
+    case BRK:
+    case UMASK:
         retval = tcp->msg_out.RETVAL;
         break;
     case MMAP:
         base = 16;
         retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
+        break;
+    case FORK:
+        retval = tcp->msg_out.PID;
         break;
     }
 
@@ -269,6 +333,11 @@ static void trace_sendrec_out(struct tcb* tcp)
 #define ORIG_EAX 18
 static void trace_call_in(struct tcb* tcp)
 {
+    if (last_tcb != tcp) {
+        if (last_tcb->pid != -1 && entering(last_tcb)) puts("");
+    }
+    if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
+
     long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
 
     void* src_msg =
@@ -289,6 +358,14 @@ static void trace_call_in(struct tcb* tcp)
 
 static void trace_call_out(struct tcb* tcp)
 {
+    if (last_tcb != tcp) {
+        if (last_tcb->pid != -1 && entering(last_tcb)) puts("");
+
+        if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
+
+        printf("<resumed> ");
+    }
+
     long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
     long eax = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EAX * 4), 0);
 
@@ -309,35 +386,75 @@ static void trace_call_out(struct tcb* tcp)
     printf(" = %ld\n", eax);
 }
 
+static int exit_tcb(struct tcb* tcp, int status)
+{
+    int i;
+
+    if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
+
+    tcp->pid = -1;
+    printf("+++ exited with %d +++\n", WEXITSTATUS(status));
+
+    for (i = 0; i < TCB_MAX; i++) {
+        if (tcbs[i].pid != -1) return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void do_trace(pid_t child, int s)
 {
     int status = s;
-    struct tcb tcb;
+    int wait_child;
+    struct tcb* tcp;
+    int restart_sig;
 
-    tcb.pid = child;
-    tcb.flags = 0;
+    last_tcb = alloc_tcb(child);
+
+    ptrace(PTRACE_SYSCALL, child, 0, 0);
 
     while (1) {
-        if (WIFEXITED(status)) break;
-
-        ptrace(PTRACE_SYSCALL, child, 0, 0);
-
-        int waitchild = wait(&status);
-        if (waitchild != child) continue;
-        if (WIFEXITED(status)) break;
+        wait_child = waitpid(-1, &status, 0);
+        if (wait_child < 0) continue;
 
         int stopsig = WSTOPSIG(status);
+
+        tcp = get_tcb(wait_child);
+        if (!tcp) {
+            tcp = alloc_tcb(wait_child);
+            tcp->flags = TCB_ENTERING;
+            tcp->msg_type_in = FORK;
+            stopsig = SIGTRAP;
+        }
+
+        if (WIFEXITED(status)) {
+            if (exit_tcb(tcp, status)) break;
+            continue;
+        }
+
+        restart_sig = 0;
+
         switch (stopsig) {
         case SIGTRAP:
-            tcb.flags ^= TCB_ENTERING;
+            tcp->flags ^= TCB_ENTERING;
 
-            if (entering(&tcb))
-                trace_call_in(&tcb);
+            if (entering(tcp))
+                trace_call_in(tcp);
             else
-                trace_call_out(&tcb);
+                trace_call_out(tcp);
+
+            break;
+
+        default:
+            restart_sig = stopsig;
             break;
         }
-    }
 
-    printf("+++ exited with %d +++\n", WEXITSTATUS(status));
+        last_tcb = tcp;
+
+        if (tcp->pid != -1)
+            ptrace(PTRACE_SYSCALL, tcp->pid, 0, restart_sig);
+        else
+            ptrace(PTRACE_CONT, wait_child, 0, 0);
+    }
 }

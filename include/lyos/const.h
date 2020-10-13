@@ -99,9 +99,9 @@
 
 #define MINOR_INITRD 120
 
-#define NR_FILES     64
-#define NR_FILE_DESC 64 /* FIXME */
-#define NR_INODE     64 /* FIXME */
+#define NR_FILES     256
+#define NR_FILE_DESC 256 /* FIXME */
+#define NR_INODE     256 /* FIXME */
 #define NR_VFS_MOUNT 16
 
 #define NO_BLOCK ((block_t)0)

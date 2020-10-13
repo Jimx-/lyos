@@ -113,16 +113,16 @@ void trace_signal(struct pmproc* p_dest, int signo)
     int retval = kernel_trace(TRACE_STOP, p_dest->endpoint, NULL, NULL);
     if (retval) panic("trace_signal: kernel_trace failed");
 
-    struct pmproc* parent = pm_endpt_proc(p_dest->parent);
-    if (waiting_for(parent, p_dest)) {
+    struct pmproc* tracer = pm_endpt_proc(p_dest->tracer);
+    if (waiting_for(tracer, p_dest)) {
         sigdelset(&p_dest->sig_trace, signo);
 
-        parent->flags &= ~PMPF_WAITING;
+        tracer->flags &= ~PMPF_WAITING;
 
         MESSAGE msg2parent;
         msg2parent.type = SYSCALL_RET;
         msg2parent.PID = p_dest->pid;
         msg2parent.STATUS = W_STOPCODE(signo);
-        send_recv(SEND_NONBLOCK, p_dest->parent, &msg2parent);
+        send_recv(SEND_NONBLOCK, tracer->endpoint, &msg2parent);
     }
 }

@@ -208,7 +208,7 @@ enum msgtype {
     CONNECT,
     LISTEN,
     ACCEPT,
-    SENDTO,
+    SENDTO, /* 80 */
     RECVFROM,
     SENDMSG,
     RECVMSG,

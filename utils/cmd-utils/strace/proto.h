@@ -23,4 +23,14 @@ int trace_munmap(struct tcb* tcp);
 
 int trace_dup(struct tcb* tcp);
 
+int trace_ioctl(struct tcb* tcp);
+
+int trace_open(struct tcb* tcp);
+
+int trace_unlink(struct tcb* tcp);
+
+int trace_pipe2(struct tcb* tcp);
+
+int trace_fork(struct tcb* tcp);
+
 #endif
