@@ -31,4 +31,6 @@
 
 #define NR_SOCKDEVS 8
 
+#define NR_LOCKS 32
+
 #endif

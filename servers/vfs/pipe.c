@@ -318,6 +318,11 @@ static void free_pipe_info(struct pipe_inode_info* pipe)
 static void put_pipe_info(struct inode* pin, struct pipe_inode_info* pipe)
 {
     if (!--pipe->files) {
+        if (waitqueue_active(&pipe->rd_wait))
+            waitqueue_wakeup_all(&pipe->rd_wait, (void*)POLLFREE);
+        if (waitqueue_active(&pipe->wr_wait))
+            waitqueue_wakeup_all(&pipe->wr_wait, (void*)POLLFREE);
+
         pin->i_private = NULL;
         free_pipe_info(pipe);
     }

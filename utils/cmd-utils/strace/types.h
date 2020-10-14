@@ -28,6 +28,7 @@ struct tcb {
 #define entering(tcb) ((tcb)->flags & TCB_ENTERING)
 #define exiting(tcb)  (!entering(tcb))
 
+extern const struct syscallent sysent_stub;
 #define tcb_sysent(tcb) ((tcb)->sysent ?: &sysent_stub)
 
 /* Format of syscall return values */

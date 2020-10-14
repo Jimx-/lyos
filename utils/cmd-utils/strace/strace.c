@@ -16,12 +16,14 @@
 #include "types.h"
 #include "proto.h"
 
+#define DEFAULT_STRLEN 32
+size_t max_strlen = DEFAULT_STRLEN;
+
 #define TCB_MAX 20
 static struct tcb tcbs[TCB_MAX];
 static struct tcb* last_tcb;
 
 static int exit_tcb(struct tcb* tcp, int status);
-static void do_trace(pid_t child, int s);
 
 static struct tcb* alloc_tcb(pid_t pid)
 {
@@ -48,30 +50,6 @@ static struct tcb* get_tcb(pid_t pid)
     return NULL;
 }
 
-int main(int argc, char* argv[], char* envp[])
-{
-    int i;
-
-    if (argc == 1) return 0;
-
-    for (i = 0; i < TCB_MAX; i++)
-        tcbs[i].pid = -1;
-
-    pid_t child;
-    child = fork();
-
-    argv++;
-    if (child == 0) {
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        exit(execve(argv[0], argv, envp));
-    } else {
-        int status;
-        wait(&status);
-        do_trace(child, status);
-    }
-    return 0;
-}
-
 static int copy_message_from(struct tcb* tcp, void* src_msg, void* dest_msg)
 {
     if (!fetch_mem(tcp, src_msg, dest_msg, sizeof(MESSAGE))) return -1;
@@ -79,96 +57,29 @@ static int copy_message_from(struct tcb* tcp, void* src_msg, void* dest_msg)
     return 0;
 }
 
-static void trace_write_in(struct tcb* tcp)
-{
-    MESSAGE* msg = &tcp->msg_in;
-
-    printf("write(%d, ", msg->FD);
-    print_str(tcp, msg->BUF, msg->CNT);
-    printf(", %d", msg->CNT);
-}
-
-static void trace_exec_in(struct tcb* tcp)
-{
-    MESSAGE* msg = &tcp->msg_in;
-
-    printf("execve(");
-    print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
-    printf(", %p", msg->BUF);
-}
-
-static void trace_chmod_in(struct tcb* tcp)
-{
-    MESSAGE* msg = &tcp->msg_in;
-
-    printf("chmod(");
-    print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
-    printf(", 0%o", msg->MODE);
-}
-
 static void trace_sendrec_in(struct tcb* tcp)
 {
     int sig, type;
 
-    copy_message_from(tcp, tcp->msg_in.SR_MSG, &tcp->msg_in);
+    fetch_mem(tcp, tcp->msg_in.SR_MSG, &tcp->msg_in, sizeof(MESSAGE));
 
     type = tcp->msg_in.type;
     tcp->msg_type_in = type;
 
-    switch (type) {
-    case READ:
-        printf("read(%d, %p, %d", tcp->msg_in.FD, tcp->msg_in.BUF,
-               tcp->msg_in.CNT);
-        tcp->sys_trace_ret = RVAL_DECODED;
-        break;
-    case WRITE:
-        trace_write_in(tcp);
-        tcp->sys_trace_ret = RVAL_DECODED;
-        break;
-    case EXEC:
-        trace_exec_in(tcp);
-        tcp->sys_trace_ret = RVAL_DECODED;
-        break;
-    case GETDENTS:
-        printf("getdents(%d, %p, %d", tcp->msg_in.FD, tcp->msg_in.BUF,
-               tcp->msg_in.CNT);
-        tcp->sys_trace_ret = RVAL_DECODED;
-        break;
-    case EXIT:
+    if (type == EXIT) {
         printf("exit(%d) = ?\n",
                tcp->msg_in.STATUS); /* exit has no return value */
         exit_tcb(tcp, W_EXITCODE(tcp->msg_in.STATUS, 0));
-        break;
-    case UMASK:
-        printf("umask(0%o", tcp->msg_in.MODE);
-        tcp->sys_trace_ret = RVAL_DECODED | RVAL_SPECIAL;
-        break;
-    case CHMOD:
-        trace_chmod_in(tcp);
-        tcp->sys_trace_ret = RVAL_DECODED;
-        break;
-    case GETSETID:
-        printf("getsetid(%d", tcp->msg_in.REQUEST);
-        tcp->sys_trace_ret = RVAL_DECODED | RVAL_SPECIAL;
-        break;
-    case SYMLINK:
-        printf("symlink(");
-        print_str(tcp, tcp->msg_in.u.m_vfs_link.old_path,
-                  tcp->msg_in.u.m_vfs_link.old_path_len);
-        printf(", ");
-        print_str(tcp, tcp->msg_in.u.m_vfs_link.new_path,
-                  tcp->msg_in.u.m_vfs_link.new_path_len);
-        tcp->sys_trace_ret = RVAL_DECODED;
-        break;
-    default:
-        tcp->sys_trace_ret = syscall_trace_entering(tcp, &sig);
-        break;
+
+        return;
     }
+
+    tcp->sys_trace_ret = syscall_trace_entering(tcp, &sig);
 }
 
 static void trace_sendrec_out(struct tcb* tcp)
 {
-    copy_message_from(tcp, tcp->msg_out.SR_MSG, &tcp->msg_out);
+    fetch_mem(tcp, tcp->msg_out.SR_MSG, &tcp->msg_out, sizeof(MESSAGE));
 
     int type = tcp->msg_type_in;
 
@@ -223,7 +134,7 @@ static void trace_call_out(struct tcb* tcp)
 
         if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
 
-        printf("<... resumed> ");
+        printf("<... %s resumed> ", tcb_sysent(tcp)->sys_name);
     }
 
     long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
@@ -317,4 +228,28 @@ static void do_trace(pid_t child, int s)
         else
             ptrace(PTRACE_CONT, wait_child, 0, 0);
     }
+}
+
+int main(int argc, char* argv[], char* envp[])
+{
+    int i;
+
+    if (argc == 1) return 0;
+
+    for (i = 0; i < TCB_MAX; i++)
+        tcbs[i].pid = -1;
+
+    pid_t child;
+    child = fork();
+
+    argv++;
+    if (child == 0) {
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        exit(execve(argv[0], argv, envp));
+    } else {
+        int status;
+        wait(&status);
+        do_trace(child, status);
+    }
+    return 0;
 }

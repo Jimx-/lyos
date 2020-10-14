@@ -48,5 +48,5 @@ int trace_waitpid(struct tcb* tcp)
         print_flags(tcp->msg_in.OPTIONS, &wait4_options);
     }
 
-    return 0;
+    return RVAL_TID;
 }

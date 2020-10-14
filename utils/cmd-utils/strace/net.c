@@ -8,6 +8,7 @@
 #include "xlat/addrfams.h"
 #include "xlat/socktypes.h"
 #include "xlat/sock_flags.h"
+#include "xlat/msg_flags.h"
 
 static void print_pairfd(int fd0, int fd1) { printf("[%d, %d]", fd0, fd1); }
 
@@ -111,4 +112,61 @@ int trace_accept(struct tcb* tcp)
     }
 
     return RVAL_DECODED | RVAL_FD;
+}
+
+int trace_sendto(struct tcb* tcp)
+{
+    MESSAGE* msg = &tcp->msg_in;
+    size_t addrlen;
+
+    printf("%d, ", msg->u.m_vfs_sendrecv.sock_fd);
+    print_strn(tcp, msg->u.m_vfs_sendrecv.buf, msg->u.m_vfs_sendrecv.len);
+    printf(", %lu, ", msg->u.m_vfs_sendrecv.len);
+    print_flags(msg->u.m_vfs_sendrecv.flags, &msg_flags);
+    printf(", ");
+    addrlen = msg->u.m_vfs_sendrecv.addr_len;
+    decode_sockaddr(tcp, msg->u.m_vfs_sendrecv.addr, addrlen);
+    printf(", %d", addrlen);
+
+    return RVAL_DECODED | RVAL_SPECIAL;
+}
+
+int trace_recvfrom(struct tcb* tcp)
+{
+    size_t ulen, rlen;
+    MESSAGE* msg = &tcp->msg_in;
+    int status;
+
+    if (entering(tcp)) {
+        printf("%d, ", msg->u.m_vfs_sendrecv.sock_fd);
+    } else {
+        status = msg->u.m_vfs_sendrecv.status;
+
+        ulen = msg->u.m_vfs_sendrecv.addr_len;
+        rlen = tcp->msg_out.u.m_vfs_sendrecv.addr_len;
+
+        if (status >= 0)
+            print_strn(tcp, msg->u.m_vfs_sendrecv.buf, tcp->msg_out.RETVAL);
+        else
+            print_addr((uint64_t)msg->u.m_vfs_sendrecv.buf);
+
+        printf(", %lu, ", msg->u.m_vfs_sendrecv.len);
+        print_flags(msg->u.m_vfs_sendrecv.flags, &msg_flags);
+        printf(", ");
+
+        if (status < 0) {
+            print_addr(msg->u.m_vfs_sendrecv.addr);
+            printf(", [%d]", ulen);
+            return 0;
+        }
+
+        decode_sockaddr(tcp, msg->u.m_vfs_sendrecv.addr,
+                        ulen > rlen ? rlen : ulen);
+        if (ulen != rlen)
+            printf(", [%d->%d]", ulen, rlen);
+        else
+            printf(", [%d]", rlen);
+    }
+
+    return RVAL_SPECIAL;
 }

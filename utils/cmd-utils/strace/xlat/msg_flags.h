@@ -1,0 +1,12 @@
+static struct xlat_data msg_flags_data[] = {
+    XLAT(MSG_OOB),        XLAT(MSG_PEEK),         XLAT(MSG_DONTROUTE),
+    XLAT(MSG_CTRUNC),     XLAT(MSG_PROXY),        XLAT(MSG_TRUNC),
+    XLAT(MSG_DONTWAIT),   XLAT(MSG_EOR),          XLAT(MSG_WAITALL),
+    XLAT(MSG_FIN),        XLAT(MSG_SYN),          XLAT(MSG_CONFIRM),
+    XLAT(MSG_ERRQUEUE),   XLAT(MSG_NOSIGNAL),     XLAT(MSG_MORE),
+    XLAT(MSG_WAITFORONE), XLAT(MSG_BATCH),        XLAT(MSG_ZEROCOPY),
+    XLAT(MSG_FASTOPEN),   XLAT(MSG_CMSG_CLOEXEC),
+
+};
+
+static DEFINE_XLAT(msg_flags);

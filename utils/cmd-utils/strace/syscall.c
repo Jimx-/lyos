@@ -16,7 +16,7 @@ static int trace_syscall(struct tcb* tcp)
     return RVAL_DECODED;
 }
 
-static const struct syscallent sysent_stub = {
+const struct syscallent sysent_stub = {
     .sys_no = 0,
     .sys_func = trace_syscall,
     .sys_name = "syscall",
@@ -86,6 +86,14 @@ int syscall_trace_exiting(struct tcb* tcp)
             base = 16;
             retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
             break;
+        case SENDTO:
+        case RECVFROM:
+            retval = tcp->msg_out.u.m_vfs_sendrecv.status;
+            if (retval < 0) {
+                err = -retval;
+                retval = -1;
+            }
+            break;
         }
         break;
     }
@@ -100,6 +108,7 @@ int syscall_trace_exiting(struct tcb* tcp)
     }
 
     if (err != 0) {
+        putchar(' ');
         print_err(err);
     }
 

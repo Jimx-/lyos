@@ -4,10 +4,34 @@
 #include "types.h"
 #include "xlat.h"
 
+extern size_t max_strlen;
+
 const char* xlookup(const struct xlat* xlat, uint64_t val);
 
 void print_path(struct tcb* tcp, char* string, int len);
-void print_str(struct tcb* tcp, char* str, int len);
+
+/** String is '\0'-terminated. */
+#define QUOTE_0_TERMINATED 0x01
+/** Do not emit leading and ending '"' characters. */
+#define QUOTE_OMIT_LEADING_TRAILING_QUOTES 0x02
+/** Do not print '\0' if it is the last character. */
+#define QUOTE_OMIT_TRAILING_0 0x08
+/** Print ellipsis if the last character is not '\0' */
+#define QUOTE_EXPECT_TRAILING_0 0x10
+/** Print string in hex (using '\xHH' notation). */
+#define QUOTE_FORCE_HEX 0x20
+/** Enclose the string in C comment syntax. */
+#define QUOTE_EMIT_COMMENT 0x40
+int string_quote(const char* instr, char* outstr, size_t size,
+                 unsigned int style, const char* escape_chars);
+int print_str(struct tcb* tcp, const void* addr, size_t len,
+              unsigned int user_style);
+
+static inline int print_strn(struct tcb* tcp, const void* str, size_t len)
+{
+    return print_str(tcp, str, len, 0);
+}
+
 void print_err(int err);
 
 int print_flags(uint64_t flags, const struct xlat* xlat);
@@ -48,7 +72,19 @@ int trace_ioctl(struct tcb* tcp);
 
 int trace_open(struct tcb* tcp);
 int trace_close(struct tcb* tcp);
+int trace_read(struct tcb* tcp);
+int trace_write(struct tcb* tcp);
 
+int trace_exec(struct tcb* tcp);
+
+int trace_getsetid(struct tcb* tcp);
+
+int trace_chmod(struct tcb* tcp);
+int trace_umask(struct tcb* tcp);
+
+int trace_getdents(struct tcb* tcp);
+
+int trace_symlink(struct tcb* tcp);
 int trace_unlink(struct tcb* tcp);
 
 int trace_pipe2(struct tcb* tcp);
@@ -57,6 +93,8 @@ int trace_bind(struct tcb* tcp);
 int trace_connect(struct tcb* tcp);
 int trace_listen(struct tcb* tcp);
 int trace_accept(struct tcb* tcp);
+int trace_sendto(struct tcb* tcp);
+int trace_recvfrom(struct tcb* tcp);
 
 int trace_fork(struct tcb* tcp);
 
