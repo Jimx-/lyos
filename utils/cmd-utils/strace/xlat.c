@@ -41,3 +41,37 @@ int print_flags(uint64_t flags, const struct xlat* xlat)
 
     return n;
 }
+
+const char* sprint_flags(uint64_t flags, const struct xlat* xlat)
+{
+    int i;
+    const char* init_sep = "";
+    unsigned int n = 0;
+    static char buf[1024];
+    char* outptr = buf;
+
+    for (i = 0; i < xlat->size; i++) {
+        uint64_t v = xlat->data[i].val;
+
+        if (xlat->data[i].str && ((flags == v) || (v && (flags & v) == v))) {
+            outptr += sprintf(outptr, "%s%s", (n++ ? "|" : init_sep),
+                              xlat->data[i].str);
+            flags &= ~v;
+        }
+
+        if (!flags) break;
+    }
+
+    if (n) {
+        if (flags) {
+            outptr += sprintf(outptr, "|%x", flags);
+            n++;
+        }
+    } else {
+        *outptr++ = '0';
+    }
+
+    *outptr++ = '\0';
+
+    return buf;
+}

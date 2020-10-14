@@ -13,6 +13,8 @@ struct tcb {
 
     int msg_type_in;
     int sys_trace_ret;
+
+    const char* aux_str;
 };
 
 #define TCB_STARTUP  0x01

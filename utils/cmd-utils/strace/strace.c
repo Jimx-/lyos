@@ -74,27 +74,7 @@ int main(int argc, char* argv[], char* envp[])
 
 static int copy_message_from(struct tcb* tcp, void* src_msg, void* dest_msg)
 {
-    char dest_buf[100];
-    uintptr_t src_ptr = (uintptr_t)src_msg;
-    long *src, *dest = (long*)dest_buf;
-    off_t offset, len;
-
-    len = sizeof(MESSAGE);
-    offset = src_ptr % sizeof(long);
-    src_ptr -= offset;
-    len += offset;
-    if (len % sizeof(long)) len += sizeof(long) - (len % sizeof(long));
-    src = (long*)src_ptr;
-
-    while (src < (long*)(src_ptr + len)) {
-        long data = ptrace(PTRACE_PEEKDATA, tcp->pid, src, 0);
-        if (data == -1 && errno != 0) return -1;
-        *dest = data;
-        src++;
-        dest++;
-    }
-
-    memcpy(dest_msg, &dest_buf[offset], sizeof(MESSAGE));
+    if (!fetch_mem(tcp, src_msg, dest_msg, sizeof(MESSAGE))) return -1;
 
     return 0;
 }
@@ -228,6 +208,57 @@ static void trace_sendrec_in(struct tcb* tcp)
     case FORK:
         tcp->sys_trace_ret = trace_fork(tcp);
         break;
+    case WAIT:
+        tcp->sys_trace_ret = trace_waitpid(tcp);
+        break;
+    case POLL:
+        tcp->sys_trace_ret = trace_poll(tcp);
+        break;
+    case EVENTFD:
+        tcp->sys_trace_ret = trace_eventfd(tcp);
+        break;
+    case SIGPROCMASK:
+        tcp->sys_trace_ret = trace_sigprocmask(tcp);
+        break;
+    case SIGNALFD:
+        tcp->sys_trace_ret = trace_signalfd(tcp);
+        break;
+    case KILL:
+        tcp->sys_trace_ret = trace_kill(tcp);
+        break;
+    case TIMERFD_CREATE:
+        tcp->sys_trace_ret = trace_timerfd_create(tcp);
+        break;
+    case TIMERFD_SETTIME:
+        tcp->sys_trace_ret = trace_timerfd_settime(tcp);
+        break;
+    case TIMERFD_GETTIME:
+        tcp->sys_trace_ret = trace_timerfd_gettime(tcp);
+        break;
+    case EPOLL_CREATE1:
+        tcp->sys_trace_ret = trace_epoll_create1(tcp);
+        break;
+    case EPOLL_CTL:
+        tcp->sys_trace_ret = trace_epoll_ctl(tcp);
+        break;
+    case EPOLL_WAIT:
+        tcp->sys_trace_ret = trace_epoll_wait(tcp);
+        break;
+    case SOCKET:
+        tcp->sys_trace_ret = trace_socket(tcp);
+        break;
+    case BIND:
+        tcp->sys_trace_ret = trace_bind(tcp);
+        break;
+    case CONNECT:
+        tcp->sys_trace_ret = trace_connect(tcp);
+        break;
+    case LISTEN:
+        tcp->sys_trace_ret = trace_listen(tcp);
+        break;
+    case ACCEPT:
+        tcp->sys_trace_ret = trace_accept(tcp);
+        break;
     default:
         printf("syscall(%d)", type);
         break;
@@ -240,6 +271,7 @@ static void trace_sendrec_out(struct tcb* tcp)
 
     int type = tcp->msg_type_in;
     int retval = 0;
+    int out_ret = 0;
     int base = 10;
     int err = 0;
 
@@ -266,11 +298,38 @@ static void trace_sendrec_out(struct tcb* tcp)
         case PIPE2:
             trace_pipe2(tcp);
             break;
+        case WAIT:
+            trace_waitpid(tcp);
+            break;
+        case POLL:
+            out_ret = trace_poll(tcp);
+            break;
+        case SIGPROCMASK:
+            trace_sigprocmask(tcp);
+            break;
+        case TIMERFD_SETTIME:
+            trace_timerfd_settime(tcp);
+            break;
+        case TIMERFD_GETTIME:
+            trace_timerfd_gettime(tcp);
+            break;
+        case EPOLL_WAIT:
+            trace_epoll_wait(tcp);
+            break;
+        case ACCEPT:
+            trace_accept(tcp);
+            break;
         }
     }
 
     switch (type) {
     case OPEN:
+    case EVENTFD:
+    case SIGNALFD:
+    case TIMERFD_CREATE:
+    case EPOLL_CREATE1:
+    case SOCKET:
+    case ACCEPT:
         retval = tcp->msg_out.FD;
         if (retval < 0) {
             err = -retval;
@@ -279,8 +338,6 @@ static void trace_sendrec_out(struct tcb* tcp)
         break;
     case READ:
     case WRITE:
-        retval = tcp->msg_out.CNT;
-        break;
     case STAT:
     case FSTAT:
     case CLOSE:
@@ -291,6 +348,16 @@ static void trace_sendrec_out(struct tcb* tcp)
     case DUP:
     case IOCTL:
     case PIPE2:
+    case POLL:
+    case SIGPROCMASK:
+    case KILL:
+    case TIMERFD_SETTIME:
+    case TIMERFD_GETTIME:
+    case EPOLL_CTL:
+    case EPOLL_WAIT:
+    case BIND:
+    case CONNECT:
+    case LISTEN:
         retval = tcp->msg_out.RETVAL;
 
         if (retval < 0) {
@@ -308,6 +375,7 @@ static void trace_sendrec_out(struct tcb* tcp)
         retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
         break;
     case FORK:
+    case WAIT:
         retval = tcp->msg_out.PID;
         break;
     }
@@ -325,6 +393,8 @@ static void trace_sendrec_out(struct tcb* tcp)
         print_err(err);
     }
 
+    if (out_ret & RVAL_STR) printf("(%s)", tcp->aux_str);
+
     printf("\n");
 }
 
@@ -334,7 +404,8 @@ static void trace_sendrec_out(struct tcb* tcp)
 static void trace_call_in(struct tcb* tcp)
 {
     if (last_tcb != tcp) {
-        if (last_tcb->pid != -1 && entering(last_tcb)) puts("");
+        if (last_tcb->pid != -1 && entering(last_tcb))
+            puts(" <unfinished ...>");
     }
     if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
 
@@ -363,7 +434,7 @@ static void trace_call_out(struct tcb* tcp)
 
         if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
 
-        printf("<resumed> ");
+        printf("<... resumed> ");
     }
 
     long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);

@@ -20,7 +20,7 @@ static void print_open_mode(int flags)
         if (flags) putchar('|');
     }
 
-    if (!str || flags) print_flags(flags & ~O_ACCMODE, &open_mode_flags);
+    if (!str || flags) print_flags(flags, &open_mode_flags);
 }
 
 int trace_open(struct tcb* tcp)

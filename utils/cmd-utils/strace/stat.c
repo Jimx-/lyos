@@ -8,16 +8,7 @@
 
 int copy_struct_stat(struct tcb* tcp, void* addr, struct stat* stat)
 {
-    long* src = (long*)addr;
-    long* dest = (long*)stat;
-
-    while (src < (long*)(addr + sizeof(struct stat))) {
-        long data = ptrace(PTRACE_PEEKDATA, tcp->pid, src, 0);
-        if (data == -1) return -1;
-        *dest = data;
-        src++;
-        dest++;
-    }
+    if (!fetch_mem(tcp, addr, stat, sizeof(struct stat))) return -1;
 
     return 0;
 }
