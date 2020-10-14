@@ -37,7 +37,7 @@ static int print_status(int status)
 int trace_waitpid(struct tcb* tcp)
 {
     if (entering(tcp)) {
-        printf("waitpid(%d, ", tcp->msg_in.PID);
+        printf("%d, ", tcp->msg_in.PID);
     } else {
         if (tcp->msg_out.PID > 0)
             print_status(tcp->msg_out.STATUS);
@@ -46,7 +46,6 @@ int trace_waitpid(struct tcb* tcp)
 
         printf(", ");
         print_flags(tcp->msg_in.OPTIONS, &wait4_options);
-        printf(")");
     }
 
     return 0;

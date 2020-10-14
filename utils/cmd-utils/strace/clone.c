@@ -2,9 +2,4 @@
 
 #include "types.h"
 
-int trace_fork(struct tcb* tcp)
-{
-    printf("fork()");
-
-    return RVAL_DECODED;
-}
+int trace_fork(struct tcb* tcp) { return RVAL_DECODED | RVAL_TID; }

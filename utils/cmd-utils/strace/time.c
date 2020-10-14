@@ -40,11 +40,9 @@ int print_itimespec(struct tcb* tcp, void* addr)
 
 int trace_timerfd_create(struct tcb* tcp)
 {
-    printf("timerfd_create(");
     print_flags(tcp->msg_in.u.m_vfs_timerfd.clock_id, &clocknames);
     printf(", ");
     print_flags(tcp->msg_in.u.m_vfs_timerfd.flags, &timerfdflags);
-    printf(")");
 
     return RVAL_DECODED | RVAL_FD;
 }
@@ -56,7 +54,7 @@ int trace_timerfd_settime(struct tcb* tcp)
     if (entering(tcp)) {
         msg = &tcp->msg_in;
 
-        printf("timerfd_settime(%d, ", msg->u.m_vfs_timerfd.fd);
+        printf("%d, ", msg->u.m_vfs_timerfd.fd);
         print_flags(msg->u.m_vfs_timerfd.flags, &timerfdflags);
         printf(", ");
         print_itimespec(tcp, msg->u.m_vfs_timerfd.new_value);
@@ -65,7 +63,6 @@ int trace_timerfd_settime(struct tcb* tcp)
         msg = &tcp->msg_out;
 
         print_itimespec(tcp, msg->u.m_vfs_timerfd.old_value);
-        printf(")");
     }
 
     return 0;
@@ -78,12 +75,11 @@ int trace_timerfd_gettime(struct tcb* tcp)
     if (entering(tcp)) {
         msg = &tcp->msg_in;
 
-        printf("timerfd_gettime(%d, ", msg->u.m_vfs_timerfd.fd);
+        printf("%d, ", msg->u.m_vfs_timerfd.fd);
     } else {
         msg = &tcp->msg_out;
 
         print_itimespec(tcp, msg->u.m_vfs_timerfd.old_value);
-        printf(")");
     }
 
     return 0;

@@ -27,7 +27,6 @@ int trace_open(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
 
-    printf("open(");
     print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
     printf(", ");
 
@@ -37,7 +36,13 @@ int trace_open(struct tcb* tcp)
         printf(", ");
         print_mode_t(msg->MODE);
     }
-    printf(")");
+
+    return RVAL_DECODED | RVAL_FD;
+}
+
+int trace_close(struct tcb* tcp)
+{
+    printf("%d", tcp->msg_in.FD);
 
     return RVAL_DECODED;
 }

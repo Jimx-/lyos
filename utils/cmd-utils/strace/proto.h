@@ -25,6 +25,9 @@ int print_array(struct tcb* tcp, const void* start, size_t count,
                 void* elem_buf, size_t elem_size, fetch_mem_fn fetch_fn,
                 print_fn print_elem_fn, void* arg);
 
+int syscall_trace_entering(struct tcb* tcp, int* sig);
+int syscall_trace_exiting(struct tcb* tcp);
+
 int decode_sockaddr(struct tcb* tcp, const void* addr, size_t addrlen);
 
 const char* sprint_signame(int sig);
@@ -44,6 +47,7 @@ int trace_dup(struct tcb* tcp);
 int trace_ioctl(struct tcb* tcp);
 
 int trace_open(struct tcb* tcp);
+int trace_close(struct tcb* tcp);
 
 int trace_unlink(struct tcb* tcp);
 

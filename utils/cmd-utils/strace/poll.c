@@ -33,7 +33,7 @@ static void decode_poll_entering(struct tcb* tcp)
     print_array(tcp, fds, nfds, &pfd, sizeof(pfd), fetch_mem, print_pollfd,
                 NULL);
     printf(", %u, ", nfds);
-    printf("%d)", tcp->msg_in.u.m_vfs_poll.timeout_msecs);
+    printf("%d", tcp->msg_in.u.m_vfs_poll.timeout_msecs);
 }
 
 static int decode_poll_exiting(struct tcb* tcp)
@@ -112,7 +112,6 @@ static int decode_poll_exiting(struct tcb* tcp)
 int trace_poll(struct tcb* tcp)
 {
     if (entering(tcp)) {
-        printf("poll(");
         decode_poll_entering(tcp);
 
         return 0;

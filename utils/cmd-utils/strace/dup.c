@@ -25,13 +25,7 @@ int trace_dup(struct tcb* tcp)
 
     newfd = tcp->msg_in.NEWFD;
 
-    if (newfd >= 0)
-        printf("dup2(");
-    else
-        printf("dup(");
-
     retval = dup12(tcp, newfd);
-    printf(")");
 
     return retval;
 }

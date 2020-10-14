@@ -14,12 +14,11 @@ static void print_pairfd(int fd0, int fd1) { printf("[%d, %d]", fd0, fd1); }
 int trace_pipe2(struct tcb* tcp)
 {
     if (entering(tcp)) {
-        printf("pipe2(");
         return 0;
     } else {
         print_pairfd(tcp->msg_out.u.m_vfs_fdpair.fd0,
                      tcp->msg_out.u.m_vfs_fdpair.fd1);
-        printf(", %d)", tcp->msg_in.FLAGS);
+        printf(", %d", tcp->msg_in.FLAGS);
 
         return 0;
     }
@@ -44,12 +43,11 @@ int trace_socket(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
 
-    printf("socket(");
     print_flags(msg->u.m_vfs_socket.domain, &addrfams);
     printf(", ");
     print_sock_type(msg->u.m_vfs_socket.type);
     printf(", ");
-    printf("%d)", msg->u.m_vfs_socket.protocol);
+    printf("%d", msg->u.m_vfs_socket.protocol);
 
     return RVAL_DECODED | RVAL_FD;
 }
@@ -59,13 +57,12 @@ static void do_bindconn(struct tcb* tcp)
     MESSAGE* msg = &tcp->msg_in;
     size_t addrlen = msg->u.m_vfs_bindconn.addr_len;
 
-    printf("(%d, ", msg->u.m_vfs_bindconn.sock_fd);
+    printf("%d, ", msg->u.m_vfs_bindconn.sock_fd);
     decode_sockaddr(tcp, msg->u.m_vfs_bindconn.addr, addrlen);
-    printf(", %d)", addrlen);
+    printf(", %d", addrlen);
 }
 int trace_bind(struct tcb* tcp)
 {
-    printf("bind");
     do_bindconn(tcp);
 
     return RVAL_DECODED;
@@ -73,7 +70,6 @@ int trace_bind(struct tcb* tcp)
 
 int trace_connect(struct tcb* tcp)
 {
-    printf("connect");
     do_bindconn(tcp);
 
     return RVAL_DECODED;
@@ -83,8 +79,7 @@ int trace_listen(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
 
-    printf("listen(%d, %d)", msg->u.m_vfs_listen.sock_fd,
-           msg->u.m_vfs_listen.backlog);
+    printf("%d, %d", msg->u.m_vfs_listen.sock_fd, msg->u.m_vfs_listen.backlog);
 
     return RVAL_DECODED;
 }
@@ -95,7 +90,7 @@ int trace_accept(struct tcb* tcp)
     MESSAGE* msg = &tcp->msg_in;
 
     if (entering(tcp)) {
-        printf("accept(%d, ", msg->u.m_vfs_bindconn.sock_fd);
+        printf("%d, ", msg->u.m_vfs_bindconn.sock_fd);
 
         return RVAL_FD;
     }
@@ -105,7 +100,7 @@ int trace_accept(struct tcb* tcp)
 
     if (tcp->msg_out.FD < 0) {
         print_addr((uint64_t)msg->u.m_vfs_bindconn.addr);
-        printf(", [%d])", ulen);
+        printf(", [%d]", ulen);
     } else {
         decode_sockaddr(tcp, msg->u.m_vfs_bindconn.addr,
                         ulen > rlen ? rlen : ulen);

@@ -5,6 +5,8 @@
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 
+#include "syscallent.h"
+
 struct tcb {
     int flags;
     int pid;
@@ -15,6 +17,8 @@ struct tcb {
     int sys_trace_ret;
 
     const char* aux_str;
+
+    const struct syscallent* sysent;
 };
 
 #define TCB_STARTUP  0x01
@@ -23,6 +27,8 @@ struct tcb {
 
 #define entering(tcb) ((tcb)->flags & TCB_ENTERING)
 #define exiting(tcb)  (!entering(tcb))
+
+#define tcb_sysent(tcb) ((tcb)->sysent ?: &sysent_stub)
 
 /* Format of syscall return values */
 #define RVAL_UDECIMAL 000 /* unsigned decimal format */
@@ -33,6 +39,7 @@ struct tcb {
 #define RVAL_SID      012 /* session ID */
 #define RVAL_TGID     013 /* thread group ID */
 #define RVAL_PGID     014 /* process group ID */
+#define RVAL_SPECIAL  016
 #define RVAL_MASK     017 /* mask for these values */
 
 #define RVAL_STR  020 /* Print `auxstr' field after return val */

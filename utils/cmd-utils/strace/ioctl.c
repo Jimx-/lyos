@@ -21,14 +21,12 @@ int trace_ioctl(struct tcb* tcp)
     int request = tcp->msg_in.REQUEST;
     void* buf = tcp->msg_in.BUF;
 
-    printf("ioctl(");
     printf("%d, ", fd);
 
     ioctl_decode(request);
     printf(", ");
 
     print_addr((uint64_t)buf);
-    printf(")");
 
     return RVAL_DECODED;
 }

@@ -79,33 +79,13 @@ static int copy_message_from(struct tcb* tcp, void* src_msg, void* dest_msg)
     return 0;
 }
 
-/*
-static void print_msg(MESSAGE* m)
-{
-    int packed = 0;
-    printf("{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, 0x%x,
-0x%x}%s}%s", packed ? "" : "\n        ", m->source, packed ? " " : "\n        ",
-           m->type,
-           packed ? " " : "\n        ",
-           m->u.m3.m3i1,
-           m->u.m3.m3i2,
-           m->u.m3.m3i3,
-           m->u.m3.m3i4,
-           (int)m->u.m3.m3p1,
-           (int)m->u.m3.m3p2,
-           packed ? "" : "\n",
-           packed ? "" : "\n"
-        );
-}
-*/
-
 static void trace_write_in(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
 
     printf("write(%d, ", msg->FD);
     print_str(tcp, msg->BUF, msg->CNT);
-    printf(", %d)", msg->CNT);
+    printf(", %d", msg->CNT);
 }
 
 static void trace_exec_in(struct tcb* tcp)
@@ -114,7 +94,7 @@ static void trace_exec_in(struct tcb* tcp)
 
     printf("execve(");
     print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
-    printf(", %p)", msg->BUF);
+    printf(", %p", msg->BUF);
 }
 
 static void trace_chmod_in(struct tcb* tcp)
@@ -123,69 +103,53 @@ static void trace_chmod_in(struct tcb* tcp)
 
     printf("chmod(");
     print_path(tcp, msg->PATHNAME, msg->NAME_LEN);
-    printf(", 0%o)", msg->MODE);
+    printf(", 0%o", msg->MODE);
 }
 
 static void trace_sendrec_in(struct tcb* tcp)
 {
+    int sig, type;
+
     copy_message_from(tcp, tcp->msg_in.SR_MSG, &tcp->msg_in);
 
-    int type = tcp->msg_in.type;
-
+    type = tcp->msg_in.type;
     tcp->msg_type_in = type;
 
     switch (type) {
-    case OPEN:
-        tcp->sys_trace_ret = trace_open(tcp);
-        break;
-    case CLOSE:
-        printf("close(%d)", tcp->msg_in.FD);
-        break;
     case READ:
-        printf("read(%d, %p, %d)", tcp->msg_in.FD, tcp->msg_in.BUF,
+        printf("read(%d, %p, %d", tcp->msg_in.FD, tcp->msg_in.BUF,
                tcp->msg_in.CNT);
+        tcp->sys_trace_ret = RVAL_DECODED;
         break;
     case WRITE:
         trace_write_in(tcp);
-        break;
-    case STAT:
-        tcp->sys_trace_ret = trace_stat(tcp);
-        break;
-    case FSTAT:
-        tcp->sys_trace_ret = trace_fstat(tcp);
+        tcp->sys_trace_ret = RVAL_DECODED;
         break;
     case EXEC:
         trace_exec_in(tcp);
-        break;
-    case BRK:
-        tcp->sys_trace_ret = trace_brk(tcp);
+        tcp->sys_trace_ret = RVAL_DECODED;
         break;
     case GETDENTS:
-        printf("getdents(%d, %p, %d)", tcp->msg_in.FD, tcp->msg_in.BUF,
+        printf("getdents(%d, %p, %d", tcp->msg_in.FD, tcp->msg_in.BUF,
                tcp->msg_in.CNT);
+        tcp->sys_trace_ret = RVAL_DECODED;
         break;
     case EXIT:
         printf("exit(%d) = ?\n",
                tcp->msg_in.STATUS); /* exit has no return value */
         exit_tcb(tcp, W_EXITCODE(tcp->msg_in.STATUS, 0));
         break;
-    case MMAP:
-        tcp->sys_trace_ret = trace_mmap(tcp);
-        break;
-    case MUNMAP:
-        tcp->sys_trace_ret = trace_munmap(tcp);
-        break;
-    case DUP:
-        tcp->sys_trace_ret = trace_dup(tcp);
-        break;
     case UMASK:
-        printf("umask(0%o)", tcp->msg_in.MODE);
+        printf("umask(0%o", tcp->msg_in.MODE);
+        tcp->sys_trace_ret = RVAL_DECODED | RVAL_SPECIAL;
         break;
     case CHMOD:
         trace_chmod_in(tcp);
+        tcp->sys_trace_ret = RVAL_DECODED;
         break;
     case GETSETID:
-        printf("getsetid(%d)", tcp->msg_in.REQUEST);
+        printf("getsetid(%d", tcp->msg_in.REQUEST);
+        tcp->sys_trace_ret = RVAL_DECODED | RVAL_SPECIAL;
         break;
     case SYMLINK:
         printf("symlink(");
@@ -194,73 +158,10 @@ static void trace_sendrec_in(struct tcb* tcp)
         printf(", ");
         print_str(tcp, tcp->msg_in.u.m_vfs_link.new_path,
                   tcp->msg_in.u.m_vfs_link.new_path_len);
-        printf(")");
-        break;
-    case IOCTL:
-        tcp->sys_trace_ret = trace_ioctl(tcp);
-        break;
-    case UNLINK:
-        tcp->sys_trace_ret = trace_unlink(tcp);
-        break;
-    case PIPE2:
-        tcp->sys_trace_ret = trace_pipe2(tcp);
-        break;
-    case FORK:
-        tcp->sys_trace_ret = trace_fork(tcp);
-        break;
-    case WAIT:
-        tcp->sys_trace_ret = trace_waitpid(tcp);
-        break;
-    case POLL:
-        tcp->sys_trace_ret = trace_poll(tcp);
-        break;
-    case EVENTFD:
-        tcp->sys_trace_ret = trace_eventfd(tcp);
-        break;
-    case SIGPROCMASK:
-        tcp->sys_trace_ret = trace_sigprocmask(tcp);
-        break;
-    case SIGNALFD:
-        tcp->sys_trace_ret = trace_signalfd(tcp);
-        break;
-    case KILL:
-        tcp->sys_trace_ret = trace_kill(tcp);
-        break;
-    case TIMERFD_CREATE:
-        tcp->sys_trace_ret = trace_timerfd_create(tcp);
-        break;
-    case TIMERFD_SETTIME:
-        tcp->sys_trace_ret = trace_timerfd_settime(tcp);
-        break;
-    case TIMERFD_GETTIME:
-        tcp->sys_trace_ret = trace_timerfd_gettime(tcp);
-        break;
-    case EPOLL_CREATE1:
-        tcp->sys_trace_ret = trace_epoll_create1(tcp);
-        break;
-    case EPOLL_CTL:
-        tcp->sys_trace_ret = trace_epoll_ctl(tcp);
-        break;
-    case EPOLL_WAIT:
-        tcp->sys_trace_ret = trace_epoll_wait(tcp);
-        break;
-    case SOCKET:
-        tcp->sys_trace_ret = trace_socket(tcp);
-        break;
-    case BIND:
-        tcp->sys_trace_ret = trace_bind(tcp);
-        break;
-    case CONNECT:
-        tcp->sys_trace_ret = trace_connect(tcp);
-        break;
-    case LISTEN:
-        tcp->sys_trace_ret = trace_listen(tcp);
-        break;
-    case ACCEPT:
-        tcp->sys_trace_ret = trace_accept(tcp);
+        tcp->sys_trace_ret = RVAL_DECODED;
         break;
     default:
-        printf("syscall(%d)", type);
+        tcp->sys_trace_ret = syscall_trace_entering(tcp, &sig);
         break;
     }
 }
@@ -270,10 +171,6 @@ static void trace_sendrec_out(struct tcb* tcp)
     copy_message_from(tcp, tcp->msg_out.SR_MSG, &tcp->msg_out);
 
     int type = tcp->msg_type_in;
-    int retval = 0;
-    int out_ret = 0;
-    int base = 10;
-    int err = 0;
 
     if (type == FORK) {
         pid_t new_pid = tcp->msg_out.PID;
@@ -287,115 +184,7 @@ static void trace_sendrec_out(struct tcb* tcp)
         }
     }
 
-    if (!(tcp->sys_trace_ret & RVAL_DECODED)) {
-        switch (type) {
-        case STAT:
-            trace_stat(tcp);
-            break;
-        case FSTAT:
-            trace_fstat(tcp);
-            break;
-        case PIPE2:
-            trace_pipe2(tcp);
-            break;
-        case WAIT:
-            trace_waitpid(tcp);
-            break;
-        case POLL:
-            out_ret = trace_poll(tcp);
-            break;
-        case SIGPROCMASK:
-            trace_sigprocmask(tcp);
-            break;
-        case TIMERFD_SETTIME:
-            trace_timerfd_settime(tcp);
-            break;
-        case TIMERFD_GETTIME:
-            trace_timerfd_gettime(tcp);
-            break;
-        case EPOLL_WAIT:
-            trace_epoll_wait(tcp);
-            break;
-        case ACCEPT:
-            trace_accept(tcp);
-            break;
-        }
-    }
-
-    switch (type) {
-    case OPEN:
-    case EVENTFD:
-    case SIGNALFD:
-    case TIMERFD_CREATE:
-    case EPOLL_CREATE1:
-    case SOCKET:
-    case ACCEPT:
-        retval = tcp->msg_out.FD;
-        if (retval < 0) {
-            err = -retval;
-            retval = -1;
-        }
-        break;
-    case READ:
-    case WRITE:
-    case STAT:
-    case FSTAT:
-    case CLOSE:
-    case GETDENTS:
-    case CHMOD:
-    case SELECT:
-    case MUNMAP:
-    case DUP:
-    case IOCTL:
-    case PIPE2:
-    case POLL:
-    case SIGPROCMASK:
-    case KILL:
-    case TIMERFD_SETTIME:
-    case TIMERFD_GETTIME:
-    case EPOLL_CTL:
-    case EPOLL_WAIT:
-    case BIND:
-    case CONNECT:
-    case LISTEN:
-        retval = tcp->msg_out.RETVAL;
-
-        if (retval < 0) {
-            err = -retval;
-            retval = -1;
-        }
-        break;
-    case GETSETID:
-    case BRK:
-    case UMASK:
-        retval = tcp->msg_out.RETVAL;
-        break;
-    case MMAP:
-        base = 16;
-        retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
-        break;
-    case FORK:
-    case WAIT:
-        retval = tcp->msg_out.PID;
-        break;
-    }
-
-    switch (base) {
-    case 10:
-        printf(" = %d ", retval);
-        break;
-    case 16:
-        printf(" = 0x%x ", retval);
-        break;
-    }
-
-    if (err != 0) {
-        print_err(err);
-    }
-
-    if (out_ret & RVAL_STR) printf("(%s)", tcp->aux_str);
-
-    printf("\n");
+    syscall_trace_exiting(tcp);
 }
 
 #define EBX      8

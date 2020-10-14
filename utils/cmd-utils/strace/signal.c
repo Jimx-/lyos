@@ -63,14 +63,12 @@ void print_sigmask(sigset_t mask) { printf("%s", sprint_sigmask(mask)); }
 int trace_sigprocmask(struct tcb* tcp)
 {
     if (entering(tcp)) {
-        printf("sigprocmask(");
         print_flags(tcp->msg_in.HOW, &sigprocmaskcmds);
         printf(", ");
         print_sigmask(tcp->msg_in.MASK);
         printf(", ");
     } else {
         print_sigmask(tcp->msg_out.MASK);
-        printf(")");
     }
 
     return 0;
@@ -78,9 +76,8 @@ int trace_sigprocmask(struct tcb* tcp)
 
 int trace_kill(struct tcb* tcp)
 {
-    printf("kill(%d, ", tcp->msg_in.PID);
+    printf("%d, ", tcp->msg_in.PID);
     printf("%s", sprint_signame(tcp->msg_in.SIGNR));
-    printf(")");
 
     return RVAL_DECODED;
 }
@@ -89,11 +86,10 @@ int trace_signalfd(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
 
-    printf("signalfd(%d, ", msg->u.m_vfs_signalfd.fd);
+    printf("%d, ", msg->u.m_vfs_signalfd.fd);
     print_sigmask(msg->u.m_vfs_signalfd.mask);
     printf(", ");
     print_flags(msg->u.m_vfs_signalfd.flags, &sfd_flags);
-    printf(")");
 
     return RVAL_DECODED | RVAL_FD;
 }

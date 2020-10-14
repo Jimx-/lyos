@@ -9,9 +9,8 @@
 
 int trace_eventfd(struct tcb* tcp)
 {
-    printf("eventfd(%u, ", tcp->msg_in.CNT);
+    printf("%u, ", tcp->msg_in.CNT);
     print_flags(tcp->msg_in.FLAGS, &efd_flags);
-    printf(")");
 
     return RVAL_DECODED | RVAL_FD;
 }

@@ -42,12 +42,10 @@ void decode_struct_stat(struct tcb* tcp, void* addr)
 int trace_stat(struct tcb* tcp)
 {
     if (entering(tcp)) {
-        printf("stat(");
         print_path(tcp, tcp->msg_in.PATHNAME, tcp->msg_in.NAME_LEN);
         printf(", ");
     } else {
         decode_struct_stat(tcp, tcp->msg_in.BUF);
-        printf(")");
     }
 
     return 0;
@@ -56,10 +54,9 @@ int trace_stat(struct tcb* tcp)
 int trace_fstat(struct tcb* tcp)
 {
     if (entering(tcp)) {
-        printf("fstat(%d, ", tcp->msg_in.FD);
+        printf("%d, ", tcp->msg_in.FD);
     } else {
         decode_struct_stat(tcp, tcp->msg_in.BUF);
-        printf(")");
     }
 
     return 0;

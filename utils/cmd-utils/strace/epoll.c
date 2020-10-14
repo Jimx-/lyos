@@ -12,9 +12,7 @@
 
 int trace_epoll_create1(struct tcb* tcp)
 {
-    printf("epoll_create1(");
     print_flags(tcp->msg_in.u.m_vfs_epoll.flags, &epollflags);
-    printf(")");
 
     return RVAL_DECODED | RVAL_FD;
 }
@@ -36,7 +34,7 @@ int trace_epoll_ctl(struct tcb* tcp)
     MESSAGE* msg = &tcp->msg_in;
     struct epoll_event ev;
 
-    printf("epoll_ctl(%d, ", msg->u.m_vfs_epoll.epfd);
+    printf("%d, ", msg->u.m_vfs_epoll.epfd);
     print_flags(msg->u.m_vfs_epoll.op, &epollctls);
     printf(", ");
     printf("%d, ", msg->u.m_vfs_epoll.fd);
@@ -47,8 +45,6 @@ int trace_epoll_ctl(struct tcb* tcp)
     else
         print_epoll_event(tcp, &ev, sizeof(ev), NULL);
 
-    printf(")");
-
     return RVAL_DECODED;
 }
 
@@ -57,7 +53,7 @@ int trace_epoll_wait(struct tcb* tcp)
     struct epoll_event ev;
 
     if (entering(tcp)) {
-        printf("epoll_wait(%d, ", tcp->msg_in.u.m_vfs_epoll.epfd);
+        printf("%d, ", tcp->msg_in.u.m_vfs_epoll.epfd);
     } else {
         if (tcp->msg_out.RETVAL >= 0)
             print_array(tcp, tcp->msg_in.u.m_vfs_epoll.events,
@@ -66,7 +62,7 @@ int trace_epoll_wait(struct tcb* tcp)
         else
             print_addr(tcp->msg_in.u.m_vfs_epoll.events);
 
-        printf(", %d, %d)", tcp->msg_in.u.m_vfs_epoll.max_events,
+        printf(", %d, %d", tcp->msg_in.u.m_vfs_epoll.max_events,
                tcp->msg_in.u.m_vfs_epoll.timeout);
     }
 
