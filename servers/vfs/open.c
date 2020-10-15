@@ -185,6 +185,8 @@ int close_fd(struct fproc* fp, int fd)
     pin = filp->fd_inode;
 
     if (--filp->fd_cnt == 0) {
+        if (!list_empty(&filp->fd_ep_links)) eventpoll_release_file(filp);
+
         if (filp->fd_fops && filp->fd_fops->release) {
             filp->fd_fops->release(pin, filp);
         }

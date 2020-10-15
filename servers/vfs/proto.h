@@ -182,6 +182,7 @@ int do_timerfd_gettime(void);
 int do_epoll_create1(void);
 int do_epoll_ctl(void);
 int do_epoll_wait(void);
+void eventpoll_release_file(struct file_desc* filp);
 
 /* vfs/driver.c */
 int do_mapdriver(void);

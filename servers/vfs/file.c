@@ -133,22 +133,6 @@ void unlock_filps(struct file_desc* filp1, struct file_desc* filp2)
     }
 }
 
-struct file_desc* alloc_filp()
-{
-    int i;
-
-    /* find a free slot in f_desc_table[] */
-    for (i = 0; i < NR_FILE_DESC; i++) {
-        struct file_desc* filp = &f_desc_table[i];
-
-        if (f_desc_table[i].fd_inode == 0 && !mutex_trylock(&filp->fd_lock)) {
-            return filp;
-        }
-    }
-
-    return NULL;
-}
-
 int check_fds(struct fproc* fp, int nfds)
 {
     int i;
@@ -187,6 +171,7 @@ int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
 
         if (filp->fd_inode == 0 && !mutex_trylock(&filp->fd_lock)) {
             filp->fd_mode = bits;
+            INIT_LIST_HEAD(&filp->fd_ep_links);
             *fpp = filp;
             return 0;
         }

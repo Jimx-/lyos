@@ -182,9 +182,6 @@ static int timerfd_release(struct inode* pin, struct file_desc* filp)
 {
     struct timerfd_ctx* ctx = filp->fd_private_data;
 
-    if (waitqueue_active(&ctx->wq))
-        waitqueue_wakeup_all(&ctx->wq, (void*)POLLFREE);
-
     cancel_timer(&ctx->timer);
     free(ctx);
 

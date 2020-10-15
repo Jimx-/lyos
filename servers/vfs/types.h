@@ -93,6 +93,8 @@ struct file_desc {
     const struct file_operations* fd_fops;
     void* fd_private_data;
     mutex_t fd_lock;
+
+    struct list_head fd_ep_links;
 };
 
 /* character device mapping */

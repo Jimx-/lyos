@@ -55,6 +55,7 @@ struct eventpoll;
 struct epitem {
     struct avl_node avl;
     struct list_head rdllink;
+    struct list_head fllink;
     struct epoll_filefd ffd;
 
     struct eventpoll* ep;
@@ -306,6 +307,7 @@ static int ep_insert(struct eventpoll* ep, struct epoll_event* event,
 
     memset(epi, 0, sizeof(*epi));
     INIT_LIST_HEAD(&epi->rdllink);
+    INIT_LIST_HEAD(&epi->fllink);
     INIT_LIST_HEAD(&epi->pwqlist);
     epi->ep = ep;
     epi->ffd.file = tfilp;
@@ -317,6 +319,7 @@ static int ep_insert(struct eventpoll* ep, struct epoll_event* event,
 
     revents = ep_item_poll(epi, &epq.pt, TRUE /* notify */);
 
+    list_add_tail(&epi->fllink, &tfilp->fd_ep_links);
     avl_insert(&epi->avl, &ep->avl_root);
 
     if (revents && !ep_is_linked(epi)) {
@@ -469,6 +472,8 @@ static int ep_remove(struct eventpoll* ep, struct epitem* epi)
 {
     ep_unregister_pollwait(ep, epi);
 
+    list_del(&epi->fllink);
+
     avl_erase(&epi->avl, &ep->avl_root);
     if (ep_is_linked(epi)) list_del(&epi->rdllink);
 
@@ -521,6 +526,18 @@ static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp)
     if (ep) ep_free(ep);
 
     return 0;
+}
+
+void eventpoll_release_file(struct file_desc* filp)
+{
+    struct eventpoll* ep;
+    struct epitem *epi, *tmp;
+
+    list_for_each_entry_safe(epi, tmp, &filp->fd_ep_links, fllink)
+    {
+        ep = epi->ep;
+        ep_remove(ep, epi);
+    }
 }
 
 static int get_epoll_flags(int eflags)
