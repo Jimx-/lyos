@@ -377,23 +377,27 @@ fetch_events:
             break;
         }
 
-        timer_cb.expired = FALSE;
-        timer_cb.worker = self;
+        if (timeout > 0) {
+            timer_cb.expired = FALSE;
+            timer_cb.worker = self;
 
-        clock_t ticks;
-        ticks = (timeout * system_hz + 1000L - 1) / 1000L;
-        set_timer(&timer, ticks, ep_timeout_check, &timer_cb);
+            clock_t ticks;
+            ticks = (timeout * system_hz + 1000L - 1) / 1000L;
+            set_timer(&timer, ticks, ep_timeout_check, &timer_cb);
+        }
 
         unlock_filp(filp);
         worker_wait();
         lock_filp(filp, RWL_READ);
 
-        timed_out = timer_cb.expired;
-        if (!timed_out) {
-            cancel_timer(&timer);
-        }
+        if (timeout > 0) {
+            timed_out = timer_cb.expired;
+            if (!timed_out) {
+                cancel_timer(&timer);
+            }
 
-        if (timed_out) break;
+            if (timed_out) break;
+        }
 
         eavail = TRUE;
     } while (0);
@@ -501,6 +505,9 @@ static void ep_free(struct eventpoll* ep)
 
     while (epi) {
         ep_unregister_pollwait(ep, epi);
+
+        list_del(&epi->fllink);
+
         if (ep_is_linked(epi)) {
             list_del(&epi->rdllink);
         }

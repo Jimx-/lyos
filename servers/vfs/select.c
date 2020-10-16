@@ -484,6 +484,8 @@ int do_poll(void)
                     cancel_timer(&timer);
                 }
             }
+
+            pwq.triggered = FALSE;
         }
     }
 

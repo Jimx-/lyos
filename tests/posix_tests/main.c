@@ -13,6 +13,7 @@ static const MunitSuite all_suites[] = {
     {(char*)"/epoll", epoll_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {(char*)"/uds", uds_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {(char*)"/dl", dl_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
+    {(char*)"/mmap", mmap_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {NULL, NULL, NULL, 0, MUNIT_SUITE_OPTION_NONE},
 };
 

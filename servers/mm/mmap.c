@@ -201,6 +201,12 @@ int do_mmap()
         if ((flags & (MAP_CONTIG | MAP_POPULATE)) == MAP_CONTIG) return EINVAL;
 
         if (prot & PROT_WRITE) vr_flags |= RF_WRITABLE;
+
+        if (flags & MAP_SHARED) {
+            flags |= MAP_POPULATE;
+            vr_flags |= RF_SHARED;
+        }
+
         vr_flags |= RF_ANON;
 
         if (flags & MAP_CONTIG)

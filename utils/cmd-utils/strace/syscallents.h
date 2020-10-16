@@ -6,6 +6,7 @@ _S(CLOSE, close),
 _S(READ, read),
 _S(WRITE, write),
 _S(GETSETID, getsetid),
+_S(GETDENTS, getdents),
 _S(STAT, stat),
 _S(FSTAT, fstat),
 _S(BRK, brk),
@@ -39,6 +40,8 @@ _S(LISTEN, listen),
 _S(ACCEPT, accept),
 _S(SENDTO, sendto),
 _S(RECVFROM, recvfrom),
+_S(SENDMSG, sendmsg),
+_S(RECVMSG, recvmsg),
 
 #undef _S
     /* clang-format on */

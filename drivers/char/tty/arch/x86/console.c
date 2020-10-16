@@ -71,6 +71,7 @@ static void cons_write(TTY* tty)
     static char buf[4096];
     off_t offset = 0;
     size_t count;
+    int retval = 0;
     int j;
 
     /* Nothing to write */
@@ -82,8 +83,11 @@ static void cons_write(TTY* tty)
         if (tty->tty_outcaller == TASK_TTY) {
             memcpy(buf, (char*)tty->tty_outbuf + offset, count);
         } else {
-            safecopy_from(tty->tty_outcaller, tty->tty_outgrant, offset, buf,
-                          count);
+            if ((retval = safecopy_from(tty->tty_outcaller, tty->tty_outgrant,
+                                        offset, buf, count)) != OK) {
+                retval = -retval;
+                break;
+            }
         }
 
         for (j = 0; j < count; j++) {
@@ -97,10 +101,11 @@ static void cons_write(TTY* tty)
 
     flush((CONSOLE*)tty->tty_dev);
 
-    if (tty->tty_outleft == 0) {
+    if (tty->tty_outleft == 0 || retval != OK) {
         if (tty->tty_outcaller != TASK_TTY) { /* done, reply to caller */
             chardriver_reply_io(tty->tty_outcaller, tty->tty_outid,
-                                tty->tty_outcnt);
+                                tty->tty_outleft == 0 ? tty->tty_outcnt
+                                                      : retval);
         }
         tty->tty_outcaller = NO_TASK;
         tty->tty_outcnt = 0;

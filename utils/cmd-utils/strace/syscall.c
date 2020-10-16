@@ -88,6 +88,8 @@ int syscall_trace_exiting(struct tcb* tcp)
             break;
         case SENDTO:
         case RECVFROM:
+        case SENDMSG:
+        case RECVMSG:
             retval = tcp->msg_out.u.m_vfs_sendrecv.status;
             if (retval < 0) {
                 err = -retval;

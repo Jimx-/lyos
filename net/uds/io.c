@@ -531,7 +531,7 @@ ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
         }
     } while (len);
 
-    if (ctl_len > 0) {
+    if (ctl_len && *ctl_len > 0) {
         ctl_off = scm_recv(uds, ctl, *ctl_len, user_endpt, &scm, flags);
 
         if (ctl_off >= 0)

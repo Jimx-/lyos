@@ -70,7 +70,7 @@ static int anon_page_fault(struct mmproc* mmp, struct vir_region* vr,
         return 0;
     }
 
-    if (pr->page->refcount < 2 || !write) return 0;
+    if (pr->page->refcount < 2 || !write || (vr->flags & RF_SHARED)) return 0;
 
     return page_cow(vr, pr, new_paddr);
 }
@@ -80,6 +80,7 @@ static int anon_writable(const struct phys_region* pr)
     assert(pr->page->refcount > 0);
     if (pr->page->phys_addr == PHYS_NONE) return 0;
     if (pr->parent->remaps > 0) return 1;
+    if (pr->parent->flags & RF_SHARED) return 1;
 
     return pr->page->refcount == 1;
 }

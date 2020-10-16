@@ -40,6 +40,7 @@ int sys_vportio(MESSAGE* m, struct proc* p_proc)
     int type = m->PIO_REQUEST & PIO_TYPE_MASK,
         dir = m->PIO_REQUEST & PIO_DIR_MASK;
     int vec_size = m->PIO_VECSIZE;
+    int retval;
 
     if (vec_size <= 0) return EINVAL;
 
@@ -61,7 +62,10 @@ int sys_vportio(MESSAGE* m, struct proc* p_proc)
     if (bytes > VPORTIO_BUF_SIZE) return E2BIG;
 
     /* copy port-value pairs */
-    memcpy(vportio_buf, m->PIO_BUF, bytes);
+    if ((retval = data_vir_copy_check(p_proc, KERNEL, vportio_buf,
+                                      p_proc->endpoint, m->PIO_BUF, bytes)) !=
+        OK)
+        return retval;
 
     int i;
     switch (type) {
@@ -94,7 +98,9 @@ int sys_vportio(MESSAGE* m, struct proc* p_proc)
     }
 
     if (dir == PIO_IN) {
-        memcpy(m->PIO_BUF, vportio_buf, bytes);
+        if ((retval = data_vir_copy_check(p_proc, p_proc->endpoint, m->PIO_BUF,
+                                          KERNEL, vportio_buf, bytes)) != OK)
+            return retval;
     }
 
     return 0;

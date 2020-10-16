@@ -233,6 +233,7 @@ static int run_client_msg(int event_fd)
     msghdr.msg_iovlen = 2;
     msghdr.msg_control = NULL;
     msghdr.msg_controllen = 0;
+    msghdr.msg_flags = 0;
 
     n = sendmsg(sock_fd, &msghdr, 0);
     if (n != iov[0].iov_len + iov[1].iov_len) return errno;
@@ -293,6 +294,7 @@ static MunitResult run_server_msg(int event_fd)
     msghdr.msg_iovlen = 1;
     msghdr.msg_control = NULL;
     msghdr.msg_controllen = 0;
+    msghdr.msg_flags = 0;
 
     n = recvmsg(conn_fd, &msghdr, 0);
     munit_assert_int(n, ==, iov.iov_len);
@@ -557,6 +559,7 @@ static int run_client_fds(int event_fd)
     msghdr.msg_iovlen = 1;
     msghdr.msg_control = u.buf;
     msghdr.msg_controllen = sizeof(u.buf);
+    msghdr.msg_flags = 0;
 
     /* send the read end of the pipe */
     cmsg = CMSG_FIRSTHDR(&msghdr);
@@ -633,6 +636,7 @@ static MunitResult run_server_fds(int event_fd)
     msghdr.msg_iovlen = 1;
     msghdr.msg_control = u.buf;
     msghdr.msg_controllen = sizeof(u.buf);
+    msghdr.msg_flags = 0;
 
     n = recvmsg(conn_fd, &msghdr, 0);
 

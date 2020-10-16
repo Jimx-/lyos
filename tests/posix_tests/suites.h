@@ -8,5 +8,6 @@ extern MunitTest timerfd_tests[];
 extern MunitTest epoll_tests[];
 extern MunitTest uds_tests[];
 extern MunitTest dl_tests[];
+extern MunitTest mmap_tests[];
 
 #endif

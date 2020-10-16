@@ -225,6 +225,7 @@ static void rs_read(TTY* tty)
 static void rs_write(TTY* tty)
 {
     rs232_t* rs = (rs232_t*)tty->tty_dev;
+    int retval = 0;
 
     while (TRUE) {
         int ocount = buflen(rs->obuf) - rs->ocount;
@@ -236,9 +237,12 @@ static void rs_write(TTY* tty)
 
         if (tty->tty_outcaller == TASK_TTY)
             memcpy(rs->ohead, (char*)tty->tty_outbuf + tty->tty_outcnt, count);
-        else
-            safecopy_from(tty->tty_outcaller, tty->tty_outgrant,
-                          tty->tty_outcnt, rs->ohead, count);
+        else if ((retval = safecopy_from(tty->tty_outcaller, tty->tty_outgrant,
+                                         tty->tty_outcnt, rs->ohead, count)) !=
+                 OK) {
+            retval = -retval;
+            goto reply;
+        }
 
         ocount = count;
         rs->ocount += ocount;
@@ -247,11 +251,14 @@ static void rs_write(TTY* tty)
             rs->ohead -= buflen(rs->obuf);
 
         tty->tty_outcnt += ocount;
+        tty->tty_outleft -= count;
 
-        if ((tty->tty_outleft -= count) == 0) {
+    reply:
+        if (tty->tty_outleft == 0 || retval != OK) {
             if (tty->tty_outcaller != TASK_TTY) {
                 chardriver_reply_io(tty->tty_outcaller, tty->tty_outid,
-                                    tty->tty_outcnt);
+                                    tty->tty_outleft == 0 ? tty->tty_outcnt
+                                                          : retval);
             }
             tty->tty_outcaller = NO_TASK;
             tty->tty_outcnt = 0;

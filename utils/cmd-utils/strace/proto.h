@@ -49,6 +49,9 @@ int print_array(struct tcb* tcp, const void* start, size_t count,
                 void* elem_buf, size_t elem_size, fetch_mem_fn fetch_fn,
                 print_fn print_elem_fn, void* arg);
 
+void print_iov_upto(struct tcb* const tcp, size_t len, void* addr,
+                    unsigned long data_size);
+
 int syscall_trace_entering(struct tcb* tcp, int* sig);
 int syscall_trace_exiting(struct tcb* tcp);
 
@@ -96,6 +99,8 @@ int trace_accept(struct tcb* tcp);
 int trace_sendto(struct tcb* tcp);
 int trace_recvfrom(struct tcb* tcp);
 
+int decode_sockaddr(struct tcb* tcp, const void* addr, size_t addrlen);
+
 int trace_fork(struct tcb* tcp);
 
 int trace_waitpid(struct tcb* tcp);
@@ -111,5 +116,8 @@ int trace_timerfd_gettime(struct tcb* tcp);
 int trace_epoll_create1(struct tcb* tcp);
 int trace_epoll_ctl(struct tcb* tcp);
 int trace_epoll_wait(struct tcb* tcp);
+
+int trace_sendmsg(struct tcb* tcp);
+int trace_recvmsg(struct tcb* tcp);
 
 #endif
