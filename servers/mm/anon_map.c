@@ -17,6 +17,7 @@
 #include <errno.h>
 
 #include "region.h"
+#include "global.h"
 #include "proto.h"
 
 static int anon_pt_flags(const struct vir_region* vr) { return 0; }
@@ -70,7 +71,11 @@ static int anon_page_fault(struct mmproc* mmp, struct vir_region* vr,
         return 0;
     }
 
-    if (pr->page->refcount < 2 || !write || (vr->flags & RF_SHARED)) return 0;
+    if (pr->page->refcount < 2 || !write) {
+        free_mem(new_paddr, ARCH_PG_SIZE);
+
+        return 0;
+    }
 
     return page_cow(vr, pr, new_paddr);
 }
@@ -80,7 +85,6 @@ static int anon_writable(const struct phys_region* pr)
     assert(pr->page->refcount > 0);
     if (pr->page->phys_addr == PHYS_NONE) return 0;
     if (pr->parent->remaps > 0) return 1;
-    if (pr->parent->flags & RF_SHARED) return 1;
 
     return pr->page->refcount == 1;
 }
@@ -93,12 +97,23 @@ static int anon_unreference(struct phys_region* pr)
     return 0;
 }
 
+static int anon_copy(struct vir_region* vr, struct vir_region* new_vr)
+{
+    if (!(vr->flags & RF_MAP_SHARED)) return 0;
+
+    new_vr->rops = &shared_map_ops;
+    shared_set_source(new_vr, vr->parent->endpoint, vr);
+
+    return 0;
+}
+
 const struct region_operations anon_map_ops = {
     .rop_pt_flags = anon_pt_flags,
     .rop_shrink_low = anon_shrink_low,
     .rop_resize = anon_resize,
     .rop_split = anon_split,
     .rop_page_fault = anon_page_fault,
+    .rop_copy = anon_copy,
 
     .rop_writable = anon_writable,
     .rop_unreference = anon_unreference,

@@ -145,6 +145,7 @@ struct vir_region* region_new(struct mmproc* mmp, vir_bytes base, size_t length,
 {
     struct vir_region* region;
     struct phys_region** prs;
+    static unsigned int seq;
 
     SLABALLOC(region);
     if (!region) return NULL;
@@ -159,6 +160,7 @@ struct vir_region* region_new(struct mmproc* mmp, vir_bytes base, size_t length,
     region->rops = rops;
     region->parent = mmp;
     region->mm = mmp->mm;
+    region->seq = seq++;
 
     if ((prs = alloc_vmem(NULL, phys_regions_size(region), 0)) == NULL) {
         SLABFREE(region);

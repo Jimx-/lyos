@@ -85,6 +85,7 @@ struct vir_region {
     size_t length;
     int flags;
     int remaps;
+    int seq;
 
     struct phys_region** phys_regions;
     const struct region_operations* rops;
@@ -97,6 +98,12 @@ struct vir_region {
             int inited;
         } file;
 
+        struct {
+            endpoint_t endpoint;
+            vir_bytes vaddr;
+            int seq;
+        } shared;
+
         phys_bytes phys;
     } param;
 };
@@ -105,6 +112,7 @@ struct vir_region {
 #define RF_WRITABLE      0x1
 #define RF_SHARED        0x2
 #define RF_UNINITIALIZED 0x4
+#define RF_MAP_SHARED    0x8
 
 #define RF_ANON   0x100
 #define RF_DIRECT 0x200
