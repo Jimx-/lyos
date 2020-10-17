@@ -90,7 +90,7 @@ void lock_filp(struct file_desc* filp, rwlock_type_t lock_type)
     }
 
     /* need blocking */
-    old_self = worker_suspend();
+    old_self = worker_suspend(WT_BLOCKED_ON_LOCK);
 
     retval = mutex_lock(&filp->fd_lock);
     if (retval != 0) {

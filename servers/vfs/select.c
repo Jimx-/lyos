@@ -243,7 +243,7 @@ int do_select(void)
                 set_timer(&timer, ticks, select_timeout_check, &timer_cb);
             }
 
-            worker_wait();
+            worker_wait(WT_BLOCKED_ON_POLL);
 
             if (has_timeout) {
                 timed_out = timer_cb.expired;
@@ -271,9 +271,11 @@ int do_select(void)
 static void select_timeout_check(struct timer_list* tp)
 {
     struct select_timer_cb_data* timer_cb = tp->arg;
+    struct worker_thread* worker = timer_cb->worker;
 
     timer_cb->expired = TRUE;
-    worker_wake(timer_cb->worker);
+
+    if (worker && worker->blocked_on == WT_BLOCKED_ON_POLL) worker_wake(worker);
 }
 
 static int copy_fdset(struct select_fdset* fdset, int nfds, int direction)
@@ -357,6 +359,8 @@ static int pollwake(struct wait_queue_entry* wq_entry, void* arg)
     if (ops && !(ops & entry->mask)) {
         return 0;
     }
+
+    if (pwq->polling_worker->blocked_on != WT_BLOCKED_ON_POLL) return 0;
 
     pwq->triggered = TRUE;
 
@@ -476,7 +480,7 @@ int do_poll(void)
                 set_timer(&timer, ticks, select_timeout_check, &timer_cb);
             }
 
-            worker_wait();
+            worker_wait(WT_BLOCKED_ON_POLL);
 
             if (timeout_msecs > 0) {
                 timed_out = timer_cb.expired;

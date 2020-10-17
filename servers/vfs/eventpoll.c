@@ -387,7 +387,7 @@ fetch_events:
         }
 
         unlock_filp(filp);
-        worker_wait();
+        worker_wait(WT_BLOCKED_ON_EPOLL);
         lock_filp(filp, RWL_READ);
 
         if (timeout > 0) {

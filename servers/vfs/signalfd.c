@@ -50,7 +50,7 @@ static void signalfd_recv(MESSAGE* msg)
     self->recv_from = TASK_PM;
     self->msg_driver = msg;
 
-    worker_wait();
+    worker_wait(WT_BLOCKED_ON_DRV_MSG);
     self->recv_from = NO_TASK;
 }
 
@@ -111,7 +111,7 @@ static ssize_t signalfd_dequeue(struct file_desc* filp, void* buf,
     waitqueue_add(&fp->signalfd_wq, &wait);
     for (;;) {
         unlock_filp(filp);
-        worker_wait();
+        worker_wait(WT_BLOCKED_ON_SFD);
         lock_filp(filp, RWL_READ);
 
         retval = request_signalfd_dequeue(ctx, buf, fp, !nonblock);
@@ -253,6 +253,7 @@ static void signalfd_reply_generic(MESSAGE* msg)
 
     struct worker_thread* worker = fp->worker;
     if (worker != NULL && worker->msg_driver != NULL &&
+        worker->blocked_on == WT_BLOCKED_ON_DRV_MSG &&
         worker->recv_from == msg->source) {
         *worker->msg_driver = *msg;
         worker->msg_driver = NULL;

@@ -13,6 +13,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_MESA:=false}
 : ${BUILD_FREETYPE:=false}
 : ${BUILD_PIXMAN:=false}
+: ${BUILD_CAIRO:=false}
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 

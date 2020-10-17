@@ -65,7 +65,7 @@ void lock_fproc(struct fproc* fp)
     }
 
     /* need blocking */
-    old_self = worker_suspend();
+    old_self = worker_suspend(WT_BLOCKED_ON_LOCK);
 
     retval = mutex_lock(&fp->lock);
     if (retval != 0) {

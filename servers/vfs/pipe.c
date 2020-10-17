@@ -101,7 +101,7 @@ static void pipe_wait(struct pipe_inode_info* pipe, int rw_flag)
 
     waitqueue_add(wq, &wait);
 
-    worker_wait();
+    worker_wait(WT_BLOCKED_ON_PIPE);
 
     waitqueue_remove(wq, &wait);
 }

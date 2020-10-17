@@ -62,7 +62,7 @@ int fs_sendrec(endpoint_t fs_e, MESSAGE* msg)
         return retval;
     }
 
-    worker_wait();
+    worker_wait(WT_BLOCKED_ON_DRV_MSG);
 
     return 0;
 }

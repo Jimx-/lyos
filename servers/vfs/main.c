@@ -326,6 +326,8 @@ static void do_work(void)
 
 static void do_reply(struct worker_thread* worker, MESSAGE* msg)
 {
+    if (worker->blocked_on != WT_BLOCKED_ON_DRV_MSG) return;
+
     if (worker->recv_from != msg->source) {
         printl("VFS: thread %d waiting for %d to reply, not %d\n", worker->tid,
                worker->recv_from, msg->source);

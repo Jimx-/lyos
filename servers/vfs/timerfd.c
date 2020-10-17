@@ -138,7 +138,7 @@ static ssize_t timerfd_read(struct file_desc* filp, char* buf, size_t count,
         if (!ctx->ticks) {
             waitqueue_add(&ctx->wq, &wait);
             unlock_filp(filp);
-            worker_wait();
+            worker_wait(WT_BLOCKED_ON_TFD);
             lock_filp(filp, RWL_READ);
             waitqueue_remove(&ctx->wq, &wait);
         }

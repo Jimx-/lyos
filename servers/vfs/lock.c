@@ -126,7 +126,7 @@ restart:
                 waitqueue_add(&flp->wq, &wait);
 
                 unlock_filp(filp);
-                worker_wait();
+                worker_wait(WT_BLOCKED_ON_FLOCK);
                 lock_filp(filp, RWL_READ);
 
                 waitqueue_remove(&flp->wq, &wait);

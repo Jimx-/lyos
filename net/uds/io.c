@@ -468,8 +468,6 @@ ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
     if (uds_get_type(uds) != SOCK_DGRAM) {
         if (!uds_is_connected(uds) && !uds_is_disconnected(uds))
             return -ENOTCONN;
-        else if (!uds_has_conn(uds) || uds_is_shutdown(uds->conn, SFL_SHUT_WR))
-            return 0;
     }
 
     target = sock_rcvlowat(&uds->sock, flags & MSG_WAITALL, len);

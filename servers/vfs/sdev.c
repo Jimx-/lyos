@@ -150,7 +150,7 @@ static int sdev_sendrec(struct sdmap* sdp, MESSAGE* msg)
     self->recv_from = sdp->endpoint;
     self->msg_driver = msg;
 
-    worker_wait();
+    worker_wait(WT_BLOCKED_ON_DRV_MSG);
     self->recv_from = NO_TASK;
 
     return 0;
@@ -429,7 +429,7 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
     data_grant = ctl_grant = addr_grant = GRANT_INVALID;
     access = (rw_flag == READ) ? MGF_WRITE : MGF_READ;
 
-    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return -EIO;
 
     if (iov_len > 0) {
         if ((retval = sdev_vsetup(iov, sdp->endpoint, src, giov, iov_len,
@@ -477,16 +477,17 @@ ssize_t sdev_vreadwrite(endpoint_t src, dev_t dev, const struct iovec* iov,
     if (ctl_grant != GRANT_INVALID) mgrant_revoke(ctl_grant);
     if (addr_grant != GRANT_INVALID) mgrant_revoke(addr_grant);
 
-    if (rw_flag == READ) {
+    if (msg.type == SDEV_RECV_REPLY) {
         retval = msg.u.m_sockdriver_recv_reply.status;
 
         if (retval >= 0) {
             if (ctl_len) *ctl_len = msg.u.m_sockdriver_recv_reply.ctl_len;
             if (addr_len) *addr_len = msg.u.m_sockdriver_recv_reply.addr_len;
         }
-    } else {
+    } else if (msg.type == SDEV_REPLY) {
         retval = msg.u.m_sockdriver_reply.status;
-    }
+    } else
+        panic("vfs: sdev_vreadwrite bogus reply from socket driver");
 
     return retval;
 }
@@ -640,13 +641,16 @@ void sdev_reply(MESSAGE* msg)
         sdev_poll_notify(sdp, msg->u.m_sockdriver_poll_notify.sock_id,
                          msg->u.m_sockdriver_poll_notify.ops);
         return;
+    default:
+        panic("vfs: unknown sdev message type");
     }
 
     fp = vfs_endpt_proc(req_id);
     if (fp == NULL) return;
 
     struct worker_thread* worker = fp->worker;
-    if (worker != NULL && worker->msg_driver != NULL) {
+    if (worker != NULL && worker->blocked_on == WT_BLOCKED_ON_DRV_MSG &&
+        worker->msg_driver != NULL) {
         *worker->msg_driver = *msg;
         worker->msg_driver = NULL;
         worker_wake(worker);

@@ -83,7 +83,7 @@ static ssize_t eventfd_read(struct file_desc* filp, char* buf, size_t count,
             }
 
             unlock_filp(filp);
-            worker_wait();
+            worker_wait(WT_BLOCKED_ON_EFD);
             lock_filp(filp, RWL_WRITE);
         }
 
@@ -139,7 +139,7 @@ static ssize_t eventfd_write(struct file_desc* filp, const char* buf,
             }
 
             unlock_filp(filp);
-            worker_wait();
+            worker_wait(WT_BLOCKED_ON_EFD);
             lock_filp(filp, RWL_WRITE);
         }
 

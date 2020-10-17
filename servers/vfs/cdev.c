@@ -62,7 +62,7 @@ static void cdev_recv(endpoint_t src, MESSAGE* msg)
     self->recv_from = src;
     self->msg_driver = msg;
 
-    worker_wait();
+    worker_wait(WT_BLOCKED_ON_DRV_MSG);
     self->recv_from = NO_TASK;
 }
 
@@ -224,7 +224,9 @@ static void cdev_reply_generic(MESSAGE* msg)
     if (fp == NULL) return;
 
     struct worker_thread* worker = fp->worker;
-    if (worker != NULL && worker->msg_driver != NULL) {
+
+    if (worker != NULL && worker->msg_driver != NULL &&
+        worker->blocked_on == WT_BLOCKED_ON_DRV_MSG) {
         *worker->msg_driver = *msg;
         worker->msg_driver = NULL;
         worker_wake(worker);

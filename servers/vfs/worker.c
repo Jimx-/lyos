@@ -59,7 +59,7 @@ int rwlock_lock(rwlock_t* rwlock, rwlock_type_t lock_type)
     case RWL_READ:
     case RWL_WRITE:
         /* save worker context as we may be blocked */
-        old_self = worker_suspend();
+        old_self = worker_suspend(WT_BLOCKED_ON_LOCK);
 
         if (lock_type == RWL_READ) {
             retval = rwlock_rdlock(rwlock);
@@ -209,9 +209,10 @@ void worker_wake(struct worker_thread* worker)
     }
 }
 
-struct worker_thread* worker_suspend(void)
+struct worker_thread* worker_suspend(int why)
 {
     self->err_code = err_code;
+    self->blocked_on = why;
 
     return self;
 }
@@ -221,11 +222,12 @@ void worker_resume(struct worker_thread* worker)
     self = worker;
     fproc = worker->fproc;
     err_code = worker->err_code;
+    self->blocked_on = WT_BLOCKED_ON_NONE;
 }
 
-void worker_wait(void)
+void worker_wait(int why)
 {
-    struct worker_thread* worker = worker_suspend();
+    struct worker_thread* worker = worker_suspend(why);
 
     worker_sleep();
 

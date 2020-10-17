@@ -208,6 +208,9 @@ static void uds_disconnect(struct udssock* uds, int has_link)
 {
     struct udssock* conn = uds->conn;
 
+    if (!skb_queue_empty(&sock_recvq(&conn->sock)))
+        sock_set_error(&conn->sock, ECONNRESET);
+
     uds->conn = NULL;
     conn->conn = NULL;
 

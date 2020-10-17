@@ -173,6 +173,13 @@ static int exit_tcb(struct tcb* tcp, int status)
     return TRUE;
 }
 
+static void print_signalled(struct tcb* tcp, int sig)
+{
+    if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
+
+    printf("+++ caught signal %s +++\n", sprint_signame(sig));
+}
+
 static void do_trace(pid_t child, int s)
 {
     int status = s;
@@ -218,6 +225,7 @@ static void do_trace(pid_t child, int s)
 
         default:
             restart_sig = stopsig;
+            /* print_signalled(tcp, restart_sig); */
             break;
         }
 
