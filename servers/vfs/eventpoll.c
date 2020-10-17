@@ -65,6 +65,7 @@ struct epitem {
 };
 
 struct eventpoll {
+    mutex_t mtx;
     struct wait_queue_head wq;
     struct wait_queue_head poll_wait;
 
@@ -132,9 +133,13 @@ static __poll_t ep_scan_ready_list(struct eventpoll* ep,
 
     INIT_LIST_HEAD(&txlist);
 
+    mutex_lock(&ep->mtx);
+
     list_splice_init(&ep->rdllist, &txlist);
     retval = (*sproc)(ep, &txlist, arg);
     list_splice(&txlist, &ep->rdllist);
+
+    mutex_unlock(&ep->mtx);
 
     return retval;
 }
@@ -166,7 +171,7 @@ static __poll_t ep_send_events_proc(struct eventpoll* ep,
         if (data_copy(esed->fp->endpoint, uevent, SELF, &revent,
                       sizeof(revent))) {
             esed->retval = -EFAULT;
-            list_add(&epi->rdllink, head);
+            if (!ep_is_linked(epi)) list_add(&epi->rdllink, head);
             break;
         }
 
@@ -176,7 +181,14 @@ static __poll_t ep_send_events_proc(struct eventpoll* ep,
         if (epi->event.events & EPOLLONESHOT)
             epi->event.events &= EP_PRIVATE_BITS;
         else if (!(epi->event.events & EPOLLET)) {
-            list_add_tail(&epi->rdllink, &ep->rdllist);
+            /* For Level Triggered mode, we still need to put this item back to
+             * the ready list so that it is checked for event availability in
+             * the next ~epoll_wait~ call.
+             *
+             * Note: A poll notification may have already arrived and put this
+             * item back to the ready list when we are blocked waiting in
+             * ~ep_item_poll~.  Check for this case here. */
+            if (!ep_is_linked(epi)) list_add_tail(&epi->rdllink, &ep->rdllist);
         }
     }
 
@@ -283,6 +295,8 @@ static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
     struct file_desc* filp = epi->ffd.file;
     __poll_t mask;
     int oneshot = (epi->event.events & EPOLLONESHOT) ? POLL_ONESHOT : 0;
+
+    assert(filp->fd_inode);
 
     pt->mask = epi->event.events;
     if (filp->fd_fops != &eventpoll_fops) {
@@ -452,6 +466,7 @@ static int ep_alloc(struct eventpoll** epp)
     init_waitqueue_head(&ep->poll_wait);
     INIT_LIST_HEAD(&ep->rdllist);
     INIT_AVL_ROOT(&ep->avl_root, ep_item_key_node_comp, ep_item_node_node_comp);
+    mutex_init(&ep->mtx, NULL);
 
     *epp = ep;
     return 0;
@@ -500,6 +515,8 @@ static void ep_free(struct eventpoll* ep)
     INIT_LIST_HEAD(&remove_list);
     memset(&key.ffd, 0, sizeof(key.ffd));
 
+    mutex_lock(&ep->mtx);
+
     avl_start_iter(&ep->avl_root, &iter, &key, AVL_GREATER_EQUAL);
     epi = ep_avl_get_iter(&iter);
 
@@ -516,6 +533,8 @@ static void ep_free(struct eventpoll* ep)
         avl_inc_iter(&iter);
         epi = ep_avl_get_iter(&iter);
     }
+
+    mutex_unlock(&ep->mtx);
 
     list_for_each_entry_safe(epi, tmp, &remove_list, rdllink)
     {
@@ -543,7 +562,9 @@ void eventpoll_release_file(struct file_desc* filp)
     list_for_each_entry_safe(epi, tmp, &filp->fd_ep_links, fllink)
     {
         ep = epi->ep;
+        mutex_lock(&ep->mtx);
         ep_remove(ep, epi);
+        mutex_unlock(&ep->mtx);
     }
 }
 
@@ -625,6 +646,8 @@ int do_epoll_ctl(void)
 
     ep = f->fd_private_data;
 
+    mutex_lock(&ep->mtx);
+
     epi = ep_find(ep, tf, fd);
 
     retval = -EINVAL;
@@ -647,6 +670,8 @@ int do_epoll_ctl(void)
         printl("ctl mod\n");
         break;
     }
+
+    mutex_unlock(&ep->mtx);
 
 err_unlock_tf:
     unlock_filp(tf);
