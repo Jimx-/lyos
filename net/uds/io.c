@@ -400,11 +400,15 @@ ssize_t uds_send(struct sock* sock, struct iov_grant_iter* iter, size_t len,
 
     if (flags & MSG_OOB) return -EOPNOTSUPP;
 
-    if (!uds_is_connected(uds) && !uds_is_disconnected(uds)) return -ENOTCONN;
+    if (uds_get_type(uds) != SOCK_DGRAM) {
+        if (!uds_is_connected(uds) && !uds_is_disconnected(uds))
+            return -ENOTCONN;
+        if (!uds_has_conn(uds)) return -EPIPE;
+    }
 
     if ((retval = uds_send_peer(uds, addr, addr_len, user_endpt, &other)) != OK)
         return -retval;
-    if (!other) return -ENOTCONN;
+    assert(other);
 
     if (uds_is_shutdown(uds, SFL_SHUT_WR)) return -EPIPE;
 
