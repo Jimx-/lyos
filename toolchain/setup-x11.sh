@@ -10,6 +10,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBEXPAT:=false}
 : ${BUILD_LIBFFI:=false}
 : ${BUILD_WAYLAND:=false}
+: ${BUILD_WAYLAND_PROTOCOLS:=false}
 : ${BUILD_MESA:=false}
 : ${BUILD_FREETYPE:=false}
 : ${BUILD_PIXMAN:=false}
@@ -80,6 +81,23 @@ if $BUILD_WAYLAND; then
 
     pushd wayland-$SUBARCH > /dev/null
     $DIR/sources/wayland-1.18.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --with-host-scanner --disable-dtd-validation --disable-documentation
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build wayland-protocols
+if $BUILD_WAYLAND_PROTOCOLS; then
+    if [ ! -d "wayland-protocols-$SUBARCH" ]; then
+        mkdir wayland-protocols-$SUBARCH
+    fi
+
+    pushd $DIR/sources/wayland-protocols-1.20 > /dev/null
+    # ./autogen.sh
+    popd > /dev/null
+
+    pushd wayland-protocols-$SUBARCH > /dev/null
+    $DIR/sources/wayland-protocols-1.20/configure --host=$TARGET --prefix=/usr
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

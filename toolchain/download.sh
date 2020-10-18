@@ -31,6 +31,7 @@ download "libdrm" "https://dri.freedesktop.org/libdrm/" "libdrm-2.4.89.tar.bz2" 
 download "libexpat" "https://github.com/libexpat/libexpat/releases/download/R_2_2_9/" "expat-2.2.9.tar.bz2" || cmd_error
 download "libffi" "https://github.com/libffi/libffi/releases/download/v3.3/" "libffi-3.3.tar.gz" || cmd_error
 download "wayland" "https://github.com/wayland-project/wayland/archive/" "1.18.0.tar.gz" && cp 1.18.0.tar.gz wayland-1.18.0.tar.gz || cmd_error
+download "wayland-protocols" "https://wayland.freedesktop.org/releases/" "wayland-protocols-1.20.tar.xz" || cmd_error
 download "pcre" "https://ftp.pcre.org/pub/pcre/" "pcre-8.44.tar.gz" || cmd_error
 download "grep" "https://mirrors.ustc.edu.cn/gnu/grep" "grep-3.4.tar.xz" || cmd_error
 download "less" "http://www.greenwoodsoftware.com/less" "less-551.tar.gz" || cmd_error
@@ -63,6 +64,7 @@ unzip "libdrm-2.4.89.tar.bz2" "libdrm-2.4.89"
 unzip "expat-2.2.9.tar.bz2" "expat-2.2.9"
 unzip "libffi-3.3.tar.gz" "libffi-3.3"
 unzip "wayland-1.18.0.tar.gz" "wayland-1.18.0"
+unzip "wayland-protocols-1.20.tar.xz" "wayland-protocols-1.20"
 unzip "pcre-8.44.tar.gz" "pcre-8.44"
 unzip "grep-3.4.tar.xz" "grep-3.4"
 unzip "less-551.tar.gz" "less-551"
