@@ -105,6 +105,7 @@ patc "freetype-2.10.2"
 patc "pixman-0.40.0"
 patc "cairo-1.16.0"
 patc "libxml2-2.9.10"
+patc "wayland-1.18.0"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"
