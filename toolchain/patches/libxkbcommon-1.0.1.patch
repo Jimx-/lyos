@@ -1,0 +1,21 @@
+diff -rupN old/meson.build new/meson.build
+--- old/meson.build	2020-09-11 20:10:23.220047200 +0800
++++ new/meson.build	2020-10-18 15:29:09.359467844 +0800
+@@ -335,7 +335,7 @@ if get_option('enable-xkbregistry')
+         'src/util-list.h',
+         'src/util-list.c',
+     ]
+-    libxkbregistry_link_args = []
++    libxkbregistry_link_args = ['-lpthread',  '-lz',  '-lm']
+     if have_version_script
+         libxkbregistry_link_args += '-Wl,--version-script=' + meson.source_root()/'xkbregistry.map'
+     endif
+@@ -446,7 +446,7 @@ if build_tools
+ You can disable the Wayland xkbcli programs with -Denable-wayland=false.''')
+         endif
+ 
+-        wayland_scanner = find_program(wayland_scanner_dep.get_pkgconfig_variable('wayland_scanner'))
++        wayland_scanner = find_program('wayland-scanner')
+         wayland_scanner_code_gen = generator(
+             wayland_scanner,
+             output: '@BASENAME@-protocol.c',
