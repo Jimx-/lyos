@@ -44,6 +44,8 @@ download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz" ||
 download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz" || cmd_error
 download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.gz" || cmd_error
 download "cairo" "https://www.cairographics.org/releases/" "cairo-1.16.0.tar.xz" || cmd_error
+download "libxkbcommon" "https://xkbcommon.org/download" "libxkbcommon-1.0.1.tar.xz"
+download "libxml2" "http://xmlsoft.org/sources" "libxml2-2.9.10.tar.gz"
 
 echo "Decompressing packages..."
 unzip "libtool-2.4.5.tar.gz" "libtool-2.4.5"
@@ -77,6 +79,8 @@ unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
 unzip "freetype-2.10.2.tar.xz" "freetype-2.10.2"
 unzip "pixman-0.40.0.tar.gz" "pixman-0.40.0"
 unzip "cairo-1.16.0.tar.xz" "cairo-1.16.0"
+unzip "libxkbcommon-1.0.1.tar.xz" "libxkbcommon-1.0.1"
+unzip "libxml2-2.9.10.tar.gz" "libxml2-2.9.10"
 
 echo "Patching..."
 patc "binutils-2.31"
@@ -100,6 +104,7 @@ patc "libpng-1.6.37"
 patc "freetype-2.10.2"
 patc "pixman-0.40.0"
 patc "cairo-1.16.0"
+patc "libxml2-2.9.10"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

@@ -330,3 +330,9 @@ int setsockopt(int fd, int level, int option_name, const void* option_value,
 
     return 0;
 }
+
+int getsockname(int fd, struct sockaddr* addr, socklen_t* addrlen)
+{
+    errno = ENOSYS;
+    return -1;
+}

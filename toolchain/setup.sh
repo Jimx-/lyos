@@ -27,6 +27,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_PKGCONFIG:=false}
 : ${BUILD_LIBPNG:=false}
 : ${BUILD_BZIP2:=false}
+: ${BUILD_LIBXML2:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
@@ -412,6 +413,19 @@ if $BUILD_BZIP2; then
     make clean || cmd_error
     make CC=$TARGET-gcc CFLAGS=-fPIC -j || cmd_error
     make PREFIX=$SYSROOT/usr install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libxml2
+if $BUILD_LIBXML2; then
+    if [ ! -d "libxml2-$SUBARCH" ]; then
+        mkdir libxml2-$SUBARCH
+    fi
+
+    pushd libxml2-$SUBARCH > /dev/null
+    $DIR/sources/libxml2-2.9.10/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-static --with-threads --disable-ipv6 --without-python
+    make -j4 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 

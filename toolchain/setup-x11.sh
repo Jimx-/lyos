@@ -15,6 +15,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_FREETYPE:=false}
 : ${BUILD_PIXMAN:=false}
 : ${BUILD_CAIRO:=false}
+: ${BUILD_LIBXKBCOMMON:=false}
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
@@ -169,6 +170,18 @@ if $BUILD_CAIRO; then
     $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-xlib
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+if $BUILD_LIBXKBCOMMON; then
+    if [ ! -d "libxkbcommon-$SUBARCH" ]; then
+        mkdir libxkbcommon-$SUBARCH
+    fi
+
+    pushd libxkbcommon-$SUBARCH > /dev/null
+    meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Denable-x11=false -Denable-docs=false $DIR/sources/libxkbcommon-1.0.1
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 

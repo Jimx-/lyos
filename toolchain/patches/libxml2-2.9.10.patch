@@ -1,0 +1,24 @@
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2019-10-31 03:14:23.000000000 +0800
++++ new/config.sub	2020-10-18 14:22:29.199510995 +0800
+@@ -1338,7 +1338,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* | kopensolaris* | plan9* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+-	     | aos* | aros* | cloudabi* | sortix* \
++	     | aos* | aros* | cloudabi* | sortix* | lyos* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+ 	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
+ 	     | knetbsd* | mirbsd* | netbsd* \
+diff -rupN old/nanohttp.c new/nanohttp.c
+--- old/nanohttp.c	2019-10-23 02:46:01.000000000 +0800
++++ new/nanohttp.c	2020-10-18 14:24:22.397641649 +0800
+@@ -11,6 +11,8 @@
+  * daniel@veillard.com
+  */
+ 
++#define __LINUX_ERRNO_EXTENSIONS__
++
+ #define IN_LIBXML
+ #include "libxml.h"
+ 
