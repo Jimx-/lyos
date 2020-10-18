@@ -725,6 +725,8 @@ int access(const char* pathname, int mode)
     return 0;
 }
 
+int eaccess(const char* pathname, int mode) { return access(pathname, mode); }
+
 off_t lseek(int fd, off_t offset, int whence)
 {
     MESSAGE msg;
@@ -1519,6 +1521,12 @@ int munmap(void* addr, size_t len)
     }
 
     return 0;
+}
+
+void* mremap(void* old_addr, size_t old_size, size_t new_size, int flags, ...)
+{
+    errno = ENOSYS;
+    return MAP_FAILED;
 }
 
 struct group* getgrnam(const char* name)

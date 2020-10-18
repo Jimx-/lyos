@@ -76,14 +76,10 @@ if $BUILD_WAYLAND; then
         mkdir wayland-$SUBARCH
     fi
 
-    pushd $DIR/sources/wayland-1.18.0 > /dev/null
-    # ./autogen.sh
-    popd > /dev/null
-
     pushd wayland-$SUBARCH > /dev/null
-    $DIR/sources/wayland-1.18.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --with-host-scanner --disable-dtd-validation --disable-documentation
-    make -j || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
+    meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Ddocumentation=false -Ddtd_validation=false $DIR/sources/wayland-1.18.0
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 
