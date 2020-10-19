@@ -35,11 +35,10 @@ int booting_cpu = 0;
 struct proc proc_table[NR_TASKS + NR_PROCS];
 struct priv priv_table[NR_PRIV_PROCS];
 
-/* when this is modified, modify
- *	- NR_BOOT_PROCS in config.h
- *	- TASK_XXX in const.h
- *	- boot_priv_table in servman
- * also
+/* When this is modified, also modify
+ *	- NR_BOOT_PROCS in lyos/config.h
+ *	- TASK_XXX in uapi/lyos/const.h
+ *	- boot_priv_table in servman/global.c
  */
 struct boot_proc boot_procs[NR_BOOT_PROCS] = {
     {CLOCK, "clock"},
@@ -58,6 +57,7 @@ struct boot_proc boot_procs[NR_BOOT_PROCS] = {
     {TASK_INITFS, "INITFS"},
     {TASK_SYSFS, "SYSFS"},
     {TASK_IPC, "IPC"},
+    {TASK_NETLINK, "NETLINK"},
 #ifdef __i386__
     {TASK_PCI, "PCI"},
 #endif

@@ -1,6 +1,6 @@
 #
 # Makefile for Lyos net drivers.
 
-SUBDIRS = uds
+SUBDIRS = uds netlink
 
 include lyos.subdirs.mk

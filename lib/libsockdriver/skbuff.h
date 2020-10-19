@@ -23,6 +23,12 @@ struct sk_buff_head {
     size_t qlen;
 };
 
+static inline struct sk_buff* skb_get(struct sk_buff* skb)
+{
+    skb->users++;
+    return skb;
+}
+
 static inline void skb_queue_init(struct sk_buff_head* list)
 {
     INIT_LIST_HEAD(&list->head);
@@ -50,6 +56,15 @@ static inline struct sk_buff* skb_peek(struct sk_buff_head* list)
 {
     if (list_empty(&list->head)) return NULL;
     return list_first_entry(&list->head, struct sk_buff, list);
+}
+
+static inline void skb_orphan(struct sk_buff* skb)
+{
+    if (skb->destructor) {
+        skb->destructor(skb);
+        skb->destructor = NULL;
+        skb->sock = NULL;
+    }
 }
 
 #endif

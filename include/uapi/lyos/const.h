@@ -20,11 +20,12 @@
 #define TASK_INITFS    9
 #define TASK_SYSFS     10
 #define TASK_IPC       11
+#define TASK_NETLINK   12
 #ifdef __i386__
-#define TASK_PCI 12
-#define INIT     13
+#define TASK_PCI 13
+#define INIT     14
 #else
-#define INIT 12
+#define INIT 13
 #endif
 #define SELF (-0x8ace)
 
@@ -112,7 +113,7 @@
 #define PCI_REQ_BASE     2301
 #define INPUT_REQ_BASE   2401
 #define IPC_REQ_BASE     2501
-
+#define NETLINK_REQ_BASE 2601
 /**
  * @enum msgtype
  * @brief MESSAGE types

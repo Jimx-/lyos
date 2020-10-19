@@ -58,6 +58,8 @@
 #define IS_BDEV_REQ(x)   ((x) >= BDEV_OPEN && (x) <= BDEV_IOCTL)
 #define IS_CDEV_REQ(x)   ((x) >= CDEV_OPEN && (x) <= CDEV_SELECT)
 
+#define MSG_PAYLOAD u.m_payload
+
 /* Macros for data_copy(). */
 #define SRC_EP    u.m3.m3i1
 #define SRC_ADDR  u.m3.m3p1

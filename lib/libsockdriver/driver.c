@@ -31,7 +31,7 @@ static void sock_addhash(struct sock* sock)
 
 static void sock_unhash(struct sock* sock) { list_del(&sock->hash); }
 
-static inline struct sock* sock_get(sockid_t id)
+struct sock* sock_get(sockid_t id)
 {
     unsigned int hash = sock_gethash(id);
     struct sock* sock;
@@ -44,7 +44,8 @@ static inline struct sock* sock_get(sockid_t id)
 }
 
 static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
-                             int type, const struct sockdriver_ops* ops)
+                             int type, int protocol,
+                             const struct sockdriver_ops* ops)
 {
 
     memset(sock, 0, sizeof(*sock));
@@ -52,6 +53,7 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
     sock->id = id;
     sock->domain = domain;
     sock->type = type;
+    sock->protocol = protocol;
 
     sock->rcvlowat = 1;
     sock->sndbuf = 262144;
@@ -74,12 +76,13 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
 
 void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid)
 {
-    sockdriver_reset(newsock, newid, sock->domain, sock->type, sock->ops);
+    sockdriver_reset(newsock, newid, sock->domain, sock->type, sock->protocol,
+                     sock->ops);
 
     newsock->sock_opt = sock->sock_opt & ~SO_ACCEPTCONN;
 }
 
-void sockdriver_free(struct sock* sock)
+void sock_free(struct sock* sock)
 {
     const struct sockdriver_ops* ops;
 
@@ -104,14 +107,15 @@ static int socket_create(const struct sockdriver* sd, endpoint_t endpoint,
              sd->sd_create(endpoint, domain, type, protocol, &sock, &ops)) < 0)
         return -sock_id;
 
-    sockdriver_reset(sock, sock_id, domain, type, ops);
+    sockdriver_reset(sock, sock_id, domain, type, protocol, ops);
     *spp = sock;
 
     return 0;
 }
 
-static sockid_t socket_socket(const struct sockdriver* sd, endpoint_t endpoint,
-                              int domain, int type, int protocol)
+sockid_t sockdriver_create_socket(const struct sockdriver* sd,
+                                  endpoint_t endpoint, int domain, int type,
+                                  int protocol)
 {
     struct sock* sock;
     int retval;
@@ -234,10 +238,10 @@ static void do_socket(const struct sockdriver* sd, MESSAGE* msg)
 {
     sockid_t sock_id;
 
-    sock_id = socket_socket(sd, msg->u.m_sockdriver_socket.endpoint,
-                            msg->u.m_sockdriver_socket.domain,
-                            msg->u.m_sockdriver_socket.type,
-                            msg->u.m_sockdriver_socket.protocol);
+    sock_id = sockdriver_create_socket(sd, msg->u.m_sockdriver_socket.endpoint,
+                                       msg->u.m_sockdriver_socket.domain,
+                                       msg->u.m_sockdriver_socket.type,
+                                       msg->u.m_sockdriver_socket.protocol);
 
     send_socket_reply(msg->source, msg->u.m_sockdriver_socket.req_id, sock_id,
                       0);
@@ -260,21 +264,21 @@ static void do_socketpair(const struct sockdriver* sd, MESSAGE* msg)
     }
 
     if (sock1->ops->sop_pair == NULL) {
-        sockdriver_free(sock1);
+        sock_free(sock1);
         sock_id = -EOPNOTSUPP;
         goto reply;
     }
 
     if ((retval = socket_create(sd, endpoint, domain, type, protocol,
                                 &sock2)) != 0) {
-        sockdriver_free(sock1);
+        sock_free(sock1);
         sock_id = -retval;
         goto reply;
     }
 
     if ((retval = sock1->ops->sop_pair(sock1, sock2, endpoint)) != OK) {
-        sockdriver_free(sock1);
-        sockdriver_free(sock2);
+        sock_free(sock1);
+        sock_free(sock2);
         sock_id = -retval;
         goto reply;
     }
@@ -960,7 +964,7 @@ static void do_close(MESSAGE* msg)
     else
         retval = 0;
 
-    if (retval == OK) sockdriver_free(sock);
+    if (retval == OK) sock_free(sock);
 
 reply:
     send_generic_reply(src, req_id, retval);

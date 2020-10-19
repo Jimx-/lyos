@@ -3,7 +3,7 @@
 
 SUBDIRS		= libbdev libexec liblyos libsysfs libfsdriver libinputdriver \
 			  libblockdriver libchardriver libmemfs libdevman libpthread \
-			  libcoro libsockdriver libdl
+			  libcoro libsockdriver libdl libnetlink
 
 ifeq ($(CONFIG_OF),y)
 	SUBDIRS += libof libfdt

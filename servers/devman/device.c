@@ -25,7 +25,6 @@
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "proto.h"
 #include <lyos/fs.h>
 #include "lyos/proc.h"
 #include "lyos/driver.h"
@@ -39,6 +38,7 @@
 
 #include "type.h"
 #include "global.h"
+#include "proto.h"
 
 struct device_attr_cb_data {
     struct list_head list;
@@ -68,10 +68,22 @@ static int bus_add_device(struct device* dev);
 static int create_sys_dev_entry(struct device* dev);
 static int add_device_node(struct device* dev);
 
-static ssize_t device_dev_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+static ssize_t device_dev_show(sysfs_dyn_attr_t* attr, char* buf)
 {
-    struct device* dev = (struct device*)sf_attr->cb_data;
+    struct device* dev = (struct device*)attr->cb_data;
     return sprintf(buf, "%u:%u", MAJOR(dev->devt), MINOR(dev->devt));
+}
+
+static ssize_t uevent_store(struct sysfs_dyn_attr* attr, const char* buf,
+                            size_t count)
+{
+    struct device* dev = (struct device*)attr->cb_data;
+    int retval;
+
+    retval = device_synth_uevent(dev, buf, count);
+    if (retval != OK) return retval;
+
+    return count;
 }
 
 void init_device()
@@ -100,8 +112,8 @@ static struct device* alloc_device()
 
     if (!dev) return NULL;
 
+    memset(dev, 0, sizeof(*dev));
     dev->id = INDEX2ID(i);
-    memset(dev->name, 0, sizeof(dev->name));
 
     return dev;
 }
@@ -128,14 +140,25 @@ static void device_domain_label(struct device* dev, char* buf)
 
 static int publish_device(struct device* dev)
 {
+    /* TODO: proper cleanup on error */
     char label[PATH_MAX];
     char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
+    sysfs_dyn_attr_t dev_uevent_attr;
+    int retval;
+
     device_domain_label(dev, device_root);
 
-    int retval = sysfs_publish_domain(device_root, SF_PRIV_OVERWRITE);
+    retval = sysfs_publish_domain(device_root, SF_PRIV_OVERWRITE);
     if (retval) {
         return retval;
     }
+
+    snprintf(label, PATH_MAX, "%s.uevent", device_root);
+    if ((retval =
+             sysfs_init_dyn_attr(&dev_uevent_attr, label, SF_PRIV_OVERWRITE,
+                                 dev, NULL, uevent_store)) != OK)
+        return retval;
+    if ((retval = sysfs_publish_dyn_attr(&dev_uevent_attr)) < 0) return -retval;
 
     retval = add_class_symlinks(dev);
     if (retval) return retval;
@@ -148,8 +171,8 @@ static int publish_device(struct device* dev)
         snprintf(label, PATH_MAX, "%s.dev", device_root);
 
         sysfs_dyn_attr_t dev_attr;
-        int retval = sysfs_init_dyn_attr(&dev_attr, label, SF_PRIV_OVERWRITE,
-                                         (void*)dev, device_dev_show, NULL);
+        retval = sysfs_init_dyn_attr(&dev_attr, label, SF_PRIV_OVERWRITE,
+                                     (void*)dev, device_dev_show, NULL);
         if (retval) return retval;
         retval = sysfs_publish_dyn_attr(&dev_attr);
         if (retval < 0) return -retval;
@@ -161,6 +184,8 @@ static int publish_device(struct device* dev)
         retval = add_device_node(dev);
         if (retval) return retval;
     }
+
+    device_uevent(dev, KOBJ_ADD);
 
     return 0;
 }
@@ -364,6 +389,50 @@ static ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
     send_recv(BOTH, attr->owner, &msg);
 
     return msg.CNT;
+}
+
+static int get_device_path_length(struct device* dev)
+{
+    int len = 1;
+
+    do {
+        len += strlen(dev->name) + 1;
+        dev = dev->parent;
+    } while (dev);
+
+    return len;
+}
+
+static void fill_device_path(struct device* dev, char* path, int len)
+{
+    --len;
+    for (; dev; dev = dev->parent) {
+        int cur = strlen(dev->name);
+        len -= cur;
+        memcpy(path + len, dev->name, cur);
+        *(path + --len) = '/';
+    }
+}
+
+char* device_get_path(struct device* dev)
+{
+    char* path;
+    const char* prefix = "/devices";
+    int prefix_len, len;
+
+    if (!dev) return NULL;
+
+    len = get_device_path_length(dev);
+    if (!len) return NULL;
+    prefix_len = strlen(prefix);
+
+    path = malloc(prefix_len + len);
+    if (!path) return NULL;
+
+    strcpy(path, prefix);
+    fill_device_path(dev, &path[prefix_len], len);
+
+    return path;
 }
 
 int do_device_attr_add(MESSAGE* m)

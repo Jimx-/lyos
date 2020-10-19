@@ -50,7 +50,7 @@ static struct sdmap* pfmap[PF_MAX];
 
 void init_sdev(void)
 {
-    int i;
+    int i, domain;
     for (i = 0; i < NR_SOCKDEVS; i++) {
         sdmap[i].num = i + 1;
         sdmap[i].endpoint = NO_TASK;
@@ -58,6 +58,9 @@ void init_sdev(void)
     }
 
     memset(pfmap, 0, sizeof(pfmap));
+
+    domain = PF_NETLINK;
+    sdev_mapdriver("netlink", TASK_NETLINK, &domain, 1);
 }
 
 int sdev_mapdriver(const char* label, endpoint_t endpoint, const int* domains,

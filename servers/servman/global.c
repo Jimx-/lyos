@@ -39,6 +39,7 @@ struct boot_priv boot_priv_table[] = {
     {TASK_INITFS, "INITFS", TASK_FLAGS},
     {TASK_SYSFS, "SYSFS", TASK_FLAGS},
     {TASK_IPC, "IPC", TASK_FLAGS},
+    {TASK_NETLINK, "NETLINK", TASK_FLAGS},
 #ifdef __i386__
     {TASK_PCI, "PCI", TASK_FLAGS},
 #endif

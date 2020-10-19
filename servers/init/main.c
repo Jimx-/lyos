@@ -8,18 +8,17 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <sys/mman.h>
 #include <sys/wait.h>
-#include <sys/shm.h>
+
+#include <sys/socket.h>
+#include <lyos/netlink.h>
 
 #define GETTY  "/usr/bin/getty"
 #define NR_TTY 4
 
 int main(int argc, char* argv[])
 {
-    int fd_stdin = open("/dev/console", O_RDWR);
-    int fd_stdout = open("/dev/console", O_RDWR);
-    int fd_stderr = open("/dev/console", O_RDWR);
+    int fd_stdin, fd_stdout, fd_stderr;
 
     int pid_rc = fork();
     if (pid_rc) {
@@ -29,6 +28,10 @@ int main(int argc, char* argv[])
         char* rc_env[] = {NULL};
         execve("/bin/sh", rc_args, rc_env);
     }
+
+    fd_stdin = open("/dev/console", O_RDWR);
+    fd_stdout = dup(fd_stdin);
+    fd_stderr = dup(fd_stdin);
 
     /* set hostname */
     int fd_hostname = open("/etc/hostname", O_RDONLY);
@@ -62,20 +65,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    /* int fb = open("/dev/fb0", O_RDWR); */
-    /* int* fbp = mmap(NULL, 4000, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
-     */
-    /* int* p; */
-    /* for (p = fbp, i = 0; i < 1000; i++) { */
-    /*     *p++ = 0xff0000; */
-    /* } */
-    /* close(fb); */
-
-    /*
-    int shmid = shmget(IPC_PRIVATE, 0x100, IPC_CREAT | 0600);
-    int* shm = shmat(shmid, NULL, SHM_RDONLY);
-    *shm = 100;
-    */
     while (1) {
         int s;
         wait(&s);

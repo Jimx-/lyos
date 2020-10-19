@@ -60,6 +60,10 @@ struct sockdriver {
 
 void sockdriver_init(void);
 
+sockid_t sockdriver_create_socket(const struct sockdriver* sd,
+                                  endpoint_t endpoint, int domain, int type,
+                                  int protocol);
+
 void sockdriver_task(const struct sockdriver* sd, size_t num_workers);
 sockdriver_worker_id_t sockdriver_worker_id(void);
 void sockdriver_sleep(void);

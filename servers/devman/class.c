@@ -45,8 +45,8 @@ static struct class* alloc_class()
 
     if (!class) return NULL;
 
+    memset(class, 0, sizeof(*class));
     class->id = INDEX2ID(i);
-    memset(class->name, 0, sizeof(class->name));
 
     return class;
 }

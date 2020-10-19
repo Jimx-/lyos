@@ -347,7 +347,7 @@ static void do_reply(struct worker_thread* worker, MESSAGE* msg)
 
 void init_vfs()
 {
-    int i;
+    int i, domain;
 
     /* f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++) {

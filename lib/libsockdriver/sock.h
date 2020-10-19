@@ -34,6 +34,7 @@ struct sock {
     unsigned int flags;
     int domain;
     int type;
+    int protocol;
     unsigned int sock_opt;
     int err;
 
@@ -63,10 +64,14 @@ struct sockdriver_data {
 
 #define sock_sockid(sock)            ((sock)->id)
 #define sock_type(sock)              ((sock)->type)
+#define sock_protocol(sock)          ((sock)->protocol)
 #define sock_recvq(sock)             ((sock)->recvq)
 #define sock_peercred(sock)          ((sock)->peercred)
 #define sock_is_listening(sock)      (!!((sock)->sock_opt & SO_ACCEPTCONN))
 #define sock_is_shutdown(sock, mask) ((sock)->flags & (mask))
+
+struct sock* sock_get(sockid_t id);
+void sock_free(struct sock* sock);
 
 static inline int sock_error(struct sock* sock)
 {

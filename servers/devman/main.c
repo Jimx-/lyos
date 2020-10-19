@@ -29,6 +29,7 @@
 #include "lyos/proc.h"
 #include "lyos/driver.h"
 #include <lyos/sysutils.h>
+#include <lyos/netlink.h>
 #include <sys/stat.h>
 #include <libsysfs/libsysfs.h>
 #include <libmemfs/libmemfs.h>
@@ -74,6 +75,7 @@ static void devman_init()
     init_device();
 
     init_sysfs();
+    uevent_init();
 
     /* Map init ramdisk */
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);

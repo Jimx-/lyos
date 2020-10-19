@@ -84,8 +84,8 @@ static struct bus_type* alloc_bus_type()
 
     if (!type) return NULL;
 
+    memset(type, 0, sizeof(*type));
     type->id = INDEX2ID(i);
-    memset(type->name, 0, sizeof(type->name));
 
     return type;
 }
