@@ -27,7 +27,10 @@ struct nlsock {
     size_t ngroups;
 };
 
+#define nls_is_shutdown(nls, mask) sock_is_shutdown(&(nls)->sock, mask)
+
 #define nls_get_protocol(nls) sock_protocol(&(nls)->sock)
+#define nls_get_type(nls)     sock_type(&(nls)->sock)
 
 #define NLS_HASH_LOG2 4
 #define NLS_HASH_SIZE ((unsigned long)1 << NLS_HASH_LOG2)

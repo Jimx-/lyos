@@ -17,6 +17,7 @@
 #include <lyos/vm.h>
 #include <lyos/idr.h>
 #include <sys/socket.h>
+#include <lyos/eventpoll.h>
 
 #include "netlink.h"
 
@@ -31,6 +32,7 @@ static sockid_t netlink_socket(endpoint_t src, int domain, int type,
                                const struct sockdriver_ops** ops);
 static int netlink_bind(struct sock* sock, struct sockaddr* addr,
                         size_t addrlen, endpoint_t user_endpt, int flags);
+static __poll_t netlink_poll(struct sock* sock);
 static int netlink_close(struct sock* sock, int force, int non_block);
 static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
@@ -49,6 +51,7 @@ static const struct sockdriver netlink_driver = {
 static const struct sockdriver_ops netlink_ops = {
     .sop_bind = netlink_bind,
     .sop_recv = netlink_recv,
+    .sop_poll = netlink_poll,
     .sop_close = netlink_close,
     .sop_free = netlink_free,
 };
@@ -388,6 +391,25 @@ static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
 
 out:
     return retval ?: copied;
+}
+
+static __poll_t netlink_poll(struct sock* sock)
+{
+    struct nlsock* nls = to_nlsock(sock);
+    __poll_t mask = 0;
+
+    if (nls->sock.err) mask |= EPOLLERR;
+    if (nls_is_shutdown(nls, SFL_SHUT_RD) && nls_is_shutdown(nls, SFL_SHUT_WR))
+        mask |= EPOLLHUP;
+    if (nls_is_shutdown(nls, SFL_SHUT_RD))
+        mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
+
+    if (!skb_queue_empty(&sock_recvq(&nls->sock)))
+        mask |= EPOLLIN | EPOLLRDNORM;
+
+    mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
+
+    return mask;
 }
 
 static int netlink_close(struct sock* sock, int force, int non_block)
