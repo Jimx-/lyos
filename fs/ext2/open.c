@@ -164,7 +164,7 @@ int ext2_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
 
     put_ext2_inode(pin_dir);
     put_ext2_inode(pin);
-    return errno;
+    return r1 != OK ? r1 : r2;
 }
 
 int ext2_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,

@@ -87,6 +87,7 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
         break;
     case ELEAVEMOUNT:
         ret->offsetp = m.u.m_fs_vfs_lookup_reply.offset;
+        ret->dev = dev;
         break;
     default:
         break;
@@ -189,12 +190,22 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
             }
 
             if (dir_pin == NULL) {
-                if (vmnt_tmp) unlock_vmnt(vmnt_tmp);
+                if (vmnt) unlock_vmnt(vmnt);
                 *(lookup->vmnt) = NULL;
                 err_code = EIO;
                 return NULL;
             }
         } else if (ret == ELEAVEMOUNT) {
+            /* Are we really leaving a filesystem? */
+            if (memcmp(lookup->pathname, "..", 2) != 0 ||
+                (lookup->pathname[2] != '\0' && lookup->pathname[2] != '/')) {
+                if (vmnt) unlock_vmnt(vmnt);
+                *(lookup->vmnt) = NULL;
+                err_code = ENOENT;
+                return NULL;
+            }
+
+            dir_pin = vmnt->m_mounted_on;
         }
 
         endpoint_t fs_e = dir_pin->i_fs_ep;

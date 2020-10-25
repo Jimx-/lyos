@@ -24,6 +24,7 @@ $(INITRD):
 	@cp -f $(DESTDIR)/sbin/atkbd sbin/
 	@cp -f $(DESTDIR)/sbin/fb sbin/
 	@cp -f $(DESTDIR)/sbin/uds sbin/
+	@cp -f $(DESTDIR)/sbin/tmpfs sbin/
 	@cp -f $(DESTDIR)/usr/bin/getty usr/bin/
 	@cp -f $(DESTDIR)/usr/bin/login usr/bin/
 	@cp -f $(DESTDIR)/bin/sh bin/
