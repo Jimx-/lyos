@@ -37,6 +37,8 @@
 #include "types.h"
 #include "proto.h"
 
+#define BOGO_DIRENT_SIZE 20
+
 static inline struct tmpfs_dentry* alloc_dentry(const char* name,
                                                 struct tmpfs_inode* pin)
 {
@@ -100,6 +102,8 @@ int tmpfs_search_dir(struct tmpfs_inode* dir_pin, const char* string,
             else if (flag == SD_DELETE) {
                 list_del(&dp->list);
                 free_dentry(dp);
+
+                dir_pin->size -= BOGO_DIRENT_SIZE;
                 dir_pin->update |= CTIME | MTIME;
             } else {
                 *ppin = dp->inode;
@@ -113,6 +117,8 @@ int tmpfs_search_dir(struct tmpfs_inode* dir_pin, const char* string,
 
     dp = alloc_dentry(string, *ppin);
     list_add(&dp->list, &dir_pin->children);
+
+    dir_pin->size += BOGO_DIRENT_SIZE;
     dir_pin->update |= CTIME | MTIME;
 
     return 0;

@@ -51,6 +51,8 @@ int trace_stat(struct tcb* tcp)
     return 0;
 }
 
+int trace_lstat(struct tcb* tcp) { return trace_stat(tcp); }
+
 int trace_fstat(struct tcb* tcp)
 {
     if (entering(tcp)) {

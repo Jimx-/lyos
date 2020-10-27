@@ -34,6 +34,7 @@ static inline int print_strn(struct tcb* tcp, const void* str, size_t len)
 
 void print_err(int err);
 
+int print_xval(uint64_t val, const struct xlat* xlat);
 int print_flags(uint64_t flags, const struct xlat* xlat);
 const char* sprint_flags(uint64_t flags, const struct xlat* xlat);
 
@@ -63,7 +64,12 @@ int trace_signalfd(struct tcb* tcp);
 int trace_kill(struct tcb* tcp);
 
 int trace_stat(struct tcb* tcp);
+int trace_lstat(struct tcb* tcp);
 int trace_fstat(struct tcb* tcp);
+
+int trace_fcntl(struct tcb* tcp);
+
+int trace_access(struct tcb* tcp);
 
 int trace_brk(struct tcb* tcp);
 int trace_mmap(struct tcb* tcp);

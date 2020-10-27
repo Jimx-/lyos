@@ -1,6 +1,6 @@
 diff -rupN old/build-aux/config.sub new/build-aux/config.sub
 --- old/build-aux/config.sub	2011-08-28 15:36:41.000000000 +0800
-+++ new/build-aux/config.sub	2020-05-05 17:46:16.961121062 +0800
++++ new/build-aux/config.sub	2020-10-27 23:09:55.359070670 +0800
 @@ -1350,7 +1350,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -10,9 +10,21 @@ diff -rupN old/build-aux/config.sub new/build-aux/config.sub
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
+diff -rupN old/lib/fcntl.c new/lib/fcntl.c
+--- old/lib/fcntl.c	2011-04-25 01:21:45.000000000 +0800
++++ new/lib/fcntl.c	2020-10-27 23:11:02.341783281 +0800
+@@ -178,7 +178,7 @@ rpl_fcntl (int fd, int action, /* arg */
+         result = dupfd (fd, target, 0);
+         break;
+       }
+-#elif FCNTL_DUPFD_BUGGY || REPLACE_FCHDIR
++#elif 0
+     case F_DUPFD:
+       {
+         int target = va_arg (arg, int);
 diff -rupN old/lib/getaddrinfo.c new/lib/getaddrinfo.c
 --- old/lib/getaddrinfo.c	2011-01-02 05:23:07.000000000 +0800
-+++ new/lib/getaddrinfo.c	2020-05-05 17:46:16.977787597 +0800
++++ new/lib/getaddrinfo.c	2020-10-27 23:09:55.362403973 +0800
 @@ -137,200 +137,6 @@ getaddrinfo (const char *restrict nodena
               const struct addrinfo *restrict hints,
               struct addrinfo **restrict res)
@@ -300,7 +312,7 @@ diff -rupN old/lib/getaddrinfo.c new/lib/getaddrinfo.c
  }
 diff -rupN old/lib/getcwd.c new/lib/getcwd.c
 --- old/lib/getcwd.c	2011-08-20 00:09:37.000000000 +0800
-+++ new/lib/getcwd.c	2020-05-05 17:46:16.977787597 +0800
++++ new/lib/getcwd.c	2020-10-27 23:09:55.362403973 +0800
 @@ -101,6 +101,11 @@
     NULL, an array is allocated with `malloc'; the array is SIZE bytes long,
     unless SIZE == 0, in which case it is as big as necessary.  */
@@ -315,7 +327,7 @@ diff -rupN old/lib/getcwd.c new/lib/getcwd.c
  {
 diff -rupN old/lib/getdtablesize.c new/lib/getdtablesize.c
 --- old/lib/getdtablesize.c	2011-04-25 01:21:45.000000000 +0800
-+++ new/lib/getdtablesize.c	2020-05-05 17:46:16.977787597 +0800
++++ new/lib/getdtablesize.c	2020-10-27 23:09:55.362403973 +0800
 @@ -20,8 +20,6 @@
  /* Specification.  */
  #include <unistd.h>
@@ -363,7 +375,7 @@ diff -rupN old/lib/getdtablesize.c new/lib/getdtablesize.c
 -#endif
 diff -rupN old/lib/save-cwd.c new/lib/save-cwd.c
 --- old/lib/save-cwd.c	2011-04-30 03:39:05.000000000 +0800
-+++ new/lib/save-cwd.c	2020-05-05 17:50:44.215666175 +0800
++++ new/lib/save-cwd.c	2020-10-27 23:09:55.362403973 +0800
 @@ -87,7 +87,7 @@ restore_cwd (const struct saved_cwd *cwd
    if (0 <= cwd->desc)
      return fchdir (cwd->desc);
@@ -375,7 +387,7 @@ diff -rupN old/lib/save-cwd.c new/lib/save-cwd.c
  void
 diff -rupN old/src/sort.c new/src/sort.c
 --- old/src/sort.c	2011-07-29 16:12:25.000000000 +0800
-+++ new/src/sort.c	2020-05-05 17:46:16.941121220 +0800
++++ new/src/sort.c	2020-10-27 23:09:55.362403973 +0800
 @@ -1,4637 +1,5 @@
 -/* sort - sort lines of text (with all kinds of options).
 -   Copyright (C) 1988, 1991-2011 Free Software Foundation, Inc.
@@ -5016,7 +5028,7 @@ diff -rupN old/src/sort.c new/src/sort.c
  }
 diff -rupN old/src/stat.c new/src/stat.c
 --- old/src/stat.c	2011-09-08 18:16:17.000000000 +0800
-+++ new/src/stat.c	2020-05-05 17:46:16.941121220 +0800
++++ new/src/stat.c	2020-10-27 23:09:55.362403973 +0800
 @@ -1,1486 +1,5 @@
 -/* stat.c -- display file or file system status
 -   Copyright (C) 2001-2011 Free Software Foundation, Inc.

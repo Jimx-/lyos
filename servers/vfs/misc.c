@@ -83,6 +83,7 @@ int do_fcntl()
     int request = self->msg_in.REQUEST;
     void* arg = self->msg_in.BUF;
     int argx = self->msg_in.BUF_LEN;
+    int flags;
     int retval = 0;
 
     struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
@@ -109,8 +110,15 @@ int do_fcntl()
         break;
     case F_SETFD:
         break;
+
+    case F_GETFL:
+        flags = filp->fd_flags & (O_NONBLOCK | O_APPEND | O_ACCMODE);
+        retval = flags;
+        break;
+
     case F_SETFL:
-        filp->fd_flags = argx;
+        flags = O_NONBLOCK | O_APPEND;
+        filp->fd_flags = (filp->fd_flags & ~flags) | (argx & flags);
         break;
 
     case F_GETLK:

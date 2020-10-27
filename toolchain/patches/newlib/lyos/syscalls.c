@@ -895,6 +895,11 @@ int rmdir(const char* pathname)
 
     send_recv(BOTH, TASK_FS, &msg);
 
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
     return msg.RETVAL;
 }
 
@@ -988,33 +993,46 @@ int getdents(unsigned int fd, struct dirent* dirp, unsigned int count)
 #define DIRBLKSIZ 1024
 DIR* opendir(const char* name)
 {
-    int fd = open(name, O_RDONLY);
+    int fd;
+    DIR* dirp;
+
+    fd = open(name, O_RDONLY);
     if (fd == -1) return NULL;
 
+    dirp = fdopendir(fd);
+    if (!dirp) close(fd);
+
+    return dirp;
+}
+
+DIR* fdopendir(int fd)
+{
     struct stat sbuf;
+
     if (fstat(fd, &sbuf)) {
         errno = ENOTDIR;
-        close(fd);
         return NULL;
     }
     if (!S_ISDIR(sbuf.st_mode)) {
         errno = ENOTDIR;
-        close(fd);
         return NULL;
     }
 
     DIR* dir = (DIR*)malloc(sizeof(DIR));
     if (!dir) {
-        close(fd);
+        errno = ENOMEM;
         return NULL;
     }
 
+    memset(dir, 0, sizeof(*dir));
     dir->len = DIRBLKSIZ;
     dir->buf = malloc(dir->len);
     if (!dir->buf) {
-        close(fd);
+        errno = ENOMEM;
+        free(dir);
         return NULL;
     }
+
     dir->loc = 0;
     dir->fd = fd;
 

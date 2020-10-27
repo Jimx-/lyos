@@ -13,6 +13,20 @@ const char* xlookup(const struct xlat* xlat, uint64_t val)
     return NULL;
 }
 
+int print_xval(uint64_t val, const struct xlat* xlat)
+{
+    const char* str;
+
+    str = xlookup(xlat, val);
+
+    if (str)
+        printf("%s", str);
+    else
+        printf("%lld", val);
+
+    return !!str;
+}
+
 int print_flags(uint64_t flags, const struct xlat* xlat)
 {
     int i;
