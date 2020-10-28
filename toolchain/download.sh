@@ -13,6 +13,8 @@ fi
 pushd sources > /dev/null
 
 echo "Donwloading packages..."
+download "autoconf" "https://ftp.gnu.org/gnu/autoconf" "autoconf-2.65.tar.gz"
+download "automake" "https://ftp.gnu.org/gnu/automake" "automake-1.12.tar.gz"
 download "libtool" "https://ftp.gnu.org/gnu/libtool" "libtool-2.4.5.tar.gz"
 download "binutils" "https://mirrors.ustc.edu.cn/gnu/binutils" "binutils-2.31.tar.gz" || cmd_error
 download "mpc"  "http://www.multiprecision.org/downloads" "mpc-0.8.1.tar.gz"
@@ -46,8 +48,11 @@ download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.g
 download "cairo" "https://www.cairographics.org/releases/" "cairo-1.16.0.tar.xz" || cmd_error
 download "libxkbcommon" "https://xkbcommon.org/download" "libxkbcommon-1.0.1.tar.xz"
 download "libxml2" "http://xmlsoft.org/sources" "libxml2-2.9.10.tar.gz"
+download "eudev" "https://dev.gentoo.org/~blueness/eudev/" "eudev-3.2.2.tar.gz"
 
 echo "Decompressing packages..."
+unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
+unzip "automake-1.12.tar.gz" "automake-1.12"
 unzip "libtool-2.4.5.tar.gz" "libtool-2.4.5"
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
 unzip "gmp-4.3.2.tar.bz2" "gmp-4.3.2"
@@ -81,6 +86,7 @@ unzip "pixman-0.40.0.tar.gz" "pixman-0.40.0"
 unzip "cairo-1.16.0.tar.xz" "cairo-1.16.0"
 unzip "libxkbcommon-1.0.1.tar.xz" "libxkbcommon-1.0.1"
 unzip "libxml2-2.9.10.tar.gz" "libxml2-2.9.10"
+unzip "eudev-3.2.2.tar.gz" "eudev-3.2.2"
 
 echo "Patching..."
 patc "binutils-2.31"

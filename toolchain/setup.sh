@@ -6,6 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/utils.sh
 
 : ${BUILD_EVERYTHING:=false}
+: ${BUILD_AUTOTOOLS:=false}
 : ${BUILD_LIBTOOL:=false}
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
@@ -28,8 +29,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBPNG:=false}
 : ${BUILD_BZIP2:=false}
 : ${BUILD_LIBXML2:=false}
+: ${BUILD_EUDEV:=false}
 
 if $BUILD_EVERYTHING; then
+    BUILD_AUTOTOOLS=true
     BUILD_BINUTILS=true
     BUILD_GCC=true
     BUILD_NEWLIB=true
@@ -51,11 +54,29 @@ fi
 
 pushd build > /dev/null
 
-# Build libtool
-if $BUILD_LIBTOOL; then
+# Build autools
+if $BUILD_AUTOTOOLS; then
+    if [ ! -d "autoconf-$SUBARCH" ]; then
+        mkdir autoconf-$SUBARCH
+    fi
+    if [ ! -d "automake-$SUBARCH" ]; then
+        mkdir automake-$SUBARCH
+    fi
     if [ ! -d "libtool-$SUBARCH" ]; then
         mkdir libtool-$SUBARCH
     fi
+
+    pushd autoconf-$SUBARCH
+    $DIR/sources/autoconf-2.65/configure --prefix=$DIR/tools/autotools || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    popd
+
+    pushd automake-$SUBARCH
+    $DIR/sources/automake-1.12/configure --prefix=$DIR/tools/autotools || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    popd
 
     pushd $DIR/sources/libtool-2.4.5
     ./bootstrap
@@ -122,9 +143,9 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
 
     pushd $DIR/sources/newlib-3.0.0/newlib/libc/sys > /dev/null
-    autoconf || cmd_error
+    PATH=$DIR/tools/autotools/bin:$PATH autoconf || cmd_error
     pushd lyos > /dev/null
-    autoreconf
+    PATH=$DIR/tools/autotools/bin:$PATH autoreconf
     popd > /dev/null
     popd > /dev/null
 
@@ -301,7 +322,7 @@ if $BUILD_LIBEVDEV; then
     fi
 
     pushd libevdev-$SUBARCH > /dev/null
-    $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
+    $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -314,7 +335,7 @@ if $BUILD_PCRE; then
     fi
 
     pushd pcre-$SUBARCH > /dev/null
-    $DIR/sources/pcre-8.44/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32
+    $DIR/sources/pcre-8.44/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -327,7 +348,7 @@ if $BUILD_GREP; then
     fi
 
     pushd grep-$SUBARCH > /dev/null
-    $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=/usr --disable-nls
+    $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -340,7 +361,7 @@ if $BUILD_LESS; then
     fi
 
     pushd less-$SUBARCH > /dev/null
-    $DIR/sources/less-551/configure --host=$TARGET --prefix=/usr --sysconfdir=/etc
+    $DIR/sources/less-551/configure --host=$TARGET --prefix=$CROSSPREFIX --sysconfdir=/etc
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -353,7 +374,7 @@ if $BUILD_ZLIB; then
     fi
 
     pushd zlib-$SUBARCH > /dev/null
-    CHOST=$TARGET prefix=/usr $DIR/sources/zlib-1.2.11/configure
+    CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -366,7 +387,7 @@ if $BUILD_GLIB; then
     fi
 
     pushd glib-$SUBARCH > /dev/null
-    PKG_CONFIG_SYSROOT_DIR=$SYSROOT PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dxattr=false $DIR/sources/glib-2.59.2
+    PKG_CONFIG_SYSROOT_DIR=$SYSROOT PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig meson --cross-file ../../meson.cross-file --prefix=$CROSSPREFIX --libdir=lib --buildtype=debugoptimized -Dxattr=false $DIR/sources/glib-2.59.2
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja intstall || cmd_error
     popd > /dev/null
@@ -379,7 +400,7 @@ if $BUILD_PKGCONFIG; then
     fi
 
     pushd pkg-config-$SUBARCH > /dev/null
-    $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=/usr --with-internal-glib --disable-static
+    $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-internal-glib --disable-static
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -392,7 +413,7 @@ if $BUILD_LIBPNG; then
     fi
 
     pushd libpng-$SUBARCH > /dev/null
-    $DIR/sources/libpng-1.6.37/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
+    $DIR/sources/libpng-1.6.37/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -412,7 +433,7 @@ if $BUILD_BZIP2; then
     make CC=$TARGET-gcc CFLAGS=-fPIC -f Makefile-libbz2_so || cmd_error
     make clean || cmd_error
     make CC=$TARGET-gcc CFLAGS=-fPIC -j || cmd_error
-    make PREFIX=$SYSROOT/usr install || cmd_error
+    make PREFIX=$SYSROOT/$CROSSPREFIX install || cmd_error
     popd > /dev/null
 fi
 
@@ -423,7 +444,20 @@ if $BUILD_LIBXML2; then
     fi
 
     pushd libxml2-$SUBARCH > /dev/null
-    $DIR/sources/libxml2-2.9.10/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-static --with-threads --disable-ipv6 --without-python
+    $DIR/sources/libxml2-2.9.10/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-static --with-threads --disable-ipv6 --without-python
+    make -j4 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build eudev
+if $BUILD_EUDEV; then
+    if [ ! -d "eudev-$SUBARCH" ]; then
+        mkdir eudev-$SUBARCH
+    fi
+
+    pushd eudev-$SUBARCH > /dev/null
+    $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages
     make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

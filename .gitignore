@@ -60,6 +60,7 @@ include/config
 toolchain/build
 toolchain/local
 toolchain/sources
+toolchain/tools
 
 #
 # Python files
