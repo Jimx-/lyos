@@ -42,7 +42,7 @@ static void root_uptime(void);
 void root_cpuinfo(void);
 void root_meminfo(void);
 static void root_stat(void);
-int root_self(endpoint_t user_endpt, struct memfs_inode** target);
+int root_self(char* ptr, size_t max, endpoint_t user_endpt);
 
 struct procfs_file root_files[] = {
     {"cmdline", S_IFREG | S_IRUSR | S_IRGRP | S_IROTH, root_cmdline},

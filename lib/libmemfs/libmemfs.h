@@ -32,8 +32,8 @@ struct memfs_hooks {
     int (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
     int (*lookup_hook)(struct memfs_inode* parent, const char* name,
                        cbdata_t data);
-    int (*rdlink_hook)(struct memfs_inode* inode, cbdata_t data,
-                       struct memfs_inode** target, endpoint_t user_endpt);
+    int (*rdlink_hook)(struct memfs_inode* inode, char* ptr, size_t max,
+                       endpoint_t user_endpt, cbdata_t data);
     int (*mkdir_hook)(struct memfs_inode* parent, const char* name,
                       struct memfs_stat* stat, cbdata_t cbdata);
     int (*mknod_hook)(struct memfs_inode* parent, const char* name,

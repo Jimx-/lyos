@@ -32,13 +32,11 @@ ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
         return -EINVAL;
     }
 
-    retval = fs_hooks.rdlink_hook(pin, pin->data, &target, user_endpt);
+    retval =
+        fs_hooks.rdlink_hook(pin, path, sizeof(path), user_endpt, pin->data);
     if (retval) return retval;
-    assert(target != NULL);
 
-    len = get_target_path(pin->i_parent, target, path);
-    if (len < 0) return len;
-
+    len = strlen(path);
     assert(len > 0 && len < sizeof(path));
 
     if (len > bytes) {
@@ -51,68 +49,6 @@ ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
     }
 
     return len;
-}
-
-static ssize_t get_target_path(struct memfs_inode* parent,
-                               struct memfs_inode* target, char* path)
-{
-    struct memfs_inode *base, *pin;
-    char* p = path;
-    size_t len = 0, plen;
-
-    base = parent;
-    if (base) {
-        while (base->i_parent) {
-            pin = target->i_parent;
-
-            if (pin) {
-                while (pin->i_parent && base != pin) {
-                    pin = pin->i_parent;
-                }
-            }
-
-            if (base == pin) {
-                break;
-            }
-
-            if ((p - path + 3) >= PATH_MAX) {
-                return -ENAMETOOLONG;
-            }
-
-            strcpy(p, "../");
-            p += 3;
-            base = base->i_parent;
-        }
-    }
-
-    pin = target;
-    while (pin->i_parent && pin != base) {
-        len += strlen(pin->i_name) + 1;
-        pin = pin->i_parent;
-    }
-
-    if (len < 2) {
-        return -EINVAL;
-    }
-    len--;
-
-    plen = (p - path) + len;
-    if (plen >= PATH_MAX) {
-        return -ENAMETOOLONG;
-    }
-
-    pin = target;
-    while (pin->i_parent && pin != base) {
-        size_t slen = strlen(pin->i_name);
-        len -= slen;
-
-        memcpy(p + len, pin->i_name, slen);
-        if (len) p[--len] = '/';
-
-        pin = pin->i_parent;
-    }
-
-    return plen;
 }
 
 int memfs_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,

@@ -24,8 +24,8 @@ ssize_t procfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
 int procfs_lookup_hook(struct memfs_inode* parent, const char* name,
                        cbdata_t data);
 int procfs_getdents_hook(struct memfs_inode* inode, cbdata_t data);
-int procfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
-                       struct memfs_inode** target, endpoint_t user_endpt);
+int procfs_rdlink_hook(struct memfs_inode* inode, char* ptr, size_t max,
+                       endpoint_t user_endpt, cbdata_t data);
 
 void init_buf(char* ptr, size_t len, off_t off);
 void buf_printf(char* fmt, ...);

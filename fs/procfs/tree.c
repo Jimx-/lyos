@@ -32,11 +32,14 @@
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"
+
 #include "global.h"
 #include "proto.h"
 
 struct proc proc[NR_TASKS + NR_PROCS];
 struct pmproc pmproc[NR_PROCS];
+
+typedef int (*rdlink_func_t)(char* ptr, size_t max, endpoint_t user_endpt);
 
 /* slot == NR_TASKS + proc_nr */
 static int slot_in_use(int slot) { return !(proc[slot].state & PST_FREE_SLOT); }
@@ -182,23 +185,23 @@ int procfs_getdents_hook(struct memfs_inode* inode, cbdata_t data)
     return 0;
 }
 
-int procfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
-                       struct memfs_inode** target, endpoint_t user_endpt)
+int procfs_rdlink_hook(struct memfs_inode* inode, char* ptr, size_t max,
+                       endpoint_t user_endpt, cbdata_t data)
 {
     int retval = EINVAL;
 
     if (memfs_node_index(inode) == NO_INDEX) {
-        retval = ((int (*)(endpoint_t, struct memfs_inode**))data)(user_endpt,
-                                                                   target);
+        if (!data) return retval;
+
+        retval = ((rdlink_func_t)data)(ptr, max, user_endpt);
     }
 
     return retval;
 }
 
-int root_self(endpoint_t user_endpt, struct memfs_inode** target)
+int root_self(char* ptr, size_t max, endpoint_t user_endpt)
 {
     int proc_nr = ENDPOINT_P(user_endpt);
-    struct memfs_inode* pin;
 
     update_tables();
     build_pid_dirs();
@@ -206,10 +209,7 @@ int root_self(endpoint_t user_endpt, struct memfs_inode** target)
     if (proc_nr < 0 || proc_nr >= NR_PROCS) return EINVAL;
     if (!slot_in_use(proc_nr + NR_TASKS)) return EINVAL;
 
-    pin = memfs_find_inode_by_index(memfs_get_root_inode(), proc_nr + NR_TASKS);
+    snprintf(ptr, max, "%u", pmproc[proc_nr].pid);
 
-    if (!pin) return ENOENT;
-
-    *target = pin;
     return 0;
 }

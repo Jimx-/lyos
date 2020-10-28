@@ -111,15 +111,86 @@ ssize_t sysfs_write_hook(struct memfs_inode* inode, char* ptr, size_t count,
     return retval;
 }
 
-int sysfs_rdlink_hook(struct memfs_inode* inode, cbdata_t data,
-                      struct memfs_inode** target, endpoint_t user_endpt)
+static ssize_t get_target_path(struct memfs_inode* parent,
+                               struct memfs_inode* target, char* path,
+                               size_t max)
+{
+    struct memfs_inode *base, *pin;
+    char* p = path;
+    size_t len = 0, plen;
+
+    base = parent;
+    if (base) {
+        while (memfs_node_parent(base)) {
+            pin = memfs_node_parent(target);
+
+            if (pin) {
+                while (memfs_node_parent(pin) && base != pin) {
+                    pin = memfs_node_parent(pin);
+                }
+            }
+
+            if (base == pin) {
+                break;
+            }
+
+            if ((p - path + 3) >= max) {
+                return -ENAMETOOLONG;
+            }
+
+            strcpy(p, "../");
+            p += 3;
+            base = memfs_node_parent(base);
+        }
+    }
+
+    pin = target;
+    while (memfs_node_parent(pin) && pin != base) {
+        len += strlen(pin->i_name) + 1;
+        pin = memfs_node_parent(pin);
+    }
+
+    if (len < 2) {
+        return -EINVAL;
+    }
+    len--;
+
+    plen = (p - path) + len;
+    if (plen >= max) {
+        return -ENAMETOOLONG;
+    }
+
+    pin = target;
+    while (memfs_node_parent(pin) && pin != base) {
+        size_t slen = strlen(pin->i_name);
+        len -= slen;
+
+        memcpy(p + len, pin->i_name, slen);
+        if (len) p[--len] = '/';
+
+        pin = memfs_node_parent(pin);
+    }
+
+    path[plen] = '\0';
+
+    return plen;
+}
+
+int sysfs_rdlink_hook(struct memfs_inode* inode, char* ptr, size_t max,
+                      endpoint_t user_endpt, cbdata_t data)
 {
     sysfs_node_t* node = (sysfs_node_t*)data;
+    struct memfs_inode* target;
+    ssize_t retval;
 
     if (NODE_TYPE(node) != SF_TYPE_LINK) {
         return EINVAL;
     }
 
-    *target = node->link_target->inode;
+    target = node->link_target->inode;
+
+    retval = get_target_path(memfs_node_parent(inode), target, ptr, max);
+    if (retval < 0) return -retval;
+
     return 0;
 }
