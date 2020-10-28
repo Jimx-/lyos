@@ -31,12 +31,16 @@ struct memfs_hooks fs_hooks;
 
 static void memfs_other(MESSAGE* m);
 
-struct fsdriver fsd = {
+#define MEMFS_ROOT_INODE 1
+
+static struct fsdriver fsd = {
     .name = NULL,
-    .root_num = 0,
+    .root_num = MEMFS_ROOT_INODE,
 
     .fs_readsuper = memfs_readsuper,
     .fs_lookup = memfs_lookup,
+    .fs_mkdir = memfs_mkdir,
+    .fs_mknod = memfs_mknod,
     .fs_stat = memfs_stat,
     .fs_read = memfs_read,
     .fs_write = memfs_write,
@@ -59,7 +63,7 @@ int memfs_start(char* name, struct memfs_hooks* hooks,
 
     memfs_init_inode();
 
-    root->i_num = 0;
+    root->i_num = MEMFS_ROOT_INODE;
     root->i_index = NO_INDEX;
     root->i_parent = NULL;
     INIT_LIST_HEAD(&root->i_hash);

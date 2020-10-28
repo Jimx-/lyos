@@ -154,7 +154,7 @@ int fsdriver_mknod(const struct fsdriver* fsd, MESSAGE* m)
     char pathname[NAME_MAX + 1];
     int retval;
 
-    if (fsd->fs_mkdir == NULL) return ENOSYS;
+    if (fsd->fs_mknod == NULL) return ENOSYS;
 
     if ((retval = fsdriver_copy_name(src, m->u.m_vfs_fs_mknod.grant, len,
                                      pathname, NAME_MAX, TRUE)) != 0)

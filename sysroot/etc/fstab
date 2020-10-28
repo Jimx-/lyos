@@ -1,5 +1,5 @@
 dev(112,1)		/		ext2	defaults	1	1
-none            /dev    devfs   defaults    1   1
+none            /dev    devtmpfs   defaults    1   1
 none			/sys	sysfs	defaults	1	1
 none			/proc	proc	defaults	1	1
 none            /tmp    tmpfs   defaults    1   1

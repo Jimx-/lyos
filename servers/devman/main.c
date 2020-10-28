@@ -18,26 +18,31 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <errno.h>
-#include "lyos/config.h"
-#include "lyos/const.h"
-#include "string.h"
-#include "proto.h"
-#include "lyos/proc.h"
-#include "lyos/driver.h"
+#include <lyos/config.h>
+#include <lyos/const.h>
+#include <string.h>
+#include <lyos/proc.h>
+#include <lyos/driver.h>
 #include <lyos/sysutils.h>
 #include <lyos/netlink.h>
 #include <sys/stat.h>
 #include <libsysfs/libsysfs.h>
 #include <libmemfs/libmemfs.h>
 
+#include "proto.h"
+
 static void devman_init();
+static int devfs_mknod(struct memfs_inode* inode, const char* name,
+                       struct memfs_stat* stat, cbdata_t cbdata);
 static void devfs_message_hook(MESSAGE* msg);
 
 struct memfs_hooks fs_hooks = {
+    .mkdir_hook = devfs_mknod,
+    .mknod_hook = devfs_mknod,
     .message_hook = devfs_message_hook,
 };
 
@@ -120,4 +125,15 @@ static void devfs_message_hook(MESSAGE* msg)
         msg->type = SYSCALL_RET;
         send_recv(SEND_NONBLOCK, msg->source, msg);
     }
+}
+
+static int devfs_mknod(struct memfs_inode* parent, const char* name,
+                       struct memfs_stat* stat, cbdata_t cbdata)
+{
+    struct memfs_inode* pin;
+
+    pin = memfs_add_inode(parent, name, NO_INDEX, stat, NULL);
+    if (!pin) return ENOMEM;
+
+    return 0;
 }

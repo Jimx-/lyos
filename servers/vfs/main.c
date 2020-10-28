@@ -349,7 +349,7 @@ static void do_reply(struct worker_thread* worker, MESSAGE* msg)
 
 void init_vfs()
 {
-    int i, domain;
+    int i;
 
     /* f_desc_table[] */
     for (i = 0; i < NR_FILE_DESC; i++) {
@@ -408,7 +408,7 @@ void init_vfs()
     worker_dispatch(vfs_endpt_proc(TASK_FS), init_root, &msg);
 
     add_filesystem(TASK_SYSFS, "sysfs");
-    add_filesystem(TASK_DEVMAN, "devfs");
+    add_filesystem(TASK_DEVMAN, "devtmpfs");
 
     get_sysinfo(&sysinfo);
     system_hz = get_system_hz();

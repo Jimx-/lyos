@@ -25,7 +25,6 @@
 
 struct memfs_hooks {
     int (*init_hook)();
-    void (*message_hook)(MESSAGE* m);
     ssize_t (*read_hook)(struct memfs_inode* inode, char* ptr, size_t count,
                          off_t offset, cbdata_t data);
     ssize_t (*write_hook)(struct memfs_inode* inode, char* ptr, size_t count,
@@ -35,6 +34,11 @@ struct memfs_hooks {
                        cbdata_t data);
     int (*rdlink_hook)(struct memfs_inode* inode, cbdata_t data,
                        struct memfs_inode** target, endpoint_t user_endpt);
+    int (*mkdir_hook)(struct memfs_inode* parent, const char* name,
+                      struct memfs_stat* stat, cbdata_t cbdata);
+    int (*mknod_hook)(struct memfs_inode* parent, const char* name,
+                      struct memfs_stat* stat, cbdata_t cbdata);
+    void (*message_hook)(MESSAGE* m);
 };
 
 extern struct memfs_hooks fs_hooks;

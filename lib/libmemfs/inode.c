@@ -39,7 +39,7 @@ static struct list_head memfs_inode_table[MEMFS_INODE_HASH_SIZE];
 
 static ino_t allocate_inode_num()
 {
-    static ino_t num = 1;
+    static ino_t num = 10;
     return num++;
 }
 

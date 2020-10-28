@@ -114,3 +114,47 @@ static ssize_t get_target_path(struct memfs_inode* parent,
 
     return plen;
 }
+
+int memfs_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+                uid_t uid, gid_t gid)
+{
+    struct memfs_inode* pin;
+    struct memfs_stat stat;
+
+    if ((pin = memfs_find_inode(dir_num)) == NULL) return EINVAL;
+
+    if (memfs_find_inode_by_name(pin, name) != NULL) return EEXIST;
+
+    if (!fs_hooks.mknod_hook) return ENOSYS;
+
+    memset(&stat, 0, sizeof(stat));
+    stat.st_dev = dev;
+    stat.st_mode = mode;
+    stat.st_uid = uid;
+    stat.st_gid = gid;
+    stat.st_device = NO_DEV;
+
+    return fs_hooks.mkdir_hook(pin, name, &stat, pin->data);
+}
+
+int memfs_mknod(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
+                uid_t uid, gid_t gid, dev_t sdev)
+{
+    struct memfs_inode* pin;
+    struct memfs_stat stat;
+
+    if ((pin = memfs_find_inode(dir_num)) == NULL) return EINVAL;
+
+    if (memfs_find_inode_by_name(pin, name) != NULL) return EEXIST;
+
+    if (!fs_hooks.mknod_hook) return ENOSYS;
+
+    memset(&stat, 0, sizeof(stat));
+    stat.st_dev = dev;
+    stat.st_mode = mode;
+    stat.st_uid = uid;
+    stat.st_gid = gid;
+    stat.st_device = sdev;
+
+    return fs_hooks.mknod_hook(pin, name, &stat, pin->data);
+}
