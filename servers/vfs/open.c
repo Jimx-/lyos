@@ -27,6 +27,7 @@
 #include <lyos/proc.h>
 #include <lyos/mgrant.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/syslimits.h>
 
 #include "types.h"
@@ -251,7 +252,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     if (pin == NULL && err_code == ENOENT) {
         if ((retval = forbidden(fp, pin_dir, W_BIT | X_BIT)) == 0) {
             retval = request_create(pin_dir->i_fs_ep, pin_dir->i_dev,
-                                    pin_dir->i_num, fp->realuid, fp->realgid,
+                                    pin_dir->i_num, fp->effuid, fp->effgid,
                                     dir_lookup.pathname, mode, &res);
         }
         if (retval != 0) {
@@ -367,7 +368,7 @@ int request_mknod(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
     m.u.m_vfs_fs_mknod.grant = grant;
     m.u.m_vfs_fs_mknod.name_len = name_len;
     m.u.m_vfs_fs_mknod.mode = mode;
-    m.u.m_vfs_fs_mknod.dev = dev;
+    m.u.m_vfs_fs_mknod.sdev = sdev;
 
     fs_sendrec(fs_ep, &m);
 
@@ -455,7 +456,7 @@ int do_mkdir(void)
 
     char pathname[PATH_MAX + 1];
     if (name_len > PATH_MAX) {
-        return -ENAMETOOLONG;
+        return ENAMETOOLONG;
     }
 
     data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, name_len);
@@ -470,17 +471,64 @@ int do_mkdir(void)
     lookup.vmnt_lock = RWL_WRITE;
     lookup.inode_lock = RWL_WRITE;
 
-    mode_t bits = S_IFDIR | (mode & ALL_MODES & fproc->umask);
+    mode_t bits = S_IFDIR | (mode & ACCESSPERMS & fproc->umask);
     if ((pin = last_dir(&lookup, fproc)) == NULL) {
-        return errno;
+        return err_code;
     }
 
     if (!S_ISDIR(pin->i_mode)) {
         retval = ENOTDIR;
     } else if ((retval = forbidden(fproc, pin, W_BIT | X_BIT)) == 0) {
         retval =
-            request_mkdir(pin->i_fs_ep, pin->i_dev, pin->i_num, fproc->realuid,
-                          fproc->realgid, lookup.pathname, bits);
+            request_mkdir(pin->i_fs_ep, pin->i_dev, pin->i_num, fproc->effuid,
+                          fproc->effgid, lookup.pathname, bits);
+    }
+
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
+    put_inode(pin);
+
+    return retval;
+}
+
+int do_mknod(void)
+{
+    size_t name_len = self->msg_in.NAME_LEN; /* length of filename */
+    mode_t mode = self->msg_in.MODE;         /* access mode */
+    dev_t dev = self->msg_in.FLAGS;          /* special device */
+    char pathname[PATH_MAX + 1];
+    mode_t bits;
+    struct vfs_mount* vmnt;
+    struct inode* pin;
+    struct lookup lookup;
+    int retval;
+
+    if (name_len > PATH_MAX) {
+        return ENAMETOOLONG;
+    }
+
+    if (fproc->effuid != SU_UID && !S_ISFIFO(mode)) return EPERM;
+
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.PATHNAME, name_len)) != OK)
+        return retval;
+    pathname[name_len] = '\0';
+
+    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_WRITE;
+    lookup.inode_lock = RWL_WRITE;
+
+    bits = (mode & S_IFMT) | (mode & ACCESSPERMS & fproc->umask);
+    if ((pin = last_dir(&lookup, fproc)) == NULL) {
+        return err_code;
+    }
+
+    if (!S_ISDIR(pin->i_mode)) {
+        retval = ENOTDIR;
+    } else if ((retval = forbidden(fproc, pin, W_BIT | X_BIT)) == 0) {
+        retval =
+            request_mknod(pin->i_fs_ep, pin->i_dev, pin->i_num, fproc->effuid,
+                          fproc->effgid, lookup.pathname, bits, dev);
     }
 
     unlock_inode(pin);

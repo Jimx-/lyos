@@ -54,7 +54,6 @@
  * link
  * chown/chroot
  * fcntl
- * mknod
  * rename
  * stime
  * umount
@@ -186,6 +185,9 @@ static void do_work(void)
         break;
     case MKDIR:
         self->msg_out.RETVAL = do_mkdir();
+        break;
+    case MKNOD:
+        self->msg_out.RETVAL = do_mknod();
         break;
     case UMASK:
         self->msg_out.RETVAL = (int)do_umask();

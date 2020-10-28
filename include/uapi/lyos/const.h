@@ -216,6 +216,7 @@ enum msgtype {
     GETSOCKOPT,
     SOCKETPAIR,
     SETSOCKOPT,
+    MKNOD,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

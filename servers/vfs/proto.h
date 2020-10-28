@@ -75,6 +75,7 @@ int do_chroot(MESSAGE* p);
 int do_mount(void);
 int do_umount(MESSAGE* p);
 int do_mkdir(void);
+int do_mknod(void);
 
 /* vfs/read_write.c */
 int do_rdwt(void);
