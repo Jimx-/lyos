@@ -13,8 +13,9 @@ fi
 pushd sources > /dev/null
 
 echo "Donwloading packages..."
-download "autoconf" "https://ftp.gnu.org/gnu/autoconf" "autoconf-2.65.tar.gz"
-download "automake" "https://ftp.gnu.org/gnu/automake" "automake-1.12.tar.gz"
+download "autoconf-2.65" "https://ftp.gnu.org/gnu/autoconf" "autoconf-2.65.tar.gz" || cmd_error
+download "autoconf-2.69" "https://ftp.gnu.org/gnu/autoconf" "autoconf-2.69.tar.gz" || cmd_error
+download "automake-1.11" "https://ftp.gnu.org/gnu/automake" "automake-1.11.tar.gz" || cmd_error
 download "libtool" "https://ftp.gnu.org/gnu/libtool" "libtool-2.4.5.tar.gz"
 download "binutils" "https://mirrors.ustc.edu.cn/gnu/binutils" "binutils-2.31.tar.gz" || cmd_error
 download "mpc"  "http://www.multiprecision.org/downloads" "mpc-0.8.1.tar.gz"
@@ -52,7 +53,8 @@ download "eudev" "https://dev.gentoo.org/~blueness/eudev/" "eudev-3.2.2.tar.gz"
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
-unzip "automake-1.12.tar.gz" "automake-1.12"
+unzip "autoconf-2.69.tar.gz" "autoconf-2.69"
+unzip "automake-1.11.tar.gz" "automake-1.11"
 unzip "libtool-2.4.5.tar.gz" "libtool-2.4.5"
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
 unzip "gmp-4.3.2.tar.bz2" "gmp-4.3.2"
@@ -89,6 +91,7 @@ unzip "libxml2-2.9.10.tar.gz" "libxml2-2.9.10"
 unzip "eudev-3.2.2.tar.gz" "eudev-3.2.2"
 
 echo "Patching..."
+patc "automake-1.11"
 patc "binutils-2.31"
 patc "gmp-4.3.2"
 patc "mpfr-2.4.2"

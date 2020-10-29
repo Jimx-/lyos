@@ -56,27 +56,40 @@ pushd build > /dev/null
 
 # Build autools
 if $BUILD_AUTOTOOLS; then
-    if [ ! -d "autoconf-$SUBARCH" ]; then
-        mkdir autoconf-$SUBARCH
+    if [ ! -d "autoconf-2.65-$SUBARCH" ]; then
+        mkdir autoconf-2.65-$SUBARCH
     fi
-    if [ ! -d "automake-$SUBARCH" ]; then
-        mkdir automake-$SUBARCH
+    if [ ! -d "autoconf-2.69-$SUBARCH" ]; then
+        mkdir autoconf-2.69-$SUBARCH
+    fi
+    if [ ! -d "automake-1.11-$SUBARCH" ]; then
+        mkdir automake-1.11-$SUBARCH
     fi
     if [ ! -d "libtool-$SUBARCH" ]; then
         mkdir libtool-$SUBARCH
     fi
+    if [ ! -d "host-pkg-config-$SUBARCH" ]; then
+        mkdir host-pkg-config-$SUBARCH
+    fi
 
-    pushd autoconf-$SUBARCH
-    $DIR/sources/autoconf-2.65/configure --prefix=$DIR/tools/autotools || cmd_error
+    pushd autoconf-2.65-$SUBARCH > /dev/null
+    $DIR/sources/autoconf-2.65/configure --prefix=$DIR/tools/autoconf-2.65 || cmd_error
     make || cmd_error
     make install || cmd_error
-    popd
+    popd > /dev/null
 
-    pushd automake-$SUBARCH
-    $DIR/sources/automake-1.12/configure --prefix=$DIR/tools/autotools || cmd_error
+    pushd autoconf-2.69-$SUBARCH > /dev/null
+    $DIR/sources/autoconf-2.69/configure --prefix=$DIR/tools/autoconf-2.69 || cmd_error
     make || cmd_error
     make install || cmd_error
-    popd
+    popd > /dev/null
+
+    pushd automake-1.11-$SUBARCH > /dev/null
+    $DIR/sources/automake-1.11/configure --prefix=$DIR/tools/automake-1.11 || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    ln -sf $DIR/tools/automake-1.11/share/aclocal-1.11 $DIR/tools/automake-1.11/share/aclocal
+    popd > /dev/null
 
     pushd $DIR/sources/libtool-2.4.5
     ./bootstrap
@@ -87,6 +100,14 @@ if $BUILD_AUTOTOOLS; then
     make -j8 || cmd_error
     make install || cmd_error
     popd
+
+    pushd host-pkg-config-$SUBARCH
+    $DIR/sources/pkg-config-0.29.2/configure --prefix=$PREFIX --with-internal-glib || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    popd
+
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.11/share/aclocal-1.11/
 fi
 
 # Build binutils
@@ -143,9 +164,9 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
 
     pushd $DIR/sources/newlib-3.0.0/newlib/libc/sys > /dev/null
-    PATH=$DIR/tools/autotools/bin:$PATH autoconf || cmd_error
+    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoconf || cmd_error
     pushd lyos > /dev/null
-    PATH=$DIR/tools/autotools/bin:$PATH autoreconf
+    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf
     popd > /dev/null
     popd > /dev/null
 
@@ -456,10 +477,14 @@ if $BUILD_EUDEV; then
         mkdir eudev-$SUBARCH
     fi
 
+    pushd $DIR/sources/eudev-3.2.2 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fis || cmd_error
+    popd > /dev/null
+
     pushd eudev-$SUBARCH > /dev/null
-    $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages
-    make -j4 || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
+    $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages || cmd_error
+    # make -j4 || cmd_error
+    # make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 
