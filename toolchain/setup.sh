@@ -44,8 +44,14 @@ if $BUILD_EVERYTHING; then
     BUILD_COREUTILS=true
     BUILD_NCURSES=true
     BUILD_VIM=true
+    BUILD_LIBEVDEV=true
     BUILD_PCRE=true
     BUILD_GREP=true
+    BUILD_LESS=true
+    BUILD_ZLIB=true
+    BUILD_LIBPNG=true
+    BUILD_BZIP2=true
+    BUILD_LIBXML2=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -365,6 +371,10 @@ if $BUILD_LIBEVDEV; then
         mkdir libevdev-$SUBARCH
     fi
 
+    pushd $DIR/sources/libevdev-1.9.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
     pushd libevdev-$SUBARCH > /dev/null
     $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j || cmd_error
@@ -424,7 +434,7 @@ if $BUILD_ZLIB; then
     fi
 
     pushd zlib-$SUBARCH > /dev/null
-    CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure
+    CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure --static
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -462,6 +472,10 @@ if $BUILD_LIBPNG; then
         mkdir libpng-$SUBARCH
     fi
 
+    pushd $DIR/sources/libpng-1.6.37 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
     pushd libpng-$SUBARCH > /dev/null
     $DIR/sources/libpng-1.6.37/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j || cmd_error
@@ -492,6 +506,10 @@ if $BUILD_LIBXML2; then
     if [ ! -d "libxml2-$SUBARCH" ]; then
         mkdir libxml2-$SUBARCH
     fi
+
+    pushd $DIR/sources/libxml2-2.9.10 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fi
+    popd > /dev/null
 
     pushd libxml2-$SUBARCH > /dev/null
     $DIR/sources/libxml2-2.9.10/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-static --with-threads --disable-ipv6 --without-python

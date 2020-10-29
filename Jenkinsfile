@@ -1,6 +1,6 @@
 pipeline {
     agent none
-    
+
     stages {
         stage('Build') {
             parallel {
@@ -12,14 +12,15 @@ pipeline {
                     steps {
                         sh 'make SUBARCH=i686 defconfig'
                         sh 'make SUBARCH=i686 objdirs'
-                        sh 'make SUBARCH=i686 install-headers'                        
+                        sh 'make SUBARCH=i686 install-headers'
 
                         dir('toolchain') {
                             sh './download.sh'
                             sh 'BUILD_EVERYTHING=true ./setup.sh -m i686'
+                            sh 'BUILD_EVERYTHING=true ./setup-x11.sh -m i686'
                         }
 
-                        ansiColor('xterm') {    
+                        ansiColor('xterm') {
                             sh 'make SUBARCH=i686'
                         }
                     }

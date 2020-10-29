@@ -5,6 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/config.sh
 . $DIR/utils.sh
 
+: ${BUILD_XORG_MACROS:=false}
 : ${BUILD_LIBDRM:=false}
 : ${BUILD_KMSCUBE:=false}
 : ${BUILD_LIBEXPAT:=false}
@@ -17,6 +18,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_CAIRO:=false}
 : ${BUILD_LIBXKBCOMMON:=false}
 
+if $BUILD_EVERYTHING; then
+    BUILD_XORG_MACROS=true
+    BUILD_LIBDRM=true
+fi
+
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
 
 if [ ! -d "build" ]; then
@@ -27,6 +33,22 @@ pushd build > /dev/null
 
 . $DIR/activate.sh
 
+# Build xorg-util-macros
+if $BUILD_XORG_MACROS; then
+    if [ ! -d "host-util-macros-$SUBARCH" ]; then
+        mkdir host-util-macros-$SUBARCH
+    fi
+
+    pushd host-util-macros-$SUBARCH > /dev/null
+    $DIR/sources/util-macros-1.19.1/configure --prefix=$PREFIX || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    popd > /dev/null
+
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.11/share/aclocal-1.11/
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.15/share/aclocal-1.15/
+fi
+
 # Build libdrm
 if $BUILD_LIBDRM; then
     if [ ! -d "libdrm-$SUBARCH" ]; then
@@ -34,11 +56,11 @@ if $BUILD_LIBDRM; then
     fi
 
     pushd $DIR/sources/libdrm-2.4.89 > /dev/null
-    autoreconf
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
     popd > /dev/null
 
     pushd libdrm-$SUBARCH > /dev/null
-    $DIR/sources/libdrm-2.4.89/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-intel --disable-vmwgfx --disable-radeon --disable-amdgpu --disable-nouveau --disable-cairo-tests
+    $DIR/sources/libdrm-2.4.89/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-intel --disable-vmwgfx --disable-radeon --disable-amdgpu --disable-nouveau --disable-cairo-tests
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -119,7 +141,7 @@ if $BUILD_KMSCUBE; then
     fi
 
     pushd $DIR/sources/kmscube > /dev/null
-    # ./autogen.sh
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH ./autogen.sh
     make distclean
     popd > /dev/null
 
