@@ -1,0 +1,21 @@
+diff -rupN old/lib/config.sub new/lib/config.sub
+--- old/lib/config.sub	2014-12-28 01:23:54.000000000 +0800
++++ new/lib/config.sub	2020-10-29 15:55:25.945135240 +0800
+@@ -2,7 +2,7 @@
+ # Configuration validation subroutine script.
+ #   Copyright 1992-2014 Free Software Foundation, Inc.
+ 
+-timestamp='2014-12-03'
++timestamp='2020-10-29'
+ 
+ # This file is free software; you can redistribute it and/or modify it
+ # under the terms of the GNU General Public License as published by
+@@ -1373,7 +1373,7 @@ case $os in
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+ 	      | -sym* | -kopensolaris* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+-	      | -aos* | -aros* \
++	      | -aos* | -aros* | -lyos* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+ 	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \

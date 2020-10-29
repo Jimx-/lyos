@@ -44,6 +44,8 @@ if $BUILD_EVERYTHING; then
     BUILD_COREUTILS=true
     BUILD_NCURSES=true
     BUILD_VIM=true
+    BUILD_PCRE=true
+    BUILD_GREP=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -65,6 +67,9 @@ if $BUILD_AUTOTOOLS; then
     if [ ! -d "automake-1.11-$SUBARCH" ]; then
         mkdir automake-1.11-$SUBARCH
     fi
+    if [ ! -d "automake-1.15-$SUBARCH" ]; then
+        mkdir automake-1.15-$SUBARCH
+    fi
     if [ ! -d "libtool-$SUBARCH" ]; then
         mkdir libtool-$SUBARCH
     fi
@@ -72,6 +77,7 @@ if $BUILD_AUTOTOOLS; then
         mkdir host-pkg-config-$SUBARCH
     fi
 
+    # Build autoconf
     pushd autoconf-2.65-$SUBARCH > /dev/null
     $DIR/sources/autoconf-2.65/configure --prefix=$DIR/tools/autoconf-2.65 || cmd_error
     make || cmd_error
@@ -84,6 +90,7 @@ if $BUILD_AUTOTOOLS; then
     make install || cmd_error
     popd > /dev/null
 
+    # Build automake
     pushd automake-1.11-$SUBARCH > /dev/null
     $DIR/sources/automake-1.11/configure --prefix=$DIR/tools/automake-1.11 || cmd_error
     make || cmd_error
@@ -91,23 +98,35 @@ if $BUILD_AUTOTOOLS; then
     ln -sf $DIR/tools/automake-1.11/share/aclocal-1.11 $DIR/tools/automake-1.11/share/aclocal
     popd > /dev/null
 
-    pushd $DIR/sources/libtool-2.4.5
-    ./bootstrap
-    popd
-
-    pushd libtool-$SUBARCH
-    $DIR/sources/libtool-2.4.5/configure --prefix=$PREFIX || cmd_error
-    make -j8 || cmd_error
+    pushd automake-1.15-$SUBARCH > /dev/null
+    $DIR/sources/automake-1.15/configure --prefix=$DIR/tools/automake-1.15 || cmd_error
+    make || cmd_error
     make install || cmd_error
-    popd
+    ln -sf $DIR/tools/automake-1.15/share/aclocal-1.11 $DIR/tools/automake-1.15/share/aclocal
+    popd > /dev/null
 
-    pushd host-pkg-config-$SUBARCH
+    # Build libtool
+    pushd $DIR/sources/libtool-2.4.5 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH ./bootstrap --force
+    popd > /dev/null
+
+    pushd libtool-$SUBARCH > /dev/null
+    (export PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH;
+     $DIR/sources/libtool-2.4.5/configure --prefix=$PREFIX &&
+             make -j8 &&
+             make install
+    ) || cmd_error
+    popd > /dev/null
+
+    # Build pkg-config
+    pushd host-pkg-config-$SUBARCH > /dev/null
     $DIR/sources/pkg-config-0.29.2/configure --prefix=$PREFIX --with-internal-glib || cmd_error
     make || cmd_error
     make install || cmd_error
-    popd
+    popd > /dev/null
 
     ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.11/share/aclocal-1.11/
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.15/share/aclocal-1.15/
 fi
 
 # Build binutils
@@ -355,8 +374,12 @@ if $BUILD_PCRE; then
         mkdir pcre-$SUBARCH
     fi
 
+    pushd $DIR/sources/pcre-8.44 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
     pushd pcre-$SUBARCH > /dev/null
-    $DIR/sources/pcre-8.44/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32
+    $DIR/sources/pcre-8.44/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32 --disable-cpp
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -367,6 +390,8 @@ if $BUILD_GREP; then
     if [ ! -d "grep-$SUBARCH" ]; then
         mkdir grep-$SUBARCH
     fi
+
+    cp $DIR/tools/automake-1.15/share/automake-1.15/config.sub $DIR/sources/grep-3.4/build-aux/
 
     pushd grep-$SUBARCH > /dev/null
     $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls
