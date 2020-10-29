@@ -1,6 +1,6 @@
 diff -rupN old/build-aux/config.sub new/build-aux/config.sub
---- old/build-aux/config.sub	2020-07-18 16:32:02.118288918 +0800
-+++ new/build-aux/config.sub	2020-07-18 16:34:57.449982864 +0800
+--- old/build-aux/config.sub	2017-12-18 09:33:20.000000000 +0800
++++ new/build-aux/config.sub	2020-10-29 20:57:32.690396587 +0800
 @@ -1373,7 +1373,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
@@ -11,8 +11,8 @@ diff -rupN old/build-aux/config.sub new/build-aux/config.sub
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
 diff -rupN old/configure.ac new/configure.ac
---- old/configure.ac	2020-07-18 16:32:02.108289011 +0800
-+++ new/configure.ac	2020-07-18 16:36:22.725852678 +0800
+--- old/configure.ac	2017-12-18 09:33:10.000000000 +0800
++++ new/configure.ac	2020-10-29 20:57:32.690396587 +0800
 @@ -68,7 +68,7 @@ LT_INIT([disable-static])
  dnl pthread-stubs is mandatory on BSD platforms, due to the nature of the
  dnl project. Even then there's a notable issue as described in the project README
@@ -23,8 +23,8 @@ diff -rupN old/configure.ac new/configure.ac
      ;;
  * )
 diff -rupN old/include/drm/drm.h new/include/drm/drm.h
---- old/include/drm/drm.h	2020-07-18 16:32:02.118288918 +0800
-+++ new/include/drm/drm.h	2020-07-18 16:37:21.491970392 +0800
+--- old/include/drm/drm.h	2017-12-18 09:33:10.000000000 +0800
++++ new/include/drm/drm.h	2020-10-29 20:57:32.690396587 +0800
 @@ -42,6 +42,12 @@
  #include <asm/ioctl.h>
  typedef unsigned int drm_handle_t;
@@ -38,9 +38,20 @@ diff -rupN old/include/drm/drm.h new/include/drm/drm.h
  #else /* One of the BSDs */
  
  #include <sys/ioccom.h>
+diff -rupN old/xf86drm.c new/xf86drm.c
+--- old/xf86drm.c	2017-12-18 09:33:10.000000000 +0800
++++ new/xf86drm.c	2020-10-29 20:58:24.293829188 +0800
+@@ -53,6 +53,7 @@
+ #define stat_t struct stat
+ #include <sys/ioctl.h>
+ #include <sys/time.h>
++#include <sys/syslimits.h>
+ #include <stdarg.h>
+ #ifdef MAJOR_IN_MKDEV
+ #include <sys/mkdev.h>
 diff -rupN old/xf86drm.h new/xf86drm.h
---- old/xf86drm.h	2020-07-18 16:32:02.124955522 +0800
-+++ new/xf86drm.h	2020-07-18 16:36:53.445565697 +0800
+--- old/xf86drm.h	2017-12-18 09:33:10.000000000 +0800
++++ new/xf86drm.h	2020-10-29 20:57:32.690396587 +0800
 @@ -47,7 +47,7 @@ extern "C" {
  #define DRM_MAX_MINOR   16
  #endif
