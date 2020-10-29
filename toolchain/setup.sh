@@ -107,7 +107,11 @@ if $BUILD_AUTOTOOLS; then
 
     # Build libtool
     pushd $DIR/sources/libtool-2.4.5 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH ./bootstrap --force
+    chmod +w bootstrap
+    sed -i 's/git:\/\/git\.sv\.gnu\.org\/gnulib/https:\/\/git.savannah.gnu.org\/git\/gnulib.git/g
+' bootstrap
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH \
+        ./bootstrap --force
     popd > /dev/null
 
     pushd libtool-$SUBARCH > /dev/null
