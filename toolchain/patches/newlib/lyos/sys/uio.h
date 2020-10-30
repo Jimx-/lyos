@@ -8,4 +8,6 @@ struct iovec {
     size_t iov_len;
 };
 
+ssize_t writev(int, const struct iovec*, int);
+
 #endif
