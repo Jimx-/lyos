@@ -352,10 +352,14 @@ int sigqueue(pid_t pid, int signo, const union sigval value);
 #define SIGVTALRM 26    /* virtual time alarm */
 #define SIGPROF   27    /* profiling time alarm */
 #define SIGWINCH  28    /* window changed */
-#define SIGLOST   29    /* resource lost (eg, record-lock lost) */
-#define SIGUSR1   30    /* user defined signal 1 */
-#define SIGUSR2   31    /* user defined signal 2 */
-#define NSIG      32    /* signal 0 implied */
+#define SIGPWR    29
+#define SIGUSR1   30 /* user defined signal 1 */
+#define SIGUSR2   31 /* user defined signal 2 */
+#define NSIG      32 /* signal 0 implied */
+
+#define SIGRTMIN 32
+#define SIGRTMAX 33
+
 #endif
 #endif
 

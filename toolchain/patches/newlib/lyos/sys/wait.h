@@ -25,12 +25,13 @@ __BEGIN_DECLS
       <code> == 80, there was a core dump.
 */
 
-#define WIFEXITED(w)   (((w)&0xff) == 0)
-#define WIFSIGNALED(w) (((w)&0x7f) > 0 && (((w)&0x7f) < 0x7f))
-#define WIFSTOPPED(w)  (((w)&0xff) == 0x7f)
-#define WEXITSTATUS(w) (((w) >> 8) & 0xff)
-#define WTERMSIG(w)    ((w)&0x7f)
-#define WSTOPSIG       WEXITSTATUS
+#define WIFEXITED(w)    (((w)&0xff) == 0)
+#define WIFSIGNALED(w)  (((w)&0x7f) > 0 && (((w)&0x7f) < 0x7f))
+#define WIFSTOPPED(w)   (((w)&0xff) == 0x7f)
+#define WIFCONTINUED(w) (((w)&0xff) == 0xff)
+#define WEXITSTATUS(w)  (((w) >> 8) & 0xff)
+#define WTERMSIG(w)     ((w)&0x7f)
+#define WSTOPSIG        WEXITSTATUS
 
 #define W_STOPCODE(sig)      ((sig) << 8 | 0x7f)
 #define W_EXITCODE(ret, sig) ((ret) << 8 | (sig))

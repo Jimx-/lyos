@@ -89,6 +89,10 @@ install-data-local:
 	for i in $(srcdir)/include/netinet/*.h; do \
 	  $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/netinet/`basename $$i`; \
 	done;
+	$(mkinstalldirs) $(DESTDIR)$(tooldir)/include/net; \
+	for i in $(srcdir)/include/net/*.h; do \
+	  $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/net/`basename $$i`; \
+	done;
 
 AM_CFLAGS = -I $(srcdir)/../../stdio
 ACLOCAL_AMFLAGS = -I ../../.. -I ../../../..

@@ -46,5 +46,12 @@
 #else
 #define SO_SNDTIMEO 21
 #endif
-#define SO_PEERCRED 17
-#define SO_TYPE     3
+#define SO_PASSCRED    16
+#define SO_PEERCRED    17
+#define SO_TYPE        3
+#define SO_SNDBUFFORCE 32
+#define SO_RCVBUFFORCE 32
+
+#define SO_ATTACH_FILTER 26
+#define SO_DETACH_FILTER 27
+#define SO_GET_FILTER    SO_ATTACH_FILTER

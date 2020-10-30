@@ -47,12 +47,9 @@ extern "C"
         time_t st_mtime;
         time_t st_ctime;
 #else
-        time_t st_atime;
-        long st_spare1;
-        time_t st_mtime;
-        long st_spare2;
-        time_t st_ctime;
-        long st_spare3;
+        struct timespec st_atim;
+        struct timespec st_mtim;
+        struct timespec st_ctim;
         blksize_t st_blksize;
         blkcnt_t st_blocks;
         long st_spare4[2];
@@ -60,7 +57,7 @@ extern "C"
 #endif
     };
 
-#if defined(__rtems__)
+#if defined(__rtems__) || defined(__lyos__)
 #define st_atime st_atim.tv_sec
 #define st_ctime st_ctim.tv_sec
 #define st_mtime st_mtim.tv_sec

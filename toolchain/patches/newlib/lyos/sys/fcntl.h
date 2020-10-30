@@ -44,10 +44,7 @@ extern "C"
 /*	O_NDELAY	_FNBIO      set in include/fcntl.h */
 #define O_NONBLOCK _FNONBLOCK
 #define O_NOCTTY   _FNOCTTY
-#define O_CLOEXEC  _FNOINHERIT
 
-/* For machines which care - */
-#if defined(__CYGWIN__)
 #define _FBINARY    0x10000
 #define _FTEXT      0x20000
 #define _FNOINHERIT 0x40000
@@ -58,19 +55,20 @@ extern "C"
 #define _FTMPFILE   0x800000
 #define _FNOATIME   0x1000000
 
+/* POSIX-1.2008 specific flags */
+#define O_CLOEXEC   _FNOINHERIT
+#define O_NOFOLLOW  _FNOFOLLOW
+#define O_DIRECTORY _FDIRECTORY
+
+/* For machines which care - */
+#if defined(__CYGWIN__)
+
 #define O_BINARY _FBINARY
 #define O_TEXT   _FTEXT
 #define O_DSYNC  _FSYNC
 #define O_RSYNC  _FSYNC
 #define O_EXEC   _FEXECSRCH
 #define O_SEARCH _FEXECSRCH
-
-/* POSIX-1.2008 specific flags */
-#if __POSIX_VISIBLE >= 200809
-#define O_CLOEXEC   _FNOINHERIT
-#define O_NOFOLLOW  _FNOFOLLOW
-#define O_DIRECTORY _FDIRECTORY
-#endif
 
 /* Linux-specific flags */
 #if __GNU_VISIBLE
@@ -226,6 +224,8 @@ extern "C"
     extern int _open64(const char*, int, ...);
 #endif
 #endif
+
+#include <bits/fcntl-linux.h>
 
 #ifdef __cplusplus
 }

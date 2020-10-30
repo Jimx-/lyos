@@ -108,7 +108,8 @@ if $BUILD_AUTOTOOLS; then
     $DIR/sources/automake-1.15/configure --prefix=$DIR/tools/automake-1.15 || cmd_error
     make || cmd_error
     make install || cmd_error
-    ln -sf $DIR/tools/automake-1.15/share/aclocal-1.11 $DIR/tools/automake-1.15/share/aclocal
+    rm -rf $DIR/tools/automake-1.15/share/aclocal
+    ln -sf $DIR/tools/automake-1.15/share/aclocal-1.15 $DIR/tools/automake-1.15/share/aclocal
     popd > /dev/null
 
     # Build libtool

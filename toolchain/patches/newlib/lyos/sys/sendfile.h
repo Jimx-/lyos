@@ -10,4 +10,4 @@ ssize_t sendfile(int, int, off_t*, size_t);
 
 __END_DECLS
 
-#endif // _SYS_SENDFILE_H_
+#endif
