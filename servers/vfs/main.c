@@ -155,6 +155,9 @@ static void do_work(void)
     case OPEN:
         self->msg_out.FD = do_open();
         break;
+    case OPENAT:
+        self->msg_out.FD = do_openat();
+        break;
     case CLOSE:
         self->msg_out.RETVAL = do_close();
         break;

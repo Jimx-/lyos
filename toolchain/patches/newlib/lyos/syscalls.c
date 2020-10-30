@@ -778,7 +778,7 @@ off_t lseek(int fd, off_t offset, int whence)
     return (off_t)msg.OFFSET;
 }
 
-int open(const char* pathname, int flags, ...)
+int openat(int fd, const char* pathname, int flags, ...)
 {
     MESSAGE msg;
     va_list parg;
@@ -786,20 +786,20 @@ int open(const char* pathname, int flags, ...)
     memset(&msg, 0, sizeof(MESSAGE));
     va_start(parg, flags);
 
-    msg.type = OPEN;
-    msg.PATHNAME = (void*)pathname;
-    msg.FLAGS = flags;
-    msg.NAME_LEN = strlen(pathname);
+    msg.type = OPENAT;
+    msg.u.m_vfs_openat.dirfd = fd;
+    msg.u.m_vfs_openat.pathname = (void*)pathname;
+    msg.u.m_vfs_openat.name_len = strlen(pathname);
+    msg.u.m_vfs_openat.flags = flags;
 
     if (flags & O_CREAT) {
-        msg.MODE = va_arg(parg, mode_t);
+        msg.u.m_vfs_openat.mode = va_arg(parg, mode_t);
     }
 
     va_end(parg);
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
-    // assert(msg.type == SYSCALL_RET);
 
     if (msg.FD < 0) {
         errno = -msg.FD;
@@ -807,6 +807,22 @@ int open(const char* pathname, int flags, ...)
     }
 
     return msg.FD;
+}
+
+int open(const char* pathname, int flags, ...)
+{
+    va_list parg;
+    mode_t mode;
+
+    if (flags & O_CREAT) {
+        va_start(parg, flags);
+        mode = va_arg(parg, mode_t);
+        va_end(parg);
+
+        return openat(AT_FDCWD, pathname, flags, mode);
+    }
+
+    return openat(AT_FDCWD, pathname, flags);
 }
 
 int read(int fd, void* buf, size_t count)

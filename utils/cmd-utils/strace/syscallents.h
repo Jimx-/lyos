@@ -2,6 +2,7 @@
 #define _S(nr, name) [nr] = {nr, SEN(name)}
 
 _S(OPEN, open),
+_S(OPENAT, openat),
 _S(CLOSE, close),
 _S(READ, read),
 _S(WRITE, write),

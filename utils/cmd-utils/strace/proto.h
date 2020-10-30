@@ -80,6 +80,7 @@ int trace_dup(struct tcb* tcp);
 int trace_ioctl(struct tcb* tcp);
 
 int trace_open(struct tcb* tcp);
+int trace_openat(struct tcb* tcp);
 int trace_close(struct tcb* tcp);
 int trace_read(struct tcb* tcp);
 int trace_write(struct tcb* tcp);

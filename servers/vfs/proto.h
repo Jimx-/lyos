@@ -39,6 +39,8 @@ void sync_inode(struct inode* p);
 
 void init_lookup(struct lookup* lookup, char* pathname, int flags,
                  struct vfs_mount** vmnt, struct inode** inode);
+void init_lookupat(struct lookup* lookup, int dfd, char* pathname, int flags,
+                   struct vfs_mount** vmnt, struct inode** inode);
 struct inode* resolve_path(struct lookup* lookup, struct fproc* fp);
 struct inode* advance_path(struct inode* start, struct lookup* lookup,
                            struct fproc* fp);
@@ -64,7 +66,8 @@ int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly, int is_root,
                       struct lookup_result* res);
 
 int do_open(void);
-int common_open(char* pathname, int flags, mode_t mode);
+int do_openat(void);
+int common_openat(int dfd, char* pathname, int flags, mode_t mode);
 int do_close(void);
 int close_fd(struct fproc* fp, int fd);
 int do_lseek(void);

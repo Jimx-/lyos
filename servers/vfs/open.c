@@ -75,10 +75,34 @@ int do_open(void)
     data_copy(SELF, pathname, src, self->msg_in.PATHNAME, name_len);
     pathname[name_len] = '\0';
 
-    return common_open(pathname, flags, mode);
+    return common_openat(AT_FDCWD, pathname, flags, mode);
 }
 
-int common_open(char* pathname, int flags, mode_t mode)
+int do_openat(void)
+{
+    /* get parameters from the message */
+    endpoint_t src = self->msg_in.source;
+    int dirfd = self->msg_in.u.m_vfs_openat.dirfd;
+    int name_len = self->msg_in.u.m_vfs_openat.name_len;
+    int flags = self->msg_in.u.m_vfs_openat.flags;
+    mode_t mode = self->msg_in.u.m_vfs_openat.mode;
+    char pathname[PATH_MAX];
+    int retval;
+
+    if (name_len > PATH_MAX) {
+        return -ENAMETOOLONG;
+    }
+
+    if ((retval = data_copy(SELF, pathname, src,
+                            self->msg_in.u.m_vfs_openat.pathname, name_len)) !=
+        OK)
+        return -retval;
+    pathname[name_len] = '\0';
+
+    return common_openat(dirfd, pathname, flags, mode);
+}
+
+int common_openat(int dfd, char* pathname, int flags, mode_t mode)
 {
     int fd = -1; /* return fd */
     struct lookup lookup;
@@ -95,7 +119,7 @@ int common_open(char* pathname, int flags, mode_t mode)
 
     struct inode* pin = NULL;
     struct vfs_mount* vmnt = NULL;
-    init_lookup(&lookup, pathname, 0, &vmnt, &pin);
+    init_lookupat(&lookup, dfd, pathname, 0, &vmnt, &pin);
 
     if (flags & O_CREAT) {
         mode = S_IFREG | (mode & ALL_MODES & fproc->umask);
@@ -234,7 +258,8 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     struct lookup dir_lookup;
     struct lookup_result res;
 
-    init_lookup(&dir_lookup, lookup->pathname, 0, &vmnt_dir, &pin_dir);
+    init_lookupat(&dir_lookup, lookup->dirfd, lookup->pathname, 0, &vmnt_dir,
+                  &pin_dir);
     dir_lookup.vmnt_lock = RWL_WRITE;
     dir_lookup.inode_lock = RWL_WRITE;
     if ((pin_dir = last_dir(&dir_lookup, fp)) == NULL) return NULL;

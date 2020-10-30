@@ -101,6 +101,7 @@ void init_lookup(struct lookup* lookup, char* pathname, int flags,
 {
     lookup->pathname = pathname;
     lookup->flags = flags;
+    lookup->dirfd = AT_FDCWD;
     lookup->vmnt_lock = RWL_NONE;
     lookup->inode_lock = RWL_NONE;
     lookup->vmnt = vmnt;
@@ -109,18 +110,71 @@ void init_lookup(struct lookup* lookup, char* pathname, int flags,
     *inode = NULL;
 }
 
-struct inode* resolve_path(struct lookup* lookup, struct fproc* fp)
+void init_lookupat(struct lookup* lookup, int dfd, char* pathname, int flags,
+                   struct vfs_mount** vmnt, struct inode** inode)
 {
-    /* start inode: root or pwd */
-    if (!fp->root || !fp->pwd) {
-        printl(
-            "VFS: resolve_path: process #%d has no root or working directory\n",
-            fp->endpoint);
-        err_code = ENOENT;
+    lookup->pathname = pathname;
+    lookup->flags = flags;
+    lookup->dirfd = dfd;
+    lookup->vmnt_lock = RWL_NONE;
+    lookup->inode_lock = RWL_NONE;
+    lookup->vmnt = vmnt;
+    lookup->inode = inode;
+    *vmnt = NULL;
+    *inode = NULL;
+}
+
+static struct inode* get_start_inode(struct lookup* lookup, struct fproc* fp)
+{
+    struct inode* start = NULL;
+    struct file_desc* filp;
+
+    /* Absolute pathname -- fetch the root. */
+    if (lookup->pathname[0] == '/') {
+        if (!fp->root) {
+            printl("vfs: process %d has no root directory\n", fp->endpoint);
+            err_code = ENOENT;
+        }
+
+        return fp->root;
+    }
+
+    /* Relative pathname -- get the starting-point it is relative to. */
+
+    if (lookup->dirfd == AT_FDCWD) {
+        if (!fp->pwd) {
+            printl("vfs: process %d has no working directory\n", fp->endpoint);
+            err_code = ENOENT;
+        }
+
+        return fp->pwd;
+    }
+
+    filp = get_filp(fp, lookup->dirfd, RWL_READ);
+    if (!filp || !filp->fd_inode) {
+        err_code = EBADF;
         return NULL;
     }
 
-    struct inode* start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
+    if (!S_ISDIR(filp->fd_inode->i_mode)) {
+        err_code = ENOTDIR;
+        goto out;
+    }
+
+    start = filp->fd_inode;
+
+out:
+    unlock_filp(filp);
+    return start;
+}
+
+struct inode* resolve_path(struct lookup* lookup, struct fproc* fp)
+{
+    struct inode* start;
+
+    start = get_start_inode(lookup, fp);
+    if (!start) return NULL;
+
     return advance_path(start, lookup, fp);
 }
 
@@ -293,7 +347,8 @@ struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
     char entry[PATH_MAX + 1];
 
     do {
-        struct inode* start = (lookup->pathname[0] == '/' ? fp->root : fp->pwd);
+        struct inode* start = get_start_inode(lookup, fp);
+        if (!start) return NULL;
 
         size_t len = strlen(lookup->pathname);
         if (len == 0) {

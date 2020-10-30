@@ -8,6 +8,14 @@
 #include "xlat/open_access_modes.h"
 #include "xlat/open_mode_flags.h"
 
+void print_dirfd(int fd)
+{
+    if (fd == AT_FDCWD)
+        printf("AT_FDCWD");
+    else
+        printf("%d", fd);
+}
+
 static void print_open_mode(int flags)
 {
     const char* str;
@@ -35,6 +43,26 @@ int trace_open(struct tcb* tcp)
     if (msg->FLAGS & O_CREAT) {
         printf(", ");
         print_mode_t(msg->MODE);
+    }
+
+    return RVAL_DECODED | RVAL_FD;
+}
+
+int trace_openat(struct tcb* tcp)
+{
+    MESSAGE* msg = &tcp->msg_in;
+
+    print_dirfd(msg->u.m_vfs_openat.dirfd);
+    printf(", ");
+
+    print_path(tcp, msg->u.m_vfs_openat.pathname, msg->u.m_vfs_openat.name_len);
+    printf(", ");
+
+    print_open_mode(msg->u.m_vfs_openat.flags);
+
+    if (msg->u.m_vfs_openat.flags & O_CREAT) {
+        printf(", ");
+        print_mode_t(msg->u.m_vfs_openat.mode);
     }
 
     return RVAL_DECODED | RVAL_FD;

@@ -290,7 +290,7 @@ int fs_exec(void)
     if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp,
                        sizeof(interp)) > 0) {
         unlock_inode(execi.pin);
-        execi.exec_fd = common_open(pathname, O_RDONLY, 0);
+        execi.exec_fd = common_openat(AT_FDCWD, pathname, O_RDONLY, 0);
         lock_inode(execi.pin, RWL_READ);
         if (execi.exec_fd < 0) {
             retval = -execi.exec_fd;
