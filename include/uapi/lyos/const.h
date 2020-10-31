@@ -220,6 +220,7 @@ enum msgtype {
     OPENAT,
     FSTATAT,
     UNLINKAT,
+    READLINKAT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

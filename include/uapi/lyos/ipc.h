@@ -154,8 +154,9 @@ struct mess_vfs_pathat {
     int flags;
     mode_t mode;
     void* buf;
+    size_t buf_len;
 
-    __u8 _pad[44 - 2 * sizeof(void*) - sizeof(mode_t)];
+    __u8 _pad[44 - 2 * sizeof(void*) - sizeof(mode_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_pathat);
 

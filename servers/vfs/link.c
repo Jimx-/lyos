@@ -201,24 +201,14 @@ int do_unlinkat(void)
     return common_unlink(dirfd, pathname, flags);
 }
 
-int do_rdlink(void)
+static int common_rdlink(int dirfd, char* pathname, void* buf, size_t len)
 {
     struct lookup lookup;
-    char pathname[PATH_MAX];
     struct vfs_mount* vmnt;
     struct inode* pin;
-    void* buf = self->msg_in.BUF;
-    size_t size = self->msg_in.BUF_LEN;
-    ssize_t retval;
+    int retval;
 
-    if (self->msg_in.NAME_LEN >= PATH_MAX) return -ENAMETOOLONG;
-
-    /* fetch the name */
-    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME,
-              self->msg_in.NAME_LEN);
-    pathname[self->msg_in.NAME_LEN] = '\0';
-
-    init_lookup(&lookup, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin);
+    init_lookupat(&lookup, dirfd, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
     pin = resolve_path(&lookup, fproc);
@@ -231,7 +221,7 @@ int do_rdlink(void)
         retval = -EINVAL;
     } else {
         retval = request_rdlink(pin->i_fs_ep, pin->i_dev, pin->i_num,
-                                self->msg_in.source, buf, size);
+                                self->msg_in.source, buf, len);
     }
 
     unlock_inode(pin);
@@ -239,6 +229,46 @@ int do_rdlink(void)
     put_inode(pin);
 
     return retval;
+}
+
+int do_rdlink(void)
+{
+    void* buf = self->msg_in.BUF;
+    size_t len = self->msg_in.BUF_LEN;
+    char pathname[PATH_MAX];
+    int retval;
+
+    if (self->msg_in.NAME_LEN >= PATH_MAX) return -ENAMETOOLONG;
+
+    /* fetch the name */
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.PATHNAME, self->msg_in.NAME_LEN)) !=
+        OK)
+        return -retval;
+    pathname[self->msg_in.NAME_LEN] = '\0';
+
+    return common_rdlink(AT_FDCWD, pathname, buf, len);
+}
+
+int do_rdlinkat(void)
+{
+    int dirfd = self->msg_in.u.m_vfs_pathat.dirfd;
+    int name_len = self->msg_in.u.m_vfs_pathat.name_len;
+    void* buf = self->msg_in.u.m_vfs_pathat.buf;
+    size_t len = self->msg_in.u.m_vfs_pathat.buf_len;
+    char pathname[PATH_MAX];
+    int retval;
+
+    if (name_len >= PATH_MAX) return -ENAMETOOLONG;
+
+    /* fetch the name */
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.u.m_vfs_pathat.pathname, name_len)) !=
+        OK)
+        return -retval;
+    pathname[name_len] = '\0';
+
+    return common_rdlink(dirfd, pathname, buf, len);
 }
 
 /**

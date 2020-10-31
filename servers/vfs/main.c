@@ -223,6 +223,9 @@ static void do_work(void)
     case READLINK:
         self->msg_out.RETVAL = do_rdlink();
         break;
+    case READLINKAT:
+        self->msg_out.RETVAL = do_rdlinkat();
+        break;
     case UNLINK:
     case RMDIR:
         self->msg_out.RETVAL = do_unlink();

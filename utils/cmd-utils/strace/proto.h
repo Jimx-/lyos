@@ -99,6 +99,7 @@ int trace_getdents(struct tcb* tcp);
 int trace_symlink(struct tcb* tcp);
 int trace_unlink(struct tcb* tcp);
 int trace_unlinkat(struct tcb* tcp);
+int trace_readlinkat(struct tcb* tcp);
 
 int trace_pipe2(struct tcb* tcp);
 int trace_socket(struct tcb* tcp);

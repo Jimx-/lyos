@@ -859,15 +859,17 @@ int read(int fd, void* buf, size_t count)
     return msg.RETVAL;
 }
 
-ssize_t readlink(const char* pathname, char* buf, size_t bufsiz)
+ssize_t readlinkat(int dirfd, const char* pathname, char* buf, size_t bufsiz)
 {
     MESSAGE msg;
 
-    msg.type = READLINK;
-    msg.PATHNAME = (char*)pathname;
-    msg.NAME_LEN = strlen(pathname);
-    msg.BUF = buf;
-    msg.BUF_LEN = bufsiz;
+    memset(&msg, 0, sizeof(msg));
+    msg.type = READLINKAT;
+    msg.u.m_vfs_pathat.dirfd = dirfd;
+    msg.u.m_vfs_pathat.pathname = (void*)pathname;
+    msg.u.m_vfs_pathat.name_len = strlen(pathname);
+    msg.u.m_vfs_pathat.buf = buf;
+    msg.u.m_vfs_pathat.buf_len = bufsiz;
 
     cmb();
 
@@ -879,6 +881,11 @@ ssize_t readlink(const char* pathname, char* buf, size_t bufsiz)
     }
 
     return msg.RETVAL;
+}
+
+ssize_t readlink(const char* pathname, char* buf, size_t bufsiz)
+{
+    return readlinkat(AT_FDCWD, pathname, buf, bufsiz);
 }
 
 int ioctl(int fd, unsigned long request, ...)
