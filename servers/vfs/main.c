@@ -177,6 +177,9 @@ static void do_work(void)
     case LSTAT:
         self->msg_out.RETVAL = do_lstat();
         break;
+    case FSTATAT:
+        self->msg_out.RETVAL = do_fstatat();
+        break;
     case SYMLINK:
         self->msg_out.RETVAL = do_symlink();
         break;

@@ -41,6 +41,7 @@ const char* sprint_flags(uint64_t flags, const struct xlat* xlat);
 void print_addr(const uint64_t addr);
 void print_dev_t(uint64_t dev);
 void print_mode_t(unsigned int mode);
+void print_dirfd(int fd);
 
 typedef int (*print_fn)(struct tcb*, void*, size_t, void*);
 typedef int (*fetch_mem_fn)(struct tcb*, const void*, void*, size_t);
@@ -66,6 +67,7 @@ int trace_kill(struct tcb* tcp);
 int trace_stat(struct tcb* tcp);
 int trace_lstat(struct tcb* tcp);
 int trace_fstat(struct tcb* tcp);
+int trace_fstatat(struct tcb* tcp);
 
 int trace_fcntl(struct tcb* tcp);
 

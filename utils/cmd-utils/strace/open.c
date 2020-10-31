@@ -52,17 +52,17 @@ int trace_openat(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
 
-    print_dirfd(msg->u.m_vfs_openat.dirfd);
+    print_dirfd(msg->u.m_vfs_pathat.dirfd);
     printf(", ");
 
-    print_path(tcp, msg->u.m_vfs_openat.pathname, msg->u.m_vfs_openat.name_len);
+    print_path(tcp, msg->u.m_vfs_pathat.pathname, msg->u.m_vfs_pathat.name_len);
     printf(", ");
 
-    print_open_mode(msg->u.m_vfs_openat.flags);
+    print_open_mode(msg->u.m_vfs_pathat.flags);
 
-    if (msg->u.m_vfs_openat.flags & O_CREAT) {
+    if (msg->u.m_vfs_pathat.flags & O_CREAT) {
         printf(", ");
-        print_mode_t(msg->u.m_vfs_openat.mode);
+        print_mode_t(msg->u.m_vfs_pathat.mode);
     }
 
     return RVAL_DECODED | RVAL_FD;

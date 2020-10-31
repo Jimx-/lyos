@@ -787,13 +787,13 @@ int openat(int fd, const char* pathname, int flags, ...)
     va_start(parg, flags);
 
     msg.type = OPENAT;
-    msg.u.m_vfs_openat.dirfd = fd;
-    msg.u.m_vfs_openat.pathname = (void*)pathname;
-    msg.u.m_vfs_openat.name_len = strlen(pathname);
-    msg.u.m_vfs_openat.flags = flags;
+    msg.u.m_vfs_pathat.dirfd = fd;
+    msg.u.m_vfs_pathat.pathname = (void*)pathname;
+    msg.u.m_vfs_pathat.name_len = strlen(pathname);
+    msg.u.m_vfs_pathat.flags = flags;
 
     if (flags & O_CREAT) {
-        msg.u.m_vfs_openat.mode = va_arg(parg, mode_t);
+        msg.u.m_vfs_pathat.mode = va_arg(parg, mode_t);
     }
 
     va_end(parg);
@@ -894,20 +894,22 @@ int creat(const char* path, mode_t mode)
     return open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
 }
 
-int _stat(const char* path, struct stat* buf)
+int fstatat(int dirfd, const char* path, struct stat* buf, int flags)
 {
     MESSAGE msg;
 
-    msg.type = STAT;
+    memset(&msg, 0, sizeof(msg));
 
-    msg.PATHNAME = (void*)path;
-    msg.BUF = (void*)buf;
-    msg.NAME_LEN = strlen(path);
+    msg.type = FSTATAT;
+    msg.u.m_vfs_pathat.dirfd = dirfd;
+    msg.u.m_vfs_pathat.pathname = (void*)path;
+    msg.u.m_vfs_pathat.name_len = strlen(path);
+    msg.u.m_vfs_pathat.buf = (void*)buf;
+    msg.u.m_vfs_pathat.flags = flags;
 
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
-    // assert(msg.type == SYSCALL_RET);
 
     if (msg.RETVAL > 0) {
         errno = msg.RETVAL;
@@ -915,6 +917,11 @@ int _stat(const char* path, struct stat* buf)
     }
 
     return msg.RETVAL;
+}
+
+int _stat(const char* path, struct stat* buf)
+{
+    return fstatat(AT_FDCWD, path, buf, 0);
 }
 
 int statfs(const char* path, struct statfs* buf)
@@ -976,25 +983,7 @@ int _fstat64(int fd, struct stat* buf) { return _fstat(fd, buf); }
 
 int lstat(const char* path, struct stat* buf)
 {
-    MESSAGE msg;
-
-    msg.type = LSTAT;
-
-    msg.PATHNAME = (void*)path;
-    msg.BUF = (void*)buf;
-    msg.NAME_LEN = strlen(path);
-
-    cmb();
-
-    send_recv(BOTH, TASK_FS, &msg);
-    // assert(msg.type == SYSCALL_RET);
-
-    if (msg.RETVAL > 0) {
-        errno = msg.RETVAL;
-        return -1;
-    }
-
-    return msg.RETVAL;
+    return fstatat(AT_FDCWD, path, buf, AT_SYMLINK_NOFOLLOW);
 }
 
 int write(int fd, const void* buf, size_t count)

@@ -5,6 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/config.sh
 . $DIR/utils.sh
 
+: ${BUILD_EVERYTHING:=false}
 : ${BUILD_XORG_MACROS:=false}
 : ${BUILD_LIBDRM:=false}
 : ${BUILD_KMSCUBE:=false}

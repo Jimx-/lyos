@@ -427,7 +427,7 @@ int do_socketpath(void)
 
     switch (request) {
     case SKP_CREATE:
-        init_lookup(&lookup, path, LKF_SYMLINK, &vmnt, &dir_pin);
+        init_lookup(&lookup, path, LKF_SYMLINK_NOFOLLOW, &vmnt, &dir_pin);
         lookup.vmnt_lock = RWL_WRITE;
         lookup.inode_lock = RWL_WRITE;
 
@@ -443,7 +443,7 @@ int do_socketpath(void)
                               fp->effuid, fp->effgid, path, mode, NO_DEV);
 
             if (retval == 0) {
-                init_lookup(&lookup2, path, LKF_SYMLINK, &vmnt2, &pin);
+                init_lookup(&lookup2, path, LKF_SYMLINK_NOFOLLOW, &vmnt2, &pin);
                 lookup2.vmnt_lock = RWL_READ;
                 lookup2.inode_lock = RWL_READ;
                 pin = advance_path(dir_pin, &lookup2, fp);

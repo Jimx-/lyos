@@ -147,16 +147,17 @@ struct mess_pm_clone {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_clone);
 
-struct mess_vfs_openat {
+struct mess_vfs_pathat {
     int dirfd;
     void* pathname;
     int name_len;
     int flags;
     mode_t mode;
+    void* buf;
 
-    __u8 _pad[44 - sizeof(void*) - sizeof(mode_t)];
+    __u8 _pad[44 - 2 * sizeof(void*) - sizeof(mode_t)];
 } __attribute__((packed));
-VERIFY_MESS_SIZE(mess_vfs_openat);
+VERIFY_MESS_SIZE(mess_vfs_pathat);
 
 struct mess_vfs_select {
     __u32 nfds;
@@ -752,7 +753,7 @@ typedef struct {
         struct mess_mm_remap m_mm_remap;
         struct mess_pm_signal m_pm_signal;
         struct mess_pm_clone m_pm_clone;
-        struct mess_vfs_openat m_vfs_openat;
+        struct mess_vfs_pathat m_vfs_pathat;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_link m_vfs_link;
         struct mess_vfs_fdpair m_vfs_fdpair;

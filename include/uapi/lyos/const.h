@@ -218,6 +218,7 @@ enum msgtype {
     SETSOCKOPT,
     MKNOD,
     OPENAT,
+    FSTATAT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

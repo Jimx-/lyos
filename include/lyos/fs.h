@@ -26,7 +26,7 @@
 /* VFS/FS flags */
 
 /* Lookup flags */
-#define LKF_SYMLINK 0x01 /* Return a symbolic link node */
+#define LKF_SYMLINK_NOFOLLOW 0x01 /* Return a symbolic link node */
 
 /* VFS/FS error messages */
 #define EENTERMOUNT (-301)

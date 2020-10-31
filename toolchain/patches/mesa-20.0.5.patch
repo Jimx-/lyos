@@ -118,21 +118,6 @@ diff -rup old/src/util/detect_os.h new/src/util/detect_os.h
 +#endif
  
  #endif /* DETECT_OS_H */
-diff -rup old/src/util/disk_cache.c new/src/util/disk_cache.c
---- old/src/util/disk_cache.c	2020-04-23 05:36:59.000000000 +0800
-+++ new/src/util/disk_cache.c	2020-10-05 14:00:23.755222000 +0800
-@@ -502,6 +502,11 @@ make_cache_file_directory(struct disk_ca
-    free(dir);
- }
- 
-+int fstatat(int dirfd, const char* pathname, struct stat* statbuf, int flags)
-+{
-+    return stat(pathname, statbuf);
-+}
-+
- /* Given a directory path and predicate function, find the entry with
-  * the oldest access time in that directory for which the predicate
-  * returns true.
 diff -rup old/src/util/os_file.c new/src/util/os_file.c
 --- old/src/util/os_file.c	2020-04-23 05:36:59.000000000 +0800
 +++ new/src/util/os_file.c	2020-10-04 15:45:43.658713000 +0800

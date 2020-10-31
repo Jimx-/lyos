@@ -82,10 +82,10 @@ int do_openat(void)
 {
     /* get parameters from the message */
     endpoint_t src = self->msg_in.source;
-    int dirfd = self->msg_in.u.m_vfs_openat.dirfd;
-    int name_len = self->msg_in.u.m_vfs_openat.name_len;
-    int flags = self->msg_in.u.m_vfs_openat.flags;
-    mode_t mode = self->msg_in.u.m_vfs_openat.mode;
+    int dirfd = self->msg_in.u.m_vfs_pathat.dirfd;
+    int name_len = self->msg_in.u.m_vfs_pathat.name_len;
+    int flags = self->msg_in.u.m_vfs_pathat.flags;
+    mode_t mode = self->msg_in.u.m_vfs_pathat.mode;
     char pathname[PATH_MAX];
     int retval;
 
@@ -94,7 +94,7 @@ int do_openat(void)
     }
 
     if ((retval = data_copy(SELF, pathname, src,
-                            self->msg_in.u.m_vfs_openat.pathname, name_len)) !=
+                            self->msg_in.u.m_vfs_pathat.pathname, name_len)) !=
         OK)
         return -retval;
     pathname[name_len] = '\0';
@@ -539,7 +539,7 @@ int do_mknod(void)
         return retval;
     pathname[name_len] = '\0';
 
-    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin);
+    init_lookup(&lookup, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin);
     lookup.vmnt_lock = RWL_WRITE;
     lookup.inode_lock = RWL_WRITE;
 

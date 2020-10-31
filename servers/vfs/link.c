@@ -133,7 +133,7 @@ int do_unlink(void)
               self->msg_in.NAME_LEN);
     pathname[self->msg_in.NAME_LEN] = '\0';
 
-    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin_dir);
+    init_lookup(&lookup, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin_dir);
     lookup.vmnt_lock = RWL_WRITE;
     lookup.inode_lock = RWL_WRITE;
 
@@ -183,7 +183,7 @@ int do_rdlink(void)
               self->msg_in.NAME_LEN);
     pathname[self->msg_in.NAME_LEN] = '\0';
 
-    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin);
+    init_lookup(&lookup, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
     pin = resolve_path(&lookup, fproc);

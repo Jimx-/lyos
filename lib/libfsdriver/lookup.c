@@ -165,7 +165,8 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
             break;
 
         /* resolve symlink */
-        if (S_ISLNK(next_node.fn_mode) && (*cp || !(flags & LKF_SYMLINK))) {
+        if (S_ISLNK(next_node.fn_mode) &&
+            (*cp || !(flags & LKF_SYMLINK_NOFOLLOW))) {
             if (++symloop < _POSIX_SYMLOOP_MAX) {
                 retval = resolve_link(fsd, dev, next_node.fn_num, pathname,
                                       sizeof(pathname), cp, user_endpt);

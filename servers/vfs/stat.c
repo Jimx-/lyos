@@ -85,12 +85,15 @@ static void generic_fill_stat(struct inode* pin, struct stat* stat)
  */
 int do_stat(void)
 {
-    int namelen = self->msg_in.NAME_LEN + 1;
+    int namelen = self->msg_in.NAME_LEN;
     char pathname[PATH_MAX];
     int retval;
+
     if (namelen > PATH_MAX) return ENAMETOOLONG;
 
-    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.PATHNAME, namelen)) != OK)
+        return retval;
     pathname[namelen] = 0;
 
     struct lookup lookup;
@@ -122,19 +125,21 @@ int do_stat(void)
 
 int do_lstat(void)
 {
-    int namelen = self->msg_in.NAME_LEN + 1;
+    int namelen = self->msg_in.NAME_LEN;
     char pathname[PATH_MAX];
     int retval;
     if (namelen > PATH_MAX) return ENAMETOOLONG;
 
-    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.PATHNAME, namelen)) != OK)
+        return retval;
     pathname[namelen] = 0;
 
     struct lookup lookup;
     struct inode* pin = NULL;
     struct vfs_mount* vmnt = NULL;
 
-    init_lookup(&lookup, pathname, LKF_SYMLINK, &vmnt, &pin);
+    init_lookup(&lookup, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
     pin = resolve_path(&lookup, fproc);
@@ -149,6 +154,64 @@ int do_lstat(void)
         generic_fill_stat(pin, &sbuf);
         retval = data_copy(fproc->endpoint, self->msg_in.BUF, SELF, &sbuf,
                            sizeof(sbuf));
+    }
+
+    unlock_inode(pin);
+    unlock_vmnt(vmnt);
+    put_inode(pin);
+
+    return retval;
+}
+
+static inline int stat_set_lookup_flags(unsigned* lookup_flags, int flags)
+{
+    if (flags & ~AT_SYMLINK_NOFOLLOW) return EINVAL;
+
+    *lookup_flags = 0;
+
+    if (flags & AT_SYMLINK_NOFOLLOW) *lookup_flags |= LKF_SYMLINK_NOFOLLOW;
+
+    return 0;
+}
+
+int do_fstatat(void)
+{
+    int dirfd = self->msg_in.u.m_vfs_pathat.dirfd;
+    int namelen = self->msg_in.u.m_vfs_pathat.name_len;
+    void* user_buf = self->msg_in.u.m_vfs_pathat.buf;
+    int flags = self->msg_in.u.m_vfs_pathat.flags;
+    unsigned int lookup_flags;
+    char pathname[PATH_MAX];
+    int retval;
+
+    if (namelen > PATH_MAX) return ENAMETOOLONG;
+
+    if (stat_set_lookup_flags(&lookup_flags, flags) != OK) return EINVAL;
+
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.u.m_vfs_pathat.pathname, namelen)) !=
+        OK)
+        return retval;
+    pathname[namelen] = 0;
+
+    struct lookup lookup;
+    struct inode* pin = NULL;
+    struct vfs_mount* vmnt = NULL;
+    init_lookupat(&lookup, dirfd, pathname, lookup_flags, &vmnt, &pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_READ;
+    pin = resolve_path(&lookup, fproc);
+
+    if (!pin) return ENOENT;
+
+    if (pin->i_fs_ep != NO_TASK) {
+        retval = request_stat(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                              fproc->endpoint, user_buf);
+    } else {
+        struct stat sbuf;
+        generic_fill_stat(pin, &sbuf);
+        retval =
+            data_copy(fproc->endpoint, user_buf, SELF, &sbuf, sizeof(sbuf));
     }
 
     unlock_inode(pin);

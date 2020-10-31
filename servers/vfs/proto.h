@@ -107,6 +107,7 @@ int request_readwrite(endpoint_t fs_ep, dev_t dev, ino_t num, loff_t pos,
 int do_stat(void);
 int do_lstat(void);
 int do_fstat(void);
+int do_fstatat(void);
 int do_access(void);
 int do_chmod(int type);
 int fs_getsetid(void);

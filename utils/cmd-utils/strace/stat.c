@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <sys/stat.h>
-#include <sys/ptrace.h>
+#include <fcntl.h>
 
 #include "types.h"
 #include "xlat.h"
 #include "proto.h"
+
+#include "xlat/at_flags.h"
 
 int copy_struct_stat(struct tcb* tcp, void* addr, struct stat* stat)
 {
@@ -59,6 +61,25 @@ int trace_fstat(struct tcb* tcp)
         printf("%d, ", tcp->msg_in.FD);
     } else {
         decode_struct_stat(tcp, tcp->msg_in.BUF);
+    }
+
+    return 0;
+}
+
+int trace_fstatat(struct tcb* tcp)
+{
+    MESSAGE* msg = &tcp->msg_in;
+
+    if (entering(tcp)) {
+        print_dirfd(msg->u.m_vfs_pathat.dirfd);
+        printf(", ");
+        print_path(tcp, msg->u.m_vfs_pathat.pathname,
+                   msg->u.m_vfs_pathat.name_len);
+        printf(", ");
+    } else {
+        decode_struct_stat(tcp, msg->u.m_vfs_pathat.buf);
+        printf(", ");
+        print_flags(msg->u.m_vfs_pathat.flags, &at_flags);
     }
 
     return 0;
