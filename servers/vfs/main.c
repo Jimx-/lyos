@@ -227,6 +227,9 @@ static void do_work(void)
     case RMDIR:
         self->msg_out.RETVAL = do_unlink();
         break;
+    case UNLINKAT:
+        self->msg_out.RETVAL = do_unlinkat();
+        break;
     case SELECT:
         self->msg_out.RETVAL = do_select();
         break;

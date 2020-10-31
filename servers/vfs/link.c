@@ -118,22 +118,15 @@ static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
     return -retval;
 }
 
-int do_unlink(void)
+static int common_unlink(int dirfd, char* pathname, int flags)
 {
-    char pathname[PATH_MAX];
     struct lookup lookup;
     struct vfs_mount* vmnt;
     struct inode* pin_dir;
     int retval;
 
-    if (self->msg_in.NAME_LEN >= PATH_MAX) return -ENAMETOOLONG;
-
-    /* fetch the name */
-    data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME,
-              self->msg_in.NAME_LEN);
-    pathname[self->msg_in.NAME_LEN] = '\0';
-
-    init_lookup(&lookup, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt, &pin_dir);
+    init_lookupat(&lookup, dirfd, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt,
+                  &pin_dir);
     lookup.vmnt_lock = RWL_WRITE;
     lookup.inode_lock = RWL_WRITE;
 
@@ -153,17 +146,59 @@ int do_unlink(void)
         return retval;
     }
 
-    if (self->msg_in.type == UNLINK)
-        retval = request_unlink(pin_dir->i_fs_ep, pin_dir->i_dev,
-                                pin_dir->i_num, pathname);
-    else
+    if (flags & AT_REMOVEDIR)
         retval = request_rmdir(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
                                pathname);
+    else
+        retval = request_unlink(pin_dir->i_fs_ep, pin_dir->i_dev,
+                                pin_dir->i_num, pathname);
 
     unlock_inode(pin_dir);
     unlock_vmnt(vmnt);
     put_inode(pin_dir);
+
     return retval;
+}
+
+int do_unlink(void)
+{
+    char pathname[PATH_MAX];
+    int flags, retval;
+
+    if (self->msg_in.NAME_LEN >= PATH_MAX) return ENAMETOOLONG;
+
+    /* fetch the name */
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.PATHNAME, self->msg_in.NAME_LEN)) !=
+        OK)
+        return retval;
+    pathname[self->msg_in.NAME_LEN] = '\0';
+
+    flags = self->msg_in.type == RMDIR ? AT_REMOVEDIR : 0;
+
+    return common_unlink(AT_FDCWD, pathname, flags);
+}
+
+int do_unlinkat(void)
+{
+    int dirfd = self->msg_in.u.m_vfs_pathat.dirfd;
+    int name_len = self->msg_in.u.m_vfs_pathat.name_len;
+    int flags = self->msg_in.u.m_vfs_pathat.flags;
+    char pathname[PATH_MAX];
+    int retval;
+
+    if (name_len >= PATH_MAX) return ENAMETOOLONG;
+
+    if (flags & ~AT_REMOVEDIR) return EINVAL;
+
+    /* fetch the name */
+    if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                            self->msg_in.u.m_vfs_pathat.pathname, name_len)) !=
+        OK)
+        return retval;
+    pathname[name_len] = '\0';
+
+    return common_unlink(dirfd, pathname, flags);
 }
 
 int do_rdlink(void)

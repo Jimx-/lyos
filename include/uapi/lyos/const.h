@@ -219,6 +219,7 @@ enum msgtype {
     MKNOD,
     OPENAT,
     FSTATAT,
+    UNLINKAT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

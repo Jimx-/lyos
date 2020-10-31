@@ -561,19 +561,34 @@ int link(const char* old, const char* new)
     return 0;
 }
 
-int unlink(const char* pathname)
+int unlinkat(int dirfd, const char* pathname, int flags)
 {
     MESSAGE msg;
-    msg.type = UNLINK;
 
-    msg.PATHNAME = (void*)pathname;
-    msg.NAME_LEN = strlen(pathname);
+    memset(&msg, 0, sizeof(msg));
+    msg.type = UNLINKAT;
+    msg.u.m_vfs_pathat.dirfd = dirfd;
+    msg.u.m_vfs_pathat.pathname = (void*)pathname;
+    msg.u.m_vfs_pathat.name_len = strlen(pathname);
+    msg.u.m_vfs_pathat.flags = flags;
 
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
 
-    return msg.RETVAL;
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
+}
+
+int unlink(const char* pathname) { return unlinkat(AT_FDCWD, pathname, 0); }
+
+int rmdir(const char* pathname)
+{
+    return unlinkat(AT_FDCWD, pathname, AT_REMOVEDIR);
 }
 
 int fcntl(int fd, int cmd, ...)
@@ -934,26 +949,6 @@ int fstatfs(int fd, struct statfs* buf)
 {
     puts("fstatfs: not implemented");
     return ENOSYS;
-}
-
-int rmdir(const char* pathname)
-{
-    MESSAGE msg;
-    msg.type = RMDIR;
-
-    msg.PATHNAME = (void*)pathname;
-    msg.NAME_LEN = strlen(pathname);
-
-    cmb();
-
-    send_recv(BOTH, TASK_FS, &msg);
-
-    if (msg.RETVAL > 0) {
-        errno = msg.RETVAL;
-        return -1;
-    }
-
-    return msg.RETVAL;
 }
 
 int _fstat(int fd, struct stat* buf)
