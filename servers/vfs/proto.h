@@ -33,6 +33,7 @@ void init_inode_table();
 struct inode* new_inode(dev_t dev, ino_t num, mode_t mode);
 struct inode* find_inode(dev_t dev, ino_t num);
 void put_inode(struct inode* pin);
+struct inode* dup_inode(struct inode* pin);
 int lock_inode(struct inode* pin, rwlock_type_t type);
 void unlock_inode(struct inode* pin);
 void sync_inode(struct inode* p);
@@ -241,5 +242,15 @@ int do_lock(int fd, int req, void* arg);
 
 /* vfs/time.c */
 int do_utimensat(void);
+
+/* vfs/fsnotify.c */
+int fsnotify(struct inode* pin, u32 mask, const struct inode* data,
+             const char* filename, u32 cookie);
+void fsnotify_create(struct inode* dir, struct inode* child, const char* name);
+void fsnotify_unlink(struct inode* dir, struct inode* child, const char* name);
+
+/* vfs/inotify.c */
+int do_inotify_init1(void);
+int do_inotify_add_watch(void);
 
 #endif

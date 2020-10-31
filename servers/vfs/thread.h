@@ -79,5 +79,6 @@ struct worker_thread {
 #define WT_BLOCKED_ON_SFD     7
 #define WT_BLOCKED_ON_TFD     8
 #define WT_BLOCKED_ON_FLOCK   9
+#define WT_BLOCKED_ON_INOTIFY 10
 
 #endif

@@ -340,6 +340,21 @@ BEGIN_MESS_DECL(mess_vfs_utimensat)
 }
 END_MESS_DECL(mess_vfs_utimensat)
 
+BEGIN_MESS_DECL(mess_vfs_inotify)
+{
+    int fd;
+    int wd;
+    void* pathname;
+    int name_len;
+    union {
+        __u32 flags;
+        __u32 mask;
+    };
+
+    __u8 _pad[40 - sizeof(void*)];
+}
+END_MESS_DECL(mess_vfs_inotify)
+
 BEGIN_MESS_DECL(mess_vfs_fs_lookup)
 {
     dev_t dev;
@@ -800,6 +815,7 @@ typedef struct {
         struct mess_vfs_sockopt m_vfs_sockopt;
         struct mess_vfs_copyfd m_vfs_copyfd;
         struct mess_vfs_utimensat m_vfs_utimensat;
+        struct mess_vfs_inotify m_vfs_inotify;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
         struct mess_vfs_fs_stat m_vfs_fs_stat;

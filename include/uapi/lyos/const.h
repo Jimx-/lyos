@@ -219,9 +219,12 @@ enum msgtype {
     MKNOD,
     OPENAT,
     FSTATAT,
-    UNLINKAT,
+    UNLINKAT, /* 90 */
     READLINKAT,
     UTIMENSAT,
+    INOTIFY_INIT1,
+    INOTIFY_ADD_WATCH,
+    INOTIFY_RM_WATCH,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

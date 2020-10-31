@@ -37,6 +37,8 @@ struct file_operations {
     int (*release)(struct inode*, struct file_desc*);
 };
 
+struct fsnotify_mark_connector;
+
 /**
  * @struct inode
  * @brief  i-node
@@ -65,6 +67,9 @@ struct inode {
 
     struct vfs_mount* i_vmnt;
     const struct file_operations* i_fops;
+
+    u32 i_fsnotify_mask;
+    struct fsnotify_mark_connector* i_fsnotify_marks;
 
     void* i_private;
 };

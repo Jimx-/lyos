@@ -75,6 +75,7 @@ struct inode* new_inode(dev_t dev, ino_t num, mode_t mode)
     struct inode* pin = (struct inode*)malloc(sizeof(struct inode));
     if (!pin) return NULL;
 
+    memset(pin, 0, sizeof(*pin));
     clear_inode(pin);
 
     pin->i_dev = dev;
@@ -131,6 +132,12 @@ void put_inode(struct inode* pin)
     unlock_inode(pin);
 
     free(pin);
+}
+
+struct inode* dup_inode(struct inode* pin)
+{
+    pin->i_cnt++;
+    return pin;
 }
 
 int lock_inode(struct inode* pin, rwlock_type_t type)

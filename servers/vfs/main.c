@@ -330,6 +330,12 @@ static void do_work(void)
     case VFS_COPYFD:
         self->msg_out.RETVAL = do_copyfd();
         break;
+    case INOTIFY_INIT1:
+        self->msg_out.FD = do_inotify_init1();
+        break;
+    case INOTIFY_ADD_WATCH:
+        self->msg_out.RETVAL = do_inotify_add_watch();
+        break;
     default:
         self->msg_out.RETVAL = ENOSYS;
         break;

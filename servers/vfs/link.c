@@ -121,8 +121,8 @@ static ssize_t request_rdlink(endpoint_t fs_ep, dev_t dev, ino_t num,
 static int common_unlink(int dirfd, char* pathname, int flags)
 {
     struct lookup lookup;
-    struct vfs_mount* vmnt;
-    struct inode* pin_dir;
+    struct vfs_mount *vmnt, *vmnt_pin;
+    struct inode *pin_dir, *pin;
     int retval;
 
     init_lookupat(&lookup, dirfd, pathname, LKF_SYMLINK_NOFOLLOW, &vmnt,
@@ -132,19 +132,24 @@ static int common_unlink(int dirfd, char* pathname, int flags)
 
     if ((pin_dir = last_dir(&lookup, fproc)) == NULL) return err_code;
 
-    if (!S_ISDIR(pin_dir->i_mode)) {
-        unlock_inode(pin_dir);
-        unlock_vmnt(vmnt);
-        put_inode(pin_dir);
-        return ENOTDIR;
+    init_lookup(&lookup, lookup.pathname, 0, &vmnt_pin, &pin);
+    lookup.vmnt_lock = RWL_WRITE;
+    lookup.inode_lock = RWL_WRITE;
+    pin = advance_path(pin_dir, &lookup, fproc);
+    if (vmnt_pin) unlock_vmnt(vmnt_pin);
+
+    if (!pin) {
+        retval = ENOENT;
+        goto out_put_dir;
     }
 
-    if ((retval = forbidden(fproc, pin_dir, W_BIT | X_BIT)) != 0) {
-        unlock_inode(pin_dir);
-        unlock_vmnt(vmnt);
-        put_inode(pin_dir);
-        return retval;
+    if (!S_ISDIR(pin_dir->i_mode)) {
+        retval = ENOTDIR;
+        goto out_put_pin;
     }
+
+    if ((retval = forbidden(fproc, pin_dir, W_BIT | X_BIT)) != 0)
+        goto out_put_pin;
 
     if (flags & AT_REMOVEDIR)
         retval = request_rmdir(pin_dir->i_fs_ep, pin_dir->i_dev, pin_dir->i_num,
@@ -153,6 +158,13 @@ static int common_unlink(int dirfd, char* pathname, int flags)
         retval = request_unlink(pin_dir->i_fs_ep, pin_dir->i_dev,
                                 pin_dir->i_num, pathname);
 
+    fsnotify_unlink(pin_dir, pin, pathname);
+
+out_put_pin:
+    if (pin_dir != pin) unlock_inode(pin_dir);
+    put_inode(pin);
+
+out_put_dir:
     unlock_inode(pin_dir);
     unlock_vmnt(vmnt);
     put_inode(pin_dir);

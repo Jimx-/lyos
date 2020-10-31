@@ -1,9 +1,11 @@
 #include <sys/types.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 #define DIRBLKSIZ 1024
 DIR* opendir(const char* name)
