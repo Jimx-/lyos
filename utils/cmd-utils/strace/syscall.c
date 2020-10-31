@@ -82,6 +82,14 @@ int syscall_trace_exiting(struct tcb* tcp)
         case UMASK:
             retval = tcp->msg_out.RETVAL;
             break;
+        case UTIMENSAT:
+            retval = tcp->msg_out.RETVAL;
+
+            if (retval > 0) {
+                err = retval;
+                retval = -1;
+            }
+            break;
         case MMAP:
             base = 16;
             retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;

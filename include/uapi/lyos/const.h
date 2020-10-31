@@ -221,6 +221,7 @@ enum msgtype {
     FSTATAT,
     UNLINKAT,
     READLINKAT,
+    UTIMENSAT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -257,6 +258,7 @@ enum msgtype {
     FS_UNLINK,
     FS_RMDIR,
     FS_MKNOD,
+    FS_UTIME,
 
     VFS_MAPDRIVER,
     VFS_SOCKETPATH,

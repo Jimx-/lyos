@@ -1056,10 +1056,110 @@ long pathconf(const char* path, int name)
     return 0;
 }
 
+int utimensat(int dirfd, const char* pathname, const struct timespec times[2],
+              int flags)
+{
+    MESSAGE msg;
+    static const struct timespec now[2] = {{0, UTIME_NOW}, {0, UTIME_NOW}};
+
+    if (times == NULL) times = now;
+
+    if (pathname == NULL) {
+        if (dirfd == AT_FDCWD)
+            errno = EFAULT;
+        else
+            errno = EINVAL;
+        return -1;
+    }
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = UTIMENSAT;
+    msg.u.m_vfs_utimensat.fd = dirfd;
+    msg.u.m_vfs_utimensat.pathname = (void*)pathname;
+    msg.u.m_vfs_utimensat.name_len = strlen(pathname);
+    msg.u.m_vfs_utimensat.flags = flags;
+    msg.u.m_vfs_utimensat.atime = times[0].tv_sec;
+    msg.u.m_vfs_utimensat.mtime = times[1].tv_sec;
+    msg.u.m_vfs_utimensat.ansec = times[0].tv_nsec;
+    msg.u.m_vfs_utimensat.mnsec = times[1].tv_nsec;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
+}
+
+int futimens(int fd, const struct timespec times[2])
+{
+    MESSAGE msg;
+    static const struct timespec now[2] = {{0, UTIME_NOW}, {0, UTIME_NOW}};
+
+    if (times == NULL) times = now;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = UTIMENSAT;
+    msg.u.m_vfs_utimensat.fd = fd;
+    msg.u.m_vfs_utimensat.pathname = NULL;
+    msg.u.m_vfs_utimensat.flags = 0;
+    msg.u.m_vfs_utimensat.atime = times[0].tv_sec;
+    msg.u.m_vfs_utimensat.mtime = times[1].tv_sec;
+    msg.u.m_vfs_utimensat.ansec = times[0].tv_nsec;
+    msg.u.m_vfs_utimensat.mnsec = times[1].tv_nsec;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
+}
+
 int utime(const char* filename, const struct utimbuf* times)
 {
-    printf("utime: not implemented\n");
-    return 0;
+    struct timespec ts[2];
+
+    if (times == NULL) {
+        ts[0].tv_sec = 0;
+        ts[0].tv_nsec = UTIME_NOW;
+        ts[1].tv_sec = 0;
+        ts[1].tv_nsec = UTIME_NOW;
+    } else {
+        ts[0].tv_sec = times->actime;
+        ts[0].tv_nsec = 0;
+        ts[1].tv_sec = times->modtime;
+        ts[1].tv_nsec = 0;
+    }
+
+    return utimensat(AT_FDCWD, filename, ts, 0);
+}
+
+int utimes(const char* filename, const struct timeval times[2])
+{
+    struct timespec ts[2];
+
+    if (times == NULL) {
+        ts[0].tv_sec = 0;
+        ts[0].tv_nsec = UTIME_NOW;
+        ts[1].tv_sec = 0;
+        ts[1].tv_nsec = UTIME_NOW;
+    } else {
+        ts[0].tv_sec = times[0].tv_sec;
+        ts[0].tv_nsec = times[0].tv_usec * 1000UL;
+        ts[1].tv_sec = times[1].tv_sec;
+        ts[1].tv_nsec = times[1].tv_usec * 1000UL;
+    }
+
+    return utimensat(AT_FDCWD, filename, ts, 0);
 }
 
 int chown(const char* path, uid_t owner, gid_t group)

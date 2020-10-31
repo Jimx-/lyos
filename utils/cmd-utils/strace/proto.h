@@ -54,6 +54,8 @@ int print_array(struct tcb* tcp, const void* start, size_t count,
 void print_iov_upto(struct tcb* const tcp, size_t len, void* addr,
                     unsigned long data_size);
 
+void print_timespec_t(const struct timespec* ts);
+
 int syscall_trace_entering(struct tcb* tcp, int* sig);
 int syscall_trace_exiting(struct tcb* tcp);
 
@@ -130,5 +132,7 @@ int trace_epoll_wait(struct tcb* tcp);
 
 int trace_sendmsg(struct tcb* tcp);
 int trace_recvmsg(struct tcb* tcp);
+
+int trace_utimensat(struct tcb* tcp);
 
 #endif

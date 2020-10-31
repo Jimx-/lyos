@@ -75,6 +75,8 @@ struct fsdriver {
     int (*fs_chmod)(dev_t dev, ino_t num, mode_t* mode);
     ssize_t (*fs_getdents)(dev_t dev, ino_t num, struct fsdriver_data* data,
                            loff_t* position, size_t count);
+    int (*fs_utime)(dev_t dev, ino_t num, const struct timespec* atime,
+                    const struct timespec* mtime);
     int (*fs_driver)(dev_t dev);
     int (*fs_sync)();
 

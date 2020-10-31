@@ -96,6 +96,9 @@ int fsdriver_start(const struct fsdriver* fsd)
         case FS_RMDIR:
             m.RETVAL = fsdriver_rmdir(fsd, &m);
             break;
+        case FS_UTIME:
+            m.RETVAL = fsdriver_utime(fsd, &m);
+            break;
         default:
             if (fsd->fs_other) {
                 fsd->fs_other(&m);

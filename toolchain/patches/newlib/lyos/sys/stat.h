@@ -137,11 +137,9 @@ extern "C"
 #define S_ISLNK(m)  (((m)&_IFMT) == _IFLNK)
 #define S_ISSOCK(m) (((m)&_IFMT) == _IFSOCK)
 
-#if defined(__CYGWIN__)
 /* Special tv_nsec values for futimens(2) and utimensat(2). */
 #define UTIME_NOW  -2L
 #define UTIME_OMIT -1L
-#endif
 
     int chmod(const char* __path, mode_t __mode);
     int fchmod(int __fd, mode_t __mode);

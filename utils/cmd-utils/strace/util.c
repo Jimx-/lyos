@@ -11,6 +11,11 @@
 
 void print_path(struct tcb* tcp, char* string, int len)
 {
+    if (!string) {
+        print_addr((uint64_t)string);
+        return;
+    }
+
     char* buf = (char*)malloc(len + 5);
     if (!buf) return;
 

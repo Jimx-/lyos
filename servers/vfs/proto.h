@@ -239,4 +239,7 @@ int do_setsockopt(void);
 /* vfs/lock.c */
 int do_lock(int fd, int req, void* arg);
 
+/* vfs/time.c */
+int do_utimensat(void);
+
 #endif

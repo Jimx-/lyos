@@ -366,6 +366,22 @@ int fsdriver_rmdir(const struct fsdriver* fsd, MESSAGE* m)
     return fsd->fs_rmdir(dev, num, name);
 }
 
+int fsdriver_utime(const struct fsdriver* fsd, MESSAGE* m)
+{
+    dev_t dev = m->u.m_vfs_fs_utime.dev;
+    ino_t num = m->u.m_vfs_fs_utime.num;
+    struct timespec atime, mtime;
+
+    atime.tv_sec = m->u.m_vfs_fs_utime.atime;
+    atime.tv_nsec = m->u.m_vfs_fs_utime.ansec;
+    mtime.tv_sec = m->u.m_vfs_fs_utime.mtime;
+    mtime.tv_nsec = m->u.m_vfs_fs_utime.mnsec;
+
+    if (!fsd->fs_utime) return ENOSYS;
+
+    return fsd->fs_utime(dev, num, &atime, &mtime);
+}
+
 int fsdriver_sync(const struct fsdriver* fsd, MESSAGE* m)
 {
     if (fsd->fs_sync == NULL) return ENOSYS;

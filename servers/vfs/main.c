@@ -260,6 +260,9 @@ static void do_work(void)
     case POLL:
         self->msg_out.RETVAL = do_poll();
         break;
+    case UTIMENSAT:
+        self->msg_out.RETVAL = do_utimensat();
+        break;
     case EVENTFD:
         self->msg_out.FD = do_eventfd();
         break;
