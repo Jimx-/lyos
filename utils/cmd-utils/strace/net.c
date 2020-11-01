@@ -95,7 +95,7 @@ int trace_listen(struct tcb* tcp)
     return RVAL_DECODED;
 }
 
-int trace_accept4(struct tcb* tcp)
+static int decode_bindconn_sockname(struct tcb* tcp)
 {
     int ulen, rlen;
     MESSAGE* msg = &tcp->msg_in;
@@ -103,7 +103,7 @@ int trace_accept4(struct tcb* tcp)
     if (entering(tcp)) {
         printf("%d, ", msg->u.m_vfs_bindconn.sock_fd);
 
-        return RVAL_FD;
+        return 0;
     }
 
     ulen = msg->u.m_vfs_bindconn.addr_len;
@@ -121,10 +121,22 @@ int trace_accept4(struct tcb* tcp)
             printf(", [%d]", rlen);
     }
 
-    printf(", ");
-    print_flags(msg->u.m_vfs_bindconn.flags, &sock_type_flags);
+    return RVAL_DECODED;
+}
 
-    return RVAL_DECODED | RVAL_FD;
+int trace_accept4(struct tcb* tcp)
+{
+    MESSAGE* msg = &tcp->msg_in;
+    int retval;
+
+    retval = decode_bindconn_sockname(tcp);
+
+    if (retval & RVAL_DECODED) {
+        printf(", ");
+        print_flags(msg->u.m_vfs_bindconn.flags, &sock_type_flags);
+    }
+
+    return retval | RVAL_FD;
 }
 
 int trace_sendto(struct tcb* tcp)
@@ -183,3 +195,5 @@ int trace_recvfrom(struct tcb* tcp)
 
     return RVAL_SPECIAL;
 }
+
+int trace_getsockname(struct tcb* tcp) { return decode_bindconn_sockname(tcp); }

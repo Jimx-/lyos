@@ -557,6 +557,11 @@ int sdev_getsockopt(endpoint_t src, dev_t dev, int level, int name, void* addr,
     return sdev_get(src, SDEV_GETSOCKOPT, dev, level, name, addr, len);
 }
 
+int sdev_getsockname(endpoint_t src, dev_t dev, void* addr, size_t* len)
+{
+    return sdev_get(src, SDEV_GETSOCKNAME, dev, 0, 0, addr, len);
+}
+
 int sdev_setsockopt(endpoint_t src, dev_t dev, int level, int name, void* addr,
                     size_t len)
 {

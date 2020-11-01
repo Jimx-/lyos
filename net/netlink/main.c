@@ -39,6 +39,8 @@ static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
                             socklen_t* ctl_len, struct sockaddr* addr,
                             socklen_t* addr_len, endpoint_t user_endpt,
                             int flags, int* rflags);
+static int netlink_getsockname(struct sock* sock, struct sockaddr* addr,
+                               socklen_t* addr_len);
 static void netlink_free(struct sock* sock);
 
 static void netlink_other(MESSAGE* msg);
@@ -52,6 +54,7 @@ static const struct sockdriver_ops netlink_ops = {
     .sop_bind = netlink_bind,
     .sop_recv = netlink_recv,
     .sop_poll = netlink_poll,
+    .sop_getsockname = netlink_getsockname,
     .sop_close = netlink_close,
     .sop_free = netlink_free,
 };
@@ -410,6 +413,21 @@ static __poll_t netlink_poll(struct sock* sock)
     mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 
     return mask;
+}
+
+static int netlink_getsockname(struct sock* sock, struct sockaddr* addr,
+                               socklen_t* addr_len)
+{
+    struct nlsock* nls = to_nlsock(sock);
+    struct sockaddr_nl* nladdr = (struct sockaddr_nl*)addr;
+
+    nladdr->nl_family = AF_NETLINK;
+    nladdr->nl_pad = 0;
+    nladdr->nl_pid = nls->portid;
+    nladdr->nl_groups = nls->groups ? nls->groups[0] : 0;
+
+    *addr_len = sizeof(*nladdr);
+    return 0;
 }
 
 static int netlink_close(struct sock* sock, int force, int non_block)

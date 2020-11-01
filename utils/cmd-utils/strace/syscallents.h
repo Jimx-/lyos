@@ -52,6 +52,7 @@ _S(SENDTO, sendto),
 _S(RECVFROM, recvfrom),
 _S(SENDMSG, sendmsg),
 _S(RECVMSG, recvmsg),
+_S(GETSOCKNAME, getsockname),
 
 #undef _S
     /* clang-format on */

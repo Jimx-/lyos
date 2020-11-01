@@ -339,6 +339,29 @@ int setsockopt(int fd, int level, int option_name, const void* option_value,
 
 int getsockname(int fd, struct sockaddr* addr, socklen_t* addrlen)
 {
-    errno = ENOSYS;
-    return -1;
+    MESSAGE msg;
+
+    if (!addrlen) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = GETSOCKNAME;
+    msg.u.m_vfs_bindconn.sock_fd = fd;
+    msg.u.m_vfs_bindconn.addr = (void*)addr;
+    msg.u.m_vfs_bindconn.addr_len = *addrlen;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    *addrlen = msg.CNT;
+
+    return 0;
 }

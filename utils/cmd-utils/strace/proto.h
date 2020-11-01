@@ -114,6 +114,7 @@ int trace_listen(struct tcb* tcp);
 int trace_accept4(struct tcb* tcp);
 int trace_sendto(struct tcb* tcp);
 int trace_recvfrom(struct tcb* tcp);
+int trace_getsockname(struct tcb* tcp);
 
 int decode_sockaddr(struct tcb* tcp, const void* addr, size_t addrlen);
 

@@ -16,7 +16,7 @@
 #define SOCK_HASH_SIZE ((unsigned long)1 << SOCK_HASH_LOG2)
 #define SOCK_HASH_MASK (((unsigned long)1 << SOCK_HASH_LOG2) - 1)
 
-static const char* name = "sockdriver";
+static const char* lib_name = "sockdriver";
 
 static struct list_head sock_hash_table[SOCK_HASH_SIZE];
 
@@ -348,7 +348,7 @@ static void do_bindconn(MESSAGE* msg)
             do_connect(sockid, (struct sockaddr*)buf, len, user_endpt, flags);
         break;
     default:
-        panic("%s: do_bindconn() unexpected message type");
+        panic("%s: do_bindconn() unexpected message type", lib_name);
     }
 
 reply:
@@ -812,7 +812,7 @@ static void do_getsockopt(MESSAGE* msg)
     socklen_t len = msg->u.m_sockdriver_getset.len;
     struct sockdriver_data data;
     int val;
-    int retval;
+    int retval = 0;
 
     if ((sock = sock_get(sock_id)) == NULL) {
         retval = -EINVAL;
@@ -886,7 +886,7 @@ static void do_setsockopt(MESSAGE* msg)
     socklen_t len = msg->u.m_sockdriver_getset.len;
     struct sockdriver_data data;
     int val;
-    int retval;
+    int retval = 0;
 
     if ((sock = sock_get(sock_id)) == NULL) {
         retval = EINVAL;
@@ -936,6 +936,51 @@ static void do_setsockopt(MESSAGE* msg)
         else
             retval = sock->ops->sop_setsockopt(sock, level, name, &data, len);
     }
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
+static void do_getname(MESSAGE* msg)
+{
+    struct sock* sock;
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_getset.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_getset.sock_id;
+    mgrant_id_t grant = msg->u.m_sockdriver_getset.grant;
+    socklen_t len, addr_len = msg->u.m_sockdriver_getset.len;
+    char buf[SOCKADDR_MAX];
+    int retval = 0;
+
+    if ((sock = sock_get(sock_id)) == NULL) {
+        retval = -EINVAL;
+        goto reply;
+    }
+
+    switch (msg->type) {
+    case SDEV_GETSOCKNAME:
+        if (!sock->ops->sop_getsockname)
+            retval = -EOPNOTSUPP;
+        else
+            retval =
+                sock->ops->sop_getsockname(sock, (struct sockaddr*)buf, &len);
+        break;
+    default:
+        panic("%s: %s unknown request", lib_name, __FUNCTION__);
+        break;
+    }
+
+    if (retval == OK) {
+        if (len == 0)
+            panic("%s: %s success but no address", lib_name, __FUNCTION__);
+
+        if (addr_len > len) addr_len = len;
+
+        if (addr_len > 0 &&
+            (retval = safecopy_to(src, grant, 0, buf, addr_len)) == 0)
+            retval = addr_len;
+    } else if (retval > 0)
+        panic("%s: %s invalid reply status %d", lib_name, __FUNCTION__, retval);
 
 reply:
     send_generic_reply(src, req_id, retval);
@@ -1060,6 +1105,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_SETSOCKOPT:
         do_setsockopt(msg);
+        break;
+    case SDEV_GETSOCKNAME:
+        do_getname(msg);
         break;
     case SDEV_CLOSE:
         do_close(msg);

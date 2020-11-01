@@ -43,6 +43,8 @@ static int uds_listen(struct sock* sock, int backlog);
 static int uds_accept(struct sock* sock, struct sockaddr* addr,
                       socklen_t* addrlen, endpoint_t user_endpt, int flags,
                       struct sock** newsockp);
+static int uds_getsockname(struct sock* sock, struct sockaddr* addr,
+                           socklen_t* addr_len);
 static int uds_close(struct sock* sock, int force, int non_block);
 static void uds_free(struct sock* sock);
 
@@ -59,6 +61,7 @@ static const struct sockdriver_ops uds_ops = {
     .sop_send = uds_send,
     .sop_recv = uds_recv,
     .sop_poll = uds_poll,
+    .sop_getsockname = uds_getsockname,
     .sop_close = uds_close,
     .sop_free = uds_free,
 };
@@ -519,6 +522,16 @@ restart:
 
     *newsockp = NULL;
     return sock_sockid(&conn->sock);
+}
+
+static int uds_getsockname(struct sock* sock, struct sockaddr* addr,
+                           socklen_t* addr_len)
+{
+    struct udssock* uds = to_udssock(sock);
+
+    uds_make_addr(uds->path, uds->path_len, addr, addr_len);
+
+    return 0;
 }
 
 static int uds_close(struct sock* sock, int force, int non_block)

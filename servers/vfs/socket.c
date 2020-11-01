@@ -431,6 +431,23 @@ int do_setsockopt(void)
     return sdev_setsockopt(src, dev, level, name, buf, len);
 }
 
+int do_getsockname(void)
+{
+    endpoint_t src = self->msg_in.source;
+    int fd = self->msg_in.u.m_vfs_bindconn.sock_fd;
+    void* addr = self->msg_in.u.m_vfs_bindconn.addr;
+    size_t len = self->msg_in.u.m_vfs_bindconn.addr_len;
+    dev_t dev;
+    int retval;
+
+    if ((retval = get_sock_fd(fd, &dev, NULL)) != OK) return retval;
+
+    retval = sdev_getsockname(src, dev, addr, &len);
+
+    if (retval == OK) self->msg_out.CNT = len;
+    return retval;
+}
+
 static ssize_t sock_read(struct file_desc* filp, char* buf, size_t count,
                          loff_t* ppos, struct fproc* fp)
 {

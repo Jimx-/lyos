@@ -227,6 +227,7 @@ enum msgtype {
     INOTIFY_RM_WATCH,
     FCHOWN,
     FCHOWNAT,
+    GETSOCKNAME,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -329,6 +330,7 @@ enum msgtype {
     SDEV_SELECT,
     SDEV_GETSOCKOPT,
     SDEV_SETSOCKOPT,
+    SDEV_GETSOCKNAME,
     SDEV_CLOSE,
     SDEV_REPLY,
     SDEV_SOCKET_REPLY,
