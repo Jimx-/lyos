@@ -230,7 +230,7 @@ int do_socketpair(void);
 int do_bind(void);
 int do_connect(void);
 int do_listen(void);
-int do_accept(void);
+int do_accept4(void);
 ssize_t do_sendto(void);
 ssize_t do_recvfrom(void);
 ssize_t do_sockmsg(void);

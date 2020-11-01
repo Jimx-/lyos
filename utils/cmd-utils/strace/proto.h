@@ -108,7 +108,7 @@ int trace_socket(struct tcb* tcp);
 int trace_bind(struct tcb* tcp);
 int trace_connect(struct tcb* tcp);
 int trace_listen(struct tcb* tcp);
-int trace_accept(struct tcb* tcp);
+int trace_accept4(struct tcb* tcp);
 int trace_sendto(struct tcb* tcp);
 int trace_recvfrom(struct tcb* tcp);
 

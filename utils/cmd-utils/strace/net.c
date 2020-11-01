@@ -85,7 +85,7 @@ int trace_listen(struct tcb* tcp)
     return RVAL_DECODED;
 }
 
-int trace_accept(struct tcb* tcp)
+int trace_accept4(struct tcb* tcp)
 {
     int ulen, rlen;
     MESSAGE* msg = &tcp->msg_in;
@@ -110,6 +110,9 @@ int trace_accept(struct tcb* tcp)
         else
             printf(", [%d]", rlen);
     }
+
+    printf(", ");
+    print_flags(msg->u.m_vfs_bindconn.flags, &sock_type_flags);
 
     return RVAL_DECODED | RVAL_FD;
 }

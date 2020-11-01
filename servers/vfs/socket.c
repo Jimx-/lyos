@@ -275,16 +275,22 @@ int do_listen(void)
     return sdev_listen(fproc->endpoint, dev, backlog);
 }
 
-int do_accept(void)
+int do_accept4(void)
 {
     int fd = self->msg_in.u.m_vfs_bindconn.sock_fd;
     void* addr = self->msg_in.u.m_vfs_bindconn.addr;
     size_t addrlen = self->msg_in.u.m_vfs_bindconn.addr_len;
+    int sock_flags = self->msg_in.u.m_vfs_bindconn.flags;
     dev_t dev, newdev;
     int flags;
     int retval;
 
+    if (sock_flags & ~(SOCK_NONBLOCK | SOCK_CLOEXEC)) return -EINVAL;
+
     if ((retval = get_sock_fd(fd, &dev, &flags)) != OK) return retval;
+
+    if (sock_flags & SOCK_NONBLOCK) flags |= O_NONBLOCK;
+    if (sock_flags & SOCK_CLOEXEC) flags |= O_CLOEXEC;
 
     if ((retval = check_fds(fproc, 1)) != OK) return retval;
 

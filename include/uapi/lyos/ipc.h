@@ -272,8 +272,9 @@ BEGIN_MESS_DECL(mess_vfs_bindconn)
     int sock_fd;
     void* addr;
     size_t addr_len;
+    int flags;
 
-    __u8 _pad[52 - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[48 - sizeof(void*) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_bindconn)
 

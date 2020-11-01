@@ -117,7 +117,7 @@ int connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen)
     return 0;
 }
 
-int accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
+int accept4(int sockfd, struct sockaddr* addr, socklen_t* addrlen, int flags)
 {
     MESSAGE msg;
 
@@ -127,10 +127,11 @@ int accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
     }
 
     memset(&msg, 0, sizeof(msg));
-    msg.type = ACCEPT;
+    msg.type = ACCEPT4;
     msg.u.m_vfs_bindconn.sock_fd = sockfd;
     msg.u.m_vfs_bindconn.addr = (void*)addr;
     msg.u.m_vfs_bindconn.addr_len = addrlen ? *addrlen : 0;
+    msg.u.m_vfs_bindconn.flags = flags;
 
     __asm__ __volatile__("" ::: "memory");
 
@@ -146,6 +147,11 @@ int accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
     }
 
     return msg.FD;
+}
+
+int accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
+{
+    return accept4(sockfd, addr, addrlen, 0);
 }
 
 ssize_t send(int sock, const void* msg, size_t len, int flags)

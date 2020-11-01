@@ -308,8 +308,8 @@ static void do_work(void)
     case LISTEN:
         self->msg_out.RETVAL = do_listen();
         break;
-    case ACCEPT:
-        self->msg_out.FD = do_accept();
+    case ACCEPT4:
+        self->msg_out.FD = do_accept4();
         break;
     case SENDTO:
         self->msg_out.u.m_vfs_sendrecv.status = do_sendto();
