@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/socket.h>
+#include <lyos/netlink.h>
 
 #include "types.h"
 #include "xlat.h"
@@ -9,6 +10,7 @@
 #include "xlat/socktypes.h"
 #include "xlat/sock_flags.h"
 #include "xlat/msg_flags.h"
+#include "xlat/netlink_protocols.h"
 
 static void print_pairfd(int fd0, int fd1) { printf("[%d, %d]", fd0, fd1); }
 
@@ -48,7 +50,15 @@ int trace_socket(struct tcb* tcp)
     printf(", ");
     print_sock_type(msg->u.m_vfs_socket.type);
     printf(", ");
-    printf("%d", msg->u.m_vfs_socket.protocol);
+
+    switch (msg->u.m_vfs_socket.domain) {
+    case AF_NETLINK:
+        print_xval(msg->u.m_vfs_socket.protocol, &netlink_protocols);
+        break;
+    default:
+        printf("%lu", msg->u.m_vfs_socket.protocol);
+        break;
+    }
 
     return RVAL_DECODED | RVAL_FD;
 }
@@ -66,7 +76,7 @@ int trace_bind(struct tcb* tcp)
 {
     do_bindconn(tcp);
 
-    return RVAL_DECODED;
+    return RVAL_DECODED | RVAL_SPECIAL;
 }
 
 int trace_connect(struct tcb* tcp)

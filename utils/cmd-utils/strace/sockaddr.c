@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <sys/un.h>
+#include <lyos/netlink.h>
 
 #include "types.h"
 #include "xlat.h"
@@ -24,6 +25,15 @@ static void print_sockaddr_data_un(struct tcb* tcp, const void* const buf,
     }
 }
 
+static void print_sockaddr_data_nl(struct tcb* tcp, const void* const buf,
+                                   size_t addrlen)
+{
+    const struct sockaddr_nl* const sa_nl = buf;
+
+    printf("nl_pid=%u, ", sa_nl->nl_pid);
+    printf("nl_groups=0x%lx", sa_nl->nl_groups);
+}
+
 typedef void (*const sockaddr_printer)(struct tcb* tcp, const void* const,
                                        size_t);
 
@@ -32,6 +42,7 @@ static const struct {
     const int min_len;
 } sa_printers[] = {
     [AF_UNIX] = {print_sockaddr_data_un, SIZEOF_SA_FAMILY + 1},
+    [AF_NETLINK] = {print_sockaddr_data_nl, SIZEOF_SA_FAMILY + 1},
 };
 
 void print_sockaddr(struct tcb* tcp, const void* const buf, const int addrlen)
