@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)getcwd.c	5.11 (Berkeley) 2/24/91";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/syslimits.h>
 #include <reent.h>
 #include <_syslist.h>
 
@@ -223,4 +224,32 @@ err:
     if (ptsize) free(pt);
     free(up);
     return (char*)NULL;
+}
+
+char* getwd(char* buf) { return getcwd(buf, PATH_MAX); }
+
+char* get_current_dir_name(void)
+{
+    struct stat sbuf1, sbuf2;
+    char* pwd = getenv("PWD");
+    char* cwd = getcwd(NULL, 0);
+    int retval;
+
+    if (pwd) {
+        retval = stat(pwd, &sbuf1);
+        if (retval < 0) goto err;
+        retval = stat(cwd, &sbuf2);
+        if (retval < 0) goto err;
+
+        if (sbuf1.st_dev == sbuf2.st_dev && sbuf1.st_ino == sbuf2.st_ino) {
+            free(cwd);
+            cwd = strdup(pwd);
+        }
+    }
+
+    return cwd;
+
+err:
+    free(cwd);
+    return NULL;
 }

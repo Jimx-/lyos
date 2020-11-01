@@ -1043,13 +1043,6 @@ int symlink(const char* target, const char* linkpath)
     return msg.RETVAL;
 }
 
-extern char* getcwd(char*, size_t);
-char* getwd(char* buf)
-{
-    if (getcwd(buf, PATH_MAX) != 0) return NULL;
-    return buf;
-}
-
 long pathconf(const char* path, int name)
 {
     printf("pathconf: not implemented\n");
