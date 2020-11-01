@@ -1,0 +1,12 @@
+diff -rupN old/filename.c new/filename.c
+--- old/filename.c	2019-06-12 02:12:01.000000000 +0800
++++ new/filename.c	2020-11-01 22:31:47.274530726 +0800
+@@ -43,6 +43,8 @@
+ #endif
+ #endif
+ 
++#include <sys/syslimits.h>
++
+ extern int force_open;
+ extern int secure;
+ extern int use_lessopen;
