@@ -225,6 +225,8 @@ enum msgtype {
     INOTIFY_INIT1,
     INOTIFY_ADD_WATCH,
     INOTIFY_RM_WATCH,
+    FCHOWN,
+    FCHOWNAT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -262,6 +264,7 @@ enum msgtype {
     FS_RMDIR,
     FS_MKNOD,
     FS_UTIME,
+    FS_CHOWN,
 
     VFS_MAPDRIVER,
     VFS_SOCKETPATH,

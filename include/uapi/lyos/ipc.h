@@ -341,6 +341,19 @@ BEGIN_MESS_DECL(mess_vfs_utimensat)
 }
 END_MESS_DECL(mess_vfs_utimensat)
 
+BEGIN_MESS_DECL(mess_vfs_fchownat)
+{
+    int fd;
+    void* pathname;
+    int name_len;
+    uid_t owner;
+    gid_t group;
+    int flags;
+
+    __u8 _pad[44 - sizeof(void*) - sizeof(uid_t) - sizeof(gid_t)];
+}
+END_MESS_DECL(mess_vfs_fchownat)
+
 BEGIN_MESS_DECL(mess_vfs_inotify)
 {
     int fd;
@@ -504,6 +517,20 @@ BEGIN_MESS_DECL(mess_vfs_fs_utime)
               2 * sizeof(long)];
 }
 END_MESS_DECL(mess_vfs_fs_utime)
+
+BEGIN_MESS_DECL(mess_vfs_fs_chown)
+{
+    int status;
+    dev_t dev;
+    ino_t num;
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
+              sizeof(gid_t) - sizeof(mode_t)];
+}
+END_MESS_DECL(mess_vfs_fs_chown)
 
 struct mess_vfs_cdev_openclose {
     __u64 minor;
@@ -816,6 +843,7 @@ typedef struct {
         struct mess_vfs_sockopt m_vfs_sockopt;
         struct mess_vfs_copyfd m_vfs_copyfd;
         struct mess_vfs_utimensat m_vfs_utimensat;
+        struct mess_vfs_fchownat m_vfs_fchownat;
         struct mess_vfs_inotify m_vfs_inotify;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
@@ -827,6 +855,7 @@ typedef struct {
         struct mess_vfs_fs_readwrite m_vfs_fs_readwrite;
         struct mess_vfs_fs_unlink m_vfs_fs_unlink;
         struct mess_vfs_fs_utime m_vfs_fs_utime;
+        struct mess_vfs_fs_chown m_vfs_fs_chown;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;

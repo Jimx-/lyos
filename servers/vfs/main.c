@@ -52,12 +52,11 @@
 /**
  * Missing filesystem syscalls:
  * link
- * chown/chroot
+ * chroot
  * fcntl
  * rename
  * stime
  * umount
- * utime
  */
 
 void init_vfs();
@@ -216,6 +215,9 @@ static void do_work(void)
     case CHMOD:
     case FCHMOD:
         self->msg_out.RETVAL = do_chmod(msgtype);
+        break;
+    case FCHOWNAT:
+        self->msg_out.RETVAL = do_fchownat(msgtype);
         break;
     case GETDENTS:
         self->msg_out.RETVAL = do_getdents();

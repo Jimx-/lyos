@@ -83,6 +83,8 @@ int syscall_trace_exiting(struct tcb* tcp)
             retval = tcp->msg_out.RETVAL;
             break;
         case UTIMENSAT:
+        case FCHOWN:
+        case FCHOWNAT:
             retval = tcp->msg_out.RETVAL;
 
             if (retval > 0) {

@@ -96,6 +96,9 @@ int trace_getsetid(struct tcb* tcp);
 int trace_chmod(struct tcb* tcp);
 int trace_umask(struct tcb* tcp);
 
+int trace_fchown(struct tcb* tcp);
+int trace_fchownat(struct tcb* tcp);
+
 int trace_getdents(struct tcb* tcp);
 
 int trace_symlink(struct tcb* tcp);

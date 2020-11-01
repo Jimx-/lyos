@@ -1155,16 +1155,64 @@ int utimes(const char* filename, const struct timeval times[2])
     return utimensat(AT_FDCWD, filename, ts, 0);
 }
 
-int chown(const char* path, uid_t owner, gid_t group)
+int fchownat(int dirfd, const char* pathname, uid_t owner, gid_t group,
+             int flags)
 {
-    printf("chown: not implemented\n");
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = FCHOWNAT;
+    msg.u.m_vfs_fchownat.fd = dirfd;
+    msg.u.m_vfs_fchownat.pathname = (void*)pathname;
+    msg.u.m_vfs_fchownat.name_len = strlen(pathname);
+    msg.u.m_vfs_fchownat.owner = owner;
+    msg.u.m_vfs_fchownat.group = group;
+    msg.u.m_vfs_fchownat.flags = flags;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
     return 0;
 }
 
 int fchown(int fd, uid_t owner, gid_t group)
 {
-    printf("fchown: not implemented\n");
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = FCHOWN;
+    msg.u.m_vfs_fchownat.fd = fd;
+    msg.u.m_vfs_fchownat.pathname = NULL;
+    msg.u.m_vfs_fchownat.owner = owner;
+    msg.u.m_vfs_fchownat.group = group;
+    msg.u.m_vfs_fchownat.flags = 0;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
     return 0;
+}
+
+int chown(const char* path, uid_t owner, gid_t group)
+{
+    return fchownat(AT_FDCWD, path, owner, group, 0);
+}
+
+int lchown(const char* path, uid_t owner, gid_t group)
+{
+    return fchownat(AT_FDCWD, path, owner, group, AT_SYMLINK_NOFOLLOW);
 }
 
 int brk(void* addr)

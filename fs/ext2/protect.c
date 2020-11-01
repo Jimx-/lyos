@@ -29,6 +29,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/list.h"
+#include <sys/stat.h>
+
 #include "ext2_fs.h"
 #include "global.h"
 
@@ -38,7 +40,24 @@ int ext2_chmod(dev_t dev, ino_t num, mode_t* mode)
     if (!pin) return EINVAL;
 
     pin->i_mode = (pin->i_mode & ~ALL_MODES) | (*mode & ALL_MODES);
-    pin->i_dirt = 1;
+    pin->i_dirt = INO_DIRTY;
+    pin->i_update |= CTIME;
+
+    *mode = pin->i_mode;
+
+    put_ext2_inode(pin);
+    return 0;
+}
+
+int ext2_chown(dev_t dev, ino_t num, uid_t uid, gid_t gid, mode_t* mode)
+{
+    ext2_inode_t* pin = get_ext2_inode(dev, num);
+    if (!pin) return EINVAL;
+
+    pin->i_uid = uid;
+    pin->i_gid = gid;
+    pin->i_mode &= ~(S_ISUID | S_ISGID);
+    pin->i_dirt = INO_DIRTY;
     pin->i_update |= CTIME;
 
     *mode = pin->i_mode;

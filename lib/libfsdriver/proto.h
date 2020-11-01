@@ -20,5 +20,6 @@ int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_unlink(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_rmdir(const struct fsdriver* fsd, MESSAGE* m);
 int fsdriver_utime(const struct fsdriver* fsd, MESSAGE* m);
+int fsdriver_chown(const struct fsdriver* fsd, MESSAGE* m);
 
 #endif

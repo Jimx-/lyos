@@ -361,8 +361,9 @@ ssize_t ext2_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
 
 int ext2_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
 int ext2_chmod(dev_t dev, ino_t num, mode_t* mode);
+int ext2_chown(dev_t dev, ino_t num, uid_t uid, gid_t gid, mode_t* mode);
 
-int ext2_utime(dev_t dev, ino_t num, struct timespec* atime,
-               struct timespec* mtime);
+int ext2_utime(dev_t dev, ino_t num, const struct timespec* atime,
+               const struct timespec* mtime);
 
 #endif

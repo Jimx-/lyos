@@ -113,6 +113,7 @@ int do_fstat(void);
 int do_fstatat(void);
 int do_access(void);
 int do_chmod(int type);
+int do_fchownat(int type);
 int fs_getsetid(void);
 
 /* vfs/device.c */

@@ -78,6 +78,9 @@ int fsdriver_start(const struct fsdriver* fsd)
         case FS_CHMOD:
             m.RET_RETVAL = fsdriver_chmod(fsd, &m);
             break;
+        case FS_CHOWN:
+            m.u.m_vfs_fs_chown.status = fsdriver_chown(fsd, &m);
+            break;
         case FS_GETDENTS:
             m.u.m_vfs_fs_readwrite.status = fsdriver_getdents(fsd, &m);
             break;

@@ -27,13 +27,14 @@
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
+#include <sys/stat.h>
+#include <sys/syslimits.h>
+#include <fcntl.h>
 #include "types.h"
 #include "const.h"
 #include "path.h"
 #include "global.h"
 #include "proto.h"
-#include <sys/stat.h>
-#include <sys/syslimits.h>
 
 /**
  * <Ring 1> Perform the access syscall.
@@ -223,4 +224,104 @@ int fs_getsetid(void)
     send_recv(SEND, TASK_PM, &self->msg_out);
 
     return SUSPEND;
+}
+
+static int request_chown(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid,
+                         gid_t gid, mode_t* new_mode)
+{
+    MESSAGE m;
+
+    memset(&m, 0, sizeof(m));
+    m.type = FS_CHOWN;
+    m.u.m_vfs_fs_chown.dev = dev;
+    m.u.m_vfs_fs_chown.num = num;
+    m.u.m_vfs_fs_chown.uid = uid;
+    m.u.m_vfs_fs_chown.gid = gid;
+
+    fs_sendrec(fs_ep, &m);
+
+    *new_mode = m.u.m_vfs_fs_chown.mode;
+
+    return m.u.m_vfs_fs_chown.status;
+}
+
+int do_fchownat(int type)
+{
+    int fd = self->msg_in.u.m_vfs_fchownat.fd;
+    int name_len = self->msg_in.u.m_vfs_fchownat.name_len;
+    int flags = self->msg_in.u.m_vfs_fchownat.flags;
+    struct lookup lookup;
+    struct file_desc* filp;
+    struct vfs_mount* vmnt;
+    struct inode* pin;
+    int lookup_flags;
+    uid_t uid, new_uid;
+    gid_t gid, new_gid;
+    mode_t new_mode;
+    char pathname[PATH_MAX];
+    int retval;
+
+    uid = self->msg_in.u.m_vfs_fchownat.owner;
+    gid = self->msg_in.u.m_vfs_fchownat.group;
+
+    if (type == FCHOWNAT) {
+        lookup_flags = 0;
+        if (flags & AT_SYMLINK_NOFOLLOW) lookup_flags |= LKF_SYMLINK_NOFOLLOW;
+
+        if ((retval = data_copy(SELF, pathname, fproc->endpoint,
+                                self->msg_in.u.m_vfs_fchownat.pathname,
+                                name_len)) != OK)
+            return retval;
+        pathname[name_len] = 0;
+
+        init_lookupat(&lookup, fd, pathname, lookup_flags, &vmnt, &pin);
+        lookup.vmnt_lock = RWL_READ;
+        lookup.inode_lock = RWL_WRITE;
+        pin = resolve_path(&lookup, fproc);
+
+        if (!pin) return err_code;
+    } else {
+        if ((filp = get_filp(fproc, fd, RWL_WRITE)) == NULL) return err_code;
+        pin = filp->fd_inode;
+        dup_inode(pin);
+    }
+
+    assert(pin);
+
+    retval = 0;
+
+    new_uid = (uid == (uid_t)-1) ? pin->i_uid : uid;
+    new_gid = (gid == (uid_t)-1) ? pin->i_gid : gid;
+
+    if (pin->i_vmnt && pin->i_vmnt->m_flags & VMNT_READONLY) retval = EROFS;
+
+    if (retval == OK) {
+        if (fproc->effuid != SU_UID) {
+            /* The owner of a file may change the group of the file to any
+             * group of which that owner is a member. */
+            if (pin->i_uid != fproc->effuid) retval = EPERM;
+            if (pin->i_uid != new_uid) retval = EPERM;
+            if (fproc->effgid != new_gid) retval = EPERM;
+        }
+    }
+
+    if (retval != OK) goto out;
+
+    if ((retval = request_chown(pin->i_fs_ep, pin->i_dev, pin->i_num, new_uid,
+                                new_gid, &new_mode)) == OK) {
+        pin->i_uid = new_uid;
+        pin->i_gid = new_gid;
+        pin->i_mode = new_mode;
+    }
+
+out:
+    if (type == FCHOWNAT) {
+        unlock_inode(pin);
+        unlock_vmnt(vmnt);
+    } else {
+        unlock_filp(filp);
+    }
+    put_inode(pin);
+
+    return retval;
 }

@@ -34,8 +34,8 @@
 #include "ext2_fs.h"
 #include "global.h"
 
-int ext2_utime(dev_t dev, ino_t num, struct timespec* atime,
-               struct timespec* mtime)
+int ext2_utime(dev_t dev, ino_t num, const struct timespec* atime,
+               const struct timespec* mtime)
 {
     ext2_inode_t* pin;
 

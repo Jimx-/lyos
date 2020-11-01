@@ -263,6 +263,24 @@ int fsdriver_chmod(const struct fsdriver* fsd, MESSAGE* m)
     return 0;
 }
 
+int fsdriver_chown(const struct fsdriver* fsd, MESSAGE* m)
+{
+    dev_t dev = m->u.m_vfs_fs_chown.dev;
+    ino_t num = m->u.m_vfs_fs_chown.num;
+    uid_t uid = m->u.m_vfs_fs_chown.uid;
+    gid_t gid = m->u.m_vfs_fs_chown.gid;
+    mode_t mode;
+
+    if (fsd->fs_chown == NULL) return ENOSYS;
+
+    int retval = fsd->fs_chown(dev, num, uid, gid, &mode);
+    if (retval) return retval;
+
+    m->u.m_vfs_fs_chown.mode = mode;
+
+    return 0;
+}
+
 int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m)
 {
     struct fsdriver_data data;
