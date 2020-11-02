@@ -4,7 +4,7 @@ INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 AM_CCASFLAGS = $(INCLUDES)
 
 LIB_SOURCES = __sigreturn.S gate_intr.S clone.c __clone.S getpagesize.c __ucontext.S \
-				makecontext.c
+				makecontext.c set_thread_area.c tls.c
 
 # liblyosi386_la_LDFLAGS = -Xcompiler -nostdlib
 

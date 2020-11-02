@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <elf.h>
 #include <unistd.h>
 #include <string.h>
 #include <dlfcn.h>
@@ -53,12 +52,11 @@ struct so_info* ldso_alloc_info(const char* name)
     if (i == NR_SO_INFO) return NULL;
     si = &si_pool[i];
 
+    memset(si, 0, sizeof(*si));
     memcpy((char*)si->name, name, name_len);
     si->name[name_len] = '\0';
     si->name_len = name_len;
     si->flags = SI_USED;
-    si->init_called = 0;
-    si->next = NULL;
 
     if (si_list == NULL) {
         si_list_tail = si_list = si;
@@ -211,9 +209,21 @@ int ldso_main(int argc, char* argv[], char* envp[])
 
     ldso_load_needed(si);
 
+#if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
+    struct so_info* si_tls;
+
+    for (si_tls = si_list; si_tls != NULL; si_tls = si_tls->next) {
+        ldso_tls_allocate_offset(si);
+    }
+#endif
+
     ldso_relocate_objects(si, bind_now);
 
     ldso_do_copy_relocations(si);
+
+#if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
+    ldso_tls_initial_allocation();
+#endif
 
     ldso_call_init_functions();
 

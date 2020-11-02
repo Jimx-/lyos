@@ -27,6 +27,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include "lyos/fs.h"
+#include <lyos/sysutils.h>
 #include <asm/const.h>
 #include <asm/proto.h>
 #ifdef CONFIG_SMP
@@ -62,6 +63,8 @@ struct proc* arch_switch_to_user()
     /* save the proc ptr on the stack */
     *((reg_t*)stack) = (reg_t)p;
 
+    load_tls(p, cpuid);
+
     return p;
 }
 
@@ -93,6 +96,8 @@ int arch_reset_proc(struct proc* p)
     }
 
     p->seg.fpu_state = fpu;
+
+    memset(p->seg.tls_array, 0, GDT_TLS_ENTRIES * sizeof(struct descriptor));
 
     return 0;
 }
@@ -148,7 +153,29 @@ int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
     p->regs.ecx = (reg_t)ps->ps_envstr;
     p->seg.trap_style = KTS_INT;
 
+    p->regs.cs = SELECTOR_USER_CS | RPL_USER;
+    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs = p->regs.ss =
+        SELECTOR_USER_DS | RPL_USER;
+
+    memset(p->seg.tls_array, 0, GDT_TLS_ENTRIES * sizeof(struct descriptor));
+
     return 0;
+}
+
+int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
+                   void* tls)
+{
+    int retval = 0;
+
+    if (newsp != NULL) {
+        p->regs.esp = (reg_t)newsp;
+    }
+
+    if (flags & KF_SETTLS)
+        retval =
+            do_set_thread_area(p, -1, tls, FALSE /* can_allocate */, parent);
+
+    return retval;
 }
 
 static int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)

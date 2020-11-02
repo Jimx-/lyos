@@ -29,34 +29,35 @@
 #endif
 #define SELF (-0x8ace)
 
-/* System calls. */
-#define NR_SYS_CALLS    26
-#define NR_PRINTX       0
-#define NR_SENDREC      1
-#define NR_DATACOPY     2
-#define NR_PRIVCTL      3
-#define NR_GETINFO      4
-#define NR_VMCTL        5
-#define NR_UMAP         6
-#define NR_PORTIO       7
-#define NR_VPORTIO      8
-#define NR_SPORTIO      9
-#define NR_IRQCTL       10
-#define NR_FORK         11
-#define NR_CLEAR        12
-#define NR_EXEC         13
-#define NR_SIGSEND      14
-#define NR_SIGRETURN    15
-#define NR_KILL         16
-#define NR_GETKSIG      17
-#define NR_ENDKSIG      18
-#define NR_TIMES        19
-#define NR_TRACE        20
-#define NR_ALARM        21
-#define NR_KPROFILE     22
-#define NR_SETGRANT     23
-#define NR_SAFECOPYFROM 24
-#define NR_SAFECOPYTO   25
+/* System call numbers. */
+#define NR_SYS_CALLS       27
+#define NR_PRINTX          0
+#define NR_SENDREC         1
+#define NR_DATACOPY        2
+#define NR_PRIVCTL         3
+#define NR_GETINFO         4
+#define NR_VMCTL           5
+#define NR_UMAP            6
+#define NR_PORTIO          7
+#define NR_VPORTIO         8
+#define NR_SPORTIO         9
+#define NR_IRQCTL          10
+#define NR_FORK            11
+#define NR_CLEAR           12
+#define NR_EXEC            13
+#define NR_SIGSEND         14
+#define NR_SIGRETURN       15
+#define NR_KILL            16
+#define NR_GETKSIG         17
+#define NR_ENDKSIG         18
+#define NR_TIMES           19
+#define NR_TRACE           20
+#define NR_ALARM           21
+#define NR_KPROFILE        22
+#define NR_SETGRANT        23
+#define NR_SAFECOPYFROM    24
+#define NR_SAFECOPYTO      25
+#define NR_SET_THREAD_AREA 26
 
 /* For send_recv(). */
 #define SEND          1

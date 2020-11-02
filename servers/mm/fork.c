@@ -58,12 +58,15 @@ void mmput(struct mm_struct* mm)
  *****************************************************************************/
 int do_fork()
 {
-    endpoint_t parent_ep = mm_msg.ENDPOINT;
-    int child_slot = mm_msg.PROC_NR;
-    void* newsp = mm_msg.BUF;
-    int flags = mm_msg.FLAGS;
+    struct mm_fork_info* mfi = mm_msg.MSG_PAYLOAD;
+    endpoint_t parent_ep = mfi->parent;
+    int child_slot = mfi->slot;
+    void* newsp = mfi->newsp;
+    void* tls = mfi->tls;
+    int flags = mfi->flags;
     endpoint_t child_ep;
     struct mmproc* mmp = &mmproc_table[child_slot];
+    int kfork_flags;
 
     /* duplicate the process table */
     int parent_slot, retval;
@@ -73,9 +76,11 @@ int do_fork()
     *mmp = mmproc_table[parent_slot];
     mmp->flags |= MMPF_INUSE;
 
-    int kfork_flags = KF_MMINHIBIT;
+    kfork_flags = KF_MMINHIBIT;
+    if (flags & CLONE_SETTLS) kfork_flags |= KF_SETTLS;
+
     if ((retval = kernel_fork(parent_ep, child_slot, &child_ep, kfork_flags,
-                              newsp)) != 0)
+                              newsp, tls)) != 0)
         return retval;
     mmp->endpoint = child_ep;
 

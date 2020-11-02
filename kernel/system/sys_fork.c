@@ -31,13 +31,15 @@
 
 int sys_fork(MESSAGE* m, struct proc* p_proc)
 {
-    endpoint_t parent_ep = m->ENDPOINT;
-    void* newsp = m->BUF;
-    int flags = m->FLAGS;
-    int child_slot = m->PROC_NR, parent_slot;
-
+    struct kfork_info* kfi = (struct kfork_info*)m->MSG_PAYLOAD;
+    endpoint_t parent_ep = kfi->parent;
+    void* newsp = kfi->newsp;
+    void* tls = kfi->tls;
+    int flags = kfi->flags;
+    int child_slot = kfi->slot, parent_slot;
     int gen = ENDPOINT_G(parent_ep) + 1;
     endpoint_t child_ep = make_endpoint(gen, child_slot);
+    int retval;
 
     if (!verify_endpt(parent_ep, &parent_slot)) return EINVAL;
 
@@ -66,15 +68,12 @@ int sys_fork(MESSAGE* m, struct proc* p_proc)
 
     if (flags & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
 
-#ifdef __i386__
-    if (newsp != NULL) {
-        child->regs.esp = (reg_t)newsp;
-    }
-#endif
+    retval = arch_fork_proc(child, parent, flags, newsp, tls);
 
-    m->ENDPOINT = child_ep;
+    if (retval == OK) kfi->child = child_ep;
+
     unlock_proc(parent);
     unlock_proc(child);
 
-    return 0;
+    return retval;
 }

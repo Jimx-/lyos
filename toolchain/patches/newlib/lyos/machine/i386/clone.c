@@ -34,8 +34,8 @@ int clone(int (*fn)(void* arg), void* child_stack, int flags, void* arg, ...)
     msg.u.m_pm_clone.flags = flags;
     msg.u.m_pm_clone.stack = params;
 
-    if (flags &
-        (CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID)) {
+    if (flags & (CLONE_SETTLS | CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID |
+                 CLONE_CHILD_SETTID)) {
         va_start(argp, arg);
 
         msg.u.m_pm_clone.parent_tid = va_arg(argp, void*);

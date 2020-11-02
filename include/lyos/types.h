@@ -127,4 +127,13 @@ struct iovec_grant {
     size_t iov_len;
 };
 
+struct kfork_info {
+    endpoint_t parent;
+    int slot;
+    int flags;
+    void* newsp;
+    void* tls;
+    endpoint_t child;
+};
+
 #endif /* _TYPE_H_ */

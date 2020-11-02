@@ -17,6 +17,7 @@
 #define _STACKFRAME_H_
 
 #include <asm/sigcontext.h>
+#include <asm/protect.h>
 
 typedef u32 reg_t;
 
@@ -47,6 +48,7 @@ struct segframe {
     u32 cr3_phys;
     u32* cr3_vir;
     char* fpu_state;
+    struct descriptor tls_array[GDT_TLS_ENTRIES];
 };
 
 struct sigframe {

@@ -16,14 +16,14 @@ void pthread_initialize(void)
         (char*)(((uintptr_t)CURRENT_SP - 2 * PTHREAD_STACK_SIZE_DEFAULT) &
                 ~(PTHREAD_STACK_SIZE_DEFAULT - 1));
 
-    __pthread_initial_thread.pid = getpid();
+    __pthread_initial_thread.tid = gettid();
 }
 
 pthread_t pthread_self(void)
 {
     pthread_internal_t* thread = thread_self();
 
-    return thread->tid;
+    return thread->thread;
 }
 
 int pthread_equal(pthread_t t1, pthread_t t2) { return t1 == t2; }

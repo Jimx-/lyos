@@ -2,7 +2,9 @@
 #define _LDSO_H_
 
 #include <sys/types.h>
+#include <sys/tls.h>
 #include <sys/syslimits.h>
+#include <elf.h>
 #include "list.h"
 
 #define LDSO_PATH        "/lib/ld-lyos.so"
@@ -56,6 +58,7 @@ struct so_info {
     size_t tls_size;
     size_t tls_offset;
     size_t tls_align;
+    int tls_done;
 
     so_func_t init;
     so_func_t fini;
@@ -130,6 +133,15 @@ void ldso_add_paths(struct search_paths* list, const char* paths);
 
 LDSO_PUBLIC void* dlopen(const char* filename, int flags);
 LDSO_PUBLIC void* dlsym(void* handle, const char* name);
+
+#if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
+#define LDSO_STATIC_TLS_RESERVATION 64
+
+LDSO_PUBLIC struct tls_tcb* __ldso_allocate_tls(void);
+
+void ldso_tls_initial_allocation(void);
+int ldso_tls_allocate_offset(struct so_info* si);
+#endif
 
 int xprintf(const char* fmt, ...);
 

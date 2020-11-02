@@ -9,8 +9,8 @@
 #define PTHREAD_GUARD_SIZE_DEFAULT (0x1000)
 
 typedef struct pthread_internal {
-    pthread_t tid;
-    pid_t pid;
+    pthread_t thread;
+    pid_t tid;
     char* guard_addr;
     size_t guard_size;
     int signal;

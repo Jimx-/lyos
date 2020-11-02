@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <unistd.h>
 
@@ -33,7 +34,7 @@ static int vsprintf(char* buf, const char* fmt, char* args)
     char* p;
 
     va_list p_next_arg = args;
-    int m;
+    uintptr_t m;
 
     char inner_buf[STR_DEFAULT_LEN];
     char cs;
@@ -79,6 +80,11 @@ static int vsprintf(char* buf, const char* fmt, char* args)
             u2a(m, 16, &q);
             p_next_arg += 4;
             break;
+        case 'u':
+            m = *((int*)p_next_arg);
+            u2a(m, 10, &q);
+            p_next_arg += 4;
+            break;
         case 'd':
             m = *((int*)p_next_arg);
             if (m < 0) {
@@ -87,6 +93,13 @@ static int vsprintf(char* buf, const char* fmt, char* args)
             }
             i2a(m, 10, &q);
             p_next_arg += 4;
+            break;
+        case 'p':
+            m = (uintptr_t) * ((void**)p_next_arg);
+            *q++ = '0';
+            *q++ = 'x';
+            u2a(m, 16, &q);
+            p_next_arg += sizeof(void*);
             break;
         case 's':
             len = strlen(*((char**)p_next_arg));

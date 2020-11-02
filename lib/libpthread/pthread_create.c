@@ -1,15 +1,25 @@
+#define _GNU_SOURCE
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <pthread.h>
 #include <sched.h>
+#include <sys/tls.h>
+#include <dlfcn.h>
+
+#ifdef __i386__
+#include <asm/ldt.h>
+#endif
 
 #include "pthread_internal.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 #define roundup(value, alignment) (((value) + (alignment)-1) & ~((alignment)-1))
+
+/* TODO: make pthread a dynamic library and use weak alias */
+struct tls_tcb* (*__ldso_allocate_tls)(void) = NULL;
 
 pthread_internal_t* __thread_handles[PTHREAD_THREADS_MAX] = {
     &__pthread_initial_thread,
@@ -71,9 +81,10 @@ static inline pthread_internal_t* thread_segment(int slot)
 }
 
 static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
-                         char** child_sp)
+                         struct tls_tcb** tcbp, char** child_sp)
 {
     int slot;
+    struct tls_tcb* tcb;
     char *stack_addr, *guard_addr;
     size_t guard_size;
     pthread_internal_t* new_thread;
@@ -91,15 +102,24 @@ static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
         }
     }
 
+    if (!__ldso_allocate_tls)
+        __ldso_allocate_tls = dlsym(RTLD_DEFAULT, "__ldso_allocate_tls");
+
+    tcb = __ldso_allocate_tls();
+    if (!tcb) return ENOMEM;
+
     memset(new_thread, 0, sizeof(*new_thread));
-    new_thread->tid = slot;
+    new_thread->thread = slot;
     new_thread->guard_size = guard_size;
     new_thread->guard_addr = guard_addr;
     new_thread->join_state = THREAD_NOT_JOINED;
 
+    tcb->tcb_pthread = new_thread;
+
     __thread_handles[slot] = new_thread;
 
     *thp = new_thread;
+    *tcbp = tcb;
     *child_sp = (char*)new_thread;
 
     return 0;
@@ -119,9 +139,11 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
                    void* (*start_routine)(void*), void* arg)
 {
     pthread_internal_t* thread;
+    struct tls_tcb* tcb;
     char* child_sp;
+    void* tls;
     pthread_attr_t th_attr;
-    pid_t pid;
+    pid_t tid;
     int clone_flags;
     int retval;
 
@@ -131,26 +153,38 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
         th_attr = *attr;
     }
 
-    retval = create_thread(&th_attr, &thread, &child_sp);
+    retval = create_thread(&th_attr, &thread, &tcb, &child_sp);
     if (retval) return retval;
 
     thread->start_routine = start_routine;
     thread->start_arg = arg;
 
-    clone_flags =
-        CLONE_VM | CLONE_THREAD | CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID;
-    pid = clone(__pthread_start, child_sp, clone_flags, (void*)thread,
-                &thread->pid, NULL, &thread->pid);
-    if (pid < 0) {
+    tls = tcb;
+
+#ifdef __i386__
+    unsigned int gs;
+    struct user_desc user_desc;
+    __asm__ __volatile__("movw %%gs, %w0" : "=q"(gs));
+    user_desc.entry_number = (gs & 0xffff) >> 3;
+    user_desc.base_addr = tls;
+
+    tls = &user_desc;
+#endif
+
+    clone_flags = CLONE_VM | CLONE_THREAD | CLONE_SETTLS | CLONE_PARENT_SETTID |
+                  CLONE_CHILD_CLEARTID;
+    tid = clone(__pthread_start, child_sp, clone_flags, (void*)thread,
+                &thread->tid, tls, &thread->tid);
+    if (tid < 0) {
         if (thread->guard_size) {
             munmap(thread->guard_addr,
                    (char*)(thread + 1) - thread->guard_addr);
         }
 
-        return pid;
+        return tid;
     }
 
-    *thread_out = thread->tid;
+    *thread_out = thread->thread;
 
     return 0;
 }

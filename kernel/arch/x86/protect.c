@@ -47,6 +47,14 @@ struct exception_info {
     int signo;
 };
 
+struct exception_frame {
+    reg_t vec_no;   /* which interrupt vector was triggered */
+    reg_t err_code; /* zero if no exception does not push err code */
+    reg_t eip;
+    reg_t cs;
+    reg_t eflags;
+};
+
 static struct exception_info err_description[] = {
     {"#DE Divide Error", SIGFPE},
     {"#DB RESERVED", SIGTRAP},
@@ -354,6 +362,16 @@ int init_tss(unsigned cpu, unsigned kernel_stack)
     }
 
     return SELECTOR_TSS;
+}
+
+void load_tls(struct proc* p, unsigned int cpu)
+{
+    struct descriptor* gdt = get_cpu_gdt(cpu);
+    int i;
+
+    for (i = 0; i < GDT_TLS_ENTRIES; i++) {
+        gdt[INDEX_TLS_MIN + i] = p->seg.tls_array[i];
+    }
 }
 
 /*======================================================================*

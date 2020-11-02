@@ -77,6 +77,9 @@ void init_system()
     sys_call_table[NR_SETGRANT] = sys_setgrant;
     sys_call_table[NR_SAFECOPYFROM] = sys_safecopyfrom;
     sys_call_table[NR_SAFECOPYTO] = sys_safecopyto;
+#ifdef __i386__
+    sys_call_table[NR_SET_THREAD_AREA] = sys_set_thread_area;
+#endif
 }
 
 int set_priv(struct proc* p, int id)

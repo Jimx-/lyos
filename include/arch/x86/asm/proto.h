@@ -35,6 +35,8 @@ void write_cr3(u32 cr3);
 u32 read_cr4();
 void write_cr4(u32 cr4);
 
+void load_tls(struct proc* p, unsigned int cpu);
+
 void arch_pause();
 
 int init_8253_timer(int freq);
@@ -54,6 +56,8 @@ reg_t read_ebp();
 
 int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
                    char* name);
+int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
+                   void* tls);
 int arch_reset_proc(struct proc* p);
 void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
@@ -68,14 +72,6 @@ void sys_call_sysenter();
 int syscall_int(int syscall_nr, MESSAGE* m);
 int syscall_sysenter(int syscall_nr, MESSAGE* m);
 int syscall_syscall(int syscall_nr, MESSAGE* m);
-
-struct exception_frame {
-    reg_t vec_no;   /* which interrupt vector was triggered */
-    reg_t err_code; /* zero if no exception does not push err code */
-    reg_t eip;
-    reg_t cs;
-    reg_t eflags;
-};
 
 void fninit(void);
 unsigned short fnstsw(void);
@@ -115,5 +111,9 @@ void clear_memcache();
 void arch_set_syscall_result(struct proc* p, int result);
 
 void arch_setup_cpulocals(void);
+
+int do_set_thread_area(struct proc* p, int idx, void* u_info, int can_allocate,
+                       struct proc* caller);
+int sys_set_thread_area(MESSAGE* m, struct proc* p_proc);
 
 #endif

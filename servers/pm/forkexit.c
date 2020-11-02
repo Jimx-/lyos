@@ -36,6 +36,28 @@
 
 static void check_parent(struct pmproc* pmp, int try_cleanup);
 
+static int mm_fork(endpoint_t parent_ep, int slot, int flags, void* newsp,
+                   void* tls, endpoint_t* child_ep)
+{
+    MESSAGE msg;
+    struct mm_fork_info* mfi = (struct mm_fork_info*)msg.MSG_PAYLOAD;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = PM_MM_FORK;
+    mfi->parent = parent_ep;
+    mfi->slot = slot;
+    mfi->flags = flags;
+    mfi->newsp = newsp;
+    mfi->tls = tls;
+
+    send_recv(BOTH, TASK_MM, &msg);
+
+    if (msg.RETVAL != 0) return msg.RETVAL;
+    *child_ep = msg.ENDPOINT;
+
+    return 0;
+}
+
 /**
  * @brief Perform the fork() syscall.
  *
@@ -49,8 +71,10 @@ int do_fork(MESSAGE* p)
     int flags = p->u.m_pm_clone.flags;
     void* parent_tid = p->u.m_pm_clone.parent_tid;
     void* child_tid = p->u.m_pm_clone.child_tid;
+    void* tls = p->u.m_pm_clone.tls;
     endpoint_t parent_ep = p->source, child_ep;
     struct pmproc* pm_parent = pm_endpt_proc(parent_ep);
+    int retval;
 
     if (!pm_parent) return EINVAL;
 
@@ -64,15 +88,8 @@ int do_fork(MESSAGE* p)
     if (n > NR_PROCS) return EAGAIN;
 
     /* tell MM */
-    MESSAGE msg2mm;
-    msg2mm.type = PM_MM_FORK;
-    msg2mm.ENDPOINT = parent_ep;
-    msg2mm.PROC_NR = child_slot;
-    msg2mm.BUF = newsp;
-    msg2mm.FLAGS = flags;
-    send_recv(BOTH, TASK_MM, &msg2mm);
-    if (msg2mm.RETVAL != 0) return msg2mm.RETVAL;
-    child_ep = msg2mm.ENDPOINT;
+    retval = mm_fork(parent_ep, child_slot, flags, newsp, tls, &child_ep);
+    if (retval) return retval;
 
     struct pmproc* pmp = &pmproc_table[child_slot];
     *pmp = *pm_parent;

@@ -89,6 +89,14 @@ struct mem_info {
     size_t vmalloc_used;
 };
 
+struct mm_fork_info {
+    endpoint_t parent;
+    int slot;
+    int flags;
+    void* newsp;
+    void* tls;
+};
+
 int procctl(endpoint_t who, int param);
 int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
 int vmctl_reply_kern_mapping(int index, void* vir_addr);

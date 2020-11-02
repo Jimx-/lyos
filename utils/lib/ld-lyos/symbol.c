@@ -17,7 +17,8 @@ static int __strcmp(const char* s1, const char* s2)
 
 static int ldso_is_exported(const Elf32_Sym* sym)
 {
-    static const void* ldso_exports[] = {dlopen, dlsym, NULL};
+    static const void* ldso_exports[] = {dlopen, dlsym, __ldso_allocate_tls,
+                                         NULL};
     int i;
     void* value;
 

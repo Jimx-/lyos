@@ -59,8 +59,9 @@ int syscall_entry(int syscall_nr, MESSAGE* m);
 void panic(const char* fmt, ...);
 
 #define KF_MMINHIBIT 0x1
+#define KF_SETTLS    0x2
 int kernel_fork(endpoint_t parent_ep, int child_proc, endpoint_t* child_ep,
-                int flags, void* newsp);
+                int flags, void* newsp, void* tls);
 
 int kernel_clear(endpoint_t ep);
 

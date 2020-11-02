@@ -25,8 +25,8 @@ void pthread_exit(void* value_ptr)
 int pthread_join(pthread_t thread, void** retval)
 {
     pthread_internal_t* join_thread = thread_handle(thread);
-    pid_t pid;
-    volatile pid_t* pidp;
+    pid_t tid;
+    volatile pid_t* tidp;
     int old_state = THREAD_NOT_JOINED, state;
 
     while (old_state == THREAD_NOT_JOINED ||
@@ -42,12 +42,12 @@ int pthread_join(pthread_t thread, void** retval)
         return EINVAL;
     }
 
-    pid = join_thread->pid;
-    pidp = &join_thread->pid;
+    tid = join_thread->tid;
+    tidp = &join_thread->tid;
 
     /* wait for kernel to signal us when the thread exits */
-    while (*pidp) {
-        futex((int*)pidp, FUTEX_WAIT, pid, NULL, NULL, 0);
+    while (*tidp) {
+        futex((int*)tidp, FUTEX_WAIT, tid, NULL, NULL, 0);
     }
 
     if (retval) *retval = join_thread->retval;
