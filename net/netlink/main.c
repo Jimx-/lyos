@@ -281,6 +281,34 @@ static void netlink_update_subscription(struct nlsock* nls,
     nls->subscriptions = subscriptions;
 }
 
+static int netlink_autobind(struct nlsock* nls, endpoint_t user_endpt)
+{
+    static s32 rover = -4096;
+    s32 portid;
+    int ok;
+    int retval;
+
+    if (rover > -4096) rover = -4096;
+
+    portid = get_epinfo(user_endpt, NULL, NULL);
+    if (portid < 0) portid = --rover;
+
+retry:
+    ok = !nlsock_lookup(sock_protocol(&nls->sock), portid);
+    if (!ok) {
+        if (rover > -4096) rover = -4096;
+
+        portid = --rover;
+        goto retry;
+    }
+
+    retval = netlink_insert(nls, portid);
+    if (retval == EADDRINUSE) goto retry;
+
+    if (retval == EBUSY) retval = 0;
+    return retval;
+}
+
 static int netlink_bind(struct sock* sock, struct sockaddr* addr,
                         size_t addrlen, endpoint_t user_endpt, int flags)
 {
@@ -308,7 +336,8 @@ static int netlink_bind(struct sock* sock, struct sockaddr* addr,
     }
 
     if (!bound) {
-        retval = netlink_insert(nls, nladdr->nl_pid);
+        retval = nladdr->nl_pid ? netlink_insert(nls, nladdr->nl_pid)
+                                : netlink_autobind(nls, user_endpt);
         if (retval != OK) return retval;
     }
 
