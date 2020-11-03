@@ -107,6 +107,14 @@ int syscall_trace_exiting(struct tcb* tcp)
                 retval = -1;
             }
             break;
+        case PIPE2:
+        case SOCKETPAIR:
+            retval = tcp->msg_out.u.m_vfs_fdpair.retval;
+            if (retval > 0) {
+                err = retval;
+                retval = -1;
+            }
+            break;
         }
         break;
     }

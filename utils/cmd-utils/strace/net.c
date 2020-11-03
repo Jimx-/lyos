@@ -23,7 +23,7 @@ int trace_pipe2(struct tcb* tcp)
                      tcp->msg_out.u.m_vfs_fdpair.fd1);
         printf(", %d", tcp->msg_in.FLAGS);
 
-        return 0;
+        return RVAL_SPECIAL;
     }
 }
 
@@ -63,6 +63,25 @@ int trace_socket(struct tcb* tcp)
     return RVAL_DECODED | RVAL_FD;
 }
 
+int trace_socketpair(struct tcb* tcp)
+{
+    MESSAGE* msg = &tcp->msg_in;
+
+    if (entering(tcp)) {
+        print_flags(msg->u.m_vfs_socket.domain, &addrfams);
+        printf(", ");
+        print_sock_type(msg->u.m_vfs_socket.type);
+        printf(", ");
+        printf("%lu", msg->u.m_vfs_socket.protocol);
+    } else {
+        printf(", ");
+        print_pairfd(tcp->msg_out.u.m_vfs_fdpair.fd0,
+                     tcp->msg_out.u.m_vfs_fdpair.fd1);
+    }
+
+    return RVAL_SPECIAL;
+}
+
 static void do_bindconn(struct tcb* tcp)
 {
     MESSAGE* msg = &tcp->msg_in;
@@ -72,6 +91,7 @@ static void do_bindconn(struct tcb* tcp)
     decode_sockaddr(tcp, msg->u.m_vfs_bindconn.addr, addrlen);
     printf(", %d", addrlen);
 }
+
 int trace_bind(struct tcb* tcp)
 {
     do_bindconn(tcp);

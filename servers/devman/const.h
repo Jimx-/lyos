@@ -4,6 +4,7 @@
 enum kobject_action {
     KOBJ_ADD,
     KOBJ_REMOVE,
+    KOBJ_CHANGE,
 };
 
 #endif

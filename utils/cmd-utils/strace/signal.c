@@ -39,7 +39,7 @@ const char* sprint_sigmask(sigset_t mask)
     char sep;
 
     sep = '[';
-    for (i = 0; i < sizeof(mask) << 3; i++) {
+    for (i = 1; i < sizeof(mask) << 3; i++) {
         if (!sigismember(&mask, i)) continue;
 
         *s++ = sep;

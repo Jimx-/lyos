@@ -34,6 +34,7 @@ static nlsockid_t uevent_sock;
 static const char* kobject_actions[] = {
     [KOBJ_ADD] = "add",
     [KOBJ_REMOVE] = "remove",
+    [KOBJ_CHANGE] = "change",
 };
 
 static u64 uevent_seqnum;
@@ -130,6 +131,8 @@ int device_uevent_env(struct device* dev, enum kobject_action action,
 
     env = malloc(sizeof(*env));
     if (!env) return -ENOMEM;
+
+    memset(env, 0, sizeof(*env));
 
     devpath = device_get_path(dev);
     if (!devpath) {

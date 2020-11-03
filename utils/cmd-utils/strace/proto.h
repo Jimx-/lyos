@@ -108,6 +108,7 @@ int trace_readlinkat(struct tcb* tcp);
 
 int trace_pipe2(struct tcb* tcp);
 int trace_socket(struct tcb* tcp);
+int trace_socketpair(struct tcb* tcp);
 int trace_bind(struct tcb* tcp);
 int trace_connect(struct tcb* tcp);
 int trace_listen(struct tcb* tcp);

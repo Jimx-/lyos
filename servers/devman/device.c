@@ -429,6 +429,8 @@ char* device_get_path(struct device* dev)
     path = malloc(prefix_len + len);
     if (!path) return NULL;
 
+    path[prefix_len + len - 1] = '\0';
+
     strcpy(path, prefix);
     fill_device_path(dev, &path[prefix_len], len);
 

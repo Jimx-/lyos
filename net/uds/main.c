@@ -283,7 +283,7 @@ static int uds_pair(struct sock* sock1, struct sock* sock2,
     struct udssock* uds1 = to_udssock(sock1);
     struct udssock* uds2 = to_udssock(sock2);
 
-    if (uds_get_type(uds1) == SOCK_DGRAM) return EOPNOTSUPP;
+    /* if (uds_get_type(uds1) == SOCK_DGRAM) return EOPNOTSUPP; */
 
     uds1->conn = uds2;
     uds2->conn = uds1;

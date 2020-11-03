@@ -107,7 +107,6 @@ struct chardriver c_driver = {
     .cdr_read = char_read,
     .cdr_write = char_write,
     .cdr_ioctl = char_ioctl,
-    .cdr_mmap = NULL,
 };
 
 int main(int argc, char* argv[])
@@ -117,7 +116,7 @@ int main(int argc, char* argv[])
 
     MESSAGE msg;
     while (TRUE) {
-        send_recv(RECEIVE, ANY, &msg);
+        send_recv(RECEIVE_ASYNC, ANY, &msg);
 
         if (IS_BDEV_REQ(msg.type)) {
             blockdriver_process(&rd_driver, &msg);
