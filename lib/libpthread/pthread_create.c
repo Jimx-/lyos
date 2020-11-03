@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <sched.h>
 #include <sys/tls.h>
 #include <dlfcn.h>
@@ -21,19 +22,16 @@
 /* TODO: make pthread a dynamic library and use weak alias */
 struct tls_tcb* (*__ldso_allocate_tls)(void) = NULL;
 
-pthread_internal_t* __thread_handles[PTHREAD_THREADS_MAX] = {
-    &__pthread_initial_thread,
-};
-
 static int alloc_stack(const pthread_attr_t* attr,
-                       pthread_internal_t* default_thread,
                        pthread_internal_t** new_thread_p, char** stack_addr_p,
-                       char** guard_addr_p, size_t* guard_size_p)
+                       char** guard_addr_p, size_t* guard_size_p,
+                       size_t* mmap_size_p)
 {
     pthread_internal_t* thread;
-    char *stack_addr, *guard_addr, *map_addr, *res_addr;
+    char *stack_addr, *guard_addr, *map_addr;
     size_t guard_size;
     size_t stack_size;
+    size_t mmap_size;
 
     if (attr->stackaddr != NULL) {
         thread =
@@ -42,65 +40,49 @@ static int alloc_stack(const pthread_attr_t* attr,
         stack_addr = (char*)attr->stackaddr - attr->stacksize;
         guard_addr = stack_addr;
         guard_size = 0;
+        mmap_size = 0;
     } else {
         guard_size = attr->guardsize;
         stack_size = MIN(roundup(attr->stacksize, 0x1000),
                          PTHREAD_STACK_SIZE_DEFAULT - guard_size);
 
-        thread = default_thread;
-        stack_addr = (char*)(thread + 1) - stack_size;
-        map_addr = stack_addr - guard_size;
-        res_addr =
-            mmap(map_addr, stack_size + guard_size, PROT_READ | PROT_WRITE,
-                 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        mmap_size = stack_size + guard_size;
+        map_addr = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE,
+                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-        if (res_addr != map_addr) {
-            if (res_addr != MAP_FAILED) {
-                munmap(res_addr, stack_size + guard_size);
-            }
-
-            return ENOMEM;
-        }
+        if (map_addr == MAP_FAILED) return ENOMEM;
 
         guard_addr = map_addr;
+        stack_addr = map_addr + guard_size;
+
+        thread =
+            (pthread_internal_t*)(stack_addr + stack_size - sizeof(*thread));
+        if ((uintptr_t)thread % 16)
+            thread = (pthread_internal_t*)((uintptr_t)thread -
+                                           ((uintptr_t)thread % 16));
     }
 
     *new_thread_p = thread;
     *stack_addr_p = stack_addr;
     *guard_addr_p = guard_addr;
     *guard_size_p = guard_size;
+    *mmap_size_p = mmap_size;
 
     return 0;
-}
-
-static inline pthread_internal_t* thread_segment(int slot)
-{
-    return (pthread_internal_t*)(__pthread_initial_thread_bos -
-                                 (slot - 1) * PTHREAD_STACK_SIZE_DEFAULT) -
-           1;
 }
 
 static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
                          struct tls_tcb** tcbp, char** child_sp)
 {
-    int slot;
     struct tls_tcb* tcb;
     char *stack_addr, *guard_addr;
-    size_t guard_size;
+    size_t guard_size, mmap_size;
     pthread_internal_t* new_thread;
+    int retval;
 
-    for (slot = 1;; slot++) {
-        if (slot >= PTHREAD_THREADS_MAX) {
-            return EAGAIN;
-        }
-
-        if (__thread_handles[slot]) continue;
-
-        if (alloc_stack(attr, thread_segment(slot), &new_thread, &stack_addr,
-                        &guard_addr, &guard_size) == 0) {
-            break;
-        }
-    }
+    retval = alloc_stack(attr, &new_thread, &stack_addr, &guard_addr,
+                         &guard_size, &mmap_size);
+    if (retval) return retval;
 
     if (!__ldso_allocate_tls)
         __ldso_allocate_tls = dlsym(RTLD_DEFAULT, "__ldso_allocate_tls");
@@ -109,14 +91,12 @@ static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
     if (!tcb) return ENOMEM;
 
     memset(new_thread, 0, sizeof(*new_thread));
-    new_thread->thread = slot;
     new_thread->guard_size = guard_size;
     new_thread->guard_addr = guard_addr;
+    new_thread->mmap_size = mmap_size;
     new_thread->join_state = THREAD_NOT_JOINED;
 
     tcb->tcb_pthread = new_thread;
-
-    __thread_handles[slot] = new_thread;
 
     *thp = new_thread;
     *tcbp = tcb;
@@ -166,7 +146,7 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
     struct user_desc user_desc;
     __asm__ __volatile__("movw %%gs, %w0" : "=q"(gs));
     user_desc.entry_number = (gs & 0xffff) >> 3;
-    user_desc.base_addr = tls;
+    user_desc.base_addr = (unsigned int)tls;
 
     tls = &user_desc;
 #endif
@@ -184,7 +164,7 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
         return tid;
     }
 
-    *thread_out = thread->thread;
+    *thread_out = (pthread_t)tcb;
 
     return 0;
 }

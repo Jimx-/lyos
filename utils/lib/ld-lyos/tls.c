@@ -11,8 +11,6 @@ size_t ldso_tls_static_offset;
 size_t ldso_tls_dtv_generation = 1;
 size_t ldso_tls_max_index = 1;
 
-extern int __libc_set_tls_tcb(void* ptr);
-
 int ldso_tls_allocate_offset(struct so_info* si)
 {
     size_t offset, next_offset;

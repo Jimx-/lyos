@@ -5,26 +5,9 @@
 
 #include "pthread_internal.h"
 
-pthread_internal_t __pthread_initial_thread;
-char* __pthread_initial_thread_bos = NULL;
+pthread_internal_t __pthread_initial_thread = {.tid = -1};
 
-void pthread_initialize(void)
-{
-    if (__pthread_initial_thread_bos) return;
-
-    __pthread_initial_thread_bos =
-        (char*)(((uintptr_t)CURRENT_SP - 2 * PTHREAD_STACK_SIZE_DEFAULT) &
-                ~(PTHREAD_STACK_SIZE_DEFAULT - 1));
-
-    __pthread_initial_thread.tid = gettid();
-}
-
-pthread_t pthread_self(void)
-{
-    pthread_internal_t* thread = thread_self();
-
-    return thread->thread;
-}
+pthread_t pthread_self(void) { return (pthread_t)__libc_get_tls_tcb(); }
 
 int pthread_equal(pthread_t t1, pthread_t t2) { return t1 == t2; }
 

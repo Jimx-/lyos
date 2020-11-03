@@ -12,7 +12,7 @@ void* print_hello(void* thread_id)
     tid = pthread_self();
 
     pthread_mutex_lock(&print_mutex);
-    printf("Hello World! It's me, thread #%ld!\n", tid);
+    printf("Hello World! It's me, thread #%lu!\n", tid);
     pthread_mutex_unlock(&print_mutex);
 
     return NULL;
@@ -29,7 +29,7 @@ int main()
 
     for (t = 0; t < NUM_THREADS; t++) {
         pthread_mutex_lock(&print_mutex);
-        printf("In main #%ld: creating thread %ld\n", main_tid, t);
+        printf("In main #%lu: creating thread %lu\n", main_tid, t);
         pthread_mutex_unlock(&print_mutex);
 
         rc = pthread_create(&threads[t], NULL, print_hello, (void*)t);

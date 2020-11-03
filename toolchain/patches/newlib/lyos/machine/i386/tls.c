@@ -1,8 +1,9 @@
+#include <sys/tls.h>
 #include <asm/ldt.h>
 
 extern int set_thread_area(struct user_desc* desc);
 
-int __libc_set_tls_tcb(void* ptr)
+int __libc_set_tls_tcb(struct tls_tcb* ptr)
 {
     struct user_desc desc;
     int sel, retval;
