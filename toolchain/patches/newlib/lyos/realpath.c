@@ -69,20 +69,42 @@ char* realpath(const char* __restrict path, char* __restrict resolved_path)
 {
     char cwd[PATH_MAX];
     char* path_copy;
+    char* out;
     int res;
 
     if (!*path) {
         errno = ENOENT; /* SUSv2 */
         return NULL;
     }
-    if (!getcwd(cwd, sizeof(cwd))) return NULL;
-    strcpy(resolved_path, "/");
-    if (resolve_path(cwd, resolved_path, resolved_path)) return NULL;
-    strcat(resolved_path, "/");
+
+    if (resolved_path)
+        out = resolved_path;
+    else
+        out = malloc(PATH_MAX);
+
+    if (!out) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    if (!getcwd(cwd, sizeof(cwd))) goto err;
+
+    strcpy(out, "/");
+
+    if (resolve_path(cwd, out, out)) goto err;
+    strcat(out, "/");
+
     path_copy = strdup(path);
-    if (!path_copy) return NULL;
-    res = resolve_path(path_copy, resolved_path, strchr(resolved_path, 0));
+    if (!path_copy) goto err;
+
+    res = resolve_path(path_copy, out, strchr(out, 0));
     free(path_copy);
-    if (res) return NULL;
-    return resolved_path;
+
+    if (res) goto err;
+
+    return out;
+
+err:
+    if (!resolved_path) free(out);
+    return NULL;
 }

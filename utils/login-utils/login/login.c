@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
         free(motd);
     }
 
-    /* setgid(pwd->pw_gid); */
-    /* setuid(pwd->pw_uid); */
+    setgid(pwd->pw_gid);
+    setuid(pwd->pw_uid);
 
     if (chdir(pwd->pw_dir) != 0) {
         printf("No home directory %s!\n", pwd->pw_dir);
