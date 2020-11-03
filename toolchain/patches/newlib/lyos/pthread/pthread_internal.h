@@ -4,8 +4,6 @@
 #include <sys/types.h>
 #include <sys/tls.h>
 
-#define PTHREAD_THREADS_MAX 1024
-
 #define PTHREAD_STACK_SIZE_DEFAULT (2 * 1024 * 1024)
 #define PTHREAD_GUARD_SIZE_DEFAULT (0x1000)
 

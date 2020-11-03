@@ -47,8 +47,6 @@ static struct sysinfo_user* get_sysinfo()
     return (syscall_gate_intr(NR_GETINFO, &m) == 0) ? sysinfo : NULL;
 }
 
-void pthread_initialize(void) __attribute__((weak));
-
 void __lyos_init(char* envp[])
 {
     environ = envp;
@@ -62,8 +60,4 @@ void __lyos_init(char* envp[])
     }
 
     _brksize = (char*)*(&_end);
-
-    if (pthread_initialize) {
-        pthread_initialize();
-    }
 }

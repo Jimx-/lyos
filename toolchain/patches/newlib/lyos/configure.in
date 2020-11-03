@@ -25,5 +25,16 @@ fi
 AC_SUBST(LYOS_MACHINE_LIB)
 AC_SUBST(machine_dir)
 
-AC_CONFIG_FILES([Makefile])
+EXTRA_SUBDIRS=pthread
+
+if test "${use_libtool}" = "yes"; then
+  EXTRA_SUBLIB=pthread/libpthread.${aext}
+else
+  EXTRA_SUBLIBS=pthread/lib.${aext}
+fi
+
+AC_SUBST(EXTRA_SUBDIRS)
+AC_SUBST(EXTRA_SUBLIBS)
+
+AC_CONFIG_FILES([Makefile pthread/Makefile])
 AC_OUTPUT

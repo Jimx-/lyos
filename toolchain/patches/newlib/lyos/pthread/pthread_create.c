@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <sched.h>
 #include <sys/tls.h>
-#include <dlfcn.h>
 
 #ifdef __i386__
 #include <asm/ldt.h>
@@ -17,10 +16,11 @@
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
-#define roundup(value, alignment) (((value) + (alignment)-1) & ~((alignment)-1))
+void* __ldso_allocate_tls(void)
+    __attribute__((weak, alias("___ldso_allocate_tls")));
+void* ___ldso_allocate_tls(void) { return NULL; }
 
-/* TODO: make pthread a dynamic library and use weak alias */
-struct tls_tcb* (*__ldso_allocate_tls)(void) = NULL;
+#define roundup(value, alignment) (((value) + (alignment)-1) & ~((alignment)-1))
 
 static int alloc_stack(const pthread_attr_t* attr,
                        pthread_internal_t** new_thread_p, char** stack_addr_p,
@@ -83,9 +83,6 @@ static int create_thread(const pthread_attr_t* attr, pthread_internal_t** thp,
     retval = alloc_stack(attr, &new_thread, &stack_addr, &guard_addr,
                          &guard_size, &mmap_size);
     if (retval) return retval;
-
-    if (!__ldso_allocate_tls)
-        __ldso_allocate_tls = dlsym(RTLD_DEFAULT, "__ldso_allocate_tls");
 
     tcb = __ldso_allocate_tls();
     if (!tcb) return ENOMEM;

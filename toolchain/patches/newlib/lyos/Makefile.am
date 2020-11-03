@@ -2,11 +2,14 @@ AUTOMAKE_OPTIONS = cygnus
 INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 AM_CCASFLAGS = $(INCLUDES)
 
-SUBDIRS = machine .
+SUBDIRS = machine \
+	$(EXTRA_SUBDIRS)
+	.
 
 noinst_LIBRARIES = lib.a
 
-SUBLIBS = ${LYOS_MACHINE_LIB}
+SUBLIBS = $(LYOS_MACHINE_LIB) \
+	$(EXTRA_SUBLIBS)
 
 GENERAL_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c ttyname.c \
 				mntent.c err.c progname.c crypt3.c sysconf.c regex.c ucontext.c poll.c \
