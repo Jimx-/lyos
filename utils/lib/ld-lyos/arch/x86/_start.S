@@ -14,6 +14,19 @@ _start:
     push	%eax                # argc
 
     push    %ecx
+
+    call    1f
+1:
+    popl    %edx
+    leal	_DYNAMIC-1b(%edx), %ecx	# &_DYNAMIC
+    movl	%ecx, %ebx
+    subl	_GLOBAL_OFFSET_TABLE_-1b(%edx), %ebx
+
+    pushl	%ebx			# relocbase
+    pushl	%ecx			# &_DYNAMIC
+    call	ldso_relocate_nonplt_self
+    addl    $8, %esp
+
     call    __lyos_init
     addl    $4, %esp
 

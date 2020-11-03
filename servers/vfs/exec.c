@@ -317,6 +317,9 @@ int fs_exec(void)
         retval = get_exec_inode(&execi, &lookup, fproc);
         if (retval) goto exec_finalize;
 
+        /* put ld.so higher to trap NULL pointer dereferences */
+        execi.args.load_offset = ARCH_PG_SIZE;
+
         execi.args.filesize = execi.pin->i_size;
         execi.args.clearproc = NULL;
         execi.args.memmap = NULL;

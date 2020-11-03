@@ -87,7 +87,8 @@ int libexec_load_elf(struct exec_info* execi)
     int retval;
     Elf_Ehdr* elf_hdr;
     Elf_Phdr* prog_hdr;
-    uintptr_t load_base = 0xffffffff;
+    uintptr_t load_base = 0;
+    int first = TRUE;
 
     if ((retval = elf_check_header((Elf_Ehdr*)execi->header)) != 0)
         return retval;
@@ -104,7 +105,7 @@ int libexec_load_elf(struct exec_info* execi)
     for (i = 0; i < elf_hdr->e_phnum; i++) {
         Elf_Phdr* phdr = &prog_hdr[i];
         off_t foffset;
-        uintptr_t vaddr;
+        uintptr_t p_vaddr, vaddr;
         size_t fsize, memsize, clearend = 0;
         int mmap_prot = PROT_READ;
 
@@ -115,15 +116,13 @@ int libexec_load_elf(struct exec_info* execi)
         if (phdr->p_type != PT_LOAD || phdr->p_memsz == 0)
             continue; /* ignore */
 
-        if (phdr->p_vaddr < load_base) load_base = phdr->p_vaddr;
-
         if ((phdr->p_vaddr % ARCH_PG_SIZE) != (phdr->p_offset % ARCH_PG_SIZE)) {
             printl("libexec: unaligned ELF program?\n");
         }
 
         foffset = phdr->p_offset;
         fsize = phdr->p_filesz;
-        vaddr = phdr->p_vaddr;
+        p_vaddr = vaddr = phdr->p_vaddr + execi->load_offset;
         memsize = phdr->p_memsz;
 
         /* clear memory beyond file size */
@@ -147,12 +146,14 @@ int libexec_load_elf(struct exec_info* execi)
 
         memsize = roundup(memsize, ARCH_PG_SIZE);
         fsize = roundup(fsize, ARCH_PG_SIZE);
+
+        if (first || load_base > vaddr) load_base = vaddr;
+        first = FALSE;
+
         if ((phdr->p_flags & PF_X) != 0)
             execi->text_size = memsize;
         else {
             execi->data_size = memsize;
-            execi->brk = (void*)(phdr->p_vaddr + phdr->p_memsz + 1);
-            execi->brk = (void*)roundup((uintptr_t)execi->brk, sizeof(int));
         }
 
         if (execi->memmap && execi->memmap(execi, (void*)vaddr, fsize, foffset,
@@ -181,7 +182,7 @@ int libexec_load_elf(struct exec_info* execi)
             }
 
             /* clear remaining memory */
-            size_t zero_len = phdr->p_vaddr - vaddr;
+            size_t zero_len = p_vaddr - vaddr;
             if (zero_len) {
 #ifdef ELF_DEBUG
                 printl("libexec: clear memory 0x%x - 0x%x\n", vaddr,
@@ -190,7 +191,7 @@ int libexec_load_elf(struct exec_info* execi)
                 execi->clearmem(execi, (void*)vaddr, zero_len);
             }
 
-            size_t fileend = phdr->p_vaddr + phdr->p_filesz;
+            size_t fileend = p_vaddr + phdr->p_filesz;
             size_t memend = vaddr + memsize;
             zero_len = memend - fileend;
             if (zero_len) {
@@ -212,7 +213,7 @@ int libexec_load_elf(struct exec_info* execi)
     }
     // execi->clearmem(execi, execi->stack_top - execi->stack_size,
     // execi->stack_size);
-    execi->entry_point = (void*)elf_hdr->e_entry;
+    execi->entry_point = (void*)elf_hdr->e_entry + execi->load_offset;
     execi->load_base = (void*)load_base;
 
     return 0;

@@ -35,6 +35,7 @@ struct exec_info {
 
     void* callback_data;
 
+    size_t load_offset;
     size_t text_size;
     size_t data_size;
     size_t stack_size;
@@ -44,7 +45,6 @@ struct exec_info {
 
     void* entry_point;
     void* stack_top;
-    void* brk;
 
     void* phdr;
     unsigned int phnum;

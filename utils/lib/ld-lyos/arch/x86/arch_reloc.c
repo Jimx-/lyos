@@ -4,6 +4,33 @@
 
 void ldso_bind_entry();
 
+void ldso_relocate_nonplt_self(Elf32_Dyn* dynp, Elf32_Addr relocbase)
+{
+    const Elf32_Rel *rel, *rel_lim;
+    Elf32_Addr rel_size;
+    Elf32_Addr* where;
+
+    for (; dynp->d_tag != DT_NULL; dynp++) {
+        switch (dynp->d_tag) {
+        case DT_REL:
+            rel = (const Elf32_Rel*)(relocbase + dynp->d_un.d_ptr);
+            break;
+        case DT_RELSZ:
+            rel_size = dynp->d_un.d_val;
+            break;
+        }
+    }
+
+    if (!rel || !rel_size) return;
+
+    rel_lim = (const Elf32_Rel*)((char*)rel + rel_size);
+
+    for (; rel < rel_lim; rel++) {
+        where = (Elf32_Addr*)(relocbase + rel->r_offset);
+        *where += (Elf32_Addr)relocbase;
+    }
+}
+
 void ldso_setup_pltgot(struct so_info* si)
 {
     si->pltgot[1] = (Elf32_Addr)si;
