@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __UAPI_LYOS_MAGIC_H__
-#define __UAPI_LYOS_MAGIC_H__
+#ifndef __UAPI_LINUX_MAGIC_H__
+#define __UAPI_LINUX_MAGIC_H__
 
 #define ADFS_SUPER_MAGIC   0xadf5
 #define AFFS_SUPER_MAGIC   0xadff
@@ -100,4 +100,4 @@
 #define Z3FOLD_MAGIC      0x33
 #define PPC_CMM_MAGIC     0xc7571590
 
-#endif /* __UAPI_LYOS_MAGIC_H__ */
+#endif /* __UAPI_LINUX_MAGIC_H__ */

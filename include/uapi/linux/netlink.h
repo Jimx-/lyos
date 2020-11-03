@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI__LYOS_NETLINK_H
-#define _UAPI__LYOS_NETLINK_H
+#ifndef _UAPI__LINUX_NETLINK_H
+#define _UAPI__LINUX_NETLINK_H
 
 #include <sys/socket.h>
-#include <lyos/types.h>
+#include <linux/types.h>
 
 #define NETLINK_ROUTE          0 /* Routing/device hook				*/
 #define NETLINK_UNUSED         1 /* Unused number				*/
@@ -252,4 +252,4 @@ struct nla_bitfield32 {
     __u32 selector;
 };
 
-#endif /* _UAPI__LYOS_NETLINK_H */
+#endif /* _UAPI__LINUX_NETLINK_H */

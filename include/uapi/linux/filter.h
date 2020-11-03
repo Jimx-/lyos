@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __UAPI_LYOS_FILTER_H__
-#define __UAPI_LYOS_FILTER_H__
+#ifndef __UAPI_LINUX_FILTER_H__
+#define __UAPI_LINUX_FILTER_H__
 
 #include <lyos/types.h>
-#include <lyos/bpf_common.h>
+#include <linux/bpf_common.h>
 
 struct sock_filter {
     __u16 code;

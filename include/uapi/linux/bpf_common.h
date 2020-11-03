@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __UAPI_LYOS_BPF_COMMON_H__
-#define __UAPI_LYOS_BPF_COMMON_H__
+#ifndef __UAPI_LINUX_BPF_COMMON_H__
+#define __UAPI_LINUX_BPF_COMMON_H__
 
 /* Instruction classes */
 #define BPF_CLASS(code) ((code)&0x07)

@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <lyos/netlink.h>
+#include <linux/netlink.h>
 #include <string.h>
 #include <poll.h>
 #include <sys/uio.h>

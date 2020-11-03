@@ -123,6 +123,7 @@ patc "cairo-1.16.0"
 patc "libxml2-2.9.10"
 patc "wayland-1.18.0"
 patc "libxkbcommon-1.0.1"
+patc "eudev-3.2.2"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

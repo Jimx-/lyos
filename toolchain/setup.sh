@@ -52,6 +52,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBPNG=true
     BUILD_BZIP2=true
     BUILD_LIBXML2=true
+    BUILD_EUDEV=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -526,11 +527,11 @@ if $BUILD_EUDEV; then
     fi
 
     pushd $DIR/sources/eudev-3.2.2 > /dev/null
-    # PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fis || cmd_error
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fis || cmd_error
     popd > /dev/null
 
     pushd eudev-$SUBARCH > /dev/null
-    # $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages || cmd_error
+    $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages || cmd_error
     make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

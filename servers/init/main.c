@@ -10,7 +10,6 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
-#include <lyos/netlink.h>
 
 #define GETTY  "/usr/bin/getty"
 #define NR_TTY 4

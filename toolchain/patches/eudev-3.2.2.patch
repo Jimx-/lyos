@@ -1,0 +1,387 @@
+diff -rupN old/configure.ac new/configure.ac
+--- old/configure.ac	2020-11-03 21:34:52.549609886 +0800
++++ new/configure.ac	2020-10-29 15:33:29.426363000 +0800
+@@ -49,7 +49,7 @@ AC_CHECK_HEADERS(
+ AC_CHECK_HEADERS(
+         [mtd/mtd-user.h],
+         [],
+-        [AC_MSG_ERROR([*** KERNEL header not found])]
++        [AC_MSG_WARN([*** KERNEL header not found])]
+ )
+ 
+ AC_CHECK_HEADERS(
+@@ -66,7 +66,7 @@ AC_TYPE_PID_T
+ AC_CHECK_MEMBERS([struct stat.st_rdev])
+ AC_CHECK_DECLS([getrandom, gettid, name_to_handle_at, accept4, mkostemp, ppoll, strndupa], [], [],
+ [[#include <fcntl.h>
+-#include <linux/random.h>
++#include <sys/random.h>
+ #include <poll.h>
+ #include <signal.h>
+ #include <stdlib.h>
+@@ -241,7 +241,7 @@ AC_CHECK_DECL([unshare],
+         [AC_DEFINE(HAVE_UNSHARE, 1, [Define if unshare is declared])],
+         [AC_CHECK_DECL([SYS_unshare],
+                 [ ] ,
+-                [AC_MSG_ERROR([*** unshare nor SYS_unshare found.])],
++                [AC_MSG_WARN([*** unshare nor SYS_unshare found.])],
+                 [#include <syscall.h>])],
+         [#include <sched.h>])
+ 
+diff -rupN old/Makefile.am new/Makefile.am
+--- old/Makefile.am	2020-11-03 21:34:52.556276524 +0800
++++ new/Makefile.am	2020-11-03 20:54:52.651422000 +0800
+@@ -5,8 +5,7 @@ SUBDIRS = \
+ 
+ if ENABLE_PROGRAMS
+ SUBDIRS += \
+-	rules \
+-	test
++	rules 
+ endif
+ 
+ if ENABLE_MANPAGES
+diff -rupN old/src/ata_id/ata_id.c new/src/ata_id/ata_id.c
+--- old/src/ata_id/ata_id.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/ata_id/ata_id.c	2020-11-03 20:41:12.402417000 +0800
+@@ -44,6 +44,7 @@
+ #include <linux/cdrom.h>
+ #include <linux/bsg.h>
+ #include <arpa/inet.h>
++#include <endian.h>
+ 
+ #include "libudev.h"
+ #include "libudev-private.h"
+diff -rupN old/src/collect/collect.c new/src/collect/collect.c
+--- old/src/collect/collect.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/collect/collect.c	2020-11-03 20:42:19.158693000 +0800
+@@ -42,6 +42,8 @@
+ #define BUFSIZE 16
+ #define UDEV_ALARM_TIMEOUT 180
+ 
++static const char* program_invocation_short_name = "collect";
++
+ enum collect_state {
+         STATE_NONE,
+         STATE_OLD,
+diff -rupN old/src/scsi_id/scsi_id.c new/src/scsi_id/scsi_id.c
+--- old/src/scsi_id/scsi_id.c	2020-11-03 21:34:52.546276567 +0800
++++ new/src/scsi_id/scsi_id.c	2020-11-03 20:49:25.726363000 +0800
+@@ -38,6 +38,8 @@
+ #include "scsi_id.h"
+ #include "udev-util.h"
+ 
++static const char* program_invocation_short_name = "scsi_id";
++
+ static const struct option options[] = {
+         { "device",             required_argument, NULL, 'd' },
+         { "config",             required_argument, NULL, 'f' },
+diff -rupN old/src/shared/hashmap.c new/src/shared/hashmap.c
+--- old/src/shared/hashmap.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/hashmap.c	2020-10-30 14:43:05.368005000 +0800
+@@ -24,6 +24,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <errno.h>
++#include <limits.h>
+ 
+ #include "util.h"
+ #include "hashmap.h"
+diff -rupN old/src/shared/hashmap.h new/src/shared/hashmap.h
+--- old/src/shared/hashmap.h	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/hashmap.h	2020-10-30 14:45:55.255473000 +0800
+@@ -98,10 +98,7 @@ extern const struct hash_ops uint64_hash
+ #if SIZEOF_DEV_T != 8
+ unsigned long devt_hash_func(const void *p, const uint8_t hash_key[HASH_KEY_SIZE]) _pure_;
+ int devt_compare_func(const void *a, const void *b) _pure_;
+-extern const struct hash_ops devt_hash_ops = {
+-        .hash = devt_hash_func,
+-        .compare = devt_compare_func
+-};
++extern const struct hash_ops devt_hash_ops;
+ #else
+ #define devt_hash_func uint64_hash_func
+ #define devt_compare_func uint64_compare_func
+diff -rupN old/src/shared/log.c new/src/shared/log.c
+--- old/src/shared/log.c	2020-11-03 21:34:52.546276567 +0800
++++ new/src/shared/log.c	2020-10-30 14:53:12.149052000 +0800
+@@ -38,6 +38,8 @@
+ 
+ #define SNDBUF_SIZE (8*1024*1024)
+ 
++static const char* program_invocation_short_name = "udev";
++
+ static LogTarget log_target = LOG_TARGET_CONSOLE;
+ static int log_max_level = LOG_INFO;
+ static int log_facility = LOG_DAEMON;
+diff -rupN old/src/shared/missing.h new/src/shared/missing.h
+--- old/src/shared/missing.h	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/missing.h	2020-11-03 20:33:58.645126000 +0800
+@@ -21,12 +21,15 @@
+ 
+ /* Missing glibc definitions to access certain kernel APIs */
+ 
++#include "config.h"
++
+ #include <sys/resource.h>
++#if !HAVE_DECL_GETRANDOM || !HAVE_DECL_GETTID || !HAVE_DECL_NAME_TO_HANDLE_AT
+ #include <sys/syscall.h>
++#endif
+ #include <fcntl.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+-#include <linux/oom.h>
+ 
+ #include "macro.h"
+ #include "config.h"
+diff -rupN old/src/shared/random-util.c new/src/shared/random-util.c
+--- old/src/shared/random-util.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/random-util.c	2020-10-30 14:54:08.704894000 +0800
+@@ -23,7 +23,7 @@
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <time.h>
+-#include <linux/random.h>
++#include <sys/random.h>
+ 
+ #include "random-util.h"
+ #include "time-util.h"
+diff -rupN old/src/shared/socket-util.h new/src/shared/socket-util.h
+--- old/src/shared/socket-util.h	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/socket-util.h	2020-11-03 21:29:00.304511000 +0800
+@@ -23,14 +23,10 @@
+ #include <net/if.h>
+ #include <asm/types.h>
+ #include <linux/netlink.h>
+-#include <linux/if_packet.h>
+ 
+ union sockaddr_union {
+         struct sockaddr sa;
+         struct sockaddr_in in;
+-        struct sockaddr_in6 in6;
+         struct sockaddr_un un;
+         struct sockaddr_nl nl;
+-        struct sockaddr_storage storage;
+-        struct sockaddr_ll ll;
+ };
+diff -rupN old/src/shared/terminal-util.c new/src/shared/terminal-util.c
+--- old/src/shared/terminal-util.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/terminal-util.c	2020-10-30 15:12:52.633552000 +0800
+@@ -27,9 +27,6 @@
+ #include <time.h>
+ #include <assert.h>
+ #include <poll.h>
+-#include <linux/vt.h>
+-#include <linux/tiocl.h>
+-#include <linux/kd.h>
+ 
+ #include "terminal-util.h"
+ #include "time-util.h"
+diff -rupN old/src/shared/time-util.c new/src/shared/time-util.c
+--- old/src/shared/time-util.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/time-util.c	2020-10-30 15:17:05.642987000 +0800
+@@ -21,7 +21,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <stdbool.h>
+-#include <time.h>
++#include <sys/time.h>
+ 
+ #include "time-util.h"
+ #include "macro.h"
+diff -rupN old/src/shared/util.c new/src/shared/util.c
+--- old/src/shared/util.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/shared/util.c	2020-11-03 21:29:14.454446000 +0800
+@@ -27,7 +27,7 @@
+ #include <syslog.h>
+ #include <sched.h>
+ #include <sys/resource.h>
+-#include <linux/sched.h>
++#include <lyos/sched.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <fcntl.h>
+@@ -40,7 +40,6 @@
+ #include <sys/utsname.h>
+ #include <pwd.h>
+ #include <netinet/ip.h>
+-#include <linux/kd.h>
+ #include <dlfcn.h>
+ #include <sys/wait.h>
+ #include <sys/time.h>
+diff -rupN old/src/udev/Makefile.am new/src/udev/Makefile.am
+--- old/src/udev/Makefile.am	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/Makefile.am	2020-10-30 16:17:10.331374000 +0800
+@@ -114,7 +114,7 @@ nodist_libudev_core_la_SOURCES = \
+ 
+ keyboard-keys.txt: Makefile
+ 	$(AM_V_at)$(MKDIR_P) $(dir $@)
+-	$(AM_V_GEN)$(CPP) $(CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) -dM -include linux/input.h - < /dev/null | $(AWK) '/^#define[ \t]+KEY_[^ ]+[ \t]+[0-9]/ { if ($$2 != "KEY_MAX") { print $$2 } }' | sed 's/^KEY_COFFEE$$/KEY_SCREENLOCK/' > $@
++	$(AM_V_GEN)$(CPP) $(CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) -dM -include lyos/input.h - < /dev/null | $(AWK) '/^#define[ \t]+KEY_[^ ]+[ \t]+[0-9]/ { if ($$2 != "KEY_MAX") { print $$2 } }' | sed 's/^KEY_COFFEE$$/KEY_SCREENLOCK/' > $@
+ 
+ keyboard-keys-from-name.gperf: keyboard-keys.txt Makefile
+ 	$(AM_V_GEN)$(AWK) 'BEGIN{ print "struct key { const char* name; unsigned short id; };"; print "%null-strings"; print "%%";} { print tolower(substr($$1 ,5)) ", " $$1 }' < $< > $@
+diff -rupN old/src/udev/udevadm.c new/src/udev/udevadm.c
+--- old/src/udev/udevadm.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm.c	2020-10-30 16:24:58.363771000 +0800
+@@ -56,6 +56,8 @@ static const struct udevadm_cmd *udevadm
+         &udevadm_help,
+ };
+ 
++static const char* program_invocation_short_name = "udevadm";
++
+ static int adm_help(struct udev *udev, int argc, char *argv[]) {
+         unsigned int i;
+ 
+diff -rupN old/src/udev/udevadm-control.c new/src/udev/udevadm-control.c
+--- old/src/udev/udevadm-control.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-control.c	2020-10-30 16:25:54.179540000 +0800
+@@ -28,6 +28,8 @@
+ #include "udev.h"
+ #include "udev-util.h"
+ 
++static const char* program_invocation_short_name = "udevadm-control";
++
+ static void print_help(void) {
+         printf("%s control COMMAND\n\n"
+                "Control the udev daemon.\n\n"
+diff -rupN old/src/udev/udevadm-info.c new/src/udev/udevadm-info.c
+--- old/src/udev/udevadm-info.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-info.c	2020-10-30 16:25:34.573188000 +0800
+@@ -256,6 +256,8 @@ static void cleanup_db(struct udev *udev
+         }
+ }
+ 
++static const char* program_invocation_short_name = "udevadm-info";
++
+ static void help(void) {
+ 
+         printf("%s info [OPTIONS] [DEVPATH|FILE]\n\n"
+diff -rupN old/src/udev/udevadm-monitor.c new/src/udev/udevadm-monitor.c
+--- old/src/udev/udevadm-monitor.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-monitor.c	2020-11-03 21:30:14.324174000 +0800
+@@ -37,6 +37,8 @@
+ 
+ static bool udev_exit;
+ 
++static const char* program_invocation_short_name = "udevadm-monitor";
++
+ static void sig_handler(int signum) {
+         if (signum == SIGINT || signum == SIGTERM)
+                 udev_exit = true;
+diff -rupN old/src/udev/udevadm-settle.c new/src/udev/udevadm-settle.c
+--- old/src/udev/udevadm-settle.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-settle.c	2020-10-30 16:27:17.988191000 +0800
+@@ -36,6 +36,8 @@
+ #include "udev-util.h"
+ #include "util.h"
+ 
++static const char* program_invocation_short_name = "udevadm-settle";
++
+ static void help(void) {
+         printf("%s settle OPTIONS\n\n"
+                "Wait for pending udev events.\n\n"
+diff -rupN old/src/udev/udevadm-test-builtin.c new/src/udev/udevadm-test-builtin.c
+--- old/src/udev/udevadm-test-builtin.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-test-builtin.c	2020-10-30 16:28:37.180247000 +0800
+@@ -33,6 +33,8 @@
+ 
+ #include "udev.h"
+ 
++static const char* program_invocation_short_name = "udevadm-test";
++
+ static void help(struct udev *udev) {
+         printf("%s builtin [--help] COMMAND SYSPATH\n\n"
+                "Test a built-in command.\n\n"
+diff -rupN old/src/udev/udevadm-test.c new/src/udev/udevadm-test.c
+--- old/src/udev/udevadm-test.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-test.c	2020-10-30 16:28:04.370776000 +0800
+@@ -31,6 +31,8 @@
+ #include "udev.h"
+ #include "udev-util.h"
+ 
++static const char* program_invocation_short_name = "udevadm-test";
++
+ static void help(void) {
+ 
+         printf("%s test OPTIONS <syspath>\n\n"
+diff -rupN old/src/udev/udevadm-trigger.c new/src/udev/udevadm-trigger.c
+--- old/src/udev/udevadm-trigger.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevadm-trigger.c	2020-10-30 16:27:44.204434000 +0800
+@@ -38,6 +38,8 @@
+ static int verbose;
+ static int dry_run;
+ 
++static const char* program_invocation_short_name = "udevadm-trigger";
++
+ static void exec_list(struct udev_enumerate *udev_enumerate, const char *action) {
+         struct udev_list_entry *entry;
+ 
+diff -rupN old/src/udev/udev-builtin-input_id.c new/src/udev/udev-builtin-input_id.c
+--- old/src/udev/udev-builtin-input_id.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udev-builtin-input_id.c	2020-10-30 16:14:35.380610000 +0800
+@@ -27,8 +27,8 @@
+ #include <unistd.h>
+ #include <string.h>
+ #include <errno.h>
+-#include <linux/limits.h>
+-#include <linux/input.h>
++#include <sys/syslimits.h>
++#include <lyos/input.h>
+ 
+ #include "udev.h"
+ #include "util.h"
+diff -rupN old/src/udev/udev-builtin-keyboard.c new/src/udev/udev-builtin-keyboard.c
+--- old/src/udev/udev-builtin-keyboard.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udev-builtin-keyboard.c	2020-10-30 16:30:34.348361000 +0800
+@@ -23,8 +23,8 @@
+ #include <stdlib.h>
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
+-#include <linux/limits.h>
+-#include <linux/input.h>
++#include <sys/syslimits.h>
++#include <lyos/input.h>
+ 
+ #include "udev.h"
+ 
+diff -rupN old/src/udev/udevd.c new/src/udev/udevd.c
+--- old/src/udev/udevd.c	2020-11-03 21:34:52.542943248 +0800
++++ new/src/udev/udevd.c	2020-11-03 21:44:11.307282470 +0800
+@@ -28,6 +28,7 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include <fcntl.h>
++#include <linux/fs.h>
+ #include <time.h>
+ #include <getopt.h>
+ #include <dirent.h>
+@@ -45,6 +46,7 @@
+ #include <sys/ioctl.h>
+ #include <sys/inotify.h>
+ #include <sys/utsname.h>
++#include <limits.h>
+ 
+ #include "udev.h"
+ #include "udev-util.h"
+@@ -76,6 +78,8 @@ Hashmap *workers;
+ static struct udev_list properties_list;
+ static bool udev_exit;
+ 
++static const char* program_invocation_short_name = "udevd";
++
+ enum event_state {
+         EVENT_UNDEF,
+         EVENT_QUEUED,
+diff -rupN old/src/v4l_id/v4l_id.c new/src/v4l_id/v4l_id.c
+--- old/src/v4l_id/v4l_id.c	2020-11-03 21:34:52.546276567 +0800
++++ new/src/v4l_id/v4l_id.c	2020-11-03 20:52:03.452236000 +0800
+@@ -32,6 +32,8 @@
+ 
+ #include "util.h"
+ 
++static const char* program_invocation_short_name = "v4l_id";
++
+ int main(int argc, char *argv[]) {
+         static const struct option options[] = {
+                 { "help", no_argument, NULL, 'h' },

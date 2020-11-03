@@ -1,8 +1,8 @@
 #ifndef _LYOS_NETLINK_H_
 #define _LYOS_NETLINK_H_
 
-#include <uapi/lyos/netlink.h>
 #include <lyos/types.h>
+#include <uapi/linux/netlink.h>
 #include <lyos/const.h>
 
 enum netlink_msgtype {
