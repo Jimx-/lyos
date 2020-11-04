@@ -37,7 +37,7 @@ int trace_symlink(struct tcb* tcp)
     print_path(tcp, tcp->msg_in.u.m_vfs_link.new_path,
                tcp->msg_in.u.m_vfs_link.new_path_len);
 
-    return RVAL_DECODED;
+    return RVAL_DECODED | RVAL_SPECIAL;
 }
 
 int trace_readlinkat(struct tcb* tcp)

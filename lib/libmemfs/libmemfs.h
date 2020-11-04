@@ -32,12 +32,17 @@ struct memfs_hooks {
     int (*getdents_hook)(struct memfs_inode* inode, cbdata_t data);
     int (*lookup_hook)(struct memfs_inode* parent, const char* name,
                        cbdata_t data);
+    int (*symlink_hook)(struct memfs_inode* parent, const char* name,
+                        struct memfs_stat* stat, const char* path,
+                        cbdata_t cbdata);
     int (*rdlink_hook)(struct memfs_inode* inode, char* ptr, size_t max,
                        endpoint_t user_endpt, cbdata_t data);
     int (*mkdir_hook)(struct memfs_inode* parent, const char* name,
                       struct memfs_stat* stat, cbdata_t cbdata);
     int (*mknod_hook)(struct memfs_inode* parent, const char* name,
                       struct memfs_stat* stat, cbdata_t cbdata);
+    int (*chstat_hook)(struct memfs_inode* inode, struct memfs_stat* stat,
+                       cbdata_t cbdata);
     void (*message_hook)(MESSAGE* m);
 };
 
@@ -56,5 +61,8 @@ struct memfs_inode* memfs_find_inode_by_name(struct memfs_inode* parent,
                                              const char* name);
 struct memfs_inode* memfs_find_inode_by_index(struct memfs_inode* parent,
                                               int index);
+
+void memfs_get_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat);
+void memfs_set_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat);
 
 #endif

@@ -186,7 +186,7 @@ int do_chmod(int type)
     }
     put_inode(pin);
 
-    return 0;
+    return retval;
 }
 
 int fs_getsetid(void)

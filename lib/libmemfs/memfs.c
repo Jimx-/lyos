@@ -46,6 +46,9 @@ static struct fsdriver fsd = {
     .fs_write = memfs_write,
     .fs_getdents = memfs_getdents,
     .fs_rdlink = memfs_rdlink,
+    .fs_symlink = memfs_symlink,
+    .fs_chmod = memfs_chmod,
+    .fs_chown = memfs_chown,
     .fs_other = memfs_other,
 };
 

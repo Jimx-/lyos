@@ -8,18 +8,16 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
+#include <sys/stat.h>
 
 #include <libmemfs/libmemfs.h>
 #include "proto.h"
-
-static ssize_t get_target_path(struct memfs_inode* parent,
-                               struct memfs_inode* target, char* path);
 
 ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
                      size_t bytes, endpoint_t user_endpt)
 {
     char path[PATH_MAX];
-    struct memfs_inode *pin, *target;
+    struct memfs_inode* pin;
     int retval;
     ssize_t len;
 
@@ -49,6 +47,36 @@ ssize_t memfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
     }
 
     return len;
+}
+
+int memfs_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
+                  gid_t gid, struct fsdriver_data* data, size_t bytes)
+{
+    struct memfs_inode* pin;
+    struct memfs_stat stat;
+    char path[PATH_MAX];
+    int retval;
+
+    if ((pin = memfs_find_inode(dir_num)) == NULL) return EINVAL;
+
+    if (memfs_find_inode_by_name(pin, name) != NULL) return EEXIST;
+
+    if (!fs_hooks.symlink_hook) return ENOSYS;
+
+    if (bytes >= sizeof(path)) return ENAMETOOLONG;
+
+    if ((retval = fsdriver_copyin(data, 0, path, bytes)) != OK) return retval;
+    path[bytes] = '\0';
+
+    memset(&stat, 0, sizeof(stat));
+    stat.st_dev = dev;
+    stat.st_mode = S_IFLNK | RWX_MODES;
+    stat.st_uid = uid;
+    stat.st_gid = gid;
+    stat.st_size = strlen(path);
+    stat.st_device = 0;
+
+    return fs_hooks.symlink_hook(pin, name, &stat, path, pin->data);
 }
 
 int memfs_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,

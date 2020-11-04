@@ -707,7 +707,12 @@ int chmod(const char* path, mode_t mode)
 
     send_recv(BOTH, TASK_FS, &msg);
 
-    return msg.RETVAL;
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
 }
 
 int fchmod(int fd, mode_t mode)
@@ -722,7 +727,12 @@ int fchmod(int fd, mode_t mode)
 
     send_recv(BOTH, TASK_FS, &msg);
 
-    return msg.RETVAL;
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
 }
 
 int mount(const char* source, const char* target, const char* filesystemtype,
@@ -1039,6 +1049,11 @@ int symlink(const char* target, const char* linkpath)
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
 
     return msg.RETVAL;
 }

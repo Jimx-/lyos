@@ -82,6 +82,8 @@ int syscall_trace_exiting(struct tcb* tcp)
         case UMASK:
             retval = tcp->msg_out.RETVAL;
             break;
+        case CHMOD:
+        case SYMLINK:
         case UTIMENSAT:
         case FCHOWN:
         case FCHOWNAT:

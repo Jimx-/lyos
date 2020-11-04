@@ -12,5 +12,5 @@ int trace_chmod(struct tcb* tcp)
     printf(", ");
     print_mode_t(msg->MODE);
 
-    return RVAL_DECODED;
+    return RVAL_DECODED | RVAL_SPECIAL;
 }

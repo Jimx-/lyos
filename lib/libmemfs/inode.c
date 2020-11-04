@@ -152,11 +152,18 @@ void memfs_update_inode(struct memfs_inode* pin)
 
 struct memfs_inode* memfs_get_root_inode() { return &root_inode; }
 
+void memfs_get_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat)
+{
+    if (!pin || !stat) return;
+
+    *stat = pin->i_stat;
+}
+
 void memfs_set_inode_stat(struct memfs_inode* pin, struct memfs_stat* stat)
 {
     if (!pin || !stat) return;
 
-    memcpy(&pin->i_stat, stat, sizeof(struct memfs_stat));
+    pin->i_stat = *stat;
 }
 
 struct memfs_inode* memfs_add_inode(struct memfs_inode* parent,

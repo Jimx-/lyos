@@ -20,6 +20,7 @@
 #include <lyos/ipc.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <lyos/config.h>
@@ -38,11 +39,21 @@
 static void devman_init();
 static int devfs_mknod(struct memfs_inode* inode, const char* name,
                        struct memfs_stat* stat, cbdata_t cbdata);
+static int devfs_chstat(struct memfs_inode* inode, struct memfs_stat* stat,
+                        cbdata_t cbdata);
+static int devfs_symlink(struct memfs_inode* inode, const char* name,
+                         struct memfs_stat* stat, const char* path,
+                         cbdata_t cbdata);
+static int devfs_rdlink(struct memfs_inode* inode, char* ptr, size_t max,
+                        endpoint_t user_endpt, cbdata_t data);
 static void devfs_message_hook(MESSAGE* msg);
 
 struct memfs_hooks fs_hooks = {
     .mkdir_hook = devfs_mknod,
     .mknod_hook = devfs_mknod,
+    .chstat_hook = devfs_chstat,
+    .symlink_hook = devfs_symlink,
+    .rdlink_hook = devfs_rdlink,
     .message_hook = devfs_message_hook,
 };
 
@@ -134,6 +145,49 @@ static int devfs_mknod(struct memfs_inode* parent, const char* name,
 
     pin = memfs_add_inode(parent, name, NO_INDEX, stat, NULL);
     if (!pin) return ENOMEM;
+
+    return 0;
+}
+
+static int devfs_chstat(struct memfs_inode* inode, struct memfs_stat* stat,
+                        cbdata_t cbdata)
+{
+    memfs_set_inode_stat(inode, stat);
+
+    return 0;
+}
+
+static int devfs_symlink(struct memfs_inode* parent, const char* name,
+                         struct memfs_stat* stat, const char* path,
+                         cbdata_t cbdata)
+{
+    struct memfs_inode* pin;
+    char* path_data;
+
+    path_data = strdup(path);
+    if (!path_data) return ENOMEM;
+
+    pin = memfs_add_inode(parent, name, NO_INDEX, stat, path_data);
+    if (!pin) {
+        free(path_data);
+        return ENOMEM;
+    }
+
+    return 0;
+}
+
+static int devfs_rdlink(struct memfs_inode* inode, char* ptr, size_t max,
+                        endpoint_t user_endpt, cbdata_t data)
+{
+    const char* link = data;
+    size_t len;
+
+    if (!link) return EINVAL;
+    len = strlen(link);
+
+    if (len >= max) return ENAMETOOLONG;
+
+    strcpy(ptr, link);
 
     return 0;
 }

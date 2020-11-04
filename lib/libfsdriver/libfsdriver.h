@@ -16,6 +16,7 @@
 #ifndef _LIBFSDRIVER_H_
 #define _LIBFSDRIVER_H_
 
+#include <sys/time.h>
 #include <lyos/mgrant.h>
 #include <libfsdriver/buffer.h>
 

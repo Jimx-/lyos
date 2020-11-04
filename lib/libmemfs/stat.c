@@ -78,3 +78,53 @@ int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data)
 
     return memfs_stat_inode(pin, data);
 }
+
+int memfs_chmod(dev_t dev, ino_t num, mode_t* mode)
+{
+    struct memfs_stat stat;
+    struct memfs_inode* pin = memfs_find_inode(num);
+    int retval;
+
+    if (!pin) return EINVAL;
+
+    if (!fs_hooks.chstat_hook) return ENOSYS;
+
+    memfs_get_inode_stat(pin, &stat);
+
+    stat.st_mode = (stat.st_mode & ~ALL_MODES) | (*mode & ALL_MODES);
+
+    retval = fs_hooks.chstat_hook(pin, &stat, pin->data);
+    if (retval) return retval;
+
+    memfs_get_inode_stat(pin, &stat);
+
+    *mode = stat.st_mode;
+
+    return 0;
+}
+
+int memfs_chown(dev_t dev, ino_t num, uid_t uid, gid_t gid, mode_t* mode)
+{
+    struct memfs_stat stat;
+    struct memfs_inode* pin = memfs_find_inode(num);
+    int retval;
+
+    if (!pin) return EINVAL;
+
+    if (!fs_hooks.chstat_hook) return ENOSYS;
+
+    memfs_get_inode_stat(pin, &stat);
+
+    stat.st_uid = uid;
+    stat.st_gid = gid;
+    stat.st_mode = stat.st_mode & ~(S_ISUID | S_ISGID);
+
+    retval = fs_hooks.chstat_hook(pin, &stat, pin->data);
+    if (retval) return retval;
+
+    memfs_get_inode_stat(pin, &stat);
+
+    *mode = stat.st_mode;
+
+    return 0;
+}
