@@ -3,6 +3,7 @@
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 #include <errno.h>
+#include <assert.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <lyos/mgrant.h>
@@ -79,7 +80,7 @@ void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid)
     sockdriver_reset(newsock, newid, sock->domain, sock->type, sock->protocol,
                      sock->ops);
 
-    newsock->sock_opt = sock->sock_opt & ~SO_ACCEPTCONN;
+    newsock->flags = sock->flags & ~SFL_ACCEPTCONN;
 }
 
 void sock_free(struct sock* sock)
@@ -298,7 +299,7 @@ static int do_bind(sockid_t id, struct sockaddr* addr, size_t addrlen,
 
     if ((sock = sock_get(id)) == NULL) return EINVAL;
     if (!sock->ops->sop_bind) return EOPNOTSUPP;
-    if (sock->sock_opt & SO_ACCEPTCONN) return EINVAL;
+    if (sock->flags & SFL_ACCEPTCONN) return EINVAL;
 
     return sock->ops->sop_bind(sock, addr, addrlen, user_endpoint, flags);
 }
@@ -311,7 +312,7 @@ static int do_connect(sockid_t id, struct sockaddr* addr, size_t addrlen,
 
     if ((sock = sock_get(id)) == NULL) return EINVAL;
     if (!sock->ops->sop_connect) return EOPNOTSUPP;
-    if (sock->sock_opt & SO_ACCEPTCONN) return EINVAL;
+    if (sock->flags & SFL_ACCEPTCONN) return EINVAL;
 
     retval = sock->ops->sop_connect(sock, addr, addrlen, user_endpoint, flags);
 
@@ -379,7 +380,7 @@ static void do_listen(MESSAGE* msg)
     retval = sock->ops->sop_listen(sock, backlog);
 
     if (retval == OK) {
-        sock->sock_opt |= SO_ACCEPTCONN;
+        sock->flags |= SFL_ACCEPTCONN;
     }
 
 reply:
@@ -462,7 +463,7 @@ static ssize_t sockdriver_send(sockid_t id, struct iov_grant_iter* data_iter,
         return -EPIPE;
     }
 
-    if (sock->sock_opt & SO_DONTROUTE) flags |= MSG_DONTROUTE;
+    if (sock->flags & SFL_LOCALROUTE) flags |= MSG_DONTROUTE;
 
     if (sock->ops->sop_send_check &&
         (retval =
@@ -574,7 +575,7 @@ static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
     if (!sock->ops->sop_recv) return -EOPNOTSUPP;
 
     oob = inflags & MSG_OOB;
-    if (oob && (sock->sock_opt & SO_OOBINLINE)) return -EINVAL;
+    if (oob && (sock->flags & SFL_URGINLINE)) return -EINVAL;
 
     do {
         if (oob || !sockdriver_has_suspended(sock, SEV_RECV)) {
@@ -800,6 +801,30 @@ reply:
     send_generic_reply(src, req_id, retval);
 }
 
+static inline int sockopt_to_flag(int name)
+{
+    switch (name) {
+    case SO_DEBUG:
+        return SFL_DBG;
+    case SO_ACCEPTCONN:
+        return SFL_ACCEPTCONN;
+    case SO_REUSEADDR:
+        return SFL_REUSE;
+    case SO_KEEPALIVE:
+        return SFL_KEEPOPEN;
+    case SO_DONTROUTE:
+        return SFL_LOCALROUTE;
+    case SO_BROADCAST:
+        return SFL_BROADCAST;
+    case SO_OOBINLINE:
+        return SFL_URGINLINE;
+    case SO_PASSCRED:
+        return SFL_PASSCRED;
+    default:
+        return 0;
+    }
+}
+
 static void do_getsockopt(MESSAGE* msg)
 {
     struct sock* sock;
@@ -811,7 +836,7 @@ static void do_getsockopt(MESSAGE* msg)
     mgrant_id_t grant = msg->u.m_sockdriver_getset.grant;
     socklen_t len = msg->u.m_sockdriver_getset.len;
     struct sockdriver_data data;
-    int val;
+    int val, flag;
     int retval = 0;
 
     if ((sock = sock_get(sock_id)) == NULL) {
@@ -832,7 +857,11 @@ static void do_getsockopt(MESSAGE* msg)
         case SO_DONTROUTE:
         case SO_BROADCAST:
         case SO_OOBINLINE:
-            val = !!(sock->sock_opt & (unsigned int)name);
+        case SO_PASSCRED:
+            flag = sockopt_to_flag(name);
+            assert(flag);
+
+            val = !!(sock->flags & flag);
             len = sizeof(val);
             retval = sockdriver_copyout(&data, 0, &val, len);
             break;
@@ -885,7 +914,7 @@ static void do_setsockopt(MESSAGE* msg)
     mgrant_id_t grant = msg->u.m_sockdriver_getset.grant;
     socklen_t len = msg->u.m_sockdriver_getset.len;
     struct sockdriver_data data;
-    int val;
+    int val, flag;
     int retval = 0;
 
     if ((sock = sock_get(sock_id)) == NULL) {
@@ -905,13 +934,17 @@ static void do_setsockopt(MESSAGE* msg)
         case SO_DONTROUTE:
         case SO_BROADCAST:
         case SO_OOBINLINE:
+        case SO_PASSCRED:
             if ((retval = sockdriver_copyin(&data, 0, &val, len)) != OK)
                 goto reply;
 
+            flag = sockopt_to_flag(name);
+            assert(flag);
+
             if (val)
-                sock->sock_opt |= (unsigned int)name;
+                sock->flags |= flag;
             else
-                sock->sock_opt &= ~(unsigned int)name;
+                sock->flags &= ~flag;
             break;
         case SO_SNDBUF:
             if ((retval = sockdriver_copyin(&data, 0, &val, len)) != OK)
@@ -1002,7 +1035,7 @@ static void do_close(MESSAGE* msg)
 
     sock->sel_endpoint = NO_TASK;
 
-    force = ((sock->sock_opt & SO_LINGER) && sock->linger == 0);
+    force = ((sock->flags & SFL_LINGER) && sock->linger == 0);
 
     if (sock->ops->sop_close)
         retval = sock->ops->sop_close(sock, force, !!(flags & SDEV_NONBLOCK));

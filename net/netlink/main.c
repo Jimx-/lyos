@@ -18,6 +18,7 @@
 #include <lyos/idr.h>
 #include <sys/socket.h>
 #include <lyos/eventpoll.h>
+#include <lyos/scm.h>
 
 #include "netlink.h"
 
@@ -366,7 +367,9 @@ static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
     struct nlsock* nls = to_nlsock(sock);
     struct sk_buff* skb;
     struct sockaddr_nl* nladdr;
+    struct scm_data scm;
     size_t copied;
+    socklen_t ctl_off;
     int retval;
 
     if (flags & MSG_OOB) return -EOPNOTSUPP;
@@ -419,7 +422,19 @@ static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
         *addr_len = sizeof(struct sockaddr_nl);
     }
 
+    memset(&scm, 0, sizeof(scm));
+    scm.creds = *NETLINK_CREDS(skb);
+
     skb_free(skb);
+
+    if (ctl_len && *ctl_len > 0) {
+        ctl_off = scm_recv(&nls->sock, ctl, *ctl_len, user_endpt, &scm, flags);
+
+        if (ctl_off >= 0)
+            *ctl_len = ctl_off;
+        else
+            *ctl_len = 0;
+    }
 
 out:
     return retval ?: copied;
@@ -525,6 +540,7 @@ void do_netlink_create(MESSAGE* msg)
 
 void do_netlink_broadcast(MESSAGE* msg)
 {
+    endpoint_t src = msg->source;
     struct netlink_transfer_req* req =
         (struct netlink_transfer_req*)msg->MSG_PAYLOAD;
     struct netlink_resp* resp = (struct netlink_resp*)msg->MSG_PAYLOAD;
@@ -537,7 +553,15 @@ void do_netlink_broadcast(MESSAGE* msg)
     struct iov_grant_iter data_iter;
     struct sock* sock;
     struct sk_buff* skb;
+    pid_t pid;
+    uid_t uid;
+    gid_t gid;
     int retval;
+
+    retval = -EPERM;
+    pid = get_epinfo(src, &uid, &gid);
+    if (!pid) goto out;
+    if (uid != SU_UID) goto out;
 
     data_iov.iov_grant = grant;
     data_iov.iov_len = len;
@@ -556,6 +580,10 @@ void do_netlink_broadcast(MESSAGE* msg)
         retval = -retval;
         goto out_free_skb;
     }
+
+    NETLINK_CREDS(skb)->pid = 0;
+    NETLINK_CREDS(skb)->uid = uid;
+    NETLINK_CREDS(skb)->gid = gid;
 
     retval = netlink_broadcast(sock, skb, portid, group);
 

@@ -4,15 +4,18 @@
 #include <sys/types.h>
 #include <sys/syslimits.h>
 #include <lyos/netlink.h>
+#include <lyos/scm.h>
 
 #include <libsockdriver/libsockdriver.h>
 
 struct netlink_skb_params {
+    struct scm_creds creds;
     u32 portid;
     u32 dest_group;
 };
 
-#define NETLINK_CB(skb) (*(struct netlink_skb_params*)&((skb)->cb))
+#define NETLINK_CB(skb)    (*(struct netlink_skb_params*)&((skb)->cb))
+#define NETLINK_CREDS(skb) (&NETLINK_CB((skb)).creds)
 
 struct nlsock {
     struct sock sock;

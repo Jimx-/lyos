@@ -17,6 +17,14 @@ typedef union {
     struct cmsghdr* cmsg;
 } union_cmsghdr;
 
+static void print_scm_creds(struct tcb* tcp, const void* cmsg_data,
+                            unsigned int data_len)
+{
+    const struct ucred* ucred = cmsg_data;
+
+    printf("{pid=%d, uid=%d, gid=%d}", ucred->pid, ucred->uid, ucred->pid);
+}
+
 static void print_scm_rights(struct tcb* tcp, const void* cmsg_data,
                              unsigned int data_len)
 {
@@ -44,6 +52,7 @@ static const struct {
     const cmsg_printer printer;
     const unsigned int min_len;
 } cmsg_socket_printers[] = {
+    [SCM_CREDENTIALS] = {print_scm_creds, sizeof(struct ucred)},
     [SCM_RIGHTS] = {print_scm_rights, sizeof(int)},
 };
 

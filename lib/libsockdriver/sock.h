@@ -17,8 +17,17 @@ typedef int32_t sockid_t;
 #define SEV_CLOSE   0x20
 
 /* Socket flags. */
-#define SFL_SHUT_RD 0x01
-#define SFL_SHUT_WR 0x02
+#define SFL_SHUT_RD    0x001
+#define SFL_SHUT_WR    0x002
+#define SFL_DBG        0x004
+#define SFL_PASSCRED   0x008
+#define SFL_LOCALROUTE 0x010
+#define SFL_REUSE      0x020
+#define SFL_KEEPOPEN   0x040
+#define SFL_URGINLINE  0x080
+#define SFL_ACCEPTCONN 0x100
+#define SFL_LINGER     0x200
+#define SFL_BROADCAST  0x400
 
 /* Socket select flags */
 #define SSEL_ONESHOT 0x01
@@ -35,7 +44,6 @@ struct sock {
     int domain;
     int type;
     int protocol;
-    unsigned int sock_opt;
     int err;
 
     int peek_off;
@@ -63,11 +71,12 @@ struct sockdriver_data {
 };
 
 #define sock_sockid(sock)            ((sock)->id)
+#define sock_domain(sock)            ((sock)->domain)
 #define sock_type(sock)              ((sock)->type)
 #define sock_protocol(sock)          ((sock)->protocol)
 #define sock_recvq(sock)             ((sock)->recvq)
 #define sock_peercred(sock)          ((sock)->peercred)
-#define sock_is_listening(sock)      (!!((sock)->sock_opt & SO_ACCEPTCONN))
+#define sock_is_listening(sock)      (!!((sock)->flags & SFL_ACCEPTCONN))
 #define sock_is_shutdown(sock, mask) ((sock)->flags & (mask))
 
 struct sock* sock_get(sockid_t id);

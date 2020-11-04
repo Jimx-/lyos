@@ -4,17 +4,9 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/syslimits.h>
+#include <lyos/scm.h>
 
 #include <libsockdriver/libsockdriver.h>
-
-#define SCM_FD_MAX 253
-
-struct scm_fd_list {
-    size_t count;
-    size_t max;
-    endpoint_t owner;
-    int fds[SCM_FD_MAX];
-};
 
 struct uds_skb_params {
     pid_t pid;
