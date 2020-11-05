@@ -17,10 +17,11 @@
 int main(int argc, char* argv[])
 {
     int fd_stdin, fd_stdout, fd_stderr;
+    pid_t pid;
 
-    int pid_rc = fork();
-    if (pid_rc) {
-        waitpid(pid_rc, NULL, 0);
+    pid = fork();
+    if (pid) {
+        waitpid(pid, NULL, 0);
     } else {
         char* rc_args[] = {"/bin/sh", "/etc/rc", NULL};
         char* rc_env[] = {NULL};
@@ -30,6 +31,14 @@ int main(int argc, char* argv[])
     fd_stdin = open("/dev/console", O_RDWR);
     fd_stdout = dup(fd_stdin);
     fd_stderr = dup(fd_stdin);
+
+    pid = fork();
+    if (!pid) {
+        char* rc_args[] = {"/usr/bin/lydm", NULL};
+        char* rc_env[] = {NULL};
+        execve("/usr/bin/lydm", rc_args, rc_env);
+        exit(EXIT_FAILURE);
+    }
 
     /* set hostname */
     int fd_hostname = open("/etc/hostname", O_RDONLY);

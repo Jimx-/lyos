@@ -1,4 +1,3 @@
-
-SUBDIRS 	= strace profile
+SUBDIRS		= strace profile lydm
 
 include lyos.subdirs.mk
