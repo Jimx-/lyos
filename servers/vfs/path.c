@@ -45,17 +45,19 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
     size_t name_len;
     int retval;
 
-    name_len = strlen(lookup->pathname);
-    path_grant = mgrant_set_direct(fs_e, (vir_bytes)lookup->pathname, name_len,
+    path_grant = mgrant_set_direct(fs_e, (vir_bytes)lookup->pathname, PATH_MAX,
                                    MGF_READ | MGF_WRITE);
     if (path_grant == GRANT_INVALID)
         panic("vfs: request_lookup cannot create path grant");
+
+    name_len = strlen(lookup->pathname);
 
     m.type = FS_LOOKUP;
     m.u.m_vfs_fs_lookup.dev = dev;
     m.u.m_vfs_fs_lookup.start = start;
     m.u.m_vfs_fs_lookup.root = root;
     m.u.m_vfs_fs_lookup.name_len = name_len;
+    m.u.m_vfs_fs_lookup.path_size = PATH_MAX;
     m.u.m_vfs_fs_lookup.path_grant = path_grant;
     m.u.m_vfs_fs_lookup.user_endpt = fp->endpoint;
     m.u.m_vfs_fs_lookup.flags = lookup->flags;
@@ -219,14 +221,15 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
     if (fp->root->i_dev == fp->pwd->i_dev) root_ino = fp->root->i_num;
 
     ret = request_lookup(start->i_fs_ep, dev, num, root_ino, lookup, fp, &res);
-    if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
+    if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT &&
+        ret != ESYMLINK) {
         if (vmnt) unlock_vmnt(vmnt);
         *(lookup->vmnt) = NULL;
         err_code = ret;
         return NULL;
     }
 
-    while (ret == EENTERMOUNT || ret == ELEAVEMOUNT) {
+    while (ret == EENTERMOUNT || ret == ELEAVEMOUNT || ret == ESYMLINK) {
         int path_offset = res.offsetp;
         int left_len = strlen(&pathname[path_offset]);
         memmove(pathname, &pathname[path_offset], left_len);
@@ -297,7 +300,8 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
         ret = request_lookup(fs_e, dir_pin->i_dev, dir_num, root_ino, lookup,
                              fp, &res);
 
-        if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT) {
+        if (ret != 0 && ret != EENTERMOUNT && ret != ELEAVEMOUNT &&
+            ret != ESYMLINK) {
             if (vmnt) unlock_vmnt(vmnt);
             *(lookup->vmnt) = NULL;
             err_code = ret;

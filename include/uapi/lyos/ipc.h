@@ -377,11 +377,12 @@ BEGIN_MESS_DECL(mess_vfs_fs_lookup)
     __endpoint_t user_endpt;
     __mgrant_id_t path_grant;
     size_t name_len;
+    size_t path_size;
     uid_t uid;
     gid_t gid;
     int flags;
 
-    __u8 _pad[44 - sizeof(dev_t) - 2 * sizeof(ino_t) - sizeof(size_t) -
+    __u8 _pad[44 - sizeof(dev_t) - 2 * sizeof(ino_t) - 2 * sizeof(size_t) -
               sizeof(uid_t) - sizeof(gid_t)];
 }
 END_MESS_DECL(mess_vfs_fs_lookup)

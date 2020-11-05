@@ -108,6 +108,7 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
     ino_t root = m->u.m_vfs_fs_lookup.root;
     int flags = m->u.m_vfs_fs_lookup.flags;
     size_t name_len = m->u.m_vfs_fs_lookup.name_len;
+    size_t path_size = m->u.m_vfs_fs_lookup.path_size;
     mgrant_id_t path_grant = m->u.m_vfs_fs_lookup.path_grant;
     endpoint_t user_endpt = m->u.m_vfs_fs_lookup.user_endpt;
     struct fsdriver_node cur_node, next_node;
@@ -201,8 +202,11 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
         int retval2 = 0;
 
         if (symloop > 0) {
-            retval2 =
-                safecopy_to(src, path_grant, 0, pathname, strlen(pathname) + 1);
+            name_len = strlen(pathname) + 1;
+
+            if (name_len > path_size) return ENAMETOOLONG;
+
+            retval2 = safecopy_to(src, path_grant, 0, pathname, name_len);
         }
 
         if (retval2 == 0) {
