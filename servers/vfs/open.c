@@ -209,6 +209,8 @@ int close_fd(struct fproc* fp, int fd)
 
     pin = filp->fd_inode;
 
+    assert(filp->fd_cnt > 0);
+
     if (--filp->fd_cnt == 0) {
         if (!list_empty(&filp->fd_ep_links)) eventpoll_release_file(filp);
 
@@ -257,21 +259,23 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     struct vfs_mount *vmnt_dir, *vmnt;
     struct lookup dir_lookup;
     struct lookup_result res;
+    int lookup_flags = 0;
 
-    init_lookupat(&dir_lookup, lookup->dirfd, lookup->pathname, 0, &vmnt_dir,
-                  &pin_dir);
+    if (flags & O_EXCL) lookup_flags |= LKF_SYMLINK_NOFOLLOW;
+
+    init_lookupat(&dir_lookup, lookup->dirfd, lookup->pathname, lookup_flags,
+                  &vmnt_dir, &pin_dir);
     dir_lookup.vmnt_lock = RWL_WRITE;
     dir_lookup.inode_lock = RWL_WRITE;
     if ((pin_dir = last_dir(&dir_lookup, fp)) == NULL) return NULL;
-    if (vmnt_dir) unlock_vmnt(vmnt_dir);
 
     int retval = 0;
     struct inode* pin = NULL;
-    init_lookup(&dir_lookup, dir_lookup.pathname, 0, &vmnt, &pin);
+    init_lookup(&dir_lookup, dir_lookup.pathname, lookup_flags, &vmnt, &pin);
     dir_lookup.vmnt_lock = RWL_WRITE;
     dir_lookup.inode_lock = RWL_WRITE;
     pin = advance_path(pin_dir, &dir_lookup, fp);
-    if (vmnt) unlock_vmnt(vmnt);
+    assert(!vmnt);
 
     /* no such entry, create one */
     if (pin == NULL && err_code == ENOENT) {
@@ -282,6 +286,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
         }
         if (retval != 0) {
             err_code = retval;
+            unlock_vmnt(vmnt_dir);
             unlock_inode(pin_dir);
             put_inode(pin_dir);
             return NULL;
@@ -289,6 +294,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
         err_code = 0;
     } else {
         err_code = EEXIST;
+        unlock_vmnt(vmnt_dir);
         if (pin_dir != pin) unlock_inode(pin_dir);
         put_inode(pin_dir);
         return pin;
@@ -306,6 +312,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     fsnotify_create(pin_dir, pin, dir_lookup.pathname);
 
     unlock_inode(pin_dir);
+    unlock_vmnt(vmnt_dir);
     put_inode(pin_dir);
 
     return pin;

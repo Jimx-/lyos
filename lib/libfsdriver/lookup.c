@@ -198,13 +198,12 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
     }
 
     if (retval == EENTERMOUNT || retval == ELEAVEMOUNT || retval == ESYMLINK) {
-        int retval2;
+        int retval2 = 0;
 
         if (symloop > 0) {
             retval2 =
                 safecopy_to(src, path_grant, 0, pathname, strlen(pathname) + 1);
-        } else
-            retval2 = 0;
+        }
 
         if (retval2 == 0) {
             m->u.m_fs_vfs_lookup_reply.offset = cp - pathname;

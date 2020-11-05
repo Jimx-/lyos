@@ -396,9 +396,9 @@ static void print_stacktrace(struct proc* p)
     unsigned long bp, hbp, pc;
     int retval;
 
-    printk("proc %d: 0x%x ", p->endpoint, p->regs.eip);
-
     bp = p->regs.ebp;
+
+    printk("proc %d: pc=0x%x bp=0x%x ", p->endpoint, p->regs.eip, bp);
 
     while (bp) {
         retval = data_vir_copy(KERNEL, &pc, p->endpoint,

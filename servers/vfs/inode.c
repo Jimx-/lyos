@@ -55,7 +55,11 @@ void init_inode_table()
 
 static void addhash_inode(struct inode* pin)
 {
-    unsigned int hash = pin->i_num & INODE_HASH_MASK;
+    unsigned int hash;
+
+    assert(pin);
+
+    hash = pin->i_num & INODE_HASH_MASK;
 
     list_add(&(pin->list), &vfs_inode_table[hash]);
 }
@@ -112,13 +116,13 @@ void put_inode(struct inode* pin)
 
     lock_inode(pin, RWL_WRITE);
 
+    assert(pin->i_cnt > 0);
+
     if (pin->i_cnt > 1) {
         pin->i_cnt--;
         unlock_inode(pin);
         return;
     }
-
-    if (pin->i_cnt <= 0) panic("VFS: put_inode: pin->i_cnt is already <= 0");
 
     // TODO: handle this with vmnt operation
     if (pin->i_fs_ep != NO_TASK &&

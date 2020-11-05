@@ -89,6 +89,9 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
         ret->offsetp = m.u.m_fs_vfs_lookup_reply.offset;
         ret->dev = dev;
         break;
+    case ESYMLINK:
+        ret->offsetp = m.u.m_fs_vfs_lookup_reply.offset;
+        break;
     default:
         break;
     }
@@ -223,7 +226,6 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
         return NULL;
     }
 
-    /* TODO: deal with EENTERMOUNT and ELEAVEMOUNT */
     while (ret == EENTERMOUNT || ret == ELEAVEMOUNT) {
         int path_offset = res.offsetp;
         int left_len = strlen(&pathname[path_offset]);
@@ -260,6 +262,10 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
             }
 
             dir_pin = vmnt->m_mounted_on;
+        } else {
+            /* ESYMLINK */
+            dir_pin = fproc->root;
+            vmnt_tmp = NULL;
         }
 
         endpoint_t fs_e = dir_pin->i_fs_ep;
