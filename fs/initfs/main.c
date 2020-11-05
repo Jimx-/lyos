@@ -35,7 +35,7 @@
 
 #include <libfsdriver/libfsdriver.h>
 
-static int initfs_putinode(dev_t dev, ino_t num);
+static int initfs_putinode(dev_t dev, ino_t num, unsigned int count);
 static int initfs_sync(void);
 
 static const struct fsdriver initfs_fsd = {
@@ -66,6 +66,9 @@ int main()
     return fsdriver_start(&initfs_fsd);
 }
 
-static int initfs_putinode(dev_t dev, ino_t num) { return 0; }
+static int initfs_putinode(dev_t dev, ino_t num, unsigned int count)
+{
+    return 0;
+}
 
 static int initfs_sync(void) { return 0; }

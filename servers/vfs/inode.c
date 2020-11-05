@@ -69,6 +69,7 @@ static void unhash_inode(struct inode* pin) { list_del(&(pin->list)); }
 void clear_inode(struct inode* pin)
 {
     pin->i_cnt = 0;
+    pin->i_fs_cnt = 0;
     pin->i_dev = 0;
     pin->i_num = 0;
     rwlock_init(&(pin->i_lock));
@@ -108,6 +109,21 @@ struct inode* find_inode(dev_t dev, ino_t num)
     return NULL;
 }
 
+static int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num, int count)
+{
+    MESSAGE m;
+
+    memset(&m, 0, sizeof(m));
+    m.type = FS_PUTINODE;
+    m.u.m_vfs_fs_putinode.dev = dev;
+    m.u.m_vfs_fs_putinode.num = num;
+    m.u.m_vfs_fs_putinode.count = count;
+
+    fs_sendrec(fs_e, &m);
+
+    return m.RETVAL;
+}
+
 void put_inode(struct inode* pin)
 {
     int ret;
@@ -117,6 +133,7 @@ void put_inode(struct inode* pin)
     lock_inode(pin, RWL_WRITE);
 
     assert(pin->i_cnt > 0);
+    assert(pin->i_fs_cnt > 0);
 
     if (pin->i_cnt > 1) {
         pin->i_cnt--;
@@ -126,7 +143,8 @@ void put_inode(struct inode* pin)
 
     // TODO: handle this with vmnt operation
     if (pin->i_fs_ep != NO_TASK &&
-        (ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num)) != 0) {
+        (ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num,
+                                 pin->i_fs_cnt)) != 0) {
         err_code = ret;
         unlock_inode(pin);
         return;
@@ -150,15 +168,3 @@ int lock_inode(struct inode* pin, rwlock_type_t type)
 }
 
 void unlock_inode(struct inode* pin) { rwlock_unlock(&(pin->i_lock)); }
-
-int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num)
-{
-    MESSAGE m;
-    m.type = FS_PUTINODE;
-    m.REQ_DEV = dev;
-    m.REQ_NUM = num;
-
-    fs_sendrec(fs_e, &m);
-
-    return m.RET_RETVAL;
-}

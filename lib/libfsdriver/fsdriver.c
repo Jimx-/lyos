@@ -49,7 +49,7 @@ int fsdriver_start(const struct fsdriver* fsd)
             m.u.m_fs_vfs_lookup_reply.status = fsdriver_lookup(fsd, &m);
             break;
         case FS_PUTINODE:
-            m.RET_RETVAL = fsdriver_putinode(fsd, &m);
+            m.RETVAL = fsdriver_putinode(fsd, &m);
             break;
         case FS_MOUNTPOINT:
             m.RET_RETVAL = fsdriver_mountpoint(fsd, &m);

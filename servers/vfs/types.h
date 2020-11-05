@@ -62,6 +62,7 @@ struct inode {
     dev_t i_dev;     /**< On which device this inode resides */
     dev_t i_specdev; /**< Device number for block/character special file */
     int i_cnt;       /**< How many procs share this inode  */
+    int i_fs_cnt;    /**< Reference count at the underlying FS */
     int i_num;       /**< inode nr.  */
     rwlock_t i_lock;
 

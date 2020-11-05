@@ -174,7 +174,7 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
             } else
                 retval = ELOOP;
 
-            if (fsd->fs_putinode) fsd->fs_putinode(dev, next_node.fn_num);
+            if (fsd->fs_putinode) fsd->fs_putinode(dev, next_node.fn_num, 1);
 
             if (retval) break;
 
@@ -189,7 +189,7 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
             continue;
         }
 
-        if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num);
+        if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num, 1);
         cur_node = next_node;
 
         if (is_mountpoint) {
@@ -226,7 +226,7 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
         m->u.m_fs_vfs_lookup_reply.node.mode = cur_node.fn_mode;
         m->u.m_fs_vfs_lookup_reply.node.spec_dev = cur_node.fn_device;
     } else {
-        if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num);
+        if (fsd->fs_putinode) fsd->fs_putinode(dev, cur_node.fn_num, 1);
     }
 
     return retval;

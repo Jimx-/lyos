@@ -533,6 +533,16 @@ BEGIN_MESS_DECL(mess_vfs_fs_chown)
 }
 END_MESS_DECL(mess_vfs_fs_chown)
 
+BEGIN_MESS_DECL(mess_vfs_fs_putinode)
+{
+    dev_t dev;
+    ino_t num;
+    unsigned int count;
+
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t)];
+}
+END_MESS_DECL(mess_vfs_fs_putinode)
+
 struct mess_vfs_cdev_openclose {
     __u64 minor;
     __u32 id;
@@ -857,6 +867,7 @@ typedef struct {
         struct mess_vfs_fs_unlink m_vfs_fs_unlink;
         struct mess_vfs_fs_utime m_vfs_fs_utime;
         struct mess_vfs_fs_chown m_vfs_fs_chown;
+        struct mess_vfs_fs_putinode m_vfs_fs_putinode;
         struct mess_vfs_cdev_openclose m_vfs_cdev_openclose;
         struct mess_vfs_cdev_readwrite m_vfs_cdev_readwrite;
         struct mess_vfs_cdev_mmap m_vfs_cdev_mmap;

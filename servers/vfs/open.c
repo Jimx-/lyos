@@ -308,6 +308,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     pin->i_gid = res.gid;
     pin->i_vmnt = pin_dir->i_vmnt;
     pin->i_cnt = 1;
+    pin->i_fs_cnt = 1;
 
     fsnotify_create(pin_dir, pin, dir_lookup.pathname);
 

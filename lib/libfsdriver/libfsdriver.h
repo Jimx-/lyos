@@ -52,7 +52,7 @@ struct fsdriver {
 
     int (*fs_readsuper)(dev_t dev, int flags, struct fsdriver_node* node);
     int (*fs_mountpoint)(dev_t dev, ino_t num);
-    int (*fs_putinode)(dev_t dev, ino_t num);
+    int (*fs_putinode)(dev_t dev, ino_t num, unsigned int count);
     int (*fs_lookup)(dev_t dev, ino_t start, const char* name,
                      struct fsdriver_node* fn, int* is_mountpoint);
     int (*fs_create)(dev_t dev, ino_t dir_num, const char* name, mode_t mode,

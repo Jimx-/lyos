@@ -251,6 +251,7 @@ int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
     root_inode->i_size = res.size;
     root_inode->i_specdev = 0;
     root_inode->i_cnt = 1;
+    root_inode->i_fs_cnt = 1;
     root_inode->i_vmnt = new_pvm;
 
     if (mount_root) {

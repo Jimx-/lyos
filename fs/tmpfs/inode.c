@@ -192,13 +192,16 @@ int tmpfs_new_inode(struct tmpfs_inode* dir_pin, const char* pathname,
     return retval;
 }
 
-int tmpfs_putinode(dev_t dev, ino_t num)
+int tmpfs_putinode(dev_t dev, ino_t num, unsigned int count)
 {
     struct tmpfs_inode* pin;
 
     pin = tmpfs_find_inode(dev, num);
     if (!pin) return EINVAL;
 
+    assert(count <= pin->count);
+
+    pin->count -= count - 1;
     tmpfs_put_inode(pin);
     return 0;
 }

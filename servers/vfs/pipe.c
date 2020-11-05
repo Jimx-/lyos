@@ -399,7 +399,8 @@ static struct inode* get_pipe_inode(struct fproc* fp)
     pin->i_fops = &pipe_fops;
     pin->i_private = pipe;
 
-    pin->i_cnt++;
+    dup_inode(pin);
+    pin->i_fs_cnt++;
 
     return pin;
 }
@@ -442,7 +443,7 @@ static int create_pipe(int* fds, int flags)
     filp1->fd_cnt = 1;
 
     filp0->fd_inode = pin;
-    pin->i_cnt++;
+    dup_inode(pin);
     filp1->fd_inode = pin;
     filp0->fd_flags = O_RDONLY | (flags & ~O_ACCMODE);
     filp1->fd_flags = O_WRONLY | (flags & ~O_ACCMODE);

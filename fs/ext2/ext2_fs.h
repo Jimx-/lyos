@@ -309,7 +309,7 @@ void ext2_init_inode();
 ext2_inode_t* get_ext2_inode(dev_t dev, ino_t num);
 ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num);
 void put_ext2_inode(ext2_inode_t* pin);
-int ext2_putinode(dev_t dev, ino_t num);
+int ext2_putinode(dev_t dev, ino_t num, unsigned int count);
 int ext2_rw_inode(ext2_inode_t* inode, int rw_flag);
 void ext2_dump_inode(ext2_inode_t* pin);
 

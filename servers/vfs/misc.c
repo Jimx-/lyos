@@ -419,8 +419,8 @@ int fs_fork(void)
         }
     }
 
-    if (child->root) child->root->i_cnt++;
-    if (child->pwd) child->pwd->i_cnt++;
+    if (child->root) dup_inode(child->root);
+    if (child->pwd) dup_inode(child->pwd);
 
     unlock_fproc(child);
     unlock_fproc(parent);

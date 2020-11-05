@@ -131,18 +131,28 @@ ext2_inode_t* find_ext2_inode(dev_t dev, ino_t num)
 void put_ext2_inode(ext2_inode_t* pin)
 {
     if (!pin) return;
-    if (pin->i_count < 1) panic("ext2fs: put_inode: pin->i_count already < 1");
+
+    assert(pin->i_count > 0);
+
+    --pin->i_count;
+
     /* no one is using it */
-    if ((--pin->i_count) == 0) {
+    if (!pin->i_count) {
         if (pin->i_dirt == INO_DIRTY) rw_inode(pin, WRITE);
         ext2_unhash_inode(pin);
         ext2_release_inode(pin);
     }
 }
 
-int ext2_putinode(dev_t dev, ino_t num)
+int ext2_putinode(dev_t dev, ino_t num, unsigned int count)
 {
     ext2_inode_t* pin = find_ext2_inode(dev, num);
+
+    assert(pin);
+    assert(count <= pin->i_count);
+
+    pin->i_count -= count - 1;
+
     put_ext2_inode(pin);
 
     return 0;

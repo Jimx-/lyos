@@ -59,7 +59,6 @@ void clear_vfs_mount(struct vfs_mount* vmnt);
 struct vfs_mount* get_free_vfs_mount();
 int do_vfs_open(MESSAGE* p);
 
-int request_put_inode(endpoint_t fs_e, dev_t dev, ino_t num);
 int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
                    struct lookup* lookup, struct fproc* fp,
                    struct lookup_result* ret);

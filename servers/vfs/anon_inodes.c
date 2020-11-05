@@ -77,7 +77,8 @@ void mount_anonfs(void)
     pin->i_fops = NULL;
     pin->i_private = NULL;
 
-    pin->i_cnt++;
+    dup_inode(pin);
+    pin->i_fs_cnt++;
 
     anon_inode = pin;
 }
@@ -112,7 +113,7 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
     filp->fd_cnt = 1;
 
     filp->fd_inode = anon_inode;
-    anon_inode->i_cnt++;
+    dup_inode(anon_inode);
     filp->fd_flags = flags & (O_ACCMODE | O_NONBLOCK);
 
     filp->fd_fops = fops;

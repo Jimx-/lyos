@@ -99,7 +99,8 @@ static int get_sock_inode(struct fproc* fp, dev_t dev, struct inode** ppin)
     pin->i_specdev = dev;
     pin->i_vmnt = sockfs_vmnt;
     pin->i_fops = &sock_fops;
-    pin->i_cnt++;
+    dup_inode(pin);
+    pin->i_fs_cnt = 1;
 
     *ppin = pin;
 

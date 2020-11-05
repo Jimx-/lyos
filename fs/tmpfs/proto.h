@@ -11,7 +11,7 @@ struct tmpfs_inode* tmpfs_alloc_inode(struct tmpfs_superblock* sb, ino_t num);
 void tmpfs_dup_inode(struct tmpfs_inode* pin);
 struct tmpfs_inode* tmpfs_get_inode(dev_t dev, ino_t num);
 int tmpfs_put_inode(struct tmpfs_inode* pin);
-int tmpfs_putinode(dev_t dev, ino_t num);
+int tmpfs_putinode(dev_t dev, ino_t num, unsigned int count);
 int tmpfs_new_inode(struct tmpfs_inode* dir_pin, const char* pathname,
                     mode_t mode, uid_t uid, gid_t gid,
                     struct tmpfs_inode** ppin);

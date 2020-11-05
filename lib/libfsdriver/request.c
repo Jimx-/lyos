@@ -78,12 +78,13 @@ int fsdriver_mountpoint(const struct fsdriver* fsd, MESSAGE* m)
 
 int fsdriver_putinode(const struct fsdriver* fsd, MESSAGE* m)
 {
-    dev_t dev = m->REQ_DEV;
-    ino_t num = m->REQ_NUM;
+    dev_t dev = m->u.m_vfs_fs_putinode.dev;
+    ino_t num = m->u.m_vfs_fs_putinode.num;
+    unsigned int count = m->u.m_vfs_fs_putinode.count;
 
     if (fsd->fs_putinode == NULL) return ENOSYS;
 
-    return fsd->fs_putinode(dev, num);
+    return fsd->fs_putinode(dev, num, count);
 }
 
 int fsdriver_create(const struct fsdriver* fsd, MESSAGE* m)
