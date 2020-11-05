@@ -427,6 +427,7 @@ static int evdev_connect(struct input_handler* handler, struct input_dev* dev)
 
     memset(&devinf, 0, sizeof(devinf));
     snprintf(devinf.name, sizeof(devinf.name), "event%d", dev_no);
+    snprintf(devinf.path, sizeof(devinf.path), "input/event%d", dev_no);
     devinf.bus = NO_BUS_ID;
     devinf.class = input_class;
     devinf.parent = dev->input_dev_id;

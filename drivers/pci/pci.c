@@ -122,6 +122,8 @@ int pci_init()
 static int pci_register_bus(int busind)
 {
     struct device_info devinf;
+
+    memset(&devinf, 0, sizeof(devinf));
     snprintf(devinf.name, sizeof(devinf.name), "pci%02x", pcibus[busind].busnr);
     devinf.bus = NO_BUS_ID;
     devinf.class = NO_CLASS_ID;

@@ -269,15 +269,51 @@ static int create_sys_dev_entry(struct device* dev)
 
 static int add_device_node(struct device* dev)
 {
-    struct memfs_inode* dir_pin = memfs_get_root_inode();
+    struct memfs_inode* dir_pin;
     struct memfs_stat stat;
     struct memfs_inode* pin;
+    char component[NAME_MAX];
+    size_t name_len;
+    const char *name, *p;
 
-    stat.st_mode = ((dev->type == DT_BLOCKDEV ? S_IFBLK : S_IFCHR) | 0666);
+    dir_pin = memfs_get_root_inode();
+
+    name = strlen(dev->path) ? dev->path : dev->name;
+
+    while (*name != '\0') {
+        p = name;
+        while (*p != '\0' && *p != '/')
+            p++;
+
+        name_len = p - name;
+        if (!name_len) {
+            name++;
+            continue;
+        }
+
+        memcpy(component, name, name_len);
+        component[name_len] = '\0';
+
+        if (*p == '\0') break;
+
+        stat.st_mode =
+            S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+        stat.st_uid = SU_UID;
+        stat.st_gid = 0;
+        pin = memfs_add_inode(dir_pin, component, NO_INDEX, &stat, NULL);
+        if (!pin) return ENOMEM;
+
+        dir_pin = pin;
+        name = p + 1;
+    }
+
+    if (!strlen(component)) return 0;
+
+    stat.st_mode = (dev->type == DT_BLOCKDEV ? S_IFBLK : S_IFCHR) | 0666;
     stat.st_uid = SU_UID;
     stat.st_gid = 0;
     stat.st_device = dev->devt;
-    pin = memfs_add_inode(dir_pin, dev->name, NO_INDEX, &stat, NULL);
+    pin = memfs_add_inode(dir_pin, component, NO_INDEX, &stat, NULL);
 
     if (!pin) {
         return ENOMEM;
@@ -299,6 +335,7 @@ device_id_t do_device_register(MESSAGE* m)
     if (!dev) return ENOMEM;
 
     strlcpy(dev->name, devinf.name, sizeof(dev->name));
+    strlcpy(dev->path, devinf.path, sizeof(dev->path));
     dev->owner = m->source;
     dev->bus = get_bus_type(devinf.bus);
     dev->class = get_class(devinf.class);

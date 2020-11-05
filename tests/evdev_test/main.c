@@ -14,7 +14,7 @@ int main()
     int fd;
     int rc = 1;
 
-    fd = open("/dev/event0", O_RDONLY | O_NONBLOCK);
+    fd = open("/dev/input/event0", O_RDONLY | O_NONBLOCK);
     rc = libevdev_new_from_fd(fd, &dev);
     if (rc < 0) {
         fprintf(stderr, "Failed to init libevdev (%s)\n", strerror(-rc));

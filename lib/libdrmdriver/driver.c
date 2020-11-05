@@ -92,6 +92,8 @@ int drmdriver_register_device(struct drm_device* dev)
 
     memset(&devinf, 0, sizeof(devinf));
     snprintf(devinf.name, sizeof(devinf.name), "card%d", dev->primary.index);
+    snprintf(devinf.path, sizeof(devinf.path), "dri/card%d",
+             dev->primary.index);
     devinf.bus = NO_BUS_ID;
     devinf.class = NO_CLASS_ID;
     devinf.parent = dev->device_id;

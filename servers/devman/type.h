@@ -32,6 +32,7 @@ struct device {
     device_id_t id;
     struct device* parent;
     char name[DEVICE_NAME_MAX];
+    char path[DEVICE_NAME_MAX];
     endpoint_t owner;
     dev_t devt;
     int type;

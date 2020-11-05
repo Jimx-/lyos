@@ -573,7 +573,7 @@ int main(int argc, char** argv)
     if (argc > 1)
         card = argv[1];
     else
-        card = "/dev/card0";
+        card = "/dev/dri/card0";
 
     fprintf(stderr, "using card '%s'\n", card);
 
