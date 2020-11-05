@@ -466,12 +466,6 @@ int wait(int* status)
     return msg.PID;
 }
 
-int getgroups(int size, gid_t list[])
-{
-    puts("getgroups: not implemented");
-    return 0;
-}
-
 int isatty(int fd)
 {
     struct termios t;
@@ -1660,18 +1654,6 @@ void* mremap(void* old_addr, size_t old_size, size_t new_size, int flags, ...)
 {
     errno = ENOSYS;
     return MAP_FAILED;
-}
-
-struct group* getgrnam(const char* name)
-{
-    puts("getgrnam: not implemented");
-    return NULL;
-}
-
-struct group* getgrgid(gid_t gid)
-{
-    puts("getgrgid: not implemented");
-    return NULL;
 }
 
 int ftruncate(int fd, off_t length)
