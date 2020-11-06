@@ -19,6 +19,7 @@
 #include <lyos/config.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <unistd.h>
 #include <assert.h>
@@ -33,66 +34,42 @@
 #include <libfsdriver/libfsdriver.h>
 
 #include "const.h"
-#include "proto.h"
 #include "types.h"
+#include "proto.h"
 
-static int tmpfs_mountpoint(dev_t dev, ino_t num);
-
-struct fsdriver tmpfs_driver = {
-    .name = "tmpfs",
-    .root_num = TMPFS_ROOT_INODE,
-
-    .fs_readsuper = tmpfs_readsuper,
-    .fs_mountpoint = tmpfs_mountpoint,
-    .fs_putinode = tmpfs_putinode,
-    .fs_lookup = tmpfs_lookup,
-    .fs_create = tmpfs_create,
-    .fs_mkdir = tmpfs_mkdir,
-    .fs_mknod = tmpfs_mknod,
-    .fs_read = tmpfs_read,
-    .fs_write = tmpfs_write,
-    .fs_rdlink = tmpfs_rdlink,
-    .fs_unlink = tmpfs_unlink,
-    .fs_rmdir = tmpfs_rmdir,
-    .fs_symlink = tmpfs_symlink,
-    .fs_stat = tmpfs_stat,
-    .fs_chmod = tmpfs_chmod,
-    .fs_getdents = tmpfs_getdents,
-    .fs_utime = tmpfs_utime,
-};
-
-static int tmpfs_mountpoint(dev_t dev, ino_t num)
+int tmpfs_utime(dev_t dev, ino_t num, const struct timespec* atime,
+                const struct timespec* mtime)
 {
     struct tmpfs_inode* pin;
-    int retval = 0;
 
     pin = tmpfs_get_inode(dev, num);
     if (!pin) return EINVAL;
 
-    if (pin->mountpoint) return EBUSY;
+    pin->update = CTIME;
 
-    if (!S_ISDIR(pin->mode)) retval = ENOTDIR;
+    switch (atime->tv_nsec) {
+    case UTIME_NOW:
+        pin->update |= ATIME;
+        break;
+    case UTIME_OMIT:
+        break;
+    default:
+        pin->atime = atime->tv_sec;
+        break;
+    }
 
-    if (retval == OK) pin->mountpoint = 1;
+    switch (mtime->tv_nsec) {
+    case UTIME_NOW:
+        pin->update |= MTIME;
+        break;
+    case UTIME_OMIT:
+        break;
+    default:
+        pin->mtime = mtime->tv_sec;
+        break;
+    }
 
     tmpfs_put_inode(pin);
 
-    return retval;
-}
-
-static int init_tmpfs(void)
-{
-    printl("tmpfs: Tmpfs driver is running.\n");
-
-    init_inode();
-
     return 0;
-}
-
-int main()
-{
-    serv_register_init_fresh_callback(init_tmpfs);
-    serv_init();
-
-    return fsdriver_start(&tmpfs_driver);
 }

@@ -57,4 +57,8 @@ int tmpfs_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
 /* protect.c */
 int tmpfs_chmod(dev_t dev, ino_t num, mode_t* mode);
 
+/* time.c */
+int tmpfs_utime(dev_t dev, ino_t num, const struct timespec* atime,
+                const struct timespec* mtime);
+
 #endif

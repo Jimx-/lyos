@@ -11,14 +11,15 @@
 #include <lyos/global.h>
 #include <lyos/driver.h>
 #include <lyos/proto.h>
+
 #include <libdevman/libdevman.h>
 
-int dm_class_register(char* name, class_id_t* id)
+int dm_class_register(const char* name, class_id_t* id)
 {
     MESSAGE msg;
 
     msg.type = DM_CLASS_REGISTER;
-    msg.BUF = name;
+    msg.BUF = (void*)name;
     msg.NAME_LEN = strlen(name);
 
     send_recv(BOTH, TASK_DEVMAN, &msg);

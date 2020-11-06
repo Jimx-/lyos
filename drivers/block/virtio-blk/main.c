@@ -555,7 +555,7 @@ static void virtio_blk_register(void)
         snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
                  'a' + (char)i);
         devinf.devt = devt;
-        retval = dm_device_register(&devinf, &dev_id);
+        retval = blockdriver_device_register(&devinf, &dev_id);
 
         if (retval == 0) {
             dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,
@@ -573,7 +573,7 @@ static void virtio_blk_register(void)
         snprintf(devinf.name, sizeof(devinf.name), "vd%d%c", instance,
                  'a' + (char)(NR_PRIM_PER_DRIVE + i));
         devinf.devt = devt;
-        retval = dm_device_register(&devinf, &dev_id);
+        retval = blockdriver_device_register(&devinf, &dev_id);
 
         if (retval == 0) {
             dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,

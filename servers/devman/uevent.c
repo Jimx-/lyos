@@ -148,7 +148,9 @@ int device_uevent_env(struct device* dev, enum kobject_action action,
         goto out_free;
 
     if (dev->devt != NO_DEV) {
-        if ((retval = add_uevent_var(env, "DEVNAME=%s", dev->name)) != OK)
+        if ((retval = add_uevent_var(env, "DEVNAME=%s",
+                                     (*dev->path) ? dev->path : dev->name)) !=
+            OK)
             goto out_free;
         if ((retval = add_uevent_var(env, "MAJOR=%d", MAJOR(dev->devt))) != OK)
             goto out_free;

@@ -6,6 +6,8 @@
 #include <lyos/driver.h>
 #include <sys/uio.h>
 
+#include <libdevman/libdevman.h>
+
 #define NR_SUB_PER_PART   16
 #define NR_SUB_PER_DRIVE  (NR_SUB_PER_PART * NR_PART_PER_DRIVE)
 #define NR_PRIM_PER_DRIVE (NR_PART_PER_DRIVE + 1)
@@ -41,5 +43,7 @@ void blockdriver_async_wakeup(blockdriver_worker_id_t tid);
 void blockdriver_async_set_workers(size_t num_workers);
 
 void partition(struct blockdriver* bd, int device, int style);
+
+int blockdriver_device_register(struct device_info* devinf, device_id_t* id);
 
 #endif

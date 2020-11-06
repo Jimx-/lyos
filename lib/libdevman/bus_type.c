@@ -28,12 +28,12 @@
 #include <lyos/proto.h>
 #include <libdevman/libdevman.h>
 
-int dm_bus_register(char* name, bus_type_id_t* id)
+int dm_bus_register(const char* name, bus_type_id_t* id)
 {
     MESSAGE msg;
 
     msg.type = DM_BUS_REGISTER;
-    msg.BUF = name;
+    msg.BUF = (void*)name;
     msg.NAME_LEN = strlen(name);
 
     send_recv(BOTH, TASK_DEVMAN, &msg);

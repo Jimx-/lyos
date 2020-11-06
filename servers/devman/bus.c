@@ -98,8 +98,8 @@ void bus_domain_label(struct bus_type* bus, char* buf)
 static int publish_bus_type(struct bus_type* bus)
 {
     char label[PATH_MAX];
-
     char* name = bus->name;
+
     snprintf(label, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL, name);
     int retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
     if (retval) return retval;
@@ -110,8 +110,13 @@ static int publish_bus_type(struct bus_type* bus)
 
     snprintf(label, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL ".devices", name);
     retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+    if (retval) return retval;
 
-    return retval;
+    snprintf(label, PATH_MAX, SYSFS_BUS_DOMAIN_LABEL ".handle", name);
+    retval = sysfs_publish_u32(label, bus->id, SF_PRIV_OVERWRITE);
+    if (retval) return retval;
+
+    return 0;
 }
 
 int do_bus_register(MESSAGE* m)

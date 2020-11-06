@@ -22,6 +22,9 @@
 #include "proto.h"
 
 static struct drm_device* drm_device;
+static class_id_t drm_class_id = NO_CLASS_ID;
+
+static const char* lib_name = "libdrmdriver";
 
 static int drm_open(dev_t minor, int access);
 static int drm_close(dev_t minor);
@@ -86,6 +89,13 @@ int drmdriver_register_device(struct drm_device* dev)
     struct device_info devinf;
     int retval;
 
+    if (drm_class_id == NO_CLASS_ID) {
+        retval = dm_class_get_or_create("drm", &drm_class_id);
+        if (retval)
+            panic("%s: %s failed to retrieve DRM class ID", lib_name,
+                  __FUNCTION__);
+    }
+
     /* add primary node */
     devt = MAKE_DEV(DEV_DRM, dev->primary.index);
     dm_cdev_add(devt);
@@ -95,7 +105,7 @@ int drmdriver_register_device(struct drm_device* dev)
     snprintf(devinf.path, sizeof(devinf.path), "dri/card%d",
              dev->primary.index);
     devinf.bus = NO_BUS_ID;
-    devinf.class = NO_CLASS_ID;
+    devinf.class = drm_class_id;
     devinf.parent = dev->device_id;
     devinf.devt = devt;
     devinf.type = DT_CHARDEV;

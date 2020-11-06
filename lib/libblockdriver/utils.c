@@ -14,7 +14,7 @@
 #include <lyos/driver.h>
 #include <sys/mman.h>
 
-#include "libblockdriver/libblockdriver.h"
+#include <libblockdriver/libblockdriver.h>
 
 /*****************************************************************************
  *                                get_part_table

@@ -88,8 +88,10 @@ int dm_cdev_add(dev_t dev);
 endpoint_t dm_get_bdev_driver(dev_t dev);
 endpoint_t dm_get_cdev_driver(dev_t dev);
 
-int dm_bus_register(char* name, bus_type_id_t* id);
-int dm_class_register(char* name, class_id_t* id);
+int dm_bus_register(const char* name, bus_type_id_t* id);
+int dm_bus_get_or_create(const char* name, bus_type_id_t* idp);
+int dm_class_register(const char* name, class_id_t* id);
+int dm_class_get_or_create(const char* name, class_id_t* idp);
 int dm_device_register(struct device_info* devinf, device_id_t* id);
 
 int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name,

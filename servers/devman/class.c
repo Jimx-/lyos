@@ -59,12 +59,18 @@ void class_domain_label(struct class* class, char* buf)
 static int publish_class(struct class* class)
 {
     char label[PATH_MAX];
+    char class_root[PATH_MAX - DEVICE_NAME_MAX - 1];
     int retval;
 
-    class_domain_label(class, label);
-    retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+    class_domain_label(class, class_root);
+    retval = sysfs_publish_domain(class_root, SF_PRIV_OVERWRITE);
+    if (retval) return retval;
 
-    return retval;
+    snprintf(label, PATH_MAX, "%s.handle", class_root);
+    retval = sysfs_publish_u32(label, class->id, SF_PRIV_OVERWRITE);
+    if (retval) return retval;
+
+    return 0;
 }
 
 int class_register(const char* name, endpoint_t owner, class_id_t* id)
