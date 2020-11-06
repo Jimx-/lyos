@@ -3,7 +3,8 @@
 
 /* super.c */
 struct tmpfs_superblock* tmpfs_get_superblock(dev_t dev);
-int tmpfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+int tmpfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                    struct fsdriver_node* node);
 
 /* inode.c */
 void init_inode(void);

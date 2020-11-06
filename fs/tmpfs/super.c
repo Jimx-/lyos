@@ -30,12 +30,19 @@
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include <libfsdriver/libfsdriver.h>
 
 #include "const.h"
 #include "types.h"
 #include "proto.h"
+
+struct tmpfs_options {
+    mode_t mode;
+    uid_t uid;
+    gid_t gid;
+};
 
 static DEF_LIST(superblock_list);
 
@@ -67,12 +74,81 @@ struct tmpfs_superblock* tmpfs_get_superblock(dev_t dev)
     return NULL;
 }
 
-int tmpfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
+static inline void tmpfs_init_options(struct tmpfs_options* opts)
+{
+    opts->mode = S_ISVTX | 0777;
+    opts->uid = SU_UID;
+    opts->gid = 0;
+}
+
+static int tmpfs_parse_one(struct fsdriver_context* fc, const char* key,
+                           const char* value, size_t len)
+{
+    struct tmpfs_options* opts = fc->fs_private;
+
+    if (!strcmp(key, "mode")) {
+        char* endptr;
+        mode_t mode;
+        mode = strtol(value, &endptr, 8);
+
+        if (*endptr) return EINVAL;
+
+        opts->mode = mode & 07777;
+        return 0;
+    }
+
+    return EINVAL;
+}
+
+static int tmpfs_parse_options(struct fsdriver_context* fc, void* data)
+{
+    char* optstr = data;
+
+    while (optstr != NULL) {
+        char* key = optstr;
+
+        for (;;) {
+            optstr = strchr(optstr, ',');
+            if (optstr == NULL) break;
+
+            optstr++;
+            if (!isdigit((int)*optstr)) {
+                optstr[-1] = '\0';
+                break;
+            }
+        }
+
+        if (*key) {
+            char* value = strchr(key, '=');
+            size_t len = 0;
+            int retval;
+
+            if (value) {
+                *value++ = '\0';
+                len = strlen(value);
+            }
+            retval = fsdriver_parse_param(fc, key, value, len, tmpfs_parse_one);
+            if (retval) return retval;
+        }
+    }
+
+    return 0;
+}
+
+int tmpfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                    struct fsdriver_node* node)
 {
     struct tmpfs_superblock* sb;
     struct tmpfs_inode* root;
+    struct tmpfs_options opts;
     int retval;
     int readonly;
+
+    tmpfs_init_options(&opts);
+    fc->fs_private = &opts;
+
+    retval = tmpfs_parse_options(fc, data);
+    if (retval) return retval;
 
     sb = alloc_superblock(dev);
     if (!sb) return ENOMEM;
@@ -81,10 +157,10 @@ int tmpfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
     root = tmpfs_alloc_inode(sb, TMPFS_ROOT_INODE);
     if (!root) goto out_free_sb;
 
-    readonly = !!(flags & RF_READONLY);
+    readonly = !!(fc->sb_flags & RF_READONLY);
     sb->readonly = readonly;
 
-    root->mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
+    root->mode = S_IFDIR | opts.mode;
     root->uid = 0;
     root->gid = 0;
     root->spec_dev = NO_DEV;

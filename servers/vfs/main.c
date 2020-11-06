@@ -450,7 +450,7 @@ static void init_root(void)
 
     int initrd_dev = MAKE_DEV(DEV_RD, MINOR_INITRD);
     // mount root
-    if (mount_fs(initrd_dev, "/", TASK_INITFS, 0) != 0) {
+    if (mount_fs(initrd_dev, "/", TASK_INITFS, 0, NO_TASK, NULL) != 0) {
         panic("failed to mount initial ramdisk");
     }
 

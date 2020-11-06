@@ -24,7 +24,8 @@
 
 #include "tar.h"
 
-int initfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+int initfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                     struct fsdriver_node* node);
 int initfs_lookup(dev_t dev, ino_t start, const char* name,
                   struct fsdriver_node* fn, int* is_mountpoint);
 ssize_t initfs_read(dev_t dev, ino_t num, struct fsdriver_data* data,

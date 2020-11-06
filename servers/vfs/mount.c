@@ -104,30 +104,33 @@ void unlock_vmnt(struct vfs_mount* vmnt) { rwlock_unlock(&(vmnt->m_lock)); }
 
 int do_mount(void)
 {
-    unsigned long flags = self->msg_in.MFLAGS;
+    endpoint_t src = self->msg_in.source;
+    unsigned long flags = self->msg_in.u.m_vfs_mount.flags;
+    size_t source_len = self->msg_in.u.m_vfs_mount.source_len;
+    size_t target_len = self->msg_in.u.m_vfs_mount.target_len;
+    size_t label_len = self->msg_in.u.m_vfs_mount.label_len;
+    char source[PATH_MAX];
+    char target[PATH_MAX];
+    void* user_data = self->msg_in.u.m_vfs_mount.data;
+    endpoint_t fs_ep;
 
     /* find fs endpoint */
-    int label_len = self->msg_in.MNAMELEN3;
     char fs_label[FS_LABEL_MAX];
     if (label_len > FS_LABEL_MAX) return ENAMETOOLONG;
 
-    data_copy(SELF, fs_label, fproc->endpoint, self->msg_in.MLABEL, label_len);
+    data_copy(SELF, fs_label, fproc->endpoint, self->msg_in.u.m_vfs_mount.label,
+              label_len);
     fs_label[label_len] = '\0';
 
-    int fs_e = get_filesystem_endpoint(fs_label);
+    fs_ep = get_filesystem_endpoint(fs_label);
 
-    if (fs_e == -1) return EINVAL;
+    if (fs_ep == -1) return EINVAL;
 
-    int source_len = self->msg_in.MNAMELEN1;
-    int target_len = self->msg_in.MNAMELEN2;
-
-    char source[PATH_MAX];
     if (source_len > PATH_MAX) return ENAMETOOLONG;
-
-    char target[PATH_MAX];
     if (target_len > PATH_MAX) return ENAMETOOLONG;
 
-    data_copy(SELF, target, fproc->endpoint, self->msg_in.MTARGET, target_len);
+    data_copy(SELF, target, fproc->endpoint, self->msg_in.u.m_vfs_mount.target,
+              target_len);
     target[target_len] = '\0';
 
     int is_root = strcmp(target, "/") == 0;
@@ -137,8 +140,8 @@ int do_mount(void)
     if (mount_root) {
         /* /dev is not available before we mount root so we need to parse it
          * differently */
-        data_copy(SELF, source, fproc->endpoint, self->msg_in.MSOURCE,
-                  source_len);
+        data_copy(SELF, source, fproc->endpoint,
+                  self->msg_in.u.m_vfs_mount.source, source_len);
         source[source_len] = '\0';
 
         int major, minor;
@@ -149,8 +152,8 @@ int do_mount(void)
             return EINVAL;
         }
     } else if (source_len > 0) {
-        data_copy(SELF, source, fproc->endpoint, self->msg_in.MSOURCE,
-                  source_len);
+        data_copy(SELF, source, fproc->endpoint,
+                  self->msg_in.u.m_vfs_mount.source, source_len);
         source[source_len] = '\0';
 
         dev_nr = name2dev(fproc, source);
@@ -161,7 +164,7 @@ int do_mount(void)
     }
 
     int readonly = flags & MS_READONLY;
-    int retval = mount_fs(dev_nr, target, fs_e, readonly);
+    int retval = mount_fs(dev_nr, target, fs_ep, readonly, src, user_data);
 
     if (retval == 0 && is_root)
         printl("VFS: %s is %s mounted on %s\n", source,
@@ -169,7 +172,8 @@ int do_mount(void)
     return retval;
 }
 
-int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
+int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly,
+             endpoint_t user_endpt, void* user_data)
 {
     if (find_vfs_mount(dev) != NULL) return EBUSY;
     struct vfs_mount* new_pvm = get_free_vfs_mount();
@@ -222,7 +226,8 @@ int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly)
         new_pvm->m_flags &= ~VMNT_READONLY;
 
     struct lookup_result res;
-    retval = request_readsuper(fs_ep, dev, readonly, is_root, &res);
+    retval = request_readsuper(fs_ep, dev, readonly, is_root, user_endpt,
+                               user_data, &res);
 
     if (retval) {
         if (pmp) {

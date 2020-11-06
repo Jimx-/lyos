@@ -52,7 +52,8 @@ struct vfs_mount* find_vfs_mount(dev_t dev);
 int lock_vmnt(struct vfs_mount* vmnt, rwlock_type_t type);
 void unlock_vmnt(struct vfs_mount* vmnt);
 dev_t get_none_dev(void);
-int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly);
+int mount_fs(dev_t dev, char* mountpoint, endpoint_t fs_ep, int readonly,
+             endpoint_t user_endpt, void* user_data);
 int forbidden(struct fproc* fp, struct inode* pin, int access);
 mode_t do_umask(void);
 void clear_vfs_mount(struct vfs_mount* vmnt);
@@ -63,6 +64,7 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
                    struct lookup* lookup, struct fproc* fp,
                    struct lookup_result* ret);
 int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly, int is_root,
+                      endpoint_t user_endpt, void* user_data,
                       struct lookup_result* res);
 
 int do_open(void);

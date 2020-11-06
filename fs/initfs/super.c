@@ -38,7 +38,8 @@
 #include <libbdev/libbdev.h>
 #include <libfsdriver/libfsdriver.h>
 
-int initfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
+int initfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                     struct fsdriver_node* node)
 {
     char buf[512];
     struct posix_tar_header* header = (struct posix_tar_header*)buf;

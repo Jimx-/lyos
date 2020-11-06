@@ -733,25 +733,33 @@ int mount(const char* source, const char* target, const char* filesystemtype,
           unsigned long mountflags, const void* data)
 {
     MESSAGE msg;
-    msg.type = MOUNT;
 
-    msg.MFLAGS = mountflags;
+    memset(&msg, 0, sizeof(msg));
+    msg.type = MOUNT;
+    msg.u.m_vfs_mount.flags = mountflags;
+
     if (source == NULL)
-        msg.MNAMELEN1 = 0;
+        msg.u.m_vfs_mount.source_len = 0;
     else
-        msg.MNAMELEN1 = strlen(source);
-    msg.MNAMELEN2 = strlen(target);
-    msg.MNAMELEN3 = strlen(filesystemtype);
-    msg.MSOURCE = (char*)source;
-    msg.MTARGET = (char*)target;
-    msg.MLABEL = (char*)filesystemtype;
-    msg.MDATA = (char*)data;
+        msg.u.m_vfs_mount.source_len = strlen(source);
+
+    msg.u.m_vfs_mount.target_len = strlen(target);
+    msg.u.m_vfs_mount.label_len = strlen(filesystemtype);
+    msg.u.m_vfs_mount.source = (void*)source;
+    msg.u.m_vfs_mount.target = (void*)target;
+    msg.u.m_vfs_mount.label = (void*)filesystemtype;
+    msg.u.m_vfs_mount.data = (void*)data;
 
     cmb();
 
     send_recv(BOTH, TASK_FS, &msg);
 
-    return msg.RETVAL;
+    if (msg.RETVAL) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
 }
 
 int access(const char* pathname, int mode)

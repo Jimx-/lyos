@@ -20,11 +20,13 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include "stddef.h"
+#include <stdint.h>
 #include "errno.h"
 #include "unistd.h"
 #include "assert.h"
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
+#include <lyos/mgrant.h>
 #include "string.h"
 #include "lyos/fs.h"
 #include "lyos/proc.h"
@@ -86,29 +88,50 @@ endpoint_t get_filesystem_endpoint(char* name)
 }
 
 int request_readsuper(endpoint_t fs_ep, dev_t dev, int readonly, int is_root,
+                      endpoint_t user_endpt, void* user_data,
                       struct lookup_result* res)
 {
     MESSAGE m;
+    mgrant_id_t grant;
+    size_t data_size;
+    int flags = 0;
+
+    memset(&m, 0, sizeof(m));
+
+    if (readonly) flags |= RF_READONLY;
+    if (is_root) flags |= RF_ISROOT;
+
+    grant = GRANT_INVALID;
+    data_size = 0;
+    if (user_data) {
+        grant = mgrant_set_proxy(fs_ep, user_endpt, (vir_bytes)user_data,
+                                 ARCH_PG_SIZE, MGF_READ);
+        if (grant == GRANT_INVALID)
+            panic("vfs: %s failed to create proxy grant", __FUNCTION__);
+
+        /* at least the rest of the page is mapped */
+        data_size = ARCH_PG_SIZE - ((uintptr_t)user_data % ARCH_PG_SIZE);
+    }
+
     m.type = FS_READSUPER;
-    m.REQ_FLAGS = 0;
-    if (readonly) m.REQ_FLAGS |= RF_READONLY;
-    if (is_root) m.REQ_FLAGS |= RF_ISROOT;
+    m.u.m_vfs_fs_readsuper.dev = dev;
+    m.u.m_vfs_fs_readsuper.flags = flags;
+    m.u.m_vfs_fs_readsuper.grant = grant;
+    m.u.m_vfs_fs_readsuper.data_size = data_size;
 
-    m.REQ_DEV = dev;
-
-    // async_sendrec(fs_ep, &m, 0);
     fs_sendrec(fs_ep, &m);
+    if (grant != GRANT_INVALID) mgrant_revoke(grant);
 
-    int retval = m.RET_RETVAL;
+    int retval = m.u.m_fs_vfs_create_reply.status;
 
     if (!retval) {
         res->dev = dev;
         res->fs_ep = fs_ep;
-        res->inode_nr = m.RET_NUM;
-        res->gid = m.RET_GID;
-        res->uid = m.RET_UID;
-        res->mode = m.RET_MODE;
-        res->size = m.RET_FILESIZE;
+        res->inode_nr = m.u.m_fs_vfs_create_reply.num;
+        res->mode = m.u.m_fs_vfs_create_reply.mode;
+        res->uid = m.u.m_fs_vfs_create_reply.uid;
+        res->gid = m.u.m_fs_vfs_create_reply.gid;
+        res->size = m.u.m_fs_vfs_create_reply.size;
     }
 
     return retval;

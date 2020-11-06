@@ -29,6 +29,11 @@ struct fsdriver_node {
     mode_t fn_mode;
 };
 
+struct fsdriver_context {
+    unsigned int sb_flags;
+    void* fs_private;
+};
+
 struct fsdriver_data {
     endpoint_t granter;
     union {
@@ -50,7 +55,8 @@ struct fsdriver {
     char* name;
     ino_t root_num;
 
-    int (*fs_readsuper)(dev_t dev, int flags, struct fsdriver_node* node);
+    int (*fs_readsuper)(dev_t dev, struct fsdriver_context* ctx, void* data,
+                        struct fsdriver_node* node);
     int (*fs_mountpoint)(dev_t dev, ino_t num);
     int (*fs_putinode)(dev_t dev, ino_t num, unsigned int count);
     int (*fs_lookup)(dev_t dev, ino_t start, const char* name,
@@ -100,6 +106,12 @@ int fsdriver_dentry_list_init(struct fsdriver_dentry_list* list,
 int fsdriver_dentry_list_add(struct fsdriver_dentry_list* list, ino_t num,
                              const char* name, size_t name_len, int type);
 int fsdriver_dentry_list_finish(struct fsdriver_dentry_list* list);
+
+int fsdriver_parse_param(struct fsdriver_context* fc, const char* key,
+                         const char* value, size_t len,
+                         int (*fs_parser)(struct fsdriver_context* fc,
+                                          const char* key, const char* value,
+                                          size_t len));
 
 int fsdriver_driver(dev_t dev);
 

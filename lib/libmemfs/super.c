@@ -28,7 +28,8 @@
 
 static int mounted = 0;
 
-int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
+int memfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                    struct fsdriver_node* node)
 {
     struct memfs_inode* root = memfs_get_root_inode();
 

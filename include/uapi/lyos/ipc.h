@@ -181,6 +181,20 @@ struct mess_vfs_link {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_link);
 
+struct mess_vfs_mount {
+    void* source;
+    void* target;
+    void* label;
+    void* data;
+    unsigned long flags;
+    int source_len;
+    int target_len;
+    int label_len;
+
+    __u8 _pad[44 - 4 * sizeof(void*) - sizeof(unsigned long)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_mount);
+
 struct mess_vfs_fdpair {
     int retval;
     int fd0;
@@ -368,6 +382,17 @@ BEGIN_MESS_DECL(mess_vfs_inotify)
     __u8 _pad[40 - sizeof(void*)];
 }
 END_MESS_DECL(mess_vfs_inotify)
+
+BEGIN_MESS_DECL(mess_vfs_fs_readsuper)
+{
+    dev_t dev;
+    unsigned int flags;
+    __mgrant_id_t grant;
+    size_t data_size;
+
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(void*) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_vfs_fs_readsuper)
 
 BEGIN_MESS_DECL(mess_vfs_fs_lookup)
 {
@@ -840,6 +865,7 @@ typedef struct {
         struct mess_vfs_pathat m_vfs_pathat;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_link m_vfs_link;
+        struct mess_vfs_mount m_vfs_mount;
         struct mess_vfs_fdpair m_vfs_fdpair;
         struct mess_vfs_poll m_vfs_poll;
         struct mess_vfs_signalfd m_vfs_signalfd;
@@ -856,6 +882,7 @@ typedef struct {
         struct mess_vfs_utimensat m_vfs_utimensat;
         struct mess_vfs_fchownat m_vfs_fchownat;
         struct mess_vfs_inotify m_vfs_inotify;
+        struct mess_vfs_fs_readsuper m_vfs_fs_readsuper;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
         struct mess_vfs_fs_stat m_vfs_fs_stat;

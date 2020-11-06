@@ -55,7 +55,7 @@ int fsdriver_start(const struct fsdriver* fsd)
             m.RET_RETVAL = fsdriver_mountpoint(fsd, &m);
             break;
         case FS_READSUPER:
-            m.RET_RETVAL = fsdriver_readsuper(fsd, &m);
+            m.u.m_fs_vfs_create_reply.status = fsdriver_readsuper(fsd, &m);
             break;
         case FS_STAT:
             m.RETVAL = fsdriver_stat(fsd, &m);

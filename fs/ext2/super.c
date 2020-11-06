@@ -189,10 +189,11 @@ ext2_bgdescriptor_t* get_ext2_group_desc(ext2_superblock_t* psb,
  *
  * @return Zero if successful
  */
-int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node)
+int ext2_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                   struct fsdriver_node* node)
 {
-    int readonly = (flags & RF_READONLY) ? 1 : 0;
-    int is_root = (flags & RF_ISROOT) ? 1 : 0;
+    int readonly = !!(fc->sb_flags & RF_READONLY);
+    int is_root = !!(fc->sb_flags & RF_ISROOT);
 
     /* open the device where this superblock resides on */
     bdev_open(dev);

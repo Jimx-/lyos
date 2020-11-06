@@ -1,7 +1,8 @@
 #ifndef _LIBMEMFS_PROTO_H_
 #define _LIBMEMFS_PROTO_H_
 
-int memfs_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+int memfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                    struct fsdriver_node* node);
 int memfs_lookup(dev_t dev, ino_t start, const char* name,
                  struct fsdriver_node* fn, int* is_mountpoint);
 int memfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);

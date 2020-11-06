@@ -22,8 +22,8 @@ static int mount_all()
 
         if (strcmp(m->mnt_fsname, "none") == 0) m->mnt_fsname = NULL;
 
-        if (mount(m->mnt_fsname, m->mnt_dir, m->mnt_type, mount_flags, NULL) !=
-            0) {
+        if (mount(m->mnt_fsname, m->mnt_dir, m->mnt_type, mount_flags,
+                  m->mnt_opts) != 0) {
             fprintf(stderr, "Can't mount on %s\n", m->mnt_dir);
             exit(EXIT_FAILURE);
         }

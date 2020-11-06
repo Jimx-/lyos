@@ -332,7 +332,8 @@ ssize_t ext2_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
 
 int ext2_update_group_desc(ext2_superblock_t* psb, int desc);
 void ext2_init_buffer_cache();
-int ext2_readsuper(dev_t dev, int flags, struct fsdriver_node* node);
+int ext2_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
+                   struct fsdriver_node* node);
 
 struct fsdriver_buffer* ext2_new_block(ext2_inode_t* pin, off_t position);
 block_t ext2_alloc_block(ext2_inode_t* pin);
