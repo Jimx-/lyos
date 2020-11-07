@@ -16,7 +16,7 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#include <uapi/lyos/input.h>
+#include <uapi/linux/input.h>
 
 typedef int input_dev_id_t;
 

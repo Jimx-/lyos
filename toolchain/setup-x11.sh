@@ -19,6 +19,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_CAIRO:=false}
 : ${BUILD_LIBXKBCOMMON:=false}
 : ${BUILD_LIBTSM:=false}
+: ${BUILD_KMSCON:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_XORG_MACROS=true
@@ -218,6 +219,21 @@ if $BUILD_LIBTSM; then
 
     pushd libtsm-$SUBARCH > /dev/null
     $DIR/sources/libtsm-3/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build kmscon
+if $BUILD_KMSCON; then
+    if [ ! -d "kmscon-$SUBARCH" ]; then
+        mkdir kmscon-$SUBARCH
+    fi
+
+    pushd kmscon-$SUBARCH > /dev/null
+    $DIR/sources/kmscon-8/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \
+                                    --with-video=drm2d --with-renderers= --with-fonts= \
+                                    --disable-multi-seat --with-sessions=dummy
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
