@@ -16,7 +16,9 @@
 #ifndef _PM_MMPROC_H_
 #define _PM_MMPROC_H_
 
+#include <sys/types.h>
 #include <signal.h>
+#include <sys/syslimits.h>
 
 #include "futex.h"
 
@@ -47,6 +49,9 @@ struct pmproc {
     uid_t realuid, effuid, suid;
     gid_t realgid, effgid, sgid;
     pid_t procgrp;
+
+    int ngroups;
+    gid_t sgroups[NGROUPS_MAX];
 
     struct pmproc* group_leader;
     struct list_head thread_group;

@@ -68,6 +68,16 @@ int do_access(void)
     return retval;
 }
 
+static int in_group(struct fproc* fp, gid_t grp)
+{
+    int i;
+
+    for (i = 0; i < fp->ngroups; i++)
+        if (fp->sgroups[i] == grp) return 0;
+
+    return EINVAL;
+}
+
 int forbidden(struct fproc* fp, struct inode* pin, int access)
 {
     mode_t bits, perm_bits;
@@ -86,6 +96,8 @@ int forbidden(struct fproc* fp, struct inode* pin, int access)
             shift = 6; /* owner */
         else if (fp->realgid == pin->i_gid)
             shift = 3; /* group */
+        else if (in_group(fp, pin->i_gid) == OK)
+            shift = 3; /* supplementary groups */
         else
             shift = 0; /* other */
         perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT);
@@ -191,10 +203,11 @@ int do_chmod(int type)
 
 int fs_getsetid(void)
 {
-    if (fproc->endpoint != TASK_PM) return EPERM;
-
     struct fproc* fp = vfs_endpt_proc(self->msg_in.ENDPOINT);
+    int ngroups;
     int retval = 0;
+
+    if (fproc->endpoint != TASK_PM) return EPERM;
 
     assert(fp != fproc);
 
@@ -210,6 +223,16 @@ int fs_getsetid(void)
         case GS_SETGID:
             fp->realgid = self->msg_in.GID;
             fp->effgid = self->msg_in.EGID;
+            break;
+        case GS_SETGROUPS:
+            ngroups = self->msg_in.CNT;
+
+            if (ngroups * sizeof(gid_t) > sizeof(fp->sgroups))
+                panic("vfs: %s too much gids to copy", __FUNCTION__);
+
+            data_copy(SELF, fp->sgroups, fproc->endpoint, self->msg_in.BUF,
+                      ngroups * sizeof(gid_t));
+            fp->ngroups = ngroups;
             break;
         default:
             retval = EINVAL;

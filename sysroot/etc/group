@@ -9,7 +9,7 @@ dialout:x:20:
 cdrom:x:24:
 tape:x:26:
 audio:x:29:
-video:x:44:
+video:x:44:jimx
 nogroup:x:99:
-input:x:108:
+input:x:108:jimx
 jimx:x:1000:

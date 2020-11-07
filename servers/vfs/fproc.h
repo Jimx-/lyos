@@ -16,11 +16,17 @@
 #ifndef _VFS_FPROC_H_
 #define _VFS_FPROC_H_
 
+#include <sys/types.h>
+#include <sys/syslimits.h>
+
 EXTERN struct fproc {
     int flags;
 
     uid_t realuid, effuid, suid;
     gid_t realgid, effgid, sgid;
+
+    int ngroups;
+    gid_t sgroups[NGROUPS_MAX];
 
     pid_t pid;
     endpoint_t endpoint;

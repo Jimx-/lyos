@@ -415,6 +415,7 @@ void init_vfs()
         pfp->pid = pm_msg.PID;
         pfp->realuid = pfp->effuid = SU_UID;
         pfp->realgid = pfp->effgid = (gid_t)0;
+        pfp->ngroups = 0;
         pfp->pwd = NULL;
         pfp->root = NULL;
         pfp->umask = ~0;

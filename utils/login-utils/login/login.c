@@ -11,6 +11,7 @@
 #include <sys/dirent.h>
 #include <limits.h>
 #include <pwd.h>
+#include <grp.h>
 
 #define NAME_LEN 30
 
@@ -86,6 +87,7 @@ int main(int argc, char* argv[])
     }
 
     setgid(pwd->pw_gid);
+    initgroups(username, pwd->pw_gid);
     setuid(pwd->pw_uid);
 
     if (chdir(pwd->pw_dir) != 0) {

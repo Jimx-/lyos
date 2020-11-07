@@ -403,12 +403,22 @@ BEGIN_MESS_DECL(mess_vfs_fs_lookup)
     __mgrant_id_t path_grant;
     size_t name_len;
     size_t path_size;
-    uid_t uid;
-    gid_t gid;
+
+    union {
+        struct {
+            uid_t uid;
+            gid_t gid;
+        };
+
+        struct {
+            __mgrant_id_t ucred_grant;
+            int ucred_size;
+        };
+    };
+
     int flags;
 
-    __u8 _pad[44 - sizeof(dev_t) - 2 * sizeof(ino_t) - 2 * sizeof(size_t) -
-              sizeof(uid_t) - sizeof(gid_t)];
+    __u8 _pad[36 - sizeof(dev_t) - 2 * sizeof(ino_t) - 2 * sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_fs_lookup)
 

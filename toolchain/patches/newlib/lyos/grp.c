@@ -20,6 +20,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
+#include <sys/syslimits.h>
+#include <lyos/types.h>
+#include <lyos/const.h>
+#include <lyos/ipc.h>
 
 typedef int (*grp_pred_t)(const struct group* grp, const void* data);
 
@@ -247,12 +251,57 @@ struct group* getgrnam(const char* name)
 
 int getgroups(int size, gid_t list[])
 {
-    char line[512];
+    MESSAGE msg;
+
+    msg.type = GETSETID;
+    msg.REQUEST = GS_GETGROUPS;
+    msg.BUF = list;
+    msg.BUF_LEN = size;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_PM, &msg);
+
+    if (msg.RETVAL < 0) {
+        errno = -msg.RETVAL;
+        return -1;
+    }
+
+    return msg.RETVAL;
+}
+
+int setgroups(size_t size, const gid_t* list)
+{
+    MESSAGE msg;
+
+    msg.type = GETSETID;
+    msg.REQUEST = GS_SETGROUPS;
+    msg.BUF = (void*)list;
+    msg.BUF_LEN = size;
+
+    __asm__ __volatile__("" ::: "memory");
+
+    send_recv(BOTH, TASK_PM, &msg);
+
+    if (msg.RETVAL) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
+}
+
+int getgrouplist(const char* user, gid_t group, gid_t* groups, int* ngroupsp)
+{
+    char line[512], *end;
     static char buf[512];
     struct group grp;
-    char* end;
-    int count = 0;
+    int max_groups = *ngroupsp;
+    int group_count = 0;
+    int i;
     int retval = 0;
+
+    groups[group_count++] = group;
 
     FILE* file = fopen("/etc/group", "r");
     if (!file) return -1;
@@ -268,13 +317,46 @@ int getgroups(int size, gid_t list[])
             continue;
         }
 
-        if (count < size)
-            list[count++] = grp.gr_gid;
-        else
+        for (i = 0; grp.gr_mem[i]; i++) {
+            if (strcmp(grp.gr_mem[i], user)) continue;
+
+            if (group_count < max_groups) groups[group_count] = grp.gr_gid;
+
+            group_count++;
             break;
+        }
     }
+
+    *ngroupsp = group_count;
+
+    if (group_count <= max_groups)
+        retval = group_count;
+    else
+        retval = -1;
 
 out:
     fclose(file);
-    return count;
+    return retval;
+}
+
+int initgroups(const char* user, gid_t group)
+{
+    gid_t groups_list[NGROUPS_MAX];
+    int ngroups;
+    gid_t* groups = groups_list;
+    int retval;
+
+    ngroups = NGROUPS_MAX;
+    if (getgrouplist(user, group, groups, &ngroups) == -1) {
+        int maxgroups = ngroups;
+        groups = calloc((size_t)maxgroups, sizeof(*groups));
+        if (groups == NULL) return -1;
+        if (getgrouplist(user, group, groups, &ngroups) == -1)
+            ngroups = maxgroups;
+    }
+
+    retval = setgroups(ngroups, groups);
+
+    if (groups != groups_list) free(groups);
+    return retval;
 }

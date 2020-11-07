@@ -28,6 +28,8 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/sysutils.h>
+#include <sys/syslimits.h>
+
 #include "proto.h"
 #include "const.h"
 #include "global.h"
@@ -39,6 +41,7 @@ int do_getsetid(MESSAGE* p)
     if (!pmp) return EINVAL;
     uid_t uid;
     gid_t gid;
+    int i, ngroups;
     int tell_vfs = 0;
     MESSAGE msg2fs;
 
@@ -91,6 +94,24 @@ int do_getsetid(MESSAGE* p)
         }
         break;
 
+    case GS_GETGROUPS:
+        ngroups = p->BUF_LEN;
+        if (ngroups < 0) return -EINVAL;
+
+        if (ngroups == 0) {
+            retval = pmp->ngroups;
+            break;
+        }
+
+        if (ngroups < pmp->ngroups) return -EINVAL;
+
+        retval = data_copy(p->source, p->BUF, SELF, pmp->sgroups,
+                           pmp->ngroups * sizeof(gid_t));
+        if (retval) return -retval;
+
+        retval = pmp->ngroups;
+        break;
+
     case GS_SETUID:
         uid = p->NEWID;
 
@@ -131,6 +152,31 @@ int do_getsetid(MESSAGE* p)
 
         pmp->procgrp = pmp->pid;
         p->PID = pmp->procgrp;
+
+        break;
+    case GS_SETGROUPS:
+        if (pmp->effuid != SU_UID) return EPERM;
+
+        ngroups = p->BUF_LEN;
+        if (ngroups > NGROUPS_MAX || ngroups < 0) return EINVAL;
+
+        if (ngroups > 0 && p->BUF == NULL) return EFAULT;
+
+        retval = data_copy(SELF, pmp->sgroups, p->source, p->BUF,
+                           ngroups * sizeof(gid_t));
+        if (retval) return retval;
+
+        for (i = ngroups; i < NGROUPS_MAX; i++)
+            pmp->sgroups[i] = 0;
+        pmp->ngroups = ngroups;
+
+        msg2fs.type = PM_VFS_GETSETID;
+        msg2fs.u.m3.m3i3 = GS_SETGROUPS;
+        msg2fs.ENDPOINT = p->source;
+        msg2fs.BUF = pmp->sgroups;
+        msg2fs.CNT = pmp->ngroups;
+
+        tell_vfs = 1;
 
         break;
     default:

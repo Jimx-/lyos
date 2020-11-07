@@ -72,19 +72,21 @@
 #define IPCF_ASYNC      0x4
 
 /* Get/set ID requests. */
-#define GS_GETUID  1
-#define GS_SETUID  2
-#define GS_GETGID  3
-#define GS_SETGID  4
-#define GS_GETEUID 5
-#define GS_GETEGID 6
-#define GS_GETEP   7
-#define GS_GETPID  8
-#define GS_GETPGRP 9
-#define GS_SETSID  10
-#define GS_GETPGID 11
-#define GS_GETPPID 12
-#define GS_GETTID  13
+#define GS_GETUID    1
+#define GS_SETUID    2
+#define GS_GETGID    3
+#define GS_SETGID    4
+#define GS_GETEUID   5
+#define GS_GETEGID   6
+#define GS_GETEP     7
+#define GS_GETPID    8
+#define GS_GETPGRP   9
+#define GS_SETSID    10
+#define GS_GETPGID   11
+#define GS_GETPPID   12
+#define GS_GETTID    13
+#define GS_GETGROUPS 14
+#define GS_SETGROUPS 15
 
 #define GS_GETHOSTNAME 1
 #define GS_SETHOSTNAME 2

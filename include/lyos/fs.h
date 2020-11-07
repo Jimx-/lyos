@@ -17,6 +17,7 @@
 #define _FS_H_
 
 #include <lyos/list.h>
+#include <sys/syslimits.h>
 
 #define MAJOR_NONE  0
 #define NR_NONEDEVS 64
@@ -27,6 +28,7 @@
 
 /* Lookup flags */
 #define LKF_SYMLINK_NOFOLLOW 0x01 /* Return a symbolic link node */
+#define LKF_INLINE_UCRED     0x02 /* In-line user credentials */
 
 /* VFS/FS error messages */
 #define EENTERMOUNT (-301)
@@ -81,6 +83,8 @@
 struct vfs_ucred {
     uid_t uid;
     gid_t gid;
+    int ngroups;
+    gid_t sgroups[NGROUPS_MAX];
 };
 
 #define _POSIX_SYMLOOP_MAX 8

@@ -41,14 +41,18 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
                    struct lookup_result* ret)
 {
     MESSAGE m;
-    mgrant_id_t path_grant;
+    mgrant_id_t path_grant, ucred_grant;
+    struct vfs_ucred ucred;
     size_t name_len;
+    int flags;
     int retval;
+
+    flags = lookup->flags;
 
     path_grant = mgrant_set_direct(fs_e, (vir_bytes)lookup->pathname, PATH_MAX,
                                    MGF_READ | MGF_WRITE);
     if (path_grant == GRANT_INVALID)
-        panic("vfs: request_lookup cannot create path grant");
+        panic("vfs: %s cannot create path grant", __FUNCTION__);
 
     name_len = strlen(lookup->pathname);
 
@@ -60,15 +64,35 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
     m.u.m_vfs_fs_lookup.path_size = PATH_MAX;
     m.u.m_vfs_fs_lookup.path_grant = path_grant;
     m.u.m_vfs_fs_lookup.user_endpt = fp->endpoint;
-    m.u.m_vfs_fs_lookup.flags = lookup->flags;
 
-    m.u.m_vfs_fs_lookup.uid = fp->effuid;
-    m.u.m_vfs_fs_lookup.gid = fp->effgid;
+    if (fp->ngroups > 0) {
+        ucred.uid = fp->effuid;
+        ucred.gid = fp->effgid;
+        ucred.ngroups = fp->ngroups;
+        memcpy(ucred.sgroups, fp->sgroups, fp->ngroups * sizeof(gid_t));
+
+        ucred_grant =
+            mgrant_set_direct(fs_e, (vir_bytes)&ucred, sizeof(ucred), MGF_READ);
+        if (ucred_grant == GRANT_INVALID)
+            panic("vfs: %s cannot create ucred grant", __FUNCTION__);
+
+        m.u.m_vfs_fs_lookup.ucred_grant = ucred_grant;
+        m.u.m_vfs_fs_lookup.ucred_size = sizeof(ucred);
+        flags &= ~LKF_INLINE_UCRED;
+    } else {
+        m.u.m_vfs_fs_lookup.uid = fp->effuid;
+        m.u.m_vfs_fs_lookup.gid = fp->effgid;
+
+        flags |= LKF_INLINE_UCRED;
+    }
+
+    m.u.m_vfs_fs_lookup.flags = flags;
 
     memset(ret, 0, sizeof(struct lookup_result));
     fs_sendrec(fs_e, &m);
 
     mgrant_revoke(path_grant);
+    if (fp->ngroups > 0) mgrant_revoke(ucred_grant);
 
     retval = m.u.m_fs_vfs_lookup_reply.status;
     ret->fs_ep = m.source;

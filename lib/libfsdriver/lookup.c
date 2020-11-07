@@ -55,6 +55,7 @@ static int get_next_name(char** ptr, char** start, char* name, size_t namesize)
 static int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
 {
     mode_t mask;
+    int i;
 
     if (!S_ISDIR(fn->fn_mode)) return ENOTDIR;
 
@@ -66,6 +67,13 @@ static int access_dir(struct fsdriver_node* fn, struct vfs_ucred* ucred)
         mask = S_IXGRP;
     else {
         mask = S_IXOTH;
+
+        for (i = 0; i < ucred->ngroups; i++) {
+            if (ucred->sgroups[i] == fn->fn_gid) {
+                mask = S_IXGRP;
+                break;
+            }
+        }
     }
 
     return (fn->fn_mode & mask) ? 0 : EACCES;
@@ -117,14 +125,23 @@ int fsdriver_lookup(const struct fsdriver* fsd, MESSAGE* m)
     char pathname[PATH_MAX];
     int symloop = 0;
 
-    ucred.uid = m->u.m_vfs_fs_lookup.uid;
-    ucred.gid = m->u.m_vfs_fs_lookup.gid;
+    if (fsd->fs_lookup == NULL) return ENOSYS;
 
     if ((retval = fsdriver_copy_name(src, path_grant, name_len, pathname,
                                      sizeof(pathname), FALSE)) != 0)
         return retval;
 
-    if (fsd->fs_lookup == NULL) return ENOSYS;
+    if (flags & LKF_INLINE_UCRED) {
+        ucred.uid = m->u.m_vfs_fs_lookup.uid;
+        ucred.gid = m->u.m_vfs_fs_lookup.gid;
+        ucred.ngroups = 0;
+    } else {
+        if (m->u.m_vfs_fs_lookup.ucred_size != sizeof(ucred)) return EINVAL;
+
+        if ((retval = safecopy_from(src, m->u.m_vfs_fs_lookup.ucred_grant, 0,
+                                    &ucred, sizeof(ucred))) != OK)
+            return retval;
+    }
 
     char *cp, *last;
     char component[NAME_MAX + 1];
