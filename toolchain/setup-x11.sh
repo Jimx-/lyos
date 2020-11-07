@@ -18,6 +18,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_PIXMAN:=false}
 : ${BUILD_CAIRO:=false}
 : ${BUILD_LIBXKBCOMMON:=false}
+: ${BUILD_LIBTSM:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_XORG_MACROS=true
@@ -201,6 +202,24 @@ if $BUILD_LIBXKBCOMMON; then
     meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Denable-x11=false -Denable-docs=false $DIR/sources/libxkbcommon-1.0.1
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libtsm
+if $BUILD_LIBTSM; then
+    if [ ! -d "libtsm-$SUBARCH" ]; then
+        mkdir libtsm-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libtsm-3 > /dev/null
+    mkdir -p m4
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fis
+    popd > /dev/null
+
+    pushd libtsm-$SUBARCH > /dev/null
+    $DIR/sources/libtsm-3/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 

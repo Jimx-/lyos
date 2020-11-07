@@ -52,6 +52,7 @@ download "libxkbcommon" "https://xkbcommon.org/download" "libxkbcommon-1.0.1.tar
 download "libxml2" "http://xmlsoft.org/sources" "libxml2-2.9.10.tar.gz"
 download "eudev" "https://dev.gentoo.org/~blueness/eudev/" "eudev-3.2.2.tar.gz"
 download "xorg-macros" "https://www.x.org/pub/individual/util/" "util-macros-1.19.1.tar.bz2"
+download "libtsm" "https://www.freedesktop.org/software/kmscon/releases/" "libtsm-3.tar.xz"
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -93,6 +94,7 @@ unzip "libxkbcommon-1.0.1.tar.xz" "libxkbcommon-1.0.1"
 unzip "libxml2-2.9.10.tar.gz" "libxml2-2.9.10"
 unzip "eudev-3.2.2.tar.gz" "eudev-3.2.2"
 unzip "util-macros-1.19.1.tar.bz2" "util-macros-1.19.1"
+unzip "libtsm-3.tar.xz" "libtsm-3"
 
 echo "Patching..."
 patc "automake-1.11"
