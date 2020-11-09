@@ -11,6 +11,13 @@ size_t ldso_tls_static_offset;
 size_t ldso_tls_dtv_generation = 1;
 size_t ldso_tls_max_index = 1;
 
+#define DTV_GENERATION(dtv)          ((size_t)((dtv)[0]))
+#define DTV_MAX_INDEX(dtv)           ((size_t)((dtv)[-1]))
+#define SET_DTV_GENERATION(dtv, val) (dtv)[0] = (void*)(size_t)(val)
+#define SET_DTV_MAX_INDEX(dtv, val)  (dtv)[-1] = (void*)(size_t)(val)
+
+void* ldso_tls_get_addr(void* tcb, size_t idx, size_t offset) { return NULL; }
+
 int ldso_tls_allocate_offset(struct so_info* si)
 {
     size_t offset, next_offset;
@@ -44,8 +51,11 @@ static struct tls_tcb* ldso_allocate_tls_locked(void)
     struct so_info* si;
     struct tls_tcb* tcb;
     char *p, *q;
+    size_t dtv_size;
 
-    p = mmap(NULL, ldso_tls_static_space + sizeof(struct tls_tcb),
+    dtv_size = sizeof(*tcb->tcb_dtv) * (2 + ldso_tls_max_index);
+
+    p = mmap(NULL, ldso_tls_static_space + sizeof(struct tls_tcb) + dtv_size,
              PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (p == MAP_FAILED) return NULL;
 
@@ -55,7 +65,12 @@ static struct tls_tcb* ldso_allocate_tls_locked(void)
     p += ldso_tls_static_space;
     tcb = (struct tls_tcb*)p;
     tcb->tcb_self = tcb;
+    tcb->tcb_dtv = (void**)(p + sizeof(struct tls_tcb));
+    ++tcb->tcb_dtv;
 #endif
+
+    SET_DTV_MAX_INDEX(tcb->tcb_dtv, ldso_tls_max_index);
+    SET_DTV_GENERATION(tcb->tcb_dtv, ldso_tls_dtv_generation);
 
     for (si = si_list; si != NULL; si = si->next) {
         if (si->tls_init_size && si->tls_done) {
@@ -67,6 +82,7 @@ static struct tls_tcb* ldso_allocate_tls_locked(void)
             /* xprintf("TLS: dtv %p in %p -> tls offset %u\n", q, si, */
             /*         si->tls_offset); */
             memcpy(q, si->tls_init, si->tls_init_size);
+            tcb->tcb_dtv[si->tls_index] = q;
         }
     }
 

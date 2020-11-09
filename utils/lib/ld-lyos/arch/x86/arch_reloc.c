@@ -121,10 +121,19 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
                     return -1;
 
                 *where += (Elf32_Addr)(sym->st_value - def_obj->tls_offset);
-                /* xprintf("TLS_TPOFF: %s in %s -> %x in %s\n", */
-                /*         (def_obj->strtab + sym->st_name), si->name, *where,
+                /* xprintf("TLS_TPOFF: %s in %s -> %p\n", */
+                /*         (def_obj->strtab + sym->st_name), si->name, *where);
                  */
-                /*         def_obj->name); */
+                break;
+
+            case R_386_TLS_DTPMOD32:
+                sym = ldso_find_sym(si, symnum, &def_obj, 0);
+                if (!sym) return -1;
+
+                *where = (Elf32_Addr)(def_obj->tls_index);
+
+                /* xprintf("TLS_DTPMOD32 %s in %s -> %p\n", */
+                /*         def_obj->strtab + sym->st_name, si->name, *where); */
                 break;
 
 #endif
@@ -155,3 +164,20 @@ char* ldso_bind(struct so_info* si, Elf32_Word reloff)
 
     return (char*)new_addr;
 }
+
+#if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
+
+LDSO_PUBLIC __attribute__((__regparm__(1))) void* ___tls_get_addr(void* arg_)
+{
+    size_t* arg = (size_t*)arg_;
+    struct tls_tcb* tcb = __libc_get_tls_tcb();
+    size_t idx = arg[0], offset = arg[1];
+    void** dtv = tcb->tcb_dtv;
+
+    if (idx < (size_t)dtv[-1] && dtv[idx] != NULL)
+        return (uint8_t*)dtv[idx] + offset;
+
+    return ldso_tls_get_addr(tcb, idx, offset);
+}
+
+#endif

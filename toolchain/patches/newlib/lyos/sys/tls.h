@@ -12,6 +12,7 @@
 
 struct tls_tcb {
     void* tcb_self;
+    void** tcb_dtv;
     void* tcb_pthread;
 };
 

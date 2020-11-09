@@ -141,6 +141,11 @@ LDSO_PUBLIC struct tls_tcb* __ldso_allocate_tls(void);
 
 void ldso_tls_initial_allocation(void);
 int ldso_tls_allocate_offset(struct so_info* si);
+void* ldso_tls_get_addr(void* tcb, size_t idx, size_t offset);
+
+#ifdef __i386__
+LDSO_PUBLIC extern void* ___tls_get_addr(void*) __attribute__((__regparm__(1)));
+#endif
 #endif
 
 int xprintf(const char* fmt, ...);
