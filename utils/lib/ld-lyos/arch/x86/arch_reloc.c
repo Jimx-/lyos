@@ -111,16 +111,23 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
                     ldso_die("copy relocation in shared library");
                 }
                 break;
+
+#if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
             case R_386_TLS_TPOFF:
                 sym = ldso_find_sym(si, symnum, &def_obj, 0);
                 if (!sym) continue;
 
-                *where += (Elf32_Addr)(sym->st_value);
+                if (!def_obj->tls_done && ldso_tls_allocate_offset(def_obj))
+                    return -1;
+
+                *where += (Elf32_Addr)(sym->st_value - def_obj->tls_offset);
                 /* xprintf("TLS_TPOFF: %s in %s -> %x in %s\n", */
                 /*         (def_obj->strtab + sym->st_name), si->name, *where,
                  */
                 /*         def_obj->name); */
                 break;
+
+#endif
             default:
                 xprintf("Unknown relocation type: %d\n",
                         ELF32_R_TYPE(rel->r_info));

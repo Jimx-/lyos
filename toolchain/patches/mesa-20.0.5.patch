@@ -39,15 +39,6 @@ diff -rup old/meson.build new/meson.build
  
  dri_drivers = get_option('dri-drivers')
  if dri_drivers.contains('auto')
-@@ -393,7 +393,7 @@ endif
- 
- # Android uses emutls for versions <= P/28. For USE_ELF_TLS we need ELF TLS.
- if host_machine.system() != 'windows' and (not with_platform_android or get_option('platform-sdk-version') >= 29)
--  pre_args += '-DUSE_ELF_TLS'
-+  # pre_args += '-DUSE_ELF_TLS'
- endif
- 
- if with_glx != 'disabled'
 @@ -890,7 +890,7 @@ if cc.compiles('__uint128_t foo(void) {
  endif
  
