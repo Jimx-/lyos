@@ -230,6 +230,11 @@ if $BUILD_KMSCON; then
         mkdir kmscon-$SUBARCH
     fi
 
+    pushd $DIR/sources/kmscon-8 > /dev/null
+    mkdir -p m4
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -i
+    popd > /dev/null
+
     pushd kmscon-$SUBARCH > /dev/null
     $DIR/sources/kmscon-8/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \
                                     --with-video=drm2d --with-renderers= --with-fonts= \

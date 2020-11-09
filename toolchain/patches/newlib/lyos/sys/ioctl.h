@@ -12,6 +12,7 @@
 #define TCFLSH     _IOW('T', 0x07, int)
 #define TIOCGWINSZ _IOR('T', 0x08, struct winsize)
 #define TIOCSWINSZ _IOR('T', 0x09, struct winsize)
+#define TIOCSIG    _IOW('T', 0x36, int)
 
 #ifdef __cplusplus
 extern "C"

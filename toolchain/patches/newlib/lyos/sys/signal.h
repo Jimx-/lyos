@@ -357,6 +357,8 @@ int sigqueue(pid_t pid, int signo, const union sigval value);
 #define SIGUSR2   31 /* user defined signal 2 */
 #define NSIG      32 /* signal 0 implied */
 
+#define SIGUNUSED SIGUSR2
+
 #define SIGRTMIN 32
 #define SIGRTMAX 33
 

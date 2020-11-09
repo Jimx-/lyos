@@ -75,6 +75,37 @@ struct dirent* readdir(DIR* dirp)
     return dp;
 }
 
+int readdir_r(DIR* dirp, struct dirent* entry, struct dirent** result)
+{
+    struct dirent* dp;
+
+    if (!dirp) return NULL;
+
+    if (dirp->loc >= dirp->size) dirp->loc = 0;
+    if (dirp->loc == 0) {
+        dirp->size = getdents(dirp->fd, dirp->buf, dirp->len);
+
+        if (dirp->size < 0) {
+            return -dirp->size;
+        }
+
+        if (dirp->size == 0) {
+            *result = NULL;
+            return 0;
+        }
+    }
+
+    dp = (struct dirent*)((char*)dirp->buf + dirp->loc);
+
+    if (dp->d_reclen >= dirp->len - dirp->loc + 1) return ENAMETOOLONG;
+
+    memcpy(entry, dp, offsetof(struct dirent, d_name) + strlen(dp->d_name) + 1);
+    dirp->loc += dp->d_reclen;
+
+    *result = entry;
+    return 0;
+}
+
 int closedir(DIR* dirp)
 {
     int fd = dirp->fd;
