@@ -20,6 +20,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBXKBCOMMON:=false}
 : ${BUILD_LIBTSM:=false}
 : ${BUILD_KMSCON:=false}
+: ${BUILD_XORG_PROTO:=false}
+: ${BUILD_XKEYBOARD_CONFIG:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_XORG_MACROS=true
@@ -239,6 +241,47 @@ if $BUILD_KMSCON; then
     $DIR/sources/kmscon-8/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \
                                     --with-video=drm2d --with-renderers= --with-fonts= \
                                     --disable-multi-seat --with-sessions=dummy
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build xorg-proto
+if $BUILD_XORG_PROTO; then
+    if [ ! -d "xorg-proto-$SUBARCH" ]; then
+        mkdir xorg-proto-$SUBARCH
+    fi
+
+    pushd $DIR/sources/xorgproto-2020.1 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd xorg-proto-$SUBARCH > /dev/null
+    $DIR/sources/xorgproto-2020.1/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                                 --sysconfdir=/etc --localstatedir=/var \
+                                                 --disable-static
+
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build xkeyboard-config
+if $BUILD_XKEYBOARD_CONFIG; then
+    if [ ! -d "xkeyboard-config-$SUBARCH" ]; then
+        mkdir xkeyboard-config-$SUBARCH
+    fi
+
+    pushd $DIR/sources/xkeyboard-config-2.30 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd xkeyboard-config-$SUBARCH > /dev/null
+    $DIR/sources/xkeyboard-config-2.30/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                                 --sysconfdir=/etc --localstatedir=/var \
+                                                 --with-xkb-rules-symlink=xorg --disable-nls \
+                                                 --disable-runtime-deps
+
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

@@ -1,6 +1,6 @@
 root:x:0:
 bin:x:1:daemon
-tty:x:5:
+tty:x:5:jimx
 disk:x:6:
 lp:x:7:
 daemon:x:8:
