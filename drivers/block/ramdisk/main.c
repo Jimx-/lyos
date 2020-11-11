@@ -84,7 +84,7 @@ static ssize_t rd_rdwt(dev_t minor, int do_write, loff_t pos,
 static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint,
                     mgrant_id_t grant, endpoint_t user_endpoint);
 
-static int char_open(dev_t minor, int access);
+static int char_open(dev_t minor, int access, endpoint_t user_endpt);
 static int char_close(dev_t minor);
 static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint,
                          mgrant_id_t grant, unsigned int count, cdev_id_t id);
@@ -191,7 +191,7 @@ static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint,
     return 0;
 }
 
-static int char_open(dev_t minor, int access)
+static int char_open(dev_t minor, int access, endpoint_t user_endpt)
 {
     if (minor <= 0 || minor > NR_CDEVS) return ENXIO;
 

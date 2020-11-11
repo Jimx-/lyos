@@ -240,7 +240,7 @@ if $BUILD_KMSCON; then
     pushd kmscon-$SUBARCH > /dev/null
     $DIR/sources/kmscon-8/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \
                                     --with-video=drm2d --with-renderers= --with-fonts= \
-                                    --disable-multi-seat --with-sessions=dummy
+                                    --disable-multi-seat --with-sessions=dummy,terminal
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

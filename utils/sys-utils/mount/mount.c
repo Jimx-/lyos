@@ -9,6 +9,14 @@
 
 static int list() { return 0; }
 
+static int mount_one(const char* source, const char* target, const char* type,
+                     int flags, const char* opts)
+{
+    if (!strcmp(source, "none")) source = NULL;
+
+    return mount(source, target, type, flags, opts);
+}
+
 static int mount_all()
 {
     struct mntent* m;
@@ -20,10 +28,8 @@ static int mount_all()
     while ((m = getmntent(f))) {
         int mount_flags = 0;
 
-        if (strcmp(m->mnt_fsname, "none") == 0) m->mnt_fsname = NULL;
-
-        if (mount(m->mnt_fsname, m->mnt_dir, m->mnt_type, mount_flags,
-                  m->mnt_opts) != 0) {
+        if (mount_one(m->mnt_fsname, m->mnt_dir, m->mnt_type, mount_flags,
+                      m->mnt_opts) != 0) {
             fprintf(stderr, "Can't mount on %s\n", m->mnt_dir);
             exit(EXIT_FAILURE);
         }
@@ -45,6 +51,8 @@ int main(int argc, char* argv[])
 {
     int i, a_flag = 0;
     char* opt;
+    const char *types = NULL, *options = NULL;
+    const char *source, *target;
 
     if (argc == 1) return list();
 
@@ -56,6 +64,12 @@ int main(int argc, char* argv[])
                 case 'a':
                     a_flag = 1;
                     break;
+                case 'o':
+                    options = argv[++i];
+                    break;
+                case 't':
+                    types = argv[++i];
+                    break;
                 default:
                     usage();
                     break;
@@ -65,6 +79,17 @@ int main(int argc, char* argv[])
     }
 
     if (a_flag) return mount_all();
+
+    if (argc < 3) usage();
+    if (!types) usage();
+
+    source = argv[argc - 2];
+    target = argv[argc - 1];
+
+    if (mount_one(source, target, types, 0, options) != 0) {
+        fprintf(stderr, "Can't mount on %s\n", target);
+        exit(EXIT_FAILURE);
+    }
 
     return EXIT_SUCCESS;
 }

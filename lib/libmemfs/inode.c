@@ -71,6 +71,7 @@ struct memfs_inode* memfs_new_inode(ino_t num, const char* name, int index)
         (struct memfs_inode*)malloc(sizeof(struct memfs_inode));
     if (!pin) return NULL;
 
+    memset(pin, 0, sizeof(*pin));
     pin->i_num = num;
     pin->i_index = index;
     strlcpy(pin->i_name, name, sizeof(pin->i_name));

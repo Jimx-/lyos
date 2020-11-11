@@ -46,7 +46,7 @@ int memfs_lookup(dev_t dev, ino_t start, const char* name,
     fn->fn_size = pin->i_stat.st_size;
     fn->fn_mode = pin->i_stat.st_mode;
     fn->fn_device = pin->i_stat.st_device;
-    *is_mountpoint = 0;
+    *is_mountpoint = pin->is_mountpoint;
 
     return 0;
 }

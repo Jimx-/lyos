@@ -183,7 +183,8 @@ extern "C"
 #ifdef __LINUX_ERRNO_EXTENSIONS__
 #define ESTRPIPE 143 /* Streams pipe error */
 #endif
-#define ENOKEY 144
+#define ENOKEY      144
+#define EDEADSRCDST 145
 
 #define EWOULDBLOCK EAGAIN /* Operation would block */
 

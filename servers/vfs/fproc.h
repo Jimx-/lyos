@@ -34,6 +34,8 @@ EXTERN struct fproc {
     struct inode* pwd;  /* working directory */
     struct inode* root; /* root directory */
 
+    dev_t tty;
+
     int umask;
 
     struct file_desc* filp[NR_FILES];

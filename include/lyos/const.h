@@ -86,6 +86,7 @@
 #define DEV_FLOPPY   2
 #define DEV_HD       3
 #define DEV_CHAR_TTY 4
+#define DEV_CHAR_PTY 5
 #define DEV_INPUT    13
 #define DEV_CHAR_FB  29
 #define DEV_DRM      34
@@ -117,6 +118,14 @@
 
 /* super user uid */
 #define SU_UID ((uid_t)0)
+
+/* Char driver flags */
+#define CDEV_R_BIT  0x1
+#define CDEV_W_BIT  0x2
+#define CDEV_NOCTTY 0x4
+
+#define CDEV_CLONED 0x10000000
+#define CDEV_CTTY   0x20000000
 
 /* Socket driver flags */
 #define SDEV_NONBLOCK 0x01

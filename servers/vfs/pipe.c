@@ -323,7 +323,7 @@ static void put_pipe_info(struct inode* pin, struct pipe_inode_info* pipe)
     }
 }
 
-static int pipe_open(struct inode* pin, struct file_desc* filp)
+static int pipe_open(int fd, struct inode* pin, struct file_desc* filp)
 {
     struct pipe_inode_info* pipe = pin->i_private;
 

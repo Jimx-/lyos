@@ -38,6 +38,7 @@ struct memfs_inode {
     int i_index;
     char i_name[NAME_MAX];
 
+    int is_mountpoint;
     struct memfs_stat i_stat;
     struct memfs_inode* i_parent;
     cbdata_t data;

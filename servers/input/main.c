@@ -47,7 +47,7 @@ static int input_attach_handler(struct input_dev* dev,
 static struct input_handle* input_get_handle(dev_t minor);
 static void input_event(MESSAGE* msg);
 
-static int input_open(dev_t minor, int access);
+static int input_open(dev_t minor, int access, endpoint_t user_endpt);
 static int input_close(dev_t minor);
 static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
                           mgrant_id_t grant, unsigned int count, cdev_id_t id);
@@ -74,7 +74,7 @@ static struct chardriver input_driver = {
     .cdr_other = input_other,
 };
 
-static int input_open(dev_t minor, int access)
+static int input_open(dev_t minor, int access, endpoint_t user_endpt)
 {
     struct input_handle* handle;
 

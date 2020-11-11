@@ -581,8 +581,10 @@ END_MESS_DECL(mess_vfs_fs_putinode)
 struct mess_vfs_cdev_openclose {
     __u64 minor;
     __u32 id;
+    __endpoint_t user;
+    int access;
 
-    __u8 _pad[44];
+    __u8 _pad[36];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
 
@@ -857,6 +859,20 @@ BEGIN_MESS_DECL(mess_sockdriver_getset)
 }
 END_MESS_DECL(mess_sockdriver_getset)
 
+BEGIN_MESS_DECL(mess_devpts_req)
+{
+    int status;
+    unsigned int index;
+    mode_t mode;
+    uid_t uid;
+    gid_t gid;
+    dev_t dev;
+
+    __u8 _pad[48 - sizeof(mode_t) - sizeof(uid_t) - sizeof(gid_t) -
+              sizeof(dev_t)];
+}
+END_MESS_DECL(mess_devpts_req)
+
 typedef struct {
     int source;
     int type;
@@ -932,6 +948,7 @@ typedef struct {
         struct mess_sockdriver_poll_notify m_sockdriver_poll_notify;
         struct mess_sockdriver_select m_sockdriver_select;
         struct mess_sockdriver_getset m_sockdriver_getset;
+        struct mess_devpts_req m_devpts_req;
 
         __u8 m_payload[56];
     } u;

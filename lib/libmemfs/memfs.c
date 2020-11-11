@@ -38,6 +38,7 @@ static struct fsdriver fsd = {
     .root_num = MEMFS_ROOT_INODE,
 
     .fs_readsuper = memfs_readsuper,
+    .fs_mountpoint = memfs_mountpoint,
     .fs_lookup = memfs_lookup,
     .fs_mkdir = memfs_mkdir,
     .fs_mknod = memfs_mknod,

@@ -92,8 +92,8 @@ static int get_sock_inode(struct fproc* fp, dev_t dev, struct inode** ppin)
 
     pin->i_dev = sockfs_vmnt->m_dev;
     pin->i_num = ino;
-    pin->i_gid = fproc->effgid;
-    pin->i_uid = fproc->effuid;
+    pin->i_gid = fp->effgid;
+    pin->i_uid = fp->effuid;
     pin->i_size = 0;
     pin->i_fs_ep = NO_TASK;
     pin->i_specdev = dev;

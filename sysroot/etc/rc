@@ -11,5 +11,13 @@ service up /sbin/fb
 service up /sbin/virtio-gpu
 service up /sbin/uds
 service up /sbin/tmpfs
+service up /sbin/pty
+service up /sbin/devpts
 
 mount -a
+
+mkdir /dev/shm
+mkdir /dev/pts
+
+mount -t tmpfs none /dev/shm
+mount -t devpts none /dev/pts

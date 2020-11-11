@@ -32,7 +32,9 @@
 static int do_open(struct chardriver* cd, MESSAGE* msg)
 {
     if (cd->cdr_open == NULL) return 0;
-    return cd->cdr_open(msg->u.m_vfs_cdev_openclose.minor, 0);
+    return cd->cdr_open(msg->u.m_vfs_cdev_openclose.minor,
+                        msg->u.m_vfs_cdev_openclose.access,
+                        msg->u.m_vfs_cdev_openclose.user);
 }
 
 static int do_close(struct chardriver* cd, MESSAGE* msg)
@@ -245,7 +247,7 @@ int chardriver_get_minor(MESSAGE* msg, dev_t* minor)
     case CDEV_OPEN:
     case CDEV_CLOSE:
         *minor = msg->u.m_vfs_cdev_openclose.minor;
-        break;
+        return 0;
     case CDEV_READ:
     case CDEV_WRITE:
     case CDEV_IOCTL:

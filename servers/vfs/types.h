@@ -33,7 +33,7 @@ struct file_operations {
                  struct fproc*);
     __poll_t (*poll)(struct file_desc*, __poll_t, struct poll_table*,
                      struct fproc*);
-    int (*open)(struct inode*, struct file_desc*);
+    int (*open)(int, struct inode*, struct file_desc*);
     int (*release)(struct inode*, struct file_desc*);
 };
 

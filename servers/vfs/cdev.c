@@ -27,6 +27,8 @@
 #include <lyos/fs.h>
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "const.h"
 #include "types.h"
@@ -38,6 +40,38 @@
 
 struct cdmap cdmap[NR_DEVICES];
 
+static struct vfs_mount* cdev_vmnt;
+
+static int get_cdev_inode(struct fproc* fp, dev_t dev, struct inode** ppin);
+static int cdev_opcl(int op, dev_t dev, int fd, int flags);
+
+static ino_t get_next_ino(void)
+{
+    static ino_t last_ino = 1;
+    return last_ino++;
+}
+
+static void mount_cdevfs(void)
+{
+    dev_t dev;
+
+    if ((dev = get_none_dev()) == NO_DEV) {
+        panic("vfs: cannot allocate dev for cdevfs");
+    }
+
+    if ((cdev_vmnt = get_free_vfs_mount()) == NULL) {
+        panic("vfs: cannot allocate vfs mount for cdevfs");
+    }
+
+    cdev_vmnt->m_dev = dev;
+    cdev_vmnt->m_fs_ep = NO_TASK;
+    cdev_vmnt->m_flags = 0;
+    strlcpy(cdev_vmnt->m_label, "cdevfs", FS_LABEL_MAX);
+
+    cdev_vmnt->m_mounted_on = NULL;
+    cdev_vmnt->m_root_node = NULL;
+}
+
 void init_cdev(void)
 {
     int i;
@@ -46,6 +80,8 @@ void init_cdev(void)
 
         init_waitqueue_head(&cdmap[i].wait);
     }
+
+    mount_cdevfs();
 }
 
 static int cdev_update(dev_t dev)
@@ -95,8 +131,36 @@ static struct fproc* cdev_get(dev_t dev)
     return vfs_endpt_proc(pm->driver);
 }
 
-static int cdev_opcl(int op, dev_t dev)
+static int cdev_clone(int fd, dev_t dev, dev_t new_minor)
 {
+    struct inode* pin;
+    int retval;
+
+    dev = MAKE_DEV(MAJOR(dev), new_minor);
+
+    retval = get_cdev_inode(fproc, dev, &pin);
+    if (retval) {
+        cdev_opcl(CDEV_CLOSE, dev, -1, 0);
+        return retval;
+    }
+
+    lock_inode(pin, RWL_READ);
+
+    assert(fproc->filp[fd]);
+    unlock_inode(fproc->filp[fd]->fd_inode);
+    put_inode(fproc->filp[fd]->fd_inode);
+
+    fproc->filp[fd]->fd_inode = pin;
+
+    return 0;
+}
+
+static int cdev_opcl(int op, dev_t dev, int fd, int flags)
+{
+    dev_t new_minor;
+    int access;
+    int retval;
+
     if (op != CDEV_OPEN && op != CDEV_CLOSE) {
         return EINVAL;
     }
@@ -104,10 +168,19 @@ static int cdev_opcl(int op, dev_t dev)
     struct fproc* driver = cdev_get(dev);
     if (!driver) return ENXIO;
 
+    access = 0;
+
     MESSAGE driver_msg;
     driver_msg.type = op;
     driver_msg.u.m_vfs_cdev_openclose.minor = MINOR(dev);
     driver_msg.u.m_vfs_cdev_openclose.id = fproc->endpoint;
+
+    if (op == CDEV_OPEN) {
+        if (flags & O_NOCTTY) access |= CDEV_NOCTTY;
+
+        driver_msg.u.m_vfs_cdev_openclose.user = fproc->endpoint;
+        driver_msg.u.m_vfs_cdev_openclose.access = access;
+    }
 
     if (asyncsend3(driver->endpoint, &driver_msg, 0)) {
         panic("vfs: cdev_opcl send message failed");
@@ -115,7 +188,21 @@ static int cdev_opcl(int op, dev_t dev)
 
     cdev_recv(driver->endpoint, &driver_msg);
 
-    return driver_msg.u.m_vfs_cdev_reply.status;
+    retval = driver_msg.u.m_vfs_cdev_reply.status;
+
+    if (op == CDEV_OPEN && retval != OK) {
+        if (retval & CDEV_CTTY) {
+            fproc->tty = dev;
+            retval &= ~CDEV_CTTY;
+        }
+
+        if (retval & CDEV_CLONED) {
+            new_minor = retval & ~(CDEV_CLONED | CDEV_CTTY);
+            retval = cdev_clone(fd, dev, new_minor);
+        }
+    }
+
+    return retval;
 }
 
 static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
@@ -314,14 +401,14 @@ static __poll_t cdev_poll(struct file_desc* filp, __poll_t mask,
     return retval;
 }
 
-static int cdev_open(struct inode* pin, struct file_desc* filp)
+static int cdev_open(int fd, struct inode* pin, struct file_desc* filp)
 {
-    return cdev_opcl(CDEV_OPEN, pin->i_specdev);
+    return cdev_opcl(CDEV_OPEN, pin->i_specdev, fd, filp->fd_flags);
 }
 
 static int cdev_release(struct inode* pin, struct file_desc* filp)
 {
-    return cdev_opcl(CDEV_CLOSE, pin->i_specdev);
+    return cdev_opcl(CDEV_CLOSE, pin->i_specdev, -1, 0);
 }
 
 const struct file_operations cdev_fops = {
@@ -332,3 +419,30 @@ const struct file_operations cdev_fops = {
     .open = cdev_open,
     .release = cdev_release,
 };
+
+static int get_cdev_inode(struct fproc* fp, dev_t dev, struct inode** ppin)
+{
+    ino_t ino = get_next_ino();
+
+    struct inode* pin = new_inode(cdev_vmnt->m_dev, ino, S_IFCHR | RWX_MODES);
+
+    if (!pin) {
+        return ENOMEM;
+    }
+
+    pin->i_dev = cdev_vmnt->m_dev;
+    pin->i_num = ino;
+    pin->i_gid = fp->effgid;
+    pin->i_uid = fp->effuid;
+    pin->i_size = 0;
+    pin->i_fs_ep = NO_TASK;
+    pin->i_specdev = dev;
+    pin->i_vmnt = cdev_vmnt;
+    pin->i_fops = &cdev_fops;
+    dup_inode(pin);
+    pin->i_fs_cnt = 1;
+
+    *ppin = pin;
+
+    return 0;
+}

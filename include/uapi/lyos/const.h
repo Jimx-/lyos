@@ -117,6 +117,8 @@
 #define INPUT_REQ_BASE   2401
 #define IPC_REQ_BASE     2501
 #define NETLINK_REQ_BASE 2601
+#define DEVPTS_BASE      2701
+
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -376,6 +378,9 @@ enum msgtype {
     /* IPC */
     IPC_SHMGET = IPC_REQ_BASE,
     IPC_SHMAT,
+
+    DEVPTS_CLEAR = DEVPTS_BASE,
+    DEVPTS_SET,
 };
 
 /* Macros for messages. */

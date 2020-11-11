@@ -166,7 +166,7 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
             } else if (S_ISDIR(pin->i_mode)) {
                 retval = (bits & W_BIT) ? EISDIR : 0;
             } else if (S_ISCHR(pin->i_mode)) {
-                retval = filp->fd_fops->open(pin, filp);
+                retval = filp->fd_fops->open(fd, pin, filp);
             } else {
                 /* TODO: handle other file types */
             }
@@ -275,7 +275,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     dir_lookup.vmnt_lock = RWL_WRITE;
     dir_lookup.inode_lock = RWL_WRITE;
     pin = advance_path(pin_dir, &dir_lookup, fp);
-    assert(!vmnt);
+    assert(!vmnt || vmnt != vmnt_dir);
 
     /* no such entry, create one */
     if (pin == NULL && err_code == ENOENT) {
@@ -295,6 +295,7 @@ static struct inode* new_node(struct fproc* fp, struct lookup* lookup,
     } else {
         err_code = EEXIST;
         unlock_vmnt(vmnt_dir);
+        if (vmnt) unlock_vmnt(vmnt);
         if (pin_dir != pin) unlock_inode(pin_dir);
         put_inode(pin_dir);
         return pin;

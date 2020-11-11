@@ -89,7 +89,7 @@ static void tty_dev_read(TTY* tty);
 static void tty_dev_write(TTY* tty);
 static void tty_dev_ioctl(TTY* tty);
 static void in_transfer(TTY* tty);
-static int do_open(dev_t minor, int access);
+static int do_open(dev_t minor, int access, endpoint_t user_endpt);
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
@@ -535,7 +535,7 @@ void handle_events(TTY* tty)
     }
 }
 
-static int do_open(dev_t minor, int access)
+static int do_open(dev_t minor, int access, endpoint_t user_endpt)
 {
     TTY* tty = minor2tty(minor);
 

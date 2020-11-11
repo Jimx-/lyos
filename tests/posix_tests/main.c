@@ -16,6 +16,7 @@ static const MunitSuite all_suites[] = {
     {(char*)"/mmap", mmap_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {(char*)"/netlink", netlink_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {(char*)"/inotify", inotify_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
+    {(char*)"/pty", pty_tests, NULL, 0, MUNIT_SUITE_OPTION_NONE},
     {NULL, NULL, NULL, 0, MUNIT_SUITE_OPTION_NONE},
 };
 

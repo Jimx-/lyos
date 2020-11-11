@@ -23,6 +23,8 @@
 #include <string.h>
 #include <lyos/fs.h>
 #include <lyos/const.h>
+#include <sys/stat.h>
+
 #include "libmemfs/libmemfs.h"
 #include "proto.h"
 
@@ -43,5 +45,20 @@ int memfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
     node->fn_device = 0;
 
     mounted = 1;
+    return 0;
+}
+
+int memfs_mountpoint(dev_t dev, ino_t num)
+{
+    struct memfs_inode* pin = memfs_find_inode(num);
+    if (!pin) return EINVAL;
+
+    if (pin->is_mountpoint) return EBUSY;
+
+    if (S_ISBLK(pin->i_stat.st_mode) || S_ISCHR(pin->i_stat.st_mode))
+        return ENOTDIR;
+
+    pin->is_mountpoint = TRUE;
+
     return 0;
 }

@@ -41,7 +41,7 @@
 
 static int init_fb();
 
-static int fb_open(dev_t minor, int access);
+static int fb_open(dev_t minor, int access, endpoint_t user_endpt);
 static int fb_close(dev_t minor);
 static ssize_t fb_read(dev_t minor, u64 pos, endpoint_t endpoint,
                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
@@ -112,7 +112,7 @@ static int init_fb()
     return 0;
 }
 
-static int fb_open(dev_t minor, int access)
+static int fb_open(dev_t minor, int access, endpoint_t user_endpt)
 {
     if (minor < 0 || minor >= NR_FB_DEVS) return ENXIO;
 
