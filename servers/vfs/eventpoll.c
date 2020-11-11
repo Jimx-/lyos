@@ -102,8 +102,11 @@ struct ep_send_events_data {
 static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
                              int notify);
 static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp);
+static __poll_t ep_eventpoll_poll(struct file_desc* filp, __poll_t mask,
+                                  struct poll_table* wait, struct fproc* fp);
 
 static const struct file_operations eventpoll_fops = {
+    .poll = ep_eventpoll_poll,
     .release = ep_eventpoll_release,
 };
 
@@ -154,6 +157,8 @@ static __poll_t ep_send_events_proc(struct eventpoll* ep,
     int revents;
 
     pt.qproc = NULL;
+    pt.mask = ~0;
+
     esed->retval = 0;
 
     list_for_each_entry_safe(epi, tmp, head, rdllink)
@@ -552,6 +557,37 @@ static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp)
     if (ep) ep_free(ep);
 
     return 0;
+}
+
+static __poll_t ep_read_events_proc(struct eventpoll* ep,
+                                    struct list_head* head, void* arg)
+{
+    struct epitem *epi, *tmp;
+    struct poll_table pt;
+
+    pt.qproc = NULL;
+    pt.mask = ~0;
+
+    list_for_each_entry_safe(epi, tmp, head, rdllink)
+    {
+        if (ep_item_poll(epi, &pt, FALSE)) {
+            return EPOLLIN | EPOLLRDNORM;
+        } else {
+            list_del(&epi->rdllink);
+        }
+    }
+
+    return 0;
+}
+
+static __poll_t ep_eventpoll_poll(struct file_desc* filp, __poll_t mask,
+                                  struct poll_table* wait, struct fproc* fp)
+{
+    struct eventpoll* ep = filp->fd_private_data;
+
+    poll_wait(filp, &ep->poll_wait, wait);
+
+    return ep_scan_ready_list(ep, ep_read_events_proc, NULL);
 }
 
 void eventpoll_release_file(struct file_desc* filp)
