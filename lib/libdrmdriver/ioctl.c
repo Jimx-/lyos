@@ -99,9 +99,18 @@ static int drm_getcap(struct drm_device* dev, endpoint_t endpoint, void* data)
     return 0;
 }
 
+static int drm_setmaster_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                               void* data)
+{
+    return 0;
+}
+
 static const struct drm_ioctl_desc drm_ioctls[] = {
     DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_GET_CAP, drm_getcap, 0),
+
+    DRM_IOCTL_DEF(DRM_IOCTL_SET_MASTER, drm_setmaster_ioctl, 0),
+
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCRTC, drm_mode_getcrtc, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETCRTC, drm_mode_setcrtc, 0),

@@ -119,11 +119,15 @@
 /* super user uid */
 #define SU_UID ((uid_t)0)
 
-/* Char driver flags */
+/* Char driver access bits */
 #define CDEV_R_BIT  0x1
 #define CDEV_W_BIT  0x2
 #define CDEV_NOCTTY 0x4
 
+/* Char driver flags */
+#define CDEV_NONBLOCK 0x1
+
+/* Char driver return flags */
 #define CDEV_CLONED 0x10000000
 #define CDEV_CTTY   0x20000000
 

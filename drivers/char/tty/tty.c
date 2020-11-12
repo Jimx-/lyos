@@ -91,11 +91,14 @@ static void tty_dev_ioctl(TTY* tty);
 static void in_transfer(TTY* tty);
 static int do_open(dev_t minor, int access, endpoint_t user_endpt);
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                       mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                       mgrant_id_t grant, unsigned int count, int flags,
+                       cdev_id_t id);
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id);
 static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
+                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                    cdev_id_t id);
 static int do_select(dev_t minor, int ops, endpoint_t endpoint);
 static void tty_do_kern_log();
 static void tty_echo(TTY* tty, char c);
@@ -562,7 +565,8 @@ static int do_open(dev_t minor, int access, endpoint_t user_endpt)
  * @see documentation/tty/
  *****************************************************************************/
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                       mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                       mgrant_id_t grant, unsigned int count, int flags,
+                       cdev_id_t id)
 {
     TTY* tty = minor2tty(minor);
 
@@ -602,7 +606,8 @@ static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
  * @param msg  The MESSAGE.
  *****************************************************************************/
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                        mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id)
 {
     TTY* tty = minor2tty(minor);
 
@@ -639,7 +644,8 @@ static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
  * @param msg  The MESSAGE.
  *****************************************************************************/
 static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
+                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                    cdev_id_t id)
 {
     int retval = 0;
     int i;

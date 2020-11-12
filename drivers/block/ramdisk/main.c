@@ -87,11 +87,13 @@ static int rd_ioctl(dev_t minor, int request, endpoint_t endpoint,
 static int char_open(dev_t minor, int access, endpoint_t user_endpt);
 static int char_close(dev_t minor);
 static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                         mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                         mgrant_id_t grant, unsigned int count, int flags,
+                         cdev_id_t id);
 static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                          mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                          mgrant_id_t grant, unsigned int count, int flags,
+                          cdev_id_t id);
 static int char_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                      mgrant_id_t grant, endpoint_t user_endpoint,
+                      mgrant_id_t grant, int flags, endpoint_t user_endpoint,
                       cdev_id_t id);
 
 struct blockdriver rd_driver = {
@@ -208,7 +210,8 @@ static int char_close(dev_t minor)
 }
 
 static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                         mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                         mgrant_id_t grant, unsigned int count, int flags,
+                         cdev_id_t id)
 {
     ssize_t retval;
 
@@ -224,7 +227,8 @@ static ssize_t char_read(dev_t minor, u64 pos, endpoint_t endpoint,
 }
 
 static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                          mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                          mgrant_id_t grant, unsigned int count, int flags,
+                          cdev_id_t id)
 {
     ssize_t retval;
 
@@ -241,7 +245,8 @@ static ssize_t char_write(dev_t minor, u64 pos, endpoint_t endpoint,
 }
 
 static int char_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                      mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
+                      mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                      cdev_id_t id)
 {
     return 0;
 }

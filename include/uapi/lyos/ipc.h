@@ -597,8 +597,9 @@ struct mess_vfs_cdev_readwrite {
     __u32 request;
     off_t pos;
     size_t count;
+    int flags;
 
-    __u8 _pad[32 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
+    __u8 _pad[28 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 

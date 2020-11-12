@@ -69,11 +69,14 @@ static class_id_t tty_subsys_id = NO_CLASS_ID;
 static int do_open(dev_t minor, int access, endpoint_t user_endpt);
 static int do_close(dev_t minor);
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                       mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                       mgrant_id_t grant, unsigned int count, int flags,
+                       cdev_id_t id);
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id);
 static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
+                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                    cdev_id_t id);
 static int do_select(dev_t minor, int ops, endpoint_t endpoint);
 
 static void in_transfer(struct tty* tty);
@@ -133,7 +136,8 @@ static int do_close(dev_t minor)
 }
 
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                       mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                       mgrant_id_t grant, unsigned int count, int flags,
+                       cdev_id_t id)
 {
     struct tty* tty = line2tty(minor);
 
@@ -164,7 +168,8 @@ static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
 }
 
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                        mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id)
 {
     struct tty* tty = line2tty(minor);
 
@@ -202,7 +207,8 @@ void tty_sigproc(struct tty* tty, int signo)
 }
 
 static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
+                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                    cdev_id_t id)
 {
     int retval = 0;
     int i;

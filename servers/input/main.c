@@ -50,11 +50,13 @@ static void input_event(MESSAGE* msg);
 static int input_open(dev_t minor, int access, endpoint_t user_endpt);
 static int input_close(dev_t minor);
 static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                          mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                          mgrant_id_t grant, unsigned int count, int flags,
+                          cdev_id_t id);
 static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                           mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                           mgrant_id_t grant, unsigned int count, int flags,
+                           cdev_id_t id);
 static int input_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                       mgrant_id_t grant, endpoint_t user_endpoint,
+                       mgrant_id_t grant, int flags, endpoint_t user_endpoint,
                        cdev_id_t id);
 static void input_other(MESSAGE* msg);
 
@@ -99,7 +101,8 @@ static int input_close(dev_t minor)
 }
 
 static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                          mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                          mgrant_id_t grant, unsigned int count, int flags,
+                          cdev_id_t id)
 {
     struct input_handle* handle;
 
@@ -112,13 +115,14 @@ static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
 }
 
 static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                           mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                           mgrant_id_t grant, unsigned int count, int flags,
+                           cdev_id_t id)
 {
     return -ENOSYS;
 }
 
 static int input_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                       mgrant_id_t grant, endpoint_t user_endpoint,
+                       mgrant_id_t grant, int flags, endpoint_t user_endpoint,
                        cdev_id_t id)
 {
     struct input_handle* handle;

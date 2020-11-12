@@ -26,10 +26,11 @@ static class_id_t drm_class_id = NO_CLASS_ID;
 
 static const char* lib_name = "libdrmdriver";
 
-static int drm_open(dev_t minor, int access);
+static int drm_open(dev_t minor, int access, endpoint_t user_endpt);
 static int drm_close(dev_t minor);
 static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                     mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
+                     mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                     cdev_id_t id);
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
                     size_t length, char** retaddr);
 
@@ -38,7 +39,7 @@ static struct chardriver drm_chrdrv = {.cdr_open = drm_open,
                                        .cdr_ioctl = drm_ioctl,
                                        .cdr_mmap = drm_mmap};
 
-static int drm_open(dev_t minor, int access)
+static int drm_open(dev_t minor, int access, endpoint_t user_endpt)
 {
     if (minor != drm_device->primary.index) {
         return ENXIO;
@@ -52,7 +53,8 @@ static int drm_open(dev_t minor, int access)
 static int drm_close(dev_t minor) { return 0; }
 
 static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                     mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
+                     mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                     cdev_id_t id)
 {
     if (minor != drm_device->primary.index) {
         return ENXIO;

@@ -147,6 +147,27 @@ static __poll_t ep_scan_ready_list(struct eventpoll* ep,
     return retval;
 }
 
+static __poll_t ep_read_events_proc(struct eventpoll* ep,
+                                    struct list_head* head, void* arg)
+{
+    struct epitem *epi, *tmp;
+    struct poll_table pt;
+
+    pt.qproc = NULL;
+    pt.mask = ~0;
+
+    list_for_each_entry_safe(epi, tmp, head, rdllink)
+    {
+        if (ep_item_poll(epi, &pt, FALSE)) {
+            return EPOLLIN | EPOLLRDNORM;
+        } else {
+            list_del(&epi->rdllink);
+        }
+    }
+
+    return 0;
+}
+
 static __poll_t ep_send_events_proc(struct eventpoll* ep,
                                     struct list_head* head, void* arg)
 {
@@ -298,6 +319,7 @@ static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
                              int notify)
 {
     struct file_desc* filp = epi->ffd.file;
+    struct eventpoll* ep;
     __poll_t mask;
     int oneshot = (epi->event.events & EPOLLONESHOT) ? POLL_ONESHOT : 0;
 
@@ -311,7 +333,11 @@ static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
         return mask & epi->event.events;
     }
 
-    return 0;
+    ep = epi->ffd.file->fd_private_data;
+    poll_wait(epi->ffd.file, &ep->poll_wait, pt);
+
+    return ep_scan_ready_list(ep, ep_read_events_proc, NULL) &
+           epi->event.events;
 }
 
 static int ep_insert(struct eventpoll* ep, struct epoll_event* event,
@@ -555,27 +581,6 @@ static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp)
 {
     struct eventpoll* ep = filp->fd_private_data;
     if (ep) ep_free(ep);
-
-    return 0;
-}
-
-static __poll_t ep_read_events_proc(struct eventpoll* ep,
-                                    struct list_head* head, void* arg)
-{
-    struct epitem *epi, *tmp;
-    struct poll_table pt;
-
-    pt.qproc = NULL;
-    pt.mask = ~0;
-
-    list_for_each_entry_safe(epi, tmp, head, rdllink)
-    {
-        if (ep_item_poll(epi, &pt, FALSE)) {
-            return EPOLLIN | EPOLLRDNORM;
-        } else {
-            list_del(&epi->rdllink);
-        }
-    }
 
     return 0;
 }

@@ -206,7 +206,7 @@ static int cdev_opcl(int op, dev_t dev, int fd, int flags)
 }
 
 static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
-                   size_t count, struct fproc* fp)
+                   size_t count, int flags, struct fproc* fp)
 {
     mgrant_id_t grant;
     struct fproc* driver = cdev_get(dev);
@@ -238,6 +238,9 @@ static int cdev_io(int op, dev_t dev, endpoint_t src, void* buf, off_t pos,
         driver_msg.u.m_vfs_cdev_readwrite.pos = pos;
         driver_msg.u.m_vfs_cdev_readwrite.count = count;
     }
+    driver_msg.u.m_vfs_cdev_readwrite.flags = 0;
+    if (flags & O_NONBLOCK)
+        driver_msg.u.m_vfs_cdev_readwrite.flags |= CDEV_NONBLOCK;
 
     if (asyncsend3(driver->endpoint, &driver_msg, 0) != 0) {
         panic("vfs: cdev_io send message failed");
@@ -350,8 +353,8 @@ static ssize_t cdev_read(struct file_desc* filp, char* buf, size_t count,
     ssize_t retval;
 
     unlock_filp(filp);
-    retval =
-        cdev_io(CDEV_READ, pin->i_specdev, fp->endpoint, buf, *ppos, count, fp);
+    retval = cdev_io(CDEV_READ, pin->i_specdev, fp->endpoint, buf, *ppos, count,
+                     filp->fd_flags, fp);
     lock_filp(filp, RWL_READ);
 
     return retval;
@@ -365,7 +368,7 @@ static ssize_t cdev_write(struct file_desc* filp, const char* buf, size_t count,
 
     unlock_filp(filp);
     retval = cdev_io(CDEV_WRITE, pin->i_specdev, fp->endpoint, (char*)buf,
-                     *ppos, count, fp);
+                     *ppos, count, filp->fd_flags, fp);
     lock_filp(filp, RWL_WRITE);
 
     return retval;
@@ -378,7 +381,7 @@ static int cdev_ioctl(struct inode* pin, struct file_desc* filp,
 
     unlock_filp(filp);
     retval = cdev_io(CDEV_IOCTL, pin->i_specdev, fp->endpoint, (void*)arg, 0,
-                     cmd, fp);
+                     cmd, filp->fd_flags, fp);
     lock_filp(filp, RWL_READ);
 
     return retval;

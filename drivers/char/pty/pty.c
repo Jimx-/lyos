@@ -70,11 +70,14 @@ static struct pty pty_table[NR_PTYS];
 static int do_open(dev_t minor, int access, endpoint_t user_endpt);
 static int do_close(dev_t minor);
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                       mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                       mgrant_id_t grant, unsigned int count, int flags,
+                       cdev_id_t id);
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                        mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id);
 static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
+                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                    cdev_id_t id);
 static int do_select(dev_t minor, int ops, endpoint_t endpoint);
 
 static void pty_in_transfer(struct pty* pty);
@@ -165,10 +168,12 @@ static int do_close(dev_t minor)
 }
 
 static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
-                       mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                       mgrant_id_t grant, unsigned int count, int flags,
+                       cdev_id_t id)
 {
     struct tty* tty = line2tty(minor);
     struct pty* pty;
+    ssize_t retval;
 
     if (tty == NULL) {
         return -ENXIO;
@@ -198,11 +203,19 @@ static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
         return SUSPEND; /* already done */
     }
 
+    if (flags & CDEV_NONBLOCK) {
+        retval = pty->incnt > 0 ? pty->incnt : -EAGAIN;
+        pty->inleft = pty->incnt = 0;
+        pty->incaller = NO_TASK;
+        return retval;
+    }
+
     return SUSPEND;
 }
 
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
-                        mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id)
 {
     struct tty* tty = line2tty(minor);
     struct pty* pty;
@@ -236,7 +249,8 @@ static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
 }
 
 static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id)
+                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
+                    cdev_id_t id)
 {
     struct tty* tty;
     struct pty* pty;
@@ -303,11 +317,19 @@ static int select_try_pty(struct tty* tty, int ops)
 void select_retry_pty(struct tty* tty)
 {
     struct pty* pty = tty->tty_dev;
-    int ops;
+    int ops, oneshot;
 
-    if (pty->select_ops && (ops = select_try_pty(tty, pty->select_ops))) {
+    oneshot = pty->select_ops & POLL_ONESHOT;
+    ops = pty->select_ops & ~POLL_ONESHOT;
+
+    if (ops && (ops = select_try_pty(tty, ops))) {
         chardriver_poll_notify(pty->select_minor, ops);
-        pty->select_ops &= ~ops;
+
+        if (oneshot) {
+            pty->select_ops &= ~ops;
+
+            if (pty->select_ops == POLL_ONESHOT) pty->select_ops = 0;
+        }
     }
 }
 
@@ -315,6 +337,7 @@ static int do_select(dev_t minor, int ops, endpoint_t endpoint)
 {
     struct tty* tty = line2tty(minor);
     struct pty* pty;
+    int watch, oneshot;
 
     if (tty == NULL) {
         return -ENXIO;
@@ -322,7 +345,8 @@ static int do_select(dev_t minor, int ops, endpoint_t endpoint)
 
     pty = tty->tty_dev;
 
-    int watch = ops & POLL_NOTIFY;
+    watch = ops & POLL_NOTIFY;
+    oneshot = ops & POLL_ONESHOT;
     ops &= (EPOLLIN | EPOLLOUT);
 
     int ready_ops = select_try_pty(tty, ops);
@@ -332,6 +356,8 @@ static int do_select(dev_t minor, int ops, endpoint_t endpoint)
         pty->select_ops |= ops;
         pty->select_proc = endpoint;
         pty->select_minor = minor;
+
+        if (oneshot) pty->select_ops |= POLL_ONESHOT;
     }
 
     return ready_ops;
