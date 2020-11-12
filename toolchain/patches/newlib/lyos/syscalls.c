@@ -1060,12 +1060,6 @@ int symlink(const char* target, const char* linkpath)
     return msg.RETVAL;
 }
 
-long pathconf(const char* path, int name)
-{
-    printf("pathconf: not implemented\n");
-    return 0;
-}
-
 int utimensat(int dirfd, const char* pathname, const struct timespec times[2],
               int flags)
 {
