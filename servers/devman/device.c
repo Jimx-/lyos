@@ -71,7 +71,14 @@ static int add_device_node(struct device* dev);
 static ssize_t device_dev_show(sysfs_dyn_attr_t* attr, char* buf)
 {
     struct device* dev = (struct device*)attr->cb_data;
-    return sprintf(buf, "%u:%u", MAJOR(dev->devt), MINOR(dev->devt));
+    return sprintf(buf, "%lu:%lu", MAJOR(dev->devt), MINOR(dev->devt));
+}
+
+static ssize_t uevent_show(sysfs_dyn_attr_t* attr, char* buf)
+{
+    struct device* dev = (struct device*)attr->cb_data;
+
+    return device_show_uevent(dev, buf);
 }
 
 static ssize_t uevent_store(struct sysfs_dyn_attr* attr, const char* buf,
@@ -156,7 +163,7 @@ static int publish_device(struct device* dev)
     snprintf(label, PATH_MAX, "%s.uevent", device_root);
     if ((retval =
              sysfs_init_dyn_attr(&dev_uevent_attr, label, SF_PRIV_OVERWRITE,
-                                 dev, NULL, uevent_store)) != OK)
+                                 dev, uevent_show, uevent_store)) != OK)
         return retval;
     if ((retval = sysfs_publish_dyn_attr(&dev_uevent_attr)) < 0) return -retval;
 
@@ -258,7 +265,7 @@ static int create_sys_dev_entry(struct device* dev)
 
     device_domain_label(dev, device_root);
 
-    snprintf(label, PATH_MAX, "dev.%s.%u:%u",
+    snprintf(label, PATH_MAX, "dev.%s.%lu:%lu",
              (dev->type == DT_BLOCKDEV ? "block" : "char"), MAJOR(dev->devt),
              MINOR(dev->devt));
     retval = sysfs_publish_link(device_root, label);

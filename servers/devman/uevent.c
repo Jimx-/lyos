@@ -243,3 +243,27 @@ int device_synth_uevent(struct device* dev, const char* buf, size_t count)
 out:
     return retval;
 }
+
+ssize_t device_show_uevent(struct device* dev, char* buf)
+{
+    struct uevent_env* env;
+    size_t count = 0;
+    int i;
+
+    env = malloc(sizeof(*env));
+    if (!env) return -ENOMEM;
+
+    memset(env, 0, sizeof(*env));
+
+    if (dev->devt != NO_DEV) {
+        add_uevent_var(env, "MAJOR=%d", MAJOR(dev->devt));
+        add_uevent_var(env, "MINOR=%d", MINOR(dev->devt));
+        add_uevent_var(env, "DEVNAME=%s", (*dev->path) ? dev->path : dev->name);
+    }
+
+    for (i = 0; i < env->envp_idx; i++)
+        count += sprintf(&buf[count], "%s\n", env->envp[i]);
+
+    free(env);
+    return count;
+}

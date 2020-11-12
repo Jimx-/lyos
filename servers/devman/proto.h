@@ -55,5 +55,6 @@ int device_uevent_env(struct device* dev, enum kobject_action action,
                       char* envp[]);
 int device_uevent(struct device* dev, enum kobject_action action);
 int device_synth_uevent(struct device* dev, const char* buf, size_t count);
+ssize_t device_show_uevent(struct device* dev, char* buf);
 
 #endif
