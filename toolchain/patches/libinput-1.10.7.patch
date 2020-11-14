@@ -1,0 +1,23 @@
+diff -rupN old/src/libinput-util.h new/src/libinput-util.h
+--- old/src/libinput-util.h	2018-05-17 10:21:29.000000000 +0800
++++ new/src/libinput-util.h	2020-11-14 15:18:10.475775841 +0800
+@@ -38,6 +38,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <time.h>
++#include <sys/time.h>
+ #include <unistd.h>
+ 
+ #include "libinput.h"
+diff -rupN old/tools/ptraccel-debug.c new/tools/ptraccel-debug.c
+--- old/tools/ptraccel-debug.c	2018-05-17 10:21:29.000000000 +0800
++++ new/tools/ptraccel-debug.c	2020-11-14 15:19:09.267824000 +0800
+@@ -190,7 +190,7 @@ print_accel_func_trackpoint(struct motio
+ static void
+ usage(void)
+ {
+-	printf("Usage: %s [options] [dx1] [dx2] [...] > gnuplot.data\n", program_invocation_short_name);
++	printf("Usage: %s [options] [dx1] [dx2] [...] > gnuplot.data\n", "ptraccel-debug");
+ 	printf("\n"
+ 	       "Options:\n"
+ 	       "--mode=<motion|accel|delta|sequence> \n"

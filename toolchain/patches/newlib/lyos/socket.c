@@ -274,6 +274,8 @@ ssize_t recvmsg(int sock, struct msghdr* msg, int flags)
     return retval;
 }
 
+int shutdown(int sockfd, int how) { return 0; }
+
 int getsockopt(int fd, int level, int option_name, void* option_value,
                socklen_t* option_len)
 {
@@ -364,4 +366,10 @@ int getsockname(int fd, struct sockaddr* addr, socklen_t* addrlen)
     *addrlen = msg.CNT;
 
     return 0;
+}
+
+int getpeername(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
+{
+    errno = ENOSYS;
+    return -1;
 }

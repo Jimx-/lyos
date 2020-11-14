@@ -16,6 +16,61 @@ static char gecos[1024];
 static char dir[1024];
 static char shell[1024];
 
+int getpwnam_r(const char* name, struct passwd* pwd, char* buf, size_t buflen,
+               struct passwd** result)
+{
+    FILE* fp;
+    static char logname[8];
+    static char password[1024];
+    static char gecos[1024];
+    static char dir[1024];
+    static char shell[1024];
+    char* out;
+
+    if ((fp = fopen("/etc/passwd", "r")) == NULL) {
+        return NULL;
+    }
+
+    out = buf;
+
+    while (fgets(buf, sizeof(buf), fp)) {
+        sscanf(buf, "%[^:]:%[^:]:%d:%d:%[^:]:%[^:]:%s\n", logname, password,
+               &pwd->pw_uid, &pwd->pw_gid, gecos, dir, shell);
+
+        if (strcmp(logname, name)) continue;
+
+        strcpy(out, logname);
+        pwd->pw_name = out;
+        out += strlen(logname) + 1;
+
+        strcpy(out, password);
+        pwd->pw_passwd = out;
+        out += strlen(password) + 1;
+
+        pwd->pw_comment = "";
+
+        strcpy(out, gecos);
+        pwd->pw_gecos = out;
+        out += strlen(gecos) + 1;
+
+        strcpy(out, dir);
+        pwd->pw_dir = out;
+        out += strlen(dir) + 1;
+
+        strcpy(out, shell);
+        pwd->pw_shell = out;
+        out += strlen(shell) + 1;
+
+        fclose(fp);
+        *result = pwd;
+        return 0;
+    }
+
+    fclose(fp);
+    *result = NULL;
+    return 0;
+}
+
 struct passwd* getpwnam(name) const char* name;
 {
     FILE* fp;

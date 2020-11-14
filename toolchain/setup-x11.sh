@@ -22,6 +22,19 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_KMSCON:=false}
 : ${BUILD_XORG_PROTO:=false}
 : ${BUILD_XKEYBOARD_CONFIG:=false}
+: ${BUILD_LIBINPUT:=false}
+: ${BUILD_DEJAVU:=false}
+: ${BUILD_LIBXAU:=false}
+: ${BUILD_LIBXDMCP:=false}
+: ${BUILD_XCB_PROTO:=false}
+: ${BUILD_LIBXCB:=false}
+: ${BUILD_XTRANS:=false}
+: ${BUILD_LIBX11:=false}
+: ${BUILD_LIBXFIXES:=false}
+: ${BUILD_LIBXRENDER:=false}
+: ${BUILD_LIBXCURSOR:=false}
+: ${BUILD_LIBXEXT:=false}
+: ${BUILD_WESTON:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_XORG_MACROS=true
@@ -58,6 +71,22 @@ if $BUILD_XORG_MACROS; then
 
     pushd host-util-macros-$SUBARCH > /dev/null
     $DIR/sources/util-macros-1.19.1/configure --prefix=$PREFIX || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    popd > /dev/null
+
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.11/share/aclocal-1.11/
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.15/share/aclocal-1.15/
+fi
+
+# Build host xtrans
+if $BUILD_XTRANS; then
+    if [ ! -d "host-xtrans-$SUBARCH" ]; then
+        mkdir host-xtrans-$SUBARCH
+    fi
+
+    pushd host-xtrans-$SUBARCH > /dev/null
+    $DIR/sources/xtrans-1.4.0/configure --prefix=$PREFIX || cmd_error
     make || cmd_error
     make install || cmd_error
     popd > /dev/null
@@ -201,8 +230,17 @@ if $BUILD_CAIRO; then
         mkdir cairo-$SUBARCH
     fi
 
+    pushd $DIR/sources/cairo-1.16.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
     pushd cairo-$SUBARCH > /dev/null
-    $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-xlib
+    # FIXME: configure cannot find these functions for unknown reason.
+    ac_cv_func_XRenderCreateConicalGradient=yes \
+    ac_cv_func_XRenderCreateLinearGradient=yes \
+    ac_cv_func_XRenderCreateRadialGradient=yes \
+    ac_cv_func_XRenderCreateSolidFill=yes \
+      $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -293,6 +331,245 @@ if $BUILD_XKEYBOARD_CONFIG; then
                                                  --sysconfdir=/etc --localstatedir=/var \
                                                  --with-xkb-rules-symlink=xorg --disable-nls \
                                                  --disable-runtime-deps
+
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libinput
+if $BUILD_LIBINPUT; then
+    if [ ! -d "libinput-$SUBARCH" ]; then
+        mkdir libinput-$SUBARCH
+    fi
+
+    pushd libinput-$SUBARCH > /dev/null
+    meson --cross-file ../../meson.cross-file --prefix=$CROSSPREFIX --libdir=lib --buildtype=debugoptimized -Dlibwacom=false -Ddebug-gui=false -Dtests=false -Ddocumentation=false $DIR/sources/libinput-1.10.7
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
+    popd > /dev/null
+fi
+
+# Build dejavu
+if $BUILD_DEJAVU; then
+    mkdir -p $SYSROOT/usr/share/fonts/truetype/
+    cp -rf $DIR/sources/dejavu-fonts-ttf-2.37/ttf $SYSROOT/usr/share/fonts/truetype/dejavu
+fi
+
+# Build libXau
+if $BUILD_LIBXAU; then
+    if [ ! -d "libXau-$SUBARCH" ]; then
+        mkdir libXau-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libXau-1.0.9 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libXau-$SUBARCH > /dev/null
+    $DIR/sources/libXau-1.0.9/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libXdmcp
+if $BUILD_LIBXDMCP; then
+    if [ ! -d "libXdmcp-$SUBARCH" ]; then
+        mkdir libXdmcp-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libXdmcp-1.1.3 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libXdmcp-$SUBARCH > /dev/null
+    $DIR/sources/libXdmcp-1.1.3/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build xcb-proto
+if $BUILD_XCB_PROTO; then
+    if [ ! -d "xcb-proto-$SUBARCH" ]; then
+        mkdir xcb-proto-$SUBARCH
+    fi
+
+    pushd $DIR/sources/xcb-proto-1.14.1 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd xcb-proto-$SUBARCH > /dev/null
+    $DIR/sources/xcb-proto-1.14.1/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libxcb
+if $BUILD_LIBXCB; then
+    if [ ! -d "libxcb-$SUBARCH" ]; then
+        mkdir libxcb-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libxcb-1.14 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    sed -i 's/pthread-stubs//' configure
+    popd > /dev/null
+
+    pushd libxcb-$SUBARCH > /dev/null
+    $DIR/sources/libxcb-1.14/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --without-doxygen \
+                                        --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build xtrans
+if $BUILD_XTRANS; then
+    if [ ! -d "xtrans-$SUBARCH" ]; then
+        mkdir xtrans-$SUBARCH
+    fi
+
+    pushd $DIR/sources/xtrans-1.4.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd xtrans-$SUBARCH > /dev/null
+    $DIR/sources/xtrans-1.4.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libX11
+if $BUILD_LIBX11; then
+    if [ ! -d "libX11-$SUBARCH" ]; then
+        mkdir libX11-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libX11-1.6.9 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libX11-$SUBARCH > /dev/null
+    $DIR/sources/libX11-1.6.9/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --disable-ipv6 \
+                                        --disable-malloc0returnsnull \
+                                        --with-keysymdefdir=$SYSROOT/usr/include/X11 \
+                                        --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libXfixes
+if $BUILD_LIBXFIXES; then
+    if [ ! -d "libXfixes-$SUBARCH" ]; then
+        mkdir libXfixes-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libXfixes-5.0.3 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libXfixes-$SUBARCH > /dev/null
+    $DIR/sources/libXfixes-5.0.3/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libXrender
+if $BUILD_LIBXRENDER; then
+    if [ ! -d "libXrender-$SUBARCH" ]; then
+        mkdir libXrender-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libXrender-0.9.10 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libXrender-$SUBARCH > /dev/null
+    $DIR/sources/libXrender-0.9.10/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --disable-malloc0returnsnull \
+                                        --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libXcursor
+if $BUILD_LIBXCURSOR; then
+    if [ ! -d "libXcursor-$SUBARCH" ]; then
+        mkdir libXcursor-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libXcursor-1.2.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libXcursor-$SUBARCH > /dev/null
+    $DIR/sources/libXcursor-1.2.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libXext
+if $BUILD_LIBXEXT; then
+    if [ ! -d "libXext-$SUBARCH" ]; then
+        mkdir libXext-$SUBARCH
+    fi
+
+    pushd $DIR/sources/libXext-1.3.4 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd libXext-$SUBARCH > /dev/null
+    $DIR/sources/libXext-1.3.4/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --sysconfdir=/etc --localstatedir=/var \
+                                        --disable-static --disable-malloc0returnsnull \
+                                        --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build weston
+if $BUILD_WESTON; then
+    if [ ! -d "weston-$SUBARCH" ]; then
+        mkdir weston-$SUBARCH
+    fi
+
+    pushd $DIR/sources/weston-4.0.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
+    pushd weston-$SUBARCH > /dev/null
+
+    $DIR/sources/weston-4.0.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
+                                        --with-sysroot=$SYSROOT --disable-x11-compositor \
+                                        --disable-weston-launch --disable-fbdev-compositor \
+                                        --disable-simple-dmabuf-drm-client \
+                                        --disable-simple-dmabuf-v4l-client
 
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error

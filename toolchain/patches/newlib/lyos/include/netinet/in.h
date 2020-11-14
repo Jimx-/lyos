@@ -12,6 +12,31 @@ struct in_addr {
     in_addr_t s_addr;
 };
 
+/* Address to accept any incoming messages.  */
+#define INADDR_ANY ((in_addr_t)0x00000000)
+/* Address to send to all hosts.  */
+#define INADDR_BROADCAST ((in_addr_t)0xffffffff)
+/* Address indicating an error return.  */
+#define INADDR_NONE ((in_addr_t)0xffffffff)
+
+/* Network number for local host loopback.  */
+#define IN_LOOPBACKNET 127
+/* Address to loopback in software to local host.  */
+#ifndef INADDR_LOOPBACK
+#define INADDR_LOOPBACK ((in_addr_t)0x7f000001) /* Inet 127.0.0.1.  */
+#endif
+
+struct in6_addr {
+    union {
+        uint8_t __u6_addr8[16];
+        uint16_t __u6_addr16[8];
+        uint32_t __u6_addr32[4];
+    } __in6_u;
+#define s6_addr   __in6_u.__u6_addr8
+#define s6_addr16 __in6_u.__u6_addr16
+#define s6_addr32 __in6_u.__u6_addr32
+};
+
 /* Standard well-defined IP protocols.  */
 enum {
     IPPROTO_IP = 0, /* Dummy protocol for TCP.  */
@@ -120,6 +145,15 @@ struct sockaddr_in {
     /* Pad to size of `struct sockaddr'.  */
     unsigned char sin_zero[sizeof(struct sockaddr) - __SOCKADDR_COMMON_SIZE -
                            sizeof(in_port_t) - sizeof(struct in_addr)];
+};
+
+/* Ditto, for IPv6.  */
+struct sockaddr_in6 {
+    __SOCKADDR_COMMON(sin6_);
+    in_port_t sin6_port;       /* Transport layer port # */
+    uint32_t sin6_flowinfo;    /* IPv6 flow information */
+    struct in6_addr sin6_addr; /* IPv6 address */
+    uint32_t sin6_scope_id;    /* IPv6 scope-id */
 };
 
 #define INET_ADDRSTRLEN  16

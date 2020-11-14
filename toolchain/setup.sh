@@ -30,6 +30,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_BZIP2:=false}
 : ${BUILD_LIBXML2:=false}
 : ${BUILD_EUDEV:=false}
+: ${BUILD_MTDEV:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -136,6 +137,12 @@ if $BUILD_AUTOTOOLS; then
     make || cmd_error
     make install || cmd_error
     popd > /dev/null
+
+    # Build autoconf-archive
+    mkdir -p $DIR/tools/autoconf-archive/share/
+    cp -r $DIR/sources/autoconf-archive-2019.01.06/m4 $DIR/tools/autoconf-archive/share/aclocal
+    ln -sf $DIR/tools/autoconf-archive/share/aclocal/*.m4 $DIR/tools/automake-1.11/share/aclocal-1.11/
+    ln -sf $DIR/tools/autoconf-archive/share/aclocal/*.m4 $DIR/tools/automake-1.15/share/aclocal-1.15/
 
     ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.11/share/aclocal-1.11/
     ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.15/share/aclocal-1.15/
@@ -534,6 +541,23 @@ if $BUILD_EUDEV; then
 
     pushd eudev-$SUBARCH > /dev/null
     $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages || cmd_error
+    make -j4 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build mtdev
+if $BUILD_MTDEV; then
+    if [ ! -d "mtdev-$SUBARCH" ]; then
+        mkdir mtdev-$SUBARCH
+    fi
+
+    pushd $DIR/sources/mtdev-1.1.6 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
+    pushd mtdev-$SUBARCH > /dev/null
+    $DIR/sources/mtdev-1.1.6/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
