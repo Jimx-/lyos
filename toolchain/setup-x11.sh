@@ -26,6 +26,18 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if $BUILD_EVERYTHING; then
     BUILD_XORG_MACROS=true
     BUILD_LIBDRM=true
+    BUILD_LIBEXPAT=true
+    BUILD_FFI=true
+    BUILD_WAYLAND=true
+    BUILD_WAYLAND_PROTOCOLS=true
+    BUILD_FREETYPE=true
+    BUILD_PIXMAN=true
+    BUILD_CAIRO=true
+    BUILD_LIBXKBCOMMON=true
+    BUILD_LIBTSM=true
+    BUILD_KMSCON=true
+    BUILD_XORG_PROTO=true
+    BUILD_XKEYBOARD_CONFIG=true
 fi
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
