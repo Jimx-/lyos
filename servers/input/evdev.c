@@ -16,6 +16,8 @@
 #include <lyos/input.h>
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
+#include <lyos/eventpoll.h>
+#include <poll.h>
 
 #include <libsysfs/libsysfs.h>
 #include <libchardriver/libchardriver.h>
@@ -28,7 +30,11 @@
 
 #define EVDEV_MIN_BUFFER_SIZE 64 /* must be power of 2 */
 
+struct evdev;
+
 struct evdev_client {
+    struct evdev* evdev;
+
     size_t head;
     size_t packet_head;
     size_t tail;
@@ -40,6 +46,8 @@ struct evdev_client {
     mgrant_id_t req_grant;
     size_t req_size;
     cdev_id_t req_id;
+
+    __poll_t select_ops;
 };
 
 struct evdev {
@@ -115,6 +123,7 @@ static ssize_t evdev_copy_events(struct evdev_client* client,
 static int evdev_open(struct input_handle* handle)
 {
     struct evdev* evdev = (struct evdev*)handle->private;
+    struct evdev_client* client = &evdev->client;
     int retval;
 
     if (evdev->open) {
@@ -128,6 +137,8 @@ static int evdev_open(struct input_handle* handle)
             evdev->open--;
             return retval;
         }
+
+        client->evdev = evdev;
     }
 
     return 0;
@@ -171,6 +182,60 @@ static ssize_t evdev_read(struct input_handle* handle, endpoint_t endpoint,
     }
 
     return evdev_copy_events(client, endpoint, grant, count);
+}
+
+static __poll_t evdev_select_try(struct evdev_client* client)
+{
+    __poll_t mask;
+
+    mask = EPOLLOUT | EPOLLWRNORM;
+
+    if (client->packet_head != client->tail) mask |= EPOLLIN | EPOLLRDNORM;
+
+    return mask;
+}
+
+static void evdev_select_retry(struct evdev* evdev)
+{
+    struct evdev_client* client = &evdev->client;
+    int ops, ready_ops, oneshot;
+
+    oneshot = client->select_ops & POLL_ONESHOT;
+    ops = client->select_ops & ~POLL_ONESHOT;
+
+    if (ops && (ready_ops = evdev_select_try(client) & ops)) {
+        chardriver_poll_notify(evdev->handle.minor, ready_ops);
+
+        if (oneshot) {
+            client->select_ops &= ~ready_ops;
+
+            if (client->select_ops == POLL_ONESHOT) client->select_ops = 0;
+        }
+    }
+}
+
+static __poll_t evdev_poll(struct input_handle* handle, int ops,
+                           endpoint_t endpoint)
+{
+    struct evdev* evdev = (struct evdev*)handle->private;
+    struct evdev_client* client = &evdev->client;
+    int watch, oneshot;
+    __poll_t ready_ops;
+
+    watch = ops & POLL_NOTIFY;
+    oneshot = ops & POLL_ONESHOT;
+    ops &= ~(POLL_NOTIFY | POLL_ONESHOT);
+
+    ready_ops = evdev_select_try(client) & ops;
+
+    ops &= ~ready_ops;
+    if (ops && watch) {
+        client->select_ops |= ops;
+
+        if (oneshot) client->select_ops |= POLL_ONESHOT;
+    }
+
+    return ready_ops;
 }
 
 static int handle_eviocgbit(struct input_dev* dev, unsigned int type,
@@ -315,6 +380,7 @@ static struct input_handle_ops evdev_handle_ops = {
     .close = evdev_close,
     .read = evdev_read,
     .ioctl = evdev_ioctl,
+    .poll = evdev_poll,
 };
 
 static void __pass_event(struct evdev_client* client,
@@ -375,6 +441,8 @@ void evdev_events(struct input_handle* handle, const struct input_value* vals,
             client->req_grant = GRANT_INVALID;
             client->req_size = 0;
         }
+
+        evdev_select_retry(evdev);
     }
 }
 

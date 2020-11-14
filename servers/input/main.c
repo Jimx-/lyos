@@ -58,6 +58,7 @@ static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint,
 static int input_ioctl(dev_t minor, int request, endpoint_t endpoint,
                        mgrant_id_t grant, int flags, endpoint_t user_endpoint,
                        cdev_id_t id);
+static int input_select(dev_t minor, int ops, endpoint_t endpoint);
 static void input_other(MESSAGE* msg);
 
 static const char* name = "input";
@@ -73,6 +74,7 @@ static struct chardriver input_driver = {
     .cdr_read = input_read,
     .cdr_write = input_write,
     .cdr_ioctl = input_ioctl,
+    .cdr_select = input_select,
     .cdr_other = input_other,
 };
 
@@ -132,6 +134,16 @@ static int input_ioctl(dev_t minor, int request, endpoint_t endpoint,
 
     return handle->ops->ioctl(handle, request, endpoint, grant, user_endpoint,
                               id);
+}
+
+static int input_select(dev_t minor, int ops, endpoint_t endpoint)
+{
+    struct input_handle* handle;
+
+    handle = input_get_handle(minor);
+    if (!handle) return ENXIO;
+
+    return handle->ops->poll(handle, ops, endpoint);
 }
 
 static struct input_dev* input_allocate_dev(endpoint_t owner)
