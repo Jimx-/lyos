@@ -455,7 +455,7 @@ static void do_slave_write(struct tty* tty)
                     &ocount);
         if (!count) break;
 
-        pty->ocount = ocount;
+        pty->ocount += ocount;
         pty->ohead += ocount;
         if (pty->ohead >= bufend(pty->obuf)) pty->ohead -= buflen(pty->obuf);
 

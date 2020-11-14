@@ -234,7 +234,7 @@ if $BUILD_KMSCON; then
 
     pushd $DIR/sources/kmscon-8 > /dev/null
     mkdir -p m4
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -i
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
     popd > /dev/null
 
     pushd kmscon-$SUBARCH > /dev/null

@@ -86,8 +86,9 @@ static ssize_t evdev_copy_events(struct evdev_client* client,
     while (tail != client->packet_head && tail < client->bufsize &&
            copy_count < event_count) {
         copy_count++;
-        tail = (tail + 1) & (client->bufsize - 1);
+        tail++;
     }
+    tail &= client->bufsize - 1;
 
     if ((retval = safecopy_to(endpoint, grant, copy_offset,
                               &client->buffer[client->tail],
