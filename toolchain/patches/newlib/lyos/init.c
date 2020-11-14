@@ -55,6 +55,11 @@ static struct sysinfo_user* get_sysinfo()
     return (syscall_gate_intr(NR_GETINFO, &m) == 0) ? sysinfo : NULL;
 }
 
+void __attribute__((__constructor__)) __brksize_init(void)
+{
+    _brksize = (char*)*(&_end);
+}
+
 void __lyos_init(char* envp[])
 {
     environ = envp;
@@ -67,7 +72,7 @@ void __lyos_init(char* envp[])
         _syscall_gate = __lyos_sysinfo->syscall_gate;
     }
 
-    _brksize = (char*)*(&_end);
+    if (_brksize == NULL) _brksize = (char*)*(&_end);
 }
 
 void __set_startup_data(int argc, char* argv[], char* envp[])

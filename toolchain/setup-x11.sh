@@ -564,7 +564,6 @@ if $BUILD_WESTON; then
     popd > /dev/null
 
     pushd weston-$SUBARCH > /dev/null
-
     $DIR/sources/weston-4.0.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --with-sysroot=$SYSROOT --disable-x11-compositor \
                                         --disable-weston-launch --disable-fbdev-compositor \

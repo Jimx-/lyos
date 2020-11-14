@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <pty.h>
+#include <unistd.h>
 
 int posix_openpt(int oflag) { return open("/dev/ptmx", oflag); }
 
@@ -34,4 +36,60 @@ char* ptsname(int fd)
     if (ptsname_r(fd, buf, sizeof(buf)) < 0) return NULL;
 
     return buf;
+}
+
+int openpty(int* amaster, int* aslave, char* name, const struct termios* termp,
+            const struct winsize* winp)
+{
+    char buf[128];
+    int fd, pts_fd;
+
+    fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
+
+    if (fd < 0) return -1;
+
+    if (ptsname_r(fd, buf, sizeof(buf)) < 0) return -1;
+
+    pts_fd = open(buf, O_RDWR | O_NOCTTY);
+
+    if (pts_fd < 0) return -1;
+
+    *amaster = fd;
+    *aslave = pts_fd;
+    return 0;
+}
+
+int login_tty(int fd)
+{
+    if (setsid() < 0) return -1;
+
+    if (ioctl(fd, TIOCSCTTY, 0)) return -1;
+
+    if (dup2(fd, STDIN_FILENO) < 0) return -1;
+    if (dup2(fd, STDOUT_FILENO) < 0) return -1;
+    if (dup2(fd, STDERR_FILENO) < 0) return -1;
+
+    if (close(fd) < 0) return -1;
+
+    return 0;
+}
+
+pid_t forkpty(int* amaster, char* name, const struct termios* termp,
+              const struct winsize* winp)
+{
+    int pts_fd;
+    pid_t child;
+
+    if (openpty(amaster, &pts_fd, name, termp, winp) < 0) return -1;
+
+    child = fork();
+    if (child < 0) return -1;
+
+    if (!child) {
+        login_tty(pts_fd);
+    } else {
+        if (close(pts_fd) < 0) return -1;
+    }
+
+    return child;
 }

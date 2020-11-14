@@ -100,6 +100,8 @@ int main(int argc, char* argv[])
     setenv("SHELL", pwd->pw_shell, 1);
     setenv("USER", pwd->pw_name, 1);
     setenv("PATH", "/usr/bin:/bin", 1);
+    setenv("XDG_RUNTIME_DIR", "/run", 1);
+    setenv("MESA_GLSL_CACHE_DISABLE", "1", 1);
 
     umask(S_IWGRP | S_IWOTH);
 

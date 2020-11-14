@@ -12,6 +12,7 @@
 #define TCFLSH      _IOW('T', 0x07, int)
 #define TIOCGWINSZ  _IOR('T', 0x08, struct winsize)
 #define TIOCSWINSZ  _IOW('T', 0x09, struct winsize)
+#define TIOCSCTTY   _IO('T', 0x0E)
 #define FIONREAD    _IOR('T', 0x1B, int)
 #define TIOCGPTN    _IOR('T', 0x30, unsigned int)
 #define TIOCSPTLCK  _IOW('T', 0x31, int)

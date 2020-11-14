@@ -87,6 +87,8 @@
 #define GS_GETTID    13
 #define GS_GETGROUPS 14
 #define GS_SETGROUPS 15
+#define GS_SETEUID   16
+#define GS_SETEGID   17
 
 #define GS_GETHOSTNAME 1
 #define GS_SETHOSTNAME 2

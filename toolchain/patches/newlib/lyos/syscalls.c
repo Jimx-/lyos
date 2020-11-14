@@ -1362,6 +1362,36 @@ gid_t getegid(void)
     return (gid_t)msg.RETVAL;
 }
 
+int seteuid(uid_t euid)
+{
+    MESSAGE msg;
+
+    msg.type = GETSETID;
+    msg.REQUEST = GS_SETEUID;
+    msg.NEWID = euid;
+
+    cmb();
+
+    send_recv(BOTH, TASK_PM, &msg);
+
+    return msg.RETVAL;
+}
+
+int setegid(gid_t egid)
+{
+    MESSAGE msg;
+
+    msg.type = GETSETID;
+    msg.REQUEST = GS_SETEGID;
+    msg.NEWID = egid;
+
+    cmb();
+
+    send_recv(BOTH, TASK_PM, &msg);
+
+    return msg.RETVAL;
+}
+
 int gethostname(char* name, size_t len)
 {
     MESSAGE msg;
