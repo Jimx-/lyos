@@ -3,11 +3,19 @@
 #include <lyos/const.h>
 #include <lyos/param.h>
 #include <elf.h>
+#include <string.h>
 
 extern char _end[];
 extern char** environ;
 
 char* _brksize = NULL;
+
+char* program_invocation_name = NULL;
+char* program_invocation_short_name = NULL;
+extern char* __progname
+    __attribute__((weak, alias("program_invocation_short_name")));
+extern char* __progname_full
+    __attribute__((weak, alias("program_invocation_name")));
 
 int syscall_gate_intr(int syscall_nr, MESSAGE* m);
 
@@ -60,4 +68,16 @@ void __lyos_init(char* envp[])
     }
 
     _brksize = (char*)*(&_end);
+}
+
+void __set_startup_data(int argc, char* argv[], char* envp[])
+{
+    char* p;
+
+    if (argc > 0) {
+        program_invocation_name = argv[0];
+
+        p = strrchr(argv[0], '/');
+        program_invocation_short_name = p ? p + 1 : argv[0];
+    }
 }

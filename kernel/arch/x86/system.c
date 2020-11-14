@@ -231,6 +231,7 @@ void arch_boot_proc(struct proc* p, struct boot_proc* bp)
 
         p->regs.eip = (u32)execi.entry_point;
         p->regs.esp = (u32)VM_STACK_TOP;
+        p->regs.ecx = (u32)0; // argc
         p->regs.ecx = (u32)0; // environ
     }
 }

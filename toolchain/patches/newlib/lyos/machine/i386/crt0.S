@@ -22,19 +22,20 @@
 .section .text
 
 _start:
-	push	%ecx	# environ
-	push 	%edx	# argv
-	push	%eax	# argc
+    push	%ecx	# environ
+    push    %edx	# argv
+    push	%eax	# argc
 
-	push 	%ecx
-	call	__lyos_init
-	addl 	$4, %esp
-	
-	call	main
-	# don't need to clean up the stack here
+    push    %ecx
+    call	__lyos_init
+    addl    $4, %esp
 
-	push	%eax
-	call	_exit
+    call    __set_startup_data
 
-	hlt	# should never arrive here
+    call	main
+    # don't need to clean up the stack here
 
+    push	%eax
+    call	_exit
+
+    hlt	# should never arrive here

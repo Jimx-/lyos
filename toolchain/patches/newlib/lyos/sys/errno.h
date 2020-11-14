@@ -27,6 +27,11 @@ extern "C"
     extern __IMPORT char* program_invocation_short_name;
 #endif
 
+#if __GNU_VISIBLE
+    extern char* program_invocation_name;
+    extern char* program_invocation_short_name;
+#endif
+
 #define __errno_r(ptr) ((ptr)->_errno)
 
 #define EPERM   1  /* Not owner */

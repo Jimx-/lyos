@@ -1,27 +1,3 @@
-diff -rupN old/tools/libevdev-tweak-device.c new/tools/libevdev-tweak-device.c
---- old/tools/libevdev-tweak-device.c	2020-03-02 12:17:04.000000000 +0800
-+++ new/tools/libevdev-tweak-device.c	2020-11-07 17:45:53.775772889 +0800
-@@ -38,6 +38,8 @@
- 
- #include "libevdev/libevdev.h"
- 
-+static const char* program_invocation_short_name = "libevdev-tweak-device";
-+
- static void
- usage(void)
- {
-diff -rupN old/tools/mouse-dpi-tool.c new/tools/mouse-dpi-tool.c
---- old/tools/mouse-dpi-tool.c	2020-03-02 12:17:04.000000000 +0800
-+++ new/tools/mouse-dpi-tool.c	2020-11-07 17:44:39.516937648 +0800
-@@ -51,7 +51,7 @@ struct measurements {
- 
- static int
- usage(void) {
--	printf("Usage: %s /dev/input/event0\n", program_invocation_short_name);
-+	printf("Usage: mouse-dpi-tool /dev/input/event0\n");
- 	printf("\n");
- 	printf("This tool reads relative events from the kernel and calculates\n"
- 	       "the distance covered and maximum frequency of the incoming events.\n"
 diff -rupN old/tools/touchpad-edge-detector.c new/tools/touchpad-edge-detector.c
 --- old/tools/touchpad-edge-detector.c	2020-03-02 12:17:04.000000000 +0800
 +++ new/tools/touchpad-edge-detector.c	2020-11-07 17:44:39.516937648 +0800
@@ -33,12 +9,3 @@ diff -rupN old/tools/touchpad-edge-detector.c new/tools/touchpad-edge-detector.c
  
  #include "libevdev/libevdev.h"
  
-@@ -43,7 +44,7 @@
- 
- static int
- usage(void) {
--	printf("Usage: %s 12x34 /dev/input/event0\n", program_invocation_short_name);
-+	printf("Usage: touchpad-edge-detector 12x34 /dev/input/event0\n");
- 	printf("\n");
- 	printf("This tool reads the touchpad events from the kernel and calculates\n "
- 	       "the minimum and maximum for the x and y coordinates, respectively.\n"
