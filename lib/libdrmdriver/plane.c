@@ -61,6 +61,8 @@ int drm_mode_page_flip_ioctl(struct drm_device* dev, endpoint_t endpoint,
     struct drm_mode_crtc_page_flip_target* page_flip = data;
     struct drm_crtc* crtc;
     struct drm_framebuffer* fb;
+    struct drm_pending_vblank_event* e = NULL;
+    int retval;
 
     if (page_flip->flags & ~DRM_MODE_PAGE_FLIP_FLAGS) return EINVAL;
 
@@ -70,5 +72,23 @@ int drm_mode_page_flip_ioctl(struct drm_device* dev, endpoint_t endpoint,
     fb = drm_framebuffer_lookup(dev, page_flip->fb_id);
     if (!fb) return ENOENT;
 
-    return drm_atomic_page_flip(crtc, fb);
+    if (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT) {
+        e = malloc(sizeof(*e));
+        if (!e) return ENOMEM;
+
+        memset(e, 0, sizeof(*e));
+
+        e->event.base.type = DRM_EVENT_FLIP_COMPLETE;
+        e->event.base.length = sizeof(e->event);
+        e->event.vbl.user_data = page_flip->user_data;
+        e->event.vbl.crtc_id = crtc->base.id;
+
+        retval = drm_event_reserve(dev, &e->base, &e->event.base);
+        if (retval) {
+            free(e);
+            return retval;
+        }
+    }
+
+    return drm_atomic_page_flip(crtc, fb, e);
 }

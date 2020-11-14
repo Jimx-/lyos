@@ -7,6 +7,8 @@ void out_process(struct tty* tty, char* bstart, char* bpos, char* bend,
                  int* icountp, int* ocountp);
 void handle_events(struct tty* tty);
 void tty_sigproc(struct tty* tty, int signo);
+int tty_ioctl(dev_t minor, int request, endpoint_t endpoint, mgrant_id_t grant,
+              int flags, endpoint_t user_endpoint, cdev_id_t id);
 
 void do_pty(MESSAGE* msg);
 void pty_init(struct tty* tty);

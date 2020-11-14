@@ -89,7 +89,7 @@ static struct chardriver tty_driver = {
     .cdr_close = do_close,
     .cdr_read = do_read,
     .cdr_write = do_write,
-    .cdr_ioctl = do_ioctl,
+    .cdr_ioctl = tty_ioctl,
     .cdr_select = do_select,
 };
 
@@ -206,9 +206,8 @@ void tty_sigproc(struct tty* tty, int signo)
         panic("unable to send signal(%d)", retval);
 }
 
-static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
-                    cdev_id_t id)
+int tty_ioctl(dev_t minor, int request, endpoint_t endpoint, mgrant_id_t grant,
+              int flags, endpoint_t user_endpoint, cdev_id_t id)
 {
     int retval = 0;
     int i;

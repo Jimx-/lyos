@@ -9,6 +9,8 @@
 #include <drm/drm_crtc.h>
 #include <drm/drm_encoder.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_file.h>
+#include <drm/drm_vblank.h>
 
 #include <libdevman/libdevman.h>
 

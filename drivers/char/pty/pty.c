@@ -285,7 +285,7 @@ static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
         break;
     }
 
-    return EINVAL;
+    return tty_ioctl(minor, request, endpoint, grant, flags, user_endpoint, id);
 }
 
 static int select_try_pty(struct tty* tty, int ops)

@@ -14,6 +14,8 @@
 #include <errno.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <lyos/eventpoll.h>
+#include <poll.h>
 
 #include <libdevman/libdevman.h>
 #include <libchardriver/libchardriver.h>
@@ -28,15 +30,21 @@ static const char* lib_name = "libdrmdriver";
 
 static int drm_open(dev_t minor, int access, endpoint_t user_endpt);
 static int drm_close(dev_t minor);
+static ssize_t drm_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id);
 static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
                      mgrant_id_t grant, int flags, endpoint_t user_endpoint,
                      cdev_id_t id);
+static int drm_select(dev_t minor, int ops, endpoint_t endpoint);
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
                     size_t length, char** retaddr);
 
 static struct chardriver drm_chrdrv = {.cdr_open = drm_open,
                                        .cdr_close = drm_close,
+                                       .cdr_read = drm_read,
                                        .cdr_ioctl = drm_ioctl,
+                                       .cdr_select = drm_select,
                                        .cdr_mmap = drm_mmap};
 
 static int drm_open(dev_t minor, int access, endpoint_t user_endpt)
@@ -52,6 +60,17 @@ static int drm_open(dev_t minor, int access, endpoint_t user_endpt)
 
 static int drm_close(dev_t minor) { return 0; }
 
+static ssize_t drm_read(dev_t minor, u64 pos, endpoint_t endpoint,
+                        mgrant_id_t grant, unsigned int count, int flags,
+                        cdev_id_t id)
+{
+    if (minor != drm_device->primary.index) {
+        return -ENXIO;
+    }
+
+    return drm_do_read(drm_device, pos, endpoint, grant, count, flags, id);
+}
+
 static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
                      mgrant_id_t grant, int flags, endpoint_t user_endpoint,
                      cdev_id_t id)
@@ -62,6 +81,49 @@ static int drm_ioctl(dev_t minor, int request, endpoint_t endpoint,
 
     return drm_do_ioctl(drm_device, request, endpoint, grant, user_endpoint,
                         id);
+}
+
+static int drm_select(dev_t minor, int ops, endpoint_t endpoint)
+{
+    int watch, oneshot;
+    __poll_t ready_ops;
+
+    if (minor != drm_device->primary.index) {
+        return ENXIO;
+    }
+
+    watch = ops & POLL_NOTIFY;
+    oneshot = ops & POLL_ONESHOT;
+    ops &= ~(POLL_NOTIFY | POLL_ONESHOT);
+
+    ready_ops = drm_select_try(drm_device) & ops;
+
+    ops &= ~ready_ops;
+    if (ops && watch) {
+        drm_device->select_ops |= ops;
+
+        if (oneshot) drm_device->select_ops |= POLL_ONESHOT;
+    }
+
+    return ready_ops;
+}
+
+void drm_select_retry(struct drm_device* dev)
+{
+    int ops, ready_ops, oneshot;
+
+    oneshot = dev->select_ops & POLL_ONESHOT;
+    ops = dev->select_ops & ~POLL_ONESHOT;
+
+    if (ops && (ready_ops = drm_select_try(dev) & ops)) {
+        chardriver_poll_notify(dev->primary.index, ready_ops);
+
+        if (oneshot) {
+            dev->select_ops &= ~ready_ops;
+
+            if (dev->select_ops == POLL_ONESHOT) dev->select_ops = 0;
+        }
+    }
 }
 
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
@@ -81,6 +143,13 @@ int drm_device_init(struct drm_device* dev, struct drm_driver* drv,
     dev->device_id = parent;
 
     dev->primary.index = 0;
+
+    dev->incaller = NO_TASK;
+    dev->inleft = dev->incnt = 0;
+
+    dev->event_space = 4096;
+    INIT_LIST_HEAD(&dev->pending_event_list);
+    INIT_LIST_HEAD(&dev->event_list);
 
     return 0;
 }

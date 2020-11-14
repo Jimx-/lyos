@@ -16,6 +16,7 @@
 #include <drm/drm.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <sys/time.h>
 
 #include <libdevman/libdevman.h>
 
@@ -425,7 +426,41 @@ static int drm_atomic_page_flip_set(struct drm_atomic_state* state,
     return 0;
 }
 
-int drm_atomic_page_flip(struct drm_crtc* crtc, struct drm_framebuffer* fb)
+static void send_vblank_event(struct drm_device* dev,
+                              struct drm_pending_vblank_event* e, u64 seq,
+                              struct timeval* now)
+{
+    switch (e->event.base.type) {
+    case DRM_EVENT_FLIP_COMPLETE:
+        e->event.vbl.sequence = seq;
+        e->event.vbl.tv_sec = now->tv_sec;
+        e->event.vbl.tv_usec = now->tv_usec;
+        break;
+    }
+
+    drm_send_event(dev, &e->base);
+}
+
+void drm_crtc_send_vblank_event(struct drm_crtc* crtc,
+                                struct drm_pending_vblank_event* e)
+{
+    struct drm_device* dev = crtc->dev;
+    u64 seq;
+    unsigned int pipe;
+    struct timeval tv;
+
+    pipe = crtc->index;
+
+    seq = 0;
+    gettimeofday(&tv, NULL);
+
+    e->pipe = pipe;
+
+    send_vblank_event(dev, e, seq, &tv);
+}
+
+int drm_atomic_page_flip(struct drm_crtc* crtc, struct drm_framebuffer* fb,
+                         struct drm_pending_vblank_event* event)
 {
     struct drm_atomic_state state;
     int retval;
@@ -437,6 +472,8 @@ int drm_atomic_page_flip(struct drm_crtc* crtc, struct drm_framebuffer* fb)
     if (retval) goto out;
 
     retval = drm_atomic_commit(&state);
+
+    drm_crtc_send_vblank_event(crtc, event);
 
 out:
     drm_atomic_state_clear(&state);
