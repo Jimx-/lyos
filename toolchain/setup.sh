@@ -10,6 +10,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBTOOL:=false}
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
+: ${BUILD_WAYLAND_SCANNER:=false}
 : ${BUILD_NEWLIB:=false}
 : ${BUILD_LIBSTDCPP:=false}
 : ${BUILD_NATIVE_BINUTILS:=false}
@@ -36,6 +37,7 @@ if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
     BUILD_BINUTILS=true
     BUILD_GCC=true
+    BUILD_WAYLAND_SCANNER=true
     BUILD_NEWLIB=true
     BUILD_LIBSTDCPP=true
     BUILD_NATIVE_BINUTILS=true
@@ -177,6 +179,20 @@ if $BUILD_GCC; then
     make install-gcc install-target-libgcc || cmd_error
 
     popd
+fi
+
+# Build host wayland-scanner
+if $HOST_WAYLAND_SCANNER; then
+    if [ ! -d "host-wayland-scanner" ]; then
+        mkdir host-wayland-scanner
+    fi
+
+    pushd host-wayland-scanner > /dev/null
+    meson --prefix=$PREFIX --libdir=$PREFIX/lib -Ddocumentation=false -Ddtd_validation=false \
+          -Dlibraries=false $DIR/sources/wayland-1.18.0
+    ninja || cmd_error
+    ninja install || cmd_error
+    popd > /dev/null
 fi
 
 . $DIR/activate.sh
