@@ -399,3 +399,96 @@ int do_symlink(void)
 
     return retval;
 }
+
+static int request_link(endpoint_t fs_ep, dev_t dev, ino_t dir_ino,
+                        char* last_component, ino_t linked_ino)
+{
+    MESSAGE m;
+    mgrant_id_t name_grant;
+    size_t name_len;
+
+    name_len = strlen(last_component);
+    name_grant =
+        mgrant_set_direct(fs_ep, (vir_bytes)last_component, name_len, MGF_READ);
+    if (name_grant == GRANT_INVALID)
+        panic("vfs: request_rdlink failed to create name grant");
+
+    m.type = FS_LINK;
+    m.u.m_vfs_fs_link.dev = dev;
+    m.u.m_vfs_fs_link.dir_ino = dir_ino;
+    m.u.m_vfs_fs_link.inode = linked_ino;
+    m.u.m_vfs_fs_link.name_grant = name_grant;
+    m.u.m_vfs_fs_link.name_len = name_len;
+
+    fs_sendrec(fs_ep, &m);
+
+    mgrant_revoke(name_grant);
+
+    return m.RETVAL;
+}
+
+int do_linkat(void)
+{
+    char pathname[PATH_MAX + 1];
+    int fd1 = self->msg_in.u.m_vfs_linkat.fd1;
+    int fd2 = self->msg_in.u.m_vfs_linkat.fd2;
+    size_t path1_len = self->msg_in.u.m_vfs_linkat.path1_len;
+    size_t path2_len = self->msg_in.u.m_vfs_linkat.path2_len;
+    int flags = self->msg_in.u.m_vfs_linkat.flags;
+    int lookup_flags = 0;
+    struct lookup lookup;
+    struct vfs_mount *vmnt1, *vmnt2;
+    struct inode *dir_pin = NULL, *pin;
+    int retval;
+
+    if (flags & AT_SYMLINK_NOFOLLOW) lookup_flags |= LKF_SYMLINK_NOFOLLOW;
+
+    if (path1_len >= PATH_MAX || path2_len >= PATH_MAX) return ENAMETOOLONG;
+
+    retval = data_copy(SELF, pathname, fproc->endpoint,
+                       self->msg_in.u.m_vfs_linkat.path1, path1_len);
+    if (retval) return retval;
+    pathname[path1_len] = 0;
+
+    init_lookupat(&lookup, fd1, pathname, lookup_flags, &vmnt1, &pin);
+    lookup.vmnt_lock = RWL_WRITE;
+    lookup.inode_lock = RWL_READ;
+
+    pin = resolve_path(&lookup, fproc);
+    if (!pin) return err_code;
+
+    retval = data_copy(SELF, pathname, fproc->endpoint,
+                       self->msg_in.u.m_vfs_linkat.path2, path2_len);
+    if (retval) goto unlock_pin;
+    pathname[path2_len] = 0;
+
+    init_lookupat(&lookup, fd2, pathname, lookup_flags, &vmnt2, &dir_pin);
+    lookup.vmnt_lock = RWL_READ;
+    lookup.inode_lock = RWL_WRITE;
+
+    dir_pin = last_dir(&lookup, fproc);
+    if (!dir_pin) {
+        retval = err_code;
+        goto unlock_pin;
+    }
+
+    if (pin->i_fs_ep != dir_pin->i_fs_ep || pin->i_dev != dir_pin->i_dev)
+        retval = EXDEV;
+    else
+        retval = forbidden(fproc, dir_pin, W_BIT | X_BIT);
+
+    if (retval == OK)
+        retval = request_link(pin->i_fs_ep, dir_pin->i_dev, dir_pin->i_num,
+                              pathname, pin->i_num);
+
+    unlock_inode(dir_pin);
+    if (vmnt2) unlock_vmnt(vmnt2);
+
+unlock_pin:
+    unlock_inode(pin);
+    unlock_vmnt(vmnt1);
+    if (dir_pin) put_inode(dir_pin);
+    put_inode(pin);
+
+    return retval;
+}

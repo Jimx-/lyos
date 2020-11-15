@@ -559,16 +559,16 @@ if $BUILD_WESTON; then
         mkdir weston-$SUBARCH
     fi
 
-    pushd $DIR/sources/weston-4.0.0 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
-    popd > /dev/null
+    # pushd $DIR/sources/weston-4.0.0 > /dev/null
+    # PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
+    # popd > /dev/null
 
     pushd weston-$SUBARCH > /dev/null
-    $DIR/sources/weston-4.0.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
-                                        --with-sysroot=$SYSROOT --disable-x11-compositor \
-                                        --disable-weston-launch --disable-fbdev-compositor \
-                                        --disable-simple-dmabuf-drm-client \
-                                        --disable-simple-dmabuf-v4l-client
+    # $DIR/sources/weston-4.0.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
+    #                                     --with-sysroot=$SYSROOT --disable-x11-compositor \
+    #                                     --disable-weston-launch --disable-fbdev-compositor \
+    #                                     --disable-simple-dmabuf-drm-client \
+    #                                     --disable-simple-dmabuf-v4l-client
 
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error

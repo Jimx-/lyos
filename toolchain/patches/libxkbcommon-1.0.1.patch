@@ -1,15 +1,6 @@
 diff -rupN old/meson.build new/meson.build
 --- old/meson.build	2020-09-11 20:10:23.220047200 +0800
-+++ new/meson.build	2020-10-18 15:29:09.359467844 +0800
-@@ -335,7 +335,7 @@ if get_option('enable-xkbregistry')
-         'src/util-list.h',
-         'src/util-list.c',
-     ]
--    libxkbregistry_link_args = []
-+    libxkbregistry_link_args = ['-lpthread',  '-lz',  '-lm']
-     if have_version_script
-         libxkbregistry_link_args += '-Wl,--version-script=' + meson.source_root()/'xkbregistry.map'
-     endif
++++ new/meson.build	2020-11-15 21:07:34.867265194 +0800
 @@ -446,7 +446,7 @@ if build_tools
  You can disable the Wayland xkbcli programs with -Denable-wayland=false.''')
          endif
@@ -19,3 +10,17 @@ diff -rupN old/meson.build new/meson.build
          wayland_scanner_code_gen = generator(
              wayland_scanner,
              output: '@BASENAME@-protocol.c',
+diff -rupN old/tools/interactive-evdev.c new/tools/interactive-evdev.c
+--- old/tools/interactive-evdev.c	2020-09-11 20:10:24.250037700 +0800
++++ new/tools/interactive-evdev.c	2020-11-15 21:04:54.092190340 +0800
+@@ -45,6 +45,10 @@
+ 
+ #include "tools-common.h"
+ 
++#ifndef LONG_BIT
++#define LONG_BIT (CHAR_BIT * sizeof(long))
++#endif
++
+ struct keyboard {
+     char *path;
+     int fd;

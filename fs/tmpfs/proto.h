@@ -47,6 +47,7 @@ int tmpfs_mknod(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
                 uid_t uid, gid_t gid, dev_t sdev);
 
 /* link.c */
+int tmpfs_link(dev_t dev, ino_t dir_num, const char* name, ino_t num);
 int tmpfs_unlink(dev_t dev, ino_t dir_num, const char* name);
 int tmpfs_rmdir(dev_t dev, ino_t dir_num, const char* name);
 ssize_t tmpfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,

@@ -51,7 +51,6 @@
 
 /**
  * Missing filesystem syscalls:
- * link
  * chroot
  * fcntl
  * rename
@@ -227,6 +226,9 @@ static void do_work(void)
         break;
     case READLINKAT:
         self->msg_out.RETVAL = do_rdlinkat();
+        break;
+    case LINKAT:
+        self->msg_out.RETVAL = do_linkat();
         break;
     case UNLINK:
     case RMDIR:

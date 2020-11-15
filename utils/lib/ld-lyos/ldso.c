@@ -236,6 +236,8 @@ void* dlopen(const char* filename, int flags)
     struct so_info** old_tail = &si_list_tail->next;
     int retval;
 
+    if (flags & RTLD_NOLOAD) return NULL;
+
     if (filename == NULL) {
         si = si_list;
     } else {

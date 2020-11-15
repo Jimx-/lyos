@@ -90,6 +90,9 @@ int fsdriver_start(const struct fsdriver* fsd)
         case FS_RDLINK:
             m.u.m_vfs_fs_readwrite.status = fsdriver_rdlink(fsd, &m);
             break;
+        case FS_LINK:
+            m.RETVAL = fsdriver_link(fsd, &m);
+            break;
         case FS_SYMLINK:
             m.RETVAL = fsdriver_symlink(fsd, &m);
             break;

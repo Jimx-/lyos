@@ -39,6 +39,44 @@
 #include "types.h"
 #include "proto.h"
 
+int tmpfs_link(dev_t dev, ino_t dir_num, const char* name, ino_t num)
+{
+    struct tmpfs_inode *dir_pin, *pin, *tmp;
+    int retval;
+
+    dir_pin = tmpfs_get_inode(dev, dir_num);
+    if (!dir_pin) return EINVAL;
+
+    retval = EINVAL;
+    pin = tmpfs_get_inode(dev, num);
+    if (!pin) goto put_dir_pin;
+
+    retval = EPERM;
+    if (S_ISDIR(pin->mode)) goto put_pin;
+
+    retval = tmpfs_advance(dir_pin, name, &tmp);
+    if (retval == OK) {
+        tmpfs_put_inode(tmp);
+        retval = EEXIST;
+        goto put_pin;
+    } else if (retval == ENOENT)
+        retval = 0;
+
+    if (retval == OK) retval = tmpfs_search_dir(dir_pin, name, &pin, SD_MAKE);
+
+    if (retval == OK) {
+        pin->link_count++;
+        pin->update |= CTIME;
+    }
+
+put_pin:
+    tmpfs_put_inode(pin);
+put_dir_pin:
+    tmpfs_put_inode(dir_pin);
+
+    return retval;
+}
+
 static int unlink_file(struct tmpfs_inode* dir_pin, struct tmpfs_inode* pin,
                        const char* name)
 {

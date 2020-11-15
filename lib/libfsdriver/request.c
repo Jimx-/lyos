@@ -15,14 +15,14 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "assert.h"
-#include "unistd.h"
-#include "errno.h"
-#include "lyos/const.h"
+#include <sys/types.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
+#include <errno.h>
+#include <lyos/const.h>
 #include <lyos/fs.h>
-#include "string.h"
+#include <string.h>
 #include <sys/syslimits.h>
 #include <lyos/sysutils.h>
 
@@ -149,7 +149,7 @@ int fsdriver_readwrite(const struct fsdriver* fsd, MESSAGE* m)
 {
     dev_t dev = m->u.m_vfs_fs_readwrite.dev;
     ino_t num = m->u.m_vfs_fs_readwrite.num;
-    loff_t position = m->u.m_vfs_fs_readwrite.position;
+    u64 position = m->u.m_vfs_fs_readwrite.position;
     size_t nbytes = m->u.m_vfs_fs_readwrite.count;
     int rw_flag = m->u.m_vfs_fs_readwrite.rw_flag;
     mgrant_id_t grant = m->u.m_vfs_fs_readwrite.grant;
@@ -266,7 +266,7 @@ int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m)
     struct fsdriver_data data;
     dev_t dev = m->u.m_vfs_fs_readwrite.dev;
     ino_t num = m->u.m_vfs_fs_readwrite.num;
-    loff_t position = m->u.m_vfs_fs_readwrite.position;
+    u64 position = m->u.m_vfs_fs_readwrite.position;
     size_t nbytes = m->u.m_vfs_fs_readwrite.count;
     ssize_t retval;
 
@@ -284,6 +284,31 @@ int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m)
     }
 
     return -retval;
+}
+
+int fsdriver_link(const struct fsdriver* fsd, MESSAGE* m)
+{
+    char name[NAME_MAX + 1];
+    struct fsdriver_data data;
+    endpoint_t src = m->source;
+    dev_t dev = m->u.m_vfs_fs_link.dev;
+    ino_t dir_num = m->u.m_vfs_fs_link.dir_ino;
+    mgrant_id_t name_grant = m->u.m_vfs_fs_link.name_grant;
+    size_t name_len = m->u.m_vfs_fs_link.name_len;
+    ino_t num = m->u.m_vfs_fs_link.inode;
+    int retval;
+
+    if (!fsd->fs_symlink) return ENOSYS;
+
+    if ((retval = fsdriver_copy_name(src, name_grant, name_len, name, NAME_MAX,
+                                     TRUE)) != 0)
+        return retval;
+
+    if (!strcmp(name, ".") || !strcmp(name, "..")) {
+        return EEXIST;
+    }
+
+    return fsd->fs_link(dev, dir_num, name, num);
 }
 
 int fsdriver_symlink(const struct fsdriver* fsd, MESSAGE* m)

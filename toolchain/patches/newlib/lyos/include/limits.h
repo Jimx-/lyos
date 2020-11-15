@@ -146,7 +146,7 @@
 #define PATH_MAX 4096
 
 #ifndef LONG_BIT
-#ifdef LONG_MAX == INT_MAX
+#if LONG_MAX == INT_MAX
 #define LONG_BIT 32
 #else
 #define LONG_BIT 64

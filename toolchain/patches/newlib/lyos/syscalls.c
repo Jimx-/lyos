@@ -549,10 +549,35 @@ int mknod(const char* pathname, mode_t mode, dev_t dev)
     return 0;
 }
 
+int linkat(int fd1, const char* path1, int fd2, const char* path2, int flag)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = LINKAT;
+    msg.u.m_vfs_linkat.fd1 = fd1;
+    msg.u.m_vfs_linkat.path1 = (void*)path1;
+    msg.u.m_vfs_linkat.path1_len = strlen(path1);
+    msg.u.m_vfs_linkat.fd2 = fd2;
+    msg.u.m_vfs_linkat.path2 = (void*)path2;
+    msg.u.m_vfs_linkat.path2_len = strlen(path2);
+    msg.u.m_vfs_linkat.flags = flag;
+
+    cmb();
+
+    send_recv(BOTH, TASK_FS, &msg);
+
+    if (msg.RETVAL > 0) {
+        errno = msg.RETVAL;
+        return -1;
+    }
+
+    return 0;
+}
+
 int link(const char* old, const char* new)
 {
-    puts("link: not implemented");
-    return 0;
+    return linkat(AT_FDCWD, old, AT_FDCWD, new, 0);
 }
 
 int unlinkat(int dirfd, const char* pathname, int flags)

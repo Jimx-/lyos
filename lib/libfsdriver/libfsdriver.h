@@ -73,6 +73,7 @@ struct fsdriver {
                         loff_t rwpos, size_t count);
     ssize_t (*fs_rdlink)(dev_t dev, ino_t num, struct fsdriver_data* data,
                          size_t bytes, endpoint_t user_endpt);
+    int (*fs_link)(dev_t dev, ino_t dir_num, const char* name, ino_t num);
     int (*fs_symlink)(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
                       gid_t gid, struct fsdriver_data* data, size_t bytes);
     int (*fs_unlink)(dev_t dev, ino_t dir_num, const char* name);

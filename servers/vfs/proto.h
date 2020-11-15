@@ -87,6 +87,7 @@ int do_rdwt(void);
 int do_getdents(void);
 
 /* vfs/link.c */
+int do_linkat(void);
 int do_unlink(void);
 int do_unlinkat(void);
 int do_rdlink(void);

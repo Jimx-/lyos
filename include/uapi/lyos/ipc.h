@@ -160,6 +160,19 @@ struct mess_vfs_pathat {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_pathat);
 
+struct mess_vfs_linkat {
+    int fd1;
+    void* path1;
+    int path1_len;
+    int fd2;
+    void* path2;
+    int path2_len;
+    int flags;
+
+    __u8 _pad[36 - 2 * sizeof(void*)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_vfs_linkat);
+
 struct mess_vfs_select {
     __u32 nfds;
     void* readfds;
@@ -468,6 +481,17 @@ struct mess_vfs_fs_symlink {
               sizeof(uid_t) - sizeof(gid_t)];
 } __attribute((packed));
 VERIFY_MESS_SIZE(mess_vfs_fs_symlink);
+
+struct mess_vfs_fs_link {
+    dev_t dev;
+    ino_t dir_ino;
+    ino_t inode;
+    __mgrant_id_t name_grant;
+    size_t name_len;
+
+    __u8 _pad[52 - sizeof(dev_t) - 2 * sizeof(ino_t) - sizeof(size_t)];
+} __attribute((packed));
+VERIFY_MESS_SIZE(mess_vfs_fs_link);
 
 BEGIN_MESS_DECL(mess_vfs_fs_create)
 {
@@ -890,6 +914,7 @@ typedef struct {
         struct mess_pm_signal m_pm_signal;
         struct mess_pm_clone m_pm_clone;
         struct mess_vfs_pathat m_vfs_pathat;
+        struct mess_vfs_linkat m_vfs_linkat;
         struct mess_vfs_select m_vfs_select;
         struct mess_vfs_link m_vfs_link;
         struct mess_vfs_mount m_vfs_mount;
@@ -914,6 +939,7 @@ typedef struct {
         struct mess_fs_vfs_lookup_reply m_fs_vfs_lookup_reply;
         struct mess_vfs_fs_stat m_vfs_fs_stat;
         struct mess_vfs_fs_symlink m_vfs_fs_symlink;
+        struct mess_vfs_fs_link m_vfs_fs_link;
         struct mess_vfs_fs_create m_vfs_fs_create;
         struct mess_vfs_fs_mknod m_vfs_fs_mknod;
         struct mess_fs_vfs_create_reply m_fs_vfs_create_reply;

@@ -235,6 +235,7 @@ enum msgtype {
     FCHOWN,
     FCHOWNAT,
     GETSOCKNAME,
+    LINKAT,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,
@@ -273,6 +274,7 @@ enum msgtype {
     FS_MKNOD,
     FS_UTIME,
     FS_CHOWN,
+    FS_LINK,
 
     VFS_MAPDRIVER,
     VFS_SOCKETPATH,

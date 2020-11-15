@@ -54,6 +54,7 @@ struct fsdriver tmpfs_driver = {
     .fs_rdlink = tmpfs_rdlink,
     .fs_unlink = tmpfs_unlink,
     .fs_rmdir = tmpfs_rmdir,
+    .fs_link = tmpfs_link,
     .fs_symlink = tmpfs_symlink,
     .fs_stat = tmpfs_stat,
     .fs_chmod = tmpfs_chmod,
