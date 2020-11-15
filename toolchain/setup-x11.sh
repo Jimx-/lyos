@@ -224,28 +224,6 @@ if $BUILD_PIXMAN; then
     popd > /dev/null
 fi
 
-# Build cairo
-if $BUILD_CAIRO; then
-    if [ ! -d "cairo-$SUBARCH" ]; then
-        mkdir cairo-$SUBARCH
-    fi
-
-    pushd $DIR/sources/cairo-1.16.0 > /dev/null
-    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fi
-    popd > /dev/null
-
-    pushd cairo-$SUBARCH > /dev/null
-    # FIXME: configure cannot find these functions for unknown reason.
-    ac_cv_func_XRenderCreateConicalGradient=yes \
-    ac_cv_func_XRenderCreateLinearGradient=yes \
-    ac_cv_func_XRenderCreateRadialGradient=yes \
-    ac_cv_func_XRenderCreateSolidFill=yes \
-      $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
-    make -j || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
-    popd > /dev/null
-fi
-
 if $BUILD_LIBXKBCOMMON; then
     if [ ! -d "libxkbcommon-$SUBARCH" ]; then
         mkdir libxkbcommon-$SUBARCH
@@ -548,6 +526,28 @@ if $BUILD_LIBXEXT; then
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --disable-malloc0returnsnull \
                                         --with-sysroot=$SYSROOT
+    make -j || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build cairo
+if $BUILD_CAIRO; then
+    if [ ! -d "cairo-$SUBARCH" ]; then
+        mkdir cairo-$SUBARCH
+    fi
+
+    pushd $DIR/sources/cairo-1.16.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
+    pushd cairo-$SUBARCH > /dev/null
+    # FIXME: configure cannot find these functions for unknown reason.
+    ac_cv_func_XRenderCreateConicalGradient=yes \
+    ac_cv_func_XRenderCreateLinearGradient=yes \
+    ac_cv_func_XRenderCreateRadialGradient=yes \
+    ac_cv_func_XRenderCreateSolidFill=yes \
+      $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
