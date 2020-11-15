@@ -8,6 +8,8 @@ export PATH=$DIR/local/bin:$PATH
 export PKG_CONFIG_LIBDIR="$SYSROOT/usr/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
 
+export PKG_CONFIG_PATH_FOR_BUILD="$PREFIX/lib/pkgconfig"
+
 echo "#!/bin/sh
 
 export PKG_CONFIG_PATH=

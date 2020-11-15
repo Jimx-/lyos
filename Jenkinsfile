@@ -27,6 +27,12 @@ pipeline {
                             sh 'BUILD_EVERYTHING=true ./setup-x11.sh -m i686'
                         }
                     }
+
+                    post {
+                        cleanup {
+                            deleteDir()
+                        }
+                    }
                 }
             }
         }
