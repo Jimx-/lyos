@@ -75,6 +75,11 @@ static void trace_sendrec_in(struct tcb* tcp)
     }
 
     tcp->sys_trace_ret = syscall_trace_entering(tcp, &sig);
+
+    if (type == EXEC) {
+        /* exec() has no return value */
+        tcp->flags ^= TCB_ENTERING;
+    }
 }
 
 static void trace_sendrec_out(struct tcb* tcp)

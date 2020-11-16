@@ -171,8 +171,28 @@ int execlp(const char* file, const char* arg, ...)
 
 int execl(const char* path, const char* arg, ...)
 {
-    puts("execl: not implemented");
-    return ENOSYS;
+    char *argv[16], *argn;
+    va_list args;
+    int n = 1;
+
+    argv[0] = (char*)arg;
+
+    va_start(args, arg);
+
+    for (;;) {
+        if (n >= sizeof(argv) / sizeof(argv[0])) {
+            errno = ENOMEM;
+            return -1;
+        }
+
+        argn = va_arg(args, char*);
+        argv[n++] = argn;
+        if (!argv[n]) break;
+    }
+
+    va_end(args);
+
+    return execve(path, argv, environ);
 }
 
 __endpoint_t get_endpoint()
