@@ -381,6 +381,15 @@ BEGIN_MESS_DECL(mess_vfs_fchownat)
 }
 END_MESS_DECL(mess_vfs_fchownat)
 
+BEGIN_MESS_DECL(mess_vfs_truncate)
+{
+    int fd;
+    off_t offset;
+
+    __u8 _pad[52 - sizeof(off_t)];
+}
+END_MESS_DECL(mess_vfs_truncate)
+
 BEGIN_MESS_DECL(mess_vfs_inotify)
 {
     int fd;
@@ -933,6 +942,7 @@ typedef struct {
         struct mess_vfs_copyfd m_vfs_copyfd;
         struct mess_vfs_utimensat m_vfs_utimensat;
         struct mess_vfs_fchownat m_vfs_fchownat;
+        struct mess_vfs_truncate m_vfs_truncate;
         struct mess_vfs_inotify m_vfs_inotify;
         struct mess_vfs_fs_readsuper m_vfs_fs_readsuper;
         struct mess_vfs_fs_lookup m_vfs_fs_lookup;

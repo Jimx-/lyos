@@ -94,6 +94,7 @@ int do_rdlink(void);
 int do_rdlinkat(void);
 int do_symlink(void);
 int truncate_node(struct inode* pin, int newsize);
+int do_ftruncate(void);
 
 int do_dup(void);
 int do_chdir(void);

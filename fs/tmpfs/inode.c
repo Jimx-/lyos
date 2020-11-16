@@ -46,8 +46,6 @@
 
 static struct list_head tmpfs_inode_table[TMPFS_INODE_HASH_SIZE];
 
-static int tmpfs_truncate_inode(struct tmpfs_inode* pin, off_t new_size);
-
 void init_inode(void)
 {
     int i;
@@ -261,7 +259,7 @@ static void zero_range(struct tmpfs_inode* pin, loff_t pos, size_t len)
     memset(&page[offset], 0, len);
 }
 
-static int free_range(struct tmpfs_inode* pin, loff_t start, loff_t end)
+int tmpfs_free_range(struct tmpfs_inode* pin, loff_t start, loff_t end)
 {
     int zero_first, zero_last;
     unsigned int start_index, end_index;
@@ -299,14 +297,14 @@ static int free_range(struct tmpfs_inode* pin, loff_t start, loff_t end)
     return 0;
 }
 
-static int tmpfs_truncate_inode(struct tmpfs_inode* pin, off_t new_size)
+int tmpfs_truncate_inode(struct tmpfs_inode* pin, off_t new_size)
 {
     int retval;
 
     if (S_ISBLK(pin->mode) || S_ISCHR(pin->mode)) return EINVAL;
 
     if (new_size < pin->size) {
-        retval = free_range(pin, new_size, pin->size);
+        retval = tmpfs_free_range(pin, new_size, pin->size);
         if (retval) return retval;
     }
 

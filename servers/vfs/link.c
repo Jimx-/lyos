@@ -35,8 +35,10 @@
 #include <lyos/mgrant.h>
 
 #include "global.h"
+#include "vfs/thread.h"
 
-static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize);
+static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num,
+                          off_t start_pos, off_t end_pos);
 
 static int request_unlink(endpoint_t fs_ep, dev_t dev, ino_t num,
                           const char* last_component)
@@ -291,14 +293,16 @@ int do_rdlinkat(void)
  * @param  newsize New size.
  * @return         Zero on success.
  */
-static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
+static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num,
+                          off_t start_pos, off_t end_pos)
 {
     MESSAGE m;
 
     m.type = FS_FTRUNC;
     m.REQ_DEV = (int)dev;
     m.REQ_NUM = (int)num;
-    m.REQ_FILESIZE = newsize;
+    m.REQ_STARTPOS = start_pos;
+    m.REQ_ENDPOS = end_pos;
 
     fs_sendrec(fs_ep, &m);
 
@@ -308,10 +312,13 @@ static int request_ftrunc(endpoint_t fs_ep, dev_t dev, ino_t num, int newsize)
 int truncate_node(struct inode* pin, int newsize)
 {
     if (!S_ISREG(pin->i_mode)) return EINVAL;
-    int retval = request_ftrunc(pin->i_fs_ep, pin->i_dev, pin->i_num, newsize);
+
+    int retval =
+        request_ftrunc(pin->i_fs_ep, pin->i_dev, pin->i_num, newsize, 0);
     if (retval == 0) {
         pin->i_size = newsize;
     }
+
     return retval;
 }
 
@@ -490,5 +497,31 @@ unlock_pin:
     if (dir_pin) put_inode(dir_pin);
     put_inode(pin);
 
+    return retval;
+}
+
+int do_ftruncate(void)
+{
+    int fd = self->msg_in.u.m_vfs_truncate.fd;
+    off_t length = self->msg_in.u.m_vfs_truncate.offset;
+    struct file_desc* filp;
+    struct inode* pin;
+    int retval;
+
+    if (length < 0) return EINVAL;
+
+    filp = get_filp(fproc, fd, RWL_WRITE);
+    if (!filp) return err_code;
+
+    pin = filp->fd_inode;
+
+    if (!(filp->fd_mode & W_BIT))
+        retval = EBADF;
+    else if (S_ISREG(pin->i_mode) && pin->i_size == length)
+        retval = 0;
+    else
+        retval = truncate_node(pin, length);
+
+    unlock_filp(filp);
     return retval;
 }

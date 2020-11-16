@@ -3,7 +3,7 @@
 
 #include "ldso.h"
 
-#define MAX_NEEDED_ENTRIES 64
+#define MAX_NEEDED_ENTRIES 128
 static struct needed_entry needed_entries[MAX_NEEDED_ENTRIES];
 static int n_ent_count = 0;
 

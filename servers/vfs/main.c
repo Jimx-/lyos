@@ -20,6 +20,7 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include "stddef.h"
+#include "uapi/lyos/const.h"
 #include "unistd.h"
 #include "assert.h"
 #include "errno.h"
@@ -239,6 +240,9 @@ static void do_work(void)
         break;
     case SELECT:
         self->msg_out.RETVAL = do_select();
+        break;
+    case FTRUNCATE:
+        self->msg_out.RETVAL = do_ftruncate();
         break;
     case PM_VFS_GETSETID:
         self->msg_out.RETVAL = fs_getsetid();

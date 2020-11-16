@@ -140,4 +140,6 @@ int trace_recvmsg(struct tcb* tcp);
 
 int trace_utimensat(struct tcb* tcp);
 
+int trace_ftruncate(struct tcb* tcp);
+
 #endif

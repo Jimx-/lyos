@@ -233,3 +233,20 @@ int tmpfs_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
 
     return retval;
 }
+
+int tmpfs_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos)
+{
+    struct tmpfs_inode* pin;
+    int retval = ENOSYS;
+
+    pin = tmpfs_get_inode(dev, num);
+    if (!pin) return EINVAL;
+
+    if (end_pos == 0)
+        retval = tmpfs_truncate_inode(pin, start_pos);
+    else
+        retval = tmpfs_free_range(pin, start_pos, end_pos);
+
+    tmpfs_put_inode(pin);
+    return retval;
+}

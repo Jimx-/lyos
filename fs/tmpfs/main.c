@@ -60,6 +60,7 @@ struct fsdriver tmpfs_driver = {
     .fs_chmod = tmpfs_chmod,
     .fs_getdents = tmpfs_getdents,
     .fs_utime = tmpfs_utime,
+    .fs_ftrunc = tmpfs_ftrunc,
 };
 
 static int tmpfs_mountpoint(dev_t dev, ino_t num)

@@ -18,6 +18,8 @@ int tmpfs_new_inode(struct tmpfs_inode* dir_pin, const char* pathname,
                     struct tmpfs_inode** ppin);
 int tmpfs_inode_getpage(struct tmpfs_inode* pin, unsigned int index,
                         char** page);
+int tmpfs_free_range(struct tmpfs_inode* pin, loff_t start, loff_t end);
+int tmpfs_truncate_inode(struct tmpfs_inode* pin, off_t new_size);
 
 /* stat.c */
 int tmpfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
@@ -54,6 +56,7 @@ ssize_t tmpfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
                      size_t bytes, endpoint_t user_endpt);
 int tmpfs_symlink(dev_t dev, ino_t dir_num, const char* name, uid_t uid,
                   gid_t gid, struct fsdriver_data* data, size_t bytes);
+int tmpfs_ftrunc(dev_t dev, ino_t num, off_t start_pos, off_t end_pos);
 
 /* protect.c */
 int tmpfs_chmod(dev_t dev, ino_t num, mode_t* mode);

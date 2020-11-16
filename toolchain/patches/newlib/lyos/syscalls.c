@@ -1715,8 +1715,22 @@ void* mremap(void* old_addr, size_t old_size, size_t new_size, int flags, ...)
 
 int ftruncate(int fd, off_t length)
 {
-    puts("ftruncate: not implemented");
-    return -ENOSYS;
+    MESSAGE m;
+    memset(&m, 0, sizeof(MESSAGE));
+
+    m.type = FTRUNCATE;
+    m.u.m_vfs_truncate.fd = fd;
+    m.u.m_vfs_truncate.offset = length;
+
+    cmb();
+    send_recv(BOTH, TASK_FS, &m);
+
+    if (m.RETVAL > 0) {
+        errno = m.RETVAL;
+        return -1;
+    }
+
+    return m.RETVAL;
 }
 
 char* getlogin()
