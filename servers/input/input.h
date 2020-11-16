@@ -54,7 +54,8 @@ struct input_handle_ops {
     int (*open)(struct input_handle* handle);
     int (*close)(struct input_handle* handle);
     ssize_t (*read)(struct input_handle* handle, endpoint_t endpoint,
-                    mgrant_id_t grant, unsigned int count, cdev_id_t id);
+                    mgrant_id_t grant, unsigned int count, int flags,
+                    cdev_id_t id);
     long (*ioctl)(struct input_handle* handle, int request, endpoint_t endpoint,
                   mgrant_id_t grant, endpoint_t user_endpoint, cdev_id_t id);
     __poll_t (*poll)(struct input_handle* handle, int ops, endpoint_t endpoint);

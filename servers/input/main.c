@@ -114,7 +114,7 @@ static ssize_t input_read(dev_t minor, u64 pos, endpoint_t endpoint,
         return ENXIO;
     }
 
-    return handle->ops->read(handle, endpoint, grant, count, id);
+    return handle->ops->read(handle, endpoint, grant, count, flags, id);
 }
 
 static ssize_t input_write(dev_t minor, u64 pos, endpoint_t endpoint,

@@ -157,7 +157,8 @@ static int evdev_close(struct input_handle* handle)
 }
 
 static ssize_t evdev_read(struct input_handle* handle, endpoint_t endpoint,
-                          mgrant_id_t grant, unsigned int count, cdev_id_t id)
+                          mgrant_id_t grant, unsigned int count, int flags,
+                          cdev_id_t id)
 {
     struct evdev* evdev = (struct evdev*)handle->private;
     struct evdev_client* client = &evdev->client;
@@ -173,6 +174,9 @@ static ssize_t evdev_read(struct input_handle* handle, endpoint_t endpoint,
 
     if (client->packet_head == client->tail) {
         /* no event */
+
+        if (flags & CDEV_NONBLOCK) return -EAGAIN;
+
         client->suspended = TRUE;
         client->caller = endpoint;
         client->req_grant = grant;
