@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <errno.h>
 
+#include "asm/page.h"
 #include "region.h"
 #include "proto.h"
 #include "global.h"
@@ -86,6 +87,8 @@ static void file_map_page_fault_callback(struct mmproc* mmp, MESSAGE* msg,
 
             page_cache_add(vr->param.file.filp->dev, 0,
                            vr->param.file.filp->ino, file_offset, page);
+        } else {
+            free_mem(state->buf_phys, ARCH_PG_SIZE);
         }
     } else {
         free_vmem(state->buf_vir, ARCH_PG_SIZE);
@@ -122,7 +125,7 @@ static int file_map_page_fault(struct mmproc* mmp, struct vir_region* vr,
             if (roundup(pr->offset + vr->param.file.clearend, ARCH_PG_SIZE) >=
                 vr->length)
                 retval = file_map_cow(mmp, vr, pr, vr->param.file.clearend);
-            else if (retval == OK && write)
+            else if (retval == OK && write && !(vr->flags & RF_MAP_SHARED))
                 retval = file_map_cow(mmp, vr, pr, 0);
 
             return retval;
@@ -156,7 +159,13 @@ static int file_map_page_fault(struct mmproc* mmp, struct vir_region* vr,
     return file_map_cow(mmp, vr, pr, 0);
 }
 
-static int file_map_writable(const struct phys_region* pr) { return 0; }
+static int file_map_writable(const struct phys_region* pr)
+{
+    struct vir_region* vr = pr->parent;
+    if (vr->flags & RF_MAP_SHARED) return vr->flags & RF_WRITABLE;
+
+    return 0;
+}
 
 static int file_map_unreference(struct phys_region* pr)
 {

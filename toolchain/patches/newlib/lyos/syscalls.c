@@ -1729,6 +1729,7 @@ int munmap(void* addr, size_t len)
 
 void* mremap(void* old_addr, size_t old_size, size_t new_size, int flags, ...)
 {
+    printf("mremap: not implemented\n");
     errno = ENOSYS;
     return MAP_FAILED;
 }

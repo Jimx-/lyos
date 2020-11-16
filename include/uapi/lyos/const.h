@@ -237,6 +237,7 @@ enum msgtype {
     GETSOCKNAME,
     LINKAT,
     FTRUNCATE, /* 100 */
+    MREMAP,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

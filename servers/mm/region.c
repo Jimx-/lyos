@@ -406,7 +406,8 @@ int region_handle_pf(struct mmproc* mmp, struct vir_region* vr,
     assert(pr->page);
     assert(pr->rops->rop_writable);
 
-    if (!write || !pr->rops->rop_writable(pr)) {
+    if (!write || !pr->rops->rop_writable(pr) ||
+        pr->page->phys_addr == PHYS_NONE) {
         assert(pr->rops->rop_page_fault);
 
         if ((retval = pr->rops->rop_page_fault(mmp, vr, pr, write, cb, state,

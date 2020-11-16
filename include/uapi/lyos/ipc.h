@@ -105,6 +105,17 @@ struct mess_mm_mmap {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap);
 
+struct mess_mm_mremap {
+    void* old_addr;
+    size_t old_size;
+    size_t new_size;
+    int flags;
+    void* new_addr;
+
+    __u8 _pad[52 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+} __attribute__((packed));
+VERIFY_MESS_SIZE(mess_mm_mremap);
+
 struct mess_mm_mmap_reply {
     int retval;
     void* retaddr;

@@ -78,6 +78,7 @@ static int mmap_file(struct mmproc* mmp, vir_bytes addr, size_t len, int flags,
     int retval = 0;
 
     if (prot & PROT_WRITE) vrflags |= RF_WRITABLE;
+    if (flags & MAP_SHARED) vrflags |= RF_MAP_SHARED;
 
     if ((page_off = (offset % ARCH_PG_SIZE)) != 0) {
         offset -= page_off;
