@@ -182,7 +182,7 @@ if $BUILD_GCC; then
 fi
 
 # Build host wayland-scanner
-if $HOST_WAYLAND_SCANNER; then
+if $BUILD_WAYLAND_SCANNER; then
     if [ ! -d "host-wayland-scanner" ]; then
         mkdir host-wayland-scanner
     fi

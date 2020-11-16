@@ -18,8 +18,11 @@ static int init_udev(void)
     assert(udev_pid != -1);
 
     if (!udev_pid) {
+        // char* rc_args[] = {"/usr/bin/strace", "/usr/sbin/udevd", "--debug",
+        //                   NULL};
         char* rc_args[] = {"/usr/sbin/udevd", NULL};
         char* rc_env[] = {NULL};
+        // execve("/usr/bin/strace", rc_args, rc_env);
         execve("/usr/sbin/udevd", rc_args, rc_env);
         exit(EXIT_FAILURE);
     }

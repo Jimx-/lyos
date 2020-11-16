@@ -38,18 +38,18 @@
 ssize_t pci_vendor_show(struct device_attribute* attr, char* buf)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
-    return sprintf(buf, "0x%04x", dev->vid);
+    return sprintf(buf, "0x%04x\n", dev->vid);
 }
 
 ssize_t pci_device_show(struct device_attribute* attr, char* buf)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
-    return sprintf(buf, "0x%04x", dev->did);
+    return sprintf(buf, "0x%04x\n", dev->did);
 }
 
 ssize_t pci_class_show(struct device_attribute* attr, char* buf)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
-    return sprintf(buf, "0x%02x%02x%02x", dev->baseclass, dev->subclass,
+    return sprintf(buf, "0x%02x%02x%02x\n", dev->baseclass, dev->subclass,
                    dev->infclass);
 }

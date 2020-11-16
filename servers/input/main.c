@@ -36,6 +36,7 @@
 #include <libdevman/libdevman.h>
 
 #include "input.h"
+#include "lyos/bitmap.h"
 
 #define INVALID_INPUT_ID (-1)
 
@@ -188,6 +189,60 @@ static int input_copy_bits(struct input_dev* dev, endpoint_t endpoint,
     return retval;
 }
 
+#define INPUT_DEV_STRING_ATTR_SHOW(name)                                \
+    static ssize_t input_dev_show_##name(struct device_attribute* attr, \
+                                         char* buf)                     \
+    {                                                                   \
+        struct input_dev* input_dev = (struct input_dev*)attr->cb_data; \
+        return snprintf(buf, ARCH_PG_SIZE, "%s\n", input_dev->name);    \
+    }
+
+INPUT_DEV_STRING_ATTR_SHOW(name)
+
+static int input_bits_to_string(char* buf, int buf_size, bitchunk_t bits,
+                                int skip_empty)
+{
+    return bits || !skip_empty ? snprintf(buf, buf_size, "%lx", bits) : 0;
+}
+
+static int input_print_bitmap(char* buf, int buf_size, bitchunk_t* bitmap,
+                              int max, int add_cr)
+{
+    int i;
+    int len = 0;
+    int skip_empty = TRUE;
+
+    for (i = BITCHUNKS(max) - 1; i >= 0; i--) {
+        len += input_bits_to_string(buf + len, max(buf_size - len, 0),
+                                    bitmap[i], skip_empty);
+        if (len) {
+            skip_empty = FALSE;
+            if (i > 0) len += snprintf(buf + len, max(buf_size - len, 0), " ");
+        }
+    }
+
+    if (len == 0) len = snprintf(buf, buf_size, "%d", 0);
+
+    if (add_cr) len += snprintf(buf + len, max(buf_size - len, 0), "\n");
+
+    return len;
+}
+
+#define INPUT_DEV_CAP_ATTR(ev, bm)                                          \
+    static ssize_t input_dev_show_cap_##bm(struct device_attribute* attr,   \
+                                           char* buf)                       \
+    {                                                                       \
+        struct input_dev* input_dev = (struct input_dev*)attr->cb_data;     \
+        int len = input_print_bitmap(buf, ARCH_PG_SIZE, input_dev->bm##bit, \
+                                     ev##_MAX, TRUE);                       \
+        return len > ARCH_PG_SIZE ? ARCH_PG_SIZE : len;                     \
+    }
+
+INPUT_DEV_CAP_ATTR(EV, ev)
+INPUT_DEV_CAP_ATTR(KEY, key)
+INPUT_DEV_CAP_ATTR(REL, rel)
+INPUT_DEV_CAP_ATTR(ABS, abs)
+
 static int input_register_device(MESSAGE* msg)
 {
     struct input_dev* dev;
@@ -195,6 +250,7 @@ static int input_register_device(MESSAGE* msg)
     MESSAGE conf_msg;
     struct device_info devinf;
     struct input_dev_bits dev_bits;
+    struct device_attribute attr;
     int retval = 0;
 
     dev = input_allocate_dev(msg->source);
@@ -235,6 +291,23 @@ static int input_register_device(MESSAGE* msg)
     {
         input_attach_handler(dev, handler);
     }
+
+    dm_init_device_attr(&attr, dev->input_dev_id, "name", SF_PRIV_OVERWRITE,
+                        dev, input_dev_show_name, NULL);
+    dm_device_attr_add(&attr);
+
+    dm_init_device_attr(&attr, dev->input_dev_id, "capabilities/ev",
+                        SF_PRIV_OVERWRITE, dev, input_dev_show_cap_ev, NULL);
+    dm_device_attr_add(&attr);
+    dm_init_device_attr(&attr, dev->input_dev_id, "capabilities/key",
+                        SF_PRIV_OVERWRITE, dev, input_dev_show_cap_key, NULL);
+    dm_device_attr_add(&attr);
+    dm_init_device_attr(&attr, dev->input_dev_id, "capabilities/rel",
+                        SF_PRIV_OVERWRITE, dev, input_dev_show_cap_rel, NULL);
+    dm_device_attr_add(&attr);
+    dm_init_device_attr(&attr, dev->input_dev_id, "capabilities/abs",
+                        SF_PRIV_OVERWRITE, dev, input_dev_show_cap_abs, NULL);
+    dm_device_attr_add(&attr);
 
 reply_free_dev:
     free(dev);
@@ -381,6 +454,10 @@ static void input_other(MESSAGE* msg)
     case INPUT_SEND_EVENT:
         input_event(msg);
         msg->RETVAL = SUSPEND;
+        break;
+    case DM_DEVICE_ATTR_SHOW:
+    case DM_DEVICE_ATTR_STORE:
+        msg->CNT = dm_device_attr_handle(msg);
         break;
     default:
         msg->RETVAL = ENOSYS;

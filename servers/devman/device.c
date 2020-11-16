@@ -71,7 +71,7 @@ static int add_device_node(struct device* dev);
 static ssize_t device_dev_show(sysfs_dyn_attr_t* attr, char* buf)
 {
     struct device* dev = (struct device*)attr->cb_data;
-    return sprintf(buf, "%lu:%lu", MAJOR(dev->devt), MINOR(dev->devt));
+    return sprintf(buf, "%lu:%lu\n", MAJOR(dev->devt), MINOR(dev->devt));
 }
 
 static ssize_t uevent_show(sysfs_dyn_attr_t* attr, char* buf)
@@ -484,22 +484,57 @@ char* device_get_path(struct device* dev)
 int do_device_attr_add(MESSAGE* m)
 {
     struct device_attr_info info;
-    char device_root[PATH_MAX - DEVICE_NAME_MAX - 1];
+    struct device_attr_cb_data* attr;
     char label[PATH_MAX];
+    char *p, *name, *out, *outlim;
+    size_t name_len;
+    struct device* dev;
+    sysfs_dyn_attr_t sysfs_attr;
+    int retval;
 
     if (m->BUF_LEN != sizeof(info)) return EINVAL;
 
     data_copy(SELF, &info, m->source, m->BUF, m->BUF_LEN);
 
-    struct device_attr_cb_data* attr = alloc_device_attr();
-    attr->device = get_device(info.device);
+    dev = get_device(info.device);
+    name = info.name;
+    out = label;
+    outlim = label + sizeof(label);
+
+    device_domain_label(dev, out);
+    out += strlen(out);
+
+    if (out + strlen(info.name) + 1 >= outlim) return ENAMETOOLONG;
+
+    while (*name != '\0') {
+        p = name;
+        while (*p != '\0' && *p != '/')
+            p++;
+
+        name_len = p - name;
+        if (!name_len) {
+            name++;
+            continue;
+        }
+
+        *out++ = '.';
+        memcpy(out, name, name_len);
+        out += name_len;
+        *out = '\0';
+
+        if (*p == '\0') break;
+
+        retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+        if (retval != OK && retval != EEXIST) return retval;
+
+        name = p + 1;
+    }
+
+    attr = alloc_device_attr();
+    attr->device = dev;
     attr->owner = m->source;
 
-    device_domain_label(attr->device, device_root);
-    snprintf(label, PATH_MAX, "%s.%s", device_root, info.name);
-
-    sysfs_dyn_attr_t sysfs_attr;
-    int retval =
+    retval =
         sysfs_init_dyn_attr(&sysfs_attr, label, SF_PRIV_OVERWRITE, (void*)attr,
                             device_attr_show, device_attr_store);
     if (retval) return retval;

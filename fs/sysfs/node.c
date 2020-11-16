@@ -158,6 +158,11 @@ sysfs_node_t* create_node(char* name, int flags)
         return NULL;
     }
 
+    if (find_node(dir_pn, end) != NULL) {
+        errno = EEXIST;
+        return NULL;
+    }
+
     sysfs_node_t* new_pn = new_node(end, flags);
     if (!new_pn) {
         errno = ENOMEM;

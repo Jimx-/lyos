@@ -59,7 +59,7 @@ typedef unsigned int block_t;
 
 typedef unsigned long priv_map_t;
 
-typedef u32 bitchunk_t;
+typedef unsigned long bitchunk_t;
 
 typedef u64 loff_t;
 

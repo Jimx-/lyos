@@ -84,7 +84,7 @@ ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
 
     switch (NODE_TYPE(node)) {
     case SF_TYPE_U32:
-        buf_printf("%d", node->u.u32v);
+        buf_printf("%d\n", node->u.u32v);
         break;
     case SF_TYPE_DYNAMIC:
         retval = dyn_attr_show(node);
@@ -92,7 +92,6 @@ ssize_t sysfs_read_hook(struct memfs_inode* inode, char* ptr, size_t count,
     }
     if (retval < 0) return retval;
 
-    buf_printf("\n");
     return buf_used();
 }
 

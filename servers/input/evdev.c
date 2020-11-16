@@ -25,7 +25,7 @@
 
 #include "input.h"
 
-#define EVDEV_MINOR_BASE 32
+#define EVDEV_MINOR_BASE 64
 #define EVDEV_MINORS     32
 
 #define EVDEV_MIN_BUFFER_SIZE 64 /* must be power of 2 */
