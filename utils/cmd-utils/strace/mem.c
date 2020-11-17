@@ -7,6 +7,7 @@
 
 #include "xlat/mmap_prot.h"
 #include "xlat/mmap_flags.h"
+#include "xlat/mremap_flags.h"
 
 int trace_brk(struct tcb* tcp)
 {
@@ -41,4 +42,24 @@ int trace_munmap(struct tcb* tcp)
     printf("%ld", msg->u.m_mm_mmap.length);
 
     return RVAL_DECODED;
+}
+
+int trace_mremap(struct tcb* tcp)
+{
+    MESSAGE* msg = &tcp->msg_in;
+
+    print_addr((uint64_t)msg->u.m_mm_mremap.old_addr);
+    printf(", ");
+    printf("%ld", msg->u.m_mm_mremap.old_size);
+    printf(", ");
+    printf("%ld", msg->u.m_mm_mremap.new_size);
+    printf(", ");
+    print_flags(msg->u.m_mm_mremap.flags, &mremap_flags);
+
+    if (msg->u.m_mm_mremap.flags & MREMAP_FIXED) {
+        printf(", ");
+        print_addr((uint64_t)msg->u.m_mm_mremap.new_addr);
+    }
+
+    return RVAL_DECODED | RVAL_SPECIAL;
 }

@@ -929,6 +929,7 @@ typedef struct {
         struct mess5 m5;
         struct mess_safecopy m_safecopy;
         struct mess_mm_mmap m_mm_mmap;
+        struct mess_mm_mremap m_mm_mremap;
         struct mess_mm_mmap_reply m_mm_mmap_reply;
         struct mess_mm_remap m_mm_remap;
         struct mess_pm_signal m_pm_signal;

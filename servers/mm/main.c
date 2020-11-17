@@ -81,10 +81,13 @@ int main()
             mm_msg.RETVAL = do_brk();
             break;
         case MMAP:
-            mm_msg.RETVAL = do_mmap();
+            mm_msg.u.m_mm_mmap_reply.retval = do_mmap();
             break;
         case MUNMAP:
             mm_msg.RETVAL = do_munmap();
+            break;
+        case MREMAP:
+            mm_msg.u.m_mm_mmap_reply.retval = do_mremap();
             break;
         case FS_MMAP:
             mm_msg.u.m_mm_mmap_reply.retval = do_vfs_mmap();

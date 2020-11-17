@@ -228,12 +228,26 @@ static int file_map_copy(struct vir_region* vr, struct vir_region* new_vr)
     return 0;
 }
 
+static int file_map_remap(struct vir_region* vr, vir_bytes offset,
+                          vir_bytes len, struct vir_region* new_vr)
+{
+    assert(new_vr->rops == &file_map_ops);
+    assert(vr->param.file.inited);
+    file_map_set_file(new_vr->parent, new_vr, vr->param.file.filp->fd,
+                      offset + vr->param.file.offset, vr->param.file.filp->dev,
+                      vr->param.file.filp->ino, 0, FALSE, FALSE);
+    assert(new_vr->param.file.inited);
+
+    return 0;
+}
+
 const struct region_operations file_map_ops = {
     .rop_delete = file_map_delete,
     .rop_pt_flags = file_map_pt_flags,
     .rop_shrink_low = file_map_shrink_low,
     .rop_split = file_map_split,
     .rop_copy = file_map_copy,
+    .rop_remap = file_map_remap,
     .rop_page_fault = file_map_page_fault,
 
     .rop_writable = file_map_writable,

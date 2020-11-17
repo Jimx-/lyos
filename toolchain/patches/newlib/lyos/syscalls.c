@@ -1698,10 +1698,12 @@ void* mmap(void* addr, size_t len, int prot, int flags, int fd, off_t offset)
 
     send_recv(BOTH, TASK_MM, &m);
 
-    if (m.u.m_mm_mmap_reply.retval)
+    if (m.u.m_mm_mmap_reply.retval) {
+        errno = m.u.m_mm_mmap_reply.retval;
         return MAP_FAILED;
-    else
-        return m.u.m_mm_mmap_reply.retaddr;
+    }
+
+    return m.u.m_mm_mmap_reply.retaddr;
 }
 
 int munmap(void* addr, size_t len)
@@ -1729,9 +1731,34 @@ int munmap(void* addr, size_t len)
 
 void* mremap(void* old_addr, size_t old_size, size_t new_size, int flags, ...)
 {
-    printf("mremap: not implemented\n");
-    errno = ENOSYS;
-    return MAP_FAILED;
+    MESSAGE m;
+    va_list args;
+
+    memset(&m, 0, sizeof(MESSAGE));
+
+    m.type = MREMAP;
+    m.u.m_mm_mremap.old_addr = old_addr;
+    m.u.m_mm_mremap.old_size = old_size;
+    m.u.m_mm_mremap.new_size = new_size;
+    m.u.m_mm_mremap.flags = flags;
+    m.u.m_mm_mremap.new_addr = NULL;
+
+    if (flags & MREMAP_FIXED) {
+        va_start(args, flags);
+        m.u.m_mm_mremap.new_addr = va_arg(args, void*);
+        va_end(args);
+    }
+
+    cmb();
+
+    send_recv(BOTH, TASK_MM, &m);
+
+    if (m.u.m_mm_mmap_reply.retval) {
+        errno = m.u.m_mm_mmap_reply.retval;
+        return MAP_FAILED;
+    }
+
+    return m.u.m_mm_mmap_reply.retaddr;
 }
 
 int ftruncate(int fd, off_t length)

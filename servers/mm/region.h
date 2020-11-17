@@ -49,6 +49,8 @@ struct region_operations {
     void (*rop_split)(struct mmproc* mmp, struct vir_region* vr,
                       struct vir_region* r1, struct vir_region* r2);
     int (*rop_copy)(struct vir_region* vr, struct vir_region* new_vr);
+    int (*rop_remap)(struct vir_region* vr, vir_bytes offset, vir_bytes len,
+                     struct vir_region* new_vr);
     int (*rop_page_fault)(struct mmproc* mmp, struct vir_region* vr,
                           struct phys_region* pr, int write,
                           void (*cb)(struct mmproc*, MESSAGE*, void*),

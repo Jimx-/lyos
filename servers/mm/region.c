@@ -634,6 +634,32 @@ static int region_unmap(struct mmproc* mmp, struct vir_region* vr, off_t offset,
     return 0;
 }
 
+int region_remap(struct mmproc* mmp, struct vir_region* vr, vir_bytes offset,
+                 size_t len, struct vir_region* new_vr)
+{
+    struct phys_region *pr, *new_pr;
+    int i, retval;
+
+    if (vr->rops->rop_remap &&
+        (retval = vr->rops->rop_remap(vr, offset, len, new_vr)) != OK)
+        return retval;
+
+    for (i = 0;
+         i < phys_slot(vr->length - offset) && i < phys_slot(new_vr->length);
+         i++) {
+        if (!(pr = phys_region_get(vr, offset + (i << ARCH_PG_SHIFT))))
+            continue;
+
+        if (!(new_pr = page_reference(pr->page, i << ARCH_PG_SHIFT, new_vr,
+                                      vr->rops)))
+            return ENOMEM;
+
+        if (pr->rops->rop_reference) pr->rops->rop_reference(pr, new_pr);
+    }
+
+    return region_unmap(mmp, vr, offset, len);
+}
+
 int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len)
 {
     off_t offset = start % ARCH_PG_SIZE;

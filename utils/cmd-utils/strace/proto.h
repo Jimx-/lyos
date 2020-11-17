@@ -78,6 +78,7 @@ int trace_access(struct tcb* tcp);
 int trace_brk(struct tcb* tcp);
 int trace_mmap(struct tcb* tcp);
 int trace_munmap(struct tcb* tcp);
+int trace_mremap(struct tcb* tcp);
 
 int trace_dup(struct tcb* tcp);
 

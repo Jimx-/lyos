@@ -324,3 +324,62 @@ int do_mm_remap()
     mm_msg.u.m_mm_remap.ret_addr = (void*)new_region->vir_addr;
     return 0;
 }
+
+int do_mremap(void)
+{
+    endpoint_t src = mm_msg.source;
+    vir_bytes old_addr = (vir_bytes)mm_msg.u.m_mm_mremap.old_addr;
+    size_t old_size = mm_msg.u.m_mm_mremap.old_size;
+    size_t new_size = mm_msg.u.m_mm_mremap.new_size;
+    int flags = mm_msg.u.m_mm_mremap.flags;
+    vir_bytes new_addr = 0, offset;
+    struct mmproc* mmp;
+    struct vir_region *src_region, *new_region = NULL;
+    int retval;
+
+    /* check for invalid flags */
+    if (flags & ~(MREMAP_MAYMOVE | MREMAP_FIXED)) return EINVAL;
+
+    /* TODO: handle !MREMAP_MAYMOVE case */
+    if (!(flags & MREMAP_MAYMOVE)) return EINVAL;
+
+    /* old_addr was not page-aligned */
+    if (old_addr % ARCH_PG_SIZE) return EINVAL;
+
+    if (flags & MREMAP_FIXED) {
+        new_addr = (vir_bytes)mm_msg.u.m_mm_mremap.new_addr;
+        if (new_addr % ARCH_PG_SIZE) return EINVAL;
+    }
+
+    mmp = endpt_mmproc(src);
+    if (!mmp) return EINVAL;
+
+    old_size = roundup(old_size, ARCH_PG_SIZE);
+    new_size = roundup(new_size, ARCH_PG_SIZE);
+
+    src_region = region_lookup(mmp, old_addr);
+    if (!src_region ||
+        old_addr + old_size > src_region->vir_addr + src_region->length)
+        return EFAULT;
+
+    offset = old_addr - src_region->vir_addr;
+
+    if (flags & MREMAP_FIXED) {
+        new_region = region_map(mmp, new_addr, 0, new_size, src_region->flags,
+                                0, src_region->rops);
+    } else {
+        new_region = region_map(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, new_size,
+                                src_region->flags, 0, src_region->rops);
+    }
+
+    if (!new_region) return ENOMEM;
+
+    retval = region_remap(mmp, src_region, offset, old_size, new_region);
+    if (retval != OK) {
+        region_free(new_region);
+        return retval;
+    }
+
+    mm_msg.u.m_mm_mmap_reply.retaddr = (void*)new_region->vir_addr;
+    return 0;
+}

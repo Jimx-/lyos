@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/mman.h>
 
 #include "proto.h"
 #include "syscallent.h"
@@ -97,8 +98,14 @@ int syscall_trace_exiting(struct tcb* tcp)
             }
             break;
         case MMAP:
+        case MREMAP:
             base = 16;
-            retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
+
+            if (tcp->msg_out.u.m_mm_mmap_reply.retval > 0) {
+                err = tcp->msg_out.u.m_mm_mmap_reply.retval;
+                retval = (int)MAP_FAILED;
+            } else
+                retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
             break;
         case SENDTO:
         case RECVFROM:

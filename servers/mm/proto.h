@@ -96,6 +96,8 @@ int region_handle_pf(struct mmproc* mmp, struct vir_region* vr,
                      vir_bytes offset, int write, vfs_callback_t cb,
                      void* state, size_t state_len);
 int region_unmap_range(struct mmproc* mmp, vir_bytes start, size_t len);
+int region_remap(struct mmproc* mmp, struct vir_region* vr, vir_bytes offset,
+                 size_t len, struct vir_region* new_vr);
 int region_free(struct vir_region* rp);
 int region_free_proc(struct mmproc* mmp);
 int region_copy_proc(struct mmproc* mmp_dest, struct mmproc* mmp_src);
@@ -133,6 +135,7 @@ int do_munmap();
 int do_vfs_mmap();
 int do_map_phys();
 int do_mm_remap();
+int do_mremap(void);
 
 int enqueue_vfs_request(struct mmproc* mmp, int req_type, int fd, void* addr,
                         off_t offset, size_t len, vfs_callback_t callback,

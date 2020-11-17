@@ -48,9 +48,9 @@ if $BUILD_EVERYTHING; then
     BUILD_CAIRO=true
     BUILD_LIBXKBCOMMON=true
     BUILD_LIBTSM=true
-    BUILD_KMSCON=true
-    BUILD_XORG_PROTO=true
-    BUILD_XKEYBOARD_CONFIG=true
+    # BUILD_KMSCON=true
+    # BUILD_XORG_PROTO=true
+    # BUILD_XKEYBOARD_CONFIG=true
 fi
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
