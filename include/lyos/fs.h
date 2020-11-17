@@ -16,6 +16,8 @@
 #ifndef _FS_H_
 #define _FS_H_
 
+#include <sys/types.h>
+#include <lyos/types.h>
 #include <lyos/list.h>
 #include <sys/syslimits.h>
 
@@ -92,5 +94,21 @@ struct vfs_ucred {
 #define VFS_TXN_TYPE_ID(t, id) (((t) << 16) | ((id)&0xffff))
 #define VFS_TXN_GET_ID(t)      ((t)&0xffff)
 #define VFS_TXN_GET_TYPE(t)    (((t) >> 16) & 0xffff)
+
+struct vfs_exec_request {
+    endpoint_t endpoint;
+    void* pathname;
+    size_t name_len;
+    void* frame;
+    size_t frame_size;
+};
+
+struct vfs_exec_response {
+    int status;
+    uid_t new_uid;
+    gid_t new_gid;
+    void* frame;
+    size_t frame_size;
+};
 
 #endif /* _FS_H_ */

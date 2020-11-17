@@ -78,7 +78,7 @@ static struct exec_loader exec_loaders[] = {
 };
 
 static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
-                          struct fproc* fp);
+                          int sugid, struct fproc* fp);
 static int read_header(struct vfs_exec_info* execi);
 static int is_script(struct vfs_exec_info* execi);
 static int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
@@ -86,7 +86,7 @@ static int request_vfs_mmap(struct exec_info* execi, void* vaddr, size_t len,
 
 /* open the executable and fill in exec info */
 static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
-                          struct fproc* fp)
+                          int sugid, struct fproc* fp)
 {
     int retval;
 
@@ -109,6 +109,17 @@ static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
     retval = request_stat(execi->pin->i_fs_ep, execi->pin->i_dev,
                           execi->pin->i_num, TASK_FS, (char*)&(execi->sbuf));
     if (retval) return retval;
+
+    if (sugid) {
+        if (execi->pin->i_mode & S_ISUID) {
+            execi->args.new_uid = execi->pin->i_uid;
+            execi->args.sugid = TRUE;
+        }
+        if (execi->pin->i_mode & S_ISGID) {
+            execi->args.new_uid = execi->pin->i_gid;
+            execi->args.sugid = TRUE;
+        }
+    }
 
     if ((retval = read_header(execi)) != 0) return retval;
 
@@ -187,10 +198,15 @@ int fs_exec(void)
     struct vfs_exec_info execi;
     int fd;
     struct file_desc* filp = NULL;
+    struct vfs_exec_request* request =
+        (struct vfs_exec_request*)self->msg_in.MSG_PAYLOAD;
+    endpoint_t src = request->endpoint;
+    size_t name_len = request->name_len;
+    void* user_sp = request->frame;
+    size_t orig_stack_len = request->frame_size;
+    struct vfs_exec_response* resp =
+        (struct vfs_exec_response*)self->msg_out.MSG_PAYLOAD;
 
-    /* get parameters from the message */
-    int name_len = self->msg_in.NAME_LEN; /* length of filename */
-    int src = self->msg_in.ENDPOINT;      /* caller proc nr. */
     struct fproc* mm_task = vfs_endpt_proc(TASK_MM);
     int i;
 
@@ -203,17 +219,15 @@ int fs_exec(void)
     execi.args.stack_size = 1 << 20;
 
     /* uid & gid */
-    execi.args.new_uid = fproc->realuid;
-    execi.args.new_gid = fproc->realgid;
-    execi.args.new_euid = fproc->effuid;
-    execi.args.new_egid = fproc->effgid;
+    execi.args.ruid = fproc->realuid;
+    execi.args.rgid = fproc->realgid;
+    execi.args.new_uid = fproc->effuid;
+    execi.args.new_gid = fproc->effgid;
 
     execi.is_dyn = 0;
     execi.exec_fd = -1;
 
     /* copy everything we need before we free the old process */
-    void* user_sp = self->msg_in.BUF;
-    size_t orig_stack_len = self->msg_in.BUF_LEN;
     if (orig_stack_len > PROC_ORIGIN_STACK) {
         retval = ENOMEM; /* stack too big */
         goto exec_finalize;
@@ -221,18 +235,18 @@ int fs_exec(void)
 
     static char stackcopy[PROC_ORIGIN_STACK];
     memset(stackcopy, 0, sizeof(stackcopy));
-    data_copy(SELF, stackcopy, src, self->msg_in.BUF, orig_stack_len);
+    data_copy(SELF, stackcopy, src, user_sp, orig_stack_len);
 
     /* copy prog name */
     char pathname[PATH_MAX];
-    data_copy(SELF, pathname, src, self->msg_in.PATHNAME, name_len);
+    data_copy(SELF, pathname, src, request->pathname, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
     struct lookup lookup;
     init_lookup(&lookup, pathname, 0, &execi.vmnt, &execi.pin);
     lookup.vmnt_lock = RWL_READ;
     lookup.inode_lock = RWL_READ;
-    retval = get_exec_inode(&execi, &lookup, fproc);
+    retval = get_exec_inode(&execi, &lookup, TRUE /* sugid */, fproc);
     if (retval) goto exec_finalize;
 
     /* relocate stack pointers */
@@ -252,7 +266,7 @@ int fs_exec(void)
     if (is_script(&execi)) {
         setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname,
                            (void**)&orig_stack);
-        retval = get_exec_inode(&execi, &lookup, fproc);
+        retval = get_exec_inode(&execi, &lookup, FALSE /* sugid */, fproc);
         if (retval) goto exec_finalize;
     }
 
@@ -314,7 +328,7 @@ int fs_exec(void)
         init_lookup(&lookup, interp, 0, &execi.vmnt, &execi.pin);
         lookup.vmnt_lock = RWL_READ;
         lookup.inode_lock = RWL_READ;
-        retval = get_exec_inode(&execi, &lookup, fproc);
+        retval = get_exec_inode(&execi, &lookup, FALSE /* sugid */, fproc);
         if (retval) goto exec_finalize;
 
         /* put ld.so higher to trap NULL pointer dereferences */
@@ -356,8 +370,16 @@ int fs_exec(void)
     ps.ps_envstr = envp;
 
     /* record frame info */
-    self->msg_out.BUF = orig_stack;
-    self->msg_out.BUF_LEN = orig_stack_len;
+    resp->frame = orig_stack;
+    resp->frame_size = orig_stack_len;
+
+    if (execi.args.sugid) {
+        fproc->effuid = execi.args.new_uid;
+        fproc->effgid = execi.args.new_gid;
+    }
+
+    resp->new_uid = execi.args.new_uid;
+    resp->new_gid = execi.args.new_gid;
 
 exec_finalize:
     if (filp) {
@@ -436,10 +458,10 @@ static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
     }
     AUXV_ENT(auxv, AT_BASE, (u32)execi->args.load_base);
     AUXV_ENT(auxv, AT_EXECFD, execi->exec_fd);
-    AUXV_ENT(auxv, AT_UID, execi->args.new_uid);
-    AUXV_ENT(auxv, AT_GID, execi->args.new_gid);
-    AUXV_ENT(auxv, AT_EUID, execi->args.new_euid);
-    AUXV_ENT(auxv, AT_EGID, execi->args.new_egid);
+    AUXV_ENT(auxv, AT_UID, execi->args.ruid);
+    AUXV_ENT(auxv, AT_GID, execi->args.rgid);
+    AUXV_ENT(auxv, AT_EUID, execi->args.new_uid);
+    AUXV_ENT(auxv, AT_EGID, execi->args.new_gid);
     AUXV_ENT(auxv, AT_PAGESZ, ARCH_PG_SIZE);
     AUXV_ENT(auxv, AT_CLKTCK, get_system_hz());
     AUXV_ENT(auxv, AT_SYSINFO, (void*)sysinfo);

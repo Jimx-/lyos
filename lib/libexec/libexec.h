@@ -40,8 +40,9 @@ struct exec_info {
     size_t data_size;
     size_t stack_size;
 
-    uid_t new_uid, new_euid;
-    gid_t new_gid, new_egid;
+    int sugid;
+    uid_t ruid, new_uid;
+    gid_t rgid, new_gid;
 
     void* entry_point;
     void* stack_top;

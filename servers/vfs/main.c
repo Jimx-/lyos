@@ -119,10 +119,13 @@ int main()
         case SDEV_POLL_NOTIFY:
             sdev_reply(&msg);
             break;
-        case PM_VFS_EXEC:
-            fproc = vfs_endpt_proc(msg.ENDPOINT);
+        case PM_VFS_EXEC: {
+            struct vfs_exec_request* request =
+                (struct vfs_exec_request*)msg.MSG_PAYLOAD;
+            fproc = vfs_endpt_proc(request->endpoint);
             dispatch_work(&msg, do_work);
             break;
+        }
         case PM_SIGNALFD_REPLY:
         case PM_SIGNALFD_POLL_NOTIFY:
             do_pm_signalfd_reply(&msg);
