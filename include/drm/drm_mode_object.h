@@ -1,6 +1,8 @@
 #ifndef _DRM_DRM_MODE_OBJECT_H_
 #define _DRM_DRM_MODE_OBJECT_H_
 
+struct drm_device;
+
 #define DRM_MODE_OBJECT_CRTC      0xcccccccc
 #define DRM_MODE_OBJECT_CONNECTOR 0xc0c0c0c0
 #define DRM_MODE_OBJECT_ENCODER   0xe0e0e0e0

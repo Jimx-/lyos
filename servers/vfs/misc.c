@@ -350,6 +350,8 @@ int do_mm_request(void)
         struct inode* pin = filp->fd_inode;
         void* retaddr;
 
+        self->msg_out.MMRFD = fd;
+
         if (S_ISCHR(pin->i_mode)) {
             result =
                 cdev_mmap(pin->i_specdev, ep, vaddr, offset, len, &retaddr, fp);

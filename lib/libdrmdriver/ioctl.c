@@ -121,6 +121,9 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_PAGE_FLIP, drm_mode_page_flip_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_CREATE_DUMB, drm_mode_create_dumb_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, 0),
+    DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES,
+                  drm_mode_obj_get_properties_ioctl, 0),
+
 };
 
 #define DRM_CORE_IOCTL_COUNT (sizeof(drm_ioctls) / sizeof(drm_ioctls[0]))

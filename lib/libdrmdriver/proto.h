@@ -53,4 +53,8 @@ int drm_event_reserve(struct drm_device* dev, struct drm_pending_event* p,
 void drm_send_event(struct drm_device* dev, struct drm_pending_event* e);
 __poll_t drm_select_try(struct drm_device* dev);
 
+/* mode_object.c */
+int drm_mode_obj_get_properties_ioctl(struct drm_device* dev,
+                                      endpoint_t endpoint, void* data);
+
 #endif

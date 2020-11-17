@@ -376,6 +376,8 @@ int do_mremap(void)
 
     retval = region_remap(mmp, src_region, offset, old_size, new_region);
     if (retval != OK) {
+        list_del(&new_region->list);
+        avl_erase(&new_region->avl, &mmp->mm->mem_avl);
         region_free(new_region);
         return retval;
     }
