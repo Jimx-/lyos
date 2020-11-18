@@ -1303,20 +1303,6 @@ void* sbrk(ptrdiff_t nbytes)
         return (void*)(-1);
 }
 
-int gettimeofday(struct timeval* tv, void* tz)
-{
-    MESSAGE msg;
-
-    msg.type = GET_TIME_OF_DAY;
-    msg.BUF = (void*)tv;
-
-    cmb();
-
-    send_recv(BOTH, TASK_SYS, &msg);
-
-    return msg.RETVAL;
-}
-
 uid_t getuid(void)
 {
     MESSAGE msg;
