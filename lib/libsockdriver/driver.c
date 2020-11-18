@@ -65,7 +65,7 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
 
     sock->sel_endpoint = NO_TASK;
     sock->sel_mask = 0;
-    sock->sel_flags = 0;
+    sock->sel_oneshot_mask = 0;
 
     sock->ops = ops;
 
@@ -779,9 +779,13 @@ static void do_select(MESSAGE* msg)
 
     retval = sock->ops->sop_poll(sock) & ops;
 
-    ops &= ~retval;
-
     if (notify && ops) {
+        if (oneshot) {
+            ops &= ~retval;
+            /* set outstanding oneshot events */
+            sock->sel_oneshot_mask |= ops & ~sock->sel_mask;
+        }
+
         if (sock->sel_endpoint != NO_TASK) {
             if (sock->sel_endpoint != src) {
                 retval = -EIO;
@@ -793,8 +797,6 @@ static void do_select(MESSAGE* msg)
             sock->sel_endpoint = src;
             sock->sel_mask = ops;
         }
-
-        if (oneshot) sock->sel_flags |= SSEL_ONESHOT;
     }
 
 reply:
@@ -1081,8 +1083,9 @@ void sockdriver_fire(struct sock* sock, unsigned int mask)
         if (retval != 0) {
             send_poll_notify(sock->sel_endpoint, sock_sockid(sock), retval);
 
-            if (sock->sel_flags & SSEL_ONESHOT) {
-                sock->sel_mask &= ~retval;
+            if (sock->sel_oneshot_mask) {
+                /* clear oneshot events */
+                sock->sel_mask &= ~(retval & sock->sel_oneshot_mask);
 
                 if (sock->sel_mask == 0) sock->sel_endpoint = NO_TASK;
             }

@@ -305,7 +305,7 @@ static int kb_init()
 
     kb_cmd0(0xAA);
     r = kb_read();
-    if (r != 0x55) return EIO;
+    /* if (r != 0x55) return EIO; */
 
     kb_hook_id = KEYBOARD_IRQ;
     irq_setpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &kb_hook_id);
@@ -399,6 +399,7 @@ static int kb_read(void)
         portio_inb(KB_STATUS, &status);
 
         if (status & KB_OUT_FULL) {
+            usleep(KBC_IN_DELAY);
             portio_inb(KB_DATA, &b);
 
             return b;

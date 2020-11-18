@@ -29,9 +29,6 @@ typedef int32_t sockid_t;
 #define SFL_LINGER     0x200
 #define SFL_BROADCAST  0x400
 
-/* Socket select flags */
-#define SSEL_ONESHOT 0x01
-
 struct sock_cred {
     pid_t pid;
     uid_t uid;
@@ -59,7 +56,7 @@ struct sock {
 
     endpoint_t sel_endpoint;
     __poll_t sel_mask;
-    int sel_flags;
+    __poll_t sel_oneshot_mask;
 
     const struct sockdriver_ops* ops;
 };

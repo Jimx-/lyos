@@ -129,32 +129,34 @@ int main()
 static int get_rtc_time(struct time* t)
 {
 #ifdef __i386__
-    /* do { */
-    /*     sec = -1; */
-    /*     n = 0; */
-    /*     do { */
-    /*         if (read_register(RTC_REG_A) & RTC_A_UIP) continue; */
+    int n, sec;
 
-    /*         t->second = read_register(RTC_SECOND); */
-    /*         if (t->second != sec) { */
-    /*             sec = t->second; */
-    /*             n++; */
-    /*         } */
-    /*     } while (n < 2); */
+    do {
+        sec = -1;
+        n = 0;
+        do {
+            if (read_register(RTC_REG_A) & RTC_A_UIP) continue;
 
-    t->second = read_register(RTC_SECOND);
-    t->minute = read_register(RTC_MINUTE);
-    t->hour = read_register(RTC_HOUR);
-    t->day = read_register(RTC_DAY);
-    t->month = read_register(RTC_MONTH);
-    t->year = read_register(RTC_YEAR);
+            t->second = read_register(RTC_SECOND);
+            if (t->second != sec) {
+                sec = t->second;
+                n++;
+            }
+        } while (n < 2);
 
-    /* } while (read_register(RTC_SECOND) != t->second || */
-    /*          read_register(RTC_MINUTE) != t->minute || */
-    /*          read_register(RTC_HOUR) != t->hour || */
-    /*          read_register(RTC_DAY) != t->day || */
-    /*          read_register(RTC_MONTH) != t->month || */
-    /*          read_register(RTC_YEAR) != t->year); */
+        t->second = read_register(RTC_SECOND);
+        t->minute = read_register(RTC_MINUTE);
+        t->hour = read_register(RTC_HOUR);
+        t->day = read_register(RTC_DAY);
+        t->month = read_register(RTC_MONTH);
+        t->year = read_register(RTC_YEAR);
+
+    } while (read_register(RTC_SECOND) != t->second ||
+             read_register(RTC_MINUTE) != t->minute ||
+             read_register(RTC_HOUR) != t->hour ||
+             read_register(RTC_DAY) != t->day ||
+             read_register(RTC_MONTH) != t->month ||
+             read_register(RTC_YEAR) != t->year);
 
     if (!(read_register(RTC_REG_B) & RTC_B_DM_BCD)) {
         t->year = BCD_TO_DEC(t->year);

@@ -41,4 +41,6 @@ Write: Write Input Buffer(8042 Command) */
 #define KB_IN_FULL  0x02
 #define KB_AUX_BYTE 0x20
 
+#define KBC_IN_DELAY 7
+
 #endif /* _KEYBOARD_H_ */
