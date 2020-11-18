@@ -43,10 +43,23 @@ int openpty(int* amaster, int* aslave, char* name, const struct termios* termp,
 {
     char buf[128];
     int fd, pts_fd;
+    int retval;
 
     fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
 
     if (fd < 0) return -1;
+
+    retval = grantpt(fd);
+    if (retval) {
+        errno = retval;
+        return -1;
+    }
+
+    retval = unlockpt(fd);
+    if (retval) {
+        errno = retval;
+        return -1;
+    }
 
     if (ptsname_r(fd, buf, sizeof(buf)) < 0) return -1;
 

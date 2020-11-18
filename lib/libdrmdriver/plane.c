@@ -92,3 +92,45 @@ int drm_mode_page_flip_ioctl(struct drm_device* dev, endpoint_t endpoint,
 
     return drm_atomic_page_flip(crtc, fb, e);
 }
+
+static int drm_mode_cursor_common(struct drm_device* dev,
+                                  struct drm_mode_cursor2* req)
+{
+    struct drm_crtc* crtc;
+    int retval;
+
+    if (!req->flags || (~DRM_MODE_CURSOR_FLAGS & req->flags)) return EINVAL;
+
+    crtc = drm_crtc_lookup(dev, req->crtc_id);
+    if (!crtc) return ENOENT;
+
+    if (req->flags & DRM_MODE_CURSOR_BO) {
+        retval = EINVAL;
+    }
+
+    if (req->flags & DRM_MODE_CURSOR_MOVE) {
+        retval = EINVAL;
+    }
+
+    return retval;
+}
+
+int drm_mode_cursor_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                          void* data)
+{
+    struct drm_mode_cursor* req = data;
+    struct drm_mode_cursor2 new_req;
+
+    memcpy(&new_req, req, sizeof(struct drm_mode_cursor));
+    new_req.hot_x = new_req.hot_y = 0;
+
+    return drm_mode_cursor_common(dev, &new_req);
+}
+
+int drm_mode_cursor2_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                           void* data)
+{
+    struct drm_mode_cursor2* req = data;
+
+    return drm_mode_cursor_common(dev, req);
+}

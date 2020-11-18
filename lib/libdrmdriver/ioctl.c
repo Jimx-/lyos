@@ -114,6 +114,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCRTC, drm_mode_getcrtc, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETCRTC, drm_mode_setcrtc, 0),
+    DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR, drm_mode_cursor_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETENCODER, drm_mode_getencoder, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCONNECTOR, drm_mode_getconnector, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB, drm_mode_addfb_ioctl, 0),
@@ -123,7 +124,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, 0),
     DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES,
                   drm_mode_obj_get_properties_ioctl, 0),
-
+    DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR2, drm_mode_cursor2_ioctl, 0),
 };
 
 #define DRM_CORE_IOCTL_COUNT (sizeof(drm_ioctls) / sizeof(drm_ioctls[0]))

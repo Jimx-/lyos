@@ -46,6 +46,10 @@ int drm_gem_mmap(struct drm_device* dev, endpoint_t endpoint, char* addr,
 /* plane.c */
 int drm_mode_page_flip_ioctl(struct drm_device* dev, endpoint_t endpoint,
                              void* data);
+int drm_mode_cursor_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                          void* data);
+int drm_mode_cursor2_ioctl(struct drm_device* dev, endpoint_t endpoint,
+                           void* data);
 
 /* file.c */
 int drm_event_reserve(struct drm_device* dev, struct drm_pending_event* p,

@@ -220,6 +220,8 @@ static void kbdaux_process(struct inputdriver_dev* dev, u8 scancode)
         if (delta) {
             if (aux_bytes[0] & (0x10 << i)) delta |= ~0xFF;
 
+            if (i) delta = -delta;
+
             inputdriver_send_event(dev, EV_REL, !i ? REL_X : REL_Y, delta);
         }
     }

@@ -265,6 +265,9 @@ int tty_ioctl(dev_t minor, int request, endpoint_t endpoint, mgrant_id_t grant,
                                sizeof(struct winsize));
         tty_sigproc(tty, SIGWINCH);
         break;
+    case TIOCSCTTY:
+        tty->tty_pgrp = user_endpoint;
+        break;
     default:
         retval = EINVAL;
         break;
