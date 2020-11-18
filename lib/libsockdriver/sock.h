@@ -73,6 +73,7 @@ struct sockdriver_data {
 #define sock_sockid(sock)            ((sock)->id)
 #define sock_domain(sock)            ((sock)->domain)
 #define sock_type(sock)              ((sock)->type)
+#define sock_flags(sock)             ((sock)->flags)
 #define sock_protocol(sock)          ((sock)->protocol)
 #define sock_recvq(sock)             ((sock)->recvq)
 #define sock_peercred(sock)          ((sock)->peercred)

@@ -121,7 +121,7 @@ int inputdriver_send_event(struct inputdriver_dev* dev, u16 type, u16 code,
     return input_sendrec(SEND, &msg);
 }
 
-int inputdriver_start(struct inputdriver_dev* dev)
+int inputdriver_start(struct inputdriver* drv)
 {
     MESSAGE msg;
 
@@ -134,8 +134,7 @@ int inputdriver_start(struct inputdriver_dev* dev)
         if (msg.type == NOTIFY_MSG) {
             switch (src) {
             case INTERRUPT:
-                if (dev->driver->input_interrupt)
-                    dev->driver->input_interrupt(dev, msg.INTERRUPTS);
+                if (drv->input_interrupt) drv->input_interrupt(msg.INTERRUPTS);
                 break;
             }
             continue;
@@ -143,8 +142,8 @@ int inputdriver_start(struct inputdriver_dev* dev)
 
         switch (msg.type) {
         default:
-            if (dev->driver->input_other) {
-                dev->driver->input_other(dev, &msg);
+            if (drv->input_other) {
+                drv->input_other(&msg);
 
                 continue;
             } else

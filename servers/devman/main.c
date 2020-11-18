@@ -143,6 +143,8 @@ static int devfs_mknod(struct memfs_inode* parent, const char* name,
 {
     struct memfs_inode* pin;
 
+    if (memfs_find_inode_by_name(parent, name) != NULL) return EEXIST;
+
     pin = memfs_add_inode(parent, name, NO_INDEX, stat, NULL);
     if (!pin) return ENOMEM;
 

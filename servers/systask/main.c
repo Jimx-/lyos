@@ -29,6 +29,7 @@
 #include "lyos/time.h"
 #include "sys/utsname.h"
 #include <sys/time.h>
+#include <lyos/sysutils.h>
 #include <lyos/portio.h>
 
 #define MAX_HOSTNAME_LEN 256
@@ -36,14 +37,18 @@ static char hostname[MAX_HOSTNAME_LEN];
 static struct utsname uname_buf;
 
 #ifdef __i386__
-#define YEAR       9 /* Clock register addresses in CMOS RAM	*/
-#define MONTH      8
-#define DAY        7
-#define HOUR       4
-#define MINUTE     2
-#define SECOND     0
-#define CLK_STATUS 0x0B /* Status register B: RTC configuration	*/
-#define CLK_HEALTH                                     \
+#define RTC_YEAR     9 /* Clock register addresses in CMOS RAM	*/
+#define RTC_MONTH    8
+#define RTC_DAY      7
+#define RTC_HOUR     4
+#define RTC_MINUTE   2
+#define RTC_SECOND   0
+#define RTC_REG_A    0xA
+#define RTC_A_UIP    0x80
+#define RTC_REG_B    0x0B /* Status register B: RTC configuration	*/
+#define RTC_B_DM_BCD 0x04
+
+#define CMOS_STATUS                                    \
     0x0E /* Diagnostic status: (should be set by Power \
           * On Self-Test [POST])                       \
           * Bit  7 = RTC lost power                    \
@@ -65,7 +70,9 @@ static int do_gettimeofday(struct timeval* tv, struct timezone* tz);
 static int prepare_uname_buf(struct utsname* buf);
 static int do_getsethostname(MESSAGE* p);
 
-#define BCD_TO_DEC(x) ((x >> 4) * 10 + (x & 0x0f))
+#define BCD_TO_DEC(x) (((x) >> 4) & 0x0F) * 10 + ((x)&0x0F)
+
+static void setup_boottime(void);
 
 /*****************************************************************************
  *                                task_sys
@@ -78,6 +85,8 @@ int main()
 {
     MESSAGE msg;
     struct timeval tv;
+
+    setup_boottime();
 
     prepare_uname_buf(&uname_buf);
 
@@ -119,17 +128,37 @@ int main()
  *****************************************************************************/
 static int get_rtc_time(struct time* t)
 {
-    int retval;
 #ifdef __i386__
-    t->year = read_register(YEAR);
-    t->month = read_register(MONTH);
-    t->day = read_register(DAY);
-    t->hour = read_register(HOUR);
-    t->minute = read_register(MINUTE);
-    t->second = read_register(SECOND);
+    int sec, n;
 
-    if ((retval = read_register(CLK_STATUS) & 0x04) == 0) {
-        /* Convert BCD to binary (default RTC mode) */
+    /* do { */
+    /*     sec = -1; */
+    /*     n = 0; */
+    /*     do { */
+    /*         if (read_register(RTC_REG_A) & RTC_A_UIP) continue; */
+
+    /*         t->second = read_register(RTC_SECOND); */
+    /*         if (t->second != sec) { */
+    /*             sec = t->second; */
+    /*             n++; */
+    /*         } */
+    /*     } while (n < 2); */
+
+    t->second = read_register(RTC_SECOND);
+    t->minute = read_register(RTC_MINUTE);
+    t->hour = read_register(RTC_HOUR);
+    t->day = read_register(RTC_DAY);
+    t->month = read_register(RTC_MONTH);
+    t->year = read_register(RTC_YEAR);
+
+    /* } while (read_register(RTC_SECOND) != t->second || */
+    /*          read_register(RTC_MINUTE) != t->minute || */
+    /*          read_register(RTC_HOUR) != t->hour || */
+    /*          read_register(RTC_DAY) != t->day || */
+    /*          read_register(RTC_MONTH) != t->month || */
+    /*          read_register(RTC_YEAR) != t->year); */
+
+    if (!(read_register(RTC_REG_B) & RTC_B_DM_BCD)) {
         t->year = BCD_TO_DEC(t->year);
         t->month = BCD_TO_DEC(t->month);
         t->day = BCD_TO_DEC(t->day);
@@ -138,10 +167,12 @@ static int get_rtc_time(struct time* t)
         t->second = BCD_TO_DEC(t->second);
     }
 
-    t->year += 2000;
+    if (t->year < 80) t->year += 100;
+
+    t->year += 1900;
 #endif
 
-    return retval;
+    return 0;
 }
 
 #ifdef __i386__
@@ -157,9 +188,17 @@ static int get_rtc_time(struct time* t)
  *****************************************************************************/
 static inline int read_register(int reg_addr)
 {
-    int v;
-    portio_outb(CLK_ELE, reg_addr);
-    portio_inb(CLK_IO, &v);
+    int v, retval;
+
+    if ((retval = portio_outb(CLK_ELE, reg_addr)) != OK) {
+        printl("read_register outb failed: %d\n", retval);
+        return -1;
+    }
+
+    if ((retval = portio_inb(CLK_IO, &v)) != OK) {
+        printl("read_register outb failed: %d\n", retval);
+        return -1;
+    }
     return v;
 }
 #endif
@@ -230,6 +269,19 @@ static int do_gettimeofday(struct timeval* tv, struct timezone* tz)
     tv->tv_sec = time;
     tv->tv_usec = 0;
     return 0;
+}
+
+static void setup_boottime(void)
+{
+    struct time t;
+    time_t time;
+
+    if (get_rtc_time(&t) != 0) return;
+
+    time = secs_of_years(t.year - 1) + secs_of_months(t.month - 1, t.year) +
+           (t.day - 1) * 86400 + t.hour * 3600 + t.minute * 60 + t.second;
+
+    kernel_stime(time);
 }
 
 static int prepare_uname_buf(struct utsname* buf)

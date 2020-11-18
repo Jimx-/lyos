@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <lyos/const.h>
 #include <string.h>
+#include <errno.h>
 #include <lyos/fs.h>
 #include <lyos/proc.h>
 #include <lyos/global.h>
@@ -31,6 +32,7 @@
 #include <libinputdriver/libinputdriver.h>
 
 #include "keyboard.h"
+#include "uapi/linux/input-event-codes.h"
 
 #define KEYMAP_SIZE 512
 
@@ -71,22 +73,34 @@ static const unsigned short set1_scancode[128] = {
 
 /* static const char* name = "atkbd"; */
 
-static struct inputdriver_dev input_dev;
+#define KB_DEV  0
+#define AUX_DEV 1
+static struct inputdriver_dev input_devs[2];
 
-static irq_id_t kb_irq_set;
-static int kb_hook_id;
+static int kb_hook_id, aux_hook_id;
 
 static unsigned short keycode_table[KEYMAP_SIZE];
 
 static int emul = 0;
 static int release = FALSE;
 
-static int init_keyboard();
-static void keyboard_interrupt(struct inputdriver_dev* dev,
-                               unsigned long irq_set);
+static u8 aux_bytes[3];
+static u8 aux_state = 0;
+static int aux_counter = 0;
+static int aux_available = 0;
+
+static int kb_init();
+static void keyboard_interrupt(unsigned long irq_set);
+static void kbd_process(struct inputdriver_dev* dev, u8 scancode);
+static void kbdaux_process(struct inputdriver_dev* dev, u8 scancode);
+
 static void set_leds();
 static void kb_wait();
 static void kb_ack();
+static void kb_cmd0(int cmd);
+static void kb_cmd1(int cmd, int data);
+static int kb_read(void);
+static int scan_keyboard(u8* bp, int* is_aux);
 
 static struct inputdriver keyboard_driver = {
     .input_interrupt = keyboard_interrupt,
@@ -101,10 +115,10 @@ static struct inputdriver keyboard_driver = {
  *****************************************************************************/
 int main()
 {
-    serv_register_init_fresh_callback(init_keyboard);
+    serv_register_init_fresh_callback(kb_init);
     serv_init();
 
-    return inputdriver_start(&input_dev);
+    return inputdriver_start(&keyboard_driver);
 }
 
 /*****************************************************************************
@@ -115,14 +129,23 @@ int main()
  *
  * @param irq The IRQ corresponding to the keyboard, unused here.
  *****************************************************************************/
-static void keyboard_interrupt(struct inputdriver_dev* dev,
-                               unsigned long irq_set)
+static void keyboard_interrupt(unsigned long irq_set)
 {
     u8 scancode;
+    int is_aux;
+
+    if (!scan_keyboard(&scancode, &is_aux)) return;
+
+    if (!is_aux)
+        kbd_process(&input_devs[KB_DEV], scancode);
+    else if (aux_available)
+        kbdaux_process(&input_devs[AUX_DEV], scancode);
+}
+
+static void kbd_process(struct inputdriver_dev* dev, u8 scancode)
+{
     u16 keycode;
     s32 value;
-
-    portio_inb(KB_DATA, &scancode);
 
     inputdriver_send_event(dev, EV_MSC, MSC_RAW, scancode);
 
@@ -169,16 +192,99 @@ static void keyboard_interrupt(struct inputdriver_dev* dev,
     release = FALSE;
 }
 
+static void kbdaux_process(struct inputdriver_dev* dev, u8 scancode)
+{
+    static const int aux_btns[] = {BTN_LEFT, BTN_MIDDLE, BTN_RIGHT};
+    u32 delta;
+    int i;
+
+    if (aux_counter == 0 && !(scancode & 0x08)) return;
+
+    aux_bytes[aux_counter++] = scancode;
+
+    if (aux_counter < 3) return;
+
+    aux_counter = 0;
+
+    for (i = 0; i < sizeof(aux_btns) / sizeof(aux_btns[0]); i++) {
+        if ((aux_state ^ aux_bytes[0]) & (1 << i)) {
+            aux_state ^= (1 << i);
+
+            inputdriver_send_event(dev, EV_KEY, aux_btns[i],
+                                   !!(aux_state & (1 << i)));
+        }
+    }
+
+    for (i = 0; i < 2; i++) {
+        delta = aux_bytes[i + 1];
+        if (delta) {
+            if (aux_bytes[0] & (0x10 << i)) delta |= ~0xFF;
+
+            inputdriver_send_event(dev, EV_REL, !i ? REL_X : REL_Y, delta);
+        }
+    }
+
+    inputdriver_sync(dev);
+}
+
+static void init_keyboard(struct inputdriver_dev* dev)
+{
+    int i;
+
+    inputdriver_device_init(dev, &keyboard_driver, NO_DEVICE_ID);
+
+    dev->input_id.bustype = BUS_I8042;
+    dev->input_id.vendor = 0x0001;
+    dev->input_id.product = 1;
+    dev->input_id.version = 1;
+
+    SET_BIT(dev->evbit, EV_KEY);
+    SET_BIT(dev->evbit, EV_MSC);
+
+    for (i = 0; i < KEYMAP_SIZE; i++) {
+        if (keycode_table[i] != KEYCODE_NULL) {
+            SET_BIT(dev->keybit, keycode_table[i]);
+        }
+    }
+
+    SET_BIT(dev->mscbit, MSC_SCAN);
+    SET_BIT(dev->mscbit, MSC_RAW);
+
+    inputdriver_register_device(dev);
+}
+
+static void init_aux(struct inputdriver_dev* dev)
+{
+    inputdriver_device_init(dev, &keyboard_driver, NO_DEVICE_ID);
+
+    dev->input_id.bustype = BUS_I8042;
+    dev->input_id.vendor = 0x0001;
+    dev->input_id.product = 1;
+    dev->input_id.version = 1;
+
+    SET_BIT(dev->evbit, EV_KEY);
+    SET_BIT(dev->evbit, EV_REL);
+
+    SET_BIT(dev->relbit, REL_X);
+    SET_BIT(dev->relbit, REL_Y);
+
+    SET_BIT(dev->keybit, BTN_LEFT);
+    SET_BIT(dev->keybit, BTN_MIDDLE);
+    SET_BIT(dev->keybit, BTN_RIGHT);
+
+    inputdriver_register_device(dev);
+}
+
 /*****************************************************************************
- *                                init_keyboard
+ *                                kb_init
  *****************************************************************************/
 /**
  * <Ring 1> Initialize some variables and set keyboard interrupt handler.
  *
  *****************************************************************************/
-static int init_keyboard()
+static int kb_init()
 {
-    int i;
+    int i, ccb, r;
     unsigned short scancode;
 
     /* init keycode table */
@@ -188,34 +294,53 @@ static int init_keyboard()
         keycode_table[i | 0x80] = set2_keycode[scancode | 0x80];
     }
 
-    set_leds();
+    /* Disable keyboard and AUX */
+    kb_cmd0(KBC_KBD_DI);
+    kb_cmd0(KBC_AUX_DI);
 
-    kb_irq_set = 1 << KEYBOARD_IRQ;
+    kb_cmd0(KBC_RD_RAM_CCB);
+    ccb = kb_read();
+
+    aux_available = !!(ccb & 0x10);
+
+    kb_cmd0(0xAA);
+    r = kb_read();
+    if (r != 0x55) return EIO;
+
     kb_hook_id = KEYBOARD_IRQ;
-
     irq_setpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &kb_hook_id);
     irq_enable(&kb_hook_id);
 
-    inputdriver_device_init(&input_dev, &keyboard_driver, NO_DEVICE_ID);
+    init_keyboard(&input_devs[KB_DEV]);
 
-    input_dev.input_id.bustype = BUS_I8042;
-    input_dev.input_id.vendor = 0x0001;
-    input_dev.input_id.product = 1;
-    input_dev.input_id.version = 1;
+    /* Enable keyboard interrupt */
+    ccb |= 0x1;
 
-    SET_BIT(input_dev.evbit, EV_KEY);
-    SET_BIT(input_dev.evbit, EV_MSC);
+    if (aux_available) {
+        aux_hook_id = PS_2_IRQ;
+        irq_setpolicy(PS_2_IRQ, IRQ_REENABLE, &aux_hook_id);
+        irq_enable(&aux_hook_id);
 
-    for (i = 0; i < KEYMAP_SIZE; i++) {
-        if (keycode_table[i] != KEYCODE_NULL) {
-            SET_BIT(input_dev.keybit, keycode_table[i]);
-        }
+        init_aux(&input_devs[AUX_DEV]);
+
+        ccb |= 0x2;
     }
 
-    SET_BIT(input_dev.mscbit, MSC_SCAN);
-    SET_BIT(input_dev.mscbit, MSC_RAW);
+    /* Enable interrupt(s) */
+    kb_cmd1(KBC_WR_RAM_CCB, ccb);
 
-    inputdriver_register_device(&input_dev);
+    /* Re-enable keyboard */
+    kb_cmd0(KBC_KBD_EN);
+
+    if (aux_available) {
+        /* Enable AUX */
+        kb_cmd0(KBC_AUX_EN);
+        kb_cmd1(0xD4, 0xF6);
+        kb_cmd1(0xD4, 0xF4);
+    }
+
+    kb_wait();
+    set_leds();
 
     return 0;
 }
@@ -250,6 +375,53 @@ static void kb_ack()
     do {
         portio_inb(KB_DATA, &kb_read);
     } while (kb_read != KB_ACK);
+}
+
+static void kb_cmd0(int cmd)
+{
+    kb_wait();
+    portio_outb(KB_CMD, cmd);
+}
+
+static void kb_cmd1(int cmd, int data)
+{
+    kb_wait();
+    portio_outb(KB_CMD, cmd);
+    kb_wait();
+    portio_outb(KB_DATA, data);
+}
+
+static int kb_read(void)
+{
+    u8 status, b;
+
+    for (;;) {
+        portio_inb(KB_STATUS, &status);
+
+        if (status & KB_OUT_FULL) {
+            portio_inb(KB_DATA, &b);
+
+            return b;
+        }
+    }
+
+    return 0;
+}
+
+static int scan_keyboard(u8* bp, int* is_aux)
+{
+    u8 b, status;
+
+    if (portio_inb(KB_STATUS, &status) != OK) return FALSE;
+
+    if (!(status & KB_OUT_FULL)) return FALSE;
+
+    if (portio_inb(KB_DATA, &b) != OK) return FALSE;
+
+    if (bp) *bp = b;
+    if (is_aux) *is_aux = !!(status & KB_AUX_BYTE);
+
+    return TRUE;
 }
 
 /*****************************************************************************

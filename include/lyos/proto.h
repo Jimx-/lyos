@@ -17,6 +17,7 @@
 #define _LYOS_PROTO_H_
 
 #include <lyos/types.h>
+#include <lyos/param.h>
 
 /* kliba.asm */
 void out_byte(u16 port, u8 value);
@@ -84,6 +85,7 @@ int init_ap_timer(int freq);
 void stop_context(struct proc* p);
 void set_sys_timer(struct timer_list* timer);
 void reset_sys_timer(struct timer_list* timer);
+void set_boottime(time_t time);
 
 /* proc.c */
 void init_proc();
@@ -178,6 +180,7 @@ int sys_kprofile(MESSAGE* m, struct proc* p_proc);
 int sys_setgrant(MESSAGE* m, struct proc* p_proc);
 int sys_safecopyfrom(MESSAGE* msg, struct proc* p_proc);
 int sys_safecopyto(MESSAGE* msg, struct proc* p_proc);
+int sys_stime(MESSAGE* m, struct proc* p_proc);
 
 /* syscall.asm */
 void sys_call(); /* int_handler */

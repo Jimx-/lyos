@@ -23,8 +23,8 @@
 struct inputdriver_dev;
 
 struct inputdriver {
-    void (*input_interrupt)(struct inputdriver_dev* dev, unsigned long irq_set);
-    void (*input_other)(struct inputdriver_dev* dev, MESSAGE* m);
+    void (*input_interrupt)(unsigned long irq_set);
+    void (*input_other)(MESSAGE* m);
 };
 
 struct inputdriver_dev {
@@ -52,7 +52,7 @@ int inputdriver_register_device(struct inputdriver_dev* dev);
 int inputdriver_send_event(struct inputdriver_dev* dev, u16 type, u16 code,
                            int value);
 
-int inputdriver_start(struct inputdriver_dev* dev);
+int inputdriver_start(struct inputdriver* drv);
 
 static inline int inputdriver_sync(struct inputdriver_dev* dev)
 {

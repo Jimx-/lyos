@@ -310,7 +310,8 @@ static int input_register_device(MESSAGE* msg)
     dm_device_attr_add(&attr);
 
 reply_free_dev:
-    free(dev);
+    if (retval) free(dev);
+
 reply:
     conf_msg.u.m_input_conf.status = retval;
 

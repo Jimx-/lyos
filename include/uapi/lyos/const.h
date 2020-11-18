@@ -30,7 +30,7 @@
 #define SELF (-0x8ace)
 
 /* System call numbers. */
-#define NR_SYS_CALLS       27
+#define NR_SYS_CALLS       28
 #define NR_PRINTX          0
 #define NR_SENDREC         1
 #define NR_DATACOPY        2
@@ -58,6 +58,7 @@
 #define NR_SAFECOPYFROM    24
 #define NR_SAFECOPYTO      25
 #define NR_SET_THREAD_AREA 26
+#define NR_STIME           27
 
 /* For send_recv(). */
 #define SEND          1
@@ -238,6 +239,7 @@ enum msgtype {
     LINKAT,
     FTRUNCATE, /* 100 */
     MREMAP,
+    CLOCK_SETTIME,
 
     /* DEVMAN */
     DM_DEVICE_ADD = 500,

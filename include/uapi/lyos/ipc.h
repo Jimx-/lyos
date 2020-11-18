@@ -86,6 +86,14 @@ BEGIN_MESS_DECL(mess_safecopy)
 }
 END_MESS_DECL(mess_safecopy)
 
+BEGIN_MESS_DECL(mess_stime)
+{
+    time_t boot_time;
+
+    __u8 _pad[56 - sizeof(time_t)];
+}
+END_MESS_DECL(mess_stime)
+
 struct mess_mm_mmap {
     __endpoint_t who;
     size_t offset;
@@ -157,6 +165,16 @@ struct mess_pm_clone {
     __u8 _pad[52 - 4 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_clone);
+
+BEGIN_MESS_DECL(mess_pm_time)
+{
+    int clock_id;
+    time_t sec;
+    time_t nsec;
+
+    __u8 _pad[52 - 2 * sizeof(time_t)];
+}
+END_MESS_DECL(mess_pm_time)
 
 struct mess_vfs_pathat {
     int dirfd;
@@ -928,12 +946,14 @@ typedef struct {
         struct mess4 m4;
         struct mess5 m5;
         struct mess_safecopy m_safecopy;
+        struct mess_stime m_stime;
         struct mess_mm_mmap m_mm_mmap;
         struct mess_mm_mremap m_mm_mremap;
         struct mess_mm_mmap_reply m_mm_mmap_reply;
         struct mess_mm_remap m_mm_remap;
         struct mess_pm_signal m_pm_signal;
         struct mess_pm_clone m_pm_clone;
+        struct mess_pm_time m_pm_time;
         struct mess_vfs_pathat m_vfs_pathat;
         struct mess_vfs_linkat m_vfs_linkat;
         struct mess_vfs_select m_vfs_select;

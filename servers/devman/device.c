@@ -303,12 +303,16 @@ static int add_device_node(struct device* dev)
 
         if (*p == '\0') break;
 
-        stat.st_mode =
-            S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-        stat.st_uid = SU_UID;
-        stat.st_gid = 0;
-        pin = memfs_add_inode(dir_pin, component, NO_INDEX, &stat, NULL);
-        if (!pin) return ENOMEM;
+        pin = memfs_find_inode_by_name(dir_pin, component);
+
+        if (!pin) {
+            stat.st_mode =
+                S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+            stat.st_uid = SU_UID;
+            stat.st_gid = 0;
+            pin = memfs_add_inode(dir_pin, component, NO_INDEX, &stat, NULL);
+            if (!pin) return ENOMEM;
+        }
 
         dir_pin = pin;
         name = p + 1;

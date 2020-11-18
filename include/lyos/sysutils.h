@@ -125,4 +125,6 @@ int copyfd(endpoint_t who, int fd, int how);
 #define COPYFD_CLOEXEC    0x1000
 #define COPYFD_FLAGS_MASK 0xf000
 
+int kernel_stime(time_t boot_time);
+
 #endif

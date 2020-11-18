@@ -64,8 +64,8 @@ static int uds_send_peer(struct udssock* uds, const struct sockaddr* addr,
 static void uds_add_creds(struct sk_buff* skb, const struct udssock* uds,
                           const struct udssock* other, endpoint_t user_endpt)
 {
-    if (UDSCB(skb).pid) return;
-    if ((uds->flags | other->flags) & UDSF_PASSCRED) {
+    if (UDSCB(skb).pid > 0) return;
+    if ((uds_get_flags(uds) | uds_get_flags(other)) & SFL_PASSCRED) {
         UDSCB(skb).pid =
             get_epinfo(user_endpt, &UDSCB(skb).uid, &UDSCB(skb).gid);
     }
@@ -255,6 +255,12 @@ ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
 
         copied += chunk;
         len -= chunk;
+
+        memset(&scm, 0, sizeof(scm));
+
+        scm.creds.pid = UDSCB(skb).pid;
+        scm.creds.uid = UDSCB(skb).uid;
+        scm.creds.gid = UDSCB(skb).gid;
 
         if (!(flags & MSG_PEEK)) {
             /* mark data in the skb as consumed */

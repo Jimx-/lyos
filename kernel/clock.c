@@ -232,3 +232,5 @@ void reset_sys_timer(struct timer_list* timer)
 
     spinlock_unlock(&timers_lock);
 }
+
+void set_boottime(time_t time) { kclockinfo.boottime = time; }

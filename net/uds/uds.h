@@ -62,7 +62,8 @@ struct udssock {
 #define uds_is_listening(uds)      sock_is_listening(&(uds)->sock)
 #define uds_is_shutdown(uds, mask) sock_is_shutdown(&(uds)->sock, mask)
 
-#define uds_get_type(uds) sock_type(&(uds)->sock)
+#define uds_get_type(uds)  sock_type(&(uds)->sock)
+#define uds_get_flags(uds) sock_flags(&(uds)->sock)
 
 static inline struct udssock* to_udssock(struct sock* sock)
 {

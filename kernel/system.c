@@ -80,6 +80,7 @@ void init_system()
 #ifdef __i386__
     sys_call_table[NR_SET_THREAD_AREA] = sys_set_thread_area;
 #endif
+    sys_call_table[NR_STIME] = sys_stime;
 }
 
 int set_priv(struct proc* p, int id)
