@@ -5,7 +5,7 @@
 
 #+HTML: <a href="https://ci2.jimx.site:8080/job/lyos-nightly/"><img src="https://ci2.jimx.site:8080/buildStatus/icon?job=lyos-nightly"></a>
 
-#+HTML: <a href="https://github.com/Jimx-/lyos"><img alt="screenshot" src="https://i.imgur.com/jK7dBid.png"></a>
+#+HTML: <a href="https://github.com/Jimx-/lyos"><img alt="screenshot" src="https://i.imgur.com/UVJI8zL.png"></a>
 
 #+HTML:</div>
 
