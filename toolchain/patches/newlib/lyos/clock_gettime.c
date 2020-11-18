@@ -23,15 +23,12 @@ int clock_gettime(clockid_t clock_id, struct timespec* tp)
         clock = __lyos_sysinfo->clock_info->uptime;
         break;
     default:
-        printf("unknown clock id %d\n", clock_id);
         errno = EINVAL;
         return -1;
     }
 
     tp->tv_sec = __lyos_sysinfo->clock_info->boottime + (clock / hz);
     tp->tv_nsec = (uint32_t)((uint64_t)(clock % hz) * (1000000000ULL / hz));
-    printf("%u %u\n", clock, tp->tv_sec);
-    printf("%u\n", tp->tv_nsec);
 
     return 0;
 }

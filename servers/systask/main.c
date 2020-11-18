@@ -129,8 +129,6 @@ int main()
 static int get_rtc_time(struct time* t)
 {
 #ifdef __i386__
-    int sec, n;
-
     /* do { */
     /*     sec = -1; */
     /*     n = 0; */

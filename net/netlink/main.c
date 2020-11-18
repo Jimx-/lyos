@@ -28,6 +28,9 @@ static struct idr sock_idr;
 
 static struct nltable nl_table[MAX_LINKS];
 
+static int netlink_unicast(struct sock* sock, struct sk_buff* skb, u32 portid,
+                           int nonblock);
+
 static sockid_t netlink_socket(endpoint_t src, int domain, int type,
                                int protocol, struct sock** sock,
                                const struct sockdriver_ops** ops);
@@ -35,6 +38,11 @@ static int netlink_bind(struct sock* sock, struct sockaddr* addr,
                         size_t addrlen, endpoint_t user_endpt, int flags);
 static __poll_t netlink_poll(struct sock* sock);
 static int netlink_close(struct sock* sock, int force, int non_block);
+static ssize_t netlink_send(struct sock* sock, struct iov_grant_iter* iter,
+                            size_t len, const struct sockdriver_data* ctl,
+                            socklen_t ctl_len, const struct sockaddr* addr,
+                            socklen_t addr_len, endpoint_t user_endpt,
+                            int flags);
 static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t* ctl_len, struct sockaddr* addr,
@@ -53,6 +61,7 @@ static const struct sockdriver netlink_driver = {
 
 static const struct sockdriver_ops netlink_ops = {
     .sop_bind = netlink_bind,
+    .sop_send = netlink_send,
     .sop_recv = netlink_recv,
     .sop_poll = netlink_poll,
     .sop_getsockname = netlink_getsockname,
@@ -358,6 +367,79 @@ static int netlink_bind(struct sock* sock, struct sockaddr* addr,
     return 0;
 }
 
+static ssize_t netlink_send(struct sock* sock, struct iov_grant_iter* iter,
+                            size_t len, const struct sockdriver_data* ctl,
+                            socklen_t ctl_len, const struct sockaddr* addr,
+                            socklen_t addr_len, endpoint_t user_endpt,
+                            int flags)
+{
+    struct nlsock* nls = to_nlsock(sock);
+    struct sk_buff* skb;
+    struct sockaddr_nl* nladdr = NULL;
+    struct scm_data scm;
+    struct scm_creds creds;
+    u32 dst_portid;
+    u32 dst_group;
+    int i, retval;
+
+    if (flags & MSG_OOB) return -EOPNOTSUPP;
+
+    creds.pid = get_epinfo(user_endpt, &creds.uid, &creds.gid);
+    if ((retval = scm_send(&nls->sock, &creds, ctl, ctl_len, user_endpt, &scm,
+                           TRUE)) != OK)
+        return retval;
+
+    nladdr = (struct sockaddr_nl*)addr;
+    if (nladdr) {
+        retval = -EINVAL;
+        if (addr_len < sizeof(struct sockaddr_nl)) goto out;
+
+        if (nladdr->nl_family != AF_NETLINK) goto out;
+
+        dst_portid = nladdr->nl_pid;
+        dst_group = 0;
+        if (nladdr->nl_groups > 0) {
+            for (i = 0; i < 32; i++)
+                if (nladdr->nl_groups & (1 << i)) {
+                    dst_group = i;
+                    break;
+                }
+        }
+    } else {
+        dst_portid = nls->dst_portid;
+        dst_group = nls->dst_group;
+    }
+
+    if (!nls->bound) {
+        retval = netlink_autobind(nls, user_endpt);
+        if (retval) {
+            retval = -retval;
+            goto out;
+        }
+    }
+
+    if ((retval = skb_alloc(sock, len, &skb)) != OK) {
+        retval = -ENOBUFS;
+        goto out;
+    }
+
+    NETLINK_CB(skb).portid = nls->portid;
+    NETLINK_CB(skb).dest_group = dst_group;
+    NETLINK_CB(skb).creds = scm.creds;
+
+    if ((retval = skb_copy_from_iter(skb, 0, iter, len)) != 0) {
+        skb_free(skb);
+        retval = -retval;
+        goto out;
+    }
+
+    retval = netlink_unicast(&nls->sock, skb, dst_portid, flags & MSG_DONTWAIT);
+
+out:
+    scm_destroy(&scm);
+    return retval;
+}
+
 static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t* ctl_len, struct sockaddr* addr,
@@ -490,6 +572,30 @@ static int netlink_send_skb(struct sock* sock, struct sk_buff* skb)
     sockdriver_fire(sock, SEV_RECV);
 
     return len;
+}
+
+static int netlink_get_sock_by_portid(struct nlsock* nls, u32 portid,
+                                      struct nlsock** nlskp)
+{
+    struct nlsock* nlsk;
+
+    nlsk = nlsock_lookup(sock_protocol(&nls->sock), portid);
+    if (!nlsk) return ECONNREFUSED;
+
+    *nlskp = nlsk;
+    return 0;
+}
+
+static int netlink_unicast(struct sock* sock, struct sk_buff* skb, u32 portid,
+                           int nonblock)
+{
+    struct nlsock *nlsk, *nls = to_nlsock(sock);
+    int retval;
+
+    retval = netlink_get_sock_by_portid(nls, portid, &nlsk);
+    if (retval) return -retval;
+
+    return netlink_send_skb(&nlsk->sock, skb);
 }
 
 static void netlink_broadcast_one(struct nlsock* nls, struct sk_buff* skb,

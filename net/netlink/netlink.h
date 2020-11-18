@@ -28,6 +28,9 @@ struct nlsock {
 
     bitchunk_t* groups;
     size_t ngroups;
+
+    u32 dst_portid;
+    u32 dst_group;
 };
 
 #define nls_is_shutdown(nls, mask) sock_is_shutdown(&(nls)->sock, mask)
