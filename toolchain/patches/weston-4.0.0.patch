@@ -1,0 +1,48 @@
+diff -rupN old/compositor/main.c new/compositor/main.c
+--- old/compositor/main.c	2018-04-10 01:21:34.000000000 +0800
++++ new/compositor/main.c	2020-11-14 21:34:29.551810806 +0800
+@@ -41,7 +41,7 @@
+ #include <sys/socket.h>
+ #include <libinput.h>
+ #include <sys/time.h>
+-#include <linux/limits.h>
++#include <limits.h>
+ 
+ #include "weston.h"
+ #include "compositor.h"
+diff -rupN old/libweston/launcher-direct.c new/libweston/launcher-direct.c
+--- old/libweston/launcher-direct.c	2018-04-10 01:21:34.000000000 +0800
++++ new/libweston/launcher-direct.c	2020-11-15 19:16:00.849503361 +0800
+@@ -149,6 +149,7 @@ setup_tty(struct launcher_direct *launch
+ 		goto err_close;
+ 	}
+ 
++    /*
+ 	ret = ioctl(launcher->tty, KDGETMODE, &kd_mode);
+ 	if (ret) {
+ 		weston_log("failed to get VT mode: %m\n");
+@@ -179,13 +180,13 @@ setup_tty(struct launcher_direct *launch
+ 		weston_log("failed to set KD_GRAPHICS mode on tty: %m\n");
+ 		goto err_close;
+ 	}
+-
++*/
+ 	/*
+ 	 * SIGRTMIN is used as global VT-acquire+release signal. Note that
+ 	 * SIGRT* must be tested on runtime, as their exact values are not
+ 	 * known at compile-time. POSIX requires 32 of them to be available.
+ 	 */
+-	if (SIGRTMIN > SIGRTMAX) {
++	/* if (SIGRTMIN > SIGRTMAX) {
+ 		weston_log("not enough RT signals available: %u-%u\n",
+ 			   SIGRTMIN, SIGRTMAX);
+ 		ret = -EINVAL;
+@@ -205,7 +206,7 @@ setup_tty(struct launcher_direct *launch
+ 		wl_event_loop_add_signal(loop, SIGRTMIN, vt_handler, launcher);
+ 	if (!launcher->vt_source)
+ 		goto err_close;
+-
++*/
+ 	return 0;
+ 
+  err_close:
