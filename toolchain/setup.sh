@@ -32,6 +32,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBXML2:=false}
 : ${BUILD_EUDEV:=false}
 : ${BUILD_MTDEV:=false}
+: ${BUILD_GDBM:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -581,6 +582,25 @@ if $BUILD_MTDEV; then
 
     pushd mtdev-$SUBARCH > /dev/null
     $DIR/sources/mtdev-1.1.6/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
+    make -j4 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build gdbm
+if $BUILD_GDBM; then
+    if [ ! -d "gdbm-$SUBARCH" ]; then
+        mkdir gdbm-$SUBARCH
+    fi
+
+    pushd $DIR/sources/gdbm-1.18.1 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fis
+    popd > /dev/null
+
+    pushd gdbm-$SUBARCH > /dev/null
+    $DIR/sources/gdbm-1.18.1/configure --host=$TARGET --prefix=$CROSSPREFIX \
+        --with-sysroot=$SYSROOT --disable-nls --disable-static --enable-libgdbm-compat \
+        --without-readline
     make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
