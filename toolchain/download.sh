@@ -72,6 +72,7 @@ download "libXext" "https://www.x.org/pub/individual/lib" "libXext-1.3.4.tar.bz2
 download "libXcursor" "https://www.x.org/pub/individual/lib" "libXcursor-1.2.0.tar.bz2"
 download "weston" "https://wayland.freedesktop.org/releases" "weston-4.0.0.tar.xz"
 download "gdbm" "https://ftp.gnu.org/gnu/gdbm" "gdbm-1.18.1.tar.gz"
+download "xz" "https://tukaani.org/xz" "xz-5.2.0.tar.xz"
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -133,6 +134,7 @@ unzip "libXext-1.3.4.tar.bz2" "libXext-1.3.4"
 unzip "libXcursor-1.2.0.tar.bz2" "libXcursor-1.2.0"
 unzip "weston-4.0.0.tar.xz" "weston-4.0.0"
 unzip "gdbm-1.18.1.tar.gz" "gdbm-1.18.1"
+unzip "xz-5.2.0.tar.xz" "xz-5.2.0"
 
 echo "Patching..."
 patc "automake-1.11"

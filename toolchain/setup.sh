@@ -33,6 +33,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_EUDEV:=false}
 : ${BUILD_MTDEV:=false}
 : ${BUILD_GDBM:=false}
+: ${BUILD_XZ:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -601,6 +602,24 @@ if $BUILD_GDBM; then
     $DIR/sources/gdbm-1.18.1/configure --host=$TARGET --prefix=$CROSSPREFIX \
         --with-sysroot=$SYSROOT --disable-nls --disable-static --enable-libgdbm-compat \
         --without-readline
+    make -j4 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build xz
+if $BUILD_XZ; then
+    if [ ! -d "xz-$SUBARCH" ]; then
+        mkdir xz-$SUBARCH
+    fi
+
+    pushd $DIR/sources/xz-5.2.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
+    pushd xz-$SUBARCH > /dev/null
+    $DIR/sources/xz-5.2.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
+        --with-sysroot=$SYSROOT --disable-nls --disable-static
     make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

@@ -11,6 +11,8 @@
 
 int pthread_condattr_init(pthread_condattr_t* attr) { return 0; }
 
+int pthread_condattr_destroy(pthread_condattr_t* attr) { return 0; }
+
 int pthread_condattr_setclock(pthread_condattr_t* attr, clockid_t clockid)
 {
     return 0;
