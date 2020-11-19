@@ -34,6 +34,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_MTDEV:=false}
 : ${BUILD_GDBM:=false}
 : ${BUILD_XZ:=false}
+: ${BUILD_LIBRESSL:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -622,6 +623,20 @@ if $BUILD_XZ; then
         --with-sysroot=$SYSROOT --disable-nls --disable-static
     make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build libressl
+if $BUILD_LIBRESSL; then
+    if [ ! -d "libressl-$SUBARCH" ]; then
+        mkdir libressl-$SUBARCH
+    fi
+
+    pushd libressl-$SUBARCH > /dev/null
+    cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$TARGET_CMAKE_TOOLCHAIN_FILE -DCMAKE_INSTALL_PREFIX=/usr \
+          -DLIBRESSL_APPS=OFF -DBUILD_SHARED_LIBS=ON $DIR/sources/libressl-3.0.2/
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 

@@ -153,4 +153,12 @@
 #endif
 #endif
 
+#ifndef SSIZE_MAX
+#if INTPTR_MAX == INT64_MAX
+#define SSIZE_MAX LONG_MAX
+#elif INTPTR_MAX == INT32_MAX
+#define SSIZE_MAX INT_MAX
+#endif
+#endif
+
 #endif
