@@ -468,7 +468,7 @@ if $BUILD_ZLIB; then
     fi
 
     pushd zlib-$SUBARCH > /dev/null
-    CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure --static
+    CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure
     make -j || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

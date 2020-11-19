@@ -1,0 +1,12 @@
+diff -rupN old/configure new/configure
+--- old/configure	2017-01-01 02:06:40.000000000 +0800
++++ new/configure	2020-11-19 20:49:56.104203732 +0800
+@@ -207,7 +207,7 @@ if test "$gcc" -eq 1 && ($cc -c $test.c)
+     uname=`(uname -s || echo unknown) 2>/dev/null`
+   fi
+   case "$uname" in
+-  Linux* | linux* | GNU | GNU/* | solaris*)
++  Linux* | linux* | GNU | GNU/* | solaris* | lyos*)
+         LDSHARED=${LDSHARED-"$cc -shared -Wl,-soname,libz.so.1,--version-script,${SRCDIR}zlib.map"} ;;
+   *BSD | *bsd* | DragonFly)
+         LDSHARED=${LDSHARED-"$cc -shared -Wl,-soname,libz.so.1,--version-script,${SRCDIR}zlib.map"}
