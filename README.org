@@ -13,6 +13,13 @@
 Lyos is an open source microkernel multitasking operating system, it runs
 on 32-bit x86-based PCs. It is distributed under the GNU General Public License.
 
+** Trying out Lyos
+To try out Lyos without building the whole system, you can download a xz-compressed [[https://lyos.jimx.site:8080/nightly/lyos-i686.img.xz][nightly image]], uncompress the image and run it with QEMU:
+
+#+BEGIN_SRC shell
+qemu-system-x86_64 -smp 2 -drive id=hda,file=lyos-i686.img,format=raw,if=none -device virtio-blk-pci,drive=hda -m 2048 -serial stdio -vga virtio -sdl -cpu host,pmu=true --enable-kvm
+#+END_SRC
+
 ** Features
 Lyos has many standard features:
 
@@ -29,17 +36,74 @@ Lyos has many standard features:
   + Unix signals
 - Virtual file system
   + Ext2 filesystem support
-  + procfs, sysfs...
-- Memory management
-  + Virtual memory based
-  + Higher half kernel
+  + procfs, sysfs, ...
 - Userspace
   + Newlib
-  + Dash, GNU Binutils, gcc, GNU Bash...
+  + GCC, binutils, bash, ...
+  + [[https://github.com/wayland-project/weston][Weston]] Wayland's reference compositor
 
-** Trying out Lyos
-To try out Lyos without building the whole system, you can download a xz-compressed [[https://lyos.jimx.site:8080/nightly/lyos-i686.img.xz][nightly image]], uncompress the image and run it with QEMU:
-
+** Building Lyos
+*** Preparation
+First we will clone the repository into the ~lyos~ directory:
 #+BEGIN_SRC shell
-qemu-system-x86_64 -smp 2 -drive id=hda,file=lyos-i686.img,format=raw,if=none -device virtio-blk-pci,drive=hda -m 2048 -serial stdio -vga virtio -sdl -cpu host,pmu=true --enable-kvm
+git clone https://github.com/Jimx-/lyos.git
+cd lyos
 #+END_SRC
+
+Since Lyos requires various build-time dependencies, it is recommended to set up a Docker instance as the build environment to make sure the correct versions of these dependencies are installed:
+#+BEGIN_SRC shell
+docker build -t lyos_build .
+#+END_SRC
+
+After building the Docker image, start a container:
+#+BEGIN_SRC shell
+docker run -v $PWD:/workspace/lyos -it lyos_build
+#+END_SRC
+
+If everything is set up properly, you should see the bash prompt and a ~lyos~ directory under ~/workspace~ containing the source files in the repository:
+#+BEGIN_SRC shell
+root@2519c5bdfad9:/# ls /workspace
+lyos
+#+END_SRC
+
+Now you can switch to the ~/workspace/lyos~ directory and proceed to the Building section.
+#+BEGIN_SRC shell
+cd /workspace/lyos
+#+END_SRC
+
+Alternatively, you can install the dependencies manually if you prefer to build Lyos on the host system directly. The complete list of required dependencies is in ~Dockerfile~. You can install the dependencies with a standard package manager (e.g. ~apt~ on Ubuntu).
+
+*** Building
+Make sure that you are in the root directory of this repository (~/workspace/lyos~ if you are using a Docker container). First we need to create the build configuration file and install some userspace headers to the cross-compile system root:
+#+BEGIN_SRC shell
+make SUBARCH=i686 defconfig objdirs install-headers
+#+END_SRC
+The ~SUBARCH~ environment variable specifies which architecture to build Lyos for. Currently only ~i686~ and ~riscv64~ are supported.
+
+Set up the toolchain and userspace packages for building Lyos:
+#+BEGIN_SRC shell
+cd toolchain
+./download.sh
+BUILD_EVERYTHING=true ./setup.sh -m i686
+cd ..
+#+END_SRC
+Similar to ~SUBARCH~, the ~-m~ option of ~setup.sh~ specifies the architecture to build the toolchain and packages for.
+
+Now build the kernel and servers:
+#+BEGIN_SRC shell
+make SUBARCH=i686
+
+#+END_SRC
+(Optionally) ~setup.sh~ only builds some core userspace packages like ~bash~ and ~coreutils~. You still need to build some extra packages if you want to use graphical interface:
+#+BEGIN_SRC shell
+cd toolchain
+BUILD_EVERYTHING=true ./setup-x11.sh -m i686
+cd ..
+#+END_SRC
+
+*** Creating Disk Image
+Now you can create the disk image for Lyos:
+#+BEGIN_SRC shell
+sudo ./scripts/setup-disk.sh
+#+END_SRC
+This will create a disk image ~lyos-disk.img~ under the current directory which can be launched with QEMU.
