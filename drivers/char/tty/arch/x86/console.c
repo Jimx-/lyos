@@ -45,8 +45,6 @@ static int ansi_colors[8] = {0, 4, 2, 6, 1, 5, 3, 7};
 
 /* #define __TTY_DEBUG__ */
 
-extern int fbcon_init();
-
 /* local routines */
 static void cons_write(TTY* tty);
 static void parse_escape(CONSOLE* con, char c);
@@ -130,28 +128,18 @@ void init_screen(TTY* tty)
 
     current_console = 0;
 
-    int using_fb = 0;
-    static int first = 0;
-    if (!first) {
-        using_fb = fbcon_init();
-        first = 1;
-    }
-
     if (!console_mem) {
         console_mem = mm_map_phys(SELF, (void*)V_MEM_BASE, V_MEM_SIZE);
         if (console_mem == MAP_FAILED) panic("can't map console memory");
     }
+
+    vgacon_init_con(con);
 
     /*
      * NOTE:
      *   variables related to `position' and `size' below are
      *   in WORDs, but not in BYTEs.
      */
-    if (using_fb) {
-        fbcon_init_con(con);
-    } else {
-        vgacon_init_con(con);
-    }
 
     con->row_size = con->cols << 1;
     con->screenbuf_size = con->rows * con->row_size;

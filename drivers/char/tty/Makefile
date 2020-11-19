@@ -11,6 +11,4 @@ PROG	= tty
 CFLAGS	+= -I$(CURDIR) -I$(CURDIR)/arch/$(ARCH)
 SERVERCFLAGS += -I$(CURDIR) -I$(CURDIR)/arch/$(ARCH)
 
-EXTRACFLAGS = -Wl,-Map,tty.map -g
-
 include lyos.service.mk
