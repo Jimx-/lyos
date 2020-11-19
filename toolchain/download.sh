@@ -164,6 +164,7 @@ patc "libxkbcommon-1.0.1"
 patc "eudev-3.2.2"
 patc "kmscon-8"
 patc "libinput-1.10.7"
+patc "weston-4.0.0"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

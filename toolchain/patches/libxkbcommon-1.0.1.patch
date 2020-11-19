@@ -10,17 +10,3 @@ diff -rupN old/meson.build new/meson.build
          wayland_scanner_code_gen = generator(
              wayland_scanner,
              output: '@BASENAME@-protocol.c',
-diff -rupN old/tools/interactive-evdev.c new/tools/interactive-evdev.c
---- old/tools/interactive-evdev.c	2020-09-11 20:10:24.250037700 +0800
-+++ new/tools/interactive-evdev.c	2020-11-15 21:04:54.092190340 +0800
-@@ -45,6 +45,10 @@
- 
- #include "tools-common.h"
- 
-+#ifndef LONG_BIT
-+#define LONG_BIT (CHAR_BIT * sizeof(long))
-+#endif
-+
- struct keyboard {
-     char *path;
-     int fd;

@@ -43,6 +43,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBFFI=true
     BUILD_WAYLAND=true
     BUILD_WAYLAND_PROTOCOLS=true
+    BUILD_MESA=true
     BUILD_FREETYPE=true
     BUILD_PIXMAN=true
     BUILD_CAIRO=true
@@ -51,6 +52,19 @@ if $BUILD_EVERYTHING; then
     BUILD_KMSCON=true
     BUILD_XORG_PROTO=true
     BUILD_XKEYBOARD_CONFIG=true
+    BUILD_LIBINPUT=true
+    BUILD_DEJAVU=true
+    BUILD_LIBXAU=true
+    BUILD_LIBXDMCP=true
+    BUILD_XCB_PROTO=true
+    BUILD_LIBXCB=true
+    BUILD_XTRANS=true
+    BUILD_LIBX11=true
+    BUILD_LIBXFIXES=true
+    BUILD_LIBXRENDER=true
+    BUILD_LIBXCURSOR=true
+    BUILD_LIBXEXT=true
+    BUILD_WESTON=true
 fi
 
 echo "Building X11... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"

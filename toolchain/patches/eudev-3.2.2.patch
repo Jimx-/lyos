@@ -1,6 +1,6 @@
 diff -rupN old/configure.ac new/configure.ac
 --- old/configure.ac	2017-04-20 05:08:17.000000000 +0800
-+++ new/configure.ac	2020-11-07 17:47:48.367305096 +0800
++++ new/configure.ac	2020-11-19 16:44:14.638340299 +0800
 @@ -49,7 +49,7 @@ AC_CHECK_HEADERS(
  AC_CHECK_HEADERS(
          [mtd/mtd-user.h],
@@ -30,7 +30,7 @@ diff -rupN old/configure.ac new/configure.ac
  
 diff -rupN old/Makefile.am new/Makefile.am
 --- old/Makefile.am	2017-01-02 07:19:58.000000000 +0800
-+++ new/Makefile.am	2020-11-07 17:47:48.367305096 +0800
++++ new/Makefile.am	2020-11-19 16:44:14.638340299 +0800
 @@ -5,8 +5,7 @@ SUBDIRS = \
  
  if ENABLE_PROGRAMS
@@ -43,7 +43,7 @@ diff -rupN old/Makefile.am new/Makefile.am
  if ENABLE_MANPAGES
 diff -rupN old/src/ata_id/ata_id.c new/src/ata_id/ata_id.c
 --- old/src/ata_id/ata_id.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/ata_id/ata_id.c	2020-11-07 17:47:48.367305096 +0800
++++ new/src/ata_id/ata_id.c	2020-11-19 16:44:14.638340299 +0800
 @@ -44,6 +44,7 @@
  #include <linux/cdrom.h>
  #include <linux/bsg.h>
@@ -54,7 +54,7 @@ diff -rupN old/src/ata_id/ata_id.c new/src/ata_id/ata_id.c
  #include "libudev-private.h"
 diff -rupN old/src/shared/hashmap.c new/src/shared/hashmap.c
 --- old/src/shared/hashmap.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/hashmap.c	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/hashmap.c	2020-11-19 16:44:14.638340299 +0800
 @@ -24,6 +24,7 @@
  #include <stdlib.h>
  #include <string.h>
@@ -65,7 +65,7 @@ diff -rupN old/src/shared/hashmap.c new/src/shared/hashmap.c
  #include "hashmap.h"
 diff -rupN old/src/shared/hashmap.h new/src/shared/hashmap.h
 --- old/src/shared/hashmap.h	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/hashmap.h	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/hashmap.h	2020-11-19 16:44:14.638340299 +0800
 @@ -98,10 +98,7 @@ extern const struct hash_ops uint64_hash
  #if SIZEOF_DEV_T != 8
  unsigned long devt_hash_func(const void *p, const uint8_t hash_key[HASH_KEY_SIZE]) _pure_;
@@ -80,7 +80,7 @@ diff -rupN old/src/shared/hashmap.h new/src/shared/hashmap.h
  #define devt_compare_func uint64_compare_func
 diff -rupN old/src/shared/missing.h new/src/shared/missing.h
 --- old/src/shared/missing.h	2017-01-02 07:18:51.000000000 +0800
-+++ new/src/shared/missing.h	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/missing.h	2020-11-19 16:44:14.638340299 +0800
 @@ -21,12 +21,15 @@
  
  /* Missing glibc definitions to access certain kernel APIs */
@@ -100,7 +100,7 @@ diff -rupN old/src/shared/missing.h new/src/shared/missing.h
  #include "config.h"
 diff -rupN old/src/shared/random-util.c new/src/shared/random-util.c
 --- old/src/shared/random-util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/random-util.c	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/random-util.c	2020-11-19 16:44:14.638340299 +0800
 @@ -23,7 +23,7 @@
  #include <sys/stat.h>
  #include <fcntl.h>
@@ -112,7 +112,7 @@ diff -rupN old/src/shared/random-util.c new/src/shared/random-util.c
  #include "time-util.h"
 diff -rupN old/src/shared/socket-util.h new/src/shared/socket-util.h
 --- old/src/shared/socket-util.h	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/socket-util.h	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/socket-util.h	2020-11-19 16:44:14.638340299 +0800
 @@ -23,14 +23,10 @@
  #include <net/if.h>
  #include <asm/types.h>
@@ -130,7 +130,7 @@ diff -rupN old/src/shared/socket-util.h new/src/shared/socket-util.h
  };
 diff -rupN old/src/shared/terminal-util.c new/src/shared/terminal-util.c
 --- old/src/shared/terminal-util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/terminal-util.c	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/terminal-util.c	2020-11-19 16:44:14.638340299 +0800
 @@ -27,9 +27,6 @@
  #include <time.h>
  #include <assert.h>
@@ -143,7 +143,7 @@ diff -rupN old/src/shared/terminal-util.c new/src/shared/terminal-util.c
  #include "time-util.h"
 diff -rupN old/src/shared/time-util.c new/src/shared/time-util.c
 --- old/src/shared/time-util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/time-util.c	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/time-util.c	2020-11-19 16:44:14.641673639 +0800
 @@ -21,7 +21,7 @@
  #include <stdio.h>
  #include <string.h>
@@ -155,7 +155,7 @@ diff -rupN old/src/shared/time-util.c new/src/shared/time-util.c
  #include "macro.h"
 diff -rupN old/src/shared/util.c new/src/shared/util.c
 --- old/src/shared/util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/util.c	2020-11-07 17:47:48.367305096 +0800
++++ new/src/shared/util.c	2020-11-19 16:44:14.641673639 +0800
 @@ -27,7 +27,7 @@
  #include <syslog.h>
  #include <sched.h>
@@ -175,7 +175,7 @@ diff -rupN old/src/shared/util.c new/src/shared/util.c
  #include <sys/time.h>
 diff -rupN old/src/udev/udev-builtin-input_id.c new/src/udev/udev-builtin-input_id.c
 --- old/src/udev/udev-builtin-input_id.c	2017-01-02 07:18:51.000000000 +0800
-+++ new/src/udev/udev-builtin-input_id.c	2020-11-07 17:48:44.516420939 +0800
++++ new/src/udev/udev-builtin-input_id.c	2020-11-19 16:44:14.641673639 +0800
 @@ -27,7 +27,7 @@
  #include <unistd.h>
  #include <string.h>
@@ -187,7 +187,7 @@ diff -rupN old/src/udev/udev-builtin-input_id.c new/src/udev/udev-builtin-input_
  #include "udev.h"
 diff -rupN old/src/udev/udev-builtin-keyboard.c new/src/udev/udev-builtin-keyboard.c
 --- old/src/udev/udev-builtin-keyboard.c	2017-01-06 05:05:38.000000000 +0800
-+++ new/src/udev/udev-builtin-keyboard.c	2020-11-07 17:48:57.246220342 +0800
++++ new/src/udev/udev-builtin-keyboard.c	2020-11-19 16:44:14.641673639 +0800
 @@ -23,7 +23,7 @@
  #include <stdlib.h>
  #include <fcntl.h>
@@ -199,7 +199,7 @@ diff -rupN old/src/udev/udev-builtin-keyboard.c new/src/udev/udev-builtin-keyboa
  #include "udev.h"
 diff -rupN old/src/udev/udevd.c new/src/udev/udevd.c
 --- old/src/udev/udevd.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/udev/udevd.c	2020-11-07 17:47:48.370638377 +0800
++++ new/src/udev/udevd.c	2020-11-19 16:49:51.925705849 +0800
 @@ -28,6 +28,7 @@
  #include <string.h>
  #include <ctype.h>
@@ -216,3 +216,28 @@ diff -rupN old/src/udev/udevd.c new/src/udev/udevd.c
  
  #include "udev.h"
  #include "udev-util.h"
+@@ -126,6 +128,7 @@ struct worker {
+ 
+ /* passed from worker to main process */
+ struct worker_message {
++    int i;
+ };
+ 
+ static void event_free(struct event *event) {
+@@ -215,6 +218,7 @@ static void worker_attach_event(struct w
+ 
+ static int worker_send_message(int fd) {
+         struct worker_message message = {};
++        message.i = 1;
+ 
+         return loop_write(fd, &message, sizeof(message), false);
+ }
+@@ -1323,7 +1327,7 @@ int main(int argc, char *argv[]) {
+         }
+ 
+         /* unnamed socket from workers to the main daemon */
+-        if (socketpair(AF_LOCAL, SOCK_DGRAM|SOCK_CLOEXEC, 0, worker_watch) < 0) {
++        if (socketpair(AF_LOCAL, SOCK_STREAM|SOCK_CLOEXEC, 0, worker_watch) < 0) {
+                 r = log_error_errno(errno, "error creating socketpair");
+                 goto exit;
+         }
