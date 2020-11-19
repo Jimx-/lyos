@@ -25,12 +25,7 @@
 #include <lyos/service.h>
 #include "libsysfs/libsysfs.h"
 
-endpoint_t __pci_endpoint =
-#ifdef __i386__
-    TASK_PCI;
-#else
-    NO_TASK;
-#endif
+endpoint_t __pci_endpoint = NO_TASK;
 
 int pci_sendrec(int function, MESSAGE* msg)
 {

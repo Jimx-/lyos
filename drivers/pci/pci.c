@@ -106,6 +106,8 @@ int pci_init()
 {
     int retval;
 
+    printl("pci: PCI driver is running.\n");
+
     retval = dm_bus_register("pci", &pci_bus_id);
     if (retval) return retval;
 

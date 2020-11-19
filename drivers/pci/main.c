@@ -59,9 +59,9 @@ static int do_find_next_capability(MESSAGE* m);
 
 int main()
 {
-    // serv_register_init_fresh_callback(pci_init);
-    // serv_init();
-    pci_init();
+    serv_register_init_fresh_callback(pci_init);
+    serv_init();
+    /* pci_init(); */
 
     MESSAGE msg;
 

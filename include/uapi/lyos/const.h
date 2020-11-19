@@ -21,13 +21,8 @@
 #define TASK_SYSFS     10
 #define TASK_IPC       11
 #define TASK_NETLINK   12
-#ifdef __i386__
-#define TASK_PCI 13
-#define INIT     14
-#else
-#define INIT 13
-#endif
-#define SELF (-0x8ace)
+#define INIT           13
+#define SELF           (-0x8ace)
 
 /* System call numbers. */
 #define NR_SYS_CALLS       28

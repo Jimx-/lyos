@@ -17,6 +17,7 @@ $(INITRD):
 	@cp -f $(DESTDIR)/sbin/init sbin/
 	@cp -f $(DESTDIR)/sbin/ext2fs sbin/
 	@cp -f $(DESTDIR)/sbin/ata sbin/
+	@cp -f $(DESTDIR)/sbin/pci sbin/
 	@cp -f $(DESTDIR)/sbin/virtio-blk sbin/
 	@cp -f $(DESTDIR)/sbin/virtio-gpu sbin/
 	@cp -f $(DESTDIR)/sbin/procfs sbin/

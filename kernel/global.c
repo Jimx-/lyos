@@ -41,27 +41,12 @@ struct priv priv_table[NR_PRIV_PROCS];
  *	- boot_priv_table in servman/global.c
  */
 struct boot_proc boot_procs[NR_BOOT_PROCS] = {
-    {CLOCK, "clock"},
-    {SYSTEM, "system"},
-    {KERNEL, "kernel"},
-    {INTERRUPT, "interrupt"},
-    {TASK_MM, "MM"},
-    {TASK_PM, "PM"},
-    {TASK_SERVMAN, "SERVMAN"},
-    {TASK_DEVMAN, "DEVMAN"},
-    {TASK_SCHED, "SCHED"},
-    {TASK_FS, "VFS"},
-    {TASK_SYS, "SYS"},
-    {TASK_TTY, "TTY"},
-    {TASK_RD, "RD"},
-    {TASK_INITFS, "INITFS"},
-    {TASK_SYSFS, "SYSFS"},
-    {TASK_IPC, "IPC"},
-    {TASK_NETLINK, "NETLINK"},
-#ifdef __i386__
-    {TASK_PCI, "PCI"},
-#endif
-    {INIT, "INIT"},
+    {CLOCK, "clock"},          {SYSTEM, "system"},        {KERNEL, "kernel"},
+    {INTERRUPT, "interrupt"},  {TASK_MM, "MM"},           {TASK_PM, "PM"},
+    {TASK_SERVMAN, "SERVMAN"}, {TASK_DEVMAN, "DEVMAN"},   {TASK_SCHED, "SCHED"},
+    {TASK_FS, "VFS"},          {TASK_SYS, "SYS"},         {TASK_TTY, "TTY"},
+    {TASK_RD, "RD"},           {TASK_INITFS, "INITFS"},   {TASK_SYSFS, "SYSFS"},
+    {TASK_IPC, "IPC"},         {TASK_NETLINK, "NETLINK"}, {INIT, "INIT"},
 };
 
 char task_stack[STACK_SIZE_TOTAL];
