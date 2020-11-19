@@ -11,6 +11,6 @@ LIBS	= exec lyos devman coro sysfs
 
 PROG	= vfs
 
-EXTRACFLAGS = -Xlinker -Ttext -Xlinker 0x60000000 -Wl,-Map,vfs.map -g
+EXTRACFLAGS = -Wl,-Map,vfs.map -g
 
 include lyos.service.mk
