@@ -56,6 +56,7 @@ if $BUILD_EVERYTHING; then
     BUILD_BZIP2=true
     BUILD_LIBXML2=true
     BUILD_EUDEV=true
+    BUILD_MTDEV=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
