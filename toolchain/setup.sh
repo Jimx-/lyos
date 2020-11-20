@@ -35,6 +35,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_GDBM:=false}
 : ${BUILD_XZ:=false}
 : ${BUILD_LIBRESSL:=false}
+: ${BUILD_PYTHON:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -637,6 +638,31 @@ if $BUILD_LIBRESSL; then
           -DLIBRESSL_APPS=OFF -DBUILD_SHARED_LIBS=ON $DIR/sources/libressl-3.0.2/
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
+    popd > /dev/null
+fi
+
+# Build python
+if $BUILD_PYTHON; then
+    if [ ! -d "python-$SUBARCH" ]; then
+        mkdir python-$SUBARCH
+    fi
+
+    pushd $DIR/sources/Python-3.8.2 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
+    pushd python-$SUBARCH > /dev/null
+
+    echo "ac_cv_file__dev_ptmx=yes
+          ac_cv_file__dev_ptc=no" > python-config-site
+
+    CONFIG_SITE=python-config-site \
+      $DIR/sources/Python-3.8.2/configure --host=$TARGET --build=x86_64-linux-gnu \
+        --prefix=$CROSSPREFIX \
+        --with-sysroot=$SYSROOT --enable-shared --with-system-ffi --with-system-expat \
+        --disable-ipv6 --without-ensurepip
+    make -j4 || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 

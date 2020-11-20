@@ -1,0 +1,64 @@
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2020-11-20 15:27:13.771256150 +0800
++++ new/config.sub	2020-11-20 15:29:23.494431332 +0800
+@@ -1372,7 +1372,7 @@ case $os in
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+ 	      | -sym* | -kopensolaris* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+-	      | -aos* | -aros* | -cloudabi* | -sortix* \
++	      | -aos* | -aros* | -cloudabi* | -sortix* | -lyos* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+ 	      | -hiux* | -knetbsd* | -mirbsd* | -netbsd* \
+diff -rupN old/configure.ac new/configure.ac
+--- old/configure.ac	2020-11-20 15:27:13.767922820 +0800
++++ new/configure.ac	2020-11-20 15:26:59.341271795 +0800
+@@ -382,6 +382,9 @@ then
+ 	*-*-vxworks*)
+ 	    ac_sys_system=VxWorks
+ 	    ;;
++	*-*-lyos*)
++	    ac_sys_system=Lyos
++	    ;;
+ 	*)
+ 		# for now, limit cross builds to known configurations
+ 		MACHDEP="unknown"
+@@ -431,6 +434,9 @@ if test "$cross_compiling" = yes; then
+ 	*-*-vxworks*)
+ 		_host_cpu=$host_cpu
+ 		;;
++	*-*-lyos*)
++		_host_cpu=$host_cpu
++		;;
+ 	*)
+ 		# for now, limit cross builds to known configurations
+ 		MACHDEP="unknown"
+@@ -2641,6 +2647,9 @@ then
+ 	CYGWIN*)
+ 		LDSHARED="gcc -shared -Wl,--enable-auto-image-base"
+ 		LDCXXSHARED="g++ -shared -Wl,--enable-auto-image-base";;
++	Lyos*)
++		LDSHARED='$(CC) -shared'
++		LDCXXSHARED='$(CXX) -shared';;
+ 	*)	LDSHARED="ld";;
+ 	esac
+ fi
+@@ -2677,7 +2686,9 @@ then
+ 		else CCSHARED="-Kpic -belf"
+ 		fi;;
+ 	VxWorks*)
+-		CCSHARED="-fpic -D__SO_PICABILINUX__  -ftls-model=global-dynamic"
++		CCSHARED="-fpic -D__SO_PICABILINUX__  -ftls-model=global-dynamic";;
++	Lyos*)
++		CCSHARED="-fPIC";;
+ 	esac
+ fi
+ AC_MSG_RESULT($CCSHARED)
+@@ -2693,6 +2704,7 @@ then
+ #	    LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
+ 	Linux-android*) LINKFORSHARED="-pie -Xlinker -export-dynamic";;
+ 	Linux*|GNU*) LINKFORSHARED="-Xlinker -export-dynamic";;
++	Lyos*) LINKFORSHARED="-Xlinker -export-dynamic";;
+ 	# -u libsys_s pulls in all symbols in libsys
+ 	Darwin/*)
+ 		LINKFORSHARED="$extra_undefs -framework CoreFoundation"

@@ -289,7 +289,6 @@ int fsdriver_getdents(const struct fsdriver* fsd, MESSAGE* m)
 int fsdriver_link(const struct fsdriver* fsd, MESSAGE* m)
 {
     char name[NAME_MAX + 1];
-    struct fsdriver_data data;
     endpoint_t src = m->source;
     dev_t dev = m->u.m_vfs_fs_link.dev;
     ino_t dir_num = m->u.m_vfs_fs_link.dir_ino;
@@ -298,7 +297,7 @@ int fsdriver_link(const struct fsdriver* fsd, MESSAGE* m)
     ino_t num = m->u.m_vfs_fs_link.inode;
     int retval;
 
-    if (!fsd->fs_symlink) return ENOSYS;
+    if (!fsd->fs_link) return ENOSYS;
 
     if ((retval = fsdriver_copy_name(src, name_grant, name_len, name, NAME_MAX,
                                      TRUE)) != 0)

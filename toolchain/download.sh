@@ -74,6 +74,7 @@ download "weston" "https://wayland.freedesktop.org/releases" "weston-4.0.0.tar.x
 download "gdbm" "https://ftp.gnu.org/gnu/gdbm" "gdbm-1.18.1.tar.gz"
 download "xz" "https://tukaani.org/xz" "xz-5.2.0.tar.xz"
 download "libressl" "https://ftp.openbsd.org/pub/OpenBSD/LibreSSL" "libressl-3.0.2.tar.gz"
+download "python" "https://www.python.org/ftp/python/3.8.2" "Python-3.8.2.tar.xz"
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -137,6 +138,7 @@ unzip "weston-4.0.0.tar.xz" "weston-4.0.0"
 unzip "gdbm-1.18.1.tar.gz" "gdbm-1.18.1"
 unzip "xz-5.2.0.tar.xz" "xz-5.2.0"
 unzip "libressl-3.0.2.tar.gz" "libressl-3.0.2"
+unzip "Python-3.8.2.tar.xz" "Python-3.8.2"
 
 echo "Patching..."
 patc "automake-1.11"
@@ -172,6 +174,7 @@ patc "eudev-3.2.2"
 patc "kmscon-8"
 patc "libinput-1.10.7"
 patc "weston-4.0.0"
+patc "Python-3.8.2"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

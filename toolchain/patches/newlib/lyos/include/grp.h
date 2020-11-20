@@ -78,6 +78,8 @@ extern "C"
     void endgrent(void);
 #endif /* __MISC_VISIBLE || __XSI_VISIBLE >= 4 */
     int initgroups(const char*, gid_t);
+    int getgrouplist(const char* user, gid_t group, gid_t* groups,
+                     int* ngroupsp);
 #endif /* !__INSIDE_CYGWIN__ */
 
 #ifdef __cplusplus

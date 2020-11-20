@@ -146,6 +146,8 @@ extern "C"
 #if __SVID_VISIBLE || __XSI_VISIBLE
     extern __IMPORT long _timezone;
     extern __IMPORT int _daylight;
+    extern int daylight;
+    extern long timezone;
 #endif
 #if __POSIX_VISIBLE
     extern __IMPORT char* _tzname[2];
@@ -237,12 +239,12 @@ extern "C"
 
     /* values for the pthread cputime_clock_allowed attribute */
 
-#define CLOCK_ALLOWED 1    /* If a thread is created with this value a */
-                           /*   CPU-time clock attached to that thread */
-                           /*   shall be accessible. */
+#define CLOCK_ALLOWED 1 /* If a thread is created with this value a */
+    /*   CPU-time clock attached to that thread */
+    /*   shall be accessible. */
 #define CLOCK_DISALLOWED 0 /* If a thread is created with this value, the */
-                           /*   thread shall not have a CPU-time clock */
-                           /*   accessible. */
+    /*   thread shall not have a CPU-time clock */
+    /*   accessible. */
 
     /* Manifest Constants, P1003.1b-1993, p. 262 */
 

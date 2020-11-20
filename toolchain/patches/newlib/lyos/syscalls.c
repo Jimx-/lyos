@@ -40,6 +40,9 @@ extern syscall_gate_t _syscall_gate;
 
 extern char* _brksize;
 
+int daylight;
+long timezone;
+
 /* compiler memory barrier */
 #define cmb() __asm__ __volatile__("" ::: "memory")
 
@@ -717,6 +720,13 @@ int chdir(const char* path)
     send_recv(BOTH, TASK_FS, &msg);
 
     return msg.RETVAL;
+}
+
+int chroot(const char* path)
+{
+    printf("chroot: not implemented\n");
+    errno = ENOSYS;
+    return -1;
 }
 
 int fchdir(int fd)
@@ -1571,6 +1581,12 @@ void sync(void)
 int fsync(int fd)
 {
     puts("fsync: not implemented");
+    return 0;
+}
+
+int fdatasync(int fd)
+{
+    puts("fdatasync: not implemented");
     return 0;
 }
 

@@ -106,6 +106,8 @@ int readdir_r(DIR* dirp, struct dirent* entry, struct dirent** result)
     return 0;
 }
 
+void rewinddir(DIR* dirp) { dirp->loc = dirp->size = 0; }
+
 int closedir(DIR* dirp)
 {
     int fd = dirp->fd;

@@ -51,6 +51,9 @@ pid_t _wait(int*);
 
 int waitid(idtype_t idtype, id_t id, siginfo_t* siginfo, int flags);
 
+struct rusage;
+pid_t wait3(int* wstatus, int options, struct rusage* rusage);
+
 __END_DECLS
 
 #endif
