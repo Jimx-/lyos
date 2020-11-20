@@ -103,7 +103,7 @@ int drm_mode_getconnector(struct drm_device* dev, endpoint_t endpoint,
     out_resp->connector_type_id = connector->connector_type_id;
 
     if (out_resp->count_modes == 0) {
-        drm_add_dmt_modes(connector, config->max_width, config->max_height);
+        connector->helper_funcs->get_modes(connector);
     }
 
     /* out_resp->mm_width = connector->display_info.width_mm; */

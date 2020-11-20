@@ -30,8 +30,8 @@
 #define DRIVER_DESC "virtio GPU"
 #define DRIVER_DATE "0"
 
-#define DRIVER_MAJOR 0
-#define DRIVER_MINOR 1
+#define DRIVER_MAJOR      0
+#define DRIVER_MINOR      1
 #define DRIVER_PATCHLEVEL 0
 
 #define XRES_MIN 32
@@ -657,6 +657,21 @@ err_free_plane:
     return retval;
 }
 
+static int virtio_gpu_conn_get_modes(struct drm_connector* conn)
+{
+    int count;
+
+    count = drm_add_dmt_modes(conn, XRES_MAX, YRES_MAX);
+
+    drm_set_preferred_mode(conn, XRES_DEF, YRES_DEF);
+
+    return count;
+}
+
+static const struct drm_connector_helper_funcs virtio_gpu_conn_helper_funcs = {
+    .get_modes = virtio_gpu_conn_get_modes,
+};
+
 static int virtio_output_init(int index)
 {
     struct virtio_gpu_output* output = &outputs[index];
@@ -672,6 +687,8 @@ static int virtio_output_init(int index)
 
     drm_connector_init(&drm_dev, &output->connector,
                        DRM_MODE_CONNECTOR_VIRTUAL);
+    drm_connector_set_helper_funcs(&output->connector,
+                                   &virtio_gpu_conn_helper_funcs);
 
     drm_encoder_init(&drm_dev, &output->encoder, DRM_MODE_ENCODER_VIRTUAL);
     output->encoder.possible_crtcs = 1U << index;

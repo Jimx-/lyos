@@ -85,4 +85,7 @@ int drm_mode_convert_umode(struct drm_display_mode* out,
 void drm_mode_convert_to_umode(struct drm_mode_modeinfo* out,
                                const struct drm_display_mode* in);
 
+void drm_set_preferred_mode(struct drm_connector* connector, int hpref,
+                            int vpref);
+
 #endif

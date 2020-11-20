@@ -206,231 +206,186 @@ static const struct drm_display_mode drm_dmt_modes[] = {
     {DRM_MODE("1366x768", DRM_MODE_TYPE_DRIVER, 72000, 1366, 1380, 1436, 1500,
               0, 768, 769, 772, 800, 0,
               DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
-    /* /\* 0x29 - 1400x1050@60Hz RB *\/ */
-    /* {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 101000, 1400, 1448, 1480,
-       1560, */
-    /*           0, 1050, 1053, 1057, 1080, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x2a - 1400x1050@60Hz *\/ */
-    /* {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 121750, 1400, 1488, 1632,
-       1864, */
-    /*           0, 1050, 1053, 1057, 1089, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x2b - 1400x1050@75Hz *\/ */
-    /* {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 156000, 1400, 1504, 1648,
-       1896, */
-    /*           0, 1050, 1053, 1057, 1099, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x2c - 1400x1050@85Hz *\/ */
-    /* {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 179500, 1400, 1504, 1656,
-       1912, */
-    /*           0, 1050, 1053, 1057, 1105, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x2d - 1400x1050@120Hz RB *\/ */
-    /* {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 208000, 1400, 1448, 1480,
-       1560, */
-    /*           0, 1050, 1053, 1057, 1112, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x2e - 1440x900@60Hz RB *\/ */
-    /* {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 88750, 1440, 1488, 1520,
-       1600, */
-    /*           0, 900, 903, 909, 926, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x2f - 1440x900@60Hz *\/ */
-    /* {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 106500, 1440, 1520, 1672,
-       1904, */
-    /*           0, 900, 903, 909, 934, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x30 - 1440x900@75Hz *\/ */
-    /* {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 136750, 1440, 1536, 1688,
-       1936, */
-    /*           0, 900, 903, 909, 942, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x31 - 1440x900@85Hz *\/ */
-    /* {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 157000, 1440, 1544, 1696,
-       1952, */
-    /*           0, 900, 903, 909, 948, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x32 - 1440x900@120Hz RB *\/ */
-    /* {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 182750, 1440, 1488, 1520,
-       1600, */
-    /*           0, 900, 903, 909, 953, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x53 - 1600x900@60Hz *\/ */
-    /* {DRM_MODE("1600x900", DRM_MODE_TYPE_DRIVER, 108000, 1600, 1624, 1704,
-       1800, */
-    /*           0, 900, 901, 904, 1000, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x33 - 1600x1200@60Hz *\/ */
-    /* {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 162000, 1600, 1664, 1856,
-       2160, */
-    /*           0, 1200, 1201, 1204, 1250, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x34 - 1600x1200@65Hz *\/ */
-    /* {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 175500, 1600, 1664, 1856,
-       2160, */
-    /*           0, 1200, 1201, 1204, 1250, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x35 - 1600x1200@70Hz *\/ */
-    /* {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 189000, 1600, 1664, 1856,
-       2160, */
-    /*           0, 1200, 1201, 1204, 1250, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x36 - 1600x1200@75Hz *\/ */
-    /* {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 202500, 1600, 1664, 1856,
-       2160, */
-    /*           0, 1200, 1201, 1204, 1250, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x37 - 1600x1200@85Hz *\/ */
-    /* {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 229500, 1600, 1664, 1856,
-       2160, */
-    /*           0, 1200, 1201, 1204, 1250, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x38 - 1600x1200@120Hz RB *\/ */
-    /* {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 268250, 1600, 1648, 1680,
-       1760, */
-    /*           0, 1200, 1203, 1207, 1271, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x39 - 1680x1050@60Hz RB *\/ */
-    /* {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 119000, 1680, 1728, 1760,
-       1840, */
-    /*           0, 1050, 1053, 1059, 1080, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x3a - 1680x1050@60Hz *\/ */
-    /* {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 146250, 1680, 1784, 1960,
-       2240, */
-    /*           0, 1050, 1053, 1059, 1089, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x3b - 1680x1050@75Hz *\/ */
-    /* {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 187000, 1680, 1800, 1976,
-       2272, */
-    /*           0, 1050, 1053, 1059, 1099, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x3c - 1680x1050@85Hz *\/ */
-    /* {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 214750, 1680, 1808, 1984,
-       2288, */
-    /*           0, 1050, 1053, 1059, 1105, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x3d - 1680x1050@120Hz RB *\/ */
-    /* {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 245500, 1680, 1728, 1760,
-       1840, */
-    /*           0, 1050, 1053, 1059, 1112, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x3e - 1792x1344@60Hz *\/ */
-    /* {DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 204750, 1792, 1920, 2120,
-       2448, */
-    /*           0, 1344, 1345, 1348, 1394, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x3f - 1792x1344@75Hz *\/ */
-    /* {DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 261000, 1792, 1888, 2104,
-       2456, */
-    /*           0, 1344, 1345, 1348, 1417, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x40 - 1792x1344@120Hz RB *\/ */
-    /* {DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 333250, 1792, 1840, 1872,
-       1952, */
-    /*           0, 1344, 1347, 1351, 1423, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x41 - 1856x1392@60Hz *\/ */
-    /* {DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 218250, 1856, 1952, 2176,
-       2528, */
-    /*           0, 1392, 1393, 1396, 1439, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x42 - 1856x1392@75Hz *\/ */
-    /* {DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 288000, 1856, 1984, 2208,
-       2560, */
-    /*           0, 1392, 1393, 1396, 1500, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x43 - 1856x1392@120Hz RB *\/ */
-    /* {DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 356500, 1856, 1904, 1936,
-       2016, */
-    /*           0, 1392, 1395, 1399, 1474, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x52 - 1920x1080@60Hz *\/ */
-    /* {DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008, 2052,
-       2200, */
-    /*           0, 1080, 1084, 1089, 1125, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x44 - 1920x1200@60Hz RB *\/ */
-    /* {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 154000, 1920, 1968, 2000,
-       2080, */
-    /*           0, 1200, 1203, 1209, 1235, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x45 - 1920x1200@60Hz *\/ */
-    /* {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 193250, 1920, 2056, 2256,
-       2592, */
-    /*           0, 1200, 1203, 1209, 1245, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x46 - 1920x1200@75Hz *\/ */
-    /* {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 245250, 1920, 2056, 2264,
-       2608, */
-    /*           0, 1200, 1203, 1209, 1255, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x47 - 1920x1200@85Hz *\/ */
-    /* {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 281250, 1920, 2064, 2272,
-       2624, */
-    /*           0, 1200, 1203, 1209, 1262, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x48 - 1920x1200@120Hz RB *\/ */
-    /* {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 317000, 1920, 1968, 2000,
-       2080, */
-    /*           0, 1200, 1203, 1209, 1271, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x49 - 1920x1440@60Hz *\/ */
-    /* {DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 234000, 1920, 2048, 2256,
-       2600, */
-    /*           0, 1440, 1441, 1444, 1500, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x4a - 1920x1440@75Hz *\/ */
-    /* {DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 297000, 1920, 2064, 2288,
-       2640, */
-    /*           0, 1440, 1441, 1444, 1500, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x4b - 1920x1440@120Hz RB *\/ */
-    /* {DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 380500, 1920, 1968, 2000,
-       2080, */
-    /*           0, 1440, 1443, 1447, 1525, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x54 - 2048x1152@60Hz *\/ */
-    /* {DRM_MODE("2048x1152", DRM_MODE_TYPE_DRIVER, 162000, 2048, 2074, 2154,
-       2250, */
-    /*           0, 1152, 1153, 1156, 1200, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x4c - 2560x1600@60Hz RB *\/ */
-    /* {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 268500, 2560, 2608, 2640,
-       2720, */
-    /*           0, 1600, 1603, 1609, 1646, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x4d - 2560x1600@60Hz *\/ */
-    /* {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 348500, 2560, 2752, 3032,
-       3504, */
-    /*           0, 1600, 1603, 1609, 1658, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x4e - 2560x1600@75Hz *\/ */
-    /* {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 443250, 2560, 2768, 3048,
-       3536, */
-    /*           0, 1600, 1603, 1609, 1672, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x4f - 2560x1600@85Hz *\/ */
-    /* {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 505250, 2560, 2768, 3048,
-       3536, */
-    /*           0, 1600, 1603, 1609, 1682, 0, */
-    /*           DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)}, */
-    /* /\* 0x50 - 2560x1600@120Hz RB *\/ */
-    /* {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 552750, 2560, 2608, 2640,
-       2720, */
-    /*           0, 1600, 1603, 1609, 1694, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x57 - 4096x2160@60Hz RB *\/ */
-    /* {DRM_MODE("4096x2160", DRM_MODE_TYPE_DRIVER, 556744, 4096, 4104, 4136,
-       4176, */
-    /*           0, 2160, 2208, 2216, 2222, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
-    /* /\* 0x58 - 4096x2160@59.94Hz RB *\/ */
-    /* {DRM_MODE("4096x2160", DRM_MODE_TYPE_DRIVER, 556188, 4096, 4104, 4136,
-       4176, */
-    /*           0, 2160, 2208, 2216, 2222, 0, */
-    /*           DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)}, */
+    /* 0x29 - 1400x1050@60Hz RB */
+    {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 101000, 1400, 1448, 1480, 1560,
+              0, 1050, 1053, 1057, 1080, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x2a - 1400x1050@60Hz */
+    {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 121750, 1400, 1488, 1632, 1864,
+              0, 1050, 1053, 1057, 1089, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x2b - 1400x1050@75Hz */
+    {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 156000, 1400, 1504, 1648, 1896,
+              0, 1050, 1053, 1057, 1099, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x2c - 1400x1050@85Hz */
+    {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 179500, 1400, 1504, 1656, 1912,
+              0, 1050, 1053, 1057, 1105, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x2d - 1400x1050@120Hz RB */
+    {DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 208000, 1400, 1448, 1480, 1560,
+              0, 1050, 1053, 1057, 1112, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x2e - 1440x900@60Hz RB */
+    {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 88750, 1440, 1488, 1520, 1600,
+              0, 900, 903, 909, 926, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x2f - 1440x900@60Hz */
+    {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 106500, 1440, 1520, 1672, 1904,
+              0, 900, 903, 909, 934, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x30 - 1440x900@75Hz */
+    {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 136750, 1440, 1536, 1688, 1936,
+              0, 900, 903, 909, 942, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x31 - 1440x900@85Hz */
+    {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 157000, 1440, 1544, 1696, 1952,
+              0, 900, 903, 909, 948, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x32 - 1440x900@120Hz RB */
+    {DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 182750, 1440, 1488, 1520, 1600,
+              0, 900, 903, 909, 953, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x53 - 1600x900@60Hz */
+    {DRM_MODE("1600x900", DRM_MODE_TYPE_DRIVER, 108000, 1600, 1624, 1704, 1800,
+              0, 900, 901, 904, 1000, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x33 - 1600x1200@60Hz */
+    {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 162000, 1600, 1664, 1856, 2160,
+              0, 1200, 1201, 1204, 1250, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x34 - 1600x1200@65Hz */
+    {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 175500, 1600, 1664, 1856, 2160,
+              0, 1200, 1201, 1204, 1250, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x35 - 1600x1200@70Hz */
+    {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 189000, 1600, 1664, 1856, 2160,
+              0, 1200, 1201, 1204, 1250, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x36 - 1600x1200@75Hz */
+    {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 202500, 1600, 1664, 1856, 2160,
+              0, 1200, 1201, 1204, 1250, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x37 - 1600x1200@85Hz */
+    {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 229500, 1600, 1664, 1856, 2160,
+              0, 1200, 1201, 1204, 1250, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x38 - 1600x1200@120Hz RB */
+    {DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 268250, 1600, 1648, 1680, 1760,
+              0, 1200, 1203, 1207, 1271, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x39 - 1680x1050@60Hz RB */
+    {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 119000, 1680, 1728, 1760, 1840,
+              0, 1050, 1053, 1059, 1080, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x3a - 1680x1050@60Hz */
+    {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 146250, 1680, 1784, 1960, 2240,
+              0, 1050, 1053, 1059, 1089, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x3b - 1680x1050@75Hz */
+    {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 187000, 1680, 1800, 1976, 2272,
+              0, 1050, 1053, 1059, 1099, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x3c - 1680x1050@85Hz */
+    {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 214750, 1680, 1808, 1984, 2288,
+              0, 1050, 1053, 1059, 1105, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x3d - 1680x1050@120Hz RB */
+    {DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 245500, 1680, 1728, 1760, 1840,
+              0, 1050, 1053, 1059, 1112, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x3e - 1792x1344@60Hz */
+    {DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 204750, 1792, 1920, 2120, 2448,
+              0, 1344, 1345, 1348, 1394, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x3f - 1792x1344@75Hz */
+    {DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 261000, 1792, 1888, 2104, 2456,
+              0, 1344, 1345, 1348, 1417, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x40 - 1792x1344@120Hz RB */
+    {DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 333250, 1792, 1840, 1872, 1952,
+              0, 1344, 1347, 1351, 1423, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x41 - 1856x1392@60Hz */
+    {DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 218250, 1856, 1952, 2176, 2528,
+              0, 1392, 1393, 1396, 1439, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x42 - 1856x1392@75Hz */
+    {DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 288000, 1856, 1984, 2208, 2560,
+              0, 1392, 1393, 1396, 1500, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x43 - 1856x1392@120Hz RB */
+    {DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 356500, 1856, 1904, 1936, 2016,
+              0, 1392, 1395, 1399, 1474, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x52 - 1920x1080@60Hz */
+    {DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008, 2052, 2200,
+              0, 1080, 1084, 1089, 1125, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x44 - 1920x1200@60Hz RB */
+    {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 154000, 1920, 1968, 2000, 2080,
+              0, 1200, 1203, 1209, 1235, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x45 - 1920x1200@60Hz */
+    {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 193250, 1920, 2056, 2256, 2592,
+              0, 1200, 1203, 1209, 1245, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x46 - 1920x1200@75Hz */
+    {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 245250, 1920, 2056, 2264, 2608,
+              0, 1200, 1203, 1209, 1255, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x47 - 1920x1200@85Hz */
+    {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 281250, 1920, 2064, 2272, 2624,
+              0, 1200, 1203, 1209, 1262, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x48 - 1920x1200@120Hz RB */
+    {DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 317000, 1920, 1968, 2000, 2080,
+              0, 1200, 1203, 1209, 1271, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x49 - 1920x1440@60Hz */
+    {DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 234000, 1920, 2048, 2256, 2600,
+              0, 1440, 1441, 1444, 1500, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x4a - 1920x1440@75Hz */
+    {DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 297000, 1920, 2064, 2288, 2640,
+              0, 1440, 1441, 1444, 1500, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x4b - 1920x1440@120Hz RB */
+    {DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 380500, 1920, 1968, 2000, 2080,
+              0, 1440, 1443, 1447, 1525, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x54 - 2048x1152@60Hz */
+    {DRM_MODE("2048x1152", DRM_MODE_TYPE_DRIVER, 162000, 2048, 2074, 2154, 2250,
+              0, 1152, 1153, 1156, 1200, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x4c - 2560x1600@60Hz RB */
+    {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 268500, 2560, 2608, 2640, 2720,
+              0, 1600, 1603, 1609, 1646, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x4d - 2560x1600@60Hz */
+    {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 348500, 2560, 2752, 3032, 3504,
+              0, 1600, 1603, 1609, 1658, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x4e - 2560x1600@75Hz */
+    {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 443250, 2560, 2768, 3048, 3536,
+              0, 1600, 1603, 1609, 1672, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x4f - 2560x1600@85Hz */
+    {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 505250, 2560, 2768, 3048, 3536,
+              0, 1600, 1603, 1609, 1682, 0,
+              DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)},
+    /* 0x50 - 2560x1600@120Hz RB */
+    {DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 552750, 2560, 2608, 2640, 2720,
+              0, 1600, 1603, 1609, 1694, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x57 - 4096x2160@60Hz RB */
+    {DRM_MODE("4096x2160", DRM_MODE_TYPE_DRIVER, 556744, 4096, 4104, 4136, 4176,
+              0, 2160, 2208, 2216, 2222, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
+    /* 0x58 - 4096x2160@59.94Hz RB */
+    {DRM_MODE("4096x2160", DRM_MODE_TYPE_DRIVER, 556188, 4096, 4104, 4136, 4176,
+              0, 2160, 2208, 2216, 2222, 0,
+              DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC)},
 };
 
 void drm_mode_copy(struct drm_display_mode* dst,
@@ -527,4 +482,16 @@ int drm_mode_convert_umode(struct drm_display_mode* out,
     /* drm_mode_set_crtcinfo(out, CRTC_INTERLACE_HALVE_V); */
 
     return 0;
+}
+
+void drm_set_preferred_mode(struct drm_connector* connector, int hpref,
+                            int vpref)
+{
+    struct drm_display_mode* mode;
+
+    list_for_each_entry(mode, &connector->modes, head)
+    {
+        if (mode->hdisplay == hpref && mode->vdisplay == vpref)
+            mode->type |= DRM_MODE_TYPE_PREFERRED;
+    }
 }

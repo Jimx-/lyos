@@ -7,6 +7,11 @@
 
 struct drm_device;
 struct drm_encoder;
+struct drm_connector;
+
+struct drm_connector_helper_funcs {
+    int (*get_modes)(struct drm_connector*);
+};
 
 struct drm_connector {
     struct list_head head;
@@ -20,6 +25,8 @@ struct drm_connector {
     struct drm_encoder* encoder;
 
     struct list_head modes;
+
+    const struct drm_connector_helper_funcs* helper_funcs;
 };
 
 int drm_connector_init(struct drm_device* dev, struct drm_connector* connector,
@@ -39,5 +46,12 @@ static inline struct drm_connector* drm_connector_lookup(struct drm_device* dev,
 
 #define drm_for_each_connector(connector, dev) \
     list_for_each_entry(connector, &(dev)->mode_config.connector_list, head)
+
+static inline void
+drm_connector_set_helper_funcs(struct drm_connector* connector,
+                               const struct drm_connector_helper_funcs* helper)
+{
+    connector->helper_funcs = helper;
+}
 
 #endif
