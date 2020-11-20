@@ -310,21 +310,6 @@ diff -rupN old/lib/getaddrinfo.c new/lib/getaddrinfo.c
 -
    return 0;
  }
-diff -rupN old/lib/getcwd.c new/lib/getcwd.c
---- old/lib/getcwd.c	2011-08-20 00:09:37.000000000 +0800
-+++ new/lib/getcwd.c	2020-10-27 23:09:55.362403973 +0800
-@@ -101,6 +101,11 @@
-    NULL, an array is allocated with `malloc'; the array is SIZE bytes long,
-    unless SIZE == 0, in which case it is as big as necessary.  */
- 
-+int rewinddir(struct dirent* dp)
-+{
-+  return 0;
-+}
-+
- char *
- __getcwd (char *buf, size_t size)
- {
 diff -rupN old/lib/getdtablesize.c new/lib/getdtablesize.c
 --- old/lib/getdtablesize.c	2011-04-25 01:21:45.000000000 +0800
 +++ new/lib/getdtablesize.c	2020-10-27 23:09:55.362403973 +0800
