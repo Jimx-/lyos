@@ -8,7 +8,6 @@ service up /sbin/ext2fs
 service up /sbin/procfs
 service up /sbin/input
 service up /sbin/atkbd
-service up /sbin/fb
 service up /sbin/virtio-gpu
 service up /sbin/uds
 service up /sbin/tmpfs

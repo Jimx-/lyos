@@ -23,7 +23,6 @@ $(INITRD):
 	@cp -f $(DESTDIR)/sbin/procfs sbin/
 	@cp -f $(DESTDIR)/sbin/input sbin/
 	@cp -f $(DESTDIR)/sbin/atkbd sbin/
-	@cp -f $(DESTDIR)/sbin/fb sbin/
 	@cp -f $(DESTDIR)/sbin/uds sbin/
 	@cp -f $(DESTDIR)/sbin/tmpfs sbin/
 	@cp -f $(DESTDIR)/sbin/pty sbin/
