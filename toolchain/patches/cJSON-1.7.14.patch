@@ -1,0 +1,11 @@
+diff -rupN old/CMakeLists.txt new/CMakeLists.txt
+--- old/CMakeLists.txt	2020-09-03 17:14:26.000000000 +0800
++++ new/CMakeLists.txt	2020-11-22 21:12:03.684708158 +0800
+@@ -38,7 +38,6 @@ if (ENABLE_CUSTOM_COMPILER_FLAGS)
+             -Wswitch-default
+             -Wconversion
+             -Wc++-compat
+-            -fstack-protector-strong
+             -Wcomma
+             -Wdouble-promotion
+             -Wparentheses

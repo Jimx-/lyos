@@ -1,12 +1,6 @@
+SRCS		= main.c parse.c
 
-SRCS 		= main.c parse.c
-EXTRAOBJS 	= cJSON/libcjson.a
-EXTRALIBS	= -lm
-PROG 		= service
-
-CFLAGS 		+= -I./cJSON
+EXTRALIBS	= -lm -lcjson
+PROG		= service
 
 include lyos.prog.mk
-
-cJSON/libcjson.a: cJSON/cJSON.c cJSON/cJSON.h
-	$(Q)$(MAKE) -C cJSON $(MAKEFLAGS) libcjson.a

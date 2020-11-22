@@ -34,6 +34,14 @@ int main(int argc, char* argv[])
 
     pid = fork();
     if (!pid) {
+        int fd;
+
+        fd = open("/dev/tty6", O_RDWR);
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+        close(fd);
+
         char* rc_args[] = {"/usr/bin/lydm", NULL};
         char* rc_env[] = {NULL};
         execve("/usr/bin/lydm", rc_args, rc_env);

@@ -15,6 +15,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBSTDCPP:=false}
 : ${BUILD_NATIVE_BINUTILS:=false}
 : ${BUILD_NATIVE_GCC:=false}
+: ${BUILD_CJSON:=false}
 : ${BUILD_READLINE:=false}
 : ${BUILD_BASH:=false}
 : ${BUILD_COREUTILS:=false}
@@ -46,6 +47,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBSTDCPP=true
     BUILD_NATIVE_BINUTILS=true
     BUILD_NATIVE_GCC=true
+    BUILD_CJSON=true
     BUILD_READLINE=true
     BUILD_BASH=true
     BUILD_COREUTILS=true
@@ -335,6 +337,20 @@ fi
 #     make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
 #     popd > /dev/null
 # fi
+
+# Build cJSON
+if $BUILD_CJSON; then
+    if [ ! -d "cJSON-$SUBARCH" ]; then
+        mkdir cJSON-$SUBARCH
+    fi
+
+    pushd cJSON-$SUBARCH > /dev/null
+    cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$TARGET_CMAKE_TOOLCHAIN_FILE \
+          -DCMAKE_INSTALL_PREFIX=$CROSSPREFIX $DIR/sources/cJSON-1.7.14/
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
+    popd > /dev/null
+fi
 
 if $BUILD_READLINE; then
     if [ ! -d "readline-$SUBARCH" ]; then

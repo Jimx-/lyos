@@ -10,7 +10,7 @@
 #include <lyos/service.h>
 #include <sys/socket.h>
 
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 
 #define PCI_CLASS         "pci_class"
 #define PCI_DEVICE        "pci_device"
