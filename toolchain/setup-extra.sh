@@ -99,7 +99,7 @@ if $BUILD_PYTHON; then
         --prefix=$CROSSPREFIX \
         --with-sysroot=$SYSROOT --enable-shared --with-system-ffi --with-system-expat \
         --disable-ipv6 --without-ensurepip
-    make -j4 || cmd_error
+    PATH=$DIR/tools/python-3.8/bin:$PATH make -j4 || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
