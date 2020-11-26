@@ -11,6 +11,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
 : ${BUILD_WAYLAND_SCANNER:=false}
+: ${BUILD_HOST_PYTHON:=false}
 : ${BUILD_NEWLIB:=false}
 : ${BUILD_LIBSTDCPP:=false}
 : ${BUILD_NATIVE_BINUTILS:=false}
@@ -39,6 +40,7 @@ if $BUILD_EVERYTHING; then
     BUILD_BINUTILS=true
     BUILD_GCC=true
     BUILD_WAYLAND_SCANNER=true
+    BUILD_HOST_PYTHON=true
     BUILD_NEWLIB=true
     BUILD_LIBSTDCPP=true
     BUILD_NATIVE_BINUTILS=true
@@ -201,6 +203,19 @@ if $BUILD_WAYLAND_SCANNER; then
           -Dlibraries=false $DIR/sources/wayland-1.18.0
     ninja || cmd_error
     ninja install || cmd_error
+    popd > /dev/null
+fi
+
+# Build host python
+if $BUILD_HOST_PYTHON; then
+    if [ ! -d "host-python" ]; then
+        mkdir host-python
+    fi
+
+    pushd host-python > /dev/null
+    $DIR/sources/Python-3.8.2/configure --prefix=$PREFIX
+    make -j || cmd_error
+    make install || cmd_error
     popd > /dev/null
 fi
 
