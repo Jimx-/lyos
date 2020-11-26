@@ -97,6 +97,7 @@ make SUBARCH=i686
 (Optionally) ~setup.sh~ only builds some core userspace packages like ~bash~ and ~coreutils~. You still need to build some extra packages if you want to use graphical interface:
 #+BEGIN_SRC shell
 cd toolchain
+BUILD_EVERYTHING=true ./setup-extra.sh -m i686
 BUILD_EVERYTHING=true ./setup-x11.sh -m i686
 cd ..
 #+END_SRC
