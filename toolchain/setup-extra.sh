@@ -94,7 +94,7 @@ if $BUILD_PYTHON; then
     echo "ac_cv_file__dev_ptmx=yes
           ac_cv_file__dev_ptc=no" > python-config-site
 
-    CONFIG_SITE=python-config-site \
+    CONFIG_SITE=python-config-site PATH=$DIR/tools/python-3.8/bin:$PATH \
       $DIR/sources/Python-3.8.2/configure --host=$TARGET --build=x86_64-linux-gnu \
         --prefix=$CROSSPREFIX \
         --with-sysroot=$SYSROOT --enable-shared --with-system-ffi --with-system-expat \

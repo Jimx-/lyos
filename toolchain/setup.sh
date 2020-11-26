@@ -213,7 +213,7 @@ if $BUILD_HOST_PYTHON; then
     fi
 
     pushd host-python > /dev/null
-    $DIR/sources/Python-3.8.2/configure --prefix=$PREFIX
+    $DIR/sources/Python-3.8.2/configure --prefix=$DIR/tools/python-3.8
     make -j || cmd_error
     make install || cmd_error
     popd > /dev/null
