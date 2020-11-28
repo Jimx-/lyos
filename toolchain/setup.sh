@@ -181,7 +181,7 @@ if $BUILD_GCC; then
     # For GCC's LIMITS_H_TEST
     if [ ! -f $SYSROOT/usr/include/limits.h ]; then
         mkdir -p $SYSROOT/usr/include/
-        echo "/* limits.h - Do not edit. Overwritten after newlib is built. */" > $SYSROOT/usr/include/
+        echo "/* limits.h - Do not edit. Overwritten after newlib is built. */" > $SYSROOT/usr/include/limits.h
     fi
 
     pushd gcc-$SUBARCH
