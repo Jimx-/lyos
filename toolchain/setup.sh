@@ -133,7 +133,7 @@ if $BUILD_AUTOTOOLS; then
     pushd libtool-$SUBARCH > /dev/null
     (export PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH;
      $DIR/sources/libtool-2.4.5/configure --prefix=$PREFIX &&
-             make -j8 &&
+             make -j$PARALLELISM &&
              make install
     ) || cmd_error
     popd > /dev/null
@@ -165,7 +165,7 @@ if $BUILD_BINUTILS; then
 
     pushd binutils-$SUBARCH
     $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
-    make -j8 || cmd_error
+    make -j$PARALLELISM || cmd_error
     make install || cmd_error
     popd
 fi
@@ -186,7 +186,7 @@ if $BUILD_GCC; then
 
     pushd gcc-$SUBARCH
     $DIR/sources/gcc-9.2.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib --enable-shared=libgcc || cmd_error
-    make all-gcc all-target-libgcc -j4 || cmd_error
+    make -j$PARALLELISM all-gcc all-target-libgcc || cmd_error
     make install-gcc install-target-libgcc || cmd_error
 
     popd
@@ -214,7 +214,7 @@ if $BUILD_HOST_PYTHON; then
 
     pushd host-python > /dev/null
     $DIR/sources/Python-3.8.2/configure --prefix=$DIR/tools/python-3.8
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make install || cmd_error
     popd > /dev/null
 fi
@@ -254,7 +254,7 @@ if $BUILD_NEWLIB; then
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
 
-    TARGET_CFLAGS=-fPIC make -j || cmd_error
+    TARGET_CFLAGS=-fPIC make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
@@ -267,7 +267,7 @@ if $BUILD_NEWLIB; then
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
 
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
     popd > /dev/null
@@ -275,7 +275,7 @@ fi
 
 if $BUILD_LIBSTDCPP; then
     pushd gcc-$SUBARCH > /dev/null
-    make all-target-libstdc++-v3 -j || cmd_error
+    make all-target-libstdc++-v3 -j$PARALLELISM || cmd_error
     make install-target-libstdc++-v3 || cmd_error
     popd > /dev/null
 fi
@@ -288,7 +288,7 @@ if $BUILD_NATIVE_BINUTILS; then
 
     pushd binutils-native-$SUBARCH > /dev/null
     $DIR/sources/binutils-2.31/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-werror || cmd_error
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -311,13 +311,13 @@ if $BUILD_NATIVE_GCC; then
 
     pushd gcc-native-$SUBARCH > /dev/null
     $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib || cmd_error
-    make DESTDIR=$SYSROOT all-gcc -j4 || cmd_error
+    make DESTDIR=$SYSROOT all-gcc -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install-gcc || cmd_error
-    make DESTDIR=$SYSROOT all-target-libgcc -j4 || cmd_error
+    make DESTDIR=$SYSROOT all-target-libgcc -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
     # touch $SYSROOT/usr/include/fenv.h
-    # make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
-    # make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
+    # make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j$PARALLELISM || cmd_error
+    # make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j$PARALLELISM || cmd_error
     popd > /dev/null
 fi
 
@@ -339,13 +339,13 @@ fi
 
 #     pushd gcc1-native-$SUBARCH > /dev/null
 #     $DIR/sources/gcc-9.2.0/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc CFLAGS=-O2 CXXFLAGS=-O2 || cmd_error
-#     make DESTDIR=$SYSROOT all-gcc -j4 || cmd_error
+#     make DESTDIR=$SYSROOT all-gcc -j$PARALLELISM || cmd_error
 #     make DESTDIR=$SYSROOT install-gcc || cmd_error
-#     make DESTDIR=$SYSROOT all-target-libgcc -j4 || cmd_error
+#     make DESTDIR=$SYSROOT all-target-libgcc -j$PARALLELISM || cmd_error
 #     make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
 #     touch $SYSROOT/usr/include/fenv.h
-#     make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j8 || cmd_error
-#     make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j || cmd_error
+#     make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j$PARALLELISM || cmd_error
+#     make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j$PARALLELISM || cmd_error
 #     popd > /dev/null
 # fi
 
@@ -370,7 +370,7 @@ if $BUILD_READLINE; then
 
     pushd readline-$SUBARCH > /dev/null
     $DIR/sources/readline-8.0/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-static --enable-multibyte || cmd_error
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -383,7 +383,7 @@ if $BUILD_BASH; then
 
     pushd bash-$SUBARCH > /dev/null
     $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls --with-installed-readline || cmd_error
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/sh
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/bash
@@ -402,7 +402,7 @@ if $BUILD_COREUTILS; then
     gl_cv_func_fstatat_zero_flag=yes \
     ac_cv_func_getgroups_works=yes \
       $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -415,7 +415,7 @@ if $BUILD_NCURSES; then
 
     pushd ncurses-$SUBARCH > /dev/null
     $DIR/sources/ncurses-6.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -425,7 +425,7 @@ if $BUILD_VIM; then
     pushd $DIR/sources/vim74 > /dev/null
     ac_cv_sizeof_int=4 vim_cv_getcwd_broken=no vim_cv_memmove_handles_overlap=yes vim_cv_stat_ignores_slash=no vim_cv_tgetent=zero vim_cv_terminfo=yes vim_cv_toupper_broken=no vim_cv_tty_group=world $DIR/sources/vim74/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-tlib=ncurses --enable-gui=no --disable-gtktest --disable-xim --with-features=normal --disable-gpm --without-x --disable-netbeans --enable-multibyte || cmd_error
     make clean
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -442,7 +442,7 @@ if $BUILD_LIBEVDEV; then
 
     pushd libevdev-$SUBARCH > /dev/null
     $DIR/sources/libevdev-1.9.0/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -459,7 +459,7 @@ if $BUILD_PCRE; then
 
     pushd pcre-$SUBARCH > /dev/null
     $DIR/sources/pcre-8.44/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -474,7 +474,7 @@ if $BUILD_GREP; then
 
     pushd grep-$SUBARCH > /dev/null
     $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -487,7 +487,7 @@ if $BUILD_LESS; then
 
     pushd less-$SUBARCH > /dev/null
     $DIR/sources/less-551/configure --host=$TARGET --prefix=$CROSSPREFIX --sysconfdir=/etc
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -500,7 +500,7 @@ if $BUILD_ZLIB; then
 
     pushd zlib-$SUBARCH > /dev/null
     CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -526,7 +526,7 @@ if $BUILD_PKGCONFIG; then
 
     pushd pkg-config-$SUBARCH > /dev/null
     $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-internal-glib --disable-static
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -543,7 +543,7 @@ if $BUILD_LIBPNG; then
 
     pushd libpng-$SUBARCH > /dev/null
     $DIR/sources/libpng-1.6.37/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -561,7 +561,7 @@ if $BUILD_BZIP2; then
 
     make CC=$TARGET-gcc CFLAGS=-fPIC -f Makefile-libbz2_so || cmd_error
     make clean || cmd_error
-    make CC=$TARGET-gcc CFLAGS=-fPIC -j || cmd_error
+    make CC=$TARGET-gcc CFLAGS=-fPIC -j$PARALLELISM || cmd_error
     make PREFIX=$SYSROOT/$CROSSPREFIX install || cmd_error
     popd > /dev/null
 fi
@@ -578,7 +578,7 @@ if $BUILD_LIBXML2; then
 
     pushd libxml2-$SUBARCH > /dev/null
     $DIR/sources/libxml2-2.9.10/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-static --with-threads --disable-ipv6 --without-python
-    make -j4 || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -595,7 +595,7 @@ if $BUILD_EUDEV; then
 
     pushd eudev-$SUBARCH > /dev/null
     $DIR/sources/eudev-3.2.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-blkid --disable-selinux --disable-kmod --disable-mtd-probe --disable-rule-generator --disable-manpages || cmd_error
-    make -j4 || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -610,9 +610,10 @@ if $BUILD_MTDEV; then
     PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
     popd > /dev/null
 
+    echo -j$PARALLELISM
     pushd mtdev-$SUBARCH > /dev/null
     $DIR/sources/mtdev-1.1.6/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
-    make -j4 || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi

@@ -121,7 +121,7 @@ if $BUILD_LIBDRM; then
 
     pushd libdrm-$SUBARCH > /dev/null
     $DIR/sources/libdrm-2.4.89/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-intel --disable-vmwgfx --disable-radeon --disable-amdgpu --disable-nouveau --disable-cairo-tests
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -134,7 +134,7 @@ if $BUILD_LIBEXPAT; then
 
     pushd libexpat-$SUBARCH > /dev/null
     $DIR/sources/expat-2.2.9/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --without-xmlwf
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -147,7 +147,7 @@ if $BUILD_LIBFFI; then
 
     pushd libffi-$SUBARCH > /dev/null
     $DIR/sources/libffi-3.3/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -177,7 +177,7 @@ if $BUILD_WAYLAND_PROTOCOLS; then
 
     pushd wayland-protocols-$SUBARCH > /dev/null
     $DIR/sources/wayland-protocols-1.20/configure --host=$TARGET --prefix=/usr
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -207,7 +207,7 @@ if $BUILD_KMSCUBE; then
 
     pushd kmscube-$SUBARCH > /dev/null
     $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -220,7 +220,7 @@ if $BUILD_FREETYPE; then
 
     pushd freetype-$SUBARCH > /dev/null
     $DIR/sources/freetype-2.10.2/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-static
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -233,7 +233,7 @@ if $BUILD_PIXMAN; then
 
     pushd pixman-$SUBARCH > /dev/null
     $DIR/sources/pixman-0.40.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -263,7 +263,7 @@ if $BUILD_LIBTSM; then
 
     pushd libtsm-$SUBARCH > /dev/null
     $DIR/sources/libtsm-3/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -283,7 +283,7 @@ if $BUILD_KMSCON; then
     $DIR/sources/kmscon-8/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \
                                     --with-video=drm2d --with-renderers= --with-fonts=unifont \
                                     --disable-multi-seat --with-sessions=dummy,terminal
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -303,7 +303,7 @@ if $BUILD_XORG_PROTO; then
                                                  --sysconfdir=/etc --localstatedir=/var \
                                                  --disable-static
 
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -324,7 +324,7 @@ if $BUILD_XKEYBOARD_CONFIG; then
                                                  --with-xkb-rules-symlink=xorg --disable-nls \
                                                  --disable-runtime-deps
 
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -362,7 +362,7 @@ if $BUILD_LIBXAU; then
     $DIR/sources/libXau-1.0.9/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -381,7 +381,7 @@ if $BUILD_LIBXDMCP; then
     $DIR/sources/libXdmcp-1.1.3/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -400,7 +400,7 @@ if $BUILD_XCB_PROTO; then
     $DIR/sources/xcb-proto-1.14.1/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -421,7 +421,7 @@ if $BUILD_LIBXCB; then
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --without-doxygen \
                                         --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -440,7 +440,7 @@ if $BUILD_XTRANS; then
     $DIR/sources/xtrans-1.4.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -462,7 +462,7 @@ if $BUILD_LIBX11; then
                                         --disable-malloc0returnsnull \
                                         --with-keysymdefdir=$SYSROOT/usr/include/X11 \
                                         --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -481,7 +481,7 @@ if $BUILD_LIBXFIXES; then
     $DIR/sources/libXfixes-5.0.3/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -501,7 +501,7 @@ if $BUILD_LIBXRENDER; then
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --disable-malloc0returnsnull \
                                         --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -520,7 +520,7 @@ if $BUILD_LIBXCURSOR; then
     $DIR/sources/libXcursor-1.2.0/configure --host=$TARGET --prefix=$CROSSPREFIX \
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -540,7 +540,7 @@ if $BUILD_LIBXEXT; then
                                         --sysconfdir=/etc --localstatedir=/var \
                                         --disable-static --disable-malloc0returnsnull \
                                         --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -562,7 +562,7 @@ if $BUILD_CAIRO; then
     ac_cv_func_XRenderCreateRadialGradient=yes \
     ac_cv_func_XRenderCreateSolidFill=yes \
       $DIR/sources/cairo-1.16.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
@@ -584,7 +584,7 @@ if $BUILD_WESTON; then
                                         --disable-simple-dmabuf-drm-client \
                                         --disable-simple-dmabuf-v4l-client
 
-    make -j || cmd_error
+    make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
