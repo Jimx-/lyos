@@ -136,7 +136,9 @@ void init_prot()
     struct descriptor* gdt;
 
     if (_cpufeature(_CPUF_I386_SYSENTER)) syscall_style |= SST_INTEL_SYSENTER;
+#ifdef CONFIG_64BIT
     if (_cpufeature(_CPUF_I386_SYSCALL)) syscall_style |= SST_AMD_SYSCALL;
+#endif
 
     /* setup gdt */
     gdt = get_cpu_gdt(booting_cpu);
