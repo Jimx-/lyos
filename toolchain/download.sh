@@ -20,11 +20,10 @@ download "automake-1.15" "https://ftp.gnu.org/gnu/automake" "automake-1.15.tar.g
 download "autoconf-archive" "https://ftp.gnu.org/gnu/autoconf-archive" "autoconf-archive-2019.01.06.tar.xz" || cmd_error
 download "libtool" "https://ftp.gnu.org/gnu/libtool" "libtool-2.4.5.tar.gz"
 download "binutils" "https://mirrors.ustc.edu.cn/gnu/binutils" "binutils-2.31.tar.gz" || cmd_error
-download "mpc"  "http://www.multiprecision.org/downloads" "mpc-0.8.1.tar.gz"
-download "mpfr" "http://www.mpfr.org/mpfr-2.4.2" "mpfr-2.4.2.tar.gz"
-download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-4.3.2.tar.bz2"
+download "mpc"  "http://www.multiprecision.org/downloads" "mpc-1.0.3.tar.gz"
+download "mpfr" "http://www.mpfr.org/mpfr-3.1.4" "mpfr-3.1.4.tar.gz"
+download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-6.1.0.tar.bz2"
 download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz" || cmd_error
-download "gcc-native" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-4.7.3" "gcc-4.7.3.tar.bz2" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
 download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz" || cmd_error
@@ -76,6 +75,8 @@ download "xz" "https://tukaani.org/xz" "xz-5.2.0.tar.xz"
 download "libressl" "https://ftp.openbsd.org/pub/OpenBSD/LibreSSL" "libressl-3.0.2.tar.gz"
 download "python" "https://www.python.org/ftp/python/3.8.2" "Python-3.8.2.tar.xz"
 download "cJSON" "https://github.com/DaveGamble/cJSON/archive" "v1.7.14.tar.gz" && cp v1.7.14.tar.gz cJSON-1.7.14.tar.gz
+download "gettext" "https://mirrors.ustc.edu.cn/gnu/gettext" "gettext-0.21.tar.xz" || cmd_error
+download "guile" "https://mirrors.ustc.edu.cn/gnu/guile" "guile-3.0.4.tar.xz" || cmd_error
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -85,11 +86,10 @@ unzip "automake-1.15.tar.gz" "automake-1.15"
 unzip "autoconf-archive-2019.01.06.tar.xz" "autoconf-archive-2019.01.06"
 unzip "libtool-2.4.5.tar.gz" "libtool-2.4.5"
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
-unzip "gmp-4.3.2.tar.bz2" "gmp-4.3.2"
-unzip "mpfr-2.4.2.tar.gz" "mpfr-2.4.2"
-unzip "mpc-0.8.1.tar.gz" "mpc-0.8.1"
+unzip "gmp-6.1.0.tar.bz2" "gmp-6.1.0"
+unzip "mpfr-3.1.4.tar.gz" "mpfr-3.1.4"
+unzip "mpc-1.0.3.tar.gz" "mpc-1.0.3"
 unzip "gcc-9.2.0.tar.gz" "gcc-9.2.0"
-unzip "gcc-4.7.3.tar.bz2" "gcc-4.7.3"
 unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
 unzip "coreutils-8.13.tar.xz" "coreutils-8.13"
 unzip "bash-4.3.tar.gz" "bash-4.3"
@@ -141,17 +141,18 @@ unzip "xz-5.2.0.tar.xz" "xz-5.2.0"
 unzip "libressl-3.0.2.tar.gz" "libressl-3.0.2"
 unzip "Python-3.8.2.tar.xz" "Python-3.8.2"
 unzip "cJSON-1.7.14.tar.gz" "cJSON-1.7.14"
+unzip "gettext-0.21.tar.xz" "gettext-0.21"
+unzip "guile-3.0.4.tar.xz" "guile-3.0.4"
 
 echo "Patching..."
 patc "automake-1.11"
 patc "automake-1.15"
 patc "libtool-2.4.5"
 patc "binutils-2.31"
-patc "gmp-4.3.2"
-patc "mpfr-2.4.2"
-patc "mpc-0.8.1"
+patc "gmp-6.1.0"
+patc "mpfr-3.1.4"
+patc "mpc-1.0.3"
 patc "gcc-9.2.0"
-patc "gcc-4.7.3"
 patc "newlib-3.0.0"
 patc "coreutils-8.13"
 patc "bash-4.3"

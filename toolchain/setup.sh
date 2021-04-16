@@ -34,6 +34,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBXML2:=false}
 : ${BUILD_EUDEV:=false}
 : ${BUILD_MTDEV:=false}
+: ${BUILD_GETTEXT:=false}
+: ${BUILD_GUILE:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -299,55 +301,27 @@ if $BUILD_NATIVE_GCC; then
         mkdir gcc-native-$SUBARCH
     fi
 
-    if [ ! -e $DIR/sources/gcc-4.7.3/mpfr ]; then
-        ln -s $DIR/sources/mpfr-2.4.2 $DIR/sources/gcc-4.7.3/mpfr
+    if [ ! -e $DIR/sources/gcc-9.2.0/mpfr ]; then
+        ln -s $DIR/sources/mpfr-3.1.4 $DIR/sources/gcc-9.2.0/mpfr
     fi
-    if [ ! -e $DIR/sources/gcc-4.7.3/mpc ]; then
-        ln -s $DIR/sources/mpc-0.8.1 $DIR/sources/gcc-4.7.3/mpc
+    if [ ! -e $DIR/sources/gcc-9.2.0/mpc ]; then
+        ln -s $DIR/sources/mpc-1.0.3 $DIR/sources/gcc-9.2.0/mpc
     fi
-    if [ ! -e $DIR/sources/gcc-4.7.3/gmp ]; then
-        ln -s $DIR/sources/gmp-4.3.2 $DIR/sources/gcc-4.7.3/gmp
+    if [ ! -e $DIR/sources/gcc-9.2.0/gmp ]; then
+        ln -s $DIR/sources/gmp-6.1.0 $DIR/sources/gcc-9.2.0/gmp
     fi
 
     pushd gcc-native-$SUBARCH > /dev/null
-    $DIR/sources/gcc-4.7.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib || cmd_error
+    $DIR/sources/gcc-9.2.0/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc CFLAGS=-O2 CXXFLAGS=-O2 || cmd_error
     make DESTDIR=$SYSROOT all-gcc -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install-gcc || cmd_error
     make DESTDIR=$SYSROOT all-target-libgcc -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
-    # touch $SYSROOT/usr/include/fenv.h
-    # make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j$PARALLELISM || cmd_error
-    # make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j$PARALLELISM || cmd_error
+    touch $SYSROOT/usr/include/fenv.h
+    make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j$PARALLELISM || cmd_error
+    make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j$PARALLELISM || cmd_error
     popd > /dev/null
 fi
-
-# Build native gcc
-# if $BUILD_NATIVE_GCC1; then
-#     if [ ! -d "gcc1-native-$SUBARCH" ]; then
-#         mkdir gcc1-native-$SUBARCH
-#     fi
-
-#     if [ ! -e $DIR/sources/gcc-9.2.0/mpfr ]; then
-#         ln -s $DIR/sources/mpfr-3.1.4 $DIR/sources/gcc-9.2.0/mpfr
-#     fi
-#     if [ ! -e $DIR/sources/gcc-9.2.0/mpc ]; then
-#         ln -s $DIR/sources/mpc-1.0.3 $DIR/sources/gcc-9.2.0/mpc
-#     fi
-#     if [ ! -e $DIR/sources/gcc-9.2.0/gmp ]; then
-#         ln -s $DIR/sources/gmp-6.1.0 $DIR/sources/gcc-9.2.0/gmp
-#     fi
-
-#     pushd gcc1-native-$SUBARCH > /dev/null
-#     $DIR/sources/gcc-9.2.0/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-sysroot=/ --with-build-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --disable-libssp --with-newlib --enable-shared=libgcc CFLAGS=-O2 CXXFLAGS=-O2 || cmd_error
-#     make DESTDIR=$SYSROOT all-gcc -j$PARALLELISM || cmd_error
-#     make DESTDIR=$SYSROOT install-gcc || cmd_error
-#     make DESTDIR=$SYSROOT all-target-libgcc -j$PARALLELISM || cmd_error
-#     make DESTDIR=$SYSROOT install-target-libgcc || cmd_error
-#     touch $SYSROOT/usr/include/fenv.h
-#     make DESTDIR=$SYSROOT all-target-libstdc++-v3 -j$PARALLELISM || cmd_error
-#     make DESTDIR=$SYSROOT install-target-libstdc++-v3 -j$PARALLELISM || cmd_error
-#     popd > /dev/null
-# fi
 
 # Build cJSON
 if $BUILD_CJSON; then
@@ -610,9 +584,42 @@ if $BUILD_MTDEV; then
     PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
     popd > /dev/null
 
-    echo -j$PARALLELISM
     pushd mtdev-$SUBARCH > /dev/null
     $DIR/sources/mtdev-1.1.6/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
+    make -j$PARALLELISM || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build gettext
+if $BUILD_GETTEXT; then
+    if [ ! -d "gettext-$SUBARCH" ]; then
+        mkdir gettext-$SUBARCH
+    fi
+
+    pushd $DIR/sources/gettext-0.21 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    popd > /dev/null
+
+    pushd gettext-$SUBARCH > /dev/null
+    $DIR/sources/gettext-0.21/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
+    make -j$PARALLELISM || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build guile
+if $BUILD_GUILE; then
+    if [ ! -d "guile-$SUBARCH" ]; then
+        mkdir guile-$SUBARCH
+    fi
+
+    pushd $DIR/sources/guile-3.0.4 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fis
+    popd > /dev/null
+
+    pushd guile-$SUBARCH > /dev/null
+    $DIR/sources/guile-3.0.4/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
