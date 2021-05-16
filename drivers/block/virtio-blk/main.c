@@ -62,16 +62,7 @@ static int virtio_blk_open(dev_t minor, int access);
 static int virtio_blk_close(dev_t minor);
 static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
                                endpoint_t endpoint,
-                               const struct iovec_grant* iov, size_t count,
-                               int async);
-static ssize_t virtio_blk_rdwt_sync(dev_t minor, int do_write, loff_t pos,
-                                    endpoint_t endpoint,
-                                    const struct iovec_grant* iov,
-                                    size_t count);
-static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
-                                     endpoint_t endpoint,
-                                     const struct iovec_grant* iov,
-                                     size_t count);
+                               const struct iovec_grant* iov, size_t count);
 static struct part_info* virtio_blk_part(dev_t device);
 static void virtio_blk_other(MESSAGE* msg);
 static void virtio_blk_intr(unsigned mask);
@@ -85,7 +76,7 @@ static void virtio_blk_interrupt_wait(void);
 static struct blockdriver virtio_blk_driver = {
     .bdr_open = virtio_blk_open,
     .bdr_close = virtio_blk_close,
-    .bdr_readwrite = virtio_blk_rdwt_sync,
+    .bdr_readwrite = virtio_blk_rdwt,
     .bdr_part = virtio_blk_part,
     .bdr_intr = virtio_blk_intr,
     .bdr_other = virtio_blk_other,
@@ -139,8 +130,7 @@ static int fill_buffers(struct iovec_grant* iov, struct umap_phys* phys,
 
 static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
                                endpoint_t endpoint,
-                               const struct iovec_grant* iov, size_t count,
-                               int async)
+                               const struct iovec_grant* iov, size_t count)
 {
     int i;
     struct part_info* part;
@@ -155,10 +145,7 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
         return -EINVAL;
     }
 
-    tid = 0;
-    if (async) {
-        tid = blockdriver_async_worker_id();
-    }
+    tid = blockdriver_async_worker_id();
 
     part = virtio_blk_part(minor);
 
@@ -241,32 +228,13 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
 
     virtqueue_kick(vqs[0]);
 
-    if (async) {
-        blockdriver_async_sleep();
-    } else {
-        virtio_blk_interrupt_wait();
-    }
+    blockdriver_async_sleep();
 
     if (mystatus(tid) == VIRTIO_BLK_S_OK) {
         return size;
     }
 
     return -virtio_blk_status2error(mystatus(tid));
-}
-
-static ssize_t virtio_blk_rdwt_sync(dev_t minor, int do_write, loff_t pos,
-                                    endpoint_t endpoint,
-                                    const struct iovec_grant* iov, size_t count)
-{
-    return virtio_blk_rdwt(minor, do_write, pos, endpoint, iov, count, FALSE);
-}
-
-static ssize_t virtio_blk_rdwt_async(dev_t minor, int do_write, loff_t pos,
-                                     endpoint_t endpoint,
-                                     const struct iovec_grant* iov,
-                                     size_t count)
-{
-    return virtio_blk_rdwt(minor, do_write, pos, endpoint, iov, count, TRUE);
 }
 
 static int virtio_blk_status2error(u8 status)
@@ -597,17 +565,18 @@ static int virtio_blk_init(void)
         panic("%s: no virtio-blk device found", name);
     }
 
-    if (retval == 0) {
-        memset(primary, 0, sizeof(primary));
-        memset(logical, 0, sizeof(logical));
-        primary[0].size = blk_config.capacity * blk_config.blk_size;
-
-        partition(&virtio_blk_driver, 0, P_PRIMARY);
-        print_disk_info();
-        virtio_blk_register();
-    }
-
     return 0;
+}
+
+static void virtio_blk_post_init(void)
+{
+    memset(primary, 0, sizeof(primary));
+    memset(logical, 0, sizeof(logical));
+    primary[0].size = blk_config.capacity * blk_config.blk_size;
+
+    partition(&virtio_blk_driver, 0, P_PRIMARY);
+    print_disk_info();
+    virtio_blk_register();
 }
 
 static void virtio_blk_other(MESSAGE* msg)
@@ -637,8 +606,8 @@ int main()
     serv_register_init_fresh_callback(virtio_blk_init);
     serv_init();
 
-    virtio_blk_driver.bdr_readwrite = virtio_blk_rdwt_async;
-    blockdriver_async_task(&virtio_blk_driver, MAX_THREADS);
+    blockdriver_async_task(&virtio_blk_driver, MAX_THREADS,
+                           virtio_blk_post_init);
 
     return 0;
 }

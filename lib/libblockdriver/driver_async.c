@@ -34,6 +34,7 @@ struct worker_thread {
     coro_thread_t thread;
     coro_mutex_t event_mutex;
     coro_cond_t event;
+    void (*init_func)(void);
 };
 
 static const char* name = "blockdriver_async";
@@ -42,6 +43,10 @@ static coro_mutex_t queue_event_mutex;
 static coro_cond_t queue_event;
 
 static int running = FALSE;
+
+static int inited = FALSE;
+static coro_mutex_t init_event_mutex;
+static coro_cond_t init_event;
 
 static size_t num_threads;
 static struct worker_thread threads[MAX_THREADS];
@@ -114,6 +119,14 @@ static void init_main_thread(struct blockdriver* bd, size_t num_workers)
         panic("%s: failed to initialize condition variable", name);
     }
 
+    if (coro_mutex_init(&init_event_mutex, NULL) != 0) {
+        panic("%s: failed to initialize mutex", name);
+    }
+
+    if (coro_cond_init(&init_event, NULL) != 0) {
+        panic("%s: failed to initialize condition variable", name);
+    }
+
     for (i = 0; i < MAX_THREADS; i++) {
         threads[i].state = WS_DEAD;
     }
@@ -127,6 +140,38 @@ static void* worker_main(void* arg)
 {
     self = (struct worker_thread*)arg;
     MESSAGE msg;
+
+    if (self->init_func) {
+        self->state = WS_BUSY;
+        self->init_func();
+        self->state = WS_RUNNING;
+
+        if (coro_mutex_lock(&init_event_mutex) != 0) {
+            panic("%s: failed to lock event mutex", name);
+        }
+
+        inited = TRUE;
+
+        if (coro_cond_signal(&init_event) != 0) {
+            panic("%s: failed to signal worker event", name);
+        }
+
+        if (coro_mutex_unlock(&init_event_mutex) != 0) {
+            panic("%s: failed to lock queue event mutex", name);
+        }
+    }
+
+    if (coro_mutex_lock(&init_event_mutex) != 0) {
+        panic("%s: failed to lock init event mutex", name);
+    }
+    while (!inited) {
+        if (coro_cond_wait(&init_event, &queue_event_mutex) != 0) {
+            panic("%s: failed to wait for worker event", name);
+        }
+    }
+    if (coro_mutex_unlock(&init_event_mutex) != 0) {
+        panic("%s: failed to lock queue event mutex", name);
+    }
 
     while (running) {
         if (!mq_dequeue(&msg)) {
@@ -145,11 +190,13 @@ static void* worker_main(void* arg)
     return NULL;
 }
 
-static void create_worker(struct worker_thread* wp, worker_id_t wid)
+static void create_worker(struct worker_thread* wp, worker_id_t wid,
+                          void (*init_func)(void))
 {
     coro_attr_t attr;
 
     wp->id = wid;
+    wp->init_func = init_func;
 
     coro_attr_init(&attr);
     coro_attr_setstacksize(&attr, WORKER_STACKSIZE);
@@ -190,7 +237,7 @@ static void dispatch_message(MESSAGE* msg)
         wp = &threads[i];
 
         if (wp->state == WS_DEAD) {
-            create_worker(wp, i);
+            create_worker(wp, i, NULL);
         }
     }
 
@@ -258,13 +305,22 @@ blockdriver_worker_id_t blockdriver_async_worker_id(void)
     return self->id;
 }
 
-void blockdriver_async_task(struct blockdriver* bd, size_t num_workers)
+void blockdriver_async_task(struct blockdriver* bd, size_t num_workers,
+                            void (*init_func)(void))
 {
     MESSAGE msg;
+
+    if (!init_func) inited = TRUE;
 
     if (!running) {
         init_main_thread(bd, num_workers);
         running = TRUE;
+    }
+
+    if (init_func) {
+        struct worker_thread* wp = &threads[0];
+        create_worker(wp, 0, init_func);
+        yield_all();
     }
 
     while (running) {

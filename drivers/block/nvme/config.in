@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see documentation/config/kconfig-language.txt.
+#
+
+config BLK_DEV_NVME
+    bool "NVM Express block device"
+    help
+      The NVM Express driver is for solid state drives directly
+      connected to the PCI or PCI Express bus.  If you know you
+      don't have one of these, it is safe to answer N.
+      To compile this driver as a module, choose M here: the
+      module will be called nvme.

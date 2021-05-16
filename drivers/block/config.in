@@ -23,4 +23,6 @@ config BLK_DEV_RAM_COUNT
 
 source "drivers/block/virtio-blk/config.in"
 
+source "drivers/block/nvme/config.in"
+
 endif
