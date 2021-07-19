@@ -1,6 +1,6 @@
 # Customized Debain container for pipeline building
 
-FROM debian-cse
+FROM debian
 
 USER root
 
