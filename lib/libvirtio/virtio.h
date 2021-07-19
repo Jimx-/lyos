@@ -20,10 +20,10 @@ struct virtqueue {
     unsigned int ring_size;
     struct vring vring;
 
-    unsigned int free_num;
-    unsigned int free_head;
-    unsigned int free_tail;
-    unsigned int last_used;
+    u16 free_num;
+    u16 free_head;
+    u16 free_tail;
+    u16 last_used;
 
     int (*notify)(struct virtqueue*);
 

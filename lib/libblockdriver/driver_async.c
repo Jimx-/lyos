@@ -120,11 +120,11 @@ static void init_main_thread(struct blockdriver* bd, size_t num_workers)
     }
 
     if (coro_mutex_init(&init_event_mutex, NULL) != 0) {
-        panic("%s: failed to initialize mutex", name);
+        panic("%s: failed to initialize init event mutex", name);
     }
 
     if (coro_cond_init(&init_event, NULL) != 0) {
-        panic("%s: failed to initialize condition variable", name);
+        panic("%s: failed to initialize init event condition variable", name);
     }
 
     for (i = 0; i < MAX_THREADS; i++) {
@@ -147,17 +147,17 @@ static void* worker_main(void* arg)
         self->state = WS_RUNNING;
 
         if (coro_mutex_lock(&init_event_mutex) != 0) {
-            panic("%s: failed to lock event mutex", name);
+            panic("%s: failed to lock init event mutex", name);
         }
 
         inited = TRUE;
 
         if (coro_cond_signal(&init_event) != 0) {
-            panic("%s: failed to signal worker event", name);
+            panic("%s: failed to signal init event", name);
         }
 
         if (coro_mutex_unlock(&init_event_mutex) != 0) {
-            panic("%s: failed to lock queue event mutex", name);
+            panic("%s: failed to unlock init event mutex", name);
         }
     }
 
@@ -165,12 +165,12 @@ static void* worker_main(void* arg)
         panic("%s: failed to lock init event mutex", name);
     }
     while (!inited) {
-        if (coro_cond_wait(&init_event, &queue_event_mutex) != 0) {
-            panic("%s: failed to wait for worker event", name);
+        if (coro_cond_wait(&init_event, &init_event_mutex) != 0) {
+            panic("%s: failed to wait for init event", name);
         }
     }
     if (coro_mutex_unlock(&init_event_mutex) != 0) {
-        panic("%s: failed to lock queue event mutex", name);
+        panic("%s: failed to unlock init event mutex", name);
     }
 
     while (running) {
@@ -283,7 +283,7 @@ void blockdriver_async_wakeup(blockdriver_worker_id_t tid)
     }
 
     if (coro_mutex_unlock(&wp->event_mutex) != 0) {
-        panic("%s: failed to lock queue event mutex", name);
+        panic("%s: failed to unlock event mutex", name);
     }
 }
 
