@@ -1,6 +1,6 @@
-diff -rupN old/config.sub new/config.sub
+diff --color -rupN old/config.sub new/config.sub
 --- old/config.sub	2019-01-03 19:28:27.000000000 +0800
-+++ new/config.sub	2021-04-20 11:10:25.329704989 +0800
++++ new/config.sub	2021-07-24 19:35:06.519171044 +0800
 @@ -2,7 +2,7 @@
  # Configuration validation subroutine script.
  #   Copyright 1992-2019 Free Software Foundation, Inc.
@@ -18,9 +18,9 @@ diff -rupN old/config.sub new/config.sub
  	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
-diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
+diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 --- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2021-04-20 11:10:25.329704989 +0800
++++ new/gcc/config/lyos.h	2021-07-24 19:35:06.519171044 +0800
 @@ -0,0 +1,27 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -49,9 +49,9 @@ diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +
 +#undef  LIB_SPEC
 +#define LIB_SPEC "%{pthread:-lpthread} %{shared:-lc} %{!shared:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
-diff -rupN old/gcc/config.gcc new/gcc/config.gcc
+diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2019-08-04 04:16:22.000000000 +0800
-+++ new/gcc/config.gcc	2021-04-20 11:10:25.329704989 +0800
++++ new/gcc/config.gcc	2021-07-24 19:35:06.522504351 +0800
 @@ -970,6 +970,12 @@ case ${target} in
        ;;
    esac
@@ -105,9 +105,9 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
          ;;
  riscv*-*-linux*)
  	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
-diff -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
+diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
 --- old/gcc/diagnostic.c	2019-01-01 20:31:55.000000000 +0800
-+++ new/gcc/diagnostic.c	2021-04-20 11:14:04.623046691 +0800
++++ new/gcc/diagnostic.c	2021-07-24 19:35:06.522504351 +0800
 @@ -35,9 +35,7 @@ along with GCC; see the file COPYING3.
  #include "selftest.h"
  #include "selftest-diagnostic.h"
@@ -119,9 +119,9 @@ diff -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
  
  #ifdef GWINSZ_IN_SYS_IOCTL
  # include <sys/ioctl.h>
-diff -rupN old/libgcc/config.host new/libgcc/config.host
+diff --color -rupN old/libgcc/config.host new/libgcc/config.host
 --- old/libgcc/config.host	2019-01-17 20:29:13.000000000 +0800
-+++ new/libgcc/config.host	2021-04-20 11:10:25.329704989 +0800
++++ new/libgcc/config.host	2021-07-24 19:36:16.938594877 +0800
 @@ -101,6 +101,9 @@ arc*-*-*)
  arm*-*-*)
  	cpu_type=arm
@@ -143,9 +143,20 @@ diff -rupN old/libgcc/config.host new/libgcc/config.host
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
-diff -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
+@@ -1187,6 +1194,10 @@ riscv*-*-freebsd*)
+ 	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
+ 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
+ 	;;
++riscv*-*-lyos*)
++	tmake_file="${tmake_file} t-crtstuff-pic t-libgcc-pic riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
++	extra_parts="$extra_parts crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o"
++	;;
+ riscv*-*-*)
+ 	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
+ 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
+diff --color -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
 --- old/libstdc++-v3/crossconfig.m4	2019-03-12 00:28:11.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2021-04-20 11:10:25.333038323 +0800
++++ new/libstdc++-v3/crossconfig.m4	2021-07-24 19:35:06.522504351 +0800
 @@ -200,6 +200,12 @@ case "${host}" in
      AC_CHECK_FUNCS(sockatmark)
      AM_ICONV

@@ -45,7 +45,7 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
 +	;;
 +  riscv*-*-lyos*)
 +    sys_dir=lyos
-+    newlib_cflags="${newlib_cflags} -mcmodel=medany"
++    newlib_cflags="${newlib_cflags}"
 +   ;;
    i[34567]86-pc-linux-*)
  	sys_dir=linux
