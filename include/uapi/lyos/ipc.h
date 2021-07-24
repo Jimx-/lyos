@@ -4,8 +4,10 @@
 #include <sys/types.h>
 #include <lyos/types.h>
 
+/* When modifying the message size, also modify copy_user_message() to copy the
+ * new size. */
 #define VERIFY_MESS_SIZE(msg_type) \
-    typedef int _VERIFY_##msg_type[sizeof(struct msg_type) == 56 ? 1 : -1]
+    typedef int _VERIFY_##msg_type[sizeof(struct msg_type) == 72 ? 1 : -1]
 
 #define BEGIN_MESS_DECL(name) struct name
 #define END_MESS_DECL(name)  \
@@ -21,7 +23,7 @@ struct mess1 { /* 16 bytes */
     int m1i3;
     int m1i4;
 
-    __u8 _pad[40];
+    __u8 _pad[56];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess1);
 
@@ -31,7 +33,7 @@ struct mess2 { /* 16 bytes */
     void* m2p3;
     void* m2p4;
 
-    __u8 _pad[56 - 4 * sizeof(void*)];
+    __u8 _pad[72 - 4 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess2);
 
@@ -45,7 +47,7 @@ struct mess3 { /* 40 bytes */
     void* m3p1;
     void* m3p2;
 
-    __u8 _pad[24 - 2 * sizeof(void*)];
+    __u8 _pad[40 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess3);
 
@@ -54,7 +56,7 @@ struct mess4 { /* 36 bytes */
     int m4i1, m4i2, m4i3;
     void *m4p1, *m4p2, *m4p3, *m4p4;
 
-    __u8 _pad[36 - 4 * sizeof(void*)];
+    __u8 _pad[52 - 4 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess4);
 
@@ -70,7 +72,7 @@ struct mess5 { /* 40 bytes */
     int m5i9;
     int m5i10;
 
-    __u8 _pad[16];
+    __u8 _pad[32];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess5);
 
@@ -82,7 +84,7 @@ BEGIN_MESS_DECL(mess_safecopy)
     void* addr;
     size_t len;
 
-    __u8 _pad[48 - sizeof(off_t) - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[64 - sizeof(off_t) - sizeof(void*) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_safecopy)
 
@@ -90,13 +92,13 @@ BEGIN_MESS_DECL(mess_stime)
 {
     time_t boot_time;
 
-    __u8 _pad[56 - sizeof(time_t)];
+    __u8 _pad[72 - sizeof(time_t)];
 }
 END_MESS_DECL(mess_stime)
 
 struct mess_mm_mmap {
     __endpoint_t who;
-    size_t offset;
+    off_t offset;
     size_t length;
 
     dev_t dev;
@@ -106,10 +108,10 @@ struct mess_mm_mmap {
     int flags;
     int prot;
     void* vaddr;
-    size_t clearend;
+    __u16 clearend;
 
-    __u8 _pad[40 - sizeof(dev_t) - sizeof(ino_t) - 3 * sizeof(size_t) -
-              sizeof(void*)];
+    __u8 _pad[54 - sizeof(dev_t) - sizeof(ino_t) - sizeof(off_t) -
+              sizeof(size_t) - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap);
 
@@ -120,7 +122,7 @@ struct mess_mm_mremap {
     int flags;
     void* new_addr;
 
-    __u8 _pad[52 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+    __u8 _pad[68 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mremap);
 
@@ -128,7 +130,7 @@ struct mess_mm_mmap_reply {
     int retval;
     void* retaddr;
 
-    __u8 _pad[52 - sizeof(void*)];
+    __u8 _pad[68 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap_reply);
 
@@ -140,7 +142,7 @@ struct mess_mm_remap {
     size_t size;
     void* ret_addr;
 
-    __u8 _pad[48 - 3 * sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[64 - 3 * sizeof(void*) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_remap);
 
@@ -151,7 +153,7 @@ struct mess_pm_signal {
     void* sigret;
     int retval;
 
-    __u8 _pad[48 - 3 * sizeof(void*)];
+    __u8 _pad[64 - 3 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_signal);
 
@@ -162,7 +164,7 @@ struct mess_pm_clone {
     void* tls;
     void* child_tid;
 
-    __u8 _pad[52 - 4 * sizeof(void*)];
+    __u8 _pad[68 - 4 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_clone);
 
@@ -172,7 +174,7 @@ BEGIN_MESS_DECL(mess_pm_time)
     time_t sec;
     time_t nsec;
 
-    __u8 _pad[52 - 2 * sizeof(time_t)];
+    __u8 _pad[68 - 2 * sizeof(time_t)];
 }
 END_MESS_DECL(mess_pm_time)
 
@@ -185,7 +187,7 @@ struct mess_vfs_pathat {
     void* buf;
     size_t buf_len;
 
-    __u8 _pad[44 - 2 * sizeof(void*) - sizeof(mode_t) - sizeof(size_t)];
+    __u8 _pad[60 - 2 * sizeof(void*) - sizeof(mode_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_pathat);
 
@@ -198,7 +200,7 @@ struct mess_vfs_linkat {
     int path2_len;
     int flags;
 
-    __u8 _pad[36 - 2 * sizeof(void*)];
+    __u8 _pad[52 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_linkat);
 
@@ -209,7 +211,7 @@ struct mess_vfs_select {
     void* exceptfds;
     void* timeout;
 
-    __u8 _pad[52 - 4 * sizeof(void*)];
+    __u8 _pad[68 - 4 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_select);
 
@@ -219,7 +221,7 @@ struct mess_vfs_link {
     size_t old_path_len;
     size_t new_path_len;
 
-    __u8 _pad[56 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+    __u8 _pad[72 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_link);
 
@@ -233,7 +235,7 @@ struct mess_vfs_mount {
     int target_len;
     int label_len;
 
-    __u8 _pad[44 - 4 * sizeof(void*) - sizeof(unsigned long)];
+    __u8 _pad[60 - 4 * sizeof(void*) - sizeof(unsigned long)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_mount);
 
@@ -242,7 +244,7 @@ struct mess_vfs_fdpair {
     int fd0;
     int fd1;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_fdpair);
 
@@ -251,7 +253,7 @@ struct mess_vfs_poll {
     unsigned int nfds;
     int timeout_msecs;
 
-    __u8 _pad[48 - sizeof(void*)];
+    __u8 _pad[64 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_poll);
 
@@ -260,7 +262,7 @@ struct mess_vfs_signalfd {
     unsigned int mask;
     int flags;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_signalfd);
 
@@ -272,7 +274,7 @@ struct mess_vfs_timerfd {
     void* new_value;
     void* old_value;
 
-    __u8 _pad[44 - 2 * sizeof(void*)];
+    __u8 _pad[60 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_timerfd);
 
@@ -285,7 +287,7 @@ struct mess_vfs_epoll {
     int timeout;
     void* events;
 
-    __u8 _pad[32 - sizeof(void*)];
+    __u8 _pad[48 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_epoll);
 
@@ -295,7 +297,7 @@ struct mess_vfs_mapdriver {
     int* domains;
     int nr_domains;
 
-    __u8 _pad[48 - 2 * sizeof(void*)];
+    __u8 _pad[64 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_mapdriver);
 
@@ -305,7 +307,7 @@ BEGIN_MESS_DECL(mess_vfs_socket)
     int type;
     int protocol;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 }
 END_MESS_DECL(mess_vfs_socket)
 
@@ -319,7 +321,7 @@ BEGIN_MESS_DECL(mess_vfs_socketpath)
     dev_t dev;
     ino_t num;
 
-    __u8 _pad[40 - sizeof(size_t) - sizeof(dev_t) - sizeof(ino_t)];
+    __u8 _pad[56 - sizeof(size_t) - sizeof(dev_t) - sizeof(ino_t)];
 }
 END_MESS_DECL(mess_vfs_socketpath)
 
@@ -330,7 +332,7 @@ BEGIN_MESS_DECL(mess_vfs_bindconn)
     size_t addr_len;
     int flags;
 
-    __u8 _pad[48 - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[64 - sizeof(void*) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_bindconn)
 
@@ -339,7 +341,7 @@ BEGIN_MESS_DECL(mess_vfs_listen)
     int sock_fd;
     int backlog;
 
-    __u8 _pad[48];
+    __u8 _pad[64];
 }
 END_MESS_DECL(mess_vfs_listen)
 
@@ -354,7 +356,7 @@ BEGIN_MESS_DECL(mess_vfs_sendrecv)
     void* addr;
     size_t addr_len;
 
-    __u8 _pad[44 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+    __u8 _pad[60 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_sendrecv)
 
@@ -368,7 +370,7 @@ BEGIN_MESS_DECL(mess_vfs_sockopt)
     void* buf;
     size_t len;
 
-    __u8 _pad[40 - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[56 - sizeof(void*) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_sockopt)
 
@@ -378,7 +380,7 @@ BEGIN_MESS_DECL(mess_vfs_copyfd)
     int fd;
     int how;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 }
 END_MESS_DECL(mess_vfs_copyfd)
 
@@ -393,7 +395,7 @@ BEGIN_MESS_DECL(mess_vfs_utimensat)
     long ansec;
     long mnsec;
 
-    __u8 _pad[44 - sizeof(void*) - 2 * sizeof(long) - 2 * sizeof(time_t)];
+    __u8 _pad[60 - sizeof(void*) - 2 * sizeof(long) - 2 * sizeof(time_t)];
 }
 END_MESS_DECL(mess_vfs_utimensat)
 
@@ -406,7 +408,7 @@ BEGIN_MESS_DECL(mess_vfs_fchownat)
     gid_t group;
     int flags;
 
-    __u8 _pad[44 - sizeof(void*) - sizeof(uid_t) - sizeof(gid_t)];
+    __u8 _pad[60 - sizeof(void*) - sizeof(uid_t) - sizeof(gid_t)];
 }
 END_MESS_DECL(mess_vfs_fchownat)
 
@@ -415,7 +417,7 @@ BEGIN_MESS_DECL(mess_vfs_truncate)
     int fd;
     off_t offset;
 
-    __u8 _pad[52 - sizeof(off_t)];
+    __u8 _pad[68 - sizeof(off_t)];
 }
 END_MESS_DECL(mess_vfs_truncate)
 
@@ -430,7 +432,7 @@ BEGIN_MESS_DECL(mess_vfs_inotify)
         __u32 mask;
     };
 
-    __u8 _pad[40 - sizeof(void*)];
+    __u8 _pad[56 - sizeof(void*)];
 }
 END_MESS_DECL(mess_vfs_inotify)
 
@@ -441,7 +443,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_readsuper)
     __mgrant_id_t grant;
     size_t data_size;
 
-    __u8 _pad[52 - sizeof(dev_t) - sizeof(void*) - sizeof(size_t)];
+    __u8 _pad[64 - sizeof(dev_t) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_fs_readsuper)
 
@@ -469,7 +471,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_lookup)
 
     int flags;
 
-    __u8 _pad[36 - sizeof(dev_t) - 2 * sizeof(ino_t) - 2 * sizeof(size_t)];
+    __u8 _pad[52 - sizeof(dev_t) - 2 * sizeof(ino_t) - 2 * sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_fs_lookup)
 
@@ -485,12 +487,12 @@ BEGIN_MESS_DECL(mess_fs_vfs_lookup_reply)
             size_t size;
             mode_t mode;
             dev_t spec_dev;
-        } node;
+        } __attribute__((packed)) node;
 
         off_t offset;
     };
 
-    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - sizeof(size_t) -
+    __u8 _pad[68 - sizeof(dev_t) - sizeof(ino_t) - sizeof(size_t) -
               sizeof(uid_t) - sizeof(gid_t) - sizeof(mode_t)];
 }
 END_MESS_DECL(mess_fs_vfs_lookup_reply)
@@ -501,7 +503,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_stat)
     ino_t num;
     __mgrant_id_t grant;
 
-    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t)];
+    __u8 _pad[68 - sizeof(dev_t) - sizeof(ino_t)];
 }
 END_MESS_DECL(mess_vfs_fs_stat)
 
@@ -515,9 +517,9 @@ struct mess_vfs_fs_symlink {
     uid_t uid;
     gid_t gid;
 
-    __u8 _pad[48 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t) -
+    __u8 _pad[64 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t) -
               sizeof(uid_t) - sizeof(gid_t)];
-} __attribute((packed));
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_fs_symlink);
 
 struct mess_vfs_fs_link {
@@ -527,8 +529,8 @@ struct mess_vfs_fs_link {
     __mgrant_id_t name_grant;
     size_t name_len;
 
-    __u8 _pad[52 - sizeof(dev_t) - 2 * sizeof(ino_t) - sizeof(size_t)];
-} __attribute((packed));
+    __u8 _pad[68 - sizeof(dev_t) - 2 * sizeof(ino_t) - sizeof(size_t)];
+} __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_fs_link);
 
 BEGIN_MESS_DECL(mess_vfs_fs_create)
@@ -541,7 +543,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_create)
     int name_len;
     mode_t mode;
 
-    __u8 _pad[48 - sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
+    __u8 _pad[64 - sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
               sizeof(gid_t) - sizeof(mode_t)];
 }
 END_MESS_DECL(mess_vfs_fs_create)
@@ -555,7 +557,7 @@ BEGIN_MESS_DECL(mess_fs_vfs_create_reply)
     mode_t mode;
     size_t size;
 
-    __u8 _pad[52 - sizeof(ino_t) - sizeof(uid_t) - sizeof(gid_t) -
+    __u8 _pad[68 - sizeof(ino_t) - sizeof(uid_t) - sizeof(gid_t) -
               sizeof(size_t) - sizeof(mode_t)];
 }
 END_MESS_DECL(mess_fs_vfs_create_reply)
@@ -571,7 +573,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_mknod)
     mode_t mode;
     dev_t sdev;
 
-    __u8 _pad[48 - 2 * sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
+    __u8 _pad[64 - 2 * sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
               sizeof(gid_t) - sizeof(mode_t)];
 }
 END_MESS_DECL(mess_vfs_fs_mknod)
@@ -587,7 +589,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_readwrite)
     size_t count;
     __endpoint_t user_endpt; /* for rdlink only */
 
-    __u8 _pad[36 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t)];
+    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_fs_readwrite)
 
@@ -598,7 +600,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_unlink)
     __mgrant_id_t grant;
     size_t name_len;
 
-    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - sizeof(size_t)];
+    __u8 _pad[68 - sizeof(dev_t) - sizeof(ino_t) - sizeof(size_t)];
 }
 END_MESS_DECL(mess_vfs_fs_unlink)
 
@@ -611,7 +613,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_utime)
     long ansec;
     long mnsec;
 
-    __u8 _pad[56 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(time_t) -
+    __u8 _pad[72 - sizeof(dev_t) - sizeof(ino_t) - 2 * sizeof(time_t) -
               2 * sizeof(long)];
 }
 END_MESS_DECL(mess_vfs_fs_utime)
@@ -625,7 +627,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_chown)
     gid_t gid;
     mode_t mode;
 
-    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
+    __u8 _pad[68 - sizeof(dev_t) - sizeof(ino_t) - sizeof(uid_t) -
               sizeof(gid_t) - sizeof(mode_t)];
 }
 END_MESS_DECL(mess_vfs_fs_chown)
@@ -636,7 +638,7 @@ BEGIN_MESS_DECL(mess_vfs_fs_putinode)
     ino_t num;
     unsigned int count;
 
-    __u8 _pad[52 - sizeof(dev_t) - sizeof(ino_t)];
+    __u8 _pad[68 - sizeof(dev_t) - sizeof(ino_t)];
 }
 END_MESS_DECL(mess_vfs_fs_putinode)
 
@@ -646,7 +648,7 @@ struct mess_vfs_cdev_openclose {
     __endpoint_t user;
     int access;
 
-    __u8 _pad[36];
+    __u8 _pad[52];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_openclose);
 
@@ -661,7 +663,7 @@ struct mess_vfs_cdev_readwrite {
     size_t count;
     int flags;
 
-    __u8 _pad[28 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
+    __u8 _pad[44 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_readwrite);
 
@@ -673,7 +675,7 @@ struct mess_vfs_cdev_mmap {
     off_t pos;
     size_t count;
 
-    __u8 _pad[40 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
+    __u8 _pad[56 - sizeof(void*) - sizeof(off_t) - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_mmap);
 
@@ -682,7 +684,7 @@ struct mess_vfs_cdev_select {
     __u32 ops;
     __u32 id;
 
-    __u8 _pad[40];
+    __u8 _pad[56];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_select);
 
@@ -691,7 +693,7 @@ struct mess_vfs_cdev_reply {
     __u32 id;
     void* retaddr;
 
-    __u8 _pad[48 - sizeof(void*)];
+    __u8 _pad[64 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_reply);
 
@@ -699,7 +701,7 @@ struct mess_vfs_cdev_poll_notify {
     __u64 minor;
     __u32 status;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_cdev_poll_notify);
 
@@ -709,7 +711,7 @@ struct mess_vfs_pm_signalfd {
     void* buf;
     int notify;
 
-    __u8 _pad[44 - sizeof(void*)];
+    __u8 _pad[60 - sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_vfs_pm_signalfd);
 
@@ -717,7 +719,7 @@ struct mess_pm_vfs_signalfd_reply {
     int status;
     __endpoint_t endpoint;
 
-    __u8 _pad[48];
+    __u8 _pad[64];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_vfs_signalfd_reply);
 
@@ -727,7 +729,7 @@ struct mess_sysfs_publish_link {
     size_t target_len;
     size_t link_path_len;
 
-    __u8 _pad[56 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+    __u8 _pad[72 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_sysfs_publish_link);
 
@@ -739,14 +741,14 @@ struct mess_bdev_blockdriver_msg {
     __endpoint_t user_endpoint;
     int request;
 
-    __u8 _pad[32 - sizeof(size_t)];
+    __u8 _pad[48 - sizeof(size_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_bdev_blockdriver_msg);
 
 struct mess_blockdriver_bdev_reply {
     ssize_t status;
 
-    __u8 _pad[56 - sizeof(ssize_t)];
+    __u8 _pad[72 - sizeof(ssize_t)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_blockdriver_bdev_reply);
 
@@ -756,7 +758,7 @@ struct mess_inputdriver_input_event {
     __u16 code;
     __s32 value;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_inputdriver_input_event);
 
@@ -765,7 +767,7 @@ struct mess_inputdriver_register_device {
     void* dev_bits;
     void* input_id;
 
-    __u8 _pad[52 - 2 * sizeof(void*)];
+    __u8 _pad[68 - 2 * sizeof(void*)];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_inputdriver_register_device);
 
@@ -775,7 +777,7 @@ struct mess_input_tty_event {
     __u16 code;
     __s32 value;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_input_tty_event);
 
@@ -783,7 +785,7 @@ struct mess_input_conf {
     int status;
     int id;
 
-    __u8 _pad[48];
+    __u8 _pad[64];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_input_conf);
 
@@ -791,7 +793,7 @@ struct mess_devman_register_reply {
     int status;
     int id;
 
-    __u8 _pad[48];
+    __u8 _pad[64];
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_devman_register_reply);
 
@@ -801,7 +803,7 @@ BEGIN_MESS_DECL(mess_sockdriver_simple)
     int sock_id;
     int param;
 
-    __u8 _pad[44];
+    __u8 _pad[60];
 }
 END_MESS_DECL(mess_sockdriver_simple)
 
@@ -810,7 +812,7 @@ BEGIN_MESS_DECL(mess_sockdriver_reply)
     int req_id;
     int status;
 
-    __u8 _pad[48];
+    __u8 _pad[64];
 }
 END_MESS_DECL(mess_sockdriver_reply)
 
@@ -822,7 +824,7 @@ BEGIN_MESS_DECL(mess_sockdriver_socket)
     int type;
     int protocol;
 
-    __u8 _pad[36];
+    __u8 _pad[52];
 }
 END_MESS_DECL(mess_sockdriver_socket)
 
@@ -833,7 +835,7 @@ BEGIN_MESS_DECL(mess_sockdriver_socket_reply)
     int sock_id;
     int sock_id2;
 
-    __u8 _pad[40];
+    __u8 _pad[56];
 }
 END_MESS_DECL(mess_sockdriver_socket_reply)
 
@@ -846,7 +848,7 @@ BEGIN_MESS_DECL(mess_sockdriver_bindconn)
     __endpoint_t user_endpoint;
     int flags;
 
-    __u8 _pad[36 - sizeof(size_t)];
+    __u8 _pad[52 - sizeof(size_t)];
 }
 END_MESS_DECL(mess_sockdriver_bindconn)
 
@@ -857,7 +859,7 @@ BEGIN_MESS_DECL(mess_sockdriver_accept_reply)
     int sock_id;
     size_t len;
 
-    __u8 _pad[44 - sizeof(size_t)];
+    __u8 _pad[60 - sizeof(size_t)];
 }
 END_MESS_DECL(mess_sockdriver_accept_reply)
 
@@ -874,7 +876,7 @@ BEGIN_MESS_DECL(mess_sockdriver_sendrecv)
     __endpoint_t user_endpoint;
     int flags;
 
-    __u8 _pad[20 - sizeof(size_t)];
+    __u8 _pad[36 - sizeof(size_t)];
 }
 END_MESS_DECL(mess_sockdriver_sendrecv)
 
@@ -885,7 +887,7 @@ BEGIN_MESS_DECL(mess_sockdriver_recv_reply)
     size_t ctl_len;
     size_t addr_len;
 
-    __u8 _pad[48 - 2 * sizeof(size_t)];
+    __u8 _pad[64 - 2 * sizeof(size_t)];
 }
 END_MESS_DECL(mess_sockdriver_recv_reply)
 
@@ -896,7 +898,7 @@ BEGIN_MESS_DECL(mess_sockdriver_select)
     int sock_id;
     __u32 ops;
 
-    __u8 _pad[40];
+    __u8 _pad[56];
 }
 END_MESS_DECL(mess_sockdriver_select)
 
@@ -905,7 +907,7 @@ BEGIN_MESS_DECL(mess_sockdriver_poll_notify)
     int sock_id;
     __poll_t ops;
 
-    __u8 _pad[48];
+    __u8 _pad[64];
 }
 END_MESS_DECL(mess_sockdriver_poll_notify)
 
@@ -918,7 +920,7 @@ BEGIN_MESS_DECL(mess_sockdriver_getset)
     __mgrant_id_t grant;
     size_t len;
 
-    __u8 _pad[36 - sizeof(size_t)];
+    __u8 _pad[52 - sizeof(size_t)];
 }
 END_MESS_DECL(mess_sockdriver_getset)
 
@@ -931,7 +933,7 @@ BEGIN_MESS_DECL(mess_devpts_req)
     gid_t gid;
     dev_t dev;
 
-    __u8 _pad[48 - sizeof(mode_t) - sizeof(uid_t) - sizeof(gid_t) -
+    __u8 _pad[64 - sizeof(mode_t) - sizeof(uid_t) - sizeof(gid_t) -
               sizeof(dev_t)];
 }
 END_MESS_DECL(mess_devpts_req)
@@ -1022,7 +1024,7 @@ typedef struct {
         __u8 m_payload[56];
     } u;
 } __attribute__((packed)) MESSAGE;
-typedef int _VERIFY_MESSAGE[sizeof(MESSAGE) == 64 ? 1 : -1];
+typedef int _VERIFY_MESSAGE[sizeof(MESSAGE) == 80 ? 1 : -1];
 
 int send_recv(int function, int src_dest, MESSAGE* msg);
 

@@ -31,7 +31,7 @@ Lyos has many standard features:
 - Symmetric multiprocessing
 - ELF loading
 - Interprocess Communication
-  + Servers and user programs communicate using fixed length message(40 bytes)
+  + Servers and user programs communicate using fixed length message(80 bytes)
   + Interrupts are converted into messages and sent to userspace servers
   + Unix signals
 - Virtual file system

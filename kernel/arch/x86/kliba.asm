@@ -531,6 +531,14 @@ copy_user_message:
     mov     [edx + 14*4], eax
     mov     eax, [ecx + 15*4]
     mov     [edx + 15*4], eax
+    mov     eax, [ecx + 16*4]
+    mov     [edx + 16*4], eax
+    mov     eax, [ecx + 17*4]
+    mov     [edx + 17*4], eax
+    mov     eax, [ecx + 18*4]
+    mov     [edx + 18*4], eax
+    mov     eax, [ecx + 19*4]
+    mov     [edx + 19*4], eax
 copy_user_message_end:
     mov     eax, 0
     ret
