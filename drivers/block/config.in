@@ -21,6 +21,15 @@ config BLK_DEV_RAM_COUNT
     help
       The default value is 8 RAM disks.
 
+config BLK_ATA_GENERIC
+    tristate "Generic ATA support"
+    default n
+    help
+      This option enables support for generic BIOS configured
+      ATA controllers via the new ATA layer
+
+      If unsure, say N.
+
 source "drivers/block/virtio-blk/config.in"
 
 source "drivers/block/nvme/config.in"

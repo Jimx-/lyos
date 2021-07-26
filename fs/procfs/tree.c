@@ -95,7 +95,7 @@ static void build_pid_dirs()
         struct memfs_stat stat;
         make_stat(&stat, i, NO_INDEX);
 
-        memfs_add_inode(root, name, i, &stat, (cbdata_t)pid);
+        memfs_add_inode(root, name, i, &stat, (cbdata_t)(uintptr_t)pid);
     }
 }
 

@@ -2,7 +2,11 @@
 # Makefile for the Lyos block device drivers
 #
 
-SUBDIRS = ramdisk ata
+SUBDIRS = ramdisk
+
+ifeq ($(CONFIG_BLK_ATA_GENERIC),y)
+	SUBDIRS += ata
+endif
 
 ifeq ($(CONFIG_VIRTIO_BLK),y)
 	SUBDIRS += virtio-blk

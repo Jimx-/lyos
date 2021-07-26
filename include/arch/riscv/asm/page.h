@@ -20,18 +20,21 @@
 
 #define LOWMEM_END 0x30000000
 #define KERNEL_VMA CONFIG_KERNEL_VMA
+
+#ifdef CONFIG_64BIT
 #define VMALLOC_START (KERNEL_VMA + LOWMEM_END)
-#define VMALLOC_END 0xf7c00000
-#define VM_STACK_TOP 0x2000000000UL
+#define VMALLOC_END   0xf7c00000
+#define VM_STACK_TOP  0x2000000000UL
+#endif
 
 #define RISCV_PG_SHIFT (12)
-#define RISCV_PG_SIZE (1UL << RISCV_PG_SHIFT)
-#define RISCV_PG_MASK (~(RISCV_PG_SIZE - 1))
+#define RISCV_PG_SIZE  (1UL << RISCV_PG_SHIFT)
+#define RISCV_PG_MASK  (~(RISCV_PG_SIZE - 1))
 
 #define RISCV_PG_PFN_SHIFT 10
 
 #define RISCV_VM_DIR_ENTRIES (RISCV_PG_SIZE / sizeof(pde_t))
-#define RISCV_VM_PT_ENTRIES (RISCV_PG_SIZE / sizeof(pte_t))
+#define RISCV_VM_PT_ENTRIES  (RISCV_PG_SIZE / sizeof(pte_t))
 
 #ifndef __ASSEMBLY__
 
@@ -54,13 +57,13 @@ typedef struct {
 } pgprot_t;
 
 #define pde_val(x) ((x).pde)
-#define __pde(x) ((pde_t){(x)})
+#define __pde(x)   ((pde_t){(x)})
 
 #define pte_val(x) ((x).pte)
-#define __pte(x) ((pte_t){(x)})
+#define __pte(x)   ((pte_t){(x)})
 
 #define pgprot_val(x) ((x).pgprot)
-#define __pgprot(x) ((pgprot_t){(x)})
+#define __pgprot(x)   ((pgprot_t){(x)})
 
 /* struct page_directory */
 typedef struct {
@@ -80,35 +83,35 @@ extern unsigned long va_pa_offset;
 #endif
 
 #define ARCH_VM_DIR_ENTRIES RISCV_VM_DIR_ENTRIES
-#define ARCH_VM_PT_ENTRIES RISCV_VM_PT_ENTRIES
+#define ARCH_VM_PT_ENTRIES  RISCV_VM_PT_ENTRIES
 
 #define ARCH_PG_PRESENT 0
-#define ARCH_PG_USER 0
-#define ARCH_PG_RW 0
-#define ARCH_PG_RO 0
+#define ARCH_PG_USER    0
+#define ARCH_PG_RW      0
+#define ARCH_PG_RO      0
 #define ARCH_PG_BIGPAGE 0
 
-#define ARCH_PGD_SIZE RISCV_PGD_SIZE
+#define ARCH_PGD_SIZE  RISCV_PGD_SIZE
 #define ARCH_PGD_SHIFT RISCV_PGD_SHIFT
-#define ARCH_PGD_MASK RISCV_PGD_MASK
+#define ARCH_PGD_MASK  RISCV_PGD_MASK
 
 #ifndef __PAGETABLE_PMD_FOLDED
 #define ARCH_VM_PMD_ENTRIES RISCV_VM_PMD_ENTRIES
 
-#define ARCH_PMD_SIZE RISCV_PMD_SIZE
+#define ARCH_PMD_SIZE  RISCV_PMD_SIZE
 #define ARCH_PMD_SHIFT RISCV_PMD_SHIFT
-#define ARCH_PMD_MASK RISCV_PMD_MASK
+#define ARCH_PMD_MASK  RISCV_PMD_MASK
 #endif
 
-#define ARCH_PG_SIZE RISCV_PG_SIZE
+#define ARCH_PG_SIZE  RISCV_PG_SIZE
 #define ARCH_PG_SHIFT RISCV_PG_SHIFT
-#define ARCH_PG_MASK RISCV_PG_MASK
+#define ARCH_PG_MASK  RISCV_PG_MASK
 
 #define ARCH_BIG_PAGE_SIZE RISCV_PGD_SIZE
 
-#define ARCH_PF_PROT(x) 0
+#define ARCH_PF_PROT(x)   0
 #define ARCH_PF_NOPAGE(x) 0
-#define ARCH_PF_WRITE(x) 0
+#define ARCH_PF_WRITE(x)  0
 
 #define ARCH_VM_ADDRESS(pde, pte, offset) \
     ((pde << RISCV_PGD_SHIFT) | (pte << RISCV_PG_SHIFT) | offset)

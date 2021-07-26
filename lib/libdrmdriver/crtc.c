@@ -21,6 +21,7 @@
 #include <libdevman/libdevman.h>
 
 #include "libdrmdriver.h"
+#include "proto.h"
 
 static int drm_crtc_set_config(struct drm_mode_set* set);
 static int drm_atomic_set_config(struct drm_mode_set* set,

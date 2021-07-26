@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = cygnus
 
 noinst_LIBRARIES = lib.a
 
-lib_a_SOURCES = gate_intr.S __sigreturn.S clone.c
+lib_a_SOURCES = gate_intr.S __sigreturn.S clone.c getpagesize.c __ucontext.S makecontext.c
 lib_a_LIBADD =
 lib_a_DEPENDENCIES =
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)

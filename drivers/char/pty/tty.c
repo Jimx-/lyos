@@ -74,9 +74,6 @@ static ssize_t do_read(dev_t minor, u64 pos, endpoint_t endpoint,
 static ssize_t do_write(dev_t minor, u64 pos, endpoint_t endpoint,
                         mgrant_id_t grant, unsigned int count, int flags,
                         cdev_id_t id);
-static int do_ioctl(dev_t minor, int request, endpoint_t endpoint,
-                    mgrant_id_t grant, int flags, endpoint_t user_endpoint,
-                    cdev_id_t id);
 static int do_select(dev_t minor, int ops, endpoint_t endpoint);
 
 static void in_transfer(struct tty* tty);

@@ -206,7 +206,7 @@ int ext2_search_dir(ext2_inode_t* dir_pin, const char string[EXT2_NAME_LEN + 1],
                 int new_slot_size = pde->d_rec_len;
                 new_slot_size -= actual_size;
                 pde->d_rec_len = actual_size;
-                pde = (ext2_dir_entry_t*)((int)pde + pde->d_rec_len);
+                pde = (ext2_dir_entry_t*)((char*)pde + pde->d_rec_len);
                 pde->d_rec_len = new_slot_size;
                 pde->d_inode = 0;
                 hit = 1;

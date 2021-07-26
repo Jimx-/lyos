@@ -56,7 +56,7 @@ int drm_mode_getconnector(struct drm_device* dev, endpoint_t endpoint,
                           void* data)
 {
     struct drm_mode_get_connector* out_resp = data;
-    struct drm_mode_config* config = &dev->mode_config;
+    /* struct drm_mode_config* config = &dev->mode_config; */
     struct drm_connector* connector;
     struct drm_encoder* encoder;
     struct drm_display_mode* mode;

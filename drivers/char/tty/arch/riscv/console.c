@@ -26,7 +26,6 @@
 #include "tty.h"
 #include "console.h"
 #include "lyos/global.h"
-#include "keyboard.h"
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/vm.h>
@@ -35,5 +34,7 @@
 #include "global.h"
 
 void init_screen(TTY* tty) {}
+
+int is_current_console(CONSOLE* con) { return FALSE; }
 
 void select_console(int nr_console) {}

@@ -30,6 +30,8 @@
 #include <lyos/portio.h>
 #include <lyos/service.h>
 
+#ifdef __i386__
+
 #include <asm/pci.h>
 #include "pci.h"
 #include <asm/pci_intel.h>
@@ -105,3 +107,5 @@ void pcii_wreg_u32(u32 busind, u32 devind, u16 port, u32 value)
     return pcii_write_u32(pcibus[busind].busnr, pcidev[devind].dev,
                           pcidev[devind].func, port, value);
 }
+
+#endif

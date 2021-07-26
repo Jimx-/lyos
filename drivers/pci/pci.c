@@ -178,6 +178,7 @@ static void pci_intel_init()
     dev = 0;
     func = 0;
 
+#ifdef __i386__
     u16 vendor = pcii_read_u16(bus, dev, func, PCI_VID);
     u16 device = pcii_read_u16(bus, dev, func, PCI_DID);
 
@@ -201,6 +202,7 @@ static void pci_intel_init()
     pcibus[busind].wreg_u32 = pcii_wreg_u32;
 
     pci_probe_bus(busind);
+#endif
 }
 
 static int record_bar(int devind, int bar_nr, int last)

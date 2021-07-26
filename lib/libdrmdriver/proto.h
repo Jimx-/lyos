@@ -52,6 +52,9 @@ int drm_mode_cursor2_ioctl(struct drm_device* dev, endpoint_t endpoint,
                            void* data);
 
 /* file.c */
+ssize_t drm_do_read(struct drm_device* dev, u64 pos, endpoint_t endpoint,
+                    mgrant_id_t grant, unsigned int count, int flags,
+                    cdev_id_t id);
 int drm_event_reserve(struct drm_device* dev, struct drm_pending_event* p,
                       struct drm_event* e);
 void drm_send_event(struct drm_device* dev, struct drm_pending_event* e);

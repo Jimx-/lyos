@@ -26,14 +26,26 @@ CONFIG_DEBUG_INFO=y
 #
 # Device Drivers
 #
-# CONFIG_BLK_DEV is not set
-# CONFIG_PCI_DEV is not set
+CONFIG_BLK_DEV=y
+CONFIG_BLK_DEV_RAM_COUNT=8
+CONFIG_VIRTIO_BLK=y
+CONFIG_BLK_DEV_NVME=y
+CONFIG_HID_DEV=y
+# CONFIG_KEYBOARD_ATKBD is not set
+CONFIG_PCI_DEV=y
+
+#
+# Graphics support
+#
+CONFIG_DRM=y
+CONFIG_VIRTIO_GPU=y
 CONFIG_PHYS_BYTES_64BIT=y
 
 #
 # Libraries
 #
 CONFIG_OF=y
+CONFIG_VIRTIO=y
 
 #
 # Platform type

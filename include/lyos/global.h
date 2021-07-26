@@ -20,7 +20,6 @@
 #endif
 
 #ifdef __i386__
-#include <asm/protect.h>
 #include <asm/page.h>
 #include <asm/const.h>
 #endif
@@ -30,6 +29,7 @@
 #endif
 
 #include <asm/types.h>
+#include <asm/protect.h>
 
 #include <lyos/param.h>
 #include <lyos/priv.h>

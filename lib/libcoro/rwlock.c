@@ -86,7 +86,8 @@ int coro_rwlock_wrlock(coro_rwlock_t* rwlock)
 
 int coro_rwlock_unlock(coro_rwlock_t* rwlock)
 {
-    int retval;
+    int retval = 0;
+
     if (rwlock == NULL) {
         return EINVAL;
     }

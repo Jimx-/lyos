@@ -18,16 +18,18 @@
 
 #include <asm/csr.h>
 
+#define cmb() __asm__ __volatile__("" ::: "memory")
+
 /* in/out functions */
 #define out_long(a, b) *((volatile unsigned int*)(a)) = (b)
-#define in_long(a) (*((volatile unsigned int*)(a)))
+#define in_long(a)     (*((volatile unsigned int*)(a)))
 #define out_word(a, b) *((volatile unsigned int*)(a)) = ((b) | ((b) << 16))
-#define in_word(a) ((*((volatile unsigned int*)(a))) & 0xffff)
+#define in_word(a)     ((*((volatile unsigned int*)(a))) & 0xffff)
 #define out_byte(a, b) *((volatile unsigned char*)(a)) = (b)
-#define in_byte(a) (*((volatile unsigned char*)(a)))
+#define in_byte(a)     (*((volatile unsigned char*)(a)))
 
 #define mmio_write(a, b) *((volatile unsigned int*)(a)) = (b)
-#define mmio_read(a) (*((volatile unsigned int*)(a)))
+#define mmio_read(a)     (*((volatile unsigned int*)(a)))
 
 int init_tss(unsigned cpu, void* kernel_stack);
 
