@@ -26,7 +26,6 @@
 #include <asm/const.h>
 #include <asm/proto.h>
 #include <asm/smp.h>
-#include <asm/type.h>
 #include <asm/csr.h>
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>

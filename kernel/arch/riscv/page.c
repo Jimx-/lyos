@@ -25,6 +25,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <asm/page.h>
+#include <asm/pagetable.h>
 #include <errno.h>
 #include <asm/proto.h>
 #include <asm/const.h>

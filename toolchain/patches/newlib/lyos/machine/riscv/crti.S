@@ -6,11 +6,11 @@
 # error PREINIT_FUNCTION_WEAK is unsupported
 #endif
 
-	.section .init_array, "aw"
+    .section .init_array, "aw"
 #ifdef __riscv64
-	.dword PREINIT_FUNCTION
+    .dword PREINIT_FUNCTION
 #else
-	.word PREINIT_FUNCTION
+    .word PREINIT_FUNCTION
 #endif
 
 #endif

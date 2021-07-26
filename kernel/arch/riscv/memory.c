@@ -39,13 +39,13 @@ extern int _KERN_OFFSET;
 
 /* temporary mappings */
 #define MAX_TEMPPDES 2
-#define TEMPPDE_SRC 0
-#define TEMPPDE_DST 1
+#define TEMPPDE_SRC  0
+#define TEMPPDE_DST  1
 static u32 temppdes[MAX_TEMPPDES];
 
-#define _SRC_ 0
-#define _DEST_ 1
-#define EFAULT_SRC 1
+#define _SRC_       0
+#define _DEST_      1
+#define EFAULT_SRC  1
 #define EFAULT_DEST 2
 
 void init_memory()
@@ -69,7 +69,7 @@ static phys_bytes create_temp_map(struct proc* p, phys_bytes la,
 }
 
 static int la_la_copy(struct proc* p_dest, phys_bytes dest_la,
-                      struct proc* p_src, phys_bytes src_la, void* len)
+                      struct proc* p_src, phys_bytes src_la, size_t len)
 {
     if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
     if (read_ptbr() != get_cpulocal_var(pt_proc)->seg.ptbr_phys)
@@ -131,7 +131,7 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
     return 0;
 }
 
-#define KM_USERMAPPED 0
+#define KM_USERMAPPED   0
 #define KM_KERN_MAPPING 1
 
 extern char _usermapped[], _eusermapped[];

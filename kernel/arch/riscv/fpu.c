@@ -37,3 +37,11 @@
  * <Ring 0> Initialize FPU.
  */
 void fpu_init() {}
+
+void enable_fpu_exception(void) {}
+
+void disable_fpu_exception(void) {}
+
+void save_local_fpu(struct proc* p, int retain) {}
+
+int restore_fpu(struct proc* p) {}

@@ -22,9 +22,15 @@
 #define KERNEL_VMA CONFIG_KERNEL_VMA
 
 #ifdef CONFIG_64BIT
-#define VMALLOC_START (KERNEL_VMA + LOWMEM_END)
-#define VMALLOC_END   0xf7c00000
-#define VM_STACK_TOP  0x2000000000UL
+
+#define KERNEL_VIRT_SIZE (-KERNEL_VMA)
+#define PKMAP_SIZE       (KERNEL_VIRT_SIZE >> 1)
+#define PKMAP_START      (KERNEL_VMA - PKMAP_SIZE)
+#define PKMAP_END        KERNEL_VMA
+
+#define VMALLOC_START 0x2000000000UL
+#define VMALLOC_END   0x3000000000UL
+#define VM_STACK_TOP  0x4000000000UL
 #endif
 
 #define RISCV_PG_SHIFT (12)
@@ -75,8 +81,6 @@ typedef struct {
     /* virtual address of all page tables */
     pte_t* vir_pts[RISCV_VM_DIR_ENTRIES];
 } pgdir_t;
-
-#include <asm/pagetable.h>
 
 extern unsigned long va_pa_offset;
 

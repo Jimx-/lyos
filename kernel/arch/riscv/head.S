@@ -4,13 +4,13 @@
 #include <asm/asm.h>
 #include <sconst.h>
 
-.section .head
+    .section ".head","ax"
 
 .globl _lyos_start	/* entry point */
 
 _lyos_start:
     /* mask interrupts */
-	csrw sie, zero
+    csrw sie, zero
 
 .option push
 .option norelax
@@ -22,7 +22,7 @@ _lyos_start:
     la a3, hart_counter
     li a2, 1
     amoadd.w a3, a2, (a3)
-	bnez a3, .Lsecondary_start
+    bnez a3, .Lsecondary_start
 
     /* save hart ID and DTB from bootloader */
     mv s0, a0
@@ -110,16 +110,16 @@ enable_paging:
 
 .align 2
 .Lno_smp:
-	wfi
-	j .Lno_smp
+    wfi
+    j .Lno_smp
 
 .section .data
 KStackSpace:
-	.zero K_STACK_SIZE
+    .zero K_STACK_SIZE
 KStackTop:
 
 .globl k_stacks_start, k_stacks_end
 .balign	K_STACK_SIZE
 k_stacks_start:
-	.space 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
+    .space 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
 k_stacks_end:

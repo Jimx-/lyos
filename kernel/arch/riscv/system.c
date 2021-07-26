@@ -34,7 +34,7 @@ Lyos is free software: you can redistribute it and/or modify
 #include <lyos/param.h>
 #include <lyos/vm.h>
 #include "libexec/libexec.h"
-#include <asm/type.h>
+#include <asm/cpu_info.h>
 
 struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -152,6 +152,10 @@ int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
 
     return 0;
 }
+
+int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
+                   void* tls)
+{}
 
 void idle_stop() {}
 

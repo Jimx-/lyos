@@ -47,6 +47,12 @@ static inline int pde_present(pde_t pde)
     return pde_val(pde) & _RISCV_PG_PRESENT;
 }
 
+static inline int pde_none(pde_t pde) { return pde_val(pde) == 0; }
+
+static inline int pde_bad(pde_t pde) { return !pde_present(pde); }
+
+static inline void pde_clear(pde_t* pde) { *pde = __pde(0); }
+
 static inline void pde_populate(pde_t* pde, pmd_t* pmd)
 {
     unsigned long pfn = __pa(pmd) >> ARCH_PG_SHIFT;
@@ -65,6 +71,15 @@ static inline int pmde_present(pmd_t pmde)
     return pmd_val(pmde) & _RISCV_PG_PRESENT;
 }
 
+static inline int pmde_none(pmd_t pmde) { return pmd_val(pmde) == 0; }
+
+static inline int pmde_bad(pmd_t pmde)
+{
+    return !pmde_present(pmde) || (pmd_val(pmde) & _RISCV_PG_LEAF);
+}
+
+static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
+
 static inline void pmde_populate(pmd_t* pmde, pte_t* pt)
 {
     unsigned long pfn = __pa(pt) >> ARCH_PG_SHIFT;
@@ -82,5 +97,19 @@ static inline int pte_present(pte_t pte)
 {
     return pte_val(pte) & _RISCV_PG_PRESENT;
 }
+
+#define pgd_addr_end(addr, end)                                          \
+    ({                                                                   \
+        vir_bytes __boundary = ((addr) + ARCH_PGD_SIZE) & ARCH_PGD_MASK; \
+        (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
+    })
+
+#ifndef pmd_addr_end
+#define pmd_addr_end(addr, end)                                          \
+    ({                                                                   \
+        vir_bytes __boundary = ((addr) + ARCH_PMD_SIZE) & ARCH_PMD_MASK; \
+        (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
+    })
+#endif
 
 #endif // _ARCH_PAGETABLE_H_

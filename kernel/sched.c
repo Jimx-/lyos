@@ -74,7 +74,7 @@ struct proc* pick_proc()
     for (i = 0; i < BITCHUNKS(SCHED_QUEUES); i++) {
         if (bitmap[i]) {
             for (j = 0; j < BITCHUNK_BITS; j++) {
-                if (bitmap[i] & (1 << j)) {
+                if (bitmap[i] & (1UL << j)) {
                     q = i * BITCHUNK_BITS + j;
                     break;
                 }
@@ -100,12 +100,12 @@ struct proc* pick_proc()
         }
     }
 
-    dequeue_proc(selected);
+    if (selected) dequeue_proc(selected);
 
     return selected;
 }
 
-static int proc_queue(struct proc* p)
+static inline int proc_queue(struct proc* p)
 {
     int queue;
 
