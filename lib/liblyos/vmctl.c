@@ -78,14 +78,14 @@ int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
     return 0;
 }
 
-int vmctl_set_address_space(endpoint_t who, void* pgd_phys, void* pgd_vir)
+int vmctl_set_address_space(endpoint_t who, void* pgd_phys)
 {
     MESSAGE m;
 
     m.VMCTL_REQUEST = VMCTL_SET_ADDRESS_SPACE;
     m.VMCTL_WHO = who;
     m.VMCTL_PHYS_ADDR = pgd_phys;
-    m.VMCTL_VIR_ADDR = pgd_vir;
+    /* m.VMCTL_VIR_ADDR = pgd_vir; */
 
     return syscall_entry(NR_VMCTL, &m);
 }

@@ -391,7 +391,7 @@ int arch_vmctl(MESSAGE* m, struct proc* p)
         m->VMCTL_VALUE = p->seg.cr3_phys;
         return 0;
     case VMCTL_SET_ADDRESS_SPACE:
-        setcr3(p, m->VMCTL_PHYS_ADDR, m->VMCTL_VIR_ADDR);
+        setcr3(p, m->VMCTL_PHYS_ADDR, __va(m->VMCTL_PHYS_ADDR));
         return 0;
     case VMCTL_FLUSHTLB:
         reload_cr3();

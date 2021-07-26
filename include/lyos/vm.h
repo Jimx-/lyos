@@ -101,7 +101,7 @@ int procctl(endpoint_t who, int param);
 int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
 int vmctl_reply_kern_mapping(int index, void* vir_addr);
 int vmctl_getpdbr(endpoint_t who, unsigned* pdbr);
-int vmctl_set_address_space(endpoint_t who, void* pgd_phys, void* pgd_vir);
+int vmctl_set_address_space(endpoint_t who, void* pgd_phys);
 int umap(endpoint_t ep, int type, vir_bytes vir_addr, vir_bytes size,
          phys_bytes* phys_addr);
 void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len);

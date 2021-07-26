@@ -571,8 +571,7 @@ void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
 int pgd_bind(struct mmproc* who, pgdir_t* pgd)
 {
     /* make sure that the page directory is in low memory */
-    return vmctl_set_address_space(who->endpoint, pgd->phys_addr,
-                                   __va(pgd->phys_addr));
+    return vmctl_set_address_space(who->endpoint, pgd->phys_addr);
 }
 
 int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
