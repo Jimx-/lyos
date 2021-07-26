@@ -36,9 +36,9 @@ static inline int pmde_bad(pmd_t pmde)
 
 static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
-static inline void pmde_populate(pmd_t* pmde, phys_bytes pt_phys)
+static inline void pmde_populate(pmd_t* pmde, pte_t* pt)
 {
-    *pmde = __pmd((pt_phys & I386_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
+    *pmde = __pmd((__pa(pt) & I386_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
                   ARCH_PG_USER);
 }
 
@@ -54,7 +54,7 @@ static inline int pte_present(pte_t pte)
 
 static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
 {
-    pte_t* vaddr = (pte_t*)(pmd_val(*pt) & ARCH_PG_MASK);
+    pte_t* vaddr = (pte_t*)__va(pmd_val(*pt) & ARCH_PG_MASK);
     return vaddr + ARCH_PTE(addr);
 }
 

@@ -30,9 +30,9 @@
 #include "region.h"
 #include "proto.h"
 #include <lyos/cpufeature.h>
+#include <asm/pagetable.h>
 #include "global.h"
 #include "const.h"
-#include "pagetable.h"
 
 #define MAX_KERN_MAPPINGS 10
 static struct kern_mapping {
@@ -228,7 +228,7 @@ int pt_create(pmd_t* pmde)
     }
 
 #ifdef __i386__
-    pmde_populate(pmde, pt_phys);
+    pmde_populate(pmde, __va(pt_phys));
 #elif defined(__arm__)
     pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) |
                                ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
@@ -578,11 +578,6 @@ int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
 {
     pte_t* pte;
     int retval;
-
-    if (vir_addr >= KERNEL_VMA) {
-        *phys_addr = __pa(vir_addr);
-        return 0;
-    }
 
     if ((retval = pt_follow(pgd, (unsigned long)vir_addr, &pte)) != 0) {
         return retval;

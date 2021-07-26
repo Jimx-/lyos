@@ -16,8 +16,9 @@
 #ifndef _MM_PROTO_H_
 #define _MM_PROTO_H_
 
+#include <asm/pagetable.h>
+
 #include "mmproc.h"
-#include "pagetable.h"
 
 typedef void (*vfs_callback_t)(struct mmproc* mmp, MESSAGE* msg, void* arg);
 

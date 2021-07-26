@@ -3,7 +3,8 @@
 ##############################
 
 LDSCRIPT = arch/$(ARCH)/lyos.lds
-LDFLAGS		= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
+LDFLAGS	= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
+CFLAGS		+= -D__kernel__
 
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o clock.o global.o proc.o klib.o \
 				sysinfo.o system/system.o interrupt.o system.o smp.o clocksource.o \
