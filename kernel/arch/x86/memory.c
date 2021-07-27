@@ -74,12 +74,12 @@ void clear_memcache()
 }
 
 /* Temporarily map la in p's address space in kernel address space */
-static phys_bytes create_temp_map(struct proc* p, void* la, size_t* len,
-                                  int index, int* changed)
+static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
+                             int* changed)
 {
     /* the process is already in current page table */
     if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
-        return (phys_bytes)la;
+        return la;
 
     phys_bytes pa;
     pde_t pdeval;
@@ -92,7 +92,7 @@ static phys_bytes create_temp_map(struct proc* p, void* la, size_t* len,
         pa = (phys_bytes)la;
         if (pa < LOWMEM_END) { /* low memory */
             *len = min(*len, LOWMEM_END - pa);
-            return (phys_bytes)__va(pa);
+            return __va(pa);
         }
         pdeval =
             __pde((((uintptr_t)la) & I386_VM_ADDR_MASK_4MB) | ARCH_PG_BIGPAGE |
@@ -109,7 +109,7 @@ static phys_bytes create_temp_map(struct proc* p, void* la, size_t* len,
     off_t offset = ((uintptr_t)la) & I386_VM_OFFSET_MASK_4MB;
     *len = min(*len, ARCH_BIG_PAGE_SIZE - offset);
 
-    return pde * ARCH_BIG_PAGE_SIZE + offset;
+    return (void*)(uintptr_t)(pde * ARCH_BIG_PAGE_SIZE + offset);
 }
 
 static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
@@ -121,7 +121,7 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
 
     while (len > 0) {
         size_t chunk = len;
-        phys_bytes src_mapped, dest_mapped;
+        void *src_mapped, *dest_mapped;
         int changed = 0;
 
         src_mapped =
@@ -131,7 +131,7 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
 
         if (changed) reload_cr3();
 
-        phys_bytes fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
+        void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 
         if (fault_addr) {
             if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
@@ -171,7 +171,7 @@ static u32 get_phys32(phys_bytes phys_addr)
  *
  * @return The linear address for the given virtual address.
  *****************************************************************************/
-void* va2la(endpoint_t ep, void* va) { return va; }
+static void* va2la(endpoint_t ep, void* va) { return va; }
 
 /*****************************************************************************
  *                la2pa
@@ -184,9 +184,9 @@ void* va2la(endpoint_t ep, void* va) { return va; }
  *
  * @return The physical address for the given linear address.
  *****************************************************************************/
-void* la2pa(endpoint_t ep, void* la)
+phys_bytes la2pa(endpoint_t ep, void* la)
 {
-    if (is_kerntaske(ep)) return (void*)((uintptr_t)la - KERNEL_VMA);
+    if (is_kerntaske(ep)) return (uintptr_t)la - KERNEL_VMA;
 
     int slot;
     if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
@@ -203,13 +203,12 @@ void* la2pa(endpoint_t ep, void* la)
     if (pde_val(pde_v) & ARCH_PG_BIGPAGE) {
         phys_addr = pde_val(pde_v) & I386_VM_ADDR_MASK_4MB;
         phys_addr += (phys_bytes)la & I386_VM_OFFSET_MASK_4MB;
-        return (void*)phys_addr;
+        return phys_addr;
     }
 
     pte_t* pt_entries = (pte_t*)(pde_val(pde_v) & ARCH_PG_MASK);
     pte_t pte_v = __pte(get_phys32((phys_bytes)(pt_entries + pt_index)));
-    return (void*)((pte_val(pte_v) & ARCH_PG_MASK) +
-                   ((uintptr_t)la % ARCH_PG_SIZE));
+    return (pte_val(pte_v) & ARCH_PG_MASK) + ((uintptr_t)la % ARCH_PG_SIZE);
 }
 
 /*****************************************************************************
@@ -223,7 +222,7 @@ void* la2pa(endpoint_t ep, void* la)
  *
  * @return The physical address for the given virtual address.
  *****************************************************************************/
-void* va2pa(endpoint_t ep, void* va) { return la2pa(ep, va2la(ep, va)); }
+phys_bytes va2pa(endpoint_t ep, void* va) { return la2pa(ep, va2la(ep, va)); }
 
 #define KM_USERMAPPED   0
 #define KM_LAPIC        1

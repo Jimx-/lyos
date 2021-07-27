@@ -34,43 +34,41 @@
 #include <lyos/vm.h>
 #include <errno.h>
 #include <lyos/smp.h>
+#include <asm/pagetable.h>
 
 extern int _KERN_OFFSET;
-
-/* temporary mappings */
-#define MAX_TEMPPDES 2
-#define TEMPPDE_SRC  0
-#define TEMPPDE_DST  1
-static u32 temppdes[MAX_TEMPPDES];
 
 #define _SRC_       0
 #define _DEST_      1
 #define EFAULT_SRC  1
 #define EFAULT_DEST 2
 
-void init_memory()
-{
-    int i;
-    for (i = 0; i < MAX_TEMPPDES; i++) {
-        temppdes[i] = kinfo.kernel_end_pde++;
-    }
-    get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
-}
+void init_memory() { get_cpulocal_var(pt_proc) = proc_addr(TASK_MM); }
 
 void clear_memcache() {}
 
 /* Temporarily map la in p's address space in kernel address space */
-static phys_bytes create_temp_map(struct proc* p, phys_bytes la,
-                                  phys_bytes* len, int index, int* changed)
+static void* create_temp_map(struct proc* p, void* la, size_t* len)
 {
+    phys_bytes pa;
+    off_t offset;
+
     /* the process is already in current page table */
     if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
         return la;
+
+    pa = va2pa(p->endpoint, la);
+    offset = ((uintptr_t)la) % ARCH_PG_SIZE;
+    *len = min(*len, ARCH_PG_SIZE - offset);
+
+    return __va(pa);
 }
 
-static int la_la_copy(struct proc* p_dest, phys_bytes dest_la,
-                      struct proc* p_src, phys_bytes src_la, size_t len)
+static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
+                      void* src_la, size_t len)
 {
+    int retval = 0;
+
     if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
     if (read_ptbr() != get_cpulocal_var(pt_proc)->seg.ptbr_phys)
         panic("bad pt_proc ptbr value");
@@ -78,39 +76,64 @@ static int la_la_copy(struct proc* p_dest, phys_bytes dest_la,
     enable_user_access();
     while (len > 0) {
         size_t chunk = len;
-        phys_bytes src_mapped, dest_mapped;
-        int changed = 0;
+        void *src_mapped, *dest_mapped;
 
-        src_mapped =
-            create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
-        dest_mapped =
-            create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
+        src_mapped = create_temp_map(p_src, src_la, &chunk);
+        dest_mapped = create_temp_map(p_dest, dest_la, &chunk);
 
-        if (changed) flush_tlb();
+        void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 
-        phys_bytes fault_addr =
-            memcpy((void*)dest_mapped, (void*)src_mapped, chunk);
-
-        /*if (fault_addr) {
+        if (fault_addr) {
+            retval = EFAULT_SRC;
             if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
-                return EFAULT_SRC;
+                goto out;
+            retval = EFAULT_DEST;
             if (fault_addr >= dest_mapped && fault_addr < dest_mapped + chunk)
-                return EFAULT_DEST;
-            return EFAULT;
-        }*/
+                goto out;
+            retval = EFAULT;
+            goto out;
+        }
 
         len -= chunk;
         src_la += chunk;
         dest_la += chunk;
     }
-    disable_user_access();
 
-    return 0;
+out:
+    disable_user_access();
+    return retval;
 }
 
-static u32 get_phys32(phys_bytes phys_addr) {}
+phys_bytes va2pa(endpoint_t ep, void* va)
+{
+    pde_t* pde;
+    pmd_t* pmde;
+    pte_t* pte;
+    int slot;
+    struct proc* p;
 
-void* va2pa(endpoint_t ep, void* va) {}
+    if (is_kerntaske(ep)) return __pa(va);
+
+    if (!verify_endpt(ep, &slot)) panic("va2pa: invalid endpoint");
+    p = proc_addr(slot);
+
+    pde = pgd_offset(p->seg.ptbr_vir, (unsigned long)va);
+    if (pde_none(*pde)) {
+        return -1;
+    }
+
+    pmde = pmd_offset(pde, (unsigned long)va);
+    if (pmde_none(*pmde)) {
+        return -1;
+    }
+
+    pte = pte_offset(pmde, (unsigned long)va);
+    if (!pte_present(*pte)) {
+        return -1;
+    }
+
+    return (pte_val(*pte) & ARCH_PG_MASK) + ((uintptr_t)va % ARCH_PG_SIZE);
+}
 
 #define MAX_KERN_MAPPINGS 8
 

@@ -141,6 +141,7 @@ static void init_mm()
 {
     int i;
 
+    data_copy(SELF, 100, SELF, 100, 100);
     get_kinfo(&kernel_info);
 
     /* initialize hole table */

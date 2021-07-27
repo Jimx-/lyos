@@ -32,7 +32,17 @@
 
 struct tss tss[CONFIG_SMP_MAX_CPUS];
 
+struct exception_frame {
+    reg_t sepc;
+    reg_t sbadaddr;
+};
+
 extern void trap_entry(void);
+
+void copy_user_message_end();
+void copy_user_message_fault();
+void phys_copy_fault();
+void phys_copy_fault_in_kernel();
 
 int init_tss(unsigned int cpu, void* kernel_stack)
 {
@@ -98,8 +108,33 @@ void do_trap_ecall_s(int in_kernel, struct proc* p) { printk("ecall s\n"); }
 
 void do_trap_ecall_m(int in_kernel, struct proc* p) { printk("ecall m\n"); }
 
-void do_page_fault(int in_kernel, struct proc* p)
+void do_page_fault(int in_kernel, struct proc* p, struct exception_frame* frame)
 {
+    struct proc* fault_proc = get_cpulocal_var(proc_ptr);
+    void* fault_addr = (void*)frame->sbadaddr;
+
+    int in_phys_copy = (frame->sepc >= (uintptr_t)phys_copy) &&
+                       (frame->sepc < (uintptr_t)phys_copy_fault);
+    int in_phys_set = 0; /* Not implemented. */
+    int in_copy_message = (frame->sepc >= (reg_t)copy_user_message) &&
+                          (frame->sepc < (reg_t)copy_user_message_end);
+
+    if ((in_kernel || is_kerntaske(fault_proc->endpoint)) &&
+        (in_phys_copy || in_phys_set || in_copy_message)) {
+        if (in_kernel) {
+            if (in_phys_copy) {
+                frame->sepc = (reg_t)phys_copy_fault_in_kernel;
+            } else if (in_copy_message) {
+                frame->sepc = (reg_t)copy_user_message_fault;
+            }
+        } else {
+            fault_proc->regs.sepc = (reg_t)phys_copy_fault;
+            fault_proc->regs.a0 = fault_addr;
+        }
+
+        return;
+    }
+
     printk("page fault %d %x %lx %lx\n", in_kernel, p->regs.scause,
-           p->regs.sbadaddr, p->regs.sepc);
+           frame->sbadaddr, frame->sepc);
 }

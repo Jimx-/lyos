@@ -92,9 +92,7 @@ void init_proc();
 void switch_to_user();
 int verify_endpt(endpoint_t ep, int* proc_nr);
 struct proc* endpt_proc(endpoint_t ep);
-void* va2la(endpoint_t ep, void* va);
-void* la2pa(endpoint_t ep, void* la);
-void* va2pa(endpoint_t ep, void* va);
+phys_bytes va2pa(endpoint_t ep, void* va);
 int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags);
 int msg_notify(struct proc* p_to_send, endpoint_t dest);
 void reset_msg(MESSAGE* p);
@@ -191,7 +189,7 @@ int printx(char* s);
 int getinfo(int request, void* buf);
 int vmctl(int request, endpoint_t who);
 
-phys_bytes phys_copy(phys_bytes dest, phys_bytes src, phys_bytes len);
+void* phys_copy(void* dest, void* src, phys_bytes len);
 int copy_user_message(MESSAGE* dest, MESSAGE* src);
 #define phys_set memset
 

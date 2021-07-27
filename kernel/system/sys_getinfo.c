@@ -48,8 +48,8 @@ int sys_getinfo(MESSAGE* m, struct proc* p_proc)
 
     switch (request) {
     case GETINFO_SYSINFO:
-        psi = (struct sysinfo**)buf;
-        *psi = sysinfo_user;
+        addr = (void*)&sysinfo_user;
+        size = sizeof(sysinfo_user);
         break;
     case GETINFO_KINFO:
         addr = (void*)&kinfo;
