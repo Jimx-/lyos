@@ -90,6 +90,26 @@ void pt_init()
 
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
 
+    unsigned int mypdbr = 0;
+    static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
+    if (vmctl_getpdbr(SELF, &mypdbr))
+        panic("MM: failed to get page directory base register");
+    /* kernel has done identity mapping for the bootstrap page dir we are using,
+     * so this is ok */
+    data_copy(SELF, &currentpagedir, NO_TASK, (void*)mypdbr,
+              sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
+
+    for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
+        pde_t pde = currentpagedir[i];
+
+        if (!pde_present(pde)) continue;
+        if (pde_val(pde) & ARCH_PG_BIGPAGE) {
+            continue;
+        }
+
+        mypgd->vir_addr[i] = pde;
+    }
+
     int kernel_pde = kernel_info.kernel_start_pde;
     phys_bytes paddr = kernel_info.kernel_start_phys;
 
@@ -126,34 +146,6 @@ void pt_init()
                   ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
                   ARM_VM_SECTION_SUPER);
 #endif
-    }
-
-    unsigned int mypdbr = 0;
-    static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
-    if (vmctl_getpdbr(SELF, &mypdbr))
-        panic("MM: failed to get page directory base register");
-    /* kernel has done identity mapping for the bootstrap page dir we are using,
-     * so this is ok */
-    data_copy(SELF, &currentpagedir, NO_TASK, (void*)mypdbr,
-              sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
-
-    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        pde_t entry = currentpagedir[i];
-
-        if (!(pde_val(entry) & ARCH_PG_PRESENT)) continue;
-        if (pde_val(entry) & ARCH_PG_BIGPAGE) {
-            continue;
-        }
-
-        /* if (pt_create((pmd_t*)&mypgd->vir_addr[i]) != 0) { */
-        /*     panic("MM: failed to allocate page table for MM"); */
-        /* } */
-
-        /* phys_bytes ptphys_kern = pde_val(entry) & ARCH_PG_MASK; */
-        /* phys_bytes ptphys_mm = pde_val(mypgd->vir_addr[i]) & ARCH_PG_MASK; */
-        /* data_copy(NO_TASK, (void*)ptphys_mm, NO_TASK, (void*)ptphys_kern,
-         * ARCH_PG_SIZE); */
-        mypgd->vir_addr[i] = entry;
     }
 
     /* using the new page dir */
@@ -425,8 +417,8 @@ void pt_kern_mapping_init()
         if (vmctl_reply_kern_mapping(rindex, (void*)kmapping->vir_addr))
             panic("MM: cannot reply kernel mapping");
 
-        printl("MM: kernel mapping index %d: 0x%08x - 0x%08x  (%dkB)\n", rindex,
-               kmapping->vir_addr, (int)kmapping->vir_addr + kmapping->len,
+        printl("MM: kernel mapping index %d: 0x%016lx - 0x%016lx  (%dkB)\n",
+               rindex, kmapping->vir_addr, kmapping->vir_addr + kmapping->len,
                kmapping->len / 1024);
 
         pkmap_start += kmapping->len;

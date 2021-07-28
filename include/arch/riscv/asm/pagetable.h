@@ -37,6 +37,11 @@ static inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)
     return __pte((pfn << RISCV_PG_PFN_SHIFT) | pgprot_val(prot));
 }
 
+static inline unsigned long pte_pfn(pte_t pte)
+{
+    return pte_val(pte) >> RISCV_PG_PFN_SHIFT;
+}
+
 static inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
 {
     return pgd + ARCH_PDE(addr);

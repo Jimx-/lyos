@@ -165,11 +165,11 @@ int get_ticks()
 void panic(const char* fmt, ...)
 {
     char buf[256];
+    va_list arg;
 
-    /* 4 is the size of fmt in the stack */
-    va_list arg = (va_list)((char*)&fmt + 4);
-
+    va_start(arg, fmt);
     vsprintf(buf, fmt, arg);
+    va_end(arg);
 
     direct_cls();
     kern_log.buf[kern_log.size] = 0;
@@ -182,6 +182,6 @@ void panic(const char* fmt, ...)
 
     while (1)
         ;
-    /* should never arrive here */
-    __asm__ __volatile__("ud2");
+
+    /* unreachable */
 }

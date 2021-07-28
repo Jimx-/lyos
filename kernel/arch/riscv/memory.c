@@ -132,7 +132,7 @@ phys_bytes va2pa(endpoint_t ep, void* va)
         return -1;
     }
 
-    return (pte_val(*pte) & ARCH_PG_MASK) + ((uintptr_t)va % ARCH_PG_SIZE);
+    return (pte_pfn(*pte) << ARCH_PG_SHIFT) + ((uintptr_t)va % ARCH_PG_SIZE);
 }
 
 #define MAX_KERN_MAPPINGS 8
@@ -154,14 +154,23 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
     return 0;
 }
 
-#define KM_USERMAPPED   0
-#define KM_KERN_MAPPING 1
+#define KM_USERMAPPED 0
+#define KM_LAST       KM_USERMAPPED
 
 extern char _usermapped[], _eusermapped[];
 off_t usermapped_offset;
 
 int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
 {
+    if (index > KM_LAST) return 1;
+
+    if (index == KM_USERMAPPED) {
+        *addr = (caddr_t)__pa((char*)*(&_usermapped));
+        *len = (char*)*(&_eusermapped) - (char*)*(&_usermapped);
+        *flags = KMF_USER;
+        return 0;
+    }
+
     return 0;
 }
 

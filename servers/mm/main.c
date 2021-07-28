@@ -141,7 +141,6 @@ static void init_mm()
 {
     int i;
 
-    data_copy(SELF, 100, SELF, 100, 100);
     get_kinfo(&kernel_info);
 
     /* initialize hole table */
@@ -318,7 +317,8 @@ static void print_memmap()
             base_l = (u32)(mmap->addr & 0xFFFFFFFF);
         u32 last_h = (u32)((last_byte & 0xFFFFFFFF00000000L) >> 32),
             last_l = (u32)(last_byte & 0xFFFFFFFF);
-        printl("  [mem %08x%08x-%08x%08x] %s\n", base_h, base_l, last_h, last_l,
+        printl("  [mem %016lx-%016lx] %s\n", (unsigned long)mmap->addr,
+               (unsigned long)last_byte,
                (mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");
 
         if (mmap->type == KINFO_MEMORY_AVAILABLE &&
@@ -351,16 +351,16 @@ static void print_memmap()
         (data_len + bss_len) / 1024, reserved_memsize / 1024);
 
     printl("Virtual kernel memory layout:\n");
-    printl("  .text     : %08p - %08p  (%dkB)\n", text_start, text_end,
+    printl("  .text     : 0x%016lx - 0x%016lx  (%dkB)\n", text_start, text_end,
            text_len / 1024);
-    printl("  .data     : %08p - %08p  (%dkB)\n", data_start, data_end,
+    printl("  .data     : 0x%016lx - 0x%016lx  (%dkB)\n", data_start, data_end,
            data_len / 1024);
-    printl("  .bss      : %08p - %08p  (%dkB)\n", bss_start, bss_end,
+    printl("  .bss      : 0x%016lx - 0x%016lx  (%dkB)\n", bss_start, bss_end,
            bss_len / 1024);
-    printl("  .vmalloc  : %08p - %08p  (%dkB)\n", VMALLOC_START, VMALLOC_END,
-           (VMALLOC_END - VMALLOC_START) / 1024);
-    printl("  .pkmap    : %08p - %08p  (%dkB)\n", PKMAP_START, PKMAP_END,
-           (PKMAP_END - PKMAP_START) / 1024);
+    printl("  .vmalloc  : 0x%016lx - 0x%016lx  (%dkB)\n", VMALLOC_START,
+           VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
+    printl("  .pkmap    : 0x%016lx - 0x%016lx  (%dkB)\n", PKMAP_START,
+           PKMAP_END, (PKMAP_END - PKMAP_START) / 1024);
 
     mem_start = kernel_info.kernel_end_phys;
     free_mem_size = memory_size - mem_start;

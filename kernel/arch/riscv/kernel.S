@@ -189,12 +189,12 @@ fstate_saved:
     la gp, __global_pointer$
 .option pop
 
-    mv t0, a0
-    mv t1, a1
+    mv s5, a0
+    mv s6, a1
     mv a0, tp
     call stop_context
-    mv a0, t0
-    mv a1, t1
+    mv a0, s5
+    mv a1, s6
 
     /* check whether cause is interrupt or exception */
     bge s3, zero, do_exception

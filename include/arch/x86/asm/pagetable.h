@@ -30,7 +30,7 @@ static inline int pmde_none(pmd_t pmde)
 
 static inline int pmde_bad(pmd_t pmde)
 {
-    return ((pmd_val(pmde) & !ARCH_PG_MASK) & ~ARCH_PG_USER) !=
+    return ((pmd_val(pmde) & ~ARCH_PG_MASK) & ~ARCH_PG_USER) !=
            (ARCH_PG_PRESENT | ARCH_PG_RW);
 }
 

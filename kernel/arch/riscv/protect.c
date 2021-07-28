@@ -135,6 +135,27 @@ void do_page_fault(int in_kernel, struct proc* p, struct exception_frame* frame)
         return;
     }
 
-    printk("page fault %d %x %lx %lx\n", in_kernel, p->regs.scause,
-           frame->sbadaddr, frame->sepc);
+    if (in_kernel) {
+        panic("unhandled page fault in kernel, epc: %p, tval: %p",
+              (void*)frame->sepc, fault_addr);
+    }
+
+    if (fault_proc->endpoint == TASK_MM) {
+        panic("unhandled page fault in MM, epc: %p, tval: %p",
+              (void*)fault_proc->regs.sepc, fault_proc->regs.sbadaddr);
+    }
+
+    /* inform MM to handle this page fault */
+    MESSAGE msg;
+    msg.type = FAULT;
+    msg.FAULT_NR = 14;
+    msg.FAULT_ADDR = (void*)frame->sbadaddr;
+    msg.FAULT_PROC = fault_proc->endpoint;
+    msg.FAULT_ERRCODE = 0;
+    msg.FAULT_PC = (void*)frame->sepc;
+
+    msg_send(fault_proc, TASK_MM, &msg, IPCF_FROMKERNEL);
+
+    /* block the process */
+    PST_SET(fault_proc, PST_PAGEFAULT);
 }
