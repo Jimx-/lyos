@@ -56,6 +56,20 @@ static struct mm_struct self_mm;
 static char static_bootstrap_pages[ARCH_PG_SIZE * STATIC_BOOTSTRAP_PAGES]
     __attribute__((aligned(ARCH_PG_SIZE)));
 
+void* phys_to_virt(unsigned long x)
+{
+    if (!pt_init_done) {
+        int i;
+
+        for (i = 0; i < STATIC_BOOTSTRAP_PAGES; i++) {
+            if (bootstrap_pages[i].phys_addr == x)
+                return bootstrap_pages[i].vir_addr;
+        }
+    }
+
+    return __va(x);
+}
+
 void mm_init(struct mm_struct* mm);
 
 void pt_init()
@@ -90,23 +104,18 @@ void pt_init()
 
     if (pgd_new(mypgd)) panic("MM: pgd_new for self failed");
 
-    unsigned int mypdbr = 0;
+    unsigned long mypdbr = 0;
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
     if (vmctl_getpdbr(SELF, &mypdbr))
         panic("MM: failed to get page directory base register");
-    /* kernel has done identity mapping for the bootstrap page dir we are using,
-     * so this is ok */
     data_copy(SELF, &currentpagedir, NO_TASK, (void*)mypdbr,
               sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
 
+    /* Copy page directory entries for the userspace (MM). */
     for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
         pde_t pde = currentpagedir[i];
 
         if (!pde_present(pde)) continue;
-        if (pde_val(pde) & ARCH_PG_BIGPAGE) {
-            continue;
-        }
-
         mypgd->vir_addr[i] = pde;
     }
 
@@ -220,7 +229,7 @@ int pt_create(pmd_t* pmde)
     }
 
 #ifdef __i386__
-    pmde_populate(pmde, __va(pt_phys));
+    pmde_populate(pmde, pt_phys);
 #elif defined(__arm__)
     pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) |
                                ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);

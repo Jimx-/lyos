@@ -63,7 +63,7 @@ int vmctl_reply_kern_mapping(int index, void* vir_addr)
     return m.VMCTL_REPLY_KM_RETVAL;
 }
 
-int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
+int vmctl_getpdbr(endpoint_t who, unsigned long* pdbr)
 {
     MESSAGE m;
 
@@ -73,12 +73,12 @@ int vmctl_getpdbr(endpoint_t who, unsigned* pdbr)
     int retval = syscall_entry(NR_VMCTL, &m);
     if (retval) return retval;
 
-    *pdbr = m.VMCTL_VALUE;
+    *pdbr = m.VMCTL_PHYS_ADDR;
 
     return 0;
 }
 
-int vmctl_set_address_space(endpoint_t who, void* pgd_phys)
+int vmctl_set_address_space(endpoint_t who, unsigned long pgd_phys)
 {
     MESSAGE m;
 

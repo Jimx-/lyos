@@ -55,8 +55,8 @@
 #define VMCTL_REQUEST   u.m3.m3i1
 #define VMCTL_WHO       u.m3.m3i2
 #define VMCTL_VALUE     u.m3.m3i3
-#define VMCTL_PHYS_ADDR u.m3.m3p1
-#define VMCTL_VIR_ADDR  u.m3.m3p2
+#define VMCTL_PHYS_ADDR u.m3.m3l1
+#define VMCTL_VIR_ADDR  u.m3.m3p1
 
 #define VMCTL_MMREQ_TARGET u.m3.m3i1
 #define VMCTL_MMREQ_ADDR   u.m3.m3p1
@@ -100,8 +100,8 @@ struct mm_fork_info {
 int procctl(endpoint_t who, int param);
 int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
 int vmctl_reply_kern_mapping(int index, void* vir_addr);
-int vmctl_getpdbr(endpoint_t who, unsigned* pdbr);
-int vmctl_set_address_space(endpoint_t who, void* pgd_phys);
+int vmctl_getpdbr(endpoint_t who, unsigned long* pdbr);
+int vmctl_set_address_space(endpoint_t who, unsigned long pgd_phys);
 int umap(endpoint_t ep, int type, vir_bytes vir_addr, vir_bytes size,
          phys_bytes* phys_addr);
 void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len);

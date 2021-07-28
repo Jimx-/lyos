@@ -85,9 +85,9 @@ static inline int pmde_bad(pmd_t pmde)
 
 static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
-static inline void pmde_populate(pmd_t* pmde, pte_t* pt)
+static inline void pmde_populate(pmd_t* pmde, unsigned long pt_phys)
 {
-    unsigned long pfn = __pa(pt) >> ARCH_PG_SHIFT;
+    unsigned long pfn = pt_phys >> ARCH_PG_SHIFT;
     *pmde = __pmd((pfn << RISCV_PG_PFN_SHIFT) | _RISCV_PG_TABLE);
 }
 

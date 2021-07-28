@@ -155,6 +155,19 @@ void pg_identity(pde_t* pgd)
     }
 }
 
+void pg_unmap_identity(pde_t* pgd)
+{
+    int i;
+
+    for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
+        pde_t pde = pgd[i];
+
+        if (pde_val(pde) & ARCH_PG_BIGPAGE) {
+            pgd[i] = __pde(0);
+        }
+    }
+}
+
 void pg_mapkernel(pde_t* pgd)
 {
     phys_bytes mapped = 0, kern_phys = kinfo.kernel_start_phys;

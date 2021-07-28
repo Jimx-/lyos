@@ -202,7 +202,7 @@ int arch_vmctl(MESSAGE* m, struct proc* p)
 
     switch (request) {
     case VMCTL_GETPDBR:
-        m->VMCTL_VALUE = p->seg.ptbr_phys;
+        m->VMCTL_PHYS_ADDR = (unsigned long)p->seg.ptbr_phys;
         return 0;
     case VMCTL_SET_ADDRESS_SPACE:
         setptbr(p, (phys_bytes)m->VMCTL_PHYS_ADDR);

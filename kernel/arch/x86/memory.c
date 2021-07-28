@@ -343,10 +343,17 @@ int arch_reply_kern_mapping(int index, void* vir_addr)
         hpet_vaddr = vir_addr;
     }
 
+    if (index == KM_LAST) {
+        /* At this point, all physical regions required by the kernel have been
+         * mapped into the virtual address space by MM and the kernel no longer
+         * need the identity mapping to access physical memory locations. */
+        pg_unmap_identity(initial_pgd);
+    }
+
     return 0;
 }
 
-static void setcr3(struct proc* p, void* cr3, void* cr3_v)
+static void setcr3(struct proc* p, unsigned long cr3, void* cr3_v)
 {
     p->seg.cr3_phys = (u32)cr3;
     p->seg.cr3_vir = (u32*)cr3_v;
@@ -387,10 +394,10 @@ int arch_vmctl(MESSAGE* m, struct proc* p)
 
     switch (request) {
     case VMCTL_GETPDBR:
-        m->VMCTL_VALUE = p->seg.cr3_phys;
+        m->VMCTL_PHYS_ADDR = (unsigned long)p->seg.cr3_phys;
         return 0;
     case VMCTL_SET_ADDRESS_SPACE:
-        setcr3(p, m->VMCTL_PHYS_ADDR, __va(m->VMCTL_PHYS_ADDR));
+        setcr3(p, (unsigned long)m->VMCTL_PHYS_ADDR, __va(m->VMCTL_PHYS_ADDR));
         return 0;
     case VMCTL_FLUSHTLB:
         reload_cr3();

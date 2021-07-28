@@ -40,13 +40,13 @@ extern int _KERN_OFFSET;
 
 /* temporary mappings */
 #define MAX_TEMPPDES 2
-#define TEMPPDE_SRC 0
-#define TEMPPDE_DST 1
+#define TEMPPDE_SRC  0
+#define TEMPPDE_DST  1
 static u32 temppdes[MAX_TEMPPDES];
 
-#define _SRC_ 0
-#define _DEST_ 1
-#define EFAULT_SRC 1
+#define _SRC_       0
+#define _DEST_      1
+#define EFAULT_SRC  1
 #define EFAULT_DEST 2
 
 void init_memory()
@@ -204,7 +204,7 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
     return 0;
 }
 
-#define KM_USERMAPPED 0
+#define KM_USERMAPPED   0
 #define KM_KERN_MAPPING 1
 
 extern char _usermapped[], _eusermapped[];
@@ -284,7 +284,7 @@ int arch_vmctl(MESSAGE* m, struct proc* p)
 
     switch (request) {
     case VMCTL_GETPDBR:
-        m->VMCTL_VALUE = p->seg.ttbr_phys;
+        m->VMCTL_PHYS_ADDR = (unsigned long)p->seg.ttbr_phys;
         return 0;
     case VMCTL_SET_ADDRESS_SPACE:
         setttbr0(p, m->VMCTL_PHYS_ADDR, m->VMCTL_VIR_ADDR);

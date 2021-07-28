@@ -313,10 +313,7 @@ static void print_memmap()
     for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count;
          i++, mmap++) {
         u64 last_byte = mmap->addr + mmap->len;
-        u32 base_h = (u32)((mmap->addr & 0xFFFFFFFF00000000L) >> 32),
-            base_l = (u32)(mmap->addr & 0xFFFFFFFF);
-        u32 last_h = (u32)((last_byte & 0xFFFFFFFF00000000L) >> 32),
-            last_l = (u32)(last_byte & 0xFFFFFFFF);
+
         printl("  [mem %016lx-%016lx] %s\n", (unsigned long)mmap->addr,
                (unsigned long)last_byte,
                (mmap->type == KINFO_MEMORY_AVAILABLE) ? "usable" : "reserved");

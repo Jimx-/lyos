@@ -101,6 +101,16 @@ void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]);
 
 void smp_commence();
 
+/* page.c */
+void pg_identity(pde_t* pgd);
+void pg_unmap_identity(pde_t* pgd);
+void pg_mapkernel(pde_t* pgd);
+void pg_load(pde_t* pgd);
+void enable_paging();
+void disable_paging();
+int read_cr2();
+int read_cr3();
+void reload_cr3();
 void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end);
 void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk);
 phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages);

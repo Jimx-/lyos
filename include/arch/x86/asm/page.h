@@ -89,15 +89,6 @@ typedef struct {
 #define I386_PF_NOPAGE(x) (!I386_PF_PROT(x))
 #define I386_PF_WRITE(x)  ((x)&I386_PG_RW)
 
-void pg_identity(pde_t* pgd);
-void pg_mapkernel(pde_t* pgd);
-void pg_load(pde_t* pgd);
-void enable_paging();
-void disable_paging();
-int read_cr2();
-int read_cr3();
-void reload_cr3();
-
 #define ARCH_PG_PRESENT I386_PG_PRESENT
 #define ARCH_PG_RW      I386_PG_RW
 #define ARCH_PG_RO      I386_PG_RO
@@ -143,6 +134,14 @@ void reload_cr3();
 
 #ifndef __pa
 #define __pa(x) ((phys_bytes)(x)-_PAGE_OFFSET)
+#endif
+
+static inline unsigned long virt_to_phys(void* x) { return __pa(x); }
+
+#ifdef __kernel__
+static inline void* phys_to_virt(unsigned long x) { return __va(x); }
+#else
+extern void* phys_to_virt(unsigned long x);
 #endif
 
 #endif

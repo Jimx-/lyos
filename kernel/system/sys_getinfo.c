@@ -42,7 +42,6 @@ int sys_getinfo(MESSAGE* m, struct proc* p_proc)
     size_t buf_len = m->BUF_LEN;
     void* addr = NULL;
     size_t size = 0;
-    struct sysinfo** psi;
     u64 ticks[CPU_STATES];
     unsigned int cpu;
 
