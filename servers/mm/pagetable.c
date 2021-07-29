@@ -29,7 +29,6 @@
 #include <lyos/vm.h>
 #include "region.h"
 #include "proto.h"
-#include <lyos/cpufeature.h>
 #include <asm/pagetable.h>
 #include "global.h"
 #include "const.h"
@@ -42,10 +41,6 @@ static struct kern_mapping {
     int flags;
 } kern_mappings[MAX_KERN_MAPPINGS];
 static int nr_kern_mappings = 0;
-
-#if defined(__i386__)
-static int global_bit = 0;
-#endif
 
 static struct mmproc* mmprocess = &mmproc_table[TASK_MM];
 static struct mm_struct self_mm;
@@ -88,10 +83,6 @@ void pt_init()
         bootstrap_pages[i].used = 0;
     }
 
-#if defined(__i386__)
-    if (_cpufeature(_CPUF_I386_PGE)) global_bit = ARCH_PG_GLOBAL;
-#endif
-
     /* init mm structure */
     mmprocess->mm = &self_mm;
     mm_init(mmprocess->mm);
@@ -119,43 +110,7 @@ void pt_init()
         mypgd->vir_addr[i] = pde;
     }
 
-    int kernel_pde = kernel_info.kernel_start_pde;
-    phys_bytes paddr = kernel_info.kernel_start_phys;
-
-    /* map kernel for MM */
-    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
-#if defined(__i386__)
-        mypgd->vir_addr[kernel_pde] =
-            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
-#elif defined(__arm__)
-        mypgd->vir_addr[kernel_pde] =
-            __pde((paddr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
-                  ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
-                  ARM_VM_SECTION_SUPER);
-#endif
-
-        paddr += ARCH_BIG_PAGE_SIZE;
-        kernel_pde++;
-    }
-
-    /* create direct mapping to access physical memory */
-    for (kernel_pde = 0, paddr = 0; kernel_pde < ARCH_PDE(LOWMEM_END);
-         kernel_pde++, paddr += ARCH_BIG_PAGE_SIZE) {
-        if (paddr < kernel_info.kernel_end_phys) {
-            continue;
-        }
-
-#if defined(__i386__)
-        mypgd->vir_addr[kernel_pde] =
-            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW |
-                  ARCH_PG_USER);
-#elif defined(__arm__)
-        mypgd->vir_addr[kernel_pde] =
-            __pde((paddr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
-                  ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
-                  ARM_VM_SECTION_SUPER);
-#endif
-    }
+    arch_init_pgd(mypgd);
 
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
@@ -228,12 +183,7 @@ int pt_create(pmd_t* pmde)
         pt[i] = __pte(0);
     }
 
-#ifdef __i386__
     pmde_populate(pmde, pt_phys);
-#elif defined(__arm__)
-    pgd->vir_addr[pde] = __pde((pt_phys & ARM_VM_PDE_MASK) |
-                               ARM_VM_PDE_PRESENT | ARM_VM_PDE_DOMAIN);
-#endif
 
     return 0;
 }
@@ -261,7 +211,7 @@ int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
     pmde = pmd_create(pde, vir_addr);
     pte = pt_create_map(pmde, vir_addr);
 
-    *pte = __pte((phys_addr & ARCH_PG_MASK) | flags);
+    *pte = pfn_pte(phys_addr >> ARCH_PG_SHIFT, __pgprot(flags));
 
     return 0;
 }
@@ -446,7 +396,7 @@ int pgd_new(pgdir_t* pgd)
     pde_t* pg_dir = (pde_t*)alloc_vmem(
         &pgd_phys, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES, PGT_PAGEDIR);
 
-    pgd->phys_addr = (void*)pgd_phys;
+    pgd->phys_addr = pgd_phys;
     pgd->vir_addr = pg_dir;
 
     int i;
@@ -472,24 +422,8 @@ int pgd_new(pgdir_t* pgd)
 int pgd_mapkernel(pgdir_t* pgd)
 {
     int i;
-    int kernel_pde = kernel_info.kernel_start_pde;
-    phys_bytes addr = kernel_info.kernel_start_phys;
 
-    /* map low memory */
-    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
-#if defined(__i386__)
-        pgd->vir_addr[kernel_pde] =
-            __pde(addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
-#elif defined(__arm__)
-        pgd->vir_addr[kernel_pde] =
-            __pde((addr & ARM_VM_SECTION_MASK) | ARM_VM_SECTION |
-                  ARM_VM_SECTION_DOMAIN | ARM_VM_SECTION_CACHED |
-                  ARM_VM_SECTION_SUPER);
-#endif
-
-        addr += ARCH_BIG_PAGE_SIZE;
-        kernel_pde++;
-    }
+    arch_pgd_mapkernel(pgd);
 
     for (i = 0; i < nr_kern_mappings; i++) {
         pt_writemap(pgd, kern_mappings[i].phys_addr, kern_mappings[i].vir_addr,
@@ -584,7 +518,7 @@ int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr)
         return retval;
     }
 
-    phys_bytes phys = pte_val(*pte) & ARCH_PG_MASK;
+    phys_bytes phys = pte_pfn(*pte) << ARCH_PG_SHIFT;
     *phys_addr = phys + ((unsigned long)vir_addr % ARCH_PG_SIZE);
     return 0;
 }

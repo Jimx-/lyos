@@ -34,11 +34,18 @@ typedef struct {
     unsigned long pte;
 } pte_t;
 
+typedef struct {
+    unsigned long pgprot;
+} pgprot_t;
+
 #define pde_val(x) ((x).pde)
 #define __pde(x)   ((pde_t){(x)})
 
 #define pte_val(x) ((x).pte)
 #define __pte(x)   ((pte_t){(x)})
+
+#define pgprot_val(x) ((x).pgprot)
+#define __pgprot(x)   ((pgprot_t){(x)})
 
 #define I386_VM_DIR_ENTRIES 1024
 #define I386_VM_PT_ENTRIES  1024
@@ -49,7 +56,7 @@ typedef struct {
 /* struct page_directory */
 typedef struct {
     /* physical address of page dir */
-    pde_t* phys_addr;
+    phys_bytes phys_addr;
     /* virtual address of page dir */
     pde_t* vir_addr;
 

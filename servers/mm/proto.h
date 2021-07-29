@@ -49,6 +49,7 @@ void slabfree(void* mem, int bytes);
         p = NULL;                \
     } while (0)
 
+/* mm/pagetable.c */
 void pt_init();
 pmd_t* pmd_create(pde_t* pde, vir_bytes addr);
 int pt_create(pmd_t* pmde);
@@ -71,6 +72,10 @@ void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
                     vir_bytes floor, vir_bytes ceiling);
 int pgd_free(pgdir_t* pgd);
 int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr);
+
+/* Arch functions. */
+void arch_init_pgd(pgdir_t* pgd);
+void arch_pgd_mapkernel(pgdir_t* pgd);
 
 struct mm_struct* mm_allocate();
 void mm_init(struct mm_struct* mm);
