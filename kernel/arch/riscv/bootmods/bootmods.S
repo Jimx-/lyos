@@ -74,6 +74,12 @@ _bootmod_ipc_start:
   .incbin "ipc"
 _bootmod_ipc_end:
 
+  .globl _bootmod_netlink_start, _bootmod_netlink_end
+  .align ARCH_PG_SHIFT
+_bootmod_netlink_start:
+  .incbin "netlink"
+_bootmod_netlink_end:
+
   .globl _bootmod_init_start, _bootmod_init_end
   .align ARCH_PG_SHIFT
 _bootmod_init_start:

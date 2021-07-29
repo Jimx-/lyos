@@ -3,7 +3,7 @@
 ####################################
 
 BOOTMODSBINS	= mm pm servman devman sched vfs systask tty ramdisk \
-					initfs sysfs ipc init
+					initfs sysfs ipc netlink init
 
 BOOTMODS		= bootmods.o
 
@@ -50,6 +50,9 @@ sysfs : $(DESTDIR)/sbin/sysfs
 	@cp $< $@
 
 ipc : $(DESTDIR)/sbin/ipc
+	@cp $< $@
+
+netlink : $(DESTDIR)/sbin/netlink
 	@cp $< $@
 
 init : $(DESTDIR)/sbin/init

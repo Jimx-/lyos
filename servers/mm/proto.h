@@ -32,9 +32,9 @@ phys_bytes alloc_pages(int nr_pages, int memflags);
 
 void vmem_init(void* mem_start, size_t free_mem_size);
 void* alloc_vmem(phys_bytes* phys_addr, size_t memsize, int reason);
-void* alloc_vmpages(int nr_pages);
+void* alloc_vmpages(size_t nr_pages);
 void free_vmem(void* base, size_t len);
-void free_vmpages(void* base, int nr_pages);
+void free_vmpages(void* base, size_t nr_pages);
 
 void slabs_init();
 void* slaballoc(int bytes);

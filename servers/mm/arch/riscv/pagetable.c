@@ -34,6 +34,68 @@
 #include "global.h"
 #include "const.h"
 
-void arch_init_pgd(pgdir_t* pgd) {}
+#ifndef __PAGETABLE_PMD_FOLDED
+#define NUM_INIT_PMDS ((uintptr_t)-KERNEL_VMA >> ARCH_PGD_SHIFT)
+pmd_t initial_pmd[ARCH_VM_PMD_ENTRIES * NUM_INIT_PMDS]
+    __attribute__((aligned(ARCH_PG_SIZE)));
+#endif
+
+unsigned long va_pa_offset;
+
+void arch_init_pgd(pgdir_t* pgd)
+{
+    int i;
+    phys_bytes pa;
+    pgprot_t prot = __pgprot(pgprot_val(RISCV_PG_KERNEL) | _RISCV_PG_EXEC);
+
+    pa = kernel_info.kernel_start_phys;
+
+    /* Create kernel mapping. */
+#ifndef __PAGETABLE_PMD_FOLDED
+    for (i = 0; i < NUM_INIT_PMDS; i++) {
+        phys_bytes pmd_phys;
+
+        if (umap(SELF, UMT_VADDR,
+                 (vir_bytes)&initial_pmd[ARCH_VM_PMD_ENTRIES * i],
+                 sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES, &pmd_phys))
+            panic("MM: can't get phys addr for bootstrap PMD page");
+
+        pgd->vir_addr[(KERNEL_VMA >> ARCH_PGD_SHIFT) % ARCH_VM_DIR_ENTRIES +
+                      i] =
+            pfn_pde((pmd_phys >> ARCH_PG_SHIFT) + i, __pgprot(_RISCV_PG_TABLE));
+    }
+
+    for (i = 0; i < sizeof(initial_pmd) / sizeof(pmd_t); i++) {
+        initial_pmd[i] =
+            pfn_pmd((pa + i * ARCH_PMD_SIZE) >> ARCH_PG_SHIFT, prot);
+    }
+#endif
+
+    /* Create linear mapping. */
+    pa = pa & ARCH_PGD_MASK;
+    va_pa_offset = PAGE_OFFSET - pa;
+
+    /* Map all memory banks. */
+    struct kinfo_mmap_entry* mmap;
+    for (i = 0, mmap = kernel_info.memmaps; i < kernel_info.memmaps_count;
+         i++, mmap++) {
+        phys_bytes start = mmap->addr;
+        phys_bytes end = mmap->addr + mmap->len;
+
+        start &= ARCH_PGD_MASK;
+
+        if (start >= end) break;
+
+        if (start <= __pa(PAGE_OFFSET) && __pa(PAGE_OFFSET) < end)
+            start = __pa(PAGE_OFFSET);
+
+        for (pa = start; pa < end; pa += ARCH_PGD_SIZE) {
+            uintptr_t va = (uintptr_t)__va(pa);
+
+            pgd->vir_addr[ARCH_PDE(va)] =
+                pfn_pde(pa >> ARCH_PG_SHIFT, RISCV_PG_WRITE);
+        }
+    }
+}
 
 void arch_pgd_mapkernel(pgdir_t* pgd) {}

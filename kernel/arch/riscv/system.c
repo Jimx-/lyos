@@ -91,7 +91,7 @@ void arch_boot_proc(struct proc* p, struct boot_proc* bp)
         execi.stack_size = PROC_ORIGIN_STACK;
 
         /* header */
-        execi.header = (void*)bp->base;
+        execi.header = __va(bp->base);
         execi.header_len = bp->len;
 
         execi.allocmem = kernel_allocmem;

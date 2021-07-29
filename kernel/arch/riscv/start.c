@@ -122,11 +122,12 @@ void cstart(unsigned int hart_id, void* dtb_phys)
     of_scan_fdt(fdt_scan_memory, NULL, initial_boot_params);
 
     /* setup boot modules */
-#define SET_MODULE(nr, name)                                               \
-    do {                                                                   \
-        extern char _bootmod_##name##_start[], _bootmod_##name##_end[];    \
-        kinfo.modules[nr].start_addr = (void*)*(&_bootmod_##name##_start); \
-        kinfo.modules[nr].end_addr = (void*)*(&_bootmod_##name##_end);     \
+#define SET_MODULE(nr, name)                                                 \
+    do {                                                                     \
+        extern char _bootmod_##name##_start[], _bootmod_##name##_end[];      \
+        kinfo.modules[nr].start_addr =                                       \
+            __pa((void*)*(&_bootmod_##name##_start));                        \
+        kinfo.modules[nr].end_addr = __pa((void*)*(&_bootmod_##name##_end)); \
     } while (0)
 
     SET_MODULE(TASK_MM, mm);
@@ -141,6 +142,7 @@ void cstart(unsigned int hart_id, void* dtb_phys)
     SET_MODULE(TASK_INITFS, initfs);
     SET_MODULE(TASK_SYSFS, sysfs);
     SET_MODULE(TASK_IPC, ipc);
+    SET_MODULE(TASK_NETLINK, netlink);
     SET_MODULE(INIT, init);
 
     /* kernel memory layout */

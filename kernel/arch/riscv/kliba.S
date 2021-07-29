@@ -20,6 +20,7 @@ phys_copy:
     REG_S ra, 0(sp)
 
     mv t6, a0  /* Preserve return value */
+    mv a0, zero
 
     /* Defer to byte-oriented copy for small sizes */
     sltiu a3, a2, 128
@@ -105,7 +106,6 @@ phys_copy:
     addi t6, t6, 4
     bltu a1, a3, 7b
 
-    mv a0, zero
     j phys_copy_fault
 
 5:
@@ -114,7 +114,6 @@ phys_copy:
     sb a4, 0(t6)
     addi t6, t6, 1
     bltu a1, a3, 5b
-    mv a0, zero
 phys_copy_fault:
     REG_L ra, 0(sp)
     addi sp, sp, REG_SIZE

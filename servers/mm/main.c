@@ -42,7 +42,6 @@
 #include "global.h"
 
 static phys_bytes free_mem_size;
-unsigned long va_pa_offset;
 
 void __lyos_init(char* envp[]);
 

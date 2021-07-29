@@ -28,6 +28,7 @@
 #define PKMAP_START      (KERNEL_VMA - PKMAP_SIZE)
 #define PKMAP_END        KERNEL_VMA
 
+#define PAGE_OFFSET   0x1000000000UL
 #define VMALLOC_START 0x2000000000UL
 #define VMALLOC_END   0x3000000000UL
 #define VM_STACK_TOP  0x4000000000UL
@@ -74,7 +75,7 @@ typedef struct {
 /* struct page_directory */
 typedef struct {
     /* physical address of page dir */
-    pde_t* phys_addr;
+    phys_bytes phys_addr;
     /* virtual address of page dir */
     pde_t* vir_addr;
 
@@ -89,10 +90,10 @@ extern unsigned long va_pa_offset;
 #define ARCH_VM_DIR_ENTRIES RISCV_VM_DIR_ENTRIES
 #define ARCH_VM_PT_ENTRIES  RISCV_VM_PT_ENTRIES
 
-#define ARCH_PG_PRESENT 0
-#define ARCH_PG_USER    0
-#define ARCH_PG_RW      0
-#define ARCH_PG_RO      0
+#define ARCH_PG_PRESENT _RISCV_PG_PRESENT
+#define ARCH_PG_USER    _RISCV_PG_USER
+#define ARCH_PG_RW      (_RISCV_PG_READ | _RISCV_PG_WRITE)
+#define ARCH_PG_RO      _RISCV_PG_READ
 #define ARCH_PG_BIGPAGE 0
 
 #define ARCH_PGD_SIZE  RISCV_PGD_SIZE
@@ -122,9 +123,22 @@ extern unsigned long va_pa_offset;
 
 #define ARCH_PTE(v) \
     (((unsigned long)(v) >> RISCV_PG_SHIFT) & (ARCH_VM_PT_ENTRIES - 1))
-#define ARCH_PDE(x) ((unsigned long)(x) >> RISCV_PGD_SHIFT)
+#define ARCH_PDE(v) \
+    (((unsigned long)(v) >> RISCV_PGD_SHIFT) & (ARCH_VM_DIR_ENTRIES - 1))
 
 #define __pa(x) ((phys_bytes)(x)-va_pa_offset)
 #define __va(x) ((void*)((unsigned long)(x) + va_pa_offset))
+
+#ifndef __ASSEMBLY__
+
+static inline unsigned long virt_to_phys(void* x) { return __pa(x); }
+
+#ifdef __kernel__
+static inline void* phys_to_virt(unsigned long x) { return __va(x); }
+#else
+extern void* phys_to_virt(unsigned long x);
+#endif
+
+#endif
 
 #endif

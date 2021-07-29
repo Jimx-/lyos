@@ -44,7 +44,6 @@ static int nr_kern_mappings = 0;
 
 static struct mmproc* mmprocess = &mmproc_table[TASK_MM];
 static struct mm_struct self_mm;
-//#define PAGETABLE_DEBUG    1
 
 /* before MM has set up page table for its own, we use these pages in page
  * allocation */
@@ -99,8 +98,9 @@ void pt_init()
     static pde_t currentpagedir[ARCH_VM_DIR_ENTRIES];
     if (vmctl_getpdbr(SELF, &mypdbr))
         panic("MM: failed to get page directory base register");
-    data_copy(SELF, &currentpagedir, NO_TASK, (void*)mypdbr,
-              sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
+    if (data_copy(SELF, &currentpagedir, NO_TASK, (void*)mypdbr,
+                  sizeof(pde_t) * ARCH_VM_DIR_ENTRIES) != 0)
+        panic("MM: failed to read initial page directory");
 
     /* Copy page directory entries for the userspace (MM). */
     for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
@@ -145,27 +145,38 @@ void mm_free(struct mm_struct* mm)
 }
 
 #ifndef __PAGETABLE_PMD_FOLDED
-static void __pmd_create(pde_t* pde, vir_bytes addr) {}
+static int __pmd_create(pde_t* pde, vir_bytes addr)
+{
+    phys_bytes pmd_phys;
+    pmd_t* pmd = (pmd_t*)alloc_vmem(
+        &pmd_phys, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES, PGT_PAGETABLE);
+    if (pmd == NULL) {
+        printl(
+            "MM: pmd_create: failed to allocate memory for new page table\n");
+        return ENOMEM;
+    }
+
+    memset(pmd, 0, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+
+    pde_populate(pde, pmd_phys);
+
+    return 0;
+}
 #else
-#define __pmd_create(pde, addr) NULL
+static inline int __pmd_create(pde_t* pde, vir_bytes addr) { return 0; }
 #endif
 
 pmd_t* pmd_create(pde_t* pde, vir_bytes addr)
 {
-    if (pde_none(*pde)) {
-        __pmd_create(pde, addr);
+    if (pde_none(*pde) && __pmd_create(pde, addr)) {
+        return NULL;
     }
 
     return pmd_offset(pde, addr);
 }
 
-int pt_create(pmd_t* pmde)
+int __pt_create(pmd_t* pmde)
 {
-    if (!pmde_none(*pmde)) {
-        /* page table already created */
-        return 0;
-    }
-
     phys_bytes pt_phys;
     pte_t* pt = (pte_t*)alloc_vmem(&pt_phys, sizeof(pte_t) * ARCH_VM_PT_ENTRIES,
                                    PGT_PAGETABLE);
@@ -174,14 +185,7 @@ int pt_create(pmd_t* pmde)
         return ENOMEM;
     }
 
-#if PAGETABLE_DEBUG
-    printl("MM: pt_create: allocated new page table\n");
-#endif
-
-    int i;
-    for (i = 0; i < ARCH_VM_PT_ENTRIES; i++) {
-        pt[i] = __pte(0);
-    }
+    memset(pt, 0, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
 
     pmde_populate(pmde, pt_phys);
 
@@ -190,7 +194,9 @@ int pt_create(pmd_t* pmde)
 
 pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
 {
-    pt_create(pmde);
+    if (pmde_none(*pmde) && __pt_create(pmde)) {
+        return NULL;
+    }
     return pte_offset(pmde, addr);
 }
 

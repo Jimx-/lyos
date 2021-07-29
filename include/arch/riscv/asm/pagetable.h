@@ -58,16 +58,16 @@ static inline int pde_bad(pde_t pde) { return !pde_present(pde); }
 
 static inline void pde_clear(pde_t* pde) { *pde = __pde(0); }
 
-static inline void pde_populate(pde_t* pde, pmd_t* pmd)
+static inline void pde_populate(pde_t* pde, phys_bytes pmd_phys)
 {
-    unsigned long pfn = __pa(pmd) >> ARCH_PG_SHIFT;
+    unsigned long pfn = pmd_phys >> ARCH_PG_SHIFT;
     *pde = __pde((pfn << RISCV_PG_PFN_SHIFT) | _RISCV_PG_TABLE);
 }
 
 static inline pmd_t* pmd_offset(pde_t* pmd, unsigned long addr)
 {
-    pmd_t* vaddr =
-        (pmd_t*)__va((pde_val(*pmd) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
+    pmd_t* vaddr = (pmd_t*)phys_to_virt((pde_val(*pmd) >> RISCV_PG_PFN_SHIFT)
+                                        << ARCH_PG_SHIFT);
     return vaddr + ARCH_PMDE(addr);
 }
 
@@ -93,8 +93,8 @@ static inline void pmde_populate(pmd_t* pmde, unsigned long pt_phys)
 
 static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
 {
-    pte_t* vaddr =
-        (pte_t*)__va((pmd_val(*pt) >> RISCV_PG_PFN_SHIFT) << ARCH_PG_SHIFT);
+    pte_t* vaddr = (pte_t*)phys_to_virt((pmd_val(*pt) >> RISCV_PG_PFN_SHIFT)
+                                        << ARCH_PG_SHIFT);
     return vaddr + ARCH_PTE(addr);
 }
 

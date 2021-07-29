@@ -66,7 +66,7 @@ void vmem_init(void* mem_start, size_t free_mem_size)
     free_slots = &hole[0];
 
     /* Free memory */
-    int nr_pages = free_mem_size / ARCH_PG_SIZE;
+    size_t nr_pages = free_mem_size >> ARCH_PG_SHIFT;
     if (free_mem_size % ARCH_PG_SIZE) nr_pages++;
     free_vmpages(mem_start, nr_pages);
 }
@@ -86,7 +86,7 @@ void* alloc_vmem(phys_bytes* phys_addr, size_t memsize, int reason)
 {
     /* avoid recursive allocation */
     static int level = 0;
-    int pages = memsize / ARCH_PG_SIZE;
+    size_t pages = memsize / ARCH_PG_SIZE;
     if (memsize % ARCH_PG_SIZE != 0) pages++;
 
     level++;
@@ -154,9 +154,9 @@ void* alloc_vmem(phys_bytes* phys_addr, size_t memsize, int reason)
  * @param  nr_pages How many pages are needed.
  * @return          Ptr to the memory.
  */
-void* alloc_vmpages(int nr_pages)
+void* alloc_vmpages(size_t nr_pages)
 {
-    size_t memsize = nr_pages * ARCH_PG_SIZE;
+    size_t memsize = nr_pages << ARCH_PG_SHIFT;
     struct hole *hp, *prev_ptr;
     vir_bytes old_base;
 
@@ -186,15 +186,17 @@ void* alloc_vmpages(int nr_pages)
         prev_ptr = hp;
         hp = hp->h_next;
     }
-    printl("MM: alloc_vmpages() failed.(Out of virtual memory space)\n");
+
+    panic("MM: alloc_vmpages() failed (out of virtual memory space).");
+
     return NULL;
 }
 
-void free_vmpages(void* base, int nr_pages)
+void free_vmpages(void* base, size_t nr_pages)
 {
     if (nr_pages <= 0) return;
 
-    int len = nr_pages * ARCH_PG_SIZE;
+    size_t len = nr_pages << ARCH_PG_SHIFT;
     struct hole *hp, *new_ptr, *prev_ptr;
 
     if ((new_ptr = free_slots) == NULL) panic("hole table full");
@@ -242,7 +244,7 @@ void free_vmem(void* base, size_t len)
 {
     if (!pt_init_done) return;
 
-    int nr_pages = len / ARCH_PG_SIZE;
+    size_t nr_pages = len >> ARCH_PG_SHIFT;
     if (len % ARCH_PG_SIZE) nr_pages++;
 
     /* free physical memory */

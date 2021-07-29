@@ -163,7 +163,7 @@ void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
         pde_t* pde = pgd_offset(pgd, (unsigned long)vir_addr);
         if (!pde_present(*pde)) {
             pmd_t* new_pmd = pg_alloc_pmd(pk);
-            pde_populate(pde, new_pmd);
+            pde_populate(pde, __pa(new_pmd));
         }
 
         pmd_t* pmde = pmd_offset(pde, (unsigned long)vir_addr);

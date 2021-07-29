@@ -51,15 +51,20 @@ void clear_memcache() {}
 static void* create_temp_map(struct proc* p, void* la, size_t* len)
 {
     phys_bytes pa;
-    off_t offset;
 
     /* the process is already in current page table */
     if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
         return la;
 
-    pa = va2pa(p->endpoint, la);
-    offset = ((uintptr_t)la) % ARCH_PG_SIZE;
-    *len = min(*len, ARCH_PG_SIZE - offset);
+    if (p) {
+        off_t offset;
+
+        pa = va2pa(p->endpoint, la);
+        offset = ((uintptr_t)la) % ARCH_PG_SIZE;
+        *len = min(*len, ARCH_PG_SIZE - offset);
+    } else {
+        pa = (phys_bytes)la;
+    }
 
     return __va(pa);
 }
@@ -84,6 +89,7 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
         void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 
         if (fault_addr) {
+            panic("Fault addr %p\n", fault_addr);
             retval = EFAULT_SRC;
             if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
                 goto out;
