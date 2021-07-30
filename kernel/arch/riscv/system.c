@@ -61,7 +61,8 @@ static int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
     return 0;
 }
 
-static int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len)
+static int kernel_allocmem(struct exec_info* execi, void* vaddr, size_t len,
+                           unsigned int prot_flags)
 {
     pg_map(0, vaddr, vaddr + len, &kinfo);
 

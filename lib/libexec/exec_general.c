@@ -31,9 +31,11 @@
 #include "lyos/vm.h"
 #include "sys/mman.h"
 
-int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len)
+int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len,
+                     unsigned int prot_flags)
 {
-    if (mmap_for(execi->proc_e, vaddr, len, PROT_READ | PROT_WRITE | PROT_EXEC,
+    /* Still need that PROT_WRITE so that we can copy data to it. */
+    if (mmap_for(execi->proc_e, vaddr, len, prot_flags | PROT_WRITE,
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1,
                  0) == MAP_FAILED) {
         return ENOMEM;
@@ -42,9 +44,10 @@ int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len)
     return 0;
 }
 
-int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len)
+int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len,
+                              unsigned int prot_flags)
 {
-    if (mmap_for(execi->proc_e, vaddr, len, PROT_READ | PROT_WRITE | PROT_EXEC,
+    if (mmap_for(execi->proc_e, vaddr, len, prot_flags | PROT_WRITE,
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED | MAP_POPULATE, -1,
                  0) == MAP_FAILED) {
         return ENOMEM;

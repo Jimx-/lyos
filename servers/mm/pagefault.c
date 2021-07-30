@@ -93,7 +93,7 @@ void handle_page_fault(endpoint_t ep, vir_bytes pfla, int err, vir_bytes pc,
         return;
     }
 
-    if (!(vr->flags & RF_WRITABLE) && wrflag) {
+    if (!(vr->flags & RF_WRITE) && wrflag) {
         printl("MM: SIGSEGV %d ro address %x, pc=%x\n", ep, pfla, pc);
 
         if (kernel_kill(ep, SIGSEGV) != 0)
@@ -201,7 +201,7 @@ static int handle_memory_state(struct hm_state* state, int retry)
     while (state->len) {
         if (!(vr = region_lookup(state->mmp, state->start)))
             return EFAULT;
-        else if (state->write && !(vr->flags & RF_WRITABLE))
+        else if (state->write && !(vr->flags & RF_WRITE))
             return EFAULT;
 
         assert(vr);

@@ -103,6 +103,16 @@ typedef struct {
 #define ARCH_PG_USER    I386_PG_USER
 #define ARCH_PG_GLOBAL  I386_PG_GLOBAL
 
+/*         xwr */
+#define __P000 __pgprot(0)
+#define __P001 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RO)
+#define __P010 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RW)
+#define __P011 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RW)
+#define __P100 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RO)
+#define __P101 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RO)
+#define __P110 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RW)
+#define __P111 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RW)
+
 #define ARCH_PDE_PRESENT I386_PG_PRESENT
 #define ARCH_PDE_RW      I386_PG_RW
 #define ARCH_PDE_USER    I386_PG_USER

@@ -72,12 +72,12 @@ static int mmap_file(struct mmproc* mmp, vir_bytes addr, size_t len, int flags,
                      int prot, int mmfd, off_t offset, dev_t dev, ino_t ino,
                      size_t clearend, int may_close, vir_bytes* ret_addr)
 {
-    int vrflags = 0;
+    int vrflags;
     struct vir_region* vr;
     size_t page_off;
     int retval = 0;
 
-    if (prot & PROT_WRITE) vrflags |= RF_WRITABLE;
+    vrflags = region_get_prot_bits(prot);
     if (flags & MAP_SHARED) vrflags |= RF_MAP_SHARED;
 
     if ((page_off = (offset % ARCH_PG_SIZE)) != 0) {
@@ -201,7 +201,7 @@ int do_mmap()
 
         if ((flags & (MAP_CONTIG | MAP_POPULATE)) == MAP_CONTIG) return EINVAL;
 
-        if (prot & PROT_WRITE) vr_flags |= RF_WRITABLE;
+        vr_flags |= region_get_prot_bits(prot);
         if (flags & MAP_SHARED) vr_flags |= RF_MAP_SHARED;
 
         vr_flags |= RF_ANON;
@@ -257,7 +257,7 @@ int do_map_phys()
     len = roundup(len, ARCH_PG_SIZE);
 
     vr = region_map(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len,
-                    RF_WRITABLE | RF_DIRECT, 0, &direct_phys_map_ops);
+                    RF_READ | RF_WRITE | RF_DIRECT, 0, &direct_phys_map_ops);
     if (!vr) return ENOMEM;
 
     direct_phys_set_phys(vr, phys_addr);
@@ -308,7 +308,7 @@ int do_mm_remap()
 
     if (size != src_region->length) return EFAULT;
 
-    int vrflags = RF_SHARED | RF_WRITABLE;
+    int vrflags = RF_READ | RF_WRITE | RF_SHARED;
     struct vir_region* new_region = NULL;
     if (dest_addr) {
         new_region =

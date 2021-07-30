@@ -162,7 +162,7 @@ static int file_map_page_fault(struct mmproc* mmp, struct vir_region* vr,
 static int file_map_writable(const struct phys_region* pr)
 {
     struct vir_region* vr = pr->parent;
-    if (vr->flags & RF_MAP_SHARED) return vr->flags & RF_WRITABLE;
+    if (vr->flags & RF_MAP_SHARED) return vr->flags & RF_WRITE;
 
     return 0;
 }

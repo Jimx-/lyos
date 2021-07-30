@@ -206,24 +206,27 @@ struct mm_exec_info {
     struct mmproc* mmp;
 };
 
-static int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len)
+static int mm_allocmem(struct exec_info* execi, void* vaddr, size_t len,
+                       unsigned int prot_flags)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
 
     if (!region_map(mmexeci->mmp, (vir_bytes)vaddr, 0, len,
-                    RF_WRITABLE | RF_ANON, MRF_PREALLOC, &anon_map_ops))
+                    region_get_prot_bits(prot_flags | PROT_WRITE) | RF_ANON,
+                    MRF_PREALLOC, &anon_map_ops))
         panic("vm: mm_allocmem for boot process failed");
 
     return 0;
 }
 
 static int mm_allocmem_prealloc(struct exec_info* execi, void* vaddr,
-                                size_t len)
+                                size_t len, unsigned int prot_flags)
 {
     struct mm_exec_info* mmexeci = (struct mm_exec_info*)execi->callback_data;
 
     if (!region_map(mmexeci->mmp, (vir_bytes)vaddr, 0, len,
-                    RF_WRITABLE | RF_ANON, 0, &anon_map_ops))
+                    region_get_prot_bits(prot_flags | PROT_WRITE) | RF_ANON, 0,
+                    &anon_map_ops))
         panic("vm: mm_allocmem for boot process failed");
 
     return 0;

@@ -8,7 +8,7 @@ struct exec_info;
 typedef int (*libexec_exec_loadfunc_t)(struct exec_info* execi);
 
 typedef int (*libexec_allocator_t)(struct exec_info* execi, void* vaddr,
-                                   size_t len);
+                                   size_t len, unsigned int prot_flags);
 typedef int (*libexec_clearmem_t)(struct exec_info* execi, void* vaddr,
                                   size_t len);
 typedef int (*libexec_clearproc_t)(struct exec_info* execi);
@@ -52,8 +52,10 @@ struct exec_info {
     void* load_base;
 };
 
-int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len);
-int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len);
+int libexec_allocmem(struct exec_info* execi, void* vaddr, size_t len,
+                     unsigned int prot_flags);
+int libexec_allocmem_prealloc(struct exec_info* execi, void* vaddr, size_t len,
+                              unsigned int prot_flags);
 int libexec_clearproc(struct exec_info* execi);
 int libexec_clearmem(struct exec_info* execi, void* vaddr, size_t len);
 

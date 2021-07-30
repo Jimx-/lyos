@@ -63,7 +63,23 @@ static inline int phys_region_writable(struct vir_region* vr,
                                        struct phys_region* pr)
 {
     assert(pr->rops->rop_writable);
-    return (vr->flags & RF_WRITABLE) && (pr->rops->rop_writable(pr));
+    return (vr->flags & RF_WRITE) && (pr->rops->rop_writable(pr));
+}
+
+static inline pgprot_t phys_region_page_prot(struct vir_region* vr,
+                                             struct phys_region* pr)
+{
+    static const pgprot_t protection_map[] = {
+        __P000, __P001, __P010, __P011, __P100, __P101, __P110, __P111,
+    };
+
+    unsigned long flags = 0;
+    int vr_flags = vr->flags & (RF_READ | RF_EXEC);
+    if (phys_region_writable(vr, pr)) vr_flags |= RF_WRITE;
+
+    if (vr->rops->rop_pt_flags) flags |= vr->rops->rop_pt_flags(vr);
+
+    return __pgprot(pgprot_val(protection_map[vr_flags]) | flags);
 }
 
 struct phys_region* phys_region_get(struct vir_region* vr, vir_bytes offset)
@@ -212,8 +228,8 @@ struct vir_region* region_map(struct mmproc* mmp, vir_bytes minv,
 int region_write_map_page(struct mmproc* mmp, struct vir_region* vr,
                           struct phys_region* pr)
 {
-    int flags = ARCH_PG_PRESENT | ARCH_PG_USER;
     struct page* page = pr->page;
+    pgprot_t prot;
 
     assert(vr);
     assert(pr);
@@ -224,12 +240,10 @@ int region_write_map_page(struct mmproc* mmp, struct vir_region* vr,
     assert(!(pr->offset % ARCH_PG_SIZE));
     assert(page->refcount);
 
-    if (phys_region_writable(vr, pr)) flags |= ARCH_PG_RW;
-
-    if (vr->rops->rop_pt_flags) flags |= vr->rops->rop_pt_flags(vr);
+    prot = phys_region_page_prot(vr, pr);
 
     if (pt_writemap(&mmp->mm->pgd, page->phys_addr, vr->vir_addr + pr->offset,
-                    ARCH_PG_SIZE, flags) != OK)
+                    ARCH_PG_SIZE, prot) != OK)
         return ENOMEM;
 
     return 0;
@@ -345,7 +359,7 @@ int region_extend_up_to(struct mmproc* mmp, vir_bytes addr)
     extra = addr - limit;
 
     if (!rb->rops->rop_resize) {
-        if (!region_map(mmp, limit, 0, extra, RF_WRITABLE | RF_ANON, 0,
+        if (!region_map(mmp, limit, 0, extra, RF_READ | RF_WRITE | RF_ANON, 0,
                         &anon_map_ops))
             return ENOMEM;
         return 0;
@@ -389,7 +403,7 @@ int region_handle_pf(struct mmproc* mmp, struct vir_region* vr,
 
     assert(offset < vr->length);
     assert(!(vr->vir_addr % ARCH_PG_SIZE));
-    assert(!(write && !(vr->flags & RF_WRITABLE)));
+    assert(!(write && !(vr->flags & RF_WRITE)));
 
     if (!(pr = phys_region_get(vr, offset))) {
         struct page* page;

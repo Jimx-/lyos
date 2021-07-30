@@ -207,7 +207,7 @@ pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
  * @return           Zero on success.
  */
 int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
-               unsigned int flags)
+               pgprot_t prot)
 {
     pde_t* pde;
     pmd_t* pmde;
@@ -217,7 +217,7 @@ int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
     pmde = pmd_create(pde, vir_addr);
     pte = pt_create_map(pmde, vir_addr);
 
-    *pte = pfn_pte(phys_addr >> ARCH_PG_SHIFT, __pgprot(flags));
+    *pte = pfn_pte(phys_addr >> ARCH_PG_SHIFT, prot);
 
     return 0;
 }
@@ -285,7 +285,7 @@ int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr)
 }
 
 int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
-                size_t length, int flags)
+                size_t length, pgprot_t prot)
 {
     /* sanity check */
     if (phys_addr % ARCH_PG_SIZE != 0) return EINVAL;
@@ -293,7 +293,7 @@ int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
     if (length % ARCH_PG_SIZE != 0) return EINVAL;
 
     while (length > 0) {
-        pt_mappage(pgd, phys_addr, vir_addr, flags);
+        pt_mappage(pgd, phys_addr, vir_addr, prot);
 
         length -= ARCH_PG_SIZE;
         phys_addr = phys_addr + ARCH_PG_SIZE;
@@ -433,7 +433,7 @@ int pgd_mapkernel(pgdir_t* pgd)
 
     for (i = 0; i < nr_kern_mappings; i++) {
         pt_writemap(pgd, kern_mappings[i].phys_addr, kern_mappings[i].vir_addr,
-                    kern_mappings[i].len, kern_mappings[i].flags);
+                    kern_mappings[i].len, __pgprot(kern_mappings[i].flags));
     }
 
     return 0;
@@ -538,7 +538,7 @@ int unmap_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
         printl("MM: map_memory: length is not page-aligned!\n");
 
     while (length > 0) {
-        pt_mappage(pgd, 0, vir_addr, 0);
+        pt_mappage(pgd, 0, vir_addr, __pgprot(0));
 
         length -= ARCH_PG_SIZE;
         vir_addr += ARCH_PG_SIZE;

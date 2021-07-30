@@ -20,6 +20,7 @@
 #include <lyos/ipc.h>
 #include <lyos/list.h>
 #include <lyos/avl.h>
+#include <sys/mman.h>
 
 #include "file.h"
 
@@ -111,15 +112,23 @@ struct vir_region {
 };
 
 /* Region flags */
-#define RF_WRITABLE      0x1
-#define RF_SHARED        0x2
-#define RF_UNINITIALIZED 0x4
-#define RF_MAP_SHARED    0x8
-
-#define RF_ANON   0x100
-#define RF_DIRECT 0x200
+#define RF_READ          0x0001
+#define RF_WRITE         0x0002
+#define RF_EXEC          0x0004
+#define RF_SHARED        0x0008
+#define RF_UNINITIALIZED 0x0010
+#define RF_MAP_SHARED    0x0020
+#define RF_ANON          0x0100
+#define RF_DIRECT        0x0200
 
 /* Map region flags */
 #define MRF_PREALLOC 0x01
+
+static inline int region_get_prot_bits(int prot)
+{
+    return ((prot & PROT_READ) ? RF_READ : 0) |
+           ((prot & PROT_WRITE) ? RF_WRITE : 0) |
+           ((prot & PROT_EXEC) ? RF_EXEC : 0);
+}
 
 #endif /* _REGION_H_ */

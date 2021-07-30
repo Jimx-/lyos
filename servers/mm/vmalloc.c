@@ -141,8 +141,7 @@ void* alloc_vmem(phys_bytes* phys_addr, size_t memsize, int reason)
     void* retval = vir_pages;
 
     pt_writemap(&mmproc_table[TASK_MM].mm->pgd, phys_pages,
-                (vir_bytes)vir_pages, pages * ARCH_PG_SIZE,
-                ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER);
+                (vir_bytes)vir_pages, pages * ARCH_PG_SIZE, __P011);
     vmctl_flushtlb(SELF);
 
     level--;

@@ -55,11 +55,11 @@ pmd_t* pmd_create(pde_t* pde, vir_bytes addr);
 int pt_create(pmd_t* pmde);
 pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr);
 int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
-               unsigned int flags);
+               pgprot_t prot);
 int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr);
 int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr);
 int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
-                size_t length, int flags);
+                size_t length, pgprot_t prot);
 int pt_wp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length);
 int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length);
 void pt_kern_mapping_init();

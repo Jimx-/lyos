@@ -92,8 +92,8 @@ extern unsigned long va_pa_offset;
 
 #define ARCH_PG_PRESENT _RISCV_PG_PRESENT
 #define ARCH_PG_USER    _RISCV_PG_USER
-#define ARCH_PG_RW      (_RISCV_PG_READ | _RISCV_PG_WRITE | _RISCV_PG_EXEC)
-#define ARCH_PG_RO      (_RISCV_PG_READ | _RISCV_PG_EXEC)
+#define ARCH_PG_RW      (_RISCV_PG_READ | _RISCV_PG_WRITE)
+#define ARCH_PG_RO      _RISCV_PG_READ
 #define ARCH_PG_BIGPAGE 0
 
 #define ARCH_PGD_SIZE  RISCV_PGD_SIZE

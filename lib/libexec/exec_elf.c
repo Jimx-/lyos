@@ -107,9 +107,11 @@ int libexec_load_elf(struct exec_info* execi)
         off_t foffset;
         uintptr_t p_vaddr, vaddr;
         size_t fsize, memsize, clearend = 0;
-        int mmap_prot = PROT_READ;
+        int mmap_prot = 0;
 
+        if (phdr->p_flags & PF_R) mmap_prot |= PROT_READ;
         if (phdr->p_flags & PF_W) mmap_prot |= PROT_WRITE;
+        if (phdr->p_flags & PF_X) mmap_prot |= PROT_EXEC;
 
         if (phdr->p_type == PT_PHDR) execi->phdr = (void*)phdr->p_vaddr;
 
@@ -163,7 +165,8 @@ int libexec_load_elf(struct exec_info* execi)
                 size_t rem_size = memsize - fsize;
                 void* rem_start = (void*)(vaddr + fsize);
 
-                if (execi->allocmem(execi, rem_start, rem_size) != 0) {
+                if (execi->allocmem(execi, rem_start, rem_size, mmap_prot) !=
+                    0) {
                     if (execi->clearproc) execi->clearproc(execi);
                     return ENOMEM;
                 }
@@ -171,7 +174,7 @@ int libexec_load_elf(struct exec_info* execi)
                 execi->clearmem(execi, rem_start, rem_size);
             }
         } else {
-            if (execi->allocmem(execi, (void*)vaddr, memsize) != 0) {
+            if (execi->allocmem(execi, (void*)vaddr, memsize, mmap_prot) != 0) {
                 if (execi->clearproc) execi->clearproc(execi);
                 return ENOMEM;
             }
@@ -207,7 +210,8 @@ int libexec_load_elf(struct exec_info* execi)
     /* allocate stack */
     if (execi->allocmem_prealloc &&
         execi->allocmem_prealloc(execi, execi->stack_top - execi->stack_size,
-                                 execi->stack_size) != 0) {
+                                 execi->stack_size,
+                                 PROT_READ | PROT_WRITE) != 0) {
         if (execi->clearproc) execi->clearproc(execi);
         return ENOMEM;
     }

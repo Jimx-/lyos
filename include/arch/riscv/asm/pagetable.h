@@ -22,6 +22,16 @@
 #define RISCV_PG_KERNEL      __pgprot(_RISCV_PG_KERNEL)
 #define RISCV_PG_KERNLE_EXEC __pgprot(_RISCV_PG_KERNEL | _RISCV_PG_EXEC)
 
+/*         xwr */
+#define __P000 RISCV_PG_NONE
+#define __P001 RISCV_PG_READ
+#define __P010 RISCV_PG_WRITE
+#define __P011 RISCV_PG_WRITE
+#define __P100 RISCV_PG_EXEC
+#define __P101 RISCV_PG_EXEC_READ
+#define __P110 RISCV_PG_EXEC_WRITE
+#define __P111 RISCV_PG_EXEC_WRITE
+
 static inline pde_t pfn_pde(unsigned long pfn, pgprot_t prot)
 {
     return __pde((pfn << RISCV_PG_PFN_SHIFT) | pgprot_val(prot));
