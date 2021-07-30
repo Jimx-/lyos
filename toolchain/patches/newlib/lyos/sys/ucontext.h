@@ -7,7 +7,7 @@
 typedef struct __ucontext ucontext_t;
 
 struct __ucontext {
-    unsigned int uc_flags;
+    unsigned long uc_flags;
     ucontext_t* uc_link;
     mcontext_t uc_mcontext;
     sigset_t uc_sigmask;
