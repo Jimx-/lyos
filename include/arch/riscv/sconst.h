@@ -91,6 +91,7 @@
 /* Exception frame */
 #define EF_SEPC     0
 #define EF_SBADADDR (EF_SEPC + REG_SIZE)
-#define EF_SIZE     (EF_SBADADDR + REG_SIZE)
+#define EF_SCAUSE   (EF_SBADADDR + REG_SIZE)
+#define EF_SIZE     (EF_SCAUSE + REG_SIZE)
 
 #endif // _ARCH_SCONST_H_

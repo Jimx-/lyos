@@ -70,7 +70,7 @@ void handle_page_fault(endpoint_t ep, vir_bytes pfla, int err, vir_bytes pc,
                        int retry)
 {
     struct mmproc* mmp = endpt_mmproc(ep);
-    int wrflag = !!(ARCH_PF_WRITE(err));
+    int wrflag = !!(err & FAULT_FLAG_WRITE);
     int retval;
     size_t offset;
     struct vir_region* vr;
@@ -78,12 +78,8 @@ void handle_page_fault(endpoint_t ep, vir_bytes pfla, int err, vir_bytes pc,
     vr = region_lookup(mmp, pfla);
 
     if (!vr) {
-        if (ARCH_PF_PROT(err)) {
-            printl("MM: SIGSEGV %d protected address %x, pc=%x\n", ep, pfla,
-                   pc);
-        } else if (ARCH_PF_NOPAGE(err)) {
-            printl("MM: SIGSEGV %d bad address %x, pc=%x\n", ep, pfla, pc);
-        }
+        printl("MM: SIGSEGV %d bad address 0x%016lx, pc=0x%016lx\n", ep, pfla,
+               pc);
 
         if (kernel_kill(ep, SIGSEGV) != 0)
             panic("pagefault: unable to kill proc");
@@ -94,7 +90,8 @@ void handle_page_fault(endpoint_t ep, vir_bytes pfla, int err, vir_bytes pc,
     }
 
     if (!(vr->flags & RF_WRITE) && wrflag) {
-        printl("MM: SIGSEGV %d ro address %x, pc=%x\n", ep, pfla, pc);
+        printl("MM: SIGSEGV %d ro address 0x%016lx, pc=0x%016lx\n", ep, pfla,
+               pc);
 
         if (kernel_kill(ep, SIGSEGV) != 0)
             panic("pagefault: unable to kill proc");
@@ -124,12 +121,7 @@ void handle_page_fault(endpoint_t ep, vir_bytes pfla, int err, vir_bytes pc,
                              handle_page_fault_callback, &state, sizeof(state));
     }
 
-    DBG(
-        if (ARCH_PF_PROT(err)) {
-            printl("MM: pagefault: %d protected address %x\n", ep, pfla);
-        } else if (ARCH_PF_NOPAGE(err)) {
-            printl("MM: pagefault: %d bad address %x\n", ep, pfla);
-        });
+    DBG(printl("MM: pagefault: %d bad address 0x%016lx\n", ep, pfla));
 
     if (retval == SUSPEND) return;
 

@@ -224,6 +224,7 @@ do_exception:
     mv a2, sp
     REG_S s1, EF_SEPC(sp)
     REG_S s2, EF_SBADADDR(sp)
+    REG_S s3, EF_SCAUSE(sp)
 
     jalr t0
 
@@ -231,7 +232,7 @@ do_exception:
     addi sp, sp, EF_SIZE
 
     andi a0, s0, SR_SPP
-    bnez s0, resume_kernel
+    bnez a0, resume_kernel
 
     tail switch_to_user
 

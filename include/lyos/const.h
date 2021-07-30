@@ -69,7 +69,6 @@
 #define DEST_SEG  u.m3.m3l2
 
 /* Macros for fault. */
-#define FAULT_NR      u.m3.m3i1
 #define FAULT_ADDR    u.m3.m3p1
 #define FAULT_PROC    u.m3.m3i3
 #define FAULT_ERRCODE u.m3.m3i4

@@ -32,6 +32,7 @@
 #include <asm/smp.h>
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>
+#include <lyos/vm.h>
 
 extern u32 StackTop;
 
@@ -484,13 +485,20 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
               pfla);
     }
 
+    int fault_flags = 0;
+    if (I386_PF_WRITE(frame->err_code))
+        fault_flags |= FAULT_FLAG_WRITE;
+    else if (I386_PF_INST(frame->err_code))
+        fault_flags |= FAULT_FLAG_INSTRUCTION;
+
+    if (I386_PF_USER(frame->err_code)) fault_flags |= FAULT_FLAG_USER;
+
     /* inform MM to handle this page fault */
     MESSAGE msg;
     msg.type = FAULT;
-    msg.FAULT_NR = frame->vec_no;
     msg.FAULT_ADDR = (void*)pfla;
     msg.FAULT_PROC = fault_proc->endpoint;
-    msg.FAULT_ERRCODE = frame->err_code;
+    msg.FAULT_ERRCODE = fault_flags;
     msg.FAULT_PC = (void*)frame->eip;
 
     msg_send(fault_proc, TASK_MM, &msg, IPCF_FROMKERNEL);

@@ -114,10 +114,6 @@ extern unsigned long va_pa_offset;
 
 #define ARCH_BIG_PAGE_SIZE RISCV_PGD_SIZE
 
-#define ARCH_PF_PROT(x)   0
-#define ARCH_PF_NOPAGE(x) 0
-#define ARCH_PF_WRITE(x)  0
-
 #define ARCH_VM_ADDRESS(pde, pte, offset) \
     ((pde << RISCV_PGD_SHIFT) | (pte << RISCV_PG_SHIFT) | offset)
 

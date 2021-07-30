@@ -95,6 +95,8 @@ typedef struct {
 #define I386_PF_PROT(x)   ((x)&I386_PG_PRESENT)
 #define I386_PF_NOPAGE(x) (!I386_PF_PROT(x))
 #define I386_PF_WRITE(x)  ((x)&I386_PG_RW)
+#define I386_PF_USER(x)   ((x)&I386_PG_USER)
+#define I386_PF_INST(x)   ((x) & (1 << 4))
 
 #define ARCH_PG_PRESENT I386_PG_PRESENT
 #define ARCH_PG_RW      I386_PG_RW
@@ -120,9 +122,6 @@ typedef struct {
 #define ARCH_VM_DIR_ENTRIES I386_VM_DIR_ENTRIES
 #define ARCH_VM_PT_ENTRIES  I386_VM_PT_ENTRIES
 #define ARCH_VM_OFFSET_MASK I386_VM_OFFSET_MASK
-#define ARCH_PF_PROT(x)     I386_PF_PROT(x)
-#define ARCH_PF_NOPAGE(x)   I386_PF_NOPAGE(x)
-#define ARCH_PF_WRITE(x)    I386_PF_WRITE(x)
 
 #define ARCH_PDE(x) ((unsigned long)(x) >> I386_PGD_SHIFT & 0x03FF)
 #define ARCH_PTE(x) ((unsigned long)(x) >> I386_PG_SHIFT & 0x03FF)

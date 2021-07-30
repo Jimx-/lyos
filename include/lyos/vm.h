@@ -80,6 +80,11 @@
 
 #define MM_GET_MEMINFO 1
 
+/* Fault flags */
+#define FAULT_FLAG_WRITE       0x1
+#define FAULT_FLAG_USER        0x2
+#define FAULT_FLAG_INSTRUCTION 0x4
+
 struct mem_info {
     size_t mem_total;
     size_t mem_free;

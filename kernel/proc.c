@@ -387,11 +387,17 @@ int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
         (p_dest->recvfrom == sender->endpoint || p_dest->recvfrom == ANY)) {
         MESSAGE tmp;
 
-        if ((retval =
-                 data_vir_copy_check(p_to_send, KERNEL, &tmp, sender->endpoint,
-                                     m, sizeof(MESSAGE))) != 0)
-            goto out;
+        if (flags & IPCF_FROMKERNEL) {
+            tmp = *m;
+        } else {
+            if ((retval = data_vir_copy_check(p_to_send, KERNEL, &tmp,
+                                              sender->endpoint, m,
+                                              sizeof(MESSAGE))) != 0)
+                goto out;
+        }
+
         tmp.source = p_to_send->endpoint;
+
         if ((retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
                                           KERNEL, &tmp, sizeof(MESSAGE))) != 0)
             goto out;

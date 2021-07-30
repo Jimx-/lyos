@@ -29,12 +29,14 @@
 #include <asm/csr.h>
 #include <lyos/cpulocals.h>
 #include <lyos/cpufeature.h>
+#include <lyos/vm.h>
 
 struct tss tss[CONFIG_SMP_MAX_CPUS];
 
 struct exception_frame {
     reg_t sepc;
     reg_t sbadaddr;
+    reg_t scause;
 };
 
 extern void trap_entry(void);
@@ -145,13 +147,20 @@ void do_page_fault(int in_kernel, struct proc* p, struct exception_frame* frame)
               (void*)fault_proc->regs.sepc, fault_proc->regs.sbadaddr);
     }
 
+    int fault_flags = 0;
+    if (frame->scause == EXC_STORE_PAGE_FAULT)
+        fault_flags |= FAULT_FLAG_WRITE;
+    else if (frame->scause == EXC_INST_PAGE_FAULT)
+        fault_flags |= FAULT_FLAG_INSTRUCTION;
+
+    if (!in_kernel) fault_flags |= FAULT_FLAG_USER;
+
     /* inform MM to handle this page fault */
     MESSAGE msg;
     msg.type = FAULT;
-    msg.FAULT_NR = 14;
     msg.FAULT_ADDR = (void*)frame->sbadaddr;
     msg.FAULT_PROC = fault_proc->endpoint;
-    msg.FAULT_ERRCODE = 0;
+    msg.FAULT_ERRCODE = fault_flags;
     msg.FAULT_PC = (void*)frame->sepc;
 
     msg_send(fault_proc, TASK_MM, &msg, IPCF_FROMKERNEL);
