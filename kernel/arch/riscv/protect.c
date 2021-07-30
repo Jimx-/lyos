@@ -77,9 +77,11 @@ void do_trap_insn_fault(int in_kernel, struct proc* p)
     printk("insn fault\n");
 }
 
-void do_trap_insn_illegal(int in_kernel, struct proc* p)
+void do_trap_insn_illegal(int in_kernel, struct proc* p,
+                          struct exception_frame* frame)
 {
-    printk("insn illegal\n");
+    printk("insn fault %p\n", frame->sepc);
+    ksig_proc(p->endpoint, SIGILL);
 }
 
 void do_trap_break(int in_kernel, struct proc* p) { printk("break\n"); }

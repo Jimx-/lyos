@@ -1,0 +1,98 @@
+diff --color -rupN old/examples/loadables/id.c new/examples/loadables/id.c
+--- old/examples/loadables/id.c	2017-06-20 22:53:25.000000000 +0800
++++ new/examples/loadables/id.c	2021-07-30 20:24:04.216396758 +0800
+@@ -43,7 +43,7 @@
+ #if !defined (HAVE_GETPW_DECLS)
+ extern struct passwd *getpwuid ();
+ #endif
+-extern struct group *getgrgid ();
++extern struct group *getgrgid (gid_t);
+ 
+ #include "shell.h"
+ #include "builtins.h"
+diff --color -rupN old/examples/loadables/setpgid.c new/examples/loadables/setpgid.c
+--- old/examples/loadables/setpgid.c	2019-12-11 03:53:49.000000000 +0800
++++ new/examples/loadables/setpgid.c	2021-07-30 20:23:56.579794482 +0800
+@@ -37,6 +37,8 @@
+ 
+ #include "bashgetopt.h"
+ 
++#define _POSIX_VERSION
++
+ #if !defined (_POSIX_VERSION)
+ #  define setpgid(pid, pgrp)      setpgrp (pid, pgrp)
+ #endif
+diff --color -rupN old/include/posixwait.h new/include/posixwait.h
+--- old/include/posixwait.h	2019-03-30 01:25:52.000000000 +0800
++++ new/include/posixwait.h	2021-07-30 20:03:39.846568668 +0800
+@@ -21,6 +21,7 @@
+ #if !defined (_POSIXWAIT_H_)
+ #  define _POSIXWAIT_H_
+ 
++#define _POSIX_VERSION
+ /* If _POSIX_VERSION is not defined, we assume that <sys/wait.h> defines
+    a `union wait' and various macros used to manipulate it.  Look in
+    unionwait.h for the things we expect to find. */
+diff --color -rupN old/include/shtty.h new/include/shtty.h
+--- old/include/shtty.h	2020-06-06 01:53:58.000000000 +0800
++++ new/include/shtty.h	2021-07-30 20:02:42.357032365 +0800
+@@ -26,6 +26,8 @@
+ 
+ #include "stdc.h"
+ 
++#define _POSIX_VERSION
++
+ #if defined (_POSIX_VERSION) && defined (HAVE_TERMIOS_H) && defined (HAVE_TCGETATTR) && !defined (TERMIOS_MISSING)
+ #  define TERMIOS_TTY_DRIVER
+ #else
+diff --color -rupN old/lib/readline/rltty.h new/lib/readline/rltty.h
+--- old/lib/readline/rltty.h	2009-01-05 03:32:33.000000000 +0800
++++ new/lib/readline/rltty.h	2021-07-30 20:21:09.034541101 +0800
+@@ -22,6 +22,9 @@
+ #if !defined (_RLTTY_H_)
+ #define _RLTTY_H_
+ 
++#undef NEW_TTY_DRIVER
++#define TERMIOS_TTY_DRIVER
++
+ /* Posix systems use termios and the Posix signal functions. */
+ #if defined (TERMIOS_TTY_DRIVER)
+ #  include <termios.h>
+diff --color -rupN old/lib/sh/input_avail.c new/lib/sh/input_avail.c
+--- old/lib/sh/input_avail.c	2019-12-27 05:59:17.000000000 +0800
++++ new/lib/sh/input_avail.c	2021-07-30 20:05:35.238971084 +0800
+@@ -110,7 +110,7 @@ nchars_avail (fd, nchars)
+ #if defined(HAVE_SELECT)
+   fd_set readfds, exceptfds;
+ #endif
+-#if defined (HAVE_PSELECT)
++#if defined (HAVE_SELECT)
+   sigset_t set, oset;
+ #endif
+ 
+diff --color -rupN old/lib/sh/oslib.c new/lib/sh/oslib.c
+--- old/lib/sh/oslib.c	2013-10-14 21:12:57.000000000 +0800
++++ new/lib/sh/oslib.c	2021-07-30 20:06:12.025340923 +0800
+@@ -236,8 +236,8 @@ killpg (pgrp, sig)
+ #if !defined (HAVE_MKFIFO) && defined (PROCESS_SUBSTITUTION)
+ int
+ mkfifo (path, mode)
+-     char *path;
+-     int mode;
++     const char *path;
++     mode_t mode;
+ {
+ #if defined (S_IFIFO)
+   return (mknod (path, (mode | S_IFIFO), 0));
+diff --color -rupN old/support/config.sub new/support/config.sub
+--- old/support/config.sub	2020-11-19 03:40:12.000000000 +0800
++++ new/support/config.sub	2021-07-30 19:59:49.595092028 +0800
+@@ -1698,7 +1698,7 @@ case $os in
+ 	     | os9* | macos* | osx* | ios* \
+ 	     | mpw* | magic* | mmixware* | mon960* | lnews* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+-	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
++	     | aos* | aros* | cloudabi* | sortix* | twizzler* | lyos* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+ 	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
+ 	     | mirbsd* | netbsd* | dicos* | openedition* | ose* \

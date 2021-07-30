@@ -345,8 +345,9 @@ int fs_exec(void)
         retval = (*exec_loaders[i].loader)(&execi.args);
         if (!retval) {
             if (exec_loaders[i].setup_stack)
-                retval = (*exec_loaders[i].setup_stack)(
-                    &execi, stackcopy, &orig_stack_len, (void**)&orig_stack);
+                retval = (*exec_loaders[i].setup_stack)(&execi, stackcopy,
+                                                        &orig_stack_len,
+                                                        (void**)&orig_stack);
             break; /* loaded successfully */
         }
     }
