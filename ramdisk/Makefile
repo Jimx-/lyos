@@ -21,14 +21,18 @@ $(INITRD):
 	@cp -f $(DESTDIR)/sbin/virtio-gpu sbin/
 	@cp -f $(DESTDIR)/sbin/procfs sbin/
 	@cp -f $(DESTDIR)/sbin/input sbin/
+ifneq ("$(wildcard $(DESTDIR)/sbin/atkbd)","")
 	@cp -f $(DESTDIR)/sbin/atkbd sbin/
+endif
 	@cp -f $(DESTDIR)/sbin/uds sbin/
 	@cp -f $(DESTDIR)/sbin/tmpfs sbin/
 	@cp -f $(DESTDIR)/sbin/pty sbin/
 	@cp -f $(DESTDIR)/sbin/devpts sbin/
 	@cp -f $(DESTDIR)/usr/bin/getty usr/bin/
 	@cp -f $(DESTDIR)/usr/bin/login usr/bin/
+ifneq ("$(wildcard $(DESTDIR)/bin/sh)","")
 	@cp -f $(DESTDIR)/bin/sh bin/
+endif
 	@cp -f $(DESTDIR)/bin/service bin/
 	@cp -f $(DESTDIR)/bin/mount bin/
 	@cp -f $(DESTDIR)/lib/ld-lyos.so lib/

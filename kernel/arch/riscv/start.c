@@ -41,9 +41,10 @@ unsigned int hart_counter __attribute__((__section__(".unpaged_text"))) = 0;
 extern char _VIR_BASE, _KERN_SIZE;
 extern char __global_pointer;
 
-/* paging utilities */
 static phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
 static phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
+
+static phys_bytes phys_initrd_start, phys_initrd_size;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern char k_stacks_start;
@@ -109,8 +110,39 @@ static int fdt_scan_memory(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
+/* Scan for chosen node in FDT */
+static int fdt_scan_chosen(void* blob, unsigned long offset, const char* name,
+                           int depth, void* arg)
+{
+    u64 start, end;
+    const u32* prop;
+    int len;
+
+    if (depth != 1 || !arg || (strcmp(name, "chosen") != 0)) return 0;
+
+    prop = fdt_getprop(blob, offset, "linux,initrd-start", &len);
+    if (!prop) return 0;
+    start = of_read_number(prop, len >> 2);
+
+    prop = fdt_getprop(blob, offset, "linux,initrd-end", &len);
+    if (!prop) return 0;
+    end = of_read_number(prop, len >> 2);
+
+    phys_initrd_start = start;
+    phys_initrd_size = end - start;
+
+    prop = fdt_getprop(blob, offset, "bootargs", &len);
+    if (prop && len > 0) {
+        strlcpy(arg, prop, min(len, KINFO_CMDLINE_LEN));
+    }
+
+    return 0;
+}
+
 void cstart(unsigned int hart_id, void* dtb_phys)
 {
+    static char cmdline[KINFO_CMDLINE_LEN];
+
     initial_boot_params = __va(dtb_phys);
 
     kinfo.memmaps_count = 0;
@@ -155,6 +187,35 @@ void cstart(unsigned int hart_id, void* dtb_phys)
 
     /* reserve memory used by the kernel */
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
+
+    memset(cmdline, 0, sizeof(cmdline));
+    of_scan_fdt(fdt_scan_chosen, cmdline, initial_boot_params);
+
+    static char var[KINFO_CMDLINE_LEN];
+    static char value[KINFO_CMDLINE_LEN];
+    char* p = cmdline;
+    while (*p) {
+        int var_i = 0;
+        int value_i = 0;
+        while (*p == ' ')
+            p++;
+        if (!*p) break;
+        while (*p && *p != '=' && *p != ' ' && var_i < KINFO_CMDLINE_LEN - 1)
+            var[var_i++] = *p++;
+        var[var_i] = 0;
+        if (*p++ != '=') continue;
+        while (*p && *p != ' ' && value_i < KINFO_CMDLINE_LEN - 1)
+            value[value_i++] = *p++;
+        value[value_i] = 0;
+
+        kinfo_set_param(kinfo.cmdline, var, value);
+    }
+
+    char initrd_param_buf[20];
+    sprintf(initrd_param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
+    kinfo_set_param(kinfo.cmdline, "initrd_base", initrd_param_buf);
+    sprintf(initrd_param_buf, "%lu", (unsigned int)phys_initrd_size);
+    kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
 }
 
 static char* get_value(const char* param, const char* key)

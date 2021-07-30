@@ -265,7 +265,7 @@ static void init_rd(int argc, char* argv[])
     initramdisk.length = len;
     initramdisk.rdonly = 1;
 
-    printl("RAMDISK: initrd: %d bytes(%d kB), base: 0x%x\n", len, len / 1024,
+    printl("RAMDISK: initrd: %d bytes (%d kB), base: 0x%x\n", len, len / 1024,
            base);
 
     retval = dm_class_register("mem", &mem_subsys_id);
