@@ -2,8 +2,11 @@
 
     .section .text
 
+    .extern resumecontext
+
     .global getcontext
     .global setcontext
+    .global ctx_wrapper
 
 getcontext:
     REG_S ra, PC(a0)
@@ -23,6 +26,7 @@ getcontext:
     REG_S s10, X26(a0)
     REG_S s11, X27(a0)
 
+    mv a0, zero /* Return zero. */
     ret
 
 setcontext:
@@ -33,7 +37,6 @@ setcontext:
     REG_L sp, X2(t0)
     REG_L s0, X8(t0)
     REG_L s1, X9(t0)
-    REG_L a0, X10(t0)
     REG_L a1, X11(t0)
     REG_L a2, X12(t0)
     REG_L a3, X13(t0)
@@ -52,4 +55,13 @@ setcontext:
     REG_L s10, X26(t0)
     REG_L s11, X27(t0)
 
+    mv a0, zero /* Return zero. */
     jr t1
+
+ctx_wrapper:
+    mv a0, s0
+    jalr s2
+
+    mv a0, s1
+    call resumecontext
+    ret
