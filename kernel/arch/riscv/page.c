@@ -186,4 +186,8 @@ void pg_mapkernel(pde_t* pgd) {}
 
 void pg_load(pde_t* pgd) {}
 
-void switch_address_space(struct proc* p) {}
+void switch_address_space(struct proc* p)
+{
+    get_cpulocal_var(pt_proc) = p;
+    write_ptbr(p->seg.ptbr_phys);
+}

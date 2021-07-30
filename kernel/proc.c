@@ -260,13 +260,11 @@ int sys_sendrec(MESSAGE* m, struct proc* p)
     int ret = 0;
     int flags = 0;
     int caller = p->endpoint;
-    MESSAGE* mla = (MESSAGE*)msg;
 
     if (function != SEND_ASYNC) {
-        mla->source = caller;
         if (!verify_endpt(src_dest, NULL)) return EINVAL;
 
-        if (mla->source == src_dest) return EINVAL;
+        if (caller == src_dest) return EINVAL;
     }
 
     switch (function) {
@@ -387,10 +385,16 @@ int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
     if (!PST_IS_SET(p_dest, PST_SENDING) &&
         PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
         (p_dest->recvfrom == sender->endpoint || p_dest->recvfrom == ANY)) {
+        MESSAGE tmp;
 
-        retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
-                                     sender->endpoint, m, sizeof(MESSAGE));
-        if (retval != 0) goto out;
+        if ((retval =
+                 data_vir_copy_check(p_to_send, KERNEL, &tmp, sender->endpoint,
+                                     m, sizeof(MESSAGE))) != 0)
+            goto out;
+        tmp.source = p_to_send->endpoint;
+        if ((retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
+                                          KERNEL, &tmp, sizeof(MESSAGE))) != 0)
+            goto out;
 
         p_dest->recv_msg = 0;
         PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
@@ -407,6 +411,8 @@ int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
         retval = data_vir_copy_check(p_to_send, KERNEL, &sender->send_msg,
                                      KERNEL, m, sizeof(MESSAGE));
         if (retval != 0) goto out;
+
+        sender->send_msg.source = p_to_send->endpoint;
 
         /* append to the sending queue */
         struct proc* p;

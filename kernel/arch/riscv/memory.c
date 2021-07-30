@@ -89,7 +89,6 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
         void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 
         if (fault_addr) {
-            panic("Fault addr %p\n", fault_addr);
             retval = EFAULT_SRC;
             if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
                 goto out;

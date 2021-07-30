@@ -42,6 +42,8 @@ pmd_t initial_pmd[ARCH_VM_PMD_ENTRIES * NUM_INIT_PMDS]
 
 unsigned long va_pa_offset;
 
+static struct mmproc* mmprocess = &mmproc_table[TASK_MM];
+
 void arch_init_pgd(pgdir_t* pgd)
 {
     int i;
@@ -98,4 +100,16 @@ void arch_init_pgd(pgdir_t* pgd)
     }
 }
 
-void arch_pgd_mapkernel(pgdir_t* pgd) {}
+void arch_pgd_mapkernel(pgdir_t* pgd)
+{
+    int i;
+    pgdir_t* mypgd = &mmprocess->mm->pgd;
+
+#ifndef __PAGETABLE_PMD_FOLDED
+    for (i = 0; i < NUM_INIT_PMDS; i++) {
+        unsigned long idx =
+            (KERNEL_VMA >> ARCH_PGD_SHIFT) % ARCH_VM_DIR_ENTRIES + i;
+        pgd->vir_addr[idx] = mypgd->vir_addr[idx];
+    }
+#endif
+}
