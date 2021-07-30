@@ -40,7 +40,7 @@ systask : $(DESTDIR)/sbin/systask
 tty : $(DESTDIR)/sbin/tty
 	@cp $< $@
 
-ramdisk : $(DESTDIR)/sbin/sysfs
+ramdisk : $(DESTDIR)/sbin/ramdisk
 	@cp $< $@
 
 initfs : $(DESTDIR)/sbin/initfs
