@@ -32,7 +32,6 @@
 #include <libdevman/libdevman.h>
 
 static endpoint_t driver_table[NR_DEVICES];
-static endpoint_t self_ep = NO_TASK;
 
 void bdev_init()
 {
@@ -45,7 +44,10 @@ static void bdev_set(dev_t dev)
 {
     dev_t major = MAJOR(dev);
 
-    driver_table[major] = dm_get_bdev_driver(dev);
+    if (major == DEV_RD)
+        driver_table[major] = TASK_RD;
+    else
+        driver_table[major] = dm_get_bdev_driver(dev);
 
     if (driver_table[major] < 0) driver_table[major] = NO_TASK;
 }
@@ -55,8 +57,6 @@ static void bdev_update(dev_t dev) { bdev_set(dev); }
 int bdev_driver(dev_t dev)
 {
     static int first = 1;
-
-    self_ep = get_endpoint();
 
     if (first) {
         bdev_init();

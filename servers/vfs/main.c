@@ -452,6 +452,8 @@ void init_vfs()
 
 static void init_root(void)
 {
+    int r;
+
     worker_allow(FALSE);
 
     mount_pipefs();
@@ -467,4 +469,7 @@ static void init_root(void)
     printl("VFS: Mounted init ramdisk\n");
 
     worker_allow(TRUE);
+
+    if ((r = privctl(INIT, PRIVCTL_ALLOW, NULL)) != 0)
+        panic("vfs: unable to allow INIT (%d)", r);
 }

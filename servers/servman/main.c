@@ -112,8 +112,9 @@ static void servman_init()
             if ((r = privctl(bpriv->endpoint, PRIVCTL_SET_PRIV, &(sp->priv))) !=
                 0)
                 panic("unable to set priv(%d)", r);
-            if ((r = privctl(bpriv->endpoint, PRIVCTL_ALLOW, NULL)) != 0)
-                panic("unable to allow priv(%d)", r);
+            if (bpriv->endpoint != INIT)
+                if ((r = privctl(bpriv->endpoint, PRIVCTL_ALLOW, NULL)) != 0)
+                    panic("unable to allow priv(%d)", r);
         }
 
         sp->endpoint = bpriv->endpoint;

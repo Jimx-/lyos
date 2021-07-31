@@ -1,6 +1,6 @@
-diff -rupN old/bfd/config.bfd new/bfd/config.bfd
+diff --color -rupN old/bfd/config.bfd new/bfd/config.bfd
 --- old/bfd/config.bfd	2018-07-09 15:44:53.000000000 +0800
-+++ new/bfd/config.bfd	2018-08-26 22:11:49.589215578 +0800
++++ new/bfd/config.bfd	2021-07-31 14:55:53.725711352 +0800
 @@ -358,6 +358,10 @@ case "${targ}" in
      targ_defvec=arm_elf32_le_vec
      targ_selvecs="arm_elf32_be_vec"
@@ -35,9 +35,9 @@ diff -rupN old/bfd/config.bfd new/bfd/config.bfd
    rl78-*-elf)
      targ_defvec=rl78_elf32_vec
      targ_underscore=yes
-diff -rupN old/config.sub new/config.sub
+diff --color -rupN old/config.sub new/config.sub
 --- old/config.sub	2018-07-06 15:13:31.000000000 +0800
-+++ new/config.sub	2018-08-26 22:13:03.985881982 +0800
++++ new/config.sub	2021-07-31 14:55:53.725711352 +0800
 @@ -1374,6 +1374,7 @@ case $os in
  	     | os2* | vos* | palmos* | uclinux* | nucleus* \
  	     | morphos* | superux* | rtmk* | windiss* \
@@ -46,9 +46,9 @@ diff -rupN old/config.sub new/config.sub
  	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd*)
-diff -rupN old/gas/configure.tgt new/gas/configure.tgt
+diff --color -rupN old/gas/configure.tgt new/gas/configure.tgt
 --- old/gas/configure.tgt	2018-06-25 02:38:57.000000000 +0800
-+++ new/gas/configure.tgt	2018-08-26 22:16:22.999214624 +0800
++++ new/gas/configure.tgt	2021-07-31 14:55:53.725711352 +0800
 @@ -142,6 +142,7 @@ case ${generic_target} in
    arm-*-eabi* | arm-*-rtems*)		fmt=elf em=armeabi ;;
    arm-*-symbianelf*)			fmt=elf em=symbian ;;
@@ -65,9 +65,9 @@ diff -rupN old/gas/configure.tgt new/gas/configure.tgt
    i386-*-bsd*)				fmt=aout em=386bsd ;;
    i386-*-nacl*)				fmt=elf em=nacl
      case ${cpu} in
-diff -rupN old/ld/configure.tgt new/ld/configure.tgt
+diff --color -rupN old/ld/configure.tgt new/ld/configure.tgt
 --- old/ld/configure.tgt	2018-07-09 15:44:53.000000000 +0800
-+++ new/ld/configure.tgt	2018-08-26 22:17:56.425880951 +0800
++++ new/ld/configure.tgt	2021-07-31 14:55:53.729044656 +0800
 @@ -119,6 +119,7 @@ arm-*-elf | arm*-*-eabi* | arm-*-rtems*)
  			targ_emul=armelf ;;
  arm*-*-symbianelf*)	targ_emul=armsymbian;;
@@ -84,9 +84,20 @@ diff -rupN old/ld/configure.tgt new/ld/configure.tgt
  i[3-7]86-*-dragonfly*)	targ_emul=elf_i386
  			targ_extra_emuls="elf_iamcu i386bsd" ;;
  x86_64-*-dragonfly*)	targ_emul=elf_x86_64
-diff -rupN old/ld/emulparams/elf_i386.sh new/ld/emulparams/elf_i386.sh
+diff --color -rupN old/ld/emulparams/elf64lriscv.sh new/ld/emulparams/elf64lriscv.sh
+--- old/ld/emulparams/elf64lriscv.sh	2018-06-25 02:38:57.000000000 +0800
++++ new/ld/emulparams/elf64lriscv.sh	2021-07-31 14:59:10.867363604 +0800
+@@ -12,4 +12,7 @@ case "$target" in
+ 	LIBPATH_SUFFIX="64/lp64d 64";;
+     esac
+     ;;
++  riscv64*-lyos*)
++    TEXT_START_ADDR=0x20000000
++    ;;
+ esac
+diff --color -rupN old/ld/emulparams/elf_i386.sh new/ld/emulparams/elf_i386.sh
 --- old/ld/emulparams/elf_i386.sh	2018-06-25 02:38:57.000000000 +0800
-+++ new/ld/emulparams/elf_i386.sh	2018-08-26 22:19:02.955880710 +0800
++++ new/ld/emulparams/elf_i386.sh	2021-07-31 14:55:53.729044656 +0800
 @@ -34,4 +34,7 @@ case "$target" in
  	;;
      esac

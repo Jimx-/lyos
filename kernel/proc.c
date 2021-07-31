@@ -916,8 +916,7 @@ int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
     struct proc* p_dest;
     /* process all async messages */
     for (i = 0; i < len; i++) {
-        retval = data_vir_copy(KERNEL, &amsg, KERNEL,
-                               (void*)((void*)table + i * sizeof(amsg)),
+        retval = data_vir_copy(KERNEL, &amsg, p_to_send->endpoint, &table[i],
                                sizeof(amsg));
         if (retval) goto async_error;
 
@@ -949,6 +948,7 @@ int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
              p_dest->recvfrom == ANY)) {
             retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
                                          KERNEL, &amsg.msg, sizeof(MESSAGE));
+
             if (retval != 0) {
                 unlock_proc(p_dest);
                 goto async_error;
@@ -968,8 +968,8 @@ int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         amsg.result = retval;
         amsg.flags |= ASMF_DONE;
 
-        retval = data_vir_copy(KERNEL, (void*)((void*)table + i * sizeof(amsg)),
-                               KERNEL, &amsg, sizeof(amsg));
+        retval = data_vir_copy(p_to_send->endpoint, &table[i], KERNEL, &amsg,
+                               sizeof(amsg));
         if (retval) goto async_error;
 
         unlock_proc(p_dest);
