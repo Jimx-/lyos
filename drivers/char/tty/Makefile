@@ -6,6 +6,10 @@ include arch/$(ARCH)/Makefile
 SRCS	+= tty.c global.c keyboard.c
 LIBS	= lyos chardriver devman sysfs
 
+ifeq ($(CONFIG_OF),y)
+	LIBS += of fdt
+endif
+
 PROG	= tty
 
 CFLAGS	+= -I$(CURDIR) -I$(CURDIR)/arch/$(ARCH)

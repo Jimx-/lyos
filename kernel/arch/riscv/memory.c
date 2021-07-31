@@ -125,7 +125,7 @@ int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
         dest_mapped =
             create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
 
-        if (changed) reload_ptbr();
+        if (changed) flush_tlb();
 
         void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 

@@ -139,11 +139,14 @@ static int fdt_scan_chosen(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
-void cstart(unsigned int hart_id, void* dtb_phys)
+void cstart(unsigned int hart_id, phys_bytes dtb_phys)
 {
     static char cmdline[KINFO_CMDLINE_LEN];
+    phys_bytes dtb_lim;
 
     initial_boot_params = __va(dtb_phys);
+    dtb_lim = dtb_phys + fdt_totalsize(initial_boot_params);
+    dtb_lim = roundup(dtb_lim, ARCH_PG_SIZE);
 
     kinfo.memmaps_count = 0;
     kinfo.memory_size = 0;
@@ -211,11 +214,18 @@ void cstart(unsigned int hart_id, void* dtb_phys)
         kinfo_set_param(kinfo.cmdline, var, value);
     }
 
-    char initrd_param_buf[20];
-    sprintf(initrd_param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
-    kinfo_set_param(kinfo.cmdline, "initrd_base", initrd_param_buf);
-    sprintf(initrd_param_buf, "%lu", (unsigned int)phys_initrd_size);
-    kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
+    char param_buf[64];
+    sprintf(param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
+    kinfo_set_param(kinfo.cmdline, "initrd_base", param_buf);
+    sprintf(param_buf, "%lu", (unsigned int)phys_initrd_size);
+    kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
+
+    cut_memmap(&kinfo, dtb_phys, dtb_lim);
+
+    sprintf(param_buf, "0x%lx", (uintptr_t)initial_boot_params);
+    kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
+    sprintf(param_buf, "%lu", (unsigned int)fdt_totalsize(initial_boot_params));
+    kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
 }
 
 static char* get_value(const char* param, const char* key)

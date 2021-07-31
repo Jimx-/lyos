@@ -35,4 +35,8 @@ EXTERN void* fb_mem_base;
 EXTERN size_t fb_mem_size;
 EXTERN int x_resolution, y_resolution;
 
+#if CONFIG_OF
+EXTERN void* boot_params;
+#endif
+
 #endif

@@ -195,6 +195,17 @@ static void init_tty()
         set_console_line(val);
     }
 
+#if CONFIG_OF
+    unsigned long dtb_base, dtb_len;
+
+    env_get_long("boot_params_base", &dtb_base, "u", 0, -1, -1);
+    env_get_long("boot_params_len", &dtb_len, "d", 0, -1, -1);
+
+    boot_params = malloc(dtb_len);
+    if ((retval = data_copy(SELF, boot_params, KERNEL, dtb_base, dtb_len)) != 0)
+        panic("tty: cannot get kernel boot params");
+#endif
+
     retval = dm_class_register("tty", &tty_subsys_id);
     if (retval) panic("tty: cannot register tty subsystem");
 
