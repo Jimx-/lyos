@@ -15,6 +15,8 @@ long sysconf(int name)
     struct rlimit rl;
 
     switch (name) {
+    case _SC_CHILD_MAX:
+        return (getrlimit(RLIMIT_NPROC, &rl) == 0 ? rl.rlim_cur : -1);
     case _SC_ARG_MAX:
         return ARG_MAX;
     case _SC_PAGE_SIZE:

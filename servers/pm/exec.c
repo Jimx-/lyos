@@ -42,6 +42,7 @@ int do_exec(MESSAGE* m)
     int sugid;
     uid_t new_uid;
     gid_t new_gid;
+    int signo;
 
     if (!pmp) return EINVAL;
 
@@ -65,6 +66,15 @@ int do_exec(MESSAGE* m)
     new_gid = exec_resp->new_gid;
 
     sugid = FALSE;
+
+    /* Reset caught signals. */
+    for (signo = 1; signo < NSIG; signo++) {
+        if (sigismember(&pmp->sig_catch, signo)) {
+            sigdelset(&pmp->sig_catch, signo);
+            pmp->sigaction[signo].sa_handler = SIG_DFL;
+            sigemptyset(&pmp->sigaction[signo].sa_mask);
+        }
+    }
 
     /* tell tracer */
     if (pmp->tracer != NO_TASK) {
