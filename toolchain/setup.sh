@@ -356,7 +356,7 @@ if $BUILD_BASH; then
     fi
 
     pushd bash-$SUBARCH > /dev/null
-    $DIR/sources/bash-4.3/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls --with-installed-readline || cmd_error
+    $DIR/sources/bash-5.1.8/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/sh

@@ -263,7 +263,14 @@ int tty_ioctl(dev_t minor, int request, endpoint_t endpoint, mgrant_id_t grant,
         tty_sigproc(tty, SIGWINCH);
         break;
     case TIOCSCTTY:
-        tty->tty_pgrp = user_endpoint;
+        retval = get_epinfo(user_endpoint, NULL, NULL);
+
+        if (retval < 0) {
+            retval = -retval;
+        } else {
+            tty->tty_pgrp = retval;
+            retval = 0;
+        }
         break;
     default:
         retval = EINVAL;
