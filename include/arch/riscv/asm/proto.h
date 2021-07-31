@@ -65,4 +65,10 @@ static inline void write_ptbr(phys_bytes ptbr)
     csr_write(sptbr, (ptbr >> ARCH_PG_SHIFT) | SATP_MODE);
 }
 
+static inline void reload_ptbr(void)
+{
+    phys_bytes ptbr = read_ptbr();
+    write_ptbr(ptbr);
+}
+
 #endif

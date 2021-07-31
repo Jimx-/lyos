@@ -13,40 +13,76 @@
     bnez \label
 .endm
 
+.macro save_gregs base
+    REG_S x1,  RAREG(\base)
+    REG_S x3,  GPREG(\base)
+    REG_S x5,  T0REG(\base)
+    REG_S x6,  T1REG(\base)
+    REG_S x7,  T2REG(\base)
+    REG_S x8,  S0REG(\base)
+    REG_S x9,  S1REG(\base)
+    REG_S x10, A0REG(\base)
+    REG_S x11, A1REG(\base)
+    REG_S x12, A2REG(\base)
+    REG_S x13, A3REG(\base)
+    REG_S x14, A4REG(\base)
+    REG_S x15, A5REG(\base)
+    REG_S x16, A6REG(\base)
+    REG_S x17, A7REG(\base)
+    REG_S x18, S2REG(\base)
+    REG_S x19, S3REG(\base)
+    REG_S x20, S4REG(\base)
+    REG_S x21, S5REG(\base)
+    REG_S x22, S6REG(\base)
+    REG_S x23, S7REG(\base)
+    REG_S x24, S8REG(\base)
+    REG_S x25, S9REG(\base)
+    REG_S x26, S10REG(\base)
+    REG_S x27, S11REG(\base)
+    REG_S x28, T3REG(\base)
+    REG_S x29, T4REG(\base)
+    REG_S x30, T5REG(\base)
+    REG_S x31, T6REG(\base)
+.endm
+
+.macro restore_gregs base
+    REG_L x1,  RAREG(\base)
+    REG_L x3,  GPREG(\base)
+    REG_L x5,  T0REG(\base)
+    REG_L x6,  T1REG(\base)
+    REG_L x7,  T2REG(\base)
+    REG_L x8,  S0REG(\base)
+    REG_L x9,  S1REG(\base)
+    REG_L x10, A0REG(\base)
+    REG_L x11, A1REG(\base)
+    REG_L x12, A2REG(\base)
+    REG_L x13, A3REG(\base)
+    REG_L x14, A4REG(\base)
+    REG_L x15, A5REG(\base)
+    REG_L x16, A6REG(\base)
+    REG_L x17, A7REG(\base)
+    REG_L x18, S2REG(\base)
+    REG_L x19, S3REG(\base)
+    REG_L x20, S4REG(\base)
+    REG_L x21, S5REG(\base)
+    REG_L x22, S6REG(\base)
+    REG_L x23, S7REG(\base)
+    REG_L x24, S8REG(\base)
+    REG_L x25, S9REG(\base)
+    REG_L x26, S10REG(\base)
+    REG_L x27, S11REG(\base)
+    REG_L x28, T3REG(\base)
+    REG_L x29, T4REG(\base)
+    REG_L x30, T5REG(\base)
+    REG_L x31, T6REG(\base)
+.endm
+
 .macro save_context
     REG_S sp, SPREG(tp)
     REG_L sp, KERNELSPREG(tp)
 
     /* save all registers */
-    REG_S x1,  RAREG(tp)
-    REG_S x3,  GPREG(tp)
-    REG_S x5,  T0REG(tp)
-    REG_S x6,  T1REG(tp)
-    REG_S x7,  T2REG(tp)
-    REG_S x8,  S0REG(tp)
-    REG_S x9,  S1REG(tp)
-    REG_S x10, A0REG(tp)
-    REG_S x11, A1REG(tp)
-    REG_S x12, A2REG(tp)
-    REG_S x13, A3REG(tp)
-    REG_S x14, A4REG(tp)
-    REG_S x15, A5REG(tp)
-    REG_S x16, A6REG(tp)
-    REG_S x17, A7REG(tp)
-    REG_S x18, S2REG(tp)
-    REG_S x19, S3REG(tp)
-    REG_S x20, S4REG(tp)
-    REG_S x21, S5REG(tp)
-    REG_S x22, S6REG(tp)
-    REG_S x23, S7REG(tp)
-    REG_S x24, S8REG(tp)
-    REG_S x25, S9REG(tp)
-    REG_S x26, S10REG(tp)
-    REG_S x27, S11REG(tp)
-    REG_S x28, T3REG(tp)
-    REG_S x29, T4REG(tp)
-    REG_S x30, T5REG(tp)
-    REG_S x31, T6REG(tp)
+    save_gregs tp
 
     /* disable user memory access */
     li t0, SR_SUM
@@ -162,6 +198,10 @@ trap_entry:
     csrrw tp, sscratch, tp
     bnez tp, trap_entry_user
 
+    /* save all registers */
+    addi sp, sp, -(SSTATUSREG)
+    save_gregs sp
+
     /* restore tp from sscratch */
     csrr tp, sscratch
     csrr s0, sstatus
@@ -242,6 +282,10 @@ do_exception:
 
 resume_kernel:
     csrw sepc, s1
+
+    restore_gregs sp
+    addi sp, sp, SSTATUSREG
+
     sret
 
 do_syscall:
@@ -273,37 +317,9 @@ restore_all:
 
     restore_fstate
 
-    REG_L x1,  RAREG(tp)
-    REG_L x2,  SPREG(tp)
-    REG_L x3,  GPREG(tp)
-    REG_L x5,  T0REG(tp)
-    REG_L x6,  T1REG(tp)
-    REG_L x7,  T2REG(tp)
-    REG_L x8,  S0REG(tp)
-    REG_L x9,  S1REG(tp)
-    REG_L x10, A0REG(tp)
-    REG_L x11, A1REG(tp)
-    REG_L x12, A2REG(tp)
-    REG_L x13, A3REG(tp)
-    REG_L x14, A4REG(tp)
-    REG_L x15, A5REG(tp)
-    REG_L x16, A6REG(tp)
-    REG_L x17, A7REG(tp)
-    REG_L x18, S2REG(tp)
-    REG_L x19, S3REG(tp)
-    REG_L x20, S4REG(tp)
-    REG_L x21, S5REG(tp)
-    REG_L x22, S6REG(tp)
-    REG_L x23, S7REG(tp)
-    REG_L x24, S8REG(tp)
-    REG_L x25, S9REG(tp)
-    REG_L x26, S10REG(tp)
-    REG_L x27, S11REG(tp)
-    REG_L x28, T3REG(tp)
-    REG_L x29, T4REG(tp)
-    REG_L x30, T5REG(tp)
-    REG_L x31, T6REG(tp)
+    restore_gregs tp
 
+    REG_L x2,  SPREG(tp)
     REG_L x4,  TPREG(tp)
 
     sret

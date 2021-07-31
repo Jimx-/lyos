@@ -247,43 +247,6 @@ static int pt_follow(pgdir_t* pgd, vir_bytes addr, pte_t** ptepp)
     return 0;
 }
 
-/**
- * <Ring 1> Make a physical page write-protected.
- * @param  vir_addr  Virtual address.
- * @return           Zero on success.
- */
-int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr)
-{
-    pte_t* pte;
-    int retval;
-
-    if ((retval = pt_follow(pgd, vir_addr, &pte)) != 0) {
-        return retval;
-    }
-
-    *pte = __pte(pte_val(*pte) & (~ARCH_PG_RW));
-
-    return 0;
-}
-
-/**
- * <Ring 1> Make a physical page read-write.
- * @param  vir_addr  Virtual address.
- * @return           Zero on success.
- */
-int pt_unwppage(pgdir_t* pgd, vir_bytes vir_addr)
-{
-    pte_t* pte;
-    int retval;
-
-    if ((retval = pt_follow(pgd, vir_addr, &pte)) != 0) {
-        return retval;
-    }
-    *pte = __pte(pte_val(*pte) | ARCH_PG_RW);
-
-    return 0;
-}
-
 int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
                 size_t length, pgprot_t prot)
 {
@@ -298,44 +261,6 @@ int pt_writemap(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
         length -= ARCH_PG_SIZE;
         phys_addr = phys_addr + ARCH_PG_SIZE;
         vir_addr = vir_addr + ARCH_PG_SIZE;
-    }
-
-    return 0;
-}
-
-int pt_wp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
-{
-    /* sanity check */
-    if (vir_addr % ARCH_PG_SIZE != 0)
-        printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0)
-        printl("MM: pt_wp_memory: length is not page-aligned!\n");
-
-    while (1) {
-        pt_wppage(pgd, vir_addr);
-
-        length -= ARCH_PG_SIZE;
-        vir_addr += ARCH_PG_SIZE;
-        if (length <= 0) break;
-    }
-
-    return 0;
-}
-
-int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length)
-{
-    /* sanity check */
-    if (vir_addr % ARCH_PG_SIZE != 0)
-        printl("MM: pt_wp_memory: vir_addr is not page-aligned!\n");
-    if (length % ARCH_PG_SIZE != 0)
-        printl("MM: pt_wp_memory: length is not page-aligned!\n");
-
-    while (1) {
-        pt_unwppage(pgd, vir_addr);
-
-        length -= ARCH_PG_SIZE;
-        vir_addr += ARCH_PG_SIZE;
-        if (length <= 0) break;
     }
 
     return 0;

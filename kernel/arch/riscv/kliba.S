@@ -16,9 +16,6 @@
 .globl __trunctfdf2
 
 phys_copy:
-    addi sp, sp, -(REG_SIZE)
-    REG_S ra, 0(sp)
-
     mv t6, a0  /* Preserve return value */
     mv a0, zero
 
@@ -115,12 +112,8 @@ phys_copy:
     addi t6, t6, 1
     bltu a1, a3, 5b
 phys_copy_fault:
-    REG_L ra, 0(sp)
-    addi sp, sp, REG_SIZE
     ret
 phys_copy_fault_in_kernel:
-    REG_L ra, 0(sp)
-    addi sp, sp, REG_SIZE
     csrr a0, sbadaddr
     ret
 

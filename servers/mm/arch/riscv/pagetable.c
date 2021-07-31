@@ -35,7 +35,7 @@
 #include "const.h"
 
 #ifndef __PAGETABLE_PMD_FOLDED
-#define NUM_INIT_PMDS ((uintptr_t)-KERNEL_VMA >> ARCH_PGD_SHIFT)
+#define NUM_INIT_PMDS (((uintptr_t)-KERNEL_VMA >> ARCH_PGD_SHIFT) - 2)
 pmd_t initial_pmd[ARCH_VM_PMD_ENTRIES * NUM_INIT_PMDS]
     __attribute__((aligned(ARCH_PG_SIZE)));
 #endif

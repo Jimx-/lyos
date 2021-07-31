@@ -38,39 +38,75 @@
 
 extern int _KERN_OFFSET;
 
+/* Temporary mappings */
+#define MAX_TEMPPDES 2
+#define TEMPPDE_SRC  0
+#define TEMPPDE_DST  1
+static int temppdes[MAX_TEMPPDES];
+
 #define _SRC_       0
 #define _DEST_      1
 #define EFAULT_SRC  1
 #define EFAULT_DEST 2
 
-void init_memory() { get_cpulocal_var(pt_proc) = proc_addr(TASK_MM); }
+void init_memory()
+{
+    int i;
 
-void clear_memcache() {}
+    for (i = 0; i < MAX_TEMPPDES; i++) {
+        temppdes[i] = ARCH_VM_DIR_ENTRIES - MAX_TEMPPDES + i;
+    }
+
+    get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+}
+
+void clear_memcache()
+{
+    int i;
+
+    for (i = 0; i < MAX_TEMPPDES; i++) {
+        struct proc* p = get_cpulocal_var(pt_proc);
+        int pde = temppdes[i];
+        p->seg.ptbr_vir[pde] = 0;
+    }
+}
 
 /* Temporarily map la in p's address space in kernel address space */
-static void* create_temp_map(struct proc* p, void* la, size_t* len)
+static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
+                             int* changed)
 {
     phys_bytes pa;
+    pde_t pdeval;
+    unsigned long pde = temppdes[index];
 
     /* the process is already in current page table */
     if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
         return la;
 
     if (p) {
-        off_t offset;
-
-        pa = va2pa(p->endpoint, la);
-        offset = ((uintptr_t)la) % ARCH_PG_SIZE;
-        *len = min(*len, ARCH_PG_SIZE - offset);
+        if (!p->seg.ptbr_vir) panic("create_temp_map: proc ptbr_vir not set");
+        pdeval = __pde(p->seg.ptbr_vir[ARCH_PDE(la)]);
     } else {
         pa = (phys_bytes)la;
+        return __va(pa);
     }
 
-    return __va(pa);
+    if (!get_cpulocal_var(pt_proc)->seg.ptbr_vir)
+        panic("create_temp_map: pt_proc ptbr_vir not set");
+    if (get_cpulocal_var(pt_proc)->seg.ptbr_vir[pde] != pde_val(pdeval)) {
+        get_cpulocal_var(pt_proc)->seg.ptbr_vir[pde] = pde_val(pdeval);
+        *changed = 1;
+    }
+
+    unsigned long offset = ((uintptr_t)la) % ARCH_PGD_SIZE;
+    *len = min(*len, ARCH_PGD_SIZE - offset);
+
+    return (void*)(uintptr_t)(-((ARCH_VM_DIR_ENTRIES - pde) << ARCH_PGD_SHIFT) +
+                              offset);
 }
 
-static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
-                      void* src_la, size_t len)
+int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
+               void* src_la, size_t len)
 {
     int retval = 0;
 
@@ -82,9 +118,14 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
     while (len > 0) {
         size_t chunk = len;
         void *src_mapped, *dest_mapped;
+        int changed = 0;
 
-        src_mapped = create_temp_map(p_src, src_la, &chunk);
-        dest_mapped = create_temp_map(p_dest, dest_la, &chunk);
+        src_mapped =
+            create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
+        dest_mapped =
+            create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
+
+        if (changed) reload_ptbr();
 
         void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
 
