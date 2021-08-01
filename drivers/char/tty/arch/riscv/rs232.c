@@ -31,6 +31,7 @@
 #include <lyos/interrupt.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
+#include <asm/io.h>
 #include "proto.h"
 #include "global.h"
 
@@ -144,9 +145,6 @@ irq_id_t rs_irq_set;
      (rs)->idevready = TRUE)
 #define istop(rs) \
     (writeb((rs)->modem_ctl_port, MC_OUT2 | MC_DTR), (rs)->idevready = FALSE)
-
-static inline u8 readb(void* port) { return *(volatile u8*)port; }
-static inline void writeb(void* port, u8 val) { *(volatile u8*)port = val; }
 
 static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
                          int depth, void* arg)
@@ -381,10 +379,8 @@ int init_rs(TTY* tty)
 
     rs_irq_set = (1 << rs->irq);
 
-    /* writeb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
-     * | */
-    /*                               IE_RECEIVER_READY | IE_TRANSMITTER_READY);
-     */
+    writeb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE |
+                                  IE_RECEIVER_READY | IE_TRANSMITTER_READY);
 
     tty->tty_devread = rs_read;
     tty->tty_devwrite = rs_write;

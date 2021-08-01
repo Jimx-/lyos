@@ -101,6 +101,8 @@ void smp_boot_ap()
     while (!smp_commenced)
         ;
 
+    plic_enable(cpuid);
+
     switch_address_space(proc_addr(TASK_MM));
 
     switch_to_user();

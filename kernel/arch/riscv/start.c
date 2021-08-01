@@ -50,7 +50,7 @@ extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern char k_stacks_start;
 void* k_stacks;
 
-static int dt_root_addr_cells, dt_root_size_cells;
+int dt_root_addr_cells, dt_root_size_cells;
 
 static char* env_get(const char* name);
 static int kinfo_set_param(char* buf, char* name, char* value);

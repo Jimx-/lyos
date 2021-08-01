@@ -197,23 +197,40 @@ static int kern_mapping_count = 0;
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
                   void** mapped_addr)
 {
+    if (kern_mapping_count >= MAX_KERN_MAPPINGS) return ENOMEM;
+
+    struct kern_map* pkm = &kern_mappings[kern_mapping_count++];
+    pkm->phys_addr = phys_addr;
+    pkm->len = len;
+    pkm->flags = flags;
+    pkm->mapped_addr = mapped_addr;
+
     return 0;
 }
 
-#define KM_USERMAPPED 0
-#define KM_LAST       KM_USERMAPPED
+#define KM_USERMAPPED   0
+#define KM_KERN_MAPPING 1
 
 extern char _usermapped[], _eusermapped[];
 off_t usermapped_offset;
 
 int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
 {
-    if (index > KM_LAST) return 1;
+    if (index >= KM_KERN_MAPPING + kern_mapping_count) return 1;
 
     if (index == KM_USERMAPPED) {
         *addr = (caddr_t)__pa((char*)*(&_usermapped));
         *len = (char*)*(&_eusermapped) - (char*)*(&_usermapped);
         *flags = KMF_USER;
+        return 0;
+    }
+
+    if (index >= KM_KERN_MAPPING &&
+        index < KM_KERN_MAPPING + kern_mapping_count) {
+        struct kern_map* pkm = &kern_mappings[index - KM_KERN_MAPPING];
+        *addr = (caddr_t)pkm->phys_addr;
+        *len = pkm->len;
+        *flags = pkm->flags;
         return 0;
     }
 
@@ -239,6 +256,12 @@ int arch_reply_kern_mapping(int index, void* vir_addr)
         return 0;
     }
 
+    if (index >= KM_KERN_MAPPING &&
+        index < KM_KERN_MAPPING + kern_mapping_count) {
+        kern_mappings[index - KM_KERN_MAPPING].vir_addr = vir_addr;
+        return 0;
+    }
+
     return 0;
 }
 
@@ -257,6 +280,11 @@ static void setptbr(struct proc* p, phys_bytes ptbr)
 
         write_ptbr(ptbr);
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+
+        plic_init();
+        plic_enable(cpuid);
+
+        smp_commence();
     }
 
     PST_UNSET(p, PST_MMINHIBIT);

@@ -67,4 +67,10 @@ static inline void write_ptbr(phys_bytes ptbr)
 
 void riscv_timer_interrupt(void);
 
+/* plic.c */
+void plic_scan(void);
+void plic_init(void);
+void plic_enable(int cpu);
+void plic_handle_irq(void);
+
 #endif

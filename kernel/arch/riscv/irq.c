@@ -37,5 +37,8 @@ void irq_entry_handle(reg_t cause)
     case IRQ_S_TIMER:
         riscv_timer_interrupt();
         break;
+    case IRQ_S_EXT:
+        plic_handle_irq();
+        break;
     }
 }
