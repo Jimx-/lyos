@@ -241,9 +241,10 @@ fstate_saved:
     j do_irq
 
 do_irq:
+    mv a0, s3
     call irq_entry_handle
 
-    tail switch_to_user
+    j ret_from_exception
 
 do_exception:
     li t0, EXC_SYSCALL
@@ -271,22 +272,11 @@ do_exception:
     REG_L s1, EF_SEPC(sp)
     addi sp, sp, EF_SIZE
 
-    andi a0, s0, SR_SPP
-    bnez a0, resume_kernel
-
-    tail switch_to_user
+    j ret_from_exception
 
 1:
     call do_trap_unknown
     tail switch_to_user
-
-resume_kernel:
-    csrw sepc, s1
-
-    restore_gregs sp
-    addi sp, sp, SSTATUSREG
-
-    sret
 
 do_syscall:
     REG_S a0, P_ORIGA0(tp)
@@ -299,6 +289,20 @@ do_syscall:
     call handle_sys_call
 
     tail switch_to_user
+
+ret_from_exception:
+    andi a0, s0, SR_SPP
+    bnez a0, resume_kernel
+
+    tail switch_to_user
+
+resume_kernel:
+    csrw sepc, s1
+
+    restore_gregs sp
+    addi sp, sp, SSTATUSREG
+
+    sret
 
 restore_user_context:
     mv tp, a0

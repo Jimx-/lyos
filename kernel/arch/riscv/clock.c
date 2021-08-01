@@ -26,24 +26,87 @@
 #include "lyos/proto.h"
 #include <asm/const.h>
 #include <asm/proto.h>
+#include <asm/byteorder.h>
+#include <asm/csr.h>
+#include <asm/sbi.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
+#include <asm/div64.h>
+#include <lyos/clocksource.h>
 #include "lyos/cpulocals.h"
 
-int arch_init_time() { return 0; }
+static unsigned long riscv_timebase;
 
-int init_local_timer(int freq) { return 0; }
+static u64 tsc_per_tick[CONFIG_SMP_MAX_CPUS];
+static DEFINE_CPULOCAL(irq_handler_t, timer_handler);
+
+static u64 read_cycles()
+{
+    u64 n;
+    __asm__ __volatile__("rdtime %0" : "=r"(n));
+    return n;
+}
+
+static struct clocksource riscv_clocksource = {
+    .name = "riscv",
+    .rating = 300,
+    .read = read_cycles,
+    .mask = 0xffffffffffffffff,
+};
+
+int arch_init_time()
+{
+    unsigned long cpu = fdt_path_offset(initial_boot_params, "/cpus");
+
+    const uint32_t* prop;
+    if ((prop = fdt_getprop(initial_boot_params, cpu, "timebase-frequency",
+                            NULL)) != NULL) {
+        riscv_timebase = be32_to_cpup(prop);
+    } else {
+        panic("RISC-V system with no 'timebase-frequency' in DTS");
+    }
+
+    register_clocksource_hz(&riscv_clocksource, riscv_timebase);
+
+    return 0;
+}
+
+int init_local_timer(int freq)
+{
+    tsc_per_tick[cpuid] = riscv_timebase;
+    do_div(tsc_per_tick[cpuid], freq);
+
+    return 0;
+}
 
 void setup_local_timer_one_shot(void) {}
 
 void setup_local_timer_periodic(void) {}
 
-void restart_local_timer() {}
+void restart_local_timer()
+{
+    csr_set(sie, SIE_STIE);
+    u64 cycles = read_cycles();
+    sbi_set_timer(cycles + tsc_per_tick[cpuid]);
+}
 
 void stop_local_timer() {}
 
-int put_local_timer_handler(irq_handler_t handler) { return 0; }
+int put_local_timer_handler(irq_handler_t handler)
+{
+    timer_handler = handler;
+
+    return 0;
+}
+
+void riscv_timer_interrupt(void)
+{
+    irq_handler_t handler = get_cpulocal_var(timer_handler);
+
+    csr_clear(sie, SIE_STIE);
+    handler(NULL);
+}
 
 void arch_stop_context(struct proc* p, u64 delta) {}
 

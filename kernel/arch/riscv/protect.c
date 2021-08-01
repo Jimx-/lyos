@@ -60,8 +60,6 @@ void init_prot()
     csr_write(sie, -1);
 }
 
-void irq_entry_handle() {}
-
 void do_trap_unknown(int in_kernel, struct proc* p)
 {
     printk("unknown trap\n");

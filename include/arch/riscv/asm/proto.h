@@ -65,4 +65,6 @@ static inline void write_ptbr(phys_bytes ptbr)
     csr_write(sptbr, (ptbr >> ARCH_PG_SHIFT) | SATP_MODE);
 }
 
+void riscv_timer_interrupt(void);
+
 #endif

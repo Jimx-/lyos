@@ -1,5 +1,5 @@
 KERNELOBJS	= head.o kernel.o start.o system.o memory.o fpu.o direct_tty.o clock.o \
-				page.o kliba.o protect.o smp.o setup_cpulocals.o watchdog.o \
+				page.o kliba.o protect.o smp.o setup_cpulocals.o watchdog.o irq.o \
 				vsprintf.o bootmods/bootmods.o
 
 ARCHKERNEL		= arch-kernel.o
