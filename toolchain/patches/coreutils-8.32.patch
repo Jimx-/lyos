@@ -1,0 +1,12 @@
+diff --color -rupN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2020-02-03 00:55:18.000000000 +0800
++++ new/build-aux/config.sub	2021-08-03 21:35:33.048500239 +0800
+@@ -1363,7 +1363,7 @@ case $os in
+ 	     | os2* | vos* | palmos* | uclinux* | nucleus* \
+ 	     | morphos* | superux* | rtmk* | windiss* \
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+-	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
++	     | skyos* | haiku* | rdos* | toppers* | drops* | es* | lyos* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix)

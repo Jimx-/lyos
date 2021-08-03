@@ -25,8 +25,7 @@ download "mpfr" "http://www.mpfr.org/mpfr-3.1.4" "mpfr-3.1.4.tar.gz"
 download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-6.1.0.tar.bz2"
 download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
-download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.13.tar.xz" || cmd_error
-download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-4.3.tar.gz" || cmd_error
+download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.32.tar.xz" || cmd_error
 download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-5.1.8.tar.gz" || cmd_error
 download "ncurses" "https://ftp.gnu.org/pub/gnu/ncurses/" "ncurses-6.2.tar.gz" || cmd_error
 download "vim" "ftp://ftp.vim.org/pub/vim/unix" "vim-7.4.tar.bz2" || cmd_error
@@ -92,8 +91,7 @@ unzip "mpfr-3.1.4.tar.gz" "mpfr-3.1.4"
 unzip "mpc-1.0.3.tar.gz" "mpc-1.0.3"
 unzip "gcc-9.2.0.tar.gz" "gcc-9.2.0"
 unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
-unzip "coreutils-8.13.tar.xz" "coreutils-8.13"
-unzip "bash-4.3.tar.gz" "bash-4.3"
+unzip "coreutils-8.32.tar.xz" "coreutils-8.32"
 unzip "bash-5.1.8.tar.gz" "bash-5.1.8"
 unzip "ncurses-6.2.tar.gz" "ncurses-6.2"
 unzip "vim-7.4.tar.bz2" "vim74"
@@ -156,8 +154,7 @@ patc "mpfr-3.1.4"
 patc "mpc-1.0.3"
 patc "gcc-9.2.0"
 patc "newlib-3.0.0"
-patc "coreutils-8.13"
-patc "bash-4.3"
+patc "coreutils-8.32"
 patc "bash-5.1.8"
 patc "ncurses-6.2"
 patc "readline-8.0"

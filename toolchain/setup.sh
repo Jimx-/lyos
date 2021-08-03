@@ -371,11 +371,9 @@ if $BUILD_COREUTILS; then
     fi
 
     pushd coreutils-$SUBARCH > /dev/null
-    touch $DIR/sources/coreutils-8.13/man/sort.1
-    touch $DIR/sources/coreutils-8.13/man/stat.1
     gl_cv_func_fstatat_zero_flag=yes \
     ac_cv_func_getgroups_works=yes \
-      $DIR/sources/coreutils-8.13/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
+      $DIR/sources/coreutils-8.32/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls || cmd_error
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
