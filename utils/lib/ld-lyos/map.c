@@ -32,14 +32,14 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
     }
     si->is_dynamic = (si->ehdr->e_type == ET_DYN);
 
-    Elf32_Ehdr* ehdr = si->ehdr;
-    Elf32_Phdr* phdr = (Elf32_Phdr*)((char*)ehdr + ehdr->e_phoff);
-    Elf32_Phdr* phdr_tls = NULL;
-    Elf32_Addr tls_vaddr = 0;
-    size_t phsize = ehdr->e_phnum * sizeof(Elf32_Phdr);
+    ElfW(Ehdr)* ehdr = si->ehdr;
+    ElfW(Phdr)* phdr = (ElfW(Phdr)*)((char*)ehdr + ehdr->e_phoff);
+    ElfW(Phdr)* phdr_tls = NULL;
+    ElfW(Addr) tls_vaddr = 0;
+    size_t phsize = ehdr->e_phnum * sizeof(ElfW(Phdr));
     char* phend = (char*)phdr + phsize;
 
-    Elf32_Phdr* segs[2];
+    ElfW(Phdr)* segs[2];
     int nsegs = 0;
     for (; (char*)phdr < phend; phdr++) {
         switch (phdr->p_type) {
@@ -48,7 +48,7 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
             nsegs++;
             break;
         case PT_DYNAMIC:
-            si->dynamic = (Elf32_Dyn*)phdr->p_vaddr;
+            si->dynamic = (ElfW(Dyn)*)phdr->p_vaddr;
             break;
         case PT_TLS:
             phdr_tls = phdr;
@@ -69,13 +69,13 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
     }
 
     off_t base_offset = rounddown(segs[0]->p_offset);
-    Elf32_Addr base_vaddr = rounddown(segs[0]->p_vaddr);
-    Elf32_Addr base_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_memsz);
-    Elf32_Addr text_vlimit = roundup(segs[0]->p_vaddr + segs[0]->p_memsz);
+    ElfW(Addr) base_vaddr = rounddown(segs[0]->p_vaddr);
+    ElfW(Addr) base_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_memsz);
+    ElfW(Addr) text_vlimit = roundup(segs[0]->p_vaddr + segs[0]->p_memsz);
     off_t data_offset = rounddown(segs[1]->p_offset);
-    Elf32_Addr data_vaddr = rounddown(segs[1]->p_vaddr);
-    Elf32_Addr data_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_filesz);
-    Elf32_Addr clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
+    ElfW(Addr) data_vaddr = rounddown(segs[1]->p_vaddr);
+    ElfW(Addr) data_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_filesz);
+    ElfW(Addr) clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
 
     if (phdr_tls) {
         ++ldso_tls_dtv_generation;
@@ -91,7 +91,7 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         ehdr = MAP_FAILED;
     }
 
-    Elf32_Addr base_addr = (Elf32_Addr)(si->is_dynamic ? 0 : base_vaddr);
+    ElfW(Addr) base_addr = (ElfW(Addr))(si->is_dynamic ? 0 : base_vaddr);
     size_t map_size = base_vlimit - base_vaddr;
 
     /* Map text segment */
@@ -131,8 +131,8 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
     si->relocbase = mapbase - base_vaddr;
 
     if (si->dynamic)
-        si->dynamic = (Elf32_Dyn*)(si->relocbase + (Elf32_Addr)si->dynamic);
-    if (si->entry) si->entry = (char*)(si->relocbase + (Elf32_Addr)si->entry);
+        si->dynamic = (ElfW(Dyn)*)(si->relocbase + (ElfW(Addr))si->dynamic);
+    if (si->entry) si->entry = (char*)(si->relocbase + (ElfW(Addr))si->entry);
 
     if (phdr_tls) {
         si->tls_init = mapbase + tls_vaddr;

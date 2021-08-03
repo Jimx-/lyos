@@ -3,16 +3,16 @@
 
 #include "ldso.h"
 
-static int ldso_do_copy_relocation(struct so_info* si, Elf32_Rela* rela)
+static int ldso_do_copy_relocation(struct so_info* si, const ElfW(Rela) * rela)
 {
     void* dest_addr = (void*)(si->relocbase + rela->r_offset);
-    Elf32_Sym* dest_sym = si->symtab + ELF32_R_SYM(rela->r_info);
+    ElfW(Sym)* dest_sym = si->symtab + ELFW(R_SYM)(rela->r_info);
     size_t size = dest_sym->st_size;
     char* name = si->strtab + dest_sym->st_name;
     unsigned long hash = ldso_elf_hash(name);
 
     struct so_info* src_obj;
-    Elf32_Sym* src_sym;
+    ElfW(Sym) * src_sym;
     for (src_obj = si->next; src_obj != NULL; src_obj = src_obj->next) {
         src_sym = ldso_lookup_symbol_obj(name, hash, src_obj, 0);
         if (src_sym) break;
@@ -34,15 +34,24 @@ static int ldso_do_copy_relocation(struct so_info* si, Elf32_Rela* rela)
 int ldso_do_copy_relocations(struct so_info* si)
 {
     if (si->rel) {
-        Elf32_Rel* rel;
+        ElfW(Rel) * rel;
 
         for (rel = si->rel; rel < si->relend; rel++) {
-            if (ELF32_R_TYPE(rel->r_info) == R_386_COPY) {
-                Elf32_Rela rela;
+            if (ELFW(R_TYPE)(rel->r_info) == R_TYPE(COPY)) {
+                ElfW(Rela) rela;
                 rela.r_offset = rel->r_offset;
                 rela.r_info = rel->r_info;
                 rela.r_addend = 0;
                 if (ldso_do_copy_relocation(si, &rela) == -1) return -1;
+            }
+        }
+    }
+
+    if (si->rela) {
+        const ElfW(Rela) * rela;
+        for (rela = si->rela; rela < si->relaend; rela++) {
+            if (ELFW(R_TYPE)(rela->r_info) == R_TYPE(COPY)) {
+                if (ldso_do_copy_relocation(si, rela) == -1) return -1;
             }
         }
     }

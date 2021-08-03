@@ -221,7 +221,7 @@ int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
     if (index == KM_USERMAPPED) {
         *addr = (caddr_t)__pa((char*)*(&_usermapped));
         *len = (char*)*(&_eusermapped) - (char*)*(&_usermapped);
-        *flags = KMF_USER;
+        *flags = KMF_USER | KMF_EXEC;
         return 0;
     }
 
@@ -236,6 +236,8 @@ int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
 
     return 0;
 }
+
+void syscall_scall();
 
 int arch_reply_kern_mapping(int index, void* vir_addr)
 {
@@ -252,6 +254,8 @@ int arch_reply_kern_mapping(int index, void* vir_addr)
         sysinfo.machine = (struct machine*)USER_PTR(&machine);
         sysinfo.user_info.clock_info =
             (struct kclockinfo*)USER_PTR(&kclockinfo);
+        sysinfo.user_info.syscall_gate =
+            (syscall_gate_t)USER_PTR(syscall_scall);
 
         return 0;
     }

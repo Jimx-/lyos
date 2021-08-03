@@ -1,16 +1,11 @@
-/* Facilitate pthread initialization using init_array.  */
+.section .init
+.global _init
+.type _init,%function
+_init:
+        ret
 
-#ifdef PREINIT_FUNCTION
-
-#if PREINIT_FUNCTION_WEAK
-# error PREINIT_FUNCTION_WEAK is unsupported
-#endif
-
-    .section .init_array, "aw"
-#ifdef __riscv64
-    .dword PREINIT_FUNCTION
-#else
-    .word PREINIT_FUNCTION
-#endif
-
-#endif
+.section .fini
+.global _fini
+.type _fini %function
+_fini:
+        ret

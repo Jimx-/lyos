@@ -38,7 +38,8 @@
 #include <lyos/vm.h>
 #include <elf.h>
 #include <lyos/sysutils.h>
-#include "libexec/libexec.h"
+#include <libexec/libexec.h>
+#include <libexec/exec_elf.h>
 #include <sys/mman.h>
 
 struct vfs_exec_info {
@@ -59,8 +60,8 @@ struct vfs_exec_info {
 
 typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack,
                             size_t* stack_size, void** vsp);
-static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
-                             size_t* stack_size, void** vsp);
+static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
+                           size_t* stack_size, void** vsp);
 static int setup_script_stack(struct inode* pin, char* stack,
                               size_t* stack_size, char* pathname, void** vsp);
 static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
@@ -73,7 +74,7 @@ struct exec_loader {
 int libexec_load_elf_dbg(struct exec_info* execi);
 
 static struct exec_loader exec_loaders[] = {
-    {libexec_load_elf, setup_stack_elf32},
+    {libexec_load_elf, setup_stack_elf},
     {NULL},
 };
 
@@ -403,7 +404,7 @@ exec_finalize:
 }
 
 /*****************************************************************************
- *                        setup_stack_elf32
+ *                        setup_stack_elf
  *****************************************************************************/
 /**
  * <Ring 3> Setup auxiliary vectors.
@@ -415,8 +416,8 @@ exec_finalize:
  *
  * @return Zero on success.
  *****************************************************************************/
-static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
-                             size_t* stack_size, void** vsp)
+static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
+                           size_t* stack_size, void** vsp)
 {
     char** arg_str;
     if (*stack_size) {
@@ -434,8 +435,8 @@ static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
     static char auxv_buf[PROC_ORIGIN_STACK];
     memset(auxv_buf, 0, sizeof(auxv_buf));
 
-    Elf32_auxv_t* auxv = (Elf32_auxv_t*)auxv_buf;
-    Elf32_auxv_t* auxv_end = (Elf32_auxv_t*)(auxv_buf + sizeof(auxv_buf));
+    Elf_auxv_t* auxv = (Elf_auxv_t*)auxv_buf;
+    Elf_auxv_t* auxv_end = (Elf_auxv_t*)(auxv_buf + sizeof(auxv_buf));
 #define AUXV_ENT(vec, type, val)                        \
     if (vec < auxv_end) {                               \
         vec->a_type = type;                             \
@@ -457,7 +458,7 @@ static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
         AUXV_ENT(auxv, AT_PHDR, execi->dyn_phdr);
         AUXV_ENT(auxv, AT_PHNUM, execi->dyn_phnum);
     }
-    AUXV_ENT(auxv, AT_BASE, (u32)execi->args.load_base);
+    AUXV_ENT(auxv, AT_BASE, (unsigned long)execi->args.load_base);
     AUXV_ENT(auxv, AT_EXECFD, execi->exec_fd);
     AUXV_ENT(auxv, AT_UID, execi->args.ruid);
     AUXV_ENT(auxv, AT_GID, execi->args.rgid);
@@ -467,7 +468,7 @@ static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
     AUXV_ENT(auxv, AT_CLKTCK, get_system_hz());
     AUXV_ENT(auxv, AT_SYSINFO, (void*)sysinfo);
 
-    Elf32_auxv_t* auxv_execfn = auxv;
+    Elf_auxv_t* auxv_execfn = auxv;
     AUXV_ENT(auxv, AT_EXECFN, NULL);
     AUXV_ENT(auxv, AT_PLATFORM, NULL);
     AUXV_ENT(auxv, AT_NULL, 0);
@@ -480,8 +481,8 @@ static int setup_stack_elf32(struct vfs_exec_info* execi, char* stack,
     if ((void*)auxv_end - (void*)auxv > name_len) {
         strcpy((char*)auxv, prog_name);
         strcpy((char*)auxv + strlen(prog_name) + 1, LYOS_PLATFORM);
-        auxv_end = (Elf32_auxv_t*)((void*)auxv + name_len);
-        auxv_end = (Elf32_auxv_t*)roundup((u32)auxv_end, sizeof(int));
+        auxv_end = (Elf_auxv_t*)((void*)auxv + name_len);
+        auxv_end = (Elf_auxv_t*)roundup((u32)auxv_end, sizeof(int));
         userp = (char*)((void*)auxv - (void*)auxv_buf);
         userp += (uintptr_t)*vsp + (uintptr_t)arg_str - (uintptr_t)stack;
     }

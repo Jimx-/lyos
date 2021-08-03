@@ -75,8 +75,9 @@
 #define UMT_GRANT 1
 #define UMT_VADDR 2
 
-#define KMF_WRITE 0x1
-#define KMF_USER  0x2
+#define KMF_WRITE 0x01
+#define KMF_USER  0x02
+#define KMF_EXEC  0x04
 
 #define MM_GET_MEMINFO 1
 

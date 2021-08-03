@@ -39,14 +39,14 @@ const char* env_get(const char* name)
 
 void parse_auxv(char* envp[], struct so_info* si, int show_auxv, char** base)
 {
-    Elf32_auxv_t* auxv;
+    ElfW(auxv_t) * auxv;
 
     *base = (char*)-1;
 
     while (*envp++ != NULL)
         ;
 
-    for (auxv = (Elf32_auxv_t*)envp; auxv->a_type != AT_NULL; auxv++) {
+    for (auxv = (ElfW(auxv_t)*)envp; auxv->a_type != AT_NULL; auxv++) {
 #define PARSE_ENTRY(type, hex)                                \
     if (auxv->a_type == type) {                               \
         if (show_auxv)                                        \

@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = cygnus
 INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 AM_CCASFLAGS = $(INCLUDES)
 
-LIB_SOURCES = _init.S gate_intr.S __sigreturn.S clone.c getpagesize.c __ucontext.S makecontext.c
+LIB_SOURCES = _init.S gate_intr.S __sigreturn.S clone.c getpagesize.c __ucontext.S makecontext.c tls.c
 
 # liblyosriscv_la_LDFLAGS = -Xcompiler -nostdlib
 

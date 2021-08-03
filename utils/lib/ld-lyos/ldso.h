@@ -16,6 +16,20 @@
 
 #define LDSO_PUBLIC __attribute__((__visibility__("default")))
 
+#ifdef __LP64__
+#define ElfW(name) Elf64_##name
+#define ELFW(name) ELF64_##name
+#else
+#define ElfW(name) Elf32_##name
+#define ELFW(name) ELF32_##name
+#endif
+
+#ifdef __i386__
+#define R_TYPE(name) R_386_##name
+#elif defined(__riscv)
+#define R_TYPE(name) R_RISCV_##name
+#endif
+
 struct needed_entry;
 
 typedef void (*so_func_t)(void);
@@ -29,8 +43,8 @@ struct so_info {
     int dev;
     int ino;
 
-    Elf32_Ehdr* ehdr;
-    Elf32_Phdr* phdr;
+    ElfW(Ehdr) * ehdr;
+    ElfW(Phdr) * phdr;
     int phnum;
     char* entry;
     int is_dynamic;
@@ -38,14 +52,16 @@ struct so_info {
     char* mapbase;
     size_t mapsize;
     char* relocbase;
-    Elf32_Dyn* dynamic;
+    ElfW(Dyn) * dynamic;
 
-    Elf32_Rel *rel, *relend;
-    Elf32_Rel *pltrel, *pltrelend;
-    Elf32_Sym* symtab;
+    ElfW(Rel) * rel, *relend;
+    ElfW(Rela) * rela, *relaend;
+    ElfW(Rel) * pltrel, *pltrelend;
+    ElfW(Rela) * pltrela, *pltrelaend;
+    ElfW(Sym) * symtab;
     char* strtab;
     int strtabsz;
-    Elf32_Addr* pltgot;
+    ElfW(Addr) * pltgot;
 
     unsigned nbuckets;
     int* buckets;
@@ -65,9 +81,9 @@ struct so_info {
     int init_done;
     int init_called;
 
-    Elf32_Addr* init_array;
+    ElfW(Addr) * init_array;
     size_t init_array_size;
-    Elf32_Addr* fini_array;
+    ElfW(Addr) * fini_array;
     size_t fini_array_size;
 
     struct needed_entry* needed;
@@ -108,7 +124,7 @@ extern struct so_info* si_list;
 #define rounddown(x) ((x) - ((x) % pagesz))
 
 int ldso_process_dynamic(struct so_info* si);
-int ldso_process_phdr(struct so_info* si, Elf32_Phdr* phdr, int phnum);
+int ldso_process_phdr(struct so_info* si, ElfW(Phdr) * phdr, int phnum);
 struct so_info* ldso_alloc_info(const char* name);
 void ldso_die(char* reason);
 struct so_info* ldso_get_obj_from_addr(const void* addr);
@@ -117,14 +133,14 @@ void ldso_setup_pltgot(struct so_info* si);
 int ldso_relocate_plt_lazy(struct so_info* si);
 int ldso_relocate_nonplt_objects(struct so_info* si);
 int ldso_do_copy_relocations(struct so_info* si);
-Elf32_Sym* ldso_find_plt_sym(struct so_info* si, unsigned long symnum,
-                             struct so_info** obj);
+ElfW(Sym) * ldso_find_plt_sym(struct so_info* si, unsigned long symnum,
+                              struct so_info** obj);
 struct so_info* ldso_map_object(const char* pathname, int fd);
 unsigned long ldso_elf_hash(const char* name);
-Elf32_Sym* ldso_lookup_symbol_obj(const char* name, unsigned long hash,
-                                  struct so_info* si, int in_plt);
-Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum,
-                         struct so_info** obj, int in_plt);
+ElfW(Sym) * ldso_lookup_symbol_obj(const char* name, unsigned long hash,
+                                   struct so_info* si, int in_plt);
+ElfW(Sym) * ldso_find_sym(struct so_info* si, unsigned long symnum,
+                          struct so_info** obj, int in_plt);
 struct so_info* ldso_load_library(const char* name, struct so_info* who);
 int ldso_load_needed(struct so_info* first);
 int ldso_relocate_objects(struct so_info* first, int bind_now);

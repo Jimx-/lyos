@@ -15,11 +15,11 @@ static struct needed_entry* alloc_needed_entry()
 
 int ldso_process_dynamic(struct so_info* si)
 {
-    Elf32_Dyn* dp;
+    ElfW(Dyn) * dp;
     int use_pltrel = 0, use_pltrela = 0;
-    Elf32_Addr pltrel, pltrelsz;
-    Elf32_Addr relsz;
-    Elf32_Addr init = 0, fini = 0;
+    ElfW(Addr) pltrel, pltrelsz;
+    ElfW(Addr) relsz, relasz;
+    ElfW(Addr) init = 0, fini = 0;
     struct needed_entry* needed;
     struct needed_entry** needed_tail = &si->needed;
 
@@ -28,10 +28,16 @@ int ldso_process_dynamic(struct so_info* si)
     for (dp = si->dynamic; dp->d_tag != DT_NULL; dp++) {
         switch (dp->d_tag) {
         case DT_REL:
-            si->rel = (Elf32_Rel*)(si->relocbase + dp->d_un.d_ptr);
+            si->rel = (ElfW(Rel)*)(si->relocbase + dp->d_un.d_ptr);
             break;
         case DT_RELSZ:
             relsz = dp->d_un.d_val;
+            break;
+        case DT_RELA:
+            si->rela = (ElfW(Rela)*)(si->relocbase + dp->d_un.d_ptr);
+            break;
+        case DT_RELASZ:
+            relasz = dp->d_un.d_val;
             break;
         case DT_PLTREL:
             use_pltrela = dp->d_un.d_val == DT_RELA;
@@ -44,7 +50,7 @@ int ldso_process_dynamic(struct so_info* si)
             pltrelsz = dp->d_un.d_val;
             break;
         case DT_SYMTAB:
-            si->symtab = (Elf32_Sym*)(si->relocbase + dp->d_un.d_ptr);
+            si->symtab = (ElfW(Sym)*)(si->relocbase + dp->d_un.d_ptr);
             break;
         case DT_STRTAB:
             si->strtab = (char*)(si->relocbase + dp->d_un.d_ptr);
@@ -53,25 +59,25 @@ int ldso_process_dynamic(struct so_info* si)
             si->strtabsz = dp->d_un.d_val;
             break;
         case DT_PLTGOT:
-            si->pltgot = (Elf32_Addr*)(si->relocbase + dp->d_un.d_ptr);
+            si->pltgot = (ElfW(Addr)*)(si->relocbase + dp->d_un.d_ptr);
             break;
         case DT_INIT:
             init = dp->d_un.d_ptr;
             break;
         case DT_INIT_ARRAY:
-            si->init_array = (Elf32_Addr*)(si->relocbase + dp->d_un.d_ptr);
+            si->init_array = (ElfW(Addr)*)(si->relocbase + dp->d_un.d_ptr);
             break;
         case DT_INIT_ARRAYSZ:
-            si->init_array_size = dp->d_un.d_val / sizeof(Elf32_Addr);
+            si->init_array_size = dp->d_un.d_val / sizeof(ElfW(Addr));
             break;
         case DT_FINI:
             fini = dp->d_un.d_ptr;
             break;
         case DT_FINI_ARRAY:
-            si->fini_array = (Elf32_Addr*)(si->relocbase + dp->d_un.d_ptr);
+            si->fini_array = (ElfW(Addr)*)(si->relocbase + dp->d_un.d_ptr);
             break;
         case DT_FINI_ARRAYSZ:
-            si->fini_array_size = dp->d_un.d_val / sizeof(Elf32_Addr);
+            si->fini_array_size = dp->d_un.d_val / sizeof(ElfW(Addr));
             break;
         case DT_NEEDED:
             needed = alloc_needed_entry();
@@ -94,10 +100,15 @@ int ldso_process_dynamic(struct so_info* si)
         }
     }
 
-    si->relend = (Elf32_Rel*)((char*)si->rel + relsz);
+    si->relend = (ElfW(Rel)*)((char*)si->rel + relsz);
+    si->relaend = (ElfW(Rela)*)((char*)si->rela + relasz);
     if (use_pltrel) {
-        si->pltrel = (Elf32_Rel*)(si->relocbase + pltrel);
-        si->pltrelend = (Elf32_Rel*)(si->relocbase + pltrel + pltrelsz);
+        si->pltrel = (ElfW(Rel)*)(si->relocbase + pltrel);
+        si->pltrelend = (ElfW(Rel)*)(si->relocbase + pltrel + pltrelsz);
+    }
+    if (use_pltrela) {
+        si->pltrela = (ElfW(Rela)*)(si->relocbase + pltrel);
+        si->pltrelaend = (ElfW(Rela)*)(si->relocbase + pltrel + pltrelsz);
     }
 
     if (init) {
@@ -108,24 +119,24 @@ int ldso_process_dynamic(struct so_info* si)
     }
 }
 
-int ldso_process_phdr(struct so_info* si, Elf32_Phdr* phdr, int phnum)
+int ldso_process_phdr(struct so_info* si, ElfW(Phdr) * phdr, int phnum)
 {
-    Elf32_Phdr* hdr;
-    Elf32_Addr vaddr;
+    ElfW(Phdr) * hdr;
+    ElfW(Addr) vaddr;
     int nsegs = 0;
 
     si->phnum = phnum;
 
     for (hdr = phdr; hdr < phdr + phnum; hdr++) {
         if (hdr->p_type == PT_PHDR) {
-            si->phdr = (Elf32_Phdr*)hdr->p_vaddr;
+            si->phdr = (ElfW(Phdr)*)hdr->p_vaddr;
             si->relocbase = (char*)((char*)phdr - (char*)si->phdr);
             break;
         }
     }
 
     for (hdr = phdr; hdr < phdr + phnum; hdr++) {
-        vaddr = (Elf32_Addr)(si->relocbase + hdr->p_vaddr);
+        vaddr = (ElfW(Addr))(si->relocbase + hdr->p_vaddr);
         switch (hdr->p_type) {
         case PT_LOAD:
             if (nsegs == 0) {
@@ -137,7 +148,7 @@ int ldso_process_phdr(struct so_info* si, Elf32_Phdr* phdr, int phnum)
             nsegs++;
             break;
         case PT_DYNAMIC:
-            si->dynamic = (Elf32_Dyn*)vaddr;
+            si->dynamic = (ElfW(Dyn)*)vaddr;
             break;
         case PT_TLS:
             si->tls_index = 1;

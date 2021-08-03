@@ -101,6 +101,18 @@ void handle_page_fault(endpoint_t ep, vir_bytes pfla, int err, vir_bytes pc,
         return;
     }
 
+    if (!(vr->flags & RF_EXEC) && (err & FAULT_FLAG_INSTRUCTION)) {
+        printl("MM: SIGSEGV %d nx address 0x%016lx, pc=0x%016lx\n", ep, pfla,
+               pc);
+
+        if (kernel_kill(ep, SIGSEGV) != 0)
+            panic("pagefault: unable to kill proc");
+        if (vmctl(VMCTL_PAGEFAULT_CLEAR, ep) != 0)
+            panic("pagefault: vmctl failed");
+
+        return;
+    }
+
     assert(pfla >= vr->vir_addr);
     assert(pfla < vr->vir_addr + vr->length);
 

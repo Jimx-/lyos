@@ -23,16 +23,22 @@ syscall_gate_t _syscall_gate = NULL;
 
 struct sysinfo_user* __lyos_sysinfo = NULL;
 
+#ifdef __LP64__
+typedef Elf64_auxv_t Elf_auxv_t;
+#else
+typedef Elf32_auxv_t Elf_auxv_t;
+#endif
+
 static struct sysinfo_user* parse_auxv(char* envp[])
 {
-    Elf32_auxv_t* auxv;
+    Elf_auxv_t* auxv;
 
     if (!envp) return NULL;
 
     while (*envp++)
         ;
 
-    for (auxv = (Elf32_auxv_t*)envp; auxv->a_type != AT_NULL; auxv++) {
+    for (auxv = (Elf_auxv_t*)envp; auxv->a_type != AT_NULL; auxv++) {
         if (auxv->a_type == AT_SYSINFO) {
             return (struct sysinfo_user*)auxv->a_un.a_val;
         }

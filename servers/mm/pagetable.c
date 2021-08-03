@@ -299,6 +299,10 @@ void pt_kern_mapping_init()
         kmapping->flags |= ARM_PG_CACHED;
 #endif
 
+#if defined(__riscv)
+        if (flags & KMF_EXEC) kmapping->flags |= _RISCV_PG_EXEC;
+#endif
+
         /* where this region will be mapped */
         kmapping->vir_addr = (vir_bytes)pkmap_start;
         if (!kmapping->vir_addr)

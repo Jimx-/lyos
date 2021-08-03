@@ -15,13 +15,19 @@ static int __strcmp(const char* s1, const char* s2)
     return (*(unsigned char*)s1) - (*(unsigned char*)s2);
 }
 
-static int ldso_is_exported(const Elf32_Sym* sym)
+static int ldso_is_exported(const ElfW(Sym) * sym)
 {
-    static const void* ldso_exports[] = {dlopen, dlsym, __ldso_allocate_tls,
-#ifdef __i386__
-                                         ___tls_get_addr,
+    static const void* ldso_exports[] = {
+        dlopen,
+        dlsym,
+#if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
+        __ldso_allocate_tls,
 #endif
-                                         NULL};
+#ifdef __i386__
+        ___tls_get_addr,
+#endif
+        NULL,
+    };
     int i;
     void* value;
 
@@ -51,8 +57,8 @@ unsigned long ldso_elf_hash(const char* name)
     return h;
 }
 
-Elf32_Sym* ldso_lookup_symbol_obj(const char* name, unsigned long hash,
-                                  struct so_info* si, int in_plt)
+ElfW(Sym) * ldso_lookup_symbol_obj(const char* name, unsigned long hash,
+                                   struct so_info* si, int in_plt)
 {
     unsigned long symnum;
 
@@ -63,14 +69,14 @@ Elf32_Sym* ldso_lookup_symbol_obj(const char* name, unsigned long hash,
     for (symnum = si->buckets[hash % si->nbuckets]; symnum != 0;
          symnum = si->chains[symnum]) {
 
-        Elf32_Sym* sym = si->symtab + symnum;
+        ElfW(Sym)* sym = si->symtab + symnum;
         char* str = si->strtab + sym->st_name;
 
         if (__strcmp(name, str)) continue;
 
         if (sym->st_shndx == SHN_UNDEF &&
             (in_plt || sym->st_value == 0 ||
-             ELF32_ST_TYPE(sym->st_info) != STT_FUNC))
+             ELFW(ST_TYPE)(sym->st_info) != STT_FUNC))
             continue;
 
         return sym;
@@ -79,12 +85,12 @@ Elf32_Sym* ldso_lookup_symbol_obj(const char* name, unsigned long hash,
     return NULL;
 }
 
-static Elf32_Sym* ldso_lookup_symbol_list(const char* name, unsigned long hash,
-                                          struct so_info* list,
-                                          struct so_info** obj, int in_plt)
+static ElfW(Sym) * ldso_lookup_symbol_list(const char* name, unsigned long hash,
+                                           struct so_info* list,
+                                           struct so_info** obj, int in_plt)
 {
     struct so_info* si;
-    Elf32_Sym* sym;
+    ElfW(Sym) * sym;
     for (si = list; si != NULL; si = si->next) {
         sym = ldso_lookup_symbol_obj(name, hash, si, in_plt);
 
@@ -97,12 +103,12 @@ static Elf32_Sym* ldso_lookup_symbol_list(const char* name, unsigned long hash,
     return NULL;
 }
 
-static Elf32_Sym* ldso_lookup_symbol(const char* name, unsigned long hash,
-                                     struct so_info* so, struct so_info** obj,
-                                     int in_plt)
+static ElfW(Sym) * ldso_lookup_symbol(const char* name, unsigned long hash,
+                                      struct so_info* so, struct so_info** obj,
+                                      int in_plt)
 {
-    Elf32_Sym* def = NULL;
-    Elf32_Sym* sym = NULL;
+    ElfW(Sym)* def = NULL;
+    ElfW(Sym)* sym = NULL;
     struct so_info* def_obj = NULL;
 
     if (!def) {
@@ -110,7 +116,7 @@ static Elf32_Sym* ldso_lookup_symbol(const char* name, unsigned long hash,
         if (sym) def = sym;
     }
 
-    if (!def || ELF32_ST_BIND(def->st_info) == STB_WEAK) {
+    if (!def || ELFW(ST_BIND)(def->st_info) == STB_WEAK) {
         sym = ldso_lookup_symbol_obj(name, hash, &si_self, in_plt);
 
         if (sym && ldso_is_exported(sym)) {
@@ -126,17 +132,17 @@ static Elf32_Sym* ldso_lookup_symbol(const char* name, unsigned long hash,
     return def;
 }
 
-Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum,
-                         struct so_info** obj, int in_plt)
+ElfW(Sym) * ldso_find_sym(struct so_info* si, unsigned long symnum,
+                          struct so_info** obj, int in_plt)
 {
-    Elf32_Sym* sym;
-    Elf32_Sym* def = NULL;
+    ElfW(Sym) * sym;
+    ElfW(Sym)* def = NULL;
     struct so_info* def_obj = NULL;
 
     sym = si->symtab + symnum;
     char* name = si->strtab + sym->st_name;
 
-    if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
+    if (ELFW(ST_BIND)(sym->st_info) != STB_LOCAL) {
         unsigned long hash = ldso_elf_hash(name);
         def = ldso_lookup_symbol(name, hash, si, &def_obj, in_plt);
     } else {
@@ -151,8 +157,8 @@ Elf32_Sym* ldso_find_sym(struct so_info* si, unsigned long symnum,
     return def;
 }
 
-Elf32_Sym* ldso_find_plt_sym(struct so_info* si, unsigned long symnum,
-                             struct so_info** obj)
+ElfW(Sym) * ldso_find_plt_sym(struct so_info* si, unsigned long symnum,
+                              struct so_info** obj)
 {
     return ldso_find_sym(si, symnum, obj, 1);
 }
@@ -160,7 +166,7 @@ Elf32_Sym* ldso_find_plt_sym(struct so_info* si, unsigned long symnum,
 void* do_dlsym(void* handle, const char* name, void* retaddr)
 {
     unsigned long hash;
-    Elf32_Sym* def;
+    ElfW(Sym) * def;
     struct so_info *si, *def_obj;
 
     def = NULL;

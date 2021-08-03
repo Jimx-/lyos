@@ -17,6 +17,8 @@ struct search_paths ld_default_paths;
 extern char _DYNAMIC;
 extern char _GLOBAL_OFFSET_TABLE_;
 
+char** environ;
+
 int* __errno(void)
 {
     static int _e = 0;
@@ -76,7 +78,7 @@ static void ldso_init_self(char* interp_base, char* relocbase)
 
     si_self.mapbase = interp_base;
     si_self.relocbase = relocbase;
-    si_self.dynamic = (Elf32_Dyn*)&_DYNAMIC;
+    si_self.dynamic = (ElfW(Dyn)*)&_DYNAMIC;
     si_self.next = NULL;
 
     ldso_process_dynamic(&si_self);
@@ -138,7 +140,7 @@ static void ldso_init_tpsort(struct list_head* head, int rev)
     }
 }
 
-static void ldso_call_initfini_function(Elf32_Addr func)
+static void ldso_call_initfini_function(ElfW(Addr) func)
 {
     ((void (*)(void))(uintptr_t)func)();
 }
@@ -153,7 +155,7 @@ static void ldso_call_init_function(struct so_info* si)
     }
 
     while (si->init_array_size > 0) {
-        Elf32_Addr init = *si->init_array++;
+        ElfW(Addr) init = *si->init_array++;
         si->init_array_size--;
         ldso_call_initfini_function(init);
     }
@@ -170,9 +172,9 @@ static void ldso_call_init_functions(void)
     list_for_each_entry(si, &init_list, list) { ldso_call_init_function(si); }
 }
 
-int ldso_main(int argc, char* argv[], char* envp[])
+void* ldso_main(int argc, char* argv[], char* envp[])
 {
-    Elf32_Addr got0;
+    ElfW(Addr) got0;
 
     init_si_pool();
     /* parse environments and aux vectors */
@@ -192,14 +194,14 @@ int ldso_main(int argc, char* argv[], char* envp[])
     }
 
     struct so_info* si = ldso_alloc_info("Main executable");
-    if (si == NULL) return -1;
+    if (si == NULL) return (void*)-1;
     si->flags |= SI_EXEC;
 
     char* interp_base;
     parse_auxv(envp, si, show_auxv, &interp_base);
     if (interp_base == (char*)-1) ldso_die("AT_BASE not set");
 
-    got0 = *(Elf32_Addr*)&_GLOBAL_OFFSET_TABLE_;
+    got0 = *(ElfW(Addr)*)&_GLOBAL_OFFSET_TABLE_;
     ldso_init_self(interp_base, &_DYNAMIC - got0);
 
     if (ld_library_path) ldso_add_paths(&ld_paths, ld_library_path);
@@ -227,7 +229,7 @@ int ldso_main(int argc, char* argv[], char* envp[])
 
     ldso_call_init_functions();
 
-    return (int)si->entry;
+    return si->entry;
 }
 
 void* dlopen(const char* filename, int flags)

@@ -30,7 +30,10 @@ int ldso_tls_allocate_offset(struct so_info* si)
     }
 
 #ifdef __HAVE_TLS_VARIANT_1
-
+    offset = ldso_tls_static_offset;
+    if (offset % si->tls_align)
+        offset += si->tls_align - (offset % si->tls_align);
+    next_offset = offset + si->tls_size;
 #else
     offset = ldso_tls_static_offset + si->tls_size;
     if (offset % si->tls_align)
@@ -60,7 +63,10 @@ static struct tls_tcb* ldso_allocate_tls_locked(void)
     if (p == MAP_FAILED) return NULL;
 
 #ifdef __HAVE_TLS_VARIANT_1
-
+    tcb = (struct tls_tcb*)p;
+    p += sizeof(struct tls_tcb);
+    tcb->tcb_dtv = (void**)(p + ldso_tls_static_space);
+    ++tcb->tcb_dtv;
 #else
     p += ldso_tls_static_space;
     tcb = (struct tls_tcb*)p;
@@ -75,7 +81,7 @@ static struct tls_tcb* ldso_allocate_tls_locked(void)
     for (si = si_list; si != NULL; si = si->next) {
         if (si->tls_init_size && si->tls_done) {
 #ifdef __HAVE_TLS_VARIANT_1
-
+            q = p + si->tls_offset;
 #else
             q = p - si->tls_offset;
 #endif
@@ -95,6 +101,12 @@ void ldso_tls_initial_allocation(void)
 
     ldso_tls_static_space =
         ldso_tls_static_offset + LDSO_STATIC_TLS_RESERVATION;
+
+#ifndef __HAVE_TLS_VARIANT_1
+    if (ldso_tls_static_space % sizeof(void*))
+        ldso_tls_static_space +=
+            sizeof(void*) - (ldso_tls_static_space % sizeof(void*));
+#endif
 
     tcb = ldso_allocate_tls_locked();
 
