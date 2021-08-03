@@ -161,10 +161,10 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
     if (!reg) return 0;
 
     uint64_t base, size;
-    base = of_read_number(reg, 2);
-    reg += 2;
-    size = of_read_number(reg, 2);
-    reg += 2;
+    base = of_read_number(reg, dt_root_addr_cells);
+    reg += dt_root_addr_cells;
+    size = of_read_number(reg, dt_root_size_cells);
+    reg += dt_root_size_cells;
 
     irq = fdt_getprop(blob, offset, "interrupts", NULL);
     if (!irq) return 0;

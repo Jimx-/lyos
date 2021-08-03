@@ -1151,7 +1151,8 @@ static int nvme_pci_probe(int instance)
     int devind;
     u16 vid, did;
     device_id_t dev_id;
-    u32 base, size;
+    unsigned long base;
+    size_t size;
     struct device_info devinf;
     int ioflag;
     int irq;

@@ -207,7 +207,8 @@ struct virtio_device* virtio_pci_legacy_setup(u16 subdid, int skip)
     int devind;
     u16 vid, did, sdid;
     device_id_t dev_id;
-    u32 base, size;
+    unsigned long base;
+    size_t size;
     int ioflag;
     struct virtio_pci_device* vpdev;
 

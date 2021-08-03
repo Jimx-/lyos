@@ -65,6 +65,20 @@ u32 pci_attr_r32(int devind, u16 port)
     return msg.u.m3.m3i2;
 }
 
+int pci_attr_w8(int devind, u16 port, u8 value)
+{
+    MESSAGE msg;
+
+    msg.type = PCI_ATTR_W8;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
+    msg.u.m3.m3i4 = value;
+
+    pci_sendrec(BOTH, &msg);
+
+    return msg.RETVAL;
+}
+
 int pci_attr_w16(int devind, u16 port, u16 value)
 {
     MESSAGE msg;
@@ -79,7 +93,22 @@ int pci_attr_w16(int devind, u16 port, u16 value)
     return msg.RETVAL;
 }
 
-int pci_get_bar(int devind, u16 port, u32* base, u32* size, int* ioflag)
+int pci_attr_w32(int devind, u16 port, u32 value)
+{
+    MESSAGE msg;
+
+    msg.type = PCI_ATTR_W8;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = port;
+    msg.u.m3.m3i4 = value;
+
+    pci_sendrec(BOTH, &msg);
+
+    return msg.RETVAL;
+}
+
+int pci_get_bar(int devind, u16 port, unsigned long* base, size_t* size,
+                int* ioflag)
 {
     MESSAGE msg;
 
@@ -90,8 +119,8 @@ int pci_get_bar(int devind, u16 port, u32* base, u32* size, int* ioflag)
     pci_sendrec(BOTH, &msg);
 
     if (msg.RETVAL == 0) {
-        *base = msg.u.m3.m3i2;
-        *size = msg.u.m3.m3i3;
+        *base = (unsigned long)msg.u.m3.m3l1;
+        *size = (size_t)msg.u.m3.m3l2;
         *ioflag = msg.u.m3.m3i4;
     }
 

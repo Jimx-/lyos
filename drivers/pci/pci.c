@@ -20,6 +20,7 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
@@ -30,7 +31,9 @@
 #include "lyos/proto.h"
 #include <lyos/portio.h>
 #include <lyos/service.h>
+#include <lyos/sysutils.h>
 #include <libsysfs/libsysfs.h>
+#include <uapi/linux/pci.h>
 
 #include <asm/pci.h>
 #include "pci.h"
@@ -44,16 +47,19 @@
 #define DBGPRINT(x)
 #endif
 
-struct pcibus pcibus[NR_PCIBUS];
+static struct pcibus pcibus[NR_PCIBUS];
 static int nr_pcibus = 0;
 
-struct pcidev pcidev[NR_PCIDEV];
+static struct pcidev pcidev[NR_PCIDEV];
 static int nr_pcidev = 0;
 
 static bus_type_id_t pci_bus_id;
 
-static void pci_intel_init();
-static void pci_probe_bus(int busind);
+#if CONFIG_OF
+void* boot_params;
+int dt_root_addr_cells;
+int dt_root_size_cells;
+#endif
 
 static int get_busind(int busnr)
 {
@@ -69,37 +75,50 @@ static int get_busind(int busnr)
 
 u8 pci_read_attr_u8(int devind, int port)
 {
-    int busnr = pcidev[devind].busnr;
+    struct pcidev* dev = &pcidev[devind];
+    int busnr = dev->busnr;
     int busind = get_busind(busnr);
-    return pcibus[busind].rreg_u8(busind, devind, port);
+    return pcibus[busind].ops->rreg_u8(&pcibus[busind], dev->devfn, port);
 }
 
 u16 pci_read_attr_u16(int devind, int port)
 {
+    struct pcidev* dev = &pcidev[devind];
     int busnr = pcidev[devind].busnr;
     int busind = get_busind(busnr);
-    return pcibus[busind].rreg_u16(busind, devind, port);
+    return pcibus[busind].ops->rreg_u16(&pcibus[busind], dev->devfn, port);
 }
 
 u32 pci_read_attr_u32(int devind, int port)
 {
+    struct pcidev* dev = &pcidev[devind];
     int busnr = pcidev[devind].busnr;
     int busind = get_busind(busnr);
-    return pcibus[busind].rreg_u32(busind, devind, port);
+    return pcibus[busind].ops->rreg_u32(&pcibus[busind], dev->devfn, port);
+}
+
+void pci_write_attr_u8(int devind, int port, u8 value)
+{
+    struct pcidev* dev = &pcidev[devind];
+    int busnr = dev->busnr;
+    int busind = get_busind(busnr);
+    pcibus[busind].ops->wreg_u8(&pcibus[busind], dev->devfn, port, value);
 }
 
 void pci_write_attr_u16(int devind, int port, u16 value)
 {
-    int busnr = pcidev[devind].busnr;
+    struct pcidev* dev = &pcidev[devind];
+    int busnr = dev->busnr;
     int busind = get_busind(busnr);
-    pcibus[busind].wreg_u16(busind, devind, port, value);
+    pcibus[busind].ops->wreg_u16(&pcibus[busind], dev->devfn, port, value);
 }
 
 void pci_write_attr_u32(int devind, int port, u32 value)
 {
-    int busnr = pcidev[devind].busnr;
+    struct pcidev* dev = &pcidev[devind];
+    int busnr = dev->busnr;
     int busind = get_busind(busnr);
-    pcibus[busind].wreg_u32(busind, devind, port, value);
+    pcibus[busind].ops->wreg_u32(&pcibus[busind], dev->devfn, port, value);
 }
 
 int pci_init()
@@ -111,7 +130,29 @@ int pci_init()
     retval = dm_bus_register("pci", &pci_bus_id);
     if (retval) return retval;
 
+#if CONFIG_OF
+    long dtb_base, dtb_len;
+    long root_addr_cells, root_size_cells;
+
+    env_get_long("boot_params_base", &dtb_base, "u", 0, -1, -1);
+    env_get_long("boot_params_len", &dtb_len, "d", 0, -1, -1);
+    env_get_long("boot_params_addr_cells", &root_addr_cells, "d", 0, -1, -1);
+    env_get_long("boot_params_size_cells", &root_size_cells, "d", 0, -1, -1);
+
+    boot_params = malloc(dtb_len);
+    if ((retval = data_copy(SELF, boot_params, KERNEL, (void*)dtb_base,
+                            dtb_len)) != 0)
+        panic("pci: cannot get kernel boot params");
+
+    dt_root_addr_cells = root_addr_cells;
+    dt_root_size_cells = root_size_cells;
+
+    pci_host_generic_init();
+#endif
+
+#ifdef __i386__
     pci_intel_init();
+#endif
 
     int i;
     for (i = 0; i < NR_PRIV_PROCS; i++) {
@@ -143,7 +184,8 @@ static int pci_register_device(int devind)
 
     memset(&devinf, 0, sizeof(devinf));
     snprintf(devinf.name, sizeof(devinf.name), "pci%02x:%02x:%x",
-             pcidev[devind].busnr, pcidev[devind].dev, pcidev[devind].func);
+             pcidev[devind].busnr, PCI_SLOT(pcidev[devind].devfn),
+             PCI_FUNC(pcidev[devind].devfn));
     devinf.bus = pci_bus_id;
     devinf.class = NO_CLASS_ID;
     devinf.parent = pcibus[busind].dev_id;
@@ -169,46 +211,73 @@ static int pci_register_device(int devind)
     return 0;
 }
 
-static void pci_intel_init()
+struct pcibus* pci_create_bus(int busnr, const struct pci_ops* ops,
+                              void* private)
 {
-    u32 bus, dev, func;
+    int busind;
+    struct pcibus* bus;
     int retval;
 
-    bus = 0;
-    dev = 0;
-    func = 0;
+    if (nr_pcibus >= NR_PCIBUS) return NULL;
 
-#ifdef __i386__
-    u16 vendor = pcii_read_u16(bus, dev, func, PCI_VID);
-    u16 device = pcii_read_u16(bus, dev, func, PCI_DID);
+    busind = nr_pcibus++;
+    bus = &pcibus[busind];
 
-    if (vendor == 0xffff && device == 0xffff) return;
+    bus->busnr = 0;
 
-    if (nr_pcibus >= NR_PCIBUS) return;
-
-    int busind = nr_pcibus++;
-
-    pcibus[busind].busnr = 0;
     retval = pci_register_bus(busind);
-    if (retval) {
+    if (retval != 0) {
         nr_pcibus--;
-        return;
+        return NULL;
     }
 
-    pcibus[busind].rreg_u8 = pcii_rreg_u8;
-    pcibus[busind].rreg_u16 = pcii_rreg_u16;
-    pcibus[busind].rreg_u32 = pcii_rreg_u32;
-    pcibus[busind].wreg_u16 = pcii_wreg_u16;
-    pcibus[busind].wreg_u32 = pcii_wreg_u32;
+    bus->ops = ops;
+    bus->private = private;
 
-    pci_probe_bus(busind);
-#endif
+    return bus;
+}
+
+struct pcibus* pci_scan_bus(int busnr, const struct pci_ops* ops, void* private)
+{
+    struct pcibus* b;
+
+    b = pci_create_bus(busnr, ops, private);
+    pci_probe_bus(b);
+
+    return b;
+}
+
+static int allocate_bar(struct pcibus* bus, int flags, size_t size,
+                        unsigned long* pci_base, unsigned long* host_base)
+{
+    int i;
+
+    for (i = 0; i < bus->nr_resources; i++) {
+        if ((bus->resources[i].flags & PBF_IO) == (flags & PBF_IO)) {
+            unsigned long offset = bus->resources[i].alloc_offset;
+
+            offset = (offset + size - 1) & ~(size - 1);
+            if (offset + size > bus->resources[i].size) continue;
+
+            bus->resources[i].alloc_offset = offset + size;
+
+            *pci_base = bus->resources[i].pci_addr + offset;
+            *host_base = bus->resources[i].cpu_addr + offset;
+
+            return 0;
+        }
+    }
+
+    return ENOMEM;
 }
 
 static int record_bar(int devind, int bar_nr, int last)
 {
     int reg, width, nr_bars, type;
-    u32 bar, bar2;
+    u32 bar, bar2, mask, mask2;
+    unsigned long base;
+    size_t size;
+    int flags = 0;
 
     width = 1;
     reg = PCI_BAR + bar_nr * 4;
@@ -226,17 +295,26 @@ static int record_bar(int devind, int bar_nr, int last)
         bar2 &= PCI_BAR_IO_MASK;
         bar2 = (~bar2 & 0xffff) + 1;
 
-        nr_bars = pcidev[devind].nr_bars++;
-        pcidev[devind].bars[nr_bars].base = bar;
-        pcidev[devind].bars[nr_bars].size = bar2;
-        pcidev[devind].bars[nr_bars].nr = bar_nr;
-        pcidev[devind].bars[nr_bars].flags = PBF_IO;
+        base = bar;
+        size = bar2;
+        flags = PBF_IO;
     } else {
         type = (bar & PCI_BAR_TYPE);
 
         switch (type) {
         case PCI_TYPE_32:
         case PCI_TYPE_32_1M:
+            base = bar & PCI_BAR_MEM_MASK;
+
+            pci_write_attr_u32(devind, reg, 0xffffffff);
+            bar2 = pci_read_attr_u32(devind, reg);
+            pci_write_attr_u32(devind, reg, bar);
+
+            bar2 &= PCI_BAR_MEM_MASK;
+            if (!bar2) return width;
+
+            size = (~bar2 & 0xffff) + 1;
+
             break;
 
         case PCI_TYPE_64:
@@ -246,34 +324,51 @@ static int record_bar(int devind, int bar_nr, int last)
 
             width++;
             bar2 = pci_read_attr_u32(devind, reg + 4);
+            base = ((unsigned long)bar2 << 32) | (bar & PCI_BAR_MEM_MASK);
 
-            if (bar2) {
-                return width;
-            }
+            pci_write_attr_u32(devind, reg, 0xffffffff);
+            pci_write_attr_u32(devind, reg + 4, 0xffffffff);
+            mask = pci_read_attr_u32(devind, reg);
+            mask2 = pci_read_attr_u32(devind, reg + 4);
+            pci_write_attr_u32(devind, reg, bar);
+            pci_write_attr_u32(devind, reg + 4, bar2);
+
+            size = ((unsigned long)mask2 << 32) | (mask & PCI_BAR_MEM_MASK);
+            size = ~size + 1;
+
             break;
 
         default:
             return width;
         }
+    }
 
-        pci_write_attr_u32(devind, reg, 0xffffffff);
-        bar2 = pci_read_attr_u32(devind, reg);
+    nr_bars = pcidev[devind].nr_bars++;
+    pcidev[devind].bars[nr_bars].base = base;
+    pcidev[devind].bars[nr_bars].size = size;
+    pcidev[devind].bars[nr_bars].nr = bar_nr;
+    pcidev[devind].bars[nr_bars].flags = flags;
 
-        pci_write_attr_u32(devind, reg, bar);
+    if (!base) {
+        struct pcidev* dev = &pcidev[devind];
+        struct pcibus* bus = &pcibus[get_busind(dev->busnr)];
+        unsigned long pci_base = 0, host_base = 0;
+        u16 cmd;
 
-        if (bar2 == 0) {
-            return width;
-        }
+        allocate_bar(bus, flags, size, &pci_base, &host_base);
+        pci_write_attr_u32(devind, reg, (u32)pci_base);
+        if (width > 1)
+            pci_write_attr_u32(devind, reg + 4, (u32)(pci_base >> 32));
+        pci_read_attr_u32(devind, reg);
 
-        bar &= PCI_BAR_MEM_MASK;
-        bar2 &= PCI_BAR_MEM_MASK;
-        bar2 = (~bar2 & 0xffff) + 1;
+        cmd = pci_read_attr_u16(devind, PCI_CR);
+        if (flags & PBF_IO)
+            cmd |= PCI_CR_IO_EN;
+        else
+            cmd |= PCI_CR_MEM_EN;
+        pci_write_attr_u16(devind, PCI_CR, cmd);
 
-        nr_bars = pcidev[devind].nr_bars++;
-        pcidev[devind].bars[nr_bars].base = bar;
-        pcidev[devind].bars[nr_bars].size = bar2;
-        pcidev[devind].bars[nr_bars].nr = bar_nr;
-        pcidev[devind].bars[nr_bars].flags = 0;
+        dev->bars[nr_bars].base = host_base;
     }
 
     return width;
@@ -288,9 +383,45 @@ static void record_bars(int devind, int last_reg)
     }
 }
 
-static void pci_probe_bus(int busind)
+static void record_irq(int devind)
 {
-    u8 bus_nr = pcibus[busind].busnr;
+    int ilr, ipr;
+
+    ilr = pci_read_attr_u8(devind, PCI_ILR);
+    ipr = pci_read_attr_u8(devind, PCI_IPR);
+
+    if (ipr && !ilr) {
+        struct pcidev* dev = &pcidev[devind];
+        struct pcibus* bus = &pcibus[get_busind(dev->busnr)];
+        unsigned int laddr[4];
+
+        laddr[0] = dev->devfn << 8;
+        laddr[1] = laddr[2] = 0;
+        laddr[3] = ipr;
+
+        int i, j;
+        for (i = 0; i < 16; i++) {
+            int match = 1;
+
+            for (j = 0; j < 4; j++)
+                if ((laddr[j] & bus->imask[j]) != bus->imap[i].child_intr[j]) {
+                    match = 0;
+                    break;
+                }
+
+            if (match) {
+                ilr = bus->imap[i].irq_nr;
+                break;
+            }
+        }
+
+        pci_write_attr_u8(devind, PCI_ILR, ilr);
+    }
+}
+
+void pci_probe_bus(struct pcibus* bus)
+{
+    u8 bus_nr = bus->busnr;
     int retval;
     int devind = nr_pcidev;
 
@@ -298,8 +429,7 @@ static void pci_probe_bus(int busind)
     for (i = 0; i < 32; i++) {
         for (func = 0; func < 8; func++) {
             pcidev[devind].busnr = bus_nr;
-            pcidev[devind].dev = i;
-            pcidev[devind].func = func;
+            pcidev[devind].devfn = PCI_DEVFN(i, func);
 
             u16 vendor = pci_read_attr_u16(devind, PCI_VID);
             u16 device = pci_read_attr_u16(devind, PCI_DID);
@@ -328,6 +458,8 @@ static void pci_probe_bus(int busind)
             pcidev[devind].infclass = infclass;
             pcidev[devind].headt = headt;
             pcidev[devind].nr_bars = 0;
+
+            record_irq(devind);
 
             char* name = pci_dev_name(vendor, device);
             if (name) {
@@ -418,7 +550,8 @@ int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
     return 0;
 }
 
-int _pci_get_bar(int devind, int port, u32* base, u32* size, int* ioflag)
+int _pci_get_bar(int devind, int port, unsigned long* base, size_t* size,
+                 int* ioflag)
 {
     int i, reg;
 

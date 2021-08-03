@@ -52,7 +52,9 @@ static int do_next_dev(MESSAGE* m);
 static int do_attr_r8(MESSAGE* m);
 static int do_attr_r16(MESSAGE* m);
 static int do_attr_r32(MESSAGE* m);
+static int do_attr_w8(MESSAGE* m);
 static int do_attr_w16(MESSAGE* m);
+static int do_attr_w32(MESSAGE* m);
 static int do_get_bar(MESSAGE* m);
 static int do_find_capability(MESSAGE* m);
 static int do_find_next_capability(MESSAGE* m);
@@ -61,7 +63,6 @@ int main()
 {
     serv_register_init_fresh_callback(pci_init);
     serv_init();
-    /* pci_init(); */
 
     MESSAGE msg;
 
@@ -91,8 +92,14 @@ int main()
         case PCI_ATTR_R32:
             msg.RETVAL = do_attr_r32(&msg);
             break;
+        case PCI_ATTR_W8:
+            msg.RETVAL = do_attr_w8(&msg);
+            break;
         case PCI_ATTR_W16:
             msg.RETVAL = do_attr_w16(&msg);
+            break;
+        case PCI_ATTR_W32:
+            msg.RETVAL = do_attr_w32(&msg);
             break;
         case PCI_GET_BAR:
             msg.RETVAL = do_get_bar(&msg);
@@ -203,15 +210,16 @@ static int do_get_bar(MESSAGE* m)
     int devind = m->u.m3.m3i2;
     int port = m->u.m3.m3i3;
 
-    u32 base, size;
+    unsigned long base;
+    size_t size;
     int ioflag;
 
     int retval = _pci_get_bar(devind, port, &base, &size, &ioflag);
 
     if (retval) return retval;
 
-    m->u.m3.m3i2 = base;
-    m->u.m3.m3i3 = size;
+    m->u.m3.m3l1 = base;
+    m->u.m3.m3l2 = size;
     m->u.m3.m3i4 = ioflag;
 
     return 0;
@@ -270,6 +278,19 @@ static int do_attr_r32(MESSAGE* m)
     return 0;
 }
 
+static int do_attr_w8(MESSAGE* m)
+{
+    // struct pci_acl * acl = get_acl(m->source);
+
+    int devind = m->u.m3.m3i2;
+    u16 offset = (u16)m->u.m3.m3i3;
+    u8 value = (u8)m->u.m3.m3i4;
+
+    pci_write_attr_u8(devind, offset, value);
+
+    return 0;
+}
+
 static int do_attr_w16(MESSAGE* m)
 {
     // struct pci_acl * acl = get_acl(m->source);
@@ -279,6 +300,19 @@ static int do_attr_w16(MESSAGE* m)
     u16 value = (u16)m->u.m3.m3i4;
 
     pci_write_attr_u16(devind, offset, value);
+
+    return 0;
+}
+
+static int do_attr_w32(MESSAGE* m)
+{
+    // struct pci_acl * acl = get_acl(m->source);
+
+    int devind = m->u.m3.m3i2;
+    u16 offset = (u16)m->u.m3.m3i3;
+    u32 value = (u32)m->u.m3.m3i4;
+
+    pci_write_attr_u32(devind, offset, value);
 
     return 0;
 }

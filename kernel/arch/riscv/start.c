@@ -230,6 +230,10 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
     sprintf(param_buf, "%lu", (unsigned int)fdt_totalsize(initial_boot_params));
     kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
+    sprintf(param_buf, "%d", (unsigned int)dt_root_addr_cells);
+    kinfo_set_param(kinfo.cmdline, "boot_params_addr_cells", param_buf);
+    sprintf(param_buf, "%d", (unsigned int)dt_root_size_cells);
+    kinfo_set_param(kinfo.cmdline, "boot_params_size_cells", param_buf);
 }
 
 static char* get_value(const char* param, const char* key)

@@ -44,7 +44,7 @@ CONFIG_VIRTIO_GPU=y
 #
 # Libraries
 #
-CONFIG_OF=y
+# CONFIG_OF is not set
 CONFIG_VIRTIO=y
 
 #

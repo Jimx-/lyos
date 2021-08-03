@@ -22,8 +22,7 @@
 
 struct pcidev {
     u8 busnr;
-    u8 dev;
-    u8 func;
+    u8 devfn;
 
     u16 vid;
     u16 did;
@@ -40,8 +39,8 @@ struct pcidev {
     struct {
         int nr;
 
-        u32 base;
-        u32 size;
+        unsigned long base;
+        size_t size;
 
         int flags;
     } bars[6];
@@ -49,15 +48,41 @@ struct pcidev {
 
 #define PBF_IO 1
 
+struct pcibus;
+
+struct pci_ops {
+    u8 (*rreg_u8)(struct pcibus* bus, unsigned int devfn, int where);
+    u16 (*rreg_u16)(struct pcibus* bus, unsigned int devfn, int where);
+    u32 (*rreg_u32)(struct pcibus* bus, unsigned int devfn, int where);
+    void (*wreg_u8)(struct pcibus* bus, unsigned int devfn, int where,
+                    u8 value);
+    void (*wreg_u16)(struct pcibus* bus, unsigned int devfn, int where,
+                     u16 value);
+    void (*wreg_u32)(struct pcibus* bus, unsigned int devfn, int where,
+                     u32 value);
+};
+
 struct pcibus {
     int busnr;
     device_id_t dev_id;
 
-    u8 (*rreg_u8)(u32 busind, u32 devind, u16 port);
-    u16 (*rreg_u16)(u32 busind, u32 devind, u16 port);
-    u32 (*rreg_u32)(u32 busind, u32 devind, u16 port);
-    void (*wreg_u16)(u32 busind, u32 devind, u16 port, u16 value);
-    void (*wreg_u32)(u32 busind, u32 devind, u16 port, u32 value);
+    int nr_resources;
+    struct {
+        int flags;
+        unsigned long cpu_addr;
+        unsigned long pci_addr;
+        size_t size;
+        unsigned long alloc_offset;
+    } resources[10];
+
+    u32 imask[4];
+    struct {
+        u32 child_intr[4];
+        unsigned int irq_nr;
+    } imap[16];
+
+    const struct pci_ops* ops;
+    void* private;
 };
 
 struct pci_device {
@@ -66,34 +91,38 @@ struct pci_device {
     char* name;
 };
 
-extern struct pcibus pcibus[];
-extern struct pcidev pcidev[];
 extern struct pci_acl pci_acl[];
 
-char* pci_dev_name(int vendor, int device_id);
+#ifdef __i386__
+void pci_intel_init();
+#endif
 
-u8 pcii_read_u8(u32 bus, u32 slot, u32 func, u16 offset);
-u16 pcii_read_u16(u32 bus, u32 slot, u32 func, u16 offset);
-u32 pcii_read_u32(u32 bus, u32 slot, u32 func, u16 offset);
-void pcii_write_u16(u32 bus, u32 slot, u32 func, u16 offset, u16 value);
-void pcii_write_u32(u32 bus, u32 slot, u32 func, u16 offset, u32 value);
-u8 pcii_rreg_u8(u32 busind, u32 devind, u16 port);
-u16 pcii_rreg_u16(u32 busind, u32 devind, u16 port);
-u32 pcii_rreg_u32(u32 busind, u32 devind, u16 port);
-void pcii_wreg_u16(u32 busind, u32 devind, u16 port, u16 value);
-void pcii_wreg_u32(u32 busind, u32 devind, u16 port, u32 value);
+#if CONFIG_OF
+void pci_host_generic_init(void);
+#endif
+
+struct pcibus* pci_create_bus(int busnr, const struct pci_ops* ops,
+                              void* private);
+struct pcibus* pci_scan_bus(int busnr, const struct pci_ops* ops,
+                            void* private);
+void pci_probe_bus(struct pcibus* bus);
+
+char* pci_dev_name(int vendor, int device_id);
 
 int _pci_first_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
                    device_id_t* dev_id);
 int _pci_next_dev(struct pci_acl* acl, int* devind, u16* vid, u16* did,
                   device_id_t* dev_id);
-int _pci_get_bar(int devind, int port, u32* base, u32* size, int* ioflag);
+int _pci_get_bar(int devind, int port, unsigned long* base, size_t* size,
+                 int* ioflag);
 int _pci_find_capability(int devind, int cap);
 int _pci_find_next_capability(int devind, u8 pos, int cap);
 
 u8 pci_read_attr_u8(int devind, int port);
 u16 pci_read_attr_u16(int devind, int port);
 u32 pci_read_attr_u32(int devind, int port);
+void pci_write_attr_u8(int devind, int port, u8 value);
 void pci_write_attr_u16(int devind, int port, u16 value);
+void pci_write_attr_u32(int devind, int port, u32 value);
 
 #endif

@@ -243,7 +243,8 @@ static void* map_capability(int devind, int off, size_t minlen, u32 align,
 {
     u8 bar;
     u32 offset, length;
-    u32 bar_base, bar_size;
+    unsigned long bar_base;
+    size_t bar_size;
     int ioflag, retval;
     void* p;
 
@@ -366,7 +367,8 @@ static inline int virtio_pci_find_capability(int devind, u8 cfg_type,
 {
     int pos;
     u8 type, bar;
-    u32 base, size;
+    unsigned long base;
+    size_t size;
     int iof, retval;
 
     for (pos = pci_find_capability(devind, PCI_CAP_ID_VNDR); pos > 0;
@@ -489,7 +491,7 @@ struct virtio_device* virtio_pci_modern_setup(u16 subdid, int skip)
     vpdev->setup_vq = setup_vq;
     vpdev->del_vq = del_vq;
 
-    printl("virtio: discovered PCI modern device, common 0x%x, irq %d\n",
+    printl("virtio: discovered PCI modern device, common %p, irq %d\n",
            vpdev->common, vpdev->irq);
 
     return &vpdev->vdev;
