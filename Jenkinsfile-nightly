@@ -37,8 +37,8 @@ pipeline {
 
                         stage('Make image - i686') {
                             steps {
-                                sh './scripts/setup-disk.sh'
-                                sh 'mv lyos-disk.img lyos-i686.img'
+                                sh './scripts/setup-disk.sh -m i686'
+                                sh 'mv lyos-disk-i686.img lyos-i686.img'
                                 sh 'xz --fast lyos-i686.img'
                             }
                         }
