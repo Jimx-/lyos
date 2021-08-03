@@ -76,6 +76,8 @@ int ldso_relocate_plt_object(struct so_info* si, ElfW(Rela) * rel,
     if (*where != addr) *where = addr;
     if (new_addr) *new_addr = addr;
 
+    /* xprintf("%s -> %x\n", obj->strtab + sym->st_name, addr); */
+
     return 0;
 }
 

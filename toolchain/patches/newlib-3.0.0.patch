@@ -1,6 +1,6 @@
-diff -rupN old/config.sub new/config.sub
+diff --color -rupN old/config.sub new/config.sub
 --- old/config.sub	2018-01-19 02:07:45.000000000 +0800
-+++ new/config.sub	2020-07-13 13:21:49.116281587 +0800
++++ new/config.sub	2021-08-03 21:18:05.266590819 +0800
 @@ -1398,6 +1398,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -9,9 +9,9 @@ diff -rupN old/config.sub new/config.sub
  	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
  	      | -onefs* | -tirtos* | -phoenix*)
  	# Remember, each alternative MUST END IN *, to match a version number.
-diff -rupN old/newlib/configure.host new/newlib/configure.host
+diff --color -rupN old/newlib/configure.host new/newlib/configure.host
 --- old/newlib/configure.host	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/configure.host	2020-07-13 15:04:49.422233826 +0800
++++ new/newlib/configure.host	2021-08-03 21:18:05.266590819 +0800
 @@ -372,6 +372,12 @@ case "${host}" in
      oext=lo
      lpfx=
@@ -60,9 +60,9 @@ diff -rupN old/newlib/configure.host new/newlib/configure.host
    *-*-cygwin*)
  	test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`
  	export cygwin_srcdir
-diff -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
+diff --color -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
 --- old/newlib/libc/machine/i386/setjmp.S	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/machine/i386/setjmp.S	2020-07-13 13:24:31.889850453 +0800
++++ new/newlib/libc/machine/i386/setjmp.S	2021-08-03 21:18:05.266590819 +0800
 @@ -115,7 +115,6 @@ SYM (longjmp):
  
  	movl	24(edi),ebp
@@ -79,9 +79,25 @@ diff -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/se
  #endif
  
  	ret
-diff -rupN old/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
+diff --color -rupN old/newlib/libc/stdlib/strtoimax.c new/newlib/libc/stdlib/strtoimax.c
+--- old/newlib/libc/stdlib/strtoimax.c	2018-01-19 02:07:45.000000000 +0800
++++ new/newlib/libc/stdlib/strtoimax.c	2021-08-03 21:19:02.572816493 +0800
+@@ -61,10 +61,10 @@ _strtoimax_l(struct _reent *rptr, const
+ 	     char ** __restrict endptr, int base, locale_t loc)
+ {
+ 	const char *s = (const unsigned char *)nptr;
+-	uintmax_t acc;
++	uintmax_t acc = 0;
+ 	char c;
+ 	uintmax_t cutoff;
+-	int neg = 0, any, cutlim;
++	int neg = 0, any = 0, cutlim;
+ 
+ 	/*
+ 	 * Skip white space and pick up leading +/- sign if any.
+diff --color -rupN old/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
 --- old/newlib/libc/sys/configure.in	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/sys/configure.in	2020-07-13 13:25:10.616574061 +0800
++++ new/newlib/libc/sys/configure.in	2021-08-03 21:18:05.266590819 +0800
 @@ -30,6 +30,7 @@ if test -n "${sys_dir}"; then
  	h8300hms) AC_CONFIG_SUBDIRS(h8300hms) ;;
  	h8500hms) AC_CONFIG_SUBDIRS(h8500hms) ;;

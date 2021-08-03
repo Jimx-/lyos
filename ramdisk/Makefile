@@ -30,9 +30,7 @@ endif
 	@cp -f $(DESTDIR)/sbin/devpts sbin/
 	@cp -f $(DESTDIR)/usr/bin/getty usr/bin/
 	@cp -f $(DESTDIR)/usr/bin/login usr/bin/
-ifneq ("$(wildcard $(DESTDIR)/bin/sh)","")
 	@cp -f $(DESTDIR)/bin/sh bin/
-endif
 	@cp -f $(DESTDIR)/bin/service bin/
 	@cp -f $(DESTDIR)/bin/mount bin/
 	@cp -f $(DESTDIR)/lib/ld-lyos.so lib/
@@ -40,6 +38,7 @@ endif
 	@cp -f $(DESTDIR)/usr/lib/libm.so usr/lib
 	@cp -f $(DESTDIR)/usr/lib/libcjson.so* usr/lib
 	@cp -rf ../sysroot/etc/* etc/
+	@cp -f ../sysroot/etc/rc.$(SUBARCH) etc/rc
 	@touch .root
 	@tar -cvf $(INITRD) .root bin lib sbin etc usr > /dev/null
 	@rm .root

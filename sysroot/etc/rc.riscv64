@@ -1,0 +1,22 @@
+#!/bin/sh
+
+echo "Starting system services..."
+# service up /sbin/ata
+service up /sbin/pci
+service up /sbin/virtio-blk
+service up /sbin/ext2fs
+service up /sbin/procfs
+service up /sbin/input
+service up /sbin/virtio-gpu
+service up /sbin/uds
+service up /sbin/tmpfs
+service up /sbin/pty
+service up /sbin/devpts
+
+mount -a
+
+mkdir /dev/shm
+mkdir /dev/pts
+
+mount -t tmpfs none /dev/shm
+mount -t devpts none /dev/pts

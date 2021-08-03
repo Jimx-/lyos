@@ -22,4 +22,8 @@
 #define RISCV_LGPTR 2
 #endif
 
+#define FREG_L    fld
+#define FREG_S    fsd
+#define FREG_SIZE 8
+
 #endif // _ARCH_ASM_H_

@@ -31,7 +31,6 @@ done
 if [ $ARCH = "i686" ]; then
     ARCH=x86
 fi
-ARCH=x86
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
 

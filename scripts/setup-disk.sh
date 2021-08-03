@@ -8,7 +8,38 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-DISK=lyos-disk.img
+SUBARCH=$(uname -m | sed -e s/sun4u/sparc64/ \
+        -e s/arm.*/arm/ -e s/sa110/arm/ \
+        -e s/s390x/s390/ -e s/parisc64/parisc/ \
+        -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+        -e s/sh[234].*/sh/ )
+
+while getopts "m:" arg
+do
+        case $arg in
+             m)
+                SUBARCH=${OPTARG}
+                ;;
+             ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+done
+
+ARCH=$SUBARCH
+
+if [ $ARCH = "i686" ]; then
+    ARCH=x86
+fi
+
+if [ $ARCH = "riscv64" ]; then
+    ARCH=riscv
+fi
+
+export SUBARCH=$SUBARCH ARCH=$ARCH
+
+DISK=lyos-disk-$SUBARCH.img
 SRCDIR=./
 # SIZE=262144
 SIZE=524288
@@ -45,7 +76,7 @@ mount $LOOPMAP $MOUNT_POINT
 
 echo "Installing sysroot..."
 cp -rf $SRCDIR/sysroot/* $MOUNT_POINT/
-cp -rf $SRCDIR/obj/destdir.x86/* $MOUNT_POINT/
+cp -rf $SRCDIR/obj/destdir.$ARCH/* $MOUNT_POINT/
 chown 1000:1000 $MOUNT_POINT/home/jimx
 chmod 0777 $MOUNT_POINT/tmp
 sync
