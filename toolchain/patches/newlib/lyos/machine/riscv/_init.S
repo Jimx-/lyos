@@ -1,7 +1,9 @@
   .text
   .global _init
+  .weak _init
   .type   _init, @function
   .global _fini
+  .weak _fini
   .type   _fini, @function
 _init:
 _fini:

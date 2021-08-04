@@ -16,7 +16,7 @@ pipeline {
 
                         dir('toolchain') {
                             sh './download.sh'
-                            sh 'BUILD_EVERYTHING=true ./setup.sh -m i686'
+                            sh 'BUILD_EVERYTHING=true PARALLELISM=4 ./setup.sh -m i686'
                         }
 
                         ansiColor('xterm') {
@@ -48,7 +48,7 @@ pipeline {
 
                         dir('toolchain') {
                             sh './download.sh'
-                            sh 'BUILD_EVERYTHING=true ./setup.sh -m riscv64'
+                            sh 'BUILD_EVERYTHING=true PARALLELISM=4 ./setup.sh -m riscv64'
                         }
 
                         ansiColor('xterm') {
