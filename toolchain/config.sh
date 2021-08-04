@@ -2,15 +2,37 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ -z "$SUBARCH" ]; then
-    SUBARCH=i686
+SUBARCH=$(uname -m | sed -e s/sun4u/sparc64/ \
+        -e s/arm.*/arm/ -e s/sa110/arm/ \
+        -e s/s390x/s390/ -e s/parisc64/parisc/ \
+        -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+        -e s/sh[234].*/sh/ )
+
+OPTIND=1
+while getopts "m:" arg
+do
+        case $arg in
+             m)
+                SUBARCH=${OPTARG}
+                ;;
+             ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+done
+
+ARCH=$SUBARCH
+
+if [ $ARCH = "i686" ]; then
     ARCH=x86
 fi
 
-if [ -z "$ARCH" ]; then
-    echo "ARCH must be set"
-    exit 1
+if [ $ARCH = "riscv64" ]; then
+    ARCH=riscv
 fi
+
+export SUBARCH=$SUBARCH ARCH=$ARCH
 
 PREFIX=$DIR/local
 CROSSPREFIX=/usr

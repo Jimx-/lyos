@@ -17,11 +17,12 @@ download "autoconf-2.65" "https://ftp.gnu.org/gnu/autoconf" "autoconf-2.65.tar.g
 download "autoconf-2.69" "https://ftp.gnu.org/gnu/autoconf" "autoconf-2.69.tar.gz" || cmd_error
 download "automake-1.11" "https://ftp.gnu.org/gnu/automake" "automake-1.11.tar.gz" || cmd_error
 download "automake-1.15" "https://ftp.gnu.org/gnu/automake" "automake-1.15.tar.gz" || cmd_error
+download "automake-1.16.4" "https://ftp.gnu.org/gnu/automake" "automake-1.16.4.tar.gz" || cmd_error
 download "autoconf-archive" "https://ftp.gnu.org/gnu/autoconf-archive" "autoconf-archive-2019.01.06.tar.xz" || cmd_error
 download "libtool" "https://ftp.gnu.org/gnu/libtool" "libtool-2.4.5.tar.gz"
 download "binutils" "https://mirrors.ustc.edu.cn/gnu/binutils" "binutils-2.31.tar.gz" || cmd_error
-download "mpc"  "http://www.multiprecision.org/downloads" "mpc-1.0.3.tar.gz"
-download "mpfr" "http://www.mpfr.org/mpfr-3.1.4" "mpfr-3.1.4.tar.gz"
+download "mpc"  "http://www.multiprecision.org/downloads" "mpc-1.2.1.tar.gz"
+download "mpfr" "http://www.mpfr.org/mpfr-4.1.0" "mpfr-4.1.0.tar.gz"
 download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-6.1.0.tar.bz2"
 download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
@@ -83,12 +84,15 @@ unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
 unzip "autoconf-2.69.tar.gz" "autoconf-2.69"
 unzip "automake-1.11.tar.gz" "automake-1.11"
 unzip "automake-1.15.tar.gz" "automake-1.15"
+unzip "automake-1.16.4.tar.gz" "automake-1.16.4"
 unzip "autoconf-archive-2019.01.06.tar.xz" "autoconf-archive-2019.01.06"
 unzip "libtool-2.4.5.tar.gz" "libtool-2.4.5"
 unzip "binutils-2.31.tar.gz" "binutils-2.31"
 unzip "gmp-6.1.0.tar.bz2" "gmp-6.1.0"
 unzip "mpfr-3.1.4.tar.gz" "mpfr-3.1.4"
+unzip "mpfr-4.1.0.tar.gz" "mpfr-4.1.0"
 unzip "mpc-1.0.3.tar.gz" "mpc-1.0.3"
+unzip "mpc-1.2.1.tar.gz" "mpc-1.2.1"
 unzip "gcc-9.2.0.tar.gz" "gcc-9.2.0"
 unzip "newlib-3.0.0.tar.gz" "newlib-3.0.0"
 unzip "coreutils-8.32.tar.xz" "coreutils-8.32"
@@ -150,8 +154,8 @@ patc "automake-1.15"
 patc "libtool-2.4.5"
 patc "binutils-2.31"
 patc "gmp-6.1.0"
-patc "mpfr-3.1.4"
-patc "mpc-1.0.3"
+patc "mpfr-4.1.0"
+patc "mpc-1.2.1"
 patc "gcc-9.2.0"
 patc "newlib-3.0.0"
 patc "coreutils-8.32"

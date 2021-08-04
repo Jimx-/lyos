@@ -1,6 +1,6 @@
-diff -rupN old/config.sub new/config.sub
---- old/config.sub	2020-06-25 18:28:49.314416073 +0800
-+++ new/config.sub	2020-06-25 18:29:03.277518040 +0800
+diff --color -rupN old/config.sub new/config.sub
+--- old/config.sub	2019-09-12 07:56:40.000000000 +0800
++++ new/config.sub	2021-07-23 11:44:54.316798247 +0800
 @@ -1343,7 +1343,7 @@ case $os in
  	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
  	     | sym* | kopensolaris* | plan9* \
@@ -10,3 +10,15 @@ diff -rupN old/config.sub new/config.sub
  	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
  	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
  	     | knetbsd* | mirbsd* | netbsd* \
+diff --color -rupN old/configure new/configure
+--- old/configure	2020-02-09 05:06:19.000000000 +0800
++++ new/configure	2021-08-04 11:57:06.932996263 +0800
+@@ -15350,7 +15350,7 @@ echo "${ECHO_T}$with_stripping" >&6
+ 
+ if test "$with_stripping" = yes
+ then
+-	INSTALL_OPT_S="-s"
++	INSTALL_OPT_S="-s --strip-program=${STRIP}"
+ else
+ 	INSTALL_OPT_S=
+ fi

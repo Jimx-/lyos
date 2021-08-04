@@ -1,6 +1,6 @@
 diff --color -rupN old/config.sub new/config.sub
 --- old/config.sub	2019-01-03 19:28:27.000000000 +0800
-+++ new/config.sub	2021-07-24 19:35:06.519171044 +0800
++++ new/config.sub	2021-08-04 15:26:21.841287390 +0800
 @@ -2,7 +2,7 @@
  # Configuration validation subroutine script.
  #   Copyright 1992-2019 Free Software Foundation, Inc.
@@ -20,7 +20,7 @@ diff --color -rupN old/config.sub new/config.sub
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
 diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 --- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2021-07-24 19:35:06.519171044 +0800
++++ new/gcc/config/lyos.h	2021-08-04 15:26:21.841287390 +0800
 @@ -0,0 +1,27 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -51,7 +51,7 @@ diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +#define LIB_SPEC "%{pthread:-lpthread} %{shared:-lc} %{!shared:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
 diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2019-08-04 04:16:22.000000000 +0800
-+++ new/gcc/config.gcc	2021-07-24 19:35:06.522504351 +0800
++++ new/gcc/config.gcc	2021-08-04 15:26:21.841287390 +0800
 @@ -970,6 +970,12 @@ case ${target} in
        ;;
    esac
@@ -107,7 +107,7 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
 diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
 --- old/gcc/diagnostic.c	2019-01-01 20:31:55.000000000 +0800
-+++ new/gcc/diagnostic.c	2021-07-24 19:35:06.522504351 +0800
++++ new/gcc/diagnostic.c	2021-08-04 15:26:21.841287390 +0800
 @@ -35,9 +35,7 @@ along with GCC; see the file COPYING3.
  #include "selftest.h"
  #include "selftest-diagnostic.h"
@@ -121,7 +121,7 @@ diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
  # include <sys/ioctl.h>
 diff --color -rupN old/libgcc/config.host new/libgcc/config.host
 --- old/libgcc/config.host	2019-01-17 20:29:13.000000000 +0800
-+++ new/libgcc/config.host	2021-07-24 19:36:16.938594877 +0800
++++ new/libgcc/config.host	2021-08-04 15:26:21.841287390 +0800
 @@ -101,6 +101,9 @@ arc*-*-*)
  arm*-*-*)
  	cpu_type=arm
@@ -154,9 +154,23 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  riscv*-*-*)
  	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
+diff --color -rupN old/libstdc++-v3/configure new/libstdc++-v3/configure
+--- old/libstdc++-v3/configure	2019-07-04 05:09:13.000000000 +0800
++++ new/libstdc++-v3/configure	2021-08-04 15:32:38.704915621 +0800
+@@ -15262,8 +15262,8 @@ if test "$enable_shared" = yes; then
+   glibcxx_compiler_shared_flag="-D_GLIBCXX_SHARED"
+ 
+ else
+-  glibcxx_lt_pic_flag=
+-  glibcxx_compiler_pic_flag=
++  glibcxx_lt_pic_flag="-prefer-pic"
++  glibcxx_compiler_pic_flag="$lt_prog_compiler_pic_CXX"
+   glibcxx_compiler_shared_flag=
+ fi
+ 
 diff --color -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
 --- old/libstdc++-v3/crossconfig.m4	2019-03-12 00:28:11.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2021-07-24 19:35:06.522504351 +0800
++++ new/libstdc++-v3/crossconfig.m4	2021-08-04 15:26:21.841287390 +0800
 @@ -200,6 +200,12 @@ case "${host}" in
      AC_CHECK_FUNCS(sockatmark)
      AM_ICONV

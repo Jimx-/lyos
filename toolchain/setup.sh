@@ -87,6 +87,9 @@ if $BUILD_AUTOTOOLS; then
     if [ ! -d "automake-1.15-$SUBARCH" ]; then
         mkdir automake-1.15-$SUBARCH
     fi
+    if [ ! -d "automake-1.16.4-$SUBARCH" ]; then
+        mkdir automake-1.16.4-$SUBARCH
+    fi
     if [ ! -d "libtool-$SUBARCH" ]; then
         mkdir libtool-$SUBARCH
     fi
@@ -123,6 +126,14 @@ if $BUILD_AUTOTOOLS; then
     ln -sf $DIR/tools/automake-1.15/share/aclocal-1.15 $DIR/tools/automake-1.15/share/aclocal
     popd > /dev/null
 
+    pushd automake-1.16.4-$SUBARCH > /dev/null
+    $DIR/sources/automake-1.16.4/configure --prefix=$DIR/tools/automake-1.16.4 || cmd_error
+    make || cmd_error
+    make install || cmd_error
+    rm -rf $DIR/tools/automake-1.16.4/share/aclocal
+    ln -sf $DIR/tools/automake-1.16.4/share/aclocal-1.16 $DIR/tools/automake-1.16.4/share/aclocal
+    popd > /dev/null
+
     # Build libtool
     pushd $DIR/sources/libtool-2.4.5 > /dev/null
     chmod +w bootstrap
@@ -155,6 +166,7 @@ if $BUILD_AUTOTOOLS; then
 
     ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.11/share/aclocal-1.11/
     ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.15/share/aclocal-1.15/
+    ln -sf $DIR/local/share/aclocal/* $DIR/tools/automake-1.16.4/share/aclocal-1.16/
 fi
 
 # Build binutils
@@ -187,7 +199,7 @@ if $BUILD_GCC; then
     fi
 
     pushd gcc-$SUBARCH
-    $DIR/sources/gcc-9.2.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib --enable-shared=libgcc || cmd_error
+    $DIR/sources/gcc-9.2.0/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-nls --enable-languages=c,c++ --with-newlib --enable-shared --with-pic || cmd_error
     make -j$PARALLELISM all-gcc all-target-libgcc || cmd_error
     make install-gcc install-target-libgcc || cmd_error
 
@@ -302,10 +314,10 @@ if $BUILD_NATIVE_GCC; then
     fi
 
     if [ ! -e $DIR/sources/gcc-9.2.0/mpfr ]; then
-        ln -s $DIR/sources/mpfr-3.1.4 $DIR/sources/gcc-9.2.0/mpfr
+        ln -s $DIR/sources/mpfr-4.1.0 $DIR/sources/gcc-9.2.0/mpfr
     fi
     if [ ! -e $DIR/sources/gcc-9.2.0/mpc ]; then
-        ln -s $DIR/sources/mpc-1.0.3 $DIR/sources/gcc-9.2.0/mpc
+        ln -s $DIR/sources/mpc-1.2.1 $DIR/sources/gcc-9.2.0/mpc
     fi
     if [ ! -e $DIR/sources/gcc-9.2.0/gmp ]; then
         ln -s $DIR/sources/gmp-6.1.0 $DIR/sources/gcc-9.2.0/gmp
@@ -386,7 +398,7 @@ if $BUILD_NCURSES; then
     fi
 
     pushd ncurses-$SUBARCH > /dev/null
-    $DIR/sources/ncurses-6.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests
+    STRIP=$TARGET-strip $DIR/sources/ncurses-6.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -395,7 +407,8 @@ fi
 # Build Vim
 if $BUILD_VIM; then
     pushd $DIR/sources/vim74 > /dev/null
-    ac_cv_sizeof_int=4 vim_cv_getcwd_broken=no vim_cv_memmove_handles_overlap=yes vim_cv_stat_ignores_slash=no vim_cv_tgetent=zero vim_cv_terminfo=yes vim_cv_toupper_broken=no vim_cv_tty_group=world $DIR/sources/vim74/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-tlib=ncurses --enable-gui=no --disable-gtktest --disable-xim --with-features=normal --disable-gpm --without-x --disable-netbeans --enable-multibyte || cmd_error
+    make distclean
+    ac_cv_sizeof_int=4 vim_cv_getcwd_broken=no vim_cv_memmove_handles_overlap=yes vim_cv_stat_ignores_slash=no vim_cv_tgetent=zero vim_cv_terminfo=yes vim_cv_toupper_broken=no vim_cv_tty_group=world STRIP=$TARGET-strip $DIR/sources/vim74/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --with-tlib=ncurses --enable-gui=no --disable-gtktest --disable-xim --with-features=normal --disable-gpm --without-x --disable-netbeans --enable-multibyte || cmd_error
     make clean
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
@@ -409,7 +422,7 @@ if $BUILD_LIBEVDEV; then
     fi
 
     pushd $DIR/sources/libevdev-1.9.0 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fiv
     popd > /dev/null
 
     pushd libevdev-$SUBARCH > /dev/null
@@ -426,7 +439,7 @@ if $BUILD_PCRE; then
     fi
 
     pushd $DIR/sources/pcre-8.44 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fi
     popd > /dev/null
 
     pushd pcre-$SUBARCH > /dev/null
@@ -442,7 +455,7 @@ if $BUILD_GREP; then
         mkdir grep-$SUBARCH
     fi
 
-    cp $DIR/tools/automake-1.15/share/automake-1.15/config.sub $DIR/sources/grep-3.4/build-aux/
+    cp $DIR/tools/automake-1.16.4/share/automake-1.16/config.sub $DIR/sources/grep-3.4/build-aux/
 
     pushd grep-$SUBARCH > /dev/null
     $DIR/sources/grep-3.4/configure --host=$TARGET --prefix=$CROSSPREFIX --disable-nls
@@ -510,7 +523,7 @@ if $BUILD_LIBPNG; then
     fi
 
     pushd $DIR/sources/libpng-1.6.37 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fiv
     popd > /dev/null
 
     pushd libpng-$SUBARCH > /dev/null
@@ -545,7 +558,7 @@ if $BUILD_LIBXML2; then
     fi
 
     pushd $DIR/sources/libxml2-2.9.10 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fi
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fi
     popd > /dev/null
 
     pushd libxml2-$SUBARCH > /dev/null
@@ -579,7 +592,7 @@ if $BUILD_MTDEV; then
     fi
 
     pushd $DIR/sources/mtdev-1.1.6 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fi
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fi
     popd > /dev/null
 
     pushd mtdev-$SUBARCH > /dev/null

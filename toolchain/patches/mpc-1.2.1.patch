@@ -1,0 +1,12 @@
+diff --color -rupN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2020-10-21 00:26:31.000000000 +0800
++++ new/build-aux/config.sub	2021-08-04 11:36:15.003422149 +0800
+@@ -1343,7 +1343,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* | kopensolaris* | plan9* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+-	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
++	     | aos* | aros* | cloudabi* | sortix* | twizzler* | lyos* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+ 	     | clix* | riscos* | uniplus* | iris* | isc* | rtu* | xenix* \
+ 	     | knetbsd* | mirbsd* | netbsd* \
