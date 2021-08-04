@@ -35,6 +35,33 @@ pipeline {
                         }
                     }
                 }
+
+                stage('Build - RISC-V') {
+                    agent {
+                        dockerfile true
+                    }
+
+                    steps {
+                        sh 'make SUBARCH=riscv64 defconfig'
+                        sh 'make SUBARCH=riscv64 objdirs'
+                        sh 'make SUBARCH=riscv64 install-headers'
+
+                        dir('toolchain') {
+                            sh './download.sh'
+                            sh 'BUILD_EVERYTHING=true ./setup.sh -m riscv64'
+                        }
+
+                        ansiColor('xterm') {
+                            sh 'make SUBARCH=riscv64'
+                        }                        
+                    }
+
+                    post {
+                        cleanup {
+                            deleteDir()
+                        }
+                    }
+                }
             }
         }
     }
