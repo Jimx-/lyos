@@ -44,7 +44,7 @@ download "zlib" "https://zlib.net/fossils/" "zlib-1.2.11.tar.gz" || cmd_error
 download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.2.tar.xz" || cmd_error
 download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz" || cmd_error
 download "mesa" "https://mesa.freedesktop.org/archive/" "mesa-20.0.5.tar.xz" || cmd_error
-download "libpng" "https://download.sourceforge.net/libpng/" "libpng-1.6.37.tar.xz" || cmd_error
+download "libpng" "https://fossies.org/linux/misc" "libpng-1.6.37.tar.xz" || cmd_error
 download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz" || cmd_error
 download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz" || cmd_error
 download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.gz" || cmd_error
@@ -59,7 +59,7 @@ download "xorg-proto" "https://xorg.freedesktop.org/archive/individual/proto" "x
 download "xkeyboard-config" "https://www.x.org/pub/individual/data/xkeyboard-config" "xkeyboard-config-2.30.tar.bz2"
 download "mtdev" "http://bitmath.org/code/mtdev" "mtdev-1.1.6.tar.bz2"
 download "libinput" "https://www.freedesktop.org/software/libinput" "libinput-1.10.7.tar.xz"
-download "dejavu" "https://sourceforge.net/projects/dejavu/files/dejavu/2.37" "dejavu-fonts-ttf-2.37.tar.bz2"
+download "dejavu" "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37" "dejavu-fonts-ttf-2.37.tar.bz2"
 download "libXau" "https://www.x.org/pub/individual/lib" "libXau-1.0.9.tar.bz2"
 download "libXdmcp" "https://www.x.org/pub/individual/lib" "libXdmcp-1.1.3.tar.bz2"
 download "xcb-proto" "https://xorg.freedesktop.org/archive/individual/proto" "xcb-proto-1.14.1.tar.xz"
