@@ -575,7 +575,7 @@ if $BUILD_EUDEV; then
     fi
 
     pushd $DIR/sources/eudev-3.2.2 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fis || cmd_error
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fis || cmd_error
     popd > /dev/null
 
     pushd eudev-$SUBARCH > /dev/null

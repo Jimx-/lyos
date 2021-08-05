@@ -1,6 +1,6 @@
-diff -rupN old/configure.ac new/configure.ac
+diff --color -rupN old/configure.ac new/configure.ac
 --- old/configure.ac	2017-04-20 05:08:17.000000000 +0800
-+++ new/configure.ac	2020-11-19 16:44:14.638340299 +0800
++++ new/configure.ac	2021-08-05 15:44:25.903382323 +0800
 @@ -49,7 +49,7 @@ AC_CHECK_HEADERS(
  AC_CHECK_HEADERS(
          [mtd/mtd-user.h],
@@ -28,9 +28,9 @@ diff -rupN old/configure.ac new/configure.ac
                  [#include <syscall.h>])],
          [#include <sched.h>])
  
-diff -rupN old/Makefile.am new/Makefile.am
+diff --color -rupN old/Makefile.am new/Makefile.am
 --- old/Makefile.am	2017-01-02 07:19:58.000000000 +0800
-+++ new/Makefile.am	2020-11-19 16:44:14.638340299 +0800
++++ new/Makefile.am	2021-08-05 15:44:25.903382323 +0800
 @@ -5,8 +5,7 @@ SUBDIRS = \
  
  if ENABLE_PROGRAMS
@@ -41,9 +41,9 @@ diff -rupN old/Makefile.am new/Makefile.am
  endif
  
  if ENABLE_MANPAGES
-diff -rupN old/src/ata_id/ata_id.c new/src/ata_id/ata_id.c
+diff --color -rupN old/src/ata_id/ata_id.c new/src/ata_id/ata_id.c
 --- old/src/ata_id/ata_id.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/ata_id/ata_id.c	2020-11-19 16:44:14.638340299 +0800
++++ new/src/ata_id/ata_id.c	2021-08-05 15:44:25.903382323 +0800
 @@ -44,6 +44,7 @@
  #include <linux/cdrom.h>
  #include <linux/bsg.h>
@@ -52,9 +52,9 @@ diff -rupN old/src/ata_id/ata_id.c new/src/ata_id/ata_id.c
  
  #include "libudev.h"
  #include "libudev-private.h"
-diff -rupN old/src/shared/hashmap.c new/src/shared/hashmap.c
+diff --color -rupN old/src/shared/hashmap.c new/src/shared/hashmap.c
 --- old/src/shared/hashmap.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/hashmap.c	2020-11-19 16:44:14.638340299 +0800
++++ new/src/shared/hashmap.c	2021-08-05 15:44:25.903382323 +0800
 @@ -24,6 +24,7 @@
  #include <stdlib.h>
  #include <string.h>
@@ -63,9 +63,9 @@ diff -rupN old/src/shared/hashmap.c new/src/shared/hashmap.c
  
  #include "util.h"
  #include "hashmap.h"
-diff -rupN old/src/shared/hashmap.h new/src/shared/hashmap.h
+diff --color -rupN old/src/shared/hashmap.h new/src/shared/hashmap.h
 --- old/src/shared/hashmap.h	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/hashmap.h	2020-11-19 16:44:14.638340299 +0800
++++ new/src/shared/hashmap.h	2021-08-05 15:44:25.903382323 +0800
 @@ -98,10 +98,7 @@ extern const struct hash_ops uint64_hash
  #if SIZEOF_DEV_T != 8
  unsigned long devt_hash_func(const void *p, const uint8_t hash_key[HASH_KEY_SIZE]) _pure_;
@@ -78,9 +78,9 @@ diff -rupN old/src/shared/hashmap.h new/src/shared/hashmap.h
  #else
  #define devt_hash_func uint64_hash_func
  #define devt_compare_func uint64_compare_func
-diff -rupN old/src/shared/missing.h new/src/shared/missing.h
+diff --color -rupN old/src/shared/missing.h new/src/shared/missing.h
 --- old/src/shared/missing.h	2017-01-02 07:18:51.000000000 +0800
-+++ new/src/shared/missing.h	2020-11-19 16:44:14.638340299 +0800
++++ new/src/shared/missing.h	2021-08-05 15:45:09.583035624 +0800
 @@ -21,12 +21,15 @@
  
  /* Missing glibc definitions to access certain kernel APIs */
@@ -98,9 +98,18 @@ diff -rupN old/src/shared/missing.h new/src/shared/missing.h
  
  #include "macro.h"
  #include "config.h"
-diff -rupN old/src/shared/random-util.c new/src/shared/random-util.c
+@@ -129,7 +132,7 @@ static inline pid_t gettid(void) {
+ #  elif defined(__powerpc__)
+ #    define __NR_name_to_handle_at 345
+ #  else
+-#    error "__NR_name_to_handle_at is not defined"
++#    warning "__NR_name_to_handle_at is not defined"
+ #  endif
+ #endif
+ 
+diff --color -rupN old/src/shared/random-util.c new/src/shared/random-util.c
 --- old/src/shared/random-util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/random-util.c	2020-11-19 16:44:14.638340299 +0800
++++ new/src/shared/random-util.c	2021-08-05 15:44:25.903382323 +0800
 @@ -23,7 +23,7 @@
  #include <sys/stat.h>
  #include <fcntl.h>
@@ -110,9 +119,9 @@ diff -rupN old/src/shared/random-util.c new/src/shared/random-util.c
  
  #include "random-util.h"
  #include "time-util.h"
-diff -rupN old/src/shared/socket-util.h new/src/shared/socket-util.h
+diff --color -rupN old/src/shared/socket-util.h new/src/shared/socket-util.h
 --- old/src/shared/socket-util.h	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/socket-util.h	2020-11-19 16:44:14.638340299 +0800
++++ new/src/shared/socket-util.h	2021-08-05 15:44:25.903382323 +0800
 @@ -23,14 +23,10 @@
  #include <net/if.h>
  #include <asm/types.h>
@@ -128,9 +137,9 @@ diff -rupN old/src/shared/socket-util.h new/src/shared/socket-util.h
 -        struct sockaddr_storage storage;
 -        struct sockaddr_ll ll;
  };
-diff -rupN old/src/shared/terminal-util.c new/src/shared/terminal-util.c
+diff --color -rupN old/src/shared/terminal-util.c new/src/shared/terminal-util.c
 --- old/src/shared/terminal-util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/terminal-util.c	2020-11-19 16:44:14.638340299 +0800
++++ new/src/shared/terminal-util.c	2021-08-05 15:44:25.903382323 +0800
 @@ -27,9 +27,6 @@
  #include <time.h>
  #include <assert.h>
@@ -141,9 +150,9 @@ diff -rupN old/src/shared/terminal-util.c new/src/shared/terminal-util.c
  
  #include "terminal-util.h"
  #include "time-util.h"
-diff -rupN old/src/shared/time-util.c new/src/shared/time-util.c
+diff --color -rupN old/src/shared/time-util.c new/src/shared/time-util.c
 --- old/src/shared/time-util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/time-util.c	2020-11-19 16:44:14.641673639 +0800
++++ new/src/shared/time-util.c	2021-08-05 15:44:25.903382323 +0800
 @@ -21,7 +21,7 @@
  #include <stdio.h>
  #include <string.h>
@@ -153,9 +162,9 @@ diff -rupN old/src/shared/time-util.c new/src/shared/time-util.c
  
  #include "time-util.h"
  #include "macro.h"
-diff -rupN old/src/shared/util.c new/src/shared/util.c
+diff --color -rupN old/src/shared/util.c new/src/shared/util.c
 --- old/src/shared/util.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/shared/util.c	2020-11-19 16:44:14.641673639 +0800
++++ new/src/shared/util.c	2021-08-05 15:44:25.903382323 +0800
 @@ -27,7 +27,7 @@
  #include <syslog.h>
  #include <sched.h>
@@ -173,9 +182,20 @@ diff -rupN old/src/shared/util.c new/src/shared/util.c
  #include <dlfcn.h>
  #include <sys/wait.h>
  #include <sys/time.h>
-diff -rupN old/src/udev/udev-builtin-input_id.c new/src/udev/udev-builtin-input_id.c
+diff --color -rupN old/src/shared/util.h new/src/shared/util.h
+--- old/src/shared/util.h	2016-11-18 05:14:19.000000000 +0800
++++ new/src/shared/util.h	2021-08-05 15:45:27.696225141 +0800
+@@ -32,6 +32,7 @@
+ #include <unistd.h>
+ #include <sys/socket.h>
+ #include <sys/inotify.h>
++#include <limits.h>
+ 
+ #include "time-util.h"
+ #include "missing.h"
+diff --color -rupN old/src/udev/udev-builtin-input_id.c new/src/udev/udev-builtin-input_id.c
 --- old/src/udev/udev-builtin-input_id.c	2017-01-02 07:18:51.000000000 +0800
-+++ new/src/udev/udev-builtin-input_id.c	2020-11-19 16:44:14.641673639 +0800
++++ new/src/udev/udev-builtin-input_id.c	2021-08-05 15:44:25.906715630 +0800
 @@ -27,7 +27,7 @@
  #include <unistd.h>
  #include <string.h>
@@ -185,9 +205,9 @@ diff -rupN old/src/udev/udev-builtin-input_id.c new/src/udev/udev-builtin-input_
  #include <linux/input.h>
  
  #include "udev.h"
-diff -rupN old/src/udev/udev-builtin-keyboard.c new/src/udev/udev-builtin-keyboard.c
+diff --color -rupN old/src/udev/udev-builtin-keyboard.c new/src/udev/udev-builtin-keyboard.c
 --- old/src/udev/udev-builtin-keyboard.c	2017-01-06 05:05:38.000000000 +0800
-+++ new/src/udev/udev-builtin-keyboard.c	2020-11-19 16:44:14.641673639 +0800
++++ new/src/udev/udev-builtin-keyboard.c	2021-08-05 15:44:25.906715630 +0800
 @@ -23,7 +23,7 @@
  #include <stdlib.h>
  #include <fcntl.h>
@@ -197,9 +217,9 @@ diff -rupN old/src/udev/udev-builtin-keyboard.c new/src/udev/udev-builtin-keyboa
  #include <linux/input.h>
  
  #include "udev.h"
-diff -rupN old/src/udev/udevd.c new/src/udev/udevd.c
+diff --color -rupN old/src/udev/udevd.c new/src/udev/udevd.c
 --- old/src/udev/udevd.c	2016-11-18 05:14:19.000000000 +0800
-+++ new/src/udev/udevd.c	2020-11-19 16:49:51.925705849 +0800
++++ new/src/udev/udevd.c	2021-08-05 15:44:25.906715630 +0800
 @@ -28,6 +28,7 @@
  #include <string.h>
  #include <ctype.h>
