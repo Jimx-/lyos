@@ -76,4 +76,7 @@ void plic_handle_irq(void);
 /* irq.c */
 void arch_init_irq(void);
 
+/* smp.c */
+unsigned int riscv_of_parent_hartid(const void* fdt, unsigned long offset);
+
 #endif

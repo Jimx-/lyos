@@ -54,10 +54,12 @@ EXTERN struct tss tss[CONFIG_SMP_MAX_CPUS];
 #endif
 
 #ifdef __riscv
-EXTERN u32 bsp_cpu_id;
+EXTERN u32 bsp_cpu_id, bsp_hart_id;
 extern pde_t initial_pgd[];
 EXTERN unsigned long va_pa_offset;
 EXTERN struct tss tss[CONFIG_SMP_MAX_CPUS];
+EXTERN unsigned int cpu_to_hart_id[CONFIG_SMP_MAX_CPUS];
+EXTERN unsigned int hart_to_cpu_id[CONFIG_SMP_MAX_CPUS];
 #endif
 
 extern int booting_cpu;

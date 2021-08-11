@@ -30,10 +30,12 @@
 #include <lyos/cpulocals.h>
 #include <lyos/smp.h>
 
+#include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
 static int smp_commenced = 0;
-static int __cpu_ready;
+static unsigned int cpu_nr;
+static volatile int __cpu_ready;
 void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
 void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
 
@@ -60,25 +62,53 @@ static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
+unsigned int riscv_of_parent_hartid(const void* fdt, unsigned long offset)
+{
+    for (; offset >= 0; offset = fdt_parent_offset(fdt, offset)) {
+        const char* compatible = fdt_getprop(fdt, offset, "compatible", NULL);
+        if (!compatible || strcmp(compatible, "riscv") != 0) continue;
+
+        const __be32* reg = fdt_getprop(fdt, offset, "reg", NULL);
+        if (!reg) continue;
+
+        u32 hart = be32_to_cpup(reg);
+        return hart;
+    }
+
+    return -1;
+}
+
 static void smp_start_cpu(int hart_id, struct proc* idle_proc)
 {
+    unsigned int cpu = cpu_nr++;
+
     __cpu_ready = -1;
-    idle_proc->regs.cpu = hart_id;
-    init_tss(hart_id, get_k_stack_top(hart_id));
+    cpu_to_hart_id[cpu] = hart_id;
+    hart_to_cpu_id[hart_id] = cpu;
+
+    idle_proc->regs.cpu = cpu;
+    init_tss(hart_id, get_k_stack_top(cpu));
 
     __asm__ __volatile__("fence rw, rw" : : : "memory");
 
-    __cpu_stack_pointer[hart_id] = get_k_stack_top(hart_id);
+    __cpu_stack_pointer[hart_id] = get_k_stack_top(cpu);
     __cpu_task_pointer[hart_id] = (void*)idle_proc;
 
-    while (__cpu_ready != hart_id)
+    while (__cpu_ready != cpu)
         ;
 
-    set_cpu_flag(hart_id, CPU_IS_READY);
+    set_cpu_flag(cpu, CPU_IS_READY);
 }
 
 void smp_init()
 {
+    bsp_cpu_id = 0;
+
+    cpu_to_hart_id[bsp_cpu_id] = bsp_hart_id;
+    hart_to_cpu_id[bsp_hart_id] = bsp_cpu_id;
+
+    cpu_nr++;
+
     init_tss(cpuid, get_k_stack_top(cpuid));
 
     of_scan_fdt(fdt_scan_hart, NULL, initial_boot_params);
@@ -89,6 +119,7 @@ void smp_init()
 void smp_boot_ap()
 {
     __cpu_ready = cpuid;
+
     printk("smp: CPU %d is up\n", cpuid);
 
     init_prot();

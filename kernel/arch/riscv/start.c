@@ -144,9 +144,13 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     static char cmdline[KINFO_CMDLINE_LEN];
     phys_bytes dtb_lim;
 
+    bsp_hart_id = hart_id;
+
     initial_boot_params = __va(dtb_phys);
     dtb_lim = dtb_phys + fdt_totalsize(initial_boot_params);
     dtb_lim = roundup(dtb_lim, ARCH_PG_SIZE);
+
+    fdt_root = initial_boot_params;
 
     kinfo.memmaps_count = 0;
     kinfo.memory_size = 0;

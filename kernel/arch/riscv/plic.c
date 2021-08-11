@@ -54,6 +54,7 @@
 struct plic {
     void* regs;
     int nr_irqs;
+    unsigned long fdt_offset;
 };
 
 struct plic plics[MAX_PLICS];
@@ -131,29 +132,46 @@ static int fdt_scan_plic(void* blob, unsigned long offset, const char* name,
     ndev = fdt_getprop(blob, offset, "riscv,ndev", &len);
     if (!ndev) return 0;
 
+    plic->fdt_offset = offset;
     plic->nr_irqs = of_read_number(ndev, 1);
 
-    return 0;
+    return nr_plics >= MAX_PLICS;
 }
 
 void plic_scan(void) { of_scan_fdt(fdt_scan_plic, NULL, initial_boot_params); }
 
 void plic_init(void)
 {
-    int i;
+    int i, j;
 
     for (i = 0; i < nr_plics; i++) {
         struct plic* plic = &plics[i];
-        int cpu = 0;
+        int cpu, nr_contexts;
 
-        struct plic_context* ctx = get_cpu_var_ptr(cpu, plic_contexts);
-        ctx->plic = plic;
-        ctx->hart_base = plic->regs + CONTEXT_BASE + 0 * CONTEXT_PER_HART;
-        ctx->enable_base = plic->regs + ENABLE_BASE + 0 * ENABLE_PER_HART;
+        nr_contexts = of_irq_count(initial_boot_params, plic->fdt_offset);
 
-        int hwirq;
-        for (hwirq = 1; hwirq <= plic->nr_irqs; hwirq++)
-            plic_toggle(ctx, hwirq, 0);
+        for (j = 0; j < nr_contexts; j++) {
+            struct of_phandle_args parent;
+            uint32_t hart;
+
+            if (of_irq_parse_one(initial_boot_params, plic->fdt_offset, j,
+                                 &parent))
+                continue;
+
+            if (parent.args[0] != IRQ_S_EXT) continue;
+
+            hart = riscv_of_parent_hartid(initial_boot_params, parent.offset);
+            cpu = hart_to_cpu_id[hart];
+
+            struct plic_context* ctx = get_cpu_var_ptr(cpu, plic_contexts);
+            ctx->plic = plic;
+            ctx->hart_base = plic->regs + CONTEXT_BASE + j * CONTEXT_PER_HART;
+            ctx->enable_base = plic->regs + ENABLE_BASE + j * ENABLE_PER_HART;
+
+            int hwirq;
+            for (hwirq = 1; hwirq <= plic->nr_irqs; hwirq++)
+                plic_toggle(ctx, hwirq, 0);
+        }
     }
 }
 
