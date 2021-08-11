@@ -29,6 +29,7 @@
 #include <asm/smp.h>
 #include <lyos/cpulocals.h>
 #include <lyos/smp.h>
+#include <asm/cpu_info.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -39,13 +40,19 @@ static volatile int __cpu_ready;
 void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
 void* __cpu_task_pointer[CONFIG_SMP_MAX_CPUS];
 
+extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
+
 struct stackframe init_stackframe; /* used to retrieve the id of the init cpu */
 
-static void smp_start_cpu(int hart_id, struct proc* idle_proc);
+static unsigned int smp_start_cpu(int hart_id, struct proc* idle_proc);
 
 static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
                          int depth, void* arg)
 {
+    unsigned int cpu;
+    const u32* prop;
+    int len;
+
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     if (!type || strcmp(type, "cpu") != 0) return 0;
 
@@ -55,9 +62,20 @@ static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
     u32 hart_id = be32_to_cpup(reg);
     if (hart_id >= CONFIG_SMP_MAX_CPUS) return 0;
 
-    if (hart_id == cpuid) return 0;
+    if (hart_id == bsp_hart_id)
+        cpu = bsp_cpu_id;
+    else
+        cpu = smp_start_cpu(hart_id, get_cpu_var_ptr(hart_id, idle_proc));
 
-    smp_start_cpu(hart_id, get_cpu_var_ptr(hart_id, idle_proc));
+    cpu_info[cpu].hart = hart_id;
+
+    prop = fdt_getprop(blob, offset, "riscv,isa", &len);
+    if (prop && len > 0)
+        strlcpy(cpu_info[cpu].isa, prop, min(len, sizeof(cpu_info[cpu].isa)));
+
+    prop = fdt_getprop(blob, offset, "mmu-type", &len);
+    if (prop && len > 0)
+        strlcpy(cpu_info[cpu].mmu, prop, min(len, sizeof(cpu_info[cpu].mmu)));
 
     return 0;
 }
@@ -78,7 +96,7 @@ unsigned int riscv_of_parent_hartid(const void* fdt, unsigned long offset)
     return -1;
 }
 
-static void smp_start_cpu(int hart_id, struct proc* idle_proc)
+static unsigned int smp_start_cpu(int hart_id, struct proc* idle_proc)
 {
     unsigned int cpu = cpu_nr++;
 
@@ -98,6 +116,8 @@ static void smp_start_cpu(int hart_id, struct proc* idle_proc)
         ;
 
     set_cpu_flag(cpu, CPU_IS_READY);
+
+    return cpu;
 }
 
 void smp_init()
@@ -112,6 +132,8 @@ void smp_init()
     init_tss(cpuid, get_k_stack_top(cpuid));
 
     of_scan_fdt(fdt_scan_hart, NULL, initial_boot_params);
+
+    machine.cpu_count = cpu_nr;
 
     finish_bsp_booting();
 }

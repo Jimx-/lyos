@@ -89,6 +89,10 @@ static void print_cpu(struct cpu_info* cpu_info, int idx)
     buf_printf("%-16s: %d\n", "cpu MHz", cpu_info->freq_mhz);
     buf_printf("%-16s: ", "flags");
     print_x86_cpu_flags(cpu_info->flags);
+#elif defined(__riscv)
+    buf_printf("%-16s: %lu\n", "hart", cpu_info->hart);
+    buf_printf("%-16s: %s\n", "isa", cpu_info->isa);
+    buf_printf("%-16s: %s\n", "mmu", cpu_info->mmu);
 #endif
     buf_printf("\n");
 }

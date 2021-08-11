@@ -361,11 +361,7 @@ static void print_memmap()
     printl("  .pkmap    : 0x%016lx - 0x%016lx  (%dkB)\n", PKMAP_START,
            PKMAP_END, (PKMAP_END - PKMAP_START) / 1024);
 
-    mem_start = kernel_info.kernel_end_phys;
-    free_mem_size = memory_size - mem_start;
-
     mem_info.mem_total = memory_size;
-    mem_info.mem_free = free_mem_size;
 }
 
 static void process_system_notify()
