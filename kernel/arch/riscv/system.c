@@ -33,6 +33,7 @@ Lyos is free software: you can redistribute it and/or modify
 #include "lyos/cpulocals.h"
 #include <lyos/param.h>
 #include <lyos/vm.h>
+#include <lyos/sysutils.h>
 #include "libexec/libexec.h"
 #include <asm/cpu_info.h>
 
@@ -160,6 +161,8 @@ int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
     if (newsp) {
         p->regs.sp = (reg_t)newsp;
     }
+
+    if (flags & KF_SETTLS) p->regs.tp = (reg_t)tls;
 
     return 0;
 }

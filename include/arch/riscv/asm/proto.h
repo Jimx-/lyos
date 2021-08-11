@@ -73,4 +73,7 @@ void plic_init(void);
 void plic_enable(int cpu);
 void plic_handle_irq(void);
 
+/* irq.c */
+void arch_init_irq(void);
+
 #endif

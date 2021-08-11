@@ -138,6 +138,10 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
 
     tls = tcb;
 
+#ifdef __HAVE_TLS_VARIANT_1
+    tls += sizeof(struct tls_tcb);
+#endif
+
 #ifdef __i386__
     unsigned int gs;
     struct user_desc user_desc;

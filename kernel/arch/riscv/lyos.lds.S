@@ -33,8 +33,8 @@ SECTIONS{
 
     . = ALIGN(4096);
     .text : AT(ADDR(.text) - _VIR_BASE) {
-    	_text = .;
-        	*(.text)
+        _text = .;
+            *(.text)
         _etext = .;
     }
 
@@ -42,20 +42,27 @@ SECTIONS{
     .rodata : AT(ADDR(.rodata) - _VIR_BASE) {
         *(.rodata)
     }
-  
+
     . = ALIGN(4096);
     .data : AT(ADDR(.data) - _VIR_BASE) {
         __global_pointer$ = . + 0x800;
-    	_data = .;
-        	*(.data)
+        _data = .;
+            *(.data)
         _edata = .;
+    }
+
+    . = ALIGN(4096);
+    .data.cpulocals : AT(ADDR(.data.cpulocals) - _VIR_BASE) {
+        _cpulocals_start = .;
+            *(.data.cpulocals)
+        _cpulocals_end = .;
     }
 
     . = ALIGN(4096);
     .bss : AT(ADDR(.bss) - _VIR_BASE) {
         _bss = .;
-        	*(COMMON)
-        	*(.bss)
+            *(COMMON)
+            *(.bss)
         _ebss = .;
     }
 
@@ -68,9 +75,9 @@ SECTIONS{
 
     . = ALIGN(4096);
     .usermapped : AT(ADDR(.usermapped) - _VIR_BASE) {
-        _usermapped = .;    
+        _usermapped = .;
             *(.usermapped)
-        . = ALIGN(4096); _eusermapped = .; 
+        . = ALIGN(4096); _eusermapped = .;
     }
 
     _KERN_SIZE = . - _VIR_BASE;

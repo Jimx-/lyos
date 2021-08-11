@@ -58,8 +58,6 @@ void init_prot()
 {
     csr_write(stvec, &trap_entry);
     csr_write(sie, -1);
-
-    plic_scan();
 }
 
 void do_trap_unknown(int in_kernel, struct proc* p)

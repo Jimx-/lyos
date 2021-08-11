@@ -95,7 +95,7 @@ void stop_local_timer() {}
 
 int put_local_timer_handler(irq_handler_t handler)
 {
-    timer_handler = handler;
+    get_cpulocal_var(timer_handler) = handler;
 
     return 0;
 }

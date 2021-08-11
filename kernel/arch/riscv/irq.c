@@ -31,6 +31,8 @@
 #include <lyos/cpufeature.h>
 #include <lyos/vm.h>
 
+void arch_init_irq(void) { plic_scan(); }
+
 void irq_entry_handle(reg_t cause)
 {
     switch (cause & ~CAUSE_IRQ_FLAG) {

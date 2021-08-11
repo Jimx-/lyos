@@ -37,6 +37,8 @@ void write_cr4(u32 cr4);
 
 void load_tls(struct proc* p, unsigned int cpu);
 
+void arch_init_irq(void);
+
 void arch_pause();
 
 int init_8253_timer(int freq);

@@ -53,6 +53,8 @@ void init_irq()
         irq_hooks[i].proc_ep = NO_TASK;
     }
     spinlock_init(&irq_handlers_lock);
+
+    arch_init_irq();
 }
 
 /*****************************************************************************

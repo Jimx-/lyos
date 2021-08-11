@@ -25,8 +25,8 @@ SECTIONS{
     }
     . = ALIGN(4096);
     .text : AT(ADDR(.text) - _VIR_BASE) {
-     _text = .;
-         *(.text)
+        _text = .;
+            *(.text)
         _etext = .;
     }
     . = ALIGN(4096);
@@ -36,15 +36,21 @@ SECTIONS{
     . = ALIGN(4096);
     .data : AT(ADDR(.data) - _VIR_BASE) {
         __global_pointer$ = . + 0x800;
-     _data = .;
-         *(.data)
+        _data = .;
+            *(.data)
         _edata = .;
+    }
+    . = ALIGN(4096);
+    .data.cpulocals : AT(ADDR(.data.cpulocals) - _VIR_BASE) {
+        _cpulocals_start = .;
+            *(.data.cpulocals)
+        _cpulocals_end = .;
     }
     . = ALIGN(4096);
     .bss : AT(ADDR(.bss) - _VIR_BASE) {
         _bss = .;
-         *(COMMON)
-         *(.bss)
+            *(COMMON)
+            *(.bss)
         _ebss = .;
     }
     . = ALIGN(4096);

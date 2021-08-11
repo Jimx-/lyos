@@ -161,6 +161,8 @@ void init_prot()
     load_prot_selectors(booting_cpu);
 }
 
+void arch_init_irq(void) {}
+
 void load_direct_gdt(unsigned int cpu)
 {
     u8 gdt_ptr[6]; /* 0~15:Limit  16~47:Base */
