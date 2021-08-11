@@ -33,7 +33,7 @@
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
-static int smp_commenced = 0;
+static volatile int smp_commenced = 0;
 static unsigned int cpu_nr;
 static volatile int __cpu_ready;
 void* __cpu_stack_pointer[CONFIG_SMP_MAX_CPUS];
@@ -132,9 +132,9 @@ void smp_boot_ap()
     while (!smp_commenced)
         ;
 
-    plic_enable(cpuid);
-
     switch_address_space(proc_addr(TASK_MM));
+
+    plic_enable(cpuid);
 
     switch_to_user();
 }
