@@ -40,6 +40,8 @@ int sys_exec(MESSAGE* m, struct proc* p_proc)
 
     lock_proc(p);
 
+    p->flags &= ~PF_DELIVER_MSG;
+
     if (data_vir_copy(KERNEL, name, p_proc->endpoint, m->KEXEC_NAME,
                       sizeof(name) - 1) != 0)
         strncpy(name, "<unset>", sizeof(name));

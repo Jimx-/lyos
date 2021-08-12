@@ -34,6 +34,7 @@
 #endif
 #include "lyos/cpulocals.h"
 #include <lyos/time.h>
+#include <lyos/vm.h>
 
 DEFINE_CPULOCAL(struct proc*, proc_ptr);
 DEFINE_CPULOCAL(struct proc*, pt_proc);
@@ -55,7 +56,9 @@ static int has_pending_async(struct proc* p, endpoint_t src);
 static void unset_notify_pending(struct proc* p, int id);
 static void set_notify_msg(struct proc* sender, MESSAGE* m, endpoint_t src);
 static int deadlock(int src, int dest);
-int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len);
+static int msg_senda(struct proc* p_to_send, async_message_t* table,
+                     size_t len);
+static void deliver_msg(struct proc* p);
 
 void init_proc()
 {
@@ -157,22 +160,26 @@ no_schedule:
 
     get_cpulocal_var(proc_ptr) = p;
 
-    if (p->flags & PF_RESUME_SYSCALL) {
-        resume_sys_call(p);
+    while (p->flags & (PF_RESUME_SYSCALL | PF_TRACE_SYSCALL | PF_LEAVE_SYSCALL |
+                       PF_DELIVER_MSG)) {
+        if (p->flags & PF_RESUME_SYSCALL) {
+            resume_sys_call(p);
 
-        /* actually leave the syscall */
-        if (p->flags & PF_TRACE_SYSCALL) p->flags |= PF_LEAVE_SYSCALL;
+            /* actually leave the syscall */
+            if (p->flags & PF_TRACE_SYSCALL) p->flags |= PF_LEAVE_SYSCALL;
+        } else if (p->flags & PF_DELIVER_MSG) {
+            deliver_msg(p);
+        } else if ((p->flags & PF_LEAVE_SYSCALL) &&
+                   (p->flags & PF_TRACE_SYSCALL) && proc_is_runnable(p)) {
+            /* syscall leave stop */
+            p->flags &= ~(PF_TRACE_SYSCALL | PF_LEAVE_SYSCALL);
+
+            ksig_proc(p->endpoint, SIGTRAP);
+        }
+
+        if (!proc_is_runnable(p)) goto reschedule;
     }
 
-    /* syscall leave stop */
-    if ((p->flags & PF_LEAVE_SYSCALL) && (p->flags & PF_TRACE_SYSCALL) &&
-        proc_is_runnable(p)) {
-        p->flags &= ~(PF_TRACE_SYSCALL | PF_LEAVE_SYSCALL);
-
-        ksig_proc(p->endpoint, SIGTRAP);
-    }
-
-    if (!proc_is_runnable(p)) goto reschedule;
     if (p->counter_ns <= 0) {
         PST_SET(p, PST_NO_QUANTUM);
         proc_no_time(p);
@@ -355,8 +362,8 @@ static int deadlock(endpoint_t src, endpoint_t dest)
  *****************************************************************************/
 /**
  * <Ring 0> Send a message to the dest proc. If dest is blocked waiting for
- * the message, copy the message to it and unblock dest. Otherwise the caller
- * will be blocked and appended to the dest's sending queue.
+ * the message, copy the message to it and unblock dest. Otherwise the
+ * caller will be blocked and appended to the dest's sending queue.
  *
  * @param p_to_send  The caller, the sender.
  * @param dest     To whom the message is sent.
@@ -385,27 +392,20 @@ int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
     if (!PST_IS_SET(p_dest, PST_SENDING) &&
         PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
         (p_dest->recvfrom == sender->endpoint || p_dest->recvfrom == ANY)) {
-        MESSAGE tmp;
+        assert(!(p_dest->flags & PF_DELIVER_MSG));
 
         if (flags & IPCF_FROMKERNEL) {
-            tmp = *m;
-        } else {
-            if ((retval = data_vir_copy_check(p_to_send, KERNEL, &tmp,
-                                              sender->endpoint, m,
-                                              sizeof(MESSAGE))) != 0)
-                goto out;
+            p_dest->deliver_msg = *m;
+        } else if (copy_user_message(&p_dest->deliver_msg, m)) {
+            retval = EFAULT;
+            goto out;
         }
 
-        tmp.source = p_to_send->endpoint;
+        p_dest->deliver_msg.source = p_to_send->endpoint;
+        p_dest->flags |= PF_DELIVER_MSG;
 
-        if ((retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
-                                          KERNEL, &tmp, sizeof(MESSAGE))) != 0)
-            goto out;
-
-        p_dest->recv_msg = 0;
         PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
         p_dest->flags &= ~PF_RECV_ASYNC;
-        p_dest->recvfrom = NO_TASK;
     } else { /* p_dest is not waiting for the msg */
         if (flags & IPCF_NONBLOCK) {
             retval = EBUSY;
@@ -414,9 +414,13 @@ int msg_send(struct proc* p_to_send, int dest, MESSAGE* m, int flags)
 
         PST_SET_LOCKED(sender, PST_SENDING);
         sender->sendto = dest;
-        retval = data_vir_copy_check(p_to_send, KERNEL, &sender->send_msg,
-                                     KERNEL, m, sizeof(MESSAGE));
-        if (retval != 0) goto out;
+
+        if (flags & IPCF_FROMKERNEL) {
+            sender->send_msg = *m;
+        } else if (copy_user_message(&sender->send_msg, m)) {
+            retval = EFAULT;
+            goto out;
+        }
 
         sender->send_msg.source = p_to_send->endpoint;
 
@@ -444,9 +448,9 @@ out:
  *                                msg_receive
  *****************************************************************************/
 /**
- * <Ring 0> Try to get a message from the src proc. If src is blocked sending
- * the message, copy the message from it and unblock src. Otherwise the caller
- * will be blocked.
+ * <Ring 0> Try to get a message from the src proc. If src is blocked
+ * sending the message, copy the message from it and unblock src. Otherwise
+ * the caller will be blocked.
  *
  * @param p_to_recv The caller, the proc who wanna receive.
  * @param src     From whom the message will be received.
@@ -476,22 +480,18 @@ static int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
     /* check pending notifications */
     int notify_id;
     if ((notify_id = has_pending_notify(who_wanna_recv, src)) != PRIV_ID_NULL) {
-        MESSAGE msg;
-        reset_msg(&msg);
-
         int proc_nr = priv_addr(notify_id)->proc_nr;
         struct proc* notifier = proc_addr(proc_nr);
-        set_notify_msg(who_wanna_recv, &msg, notifier->endpoint);
+        set_notify_msg(who_wanna_recv, &who_wanna_recv->deliver_msg,
+                       notifier->endpoint);
 
         unset_notify_pending(who_wanna_recv, notify_id);
-        retval = data_vir_copy_check(who_wanna_recv, KERNEL, m, KERNEL, &msg,
-                                     sizeof(MESSAGE));
-        if (retval != 0) goto out;
 
-        who_wanna_recv->recv_msg = NULL;
+        who_wanna_recv->recv_msg = m;
+        who_wanna_recv->flags |= PF_DELIVER_MSG;
+
         PST_UNSET_LOCKED(who_wanna_recv, PST_RECEIVING);
         who_wanna_recv->flags &= ~PF_RECV_ASYNC;
-        who_wanna_recv->recvfrom = NO_TASK;
 
         goto out;
     }
@@ -580,10 +580,9 @@ static int msg_receive(struct proc* p_to_recv, int src, MESSAGE* m, int flags)
         }
 
         assert(m);
-        /* copy the message */
-        retval = data_vir_copy_check(who_wanna_recv, KERNEL, m, KERNEL,
-                                     &from->send_msg, sizeof(MESSAGE));
-        if (retval != 0) goto out;
+        who_wanna_recv->recv_msg = m;
+        who_wanna_recv->deliver_msg = from->send_msg;
+        who_wanna_recv->flags |= PF_DELIVER_MSG;
 
         reset_msg(&from->send_msg);
         from->sendto = NO_TASK;
@@ -614,8 +613,8 @@ out:
 static int receive_async_from(struct proc* p, struct proc* sender)
 {
     struct priv* priv = sender->priv;
-    if (!(priv->flags & PRF_PRIV_PROC)) { /* only privilege processes can send
-                                             async messages */
+    if (!(priv->flags & PRF_PRIV_PROC)) { /* only privilege processes can
+                                             send async messages */
         return EPERM;
     }
 
@@ -643,16 +642,14 @@ static int receive_async_from(struct proc* p, struct proc* sender)
 
         done = FALSE;
         if (dest != p->endpoint) continue;
-        retval = data_vir_copy_check(p, KERNEL, p->recv_msg, KERNEL, &amsg.msg,
-                                     sizeof(MESSAGE));
-        if (retval != 0) {
-            goto async_error;
-        }
 
-        p->recv_msg = 0;
+        retval = 0;
+        p->deliver_msg = amsg.msg;
+        p->deliver_msg.source = sender->endpoint;
+        p->flags |= PF_DELIVER_MSG;
+
         p->flags &= ~PF_RECV_ASYNC;
         PST_UNSET_LOCKED(p, PST_RECEIVING);
-        p->recvfrom = NO_TASK;
 
         amsg.result = retval;
         amsg.flags |= ASMF_DONE;
@@ -795,20 +792,11 @@ int msg_notify(struct proc* p_to_send, endpoint_t dest)
     if (!PST_IS_SET(p_dest, PST_SENDING) &&
         PST_IS_SET(p_dest, PST_RECEIVING) && /* p_dest is waiting for the msg */
         (p_dest->recvfrom == p_to_send->endpoint || p_dest->recvfrom == ANY)) {
+        set_notify_msg(p_dest, &p_dest->deliver_msg, p_to_send->endpoint);
+        p_dest->flags |= PF_DELIVER_MSG;
 
-        MESSAGE m;
-        set_notify_msg(p_dest, &m, p_to_send->endpoint);
-        retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
-                                     p_to_send->endpoint, &m, sizeof(MESSAGE));
-        if (retval != 0) {
-            unlock_proc(p_dest);
-            return retval;
-        }
-
-        p_dest->recv_msg = NULL;
         p_dest->flags &= ~PF_RECV_ASYNC;
         PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
-        p_dest->recvfrom = NO_TASK;
 
         unlock_proc(p_dest);
         return retval;
@@ -872,7 +860,8 @@ void dumproc(struct proc* p)
 void dump_msg(const char* title, MESSAGE* m)
 {
     int packed = 0;
-    printk("\n\n%s<0x%x>{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, "
+    printk("\n\n%s<0x%x>{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, "
+           "0x%x, "
            "0x%x, 0x%x}%s}%s", //, (0x%x, 0x%x, 0x%x)}",
            title, (int)m, packed ? "" : "\n        ", m->source,
            packed ? " " : "\n        ", m->type, packed ? " " : "\n        ",
@@ -894,11 +883,11 @@ void dump_msg(const char* title, MESSAGE* m)
  *
  * @return Zero if success.
  *****************************************************************************/
-int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
+static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
 {
     struct priv* priv = p_to_send->priv;
-    if (!(priv->flags & PRF_PRIV_PROC)) { /* only privilege processes can send
-                                             async messages */
+    if (!(priv->flags & PRF_PRIV_PROC)) { /* only privilege processes can
+                                             send async messages */
         return EPERM;
     }
 
@@ -946,18 +935,12 @@ int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
             (p_dest->flags & PF_RECV_ASYNC) &&
             (p_dest->recvfrom == p_to_send->endpoint ||
              p_dest->recvfrom == ANY)) {
-            retval = data_vir_copy_check(p_to_send, dest, p_dest->recv_msg,
-                                         KERNEL, &amsg.msg, sizeof(MESSAGE));
+            p_dest->deliver_msg = amsg.msg;
+            p_dest->deliver_msg.source = p_to_send->endpoint;
+            p_dest->flags |= PF_DELIVER_MSG;
 
-            if (retval != 0) {
-                unlock_proc(p_dest);
-                goto async_error;
-            }
-
-            p_dest->recv_msg = 0;
             p_dest->flags &= ~PF_RECV_ASYNC;
             PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
-            p_dest->recvfrom = NO_TASK;
         } else { /* tell dest that it has a pending async message */
             p_dest->priv->async_pending |= (1 << priv->id);
             done = FALSE;
@@ -1015,5 +998,23 @@ void release_fpu(struct proc* p)
 
     if (*local_fpu_owner == p) {
         *local_fpu_owner = NULL;
+    }
+}
+
+static void deliver_msg(struct proc* p)
+{
+    if (copy_user_message(p->recv_msg, &p->deliver_msg)) {
+        if (p->flags & PF_MSG_FAILED) {
+            ksig_proc(p->endpoint, SIGSEGV);
+        } else {
+            mm_suspend(p, p->endpoint, p->recv_msg, sizeof(MESSAGE), TRUE,
+                       MMREQ_TYPE_DELIVERMSG);
+            p->flags |= PF_MSG_FAILED;
+        }
+    } else {
+        reset_msg(&p->deliver_msg);
+        p->flags &= ~(PF_DELIVER_MSG | PF_MSG_FAILED);
+        p->recv_msg = NULL;
+        p->recvfrom = NO_TASK;
     }
 }

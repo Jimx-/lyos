@@ -53,6 +53,8 @@
 #define PF_PROFILE_RECORDED 0x008 /* recorded in the sample buffer */
 #define PF_RECV_ASYNC       0x010 /* proc can receive async message */
 #define PF_FPU_INITIALIZED  0x020 /* proc has used FPU */
+#define PF_DELIVER_MSG      0x040 /* copy message before resuming */
+#define PF_MSG_FAILED       0x080 /* failed to deliver message */
 
 #define proc_slot(n)    ((n) + NR_TASKS)
 #define proc_addr(n)    (&proc_table[(n) + NR_TASKS])
@@ -149,6 +151,7 @@ struct proc {
 #endif
 
     MESSAGE send_msg;
+    MESSAGE deliver_msg;
     MESSAGE* recv_msg;
     MESSAGE* syscall_msg;
     int recvfrom;

@@ -58,13 +58,14 @@
 #define VMCTL_PHYS_ADDR u.m3.m3l1
 #define VMCTL_VIR_ADDR  u.m3.m3p1
 
-#define VMCTL_MMREQ_TARGET u.m3.m3i1
-#define VMCTL_MMREQ_ADDR   u.m3.m3p1
-#define VMCTL_MMREQ_LEN    u.m3.m3i2
-#define VMCTL_MMREQ_FLAGS  u.m3.m3i3
-#define VMCTL_MMREQ_CALLER u.m3.m3i4
-#define MMREQ_TYPE_SYSCALL 1
-#define MMREQ_CHECK        1
+#define VMCTL_MMREQ_TARGET    u.m3.m3i1
+#define VMCTL_MMREQ_ADDR      u.m3.m3p1
+#define VMCTL_MMREQ_LEN       u.m3.m3i2
+#define VMCTL_MMREQ_FLAGS     u.m3.m3i3
+#define VMCTL_MMREQ_CALLER    u.m3.m3i4
+#define MMREQ_TYPE_SYSCALL    1
+#define MMREQ_TYPE_DELIVERMSG 2
+#define MMREQ_CHECK           1
 
 #define UMAP_WHO     u.m3.m3i1
 #define UMAP_TYPE    u.m3.m3i2

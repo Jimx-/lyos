@@ -103,6 +103,8 @@ int sys_vmctl(MESSAGE* m, struct proc* p)
         case MMREQ_TYPE_SYSCALL:
             target->flags |= PF_RESUME_SYSCALL;
             break;
+        case MMREQ_TYPE_DELIVERMSG:
+            break;
         default:
             panic("wrong mm request type: %d", target->mm_request.type);
             break;

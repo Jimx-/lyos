@@ -135,6 +135,8 @@ u32 now();
 
 endpoint_t get_endpoint();
 
+void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
+                size_t bytes, int write, int type);
 int data_copy(endpoint_t dest_ep, void* dest_addr, endpoint_t src_ep,
               void* src_addr, int len);
 int _vir_copy(struct proc* caller, struct vir_addr* dest_addr,

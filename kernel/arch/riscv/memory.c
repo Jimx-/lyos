@@ -311,7 +311,7 @@ int arch_vmctl(MESSAGE* m, struct proc* p)
 }
 
 void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
-                void* bytes, int write, int type)
+                size_t bytes, int write, int type)
 {
     PST_SET_LOCKED(caller, PST_MMREQUEST);
 
