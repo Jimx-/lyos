@@ -1,6 +1,8 @@
 #ifndef _ARCH_PAGETABLE_H_
 #define _ARCH_PAGETABLE_H_
 
+#include <lyos/pagetable-nopud.h>
+
 #include <asm/pagetable_bits.h>
 
 #define _RISCV_PG_BASE \
@@ -57,26 +59,26 @@ static inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
     return pgd + ARCH_PDE(addr);
 }
 
-static inline int pde_present(pde_t pde)
+static inline int pude_present(pud_t pude)
 {
-    return pde_val(pde) & _RISCV_PG_PRESENT;
+    return pud_val(pude) & _RISCV_PG_PRESENT;
 }
 
-static inline int pde_none(pde_t pde) { return pde_val(pde) == 0; }
+static inline int pude_none(pud_t pude) { return pud_val(pude) == 0; }
 
-static inline int pde_bad(pde_t pde) { return !pde_present(pde); }
+static inline int pude_bad(pud_t pude) { return !pude_present(pude); }
 
-static inline void pde_clear(pde_t* pde) { *pde = __pde(0); }
+static inline void pude_clear(pud_t* pude) { *pude = __pud(0); }
 
-static inline void pde_populate(pde_t* pde, phys_bytes pmd_phys)
+static inline void pude_populate(pud_t* pude, phys_bytes pmd_phys)
 {
     unsigned long pfn = pmd_phys >> ARCH_PG_SHIFT;
-    *pde = __pde((pfn << RISCV_PG_PFN_SHIFT) | _RISCV_PG_TABLE);
+    *pude = __pud((pfn << RISCV_PG_PFN_SHIFT) | _RISCV_PG_TABLE);
 }
 
-static inline pmd_t* pmd_offset(pde_t* pmd, unsigned long addr)
+static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)
 {
-    pmd_t* vaddr = (pmd_t*)phys_to_virt((pde_val(*pmd) >> RISCV_PG_PFN_SHIFT)
+    pmd_t* vaddr = (pmd_t*)phys_to_virt((pud_val(*pmd) >> RISCV_PG_PFN_SHIFT)
                                         << ARCH_PG_SHIFT);
     return vaddr + ARCH_PMDE(addr);
 }

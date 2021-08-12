@@ -51,9 +51,6 @@ void slabfree(void* mem, int bytes);
 
 /* mm/pagetable.c */
 void pt_init();
-pmd_t* pmd_create(pde_t* pde, vir_bytes addr);
-int pt_create(pmd_t* pmde);
-pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr);
 int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
                pgprot_t prot);
 int pt_wppage(pgdir_t* pgd, vir_bytes vir_addr);

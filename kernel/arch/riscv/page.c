@@ -181,12 +181,14 @@ void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
         if (ph == 0) ph = pg_alloc_page(pk);
 
         pde_t* pde = pgd_offset(pgd, (unsigned long)vir_addr);
-        if (!pde_present(*pde)) {
+
+        pud_t* pude = pud_offset(pde, (unsigned long)vir_addr);
+        if (!pude_present(*pude)) {
             pmd_t* new_pmd = pg_alloc_pmd(pk);
-            pde_populate(pde, __pa(new_pmd));
+            pude_populate(pude, __pa(new_pmd));
         }
 
-        pmd_t* pmde = pmd_offset(pde, (unsigned long)vir_addr);
+        pmd_t* pmde = pmd_offset(pude, (unsigned long)vir_addr);
         if (!pmde_present(*pmde)) {
             pte_t* new_pt = pg_alloc_pt(pk);
             pmde_populate(pmde, __pa(new_pt));

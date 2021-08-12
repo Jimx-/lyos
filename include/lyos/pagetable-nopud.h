@@ -13,34 +13,32 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _ARCH_PAGETABLE_NOPMD_H_
-#define _ARCH_PAGETABLE_NOPMD_H_
+#ifndef _ARCH_PAGETABLE_NOPUD_H_
+#define _ARCH_PAGETABLE_NOPUD_H_
 
-#include <lyos/pagetable-nopud.h>
-
-#define __PAGETABLE_PMD_FOLDED 1
+#define __PAGETABLE_PUD_FOLDED 1
 
 typedef struct {
-    pud_t pud;
-} pmd_t;
+    pde_t pde;
+} pud_t;
 
-#define ARCH_VM_PMD_ENTRIES 1
+#define ARCH_VM_PUD_ENTRIES 1
 
-static inline int pude_none(pud_t pude) { return 0; }
-static inline int pude_bad(pud_t pude) { return 0; }
-static inline int pude_present(pud_t pude) { return 1; }
-static inline void pude_clear(pud_t* pude) {}
+static inline int pde_none(pde_t pde) { return 0; }
+static inline int pde_bad(pde_t pde) { return 0; }
+static inline int pde_present(pde_t pde) { return 1; }
+static inline void pde_clear(pde_t* pde) {}
 
-static inline void pude_populate(pud_t* pud, phys_bytes pmd_phys) {}
+static inline void pde_populate(pde_t* pde, phys_bytes pud_phys) {}
 
-static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)
+static inline pud_t* pud_offset(pde_t* pud, unsigned long addr)
 {
-    return (pmd_t*)pmd;
+    return (pud_t*)pud;
 }
 
-#define pmd_val(x) pud_val((x).pud)
-#define __pmd(x)   ((pmd_t){__pud(x)})
+#define pud_val(x) pde_val((x).pde)
+#define __pud(x)   ((pud_t){__pde(x)})
 
-#define pmd_addr_end(addr, end) (end)
+#define pud_addr_end(addr, end) (end)
 
 #endif
