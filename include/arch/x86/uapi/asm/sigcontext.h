@@ -31,6 +31,10 @@ struct sigcontext {
     __u64 mask;
     __u32 trap_style;
 };
+#elif defined(__x86_64)
+struct sigcontext {
+    __u64 mask;
+};
 #endif
 
 #endif

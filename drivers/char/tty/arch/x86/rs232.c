@@ -32,6 +32,7 @@
 #include <lyos/sysutils.h>
 #include "proto.h"
 #include "global.h"
+#include <asm/const.h>
 
 #include <libchardriver/libchardriver.h>
 

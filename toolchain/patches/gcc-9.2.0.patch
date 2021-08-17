@@ -43,7 +43,7 @@ diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
 +
 +#undef ENDFILE_SPEC
-+#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++#define ENDFILE_SPEC "%{shared:crtendS.o%s;:crtend.o%s} crtn.o%s"
 +
 +#undef  LINK_SPEC
 +#define LINK_SPEC "\

@@ -264,7 +264,7 @@ if $BUILD_NEWLIB; then
 
     # Build dynamic library with -fPIC
     pushd newlib-dynamic-$SUBARCH > /dev/null
-    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
+    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX --disable-multilib || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
 
@@ -277,7 +277,7 @@ if $BUILD_NEWLIB; then
 
     # Build static library without -fPIC
     pushd newlib-static-$SUBARCH > /dev/null
-    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX || cmd_error
+    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX --disable-multilib || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
 

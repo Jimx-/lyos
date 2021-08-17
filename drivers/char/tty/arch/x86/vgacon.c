@@ -30,6 +30,7 @@
 #include <lyos/portio.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
+#include <asm/const.h>
 #include "proto.h"
 #include "global.h"
 

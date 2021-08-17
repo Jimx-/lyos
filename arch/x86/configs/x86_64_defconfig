@@ -1,0 +1,62 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# Lyos/x86_64 0.4.1 Kernel Configuration
+#
+CONFIG_64BIT=y
+CONFIG_X86_64=y
+
+#
+# General setup
+#
+CONFIG_LOCALVERSION=""
+CONFIG_LOCALVERSION_AUTO=y
+# CONFIG_COMPRESS_NONE is not set
+CONFIG_COMPRESS_GZIP=y
+CONFIG_DEFAULT_HOSTNAME="lyos-test"
+CONFIG_LOG_BUF_SHIFT=14
+CONFIG_PROFILING=y
+
+#
+# Kernel hacking
+#
+CONFIG_DEBUG_KERNEL=y
+CONFIG_DEBUG_INFO=y
+
+#
+# Device Drivers
+#
+CONFIG_BLK_DEV=y
+CONFIG_BLK_DEV_RAM_COUNT=8
+# CONFIG_BLK_ATA_GENERIC is not set
+CONFIG_VIRTIO_BLK=y
+CONFIG_BLK_DEV_NVME=y
+CONFIG_HID_DEV=y
+# CONFIG_KEYBOARD_ATKBD is not set
+CONFIG_PCI_DEV=y
+
+#
+# Graphics support
+#
+CONFIG_DRM=y
+CONFIG_VIRTIO_GPU=y
+CONFIG_PHYS_BYTES_64BIT=y
+
+#
+# Libraries
+#
+# CONFIG_OF is not set
+CONFIG_VIRTIO=y
+
+#
+# Power management and ACPI options
+#
+CONFIG_ACPI=y
+
+#
+# Processor type and features
+#
+CONFIG_X86_LOCAL_APIC=y
+CONFIG_X86_IO_APIC=y
+CONFIG_SMP=y
+CONFIG_SMP_MAX_CPUS=8
+CONFIG_KVM_GUEST=y

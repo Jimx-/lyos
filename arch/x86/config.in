@@ -4,7 +4,7 @@
 #
 
 config 64BIT
-       bool "64-bit kernel" if ARCH = "x86_64"
+       bool "64-bit kernel" if ARCH = "x86"
        default SUBARCH = "x86_64"
     help
          Say yes to build a 64-bit kernel - formerly known as x86_64
