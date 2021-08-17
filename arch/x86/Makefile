@@ -1,16 +1,14 @@
 ASM		= nasm
-DASM	       = objdump
-
-ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf
-
-export ASMKFLAGS
+DASM		   = objdump
 
 DASMFLAGS	= -D
 
 ifeq ($(CONFIG_X86_32),y)
-       BITS := 32
+	   BITS := 32
 else
-       BITS := 64
+	   BITS := 64
 endif
 
-export BITS
+ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf$(BITS)
+
+export ASMKFLAGS BITS
