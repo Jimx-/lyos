@@ -1,6 +1,6 @@
 diff --color -rupN old/config.sub new/config.sub
 --- old/config.sub	2019-01-03 19:28:27.000000000 +0800
-+++ new/config.sub	2021-08-04 15:26:21.841287390 +0800
++++ new/config.sub	2021-08-14 14:57:51.720567756 +0800
 @@ -2,7 +2,7 @@
  # Configuration validation subroutine script.
  #   Copyright 1992-2019 Free Software Foundation, Inc.
@@ -18,9 +18,16 @@ diff --color -rupN old/config.sub new/config.sub
  	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
+diff --color -rupN old/gcc/config/i386/t-lyos64 new/gcc/config/i386/t-lyos64
+--- old/gcc/config/i386/t-lyos64	1970-01-01 08:00:00.000000000 +0800
++++ new/gcc/config/i386/t-lyos64	2021-08-14 15:03:12.140472203 +0800
+@@ -0,0 +1,3 @@
++MULTILIB_OPTIONS = m64/m32
++MULTILIB_DIRNAMES = 64 32
++MULTILIB_OSDIRNAMES = m64=../lib64:x86_64-lyos m32=../lib32:i386-lyos
 diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 --- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2021-08-04 15:26:21.841287390 +0800
++++ new/gcc/config/lyos.h	2021-08-14 14:57:51.720567756 +0800
 @@ -0,0 +1,27 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -51,7 +58,7 @@ diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +#define LIB_SPEC "%{pthread:-lpthread} %{shared:-lc} %{!shared:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
 diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2019-08-04 04:16:22.000000000 +0800
-+++ new/gcc/config.gcc	2021-08-04 15:26:21.841287390 +0800
++++ new/gcc/config.gcc	2021-08-14 15:03:47.033438613 +0800
 @@ -970,6 +970,12 @@ case ${target} in
        ;;
    esac
@@ -90,7 +97,18 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  i[34567]86-*-darwin*)
  	need_64bit_isa=yes
  	# Baseline choice for a machine that allows m64 support.
-@@ -2198,6 +2215,14 @@ microblaze*-*-elf)
+@@ -1780,6 +1797,10 @@ x86_64-*-linux* | x86_64-*-kfreebsd*-gnu
+ 	done
+ 	TM_MULTILIB_CONFIG=`echo $TM_MULTILIB_CONFIG | sed 's/^,//'`
+ 	;;
++x86_64-*-lyos*)
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h glibc-stdint.h elfos.h gnu-user.h i386/x86-64.h i386/gnu-user-common.h i386/gnu-user64.h lyos.h"
++	tmake_file="${tmake_file} i386/t-lyos64"
++	;;    
+ i[34567]86-pc-msdosdjgpp*)
+ 	xm_file=i386/xm-djgpp.h
+ 	tm_file="dbxcoff.h ${tm_file} i386/unix.h i386/bsd.h i386/gas.h i386/djgpp.h i386/djgpp-stdint.h"
+@@ -2198,6 +2219,14 @@ microblaze*-*-elf)
  	c_target_objs="${c_target_objs} microblaze-c.o"
  	cxx_target_objs="${cxx_target_objs} microblaze-c.o"
  	tmake_file="${tmake_file} microblaze/t-microblaze"
@@ -107,7 +125,7 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
 diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
 --- old/gcc/diagnostic.c	2019-01-01 20:31:55.000000000 +0800
-+++ new/gcc/diagnostic.c	2021-08-04 15:26:21.841287390 +0800
++++ new/gcc/diagnostic.c	2021-08-14 14:57:51.720567756 +0800
 @@ -35,9 +35,7 @@ along with GCC; see the file COPYING3.
  #include "selftest.h"
  #include "selftest-diagnostic.h"
@@ -121,7 +139,7 @@ diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
  # include <sys/ioctl.h>
 diff --color -rupN old/libgcc/config.host new/libgcc/config.host
 --- old/libgcc/config.host	2019-01-17 20:29:13.000000000 +0800
-+++ new/libgcc/config.host	2021-08-04 15:26:21.841287390 +0800
++++ new/libgcc/config.host	2021-08-14 15:12:15.053903478 +0800
 @@ -101,6 +101,9 @@ arc*-*-*)
  arm*-*-*)
  	cpu_type=arm
@@ -132,7 +150,18 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  avr-*-*)
  	cpu_type=avr
  	;;    
-@@ -812,6 +815,10 @@ x86_64-*-mingw*)
+@@ -686,6 +689,10 @@ x86_64-*-linux*)
+ 	tm_file="${tm_file} i386/elf-lib.h"
+ 	md_unwind_header=i386/linux-unwind.h
+ 	;;
++x86_64-*-lyos*)
++	tmake_file="$tmake_file i386/t-crtpc t-crtfm i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-dfprules"
++	extra_parts="$extra_parts crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o crtprec32.o crtprec64.o crtprec80.o crtfastmath.o"
++	;;    
+ x86_64-*-kfreebsd*-gnu)
+ 	extra_parts="$extra_parts crtprec32.o crtprec64.o crtprec80.o crtfastmath.o"
+ 	tmake_file="${tmake_file} i386/t-crtpc t-crtfm i386/t-crtstuff t-dfprules"
+@@ -812,6 +819,10 @@ x86_64-*-mingw*)
  		extra_parts="$extra_parts vtv_start.o vtv_end.o vtv_start_preinit.o vtv_end_preinit.o"
  	fi
  	;;
@@ -143,7 +172,7 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
-@@ -1187,6 +1194,10 @@ riscv*-*-freebsd*)
+@@ -1187,6 +1198,10 @@ riscv*-*-freebsd*)
  	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
  	;;
@@ -156,7 +185,7 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
 diff --color -rupN old/libstdc++-v3/configure new/libstdc++-v3/configure
 --- old/libstdc++-v3/configure	2019-07-04 05:09:13.000000000 +0800
-+++ new/libstdc++-v3/configure	2021-08-04 15:32:38.704915621 +0800
++++ new/libstdc++-v3/configure	2021-08-14 14:57:51.723901054 +0800
 @@ -15262,8 +15262,8 @@ if test "$enable_shared" = yes; then
    glibcxx_compiler_shared_flag="-D_GLIBCXX_SHARED"
  
@@ -170,7 +199,7 @@ diff --color -rupN old/libstdc++-v3/configure new/libstdc++-v3/configure
  
 diff --color -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
 --- old/libstdc++-v3/crossconfig.m4	2019-03-12 00:28:11.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2021-08-04 15:26:21.841287390 +0800
++++ new/libstdc++-v3/crossconfig.m4	2021-08-14 14:57:51.727234350 +0800
 @@ -200,6 +200,12 @@ case "${host}" in
      AC_CHECK_FUNCS(sockatmark)
      AM_ICONV

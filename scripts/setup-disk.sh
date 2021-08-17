@@ -33,6 +33,10 @@ if [ $ARCH = "i686" ]; then
     ARCH=x86
 fi
 
+if [ $ARCH = "x86_64" ]; then
+    ARCH=x86
+fi
+
 if [ $ARCH = "riscv64" ]; then
     ARCH=riscv
 fi
@@ -76,7 +80,7 @@ mount $LOOPMAP $MOUNT_POINT
 
 echo "Installing sysroot..."
 cp -rf $SRCDIR/sysroot/* $MOUNT_POINT/
-cp -rf $SRCDIR/obj/destdir.$ARCH/* $MOUNT_POINT/
+cp -rf $SRCDIR/obj/destdir.$SUBARCH/* $MOUNT_POINT/
 chown 1000:1000 $MOUNT_POINT/home/jimx
 chmod 0777 $MOUNT_POINT/tmp
 sync

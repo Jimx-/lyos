@@ -32,11 +32,20 @@ if [ $ARCH = "i686" ]; then
     ARCH=x86
 fi
 
+if [ $ARCH = "x86_64" ]; then
+    ARCH=x86
+fi
+
+if [ $ARCH = "riscv64" ]; then
+    ARCH=riscv
+fi
+
 export SUBARCH=$SUBARCH ARCH=$ARCH
 
 DISK=lyos-disk.img
 SRCDIR=./
 MOUNT_POINT=/mnt/lyos-root
+DESTDIR=obj/destdir.$SUBARCH
 
 source $SRCDIR/.config
 
@@ -58,22 +67,22 @@ else
     cp -r $SRCDIR/arch/x86/lyos.elf /$MOUNT_POINT/boot/
 fi
 
-#cp -rf obj/destdir.$ARCH/boot/* /$MOUNT_POINT/boot/
-#cp -rf obj/destdir.$ARCH/bin/profile /$MOUNT_POINT/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/bash /$MOUNT_POINT/usr/bin/bash
-cp -rf obj/destdir.$ARCH/bin/* /$MOUNT_POINT/bin/
-#cp -rf obj/destdir.$ARCH/sbin/procfs /$MOUNT_POINT/sbin/
-cp -rf obj/destdir.$ARCH/usr/bin/getty /$MOUNT_POINT/usr/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/login /$MOUNT_POINT/usr/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/vim /$MOUNT_POINT/usr/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/strace /$MOUNT_POINT/usr/bin/
-cp -rf obj/destdir.$ARCH/usr/bin/lydm /$MOUNT_POINT/usr/bin/
-#cp -rf obj/destdir.$ARCH/usr/ /$MOUNT_POINT/
-cp -rf obj/destdir.$ARCH/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
-cp -rf obj/destdir.$ARCH/lib/ld-lyos.so /$MOUNT_POINT/lib/
-cp -rf obj/destdir.$ARCH/usr/lib/libEGL.so.1.0.0 /$MOUNT_POINT/usr/lib/
-cp -rf obj/destdir.$ARCH/usr/lib/libgbm.so.1.0.0 /$MOUNT_POINT/usr/lib/
-cp -rf obj/destdir.$ARCH/usr/lib/dri/* /$MOUNT_POINT/usr/lib/dri/
+#cp -rf $DESTDIR/boot/* /$MOUNT_POINT/boot/
+#cp -rf $DESTDIR/bin/profile /$MOUNT_POINT/bin/
+cp -rf $DESTDIR/usr/bin/bash /$MOUNT_POINT/usr/bin/bash
+cp -rf $DESTDIR/bin/* /$MOUNT_POINT/bin/
+#cp -rf $DESTDIR/sbin/procfs /$MOUNT_POINT/sbin/
+cp -rf $DESTDIR/usr/bin/getty /$MOUNT_POINT/usr/bin/
+cp -rf $DESTDIR/usr/bin/login /$MOUNT_POINT/usr/bin/
+cp -rf $DESTDIR/usr/bin/vim /$MOUNT_POINT/usr/bin/
+cp -rf $DESTDIR/usr/bin/strace /$MOUNT_POINT/usr/bin/
+cp -rf $DESTDIR/usr/bin/lydm /$MOUNT_POINT/usr/bin/
+#cp -rf $DESTDIR/usr/ /$MOUNT_POINT/
+cp -rf $DESTDIR/usr/lib/libc.so /$MOUNT_POINT/usr/lib/
+cp -rf $DESTDIR/lib/ld-lyos.so /$MOUNT_POINT/lib/
+cp -rf $DESTDIR/usr/lib/libEGL.so.1.0.0 /$MOUNT_POINT/usr/lib/
+cp -rf $DESTDIR/usr/lib/libgbm.so.1.0.0 /$MOUNT_POINT/usr/lib/
+cp -rf $DESTDIR/usr/lib/dri/* /$MOUNT_POINT/usr/lib/dri/
 cp -rf sysroot/etc/* /$MOUNT_POINT/etc/
 # cp -rf /$MOUNT_POINT/home/jimx/profile.out .
 #cp -rf sysroot/boot/* /$MOUNT_POINT/boot/

@@ -23,6 +23,10 @@ ifeq ($(ARCH),i686)
 	ARCH = x86
 endif
 
+ifeq ($(ARCH),x86_64)
+	ARCH = x86
+endif
+
 ifeq ($(ARCH),arm)
 	SUBARCH = arm
 endif
@@ -58,7 +62,7 @@ ARCHDIR = $(SRCDIR)/arch/$(ARCH)
 ARCHINC = $(ARCHDIR)/include
 ARCHLIB = $(ARCHDIR)/lib
 OBJDIR ?= $(SRCDIR)/obj
-DESTDIR	?= $(OBJDIR)/destdir.$(ARCH)
+DESTDIR	?= $(OBJDIR)/destdir.$(SUBARCH)
 LIBOUTDIR = $(DESTDIR)/lib
 PATH := $(SRCDIR)/toolchain/local/bin:$(PATH)
 export SRCDIR INCDIR SYSINCDIR ARCHINCDIR LIBDIR ARCHDIR DESTDIR BINDIR LIBOUTDIR ARCHINC ARCHLIB PATH

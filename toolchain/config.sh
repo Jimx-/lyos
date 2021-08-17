@@ -28,6 +28,10 @@ if [ $ARCH = "i686" ]; then
     ARCH=x86
 fi
 
+if [ $ARCH = "x86_64" ]; then
+    ARCH=x86
+fi
+
 if [ $ARCH = "riscv64" ]; then
     ARCH=riscv
 fi
@@ -37,7 +41,7 @@ export SUBARCH=$SUBARCH ARCH=$ARCH
 PREFIX=$DIR/local
 CROSSPREFIX=/usr
 
-DESTDIR=`readlink -f $DIR/../obj/destdir.$ARCH/`
+DESTDIR=`readlink -f $DIR/../obj/destdir.$SUBARCH/`
 export SYSROOT=$DESTDIR
 
 TARGET=$SUBARCH-elf-lyos
