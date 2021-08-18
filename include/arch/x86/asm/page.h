@@ -16,8 +16,14 @@
 #ifndef _ARCH_PAGE_H_
 #define _ARCH_PAGE_H_
 
-#define LOWMEM_END    0x30000000
-#define KERNEL_VMA    0xc0000000
+#define LOWMEM_END 0x30000000
+
+#ifdef CONFIG_X86_32
+#define KERNEL_VMA 0xc0000000
+#else
+#define KERNEL_VMA 0xffffffff80000000
+#endif
+
 #define VMALLOC_START 0x80000000
 #define VMALLOC_END                                                          \
     0xb0000000 /* region where MM map physical memory into its address space \
@@ -25,6 +31,11 @@
 #define PKMAP_START  (KERNEL_VMA + LOWMEM_END)
 #define PKMAP_END    (PKMAP_START + 0x400000) /* 4 MB */
 #define VM_STACK_TOP KERNEL_VMA
+
+#define I386_VM_DIR_ENTRIES 1024
+#define I386_VM_PT_ENTRIES  1024
+
+#ifndef __ASSEMBLY__
 
 typedef struct {
     unsigned long pde;
@@ -47,12 +58,6 @@ typedef struct {
 #define pgprot_val(x) ((x).pgprot)
 #define __pgprot(x)   ((pgprot_t){(x)})
 
-#define I386_VM_DIR_ENTRIES 1024
-#define I386_VM_PT_ENTRIES  1024
-
-#define I386_VM_ADDR_MASK_4MB   0xffc00000
-#define I386_VM_OFFSET_MASK_4MB 0x003fffff
-
 /* struct page_directory */
 typedef struct {
     /* physical address of page dir */
@@ -63,6 +68,11 @@ typedef struct {
     /* virtual address of all page tables */
     pte_t* vir_pts[I386_VM_DIR_ENTRIES];
 } pgdir_t;
+
+#endif
+
+#define I386_VM_ADDR_MASK_4MB   0xffc00000
+#define I386_VM_OFFSET_MASK_4MB 0x003fffff
 
 /* size of page directory */
 #define I386_PGD_SHIFT (22)
@@ -152,12 +162,16 @@ typedef struct {
 #define __pa(x) ((phys_bytes)(x)-_PAGE_OFFSET)
 #endif
 
+#ifndef __ASSEMBLY__
+
 static inline unsigned long virt_to_phys(void* x) { return __pa(x); }
 
 #ifdef __kernel__
 static inline void* phys_to_virt(unsigned long x) { return __va(x); }
 #else
 extern void* phys_to_virt(unsigned long x);
+#endif
+
 #endif
 
 #endif

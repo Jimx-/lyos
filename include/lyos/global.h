@@ -19,7 +19,7 @@
 #define EXTERN
 #endif
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64)
 #include <asm/page.h>
 #include <asm/const.h>
 #endif
@@ -37,7 +37,7 @@
 EXTERN int jiffies;
 extern struct clocksource* curr_clocksource;
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64)
 EXTERN struct gate idt[IDT_SIZE];
 EXTERN pde_t* initial_pgd;
 EXTERN void* lapic_addr;

@@ -18,7 +18,7 @@
 ; 导入全局变量
 extern	disp_pos
 
-
+bits 32
 [SECTION .text]
 
 ; 导出函数

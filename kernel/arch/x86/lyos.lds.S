@@ -1,35 +1,46 @@
-OUTPUT_ARCH(i386)
+    #include <lyos/config.h>
+    #include <asm/page.h>
+
+    #ifdef CONFIG_X86_32
+    #undef i386
+    OUTPUT_ARCH(i386)
+    #else
+    OUTPUT_ARCH(i386:x86-64)
+    #endif
+
+    #define LOAD_PHYS_ADDR 0x100000
+
 ENTRY (_start)
 SECTIONS{
-    . = 0xC0100000;
+    . = KERNEL_VMA + LOAD_PHYS_ADDR;
 
-    .text : AT(ADDR(.text) - 0xC0000000) {
+    .text : AT(ADDR(.text) - KERNEL_VMA) {
         _text = .;
             *(.text)
         _etext = .;
     }
 
     . = ALIGN(4096);
-    .rodata : AT(ADDR(.rodata) - 0xC0000000) {
+    .rodata : AT(ADDR(.rodata) - KERNEL_VMA) {
         *(.rodata)
     }
 
     . = ALIGN(4096);
-    .data : AT(ADDR(.data) - 0xC0000000) {
+    .data : AT(ADDR(.data) - KERNEL_VMA) {
         _data = .;
             *(.data)
         _edata = .;
     }
 
     . = ALIGN(4096);
-    .data.cpulocals : AT(ADDR(.data.cpulocals) - 0xC0000000) {
+    .data.cpulocals : AT(ADDR(.data.cpulocals) - KERNEL_VMA) {
         _cpulocals_start = .;
             *(.data.cpulocals)
         _cpulocals_end = .;
     }
 
     . = ALIGN(4096);
-    .bss : AT(ADDR(.bss) - 0xC0000000) {
+    .bss : AT(ADDR(.bss) - KERNEL_VMA) {
         _bss = .;
             *(COMMON)
             *(.bss)
@@ -37,10 +48,11 @@ SECTIONS{
     }
 
     . = ALIGN(4096);
-    .usermapped : AT(ADDR(.usermapped) - 0xC0000000) {
+    .usermapped : AT(ADDR(.usermapped) - KERNEL_VMA) {
         _usermapped = .;
             *(.usermapped)
-        . = ALIGN(4096); _eusermapped = .;
+        . = ALIGN(4096);
+        _eusermapped = .;
     }
 
     _end = .;

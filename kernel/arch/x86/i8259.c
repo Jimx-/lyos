@@ -24,6 +24,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <lyos/interrupt.h>
+#include <asm/const.h>
 
 /* 8259A interrupt controller ports. */
 #define INT_M_CTL                                              \

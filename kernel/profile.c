@@ -103,8 +103,10 @@ static int profile_clock_handler(irq_hook_t* hook)
     profile_sample(p,
 #ifdef __i386__
                    (void*)p->regs.eip
-#elif defined(__riscv)
+#elif defined(__x86_64)
                    0
+#elif defined(__riscv)
+                   (void*)p->regs.sepc
 #endif
     );
 
