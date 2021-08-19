@@ -16,7 +16,9 @@
 #ifndef _ARCH_PAGETABLE_H_
 #define _ARCH_PAGETABLE_H_
 
+#if CONFIG_PGTABLE_LEVELS < 3
 #include <lyos/pagetable-nopmd.h>
+#endif
 
 static inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)
 {
@@ -33,10 +35,65 @@ static inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
     return pgd + ARCH_PDE(addr);
 }
 
-static inline int pmde_none(pmd_t pmde)
+#if CONFIG_PGTABLE_LEVELS > 3
+static inline int pde_present(pde_t pde)
 {
-    return !(pmd_val(pmde) & ARCH_PG_PRESENT);
+    return pde_val(pde) & ARCH_PG_PRESENT;
 }
+
+static inline int pde_none(pde_t pde) { return pde_val(pde) == 0; }
+
+static inline int pde_bad(pde_t pde)
+{
+    unsigned long ignore_flags = ARCH_PG_USER | ARCH_PG_PRESENT | ARCH_PG_RW;
+    return ((pde_val(pde) & ~ARCH_PG_MASK) & ~ignore_flags) != 0;
+}
+
+static inline void pde_clear(pde_t* pde) { *pde = __pde(0); }
+
+static inline void pde_populate(pde_t* pde, unsigned long pud_phys)
+{
+    *pde = __pde((pud_phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
+                 ARCH_PG_USER);
+}
+
+static inline pud_t* pud_offset(pde_t* pud, unsigned long addr)
+{
+    pud_t* vaddr = (pud_t*)phys_to_virt(pde_val(*pud) & ARCH_PG_MASK);
+    return vaddr + ARCH_PUDE(addr);
+}
+#endif
+
+#if CONFIG_PGTABLE_LEVELS > 2
+static inline int pude_present(pud_t pude)
+{
+    return pud_val(pude) & ARCH_PG_PRESENT;
+}
+
+static inline int pude_none(pud_t pude) { return pud_val(pude) == 0; }
+
+static inline int pude_bad(pud_t pude)
+{
+    unsigned long ignore_flags = ARCH_PG_USER | ARCH_PG_PRESENT | ARCH_PG_RW;
+    return ((pud_val(pude) & ~ARCH_PG_MASK) & ~ignore_flags) != 0;
+}
+
+static inline void pude_clear(pud_t* pude) { *pude = __pud(0); }
+
+static inline void pude_populate(pud_t* pude, unsigned long pmd_phys)
+{
+    *pude = __pud((pmd_phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
+                  ARCH_PG_USER);
+}
+
+static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)
+{
+    pmd_t* vaddr = (pmd_t*)phys_to_virt(pud_val(*pmd) & ARCH_PG_MASK);
+    return vaddr + ARCH_PMDE(addr);
+}
+#endif
+
+static inline int pmde_none(pmd_t pmde) { return pmd_val(pmde) == 0; }
 
 static inline int pmde_bad(pmd_t pmde)
 {
@@ -48,14 +105,11 @@ static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
 static inline void pmde_populate(pmd_t* pmde, unsigned long pt_phys)
 {
-    *pmde = __pmd((pt_phys & I386_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
+    *pmde = __pmd((pt_phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
                   ARCH_PG_USER);
 }
 
-static inline int pte_none(pte_t pte)
-{
-    return !(pte_val(pte) & ARCH_PG_PRESENT);
-}
+static inline int pte_none(pte_t pte) { return pte_val(pte) == 0; }
 
 static inline int pte_present(pte_t pte)
 {
@@ -73,6 +127,14 @@ static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
         vir_bytes __boundary = ((addr) + ARCH_PGD_SIZE) & ARCH_PGD_MASK; \
         (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
     })
+
+#ifndef pud_addr_end
+#define pud_addr_end(addr, end)                                          \
+    ({                                                                   \
+        vir_bytes __boundary = ((addr) + ARCH_PUD_SIZE) & ARCH_PUD_MASK; \
+        (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
+    })
+#endif
 
 #ifndef pmd_addr_end
 #define pmd_addr_end(addr, end)                                          \

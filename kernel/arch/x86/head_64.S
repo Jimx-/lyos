@@ -86,7 +86,6 @@ startup_64:
 
     pop %rdi
     pop %rsi
-
     callq cstart
 
     jmp kernel_main

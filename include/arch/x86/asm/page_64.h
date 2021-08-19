@@ -26,4 +26,13 @@
 #define ARCH_VM_PMD_ENTRIES 512
 #define ARCH_VM_PT_ENTRIES  512
 
+#define ARCH_PDE(x) \
+    (((unsigned long)(x) >> ARCH_PGD_SHIFT) & (ARCH_VM_DIR_ENTRIES - 1))
+#define ARCH_PUDE(x) \
+    (((unsigned long)(x) >> ARCH_PUD_SHIFT) & (ARCH_VM_PUD_ENTRIES - 1))
+#define ARCH_PMDE(x) \
+    (((unsigned long)(x) >> ARCH_PMD_SHIFT) & (ARCH_VM_PMD_ENTRIES - 1))
+#define ARCH_PTE(x) \
+    (((unsigned long)(x) >> ARCH_PG_SHIFT) & (ARCH_VM_PT_ENTRIES - 1))
+
 #endif

@@ -38,6 +38,24 @@ typedef struct {
     unsigned long pde;
 } pde_t;
 
+#if CONFIG_PGTABLE_LEVELS > 3
+typedef struct {
+    unsigned long pud;
+} pud_t;
+
+#define pud_val(x) ((x).pud)
+#define __pud(x)   ((pud_t){(x)})
+#endif
+
+#if CONFIG_PGTABLE_LEVELS > 2
+typedef struct {
+    unsigned long pmd;
+} pmd_t;
+
+#define pmd_val(x) ((x).pmd)
+#define __pmd(x)   ((pmd_t){(x)})
+#endif
+
 typedef struct {
     unsigned long pte;
 } pte_t;
@@ -69,7 +87,11 @@ typedef struct {
 #define I386_VM_OFFSET_MASK_4MB 0x003fffff
 
 /* size of a big page */
+#if CONFIG_X86_32
 #define PG_BIG_SIZE I386_PGD_SIZE
+#else
+#define PG_BIG_SIZE ARCH_PMD_SIZE
+#endif
 
 #define I386_PG_PRESENT 0x001
 #define I386_PG_RO      0x000

@@ -43,7 +43,7 @@ SECTIONS{
     }
 
     . = ALIGN(4096);
-    .bss : AT(ADDR(.bss) - KERNEL_VMA) ALIGN(4096) {
+    .bss : AT(ADDR(.bss) - KERNEL_VMA) {
         _bss = .;
             *(COMMON)
             *(.bss)
