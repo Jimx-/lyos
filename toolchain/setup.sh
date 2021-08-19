@@ -178,7 +178,7 @@ if $BUILD_BINUTILS; then
     unset PKG_CONFIG_LIBDIR
 
     pushd binutils-$SUBARCH
-    $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror || cmd_error
+    $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror --enable-separate-code || cmd_error
     make -j$PARALLELISM || cmd_error
     make install || cmd_error
     popd
