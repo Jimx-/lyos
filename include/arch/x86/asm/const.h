@@ -58,7 +58,8 @@ extern u32 k_stacks_start, k_stacks_end;
 #define INTEL_MSR_ERFEVTSEL_INT_EN               (1 << 20)
 #define INTEL_MSR_ERFEVTSEL_EN                   (1 << 22)
 
-#define AMD_EFER_SCE (1L << 0)  /* SYSCALL/SYSRET enabled */
+#define AMD_EFER_SCE (1 << 0)   /* SYSCALL/SYSRET enabled */
+#define AMD_EFER_LME (1 << 8)   /* Long mode enabled */
 #define AMD_MSR_EFER 0xC0000080 /* extended features msr */
 #define AMD_MSR_STAR 0xC0000081 /* SYSCALL params msr */
 

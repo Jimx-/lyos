@@ -380,10 +380,6 @@ int pgd_new(pgdir_t* pgd)
         pg_dir[i] = __pde(0);
     }
 
-    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        pgd->vir_pts[i] = NULL;
-    }
-
     pgd_mapkernel(pgd);
     return 0;
 }

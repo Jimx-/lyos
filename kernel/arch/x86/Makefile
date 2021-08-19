@@ -1,8 +1,8 @@
-OBJS-$(CONFIG_X86_32) = gate.o
+OBJS-$(CONFIG_X86_32) = kernel.o gate.o
 
-OBJS-$(CONFIG_X86_64) = gate_64.o
+OBJS-$(CONFIG_X86_64) = head_64.o gate_64.o
 
-KERNELOBJS	= $(OBJS-y) kernel.o kliba.o i8259.o start.o protect.o apic.o acpi.o \
+KERNELOBJS	= $(OBJS-y) kliba.o i8259.o start.o protect.o apic.o acpi.o \
 				system.o direct_tty.o page.o memory.o clock.o sys_sportio.o \
 				apic_asm.o fpu.o hpet.o tsc.o watchdog.o apic_flat.o x2apic_phys.o \
 				setup_cpulocals.o tls.o
@@ -33,6 +33,10 @@ $(ARCHKERNEL): $(KERNELOBJS)
 %.o : %.asm
 	@echo -e '\tASM\tkernel/arch/x86/$@'
 	@$(ASM) $(ASMKFLAGS) -o $@ $<
+
+%.o : %.S
+	@echo -e '\tAS\tkernel/arch/x86/$@'
+	@$(CC) $(CFLAGS) -c -D__ASSEMBLY__ -o $@ $<
 
 %.o: %.c
 	@echo -e '\tCC\tkernel/arch/x86/$@'

@@ -32,9 +32,6 @@
 #define PKMAP_END    (PKMAP_START + 0x400000) /* 4 MB */
 #define VM_STACK_TOP KERNEL_VMA
 
-#define I386_VM_DIR_ENTRIES 1024
-#define I386_VM_PT_ENTRIES  1024
-
 #ifndef __ASSEMBLY__
 
 typedef struct {
@@ -64,25 +61,12 @@ typedef struct {
     phys_bytes phys_addr;
     /* virtual address of page dir */
     pde_t* vir_addr;
-
-    /* virtual address of all page tables */
-    pte_t* vir_pts[I386_VM_DIR_ENTRIES];
 } pgdir_t;
 
 #endif
 
 #define I386_VM_ADDR_MASK_4MB   0xffc00000
 #define I386_VM_OFFSET_MASK_4MB 0x003fffff
-
-/* size of page directory */
-#define I386_PGD_SHIFT (22)
-#define I386_PGD_SIZE  (1UL << I386_PGD_SHIFT)
-#define I386_PGD_MASK  (~(I386_PGD_SIZE - 1))
-
-/* size of a virtual page */
-#define I386_PG_SHIFT (12)
-#define I386_PG_SIZE  (1UL << I386_PG_SHIFT)
-#define I386_PG_MASK  (~(I386_PG_SIZE - 1))
 
 /* size of a big page */
 #define PG_BIG_SIZE I386_PGD_SIZE
@@ -125,28 +109,13 @@ typedef struct {
 #define __P110 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RW)
 #define __P111 __pgprot(I386_PG_PRESENT | I386_PG_USER | I386_PG_RW)
 
-#define ARCH_PDE_PRESENT I386_PG_PRESENT
-#define ARCH_PDE_RW      I386_PG_RW
-#define ARCH_PDE_USER    I386_PG_USER
-
-#define ARCH_VM_DIR_ENTRIES I386_VM_DIR_ENTRIES
-#define ARCH_VM_PT_ENTRIES  I386_VM_PT_ENTRIES
-#define ARCH_VM_OFFSET_MASK I386_VM_OFFSET_MASK
-
-#define ARCH_PDE(x) ((unsigned long)(x) >> I386_PGD_SHIFT & 0x03FF)
-#define ARCH_PTE(x) ((unsigned long)(x) >> I386_PG_SHIFT & 0x03FF)
-
-#define ARCH_VM_ADDRESS(pde, pte, offset) \
-    ((pde << I386_PGD_SHIFT) | (pte << I386_PG_SHIFT) | offset)
-
-#define ARCH_PGD_SIZE  I386_PGD_SIZE
-#define ARCH_PGD_SHIFT I386_PGD_SHIFT
-#define ARCH_PGD_MASK  I386_PGD_MASK
-
-#define ARCH_PG_SIZE       I386_PG_SIZE
-#define ARCH_PG_SHIFT      I386_PG_SHIFT
-#define ARCH_PG_MASK       I386_PG_MASK
 #define ARCH_BIG_PAGE_SIZE PG_BIG_SIZE
+
+#if CONFIG_X86_32
+#include <asm/page_32.h>
+#else
+#include <asm/page_64.h>
+#endif
 
 #ifdef __kernel__
 #define _PAGE_OFFSET KERNEL_VMA

@@ -8,14 +8,17 @@
     OUTPUT_ARCH(i386:x86-64)
     #endif
 
-    #define LOAD_PHYS_ADDR 0x100000
-
 ENTRY (_start)
+
+    #define LOAD_PHYS_ADDR  1M
+
 SECTIONS{
     . = KERNEL_VMA + LOAD_PHYS_ADDR;
 
     .text : AT(ADDR(.text) - KERNEL_VMA) {
         _text = .;
+            KEEP(*(.multiboot))
+            *(.head.text)
             *(.text)
         _etext = .;
     }
@@ -40,7 +43,7 @@ SECTIONS{
     }
 
     . = ALIGN(4096);
-    .bss : AT(ADDR(.bss) - KERNEL_VMA) {
+    .bss : AT(ADDR(.bss) - KERNEL_VMA) ALIGN(4096) {
         _bss = .;
             *(COMMON)
             *(.bss)
