@@ -376,18 +376,6 @@ halt_cpu:
     hlt
     ret
 
-enable_paging:
-    mov	eax, cr0
-    or	eax, 80000000h
-    mov	cr0, eax
-
-    lea ecx, [paging_enabled]
-    jmp ecx				; jump!
-paging_enabled:
-    nop
-
-    ret
-
 read_cr0:
     push ebp
     mov ebp, esp

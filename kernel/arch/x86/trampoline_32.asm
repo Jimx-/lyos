@@ -1,37 +1,82 @@
-;    This file is part of Lyos.
-;
-;    Lyos is free software: you can redistribute it and/or modify
-;    it under the terms of the GNU General Public License as published by
-;    the Free Software Foundation, either version 3 of the License, or
-;    (at your option) any later version.
-
-;    Lyos is distributed in the hope that it will be useful,
-;    but WITHOUT ANY WARRANTY; without even the implied warranty of
-;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;    GNU General Public License for more details.
-;
-;    You should have received a copy of the GNU General Public License
-;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>.
-
 %include "sconst.inc"
 
-extern  load_prot_selectors
-extern  smp_boot_ap
+global trampoline
+global __ap_id
+global __ap_pgd
+global __ap_gdt
+global __ap_idt
+global __ap_gdt_table
+global __ap_idt_table
+global __trampoline_end
 
 extern StackTop
-bits 32
+extern load_prot_selectors
+extern smp_boot_ap
 
-global trampoline_32
+bits 16
 
-[section .text]	; code is here
-ALIGN 4
+[section .text]
 
+ALIGN 0x1000
+
+trampoline:
+    cli
+
+    mov ax, cs
+    mov ds, ax
+
+    lgdt [__ap_gdt - trampoline]
+    lidt [__ap_idt - trampoline]
+
+    ; switch to protected mode
+    mov eax, cr0
+    or al, 1
+    mov cr0, eax
+
+    mov eax, cr4
+    or  eax, I386_CR4_PSE	; enable big page
+    mov cr4, eax
+
+    ; set cr3
+    mov eax, [__ap_pgd - trampoline]
+    mov cr3, eax
+
+    ; enable paging
+    mov	eax, cr0
+    or	eax, I386_CR0_PG
+    or  eax, I386_CR0_WP
+    mov	cr0, eax
+
+    mov eax, cr4
+    or  eax, I386_CR4_PGE	; enable big page
+    mov cr4, eax
+
+    jmp dword SELECTOR_KERNEL_CS:trampoline_32
+
+    bits 32
+    ALIGN 4
 trampoline_32:
-	mov ax, SELECTOR_KERNEL_DS
-	mov ds, ax
-	mov ss, ax
-	mov esp, StackTop - 4
+    mov ax, SELECTOR_KERNEL_DS
+    mov ds, ax
+    mov ss, ax
+    mov esp, StackTop - 4
 
-	call load_prot_selectors
-	jmp smp_boot_ap
-	hlt
+    call load_prot_selectors
+    jmp smp_boot_ap
+    hlt
+
+ALIGN 4
+__ap_id:
+    dd	0
+__ap_pgd:
+    dd      0
+__ap_gdt:
+    dq	0
+__ap_idt:
+    dq      0
+__ap_gdt_table:
+    times 128 db 0
+__ap_idt_table:
+    times 256 db 0
+ALIGN 0x1000
+__trampoline_end:

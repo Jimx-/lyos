@@ -1,5 +1,6 @@
     #include <asm/const.h>
     #include <asm/page.h>
+    #include <lyos/config.h>
 
     .section .multiboot
 
@@ -102,6 +103,7 @@ startup_64:
     .endr
 
     .align 0x1000
+    .global init_top_pgt
 init_top_pgt:
     .quad level3_ident_pgt - KERNEL_VMA + 0x07 /* PG_PRESENT | PG_RW | PG_USER */
     .fill 510,8,0
@@ -145,7 +147,13 @@ gdt_base:
 gdt_end:
 
     .section .bss
+    .global StackTop
+    .global k_stacks_start
+
     .align 0x1000
 StackSpace:
     .skip K_STACK_SIZE
 StackTop:
+k_stacks_start:
+    .skip 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
+k_stacks_end:
