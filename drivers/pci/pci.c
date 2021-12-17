@@ -324,7 +324,7 @@ static int record_bar(int devind, int bar_nr, int last)
 
             width++;
             bar2 = pci_read_attr_u32(devind, reg + 4);
-            base = ((unsigned long)bar2 << 32) | (bar & PCI_BAR_MEM_MASK);
+            base = ((u64)bar2 << 32) | (bar & PCI_BAR_MEM_MASK);
 
             pci_write_attr_u32(devind, reg, 0xffffffff);
             pci_write_attr_u32(devind, reg + 4, 0xffffffff);
@@ -333,7 +333,7 @@ static int record_bar(int devind, int bar_nr, int last)
             pci_write_attr_u32(devind, reg, bar);
             pci_write_attr_u32(devind, reg + 4, bar2);
 
-            size = ((unsigned long)mask2 << 32) | (mask & PCI_BAR_MEM_MASK);
+            size = ((u64)mask2 << 32) | (mask & PCI_BAR_MEM_MASK);
             size = ~size + 1;
 
             break;
@@ -358,7 +358,7 @@ static int record_bar(int devind, int bar_nr, int last)
         allocate_bar(bus, flags, size, &pci_base, &host_base);
         pci_write_attr_u32(devind, reg, (u32)pci_base);
         if (width > 1)
-            pci_write_attr_u32(devind, reg + 4, (u32)(pci_base >> 32));
+            pci_write_attr_u32(devind, reg + 4, (u32)((u64)pci_base >> 32));
         pci_read_attr_u32(devind, reg);
 
         cmd = pci_read_attr_u16(devind, PCI_CR);
