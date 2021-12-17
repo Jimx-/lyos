@@ -109,6 +109,9 @@ int main(int argc, char* argv[])
         if (progname == NULL) die(argv[0], "absolute path required");
         progname++;
 
+        up_req.progname = progname;
+        up_req.prognamelen = strlen(progname);
+
         if (!config_path) {
             sprintf(config_dfl, "/etc/system/%s.conf", progname);
             config_path = config_dfl;
@@ -125,8 +128,6 @@ int main(int argc, char* argv[])
 
         up_req.cmdline = cmdline;
         up_req.cmdlen = strlen(cmdline);
-        up_req.progname = progname;
-        up_req.prognamelen = strlen(progname);
 
         if (req_label) {
             up_req.label = req_label;

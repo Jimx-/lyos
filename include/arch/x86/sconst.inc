@@ -63,6 +63,8 @@ SELECTOR_USER_DS	equ		0x20
 SELECTOR_CPULOCALS	equ		0x30
 
 K_STACK_SIZE	equ	0x1000
+X86_STACK_TOP_RESERVED equ 8 ; Must be the same as in `asm/const.h'
+
 CONFIG_SMP_MAX_CPUS	equ	8
 
 ; Kernel trap style

@@ -21,22 +21,22 @@ global _cpuid
 ; void _cpuid(u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx);
 
 _cpuid:
-    push rbp
     push rbx
 
-    mov rax, [rdi]
-    mov rbx, [rsi]
-    mov rcx, [rdx]
-    mov rdx, [rcx]
+    mov r10, rdx
+    mov r11, rcx
+
+    mov eax, [rdi]
+    mov ebx, [rsi]
+    mov ecx, [r10]
+    mov edx, [r11]
 
 db 0x0F, 0xA2
 
-    mov [rdi], rax
-    mov [rsi], rbx
-    mov [rdx], rcx
-    mov [rcx], rdx
+    mov [rdi], eax
+    mov [rsi], ebx
+    mov [r10], ecx
+    mov [r11], edx
 
     pop rbx
-    pop rbp
-
     ret

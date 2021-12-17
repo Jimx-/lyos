@@ -101,7 +101,7 @@ void smp_init()
     bsp_lapic_id = *(volatile u32*)(lapic_addr + LAPIC_ID);
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
 
-    init_tss(bsp_cpu_id, (u32)get_k_stack_top(bsp_cpu_id));
+    init_tss(bsp_cpu_id, get_k_stack_top(bsp_cpu_id));
 
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");
@@ -231,7 +231,7 @@ static void ap_finish_booting()
 
 void smp_boot_ap()
 {
-    init_tss(__ap_id, (u32)get_k_stack_top(__ap_id));
+    init_tss(__ap_id, get_k_stack_top(__ap_id));
     load_prot_selectors(__ap_id);
 
     switch_k_stack((char*)get_k_stack_top(__ap_id) - X86_STACK_TOP_RESERVED,

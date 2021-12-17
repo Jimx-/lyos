@@ -1,6 +1,7 @@
+    #include <lyos/config.h>
     #include <asm/const.h>
     #include <asm/page.h>
-    #include <lyos/config.h>
+    #include <asm/protect.h>
 
     .section .multiboot
 
@@ -32,7 +33,7 @@ multiboot_header:
     .global _start
     .type _start, @function
 _start:
-    mov $StackTop - KERNEL_VMA, %esp
+    mov $StackTop - KERNEL_VMA - 16, %esp
 
     /* Save Multiboot parameters */
     pushl $0
@@ -60,7 +61,7 @@ _start:
     mov %eax, %cr0
 
     lgdt gdtr - KERNEL_VMA
-    ljmp $0x08, $long_mode_enabled - KERNEL_VMA
+    ljmp $SELECTOR_KERNEL_CS, $long_mode_enabled - KERNEL_VMA
 
     .code64
     .align 8
@@ -68,7 +69,7 @@ _start:
 
 long_mode_enabled:
     cli
-    mov $0x10, %ax
+    mov $SELECTOR_KERNEL_DS, %ax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %fs
@@ -130,19 +131,26 @@ gdtr:
 gdt_base:
     /* Null */
     .quad 0
-    /* Code */
-    .word 0
+    /* Code32 */
+    .word 0xffff
     .word 0
     .byte 0
     .byte 0x9a
-    .byte 0x20
+    .byte 0xcf
+    .byte 0
+    /* Code */
+    .word 0xffff
+    .word 0
+    .byte 0
+    .byte 0x9a
+    .byte 0xaf
     .byte 0
     /*  Data */
     .word 0xffff
     .word 0
     .byte 0
     .byte 0x92
-    .byte 0
+    .byte 0xcf
     .byte 0
 gdt_end:
 

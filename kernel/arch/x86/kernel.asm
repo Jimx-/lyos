@@ -145,7 +145,7 @@ _start:				; entry point
     jmp ecx				; jump!
 paging_enabled:
     ; set stack
-    mov	esp, StackTop	; stack is in section bss
+    mov	esp, StackTop - X86_STACK_TOP_RESERVED	; stack is in section bss
 
     ; Multiboot information
     push eax

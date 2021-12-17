@@ -39,7 +39,7 @@ extern u32 StackTop;
 DEFINE_CPULOCAL(struct gdt_page, gdt_page)
 __attribute__((aligned(ARCH_PG_SIZE)));
 
-u32 percpu_kstack[CONFIG_SMP_MAX_CPUS];
+vir_bytes percpu_kstack[CONFIG_SMP_MAX_CPUS];
 
 int syscall_style = 0;
 
@@ -144,19 +144,33 @@ void init_prot()
     /* setup gdt */
     gdt = get_cpu_gdt(booting_cpu);
     init_desc(&gdt[0], 0, 0, 0);
+
+#ifdef CONFIG_X86_32 /* 32-bit: */
     init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR | DA_32 | DA_LIMIT_4K);
     init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW | DA_32 | DA_LIMIT_4K);
     init_desc(&gdt[INDEX_USER_C], 0, 0xfffff,
               DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
     init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff,
               DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
+#else /* 64-bit: */
+    init_desc(&gdt[INDEX_KERNEL32_C], 0, 0xfffff, DA_CR | DA_32 | DA_LIMIT_4K);
+    init_desc(&gdt[INDEX_KERNEL_C], 0, 0xfffff, DA_CR | DA_L | DA_LIMIT_4K);
+    init_desc(&gdt[INDEX_KERNEL_RW], 0, 0xfffff, DA_DRW | DA_32 | DA_LIMIT_4K);
+    init_desc(&gdt[INDEX_USER32_C], 0, 0xfffff,
+              DA_32 | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
+    init_desc(&gdt[INDEX_USER_C], 0, 0xfffff,
+              DA_L | DA_LIMIT_4K | DA_C | PRIVILEGE_USER << 5);
+    init_desc(&gdt[INDEX_USER_RW], 0, 0xfffff,
+              DA_32 | DA_LIMIT_4K | DA_DRW | PRIVILEGE_USER << 5);
+#endif
+
     init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
 
     init_8259A();
 
     init_idt();
 
-    init_tss(0, (u32)&StackTop);
+    init_tss(0, &StackTop);
 
     load_prot_selectors(booting_cpu);
 }
@@ -165,24 +179,24 @@ void arch_init_irq(void) {}
 
 void load_direct_gdt(unsigned int cpu)
 {
-    u8 gdt_ptr[6]; /* 0~15:Limit  16~47:Base */
+    u8 gdt_ptr[2 + sizeof(unsigned long)]; /* 0~15:Limit  16~47:Base */
 
     u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
-    u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
+    unsigned long* p_gdt_base = (unsigned long*)(&gdt_ptr[2]);
     *p_gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
-    *p_gdt_base = (u32)get_cpu_gdt(cpu);
+    *p_gdt_base = (unsigned long)get_cpu_gdt(cpu);
 
     x86_lgdt((u8*)&gdt_ptr);
 }
 
 void load_prot_selectors(unsigned int cpu)
 {
-    u8 idt_ptr[6]; /* 0~15:Limit  16~47:Base */
+    u8 idt_ptr[2 + sizeof(unsigned long)]; /* 0~15:Limit  16~47:Base */
 
     u16* p_idt_limit = (u16*)(&idt_ptr[0]);
-    u32* p_idt_base = (u32*)(&idt_ptr[2]);
+    unsigned long* p_idt_base = (unsigned long*)(&idt_ptr[2]);
     *p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
-    *p_idt_base = (u32)&idt;
+    *p_idt_base = (unsigned long)&idt;
 
     load_direct_gdt(cpu);
     x86_lidt((u8*)&idt_ptr);
@@ -192,7 +206,11 @@ void load_prot_selectors(unsigned int cpu)
     x86_load_kerncs();
     x86_load_ds(SELECTOR_KERNEL_DS);
     x86_load_es(SELECTOR_KERNEL_DS);
+
+#ifdef CONFIG_X86_32
     x86_load_fs(SELECTOR_CPULOCALS);
+#endif
+
     x86_load_gs(SELECTOR_KERNEL_DS);
     x86_load_ss(SELECTOR_KERNEL_DS);
 }
@@ -316,27 +334,35 @@ void sys_call_syscall_cpu5();
 void sys_call_syscall_cpu6();
 void sys_call_syscall_cpu7();
 
-int init_tss(unsigned cpu, unsigned kernel_stack)
+int init_tss(unsigned cpu, void* kernel_stack)
 {
     struct tss* t = &tss[cpu];
     struct descriptor* gdt = get_cpu_gdt(cpu);
 
     /* Fill the TSS descriptor in GDT */
     memset(t, 0, sizeof(struct tss));
+    percpu_kstack[cpu] = (unsigned long)kernel_stack - X86_STACK_TOP_RESERVED;
+
+#ifdef CONFIG_X86_32 /* 32-bit: */
     t->ss0 = SELECTOR_KERNEL_DS;
     t->cs = SELECTOR_KERNEL_CS;
-    percpu_kstack[cpu] = t->esp0 = kernel_stack - X86_STACK_TOP_RESERVED;
+    t->esp0 = percpu_kstack[cpu];
     init_desc(&gdt[INDEX_CPULOCALS], cpulocals_offset(cpu), 0xfffff,
               DA_DRW | DA_32 | DA_LIMIT_4K);
-    init_desc(&gdt[INDEX_TSS], (u32)t, sizeof(struct tss) - 1, DA_386TSS);
+#else /* 64-bit: */
+    t->sp0 = percpu_kstack[cpu];
+#endif
+
     t->iobase = sizeof(struct tss); /* No IO permission bitmap */
+    init_desc(&gdt[INDEX_TSS], (unsigned long)t, sizeof(struct tss) - 1,
+              DA_386TSS);
 
     /* set cpuid */
-    *((u32*)(t->esp0 + sizeof(u32))) = cpu;
+    *((u32*)(percpu_kstack[cpu] + sizeof(u32))) = cpu;
 
     if (syscall_style & SST_INTEL_SYSENTER) {
         ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, SELECTOR_KERNEL_CS);
-        ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, t->esp0);
+        ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, percpu_kstack[cpu]);
         ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);
     }
 
@@ -384,7 +410,8 @@ void load_tls(struct proc* p, unsigned int cpu)
  *----------------------------------------------------------------------*
  初始化段描述符
  *======================================================================*/
-void init_desc(struct descriptor* p_desc, u32 base, u32 limit, u16 attribute)
+void init_desc(struct descriptor* p_desc, unsigned long base, u32 limit,
+               u16 attribute)
 {
     p_desc->limit_low = limit & 0x0FFFF;     /* 段界限 1		(2 字节) */
     p_desc->base_low = base & 0x0FFFF;       /* 段基址 1		(2 字节) */
@@ -394,6 +421,16 @@ void init_desc(struct descriptor* p_desc, u32 base, u32 limit, u16 attribute)
         ((limit >> 16) & 0x0F) |
         ((attribute >> 8) & 0xF0);            /* 段界限 2 + 属性 2 */
     p_desc->base_high = (base >> 24) & 0x0FF; /* 段基址 3		(1 字节) */
+
+#ifdef CONFIG_X86_64
+    if (attribute == DA_LDT || attribute == DA_386TSS) {
+        struct ldttss_descriptor* ldttss_desc =
+            (struct ldttss_descriptor*)p_desc;
+
+        ldttss_desc->base3 = (u32)(base >> 32UL);
+        ldttss_desc->zero0 = 0;
+    }
+#endif
 }
 
 static void print_stacktrace(struct proc* p)

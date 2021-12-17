@@ -16,7 +16,11 @@
 #ifndef _PROTECT_H_
 #define _PROTECT_H_
 
+#include <lyos/config.h>
 #include <asm/page.h>
+
+#ifndef __ASSEMBLY__
+
 #include <lyos/cpulocals.h>
 
 /* Segment descriptor */
@@ -28,6 +32,19 @@ struct descriptor /* 8 bytes */
     u8 attr1;            /* P(1) DPL(2) DT(1) TYPE(4) */
     u8 limit_high_attr2; /* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
     u8 base_high;        /* Base */
+};
+
+struct ldttss_descriptor {
+    u16 limit_low;       /* Limit */
+    u16 base0;           /* Base */
+    u8 base1;            /* Base */
+    u8 attr1;            /* P(1) DPL(2) DT(1) TYPE(4) */
+    u8 limit_high_attr2; /* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
+    u8 base2;            /* Base */
+#ifdef CONFIG_X86_64
+    u32 base3;
+    u32 zero0;
+#endif
 };
 
 #define reassembly(high, high_shift, mid, mid_shift, low) \
@@ -42,6 +59,7 @@ struct gate {
     u16 offset_high; /* Offset High */
 };
 
+#ifdef CONFIG_X86_32 /* 32-bit: */
 struct tss {
     u32 backlink;
     u32 esp0; /* stack pointer to use during interrupt */
@@ -72,10 +90,28 @@ struct tss {
     u16 iobase;
     /*u8	iomap[2];*/
 };
+#else /* 64-bit: */
+struct tss {
+    u32 reserved1;
+    u64 sp0;
+    u64 sp1;
+    u64 sp2;
+    u64 reserved2;
+    u64 ist[7];
+    u32 reserved3;
+    u32 reserved4;
+    u16 reserved5;
+    u16 iobase;
+};
+#endif
+
+#endif /* !__ASSEMBLY__ */
 
 /* GDT */
 /* desciptor index */
-#define INDEX_DUMMY     0
+#define INDEX_DUMMY 0
+
+#ifdef CONFIG_X86_32 /* 32-bit: */
 #define INDEX_KERNEL_C  1
 #define INDEX_KERNEL_RW 2
 #define INDEX_USER_C    3
@@ -85,6 +121,18 @@ struct tss {
 #define INDEX_TSS       7
 #define INDEX_TLS_MIN   8
 #define INDEX_TLS_MAX   (INDEX_TLS_MIN + GDT_TLS_ENTRIES - 1)
+#else /* 64-bit: */
+#define INDEX_KERNEL32_C 1
+#define INDEX_KERNEL_C   2
+#define INDEX_KERNEL_RW  3
+#define INDEX_USER32_C   4
+#define INDEX_USER_RW    5
+#define INDEX_USER_C     6
+#define INDEX_LDT        8
+#define INDEX_TSS        10
+#define INDEX_TLS_MIN    12
+#define INDEX_TLS_MAX    14
+#endif
 
 #define GDT_TLS_ENTRIES 3
 
@@ -96,8 +144,11 @@ struct tss {
 #define SELECTOR_USER_C    SEG_SELECTOR(INDEX_USER_C)
 #define SELECTOR_USER_RW   SEG_SELECTOR(INDEX_USER_RW)
 #define SELECTOR_LDT       SEG_SELECTOR(INDEX_LDT)
-#define SELECTOR_CPULOCALS SEG_SELECTOR(INDEX_CPULOCALS)
 #define SELECTOR_TSS       SEG_SELECTOR(INDEX_TSS)
+
+#ifdef CONFIG_X86_32
+#define SELECTOR_CPULOCALS SEG_SELECTOR(INDEX_CPULOCALS)
+#endif
 
 #define SELECTOR_KERNEL_CS SELECTOR_KERNEL_C
 #define SELECTOR_KERNEL_DS SELECTOR_KERNEL_RW
@@ -105,6 +156,7 @@ struct tss {
 #define SELECTOR_USER_DS   SELECTOR_USER_RW
 
 /* 描述符类型值说明 */
+#define DA_L           0x2000 /* Long-mode code */
 #define DA_32          0x4000 /* 32 位段				*/
 #define DA_LIMIT_4K    0x8000 /* 段界限粒度为 4K 字节			*/
 #define LIMIT_4K_SHIFT 12
@@ -176,6 +228,8 @@ struct tss {
 
 #define GDT_SIZE 128
 
+#ifndef __ASSEMBLY__
+
 struct gdt_page {
     struct descriptor gdt[GDT_SIZE];
 } __attribute__((aligned(ARCH_PG_SIZE)));
@@ -196,14 +250,17 @@ static inline struct descriptor* get_cpu_gdt(unsigned int cpu)
 
 /* protect.c */
 void init_prot();
-void init_desc(struct descriptor* p_desc, u32 base, u32 limit, u16 attribute);
+void init_desc(struct descriptor* p_desc, unsigned long base, u32 limit,
+               u16 attribute);
 void load_direct_gdt(unsigned int cpu);
 void load_prot_selectors(unsigned int cpu);
-int init_tss(unsigned cpu, unsigned kernel_stack);
+int init_tss(unsigned cpu, void* kernel_stack);
 void init_idt();
 void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler,
                    unsigned char privilege);
 
 void reload_idt();
+
+#endif /* !__ASSEMBLY__ */
 
 #endif /* _PROTECT_H_ */

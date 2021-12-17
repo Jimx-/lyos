@@ -53,10 +53,10 @@ struct proc* arch_switch_to_user()
     char* stack;
     struct proc* p;
 
-#ifdef CONFIG_SMP
+#ifdef CONFIG_X86_32
     stack = (char*)tss[cpuid].esp0;
 #else
-    stack = (char*)tss[0].esp0;
+    stack = (char*)tss[cpuid].sp0;
 #endif
 
     p = get_cpulocal_var(proc_ptr);

@@ -66,7 +66,7 @@ int init_sproc(struct sproc* sp, struct service_up_req* up_req,
         }
     }
 
-    memcpy(&sp->priv.syscall_mask, &up_req->syscall_mask,
+    memcpy(sp->priv.syscall_mask, up_req->syscall_mask,
            sizeof(sp->priv.syscall_mask));
     if (up_req->flags & SUR_BASIC_SYSCALLS) {
         for (i = 0; basic_syscalls[i] >= 0; i++) {

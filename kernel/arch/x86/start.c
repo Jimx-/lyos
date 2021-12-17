@@ -81,7 +81,7 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
         kinfo.memmaps[kinfo.memmaps_count].len = mmap->len;
         kinfo.memmaps[kinfo.memmaps_count].type = mmap->type;
         kinfo.memory_size += mmap->len;
-        mmap = (struct multiboot_mmap_entry*)((unsigned int)mmap + mmap->size +
+        mmap = (struct multiboot_mmap_entry*)((uintptr_t)mmap + mmap->size +
                                               sizeof(unsigned int));
     }
 
@@ -110,9 +110,11 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     kinfo.kernel_start_phys = 0;
     kinfo.kernel_end_phys = procs_base;
 
+#ifndef CONFIG_X86_64
     pg_identity(initial_pgd);
     pg_mapkernel(initial_pgd);
     pg_load(initial_pgd);
+#endif
 
     /* initial_pgd --> physical initial pgd */
 

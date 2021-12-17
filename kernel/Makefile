@@ -26,8 +26,14 @@ realclean :
 
 $(KRNL): $(KERNELOBJS) $(LIB) $(LIBC)
 	@echo -e '\tLD\t$@'
+ifeq ($(SUBARCH),x86_64)
+	@$(LD) $(LDFLAGS) -o $(KRNL).64 $^
+	@$(OBJCOPY) -I elf64-x86-64 -O elf32-i386 $(KRNL).64 $(KRNL)
+	@cp -f $(KRNL).64 $(DESTDIR)/boot/
+else
 	@$(LD) $(LDFLAGS) -o $(KRNL) $^
-	@cp -f $(KRNL) $(KRNLBIN) $(DESTDIR)/boot/
+endif
+	@cp -f $(KRNL) $(DESTDIR)/boot/
 
 arch/$(ARCH)/arch-kernel.o:
 	@(cd arch/$(ARCH); make)

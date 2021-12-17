@@ -1,35 +1,57 @@
+    #include <asm/protect.h>
+
     .section .text
 
     .global out_byte
 out_byte:
+    mov %edi, %edx
+    mov %esi, %eax
+    outb %al, %dx
     retq
 
     .global in_byte
 in_byte:
+    mov %edi, %edx
+    xor %rax, %rax
+    inb %dx, %al
     retq
 
     .global out_word
 out_word:
+    mov %edi, %edx
+    mov %esi, %eax
+    outw %ax, %dx
     retq
 
     .global in_word
 in_word:
+    mov %edi, %edx
+    xor %rax, %rax
+    inw %dx, %ax
     retq
 
     .global out_long
 out_long:
+    mov %edi, %edx
+    mov %esi, %eax
+    outl %eax, %dx
     retq
 
     .global in_long
 in_long:
+    mov %edi, %edx
+    xor %rax, %rax
+    inl %dx, %eax
     retq
 
     .global enable_int
 enable_int:
+    sti
     retq
 
     .global disable_int
 disable_int:
+    cli
     retq
 
     .global port_read
@@ -42,18 +64,22 @@ port_write:
 
     .global x86_lgdt
 x86_lgdt:
+    lgdt (%rdi)
     retq
 
     .global x86_lidt
 x86_lidt:
+    lidt (%rdi)
     retq
 
     .global x86_lldt
 x86_lldt:
+    lldt %di
     retq
 
     .global x86_ltr
 x86_ltr:
+    ltr %di
     retq
 
     .global x86_load_kerncs
@@ -62,22 +88,27 @@ x86_load_kerncs:
 
     .global x86_load_ds
 x86_load_ds:
+    mov %di, %ds
     retq
 
     .global x86_load_es
 x86_load_es:
+    mov %di, %es
     retq
 
     .global x86_load_fs
 x86_load_fs:
+    mov %di, %fs
     retq
 
     .global x86_load_gs
 x86_load_gs:
+    mov %di, %gs
     retq
 
     .global x86_load_ss
 x86_load_ss:
+    mov %di, %ss
     retq
 
     .global switch_k_stack
