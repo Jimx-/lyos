@@ -41,7 +41,7 @@ int request_lookup(endpoint_t fs_e, dev_t dev, ino_t start, ino_t root,
                    struct lookup_result* ret)
 {
     MESSAGE m;
-    mgrant_id_t path_grant, ucred_grant;
+    mgrant_id_t path_grant, ucred_grant = GRANT_INVALID;
     struct vfs_ucred ucred;
     size_t name_len;
     int flags;

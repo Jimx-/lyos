@@ -191,7 +191,7 @@ int do_getdents(void)
         return -EBADF;
     }
 
-    u64 newpos;
+    u64 newpos = 0;
     int retval =
         request_getdents(filp->fd_inode->i_fs_ep, filp->fd_inode->i_dev,
                          filp->fd_inode->i_num, filp->fd_pos, fproc->endpoint,

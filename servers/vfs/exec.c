@@ -346,9 +346,8 @@ int fs_exec(void)
         retval = (*exec_loaders[i].loader)(&execi.args);
         if (!retval) {
             if (exec_loaders[i].setup_stack)
-                retval = (*exec_loaders[i].setup_stack)(&execi, stackcopy,
-                                                        &orig_stack_len,
-                                                        (void**)&orig_stack);
+                retval = (*exec_loaders[i].setup_stack)(
+                    &execi, stackcopy, &orig_stack_len, (void**)&orig_stack);
             break; /* loaded successfully */
         }
     }
@@ -419,7 +418,7 @@ exec_finalize:
 static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
                            size_t* stack_size, void** vsp)
 {
-    char** arg_str;
+    char** arg_str = NULL;
     if (*stack_size) {
         arg_str = (char**)stack;
         for (; *arg_str != 0; arg_str++)

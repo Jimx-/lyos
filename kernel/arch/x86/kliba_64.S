@@ -84,6 +84,11 @@ x86_ltr:
 
     .global x86_load_kerncs
 x86_load_kerncs:
+    pushq $SELECTOR_KERNEL_CS
+    leaq newcs, %rax
+    push %rax
+    retfq
+newcs:
     retq
 
     .global x86_load_ds

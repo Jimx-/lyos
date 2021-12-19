@@ -398,7 +398,7 @@ static int ep_poll(struct eventpoll* ep, void* events, int maxevents,
     struct timer_list timer;
     struct ep_timer_cb_data timer_cb;
     struct file_desc* filp = ep->file;
-    int retval;
+    int retval = 0;
 
     if (!timeout) {
         timed_out = 1;
@@ -452,7 +452,6 @@ fetch_events:
     }
 
 send_events:
-
     if (!retval && eavail &&
         !(retval = ep_send_events(ep, events, maxevents, fp)) && !timed_out) {
         goto fetch_events;
@@ -708,7 +707,6 @@ int do_epoll_ctl(void)
             retval = -ENOENT;
         break;
     case EPOLL_CTL_MOD:
-        printl("ctl mod\n");
         break;
     }
 
