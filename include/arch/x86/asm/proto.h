@@ -29,11 +29,11 @@ void x86_load_fs(u32 fs);
 void x86_load_gs(u32 gs);
 void x86_load_ss(u32 ss);
 
-u32 read_cr0();
-void write_cr0(u32 cr0);
-void write_cr3(u32 cr3);
-u32 read_cr4();
-void write_cr4(u32 cr4);
+unsigned long read_cr0();
+void write_cr0(unsigned long cr0);
+void write_cr3(unsigned long cr3);
+unsigned long read_cr4();
+void write_cr4(unsigned long cr4);
 
 void load_tls(struct proc* p, unsigned int cpu);
 

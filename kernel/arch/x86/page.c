@@ -91,49 +91,73 @@ phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
     return 0;
 }
 
-static void* pg_alloc_pt(phys_bytes* ph)
+static pte_t* pg_alloc_pt(kinfo_t* pk)
 {
-    void* ret;
-#define PG_PAGETABLES 6
-    static u8 pagetables[PG_PAGETABLES][ARCH_PG_SIZE]
-        __attribute__((aligned(ARCH_PG_SIZE)));
-    static int pt_inuse = 0;
+    phys_bytes phys_addr = pg_alloc_pages(pk, 1);
+    pte_t* pt = __va(phys_addr);
 
-    if (pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
-
-    ret = pagetables[pt_inuse++];
-    *ph = __pa(ret);
-
-    return ret;
+    memset(pt, 0, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
+    return pt;
 }
+
+#ifndef __PAGETABLE_PMD_FOLDED
+static pmd_t* pg_alloc_pmd(kinfo_t* pk)
+{
+    phys_bytes phys_addr = pg_alloc_pages(pk, 1);
+    pmd_t* pmd = __va(phys_addr);
+
+    memset(pmd, 0, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+    return pmd;
+}
+#else
+static inline pmd_t* pg_alloc_pmd(kinfo_t* pk) { return NULL; }
+#endif
+
+#ifndef __PAGETABLE_PUD_FOLDED
+static pud_t* pg_alloc_pud(kinfo_t* pk)
+{
+    phys_bytes phys_addr = pg_alloc_pages(pk, 1);
+    pud_t* pud = __va(phys_addr);
+
+    memset(pud, 0, sizeof(pud_t) * ARCH_VM_PUD_ENTRIES);
+    return pud;
+}
+#else
+static inline pud_t* pg_alloc_pud(kinfo_t* pk) { return NULL; }
+#endif
 
 void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
 {
-    pte_t* pt;
     pde_t* pgd = initial_pgd;
-    if (phys_addr % ARCH_PG_SIZE)
-        phys_addr = (phys_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE;
-    if ((uintptr_t)vir_addr % ARCH_PG_SIZE)
-        vir_addr = (void*)(((uintptr_t)vir_addr / ARCH_PG_SIZE) * ARCH_PG_SIZE);
+
+    if (phys_addr % ARCH_PG_SIZE) phys_addr = roundup(phys_addr, ARCH_PG_SIZE);
 
     while (vir_addr < vir_end) {
-        phys_bytes phys = phys_addr;
-        if (phys == 0) phys = pg_alloc_pages(pk, 1);
+        phys_bytes ph = phys_addr;
+        if (ph == 0) ph = pg_alloc_pages(pk, 1);
 
-        int pde = ARCH_PDE(vir_addr);
-        int pte = ARCH_PTE(vir_addr);
-
-        if (!pde_val(pgd[pde]) || pde_val(pgd[pde]) & ARCH_PG_BIGPAGE) {
-            phys_bytes pt_ph;
-            pt = pg_alloc_pt(&pt_ph);
-            pgd[pde] = __pde((pt_ph & ARCH_PG_MASK) | ARCH_PG_PRESENT |
-                             ARCH_PG_RW | ARCH_PG_USER);
-        } else {
-            pt = (pte_t*)__va(pde_val(pgd[pde]) & ARCH_PG_MASK);
+        pde_t* pde = pgd_offset(pgd, (unsigned long)vir_addr);
+        if (!pde_present(*pde) || pde_large(*pde)) {
+            pud_t* new_pud = pg_alloc_pud(pk);
+            pde_populate(pde, __pa(new_pud));
         }
 
-        pt[pte] = __pte((phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
-                        ARCH_PG_USER);
+        pud_t* pude = pud_offset(pde, (unsigned long)vir_addr);
+        if (!pude_present(*pude) || pude_large(*pude)) {
+            pmd_t* new_pmd = pg_alloc_pmd(pk);
+            pude_populate(pude, __pa(new_pmd));
+        }
+
+        pmd_t* pmde = pmd_offset(pude, (unsigned long)vir_addr);
+        if (!pmde_present(*pmde) || pmde_large(*pmde)) {
+            pte_t* new_pt = pg_alloc_pt(pk);
+            pmde_populate(pmde, __pa(new_pt));
+        }
+
+        pte_t* pte = pte_offset(pmde, (unsigned long)vir_addr);
+        *pte = pfn_pte(ph >> ARCH_PG_SHIFT,
+                       __pgprot(ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER));
+
         vir_addr += ARCH_PG_SIZE;
         if (phys_addr != 0) phys_addr += ARCH_PG_SIZE;
     }

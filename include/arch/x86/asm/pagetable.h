@@ -64,6 +64,8 @@ static inline pud_t* pud_offset(pde_t* pud, unsigned long addr)
 }
 #endif
 
+static inline int pde_large(pde_t pde) { return 0; }
+
 #if CONFIG_PGTABLE_LEVELS > 2
 static inline int pude_present(pud_t pude)
 {
@@ -76,6 +78,12 @@ static inline int pude_bad(pud_t pude)
 {
     unsigned long ignore_flags = ARCH_PG_USER | ARCH_PG_PRESENT | ARCH_PG_RW;
     return ((pud_val(pude) & ~ARCH_PG_MASK) & ~ignore_flags) != 0;
+}
+
+static inline int pude_large(pud_t pude)
+{
+    return (pud_val(pude) & (ARCH_PG_PRESENT | ARCH_PG_BIGPAGE)) ==
+           (ARCH_PG_PRESENT | ARCH_PG_BIGPAGE);
 }
 
 static inline void pude_clear(pud_t* pude) { *pude = __pud(0); }
@@ -91,7 +99,20 @@ static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)
     pmd_t* vaddr = (pmd_t*)phys_to_virt(pud_val(*pmd) & ARCH_PG_MASK);
     return vaddr + ARCH_PMDE(addr);
 }
+#else
+static inline int pude_large(pud_t pude) { return 0; }
 #endif
+
+static inline int pmde_present(pmd_t pmde)
+{
+    return !!(pmd_val(pmde) & ARCH_PG_PRESENT);
+}
+
+static inline int pmde_large(pmd_t pmde)
+{
+    return (pmd_val(pmde) & (ARCH_PG_PRESENT | ARCH_PG_BIGPAGE)) ==
+           (ARCH_PG_PRESENT | ARCH_PG_BIGPAGE);
+}
 
 static inline int pmde_none(pmd_t pmde) { return pmd_val(pmde) == 0; }
 
