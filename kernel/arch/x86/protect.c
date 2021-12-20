@@ -521,13 +521,13 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
     }
 
     if (in_kernel) {
-        panic("unhandled page fault in kernel, eip: 0x%x, cr2: 0x%x",
-              frame->eip, pfla);
+        panic("unhandled page fault in kernel, eip: %p, cr2: %p",
+              (void*)frame->eip, (void*)pfla);
     }
 
     if (fault_proc->endpoint == TASK_MM) {
-        panic("unhandled page fault in MM, eip: 0x%x, cr2: 0x%x", frame->eip,
-              pfla);
+        panic("unhandled page fault in MM, eip: %p, cr2: %p", (void*)frame->eip,
+              (void*)pfla);
     }
 
     int fault_flags = 0;

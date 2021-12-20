@@ -166,46 +166,66 @@ clts:
 
     .global ia32_read_msr
 ia32_read_msr:
+    mov %edi, %ecx
+    mov %rdx, %r10
+    rdmsr
+    mov %edx, (%rsi)
+    mov %eax, (%r10)
     retq
 
     .global ia32_write_msr
 ia32_write_msr:
+    mov %edi, %ecx
+    mov %edx, %eax
+    mov %esi, %edx
+    wrmsr
     retq
 
     .global halt_cpu
 halt_cpu:
+    sti
+    hlt
     retq
 
     .global read_cr0
 read_cr0:
+    mov %cr0, %rax
     retq
 
     .global write_cr0
 write_cr0:
+    mov %rdi, %cr0
     retq
 
     .global read_cr2
 read_cr2:
+    mov %cr2, %rax
     retq
 
     .global read_cr3
 read_cr3:
+    mov %cr3, %rax
     retq
 
     .global write_cr3
 write_cr3:
+    mov %rdi, %cr3
     retq
 
     .global read_cr4
 read_cr4:
+    mov %cr4, %rax
     retq
 
     .global write_cr4
 write_cr4:
+    mov %rdi, %cr4
     retq
 
     .global reload_cr3
 reload_cr3:
+    mov %cr3, %rax
+    mov %rax, %cr3
     retq
 
     .global i8259_eoi_master

@@ -1,4 +1,5 @@
     #include <asm/protect.h>
+    #include <asm/sconst_64.h>
 
     .section .text
 
@@ -33,6 +34,8 @@
     call idle_stop
     mov $\number, %rdi
     call irq_handle
+
+    CLEAR_IF(17*8(%rsp))
 
     pop %rax
     pop %rbx
@@ -74,9 +77,10 @@
     .global \name
     \name:
     .if \errcode == 0
-    push $0
+    pushq $0
     .endif
 
+    pushq $\number
     jmp exception
     .endm
 
@@ -98,7 +102,52 @@
     MAKE_EXCEPTION_HANDLER copr_error, 0, 15
 
 exception:
+    cmpl $SELECTOR_KERNEL_CS, 24(%rsp)
+    je exception_in_kernel
     retq
+
+exception_in_kernel:
+    push %rbp
+    push %r15
+    push %r14
+    push %r13
+    push %r12
+    push %r11
+    push %r10
+    push %r9
+    push %r8
+    push %rsi
+    push %rdi
+    push %rdx
+    push %rcx
+    push %rbx
+    push %rax
+
+    mov $1, %rdi
+    mov %rsp, %rsi
+    add $120, %rsi              // 15 registers
+    call exception_handler
+
+    CLEAR_IF(19*8(%rsp))
+
+    pop %rax
+    pop %rbx
+    pop %rcx
+    pop %rdx
+    pop %rdi
+    pop %rsi
+    pop %r8
+    pop %r9
+    pop %r10
+    pop %r11
+    pop %r12
+    pop %r13
+    pop %r14
+    pop %r15
+    pop %rbp
+
+    add $16, %rsp
+    iretq
 
     .global sys_call
 sys_call:

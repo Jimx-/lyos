@@ -19,7 +19,7 @@
 #include <asm/sigcontext.h>
 #include <asm/protect.h>
 
-typedef u32 reg_t;
+typedef unsigned long reg_t;
 
 struct stackframe {
     reg_t gs;
