@@ -210,14 +210,21 @@ reload_cr3:
 
     .global i8259_eoi_master
 i8259_eoi_master:
+    mov $0x20, %al              // EOI
+    outb %al, $0x20             // INT_M_CTL
     retq
 
     .global i8259_eoi_slave
 i8259_eoi_slave:
+    mov $0x20, %al              // EOI
+    outb %al, $0x20             // INT_M_CTL
+    nop
+    outb %al, $0xa0             // INT_S_CTL
     retq
 
     .global arch_pause
 arch_pause:
+    pause
     retq
 
     .global phys_copy

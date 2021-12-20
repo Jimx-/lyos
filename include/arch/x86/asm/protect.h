@@ -32,7 +32,7 @@ struct descriptor /* 8 bytes */
     u8 attr1;            /* P(1) DPL(2) DT(1) TYPE(4) */
     u8 limit_high_attr2; /* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
     u8 base_high;        /* Base */
-};
+} __attribute__((packed));
 
 struct ldttss_descriptor {
     u16 limit_low;       /* Limit */
@@ -45,19 +45,23 @@ struct ldttss_descriptor {
     u32 base3;
     u32 zero0;
 #endif
-};
+} __attribute__((packed));
 
 #define reassembly(high, high_shift, mid, mid_shift, low) \
     (((high) << (high_shift)) + ((mid) << (mid_shift)) + (low))
 
 /* Gate descriptor */
 struct gate {
-    u16 offset_low;  /* Offset Low */
-    u16 selector;    /* Selector */
-    u8 dcount;       /*  */
-    u8 attr;         /* P(1) DPL(2) DT(1) TYPE(4) */
-    u16 offset_high; /* Offset High */
-};
+    u16 offset_low;    /* Offset Low */
+    u16 selector;      /* Selector */
+    u8 dcount;         /*  */
+    u8 attr;           /* P(1) DPL(2) DT(1) TYPE(4) */
+    u16 offset_middle; /* Offset High */
+#ifdef CONFIG_X86_64
+    u32 offset_high;
+    u32 reserved;
+#endif
+} __attribute__((packed));
 
 #ifdef CONFIG_X86_32 /* 32-bit: */
 struct tss {
@@ -89,7 +93,7 @@ struct tss {
     u16 trap;
     u16 iobase;
     /*u8	iomap[2];*/
-};
+} __attribute__((packed));
 #else /* 64-bit: */
 struct tss {
     u32 reserved1;
@@ -102,7 +106,7 @@ struct tss {
     u32 reserved4;
     u16 reserved5;
     u16 iobase;
-};
+} __attribute__((packed));
 #endif
 
 #endif /* !__ASSEMBLY__ */

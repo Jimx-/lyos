@@ -1,27 +1,74 @@
+    #include <asm/protect.h>
+
     .section .text
 
-    .macro HWINT number
-    .global hwint\number
-    hwint\number:
-    retq
+    .extern idle_stop
+    .extern irq_handle
+
+    .macro HWINT label, number
+    .global hwint\label
+    hwint\label:
+    cmpl $SELECTOR_KERNEL_CS, 8(%rsp)
+    je 1f
+
+    swapgs
+
+    1:
+    push %rbp
+    push %r15
+    push %r14
+    push %r13
+    push %r12
+    push %r11
+    push %r10
+    push %r9
+    push %r8
+    push %rsi
+    push %rdi
+    push %rdx
+    push %rcx
+    push %rbx
+    push %rax
+
+    call idle_stop
+    mov $\number, %rdi
+    call irq_handle
+
+    pop %rax
+    pop %rbx
+    pop %rcx
+    pop %rdx
+    pop %rdi
+    pop %rsi
+    pop %r8
+    pop %r9
+    pop %r10
+    pop %r11
+    pop %r12
+    pop %r13
+    pop %r14
+    pop %r15
+    pop %rbp
+
+    iretq
     .endm
 
-    HWINT 00
-    HWINT 01
-    HWINT 02
-    HWINT 03
-    HWINT 04
-    HWINT 05
-    HWINT 06
-    HWINT 07
-    HWINT 08
-    HWINT 09
-    HWINT 10
-    HWINT 11
-    HWINT 12
-    HWINT 13
-    HWINT 14
-    HWINT 15
+    HWINT 00, 0
+    HWINT 01, 1
+    HWINT 02, 2
+    HWINT 03, 3
+    HWINT 04, 4
+    HWINT 05, 5
+    HWINT 06, 6
+    HWINT 07, 7
+    HWINT 08, 8
+    HWINT 09, 9
+    HWINT 10, 10
+    HWINT 11, 11
+    HWINT 12, 12
+    HWINT 13, 13
+    HWINT 14, 14
+    HWINT 15, 15
 
     .macro MAKE_EXCEPTION_HANDLER name, errcode, number
     .global \name
