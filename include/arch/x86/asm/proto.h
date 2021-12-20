@@ -104,7 +104,8 @@ void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]);
 void smp_commence();
 
 /* page.c */
-void pg_identity(pde_t* pgd);
+int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
+                    unsigned long offset);
 void pg_unmap_identity(pde_t* pgd);
 void pg_mapkernel(pde_t* pgd);
 void pg_load(pde_t* pgd);

@@ -42,11 +42,7 @@
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 void* k_stacks;
 
-#ifdef CONFIG_X86_64
 extern pde_t init_top_pgt;
-#else
-extern pde_t pgd0;
-#endif
 
 static int kinfo_set_param(char* buf, char* name, char* value);
 static char* env_get(const char* name);
@@ -93,11 +89,7 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
 
     /* setup kernel page table */
 
-#ifdef CONFIG_X86_64
     initial_pgd = &init_top_pgt;
-#else
-    initial_pgd = &pgd0;
-#endif
 
     phys_bytes procs_base = mod_ends & ARCH_PG_MASK;
     int kernel_pts = procs_base >> ARCH_PGD_SHIFT;
@@ -110,13 +102,14 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     kinfo.kernel_start_phys = 0;
     kinfo.kernel_end_phys = procs_base;
 
-#ifndef CONFIG_X86_64
-    pg_identity(initial_pgd);
+    /* Identity map the first 4G so that the kernel can get access to ACPI
+     * tables and HPET before MM sets up those mappings for it. */
+    pg_identity_map(initial_pgd, 0, (unsigned long)0x100000000UL, 0);
+
+#ifdef CONFIG_X86_32
     pg_mapkernel(initial_pgd);
     pg_load(initial_pgd);
 #endif
-
-    /* initial_pgd --> physical initial pgd */
 
     init_prot();
 

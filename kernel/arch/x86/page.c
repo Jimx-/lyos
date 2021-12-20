@@ -26,6 +26,7 @@
 #include "lyos/global.h"
 #include "lyos/proto.h"
 #include <asm/page.h>
+#include <asm/pagetable.h>
 #include <errno.h>
 #include <asm/proto.h>
 #include <asm/const.h>
@@ -90,18 +91,18 @@ phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
     return 0;
 }
 
-static pte_t* pg_alloc_pt(phys_bytes* ph)
+static void* pg_alloc_pt(phys_bytes* ph)
 {
-    pte_t* ret;
+    void* ret;
 #define PG_PAGETABLES 6
-    static pte_t pagetables[PG_PAGETABLES][1024]
+    static u8 pagetables[PG_PAGETABLES][ARCH_PG_SIZE]
         __attribute__((aligned(ARCH_PG_SIZE)));
     static int pt_inuse = 0;
 
     if (pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
 
     ret = pagetables[pt_inuse++];
-    *ph = (phys_bytes)ret - KERNEL_VMA;
+    *ph = __pa(ret);
 
     return ret;
 }
@@ -141,7 +142,11 @@ void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
 /**
  * <Ring 0> Setup identity paging for kernel
  */
-void pg_identity(pde_t* pgd)
+
+#ifdef CONFIG_X86_32
+
+int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
+                    unsigned long offset)
 {
     int i;
     phys_bytes phys;
@@ -151,9 +156,84 @@ void pg_identity(pde_t* pgd)
         if (i >= kinfo.kernel_start_pde && i < kinfo.kernel_end_pde)
             continue; /* don't touch kernel */
         phys = i * ARCH_BIG_PAGE_SIZE;
-        pgd[i] = __pde(phys | flags);
+        pgd_page[i] = __pde(phys | flags);
     }
+
+    return 0;
 }
+
+#else
+
+static int ident_map_pud(pud_t* pud_page, vir_bytes addr, vir_bytes end,
+                         unsigned long offset, unsigned int pmd_flags,
+                         int use_gbpages)
+{
+    vir_bytes next;
+
+    for (; addr < end; addr = next) {
+        pud_t* pude = pud_page + ARCH_PUDE(addr);
+
+        next = (addr & ARCH_PUD_MASK) + ARCH_PUD_SIZE;
+        if (next > end) next = end;
+
+        if (use_gbpages) {
+            pud_t pud_val;
+
+            if (pude_present(*pude)) continue;
+
+            addr &= ARCH_PUD_MASK;
+            pud_val = __pud((addr - offset) | pmd_flags);
+            *pude = pud_val;
+            continue;
+        }
+    }
+
+    return 0;
+}
+
+int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
+                    unsigned long offset)
+{
+    vir_bytes addr = pstart + offset;
+    vir_bytes end = pend + offset;
+    vir_bytes next;
+    unsigned long pmd_flags =
+        ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER | ARCH_PG_BIGPAGE;
+    unsigned long page_flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
+    int use_gbpages;
+    int retval;
+
+    use_gbpages = _cpufeature(_CPUF_I386_GBPAGES);
+
+    for (; addr < end; addr = next) {
+        pde_t* pgd = pgd_offset(pgd_page, addr);
+        pud_t* pud;
+        phys_bytes pud_ph;
+
+        next = (addr & ARCH_PGD_MASK) + ARCH_PGD_SIZE;
+        if (next > end) next = end;
+
+        if (pde_present(*pgd)) {
+            pud = pud_offset(pgd, 0);
+            retval =
+                ident_map_pud(pud, addr, next, offset, pmd_flags, use_gbpages);
+            if (retval) return retval;
+            continue;
+        }
+
+        pud = pg_alloc_pt(&pud_ph);
+        if (!pud) return ENOMEM;
+
+        retval = ident_map_pud(pud, addr, next, offset, pmd_flags, use_gbpages);
+        if (retval) return retval;
+
+        *pgd = __pde((pud_ph & ARCH_PG_MASK) | page_flags);
+    }
+
+    return 0;
+}
+
+#endif
 
 void pg_unmap_identity(pde_t* pgd)
 {

@@ -7,12 +7,23 @@
 
 void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);
 
+static u32 cpuid_eax(u32 eax)
+{
+    u32 ebx, ecx, edx;
+
+    ebx = ecx = edx = 0;
+    _cpuid(&eax, &ebx, &ecx, &edx);
+
+    return eax;
+}
+
 int _cpufeature(int cpufeature)
 {
     u32 eax, ebx, ecx, edx;
     u32 ef_eax = 0, ef_ebx = 0, ef_ecx = 0, ef_edx = 0;
     unsigned int family, model, stepping;
-    int is_intel = 0, is_amd = 0;
+    int is_intel = 0;
+    u32 extended_cpuid_level;
 
     eax = ebx = ecx = edx = 0;
 
@@ -25,7 +36,6 @@ int _cpufeature(int cpufeature)
         memcpy(vendor + 4, &edx, sizeof(edx));
         memcpy(vendor + 8, &ecx, sizeof(ecx));
         if (!strncmp(vendor, "GenuineIntel", sizeof(vendor))) is_intel = 1;
-        if (!strncmp(vendor, "AuthenticAMD", sizeof(vendor))) is_amd = 1;
         eax = 1;
         _cpuid(&eax, &ebx, &ecx, &edx);
     } else
@@ -44,9 +54,12 @@ int _cpufeature(int cpufeature)
         family += (eax >> 20) & 0xff;
     }
 
-    if (is_amd) {
-        ef_eax = 0x80000001;
-        _cpuid(&ef_eax, &ef_ebx, &ef_ecx, &ef_edx);
+    extended_cpuid_level = cpuid_eax(0x80000000);
+    if ((extended_cpuid_level & 0xffff0000) == 0x80000000) {
+        if (extended_cpuid_level >= 0x80000001) {
+            ef_eax = 0x80000001;
+            _cpuid(&ef_eax, &ef_ebx, &ef_ecx, &ef_edx);
+        }
     }
 
     switch (cpufeature) {
@@ -94,9 +107,9 @@ int _cpufeature(int cpufeature)
         if (family == 6 && model < 3 && stepping < 3) return 0;
         return 1;
     case _CPUF_I386_SYSCALL:
-        if (!is_amd) return 0;
-        if (!(ef_edx & CPUID_EF_EDX_SYSENTER)) return 0;
-        return 1;
+        return !!(ef_edx & CPUID_EF_EDX_SYSENTER);
+    case _CPUF_I386_GBPAGES:
+        return !!(ef_edx & CPUID_EF_EDX_PDPE1GB);
     }
 
     return 0;

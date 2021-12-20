@@ -39,14 +39,14 @@ extern  usermapped_offset
 extern  percpu_kstack
 bits 32
 
-global pgd0
+global init_top_pgt
 global StackTop
 global k_stacks_start
 global k_stacks_end
 
 [SECTION .data]
 ALIGN 0x1000
-pgd0:
+init_top_pgt:
 ; 0x00000000
 dd              0x00000087	; 0 ~ 4M, 0x87 = PG_PRESENT | PG_USER | PG_RW | PG_BIGPAGE
 dd              0x00400087	; 4M ~ 8M
@@ -133,7 +133,7 @@ _start:				; entry point
     or  eax, I386_CR4_PSE	; enable big page
     mov cr4, eax
 
-    mov eax, pgd0 - KERNEL_VMA
+    mov eax, init_top_pgt - KERNEL_VMA
     mov cr3, eax
 
     mov	eax, cr0
