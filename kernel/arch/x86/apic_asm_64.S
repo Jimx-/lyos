@@ -1,10 +1,85 @@
+    #include <asm/protect.h>
+    #include <asm/const.h>
+    #include <asm/sconst_64.h>
+
     .section .text
+
+    .macro lapic_int handler
+    cmpl $SELECTOR_KERNEL_CS, 8(%rsp)
+    je 1f
+
+    swapgs
+    SAVE_CONTEXT 0, KTS_INT
+
+    mov %rsi, %rdi // proc ptr
+    call stop_context
+
+    call \handler
+    call apic_eoi_write
+    jmp  switch_to_user
+
+1:
+    push %rbp
+    push %r15
+    push %r14
+    push %r13
+    push %r12
+    push %r11
+    push %r10
+    push %r9
+    push %r8
+    push %rsi
+    push %rdi
+    push %rdx
+    push %rcx
+    push %rbx
+    push %rax
+
+    call idle_stop
+    call \handler
+    call apic_eoi_write
+
+    CLEAR_IF 17*8(%rsp)
+
+    pop %rax
+    pop %rbx
+    pop %rcx
+    pop %rdx
+    pop %rdi
+    pop %rsi
+    pop %r8
+    pop %r9
+    pop %r10
+    pop %r11
+    pop %r12
+    pop %r13
+    pop %r14
+    pop %r15
+    pop %rbp
+
+    iretq
+    .endm
+
+    .global apic_spurious_intr
+    .align 16
+apic_spurious_intr:
+    lapic_int apic_spurious_int_handler
+
+    .global apic_error_intr
+    .align 16
+apic_error_intr:
+    lapic_int apic_error_int_handler
+
+    .global apic_timer_int_handler
+    .align 16
+apic_timer_int_handler:
+    lapic_int clock_handler
 
     .macro apic_hwint number
     .global apic_hwint\number
     .align 16
     apic_hwint\number:
-    retq
+    jmp apic_hwint\number
     .endm
 
     apic_hwint 00
@@ -71,18 +146,3 @@
     apic_hwint 61
     apic_hwint 62
     apic_hwint 63
-
-    .global apic_spurious_intr
-    .align 16
-apic_spurious_intr:
-    retq
-
-    .global apic_error_intr
-    .align 16
-apic_error_intr:
-    retq
-
-    .global apic_timer_int_handler
-    .align 16
-apic_timer_int_handler:
-    retq

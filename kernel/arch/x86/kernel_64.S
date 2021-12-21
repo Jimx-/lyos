@@ -1,10 +1,8 @@
     #include <asm/protect.h>
+    #include <asm/const.h>
     #include <asm/sconst_64.h>
 
     .section .text
-
-    .extern idle_stop
-    .extern irq_handle
 
     .macro HWINT label, number
     .global hwint\label
@@ -14,7 +12,7 @@
 
     swapgs
 
-    1:
+1:
     push %rbp
     push %r15
     push %r14
@@ -35,7 +33,7 @@
     mov $\number, %rdi
     call irq_handle
 
-    CLEAR_IF(17*8(%rsp))
+    CLEAR_IF 17*8(%rsp)
 
     pop %rax
     pop %rbx
@@ -104,7 +102,7 @@
 exception:
     cmpl $SELECTOR_KERNEL_CS, 24(%rsp)
     je exception_in_kernel
-    retq
+    jmp exception
 
 exception_in_kernel:
     push %rbp
@@ -128,7 +126,7 @@ exception_in_kernel:
     add $120, %rsi              // 15 registers
     call exception_handler
 
-    CLEAR_IF(19*8(%rsp))
+    CLEAR_IF 19*8(%rsp)
 
     pop %rax
     pop %rbx
@@ -151,10 +149,29 @@ exception_in_kernel:
 
     .global sys_call
 sys_call:
-    retq
+    swapgs
+
+    SAVE_CONTEXT 0, KTS_INT
+
+    push %rsi // proc ptr
+    push %rax
+
+    mov %rsi, %rdi
+    call stop_context
+
+    pop %rdi
+    mov %rbx, %rsi
+    mov (%rsp), %rdx
+    call handle_sys_call
+
+    pop %rsi
+    mov %rax, RAXREG(%rsi)
+
+    jmp switch_to_user
 
     .global sys_call_sysenter
 sys_call_sysenter:
+    jmp sys_call_sysenter
     retq
 
     .macro SYS_CALL_SYSCALL_PER_CPU cpu
@@ -174,7 +191,13 @@ sys_call_sysenter:
 
     .global restore_user_context_int
 restore_user_context_int:
-    retq
+    mov %rdi, %rsp
+    POP_REGS
+
+    add $8, %rsp // Skip orig_ax and we are at the IRET frame.
+
+    swapgs
+    iretq
 
     .global restore_user_context_sysenter
 restore_user_context_sysenter:

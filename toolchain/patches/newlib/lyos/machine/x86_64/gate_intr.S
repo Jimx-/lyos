@@ -4,10 +4,11 @@
 .section .text
 
 syscall_gate_intr:
-    push %rbp
-    mov  %rsp, %rbp
+    push    %rbx
+    mov     %rdi, %rax
+    mov     %rsi, %rbx
 
-    int	$0x90
+    int     $0x90
 
-    pop %rbp
+    pop     %rbx
     ret

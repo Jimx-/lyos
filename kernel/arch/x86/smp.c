@@ -103,6 +103,7 @@ void smp_init()
     bsp_cpu_id = apicid2cpuid[bsp_lapic_id];
 
     init_tss(bsp_cpu_id, get_k_stack_top(bsp_cpu_id));
+    load_prot_selectors(bsp_cpu_id);
 
     if (!lapic_enable(bsp_cpu_id)) {
         panic("unable to initialize bsp lapic");

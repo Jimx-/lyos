@@ -28,9 +28,14 @@
 #define VMALLOC_END                                                          \
     0xb0000000 /* region where MM map physical memory into its address space \
                 */
-#define PKMAP_START  (KERNEL_VMA + LOWMEM_END)
-#define PKMAP_END    (PKMAP_START + 0x400000) /* 4 MB */
+#define PKMAP_START (KERNEL_VMA + LOWMEM_END)
+#define PKMAP_END   (PKMAP_START + 0x400000) /* 4 MB */
+
+#ifdef CONFIG_X86_32
 #define VM_STACK_TOP KERNEL_VMA
+#else
+#define VM_STACK_TOP 0x800000000000UL
+#endif
 
 #ifndef __ASSEMBLY__
 

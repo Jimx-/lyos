@@ -372,7 +372,7 @@ int init_tss(unsigned cpu, void* kernel_stack)
               DA_386TSS);
 
     /* set cpuid */
-    *((u32*)(percpu_kstack[cpu] + sizeof(u32))) = cpu;
+    *((reg_t*)(percpu_kstack[cpu] + sizeof(reg_t))) = cpu;
 
     if (syscall_style & SST_INTEL_SYSENTER) {
         ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, SELECTOR_KERNEL_CS);

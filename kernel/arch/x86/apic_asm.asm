@@ -107,7 +107,7 @@ extern  apic_error_int_handler
 %endmacro
 
 %macro	lapic_int       1
-cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
+    cmp dword [esp + 4], SELECTOR_KERNEL_CS		; Test if this interrupt is triggered in kernel
     je .1
     call	save
     push    esi

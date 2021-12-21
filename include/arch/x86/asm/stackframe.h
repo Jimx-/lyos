@@ -64,22 +64,22 @@ struct stackframe {
     reg_t dx;
     reg_t si;
     reg_t di;
-    reg_t kernel_sp;
-    reg_t retaddr;
+    reg_t orig_ax;
     reg_t ip;
     reg_t cs;
     reg_t flags;
     reg_t sp;
     reg_t ss;
-    reg_t orig_ax;
+    reg_t kernel_sp;
+    reg_t retaddr;
 };
 
 #endif
 
 struct segframe {
     int trap_style;
-    u32 cr3_phys;
-    u32* cr3_vir;
+    unsigned long cr3_phys;
+    unsigned long* cr3_vir;
     char* fpu_state;
     struct descriptor tls_array[GDT_TLS_ENTRIES];
 };

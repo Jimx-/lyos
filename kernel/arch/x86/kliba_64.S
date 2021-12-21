@@ -265,12 +265,53 @@ phys_copy_fault_in_kernel:
 
     .global copy_user_message
 copy_user_message:
-    retq
+    mov 0*4(%rsi), %rax
+    mov %rax, 0*4(%rdi)
+    mov 1*4(%rsi), %rax
+    mov %rax, 1*4(%rdi)
+    mov 2*4(%rsi), %rax
+    mov %rax, 2*4(%rdi)
+    mov 3*4(%rsi), %rax
+    mov %rax, 3*4(%rdi)
+    mov 4*4(%rsi), %rax
+    mov %rax, 4*4(%rdi)
+    mov 5*4(%rsi), %rax
+    mov %rax, 5*4(%rdi)
+    mov 6*4(%rsi), %rax
+    mov %rax, 6*4(%rdi)
+    mov 7*4(%rsi), %rax
+    mov %rax, 7*4(%rdi)
+    mov 8*4(%rsi), %rax
+    mov %rax, 8*4(%rdi)
+    mov 9*4(%rsi), %rax
+    mov %rax, 9*4(%rdi)
+    mov 10*4(%rsi), %rax
+    mov %rax, 10*4(%rdi)
+    mov 11*4(%rsi), %rax
+    mov %rax, 11*4(%rdi)
+    mov 12*4(%rsi), %rax
+    mov %rax, 12*4(%rdi)
+    mov 13*4(%rsi), %rax
+    mov %rax, 13*4(%rdi)
+    mov 14*4(%rsi), %rax
+    mov %rax, 14*4(%rdi)
+    mov 15*4(%rsi), %rax
+    mov %rax, 15*4(%rdi)
+    mov 16*4(%rsi), %rax
+    mov %rax, 16*4(%rdi)
+    mov 17*4(%rsi), %rax
+    mov %rax, 17*4(%rdi)
+    mov 18*4(%rsi), %rax
+    mov %rax, 18*4(%rdi)
+    mov 19*4(%rsi), %rax
+    mov %rax, 19*4(%rdi)
 
     .global copy_user_message_end
 copy_user_message_end:
+    xor %rax, %rax
     retq
 
     .global copy_user_message_fault
 copy_user_message_fault:
+    mov $1, %rax
     retq
