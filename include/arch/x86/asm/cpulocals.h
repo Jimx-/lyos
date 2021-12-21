@@ -1,7 +1,11 @@
 #ifndef _ARCH_CPULOCALS_H_
 #define _ARCH_CPULOCALS_H_
 
+#ifdef CONFIG_X86_32
 #define __cpulocals_seg "fs"
+#else
+#define __cpulocals_seg "gs"
+#endif
 
 #ifdef CONFIG_SMP
 

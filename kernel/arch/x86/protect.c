@@ -211,7 +211,15 @@ void load_prot_selectors(unsigned int cpu)
     x86_load_fs(SELECTOR_CPULOCALS);
 #endif
 
+#ifdef CONFIG_X86_64
+    x86_load_gs(0);
+
+    ia32_write_msr(AMD_MSR_GS_BASE, (u32)(cpulocals_offset(cpu) >> 32),
+                   (u32)cpulocals_offset(cpu));
+#else
     x86_load_gs(SELECTOR_KERNEL_DS);
+#endif
+
     x86_load_ss(SELECTOR_KERNEL_DS);
 }
 
