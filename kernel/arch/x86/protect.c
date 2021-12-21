@@ -321,12 +321,12 @@ void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler,
 
 void reload_idt()
 {
-    u8 idt_ptr[6];
+    u8 idt_ptr[2 + sizeof(unsigned long)];
 
     u16* p_idt_limit = (u16*)(&idt_ptr[0]);
-    u32* p_idt_base = (u32*)(&idt_ptr[2]);
+    unsigned long* p_idt_base = (unsigned long*)(&idt_ptr[2]);
     *p_idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
-    *p_idt_base = (u32)&idt;
+    *p_idt_base = (unsigned long)&idt;
 
     x86_lidt((u8*)&idt_ptr);
 }
@@ -444,9 +444,9 @@ static void print_stacktrace(struct proc* p)
     unsigned long bp, hbp, pc;
     int retval;
 
-    bp = p->regs.ebp;
+    bp = p->regs.bp;
 
-    printk("proc %d: pc=0x%x bp=0x%x ", p->endpoint, p->regs.eip, bp);
+    printk("proc %d: pc=0x%x bp=0x%x ", p->endpoint, p->regs.ip, bp);
 
     while (bp) {
         retval = data_vir_copy(KERNEL, &pc, p->endpoint,
@@ -513,8 +513,8 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
                 frame->eip = (u32)phys_copy_fault_in_kernel;
             }
         } else {
-            fault_proc->regs.eip = (u32)phys_copy_fault;
-            fault_proc->regs.eax = pfla;
+            fault_proc->regs.ip = (u32)phys_copy_fault;
+            fault_proc->regs.ax = pfla;
         }
 
         return;

@@ -118,7 +118,11 @@ x86_load_ss:
 
     .global switch_k_stack
 switch_k_stack:
-    retq
+    xor %rbp, %rbp
+    mov %rdi, %rsp
+    jmp *%rsi
+.0:
+    jmp .0
 
     .global fninit
 fninit:

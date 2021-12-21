@@ -92,11 +92,16 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     initial_pgd = &init_top_pgt;
 
     phys_bytes procs_base = mod_ends & ARCH_PG_MASK;
-    int kernel_pts = procs_base >> ARCH_PGD_SHIFT;
-    if (procs_base % ARCH_PGD_SIZE != 0) {
-        kernel_pts++;
-        procs_base = kernel_pts << ARCH_PGD_SHIFT;
-    }
+    unsigned long kernel_pts;
+
+#ifdef CONFIG_X86_32
+    procs_base = roundup(procs_base, ARCH_PGD_SIZE);
+    kernel_pts = procs_base >> ARCH_PGD_SHIFT;
+#else
+    procs_base = roundup(procs_base, ARCH_PMD_SIZE);
+    kernel_pts = procs_base >> ARCH_PMD_SHIFT;
+#endif
+
     kinfo.kernel_start_pde = ARCH_PDE(KERNEL_VMA);
     kinfo.kernel_end_pde = ARCH_PDE(KERNEL_VMA) + kernel_pts;
     kinfo.kernel_start_phys = 0;

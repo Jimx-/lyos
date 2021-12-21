@@ -56,8 +56,9 @@ static void smp_start_aps();
 
 void trampoline();
 
-#define AP_LIN_ADDR(addr) \
-    (phys_bytes)((u32)addr - (u32)&trampoline + trampoline_base)
+#define AP_LIN_ADDR(addr)                                           \
+    (phys_bytes)((unsigned long)addr - (unsigned long)&trampoline + \
+                 trampoline_base)
 
 static void copy_trampoline()
 {
@@ -74,16 +75,16 @@ static void copy_trampoline()
 
     /* Set up descriptors */
     u16* gdt_limit = (u16*)(&__ap_gdt[0]);
-    u32* gdt_base = (u32*)(&__ap_gdt[2]);
+    unsigned long* gdt_base = (unsigned long*)(&__ap_gdt[2]);
     *gdt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
     *gdt_base = AP_LIN_ADDR(&__ap_gdt_table);
 
     u16* idt_limit = (u16*)(&__ap_idt[0]);
-    u32* idt_base = (u32*)(&__ap_idt[2]);
-    *idt_limit = GDT_SIZE * sizeof(struct descriptor) - 1;
+    unsigned long* idt_base = (unsigned long*)(&__ap_idt[2]);
+    *idt_limit = IDT_SIZE * sizeof(struct gate) - 1;
     *idt_base = AP_LIN_ADDR(&__ap_idt_table);
 
-    memcpy((void*)trampoline_base, trampoline, tramp_size);
+    memcpy(__va(trampoline_base), trampoline, tramp_size);
 }
 
 void smp_init()

@@ -39,7 +39,7 @@ int sys_sigsend(MESSAGE* m, struct proc* p)
     lock_proc(p_dest);
 
 #ifdef __i386__
-    si.stackptr = (void*)p_dest->regs.esp;
+    si.stackptr = (void*)p_dest->regs.sp;
 #endif
 
     struct sigframe sf, *sfp;
@@ -53,21 +53,21 @@ int sys_sigsend(MESSAGE* m, struct proc* p)
     sf.sc.fs = p_dest->regs.fs;
     sf.sc.es = p_dest->regs.es;
     sf.sc.ds = p_dest->regs.ds;
-    sf.sc.edi = p_dest->regs.edi;
-    sf.sc.esi = p_dest->regs.esi;
-    sf.sc.ebp = p_dest->regs.ebp;
-    sf.sc.ebx = p_dest->regs.ebx;
-    sf.sc.edx = p_dest->regs.edx;
-    sf.sc.ecx = p_dest->regs.ecx;
-    sf.sc.eax = p_dest->regs.eax;
-    sf.sc.eip = p_dest->regs.eip;
+    sf.sc.edi = p_dest->regs.di;
+    sf.sc.esi = p_dest->regs.si;
+    sf.sc.ebp = p_dest->regs.bp;
+    sf.sc.ebx = p_dest->regs.bx;
+    sf.sc.edx = p_dest->regs.dx;
+    sf.sc.ecx = p_dest->regs.cx;
+    sf.sc.eax = p_dest->regs.ax;
+    sf.sc.eip = p_dest->regs.ip;
     sf.sc.cs = p_dest->regs.cs;
-    sf.sc.eflags = p_dest->regs.eflags;
-    sf.sc.esp = p_dest->regs.esp;
+    sf.sc.eflags = p_dest->regs.flags;
+    sf.sc.esp = p_dest->regs.sp;
     sf.sc.ss = p_dest->regs.ss;
     sf.signum = si.signo;
     sf.retaddr_sigreturn = si.sig_return;
-    sf.retaddr = p_dest->regs.eip;
+    sf.retaddr = p_dest->regs.ip;
 
     sf.sc.trap_style = p_dest->seg.trap_style;
 #endif
@@ -76,8 +76,8 @@ int sys_sigsend(MESSAGE* m, struct proc* p)
     data_vir_copy(p_dest->endpoint, sfp, KERNEL, &sf, sizeof(sf));
 
 #ifdef __i386__
-    p_dest->regs.esp = (reg_t)sfp;
-    p_dest->regs.eip = (reg_t)si.sig_handler;
+    p_dest->regs.sp = (reg_t)sfp;
+    p_dest->regs.ip = (reg_t)si.sig_handler;
 #endif
 
     unlock_proc(p_dest);

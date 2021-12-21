@@ -74,8 +74,8 @@ int arch_reset_proc(struct proc* p)
 {
     char* fpu = NULL;
 
-    p->regs.eip = 0;
-    p->regs.esp = 0;
+    p->regs.ip = 0;
+    p->regs.sp = 0;
 
     if (p->endpoint == TASK_MM) {
         /* use bootstrap page table */
@@ -84,10 +84,13 @@ int arch_reset_proc(struct proc* p)
     }
 
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;
-    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs = p->regs.ss =
+#ifdef CONFIG_X86_32
+    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs =
         SELECTOR_USER_DS | RPL_USER;
+#endif
+    p->regs.ss = SELECTOR_USER_DS | RPL_USER;
 
-    p->regs.eflags = 0x202; /* IF=1, bit 2 is always 1 */
+    p->regs.flags = 0x202; /* IF=1, bit 2 is always 1 */
     p->seg.trap_style = KTS_INT;
 
     if (p->slot >= 0) {
@@ -146,16 +149,19 @@ int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
 {
     strlcpy(p->name, name, sizeof(p->name));
 
-    p->regs.esp = (reg_t)sp;
-    p->regs.eip = (reg_t)ip;
-    p->regs.eax = ps->ps_nargvstr;
-    p->regs.edx = (reg_t)ps->ps_argvstr;
-    p->regs.ecx = (reg_t)ps->ps_envstr;
+    p->regs.sp = (reg_t)sp;
+    p->regs.ip = (reg_t)ip;
+    p->regs.ax = ps->ps_nargvstr;
+    p->regs.dx = (reg_t)ps->ps_argvstr;
+    p->regs.cx = (reg_t)ps->ps_envstr;
     p->seg.trap_style = KTS_INT;
 
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;
-    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs = p->regs.ss =
+#ifdef CONFIG_X86_32
+    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs =
         SELECTOR_USER_DS | RPL_USER;
+#endif
+    p->regs.ss = SELECTOR_USER_DS | RPL_USER;
 
     memset(p->seg.tls_array, 0, GDT_TLS_ENTRIES * sizeof(struct descriptor));
 
@@ -168,7 +174,7 @@ int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
     int retval = 0;
 
     if (newsp != NULL) {
-        p->regs.esp = (reg_t)newsp;
+        p->regs.sp = (reg_t)newsp;
     }
 
     if (flags & KF_SETTLS)
@@ -230,16 +236,16 @@ void arch_boot_proc(struct proc* p, struct boot_proc* bp)
 
         strcpy(p->name, bp->name);
 
-        p->regs.eip = (u32)execi.entry_point;
-        p->regs.esp = (u32)VM_STACK_TOP;
-        p->regs.ecx = (u32)0; // argc
-        p->regs.ecx = (u32)0; // environ
+        p->regs.ip = (reg_t)execi.entry_point;
+        p->regs.sp = (reg_t)VM_STACK_TOP;
+        p->regs.ax = (reg_t)0; // argc
+        p->regs.cx = (reg_t)0; // environ
     }
 }
 
 void arch_set_syscall_result(struct proc* p, int result)
 {
-    p->regs.eax = (u32)result;
+    p->regs.ax = (reg_t)result;
 }
 
 /*****************************************************************************

@@ -120,8 +120,12 @@ level2_ident_pgt:
 
 level3_kernel_pgt:
     .fill 510,8,0
-    .quad level2_ident_pgt - KERNEL_VMA + 0x07
+    .quad level2_kernel_pgt - KERNEL_VMA + 0x07
     .quad 0
+
+level2_kernel_pgt:
+    /* Identity map the first 1G. */
+    PMDS(0, 0x87 /* PG_PRESENT | PG_RW | PG_USER | PG_BIGPAGE */, ARCH_VM_PMD_ENTRIES)
 
     .align 8
 gdtr:

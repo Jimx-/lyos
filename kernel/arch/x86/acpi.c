@@ -151,7 +151,7 @@ static int acpi_find_rsdp()
     return 0;
 }
 
-u32 acpi_get_table_base(const char* name)
+unsigned long acpi_get_table_base(const char* name)
 {
     int i;
 

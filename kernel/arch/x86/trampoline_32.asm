@@ -10,7 +10,6 @@ global __ap_idt_table
 global __trampoline_end
 
 extern StackTop
-extern load_prot_selectors
 extern smp_boot_ap
 
 bits 16
@@ -58,10 +57,12 @@ trampoline:
 trampoline_32:
     mov ax, SELECTOR_KERNEL_DS
     mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
     mov ss, ax
-    mov esp, StackTop - 4
+    mov esp, StackTop - X86_STACK_TOP_RESERVED
 
-    call load_prot_selectors
     jmp smp_boot_ap
     hlt
 
@@ -75,8 +76,8 @@ __ap_gdt:
 __ap_idt:
     dq      0
 __ap_gdt_table:
-    times 128 db 0
+    times 128*8 db 0
 __ap_idt_table:
-    times 256 db 0
+    times 256*8 db 0
 ALIGN 0x1000
 __trampoline_end:

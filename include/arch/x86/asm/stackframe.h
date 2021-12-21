@@ -16,32 +16,65 @@
 #ifndef _STACKFRAME_H_
 #define _STACKFRAME_H_
 
+#include <lyos/config.h>
 #include <asm/sigcontext.h>
 #include <asm/protect.h>
 
 typedef unsigned long reg_t;
+
+#ifdef CONFIG_X86_32 /* 32-bit: */
 
 struct stackframe {
     reg_t gs;
     reg_t fs;
     reg_t es;
     reg_t ds;
-    reg_t edi;
-    reg_t esi;
-    reg_t ebp;
-    reg_t kernel_esp;
-    reg_t ebx;
-    reg_t edx;
-    reg_t ecx;
-    reg_t eax;
+    reg_t di;
+    reg_t si;
+    reg_t bp;
+    reg_t kernel_sp;
+    reg_t bx;
+    reg_t dx;
+    reg_t cx;
+    reg_t ax;
     reg_t retaddr;
-    reg_t eip;
+    reg_t ip;
     reg_t cs;
-    reg_t eflags;
-    reg_t esp;
+    reg_t flags;
+    reg_t sp;
     reg_t ss;
-    reg_t orig_eax;
+    reg_t orig_ax;
 };
+
+#else /* 64-bit: */
+
+struct stackframe {
+    reg_t r15;
+    reg_t r14;
+    reg_t r13;
+    reg_t r12;
+    reg_t bp;
+    reg_t bx;
+    reg_t r11;
+    reg_t r10;
+    reg_t r9;
+    reg_t r8;
+    reg_t ax;
+    reg_t cx;
+    reg_t dx;
+    reg_t si;
+    reg_t di;
+    reg_t kernel_sp;
+    reg_t retaddr;
+    reg_t ip;
+    reg_t cs;
+    reg_t flags;
+    reg_t sp;
+    reg_t ss;
+    reg_t orig_ax;
+};
+
+#endif
 
 struct segframe {
     int trap_style;

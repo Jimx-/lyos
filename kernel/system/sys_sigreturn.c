@@ -43,17 +43,17 @@ int sys_sigreturn(MESSAGE* m, struct proc* p)
     p_dest->regs.fs = sc.fs;
     p_dest->regs.es = sc.es;
     p_dest->regs.ds = sc.ds;
-    p_dest->regs.edi = sc.edi;
-    p_dest->regs.esi = sc.esi;
-    p_dest->regs.ebp = sc.ebp;
-    p_dest->regs.ebx = sc.ebx;
-    p_dest->regs.edx = sc.edx;
-    p_dest->regs.ecx = sc.ecx;
-    p_dest->regs.eax = sc.eax;
-    p_dest->regs.eip = sc.eip;
+    p_dest->regs.di = sc.edi;
+    p_dest->regs.si = sc.esi;
+    p_dest->regs.bp = sc.ebp;
+    p_dest->regs.bx = sc.ebx;
+    p_dest->regs.dx = sc.edx;
+    p_dest->regs.cx = sc.ecx;
+    p_dest->regs.ax = sc.eax;
+    p_dest->regs.ip = sc.eip;
     p_dest->regs.cs = sc.cs;
-    p_dest->regs.eflags = sc.eflags;
-    p_dest->regs.esp = sc.esp;
+    p_dest->regs.flags = sc.eflags;
+    p_dest->regs.sp = sc.esp;
     p_dest->regs.ss = sc.ss;
 
     p_dest->seg.trap_style = sc.trap_style;
