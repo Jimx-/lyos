@@ -68,7 +68,7 @@ struct proc* arch_switch_to_user()
     return p;
 }
 
-static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __attribute__((aligned(16)));
+static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __attribute__((aligned(64)));
 
 int arch_reset_proc(struct proc* p)
 {
@@ -80,7 +80,7 @@ int arch_reset_proc(struct proc* p)
     if (p->endpoint == TASK_MM) {
         /* use bootstrap page table */
         p->seg.cr3_phys = __pa(initial_pgd);
-        p->seg.cr3_vir = (u32*)initial_pgd;
+        p->seg.cr3_vir = (unsigned long*)initial_pgd;
     }
 
     p->regs.cs = SELECTOR_USER_CS | RPL_USER;

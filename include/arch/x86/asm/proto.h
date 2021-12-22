@@ -80,10 +80,13 @@ unsigned short fnstsw(void);
 void fnstcw(unsigned short* cw);
 void fnsave(void* state);
 void fxsave(void* state);
+void xsave(void* state, u32 hi, u32 lo);
 int frstor(void* state);
 int frstor_end(void*);
 int fxrstor(void* state);
 int fxrstor_end(void*);
+int xrstor(void* state, u32 hi, u32 lo);
+int xrstor_end(void*);
 int frstor_fault(void*);
 void clts(void);
 

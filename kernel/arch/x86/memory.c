@@ -330,8 +330,8 @@ int arch_reply_kern_mapping(int index, void* vir_addr)
 
 static void setcr3(struct proc* p, unsigned long cr3, void* cr3_v)
 {
-    p->seg.cr3_phys = (u32)cr3;
-    p->seg.cr3_vir = (u32*)cr3_v;
+    p->seg.cr3_phys = cr3;
+    p->seg.cr3_vir = (unsigned long*)cr3_v;
 
     if (p->endpoint == TASK_MM) {
 #if CONFIG_SMP

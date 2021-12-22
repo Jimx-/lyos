@@ -97,6 +97,8 @@ int _cpufeature(int cpufeature)
         return ecx & CPUID1_ECX_HYPERVISOR;
     case _CPUF_I386_HAS_X2APIC:
         return ecx & CPUID1_ECX_X2APIC;
+    case _CPUF_I386_XSAVE:
+        return ecx & CPUID1_ECX_XSAVE;
     case _CPUF_I386_HTT:
         return edx & CPUID1_EDX_HTT;
     case _CPUF_I386_HTT_MAX_NUM:

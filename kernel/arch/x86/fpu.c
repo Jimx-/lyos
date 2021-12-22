@@ -38,6 +38,7 @@
 static DEFINE_CPULOCAL(int, fpu_present) = 0;
 
 static int has_osfxsr = 0;
+static int has_osxsave = 0;
 
 /* CR0 Flags */
 #define CR0_MP (1L << 1) /* Monitor co-processor */
@@ -47,6 +48,10 @@ static int has_osfxsr = 0;
 /* CR4 Flags */
 #define CR4_OSFXSR   (1L << 9)
 #define CR4_XMMEXCPT (1L << 10)
+#define CR4_OSXSAVE  (1L << 18)
+
+#define XFEATURE_FP  (1L << 0)
+#define XFEATURE_SSE (1L << 1)
 
 /**
  * <Ring 0> Initialize FPU.
@@ -74,12 +79,18 @@ void fpu_init(void)
 
             write_cr4(cr4);
             has_osfxsr = 1;
-        } else {
-            has_osfxsr = 0;
+        }
+
+        if (_cpufeature(_CPUF_I386_XSAVE)) {
+            u32 cr4 = read_cr4();
+            cr4 |= CR4_OSXSAVE;
+            write_cr4(cr4);
+
+            xsetbv(0, XFEATURE_FP | XFEATURE_SSE);
+            has_osxsave = 1;
         }
     } else {
         get_cpulocal_var(fpu_present) = 0;
-        has_osfxsr = 0;
     }
 }
 
@@ -100,7 +111,9 @@ void save_local_fpu(struct proc* p, int retain)
 {
     char* state = p->seg.fpu_state;
 
-    if (has_osfxsr) {
+    if (has_osxsave) {
+        xsave(state, 0xffffffff, 0xffffffff);
+    } else if (has_osfxsr) {
         fxsave(state);
     } else {
         fnsave(state);
@@ -119,7 +132,9 @@ int restore_fpu(struct proc* p)
         fninit();
         p->flags |= PF_FPU_INITIALIZED;
     } else {
-        if (has_osfxsr) {
+        if (has_osxsave) {
+            retval = xrstor(state, 0xffffffff, 0xffffffff);
+        } else if (has_osfxsr) {
             retval = fxrstor(state);
         } else {
             retval = frstor(state);

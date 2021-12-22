@@ -604,7 +604,9 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
         if ((frame->eip >= (uintptr_t)frstor &&
              frame->eip < (uintptr_t)frstor_end) ||
             (frame->eip >= (uintptr_t)fxrstor &&
-             frame->eip < (uintptr_t)fxrstor_end)) {
+             frame->eip < (uintptr_t)fxrstor_end) ||
+            (frame->eip >= (uintptr_t)xrstor &&
+             frame->eip < (uintptr_t)xrstor_end)) {
             if (frame->vec_no == 14 || frame->vec_no == 13) { /* #PF or #GP */
                 frame->eip = (reg_t)frstor_fault;
                 return;
@@ -622,6 +624,8 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
         panic("unhandled exception in kernel %d, eip: %x", frame->vec_no,
               frame->eip);
     } else {
+        printk("unhandled exception in userspace %d, eip: %x", frame->vec_no,
+               frame->eip);
         print_stacktrace(fault_proc);
         ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);
     }

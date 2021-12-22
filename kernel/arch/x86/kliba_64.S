@@ -126,46 +126,71 @@ switch_k_stack:
 
     .global fninit
 fninit:
+    fninit
     retq
 
     .global fnstsw
 fnstsw:
+    xor %rax, %rax
+    fnstsw %ax
     retq
 
     .global fnstcw
 fnstcw:
+    fnstcw (%rdi)
     retq
 
     .global fnsave
 fnsave:
+    fnsave (%rdi)
     retq
 
     .global fxsave
 fxsave:
+    fxsave (%rdi)
+    retq
+
+    .global xsave
+xsave:
+    mov %rdx, %rax
+    mov %rsi, %rdx
+    xsave (%rdi)
     retq
 
     .global frstor
+    .global frstor_end
 frstor:
+    frstor (%rdi)
+frstor_end:
+    xor %rax, %rax
     retq
 
     .global fxrstor
-fxrstor:
-    retq
-
-    .global frstor_end
-frstor_end:
-    retq
-
     .global fxrstor_end
+fxrstor:
+    fxrstor (%rdi)
 fxrstor_end:
+    xor %rax, %rax
+    retq
+
+    .global xrstor
+    .global xrstor_end
+xrstor:
+    mov %rdx, %rax
+    mov %rsi, %rdx
+    xrstor (%rdi)
+xrstor_end:
+    xor %rax, %rax
     retq
 
     .global frstor_fault
 frstor_fault:
+    mov $1, %rax
     retq
 
     .global clts
 clts:
+    clts
     retq
 
     .global ia32_read_msr

@@ -48,10 +48,13 @@ global  fnstsw
 global  fnstcw
 global  fnsave
 global  fxsave
+global  xsave
 global  frstor
 global  fxrstor
+global  xrstor
 global  frstor_end
 global  fxrstor_end
+global  xrstor_end
 global  frstor_fault
 global  clts
 global  ia32_read_msr
@@ -323,6 +326,19 @@ fxsave:
     pop     ebp
     ret
 
+xsave:
+    push    ebp
+    mov     ebp, esp
+
+    mov     ecx, [ebp + 8]
+    mov     edx, [ebp + 12]
+    mov     eax, [ebp + 16]
+
+    xsave   [ecx]
+
+    pop     ebp
+    ret
+
 frstor:
     mov     eax, [esp + 4]
     frstor  [eax]
@@ -334,6 +350,15 @@ fxrstor:
     mov     eax, [esp + 4]
     fxrstor [eax]
 fxrstor_end:
+    xor     eax, eax
+    ret
+
+xrstor:
+    mov     ecx, [esp + 4]
+    mov     edx, [esp + 8]
+    mov     eax, [esp + 12]
+    xrstor  [ecx]
+xrstor_end:
     xor     eax, eax
     ret
 
