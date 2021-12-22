@@ -11,7 +11,7 @@ KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o clock.o global.o proc.o klib.o \
 				sched.o profile.o watchdog.o
 
 LIB		= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
-LIBC		= $(DESTDIR)/usr/lib/libc.a
+KLIBC		= lib/klibc.o
 
 ifeq ($(CONFIG_OF),y)
 	LIB += $(LIBOUTDIR)/libof.a $(LIBOUTDIR)/libfdt.a
@@ -22,9 +22,9 @@ KRNL		= $(ARCHDIR)/lyos.elf
 everything : realclean $(KRNL)
 
 realclean :
-	@rm -f $(KRNL) $(KERNELOBJS)
+	@rm -f $(KRNL) $(KERNELOBJS) $(KLIBC)
 
-$(KRNL): $(KERNELOBJS) $(LIB) $(LIBC)
+$(KRNL): $(KERNELOBJS) $(LIB) $(KLIBC)
 	@echo -e '\tLD\t$@'
 ifeq ($(SUBARCH),x86_64)
 	@$(LD) $(LDFLAGS) -o $(KRNL).64 $^
@@ -44,3 +44,6 @@ arch/$(ARCH)/arch-kernel.o:
 
 system/system.o:
 	@(cd system; make)
+
+$(KLIBC):
+	@(cd lib; make)

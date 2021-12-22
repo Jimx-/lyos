@@ -219,7 +219,7 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     }
 
     char* hz_value = env_get("hz");
-    if (hz_value) system_hz = atoi(hz_value);
+    if (hz_value) system_hz = strtol(hz_value, NULL, 10);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
     char param_buf[64];

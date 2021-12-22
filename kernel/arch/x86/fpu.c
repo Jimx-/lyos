@@ -85,16 +85,16 @@ void fpu_init(void)
 
 void enable_fpu_exception(void)
 {
-    /* u32 cr0; */
+    u32 cr0;
 
-    /* cr0 = read_cr0(); */
-    /* if (!(cr0 & CR0_TS)) { */
-    /*     cr0 |= CR0_TS; */
-    /*     write_cr0(cr0); */
-    /* } */
+    cr0 = read_cr0();
+    if (!(cr0 & CR0_TS)) {
+        cr0 |= CR0_TS;
+        write_cr0(cr0);
+    }
 }
 
-void disable_fpu_exception(void) { /* clts(); */ }
+void disable_fpu_exception(void) { clts(); }
 
 void save_local_fpu(struct proc* p, int retain)
 {

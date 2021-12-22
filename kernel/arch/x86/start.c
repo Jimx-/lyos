@@ -202,12 +202,12 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     cut_memmap(&kinfo, 0x100000, kinfo.kernel_end_phys);
 
     char* hz_value = env_get("hz");
-    if (hz_value) system_hz = atoi(hz_value);
+    if (hz_value) system_hz = strtol(hz_value, NULL, 10);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
     watchdog_enabled = 0;
     char* watchdog_value = env_get("watchdog");
-    if (watchdog_value) watchdog_enabled = atoi(watchdog_value);
+    if (watchdog_value) watchdog_enabled = strtol(watchdog_value, NULL, 10);
 
     if (mb_flags & MULTIBOOT_INFO_VIDEO_INFO) {
     }

@@ -7,7 +7,7 @@ ifeq ($(CONFIG_X86_32),y)
 	BITS := 32
 else
 	BITS := 64
-	CFLAGS	+= -mcmodel=large
+	CFLAGS	+= -mcmodel=kernel
 endif
 
 CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow

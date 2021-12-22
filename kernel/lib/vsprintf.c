@@ -33,6 +33,7 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
+#include <limits.h>
 
 #define ZEROPAD 1  // Pad with zero
 #define SIGN    2  // Unsigned/signed long
@@ -46,6 +47,58 @@
 
 static char* digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 static char* upper_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+long strtol(const char* nptr, char** endptr, int base)
+{
+    const unsigned char* s = (const unsigned char*)nptr;
+    unsigned long acc = 0;
+    int c;
+    unsigned long cutoff;
+    int neg = 0, any = 0, cutlim;
+
+    do {
+        c = *s++;
+    } while (c == ' ');
+    if (c == '-') {
+        neg = 1;
+        c = *s++;
+    } else if (c == '+')
+        c = *s++;
+    if ((base == 0 || base == 16) && c == '0' && (*s == 'x' || *s == 'X')) {
+        c = s[1];
+        s += 2;
+        base = 16;
+    }
+    if (base == 0) base = c == '0' ? 8 : 10;
+
+    cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
+    cutlim = cutoff % (unsigned long)base;
+    cutoff /= (unsigned long)base;
+    for (acc = 0, any = 0;; c = *s++) {
+        if (c >= '0' && c <= '9')
+            c -= '0';
+        else if (c >= 'A' && c <= 'Z')
+            c -= 'A' - 10;
+        else if (c >= 'a' && c <= 'z')
+            c -= 'a' - 10;
+        else
+            break;
+        if (c >= base) break;
+        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+            any = -1;
+        else {
+            any = 1;
+            acc *= base;
+            acc += c;
+        }
+    }
+    if (any < 0) {
+        acc = neg ? LONG_MIN : LONG_MAX;
+    } else if (neg)
+        acc = -acc;
+    if (endptr != 0) *endptr = (char*)(any ? (char*)s - 1 : nptr);
+    return (acc);
+}
 
 static size_t strnlen(const char* s, size_t count)
 {
@@ -63,8 +116,8 @@ static int skip_atoi(const char** s)
     return i;
 }
 
-static char* number(char* str, long num, int base, int size, int precision,
-                    int type)
+static char* number(char* str, char* end, long num, int base, int size,
+                    int precision, int type)
 {
     char c, sign, tmp[66];
     char* dig = digits;
@@ -112,34 +165,50 @@ static char* number(char* str, long num, int base, int size, int precision,
     if (i > precision) precision = i;
     size -= precision;
     if (!(type & (ZEROPAD | LEFT)))
-        while (size-- > 0)
-            *str++ = ' ';
-    if (sign) *str++ = sign;
+        while (size-- > 0) {
+            if (str < end) *str = ' ';
+            str++;
+        }
+    if (sign) {
+        if (str < end) *str = sign;
+        str++;
+    }
 
     if (type & SPECIAL) {
         if (base == 8) {
-            *str++ = '0';
+            if (str < end) *str = '0';
+            str++;
         } else if (base == 16) {
-            *str++ = '0';
-            *str++ = digits[33];
+            if (str < end) *str = '0';
+            str++;
+            if (str < end) *str = digits[33];
+            str++;
         }
     }
 
     if (!(type & LEFT))
-        while (size-- > 0)
-            *str++ = c;
-    while (i < precision--)
-        *str++ = '0';
-    while (i-- > 0)
-        *str++ = tmp[i];
-    while (size-- > 0)
-        *str++ = ' ';
+        while (size-- > 0) {
+            if (str < end) *str = c;
+            str++;
+        }
+    while (i < precision--) {
+        if (str < end) *str = '0';
+        str++;
+    }
+    while (i-- > 0) {
+        if (str < end) *str = tmp[i];
+        str++;
+    }
+    while (size-- > 0) {
+        if (str < end) *str = ' ';
+        str++;
+    }
 
     return str;
 }
 
-static char* eaddr(char* str, unsigned char* addr, int size, int precision,
-                   int type)
+static char* eaddr(char* str, char* end, unsigned char* addr, int size,
+                   int precision, int type)
 {
     char tmp[24];
     char* dig = digits;
@@ -154,18 +223,23 @@ static char* eaddr(char* str, unsigned char* addr, int size, int precision,
     }
 
     if (!(type & LEFT))
-        while (len < size--)
-            *str++ = ' ';
-    for (i = 0; i < len; ++i)
-        *str++ = tmp[i];
-    while (len < size--)
-        *str++ = ' ';
+        while (len < size--) {
+            if (str < end) *str = ' ';
+            str++;
+        }
+    for (i = 0; i < len; ++i, ++str) {
+        if (str < end) *str = tmp[i];
+    }
+    while (len < size--) {
+        if (str < end) *str = ' ';
+        str++;
+    }
 
     return str;
 }
 
-static char* iaddr(char* str, unsigned char* addr, int size, int precision,
-                   int type)
+static char* iaddr(char* str, char* end, unsigned char* addr, int size,
+                   int precision, int type)
 {
     char tmp[24];
     int i, n, len;
@@ -193,22 +267,27 @@ static char* iaddr(char* str, unsigned char* addr, int size, int precision,
     }
 
     if (!(type & LEFT))
-        while (len < size--)
-            *str++ = ' ';
-    for (i = 0; i < len; ++i)
-        *str++ = tmp[i];
-    while (len < size--)
-        *str++ = ' ';
+        while (len < size--) {
+            if (str < end) *str = ' ';
+            str++;
+        }
+    for (i = 0; i < len; ++i, ++str) {
+        if (str < end) *str = tmp[i];
+    }
+    while (len < size--) {
+        if (str < end) *str = ' ';
+        str++;
+    }
 
     return str;
 }
 
-int vsprintf(char* buf, const char* fmt, va_list args)
+int vsnprintf(char* buf, size_t size, const char* fmt, va_list args)
 {
     int len;
     unsigned long num;
     int i, base;
-    char* str;
+    char *str, *end;
     char* s;
 
     int flags; // Flags to number()
@@ -218,9 +297,18 @@ int vsprintf(char* buf, const char* fmt, va_list args)
                      // from string
     int qualifier;   // 'h', 'l', or 'L' for integer fields
 
+    str = buf;
+    end = buf + size;
+
+    if (end < buf) {
+        end = ((void*)-1);
+        size = end - buf;
+    }
+
     for (str = buf; *fmt; fmt++) {
         if (*fmt != '%') {
-            *str++ = *fmt;
+            if (str < end) *str = *fmt;
+            str++;
             continue;
         }
 
@@ -275,8 +363,16 @@ int vsprintf(char* buf, const char* fmt, va_list args)
         // Get the conversion qualifier
         qualifier = -1;
         if (*fmt == 'h' || *fmt == 'l' || *fmt == 'L') {
-            qualifier = *fmt;
-            fmt++;
+            qualifier = *fmt++;
+            if (qualifier == *fmt) {
+                if (qualifier == 'h') {
+                    qualifier = 'H';
+                    fmt++;
+                } else if (qualifier == 'l') {
+                    qualifier = 'L';
+                    fmt++;
+                }
+            }
         }
 
         // Default base
@@ -285,11 +381,18 @@ int vsprintf(char* buf, const char* fmt, va_list args)
         switch (*fmt) {
         case 'c':
             if (!(flags & LEFT))
-                while (--field_width > 0)
-                    *str++ = ' ';
-            *str++ = (unsigned char)va_arg(args, int);
-            while (--field_width > 0)
-                *str++ = ' ';
+                while (--field_width > 0) {
+                    if (str < end) *str = ' ';
+                    str++;
+                }
+
+            if (str < end) *str = (unsigned char)va_arg(args, int);
+            str++;
+
+            while (--field_width > 0) {
+                if (str < end) *str = ' ';
+                str++;
+            }
             continue;
 
         case 's':
@@ -297,12 +400,18 @@ int vsprintf(char* buf, const char* fmt, va_list args)
             if (!s) s = "<NULL>";
             len = strnlen(s, precision);
             if (!(flags & LEFT))
-                while (len < field_width--)
-                    *str++ = ' ';
-            for (i = 0; i < len; ++i)
-                *str++ = *s++;
-            while (len < field_width--)
-                *str++ = ' ';
+                while (len < field_width--) {
+                    if (str < end) *str = ' ';
+                    str++;
+                }
+            for (i = 0; i < len; ++i, ++s, ++str) {
+                if (str < end) *str = *s;
+            }
+
+            while (len < field_width--) {
+                if (str < end) *str = ' ';
+                str++;
+            }
             continue;
 
         case 'p':
@@ -310,7 +419,7 @@ int vsprintf(char* buf, const char* fmt, va_list args)
                 field_width = 2 * sizeof(void*);
                 flags |= ZEROPAD;
             }
-            str = number(str, (unsigned long)va_arg(args, void*), 16,
+            str = number(str, end, (unsigned long)va_arg(args, void*), 16,
                          field_width, precision, flags);
             continue;
 
@@ -329,10 +438,10 @@ int vsprintf(char* buf, const char* fmt, va_list args)
 
         case 'a':
             if (qualifier == 'l') {
-                str = eaddr(str, va_arg(args, unsigned char*), field_width,
+                str = eaddr(str, end, va_arg(args, unsigned char*), field_width,
                             precision, flags);
             } else {
-                str = iaddr(str, va_arg(args, unsigned char*), field_width,
+                str = iaddr(str, end, va_arg(args, unsigned char*), field_width,
                             precision, flags);
             }
             continue;
@@ -356,18 +465,11 @@ int vsprintf(char* buf, const char* fmt, va_list args)
         case 'u':
             break;
 
-        case 'E':
-        case 'G':
-        case 'e':
-        case 'f':
-        case 'g':
-            (void)va_arg(args, double);
-            continue;
-
         default:
             if (*fmt != '%') *str++ = '%';
             if (*fmt) {
-                *str++ = *fmt;
+                if (str < end) *str = *fmt;
+                str++;
             } else {
                 --fmt;
             }
@@ -376,6 +478,8 @@ int vsprintf(char* buf, const char* fmt, va_list args)
 
         if (qualifier == 'l') {
             num = va_arg(args, unsigned long);
+        } else if (qualifier == 'L') {
+            num = va_arg(args, unsigned long long);
         } else if (qualifier == 'h') {
             if (flags & SIGN) {
                 num = va_arg(args, int);
@@ -388,11 +492,22 @@ int vsprintf(char* buf, const char* fmt, va_list args)
             num = va_arg(args, unsigned int);
         }
 
-        str = number(str, num, base, field_width, precision, flags);
+        str = number(str, end, num, base, field_width, precision, flags);
     }
 
-    *str = '\0';
+    if (size > 0) {
+        if (str < end)
+            *str = '\0';
+        else
+            end[-1] = '\0';
+    }
+
     return str - buf;
+}
+
+int vsprintf(char* buf, const char* fmt, va_list args)
+{
+    return vsnprintf(buf, INT_MAX, fmt, args);
 }
 
 int sprintf(char* buf, const char* fmt, ...)
@@ -413,7 +528,7 @@ int snprintf(char* buf, size_t size, const char* fmt, ...)
     int n;
 
     va_start(args, fmt);
-    n = vsprintf(buf, fmt, args);
+    n = vsnprintf(buf, size, fmt, args);
     va_end(args);
 
     return n;
