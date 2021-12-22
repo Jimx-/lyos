@@ -518,10 +518,10 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
         (in_phys_copy || in_phys_set)) {
         if (in_kernel) {
             if (in_phys_copy) {
-                frame->eip = (u32)phys_copy_fault_in_kernel;
+                frame->eip = (reg_t)phys_copy_fault_in_kernel;
             }
         } else {
-            fault_proc->regs.ip = (u32)phys_copy_fault;
+            fault_proc->regs.ip = (reg_t)phys_copy_fault;
             fault_proc->regs.ax = pfla;
         }
 

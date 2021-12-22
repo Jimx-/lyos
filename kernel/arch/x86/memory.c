@@ -33,6 +33,8 @@
 #include "lyos/cpulocals.h"
 #include <lyos/param.h>
 #include <lyos/vm.h>
+#include <asm/page.h>
+#include <asm/pagetable.h>
 #include <lyos/watchdog.h>
 #include <errno.h>
 #include "apic.h"
@@ -149,68 +151,6 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
     return 0;
 }
 
-static u32 get_phys32(phys_bytes phys_addr)
-{
-    u32 v;
-
-    if (la_la_copy(proc_addr(KERNEL), &v, NULL, (void*)phys_addr, sizeof(v))) {
-        panic("get_phys32: la_la_copy failed");
-    }
-
-    return v;
-}
-
-/*****************************************************************************
- *                va2la
- *****************************************************************************/
-/**
- * <Ring 0~1> Virtual addr --> Linear addr.
- *
- * @param pid  PID of the proc whose address is to be calculated.
- * @param va   Virtual address.
- *
- * @return The linear address for the given virtual address.
- *****************************************************************************/
-static void* va2la(endpoint_t ep, void* va) { return va; }
-
-/*****************************************************************************
- *                la2pa
- *****************************************************************************/
-/**
- * <Ring 0~1> Linear addr --> physical addr.
- *
- * @param pid  PID of the proc whose address is to be calculated.
- * @param la   Linear address.
- *
- * @return The physical address for the given linear address.
- *****************************************************************************/
-phys_bytes la2pa(endpoint_t ep, void* la)
-{
-    if (is_kerntaske(ep)) return (uintptr_t)la - KERNEL_VMA;
-
-    int slot;
-    if (!verify_endpt(ep, &slot)) panic("la2pa: invalid endpoint");
-    struct proc* p = proc_addr(slot);
-
-    phys_bytes phys_addr = 0;
-    unsigned long pgd_index = ARCH_PDE(la);
-    unsigned long pt_index = ARCH_PTE(la);
-
-    phys_bytes pgd_phys = (phys_bytes)(p->seg.cr3_phys);
-
-    pde_t pde_v = __pde(get_phys32(pgd_phys + sizeof(pde_t) * pgd_index));
-
-    if (pde_val(pde_v) & ARCH_PG_BIGPAGE) {
-        phys_addr = pde_val(pde_v) & I386_VM_ADDR_MASK_4MB;
-        phys_addr += (phys_bytes)la & I386_VM_OFFSET_MASK_4MB;
-        return phys_addr;
-    }
-
-    pte_t* pt_entries = (pte_t*)(pde_val(pde_v) & ARCH_PG_MASK);
-    pte_t pte_v = __pte(get_phys32((phys_bytes)(pt_entries + pt_index)));
-    return (pte_val(pte_v) & ARCH_PG_MASK) + ((uintptr_t)la % ARCH_PG_SIZE);
-}
-
 /*****************************************************************************
  *                va2pa
  *****************************************************************************/
@@ -222,7 +162,42 @@ phys_bytes la2pa(endpoint_t ep, void* la)
  *
  * @return The physical address for the given virtual address.
  *****************************************************************************/
-phys_bytes va2pa(endpoint_t ep, void* va) { return la2pa(ep, va2la(ep, va)); }
+phys_bytes va2pa(endpoint_t ep, void* va)
+{
+    pde_t* pde;
+    pud_t* pude;
+    pmd_t* pmde;
+    pte_t* pte;
+    int slot;
+    struct proc* p;
+
+    if (is_kerntaske(ep)) return __pa(va);
+
+    if (!verify_endpt(ep, &slot)) panic("va2pa: invalid endpoint");
+    p = proc_addr(slot);
+
+    pde = pgd_offset((pde_t*)p->seg.cr3_vir, (unsigned long)va);
+    if (pde_none(*pde)) {
+        return -1;
+    }
+
+    pude = pud_offset(pde, (unsigned long)va);
+    if (pude_none(*pude)) {
+        return -1;
+    }
+
+    pmde = pmd_offset(pude, (unsigned long)va);
+    if (pmde_none(*pmde)) {
+        return -1;
+    }
+
+    pte = pte_offset(pmde, (unsigned long)va);
+    if (!pte_present(*pte)) {
+        return -1;
+    }
+
+    return (pte_pfn(*pte) << ARCH_PG_SHIFT) + ((uintptr_t)va % ARCH_PG_SIZE);
+}
 
 #define KM_USERMAPPED   0
 #define KM_LAPIC        1

@@ -253,7 +253,14 @@ arch_pause:
 
     .global phys_copy
 phys_copy:
-    retq
+    movq %rdi, %rax
+    movq %rdx, %rcx
+    shrq $3, %rcx
+    andl $7, %edx
+    rep movsq
+    movl %edx, %ecx
+    rep movsb
+    xor %rax, %rax
 
     .global phys_copy_fault
 phys_copy_fault:
@@ -261,50 +268,31 @@ phys_copy_fault:
 
     .global phys_copy_fault_in_kernel
 phys_copy_fault_in_kernel:
+    mov %cr2, %rax
     retq
 
     .global copy_user_message
 copy_user_message:
-    mov 0*4(%rsi), %rax
-    mov %rax, 0*4(%rdi)
-    mov 1*4(%rsi), %rax
-    mov %rax, 1*4(%rdi)
-    mov 2*4(%rsi), %rax
-    mov %rax, 2*4(%rdi)
-    mov 3*4(%rsi), %rax
-    mov %rax, 3*4(%rdi)
-    mov 4*4(%rsi), %rax
-    mov %rax, 4*4(%rdi)
-    mov 5*4(%rsi), %rax
-    mov %rax, 5*4(%rdi)
-    mov 6*4(%rsi), %rax
-    mov %rax, 6*4(%rdi)
-    mov 7*4(%rsi), %rax
-    mov %rax, 7*4(%rdi)
-    mov 8*4(%rsi), %rax
-    mov %rax, 8*4(%rdi)
-    mov 9*4(%rsi), %rax
-    mov %rax, 9*4(%rdi)
-    mov 10*4(%rsi), %rax
-    mov %rax, 10*4(%rdi)
-    mov 11*4(%rsi), %rax
-    mov %rax, 11*4(%rdi)
-    mov 12*4(%rsi), %rax
-    mov %rax, 12*4(%rdi)
-    mov 13*4(%rsi), %rax
-    mov %rax, 13*4(%rdi)
-    mov 14*4(%rsi), %rax
-    mov %rax, 14*4(%rdi)
-    mov 15*4(%rsi), %rax
-    mov %rax, 15*4(%rdi)
-    mov 16*4(%rsi), %rax
-    mov %rax, 16*4(%rdi)
-    mov 17*4(%rsi), %rax
-    mov %rax, 17*4(%rdi)
-    mov 18*4(%rsi), %rax
-    mov %rax, 18*4(%rdi)
-    mov 19*4(%rsi), %rax
-    mov %rax, 19*4(%rdi)
+    mov 0*8(%rsi), %rax
+    mov %rax, 0*8(%rdi)
+    mov 1*8(%rsi), %rax
+    mov %rax, 1*8(%rdi)
+    mov 2*8(%rsi), %rax
+    mov %rax, 2*8(%rdi)
+    mov 3*8(%rsi), %rax
+    mov %rax, 3*8(%rdi)
+    mov 4*8(%rsi), %rax
+    mov %rax, 4*8(%rdi)
+    mov 5*8(%rsi), %rax
+    mov %rax, 5*8(%rdi)
+    mov 6*8(%rsi), %rax
+    mov %rax, 6*8(%rdi)
+    mov 7*8(%rsi), %rax
+    mov %rax, 7*8(%rdi)
+    mov 8*8(%rsi), %rax
+    mov %rax, 8*8(%rdi)
+    mov 9*8(%rsi), %rax
+    mov %rax, 9*8(%rdi)
 
     .global copy_user_message_end
 copy_user_message_end:

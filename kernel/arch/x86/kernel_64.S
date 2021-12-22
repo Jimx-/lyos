@@ -102,7 +102,17 @@
 exception:
     cmpl $SELECTOR_KERNEL_CS, 24(%rsp)
     je exception_in_kernel
-    jmp exception
+
+    SAVE_CONTEXT 16, KTS_INT
+
+    mov %rsi, %rdi
+    call stop_context
+
+    mov $0, %rdi
+    mov %rsp, %rsi
+    call exception_handler
+
+    jmp switch_to_user
 
 exception_in_kernel:
     push %rbp

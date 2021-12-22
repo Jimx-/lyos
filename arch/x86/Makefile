@@ -10,6 +10,8 @@ else
 	CFLAGS	+= -mcmodel=large
 endif
 
+CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow
+
 ASMKFLAGS	= -I $(INCDIR)/ -I $(ARCHINCDIR)/ -f elf$(BITS)
 
 export ASMKFLAGS BITS

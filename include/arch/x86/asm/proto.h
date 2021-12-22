@@ -129,4 +129,20 @@ int do_set_thread_area(struct proc* p, int idx, void* u_info, int can_allocate,
                        struct proc* caller);
 int sys_set_thread_area(MESSAGE* m, struct proc* p_proc);
 
+static inline u64 xgetbv(u32 index)
+{
+    u32 eax, edx;
+
+    asm volatile("xgetbv" : "=a"(eax), "=d"(edx) : "c"(index));
+    return eax + ((u64)edx << 32);
+}
+
+static inline void xsetbv(u32 index, u64 value)
+{
+    u32 eax = value;
+    u32 edx = value >> 32;
+
+    asm volatile("xsetbv" ::"a"(eax), "d"(edx), "c"(index));
+}
+
 #endif
