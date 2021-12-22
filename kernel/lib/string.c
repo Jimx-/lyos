@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <string.h>
+#include <asm/string.h>
 
 #ifndef __HAVE_ARCH_STRLEN
 size_t strlen(const char* s)
