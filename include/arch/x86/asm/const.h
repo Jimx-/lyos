@@ -62,6 +62,8 @@ extern u32 k_stacks_start, k_stacks_end;
 #define AMD_EFER_LME           (1 << 8)   /* Long mode enabled */
 #define AMD_MSR_EFER           0xC0000080 /* extended features msr */
 #define AMD_MSR_STAR           0xC0000081 /* SYSCALL params msr */
+#define AMD_MSR_LSTAR          0xC0000082 /* long mode SYSCALL target msr */
+#define AMD_MSR_SYSCALL_MASK   0xC0000084 /* EFLAGS mask for syscall */
 #define AMD_MSR_FS_BASE        0xC0000100 /* 64-bit FS base */
 #define AMD_MSR_GS_BASE        0xC0000101 /* 64-bit GS base */
 #define AMD_MSR_KERNEL_GS_BASE 0xC0000102 /* SwapGS GS shadow */

@@ -13,8 +13,6 @@
 ;    You should have received a copy of the GNU General Public License
 ;    along with Lyos.  If not, see <http://www.gnu.org/licenses/>.
 
-%include "sconst.inc"
-
 ALIGN 8
 
 INT_VECTOR_SYS_CALL equ 0x90
@@ -26,10 +24,43 @@ global syscall_sysenter
 global syscall_syscall
 
 syscall_int:
+    push rbp
+    mov rbp, rsp
+
+    push rbx
+    mov rax, rdi
+    mov rbx, rsi
+    int INT_VECTOR_SYS_CALL
+
+    pop rbx
+    pop rbp
+
     ret
 
 syscall_sysenter:
     ret
 
 syscall_syscall:
+    push rbp
+    mov rbp, rsp
+
+    push rbp
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov rax, rdi
+    mov rbx, rsi
+    syscall
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    pop rbp
+
+    pop rbp
     ret

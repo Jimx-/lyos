@@ -39,7 +39,7 @@ extern u32 StackTop;
 DEFINE_CPULOCAL(struct gdt_page, gdt_page)
 __attribute__((aligned(ARCH_PG_SIZE)));
 
-vir_bytes percpu_kstack[CONFIG_SMP_MAX_CPUS];
+DEFINE_CPULOCAL(vir_bytes, percpu_kstack);
 
 int syscall_style = 0;
 
@@ -339,14 +339,11 @@ void reload_idt()
     x86_lidt((u8*)&idt_ptr);
 }
 
-void sys_call_syscall_cpu0();
-void sys_call_syscall_cpu1();
-void sys_call_syscall_cpu2();
-void sys_call_syscall_cpu3();
-void sys_call_syscall_cpu4();
-void sys_call_syscall_cpu5();
-void sys_call_syscall_cpu6();
-void sys_call_syscall_cpu7();
+#ifdef CONFIG_X86_32
+void sys_call_sysenter();
+#else
+void sys_call_syscall();
+#endif
 
 int init_tss(unsigned cpu, void* kernel_stack)
 {
@@ -355,16 +352,17 @@ int init_tss(unsigned cpu, void* kernel_stack)
 
     /* Fill the TSS descriptor in GDT */
     memset(t, 0, sizeof(struct tss));
-    percpu_kstack[cpu] = (unsigned long)kernel_stack - X86_STACK_TOP_RESERVED;
+    get_cpu_var(cpu, percpu_kstack) =
+        (unsigned long)kernel_stack - X86_STACK_TOP_RESERVED;
 
 #ifdef CONFIG_X86_32 /* 32-bit: */
     t->ss0 = SELECTOR_KERNEL_DS;
     t->cs = SELECTOR_KERNEL_CS;
-    t->esp0 = percpu_kstack[cpu];
+    t->esp0 = get_cpu_var(cpu, percpu_kstack);
     init_desc(&gdt[INDEX_CPULOCALS], cpulocals_offset(cpu), 0xfffff,
               DA_DRW | DA_32 | DA_LIMIT_4K);
 #else /* 64-bit: */
-    t->sp0 = percpu_kstack[cpu];
+    t->sp0 = get_cpu_var(cpu, percpu_kstack);
 #endif
 
     t->iobase = sizeof(struct tss); /* No IO permission bitmap */
@@ -372,14 +370,18 @@ int init_tss(unsigned cpu, void* kernel_stack)
               DA_386TSS);
 
     /* set cpuid */
-    *((reg_t*)(percpu_kstack[cpu] + sizeof(reg_t))) = cpu;
+    *((reg_t*)(get_cpu_var(cpu, percpu_kstack) + sizeof(reg_t))) = cpu;
 
+#ifdef CONFIG_X86_32
     if (syscall_style & SST_INTEL_SYSENTER) {
         ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, SELECTOR_KERNEL_CS);
-        ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, percpu_kstack[cpu]);
+        ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0,
+                       get_cpu_var(cpu, percpu_kstack));
         ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, (u32)sys_call_sysenter);
     }
+#endif
 
+#ifdef CONFIG_X86_64
     if (syscall_style & SST_AMD_SYSCALL) {
         u32 msr_lo, msr_hi;
 
@@ -388,23 +390,20 @@ int init_tss(unsigned cpu, void* kernel_stack)
         msr_lo |= AMD_EFER_SCE;
         ia32_write_msr(AMD_MSR_EFER, msr_hi, msr_lo);
 
-#define set_star(forcpu)                                   \
-    if (forcpu == cpu) {                                   \
-        ia32_write_msr(AMD_MSR_STAR,                       \
-                       ((u32)SELECTOR_USER_CS << 16) |     \
-                           (u32)SELECTOR_KERNEL_CS,        \
-                       (u32)sys_call_syscall_cpu##forcpu); \
-    }
+        ia32_write_msr(
+            AMD_MSR_STAR,
+            ((u32)SELECTOR_USER32_CS << 16) | (u32)SELECTOR_KERNEL_CS, 0);
+        ia32_write_msr(AMD_MSR_LSTAR,
+                       (u32)(((unsigned long)&sys_call_syscall) >> 32),
+                       (u32)&sys_call_syscall);
+        /* Clear IF on syscall. */
+        ia32_write_msr(AMD_MSR_SYSCALL_MASK, 0, 0x300);
 
-        set_star(0);
-        set_star(1);
-        set_star(2);
-        set_star(3);
-        set_star(4);
-        set_star(5);
-        set_star(6);
-        set_star(7);
+        ia32_write_msr(INTEL_MSR_SYSENTER_CS, 0, 0);
+        ia32_write_msr(INTEL_MSR_SYSENTER_ESP, 0, 0);
+        ia32_write_msr(INTEL_MSR_SYSENTER_EIP, 0, 0);
     }
+#endif
 
     return SELECTOR_TSS;
 }
@@ -529,13 +528,13 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
     }
 
     if (in_kernel) {
-        panic("unhandled page fault in kernel, eip: %p, cr2: %p",
-              (void*)frame->eip, (void*)pfla);
+        panic("unhandled page fault in kernel, eip: %lx, cr2: %lx", frame->eip,
+              pfla);
     }
 
     if (fault_proc->endpoint == TASK_MM) {
-        panic("unhandled page fault in MM, eip: %p, cr2: %p", (void*)frame->eip,
-              (void*)pfla);
+        panic("unhandled page fault in MM, eip: %lx, cr2: %lx", frame->eip,
+              pfla);
     }
 
     int fault_flags = 0;
@@ -621,10 +620,10 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
     }
 
     if (in_kernel) {
-        panic("unhandled exception in kernel %d, eip: %x", frame->vec_no,
+        panic("unhandled exception in kernel %d, eip: %lx", frame->vec_no,
               frame->eip);
     } else {
-        printk("unhandled exception in userspace %d, eip: %x", frame->vec_no,
+        printk("unhandled exception in userspace %d, eip: %lx", frame->vec_no,
                frame->eip);
         print_stacktrace(fault_proc);
         ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);

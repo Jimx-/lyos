@@ -485,26 +485,6 @@ sys_call_sysenter_common:
     push    ebp
     jmp     switch_to_user
 
-%macro	SYS_CALL_SYSCALL_PER_CPU	1
-global sys_call_syscall_cpu%1
-sys_call_syscall_cpu%1:
-    mov     edx, ecx        ; return address
-    mov     ecx, dword [percpu_kstack + 4 * %1]
-    mov     ebp, [ecx]
-    mov     dword [ebp + P_TRAPSTYLE], KTS_SYSCALL
-    xchg	ecx, esp
-    jmp     sys_call_sysenter_common
-%endmacro
-
-SYS_CALL_SYSCALL_PER_CPU	0
-SYS_CALL_SYSCALL_PER_CPU	1
-SYS_CALL_SYSCALL_PER_CPU	2
-SYS_CALL_SYSCALL_PER_CPU	3
-SYS_CALL_SYSCALL_PER_CPU	4
-SYS_CALL_SYSCALL_PER_CPU	5
-SYS_CALL_SYSCALL_PER_CPU	6
-SYS_CALL_SYSCALL_PER_CPU	7
-
 ; ====================================================================================
 ;                                   restore_user_context_int
 ; ====================================================================================

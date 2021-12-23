@@ -179,25 +179,32 @@ sys_call:
 
     jmp switch_to_user
 
-    .global sys_call_sysenter
-sys_call_sysenter:
-    jmp sys_call_sysenter
-    retq
+    .global sys_call_syscall
+sys_call_syscall:
+    swapgs
+    mov %gs:percpu_kstack, %rdx
+    mov (%rdx), %rbp            // proc ptr
 
-    .macro SYS_CALL_SYSCALL_PER_CPU cpu
-    .global sys_call_syscall_cpu\cpu
-    sys_call_syscall_cpu\cpu:
-    retq
-    .endm
+    mov %rcx, RIPREG(%rbp)
+    mov %rsp, RSPREG(%rbp)
+    mov %rax, P_ORIGRAX(%rbp)
+    mov %rbx, RBXREG(%rbp)
+    mov %r11, RFLAGSREG(%rbp)
+    movl $KTS_SYSCALL, P_TRAPSTYLE(%rbp)
 
-    SYS_CALL_SYSCALL_PER_CPU    0
-    SYS_CALL_SYSCALL_PER_CPU	1
-    SYS_CALL_SYSCALL_PER_CPU	2
-    SYS_CALL_SYSCALL_PER_CPU	3
-    SYS_CALL_SYSCALL_PER_CPU	4
-    SYS_CALL_SYSCALL_PER_CPU	5
-    SYS_CALL_SYSCALL_PER_CPU	6
-    SYS_CALL_SYSCALL_PER_CPU	7
+    mov %rdx, %rsp
+    push %rax
+
+    mov %rbp, %rdi
+    call stop_context
+
+    pop %rdi
+    mov %rbx, %rsi
+    mov %rbp, %rdx
+    call handle_sys_call
+
+    mov %rax, RAXREG(%rbp)
+    jmp switch_to_user
 
     .global restore_user_context_int
 restore_user_context_int:
@@ -215,4 +222,10 @@ restore_user_context_sysenter:
 
     .global restore_user_context_syscall
 restore_user_context_syscall:
-    retq
+    mov RFLAGSREG(%rdi), %r11
+    mov RAXREG(%rdi), %rax
+    mov RIPREG(%rdi), %rcx
+    mov RSPREG(%rdi), %rsp
+
+    swapgs
+    sysretq

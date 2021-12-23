@@ -69,8 +69,6 @@ int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
 int arch_reply_kern_mapping(int index, void* vir_addr);
 int arch_vmctl(MESSAGE* m, struct proc* p);
 
-void sys_call_sysenter();
-
 int syscall_int(int syscall_nr, MESSAGE* m);
 int syscall_sysenter(int syscall_nr, MESSAGE* m);
 int syscall_syscall(int syscall_nr, MESSAGE* m);
