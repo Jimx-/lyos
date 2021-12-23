@@ -36,6 +36,8 @@
 
 static int global_bit = 0;
 
+unsigned long va_pa_offset = 0;
+
 void arch_init_pgd(pgdir_t* pgd)
 {
     int kernel_pde = kernel_info.kernel_start_pde;

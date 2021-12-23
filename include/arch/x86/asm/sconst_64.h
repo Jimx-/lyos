@@ -64,6 +64,7 @@
     mov %r9, R9REG(\base)
     mov %r8, R8REG(\base)
     mov %rax, P_ORIGRAX(\base)
+    mov %rax, RAXREG(\base)
     mov %rcx, RCXREG(\base)
     mov %rdx, RDXREG(\base)
     mov %rsi, RSIREG(\base)

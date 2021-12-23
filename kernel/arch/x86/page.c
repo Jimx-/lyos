@@ -186,6 +186,19 @@ int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
     return 0;
 }
 
+void pg_unmap_identity(pde_t* pgd)
+{
+    int i;
+
+    for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
+        pde_t pde = pgd[i];
+
+        if (pde_val(pde) & ARCH_PG_BIGPAGE) {
+            pgd[i] = __pde(0);
+        }
+    }
+}
+
 #else
 
 static int ident_map_pud(pud_t* pud_page, vir_bytes addr, vir_bytes end,
@@ -232,7 +245,6 @@ int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
     for (; addr < end; addr = next) {
         pde_t* pgd = pgd_offset(pgd_page, addr);
         pud_t* pud;
-        phys_bytes pud_ph;
 
         next = (addr & ARCH_PGD_MASK) + ARCH_PGD_SIZE;
         if (next > end) next = end;
@@ -245,32 +257,81 @@ int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
             continue;
         }
 
-        pud = pg_alloc_pt(&pud_ph);
+        pud = pg_alloc_pud(&kinfo);
         if (!pud) return ENOMEM;
 
         retval = ident_map_pud(pud, addr, next, offset, pmd_flags, use_gbpages);
         if (retval) return retval;
 
-        *pgd = __pde((pud_ph & ARCH_PG_MASK) | page_flags);
+        *pgd = __pde((__pa(pud) & ARCH_PG_MASK) | page_flags);
     }
 
     return 0;
 }
 
-#endif
-
-void pg_unmap_identity(pde_t* pgd)
+static void ident_unmap_pmd(pmd_t* pmd_page, vir_bytes start, vir_bytes end)
 {
-    int i;
+    vir_bytes addr = start;
+    vir_bytes next;
 
-    for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
-        pde_t pde = pgd[i];
+    for (; addr < end; addr = next) {
+        pmd_t* pmde = pmd_page + ARCH_PMDE(addr);
 
-        if (pde_val(pde) & ARCH_PG_BIGPAGE) {
-            pgd[i] = __pde(0);
+        next = (addr & ARCH_PMD_MASK) + ARCH_PMD_SIZE;
+        if (next > end) next = end;
+
+        if (pmde_large(*pmde)) {
+            *pmde = __pmd(0);
         }
     }
 }
+
+static void ident_unmap_pud(pud_t* pud_page, vir_bytes start, vir_bytes end)
+{
+    vir_bytes addr = start;
+    vir_bytes next;
+
+    for (; addr < end; addr = next) {
+        pud_t* pude = pud_page + ARCH_PUDE(addr);
+        pmd_t* pmd;
+
+        next = (addr & ARCH_PUD_MASK) + ARCH_PUD_SIZE;
+        if (next > end) next = end;
+
+        if (pude_large(*pude)) {
+            *pude = __pud(0);
+        } else if (pude_present(*pude)) {
+            pmd = pmd_offset(pude, 0);
+            ident_unmap_pmd(pmd, addr, next);
+        }
+    }
+}
+
+static void pg_identity_unmap(pde_t* pgd_page, vir_bytes start, vir_bytes end)
+{
+    vir_bytes addr = start;
+    vir_bytes next;
+
+    for (; addr < end; addr = next) {
+        pde_t* pgd = pgd_offset(pgd_page, addr);
+        pud_t* pud;
+
+        next = (addr & ARCH_PGD_MASK) + ARCH_PGD_SIZE;
+        if (next > end) next = end;
+
+        if (pde_present(*pgd)) {
+            pud = pud_offset(pgd, 0);
+            ident_unmap_pud(pud, addr, next);
+        }
+    }
+}
+
+void pg_unmap_identity(pde_t* pgd)
+{
+    pg_identity_unmap(pgd, 0, (unsigned long)0x100000000UL);
+}
+
+#endif
 
 void pg_mapkernel(pde_t* pgd)
 {

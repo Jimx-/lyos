@@ -45,6 +45,7 @@ EXTERN void* lapic_vaddr;
 EXTERN void* lapic_eoi_addr;
 EXTERN u32 bsp_cpu_id, bsp_lapic_id;
 EXTERN struct tss tss[CONFIG_SMP_MAX_CPUS];
+EXTERN unsigned long va_pa_offset;
 #endif
 
 #ifdef __arm__

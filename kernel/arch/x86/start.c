@@ -55,6 +55,8 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     kinfo.memory_size = 0;
     memset(&kinfo, 0, sizeof(kinfo_t));
 
+    va_pa_offset = KERNEL_VMA;
+
     kinfo.magic = KINFO_MAGIC;
     mb_magic = mboot_magic;
 
@@ -109,7 +111,7 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
 
     /* Identity map the first 4G so that the kernel can get access to ACPI
      * tables and HPET before MM sets up those mappings for it. */
-    pg_identity_map(initial_pgd, 0, (unsigned long)0x100000000UL, 0);
+    pg_identity_map(initial_pgd, 0, 0xffffffffUL, 0);
 
 #ifdef CONFIG_X86_32
     pg_mapkernel(initial_pgd);

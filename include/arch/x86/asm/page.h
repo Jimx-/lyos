@@ -24,12 +24,23 @@
 #define KERNEL_VMA 0xffffffff80000000
 #endif
 
+#ifdef CONFIG_X86_32
+/* Region where MM sets up temporary mappings into its address space. */
 #define VMALLOC_START 0x80000000
-#define VMALLOC_END                                                          \
-    0xb0000000 /* region where MM map physical memory into its address space \
-                */
+#define VMALLOC_END   0xb0000000
+
 #define PKMAP_START (KERNEL_VMA + LOWMEM_END)
 #define PKMAP_END   (PKMAP_START + 0x400000) /* 4 MB */
+#else
+#define PAGE_OFFSET   0x1000000000UL
+#define VMALLOC_START 0x2000000000UL
+#define VMALLOC_END   0x3000000000UL
+
+#define KERNEL_VIRT_SIZE (-KERNEL_VMA)
+#define PKMAP_SIZE       (KERNEL_VIRT_SIZE >> 1)
+#define PKMAP_START      (KERNEL_VMA - PKMAP_SIZE)
+#define PKMAP_END        KERNEL_VMA
+#endif
 
 #ifdef CONFIG_X86_32
 #define VM_STACK_TOP KERNEL_VMA
@@ -85,6 +96,8 @@ typedef struct {
     /* virtual address of page dir */
     pde_t* vir_addr;
 } pgdir_t;
+
+extern unsigned long va_pa_offset;
 
 #endif
 
@@ -144,18 +157,12 @@ typedef struct {
 #include <asm/page_64.h>
 #endif
 
-#ifdef __kernel__
-#define _PAGE_OFFSET KERNEL_VMA
-#else
-#define _PAGE_OFFSET 0
-#endif
-
 #ifndef __va
-#define __va(x) ((void*)((unsigned long)(x) + _PAGE_OFFSET))
+#define __va(x) ((void*)((unsigned long)(x) + va_pa_offset))
 #endif
 
 #ifndef __pa
-#define __pa(x) ((phys_bytes)(x)-_PAGE_OFFSET)
+#define __pa(x) ((phys_bytes)(x)-va_pa_offset)
 #endif
 
 #ifndef __ASSEMBLY__

@@ -504,7 +504,7 @@ static void page_fault_handler(int in_kernel, struct exception_frame* frame)
         printk("in supervisor mode");
     }
 
-    printk("\n  CR2(PFLA): 0x%x, CR3: 0x%x, EIP: 0x%x\n", pfla, read_cr3(),
+    printk("\n  CR2(PFLA): 0x%lx, CR3: 0x%lx, EIP: 0x%lx\n", pfla, read_cr3(),
            frame->eip);
 #endif
 
