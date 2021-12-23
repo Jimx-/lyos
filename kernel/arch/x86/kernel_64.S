@@ -10,6 +10,7 @@
     cmpl $SELECTOR_KERNEL_CS, 8(%rsp)
     je 1f
 
+    jmp hwint\label
     swapgs
 
 1:
@@ -103,6 +104,7 @@ exception:
     cmpl $SELECTOR_KERNEL_CS, 24(%rsp)
     je exception_in_kernel
 
+    swapgs
     SAVE_CONTEXT 16, KTS_INT
 
     mov %rsi, %rdi

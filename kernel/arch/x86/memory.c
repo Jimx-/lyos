@@ -46,7 +46,7 @@ extern int syscall_style;
 #define MAX_TEMPPDES 2
 #define TEMPPDE_SRC  0
 #define TEMPPDE_DST  1
-static u32 temppdes[MAX_TEMPPDES];
+static unsigned long temppdes[MAX_TEMPPDES];
 
 #define _SRC_       0
 #define _DEST_      1
@@ -58,7 +58,14 @@ int send_sig(endpoint_t ep, int signo);
 void init_memory()
 {
     int i;
-    int temppde_start = ARCH_PDE(PKMAP_END);
+    int temppde_start;
+
+#ifdef CONFIG_X86_32
+    temppde_start = ARCH_PDE(PKMAP_END);
+#else
+    temppde_start = ARCH_PDE(PKMAP_START) - MAX_TEMPPDES;
+#endif
+
     for (i = 0; i < MAX_TEMPPDES; i++) {
         temppdes[i] = temppde_start++;
     }
@@ -85,20 +92,26 @@ static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
 
     phys_bytes pa;
     pde_t pdeval;
-    u32 pde = temppdes[index];
+    unsigned long pde = temppdes[index];
 
     if (p) {
         if (!p->seg.cr3_vir) panic("create_temp_map: proc cr3_vir not set");
         pdeval = __pde(p->seg.cr3_vir[ARCH_PDE(la)]);
     } else { /* physical address */
         pa = (phys_bytes)la;
+
+#ifdef CONFIG_X86_32
         if (pa < LOWMEM_END) { /* low memory */
             *len = min(*len, LOWMEM_END - pa);
             return __va(pa);
         }
+
         pdeval =
             __pde((((uintptr_t)la) & I386_VM_ADDR_MASK_4MB) | ARCH_PG_BIGPAGE |
                   ARCH_PG_PRESENT | ARCH_PG_USER | ARCH_PG_RW);
+#else
+        return __va(pa);
+#endif
     }
 
     if (!get_cpulocal_var(pt_proc)->seg.cr3_vir)
@@ -108,10 +121,11 @@ static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
         *changed = 1;
     }
 
-    off_t offset = ((uintptr_t)la) & I386_VM_OFFSET_MASK_4MB;
-    *len = min(*len, ARCH_BIG_PAGE_SIZE - offset);
+    unsigned long offset = ((uintptr_t)la) % ARCH_PGD_SIZE;
+    *len = min(*len, ARCH_PGD_SIZE - offset);
 
-    return (void*)(uintptr_t)(pde * ARCH_BIG_PAGE_SIZE + offset);
+    return (void*)(uintptr_t)(-((ARCH_VM_DIR_ENTRIES - pde) << ARCH_PGD_SHIFT) +
+                              offset);
 }
 
 static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,

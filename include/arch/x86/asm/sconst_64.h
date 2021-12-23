@@ -82,15 +82,15 @@
     mov %rsi, RBPREG(%rbp)
     mov %rsp, KERNELSPREG(%rbp)
 
-    mov (%rsp), %rsi
+    mov 0+\offset(%rsp), %rsi
     mov %rsi, RIPREG(%rbp)
-    mov 8(%rsp), %rsi
+    mov 8+\offset(%rsp), %rsi
     mov %rsi, CSREG(%rbp)
-    mov 16(%rsp), %rsi
+    mov 16+\offset(%rsp), %rsi
     mov %rsi, RFLAGSREG(%rbp)
-    mov 24(%rsp), %rsi
+    mov 24+\offset(%rsp), %rsi
     mov %rsi, RSPREG(%rbp)
-    mov 32(%rsp), %rsi
+    mov 32+\offset(%rsp), %rsi
     mov %rsi, SSREG(%rbp)
 
     movl $\style, P_TRAPSTYLE(%rbp)
