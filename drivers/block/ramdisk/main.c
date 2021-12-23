@@ -253,7 +253,7 @@ static int char_ioctl(dev_t minor, int request, endpoint_t endpoint,
 
 static void init_rd(int argc, char* argv[])
 {
-    long base, len;
+    unsigned long base, len;
     struct device_info devinf;
     device_id_t dev_id;
     int retval;
@@ -265,7 +265,7 @@ static void init_rd(int argc, char* argv[])
     initramdisk.length = len;
     initramdisk.rdonly = 1;
 
-    printl("RAMDISK: initrd: %d bytes (%d kB), base: 0x%x\n", len, len / 1024,
+    printl("RAMDISK: initrd: %d bytes (%d kB), base: 0x%lx\n", len, len / 1024,
            base);
 
     retval = dm_class_register("mem", &mem_subsys_id);
