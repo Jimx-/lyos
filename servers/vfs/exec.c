@@ -333,7 +333,8 @@ int fs_exec(void)
         if (retval) goto exec_finalize;
 
         /* put ld.so higher to trap NULL pointer dereferences */
-        execi.args.load_offset = ARCH_PG_SIZE;
+        /* execi.args.load_offset = ARCH_PG_SIZE; */
+        execi.args.load_offset = 0;
 
         execi.args.filesize = execi.pin->i_size;
         execi.args.clearproc = NULL;

@@ -49,3 +49,11 @@ size_t strlen(const char* str)
     return ret + 7 - sl;
 #endif /* not PREFER_SIZE_OVER_SPEED */
 }
+
+size_t strnlen(const char* s, size_t count)
+{
+    const char* sc;
+    for (sc = s; *sc != '\0' && count--; ++sc)
+        ;
+    return sc - s;
+}

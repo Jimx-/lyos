@@ -26,6 +26,8 @@
 
 #ifdef __i386__
 #define R_TYPE(name) R_386_##name
+#elif defined(__x86_64__)
+#define R_TYPE(name) R_X86_64_##name
 #elif defined(__riscv)
 #define R_TYPE(name) R_RISCV_##name
 #endif

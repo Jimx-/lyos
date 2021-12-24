@@ -1,14 +1,20 @@
 #include <elf.h>
+#include <stddef.h>
 
 #include "ldso.h"
 
 void ldso_bind_entry();
 
-void ldso_relocate_nonplt_self(ElfW(Dyn)* dynp, ElfW(Addr) relocbase)
+void ldso_relocate_nonplt_self(ElfW(Dyn) * dynp, ElfW(Addr) relocbase)
 {
-    const ElfW(Rel) *rel, *rel_lim;
+    const ElfW(Rel) * rel, *rel_lim;
+    const ElfW(Rela) * rela, *rela_lim;
     ElfW(Addr) rel_size;
-    ElfW(Addr)* where;
+    ElfW(Addr) rela_size;
+    ElfW(Addr) * where;
+
+    rel = NULL;
+    rela = NULL;
 
     for (; dynp->d_tag != DT_NULL; dynp++) {
         switch (dynp->d_tag) {
@@ -18,16 +24,37 @@ void ldso_relocate_nonplt_self(ElfW(Dyn)* dynp, ElfW(Addr) relocbase)
         case DT_RELSZ:
             rel_size = dynp->d_un.d_val;
             break;
+        case DT_RELA:
+            rela = (const ElfW(Rela)*)(relocbase + dynp->d_un.d_ptr);
+            break;
+        case DT_RELASZ:
+            rela_size = dynp->d_un.d_val;
+            break;
         }
     }
 
-    if (!rel || !rel_size) return;
+    if (rel) {
+        rel_lim = (const ElfW(Rel)*)((char*)rel + rel_size);
 
-    rel_lim = (const ElfW(Rel)*)((char*)rel + rel_size);
+        for (; rel < rel_lim; rel++) {
+            where = (ElfW(Addr)*)(relocbase + rel->r_offset);
+            *where += (ElfW(Addr))relocbase;
+        }
+    }
 
-    for (; rel < rel_lim; rel++) {
-        where = (ElfW(Addr)*)(relocbase + rel->r_offset);
-        *where += (ElfW(Addr))relocbase;
+    if (rela) {
+        rela_lim = (const ElfW(Rela)*)((char*)rela + rela_size);
+
+        for (; rela < rela_lim; rela++) {
+            ElfW(Word) r_type = ELFW(R_TYPE)(rela->r_info);
+            ElfW(Addr)* where = (ElfW(Addr)*)(relocbase + rela->r_offset);
+
+            switch (r_type) {
+            case R_X86_64_RELATIVE:
+                *where = (ElfW(Addr))relocbase + rela->r_addend;
+                break;
+            }
+        }
     }
 }
 
@@ -39,7 +66,7 @@ void ldso_setup_pltgot(struct so_info* si)
 
 int ldso_relocate_plt_lazy(struct so_info* si)
 {
-    ElfW(Rel)* rel;
+    ElfW(Rel) * rel;
 
     if (si->relocbase == NULL) return 0;
 
@@ -52,13 +79,13 @@ int ldso_relocate_plt_lazy(struct so_info* si)
     return 0;
 }
 
-int ldso_relocate_plt_object(struct so_info* si, ElfW(Rel)* rel,
-                             ElfW(Addr)* new_addr)
+int ldso_relocate_plt_object(struct so_info* si, ElfW(Rel) * rel,
+                             ElfW(Addr) * new_addr)
 {
     ElfW(Addr)* where = (ElfW(Addr)*)(si->relocbase + rel->r_offset);
     unsigned long info = rel->r_info;
 
-    ElfW(Sym)* sym;
+    ElfW(Sym) * sym;
 
     struct so_info* obj;
     sym = ldso_find_plt_sym(si, ELFW(R_SYM)(info), &obj);
@@ -75,14 +102,14 @@ int ldso_relocate_plt_object(struct so_info* si, ElfW(Rel)* rel,
 
 int ldso_relocate_nonplt_objects(struct so_info* si)
 {
-    ElfW(Rel)* rel;
+    ElfW(Rel) * rel;
 
     if (si->rel) {
         for (rel = si->rel; rel < si->relend; rel++) {
             ElfW(Addr)* where =
                 (ElfW(Addr)*)((char*)si->relocbase + rel->r_offset);
             unsigned long symnum = ELFW(R_SYM)(rel->r_info);
-            ElfW(Sym)* sym;
+            ElfW(Sym) * sym;
             struct so_info* def_obj = NULL;
 
             switch (ELFW(R_TYPE)(rel->r_info)) {

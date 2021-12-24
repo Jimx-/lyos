@@ -14,8 +14,8 @@ struct so_info *si_list = NULL, *si_list_tail;
 struct search_paths ld_paths;
 struct search_paths ld_default_paths;
 
-extern char _DYNAMIC;
-extern char _GLOBAL_OFFSET_TABLE_;
+extern __attribute__((visibility("hidden"))) char _DYNAMIC;
+extern __attribute__((visibility("hidden"))) char _GLOBAL_OFFSET_TABLE_;
 
 char** environ;
 
@@ -175,6 +175,7 @@ static void ldso_call_init_functions(void)
 void* ldso_main(int argc, char* argv[], char* envp[])
 {
     ElfW(Addr) got0;
+    char* got_addr;
 
     init_si_pool();
     /* parse environments and aux vectors */
@@ -199,7 +200,7 @@ void* ldso_main(int argc, char* argv[], char* envp[])
 
     char* interp_base;
     parse_auxv(envp, si, show_auxv, &interp_base);
-    if (interp_base == (char*)-1) ldso_die("AT_BASE not set");
+    if (interp_base == (char*)-1ULL) ldso_die("AT_BASE not set");
 
     got0 = *(ElfW(Addr)*)&_GLOBAL_OFFSET_TABLE_;
     ldso_init_self(interp_base, &_DYNAMIC - got0);
