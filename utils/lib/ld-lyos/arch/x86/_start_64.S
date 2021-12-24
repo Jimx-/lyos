@@ -25,14 +25,41 @@ _start:
     mov 8(%rsp), %rsi
     mov 16(%rsp), %rdx
     call ldso_main
+    mov %rax, %rbx
 
-    pop %rdi
-    pop %rsi
+    pop %rax
     pop %rdx
-    call *%rax
+    pop %rcx
+    call *%rbx
 
     .align	8
     .globl	ldso_bind_entry
     .hidden	ldso_bind_entry
     .type	ldso_bind_entry,@function
 ldso_bind_entry:
+    push %rsi
+    push %rdi
+    mov 16(%rsp), %rdi
+    mov 24(%rsp), %rsi
+
+    push %rax
+    push %rcx
+    push %rdx
+    push %r8
+    push %r9
+    push %r10
+
+    call ldso_bind
+    mov %rax, %r11
+
+    pop %r10
+    pop %r9
+    pop %r8
+    pop %rdx
+    pop %rcx
+    pop %rax
+
+    pop %rdi
+    pop %rsi
+    add $16, %rsp
+    jmp *%r11

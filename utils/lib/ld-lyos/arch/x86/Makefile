@@ -1,9 +1,9 @@
-OBJS-$(CONFIG_X86_32) = _start.o memset.o memcpy.o
+OBJS-$(CONFIG_X86_32) = _start.o arch_reloc.o memset.o memcpy.o
 
-OBJS-$(CONFIG_X86_64) = _start_64.o memset_64.o memcpy_64.o
+OBJS-$(CONFIG_X86_64) = _start_64.o arch_reloc_64.o memset_64.o memcpy_64.o
 
 LDSOOBJS		= $(OBJS-y) gate_intr.o init.o syscalls.o strlen.o \
-					arch_reloc.o crti.o crtn.o set_thread_area.o tls.o
+					crti.o crtn.o set_thread_area.o tls.o
 
 ARCHLDSO		= arch-ldso.o
 

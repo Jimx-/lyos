@@ -623,9 +623,9 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
         panic("unhandled exception in kernel %d, eip: %lx", frame->vec_no,
               frame->eip);
     } else {
-        printk("unhandled exception in userspace %d, eip: %lx", frame->vec_no,
+        printk("kernel: exception in userspace %d, eip: %lx", frame->vec_no,
                frame->eip);
-        print_stacktrace(fault_proc);
+        /* print_stacktrace(fault_proc); */
         ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);
     }
 }

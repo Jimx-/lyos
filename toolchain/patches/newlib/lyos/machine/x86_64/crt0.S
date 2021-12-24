@@ -23,7 +23,7 @@
 
 _start:
     push	%rcx	# environ
-    push    %rbx	# argv
+    push    %rdx	# argv
     push	%rax	# argc
 
     mov     %rcx, %rdi
