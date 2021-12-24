@@ -10,8 +10,16 @@
     cmpl $SELECTOR_KERNEL_CS, 8(%rsp)
     je 1f
 
-    jmp hwint\label
     swapgs
+    SAVE_CONTEXT 0, KTS_INT
+
+    mov %rsi, %rdi
+    call stop_context
+
+    mov $\number, %rdi
+    call irq_handle
+
+    jmp switch_to_user
 
 1:
     push %rbp
