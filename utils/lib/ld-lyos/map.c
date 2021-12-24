@@ -10,9 +10,13 @@
 #include "ldso.h"
 #include "env.h"
 
+#define MAX_SEGS 4
+
 struct so_info* ldso_map_object(const char* pathname, int fd)
 {
     struct so_info* si = ldso_alloc_info(pathname);
+    int i;
+
     if (!si) return NULL;
 
     si->ehdr = mmap(NULL, pagesz, PROT_READ, MAP_SHARED, fd, 0);
@@ -39,12 +43,12 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
     size_t phsize = ehdr->e_phnum * sizeof(ElfW(Phdr));
     char* phend = (char*)phdr + phsize;
 
-    ElfW(Phdr)* segs[2];
+    ElfW(Phdr) segs[MAX_SEGS];
     int nsegs = 0;
     for (; (char*)phdr < phend; phdr++) {
         switch (phdr->p_type) {
         case PT_LOAD:
-            if (nsegs < 2) segs[nsegs] = phdr;
+            if (nsegs < MAX_SEGS) segs[nsegs] = *phdr;
             nsegs++;
             break;
         case PT_DYNAMIC:
@@ -63,19 +67,15 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
 
     si->entry = (char*)ehdr->e_entry;
 
-    if (nsegs != 2) {
+    if (nsegs > MAX_SEGS) {
         xprintf("%s: wrong number of segments\n", pathname);
         goto failed;
     }
 
-    off_t base_offset = rounddown(segs[0]->p_offset);
-    ElfW(Addr) base_vaddr = rounddown(segs[0]->p_vaddr);
-    ElfW(Addr) base_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_memsz);
-    ElfW(Addr) text_vlimit = roundup(segs[0]->p_vaddr + segs[0]->p_memsz);
-    off_t data_offset = rounddown(segs[1]->p_offset);
-    ElfW(Addr) data_vaddr = rounddown(segs[1]->p_vaddr);
-    ElfW(Addr) data_vlimit = roundup(segs[1]->p_vaddr + segs[1]->p_filesz);
-    ElfW(Addr) clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
+    off_t base_offset = rounddown(segs[0].p_offset);
+    ElfW(Addr) base_vaddr = rounddown(segs[0].p_vaddr);
+    ElfW(Addr) base_vlimit =
+        roundup(segs[nsegs - 1].p_vaddr + segs[nsegs - 1].p_memsz);
 
     if (phdr_tls) {
         ++ldso_tls_dtv_generation;
@@ -94,36 +94,47 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
     ElfW(Addr) base_addr = (ElfW(Addr))(si->is_dynamic ? 0 : base_vaddr);
     size_t map_size = base_vlimit - base_vaddr;
 
-    /* Map text segment */
-    char* mapbase =
-        mmap((void*)base_addr, map_size, PROT_READ | PROT_WRITE | PROT_EXEC,
-             MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
+    char* mapbase = mmap(
+        (void*)base_addr, map_size,
+        PROT_READ | PROT_WRITE | ((segs[0].p_flags & PF_X) ? PROT_EXEC : 0),
+        MAP_PRIVATE | (si->is_dynamic ? 0 : MAP_FIXED), fd, base_offset);
     if (mapbase == MAP_FAILED) {
-        xprintf("%s: failed to map text segment\n", pathname);
+        xprintf("%s: failed to map base segment\n", pathname);
         goto failed;
     }
 
-    void* data_addr = mapbase + (data_vaddr - base_vaddr);
-    if (mmap(data_addr, data_vlimit - data_vaddr, PROT_READ | PROT_WRITE,
-             MAP_PRIVATE | MAP_FIXED, fd, data_offset) == MAP_FAILED) {
-        xprintf("%s: failed to map data segment\n", pathname);
-        goto failed;
-    }
+    for (i = 1; i < nsegs; i++) {
+        ElfW(Phdr)* seg = &segs[i];
+        ElfW(Addr) seg_vaddr = rounddown(seg->p_vaddr);
+        off_t seg_offset = rounddown(seg->p_offset);
+        ElfW(Addr) seg_flimit = roundup(seg->p_vaddr + seg->p_filesz);
+        ElfW(Addr) seg_mlimit = roundup(seg->p_vaddr + seg->p_memsz);
+        ElfW(Addr) clear_vaddr = seg->p_vaddr + seg->p_filesz;
+        void* map_addr = mapbase + (seg_vaddr - base_vaddr);
+        int map_prot =
+            PROT_READ | PROT_WRITE | ((seg->p_flags & PF_X) ? PROT_EXEC : 0);
 
-    if (base_vlimit > data_vlimit) {
-        if (mmap(mapbase + (data_vlimit - base_vaddr),
-                 base_vlimit - data_vlimit, PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1,
-                 0) == MAP_FAILED) {
-            xprintf("%s: failed to map data segment\n", pathname);
+        if (mmap(map_addr, seg_flimit - seg_vaddr, map_prot,
+                 MAP_PRIVATE | MAP_FIXED, fd, seg_offset) == MAP_FAILED) {
+            xprintf("%s: failed to map segment\n", pathname);
             goto failed;
         }
-    }
 
-    void* clear_addr = mapbase + (clear_vaddr - base_vaddr);
-    size_t clear_size = data_vlimit - clear_vaddr;
-    if (data_vlimit > clear_vaddr) {
-        memset(clear_addr, 0, clear_size);
+        if (seg_mlimit > seg_flimit) {
+            if (mmap(mapbase + (seg_flimit - base_vaddr),
+                     seg_mlimit - seg_flimit, map_prot,
+                     MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1,
+                     0) == MAP_FAILED) {
+                xprintf("%s: failed to map segment\n", pathname);
+                goto failed;
+            }
+        }
+
+        if (seg->p_memsz > seg->p_filesz && seg_flimit > clear_vaddr) {
+            void* clear_addr = mapbase + (clear_vaddr - base_vaddr);
+            size_t clear_size = seg_flimit - clear_vaddr;
+            memset(clear_addr, 0, clear_size);
+        }
     }
 
     si->mapbase = mapbase;
