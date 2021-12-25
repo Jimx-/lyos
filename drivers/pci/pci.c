@@ -150,7 +150,7 @@ int pci_init()
     pci_host_generic_init();
 #endif
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
     pci_intel_init();
 #endif
 

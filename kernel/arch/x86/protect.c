@@ -390,9 +390,10 @@ int init_tss(unsigned cpu, void* kernel_stack)
         msr_lo |= AMD_EFER_SCE;
         ia32_write_msr(AMD_MSR_EFER, msr_hi, msr_lo);
 
-        ia32_write_msr(
-            AMD_MSR_STAR,
-            ((u32)SELECTOR_USER32_CS << 16) | (u32)SELECTOR_KERNEL_CS, 0);
+        ia32_write_msr(AMD_MSR_STAR,
+                       ((u32)(SELECTOR_USER32_CS | RPL_USER) << 16) |
+                           (u32)SELECTOR_KERNEL_CS,
+                       0);
         ia32_write_msr(AMD_MSR_LSTAR,
                        (u32)(((unsigned long)&sys_call_syscall) >> 32),
                        (u32)&sys_call_syscall);
@@ -623,8 +624,8 @@ void exception_handler(int in_kernel, struct exception_frame* frame)
         panic("unhandled exception in kernel %d, eip: %lx", frame->vec_no,
               frame->eip);
     } else {
-        printk("kernel: exception in userspace %d, eip: %lx", frame->vec_no,
-               frame->eip);
+        printk("kernel: exception in userspace %d (err %d), eip: %lx\n",
+               frame->vec_no, frame->err_code, frame->eip);
         /* print_stacktrace(fault_proc); */
         ksig_proc(fault_proc->endpoint, err_description[frame->vec_no].signo);
     }

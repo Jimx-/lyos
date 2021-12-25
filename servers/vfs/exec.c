@@ -252,7 +252,8 @@ int fs_exec(void)
 
     /* relocate stack pointers */
     char* orig_stack = (char*)(VM_STACK_TOP - orig_stack_len);
-    int delta = (void*)orig_stack - user_sp;
+    orig_stack = (char*)((unsigned long)orig_stack & ~0xfUL);
+    unsigned long delta = (void*)orig_stack - user_sp;
 
     if (orig_stack_len) {
         char** q = (char**)stackcopy;
