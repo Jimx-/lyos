@@ -334,8 +334,7 @@ int fs_exec(void)
         if (retval) goto exec_finalize;
 
         /* put ld.so higher to trap NULL pointer dereferences */
-        /* execi.args.load_offset = ARCH_PG_SIZE; */
-        execi.args.load_offset = 0;
+        execi.args.load_offset = ARCH_PG_SIZE;
 
         execi.args.filesize = execi.pin->i_size;
         execi.args.clearproc = NULL;
@@ -375,6 +374,8 @@ int fs_exec(void)
     /* record frame info */
     resp->frame = orig_stack;
     resp->frame_size = orig_stack_len;
+
+    orig_stack = (char*)((unsigned long)orig_stack & ~0xfUL);
 
     if (execi.args.sugid) {
         fproc->effuid = execi.args.new_uid;
@@ -483,7 +484,7 @@ static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
         strcpy((char*)auxv, prog_name);
         strcpy((char*)auxv + strlen(prog_name) + 1, LYOS_PLATFORM);
         auxv_end = (Elf_auxv_t*)((void*)auxv + name_len);
-        auxv_end = (Elf_auxv_t*)roundup((u32)auxv_end, sizeof(int));
+        auxv_end = (Elf_auxv_t*)roundup((unsigned long)auxv_end, sizeof(int));
         userp = (char*)((void*)auxv - (void*)auxv_buf);
         userp += (uintptr_t)*vsp + (uintptr_t)arg_str - (uintptr_t)stack;
     }
@@ -557,14 +558,14 @@ static int setup_script_stack(struct inode* pin, char* stack,
 static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
                        void** vsp)
 {
-    int arglen = strlen(arg) + 1;
+    size_t arglen = strlen(arg) + 1;
     char** arg0 = (char**)stack;
     /* delta of argv[0] to vsp */
-    int delta = (int)((void*)*arg0 - *vsp);
-    int orig_size = *stack_size;
+    unsigned long delta = (void*)*arg0 - *vsp;
+    size_t orig_size = *stack_size;
     char* arg_start;
 
-    int offset;
+    unsigned long offset;
     if (replace) {
         /* replace the former argument with the new one */
         arglen--;

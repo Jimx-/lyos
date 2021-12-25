@@ -30,7 +30,8 @@ _start:
     pop %rax
     pop %rdx
     pop %rcx
-    call *%rbx
+    andq $~0xf, %rsp
+    jmp *%rbx
 
     .align	8
     .globl	ldso_bind_entry

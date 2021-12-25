@@ -47,7 +47,7 @@ phys_bytes trampoline_base;
 static u8 apicid2cpuid[255];
 u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
-static u32 ap_ready;
+static volatile u32 ap_ready;
 
 static volatile int smp_commenced = 0;
 
@@ -199,8 +199,6 @@ static void smp_start_aps()
 
 static void ap_finish_booting()
 {
-    ap_ready = cpuid;
-
     printk("smp: CPU %d is up\n", cpuid);
 
     identify_cpu();
@@ -211,6 +209,8 @@ static void ap_finish_booting()
 
     lapic_enable(cpuid);
     fpu_init();
+
+    ap_ready = cpuid;
 
     if (init_ap_timer(system_hz) != 0)
         panic("smp: cannot init timer for CPU %d", cpuid);
