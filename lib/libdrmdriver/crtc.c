@@ -474,7 +474,7 @@ int drm_atomic_page_flip(struct drm_crtc* crtc, struct drm_framebuffer* fb,
 
     retval = drm_atomic_commit(&state);
 
-    drm_crtc_send_vblank_event(crtc, event);
+    if (event) drm_crtc_send_vblank_event(crtc, event);
 
 out:
     drm_atomic_state_clear(&state);
