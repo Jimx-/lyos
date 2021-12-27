@@ -133,6 +133,20 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
                 *where = (ElfW(Addr))(sym->st_value - def_obj->tls_offset +
                                       rela->r_addend);
                 break;
+
+            case R_X86_64_DTPMOD64:
+                sym = ldso_find_sym(si, symnum, &def_obj, 0);
+                if (!sym) continue;
+
+                *where = (ElfW(Addr))def_obj->tls_index;
+                break;
+
+            case R_X86_64_DTPOFF64:
+                sym = ldso_find_sym(si, symnum, &def_obj, 0);
+                if (!sym) continue;
+
+                *where = (ElfW(Addr))(sym->st_value + rela->r_addend);
+                break;
 #endif
             default:
                 xprintf("Unknown relocation type: %d\n", r_type);
