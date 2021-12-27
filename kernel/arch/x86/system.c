@@ -190,9 +190,14 @@ int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
         p->regs.sp = (reg_t)newsp;
     }
 
-    if (flags & KF_SETTLS)
+    if (flags & KF_SETTLS) {
+#ifdef CONFIG_X86_64
+        p->seg.fsbase = (unsigned long)tls;
+#else
         retval =
             do_set_thread_area(p, -1, tls, FALSE /* can_allocate */, parent);
+#endif
+    }
 
     return retval;
 }

@@ -17,11 +17,11 @@ int clone(int (*fn)(void* arg), void* child_stack, int flags, void* arg, ...)
     if (!fn) return -EINVAL;
 
     /* save parameters in the new stack */
-    int* params = (int*)child_stack;
-#define SAVE_PARAM(param)       \
-    do {                        \
-        params--;               \
-        *params = (int)(param); \
+    unsigned long* params = (unsigned long*)child_stack;
+#define SAVE_PARAM(param)                 \
+    do {                                  \
+        params--;                         \
+        *params = (unsigned long)(param); \
     } while (0)
 
     SAVE_PARAM(arg);

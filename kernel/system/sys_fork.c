@@ -68,6 +68,12 @@ int sys_fork(MESSAGE* m, struct proc* p_proc)
 
     if (flags & KF_MMINHIBIT) PST_SET_LOCKED(child, PST_MMINHIBIT);
 
+    if (newsp) {
+        /* XXX: Relocate the receive message if the child is using a separate
+         * stack in the same address space. */
+        child->recv_msg = (MESSAGE*)(newsp - sizeof(MESSAGE));
+    }
+
     retval = arch_fork_proc(child, parent, flags, newsp, tls);
 
     if (retval == OK) kfi->child = child_ep;

@@ -123,7 +123,16 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
                 break;
 
 #if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
+            case R_X86_64_TPOFF64:
+                sym = ldso_find_sym(si, symnum, &def_obj, 0);
+                if (!sym) continue;
 
+                if (!def_obj->tls_done && ldso_tls_allocate_offset(def_obj))
+                    return -1;
+
+                *where = (ElfW(Addr))(sym->st_value - def_obj->tls_offset +
+                                      rela->r_addend);
+                break;
 #endif
             default:
                 xprintf("Unknown relocation type: %d\n", r_type);
