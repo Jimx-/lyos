@@ -108,8 +108,10 @@ int arch_reset_proc(struct proc* p)
 
     p->seg.fpu_state = fpu;
 
+#ifdef CONFIG_X86_64
     p->seg.fsbase = 0;
     p->seg.gsbase = 0;
+#endif
 
     memset(p->seg.tls_array, 0, GDT_TLS_ENTRIES * sizeof(struct descriptor));
 
@@ -331,6 +333,8 @@ void arch_ack_profile_clock()
 
 #endif
 
+#ifdef CONFIG_X86_64
+
 static int do_arch_prctl_64(struct proc* proc, int option, unsigned long arg2)
 {
     int retval = 0;
@@ -349,6 +353,8 @@ static int do_arch_prctl_64(struct proc* proc, int option, unsigned long arg2)
 
     return retval;
 }
+
+#endif
 
 int sys_arch_prctl(MESSAGE* m, struct proc* p_proc)
 {

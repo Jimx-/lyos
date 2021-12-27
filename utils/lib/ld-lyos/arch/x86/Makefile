@@ -1,6 +1,6 @@
 OBJS-$(CONFIG_X86_32) = _start.o arch_reloc.o memset.o memcpy.o
 
-OBJS-$(CONFIG_X86_64) = _start_64.o arch_reloc_64.o memset_64.o memcpy_64.o
+OBJS-$(CONFIG_X86_64) = _start_64.o arch_reloc_64.o arch_prctl.o memset_64.o memcpy_64.o
 
 LDSOOBJS		= $(OBJS-y) gate_intr.o init.o syscalls.o strlen.o \
 					crti.o crtn.o set_thread_area.o tls.o
@@ -46,4 +46,7 @@ set_thread_area.o: $(SRCDIR)/toolchain/patches/newlib/lyos/machine/$(MACHINE)/se
 	@$(CC) $(CFLAGS) -fPIC -c -o $@ $<
 
 tls.o: $(SRCDIR)/toolchain/patches/newlib/lyos/machine/$(MACHINE)/tls.c
+	@$(CC) $(CFLAGS) -fPIC -c -o $@ $<
+
+arch_prctl.o: $(SRCDIR)/toolchain/patches/newlib/lyos/machine/$(MACHINE)/arch_prctl.c
 	@$(CC) $(CFLAGS) -fPIC -c -o $@ $<
