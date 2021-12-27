@@ -860,15 +860,15 @@ void dumproc(struct proc* p)
 void dump_msg(const char* title, MESSAGE* m)
 {
     int packed = 0;
-    printk("\n\n%s<0x%x>{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, "
-           "0x%x, "
-           "0x%x, 0x%x}%s}%s", //, (0x%x, 0x%x, 0x%x)}",
-           title, (int)m, packed ? "" : "\n        ", m->source,
+
+    /* clang-format off */
+    printk("\n\n%s<%p>{%ssrc:%d,%stype:%d,%sm->u.m3:{0x%x, 0x%x, 0x%x, 0x%x, %p, %p}%s}%s", //, (0x%x, 0x%x, 0x%x)}",
+           title, m, packed ? "" : "\n        ", m->source,
            packed ? " " : "\n        ", m->type, packed ? " " : "\n        ",
-           m->u.m3.m3i1, m->u.m3.m3i2, m->u.m3.m3i3, m->u.m3.m3i4,
-           (int)m->u.m3.m3p1, (int)m->u.m3.m3p2, packed ? "" : "\n",
-           packed ? "" : "\n" /* , */
+           m->u.m3.m3i1, m->u.m3.m3i2, m->u.m3.m3i3, m->u.m3.m3i4, m->u.m3.m3p1,
+           m->u.m3.m3p2, packed ? "" : "\n", packed ? "" : "\n" /* , */
     );
+    /* clang-format on */
 }
 
 /*****************************************************************************

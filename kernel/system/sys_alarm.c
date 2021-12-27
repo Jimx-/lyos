@@ -31,7 +31,7 @@
 
 static void sig_alarm(struct timer_list* timer)
 {
-    msg_notify(proc_addr(CLOCK), (endpoint_t)timer->arg);
+    msg_notify(proc_addr(CLOCK), (endpoint_t)(unsigned long)timer->arg);
 }
 
 int sys_alarm(MESSAGE* m, struct proc* p_proc)
@@ -43,7 +43,7 @@ int sys_alarm(MESSAGE* m, struct proc* p_proc)
 
     struct timer_list* tp;
     tp = &(p_proc->priv->timer);
-    tp->arg = (void*)p_proc->endpoint;
+    tp->arg = (void*)(unsigned long)p_proc->endpoint;
     tp->callback = sig_alarm;
 
     if ((tp->expire_time != TIMER_UNSET) && (tp->expire_time > jiffies))

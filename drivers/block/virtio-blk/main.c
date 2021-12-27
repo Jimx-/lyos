@@ -71,8 +71,6 @@ static int virtio_blk_status2error(u8 status);
 static int virtio_blk_get_id(char* id_str);
 static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf);
 
-static void virtio_blk_interrupt_wait(void);
-
 static struct blockdriver virtio_blk_driver = {
     .bdr_open = virtio_blk_open,
     .bdr_close = virtio_blk_close,
@@ -224,7 +222,7 @@ static ssize_t virtio_blk_rdwt(dev_t minor, int do_write, loff_t pos,
     phys[count + 1].phys_addr |= 1;
     phys[count + 1].size = sizeof(u8);
 
-    virtqueue_add_buffers(vqs[0], phys, count + 2, (void*)tid);
+    virtqueue_add_buffers(vqs[0], phys, count + 2, (void*)(unsigned long)tid);
 
     virtqueue_kick(vqs[0]);
 
@@ -262,7 +260,7 @@ static void virtio_blk_intr(unsigned mask)
     }
 
     while (!virtqueue_get_buffer(vqs[0], NULL, &data)) {
-        tid = (blockdriver_worker_id_t)data;
+        tid = (blockdriver_worker_id_t)(unsigned long)data;
 
         blockdriver_async_wakeup(tid);
     }
@@ -299,7 +297,7 @@ static int virtio_blk_get_id(char* id_str)
     phys[2].phys_addr |= 1;
     phys[2].size = sizeof(u8);
 
-    virtqueue_add_buffers(vqs[0], phys, 3, (void*)tid);
+    virtqueue_add_buffers(vqs[0], phys, 3, (void*)(unsigned long)tid);
 
     virtqueue_kick(vqs[0]);
 
@@ -328,19 +326,6 @@ static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf)
     }
 
     return -retval;
-}
-
-static void virtio_blk_interrupt_wait(void)
-{
-    MESSAGE msg;
-    void* data;
-
-    do {
-        send_recv(RECEIVE, INTERRUPT, &msg);
-    } while (!virtio_had_irq(vdev));
-
-    while (!virtqueue_get_buffer(vqs[0], NULL, &data))
-        ;
 }
 
 static int virtio_blk_init_vqs(void)

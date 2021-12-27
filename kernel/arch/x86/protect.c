@@ -384,6 +384,7 @@ int init_tss(unsigned cpu, void* kernel_stack)
 #ifdef CONFIG_X86_64
     if (syscall_style & SST_AMD_SYSCALL) {
         u32 msr_lo, msr_hi;
+        unsigned long syscall_target = (unsigned long)&sys_call_syscall;
 
         /* enable SYSCALL in EFER */
         ia32_read_msr(AMD_MSR_EFER, &msr_hi, &msr_lo);
@@ -394,9 +395,8 @@ int init_tss(unsigned cpu, void* kernel_stack)
                        ((u32)(SELECTOR_USER32_CS | RPL_USER) << 16) |
                            (u32)SELECTOR_KERNEL_CS,
                        0);
-        ia32_write_msr(AMD_MSR_LSTAR,
-                       (u32)(((unsigned long)&sys_call_syscall) >> 32),
-                       (u32)&sys_call_syscall);
+        ia32_write_msr(AMD_MSR_LSTAR, (u32)(syscall_target >> 32),
+                       (u32)syscall_target);
         /* Clear IF on syscall. */
         ia32_write_msr(AMD_MSR_SYSCALL_MASK, 0, 0x300);
 

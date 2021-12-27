@@ -64,9 +64,9 @@ int do_ptrace(MESSAGE* m)
     switch (request) {
     case PTRACE_SYSCALL:
     case PTRACE_CONT:
-        if ((int)data < 0 || (int)data >= NSIG) return EINVAL;
+        if ((long)data < 0 || (long)data >= NSIG) return EINVAL;
 
-        if ((int)data > 0) sig_proc(target, (int)data, FALSE);
+        if ((long)data > 0) sig_proc(target, (long)data, FALSE);
 
         for (i = 0; i < NSIG; i++) {
             if (sigismember(&target->sig_trace, i)) {

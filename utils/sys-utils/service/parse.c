@@ -123,6 +123,7 @@ static struct {
     {"setgrant", NR_SETGRANT},
     {"safecopyfrom", NR_SAFECOPYFROM},
     {"safecopyto", NR_SAFECOPYTO},
+    {"stime", NR_STIME},
     {NULL, 0},
 };
 

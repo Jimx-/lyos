@@ -621,7 +621,7 @@ __poll_t sock_poll(struct file_desc* filp, __poll_t mask,
 static void sdev_poll_notify(struct sdmap* sdp, sockid_t sock_id, __poll_t ops)
 {
     if (waitqueue_active(&sdp->wait))
-        waitqueue_wakeup_all(&sdp->wait, (void*)ops);
+        waitqueue_wakeup_all(&sdp->wait, (void*)(unsigned long)ops);
 }
 
 void sdev_reply(MESSAGE* msg)

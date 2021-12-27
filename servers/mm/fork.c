@@ -58,7 +58,7 @@ void mmput(struct mm_struct* mm)
  *****************************************************************************/
 int do_fork()
 {
-    struct mm_fork_info* mfi = mm_msg.MSG_PAYLOAD;
+    struct mm_fork_info* mfi = (struct mm_fork_info*)mm_msg.MSG_PAYLOAD;
     endpoint_t parent_ep = mfi->parent;
     int child_slot = mfi->slot;
     void* newsp = mfi->newsp;

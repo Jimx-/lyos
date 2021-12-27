@@ -81,6 +81,8 @@ struct segframe {
     unsigned long cr3_phys;
     unsigned long* cr3_vir;
     char* fpu_state;
+    unsigned long fsbase;
+    unsigned long gsbase;
     struct descriptor tls_array[GDT_TLS_ENTRIES];
 };
 

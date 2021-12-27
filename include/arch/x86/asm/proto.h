@@ -129,6 +129,7 @@ void arch_setup_cpulocals(void);
 int do_set_thread_area(struct proc* p, int idx, void* u_info, int can_allocate,
                        struct proc* caller);
 int sys_set_thread_area(MESSAGE* m, struct proc* p_proc);
+int sys_arch_prctl(MESSAGE* m, struct proc* p_proc);
 
 static inline u64 xgetbv(u32 index)
 {

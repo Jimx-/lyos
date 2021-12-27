@@ -40,6 +40,7 @@
 #include <asm/cpu_info.h>
 #include <asm/cmos.h>
 #include <asm/fpu.h>
+#include <asm/prctl.h>
 
 struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -64,6 +65,13 @@ struct proc* arch_switch_to_user()
     *((reg_t*)stack) = (reg_t)p;
 
     load_tls(p, cpuid);
+
+#ifdef CONFIG_X86_64
+    ia32_write_msr(AMD_MSR_FS_BASE, (u32)(p->seg.fsbase >> 32),
+                   (u32)p->seg.fsbase);
+    ia32_write_msr(AMD_MSR_KERNEL_GS_BASE, (u32)(p->seg.gsbase >> 32),
+                   (u32)p->seg.gsbase);
+#endif
 
     return p;
 }
@@ -99,6 +107,9 @@ int arch_reset_proc(struct proc* p)
     }
 
     p->seg.fpu_state = fpu;
+
+    p->seg.fsbase = 0;
+    p->seg.gsbase = 0;
 
     memset(p->seg.tls_array, 0, GDT_TLS_ENTRIES * sizeof(struct descriptor));
 
@@ -319,3 +330,35 @@ void arch_ack_profile_clock()
 }
 
 #endif
+
+static int do_arch_prctl_64(struct proc* proc, int option, unsigned long arg2)
+{
+    int retval = 0;
+
+    switch (option) {
+    case ARCH_SET_FS:
+        proc->seg.fsbase = arg2;
+        break;
+    case ARCH_SET_GS:
+        proc->seg.gsbase = arg2;
+        break;
+    default:
+        retval = EINVAL;
+        break;
+    }
+
+    return retval;
+}
+
+int sys_arch_prctl(MESSAGE* m, struct proc* p_proc)
+{
+    int option = m->u.m3.m3i1;
+    unsigned long arg2 = (unsigned long)m->u.m3.m3l1;
+    int retval = EINVAL;
+
+#ifdef CONFIG_X86_64
+    retval = do_arch_prctl_64(p_proc, option, arg2);
+#endif
+
+    return retval;
+}

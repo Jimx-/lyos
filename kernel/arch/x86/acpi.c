@@ -42,7 +42,7 @@ static struct {
 static int sdt_count;
 
 static int acpi_find_rsdp();
-static int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
+static int acpi_read_sdt_at(unsigned long addr, struct acpi_sdt_header* sdt_hdr,
                             size_t size, const char* name);
 
 void acpi_init()
@@ -54,7 +54,8 @@ void acpi_init()
         return;
     }
 
-    s = acpi_read_sdt_at(acpi_rsdp.rsdt_addr, (struct acpi_sdt_header*)&rsdt,
+    s = acpi_read_sdt_at((unsigned long)acpi_rsdp.rsdt_addr,
+                         (struct acpi_sdt_header*)&rsdt,
                          sizeof(struct acpi_rsdt), ACPI_SDT_SIGNATURE(RSDT));
 
     sdt_count = (s - sizeof(struct acpi_sdt_header)) / sizeof(u32);
@@ -62,7 +63,8 @@ void acpi_init()
     for (i = 0; i < sdt_count; i++) {
         struct acpi_sdt_header hdr;
         int j;
-        memcpy(&hdr, (void*)rsdt.data[i], sizeof(struct acpi_sdt_header));
+        memcpy(&hdr, (void*)(unsigned long)rsdt.data[i],
+               sizeof(struct acpi_sdt_header));
 
         for (j = 0; j < ACPI_SDT_SIGNATURE_LEN; j++)
             sdt_trans[i].signature[j] = hdr.signature[j];
@@ -85,8 +87,8 @@ static int acpi_checksum(char* ptr, u32 length)
 
 static int acpi_find_rsdp_ptr(void* start, void* end)
 {
-    u32 addr;
-    for (addr = (u32)start; addr < (u32)end; addr += 16) {
+    unsigned long addr;
+    for (addr = (unsigned long)start; addr < (unsigned long)end; addr += 16) {
         memcpy(&acpi_rsdp, (void*)addr, sizeof(struct acpi_rsdp));
         if (!acpi_checksum((char*)addr, 20)) continue;
         if (!strncmp(acpi_rsdp.signature, "RSD PTR ", 8)) return 1;
@@ -100,7 +102,7 @@ static int acpi_check_signature(const char* orig, const char* match)
     return strncmp(orig, match, ACPI_SDT_SIGNATURE_LEN);
 }
 
-static int acpi_read_sdt_at(u32 addr, struct acpi_sdt_header* sdt_hdr,
+static int acpi_read_sdt_at(unsigned long addr, struct acpi_sdt_header* sdt_hdr,
                             size_t size, const char* name)
 {
     struct acpi_sdt_header hdr;
@@ -139,12 +141,13 @@ static int acpi_find_rsdp()
     memcpy(&ebda, (void*)0x40E, sizeof(ebda));
     if (ebda) {
         ebda <<= 4;
-        if (acpi_find_rsdp_ptr((void*)(u32)ebda, (void*)((u32)ebda + 0x400))) {
+        if (acpi_find_rsdp_ptr((void*)(unsigned long)ebda,
+                               (void*)((unsigned long)ebda + 0x400))) {
             return 1;
         }
     }
 
-    if (acpi_find_rsdp_ptr((void*)0xE0000, (void*)0x100000)) {
+    if (acpi_find_rsdp_ptr((void*)0xE0000UL, (void*)0x100000UL)) {
         return 1;
     }
 

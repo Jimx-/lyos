@@ -77,10 +77,13 @@ void init_system()
     sys_call_table[NR_SETGRANT] = sys_setgrant;
     sys_call_table[NR_SAFECOPYFROM] = sys_safecopyfrom;
     sys_call_table[NR_SAFECOPYTO] = sys_safecopyto;
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
     sys_call_table[NR_SET_THREAD_AREA] = sys_set_thread_area;
 #endif
     sys_call_table[NR_STIME] = sys_stime;
+#if defined(__i386__) || defined(__x86_64__)
+    sys_call_table[NR_ARCH_PRCTL] = sys_arch_prctl;
+#endif
 }
 
 int set_priv(struct proc* p, int id)

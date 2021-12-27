@@ -93,7 +93,7 @@ struct pci_device {
 
 extern struct pci_acl pci_acl[];
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 void pci_intel_init();
 #endif
 

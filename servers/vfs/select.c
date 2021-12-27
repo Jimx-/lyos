@@ -351,7 +351,7 @@ static void fd_setfromops(struct select_fdset* fdset, int fd, int ops)
 
 static int pollwake(struct wait_queue_entry* wq_entry, void* arg)
 {
-    __poll_t ops = (__poll_t)arg;
+    __poll_t ops = (__poll_t)(unsigned long)arg;
     struct poll_table_entry* entry =
         list_entry(wq_entry, struct poll_table_entry, wait);
     struct poll_wqueues* pwq = wq_entry->private;

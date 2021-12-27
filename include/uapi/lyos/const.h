@@ -25,7 +25,7 @@
 #define SELF           (-0x8ace)
 
 /* System call numbers. */
-#define NR_SYS_CALLS       28
+#define NR_SYS_CALLS       29
 #define NR_PRINTX          0
 #define NR_SENDREC         1
 #define NR_DATACOPY        2
@@ -54,6 +54,7 @@
 #define NR_SAFECOPYTO      25
 #define NR_SET_THREAD_AREA 26
 #define NR_STIME           27
+#define NR_ARCH_PRCTL      28
 
 /* For send_recv(). */
 #define SEND          1

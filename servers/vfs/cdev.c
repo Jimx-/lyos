@@ -328,7 +328,7 @@ static void cdev_poll_notify(endpoint_t driver_ep, dev_t minor, int status)
     struct cdmap* pm = cdev_lookup_by_endpoint(driver_ep);
     if (!pm) return;
 
-    waitqueue_wakeup_all(&pm->wait, (void*)status);
+    waitqueue_wakeup_all(&pm->wait, (void*)(unsigned long)status);
 }
 
 int cdev_reply(MESSAGE* msg)

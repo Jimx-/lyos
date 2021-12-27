@@ -258,8 +258,8 @@ static void init_rd(int argc, char* argv[])
     device_id_t dev_id;
     int retval;
 
-    env_get_long("initrd_base", &base, "u", 0, -1, -1);
-    env_get_long("initrd_len", &len, "d", 0, -1, -1);
+    env_get_long("initrd_base", (long*)&base, "u", 0, -1, -1);
+    env_get_long("initrd_len", (long*)&len, "d", 0, -1, -1);
 
     initramdisk.start = (char*)base;
     initramdisk.length = len;

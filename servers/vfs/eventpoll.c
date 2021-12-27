@@ -266,7 +266,7 @@ static int ep_poll_callback(struct wait_queue_entry* wait, void* arg)
     struct eppoll_entry* pwq = list_entry(wait, struct eppoll_entry, wait);
     struct epitem* epi = pwq->epi;
     struct eventpoll* ep = epi->ep;
-    __poll_t mask = (__poll_t)arg;
+    __poll_t mask = (__poll_t)(unsigned long)arg;
     int ewake = 0;
 
     if (!(epi->event.events & ~EP_PRIVATE_BITS)) goto out;

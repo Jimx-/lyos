@@ -101,8 +101,9 @@ static void servman_init()
             /* allow these calls for user processes */
             SET_BIT(sp->priv.syscall_mask, NR_SENDREC);
             SET_BIT(sp->priv.syscall_mask, NR_GETINFO);
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
             SET_BIT(sp->priv.syscall_mask, NR_SET_THREAD_AREA);
+            SET_BIT(sp->priv.syscall_mask, NR_ARCH_PRCTL);
 #endif
         }
 

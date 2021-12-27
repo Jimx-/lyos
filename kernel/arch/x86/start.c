@@ -84,7 +84,8 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
     }
 
     mb_mod_addr = __va(mboot->mods_addr);
-    multiboot_module_t* last_mod = (multiboot_module_t*)mboot->mods_addr;
+    multiboot_module_t* last_mod =
+        (multiboot_module_t*)(unsigned long)mboot->mods_addr;
     last_mod += mb_mod_count - 1;
 
     phys_bytes mod_ends = (phys_bytes)last_mod->mod_end;
@@ -133,7 +134,8 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
         static char var[KINFO_CMDLINE_LEN];
         static char value[KINFO_CMDLINE_LEN];
 
-        memcpy(cmdline, (void*)mboot->cmdline, KINFO_CMDLINE_LEN);
+        memcpy(cmdline, (void*)(unsigned long)mboot->cmdline,
+               KINFO_CMDLINE_LEN);
         char* p = cmdline;
         while (*p) {
             int var_i = 0;
