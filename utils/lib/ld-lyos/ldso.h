@@ -4,11 +4,12 @@
 #include <sys/types.h>
 #include <sys/tls.h>
 #include <sys/syslimits.h>
+#include <stdarg.h>
 #include <elf.h>
 #include "list.h"
 
 #define LDSO_PATH        "/lib/ld-lyos.so"
-#define DEFAULT_LD_PATHS "/usr/lib:/lib"
+#define DEFAULT_LD_PATHS "/usr/lib:/lib:/usr/lib64"
 
 #define SI_USED  1
 #define SI_EXEC  2
@@ -159,13 +160,16 @@ LDSO_PUBLIC struct tls_tcb* __ldso_allocate_tls(void);
 
 void ldso_tls_initial_allocation(void);
 int ldso_tls_allocate_offset(struct so_info* si);
+void* ldso_tls_module_allocate(size_t idx);
 void* ldso_tls_get_addr(void* tcb, size_t idx, size_t offset);
 
-#ifdef __i386__
+LDSO_PUBLIC extern void* __tls_get_addr(void*);
+#if defined(__i386__)
 LDSO_PUBLIC extern void* ___tls_get_addr(void*) __attribute__((__regparm__(1)));
 #endif
 #endif
 
 int xprintf(const char* fmt, ...);
+int xvprintf(const char* fmt, va_list args);
 
 #endif

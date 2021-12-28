@@ -416,16 +416,25 @@ int vsnprintf(char* buf, size_t size, const char* fmt, va_list args)
     return str - buf;
 }
 
+int xvprintf(const char* fmt, va_list args)
+{
+    size_t n;
+    char buf[512];
+
+    n = vsnprintf(buf, sizeof(buf), fmt, args);
+    write(1, buf, n);
+
+    return n;
+}
+
 int xprintf(const char* fmt, ...)
 {
-    int i;
-    char buf[512];
-    va_list arg;
+    va_list args;
+    size_t n;
 
-    va_start(arg, fmt);
-    i = vsnprintf(buf, sizeof(buf), fmt, arg);
-    int c = write(1, buf, i);
-    va_end(arg);
+    va_start(args, fmt);
+    n = xvprintf(fmt, args);
+    va_end(args);
 
-    return i;
+    return n;
 }

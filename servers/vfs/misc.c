@@ -291,6 +291,7 @@ int do_mm_request(void)
         int mmfd;
         result = get_fd(mm_task, 0, 0, &mmfd, NULL);
         if (result) {
+            unlock_filp(filp);
             goto reply;
         }
 

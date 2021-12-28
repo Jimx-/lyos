@@ -5,6 +5,7 @@
 
 #include "ldso.h"
 #include "env.h"
+#include "debug.h"
 
 #define NR_SO_INFO 64
 struct so_info si_pool[NR_SO_INFO];
@@ -117,6 +118,8 @@ static void ldso_init_tpsort_visit(struct list_head* head, struct so_info* si,
     if (si->init_done) return;
     si->init_done = 1;
 
+    /* dbg(("ldso_init_tpsort_visit(%s)\n", si->name)); */
+
     for (entry = si->needed; entry; entry = entry->next) {
         if (entry->si) ldso_init_tpsort_visit(head, entry->si, rev);
     }
@@ -150,12 +153,14 @@ static void ldso_call_init_function(struct so_info* si)
     if (si->init_array_size == 0 && (si->init_called || !si->init)) return;
 
     if (!si->init_called && si->init) {
+        dbg(("calling init function %s at %p\n", si->name, si->init));
         si->init_called = 1;
         si->init();
     }
 
     while (si->init_array_size > 0) {
         ElfW(Addr) init = *si->init_array++;
+        dbg(("calling init array function %s at %p\n", si->name, init));
         si->init_array_size--;
         ldso_call_initfini_function(init);
     }
@@ -192,6 +197,12 @@ void* ldso_main(int argc, char* argv[], char* envp[])
     const char* bind_now_env = env_get("LD_BIND_NOW");
     if (bind_now_env) {
         bind_now = bind_now_env[0] - '0';
+    }
+
+    const char* ld_debug = env_get("LD_DEBUG");
+    debug = 0;
+    if (ld_debug) {
+        debug = ld_debug[0] - '0';
     }
 
     struct so_info* si = ldso_alloc_info("Main executable");

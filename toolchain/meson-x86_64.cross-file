@@ -1,0 +1,12 @@
+[binaries]
+c = 'x86_64-elf-lyos-gcc'
+cpp = 'x86_64-elf-lyos-g++'
+ar = 'x86_64-elf-lyos-ar'
+strip = 'x86_64-elf-lyos-strip'
+pkgconfig = 'x86_64-elf-lyos-pkg-config'
+
+[host_machine]
+system = 'lyos'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'

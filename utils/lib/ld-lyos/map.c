@@ -9,6 +9,7 @@
 
 #include "ldso.h"
 #include "env.h"
+#include "debug.h"
 
 #define MAX_SEGS 4
 
@@ -102,6 +103,8 @@ struct so_info* ldso_map_object(const char* pathname, int fd)
         xprintf("%s: failed to map base segment\n", pathname);
         goto failed;
     }
+
+    dbg(("%s => %p-%p\n", pathname, mapbase, mapbase + map_size));
 
     for (i = 1; i < nsegs; i++) {
         ElfW(Phdr)* seg = &segs[i];

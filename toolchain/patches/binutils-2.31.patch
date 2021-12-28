@@ -1,6 +1,6 @@
 diff --color -rupN old/bfd/config.bfd new/bfd/config.bfd
 --- old/bfd/config.bfd	2018-07-09 15:44:53.000000000 +0800
-+++ new/bfd/config.bfd	2021-08-14 14:53:43.266637606 +0800
++++ new/bfd/config.bfd	2021-12-27 21:09:37.187676127 +0800
 @@ -358,6 +358,10 @@ case "${targ}" in
      targ_defvec=arm_elf32_le_vec
      targ_selvecs="arm_elf32_be_vec"
@@ -49,7 +49,7 @@ diff --color -rupN old/bfd/config.bfd new/bfd/config.bfd
      targ_underscore=yes
 diff --color -rupN old/config.sub new/config.sub
 --- old/config.sub	2018-07-06 15:13:31.000000000 +0800
-+++ new/config.sub	2021-08-14 14:46:45.173088820 +0800
++++ new/config.sub	2021-12-27 21:09:37.187676127 +0800
 @@ -1374,6 +1374,7 @@ case $os in
  	     | os2* | vos* | palmos* | uclinux* | nucleus* \
  	     | morphos* | superux* | rtmk* | windiss* \
@@ -60,7 +60,7 @@ diff --color -rupN old/config.sub new/config.sub
  	     | midnightbsd*)
 diff --color -rupN old/gas/configure.tgt new/gas/configure.tgt
 --- old/gas/configure.tgt	2018-06-25 02:38:57.000000000 +0800
-+++ new/gas/configure.tgt	2021-08-14 14:46:45.173088820 +0800
++++ new/gas/configure.tgt	2021-12-27 21:09:37.187676127 +0800
 @@ -142,6 +142,7 @@ case ${generic_target} in
    arm-*-eabi* | arm-*-rtems*)		fmt=elf em=armeabi ;;
    arm-*-symbianelf*)			fmt=elf em=symbian ;;
@@ -79,7 +79,7 @@ diff --color -rupN old/gas/configure.tgt new/gas/configure.tgt
      case ${cpu} in
 diff --color -rupN old/ld/configure.tgt new/ld/configure.tgt
 --- old/ld/configure.tgt	2018-07-09 15:44:53.000000000 +0800
-+++ new/ld/configure.tgt	2021-08-14 14:50:53.164954193 +0800
++++ new/ld/configure.tgt	2021-12-27 21:09:37.187676127 +0800
 @@ -119,6 +119,7 @@ arm-*-elf | arm*-*-eabi* | arm-*-rtems*)
  			targ_emul=armelf ;;
  arm*-*-symbianelf*)	targ_emul=armsymbian;;
@@ -109,7 +109,7 @@ diff --color -rupN old/ld/configure.tgt new/ld/configure.tgt
  x86_64-*-dragonfly*)	targ_emul=elf_x86_64
 diff --color -rupN old/ld/emulparams/elf64lriscv.sh new/ld/emulparams/elf64lriscv.sh
 --- old/ld/emulparams/elf64lriscv.sh	2018-06-25 02:38:57.000000000 +0800
-+++ new/ld/emulparams/elf64lriscv.sh	2021-08-14 14:46:45.173088820 +0800
++++ new/ld/emulparams/elf64lriscv.sh	2021-12-27 21:09:37.187676127 +0800
 @@ -12,4 +12,7 @@ case "$target" in
  	LIBPATH_SUFFIX="64/lp64d 64";;
      esac
@@ -120,7 +120,7 @@ diff --color -rupN old/ld/emulparams/elf64lriscv.sh new/ld/emulparams/elf64lrisc
  esac
 diff --color -rupN old/ld/emulparams/elf_i386.sh new/ld/emulparams/elf_i386.sh
 --- old/ld/emulparams/elf_i386.sh	2018-06-25 02:38:57.000000000 +0800
-+++ new/ld/emulparams/elf_i386.sh	2021-08-14 14:46:45.173088820 +0800
++++ new/ld/emulparams/elf_i386.sh	2021-12-27 21:09:37.187676127 +0800
 @@ -34,4 +34,7 @@ case "$target" in
  	;;
      esac
@@ -129,3 +129,15 @@ diff --color -rupN old/ld/emulparams/elf_i386.sh new/ld/emulparams/elf_i386.sh
 +    TEXT_START_ADDR=0x40000000
 +    ;;
  esac
+diff --color -rupN old/ld/emulparams/elf_x86_64.sh new/ld/emulparams/elf_x86_64.sh
+--- old/ld/emulparams/elf_x86_64.sh	2018-06-25 02:38:57.000000000 +0800
++++ new/ld/emulparams/elf_x86_64.sh	2021-12-27 21:11:35.636879803 +0800
+@@ -37,7 +37,7 @@ fi
+ # Linux/Solaris modify the default library search path to first include
+ # a 64-bit specific directory.
+ case "$target" in
+-  x86_64*-linux*|i[3-7]86-*-linux-*)
++  x86_64*-linux*|i[3-7]86-*-linux-*|x86_64*-lyos*)
+     case "$EMULATION_NAME" in
+       *64*)
+ 	LIBPATH_SUFFIX=64

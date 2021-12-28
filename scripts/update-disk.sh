@@ -42,7 +42,7 @@ fi
 
 export SUBARCH=$SUBARCH ARCH=$ARCH
 
-DISK=lyos-disk.img
+DISK=lyos-disk-$SUBARCH.img
 SRCDIR=./
 MOUNT_POINT=/mnt/lyos-root
 DESTDIR=obj/destdir.$SUBARCH

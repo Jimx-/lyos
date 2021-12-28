@@ -35,7 +35,7 @@ diff --color -rupN old/newlib/configure.host new/newlib/configure.host
    arm*-*-*)
  	sys_dir=arm
  	if [ "x${newlib_may_supply_syscalls}" = "xno" ] ; then
-@@ -468,6 +477,17 @@ case "${host}" in
+@@ -468,6 +477,18 @@ case "${host}" in
  	sys_dir=sysvi386
  	unix_dir=unix
  	;;
@@ -49,6 +49,7 @@ diff --color -rupN old/newlib/configure.host new/newlib/configure.host
 +   ;;
 +  x86_64-*-lyos*)
 +    sys_dir=lyos
++    newlib_cflags="${newlib_cflags} -D_NO_GETPWENT  -D_I386MACH_NEED_SOTYPE_FUNCTION -DHAVE_MKDIR"
 +   ;;
    i[34567]86-pc-linux-*)
  	sys_dir=linux

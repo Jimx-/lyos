@@ -1,6 +1,7 @@
 #include <elf.h>
 
 #include "ldso.h"
+#include "debug.h"
 
 void ldso_bind_entry();
 
@@ -132,8 +133,9 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
 
                 *where = (ElfW(Addr))(def_obj->tls_index);
 
-                /* xprintf("TLS_DTPMOD32 %s in %s -> %p\n", */
-                /*         def_obj->strtab + sym->st_name, si->name, *where); */
+                dbg(("TLS_DTPMOD32 %s in %s -> %p (%s)\n",
+                     def_obj->strtab + sym->st_name, si->name, *where,
+                     def_obj->name));
                 break;
 
 #endif

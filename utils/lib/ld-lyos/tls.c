@@ -1,7 +1,9 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <string.h>
+
 #include "ldso.h"
+#include "debug.h"
 
 #if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
 
@@ -16,7 +18,42 @@ size_t ldso_tls_max_index = 1;
 #define SET_DTV_GENERATION(dtv, val) (dtv)[0] = (void*)(size_t)(val)
 #define SET_DTV_MAX_INDEX(dtv, val)  (dtv)[-1] = (void*)(size_t)(val)
 
-void* ldso_tls_get_addr(void* tcb, size_t idx, size_t offset) { return NULL; }
+void* ldso_tls_get_addr(void* tls, size_t idx, size_t offset)
+{
+    struct tls_tcb* tcb = tls;
+    void** dtv;
+
+    dtv = tcb->tcb_dtv;
+
+    if (DTV_GENERATION(dtv) != ldso_tls_dtv_generation) {
+    }
+
+    if (!dtv[idx]) {
+        dtv[idx] = ldso_tls_module_allocate(idx);
+    }
+
+    return (char*)dtv[idx] + offset;
+}
+
+void* ldso_tls_module_allocate(size_t idx)
+{
+    struct so_info* si = NULL;
+    void* p;
+
+    for (si = si_list; si != NULL; si = si->next) {
+        if (si->tls_index == idx) break;
+    }
+    if (!si) {
+        xprintf("Module for index %d not found", idx);
+        ldso_die("ldso_tls_module_allocate");
+    }
+
+    p = mmap(NULL, si->tls_size, PROT_READ | PROT_WRITE,
+             MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    memcpy(p, si->tls_init, si->tls_init_size);
+
+    return p;
+}
 
 int ldso_tls_allocate_offset(struct so_info* si)
 {
@@ -79,15 +116,15 @@ static struct tls_tcb* ldso_allocate_tls_locked(void)
     SET_DTV_GENERATION(tcb->tcb_dtv, ldso_tls_dtv_generation);
 
     for (si = si_list; si != NULL; si = si->next) {
-        if (si->tls_init_size && si->tls_done) {
+        if (si->tls_done) {
 #ifdef __HAVE_TLS_VARIANT_1
             q = p + si->tls_offset;
 #else
             q = p - si->tls_offset;
 #endif
-            /* xprintf("TLS: dtv %p in %p -> tls offset %u\n", q, si, */
-            /*         si->tls_offset); */
-            memcpy(q, si->tls_init, si->tls_init_size);
+            dbg(("TLS: dtv %p in %p -> tls offset %u\n", q, si,
+                 si->tls_offset));
+            if (si->tls_init_size) memcpy(q, si->tls_init, si->tls_init_size);
             tcb->tcb_dtv[si->tls_index] = q;
         }
     }
@@ -114,5 +151,18 @@ void ldso_tls_initial_allocation(void)
 }
 
 struct tls_tcb* __ldso_allocate_tls(void) { return ldso_allocate_tls_locked(); }
+
+LDSO_PUBLIC void* __tls_get_addr(void* arg_)
+{
+    size_t* arg = (size_t*)arg_;
+    struct tls_tcb* tcb = __libc_get_tls_tcb();
+    size_t idx = arg[0], offset = arg[1];
+    void** dtv = tcb->tcb_dtv;
+
+    if (idx < (size_t)dtv[-1] && dtv[idx] != NULL)
+        return (uint8_t*)dtv[idx] + offset;
+
+    return ldso_tls_get_addr(tcb, idx, offset);
+}
 
 #endif /* defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2) */

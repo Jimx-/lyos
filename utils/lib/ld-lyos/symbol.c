@@ -22,8 +22,9 @@ static int ldso_is_exported(const ElfW(Sym) * sym)
         dlsym,
 #if defined(__HAVE_TLS_VARIANT_1) || defined(__HAVE_TLS_VARIANT_2)
         __ldso_allocate_tls,
+        __tls_get_addr,
 #endif
-#ifdef __i386__
+#if defined(__i386__)
         ___tls_get_addr,
 #endif
         NULL,

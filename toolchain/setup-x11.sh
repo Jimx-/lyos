@@ -132,6 +132,10 @@ if $BUILD_LIBEXPAT; then
         mkdir libexpat-$SUBARCH
     fi
 
+    pushd $DIR/sources/expat-2.2.9 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fiv
+    popd > /dev/null
+
     pushd libexpat-$SUBARCH > /dev/null
     $DIR/sources/expat-2.2.9/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --without-xmlwf
     make -j$PARALLELISM || cmd_error
@@ -144,6 +148,10 @@ if $BUILD_LIBFFI; then
     if [ ! -d "libffi-$SUBARCH" ]; then
         mkdir libffi-$SUBARCH
     fi
+
+    pushd $DIR/sources/libffi-3.3 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    popd > /dev/null
 
     pushd libffi-$SUBARCH > /dev/null
     $DIR/sources/libffi-3.3/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
@@ -159,7 +167,7 @@ if $BUILD_WAYLAND; then
     fi
 
     pushd wayland-$SUBARCH > /dev/null
-    meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Ddocumentation=false -Ddtd_validation=false $DIR/sources/wayland-1.18.0
+    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Ddocumentation=false -Ddtd_validation=false $DIR/sources/wayland-1.18.0
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
@@ -188,7 +196,7 @@ if $BUILD_MESA; then
     fi
 
     pushd mesa-$SUBARCH > /dev/null
-    meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=drm -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-20.0.5
+    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=drm -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-20.0.5
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
@@ -218,6 +226,11 @@ if $BUILD_FREETYPE; then
         mkdir freetype-$SUBARCH
     fi
 
+    pushd $DIR/sources/freetype-2.10.2 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH NOCONFIGURE=1 ./autogen.sh
+    cp $DIR/tools/automake-1.15/share/automake-1.15/config.sub builds/unix
+    popd > /dev/null
+
     pushd freetype-$SUBARCH > /dev/null
     $DIR/sources/freetype-2.10.2/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --disable-static
     make -j$PARALLELISM || cmd_error
@@ -230,6 +243,10 @@ if $BUILD_PIXMAN; then
     if [ ! -d "pixman-$SUBARCH" ]; then
         mkdir pixman-$SUBARCH
     fi
+
+    pushd $DIR/sources/pixman-0.40.0 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
+    popd > /dev/null
 
     pushd pixman-$SUBARCH > /dev/null
     $DIR/sources/pixman-0.40.0/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
@@ -244,7 +261,7 @@ if $BUILD_LIBXKBCOMMON; then
     fi
 
     pushd libxkbcommon-$SUBARCH > /dev/null
-    meson --cross-file ../../meson.cross-file --prefix=/usr --libdir=lib --buildtype=debugoptimized -Denable-x11=false -Denable-docs=false $DIR/sources/libxkbcommon-1.0.1
+    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Denable-x11=false -Denable-docs=false $DIR/sources/libxkbcommon-1.0.1
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
@@ -336,7 +353,7 @@ if $BUILD_LIBINPUT; then
     fi
 
     pushd libinput-$SUBARCH > /dev/null
-    meson --cross-file ../../meson.cross-file --prefix=$CROSSPREFIX --libdir=lib --buildtype=debugoptimized -Dlibwacom=false -Ddebug-gui=false -Dtests=false -Ddocumentation=false $DIR/sources/libinput-1.10.7
+    meson --cross-file $MESON_CROSS_FILE --prefix=$CROSSPREFIX --libdir=lib --buildtype=debugoptimized -Dlibwacom=false -Ddebug-gui=false -Dtests=false -Ddocumentation=false $DIR/sources/libinput-1.10.7
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
