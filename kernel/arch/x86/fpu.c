@@ -123,26 +123,55 @@ void save_local_fpu(struct proc* p, int retain)
     }
 }
 
+void save_fpu(struct proc* p)
+{
+    if (get_cpulocal_var(fpu_owner) == p) {
+        disable_fpu_exception();
+        save_local_fpu(p, TRUE);
+    }
+}
+
+static void fpu_init_xstate(struct xregs_state* xsave)
+{
+    xsave->header.xcomp_bv =
+        XCOMP_BV_COMPACTED_FORMAT | XFEATURE_FP | XFEATURE_SSE;
+}
+
+static void fpu_init_fxstate(struct fxregs_state* fx)
+{
+    fx->cwd = 0x37f;
+    fx->mxcsr = MXCSR_DEFAULT;
+}
+
+static void fpu_init_state(union fpregs_state* state)
+{
+    memset(state, 0, sizeof(*state));
+
+    if (has_osxsave) fpu_init_xstate(&state->xsave);
+    if (has_osfxsr) fpu_init_fxstate(&state->fxsave);
+}
+
 int restore_fpu(struct proc* p)
 {
     int retval;
-    char* state = p->seg.fpu_state;
+    union fpregs_state* state = (union fpregs_state*)p->seg.fpu_state;
 
     if (!(p->flags & PF_FPU_INITIALIZED)) {
         fninit();
+        fpu_init_state(state);
         p->flags |= PF_FPU_INITIALIZED;
-    } else {
-        if (has_osxsave) {
-            retval = xrstor(state, 0xffffffff, 0xffffffff);
-        } else if (has_osfxsr) {
-            retval = fxrstor(state);
-        } else {
-            retval = frstor(state);
-        }
+    }
 
-        if (retval) {
-            return EINVAL;
-        }
+    if (has_osxsave) {
+        retval = xrstor(&state->xsave, 0xffffffff, 0xffffffff);
+    } else if (has_osfxsr) {
+        retval = fxrstor(&state->fxsave);
+    } else {
+        retval = frstor(state);
+    }
+
+    if (retval) {
+        return EINVAL;
     }
 
     return 0;

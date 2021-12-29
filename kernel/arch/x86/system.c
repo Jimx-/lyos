@@ -76,11 +76,11 @@ struct proc* arch_switch_to_user()
     return p;
 }
 
-static char fpu_state[NR_PROCS][FPU_XFP_SIZE] __attribute__((aligned(64)));
+static union fpregs_state fpu_state[NR_PROCS];
 
 int arch_reset_proc(struct proc* p)
 {
-    char* fpu = NULL;
+    union fpregs_state* fpu = NULL;
 
     p->regs.ip = 0;
     p->regs.sp = 0;
@@ -102,11 +102,10 @@ int arch_reset_proc(struct proc* p)
     p->seg.trap_style = KTS_INT;
 
     if (p->slot >= 0) {
-        fpu = fpu_state[p->slot];
-        memset(fpu, 0, FPU_XFP_SIZE);
+        fpu = &fpu_state[p->slot];
     }
 
-    p->seg.fpu_state = fpu;
+    p->seg.fpu_state = (void*)fpu;
 
 #ifdef CONFIG_X86_64
     p->seg.fsbase = 0;
@@ -160,6 +159,8 @@ void idle_stop()
 int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
                    char* name)
 {
+    arch_reset_proc(p);
+
     strlcpy(p->name, name, sizeof(p->name));
 
     p->regs.sp = (reg_t)sp;
@@ -167,16 +168,6 @@ int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
     p->regs.ax = ps->ps_nargvstr;
     p->regs.dx = (reg_t)ps->ps_argvstr;
     p->regs.cx = (reg_t)ps->ps_envstr;
-    p->seg.trap_style = KTS_INT;
-
-    p->regs.cs = SELECTOR_USER_CS | RPL_USER;
-#ifdef CONFIG_X86_32
-    p->regs.ds = p->regs.es = p->regs.fs = p->regs.gs =
-        SELECTOR_USER_DS | RPL_USER;
-#endif
-    p->regs.ss = SELECTOR_USER_DS | RPL_USER;
-
-    memset(p->seg.tls_array, 0, GDT_TLS_ENTRIES * sizeof(struct descriptor));
 
     return 0;
 }

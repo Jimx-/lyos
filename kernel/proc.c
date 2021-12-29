@@ -71,6 +71,8 @@ void init_proc()
         spinlock_init(&p->lock);
         INIT_LIST_HEAD(&p->run_list);
 
+        arch_reset_proc(p);
+
         if (i >= (NR_BOOT_PROCS - NR_TASKS)) {
             p->state = PST_FREE_SLOT;
             continue;
@@ -113,8 +115,6 @@ void init_proc()
 
         p->sched_policy = SCHED_NORMAL;
         proc_no_time(p);
-
-        arch_reset_proc(p);
     }
 
     int id = 0;
@@ -195,7 +195,7 @@ no_schedule:
 
     stop_context(proc_addr(KERNEL));
 
-    if (get_cpulocal_var(fpu_owner) != p && p->endpoint != TASK_MM) {
+    if (get_cpulocal_var(fpu_owner) != p) {
         enable_fpu_exception();
     } else {
         disable_fpu_exception();

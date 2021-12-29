@@ -44,4 +44,6 @@ void disable_fpu_exception(void) {}
 
 void save_local_fpu(struct proc* p, int retain) {}
 
+void save_fpu(struct proc* p) {}
+
 int restore_fpu(struct proc* p) {}
