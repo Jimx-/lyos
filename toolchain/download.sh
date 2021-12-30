@@ -43,7 +43,7 @@ download "less" "http://www.greenwoodsoftware.com/less" "less-551.tar.gz" || cmd
 download "zlib" "https://zlib.net/fossils/" "zlib-1.2.11.tar.gz" || cmd_error
 download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.2.tar.xz" || cmd_error
 download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz" || cmd_error
-download "mesa" "https://mesa.freedesktop.org/archive/" "mesa-20.0.5.tar.xz" || cmd_error
+download "mesa" "https://mesa.freedesktop.org/archive" "mesa-21.1.4.tar.xz" || cmd_error
 download "libpng" "https://fossies.org/linux/misc" "libpng-1.6.37.tar.xz" || cmd_error
 download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz" || cmd_error
 download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz" || cmd_error
@@ -110,7 +110,7 @@ unzip "less-551.tar.gz" "less-551"
 unzip "zlib-1.2.11.tar.gz" "zlib-1.2.11"
 unzip "glib-2.59.2.tar.xz" "glib-2.59.2"
 unzip "pkg-config-0.29.2.tar.gz" "pkg-config-0.29.2"
-unzip "mesa-20.0.5.tar.xz" "mesa-20.0.5"
+unzip "mesa-21.1.4.tar.xz" "mesa-21.1.4"
 unzip "libpng-1.6.37.tar.xz" "libpng-1.6.37"
 unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
 unzip "freetype-2.10.2.tar.xz" "freetype-2.10.2"
@@ -168,7 +168,7 @@ patc "expat-2.2.9"
 patc "libffi-3.3"
 patc "pcre-8.44"
 patc "zlib-1.2.11"
-patc "mesa-20.0.5"
+patc "mesa-21.1.4"
 patc "libpng-1.6.37"
 patc "freetype-2.10.2"
 patc "pixman-0.40.0"

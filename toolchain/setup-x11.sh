@@ -196,7 +196,7 @@ if $BUILD_MESA; then
     fi
 
     pushd mesa-$SUBARCH > /dev/null
-    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=drm -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-20.0.5
+    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=wayland -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-21.1.4
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
