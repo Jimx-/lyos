@@ -145,20 +145,4 @@
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 
-#ifndef LONG_BIT
-#if LONG_MAX == INT_MAX
-#define LONG_BIT 32
-#else
-#define LONG_BIT 64
-#endif
-#endif
-
-#ifndef SSIZE_MAX
-#if INTPTR_MAX == INT64_MAX
-#define SSIZE_MAX LONG_MAX
-#elif INTPTR_MAX == INT32_MAX
-#define SSIZE_MAX INT_MAX
-#endif
-#endif
-
 #endif
