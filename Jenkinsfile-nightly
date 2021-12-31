@@ -8,7 +8,7 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile'
-                            args '--privileged -v /var/www:/var/www'
+                            args '-u root --privileged -v /var/www:/var/www'
                         }
                     }
 
