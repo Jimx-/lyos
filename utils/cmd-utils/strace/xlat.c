@@ -22,7 +22,7 @@ int print_xval(uint64_t val, const struct xlat* xlat)
     if (str)
         printf("%s", str);
     else
-        printf("%lld", val);
+        printf("%lld", (long long)val);
 
     return !!str;
 }
@@ -46,7 +46,7 @@ int print_flags(uint64_t flags, const struct xlat* xlat)
 
     if (n) {
         if (flags) {
-            printf("|%x", flags);
+            printf("|%llx", (unsigned long long)flags);
             n++;
         }
     } else {
@@ -78,7 +78,7 @@ const char* sprint_flags(uint64_t flags, const struct xlat* xlat)
 
     if (n) {
         if (flags) {
-            outptr += sprintf(outptr, "|%x", flags);
+            outptr += sprintf(outptr, "|%llx", (unsigned long long)flags);
             n++;
         }
     } else {

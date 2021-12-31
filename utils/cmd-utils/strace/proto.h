@@ -1,6 +1,8 @@
 #ifndef _STRACE_PROTO_H_
 #define _STRACE_PROTO_H_
 
+#include <time.h>
+
 #include "types.h"
 #include "xlat.h"
 
@@ -142,5 +144,9 @@ int trace_recvmsg(struct tcb* tcp);
 int trace_utimensat(struct tcb* tcp);
 
 int trace_ftruncate(struct tcb* tcp);
+
+/* Arch-specific */
+void arch_get_syscall_args(struct tcb* tcp);
+void arch_get_syscall_rval(struct tcb* tcp);
 
 #endif

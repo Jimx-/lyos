@@ -10,6 +10,10 @@
 struct tcb {
     int flags;
     int pid;
+
+    unsigned long u_args[2];
+    unsigned long rval;
+
     MESSAGE msg_in;
     MESSAGE msg_out;
 

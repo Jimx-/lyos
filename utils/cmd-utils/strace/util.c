@@ -49,7 +49,7 @@ void print_addr(const uint64_t addr)
 
 void print_dev_t(uint64_t dev)
 {
-    printf("makedev(%x, %x)", MAJOR(dev), MINOR(dev));
+    printf("makedev(%lx, %lx)", MAJOR(dev), MINOR(dev));
 }
 
 int fetch_mem(struct tcb* tcp, const void* addr, void* buf, size_t size)
@@ -163,7 +163,7 @@ int print_str(struct tcb* tcp, const void* addr, size_t len,
 
     unsigned int size;
     unsigned int style = user_style;
-    int rc;
+    int rc = 0;
     int ellipsis;
 
     if (!addr) {

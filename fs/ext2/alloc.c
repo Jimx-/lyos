@@ -53,7 +53,7 @@ int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
 
         /* find and allocate a free bit */
         k = (bitchunk_t)*chunk;
-        for (i = 0; (k & (1 << i)) != 0; ++i) {
+        for (i = 0; (k & (1UL << i)) != 0; ++i) {
         }
 
         /* bit number */
@@ -66,7 +66,7 @@ int ext2_setbit(bitchunk_t* bitmap, int max_bits, off_t startp)
         }
 
         /* allocate bit */
-        k |= 1 << i;
+        k |= 1UL << i;
         *chunk = (bitchunk_t)k;
         break;
     }

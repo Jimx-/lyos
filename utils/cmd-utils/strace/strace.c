@@ -103,9 +103,6 @@ static void trace_sendrec_out(struct tcb* tcp)
     syscall_trace_exiting(tcp);
 }
 
-#define EBX      8
-#define EAX      11
-#define ORIG_EAX 18
 static void trace_call_in(struct tcb* tcp)
 {
     if (last_tcb != tcp) {
@@ -114,18 +111,17 @@ static void trace_call_in(struct tcb* tcp)
     }
     if (tcp->pid != tcbs[0].pid) printf("[pid %d] ", tcp->pid);
 
-    long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
+    arch_get_syscall_args(tcp);
+    copy_message_from(tcp, (void*)tcp->u_args[1], &tcp->msg_in);
 
-    void* src_msg =
-        (void*)ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EBX * 4), 0);
-    copy_message_from(tcp, src_msg, &tcp->msg_in);
-
-    switch (call_nr) {
+    switch (tcp->u_args[0]) {
     case NR_GETINFO:
         printf("get_sysinfo()");
         break;
     case NR_SENDREC:
         trace_sendrec_in(tcp);
+        break;
+    default:
         break;
     }
 
@@ -142,14 +138,10 @@ static void trace_call_out(struct tcb* tcp)
         printf("<... %s resumed> ", tcb_sysent(tcp)->sys_name);
     }
 
-    long call_nr = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(ORIG_EAX * 4), 0);
-    long eax = ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EAX * 4), 0);
+    arch_get_syscall_rval(tcp);
+    copy_message_from(tcp, (void*)tcp->u_args[1], &tcp->msg_out);
 
-    void* src_msg =
-        (void*)ptrace(PTRACE_PEEKUSER, tcp->pid, (void*)(EBX * 4), 0);
-    copy_message_from(tcp, src_msg, &tcp->msg_out);
-
-    switch (call_nr) {
+    switch (tcp->u_args[0]) {
     case NR_GETINFO:
         printf(" = 0x%lx\n",
                ptrace(PTRACE_PEEKDATA, tcp->pid, tcp->msg_out.BUF, 0));
@@ -157,9 +149,11 @@ static void trace_call_out(struct tcb* tcp)
     case NR_SENDREC:
         trace_sendrec_out(tcp);
         return;
+    default:
+        break;
     }
 
-    printf(" = %ld\n", eax);
+    printf(" = %ld\n", tcp->rval);
 }
 
 static int exit_tcb(struct tcb* tcp, int status)

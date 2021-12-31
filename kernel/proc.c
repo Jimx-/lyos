@@ -169,12 +169,16 @@ no_schedule:
             if (p->flags & PF_TRACE_SYSCALL) p->flags |= PF_LEAVE_SYSCALL;
         } else if (p->flags & PF_DELIVER_MSG) {
             deliver_msg(p);
-        } else if ((p->flags & PF_LEAVE_SYSCALL) &&
-                   (p->flags & PF_TRACE_SYSCALL) && proc_is_runnable(p)) {
+        } else if (p->flags & PF_TRACE_SYSCALL) {
+            if (!(p->flags & PF_LEAVE_SYSCALL)) break;
+
             /* syscall leave stop */
             p->flags &= ~(PF_TRACE_SYSCALL | PF_LEAVE_SYSCALL);
 
             ksig_proc(p->endpoint, SIGTRAP);
+        } else if (p->flags & PF_LEAVE_SYSCALL) {
+            p->flags &= ~PF_LEAVE_SYSCALL;
+            break;
         }
 
         if (!proc_is_runnable(p)) goto reschedule;

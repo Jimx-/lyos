@@ -42,7 +42,7 @@ int syscall_trace_entering(struct tcb* tcp, int* sig)
 
 int syscall_trace_exiting(struct tcb* tcp)
 {
-    int retval = 0;
+    long retval = 0;
     int out_ret = 0;
     int base = 10;
     int err = 0;
@@ -103,9 +103,9 @@ int syscall_trace_exiting(struct tcb* tcp)
 
             if (tcp->msg_out.u.m_mm_mmap_reply.retval > 0) {
                 err = tcp->msg_out.u.m_mm_mmap_reply.retval;
-                retval = (int)MAP_FAILED;
+                retval = (long)MAP_FAILED;
             } else
-                retval = (int)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
+                retval = (long)tcp->msg_out.u.m_mm_mmap_reply.retaddr;
             break;
         case SENDTO:
         case RECVFROM:
@@ -131,10 +131,10 @@ int syscall_trace_exiting(struct tcb* tcp)
 
     switch (base) {
     case 10:
-        printf("= %d", retval);
+        printf("= %ld", retval);
         break;
     case 16:
-        printf("= 0x%x", retval);
+        printf("= 0x%lx", retval);
         break;
     }
 

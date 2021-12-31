@@ -3,6 +3,8 @@ SRCS	= strace.c xlat.c syscall.c mem.c util.c print_mode.c stat.c dup.c ioctl.c 
 			sockaddr.c io.c dirent.c exec.c umask.c chmod.c getsetid.c msghdr.c fcntl.c \
 			access.c utimes.c uid.c truncate.c
 
+include arch/$(ARCH)/Makefile
+
 PROG	= strace
 
 INSTALL_PREFIX=/usr/bin

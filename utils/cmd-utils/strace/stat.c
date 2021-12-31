@@ -26,7 +26,7 @@ void print_struct_stat(struct tcb* tcp, struct stat* stat)
         print_dev_t(stat->st_rdev);
     } else {
         printf(", st_size=");
-        printf("%llu", stat->st_size);
+        printf("%llu", (unsigned long long)stat->st_size);
     }
 
     printf(", ...}");
