@@ -152,8 +152,8 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
     tls = &user_desc;
 #endif
 
-    clone_flags = CLONE_VM | CLONE_THREAD | CLONE_SETTLS | CLONE_PARENT_SETTID |
-                  CLONE_CHILD_CLEARTID;
+    clone_flags = CLONE_VM | CLONE_FILES | CLONE_THREAD | CLONE_SETTLS |
+                  CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID;
     tid = clone(__pthread_start, child_sp, clone_flags, (void*)thread,
                 &thread->tid, tls, &thread->tid);
     if (tid < 0) {

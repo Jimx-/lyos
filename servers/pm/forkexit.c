@@ -129,6 +129,7 @@ int do_fork(MESSAGE* p)
         msg2fs.ENDPOINT = child_ep;
         msg2fs.PENDPOINT = parent_ep;
         msg2fs.PID = pmp->pid;
+        msg2fs.FLAGS = flags;
         send_recv(BOTH, TASK_FS, &msg2fs);
     }
 

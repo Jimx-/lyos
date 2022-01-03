@@ -18,6 +18,7 @@
 #include <lyos/sysutils.h>
 #include "sys/types.h"
 #include "stdio.h"
+#include <stdlib.h>
 #include "unistd.h"
 #include "assert.h"
 #include "stddef.h"
@@ -133,35 +134,131 @@ void unlock_filps(struct file_desc* filp1, struct file_desc* filp2)
     }
 }
 
-int check_fds(struct fproc* fp, int nfds)
+struct files_struct* files_alloc(void)
+{
+    struct files_struct* files;
+
+    files = malloc(sizeof(*files));
+    if (!files) return NULL;
+
+    memset(files, 0, sizeof(*files));
+    INIT_ATOMIC(&files->refcnt, 1);
+    files->max_fds = NR_OPEN_DEFAULT;
+    files->filp = files->filp_array;
+
+    return files;
+}
+
+static int expand_files(struct files_struct* files, unsigned int nr)
 {
     int i;
+    struct file_desc** new_filp;
+    size_t copy, set;
 
-    for (i = 0; i < NR_FILES; i++) {
-        if (fp->filp[i] == NULL) {
-            if (--nfds == 0) {
-                return 0;
-            }
+    nr /= (1024 / sizeof(struct file_desc*));
+    for (i = 0; i < 5; i++) {
+        nr |= nr >> (1 << i);
+    }
+    nr++;
+    nr *= (1024 / sizeof(struct file_desc*));
+
+    new_filp = calloc(nr, sizeof(struct file_desc*));
+    if (!new_filp) return ENOMEM;
+
+    copy = files->max_fds * sizeof(struct file_desc*);
+    set = (nr - files->max_fds) * sizeof(struct file_desc*);
+
+    memcpy(new_filp, files->filp, copy);
+    memset((char*)new_filp + copy, 0, set);
+
+    if (files->filp != files->filp_array) free(files->filp);
+    files->filp = new_filp;
+    files->max_fds = nr;
+
+    return 0;
+}
+
+struct files_struct* dup_files(struct files_struct* old, int* errorp)
+{
+    struct files_struct* new;
+    int i, retval;
+
+    *errorp = ENOMEM;
+
+    new = malloc(sizeof(*new));
+    if (!new) return NULL;
+
+    memset(new, 0, sizeof(*new));
+    INIT_ATOMIC(&new->refcnt, 1);
+    new->max_fds = NR_OPEN_DEFAULT;
+    new->filp = new->filp_array;
+
+    if (old->max_fds > new->max_fds) {
+        retval = expand_files(new, old->max_fds);
+
+        if (retval) {
+            free(new);
+            *errorp = retval;
+            return NULL;
         }
     }
 
-    return EMFILE;
+    for (i = 0; i < old->max_fds; i++) {
+        struct file_desc* filp = old->filp[i];
+        if (filp) {
+            filp->fd_cnt++;
+            new->filp[i] = filp;
+        } else {
+            new->filp[i] = NULL;
+        }
+    }
+
+    return new;
+}
+
+static void close_files(struct files_struct* files)
+{
+    int i;
+
+    for (i = 0; i < files->max_fds; i++) {
+        if (files->filp[i]) close_fd(fproc, i);
+    }
+}
+
+void put_files(struct files_struct* files)
+{
+    if (atomic_dec_and_test(&files->refcnt)) {
+        close_files(files);
+        if (files->filp != files->filp_array) free(files->filp);
+        free(files);
+    }
+}
+
+void exit_files(struct fproc* fp)
+{
+    struct files_struct* files = fp->files;
+
+    fp->files = NULL;
+    put_files(files);
 }
 
 int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
            struct file_desc** fpp)
 {
     /* find an unused fd in proc's filp table and a free file slot */
-    int i;
+    int i, retval;
 
-    for (i = start; i < NR_FILES; i++) {
-        if (fp->filp[i] == 0) {
+    for (i = start; i < fp->files->max_fds; i++) {
+        if (fp->files->filp[i] == 0) {
             *fd = i;
             break;
         }
     }
-    if (i == NR_FILES) {
-        return EMFILE;
+    if (i == fp->files->max_fds) {
+        retval = expand_files(fp->files, i);
+        if (retval) return retval;
+
+        *fd = i;
     }
     if (!fpp) return 0;
 
@@ -185,11 +282,11 @@ struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
     /* retrieve a file descriptor from fp's filp table and lock it */
     struct file_desc* filp = NULL;
 
-    if (fd < 0 || fd >= NR_FILES) {
+    if (fd < 0 || fd >= fp->files->max_fds) {
         err_code = EINVAL;
         return NULL;
     }
-    filp = fp->filp[fd];
+    filp = fp->files->filp[fd];
 
     if (!filp) {
         err_code = EBADF;
@@ -222,21 +319,26 @@ int do_copyfd(void)
         flags &= !COPYFD_CLOEXEC;
     /* fall-through */
     case COPYFD_TO:
-        for (fd = 0; fd < NR_FILES; fd++)
-            if (fp_dest->filp[fd] == NULL) break;
+        for (fd = 0; fd < fp_dest->files->max_fds; fd++)
+            if (fp_dest->files->filp[fd] == NULL) break;
 
-        if (fd < NR_FILES) {
-            fp_dest->filp[fd] = filp;
-            filp->fd_cnt++;
-            retval = fd;
-        } else
-            retval = -EMFILE;
+        if (fd == fp_dest->files->max_fds) {
+            retval = expand_files(fp_dest->files, fd);
+            if (retval) {
+                retval = -retval;
+                goto out;
+            }
+        }
+
+        fp_dest->files->filp[fd] = filp;
+        filp->fd_cnt++;
+        retval = fd;
         break;
 
     case COPYFD_CLOSE:
         if (filp->fd_cnt > 1) {
             filp->fd_cnt--;
-            fp_dest->filp[fd] = NULL;
+            fp_dest->files->filp[fd] = NULL;
             retval = 0;
         } else
             retval = -EBADF;
@@ -245,6 +347,7 @@ int do_copyfd(void)
         retval = -EINVAL;
     }
 
+out:
     unlock_filp(filp);
     return retval;
 }

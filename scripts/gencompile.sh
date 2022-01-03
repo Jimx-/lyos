@@ -10,6 +10,9 @@ LOCAL_VERSION=$5
 LOCAL_VERSION_AUTO=$6
 SMP=$7
 
+LC_ALL=C
+export LC_ALL
+
 if [ -r $PWD/.version ]; then
     VERSION=`cat .version`
 else

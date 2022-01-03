@@ -146,11 +146,13 @@ static int cdev_clone(int fd, dev_t dev, dev_t new_minor)
 
     lock_inode(pin, RWL_READ);
 
-    assert(fproc->filp[fd]);
-    unlock_inode(fproc->filp[fd]->fd_inode);
-    put_inode(fproc->filp[fd]->fd_inode);
+    assert(fd < fproc->files->max_fds);
+    assert(fproc->files->filp[fd]);
 
-    fproc->filp[fd]->fd_inode = pin;
+    unlock_inode(fproc->files->filp[fd]->fd_inode);
+    put_inode(fproc->files->filp[fd]->fd_inode);
+
+    fproc->files->filp[fd]->fd_inode = pin;
 
     return 0;
 }

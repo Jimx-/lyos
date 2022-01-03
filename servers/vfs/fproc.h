@@ -38,7 +38,7 @@ EXTERN struct fproc {
 
     int umask;
 
-    struct file_desc* filp[NR_FILES];
+    struct files_struct* files;
     mutex_t lock;
 
     struct wait_queue_head signalfd_wq;

@@ -427,11 +427,11 @@ static int create_pipe(int* fds, int flags)
         unlock_vmnt(pipefs_vmnt);
         return retval;
     }
-    fproc->filp[fds[0]] = filp0;
+    fproc->files->filp[fds[0]] = filp0;
     filp0->fd_cnt = 1;
 
     if ((retval = get_fd(fproc, 0, W_BIT, &fds[1], &filp1)) != 0) {
-        fproc->filp[fds[0]] = NULL;
+        fproc->files->filp[fds[0]] = NULL;
         filp0->fd_cnt = 0;
         unlock_filp(filp0);
         unlock_inode(pin);
@@ -439,7 +439,7 @@ static int create_pipe(int* fds, int flags)
         unlock_vmnt(pipefs_vmnt);
         return retval;
     }
-    fproc->filp[fds[1]] = filp1;
+    fproc->files->filp[fds[1]] = filp1;
     filp1->fd_cnt = 1;
 
     filp0->fd_inode = pin;

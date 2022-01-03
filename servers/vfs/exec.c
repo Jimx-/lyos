@@ -281,7 +281,7 @@ int fs_exec(void)
         execi.mmfd = -1;
         execi.args.memmap = NULL;
     } else {
-        mm_task->filp[fd] = filp;
+        mm_task->files->filp[fd] = filp;
         filp->fd_cnt = 1;
         filp->fd_pos = 0;
         filp->fd_inode = execi.pin;

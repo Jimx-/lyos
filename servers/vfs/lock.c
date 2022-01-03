@@ -61,7 +61,7 @@ int do_lock(int fd, int req, void* arg)
 
     assert(req == F_GETLK || req == F_SETLK || req == F_SETLKW);
 
-    filp = fproc->filp[fd];
+    filp = fproc->files->filp[fd];
     assert(filp);
 
     if ((retval = data_copy(SELF, &flock, fproc->endpoint, arg,

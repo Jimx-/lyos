@@ -109,7 +109,7 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
         return -retval;
     }
 
-    fproc->filp[fd] = filp;
+    fproc->files->filp[fd] = filp;
     filp->fd_cnt = 1;
 
     filp->fd_inode = anon_inode;

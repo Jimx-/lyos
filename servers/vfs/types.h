@@ -16,6 +16,7 @@
 #ifndef _VFS_TYPES_H_
 #define _VFS_TYPES_H_
 
+#include <asm/atomic.h>
 #include <lyos/spinlock.h>
 #include <lyos/types.h>
 #include "thread.h"
@@ -101,6 +102,13 @@ struct file_desc {
     mutex_t fd_lock;
 
     struct list_head fd_ep_links;
+};
+
+struct files_struct {
+    atomic_t refcnt;
+    unsigned int max_fds;
+    struct file_desc** filp;
+    struct file_desc* filp_array[NR_OPEN_DEFAULT];
 };
 
 /* character device mapping */

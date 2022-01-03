@@ -130,7 +130,7 @@ static int create_sock_fd(dev_t dev, int flags)
         return -retval;
     }
 
-    fproc->filp[fd] = filp;
+    fproc->files->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_inode = pin;
     filp->fd_flags = O_RDWR | (flags & ~O_ACCMODE);
@@ -183,8 +183,6 @@ int do_socket(void)
     dev_t dev;
     int retval;
 
-    if ((retval = check_fds(fproc, 1)) != 0) return -retval;
-
     sock_type = type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
     flags = get_sock_flags(type);
 
@@ -208,8 +206,6 @@ int do_socketpair(void)
     int sock_type, flags;
     dev_t dev[2];
     int fd0, fd1, retval;
-
-    if ((retval = check_fds(fproc, 2)) != 0) return retval;
 
     sock_type = type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
     flags = get_sock_flags(type);
@@ -292,8 +288,6 @@ int do_accept4(void)
 
     if (sock_flags & SOCK_NONBLOCK) flags |= O_NONBLOCK;
     if (sock_flags & SOCK_CLOEXEC) flags |= O_CLOEXEC;
-
-    if ((retval = check_fds(fproc, 1)) != OK) return retval;
 
     retval = sdev_accept(fproc->endpoint, dev, addr, &addrlen, flags, &newdev);
 

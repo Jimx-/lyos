@@ -430,8 +430,7 @@ void init_vfs()
         pfp->umask = ~0;
         pfp->flags |= FPF_INUSE;
 
-        for (i = 0; i < NR_FILES; i++)
-            pfp->filp[i] = 0;
+        pfp->files = files_alloc();
     } while (TRUE);
 
     pm_msg.RETVAL = 0;

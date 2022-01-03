@@ -152,10 +152,13 @@ void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 void unlock_filp(struct file_desc* filp);
 void unlock_filps(struct file_desc* filp1, struct file_desc* filp2);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
-int check_fds(struct fproc* fp, int nfds);
 int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
            struct file_desc** fpp);
 int do_copyfd(void);
+struct files_struct* files_alloc(void);
+struct files_struct* dup_files(struct files_struct* old, int* errorp);
+void put_files(struct files_struct* files);
+void exit_files(struct fproc* fp);
 
 /* vfs/cdev.c */
 void init_cdev(void);

@@ -147,7 +147,7 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
         if (vmnt) unlock_vmnt(vmnt);
     }
 
-    fproc->filp[fd] = filp;
+    fproc->files->filp[fd] = filp;
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
     filp->fd_inode = pin;
@@ -178,7 +178,7 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
     unlock_filp(filp);
 
     if (retval != 0) {
-        fproc->filp[fd] = NULL;
+        fproc->files->filp[fd] = NULL;
         filp->fd_cnt = 0;
         filp->fd_flags = 0;
         filp->fd_inode = 0;
@@ -204,8 +204,8 @@ int close_fd(struct fproc* fp, int fd)
 
     DEB(printl("closing file (filp[%d] of proc #%d, inode number = %d, "
                "fd->refcnt = %d, inode->refcnt = %d)\n",
-               fd, fp->endpoint, fp->filp[fd]->fd_inode->i_num,
-               fp->filp[fd]->fd_cnt, fp->filp[fd]->fd_inode->i_cnt));
+               fd, fp->endpoint, filp->fd_inode->i_num, filp->fd_cnt,
+               filp->fd_inode->i_cnt));
 
     pin = filp->fd_inode;
 
@@ -228,7 +228,7 @@ int close_fd(struct fproc* fp, int fd)
     }
 
     mutex_unlock(&filp->fd_lock);
-    fp->filp[fd] = NULL;
+    fp->files->filp[fd] = NULL;
 
     return 0;
 }

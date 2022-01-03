@@ -641,7 +641,7 @@ int do_epoll_create1(void)
         ep_free(ep);
     }
 
-    ep->file = fproc->filp[fd];
+    ep->file = fproc->files->filp[fd];
 
     return fd;
 }

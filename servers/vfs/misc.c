@@ -28,6 +28,7 @@
 #include "errno.h"
 #include <sys/syslimits.h>
 #include <sys/stat.h>
+#include <sys/sched.h>
 #include <asm/page.h>
 #include "types.h"
 #include "path.h"
@@ -93,7 +94,7 @@ int do_fcntl()
     switch (request) {
     case F_DUPFD:
     case F_DUPFD_CLOEXEC:
-        if (argx < 0 || argx >= NR_FILES) return -EINVAL;
+        if (argx < 0) return -EINVAL;
 
         newfd = -1;
         retval = get_fd(fproc, argx, 0, &newfd, NULL);
@@ -102,7 +103,7 @@ int do_fcntl()
             return retval;
         }
         filp->fd_cnt++;
-        fproc->filp[newfd] = filp;
+        fproc->files->filp[newfd] = filp;
         retval = newfd;
         break;
     case F_GETFD:
@@ -161,14 +162,14 @@ int do_dup(void)
         }
     }
 
-    if (fproc->filp[newfd] != NULL) {
+    if (fproc->files->filp[newfd] != NULL) {
         /* close the file */
         self->msg_out.FD = newfd;
         close_fd(fproc, newfd);
     }
 
     filp->fd_cnt++;
-    fproc->filp[newfd] = filp;
+    fproc->files->filp[newfd] = filp;
     unlock_filp(filp);
 
     return newfd;
@@ -296,7 +297,7 @@ int do_mm_request(void)
         }
 
         filp->fd_cnt++;
-        mm_task->filp[mmfd] = filp;
+        mm_task->files->filp[mmfd] = filp;
 
         self->msg_out.MMRDEV = filp->fd_inode->i_dev;
         self->msg_out.MMRINO = filp->fd_inode->i_num;
@@ -393,10 +394,12 @@ reply:
 /* Perform fs part of fork/exit */
 int fs_fork(void)
 {
-    int i;
     struct fproc* child = vfs_endpt_proc(self->msg_in.ENDPOINT);
     struct fproc* parent = vfs_endpt_proc(self->msg_in.PENDPOINT);
+    int flags = self->msg_in.FLAGS;
+    struct files_struct* newf;
     mutex_t cmutex;
+    int retval;
 
     if (child == NULL || parent == NULL) {
         return EINVAL;
@@ -409,18 +412,24 @@ int fs_fork(void)
     *child = *parent;
     child->lock = cmutex;
 
+    if (flags & CLONE_FILES) {
+        atomic_inc(&parent->files->refcnt);
+    } else {
+        newf = dup_files(parent->files, &retval);
+        if (!newf) {
+            unlock_fproc(child);
+            unlock_fproc(parent);
+            return retval;
+        }
+
+        child->files = newf;
+    }
+
     init_waitqueue_head(&child->signalfd_wq);
 
     child->pid = self->msg_in.PID;
     child->endpoint = self->msg_in.ENDPOINT;
     child->flags |= FPF_INUSE;
-
-    for (i = 0; i < NR_FILES; i++) {
-        struct file_desc* filp = child->filp[i];
-        if (filp) {
-            filp->fd_cnt++;
-        }
-    }
 
     if (child->root) dup_inode(child->root);
     if (child->pwd) dup_inode(child->pwd);
@@ -437,9 +446,7 @@ int fs_exit()
 
     p->flags &= ~FPF_INUSE;
 
-    for (i = 0; i < NR_FILES; i++) {
-        close_fd(p, i);
-    }
+    exit_files(p);
 
     if (p->pwd) {
         put_inode(p->pwd);
