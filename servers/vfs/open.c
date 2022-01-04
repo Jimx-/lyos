@@ -67,7 +67,7 @@ int do_open(void)
     int src = self->msg_in.source;        /* caller proc nr. */
     mode_t mode = self->msg_in.MODE;      /* access mode */
 
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     if (name_len > PATH_MAX) {
         return -ENAMETOOLONG;
     }
@@ -86,7 +86,7 @@ int do_openat(void)
     int name_len = self->msg_in.u.m_vfs_pathat.name_len;
     int flags = self->msg_in.u.m_vfs_pathat.flags;
     mode_t mode = self->msg_in.u.m_vfs_pathat.mode;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
     if (name_len > PATH_MAX) {
@@ -147,14 +147,13 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
         if (vmnt) unlock_vmnt(vmnt);
     }
 
-    fproc->files->filp[fd] = filp;
+    install_filp(fproc, fd, filp);
     filp->fd_cnt = 1;
     filp->fd_pos = 0;
     filp->fd_inode = pin;
     filp->fd_flags = flags;
     filp->fd_fops = pin->i_fops;
-
-    if (flags & O_CLOEXEC) SET_BIT(fproc->files->close_on_exec, fd);
+    set_close_on_exec(fproc, fd, flags & O_CLOEXEC);
 
     if (exist) {
         if ((retval = forbidden(fproc, pin, bits)) == 0) {
@@ -180,8 +179,8 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
     unlock_filp(filp);
 
     if (retval != 0) {
-        fproc->files->filp[fd] = NULL;
-        UNSET_BIT(fproc->files->close_on_exec, fd);
+        install_filp(fproc, fd, NULL);
+        set_close_on_exec(fproc, fd, 0);
         filp->fd_cnt = 0;
         filp->fd_flags = 0;
         filp->fd_inode = 0;
@@ -212,8 +211,8 @@ int close_fd(struct fproc* fp, int fd)
 
     retval = close_filp(filp);
 
-    fp->files->filp[fd] = NULL;
-    UNSET_BIT(fp->files->close_on_exec, fd);
+    install_filp(fp, fd, NULL);
+    set_close_on_exec(fproc, fd, 0);
 
     return retval;
 }

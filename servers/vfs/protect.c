@@ -44,7 +44,7 @@
 int do_access(void)
 {
     int namelen = self->msg_in.NAME_LEN + 1;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     if (namelen > PATH_MAX) return ENAMETOOLONG;
 
     data_copy(SELF, pathname, fproc->endpoint, self->msg_in.PATHNAME, namelen);
@@ -150,7 +150,7 @@ int do_chmod(int type)
 
     struct lookup lookup;
     if (type == CHMOD) {
-        char pathname[PATH_MAX];
+        char pathname[PATH_MAX + 1];
         if (self->msg_in.NAME_LEN > PATH_MAX) return ENAMETOOLONG;
 
         /* fetch the name */
@@ -281,7 +281,7 @@ int do_fchownat(int type)
     uid_t uid, new_uid;
     gid_t gid, new_gid;
     mode_t new_mode;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
     uid = self->msg_in.u.m_vfs_fchownat.owner;
@@ -290,6 +290,8 @@ int do_fchownat(int type)
     if (type == FCHOWNAT) {
         lookup_flags = 0;
         if (flags & AT_SYMLINK_NOFOLLOW) lookup_flags |= LKF_SYMLINK_NOFOLLOW;
+
+        if (name_len > PATH_MAX) return ENAMETOOLONG;
 
         if ((retval = data_copy(SELF, pathname, fproc->endpoint,
                                 self->msg_in.u.m_vfs_fchownat.pathname,

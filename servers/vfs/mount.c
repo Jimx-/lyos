@@ -109,13 +109,13 @@ int do_mount(void)
     size_t source_len = self->msg_in.u.m_vfs_mount.source_len;
     size_t target_len = self->msg_in.u.m_vfs_mount.target_len;
     size_t label_len = self->msg_in.u.m_vfs_mount.label_len;
-    char source[PATH_MAX];
-    char target[PATH_MAX];
+    char source[PATH_MAX + 1];
+    char target[PATH_MAX + 1];
     void* user_data = self->msg_in.u.m_vfs_mount.data;
     endpoint_t fs_ep;
 
     /* find fs endpoint */
-    char fs_label[FS_LABEL_MAX];
+    char fs_label[FS_LABEL_MAX + 1];
     if (label_len > FS_LABEL_MAX) return ENAMETOOLONG;
 
     data_copy(SELF, fs_label, fproc->endpoint, self->msg_in.u.m_vfs_mount.label,

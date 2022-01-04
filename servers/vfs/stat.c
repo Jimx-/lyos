@@ -86,7 +86,7 @@ static void generic_fill_stat(struct inode* pin, struct stat* stat)
 int do_stat(void)
 {
     int namelen = self->msg_in.NAME_LEN;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
     if (namelen > PATH_MAX) return ENAMETOOLONG;
@@ -126,7 +126,7 @@ int do_stat(void)
 int do_lstat(void)
 {
     int namelen = self->msg_in.NAME_LEN;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
     if (namelen > PATH_MAX) return ENAMETOOLONG;
 
@@ -181,7 +181,7 @@ int do_fstatat(void)
     void* user_buf = self->msg_in.u.m_vfs_pathat.buf;
     int flags = self->msg_in.u.m_vfs_pathat.flags;
     unsigned int lookup_flags;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
     if (namelen > PATH_MAX) return ENAMETOOLONG;

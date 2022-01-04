@@ -44,8 +44,8 @@
 
 struct vfs_exec_info {
     struct exec_info args;
-    char prog_name[PATH_MAX];
-    char dyn_prog_name[PATH_MAX];
+    char prog_name[PATH_MAX + 1];
+    char dyn_prog_name[PATH_MAX + 1];
     struct inode* pin;
     struct vfs_mount* vmnt;
     struct stat sbuf;
@@ -59,13 +59,16 @@ struct vfs_exec_info {
 };
 
 typedef int (*stack_hook_t)(struct vfs_exec_info* execi, char* stack,
-                            size_t* stack_size, void** vsp);
+                            const char* stack_end, size_t* stack_size,
+                            void** vsp);
 static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
-                           size_t* stack_size, void** vsp);
+                           const char* stack_end, size_t* stack_size,
+                           void** vsp);
 static int setup_script_stack(struct inode* pin, char* stack,
-                              size_t* stack_size, char* pathname, void** vsp);
-static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
-                       void** vsp);
+                              const char* stack_end, size_t* stack_size,
+                              char* pathname, void** vsp);
+static int prepend_arg(int replace, char* stack, const char* stack_end,
+                       size_t* stack_size, char* arg, void** vsp);
 struct exec_loader {
     libexec_exec_loadfunc_t loader;
     stack_hook_t setup_stack;
@@ -97,8 +100,8 @@ static int get_exec_inode(struct vfs_exec_info* execi, struct lookup* lookup,
         execi->pin = NULL;
     }
 
-    strlcpy(execi->prog_name, lookup->pathname, PATH_MAX);
-    strlcpy(execi->args.prog_name, lookup->pathname, PATH_MAX);
+    strlcpy(execi->prog_name, lookup->pathname, PATH_MAX + 1);
+    strlcpy(execi->args.prog_name, lookup->pathname, PATH_MAX + 1);
 
     if ((execi->pin = resolve_path(lookup, fp)) == NULL) return err_code;
     execi->vmnt = execi->pin->i_vmnt;
@@ -234,12 +237,17 @@ int fs_exec(void)
         goto exec_finalize;
     }
 
+    if (name_len > PATH_MAX) {
+        retval = ENAMETOOLONG;
+        goto exec_finalize;
+    }
+
     static char stackcopy[PROC_ORIGIN_STACK];
     memset(stackcopy, 0, sizeof(stackcopy));
     data_copy(SELF, stackcopy, src, user_sp, orig_stack_len);
 
     /* copy prog name */
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     data_copy(SELF, pathname, src, request->pathname, name_len);
     pathname[name_len] = 0; /* terminate the string */
 
@@ -266,8 +274,8 @@ int fs_exec(void)
     }
 
     if (is_script(&execi)) {
-        setup_script_stack(execi.pin, stackcopy, &orig_stack_len, pathname,
-                           (void**)&orig_stack);
+        setup_script_stack(execi.pin, stackcopy, stackcopy + sizeof(stackcopy),
+                           &orig_stack_len, pathname, (void**)&orig_stack);
         retval = get_exec_inode(&execi, &lookup, FALSE /* sugid */, fproc);
         if (retval) goto exec_finalize;
     }
@@ -281,7 +289,7 @@ int fs_exec(void)
         execi.mmfd = -1;
         execi.args.memmap = NULL;
     } else {
-        mm_task->files->filp[fd] = filp;
+        install_filp(mm_task, fd, filp);
         filp->fd_cnt = 1;
         filp->fd_pos = 0;
         filp->fd_inode = execi.pin;
@@ -302,9 +310,9 @@ int fs_exec(void)
     execi.args.proc_e = src;
     execi.args.filesize = execi.pin->i_size;
 
-    char interp[PATH_MAX];
+    char interp[PATH_MAX + 1];
     if (elf_is_dynamic(execi.args.header, execi.args.header_len, interp,
-                       sizeof(interp)) > 0) {
+                       PATH_MAX) > 0) {
         unlock_inode(execi.pin);
         execi.exec_fd = common_openat(AT_FDCWD, pathname, O_RDONLY, 0);
         lock_inode(execi.pin, RWL_READ);
@@ -348,7 +356,8 @@ int fs_exec(void)
         if (!retval) {
             if (exec_loaders[i].setup_stack)
                 retval = (*exec_loaders[i].setup_stack)(
-                    &execi, stackcopy, &orig_stack_len, (void**)&orig_stack);
+                    &execi, stackcopy, stackcopy + sizeof(stackcopy),
+                    &orig_stack_len, (void**)&orig_stack);
             break; /* loaded successfully */
         }
     }
@@ -364,6 +373,7 @@ int fs_exec(void)
         envp += (void*)q - (void*)stackcopy;
     }
 
+    assert(orig_stack_len <= sizeof(stackcopy));
     data_copy(src, orig_stack, SELF, stackcopy, orig_stack_len);
 
     struct ps_strings ps;
@@ -426,7 +436,8 @@ exec_finalize:
  * @return Zero on success.
  *****************************************************************************/
 static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
-                           size_t* stack_size, void** vsp)
+                           const char* stack_end, size_t* stack_size,
+                           void** vsp)
 {
     char** arg_str = NULL;
     if (*stack_size) {
@@ -505,6 +516,7 @@ static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
         /* AT_EXECFN and AT_PLATFORM not present */
         AUXV_ENT(auxv_execfn, AT_NULL, 0);
     }
+    assert((char*)arg_str + auxv_len + strings_len < stack_end);
     memmove((char*)arg_str + auxv_len, (char*)arg_str, strings_len);
     memcpy((char*)arg_str, auxv_buf, auxv_len);
 
@@ -515,9 +527,10 @@ static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
 }
 
 static int setup_script_stack(struct inode* pin, char* stack,
-                              size_t* stack_size, char* pathname, void** vsp)
+                              const char* stack_end, size_t* stack_size,
+                              char* pathname, void** vsp)
 {
-    prepend_arg(1, stack, stack_size, pathname, vsp);
+    prepend_arg(1, stack, stack_end, stack_size, pathname, vsp);
 
     u64 newpos;
     int retval;
@@ -553,17 +566,22 @@ static int setup_script_stack(struct inode* pin, char* stack,
         interp = p;
         p--;
 
-        prepend_arg(0, stack, stack_size, interp, vsp);
+        prepend_arg(0, stack, stack_end, stack_size, interp, vsp);
     }
 
     if (!interp) return ENOEXEC;
-    if (interp != pathname) memmove(pathname, interp, strlen(interp) + 1);
+    if (interp != pathname) {
+        size_t move_len = strlen(interp);
+        if (move_len > PATH_MAX) move_len = PATH_MAX;
+        memmove(pathname, interp, move_len);
+        pathname[move_len] = '\0';
+    }
 
     return 0;
 }
 
-static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
-                       void** vsp)
+static int prepend_arg(int replace, char* stack, const char* stack_end,
+                       size_t* stack_size, char* arg, void** vsp)
 {
     size_t arglen = strlen(arg) + 1;
     char** arg0 = (char**)stack;
@@ -587,10 +605,13 @@ static int prepend_arg(int replace, char* stack, size_t* stack_size, char* arg,
     if (*stack_size + offset >= ARG_MAX) {
         return ENOMEM;
     }
+    assert(stack + offset + orig_size < stack_end);
+    assert(arg_start + arglen < stack_end);
     memmove(stack + delta + offset, stack + delta, orig_size - delta);
     memcpy(arg_start, arg, arglen);
 
     if (!replace) {
+        assert(stack + sizeof(char*) + delta < stack_end);
         memmove(stack + sizeof(char*), stack, delta);
     }
 

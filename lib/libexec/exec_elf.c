@@ -61,6 +61,8 @@ int elf_is_dynamic(char* hdr, size_t hdr_len, char* interp, size_t maxlen)
     Elf_Ehdr* elf_hdr;
     Elf_Phdr* prog_hdr;
 
+    if (elf_check_header((Elf_Ehdr*)hdr)) return 0;
+
     if (elf_unpack(hdr, &elf_hdr, &prog_hdr)) return 0;
 
     int i;

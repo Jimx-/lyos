@@ -70,7 +70,7 @@ int do_utimensat(void)
     struct inode* pin;
     int type, lookup_flags;
     struct timespec atime, mtime, now_ts, new_atime, new_mtime;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
     atime.tv_sec = self->msg_in.u.m_vfs_utimensat.atime;
@@ -83,6 +83,8 @@ int do_utimensat(void)
 
         lookup_flags = 0;
         if (flags & AT_SYMLINK_NOFOLLOW) lookup_flags |= LKF_SYMLINK_NOFOLLOW;
+
+        if (name_len > PATH_MAX) return ENAMETOOLONG;
 
         if ((retval = data_copy(SELF, pathname, fproc->endpoint,
                                 self->msg_in.u.m_vfs_utimensat.pathname,

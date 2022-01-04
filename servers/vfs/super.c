@@ -47,10 +47,10 @@ int do_register_filesystem()
     int name_len = self->msg_in.NAME_LEN;
 
     if (name_len > FS_LABEL_MAX) return ENAMETOOLONG;
-    char name[FS_LABEL_MAX];
-    name[name_len] = '\0';
+    char name[FS_LABEL_MAX + 1];
 
     data_copy(SELF, name, fproc->endpoint, self->msg_in.PATHNAME, name_len);
+    name[name_len] = '\0';
 
     return add_filesystem(fproc->endpoint, name);
 }
@@ -64,7 +64,7 @@ int add_filesystem(endpoint_t fs_ep, char* name)
         return ENOMEM;
     }
 
-    strcpy(pfs->name, name);
+    strlcpy(pfs->name, name, sizeof(pfs->name));
     pfs->fs_ep = fs_ep;
 
     list_add(&(pfs->list), &filesystem_table);

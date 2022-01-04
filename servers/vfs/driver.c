@@ -48,13 +48,14 @@ int do_mapdriver(void)
     int domains[NR_DOMAIN];
     int retval;
 
-    if (label_len > sizeof(label)) return ENAMETOOLONG;
+    if (label_len > PROC_NAME_LEN) return ENAMETOOLONG;
 
     retval = data_copy(SELF, label, src, label_user, label_len);
     if (retval) return retval;
     label[label_len] = '\0';
 
-    sprintf(endpoint_label, SYSFS_SERVICE_ENDPOINT_LABEL, label);
+    snprintf(endpoint_label, sizeof(endpoint_label),
+             SYSFS_SERVICE_ENDPOINT_LABEL, label);
     retval = sysfs_retrieve_u32(endpoint_label, (u32*)&driver_ep);
     if (retval) return retval;
 

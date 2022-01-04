@@ -103,7 +103,7 @@ int do_fcntl()
             return retval;
         }
         filp->fd_cnt++;
-        fproc->files->filp[newfd] = filp;
+        install_filp(fproc, newfd, filp);
         retval = newfd;
         break;
     case F_GETFD:
@@ -169,7 +169,7 @@ int do_dup(void)
     }
 
     filp->fd_cnt++;
-    fproc->files->filp[newfd] = filp;
+    install_filp(fproc, newfd, filp);
     unlock_filp(filp);
 
     return newfd;
@@ -207,7 +207,7 @@ int do_fchdir(void)
 static int change_directory(struct fproc* fp, struct inode** ppin,
                             endpoint_t src, char* string, int len)
 {
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     if (len > PATH_MAX) return ENAMETOOLONG;
 
     /* fetch the name */
@@ -297,7 +297,7 @@ int do_mm_request(void)
         }
 
         filp->fd_cnt++;
-        mm_task->files->filp[mmfd] = filp;
+        install_filp(mm_task, mmfd, filp);
 
         self->msg_out.MMRDEV = filp->fd_inode->i_dev;
         self->msg_out.MMRINO = filp->fd_inode->i_num;

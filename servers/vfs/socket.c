@@ -130,11 +130,11 @@ static int create_sock_fd(dev_t dev, int flags)
         return -retval;
     }
 
-    fproc->files->filp[fd] = filp;
+    install_filp(fproc, fd, filp);
     filp->fd_cnt = 1;
     filp->fd_inode = pin;
     filp->fd_flags = O_RDWR | (flags & ~O_ACCMODE);
-    if (flags & O_CLOEXEC) SET_BIT(fproc->files->close_on_exec, fd);
+    set_close_on_exec(fproc, fd, flags & O_CLOEXEC);
 
     filp->fd_fops = pin->i_fops;
 

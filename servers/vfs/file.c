@@ -138,6 +138,9 @@ struct files_struct* files_alloc(void)
 {
     struct files_struct* files;
 
+    _Static_assert(BITCHUNKS(NR_OPEN_DEFAULT) == 1,
+                   "NR_OPEN_DEFAULT > bitchunk bits");
+
     files = malloc(sizeof(*files));
     if (!files) return NULL;
 
@@ -164,10 +167,12 @@ static int expand_files(struct files_struct* files, unsigned int nr)
     nr++;
     nr *= (1024 / sizeof(struct file_desc*));
 
+    assert(nr > files->max_fds);
+
     new_filp = calloc(nr, sizeof(struct file_desc*));
     if (!new_filp) return ENOMEM;
 
-    bitmap = malloc(BITCHUNKS(nr) * sizeof(bitchunk_t));
+    bitmap = calloc(BITCHUNKS(nr), sizeof(bitchunk_t));
     if (!bitmap) {
         free(new_filp);
         return ENOMEM;
@@ -176,12 +181,14 @@ static int expand_files(struct files_struct* files, unsigned int nr)
     copy = files->max_fds * sizeof(struct file_desc*);
     set = (nr - files->max_fds) * sizeof(struct file_desc*);
 
+    assert(copy + set == nr * sizeof(struct file_desc*));
     memcpy(new_filp, files->filp, copy);
     memset((char*)new_filp + copy, 0, set);
 
     copy = BITCHUNKS(files->max_fds) * sizeof(bitchunk_t);
     set = BITCHUNKS(nr) * sizeof(bitchunk_t) - copy;
 
+    assert(copy + set == BITCHUNKS(nr) * sizeof(bitchunk_t));
     memcpy(bitmap, files->close_on_exec, copy);
     memset((char*)bitmap + copy, 0, set);
 
@@ -223,6 +230,8 @@ struct files_struct* dup_files(struct files_struct* old, int* errorp)
         }
     }
 
+    assert(new->max_fds >= old->max_fds);
+
     for (i = 0; i < old->max_fds; i++) {
         struct file_desc* filp = old->filp[i];
         if (filp) {
@@ -233,7 +242,8 @@ struct files_struct* dup_files(struct files_struct* old, int* errorp)
         }
     }
 
-    memcpy(new->close_on_exec, old->close_on_exec, BITCHUNKS(old->max_fds));
+    memcpy(new->close_on_exec, old->close_on_exec,
+           BITCHUNKS(old->max_fds) * sizeof(bitchunk_t));
 
     return new;
 }
@@ -332,6 +342,21 @@ struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
     return filp;
 }
 
+void install_filp(struct fproc* fp, int fd, struct file_desc* filp)
+{
+    assert(fd < fp->files->max_fds);
+    fp->files->filp[fd] = filp;
+}
+
+void set_close_on_exec(struct fproc* fp, int fd, int flag)
+{
+    assert(fd < fp->files->max_fds);
+    if (flag)
+        SET_BIT(fp->files->close_on_exec, fd);
+    else
+        UNSET_BIT(fp->files->close_on_exec, fd);
+}
+
 int close_filp(struct file_desc* filp)
 {
     struct inode* pin;
@@ -392,7 +417,7 @@ int do_copyfd(void)
             }
         }
 
-        fp_dest->files->filp[fd] = filp;
+        install_filp(fp_dest, fd, filp);
         filp->fd_cnt++;
         retval = fd;
         break;
@@ -400,8 +425,8 @@ int do_copyfd(void)
     case COPYFD_CLOSE:
         if (filp->fd_cnt > 1) {
             filp->fd_cnt--;
-            fp_dest->files->filp[fd] = NULL;
-            UNSET_BIT(fp_dest->files->close_on_exec, fd);
+            install_filp(fp_dest, fd, NULL);
+            set_close_on_exec(fp_dest, fd, 0);
             retval = 0;
         } else
             retval = -EBADF;

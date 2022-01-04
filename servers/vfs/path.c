@@ -254,8 +254,10 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
     }
 
     while (ret == EENTERMOUNT || ret == ELEAVEMOUNT || ret == ESYMLINK) {
-        int path_offset = res.offsetp;
-        int left_len = strlen(&pathname[path_offset]);
+        off_t path_offset = res.offsetp;
+        size_t left_len = strlen(&pathname[path_offset]);
+
+        assert(left_len <= PATH_MAX);
         memmove(pathname, &pathname[path_offset], left_len);
         pathname[left_len] = '\0';
 

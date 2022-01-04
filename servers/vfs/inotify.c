@@ -236,7 +236,7 @@ static int inotify_handle_event(struct fsnotify_group* group, struct inode* pin,
     event->wd = i_mark->wd;
     event->cookie = cookie;
     event->name_len = len;
-    if (len) strcpy(event->name, filename);
+    if (len) strlcpy(event->name, filename, len + 1);
 
     retval = fsnotify_add_event(group, fsn_event);
     if (retval) fsnotify_destroy_event(group, fsn_event);
@@ -431,7 +431,7 @@ int do_inotify_add_watch(void)
     int name_len = self->msg_in.u.m_vfs_inotify.name_len;
     u32 mask = self->msg_in.u.m_vfs_inotify.mask;
     struct file_desc* filp;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     struct lookup lookup;
     struct inode* pin;
     struct vfs_mount* vmnt;
@@ -442,7 +442,7 @@ int do_inotify_add_watch(void)
     if (mask & ~ALL_INOTIFY_BITS) return -EINVAL;
     if (!(mask & ALL_INOTIFY_BITS)) return -EINVAL;
 
-    if (name_len >= PATH_MAX) return -ENAMETOOLONG;
+    if (name_len > PATH_MAX) return -ENAMETOOLONG;
 
     if ((retval = data_copy(SELF, pathname, fproc->endpoint,
                             self->msg_in.u.m_vfs_inotify.pathname, name_len)) !=

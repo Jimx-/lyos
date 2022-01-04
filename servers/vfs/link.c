@@ -176,10 +176,10 @@ out_put_dir:
 
 int do_unlink(void)
 {
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int flags, retval;
 
-    if (self->msg_in.NAME_LEN >= PATH_MAX) return ENAMETOOLONG;
+    if (self->msg_in.NAME_LEN > PATH_MAX) return ENAMETOOLONG;
 
     /* fetch the name */
     if ((retval = data_copy(SELF, pathname, fproc->endpoint,
@@ -198,10 +198,10 @@ int do_unlinkat(void)
     int dirfd = self->msg_in.u.m_vfs_pathat.dirfd;
     int name_len = self->msg_in.u.m_vfs_pathat.name_len;
     int flags = self->msg_in.u.m_vfs_pathat.flags;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
-    if (name_len >= PATH_MAX) return ENAMETOOLONG;
+    if (name_len > PATH_MAX) return ENAMETOOLONG;
 
     if (flags & ~AT_REMOVEDIR) return EINVAL;
 
@@ -249,10 +249,10 @@ int do_rdlink(void)
 {
     void* buf = self->msg_in.BUF;
     size_t len = self->msg_in.BUF_LEN;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
-    if (self->msg_in.NAME_LEN >= PATH_MAX) return -ENAMETOOLONG;
+    if (self->msg_in.NAME_LEN > PATH_MAX) return -ENAMETOOLONG;
 
     /* fetch the name */
     if ((retval = data_copy(SELF, pathname, fproc->endpoint,
@@ -270,10 +270,10 @@ int do_rdlinkat(void)
     int name_len = self->msg_in.u.m_vfs_pathat.name_len;
     void* buf = self->msg_in.u.m_vfs_pathat.buf;
     size_t len = self->msg_in.u.m_vfs_pathat.buf_len;
-    char pathname[PATH_MAX];
+    char pathname[PATH_MAX + 1];
     int retval;
 
-    if (name_len >= PATH_MAX) return -ENAMETOOLONG;
+    if (name_len > PATH_MAX) return -ENAMETOOLONG;
 
     /* fetch the name */
     if ((retval = data_copy(SELF, pathname, fproc->endpoint,
@@ -450,7 +450,7 @@ int do_linkat(void)
 
     if (flags & AT_SYMLINK_NOFOLLOW) lookup_flags |= LKF_SYMLINK_NOFOLLOW;
 
-    if (path1_len >= PATH_MAX || path2_len >= PATH_MAX) return ENAMETOOLONG;
+    if (path1_len > PATH_MAX || path2_len > PATH_MAX) return ENAMETOOLONG;
 
     retval = data_copy(SELF, pathname, fproc->endpoint,
                        self->msg_in.u.m_vfs_linkat.path1, path1_len);

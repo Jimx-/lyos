@@ -212,12 +212,14 @@ static ssize_t pipe_write(struct file_desc* filp, const char* buf, size_t count,
 
         if (pipe->start > 0) {
             if (pin->i_size > 0) {
+                assert(pin->i_size <= PIPE_BUF);
                 memmove(pipe->data, pipe->data + pipe->start, pin->i_size);
             }
 
             pipe->start = 0;
         }
 
+        assert(pin->i_size + size <= PIPE_BUF);
         retval = data_copy(SELF, pipe->data + pin->i_size, fp->endpoint,
                            (void*)buf, size);
         if (retval) {
@@ -427,11 +429,11 @@ static int create_pipe(int* fds, int flags)
         unlock_vmnt(pipefs_vmnt);
         return retval;
     }
-    fproc->files->filp[fds[0]] = filp0;
+    install_filp(fproc, fds[0], filp0);
     filp0->fd_cnt = 1;
 
     if ((retval = get_fd(fproc, 0, W_BIT, &fds[1], &filp1)) != 0) {
-        fproc->files->filp[fds[0]] = NULL;
+        install_filp(fproc, fds[0], NULL);
         filp0->fd_cnt = 0;
         unlock_filp(filp0);
         unlock_inode(pin);
@@ -439,7 +441,7 @@ static int create_pipe(int* fds, int flags)
         unlock_vmnt(pipefs_vmnt);
         return retval;
     }
-    fproc->files->filp[fds[1]] = filp1;
+    install_filp(fproc, fds[1], filp1);
     filp1->fd_cnt = 1;
 
     filp0->fd_inode = pin;
@@ -451,10 +453,8 @@ static int create_pipe(int* fds, int flags)
     filp0->fd_fops = filp1->fd_fops = pin->i_fops;
     filp0->fd_private_data = filp1->fd_private_data = pin->i_private;
 
-    if (flags & O_CLOEXEC) {
-        SET_BIT(fproc->files->close_on_exec, fds[0]);
-        SET_BIT(fproc->files->close_on_exec, fds[1]);
-    }
+    set_close_on_exec(fproc, fds[0], flags & O_CLOEXEC);
+    set_close_on_exec(fproc, fds[1], flags & O_CLOEXEC);
 
     unlock_filps(filp0, filp1);
     unlock_vmnt(pipefs_vmnt);
