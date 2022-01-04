@@ -145,6 +145,7 @@ struct files_struct* files_alloc(void)
     INIT_ATOMIC(&files->refcnt, 1);
     files->max_fds = NR_OPEN_DEFAULT;
     files->filp = files->filp_array;
+    files->close_on_exec = &files->close_on_exec_init;
 
     return files;
 }
@@ -153,6 +154,7 @@ static int expand_files(struct files_struct* files, unsigned int nr)
 {
     int i;
     struct file_desc** new_filp;
+    bitchunk_t* bitmap;
     size_t copy, set;
 
     nr /= (1024 / sizeof(struct file_desc*));
@@ -165,14 +167,31 @@ static int expand_files(struct files_struct* files, unsigned int nr)
     new_filp = calloc(nr, sizeof(struct file_desc*));
     if (!new_filp) return ENOMEM;
 
+    bitmap = malloc(BITCHUNKS(nr) * sizeof(bitchunk_t));
+    if (!bitmap) {
+        free(new_filp);
+        return ENOMEM;
+    }
+
     copy = files->max_fds * sizeof(struct file_desc*);
     set = (nr - files->max_fds) * sizeof(struct file_desc*);
 
     memcpy(new_filp, files->filp, copy);
     memset((char*)new_filp + copy, 0, set);
 
-    if (files->filp != files->filp_array) free(files->filp);
+    copy = BITCHUNKS(files->max_fds) * sizeof(bitchunk_t);
+    set = BITCHUNKS(nr) * sizeof(bitchunk_t) - copy;
+
+    memcpy(bitmap, files->close_on_exec, copy);
+    memset((char*)bitmap + copy, 0, set);
+
+    if (files->filp != files->filp_array) {
+        free(files->filp);
+        free(files->close_on_exec);
+    }
+
     files->filp = new_filp;
+    files->close_on_exec = bitmap;
     files->max_fds = nr;
 
     return 0;
@@ -192,6 +211,7 @@ struct files_struct* dup_files(struct files_struct* old, int* errorp)
     INIT_ATOMIC(&new->refcnt, 1);
     new->max_fds = NR_OPEN_DEFAULT;
     new->filp = new->filp_array;
+    new->close_on_exec = &new->close_on_exec_init;
 
     if (old->max_fds > new->max_fds) {
         retval = expand_files(new, old->max_fds);
@@ -213,6 +233,8 @@ struct files_struct* dup_files(struct files_struct* old, int* errorp)
         }
     }
 
+    memcpy(new->close_on_exec, old->close_on_exec, BITCHUNKS(old->max_fds));
+
     return new;
 }
 
@@ -221,7 +243,12 @@ static void close_files(struct files_struct* files)
     int i;
 
     for (i = 0; i < files->max_fds; i++) {
-        if (files->filp[i]) close_fd(fproc, i);
+        struct file_desc* filp = files->filp[i];
+
+        if (filp) {
+            lock_filp(filp, RWL_WRITE);
+            close_filp(filp);
+        }
     }
 }
 
@@ -229,7 +256,10 @@ void put_files(struct files_struct* files)
 {
     if (atomic_dec_and_test(&files->refcnt)) {
         close_files(files);
-        if (files->filp != files->filp_array) free(files->filp);
+        if (files->filp != files->filp_array) {
+            free(files->close_on_exec);
+            free(files->filp);
+        }
         free(files);
     }
 }
@@ -260,6 +290,12 @@ int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
 
         *fd = i;
     }
+
+    if (GET_BIT(fp->files->close_on_exec, *fd)) {
+        printl("%d %d\n", fp->endpoint, *fd);
+    }
+    assert(!GET_BIT(fp->files->close_on_exec, *fd));
+
     if (!fpp) return 0;
 
     /* find a free slot in f_desc_table[] */
@@ -294,6 +330,32 @@ struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type)
         lock_filp(filp, lock_type);
     }
     return filp;
+}
+
+int close_filp(struct file_desc* filp)
+{
+    struct inode* pin;
+
+    assert(filp->fd_cnt > 0);
+    pin = filp->fd_inode;
+
+    if (--filp->fd_cnt == 0) {
+        if (!list_empty(&filp->fd_ep_links)) eventpoll_release_file(filp);
+
+        if (filp->fd_fops && filp->fd_fops->release) {
+            filp->fd_fops->release(pin, filp);
+        }
+
+        unlock_inode(pin);
+        put_inode(pin);
+        filp->fd_inode = NULL;
+    } else {
+        unlock_inode(pin);
+    }
+
+    mutex_unlock(&filp->fd_lock);
+
+    return 0;
 }
 
 int do_copyfd(void)
@@ -339,6 +401,7 @@ int do_copyfd(void)
         if (filp->fd_cnt > 1) {
             filp->fd_cnt--;
             fp_dest->files->filp[fd] = NULL;
+            UNSET_BIT(fp_dest->files->close_on_exec, fd);
             retval = 0;
         } else
             retval = -EBADF;

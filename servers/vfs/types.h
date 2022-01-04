@@ -19,6 +19,7 @@
 #include <asm/atomic.h>
 #include <lyos/spinlock.h>
 #include <lyos/types.h>
+#include <lyos/bitmap.h>
 #include "thread.h"
 #include "wait_queue.h"
 
@@ -108,7 +109,10 @@ struct files_struct {
     atomic_t refcnt;
     unsigned int max_fds;
     struct file_desc** filp;
+    bitchunk_t* close_on_exec;
+
     struct file_desc* filp_array[NR_OPEN_DEFAULT];
+    bitchunk_t close_on_exec_init;
 };
 
 /* character device mapping */

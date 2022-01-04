@@ -134,6 +134,7 @@ static int create_sock_fd(dev_t dev, int flags)
     filp->fd_cnt = 1;
     filp->fd_inode = pin;
     filp->fd_flags = O_RDWR | (flags & ~O_ACCMODE);
+    if (flags & O_CLOEXEC) SET_BIT(fproc->files->close_on_exec, fd);
 
     filp->fd_fops = pin->i_fops;
 

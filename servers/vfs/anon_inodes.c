@@ -119,6 +119,8 @@ int anon_inode_get_fd(struct fproc* fproc, int start,
     filp->fd_fops = fops;
     filp->fd_private_data = private;
 
+    if (flags & O_CLOEXEC) SET_BIT(fproc->files->close_on_exec, fd);
+
     unlock_filp(filp);
     unlock_vmnt(anon_vmnt);
 

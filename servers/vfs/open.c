@@ -154,6 +154,8 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
     filp->fd_flags = flags;
     filp->fd_fops = pin->i_fops;
 
+    if (flags & O_CLOEXEC) SET_BIT(fproc->files->close_on_exec, fd);
+
     if (exist) {
         if ((retval = forbidden(fproc, pin, bits)) == 0) {
             if (S_ISREG(pin->i_mode)) {
@@ -179,6 +181,7 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
 
     if (retval != 0) {
         fproc->files->filp[fd] = NULL;
+        UNSET_BIT(fproc->files->close_on_exec, fd);
         filp->fd_cnt = 0;
         filp->fd_flags = 0;
         filp->fd_inode = 0;
@@ -193,7 +196,7 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
 int close_fd(struct fproc* fp, int fd)
 {
     struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
-    struct inode* pin;
+    int retval;
 
     if (!filp) return EBADF;
 
@@ -207,30 +210,12 @@ int close_fd(struct fproc* fp, int fd)
                fd, fp->endpoint, filp->fd_inode->i_num, filp->fd_cnt,
                filp->fd_inode->i_cnt));
 
-    pin = filp->fd_inode;
+    retval = close_filp(filp);
 
-    assert(filp->fd_cnt > 0);
-
-    if (--filp->fd_cnt == 0) {
-        if (!list_empty(&filp->fd_ep_links)) eventpoll_release_file(filp);
-
-        if (filp->fd_fops && filp->fd_fops->release) {
-            filp->fd_fops->release(pin, filp);
-        }
-
-        unlock_inode(pin);
-        put_inode(pin);
-        filp->fd_inode = NULL;
-    } else if (filp->fd_cnt < 0) {
-        panic("VFS: invalid filp ref count");
-    } else {
-        unlock_inode(pin);
-    }
-
-    mutex_unlock(&filp->fd_lock);
     fp->files->filp[fd] = NULL;
+    UNSET_BIT(fp->files->close_on_exec, fd);
 
-    return 0;
+    return retval;
 }
 
 /**

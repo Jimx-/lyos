@@ -451,6 +451,11 @@ static int create_pipe(int* fds, int flags)
     filp0->fd_fops = filp1->fd_fops = pin->i_fops;
     filp0->fd_private_data = filp1->fd_private_data = pin->i_private;
 
+    if (flags & O_CLOEXEC) {
+        SET_BIT(fproc->files->close_on_exec, fds[0]);
+        SET_BIT(fproc->files->close_on_exec, fds[1]);
+    }
+
     unlock_filps(filp0, filp1);
     unlock_vmnt(pipefs_vmnt);
 

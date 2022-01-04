@@ -377,6 +377,13 @@ int fs_exec(void)
 
     orig_stack = (char*)((unsigned long)orig_stack & ~0xfUL);
 
+    for (i = 0; i < fproc->files->max_fds; i++) {
+        if (GET_BIT(fproc->files->close_on_exec, i)) {
+            assert(fproc->files->filp[i]);
+            close_fd(fproc, i);
+        }
+    }
+
     if (execi.args.sugid) {
         fproc->effuid = execi.args.new_uid;
         fproc->effgid = execi.args.new_gid;

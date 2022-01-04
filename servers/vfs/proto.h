@@ -152,6 +152,7 @@ void lock_filp(struct file_desc* filp, rwlock_type_t lock_type);
 void unlock_filp(struct file_desc* filp);
 void unlock_filps(struct file_desc* filp1, struct file_desc* filp2);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
+int close_filp(struct file_desc* filp);
 int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
            struct file_desc** fpp);
 int do_copyfd(void);
