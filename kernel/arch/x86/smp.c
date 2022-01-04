@@ -32,6 +32,7 @@
 #include <asm/smp.h>
 #include <lyos/cpulocals.h>
 #include <lyos/smp.h>
+#include <asm/cpu_info.h>
 
 #ifdef CONFIG_KVM_GUEST
 #include <lyos/kvm_para.h>
@@ -48,6 +49,8 @@ static u8 apicid2cpuid[255];
 u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
 static volatile u32 ap_ready;
+
+extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
 static volatile int smp_commenced = 0;
 
@@ -133,6 +136,7 @@ static int discover_cpus()
     while (ncpus < CONFIG_SMP_MAX_CPUS && (cpu = acpi_get_lapic_next())) {
         apicid2cpuid[cpu->apic_id] = ncpus;
         cpuid2apicid[ncpus] = cpu->apic_id;
+        cpu_info[ncpus].apicid = cpu->apic_id;
         printk("CPU %3d local APIC id 0x%03x %s\n", ncpus, cpu->apic_id,
                ncpus == 0 ? "(bsp)" : "");
         ncpus++;

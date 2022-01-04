@@ -35,7 +35,7 @@
 #include <asm/const.h>
 #include <asm/cpu_info.h>
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 static const char* x86_flag[] = {
     "sse3",    "pclmulqdq",  "dtes64",  "monitor", "ds_cpl",
     "vmx",     "smx",        "est",     "tm2",     "ssse3",
@@ -70,7 +70,7 @@ static void print_cpu(struct cpu_info* cpu_info, int idx)
 {
     buf_printf("%-16s: %d\n", "processor", idx);
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
     switch (cpu_info->vendor) {
     case CPU_VENDOR_INTEL:
         buf_printf("%-16s: %s\n", "vendor_id", "GenuineIntel");
@@ -87,6 +87,7 @@ static void print_cpu(struct cpu_info* cpu_info, int idx)
     buf_printf("%-16s: %d\n", "model", cpu_info->model);
     buf_printf("%-16s: %d\n", "stepping", cpu_info->stepping);
     buf_printf("%-16s: %d\n", "cpu MHz", cpu_info->freq_mhz);
+    buf_printf("%-16s: %d\n", "apicid", cpu_info->apicid);
     buf_printf("%-16s: ", "flags");
     print_x86_cpu_flags(cpu_info->flags);
 #elif defined(__riscv)

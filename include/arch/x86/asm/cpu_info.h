@@ -7,6 +7,7 @@ struct cpu_info {
     u8 model;
     u8 stepping;
     u32 freq_mhz;
+    unsigned int apicid;
     u32 flags[2];
 };
 
