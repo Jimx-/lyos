@@ -70,6 +70,7 @@ static void build_root(struct memfs_inode* root)
 {
     struct memfs_stat stat;
 
+    memset(&stat, 0, sizeof(stat));
     stat.st_uid = SU_UID;
     stat.st_gid = 0;
     stat.st_size = 0;

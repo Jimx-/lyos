@@ -93,6 +93,7 @@ static void build_pid_dirs()
         snprintf(name, NAME_MAX + 1, "%d", pid);
 
         struct memfs_stat stat;
+        memset(&stat, 0, sizeof(stat));
         make_stat(&stat, i, NO_INDEX);
 
         memfs_add_inode(root, name, i, &stat, (cbdata_t)(uintptr_t)pid);
@@ -114,6 +115,7 @@ static void build_one_pid_entry(struct memfs_inode* parent, const char* name,
     for (i = 0; pid_files[i].name != NULL; i++) {
         if (!strcmp(pid_files[i].name, name)) {
             struct memfs_stat stat;
+            memset(&stat, 0, sizeof(stat));
             make_stat(&stat, slot, i);
 
             memfs_add_inode(parent, name, i, &stat, (cbdata_t)0);
@@ -131,6 +133,7 @@ static void build_all_pid_entries(struct memfs_inode* parent, int slot)
         node = memfs_find_inode_by_index(parent, i);
         if (node) continue;
 
+        memset(&stat, 0, sizeof(stat));
         make_stat(&stat, slot, i);
 
         node =

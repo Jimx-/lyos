@@ -206,6 +206,8 @@ static void stat_node(struct memfs_stat* stat, sysfs_node_t* node)
 int add_node(sysfs_node_t* parent, sysfs_node_t* child)
 {
     struct memfs_stat stat;
+
+    memset(&stat, 0, sizeof(stat));
     stat_node(&stat, child);
 
     struct memfs_inode* pin =

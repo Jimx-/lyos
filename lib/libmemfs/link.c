@@ -89,7 +89,7 @@ int memfs_mkdir(dev_t dev, ino_t dir_num, const char* name, mode_t mode,
 
     if (memfs_find_inode_by_name(pin, name) != NULL) return EEXIST;
 
-    if (!fs_hooks.mknod_hook) return ENOSYS;
+    if (!fs_hooks.mkdir_hook) return ENOSYS;
 
     memset(&stat, 0, sizeof(stat));
     stat.st_dev = dev;

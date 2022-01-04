@@ -306,6 +306,7 @@ static int add_device_node(struct device* dev)
         pin = memfs_find_inode_by_name(dir_pin, component);
 
         if (!pin) {
+            memset(&stat, 0, sizeof(stat));
             stat.st_mode =
                 S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
             stat.st_uid = SU_UID;
@@ -320,6 +321,7 @@ static int add_device_node(struct device* dev)
 
     if (!strlen(component)) return 0;
 
+    memset(&stat, 0, sizeof(stat));
     stat.st_mode = (dev->type == DT_BLOCKDEV ? S_IFBLK : S_IFCHR) | 0666;
     stat.st_uid = SU_UID;
     stat.st_gid = 0;
