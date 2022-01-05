@@ -24,24 +24,24 @@ typedef struct sysfs_dyn_attr {
 } __attribute__((packed)) sysfs_dyn_attr_t;
 
 /* Privilege */
-#define SF_PRIV_RETRIEVE 0x1
+#define SF_PRIV_RETRIEVE  0x1
 #define SF_PRIV_OVERWRITE 0x2
-#define SF_PRIV_DELETE 0x4
+#define SF_PRIV_DELETE    0x4
 
 /* Node types */
-#define SF_TYPE_DOMAIN 0x10
-#define SF_TYPE_U32 0x20
-#define SF_TYPE_DEVNO 0x40
+#define SF_TYPE_DOMAIN  0x10
+#define SF_TYPE_U32     0x20
+#define SF_TYPE_DEVNO   0x40
 #define SF_TYPE_DYNAMIC 0x80
-#define SF_TYPE_LINK 0x100
+#define SF_TYPE_LINK    0x100
 
 #define SF_PRIV_MASK 0xF
 #define SF_TYPE_MASK 0xFF0
 
-#define SYSFS_SERVICE_DOMAIN_LABEL "services.%s"
+#define SYSFS_SERVICE_DOMAIN_LABEL   "services.%s"
 #define SYSFS_SERVICE_ENDPOINT_LABEL SYSFS_SERVICE_DOMAIN_LABEL ".endpoint"
 
-#define SYSFS_BUS_DOMAIN_LABEL "bus.%s"
+#define SYSFS_BUS_DOMAIN_LABEL   "bus.%s"
 #define SYSFS_CLASS_DOMAIN_LABEL "class.%s"
 
 int sysfs_publish_domain(char* key, int flags);

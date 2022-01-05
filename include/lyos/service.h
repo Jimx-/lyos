@@ -40,6 +40,8 @@ struct service_up_req {
     int prognamelen;
     char* label;
     int labellen;
+    char* class;
+    int classlen;
 
     int flags;
 #define SUR_BASIC_SYSCALLS    0x01

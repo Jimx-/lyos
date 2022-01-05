@@ -178,14 +178,26 @@ int init_service(struct sproc* sp, int init_type)
 
 int publish_service(struct sproc* sp)
 {
+    char domain[PATH_MAX];
     char label[PATH_MAX];
     int retval;
-
     char* name = sp->label;
-    sprintf(label, SYSFS_SERVICE_DOMAIN_LABEL, name);
+    char* class = sp->class;
+
+    if (*class) {
+        snprintf(label, sizeof(label), SYSFS_SERVICE_DOMAIN_LABEL, class);
+        retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
+        if (retval && retval != EEXIST) return retval;
+
+        snprintf(domain, sizeof(domain), "%s.%s", class, name);
+    } else {
+        strlcpy(domain, sp->label, sizeof(domain));
+    }
+
+    snprintf(label, sizeof(label), SYSFS_SERVICE_DOMAIN_LABEL, domain);
     retval = sysfs_publish_domain(label, SF_PRIV_OVERWRITE);
 
-    sprintf(label, SYSFS_SERVICE_ENDPOINT_LABEL, name);
+    snprintf(label, sizeof(label), SYSFS_SERVICE_ENDPOINT_LABEL, domain);
     retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE);
 
     sp->pci_acl.endpoint = sp->endpoint;

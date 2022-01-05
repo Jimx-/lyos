@@ -41,6 +41,7 @@ struct sproc {
     /* ------------------- */
     char proc_name[PROC_NAME_LEN];
     char label[PROC_NAME_LEN];
+    char class[PROC_NAME_LEN + 1];
     struct pci_acl pci_acl;
 
     int nr_domain;

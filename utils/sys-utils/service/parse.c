@@ -12,6 +12,7 @@
 
 #include <cjson/cJSON.h>
 
+#define CLASS             "class"
 #define PCI_CLASS         "pci_class"
 #define PCI_DEVICE        "pci_device"
 #define DOMAIN            "domain"
@@ -21,6 +22,19 @@
 #define SYSCALL_BASIC "basic"
 #define SYSCALL_ALL   "all"
 #define SYSCALL_NONE  "none"
+
+static int parse_class(cJSON* root, struct service_up_req* up_req)
+{
+    cJSON* _class = cJSON_GetObjectItem(root, CLASS);
+    if (!_class) return 0;
+
+    if (_class->type != cJSON_String) return EINVAL;
+
+    up_req->class = strdup(_class->valuestring);
+    up_req->classlen = strlen(up_req->class);
+
+    return 0;
+}
 
 static void parse_pci_class(cJSON* root, struct service_up_req* up_req)
 {
@@ -255,6 +269,9 @@ int parse_config(char* progname, char* path, struct service_up_req* up_req)
     }
 
     up_req->flags = SUR_BASIC_SYSCALLS;
+
+    r = parse_class(root, up_req);
+    if (r) return r;
 
     parse_pci_class(root, up_req);
     parse_pci_device(root, up_req);

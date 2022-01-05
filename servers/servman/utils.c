@@ -42,7 +42,9 @@ static int basic_syscalls[] = {BASIC_SYSCALLS, -1};
 int init_sproc(struct sproc* sp, struct service_up_req* up_req,
                endpoint_t source)
 {
-    int i;
+    int i, retval;
+    size_t classlen = 0;
+
     sp->priv.flags = TASK_FLAGS;
     if (up_req->flags & SUR_ALLOW_PROXY_GRANT) {
         sp->priv.flags |= PRF_ALLOW_PROXY_GRANT;
@@ -82,6 +84,13 @@ int init_sproc(struct sproc* sp, struct service_up_req* up_req,
             sp->domain[i] = up_req->domain[i];
         }
     }
+
+    if (up_req->class) {
+        classlen = min(PROC_NAME_LEN, up_req->classlen);
+        retval = data_copy(SELF, sp->class, source, up_req->class, classlen);
+        if (retval) return retval;
+    }
+    sp->class[classlen] = '\0';
 
     sp->label[0] = '\0';
     set_sproc(sp, up_req, source);
