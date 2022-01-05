@@ -12,7 +12,7 @@ SUBLIBS = $(LYOS_MACHINE_LIB) \
 	$(EXTRA_SUBLIBS)
 
 GENERAL_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c ttyname.c \
-				mntent.c err.c progname.c crypt3.c sysconf.c regex.c ucontext.c poll.c \
+				mntent.c err.c progname.c crypt3.c sysconf.c ucontext.c poll.c \
 				clock_gettime.c clock_settime.c clock_getres.c sched.c usleep.c \
 				nanosleep.c signalfd.c flockfile.c popen.c eventfd.c timerfd.c epoll.c \
 				socket.c dl.c iconv.c fnmatch.c scandir.c ftw.c prctl.c wait.c basename.c \
