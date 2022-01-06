@@ -141,17 +141,15 @@ void put_inode(struct inode* pin)
         return;
     }
 
+    unhash_inode(pin);
+    unlock_inode(pin);
+
     // TODO: handle this with vmnt operation
     if (pin->i_fs_ep != NO_TASK &&
         (ret = request_put_inode(pin->i_fs_ep, pin->i_dev, pin->i_num,
                                  pin->i_fs_cnt)) != 0) {
         err_code = ret;
-        unlock_inode(pin);
-        return;
     }
-
-    unhash_inode(pin);
-    unlock_inode(pin);
 
     free(pin);
 }

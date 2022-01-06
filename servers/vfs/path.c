@@ -354,6 +354,7 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
         new_pin->i_size = res.size;
         new_pin->i_fs_ep = res.fs_ep;
         new_pin->i_specdev = res.spec_dev;
+        new_pin->i_cnt = 1;
         new_pin->i_fs_cnt = 1;
 
         if ((vmnt = find_vfs_mount(new_pin->i_dev)) == NULL)
@@ -362,15 +363,11 @@ struct inode* advance_path(struct inode* start, struct lookup* lookup,
 
         pin = new_pin;
     } else {
+        dup_inode(pin);
         lock_inode(pin, lookup->inode_lock);
-
-        if (pin->i_cnt == 0)
-            pin->i_fs_cnt = 1;
-        else
-            pin->i_fs_cnt++;
+        pin->i_fs_cnt++;
     }
 
-    dup_inode(pin);
     *(lookup->inode) = pin;
 
     return pin;
