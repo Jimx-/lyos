@@ -297,6 +297,9 @@ int sys_sendrec(MESSAGE* m, struct proc* p)
     case RECEIVE_ASYNC:
         ret = msg_receive(p, src_dest, msg, flags | IPCF_ASYNC);
         break;
+    case NOTIFY:
+        ret = msg_notify(p, src_dest);
+        break;
     default:
         ret = EINVAL;
         break;

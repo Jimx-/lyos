@@ -117,6 +117,9 @@ void chardriver_process(struct chardriver* cd, MESSAGE* msg)
         case CLOCK:
             if (cd->cdr_alarm) cd->cdr_alarm(msg->TIMESTAMP);
             break;
+        default:
+            if (cd->cdr_other) cd->cdr_other(msg);
+            break;
         }
         return;
     }

@@ -35,8 +35,15 @@ typedef struct sysfs_dyn_attr {
 #define SF_TYPE_DYNAMIC 0x80
 #define SF_TYPE_LINK    0x100
 
+#define SF_OVERWRITE 0x1000
+#define SF_CHECK_NOW 0x2000
+
 #define SF_PRIV_MASK 0xF
 #define SF_TYPE_MASK 0xFF0
+
+/* Events */
+#define SF_EVENT_PUBLISH 0x1
+#define SF_EVENT_DELETE  0x2
 
 #define SYSFS_SERVICE_DOMAIN_LABEL   "services.%s"
 #define SYSFS_SERVICE_ENDPOINT_LABEL SYSFS_SERVICE_DOMAIN_LABEL ".endpoint"
@@ -49,6 +56,9 @@ int sysfs_publish_u32(char* key, u32 value, int flags);
 int sysfs_publish_link(char* target, char* linkpath);
 
 int sysfs_retrieve_u32(char* key, u32* value);
+
+int sysfs_subscribe(char* regexp, int flags);
+int sysfs_get_event(char* key, int* typep, int* eventp);
 
 int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
                         void* cb_data, sysfs_dyn_attr_show_t show,

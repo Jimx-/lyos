@@ -444,9 +444,32 @@ static void input_event(MESSAGE* msg)
     }
 }
 
+static void process_sysfs_events(void)
+{
+    char key[PATH_MAX];
+    int type, event;
+    endpoint_t endpoint;
+    int retval;
+
+    while (sysfs_get_event(key, &type, &event) == 0) {
+        if ((retval = sysfs_retrieve_u32(key, &endpoint)) != 0) {
+            continue;
+        }
+    }
+}
+
 static void input_other(MESSAGE* msg)
 {
     int src = msg->source;
+
+    if (msg->type == NOTIFY_MSG) {
+        switch (src) {
+        case TASK_SYSFS:
+            process_sysfs_events();
+            break;
+        }
+        return;
+    }
 
     switch (msg->type) {
     case INPUT_REGISTER_DEVICE:
@@ -486,6 +509,11 @@ static int init_input()
     }
 
     evdev_init();
+
+    if ((retval = sysfs_subscribe("services\\.inputdrv\\.[^.]*\\.endpoint",
+                                  SF_CHECK_NOW)) != 0)
+        panic("%s: failed to subscribe to input driver events (%d)", name,
+              retval);
 
     /* tell TTY that we're up */
     memset(&msg, 0, sizeof(msg));

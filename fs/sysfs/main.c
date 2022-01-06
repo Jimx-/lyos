@@ -73,13 +73,19 @@ static void sysfs_message_hook(MESSAGE* m)
 
     switch (msgtype) {
     case SYSFS_PUBLISH:
-        m->RETVAL = do_publish(m);
+        m->u.m_sysfs_req.status = do_publish(m);
         break;
     case SYSFS_PUBLISH_LINK:
-        m->RETVAL = do_publish_link(m);
+        m->u.m_sysfs_req.status = do_publish_link(m);
         break;
     case SYSFS_RETRIEVE:
-        m->RETVAL = do_retrieve(m);
+        m->u.m_sysfs_req.status = do_retrieve(m);
+        break;
+    case SYSFS_SUBSCRIBE:
+        m->u.m_sysfs_req.status = do_subscribe(m);
+        break;
+    case SYSFS_GET_EVENT:
+        m->u.m_sysfs_req.status = do_get_event(m);
         break;
     default:
         m->RETVAL = ENOSYS;

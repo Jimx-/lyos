@@ -723,15 +723,28 @@ struct mess_pm_vfs_signalfd_reply {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_pm_vfs_signalfd_reply);
 
-struct mess_sysfs_publish_link {
-    void* target;
-    void* link_path;
-    size_t target_len;
-    size_t link_path_len;
+union sysfs_val {
+    __mgrant_id_t grant;
+    __u32 u32;
+    __endpoint_t endpoint;
+    unsigned int attr_id;
+};
 
-    __u8 _pad[72 - 2 * sizeof(void*) - 2 * sizeof(size_t)];
+struct mess_sysfs_req {
+    int status;
+    __mgrant_id_t key_grant;
+    size_t key_len;
+    __mgrant_id_t target_grant;
+    size_t target_len;
+    union sysfs_val val;
+    size_t val_len;
+    int flags;
+    __endpoint_t owner;
+    int event;
+
+    __u8 _pad[44 - 3 * sizeof(size_t)];
 } __attribute__((packed));
-VERIFY_MESS_SIZE(mess_sysfs_publish_link);
+VERIFY_MESS_SIZE(mess_sysfs_req);
 
 struct mess_bdev_blockdriver_msg {
     int minor;
@@ -1000,7 +1013,7 @@ typedef struct {
         struct mess_vfs_cdev_poll_notify m_vfs_cdev_poll_notify;
         struct mess_vfs_pm_signalfd m_vfs_pm_signalfd;
         struct mess_pm_vfs_signalfd_reply m_pm_vfs_signalfd_reply;
-        struct mess_sysfs_publish_link m_sysfs_publish_link;
+        struct mess_sysfs_req m_sysfs_req;
         struct mess_bdev_blockdriver_msg m_bdev_blockdriver_msg;
         struct mess_blockdriver_bdev_reply m_blockdriver_bdev_reply;
         struct mess_inputdriver_register_device m_inputdriver_register_device;

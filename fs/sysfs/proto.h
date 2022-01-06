@@ -17,11 +17,14 @@
 #define _SYSFS_PROTO_H_
 
 void init_node();
-sysfs_node_t* new_node(char* name, int flags);
+sysfs_node_t* new_node(const char* name, int flags);
 int add_node(sysfs_node_t* parent, sysfs_node_t* child);
-sysfs_node_t* find_node(sysfs_node_t* parent, char* name);
-sysfs_node_t* lookup_node_by_name(char* name);
-sysfs_node_t* create_node(char* name, int flags);
+sysfs_node_t* find_node(sysfs_node_t* parent, const char* name);
+sysfs_node_t* lookup_node_by_name(const char* name);
+sysfs_node_t* create_node(const char* name, int flags);
+int traverse_node(sysfs_node_t* root, int type_mask,
+                  int (*callback)(const char*, sysfs_node_t*, void*),
+                  void* cb_data);
 
 void init_buf(char* ptr, size_t len, off_t off);
 void buf_printf(char* fmt, ...);
@@ -37,5 +40,7 @@ int sysfs_rdlink_hook(struct memfs_inode* inode, char* ptr, size_t max,
 int do_publish(MESSAGE* m);
 int do_publish_link(MESSAGE* m);
 int do_retrieve(MESSAGE* m);
+int do_subscribe(MESSAGE* m);
+int do_get_event(MESSAGE* m);
 
 #endif

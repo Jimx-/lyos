@@ -4,7 +4,7 @@
 include arch/$(ARCH)/Makefile
 
 SRCS	+= tty.c global.c keyboard.c
-LIBS	= lyos chardriver devman sysfs
+LIBS	= chardriver devman sysfs lyos
 
 ifeq ($(CONFIG_OF),y)
 	LIBS += of fdt

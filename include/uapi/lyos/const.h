@@ -63,6 +63,7 @@
 #define SEND_NONBLOCK 4
 #define SEND_ASYNC    5
 #define RECEIVE_ASYNC 6
+#define NOTIFY        7
 
 #define IPCF_FROMKERNEL 0x1
 #define IPCF_NONBLOCK   0x2
@@ -354,6 +355,7 @@ enum msgtype {
     SYSFS_DYN_STORE,
     SYSFS_PUBLISH_LINK,
     SYSFS_SUBSCRIBE,
+    SYSFS_GET_EVENT,
 
     /* SERVMAN */
     SERVICE_UP = SERVMAN_REQ_BASE,

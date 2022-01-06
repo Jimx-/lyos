@@ -68,8 +68,6 @@ static int sendrec(int function, int src_dest, MESSAGE* msg)
 
 int send_recv(int function, int src_dest, MESSAGE* msg)
 {
-    int ret = 0;
-
     if (function == RECEIVE) memset(msg, 0, sizeof(MESSAGE));
 
     return sendrec(function, src_dest, msg);

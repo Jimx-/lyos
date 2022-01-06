@@ -23,6 +23,7 @@
 #include "errno.h"
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
+#include <lyos/mgrant.h>
 #include "string.h"
 #include "libsysfs.h"
 
@@ -94,23 +95,33 @@ static sysfs_dyn_attr_t* find_dyn_attr_by_id(sysfs_dyn_attr_id_t id)
 int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
 {
     MESSAGE msg;
+    mgrant_id_t grant;
+    size_t key_len;
 
+    key_len = strlen(attr->label) + 1;
+
+    grant = mgrant_set_direct(TASK_SYSFS, (vir_bytes)attr->label, key_len,
+                              MGF_READ);
+    if (grant == GRANT_INVALID) return ENOMEM;
+
+    memset(&msg, 0, sizeof(msg));
     msg.type = SYSFS_PUBLISH;
-
-    msg.PATHNAME = attr->label;
-    msg.NAME_LEN = strlen(attr->label);
-    msg.FLAGS = attr->flags | SF_TYPE_DYNAMIC;
+    msg.u.m_sysfs_req.key_grant = grant;
+    msg.u.m_sysfs_req.key_len = key_len;
+    msg.u.m_sysfs_req.flags = attr->flags | SF_TYPE_DYNAMIC;
 
     send_recv(BOTH, TASK_SYSFS, &msg);
 
-    if (msg.RETVAL) return msg.RETVAL;
+    mgrant_revoke(grant);
+
+    if (msg.u.m_sysfs_req.status) return msg.u.m_sysfs_req.status;
 
     sysfs_dyn_attr_t* new_attr =
         (sysfs_dyn_attr_t*)malloc(sizeof(sysfs_dyn_attr_t));
     if (!new_attr) return ENOMEM;
     memcpy(new_attr, attr, sizeof(sysfs_dyn_attr_t));
 
-    sysfs_dyn_attr_id_t id = (sysfs_dyn_attr_id_t)msg.ATTRID;
+    sysfs_dyn_attr_id_t id = (sysfs_dyn_attr_id_t)msg.u.m_sysfs_req.val.attr_id;
     new_attr->attr_id = id;
 
     dyn_attr_addhash(new_attr);

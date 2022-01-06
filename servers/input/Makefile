@@ -2,7 +2,7 @@
 # Makefile for input driver.
 
 SRCS	= main.c evdev.c
-LIBS	= chardriver devman lyos sysfs
+LIBS	= chardriver devman sysfs lyos
 
 PROG	= input
 
