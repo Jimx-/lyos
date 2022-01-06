@@ -41,11 +41,12 @@
 #include "global.h"
 #include "libsysfs/libsysfs.h"
 
-int create_service(struct sproc* sp);
-int start_service(struct sproc* sp);
-int run_service(struct sproc* sp, int init_type);
-int init_service(struct sproc* sp, int init_type);
-int publish_service(struct sproc* sp);
+static int create_service(struct sproc* sp);
+static int start_service(struct sproc* sp);
+static int run_service(struct sproc* sp, int init_type);
+static int init_service(struct sproc* sp, int init_type);
+static int publish_service(struct sproc* sp);
+static int activate_service(struct sproc* sp);
 
 int check_permission(endpoint_t caller, int request)
 {
@@ -85,6 +86,7 @@ int do_service_up(MESSAGE* msg)
 
 int do_service_init_reply(MESSAGE* msg)
 {
+    MESSAGE reply_msg;
     int slot = ENDPOINT_P(msg->source);
     int result = msg->RETVAL;
 
@@ -95,21 +97,29 @@ int do_service_init_reply(MESSAGE* msg)
         return EINVAL;
     }
 
-    if (result != 0) return SUSPEND;
+    if (result != 0) {
+        return SUSPEND;
+    }
 
     sp->flags &= ~SPF_INITIALIZING;
+
+    memset(&reply_msg, 0, sizeof(reply_msg));
+    reply_msg.type = SYSCALL_RET;
+    send_recv(SEND_NONBLOCK, sp->endpoint, &reply_msg);
+
+    publish_service(sp);
 
     late_reply(sp, 0);
 
     return SUSPEND;
 }
 
-int start_service(struct sproc* sp)
+static int start_service(struct sproc* sp)
 {
     int retval = create_service(sp);
     if (retval) return retval;
 
-    retval = publish_service(sp);
+    retval = activate_service(sp);
     if (retval) return retval;
 
     retval = run_service(sp, SERVICE_INIT_FRESH);
@@ -118,7 +128,7 @@ int start_service(struct sproc* sp)
     return 0;
 }
 
-int create_service(struct sproc* sp)
+static int create_service(struct sproc* sp)
 {
     int child_pid = fork();
 
@@ -154,7 +164,7 @@ int create_service(struct sproc* sp)
     return 0;
 }
 
-int run_service(struct sproc* sp, int init_type)
+static int run_service(struct sproc* sp, int init_type)
 {
     int r;
     if ((r = privctl(sp->endpoint, PRIVCTL_ALLOW, NULL)) != 0) return r;
@@ -164,25 +174,39 @@ int run_service(struct sproc* sp, int init_type)
     return 0;
 }
 
-int init_service(struct sproc* sp, int init_type)
+static int init_service(struct sproc* sp, int init_type)
 {
     MESSAGE m;
+    int retval;
+
+    sp->flags |= SPF_INITIALIZING;
+
+    memset(&m, 0, sizeof(m));
     m.type = SERVICE_INIT;
     m.REQUEST = init_type;
 
-    send_recv(SEND, sp->endpoint, &m);
-    sp->flags |= SPF_INITIALIZING;
+    retval = asyncsend3(sp->endpoint, &m, 0);
+
+    return retval;
+}
+
+static int activate_service(struct sproc* sp)
+{
+    sp->pci_acl.endpoint = sp->endpoint;
+    if (sp->pci_acl.nr_pci_class > 0 || sp->pci_acl.nr_pci_id > 0) {
+        pci_set_acl(&sp->pci_acl);
+    }
 
     return 0;
 }
 
-int publish_service(struct sproc* sp)
+static int publish_service(struct sproc* sp)
 {
     char domain[PATH_MAX];
     char label[PATH_MAX];
-    int retval;
     char* name = sp->label;
     char* class = sp->class;
+    int retval;
 
     if (*class) {
         snprintf(label, sizeof(label), SYSFS_SERVICE_DOMAIN_LABEL, class);
@@ -199,16 +223,12 @@ int publish_service(struct sproc* sp)
 
     snprintf(label, sizeof(label), SYSFS_SERVICE_ENDPOINT_LABEL, domain);
     retval = sysfs_publish_u32(label, sp->endpoint, SF_PRIV_OVERWRITE);
-
-    sp->pci_acl.endpoint = sp->endpoint;
-    if (sp->pci_acl.nr_pci_class > 0 || sp->pci_acl.nr_pci_id > 0) {
-        pci_set_acl(&sp->pci_acl);
-    }
+    if (retval) return retval;
 
     if (sp->nr_domain) {
         retval = mapdriver(sp->label, sp->domain, sp->nr_domain);
         if (retval) return retval;
     }
 
-    return retval;
+    return 0;
 }

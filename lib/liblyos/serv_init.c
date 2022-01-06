@@ -40,7 +40,7 @@ int serv_init()
     MESSAGE msg;
 
     do {
-        send_recv(RECEIVE, TASK_SERVMAN, &msg);
+        send_recv(RECEIVE_ASYNC, TASK_SERVMAN, &msg);
     } while (msg.type != SERVICE_INIT);
 
     int retval = 0;
@@ -54,7 +54,7 @@ int serv_init()
 
     msg.type = SERVICE_INIT_REPLY;
     msg.RETVAL = retval;
-    send_recv(SEND, TASK_SERVMAN, &msg);
+    send_recv(BOTH, TASK_SERVMAN, &msg);
 
     return retval;
 }
