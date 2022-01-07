@@ -11,6 +11,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
 : ${BUILD_WAYLAND_SCANNER:=false}
+: ${BUILD_HOST_CMAKE:=false}
 : ${BUILD_HOST_PYTHON:=false}
 : ${BUILD_NEWLIB:=false}
 : ${BUILD_LIBSTDCPP:=false}
@@ -36,12 +37,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_MTDEV:=false}
 : ${BUILD_GETTEXT:=false}
 : ${BUILD_GUILE:=false}
+: ${BUILD_LWIP:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
     BUILD_BINUTILS=true
     BUILD_GCC=true
     BUILD_WAYLAND_SCANNER=true
+    BUILD_HOST_CMAKE=true
     BUILD_HOST_PYTHON=true
     BUILD_NEWLIB=true
     BUILD_LIBSTDCPP=true
@@ -63,6 +66,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBXML2=true
     BUILD_EUDEV=true
     BUILD_MTDEV=true
+    BUILD_LWIP=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -230,6 +234,20 @@ if $BUILD_HOST_PYTHON; then
     $DIR/sources/Python-3.8.2/configure --prefix=$DIR/tools/python-3.8
     make -j$PARALLELISM || cmd_error
     make install || cmd_error
+    popd > /dev/null
+fi
+
+# Build host cmake
+if $BUILD_HOST_CMAKE; then
+    if [ ! -d "host-cmake-$SUBARCH" ]; then
+        mkdir host-cmake-$SUBARCH
+    fi
+
+    pushd host-cmake-$SUBARCH > /dev/null
+    $DIR/sources/cmake-3.22.1/bootstrap --prefix=$DIR/tools/cmake-3.22.1 --parallel=$PARALLELISM
+    make -j$PARALLELISM || cmd_error
+    make install || cmd_error
+    ln -sf $DIR/lyos.cmake $DIR/tools/cmake-3.22.1/share/cmake-3.22/Modules/Platform
     popd > /dev/null
 fi
 
@@ -615,6 +633,24 @@ if $BUILD_GUILE; then
     $DIR/sources/guile-3.0.4/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build lwip
+if $BUILD_LWIP; then
+    if [ ! -d "lwip-$SUBARCH" ]; then
+        mkdir lwip-$SUBARCH
+    fi
+
+    pushd lwip-$SUBARCH > /dev/null
+    PATH=$DIR/tools/cmake-3.22.1/bin:$PATH cmake -GNinja \
+          -DCMAKE_TOOLCHAIN_FILE=$TARGET_CMAKE_TOOLCHAIN_FILE \
+          -DCMAKE_INSTALL_PREFIX=$CROSSPREFIX \
+          -DLWIP_DIR=$DIR/sources/lwip-STABLE-2_1_3_RELEASE \
+          -DLWIP_INCLUDE_DIRS="$DIR/sources/lwip-STABLE-2_1_3_RELEASE/src/include;$DIR/patches/lwip" \
+          $DIR/sources/lwip-STABLE-2_1_3_RELEASE/
+    ninja lwipcore || cmd_error
+    cp liblwipcore.a $SYSROOT/lib
     popd > /dev/null
 fi
 

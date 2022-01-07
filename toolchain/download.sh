@@ -78,6 +78,8 @@ download "python" "https://www.python.org/ftp/python/3.8.2" "Python-3.8.2.tar.xz
 download "cJSON" "https://github.com/DaveGamble/cJSON/archive" "v1.7.14.tar.gz" && cp v1.7.14.tar.gz cJSON-1.7.14.tar.gz
 download "gettext" "https://mirrors.ustc.edu.cn/gnu/gettext" "gettext-0.21.tar.xz" || cmd_error
 download "guile" "https://mirrors.ustc.edu.cn/gnu/guile" "guile-3.0.4.tar.xz" || cmd_error
+download "lwip" "https://git.savannah.gnu.org/cgit/lwip.git/snapshot" "lwip-STABLE-2_1_3_RELEASE.tar.gz" || cmd_error
+download "cmake" "https://github.com/Kitware/CMake/releases/download/v3.22.1" "cmake-3.22.1.tar.gz" || cmd_error
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -145,6 +147,8 @@ unzip "Python-3.8.2.tar.xz" "Python-3.8.2"
 unzip "cJSON-1.7.14.tar.gz" "cJSON-1.7.14"
 unzip "gettext-0.21.tar.xz" "gettext-0.21"
 unzip "guile-3.0.4.tar.xz" "guile-3.0.4"
+unzip "lwip-STABLE-2_1_3_RELEASE.tar.gz" "lwip-STABLE-2_1_3_RELEASE"
+unzip "cmake-3.22.1.tar.gz" "cmake-3.22.1"
 
 echo "Patching..."
 patc "automake-1.11"
