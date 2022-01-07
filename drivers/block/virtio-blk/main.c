@@ -369,7 +369,7 @@ static int virtio_blk_alloc_requests(void)
              MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE, -1, 0);
 
     if (status_vir == MAP_FAILED) {
-        munmap(hdrs_vir, sizeof(*hdrs_vir));
+        munmap(hdrs_vir, sizeof(*hdrs_vir) * MAX_THREADS);
         return ENOMEM;
     }
 

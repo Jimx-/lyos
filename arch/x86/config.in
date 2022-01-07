@@ -31,6 +31,8 @@ source "servers/config.in"
 
 source "lib/config.in"
 
+source "net/config.in"
+
 menu "Power management and ACPI options"
 
 source "drivers/acpi/config.in"

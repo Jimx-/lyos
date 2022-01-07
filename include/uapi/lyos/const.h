@@ -118,6 +118,7 @@
 #define IPC_REQ_BASE     2501
 #define NETLINK_REQ_BASE 2601
 #define DEVPTS_BASE      2701
+#define NDEV_BASE        3001
 
 /**
  * @enum msgtype
@@ -390,6 +391,13 @@ enum msgtype {
 
     DEVPTS_CLEAR = DEVPTS_BASE,
     DEVPTS_SET,
+
+    /* Network device */
+    NDEV_INIT = NDEV_BASE,
+    NDEV_SEND,
+    NDEV_RECV,
+    NDEV_SEND_REPLY,
+    NDEV_RECV_REPLY,
 };
 
 /* Macros for messages. */

@@ -19,6 +19,7 @@ $(INITRD):
 	@cp -f $(DESTDIR)/sbin/pci sbin/
 	@cp -f $(DESTDIR)/sbin/virtio-blk sbin/
 	@cp -f $(DESTDIR)/sbin/virtio-gpu sbin/
+	@cp -f $(DESTDIR)/sbin/virtio-net sbin/
 	@cp -f $(DESTDIR)/sbin/procfs sbin/
 	@cp -f $(DESTDIR)/sbin/input sbin/
 ifneq ("$(wildcard $(DESTDIR)/sbin/atkbd)","")

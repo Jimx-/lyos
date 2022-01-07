@@ -17,4 +17,8 @@ ifeq ($(CONFIG_DRM),y)
 	SUBDIRS += libdrmdriver
 endif
 
+ifeq ($(CONFIG_NET),y)
+	SUBDIRS += libnetdriver
+endif
+
 include lyos.subdirs.mk

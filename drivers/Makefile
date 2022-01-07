@@ -15,4 +15,8 @@ ifeq ($(CONFIG_DRM),y)
 	SUBDIRS += gpu/drm
 endif
 
+ifeq ($(CONFIG_NETDEVICES),y)
+	SUBDIRS += net
+endif
+
 include lyos.subdirs.mk

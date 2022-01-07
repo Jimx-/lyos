@@ -1,0 +1,15 @@
+menuconfig NETDEVICES
+    default y
+    depends on NET
+    bool "Network device support"
+
+if NETDEVICES
+
+config VIRTIO_NET
+    bool "Virtio network driver"
+    depends on VIRTIO
+    help
+      This is the virtual network driver for virtio.  It can be used with
+      QEMU based VMMs (like KVM or Xen).  Say Y or M.
+
+endif

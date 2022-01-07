@@ -134,4 +134,7 @@
 /* Socket driver flags */
 #define SDEV_NONBLOCK 0x01
 
+/* Net devices */
+#define ETH_PACKET_MAX 1514
+
 #endif /* _CONST_H_ */

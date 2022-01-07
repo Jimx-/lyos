@@ -11,6 +11,8 @@ source "drivers/hid/config.in"
 
 source "drivers/pci/config.in"
 
+source "drivers/net/config.in"
+
 source "drivers/video/config.in"
 
 endmenu

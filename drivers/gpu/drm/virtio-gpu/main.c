@@ -551,7 +551,7 @@ static int virtio_gpu_config(void)
     }
 
     printl("  Features: %cvirgl %cedid\n", has_virgl ? '+' : '-',
-           has_edid ? '+' : '_');
+           has_edid ? '+' : '-');
 
     virtio_cread(vdev, struct virtio_gpu_config, num_scanouts,
                  &gpu_config.num_scanouts);

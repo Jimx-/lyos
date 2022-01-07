@@ -64,4 +64,8 @@
 
 #define NR_DOMAIN 8
 
+/* Net driver */
+#define NDEV_HWADDR_MAX 6
+#define NDEV_IOV_MAX    8
+
 #endif

@@ -13,6 +13,7 @@ service up /sbin/uds
 service up /sbin/tmpfs
 service up /sbin/pty
 service up /sbin/devpts
+service up /sbin/virtio-net
 
 mount -a
 
