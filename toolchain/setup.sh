@@ -651,6 +651,8 @@ if $BUILD_LWIP; then
           $DIR/sources/lwip-STABLE-2_1_3_RELEASE/
     ninja lwipcore || cmd_error
     cp liblwipcore.a $SYSROOT/lib
+    cp -rf $DIR/sources/lwip-STABLE-2_1_3_RELEASE/src/include/lwip $SYSROOT/usr/include/
+    cp -rf $DIR/patches/lwip/* $SYSROOT/usr/include/lwip
     popd > /dev/null
 fi
 

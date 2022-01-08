@@ -951,6 +951,27 @@ BEGIN_MESS_DECL(mess_devpts_req)
 }
 END_MESS_DECL(mess_devpts_req)
 
+BEGIN_MESS_DECL(mess_ndev_init)
+{
+    unsigned int id;
+    int status;
+
+    __u8 _pad[64];
+}
+END_MESS_DECL(mess_ndev_init)
+
+BEGIN_MESS_DECL(mess_ndev_init_reply)
+{
+    unsigned int id;
+    __u8 hwaddr[6];
+    __u8 hwaddr_len;
+    __u8 max_send;
+    __u8 max_recv;
+
+    __u8 _pad1[59];
+}
+END_MESS_DECL(mess_ndev_init_reply)
+
 #define NDEV_TRANSFER_INLINE_IOVS 8
 BEGIN_MESS_DECL(mess_ndev_transfer)
 {
@@ -1054,6 +1075,8 @@ typedef struct {
         struct mess_sockdriver_select m_sockdriver_select;
         struct mess_sockdriver_getset m_sockdriver_getset;
         struct mess_devpts_req m_devpts_req;
+        struct mess_ndev_init m_ndev_init;
+        struct mess_ndev_init_reply m_ndev_init_reply;
         struct mess_ndev_transfer m_ndev_transfer;
         struct mess_ndev_reply m_ndev_reply;
 

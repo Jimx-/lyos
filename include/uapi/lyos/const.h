@@ -396,9 +396,13 @@ enum msgtype {
     NDEV_INIT = NDEV_BASE,
     NDEV_SEND,
     NDEV_RECV,
+    NDEV_INIT_REPLY,
     NDEV_SEND_REPLY,
     NDEV_RECV_REPLY,
+    NDEV_CALL_MAX,
 };
+
+#define IS_NDEV_CALL(type) (((type) >= NDEV_BASE) && ((type) < NDEV_CALL_MAX))
 
 /* Macros for messages. */
 #define FD         u.m3.m3i1

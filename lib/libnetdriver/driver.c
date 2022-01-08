@@ -107,6 +107,24 @@ void netdriver_recv(void)
     }
 }
 
+static void do_init(const struct netdriver* ndr, const MESSAGE* msg)
+{
+    MESSAGE reply_msg;
+
+    pending_sends = pending_recvs = 0;
+
+    memset(&reply_msg, 0, sizeof(reply_msg));
+    reply_msg.type = NDEV_INIT_REPLY;
+    reply_msg.u.m_ndev_init_reply.id = msg->u.m_ndev_init.id;
+    memcpy(reply_msg.u.m_ndev_init_reply.hwaddr, dev_hwaddr.addr,
+           sizeof(dev_hwaddr.addr));
+    reply_msg.u.m_ndev_init_reply.hwaddr_len = sizeof(dev_hwaddr.addr);
+    reply_msg.u.m_ndev_init_reply.max_send = SENDQ_MAX;
+    reply_msg.u.m_ndev_init_reply.max_recv = RECVQ_MAX;
+
+    asyncsend3(msg->source, &reply_msg, 0);
+}
+
 static void do_sendrecv(const struct netdriver* ndr, const MESSAGE* msg,
                         int do_send)
 {
@@ -162,6 +180,9 @@ void netdriver_process(const struct netdriver* ndr, MESSAGE* msg)
     }
 
     switch (msg->type) {
+    case NDEV_INIT:
+        do_init(ndr, msg);
+        break;
     case NDEV_SEND:
     case NDEV_RECV:
         do_sendrecv(ndr, msg, msg->type == NDEV_SEND);

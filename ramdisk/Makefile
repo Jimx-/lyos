@@ -29,6 +29,7 @@ endif
 	@cp -f $(DESTDIR)/sbin/tmpfs sbin/
 	@cp -f $(DESTDIR)/sbin/pty sbin/
 	@cp -f $(DESTDIR)/sbin/devpts sbin/
+	@cp -f $(DESTDIR)/sbin/inet sbin/
 	@cp -f $(DESTDIR)/usr/bin/getty usr/bin/
 	@cp -f $(DESTDIR)/usr/bin/login usr/bin/
 	@cp -f $(DESTDIR)/bin/sh bin/
