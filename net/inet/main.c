@@ -19,14 +19,37 @@
 #include <sys/socket.h>
 
 #include "inet.h"
+#include "ifdev.h"
+
+uint32_t sys_now(void)
+{
+    clock_t now;
+    static int first = TRUE;
+    static int sys_hz;
+
+    if (first) {
+        sys_hz = get_system_hz();
+        first = FALSE;
+    }
+
+    get_ticks(&now, NULL);
+    return (uint32_t)(((uint64_t)now * 1000) / sys_hz);
+}
+
+uint32_t lwip_hook_rand(void) { return lrand48(); }
 
 static int inet_init(void)
 {
     printl("inet: INET socket driver is running\n");
 
+    srand48(time(NULL));
+
     sockdriver_init();
 
     ndev_init();
+
+    loopif_init();
+    ifconf_init();
 
     return 0;
 }
@@ -39,6 +62,8 @@ int main()
     serv_init();
 
     while (TRUE) {
+        ifdev_poll();
+
         send_recv(RECEIVE_ASYNC, ANY, &msg);
 
         if (msg.type == NOTIFY_MSG) {

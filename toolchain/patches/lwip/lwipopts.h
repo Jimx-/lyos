@@ -1,6 +1,10 @@
 #ifndef LWIP_LWIPOPTS_H
 #define LWIP_LWIPOPTS_H
 
+#define NETIF_DEBUG  LWIP_DBG_ON
+#define IP_DEBUG     LWIP_DBG_ON
+#define ETHARP_DEBUG LWIP_DBG_ON
+
 #define NO_SYS               1
 #define LWIP_TIMERS          1
 #define SYS_LIGHTWEIGHT_PROT 0

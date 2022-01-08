@@ -648,6 +648,7 @@ if $BUILD_LWIP; then
           -DCMAKE_INSTALL_PREFIX=$CROSSPREFIX \
           -DLWIP_DIR=$DIR/sources/lwip-STABLE-2_1_3_RELEASE \
           -DLWIP_INCLUDE_DIRS="$DIR/sources/lwip-STABLE-2_1_3_RELEASE/src/include;$DIR/patches/lwip" \
+          -DCMAKE_C_FLAGS=-DLWIP_DEBUG \
           $DIR/sources/lwip-STABLE-2_1_3_RELEASE/
     ninja lwipcore || cmd_error
     cp liblwipcore.a $SYSROOT/lib

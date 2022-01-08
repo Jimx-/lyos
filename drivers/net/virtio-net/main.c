@@ -270,6 +270,7 @@ static int virtio_net_alloc_buffers(void)
         return ENOMEM;
     }
 
+    memset(pkt_buf_vir, 0, PKT_BUF_SIZE);
     for (i = 0; i < NR_PACKETS; i++) {
         struct packet* pkt = &packets[i];
 

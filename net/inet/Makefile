@@ -1,4 +1,4 @@
-SRCS	= main.c ndev.c ifdevice.c
+SRCS	= main.c ndev.c ifdev.c ethdev.c ifconf.c loopback.c addr.c ifaddr.c
 LIBS	= lwipcore sockdriver sysfs lyos coro
 
 PROG	= inet

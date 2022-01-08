@@ -22,6 +22,11 @@
 #define LWIP_PLATFORM_ASSERT(x) assert(x)
 #endif
 
+#define LWIP_PLATFORM_DIAG(x) \
+    do {                      \
+        printl x;             \
+    } while (0)
+
 extern uint32_t lwip_hook_rand(void);
 
 #define LWIP_RAND lwip_hook_rand

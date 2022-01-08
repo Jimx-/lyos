@@ -125,7 +125,7 @@ static void do_init(const struct netdriver* ndr, const MESSAGE* msg)
     asyncsend3(msg->source, &reply_msg, 0);
 }
 
-static void do_sendrecv(const struct netdriver* ndr, const MESSAGE* msg,
+static void do_transfer(const struct netdriver* ndr, const MESSAGE* msg,
                         int do_send)
 {
     struct netdriver_data* data;
@@ -185,7 +185,7 @@ void netdriver_process(const struct netdriver* ndr, MESSAGE* msg)
         break;
     case NDEV_SEND:
     case NDEV_RECV:
-        do_sendrecv(ndr, msg, msg->type == NDEV_SEND);
+        do_transfer(ndr, msg, msg->type == NDEV_SEND);
         break;
     default:
         if (ndr->ndr_other) ndr->ndr_other(msg);
