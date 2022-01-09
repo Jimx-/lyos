@@ -275,6 +275,11 @@ void sockdriver_task(const struct sockdriver* sd, size_t num_workers)
     }
 
     while (running) {
+        if (sd->sd_poll) {
+            sd->sd_poll();
+            yield_all();
+        }
+
         send_recv(RECEIVE_ASYNC, ANY, &msg);
 
         dispatch_message(&msg);

@@ -21,6 +21,22 @@
 #include "inet.h"
 #include "ifdev.h"
 
+#define MAX_THREADS 128
+
+static sockid_t inet_socket(endpoint_t src, int domain, int type, int protocol,
+                            struct sock** sock,
+                            const struct sockdriver_ops** ops);
+static void inet_poll(void);
+static void inet_other(MESSAGE* msg);
+
+struct idr sock_idr;
+
+static const struct sockdriver inet_driver = {
+    .sd_create = inet_socket,
+    .sd_poll = inet_poll,
+    .sd_other = inet_other,
+};
+
 uint32_t sys_now(void)
 {
     clock_t now;
@@ -38,11 +54,49 @@ uint32_t sys_now(void)
 
 uint32_t lwip_hook_rand(void) { return lrand48(); }
 
+static sockid_t inet_socket(endpoint_t src, int domain, int type, int protocol,
+                            struct sock** sock,
+                            const struct sockdriver_ops** ops)
+{
+    switch (domain) {
+    case PF_INET:
+        switch (type) {
+        case SOCK_STREAM:
+            return tcpsock_socket(domain, protocol, sock, ops);
+        default:
+            return -EPROTOTYPE;
+        }
+        break;
+    default:
+        return -EAFNOSUPPORT;
+    }
+}
+
+static void inet_poll(void) { ifdev_poll(); }
+
+static void inet_other(MESSAGE* msg)
+{
+    if (msg->type == NOTIFY_MSG) {
+        switch (msg->source) {
+        case TASK_SYSFS:
+            ndev_check();
+            break;
+        }
+        return;
+    }
+
+    if (IS_NDEV_CALL(msg->type)) {
+        ndev_process(msg);
+    }
+}
+
 static int inet_init(void)
 {
     printl("inet: INET socket driver is running\n");
 
     srand48(time(NULL));
+
+    idr_init(&sock_idr);
 
     sockdriver_init();
 
@@ -56,29 +110,10 @@ static int inet_init(void)
 
 int main()
 {
-    MESSAGE msg;
-
     serv_register_init_fresh_callback(inet_init);
     serv_init();
 
-    while (TRUE) {
-        ifdev_poll();
-
-        send_recv(RECEIVE_ASYNC, ANY, &msg);
-
-        if (msg.type == NOTIFY_MSG) {
-            switch (msg.source) {
-            case TASK_SYSFS:
-                ndev_check();
-                break;
-            }
-            continue;
-        }
-
-        if (IS_NDEV_CALL(msg.type)) {
-            ndev_process(&msg);
-        }
-    }
+    sockdriver_task(&inet_driver, MAX_THREADS);
 
     return 0;
 }

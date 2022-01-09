@@ -25,4 +25,6 @@ void ifconf_init(void)
 
     if ((retval = ifdev_set_ifflags(loopback, IFF_UP)) != 0)
         panic("inet: failed to bring up loopback interface (%d)", retval);
+
+    netif_set_default(&loopback->netif);
 }

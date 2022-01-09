@@ -44,8 +44,8 @@ struct sock {
     int err;
 
     int peek_off;
-    int rcvlowat;
-    int sndbuf;
+    size_t sndlowat;
+    size_t rcvlowat;
     clock_t linger;
 
     struct sock_cred peercred;

@@ -56,8 +56,8 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
     sock->type = type;
     sock->protocol = protocol;
 
+    sock->sndlowat = 1;
     sock->rcvlowat = 1;
-    sock->sndbuf = 262144;
 
     sock->peercred.pid = -1;
     sock->peercred.uid = -1;
@@ -81,6 +81,9 @@ void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid)
                      sock->ops);
 
     newsock->flags = sock->flags & ~SFL_ACCEPTCONN;
+    newsock->sndlowat = sock->sndlowat;
+    newsock->rcvlowat = sock->rcvlowat;
+    newsock->linger = sock->linger;
 }
 
 void sock_free(struct sock* sock)
@@ -449,6 +452,7 @@ static ssize_t sockdriver_send(sockid_t id, struct iov_grant_iter* data_iter,
                                int flags)
 {
     struct sock* sock;
+    size_t min;
     ssize_t retval;
 
     if ((sock = sock_get(id)) == NULL) return -EINVAL;
@@ -475,10 +479,13 @@ static ssize_t sockdriver_send(sockid_t id, struct iov_grant_iter* data_iter,
 
     do {
         if (!sockdriver_has_suspended(sock, SEV_SEND)) {
+            min = sock->sndlowat;
+            if (min > data_len) min = data_len;
+
             /* try if there is no suspended sender */
-            retval =
-                sock->ops->sop_send(sock, data_iter, data_len, ctl_data,
-                                    ctl_len, addr, addr_len, user_endpt, flags);
+            retval = sock->ops->sop_send(sock, data_iter, data_len, ctl_data,
+                                         ctl_len, addr, addr_len, user_endpt,
+                                         flags, min);
             break;
         }
 
@@ -559,6 +566,7 @@ static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
     int inflags;
     int oob;
     int check_error = FALSE;
+    size_t min;
     ssize_t retval;
 
     inflags = *flags;
@@ -579,10 +587,16 @@ static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
 
     do {
         if (oob || !sockdriver_has_suspended(sock, SEV_RECV)) {
+            if (!oob && sock->err == 0) {
+                min = sock->rcvlowat;
+                if (min > data_len) min = data_len;
+            } else
+                min = 0;
+
             /* try if there is no suspended receiver */
             retval = sock->ops->sop_recv(sock, data_iter, data_len, ctl_data,
                                          ctl_len, addr, addr_len, user_endpt,
-                                         inflags, flags);
+                                         inflags, min, flags);
             break;
         }
 
@@ -948,13 +962,13 @@ static void do_setsockopt(MESSAGE* msg)
             else
                 sock->flags &= ~flag;
             break;
-        case SO_SNDBUF:
-            if ((retval = sockdriver_copyin(&data, 0, &val, len)) != OK)
-                goto reply;
-            val = min(val, INT_MAX / 2);
-            sock->sndbuf = val * 2;
-            sockdriver_fire(sock, SEV_SEND);
-            break;
+        /* case SO_SNDBUF: */
+        /*     if ((retval = sockdriver_copyin(&data, 0, &val, len)) != OK) */
+        /*         goto reply; */
+        /*     val = min(val, INT_MAX / 2); */
+        /*     sock->sndbuf = val * 2; */
+        /*     sockdriver_fire(sock, SEV_SEND); */
+        /*     break; */
         case SO_ACCEPTCONN:
         case SO_ERROR:
         case SO_TYPE:

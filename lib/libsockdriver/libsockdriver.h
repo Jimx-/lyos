@@ -35,13 +35,14 @@ struct sockdriver_ops {
     ssize_t (*sop_send)(struct sock* sock, struct iov_grant_iter* iter,
                         size_t len, const struct sockdriver_data* ctl,
                         socklen_t ctl_len, const struct sockaddr* addr,
-                        socklen_t addr_len, endpoint_t user_endpt, int flags);
+                        socklen_t addr_len, endpoint_t user_endpt, int flags,
+                        size_t min);
     int (*sop_recv_check)(struct sock* sock, endpoint_t user_endpt, int flags);
     ssize_t (*sop_recv)(struct sock* sock, struct iov_grant_iter* iter,
                         size_t len, const struct sockdriver_data* ctl,
                         socklen_t* ctl_len, struct sockaddr* addr,
                         socklen_t* addr_len, endpoint_t user_endpt, int flags,
-                        int* rflags);
+                        size_t min, int* rflags);
     __poll_t (*sop_poll)(struct sock* sock);
     int (*sop_getsockopt)(struct sock* sock, int level, int name,
                           const struct sockdriver_data* data, socklen_t* len);
@@ -57,6 +58,7 @@ struct sockdriver {
     sockid_t (*sd_create)(endpoint_t src, int domain, int type, int protocol,
                           struct sock** sock,
                           const struct sockdriver_ops** ops);
+    void (*sd_poll)(void);
     void (*sd_other)(MESSAGE* msg);
 };
 

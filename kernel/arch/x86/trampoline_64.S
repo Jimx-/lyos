@@ -54,6 +54,7 @@ startup_ap_32:
     /* Enable paging */
     mov %cr0, %eax
     or $I386_CR0_PG, %eax
+    or $I386_CR0_WP, %eax
     mov %eax, %cr0
 
     ljmp $SELECTOR_KERNEL_CS, $startup_ap_64 - KERNEL_VMA

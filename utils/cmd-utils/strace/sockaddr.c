@@ -3,6 +3,8 @@
 #include <string.h>
 #include <sys/un.h>
 #include <lyos/netlink.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "types.h"
 #include "xlat.h"
@@ -25,6 +27,17 @@ static void print_sockaddr_data_un(struct tcb* tcp, const void* const buf,
     }
 }
 
+static void print_sockaddr_data_in(struct tcb* tcp, const void* const buf,
+                                   size_t addrlen)
+{
+    const struct sockaddr_in* const sa_in = buf;
+    char addr_buf[INET_ADDRSTRLEN];
+
+    printf("sin_port=%u, ", ntohs(sa_in->sin_port));
+    inet_ntop(AF_INET, &sa_in->sin_addr, addr_buf, sizeof(addr_buf));
+    printf("sin_addr=\"%s\"", addr_buf);
+}
+
 static void print_sockaddr_data_nl(struct tcb* tcp, const void* const buf,
                                    size_t addrlen)
 {
@@ -42,6 +55,7 @@ static const struct {
     const int min_len;
 } sa_printers[] = {
     [AF_UNIX] = {print_sockaddr_data_un, SIZEOF_SA_FAMILY + 1},
+    [AF_INET] = {print_sockaddr_data_in, sizeof(struct sockaddr_in)},
     [AF_NETLINK] = {print_sockaddr_data_nl, SIZEOF_SA_FAMILY + 1},
 };
 

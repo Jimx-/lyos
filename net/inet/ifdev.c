@@ -15,9 +15,26 @@ static struct {
 } ifdev_vtype[MAX_VTYPE];
 static unsigned int nr_vtypes;
 
+#define to_ifdev(netif) list_entry(netif, struct if_device, netif)
+
 static DEF_LIST(ifdev_list);
 
-#define to_ifdev(netif) list_entry(netif, struct if_device, netif)
+static struct if_device* loopback_dev;
+
+static err_t ifdev_output_v4(struct netif* netif, struct pbuf* pbuf,
+                             const ip4_addr_t* ipaddr);
+
+struct if_device* ifdev_find_by_index(unsigned int index)
+{
+    struct if_device* ifdev;
+
+    list_for_each_entry(ifdev, &ifdev_list, list)
+    {
+        if (ifdev_get_index(ifdev) == index) return ifdev;
+    }
+
+    return NULL;
+}
 
 struct if_device* ifdev_find_by_name(const char* name)
 {
@@ -35,6 +52,8 @@ static err_t ifdev_init_netif(struct netif* netif)
 {
     struct if_device* ifdev = to_ifdev(netif);
     assert(ifdev);
+
+    netif->output = ifdev_output_v4;
 
     netif->mtu = ifdev->mtu;
 
@@ -78,6 +97,8 @@ void ifdev_add(struct if_device* ifdev, const char* name, unsigned int ifflags,
         panic("inet: cannot add netif");
 
     ifdev_update_ifflags(ifdev, ifflags);
+
+    if (!loopback_dev && ifdev_is_loopback(ifdev)) loopback_dev = ifdev;
 }
 
 void ifdev_input(struct if_device* ifdev, struct pbuf* pbuf,
@@ -89,12 +110,40 @@ void ifdev_input(struct if_device* ifdev, struct pbuf* pbuf,
     ifdev->stats.rx_bytes += pbuf->tot_len;
 
     if (netif) {
-
+        err = ip_input(pbuf, netif);
     } else {
         err = ifdev->netif.input(pbuf, &ifdev->netif);
     }
 
     if (err != ERR_OK) pbuf_free(pbuf);
+}
+
+err_t ifdev_output(struct if_device* ifdev, struct pbuf* pbuf,
+                   struct netif* netif)
+{
+    if (!ifdev_is_up(ifdev) || !ifdev_is_link_up(ifdev)) return ERR_IF;
+
+    ifdev->stats.tx_packets++;
+    ifdev->stats.tx_bytes += pbuf->tot_len;
+
+    return ifdev->ifd_ops->ido_output(ifdev, pbuf, netif);
+}
+
+static err_t ifdev_output_v4(struct netif* netif, struct pbuf* pbuf,
+                             const ip4_addr_t* ipaddr)
+{
+    struct if_device* ifdev = to_ifdev(netif);
+
+    if (!ifdev_is_loopback(ifdev) && ifdev->v4_set &&
+        ip4_addr_cmp(netif_ip4_addr(netif), ipaddr))
+        ifdev = loopback_dev;
+    else
+        netif = NULL;
+
+    if (ifdev->ifd_ops->ido_output_v4)
+        return ifdev->ifd_ops->ido_output_v4(netif, pbuf, ipaddr);
+
+    return ifdev_output(ifdev, pbuf, netif);
 }
 
 void ifdev_register(const char* name, int (*create)(const char*))
@@ -155,4 +204,23 @@ int ifdev_set_ifflags(struct if_device* ifdev, unsigned int ifflags)
     ifdev_update_ifflags(ifdev, ifflags);
 
     return 0;
+}
+
+void ifdev_update_link(struct if_device* ifdev, unsigned int link_state)
+{
+    int is_up, was_up;
+    struct netif* netif = &ifdev->netif;
+
+    ifdev->link_state = link_state;
+
+    was_up = netif_is_link_up(netif);
+    is_up = link_state != LINK_STATE_DOWN;
+
+    if (was_up != is_up) {
+        if (is_up) {
+            netif_set_link_up(netif);
+        } else {
+            netif_set_link_down(netif);
+        }
+    }
 }

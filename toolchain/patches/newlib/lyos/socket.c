@@ -79,7 +79,7 @@ int listen(int sockfd, int backlog)
     MESSAGE msg;
 
     memset(&msg, 0, sizeof(msg));
-    msg.type = LISTEN;
+    msg.type = __LISTEN;
     msg.u.m_vfs_listen.sock_fd = sockfd;
     msg.u.m_vfs_listen.backlog = backlog;
 

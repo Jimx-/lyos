@@ -17,7 +17,8 @@ GENERAL_SOURCES = syscalls.c init.c getpass.c getpwent.c getcwd.c ttyname_r.c tt
 				nanosleep.c signalfd.c flockfile.c popen.c eventfd.c timerfd.c epoll.c \
 				socket.c dl.c iconv.c fnmatch.c scandir.c ftw.c prctl.c wait.c basename.c \
 				inet.c netdb.c dirent.c uio.c inotify.c realpath.c dirname.c random.c \
-				fcntl.c grp.c tls.c pty.c pathconf.c inet_addr.c gettimeofday.c signal.c
+				fcntl.c grp.c tls.c pty.c pathconf.c inet_addr.c gettimeofday.c signal.c \
+				inet_ntop.c
 
 ADD_OBJS = $(LYOS_MACHINE_LIB)
 

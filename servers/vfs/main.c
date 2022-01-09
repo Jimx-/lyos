@@ -316,7 +316,7 @@ static void do_work(void)
     case CONNECT:
         self->msg_out.RETVAL = do_connect();
         break;
-    case LISTEN:
+    case __LISTEN:
         self->msg_out.RETVAL = do_listen();
         break;
     case ACCEPT4:

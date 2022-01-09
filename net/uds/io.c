@@ -121,7 +121,7 @@ static int uds_scm_to_skb(struct scm_data* scm, struct sk_buff* skb,
 ssize_t uds_send(struct sock* sock, struct iov_grant_iter* iter, size_t len,
                  const struct sockdriver_data* ctl, socklen_t ctl_len,
                  const struct sockaddr* addr, socklen_t addr_len,
-                 endpoint_t user_endpt, int flags)
+                 endpoint_t user_endpt, int flags, size_t min)
 {
     struct udssock *uds = to_udssock(sock), *other;
     struct sk_buff* skb;
@@ -196,7 +196,7 @@ out_err:
 ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
                  const struct sockdriver_data* ctl, socklen_t* ctl_len,
                  struct sockaddr* addr, socklen_t* addr_len,
-                 endpoint_t user_endpt, int flags, int* rflags)
+                 endpoint_t user_endpt, int flags, size_t min, int* rflags)
 {
     struct udssock *uds = to_udssock(sock), *other;
     struct sk_buff* skb;

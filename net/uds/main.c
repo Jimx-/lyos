@@ -406,12 +406,13 @@ static int uds_connect(struct sock* sock, struct sockaddr* addr, size_t addrlen,
 {
     struct udssock* uds = to_udssock(sock);
     struct udssock* peer;
-    int need_wait = FALSE;
+    int need_wait;
     int check_again = TRUE;
     int retval;
 
 restart:
     retval = 0;
+    need_wait = FALSE;
 
     if (uds_get_type(uds) != SOCK_DGRAM) {
         if (uds_is_listening(uds)) return EOPNOTSUPP;

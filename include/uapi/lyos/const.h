@@ -213,7 +213,7 @@ enum msgtype {
     RMDIR,
     BIND,
     CONNECT,
-    LISTEN,
+    __LISTEN,
     ACCEPT4,
     SENDTO, /* 80 */
     RECVFROM,

@@ -4,6 +4,7 @@
 #define NETIF_DEBUG  LWIP_DBG_ON
 #define IP_DEBUG     LWIP_DBG_ON
 #define ETHARP_DEBUG LWIP_DBG_ON
+#define TCP_DEBUG    LWIP_DBG_ON
 
 #define NO_SYS               1
 #define LWIP_TIMERS          1

@@ -13,6 +13,8 @@ struct ndev_hwaddr {
 /* addr.c */
 int addr_get_inet(const struct sockaddr* addr, socklen_t addr_len, uint8_t type,
                   ip_addr_t* ipaddr, uint16_t* port);
+void addr_set_inet(struct sockaddr* addr, socklen_t* addr_len,
+                   const ip_addr_t* ipaddr, uint16_t port);
 
 /* ndev.c */
 void ndev_init(void);
@@ -26,5 +28,15 @@ void ifconf_init(void);
 
 /* loopback.c */
 void loopif_init(void);
+
+/* tcpsock.c */
+sockid_t tcpsock_socket(int domain, int protocol, struct sock** sock,
+                        const struct sockdriver_ops** ops);
+
+/* util.c */
+int is_superuser(endpoint_t endpoint);
+int convert_err(err_t err);
+ssize_t copy_socket_data(struct iov_grant_iter* iter, size_t len,
+                         const struct pbuf* pbuf, size_t skip, int copy_in);
 
 #endif

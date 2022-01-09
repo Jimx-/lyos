@@ -3,6 +3,8 @@
 
 #include "worker.h"
 
+void sockdriver_init_table(void);
+
 void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg);
 
 void sockdriver_wakeup_worker(struct worker_thread* wp);

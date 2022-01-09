@@ -72,18 +72,18 @@ int main()
 
     init_udev();
 
-    desktop = fork();
-    if (!desktop) {
-        setenv("HOME", "/root", 1);
-        setenv("USER", "root", 1);
-        setenv("PATH", "/usr/bin:/bin", 1);
-        setenv("XDG_RUNTIME_DIR", "/run", 1);
-        setenv("MESA_GLSL_CACHE_DISABLE", "1", 1);
+    /* desktop = fork(); */
+    /* if (!desktop) { */
+    /*     setenv("HOME", "/root", 1); */
+    /*     setenv("USER", "root", 1); */
+    /*     setenv("PATH", "/usr/bin:/bin", 1); */
+    /*     setenv("XDG_RUNTIME_DIR", "/run", 1); */
+    /*     setenv("MESA_GLSL_CACHE_DISABLE", "1", 1); */
 
-        exit(execl("/usr/bin/weston", "/usr/bin/weston", NULL));
-    }
+    /*     exit(execl("/usr/bin/weston", "/usr/bin/weston", NULL)); */
+    /* } */
 
-    waitpid(desktop, NULL, 0);
+    /* waitpid(desktop, NULL, 0); */
 
     return 0;
 }

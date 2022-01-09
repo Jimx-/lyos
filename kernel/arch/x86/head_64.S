@@ -58,6 +58,7 @@ _start:
     /* Enable paging */
     mov %cr0, %eax
     or $I386_CR0_PG, %eax
+    or $I386_CR0_WP, %eax
     mov %eax, %cr0
 
     lgdt gdtr - KERNEL_VMA
