@@ -337,7 +337,8 @@ static int pipe_open(int fd, struct inode* pin, struct file_desc* filp)
     return 0;
 }
 
-static int pipe_release(struct inode* pin, struct file_desc* filp)
+static int pipe_release(struct inode* pin, struct file_desc* filp,
+                        int may_block)
 {
     struct pipe_inode_info* pipe = filp->fd_private_data;
 

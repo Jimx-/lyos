@@ -80,11 +80,11 @@ void uds_io_free(struct udssock* uds);
 ssize_t uds_send(struct sock* sock, struct iov_grant_iter* iter, size_t len,
                  const struct sockdriver_data* ctl, socklen_t ctl_len,
                  const struct sockaddr* addr, socklen_t addr_len,
-                 endpoint_t user_endpt, int flags, size_t min);
+                 endpoint_t user_endpt, int flags);
 ssize_t uds_recv(struct sock* sock, struct iov_grant_iter* iter, size_t len,
                  const struct sockdriver_data* ctl, socklen_t* ctl_len,
                  struct sockaddr* addr, socklen_t* addr_len,
-                 endpoint_t user_endpt, int flags, size_t min, int* rflags);
+                 endpoint_t user_endpt, int flags, int* rflags);
 __poll_t uds_poll(struct sock* sock);
 
 #endif

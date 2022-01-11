@@ -184,7 +184,8 @@ static void eventfd_free(struct kref* kref)
     free(ctx);
 }
 
-static int eventfd_release(struct inode* pin, struct file_desc* filp)
+static int eventfd_release(struct inode* pin, struct file_desc* filp,
+                           int may_block)
 {
     struct eventfd_ctx* ctx = filp->fd_private_data;
 

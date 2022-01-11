@@ -411,7 +411,8 @@ static int cdev_open(int fd, struct inode* pin, struct file_desc* filp)
     return cdev_opcl(CDEV_OPEN, pin->i_specdev, fd, filp->fd_flags);
 }
 
-static int cdev_release(struct inode* pin, struct file_desc* filp)
+static int cdev_release(struct inode* pin, struct file_desc* filp,
+                        int may_block)
 {
     return cdev_opcl(CDEV_CLOSE, pin->i_specdev, -1, 0);
 }

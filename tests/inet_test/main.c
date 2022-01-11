@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <assert.h>
+#include <poll.h>
 
 static const char test_string[] = "Hello, world!";
 
@@ -17,6 +18,7 @@ int run_server(int event_fd)
     socklen_t cliin_len;
     char buf[100];
     uint64_t count = 1;
+    struct pollfd pfd;
     int retval, n;
 
     listen_fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -38,11 +40,32 @@ int run_server(int event_fd)
     conn_fd = accept(listen_fd, (struct sockaddr*)&cliin, &cliin_len);
     assert(conn_fd >= 0);
 
+    pfd.fd = conn_fd;
+    pfd.events = POLLIN;
+    n = poll(&pfd, 1, 0);
+    assert(n == 0);
+
     n = write(event_fd, &count, sizeof(count));
     assert(n == sizeof(count));
 
     n = recv(conn_fd, buf, strlen(test_string), 0);
     assert(n == strlen(test_string));
+
+    /* server -> client */
+    n = send(conn_fd, test_string, strlen(test_string), 0);
+    assert(n == strlen(test_string));
+
+    n = write(event_fd, &count, sizeof(count));
+    assert(n == sizeof(count));
+
+    /* wait for the client to close the connection */
+    pfd.fd = conn_fd;
+    pfd.events = POLLIN;
+    n = poll(&pfd, 1, -1);
+    assert(n == 1);
+
+    close(conn_fd);
+    close(listen_fd);
 
     return 0;
 }
@@ -52,6 +75,8 @@ int run_client(int event_fd)
     int sock_fd;
     struct sockaddr_in serin;
     uint64_t count;
+    char buf[100];
+    struct pollfd pfd;
     int retval, n;
 
     sock_fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -74,6 +99,21 @@ int run_client(int event_fd)
     /* client -> server */
     n = send(sock_fd, test_string, strlen(test_string), 0);
     assert(n == strlen(test_string));
+
+    n = read(event_fd, &count, sizeof(count));
+    assert(n == sizeof(count));
+
+    pfd.fd = sock_fd;
+    pfd.events = POLLIN;
+    n = poll(&pfd, 1, 0);
+    assert(n == 1);
+    assert(pfd.revents & POLLIN);
+
+    /* server -> client */
+    n = recv(sock_fd, buf, strlen(test_string), 0);
+    assert(n == strlen(test_string));
+
+    close(sock_fd);
 
     return 0;
 }

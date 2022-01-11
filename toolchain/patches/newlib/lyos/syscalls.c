@@ -103,7 +103,7 @@ int execve(const char* name, char* const argv[], char* const envp[])
         }
     }
 
-    *((int*)(&arg_stack[stack_len])) = 0;
+    *((char**)(&arg_stack[stack_len])) = NULL;
     stack_len += sizeof(char*);
 
     int env_start = stack_len / sizeof(char*);
@@ -115,7 +115,7 @@ int execve(const char* name, char* const argv[], char* const envp[])
         }
     }
 
-    *((int*)(&arg_stack[stack_len])) = 0;
+    *((char**)(&arg_stack[stack_len])) = NULL;
     stack_len += sizeof(char*);
 
     if (argv) {

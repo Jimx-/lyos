@@ -178,7 +178,8 @@ static __poll_t timerfd_poll(struct file_desc* filp, __poll_t mask,
     return mask;
 }
 
-static int timerfd_release(struct inode* pin, struct file_desc* filp)
+static int timerfd_release(struct inode* pin, struct file_desc* filp,
+                           int may_block)
 {
     struct timerfd_ctx* ctx = filp->fd_private_data;
 

@@ -45,7 +45,7 @@ static int uds_accept(struct sock* sock, struct sockaddr* addr,
                       struct sock** newsockp);
 static int uds_getsockname(struct sock* sock, struct sockaddr* addr,
                            socklen_t* addr_len);
-static int uds_close(struct sock* sock, int force, int non_block);
+static int uds_close(struct sock* sock, int force);
 static void uds_free(struct sock* sock);
 
 static const struct sockdriver uds_driver = {
@@ -535,7 +535,7 @@ static int uds_getsockname(struct sock* sock, struct sockaddr* addr,
     return 0;
 }
 
-static int uds_close(struct sock* sock, int force, int non_block)
+static int uds_close(struct sock* sock, int force)
 {
     struct udssock* uds = to_udssock(sock);
 

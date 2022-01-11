@@ -257,7 +257,7 @@ static void close_files(struct files_struct* files)
 
         if (filp) {
             lock_filp(filp, RWL_WRITE);
-            close_filp(filp);
+            close_filp(filp, FALSE);
         }
     }
 }
@@ -357,7 +357,7 @@ void set_close_on_exec(struct fproc* fp, int fd, int flag)
         UNSET_BIT(fp->files->close_on_exec, fd);
 }
 
-int close_filp(struct file_desc* filp)
+int close_filp(struct file_desc* filp, int may_block)
 {
     struct inode* pin;
 
@@ -368,7 +368,7 @@ int close_filp(struct file_desc* filp)
         if (!list_empty(&filp->fd_ep_links)) eventpoll_release_file(filp);
 
         if (filp->fd_fops && filp->fd_fops->release) {
-            filp->fd_fops->release(pin, filp);
+            filp->fd_fops->release(pin, filp, may_block);
         }
 
         unlock_inode(pin);

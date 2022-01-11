@@ -391,7 +391,8 @@ static __poll_t inotify_poll(struct file_desc* filp, __poll_t mask,
     return mask;
 }
 
-static int inotify_release(struct inode* pin, struct file_desc* filp)
+static int inotify_release(struct inode* pin, struct file_desc* filp,
+                           int may_block)
 {
     struct fsnotify_group* group = filp->fd_private_data;
 

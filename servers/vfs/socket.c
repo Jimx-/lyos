@@ -43,7 +43,8 @@ static ssize_t sock_read(struct file_desc*, char*, size_t, loff_t*,
                          struct fproc*);
 static ssize_t sock_write(struct file_desc*, const char*, size_t, loff_t*,
                           struct fproc*);
-static int sock_release(struct inode* pin, struct file_desc* filp);
+static int sock_release(struct inode* pin, struct file_desc* filp,
+                        int may_block);
 
 static const struct file_operations sock_fops = {
     .read = sock_read,
@@ -462,8 +463,11 @@ static ssize_t sock_write(struct file_desc* filp, const char* buf, size_t count,
                           NULL, 0, WRITE, filp->fd_flags);
 }
 
-static int sock_release(struct inode* pin, struct file_desc* filp)
+static int sock_release(struct inode* pin, struct file_desc* filp,
+                        int may_block)
 {
-    sdev_close(fproc->endpoint, pin->i_specdev, !(filp->fd_flags & O_NONBLOCK));
+    if (filp->fd_flags & O_NONBLOCK) may_block = FALSE;
+
+    sdev_close(fproc->endpoint, pin->i_specdev, may_block);
     return 0;
 }

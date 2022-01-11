@@ -37,17 +37,17 @@ static sockid_t netlink_socket(endpoint_t src, int domain, int type,
 static int netlink_bind(struct sock* sock, struct sockaddr* addr,
                         size_t addrlen, endpoint_t user_endpt, int flags);
 static __poll_t netlink_poll(struct sock* sock);
-static int netlink_close(struct sock* sock, int force, int non_block);
+static int netlink_close(struct sock* sock, int force);
 static ssize_t netlink_send(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t ctl_len, const struct sockaddr* addr,
                             socklen_t addr_len, endpoint_t user_endpt,
-                            int flags, size_t min);
+                            int flags);
 static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t* ctl_len, struct sockaddr* addr,
                             socklen_t* addr_len, endpoint_t user_endpt,
-                            int flags, size_t min, int* rflags);
+                            int flags, int* rflags);
 static int netlink_getsockname(struct sock* sock, struct sockaddr* addr,
                                socklen_t* addr_len);
 static void netlink_free(struct sock* sock);
@@ -371,7 +371,7 @@ static ssize_t netlink_send(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t ctl_len, const struct sockaddr* addr,
                             socklen_t addr_len, endpoint_t user_endpt,
-                            int flags, size_t min)
+                            int flags)
 {
     struct nlsock* nls = to_nlsock(sock);
     struct sk_buff* skb;
@@ -444,7 +444,7 @@ static ssize_t netlink_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t* ctl_len, struct sockaddr* addr,
                             socklen_t* addr_len, endpoint_t user_endpt,
-                            int flags, size_t min, int* rflags)
+                            int flags, int* rflags)
 {
     struct nlsock* nls = to_nlsock(sock);
     struct sk_buff* skb;
@@ -556,7 +556,7 @@ static int netlink_getsockname(struct sock* sock, struct sockaddr* addr,
     return 0;
 }
 
-static int netlink_close(struct sock* sock, int force, int non_block)
+static int netlink_close(struct sock* sock, int force)
 {
     struct nlsock* nls = to_nlsock(sock);
 

@@ -35,14 +35,13 @@ struct sockdriver_ops {
     ssize_t (*sop_send)(struct sock* sock, struct iov_grant_iter* iter,
                         size_t len, const struct sockdriver_data* ctl,
                         socklen_t ctl_len, const struct sockaddr* addr,
-                        socklen_t addr_len, endpoint_t user_endpt, int flags,
-                        size_t min);
+                        socklen_t addr_len, endpoint_t user_endpt, int flags);
     int (*sop_recv_check)(struct sock* sock, endpoint_t user_endpt, int flags);
     ssize_t (*sop_recv)(struct sock* sock, struct iov_grant_iter* iter,
                         size_t len, const struct sockdriver_data* ctl,
                         socklen_t* ctl_len, struct sockaddr* addr,
                         socklen_t* addr_len, endpoint_t user_endpt, int flags,
-                        size_t min, int* rflags);
+                        int* rflags);
     __poll_t (*sop_poll)(struct sock* sock);
     int (*sop_getsockopt)(struct sock* sock, int level, int name,
                           const struct sockdriver_data* data, socklen_t* len);
@@ -50,7 +49,7 @@ struct sockdriver_ops {
                           const struct sockdriver_data* data, socklen_t len);
     int (*sop_getsockname)(struct sock* sock, struct sockaddr* addr,
                            socklen_t* addr_len);
-    int (*sop_close)(struct sock* sock, int force, int non_block);
+    int (*sop_close)(struct sock* sock, int force);
     void (*sop_free)(struct sock* sock);
 };
 
@@ -59,6 +58,7 @@ struct sockdriver {
                           struct sock** sock,
                           const struct sockdriver_ops** ops);
     void (*sd_poll)(void);
+    void (*sd_alarm)(clock_t timestamp);
     void (*sd_other)(MESSAGE* msg);
 };
 
@@ -76,6 +76,8 @@ void sockdriver_wakeup(sockdriver_worker_id_t tid);
 void sockdriver_set_workers(size_t num_workers);
 
 void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid);
+
+void sockdriver_set_shutdown(struct sock* sock, unsigned int flags);
 
 void sockdriver_suspend(struct sock* sock, unsigned int event);
 void sockdriver_fire(struct sock* sock, unsigned int mask);

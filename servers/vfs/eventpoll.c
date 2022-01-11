@@ -101,7 +101,8 @@ struct ep_send_events_data {
 
 static __poll_t ep_item_poll(struct epitem* epi, struct poll_table* pt,
                              int notify);
-static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp);
+static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp,
+                                int may_block);
 static __poll_t ep_eventpoll_poll(struct file_desc* filp, __poll_t mask,
                                   struct poll_table* wait, struct fproc* fp);
 
@@ -576,7 +577,8 @@ static void ep_free(struct eventpoll* ep)
     free(ep);
 }
 
-static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp)
+static int ep_eventpoll_release(struct inode* pin, struct file_desc* filp,
+                                int may_block)
 {
     struct eventpoll* ep = filp->fd_private_data;
     if (ep) ep_free(ep);

@@ -12,5 +12,6 @@ extern MunitTest mmap_tests[];
 extern MunitTest netlink_tests[];
 extern MunitTest inotify_tests[];
 extern MunitTest pty_tests[];
+extern MunitTest tcp_tests[];
 
 #endif

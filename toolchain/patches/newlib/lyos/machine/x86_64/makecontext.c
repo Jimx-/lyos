@@ -22,8 +22,8 @@ void makecontext(ucontext_t* ucp, void (*func)(void), int argc, ...)
 
     stack_top = (unsigned long*)((uintptr_t)ucp->uc_stack.ss_sp +
                                  ucp->uc_stack.ss_size);
-    stack_top = (unsigned long*)((uintptr_t)stack_top & ~0xf);
     stack_top -= (1 + (argc > 6 ? argc - 6 : 0) + 1); /* args */
+    stack_top = (unsigned long*)(((uintptr_t)stack_top & ~0xf) - 8);
 
     _UC_MACHINE_SET_RBP(ucp, 0);
     _UC_MACHINE_SET_STACK(ucp, (__greg_t)stack_top);

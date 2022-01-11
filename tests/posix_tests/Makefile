@@ -1,5 +1,5 @@
 SRCS	= main.c pipe.c eventfd.c signalfd.c timerfd.c epoll.c uds.c dl.c mmap.c netlink.c \
-			inotify.c pty.c
+			inotify.c pty.c tcp.c
 PROG	= posix_tests
 
 CFLAGS  = -I..

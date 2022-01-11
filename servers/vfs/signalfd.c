@@ -168,7 +168,8 @@ static __poll_t signalfd_poll(struct file_desc* filp, __poll_t mask,
     return mask;
 }
 
-static int signalfd_release(struct inode* pin, struct file_desc* filp)
+static int signalfd_release(struct inode* pin, struct file_desc* filp,
+                            int may_block)
 {
     if (waitqueue_active(&fproc->signalfd_wq)) {
         waitqueue_wakeup_all(&fproc->signalfd_wq, (void*)(EPOLLHUP | POLLFREE));

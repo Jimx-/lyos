@@ -71,7 +71,7 @@ int do_open(void);
 int do_openat(void);
 int common_openat(int dfd, char* pathname, int flags, mode_t mode);
 int do_close(void);
-int close_fd(struct fproc* fp, int fd);
+int close_fd(struct fproc* fp, int fd, int may_block);
 int do_lseek(void);
 int request_mknod(endpoint_t fs_ep, dev_t dev, ino_t num, uid_t uid, gid_t gid,
                   char* last_component, mode_t mode, dev_t sdev);
@@ -154,7 +154,7 @@ void unlock_filps(struct file_desc* filp1, struct file_desc* filp2);
 struct file_desc* get_filp(struct fproc* fp, int fd, rwlock_type_t lock_type);
 void install_filp(struct fproc* fp, int fd, struct file_desc* filp);
 void set_close_on_exec(struct fproc* fp, int fd, int flag);
-int close_filp(struct file_desc* filp);
+int close_filp(struct file_desc* filp, int may_block);
 int get_fd(struct fproc* fp, int start, mode_t bits, int* fd,
            struct file_desc** fpp);
 int do_copyfd(void);

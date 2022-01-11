@@ -28,6 +28,7 @@ typedef int32_t sockid_t;
 #define SFL_ACCEPTCONN 0x100
 #define SFL_LINGER     0x200
 #define SFL_BROADCAST  0x400
+#define SFL_CLOSING    0x800
 
 struct sock_cred {
     pid_t pid;
@@ -76,6 +77,7 @@ struct sockdriver_data {
 #define sock_peercred(sock)          ((sock)->peercred)
 #define sock_is_listening(sock)      (!!((sock)->flags & SFL_ACCEPTCONN))
 #define sock_is_shutdown(sock, mask) ((sock)->flags & (mask))
+#define sock_is_closing(sock)        (!!((sock)->flags & SFL_CLOSING))
 
 struct sock* sock_get(sockid_t id);
 void sock_free(struct sock* sock);
@@ -92,7 +94,14 @@ static inline void sock_set_error(struct sock* sock, int err)
     sock->err = err;
 }
 
-static inline int sock_rcvlowat(const struct sock* sock, int waitall, int len)
+static inline int sock_sndlowat(const struct sock* sock, size_t len)
+{
+    int v = min(sock->sndlowat, len);
+    return v ?: 1;
+}
+
+static inline int sock_rcvlowat(const struct sock* sock, int waitall,
+                                size_t len)
 {
     int v = waitall ? len : min(sock->rcvlowat, len);
 

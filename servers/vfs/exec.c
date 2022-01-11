@@ -390,7 +390,7 @@ int fs_exec(void)
     for (i = 0; i < fproc->files->max_fds; i++) {
         if (GET_BIT(fproc->files->close_on_exec, i)) {
             assert(fproc->files->filp[i]);
-            close_fd(fproc, i);
+            close_fd(fproc, i, FALSE);
         }
     }
 
@@ -450,6 +450,7 @@ static int setup_stack_elf(struct vfs_exec_info* execi, char* stack,
         arg_str++;
     }
 
+    assert((char*)arg_str <= stack + *stack_size);
     size_t strings_len = stack + *stack_size - (char*)arg_str;
 
     static char auxv_buf[PROC_ORIGIN_STACK];

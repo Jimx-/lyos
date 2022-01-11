@@ -86,6 +86,25 @@ void sockdriver_clone(struct sock* sock, struct sock* newsock, sockid_t newid)
     newsock->linger = sock->linger;
 }
 
+void sockdriver_set_shutdown(struct sock* sock, unsigned int flags)
+{
+    unsigned int mask;
+
+    flags &= ~(unsigned int)sock->flags;
+
+    if (flags != 0) {
+        sock->flags |= flags;
+
+        mask = 0;
+        if (flags & SFL_SHUT_RD) mask |= SEV_RECV;
+        if (flags & SFL_SHUT_WR) mask |= SEV_SEND;
+        if (sock_is_listening(sock)) mask |= SEV_ACCEPT;
+
+        assert(mask);
+        sockdriver_fire(sock, mask);
+    }
+}
+
 void sock_free(struct sock* sock)
 {
     const struct sockdriver_ops* ops;
@@ -452,7 +471,6 @@ static ssize_t sockdriver_send(sockid_t id, struct iov_grant_iter* data_iter,
                                int flags)
 {
     struct sock* sock;
-    size_t min;
     ssize_t retval;
 
     if ((sock = sock_get(id)) == NULL) return -EINVAL;
@@ -479,13 +497,10 @@ static ssize_t sockdriver_send(sockid_t id, struct iov_grant_iter* data_iter,
 
     do {
         if (!sockdriver_has_suspended(sock, SEV_SEND)) {
-            min = sock->sndlowat;
-            if (min > data_len) min = data_len;
-
             /* try if there is no suspended sender */
-            retval = sock->ops->sop_send(sock, data_iter, data_len, ctl_data,
-                                         ctl_len, addr, addr_len, user_endpt,
-                                         flags, min);
+            retval =
+                sock->ops->sop_send(sock, data_iter, data_len, ctl_data,
+                                    ctl_len, addr, addr_len, user_endpt, flags);
             break;
         }
 
@@ -566,7 +581,6 @@ static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
     int inflags;
     int oob;
     int check_error = FALSE;
-    size_t min;
     ssize_t retval;
 
     inflags = *flags;
@@ -587,16 +601,10 @@ static ssize_t sockdriver_recv(sockid_t id, struct iov_grant_iter* data_iter,
 
     do {
         if (oob || !sockdriver_has_suspended(sock, SEV_RECV)) {
-            if (!oob && sock->err == 0) {
-                min = sock->rcvlowat;
-                if (min > data_len) min = data_len;
-            } else
-                min = 0;
-
             /* try if there is no suspended receiver */
             retval = sock->ops->sop_recv(sock, data_iter, data_len, ctl_data,
                                          ctl_len, addr, addr_len, user_endpt,
-                                         inflags, min, flags);
+                                         inflags, flags);
             break;
         }
 
@@ -1054,11 +1062,25 @@ static void do_close(MESSAGE* msg)
     force = ((sock->flags & SFL_LINGER) && sock->linger == 0);
 
     if (sock->ops->sop_close)
-        retval = sock->ops->sop_close(sock, force, !!(flags & SDEV_NONBLOCK));
+        retval = sock->ops->sop_close(sock, force);
     else
         retval = 0;
 
-    if (retval == OK) sock_free(sock);
+    assert(retval == 0 || retval == SUSPEND);
+
+    if (retval == SUSPEND) {
+        sock->flags |= SFL_CLOSING;
+
+        retval = 0;
+
+        if (force) goto reply;
+
+        if (!(flags & SDEV_NONBLOCK)) {
+            sockdriver_suspend(sock, SEV_CLOSE);
+            sock_free(sock);
+        }
+    } else
+        sock_free(sock);
 
 reply:
     send_generic_reply(src, req_id, retval);
@@ -1078,8 +1100,11 @@ void sockdriver_fire(struct sock* sock, unsigned int mask)
 {
     struct worker_thread *wp, *tmp;
     __poll_t ops, retval;
+    int release_sock;
 
     if (mask & SEV_CONNECT) mask |= SEV_SEND;
+
+    release_sock = (mask & SEV_CLOSE) && list_empty(&sock->wq);
 
     list_for_each_entry_safe(wp, tmp, &sock->wq, list)
     {
@@ -1105,6 +1130,11 @@ void sockdriver_fire(struct sock* sock, unsigned int mask)
             }
         }
     }
+
+    if (release_sock) {
+        assert(sock_is_closing(sock));
+        sock_free(sock);
+    }
 }
 
 void sockdriver_init(void)
@@ -1118,6 +1148,17 @@ void sockdriver_init(void)
 
 void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
 {
+    if (msg->type == NOTIFY_MSG) {
+        switch (msg->source) {
+        case CLOCK:
+            if (sd->sd_alarm) sd->sd_alarm(msg->TIMESTAMP);
+            break;
+        default:
+            if (sd->sd_other) sd->sd_other(msg);
+            break;
+        }
+    }
+
     switch (msg->type) {
     case SDEV_SOCKET:
         do_socket(sd, msg);

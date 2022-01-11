@@ -142,6 +142,8 @@ int serv_exec(endpoint_t target, char* exec, int exec_len, char* progname,
     // ps.ps_envstr = vsp + envp_offset;
     ps.ps_envstr = NULL;
 
+    vsp = (char*)((unsigned long)vsp & ~0xf);
+
     return kernel_exec(target, vsp, progname, (void*)execi.entry_point, &ps);
 }
 

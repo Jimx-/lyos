@@ -36,7 +36,7 @@ struct file_operations {
     __poll_t (*poll)(struct file_desc*, __poll_t, struct poll_table*,
                      struct fproc*);
     int (*open)(int, struct inode*, struct file_desc*);
-    int (*release)(struct inode*, struct file_desc*);
+    int (*release)(struct inode*, struct file_desc*, int);
 };
 
 struct fsnotify_mark_connector;

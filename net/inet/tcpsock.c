@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <lyos/idr.h>
 #include <assert.h>
+#include <sys/epoll.h>
 
 #include <lwip/tcp.h>
 
@@ -14,6 +15,9 @@
 
 #define TCP_DEF_SNDBUF 32768
 #define TCP_DEF_RCVBUF 32768
+
+#define TCP_POLL_REG_INTERVAL   10
+#define TCP_POLL_CLOSE_INTERVAL 1
 
 struct tcpsock {
     struct ipsock ipsock;
@@ -38,6 +42,7 @@ struct tcpsock {
         struct pbuf** tailp;
         size_t len;
         size_t head_off;
+        size_t unacked_len;
     } recv_queue;
 };
 
@@ -45,6 +50,9 @@ struct tcpsock {
 
 #define tcpsock_get_sock(tcp)     ipsock_get_sock(&(tcp)->ipsock)
 #define tcpsock_is_listening(tcp) sock_is_listening(tcpsock_get_sock(tcp))
+#define tcpsock_is_shutdown(tcp, mask) \
+    sock_is_shutdown(tcpsock_get_sock(tcp), mask)
+#define tcpsock_is_closing(tcp) sock_is_closing(tcpsock_get_sock(tcp))
 
 #define tcpsock_get_sndbuf(tcp) ipsock_get_sndbuf(&(tcp)->ipsock)
 #define tcpsock_get_rcvbuf(tcp) ipsock_get_rcvbuf(&(tcp)->ipsock)
@@ -52,7 +60,7 @@ struct tcpsock {
 #define tcpsock_get_flags(tcp)        ipsock_get_flags(&(tcp)->ipsock)
 #define tcpsock_get_flag(tcp, flag)   ipsock_get_flag(&(tcp)->ipsock, flag)
 #define tcpsock_set_flag(tcp, flag)   ipsock_set_flag(&(tcp)->ipsock, flag)
-#define tcpsock_clear_flag(tcp, flag) ipsock_clear_flags(&(tcp)->ipsock, flag)
+#define tcpsock_clear_flag(tcp, flag) ipsock_clear_flag(&(tcp)->ipsock, flag)
 
 extern struct idr sock_idr;
 
@@ -68,12 +76,14 @@ static ssize_t tcpsock_send(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t ctl_len, const struct sockaddr* addr,
                             socklen_t addr_len, endpoint_t user_endpt,
-                            int flags, size_t min);
+                            int flags);
 static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t* ctl_len, struct sockaddr* addr,
                             socklen_t* addr_len, endpoint_t user_endpt,
-                            int flags, size_t min, int* rflags);
+                            int flags, int* rflags);
+__poll_t tcpsock_poll(struct sock* sock);
+static int tcpsock_close(struct sock* sock, int force);
 static void tcpsock_free(struct sock* sock);
 
 const struct sockdriver_ops tcpsock_ops = {
@@ -83,6 +93,8 @@ const struct sockdriver_ops tcpsock_ops = {
     .sop_accept = tcpsock_accept,
     .sop_send = tcpsock_send,
     .sop_recv = tcpsock_recv,
+    .sop_poll = tcpsock_poll,
+    .sop_close = tcpsock_close,
     .sop_free = tcpsock_free,
 };
 
@@ -102,9 +114,66 @@ static void tcpsock_reset_recv(struct tcpsock* tcp)
     tcp->recv_queue.tailp = NULL;
     tcp->recv_queue.len = 0;
     tcp->recv_queue.head_off = 0;
+    tcp->recv_queue.unacked_len = 0;
 }
 
-static int tcpsock_cleanup(struct tcpsock* tcp, int may_free) { return FALSE; }
+static void tcpsock_clear_send(struct tcpsock* tcp)
+{
+    struct pbuf* head;
+
+    assert(!tcp->pcb);
+
+    while ((head = tcp->send_queue.head) != NULL) {
+        tcp->send_queue.head = head->next;
+        pbuf_free(head);
+    }
+
+    tcpsock_reset_send(tcp);
+}
+
+static size_t tcpsock_clear_recv(struct tcpsock* tcp, int ack)
+{
+    struct pbuf* head;
+    size_t len;
+
+    len = tcp->recv_queue.len;
+
+    while ((head = tcp->recv_queue.head) != NULL) {
+        tcp->recv_queue.head = head->next;
+        pbuf_free(head);
+    }
+
+    if (ack && tcp->pcb && tcp->recv_queue.unacked_len)
+        tcp_recved(tcp->pcb, tcp->recv_queue.unacked_len);
+
+    tcpsock_reset_recv(tcp);
+
+    return len;
+}
+
+static int tcpsock_cleanup(struct tcpsock* tcp, int may_free)
+{
+    int release;
+
+    assert(!tcp->pcb);
+
+    tcpsock_clear_send(tcp);
+
+    if (tcp->listener) {
+        assert(!list_empty(&tcp->list));
+        list_del(&tcp->list);
+        tcp->listener = NULL;
+        release = TRUE;
+    } else
+        release = tcpsock_is_closing(tcp);
+
+    if (release && may_free) {
+        tcpsock_clear_recv(tcp, FALSE);
+        sockdriver_fire(tcpsock_get_sock(tcp), SEV_CLOSE);
+    }
+
+    return release;
+}
 
 sockid_t tcpsock_socket(int domain, int protocol, struct sock** sock,
                         const struct sockdriver_ops** ops)
@@ -169,9 +238,77 @@ static int tcpsock_clone(struct tcpsock* listener, struct tcp_pcb* pcb)
     return 0;
 }
 
+static inline int tcpsock_may_close(struct tcpsock* tcp)
+{
+    assert(tcp->pcb);
+
+    return tcpsock_get_flag(tcp, TCPF_SENT_FIN) &&
+           tcpsock_get_flag(tcp, TCPF_RCVD_FIN) && tcp->send_queue.len == 0;
+}
+
+static void tcpsock_pcb_close(struct tcpsock* tcp)
+{
+    err_t err;
+
+    assert(tcp->pcb);
+    assert(tcp->send_queue.len == 0);
+
+    if (!tcpsock_is_listening(tcp)) {
+        tcp_recv(tcp->pcb, NULL);
+        tcp_sent(tcp->pcb, NULL);
+        tcp_err(tcp->pcb, NULL);
+        tcp_poll(tcp->pcb, NULL, TCP_POLL_REG_INTERVAL);
+    }
+    tcp_arg(tcp->pcb, NULL);
+
+    err = tcp_close(tcp->pcb);
+    assert(err == ERR_OK);
+
+    tcp->pcb = NULL;
+}
+
+static int tcpsock_finish_close(struct tcpsock* tcp)
+{
+    assert(tcp->send_queue.len == 0);
+    assert(!tcp->listener);
+
+    tcpsock_pcb_close(tcp);
+
+    if (tcpsock_is_closing(tcp)) {
+        assert(tcp->recv_queue.len == 0);
+
+        sockdriver_fire(tcpsock_get_sock(tcp), SEV_CLOSE);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static err_t tcpsock_event_poll(void* arg, struct tcp_pcb* pcb)
+{
+    struct tcpsock* tcp = (struct tcpsock*)arg;
+
+    if (tcpsock_is_closing(tcp) && tcpsock_get_flag(tcp, TCPF_SENT_FIN) &&
+        tcp->pcb->unsent == NULL && tcp->pcb->unacked == NULL) {
+        assert(tcp->send_queue.len == 0);
+
+        tcpsock_finish_close(tcp);
+    }
+
+    return ERR_OK;
+}
+
 static void tcpsock_pcb_abort(struct tcpsock* tcp)
 {
     assert(tcp->pcb);
+
+    tcp_recv(tcp->pcb, NULL);
+    tcp_sent(tcp->pcb, NULL);
+    tcp_err(tcp->pcb, NULL);
+    tcp_poll(tcp->pcb, NULL, TCP_POLL_REG_INTERVAL);
+
+    tcp_arg(tcp->pcb, NULL);
 
     tcp_abort(tcp->pcb);
     tcp->pcb = NULL;
@@ -196,6 +333,86 @@ static int tcpsock_bind(struct sock* sock, struct sockaddr* addr,
     err = tcp_bind(tcp->pcb, &ipaddr, port);
 
     return convert_err(err);
+}
+
+static int tcpsock_pcb_enqueue(struct tcpsock* tcp)
+{
+    int enqueued;
+    size_t space;
+    struct pbuf* unsent;
+    int flags;
+    err_t err;
+
+    enqueued = FALSE;
+
+    while ((unsent = tcp->send_queue.unsent) != NULL) {
+        size_t chunk;
+
+        if (!(space = tcp_sndbuf(tcp->pcb))) break;
+
+        assert(unsent->len >= tcp->send_queue.unsent_off);
+        chunk = unsent->len - tcp->send_queue.unsent_off;
+        if (!chunk) break;
+
+        if (chunk > space) chunk = space;
+
+        flags = 0;
+        if (chunk < unsent->len || unsent->next) flags = TCP_WRITE_FLAG_MORE;
+
+        err = tcp_write(tcp->pcb, unsent->payload + tcp->send_queue.unsent_off,
+                        chunk, flags);
+        if (err != ERR_OK) break;
+
+        enqueued = TRUE;
+
+        tcp->send_queue.unsent_off += chunk;
+
+        if (tcp->send_queue.unsent_off < unsent->tot_len) break;
+
+        tcp->send_queue.unsent_off = 0;
+        tcp->send_queue.unsent = unsent->next;
+    }
+
+    if ((!tcp->send_queue.unsent ||
+         tcp->send_queue.unsent_off == tcp->send_queue.unsent->len) &&
+        tcpsock_is_shutdown(tcp, SFL_SHUT_WR) &&
+        !tcpsock_get_flag(tcp, TCPF_SENT_FIN)) {
+        err = tcp_shutdown(tcp->pcb, FALSE, TRUE);
+
+        if (err == ERR_OK) {
+            tcpsock_set_flag(tcp, TCPF_SENT_FIN);
+            enqueued = TRUE;
+        } else {
+            assert(err == ERR_MEM);
+            tcp->pcb->flags &= ~TF_CLOSEPEND;
+            tcpsock_set_flag(tcp, TCPF_FULL);
+        }
+    }
+
+    return enqueued;
+}
+
+static int tcpsock_pcb_send(struct tcpsock* tcp, int set_error)
+{
+    err_t err;
+    int retval;
+
+    assert(tcp->pcb);
+    err = tcp_output(tcp->pcb);
+
+    if (err != ERR_OK && err != ERR_MEM) {
+        tcpsock_pcb_abort(tcp);
+
+        retval = convert_err(err);
+
+        if (!tcpsock_cleanup(tcp, TRUE)) {
+            if (set_error) sock_set_error(tcpsock_get_sock(tcp), retval);
+        }
+
+        return retval;
+    }
+
+    return 0;
 }
 
 static err_t tcpsock_event_sent(void* arg, struct tcp_pcb* pcb, uint16_t len)
@@ -231,8 +448,65 @@ static err_t tcpsock_event_sent(void* arg, struct tcp_pcb* pcb, uint16_t len)
 
     if (!tcp->send_queue.head) tcp->send_queue.tail = NULL;
 
+    if (tcpsock_may_close(tcp)) {
+        if (tcpsock_finish_close(tcp)) return ERR_OK;
+    } else {
+        tcpsock_clear_flag(tcp, TCPF_FULL);
+
+        if (tcpsock_pcb_enqueue(tcp)) {
+            if (tcpsock_may_close(tcp) && tcpsock_finish_close(tcp))
+                return ERR_OK;
+        }
+    }
+
     sockdriver_fire(tcpsock_get_sock(tcp), SEV_SEND);
+
     return ERR_OK;
+}
+
+static void tcpsock_ack_recv(struct tcpsock* tcp)
+{
+    size_t rcvbuf;
+    size_t left, delta, ack;
+
+    assert(tcp->pcb);
+
+    rcvbuf = tcpsock_get_rcvbuf(tcp);
+
+    if (rcvbuf > tcp->recv_queue.len && tcp->recv_queue.unacked_len) {
+        left = TCP_WND - tcp->recv_queue.unacked_len;
+        delta = rcvbuf - tcp->recv_queue.len;
+
+        if (left < delta) {
+            ack = delta - left;
+
+            if (ack > tcp->recv_queue.unacked_len)
+                ack = tcp->recv_queue.unacked_len;
+
+            tcp_recved(tcp->pcb, ack);
+
+            tcp->recv_queue.unacked_len -= ack;
+        }
+    }
+}
+
+static int tcpsock_try_merge(struct pbuf** nextp, struct pbuf* tail,
+                             struct pbuf* pbuf)
+{
+    assert(*nextp == tail);
+    assert(tail->next == pbuf);
+
+    if (tail->tot_len - tail->len >= pbuf->len) {
+        memcpy((char*)tail->payload + tail->len, pbuf->payload, pbuf->len);
+        tail->len += pbuf->len;
+        tail->next = pbuf->next;
+
+        pbuf_free(pbuf);
+
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 static err_t tcpsock_event_recv(void* arg, struct tcp_pcb* pcb,
@@ -245,8 +519,32 @@ static err_t tcpsock_event_recv(void* arg, struct tcp_pcb* pcb,
 
     assert(tcp);
     assert(pcb == tcp->pcb);
-
     assert(err == ERR_OK);
+
+    if (!pbuf) {
+        tcpsock_set_flag(tcp, TCPF_RCVD_FIN);
+
+        if (!tcpsock_is_shutdown(tcp, SFL_SHUT_RD))
+            sockdriver_fire(tcpsock_get_sock(tcp), SEV_RECV);
+
+        if (tcpsock_may_close(tcp)) tcpsock_finish_close(tcp);
+
+        return ERR_OK;
+    }
+
+    if (tcpsock_is_closing(tcp)) {
+        tcpsock_pcb_abort(tcp);
+        tcpsock_cleanup(tcp, TRUE);
+        pbuf_free(pbuf);
+
+        return ERR_ABRT;
+    }
+
+    if (tcpsock_is_shutdown(tcp, SFL_SHUT_RD)) {
+        tcp_recved(tcp->pcb, pbuf->tot_len);
+        pbuf_free(pbuf);
+        return ERR_OK;
+    }
 
     len = pbuf->tot_len;
 
@@ -259,6 +557,11 @@ static err_t tcpsock_event_recv(void* arg, struct tcp_pcb* pcb,
 
         tail->next = pbuf;
         pbuf->tot_len = pbuf->len;
+
+        if (tcpsock_try_merge(prevp, tail, pbuf)) {
+            tail = *prevp;
+            pbuf = tail->next;
+        }
 
         if (pbuf) prevp = &tail->next;
     } else {
@@ -278,6 +581,9 @@ static err_t tcpsock_event_recv(void* arg, struct tcp_pcb* pcb,
 
     tcp->recv_queue.tailp = prevp;
     tcp->recv_queue.len += len;
+    tcp->recv_queue.unacked_len += len;
+
+    tcpsock_ack_recv(tcp);
 
     sockdriver_fire(tcpsock_get_sock(tcp), SEV_RECV);
 
@@ -305,6 +611,7 @@ static err_t tcpsock_event_accept(void* arg, struct tcp_pcb* pcb, err_t err)
     tcp_recv(pcb, tcpsock_event_recv);
     tcp_sent(pcb, tcpsock_event_sent);
     tcp_err(pcb, tcpsock_event_err);
+    tcp_poll(pcb, tcpsock_poll, TCP_POLL_REG_INTERVAL);
 
     sockdriver_fire(tcpsock_get_sock(tcp), SEV_ACCEPT);
 
@@ -432,6 +739,7 @@ static int tcpsock_connect(struct sock* sock, struct sockaddr* addr,
     tcp_recv(tcp->pcb, tcpsock_event_recv);
     tcp_sent(tcp->pcb, tcpsock_event_sent);
     tcp_err(tcp->pcb, tcpsock_event_err);
+    tcp_poll(tcp->pcb, tcpsock_event_poll, TCP_POLL_REG_INTERVAL);
 
     tcpsock_set_flag(tcp, TCPF_CONNECTING);
 
@@ -441,86 +749,26 @@ static int tcpsock_connect(struct sock* sock, struct sockaddr* addr,
     return sock_error(sock);
 }
 
-static int tcpsock_pcb_enqueue(struct tcpsock* tcp)
-{
-    int enqueued;
-    size_t space;
-    struct pbuf* unsent;
-    int flags;
-    err_t err;
-
-    enqueued = FALSE;
-
-    while ((unsent = tcp->send_queue.unsent) != NULL) {
-        size_t chunk;
-
-        if (!(space = tcp_sndbuf(tcp->pcb))) break;
-
-        assert(unsent->len >= tcp->send_queue.unsent_off);
-        chunk = unsent->len - tcp->send_queue.unsent_off;
-        if (!chunk) break;
-
-        if (chunk > space) chunk = space;
-
-        flags = 0;
-        if (chunk < unsent->len || unsent->next) flags = TCP_WRITE_FLAG_MORE;
-
-        err = tcp_write(tcp->pcb, unsent->payload + tcp->send_queue.unsent_off,
-                        chunk, flags);
-        if (err != ERR_OK) break;
-
-        enqueued = TRUE;
-
-        tcp->send_queue.unsent_off += chunk;
-
-        if (tcp->send_queue.unsent_off < unsent->tot_len) break;
-
-        tcp->send_queue.unsent_off = 0;
-        tcp->send_queue.unsent = unsent->next;
-    }
-
-    return enqueued;
-}
-
-static int tcpsock_pcb_send(struct tcpsock* tcp, int set_error)
-{
-    err_t err;
-    int retval;
-
-    assert(tcp->pcb);
-    err = tcp_output(tcp->pcb);
-
-    if (err != ERR_OK && err != ERR_MEM) {
-        tcpsock_pcb_abort(tcp);
-
-        retval = convert_err(err);
-
-        if (!tcpsock_cleanup(tcp, TRUE)) {
-            if (set_error) sock_set_error(tcpsock_get_sock(tcp), retval);
-        }
-
-        return retval;
-    }
-
-    return 0;
-}
-
 static ssize_t tcpsock_send(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t ctl_len, const struct sockaddr* addr,
                             socklen_t addr_len, endpoint_t user_endpt,
-                            int flags, size_t min)
+                            int flags)
 {
     struct tcpsock* tcp = to_tcpsock(sock);
-    size_t sndbuf, min_send;
+    size_t sndbuf, min;
     int need_wait;
     struct pbuf *first, *last, *tail, *next;
     size_t left, off, tail_off, sent = 0;
     ssize_t retval;
 
+    sndbuf = tcpsock_get_sndbuf(tcp);
+    min = sock_sndlowat(tcpsock_get_sock(tcp), len);
+    if (min > sndbuf) min = sndbuf;
+    assert(min > 0);
+
 restart:
     need_wait = FALSE;
-    sndbuf = tcpsock_get_sndbuf(tcp);
 
     if (!tcp->pcb) return -EPIPE;
 
@@ -538,12 +786,8 @@ restart:
         return -EPIPE;
     }
 
-    min_send = min;
-    if (min_send > sndbuf) min_send = sndbuf;
-    assert(min_send > 0);
-
     if (!need_wait) {
-        need_wait = tcp->send_queue.len + min_send > sndbuf;
+        need_wait = tcp->send_queue.len + min > sndbuf;
     }
 
     if (need_wait) {
@@ -574,6 +818,7 @@ restart:
     if (left > len) left = len;
 
     if (((tail = tcp->send_queue.tail) != NULL) && tail->len < tail->tot_len) {
+        /* Append data to the send queue tail buffer if there is any room. */
         assert(tail->len);
         tail_off = tail->len;
 
@@ -588,6 +833,7 @@ restart:
 
     first = last = NULL;
     while (off < left) {
+        /* Allocate new buffers for the send data. */
         size_t chunk;
 
         next = pbuf_alloc(PBUF_RAW, TCP_BUF_SIZE, PBUF_RAM);
@@ -608,7 +854,8 @@ restart:
         off += chunk;
     }
 
-    if (off >= min_send) {
+    /* Copy data from user or sleep if we cannot meet the send low watermark. */
+    if (off >= min) {
         if (tail) {
             tail->next = first;
             next = tail;
@@ -718,36 +965,30 @@ static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
                             size_t len, const struct sockdriver_data* ctl,
                             socklen_t* ctl_len, struct sockaddr* addr,
                             socklen_t* addr_len, endpoint_t user_endpt,
-                            int flags, size_t min, int* rflags)
+                            int flags, int* rflags)
 {
     struct tcpsock* tcp = to_tcpsock(sock);
     int may_wait;
-    size_t left = len, copied = 0, target;
-    int need_wait;
+    size_t copied = 0, target;
     ssize_t retval;
+
+    target = sock_rcvlowat(sock, flags & MSG_WAITALL, len);
+    if (target > tcpsock_get_rcvbuf(tcp)) target = tcpsock_get_rcvbuf(tcp);
 
     do {
         size_t chunk;
-
-        need_wait = FALSE;
 
         if (tcp->pcb != NULL &&
             (tcp->pcb->state == CLOSED || tcp->pcb->state == LISTEN))
             return -ENOTCONN;
 
         may_wait = tcpsock_may_wait(tcp);
+        if (!may_wait) target = 1;
 
-        if (!may_wait)
-            min = 1;
-        else if (min > tcpsock_get_rcvbuf(tcp))
-            min = tcpsock_get_rcvbuf(tcp);
+        if (!tcp->recv_queue.len) {
+            /* No data in receive queue. */
 
-        need_wait = tcp->recv_queue.len < min;
-
-        target = (flags & MSG_WAITALL) ? len : min;
-
-        if (need_wait) {
-            if (!may_wait) return 0;
+            if (!may_wait) return 0; /* EOF */
 
             if (copied >= target) break;
 
@@ -766,7 +1007,7 @@ static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
         }
 
         chunk = tcp->recv_queue.len;
-        if (chunk > left) chunk = left;
+        if (chunk > len) chunk = len;
 
         assert(tcp->recv_queue.head != NULL);
         assert(tcp->recv_queue.head_off < tcp->recv_queue.head->len);
@@ -776,17 +1017,17 @@ static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
         if (retval < 0) return retval;
         retval = 0;
 
-        left -= chunk;
+        len -= chunk;
         copied += chunk;
 
         if (!(flags & MSG_PEEK)) {
+            /* Clean up data we have read. */
             struct pbuf* tail;
-
-            tcp->recv_queue.len -= chunk;
+            size_t left = chunk;
 
             while ((tail = tcp->recv_queue.head) != NULL &&
-                   chunk >= (size_t)tail->len - tcp->recv_queue.head_off) {
-                chunk -= (size_t)tail->len - tcp->recv_queue.head_off;
+                   left >= (size_t)tail->len - tcp->recv_queue.head_off) {
+                left -= (size_t)tail->len - tcp->recv_queue.head_off;
 
                 tcp->recv_queue.head = tail->next;
                 tcp->recv_queue.head_off = 0;
@@ -799,19 +1040,130 @@ static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
                 pbuf_free(tail);
             }
 
-            if (chunk > 0) {
+            if (left > 0) {
                 assert(tcp->recv_queue.head);
-                tcp->recv_queue.head_off += chunk;
+                tcp->recv_queue.head_off += left;
                 assert(tcp->recv_queue.head_off < tcp->recv_queue.head->len);
             }
+
+            tcp->recv_queue.len -= chunk;
+
+            if (tcp->pcb) tcpsock_ack_recv(tcp);
         }
-    } while (left);
+    } while (len > 0);
 
     return copied ?: retval;
+}
+
+__poll_t tcpsock_poll(struct sock* sock)
+{
+    struct tcpsock* tcp = to_tcpsock(sock);
+    int state = tcp->pcb->state;
+    __poll_t mask = 0;
+
+    if (state == LISTEN) {
+        /* LISTEN is a special case. */
+        return list_empty(&tcp->queue) ? 0 : (EPOLLIN | EPOLLRDNORM);
+    }
+
+    if ((tcpsock_is_shutdown(tcp, SFL_SHUT_RD) &&
+         tcpsock_is_shutdown(tcp, SFL_SHUT_WR)) ||
+        state == CLOSED)
+        mask |= EPOLLHUP;
+
+    if (tcpsock_is_shutdown(tcp, SFL_SHUT_RD) ||
+        tcpsock_get_flag(tcp, TCPF_RCVD_FIN))
+        mask |= EPOLLIN | EPOLLRDNORM | EPOLLRDHUP;
+
+    if (state != SYN_SENT && state != SYN_RCVD) {
+        int target = sock_rcvlowat(sock, FALSE, INT_MAX);
+
+        if (tcp->recv_queue.len >= target) mask |= EPOLLIN | EPOLLRDNORM;
+
+        if (!tcpsock_is_shutdown(tcp, SFL_SHUT_WR)) {
+            size_t sndbuf = tcpsock_get_sndbuf(tcp);
+            target = sock_sndlowat(sock, sndbuf);
+
+            assert(tcp->send_queue.len <= sndbuf);
+            if (target <= sndbuf - tcp->send_queue.len)
+                mask |= EPOLLOUT | EPOLLWRNORM;
+        } else
+            mask |= EPOLLOUT | EPOLLWRNORM;
+    }
+
+    if (tcpsock_get_sock(tcp)->err) mask |= EPOLLERR;
+
+    return mask;
+}
+
+static void tcpsock_send_fin(struct tcpsock* tcp)
+{
+    sockdriver_set_shutdown(tcpsock_get_sock(tcp), SFL_SHUT_WR);
+
+    if (tcpsock_pcb_enqueue(tcp)) {
+        if (tcpsock_may_close(tcp))
+            tcpsock_finish_close(tcp);
+        else
+            tcpsock_pcb_send(tcp, TRUE);
+    }
+}
+
+static int tcpsock_close(struct sock* sock, int force)
+{
+    struct tcpsock* tcp = to_tcpsock(sock);
+    struct tcpsock *queued, *tmp;
+    size_t rlen;
+
+    assert(!tcp->listener);
+
+    if (tcpsock_is_listening(tcp)) {
+        list_for_each_entry_safe(queued, tmp, &tcp->queue, list)
+        {
+            tcpsock_pcb_abort(queued);
+            tcpsock_cleanup(queued, TRUE);
+        }
+    }
+
+    rlen = tcpsock_clear_recv(tcp, FALSE);
+
+    sockdriver_set_shutdown(tcpsock_get_sock(tcp), SFL_SHUT_RD);
+
+    if (tcp->pcb != NULL) {
+        switch (tcp->pcb->state) {
+        case CLOSE_WAIT:
+        case CLOSING:
+        case LAST_ACK:
+        case SYN_RCVD:
+        case ESTABLISHED:
+        case FIN_WAIT_1:
+            if (force || rlen > 0) break;
+
+            if (!tcpsock_is_shutdown(tcp, SFL_SHUT_WR))
+                tcpsock_send_fin(tcp);
+            else if (tcpsock_may_close(tcp))
+                tcpsock_pcb_close(tcp);
+
+            if (tcp->pcb == NULL) return 0;
+
+            tcp_poll(tcp->pcb, tcpsock_event_poll, TCP_POLL_CLOSE_INTERVAL);
+
+            return SUSPEND;
+
+        default:
+            tcpsock_pcb_close(tcp);
+            break;
+        }
+    }
+
+    if (tcp->pcb) tcpsock_pcb_abort(tcp);
+    tcpsock_cleanup(tcp, FALSE);
+
+    return 0;
 }
 
 static void tcpsock_free(struct sock* sock)
 {
     struct tcpsock* tcp = to_tcpsock(sock);
+    idr_remove(&sock_idr, sock_sockid(sock));
     free(tcp);
 }

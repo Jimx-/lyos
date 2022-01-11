@@ -192,7 +192,7 @@ int common_openat(int dfd, char* pathname, int flags, mode_t mode)
     return fd;
 }
 
-int close_fd(struct fproc* fp, int fd)
+int close_fd(struct fproc* fp, int fd, int may_block)
 {
     struct file_desc* filp = get_filp(fp, fd, RWL_WRITE);
     int retval;
@@ -209,7 +209,7 @@ int close_fd(struct fproc* fp, int fd)
                fd, fp->endpoint, filp->fd_inode->i_num, filp->fd_cnt,
                filp->fd_inode->i_cnt));
 
-    retval = close_filp(filp);
+    retval = close_filp(filp, may_block);
 
     install_filp(fp, fd, NULL);
     set_close_on_exec(fproc, fd, 0);
@@ -226,7 +226,7 @@ int do_close()
 {
     int fd = self->msg_in.FD;
 
-    return close_fd(fproc, fd);
+    return close_fd(fproc, fd, TRUE);
 }
 
 /**

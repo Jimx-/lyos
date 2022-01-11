@@ -165,7 +165,7 @@ int do_dup(void)
     if (fproc->files->filp[newfd] != NULL) {
         /* close the file */
         self->msg_out.FD = newfd;
-        close_fd(fproc, newfd);
+        close_fd(fproc, newfd, FALSE);
     }
 
     filp->fd_cnt++;
@@ -373,7 +373,7 @@ int do_mm_request(void)
         break;
     }
     case MMR_FDCLOSE: {
-        result = close_fd(mm_task, fd);
+        result = close_fd(mm_task, fd, FALSE);
         break;
     }
     }
