@@ -965,7 +965,7 @@ int ioctl(int fd, unsigned long request, ...)
 
     msg.type = IOCTL;
     msg.FD = fd;
-    msg.REQUEST = request;
+    msg.u.m3.m3l1 = request;
     msg.BUF = data;
 
     cmb();

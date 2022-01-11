@@ -31,7 +31,7 @@ struct file_operations {
     ssize_t (*read)(struct file_desc*, char*, size_t, loff_t*, struct fproc*);
     ssize_t (*write)(struct file_desc*, const char*, size_t, loff_t*,
                      struct fproc*);
-    int (*ioctl)(struct inode*, struct file_desc*, unsigned int, unsigned long,
+    int (*ioctl)(struct inode*, struct file_desc*, unsigned long, unsigned long,
                  struct fproc*);
     __poll_t (*poll)(struct file_desc*, __poll_t, struct poll_table*,
                      struct fproc*);

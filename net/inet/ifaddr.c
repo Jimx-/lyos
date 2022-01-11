@@ -51,3 +51,39 @@ int ifaddr_v4_add(struct if_device* ifdev, const struct sockaddr_in* addr,
 
     return 0;
 }
+
+int ifaddr_v4_get(struct if_device* ifdev, unsigned int num,
+                  struct sockaddr_in* addr, struct sockaddr_in* mask,
+                  struct sockaddr_in* bcast, struct sockaddr_in* dest)
+{
+    struct netif* netif;
+    socklen_t addr_len;
+
+    if (num != 0 || !ifdev->v4_set) return EADDRNOTAVAIL;
+
+    netif = &ifdev->netif;
+
+    if (addr) {
+        addr_len = sizeof(*addr);
+
+        addr_set_inet((struct sockaddr*)addr, &addr_len, netif_ip_addr4(netif),
+                      0);
+    }
+
+    if (mask) {
+        addr_len = sizeof(*mask);
+
+        addr_set_inet((struct sockaddr*)mask, &addr_len,
+                      netif_ip_netmask4(netif), 0);
+    }
+
+    if (bcast) {
+        bcast->sin_family = AF_UNSPEC;
+    }
+
+    if (dest) {
+        dest->sin_family = AF_UNSPEC;
+    }
+
+    return 0;
+}

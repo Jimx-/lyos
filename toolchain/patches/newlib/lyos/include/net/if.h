@@ -40,6 +40,14 @@ struct ifreq {
     };
 };
 
+struct ifconf {
+    int ifc_len;
+    union {
+        char* ifc_buf;
+        struct ifreq* ifc_req;
+    };
+};
+
 #define IFF_UP          0x1
 #define IFF_BROADCAST   0x2
 #define IFF_DEBUG       0x4

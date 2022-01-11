@@ -377,7 +377,7 @@ static ssize_t cdev_write(struct file_desc* filp, const char* buf, size_t count,
 }
 
 static int cdev_ioctl(struct inode* pin, struct file_desc* filp,
-                      unsigned int cmd, unsigned long arg, struct fproc* fp)
+                      unsigned long cmd, unsigned long arg, struct fproc* fp)
 {
     int retval;
 

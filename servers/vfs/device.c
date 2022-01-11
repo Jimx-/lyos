@@ -38,6 +38,7 @@ int do_ioctl(void)
 {
     int fd = self->msg_in.FD;
     int retval = 0;
+    unsigned long request = self->msg_in.u.m3.m3l1;
     struct file_desc* filp = get_filp(fproc, fd, RWL_READ);
     if (filp == NULL) return EBADF;
 
@@ -52,7 +53,7 @@ int do_ioctl(void)
         return ENOTTY;
     }
 
-    retval = filp->fd_fops->ioctl(pin, filp, self->msg_in.REQUEST,
+    retval = filp->fd_fops->ioctl(pin, filp, request,
                                   (unsigned long)self->msg_in.BUF, fproc);
 
     unlock_filp(filp);

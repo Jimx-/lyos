@@ -25,6 +25,9 @@ void ndev_check(void);
 
 /* ifconf.c */
 void ifconf_init(void);
+int ifconf_ioctl(struct sock* sock, unsigned long request,
+                 const struct sockdriver_data* data, endpoint_t user_endpt,
+                 int flags);
 
 /* loopback.c */
 void loopif_init(void);

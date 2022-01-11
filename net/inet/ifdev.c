@@ -224,3 +224,49 @@ void ifdev_update_link(struct if_device* ifdev, unsigned int link_state)
         }
     }
 }
+
+int ifdev_ifconf(struct ifconf* ifc, size_t size, endpoint_t user_endpt)
+{
+    struct if_device* ifdev;
+    char* pos;
+    size_t len;
+    size_t total = 0;
+    struct ifreq ifr;
+
+    pos = ifc->ifc_buf;
+    len = ifc->ifc_len;
+
+    list_for_each_entry(ifdev, &ifdev_list, list)
+    {
+        int done;
+
+        if (!pos)
+            done = size;
+        else {
+            if (len < size) break;
+            memset(&ifr, 0, sizeof(ifr));
+            strcpy(ifr.ifr_name, ifdev->name);
+            ifaddr_v4_get(ifdev, 0, (struct sockaddr_in*)&ifr.ifr_addr, NULL,
+                          NULL, NULL, NULL);
+
+            if (data_copy(user_endpt, pos + total, SELF, &ifr, size) != 0)
+                done = -EFAULT;
+            else
+                done = size;
+        }
+
+        if (done < 0) return EFAULT;
+
+        total += done;
+        len -= done;
+    }
+
+    ifc->ifc_len = total;
+    return 0;
+}
+
+int ifdev_set_mtu(struct if_device* ifdev, unsigned int mtu)
+{
+    ifdev->mtu = mtu;
+    return 0;
+}

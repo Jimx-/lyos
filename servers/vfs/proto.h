@@ -232,6 +232,8 @@ int sdev_setsockopt(endpoint_t src, dev_t dev, int level, int name, void* addr,
 int sdev_close(endpoint_t src, dev_t dev, int may_block);
 __poll_t sock_poll(struct file_desc* filp, __poll_t mask,
                    struct poll_table* wait, struct fproc* fp);
+int sock_ioctl(struct inode* pin, struct file_desc* filp, unsigned long cmd,
+               unsigned long arg, struct fproc* fp);
 void sdev_reply(MESSAGE* msg);
 
 /* vfs/socket.c */

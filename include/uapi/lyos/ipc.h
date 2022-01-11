@@ -937,6 +937,19 @@ BEGIN_MESS_DECL(mess_sockdriver_getset)
 }
 END_MESS_DECL(mess_sockdriver_getset)
 
+BEGIN_MESS_DECL(mess_sockdriver_ioctl)
+{
+    int req_id;
+    int sock_id;
+    unsigned long request;
+    __mgrant_id_t grant;
+    __endpoint_t endpoint;
+    int flags;
+
+    __u8 _pad[52 - sizeof(unsigned long)];
+}
+END_MESS_DECL(mess_sockdriver_ioctl)
+
 BEGIN_MESS_DECL(mess_devpts_req)
 {
     int status;
@@ -1074,6 +1087,7 @@ typedef struct {
         struct mess_sockdriver_poll_notify m_sockdriver_poll_notify;
         struct mess_sockdriver_select m_sockdriver_select;
         struct mess_sockdriver_getset m_sockdriver_getset;
+        struct mess_sockdriver_ioctl m_sockdriver_ioctl;
         struct mess_devpts_req m_devpts_req;
         struct mess_ndev_init m_ndev_init;
         struct mess_ndev_init_reply m_ndev_init_reply;

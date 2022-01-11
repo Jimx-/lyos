@@ -1,4 +1,8 @@
 #include <lyos/sysutils.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/ioctl.h>
 
 #include "inet.h"
 #include "ifdev.h"
@@ -27,4 +31,171 @@ void ifconf_init(void)
         panic("inet: failed to bring up loopback interface (%d)", retval);
 
     netif_set_default(&loopback->netif);
+}
+
+static int ifconf_ioctl_ifconf(unsigned long request,
+                               const struct sockdriver_data* data,
+                               endpoint_t user_endpt)
+{
+    struct ifconf ifconf;
+    int retval;
+
+    assert(request == SIOCGIFCONF);
+
+    if ((retval = sockdriver_copyin(data, 0, &ifconf, sizeof(ifconf)) != 0))
+        return retval;
+    retval = ifdev_ifconf(&ifconf, sizeof(struct ifreq), user_endpt);
+    if (retval) return retval;
+
+    return sockdriver_copyout(data, 0, &ifconf, sizeof(ifconf));
+}
+
+static int ifconf_ioctl_ifreq(unsigned long request,
+                              const struct sockdriver_data* data)
+{
+    struct ifreq ifr;
+    struct if_device* ifdev;
+    int retval;
+
+    if ((retval = sockdriver_copyin(data, 0, &ifr, sizeof(ifr)) != 0))
+        return retval;
+
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+    ifdev = ifdev_find_by_name(ifr.ifr_name);
+    if (!ifdev) return ENXIO;
+
+    _Static_assert(sizeof(ifr.ifr_flags) == sizeof(short),
+                   "ifr.ifr_flags is not short");
+
+    switch (request) {
+    case SIOCGIFFLAGS:
+        ifr.ifr_flags = ifdev->ifflags;
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
+    case SIOCSIFFLAGS:
+        return ifdev_set_ifflags(ifdev, (unsigned int)ifr.ifr_flags & 0xffff);
+
+    case SIOCGIFMETRIC:
+        ifr.ifr_metric = ifdev->metric;
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
+    case SIOCSIFMETRIC:
+        ifdev->metric = ifr.ifr_metric;
+        return 0;
+
+    case SIOCGIFMTU:
+        ifr.ifr_mtu = ifdev->mtu;
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
+    case SIOCGIFINDEX:
+        ifr.ifr_ifindex = ifdev_get_index(ifdev);
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
+    default:
+        return ENOTTY;
+    }
+}
+
+static int ifconf_ioctl_ifreq_v4(unsigned long request,
+                                 const struct sockdriver_data* data)
+{
+    struct sockaddr_in addr, mask, bcast, dst, *sin = NULL;
+    struct ifreq ifr;
+    struct if_device* ifdev;
+    int retval;
+
+    if ((retval = sockdriver_copyin(data, 0, &ifr, sizeof(ifr)) != 0))
+        return retval;
+
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+    ifdev = ifdev_find_by_name(ifr.ifr_name);
+    if (!ifdev) return ENXIO;
+
+    switch (request) {
+    case SIOCSIFADDR:
+    case SIOCSIFDSTADDR:
+    case SIOCSIFBRDADDR:
+    case SIOCSIFNETMASK:
+        switch (request) {
+        case SIOCSIFADDR:
+            sin = &addr;
+            break;
+        case SIOCSIFDSTADDR:
+            sin = &mask;
+            break;
+        case SIOCSIFBRDADDR:
+            sin = &bcast;
+            break;
+        case SIOCSIFNETMASK:
+            sin = &dst;
+            break;
+        }
+
+        if ((retval = ifaddr_v4_get(ifdev, 0, &addr, &mask, &bcast, &dst)) != 0)
+            return retval;
+
+        memcpy(&ifr.ifr_addr, sin, sizeof(*sin));
+
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
+    default:
+        return ENOTTY;
+    }
+}
+
+static int ifconf_ioctl_v4(unsigned long request,
+                           const struct sockdriver_data* data,
+                           endpoint_t user_endpt)
+{
+    switch (request) {
+    case SIOCSIFADDR:
+    case SIOCSIFDSTADDR:
+    case SIOCSIFBRDADDR:
+    case SIOCSIFNETMASK:
+        if (!is_superuser(user_endpt)) return EPERM;
+
+    case SIOCGIFADDR:
+    case SIOCGIFDSTADDR:
+    case SIOCGIFBRDADDR:
+    case SIOCGIFNETMASK:
+        return ifconf_ioctl_ifreq_v4(request, data);
+
+    default:
+        return ENOTTY;
+    }
+}
+
+int ifconf_ioctl(struct sock* sock, unsigned long request,
+                 const struct sockdriver_data* data, endpoint_t user_endpt,
+                 int flags)
+{
+    int domain;
+
+    domain = sock_domain(sock);
+
+    switch (request) {
+    case SIOCGIFCONF:
+        return ifconf_ioctl_ifconf(request, data, user_endpt);
+
+    case SIOCSIFFLAGS:
+    case SIOCSIFMETRIC:
+    case SIOCSIFMTU:
+        if (!is_superuser(user_endpt)) return EPERM;
+
+    case SIOCGIFFLAGS:
+    case SIOCGIFMETRIC:
+    case SIOCGIFMTU:
+    case SIOCGIFINDEX:
+        return ifconf_ioctl_ifreq(request, data);
+
+    default:
+        switch (domain) {
+        case AF_INET:
+            return ifconf_ioctl_v4(request, data, user_endpt);
+        default:
+            break;
+        }
+    }
+
+    return ENOTTY;
 }

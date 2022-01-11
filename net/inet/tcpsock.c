@@ -4,6 +4,7 @@
 #include <lyos/idr.h>
 #include <assert.h>
 #include <sys/epoll.h>
+#include <sys/ioctl.h>
 
 #include <lwip/tcp.h>
 
@@ -82,6 +83,9 @@ static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
                             socklen_t* ctl_len, struct sockaddr* addr,
                             socklen_t* addr_len, endpoint_t user_endpt,
                             int flags, int* rflags);
+static int tcpsock_ioctl(struct sock* sock, unsigned long request,
+                         const struct sockdriver_data* data,
+                         endpoint_t user_endpt, int flags);
 __poll_t tcpsock_poll(struct sock* sock);
 static int tcpsock_close(struct sock* sock, int force);
 static void tcpsock_free(struct sock* sock);
@@ -93,6 +97,7 @@ const struct sockdriver_ops tcpsock_ops = {
     .sop_accept = tcpsock_accept,
     .sop_send = tcpsock_send,
     .sop_recv = tcpsock_recv,
+    .sop_ioctl = tcpsock_ioctl,
     .sop_poll = tcpsock_poll,
     .sop_close = tcpsock_close,
     .sop_free = tcpsock_free,
@@ -611,7 +616,7 @@ static err_t tcpsock_event_accept(void* arg, struct tcp_pcb* pcb, err_t err)
     tcp_recv(pcb, tcpsock_event_recv);
     tcp_sent(pcb, tcpsock_event_sent);
     tcp_err(pcb, tcpsock_event_err);
-    tcp_poll(pcb, tcpsock_poll, TCP_POLL_REG_INTERVAL);
+    tcp_poll(pcb, tcpsock_event_poll, TCP_POLL_REG_INTERVAL);
 
     sockdriver_fire(tcpsock_get_sock(tcp), SEV_ACCEPT);
 
@@ -1076,7 +1081,7 @@ __poll_t tcpsock_poll(struct sock* sock)
         mask |= EPOLLIN | EPOLLRDNORM | EPOLLRDHUP;
 
     if (state != SYN_SENT && state != SYN_RCVD) {
-        int target = sock_rcvlowat(sock, FALSE, INT_MAX);
+        int target = sock_rcvlowat(sock, FALSE, tcpsock_get_rcvbuf(tcp));
 
         if (tcp->recv_queue.len >= target) mask |= EPOLLIN | EPOLLRDNORM;
 
@@ -1159,6 +1164,33 @@ static int tcpsock_close(struct sock* sock, int force)
     tcpsock_cleanup(tcp, FALSE);
 
     return 0;
+}
+
+static int tcpsock_ioctl(struct sock* sock, unsigned long request,
+                         const struct sockdriver_data* data,
+                         endpoint_t user_endpt, int flags)
+{
+    struct tcpsock* tcp = to_tcpsock(sock);
+    size_t size, target;
+    int val;
+
+    switch (request) {
+    case FIONREAD:
+        size = 0;
+
+        if (!tcpsock_is_shutdown(tcp, SFL_SHUT_RD)) {
+            target = sock_rcvlowat(
+                sock, 0, tcpsock_may_wait(tcp) ? tcpsock_get_rcvbuf(tcp) : 1);
+
+            if (tcp->recv_queue.len >= target) size = tcp->recv_queue.len;
+        }
+
+        val = size;
+        return sockdriver_copyout(data, 0, &val, sizeof(val));
+
+    default:
+        return ifconf_ioctl(sock, request, data, user_endpt, flags);
+    }
 }
 
 static void tcpsock_free(struct sock* sock)

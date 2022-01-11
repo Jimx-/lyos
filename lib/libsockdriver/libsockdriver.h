@@ -49,6 +49,9 @@ struct sockdriver_ops {
                           const struct sockdriver_data* data, socklen_t len);
     int (*sop_getsockname)(struct sock* sock, struct sockaddr* addr,
                            socklen_t* addr_len);
+    int (*sop_ioctl)(struct sock* sock, unsigned long request,
+                     const struct sockdriver_data* data, endpoint_t user_endpt,
+                     int flags);
     int (*sop_close)(struct sock* sock, int force);
     void (*sop_free)(struct sock* sock);
 };

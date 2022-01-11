@@ -41,6 +41,7 @@ struct if_device {
     unsigned int link_state;
 
     unsigned int hwaddr_len;
+    int metric;
     unsigned int mtu;
 
     int v4_set;
@@ -83,5 +84,9 @@ void ifdev_update_ifflags(struct if_device* ifdev, unsigned int ifflags);
 int ifdev_set_ifflags(struct if_device* ifdev, unsigned int ifflags);
 
 void ifdev_update_link(struct if_device* ifdev, unsigned int link_state);
+
+int ifdev_set_mtu(struct if_device* ifdev, unsigned int mtu);
+
+int ifdev_ifconf(struct ifconf* ifc, size_t size, endpoint_t user_endpt);
 
 #endif

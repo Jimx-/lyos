@@ -9,6 +9,7 @@
 #include <lyos/mgrant.h>
 #include <lyos/sysutils.h>
 #include <poll.h>
+#include <sys/ioctl.h>
 
 #include "libsockdriver.h"
 #include "proto.h"
@@ -48,7 +49,6 @@ static void sockdriver_reset(struct sock* sock, sockid_t id, int domain,
                              int type, int protocol,
                              const struct sockdriver_ops* ops)
 {
-
     memset(sock, 0, sizeof(*sock));
 
     sock->id = id;
@@ -825,6 +825,38 @@ reply:
     send_generic_reply(src, req_id, retval);
 }
 
+static void do_ioctl(MESSAGE* msg)
+{
+    struct sock* sock;
+    endpoint_t src = msg->source;
+    int req_id = msg->u.m_sockdriver_ioctl.req_id;
+    sockid_t sock_id = msg->u.m_sockdriver_ioctl.sock_id;
+    unsigned long request = msg->u.m_sockdriver_ioctl.request;
+    endpoint_t user_endpt = msg->u.m_sockdriver_ioctl.endpoint;
+    int flags = msg->u.m_sockdriver_ioctl.flags;
+    struct sockdriver_data data;
+    int retval;
+
+    if ((sock = sock_get(sock_id)) == NULL) {
+        retval = EINVAL;
+        goto reply;
+    }
+
+    data.endpoint = src;
+    data.grant = msg->u.m_sockdriver_ioctl.grant;
+    data.len = _IOC_SIZE(request);
+
+    if (!sock->ops->sop_ioctl) {
+        retval = ENOTTY;
+        goto reply;
+    }
+
+    retval = sock->ops->sop_ioctl(sock, request, &data, user_endpt, flags);
+
+reply:
+    send_generic_reply(src, req_id, retval);
+}
+
 static inline int sockopt_to_flag(int name)
 {
     switch (name) {
@@ -1190,6 +1222,9 @@ void sockdriver_process(const struct sockdriver* sd, MESSAGE* msg)
         break;
     case SDEV_SELECT:
         do_select(msg);
+        break;
+    case SDEV_IOCTL:
+        do_ioctl(msg);
         break;
     case SDEV_GETSOCKOPT:
         do_getsockopt(msg);

@@ -624,6 +624,40 @@ static void sdev_poll_notify(struct sdmap* sdp, sockid_t sock_id, __poll_t ops)
         waitqueue_wakeup_all(&sdp->wait, (void*)(unsigned long)ops);
 }
 
+int sock_ioctl(struct inode* pin, struct file_desc* filp, unsigned long cmd,
+               unsigned long arg, struct fproc* fp)
+{
+    struct sdmap* sdp;
+    sockid_t sockid;
+    mgrant_id_t grant;
+    MESSAGE msg;
+    dev_t dev = pin->i_specdev;
+
+    if ((sdp = get_sdmap_by_dev(dev, &sockid)) == NULL) return EIO;
+
+    grant = make_ioctl_grant(sdp->endpoint, fp->endpoint, cmd, (void*)arg);
+    if (grant == GRANT_INVALID)
+        panic("vfs: sdev_ioctl failed to create ioctl grant");
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = SDEV_IOCTL;
+    msg.u.m_sockdriver_ioctl.req_id = fp->endpoint;
+    msg.u.m_sockdriver_ioctl.sock_id = sockid;
+    msg.u.m_sockdriver_ioctl.request = cmd;
+    msg.u.m_sockdriver_ioctl.grant = grant;
+    msg.u.m_sockdriver_ioctl.endpoint = fp->endpoint;
+    msg.u.m_sockdriver_ioctl.flags =
+        (filp->fd_flags & O_NONBLOCK) ? SDEV_NONBLOCK : 0;
+
+    if (sdev_sendrec(sdp, &msg)) {
+        panic("vfs: sdev_ioctl failed to send request");
+    }
+
+    mgrant_revoke(grant);
+
+    return msg.u.m_sockdriver_reply.status;
+}
+
 void sdev_reply(MESSAGE* msg)
 {
     int req_id = NO_TASK;
