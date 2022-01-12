@@ -5,6 +5,7 @@
 #include <string.h>
 #include <limits.h>
 #include <lyos/sysutils.h>
+#include <net/if_arp.h>
 
 #include "inet.h"
 #include "ifdev.h"
@@ -50,8 +51,8 @@ static int loopif_create(const char* name)
     loopif->head = NULL;
     loopif->tailp = &loopif->head;
 
-    ifdev_add(&loopif->ifdev, name, IFF_LOOPBACK | IFF_MULTICAST, 0,
-              LOOPIF_DEF_MTU, &loopif_ifd_ops);
+    ifdev_add(&loopif->ifdev, name, IFF_LOOPBACK | IFF_MULTICAST,
+              ARPHRD_LOOPBACK, 0, LOOPIF_DEF_MTU, &loopif_ifd_ops);
 
     ifdev_update_link(&loopif->ifdev, LINK_STATE_UP);
 

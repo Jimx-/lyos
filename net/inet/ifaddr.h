@@ -10,4 +10,7 @@ int ifaddr_v4_add(struct if_device* ifdev, const struct sockaddr_in* addr,
                   const struct sockaddr_in* bcast,
                   const struct sockaddr_in* dest);
 
+void ifaddr_hwaddr_get(struct if_device* ifdev, unsigned int num,
+                       struct sockaddr* addr);
+
 #endif

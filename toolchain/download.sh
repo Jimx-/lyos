@@ -80,6 +80,7 @@ download "gettext" "https://mirrors.ustc.edu.cn/gnu/gettext" "gettext-0.21.tar.x
 download "guile" "https://mirrors.ustc.edu.cn/gnu/guile" "guile-3.0.4.tar.xz" || cmd_error
 download "lwip" "https://git.savannah.gnu.org/cgit/lwip.git/snapshot" "lwip-STABLE-2_1_3_RELEASE.tar.gz" || cmd_error
 download "cmake" "https://github.com/Kitware/CMake/releases/download/v3.22.1" "cmake-3.22.1.tar.gz" || cmd_error
+download "net-tools" "https://downloads.sourceforge.net/project/net-tools" "net-tools-2.10.tar.xz"
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -149,6 +150,7 @@ unzip "gettext-0.21.tar.xz" "gettext-0.21"
 unzip "guile-3.0.4.tar.xz" "guile-3.0.4"
 unzip "lwip-STABLE-2_1_3_RELEASE.tar.gz" "lwip-STABLE-2_1_3_RELEASE"
 unzip "cmake-3.22.1.tar.gz" "cmake-3.22.1"
+unzip "net-tools-2.10.tar.xz" "net-tools-2.10"
 
 echo "Patching..."
 patc "automake-1.11"
@@ -186,6 +188,7 @@ patc "libinput-1.10.7"
 patc "weston-4.0.0"
 patc "Python-3.8.2"
 patc "cJSON-1.7.14"
+patc "net-tools-2.10"
 
 echo "Installing extra files..."
 install_newlib "newlib-3.0.0"

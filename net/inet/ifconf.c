@@ -91,15 +91,24 @@ static int ifconf_ioctl_ifreq(unsigned long request,
         ifr.ifr_ifindex = ifdev_get_index(ifdev);
         return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
 
+    case SIOCGIFHWADDR:
+        ifaddr_hwaddr_get(ifdev, 0, &ifr.ifr_addr);
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
+    case SIOCGIFTXQLEN:
+        /* XXX */
+        ifr.ifr_qlen = 0;
+        return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
+
     default:
         return ENOTTY;
     }
 }
 
-static int ifconf_ioctl_ifreq_v4(unsigned long request,
+static int ifconf_ioctl_v4_ifreq(unsigned long request,
                                  const struct sockdriver_data* data)
 {
-    struct sockaddr_in addr, mask, bcast, dst, *sin = NULL;
+    struct sockaddr_in addr, mask, bcast, dest, *sin = NULL;
     struct ifreq ifr;
     struct if_device* ifdev;
     int retval;
@@ -112,27 +121,30 @@ static int ifconf_ioctl_ifreq_v4(unsigned long request,
     if (!ifdev) return ENXIO;
 
     switch (request) {
-    case SIOCSIFADDR:
-    case SIOCSIFDSTADDR:
-    case SIOCSIFBRDADDR:
-    case SIOCSIFNETMASK:
+    case SIOCGIFADDR:
+    case SIOCGIFDSTADDR:
+    case SIOCGIFBRDADDR:
+    case SIOCGIFNETMASK:
         switch (request) {
-        case SIOCSIFADDR:
+        case SIOCGIFADDR:
             sin = &addr;
             break;
-        case SIOCSIFDSTADDR:
-            sin = &mask;
+        case SIOCGIFDSTADDR:
+            sin = &dest;
             break;
-        case SIOCSIFBRDADDR:
+        case SIOCGIFBRDADDR:
             sin = &bcast;
             break;
-        case SIOCSIFNETMASK:
-            sin = &dst;
+        case SIOCGIFNETMASK:
+            sin = &mask;
             break;
         }
 
-        if ((retval = ifaddr_v4_get(ifdev, 0, &addr, &mask, &bcast, &dst)) != 0)
+        if ((retval = ifaddr_v4_get(ifdev, 0, &addr, &mask, &bcast, &dest)) !=
+            0)
             return retval;
+
+        if (sin->sin_family == AF_UNSPEC) return EADDRNOTAVAIL;
 
         memcpy(&ifr.ifr_addr, sin, sizeof(*sin));
 
@@ -158,7 +170,7 @@ static int ifconf_ioctl_v4(unsigned long request,
     case SIOCGIFDSTADDR:
     case SIOCGIFBRDADDR:
     case SIOCGIFNETMASK:
-        return ifconf_ioctl_ifreq_v4(request, data);
+        return ifconf_ioctl_v4_ifreq(request, data);
 
     default:
         return ENOTTY;
@@ -186,6 +198,8 @@ int ifconf_ioctl(struct sock* sock, unsigned long request,
     case SIOCGIFMETRIC:
     case SIOCGIFMTU:
     case SIOCGIFINDEX:
+    case SIOCGIFHWADDR:
+    case SIOCGIFTXQLEN:
         return ifconf_ioctl_ifreq(request, data);
 
     default:

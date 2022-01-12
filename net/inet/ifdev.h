@@ -38,6 +38,7 @@ struct if_device {
 
     char name[IFNAMSIZ];
     unsigned int ifflags;
+    unsigned int type;
     unsigned int link_state;
 
     unsigned int hwaddr_len;
@@ -69,7 +70,7 @@ void ifdev_register(const char* name, int (*create)(const char*));
 int ifdev_create(const char* name);
 
 void ifdev_add(struct if_device* ifdev, const char* name, unsigned int ifflags,
-               unsigned int hwaddr_len, unsigned int mtu,
+               unsigned int type, unsigned int hwaddr_len, unsigned int mtu,
                const struct if_device_operations* ifd_ops);
 
 struct if_device* ifdev_find_by_index(unsigned int index);

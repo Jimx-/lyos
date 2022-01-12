@@ -76,13 +76,14 @@ void ifdev_update_hwaddr(struct if_device* ifdev, const u8* hwaddr)
 }
 
 void ifdev_add(struct if_device* ifdev, const char* name, unsigned int ifflags,
-               unsigned int hwaddr_len, unsigned int mtu,
+               unsigned int type, unsigned int hwaddr_len, unsigned int mtu,
                const struct if_device_operations* ifd_ops)
 {
     ip4_addr_t ip4_addr_any, ip4_addr_none;
 
     strlcpy(ifdev->name, name, sizeof(ifdev->name));
     ifdev->ifflags = 0;
+    ifdev->type = type;
     ifdev->hwaddr_len = hwaddr_len;
     ifdev->mtu = mtu;
     ifdev->ifd_ops = ifd_ops;

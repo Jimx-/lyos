@@ -10,12 +10,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_XZ:=false}
 : ${BUILD_LIBRESSL:=false}
 : ${BUILD_PYTHON:=false}
+: ${BUILD_NET_TOLS:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_GDBM=true
     BUILD_XZ=true
     BUILD_LIBRESSL=true
     BUILD_PYTHON=true
+    BUILD_NET_TOOLS=true
 fi
 
 echo "Building extra packages... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -101,6 +103,15 @@ if $BUILD_PYTHON; then
         --disable-ipv6 --without-ensurepip
     PATH=$DIR/tools/python-3.8/bin:$PATH make -j$PARALLELISM || cmd_error
     PATH=$DIR/tools/python-3.8/bin:$PATH make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build net-tools
+if $BUILD_NET_TOOLS; then
+    pushd $DIR/sources/net-tools-2.10 > /dev/null
+    make clean
+    CC=$TARGET-gcc make
+    DESTDIR=$SYSROOT/usr make install
     popd > /dev/null
 fi
 

@@ -51,3 +51,24 @@ void addr_set_inet(struct sockaddr* addr, socklen_t* addr_len,
         assert(FALSE);
     }
 }
+
+void addr_set_link(struct sockaddr* addr, socklen_t* addr_len,
+                   unsigned int type, const uint8_t* hwaddr, size_t hwaddr_len)
+{
+    socklen_t len;
+
+    if (hwaddr == NULL) hwaddr_len = 0;
+
+    len = offsetof(struct sockaddr, sa_data) + hwaddr_len;
+
+    assert(*addr_len > len);
+
+    if (!hwaddr_len) {
+        memset(addr, 0, *addr_len);
+    } else {
+        memcpy(addr->sa_data, hwaddr, hwaddr_len);
+    }
+
+    addr->sa_family = type;
+    *addr_len = len;
+}

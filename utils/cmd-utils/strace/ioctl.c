@@ -18,7 +18,7 @@ static void ioctl_decode(int code)
 int trace_ioctl(struct tcb* tcp)
 {
     int fd = tcp->msg_in.FD;
-    int request = tcp->msg_in.REQUEST;
+    int request = tcp->msg_in.u.m3.m3l1;
     void* buf = tcp->msg_in.BUF;
 
     printf("%d, ", fd);

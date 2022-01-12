@@ -82,8 +82,25 @@ int ifaddr_v4_get(struct if_device* ifdev, unsigned int num,
     }
 
     if (dest) {
-        dest->sin_family = AF_UNSPEC;
+        bcast->sin_family = AF_UNSPEC;
     }
 
     return 0;
+}
+
+void ifaddr_hwaddr_get(struct if_device* ifdev, unsigned int num,
+                       struct sockaddr* addr)
+{
+    const uint8_t* hwaddr;
+    size_t hwaddr_len;
+    socklen_t addr_len;
+
+    if ((hwaddr_len = ifdev->hwaddr_len) > 0)
+        hwaddr = ifdev->netif.hwaddr;
+    else
+        hwaddr = NULL;
+
+    addr_len = sizeof(*addr);
+
+    addr_set_link(addr, &addr_len, ifdev->type, hwaddr, hwaddr_len);
 }

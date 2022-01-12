@@ -19,6 +19,9 @@
 #define TIOCSIG     _IOW('T', 0x36, int)
 #define TIOCGRANTPT _IO('T', 0x60)
 
+#define SIOCADDRT _IOW(0x89, 0x0B, struct rtentry)
+#define SIOCDELRT _IOW(0x89, 0x0C, struct rtentry)
+
 #define SIOCGIFCONF    _IOWR(0x89, 0x12, struct ifconf)
 #define SIOCGIFFLAGS   _IOWR(0x89, 0x13, struct ifreq)
 #define SIOCSIFFLAGS   _IOW(0x89, 0x14, struct ifreq)
@@ -34,7 +37,15 @@
 #define SIOCSIFMETRIC  _IOW(0x89, 0x1E, struct ifreq)
 #define SIOCGIFMTU     _IOWR(0x89, 0x21, struct ifreq)
 #define SIOCSIFMTU     _IOW(0x89, 0x22, struct ifreq)
+#define SIOCSIFHWADDR  _IOW(0x89, 0x24, struct ifreq)
+#define SIOCGIFHWADDR  _IOWR(0x89, 0x27, struct ifreq)
 #define SIOCGIFINDEX   _IOWR(0x89, 0x33, struct ifreq)
+
+#define SIOCGIFTXQLEN _IOWR(0x89, 0x42, struct ifreq)
+#define SIOCSIFTXQLEN _IOW(0x89, 0x43, struct ifreq)
+
+#define SIOCGIFMAP _IOWR(0x89, 0x70, struct ifmap)
+#define SIOCSIFMAP _IOW(0x89, 0x71, struct ifmap)
 
 #ifdef __cplusplus
 extern "C"

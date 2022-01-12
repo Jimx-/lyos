@@ -100,6 +100,8 @@ static sockid_t inet_socket(endpoint_t src, int domain, int type, int protocol,
         switch (type) {
         case SOCK_STREAM:
             return tcpsock_socket(domain, protocol, sock, ops);
+        case SOCK_DGRAM:
+            return udpsock_socket(domain, protocol, sock, ops);
         default:
             return -EPROTOTYPE;
         }

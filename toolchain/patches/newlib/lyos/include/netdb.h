@@ -118,6 +118,8 @@ void setnetent(int);
 void setprotoent(int);
 void setservent(int);
 
+void herror(const char* s);
+
 __END_DECLS
 
 #endif // _NETDB_H

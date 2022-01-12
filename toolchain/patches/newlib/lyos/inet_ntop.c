@@ -179,3 +179,10 @@ socklen_t size;
     strcpy(dst, tmp);
     return (dst);
 }
+
+char* inet_ntoa(struct in_addr in)
+{
+    static char buf[INET_ADDRSTRLEN];
+
+    return (char*)inet_ntop(AF_INET, &in, buf, sizeof(buf));
+}

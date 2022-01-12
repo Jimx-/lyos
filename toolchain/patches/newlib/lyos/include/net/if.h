@@ -40,6 +40,9 @@ struct ifreq {
     };
 };
 
+#define ifr_qlen    ifr_ifindex
+#define ifr_newname ifr_newname
+
 struct ifconf {
     int ifc_len;
     union {
@@ -55,8 +58,15 @@ struct ifconf {
 #define IFF_POINTOPOINT 0x10
 #define IFF_NOTRAILERS  0x20
 #define IFF_RUNNING     0x40
+#define IFF_NOARP       0x80
 #define IFF_PROMISC     0x100
+#define IFF_ALLMULTI    0x200
+#define IFF_MASTER      0x400
+#define IFF_SLAVE       0x800
 #define IFF_MULTICAST   0x1000
+#define IFF_PORTSEL     0x2000
+#define IFF_AUTOMEDIA   0x4000
+#define IFF_DYNAMIC     0x8000
 
 __BEGIN_DECLS
 

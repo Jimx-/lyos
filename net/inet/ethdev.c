@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <lyos/list.h>
+#include <net/if_arp.h>
 
 #include "inet.h"
 #include "ethdev.h"
@@ -69,8 +70,8 @@ struct eth_device* ethdev_add(unsigned int id)
 
     ifflags = 0;
 
-    ifdev_add(&ethdev->ifdev, name, ifflags, ETHARP_HWADDR_LEN, ETH_DEF_MTU,
-              &ethdev_ifd_ops);
+    ifdev_add(&ethdev->ifdev, name, ifflags, ARPHRD_ETHER, ETHARP_HWADDR_LEN,
+              ETH_DEF_MTU, &ethdev_ifd_ops);
 
     return ethdev;
 }

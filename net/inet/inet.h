@@ -15,6 +15,8 @@ int addr_get_inet(const struct sockaddr* addr, socklen_t addr_len, uint8_t type,
                   ip_addr_t* ipaddr, uint16_t* port);
 void addr_set_inet(struct sockaddr* addr, socklen_t* addr_len,
                    const ip_addr_t* ipaddr, uint16_t port);
+void addr_set_link(struct sockaddr* addr, socklen_t* addr_len,
+                   unsigned int type, const uint8_t* hwaddr, size_t hwaddr_len);
 
 /* ndev.c */
 void ndev_init(void);
@@ -34,6 +36,10 @@ void loopif_init(void);
 
 /* tcpsock.c */
 sockid_t tcpsock_socket(int domain, int protocol, struct sock** sock,
+                        const struct sockdriver_ops** ops);
+
+/* udpsock.c */
+sockid_t udpsock_socket(int domain, int protocol, struct sock** sock,
                         const struct sockdriver_ops** ops);
 
 /* util.c */
