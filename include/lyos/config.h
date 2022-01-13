@@ -47,11 +47,11 @@
 
 #define VPORTIO_BUF_SIZE 256
 
-/* #if CONFIG_X86_LOCAL_APIC */
+#if CONFIG_64BIT
 #define NR_IRQ_HOOKS 64
-/* #else */
-/* #define NR_IRQ_HOOKS 16 */
-/* #endif */
+#else
+#define NR_IRQ_HOOKS 32
+#endif
 
 /* TTY */
 #define NR_CONSOLES 6 /* consoles */

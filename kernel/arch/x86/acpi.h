@@ -54,6 +54,19 @@ struct acpi_madt_hdr {
 #define ACPI_MADT_TYPE_Lx2APIC          9
 #define ACPI_MADT_TYPE_Lx2APIC_NMI      10
 
+#define ACPI_MADT_POLARITY_MASK (3)
+#define ACPI_MADT_TRIGGER_MASK  (3 << 2)
+
+#define ACPI_MADT_POLARITY_CONFORMS    0
+#define ACPI_MADT_POLARITY_ACTIVE_HIGH 1
+#define ACPI_MADT_POLARITY_RESERVED    2
+#define ACPI_MADT_POLARITY_ACTIVE_LOW  3
+
+#define ACPI_MADT_TRIGGER_CONFORMS (0)
+#define ACPI_MADT_TRIGGER_EDGE     (1 << 2)
+#define ACPI_MADT_TRIGGER_RESERVED (2 << 2)
+#define ACPI_MADT_TRIGGER_LEVEL    (3 << 2)
+
 struct acpi_madt_item_hdr {
     u8 type;
     u8 length;

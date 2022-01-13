@@ -39,6 +39,8 @@
 static spinlock_t irq_handlers_lock;
 static irq_hook_t* irq_handlers[NR_IRQ] = {0};
 
+static unsigned long irq_actids[NR_IRQ];
+
 /*****************************************************************************
  *                                init_irq
  *****************************************************************************/
@@ -71,7 +73,7 @@ void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
     spinlock_lock(&irq_handlers_lock);
     irq_hook_t** line = &irq_handlers[irq];
 
-    int used_ids = 0;
+    unsigned long used_ids = 0;
     while (*line != NULL) {
         if (hook == *line) {
             spinlock_unlock(&irq_handlers_lock);
@@ -81,7 +83,7 @@ void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
         line = &(*line)->next;
     }
 
-    int id;
+    unsigned long id;
     for (id = 1; id != 0; id <<= 1)
         if ((used_ids & id) == 0) break;
 
@@ -93,8 +95,10 @@ void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
     hook->irq = irq;
     *line = hook;
 
-    hwint_used(irq);
-    hwint_unmask(irq);
+    if ((irq_actids[hook->irq] &= ~hook->id) == 0) {
+        hwint_used(irq);
+        hwint_unmask(irq);
+    }
 
     spinlock_unlock(&irq_handlers_lock);
 }
@@ -102,13 +106,14 @@ void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler)
 void rm_irq_handler(irq_hook_t* hook)
 {
     int irq = hook->irq;
-    int id = hook->id;
+    unsigned long id = hook->id;
 
     spinlock_lock(&irq_handlers_lock);
     irq_hook_t** line = &irq_handlers[irq];
     while (*line != NULL) {
         if ((*line)->id == id) {
             (*line) = (*line)->next;
+            if (irq_actids[irq] & id) irq_actids[irq] &= ~id;
         } else
             line = &(*line)->next;
     }
@@ -116,7 +121,8 @@ void rm_irq_handler(irq_hook_t* hook)
     if (irq_handlers[irq] == NULL) {
         hwint_mask(irq);
         hwint_not_used(irq);
-    }
+    } else if (irq_actids[irq] == 0)
+        hwint_unmask(irq);
 
     spinlock_unlock(&irq_handlers_lock);
 }
@@ -129,22 +135,32 @@ void irq_handle(int irq)
     hwint_mask(irq);
 
     while (hook != NULL) {
+        irq_actids[irq] |= hook->id;
+
         if ((*hook->handler)(hook)) /* reenable int */
-            ;
+            irq_actids[hook->irq] &= ~hook->id;
 
         hook = hook->next;
     }
 
-    hwint_unmask(irq);
+    if (irq_actids[irq] == 0) hwint_unmask(irq);
 
     hwint_ack(irq);
     spinlock_unlock(&irq_handlers_lock);
 }
 
-void enable_irq(irq_hook_t* hook) { hwint_unmask(hook->irq); }
+void enable_irq(irq_hook_t* hook)
+{
+    if ((irq_actids[hook->irq] &= ~hook->id) == 0) {
+        hwint_unmask(hook->irq);
+    }
+}
 
 int disable_irq(irq_hook_t* hook)
 {
+    if (irq_actids[hook->irq] & hook->id) return FALSE;
+
+    irq_actids[hook->irq] |= hook->id;
     hwint_mask(hook->irq);
-    return 1;
+    return TRUE;
 }

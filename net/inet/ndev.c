@@ -62,7 +62,7 @@ static void ndev_queue_init(struct ndev_queue* nq)
 
 static void ndev_queue_add(struct ndev_queue* nq, struct ndev_req* req)
 {
-    list_add(&req->list, &nq->reqs);
+    list_add_tail(&req->list, &nq->reqs);
     nq->count++;
 }
 
@@ -197,6 +197,7 @@ static void ndev_init_reply(struct ndev* ndev, const MESSAGE* msg)
     struct ndev_hwaddr hwaddr;
     int hwaddr_len;
     u8 max_send, max_recv;
+    int link;
     int enabled = FALSE;
 
     if (msg->u.m_ndev_init_reply.id != ndev->sendq.head) return;
@@ -209,6 +210,7 @@ static void ndev_init_reply(struct ndev* ndev, const MESSAGE* msg)
 
     max_send = msg->u.m_ndev_init_reply.max_send;
     max_recv = msg->u.m_ndev_init_reply.max_recv;
+    link = msg->u.m_ndev_init_reply.link;
 
     if (ndev->ethdev == NULL) {
         ndev->ethdev = ethdev_add(ndev->id);
@@ -223,7 +225,7 @@ static void ndev_init_reply(struct ndev* ndev, const MESSAGE* msg)
         memset(hwaddr.hwaddr, 0, sizeof(hwaddr.hwaddr));
         memcpy(hwaddr.hwaddr, msg->u.m_ndev_init_reply.hwaddr, hwaddr_len);
 
-        enabled = ethdev_enable(ndev->ethdev, &hwaddr, hwaddr_len);
+        enabled = ethdev_enable(ndev->ethdev, &hwaddr, hwaddr_len, link);
     }
 
     if (!enabled) ndev_down(ndev);
@@ -304,6 +306,28 @@ int ndev_can_recv(unsigned int id)
     return ndev->recvq.count < ndev->recvq.max;
 }
 
+int ndev_send(unsigned int id, struct pbuf* pbuf)
+{
+    struct ndev* ndev;
+    struct ndev_req* req;
+    unsigned int seq;
+    int retval;
+
+    ndev = lookup_ndev(id);
+    assert(ndev);
+
+    if ((req = ndev_queue_get(&ndev->sendq, NDEV_SEND, &seq)) == NULL)
+        return EBUSY;
+
+    if ((retval = ndev_transfer(ndev, pbuf, TRUE, seq, req)) != 0) {
+        free(req);
+        return retval;
+    }
+
+    ndev_queue_add(&ndev->sendq, req);
+    return 0;
+}
+
 int ndev_recv(unsigned int id, struct pbuf* pbuf)
 {
     struct ndev* ndev;
@@ -326,6 +350,14 @@ int ndev_recv(unsigned int id, struct pbuf* pbuf)
     return 0;
 }
 
+static void ndev_send_reply(struct ndev* ndev, const MESSAGE* msg)
+{
+    if (!ndev_queue_remove(&ndev->sendq, NDEV_SEND, msg->u.m_ndev_reply.id))
+        return;
+
+    ethdev_sent(ndev->ethdev, msg->u.m_ndev_reply.status);
+}
+
 static void ndev_recv_reply(struct ndev* ndev, const MESSAGE* msg)
 {
     if (!ndev_queue_remove(&ndev->recvq, NDEV_RECV, msg->u.m_ndev_reply.id))
@@ -344,6 +376,10 @@ void ndev_process(MESSAGE* msg)
     switch (msg->type) {
     case NDEV_INIT_REPLY:
         ndev_init_reply(ndev, msg);
+        break;
+
+    case NDEV_SEND_REPLY:
+        ndev_send_reply(ndev, msg);
         break;
 
     case NDEV_RECV_REPLY:

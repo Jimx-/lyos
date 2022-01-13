@@ -79,6 +79,9 @@ struct if_device* ifdev_find_by_name(const char* name);
 void ifdev_input(struct if_device* ifdev, struct pbuf* pbuf,
                  struct netif* netif);
 
+err_t ifdev_output(struct if_device* ifdev, struct pbuf* pbuf,
+                   struct netif* netif);
+
 void ifdev_update_hwaddr(struct if_device* ifdev, const u8* hwaddr);
 
 void ifdev_update_ifflags(struct if_device* ifdev, unsigned int ifflags);

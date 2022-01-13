@@ -44,6 +44,8 @@ int vp_find_vqs(struct virtio_device* vdev, unsigned nvqs,
                 struct virtqueue* vqs[]);
 void vp_del_vqs(struct virtio_device* vdev);
 
+int vp_enable_irq(struct virtio_device* vdev);
+
 struct virtio_device* virtio_pci_legacy_setup(u16 subdid, int skip);
 struct virtio_device* virtio_pci_modern_setup(u16 subdid, int skip);
 

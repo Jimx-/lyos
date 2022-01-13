@@ -503,12 +503,19 @@ static void virtio_gpu_interrupt_wait(void)
     MESSAGE msg;
     void* data;
 
-    do {
+    while (TRUE) {
         send_recv(RECEIVE, INTERRUPT, &msg);
-    } while (!virtio_had_irq(vdev));
 
-    while (!virtqueue_get_buffer(control_q, NULL, &data))
-        ;
+        if (virtio_had_irq(vdev)) {
+            while (!virtqueue_get_buffer(control_q, NULL, &data))
+                ;
+
+            virtio_enable_irq(vdev);
+            break;
+        }
+
+        virtio_enable_irq(vdev);
+    }
 }
 
 static int virtio_gpu_probe(int instance)

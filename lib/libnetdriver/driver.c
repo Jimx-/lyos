@@ -19,6 +19,7 @@ static struct netdriver_data recvq[RECVQ_MAX];
 static unsigned int pending_recvs, recvq_tail;
 
 static netdriver_addr_t dev_hwaddr;
+static int dev_link;
 
 int netdriver_copyin(struct netdriver_data* data, void* buf, size_t size)
 {
@@ -32,6 +33,8 @@ int netdriver_copyout(struct netdriver_data* data, const void* buf, size_t size)
 
 static int netdriver_init(void)
 {
+    dev_link = NDEV_LINK_UNKNOWN;
+
     return netdriver_tab->ndr_init(0, &dev_hwaddr);
 }
 
@@ -121,6 +124,7 @@ static void do_init(const struct netdriver* ndr, const MESSAGE* msg)
     reply_msg.u.m_ndev_init_reply.hwaddr_len = sizeof(dev_hwaddr.addr);
     reply_msg.u.m_ndev_init_reply.max_send = SENDQ_MAX;
     reply_msg.u.m_ndev_init_reply.max_recv = RECVQ_MAX;
+    reply_msg.u.m_ndev_init_reply.link = dev_link;
 
     asyncsend3(msg->source, &reply_msg, 0);
 }

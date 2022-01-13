@@ -21,7 +21,10 @@ int ifaddr_v4_add(struct if_device* ifdev, const struct sockaddr_in* addr,
     val = ntohl(ip_addr_get_ip4_u32(&ipaddr));
 
     if (mask) {
-        assert(FALSE);
+        if ((retval =
+                 addr_get_netmask((const struct sockaddr*)mask, sizeof(*mask),
+                                  IPADDR_TYPE_V4, NULL, &netmask)) != 0)
+            return retval;
     } else {
         if (IN_CLASSA(val))
             ip_addr_set_ip4_u32(&netmask, PP_HTONL(IN_CLASSA_NET));
@@ -46,7 +49,7 @@ int ifaddr_v4_add(struct if_device* ifdev, const struct sockaddr_in* addr,
 
         ifdev->v4_set = TRUE;
     } else {
-        assert(FALSE);
+        netif_set_netmask(netif, ip_2_ip4(&netmask));
     }
 
     return 0;

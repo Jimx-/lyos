@@ -980,8 +980,9 @@ BEGIN_MESS_DECL(mess_ndev_init_reply)
     __u8 hwaddr_len;
     __u8 max_send;
     __u8 max_recv;
+    __u8 link;
 
-    __u8 _pad1[59];
+    __u8 _pad1[58];
 }
 END_MESS_DECL(mess_ndev_init_reply)
 

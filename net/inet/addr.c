@@ -52,6 +52,39 @@ void addr_set_inet(struct sockaddr* addr, socklen_t* addr_len,
     }
 }
 
+int addr_get_netmask(const struct sockaddr* addr, socklen_t addr_len,
+                     uint8_t type, unsigned int* prefix, ip_addr_t* ipaddr)
+{
+    struct sockaddr_in sin;
+    unsigned int bit;
+    u32 val;
+
+    switch (type) {
+    case IPADDR_TYPE_V4:
+        if (addr_len != sizeof(sin)) return EINVAL;
+
+        memcpy(&sin, addr, sizeof(sin));
+
+        if (sin.sin_family != AF_INET) return EAFNOSUPPORT;
+
+        val = ntohl(sin.sin_addr.s_addr);
+
+        for (bit = 0; bit < 32; bit++)
+            if (!(val & (1 << (32 - bit - 1)))) break;
+
+        if (prefix) *prefix = bit;
+
+        if (bit < 32 && (val & ((1 << (32 - bit - 1)) - 1))) return EINVAL;
+
+        if (ipaddr != NULL) ip_addr_set_ip4_u32(ipaddr, sin.sin_addr.s_addr);
+
+        return 0;
+
+    default:
+        assert(FALSE);
+    }
+}
+
 void addr_set_link(struct sockaddr* addr, socklen_t* addr_len,
                    unsigned int type, const uint8_t* hwaddr, size_t hwaddr_len)
 {

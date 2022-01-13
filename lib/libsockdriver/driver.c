@@ -1132,11 +1132,15 @@ void sockdriver_fire(struct sock* sock, unsigned int mask)
 {
     struct worker_thread *wp, *tmp;
     __poll_t ops, retval;
-    int release_sock;
 
     if (mask & SEV_CONNECT) mask |= SEV_SEND;
 
-    release_sock = (mask & SEV_CLOSE) && list_empty(&sock->wq);
+    if ((mask & SEV_CLOSE) && list_empty(&sock->wq)) {
+        assert(mask == SEV_CLOSE);
+        assert(sock_is_closing(sock));
+        sock_free(sock);
+        return;
+    }
 
     list_for_each_entry_safe(wp, tmp, &sock->wq, list)
     {
@@ -1161,11 +1165,6 @@ void sockdriver_fire(struct sock* sock, unsigned int mask)
                 if (sock->sel_mask == 0) sock->sel_endpoint = NO_TASK;
             }
         }
-    }
-
-    if (release_sock) {
-        assert(sock_is_closing(sock));
-        sock_free(sock);
     }
 }
 

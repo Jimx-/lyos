@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+#define NDEV_LINK_UNKNOWN 0
+#define NDEV_LINK_UP      1
+#define NDEV_LINK_DOWN    2
+
 typedef struct {
     uint8_t addr[NDEV_HWADDR_MAX];
 } netdriver_addr_t;

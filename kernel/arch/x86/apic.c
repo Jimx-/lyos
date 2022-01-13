@@ -41,71 +41,71 @@
 #include <asm/div64.h>
 #include <asm/cpu_info.h>
 
-#define APIC_ENABLE 0x100
+#define APIC_ENABLE         0x100
 #define APIC_FOCUS_DISABLED (1 << 9)
-#define APIC_SIV 0xFF
+#define APIC_SIV            0xFF
 
-#define APIC_TDCR_2 0x00
-#define APIC_TDCR_4 0x01
-#define APIC_TDCR_8 0x02
-#define APIC_TDCR_16 0x03
-#define APIC_TDCR_32 0x08
-#define APIC_TDCR_64 0x09
+#define APIC_TDCR_2   0x00
+#define APIC_TDCR_4   0x01
+#define APIC_TDCR_8   0x02
+#define APIC_TDCR_16  0x03
+#define APIC_TDCR_32  0x08
+#define APIC_TDCR_64  0x09
 #define APIC_TDCR_128 0x0a
-#define APIC_TDCR_1 0x0b
+#define APIC_TDCR_1   0x0b
 
 #define APIC_LVTT_VECTOR_MASK 0x000000FF
-#define APIC_LVTT_DS_PENDING (1 << 12)
-#define APIC_LVTT_MASK (1 << 16)
-#define APIC_LVTT_TM (1 << 17)
+#define APIC_LVTT_DS_PENDING  (1 << 12)
+#define APIC_LVTT_MASK        (1 << 16)
+#define APIC_LVTT_TM          (1 << 17)
 
 #define APIC_LVT_IIPP_MASK 0x00002000
-#define APIC_LVT_IIPP_AH 0x00002000
-#define APIC_LVT_IIPP_AL 0x00000000
+#define APIC_LVT_IIPP_AH   0x00002000
+#define APIC_LVT_IIPP_AL   0x00000000
 
-#define APIC_LVT_TM_ONESHOT 0
+#define APIC_LVT_TM_ONESHOT  0
 #define APIC_LVT_TM_PERIODIC APIC_LVTT_TM
 
 #define IOAPIC_REGSEL 0x0
-#define IOAPIC_RW 0x10
+#define IOAPIC_RW     0x10
 
-#define APIC_ICR_DM_MASK 0x00000700
-#define APIC_ICR_VECTOR APIC_LVTT_VECTOR_MASK
-#define APIC_ICR_DM_FIXED (0 << 8)
+#define APIC_ICR_DM_MASK            0x00000700
+#define APIC_ICR_VECTOR             APIC_LVTT_VECTOR_MASK
+#define APIC_ICR_DM_FIXED           (0 << 8)
 #define APIC_ICR_DM_LOWEST_PRIORITY (1 << 8)
-#define APIC_ICR_DM_SMI (2 << 8)
-#define APIC_ICR_DM_RESERVED (3 << 8)
-#define APIC_ICR_DM_NMI (4 << 8)
-#define APIC_ICR_DM_INIT (5 << 8)
-#define APIC_ICR_DM_STARTUP (6 << 8)
-#define APIC_ICR_DM_EXTINT (7 << 8)
+#define APIC_ICR_DM_SMI             (2 << 8)
+#define APIC_ICR_DM_RESERVED        (3 << 8)
+#define APIC_ICR_DM_NMI             (4 << 8)
+#define APIC_ICR_DM_INIT            (5 << 8)
+#define APIC_ICR_DM_STARTUP         (6 << 8)
+#define APIC_ICR_DM_EXTINT          (7 << 8)
 
 #define APIC_ICR_DM_PHYSICAL (0 << 11)
-#define APIC_ICR_DM_LOGICAL (1 << 11)
+#define APIC_ICR_DM_LOGICAL  (1 << 11)
 
 #define APIC_ICR_DELIVERY_PENDING (1 << 12)
 
 #define APIC_ICR_INT_POLARITY (1 << 13)
-#define APIC_ICR_INTPOL_LOW APIC_ICR_INT_POLARITY
-#define APIC_ICR_INTPOL_HIGH APIC_ICR_INT_POLARITY
+#define APIC_ICR_INTPOL_LOW   APIC_ICR_INT_POLARITY
+#define APIC_ICR_INTPOL_HIGH  APIC_ICR_INT_POLARITY
 
-#define APIC_ICR_LEVEL_ASSERT (1 << 14)
+#define APIC_ICR_LEVEL_ASSERT   (1 << 14)
 #define APIC_ICR_LEVEL_DEASSERT (0 << 14)
 
-#define APIC_ICR_TRIGGER (1 << 15)
+#define APIC_ICR_TRIGGER  (1 << 15)
 #define APIC_ICR_TM_LEVEL APIC_ICR_TRIGGER
-#define APIC_ICR_TM_EDGE 0
+#define APIC_ICR_TM_EDGE  0
 
 #define APIC_ICR_INT_MASK (1 << 16)
 
-#define APIC_ICR_DEST_FIELD (0 << 18)
-#define APIC_ICR_DEST_SELF (1 << 18)
-#define APIC_ICR_DEST_ALL (2 << 18)
+#define APIC_ICR_DEST_FIELD        (0 << 18)
+#define APIC_ICR_DEST_SELF         (1 << 18)
+#define APIC_ICR_DEST_ALL          (2 << 18)
 #define APIC_ICR_DEST_ALL_BUT_SELF (3 << 18)
 
-#define IA32_APIC_BASE 0x1b
+#define IA32_APIC_BASE                   0x1b
 #define IA32_APIC_BASE_X2APIC_ENABLE_BIT 10
-#define IA32_APIC_BASE_ENABLE_BIT 11
+#define IA32_APIC_BASE_ENABLE_BIT        11
 
 extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 
@@ -128,6 +128,7 @@ struct irq {
     eoi_method_t eoi;
 #define IOAPIC_IRQ_STATE_MASKED 0x1
     unsigned state;
+    unsigned int mps_flags;
 };
 
 static struct irq io_apic_irq[NR_IRQ_VECTORS];
@@ -141,7 +142,7 @@ u8 ioapic_enabled = 0;
 u32 apicid() { return lapic_read(LAPIC_ID); }
 
 #define IOAPIC_IOREGSEL 0x0
-#define IOAPIC_IOWIN 0x10
+#define IOAPIC_IOWIN    0x10
 
 static u32 ioapic_read(void* ioa_base, u32 reg)
 {
@@ -195,7 +196,7 @@ static u32 hpet_ref_ms(u64 hpet1, u64 hpet2)
     return (u32)hpet_ms;
 }
 
-#define CAL_MS 50
+#define CAL_MS    50
 #define CAL_LATCH (TIMER_FREQ / (1000 / CAL_MS))
 static int apic_calibrate(unsigned cpu)
 {
@@ -424,18 +425,88 @@ void apic_native_icr_write(u32 id, u32 lo)
     lapic_write(LAPIC_ICR1, lo);
 }
 
+static int irq_is_level(u32 gsi)
+{
+    unsigned int flags = io_apic_irq[gsi].mps_flags;
+
+    switch (flags & ACPI_MADT_TRIGGER_MASK) {
+    case ACPI_MADT_TRIGGER_CONFORMS:
+        return gsi >= 16;
+    case ACPI_MADT_TRIGGER_EDGE:
+        return FALSE;
+    case ACPI_MADT_TRIGGER_RESERVED:
+    case ACPI_MADT_TRIGGER_LEVEL:
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int irq_active_low(u32 gsi)
+{
+    unsigned int flags = io_apic_irq[gsi].mps_flags;
+
+    switch (flags & ACPI_MADT_POLARITY_MASK) {
+    case ACPI_MADT_POLARITY_CONFORMS:
+        return gsi >= 16;
+    case ACPI_MADT_POLARITY_ACTIVE_HIGH:
+        return FALSE;
+    case ACPI_MADT_POLARITY_RESERVED:
+    case ACPI_MADT_POLARITY_ACTIVE_LOW:
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void mp_override_legacy_irq(u8 bus_irq, u8 polarity, u8 trigger, u32 gsi)
+{
+    if (bus_irq >= 16) {
+        return;
+    }
+
+    if ((bus_irq == 0) && (trigger == 3)) trigger = 1;
+
+    io_apic_irq[gsi].mps_flags = (trigger << 2) | polarity;
+
+    isa_irq_to_gsi[bus_irq] = gsi;
+}
+
 static void ioapic_init_legacy_irqs()
 {
     struct acpi_madt_int_src* acpi_int_src;
 
     while ((acpi_int_src = acpi_get_int_src_next())) {
-        isa_irq_to_gsi[acpi_int_src->bus_int] = acpi_int_src->global_int;
-        printk("ACPI: IRQ%d used by override\n", acpi_int_src->bus_int);
+        mp_override_legacy_irq(
+            acpi_int_src->bus_int,
+            acpi_int_src->mps_flags & ACPI_MADT_POLARITY_MASK,
+            (acpi_int_src->mps_flags & ACPI_MADT_TRIGGER_MASK) >> 2,
+            acpi_int_src->global_int);
+
+        printk("ACPI: IRQ%d used by override (bus %d global_irq %d %s %s)\n",
+               acpi_int_src->bus_int, acpi_int_src->bus,
+               acpi_int_src->global_int,
+               irq_active_low(acpi_int_src->global_int) ? "low" : "high",
+               irq_is_level(acpi_int_src->global_int) ? "level" : "edge");
     }
 }
 
 int ioapic_enable()
 {
+    int i;
+
+    for (i = 0; i < NR_IRQ_VECTORS; i++) {
+        if (i < 16) {
+            /* ISA active-high edge triggered */
+            io_apic_irq[i].mps_flags =
+                ACPI_MADT_POLARITY_ACTIVE_HIGH | ACPI_MADT_TRIGGER_EDGE;
+        } else {
+            /* PCI active-low level triggered */
+            io_apic_irq[i].mps_flags =
+                ACPI_MADT_POLARITY_ACTIVE_LOW | ACPI_MADT_TRIGGER_LEVEL;
+        }
+    }
+
     ioapic_init_legacy_irqs();
 
     disable_8259A();
@@ -494,7 +565,7 @@ static void ioapic_eoi_level(struct irq* irq) { apic_eoi(); }
 
 static eoi_method_t set_eoi_method(int irq)
 {
-    return irq < 16 ? ioapic_eoi_edge : ioapic_eoi_level;
+    return irq_is_level(irq) ? ioapic_eoi_level : ioapic_eoi_edge;
 }
 
 static void set_irq_redir_low(int irq, u32* low)
@@ -504,15 +575,8 @@ static void set_irq_redir_low(int irq, u32* low)
     val &= ~(APIC_ICR_VECTOR | APIC_ICR_INT_MASK | APIC_ICR_TRIGGER |
              APIC_ICR_INT_POLARITY);
 
-    if (irq < 16) {
-        /* ISA */
-        val &= ~APIC_ICR_INT_POLARITY;
-        val &= ~APIC_ICR_TRIGGER;
-    } else {
-        /* PCI */
-        val |= APIC_ICR_INT_POLARITY;
-        val |= APIC_ICR_TRIGGER;
-    }
+    if (irq_is_level(irq)) val |= APIC_ICR_TRIGGER;
+    if (irq_active_low(irq)) val |= APIC_ICR_INT_POLARITY;
 
     val |= io_apic_irq[irq].vector;
 

@@ -142,7 +142,7 @@ static err_t ifdev_output_v4(struct netif* netif, struct pbuf* pbuf,
         netif = NULL;
 
     if (ifdev->ifd_ops->ido_output_v4)
-        return ifdev->ifd_ops->ido_output_v4(netif, pbuf, ipaddr);
+        return ifdev->ifd_ops->ido_output_v4(&ifdev->netif, pbuf, ipaddr);
 
     return ifdev_output(ifdev, pbuf, netif);
 }

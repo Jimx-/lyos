@@ -441,7 +441,6 @@ int fs_fork(void)
 
 int fs_exit()
 {
-    int i;
     struct fproc* p = vfs_endpt_proc(self->msg_in.ENDPOINT);
 
     p->flags &= ~FPF_INUSE;

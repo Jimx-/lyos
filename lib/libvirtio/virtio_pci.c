@@ -33,7 +33,7 @@ static int vp_find_vqs_intx(struct virtio_device* vdev, unsigned nvqs,
     struct virtio_pci_device* vpdev = to_vp_device(vdev);
     int i, retval;
 
-    retval = irq_setpolicy(vpdev->irq, IRQ_REENABLE, &vpdev->irq_hook);
+    retval = irq_setpolicy(vpdev->irq, 0, &vpdev->irq_hook);
     if (retval) return retval;
 
     retval = irq_enable(&vpdev->irq_hook);
@@ -56,6 +56,13 @@ static int vp_find_vqs_intx(struct virtio_device* vdev, unsigned nvqs,
 out_del_vqs:
     vp_del_vqs(vdev);
     return retval;
+}
+
+int vp_enable_irq(struct virtio_device* vdev)
+{
+    struct virtio_pci_device* vpdev = to_vp_device(vdev);
+
+    return irq_enable(&vpdev->irq_hook);
 }
 
 static inline void vp_del_vp(struct virtqueue* vq)

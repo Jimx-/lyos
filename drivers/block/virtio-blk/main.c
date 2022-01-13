@@ -254,16 +254,15 @@ static void virtio_blk_intr(unsigned mask)
     void* data;
     blockdriver_worker_id_t tid;
 
-    if (!virtio_had_irq(vdev)) {
-        /* spurious interrupt */
-        return;
+    if (virtio_had_irq(vdev)) {
+        while (!virtqueue_get_buffer(vqs[0], NULL, &data)) {
+            tid = (blockdriver_worker_id_t)(unsigned long)data;
+
+            blockdriver_async_wakeup(tid);
+        }
     }
 
-    while (!virtqueue_get_buffer(vqs[0], NULL, &data)) {
-        tid = (blockdriver_worker_id_t)(unsigned long)data;
-
-        blockdriver_async_wakeup(tid);
-    }
+    virtio_enable_irq(vdev);
 }
 
 static int virtio_blk_get_id(char* id_str)

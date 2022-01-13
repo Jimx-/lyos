@@ -150,6 +150,33 @@ static int ifconf_ioctl_v4_ifreq(unsigned long request,
 
         return sockdriver_copyout(data, 0, &ifr, sizeof(ifr));
 
+    case SIOCSIFADDR:
+        sin = (struct sockaddr_in*)&ifr.ifr_addr;
+        return ifaddr_v4_add(ifdev, sin, NULL, NULL, NULL);
+
+    case SIOCSIFNETMASK:
+    case SIOCSIFBRDADDR:
+    case SIOCSIFDSTADDR:
+        if ((retval = ifaddr_v4_get(ifdev, 0, &addr, &mask, &bcast, &dest)) !=
+            0)
+            return retval;
+
+        sin = (struct sockaddr_in*)&ifr.ifr_addr;
+
+        switch (request) {
+        case SIOCSIFNETMASK:
+            memcpy(&mask, sin, sizeof(mask));
+            break;
+        case SIOCSIFBRDADDR:
+            memcpy(&bcast, sin, sizeof(bcast));
+            break;
+        case SIOCSIFDSTADDR:
+            memcpy(&dest, sin, sizeof(dest));
+            break;
+        }
+
+        return ifaddr_v4_add(ifdev, &addr, &mask, &bcast, &dest);
+
     default:
         return ENOTTY;
     }

@@ -85,6 +85,7 @@ static const struct netdriver virtio_net_driver = {
 static void virtio_net_fill_rx_buffers(void)
 {
     struct umap_phys phys[2];
+    int added = FALSE;
 
     while ((in_rx < NR_PACKETS / 2) && !list_empty(&free_list)) {
         struct packet* pkt = list_first_entry(&free_list, struct packet, list);
@@ -101,7 +102,10 @@ static void virtio_net_fill_rx_buffers(void)
 
         virtqueue_add_buffers(vqs[RX_Q], phys, 2, pkt);
         in_rx++;
+        added = TRUE;
     }
+
+    if (added) virtqueue_kick(vqs[RX_Q]);
 }
 
 static int virtio_net_send(struct netdriver_data* data, size_t len)
@@ -126,6 +130,8 @@ static int virtio_net_send(struct netdriver_data* data, size_t len)
 
     virtqueue_add_buffers(vqs[TX_Q], phys, 2, pkt);
 
+    virtqueue_kick(vqs[TX_Q]);
+
     return 0;
 }
 
@@ -145,6 +151,7 @@ static ssize_t virtio_net_recv(struct netdriver_data* data, size_t max)
 
     netdriver_copyout(data, pkt->buf_vir, len);
 
+    memset(pkt->hdr_vir, 0, sizeof(*pkt->hdr_vir));
     list_add(&pkt->list, &free_list);
 
     virtio_net_fill_rx_buffers();
@@ -160,17 +167,20 @@ static void virtio_net_intr(unsigned int mask)
     if (virtio_had_irq(vdev)) {
         while (!virtqueue_get_buffer(vqs[RX_Q], &len, (void**)&pkt)) {
             pkt->len = len;
-            list_add(&pkt->list, &recv_list);
+            list_add_tail(&pkt->list, &recv_list);
             in_rx--;
         }
 
         while (!virtqueue_get_buffer(vqs[TX_Q], NULL, (void**)&pkt)) {
+            memset(pkt->hdr_vir, 0, sizeof(*pkt->hdr_vir));
             list_add(&pkt->list, &free_list);
         }
     }
 
     if (!list_empty(&recv_list)) netdriver_recv();
     if (!list_empty(&free_list)) netdriver_send();
+
+    virtio_enable_irq(vdev);
 
     virtio_net_fill_rx_buffers();
 }
@@ -271,6 +281,8 @@ static int virtio_net_alloc_buffers(void)
     }
 
     memset(pkt_buf_vir, 0, PKT_BUF_SIZE);
+    memset(hdrs_vir, 0, sizeof(*hdrs_vir) * NR_PACKETS);
+
     for (i = 0; i < NR_PACKETS; i++) {
         struct packet* pkt = &packets[i];
 

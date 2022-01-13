@@ -13,6 +13,7 @@ struct virtio_config_ops {
     u8 (*get_status)(struct virtio_device* vdev);
     void (*set_status)(struct virtio_device* vdev, u8 status);
     void (*reset)(struct virtio_device* dev);
+    int (*enable_irq)(struct virtio_device* vdev);
     int (*had_irq)(struct virtio_device* vdev);
     int (*get_features)(struct virtio_device* vdev);
     int (*finalize_features)(struct virtio_device* vdev);
@@ -25,6 +26,11 @@ static inline int virtio_find_vqs(struct virtio_device* vdev, unsigned nvqs,
                                   struct virtqueue* vqs[])
 {
     return vdev->config->find_vqs(vdev, nvqs, vqs);
+}
+
+static inline int virtio_enable_irq(struct virtio_device* vdev)
+{
+    return vdev->config->enable_irq(vdev);
 }
 
 static inline int virtio_had_irq(struct virtio_device* vdev)

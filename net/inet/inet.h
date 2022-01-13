@@ -15,12 +15,15 @@ int addr_get_inet(const struct sockaddr* addr, socklen_t addr_len, uint8_t type,
                   ip_addr_t* ipaddr, uint16_t* port);
 void addr_set_inet(struct sockaddr* addr, socklen_t* addr_len,
                    const ip_addr_t* ipaddr, uint16_t port);
+int addr_get_netmask(const struct sockaddr* addr, socklen_t addr_len,
+                     uint8_t type, unsigned int* prefix, ip_addr_t* ipaddr);
 void addr_set_link(struct sockaddr* addr, socklen_t* addr_len,
                    unsigned int type, const uint8_t* hwaddr, size_t hwaddr_len);
 
 /* ndev.c */
 void ndev_init(void);
 int ndev_can_recv(unsigned int id);
+int ndev_send(unsigned int id, struct pbuf* pbuf);
 int ndev_recv(unsigned int id, struct pbuf* pbuf);
 void ndev_process(MESSAGE* msg);
 void ndev_check(void);

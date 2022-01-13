@@ -942,6 +942,8 @@ static void nvme_pci_intr(unsigned mask)
     int i;
     for (i = 0; i < queue_count; i++)
         nvme_process_cq(&nvme_queues[i]);
+
+    irq_enable(&pin_irq_hook);
 }
 
 static int nvme_identify_controller(struct nvme_id_ctrl** id)
@@ -1174,7 +1176,7 @@ static int nvme_pci_probe(int instance)
     irq = pci_attr_r8(devind, PCI_ILR);
     pin_irq_hook = 0;
 
-    retval = irq_setpolicy(irq, IRQ_REENABLE, &pin_irq_hook);
+    retval = irq_setpolicy(irq, 0, &pin_irq_hook);
     if (retval) goto free;
 
     retval = irq_enable(&pin_irq_hook);
