@@ -18,12 +18,8 @@
 global read_tsc
 
 read_tsc:
-    push rdx
-    push rax
 db	0x0f
 db	0x31
     mov [rdi], edx
     mov [rsi], eax
-    pop rax
-    pop rdx
     ret

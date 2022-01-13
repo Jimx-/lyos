@@ -23,11 +23,11 @@
 #include "assert.h"
 #include "lyos/vm.h"
 
-void read_tsc(unsigned long* high, unsigned long* low);
+void read_tsc(unsigned int* high, unsigned int* low);
 
 void read_tsc_64(u64* v)
 {
-    unsigned long hi, lo;
+    unsigned int hi, lo;
     read_tsc(&hi, &lo);
     *v = make64(hi, lo);
 }
