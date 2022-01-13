@@ -65,7 +65,8 @@ int addr_get_netmask(const struct sockaddr* addr, socklen_t addr_len,
 
         memcpy(&sin, addr, sizeof(sin));
 
-        if (sin.sin_family != AF_INET) return EAFNOSUPPORT;
+        if (sin.sin_addr.s_addr != 0 && sin.sin_family != AF_INET)
+            return EAFNOSUPPORT;
 
         val = ntohl(sin.sin_addr.s_addr);
 

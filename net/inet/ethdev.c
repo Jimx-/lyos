@@ -6,6 +6,7 @@
 #include <string.h>
 #include <lyos/list.h>
 #include <net/if_arp.h>
+#include <lyos/sysutils.h>
 
 #include <libnetdriver/libnetdriver.h>
 
@@ -224,8 +225,6 @@ int ethdev_enable(struct eth_device* ethdev, const struct ndev_hwaddr* hwaddr,
     ifdev_update_hwaddr(&ethdev->ifdev, hwaddr->hwaddr);
 
     ethdev_set_status(ethdev, link);
-
-    netif_set_default(&ethdev->ifdev.netif);
 
     return TRUE;
 }

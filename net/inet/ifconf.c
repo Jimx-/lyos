@@ -3,6 +3,8 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/route.h>
 
 #include "inet.h"
 #include "ifdev.h"
@@ -228,6 +230,9 @@ int ifconf_ioctl(struct sock* sock, unsigned long request,
     case SIOCGIFHWADDR:
     case SIOCGIFTXQLEN:
         return ifconf_ioctl_ifreq(request, data);
+
+    case SIOCADDRT:
+        return route_ioctl(request, data, user_endpt, flags);
 
     default:
         switch (domain) {

@@ -51,4 +51,8 @@ int convert_err(err_t err);
 ssize_t copy_socket_data(struct iov_grant_iter* iter, size_t len,
                          const struct pbuf* pbuf, size_t skip, int copy_in);
 
+/* route.c */
+int route_ioctl(unsigned long request, const struct sockdriver_data* data,
+                endpoint_t user_endpt, int flags);
+
 #endif

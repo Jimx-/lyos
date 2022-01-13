@@ -25,3 +25,4 @@ mount -t tmpfs none /dev/shm
 mount -t devpts none /dev/pts
 
 ifconfig eth1 10.0.2.15 netmask 255.255.255.0 up
+route add default gw 10.0.2.2 eth1
