@@ -10,7 +10,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_XZ:=false}
 : ${BUILD_LIBRESSL:=false}
 : ${BUILD_PYTHON:=false}
-: ${BUILD_NET_TOLS:=false}
+: ${BUILD_NET_TOOLS:=false}
+: ${BUILD_WGET:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_GDBM=true
@@ -18,6 +19,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBRESSL=true
     BUILD_PYTHON=true
     BUILD_NET_TOOLS=true
+    BUILD_WGET=true
 fi
 
 echo "Building extra packages... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -112,6 +114,24 @@ if $BUILD_NET_TOOLS; then
     make clean
     CC=$TARGET-gcc make
     DESTDIR=$SYSROOT/usr make install
+    popd > /dev/null
+fi
+
+# Build wget
+if $BUILD_WGET; then
+    if [ ! -d "wget-$SUBARCH" ]; then
+        mkdir wget-$SUBARCH
+    fi
+
+    # pushd $DIR/sources/wget-1.21.1 > /dev/null
+    # PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fis
+    # popd > /dev/null
+
+    pushd wget-$SUBARCH > /dev/null
+    $DIR/sources/wget-1.21.1/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \
+                                       --sysconfdir=/etc --disable-nls --without-ssl
+    make -j$PARALLELISM || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 

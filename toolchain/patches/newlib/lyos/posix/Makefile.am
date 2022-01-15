@@ -10,7 +10,8 @@ GENERAL_SOURCES = \
 	regcomp.c \
 	regerror.c \
 	regexec.c \
-	regfree.c
+	regfree.c \
+	posix_spawn.c
 
 # libposix_la_LDFLAGS = -Xcompiler -nostdlib
 

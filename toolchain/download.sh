@@ -81,6 +81,7 @@ download "guile" "https://mirrors.ustc.edu.cn/gnu/guile" "guile-3.0.4.tar.xz" ||
 download "lwip" "https://git.savannah.gnu.org/cgit/lwip.git/snapshot" "lwip-STABLE-2_1_3_RELEASE.tar.gz" || cmd_error
 download "cmake" "https://github.com/Kitware/CMake/releases/download/v3.22.1" "cmake-3.22.1.tar.gz" || cmd_error
 download "net-tools" "https://downloads.sourceforge.net/project/net-tools" "net-tools-2.10.tar.xz"
+download "wget" "https://ftp.gnu.org/gnu/wget" "wget-1.21.1.tar.gz"
 
 echo "Decompressing packages..."
 unzip "autoconf-2.65.tar.gz" "autoconf-2.65"
@@ -151,6 +152,7 @@ unzip "guile-3.0.4.tar.xz" "guile-3.0.4"
 unzip "lwip-STABLE-2_1_3_RELEASE.tar.gz" "lwip-STABLE-2_1_3_RELEASE"
 unzip "cmake-3.22.1.tar.gz" "cmake-3.22.1"
 unzip "net-tools-2.10.tar.xz" "net-tools-2.10"
+unzip "wget-1.21.1.tar.gz" "wget-1.21.1"
 
 echo "Patching..."
 patc "automake-1.11"
