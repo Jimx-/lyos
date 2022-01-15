@@ -122,6 +122,13 @@ static void tcpsock_reset_recv(struct tcpsock* tcp)
     tcp->recv_queue.unacked_len = 0;
 }
 
+static void tcpsock_free_pbuf(struct pbuf* pbuf)
+{
+    pbuf->len = pbuf->tot_len;
+    pbuf->next = NULL;
+    pbuf_free(pbuf);
+}
+
 static void tcpsock_clear_send(struct tcpsock* tcp)
 {
     struct pbuf* head;
@@ -130,7 +137,7 @@ static void tcpsock_clear_send(struct tcpsock* tcp)
 
     while ((head = tcp->send_queue.head) != NULL) {
         tcp->send_queue.head = head->next;
-        pbuf_free(head);
+        tcpsock_free_pbuf(head);
     }
 
     tcpsock_reset_send(tcp);
@@ -145,7 +152,7 @@ static size_t tcpsock_clear_recv(struct tcpsock* tcp, int ack)
 
     while ((head = tcp->recv_queue.head) != NULL) {
         tcp->recv_queue.head = head->next;
-        pbuf_free(head);
+        tcpsock_free_pbuf(head);
     }
 
     if (ack && tcp->pcb && tcp->recv_queue.unacked_len)
@@ -440,7 +447,7 @@ static err_t tcpsock_event_sent(void* arg, struct tcp_pcb* pcb, uint16_t len)
             tcp->send_queue.unsent_off = 0;
         }
 
-        pbuf_free(head);
+        tcpsock_free_pbuf(head);
     }
 
     if (left) {
@@ -506,7 +513,7 @@ static int tcpsock_try_merge(struct pbuf** nextp, struct pbuf* tail,
         tail->len += pbuf->len;
         tail->next = pbuf->next;
 
-        pbuf_free(pbuf);
+        tcpsock_free_pbuf(pbuf);
 
         return TRUE;
     }
@@ -540,14 +547,14 @@ static err_t tcpsock_event_recv(void* arg, struct tcp_pcb* pcb,
     if (tcpsock_is_closing(tcp)) {
         tcpsock_pcb_abort(tcp);
         tcpsock_cleanup(tcp, TRUE);
-        pbuf_free(pbuf);
+        tcpsock_free_pbuf(pbuf);
 
         return ERR_ABRT;
     }
 
     if (tcpsock_is_shutdown(tcp, SFL_SHUT_RD)) {
         tcp_recved(tcp->pcb, pbuf->tot_len);
-        pbuf_free(pbuf);
+        tcpsock_free_pbuf(pbuf);
         return ERR_OK;
     }
 
@@ -880,7 +887,7 @@ restart:
         /* Revert changes and restart. */
         while (first) {
             next = first->next;
-            pbuf_free(first);
+            tcpsock_free_pbuf(first);
             first = next;
         }
 
@@ -1042,7 +1049,7 @@ static ssize_t tcpsock_recv(struct sock* sock, struct iov_grant_iter* iter,
                 else if (tcp->recv_queue.tailp == &tail->next)
                     tcp->recv_queue.tailp = &tcp->recv_queue.head;
 
-                pbuf_free(tail);
+                tcpsock_free_pbuf(tail);
             }
 
             if (left > 0) {

@@ -123,9 +123,9 @@ if $BUILD_WGET; then
         mkdir wget-$SUBARCH
     fi
 
-    # pushd $DIR/sources/wget-1.21.1 > /dev/null
-    # PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fis
-    # popd > /dev/null
+    pushd $DIR/sources/wget-1.21.1 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fis
+    popd > /dev/null
 
     pushd wget-$SUBARCH > /dev/null
     $DIR/sources/wget-1.21.1/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT \

@@ -391,7 +391,7 @@ struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
 
         size_t len = strlen(lookup->pathname);
         if (len == 0) {
-            errno = ENOENT;
+            err_code = ENOENT;
             result_pin = NULL;
             break;
         }
@@ -405,7 +405,7 @@ struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
         if (cp == NULL) {
             if (strlcpy(entry, lookup->pathname, PATH_MAX + 1) >=
                 PATH_MAX + 1) {
-                errno = ENAMETOOLONG;
+                err_code = ENAMETOOLONG;
                 result_pin = NULL;
                 break;
             }
@@ -417,7 +417,7 @@ struct inode* last_dir(struct lookup* lookup, struct fproc* fp)
             entry[1] = '\0';
         } else {
             if (strlcpy(entry, cp + 1, PATH_MAX + 1) >= PATH_MAX + 1) {
-                errno = ENAMETOOLONG;
+                err_code = ENAMETOOLONG;
                 result_pin = NULL;
                 break;
             }

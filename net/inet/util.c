@@ -72,7 +72,7 @@ ssize_t copy_socket_data(struct iov_grant_iter* iter, size_t len,
             retval = iov_grant_iter_copy_to(iter, (char*)pbuf->payload + skip,
                                             chunk);
 
-        if (retval) return retval;
+        if (retval < 0) return retval;
 
         pbuf = pbuf->next;
         len -= chunk;
