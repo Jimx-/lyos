@@ -71,28 +71,45 @@ static int get_dns_servers(const char* dns_servers[2], char* buf, size_t buflen)
     return nr_servers;
 }
 
-const char* read_dns_name(char* buf, char** endp)
+const char* read_dns_name(const char* name, const char* resp, char* buf,
+                          size_t buflen, const char** endp)
 {
-    char* p;
+    const char* p;
+    char* pb;
+    unsigned char offset;
+    int first;
 
-    p = buf;
-    while (*p) {
-        char code = *p;
+    p = name;
+    pb = buf;
+    first = 1;
+    while (*name) {
+        char code = *p++;
 
         if (!code) break;
 
         if ((code & 0xc0) == 0xc0) {
-            p++;
+            offset = ((code & 0x3f) << 8) | *p++;
+
+            if (!read_dns_name(resp + offset, resp, pb, buflen, NULL))
+                return NULL;
             break;
         }
 
-        *p++ = '.';
+        if (buflen < code + !first + 1) return NULL;
+        if (!first) *pb++ = '.';
+        memcpy(pb, p, code);
+        pb += code;
+        *pb = '\0';
         p += code;
+
+        first = 0;
     }
+
+    if (buflen < 1) return NULL;
 
     if (endp) *endp = p;
 
-    return (p == buf) ? buf : &buf[1];
+    return buf;
 }
 
 int gethostbyname_r(const char* name, struct hostent* ret, char* buf,
@@ -210,10 +227,11 @@ int gethostbyname_r(const char* name, struct hostent* ret, char* buf,
     ret->h_name = NULL;
     for (i = 0; i < ntohs(resp->q_count); i++) {
         size_t name_len;
-        char* pend;
+        const char* pend;
 
-        name = read_dns_name(p, &pend);
-        name_len = pend - name;
+        name = read_dns_name(p, (char*)resp, p_alloc, left, &pend);
+        if (!name) goto close_sock;
+        name_len = strlen(name);
 
         if (!i) {
             if (left <= name_len) goto close_sock;
@@ -224,8 +242,8 @@ int gethostbyname_r(const char* name, struct hostent* ret, char* buf,
             left -= name_len;
         }
 
-        p = pend;
-        p += 1 + 2 * sizeof(unsigned short);
+        p = (char*)pend;
+        p += 2 * sizeof(unsigned short);
     }
 
     no_ans = ntohs(resp->ans_count);
@@ -241,12 +259,14 @@ int gethostbyname_r(const char* name, struct hostent* ret, char* buf,
     n_addrs = 0;
 
     for (i = 0; i < no_ans; i++) {
-        char* pend;
+        const char* pend;
         uint16_t rr_type;
         uint16_t rr_length;
+        size_t name_len;
 
-        name = read_dns_name(p, &pend);
-        p = pend + 1;
+        name = read_dns_name(p, (char*)resp, p_alloc, left, &pend);
+        if (!name) goto close_sock;
+        p = (char*)pend;
 
         rr_type = ntohs(*(unsigned short*)&p[0]);
         rr_length = ntohs(*(unsigned short*)&p[8]);
@@ -260,6 +280,15 @@ int gethostbyname_r(const char* name, struct hostent* ret, char* buf,
             p += rr_length;
             p_alloc += rr_length;
             left -= rr_length;
+            break;
+        case RECORD_CNAME:
+            name = read_dns_name(p, (char*)resp, p_alloc, left, &pend);
+            if (!name) goto close_sock;
+            name_len = strlen(name);
+            ret->h_aliases[n_aliases++] = p_alloc;
+            p_alloc += name_len + 1;
+            left -= name_len - 1;
+            p = (char*)pend;
             break;
         }
     }
