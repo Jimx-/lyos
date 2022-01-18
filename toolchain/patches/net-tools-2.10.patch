@@ -1,6 +1,6 @@
 diff --color -rupN old/config.h new/config.h
 --- old/config.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/config.h	2022-01-12 11:33:51.701254794 +0800
++++ new/config.h	2022-01-18 17:55:09.047193775 +0800
 @@ -0,0 +1,83 @@
 +/*
 + * config.h	Automatically generated configuration includefile
@@ -85,3 +85,44 @@ diff --color -rupN old/config.h new/config.h
 +#define HAVE_PLIP_TOOLS        0
 +#define HAVE_SERIAL_TOOLS      0
 +#define HAVE_SELINUX           0
+diff --color -rupN old/nameif.c new/nameif.c
+--- old/nameif.c	2021-01-07 07:22:35.000000000 +0800
++++ new/nameif.c	2022-01-18 17:56:31.830037234 +0800
+@@ -158,7 +158,7 @@ static void readconf(void)
+ 	line = NULL;
+ 	linel = 0;
+ 	linenum = 1;
+-	while (getdelim(&line, &linel, '\n', ifh) > 0) {
++	while (__getdelim(&line, &linel, '\n', ifh) > 0) {
+ 		char pos[20];
+ 
+ 		sprintf(pos, _("line %d"), linenum);
+@@ -253,7 +253,7 @@ int main(int ac, char **av)
+ 
+ 
+ 	linenum = 0;
+-	while (getdelim(&line, &linel, '\n', ifh) > 0) {
++	while (__getdelim(&line, &linel, '\n', ifh) > 0) {
+ 		struct change *ch;
+ 		unsigned char mac[MAC_ADDRESS_MAX_LENGTH];
+ 
+diff --color -rupN old/statistics.c new/statistics.c
+--- old/statistics.c	2021-01-07 07:22:35.000000000 +0800
++++ new/statistics.c	2022-01-18 17:55:40.853674643 +0800
+@@ -415,14 +415,14 @@ static int process_fd(FILE *f, int all,
+     static size_t buf1_len, buf2_len;
+     char *sp, *np, *p;
+ 
+-    while (getline(&buf1, &buf1_len, f) > 0) {
++    while (__getline(&buf1, &buf1_len, f) > 0) {
+ 	int endflag;
+ 	const struct tabtab *tab;
+ 
+         if (buf1[0] == '\n') // skip empty first line in 2.6 kernels
+             continue;
+ 
+-	if (getline(&buf2, &buf2_len, f) <= 0)
++	if (__getline(&buf2, &buf2_len, f) <= 0)
+ 	    break;
+ 	sp = strchr(buf1, ':');
+ 	np = strchr(buf2, ':');
