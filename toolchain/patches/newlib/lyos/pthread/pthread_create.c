@@ -169,3 +169,9 @@ int pthread_create(pthread_t* thread_out, const pthread_attr_t* attr,
 
     return 0;
 }
+
+int pthread_atfork(void (*prepare)(void), void (*parent)(void),
+                   void (*child)(void))
+{
+    return ENOSYS;
+}

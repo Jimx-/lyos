@@ -11,6 +11,7 @@
 #define AI_V4MAPPED    0x08
 #define AI_ALL         0x10
 #define AI_ADDRCONFIG  0x20
+#define AI_NUMERICSERV 0x400
 
 #define NI_NOFQDN       0x01
 #define NI_NUMERICHOST  0x02
@@ -23,16 +24,25 @@
 
 #define NI_MAXHOST 1025
 
-#define EAI_AGAIN    1
-#define EAI_BADFLAGS 2
-#define EAI_FAIL     3
-#define EAI_FAMILY   4
-#define EAI_MEMORY   5
-#define EAI_NONAME   6
-#define EAI_SERVICE  7
-#define EAI_SOCKTYPE 8
-#define EAI_SYSTEM   9
-#define EAI_OVERFLOW 10
+/* Error values for `getaddrinfo' function.  */
+#define EAI_BADFLAGS    -1   /* Invalid value for `ai_flags' field.  */
+#define EAI_NONAME      -2   /* NAME or SERVICE is unknown.  */
+#define EAI_AGAIN       -3   /* Temporary failure in name resolution.  */
+#define EAI_FAIL        -4   /* Non-recoverable failure in name res.  */
+#define EAI_FAMILY      -6   /* `ai_family' not supported.  */
+#define EAI_SOCKTYPE    -7   /* `ai_socktype' not supported.  */
+#define EAI_SERVICE     -8   /* SERVICE not supported for `ai_socktype'.  */
+#define EAI_MEMORY      -10  /* Memory allocation failure.  */
+#define EAI_SYSTEM      -11  /* System error returned in `errno'.  */
+#define EAI_OVERFLOW    -12  /* Argument buffer overflow.  */
+#define EAI_NODATA      -5   /* No address associated with NAME.  */
+#define EAI_ADDRFAMILY  -9   /* Address family for NAME not supported.  */
+#define EAI_INPROGRESS  -100 /* Processing request in progress.  */
+#define EAI_CANCELED    -101 /* Request canceled.  */
+#define EAI_NOTCANCELED -102 /* Request not canceled.  */
+#define EAI_ALLDONE     -103 /* All requests done.  */
+#define EAI_INTR        -104 /* Interrupted by a signal.  */
+#define EAI_IDN_ENCODE  -105 /* IDN encoding failed.  */
 
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2

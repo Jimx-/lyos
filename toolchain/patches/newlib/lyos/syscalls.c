@@ -1806,6 +1806,12 @@ int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
     return m.RETVAL;
 }
 
+int pselect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+            const struct timespec* timeout, const sigset_t* sigmask)
+{
+    return select(nfds, readfds, writefds, exceptfds, NULL);
+}
+
 int futex(int* uaddr, int futex_op, int val,
           const struct timespec* timeout, /* or: uint32_t val2 */
           int* uaddr2, int val3)
@@ -1894,8 +1900,8 @@ int shmdt(const void* shmaddr)
 
 int getentropy(void* buffer, size_t length)
 {
-    printf("getentropy: not implemented\n");
-    return ENOSYS;
+    memset(buffer, 0, length);
+    return 0;
 }
 
 int posix_memalign(void** memptr, size_t alignment, size_t size)

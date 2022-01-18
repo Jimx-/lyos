@@ -36,7 +36,7 @@
 static char hostname[MAX_HOSTNAME_LEN];
 static struct utsname uname_buf;
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 #define RTC_YEAR     9 /* Clock register addresses in CMOS RAM	*/
 #define RTC_MONTH    8
 #define RTC_DAY      7
@@ -128,7 +128,7 @@ int main()
  *****************************************************************************/
 static int get_rtc_time(struct time* t)
 {
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
     int n, sec;
 
     do {
@@ -175,7 +175,7 @@ static int get_rtc_time(struct time* t)
     return 0;
 }
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 /*****************************************************************************
  *                                read_register
  *****************************************************************************/

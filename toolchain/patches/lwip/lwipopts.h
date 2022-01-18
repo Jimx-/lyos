@@ -1,8 +1,8 @@
 #ifndef LWIP_LWIPOPTS_H
 #define LWIP_LWIPOPTS_H
 
-#define NETIF_DEBUG LWIP_DBG_ON
-#define IP_DEBUG    LWIP_DBG_ON
+/* #define NETIF_DEBUG LWIP_DBG_ON */
+/* #define IP_DEBUG    LWIP_DBG_ON */
 /* #define ETHARP_DEBUG LWIP_DBG_ON */
 /* #define TCP_DEBUG    LWIP_DBG_ON */
 
