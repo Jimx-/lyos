@@ -28,48 +28,50 @@ source "servers/config.in"
 
 source "lib/config.in"
 
+source "net/config.in"
+
 menu "Platform type"
 
 choice
-	prompt "Base ISA"
-	default ARCH_RV64I
-	help
-	  This selects the base ISA that this kernel will traget and must match
-	  the target platform.
+    prompt "Base ISA"
+    default ARCH_RV64I
+    help
+      This selects the base ISA that this kernel will traget and must match
+      the target platform.
 
 config ARCH_RV32I
-	bool "RV32I"
-	select 32BIT
+    bool "RV32I"
+    select 32BIT
 
 config ARCH_RV64I
-	bool "RV64I"
-	select 64BIT
+    bool "RV64I"
+    select 64BIT
 
 endchoice
 
 choice
   prompt "Kernel Code Model"
-	default CMODEL_MEDLOW if 32BIT
-	default CMODEL_MEDANY if 64BIT
+    default CMODEL_MEDLOW if 32BIT
+    default CMODEL_MEDANY if 64BIT
 
-	config CMODEL_MEDLOW
-		bool "medium low code model"
-	config CMODEL_MEDANY
-		bool "medium any code model"
+    config CMODEL_MEDLOW
+        bool "medium low code model"
+    config CMODEL_MEDANY
+        bool "medium any code model"
 endchoice
 
 choice
-	prompt "Maximum Physical Memory"
-	default MAXPHYSMEM_2GB if 32BIT
-	default MAXPHYSMEM_2GB if 64BIT && CMODEL_MEDLOW
-	default MAXPHYSMEM_128GB if 64BIT && CMODEL_MEDANY
+    prompt "Maximum Physical Memory"
+    default MAXPHYSMEM_2GB if 32BIT
+    default MAXPHYSMEM_2GB if 64BIT && CMODEL_MEDLOW
+    default MAXPHYSMEM_128GB if 64BIT && CMODEL_MEDANY
 
-	config MAXPHYSMEM_2GB
-		bool "2GiB"
-	config MAXPHYSMEM_128GB
-		depends on 64BIT && CMODEL_MEDANY
-		select MODULE_SECTIONS if MODULES
-		bool "128GiB"
+    config MAXPHYSMEM_2GB
+        bool "2GiB"
+    config MAXPHYSMEM_128GB
+        depends on 64BIT && CMODEL_MEDANY
+        select MODULE_SECTIONS if MODULES
+        bool "128GiB"
 endchoice
 
 config SMP
@@ -85,10 +87,10 @@ config SMP_MAX_CPUS
       The default value is 8 CPUs.
 
 config RISCV_ISA_C
-	bool "Emit compressed instructions"
-	default y
+    bool "Emit compressed instructions"
+    default y
 
 config RISCV_ISA_A
-	def_bool y
+    def_bool y
 
 endmenu
