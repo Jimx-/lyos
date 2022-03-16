@@ -9,6 +9,8 @@ int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mask)
     return -1;
 }
 
+int sched_getscheduler(pid_t pid) { return SCHED_OTHER; }
+
 int sched_setscheduler(pid_t pid, int policy, const struct sched_param* param)
 {
     errno = ENOSYS;

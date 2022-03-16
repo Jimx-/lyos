@@ -1,28 +1,42 @@
-diff --color -rupN old/Configurations/10-main.conf new/Configurations/10-main.conf
+diff -rupN old/Configurations/10-main.conf new/Configurations/10-main.conf
 --- old/Configurations/10-main.conf	2021-12-14 23:45:01.000000000 +0800
-+++ new/Configurations/10-main.conf	2022-01-17 14:06:02.992101796 +0800
-@@ -918,6 +918,35 @@ my %targets = (
++++ new/Configurations/10-main.conf	2022-03-16 20:15:35.187206021 +0800
+@@ -918,6 +918,48 @@ my %targets = (
          ranlib           => "true",
      },
  
-+ ### Lyos
-+    "lyos-generic64" => {
++    ### Lyos
++    "lyos-generic32" => {
 +        inherit_from     => [ "BASE_unix" ],
-+        CFLAGS           => picker(default   => "-Wall",
-+                         debug       => "-O0 -g",
-+                         release     => "-O3"),
-+        CXXFLAGS         => picker(default   => "-Wall",
-+                         debug       => "-O0 -g",
-+                         release     => "-O3"),
++        CFLAGS           => picker(default => "-Wall",
++                                   debug   => "-O0 -g",
++                                   release => "-O3"),
++        CXXFLAGS         => picker(default => "-Wall",
++                                   debug   => "-O0 -g",
++                                   release => "-O3"),
 +        cxxflags         => add("-std=c++11"),
 +        lib_cppflags     => combine("-DOPENSSL_USE_NODELETE", "-DL_ENDIAN"),
-+        bn_ops           => "SIXTY_FOUR_BIT_LONG RC4_CHAR",
++        bn_ops           => "BN_LLONG RC4_CHAR",
 +        thread_scheme    => "pthreads",
 +        dso_scheme       => "dlfcn",
 +        shared_target    => "linux-shared",
 +        shared_cflag     => "-fPIC",
 +        shared_ldflag    => sub { $disabled{pinshared} ? () : "-Wl,-znodelete" },
 +        shared_extension => ".so.\$(SHLIB_VERSION_NUMBER)",
++    },
++    "lyos-generic64" => {
++        inherit_from     => [ "lyos-generic32" ],
++        bn_ops           => "SIXTY_FOUR_BIT_LONG RC4_CHAR",
++    },
++
++    "i686-elf-lyos" => {
++        inherit_from     => [ "lyos-generic32", asm("x86_asm") ],
++        perlasm_scheme   => "elf",
++        cflags           => add("-m32"),
++        cxxflags         => add("-m32"),
++
++        CC               => "i686-elf-lyos-gcc",
++        CXX              => "i686-elf-lyos-g++",
 +    },
 +
 +    "x86_64-elf-lyos" => {
@@ -31,7 +45,6 @@ diff --color -rupN old/Configurations/10-main.conf new/Configurations/10-main.co
 +
 +        CC               => "x86_64-elf-lyos-gcc",
 +        CXX              => "x86_64-elf-lyos-g++",
-+
 +    },
 +
  #### *BSD
