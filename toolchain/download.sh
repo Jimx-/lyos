@@ -22,7 +22,7 @@ download "autoconf-archive" "https://ftp.gnu.org/gnu/autoconf-archive" "autoconf
 download "libtool" "https://ftp.gnu.org/gnu/libtool" "libtool-2.4.5.tar.gz"
 download "binutils" "https://mirrors.ustc.edu.cn/gnu/binutils" "binutils-2.31.tar.gz" || cmd_error
 download "mpc"  "http://www.multiprecision.org/downloads" "mpc-1.2.1.tar.gz"
-download "mpfr" "http://www.mpfr.org/mpfr-4.1.0" "mpfr-4.1.0.tar.gz"
+download "mpfr" "https://ftp.gnu.org/gnu/mpfr" "mpfr-4.1.0.tar.gz"
 download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-6.1.0.tar.bz2"
 download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-3.0.0.tar.gz" || cmd_error
