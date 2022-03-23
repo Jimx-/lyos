@@ -8,7 +8,7 @@ pipeline {
                     agent {
                         docker { 
                             image 'lyos_build' 
-                            reuseNode true
+                            label 'master'
                         }
                     }
 
@@ -42,7 +42,7 @@ pipeline {
                     agent {
                         docker { 
                             image 'lyos_build' 
-                            reuseNode true
+                            label 'master'
                         }
                     }
 
@@ -76,7 +76,7 @@ pipeline {
                     agent {
                         docker { 
                             image 'lyos_build' 
-                            reuseNode true
+                            label 'master'
                         }
                     }
 
