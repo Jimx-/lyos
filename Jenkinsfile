@@ -6,6 +6,7 @@ pipeline {
             parallel {
                 stage('Build - i686') {
                     agent {
+                        label 'master'
                         docker { image 'lyos_build' }
                     }
 
@@ -37,6 +38,7 @@ pipeline {
 
                 stage('Build - x86_64') {
                     agent {
+                        label 'master'
                         docker { image 'lyos_build' }
                     }
 
@@ -68,6 +70,7 @@ pipeline {
 
                 stage('Build - RISC-V') {
                     agent {
+                        label 'master'
                         docker { image 'lyos_build' }
                     }
 
