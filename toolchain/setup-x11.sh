@@ -10,7 +10,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBDRM:=false}
 : ${BUILD_KMSCUBE:=false}
 : ${BUILD_LIBEXPAT:=false}
-: ${BUILD_LIBFFI:=false}
 : ${BUILD_WAYLAND:=false}
 : ${BUILD_WAYLAND_PROTOCOLS:=false}
 : ${BUILD_MESA:=false}
@@ -40,7 +39,6 @@ if $BUILD_EVERYTHING; then
     BUILD_XORG_MACROS=true
     BUILD_LIBDRM=true
     BUILD_LIBEXPAT=true
-    BUILD_LIBFFI=true
     BUILD_WAYLAND=true
     BUILD_WAYLAND_PROTOCOLS=true
     BUILD_MESA=true
@@ -138,23 +136,6 @@ if $BUILD_LIBEXPAT; then
 
     pushd libexpat-$SUBARCH > /dev/null
     $DIR/sources/expat-2.2.9/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT --without-xmlwf
-    make -j$PARALLELISM || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
-    popd > /dev/null
-fi
-
-# Build libffi
-if $BUILD_LIBFFI; then
-    if [ ! -d "libffi-$SUBARCH" ]; then
-        mkdir libffi-$SUBARCH
-    fi
-
-    pushd $DIR/sources/libffi-3.3 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
-    popd > /dev/null
-
-    pushd libffi-$SUBARCH > /dev/null
-    $DIR/sources/libffi-3.3/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
