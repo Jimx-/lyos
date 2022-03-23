@@ -6,8 +6,10 @@ pipeline {
             parallel {
                 stage('Build - i686') {
                     agent {
-                        label 'master'
-                        docker { image 'lyos_build' }
+                        docker { 
+                            image 'lyos_build' 
+                            reuseNode true
+                        }
                     }
 
                     steps {
@@ -38,8 +40,10 @@ pipeline {
 
                 stage('Build - x86_64') {
                     agent {
-                        label 'master'
-                        docker { image 'lyos_build' }
+                        docker { 
+                            image 'lyos_build' 
+                            reuseNode true
+                        }
                     }
 
                     steps {
@@ -70,8 +74,10 @@ pipeline {
 
                 stage('Build - RISC-V') {
                     agent {
-                        label 'master'
-                        docker { image 'lyos_build' }
+                        docker { 
+                            image 'lyos_build' 
+                            reuseNode true
+                        }
                     }
 
                     steps {

@@ -7,9 +7,9 @@ pipeline {
                 stage('i686') {
                     agent {
                         docker {
-                            label 'master'
                             image 'lyos_build'
                             args '-u root --privileged -v /var/www:/var/www'
+                            reuseNode true
                         }
                     }
 
