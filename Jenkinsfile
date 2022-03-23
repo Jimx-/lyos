@@ -1,12 +1,12 @@
 pipeline {
-    agent none
+    agent { label 'master' }
 
     stages {
         stage('Build') {
             parallel {
                 stage('Build - i686') {
                     agent {
-                        dockerfile true
+                        docker { image 'lyos_build' }
                     }
 
                     steps {
@@ -37,7 +37,7 @@ pipeline {
 
                 stage('Build - x86_64') {
                     agent {
-                        dockerfile true
+                        docker { image 'lyos_build' }
                     }
 
                     steps {
@@ -68,7 +68,7 @@ pipeline {
 
                 stage('Build - RISC-V') {
                     agent {
-                        dockerfile true
+                        docker { image 'lyos_build' }
                     }
 
                     steps {

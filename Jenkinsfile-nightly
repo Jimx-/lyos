@@ -1,13 +1,13 @@
 pipeline {
-    agent none
+    agent { label 'master' }
 
     stages {
         stage('Build') {
             parallel {
                 stage('i686') {
                     agent {
-                        dockerfile {
-                            filename 'Dockerfile'
+                        docker {
+                            image 'lyos_build'
                             args '-u root --privileged -v /var/www:/var/www'
                         }
                     }
