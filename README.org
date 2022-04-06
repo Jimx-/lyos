@@ -11,7 +11,7 @@
 
 
 Lyos is an open source microkernel multitasking operating system, it runs
-on 32-bit x86-based PCs. It is distributed under the GNU General Public License.
+on 64-bit x86-based PCs. It is distributed under the GNU General Public License.
 
 ** Trying out Lyos
 To try out Lyos without building the whole system, you can download a xz-compressed [[https://lyos.jimx.codes/nightly/lyos-i686.img.xz][nightly image]], uncompress the image and run it with QEMU:
@@ -76,29 +76,29 @@ Alternatively, you can install the dependencies manually if you prefer to build 
 *** Building
 Make sure that you are in the root directory of this repository (~/workspace/lyos~ if you are using a Docker container). First we need to create the build configuration file and install some userspace headers to the cross-compile system root:
 #+BEGIN_SRC shell
-make SUBARCH=i686 defconfig objdirs install-headers
+make <SUBARCH=x86_64> defconfig objdirs install-headers
 #+END_SRC
-The ~SUBARCH~ environment variable specifies which architecture to build Lyos for. Currently only ~i686~ and ~riscv64~ are supported.
+The optional ~SUBARCH~ environment variable specifies which architecture to build Lyos for. Currently only ~x86_64~, ~i686~ and ~riscv64~ are supported. If not specified, Lyos will be built for the architecture of the host system.
 
 Set up the toolchain and userspace packages for building Lyos:
 #+BEGIN_SRC shell
 cd toolchain
 ./download.sh
-BUILD_EVERYTHING=true ./setup.sh -m i686
+BUILD_EVERYTHING=true ./setup.sh <-m x86_64>
 cd ..
 #+END_SRC
 Similar to ~SUBARCH~, the ~-m~ option of ~setup.sh~ specifies the architecture to build the toolchain and packages for.
 
 Now build the kernel and servers:
 #+BEGIN_SRC shell
-make SUBARCH=i686
+make SUBARCH=x86_64
 
 #+END_SRC
 (Optionally) ~setup.sh~ only builds some core userspace packages like ~bash~ and ~coreutils~. You still need to build some extra packages if you want to use graphical interface:
 #+BEGIN_SRC shell
 cd toolchain
-BUILD_EVERYTHING=true ./setup-extra.sh -m i686
-BUILD_EVERYTHING=true ./setup-x11.sh -m i686
+BUILD_EVERYTHING=true ./setup-extra.sh -m x86_64
+BUILD_EVERYTHING=true ./setup-x11.sh -m x86_64
 cd ..
 #+END_SRC
 

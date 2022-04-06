@@ -38,7 +38,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_GETTEXT:=false}
 : ${BUILD_GUILE:=false}
 : ${BUILD_LWIP:=false}
-: ${BUILD_LIBFFI:=false}
 
 if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
@@ -68,7 +67,6 @@ if $BUILD_EVERYTHING; then
     BUILD_EUDEV=true
     BUILD_MTDEV=true
     BUILD_LWIP=true
-    BUILD_LIBFFI=true
 fi
 
 echo "Building toolchain... (sysroot: $SYSROOT, prefix: $PREFIX, crossprefix: $CROSSPREFIX, target: $TARGET)"
@@ -656,23 +654,6 @@ if $BUILD_LWIP; then
     cp liblwipcore.a $SYSROOT/lib
     cp -rf $DIR/sources/lwip-STABLE-2_1_3_RELEASE/src/include/lwip $SYSROOT/usr/include/
     cp -rf $DIR/patches/lwip/* $SYSROOT/usr/include/lwip
-    popd > /dev/null
-fi
-
-# Build libffi
-if $BUILD_LIBFFI; then
-    if [ ! -d "libffi-$SUBARCH" ]; then
-        mkdir libffi-$SUBARCH
-    fi
-
-    pushd $DIR/sources/libffi-3.3 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
-    popd > /dev/null
-
-    pushd libffi-$SUBARCH > /dev/null
-    $DIR/sources/libffi-3.3/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
-    make -j$PARALLELISM || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 
