@@ -1,6 +1,6 @@
-diff --color -rupN old/config.sub new/config.sub
+diff -rupN old/config.sub new/config.sub
 --- old/config.sub	2019-01-03 19:28:27.000000000 +0800
-+++ new/config.sub	2021-12-31 13:49:34.364043727 +0800
++++ new/config.sub	2022-01-18 22:22:35.569582027 +0800
 @@ -2,7 +2,7 @@
  # Configuration validation subroutine script.
  #   Copyright 1992-2019 Free Software Foundation, Inc.
@@ -18,16 +18,27 @@ diff --color -rupN old/config.sub new/config.sub
  	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
-diff --color -rupN old/gcc/config/i386/t-lyos64 new/gcc/config/i386/t-lyos64
+diff -rupN old/gcc/config/aarch64/t-aarch64-lyos new/gcc/config/aarch64/t-aarch64-lyos
+--- old/gcc/config/aarch64/t-aarch64-lyos	1970-01-01 08:00:00.000000000 +0800
++++ new/gcc/config/aarch64/t-aarch64-lyos	2022-04-07 22:11:17.324546257 +0800
+@@ -0,0 +1,7 @@
++LIB1ASMSRC   = aarch64/lib1funcs.asm
++LIB1ASMFUNCS = _aarch64_sync_cache_range
++
++MULTILIB_OSDIRNAMES = mabi.lp64=../lib64$(call if_multiarch,:aarch64-lyos)
++MULTIARCH_DIRNAME = $(call if_multiarch,aarch64-lyos)
++
++MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32$(call if_multiarch,:aarch64-lyos_ilp32)
+diff -rupN old/gcc/config/i386/t-lyos64 new/gcc/config/i386/t-lyos64
 --- old/gcc/config/i386/t-lyos64	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/i386/t-lyos64	2021-12-31 13:49:34.364043727 +0800
++++ new/gcc/config/i386/t-lyos64	2022-01-18 22:22:35.569582027 +0800
 @@ -0,0 +1,3 @@
 +MULTILIB_OPTIONS = m64/m32
 +MULTILIB_DIRNAMES = 64 32
 +MULTILIB_OSDIRNAMES = m64=../lib64:x86_64-lyos m32=../lib32:i386-lyos
-diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
+diff -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 --- old/gcc/config/lyos.h	1970-01-01 08:00:00.000000000 +0800
-+++ new/gcc/config/lyos.h	2021-12-31 13:49:34.364043727 +0800
++++ new/gcc/config/lyos.h	2022-01-18 22:22:35.569582027 +0800
 @@ -0,0 +1,27 @@
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS() \
@@ -56,9 +67,9 @@ diff --color -rupN old/gcc/config/lyos.h new/gcc/config/lyos.h
 +
 +#undef  LIB_SPEC
 +#define LIB_SPEC "%{pthread:-lpthread} %{shared:-lc} %{!shared:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}"
-diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
+diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 --- old/gcc/config.gcc	2019-08-04 04:16:22.000000000 +0800
-+++ new/gcc/config.gcc	2021-12-31 13:49:34.364043727 +0800
++++ new/gcc/config.gcc	2022-04-07 22:03:50.993727573 +0800
 @@ -970,6 +970,12 @@ case ${target} in
        ;;
    esac
@@ -72,7 +83,21 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  *-*-elf|arc*-*-elf*)
    # Assume that newlib is being used and so __cxa_atexit is provided.
    default_use_cxa_atexit=yes
-@@ -1135,6 +1141,11 @@ arm-wrs-vxworks|arm-wrs-vxworks7)
+@@ -1050,6 +1056,13 @@ aarch64*-*-linux*)
+ 	done
+ 	TM_MULTILIB_CONFIG=`echo $TM_MULTILIB_CONFIG | sed 's/^,//'`
+ 	;;
++aarch64*-*-lyos*)
++	tm_file="${tm_file} dbxelf.h elfos.h gnu-user.h lyos.h glibc-stdint.h"
++	tm_file="${tm_file} aarch64/aarch64-elf.h"    
++	tmake_file="${tmake_file} aarch64/t-aarch64 aarch64/t-aarch64-lyos"
++    tm_defines="${tm_defines}  TARGET_DEFAULT_ASYNC_UNWIND_TABLES=1"
++    TM_MULTILIB_CONFIG="lp64"
++    ;;    
+ alpha*-*-linux*)
+ 	tm_file="elfos.h ${tm_file} alpha/elf.h alpha/linux.h alpha/linux-elf.h glibc-stdint.h"
+ 	tmake_file="${tmake_file} alpha/t-linux alpha/t-alpha"
+@@ -1135,6 +1148,11 @@ arm-wrs-vxworks|arm-wrs-vxworks7)
          tm_file="elfos.h arm/elf.h arm/aout.h ${tm_file} vx-common.h vxworks.h arm/vxworks.h"
  	target_cpu_cname="arm8"
  	;;
@@ -84,7 +109,7 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  arm*-*-freebsd*)                # ARM FreeBSD EABI
  	tm_file="dbxelf.h elfos.h ${fbsd_tm_file} arm/elf.h"
  	case $target in
-@@ -1612,6 +1623,12 @@ hppa[12]*-*-hpux11*)
+@@ -1612,6 +1630,12 @@ hppa[12]*-*-hpux11*)
  i[34567]86-*-darwin1[89]*)
  	echo "Error: 32bit target is not supported after Darwin17" 1>&2
  	;;
@@ -97,7 +122,7 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  i[34567]86-*-darwin*)
  	need_64bit_isa=yes
  	# Baseline choice for a machine that allows m64 support.
-@@ -1780,6 +1797,10 @@ x86_64-*-linux* | x86_64-*-kfreebsd*-gnu
+@@ -1780,6 +1804,10 @@ x86_64-*-linux* | x86_64-*-kfreebsd*-gnu
  	done
  	TM_MULTILIB_CONFIG=`echo $TM_MULTILIB_CONFIG | sed 's/^,//'`
  	;;
@@ -108,7 +133,7 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
  i[34567]86-pc-msdosdjgpp*)
  	xm_file=i386/xm-djgpp.h
  	tm_file="dbxcoff.h ${tm_file} i386/unix.h i386/bsd.h i386/gas.h i386/djgpp.h i386/djgpp-stdint.h"
-@@ -2198,6 +2219,14 @@ microblaze*-*-elf)
+@@ -2198,6 +2226,14 @@ microblaze*-*-elf)
  	c_target_objs="${c_target_objs} microblaze-c.o"
  	cxx_target_objs="${cxx_target_objs} microblaze-c.o"
  	tmake_file="${tmake_file} microblaze/t-microblaze"
@@ -123,9 +148,21 @@ diff --color -rupN old/gcc/config.gcc new/gcc/config.gcc
          ;;
  riscv*-*-linux*)
  	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
-diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
+diff -rupN old/gcc/config.host new/gcc/config.host
+--- old/gcc/config.host	2019-01-01 20:31:55.000000000 +0800
++++ new/gcc/config.host	2022-04-07 22:04:33.708536192 +0800
+@@ -99,7 +99,7 @@ case ${host} in
+ esac
+ 
+ case ${host} in
+-  aarch64*-*-freebsd* | aarch64*-*-linux* | aarch64*-*-fuchsia*)
++  aarch64*-*-freebsd* | aarch64*-*-linux* | aarch64*-*-fuchsia* | aarch64*-*-lyos*)
+     case ${target} in
+       aarch64*-*-*)
+ 	host_extra_gcc_objs="driver-aarch64.o"
+diff -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
 --- old/gcc/diagnostic.c	2019-01-01 20:31:55.000000000 +0800
-+++ new/gcc/diagnostic.c	2021-12-31 13:49:34.364043727 +0800
++++ new/gcc/diagnostic.c	2022-01-18 22:22:35.572914201 +0800
 @@ -35,9 +35,7 @@ along with GCC; see the file COPYING3.
  #include "selftest.h"
  #include "selftest-diagnostic.h"
@@ -137,9 +174,9 @@ diff --color -rupN old/gcc/diagnostic.c new/gcc/diagnostic.c
  
  #ifdef GWINSZ_IN_SYS_IOCTL
  # include <sys/ioctl.h>
-diff --color -rupN old/gcc/limity.h new/gcc/limity.h
+diff -rupN old/gcc/limity.h new/gcc/limity.h
 --- old/gcc/limity.h	2001-05-10 08:07:23.000000000 +0800
-+++ new/gcc/limity.h	2021-12-31 13:50:23.260346027 +0800
++++ new/gcc/limity.h	2022-01-18 22:22:35.572914201 +0800
 @@ -1,6 +1,22 @@
  /* This administrivia gets added to the end of limits.h
     if the system has its own version of limits.h.  */
@@ -163,9 +200,9 @@ diff --color -rupN old/gcc/limity.h new/gcc/limity.h
  #else /* not _GCC_LIMITS_H_ */
  
  #ifdef _GCC_NEXT_LIMITS_H
-diff --color -rupN old/libgcc/config.host new/libgcc/config.host
+diff -rupN old/libgcc/config.host new/libgcc/config.host
 --- old/libgcc/config.host	2019-01-17 20:29:13.000000000 +0800
-+++ new/libgcc/config.host	2021-12-31 13:49:34.364043727 +0800
++++ new/libgcc/config.host	2022-04-07 22:14:53.821665753 +0800
 @@ -101,6 +101,9 @@ arc*-*-*)
  arm*-*-*)
  	cpu_type=arm
@@ -176,7 +213,22 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  avr-*-*)
  	cpu_type=avr
  	;;    
-@@ -686,6 +689,10 @@ x86_64-*-linux*)
+@@ -366,6 +369,14 @@ aarch64*-*-linux*)
+ 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
+ 	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
+ 	;;
++aarch64*-*-lyos*)
++	extra_parts="$extra_parts crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o crtfastmath.o"
++    md_unwind_header=aarch64/aarch64-unwind.h    
++	tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic"
++    tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
++    tmake_file="${tmake_file} ${cpu_type}/t-lse t-slibgcc-libgcc"
++	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"    
++	;;    
+ alpha*-*-linux*)
+ 	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee t-crtfm alpha/t-linux"
+ 	extra_parts="$extra_parts crtfastmath.o"
+@@ -686,6 +697,10 @@ x86_64-*-linux*)
  	tm_file="${tm_file} i386/elf-lib.h"
  	md_unwind_header=i386/linux-unwind.h
  	;;
@@ -187,7 +239,7 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  x86_64-*-kfreebsd*-gnu)
  	extra_parts="$extra_parts crtprec32.o crtprec64.o crtprec80.o crtfastmath.o"
  	tmake_file="${tmake_file} i386/t-crtpc t-crtfm i386/t-crtstuff t-dfprules"
-@@ -812,6 +819,10 @@ x86_64-*-mingw*)
+@@ -812,6 +827,10 @@ x86_64-*-mingw*)
  		extra_parts="$extra_parts vtv_start.o vtv_end.o vtv_start_preinit.o vtv_end_preinit.o"
  	fi
  	;;
@@ -198,7 +250,7 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
-@@ -1187,6 +1198,10 @@ riscv*-*-freebsd*)
+@@ -1187,6 +1206,10 @@ riscv*-*-freebsd*)
  	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
  	;;
@@ -209,9 +261,9 @@ diff --color -rupN old/libgcc/config.host new/libgcc/config.host
  riscv*-*-*)
  	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
-diff --color -rupN old/libstdc++-v3/configure new/libstdc++-v3/configure
+diff -rupN old/libstdc++-v3/configure new/libstdc++-v3/configure
 --- old/libstdc++-v3/configure	2019-07-04 05:09:13.000000000 +0800
-+++ new/libstdc++-v3/configure	2021-12-31 13:49:34.370710345 +0800
++++ new/libstdc++-v3/configure	2022-01-18 22:22:35.576246377 +0800
 @@ -15262,8 +15262,8 @@ if test "$enable_shared" = yes; then
    glibcxx_compiler_shared_flag="-D_GLIBCXX_SHARED"
  
@@ -223,9 +275,9 @@ diff --color -rupN old/libstdc++-v3/configure new/libstdc++-v3/configure
    glibcxx_compiler_shared_flag=
  fi
  
-diff --color -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
+diff -rupN old/libstdc++-v3/crossconfig.m4 new/libstdc++-v3/crossconfig.m4
 --- old/libstdc++-v3/crossconfig.m4	2019-03-12 00:28:11.000000000 +0800
-+++ new/libstdc++-v3/crossconfig.m4	2021-12-31 13:49:34.370710345 +0800
++++ new/libstdc++-v3/crossconfig.m4	2022-01-18 22:22:35.579578550 +0800
 @@ -200,6 +200,12 @@ case "${host}" in
      AC_CHECK_FUNCS(sockatmark)
      AM_ICONV

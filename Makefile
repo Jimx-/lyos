@@ -31,6 +31,10 @@ ifeq ($(ARCH),arm)
 	SUBARCH = arm
 endif
 
+ifeq ($(ARCH),aarch64)
+	SUBARCH = arm64
+endif
+
 ifeq ($(ARCH),riscv32)
 	ARCH = riscv
 endif

@@ -181,6 +181,10 @@ if $BUILD_BINUTILS; then
 
     unset PKG_CONFIG_LIBDIR
 
+    pushd $DIR/sources/binutils-2.31/ld > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf || cmd_error
+    popd > /dev/null
+
     pushd binutils-$SUBARCH
     $DIR/sources/binutils-2.31/configure --target=$TARGET --prefix=$PREFIX --with-sysroot=$SYSROOT --disable-werror --enable-separate-code || cmd_error
     make -j$PARALLELISM || cmd_error
