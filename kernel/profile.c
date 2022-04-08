@@ -107,6 +107,8 @@ static int profile_clock_handler(irq_hook_t* hook)
                    (void*)p->regs.ip
 #elif defined(__riscv)
                    (void*)p->regs.sepc
+#elif defined(__aarch64__)
+                   (void*)0
 #endif
     );
 

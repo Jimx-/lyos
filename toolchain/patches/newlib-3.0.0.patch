@@ -1,6 +1,6 @@
-diff --color -rupN old/config.sub new/config.sub
+diff -rupN old/config.sub new/config.sub
 --- old/config.sub	2018-01-19 02:07:45.000000000 +0800
-+++ new/config.sub	2021-08-17 18:12:28.051492832 +0800
++++ new/config.sub	2022-04-08 12:23:10.121708862 +0800
 @@ -1398,6 +1398,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
  	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
@@ -9,9 +9,22 @@ diff --color -rupN old/config.sub new/config.sub
  	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
  	      | -onefs* | -tirtos* | -phoenix*)
  	# Remember, each alternative MUST END IN *, to match a version number.
-diff --color -rupN old/newlib/configure.host new/newlib/configure.host
+diff -rupN old/libgloss/aarch64/configure.in new/libgloss/aarch64/configure.in
+--- old/libgloss/aarch64/configure.in	2018-01-19 02:07:45.000000000 +0800
++++ new/libgloss/aarch64/configure.in	2022-04-08 12:57:41.389505856 +0800
+@@ -32,6 +32,9 @@ case "${target}" in
+   *-*-elf)
+ 	objtype=elf-
+ 	;;
++  *-*-lyos*)
++	objtype=elf-
++	;;    
+ esac
+ 
+ AC_SUBST(objtype)
+diff -rupN old/newlib/configure.host new/newlib/configure.host
 --- old/newlib/configure.host	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/configure.host	2021-08-17 18:13:12.381140736 +0800
++++ new/newlib/configure.host	2022-04-08 12:25:17.469755939 +0800
 @@ -372,6 +372,12 @@ case "${host}" in
      oext=lo
      lpfx=
@@ -25,17 +38,20 @@ diff --color -rupN old/newlib/configure.host new/newlib/configure.host
    *) ;; #shared library not supported for ${host}
  esac
  
-@@ -409,6 +415,9 @@ case "${host}" in
+@@ -409,6 +415,12 @@ case "${host}" in
  	sys_dir=a29khif
  	signal_dir=
  	;;
 +  arm-*-lyos*)
 +    sys_dir=lyos
 +    ;;
++  aarch64-*-lyos*)
++    sys_dir=lyos
++    ;;    
    arm*-*-*)
  	sys_dir=arm
  	if [ "x${newlib_may_supply_syscalls}" = "xno" ] ; then
-@@ -468,6 +477,18 @@ case "${host}" in
+@@ -468,6 +480,18 @@ case "${host}" in
  	sys_dir=sysvi386
  	unix_dir=unix
  	;;
@@ -54,7 +70,7 @@ diff --color -rupN old/newlib/configure.host new/newlib/configure.host
    i[34567]86-pc-linux-*)
  	sys_dir=linux
  	unix_dir=unix
-@@ -578,6 +598,9 @@ esac
+@@ -578,6 +602,9 @@ esac
  # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
  
  case "${host}" in
@@ -64,9 +80,9 @@ diff --color -rupN old/newlib/configure.host new/newlib/configure.host
    *-*-cygwin*)
  	test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`
  	export cygwin_srcdir
-diff --color -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
+diff -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
 --- old/newlib/libc/machine/i386/setjmp.S	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/machine/i386/setjmp.S	2021-08-17 18:12:28.051492832 +0800
++++ new/newlib/libc/machine/i386/setjmp.S	2022-04-08 12:23:10.121708862 +0800
 @@ -115,7 +115,6 @@ SYM (longjmp):
  
  	movl	24(edi),ebp
@@ -83,9 +99,9 @@ diff --color -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine
  #endif
  
  	ret
-diff --color -rupN old/newlib/libc/stdlib/strtoimax.c new/newlib/libc/stdlib/strtoimax.c
+diff -rupN old/newlib/libc/stdlib/strtoimax.c new/newlib/libc/stdlib/strtoimax.c
 --- old/newlib/libc/stdlib/strtoimax.c	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/stdlib/strtoimax.c	2021-08-17 18:12:28.051492832 +0800
++++ new/newlib/libc/stdlib/strtoimax.c	2022-04-08 12:23:10.121708862 +0800
 @@ -61,10 +61,10 @@ _strtoimax_l(struct _reent *rptr, const
  	     char ** __restrict endptr, int base, locale_t loc)
  {
@@ -99,9 +115,9 @@ diff --color -rupN old/newlib/libc/stdlib/strtoimax.c new/newlib/libc/stdlib/str
  
  	/*
  	 * Skip white space and pick up leading +/- sign if any.
-diff --color -rupN old/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
+diff -rupN old/newlib/libc/sys/configure.in new/newlib/libc/sys/configure.in
 --- old/newlib/libc/sys/configure.in	2018-01-19 02:07:45.000000000 +0800
-+++ new/newlib/libc/sys/configure.in	2021-08-17 18:12:28.051492832 +0800
++++ new/newlib/libc/sys/configure.in	2022-04-08 12:23:10.125042028 +0800
 @@ -30,6 +30,7 @@ if test -n "${sys_dir}"; then
  	h8300hms) AC_CONFIG_SUBDIRS(h8300hms) ;;
  	h8500hms) AC_CONFIG_SUBDIRS(h8500hms) ;;

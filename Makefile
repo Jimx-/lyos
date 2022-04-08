@@ -32,7 +32,7 @@ ifeq ($(ARCH),arm)
 endif
 
 ifeq ($(ARCH),aarch64)
-	SUBARCH = arm64
+	ARCH = arm64
 endif
 
 ifeq ($(ARCH),riscv32)

@@ -277,6 +277,10 @@ if $BUILD_NEWLIB; then
     popd > /dev/null
     popd > /dev/null
 
+    pushd $DIR/sources/newlib-3.0.0/libgloss/aarch64 > /dev/null
+    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf || cmd_error
+    popd > /dev/null
+
     pushd newlib-$SUBARCH > /dev/null
     $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX --disable-multilib || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak

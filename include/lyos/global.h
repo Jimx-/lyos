@@ -54,6 +54,10 @@ extern pde_t initial_pgd[];
 EXTERN struct tss tss[CONFIG_SMP_MAX_CPUS];
 #endif
 
+#ifdef __aarch64__
+EXTERN u32 bsp_cpu_id;
+#endif
+
 #ifdef __riscv
 EXTERN u32 bsp_cpu_id, bsp_hart_id;
 extern pde_t initial_pgd[];
