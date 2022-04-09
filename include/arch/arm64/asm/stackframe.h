@@ -18,7 +18,16 @@
 
 typedef unsigned long reg_t;
 
-struct stackframe {};
+struct stackframe {
+    reg_t regs[31];
+    reg_t sp;
+    reg_t pc;
+    reg_t pstate;
+    reg_t orig_x0;
+
+    /* Current CPU */
+    unsigned int cpu;
+};
 
 struct segframe {};
 

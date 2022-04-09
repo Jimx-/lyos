@@ -120,6 +120,8 @@
 #define DEVPTS_BASE      2701
 #define NDEV_BASE        3001
 
+#ifndef __ASSEMBLY__
+
 /**
  * @enum msgtype
  * @brief MESSAGE types
@@ -402,6 +404,8 @@ enum msgtype {
     NDEV_RECV_REPLY,
     NDEV_CALL_MAX,
 };
+
+#endif
 
 #define IS_NDEV_CALL(type) (((type) >= NDEV_BASE) && ((type) < NDEV_CALL_MAX))
 

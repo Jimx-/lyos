@@ -30,6 +30,9 @@ ifeq ($(SUBARCH),x86_64)
 	@$(LD) $(LDFLAGS) -o $(KRNL).64 $^
 	@$(OBJCOPY) -I elf64-x86-64 -O elf32-i386 $(KRNL).64 $(KRNL)
 	@cp -f $(KRNL).64 $(DESTDIR)/boot/
+else ifeq ($(ARCH),arm64)
+	@$(LD) $(LDFLAGS) -o $(KRNL) $^
+	@$(OBJCOPY) -O binary $(KRNL) $(KRNL).bin
 else
 	@$(LD) $(LDFLAGS) -o $(KRNL) $^
 endif

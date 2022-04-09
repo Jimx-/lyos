@@ -32,6 +32,11 @@
 #define TRUE  1
 #define FALSE 0
 
+#define UL(x)  (_UL(x))
+#define ULL(x) (_ULL(x))
+
+#define BIT(nr) (UL(1) << (nr))
+
 #define STR_DEFAULT_LEN 1024
 
 #define NR_IOREQS 64

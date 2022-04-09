@@ -34,4 +34,10 @@
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
+u64 boot_args[4];
+
+phys_bytes __fdt_pointer;
+
+void cstart(phys_bytes dtb_phys) {}
+
 void init_arch() {}

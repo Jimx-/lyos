@@ -1,5 +1,9 @@
 .section .text
 
-.global restore_user_context
+    .globl vectors
+    .globl restore_user_context
+
+    .align	11
+vectors:
 
 restore_user_context:

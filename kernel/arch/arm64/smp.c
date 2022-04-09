@@ -34,4 +34,6 @@
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
+struct stackframe init_stackframe; /* used to retrieve the id of the init cpu */
+
 void smp_init() {}
