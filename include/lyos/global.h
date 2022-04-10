@@ -56,7 +56,7 @@ EXTERN struct tss tss[CONFIG_SMP_MAX_CPUS];
 
 #ifdef __aarch64__
 EXTERN u32 bsp_cpu_id;
-EXTERN unsigned long kimage_voffset;
+extern pde_t init_pg_dir[];
 #endif
 
 #ifdef __riscv

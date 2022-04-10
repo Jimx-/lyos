@@ -1,1 +1,1 @@
-SRCS	+= arch/arm64/spinlock.S
+SRCS	+= arch/arm64/spinlock.S arch/arm64/cache.S

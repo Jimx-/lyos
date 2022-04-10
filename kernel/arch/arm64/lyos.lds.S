@@ -35,6 +35,8 @@ SECTIONS
     . = ALIGN(0x10000);
     .data : {
         _data = .;
+        . = ALIGN(64);
+            *(.data..cacheline_aligned)
             *(.data)
         _edata = .;
     }

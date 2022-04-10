@@ -30,4 +30,6 @@
 #define mmio_write(a, b) *((volatile unsigned int*)(unsigned long)(a)) = (b)
 #define mmio_read(a)     (*((volatile unsigned int*)(unsigned long)(a)))
 
+void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot);
+
 #endif

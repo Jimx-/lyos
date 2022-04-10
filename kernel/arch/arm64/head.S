@@ -153,8 +153,6 @@ __primary_switched:
     stp     x29, x30, [sp, #-16]!
     mov     x29, sp
 
-    str_l   x21, __fdt_pointer, x5
-
     ldr_l   x4, kimage_vaddr
     sub     x4, x4, x0
     str_l   x4, kimage_voffset, x5
@@ -165,6 +163,8 @@ __primary_switched:
     sub     x2, x2, x0
     bl  memset
     dsb ishst
+
+    str_l   x21, __fdt_pointer, x5
 
     mov x0, x21
     bl cstart
@@ -220,6 +220,10 @@ __enable_paging:
 
     .pushsection ".rodata", "a"
 kimage_vaddr:
+    .quad   _text
+
+    .globl kimage_voffset
+kimage_voffset:
     .quad   _text
     .popsection
 

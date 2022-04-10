@@ -21,7 +21,8 @@
 
 #define VA_BITS (CONFIG_ARM64_VA_BITS)
 
-#define KERNEL_VMA (_PAGE_END(VA_BITS_MIN))
+#define KERNEL_VMA  (_PAGE_END(VA_BITS_MIN))
+#define FIXADDR_TOP (-(UL(1) << (VA_BITS - 2)))
 
 #if VA_BITS > 48
 #define VA_BITS_MIN (48)
@@ -29,7 +30,7 @@
 #define VA_BITS_MIN (VA_BITS)
 #endif
 
-#define _PAGE_END(va) (-(_AC(1, UL) << ((va)-1)))
+#define _PAGE_END(va) (-(UL(1) << ((va)-1)))
 
 /* Memory types. */
 #define MT_NORMAL        0
@@ -53,13 +54,18 @@
 
 #ifndef __ASSEMBLY__
 
+typedef unsigned long pteval_t;
+typedef unsigned long pmdval_t;
+typedef unsigned long pudval_t;
+typedef unsigned long pgdval_t;
+
 typedef struct {
-    unsigned long pde;
+    pgdval_t pde;
 } pde_t;
 
 #if CONFIG_PGTABLE_LEVELS > 3
 typedef struct {
-    unsigned long pud;
+    pudval_t pud;
 } pud_t;
 
 #define pud_val(x) ((x).pud)
@@ -68,7 +74,7 @@ typedef struct {
 
 #if CONFIG_PGTABLE_LEVELS > 2
 typedef struct {
-    unsigned long pmd;
+    pmdval_t pmd;
 } pmd_t;
 
 #define pmd_val(x) ((x).pmd)
@@ -76,7 +82,7 @@ typedef struct {
 #endif
 
 typedef struct {
-    unsigned long pte;
+    pteval_t pte;
 } pte_t;
 
 typedef struct {
@@ -126,7 +132,21 @@ typedef struct {
 #define ARCH_PGD_MASK       (~(ARCH_PGD_SIZE - 1))
 #define ARCH_VM_DIR_ENTRIES (1 << (VA_BITS - ARCH_PGD_SHIFT))
 
+#define ARCH_PTE(v) \
+    (((unsigned long)(v) >> ARCH_PG_SHIFT) & (ARCH_VM_PT_ENTRIES - 1))
+#define ARCH_PMDE(v) \
+    (((unsigned long)(v) >> ARCH_PMD_SHIFT) & (ARCH_VM_PMD_ENTRIES - 1))
+#define ARCH_PDE(v) \
+    (((unsigned long)(v) >> ARCH_PGD_SHIFT) & (ARCH_VM_DIR_ENTRIES - 1))
+
+#define _ARM64_PGD_TYPE_TABLE (_AT(pudval_t, 3) << 0)
+#define _ARM64_PGD_TYPE_SECT  (_AT(pgdval_t, 1) << 0)
+
+#define _ARM64_PUD_TYPE_TABLE (_AT(pudval_t, 3) << 0)
+#define _ARM64_PUD_TYPE_SECT  (_AT(pudval_t, 1) << 0)
+
 #define _ARM64_PMD_TYPE_TABLE (_AT(pmdval_t, 3) << 0)
+#define _ARM64_PMD_TABLE_BIT  (_AT(pmdval_t, 1) << 1)
 #define _ARM64_PMD_TYPE_SECT  (_AT(pmdval_t, 1) << 0)
 
 #define _ARM64_SECT_VALID  (_AT(pmdval_t, 1) << 0)
@@ -138,6 +158,28 @@ typedef struct {
 #define _ARM64_SECT_CONT   (_AT(pmdval_t, 1) << 52)
 #define _ARM64_SECT_PXN    (_AT(pmdval_t, 1) << 53)
 #define _ARM64_SECT_UXN    (_AT(pmdval_t, 1) << 54)
+
+#define _ARM64_PTE_VALID     (_AT(pteval_t, 1) << 0)
+#define _ARM64_PTE_TYPE_MASK (_AT(pteval_t, 3) << 0)
+#define _ARM64_PTE_TYPE_PAGE (_AT(pteval_t, 3) << 0)
+#define _ARM64_PTE_TABLE_BIT (_AT(pteval_t, 1) << 1)
+#define _ARM64_PTE_USER      (_AT(pteval_t, 1) << 6)  /* AP[1] */
+#define _ARM64_PTE_RDONLY    (_AT(pteval_t, 1) << 7)  /* AP[2] */
+#define _ARM64_PTE_SHARED    (_AT(pteval_t, 3) << 8)  /* SH[1:0] */
+#define _ARM64_PTE_AF        (_AT(pteval_t, 1) << 10) /* Access Flag */
+#define _ARM64_PTE_NG        (_AT(pteval_t, 1) << 11) /* nG */
+#define _ARM64_PTE_GP        (_AT(pteval_t, 1) << 50) /* BTI guarded */
+#define _ARM64_PTE_DBM       (_AT(pteval_t, 1) << 51) /* Dirty Bit Management */
+#define _ARM64_PTE_CONT      (_AT(pteval_t, 1) << 52) /* Contiguous range */
+#define _ARM64_PTE_PXN       (_AT(pteval_t, 1) << 53) /* Privileged XN */
+#define _ARM64_PTE_UXN       (_AT(pteval_t, 1) << 54) /* User XN */
+
+#define _ARM64_PTE_ADDR_LOW \
+    (((_AT(pteval_t, 1) << (48 - ARCH_PG_SHIFT)) - 1) << ARCH_PG_SHIFT)
+#define _ARM64_PTE_ADDR_MASK _ARM64_PTE_ADDR_LOW
+
+#define _ARM64_PTE_ATTRINDX(t)   (_AT(pteval_t, (t)) << 2)
+#define _ARM64_PTE_ATTRINDX_MASK (_AT(pteval_t, 7) << 2)
 
 #define SWAPPER_TABLE_SHIFT ARCH_PUD_SHIFT
 #define SWAPPER_BLOCK_SHIFT ARCH_PMD_SHIFT
@@ -235,5 +277,17 @@ typedef struct {
 #define TCR_E0PD1     (UL(1) << 56)
 #define TCR_TCMA0     (UL(1) << 57)
 #define TCR_TCMA1     (UL(1) << 58)
+
+#define __kimg_to_phys(addr) ((addr)-kimage_voffset)
+
+#define __pa_symbol(x) __kimg_to_phys((phys_bytes)(x))
+
+#define __phys_to_kimg(x) ((unsigned long)((x) + kimage_voffset))
+
+#ifndef __ASSEMBLY__
+
+extern unsigned long kimage_voffset;
+
+#endif
 
 #endif

@@ -105,14 +105,6 @@
     movk	\reg, :abs_g0_nc:\val
 .endm
 
-
-.macro dcache_line_size, reg, tmp
-    mrs     \tmp, ctr_el0
-    ubfm    \tmp, \tmp, #16, #19
-    mov     \reg, #4
-    lsl     \reg, \reg, \tmp
-.endm
-
 /* clang-format on */
 
 #define MAIR_EL1_SET                                           \

@@ -6,4 +6,4 @@ target remote 127.0.0.1:1234
 # set archi i386
 # hb ldso_main
 layout asm
-hb __primary_switched
+hb cstart
