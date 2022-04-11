@@ -38,9 +38,71 @@
 
 #include <libfdt/libfdt.h>
 
+#define NO_BLOCK_MAPPINGS BIT(0)
+#define NO_CONT_MAPPINGS  BIT(1)
+
 static pte_t bm_pt[ARCH_VM_PT_ENTRIES] __attribute__((aligned(ARCH_PG_SIZE)));
 static pmd_t bm_pmd[ARCH_VM_PMD_ENTRIES] __attribute__((aligned(ARCH_PG_SIZE)));
 static pud_t bm_pud[ARCH_VM_PUD_ENTRIES] __attribute__((aligned(ARCH_PG_SIZE)));
+
+phys_bytes pg_alloc_pages(kinfo_t* pk, unsigned int nr_pages)
+{
+    int i;
+    vir_bytes size = nr_pages * ARCH_PG_SIZE;
+
+    for (i = pk->memmaps_count - 1; i >= 0; i--) {
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
+
+        if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
+
+        if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= size)) {
+            entry->addr += size;
+            entry->len -= size;
+
+            return entry->addr - size;
+        }
+    }
+
+    return 0;
+}
+
+phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size)
+{
+    int i;
+
+    for (i = 0; i < pk->memmaps_count; i++) {
+        struct kinfo_mmap_entry* entry = &pk->memmaps[i];
+
+        if (entry->type != KINFO_MEMORY_AVAILABLE) continue;
+
+        if (!(entry->addr % ARCH_PG_SIZE) && (entry->len >= size)) {
+            entry->addr += size;
+            entry->len -= size;
+
+            return entry->addr - size;
+        }
+    }
+
+    return 0;
+}
+
+static phys_bytes pg_alloc_pt(kinfo_t* pk)
+{
+    phys_bytes phys_addr = pg_alloc_pages(pk, 1);
+    void* pt;
+
+    if (!phys_addr) {
+        panic("failed to allocate page table page");
+    }
+
+    pt = pte_set_fixmap(phys_addr);
+
+    memset(pt, 0, ARCH_PG_SIZE);
+
+    pte_clear_fixmap();
+
+    return phys_addr;
+}
 
 static inline pud_t* fixmap_pude(unsigned long addr)
 {
@@ -54,6 +116,118 @@ static inline pmd_t* fixmap_pmde(unsigned long addr)
 {
     pud_t* pude = fixmap_pude(addr);
     return pmd_offset_kimg(pude, addr);
+}
+
+static inline pte_t* fixmap_pte(unsigned long addr)
+{
+    return &bm_pt[ARCH_PTE(addr)];
+}
+
+static void alloc_init_pte(pmd_t* pmde, unsigned long addr, unsigned long end,
+                           phys_bytes phys, pgprot_t prot, int flags,
+                           kinfo_t* pk)
+{
+    pte_t* pte;
+
+    if (pmde_none(*pmde)) {
+        pmdval_t pmdval = _ARM64_PMD_TYPE_TABLE;
+        phys_bytes pt_phys;
+
+        if (!pk) panic("page table allocation not allowed");
+        pt_phys = pg_alloc_pt(pk);
+        __pmde_populate(pmde, pt_phys, pmdval);
+    }
+
+    pte = pte_set_fixmap_offset(pmde, addr);
+    do {
+        *pte = pfn_pte(phys >> ARCH_PG_SHIFT, prot);
+        phys += ARCH_PG_SIZE;
+    } while (pte++, addr += ARCH_PG_SIZE, addr != end);
+
+    pte_clear_fixmap();
+}
+
+static void alloc_init_pmd(pud_t* pude, unsigned long addr, unsigned long end,
+                           phys_bytes phys, pgprot_t prot, int flags,
+                           kinfo_t* pk)
+{
+    unsigned long next;
+    pmd_t* pmde;
+
+    if (pude_none(*pude)) {
+        pudval_t pudval = _ARM64_PUD_TYPE_TABLE;
+        phys_bytes pmd_phys;
+
+        if (!pk) panic("page table allocation not allowed");
+        pmd_phys = pg_alloc_pt(pk);
+        __pude_populate(pude, pmd_phys, pudval);
+    }
+
+    pmde = pmd_set_fixmap_offset(pude, addr);
+    do {
+        next = pmd_addr_end(addr, end);
+
+        if (((addr | next | phys) & ~ARCH_PMD_MASK) == 0 &&
+            !(flags & NO_BLOCK_MAPPINGS)) {
+            *pmde = pfn_pmd(phys >> ARCH_PG_SHIFT, mk_pmd_sect_prot(prot));
+        } else {
+            alloc_init_pte(pmde, addr, next, phys, prot, flags, pk);
+        }
+        phys += next - addr;
+    } while (pmde++, addr = next, addr != end);
+
+    pmd_clear_fixmap();
+}
+
+static void alloc_init_pud(pde_t* pde, unsigned long addr, unsigned long end,
+                           phys_bytes phys, pgprot_t prot, int flags,
+                           kinfo_t* pk)
+{
+    unsigned long next;
+    pud_t* pude;
+
+    if (pde_none(*pde)) {
+        pdeval_t pdeval = _ARM64_PGD_TYPE_TABLE;
+        phys_bytes pud_phys;
+
+        if (!pk) panic("page table allocation not allowed");
+        pud_phys = pg_alloc_pt(pk);
+        __pde_populate(pde, pud_phys, pdeval);
+    }
+
+    pude = pud_set_fixmap_offset(pde, addr);
+    do {
+        next = pud_addr_end(addr, end);
+        alloc_init_pmd(pude, addr, next, phys, prot, flags, pk);
+        phys += next - addr;
+    } while (pude++, addr = next, addr != end);
+
+    pud_clear_fixmap();
+}
+
+static void __create_pgd_mapping(pde_t* pgd_page, phys_bytes phys,
+                                 vir_bytes virt, phys_bytes size, pgprot_t prot,
+                                 int flags, kinfo_t* pk)
+{
+    unsigned long addr, end, next;
+    pde_t* pde = pgd_offset(pgd_page, virt);
+
+    phys &= ARCH_PG_MASK;
+    addr = virt & ARCH_PG_MASK;
+    end = roundup(virt + size, ARCH_PG_SIZE);
+
+    do {
+        next = pgd_addr_end(addr, end);
+        alloc_init_pud(pde, addr, next, phys, prot, flags, pk);
+        phys += next - addr;
+    } while (pde++, addr = next, addr != end);
+}
+
+static void create_mapping_noalloc(phys_bytes phys, vir_bytes virt,
+                                   phys_bytes size, pgprot_t prot)
+{
+    __create_pgd_mapping(init_pg_dir, phys, virt, size, prot, NO_CONT_MAPPINGS,
+                         NULL);
 }
 
 void early_fixmap_init(void)
@@ -78,18 +252,16 @@ void early_fixmap_init(void)
 void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot)
 {
     const unsigned long dt_virt_base = __fix_to_virt(FIX_FDT);
-    const phys_bytes dt_phys_base = rounddown(dt_phys, SWAPPER_BLOCK_SIZE);
     int offset;
     void* dt_virt;
-    pmd_t* pmde;
 
     if (!dt_phys || dt_phys % 8) return NULL;
 
     offset = dt_phys % SWAPPER_BLOCK_SIZE;
     dt_virt = (void*)dt_virt_base + offset;
 
-    pmde = fixmap_pmde(dt_virt_base);
-    *pmde = pfn_pmd(dt_phys_base >> ARCH_PG_SHIFT, mk_pmd_sect_prot(prot));
+    create_mapping_noalloc(rounddown(dt_phys, SWAPPER_BLOCK_SIZE), dt_virt_base,
+                           SWAPPER_BLOCK_SIZE, prot);
 
     if (fdt_magic(dt_virt) != FDT_MAGIC) return NULL;
 
@@ -97,12 +269,26 @@ void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot)
     if (*size > (2 << 20)) return NULL;
 
     if (offset + *size > SWAPPER_BLOCK_SIZE) {
-        pmde = fixmap_pmde(dt_virt_base + SWAPPER_BLOCK_SIZE);
-        *pmde = pfn_pmd((dt_phys_base + SWAPPER_BLOCK_SIZE) >> ARCH_PG_SHIFT,
-                        mk_pmd_sect_prot(prot));
+        create_mapping_noalloc(
+            rounddown(dt_phys, SWAPPER_BLOCK_SIZE), dt_virt_base,
+            roundup(offset + *size, SWAPPER_BLOCK_SIZE), prot);
     }
 
     return dt_virt;
+}
+
+void __set_fixmap(enum fixed_address idx, phys_bytes phys, pgprot_t prot)
+{
+    unsigned long addr = __fix_to_virt(idx);
+    pte_t* pte;
+
+    pte = fixmap_pte(addr);
+
+    if (pgprot_val(prot)) {
+        *pte = pfn_pte(phys >> ARCH_PG_SHIFT, prot);
+    } else {
+        *pte = __pte(0);
+    }
 }
 
 void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)

@@ -57,10 +57,10 @@
 typedef unsigned long pteval_t;
 typedef unsigned long pmdval_t;
 typedef unsigned long pudval_t;
-typedef unsigned long pgdval_t;
+typedef unsigned long pdeval_t;
 
 typedef struct {
-    pgdval_t pde;
+    pdeval_t pde;
 } pde_t;
 
 #if CONFIG_PGTABLE_LEVELS > 3
@@ -139,8 +139,8 @@ typedef struct {
 #define ARCH_PDE(v) \
     (((unsigned long)(v) >> ARCH_PGD_SHIFT) & (ARCH_VM_DIR_ENTRIES - 1))
 
-#define _ARM64_PGD_TYPE_TABLE (_AT(pudval_t, 3) << 0)
-#define _ARM64_PGD_TYPE_SECT  (_AT(pgdval_t, 1) << 0)
+#define _ARM64_PGD_TYPE_TABLE (_AT(pdeval_t, 3) << 0)
+#define _ARM64_PGD_TYPE_SECT  (_AT(pdeval_t, 1) << 0)
 
 #define _ARM64_PUD_TYPE_TABLE (_AT(pudval_t, 3) << 0)
 #define _ARM64_PUD_TYPE_SECT  (_AT(pudval_t, 1) << 0)
