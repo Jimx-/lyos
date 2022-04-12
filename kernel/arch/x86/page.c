@@ -33,7 +33,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 #include <lyos/cpufeature.h>
 
 void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)

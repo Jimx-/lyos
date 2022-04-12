@@ -30,7 +30,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 
 #if CONFIG_PROFILING
 

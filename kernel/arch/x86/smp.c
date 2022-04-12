@@ -30,7 +30,7 @@
 #include <asm/const.h>
 #include <asm/proto.h>
 #include <asm/smp.h>
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 #include <lyos/smp.h>
 #include <asm/cpu_info.h>
 

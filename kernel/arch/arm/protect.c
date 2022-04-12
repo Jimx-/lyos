@@ -28,7 +28,7 @@
 #include "arch_proto.h"
 #include "arch_smp.h"
 #include "arch_type.h"
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 #include <lyos/cpufeature.h>
 
 extern int exc_vector_table;

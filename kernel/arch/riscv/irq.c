@@ -27,7 +27,7 @@
 #include <asm/proto.h>
 #include <asm/smp.h>
 #include <asm/csr.h>
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/vm.h>
 

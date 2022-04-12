@@ -31,7 +31,7 @@
 #include <asm/proto.h>
 #include <asm/smp.h>
 #include <asm/ldt.h>
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 #include <lyos/cpufeature.h>
 
 static int get_free_idx(struct proc* p)

@@ -32,7 +32,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 #include <lyos/vm.h>
 
 typedef int (*sys_call_handler_t)(MESSAGE* m, struct proc* p_proc);

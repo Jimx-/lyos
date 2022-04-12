@@ -31,7 +31,7 @@
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 #include <lyos/cpufeature.h>
 
 extern char _PHYS_BASE, _VIR_BASE, _KERN_SIZE, _KERN_OFFSET;

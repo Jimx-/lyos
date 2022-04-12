@@ -29,7 +29,7 @@
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 
 int arch_init_time() { return 0; }
 

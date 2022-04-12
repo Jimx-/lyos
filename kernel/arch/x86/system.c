@@ -33,7 +33,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 #include <lyos/param.h>
 #include <lyos/vm.h>
 #include "libexec/libexec.h"

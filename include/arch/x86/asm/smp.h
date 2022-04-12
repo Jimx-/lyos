@@ -17,7 +17,6 @@
 #define _ARCH_SMP_H_
 
 #include <asm/cpulocals.h>
-#include <lyos/cpulocals.h>
 
 DECLARE_CPULOCAL(unsigned int, cpu_number);
 

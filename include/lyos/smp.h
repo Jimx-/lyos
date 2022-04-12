@@ -16,7 +16,7 @@
 #ifndef _SMP_H_
 #define _SMP_H_
 
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 
 #define CPU_IS_READY 1
 

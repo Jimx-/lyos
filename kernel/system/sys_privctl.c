@@ -32,7 +32,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 
 int arch_privctl(MESSAGE* m, struct proc* p);
 

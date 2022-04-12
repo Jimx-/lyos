@@ -19,4 +19,6 @@ static inline unsigned long ___my_cpu_offset(void)
 
 #define __my_cpu_offset ___my_cpu_offset()
 
+#include <asm-generic/cpulocals.h>
+
 #endif

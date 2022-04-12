@@ -23,7 +23,7 @@
 #include <asm/fpu.h>
 #include <lyos/spinlock.h>
 #include <lyos/endpoint.h>
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 
 /* Process State */
 #define PST_BOOTINHIBIT \

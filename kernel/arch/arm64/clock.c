@@ -24,7 +24,7 @@
 #include "lyos/proc.h"
 #include "lyos/global.h"
 #include "lyos/proto.h"
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 
 int arch_init_time() { return 0; }
 

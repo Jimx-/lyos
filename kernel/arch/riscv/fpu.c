@@ -31,7 +31,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 
 /**
  * <Ring 0> Initialize FPU.

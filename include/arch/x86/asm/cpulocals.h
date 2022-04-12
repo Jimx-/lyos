@@ -32,4 +32,6 @@
 
 #define raw_cpulocal_read(var) cpulocal_from_op(, "mov", var)
 
+#include <asm-generic/cpulocals.h>
+
 #endif

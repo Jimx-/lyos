@@ -12,7 +12,7 @@
 #include <asm/const.h>
 #include <asm/proto.h>
 #include <asm/smp.h>
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 #include <lyos/smp.h>
 
 DEFINE_CPULOCAL(unsigned int, cpu_number) = 0;

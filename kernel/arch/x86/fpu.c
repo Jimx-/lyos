@@ -32,7 +32,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 #include <lyos/cpufeature.h>
 
 static DEFINE_CPULOCAL(int, fpu_present) = 0;

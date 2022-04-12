@@ -32,7 +32,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 #include <lyos/cpufeature.h>
 
 extern char _VIR_BASE, _KERN_SIZE;

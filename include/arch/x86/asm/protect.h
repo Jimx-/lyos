@@ -21,7 +21,7 @@
 
 #ifndef __ASSEMBLY__
 
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 
 /* Segment descriptor */
 struct descriptor /* 8 bytes */

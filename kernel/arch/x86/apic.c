@@ -33,7 +33,7 @@
 #include <asm/smp.h>
 #endif
 #include <asm/hwint.h>
-#include <lyos/cpulocals.h>
+#include <asm/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/spinlock.h>
 #include <lyos/time.h>

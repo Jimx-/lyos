@@ -34,7 +34,7 @@
 #endif
 #include <asm/div64.h>
 #include <lyos/clocksource.h>
-#include "lyos/cpulocals.h"
+#include "asm/cpulocals.h"
 
 static unsigned long riscv_timebase;
 
