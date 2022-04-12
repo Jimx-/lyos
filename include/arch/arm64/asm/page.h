@@ -19,7 +19,9 @@
 #include <lyos/config.h>
 #include <lyos/const.h>
 
-#define VA_BITS (CONFIG_ARM64_VA_BITS)
+#define VA_BITS          (CONFIG_ARM64_VA_BITS)
+#define _PAGE_OFFSET(va) (-(UL(1) << (va)))
+#define PAGE_OFFSET      (_PAGE_OFFSET(VA_BITS))
 
 #define KERNEL_VMA  (_PAGE_END(VA_BITS_MIN))
 #define FIXADDR_TOP (-(UL(1) << (VA_BITS - 2)))
@@ -143,6 +145,7 @@ typedef struct {
 #define _ARM64_PGD_TYPE_SECT  (_AT(pdeval_t, 1) << 0)
 
 #define _ARM64_PUD_TYPE_TABLE (_AT(pudval_t, 3) << 0)
+#define _ARM64_PUD_TABLE_BIT  (_AT(pudval_t, 1) << 1)
 #define _ARM64_PUD_TYPE_SECT  (_AT(pudval_t, 1) << 0)
 
 #define _ARM64_PMD_TYPE_TABLE (_AT(pmdval_t, 3) << 0)
@@ -282,10 +285,16 @@ typedef struct {
 
 #define __pa_symbol(x) __kimg_to_phys((phys_bytes)(x))
 
+#define __phys_to_virt(x) ((unsigned long)((x) + va_pa_offset))
 #define __phys_to_kimg(x) ((unsigned long)((x) + kimage_voffset))
+
+#ifndef __va
+#define __va(x) ((void*)(__phys_to_virt((phys_bytes)(x))))
+#endif
 
 #ifndef __ASSEMBLY__
 
+extern unsigned long va_pa_offset;
 extern unsigned long kimage_voffset;
 
 #endif

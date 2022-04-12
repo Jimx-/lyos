@@ -14,6 +14,8 @@ enum fixed_address {
 
     __end_of_permanent_fixed_addresses,
 
+    FIX_CPU_RELEASE_ADDR,
+
     FIX_PTE,
     FIX_PMD,
     FIX_PUD,

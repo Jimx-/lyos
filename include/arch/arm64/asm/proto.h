@@ -18,6 +18,10 @@
 
 #define cmb() __asm__ __volatile__("" ::: "memory")
 
+#define sev() asm volatile("sev" : : : "memory")
+#define wfe() asm volatile("wfe" : : : "memory")
+#define wfi() asm volatile("wfi" : : : "memory")
+
 /* in/out functions */
 #define out_long(a, b) *((volatile unsigned int*)(unsigned long)(a)) = (b)
 #define in_long(a)     (*((volatile unsigned int*)(unsigned long)(a)))
@@ -29,6 +33,11 @@
 
 #define mmio_write(a, b) *((volatile unsigned int*)(unsigned long)(a)) = (b)
 #define mmio_read(a)     (*((volatile unsigned int*)(unsigned long)(a)))
+
+void arch_pause();
+
+void paging_init(void);
+phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size);
 
 void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot);
 

@@ -1,3 +1,4 @@
+    .globl dcache_clean_inval_poc
     .globl dcache_inval_poc
 
     .macro dcache_line_size, reg, tmp
@@ -6,6 +7,18 @@
     mov     \reg, #4
     lsl     \reg, \reg, \tmp
     .endm
+
+dcache_clean_inval_poc:
+    dcache_line_size x2, x3
+    sub     x3, x2, #1
+    bic     x0, x0, x3
+1:
+    dc  civac, x0
+    add x0, x0, x2
+    cmp x0, x1
+    b.lo 1b
+    dsb sy
+    ret
 
 dcache_inval_poc:
     dcache_line_size x2, x3

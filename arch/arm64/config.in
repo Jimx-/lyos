@@ -31,6 +31,15 @@ config PGTABLE_LEVELS
     default 3 if ARM64_16K_PAGES && ARM64_VA_BITS_47
     default 4 if !ARM64_64K_PAGES && ARM64_VA_BITS_48
 
+menu "Kernel features"
+
+config SMP_MAX_CPUS
+    int "Maximum number of CPUs (2-4096)"
+    range 2 4096
+    default "8"
+
+endmenu
+
 source "kernel/config.in"
 
 source "drivers/config.in"

@@ -1,6 +1,23 @@
 #ifndef _ARCH_SYSREG_H_
 #define _ARCH_SYSREG_H_
 
+#define Op0_shift 19
+#define Op0_mask  0x3
+#define Op1_shift 16
+#define Op1_mask  0x7
+#define CRn_shift 12
+#define CRn_mask  0xf
+#define CRm_shift 8
+#define CRm_mask  0xf
+#define Op2_shift 5
+#define Op2_mask  0x7
+
+#define sys_reg(op0, op1, crn, crm, op2)                                  \
+    (((op0) << Op0_shift) | ((op1) << Op1_shift) | ((crn) << CRn_shift) | \
+     ((crm) << CRm_shift) | ((op2) << Op2_shift))
+
+#define __emit_inst(x) ".long " #x "\n\t"
+
 #define SCTLR_ELx_ATA (BIT(43))
 
 #define SCTLR_ELx_ENIA_SHIFT 31
@@ -80,5 +97,65 @@
 #define ID_AA64MMFR0_PARANGE_48  0x5
 #define ID_AA64MMFR0_PARANGE_52  0x6
 #define ID_AA64MMFR0_PARANGE_MAX ID_AA64MMFR0_PARANGE_48
+
+#define SYS_MIDR_EL1   sys_reg(3, 0, 0, 0, 0)
+#define SYS_MPIDR_EL1  sys_reg(3, 0, 0, 0, 5)
+#define SYS_REVIDR_EL1 sys_reg(3, 0, 0, 0, 6)
+
+#define __DEFINE_MRS_MSR_S_REGNUM                                              \
+    "	.irp	"                                                                   \
+    "num,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25," \
+    "26,27,28,29,30\n"                                                         \
+    "	.equ	.L__reg_num_x\\num, \\num\n"                                        \
+    "	.endr\n"                                                                 \
+    "	.equ	.L__reg_num_xzr, 31\n"
+
+#define DEFINE_MRS_S                            \
+    __DEFINE_MRS_MSR_S_REGNUM                   \
+    "	.macro	mrs_s, rt, sreg\n" __emit_inst( \
+        0xd5200000 | (\\sreg) | (.L__reg_num_\\rt)) "	.endm\n"
+
+#define DEFINE_MSR_S                            \
+    __DEFINE_MRS_MSR_S_REGNUM                   \
+    "	.macro	msr_s, sreg, rt\n" __emit_inst( \
+        0xd5000000 | (\\sreg) | (.L__reg_num_\\rt)) "	.endm\n"
+
+#define UNDEFINE_MRS_S "	.purgem	mrs_s\n"
+
+#define UNDEFINE_MSR_S "	.purgem	msr_s\n"
+
+#define __mrs_s(v, r) \
+    DEFINE_MRS_S      \
+    "	mrs_s " v ", " #r "\n" UNDEFINE_MRS_S
+
+#define __msr_s(r, v) \
+    DEFINE_MSR_S      \
+    "	msr_s " #r ", " v "\n" UNDEFINE_MSR_S
+
+#define read_sysreg(r)                             \
+    ({                                             \
+        u64 __val;                                 \
+        asm volatile("mrs %0, " #r : "=r"(__val)); \
+        __val;                                     \
+    })
+
+#define write_sysreg(v, r)                               \
+    do {                                                 \
+        u64 __val = (u64)(v);                            \
+        asm volatile("msr " #r ", %x0" : : "rZ"(__val)); \
+    } while (0)
+
+#define read_sysreg_s(r)                              \
+    ({                                                \
+        u64 __val;                                    \
+        asm volatile(__mrs_s("%0", r) : "=r"(__val)); \
+        __val;                                        \
+    })
+
+#define write_sysreg_s(v, r)                             \
+    do {                                                 \
+        u64 __val = (u64)(v);                            \
+        asm volatile(__msr_s(r, "%x0") : : "rZ"(__val)); \
+    } while (0)
 
 #endif

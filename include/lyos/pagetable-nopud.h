@@ -22,6 +22,9 @@ typedef struct {
     pde_t pde;
 } pud_t;
 
+#define ARCH_PUD_SHIFT      ARCH_PGD_SHIFT
+#define ARCH_PUD_SIZE       (1UL << ARCH_PUD_SHIFT)
+#define ARCH_PUD_MASK       (~(ARCH_PUD_SIZE - 1))
 #define ARCH_VM_PUD_ENTRIES 1
 
 static inline int pde_none(pde_t pde) { return 0; }

@@ -6,6 +6,8 @@
 
     #define __PHYS_OFFSET _text
 
+    .globl secondary_entry_spin_table
+
     .section	".head.text","ax"
 
 _head:
@@ -218,6 +220,31 @@ __enable_paging:
     isb
     ret
 
+secondary_entry_spin_table:
+    bl  setup_el
+
+    b secondary_startup
+
+secondary_startup:
+    bl  __cpu_setup
+    bl  __enable_paging
+
+    ldr x8, =__secondary_switched
+    br  x8
+
+__secondary_switched:
+    ldr_l   x5, __cpu_stack_pointer
+    mov     sp, x5
+
+    ldr_l   x2, __cpu_task_pointer
+    init_cpu_task x2, x1, x3
+
+    adr_l   x5, vectors
+    msr vbar_el1, x5
+    isb
+
+    b smp_boot_ap
+
     .pushsection ".rodata", "a"
 kimage_vaddr:
     .quad   _text
@@ -231,3 +258,9 @@ kimage_voffset:
 KStackSpace:
     .zero K_STACK_SIZE
 KStackTop:
+
+    .globl k_stacks_start, k_stacks_end
+.balign	K_STACK_SIZE
+k_stacks_start:
+    .space 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
+k_stacks_end:

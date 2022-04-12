@@ -25,10 +25,33 @@
 
 #define ARM64_PG_KERNEL __pgprot(_ARM64_PG_NORMAL)
 
+#define ARM64_PG_SHARED                                             \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
+             _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_UXN |      \
+             _ARM64_PTE_WRITE)
+#define ARM64_PG_SHARED_EXEC                                        \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
+             _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_WRITE)
+#define ARM64_PG_READONLY                                           \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
+             _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_UXN)
+#define ARM64_PG_READONLY_EXEC                                      \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
+             _ARM64_PTE_NG | _ARM64_PTE_PXN)
+#define ARM64_PG_EXECONLY                                         \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_RDONLY | _ARM64_PTE_NG | \
+             _ARM64_PTE_PXN)
+
 static inline pmd_t pude_pmd(pud_t pude) { return __pmd(pud_val(pude)); }
 static inline pte_t pude_pte(pud_t pude) { return __pte(pud_val(pude)); }
 
 static inline pte_t pmde_pte(pmd_t pmde) { return __pte(pmd_val(pmde)); }
+
+static inline pgprot_t mk_pud_sect_prot(pgprot_t prot)
+{
+    return __pgprot((pgprot_val(prot) & ~_ARM64_PUD_TABLE_BIT) |
+                    _ARM64_PUD_TYPE_SECT);
+}
 
 static inline pgprot_t mk_pmd_sect_prot(pgprot_t prot)
 {
@@ -41,6 +64,9 @@ static inline pgprot_t mk_pmd_sect_prot(pgprot_t prot)
 
 #define pfn_pmd(pfn, prot) \
     __pmd((pmdval_t)((phys_bytes)(pfn) << ARCH_PG_SHIFT) | pgprot_val(prot))
+
+#define pfn_pud(pfn, prot) \
+    __pud((pudval_t)((phys_bytes)(pfn) << ARCH_PG_SHIFT) | pgprot_val(prot))
 
 #define __pte_to_phys(pte) (pte_val(pte) & _ARM64_PTE_ADDR_MASK)
 
@@ -140,5 +166,7 @@ static inline void __pde_populate(pde_t* pde, phys_bytes pud_phys,
         (__boundary - 1 < (end)-1) ? __boundary : (end);                 \
     })
 #endif
+
+static inline int pud_sect_supported(void) { return ARCH_PG_SIZE == 0x1000; }
 
 #endif

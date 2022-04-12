@@ -38,6 +38,8 @@
 
 #include <libfdt/libfdt.h>
 
+unsigned long va_pa_offset;
+
 #define NO_BLOCK_MAPPINGS BIT(0)
 #define NO_CONT_MAPPINGS  BIT(1)
 
@@ -198,7 +200,15 @@ static void alloc_init_pud(pde_t* pde, unsigned long addr, unsigned long end,
     pude = pud_set_fixmap_offset(pde, addr);
     do {
         next = pud_addr_end(addr, end);
-        alloc_init_pmd(pude, addr, next, phys, prot, flags, pk);
+
+        if (pud_sect_supported() &&
+            ((addr | next | phys) & ~ARCH_PUD_MASK) == 0 &&
+            !(flags & NO_BLOCK_MAPPINGS)) {
+            *pude = pfn_pud(phys >> ARCH_PG_SHIFT, mk_pud_sect_prot(prot));
+        } else {
+            alloc_init_pmd(pude, addr, next, phys, prot, flags, pk);
+        }
+
         phys += next - addr;
     } while (pude++, addr = next, addr != end);
 
@@ -228,6 +238,13 @@ static void create_mapping_noalloc(phys_bytes phys, vir_bytes virt,
 {
     __create_pgd_mapping(init_pg_dir, phys, virt, size, prot, NO_CONT_MAPPINGS,
                          NULL);
+}
+
+void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
+{
+    __create_pgd_mapping(init_pg_dir, phys_addr, (vir_bytes)vir_addr,
+                         vir_end - vir_addr, ARM64_PG_SHARED_EXEC,
+                         NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS, pk);
 }
 
 void early_fixmap_init(void)
@@ -302,6 +319,27 @@ void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
             entry->addr = end;
             entry->len = mmap_end - entry->addr;
         }
+    }
+}
+
+void paging_init(void)
+{
+    struct kinfo_mmap_entry* mmap;
+    int i;
+
+    va_pa_offset = PAGE_OFFSET;
+
+    for (i = 0, mmap = kinfo.memmaps; i < kinfo.memmaps_count; i++, mmap++) {
+        phys_bytes start = mmap->addr;
+        phys_bytes end = mmap->addr + mmap->len;
+
+        start &= ARCH_PUD_MASK;
+        end = roundup(end, ARCH_PUD_SIZE);
+
+        if (start >= end) break;
+
+        __create_pgd_mapping(init_pg_dir, start, __phys_to_virt(start),
+                             end - start, ARM64_PG_KERNEL, 0, &kinfo);
     }
 }
 

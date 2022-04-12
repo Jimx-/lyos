@@ -45,6 +45,9 @@ int dt_root_addr_cells, dt_root_size_cells;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 
+extern char k_stacks_start;
+void* k_stacks;
+
 static char* env_get(const char* name);
 static int kinfo_set_param(char* buf, char* name, char* value);
 
@@ -154,6 +157,8 @@ void cstart(phys_bytes dtb_phys)
     static char value[KINFO_CMDLINE_LEN];
     int fdt_size;
 
+    k_stacks = &k_stacks_start;
+
     early_fixmap_init();
 
     initial_boot_params =
@@ -177,6 +182,8 @@ void cstart(phys_bytes dtb_phys)
 
     /* reserve memory used by the kernel */
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
+
+    paging_init();
 
     memset(cmdline, 0, sizeof(cmdline));
     of_scan_fdt(fdt_scan_chosen, cmdline, initial_boot_params);

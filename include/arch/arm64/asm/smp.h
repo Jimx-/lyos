@@ -16,6 +16,12 @@
 #ifndef _ARCH_SMP_H_
 #define _ARCH_SMP_H_
 
-#define cpuid 0
+#ifndef __ASSEMBLY__
+
+DECLARE_CPULOCAL(unsigned int, cpu_number);
+
+#define cpuid (get_cpulocal_var(cpu_number))
+
+#endif
 
 #endif
