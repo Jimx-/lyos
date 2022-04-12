@@ -25,8 +25,12 @@
 #include <string.h>
 #include <lyos/global.h>
 #include <lyos/proto.h>
+#include <asm/mach.h>
 
-void disp_char(const char c) {}
+void disp_char(const char c)
+{
+    if (machine_desc->serial_putc) machine_desc->serial_putc(c);
+}
 
 void direct_put_str(const char* str)
 {

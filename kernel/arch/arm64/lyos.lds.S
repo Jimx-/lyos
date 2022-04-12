@@ -32,6 +32,13 @@ SECTIONS
         *(.rodata)
     }
 
+    . = ALIGN(ARCH_PG_SIZE);
+    .arch.info.init : {
+        _arch_info_start = .;
+            *(.arch.info.init)
+        _arch_info_end = .;
+    }
+
     . = ALIGN(0x10000);
     .data : {
         _data = .;

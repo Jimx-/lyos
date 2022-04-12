@@ -22,35 +22,35 @@
 #include <lyos/global.h>
 #include <lyos/proto.h>
 #include <lyos/vm.h>
-#include "arch.h"
-#include "common.h"
-#include "serial.h"
-#include "interrupt.h"
+#include <asm/pagetable.h>
+#include <asm/mach.h>
+#include <asm/fixmap.h>
 
-static void omap3_beagle_init_serial(void)
+#include "serial.h"
+
+#define BCM2835_MMIO_BASE 0x3f000000
+
+#define BCM2835_DEBUG_UART_BASE (BCM2835_MMIO_BASE + 0x201000)
+
+static void bcm2835_init_serial(void)
 {
-    /* map UART register */
-    uart_base_addr = OMAP3_BEAGLE_DEBUG_UART_BASE;
-    kern_map_phys(OMAP3_BEAGLE_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE,
+    set_fixmap_io(FIX_EARLYCON_MEM_BASE, BCM2835_DEBUG_UART_BASE);
+    uart_base_addr = (void*)__fix_to_virt(FIX_EARLYCON_MEM_BASE);
+
+    kern_map_phys(BCM2835_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE,
                   &uart_base_addr);
 }
 
-static void omap3_beagle_init_interrupt(void)
-{
-    intr_base_addr = OMAP3_BEAGLE_INTR_BASE;
-    kern_map_phys(OMAP3_BEAGLE_INTR_BASE, ARCH_PG_SIZE, KMF_WRITE,
-                  &intr_base_addr);
-}
+static void bcm2835_init_machine(void) { bcm2835_init_serial(); }
 
-static void omap3_beagle_init_machine(void)
-{
-    omap3_beagle_init_serial();
-    omap3_beagle_init_interrupt();
-}
+static const char* const bcm2835_compat[] = {"brcm,bcm2835", "brcm,bcm2836",
+                                             "brcm,bcm2837", NULL};
 
 /* clang-format off */
-MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
-.init_machine = omap3_beagle_init_machine,
-.serial_putc = omap3_disp_char,
+DT_MACHINE_START(BCM2835, "BCM2835")
+.dt_compat = bcm2835_compat,
+
+.init_machine = bcm2835_init_machine,
+.serial_putc = pl011_disp_char,
 MACHINE_END
     /* clang-format on */

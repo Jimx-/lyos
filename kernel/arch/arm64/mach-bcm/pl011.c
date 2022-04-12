@@ -21,36 +21,19 @@
 #include <lyos/proc.h>
 #include <lyos/global.h>
 #include <lyos/proto.h>
-#include <lyos/vm.h>
-#include "arch.h"
-#include "common.h"
+#include <asm/proto.h>
+
 #include "serial.h"
-#include "interrupt.h"
 
-static void omap3_beagle_init_serial(void)
+void* uart_base_addr;
+
+void pl011_disp_char(const char c)
 {
-    /* map UART register */
-    uart_base_addr = OMAP3_BEAGLE_DEBUG_UART_BASE;
-    kern_map_phys(OMAP3_BEAGLE_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE,
-                  &uart_base_addr);
-}
+    while (mmio_read(uart_base_addr + UART01x_FR) & UART01x_FR_TXFF)
+        arch_pause();
 
-static void omap3_beagle_init_interrupt(void)
-{
-    intr_base_addr = OMAP3_BEAGLE_INTR_BASE;
-    kern_map_phys(OMAP3_BEAGLE_INTR_BASE, ARCH_PG_SIZE, KMF_WRITE,
-                  &intr_base_addr);
-}
+    mmio_write(uart_base_addr + UART01x_DR, c);
 
-static void omap3_beagle_init_machine(void)
-{
-    omap3_beagle_init_serial();
-    omap3_beagle_init_interrupt();
+    while (mmio_read(uart_base_addr + UART01x_FR) & UART01x_FR_BUSY)
+        arch_pause();
 }
-
-/* clang-format off */
-MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
-.init_machine = omap3_beagle_init_machine,
-.serial_putc = omap3_disp_char,
-MACHINE_END
-    /* clang-format on */

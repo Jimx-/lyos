@@ -7,19 +7,24 @@ LINKERSCRIPT	= lyos.lds
 everything : realclean $(ARCHKERNEL) .linker_script
 
 realclean :
-	@rm -f $(KERNELOBJS) $(LINKERSCRIPT)
+	@rm -f $(KERNELOBJS) $(machine-y) $(LINKERSCRIPT)
 
-$(ARCHKERNEL): $(KERNELOBJS)
-	@echo -e '\tLD\tkernel/arch/aarch64/$@'
-	@$(LD) -r -o $(ARCHKERNEL) $(KERNELOBJS)
+machine-$(CONFIG_ARCH_BCM) += mach-bcm/mach-bcm.o
+
+$(ARCHKERNEL): $(KERNELOBJS) $(machine-y)
+	@echo -e '\tLD\tkernel/arch/arm64/$@'
+	@$(LD) -r -o $@ $^
 
 .linker_script : lyos.lds.S
 	@$(CPP) $(ASFLAGS) -E -P -D__ASSEMBLY__ -o $(LINKERSCRIPT) $<
 
 %.o : %.S
-	@echo -e '\tAS\tkernel/arch/aarch64/$@'
+	@echo -e '\tAS\tkernel/arch/arm64/$@'
 	@$(CC) $(CFLAGS) -c -D__ASSEMBLY__ -o $@ $<
 
 %.o: %.c
-	@echo -e '\tCC\tkernel/arch/aarch64/$@'
+	@echo -e '\tCC\tkernel/arch/arm64/$@'
 	@$(CC) $(CFLAGS) -c -o $@ $<
+
+mach-bcm/mach-bcm.o:
+	@(cd mach-bcm; make)

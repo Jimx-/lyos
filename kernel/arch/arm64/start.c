@@ -32,6 +32,7 @@
 #include <asm/byteorder.h>
 #include <asm/fixmap.h>
 #include <asm/pagetable.h>
+#include <asm/mach.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -129,6 +130,23 @@ static int fdt_scan_chosen(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
+const struct machine_desc* setup_machine_fdt(void* dtb_virt)
+{
+    const struct machine_desc *mdesc, *mdesc_best = NULL;
+    unsigned int score = 0, best_score = ~1;
+
+    for_each_machine_desc(mdesc)
+    {
+        score = of_flat_dt_match(dtb_virt, 0, mdesc->dt_compat);
+        if (score > 0 && score < best_score) {
+            mdesc_best = mdesc;
+            best_score = score;
+        }
+    }
+
+    return mdesc_best;
+}
+
 void cstart(phys_bytes dtb_phys)
 {
     static char cmdline[KINFO_CMDLINE_LEN];
@@ -140,6 +158,8 @@ void cstart(phys_bytes dtb_phys)
 
     initial_boot_params =
         fixmap_remap_fdt(dtb_phys, &fdt_size, ARM64_PG_KERNEL);
+
+    machine_desc = setup_machine_fdt(initial_boot_params);
 
     of_scan_fdt(fdt_scan_root, NULL, initial_boot_params);
     of_scan_fdt(fdt_scan_memory, NULL, initial_boot_params);
@@ -241,4 +261,7 @@ static int kinfo_set_param(char* buf, char* name, char* value)
     return 0;
 }
 
-void init_arch() {}
+void init_arch()
+{
+    if (machine_desc->init_machine) machine_desc->init_machine();
+}

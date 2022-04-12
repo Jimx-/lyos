@@ -45,6 +45,33 @@ void init_memory() {}
 
 void clear_memcache() {}
 
+#define MAX_KERN_MAPPINGS 8
+
+struct kern_map {
+    phys_bytes phys_addr;
+    phys_bytes len;
+    int flags;
+    void* vir_addr;
+    void** mapped_addr;
+};
+
+static struct kern_map kern_mappings[MAX_KERN_MAPPINGS];
+static int kern_mapping_count = 0;
+
+int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
+                  void** mapped_addr)
+{
+    if (kern_mapping_count >= MAX_KERN_MAPPINGS) return ENOMEM;
+
+    struct kern_map* pkm = &kern_mappings[kern_mapping_count++];
+    pkm->phys_addr = phys_addr;
+    pkm->len = len;
+    pkm->flags = flags;
+    pkm->mapped_addr = mapped_addr;
+
+    return 0;
+}
+
 static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
                       void* src_la, size_t len)
 {}

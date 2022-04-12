@@ -13,6 +13,12 @@
     (_ARM64_PTE_TYPE_PAGE | _ARM64_PTE_AF | _ARM64_PTE_SHARED)
 #define _ARM64_SECT_BASE (_ARM64_PMD_TYPE_SECT | _ARM64_SECT_AF | _ARM64_SECT_S)
 
+#define _ARM64_DEVICE_nGnRnE                                               \
+    (_ARM64_PG_BASE | _ARM64_PTE_PXN | _ARM64_PTE_UXN | _ARM64_PTE_WRITE | \
+     _ARM64_PTE_ATTRINDX(MT_DEVICE_nGnRnE))
+#define _ARM64_DEVICE_nGnRE                                                \
+    (_ARM64_PG_BASE | _ARM64_PTE_PXN | _ARM64_PTE_UXN | _ARM64_PTE_WRITE | \
+     _ARM64_PTE_ATTRINDX(MT_DEVICE_nGnRE))
 #define _ARM64_PG_NORMAL                                                   \
     (_ARM64_PG_BASE | _ARM64_PTE_PXN | _ARM64_PTE_UXN | _ARM64_PTE_WRITE | \
      _ARM64_PTE_ATTRINDX(MT_NORMAL))

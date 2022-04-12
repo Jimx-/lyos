@@ -185,3 +185,39 @@ int of_irq_parse_one(const void* blob, unsigned long offset, int index,
 
     return retval;
 }
+
+static int of_fdt_is_compatible(const void* blob, unsigned long node,
+                                const char* compat)
+{
+    const char* cp;
+    int cplen;
+    unsigned long l, score = 0;
+
+    cp = fdt_getprop(blob, node, "compatible", &cplen);
+    if (cp == NULL) return 0;
+    while (cplen > 0) {
+        score++;
+        if (strncmp(cp, compat, strlen(compat)) == 0) return score;
+        l = strlen(cp) + 1;
+        cp += l;
+        cplen -= l;
+    }
+
+    return 0;
+}
+
+int of_flat_dt_match(const void* blob, unsigned long node,
+                     const char* const* compat)
+{
+    unsigned int tmp, score = 0;
+
+    if (!compat) return 0;
+
+    while (*compat) {
+        tmp = of_fdt_is_compatible(blob, node, *compat);
+        if (tmp && (score == 0 || (tmp < score))) score = tmp;
+        compat++;
+    }
+
+    return score;
+}

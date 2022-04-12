@@ -42,6 +42,9 @@ static inline u64 of_read_number(const __be32* cell, int size)
 int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int, void*),
                 void* arg, void* blob);
 
+int of_flat_dt_match(const void* blob, unsigned long node,
+                     const char* const* compat);
+
 int of_phandle_iterator_init(struct of_phandle_iterator* it, const void* blob,
                              unsigned long offset, const char* list_name,
                              const char* cells_name, int cell_count);

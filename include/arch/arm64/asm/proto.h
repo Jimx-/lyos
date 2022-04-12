@@ -32,4 +32,11 @@
 
 void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot);
 
+int init_tss(unsigned cpu, void* kernel_stack);
+
+void arch_boot_proc(struct proc* p, struct boot_proc* bp);
+
+int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
+                  void** mapped_addr);
+
 #endif

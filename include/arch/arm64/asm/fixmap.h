@@ -26,6 +26,7 @@ enum fixed_address {
 #define FIXADDR_START (FIXADDR_TOP - FIXADDR_SIZE)
 
 #define FIXMAP_PAGE_NORMAL ARM64_PG_KERNEL
+#define FIXMAP_PAGE_IO     __pgprot(_ARM64_DEVICE_nGnRE)
 
 extern void early_fixmap_init(void);
 

@@ -16,4 +16,6 @@ copy_user_message:
 copy_user_message_end:
 copy_user_message_fault:
 halt_cpu:
+
 arch_pause:
+    ret

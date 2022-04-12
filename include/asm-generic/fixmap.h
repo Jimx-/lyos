@@ -27,4 +27,9 @@
 #define set_fixmap_offset(idx, phys) \
     __set_fixmap_offset(idx, phys, FIXMAP_PAGE_NORMAL)
 
+#define set_fixmap_io(idx, phys) __set_fixmap(idx, phys, FIXMAP_PAGE_IO)
+
+#define set_fixmap_offset_io(idx, phys) \
+    __set_fixmap_offset(idx, phys, FIXMAP_PAGE_IO)
+
 #endif

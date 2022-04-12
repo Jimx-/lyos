@@ -1,0 +1,14 @@
+menuconfig ARCH_BCM
+    bool "Broadcom SoC Support"
+    help
+      This enables support for Broadcom ARM based SoC chips
+
+if ARCH_BCM
+
+config ARCH_BCM2835
+    bool "Broadcom BCM2835 family"
+    help
+      This enables support for the Broadcom BCM2711 and BCM283x SoCs.
+      This SoC is used in the Raspberry Pi and Roku 2 devices.
+
+endif
