@@ -25,6 +25,14 @@
 
 #define KERNEL_VMA  (_PAGE_END(VA_BITS_MIN))
 #define FIXADDR_TOP (-(UL(1) << (VA_BITS - 2)))
+#define PKMAP_SIZE  (128 << 20)
+#define PKMAP_START FIXADDR_TOP
+#define PKMAP_END   (FIXADDR_TOP + PKMAP_SIZE)
+
+#define VMALLOC_START 0x2000000000UL
+#define VMALLOC_END   0x3000000000UL
+
+#define VM_STACK_TOP (UL(1) << VA_BITS)
 
 #if VA_BITS > 48
 #define VA_BITS_MIN (48)
@@ -33,6 +41,7 @@
 #endif
 
 #define _PAGE_END(va) (-(UL(1) << ((va)-1)))
+#define PAGE_END      (_PAGE_END(VA_BITS_MIN))
 
 /* Memory types. */
 #define MT_NORMAL        0
@@ -46,6 +55,7 @@
 
 #define IDMAP_DIR_SIZE (IDMAP_PGTABLE_LEVELS * ARCH_PG_SIZE)
 #define INIT_DIR_SIZE  (INIT_PGTABLE_LEVELS * ARCH_PG_SIZE)
+#define MM_DIR_SIZE    (ARCH_PG_SIZE)
 
 #define ARM64_HW_PGTABLE_LEVEL_SHIFT(n) ((ARCH_PG_SHIFT - 3) * (4 - (n)) + 3)
 
@@ -134,6 +144,8 @@ typedef struct {
 #define ARCH_PGD_MASK       (~(ARCH_PGD_SIZE - 1))
 #define ARCH_VM_DIR_ENTRIES (1 << (VA_BITS - ARCH_PGD_SHIFT))
 
+#define ARCH_BIG_PAGE_SIZE ARCH_PMD_SIZE
+
 #define ARCH_PTE(v) \
     (((unsigned long)(v) >> ARCH_PG_SHIFT) & (ARCH_VM_PT_ENTRIES - 1))
 #define ARCH_PMDE(v) \
@@ -145,10 +157,12 @@ typedef struct {
 #define _ARM64_PGD_TYPE_SECT  (_AT(pdeval_t, 1) << 0)
 
 #define _ARM64_PUD_TYPE_TABLE (_AT(pudval_t, 3) << 0)
+#define _ARM64_PUD_TYPE_MASK  (_AT(pudval_t, 3) << 0)
 #define _ARM64_PUD_TABLE_BIT  (_AT(pudval_t, 1) << 1)
 #define _ARM64_PUD_TYPE_SECT  (_AT(pudval_t, 1) << 0)
 
 #define _ARM64_PMD_TYPE_TABLE (_AT(pmdval_t, 3) << 0)
+#define _ARM64_PMD_TYPE_MASK  (_AT(pmdval_t, 3) << 0)
 #define _ARM64_PMD_TABLE_BIT  (_AT(pmdval_t, 1) << 1)
 #define _ARM64_PMD_TYPE_SECT  (_AT(pmdval_t, 1) << 0)
 
@@ -281,21 +295,38 @@ typedef struct {
 #define TCR_TCMA0     (UL(1) << 57)
 #define TCR_TCMA1     (UL(1) << 58)
 
+#define __is_lm_address(addr) \
+    (((u64)(addr)-PAGE_OFFSET) < (PAGE_END - PAGE_OFFSET))
+
+#define __lm_to_phys(addr)   ((addr)-va_pa_offset)
 #define __kimg_to_phys(addr) ((addr)-kimage_voffset)
+
+#define __virt_to_phys(x)                                               \
+    ({                                                                  \
+        phys_bytes __x = (phys_bytes)(x);                               \
+        __is_lm_address(__x) ? __lm_to_phys(__x) : __kimg_to_phys(__x); \
+    })
 
 #define __pa_symbol(x) __kimg_to_phys((phys_bytes)(x))
 
 #define __phys_to_virt(x) ((unsigned long)((x) + va_pa_offset))
 #define __phys_to_kimg(x) ((unsigned long)((x) + kimage_voffset))
 
-#ifndef __va
 #define __va(x) ((void*)(__phys_to_virt((phys_bytes)(x))))
-#endif
+#define __pa(x) __virt_to_phys((unsigned long)(x))
 
 #ifndef __ASSEMBLY__
 
 extern unsigned long va_pa_offset;
 extern unsigned long kimage_voffset;
+
+static inline unsigned long virt_to_phys(void* x) { return __pa(x); }
+
+#ifdef __kernel__
+static inline void* phys_to_virt(unsigned long x) { return __va(x); }
+#else
+extern void* phys_to_virt(unsigned long x);
+#endif
 
 #endif
 

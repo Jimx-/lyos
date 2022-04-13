@@ -1,5 +1,6 @@
 KERNELOBJS	= head.o kernel.o system.o memory.o start.o smp.o direct_tty.o fpu.o \
-			setup_cpulocals.o clock.o kliba.o page.o irq.o watchdog.o
+			setup_cpulocals.o clock.o kliba.o page.o irq.o watchdog.o protect.o \
+			bootmods/bootmods.o
 
 ARCHKERNEL		= arch-kernel.o
 LINKERSCRIPT	= lyos.lds
@@ -28,3 +29,6 @@ $(ARCHKERNEL): $(KERNELOBJS) $(machine-y)
 
 mach-bcm/mach-bcm.o:
 	@(cd mach-bcm; make)
+
+bootmods/bootmods.o:
+	@(cd bootmods; make)

@@ -34,6 +34,7 @@
 int init_tss(unsigned cpu, void* kernel_stack);
 
 void arch_boot_proc(struct proc* p, struct boot_proc* bp);
+struct proc* arch_switch_to_user(void);
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
                   void** mapped_addr);

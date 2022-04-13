@@ -22,6 +22,10 @@
 #define wfe() asm volatile("wfe" : : : "memory")
 #define wfi() asm volatile("wfi" : : : "memory")
 
+#define isb()    asm volatile("isb" : : : "memory")
+#define dmb(opt) asm volatile("dmb " #opt : : : "memory")
+#define dsb(opt) asm volatile("dsb " #opt : : : "memory")
+
 /* in/out functions */
 #define out_long(a, b) *((volatile unsigned int*)(unsigned long)(a)) = (b)
 #define in_long(a)     (*((volatile unsigned int*)(unsigned long)(a)))
@@ -43,9 +47,18 @@ void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot);
 
 int init_tss(unsigned cpu, void* kernel_stack);
 
+struct proc* arch_switch_to_user(void);
 void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
                   void** mapped_addr);
+
+static inline void flush_tlb(void)
+{
+    dsb(nshst);
+    asm("tlbi vmalle1\n" ::);
+    dsb(nsh);
+    isb();
+}
 
 #endif

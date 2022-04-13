@@ -13,40 +13,31 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _STACKFRAME_H_
-#define _STACKFRAME_H_
+#ifndef _ARCH_ATOMIC_H_
+#define _ARCH_ATOMIC_H_
 
-typedef unsigned long reg_t;
+typedef struct {
+    volatile int counter;
+} atomic_t;
 
-struct stackframe {
-    reg_t regs[31];
-    reg_t sp;
-    reg_t pc;
-    reg_t pstate;
-    reg_t kernel_sp;
-    reg_t orig_x0;
+#define ATOMIC_INIT(i) \
+    {                  \
+        (i)            \
+    }
+#define INIT_ATOMIC(v, i) \
+    do {                  \
+        (v)->counter = i; \
+    } while (0)
 
-    /* Current CPU */
-    unsigned int cpu;
-};
+static inline int atomic_get(atomic_t* v) { return v->counter; }
 
-struct segframe {
-    reg_t ttbr_phys;
-    reg_t* ttbr_vir;
-};
+static inline void atomic_inc(atomic_t* v) { v->counter++; }
 
-struct sigcontext {
-    sigset_t mask;
-};
+static inline void atomic_dec(atomic_t* v) { v->counter--; }
 
-struct sigframe {
-    int retaddr_sigreturn;
-    int signum;
-    int code;
-    struct sigcontext* scp;
-    int retaddr;
-    struct sigcontext* scp_sigreturn;
-    struct sigcontext sc; /* actual saved context */
-};
+static inline int atomic_dec_and_test(atomic_t* v)
+{
+    return (--v->counter == 0);
+}
 
 #endif

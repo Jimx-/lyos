@@ -73,7 +73,7 @@ __create_page_tables:
     mov     x28, lr
 
     adrp    x0, idmap_pg_dir
-    ldr     x1, =(IDMAP_DIR_SIZE + INIT_DIR_SIZE)
+    ldr     x1, =(IDMAP_DIR_SIZE + INIT_DIR_SIZE + MM_DIR_SIZE)
 1:  stp     xzr, xzr, [x0], #16
     stp     xzr, xzr, [x0], #16
     stp     xzr, xzr, [x0], #16
@@ -189,7 +189,7 @@ __cpu_setup:
 
     mov_q   mair, MAIR_EL1_SET
     mov_q   tcr, TCR_TxSZ(VA_BITS) | TCR_CACHE_FLAGS | TCR_SMP_FLAGS | \
-            TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0 | TCR_A1
+    TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0 | TCR_A1
 
     mrs     x5, ID_AA64MMFR0_EL1
     ubfx    x5, x5, #ID_AA64MMFR0_PARANGE_SHIFT, #3

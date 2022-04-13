@@ -25,13 +25,16 @@
 
 #define ARM64_PG_KERNEL __pgprot(_ARM64_PG_NORMAL)
 
-#define ARM64_PG_SHARED                                             \
-    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
-             _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_UXN |      \
-             _ARM64_PTE_WRITE)
-#define ARM64_PG_SHARED_EXEC                                        \
-    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
-             _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_WRITE)
+#define ARM64_PG_NONE                                                     \
+    __pgprot(((_ARM64_PG_BASE) & ~_ARM64_PTE_VALID) | _ARM64_PTE_RDONLY | \
+             _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_UXN)
+
+#define ARM64_PG_SHARED                                         \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_NG | \
+             _ARM64_PTE_PXN | _ARM64_PTE_UXN | _ARM64_PTE_WRITE)
+#define ARM64_PG_SHARED_EXEC                                    \
+    __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_NG | \
+             _ARM64_PTE_PXN | _ARM64_PTE_WRITE)
 #define ARM64_PG_READONLY                                           \
     __pgprot(_ARM64_PG_BASE | _ARM64_PTE_USER | _ARM64_PTE_RDONLY | \
              _ARM64_PTE_NG | _ARM64_PTE_PXN | _ARM64_PTE_UXN)
@@ -41,6 +44,16 @@
 #define ARM64_PG_EXECONLY                                         \
     __pgprot(_ARM64_PG_BASE | _ARM64_PTE_RDONLY | _ARM64_PTE_NG | \
              _ARM64_PTE_PXN)
+
+/*         xwr */
+#define __P000 ARM64_PG_NONE
+#define __P001 ARM64_PG_READONLY
+#define __P010 ARM64_PG_SHARED
+#define __P011 ARM64_PG_SHARED
+#define __P100 ARM64_PG_READONLY_EXEC
+#define __P101 ARM64_PG_READONLY_EXEC
+#define __P110 ARM64_PG_SHARED_EXEC
+#define __P111 ARM64_PG_SHARED_EXEC
 
 static inline pmd_t pude_pmd(pud_t pude) { return __pmd(pud_val(pude)); }
 static inline pte_t pude_pte(pud_t pude) { return __pte(pud_val(pude)); }
@@ -59,6 +72,9 @@ static inline pgprot_t mk_pmd_sect_prot(pgprot_t prot)
                     _ARM64_PMD_TYPE_SECT);
 }
 
+#define __pte_to_phys(pte) (pte_val(pte) & _ARM64_PTE_ADDR_MASK)
+
+#define pte_pfn(pte) (__pte_to_phys(pte) >> ARCH_PG_SHIFT)
 #define pfn_pte(pfn, prot) \
     __pte((pteval_t)((phys_bytes)(pfn) << ARCH_PG_SHIFT) | pgprot_val(prot))
 
@@ -67,8 +83,6 @@ static inline pgprot_t mk_pmd_sect_prot(pgprot_t prot)
 
 #define pfn_pud(pfn, prot) \
     __pud((pudval_t)((phys_bytes)(pfn) << ARCH_PG_SHIFT) | pgprot_val(prot))
-
-#define __pte_to_phys(pte) (pte_val(pte) & _ARM64_PTE_ADDR_MASK)
 
 static inline pde_t* pgd_offset(pde_t* pgd, unsigned long addr)
 {
@@ -88,13 +102,45 @@ static inline phys_bytes pmde_page_paddr(pmd_t pmde)
     pte_set_fixmap(pte_offset_phys(pmd, addr))
 #define pte_clear_fixmap() clear_fixmap(FIX_PTE)
 
+#define pte_present(pte) (!!(pte_val(pte) & _ARM64_PTE_VALID))
+
+static inline void set_pte(pte_t* ptep, pte_t pte)
+{
+    *(volatile pte_t*)ptep = pte;
+}
+
+static inline void pte_clear(pte_t* pte) { *pte = __pte(0); }
+
+#define pmde_none(x) (!pmd_val(x))
+#define pmde_table(pmde) \
+    ((pmd_val(pmde) & _ARM64_PMD_TYPE_MASK) == _ARM64_PMD_TYPE_TABLE)
+#define pmde_sect(pmde) \
+    ((pmd_val(pmde) & _ARM64_PMD_TYPE_MASK) == _ARM64_PMD_TYPE_SECT)
+#define pmde_bad(pmde) (!pmde_table(pmde))
+
 static inline void __pmde_populate(pmd_t* pmde, phys_bytes pte_phys,
                                    pmdval_t prot)
 {
     *pmde = __pmd(pte_phys | prot);
 }
 
-#define pmde_none(x) (!pmd_val(x))
+static inline void pmde_populate(pmd_t* pmde, phys_bytes pte_phys)
+{
+    __pmde_populate(pmde, pte_phys, _ARM64_PMD_TYPE_TABLE);
+}
+
+static inline void set_pmde(pmd_t* pmdep, pmd_t pmde)
+{
+    *(volatile pmd_t*)pmdep = pmde;
+}
+
+static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
+
+static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
+{
+    pte_t* vaddr = (pte_t*)phys_to_virt(pmde_page_paddr(*pt));
+    return vaddr + ARCH_PTE(addr);
+}
 
 #if CONFIG_PGTABLE_LEVELS > 2
 
@@ -119,9 +165,33 @@ static inline void __pude_populate(pud_t* pude, phys_bytes pmd_phys,
 {
     *pude = __pud(pmd_phys | prot);
 }
+
+static inline void pude_populate(pud_t* pude, phys_bytes pmd_phys)
+{
+    __pude_populate(pude, pmd_phys, _ARM64_PUD_TYPE_TABLE);
+}
+
+#endif
+
+#if defined(CONFIG_ARM64_64K_PAGES) || CONFIG_PGTABLE_LEVELS < 3
+static inline bool pude_sect(pud_t pude) { return false; }
+static inline bool pude_table(pud_t pude) { return true; }
+#else
+#define pude_sect(pude) \
+    ((pud_val(pude) & _ARM64_PUD_TYPE_MASK) == _ARM64_PUD_TYPE_SECT)
+#define pude_table(pude) \
+    ((pud_val(pude) & _ARM64_PUD_TYPE_MASK) == _ARM64_PUD_TYPE_TABLE)
 #endif
 
 #define pude_none(x) (!pud_val(x))
+#define pude_bad(x)  (!pude_table(x))
+
+static inline void set_pude(pud_t* pudep, pud_t pude)
+{
+    *(volatile pud_t*)pudep = pude;
+}
+
+static inline void pude_clear(pud_t* pude) { *pude = __pud(0); }
 
 #if CONFIG_PGTABLE_LEVELS > 3
 
@@ -132,6 +202,12 @@ static inline void __pde_populate(pde_t* pde, phys_bytes pud_phys,
 }
 
 #else
+
+static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)
+{
+    pmd_t* vaddr = (pmd_t*)phys_to_virt(pude_page_paddr(*pmd));
+    return vaddr + ARCH_PMDE(addr);
+}
 
 #define pud_set_fixmap(addr)             NULL
 #define pud_set_fixmap_offset(dir, addr) ((pud_t*)dir)

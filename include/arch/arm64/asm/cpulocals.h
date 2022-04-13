@@ -1,6 +1,11 @@
 #ifndef _ARCH_CPULOCALS_H_
 #define _ARCH_CPULOCALS_H_
 
+static inline void set_my_cpu_offset(unsigned long off)
+{
+    asm volatile("msr tpidr_el1, %0" ::"r"(off) : "memory");
+}
+
 static inline unsigned long ___my_cpu_offset(void)
 {
     unsigned long off;

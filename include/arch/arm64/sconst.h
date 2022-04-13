@@ -26,9 +26,10 @@
 #define SPREG       (LRREG + REG_SIZE)
 #define PCREG       (SPREG + REG_SIZE)
 
-#define P_PSTATE (PCREG + REG_SIZE)
-#define P_ORIGX0 (P_PSTATE + REG_SIZE)
-#define P_CPU    (P_ORIGX0 + REG_SIZE)
+#define P_PSTATE   (PCREG + REG_SIZE)
+#define P_KERNELSP (P_PSTATE + REG_SIZE)
+#define P_ORIGX0   (P_KERNELSP + REG_SIZE)
+#define P_CPU      (P_ORIGX0 + REG_SIZE)
 
 #define CurrentEL_EL1 (1 << 2)
 #define CurrentEL_EL2 (2 << 2)

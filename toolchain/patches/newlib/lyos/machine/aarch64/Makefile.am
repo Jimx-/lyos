@@ -3,7 +3,8 @@ AUTOMAKE_OPTIONS = cygnus
 INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 AM_CCASFLAGS = $(INCLUDES)
 
-LIB_SOURCES = gate_intr.S
+LIB_SOURCES = gate_intr.S getpagesize.c __sigreturn.S __ucontext.S makecontext.c \
+				clone.c
 
 # liblyosaarch64_la_LDFLAGS = -Xcompiler -nostdlib
 

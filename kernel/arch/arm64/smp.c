@@ -105,6 +105,7 @@ static unsigned int smp_start_cpu_spin_table(u64 hwid,
     __cpu_logical_map[cpu] = hwid;
 
     idle_proc->regs.cpu = cpu;
+    init_tss(cpu, get_k_stack_top(cpu));
 
     __cpu_task_pointer = (void*)idle_proc;
     __cpu_stack_pointer = get_k_stack_top(cpu);
@@ -136,7 +137,10 @@ void smp_init()
     bsp_cpu_id = 0;
 
     smp_setup_processor_id();
+    set_my_cpu_offset(cpulocals_offset(bsp_cpu_id));
     cpu_nr++;
+
+    init_tss(bsp_cpu_id, get_k_stack_top(bsp_cpu_id));
 
     of_scan_fdt(fdt_scan_hart, NULL, initial_boot_params);
 

@@ -35,6 +35,7 @@
 #include "asm/cpulocals.h"
 #include <lyos/cpufeature.h>
 #include <asm/fixmap.h>
+#include <asm/sysreg.h>
 
 #include <libfdt/libfdt.h>
 
@@ -142,8 +143,13 @@ static void alloc_init_pte(pmd_t* pmde, unsigned long addr, unsigned long end,
 
     pte = pte_set_fixmap_offset(pmde, addr);
     do {
-        *pte = pfn_pte(phys >> ARCH_PG_SHIFT, prot);
-        phys += ARCH_PG_SIZE;
+        phys_bytes ph = phys;
+        if (ph == 0 && pk) ph = pg_alloc_pages(pk, 1);
+
+        pte_t a = pfn_pte(ph >> ARCH_PG_SHIFT, prot);
+        set_pte(pte, pfn_pte(ph >> ARCH_PG_SHIFT, prot));
+
+        if (phys) phys += ARCH_PG_SIZE;
     } while (pte++, addr += ARCH_PG_SIZE, addr != end);
 
     pte_clear_fixmap();
@@ -171,7 +177,8 @@ static void alloc_init_pmd(pud_t* pude, unsigned long addr, unsigned long end,
 
         if (((addr | next | phys) & ~ARCH_PMD_MASK) == 0 &&
             !(flags & NO_BLOCK_MAPPINGS)) {
-            *pmde = pfn_pmd(phys >> ARCH_PG_SHIFT, mk_pmd_sect_prot(prot));
+            set_pmde(pmde,
+                     pfn_pmd(phys >> ARCH_PG_SHIFT, mk_pmd_sect_prot(prot)));
         } else {
             alloc_init_pte(pmde, addr, next, phys, prot, flags, pk);
         }
@@ -204,7 +211,8 @@ static void alloc_init_pud(pde_t* pde, unsigned long addr, unsigned long end,
         if (pud_sect_supported() &&
             ((addr | next | phys) & ~ARCH_PUD_MASK) == 0 &&
             !(flags & NO_BLOCK_MAPPINGS)) {
-            *pude = pfn_pud(phys >> ARCH_PG_SHIFT, mk_pud_sect_prot(prot));
+            set_pude(pude,
+                     pfn_pud(phys >> ARCH_PG_SHIFT, mk_pud_sect_prot(prot)));
         } else {
             alloc_init_pmd(pude, addr, next, phys, prot, flags, pk);
         }
@@ -242,7 +250,7 @@ static void create_mapping_noalloc(phys_bytes phys, vir_bytes virt,
 
 void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
 {
-    __create_pgd_mapping(init_pg_dir, phys_addr, (vir_bytes)vir_addr,
+    __create_pgd_mapping(mm_pg_dir, phys_addr, (vir_bytes)vir_addr,
                          vir_end - vir_addr, ARM64_PG_SHARED_EXEC,
                          NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS, pk);
 }
@@ -302,9 +310,10 @@ void __set_fixmap(enum fixed_address idx, phys_bytes phys, pgprot_t prot)
     pte = fixmap_pte(addr);
 
     if (pgprot_val(prot)) {
-        *pte = pfn_pte(phys >> ARCH_PG_SHIFT, prot);
+        set_pte(pte, pfn_pte(phys >> ARCH_PG_SHIFT, prot));
     } else {
-        *pte = __pte(0);
+        pte_clear(pte);
+        flush_tlb();
     }
 }
 
@@ -343,4 +352,9 @@ void paging_init(void)
     }
 }
 
-void switch_address_space(struct proc* p) {}
+void switch_address_space(struct proc* p)
+{
+    get_cpulocal_var(pt_proc) = p;
+    write_sysreg(p->seg.ttbr_phys, ttbr0_el1);
+    isb();
+}

@@ -33,6 +33,7 @@
 #include <asm/fixmap.h>
 #include <asm/pagetable.h>
 #include <asm/mach.h>
+#include <asm/sysreg.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -168,6 +169,35 @@ void cstart(phys_bytes dtb_phys)
 
     of_scan_fdt(fdt_scan_root, NULL, initial_boot_params);
     of_scan_fdt(fdt_scan_memory, NULL, initial_boot_params);
+
+    flush_tlb();
+    write_sysreg(__pa_symbol(mm_pg_dir), ttbr0_el1);
+    isb();
+
+    /* setup boot modules */
+#define SET_MODULE(nr, name)                                            \
+    do {                                                                \
+        extern char _bootmod_##name##_start[], _bootmod_##name##_end[]; \
+        kinfo.modules[nr].start_addr =                                  \
+            __pa_symbol((void*)*(&_bootmod_##name##_start));            \
+        kinfo.modules[nr].end_addr =                                    \
+            __pa_symbol((void*)*(&_bootmod_##name##_end));              \
+    } while (0)
+
+    SET_MODULE(TASK_MM, mm);
+    SET_MODULE(TASK_PM, pm);
+    SET_MODULE(TASK_SERVMAN, servman);
+    SET_MODULE(TASK_DEVMAN, devman);
+    SET_MODULE(TASK_SCHED, sched);
+    SET_MODULE(TASK_FS, vfs);
+    SET_MODULE(TASK_SYS, systask);
+    SET_MODULE(TASK_TTY, tty);
+    SET_MODULE(TASK_RD, ramdisk);
+    SET_MODULE(TASK_INITFS, initfs);
+    SET_MODULE(TASK_SYSFS, sysfs);
+    SET_MODULE(TASK_IPC, ipc);
+    SET_MODULE(TASK_NETLINK, netlink);
+    SET_MODULE(INIT, init);
 
     /* kernel memory layout */
     kinfo.kernel_text_start = (void*)*(&_text);

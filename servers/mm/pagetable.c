@@ -323,6 +323,9 @@ void pt_kern_mapping_init()
         kmapping->phys_addr = (phys_bytes)addr;
         kmapping->len = len;
 
+#ifdef __aarch64__
+
+#else
         kmapping->flags = ARCH_PG_PRESENT;
         if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
 #if defined(__arm__)
@@ -340,6 +343,8 @@ void pt_kern_mapping_init()
 
 #if defined(__riscv)
         if (flags & KMF_EXEC) kmapping->flags |= _RISCV_PG_EXEC;
+#endif
+
 #endif
 
         /* where this region will be mapped */

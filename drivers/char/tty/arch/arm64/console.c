@@ -13,40 +13,28 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _STACKFRAME_H_
-#define _STACKFRAME_H_
+#include <lyos/types.h>
+#include <lyos/ipc.h>
+#include "sys/types.h"
+#include "stdio.h"
+#include "unistd.h"
+#include "assert.h"
+#include "lyos/const.h"
+#include "string.h"
+#include "lyos/fs.h"
+#include "lyos/proc.h"
+#include "tty.h"
+#include "console.h"
+#include "lyos/global.h"
+#include "lyos/proto.h"
+#include <lyos/portio.h>
+#include <lyos/vm.h>
+#include <sys/mman.h>
+#include "proto.h"
+#include "global.h"
 
-typedef unsigned long reg_t;
+void init_screen(TTY* tty) {}
 
-struct stackframe {
-    reg_t regs[31];
-    reg_t sp;
-    reg_t pc;
-    reg_t pstate;
-    reg_t kernel_sp;
-    reg_t orig_x0;
+int is_current_console(CONSOLE* con) { return FALSE; }
 
-    /* Current CPU */
-    unsigned int cpu;
-};
-
-struct segframe {
-    reg_t ttbr_phys;
-    reg_t* ttbr_vir;
-};
-
-struct sigcontext {
-    sigset_t mask;
-};
-
-struct sigframe {
-    int retaddr_sigreturn;
-    int signum;
-    int code;
-    struct sigcontext* scp;
-    int retaddr;
-    struct sigcontext* scp_sigreturn;
-    struct sigcontext sc; /* actual saved context */
-};
-
-#endif
+void select_console(int nr_console) {}

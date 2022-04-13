@@ -3,6 +3,8 @@
 
 #include <asm/stackframe.h>
 
-struct tss {};
+struct tss {
+    reg_t sp0;
+};
 
 #endif

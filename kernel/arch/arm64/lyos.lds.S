@@ -69,6 +69,16 @@ SECTIONS
     . += IDMAP_DIR_SIZE;
     init_pg_dir = .;
     . += INIT_DIR_SIZE;
+    mm_pg_dir = .;
+    . += MM_DIR_SIZE;
+
+    . = ALIGN(ARCH_PG_SIZE);
+    .bootmods : {
+        _bootmods = .;
+            *(.bootmods)
+        . = ALIGN(ARCH_PG_SIZE);
+        _ebootmods = .;
+    }
 
    _KERN_SIZE = . - _VIR_BASE;
 
