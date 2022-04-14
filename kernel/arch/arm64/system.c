@@ -43,12 +43,12 @@ struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 struct proc* arch_switch_to_user(void)
 {
     struct proc* p;
-    reg_t stk;
+    reg_t* stk;
 
-    stk = tss[cpuid].sp0;
+    stk = (reg_t*)tss[cpuid].sp0;
     p = get_cpulocal_var(proc_ptr);
 
-    p->regs.kernel_sp = stk;
+    p->regs.kernel_sp = (reg_t)stk;
     p->regs.cpu = cpuid;
 
     return p;

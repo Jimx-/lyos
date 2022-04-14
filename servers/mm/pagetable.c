@@ -250,7 +250,7 @@ int pt_mappage(pgdir_t* pgd, phys_bytes phys_addr, vir_bytes vir_addr,
     pmde = pmd_create(pude, vir_addr);
     pte = pt_create_map(pmde, vir_addr);
 
-    *pte = pfn_pte(phys_addr >> ARCH_PG_SHIFT, prot);
+    set_pte(pte, pfn_pte(phys_addr >> ARCH_PG_SHIFT, prot));
 
     return 0;
 }

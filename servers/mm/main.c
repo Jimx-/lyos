@@ -32,6 +32,10 @@
 #include <sys/mman.h>
 #include <sys/syslimits.h>
 
+#ifdef __aarch64__
+#include <asm/fixmap.h>
+#endif
+
 #include "libexec/libexec.h"
 #include "multiboot.h"
 #include <asm/page.h>
@@ -360,6 +364,10 @@ static void print_memmap()
            VMALLOC_END, (VMALLOC_END - VMALLOC_START) / 1024);
     printl("  .pkmap    : 0x%016lx - 0x%016lx  (%dkB)\n", PKMAP_START,
            PKMAP_END, (PKMAP_END - PKMAP_START) / 1024);
+#ifdef __aarch64__
+    printl("  .fixmap   : 0x%016lx - 0x%016lx  (%dkB)\n", FIXADDR_START,
+           FIXADDR_TOP, (FIXADDR_TOP - FIXADDR_START) / 1024);
+#endif
 
     mem_info.mem_total = memory_size;
 }

@@ -36,14 +36,112 @@
 #include <lyos/smp.h>
 #include <asm/pagetable.h>
 
+/* temporary mappings */
+#define MAX_TEMPPDES 2
+#define TEMPPDE_SRC  0
+#define TEMPPDE_DST  1
+static unsigned long temppdes[MAX_TEMPPDES];
+
 #define _SRC_       0
 #define _DEST_      1
 #define EFAULT_SRC  1
 #define EFAULT_DEST 2
 
-void init_memory() {}
+static inline void set_pde(pde_t* pdep, pde_t pde)
+{
+    *(volatile pde_t*)pdep = pde;
+}
 
-void clear_memcache() {}
+void init_memory()
+{
+    int i;
+    int temppde_start;
+
+    temppde_start = ARCH_VM_DIR_ENTRIES - MAX_TEMPPDES;
+
+    for (i = 0; i < MAX_TEMPPDES; i++) {
+        temppdes[i] = temppde_start++;
+    }
+    get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+}
+
+void clear_memcache()
+{
+    int i;
+    for (i = 0; i < MAX_TEMPPDES; i++) {
+        set_pde(&init_pg_dir[temppdes[i]], __pde(0));
+    }
+    flush_tlb();
+}
+
+/* Temporarily map la in p's address space in kernel address space */
+static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
+                             int* changed)
+{
+    phys_bytes pa;
+    pde_t pdeval;
+    unsigned long pde = temppdes[index];
+
+    /* the process is already in current page table */
+    if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))
+        return la;
+
+    if (p) {
+        if (!p->seg.ttbr_vir) panic("create_temp_map: proc ttbr_vir not set");
+        pdeval = __pde(p->seg.ttbr_vir[ARCH_PDE(la)]);
+    } else { /* physical address */
+        pa = (phys_bytes)la;
+        return __va(pa);
+    }
+
+    if (pde_val(init_pg_dir[pde]) != pde_val(pdeval)) {
+        set_pde(&init_pg_dir[pde], pdeval);
+        *changed = 1;
+    }
+
+    unsigned long offset = ((uintptr_t)la) % ARCH_PGD_SIZE;
+    *len = min(*len, ARCH_PGD_SIZE - offset);
+
+    return (void*)(uintptr_t)(-((ARCH_VM_DIR_ENTRIES - pde) << ARCH_PGD_SHIFT) +
+                              offset);
+}
+
+static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
+                      void* src_la, size_t len)
+{
+    if (!get_cpulocal_var(pt_proc)) panic("pt_proc not present");
+
+    while (len > 0) {
+        size_t chunk = len;
+        void *src_mapped, *dest_mapped;
+        int changed = 0;
+
+        src_mapped =
+            create_temp_map(p_src, src_la, &chunk, TEMPPDE_SRC, &changed);
+        dest_mapped =
+            create_temp_map(p_dest, dest_la, &chunk, TEMPPDE_DST, &changed);
+
+        if (changed) flush_tlb();
+
+        void* fault_addr = phys_copy(dest_mapped, src_mapped, chunk);
+
+        if (fault_addr) {
+            if (fault_addr >= src_mapped && fault_addr < src_mapped + chunk)
+                return EFAULT_SRC;
+            if (fault_addr >= dest_mapped && fault_addr < dest_mapped + chunk)
+                return EFAULT_DEST;
+            return EFAULT;
+        }
+
+        len -= chunk;
+        src_la += chunk;
+        dest_la += chunk;
+    }
+
+    return 0;
+}
+
+phys_bytes va2pa(endpoint_t ep, void* va) {}
 
 #define MAX_KERN_MAPPINGS 8
 
@@ -71,12 +169,6 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
 
     return 0;
 }
-
-static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
-                      void* src_la, size_t len)
-{}
-
-phys_bytes va2pa(endpoint_t ep, void* va) {}
 
 int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags) {}
 

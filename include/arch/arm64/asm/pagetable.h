@@ -109,7 +109,7 @@ static inline void set_pte(pte_t* ptep, pte_t pte)
     *(volatile pte_t*)ptep = pte;
 }
 
-static inline void pte_clear(pte_t* pte) { *pte = __pte(0); }
+static inline void pte_clear(pte_t* pte) { set_pte(pte, __pte(0)); }
 
 #define pmde_none(x) (!pmd_val(x))
 #define pmde_table(pmde) \
@@ -134,7 +134,7 @@ static inline void set_pmde(pmd_t* pmdep, pmd_t pmde)
     *(volatile pmd_t*)pmdep = pmde;
 }
 
-static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
+static inline void pmde_clear(pmd_t* pmde) { set_pmde(pmde, __pmd(0)); }
 
 static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
 {
@@ -191,7 +191,7 @@ static inline void set_pude(pud_t* pudep, pud_t pude)
     *(volatile pud_t*)pudep = pude;
 }
 
-static inline void pude_clear(pud_t* pude) { *pude = __pud(0); }
+static inline void pude_clear(pud_t* pude) { set_pude(pude, __pud(0)); }
 
 #if CONFIG_PGTABLE_LEVELS > 3
 

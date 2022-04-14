@@ -29,11 +29,66 @@
 #include <asm/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/vm.h>
+#include <asm/sysreg.h>
+#include <asm/esr.h>
+
+DEFINE_CPULOCAL(unsigned long, percpu_kstack);
 
 int init_tss(unsigned int cpu, void* kernel_stack)
 {
     struct tss* t = &tss[cpu];
 
-    t->sp0 = (reg_t)kernel_stack;
+    get_cpu_var(cpu, percpu_kstack) =
+        (unsigned long)kernel_stack - ARM64_STACK_TOP_RESERVED;
+
+    memset(t, 0, sizeof(struct tss));
+    t->sp0 = get_cpu_var(cpu, percpu_kstack);
+
     return 0;
 }
+
+static void el0_svc(struct proc* p)
+{
+    handle_sys_call((int)p->regs.regs[8], (MESSAGE*)p->regs.regs[0], p);
+}
+
+void el1t_64_sync_handler(struct proc* p) {}
+
+void el1t_64_irq_handler(struct proc* p) {}
+
+void el1t_64_fiq_handler(struct proc* p) {}
+
+void el1t_64_error_handler(struct proc* p) {}
+
+void el1h_64_sync_handler(struct proc* p) {}
+
+void el1h_64_irq_handler(struct proc* p) {}
+
+void el1h_64_fiq_handler(struct proc* p) {}
+
+void el1h_64_error_handler(struct proc* p) {}
+
+void el0t_64_sync_handler(struct proc* p)
+{
+    unsigned long esr = read_sysreg(esr_el1);
+
+    switch (ESR_ELx_EC(esr)) {
+    case ESR_ELx_EC_SVC64:
+        el0_svc(p);
+        break;
+    }
+}
+
+void el0t_64_irq_handler(struct proc* p) {}
+
+void el0t_64_fiq_handler(struct proc* p) {}
+
+void el0t_64_error_handler(struct proc* p) {}
+
+void el0t_32_sync_handler(struct proc* p) {}
+
+void el0t_32_irq_handler(struct proc* p) {}
+
+void el0t_32_fiq_handler(struct proc* p) {}
+
+void el0t_32_error_handler(struct proc* p) {}

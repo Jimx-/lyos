@@ -119,9 +119,6 @@ phys_copy_fault_in_kernel:
 
 /* copy a message of 64 bytes */
 copy_user_message:
-    addi sp, sp, -(REG_SIZE)
-    REG_S ra, 0(sp)
-
     li t1, SR_SUM
     csrs sstatus, t1
 
@@ -147,15 +144,11 @@ copy_user_message:
     sd t0, 72(a0)
 copy_user_message_end:
     csrc sstatus, t1
-    REG_L ra, 0(sp)
-    addi sp, sp, REG_SIZE
     mv a0, zero
     ret
 copy_user_message_fault:
     li t1, SR_SUM
     csrc sstatus, t1
-    REG_L ra, 0(sp)
-    addi sp, sp, REG_SIZE
     li a0, 1
     ret
 

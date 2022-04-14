@@ -26,8 +26,11 @@ struct stackframe {
     reg_t kernel_sp;
     reg_t orig_x0;
 
+    reg_t stackframe[2];
+
     /* Current CPU */
     unsigned int cpu;
+    unsigned int __unused0;
 };
 
 struct segframe {

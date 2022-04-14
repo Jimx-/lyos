@@ -110,6 +110,11 @@ static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
     return vaddr + ARCH_PTE(addr);
 }
 
+static inline void set_pte(pte_t* ptep, pte_t pte)
+{
+    *(volatile pte_t*)ptep = pte;
+}
+
 static inline int pte_present(pte_t pte)
 {
     return pte_val(pte) & _RISCV_PG_PRESENT;

@@ -16,7 +16,7 @@
 #ifndef _ARCH_CONST_H_
 #define _ARCH_CONST_H_
 
-#define RISCV_STACK_TOP_RESERVED (2 * sizeof(reg_t))
+#define ARM64_STACK_TOP_RESERVED (2 * sizeof(reg_t))
 #define K_STACK_SIZE             ARCH_PG_SIZE
 
 #ifndef __ASSEMBLY__

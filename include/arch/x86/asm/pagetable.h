@@ -143,6 +143,11 @@ static inline pte_t* pte_offset(pmd_t* pt, unsigned long addr)
     return vaddr + ARCH_PTE(addr);
 }
 
+static inline void set_pte(pte_t* ptep, pte_t pte)
+{
+    *(volatile pte_t*)ptep = pte;
+}
+
 #define pgd_addr_end(addr, end)                                          \
     ({                                                                   \
         vir_bytes __boundary = ((addr) + ARCH_PGD_SIZE) & ARCH_PGD_MASK; \
