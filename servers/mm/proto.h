@@ -62,7 +62,6 @@ int pt_unwp_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length);
 void pt_kern_mapping_init();
 int unmap_memory(pgdir_t* pgd, vir_bytes vir_addr, size_t length);
 int pgd_new(pgdir_t* pgd);
-int pgd_mapkernel(pgdir_t* pgd);
 int pgd_bind(struct mmproc* who, pgdir_t* pgd);
 int pgd_clear(pgdir_t* pgd);
 void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
@@ -72,7 +71,9 @@ int pgd_va2pa(pgdir_t* pgd, vir_bytes vir_addr, phys_bytes* phys_addr);
 
 /* Arch functions. */
 void arch_init_pgd(pgdir_t* pgd);
-void arch_pgd_mapkernel(pgdir_t* pgd);
+void arch_pgd_new(pgdir_t* pgd);
+void arch_create_kern_mapping(phys_bytes phys_addr, vir_bytes vir_addr,
+                              size_t len, int flags);
 
 struct mm_struct* mm_allocate();
 void mm_init(struct mm_struct* mm);

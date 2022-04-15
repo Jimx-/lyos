@@ -174,7 +174,7 @@ int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
 {
     int i;
     phys_bytes phys;
-    int flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER | ARCH_PG_BIGPAGE;
+    int flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_BIGPAGE;
     /* initialize page directory */
     for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
         if (i >= kinfo.kernel_start_pde && i < kinfo.kernel_end_pde)
@@ -234,9 +234,7 @@ int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
     vir_bytes addr = pstart + offset;
     vir_bytes end = pend + offset;
     vir_bytes next;
-    unsigned long pmd_flags =
-        ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER | ARCH_PG_BIGPAGE;
-    unsigned long page_flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_USER;
+    unsigned long pmd_flags = ARCH_PG_PRESENT | ARCH_PG_RW | ARCH_PG_BIGPAGE;
     int use_gbpages;
     int retval;
 
@@ -263,7 +261,7 @@ int pg_identity_map(pde_t* pgd_page, phys_bytes pstart, phys_bytes pend,
         retval = ident_map_pud(pud, addr, next, offset, pmd_flags, use_gbpages);
         if (retval) return retval;
 
-        *pgd = __pde((__pa(pud) & ARCH_PG_MASK) | page_flags);
+        *pgd = __pde((__pa(pud) & ARCH_PG_MASK) | _I386_PG_TABLE);
     }
 
     return 0;

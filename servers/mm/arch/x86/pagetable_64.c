@@ -37,8 +37,6 @@
 
 unsigned long va_pa_offset = 0;
 
-static struct mmproc* mmprocess = &mmproc_table[TASK_MM];
-
 static pud_t* alloc_pud(phys_bytes* pud_phys)
 {
     pud_t* pud = (pud_t*)alloc_vmem(
@@ -122,8 +120,6 @@ void arch_init_pgd(pgdir_t* pgd)
     int i;
     phys_bytes paddr = kernel_info.kernel_start_phys;
 
-    va_pa_offset = KERNEL_VMA;
-
     identity_map(pgd->vir_addr, paddr, paddr + KERNEL_VIRT_SIZE - 1, KERNEL_VMA,
                  0);
 
@@ -142,14 +138,4 @@ void arch_init_pgd(pgdir_t* pgd)
     }
 
     va_pa_offset = PAGE_OFFSET;
-}
-
-void arch_pgd_mapkernel(pgdir_t* pgd)
-{
-    int i;
-    pgdir_t* mypgd = &mmprocess->mm->pgd;
-
-    for (i = ARCH_PDE(KERNEL_VMA); i < ARCH_VM_DIR_ENTRIES; i++) {
-        pgd->vir_addr[i] = mypgd->vir_addr[i];
-    }
 }

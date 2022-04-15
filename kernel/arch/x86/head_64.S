@@ -107,12 +107,14 @@ startup_64:
     .align 0x1000
     .global init_top_pgt
 init_top_pgt:
-    .quad level3_ident_pgt - KERNEL_VMA + 0x07 /* PG_PRESENT | PG_RW | PG_USER */
+    /* Identity PUDs need to be mapped with PG_USER because they will be
+     * reused for MM mappings. */
+    .quad level3_ident_pgt - KERNEL_VMA + 0x67 /* _I386_PG_TABLE */
     .fill 510,8,0
-    .quad level3_kernel_pgt - KERNEL_VMA + 0x07 /* PG_PRESENT | PG_RW | PG_USER */
+    .quad level3_kernel_pgt - KERNEL_VMA + 0x63 /* _I386_PG_KERN_TABLE */
 
 level3_ident_pgt:
-    .quad level2_ident_pgt - KERNEL_VMA + 0x07 /* PG_PRESENT | PG_RW | PG_USER */
+    .quad level2_ident_pgt - KERNEL_VMA + 0x67 /* _I386_PG_TABLE */
     .fill 511,8,0
 
 level2_ident_pgt:
@@ -121,12 +123,12 @@ level2_ident_pgt:
 
 level3_kernel_pgt:
     .fill 510,8,0
-    .quad level2_kernel_pgt - KERNEL_VMA + 0x07
+    .quad level2_kernel_pgt - KERNEL_VMA + 0x63 /* _I386_PG_KERN_TABLE */
     .quad 0
 
 level2_kernel_pgt:
     /* Identity map the first 1G. */
-    PMDS(0, 0x87 /* PG_PRESENT | PG_RW | PG_USER | PG_BIGPAGE */, ARCH_VM_PMD_ENTRIES)
+    PMDS(0, 0x83 /* PG_PRESENT | PG_RW | PG_BIGPAGE */, ARCH_VM_PMD_ENTRIES)
 
     .align 8
 gdtr:

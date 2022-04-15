@@ -32,9 +32,11 @@
 #define PKMAP_START (KERNEL_VMA + LOWMEM_END)
 #define PKMAP_END   (PKMAP_START + 0x400000) /* 4 MB */
 #else
-#define PAGE_OFFSET   0x1000000000UL
-#define VMALLOC_START 0x2000000000UL
-#define VMALLOC_END   0x3000000000UL
+/* Region where MM sets up linear mapping to physical memory. Must not overlap
+ * with the first PGD entry. */
+#define PAGE_OFFSET   0x8000000000UL
+#define VMALLOC_START 0xf000000000UL
+#define VMALLOC_END   0x10000000000UL
 
 #define KERNEL_VIRT_SIZE (-KERNEL_VMA)
 #define PKMAP_SIZE       (KERNEL_VIRT_SIZE >> 1)
@@ -111,12 +113,14 @@ extern unsigned long va_pa_offset;
 #define PG_BIG_SIZE ARCH_PMD_SIZE
 #endif
 
-#define I386_PG_PRESENT 0x001
-#define I386_PG_RO      0x000
-#define I386_PG_RW      0x002
-#define I386_PG_USER    0x004
-#define I386_PG_BIGPAGE 0x080
-#define I386_PG_GLOBAL  (1L << 8)
+#define I386_PG_PRESENT  0x001
+#define I386_PG_RO       0x000
+#define I386_PG_RW       0x002
+#define I386_PG_USER     0x004
+#define I386_PG_ACCESSED 0x020
+#define I386_PG_DIRTY    0x040
+#define I386_PG_BIGPAGE  0x080
+#define I386_PG_GLOBAL   0x100
 
 #define I386_CR0_WP 0x00010000 /* Enable paging */
 #define I386_CR0_PG 0x80000000 /* Enable paging */
@@ -138,6 +142,12 @@ extern unsigned long va_pa_offset;
 #define ARCH_PG_BIGPAGE I386_PG_BIGPAGE
 #define ARCH_PG_USER    I386_PG_USER
 #define ARCH_PG_GLOBAL  I386_PG_GLOBAL
+
+#define _I386_PG_KERN_TABLE \
+    (I386_PG_PRESENT | I386_PG_RW | I386_PG_ACCESSED | I386_PG_DIRTY)
+#define _I386_PG_TABLE                                                \
+    (I386_PG_PRESENT | I386_PG_USER | I386_PG_RW | I386_PG_ACCESSED | \
+     I386_PG_DIRTY)
 
 /*         xwr */
 #define __P000 __pgprot(0)

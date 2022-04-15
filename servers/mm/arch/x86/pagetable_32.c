@@ -34,12 +34,35 @@
 #include "global.h"
 #include "const.h"
 
-unsigned long va_pa_offset;
+static int global_bit = 0;
 
-void arch_init_pgd(pgdir_t* pgd) {}
+unsigned long va_pa_offset = 0;
 
-void arch_create_kern_mapping(phys_bytes phys_addr, vir_bytes vir_addr,
-                              size_t len, int flags)
-{}
+void arch_init_pgd(pgdir_t* pgd)
+{
+    int kernel_pde = kernel_info.kernel_start_pde;
+    phys_bytes paddr = kernel_info.kernel_start_phys;
 
-void arch_pgd_new(pgdir_t* pgd) {}
+    if (_cpufeature(_CPUF_I386_PGE)) global_bit = ARCH_PG_GLOBAL;
+
+    /* map kernel for MM */
+    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
+        pgd->vir_addr[kernel_pde] =
+            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
+
+        paddr += ARCH_BIG_PAGE_SIZE;
+        kernel_pde++;
+    }
+
+    /* create direct mapping to access physical memory */
+    for (kernel_pde = 0, paddr = 0; kernel_pde < ARCH_PDE(LOWMEM_END);
+         kernel_pde++, paddr += ARCH_BIG_PAGE_SIZE) {
+        if (paddr < kernel_info.kernel_end_phys) {
+            continue;
+        }
+
+        pgd->vir_addr[kernel_pde] =
+            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW |
+                  ARCH_PG_USER);
+    }
+}

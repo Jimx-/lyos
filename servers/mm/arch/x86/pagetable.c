@@ -34,50 +34,27 @@
 #include "global.h"
 #include "const.h"
 
-static int global_bit = 0;
+static struct mmproc* mmprocess = &mmproc_table[TASK_MM];
 
-unsigned long va_pa_offset = 0;
-
-void arch_init_pgd(pgdir_t* pgd)
+void arch_create_kern_mapping(phys_bytes phys_addr, vir_bytes vir_addr,
+                              size_t len, int flags)
 {
-    int kernel_pde = kernel_info.kernel_start_pde;
-    phys_bytes paddr = kernel_info.kernel_start_phys;
+    pgdir_t* mypgd = &mmprocess->mm->pgd;
+    unsigned long page_prot;
 
-    if (_cpufeature(_CPUF_I386_PGE)) global_bit = ARCH_PG_GLOBAL;
+    page_prot = ARCH_PG_PRESENT;
+    if (flags & KMF_USER) page_prot |= ARCH_PG_USER;
 
-    /* map kernel for MM */
-    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
-        pgd->vir_addr[kernel_pde] =
-            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW);
+    if (flags & KMF_WRITE) page_prot |= ARCH_PG_RW;
 
-        paddr += ARCH_BIG_PAGE_SIZE;
-        kernel_pde++;
-    }
-
-    /* create direct mapping to access physical memory */
-    for (kernel_pde = 0, paddr = 0; kernel_pde < ARCH_PDE(LOWMEM_END);
-         kernel_pde++, paddr += ARCH_BIG_PAGE_SIZE) {
-        if (paddr < kernel_info.kernel_end_phys) {
-            continue;
-        }
-
-        pgd->vir_addr[kernel_pde] =
-            __pde(paddr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW |
-                  ARCH_PG_USER);
-    }
+    pt_writemap(mypgd, phys_addr, vir_addr, len, __pgprot(page_prot));
 }
 
-void arch_pgd_mapkernel(pgdir_t* pgd)
+void arch_pgd_new(pgdir_t* pgd)
 {
-    int kernel_pde = kernel_info.kernel_start_pde;
-    phys_bytes addr = kernel_info.kernel_start_phys;
+    pgdir_t* mypgd = &mmprocess->mm->pgd;
 
-    /* map low memory */
-    while (kernel_pde < ARCH_PDE(KERNEL_VMA + LOWMEM_END)) {
-        pgd->vir_addr[kernel_pde] = __pde(
-            addr | ARCH_PG_PRESENT | ARCH_PG_BIGPAGE | ARCH_PG_RW | global_bit);
-
-        addr += ARCH_BIG_PAGE_SIZE;
-        kernel_pde++;
-    }
+    memcpy(&pgd->vir_addr[ARCH_PDE(KERNEL_VMA)],
+           &mypgd->vir_addr[ARCH_PDE(KERNEL_VMA)],
+           (ARCH_VM_DIR_ENTRIES - ARCH_PDE(KERNEL_VMA)) * sizeof(pde_t));
 }

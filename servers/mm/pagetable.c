@@ -106,11 +106,17 @@ void pt_init()
     for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
         pde_t pde = currentpagedir[i];
 
-        if (!pde_present(pde)) continue;
+        if (!pde_present(pde) || pde_bad(pde)) continue;
         mypgd->vir_addr[i] = pde;
     }
 
     arch_init_pgd(mypgd);
+
+    for (i = 0; i < nr_kern_mappings; i++) {
+        arch_create_kern_mapping(kern_mappings[i].phys_addr,
+                                 kern_mappings[i].vir_addr,
+                                 kern_mappings[i].len, kern_mappings[i].flags);
+    }
 
     /* using the new page dir */
     pgd_bind(mmprocess, mypgd);
@@ -322,30 +328,7 @@ void pt_kern_mapping_init()
         /* fill in mapping information */
         kmapping->phys_addr = (phys_bytes)addr;
         kmapping->len = len;
-
-#ifdef __aarch64__
-
-#else
-        kmapping->flags = ARCH_PG_PRESENT;
-        if (flags & KMF_USER) kmapping->flags |= ARCH_PG_USER;
-#if defined(__arm__)
-        else
-            kmapping->flags |= ARM_PG_SUPER;
-#endif
-        if (flags & KMF_WRITE)
-            kmapping->flags |= ARCH_PG_RW;
-        else
-            kmapping->flags |= ARCH_PG_RO;
-
-#if defined(__arm__)
-        kmapping->flags |= ARM_PG_CACHED;
-#endif
-
-#if defined(__riscv)
-        if (flags & KMF_EXEC) kmapping->flags |= _RISCV_PG_EXEC;
-#endif
-
-#endif
+        kmapping->flags = flags;
 
         /* where this region will be mapped */
         kmapping->vir_addr = (vir_bytes)pkmap_start;
@@ -378,32 +361,10 @@ int pgd_new(pgdir_t* pgd)
     pgd->phys_addr = pgd_phys;
     pgd->vir_addr = pg_dir;
 
-    int i;
-
     /* zero it */
-    for (i = 0; i < ARCH_VM_DIR_ENTRIES; i++) {
-        pg_dir[i] = __pde(0);
-    }
+    memset(pg_dir, 0, sizeof(pde_t) * ARCH_VM_DIR_ENTRIES);
 
-    pgd_mapkernel(pgd);
-    return 0;
-}
-
-/**
- * <Ring 1> Map the kernel.
- * @param  pgd The page directory.
- * @return     Zero on success.
- */
-int pgd_mapkernel(pgdir_t* pgd)
-{
-    int i;
-
-    arch_pgd_mapkernel(pgd);
-
-    for (i = 0; i < nr_kern_mappings; i++) {
-        pt_writemap(pgd, kern_mappings[i].phys_addr, kern_mappings[i].vir_addr,
-                    kern_mappings[i].len, __pgprot(kern_mappings[i].flags));
-    }
+    arch_pgd_new(pgd);
 
     return 0;
 }

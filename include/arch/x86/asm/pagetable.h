@@ -45,16 +45,15 @@ static inline int pde_none(pde_t pde) { return pde_val(pde) == 0; }
 
 static inline int pde_bad(pde_t pde)
 {
-    unsigned long ignore_flags = ARCH_PG_USER | ARCH_PG_PRESENT | ARCH_PG_RW;
-    return ((pde_val(pde) & ~ARCH_PG_MASK) & ~ignore_flags) != 0;
+    return ((pde_val(pde) & ~ARCH_PG_MASK) & ~ARCH_PG_USER) !=
+           _I386_PG_KERN_TABLE;
 }
 
 static inline void pde_clear(pde_t* pde) { *pde = __pde(0); }
 
 static inline void pde_populate(pde_t* pde, unsigned long pud_phys)
 {
-    *pde = __pde((pud_phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
-                 ARCH_PG_USER);
+    *pde = __pde((pud_phys & ARCH_PG_MASK) | _I386_PG_TABLE);
 }
 
 static inline pud_t* pud_offset(pde_t* pud, unsigned long addr)
@@ -76,8 +75,8 @@ static inline int pude_none(pud_t pude) { return pud_val(pude) == 0; }
 
 static inline int pude_bad(pud_t pude)
 {
-    unsigned long ignore_flags = ARCH_PG_USER | ARCH_PG_PRESENT | ARCH_PG_RW;
-    return ((pud_val(pude) & ~ARCH_PG_MASK) & ~ignore_flags) != 0;
+    return ((pud_val(pude) & ~ARCH_PG_MASK) & ~ARCH_PG_USER) !=
+           _I386_PG_KERN_TABLE;
 }
 
 static inline int pude_large(pud_t pude)
@@ -90,8 +89,7 @@ static inline void pude_clear(pud_t* pude) { *pude = __pud(0); }
 
 static inline void pude_populate(pud_t* pude, unsigned long pmd_phys)
 {
-    *pude = __pud((pmd_phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
-                  ARCH_PG_USER);
+    *pude = __pud((pmd_phys & ARCH_PG_MASK) | _I386_PG_TABLE);
 }
 
 static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)
@@ -119,15 +117,14 @@ static inline int pmde_none(pmd_t pmde) { return pmd_val(pmde) == 0; }
 static inline int pmde_bad(pmd_t pmde)
 {
     return ((pmd_val(pmde) & ~ARCH_PG_MASK) & ~ARCH_PG_USER) !=
-           (ARCH_PG_PRESENT | ARCH_PG_RW);
+           _I386_PG_KERN_TABLE;
 }
 
 static inline void pmde_clear(pmd_t* pmde) { *pmde = __pmd(0); }
 
 static inline void pmde_populate(pmd_t* pmde, unsigned long pt_phys)
 {
-    *pmde = __pmd((pt_phys & ARCH_PG_MASK) | ARCH_PG_PRESENT | ARCH_PG_RW |
-                  ARCH_PG_USER);
+    *pmde = __pmd((pt_phys & ARCH_PG_MASK) | _I386_PG_TABLE);
 }
 
 static inline int pte_none(pte_t pte) { return pte_val(pte) == 0; }

@@ -100,16 +100,30 @@ void arch_init_pgd(pgdir_t* pgd)
     }
 }
 
-void arch_pgd_mapkernel(pgdir_t* pgd)
+void arch_create_kern_mapping(phys_bytes phys_addr, vir_bytes vir_addr,
+                              size_t len, int flags)
 {
-    int i;
+    pgdir_t* mypgd = &mmprocess->mm->pgd;
+    unsigned long page_prot;
+
+    page_prot = ARCH_PG_PRESENT;
+    if (flags & KMF_USER) page_prot |= ARCH_PG_USER;
+
+    if (flags & KMF_WRITE)
+        page_prot |= ARCH_PG_RW;
+    else
+        page_prot |= ARCH_PG_RO;
+
+    if (flags & KMF_EXEC) page_prot |= _RISCV_PG_EXEC;
+
+    pt_writemap(mypgd, phys_addr, vir_addr, len, __pgprot(page_prot));
+}
+
+void arch_pgd_new(pgdir_t* pgd)
+{
     pgdir_t* mypgd = &mmprocess->mm->pgd;
 
-#ifndef __PAGETABLE_PMD_FOLDED
-    for (i = 0; i < NUM_INIT_PMDS; i++) {
-        unsigned long idx =
-            (KERNEL_VMA >> ARCH_PGD_SHIFT) % ARCH_VM_DIR_ENTRIES + i;
-        pgd->vir_addr[idx] = mypgd->vir_addr[idx];
-    }
-#endif
+    memcpy(&pgd->vir_addr[ARCH_PDE(VM_STACK_TOP)],
+           &mypgd->vir_addr[ARCH_PDE(VM_STACK_TOP)],
+           (ARCH_VM_DIR_ENTRIES - ARCH_PDE(VM_STACK_TOP)) * sizeof(pde_t));
 }

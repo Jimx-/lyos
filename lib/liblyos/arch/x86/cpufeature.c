@@ -104,7 +104,6 @@ int _cpufeature(int cpufeature)
     case _CPUF_I386_HTT_MAX_NUM:
         return (ebx >> 16) & 0xff;
     case _CPUF_I386_SYSENTER:
-        if (!is_intel) return 0;
         if (!(edx & CPUID1_EDX_SYSENTER)) return 0;
         if (family == 6 && model < 3 && stepping < 3) return 0;
         return 1;
