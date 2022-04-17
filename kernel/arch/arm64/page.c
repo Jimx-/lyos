@@ -43,6 +43,7 @@ unsigned long va_pa_offset;
 
 #define NO_BLOCK_MAPPINGS BIT(0)
 #define NO_CONT_MAPPINGS  BIT(1)
+#define ALLOC_PHYS_MEM    BIT(2)
 
 static pte_t bm_pt[ARCH_VM_PT_ENTRIES] __attribute__((aligned(ARCH_PG_SIZE)));
 static pmd_t bm_pmd[ARCH_VM_PMD_ENTRIES] __attribute__((aligned(ARCH_PG_SIZE)));
@@ -144,11 +145,11 @@ static void alloc_init_pte(pmd_t* pmde, unsigned long addr, unsigned long end,
     pte = pte_set_fixmap_offset(pmde, addr);
     do {
         phys_bytes ph = phys;
-        if (ph == 0 && pk) ph = pg_alloc_pages(pk, 1);
+        if (flags & ALLOC_PHYS_MEM) ph = pg_alloc_pages(pk, 1);
 
         set_pte(pte, pfn_pte(ph >> ARCH_PG_SHIFT, prot));
 
-        if (phys) phys += ARCH_PG_SIZE;
+        phys += ARCH_PG_SIZE;
     } while (pte++, addr += ARCH_PG_SIZE, addr != end);
 
     pte_clear_fixmap();
@@ -249,9 +250,12 @@ static void create_mapping_noalloc(phys_bytes phys, vir_bytes virt,
 
 void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
 {
+    int flags = NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS;
+
+    if (phys_addr == 0) flags |= ALLOC_PHYS_MEM;
+
     __create_pgd_mapping(mm_pg_dir, phys_addr, (vir_bytes)vir_addr,
-                         vir_end - vir_addr, ARM64_PG_SHARED_EXEC,
-                         NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS, pk);
+                         vir_end - vir_addr, ARM64_PG_SHARED_EXEC, flags, pk);
 }
 
 void early_fixmap_init(void)
@@ -318,15 +322,44 @@ void __set_fixmap(enum fixed_address idx, phys_bytes phys, pgprot_t prot)
 
 void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)
 {
-    int i;
+    int i = 0;
 
-    for (i = 0; i < pk->memmaps_count; i++) {
+    while (i < pk->memmaps_count) {
         struct kinfo_mmap_entry* entry = &pk->memmaps[i];
         u64 mmap_end = entry->addr + entry->len;
-        if (start >= entry->addr && end <= mmap_end) {
-            entry->addr = end;
-            entry->len = mmap_end - entry->addr;
-        }
+
+        if (entry->addr > end) break;
+
+        if ((start >= entry->addr && start < mmap_end) ||
+            (end >= entry->addr && end < mmap_end)) {
+
+            if (start == entry->addr && end == mmap_end) {
+                pk->memmaps_count--;
+                if (i < pk->memmaps_count)
+                    memmove(&pk->memmaps[i], &pk->memmaps[i + 1],
+                            (pk->memmaps_count - i) * sizeof(*entry));
+            } else if (start > entry->addr && end < mmap_end) {
+                if (pk->memmaps_count == KINFO_MAXMEMMAP)
+                    panic("Memory map table full");
+
+                memmove(&pk->memmaps[i + 2], &pk->memmaps[i + 1],
+                        (pk->memmaps_count - i - 1) * sizeof(*entry));
+                pk->memmaps[i + 1] = *entry;
+                entry->len = start - entry->addr;
+                pk->memmaps[i + 1].addr = end;
+                pk->memmaps[i + 1].len = mmap_end - end;
+                pk->memmaps_count++;
+                i += 2;
+            } else if (start > entry->addr) {
+                entry->len = start - entry->addr;
+                i++;
+            } else {
+                entry->addr = end;
+                entry->len = mmap_end - end;
+                i++;
+            }
+        } else
+            i++;
     }
 }
 

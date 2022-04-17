@@ -9,4 +9,3 @@ CFLAGS	= -static
 INSTALL_PREFIX = /sbin
 
 include lyos.prog.mk
-

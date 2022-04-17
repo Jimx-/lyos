@@ -149,7 +149,13 @@ int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
 
 int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
                    void* tls)
-{}
+{
+    if (newsp) {
+        p->regs.sp = (reg_t)newsp;
+    }
+
+    return 0;
+}
 
 void idle_stop() {}
 

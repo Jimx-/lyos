@@ -166,7 +166,7 @@ void cstart(phys_bytes dtb_phys)
 
     initial_boot_params =
         fixmap_remap_fdt(dtb_phys, &fdt_size, ARM64_PG_KERNEL);
-    dtb_lim = dtb_phys + fdt_size;
+    dtb_lim = roundup(dtb_phys + fdt_size, ARCH_PG_SIZE);
 
     machine_desc = setup_machine_fdt(initial_boot_params);
 
@@ -215,6 +215,7 @@ void cstart(phys_bytes dtb_phys)
 
     /* reserve memory used by the kernel */
     cut_memmap(&kinfo, kinfo.kernel_start_phys, kinfo.kernel_end_phys);
+    cut_memmap(&kinfo, 0, ARCH_PG_SIZE);
 
     paging_init();
 
@@ -244,13 +245,15 @@ void cstart(phys_bytes dtb_phys)
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
     char param_buf[64];
+
+    cut_memmap(&kinfo, phys_initrd_start,
+               roundup(phys_initrd_start + phys_initrd_size, ARCH_PG_SIZE));
     sprintf(param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
     kinfo_set_param(kinfo.cmdline, "initrd_base", param_buf);
     sprintf(param_buf, "%lu", (unsigned int)phys_initrd_size);
     kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
 
-    /* cut_memmap(&kinfo, dtb_phys, dtb_lim); */
-
+    cut_memmap(&kinfo, dtb_phys, dtb_lim);
     sprintf(param_buf, "0x%lx", (uintptr_t)initial_boot_params);
     kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
     sprintf(param_buf, "%lu", (unsigned int)fdt_totalsize(initial_boot_params));

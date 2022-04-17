@@ -43,6 +43,11 @@ static const struct fault_info fault_info[];
 
 DEFINE_CPULOCAL(unsigned long, percpu_kstack);
 
+void copy_user_message_end();
+void copy_user_message_fault();
+void phys_copy_fault();
+void phys_copy_fault_in_kernel();
+
 int handle_sys_call(int call_nr, MESSAGE* m_user,
                     struct stackframe* frame_proc);
 
@@ -74,6 +79,16 @@ static int is_write_abort(unsigned int esr)
     return (esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM);
 }
 
+static int is_el1_instruction_abort(unsigned int esr)
+{
+    return ESR_ELx_EC(esr) == ESR_ELx_EC_IABT_CUR;
+}
+
+static int is_el1_data_abort(unsigned int esr)
+{
+    return ESR_ELx_EC(esr) == ESR_ELx_EC_DABT_CUR;
+}
+
 static int do_bad(int in_kernel, unsigned long far, unsigned int esr,
                   struct stackframe* frame)
 {
@@ -87,7 +102,26 @@ static int do_page_fault(int in_kernel, unsigned long far, unsigned int esr,
     int fault_flags = 0;
     MESSAGE msg;
 
-    if (in_kernel) {
+    if (in_kernel || is_kerntaske(fault_proc->endpoint)) {
+        if (!is_el1_instruction_abort(esr)) {
+            int in_phys_copy = (frame->pc >= (reg_t)phys_copy) &&
+                               (frame->pc < (reg_t)phys_copy_fault);
+            int in_phys_set = 0; /* Not implemented. */
+            int in_copy_message = (frame->pc >= (reg_t)copy_user_message) &&
+                                  (frame->pc < (reg_t)copy_user_message_end);
+
+            if (in_phys_copy || in_phys_set || in_copy_message) {
+                if (in_phys_copy) {
+                    frame->pc = (reg_t)phys_copy_fault_in_kernel;
+                    frame->regs[0] = far;
+                } else if (in_copy_message) {
+                    frame->pc = (reg_t)copy_user_message_fault;
+                }
+
+                return 0;
+            }
+        }
+
         panic("unhandled page fault in kernel, pc: %lx, esr: %lx, far: %lx",
               frame->pc, esr, far);
     }
