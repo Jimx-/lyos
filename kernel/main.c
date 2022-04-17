@@ -65,7 +65,6 @@ int kernel_main()
     init_time();
 
     printk(LYOS_BANNER);
-    printk("Cmdline: %s\n", kinfo.cmdline);
 
     int i;
     struct boot_proc* bp = boot_procs;
