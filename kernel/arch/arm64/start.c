@@ -156,6 +156,7 @@ void cstart(phys_bytes dtb_phys)
     static char cmdline[KINFO_CMDLINE_LEN];
     static char var[KINFO_CMDLINE_LEN];
     static char value[KINFO_CMDLINE_LEN];
+    phys_bytes dtb_lim;
     int fdt_size;
 
     swapper_pg_dir = init_pg_dir;
@@ -165,6 +166,7 @@ void cstart(phys_bytes dtb_phys)
 
     initial_boot_params =
         fixmap_remap_fdt(dtb_phys, &fdt_size, ARM64_PG_KERNEL);
+    dtb_lim = dtb_phys + fdt_size;
 
     machine_desc = setup_machine_fdt(initial_boot_params);
 
@@ -240,6 +242,19 @@ void cstart(phys_bytes dtb_phys)
     char* hz_value = env_get("hz");
     if (hz_value) system_hz = strtol(hz_value, NULL, 10);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
+
+    char param_buf[64];
+    sprintf(param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
+    kinfo_set_param(kinfo.cmdline, "initrd_base", param_buf);
+    sprintf(param_buf, "%lu", (unsigned int)phys_initrd_size);
+    kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
+
+    /* cut_memmap(&kinfo, dtb_phys, dtb_lim); */
+
+    sprintf(param_buf, "0x%lx", (uintptr_t)initial_boot_params);
+    kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
+    sprintf(param_buf, "%lu", (unsigned int)fdt_totalsize(initial_boot_params));
+    kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
 }
 
 static char* get_value(const char* param, const char* key)

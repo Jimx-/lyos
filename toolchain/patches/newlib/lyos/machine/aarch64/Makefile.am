@@ -4,7 +4,7 @@ INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 AM_CCASFLAGS = $(INCLUDES)
 
 LIB_SOURCES = gate_intr.S getpagesize.c __sigreturn.S __ucontext.S makecontext.c \
-				clone.c
+				clone.c tls.c
 
 # liblyosaarch64_la_LDFLAGS = -Xcompiler -nostdlib
 
