@@ -13,8 +13,6 @@
 .globl halt_cpu
 .globl arch_pause
 
-.globl __trunctfdf2
-
 phys_copy:
     mv t6, a0  /* Preserve return value */
     mv a0, zero
@@ -161,8 +159,4 @@ halt_cpu:
 
 arch_pause:
     nop
-    ret
-
-__trunctfdf2:
-    /* some newlib routines require this */
     ret
