@@ -55,11 +55,9 @@ setcontext:
     REG_L s10, X26(t0)
     REG_L s11, X27(t0)
 
-    mv a0, zero /* Return zero. */
     jr t1
 
 ctx_wrapper:
-    mv a0, s0
     jalr s2
 
     mv a0, s1

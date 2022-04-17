@@ -32,15 +32,8 @@ void makecontext(ucontext_t* ucp, void (*func)(void), int argc, ...)
     ucp->uc_mcontext.gregs[_REG_X18] = (__greg_t)func; /* s2 = func */
 
     va_start(ap, argc);
-    for (i = 0; i < argc && i < 8; i++) {
-        if (i == 0)
-            /* Can't use a0 to pass the first argument because setcontext() uses
-             * it to pass return value to getcontext(). */
-            ucp->uc_mcontext.gregs[_REG_X8] =
-                va_arg(ap, int); /* s0 = first arg */
-        else
-            ucp->uc_mcontext.gregs[_REG_A0 + i] = va_arg(ap, int);
-    }
+    for (i = 0; i < argc && i < 8; i++)
+        ucp->uc_mcontext.gregs[_REG_A0 + i] = va_arg(ap, int);
 
     for (; i < argc; i++)
         *stack_top++ = va_arg(ap, unsigned long);
