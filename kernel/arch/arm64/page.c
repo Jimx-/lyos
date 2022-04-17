@@ -111,7 +111,7 @@ static inline pud_t* fixmap_pude(unsigned long addr)
 {
     pde_t* pde;
 
-    pde = pgd_offset(init_pg_dir, addr);
+    pde = pgd_offset(swapper_pg_dir, addr);
     return pud_offset_kimg(pde, addr);
 }
 
@@ -146,7 +146,6 @@ static void alloc_init_pte(pmd_t* pmde, unsigned long addr, unsigned long end,
         phys_bytes ph = phys;
         if (ph == 0 && pk) ph = pg_alloc_pages(pk, 1);
 
-        pte_t a = pfn_pte(ph >> ARCH_PG_SHIFT, prot);
         set_pte(pte, pfn_pte(ph >> ARCH_PG_SHIFT, prot));
 
         if (phys) phys += ARCH_PG_SIZE;
@@ -244,8 +243,8 @@ static void __create_pgd_mapping(pde_t* pgd_page, phys_bytes phys,
 static void create_mapping_noalloc(phys_bytes phys, vir_bytes virt,
                                    phys_bytes size, pgprot_t prot)
 {
-    __create_pgd_mapping(init_pg_dir, phys, virt, size, prot, NO_CONT_MAPPINGS,
-                         NULL);
+    __create_pgd_mapping(swapper_pg_dir, phys, virt, size, prot,
+                         NO_CONT_MAPPINGS, NULL);
 }
 
 void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk)
@@ -262,7 +261,7 @@ void early_fixmap_init(void)
     pmd_t* pmde;
     vir_bytes addr = FIXADDR_START;
 
-    pde = pgd_offset(init_pg_dir, addr);
+    pde = pgd_offset(swapper_pg_dir, addr);
     if (pde_none(*pde))
         __pde_populate(pde, __pa_symbol(bm_pud), _ARM64_PGD_TYPE_TABLE);
     pude = fixmap_pude((unsigned long)addr);
@@ -347,7 +346,7 @@ void paging_init(void)
 
         if (start >= end) break;
 
-        __create_pgd_mapping(init_pg_dir, start, __phys_to_virt(start),
+        __create_pgd_mapping(swapper_pg_dir, start, __phys_to_virt(start),
                              end - start, ARM64_PG_KERNEL, 0, &kinfo);
     }
 }
@@ -355,6 +354,7 @@ void paging_init(void)
 void switch_address_space(struct proc* p)
 {
     get_cpulocal_var(pt_proc) = p;
+    flush_tlb();
     write_sysreg(p->seg.ttbr_phys, ttbr0_el1);
     isb();
 }

@@ -103,7 +103,7 @@ void pt_init()
         panic("MM: failed to read initial page directory");
 
     /* Copy page directory entries for the userspace (MM). */
-    for (i = 0; i < ARCH_PDE(VM_STACK_TOP); i++) {
+    for (i = 0; i < VM_STACK_TOP >> ARCH_PGD_SHIFT; i++) {
         pde_t pde = currentpagedir[i];
 
         if (!pde_present(pde) || pde_bad(pde)) continue;

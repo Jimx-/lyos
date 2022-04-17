@@ -59,6 +59,7 @@ EXTERN const struct machine_desc* machine_desc;
 EXTERN u32 bsp_cpu_id;
 extern pde_t init_pg_dir[];
 extern pde_t mm_pg_dir[];
+EXTERN pde_t* swapper_pg_dir;
 EXTERN struct tss tss[CONFIG_SMP_MAX_CPUS];
 #endif
 

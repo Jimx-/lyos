@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <lyos/smp.h>
 #include <asm/pagetable.h>
+#include <asm/sysreg.h>
 
 /* temporary mappings */
 #define MAX_TEMPPDES 2
@@ -69,7 +70,7 @@ void clear_memcache()
 {
     int i;
     for (i = 0; i < MAX_TEMPPDES; i++) {
-        set_pde(&init_pg_dir[temppdes[i]], __pde(0));
+        set_pde(&swapper_pg_dir[temppdes[i]], __pde(0));
     }
     flush_tlb();
 }
@@ -94,8 +95,8 @@ static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
         return __va(pa);
     }
 
-    if (pde_val(init_pg_dir[pde]) != pde_val(pdeval)) {
-        set_pde(&init_pg_dir[pde], pdeval);
+    if (pde_val(swapper_pg_dir[pde]) != pde_val(pdeval)) {
+        set_pde(&swapper_pg_dir[pde], pdeval);
         *changed = 1;
     }
 
@@ -141,7 +142,42 @@ static int la_la_copy(struct proc* p_dest, void* dest_la, struct proc* p_src,
     return 0;
 }
 
-phys_bytes va2pa(endpoint_t ep, void* va) {}
+phys_bytes va2pa(endpoint_t ep, void* va)
+{
+    pde_t* pde;
+    pud_t* pude;
+    pmd_t* pmde;
+    pte_t* pte;
+    int slot;
+    struct proc* p;
+
+    if (is_kerntaske(ep)) return __pa(va);
+
+    if (!verify_endpt(ep, &slot)) panic("va2pa: invalid endpoint");
+    p = proc_addr(slot);
+
+    pde = pgd_offset((pde_t*)p->seg.ttbr_vir, (unsigned long)va);
+    if (pde_none(*pde)) {
+        return -1;
+    }
+
+    pude = pud_offset(pde, (unsigned long)va);
+    if (pude_none(*pude)) {
+        return -1;
+    }
+
+    pmde = pmd_offset(pude, (unsigned long)va);
+    if (pmde_none(*pmde)) {
+        return -1;
+    }
+
+    pte = pte_offset(pmde, (unsigned long)va);
+    if (!pte_present(*pte)) {
+        return -1;
+    }
+
+    return (pte_pfn(*pte) << ARCH_PG_SHIFT) + ((uintptr_t)va % ARCH_PG_SIZE);
+}
 
 #define MAX_KERN_MAPPINGS 8
 
@@ -170,11 +206,124 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
     return 0;
 }
 
-int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags) {}
+#define KM_USERMAPPED   0
+#define KM_KERN_MAPPING 1
 
-int arch_reply_kern_mapping(int index, void* vir_addr) {}
+extern char _usermapped[], _eusermapped[];
+off_t usermapped_offset;
 
-int arch_vmctl(MESSAGE* m, struct proc* p) {}
+int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags)
+{
+    if (index >= KM_KERN_MAPPING + kern_mapping_count) return 1;
+
+    if (index == KM_USERMAPPED) {
+        *addr = (caddr_t)__pa((char*)*(&_usermapped));
+        *len = (char*)*(&_eusermapped) - (char*)*(&_usermapped);
+        *flags = KMF_USER | KMF_EXEC;
+        return 0;
+    }
+
+    if (index >= KM_KERN_MAPPING &&
+        index < KM_KERN_MAPPING + kern_mapping_count) {
+        struct kern_map* pkm = &kern_mappings[index - KM_KERN_MAPPING];
+        *addr = (caddr_t)pkm->phys_addr;
+        *len = pkm->len;
+        *flags = pkm->flags;
+        return 0;
+    }
+
+    return 0;
+}
+
+void syscall_svc();
+
+int arch_reply_kern_mapping(int index, void* vir_addr)
+{
+    char* usermapped_start = (char*)*(&_usermapped);
+
+#define USER_PTR(x) (((char*)(x)-usermapped_start) + (char*)vir_addr)
+
+    if (index == KM_USERMAPPED) {
+        usermapped_offset = (char*)vir_addr - usermapped_start;
+        sysinfo.user_info.magic = SYSINFO_MAGIC;
+        sysinfo_user = (struct sysinfo*)USER_PTR(&sysinfo);
+        sysinfo.kinfo = (kinfo_t*)USER_PTR(&kinfo);
+        sysinfo.kern_log = (struct kern_log*)USER_PTR(&kern_log);
+        sysinfo.machine = (struct machine*)USER_PTR(&machine);
+        sysinfo.user_info.clock_info =
+            (struct kclockinfo*)USER_PTR(&kclockinfo);
+        sysinfo.user_info.syscall_gate = (syscall_gate_t)USER_PTR(syscall_svc);
+
+        return 0;
+    }
+
+    if (index >= KM_KERN_MAPPING &&
+        index < KM_KERN_MAPPING + kern_mapping_count) {
+        kern_mappings[index - KM_KERN_MAPPING].vir_addr = vir_addr;
+        return 0;
+    }
+
+    return 0;
+}
+
+static void setttbr(struct proc* p, phys_bytes ttbr)
+{
+    p->seg.ttbr_phys = (reg_t)ttbr;
+    p->seg.ttbr_vir = (reg_t)__va(ttbr);
+
+    if (p->endpoint == TASK_MM) {
+        int i;
+        /* update mapped address of kernel mappings */
+        for (i = 0; i < kern_mapping_count; i++) {
+            struct kern_map* pkm = &kern_mappings[i];
+            *(pkm->mapped_addr) = pkm->vir_addr;
+        }
+
+        write_sysreg(ttbr, ttbr0_el1);
+        isb();
+        get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+
+        smp_commence();
+    }
+
+    PST_UNSET(p, PST_MMINHIBIT);
+}
+
+static void setttbr1(phys_bytes ttbr1)
+{
+    flush_tlb();
+    write_sysreg(ttbr1, ttbr1_el1);
+    isb();
+    swapper_pg_dir = __va(ttbr1);
+}
+
+int arch_vmctl(MESSAGE* m, struct proc* p)
+{
+    int request = m->VMCTL_REQUEST;
+
+    switch (request) {
+    case VMCTL_GETPDBR:
+        m->VMCTL_PHYS_ADDR = (unsigned long)p->seg.ttbr_phys;
+        return 0;
+    case VMCTL_GETKPDBR:
+        if (swapper_pg_dir == init_pg_dir)
+            m->VMCTL_PHYS_ADDR = (unsigned long)__pa_symbol(init_pg_dir);
+        else
+            m->VMCTL_PHYS_ADDR = (unsigned long)__pa(swapper_pg_dir);
+        return 0;
+    case VMCTL_SET_ADDRESS_SPACE:
+        setttbr(p, (unsigned long)m->VMCTL_PHYS_ADDR);
+        return 0;
+    case VMCTL_SET_KADDRSPACE:
+        setttbr1((unsigned long)m->VMCTL_PHYS_ADDR);
+        return 0;
+    case VMCTL_FLUSHTLB:
+        flush_tlb();
+        return 0;
+    }
+
+    return EINVAL;
+}
 
 void mm_suspend(struct proc* caller, endpoint_t target, void* laddr,
                 size_t bytes, int write, int type)

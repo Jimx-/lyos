@@ -63,7 +63,6 @@ static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
     u64 hwid;
     u64 cpu_release_addr;
     const u32* prop;
-    int len;
 
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     if (!type || strcmp(type, "cpu") != 0) return 0;
@@ -96,18 +95,18 @@ static unsigned int smp_start_cpu_spin_table(u64 hwid,
                                              phys_bytes cpu_release_addr)
 {
     unsigned int cpu = cpu_nr++;
-    struct proc* idle_proc = get_cpu_var_ptr(cpu, idle_proc);
+    struct proc* idle_task = get_cpu_var_ptr(cpu, idle_proc);
     phys_bytes pa_entry = __pa_symbol(secondary_entry_spin_table);
     void* release_addr =
-        set_fixmap_offset(FIX_CPU_RELEASE_ADDR, cpu_release_addr);
+        (void*)set_fixmap_offset(FIX_CPU_RELEASE_ADDR, cpu_release_addr);
 
     __cpu_ready = -1;
     __cpu_logical_map[cpu] = hwid;
 
-    idle_proc->regs.cpu = cpu;
+    idle_task->regs.cpu = cpu;
     init_tss(cpu, get_k_stack_top(cpu));
 
-    __cpu_task_pointer = (void*)idle_proc;
+    __cpu_task_pointer = (void*)idle_task;
     __cpu_stack_pointer = get_k_stack_top(cpu);
 
     *(volatile unsigned long*)release_addr = pa_entry;
@@ -164,6 +163,8 @@ void smp_boot_ap()
         arch_pause();
 
     switch_address_space(proc_addr(TASK_MM));
+    write_sysreg(__pa(swapper_pg_dir), ttbr1_el1);
+    isb();
 
     switch_to_user();
 }

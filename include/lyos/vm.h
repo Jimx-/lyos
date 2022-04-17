@@ -41,6 +41,10 @@
 #define VMCTL_GET_MMREQ          9
 #define VMCTL_REPLY_MMREQ        10
 #define VMCTL_FLUSHTLB           11
+#ifdef __aarch64__
+#define VMCTL_GETKPDBR       12
+#define VMCTL_SET_KADDRSPACE 13
+#endif
 
 #define VMCTL_GET_KM_INDEX  u.m3.m3i2
 #define VMCTL_GET_KM_RETVAL u.m3.m3i2
@@ -79,6 +83,7 @@
 #define KMF_WRITE 0x01
 #define KMF_USER  0x02
 #define KMF_EXEC  0x04
+#define KMF_IO    0x08
 
 #define MM_GET_MEMINFO 1
 
@@ -119,5 +124,10 @@ int vmctl_flushtlb(endpoint_t who);
 int get_meminfo(struct mem_info* mem_info);
 int vfs_mmap(endpoint_t who, off_t offset, size_t len, dev_t dev, ino_t ino,
              int fd, void* vaddr, int flags, int prot, size_t clearend);
+
+#ifdef __aarch64__
+int vmctl_getkpdbr(endpoint_t who, unsigned long* kpdbr);
+int vmctl_set_kern_address_space(unsigned long pgd_phys);
+#endif
 
 #endif

@@ -41,6 +41,7 @@
 void arch_pause();
 
 void paging_init(void);
+void pg_map(phys_bytes phys_addr, void* vir_addr, void* vir_end, kinfo_t* pk);
 phys_bytes pg_alloc_lowest(kinfo_t* pk, phys_bytes size);
 
 void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot);
@@ -48,7 +49,20 @@ void* fixmap_remap_fdt(phys_bytes dt_phys, int* size, pgprot_t prot);
 int init_tss(unsigned cpu, void* kernel_stack);
 
 struct proc* arch_switch_to_user(void);
+int arch_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
+int arch_reply_kern_mapping(int index, void* vir_addr);
+int arch_vmctl(MESSAGE* m, struct proc* p);
+int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
+                   char* name);
+int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
+                   void* tls);
+int arch_reset_proc(struct proc* p);
 void arch_boot_proc(struct proc* p, struct boot_proc* bp);
+void arch_set_syscall_result(struct proc* p, int result);
+
+void clear_memcache();
+
+void arch_setup_cpulocals(void);
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
                   void** mapped_addr);

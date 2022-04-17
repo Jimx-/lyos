@@ -1,6 +1,6 @@
 KERNELOBJS	= head.o kernel.o system.o memory.o start.o smp.o direct_tty.o fpu.o \
 			setup_cpulocals.o clock.o kliba.o page.o irq.o watchdog.o protect.o \
-			bootmods/bootmods.o
+			gate.o bootmods/bootmods.o
 
 ARCHKERNEL		= arch-kernel.o
 LINKERSCRIPT	= lyos.lds

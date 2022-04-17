@@ -201,6 +201,11 @@ static inline void __pde_populate(pde_t* pde, phys_bytes pud_phys,
     *pde = __pde(pud_phys | prot);
 }
 
+static inline void pde_populate(pde_t* pde, phys_bytes pud_phys)
+{
+    __pde_populate(pde, pud_phys, _ARM64_PGD_TYPE_TABLE);
+}
+
 #else
 
 static inline pmd_t* pmd_offset(pud_t* pmd, unsigned long addr)

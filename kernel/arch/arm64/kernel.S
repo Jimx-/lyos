@@ -44,7 +44,6 @@
     mrs     x21, sp_el0
     mov     tsk, sp
     msr     sp_el0, tsk
-
     .else
     add     x21, sp, #STACKFRAME_SIZE
     mrs     tsk, sp_el0
@@ -69,11 +68,15 @@
     .endm
 
     .macro kernel_exit, el
+    .if \el != 0
+    msr	daifset, #0xf
+    .endif
+
     ldp     x21, x22, [sp, #PCREG]
 
     .if \el == 0
-    ldr x23, [sp, #SPREG]
-    msr sp_el0, x23 // Restore EL0 stack pointer.
+    ldr     x23, [sp, #SPREG]
+    msr     sp_el0, x23 // Restore EL0 stack pointer.
     .endif
 
     msr     elr_el1, x21
@@ -94,11 +97,9 @@
     ldp     x26, x27, [sp, #16 * 13]
     ldp     x28, x29, [sp, #16 * 14]
 
-    .if \el == 0
-    ldr lr, [sp, #LRREG]
-    add sp, sp, #STACKFRAME_SIZE
+    ldr     lr, [sp, #LRREG]
+    add     sp, sp, #STACKFRAME_SIZE
     eret
-    .endif
     .endm
 
     tsk .req    x28
@@ -128,7 +129,11 @@ vectors:
     .macro entry_handler el:req, ht:req, regsize:req, label:req
     el\el\ht\()_\regsize\()_\label:
     kernel_entry \el, \regsize
+    .if \el == 0
     mov x0, tsk
+    .else
+    mov x0, sp
+    .endif
     bl  el\el\ht\()_\regsize\()_\label\()_handler
     .if \el == 0
     b   switch_to_user

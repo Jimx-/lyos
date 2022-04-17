@@ -65,4 +65,35 @@
 #define ESR_ELx_EC_MASK  (UL(0x3F) << ESR_ELx_EC_SHIFT)
 #define ESR_ELx_EC(esr)  (((esr)&ESR_ELx_EC_MASK) >> ESR_ELx_EC_SHIFT)
 
+/* ISS field definitions shared by different classes */
+#define ESR_ELx_WNR_SHIFT (6)
+#define ESR_ELx_WNR       (UL(1) << ESR_ELx_WNR_SHIFT)
+
+/* Shared ISS fault status code(IFSC/DFSC) for Data/Instruction aborts */
+#define ESR_ELx_FSC        (0x3F)
+#define ESR_ELx_FSC_TYPE   (0x3C)
+#define ESR_ELx_FSC_LEVEL  (0x03)
+#define ESR_ELx_FSC_EXTABT (0x10)
+#define ESR_ELx_FSC_MTE    (0x11)
+#define ESR_ELx_FSC_SERROR (0x11)
+#define ESR_ELx_FSC_ACCESS (0x08)
+#define ESR_ELx_FSC_FAULT  (0x04)
+#define ESR_ELx_FSC_PERM   (0x0C)
+
+/* ISS field definitions for Data Aborts */
+#define ESR_ELx_ISV_SHIFT (24)
+#define ESR_ELx_ISV       (UL(1) << ESR_ELx_ISV_SHIFT)
+#define ESR_ELx_SAS_SHIFT (22)
+#define ESR_ELx_SAS       (UL(3) << ESR_ELx_SAS_SHIFT)
+#define ESR_ELx_SSE_SHIFT (21)
+#define ESR_ELx_SSE       (UL(1) << ESR_ELx_SSE_SHIFT)
+#define ESR_ELx_SRT_SHIFT (16)
+#define ESR_ELx_SRT_MASK  (UL(0x1F) << ESR_ELx_SRT_SHIFT)
+#define ESR_ELx_SF_SHIFT  (15)
+#define ESR_ELx_SF        (UL(1) << ESR_ELx_SF_SHIFT)
+#define ESR_ELx_AR_SHIFT  (14)
+#define ESR_ELx_AR        (UL(1) << ESR_ELx_AR_SHIFT)
+#define ESR_ELx_CM_SHIFT  (8)
+#define ESR_ELx_CM        (UL(1) << ESR_ELx_CM_SHIFT)
+
 #endif

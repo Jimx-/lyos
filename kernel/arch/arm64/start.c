@@ -158,6 +158,7 @@ void cstart(phys_bytes dtb_phys)
     static char value[KINFO_CMDLINE_LEN];
     int fdt_size;
 
+    swapper_pg_dir = init_pg_dir;
     k_stacks = &k_stacks_start;
 
     early_fixmap_init();

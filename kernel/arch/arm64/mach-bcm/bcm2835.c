@@ -25,6 +25,7 @@
 #include <asm/pagetable.h>
 #include <asm/mach.h>
 #include <asm/fixmap.h>
+#include <asm/proto.h>
 
 #include "serial.h"
 
@@ -37,7 +38,7 @@ static void bcm2835_init_serial(void)
     set_fixmap_io(FIX_EARLYCON_MEM_BASE, BCM2835_DEBUG_UART_BASE);
     uart_base_addr = (void*)__fix_to_virt(FIX_EARLYCON_MEM_BASE);
 
-    kern_map_phys(BCM2835_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE,
+    kern_map_phys(BCM2835_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE | KMF_IO,
                   &uart_base_addr);
 }
 

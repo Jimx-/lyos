@@ -126,12 +126,25 @@ int arch_reset_proc(struct proc* p)
     return 0;
 }
 
-void arch_set_syscall_result(struct proc* p, int result) {}
+void arch_set_syscall_result(struct proc* p, int result)
+{
+    p->regs.regs[0] = (reg_t)result;
+}
 
 int arch_init_proc(struct proc* p, void* sp, void* ip, struct ps_strings* ps,
                    char* name)
 {
     arch_reset_proc(p);
+
+    memcpy(p->name, name, PROC_NAME_LEN);
+
+    p->regs.sp = (reg_t)sp;
+    p->regs.pc = (reg_t)ip;
+    p->regs.regs[0] = (reg_t)ps->ps_nargvstr;
+    p->regs.regs[1] = (reg_t)ps->ps_argvstr;
+    p->regs.regs[2] = (reg_t)ps->ps_envstr;
+
+    return 0;
 }
 
 int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,

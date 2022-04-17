@@ -128,3 +128,32 @@ int vmctl_reply_mmreq(endpoint_t who, int result)
 
     return syscall_entry(NR_VMCTL, &m);
 }
+
+#ifdef __aarch64__
+
+int vmctl_getkpdbr(endpoint_t who, unsigned long* kpdbr)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_GETKPDBR;
+    m.VMCTL_WHO = who;
+
+    int retval = syscall_entry(NR_VMCTL, &m);
+    if (retval) return retval;
+
+    *kpdbr = m.VMCTL_PHYS_ADDR;
+
+    return 0;
+}
+
+int vmctl_set_kern_address_space(unsigned long pgd_phys)
+{
+    MESSAGE m;
+
+    m.VMCTL_REQUEST = VMCTL_SET_KADDRSPACE;
+    m.VMCTL_PHYS_ADDR = pgd_phys;
+
+    return syscall_entry(NR_VMCTL, &m);
+}
+
+#endif

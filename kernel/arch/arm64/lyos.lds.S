@@ -80,6 +80,14 @@ SECTIONS
         _ebootmods = .;
     }
 
+    . = ALIGN(ARCH_PG_SIZE);
+    .usermapped : {
+        _usermapped = .;
+            *(.usermapped)
+        . = ALIGN(ARCH_PG_SIZE);
+        _eusermapped = .;
+    }
+
    _KERN_SIZE = . - _VIR_BASE;
 
     _end = .;
