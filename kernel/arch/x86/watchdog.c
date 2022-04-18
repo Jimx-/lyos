@@ -10,7 +10,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <lyos/watchdog.h>
+#include <kernel/watchdog.h>
 #include <asm/div64.h>
 #include <asm/cpu_info.h>
 

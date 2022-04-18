@@ -28,7 +28,7 @@
 #include <asm/proto.h>
 #include <lyos/log.h>
 #include <lyos/spinlock.h>
-#include <lyos/watchdog.h>
+#include <kernel/watchdog.h>
 
 #ifdef CONFIG_KVM_GUEST
 #include <lyos/kvm_para.h>

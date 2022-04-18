@@ -22,7 +22,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <lyos/watchdog.h>
+#include <kernel/watchdog.h>
 
 int watchdog_enabled;
 struct arch_watchdog* watchdog;

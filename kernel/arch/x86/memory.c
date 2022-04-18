@@ -29,7 +29,7 @@
 #include <lyos/vm.h>
 #include <asm/page.h>
 #include <asm/pagetable.h>
-#include <lyos/watchdog.h>
+#include <kernel/watchdog.h>
 #include <errno.h>
 #include "apic.h"
 #include <lyos/smp.h>
