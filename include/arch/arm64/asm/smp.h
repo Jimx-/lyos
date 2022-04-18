@@ -16,6 +16,8 @@
 #ifndef _ARCH_SMP_H_
 #define _ARCH_SMP_H_
 
+#include <asm/cpulocals.h>
+
 #ifndef __ASSEMBLY__
 
 DECLARE_CPULOCAL(unsigned int, cpu_number);

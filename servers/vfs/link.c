@@ -15,11 +15,6 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
-#include "stddef.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
@@ -27,9 +22,9 @@
 #include "types.h"
 #include "path.h"
 #include "proto.h"
-#include "fcntl.h"
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/syslimits.h>
 #include <lyos/mgrant.h>
 

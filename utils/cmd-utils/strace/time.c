@@ -2,7 +2,6 @@
 #include <sys/timerfd.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/clocknames.h"

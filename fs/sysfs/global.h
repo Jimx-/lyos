@@ -16,6 +16,8 @@
 #ifndef _SYSFS_GLOBAL_H_
 #define _SYSFS_GLOBAL_H_
 
+#include "node.h"
+
 /* EXTERN is extern except for global.c */
 #ifdef _SYSFS_GLOBAL_VARIABLE_HERE_
 #undef EXTERN

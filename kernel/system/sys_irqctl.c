@@ -13,21 +13,14 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "lyos/config.h"
-#include "stdio.h"
-#include "stdarg.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
-#include "string.h"
 #include <kernel/proc.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
 #include <errno.h>
 #include <lyos/irqctl.h>
+#include <lyos/priv.h>
 #include <kernel/irq.h>
 
 static int generic_irq_handler(irq_hook_t* hook);

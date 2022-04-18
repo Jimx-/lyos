@@ -13,19 +13,13 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "stdio.h"
 #include "stdarg.h"
-#include "unistd.h"
-#include "assert.h"
-#include <asm/protect.h>
 #include "lyos/const.h"
-#include <kernel/proc.h>
-#include "string.h"
-#include <kernel/global.h>
 #include <kernel/proto.h>
+#include <asm/const.h>
+#include <asm/page.h>
 
 static int disp_pos = 0, print_line = 0;
 

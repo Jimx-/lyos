@@ -15,10 +15,6 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "stddef.h"
 #include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
@@ -30,7 +26,6 @@
 #include <asm/const.h>
 #include <asm/proto.h>
 #include <asm/smp.h>
-#include <asm/cpulocals.h>
 #include <lyos/smp.h>
 #include <asm/cpu_info.h>
 

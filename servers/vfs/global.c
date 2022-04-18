@@ -15,12 +15,10 @@
 
 #define _VFS_GLOBAL_VARIABLE_HERE_
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
 #include "lyos/list.h"
-#include <lyos/fs.h>
 #include <lyos/const.h>
+#include <lyos/fs.h>
 #include "types.h"
 #include "global.h"
 

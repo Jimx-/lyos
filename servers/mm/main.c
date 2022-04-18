@@ -15,17 +15,12 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "lyos/config.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
 #include <errno.h>
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include "string.h"
 #include <lyos/vm.h>
-#include <lyos/fs.h>
 #include <sys/mman.h>
 #include <sys/syslimits.h>
 
@@ -34,12 +29,9 @@
 #endif
 
 #include "libexec/libexec.h"
-#include "multiboot.h"
 #include <asm/page.h>
-#include <elf.h>
 #include "region.h"
 #include "proto.h"
-#include "const.h"
 #include "global.h"
 
 void __lyos_init(char* envp[]);

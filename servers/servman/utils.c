@@ -18,19 +18,16 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
 #include <stdlib.h>
-#include "assert.h"
-#include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "errno.h"
 #include "string.h"
-#include <fcntl.h>
-#include "lyos/fs.h"
+#include <unistd.h>
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+
 #include "proto.h"
 #include "const.h"
 #include "global.h"

@@ -15,9 +15,6 @@
 
 #define _DEVMAN_GLOBAL_VARIABLE_HERE_
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/list.h"
-#include "lyos/driver.h"
+#include <lyos/driver.h>
 #include "global.h"

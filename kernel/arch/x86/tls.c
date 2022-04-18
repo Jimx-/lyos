@@ -13,26 +13,15 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <assert.h>
 #include <asm/protect.h>
 #include <lyos/const.h>
 #include <kernel/proc.h>
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
-#include <asm/const.h>
 #include <asm/proto.h>
-#include <asm/smp.h>
 #include <asm/ldt.h>
-#include <asm/cpulocals.h>
-#include <lyos/cpufeature.h>
 
 static int get_free_idx(struct proc* p)
 {

@@ -56,7 +56,7 @@ static inline void flush_tlb()
 
 static inline phys_bytes read_ptbr()
 {
-    reg_t ptbr = csr_read(sptbr);
+    unsigned long ptbr = csr_read(sptbr);
     return (phys_bytes)((ptbr & SATP_PPN) << ARCH_PG_SHIFT);
 }
 

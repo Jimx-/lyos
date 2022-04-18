@@ -18,6 +18,7 @@
 #ifndef _PCI_H_
 #define _PCI_H_
 
+#include <lyos/service.h> /* For struct pci_acl */
 #include <libdevman/libdevman.h>
 
 struct pcidev {

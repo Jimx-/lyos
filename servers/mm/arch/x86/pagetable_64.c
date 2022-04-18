@@ -15,16 +15,9 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <lyos/config.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/vm.h>
-#include "region.h"
 #include "proto.h"
 #include <lyos/cpufeature.h>
 #include <asm/page.h>

@@ -15,14 +15,8 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "lyos/config.h"
-#include "stdio.h"
-#include "stdarg.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
-#include "string.h"
 #include <kernel/proc.h>
 #include <kernel/global.h>
 #include <kernel/proto.h>

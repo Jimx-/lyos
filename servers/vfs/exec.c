@@ -16,21 +16,12 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/compile.h>
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
-#include <fcntl.h>
-#include "stddef.h"
-#include "unistd.h"
 #include "assert.h"
 #include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
-#include "types.h"
-#include "path.h"
-#include "global.h"
-#include "proto.h"
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 #include <asm/page.h>
@@ -40,6 +31,11 @@
 #include <libexec/libexec.h>
 #include <libexec/exec_elf.h>
 #include <sys/mman.h>
+
+#include "types.h"
+#include "path.h"
+#include "global.h"
+#include "proto.h"
 
 struct vfs_exec_info {
     struct exec_info args;

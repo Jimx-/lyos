@@ -13,19 +13,11 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/config.h"
 #include "errno.h"
-#include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
-#include "lyos/list.h"
 #include <fcntl.h>
 #include <asm/page.h>
 
@@ -33,7 +25,6 @@
 #include "global.h"
 #include "tar.h"
 
-#include <libfsdriver/libfsdriver.h>
 
 unsigned int initfs_getsize(const char* in)
 {

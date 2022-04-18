@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 static int dup12(struct tcb* tcp, int newfd)

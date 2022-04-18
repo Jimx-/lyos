@@ -15,27 +15,15 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
 #include <stdlib.h>
 #include <fcntl.h>
-#include "stddef.h"
-#include "stdlib.h"
-#include "unistd.h"
-#include "assert.h"
 #include "errno.h"
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include "string.h"
-#include "lyos/fs.h"
 #include "proto.h"
-#include <sys/stat.h>
 #include <asm/page.h>
-#include <elf.h>
 #include "libexec/libexec.h"
-#include <sys/mman.h>
-#include <multiboot.h>
 
 #define MAX_MODULE_PARAMS 64
 

@@ -3,7 +3,6 @@
 
 #include "coro_internal.h"
 #include "global.h"
-#include "proto.h"
 
 int coro_rwlock_init(coro_rwlock_t* rwlock)
 {

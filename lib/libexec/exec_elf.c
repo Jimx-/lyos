@@ -13,19 +13,12 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "assert.h"
-#include "unistd.h"
 #include "errno.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
 #include "libexec.h"
 #include <asm/page.h>
-#include <lyos/vm.h>
 #include <lyos/sysutils.h>
 #include <sys/mman.h>
 

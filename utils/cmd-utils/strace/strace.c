@@ -1,15 +1,10 @@
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
-#include <sys/mman.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <errno.h>
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 

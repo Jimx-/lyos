@@ -17,7 +17,6 @@
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/time.h>
 
 u32 now()

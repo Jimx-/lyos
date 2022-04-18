@@ -16,9 +16,6 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 

@@ -1,8 +1,5 @@
-#include <lyos/types.h>
 #include <lyos/const.h>
 #include <lyos/ipc.h>
-#include <kernel/proc.h>
-#include <lyos/timer.h>
 #include <kernel/proto.h>
 
 int sys_stime(MESSAGE* m, struct proc* p_proc)

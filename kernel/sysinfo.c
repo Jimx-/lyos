@@ -13,17 +13,10 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "lyos/config.h"
 #include "lyos/const.h"
-#include <kernel/proc.h>
-#include <kernel/global.h>
-#include <kernel/proto.h>
 #include <lyos/log.h>
+#include <lyos/param.h>
 
 struct sysinfo sysinfo __attribute__((section(".usermapped")));
 

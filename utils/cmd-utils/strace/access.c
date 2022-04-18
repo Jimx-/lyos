@@ -2,7 +2,6 @@
 #include <unistd.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/access_modes.h"

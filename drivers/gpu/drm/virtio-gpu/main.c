@@ -1,19 +1,14 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <assert.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/driver.h>
 #include <errno.h>
-#include <lyos/portio.h>
-#include <lyos/irqctl.h>
-#include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <lyos/vm.h>
+#include <lyos/service.h>
 #include <sys/mman.h>
 #include <asm/page.h>
 #include <drm/drm.h>
@@ -25,7 +20,7 @@
 #include "virtio_gpu.h"
 
 #define DRIVER_NAME "virtio_gpu"
-#define DRIVER_DESC "virtio GPU"
+#define DRIVER_DESC "Virtio GPU"
 #define DRIVER_DATE "0"
 
 #define DRIVER_MAJOR      0

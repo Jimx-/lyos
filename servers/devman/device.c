@@ -16,27 +16,21 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "stdio.h"
 #include <stdlib.h>
-#include "unistd.h"
 #include <errno.h>
-#include <string.h>
-#include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
-#include <lyos/fs.h>
 #include "lyos/driver.h"
 #include <lyos/sysutils.h>
+#include <sys/stat.h>
 #include <sys/syslimits.h>
-#include <fcntl.h>
 
 #include <libsysfs/libsysfs.h>
 #include <libdevman/libdevman.h>
 #include <libmemfs/libmemfs.h>
 
 #include "type.h"
-#include "global.h"
 #include "proto.h"
 
 struct device_attr_cb_data {

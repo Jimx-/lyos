@@ -1,8 +1,6 @@
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/sysutils.h>
 #include <libcoro/libcoro.h>
-
 #include "coro_internal.h"
 #include "global.h"
 #include "proto.h"

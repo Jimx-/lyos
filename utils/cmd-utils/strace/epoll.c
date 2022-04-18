@@ -3,7 +3,6 @@
 #include <inttypes.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/epollflags.h"

@@ -3,7 +3,6 @@
 #include <fcntl.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/at_flags.h"

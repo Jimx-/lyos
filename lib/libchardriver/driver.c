@@ -16,14 +16,10 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
 #include <lyos/sysutils.h>
-#include <lyos/driver.h>
 
 #include "libchardriver/libchardriver.h"
 

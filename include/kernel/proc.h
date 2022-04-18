@@ -193,6 +193,8 @@ struct proc {
     } mm_request;
 };
 
+extern struct proc proc_table[];
+
 #define FIRST_PROC proc_table[0]
 #define LAST_PROC  proc_table[NR_TASKS + NR_PROCS - 1]
 

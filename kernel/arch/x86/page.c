@@ -15,11 +15,6 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "stddef.h"
-#include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
 #include <kernel/proc.h>
@@ -29,11 +24,9 @@
 #include <asm/pagetable.h>
 #include <errno.h>
 #include <asm/proto.h>
-#include <asm/const.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "asm/cpulocals.h"
 #include <lyos/cpufeature.h>
 
 void cut_memmap(kinfo_t* pk, phys_bytes start, phys_bytes end)

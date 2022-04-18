@@ -15,10 +15,6 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
 #include <asm/protect.h>
 #include "lyos/const.h"
 #include <kernel/proc.h>
@@ -29,10 +25,9 @@
 #include <kernel/proto.h>
 #include <asm/const.h>
 #include <asm/proto.h>
-#include <asm/smp.h>
-#include <asm/cpulocals.h>
 #include <lyos/cpufeature.h>
 #include <lyos/vm.h>
+#include <asm/smp.h>
 
 extern u32 StackTop;
 

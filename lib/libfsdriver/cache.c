@@ -1,21 +1,16 @@
-#include <lyos/config.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
-#include <lyos/fs.h>
 #include <lyos/sysutils.h>
-#include <string.h>
 #include <sys/mman.h>
 #include <asm/page.h>
 
-#include <libfsdriver/libfsdriver.h>
 #include <libbdev/libbdev.h>
+#include <libfsdriver/libfsdriver.h>
 
 #define BF_DIRTY 0x1
 

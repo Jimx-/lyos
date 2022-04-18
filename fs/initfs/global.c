@@ -15,7 +15,5 @@
 
 #define _INITFS_GLOBAL_VARIABLE_HERE_
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "lyos/list.h"
 #include "global.h"

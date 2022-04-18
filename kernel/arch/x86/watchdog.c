@@ -1,30 +1,16 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "stddef.h"
-#include <asm/protect.h>
 #include "lyos/const.h"
 #include <errno.h>
-#include "string.h"
-#include <kernel/proc.h>
 #include <kernel/global.h>
 #include <kernel/proto.h>
-#include "acpi.h"
 #include "apic.h"
 #include <asm/proto.h>
 #include <asm/const.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <asm/hwint.h>
-#include <asm/cpulocals.h>
-#include <lyos/cpufeature.h>
-#include <lyos/spinlock.h>
 #include <lyos/watchdog.h>
-#include <lyos/time.h>
-#include <asm/hpet.h>
 #include <asm/div64.h>
 #include <asm/cpu_info.h>
 

@@ -13,18 +13,10 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include <lyos/config.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
 #include <lyos/const.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <assert.h>
-#include <lyos/service.h>
 #include <lyos/pci_utils.h>
-#include "libsysfs/libsysfs.h"
 #include <libdevman/libdevman.h>
 
 int pci_first_dev(int* devind, u16* vid, u16* did, device_id_t* dev_id)

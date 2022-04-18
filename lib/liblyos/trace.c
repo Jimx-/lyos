@@ -16,8 +16,6 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
-#include <stdio.h>
-#include <string.h>
 #include <lyos/sysutils.h>
 #include <lyos/trace.h>
 

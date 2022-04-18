@@ -16,12 +16,8 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <lyos/fs.h>
 #include <lyos/const.h>
 #include <sys/stat.h>
 #include <sys/dirent.h>

@@ -15,7 +15,6 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "lyos/const.h"
 #include <lyos/portio.h>
 

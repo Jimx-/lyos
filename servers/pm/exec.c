@@ -19,16 +19,12 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/fs.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
 #include <errno.h>
-#include <lyos/sysutils.h>
-#include <lyos/vm.h>
-#include "global.h"
+#include <signal.h>
+
+#include "pmproc.h"
 #include "proto.h"
 
 int do_exec(MESSAGE* m)

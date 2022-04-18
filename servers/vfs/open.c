@@ -15,17 +15,14 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <assert.h>
-#include <stddef.h>
+#include <unistd.h>
 #include <lyos/const.h>
 #include <lyos/sysutils.h>
 #include <string.h>
 #include <lyos/fs.h>
-#include <lyos/mgrant.h>
 #include <fcntl.h>
+#include <lyos/mgrant.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 
@@ -33,7 +30,6 @@
 #include "errno.h"
 #include "path.h"
 #include "proto.h"
-#include "fcntl.h"
 #include "global.h"
 
 //#define OPEN_DEBUG

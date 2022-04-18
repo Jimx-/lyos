@@ -15,17 +15,8 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
-#include "stddef.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
 #include "errno.h"
-#include "string.h"
-#include "lyos/fs.h"
-#include "lyos/list.h"
 #include <sys/stat.h>
 
 #include "ext2_fs.h"

@@ -13,15 +13,9 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include <lyos/config.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
 #include <lyos/const.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <assert.h>
 #include <lyos/service.h>
 #include "libsysfs/libsysfs.h"
 

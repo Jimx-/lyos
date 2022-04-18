@@ -16,6 +16,8 @@
 #ifndef _CLOCKSOURCE_H_
 #define _CLOCKSOURCE_H_
 
+#include <lyos/list.h>
+
 struct clocksource;
 
 struct clocksource {

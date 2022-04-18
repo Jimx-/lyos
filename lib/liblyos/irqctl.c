@@ -13,13 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "lyos/const.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
 #include <lyos/irqctl.h>
 
 int syscall_entry(int syscall_nr, MESSAGE* m);

@@ -15,17 +15,12 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
-#include "stddef.h"
 #include "lyos/const.h"
 #include <lyos/endpoint.h>
 #include <lyos/sysutils.h>
-#include "string.h"
 #include "lyos/fs.h"
 #include "errno.h"
+#include <fcntl.h>
 #include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <sys/sched.h>
@@ -33,7 +28,6 @@
 #include "types.h"
 #include "path.h"
 #include "proto.h"
-#include "fcntl.h"
 #include "global.h"
 #include "thread.h"
 

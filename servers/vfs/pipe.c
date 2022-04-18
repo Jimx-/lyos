@@ -16,23 +16,18 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <assert.h>
-#include <stddef.h>
 #include <lyos/const.h>
 #include <lyos/sysutils.h>
 #include <string.h>
 #include <lyos/fs.h>
 #include <errno.h>
-#include <sys/syslimits.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/syslimits.h>
+#include <sys/stat.h>
 
 #include "types.h"
-#include "path.h"
 #include "proto.h"
 #include "global.h"
 #include "poll.h"

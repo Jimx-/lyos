@@ -15,21 +15,14 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "stddef.h"
 #include "errno.h"
 #include "assert.h"
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
-#include "string.h"
 #include <lyos/fs.h>
 #include <signal.h>
 #include "region.h"
 #include "proto.h"
-#include "const.h"
 #include <lyos/vm.h>
 #include "global.h"
 

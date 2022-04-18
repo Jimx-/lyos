@@ -15,16 +15,9 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
 #include <asm/protect.h>
 #include "lyos/const.h"
-#include <kernel/proc.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
-#include <kernel/irq.h>
-#include <lyos/irqctl.h>
 #include <asm/const.h>
 
 /* 8259A interrupt controller ports. */
@@ -36,6 +29,9 @@
 #define INT_S_CTL 0xA0 /* I/O port for second interrupt controller  <Slave> */
 #define INT_S_CTLMASK \
     0xA1 /* setting bits in this port disables ints   <Slave>  */
+
+extern void i8259_eoi_master();
+extern void i8259_eoi_slave();
 
 /*======================================================================*
                             init_8259A

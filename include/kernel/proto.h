@@ -76,8 +76,6 @@ int init_time();
 int init_bsp_timer(int freq);
 int init_ap_timer(int freq);
 void stop_context(struct proc* p);
-void set_sys_timer(struct timer_list* timer);
-void reset_sys_timer(struct timer_list* timer);
 void set_boottime(time_t time);
 
 /* proc.c */

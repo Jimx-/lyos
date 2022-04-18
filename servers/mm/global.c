@@ -15,11 +15,8 @@
 
 #define _MM_GLOBAL_VARIABLE_HERE_
 
-#include <sys/types.h>
 #include "lyos/config.h"
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "lyos/list.h"
 #include "global.h"
 
 struct mmproc mmproc_table[NR_PROCS];

@@ -1,15 +1,10 @@
-#include <lyos/config.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
 #include <lyos/const.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
-#include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
 
 #define NR_STATIC_GRANTS 20

@@ -46,7 +46,7 @@ void stop_8253_timer();
 
 void switch_k_stack(char* esp, void* cont);
 
-reg_t read_ebp();
+unsigned long read_ebp();
 
 #ifndef __GNUC__
 /* call a function to read the stack fram pointer (%ebp) */

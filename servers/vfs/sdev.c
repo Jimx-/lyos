@@ -16,20 +16,16 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <stdint.h>
 #include <string.h>
-#include <lyos/driver.h>
 #include <lyos/fs.h>
 #include <lyos/sysutils.h>
 #include <sys/socket.h>
 #include <lyos/mgrant.h>
-#include <sys/uio.h>
 #include <fcntl.h>
+#include <sys/uio.h>
 
 #include "const.h"
 #include "types.h"

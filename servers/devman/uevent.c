@@ -1,18 +1,13 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
-#include <lyos/config.h>
 #include <lyos/const.h>
 #include <string.h>
 #include <stdarg.h>
-#include <lyos/driver.h>
 #include <lyos/sysutils.h>
 #include <lyos/netlink.h>
-#include <sys/stat.h>
 #include <libnetlink/libnetlink.h>
 
 #include "const.h"

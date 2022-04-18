@@ -15,25 +15,17 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stddef.h>
-#include <asm/protect.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <kernel/proc.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
-#include <lyos/irqctl.h>
-#include <asm/const.h>
-#include <asm/proto.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <asm/cpulocals.h>
 #include <lyos/kvm_para.h>
 #include <asm/bitops.h>
+#include <asm/page.h>
+#include <kernel/global.h>
+#include <asm/proto.h>
 
 #include "apic.h"
 

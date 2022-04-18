@@ -18,16 +18,9 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "lyos/config.h"
 #include "lyos/const.h"
-#include "string.h"
-#include "lyos/fs.h"
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
-#include "type.h"
 #include "proto.h"
 #include <asm/const.h>
 #include <asm/cpu_info.h>

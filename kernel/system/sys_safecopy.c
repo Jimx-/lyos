@@ -2,8 +2,6 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <kernel/proc.h>
-#include <lyos/param.h>
-#include <lyos/timer.h>
 #include <kernel/proto.h>
 #include <lyos/const.h>
 #include <lyos/priv.h>

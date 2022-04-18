@@ -1,9 +1,7 @@
 #include <errno.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <mntent.h>
 

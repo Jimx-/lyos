@@ -1,9 +1,7 @@
-#include <sys/types.h>
 #include <lyos/types.h>
 #include <lyos/const.h>
 #include <lyos/ipc.h>
 #include <lyos/sysutils.h>
-#include <lyos/fs.h>
 #include <errno.h>
 #include <string.h>
 

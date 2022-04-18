@@ -15,25 +15,13 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <lyos/config.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <unistd.h>
-#include <assert.h>
 #include <errno.h>
 #include <lyos/const.h>
-#include <string.h>
 #include <lyos/fs.h>
-#include <lyos/param.h>
-#include <lyos/sysutils.h>
-#include <sched.h>
+
 #include "types.h"
-#include "path.h"
 #include "global.h"
 #include "proto.h"
-#include "global.h"
 #include "thread.h"
 
 static int sendmsg(endpoint_t dest, struct worker_thread* wp)

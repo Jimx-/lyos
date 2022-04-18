@@ -16,10 +16,7 @@
 #define _SERVMAN_GLOBAL_VARIABLE_HERE_
 
 #include "lyos/config.h"
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include "lyos/list.h"
 #include <lyos/const.h>
 #include "global.h"
 

@@ -2,7 +2,6 @@
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 #include <lyos/cpufeature.h>
-#include <stdint.h>
 #include <string.h>
 
 void _cpuid(u32* eax, u32* ebx, u32* ecx, u32* edx);

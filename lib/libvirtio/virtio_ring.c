@@ -1,19 +1,10 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <assert.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/driver.h>
 #include <errno.h>
-#include <lyos/portio.h>
-#include <lyos/irqctl.h>
-#include <lyos/service.h>
 #include <lyos/sysutils.h>
-#include <lyos/pci_utils.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
 #include <asm/page.h>
@@ -23,8 +14,6 @@
 #include <libvirtio/libvirtio.h>
 
 #include "virtio.h"
-#include "virtio_pci.h"
-#include "virtio_config.h"
 
 #define cmb() __asm__ __volatile__("" ::: "memory")
 

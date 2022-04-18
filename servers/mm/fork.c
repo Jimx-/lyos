@@ -15,21 +15,12 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
-#include "string.h"
-#include "signal.h"
 #include "errno.h"
-#include "sys/wait.h"
-#include <sched.h>
-#include "region.h"
-#include "const.h"
 #include "proto.h"
 #include "global.h"
 #include <lyos/sysutils.h>
+#include <sys/sched.h>
 
 static inline void __mmput(struct mm_struct* mm)
 {

@@ -15,17 +15,11 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "lyos/config.h"
 #include "errno.h"
 #include "stdio.h"
-#include "stddef.h"
-#include <stdarg.h>
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/fs.h"
 #include <lyos/sysutils.h>
 #include <sys/stat.h>
 #include "libmemfs/libmemfs.h"

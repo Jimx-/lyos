@@ -15,19 +15,11 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "stddef.h"
 #include "lyos/const.h"
-#include "string.h"
 #include <kernel/proc.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
 #include <asm/page.h>
 #include <errno.h>
-#include <asm/proto.h>
-#include <lyos/sysutils.h>
 
 int sys_clear(MESSAGE* m, struct proc* p_proc)
 {

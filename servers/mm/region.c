@@ -16,24 +16,16 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <assert.h>
 #include <lyos/const.h>
-#include <lyos/sysutils.h>
 #include <string.h>
-#include <lyos/fs.h>
 #include <lyos/vm.h>
-#include <asm/atomic.h>
-#include <signal.h>
 #include <errno.h>
+#include <asm/pagetable.h>
 
 #include "region.h"
 #include "global.h"
 #include "proto.h"
-#include "const.h"
-#include "cache.h"
-#include "file.h"
 
 #define REGION_DEBUG 0
 #if REGION_DEBUG

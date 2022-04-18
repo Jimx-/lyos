@@ -15,15 +15,9 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
 #include <stdlib.h>
-#include "stddef.h"
 #include <stdint.h>
 #include "errno.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
@@ -32,7 +26,6 @@
 #include "lyos/fs.h"
 #include "types.h"
 #include "path.h"
-#include "const.h"
 #include "proto.h"
 #include "global.h"
 

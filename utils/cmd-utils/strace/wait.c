@@ -2,7 +2,6 @@
 #include <sys/wait.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/wait4_options.h"

@@ -15,19 +15,11 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
 #include <errno.h>
 #include "lyos/const.h"
-#include "string.h"
-#include "lyos/fs.h"
 #include "tty.h"
 #include "console.h"
 #include "keymap.h"
-#include <lyos/irqctl.h>
-#include <lyos/portio.h>
-#include <lyos/input.h>
 #include <libsysfs/libsysfs.h>
 #include "proto.h"
 

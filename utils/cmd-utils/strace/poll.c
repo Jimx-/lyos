@@ -1,9 +1,8 @@
 #include <stdio.h>
-#include <poll.h>
 #include <string.h>
+#include <poll.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/pollflags.h"

@@ -1,8 +1,7 @@
 #include <stdio.h>
-#include <lyos/ioctl.h>
+#include <sys/ioctl.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/ioctl_dirs.h"

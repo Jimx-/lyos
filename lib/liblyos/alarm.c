@@ -13,12 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/config.h>
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
-#include <stdio.h>
-#include <string.h>
 #include <lyos/sysutils.h>
 
 int kernel_alarm2(clock_t expire_time, int abs_time, clock_t* time_left)

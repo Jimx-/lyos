@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include <unistd.h>
 
 #include "types.h"
 #include "uapi/lyos/ipc.h"
-#include "xlat.h"
 #include "proto.h"
 
 int trace_ftruncate(struct tcb* tcp)

@@ -13,28 +13,14 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
 #include <stddef.h>
 #include <lyos/const.h>
-#include <lyos/sysutils.h>
-#include <string.h>
-#include <lyos/fs.h>
 #include <errno.h>
-#include <sys/syslimits.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <lyos/fs.h>
 
 #include "types.h"
-#include "path.h"
 #include "proto.h"
-#include "global.h"
 #include "wait_queue.h"
 
 int default_wake_function(struct wait_queue_entry* wq_entry, void* arg)

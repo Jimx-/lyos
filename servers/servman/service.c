@@ -18,17 +18,13 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "stdio.h"
 #include <stdlib.h>
-#include "assert.h"
-#include "unistd.h"
-#include "lyos/config.h"
 #include "lyos/const.h"
 #include <lyos/endpoint.h>
 #include "errno.h"
 #include "string.h"
-#include "lyos/fs.h"
+#include <unistd.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <sys/syslimits.h>

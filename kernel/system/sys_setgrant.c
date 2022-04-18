@@ -1,4 +1,3 @@
-#include <sys/types.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <kernel/proc.h>

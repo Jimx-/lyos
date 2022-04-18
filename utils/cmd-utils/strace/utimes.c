@@ -1,9 +1,8 @@
 #include <stdio.h>
-#include <fcntl.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/at_flags.h"

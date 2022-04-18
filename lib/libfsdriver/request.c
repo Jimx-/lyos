@@ -16,15 +16,11 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <lyos/fs.h>
 #include <string.h>
 #include <sys/syslimits.h>
-#include <lyos/sysutils.h>
 
 #include <libbdev/libbdev.h>
 #include <libfsdriver/libfsdriver.h>

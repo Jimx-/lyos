@@ -18,18 +18,16 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
 #include <errno.h>
-#include <sched.h>
 #include <lyos/sysutils.h>
 #include <sys/wait.h>
 #include <lyos/vm.h>
 #include <sys/futex.h>
+#include <sys/sched.h>
+
 #include "global.h"
 #include "proto.h"
 

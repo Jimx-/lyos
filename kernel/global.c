@@ -17,19 +17,12 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include <kernel/proc.h>
 #include <kernel/global.h>
-#include <kernel/proto.h>
 #include "errno.h"
-#include "lyos/compile.h"
 #include <kernel/irq.h>
-#include "sys/utsname.h"
-#include <lyos/log.h>
 
 int booting_cpu = 0;
 

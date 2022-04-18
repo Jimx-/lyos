@@ -77,7 +77,6 @@ extern int booted_aps;
 EXTERN int ncpus;
 EXTERN u64 cpu_hz[CONFIG_SMP_MAX_CPUS];
 
-extern struct proc proc_table[];
 extern struct priv priv_table[];
 extern struct boot_proc boot_procs[];
 

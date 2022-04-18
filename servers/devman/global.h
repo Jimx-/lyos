@@ -17,6 +17,7 @@
 #define _DEVMAN_GLOBAL_H_
 
 #include <lyos/types.h>
+#include <lyos/list.h>
 
 /* EXTERN is extern except for global.c */
 #ifdef _DEVMAN_GLOBAL_VARIABLE_HERE_

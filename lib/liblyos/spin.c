@@ -13,12 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include "lyos/const.h"
-#include "stdio.h"
-#include "string.h"
-#include "assert.h"
 
 int printl(const char* fmt, ...);
 

@@ -15,29 +15,20 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "stdio.h"
 #include "stdarg.h"
-#include "unistd.h"
-#include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
 #include <kernel/proc.h>
 #include <kernel/global.h>
 #include <kernel/proto.h>
-#include "fcntl.h"
-#include "sys/wait.h"
-#include "sys/utsname.h"
 #include "lyos/compile.h"
 #include "errno.h"
-#include "multiboot.h"
-#include <asm/const.h>
 #include <asm/proto.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #include <lyos/smp.h>
 #endif
-#include "asm/cpulocals.h"
 #include <lyos/log.h>
 #include <kernel/irq.h>
 

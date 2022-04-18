@@ -15,13 +15,9 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <lyos/const.h>
-#include <string.h>
 #include <errno.h>
-#include <lyos/fs.h>
+#include <unistd.h>
 #include <lyos/irqctl.h>
 #include <lyos/portio.h>
 #include <lyos/service.h>

@@ -5,7 +5,6 @@
 #include <stdlib.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/msg_flags.h"

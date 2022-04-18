@@ -1,10 +1,6 @@
 #include <string.h>
-#include <stdint.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <limits.h>
 
 #define ZEROPAD 1  // Pad with zero
 #define SIGN    2  // Unsigned/signed long

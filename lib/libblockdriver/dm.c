@@ -1,15 +1,6 @@
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
-#include <string.h>
-#include <lyos/driver.h>
-#include <sys/mman.h>
 
 #include <libblockdriver/libblockdriver.h>
 #include <libdevman/libdevman.h>

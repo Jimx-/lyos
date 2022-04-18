@@ -6,7 +6,6 @@
 #include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <lyos/const.h>
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/service.h>
 

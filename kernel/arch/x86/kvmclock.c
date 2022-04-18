@@ -16,25 +16,16 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stddef.h>
-#include <asm/protect.h>
 #include <lyos/const.h>
-#include <string.h>
-#include <kernel/proc.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
-#include <lyos/irqctl.h>
-#include <asm/const.h>
-#include <asm/proto.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <asm/cpulocals.h>
 #include <lyos/kvm_para.h>
 #include <asm/pvclock.h>
 #include <lyos/clocksource.h>
+#include <asm/page.h>
+#include <asm/proto.h>
 
 static int msr_kvm_system_time;
 static int msr_kvm_wall_clock;
@@ -81,8 +72,8 @@ static inline u64 pvclock_scale_delta(u64 delta, u32 mul_frac, int shift)
             : "a"((u32)delta), "1"((u32)(delta >> 32)), "2"(mul_frac));
 #elif defined(__x86_64__)
     __asm__("mulq %[mul_frac] ; shrd $32, %[hi], %[lo]"
-            : [ lo ] "=a"(product), [ hi ] "=d"(tmp)
-            : "0"(delta), [ mul_frac ] "rm"((u64)mul_frac));
+            : [lo] "=a"(product), [hi] "=d"(tmp)
+            : "0"(delta), [mul_frac] "rm"((u64)mul_frac));
 #else
 #error implement me!
 #endif

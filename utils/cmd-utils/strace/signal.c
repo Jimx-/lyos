@@ -3,7 +3,6 @@
 #include <sys/signalfd.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/sigprocmaskcmds.h"

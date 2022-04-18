@@ -2,12 +2,10 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <sys/un.h>
-#include <lyos/netlink.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <lyos/netlink.h>
 
-#include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/addrfams.h"

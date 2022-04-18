@@ -13,14 +13,10 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/compile.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
 #include <lyos/sysutils.h>
-#include <lyos/config.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>

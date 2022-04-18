@@ -18,15 +18,12 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
 #include "stdio.h"
 #include <stdlib.h>
-#include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
 #include <errno.h>
-#include <lyos/portio.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <libsysfs/libsysfs.h>

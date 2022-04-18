@@ -13,27 +13,23 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "lyos/compile.h"
+#include <lyos/compile.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "lyos/config.h"
-#include "stdio.h"
-#include "unistd.h"
+#include <lyos/const.h>
 #include <errno.h>
-#include "lyos/const.h"
+#include <stdio.h>
 #include "string.h"
-#include "lyos/time.h"
+#include <lyos/time.h>
 #include "sys/utsname.h"
 #include <sys/time.h>
-#include <lyos/sysutils.h>
 #include <lyos/portio.h>
+#include <lyos/sysutils.h>
 #include <asm/const.h>
 
 #define MAX_HOSTNAME_LEN 256
 static char hostname[MAX_HOSTNAME_LEN];
 static struct utsname uname_buf;
-
 #if defined(__i386__) || defined(__x86_64__)
 #define RTC_YEAR     9 /* Clock register addresses in CMOS RAM	*/
 #define RTC_MONTH    8

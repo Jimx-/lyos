@@ -3,7 +3,6 @@
 #include <lyos/netlink.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/addrfams.h"

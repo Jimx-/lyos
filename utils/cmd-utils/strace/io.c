@@ -2,7 +2,6 @@
 #include <sys/uio.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 int trace_read(struct tcb* tcp)

@@ -13,28 +13,13 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "assert.h"
 #include <errno.h>
 #include "lyos/const.h"
-#include "string.h"
-#include <kernel/proc.h>
-#include <kernel/global.h>
 #include <kernel/proto.h>
-#include <signal.h>
 #include <asm/page.h>
-#include <asm/const.h>
 #include <asm/proto.h>
-#ifdef CONFIG_SMP
-#include <asm/smp.h>
-#endif
-#include <asm/cpulocals.h>
 #include <asm/hwint.h>
-#include <lyos/irqctl.h>
 #include <kernel/irq.h>
 #include <lyos/spinlock.h>
 

@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/modetypes.h"

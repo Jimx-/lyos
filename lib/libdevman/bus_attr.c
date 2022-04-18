@@ -13,20 +13,14 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/driver.h>
 #include <lyos/sysutils.h>
 #include <libdevman/libdevman.h>
-#include <libsysfs/libsysfs.h>
 
 #define BUFSIZE 4096
 

@@ -38,4 +38,9 @@ int cancel_timer(struct timer_list* timer);
 void expire_timer(clock_t timestamp);
 clock_t timer_expires_remaining(struct timer_list* tp);
 
+#ifdef __kernel__
+void set_sys_timer(struct timer_list* timer);
+void reset_sys_timer(struct timer_list* timer);
+#endif
+
 #endif

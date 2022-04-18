@@ -17,6 +17,7 @@
 #define _LIBMEMFS_INODE_H_
 
 #include <sys/syslimits.h>
+#include <lyos/list.h>
 
 typedef void* cbdata_t;
 

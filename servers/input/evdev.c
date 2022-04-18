@@ -1,22 +1,18 @@
 #include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <sys/types.h>
-#include <lyos/config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <assert.h>
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/service.h>
 #include <lyos/input.h>
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
 #include <lyos/eventpoll.h>
 #include <poll.h>
 
-#include <libsysfs/libsysfs.h>
 #include <libchardriver/libchardriver.h>
 #include <libdevman/libdevman.h>
 
@@ -27,7 +23,6 @@
 
 #define EVDEV_MIN_BUFFER_SIZE 64 /* must be power of 2 */
 
-struct evdev;
 
 struct evdev_client {
     struct evdev* evdev;

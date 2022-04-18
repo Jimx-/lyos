@@ -15,10 +15,6 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
-#include "stddef.h"
 #include <asm/protect.h>
 #include <errno.h>
 #include "lyos/const.h"
@@ -26,16 +22,12 @@
 #include <kernel/proc.h>
 #include <kernel/global.h>
 #include <kernel/proto.h>
-#include "lyos/fs.h"
 #include <lyos/sysutils.h>
 #include <asm/const.h>
 #include <asm/proto.h>
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "asm/cpulocals.h"
-#include <lyos/param.h>
-#include <lyos/vm.h>
 #include "libexec/libexec.h"
 #include <asm/cpu_info.h>
 #include <asm/cmos.h>

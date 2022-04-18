@@ -16,9 +16,6 @@
 #include <lyos/config.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "sys/types.h"
-#include "stdio.h"
-#include "unistd.h"
 #include "lyos/const.h"
 #include "string.h"
 #include <lyos/sysutils.h>

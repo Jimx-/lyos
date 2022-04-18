@@ -1,9 +1,6 @@
 #include <errno.h>
 #include <libcoro/libcoro.h>
 
-#include "coro_internal.h"
-#include "global.h"
-#include "proto.h"
 
 int coro_attr_init(coro_attr_t* attr)
 {

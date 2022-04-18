@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 int trace_getdents(struct tcb* tcp)

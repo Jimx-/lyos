@@ -18,6 +18,7 @@
 
 #include <asm/atomic.h>
 #include <asm/page.h>
+#include <lyos/list.h>
 #include <lyos/avl.h>
 
 struct mm_struct {

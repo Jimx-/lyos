@@ -1,4 +1,3 @@
-#include <lyos/types.h>
 #include <lyos/ipc.h>
 #include <lyos/const.h>
 #include <string.h>

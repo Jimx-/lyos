@@ -23,7 +23,6 @@
 #include <lyos/eventpoll.h>
 #include <poll.h>
 
-#include <libdevman/libdevman.h>
 #include <libchardriver/libchardriver.h>
 
 #include "tty.h"

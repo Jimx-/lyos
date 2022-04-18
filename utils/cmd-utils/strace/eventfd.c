@@ -2,7 +2,6 @@
 #include <sys/eventfd.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/efd_flags.h"

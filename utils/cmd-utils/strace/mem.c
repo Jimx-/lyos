@@ -2,7 +2,6 @@
 #include <sys/mman.h>
 
 #include "types.h"
-#include "xlat.h"
 #include "proto.h"
 
 #include "xlat/mmap_prot.h"
