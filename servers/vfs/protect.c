@@ -26,7 +26,6 @@
 #include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 #include <fcntl.h>

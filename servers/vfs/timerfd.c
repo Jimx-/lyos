@@ -25,7 +25,6 @@
 #include <lyos/sysutils.h>
 #include <string.h>
 #include <lyos/fs.h>
-#include <lyos/proc.h>
 #include <lyos/kref.h>
 #include <errno.h>
 #include <sys/syslimits.h>

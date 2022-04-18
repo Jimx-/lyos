@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <lyos/proc.h>
+#include <kernel/proc.h>
 #include <lyos/const.h>
 #include <lyos/priv.h>
 #include <errno.h>

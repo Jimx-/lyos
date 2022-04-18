@@ -25,11 +25,10 @@
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
 #include <lyos/service.h>
 #include <lyos/input.h>
+#include <lyos/sysutils.h>
+#include <asm/page.h>
 
 #include <libsysfs/libsysfs.h>
 #include <libchardriver/libchardriver.h>

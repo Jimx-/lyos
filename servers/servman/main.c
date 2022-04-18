@@ -20,6 +20,7 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/config.h"
+#include <lyos/endpoint.h>
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
@@ -27,9 +28,6 @@
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "libsysfs/libsysfs.h"
 #include "proto.h"
 #include "global.h"

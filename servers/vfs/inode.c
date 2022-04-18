@@ -25,7 +25,6 @@
 #include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
 #include "errno.h"
 #include "fcntl.h"
 #include "const.h"

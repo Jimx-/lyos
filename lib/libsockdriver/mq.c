@@ -7,10 +7,8 @@
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
 #include <lyos/driver.h>
+#include <lyos/list.h>
 
 #define MQ_SIZE 128
 

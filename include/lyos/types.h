@@ -70,17 +70,6 @@ typedef void (*task_f)();
 typedef unsigned long irq_id_t;
 typedef unsigned long irq_hook_id_t;
 typedef unsigned long irq_policy_t;
-typedef struct irq_hook {
-    int irq;
-    irq_hook_id_t id;
-    int (*handler)(struct irq_hook*);
-    struct irq_hook* next;
-    endpoint_t proc_ep;
-    irq_hook_id_t notify_id;
-    irq_policy_t irq_policy;
-} irq_hook_t;
-
-typedef int (*irq_handler_t)(irq_hook_t* irq_hook);
 
 typedef u16 port_t;
 

@@ -25,7 +25,6 @@
 #include "lyos/const.h"
 #include "string.h"
 #include <errno.h>
-#include "lyos/proc.h"
 #include <lyos/sysutils.h>
 #include "global.h"
 #include "proto.h"

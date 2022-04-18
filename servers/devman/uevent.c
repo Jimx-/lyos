@@ -9,7 +9,6 @@
 #include <lyos/const.h>
 #include <string.h>
 #include <stdarg.h>
-#include <lyos/proc.h>
 #include <lyos/driver.h>
 #include <lyos/sysutils.h>
 #include <lyos/netlink.h>

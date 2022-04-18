@@ -16,6 +16,7 @@
 #ifndef _PROC_H_
 #define _PROC_H_
 
+#include <lyos/const.h>
 #include <signal.h>
 #include <lyos/list.h>
 #include <asm/stackframe.h>
@@ -103,8 +104,6 @@
         PST_UNSET_LOCKED(proc, pst); \
         unlock_proc(proc);           \
     } while (0)
-
-#define PROC_NAME_LEN 16
 
 /* scheduling policy */
 #define SCHED_RUNTIME  1
@@ -197,39 +196,12 @@ struct proc {
 #define FIRST_PROC proc_table[0]
 #define LAST_PROC  proc_table[NR_TASKS + NR_PROCS - 1]
 
-#define NR_HOLES 2048
-
 DECLARE_CPULOCAL(struct proc*, proc_ptr);
 DECLARE_CPULOCAL(struct proc*, pt_proc);
 DECLARE_CPULOCAL(struct proc, idle_proc);
 DECLARE_CPULOCAL(struct proc*, fpu_owner);
 
 DECLARE_CPULOCAL(volatile int, cpu_is_idle);
-
-/**
- * All forked proc will use memory above PROCS_BASE.
- *
- * @attention make sure PROCS_BASE is higher than any buffers, such as
- *            fsbuf, mmbuf, etc
- * @see global.c
- * @see global.h
- */
-//#define	PROCS_BASE		0x1000000 /* 16 MB */
-#define PROC_ORIGIN_STACK 0x100000 /*  32 KB */
-
-/* stacks of tasks */
-#define STACK_SIZE_DEFAULT 0x80000 /* 32 KB */
-#define STACK_SIZE_MM      STACK_SIZE_DEFAULT
-
-#define STACK_SIZE_TOTAL (STACK_SIZE_MM)
-
-/* CPU states */
-#define CPS_USER   0
-#define CPS_SYS    1
-#define CPS_IDLE   2
-#define CPS_INTR   3
-#define CPS_STEAL  4
-#define CPU_STATES 5
 
 static inline void lock_proc(struct proc* p) { spinlock_lock(&p->lock); }
 static inline void unlock_proc(struct proc* p) { spinlock_lock(&p->lock); }

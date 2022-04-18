@@ -17,7 +17,6 @@
 #define _SERVMAN_TYPE_H_
 
 #include <lyos/priv.h>
-#include <lyos/proc.h>
 #include <lyos/service.h>
 #include "const.h"
 

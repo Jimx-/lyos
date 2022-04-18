@@ -96,7 +96,6 @@ void halt_cpu();
 int init_local_timer(int freq);
 void setup_local_timer_one_shot(void);
 void setup_local_timer_periodic(void);
-int put_local_timer_handler(irq_handler_t handler);
 void restart_local_timer();
 void stop_local_timer();
 void arch_stop_context(struct proc* p, u64 delta);

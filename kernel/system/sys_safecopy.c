@@ -1,10 +1,10 @@
 #include <sys/types.h>
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <lyos/proc.h>
+#include <kernel/proc.h>
 #include <lyos/param.h>
 #include <lyos/timer.h>
-#include <lyos/proto.h>
+#include <kernel/proto.h>
 #include <lyos/const.h>
 #include <lyos/priv.h>
 #include <lyos/mgrant.h>

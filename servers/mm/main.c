@@ -24,9 +24,6 @@
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/vm.h>
 #include <lyos/fs.h>
 #include <sys/mman.h>
@@ -44,8 +41,6 @@
 #include "proto.h"
 #include "const.h"
 #include "global.h"
-
-static phys_bytes free_mem_size;
 
 void __lyos_init(char* envp[]);
 

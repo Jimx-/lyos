@@ -23,12 +23,9 @@
 #include <errno.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
 #include "tty.h"
 #include "console.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
-#include <lyos/interrupt.h>
+#include <lyos/irqctl.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
 #include <asm/io.h>

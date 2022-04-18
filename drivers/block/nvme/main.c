@@ -7,14 +7,11 @@
 #include <assert.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
 #include <lyos/driver.h>
 #include <asm/byteorder.h>
 #include <errno.h>
 #include <lyos/portio.h>
-#include <lyos/interrupt.h>
+#include <lyos/irqctl.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <lyos/vm.h>
@@ -22,6 +19,7 @@
 #include <sys/mman.h>
 #include <asm/pci.h>
 #include <lyos/kref.h>
+#include <asm/page.h>
 
 #include <libblockdriver/libblockdriver.h>
 #include <libvirtio/libvirtio.h>

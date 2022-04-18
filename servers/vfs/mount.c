@@ -32,7 +32,6 @@
 #include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
 #include <sys/syslimits.h>
 #define __LINUX_ERRNO_EXTENSIONS__ /* we want ENOTBLK */
 #include "errno.h"

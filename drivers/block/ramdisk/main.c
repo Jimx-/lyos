@@ -21,9 +21,6 @@
 #include "lyos/config.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "multiboot.h"
 #include <errno.h>
 #include <lyos/sysutils.h>

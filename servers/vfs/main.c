@@ -28,7 +28,6 @@
 #include <lyos/sysutils.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
 #include "types.h"
 #include "path.h"
 #include "global.h"

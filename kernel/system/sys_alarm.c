@@ -21,9 +21,9 @@
 #include "stddef.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include <errno.h>
 #include <asm/proto.h>
 #include <lyos/sysutils.h>

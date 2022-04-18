@@ -17,12 +17,12 @@
 #include <lyos/ipc.h>
 #include "sys/types.h"
 #include "lyos/const.h"
-#include "lyos/proc.h"
+#include <kernel/proc.h>
 #include "string.h"
 #include <errno.h>
 #include <signal.h>
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include "arch.h"
 #include "arch_const.h"
 #include "arch_proto.h"

@@ -25,13 +25,11 @@
 #include "errno.h"
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "lyos/list.h"
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
+#include <lyos/sysutils.h>
 #include "ext2_fs.h"
 #include "global.h"
 

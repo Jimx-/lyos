@@ -7,9 +7,6 @@
 #include <assert.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
 #include <lyos/driver.h>
 #include <errno.h>
 #include <asm/ioctl.h>

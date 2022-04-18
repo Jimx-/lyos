@@ -21,10 +21,10 @@
 #include <unistd.h>
 #include <assert.h>
 #include <lyos/const.h>
-#include <lyos/proc.h>
+#include <kernel/proc.h>
 #include <string.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include <asm/sbi.h>
 
 void disp_char(const char c) { sbi_console_putchar((int)c); }

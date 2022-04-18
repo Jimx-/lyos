@@ -22,11 +22,12 @@
 #include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include "errno.h"
 #include "lyos/compile.h"
+#include <kernel/irq.h>
 #include "sys/utsname.h"
 #include <lyos/log.h>
 
@@ -48,8 +49,6 @@ struct boot_proc boot_procs[NR_BOOT_PROCS] = {
     {TASK_RD, "RD"},           {TASK_INITFS, "INITFS"},   {TASK_SYSFS, "SYSFS"},
     {TASK_IPC, "IPC"},         {TASK_NETLINK, "NETLINK"}, {INIT, "INIT"},
 };
-
-char task_stack[STACK_SIZE_TOTAL];
 
 irq_hook_t irq_hooks[NR_IRQ_HOOKS];
 

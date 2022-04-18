@@ -77,7 +77,6 @@ extern int booted_aps;
 EXTERN int ncpus;
 EXTERN u64 cpu_hz[CONFIG_SMP_MAX_CPUS];
 
-extern char task_stack[];
 extern struct proc proc_table[];
 extern struct priv priv_table[];
 extern struct boot_proc boot_procs[];
@@ -85,8 +84,6 @@ extern struct boot_proc boot_procs[];
 EXTERN struct proc* mmrequest; /* first proc in mm request queue */
 
 EXTERN int system_hz;
-
-extern irq_hook_t irq_hooks[];
 
 extern int err_code;
 

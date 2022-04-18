@@ -26,7 +26,6 @@
 #include <lyos/const.h>
 #include <string.h>
 #include <lyos/fs.h>
-#include <lyos/proc.h>
 #include <lyos/param.h>
 #include <lyos/sysutils.h>
 #include <libpthread/pthread.h>

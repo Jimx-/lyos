@@ -22,9 +22,9 @@
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include "fcntl.h"
 #include "sys/wait.h"
 #include "sys/utsname.h"
@@ -39,6 +39,7 @@
 #endif
 #include "asm/cpulocals.h"
 #include <lyos/log.h>
+#include <kernel/irq.h>
 
 #define LYOS_BANNER                                              \
     "Lyos version " UTS_RELEASE " (compiled by " LYOS_COMPILE_BY \

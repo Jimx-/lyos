@@ -7,9 +7,6 @@
 #include <assert.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
 #include <lyos/driver.h>
 #include <errno.h>
 #include <lyos/service.h>
@@ -17,6 +14,7 @@
 #include <lyos/vm.h>
 #include <lyos/idr.h>
 #include <sys/socket.h>
+#include <lyos/timer.h>
 
 #include "inet.h"
 #include "ifdev.h"

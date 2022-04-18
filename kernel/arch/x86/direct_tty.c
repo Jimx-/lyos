@@ -22,10 +22,10 @@
 #include "assert.h"
 #include <asm/protect.h>
 #include "lyos/const.h"
-#include "lyos/proc.h"
+#include <kernel/proc.h>
 #include "string.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/global.h>
+#include <kernel/proto.h>
 
 static int disp_pos = 0, print_line = 0;
 

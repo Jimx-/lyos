@@ -25,9 +25,6 @@
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/fs.h>
 #include <signal.h>
 #include "region.h"

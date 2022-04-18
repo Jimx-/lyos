@@ -10,7 +10,6 @@
 #include "string.h"
 #include "proto.h"
 #include <lyos/fs.h>
-#include "lyos/proc.h"
 #include "lyos/driver.h"
 #include <lyos/sysutils.h>
 #include <libsysfs/libsysfs.h>

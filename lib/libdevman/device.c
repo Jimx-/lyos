@@ -22,10 +22,7 @@
 #include <errno.h>
 #include <lyos/const.h>
 #include <string.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
 #include <lyos/driver.h>
-#include <lyos/proto.h>
 #include <libdevman/libdevman.h>
 
 int dm_device_register(struct device_info* devinf, device_id_t* id)

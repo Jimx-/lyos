@@ -143,4 +143,15 @@
 #define ETH_PACKET_MIN 60
 #define ETH_PACKET_MAX 1514
 
+/* CPU states */
+#define CPS_USER   0
+#define CPS_SYS    1
+#define CPS_IDLE   2
+#define CPS_INTR   3
+#define CPS_STEAL  4
+#define CPU_STATES 5
+
+#define PROC_NAME_LEN     16
+#define PROC_ORIGIN_STACK 0x100000 /*  32 KB */
+
 #endif /* _CONST_H_ */

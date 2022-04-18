@@ -22,8 +22,8 @@ int _cpufeature(int cpufeature)
     u32 eax, ebx, ecx, edx;
     u32 ef_eax = 0, ef_ebx = 0, ef_ecx = 0, ef_edx = 0;
     unsigned int family, model, stepping;
-    int is_intel = 0;
     u32 extended_cpuid_level;
+    int is_intel = 0;
 
     eax = ebx = ecx = edx = 0;
 

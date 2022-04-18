@@ -22,9 +22,9 @@
 #include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include <signal.h>
 #include <asm/page.h>
 #include <asm/const.h>
@@ -32,8 +32,10 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "asm/cpulocals.h"
-#include <lyos/interrupt.h>
+#include <asm/cpulocals.h>
+#include <asm/hwint.h>
+#include <lyos/irqctl.h>
+#include <kernel/irq.h>
 #include <lyos/spinlock.h>
 
 static spinlock_t irq_handlers_lock;
@@ -48,7 +50,7 @@ static unsigned long irq_actids[NR_IRQ];
  * <Ring 0> Initializes IRQ subsystem.
  *
  *****************************************************************************/
-void init_irq()
+void init_irq(void)
 {
     int i;
     for (i = 0; i < NR_IRQ_HOOKS; i++) {

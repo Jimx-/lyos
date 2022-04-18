@@ -32,10 +32,8 @@
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/vm.h>
+#include <lyos/sysutils.h>
 #include <asm/page.h>
 
 #include "const.h"
@@ -43,6 +41,8 @@
 #include "proto.h"
 #include "global.h"
 #include "types.h"
+
+#define NR_HOLES 2048
 
 static struct hole hole[NR_HOLES]; /* the hole table */
 static struct hole* hole_head;     /* pointer to first hole */

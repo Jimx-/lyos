@@ -23,7 +23,6 @@
 #include <lyos/const.h>
 #include <string.h>
 #include <lyos/fs.h>
-#include <lyos/proc.h>
 #include <lyos/sysutils.h>
 #include <errno.h>
 #include <sys/ioctl.h>

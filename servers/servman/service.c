@@ -25,12 +25,10 @@
 #include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
+#include <lyos/endpoint.h>
 #include "errno.h"
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
 #include <sys/syslimits.h>

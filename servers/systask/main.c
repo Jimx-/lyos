@@ -23,14 +23,12 @@
 #include <errno.h>
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "lyos/time.h"
 #include "sys/utsname.h"
 #include <sys/time.h>
 #include <lyos/sysutils.h>
 #include <lyos/portio.h>
+#include <asm/const.h>
 
 #define MAX_HOSTNAME_LEN 256
 static char hostname[MAX_HOSTNAME_LEN];

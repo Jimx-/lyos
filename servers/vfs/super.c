@@ -27,9 +27,9 @@
 #include "lyos/const.h"
 #include <lyos/sysutils.h>
 #include <lyos/mgrant.h>
+#include <asm/page.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
 #include "types.h"
 #include "path.h"
 #include "const.h"

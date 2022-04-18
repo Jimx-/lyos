@@ -25,9 +25,6 @@
 #include "errno.h"
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "lyos/list.h"
 #include <sys/stat.h>
 

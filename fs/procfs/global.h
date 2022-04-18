@@ -18,6 +18,7 @@
 #define _PROCFS_GLOBAL_H_
 
 #include "type.h"
+#include <kernel/proc.h>
 #include "pm/pmproc.h"
 
 extern struct procfs_file root_files[];

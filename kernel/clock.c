@@ -20,9 +20,9 @@
 #include "unistd.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include <asm/const.h>
 #include <asm/proto.h>
 #ifdef CONFIG_SMP
@@ -32,6 +32,7 @@
 #include <lyos/clocksource.h>
 #include <lyos/time.h>
 #include <lyos/sysutils.h>
+#include <kernel/irq.h>
 #include <asm/div64.h>
 
 extern spinlock_t clocksource_lock;

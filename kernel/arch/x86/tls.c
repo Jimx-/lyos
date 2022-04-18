@@ -21,12 +21,12 @@
 #include <assert.h>
 #include <asm/protect.h>
 #include <lyos/const.h>
-#include <lyos/proc.h>
+#include <kernel/proc.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include <asm/const.h>
 #include <asm/proto.h>
 #include <asm/smp.h>

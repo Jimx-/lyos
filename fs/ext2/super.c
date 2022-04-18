@@ -26,10 +26,8 @@
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "lyos/list.h"
+#include <lyos/sysutils.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include "ext2_fs.h"

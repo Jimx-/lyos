@@ -26,7 +26,6 @@
 #include "string.h"
 #include <errno.h>
 #include <sched.h>
-#include "lyos/proc.h"
 #include <lyos/sysutils.h>
 #include <sys/wait.h>
 #include <lyos/vm.h>

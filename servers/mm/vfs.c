@@ -24,10 +24,8 @@
 #include "assert.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include <lyos/fs.h>
+#include <lyos/sysutils.h>
 #include <asm/page.h>
 #include "region.h"
 #include "proto.h"

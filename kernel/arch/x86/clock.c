@@ -22,9 +22,9 @@
 #include <asm/protect.h>
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include <asm/const.h>
 #include <asm/proto.h>
 #ifdef CONFIG_SMP
@@ -37,6 +37,7 @@
 #include <asm/hpet.h>
 #include <asm/div64.h>
 #include <lyos/kvm_para.h>
+#include <kernel/irq.h>
 
 static irq_hook_t timer_irq_hook;
 

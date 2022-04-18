@@ -8,9 +8,9 @@
 #include "lyos/const.h"
 #include <errno.h>
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
 #include "acpi.h"
 #include "apic.h"
 #include <asm/proto.h>

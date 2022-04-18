@@ -18,14 +18,14 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include <lyos/proc.h>
+#include <lyos/const.h>
 
 #define KPROF_SAMPLE_BUFSIZE (4 << 20)
 
 #define KPROF_START 1
-#define KPROF_STOP 2
+#define KPROF_STOP  2
 
-#define KPROF_TYPE_PROC ((u8)1)
+#define KPROF_TYPE_PROC   ((u8)1)
 #define KPROF_TYPE_SAMPLE ((u8)2)
 
 struct kprof_sample {

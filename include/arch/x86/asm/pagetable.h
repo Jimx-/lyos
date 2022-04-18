@@ -16,6 +16,8 @@
 #ifndef _ARCH_PAGETABLE_H_
 #define _ARCH_PAGETABLE_H_
 
+#include <asm/page.h>
+
 #if CONFIG_PGTABLE_LEVELS < 3
 #include <lyos/pagetable-nopmd.h>
 #endif

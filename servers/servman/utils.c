@@ -29,9 +29,7 @@
 #include "string.h"
 #include <fcntl.h>
 #include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <lyos/sysutils.h>
 #include <sys/stat.h>
 #include "proto.h"
 #include "const.h"

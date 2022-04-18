@@ -70,14 +70,6 @@ void init_memory();
 /* i8259.c */
 void init_8259A();
 
-/* interrupt.c */
-void init_irq();
-void irq_handle(int irq);
-void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler);
-void rm_irq_handler(irq_hook_t* hook);
-int disable_irq(irq_hook_t* hook);
-void enable_irq(irq_hook_t* hook);
-
 /* clock.c */
 int arch_init_time();
 int init_time();
@@ -190,14 +182,12 @@ void sys_call(); /* int_handler */
 int sendrec(int function, int src_dest, MESSAGE* p_msg);
 int printx(char* s);
 int getinfo(int request, void* buf);
-int vmctl(int request, endpoint_t who);
 
 void* phys_copy(void* dest, void* src, phys_bytes len);
 int copy_user_message(MESSAGE* dest, MESSAGE* src);
 #define phys_set memset
 
 int printk(const char* fmt, ...);
-int printl(const char* fmt, ...);
 int get_sysinfo(struct sysinfo** sysinfo);
 int get_kinfo(kinfo_t* kinfo);
 

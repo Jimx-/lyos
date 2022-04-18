@@ -22,14 +22,12 @@
 #include <string.h>
 #include <errno.h>
 #include <lyos/fs.h>
-#include <lyos/proc.h>
-#include <lyos/global.h>
-#include <lyos/proto.h>
-#include <lyos/interrupt.h>
+#include <lyos/irqctl.h>
 #include <lyos/portio.h>
 #include <lyos/service.h>
 #include <lyos/input.h>
 #include <libinputdriver/libinputdriver.h>
+#include <asm/const.h>
 
 #include "keyboard.h"
 #include "uapi/linux/input-event-codes.h"

@@ -24,7 +24,6 @@
 #include "lyos/vm.h"
 #include <lyos/config.h>
 #include <lyos/param.h>
-#include <lyos/proc.h>
 #include <lyos/sysutils.h>
 #include <asm/cpu_info.h>
 

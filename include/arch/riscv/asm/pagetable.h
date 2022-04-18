@@ -1,9 +1,10 @@
 #ifndef _ARCH_PAGETABLE_H_
 #define _ARCH_PAGETABLE_H_
 
-#include <lyos/pagetable-nopud.h>
-
+#include <asm/page.h>
 #include <asm/pagetable_bits.h>
+
+#include <lyos/pagetable-nopud.h>
 
 #define _RISCV_PG_BASE \
     (_RISCV_PG_PRESENT | _RISCV_PG_ACCESSED | _RISCV_PG_USER | _RISCV_PG_DIRTY)

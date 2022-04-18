@@ -21,9 +21,10 @@
 #include "stddef.h"
 #include "lyos/const.h"
 #include "string.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
+#include <kernel/proc.h>
+#include <kernel/global.h>
+#include <kernel/proto.h>
+#include <kernel/irq.h>
 #include "asm/cpulocals.h"
 
 int arch_init_time() { return 0; }

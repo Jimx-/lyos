@@ -23,7 +23,6 @@
 #include <lyos/const.h>
 #include <stdint.h>
 #include <string.h>
-#include <lyos/proc.h>
 #include <lyos/driver.h>
 #include <lyos/fs.h>
 #include <lyos/sysutils.h>

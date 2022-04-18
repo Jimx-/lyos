@@ -20,7 +20,7 @@
 #include "stdio.h"
 #include "unistd.h"
 #include "assert.h"
-#include <lyos/interrupt.h>
+#include <lyos/irqctl.h>
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 

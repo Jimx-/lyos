@@ -25,11 +25,9 @@
 #include "lyos/const.h"
 #include "string.h"
 #include "lyos/fs.h"
-#include "lyos/proc.h"
-#include "lyos/global.h"
-#include "lyos/proto.h"
 #include "lyos/list.h"
 #include <sys/dirent.h>
+#include <asm/page.h>
 
 #include "proto.h"
 #include "global.h"

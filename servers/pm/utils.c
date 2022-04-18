@@ -23,9 +23,9 @@
 #include "unistd.h"
 #include "lyos/config.h"
 #include "lyos/const.h"
+#include <lyos/endpoint.h>
 #include "string.h"
 #include <errno.h>
-#include "lyos/proc.h"
 #include <lyos/sysutils.h>
 #include "global.h"
 #include "const.h"
