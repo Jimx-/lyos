@@ -19,7 +19,7 @@
 #include <asm/page.h>
 
 #if CONFIG_PGTABLE_LEVELS < 3
-#include <lyos/pagetable-nopmd.h>
+#include <asm-generic/pagetable-nopmd.h>
 #endif
 
 static inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)

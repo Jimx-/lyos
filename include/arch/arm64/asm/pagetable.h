@@ -4,9 +4,9 @@
 #include <asm/page.h>
 
 #if CONFIG_PGTABLE_LEVELS == 2
-#include <lyos/pagetable-nopmd.h>
+#include <asm-generic/pagetable-nopmd.h>
 #elif CONFIG_PGTABLE_LEVELS == 3
-#include <lyos/pagetable-nopud.h>
+#include <asm-generic/pagetable-nopud.h>
 #endif
 
 #define _ARM64_PTE_WRITE (_ARM64_PTE_DBM)

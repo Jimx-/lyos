@@ -16,7 +16,7 @@
 #ifndef _ARCH_PAGETABLE_NOPMD_H_
 #define _ARCH_PAGETABLE_NOPMD_H_
 
-#include <lyos/pagetable-nopud.h>
+#include <asm-generic/pagetable-nopud.h>
 
 #define __PAGETABLE_PMD_FOLDED 1
 
