@@ -6,13 +6,12 @@
 
 typedef u32 phandle_t;
 
-extern void* fdt_root;
-
 #define MAX_PHANDLE_ARGS 16
 struct of_phandle_args {
+    u32 phandle;
     unsigned long offset;
     int args_count;
-    uint32_t args[MAX_PHANDLE_ARGS];
+    u32 args[MAX_PHANDLE_ARGS];
 };
 
 struct of_phandle_iterator {
@@ -45,10 +44,15 @@ int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int, void*),
 int of_flat_dt_match(const void* blob, unsigned long node,
                      const char* const* compat);
 
+int of_find_node_by_phandle(const void* blob, phandle_t handle,
+                            unsigned long* offp);
+
 int of_phandle_iterator_init(struct of_phandle_iterator* it, const void* blob,
                              unsigned long offset, const char* list_name,
                              const char* cells_name, int cell_count);
 int of_phandle_iterator_next(struct of_phandle_iterator* it);
+int of_phandle_iterator_args(struct of_phandle_iterator* it, uint32_t* args,
+                             int size);
 
 #define of_for_each_phandle(it, err, blob, off, ln, cn, cc)               \
     for (of_phandle_iterator_init((it), (blob), (off), (ln), (cn), (cc)), \
@@ -58,5 +62,11 @@ int of_phandle_iterator_next(struct of_phandle_iterator* it);
 int of_irq_count(const void* blob, unsigned long offset);
 int of_irq_parse_one(const void* blob, unsigned long offset, int index,
                      struct of_phandle_args* out_irq);
+
+#ifndef __kernel__
+unsigned int irq_of_map(struct of_phandle_args* oirq);
+unsigned int irq_of_parse_and_map(const void* blob, unsigned long offset,
+                                  int index);
+#endif
 
 #endif // _LIBOF_H_

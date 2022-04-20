@@ -189,13 +189,15 @@ struct kern_map {
     int flags;
     void* vir_addr;
     void** mapped_addr;
+    void (*callback)(void*);
+    void* cb_arg;
 };
 
 static struct kern_map kern_mappings[MAX_KERN_MAPPINGS];
 static int kern_mapping_count = 0;
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
-                  void** mapped_addr)
+                  void** mapped_addr, void (*callback)(void*), void* arg)
 {
     if (kern_mapping_count >= MAX_KERN_MAPPINGS) return ENOMEM;
 
@@ -204,6 +206,8 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
     pkm->len = len;
     pkm->flags = flags;
     pkm->mapped_addr = mapped_addr;
+    pkm->callback = callback;
+    pkm->cb_arg = arg;
 
     return 0;
 }
@@ -276,16 +280,17 @@ static void setptbr(struct proc* p, phys_bytes ptbr)
 
     if (p->endpoint == TASK_MM) {
         int i;
-        /* update mapped address of kernel mappings */
-        for (i = 0; i < kern_mapping_count; i++) {
-            struct kern_map* pkm = &kern_mappings[i];
-            *(pkm->mapped_addr) = pkm->vir_addr;
-        }
 
         write_ptbr(ptbr);
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 
-        plic_init();
+        /* update mapped address of kernel mappings */
+        for (i = 0; i < kern_mapping_count; i++) {
+            struct kern_map* pkm = &kern_mappings[i];
+            *pkm->mapped_addr = pkm->vir_addr;
+            if (pkm->callback) pkm->callback(pkm->cb_arg);
+        }
+
         plic_enable(cpuid);
 
         smp_commence();

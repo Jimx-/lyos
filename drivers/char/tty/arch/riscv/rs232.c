@@ -29,11 +29,13 @@
 #include <lyos/vm.h>
 #include <sys/mman.h>
 #include <asm/io.h>
+#include <lyos/sysutils.h>
 #include "proto.h"
 #include "global.h"
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
+#include <libchardriver/libchardriver.h>
 
 /* 8250 constants */
 #define UART_FREQ 115200L /* timer frequency */
@@ -148,7 +150,7 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
 {
 
     struct uart_scan_data* usd = arg;
-    const uint32_t *reg, *irq;
+    const uint32_t* reg;
     int len;
 
     if (!arg || strlen(name) < 4 || memcmp(name, "uart", 4) != 0) return 0;
@@ -163,9 +165,8 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
     size = of_read_number(reg, dt_root_size_cells);
     reg += dt_root_size_cells;
 
-    irq = fdt_getprop(blob, offset, "interrupts", NULL);
-    if (!irq) return 0;
-    usd->interrupt = be32_to_cpup(irq);
+    usd->interrupt = irq_of_parse_and_map(blob, offset, 0);
+    if (!usd->interrupt) return 0;
 
     usd->base = base;
     usd->size = size;

@@ -37,7 +37,7 @@ void arch_boot_proc(struct proc* p, struct boot_proc* bp);
 struct proc* arch_switch_to_user(void);
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
-                  void** mapped_addr);
+                  void** mapped_addr, void (*callback)(void*), void* arg);
 
 static inline void enable_user_access()
 {
@@ -70,7 +70,6 @@ void riscv_timer_interrupt(void);
 
 /* plic.c */
 void plic_scan(void);
-void plic_init(void);
 void plic_enable(int cpu);
 void plic_handle_irq(void);
 

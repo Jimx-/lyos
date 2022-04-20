@@ -161,8 +161,6 @@ void init_prot()
 
     init_desc(&gdt[INDEX_LDT], 0, 0, DA_LDT);
 
-    init_8259A();
-
     init_idt();
 
     init_tss(0, &StackTop);
@@ -170,7 +168,7 @@ void init_prot()
     load_prot_selectors(booting_cpu);
 }
 
-void arch_init_irq(void) {}
+void arch_init_irq(void) { init_8259A(); }
 
 void load_direct_gdt(unsigned int cpu)
 {

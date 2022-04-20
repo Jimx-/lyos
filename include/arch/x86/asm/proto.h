@@ -41,6 +41,9 @@ void arch_init_irq(void);
 
 void arch_pause();
 
+void init_8259A();
+void disable_8259A();
+
 int init_8253_timer(int freq);
 void stop_8253_timer();
 

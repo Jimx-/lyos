@@ -19,6 +19,7 @@
 #include "lyos/const.h"
 #include <kernel/global.h>
 #include <kernel/proto.h>
+#include <errno.h>
 #include "acpi.h"
 #include "apic.h"
 #include <asm/proto.h>
@@ -32,6 +33,7 @@
 #include <asm/hpet.h>
 #include <asm/div64.h>
 #include <asm/cpu_info.h>
+#include <kernel/irq.h>
 
 #define APIC_ENABLE         0x100
 #define APIC_FOCUS_DISABLED (1 << 9)
@@ -135,6 +137,8 @@ u32 apicid() { return lapic_read(LAPIC_ID); }
 
 #define IOAPIC_IOREGSEL 0x0
 #define IOAPIC_IOWIN    0x10
+
+static const struct irq_domain_ops ioapic_irqdomain_ops;
 
 static u32 ioapic_read(void* ioa_base, u32 reg)
 {
@@ -464,7 +468,7 @@ static void mp_override_legacy_irq(u8 bus_irq, u8 polarity, u8 trigger, u32 gsi)
     isa_irq_to_gsi[bus_irq] = gsi;
 }
 
-static void ioapic_init_legacy_irqs()
+static void ioapic_init_legacy_irqs(void)
 {
     struct acpi_madt_int_src* acpi_int_src;
 
@@ -483,9 +487,18 @@ static void ioapic_init_legacy_irqs()
     }
 }
 
-int ioapic_enable()
+int ioapic_enable(void)
 {
-    int i;
+    int i, ioa, pin;
+
+    for (ioa = 0; ioa < nr_ioapics; ioa++) {
+        struct io_apic* ip = &io_apics[ioa];
+
+        ip->irq_domain = irq_domain_add(ip->id, ip->pins, &ioapic_irqdomain_ops,
+                                        (void*)(unsigned long)ioa);
+        if (!ip->irq_domain)
+            panic("failed to allocate IRQ domain for IO-APIC %d", ioa);
+    }
 
     for (i = 0; i < NR_IRQ_VECTORS; i++) {
         if (i < 16) {
@@ -503,10 +516,20 @@ int ioapic_enable()
 
     disable_8259A();
 
+    for (ioa = 0; ioa < nr_ioapics; ioa++) {
+        struct io_apic* ip = &io_apics[ioa];
+
+        for (pin = 0; pin < ip->pins; pin++) {
+            u32 gsi = ip->gsi_base + pin;
+
+            __irq_domain_alloc_irqs(ip->irq_domain, gsi, 1, NULL);
+        }
+    }
+
     out_byte(0x22, 0x70);
     out_byte(0x23, 0x01);
 
-    ioapic_enabled = 1;
+    ioapic_enabled = TRUE;
     return 1;
 }
 
@@ -526,30 +549,7 @@ static void ioapic_disable_irq(int irq)
     io_apic_irq[irq].state |= IOAPIC_IRQ_STATE_MASKED;
 }
 
-void ioapic_mask(int irq)
-{
-    if (ioapic_enabled)
-        ioapic_disable_irq(irq);
-    else
-        i8259_mask(irq);
-}
-
-void ioapic_unmask(int irq)
-{
-    if (ioapic_enabled)
-        ioapic_enable_irq(irq);
-    else
-        i8259_unmask(irq);
-}
-
-void ioapic_eoi(int irq)
-{
-    if (ioapic_enabled) {
-        io_apic_irq[irq].eoi(&io_apic_irq[irq]);
-    } else {
-        i8259_eoi(irq);
-    }
-}
+static void ioapic_ack_irq(int irq) { io_apic_irq[irq].eoi(&io_apic_irq[irq]); }
 
 static void ioapic_eoi_edge(struct irq* irq) { apic_eoi(); }
 
@@ -607,7 +607,7 @@ void ioapic_unset_irq(int irq)
     io_apic_irq[irq].eoi = NULL;
 }
 
-int detect_ioapics()
+int detect_ioapics(void)
 {
     int n = 0;
     struct acpi_madt_ioapic* acpi_ioa;
@@ -955,3 +955,49 @@ int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline)
     return 0;
 }
 #endif
+
+void ioapic_mask(struct irq_data* data) { ioapic_disable_irq(data->irq); }
+
+void ioapic_unmask(struct irq_data* data) { ioapic_enable_irq(data->irq); }
+
+void ioapic_eoi(struct irq_data* data) { ioapic_ack_irq(data->irq); }
+
+void ioapic_used(struct irq_data* data) { ioapic_set_irq(data->irq); }
+
+void ioapic_not_used(struct irq_data* data) { ioapic_unset_irq(data->irq); }
+
+static struct irq_chip ioapic_chip = {
+    .irq_mask = ioapic_mask,
+    .irq_unmask = ioapic_unmask,
+    .irq_eoi = ioapic_eoi,
+    .irq_used = ioapic_used,
+    .irq_not_used = ioapic_not_used,
+};
+
+static int irqdomain_ioapic_idx(struct irq_domain* domain)
+{
+    return (int)(unsigned long)domain->host_data;
+}
+
+static int ioapic_irqdomain_alloc(struct irq_domain* domain, unsigned int virq,
+                                  unsigned int nr_irqs, void* arg)
+{
+    struct irq_data* irq_data;
+    int ioa;
+
+    if (nr_irqs > 1) return -EINVAL;
+    irq_data = irq_domain_get_irq_data(domain, virq);
+    if (!irq_data) return -EINVAL;
+
+    ioa = irqdomain_ioapic_idx(domain);
+
+    irq_data->hwirq = virq - io_apics[ioa].gsi_base;
+    irq_data->chip = &ioapic_chip;
+    irq_data->chip_data = &io_apic_irq[virq];
+
+    return 0;
+}
+
+static const struct irq_domain_ops ioapic_irqdomain_ops = {
+    .alloc = ioapic_irqdomain_alloc,
+};

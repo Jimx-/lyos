@@ -5,16 +5,16 @@
 LDSCRIPT = arch/$(ARCH)/lyos.lds
 LDFLAGS	= -T $(LDSCRIPT) -Map $(ARCHDIR)/System.map
 CFLAGS		+= -D__kernel__
+LIB		= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
 
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o clock.o global.o proc.o klib.o \
 				sysinfo.o system/system.o interrupt.o system.o smp.o clocksource.o \
 				sched.o profile.o watchdog.o
 
-LIB		= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
 KLIBC		= lib/klibc.o
 
 ifeq ($(CONFIG_OF),y)
-	LIB += $(LIBOUTDIR)/libof.a $(LIBOUTDIR)/libfdt.a
+	LIB := $(LIBOUTDIR)/libof.a $(LIBOUTDIR)/libfdt.a $(LIB)
 endif
 
 KRNL		= $(ARCHDIR)/lyos.elf

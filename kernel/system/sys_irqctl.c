@@ -19,6 +19,7 @@
 #include <kernel/proc.h>
 #include <kernel/proto.h>
 #include <errno.h>
+#include <string.h>
 #include <lyos/irqctl.h>
 #include <lyos/priv.h>
 #include <kernel/irq.h>
@@ -27,23 +28,25 @@ static int generic_irq_handler(irq_hook_t* hook);
 
 int sys_irqctl(MESSAGE* m, struct proc* p_proc)
 {
-    int irq = m->IRQ_IRQ, hook_id = m->IRQ_HOOK_ID - 1,
-        notify_id = m->IRQ_HOOK_ID;
+    struct irqctl_request* req = (struct irqctl_request*)m->MSG_PAYLOAD;
+    int irq = req->irq, hook_id = req->hook_id - 1, notify_id = req->hook_id;
     int retval = 0, i;
     irq_hook_t* hook = NULL;
+    struct irq_fwspec fwspec;
 
-    switch (m->IRQ_REQUEST) {
+    switch (req->request) {
     case IRQ_ENABLE:
     case IRQ_DISABLE:
         if (hook_id < 0 || hook_id >= NR_IRQ_HOOKS ||
             irq_hooks[hook_id].proc_ep == NO_TASK)
             return EINVAL;
         if (irq_hooks[hook_id].proc_ep != p_proc->endpoint) return EPERM;
-        if (m->IRQ_REQUEST == IRQ_ENABLE)
+        if (req->request == IRQ_ENABLE)
             enable_irq(&irq_hooks[hook_id]);
         else
             disable_irq(&irq_hooks[hook_id]);
         break;
+
     case IRQ_SETPOLICY:
         if (irq < 0 || irq >= NR_IRQ) return EINVAL;
 
@@ -66,12 +69,28 @@ int sys_irqctl(MESSAGE* m, struct proc* p_proc)
 
         hook->proc_ep = p_proc->endpoint;
         hook->notify_id = notify_id;
-        hook->irq_policy = m->IRQ_POLICY;
+        hook->irq_policy = req->policy;
         put_irq_handler(irq, hook, generic_irq_handler);
 
-        m->IRQ_HOOK_ID = hook_id + 1;
+        req->hook_id = hook_id + 1;
 
         break;
+
+    case IRQ_MAP_FWSPEC:
+        if (req->fwspec.param_count > IRQCTL_IRQ_SPEC_PARAMS) return EINVAL;
+
+        memset(&fwspec, 0, sizeof(fwspec));
+        fwspec.fwid = req->fwspec.fwid;
+        fwspec.param_count = req->fwspec.param_count;
+        memcpy(fwspec.param, req->fwspec.param,
+               sizeof(u32) * req->fwspec.param_count);
+
+        irq = irq_create_fwspec_mapping(&fwspec);
+        if (irq == 0) return EINVAL;
+
+        req->irq = irq;
+        break;
+
     default:
         retval = EINVAL;
         break;

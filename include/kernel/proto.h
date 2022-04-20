@@ -67,9 +67,6 @@ void smp_init();
 /* memory.c */
 void init_memory();
 
-/* i8259.c */
-void init_8259A();
-
 /* clock.c */
 int arch_init_time();
 int init_time();

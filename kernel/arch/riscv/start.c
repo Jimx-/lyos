@@ -41,9 +41,6 @@ unsigned int hart_counter __attribute__((__section__(".unpaged_text"))) = 0;
 extern char _VIR_BASE, _KERN_SIZE;
 extern char __global_pointer;
 
-static phys_bytes kern_vir_base = (phys_bytes)&_VIR_BASE;
-static phys_bytes kern_size = (phys_bytes)&_KERN_SIZE;
-
 static phys_bytes phys_initrd_start, phys_initrd_size;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
@@ -64,7 +61,7 @@ static int fdt_scan_root(void* blob, unsigned long offset, const char* name,
     dt_root_addr_cells = 1;
     dt_root_size_cells = 1;
 
-    u32* prop;
+    const u32* prop;
     if ((prop = fdt_getprop(blob, offset, "#size-cells", NULL)) != NULL) {
         dt_root_size_cells = be32_to_cpup(prop);
     }
@@ -84,7 +81,7 @@ static int fdt_scan_memory(void* blob, unsigned long offset, const char* name,
     if (!type || strcmp(type, "memory") != 0) return 0;
 
     const u32 *reg, *lim;
-    size_t len;
+    int len;
     reg = fdt_getprop(blob, offset, "reg", &len);
     if (!reg) return 0;
 
@@ -115,7 +112,7 @@ static int fdt_scan_chosen(void* blob, unsigned long offset, const char* name,
                            int depth, void* arg)
 {
     u64 start, end;
-    const u32* prop;
+    const void* prop;
     int len;
 
     if (depth != 1 || !arg || (strcmp(name, "chosen") != 0)) return 0;
@@ -149,8 +146,6 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     initial_boot_params = __va(dtb_phys);
     dtb_lim = dtb_phys + fdt_totalsize(initial_boot_params);
     dtb_lim = roundup(dtb_lim, ARCH_PG_SIZE);
-
-    fdt_root = initial_boot_params;
 
     kinfo.memmaps_count = 0;
     kinfo.memory_size = 0;
@@ -225,14 +220,14 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     char param_buf[64];
     sprintf(param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
     kinfo_set_param(kinfo.cmdline, "initrd_base", param_buf);
-    sprintf(param_buf, "%lu", (unsigned int)phys_initrd_size);
+    sprintf(param_buf, "%u", (unsigned int)phys_initrd_size);
     kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
 
     cut_memmap(&kinfo, dtb_phys, dtb_lim);
 
     sprintf(param_buf, "0x%lx", (uintptr_t)initial_boot_params);
     kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
-    sprintf(param_buf, "%lu", (unsigned int)fdt_totalsize(initial_boot_params));
+    sprintf(param_buf, "%u", (unsigned int)fdt_totalsize(initial_boot_params));
     kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
     sprintf(param_buf, "%d", (unsigned int)dt_root_addr_cells);
     kinfo_set_param(kinfo.cmdline, "boot_params_addr_cells", param_buf);

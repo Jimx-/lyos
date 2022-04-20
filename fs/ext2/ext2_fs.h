@@ -1,7 +1,9 @@
 #ifndef _EXT2_FS_H_
 #define _EXT2_FS_H_
 
-#include "libfsdriver/libfsdriver.h"
+#include <lyos/bitmap.h>
+
+#include <libfsdriver/libfsdriver.h>
 
 #define EXT2FS_MAGIC 0xEF53
 

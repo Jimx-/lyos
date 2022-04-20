@@ -10,7 +10,7 @@ endif
 
 ifeq ($(CONFIG_OF),y)
 	SRCS += pci_host_generic.c pci_ecam.c
-	LIBS += of fdt
+	LIBS := of fdt $(LIBS)
 endif
 
 PROG	= pci

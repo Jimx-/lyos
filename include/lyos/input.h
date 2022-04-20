@@ -18,6 +18,8 @@
 
 #include <uapi/linux/input.h>
 
+#include <lyos/bitmap.h>
+
 typedef int input_dev_id_t;
 
 struct input_value {

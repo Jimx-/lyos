@@ -16,14 +16,4 @@
 #ifndef _HWINT_H_
 #define _HWINT_H_
 
-void plic_mask(int hwirq);
-void plic_unmask(int hwirq);
-void plic_ack(int hwirq);
-
-#define hwint_mask(irq)   plic_mask(irq)
-#define hwint_unmask(irq) plic_unmask(irq)
-#define hwint_ack(irq)    plic_ack(irq)
-#define hwint_used(irq)
-#define hwint_not_used(irq)
-
 #endif

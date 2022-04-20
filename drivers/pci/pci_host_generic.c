@@ -8,6 +8,7 @@
 #include "string.h"
 #include <lyos/portio.h>
 #include <lyos/service.h>
+#include <lyos/sysutils.h>
 
 #include <asm/pci.h>
 #include "pci.h"
@@ -26,6 +27,7 @@ static void fdt_parse_pci_interrupt(void* blob, unsigned long offset,
     int addr_cells, intr_cells;
     const u32* prop;
     const u32 *imap, *imap_lim;
+    int nr_imaps = 0;
     int len;
 
     if ((prop = fdt_getprop(blob, offset, "#address-cells", NULL)) != NULL) {
@@ -46,27 +48,30 @@ static void fdt_parse_pci_interrupt(void* blob, unsigned long offset,
             bus->imask[i] = be32_to_cpup(&prop[i]);
     }
 
-    int i = 0;
     while (imap < imap_lim) {
         unsigned long child_intr, child_intr_hi;
-        unsigned int pin, irq_nr;
+        struct of_phandle_args irq;
+        unsigned int pin;
+        int i;
 
         child_intr_hi = of_read_number(imap, 1);
         child_intr = of_read_number(imap + 1, 2);
         imap += addr_cells;
         pin = of_read_number(imap, intr_cells);
         imap += intr_cells;
-        imap++;
-        irq_nr = of_read_number(imap, intr_cells);
-        imap += intr_cells;
 
-        bus->imap[i].child_intr[0] = child_intr_hi & 0xfffffff;
-        bus->imap[i].child_intr[1] = (child_intr >> 32) & 0xffffffff;
-        bus->imap[i].child_intr[2] = child_intr & 0xffffffff;
-        bus->imap[i].child_intr[3] = pin;
+        irq.phandle = of_read_number(imap++, 1);
+        irq.args_count = intr_cells;
+        for (i = 0; i < intr_cells; i++)
+            irq.args[i] = of_read_number(imap++, 1);
 
-        bus->imap[i].irq_nr = irq_nr;
-        i++;
+        bus->imap[nr_imaps].child_intr[0] = child_intr_hi & 0xfffffff;
+        bus->imap[nr_imaps].child_intr[1] = (child_intr >> 32) & 0xffffffff;
+        bus->imap[nr_imaps].child_intr[2] = child_intr & 0xffffffff;
+        bus->imap[nr_imaps].child_intr[3] = pin;
+
+        bus->imap[nr_imaps].irq_nr = irq_of_map(&irq);
+        nr_imaps++;
     }
 }
 

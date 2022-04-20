@@ -18,6 +18,7 @@
 #include <asm/protect.h>
 #include "lyos/const.h"
 #include <kernel/proto.h>
+#include <kernel/irq.h>
 #include <asm/const.h>
 
 /* 8259A interrupt controller ports. */
@@ -33,11 +34,19 @@
 extern void i8259_eoi_master();
 extern void i8259_eoi_slave();
 
+static struct irq_chip i8259A_chip;
+
 /*======================================================================*
                             init_8259A
  *======================================================================*/
 void init_8259A()
 {
+    int irq;
+
+    for (irq = 0; irq < NR_IRQS_LEGACY; irq++) {
+        irq_set_chip(irq, &i8259A_chip);
+    }
+
     out_byte(INT_M_CTL, 0x11); /* Master 8259, ICW1. */
     out_byte(INT_S_CTL, 0x11); /* Slave  8259, ICW1. */
     out_byte(INT_M_CTLMASK,
@@ -57,27 +66,45 @@ void init_8259A()
 
 void disable_8259A()
 {
+    int irq;
+
     out_byte(INT_S_CTLMASK, 0xFF);
     out_byte(INT_M_CTLMASK, 0xFF);
     in_byte(INT_M_CTLMASK);
+
+    for (irq = 0; irq < NR_IRQS_LEGACY; irq++) {
+        irq_set_chip(irq, NULL);
+    }
 }
 
-void i8259_mask(int irq)
+static void mask_i8259_irq(int irq)
 {
     u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;
     out_byte(ctl_mask, in_byte(ctl_mask) | (1 << (irq & 0x7)));
 }
 
-void i8259_unmask(int irq)
+static void unmask_i8259_irq(int irq)
 {
     u32 ctl_mask = irq < 8 ? INT_M_CTLMASK : INT_S_CTLMASK;
     out_byte(ctl_mask, in_byte(ctl_mask) & ~(1 << (irq & 0x7)));
 }
 
-void i8259_eoi(int irq)
+static void i8259_eoi_irq(int irq)
 {
     if (irq < 8)
         i8259_eoi_master();
     else
         i8259_eoi_slave();
 }
+
+static void i8259_mask(struct irq_data* data) { mask_i8259_irq(data->irq); }
+
+static void i8259_unmask(struct irq_data* data) { unmask_i8259_irq(data->irq); }
+
+static void i8259_eoi(struct irq_data* data) { i8259_eoi_irq(data->irq); }
+
+static struct irq_chip i8259A_chip = {
+    .irq_mask = i8259_mask,
+    .irq_unmask = i8259_unmask,
+    .irq_eoi = i8259_eoi,
+};

@@ -14,23 +14,42 @@
     along with Lyos.  If not, see <http://www.gnu.org/licenses/". */
 
 #include <lyos/ipc.h>
-#include "lyos/const.h"
+#include <lyos/const.h>
 #include <lyos/irqctl.h>
+#include <string.h>
 
 int syscall_entry(int syscall_nr, MESSAGE* m);
 
 int irqctl(int request, int irq, int policy, int* hook_id)
 {
     MESSAGE m;
+    struct irqctl_request* req = (struct irqctl_request*)m.MSG_PAYLOAD;
 
-    m.IRQ_REQUEST = request;
-    m.IRQ_IRQ = irq;
-    m.IRQ_POLICY = policy;
-    m.IRQ_HOOK_ID = *hook_id;
+    memset(&m, 0, sizeof(m));
+    req->request = request;
+    req->irq = irq;
+    req->policy = policy;
+    req->hook_id = *hook_id;
 
     int retval = syscall_entry(NR_IRQCTL, &m);
 
-    if (request == IRQ_SETPOLICY) *hook_id = m.IRQ_HOOK_ID;
+    if (request == IRQ_SETPOLICY) *hook_id = req->hook_id;
 
     return retval;
+}
+
+int irqctl_map_fwspec(struct irqctl_fwspec* fwspec)
+{
+    MESSAGE m;
+    struct irqctl_request* req = (struct irqctl_request*)m.MSG_PAYLOAD;
+    int retval;
+
+    memset(&m, 0, sizeof(m));
+    req->request = IRQ_MAP_FWSPEC;
+    req->fwspec = *fwspec;
+
+    retval = syscall_entry(NR_IRQCTL, &m);
+    if (retval > 0) return 0;
+
+    return req->irq;
 }

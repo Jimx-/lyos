@@ -44,7 +44,9 @@
 #define DEFAULT_HZ 100 /* clock freq (software settable on IBM-PC) */
 
 /* Hardware interrupts */
-#define NR_IRQ 64 /* Number of IRQs */
+#define NR_IRQ        64 /* Number of IRQs */
+#define NR_HWIRQ      64
+#define NR_IRQ_DOMAIN 4
 
 #define ANY     (NR_PROCS + 10)
 #define NO_TASK (NR_PROCS + 20)

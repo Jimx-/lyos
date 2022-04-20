@@ -6,8 +6,6 @@
 #include <libfdt/libfdt.h>
 #include "libof.h"
 
-void* fdt_root;
-
 struct phandle_scan_args {
     phandle_t phandle;
     unsigned long offset;
@@ -47,16 +45,20 @@ static int fdt_scan_phandle(void* blob, unsigned long offset, const char* name,
     return 1;
 }
 
-unsigned long of_find_node_by_phandle(phandle_t handle)
+int of_find_node_by_phandle(const void* blob, phandle_t handle,
+                            unsigned long* offp)
 {
     struct phandle_scan_args psa;
 
     psa.phandle = handle;
     psa.offset = -1;
 
-    of_scan_fdt(fdt_scan_phandle, &psa, fdt_root);
+    of_scan_fdt(fdt_scan_phandle, &psa, (void*)blob);
 
-    return psa.offset;
+    if (psa.offset == -1) return -EINVAL;
+
+    *offp = psa.offset;
+    return 0;
 }
 
 int of_phandle_iterator_init(struct of_phandle_iterator* it, const void* blob,
@@ -87,6 +89,7 @@ int of_phandle_iterator_init(struct of_phandle_iterator* it, const void* blob,
 int of_phandle_iterator_next(struct of_phandle_iterator* it)
 {
     uint32_t count = 0;
+    int ret;
 
     if (it->offset != -1) {
         it->offset = -1;
@@ -99,10 +102,11 @@ int of_phandle_iterator_next(struct of_phandle_iterator* it)
     it->phandle = be32_to_cpup(it->cur++);
 
     if (it->phandle) {
-        it->offset = of_find_node_by_phandle(it->phandle);
+        it->offset = -1;
+        ret = of_find_node_by_phandle(it->blob, it->phandle, &it->offset);
 
         if (it->cells_name) {
-            if (it->offset == -1) return -EINVAL;
+            if (ret) return -EINVAL;
 
             const uint32_t* cell_prop =
                 fdt_getprop(it->blob, it->offset, it->cells_name, NULL);
@@ -141,49 +145,6 @@ int of_phandle_iterator_args(struct of_phandle_iterator* it, uint32_t* args,
         args[i] = be32_to_cpup(it->cur++);
 
     return count;
-}
-
-int of_irq_count(const void* blob, unsigned long offset)
-{
-    struct of_phandle_args irq;
-    int nr = 0;
-
-    while (of_irq_parse_one(blob, offset, nr, &irq) == 0)
-        nr++;
-
-    return nr;
-}
-
-int of_irq_parse_one(const void* blob, unsigned long offset, int index,
-                     struct of_phandle_args* out_irq)
-{
-    const char* list_name = "interrupts-extended";
-    const char* cells_name = "#interrupt-cells";
-    struct of_phandle_iterator it;
-    int retval, cur_index = 0;
-
-    if (index < 0) return -EINVAL;
-
-    of_for_each_phandle(&it, retval, blob, offset, list_name, cells_name, -1)
-    {
-        retval = -ENOENT;
-        if (cur_index == index) {
-            if (!it.phandle) return retval;
-
-            if (out_irq) {
-                int c = of_phandle_iterator_args(&it, out_irq->args,
-                                                 MAX_PHANDLE_ARGS);
-                out_irq->offset = it.offset;
-                out_irq->args_count = c;
-            }
-
-            return 0;
-        }
-
-        cur_index++;
-    }
-
-    return retval;
 }
 
 static int of_fdt_is_compatible(const void* blob, unsigned long node,
