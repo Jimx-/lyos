@@ -20,7 +20,6 @@
 #include <kernel/proto.h>
 #include <asm/page.h>
 #include <asm/proto.h>
-#include <asm/hwint.h>
 #include <kernel/irq.h>
 #include <lyos/bitmap.h>
 #include <lyos/spinlock.h>

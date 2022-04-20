@@ -27,7 +27,6 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include <asm/hwint.h>
 #include <lyos/cpufeature.h>
 #include <lyos/time.h>
 #include <asm/hpet.h>
