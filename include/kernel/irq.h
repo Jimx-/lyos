@@ -5,6 +5,7 @@
 
 struct irq_chip;
 struct irq_domain;
+struct irq_desc;
 
 enum {
     IRQ_TYPE_NONE = 0x00000000,
@@ -75,11 +76,20 @@ struct irq_domain_ops {
                      unsigned int* out_hwirq, unsigned int* out_type);
 };
 
+typedef void (*irq_flow_handler_t)(struct irq_desc* desc);
+
+struct irq_desc {
+    struct irq_data irq_data;
+    irq_flow_handler_t handle_irq;
+    irq_hook_t* handler;
+    unsigned long active_ids;
+    spinlock_t lock;
+};
+
 extern irq_hook_t irq_hooks[];
 
 /* interrupt.c */
 void init_irq(void);
-void irq_handle(int irq);
 void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler);
 void rm_irq_handler(irq_hook_t* hook);
 int disable_irq(irq_hook_t* hook);
@@ -87,11 +97,19 @@ void enable_irq(irq_hook_t* hook);
 
 int put_local_timer_handler(irq_handler_t handler);
 
+void handle_bad_irq(struct irq_desc* desc);
+void handle_simple_irq(struct irq_desc* desc);
+
 int irq_set_chip(unsigned int irq, const struct irq_chip* chip);
+void irq_set_handler(unsigned int irq, irq_flow_handler_t handler,
+                     int is_chained);
 
 int irq_domain_set_hwirq_and_chip(struct irq_domain* domain, unsigned int virq,
                                   unsigned int hwirq,
                                   const struct irq_chip* chip, void* chip_data);
+void irq_domain_set_info(struct irq_domain* domain, unsigned int virq,
+                         unsigned int hwirq, const struct irq_chip* chip,
+                         void* chip_data, irq_flow_handler_t handler);
 
 unsigned int irq_find_mapping(struct irq_domain* domain, unsigned int hwirq);
 
@@ -120,6 +138,7 @@ int irq_domain_translate_twocell(struct irq_domain* d,
                                  unsigned int* out_hwirq,
                                  unsigned int* out_type);
 
-void handle_domain_irq(struct irq_domain* domain, unsigned int hwirq);
+void generic_handle_domain_irq(struct irq_domain* domain, unsigned int hwirq);
+void generic_handle_irq(unsigned int irq);
 
 #endif

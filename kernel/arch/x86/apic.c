@@ -993,6 +993,7 @@ static int ioapic_irqdomain_alloc(struct irq_domain* domain, unsigned int virq,
     irq_data->hwirq = virq - io_apics[ioa].gsi_base;
     irq_data->chip = &ioapic_chip;
     irq_data->chip_data = &io_apic_irq[virq];
+    irq_set_handler(virq, handle_simple_irq, FALSE);
 
     return 0;
 }

@@ -216,9 +216,8 @@ static int plic_irq_domain_alloc(struct irq_domain* domain, unsigned int virq,
     if (ret) return ret;
 
     for (i = 0; i < nr_irqs; i++) {
-        ret = irq_domain_set_hwirq_and_chip(domain, virq + i, hwirq + i,
-                                            &plic_chip, domain->host_data);
-        if (ret) return ret;
+        irq_domain_set_info(domain, virq + i, hwirq + i, &plic_chip,
+                            domain->host_data, handle_simple_irq);
     }
 
     return 0;
@@ -237,7 +236,7 @@ void plic_handle_irq(void)
 
     csr_clear(sie, SIE_SEIE);
     while ((hwirq = readl(claim))) {
-        handle_domain_irq(ctx->plic->irqdomain, hwirq);
+        generic_handle_domain_irq(ctx->plic->irqdomain, hwirq);
     }
 
     csr_set(sie, SIE_SEIE);

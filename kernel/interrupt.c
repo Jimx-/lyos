@@ -24,13 +24,6 @@
 #include <lyos/bitmap.h>
 #include <lyos/spinlock.h>
 
-struct irq_desc {
-    struct irq_data irq_data;
-    irq_hook_t* handler;
-    unsigned long active_ids;
-    spinlock_t lock;
-};
-
 static struct irq_desc irq_desc[NR_IRQ];
 
 static spinlock_t irq_domain_lock;
@@ -63,6 +56,7 @@ static inline struct irq_desc* irq_data_to_desc(struct irq_data* irq_data)
 
 static void desc_set_defaults(unsigned int irq, struct irq_desc* desc)
 {
+    desc->handle_irq = handle_bad_irq;
     desc->irq_data.irq = irq;
     desc->irq_data.chip = &no_irq_chip;
     desc->irq_data.chip_data = NULL;
@@ -78,6 +72,20 @@ int irq_set_chip(unsigned int irq, const struct irq_chip* chip)
     spinlock_unlock(&desc->lock);
 
     return 0;
+}
+
+void irq_set_handler(unsigned int irq, irq_flow_handler_t handler,
+                     int is_chained)
+{
+    struct irq_desc* desc = irq_to_desc(irq);
+
+    if (!desc) return;
+    spinlock_lock(&desc->lock);
+
+    if (!handler) handler = handle_bad_irq;
+    desc->handle_irq = handler;
+
+    spinlock_unlock(&desc->lock);
 }
 
 /*****************************************************************************
@@ -193,9 +201,10 @@ void rm_irq_handler(irq_hook_t* hook)
     spinlock_unlock(&desc->lock);
 }
 
-void irq_handle(int irq)
+void handle_bad_irq(struct irq_desc* desc) {}
+
+void handle_simple_irq(struct irq_desc* desc)
 {
-    struct irq_desc* desc = irq_to_desc(irq);
     irq_hook_t* hook;
 
     spinlock_lock(&desc->lock);
@@ -221,11 +230,18 @@ void irq_handle(int irq)
     spinlock_unlock(&desc->lock);
 }
 
-void handle_domain_irq(struct irq_domain* domain, unsigned int hwirq)
+static void handle_irq_desc(struct irq_desc* desc)
 {
-    unsigned int virq;
-    if (irq_resolve_mapping(domain, hwirq, &virq)) irq_handle(virq);
+    if (!desc) return;
+    desc->handle_irq(desc);
 }
+
+void generic_handle_domain_irq(struct irq_domain* domain, unsigned int hwirq)
+{
+    handle_irq_desc(irq_resolve_mapping(domain, hwirq, NULL));
+}
+
+void generic_handle_irq(unsigned int irq) { handle_irq_desc(irq_to_desc(irq)); }
 
 void enable_irq(irq_hook_t* hook)
 {
@@ -270,6 +286,14 @@ int irq_domain_set_hwirq_and_chip(struct irq_domain* domain, unsigned int virq,
     irq_data->chip_data = chip_data;
 
     return 0;
+}
+
+void irq_domain_set_info(struct irq_domain* domain, unsigned int virq,
+                         unsigned int hwirq, const struct irq_chip* chip,
+                         void* chip_data, irq_flow_handler_t handler)
+{
+    irq_domain_set_hwirq_and_chip(domain, virq, hwirq, chip, chip_data);
+    irq_set_handler(virq, handler, FALSE);
 }
 
 static struct irq_domain* alloc_irq_domain(unsigned int fwid)

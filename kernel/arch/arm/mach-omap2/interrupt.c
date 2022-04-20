@@ -31,6 +31,6 @@ void omap3_handle_irq(void)
 {
     int irq = mmio_read(intr_base_addr + OMAP3_INTCPS_SIR_IRQ) &
               OMAP3_INTR_ACTIVEIRQ_MASK;
-    irq_handle(irq);
+    generic_handle_irq(irq);
     mmio_write(intr_base_addr + OMAP3_INTCPS_CONTROL, OMAP3_INTR_NEWIRQAGR);
 }

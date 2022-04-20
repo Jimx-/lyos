@@ -17,7 +17,7 @@
     call stop_context
 
     mov $\number, %rdi
-    call irq_handle
+    call generic_handle_irq
 
     jmp switch_to_user
 
@@ -40,7 +40,7 @@
 
     call idle_stop
     mov $\number, %rdi
-    call irq_handle
+    call generic_handle_irq
 
     CLEAR_IF 17*8(%rsp)
 

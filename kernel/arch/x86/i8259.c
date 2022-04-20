@@ -45,6 +45,7 @@ void init_8259A()
 
     for (irq = 0; irq < NR_IRQS_LEGACY; irq++) {
         irq_set_chip(irq, &i8259A_chip);
+        irq_set_handler(irq, handle_simple_irq, FALSE);
     }
 
     out_byte(INT_M_CTL, 0x11); /* Master 8259, ICW1. */
@@ -74,6 +75,7 @@ void disable_8259A()
 
     for (irq = 0; irq < NR_IRQS_LEGACY; irq++) {
         irq_set_chip(irq, NULL);
+        irq_set_handler(irq, NULL, FALSE);
     }
 }
 

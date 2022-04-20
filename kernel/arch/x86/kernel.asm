@@ -18,7 +18,7 @@
 extern	cstart
 extern	kernel_main
 extern  switch_to_user
-extern  irq_handle
+extern  generic_handle_irq
 extern	exception_handler
 extern	spurious_irq
 extern  idle_stop
@@ -168,14 +168,14 @@ paging_enabled:
     call    stop_context
     pop     esi
     push	%1						; `.
-    call	irq_handle	;  | Call the interrupt handler
+    call	generic_handle_irq	;  | Call the interrupt handler
     pop	ecx							; /
     jmp switch_to_user
 .1:
     pushad
     call idle_stop
     push	%1			; `.
-    call	irq_handle	;  | 中断处理程序
+    call	generic_handle_irq	;  | 中断处理程序
     pop	ecx			; /
     CLEAR_IF	dword [esp + 40]
     popad
@@ -224,14 +224,14 @@ hwint07:		; Interrupt routine for irq 7 (printer)
     call    stop_context
     pop     esi
     push	%1			; `.
-    call	irq_handle	;  | 中断处理程序
+    call	generic_handle_irq	;  | 中断处理程序
     pop	ecx			; /
     jmp switch_to_user
 .1:
     pushad
     call idle_stop
     push	%1			; `.
-    call	irq_handle	;  | 中断处理程序
+    call	generic_handle_irq	;  | 中断处理程序
     pop	ecx			; /
     CLEAR_IF	dword [esp + 40]
     popad
