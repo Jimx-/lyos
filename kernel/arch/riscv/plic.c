@@ -158,9 +158,9 @@ static int fdt_scan_plic(void* blob, unsigned long offset, const char* name,
 {
     struct plic* plic;
     const char* type = fdt_getprop(blob, offset, "compatible", NULL);
-    unsigned long base, size;
-    const u32 *reg, *prop;
-    int len;
+    phys_bytes base, size;
+    const u32* prop;
+    int ret;
 
     if (!type || (strcmp(type, "sifive,plic-1.0.0") != 0 &&
                   strcmp(type, "riscv,plic0") != 0))
@@ -168,12 +168,8 @@ static int fdt_scan_plic(void* blob, unsigned long offset, const char* name,
 
     plic = &plics[nr_plics];
 
-    reg = fdt_getprop(blob, offset, "reg", NULL);
-    if (!reg) return 0;
-
-    base = of_read_number(reg, dt_root_addr_cells);
-    reg += dt_root_addr_cells;
-    size = of_read_number(reg, dt_root_size_cells);
+    ret = of_address_parse_one(blob, offset, 0, &base, &size);
+    if (ret < 0) return 0;
 
     prop = fdt_getprop(blob, offset, "phandle", NULL);
     plic->phandle = of_read_number(prop, 1);

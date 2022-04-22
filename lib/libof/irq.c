@@ -15,7 +15,11 @@ int of_irq_find_parent(const void* blob, unsigned long offset,
     do {
         prop = fdt_getprop(blob, offset, "interrupt-parent", NULL);
         if (!prop) {
-            ret = -EINVAL;
+            int parent_offset = fdt_parent_offset(blob, offset);
+            if (parent_offset < 0)
+                ret = -ENOENT;
+            else
+                offset = parent_offset;
         } else {
             parent = of_read_number(prop, 1);
             ret = of_find_node_by_phandle(blob, parent, &offset);

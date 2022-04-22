@@ -42,7 +42,7 @@ u64 boot_args[4] __attribute__((section("data..cacheline_aligned")));
 
 phys_bytes __fdt_pointer;
 static phys_bytes phys_initrd_start, phys_initrd_size;
-int dt_root_addr_cells, dt_root_size_cells;
+static int dt_root_addr_cells, dt_root_size_cells;
 
 extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 

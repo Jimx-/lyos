@@ -4,6 +4,16 @@
 #include <lyos/swab.h>
 
 static inline u32 __be32_to_cpup(const __be32* p) { return (u32)__swab32p(p); }
+static inline __be32 __cpu_to_be32p(const u32* p)
+{
+    return (__be32)__swab32p(p);
+}
+
+static inline u32 __be32_to_cpu(const __be32 p) { return (u32)__swab32p(&p); }
+static inline __be32 __cpu_to_be32(const u32 p)
+{
+    return (__be32)__swab32p(&p);
+}
 
 #define __le16_to_cpu(x) ((__u16)(__le16)(x))
 #define __le32_to_cpu(x) ((__u32)(__le32)(x))

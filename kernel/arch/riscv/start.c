@@ -47,7 +47,7 @@ extern char _text[], _etext[], _data[], _edata[], _bss[], _ebss[], _end[];
 extern char k_stacks_start;
 void* k_stacks;
 
-int dt_root_addr_cells, dt_root_size_cells;
+static int dt_root_addr_cells, dt_root_size_cells;
 
 static char* env_get(const char* name);
 static int kinfo_set_param(char* buf, char* name, char* value);
@@ -229,10 +229,6 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
     sprintf(param_buf, "%u", (unsigned int)fdt_totalsize(initial_boot_params));
     kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
-    sprintf(param_buf, "%d", (unsigned int)dt_root_addr_cells);
-    kinfo_set_param(kinfo.cmdline, "boot_params_addr_cells", param_buf);
-    sprintf(param_buf, "%d", (unsigned int)dt_root_size_cells);
-    kinfo_set_param(kinfo.cmdline, "boot_params_size_cells", param_buf);
 }
 
 static char* get_value(const char* param, const char* key)

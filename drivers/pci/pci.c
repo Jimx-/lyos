@@ -51,8 +51,6 @@ static bus_type_id_t pci_bus_id;
 
 #if CONFIG_OF
 void* boot_params;
-int dt_root_addr_cells;
-int dt_root_size_cells;
 #endif
 
 static int get_busind(int busnr)
@@ -130,16 +128,11 @@ int pci_init()
 
     env_get_long("boot_params_base", &dtb_base, "u", 0, -1, -1);
     env_get_long("boot_params_len", &dtb_len, "d", 0, -1, -1);
-    env_get_long("boot_params_addr_cells", &root_addr_cells, "d", 0, -1, -1);
-    env_get_long("boot_params_size_cells", &root_size_cells, "d", 0, -1, -1);
 
     boot_params = malloc(dtb_len);
     if ((retval = data_copy(SELF, boot_params, KERNEL, (void*)dtb_base,
                             dtb_len)) != 0)
         panic("pci: cannot get kernel boot params");
-
-    dt_root_addr_cells = root_addr_cells;
-    dt_root_size_cells = root_size_cells;
 
     pci_host_generic_init();
 #endif

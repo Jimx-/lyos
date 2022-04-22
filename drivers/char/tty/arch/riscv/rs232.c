@@ -150,20 +150,14 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
 {
 
     struct uart_scan_data* usd = arg;
-    const uint32_t* reg;
-    int len;
+    phys_bytes base, size;
+    int ret;
 
     if (!arg || strlen(name) < 4 || memcmp(name, "uart", 4) != 0) return 0;
     if (usd->line-- > 0) return 0;
 
-    reg = fdt_getprop(blob, offset, "reg", &len);
-    if (!reg) return 0;
-
-    uint64_t base, size;
-    base = of_read_number(reg, dt_root_addr_cells);
-    reg += dt_root_addr_cells;
-    size = of_read_number(reg, dt_root_size_cells);
-    reg += dt_root_size_cells;
+    ret = of_address_parse_one(blob, offset, 0, &base, &size);
+    if (ret < 0) return 0;
 
     usd->interrupt = irq_of_parse_and_map(blob, offset, 0);
     if (!usd->interrupt) return 0;

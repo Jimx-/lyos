@@ -189,19 +189,13 @@ static void init_tty()
 
 #if CONFIG_OF
     unsigned long dtb_base, dtb_len;
-    long root_addr_cells, root_size_cells;
 
     env_get_long("boot_params_base", &dtb_base, "u", 0, -1, -1);
     env_get_long("boot_params_len", &dtb_len, "d", 0, -1, -1);
-    env_get_long("boot_params_addr_cells", &root_addr_cells, "d", 0, -1, -1);
-    env_get_long("boot_params_size_cells", &root_size_cells, "d", 0, -1, -1);
 
     boot_params = malloc(dtb_len);
     if ((retval = data_copy(SELF, boot_params, KERNEL, dtb_base, dtb_len)) != 0)
         panic("tty: cannot get kernel boot params");
-
-    dt_root_addr_cells = root_addr_cells;
-    dt_root_size_cells = root_size_cells;
 #endif
 
     retval = dm_class_register("tty", &tty_subsys_id);

@@ -4,6 +4,9 @@
 #include <lyos/types.h>
 #include <asm/byteorder.h>
 
+#define OF_BAD_ADDR       ((u64)-1)
+#define OF_MAX_ADDR_CELLS 4
+
 typedef u32 phandle_t;
 
 #define MAX_PHANDLE_ARGS 16
@@ -38,6 +41,9 @@ static inline u64 of_read_number(const __be32* cell, int size)
     return r;
 }
 
+void of_n_addr_size_cells(const void* blob, unsigned long offset, int* addrc,
+                          int* sizec);
+
 int of_scan_fdt(int (*scan)(void*, unsigned long, const char*, int, void*),
                 void* arg, void* blob);
 
@@ -59,6 +65,11 @@ int of_phandle_iterator_args(struct of_phandle_iterator* it, uint32_t* args,
          err = of_phandle_iterator_next(it);                              \
          err == 0; err = of_phandle_iterator_next(it))
 
+/* Addresses */
+int of_address_parse_one(const void* blob, unsigned long offset, int index,
+                         phys_bytes* basep, phys_bytes* sizep);
+
+/* IRQ */
 int of_irq_count(const void* blob, unsigned long offset);
 int of_irq_parse_one(const void* blob, unsigned long offset, int index,
                      struct of_phandle_args* out_irq);

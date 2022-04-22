@@ -112,8 +112,3 @@ extern int kprofiling;
 EXTERN struct kprof_info kprof_info;
 
 #endif
-
-#if CONFIG_OF
-extern int dt_root_addr_cells;
-extern int dt_root_size_cells;
-#endif

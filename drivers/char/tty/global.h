@@ -37,8 +37,6 @@ EXTERN int x_resolution, y_resolution;
 
 #if CONFIG_OF
 EXTERN void* boot_params;
-EXTERN int dt_root_addr_cells;
-EXTERN int dt_root_size_cells;
 #endif
 
 #endif

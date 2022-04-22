@@ -18,8 +18,6 @@
 #include <libof/libof.h>
 
 extern void* boot_params;
-extern int dt_root_addr_cells;
-extern int dt_root_size_cells;
 
 static void fdt_parse_pci_interrupt(void* blob, unsigned long offset,
                                     struct pcibus* bus)
@@ -81,20 +79,15 @@ static int fdt_scan_pci_host(void* blob, unsigned long offset, const char* name,
     const char* type = fdt_getprop(blob, offset, "device_type", NULL);
     struct pcibus* bus;
     struct pci_config_window* cfg;
-    const u32 *reg, *ranges, *ranges_lim;
+    const u32 *ranges, *ranges_lim;
     int len;
-    u64 base, size;
+    phys_bytes base, size;
     u16 did, vid;
+    int na, ns;
 
     if (!type || strcmp(type, "pci") != 0) return 0;
 
-    reg = fdt_getprop(blob, offset, "reg", &len);
-    if (!reg) return 0;
-
-    base = of_read_number(reg, dt_root_addr_cells);
-    reg += dt_root_addr_cells;
-    size = of_read_number(reg, dt_root_size_cells);
-    reg += dt_root_size_cells;
+    if (of_address_parse_one(blob, offset, 0, &base, &size) < 0) return 0;
 
     printl("pci: ECAM: [mem 0x%016lx-0x%016lx]\r\n", base, base + size - 1);
 
@@ -115,6 +108,8 @@ static int fdt_scan_pci_host(void* blob, unsigned long offset, const char* name,
         return 0;
     }
 
+    of_n_addr_size_cells(blob, offset, &na, &ns);
+
     ranges = fdt_getprop(blob, offset, "ranges", &len);
     if (!ranges) return 0;
     ranges_lim = (u32*)((char*)ranges + len);
@@ -130,10 +125,10 @@ static int fdt_scan_pci_host(void* blob, unsigned long offset, const char* name,
         child_addr_hi = of_read_number(ranges, 1);
         child_addr = of_read_number(ranges + 1, 2);
         ranges += 3;
-        parent_addr = of_read_number(ranges, dt_root_addr_cells);
-        ranges += dt_root_addr_cells;
-        range_size = of_read_number(ranges, dt_root_size_cells);
-        ranges += dt_root_size_cells;
+        parent_addr = of_read_number(ranges, na);
+        ranges += na;
+        range_size = of_read_number(ranges, ns);
+        ranges += ns;
 
         switch ((child_addr_hi >> 24) & 3) {
         case 1:
