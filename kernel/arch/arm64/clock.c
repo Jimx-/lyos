@@ -29,18 +29,6 @@
 
 int arch_init_time() { return 0; }
 
-int init_local_timer(int freq) { return 0; }
-
-void setup_local_timer_one_shot(void) {}
-
-void setup_local_timer_periodic(void) {}
-
-void restart_local_timer() {}
-
-void stop_local_timer() {}
-
-int put_local_timer_handler(irq_handler_t handler) { return 0; }
-
 void arch_stop_context(struct proc* p, u64 delta) {}
 
 void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]) {}

@@ -28,6 +28,12 @@ typedef unsigned long bitchunk_t;
 #define SET_BIT(map, bit)   (MAP_CHUNK(map, bit) |= (1UL << CHUNK_OFFSET(bit)))
 #define UNSET_BIT(map, bit) (MAP_CHUNK(map, bit) &= ~(1UL << CHUNK_OFFSET(bit)))
 
+#define BITMAP_FIRST_WORD_MASK(start) (~0UL << ((start) & (BITCHUNK_BITS - 1)))
+#define BITMAP_LAST_WORD_MASK(nbits)  (~0UL >> (-(nbits) & (BITCHUNK_BITS - 1)))
+
+int bitmap_equal(const unsigned long* bitmap1, const unsigned long* bitmap2,
+                 unsigned int bits);
+
 unsigned long bitmap_find_next_zero_area(bitchunk_t* map, unsigned long size,
                                          unsigned long start, unsigned int nr);
 

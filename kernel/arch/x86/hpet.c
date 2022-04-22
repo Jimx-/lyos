@@ -60,7 +60,7 @@ int init_hpet()
     do_div(freq, hpet_period);
     hpet_freq = freq;
 
-    register_clocksource_hz(&hpet_clocksource, (u32)hpet_freq);
+    clocksource_register_hz(&hpet_clocksource, (u32)hpet_freq);
     hpet_enabled = 1;
 
     return hpet_enabled;

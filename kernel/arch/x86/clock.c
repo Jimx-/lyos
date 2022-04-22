@@ -30,6 +30,10 @@
 #include <asm/div64.h>
 #include <lyos/kvm_para.h>
 #include <kernel/irq.h>
+#include <kernel/clockevent.h>
+
+struct clock_event_device* global_clock_event;
+static struct clock_event_device i8253_clockevent;
 
 static irq_hook_t timer_irq_hook;
 
@@ -55,96 +59,46 @@ int arch_init_time()
  * <Ring 0> Initialize 8253/8254 PIT (Programmable Interval Timer).
  *
  *****************************************************************************/
-int init_8253_timer(int freq)
+int init_8253_timer(void)
 {
-    /* 初始化 8253 PIT */
-    out_byte(TIMER_MODE, RATE_GENERATOR);
-    out_byte(TIMER0, (u8)(TIMER_FREQ / freq));
-    out_byte(TIMER0, (u8)((TIMER_FREQ / freq) >> 8));
+    i8253_clockevent.cpumask = cpumask_of(bsp_cpu_id);
+    clockevents_config_and_register(&i8253_clockevent, TIMER_FREQ, 0xF, 0x7FFF);
+
+    global_clock_event = &i8253_clockevent;
 
     return 0;
 }
 
-void stop_8253_timer()
+static int set_8253_periodic(struct clock_event_device* evt)
+{
+    out_byte(TIMER_MODE, RATE_GENERATOR);
+    out_byte(TIMER0, (u8)(TIMER_FREQ / system_hz));
+    out_byte(TIMER0, (u8)((TIMER_FREQ / system_hz) >> 8));
+    return 0;
+}
+
+static int set_8253_next_event(struct clock_event_device* evt,
+                               unsigned long delta)
+{
+    out_byte(TIMER_MODE, RATE_GENERATOR);
+    out_byte(TIMER0, (u8)(delta & 0xff));
+    out_byte(TIMER0, (u8)(delta >> 8));
+    return 0;
+}
+
+static int stop_8253_timer(struct clock_event_device* evt)
 {
     out_byte(TIMER_MODE, 0x36);
     out_byte(TIMER0, 0);
     out_byte(TIMER0, 0);
-}
-
-int init_local_timer(int freq)
-{
-#ifdef CONFIG_KVM_GUEST
-    kvm_register_clock();
-#endif
-
-#if CONFIG_X86_LOCAL_APIC
-    if (lapic_addr) {
-        tsc_per_tick[cpuid] = cpu_hz[cpuid];
-        do_div(tsc_per_tick[cpuid], (u64)system_hz);
-        setup_local_timer_one_shot();
-    } else
-#endif
-    {
-        init_8253_timer(freq);
-    }
-
     return 0;
 }
 
-void setup_local_timer_one_shot(void)
-{
-#ifdef CONFIG_X86_LOCAL_APIC
-    if (lapic_addr) {
-        lapic_setup_timer_one_shot();
-    }
-#endif
-}
-
-void setup_local_timer_periodic(void)
-{
-#ifdef CONFIG_X86_LOCAL_APIC
-    if (lapic_addr) {
-        lapic_setup_timer_periodic();
-    }
-#endif
-}
-
-void restart_local_timer()
-{
-#if CONFIG_X86_LOCAL_APIC
-    if (lapic_addr) {
-        lapic_restart_timer();
-    }
-#endif
-}
-
-void stop_local_timer()
-{
-#if CONFIG_X86_LOCAL_APIC
-    if (lapic_addr) {
-        lapic_stop_timer();
-        /* apic_eoi(); */
-    } else
-#endif
-    {
-        stop_8253_timer();
-    }
-}
-
-int put_local_timer_handler(irq_handler_t handler)
-{
-#if CONFIG_X86_LOCAL_APIC
-    if (lapic_addr) {
-
-    } else
-#endif
-    {
-        put_irq_handler(CLOCK_IRQ, &timer_irq_hook, handler);
-    }
-
-    return 0;
-}
+static struct clock_event_device i8253_clockevent = {
+    .set_state_periodic = set_8253_periodic,
+    .set_state_shutdown = stop_8253_timer,
+    .set_next_event = set_8253_next_event,
+};
 
 void arch_stop_context(struct proc* p, u64 delta)
 {

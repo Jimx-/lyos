@@ -74,6 +74,11 @@ int init_bsp_timer(int freq);
 int init_ap_timer(int freq);
 void stop_context(struct proc* p);
 void set_boottime(time_t time);
+int init_local_timer(int freq);
+void setup_local_timer_one_shot(void);
+void setup_local_timer_periodic(void);
+void restart_local_timer(void);
+void stop_local_timer(void);
 
 /* proc.c */
 void init_proc();

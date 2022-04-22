@@ -70,10 +70,10 @@ apic_spurious_intr:
 apic_error_intr:
     lapic_int apic_error_int_handler
 
-    .global apic_timer_int_handler
+    .global apic_timer_intr
     .align 16
-apic_timer_int_handler:
-    lapic_int clock_handler
+apic_timer_intr:
+    lapic_int apic_timer_int_handler
 
     .macro apic_hwint label, number
     .global apic_hwint\label

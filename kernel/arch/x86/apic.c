@@ -20,6 +20,7 @@
 #include <kernel/global.h>
 #include <kernel/proto.h>
 #include <errno.h>
+#include <string.h>
 #include "acpi.h"
 #include "apic.h"
 #include <asm/proto.h>
@@ -33,6 +34,7 @@
 #include <asm/div64.h>
 #include <asm/cpu_info.h>
 #include <kernel/irq.h>
+#include <kernel/clockevent.h>
 
 #define APIC_ENABLE         0x100
 #define APIC_FOCUS_DISABLED (1 << 9)
@@ -105,6 +107,9 @@ extern u8 cpuid2apicid[CONFIG_SMP_MAX_CPUS];
 extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
 static u32 lapic_bus_freq[CONFIG_SMP_MAX_CPUS];
+
+static struct clock_event_device lapic_clockevent;
+static DEFINE_CPULOCAL(struct clock_event_device, lapic_events);
 
 extern struct apic x2apic_phys;
 
@@ -237,7 +242,8 @@ static int apic_calibrate(unsigned cpu)
 
         while ((in_byte(0x61) & 0x20) == 0) {
         }
-        stop_8253_timer();
+
+        out_byte(TIMER_MODE, 0x36);
     }
 
     if (hpet) hpet1 = hpet_readl(HPET_COUNTER);
@@ -341,6 +347,17 @@ int lapic_enable(unsigned cpu)
     return 1;
 }
 
+void setup_apic_timer(void)
+{
+    struct clock_event_device* levt = get_cpulocal_var_ptr(lapic_events);
+
+    memcpy(levt, &lapic_clockevent, sizeof(*levt));
+    levt->cpumask = cpumask_of(cpuid);
+
+    clockevents_config_and_register(levt, lapic_bus_freq[cpuid], 0xF,
+                                    0x7FFFFFFF);
+}
+
 static void lapic_setup_timer_lvtt(int one_shot, int irqen)
 {
     u32 lvtt = APIC_TIMER_INT_VECTOR;
@@ -364,37 +381,57 @@ static inline void lapic_setup_timer_one_shot_periodic(int one_shot)
     lapic_setup_timer_lvtt(one_shot, TRUE);
 }
 
-void lapic_setup_timer_one_shot(void)
-{
-    lapic_setup_timer_one_shot_periodic(TRUE);
-}
-
-void lapic_setup_timer_periodic(void)
-{
-    lapic_setup_timer_one_shot_periodic(FALSE);
-}
-
-void lapic_set_timer_one_shot(const u32 usec)
-{
-    u32 ticks_per_us;
-
-    ticks_per_us = lapic_bus_freq[cpuid] / 1000000;
-
-    lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
-}
-
-void lapic_restart_timer()
-{
-    if (lapic_read(LAPIC_TIMER_CCR) == 0)
-        lapic_set_timer_one_shot(1000000 / system_hz);
-}
-
 void lapic_stop_timer()
 {
     u32 lvtt;
     lvtt = lapic_read(LAPIC_LVTTR);
     lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
     lapic_write(LAPIC_TIMER_ICR, 0);
+}
+
+static int lapic_timer_next_event(struct clock_event_device* evt,
+                                  unsigned long delta)
+{
+    if (lapic_read(LAPIC_TIMER_CCR) == 0) lapic_write(LAPIC_TIMER_ICR, delta);
+    return 0;
+}
+
+static int lapic_timer_set_periodic(struct clock_event_device* evt)
+{
+    lapic_setup_timer_one_shot_periodic(FALSE);
+    return 0;
+}
+
+static int lapic_timer_set_oneshot(struct clock_event_device* evt)
+{
+    lapic_setup_timer_one_shot_periodic(TRUE);
+    return 0;
+}
+
+static int lapic_timer_shutdown(struct clock_event_device* evt)
+{
+    u32 lvtt;
+    lvtt = lapic_read(LAPIC_LVTTR);
+    lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
+    lapic_write(LAPIC_TIMER_ICR, 0);
+    return 0;
+}
+
+static struct clock_event_device lapic_clockevent = {
+    .set_state_shutdown = lapic_timer_shutdown,
+    .set_state_periodic = lapic_timer_set_periodic,
+    .set_state_oneshot = lapic_timer_set_oneshot,
+    .set_state_oneshot_stopped = lapic_timer_shutdown,
+    .set_next_event = lapic_timer_next_event,
+    .rating = 100,
+};
+
+void lapic_set_timer_one_shot(const u32 usec)
+{
+    u32 ticks_per_us;
+
+    ticks_per_us = lapic_bus_freq[cpuid] / 1000000;
+    lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }
 
 void lapic_microsec_sleep(unsigned usec)
@@ -637,6 +674,18 @@ int detect_ioapics(void)
     return nr_ioapics;
 }
 
+void apic_timer_int_handler()
+{
+    struct clock_event_device* evt = get_cpulocal_var_ptr(lapic_events);
+
+    if (!evt->event_handler) {
+        lapic_timer_shutdown(evt);
+        return;
+    }
+
+    evt->event_handler(evt);
+}
+
 void apic_spurious_int_handler() {}
 void apic_error_int_handler() {}
 
@@ -704,7 +753,7 @@ void apic_hwint60();
 void apic_hwint61();
 void apic_hwint62();
 void apic_hwint63();
-void apic_timer_int_handler();
+void apic_timer_intr();
 void apic_spurious_intr();
 void apic_error_intr();
 
@@ -858,8 +907,8 @@ void apic_init_idt(int reset)
 
     if (apicid() == bsp_lapic_id) {
         printk("APIC: initiating LAPIC timer handler\n");
-        init_idt_desc(APIC_TIMER_INT_VECTOR, DA_386IGate,
-                      apic_timer_int_handler, PRIVILEGE_KRNL);
+        init_idt_desc(APIC_TIMER_INT_VECTOR, DA_386IGate, apic_timer_intr,
+                      PRIVILEGE_KRNL);
     }
 }
 

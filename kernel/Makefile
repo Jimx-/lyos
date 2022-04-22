@@ -9,7 +9,7 @@ LIB		= $(LIBOUTDIR)/libexec.a $(LIBOUTDIR)/liblyos.a
 
 KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o clock.o global.o proc.o klib.o \
 				sysinfo.o system/system.o interrupt.o system.o smp.o clocksource.o \
-				sched.o profile.o watchdog.o
+				sched.o profile.o watchdog.o clockevent.o
 
 KLIBC		= lib/klibc.o
 

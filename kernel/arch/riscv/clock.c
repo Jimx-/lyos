@@ -35,12 +35,10 @@
 #endif
 #include <asm/div64.h>
 #include <lyos/clocksource.h>
+#include <kernel/clockevent.h>
 #include "asm/cpulocals.h"
 
 static unsigned long riscv_timebase;
-
-static u64 tsc_per_tick[CONFIG_SMP_MAX_CPUS];
-static DEFINE_CPULOCAL(irq_handler_t, timer_handler);
 
 static u64 read_cycles()
 {
@@ -48,6 +46,19 @@ static u64 read_cycles()
     __asm__ __volatile__("rdtime %0" : "=r"(n));
     return n;
 }
+
+static int riscv_clock_next_event(struct clock_event_device* evt,
+                                  unsigned long delta)
+{
+    csr_set(sie, SIE_STIE);
+    u64 cycles = read_cycles();
+    sbi_set_timer(cycles + delta);
+}
+
+static DEFINE_CPULOCAL(struct clock_event_device, riscv_clock_event) = {
+    .rating = 100,
+    .set_next_event = riscv_clock_next_event,
+};
 
 static struct clocksource riscv_clocksource = {
     .name = "riscv",
@@ -68,45 +79,29 @@ int arch_init_time()
         panic("RISC-V system with no 'timebase-frequency' in DTS");
     }
 
-    register_clocksource_hz(&riscv_clocksource, riscv_timebase);
+    clocksource_register_hz(&riscv_clocksource, riscv_timebase);
+
+    setup_riscv_timer();
 
     return 0;
 }
 
-int init_local_timer(int freq)
+int setup_riscv_timer(void)
 {
-    tsc_per_tick[cpuid] = riscv_timebase;
-    do_div(tsc_per_tick[cpuid], freq);
+    struct clock_event_device* evt = get_cpulocal_var_ptr(riscv_clock_event);
 
-    return 0;
-}
-
-void setup_local_timer_one_shot(void) {}
-
-void setup_local_timer_periodic(void) {}
-
-void restart_local_timer()
-{
-    csr_set(sie, SIE_STIE);
-    u64 cycles = read_cycles();
-    sbi_set_timer(cycles + tsc_per_tick[cpuid]);
-}
-
-void stop_local_timer() {}
-
-int put_local_timer_handler(irq_handler_t handler)
-{
-    get_cpulocal_var(timer_handler) = handler;
+    evt->cpumask = cpumask_of(cpuid);
+    clockevents_config_and_register(evt, riscv_timebase, 100, 0x7fffffff);
 
     return 0;
 }
 
 void riscv_timer_interrupt(void)
 {
-    irq_handler_t handler = get_cpulocal_var(timer_handler);
+    struct clock_event_device* evt = get_cpulocal_var_ptr(riscv_clock_event);
 
     csr_clear(sie, SIE_STIE);
-    handler(NULL);
+    evt->event_handler(evt);
 }
 
 void arch_stop_context(struct proc* p, u64 delta) {}

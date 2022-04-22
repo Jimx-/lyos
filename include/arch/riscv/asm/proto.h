@@ -66,6 +66,7 @@ static inline void write_ptbr(phys_bytes ptbr)
     csr_write(sptbr, (ptbr >> ARCH_PG_SHIFT) | SATP_MODE);
 }
 
+int setup_riscv_timer(void);
 void riscv_timer_interrupt(void);
 
 /* plic.c */

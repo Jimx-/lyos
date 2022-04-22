@@ -22,7 +22,6 @@ extern  generic_handle_irq
 extern	exception_handler
 extern	spurious_irq
 extern  idle_stop
-extern	clock_handler
 extern	disp_str
 extern	delay
 extern	irq_table

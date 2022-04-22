@@ -36,7 +36,7 @@ _lyos_start:
     /* reload stack pointer and save hart id */
     la sp, KStackTop
     la tp, init_stackframe
-    sw s0, P_CPU(tp)
+    sw x0, P_CPU(tp)
 
     /* start kernel */
     mv a0, s0

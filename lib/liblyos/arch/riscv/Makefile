@@ -1,1 +1,1 @@
-SRCS 	+= arch/riscv/portio.c arch/riscv/spinlock.S
+SRCS	+= arch/riscv/portio.c arch/riscv/spinlock.S

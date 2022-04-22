@@ -23,8 +23,11 @@
 #include <asm/div64.h>
 #include <lyos/clocksource.h>
 #include <kernel/irq.h>
+#include <kernel/clockevent.h>
 
 u32 tsc_khz;
+
+extern struct clock_event_device* global_clock_event;
 
 static u64 tsc_read(struct clocksource* cs)
 {
@@ -49,7 +52,7 @@ static u32 pit_calibrate_tsc();
 
 static void init_tsc_clocksource()
 {
-    register_clocksource_khz(&tsc_clocksource, tsc_khz);
+    clocksource_register_khz(&tsc_clocksource, tsc_khz);
 }
 
 void init_tsc()
@@ -109,21 +112,24 @@ static u32 pit_calibrate_tsc()
 
     probe_ticks = 0;
 
+    init_8253_timer();
+
     put_irq_handler(CLOCK_IRQ, &calibrate_hook, tsc_calibrate_handler);
-    init_8253_timer(system_hz);
+    clockevents_switch_state(global_clock_event, CLOCK_EVT_STATE_PERIODIC);
 
     enable_int();
     while (probe_ticks < PROBE_TICKS)
         enable_int();
     disable_int();
 
+    clockevents_shutdown(global_clock_event);
     rm_irq_handler(&calibrate_hook);
 
     u64 tsc_delta = tsc1 - tsc0;
     do_div(tsc_delta, PROBE_TICKS - 1);
     tsc_delta *= make64(0, system_hz);
     do_div(tsc_delta, 1000);
-    printk("tsc: TSC calibration using PIT\n", tsc_delta);
+    printk("tsc: TSC calibration using PIT\n");
 
     return tsc_delta;
 }

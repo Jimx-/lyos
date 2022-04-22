@@ -18,8 +18,6 @@
 
 #include <lyos/list.h>
 
-struct clocksource;
-
 struct clocksource {
     struct list_head list;
 
@@ -32,10 +30,9 @@ struct clocksource {
     u32 rating;
 };
 
-void init_clocksource();
-void register_clocksource(struct clocksource* cs);
-void register_clocksource_hz(struct clocksource* cs, u32 hz);
-void register_clocksource_khz(struct clocksource* cs, u32 khz);
+void clocksource_register(struct clocksource* cs);
+void clocksource_register_hz(struct clocksource* cs, u32 hz);
+void clocksource_register_khz(struct clocksource* cs, u32 khz);
 
 static __attribute__((always_inline)) inline u64
 clocksource_cyc2ns(struct clocksource* cs, u64 cycles)

@@ -111,6 +111,7 @@ static inline void apic_native_msr_eoi_write(void)
 
 u32 apicid();
 int lapic_enable(unsigned cpu);
+void setup_apic_timer(void);
 void apic_set_eoi_write(void (*eoi_write)(void));
 void apic_init_idt(int reset);
 #if CONFIG_SMP

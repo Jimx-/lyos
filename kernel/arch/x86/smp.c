@@ -107,6 +107,8 @@ void smp_init()
         panic("unable to initialize bsp lapic");
     }
 
+    setup_apic_timer();
+
     if (!detect_ioapics()) {
         panic("no ioapic detected");
     }
@@ -118,6 +120,7 @@ void smp_init()
 
 #ifdef CONFIG_KVM_GUEST
     kvm_init_guest_cpu();
+    kvm_register_clock();
 #endif
 
     switch_k_stack((char*)get_k_stack_top(bsp_cpu_id) - X86_STACK_TOP_RESERVED,
@@ -207,6 +210,7 @@ static void ap_finish_booting()
     get_cpulocal_var(fpu_owner) = NULL;
 
     lapic_enable(cpuid);
+    setup_apic_timer();
     fpu_init();
 
     ap_ready = cpuid;
@@ -216,6 +220,7 @@ static void ap_finish_booting()
 
 #ifdef CONFIG_KVM_GUEST
     kvm_init_guest_cpu();
+    kvm_register_clock();
 #endif
 
     ap_finished_booting();

@@ -95,8 +95,6 @@ void rm_irq_handler(irq_hook_t* hook);
 int disable_irq(irq_hook_t* hook);
 void enable_irq(irq_hook_t* hook);
 
-int put_local_timer_handler(irq_handler_t handler);
-
 void handle_bad_irq(struct irq_desc* desc);
 void handle_simple_irq(struct irq_desc* desc);
 

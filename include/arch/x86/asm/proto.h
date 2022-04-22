@@ -44,8 +44,7 @@ void arch_pause();
 void init_8259A();
 void disable_8259A();
 
-int init_8253_timer(int freq);
-void stop_8253_timer();
+int init_8253_timer(void);
 
 void switch_k_stack(char* esp, void* cont);
 
@@ -96,11 +95,6 @@ void ia32_write_msr(u32 reg, u32 hi, u32 lo);
 
 void halt_cpu();
 
-int init_local_timer(int freq);
-void setup_local_timer_one_shot(void);
-void setup_local_timer_periodic(void);
-void restart_local_timer();
-void stop_local_timer();
 void arch_stop_context(struct proc* p, u64 delta);
 void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]);
 

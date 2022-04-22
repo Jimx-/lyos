@@ -44,7 +44,7 @@ extern struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
 struct stackframe init_stackframe; /* used to retrieve the id of the init cpu */
 
-static unsigned int smp_start_cpu(int hart_id, struct proc* idle_proc);
+static unsigned int smp_start_cpu(int hart_id);
 
 static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
                          int depth, void* arg)
@@ -65,7 +65,7 @@ static int fdt_scan_hart(void* blob, unsigned long offset, const char* name,
     if (hart_id == bsp_hart_id)
         cpu = bsp_cpu_id;
     else
-        cpu = smp_start_cpu(hart_id, get_cpu_var_ptr(hart_id, idle_proc));
+        cpu = smp_start_cpu(hart_id);
 
     cpu_info[cpu].hart = hart_id;
 
@@ -96,21 +96,22 @@ unsigned int riscv_of_parent_hartid(const void* fdt, unsigned long offset)
     return -1;
 }
 
-static unsigned int smp_start_cpu(int hart_id, struct proc* idle_proc)
+static unsigned int smp_start_cpu(int hart_id)
 {
     unsigned int cpu = cpu_nr++;
+    struct proc* idle = get_cpu_var_ptr(cpu, idle_proc);
 
     __cpu_ready = -1;
     cpu_to_hart_id[cpu] = hart_id;
     hart_to_cpu_id[hart_id] = cpu;
 
-    idle_proc->regs.cpu = cpu;
-    init_tss(hart_id, get_k_stack_top(cpu));
+    idle->regs.cpu = cpu;
+    init_tss(cpu, get_k_stack_top(cpu));
 
     __asm__ __volatile__("fence rw, rw" : : : "memory");
 
     __cpu_stack_pointer[hart_id] = get_k_stack_top(cpu);
-    __cpu_task_pointer[hart_id] = (void*)idle_proc;
+    __cpu_task_pointer[hart_id] = (void*)idle;
 
     while (__cpu_ready != cpu)
         ;
@@ -145,6 +146,7 @@ void smp_boot_ap()
     printk("smp: CPU %d is up\n", cpuid);
 
     init_prot();
+    setup_riscv_timer();
 
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);

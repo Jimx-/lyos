@@ -206,6 +206,6 @@ DECLARE_CPULOCAL(struct proc*, fpu_owner);
 DECLARE_CPULOCAL(volatile int, cpu_is_idle);
 
 static inline void lock_proc(struct proc* p) { spinlock_lock(&p->lock); }
-static inline void unlock_proc(struct proc* p) { spinlock_lock(&p->lock); }
+static inline void unlock_proc(struct proc* p) { spinlock_unlock(&p->lock); }
 
 #endif

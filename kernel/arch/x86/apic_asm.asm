@@ -68,7 +68,7 @@ global  apic_hwint60
 global  apic_hwint61
 global  apic_hwint62
 global  apic_hwint63
-global  apic_timer_int_handler
+global  apic_timer_intr
 global  apic_spurious_intr
 global  apic_error_intr
 
@@ -78,7 +78,7 @@ extern  switch_to_user
 extern  generic_handle_irq
 extern  idle_stop
 extern  apic_eoi_write
-extern  clock_handler
+extern  apic_timer_int_handler
 extern  apic_spurious_int_handler
 extern  apic_error_int_handler
 
@@ -127,8 +127,8 @@ extern  apic_error_int_handler
 %endmacro
 
 ALIGN   16
-apic_timer_int_handler:
-    lapic_int	clock_handler
+apic_timer_intr:
+    lapic_int	apic_timer_int_handler
 ALIGN   16
 apic_spurious_intr:
     lapic_int	apic_spurious_int_handler

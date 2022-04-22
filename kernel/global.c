@@ -23,6 +23,7 @@
 #include <kernel/global.h>
 #include "errno.h"
 #include <kernel/irq.h>
+#include <kernel/cpumask.h>
 
 int booting_cpu = 0;
 
@@ -52,3 +53,19 @@ int err_code = 0;
 #if CONFIG_PROFILING
 int kprofiling = 0;
 #endif
+
+#define MASK_DECLARE_1(x) [x + 1][0] = (1UL << (x))
+#define MASK_DECLARE_2(x) MASK_DECLARE_1(x), MASK_DECLARE_1(x + 1)
+#define MASK_DECLARE_4(x) MASK_DECLARE_2(x), MASK_DECLARE_2(x + 2)
+#define MASK_DECLARE_8(x) MASK_DECLARE_4(x), MASK_DECLARE_4(x + 4)
+
+const bitchunk_t cpu_bit_bitmap[BITCHUNK_BITS + 1]
+                               [BITCHUNKS(CONFIG_SMP_MAX_CPUS)] = {
+
+                                   MASK_DECLARE_8(0),  MASK_DECLARE_8(8),
+                                   MASK_DECLARE_8(16), MASK_DECLARE_8(24),
+#if BITCHUNKS_BITS > 32
+                                   MASK_DECLARE_8(32), MASK_DECLARE_8(40),
+                                   MASK_DECLARE_8(48), MASK_DECLARE_8(56),
+#endif
+};

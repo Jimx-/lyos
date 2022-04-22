@@ -26,21 +26,8 @@
 #include <lyos/spinlock.h>
 
 struct clocksource* curr_clocksource;
-spinlock_t clocksource_lock;
-static struct list_head clocksource_list;
-
-/*****************************************************************************
- *                                init_clocksource
- *****************************************************************************/
-/**
- * <Ring 0> Initializes the clocksource subsystem.
- *
- *****************************************************************************/
-void init_clocksource()
-{
-    INIT_LIST_HEAD(&clocksource_list);
-    curr_clocksource = NULL;
-}
+static DEF_SPINLOCK(clocksource_lock);
+static DEF_LIST(clocksource_list);
 
 /*****************************************************************************
  *                                clocksource_enqueue
@@ -85,14 +72,14 @@ static void clocksource_select()
 }
 
 /*****************************************************************************
- *                                register_clocksource
+ *                                clocksource_register
  *****************************************************************************/
 /**
  * <Ring 0> Register a clocksource.
  *
  * @param clocksource The clocksource to be registered.
  *****************************************************************************/
-void register_clocksource(struct clocksource* cs)
+void clocksource_register(struct clocksource* cs)
 {
     clocksource_enqueue(cs);
     clocksource_select();
@@ -153,39 +140,39 @@ static void update_clocksource_freq(struct clocksource* cs, u32 scale, u32 freq)
 }
 
 /*****************************************************************************
- *                                register_clocksource_scale
+ *                                clocksource_register_scale
  *****************************************************************************/
 /**
  * <Ring 0> Register a clocksource with frequency and scale.
  *
  *****************************************************************************/
-static void register_clocksource_scale(struct clocksource* cs, u32 scale,
+static void clocksource_register_scale(struct clocksource* cs, u32 scale,
                                        u32 freq)
 {
     update_clocksource_freq(cs, scale, freq);
-    register_clocksource(cs);
+    clocksource_register(cs);
 }
 
 /*****************************************************************************
- *                                register_clocksource_hz
+ *                                clocksource_register_hz
  *****************************************************************************/
 /**
  * <Ring 0> Register a clocksource with frequency in HZ.
  *
  *****************************************************************************/
-void register_clocksource_hz(struct clocksource* cs, u32 hz)
+void clocksource_register_hz(struct clocksource* cs, u32 hz)
 {
-    register_clocksource_scale(cs, 1, hz);
+    clocksource_register_scale(cs, 1, hz);
 }
 
 /*****************************************************************************
- *                                register_clocksource_khz
+ *                                clocksource_register_khz
  *****************************************************************************/
 /**
  * <Ring 0> Register clocksource with frequency in kHZ.
  *
  *****************************************************************************/
-void register_clocksource_khz(struct clocksource* cs, u32 khz)
+void clocksource_register_khz(struct clocksource* cs, u32 khz)
 {
-    register_clocksource_scale(cs, 1000, khz);
+    clocksource_register_scale(cs, 1000, khz);
 }

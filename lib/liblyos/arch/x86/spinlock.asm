@@ -29,12 +29,8 @@ arch_spinlock_lock:
     mov	ecx, 1
     xchg ecx, [eax]
     test ecx, ecx
-    js .0
+    je .0
 
-    mfence
-    ret
-
-.0:
     cmp	edx, 1 << 16
     je	.1
     shl	edx, 1
@@ -46,6 +42,11 @@ arch_spinlock_lock:
     test ecx, ecx
     jz .2
     jmp	.3
+
+.0:
+    mfence
+    ret
+
 
 ; ========================================================================
 ;                  void arch_spinlock_unlock(u32 * lock);

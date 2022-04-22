@@ -151,5 +151,5 @@ void init_kvmclock(void)
     printk("kvm-clock: using msrs 0x%x and 0x%x\n", msr_kvm_system_time,
            msr_kvm_wall_clock);
 
-    register_clocksource(&kvmclock_clocksource);
+    clocksource_register(&kvmclock_clocksource);
 }

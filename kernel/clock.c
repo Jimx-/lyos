@@ -27,16 +27,23 @@
 #include <lyos/clocksource.h>
 #include <lyos/time.h>
 #include <kernel/irq.h>
-
-extern spinlock_t clocksource_lock;
+#include <kernel/clockevent.h>
+#include <asm/div64.h>
 
 clock_t idle_ticks = 0;
 
 static DEFINE_CPULOCAL(u64, context_switch_clock);
 
+struct tick_device {
+    struct clock_event_device* evdev;
+};
+
+static DEFINE_CPULOCAL(struct tick_device, tick_cpu_device);
+static DEFINE_CPULOCAL(u64, ns_per_tick);
+
 DEF_LIST(timer_list);
-spinlock_t timers_lock;
-clock_t next_timeout = TIMER_UNSET;
+static spinlock_t timers_lock;
+static clock_t next_timeout = TIMER_UNSET;
 
 void sched_clock(struct proc* p);
 
@@ -74,7 +81,7 @@ static struct clocksource jiffies_clocksource = {
  *
  * @param irq The IRQ nr, unused here.
  *****************************************************************************/
-int clock_handler(irq_hook_t* hook)
+static void clock_handler(struct clock_event_device* evt)
 {
 #if CONFIG_SMP
     if (cpuid == bsp_cpu_id) {
@@ -111,8 +118,6 @@ int clock_handler(irq_hook_t* hook)
 #endif
 
     sched_clock(get_cpulocal_var(proc_ptr));
-
-    return 1;
 }
 
 /*****************************************************************************
@@ -126,13 +131,22 @@ int init_time()
 {
     jiffies = 0;
 
-    init_clocksource();
     arch_init_time();
-    register_clocksource(&jiffies_clocksource);
+    clocksource_register(&jiffies_clocksource);
     spinlock_init(&timers_lock);
 
     memset(&kclockinfo, 0, sizeof(kclockinfo));
     kclockinfo.hz = system_hz;
+
+    return 0;
+}
+
+int init_local_timer(int freq)
+{
+    get_cpulocal_var(ns_per_tick) = NSEC_PER_SEC;
+    do_div(get_cpulocal_var(ns_per_tick), (u64)freq);
+
+    setup_local_timer_one_shot();
 
     return 0;
 }
@@ -148,8 +162,6 @@ int init_time()
 int init_bsp_timer(int freq)
 {
     if (init_local_timer(freq)) return -1;
-    if (put_local_timer_handler(clock_handler)) return -1;
-
     return 0;
 }
 
@@ -164,8 +176,39 @@ int init_bsp_timer(int freq)
 int init_ap_timer(int freq)
 {
     if (init_local_timer(freq)) return -1;
-
     return 0;
+}
+
+void setup_local_timer_one_shot(void)
+{
+    struct tick_device* td = get_cpulocal_var_ptr(tick_cpu_device);
+
+    if (!td->evdev) return;
+    clockevents_switch_state(td->evdev, CLOCK_EVT_STATE_ONESHOT);
+}
+
+void setup_local_timer_periodic(void)
+{
+    struct tick_device* td = get_cpulocal_var_ptr(tick_cpu_device);
+
+    if (!td->evdev) return;
+    clockevents_switch_state(td->evdev, CLOCK_EVT_STATE_PERIODIC);
+}
+
+void restart_local_timer(void)
+{
+    struct tick_device* td = get_cpulocal_var_ptr(tick_cpu_device);
+
+    if (!td->evdev) return;
+    clockevents_program_delta(td->evdev, get_cpulocal_var(ns_per_tick));
+}
+
+void stop_local_timer(void)
+{
+    struct tick_device* td = get_cpulocal_var_ptr(tick_cpu_device);
+
+    if (!td->evdev) return;
+    clockevents_shutdown(td->evdev);
 }
 
 /*****************************************************************************
@@ -228,3 +271,44 @@ void reset_sys_timer(struct timer_list* timer)
 }
 
 void set_boottime(time_t time) { kclockinfo.boottime = time; }
+
+static void tick_setup_device(struct tick_device* td,
+                              struct clock_event_device* newdev, int cpu)
+{
+    void (*handler)(struct clock_event_device*) = NULL;
+
+    if (td->evdev) {
+        handler = td->evdev->event_handler;
+        td->evdev->event_handler = clockevents_handle_noop;
+    }
+
+    if (handler == NULL) handler = clock_handler;
+
+    td->evdev = newdev;
+    td->evdev->event_handler = handler;
+}
+
+static int check_tick_device_replacement(struct clock_event_device* curdev,
+                                         struct clock_event_device* newdev)
+{
+    if (!cpumask_test_cpu(newdev->cpumask, cpuid)) return FALSE;
+
+    if (!cpumask_equal(newdev->cpumask, cpumask_of(cpuid))) {
+        if (curdev && cpumask_equal(curdev->cpumask, cpumask_of(cpuid)))
+            return FALSE;
+    }
+
+    return !curdev || newdev->rating > curdev->rating ||
+           !cpumask_equal(curdev->cpumask, newdev->cpumask);
+}
+
+void tick_check_new_device(struct clock_event_device* newdev)
+{
+    struct tick_device* td = get_cpulocal_var_ptr(tick_cpu_device);
+    struct clock_event_device* curdev = td->evdev;
+
+    if (!check_tick_device_replacement(curdev, newdev)) return;
+
+    clockevents_exchange_device(curdev, newdev);
+    tick_setup_device(td, newdev, cpuid);
+}

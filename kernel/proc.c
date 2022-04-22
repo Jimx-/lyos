@@ -153,7 +153,6 @@ reschedule:
     switch_address_space(p);
 
 no_schedule:
-
     get_cpulocal_var(proc_ptr) = p;
 
     while (p->flags & (PF_RESUME_SYSCALL | PF_TRACE_SYSCALL | PF_LEAVE_SYSCALL |
