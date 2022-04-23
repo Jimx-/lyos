@@ -45,7 +45,7 @@
 
 /* Hardware interrupts */
 #define NR_IRQ        64 /* Number of IRQs */
-#define NR_HWIRQ      64
+#define NR_HWIRQ      128
 #define NR_IRQ_DOMAIN 4
 
 #define ANY     (NR_PROCS + 10)

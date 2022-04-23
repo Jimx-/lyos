@@ -96,6 +96,9 @@ void rm_irq_handler(irq_hook_t* hook);
 int disable_irq(irq_hook_t* hook);
 void enable_irq(irq_hook_t* hook);
 
+void mask_irq(struct irq_desc* desc);
+void unmask_irq(struct irq_desc* desc);
+
 void handle_bad_irq(struct irq_desc* desc);
 void handle_simple_irq(struct irq_desc* desc);
 

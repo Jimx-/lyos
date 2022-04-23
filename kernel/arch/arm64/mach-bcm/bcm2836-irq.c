@@ -8,6 +8,7 @@
 #include <kernel/proto.h>
 #include <asm/io.h>
 #include <asm/smp.h>
+#include <errno.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -64,6 +65,15 @@ static struct irq_chip bcm2836_arm_irqchip_timer = {
     .irq_unmask = bcm2836_arm_irqchip_unmask_timer_irq,
 };
 
+static void bcm2836_arm_irqchip_mask_gpu_irq(struct irq_data* d) {}
+
+static void bcm2836_arm_irqchip_unmask_gpu_irq(struct irq_data* d) {}
+
+static struct irq_chip bcm2836_arm_irqchip_gpu = {
+    .irq_mask = bcm2836_arm_irqchip_mask_gpu_irq,
+    .irq_unmask = bcm2836_arm_irqchip_unmask_gpu_irq,
+};
+
 static int bcm2836_map(struct irq_domain* d, unsigned int irq, unsigned int hw)
 {
     struct irq_chip* chip;
@@ -75,6 +85,11 @@ static int bcm2836_map(struct irq_domain* d, unsigned int irq, unsigned int hw)
     case LOCAL_IRQ_CNTVIRQ:
         chip = &bcm2836_arm_irqchip_timer;
         break;
+    case LOCAL_IRQ_GPU_FAST:
+        chip = &bcm2836_arm_irqchip_gpu;
+        break;
+    default:
+        return -EINVAL;
     }
 
     irq_domain_set_info(d, irq, hw, chip, d->host_data, handle_simple_irq);

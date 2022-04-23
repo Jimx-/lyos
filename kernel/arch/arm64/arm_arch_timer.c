@@ -32,8 +32,13 @@ static inline u64 arch_timer_reg_read_cp15(int access, enum arch_timer_reg reg)
         switch (reg) {
         case ARCH_TIMER_REG_CTRL:
             return read_sysreg(cntp_ctl_el0);
+        default:
+            break;
         }
     }
+
+    panic("invalid cp15 read reg");
+    return 0;
 }
 
 static inline void arch_timer_reg_write_cp15(int access,
@@ -119,6 +124,8 @@ static inline int arch_timer_set_next_event(struct clock_event_device* evt,
 
     arch_timer_reg_write(evt, access, ARCH_TIMER_REG_CVAL, delta + cnt);
     arch_timer_reg_write(evt, access, ARCH_TIMER_REG_CTRL, ctrl);
+
+    return 0;
 }
 
 static int arch_timer_set_next_event_phys(struct clock_event_device* evt,

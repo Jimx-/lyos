@@ -35,6 +35,7 @@
 #define BCM2835_DEBUG_UART_BASE (BCM2835_MMIO_BASE + 0x201000)
 
 void bcm2836_arm_irqchip_l1_intc_scan(void);
+void bcm2835_armctrl_irqchip_scan(void);
 void bcm2836_arm_irqchip_handle_irq(void);
 
 static void bcm2835_init_serial(void)
@@ -53,6 +54,8 @@ static void bcm2835_init_machine(void)
     bcm2836_arm_irqchip_l1_intc_scan();
 
     arm_arch_timer_scan();
+
+    bcm2835_armctrl_irqchip_scan();
 }
 
 static void bcm2835_init_cpu(unsigned int cpu)

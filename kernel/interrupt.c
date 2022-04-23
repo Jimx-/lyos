@@ -90,6 +90,10 @@ void irq_set_handler(unsigned int irq, irq_flow_handler_t handler,
     if (!handler) handler = handle_bad_irq;
     desc->handle_irq = handler;
 
+    if (handler != handle_bad_irq && is_chained) {
+        unmask_irq(desc);
+    }
+
     spinlock_unlock(&desc->lock);
 }
 
@@ -114,7 +118,7 @@ void early_init_irq(void)
 
     for (i = 0; i < NR_IRQ_DOMAIN; i++) {
         spinlock_init(&irq_domain[i].revmap_lock);
-        irq_domain->fwid = IRQ_DOMAIN_NONE;
+        irq_domain[i].fwid = IRQ_DOMAIN_NONE;
     }
 }
 
