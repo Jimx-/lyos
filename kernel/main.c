@@ -47,6 +47,7 @@ void init_arch();
  *****************************************************************************/
 int kernel_main()
 {
+    early_init_irq();
     init_arch();
     arch_setup_cpulocals();
     init_sched();

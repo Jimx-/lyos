@@ -20,12 +20,6 @@
 #include <lyos/param.h>
 
 /* kliba.asm */
-void out_byte(u16 port, u8 value);
-u8 in_byte(u16 port);
-void out_word(u16 port, u16 val);
-u16 in_word(u16 port);
-void out_long(u16 port, u32 val);
-u32 in_long(u16 port);
 void disable_int();
 void enable_int();
 void port_read(u16 port, void* buf, int n);

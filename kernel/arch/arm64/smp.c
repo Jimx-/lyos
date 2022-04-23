@@ -34,6 +34,7 @@
 #include <asm/cpu_type.h>
 #include <asm/fixmap.h>
 #include <asm/cache.h>
+#include <asm/mach.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -165,6 +166,8 @@ void smp_boot_ap()
     switch_address_space(proc_addr(TASK_MM));
     write_sysreg(__pa(swapper_pg_dir), ttbr1_el1);
     isb();
+
+    if (machine_desc->init_cpu) machine_desc->init_cpu(cpuid);
 
     switch_to_user();
 }

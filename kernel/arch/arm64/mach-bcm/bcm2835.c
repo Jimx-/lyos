@@ -26,6 +26,7 @@
 #include <asm/mach.h>
 #include <asm/fixmap.h>
 #include <asm/proto.h>
+#include <asm/arm_arch_timer.h>
 
 #include "serial.h"
 
@@ -33,16 +34,31 @@
 
 #define BCM2835_DEBUG_UART_BASE (BCM2835_MMIO_BASE + 0x201000)
 
+void bcm2836_arm_irqchip_l1_intc_scan(void);
+void bcm2836_arm_irqchip_handle_irq(void);
+
 static void bcm2835_init_serial(void)
 {
     set_fixmap_io(FIX_EARLYCON_MEM_BASE, BCM2835_DEBUG_UART_BASE);
     uart_base_addr = (void*)__fix_to_virt(FIX_EARLYCON_MEM_BASE);
 
     kern_map_phys(BCM2835_DEBUG_UART_BASE, ARCH_PG_SIZE, KMF_WRITE | KMF_IO,
-                  &uart_base_addr);
+                  &uart_base_addr, NULL, NULL);
 }
 
-static void bcm2835_init_machine(void) { bcm2835_init_serial(); }
+static void bcm2835_init_machine(void)
+{
+    bcm2835_init_serial();
+
+    bcm2836_arm_irqchip_l1_intc_scan();
+
+    arm_arch_timer_scan();
+}
+
+static void bcm2835_init_cpu(unsigned int cpu)
+{
+    arm_arch_timer_setup_cpu(cpu);
+}
 
 static const char* const bcm2835_compat[] = {"brcm,bcm2835", "brcm,bcm2836",
                                              "brcm,bcm2837", NULL};
@@ -52,6 +68,10 @@ DT_MACHINE_START(BCM2835, "BCM2835")
 .dt_compat = bcm2835_compat,
 
 .init_machine = bcm2835_init_machine,
+.init_cpu = bcm2835_init_cpu,
+
 .serial_putc = pl011_disp_char,
+
+.handle_irq = bcm2836_arm_irqchip_handle_irq,
 MACHINE_END
     /* clang-format on */

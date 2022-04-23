@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <lyos/smp.h>
 #include <asm/pagetable.h>
+#include <asm/mach.h>
 #include <asm/sysreg.h>
 
 /* temporary mappings */
@@ -187,13 +188,15 @@ struct kern_map {
     int flags;
     void* vir_addr;
     void** mapped_addr;
+    void (*callback)(void*);
+    void* cb_arg;
 };
 
 static struct kern_map kern_mappings[MAX_KERN_MAPPINGS];
 static int kern_mapping_count = 0;
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
-                  void** mapped_addr)
+                  void** mapped_addr, void (*callback)(void*), void* arg)
 {
     if (kern_mapping_count >= MAX_KERN_MAPPINGS) return ENOMEM;
 
@@ -202,6 +205,8 @@ int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
     pkm->len = len;
     pkm->flags = flags;
     pkm->mapped_addr = mapped_addr;
+    pkm->callback = callback;
+    pkm->cb_arg = arg;
 
     return 0;
 }
@@ -273,15 +278,19 @@ static void setttbr(struct proc* p, phys_bytes ttbr)
 
     if (p->endpoint == TASK_MM) {
         int i;
-        /* update mapped address of kernel mappings */
-        for (i = 0; i < kern_mapping_count; i++) {
-            struct kern_map* pkm = &kern_mappings[i];
-            *(pkm->mapped_addr) = pkm->vir_addr;
-        }
 
         write_sysreg(ttbr, ttbr0_el1);
         isb();
         get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
+
+        /* update mapped address of kernel mappings */
+        for (i = 0; i < kern_mapping_count; i++) {
+            struct kern_map* pkm = &kern_mappings[i];
+            *pkm->mapped_addr = pkm->vir_addr;
+            if (pkm->callback) pkm->callback(pkm->cb_arg);
+        }
+
+        if (machine_desc->init_cpu) machine_desc->init_cpu(bsp_cpu_id);
 
         smp_commence();
     }

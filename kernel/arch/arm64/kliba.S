@@ -250,6 +250,11 @@ copy_user_message_fault:
     ret
 
 halt_cpu:
+    dsb sy
+    wfi
+    msr daifclr, #3
+    msr daifset, #3
+    ret
 
 arch_pause:
     ret

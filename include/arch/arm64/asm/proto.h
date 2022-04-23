@@ -65,7 +65,7 @@ void clear_memcache();
 void arch_setup_cpulocals(void);
 
 int kern_map_phys(phys_bytes phys_addr, phys_bytes len, int flags,
-                  void** mapped_addr);
+                  void** mapped_addr, void (*callback)(void*), void* arg);
 
 static inline void flush_tlb(void)
 {

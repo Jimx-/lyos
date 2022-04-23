@@ -1,6 +1,6 @@
 obj-y	= pl011.o
 
-obj-$(CONFIG_ARCH_BCM2835) += bcm2835.o
+obj-$(CONFIG_ARCH_BCM2835) += bcm2835.o bcm2836-irq.o
 
 BCM = mach-bcm.o
 

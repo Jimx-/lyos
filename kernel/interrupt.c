@@ -23,13 +23,18 @@
 #include <kernel/irq.h>
 #include <lyos/bitmap.h>
 #include <lyos/spinlock.h>
+#include <string.h>
+
+#if CONFIG_OF
+#include <libof/libof.h>
+#endif
 
 static struct irq_desc irq_desc[NR_IRQ];
 
-static spinlock_t irq_domain_lock;
+static DEF_SPINLOCK(irq_domain_lock);
 static struct irq_domain irq_domain[NR_IRQ_DOMAIN];
 
-static spinlock_t irq_allocate_lock;
+static DEF_SPINLOCK(irq_allocate_lock);
 static bitchunk_t allocated_irqs[BITCHUNKS(NR_IRQ)];
 
 static struct irq_chip no_irq_chip = {};
@@ -95,7 +100,7 @@ void irq_set_handler(unsigned int irq, irq_flow_handler_t handler,
  * <Ring 0> Initializes IRQ subsystem.
  *
  *****************************************************************************/
-void init_irq(void)
+void early_init_irq(void)
 {
     int i;
     for (i = 0; i < NR_IRQ_HOOKS; i++) {
@@ -111,12 +116,9 @@ void init_irq(void)
         spinlock_init(&irq_domain[i].revmap_lock);
         irq_domain->fwid = IRQ_DOMAIN_NONE;
     }
-
-    spinlock_init(&irq_domain_lock);
-    spinlock_init(&irq_allocate_lock);
-
-    arch_init_irq();
 }
+
+void init_irq(void) { arch_init_irq(); }
 
 void mask_irq(struct irq_desc* desc)
 {
@@ -531,6 +533,20 @@ int irq_domain_translate_twocell(struct irq_domain* d,
     return 0;
 }
 
+int irq_domain_translate_onetwocell(struct irq_domain* d,
+                                    struct irq_fwspec* fwspec,
+                                    unsigned int* out_hwirq,
+                                    unsigned int* out_type)
+{
+    if (fwspec->param_count < 1) return -EINVAL;
+    *out_hwirq = fwspec->param[0];
+    if (fwspec->param_count > 1)
+        *out_type = fwspec->param[1] & IRQ_TYPE_SENSE_MASK;
+    else
+        *out_type = IRQ_TYPE_NONE;
+    return 0;
+}
+
 static int irq_domain_translate(struct irq_domain* d, struct irq_fwspec* fwspec,
                                 unsigned int* hwirq, unsigned int* type)
 {
@@ -562,3 +578,19 @@ unsigned int irq_create_fwspec_mapping(struct irq_fwspec* fwspec)
 
     return virq;
 }
+
+#if CONFIG_OF
+unsigned int irq_create_of_mapping(struct of_phandle_args* oirq)
+{
+    struct irq_fwspec fwspec;
+
+    if (oirq->args_count > IRQ_DOMAIN_IRQ_SPEC_PARAMS) return 0;
+
+    memset(&fwspec, 0, sizeof(fwspec));
+    fwspec.fwid = oirq->phandle;
+    fwspec.param_count = oirq->args_count;
+    memcpy(fwspec.param, oirq->args, sizeof(u32) * oirq->args_count);
+
+    return irq_create_fwspec_mapping(&fwspec);
+}
+#endif

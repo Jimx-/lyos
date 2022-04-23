@@ -152,8 +152,8 @@ copy_user_message_fault:
 
 halt_cpu:
     fence
-    csrs sstatus, SR_SIE
     wfi
+    csrs sstatus, SR_SIE
     csrc sstatus, SR_SIE
     ret
 

@@ -21,8 +21,12 @@ struct machine_desc {
     const char* const* dt_compat;
 
     void (*init_machine)(void);
+    void (*init_cpu)(unsigned int cpu);
+
     void (*serial_putc)(const char c);
+
     void (*handle_irq)(void);
+    void (*handle_fiq)(void);
 };
 
 extern const struct machine_desc* machine_desc;

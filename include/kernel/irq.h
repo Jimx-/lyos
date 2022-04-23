@@ -89,6 +89,7 @@ struct irq_desc {
 extern irq_hook_t irq_hooks[];
 
 /* interrupt.c */
+void early_init_irq(void);
 void init_irq(void);
 void put_irq_handler(int irq, irq_hook_t* hook, irq_handler_t handler);
 void rm_irq_handler(irq_hook_t* hook);
@@ -126,6 +127,10 @@ static inline int irq_domain_alloc_irqs(struct irq_domain* domain,
 }
 
 unsigned int irq_create_fwspec_mapping(struct irq_fwspec* fwspec);
+#if CONFIG_OF
+struct of_phandle_args;
+unsigned int irq_create_of_mapping(struct of_phandle_args* oirq);
+#endif
 
 int irq_domain_translate_onecell(struct irq_domain* d,
                                  struct irq_fwspec* fwspec,
@@ -135,6 +140,10 @@ int irq_domain_translate_twocell(struct irq_domain* d,
                                  struct irq_fwspec* fwspec,
                                  unsigned int* out_hwirq,
                                  unsigned int* out_type);
+int irq_domain_translate_onetwocell(struct irq_domain* d,
+                                    struct irq_fwspec* fwspec,
+                                    unsigned int* out_hwirq,
+                                    unsigned int* out_type);
 
 void generic_handle_domain_irq(struct irq_domain* domain, unsigned int hwirq);
 void generic_handle_irq(unsigned int irq);

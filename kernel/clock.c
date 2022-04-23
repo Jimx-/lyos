@@ -146,8 +146,6 @@ int init_local_timer(int freq)
     get_cpulocal_var(ns_per_tick) = NSEC_PER_SEC;
     do_div(get_cpulocal_var(ns_per_tick), (u64)freq);
 
-    setup_local_timer_one_shot();
-
     return 0;
 }
 
@@ -286,6 +284,8 @@ static void tick_setup_device(struct tick_device* td,
 
     td->evdev = newdev;
     td->evdev->event_handler = handler;
+
+    clockevents_switch_state(td->evdev, CLOCK_EVT_STATE_ONESHOT);
 }
 
 static int check_tick_device_replacement(struct clock_event_device* curdev,

@@ -52,7 +52,7 @@ int of_irq_parse_one(const void* blob, unsigned long offset, int index,
     struct of_phandle_iterator it;
     u32 parent;
     unsigned long parent_offset;
-    int intsize;
+    int intsize, len;
     const u32* prop;
     int i, retval, cur_index = 0;
 
@@ -85,8 +85,10 @@ int of_irq_parse_one(const void* blob, unsigned long offset, int index,
     if (!prop) return -EINVAL;
     intsize = of_read_number(prop, 1);
 
-    prop = fdt_getprop(blob, offset, "interrupts", NULL);
+    prop = fdt_getprop(blob, offset, "interrupts", &len);
     if (!prop) return -EINVAL;
+
+    if (len < intsize * (index + 1) * sizeof(u32)) return -EOVERFLOW;
 
     out_irq->phandle = parent;
     out_irq->offset = parent_offset;

@@ -31,6 +31,7 @@
 #include <lyos/vm.h>
 #include <asm/sysreg.h>
 #include <asm/esr.h>
+#include <asm/mach.h>
 
 struct fault_info {
     int (*fn)(int in_kernel, unsigned long far, unsigned int esr,
@@ -50,6 +51,20 @@ void phys_copy_fault_in_kernel();
 
 int handle_sys_call(int call_nr, MESSAGE* m_user,
                     struct stackframe* frame_proc);
+
+static void __panic_unhandled(struct stackframe* frame, const char* vector,
+                              unsigned int esr)
+{
+    printk("Unhandled %s exception on CPU%d, ESR 0x%08x\n", vector, cpuid, esr);
+    panic("Unhandled exception");
+}
+
+#define UNHANDLED(el, regsize, vector)                                 \
+    void el##_##regsize##_##vector##_handler(struct stackframe* frame) \
+    {                                                                  \
+        const char* desc = #regsize "-bit " #el " " #vector;           \
+        __panic_unhandled(frame, desc, read_sysreg(esr_el1));          \
+    }
 
 static inline const struct fault_info* esr_to_fault_info(unsigned int esr)
 {
@@ -257,13 +272,18 @@ static void el1_abort(struct stackframe* frame, unsigned long esr)
     do_mem_abort(TRUE, far, esr, frame);
 }
 
-void el1t_64_sync_handler(struct stackframe* frame) {}
+static void el1_interrupt(struct stackframe* frame, void (*handler)(void))
+{
+    if (!handler) panic("no root IRQ handler");
 
-void el1t_64_irq_handler(struct stackframe* frame) {}
+    write_sysreg(PSR_I_BIT | PSR_F_BIT, daif);
+    handler();
+}
 
-void el1t_64_fiq_handler(struct stackframe* frame) {}
-
-void el1t_64_error_handler(struct stackframe* frame) {}
+UNHANDLED(el1t, 64, sync)
+UNHANDLED(el1t, 64, irq)
+UNHANDLED(el1t, 64, fiq)
+UNHANDLED(el1t, 64, error)
 
 void el1h_64_sync_handler(struct stackframe* frame)
 {
@@ -277,9 +297,15 @@ void el1h_64_sync_handler(struct stackframe* frame)
     }
 }
 
-void el1h_64_irq_handler(struct stackframe* frame) {}
+void el1h_64_irq_handler(struct stackframe* frame)
+{
+    el1_interrupt(frame, machine_desc->handle_irq);
+}
 
-void el1h_64_fiq_handler(struct stackframe* frame) {}
+void el1h_64_fiq_handler(struct stackframe* frame)
+{
+    el1_interrupt(frame, machine_desc->handle_fiq);
+}
 
 void el1h_64_error_handler(struct stackframe* frame) {}
 
@@ -301,6 +327,14 @@ static void el0_ia(struct stackframe* frame, unsigned long esr)
     do_mem_abort(FALSE, far, esr, frame);
 }
 
+static void el0_interrupt(struct stackframe* frame, void (*handler)(void))
+{
+    if (!handler) panic("no root IRQ handler");
+
+    write_sysreg(PSR_I_BIT | PSR_F_BIT, daif);
+    handler();
+}
+
 void el0t_64_sync_handler(struct stackframe* frame)
 {
     unsigned long esr = read_sysreg(esr_el1);
@@ -318,16 +352,28 @@ void el0t_64_sync_handler(struct stackframe* frame)
     }
 }
 
-void el0t_64_irq_handler(struct stackframe* frame) {}
+void el0t_64_irq_handler(struct stackframe* frame)
+{
+    el0_interrupt(frame, machine_desc->handle_irq);
+}
 
-void el0t_64_fiq_handler(struct stackframe* frame) {}
+void el0t_64_fiq_handler(struct stackframe* frame)
+{
+    el0_interrupt(frame, machine_desc->handle_fiq);
+}
 
 void el0t_64_error_handler(struct stackframe* frame) {}
 
 void el0t_32_sync_handler(struct stackframe* frame) {}
 
-void el0t_32_irq_handler(struct stackframe* frame) {}
+void el0t_32_irq_handler(struct stackframe* frame)
+{
+    el0_interrupt(frame, machine_desc->handle_irq);
+}
 
-void el0t_32_fiq_handler(struct stackframe* frame) {}
+void el0t_32_fiq_handler(struct stackframe* frame)
+{
+    el0_interrupt(frame, machine_desc->handle_fiq);
+}
 
 void el0t_32_error_handler(struct stackframe* frame) {}

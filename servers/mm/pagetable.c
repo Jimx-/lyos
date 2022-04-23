@@ -313,6 +313,7 @@ void pt_kern_mapping_init()
 {
     int rindex = 0;
     caddr_t addr;
+    unsigned long offset;
     int len, flags;
     struct kern_mapping* kmapping = kern_mappings;
     void* pkmap_start = (void*)PKMAP_START;
@@ -322,11 +323,12 @@ void pt_kern_mapping_init()
 
         /* fill in mapping information */
         kmapping->phys_addr = (phys_bytes)addr;
-        kmapping->len = len;
+        offset = kmapping->phys_addr % ARCH_PG_SIZE;
+        kmapping->len = roundup(len, ARCH_PG_SIZE) - offset;
         kmapping->flags = flags;
 
         /* where this region will be mapped */
-        kmapping->vir_addr = (vir_bytes)pkmap_start;
+        kmapping->vir_addr = (vir_bytes)pkmap_start + offset;
         if (!kmapping->vir_addr)
             panic("MM: cannot allocate memory for kernel mappings");
 
@@ -337,7 +339,7 @@ void pt_kern_mapping_init()
                rindex, kmapping->vir_addr, kmapping->vir_addr + kmapping->len,
                kmapping->len / 1024);
 
-        pkmap_start += kmapping->len;
+        pkmap_start += offset + kmapping->len;
         nr_kern_mappings++;
         kmapping++;
 

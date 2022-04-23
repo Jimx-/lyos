@@ -28,4 +28,15 @@ extern char k_stacks_start, k_stacks_end;
 
 #endif
 
+#define PSR_F_BIT 0x00000040 /* >= V4, but not V7M */
+#define PSR_I_BIT 0x00000080 /* >= V4, but not V7M */
+#define PSR_A_BIT 0x00000100 /* >= V6, but not V7M */
+#define PSR_E_BIT 0x00000200 /* >= V6, but not V7M */
+#define PSR_J_BIT 0x01000000 /* >= V5J, but not V7M */
+#define PSR_Q_BIT 0x08000000 /* >= V5E, including V7M */
+#define PSR_V_BIT 0x10000000
+#define PSR_C_BIT 0x20000000
+#define PSR_Z_BIT 0x40000000
+#define PSR_N_BIT 0x80000000
+
 #endif

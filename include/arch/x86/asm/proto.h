@@ -18,6 +18,13 @@
 
 #define cmb() __asm__ __volatile__("" ::: "memory")
 
+void out_byte(u16 port, u8 value);
+u8 in_byte(u16 port);
+void out_word(u16 port, u16 val);
+u16 in_word(u16 port);
+void out_long(u16 port, u32 val);
+u32 in_long(u16 port);
+
 void x86_lgdt(u8* p_gdt);
 void x86_lidt(u8* p_idt);
 void x86_lldt(u32 ldt);
