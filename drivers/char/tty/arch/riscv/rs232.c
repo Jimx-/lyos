@@ -23,27 +23,23 @@
 #include <errno.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "tty.h"
-#include "console.h"
 #include <lyos/irqctl.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
 #include <asm/io.h>
 #include <lyos/sysutils.h>
+
+#include "tty.h"
+#include "console.h"
 #include "proto.h"
 #include "global.h"
+#include "serial.h"
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
-#include <libchardriver/libchardriver.h>
 
 /* 8250 constants */
 #define UART_FREQ 115200L /* timer frequency */
-
-#define RS_IBUFSIZE 1024 /* RS232 input buffer size */
-#define RS_IBUFLOW  (RS_IBUFSIZE / 4)
-#define RS_IBUFHIGH (RS_IBUFSIZE * 3 / 4)
-#define RS_OBUFSIZE 1024 /* RS232 output buffer size */
 
 /* Interrupt enable bits */
 #define IE_RECEIVER_READY      1
@@ -87,14 +83,8 @@
 #define MS_RLSD  0x80 /* Received Line Signal Detect */
 #define MS_DRLSD 0x08 /* RLSD Delta */
 
-struct uart_scan_data {
-    int line;
-    uint64_t base, size;
-    int interrupt;
-};
-
-typedef struct {
-    TTY* rs_tty;
+struct rs232 {
+    struct uart_port uport;
 
     int cts;
 
@@ -107,12 +97,6 @@ typedef struct {
 #define OSWREADY  0x40
 #define ODEVHUP   MS_RLSD
 
-    char *ihead, *itail;
-    char *ohead, *otail;
-
-    int icount, ocount;
-    int idevready;
-
     void* reg_base;
     void* xmit_port;
     void* recv_port;
@@ -124,53 +108,32 @@ typedef struct {
     void* modem_ctl_port;
     void* line_status_port;
     void* modem_status_port;
+};
 
-    int irq;
-    int irq_hook_id;
-
-    char ibuf[RS_IBUFSIZE];
-    char obuf[RS_OBUFSIZE];
-} rs232_t;
-
-static rs232_t rs_lines[NR_SERIALS];
-
-irq_id_t rs_irq_set;
+#define uport_to_rs232(uport) list_entry((uport), struct rs232, uport)
 
 #define devready(rs) ((readb((rs)->modem_status_port) | (rs)->cts) & MS_CTS)
 #define txready(rs)  (readb((rs)->line_status_port) & LS_TRANSMITTER_READY)
 
-#define istart(rs)                                            \
-    (writeb((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR), \
-     (rs)->idevready = TRUE)
-#define istop(rs) \
-    (writeb((rs)->modem_ctl_port, MC_OUT2 | MC_DTR), (rs)->idevready = FALSE)
+#define istart(rs) writeb((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR)
+#define istop(rs)  writeb((rs)->modem_ctl_port, MC_OUT2 | MC_DTR)
 
-static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
-                         int depth, void* arg)
+static void rs_start_rx(struct uart_port* uport)
 {
-
-    struct uart_scan_data* usd = arg;
-    phys_bytes base, size;
-    int ret;
-
-    if (!arg || strlen(name) < 4 || memcmp(name, "uart", 4) != 0) return 0;
-    if (usd->line-- > 0) return 0;
-
-    ret = of_address_parse_one(blob, offset, 0, &base, &size);
-    if (ret < 0) return 0;
-
-    usd->interrupt = irq_of_parse_and_map(blob, offset, 0);
-    if (!usd->interrupt) return 0;
-
-    usd->base = base;
-    usd->size = size;
-
-    return 1;
+    struct rs232* rs = uport_to_rs232(uport);
+    istart(rs);
 }
 
-static void rs_config(rs232_t* rs)
+static void rs_stop_rx(struct uart_port* uport)
 {
-    TTY* tty = rs->rs_tty;
+    struct rs232* rs = uport_to_rs232(uport);
+    istop(rs);
+}
+
+static void rs_set_termios(struct uart_port* uport, struct termios* termios)
+{
+    struct rs232* rs = uport_to_rs232(uport);
+
     static struct speed_divisor {
         int speed;
         int divisor;
@@ -189,203 +152,85 @@ static void rs_config(rs232_t* rs)
 
     struct speed_divisor* sd;
 
-    rs->cts = (tty->tty_termios.c_cflag & CLOCAL) ? MS_CTS : 0;
+    rs->cts = (termios->c_cflag & CLOCAL) ? MS_CTS : 0;
 
     int divisor = 0;
     for (sd = sp2d; sd < sp2d + sizeof(sp2d) / sizeof(sp2d[0]); sd++) {
-        if (sd->speed == tty->tty_termios.c_ospeed) divisor = sd->divisor;
+        if (sd->speed == termios->c_ospeed) divisor = sd->divisor;
     }
     if (divisor == 0) return;
 
     int line_controls = 0;
-    if (tty->tty_termios.c_cflag & CPARENB) {
+    if (termios->c_cflag & CPARENB) {
         line_controls |= LC_PARITY;
-        if (!(tty->tty_termios.c_cflag & CPARODD)) line_controls |= LC_PAREVEN;
+        if (!(termios->c_cflag & CPARODD)) line_controls |= LC_PAREVEN;
     }
 
     if (divisor >= (UART_FREQ / 110)) line_controls |= LC_2STOP_BITS;
 
-    if ((tty->tty_termios.c_cflag & CSIZE) == CS5)
+    if ((termios->c_cflag & CSIZE) == CS5)
         line_controls |= LC_CS5;
-    else if ((tty->tty_termios.c_cflag & CSIZE) == CS6)
+    else if ((termios->c_cflag & CSIZE) == CS6)
         line_controls |= LC_CS6;
-    else if ((tty->tty_termios.c_cflag & CSIZE) == CS7)
+    else if ((termios->c_cflag & CSIZE) == CS7)
         line_controls |= LC_CS7;
-    else if ((tty->tty_termios.c_cflag & CSIZE) == CS8)
+    else if ((termios->c_cflag & CSIZE) == CS8)
         line_controls |= LC_CS8;
 
     writeb(rs->line_ctl_port, LC_ADDRESS_DIVISOR);
     writeb(rs->div_low_port, divisor);
     writeb(rs->div_hi_port, divisor >> 8);
     writeb(rs->line_ctl_port, line_controls);
+}
+
+static void rs_startup(struct uart_port* uport)
+{
+    struct rs232* rs = uport_to_rs232(uport);
+
+    irq_setpolicy(rs->uport.irq, IRQ_REENABLE, &rs->uport.irq_hook_id);
+    irq_enable(&rs->uport.irq_hook_id);
+
+    writeb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE |
+                                  IE_RECEIVER_READY | IE_TRANSMITTER_READY);
+
+    istart(rs);
 
     rs->ostate = devready(rs) | OSWREADY;
 }
 
-static void rs_read(TTY* tty)
+static void rs_in_int(struct rs232* rs)
 {
-    int count, icount;
-    rs232_t* rs = (rs232_t*)tty->tty_dev;
-
-    while ((count = rs->icount) > 0) {
-        icount = bufend(rs->ibuf) - rs->itail;
-        count = min(count, icount);
-
-        if ((count = in_process(tty, rs->itail, count)) == 0) break;
-
-        rs->icount -= count;
-        if (!rs->idevready && rs->icount < RS_IBUFLOW) istart(rs);
-        if ((rs->itail += count) == bufend(rs->ibuf)) rs->itail = rs->ibuf;
-    }
-}
-
-static void rs_in_int(rs232_t* rs)
-{
-    u8 ch;
+    u32 ch;
     ch = readb(rs->recv_port);
-
-    if (rs->icount >= buflen(rs->ibuf)) return; /* buffer full */
-
-    if (++rs->icount >= RS_IBUFHIGH && rs->idevready) istop(rs);
-    *rs->ihead = ch;
-    if (++rs->ihead >= bufend(rs->ibuf)) rs->ihead = rs->ibuf;
+    uart_insert_char(&rs->uport, ch);
 }
 
-static void rs_out_int(rs232_t* rs)
+static void rs_out_int(struct rs232* rs)
 {
     while (txready(rs) && rs->ostate >= (ODEVREADY | OSWREADY | OQUEUED)) {
-        writeb(rs->xmit_port, *rs->otail);
+        writeb(rs->xmit_port, *rs->uport.otail);
 
-        if (++rs->otail == bufend(rs->obuf)) rs->otail = rs->obuf;
-        if (--rs->ocount == 0) {
+        if (++rs->uport.otail == bufend(rs->uport.obuf))
+            rs->uport.otail = rs->uport.obuf;
+        if (--rs->uport.ocount == 0) {
             rs->ostate &= ~OQUEUED;
         }
     }
 }
 
-static void rs_ostart(rs232_t* rs)
+static void rs_start_tx(struct uart_port* uport)
 {
+    struct rs232* rs = uport_to_rs232(uport);
+
     rs->ostate |= OQUEUED;
     if (txready(rs)) rs_out_int(rs);
 }
 
-static void rs_write(TTY* tty)
+static void rs_handle_irq(struct uart_port* uport)
 {
-    rs232_t* rs = (rs232_t*)tty->tty_dev;
-    int retval = 0;
-
-    while (TRUE) {
-        int ocount = buflen(rs->obuf) - rs->ocount;
-        int count = bufend(rs->obuf) - rs->ohead;
-        count = min(count, ocount);
-        count = min(count, tty->tty_outleft);
-
-        if (count == 0) break;
-
-        if (tty->tty_outcaller == TASK_TTY)
-            memcpy(rs->ohead, (char*)tty->tty_outbuf + tty->tty_outcnt, count);
-        else if ((retval = safecopy_from(tty->tty_outcaller, tty->tty_outgrant,
-                                         tty->tty_outcnt, rs->ohead, count)) !=
-                 OK) {
-            retval = -retval;
-            goto reply;
-        }
-
-        ocount = count;
-        rs->ocount += ocount;
-        rs_ostart(rs);
-        if ((rs->ohead += ocount) >= bufend(rs->obuf))
-            rs->ohead -= buflen(rs->obuf);
-
-        tty->tty_outcnt += ocount;
-        tty->tty_outleft -= count;
-
-    reply:
-        if (tty->tty_outleft == 0 || retval != OK) {
-            if (tty->tty_outcaller != TASK_TTY) {
-                chardriver_reply_io(tty->tty_outcaller, tty->tty_outid,
-                                    tty->tty_outleft == 0 ? tty->tty_outcnt
-                                                          : retval);
-            }
-            tty->tty_outcaller = NO_TASK;
-            tty->tty_outcnt = 0;
-        }
-    }
-}
-
-static void rs_echo(TTY* tty, char c)
-{
-    rs232_t* rs = (rs232_t*)tty->tty_dev;
-    int ocount;
-
-    if (buflen(rs->obuf) == rs->ocount) return;
-    ocount = 1;
-    *rs->ohead = c;
-
-    rs->ocount += ocount;
-    rs_ostart(rs);
-    if ((rs->ohead += ocount) >= bufend(rs->obuf))
-        rs->ohead -= buflen(rs->obuf);
-}
-
-int init_rs(TTY* tty)
-{
-    int line = tty - &tty_table[NR_CONSOLES];
-    rs232_t* rs;
-    struct uart_scan_data usd;
-
-    usd.base = 0;
-    usd.line = line;
-    of_scan_fdt(fdt_scan_uart, &usd, boot_params);
-
-    if (!usd.base) return ENXIO;
-
-    rs = tty->tty_dev = &rs_lines[line];
-    rs->rs_tty = tty;
-
-    rs->ihead = rs->itail = rs->ibuf;
-    rs->ohead = rs->otail = rs->obuf;
-    rs->icount = rs->ocount = 0;
-
-    rs->reg_base = mm_map_phys(SELF, (void*)usd.base, usd.size);
-    if (rs->reg_base == MAP_FAILED) return EFAULT;
-
-    rs->xmit_port = rs->reg_base + 0;
-    rs->recv_port = rs->reg_base + 0;
-    rs->div_low_port = rs->reg_base + 0;
-    rs->div_hi_port = rs->reg_base + 1;
-    rs->int_enab_port = rs->reg_base + 1;
-    rs->int_id_port = rs->reg_base + 2;
-    rs->line_ctl_port = rs->reg_base + 3;
-    rs->modem_ctl_port = rs->reg_base + 4;
-    rs->line_status_port = rs->reg_base + 5;
-    rs->modem_status_port = rs->reg_base + 6;
-
-    istop(rs);
-    rs_config(rs);
-    rs->irq = usd.interrupt;
-    rs->irq_hook_id = rs->irq;
-
-    irq_setpolicy(rs->irq, IRQ_REENABLE, &rs->irq_hook_id);
-    irq_enable(&rs->irq_hook_id);
-
-    rs_irq_set = (1 << rs->irq);
-
-    writeb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE |
-                                  IE_RECEIVER_READY | IE_TRANSMITTER_READY);
-
-    tty->tty_devread = rs_read;
-    tty->tty_devwrite = rs_write;
-    tty->tty_echo = rs_echo;
-
-    istart(rs);
-
-    return 0;
-}
-
-static void rs_handle_irq(rs232_t* rs)
-{
+    struct rs232* rs = uport_to_rs232(uport);
     int i = 1000;
+
     while (i--) {
         int v;
         v = readb(rs->int_id_port);
@@ -404,15 +249,56 @@ static void rs_handle_irq(rs232_t* rs)
     }
 }
 
-int rs_interrupt(MESSAGE* m)
-{
-    unsigned long irq_set = m->INTERRUPTS;
-    rs232_t* rs = rs_lines;
-    int i;
+static const struct uart_port_ops rs232_uart_ops = {
+    .start_rx = rs_start_rx,
+    .stop_rx = rs_stop_rx,
+    .start_tx = rs_start_tx,
+    .set_termios = rs_set_termios,
+    .startup = rs_startup,
+    .handle_irq = rs_handle_irq,
+};
 
-    for (i = 0; i < NR_SERIALS; i++, rs++) {
-        if (irq_set & (1 << rs->irq)) rs_handle_irq(rs);
-    }
+static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
+                         int depth, void* arg)
+{
+    struct rs232* rs;
+    phys_bytes base, size;
+    void* reg_base;
+    int irq;
+    int ret;
+
+    if (strlen(name) < 4 || memcmp(name, "uart", 4) != 0) return 0;
+
+    ret = of_address_parse_one(blob, offset, 0, &base, &size);
+    if (ret < 0) return 0;
+
+    reg_base = mm_map_phys(SELF, (void*)base, size);
+    if (reg_base == MAP_FAILED) return 0;
+
+    irq = irq_of_parse_and_map(blob, offset, 0);
+    if (!irq) return 0;
+
+    rs = malloc(sizeof(*rs));
+    if (!rs) return 1;
+
+    memset(rs, 0, sizeof(*rs));
+    rs->reg_base = reg_base;
+    rs->xmit_port = rs->reg_base + 0;
+    rs->recv_port = rs->reg_base + 0;
+    rs->div_low_port = rs->reg_base + 0;
+    rs->div_hi_port = rs->reg_base + 1;
+    rs->int_enab_port = rs->reg_base + 1;
+    rs->int_id_port = rs->reg_base + 2;
+    rs->line_ctl_port = rs->reg_base + 3;
+    rs->modem_ctl_port = rs->reg_base + 4;
+    rs->line_status_port = rs->reg_base + 5;
+    rs->modem_status_port = rs->reg_base + 6;
+
+    rs->uport.irq = irq;
+    rs->uport.irq_hook_id = irq;
+    uart_add_port(&rs->uport, &rs232_uart_ops);
 
     return 0;
 }
+
+void arch_init_serial(void) { of_scan_fdt(fdt_scan_uart, NULL, boot_params); }

@@ -3,7 +3,7 @@
 
 include arch/$(ARCH)/Makefile
 
-SRCS	+= tty.c global.c keyboard.c
+SRCS	+= tty.c global.c keyboard.c serial.c
 LIBS	= chardriver devman sysfs lyos
 
 ifeq ($(CONFIG_OF),y)

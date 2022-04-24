@@ -33,6 +33,7 @@
 #include <lyos/eventpoll.h>
 #include <poll.h>
 
+#include "serial.h"
 #include "global.h"
 
 #include <libdevman/libdevman.h>
@@ -138,7 +139,7 @@ int main()
                 tty_do_kern_log();
                 break;
             case INTERRUPT:
-                if (msg.INTERRUPTS & rs_irq_set) rs_interrupt(&msg);
+                uart_interrupt(&msg);
                 break;
             case CLOCK:
                 expire_timer(msg.TIMESTAMP);
@@ -203,6 +204,8 @@ static void init_tty()
 
     init_keyboard();
 
+    arch_init_serial();
+
     /* add /dev/console */
     devt = MAKE_DEV(DEV_CHAR_TTY, CONS_MINOR);
     dm_cdev_add(devt);
@@ -249,7 +252,8 @@ static void init_tty()
             retval = dm_device_register(&devinf, &tty->tty_device_id);
             if (retval) panic("tty: cannot register tty device");
         } else { /* serial ports */
-            init_rs(tty);
+            retval = init_uart(tty);
+            if (retval < 0) continue;
 
             devt = MAKE_DEV(DEV_CHAR_TTY, i - NR_CONSOLES + SERIAL_MINOR);
             dm_cdev_add(devt);

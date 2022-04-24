@@ -23,19 +23,17 @@
 #include <errno.h>
 #include "string.h"
 #include "lyos/fs.h"
-#include "tty.h"
-#include "console.h"
 #include <lyos/irqctl.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
+
+#include "tty.h"
+#include "console.h"
 #include "proto.h"
 #include "global.h"
+#include "serial.h"
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
-irq_id_t rs_irq_set;
-
-int init_rs(TTY* tty) { return 0; }
-
-int rs_interrupt(MESSAGE* m) { return 0; }
+void arch_init_serial(void) {}
