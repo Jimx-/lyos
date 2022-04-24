@@ -35,6 +35,8 @@
 #define __P110 RISCV_PG_EXEC_WRITE
 #define __P111 RISCV_PG_EXEC_WRITE
 
+#define pgprot_noncached(prot) (prot)
+
 static inline pde_t pfn_pde(unsigned long pfn, pgprot_t prot)
 {
     return __pde((pfn << RISCV_PG_PFN_SHIFT) | pgprot_val(prot));

@@ -378,7 +378,7 @@ static int virtio_gpu_mmap(struct drm_gem_object* obj, endpoint_t endpoint,
 {
     struct virtio_gpu_object* bo = gem_to_virtio_gpu_obj(obj);
 
-    char* mapped = mm_map_phys(endpoint, (void*)bo->paddr, length);
+    char* mapped = mm_map_phys(endpoint, bo->paddr, length, 0);
     if (mapped == MAP_FAILED) {
         return ENOMEM;
     }

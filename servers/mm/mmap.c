@@ -227,11 +227,15 @@ static int map_perm_check(endpoint_t source, endpoint_t target,
 
 int do_map_phys()
 {
-    endpoint_t who = mm_msg.ENDPOINT == SELF ? mm_msg.source : mm_msg.ENDPOINT;
-    phys_bytes phys_addr = (phys_bytes)mm_msg.ADDR;
-    phys_bytes len = mm_msg.BUF_LEN;
+    struct mm_map_phys_request* req =
+        (struct mm_map_phys_request*)&mm_msg.MSG_PAYLOAD;
+    endpoint_t who = req->who == SELF ? mm_msg.source : req->who;
+    phys_bytes phys_addr = req->phys_addr;
+    phys_bytes len = req->len;
+    int flags = req->flags;
     struct mmproc* mmp = endpt_mmproc(who);
     struct vir_region* vr;
+    int vrflags;
     off_t offset;
     int retval = 0;
 
@@ -246,8 +250,11 @@ int do_map_phys()
 
     len = roundup(len, ARCH_PG_SIZE);
 
-    vr = region_map(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len,
-                    RF_READ | RF_WRITE | RF_DIRECT, 0, &direct_phys_map_ops);
+    vrflags = RF_READ | RF_WRITE | RF_DIRECT;
+    if (flags & MMP_IO) vrflags |= RF_IO;
+
+    vr = region_map(mmp, ARCH_BIG_PAGE_SIZE, VM_STACK_TOP, len, vrflags, 0,
+                    &direct_phys_map_ops);
     if (!vr) return ENOMEM;
 
     direct_phys_set_phys(vr, phys_addr);

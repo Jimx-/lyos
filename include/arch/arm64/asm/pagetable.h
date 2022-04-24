@@ -57,6 +57,14 @@
 #define __P110 ARM64_PG_SHARED_EXEC
 #define __P111 ARM64_PG_SHARED_EXEC
 
+#define __pgprot_modify(prot, mask, bits) \
+    __pgprot((pgprot_val(prot) & ~(mask)) | (bits))
+
+#define pgprot_noncached(prot)                                               \
+    __pgprot_modify(prot, _ARM64_PTE_ATTRINDX_MASK,                          \
+                    _ARM64_PTE_ATTRINDX(MT_DEVICE_nGnRnE) | _ARM64_PTE_PXN | \
+                        _ARM64_PTE_UXN)
+
 static inline pmd_t pude_pmd(pud_t pude) { return __pmd(pud_val(pude)); }
 static inline pte_t pude_pte(pud_t pude) { return __pte(pud_val(pude)); }
 

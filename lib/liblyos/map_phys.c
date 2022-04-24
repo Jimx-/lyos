@@ -18,18 +18,23 @@
 #include "lyos/const.h"
 #include "lyos/vm.h"
 #include <sys/mman.h>
+#include <string.h>
 
 /*****************************************************************************
  *                                mm_map_phys
  *****************************************************************************/
-void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len)
+void* mm_map_phys(endpoint_t who, phys_bytes phys_addr, size_t len, int flags)
 {
     MESSAGE msg;
+    struct mm_map_phys_request* mmp_req =
+        (struct mm_map_phys_request*)&msg.MSG_PAYLOAD;
 
+    memset(&msg, 0, sizeof(msg));
     msg.type = MM_MAP_PHYS;
-    msg.ENDPOINT = who;
-    msg.ADDR = phys_addr;
-    msg.BUF_LEN = len;
+    mmp_req->who = who;
+    mmp_req->phys_addr = phys_addr;
+    mmp_req->len = len;
+    mmp_req->flags = flags;
 
     send_recv(BOTH, TASK_MM, &msg);
 

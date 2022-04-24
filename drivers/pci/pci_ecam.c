@@ -26,7 +26,7 @@ struct pci_config_window* pci_ecam_create(unsigned long base, size_t size)
 
     memset(cfg, 0, sizeof(*cfg));
 
-    cfg->win = mm_map_phys(SELF, (void*)base, size);
+    cfg->win = mm_map_phys(SELF, base, size, MMP_IO);
     if (cfg->win == MAP_FAILED) {
         free(cfg);
         return NULL;

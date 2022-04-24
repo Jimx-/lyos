@@ -61,6 +61,7 @@ static inline pgprot_t phys_region_page_prot(struct vir_region* vr,
     static const pgprot_t protection_map[] = {
         __P000, __P001, __P010, __P011, __P100, __P101, __P110, __P111,
     };
+    pgprot_t prot;
 
     unsigned long flags = 0;
     int vr_flags = vr->flags & (RF_READ | RF_EXEC);
@@ -68,7 +69,11 @@ static inline pgprot_t phys_region_page_prot(struct vir_region* vr,
 
     if (vr->rops->rop_pt_flags) flags |= vr->rops->rop_pt_flags(vr);
 
-    return __pgprot(pgprot_val(protection_map[vr_flags]) | flags);
+    prot = __pgprot(pgprot_val(protection_map[vr_flags]) | flags);
+
+    if (vr->flags & RF_IO) prot = pgprot_noncached(prot);
+
+    return prot;
 }
 
 struct phys_region* phys_region_get(struct vir_region* vr, vir_bytes offset)

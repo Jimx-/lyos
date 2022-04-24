@@ -120,6 +120,7 @@ struct vir_region {
 #define RF_MAP_SHARED    0x0020
 #define RF_ANON          0x0100
 #define RF_DIRECT        0x0200
+#define RF_IO            0x0400
 
 /* Map region flags */
 #define MRF_PREALLOC 0x01

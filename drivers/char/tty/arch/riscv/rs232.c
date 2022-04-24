@@ -272,7 +272,7 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
     ret = of_address_parse_one(blob, offset, 0, &base, &size);
     if (ret < 0) return 0;
 
-    reg_base = mm_map_phys(SELF, (void*)base, size);
+    reg_base = mm_map_phys(SELF, base, size, 0);
     if (reg_base == MAP_FAILED) return 0;
 
     irq = irq_of_parse_and_map(blob, offset, 0);

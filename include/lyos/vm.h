@@ -71,6 +71,7 @@
 #define MMREQ_TYPE_DELIVERMSG 2
 #define MMREQ_CHECK           1
 
+/* umap() request */
 #define UMAP_WHO     u.m3.m3i1
 #define UMAP_TYPE    u.m3.m3i2
 #define UMAP_SIZE    u.m3.m3l1
@@ -109,6 +110,14 @@ struct mm_fork_info {
     void* tls;
 };
 
+struct mm_map_phys_request {
+    endpoint_t who;
+    phys_bytes phys_addr;
+    size_t len;
+    int flags;
+#define MMP_IO 0x01
+};
+
 int vmctl(int request, endpoint_t who);
 int procctl(endpoint_t who, int param);
 int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
@@ -117,7 +126,7 @@ int vmctl_getpdbr(endpoint_t who, unsigned long* pdbr);
 int vmctl_set_address_space(endpoint_t who, unsigned long pgd_phys);
 int umap(endpoint_t ep, int type, vir_bytes vir_addr, vir_bytes size,
          phys_bytes* phys_addr);
-void* mm_map_phys(endpoint_t who, void* phys_addr, size_t len);
+void* mm_map_phys(endpoint_t who, phys_bytes phys_addr, size_t len, int flags);
 int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
                         int* flags, endpoint_t* caller);
 int vmctl_reply_mmreq(endpoint_t who, int result);

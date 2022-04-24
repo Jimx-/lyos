@@ -273,7 +273,7 @@ static void* map_capability(int devind, int off, size_t minlen, u32 align,
         return NULL;
     }
 
-    p = mm_map_phys(SELF, (void*)(uintptr_t)(bar_base + offset), length);
+    p = mm_map_phys(SELF, bar_base + offset, length, MMP_IO);
 
     return p;
 }

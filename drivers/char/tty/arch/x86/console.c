@@ -121,7 +121,7 @@ void init_screen(TTY* tty)
     current_console = 0;
 
     if (!console_mem) {
-        console_mem = mm_map_phys(SELF, (void*)V_MEM_BASE, V_MEM_SIZE);
+        console_mem = mm_map_phys(SELF, V_MEM_BASE, V_MEM_SIZE, 0);
         if (console_mem == MAP_FAILED) panic("can't map console memory");
     }
 

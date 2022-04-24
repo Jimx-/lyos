@@ -22,6 +22,8 @@
 #include <asm-generic/pagetable-nopmd.h>
 #endif
 
+#define pgprot_noncached(prot) (prot)
+
 static inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)
 {
     return __pte((pfn << ARCH_PG_SHIFT) | pgprot_val(prot));

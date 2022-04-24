@@ -177,8 +177,7 @@ static int fb_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
         length = size - offset;
     }
 
-    char* mapped =
-        mm_map_phys(endpoint, (void*)(base + (size_t)offset), length);
+    char* mapped = mm_map_phys(endpoint, base + (size_t)offset, length, 0);
     if (mapped == MAP_FAILED) {
         return ENOMEM;
     }

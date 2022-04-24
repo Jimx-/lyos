@@ -215,7 +215,7 @@ static int nvme_pci_remap_bar(unsigned long size)
 {
     if (nvme_bar) munmap(nvme_bar, nvme_bar_map_size);
 
-    nvme_bar = mm_map_phys(SELF, (void*)(uintptr_t)nvme_bar_base, size);
+    nvme_bar = mm_map_phys(SELF, nvme_bar_base, size, MMP_IO);
     if (!nvme_bar) {
         nvme_bar_map_size = 0;
         nvme_dbs = NULL;
