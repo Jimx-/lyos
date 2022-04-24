@@ -7,7 +7,7 @@ SRCS	+= tty.c global.c keyboard.c serial.c
 LIBS	= chardriver devman sysfs lyos
 
 ifeq ($(CONFIG_OF),y)
-	LIBS += of fdt
+	LIBS := of fdt $(LIBS)
 endif
 
 PROG	= tty
