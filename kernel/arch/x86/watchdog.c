@@ -60,10 +60,10 @@ static void intel_watchdog_init(unsigned int cpu)
     u64 cpu_freq;
 
     cpu_freq = cpu_hz[cpu];
-    while (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffff)
+    while (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffffUL)
         cpu_freq >>= 1;
 
-    watchdog->reset_val = watchdog->watchdog_reset_val = -cpu_freq;
+    watchdog->reset_val = watchdog->watchdog_reset_val = -(u32)cpu_freq;
 
     /* set initial ctr0 value */
     ia32_write_msr(INTEL_MSR_PERF_FIXED_CTR0, ex64hi(watchdog->reset_val),
@@ -101,13 +101,12 @@ static int intel_watchdog_init_profile(unsigned int freq)
     cpu_freq = cpu_hz[cpuid];
     do_div(cpu_freq, freq);
 
-    if (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffffU) {
+    if (ex64hi(cpu_freq) || ex64lo(cpu_freq) > 0x7fffffffUL) {
         printk("nmi watchdog ticks exceed 31 bits\n");
         return EINVAL;
     }
 
-    cpu_freq = -cpu_freq;
-    watchdog->profile_reset_val = cpu_freq;
+    watchdog->profile_reset_val = -(u32)cpu_freq;
 
     return 0;
 }
