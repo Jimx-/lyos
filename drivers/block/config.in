@@ -34,4 +34,6 @@ source "drivers/block/virtio-blk/config.in"
 
 source "drivers/block/nvme/config.in"
 
+source "drivers/block/mmc/config.in"
+
 endif

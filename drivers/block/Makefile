@@ -16,4 +16,8 @@ ifeq ($(CONFIG_BLK_DEV_NVME),y)
 	SUBDIRS += nvme
 endif
 
+ifeq ($(CONFIG_MMC),y)
+	SUBDIRS += mmc
+endif
+
 include lyos.subdirs.mk
