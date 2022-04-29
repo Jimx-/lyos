@@ -129,12 +129,18 @@ vectors:
     .macro entry_handler el:req, ht:req, regsize:req, label:req
     el\el\ht\()_\regsize\()_\label:
     kernel_entry \el, \regsize
+
+    mov x0, tsk
+    bl stop_context
+
     .if \el == 0
     mov x0, tsk
     .else
     mov x0, sp
     .endif
+
     bl  el\el\ht\()_\regsize\()_\label\()_handler
+
     .if \el == 0
     b   switch_to_user
     .else

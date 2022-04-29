@@ -10,6 +10,7 @@
 #include <string.h>
 #include <asm/smp.h>
 #include <asm/cpulocals.h>
+#include <lyos/clocksource.h>
 #include <kernel/clockevent.h>
 
 #include <libfdt/libfdt.h>
@@ -25,6 +26,22 @@ static int arch_timer_uses_ppi;
 static irq_hook_t arch_timer_irq_hook;
 
 static DEFINE_CPULOCAL(struct clock_event_device, arch_timer_evt);
+
+static u64 arch_timer_read_counter(struct clocksource* cs)
+{
+    u64 cval;
+
+    isb();
+    cval = read_sysreg(cntv_cval_el0);
+    return cval;
+}
+
+static struct clocksource arch_timer_clocksource = {
+    .name = "arch_sys_counter",
+    .rating = 300,
+    .read = arch_timer_read_counter,
+    .mask = 0x7fffffffffffffffUL,
+};
 
 static inline u64 arch_timer_reg_read_cp15(int access, enum arch_timer_reg reg)
 {
@@ -184,6 +201,8 @@ static int fdt_scan_arch_timer(void* blob, unsigned long offset,
 
     put_irq_handler(arch_timer_ppi[arch_timer_uses_ppi], &arch_timer_irq_hook,
                     arch_timer_handler_phys);
+
+    clocksource_register_hz(&arch_timer_clocksource, arch_timer_rate);
 
     return 1;
 }
