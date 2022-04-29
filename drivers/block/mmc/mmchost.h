@@ -26,8 +26,12 @@ struct mmc_card {
     struct mmc_host* host;
     int dev_id;
     u32 ocr;
-    unsigned type;
+    unsigned int type;
 #define MMC_TYPE_SD 1
+
+    unsigned int state;
+#define MMC_STATE_PRESENT   (1 << 0)
+#define MMC_STATE_BLOCKADDR (1 << 0)
 
     unsigned int rca;
 
@@ -109,10 +113,15 @@ int mmc_go_idle(struct mmc_host* host);
 int mmc_send_cid(struct mmc_host* host, u32* cid);
 int mmc_send_csd(struct mmc_card* card, u32* csd);
 
+int mmc_add_card(struct mmc_card* card);
+void mmc_remove_card(struct mmc_card* card);
+
 int mmc_select_card(struct mmc_card* card);
 int mmc_deselect_card(struct mmc_host* host);
 
 void mmc_set_clock(struct mmc_host* host, unsigned int hz);
 void mmc_set_bus_width(struct mmc_host* host, unsigned int width);
+
+int mmc_attach_sd(struct mmc_host* host);
 
 #endif

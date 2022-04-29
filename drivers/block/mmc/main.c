@@ -13,6 +13,7 @@
 
 #include "mmc.h"
 #include "mmchost.h"
+#include "sdhci.h"
 
 #define NAME "mmcblk"
 
@@ -276,7 +277,7 @@ static int copyfrom(endpoint_t endpoint, const struct iovec_grant* iov,
 }
 
 static int copyto(endpoint_t endpoint, const struct iovec_grant* iov,
-                  vir_bytes offset, void* addr, size_t bytes)
+                  vir_bytes offset, const void* addr, size_t bytes)
 {
     int ret;
 
@@ -291,8 +292,8 @@ static int copyto(endpoint_t endpoint, const struct iovec_grant* iov,
     return 0;
 }
 
-static int mmc_blk_read_single(struct mmc_card* card, unsigned int blknr,
-                               unsigned char* buf)
+static int mmc_blk_rw_single(struct mmc_card* card, int do_write,
+                             unsigned int blknr, unsigned char* buf)
 {
     struct mmc_request mrq = {};
     struct mmc_command cmd = {};
@@ -301,13 +302,15 @@ static int mmc_blk_read_single(struct mmc_card* card, unsigned int blknr,
     mrq.cmd = &cmd;
     mrq.data = &data;
 
-    cmd.opcode = MMC_READ_SINGLE_BLOCK;
-    cmd.arg = blknr * SECTOR_SIZE;
+    cmd.opcode = do_write ? MMC_WRITE_BLOCK : MMC_READ_SINGLE_BLOCK;
+    cmd.arg = blknr;
+    if (!(card->state & MMC_STATE_BLOCKADDR)) cmd.arg <<= 9;
     cmd.flags = MMC_RSP_R1 | MMC_CMD_ADTC;
 
     data.blksz = SECTOR_SIZE;
     data.blocks = 1;
-    data.flags = MMC_DATA_READ;
+    data.blk_addr = blknr;
+    data.flags = do_write ? MMC_DATA_WRITE : MMC_DATA_READ;
     data.data = buf;
     data.len = SECTOR_SIZE;
 
@@ -363,16 +366,24 @@ static ssize_t mmc_blk_rdwt(dev_t minor, int do_write, loff_t pos,
 
         for (i = 0; i < io_size / blk_size; i++) {
             if (do_write) {
+                err =
+                    copyfrom(endpoint, ciov, i * blk_size, copybuff, blk_size);
+                if (err) return err;
+
+                err = mmc_blk_rw_single(md->card, do_write,
+                                        (io_offset / blk_size) + i, copybuff);
+                if (err) return err;
+
             } else {
-                err = mmc_blk_read_single(md->card, (io_offset / blk_size) + i,
-                                          copybuff);
+                err = mmc_blk_rw_single(md->card, do_write,
+                                        (io_offset / blk_size) + i, copybuff);
                 if (err) return err;
 
                 err = copyto(endpoint, ciov, i * blk_size, copybuff, blk_size);
                 if (err) return err;
-
-                bytes_rdwt += blk_size;
             }
+
+            bytes_rdwt += blk_size;
         }
     }
 

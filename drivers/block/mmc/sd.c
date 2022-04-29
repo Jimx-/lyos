@@ -57,6 +57,22 @@ static int mmc_decode_csd(struct mmc_card* card)
         csd->read_blkbits = UNSTUFF_BITS(raw_csd, 80, 4);
         csd->write_blkbits = UNSTUFF_BITS(raw_csd, 22, 4);
         break;
+
+    case 1:
+        card->state |= MMC_STATE_BLOCKADDR;
+
+        csd->cmdclass = UNSTUFF_BITS(raw_csd, 84, 12);
+
+        m = UNSTUFF_BITS(raw_csd, 99, 4);
+        e = UNSTUFF_BITS(raw_csd, 96, 3);
+        csd->max_dtr = tran_exp[e] * tran_mant[m];
+
+        m = UNSTUFF_BITS(raw_csd, 48, 22);
+        csd->capacity = (1 + m) << 10;
+
+        csd->read_blkbits = 9;
+        csd->write_blkbits = 9;
+
     default:
         return -EINVAL;
     }
