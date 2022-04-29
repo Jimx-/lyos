@@ -29,7 +29,7 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "asm/cpulocals.h"
+#include <asm/cpulocals.h>
 #include <lyos/param.h>
 #include <lyos/vm.h>
 #include <errno.h>
@@ -42,7 +42,7 @@
 #define MAX_TEMPPDES 2
 #define TEMPPDE_SRC  0
 #define TEMPPDE_DST  1
-static unsigned long temppdes[MAX_TEMPPDES];
+static DEFINE_CPULOCAL(unsigned long, temppdes[MAX_TEMPPDES]);
 
 #define _SRC_       0
 #define _DEST_      1
@@ -56,14 +56,17 @@ static inline void set_pde(pde_t* pdep, pde_t pde)
 
 void init_memory()
 {
-    int i;
+    int i, cpu;
     int temppde_start;
 
-    temppde_start = ARCH_VM_DIR_ENTRIES - MAX_TEMPPDES;
+    temppde_start = ARCH_VM_DIR_ENTRIES - MAX_TEMPPDES * CONFIG_SMP_MAX_CPUS;
 
-    for (i = 0; i < MAX_TEMPPDES; i++) {
-        temppdes[i] = temppde_start++;
+    for (cpu = 0; cpu < CONFIG_SMP_MAX_CPUS; cpu++) {
+        for (i = 0; i < MAX_TEMPPDES; i++) {
+            get_cpu_var(cpu, temppdes)[i] = temppde_start++;
+        }
     }
+
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 }
 
@@ -71,7 +74,7 @@ void clear_memcache()
 {
     int i;
     for (i = 0; i < MAX_TEMPPDES; i++) {
-        set_pde(&swapper_pg_dir[temppdes[i]], __pde(0));
+        set_pde(&swapper_pg_dir[get_cpulocal_var(temppdes)[i]], __pde(0));
     }
     flush_tlb();
 }
@@ -82,7 +85,7 @@ static void* create_temp_map(struct proc* p, void* la, size_t* len, int index,
 {
     phys_bytes pa;
     pde_t pdeval;
-    unsigned long pde = temppdes[index];
+    unsigned long pde = get_cpulocal_var(temppdes)[index];
 
     /* the process is already in current page table */
     if (p && (p == get_cpulocal_var(pt_proc) || is_kerntaske(p->endpoint)))

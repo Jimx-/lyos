@@ -56,12 +56,13 @@ static int kinfo_set_param(char* buf, char* name, char* value);
 static int fdt_scan_root(void* blob, unsigned long offset, const char* name,
                          int depth, void* arg)
 {
+    const u32* prop;
+
     if (depth != 0) return 0;
 
     dt_root_addr_cells = 1;
     dt_root_size_cells = 1;
 
-    u32* prop;
     if ((prop = fdt_getprop(blob, offset, "#size-cells", NULL)) != NULL) {
         dt_root_size_cells = be32_to_cpup(prop);
     }
