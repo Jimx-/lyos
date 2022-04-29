@@ -136,9 +136,11 @@ int do_mount(void)
     if (mount_root) {
         /* /dev is not available before we mount root so we need to parse it
          * differently */
-        data_copy(SELF, source, fproc->endpoint,
-                  self->msg_in.u.m_vfs_mount.source, source_len);
-        source[source_len] = '\0';
+        if (env_get_param("root", source, PATH_MAX) != 0) {
+            data_copy(SELF, source, fproc->endpoint,
+                      self->msg_in.u.m_vfs_mount.source, source_len);
+            source[source_len] = '\0';
+        }
 
         int major, minor;
         char dummy;

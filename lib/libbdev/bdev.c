@@ -28,12 +28,12 @@
 #include <libbdev/libbdev.h>
 #include <libdevman/libdevman.h>
 
-static endpoint_t driver_table[NR_DEVICES];
+static endpoint_t driver_table[MAJOR_MAX];
 
 void bdev_init()
 {
     int i;
-    for (i = 0; i < NR_DEVICES; i++)
+    for (i = 0; i < MAJOR_MAX; i++)
         driver_table[i] = NO_TASK;
 }
 
