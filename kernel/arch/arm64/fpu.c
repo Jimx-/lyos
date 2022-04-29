@@ -31,19 +31,52 @@
 #ifdef CONFIG_SMP
 #include <asm/smp.h>
 #endif
-#include "asm/cpulocals.h"
+#include <asm/cpulocals.h>
+#include <asm/fpu.h>
+#include <asm/sysreg.h>
 
 /**
  * <Ring 0> Initialize FPU.
  */
 void fpu_init() {}
 
-void enable_fpu_exception(void) {}
+void enable_fpu_exception(void)
+{
+    write_sysreg(CPACR_EL1_FPEN_EL1EN, cpacr_el1);
+    isb();
+}
 
-void disable_fpu_exception(void) {}
+void disable_fpu_exception(void)
+{
+    write_sysreg(CPACR_EL1_FPEN, cpacr_el1);
+    isb();
+}
 
-void save_local_fpu(struct proc* p, int retain) {}
+void save_local_fpu(struct proc* p, int retain)
+{
+    save_fpregs((struct fpu_state*)p->seg.fpu_state);
+}
 
-void save_fpu(struct proc* p) {}
+void save_fpu(struct proc* p)
+{
+    if (get_cpulocal_var(fpu_owner) == p) {
+        disable_fpu_exception();
+        save_local_fpu(p, TRUE);
+    }
+}
 
-int restore_fpu(struct proc* p) {}
+static inline void fpu_init_state(struct fpu_state* state)
+{
+    memset(state, 0, sizeof(*state));
+}
+
+int restore_fpu(struct proc* p)
+{
+    if (!(p->flags & PF_FPU_INITIALIZED)) {
+        fpu_init_state((struct fpu_state*)p->seg.fpu_state);
+        p->flags |= PF_FPU_INITIALIZED;
+    }
+
+    load_fpregs((struct fpu_state*)p->seg.fpu_state);
+    return 0;
+}

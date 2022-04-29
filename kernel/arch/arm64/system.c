@@ -118,8 +118,12 @@ void arch_boot_proc(struct proc* p, struct boot_proc* bp)
     }
 }
 
+static struct fpu_state fpu_state[NR_PROCS];
+
 int arch_reset_proc(struct proc* p)
 {
+    struct fpu_state* fpu;
+
     memset(&p->regs, 0, sizeof(p->regs));
 
     if (p->endpoint == TASK_MM) {
@@ -127,6 +131,12 @@ int arch_reset_proc(struct proc* p)
         p->seg.ttbr_phys = (reg_t)__pa_symbol(mm_pg_dir);
         p->seg.ttbr_vir = (reg_t*)mm_pg_dir;
     }
+
+    if (p->slot >= 0) {
+        fpu = &fpu_state[p->slot];
+    }
+
+    p->seg.fpu_state = (void*)fpu;
 
     return 0;
 }
@@ -157,6 +167,11 @@ int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
 {
     if (newsp) {
         p->regs.sp = (reg_t)newsp;
+    }
+
+    if (parent->flags & PF_FPU_INITIALIZED) {
+        memcpy(p->seg.fpu_state, parent->seg.fpu_state,
+               sizeof(struct fpu_state));
     }
 
     return 0;

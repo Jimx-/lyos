@@ -73,6 +73,10 @@
 
 #define MAIR_ATTRIDX(attr, idx) ((attr) << ((idx)*8))
 
+#define CPACR_EL1_FPEN_EL1EN (BIT(20)) /* enable EL1 access */
+#define CPACR_EL1_FPEN_EL0EN (BIT(21)) /* enable EL0 access, if EL1EN set */
+#define CPACR_EL1_FPEN       (CPACR_EL1_FPEN_EL1EN | CPACR_EL1_FPEN_EL0EN)
+
 /* id_aa64mmfr0 */
 #define ID_AA64MMFR0_ECV_SHIFT       60
 #define ID_AA64MMFR0_FGT_SHIFT       56

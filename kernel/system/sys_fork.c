@@ -50,18 +50,14 @@ int sys_fork(MESSAGE* m, struct proc* p_proc)
 
     save_fpu(parent);
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
     old_fpu_state = child->seg.fpu_state;
 #endif
 
     *child = *parent;
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
     child->seg.fpu_state = old_fpu_state;
-    if (parent->flags & PF_FPU_INITIALIZED) {
-        memcpy(child->seg.fpu_state, parent->seg.fpu_state,
-               sizeof(union fpregs_state));
-    }
 #endif
 
     snprintf(child->name, sizeof(child->name), "%s_%d", parent->name, child_ep);

@@ -335,6 +335,11 @@ static void el0_interrupt(struct stackframe* frame, void (*handler)(void))
     handler();
 }
 
+static void el0_fpsimd_acc(struct stackframe* regs, unsigned long esr)
+{
+    copr_not_available_handler();
+}
+
 void el0t_64_sync_handler(struct stackframe* frame)
 {
     unsigned long esr = read_sysreg(esr_el1);
@@ -348,6 +353,9 @@ void el0t_64_sync_handler(struct stackframe* frame)
         break;
     case ESR_ELx_EC_IABT_LOW:
         el0_ia(frame, esr);
+        break;
+    case ESR_ELx_EC_FP_ASIMD:
+        el0_fpsimd_acc(frame, esr);
         break;
     }
 }

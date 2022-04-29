@@ -36,6 +36,7 @@ struct stackframe {
 struct segframe {
     reg_t ttbr_phys;
     reg_t* ttbr_vir;
+    char* fpu_state;
 };
 
 struct sigcontext {

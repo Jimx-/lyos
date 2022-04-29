@@ -169,6 +169,11 @@ int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
 {
     int retval = 0;
 
+    if (parent->flags & PF_FPU_INITIALIZED) {
+        memcpy(p->seg.fpu_state, parent->seg.fpu_state,
+               sizeof(union fpregs_state));
+    }
+
     if (newsp != NULL) {
         p->regs.sp = (reg_t)newsp;
     }
