@@ -155,6 +155,8 @@ void smp_boot_ap()
 
     printk("smp: CPU %d is up\n", cpuid);
 
+    identify_cpu();
+
     get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
     get_cpulocal_var(pt_proc) = proc_addr(TASK_MM);
 

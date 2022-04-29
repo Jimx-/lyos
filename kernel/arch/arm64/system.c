@@ -37,6 +37,7 @@
 #include <lyos/sysutils.h>
 #include "libexec/libexec.h"
 #include <asm/cpu_info.h>
+#include <asm/cpu_type.h>
 
 struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -54,7 +55,11 @@ struct proc* arch_switch_to_user(void)
     return p;
 }
 
-void identify_cpu() {}
+void identify_cpu()
+{
+    struct cpu_info* ci = &cpu_info[cpuid];
+    ci->reg_midr = read_cpuid_id();
+}
 
 static int kernel_clearmem(struct exec_info* execi, void* vaddr, size_t len)
 {

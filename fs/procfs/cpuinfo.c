@@ -80,6 +80,15 @@ static void print_cpu(struct cpu_info* cpu_info, int idx)
     buf_printf("%-16s: %d\n", "apicid", cpu_info->apicid);
     buf_printf("%-16s: ", "flags");
     print_x86_cpu_flags(cpu_info->flags);
+#elif defined(__aarch64__)
+    buf_printf("%-16s: 0x%x\n", "CPU implementer",
+               MIDR_IMPLEMENTOR(cpu_info->reg_midr));
+    buf_printf("%-16s: %d\n", "CPU architecture", 8);
+    buf_printf("%-16s: 0x%x\n", "CPU variant",
+               MIDR_VARIANT(cpu_info->reg_midr));
+    buf_printf("%-16s: 0x%x\n", "CPU part", MIDR_PARTNUM(cpu_info->reg_midr));
+    buf_printf("%-16s: %d\n", "CPU revision",
+               MIDR_REVISION(cpu_info->reg_midr));
 #elif defined(__riscv)
     buf_printf("%-16s: %lu\n", "hart", cpu_info->hart);
     buf_printf("%-16s: %s\n", "isa", cpu_info->isa);
