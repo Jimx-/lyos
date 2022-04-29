@@ -56,6 +56,8 @@ typedef struct kinfo {
 
     phys_bytes kernel_start_phys, kernel_end_phys;
 
+    phys_bytes initrd_base_phys, initrd_len;
+
     struct boot_proc boot_procs[NR_BOOT_PROCS];
 } __attribute__((packed)) kinfo_t;
 

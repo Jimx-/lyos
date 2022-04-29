@@ -245,14 +245,11 @@ void cstart(phys_bytes dtb_phys)
     if (hz_value) system_hz = strtol(hz_value, NULL, 10);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
-    char param_buf[64];
-
     cut_memmap(&kinfo, phys_initrd_start,
                roundup(phys_initrd_start + phys_initrd_size, ARCH_PG_SIZE));
-    sprintf(param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
-    kinfo_set_param(kinfo.cmdline, "initrd_base", param_buf);
-    sprintf(param_buf, "%lu", (unsigned int)phys_initrd_size);
-    kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
+
+    kinfo.initrd_base_phys = phys_initrd_start;
+    kinfo.initrd_len = phys_initrd_size;
 
     kern_map_phys(dtb_phys, fdt_totalsize(initial_boot_params), KMF_USER,
                   &sysinfo.boot_params, NULL, NULL);

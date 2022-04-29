@@ -18,6 +18,9 @@
 #include "string.h"
 #include <errno.h>
 #include <lyos/sysutils.h>
+#include <lyos/param.h>
+#include <lyos/vm.h>
+#include <sys/mman.h>
 
 #include "libblockdriver/libblockdriver.h"
 #include "libchardriver/libchardriver.h"
@@ -244,20 +247,24 @@ static int char_ioctl(dev_t minor, int request, endpoint_t endpoint,
 
 static void init_rd(int argc, char* argv[])
 {
-    unsigned long base, len;
+    struct kinfo kinfo;
+    void* initrd_base;
     struct device_info devinf;
     device_id_t dev_id;
     int retval;
 
-    env_get_long("initrd_base", (long*)&base, "u", 0, -1, -1);
-    env_get_long("initrd_len", (long*)&len, "d", 0, -1, -1);
+    get_kinfo(&kinfo);
 
-    initramdisk.start = (char*)base;
-    initramdisk.length = len;
+    initrd_base =
+        mm_map_phys(SELF, kinfo.initrd_base_phys, kinfo.initrd_len, 0);
+    if (initrd_base == MAP_FAILED) return;
+
+    initramdisk.start = (char*)initrd_base;
+    initramdisk.length = kinfo.initrd_len;
     initramdisk.rdonly = 1;
 
-    printl("RAMDISK: initrd: %d bytes (%d kB), base: 0x%lx\n", len, len / 1024,
-           base);
+    printl("RAMDISK: initrd: %d bytes (%d kB), base: 0x%lx\n", kinfo.initrd_len,
+           kinfo.initrd_len / 1024, kinfo.initrd_base_phys);
 
     retval = dm_class_register("mem", &mem_subsys_id);
     if (retval) panic("ramdisk: cannot register mem subsystem");

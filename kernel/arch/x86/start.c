@@ -153,13 +153,8 @@ void cstart(struct multiboot_info* mboot, u32 mboot_magic)
 
     /* set initrd parameters */
     multiboot_module_t* initrd_mod = (multiboot_module_t*)mb_mod_addr;
-    char* initrd_base = (char*)__va(initrd_mod->mod_start);
-    unsigned int initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
-    char initrd_param_buf[20];
-    sprintf(initrd_param_buf, "0x%lx", (unsigned long)initrd_base);
-    kinfo_set_param(kinfo.cmdline, "initrd_base", initrd_param_buf);
-    sprintf(initrd_param_buf, "%u", (unsigned int)initrd_len);
-    kinfo_set_param(kinfo.cmdline, "initrd_len", initrd_param_buf);
+    kinfo.initrd_base_phys = (phys_bytes)initrd_mod->mod_start;
+    kinfo.initrd_len = initrd_mod->mod_end - initrd_mod->mod_start;
 
     /* set module information */
     int i;

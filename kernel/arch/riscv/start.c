@@ -218,11 +218,8 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
     if (hz_value) system_hz = strtol(hz_value, NULL, 10);
     if (!hz_value || system_hz < 2 || system_hz > 5000) system_hz = DEFAULT_HZ;
 
-    char param_buf[64];
-    sprintf(param_buf, "0x%lx", (uintptr_t)__va(phys_initrd_start));
-    kinfo_set_param(kinfo.cmdline, "initrd_base", param_buf);
-    sprintf(param_buf, "%u", (unsigned int)phys_initrd_size);
-    kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
+    kinfo.initrd_base_phys = phys_initrd_start;
+    kinfo.initrd_len = phys_initrd_size;
 
     cut_memmap(&kinfo, dtb_phys, dtb_lim);
 
