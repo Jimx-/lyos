@@ -69,6 +69,7 @@ struct sysinfo {
     kinfo_t* kinfo;
     struct kern_log* kern_log;
     struct machine* machine;
+    void* boot_params;
 };
 
 #endif

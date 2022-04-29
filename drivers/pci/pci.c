@@ -116,24 +116,17 @@ void pci_write_attr_u32(int devind, int port, u32 value)
 int pci_init()
 {
     int retval;
+    struct sysinfo* sysinfo;
 
     printl("pci: PCI driver is running.\n");
+
+    get_sysinfo(&sysinfo);
 
     retval = dm_bus_register("pci", &pci_bus_id);
     if (retval) return retval;
 
 #if CONFIG_OF
-    long dtb_base, dtb_len;
-    long root_addr_cells, root_size_cells;
-
-    env_get_long("boot_params_base", &dtb_base, "u", 0, -1, -1);
-    env_get_long("boot_params_len", &dtb_len, "d", 0, -1, -1);
-
-    boot_params = malloc(dtb_len);
-    if ((retval = data_copy(SELF, boot_params, KERNEL, (void*)dtb_base,
-                            dtb_len)) != 0)
-        panic("pci: cannot get kernel boot params");
-
+    boot_params = sysinfo->boot_params;
     pci_host_generic_init();
 #endif
 

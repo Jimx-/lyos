@@ -2,6 +2,7 @@
 #define _LIBBLOCKDRIVER_H_
 
 #include <lyos/types.h>
+#include <lyos/ipc.h>
 #include <lyos/partition.h>
 #include <lyos/driver.h>
 #include <sys/uio.h>

@@ -98,6 +98,7 @@
 #define DEV_DRM      34
 #define DEV_VD       112
 #define DEV_NVME     114
+#define DEV_MMC_BLK  179
 
 /* make device number from major and minor numbers */
 #define MAJOR_SHIFT    8

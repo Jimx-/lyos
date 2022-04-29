@@ -9,3 +9,35 @@ config MMC_SDHCI
       also need to enable an appropriate bus interface.
 
       If unsure, say N.
+
+config MMC_SDHCI_OF
+    tristate "SDHCI platform and OF driver helper"
+    depends on MMC_SDHCI
+    help
+      This selects the common helper functions support for Secure Digital
+      Host Controller Interface based platform and OF drivers.
+
+      If you have a controller with this interface, say Y or M here.
+
+      If unsure, say N.
+
+config MMC_SDHCI_IO_ACCESSORS
+    bool
+    depends on MMC_SDHCI
+    help
+      This is silent Kconfig symbol that is selected by the drivers that
+      need to overwrite SDHCI IO memory accessors.
+
+config MMC_SDHCI_IPROC
+    bool "SDHCI support for the BCM2835 & iProc SD/MMC Controller"
+    depends on ARCH_BCM2835
+    depends on MMC_SDHCI_OF
+    depends on OF
+    select MMC_SDHCI_IO_ACCESSORS
+    help
+      This selects the iProc SD/MMC controller.
+
+      If you have a BCM2835 or IPROC platform with SD or MMC devices,
+      say Y or M here.
+
+      If unsure, say N.

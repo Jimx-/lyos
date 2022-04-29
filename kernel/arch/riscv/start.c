@@ -31,6 +31,7 @@
 #include <asm/setup.h>
 #include <asm/smp.h>
 #include <asm/byteorder.h>
+#include <lyos/vm.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -225,10 +226,8 @@ void cstart(unsigned int hart_id, phys_bytes dtb_phys)
 
     cut_memmap(&kinfo, dtb_phys, dtb_lim);
 
-    sprintf(param_buf, "0x%lx", (uintptr_t)initial_boot_params);
-    kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
-    sprintf(param_buf, "%u", (unsigned int)fdt_totalsize(initial_boot_params));
-    kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
+    kern_map_phys(dtb_phys, fdt_totalsize(initial_boot_params), KMF_USER,
+                  &sysinfo.boot_params, NULL, NULL);
 }
 
 static char* get_value(const char* param, const char* key)

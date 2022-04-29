@@ -34,6 +34,7 @@
 #include <asm/pagetable.h>
 #include <asm/mach.h>
 #include <asm/sysreg.h>
+#include <lyos/vm.h>
 
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
@@ -253,11 +254,8 @@ void cstart(phys_bytes dtb_phys)
     sprintf(param_buf, "%lu", (unsigned int)phys_initrd_size);
     kinfo_set_param(kinfo.cmdline, "initrd_len", param_buf);
 
-    cut_memmap(&kinfo, dtb_phys, dtb_lim);
-    sprintf(param_buf, "0x%lx", (uintptr_t)initial_boot_params);
-    kinfo_set_param(kinfo.cmdline, "boot_params_base", param_buf);
-    sprintf(param_buf, "%lu", (unsigned int)fdt_totalsize(initial_boot_params));
-    kinfo_set_param(kinfo.cmdline, "boot_params_len", param_buf);
+    kern_map_phys(dtb_phys, fdt_totalsize(initial_boot_params), KMF_USER,
+                  &sysinfo.boot_params, NULL, NULL);
 }
 
 static char* get_value(const char* param, const char* key)
