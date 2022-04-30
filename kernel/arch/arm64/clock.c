@@ -26,9 +26,13 @@
 #include <kernel/proto.h>
 #include <kernel/irq.h>
 #include "asm/cpulocals.h"
+#include <asm/sysreg.h>
 
 int arch_init_time() { return 0; }
 
-void arch_stop_context(struct proc* p, u64 delta) {}
+void arch_stop_context(struct proc* p, u64 delta)
+{
+    p->seg.tp_value = read_sysreg(tpidr_el0);
+}
 
 void get_cpu_ticks(unsigned int cpu, u64 ticks[CPU_STATES]) {}

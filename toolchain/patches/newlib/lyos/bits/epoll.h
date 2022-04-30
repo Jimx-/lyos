@@ -25,4 +25,6 @@ enum {
 #define EPOLL_CLOEXEC EPOLL_CLOEXEC
 };
 
+#ifdef __x86_64__
 #define __EPOLL_PACKED __attribute__((__packed__))
+#endif

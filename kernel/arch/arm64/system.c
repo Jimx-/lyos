@@ -38,6 +38,7 @@
 #include "libexec/libexec.h"
 #include <asm/cpu_info.h>
 #include <asm/cpu_type.h>
+#include <asm/sysreg.h>
 
 struct cpu_info cpu_info[CONFIG_SMP_MAX_CPUS];
 
@@ -51,6 +52,8 @@ struct proc* arch_switch_to_user(void)
 
     p->regs.kernel_sp = (reg_t)stk;
     p->regs.cpu = cpuid;
+
+    write_sysreg(p->seg.tp_value, tpidr_el0);
 
     return p;
 }
@@ -173,6 +176,8 @@ int arch_fork_proc(struct proc* p, struct proc* parent, int flags, void* newsp,
         memcpy(p->seg.fpu_state, parent->seg.fpu_state,
                sizeof(struct fpu_state));
     }
+
+    if (flags & KF_SETTLS) p->seg.tp_value = (unsigned long)tls;
 
     return 0;
 }
