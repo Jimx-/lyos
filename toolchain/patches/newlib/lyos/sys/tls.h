@@ -11,7 +11,9 @@
 #endif
 
 struct tls_tcb {
+#if defined(__HAVE_TLS_VARIANT_2)
     void* tcb_self;
+#endif
     void** tcb_dtv;
     void* tcb_pthread;
 };
