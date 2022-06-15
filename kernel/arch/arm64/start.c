@@ -118,15 +118,16 @@ static int fdt_scan_chosen(void* blob, unsigned long offset, const char* name,
     if (depth != 1 || !arg || (strcmp(name, "chosen") != 0)) return 0;
 
     prop = fdt_getprop(blob, offset, "linux,initrd-start", &len);
-    if (!prop) return 0;
-    start = of_read_number(prop, len >> 2);
+    if (prop) {
+        start = of_read_number(prop, len >> 2);
 
-    prop = fdt_getprop(blob, offset, "linux,initrd-end", &len);
-    if (!prop) return 0;
-    end = of_read_number(prop, len >> 2);
+        prop = fdt_getprop(blob, offset, "linux,initrd-end", &len);
+        if (!prop) return 0;
+        end = of_read_number(prop, len >> 2);
 
-    phys_initrd_start = start;
-    phys_initrd_size = end - start;
+        phys_initrd_start = start;
+        phys_initrd_size = end - start;
+    }
 
     prop = fdt_getprop(blob, offset, "bootargs", &len);
     if (prop && len > 0) {

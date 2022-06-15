@@ -65,6 +65,24 @@ extern void* uart_base_addr;
 #define UART01x_FR_CTS  0x001
 #define UART01x_FR_TMSK (UART01x_FR_TXFF + UART01x_FR_BUSY)
 
-extern void pl011_disp_char(const char c);
+#define UART011_CR_CTSEN      0x8000 /* CTS hardware flow control */
+#define UART011_CR_RTSEN      0x4000 /* RTS hardware flow control */
+#define UART011_CR_OUT2       0x2000 /* OUT2 */
+#define UART011_CR_OUT1       0x1000 /* OUT1 */
+#define UART011_CR_RTS        0x0800 /* RTS */
+#define UART011_CR_DTR        0x0400 /* DTR */
+#define UART011_CR_RXE        0x0200 /* receive enable */
+#define UART011_CR_TXE        0x0100 /* transmit enable */
+#define UART011_CR_LBE        0x0080 /* loopback enable */
+#define UART010_CR_RTIE       0x0040
+#define UART010_CR_TIE        0x0020
+#define UART010_CR_RIE        0x0010
+#define UART010_CR_MSIE       0x0008
+#define ST_UART011_CR_OVSFACT 0x0008 /* Oversampling factor */
+#define UART01x_CR_IIRLP      0x0004 /* SIR low power mode */
+#define UART01x_CR_SIREN      0x0002 /* SIR enable */
+#define UART01x_CR_UARTEN     0x0001 /* UART enable */
+
+extern void uart_aux_disp_char(const char c);
 
 #endif

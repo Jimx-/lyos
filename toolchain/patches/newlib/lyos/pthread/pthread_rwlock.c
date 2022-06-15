@@ -202,7 +202,7 @@ int pthread_rwlock_unlock(pthread_rwlock_t* lock)
         futex((int*)&lock->pending_reader_serial, FUTEX_WAKE, 0x7fffffff, NULL,
               NULL, 0);
     } else {
-        pthread_mutex_lock(&lock->pending_mutex);
+        pthread_mutex_unlock(&lock->pending_mutex);
     }
 
     return 0;

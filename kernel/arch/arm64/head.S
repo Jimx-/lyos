@@ -255,12 +255,13 @@ kimage_voffset:
     .popsection
 
     .section .data
+    .balign K_STACK_SIZE
 KStackSpace:
     .zero K_STACK_SIZE
 KStackTop:
 
     .globl k_stacks_start, k_stacks_end
-.balign	K_STACK_SIZE
+    .balign K_STACK_SIZE
 k_stacks_start:
     .space 2 * K_STACK_SIZE * CONFIG_SMP_MAX_CPUS
 k_stacks_end:

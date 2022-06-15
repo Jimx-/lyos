@@ -27,12 +27,13 @@
 #include <asm/fixmap.h>
 #include <asm/proto.h>
 #include <asm/arm_arch_timer.h>
+#include <asm/io.h>
 
 #include "serial.h"
 
 #define BCM2835_MMIO_BASE 0x3f000000
 
-#define BCM2835_DEBUG_UART_BASE (BCM2835_MMIO_BASE + 0x201000)
+#define BCM2835_DEBUG_UART_BASE (BCM2835_MMIO_BASE + 0x215000)
 
 void bcm2836_arm_irqchip_l1_intc_scan(void);
 void bcm2835_armctrl_irqchip_scan(void);
@@ -73,7 +74,7 @@ DT_MACHINE_START(BCM2835, "BCM2835")
 .init_machine = bcm2835_init_machine,
 .init_cpu = bcm2835_init_cpu,
 
-.serial_putc = pl011_disp_char,
+.serial_putc = uart_aux_disp_char,
 
 .handle_irq = bcm2836_arm_irqchip_handle_irq,
 MACHINE_END

@@ -16,15 +16,7 @@
 #ifndef _ARCH_PROTO_H_
 #define _ARCH_PROTO_H_
 
-#define cmb() __asm__ __volatile__("" ::: "memory")
-
-#define sev() asm volatile("sev" : : : "memory")
-#define wfe() asm volatile("wfe" : : : "memory")
-#define wfi() asm volatile("wfi" : : : "memory")
-
-#define isb()    asm volatile("isb" : : : "memory")
-#define dmb(opt) asm volatile("dmb " #opt : : : "memory")
-#define dsb(opt) asm volatile("dsb " #opt : : : "memory")
+#include <asm/barrier.h>
 
 /* in/out functions */
 #define out_long(a, b) *((volatile unsigned int*)(unsigned long)(a)) = (b)

@@ -143,7 +143,7 @@ int ldso_process_phdr(struct so_info* si, ElfW(Phdr) * phdr, int phnum)
                 si->mapbase = (void*)vaddr;
             } else {
                 si->mapsize =
-                    roundup(vaddr + hdr->p_memsz) - (uintptr_t)si->mapsize;
+                    roundup(vaddr + hdr->p_memsz) - (uintptr_t)si->mapbase;
             }
             nsegs++;
             break;

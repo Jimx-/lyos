@@ -25,15 +25,27 @@
 
 #include "serial.h"
 
+#define UART_TX 0x40
+
+#define UART_LSR      0x54
+#define UART_LSR_TEMT 0x40
+#define UART_LSR_THRE 0x20
+
 void* uart_base_addr;
 
-void pl011_disp_char(const char c)
+void uart_aux_disp_char(const char c)
 {
-    while (mmio_read(uart_base_addr + UART01x_FR) & UART01x_FR_TXFF)
-        arch_pause();
+    unsigned int status;
 
-    mmio_write(uart_base_addr + UART01x_DR, c);
+    if (!uart_base_addr) return;
 
-    while (mmio_read(uart_base_addr + UART01x_FR) & UART01x_FR_BUSY)
+    mmio_write(uart_base_addr + UART_TX, c);
+
+    for (;;) {
+        status = mmio_read(uart_base_addr + UART_LSR);
+        if ((status & (UART_LSR_TEMT | UART_LSR_THRE)) ==
+            (UART_LSR_TEMT | UART_LSR_THRE))
+            break;
         arch_pause();
+    }
 }

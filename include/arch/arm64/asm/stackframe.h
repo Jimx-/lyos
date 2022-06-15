@@ -31,7 +31,8 @@ struct stackframe {
     /* Current CPU */
     unsigned int cpu;
     unsigned int __unused0;
-};
+    unsigned long __unused1;
+} __attribute__((aligned(16)));
 
 struct segframe {
     reg_t ttbr_phys;

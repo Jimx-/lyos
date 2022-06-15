@@ -429,8 +429,12 @@ int sdhci_add_host(struct sdhci_host* host)
 
     host->caps = sdhci_readl(host, SDHCI_CAPABILITIES);
 
-    if (host->version < SDHCI_SPEC_300)
+    if (host->version >= SDHCI_SPEC_300)
         host->caps1 = sdhci_readl(host, SDHCI_CAPABILITIES_1);
+
+    printl("Version:   0x%08x | Present:  0x%08x\n", v,
+           sdhci_readl(host, SDHCI_PRESENT_STATE));
+    printl("Caps:      0x%08x | Caps_1:   0x%08x\n", host->caps, host->caps1);
 
     if (host->version >= SDHCI_SPEC_300)
         host->max_clk =

@@ -1,6 +1,7 @@
 #ifndef _ARCH_PAGETABLE_H_
 #define _ARCH_PAGETABLE_H_
 
+#include <asm/barrier.h>
 #include <asm/page.h>
 
 #if CONFIG_PGTABLE_LEVELS == 2
@@ -117,6 +118,9 @@ static inline phys_bytes pmde_page_paddr(pmd_t pmde)
 static inline void set_pte(pte_t* ptep, pte_t pte)
 {
     *(volatile pte_t*)ptep = pte;
+
+    dsb(ishst);
+    isb();
 }
 
 static inline void pte_clear(pte_t* pte) { set_pte(pte, __pte(0)); }
@@ -142,6 +146,9 @@ static inline void pmde_populate(pmd_t* pmde, phys_bytes pte_phys)
 static inline void set_pmde(pmd_t* pmdep, pmd_t pmde)
 {
     *(volatile pmd_t*)pmdep = pmde;
+
+    dsb(ishst);
+    isb();
 }
 
 static inline void pmde_clear(pmd_t* pmde) { set_pmde(pmde, __pmd(0)); }
@@ -199,6 +206,9 @@ static inline bool pude_table(pud_t pude) { return true; }
 static inline void set_pude(pud_t* pudep, pud_t pude)
 {
     *(volatile pud_t*)pudep = pude;
+
+    dsb(ishst);
+    isb();
 }
 
 static inline void pude_clear(pud_t* pude) { set_pude(pude, __pud(0)); }

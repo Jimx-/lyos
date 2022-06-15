@@ -1,4 +1,4 @@
-obj-y	= pl011.o
+obj-y	= uart-aux.o
 
 obj-$(CONFIG_ARCH_BCM2835) += bcm2835.o bcm2835-irq.o bcm2836-irq.o
 

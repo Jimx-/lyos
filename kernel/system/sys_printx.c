@@ -116,7 +116,7 @@ static void kputs(char* s)
         kputc(ch);
     }
     kputc(0);
-    /* direct_print("%s", s); */
+    direct_print("%s", s);
     spinlock_unlock(&kern_log.lock);
 }
 
