@@ -18,7 +18,7 @@ enum arch_timer_ppi_nr {
 
 enum arch_timer_reg {
     ARCH_TIMER_REG_CTRL,
-    ARCH_TIMER_REG_CVAL,
+    ARCH_TIMER_REG_TVAL,
 };
 
 #define ARCH_TIMER_PHYS_ACCESS 0

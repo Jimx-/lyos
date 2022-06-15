@@ -32,7 +32,7 @@ static u64 arch_timer_read_counter(struct clocksource* cs)
     u64 cval;
 
     isb();
-    cval = read_sysreg(cntv_cval_el0);
+    cval = read_sysreg(cntvct_el0);
     return cval;
 }
 
@@ -67,8 +67,8 @@ static inline void arch_timer_reg_write_cp15(int access,
             write_sysreg(val, cntp_ctl_el0);
             isb();
             break;
-        case ARCH_TIMER_REG_CVAL:
-            write_sysreg(val, cntp_cval_el0);
+        case ARCH_TIMER_REG_TVAL:
+            write_sysreg(val, cntp_tval_el0);
             break;
         }
     }
@@ -127,19 +127,11 @@ static inline int arch_timer_set_next_event(struct clock_event_device* evt,
                                             unsigned long delta, int access)
 {
     unsigned long ctrl;
-    u64 cnt;
 
     ctrl = arch_timer_reg_read(evt, access, ARCH_TIMER_REG_CTRL);
     ctrl |= ARCH_TIMER_CTRL_ENABLE;
     ctrl &= ~ARCH_TIMER_CTRL_IT_MASK;
-
-    isb();
-    if (access == ARCH_TIMER_PHYS_ACCESS)
-        cnt = read_sysreg(cntpct_el0);
-    else
-        cnt = read_sysreg(cntvct_el0);
-
-    arch_timer_reg_write(evt, access, ARCH_TIMER_REG_CVAL, delta + cnt);
+    arch_timer_reg_write(evt, access, ARCH_TIMER_REG_TVAL, delta);
     arch_timer_reg_write(evt, access, ARCH_TIMER_REG_CTRL, ctrl);
 
     return 0;

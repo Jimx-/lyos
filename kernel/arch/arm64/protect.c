@@ -288,7 +288,6 @@ UNHANDLED(el1t, 64, error)
 void el1h_64_sync_handler(struct stackframe* frame)
 {
     unsigned long esr = read_sysreg(esr_el1);
-    /* printk("EL1 sync %lx %lx\n", ESR_ELx_EC(esr), frame->pc); */
 
     switch (ESR_ELx_EC(esr)) {
     case ESR_ELx_EC_DABT_CUR:
@@ -300,7 +299,6 @@ void el1h_64_sync_handler(struct stackframe* frame)
 
 void el1h_64_irq_handler(struct stackframe* frame)
 {
-    /* printk("EL1 irq\n"); */
     el1_interrupt(frame, machine_desc->handle_irq);
 }
 
@@ -309,7 +307,7 @@ void el1h_64_fiq_handler(struct stackframe* frame)
     el1_interrupt(frame, machine_desc->handle_fiq);
 }
 
-void el1h_64_error_handler(struct stackframe* frame) { printk("EL1 error\n"); }
+void el1h_64_error_handler(struct stackframe* frame) {}
 
 static void el0_svc(struct stackframe* frame)
 {
@@ -345,7 +343,6 @@ static void el0_fpsimd_acc(struct stackframe* regs, unsigned long esr)
 void el0t_64_sync_handler(struct stackframe* frame)
 {
     unsigned long esr = read_sysreg(esr_el1);
-    /* printk("EL0 sync %lx %lx\n", ESR_ELx_EC(esr), frame->pc); */
 
     switch (ESR_ELx_EC(esr)) {
     case ESR_ELx_EC_SVC64:
@@ -365,7 +362,6 @@ void el0t_64_sync_handler(struct stackframe* frame)
 
 void el0t_64_irq_handler(struct stackframe* frame)
 {
-    /* printk("EL0 irq\n"); */
     el0_interrupt(frame, machine_desc->handle_irq);
 }
 
