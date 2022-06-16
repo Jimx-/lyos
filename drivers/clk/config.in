@@ -1,0 +1,19 @@
+config HAVE_CLK
+    bool
+
+menuconfig COMMON_CLK
+	bool "Common Clock Framework"
+	select HAVE_CLK
+
+if COMMON_CLK
+
+config CLK_BCM2835
+	bool "Broadcom BCM2835 clock support"
+	depends on ARCH_BCM2835
+	depends on COMMON_CLK
+	default ARCH_BCM2835
+	help
+	  Enable common clock framework support for Broadcom BCM2835
+	  SoCs.
+
+endif

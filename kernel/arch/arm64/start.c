@@ -255,6 +255,9 @@ void cstart(phys_bytes dtb_phys)
 
     kern_map_phys(dtb_phys, fdt_totalsize(initial_boot_params), KMF_USER,
                   &sysinfo.boot_params, NULL, NULL);
+    cut_memmap(
+        &kinfo, dtb_phys,
+        roundup(dtb_phys + fdt_totalsize(initial_boot_params), ARCH_PG_SIZE));
 }
 
 static char* get_value(const char* param, const char* key)

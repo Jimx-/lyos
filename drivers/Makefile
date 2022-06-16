@@ -7,6 +7,10 @@ ifeq ($(CONFIG_BLK_DEV),y)
 	SUBDIRS += block
 endif
 
+ifeq ($(CONFIG_COMMON_CLK),y)
+	SUBDIRS += clk
+endif
+
 ifeq ($(CONFIG_PCI_DEV),y)
 	SUBDIRS += pci
 endif

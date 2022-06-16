@@ -120,7 +120,7 @@ static int fdt_scan_sdhci_iproc(void* blob, unsigned long offset,
     if (!host) return 0;
 
     sdhci_add_host(host);
-    return 0;
+    return 1;
 }
 
 void sdhci_iproc_scan(void)
