@@ -396,10 +396,18 @@ static void sdhci_intr(struct mmc_host* mmc)
     irq_enable(&host->irq_hook);
 }
 
+static void sdhci_hw_reset(struct mmc_host* mmc)
+{
+    struct sdhci_host* host = mmc_priv(mmc);
+
+    if (host->ops && host->ops->hw_reset) host->ops->hw_reset(host);
+}
+
 static const struct mmc_host_ops sdhci_mmc_host_ops = {
     .request = sdhci_request,
     .set_ios = sdhci_set_ios,
     .hw_intr = sdhci_intr,
+    .hw_reset = sdhci_hw_reset,
 };
 
 struct sdhci_host* sdhci_alloc_host(size_t priv_size)
@@ -444,6 +452,7 @@ int sdhci_add_host(struct sdhci_host* host)
             (host->caps & SDHCI_CLOCK_BASE_MASK) >> SDHCI_CLOCK_BASE_SHIFT;
 
     host->max_clk *= 1000000;
+    if (host->max_clk == 0) return -ENODEV;
 
     host->clk_mul =
         (host->caps1 & SDHCI_CLOCK_MUL_MASK) >> SDHCI_CLOCK_MUL_SHIFT;
@@ -480,6 +489,9 @@ int sdhci_add_host(struct sdhci_host* host)
 
     host->irq_hook = host->irq;
     ret = irq_setpolicy(host->irq, 0, &host->irq_hook);
+    if (ret != 0) return -ret;
+
+    ret = irq_enable(&host->irq_hook);
     if (ret != 0) return -ret;
 
     mmc->irq = host->irq;

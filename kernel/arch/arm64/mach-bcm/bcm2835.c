@@ -34,6 +34,7 @@
 #define BCM2835_MMIO_BASE 0x3f000000
 
 #define BCM2835_DEBUG_UART_BASE (BCM2835_MMIO_BASE + 0x215000)
+#define BCM2835_GPIO_BASE       (BCM2835_MMIO_BASE + 0x200000)
 
 void bcm2836_arm_irqchip_l1_intc_scan(void);
 void bcm2835_armctrl_irqchip_scan(void);

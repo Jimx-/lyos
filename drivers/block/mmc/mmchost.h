@@ -53,6 +53,7 @@ struct mmc_ios {
 struct mmc_host_ops {
     void (*request)(struct mmc_host* host, struct mmc_request* req);
     void (*set_ios)(struct mmc_host* host, struct mmc_ios* ios);
+    void (*hw_reset)(struct mmc_host* host);
     void (*hw_intr)(struct mmc_host* host);
 };
 
@@ -123,5 +124,9 @@ void mmc_set_clock(struct mmc_host* host, unsigned int hz);
 void mmc_set_bus_width(struct mmc_host* host, unsigned int width);
 
 int mmc_attach_sd(struct mmc_host* host);
+
+#if CONFIG_MMC_BCM2835
+void bcm2835_scan(void);
+#endif
 
 #endif

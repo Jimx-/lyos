@@ -11,6 +11,8 @@ service up /sbin/tmpfs
 service up /sbin/pty
 service up /sbin/devpts
 
+sleep 2
+
 mount -a
 
 mkdir /dev/shm

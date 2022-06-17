@@ -49,8 +49,7 @@ void copy_user_message_fault();
 void phys_copy_fault();
 void phys_copy_fault_in_kernel();
 
-int handle_sys_call(int call_nr, MESSAGE* m_user,
-                    struct stackframe* frame_proc);
+int handle_sys_call(int call_nr, MESSAGE* m_user, struct proc* p_proc);
 
 static void __panic_unhandled(struct stackframe* frame, const char* vector,
                               unsigned int esr)

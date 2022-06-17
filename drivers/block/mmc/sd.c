@@ -72,6 +72,7 @@ static int mmc_decode_csd(struct mmc_card* card)
 
         csd->read_blkbits = 9;
         csd->write_blkbits = 9;
+        break;
 
     default:
         return -EINVAL;

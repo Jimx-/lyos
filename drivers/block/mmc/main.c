@@ -125,6 +125,11 @@ static inline void mmc_set_ios(struct mmc_host* host)
     host->ops->set_ios(host, &host->ios);
 }
 
+static void mmc_hw_reset_for_init(struct mmc_host* host)
+{
+    if (host->ops->hw_reset) host->ops->hw_reset(host);
+}
+
 void mmc_set_clock(struct mmc_host* host, unsigned int hz)
 {
     host->ios.clock = hz;
@@ -144,6 +149,7 @@ void mmc_request_done(struct mmc_host* host, struct mmc_request* mrq)
 
 static void mmc_wait_done(struct mmc_request* mrq)
 {
+    mrq->completed = TRUE;
     blockdriver_async_wakeup(mrq->tid);
 }
 
@@ -173,6 +179,7 @@ void mmc_wait_for_req(struct mmc_host* host, struct mmc_request* mrq)
     int err;
 
     mrq->tid = blockdriver_async_worker_id();
+    mrq->completed = FALSE;
     mrq->done = mmc_wait_done;
 
     err = mmc_start_request(host, mrq);
@@ -181,7 +188,7 @@ void mmc_wait_for_req(struct mmc_host* host, struct mmc_request* mrq)
         return;
     }
 
-    blockdriver_async_sleep();
+    if (!mrq->completed) blockdriver_async_sleep();
 }
 
 int mmc_wait_for_cmd(struct mmc_host* host, struct mmc_command* cmd)
@@ -400,7 +407,14 @@ static void mmc_blk_intr(unsigned mask)
     }
 }
 
-static void mmc_rescan(struct mmc_host* host) { mmc_attach_sd(host); }
+static void mmc_rescan(struct mmc_host* host)
+{
+    mmc_hw_reset_for_init(host);
+
+    mmc_go_idle(host);
+
+    mmc_attach_sd(host);
+}
 
 int mmc_add_host(struct mmc_host* host)
 {
@@ -578,6 +592,10 @@ static void mmc_post_init(void)
 {
 #if CONFIG_MMC_SDHCI_IPROC
     sdhci_iproc_scan();
+#endif
+
+#if CONFIG_MMC_BCM2835
+    bcm2835_scan();
 #endif
 }
 

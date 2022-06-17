@@ -187,6 +187,7 @@ struct mmc_request {
     struct mmc_command* cmd;
     struct mmc_data* data;
     unsigned int tid;
+    int completed;
 
     void (*done)(struct mmc_request*);
 };

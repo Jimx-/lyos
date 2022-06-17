@@ -38,6 +38,9 @@ endif
 	@cp -f $(DESTDIR)/sbin/inet sbin/
 	@cp -f $(DESTDIR)/usr/bin/getty usr/bin/
 	@cp -f $(DESTDIR)/usr/bin/login usr/bin/
+ifneq ("$(wildcard $(DESTDIR)/usr/bin/sleep)","")
+	@cp -f $(DESTDIR)/usr/bin/sleep usr/bin/
+endif
 	@cp -f $(DESTDIR)/bin/sh bin/
 	@cp -f $(DESTDIR)/bin/service bin/
 	@cp -f $(DESTDIR)/bin/mount bin/
