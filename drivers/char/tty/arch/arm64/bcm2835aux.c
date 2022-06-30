@@ -41,6 +41,18 @@
 /* 8250 constants */
 #define UART_FREQ 115200L /* timer frequency */
 
+#define BCM2835_AUX_UART_CNTL         8
+#define BCM2835_AUX_UART_CNTL_RXEN    0x01 /* Receiver enable */
+#define BCM2835_AUX_UART_CNTL_TXEN    0x02 /* Transmitter enable */
+#define BCM2835_AUX_UART_CNTL_AUTORTS 0x04 /* RTS set by RX fill level */
+#define BCM2835_AUX_UART_CNTL_AUTOCTS 0x08 /* CTS stops transmitter */
+#define BCM2835_AUX_UART_CNTL_RTS3    0x00 /* RTS set until 3 chars left */
+#define BCM2835_AUX_UART_CNTL_RTS2    0x10 /* RTS set until 2 chars left */
+#define BCM2835_AUX_UART_CNTL_RTS1    0x20 /* RTS set until 1 chars left */
+#define BCM2835_AUX_UART_CNTL_RTS4    0x30 /* RTS set until 4 chars left */
+#define BCM2835_AUX_UART_CNTL_RTSINV  0x40 /* Invert auto RTS polarity */
+#define BCM2835_AUX_UART_CNTL_CTSINV  0x80 /* Invert auto CTS polarity */
+
 /* Interrupt enable bits */
 #define IE_RECEIVER_READY      1
 #define IE_TRANSMITTER_READY   2
@@ -98,6 +110,7 @@ struct rs232 {
 #define OSWREADY  0x40
 #define ODEVHUP   MS_RLSD
 
+    u32 cntl;
     u32 ier;
 
     void* reg_base;
@@ -234,6 +247,9 @@ static void rs_out_int(struct rs232* rs)
     if (!(rs->ostate & OQUEUED)) {
         rs->ier &= ~IE_TRANSMITTER_READY;
         writel(rs->int_enab_port, rs->ier);
+
+        rs->cntl |= BCM2835_AUX_UART_CNTL_RXEN;
+        writel(rs->reg_base + BCM2835_AUX_UART_CNTL, rs->cntl);
     }
 }
 
@@ -241,12 +257,18 @@ static void rs_start_tx(struct uart_port* uport)
 {
     struct rs232* rs = uport_to_rs232(uport);
 
+    rs->cntl &= ~BCM2835_AUX_UART_CNTL_RXEN;
+    writel(rs->reg_base + BCM2835_AUX_UART_CNTL, rs->cntl);
+
     rs->ostate |= OQUEUED;
     if (txready(rs)) rs_out_int(rs);
 
     if (rs->ostate & OQUEUED) {
         rs->ier |= IE_TRANSMITTER_READY;
         writel(rs->int_enab_port, rs->ier);
+    } else {
+        rs->cntl |= BCM2835_AUX_UART_CNTL_RXEN;
+        writel(rs->reg_base + BCM2835_AUX_UART_CNTL, rs->cntl);
     }
 }
 
@@ -319,6 +341,8 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
     rs->modem_ctl_port = rs->reg_base + (4 << 2);
     rs->line_status_port = rs->reg_base + (5 << 2);
     rs->modem_status_port = rs->reg_base + (6 << 2);
+
+    rs->cntl = BCM2835_AUX_UART_CNTL_RXEN | BCM2835_AUX_UART_CNTL_TXEN;
 
     rs->uport.irq = irq;
     rs->uport.irq_hook_id = irq;
