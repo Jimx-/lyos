@@ -63,6 +63,7 @@ int page_cache_add(dev_t dev, off_t dev_offset, ino_t ino, off_t ino_offset,
     cache->ino_offset = ino_offset;
     cache->page = page;
     cache->page->refcount++;
+    cache->page->flags |= PFF_INCACHE;
 
     mem_info.cached += ARCH_PG_SIZE;
 

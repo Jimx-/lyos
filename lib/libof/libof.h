@@ -65,6 +65,24 @@ int of_phandle_iterator_args(struct of_phandle_iterator* it, uint32_t* args,
          err = of_phandle_iterator_next(it);                              \
          err == 0; err = of_phandle_iterator_next(it))
 
+int of_parse_phandle_with_args(const void* blob, unsigned long offset,
+                               const char* list_name, const char* cells_name,
+                               int index, struct of_phandle_args* out_args);
+
+int of_property_read_string_helper(const void* blob, unsigned long offset,
+                                   const char* propname, const char** out_strs,
+                                   size_t sz, int skip);
+
+static inline int of_property_read_string_index(const void* blob,
+                                                unsigned long offset,
+                                                const char* propname, int index,
+                                                const char** output)
+{
+    int rc = of_property_read_string_helper(blob, offset, propname, output, 1,
+                                            index);
+    return rc < 0 ? rc : 0;
+}
+
 /* Addresses */
 int of_address_parse_one(const void* blob, unsigned long offset, int index,
                          phys_bytes* basep, phys_bytes* sizep);
@@ -79,5 +97,9 @@ unsigned int irq_of_map(struct of_phandle_args* oirq);
 unsigned int irq_of_parse_and_map(const void* blob, unsigned long offset,
                                   int index);
 #endif
+
+/* Clock */
+int of_parse_clkspec(const void* blob, unsigned long offset, int index,
+                     const char* name, struct of_phandle_args* out_args);
 
 #endif // _LIBOF_H_

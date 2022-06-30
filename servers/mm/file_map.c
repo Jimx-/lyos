@@ -163,7 +163,7 @@ static int file_map_writable(const struct phys_region* pr)
 static int file_map_unreference(struct phys_region* pr)
 {
     assert(pr->page->refcount == 0);
-    if (pr->page->phys_addr != PHYS_NONE)
+    if (pr->page->phys_addr != PHYS_NONE && !(pr->page->flags & PFF_INCACHE))
         free_mem(pr->page->phys_addr, ARCH_PG_SIZE);
     return 0;
 }

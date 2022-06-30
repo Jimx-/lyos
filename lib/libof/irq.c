@@ -47,36 +47,15 @@ int of_irq_count(const void* blob, unsigned long offset)
 int of_irq_parse_one(const void* blob, unsigned long offset, int index,
                      struct of_phandle_args* out_irq)
 {
-    const char* list_name = "interrupts-extended";
-    const char* cells_name = "#interrupt-cells";
-    struct of_phandle_iterator it;
     u32 parent;
     unsigned long parent_offset;
     int intsize, len;
     const u32* prop;
-    int i, retval, cur_index = 0;
+    int i, retval;
 
-    if (index < 0) return -EINVAL;
-
-    of_for_each_phandle(&it, retval, blob, offset, list_name, cells_name, -1)
-    {
-        retval = -ENOENT;
-        if (cur_index == index) {
-            if (!it.phandle) return retval;
-
-            if (out_irq) {
-                int c = of_phandle_iterator_args(&it, out_irq->args,
-                                                 MAX_PHANDLE_ARGS);
-                out_irq->phandle = it.phandle;
-                out_irq->offset = it.offset;
-                out_irq->args_count = c;
-            }
-
-            return 0;
-        }
-
-        cur_index++;
-    }
+    retval = of_parse_phandle_with_args(blob, offset, "interrupts-extended",
+                                        "#interrupt-cells", index, out_irq);
+    if (!retval) return 0;
 
     retval = of_irq_find_parent(blob, offset, &parent, &parent_offset);
     if (retval) return retval;

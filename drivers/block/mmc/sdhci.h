@@ -320,6 +320,7 @@ struct sdhci_host_ops {
 #endif
 
     void (*set_clock)(struct sdhci_host* host, unsigned int clock);
+    unsigned int (*get_max_clock)(struct sdhci_host* host);
     void (*set_bus_width)(struct sdhci_host* host, int width);
     void (*hw_reset)(struct sdhci_host* host);
 };

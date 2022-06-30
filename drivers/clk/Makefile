@@ -2,6 +2,7 @@
 # Makefile for the common clock framework driver.
 #
 
+SRCS-y += clk-fixed-rate.c clk-divider.c
 SRCS-$(CONFIG_CLK_BCM2835) += clk-bcm2835.c
 
 SRCS	= main.c $(SRCS-y)

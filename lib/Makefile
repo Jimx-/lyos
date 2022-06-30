@@ -21,4 +21,8 @@ ifeq ($(CONFIG_NET),y)
 	SUBDIRS += libnetdriver
 endif
 
+ifeq ($(CONFIG_COMMON_CLK),y)
+	SUBDIRS += libclk
+endif
+
 include lyos.subdirs.mk

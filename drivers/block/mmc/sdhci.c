@@ -435,10 +435,12 @@ int sdhci_add_host(struct sdhci_host* host)
     v = sdhci_readw(host, SDHCI_HOST_VERSION);
     host->version = (v & SDHCI_SPEC_VER_MASK) >> SDHCI_SPEC_VER_SHIFT;
 
-    host->caps = sdhci_readl(host, SDHCI_CAPABILITIES);
+    if (!host->caps) {
+        host->caps = sdhci_readl(host, SDHCI_CAPABILITIES);
 
-    if (host->version >= SDHCI_SPEC_300)
-        host->caps1 = sdhci_readl(host, SDHCI_CAPABILITIES_1);
+        if (host->version >= SDHCI_SPEC_300)
+            host->caps1 = sdhci_readl(host, SDHCI_CAPABILITIES_1);
+    }
 
     printl("Version:   0x%08x | Present:  0x%08x\n", v,
            sdhci_readl(host, SDHCI_PRESENT_STATE));
@@ -452,7 +454,11 @@ int sdhci_add_host(struct sdhci_host* host)
             (host->caps & SDHCI_CLOCK_BASE_MASK) >> SDHCI_CLOCK_BASE_SHIFT;
 
     host->max_clk *= 1000000;
-    if (host->max_clk == 0) return -ENODEV;
+    if (host->max_clk == 0) {
+        if (!host->ops->get_max_clock) return -ENODEV;
+
+        host->max_clk = host->ops->get_max_clock(host);
+    }
 
     host->clk_mul =
         (host->caps1 & SDHCI_CLOCK_MUL_MASK) >> SDHCI_CLOCK_MUL_SHIFT;

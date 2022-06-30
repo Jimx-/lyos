@@ -6,7 +6,7 @@
 #include <sys/utsname.h>
 
 #define ISSUE_LEN 256
-#define NAME_LEN 30
+#define NAME_LEN  30
 
 #define LOGIN "/usr/bin/login"
 

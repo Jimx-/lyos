@@ -119,6 +119,7 @@
 #define NETLINK_REQ_BASE 2601
 #define DEVPTS_BASE      2701
 #define NDEV_BASE        3001
+#define CLK_REQ_BASE     3101
 
 #ifndef __ASSEMBLY__
 
@@ -403,6 +404,9 @@ enum msgtype {
     NDEV_SEND_REPLY,
     NDEV_RECV_REPLY,
     NDEV_CALL_MAX,
+
+    CLK_GET = CLK_REQ_BASE,
+    CLK_GET_RATE,
 };
 
 #endif

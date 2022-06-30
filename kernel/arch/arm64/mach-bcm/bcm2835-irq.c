@@ -157,8 +157,7 @@ static int fdt_scan_armctrl(void* blob, unsigned long offset, const char* name,
     ret = of_address_parse_one(blob, offset, 0, &base, &size);
     if (ret < 0) return 0;
 
-    prop = fdt_getprop(blob, offset, "phandle", NULL);
-    intc.phandle = of_read_number(prop, 1);
+    intc.phandle = fdt_get_phandle(blob, offset);
 
     intc.fdt_offset = offset;
     kern_map_phys(base, size, KMF_WRITE | KMF_IO, &intc.base,

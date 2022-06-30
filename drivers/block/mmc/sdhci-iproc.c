@@ -1,6 +1,8 @@
 #include <lyos/const.h>
 #include <stddef.h>
 
+#include <libclk/libclk.h>
+
 #include <libfdt/libfdt.h>
 #include <libof/libof.h>
 
@@ -11,6 +13,8 @@ struct sdhci_iproc_host {
     u32 shadow_blk;
     int is_cmd_shadowed;
     int is_blk_shadowed;
+
+    clk_id_t clk;
 };
 
 extern void* boot_params;
@@ -96,6 +100,13 @@ static void sdhci_iproc_writeb(struct sdhci_host* host, int reg, u8 val)
     sdhci_iproc_writel(host, reg & ~3, newval);
 }
 
+static unsigned int sdhci_iproc_get_max_clock(struct sdhci_host* host)
+{
+    struct sdhci_iproc_host* iproc_host = sdhci_priv(host);
+
+    return clk_get_rate(iproc_host->clk);
+}
+
 const struct sdhci_host_ops sdhci_iproc_ops = {
     .read_l = sdhci_iproc_readl,
     .read_w = sdhci_iproc_readw,
@@ -105,6 +116,7 @@ const struct sdhci_host_ops sdhci_iproc_ops = {
     .write_b = sdhci_iproc_writeb,
 
     .set_clock = sdhci_set_clock,
+    .get_max_clock = sdhci_iproc_get_max_clock,
     .set_bus_width = sdhci_set_bus_width,
 };
 
@@ -112,12 +124,29 @@ static int fdt_scan_sdhci_iproc(void* blob, unsigned long offset,
                                 const char* name, int depth, void* arg)
 {
     struct sdhci_host* host;
+    struct sdhci_iproc_host* iproc_host;
+    struct of_phandle_args clkspec;
+    int ret;
 
     if (!of_flat_dt_match(blob, offset, bcm2835_compat)) return 0;
 
     host = sdhci_of_init(blob, offset, &sdhci_iproc_ops,
                          sizeof(struct sdhci_iproc_host));
     if (!host) return 0;
+
+    iproc_host = sdhci_priv(host);
+
+    ret = of_parse_clkspec(blob, offset, 0, NULL, &clkspec);
+    if (ret) return 0;
+
+    iproc_host->clk = clk_get_of(&clkspec);
+    if (iproc_host->clk < 0) return 0;
+
+    host->caps = ((0x1 << SDHCI_MAX_BLOCK_SHIFT) & SDHCI_MAX_BLOCK_MASK) |
+                 SDHCI_CAN_VDD_330 | SDHCI_CAN_VDD_180 | SDHCI_CAN_DO_SUSPEND |
+                 SDHCI_CAN_DO_HISPD | SDHCI_CAN_DO_ADMA2 | SDHCI_CAN_DO_SDMA;
+    host->caps1 =
+        SDHCI_DRIVER_TYPE_C | SDHCI_DRIVER_TYPE_D | SDHCI_SUPPORT_DDR50;
 
     sdhci_add_host(host);
     return 1;
