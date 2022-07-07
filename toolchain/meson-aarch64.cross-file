@@ -1,0 +1,12 @@
+[binaries]
+c = 'aarch64-elf-lyos-gcc'
+cpp = 'aarch64-elf-lyos-g++'
+ar = 'aarch64-elf-lyos-ar'
+strip = 'aarch64-elf-lyos-strip'
+pkgconfig = 'aarch64-elf-lyos-pkg-config'
+
+[host_machine]
+system = 'lyos'
+cpu_family = 'aarch64'
+cpu = 'cortex-a72'
+endian = 'little'

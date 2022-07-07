@@ -115,14 +115,10 @@ if $BUILD_LIBDRM; then
         mkdir libdrm-$SUBARCH
     fi
 
-    pushd $DIR/sources/libdrm-2.4.89 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
-    popd > /dev/null
-
     pushd libdrm-$SUBARCH > /dev/null
-    $DIR/sources/libdrm-2.4.89/configure --host=$TARGET --prefix=$CROSSPREFIX --with-sysroot=$SYSROOT --disable-intel --disable-vmwgfx --disable-radeon --disable-amdgpu --disable-nouveau --disable-cairo-tests
-    make -j$PARALLELISM || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
+    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dintel=false -Dvmwgfx=false -Dradeon=false -Damdgpu=false -Dnouveau=false -Dcairo-tests=false $DIR/sources/libdrm-2.4.109
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 
