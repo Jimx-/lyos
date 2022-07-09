@@ -125,9 +125,7 @@ int drm_mode_addfb_ioctl(struct drm_device* dev, endpoint_t endpoint,
     int retval;
 
     r.pixel_format = drm_mode_legacy_fb_format(or->bpp, or->depth);
-    if (r.pixel_format == DRM_FORMAT_INVALID) {
-        return EINVAL;
-    }
+    if (r.pixel_format == DRM_FORMAT_INVALID) return EINVAL;
 
     r.fb_id = or->fb_id;
     r.width = or->width;

@@ -1,7 +1,5 @@
-#ifndef _VIDEO_FB_H_
-#define _VIDEO_FB_H_
-
-#include <libdevman/libdevman.h>
+#ifndef _FBDRM_H_
+#define _FBDRM_H_
 
 struct fb_videomode {
     u32 xres;
@@ -9,7 +7,6 @@ struct fb_videomode {
 };
 
 struct fb_info {
-    device_id_t dev_id;
     struct fb_videomode* mode;
 
     void* screen_base;

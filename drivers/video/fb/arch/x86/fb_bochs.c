@@ -15,12 +15,15 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
+#include <stdlib.h>
+#include <string.h>
 #include "lyos/const.h"
 #include <lyos/pci_utils.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
 #include <asm/pci.h>
 
+#include "fb.h"
 #include "arch_fb.h"
 
 #define VBE_DISPI_IOPORT_INDEX 0x01CE
@@ -62,21 +65,43 @@ static void bochs_write(u16 reg, u16 val)
 }
 */
 
-int fb_init_bochs(int devind)
+void fb_init_bochs(int devind)
 {
+    struct fb_info* fb;
+    struct fb_videomode* mode;
     int x_res = 1024;
     int y_res = 768;
+    int ret;
+
+    fb = malloc(sizeof(*fb));
+    if (!fb) return;
+
+    mode = malloc(sizeof(*mode));
+    if (!mode) goto out_free_fb;
+
+    memset(fb, 0, sizeof(*fb));
+    memset(mode, 0, sizeof(*mode));
 
     phys_bytes vmem_phys_base = pci_attr_r32(devind, PCI_BAR);
     vmem_phys_base &= 0xfffffff0;
-    phys_bytes vmem_size = x_res * y_res * 8;
+    phys_bytes vmem_size = x_res * y_res * 4;
 
     void* vmem_base = mm_map_phys(SELF, vmem_phys_base, vmem_size, 0);
-    if (vmem_base == MAP_FAILED) return 0;
+    if (vmem_base == MAP_FAILED) goto out_free_mode;
 
-    fb_mem_phys = vmem_phys_base;
-    fb_mem_vir = vmem_base;
-    fb_mem_size = vmem_size;
+    fb->screen_base = vmem_base;
+    fb->screen_base_phys = vmem_phys_base;
+    fb->screen_size = vmem_size;
 
-    return 1;
+    mode->xres = x_res;
+    mode->yres = y_res;
+    fb->mode = mode;
+
+    ret = register_framebuffer(fb);
+    if (!ret) return;
+
+out_free_mode:
+    free(mode);
+out_free_fb:
+    free(fb);
 }

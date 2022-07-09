@@ -33,35 +33,19 @@ struct dev_probe {
     {.vid = 0xffff, .did = 0xffff, NULL},
 };
 
-void* fb_mem_vir;
-phys_bytes fb_mem_phys;
-size_t fb_mem_size;
-static int initialized = 0;
-
-int arch_init_fb(int minor)
+void arch_init_fb(void)
 {
 
     int devind;
     u16 vid, did;
     int retval = pci_first_dev(&devind, &vid, &did, NULL);
-    int ok = 0;
-
-    if (minor != 0) {
-        return ENXIO;
-    }
-
-    if (initialized) {
-        return 0;
-    }
-
-    initialized = 1;
 
     while (retval == 0) {
         struct dev_probe* probe = dev_probes;
         while (probe->vid != 0xffff) {
             if (probe->vid == vid && probe->did == did) {
                 if (probe->init_func) {
-                    if (probe->init_func(devind)) ok = 1;
+                    probe->init_func(devind);
                 }
             }
             probe++;
@@ -69,32 +53,4 @@ int arch_init_fb(int minor)
 
         retval = pci_next_dev(&devind, &vid, &did, NULL);
     }
-
-    if (!ok) {
-        panic("fb: no supported framebuffer devices");
-    }
-
-    return 0;
-}
-
-int arch_get_device(int minor, void** base, size_t* size)
-{
-    if (!initialized || minor != 0) {
-        return ENXIO;
-    }
-
-    *base = fb_mem_vir;
-    *size = fb_mem_size;
-    return OK;
-}
-
-int arch_get_device_phys(int minor, phys_bytes* phys_base, phys_bytes* size)
-{
-    if (!initialized || minor != 0) {
-        return ENXIO;
-    }
-
-    *phys_base = fb_mem_phys;
-    *size = fb_mem_size;
-    return OK;
 }

@@ -1,4 +1,4 @@
-SUBDIRS =
+SUBDIRS = fbdrm
 
 ifeq ($(CONFIG_VIRTIO_GPU),y)
 	SUBDIRS += virtio-gpu

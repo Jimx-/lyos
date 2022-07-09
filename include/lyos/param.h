@@ -58,6 +58,11 @@ typedef struct kinfo {
 
     phys_bytes initrd_base_phys, initrd_len;
 
+    phys_bytes fb_base_phys;
+    unsigned int fb_screen_width;
+    unsigned int fb_screen_height;
+    unsigned int fb_screen_pitch;
+
     struct boot_proc boot_procs[NR_BOOT_PROCS];
 } __attribute__((packed)) kinfo_t;
 
