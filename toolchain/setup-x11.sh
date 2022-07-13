@@ -145,12 +145,12 @@ if $BUILD_LIBFFI; then
         mkdir libffi-$SUBARCH
     fi
 
-    pushd $DIR/sources/libffi-3.3 > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf -fiv
+    pushd $DIR/sources/libffi-3.4.2 > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH autoreconf -fiv
     popd > /dev/null
 
     pushd libffi-$SUBARCH > /dev/null
-    $DIR/sources/libffi-3.3/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
+    $DIR/sources/libffi-3.4.2/configure --host=$TARGET --prefix=/usr --with-sysroot=$SYSROOT
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -204,15 +204,10 @@ if $BUILD_KMSCUBE; then
         mkdir kmscube-$SUBARCH
     fi
 
-    pushd $DIR/sources/kmscube > /dev/null
-    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.15/bin:$PATH ./autogen.sh
-    make distclean
-    popd > /dev/null
-
     pushd kmscube-$SUBARCH > /dev/null
-    $DIR/sources/kmscube/configure --host=$TARGET --prefix=/usr
-    make -j$PARALLELISM || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
+    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dgstreamer=disabled $DIR/sources/kmscube
+    ninja || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 

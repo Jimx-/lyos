@@ -53,7 +53,13 @@ int ldso_relocate_plt_lazy(struct so_info* si)
     for (rela = si->pltrela; rela < si->pltrelaend; rela++) {
         ElfW(Addr)* addr = (ElfW(Addr)*)((char*)si->relocbase + rela->r_offset);
 
-        *addr += (ElfW(Addr))si->relocbase;
+        switch (ELFW(R_TYPE)(rela->r_info)) {
+        case R_TYPE(JUMP_SLOT):
+            *addr += (ElfW(Addr))si->relocbase;
+            break;
+        case R_TYPE(TLSDESC):
+            break;
+        }
     }
 
     return 0;
@@ -109,6 +115,18 @@ int ldso_relocate_nonplt_objects(struct so_info* si)
             case R_TYPE(RELATIVE):
                 *where = (ElfW(Addr))si->relocbase + rela->r_addend;
                 break;
+
+            case R_TYPE(TLS_TPREL):
+                sym = ldso_find_sym(si, symnum, &def_obj, 0);
+                if (!sym) continue;
+
+                if (!def_obj->tls_done && ldso_tls_allocate_offset(def_obj))
+                    return -1;
+
+                *where = (ElfW(Addr))(sym->st_value + def_obj->tls_offset +
+                                      rela->r_addend + sizeof(struct tls_tcb));
+                break;
+
             case R_TYPE(COPY):
                 if (si->is_dynamic) {
                     ldso_die("copy relocation in shared library");

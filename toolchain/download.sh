@@ -34,7 +34,7 @@ download "readline" "https://mirrors.ustc.edu.cn/gnu/readline" "readline-8.0.tar
 download "libevdev" "https://www.freedesktop.org/software/libevdev" "libevdev-1.9.0.tar.xz" || cmd_error
 download "libdrm" "https://dri.freedesktop.org/libdrm/" "libdrm-2.4.109.tar.xz" || cmd_error
 download "libexpat" "https://github.com/libexpat/libexpat/releases/download/R_2_2_9/" "expat-2.2.9.tar.bz2" || cmd_error
-download "libffi" "https://github.com/libffi/libffi/releases/download/v3.3/" "libffi-3.3.tar.gz" || cmd_error
+download "libffi" "https://github.com/libffi/libffi/releases/download/v3.4.2/" "libffi-3.4.2.tar.gz" || cmd_error
 download "wayland" "https://github.com/wayland-project/wayland/archive/" "1.18.0.tar.gz" && cp 1.18.0.tar.gz wayland-1.18.0.tar.gz || cmd_error
 download "wayland-protocols" "https://wayland.freedesktop.org/releases/" "wayland-protocols-1.20.tar.xz" || cmd_error
 download "pcre" "https://ftp.exim.org/pub/pcre" "pcre-8.44.tar.gz" || cmd_error
@@ -110,7 +110,7 @@ unzip "readline-8.0.tar.gz" "readline-8.0"
 unzip "libevdev-1.9.0.tar.xz" "libevdev-1.9.0"
 unzip "libdrm-2.4.109.tar.xz" "libdrm-2.4.109"
 unzip "expat-2.2.9.tar.bz2" "expat-2.2.9"
-unzip "libffi-3.3.tar.gz" "libffi-3.3"
+unzip "libffi-3.4.2.tar.gz" "libffi-3.4.2"
 unzip "wayland-1.18.0.tar.gz" "wayland-1.18.0"
 unzip "wayland-protocols-1.20.tar.xz" "wayland-protocols-1.20"
 unzip "pcre-8.44.tar.gz" "pcre-8.44"
@@ -183,7 +183,6 @@ patc "libevdev-1.9.0"
 patc "less-551"
 patc "libdrm-2.4.109"
 patc "expat-2.2.9"
-patc "libffi-3.3"
 patc "pcre-8.44"
 patc "zlib-1.2.11"
 patc "mesa-21.1.4"
