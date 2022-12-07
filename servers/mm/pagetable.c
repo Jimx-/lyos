@@ -158,13 +158,21 @@ static int __pud_create(pde_t* pde, vir_bytes addr)
     }
 
     memset(pud, 0, sizeof(pud_t) * ARCH_VM_PUD_ENTRIES);
+    free_vmpages(pud, 1);
 
     pde_populate(pde, pud_phys);
 
     return 0;
 }
+
+static void pud_free(pud_t* pud)
+{
+    free_mem(virt_to_phys(pud), sizeof(pud_t) * ARCH_VM_PUD_ENTRIES);
+}
 #else
 static inline int __pud_create(pde_t* pde, vir_bytes addr) { return 0; }
+
+static inline void pud_free(pud_t* pud) {}
 #endif
 
 pud_t* pud_create(pde_t* pde, vir_bytes addr)
@@ -189,13 +197,21 @@ static int __pmd_create(pud_t* pude, vir_bytes addr)
     }
 
     memset(pmd, 0, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+    free_vmpages(pmd, 1);
 
     pude_populate(pude, pmd_phys);
 
     return 0;
 }
+
+static void pmd_free(pmd_t* pmd)
+{
+    free_mem(virt_to_phys(pmd), sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+}
 #else
 static inline int __pmd_create(pud_t* pude, vir_bytes addr) { return 0; }
+
+static inline void pmd_free(pmd_t* pmd) {}
 #endif
 
 pmd_t* pmd_create(pud_t* pude, vir_bytes addr)
@@ -207,7 +223,7 @@ pmd_t* pmd_create(pud_t* pude, vir_bytes addr)
     return pmd_offset(pude, addr);
 }
 
-int __pt_create(pmd_t* pmde)
+static int __pt_create(pmd_t* pmde)
 {
     phys_bytes pt_phys;
     pte_t* pt = (pte_t*)alloc_vmem(&pt_phys, sizeof(pte_t) * ARCH_VM_PT_ENTRIES,
@@ -218,6 +234,7 @@ int __pt_create(pmd_t* pmde)
     }
 
     memset(pt, 0, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
+    free_vmpages(pt, 1);
 
     pmde_populate(pmde, pt_phys);
 
@@ -230,6 +247,11 @@ pte_t* pt_create_map(pmd_t* pmde, vir_bytes addr)
         return NULL;
     }
     return pte_offset(pmde, addr);
+}
+
+static void pt_free(pte_t* pt)
+{
+    free_mem(virt_to_phys(pt), sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
 }
 
 /**
@@ -378,7 +400,7 @@ void pt_free_range(pmd_t* pt)
 {
     pte_t* pte = pte_offset(pt, 0);
     pmde_clear(pt);
-    free_vmem(pte, sizeof(pte_t) * ARCH_VM_PT_ENTRIES);
+    pt_free(pte);
 }
 
 void pmd_free_range(pud_t* pmd, vir_bytes addr, vir_bytes end, vir_bytes floor,
@@ -402,18 +424,18 @@ void pmd_free_range(pud_t* pmd, vir_bytes addr, vir_bytes end, vir_bytes floor,
         addr = next;
     } while (addr != end);
 
-    start &= ARCH_PGD_MASK;
+    start &= ARCH_PUD_MASK;
     if (start < floor) return;
 
     if (ceiling) {
-        ceiling &= ARCH_PGD_MASK;
+        ceiling &= ARCH_PUD_MASK;
     }
 
     if (end > ceiling) return;
 
     pmde = pmd_offset(pmd, 0);
     pude_clear(pmd);
-    free_vmem(pmde, sizeof(pmd_t) * ARCH_VM_PMD_ENTRIES);
+    pmd_free(pmde);
 }
 
 void pud_free_range(pde_t* pud, vir_bytes addr, vir_bytes end, vir_bytes floor,
@@ -448,7 +470,7 @@ void pud_free_range(pde_t* pud, vir_bytes addr, vir_bytes end, vir_bytes floor,
 
     pude = pud_offset(pud, 0);
     pde_clear(pud);
-    free_vmem(pude, sizeof(pud_t) * ARCH_VM_PUD_ENTRIES);
+    pud_free(pude);
 }
 
 void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,

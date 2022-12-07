@@ -321,11 +321,17 @@ typedef struct {
 extern unsigned long va_pa_offset;
 extern unsigned long kimage_voffset;
 
+#ifdef __kernel__
 static inline unsigned long virt_to_phys(void* x) { return __pa(x); }
 
-#ifdef __kernel__
 static inline void* phys_to_virt(unsigned long x) { return __va(x); }
 #else
+static inline unsigned long virt_to_phys(void* x)
+{
+    phys_bytes __x = (phys_bytes)x;
+    return __lm_to_phys(__x);
+}
+
 extern void* phys_to_virt(unsigned long x);
 #endif
 

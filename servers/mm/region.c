@@ -744,6 +744,7 @@ int region_free(struct vir_region* rp)
     if (rp->rops->rop_delete) rp->rops->rop_delete(rp);
     free_vmem(rp->phys_regions, phys_regions_size(rp));
     rp->phys_regions = NULL;
+
     SLABFREE(rp);
 
     return 0;
@@ -756,6 +757,8 @@ int region_free_mm(struct mm_struct* mm)
     list_for_each_entry_safe(vr, tmp, &mm->mem_regions, list)
     {
         list_del(&vr->list);
+        pgd_free_range(&mm->pgd, vr->vir_addr, vr->vir_addr + vr->length, 0UL,
+                       0UL);
         region_free(vr);
     }
 
