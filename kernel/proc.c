@@ -819,7 +819,7 @@ int msg_notify(struct proc* p_to_send, endpoint_t dest)
  * @param ep Endpoint number.
  * @param proc_nr [out] Ptr to proc nr.
  *
- * @return Non-zero if the endpoint number is valid.
+ * @return True if the endpoint number is valid.
  */
 int verify_endpt(endpoint_t ep, int* proc_nr)
 {
@@ -829,11 +829,14 @@ int verify_endpt(endpoint_t ep, int* proc_nr)
     int n = ENDPOINT_P(ep);
     int slot = proc_slot(n);
 
-    if (slot < 0 || slot > NR_PROCS) return 0;
+    if (slot < 0 || slot > NR_PROCS) return FALSE;
+
+    if (proc_addr(n)->state == PST_FREE_SLOT || proc_addr(n)->endpoint != ep)
+        return FALSE;
 
     if (proc_nr) *proc_nr = n;
 
-    return 1;
+    return TRUE;
 }
 
 /*****************************************************************************
