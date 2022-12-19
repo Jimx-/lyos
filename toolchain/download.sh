@@ -44,7 +44,7 @@ download "zlib" "https://zlib.net/fossils/" "zlib-1.2.11.tar.gz" || cmd_error
 download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.2.tar.xz" || cmd_error
 download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz" || cmd_error
 download "mesa" "https://mesa.freedesktop.org/archive" "mesa-21.1.4.tar.xz" || cmd_error
-download "libpng" "https://fossies.org/linux/misc" "libpng-1.6.37.tar.xz" || cmd_error
+download "libpng" "https://download.sourceforge.net/libpng" "libpng-1.6.37.tar.gz" || cmd_error
 download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz" || cmd_error
 download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz" || cmd_error
 download "pixman" "https://www.cairographics.org/releases/" "pixman-0.40.0.tar.gz" || cmd_error
@@ -120,7 +120,7 @@ unzip "zlib-1.2.11.tar.gz" "zlib-1.2.11"
 unzip "glib-2.59.2.tar.xz" "glib-2.59.2"
 unzip "pkg-config-0.29.2.tar.gz" "pkg-config-0.29.2"
 unzip "mesa-21.1.4.tar.xz" "mesa-21.1.4"
-unzip "libpng-1.6.37.tar.xz" "libpng-1.6.37"
+unzip "libpng-1.6.37.tar.gz" "libpng-1.6.37"
 unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
 unzip "freetype-2.10.2.tar.xz" "freetype-2.10.2"
 unzip "pixman-0.40.0.tar.gz" "pixman-0.40.0"
