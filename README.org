@@ -97,8 +97,8 @@ make SUBARCH=x86_64
 (Optionally) ~setup.sh~ only builds some core userspace packages like ~bash~ and ~coreutils~. You still need to build some extra packages if you want to use graphical interface:
 #+BEGIN_SRC shell
 cd toolchain
-BUILD_EVERYTHING=true ./setup-extra.sh -m x86_64
 BUILD_EVERYTHING=true ./setup-x11.sh -m x86_64
+BUILD_EVERYTHING=true ./setup-extra.sh -m x86_64
 cd ..
 #+END_SRC
 

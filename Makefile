@@ -7,40 +7,40 @@ PATCHLEVEL = 4
 SUBLEVEL = 1
 EXTRAVERSION =
 
-SUBARCH = $(shell uname -m | sed -e s/sun4u/sparc64/ \
+SUBARCH := $(shell uname -m | sed -e s/sun4u/sparc64/ \
 		-e s/arm.*/arm/ -e s/sa110/arm/ \
 		-e s/s390x/s390/ -e s/parisc64/parisc/ \
 		-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
-		-e s/sh[234].*/sh/ )
+		-e s/sh[234].*/sh/)
 
 ARCH ?= $(SUBARCH)
 
 ifeq ($(ARCH),i386)
-	ARCH = x86
+	ARCH := x86
 endif
 
 ifeq ($(ARCH),i686)
-	ARCH = x86
+	ARCH := x86
 endif
 
 ifeq ($(ARCH),x86_64)
-	ARCH = x86
+	ARCH := x86
 endif
 
 ifeq ($(ARCH),arm)
-	SUBARCH = arm
+	SUBARCH := arm
 endif
 
 ifeq ($(ARCH),aarch64)
-	ARCH = arm64
+	ARCH := arm64
 endif
 
 ifeq ($(ARCH),riscv32)
-	ARCH = riscv
+	ARCH := riscv
 endif
 
 ifeq ($(ARCH),riscv64)
-	ARCH = riscv
+	ARCH := riscv
 endif
 
 export SUBARCH ARCH
