@@ -37,12 +37,14 @@ static int drm_select(dev_t minor, int ops, endpoint_t endpoint);
 static int drm_mmap(dev_t minor, endpoint_t endpoint, char* addr, off_t offset,
                     size_t length, char** retaddr);
 
-static struct chardriver drm_chrdrv = {.cdr_open = drm_open,
-                                       .cdr_close = drm_close,
-                                       .cdr_read = drm_read,
-                                       .cdr_ioctl = drm_ioctl,
-                                       .cdr_select = drm_select,
-                                       .cdr_mmap = drm_mmap};
+static struct chardriver drm_chrdrv = {
+    .cdr_open = drm_open,
+    .cdr_close = drm_close,
+    .cdr_read = drm_read,
+    .cdr_ioctl = drm_ioctl,
+    .cdr_select = drm_select,
+    .cdr_mmap = drm_mmap,
+};
 
 static int drm_open(dev_t minor, int access, endpoint_t user_endpt)
 {
@@ -181,6 +183,13 @@ int drmdriver_register_device(struct drm_device* dev)
     retval = dm_device_register(&devinf, &dev->primary.device_id);
 
     return retval;
+}
+
+void drmdriver_process(struct drm_device* drm_dev, MESSAGE* msg)
+{
+    drm_device = drm_dev;
+
+    chardriver_process(&drm_chrdrv, msg);
 }
 
 int drmdriver_task(struct drm_device* drm_dev)

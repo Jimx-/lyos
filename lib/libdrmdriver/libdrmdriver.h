@@ -28,6 +28,7 @@ struct drm_driver {
 };
 
 int drmdriver_register_device(struct drm_device* dev);
+void drmdriver_process(struct drm_device* drm_dev, MESSAGE* msg);
 int drmdriver_task(struct drm_device* drm_dev);
 
 #endif

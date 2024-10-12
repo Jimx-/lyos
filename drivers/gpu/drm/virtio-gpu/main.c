@@ -491,6 +491,8 @@ static int virtio_gpu_mode_dumb_create(struct drm_device* dev,
     return retval;
 }
 
+static void virtio_gpu_interrupt(unsigned int mask) { virtio_enable_irq(vdev); }
+
 static void virtio_gpu_interrupt_wait(void)
 {
     MESSAGE msg;
@@ -828,14 +830,25 @@ out_free_dev:
 
 int main()
 {
-    int retval;
+    MESSAGE msg;
 
     serv_register_init_fresh_callback(virtio_gpu_init);
     serv_init();
 
-    retval = drmdriver_task(&drm_dev);
-    if (retval) {
-        panic("%s: failed to start DRM driver task");
+    while (TRUE) {
+        send_recv(RECEIVE_ASYNC, ANY, &msg);
+
+        if (msg.type == NOTIFY_MSG) {
+            switch (msg.source) {
+            case INTERRUPT:
+                virtio_gpu_interrupt(msg.INTERRUPTS);
+                continue;
+            default:
+                break;
+            }
+        }
+
+        drmdriver_process(&drm_dev, &msg);
     }
 
     return 0;
