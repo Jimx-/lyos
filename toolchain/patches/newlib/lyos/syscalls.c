@@ -1904,9 +1904,14 @@ int getentropy(void* buffer, size_t length)
     return 0;
 }
 
+extern void* memalign(size_t alignment, size_t size);
+
 int posix_memalign(void** memptr, size_t alignment, size_t size)
 {
-    *memptr = malloc(size);
+    void* p = memalign(alignment, size);
+    if (!p) return ENOMEM;
+
+    *memptr = p;
     return 0;
 }
 

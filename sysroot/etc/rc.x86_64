@@ -15,6 +15,7 @@ service up /sbin/pty
 service up /sbin/devpts
 service up /sbin/inet
 service up /sbin/virtio-net
+service up /sbin/usbd
 
 mount -a
 

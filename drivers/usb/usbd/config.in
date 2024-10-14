@@ -1,0 +1,30 @@
+config USB_PCI
+    bool "PCI based USB host interface"
+    depends on PCI_DEV
+    default y
+
+config USB_OHCI_HCD
+    tristate "OHCI HCD (USB 1.1) support"
+    help
+      The Open Host Controller Interface (OHCI) is a standard for accessing
+      USB 1.1 host controller hardware.
+
+if USB_OHCI_HCD
+
+config USB_OHCI_HCD_PCI
+    tristate "OHCI support for PCI-bus USB controllers"
+    depends on USB_PCI
+    default y
+    help
+      Enables support for PCI-bus plug-in USB controller cards.
+      If unsure, say Y.
+
+endif
+
+config USB_DWC2
+    bool "DesignWare USB2 DRD Core Support"
+    depends on USB
+    depends on OF
+    help
+      Say Y here if your system has a Dual Role Hi-Speed USB
+      controller based on the DesignWare HSOTG IP Core.

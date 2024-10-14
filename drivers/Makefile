@@ -23,4 +23,8 @@ ifeq ($(CONFIG_NETDEVICES),y)
 	SUBDIRS += net
 endif
 
+ifeq ($(CONFIG_USB_SUPPORT),y)
+	SUBDIRS += usb
+endif
+
 include lyos.subdirs.mk

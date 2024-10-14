@@ -17,4 +17,6 @@ source "drivers/net/config.in"
 
 source "drivers/video/config.in"
 
+source "drivers/usb/config.in"
+
 endmenu

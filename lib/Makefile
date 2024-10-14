@@ -2,8 +2,9 @@
 # Makefile for Lyos libraries.
 
 SUBDIRS		= libbdev libexec liblyos libsysfs libfsdriver libinputdriver \
-			  libblockdriver libchardriver libmemfs libdevman libpthread \
-			  libcoro libsockdriver libdl libnetlink libutil libpciutil
+					libblockdriver libchardriver libmemfs libdevman libpthread \
+					libcoro libsockdriver libdl libnetlink libutil libpciutil \
+					libasyncdriver
 
 ifeq ($(CONFIG_OF),y)
 	SUBDIRS += libof libfdt
@@ -23,6 +24,10 @@ endif
 
 ifeq ($(CONFIG_COMMON_CLK),y)
 	SUBDIRS += libclk
+endif
+
+ifeq ($(CONFIG_USB),y)
+	SUBDIRS += libusb
 endif
 
 include lyos.subdirs.mk

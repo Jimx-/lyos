@@ -1,4 +1,3 @@
-
 CFLAGS = -c
 
 CONFBIN = conf
@@ -33,14 +32,14 @@ $(MCONFBIN): $(mconf-objs)
 	@$(HOSTCC) $^ $(LOADLIBES) -o $@
 
 clean-files	:= zconf.tab.c zconf.lex.c zconf.hash.c $(lxdialog)
-clean-files     += conf mconf 
+clean-files     += conf mconf
 
 clean:
 	@rm -f $(clean-files)
 
 %.o: %.c
 	@echo "\tHOSTCC\t$@"
-	@$(HOSTCC) $(EXTRACFLAGS) -c $< -o $@ 
+	@$(HOSTCC) $(EXTRACFLAGS) -c $< -o $@
 
 zconf.tab.o: zconf.tab.c zconf.lex.c zconf.hash.c
 	@echo "\tHOSTCC\t$@"
@@ -49,5 +48,3 @@ zconf.tab.o: zconf.tab.c zconf.lex.c zconf.hash.c
 %.c: %.c_shipped
 	@echo "\tSHIPPED\t$@"
 	@cat $< > $@
-
-

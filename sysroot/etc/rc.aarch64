@@ -11,6 +11,7 @@ service up /sbin/tmpfs
 service up /sbin/pty
 service up /sbin/devpts
 service up /sbin/fbdrm
+service up /sbin/usbd
 
 sleep 2
 

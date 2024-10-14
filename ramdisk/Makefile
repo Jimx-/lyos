@@ -31,6 +31,9 @@ endif
 ifneq ("$(wildcard $(DESTDIR)/sbin/clk)","")
 	@cp -f $(DESTDIR)/sbin/clk sbin/
 endif
+ifneq ("$(wildcard $(DESTDIR)/sbin/usbd)","")
+	@cp -f $(DESTDIR)/sbin/usbd sbin/
+endif
 	@cp -f $(DESTDIR)/sbin/uds sbin/
 	@cp -f $(DESTDIR)/sbin/tmpfs sbin/
 	@cp -f $(DESTDIR)/sbin/pty sbin/
