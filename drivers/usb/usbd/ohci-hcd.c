@@ -661,7 +661,7 @@ int ohci_hub_control(struct usb_hcd* hcd, u16 typeReq, u16 wValue, u16 wIndex,
                         RH_PS_PPS);
             break;
         case USB_PORT_FEAT_RESET:
-            retval = root_port_reset(ohci, wIndex);
+            retval = -root_port_reset(ohci, wIndex);
             break;
         default:
             goto error;
@@ -669,7 +669,7 @@ int ohci_hub_control(struct usb_hcd* hcd, u16 typeReq, u16 wValue, u16 wIndex,
         break;
 
     error:
-        retval = EPIPE;
+        retval = -EPIPE;
     }
 
     return retval;

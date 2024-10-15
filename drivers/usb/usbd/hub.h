@@ -6,7 +6,7 @@
 #include "usb.h"
 
 struct usb_hub {
-    struct usb_bus* bus;
+    struct usb_device* hdev;
 
     union {
         struct usb_hub_status hub;
@@ -19,8 +19,10 @@ struct usb_hub {
     struct usb_device* ports[USB_MAXCHILDREN];
 };
 
-struct usb_hub* usb_create_hub(struct usb_bus* bus);
+struct usb_hub* usb_create_hub(struct usb_device* hdev);
 void usb_hub_handle_status_data(struct usb_hub* hub, const char* buffer,
                                 int length);
+
+int usb_clear_port_feature(struct usb_device* hdev, int port1, int feature);
 
 #endif

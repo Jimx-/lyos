@@ -22,14 +22,14 @@ static const char* name = "usb-hub";
 #define HUB_LONG_RESET_TIME  200
 #define HUB_RESET_TIMEOUT    800
 
-struct usb_hub* usb_create_hub(struct usb_bus* bus)
+struct usb_hub* usb_create_hub(struct usb_device* hdev)
 {
     struct usb_hub* hub;
 
     hub = malloc(sizeof(*hub));
     if (!hub) return NULL;
 
-    hub->bus = bus;
+    hub->hdev = hdev;
 
     hub->maxchild = USB_MAXCHILDREN;
 
@@ -81,25 +81,60 @@ static int hub_enable_device(struct usb_device* udev)
     return hcd->driver->enable_device(hcd, udev);
 }
 
+int usb_clear_port_feature(struct usb_device* hdev, int port1, int feature)
+{
+    return usb_control_msg(hdev, usb_sndctrlpipe(hdev, 0),
+                           USB_REQ_CLEAR_FEATURE, USB_RT_PORT, feature, port1,
+                           NULL, 0);
+}
+
+static int set_port_feature(struct usb_device* hdev, int port1, int feature)
+{
+    return usb_control_msg(hdev, usb_sndctrlpipe(hdev, 0), USB_REQ_SET_FEATURE,
+                           USB_RT_PORT, feature, port1, NULL, 0);
+}
+
+#define USB_STS_RETRIES 5
+
+static int get_port_status(struct usb_device* hdev, int port1, void* data,
+                           u16 value, u16 length)
+{
+    int i, status = -ETIMEDOUT;
+
+    for (i = 0;
+         i < USB_STS_RETRIES && (status == -ETIMEDOUT || status == -EPIPE);
+         i++) {
+        status = usb_control_msg(hdev, usb_rcvctrlpipe(hdev, 0),
+                                 USB_REQ_GET_STATUS, USB_DIR_IN | USB_RT_PORT,
+                                 value, port1, data, length);
+    }
+    return status;
+}
+
 static int hub_ext_port_status(struct usb_hub* hub, int port1, int type,
                                u16* status, u16* change, u32* ext_status)
 {
-    struct usb_hcd* hcd = bus_to_hcd(hub->bus);
     int retval;
     int len = 4;
 
     if (type != HUB_PORT_STATUS) len = 8;
 
-    retval = usb_hcd_call_control(hcd, GetPortStatus, type, port1,
-                                  (char*)&hub->status.port, len);
-    if (retval) return retval;
+    retval = get_port_status(hub->hdev, port1, &hub->status.port, type, len);
+    if (retval < len) {
+        if (retval >= 0)
+            retval = EIO;
+        else
+            retval = -retval;
+    } else {
+        *status = hub->status.port.wPortStatus;
+        *change = hub->status.port.wPortChange;
+        if (type != HUB_PORT_STATUS && ext_status)
+            *ext_status = hub->status.port.dwExtPortStatus;
 
-    *status = hub->status.port.wPortStatus;
-    *change = hub->status.port.wPortChange;
-    if (type != HUB_PORT_STATUS && ext_status)
-        *ext_status = hub->status.port.dwExtPortStatus;
+        retval = 0;
+    }
 
-    return 0;
+    return retval;
 }
 
 static int hub_port_status(struct usb_hub* hub, int port1, u16* status,
@@ -112,7 +147,6 @@ static int hub_port_status(struct usb_hub* hub, int port1, u16* status,
 static int hub_port_wait_reset(struct usb_hub* hub, int port1,
                                struct usb_device* udev, unsigned int delay)
 {
-    struct usb_hcd* hcd = bus_to_hcd(hub->bus);
     int retval, delay_time;
     u16 portstatus;
     u16 portchange;
@@ -135,8 +169,7 @@ static int hub_port_wait_reset(struct usb_hub* hub, int port1,
     if (!(portstatus & USB_PORT_STAT_CONNECTION)) return ENOTCONN;
 
     if (portchange & USB_PORT_STAT_C_CONNECTION) {
-        retval = usb_hcd_call_control(
-            hcd, ClearPortFeature, USB_PORT_FEAT_C_CONNECTION, port1, NULL, 0);
+        usb_clear_port_feature(hub->hdev, port1, USB_PORT_FEAT_C_CONNECTION);
         return EAGAIN;
     }
 
@@ -153,19 +186,18 @@ static int hub_port_wait_reset(struct usb_hub* hub, int port1,
 static int hub_port_reset(struct usb_hub* hub, int port1,
                           struct usb_device* udev, unsigned int delay)
 {
-    struct usb_hcd* hcd = bus_to_hcd(hub->bus);
+    struct usb_hcd* hcd = bus_to_hcd(hub->hdev->bus);
     int retval, i;
 
     for (i = 0; i < PORT_RESET_TRIES; i++) {
-        retval = usb_hcd_call_control(hcd, SetPortFeature, USB_PORT_FEAT_RESET,
-                                      port1, NULL, 0);
+        retval = set_port_feature(hub->hdev, port1, USB_PORT_FEAT_RESET);
+        if (retval < 0) retval = -retval;
 
         if (!retval) retval = hub_port_wait_reset(hub, port1, udev, delay);
 
         if (retval == 0 || retval == ENOTCONN || retval == ENODEV ||
             (retval == EBUSY && i == PORT_RESET_TRIES - 1)) {
-            usb_hcd_call_control(hcd, ClearPortFeature, USB_PORT_FEAT_C_RESET,
-                                 port1, NULL, 0);
+            usb_clear_port_feature(hub->hdev, port1, USB_PORT_FEAT_C_RESET);
 
             goto done;
         }
@@ -286,7 +318,7 @@ static int hub_port_init(struct usb_hub* hub, struct usb_device* udev,
         }
     }
 
-    driver_name = bus_to_hcd(hub->bus)->driver->description;
+    driver_name = bus_to_hcd(hub->hdev->bus)->driver->description;
     speed = usb_speed_string(udev->speed);
 
     if (udev->speed < USB_SPEED_SUPER) {
@@ -367,6 +399,7 @@ out:
 static void hub_port_connect(struct usb_hub* hub, int port1, u16 portstatus,
                              u16 portchange)
 {
+    struct usb_device* hdev = hub->hdev;
     struct usb_device* udev = hub->ports[port1 - 1];
     int retval, i;
 
@@ -375,7 +408,7 @@ static void hub_port_connect(struct usb_hub* hub, int port1, u16 portstatus,
     }
 
     for (i = 0; i < PORT_INIT_TRIES; i++) {
-        udev = usb_alloc_dev(hub->bus, port1);
+        udev = usb_alloc_dev(hdev, hub->hdev->bus, port1);
 
         udev->speed = USB_SPEED_UNKNOWN;
 
@@ -410,28 +443,26 @@ static void hub_port_connect_change(struct usb_hub* hub, int port1,
 
 static void port_event(struct usb_hub* hub, int port1)
 {
-    struct usb_hcd* hcd = bus_to_hcd(hub->bus);
     u16 portstatus, portchange;
     int connect_change = 0;
+    int retval;
 
     UNSET_BIT(hub->event_bits, port1);
 
-    hub_port_status(hub, port1, &portstatus, &portchange);
+    retval = hub_port_status(hub, port1, &portstatus, &portchange);
+    if (retval) return;
 
     if (portchange & USB_PORT_STAT_C_CONNECTION) {
-        usb_hcd_call_control(hcd, ClearPortFeature, USB_PORT_FEAT_C_CONNECTION,
-                             port1, NULL, 0);
+        usb_clear_port_feature(hub->hdev, port1, USB_PORT_FEAT_C_CONNECTION);
         connect_change = 1;
     }
 
     if (portchange & USB_PORT_STAT_C_ENABLE) {
-        usb_hcd_call_control(hcd, ClearPortFeature, USB_PORT_FEAT_C_ENABLE,
-                             port1, NULL, 0);
+        usb_clear_port_feature(hub->hdev, port1, USB_PORT_FEAT_C_ENABLE);
     }
 
     if (portchange & USB_PORT_STAT_C_RESET) {
-        usb_hcd_call_control(hcd, ClearPortFeature, USB_PORT_FEAT_C_RESET,
-                             port1, NULL, 0);
+        usb_clear_port_feature(hub->hdev, port1, USB_PORT_FEAT_C_RESET);
     }
 
     if (connect_change)

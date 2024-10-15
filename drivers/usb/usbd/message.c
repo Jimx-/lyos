@@ -10,6 +10,7 @@
 
 struct urb_wait_context {
     worker_id_t wid;
+    int done;
     int status;
 };
 
@@ -17,6 +18,7 @@ static void usb_blocking_completion(struct urb* urb)
 {
     struct urb_wait_context* ctx = urb->context;
 
+    ctx->done = TRUE;
     ctx->status = urb->status;
     worker_async_wakeup(ctx->wid);
 }
@@ -27,13 +29,16 @@ int usb_start_wait_urb(struct urb* urb, int* actual_length)
     int retval;
 
     ctx.wid = current_worker_id();
+    ctx.done = FALSE;
     urb->context = &ctx;
     urb->actual_length = 0;
 
     retval = usb_submit_urb(urb);
     if (retval) goto out;
 
-    worker_async_sleep();
+    if (!ctx.done) {
+        worker_async_sleep();
+    }
     retval = ctx.status;
 
 out:

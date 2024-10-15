@@ -88,6 +88,18 @@ int usb_hcd_link_urb_to_ep(struct usb_hcd* hcd, struct urb* urb);
 void usb_hcd_unlink_urb_from_ep(struct usb_hcd* hcd, struct urb* urb);
 void usb_hcd_giveback_urb(struct usb_hcd* hcd, struct urb* urb, int status);
 
+#define DeviceRequest ((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE) << 8)
+#define DeviceOutRequest \
+    ((USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE) << 8)
+
+#define InterfaceRequest \
+    ((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_INTERFACE) << 8)
+
+#define EndpointRequest \
+    ((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT) << 8)
+#define EndpointOutRequest \
+    ((USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT) << 8)
+
 /* class requests from the USB 2.0 hub spec, table 11-15 */
 #define HUB_CLASS_REQ(dir, type, request) ((((dir) | (type)) << 8) | (request))
 /* GetBusState and SetHubDescriptor are optional, omitted */
@@ -108,9 +120,6 @@ void usb_hcd_giveback_urb(struct usb_hcd* hcd, struct urb* urb, int status);
 #define ResetTT    HUB_CLASS_REQ(USB_DIR_OUT, USB_RT_PORT, HUB_RESET_TT)
 #define GetTTState HUB_CLASS_REQ(USB_DIR_IN, USB_RT_PORT, HUB_GET_TT_STATE)
 #define StopTT     HUB_CLASS_REQ(USB_DIR_OUT, USB_RT_PORT, HUB_STOP_TT)
-
-int usb_hcd_call_control(struct usb_hcd* hcd, u16 typeReq, u16 wValue,
-                         u16 wIndex, char* buf, u16 wLength);
 
 void usb_hcd_disable_endpoint(struct usb_device* udev,
                               struct usb_host_endpoint* ep);

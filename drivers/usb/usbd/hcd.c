@@ -12,6 +12,26 @@
 #include "hcd.h"
 #include "hub.h"
 
+static const u8 usb11_rh_dev_descriptor[18] = {
+    0x12,                /*  __u8  bLength; */
+    USB_DT_DEVICE,       /* __u8 bDescriptorType; Device */
+    0x10,          0x01, /*  __le16 bcdUSB; v1.1 */
+
+    0x09, /*  __u8  bDeviceClass; HUB_CLASSCODE */
+    0x00, /*  __u8  bDeviceSubClass; */
+    0x00, /*  __u8  bDeviceProtocol; [ low/full speeds only ] */
+    0x40, /*  __u8  bMaxPacketSize0; 64 Bytes */
+
+    0x6b,          0x1d, /*  __le16 idVendor; Linux Foundation 0x1d6b */
+    0x01,          0x00, /*  __le16 idProduct; device 0x0001 */
+    0x01,          0x00, /*  __le16 bcdDevice */
+
+    0x03, /*  __u8  iManufacturer; */
+    0x02, /*  __u8  iProduct; */
+    0x01, /*  __u8  iSerialNumber; */
+    0x01  /*  __u8  bNumConfigurations; */
+};
+
 static DEF_LIST(hcd_list);
 
 static void usb_bus_init(struct usb_bus* bus)
@@ -63,23 +83,51 @@ void usb_put_hcd(struct usb_hcd* hcd)
     if (hcd) kref_put(&hcd->kref, hcd_release);
 }
 
+static int register_roothub(struct usb_hcd* hcd)
+{
+    struct usb_device* hdev = hcd->self.roothub->hdev;
+    struct usb_device_descriptor* descr;
+    const int devnum = 1;
+    int retval = 0;
+
+    hdev->devnum = devnum;
+    hcd->self.devnum_next = devnum + 1;
+    SET_BIT(hcd->self.devmap, devnum);
+
+    hdev->ep0.desc.wMaxPacketSize = cpu_to_le16(64);
+    descr = usb_get_device_descriptor(hdev);
+    if (!descr) return EIO;
+
+    hdev->descriptor = *descr;
+    free(descr);
+
+    return retval;
+}
+
 int usb_hcd_add(struct usb_hcd* hcd, int irq)
 {
-    struct usb_hub* rhdev;
+    struct usb_device* rhdev;
+    struct usb_hub* roothub;
     int retval = 0;
 
     list_add(&hcd->list, &hcd_list);
 
-    rhdev = usb_create_hub(&hcd->self);
+    rhdev = usb_alloc_dev(NULL, &hcd->self, 0);
     if (!rhdev) {
         retval = ENOMEM;
         goto rm_list;
     }
-    hcd->self.roothub = rhdev;
+
+    roothub = usb_create_hub(rhdev);
+    if (!roothub) {
+        retval = ENOMEM;
+        goto free_hdev;
+    }
+    hcd->self.roothub = roothub;
 
     if (hcd->driver->setup) {
         retval = hcd->driver->setup(hcd);
-        if (retval) return retval;
+        if (retval) goto free_hub;
     }
 
     if (irq && hcd->driver->irq) {
@@ -87,10 +135,10 @@ int usb_hcd_add(struct usb_hcd* hcd, int irq)
         hcd->irq_hook = irq;
 
         retval = irq_setpolicy(irq, 0, &hcd->irq_hook);
-        if (retval) return retval;
+        if (retval) goto free_hub;
 
         retval = irq_enable(&hcd->irq_hook);
-        if (retval) return retval;
+        if (retval) goto free_hub;
     } else {
         hcd->irq = 0;
     }
@@ -98,8 +146,8 @@ int usb_hcd_add(struct usb_hcd* hcd, int irq)
     retval = hcd->driver->start(hcd);
     if (retval) goto rm_irq;
 
-    hcd->self.devnum_next += 1;
-    SET_BIT(hcd->self.devmap, 1);
+    retval = register_roothub(hcd);
+    if (retval) goto rm_irq;
 
     usb_hcd_poll_rh_status(hcd);
 
@@ -109,6 +157,10 @@ rm_irq:
     if (hcd->irq) {
         irq_rmpolicy(&hcd->irq_hook);
     }
+
+free_hub:
+free_hdev:
+    usb_put_dev(rhdev);
 
 rm_list:
     list_del(&hcd->list);
@@ -140,12 +192,105 @@ void usb_hcd_poll_rh_status(struct usb_hcd* hcd)
     usb_hub_handle_status_data(hcd->self.roothub, buffer, length);
 }
 
-int usb_hcd_call_control(struct usb_hcd* hcd, u16 typeReq, u16 wValue,
-                         u16 wIndex, char* buf, u16 wLength)
+static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
 {
-    if (!hcd->driver->hub_control) return ENOSYS;
+    struct usb_ctrlrequest* cmd;
+    u16 typeReq, wValue, wIndex, wLength;
+    u8* ubuf = urb->transfer_buffer;
+    unsigned int len = 0;
+    u16 tbuf_size;
+    u8* tbuf = NULL;
+    const u8* bufp;
+    int retval;
 
-    return hcd->driver->hub_control(hcd, typeReq, wValue, wIndex, buf, wLength);
+    retval = usb_hcd_link_urb_to_ep(hcd, urb);
+    if (retval) return retval;
+
+    urb->hc_priv = hcd;
+
+    cmd = (struct usb_ctrlrequest*)urb->setup_packet;
+    typeReq = (cmd->bRequestType << 8) | cmd->bRequest;
+    wValue = le16_to_cpu(cmd->wValue);
+    wIndex = le16_to_cpu(cmd->wIndex);
+    wLength = le16_to_cpu(cmd->wLength);
+
+    tbuf_size = max(sizeof(struct usb_hub_descriptor), wLength);
+    tbuf = malloc(tbuf_size);
+    if (!tbuf) {
+        retval = ENOMEM;
+        goto err_alloc;
+    }
+
+    bufp = tbuf;
+
+    urb->actual_length = 0;
+
+    switch (typeReq) {
+    case DeviceRequest | USB_REQ_GET_DESCRIPTOR:
+        switch (wValue & 0xff00) {
+        case USB_DT_DEVICE << 8:
+            switch (hcd->speed) {
+            case HCD_USB11:
+                bufp = usb11_rh_dev_descriptor;
+                break;
+            default:
+                goto error;
+            }
+
+            len = 18;
+            break;
+        }
+        break;
+
+    default:
+        switch (typeReq) {
+        case GetHubStatus:
+            len = 4;
+            break;
+        case GetPortStatus:
+            if (wValue == HUB_PORT_STATUS)
+                len = 4;
+            else
+                len = 8;
+            break;
+        case GetHubDescriptor:
+            len = sizeof(struct usb_hub_descriptor);
+            break;
+        }
+
+        retval = hcd->driver->hub_control(hcd, typeReq, wValue, wIndex,
+                                          (char*)tbuf, wLength);
+        if (retval < 0)
+            retval = -retval;
+        else if (retval > 0) {
+            len = retval;
+            retval = 0;
+        }
+
+        break;
+
+    error:
+        retval = EPIPE;
+    }
+
+    if (retval) len = 0;
+
+    if (len) {
+        if (urb->transfer_buffer_length < len)
+            len = urb->transfer_buffer_length;
+
+        urb->actual_length = len;
+
+        memcpy(ubuf, bufp, len);
+    }
+
+    free(tbuf);
+
+err_alloc:
+    usb_hcd_unlink_urb_from_ep(hcd, urb);
+    usb_hcd_giveback_urb(hcd, urb, retval);
+
+    return retval;
 }
 
 void usb_hcd_disable_endpoint(struct usb_device* udev,
@@ -172,6 +317,13 @@ void usb_hcd_reset_endpoint(struct usb_device* udev,
         usb_settoggle(udev, epnum, is_out, 0);
         if (is_control) usb_settoggle(udev, epnum, !is_out, 0);
     }
+}
+
+static int rh_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
+{
+    if (usb_endpoint_xfer_control(&urb->ep->desc))
+        return rh_call_control(hcd, urb);
+    return EINVAL;
 }
 
 static int map_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
@@ -215,16 +367,21 @@ void usb_hcd_unmap_urb_for_dma(struct usb_hcd* hcd, struct urb* urb) {}
 
 int usb_hcd_submit_urb(struct urb* urb)
 {
-    struct usb_hcd* hcd = bus_to_hcd(urb->dev->bus);
+    struct usb_device* udev = urb->dev;
+    struct usb_hcd* hcd = bus_to_hcd(udev->bus);
     int retval;
 
     usb_get_urb(urb);
 
-    retval = map_urb_for_dma(hcd, urb);
-    if (!retval) {
-        retval = hcd->driver->urb_enqueue(hcd, urb);
+    if (udev->parent == NULL) {
+        retval = rh_urb_enqueue(hcd, urb);
+    } else {
+        retval = map_urb_for_dma(hcd, urb);
+        if (!retval) {
+            retval = hcd->driver->urb_enqueue(hcd, urb);
 
-        if (retval) unmap_urb_for_dma(hcd, urb);
+            if (retval) unmap_urb_for_dma(hcd, urb);
+        }
     }
 
     if (retval) {

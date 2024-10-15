@@ -9,7 +9,8 @@
 #include "usb.h"
 #include "hcd.h"
 
-struct usb_device* usb_alloc_dev(struct usb_bus* bus, unsigned int port1)
+struct usb_device* usb_alloc_dev(struct usb_device* parent, struct usb_bus* bus,
+                                 unsigned int port1)
 {
     struct usb_device* dev;
     struct usb_hcd* hcd = bus_to_hcd(bus);
@@ -32,6 +33,7 @@ struct usb_device* usb_alloc_dev(struct usb_bus* bus, unsigned int port1)
 
     dev->portnum = port1;
     dev->bus = bus;
+    dev->parent = parent;
 
     return dev;
 }

@@ -31,6 +31,7 @@ struct usb_bus {
 struct usb_device {
     struct kref kref;
     struct usb_bus* bus;
+    struct usb_device* parent;
     int devnum;
     enum usb_device_speed speed;
 
@@ -55,7 +56,8 @@ struct usb_device {
 #define usb_settoggle(dev, ep, out, bit) \
     ((dev)->toggle[out] = ((dev)->toggle[out] & ~(1 << (ep))) | ((bit) << (ep)))
 
-struct usb_device* usb_alloc_dev(struct usb_bus* bus, unsigned int port1);
+struct usb_device* usb_alloc_dev(struct usb_device* parent, struct usb_bus* bus,
+                                 unsigned int port1);
 struct usb_device* usb_get_dev(struct usb_device* udev);
 void usb_put_dev(struct usb_device* udev);
 
