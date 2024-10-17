@@ -19,6 +19,34 @@ struct usb_host_endpoint {
     int enabled;
 };
 
+struct usb_host_interface {
+    struct usb_interface_descriptor desc;
+
+    struct usb_host_endpoint* endpoint;
+
+    char* string;
+};
+
+struct usb_interface_cache {
+    struct kref kref;
+    int num_altsetting;
+
+    struct usb_host_interface altsetting[0];
+};
+
+#define USB_MAXENDPOINTS  30
+#define USB_MAXINTERFACES 32
+
+struct usb_host_config {
+    struct usb_config_descriptor desc;
+
+    struct usb_host_interface* interface[USB_MAXINTERFACES];
+
+    struct usb_interface_cache* intf_cache[USB_MAXINTERFACES];
+
+    char* string;
+};
+
 struct usb_bus {
     int busnum;
 
@@ -38,6 +66,9 @@ struct usb_device {
     unsigned int toggle[2];
 
     struct usb_device_descriptor descriptor;
+    struct usb_host_config* config;
+
+    char** raw_descr;
 
     struct usb_host_endpoint ep0;
     struct usb_host_endpoint* ep_in[16];
@@ -45,6 +76,9 @@ struct usb_device {
 
     int portnum;
     int devaddr;
+
+    unsigned int has_langid;
+    int string_langid;
 
     char* product;
     char* manufacturer;
@@ -135,6 +169,22 @@ usb_fill_control_urb(struct urb* urb, struct usb_device* dev, unsigned int pipe,
     urb->context = context;
 }
 
+static inline void usb_fill_int_urb(struct urb* urb, struct usb_device* dev,
+                                    unsigned int pipe, void* transfer_buffer,
+                                    int buffer_length,
+                                    usb_complete_t complete_fn, void* context,
+                                    int interval)
+{
+    urb->dev = dev;
+    urb->pipe = pipe;
+    urb->transfer_buffer = transfer_buffer;
+    urb->transfer_buffer_length = buffer_length;
+    urb->complete = complete_fn;
+    urb->context = context;
+    urb->interval = interval;
+    urb->start_frame = -1;
+}
+
 #define PIPE_ISOCHRONOUS 0
 #define PIPE_INTERRUPT   1
 #define PIPE_CONTROL     2
@@ -194,5 +244,9 @@ int usb_get_descriptor(struct usb_device* dev, unsigned char type,
                        unsigned char index, void* buf, int size);
 struct usb_device_descriptor*
 usb_get_device_descriptor(struct usb_device* udev);
+
+int usb_get_configuration(struct usb_device* dev);
+
+char* usb_cache_string(struct usb_device* udev, int index);
 
 #endif

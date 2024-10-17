@@ -1,5 +1,7 @@
 #include <lyos/types.h>
+#include <lyos/compile.h>
 #include <lyos/const.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <lyos/vm.h>
@@ -7,6 +9,7 @@
 #include <lyos/irqctl.h>
 #include <errno.h>
 #include <lyos/usb.h>
+#include <lyos/idr.h>
 
 #include "usb.h"
 #include "hcd.h"
@@ -32,7 +35,40 @@ static const u8 usb11_rh_dev_descriptor[18] = {
     0x01  /*  __u8  bNumConfigurations; */
 };
 
+static const u8 fs_rh_config_descriptor[] = {
+    /* one configuration */
+    0x09,          /*  __u8  bLength; */
+    USB_DT_CONFIG, /* __u8 bDescriptorType; Configuration */
+    0x19, 0x00,    /*  __le16 wTotalLength; */
+    0x01,          /*  __u8  bNumInterfaces; (1) */
+    0x01,          /*  __u8  bConfigurationValue; */
+    0x00,          /*  __u8  iConfiguration; */
+    0xc0,          /*  __u8  bmAttributes; */
+    0x00,          /*  __u8  MaxPower; */
+
+    /* one interface */
+    0x09,             /*  __u8  if_bLength; */
+    USB_DT_INTERFACE, /* __u8 if_bDescriptorType; Interface */
+    0x00,             /*  __u8  if_bInterfaceNumber; */
+    0x00,             /*  __u8  if_bAlternateSetting; */
+    0x01,             /*  __u8  if_bNumEndpoints; */
+    0x09,             /*  __u8  if_bInterfaceClass; HUB_CLASSCODE */
+    0x00,             /*  __u8  if_bInterfaceSubClass; */
+    0x00,             /*  __u8  if_bInterfaceProtocol; [usb1.1 or single tt] */
+    0x00,             /*  __u8  if_iInterface; */
+
+    /* one endpoint (status change endpoint) */
+    0x07,            /*  __u8  ep_bLength; */
+    USB_DT_ENDPOINT, /* __u8 ep_bDescriptorType; Endpoint */
+    0x81,            /*  __u8  ep_bEndpointAddress; IN Endpoint 1 */
+    0x03,            /*  __u8  ep_bmAttributes; Interrupt */
+    0x02, 0x00,      /*  __le16 ep_wMaxPacketSize; 1 + (MAX_ROOT_PORTS / 8) */
+    0xff             /*  __u8  ep_bInterval; (255ms -- usb 2.0 spec) */
+};
+
 static DEF_LIST(hcd_list);
+
+static struct idr usb_bus_idr;
 
 static void usb_bus_init(struct usb_bus* bus)
 {
@@ -62,6 +98,8 @@ struct usb_hcd* usb_create_hcd(const struct hc_driver* driver)
 
     hcd->driver = driver;
     hcd->speed = driver->flags & HCD_MASK;
+    hcd->product_desc =
+        driver->product_desc ? driver->product_desc : "USB Host Controller";
 
     return hcd;
 }
@@ -83,12 +121,29 @@ void usb_put_hcd(struct usb_hcd* hcd)
     if (hcd) kref_put(&hcd->kref, hcd_release);
 }
 
+static int usb_register_bus(struct usb_bus* bus)
+{
+    static int idr_inited = FALSE;
+    int busnum;
+
+    if (!idr_inited) {
+        idr_init(&usb_bus_idr);
+        idr_inited = TRUE;
+    }
+
+    busnum = idr_alloc(&usb_bus_idr, bus, 1, 0);
+    if (busnum < 0) return E2BIG;
+
+    bus->busnum = busnum;
+    return 0;
+}
+
 static int register_roothub(struct usb_hcd* hcd)
 {
     struct usb_device* hdev = hcd->self.roothub->hdev;
     struct usb_device_descriptor* descr;
     const int devnum = 1;
-    int retval = 0;
+    int retval;
 
     hdev->devnum = devnum;
     hcd->self.devnum_next = devnum + 1;
@@ -101,6 +156,8 @@ static int register_roothub(struct usb_hcd* hcd)
     hdev->descriptor = *descr;
     free(descr);
 
+    retval = usb_new_device(hdev);
+
     return retval;
 }
 
@@ -111,6 +168,9 @@ int usb_hcd_add(struct usb_hcd* hcd, int irq)
     int retval = 0;
 
     list_add(&hcd->list, &hcd_list);
+
+    retval = usb_register_bus(&hcd->self);
+    if (retval) return retval;
 
     rhdev = usb_alloc_dev(NULL, &hcd->self, 0);
     if (!rhdev) {
@@ -192,6 +252,56 @@ void usb_hcd_poll_rh_status(struct usb_hcd* hcd)
     usb_hub_handle_status_data(hcd->self.roothub, buffer, length);
 }
 
+static unsigned ascii2desc(char const* s, u8* buf, unsigned len)
+{
+    unsigned n, t = 2 + 2 * strlen(s);
+
+    if (t > 254) t = 254;
+    if (len > t) len = t;
+
+    t += USB_DT_STRING << 8;
+
+    n = len;
+    while (n--) {
+        *buf++ = t;
+        if (!n--) break;
+        *buf++ = t >> 8;
+        t = (unsigned char)*s++;
+    }
+    return len;
+}
+
+static unsigned rh_string(int id, struct usb_hcd const* hcd, u8* data,
+                          unsigned len)
+{
+    char buf[100];
+    char const* s;
+    static char const langids[4] = {4, USB_DT_STRING, 0x09, 0x04};
+
+    switch (id) {
+    case 0:
+        if (len > 4) len = 4;
+        memcpy(data, langids, len);
+        return len;
+    case 1:
+        snprintf(buf, sizeof(buf), "usb%d", hcd->self.busnum);
+        s = buf;
+        break;
+    case 2:
+        s = hcd->product_desc;
+        break;
+    case 3:
+        snprintf(buf, sizeof(buf), "Lyos %s %s", UTS_RELEASE,
+                 hcd->driver->description);
+        s = buf;
+        break;
+    default:
+        return 0;
+    }
+
+    return ascii2desc(s, data, len);
+}
+
 static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
 {
     struct usb_ctrlrequest* cmd;
@@ -226,6 +336,11 @@ static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
     urb->actual_length = 0;
 
     switch (typeReq) {
+    case DeviceRequest | USB_REQ_GET_CONFIGURATION:
+        tbuf[0] = 1;
+        len = 1;
+    case DeviceOutRequest | USB_REQ_SET_CONFIGURATION:
+        break;
     case DeviceRequest | USB_REQ_GET_DESCRIPTOR:
         switch (wValue & 0xff00) {
         case USB_DT_DEVICE << 8:
@@ -238,6 +353,27 @@ static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
             }
 
             len = 18;
+            break;
+
+        case USB_DT_CONFIG << 8:
+            switch (hcd->speed) {
+            case HCD_USB11:
+                bufp = fs_rh_config_descriptor;
+                len = sizeof(fs_rh_config_descriptor);
+                break;
+            default:
+                goto error;
+            }
+
+            break;
+
+        case USB_DT_STRING << 8:
+            if ((wValue & 0xff) < 4)
+                urb->actual_length =
+                    rh_string(wValue & 0xff, hcd, ubuf, wLength);
+            else
+                goto error;
+
             break;
         }
         break;
@@ -319,8 +455,11 @@ void usb_hcd_reset_endpoint(struct usb_device* udev,
     }
 }
 
+static int rh_queue_status(struct usb_hcd* hcd, struct urb* urb) { return 0; }
+
 static int rh_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
 {
+    if (usb_endpoint_xfer_int(&urb->ep->desc)) return rh_queue_status(hcd, urb);
     if (usb_endpoint_xfer_control(&urb->ep->desc))
         return rh_call_control(hcd, urb);
     return EINVAL;

@@ -1044,6 +1044,7 @@ rescan:
 
 static const struct hc_driver ohci_hc_driver = {
     .description = hcd_name,
+    .product_desc = "OHCI Host Controller",
     .hcd_priv_size = sizeof(struct ohci_hcd),
     .flags = HCD_USB11 | HCD_MEMORY,
 

@@ -22,18 +22,29 @@ static const char* name = "usb-hub";
 #define HUB_LONG_RESET_TIME  200
 #define HUB_RESET_TIMEOUT    800
 
+static int hub_configure(struct usb_hub* hub);
+static void hub_irq(struct urb* urb);
+
 struct usb_hub* usb_create_hub(struct usb_device* hdev)
 {
     struct usb_hub* hub;
+    int retval;
 
     hub = malloc(sizeof(*hub));
     if (!hub) return NULL;
 
     hub->hdev = hdev;
+    usb_get_dev(hdev);
 
     hub->maxchild = USB_MAXCHILDREN;
 
     return hub;
+
+put_dev:
+    usb_put_dev(hdev);
+
+    free(hub);
+    return NULL;
 }
 
 static void assign_devnum(struct usb_device* udev)
@@ -423,6 +434,9 @@ static void hub_port_connect(struct usb_hub* hub, int port1, u16 portstatus,
 
         hub->ports[port1 - 1] = udev;
 
+        retval = usb_new_device(udev);
+        if (retval) goto again;
+
         return;
 
     again:
@@ -492,4 +506,53 @@ void usb_hub_handle_status_data(struct usb_hub* hub, const char* buffer,
     hub->event_bits[0] = bits;
 
     hub_event(hub);
+}
+
+static void hub_irq(struct urb* urb) {}
+
+static void announce_device(struct usb_device* udev)
+{
+    u16 bcdDevice = le16_to_cpu(udev->descriptor.bcdDevice);
+
+    printl("%s: New USB device found, idVendor=%04x, idProduct=%04x, "
+           "bcdDevice=%2x.%02x\n",
+           name, le16_to_cpu(udev->descriptor.idVendor),
+           le16_to_cpu(udev->descriptor.idProduct), bcdDevice >> 8,
+           bcdDevice & 0xff);
+    printl("%s: New USB device strings: Mfr=%d, Product=%d, SerialNumber=%d\n",
+           name, udev->descriptor.iManufacturer, udev->descriptor.iProduct,
+           udev->descriptor.iSerialNumber);
+
+    if (udev->product) printl("%s: Product: %s\n", name, udev->product);
+    if (udev->manufacturer)
+        printl("%s: Manufacturer: %s\n", name, udev->manufacturer);
+    if (udev->serial) printl("%s: SerialNumber: %s\n", name, udev->serial);
+}
+
+static int usb_enumerate_device(struct usb_device* udev)
+{
+    int retval;
+
+    if (!udev->config) {
+        retval = usb_get_configuration(udev);
+        if (retval) return retval;
+    }
+
+    udev->product = usb_cache_string(udev, udev->descriptor.iProduct);
+    udev->manufacturer = usb_cache_string(udev, udev->descriptor.iManufacturer);
+    udev->serial = usb_cache_string(udev, udev->descriptor.iSerialNumber);
+
+    return 0;
+}
+
+int usb_new_device(struct usb_device* udev)
+{
+    int retval;
+
+    retval = usb_enumerate_device(udev);
+    if (retval) return retval;
+
+    announce_device(udev);
+
+    return 0;
 }

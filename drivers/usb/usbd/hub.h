@@ -7,6 +7,9 @@
 
 struct usb_hub {
     struct usb_device* hdev;
+    struct urb* urb;
+
+    u8 buffer[8];
 
     union {
         struct usb_hub_status hub;
@@ -24,5 +27,7 @@ void usb_hub_handle_status_data(struct usb_hub* hub, const char* buffer,
                                 int length);
 
 int usb_clear_port_feature(struct usb_device* hdev, int port1, int feature);
+
+int usb_new_device(struct usb_device* udev);
 
 #endif

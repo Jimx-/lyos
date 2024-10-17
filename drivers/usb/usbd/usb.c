@@ -192,7 +192,7 @@ int usb_submit_urb(struct urb* urb)
             }
             break;
         default:
-            return -EINVAL;
+            return EINVAL;
         }
         urb->interval = min(max, urb->interval);
     }

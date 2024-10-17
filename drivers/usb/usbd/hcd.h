@@ -17,6 +17,7 @@ struct usb_hcd {
     struct kref kref;
     struct list_head list;
 
+    const char* product_desc;
     int speed;
 
     const struct hc_driver* driver;
@@ -40,6 +41,7 @@ static inline struct usb_hcd* bus_to_hcd(struct usb_bus* bus)
 
 struct hc_driver {
     const char* description;
+    const char* product_desc;
     size_t hcd_priv_size;
 
     int flags;
