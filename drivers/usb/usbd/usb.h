@@ -4,7 +4,9 @@
 #include <lyos/bitmap.h>
 #include <lyos/kref.h>
 #include <lyos/list.h>
+#include <lyos/ipc.h>
 #include <lyos/usb.h>
+#include <libdevman/libdevman.h>
 
 struct usb_device;
 struct usb_hub;
@@ -76,6 +78,8 @@ struct usb_device {
     struct usb_bus* bus;
     struct usb_device* parent;
     int devnum;
+    device_id_t dev_id;
+    char devpath[16];
     enum usb_device_speed speed;
 
     unsigned int toggle[2];
@@ -275,5 +279,9 @@ int usb_choose_configuration(struct usb_device* udev);
 int usb_set_configuration(struct usb_device* dev, int configuration);
 
 char* usb_cache_string(struct usb_device* udev, int index);
+
+int usb_register_device(struct usb_device* udev);
+
+int usb_create_sysfs_dev_files(struct usb_device* udev);
 
 #endif

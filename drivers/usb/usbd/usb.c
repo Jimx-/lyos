@@ -1,5 +1,6 @@
 #include <lyos/const.h>
 #include <lyos/sysutils.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,6 +31,17 @@ struct usb_device* usb_alloc_dev(struct usb_device* parent, struct usb_bus* bus,
     dev->ep0.desc.bLength = USB_DT_ENDPOINT_SIZE;
     dev->ep0.desc.bDescriptorType = USB_DT_ENDPOINT;
     usb_enable_endpoint(dev, &dev->ep0, FALSE);
+
+    if (!parent) {
+        dev->devpath[0] = '0';
+    } else {
+        if (parent->devpath[0] == '0') {
+            snprintf(dev->devpath, sizeof(dev->devpath), "%d", port1);
+        } else {
+            snprintf(dev->devpath, sizeof(dev->devpath), "%s.%d",
+                     parent->devpath, port1);
+        }
+    }
 
     dev->portnum = port1;
     dev->bus = bus;

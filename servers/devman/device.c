@@ -70,7 +70,6 @@ static ssize_t device_dev_show(sysfs_dyn_attr_t* attr, char* buf)
 static ssize_t uevent_show(sysfs_dyn_attr_t* attr, char* buf)
 {
     struct device* dev = (struct device*)attr->cb_data;
-
     return device_show_uevent(dev, buf);
 }
 
