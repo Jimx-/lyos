@@ -320,3 +320,110 @@ out:
 
     return 0;
 }
+
+int usb_choose_configuration(struct usb_device* udev)
+{
+    int i;
+    int num_configs;
+    struct usb_host_config *c, *best;
+
+    best = NULL;
+    num_configs = udev->descriptor.bNumConfigurations;
+    for (i = 0, c = udev->config; i < num_configs; i++, c++) {
+        struct usb_interface_descriptor* desc = NULL;
+
+        if (c->desc.bNumInterfaces > 0)
+            desc = &c->intf_cache[0]->altsetting->desc;
+
+        if (udev->descriptor.bDeviceClass != USB_CLASS_VENDOR_SPEC &&
+            (desc && desc->bInterfaceClass != USB_CLASS_VENDOR_SPEC)) {
+            best = c;
+            break;
+        } else if (!best)
+            best = c;
+    }
+
+    if (best) return best->desc.bConfigurationValue;
+
+    return -1;
+}
+
+int usb_set_configuration(struct usb_device* dev, int configuration)
+{
+    int i, retval;
+    struct usb_host_config* cp = NULL;
+    struct usb_interface** new_interfaces = NULL;
+    int n, nintf;
+
+    if (configuration == -1)
+        configuration = 0;
+    else {
+        for (i = 0; i < dev->descriptor.bNumConfigurations; i++) {
+            if (dev->config[i].desc.bConfigurationValue == configuration) {
+                cp = &dev->config[i];
+                break;
+            }
+        }
+    }
+    if ((!cp && configuration != 0)) return EINVAL;
+
+    n = nintf = 0;
+    if (cp) {
+        nintf = cp->desc.bNumInterfaces;
+        new_interfaces = calloc(nintf, sizeof(*new_interfaces));
+        if (!new_interfaces) return ENOMEM;
+
+        for (; n < nintf; ++n) {
+            new_interfaces[n] = malloc(sizeof(struct usb_interface));
+            if (!new_interfaces[n]) {
+                retval = ENOMEM;
+
+                while (--n >= 0)
+                    free(new_interfaces[n]);
+                free(new_interfaces);
+                return retval;
+            }
+
+            memset(new_interfaces[n], 0, sizeof(struct usb_interface));
+        }
+    }
+
+    for (i = 0; i < nintf; ++i) {
+        struct usb_interface_cache* intfc;
+        struct usb_interface* intf;
+        struct usb_host_interface* alt;
+
+        cp->interface[i] = intf = new_interfaces[i];
+        intfc = cp->intf_cache[i];
+        intf->altsetting = intfc->altsetting;
+        intf->num_altsetting = intfc->num_altsetting;
+
+        kref_get(&intfc->kref);
+
+        alt = usb_altnum_to_altsetting(intf, 0);
+        if (!alt) alt = &intf->altsetting[0];
+
+        kref_init(&intf->kref);
+        intf->cur_altsetting = alt;
+        usb_enable_interface(dev, intf, TRUE);
+    }
+    free(new_interfaces);
+
+    retval = usb_control_msg_send(dev, 0, USB_REQ_SET_CONFIGURATION, 0,
+                                  configuration, 0, NULL, 0);
+    if (retval && cp) {
+        for (i = 0; i < nintf; ++i) {
+            usb_disable_interface(dev, cp->interface[i], TRUE);
+            usb_put_interface(cp->interface[i]);
+            cp->interface[i] = NULL;
+        }
+        cp = NULL;
+    }
+
+    dev->actconfig = cp;
+
+    if (cp->string == NULL)
+        cp->string = usb_cache_string(dev, cp->desc.iConfiguration);
+
+    return 0;
+}

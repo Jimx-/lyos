@@ -199,3 +199,35 @@ int usb_submit_urb(struct urb* urb)
 
     return usb_hcd_submit_urb(urb);
 }
+
+struct usb_host_interface*
+usb_altnum_to_altsetting(const struct usb_interface* intf, unsigned int altnum)
+{
+    int i;
+
+    for (i = 0; i < intf->num_altsetting; i++) {
+        if (intf->altsetting[i].desc.bAlternateSetting == altnum)
+            return &intf->altsetting[i];
+    }
+    return NULL;
+}
+
+static void usb_free_interface(struct kref* kref)
+{
+    struct usb_interface* intf = list_entry(kref, struct usb_interface, kref);
+
+    free(intf);
+}
+
+struct usb_interface* usb_get_interface(struct usb_interface* intf)
+{
+    if (intf) kref_get(&intf->kref);
+    return intf;
+}
+
+void usb_put_interface(struct usb_interface* intf)
+{
+    if (intf) {
+        kref_put(&intf->kref, usb_free_interface);
+    }
+}

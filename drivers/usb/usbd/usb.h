@@ -27,6 +27,18 @@ struct usb_host_interface {
     char* string;
 };
 
+struct usb_interface {
+    struct kref kref;
+
+    struct usb_host_interface* altsetting;
+    struct usb_host_interface* cur_altsetting;
+
+    unsigned int num_altsetting;
+};
+
+struct usb_interface* usb_get_interface(struct usb_interface* intf);
+void usb_put_interface(struct usb_interface* intf);
+
 struct usb_interface_cache {
     struct kref kref;
     int num_altsetting;
@@ -40,12 +52,15 @@ struct usb_interface_cache {
 struct usb_host_config {
     struct usb_config_descriptor desc;
 
-    struct usb_host_interface* interface[USB_MAXINTERFACES];
+    struct usb_interface* interface[USB_MAXINTERFACES];
 
     struct usb_interface_cache* intf_cache[USB_MAXINTERFACES];
 
     char* string;
 };
+
+struct usb_host_interface*
+usb_altnum_to_altsetting(const struct usb_interface* intf, unsigned int altnum);
 
 struct usb_bus {
     int busnum;
@@ -69,6 +84,8 @@ struct usb_device {
     struct usb_host_config* config;
 
     char** raw_descr;
+
+    struct usb_host_config* actconfig;
 
     struct usb_host_endpoint ep0;
     struct usb_host_endpoint* ep_in[16];
@@ -237,15 +254,25 @@ void usb_enable_endpoint(struct usb_device* dev, struct usb_host_endpoint* ep,
                          int reset_ep);
 void usb_disable_endpoint(struct usb_device* dev, unsigned int epaddr,
                           int reset_hardware);
+void usb_enable_interface(struct usb_device* dev, struct usb_interface* intf,
+                          int reset_eps);
+void usb_disable_interface(struct usb_device* dev, struct usb_interface* intf,
+                           int reset_hardware);
 
 int usb_control_msg(struct usb_device* dev, unsigned int pipe, u8 request,
                     u8 requesttype, u16 value, u16 index, void* data, u16 size);
+int usb_control_msg_send(struct usb_device* dev, u8 endpoint, u8 request,
+                         u8 requesttype, u16 value, u16 index,
+                         const void* driver_data, u16 size);
+
 int usb_get_descriptor(struct usb_device* dev, unsigned char type,
                        unsigned char index, void* buf, int size);
 struct usb_device_descriptor*
 usb_get_device_descriptor(struct usb_device* udev);
 
 int usb_get_configuration(struct usb_device* dev);
+int usb_choose_configuration(struct usb_device* udev);
+int usb_set_configuration(struct usb_device* dev, int configuration);
 
 char* usb_cache_string(struct usb_device* udev, int index);
 

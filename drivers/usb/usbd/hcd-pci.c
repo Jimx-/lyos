@@ -73,8 +73,6 @@ int usb_hcd_pci_probe(int devind, const struct hc_driver* driver)
     int hcd_irq = 0;
     int retval = 0;
 
-    printl("USB hcd pci probe %s\n", driver->description);
-
     if ((driver->flags & HCD_MASK) < HCD_USB3) {
         hcd_irq = pci_attr_r8(devind, PCI_ILR);
     }

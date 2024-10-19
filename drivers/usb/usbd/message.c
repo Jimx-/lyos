@@ -88,6 +88,30 @@ int usb_control_msg(struct usb_device* dev, unsigned int pipe, u8 request,
     return retval;
 }
 
+int usb_control_msg_send(struct usb_device* dev, u8 endpoint, u8 request,
+                         u8 requesttype, u16 value, u16 index,
+                         const void* driver_data, u16 size)
+{
+    unsigned int pipe = usb_sndctrlpipe(dev, endpoint);
+    int ret;
+    u8* data = NULL;
+
+    if (size) {
+        data = malloc(size);
+        if (!data) return ENOMEM;
+
+        memcpy(data, driver_data, size);
+    }
+
+    ret = usb_control_msg(dev, pipe, request, requesttype, value, index, data,
+                          size);
+    free(data);
+
+    if (ret < 0) return -ret;
+
+    return 0;
+}
+
 int usb_get_descriptor(struct usb_device* dev, unsigned char type,
                        unsigned char index, void* buf, int size)
 {
@@ -160,6 +184,28 @@ void usb_disable_endpoint(struct usb_device* dev, unsigned int epaddr,
     if (ep) {
         ep->enabled = 0;
         if (reset_hardware) usb_hcd_disable_endpoint(dev, ep);
+    }
+}
+
+void usb_enable_interface(struct usb_device* dev, struct usb_interface* intf,
+                          int reset_eps)
+{
+    struct usb_host_interface* alt = intf->cur_altsetting;
+    int i;
+
+    for (i = 0; i < alt->desc.bNumEndpoints; ++i)
+        usb_enable_endpoint(dev, &alt->endpoint[i], reset_eps);
+}
+
+void usb_disable_interface(struct usb_device* dev, struct usb_interface* intf,
+                           int reset_hardware)
+{
+    struct usb_host_interface* alt = intf->cur_altsetting;
+    int i;
+
+    for (i = 0; i < alt->desc.bNumEndpoints; ++i) {
+        usb_disable_endpoint(dev, alt->endpoint[i].desc.bEndpointAddress,
+                             reset_hardware);
     }
 }
 

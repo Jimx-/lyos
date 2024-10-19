@@ -548,11 +548,15 @@ static int usb_enumerate_device(struct usb_device* udev)
 int usb_new_device(struct usb_device* udev)
 {
     int retval;
+    int cfg;
 
     retval = usb_enumerate_device(udev);
     if (retval) return retval;
 
     announce_device(udev);
+
+    cfg = usb_choose_configuration(udev);
+    if (cfg >= 0) usb_set_configuration(udev, cfg);
 
     return 0;
 }
