@@ -23,21 +23,21 @@
 
 #include "pci.h"
 
-ssize_t pci_vendor_show(struct device_attribute* attr, char* buf)
+ssize_t pci_vendor_show(struct device_attribute* attr, char* buf, size_t size)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
-    return sprintf(buf, "0x%04x\n", dev->vid);
+    return snprintf(buf, size, "0x%04x\n", dev->vid);
 }
 
-ssize_t pci_device_show(struct device_attribute* attr, char* buf)
+ssize_t pci_device_show(struct device_attribute* attr, char* buf, size_t size)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
-    return sprintf(buf, "0x%04x\n", dev->did);
+    return snprintf(buf, size, "0x%04x\n", dev->did);
 }
 
-ssize_t pci_class_show(struct device_attribute* attr, char* buf)
+ssize_t pci_class_show(struct device_attribute* attr, char* buf, size_t size)
 {
     struct pcidev* dev = (struct pcidev*)(attr->cb_data);
-    return sprintf(buf, "0x%02x%02x%02x\n", dev->baseclass, dev->subclass,
-                   dev->infclass);
+    return snprintf(buf, size, "0x%02x%02x%02x\n", dev->baseclass,
+                    dev->subclass, dev->infclass);
 }

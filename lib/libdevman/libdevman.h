@@ -69,7 +69,8 @@ struct device_attr_info {
 };
 
 struct device_attribute;
-typedef ssize_t (*device_attr_show_t)(struct device_attribute* attr, char* buf);
+typedef ssize_t (*device_attr_show_t)(struct device_attribute* attr, char* buf,
+                                      size_t size);
 typedef ssize_t (*device_attr_store_t)(struct device_attribute* attr,
                                        const char* buf, size_t count);
 struct device_attribute {
@@ -104,6 +105,12 @@ int dm_init_device_attr(struct device_attribute* attr, device_id_t device,
                         char* name, mode_t mode, void* cb_data,
                         device_attr_show_t show, device_attr_store_t store);
 int dm_device_attr_add(struct device_attribute* attr);
-ssize_t dm_device_attr_handle(MESSAGE* msg);
+void dm_device_attr_handle(MESSAGE* msg);
+
+int dm_async_cdev_add(dev_t dev);
+int dm_async_device_register(struct device_info* devinf, device_id_t* id);
+int dm_async_device_attr_add(struct device_attribute* attr);
+
+void dm_async_reply(MESSAGE* msg);
 
 #endif

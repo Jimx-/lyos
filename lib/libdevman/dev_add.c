@@ -1,4 +1,3 @@
-
 /*  This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
@@ -18,6 +17,8 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <lyos/const.h>
+
+#include <libasyncdriver/libasyncdriver.h>
 
 #include "libdevman.h"
 
@@ -43,6 +44,20 @@ int dm_cdev_add(dev_t dev)
     msg.FLAGS = DT_CHARDEV;
 
     send_recv(BOTH, TASK_DEVMAN, &msg);
+
+    return msg.RETVAL;
+}
+
+int dm_async_cdev_add(dev_t dev)
+{
+    MESSAGE msg;
+
+    msg.type = DM_DEVICE_ADD;
+    msg.DEVICE = dev;
+    msg.FLAGS = DT_CHARDEV;
+    msg.u.m3.m3l1 = asyncdrv_worker_id();
+
+    asyncdrv_sendrec(TASK_DEVMAN, &msg);
 
     return msg.RETVAL;
 }

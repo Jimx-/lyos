@@ -96,9 +96,18 @@ static void devman_init()
     map_driver(MAKE_DEV(DEV_RD, MINOR_INITRD), DT_BLOCKDEV, TASK_RD);
 }
 
+static void do_device_attr_reply(MESSAGE* msg)
+{
+    int status = msg->u.m_devman_attr_reply.status;
+    size_t count = msg->u.m_devman_attr_reply.count;
+
+    sysfs_complete_dyn_attr(status, count);
+}
+
 static void devfs_message_hook(MESSAGE* msg)
 {
-    int reply = 1;
+    int reply = TRUE;
+    int ret_type = DM_REPLY;
 
     switch (msg->type) {
     case DM_DEVICE_ADD:
@@ -122,17 +131,23 @@ static void devfs_message_hook(MESSAGE* msg)
     case DM_DEVICE_ATTR_ADD:
         msg->RETVAL = do_device_attr_add(msg);
         break;
+    case DM_DEVICE_ATTR_REPLY:
+        do_device_attr_reply(msg);
+        reply = FALSE;
+        break;
     case SYSFS_DYN_SHOW:
     case SYSFS_DYN_STORE:
-        msg->CNT = sysfs_handle_dyn_attr(msg);
+        sysfs_handle_dyn_attr(msg);
+        reply = FALSE;
         break;
     default:
         msg->RETVAL = ENOSYS;
+        ret_type = SYSCALL_RET;
         break;
     }
 
     if (reply) {
-        msg->type = SYSCALL_RET;
+        msg->type = ret_type;
         send_recv(SEND_NONBLOCK, msg->source, msg);
     }
 }

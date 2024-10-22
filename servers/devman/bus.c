@@ -172,14 +172,14 @@ static void bus_attr_unhash(struct bus_attr_cb_data* attr)
 }
 */
 
-static ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+static ssize_t bus_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf, size_t size)
 {
     struct bus_attr_cb_data* attr = (struct bus_attr_cb_data*)sf_attr->cb_data;
 
     MESSAGE msg;
     msg.type = DM_BUS_ATTR_SHOW;
     msg.BUF = buf;
-    msg.CNT = BUFSIZE;
+    msg.CNT = size;
     msg.TARGET = attr->id;
 
     /* TODO: async read/write */

@@ -8,8 +8,8 @@
 /* dynamic attribute */
 typedef int sysfs_dyn_attr_id_t;
 struct sysfs_dyn_attr;
-typedef ssize_t (*sysfs_dyn_attr_show_t)(struct sysfs_dyn_attr* attr,
-                                         char* buf);
+typedef ssize_t (*sysfs_dyn_attr_show_t)(struct sysfs_dyn_attr* attr, char* buf,
+                                         size_t size);
 typedef ssize_t (*sysfs_dyn_attr_store_t)(struct sysfs_dyn_attr* attr,
                                           const char* buf, size_t count);
 
@@ -64,6 +64,7 @@ int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
                         void* cb_data, sysfs_dyn_attr_show_t show,
                         sysfs_dyn_attr_store_t store);
 int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr);
-ssize_t sysfs_handle_dyn_attr(MESSAGE* msg);
+void sysfs_handle_dyn_attr(MESSAGE* msg);
+void sysfs_complete_dyn_attr(int status, size_t count);
 
 #endif /* _LIBSYSFS_H_ */

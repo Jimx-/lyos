@@ -114,7 +114,8 @@ int main()
             break;
         case DM_DEVICE_ATTR_SHOW:
         case DM_DEVICE_ATTR_STORE:
-            msg.CNT = dm_device_attr_handle(&msg);
+            dm_device_attr_handle(&msg);
+            msg.RETVAL = SUSPEND;
             break;
         default:
             msg.RETVAL = ENOSYS;

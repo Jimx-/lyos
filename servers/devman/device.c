@@ -61,13 +61,13 @@ static int bus_add_device(struct device* dev);
 static int create_sys_dev_entry(struct device* dev);
 static int add_device_node(struct device* dev);
 
-static ssize_t device_dev_show(sysfs_dyn_attr_t* attr, char* buf)
+static ssize_t device_dev_show(sysfs_dyn_attr_t* attr, char* buf, size_t size)
 {
     struct device* dev = (struct device*)attr->cb_data;
-    return sprintf(buf, "%lu:%lu\n", MAJOR(dev->devt), MINOR(dev->devt));
+    return snprintf(buf, size, "%lu:%lu\n", MAJOR(dev->devt), MINOR(dev->devt));
 }
 
-static ssize_t uevent_show(sysfs_dyn_attr_t* attr, char* buf)
+static ssize_t uevent_show(sysfs_dyn_attr_t* attr, char* buf, size_t size)
 {
     struct device* dev = (struct device*)attr->cb_data;
     return device_show_uevent(dev, buf);
@@ -351,6 +351,8 @@ device_id_t do_device_register(MESSAGE* m)
     retval = publish_device(dev);
     if (retval) return retval;
 
+    device_uevent(dev, KOBJ_ADD);
+
     m->u.m_devman_register_reply.id = dev->id;
     return 0;
 }
@@ -391,27 +393,27 @@ static void device_attr_unhash(struct device_attr_cb_data* attr)
 }
 */
 
-static ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf)
+static ssize_t device_attr_show(sysfs_dyn_attr_t* sf_attr, char* buf,
+                                size_t size)
 {
     struct device_attr_cb_data* attr =
         (struct device_attr_cb_data*)sf_attr->cb_data;
-
     MESSAGE msg;
+    int retval;
+
     msg.type = DM_DEVICE_ATTR_SHOW;
-    msg.BUF = buf;
-    msg.CNT = BUFSIZE;
-    msg.TARGET = attr->id;
+    msg.u.m_devman_attr_req.buf = buf;
+    msg.u.m_devman_attr_req.len = size;
+    msg.u.m_devman_attr_req.target = attr->id;
 
     /* TODO: async read/write */
-    send_recv(BOTH, attr->owner, &msg);
+    retval = send_recv(BOTH, attr->owner, &msg);
+    if (retval) return -retval;
 
-    ssize_t count = msg.CNT;
-    if (count < 0) return count;
+    sysfs_complete_dyn_attr(msg.u.m_devman_attr_reply.status,
+                            msg.u.m_devman_attr_reply.count);
 
-    if (count >= BUFSIZE) return E2BIG;
-    buf[count] = '\0';
-
-    return count;
+    return SUSPEND;
 }
 
 static ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
@@ -419,18 +421,22 @@ static ssize_t device_attr_store(sysfs_dyn_attr_t* sf_attr, const char* buf,
 {
     struct device_attr_cb_data* attr =
         (struct device_attr_cb_data*)(sf_attr->cb_data);
-
     MESSAGE msg;
+    int retval;
 
     msg.type = DM_DEVICE_ATTR_STORE;
-    msg.BUF = (char*)buf;
-    msg.CNT = count;
-    msg.TARGET = attr->id;
+    msg.u.m_devman_attr_req.buf = (char*)buf;
+    msg.u.m_devman_attr_req.len = count;
+    msg.u.m_devman_attr_req.target = attr->id;
 
     /* TODO: async read/write */
-    send_recv(BOTH, attr->owner, &msg);
+    retval = send_recv(BOTH, attr->owner, &msg);
+    if (retval) return -retval;
 
-    return msg.CNT;
+    sysfs_complete_dyn_attr(msg.u.m_devman_attr_reply.status,
+                            msg.u.m_devman_attr_reply.count);
+
+    return SUSPEND;
 }
 
 static int get_device_path_length(struct device* dev)

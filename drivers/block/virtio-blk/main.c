@@ -66,7 +66,8 @@ static void virtio_blk_intr(unsigned mask);
 static int virtio_blk_status2error(u8 status);
 
 static int virtio_blk_get_id(char* id_str);
-static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf);
+static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf,
+                                      size_t size);
 
 static struct blockdriver virtio_blk_driver = {
     .bdr_open = virtio_blk_open,
@@ -306,7 +307,8 @@ static int virtio_blk_get_id(char* id_str)
     return virtio_blk_status2error(mystatus(tid));
 }
 
-static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf)
+static ssize_t virtio_blk_serial_show(struct device_attribute* attr, char* buf,
+                                      size_t size)
 {
     int retval;
 
@@ -569,7 +571,8 @@ static void virtio_blk_other(MESSAGE* msg)
         break;
     case DM_DEVICE_ATTR_SHOW:
     case DM_DEVICE_ATTR_STORE:
-        msg->CNT = dm_device_attr_handle(msg);
+        dm_device_attr_handle(msg);
+        msg->RETVAL = SUSPEND;
         break;
     default:
         msg->RETVAL = ENOSYS;

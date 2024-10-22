@@ -16,9 +16,13 @@
 #include <sys/socket.h>
 #include <lyos/timer.h>
 
-#include "worker.h"
+#include <libasyncdriver/libasyncdriver.h>
+#include <libdevman/libdevman.h>
+
 #include "proto.h"
 #include "hcd.h"
+
+#define MAX_THREADS 16
 
 static bus_type_id_t usb_bus_id;
 
@@ -26,11 +30,28 @@ static bus_type_id_t usb_bus_id;
 void* boot_params;
 #endif
 
+static int usbd_process_on_thread(MESSAGE* msg);
+static void usbd_process(MESSAGE* msg);
+
+static const struct asyncdriver asyncdriver = {
+    .name = "usbd_async",
+
+    .process_on_thread = usbd_process_on_thread,
+    .process = usbd_process,
+};
+
+static int usbd_process_on_thread(MESSAGE* msg)
+{
+    return msg->type != NOTIFY_MSG && msg->type != DM_REPLY &&
+           msg->type != DM_DEVICE_ATTR_SHOW;
+}
+
 int usb_register_device(struct usb_device* udev)
 {
     struct usb_bus* bus = udev->bus;
     device_id_t device_id;
     struct device_info devinf;
+    dev_t devt;
     int retval;
 
     memset(&devinf, 0, sizeof(devinf));
@@ -42,12 +63,18 @@ int usb_register_device(struct usb_device* udev)
                  udev->devpath);
     }
 
+    devt = MAKE_DEV(USB_DEVICE_MAJOR,
+                    (((udev->bus->busnum - 1) * 64) + (udev->devnum - 1)));
+    dm_async_cdev_add(devt);
+
     devinf.bus = usb_bus_id;
     devinf.class = NO_CLASS_ID;
     devinf.parent = udev->parent ? udev->parent->dev_id : NO_DEVICE_ID;
-    devinf.devt = NO_DEV;
+    devinf.type = DT_CHARDEV;
+    devinf.devt = devt;
+    /* devinf.devt = NO_DEV; */
 
-    retval = dm_device_register(&devinf, &device_id);
+    retval = dm_async_device_register(&devinf, &device_id);
     if (retval) return retval;
 
     udev->dev_id = device_id;
@@ -81,7 +108,7 @@ static int usbd_init(void)
     return 0;
 }
 
-void usbd_process(MESSAGE* msg)
+static void usbd_process(MESSAGE* msg)
 {
     int src = msg->source;
 
@@ -102,7 +129,12 @@ void usbd_process(MESSAGE* msg)
         break;
     case DM_DEVICE_ATTR_SHOW:
     case DM_DEVICE_ATTR_STORE:
-        msg->CNT = dm_device_attr_handle(msg);
+        dm_device_attr_handle(msg);
+        msg->RETVAL = SUSPEND;
+        break;
+    case DM_REPLY:
+        dm_async_reply(msg);
+        msg->RETVAL = SUSPEND;
         break;
     default:
         msg->RETVAL = ENOSYS;
@@ -131,7 +163,7 @@ int main()
     serv_register_init_fresh_callback(usbd_init);
     serv_init();
 
-    worker_main_thread(usbd_post_init);
+    asyncdrv_task(&asyncdriver, MAX_THREADS, usbd_post_init);
 
     return 0;
 }

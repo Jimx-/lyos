@@ -4,12 +4,13 @@
 #include <errno.h>
 #include <string.h>
 
+#include <libasyncdriver/libasyncdriver.h>
+
 #include "usb.h"
 #include "hcd.h"
-#include "worker.h"
 
 struct urb_wait_context {
-    worker_id_t wid;
+    async_worker_id_t wid;
     int done;
     int status;
 };
@@ -20,7 +21,7 @@ static void usb_blocking_completion(struct urb* urb)
 
     ctx->done = TRUE;
     ctx->status = urb->status;
-    worker_async_wakeup(ctx->wid);
+    asyncdrv_wakeup(ctx->wid);
 }
 
 int usb_start_wait_urb(struct urb* urb, int* actual_length)
@@ -28,7 +29,7 @@ int usb_start_wait_urb(struct urb* urb, int* actual_length)
     struct urb_wait_context ctx;
     int retval;
 
-    ctx.wid = current_worker_id();
+    ctx.wid = asyncdrv_worker_id();
     ctx.done = FALSE;
     urb->context = &ctx;
     urb->actual_length = 0;
@@ -37,7 +38,7 @@ int usb_start_wait_urb(struct urb* urb, int* actual_length)
     if (retval) goto out;
 
     if (!ctx.done) {
-        worker_async_sleep();
+        asyncdrv_sleep();
     }
     retval = ctx.status;
 

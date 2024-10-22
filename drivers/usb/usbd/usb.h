@@ -8,6 +8,9 @@
 #include <lyos/usb.h>
 #include <libdevman/libdevman.h>
 
+#define USB_MAJOR        180
+#define USB_DEVICE_MAJOR 189
+
 struct usb_device;
 struct usb_hub;
 

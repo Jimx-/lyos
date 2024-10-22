@@ -20,6 +20,8 @@
 #include <lyos/const.h>
 #include <string.h>
 #include <lyos/sysutils.h>
+
+#include <libasyncdriver/libasyncdriver.h>
 #include <libdevman/libdevman.h>
 
 #define BUFSIZE 4096
@@ -115,36 +117,88 @@ int dm_device_attr_add(struct device_attribute* attr)
     return 0;
 }
 
-ssize_t dm_device_attr_handle(MESSAGE* msg)
+int dm_async_device_attr_add(struct device_attribute* attr)
+{
+    MESSAGE msg;
+
+    msg.type = DM_DEVICE_ATTR_ADD;
+    msg.BUF = &attr->info;
+    msg.BUF_LEN = sizeof(attr->info);
+    msg.u.m3.m3l1 = asyncdrv_worker_id();
+
+    asyncdrv_sendrec(TASK_DEVMAN, &msg);
+
+    if (msg.RETVAL) return msg.RETVAL;
+
+    struct device_attribute* new_attr =
+        (struct device_attribute*)malloc(sizeof(struct device_attribute));
+    if (!new_attr) return ENOMEM;
+    memcpy(new_attr, attr, sizeof(*attr));
+
+    dev_attr_id_t id = (dev_attr_id_t)msg.ATTRID;
+    new_attr->id = id;
+
+    device_attr_addhash(new_attr);
+
+    return 0;
+}
+
+void dm_device_attr_handle(MESSAGE* msg)
 {
     /* handle device attribute show/store request */
     int rw_flag = msg->type;
     static char tmp_buf[BUFSIZE];
-    ssize_t count = msg->CNT;
-    char* buf = msg->BUF;
+    size_t count = msg->u.m_devman_attr_req.len;
+    char* buf = msg->u.m_devman_attr_req.buf;
+    dev_attr_id_t target = msg->u.m_devman_attr_req.target;
+    ssize_t retval;
 
-    struct device_attribute* attr = find_device_attr_by_id(msg->TARGET);
-    if (!attr) return -ENOENT;
-
-    if (rw_flag == DM_DEVICE_ATTR_SHOW) {
-        if (!attr->show) return -EPERM;
-
-        ssize_t byte_read = attr->show(attr, tmp_buf);
-        if (byte_read >= count) {
-            return -E2BIG;
-        }
-        if (byte_read < 0) return byte_read;
-
-        data_copy(msg->source, buf, SELF, tmp_buf, byte_read);
-        return byte_read;
-    } else {
-        if (!attr->store) return -EPERM;
-
-        if (count >= BUFSIZE) return -E2BIG;
-        data_copy(SELF, tmp_buf, msg->source, buf, count);
-
-        return attr->store(attr, tmp_buf, count);
+    struct device_attribute* attr = find_device_attr_by_id(target);
+    if (!attr) {
+        retval = -ENOENT;
+        goto reply;
     }
 
-    return 0;
+    if (rw_flag == DM_DEVICE_ATTR_SHOW) {
+        if (!attr->show) {
+            retval = -EPERM;
+            goto reply;
+        }
+
+        retval = attr->show(attr, tmp_buf, sizeof(tmp_buf));
+        if (retval >= count) {
+            retval = -E2BIG;
+            goto reply;
+        }
+        if (retval < 0) goto reply;
+
+        data_copy(msg->source, buf, SELF, tmp_buf, retval);
+    } else {
+        if (!attr->store) {
+            retval = -EPERM;
+            goto reply;
+        }
+
+        if (count >= BUFSIZE) {
+            retval = -E2BIG;
+            goto reply;
+        }
+
+        data_copy(SELF, tmp_buf, msg->source, buf, count);
+
+        retval = attr->store(attr, tmp_buf, count);
+    }
+
+reply:
+    msg->u.m_devman_attr_reply.opaque = msg->u.m_devman_attr_req.opaque;
+    if (retval < 0) {
+        msg->u.m_devman_attr_reply.status = -retval;
+        msg->u.m_devman_attr_reply.count = 0;
+    } else {
+        msg->u.m_devman_attr_reply.status = 0;
+        msg->u.m_devman_attr_reply.count = retval;
+    }
+
+    msg->type = DM_DEVICE_ATTR_REPLY;
+    send_recv(SEND_NONBLOCK, msg->source, msg);
 }

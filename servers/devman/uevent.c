@@ -117,11 +117,13 @@ int device_uevent_env(struct device* dev, enum kobject_action action,
         top_dev = top_dev->parent;
 
     class = top_dev->class;
-    if (!class) return -EINVAL;
+    /* if (!class) return -EINVAL; */
 
     if (dev->uevent_suppress) return 0;
 
-    subsystem = class->name;
+    if (dev->bus) subsystem = dev->bus->name;
+    if (dev->class) subsystem = dev->class->name;
+    if (!subsystem) return 0;
 
     env = malloc(sizeof(*env));
     if (!env) return -ENOMEM;

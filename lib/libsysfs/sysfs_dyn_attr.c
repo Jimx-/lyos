@@ -30,6 +30,14 @@
 /* dynamic attribute hash table */
 static struct list_head dyn_attr_table[DYN_ATTR_HASH_SIZE];
 
+static struct {
+    int type;
+    endpoint_t source;
+    void* src_buf;
+    void* buf;
+    size_t size;
+} wait_context;
+
 int sysfs_init_dyn_attr(sysfs_dyn_attr_t* attr, char* label, int flags,
                         void* cb_data, sysfs_dyn_attr_show_t show,
                         sysfs_dyn_attr_store_t store)
@@ -125,37 +133,94 @@ int sysfs_publish_dyn_attr(sysfs_dyn_attr_t* attr)
     return 0;
 }
 
+static void setup_wait_context(int type, endpoint_t source, void* src_buf,
+                               void* buf, size_t size)
+{
+    wait_context.type = type;
+    wait_context.source = source;
+    wait_context.src_buf = src_buf;
+    wait_context.buf = buf;
+    wait_context.size = size;
+}
+
 #define BUFSIZE 4096
-ssize_t sysfs_handle_dyn_attr(MESSAGE* msg)
+void sysfs_handle_dyn_attr(MESSAGE* msg)
 {
     /* handle dynamic attribute show/store request */
     int rw_flag = msg->type;
     static char tmp_buf[BUFSIZE];
-    ssize_t count = msg->CNT;
+    size_t count = msg->CNT;
     char* buf = msg->BUF;
+    ssize_t retval;
 
     sysfs_dyn_attr_t* attr = find_dyn_attr_by_id(msg->TARGET);
-    if (!attr) return -ENOENT;
-
-    if (rw_flag == SYSFS_DYN_SHOW) {
-        if (!attr->show) return -EPERM;
-
-        ssize_t byte_read = attr->show(attr, tmp_buf);
-        if (byte_read >= count) {
-            return -E2BIG;
-        }
-        if (byte_read < 0) return byte_read;
-
-        data_copy(msg->source, buf, SELF, tmp_buf, byte_read);
-        return byte_read;
-    } else {
-        if (!attr->store) return -EPERM;
-
-        if (count >= BUFSIZE) return -E2BIG;
-        data_copy(SELF, tmp_buf, msg->source, buf, count);
-
-        return attr->store(attr, tmp_buf, count);
+    if (!attr) {
+        retval = -ENOENT;
+        goto reply;
     }
 
-    return 0;
+    memset(tmp_buf, 0, sizeof(tmp_buf));
+    setup_wait_context(rw_flag, msg->source, buf, tmp_buf, count);
+
+    if (rw_flag == SYSFS_DYN_SHOW) {
+        if (!attr->show) {
+            retval = -EPERM;
+            goto reply;
+        }
+
+        retval = attr->show(attr, tmp_buf, sizeof(tmp_buf));
+        if (retval >= count) {
+            retval = -E2BIG;
+            goto reply;
+        }
+        if (retval < 0) goto reply;
+
+        data_copy(msg->source, buf, SELF, tmp_buf, retval);
+    } else {
+        if (!attr->store) {
+            retval = -EPERM;
+            goto reply;
+        }
+
+        if (count >= BUFSIZE) {
+            retval = -E2BIG;
+            goto reply;
+        }
+
+        data_copy(SELF, tmp_buf, msg->source, buf, count);
+
+        retval = attr->store(attr, tmp_buf, count);
+    }
+
+reply:
+    if (retval == SUSPEND) return;
+
+    msg->CNT = retval;
+
+    msg->type = SYSCALL_RET;
+    send_recv(SEND_NONBLOCK, msg->source, msg);
+}
+
+void sysfs_complete_dyn_attr(int status, size_t count)
+{
+    ssize_t retval;
+    MESSAGE msg;
+
+    retval = status ? -status : count;
+
+    if (wait_context.type == SYSFS_DYN_SHOW && status == 0) {
+        if (count >= wait_context.size) {
+            retval = -E2BIG;
+            goto reply;
+        }
+
+        data_copy(wait_context.source, wait_context.src_buf, SELF,
+                  wait_context.buf, count);
+    }
+
+reply:
+    msg.CNT = retval;
+    msg.type = SYSCALL_RET;
+
+    send_recv(SEND_NONBLOCK, wait_context.source, &msg);
 }

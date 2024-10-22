@@ -810,6 +810,27 @@ struct mess_devman_register_reply {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_devman_register_reply);
 
+BEGIN_MESS_DECL(mess_devman_attr_req)
+{
+    int target;
+    void* buf;
+    size_t len;
+    void* opaque;
+
+    __u8 _pad[68 - 2 * sizeof(void*) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_devman_attr_req)
+
+BEGIN_MESS_DECL(mess_devman_attr_reply)
+{
+    int status;
+    size_t count;
+    void* opaque;
+
+    __u8 _pad[68 - sizeof(void*) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_devman_attr_reply)
+
 BEGIN_MESS_DECL(mess_sockdriver_simple)
 {
     int req_id;
@@ -1077,6 +1098,8 @@ typedef struct {
         struct mess_input_tty_event m_input_tty_event;
         struct mess_input_conf m_input_conf;
         struct mess_devman_register_reply m_devman_register_reply;
+        struct mess_devman_attr_req m_devman_attr_req;
+        struct mess_devman_attr_reply m_devman_attr_reply;
         struct mess_sockdriver_simple m_sockdriver_simple;
         struct mess_sockdriver_reply m_sockdriver_reply;
         struct mess_sockdriver_socket m_sockdriver_socket;

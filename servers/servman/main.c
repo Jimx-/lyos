@@ -55,7 +55,8 @@ int main()
             break;
         case SYSFS_DYN_SHOW:
         case SYSFS_DYN_STORE:
-            msg.CNT = sysfs_handle_dyn_attr(&msg);
+            sysfs_handle_dyn_attr(&msg);
+            msg.RETVAL = SUSPEND;
             break;
         default:
             msg.RETVAL = ENOSYS;

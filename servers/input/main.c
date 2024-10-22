@@ -190,10 +190,10 @@ static int input_copy_bits(struct input_dev* dev, endpoint_t endpoint,
 
 #define INPUT_DEV_STRING_ATTR_SHOW(name)                                \
     static ssize_t input_dev_show_##name(struct device_attribute* attr, \
-                                         char* buf)                     \
+                                         char* buf, size_t size)        \
     {                                                                   \
         struct input_dev* input_dev = (struct input_dev*)attr->cb_data; \
-        return snprintf(buf, ARCH_PG_SIZE, "%s\n", input_dev->name);    \
+        return snprintf(buf, size, "%s\n", input_dev->name);            \
     }
 
 INPUT_DEV_STRING_ATTR_SHOW(name)
@@ -227,14 +227,14 @@ static int input_print_bitmap(char* buf, int buf_size, bitchunk_t* bitmap,
     return len;
 }
 
-#define INPUT_DEV_CAP_ATTR(ev, bm)                                          \
-    static ssize_t input_dev_show_cap_##bm(struct device_attribute* attr,   \
-                                           char* buf)                       \
-    {                                                                       \
-        struct input_dev* input_dev = (struct input_dev*)attr->cb_data;     \
-        int len = input_print_bitmap(buf, ARCH_PG_SIZE, input_dev->bm##bit, \
-                                     ev##_MAX, TRUE);                       \
-        return len > ARCH_PG_SIZE ? ARCH_PG_SIZE : len;                     \
+#define INPUT_DEV_CAP_ATTR(ev, bm)                                             \
+    static ssize_t input_dev_show_cap_##bm(struct device_attribute* attr,      \
+                                           char* buf, size_t size)             \
+    {                                                                          \
+        struct input_dev* input_dev = (struct input_dev*)attr->cb_data;        \
+        int len =                                                              \
+            input_print_bitmap(buf, size, input_dev->bm##bit, ev##_MAX, TRUE); \
+        return len > size ? size : len;                                        \
     }
 
 INPUT_DEV_CAP_ATTR(EV, ev)
@@ -480,7 +480,8 @@ static void input_other(MESSAGE* msg)
         break;
     case DM_DEVICE_ATTR_SHOW:
     case DM_DEVICE_ATTR_STORE:
-        msg->CNT = dm_device_attr_handle(msg);
+        dm_device_attr_handle(msg);
+        msg->RETVAL = SUSPEND;
         break;
     default:
         msg->RETVAL = ENOSYS;
