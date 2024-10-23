@@ -23,10 +23,10 @@ void __asyncdrv_reply(async_worker_id_t tid, MESSAGE* msg)
 {
     panic("libdevman not linked with libasyncdriver\n");
 }
-void asyncdrv_reply(async_worker_id_t tid, MESSAGE* msg)
+void asyncdrv_reply(async_worker_id_t tid, const MESSAGE* msg)
     __attribute__((weak, alias("__asyncdrv_reply")));
 
-void dm_async_reply(MESSAGE* msg)
+void dm_async_reply(const MESSAGE* msg)
 {
     async_worker_id_t tid = msg->u.m3.m3l1;
     asyncdrv_reply(tid, msg);

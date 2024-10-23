@@ -354,7 +354,7 @@ int asyncdrv_sendrec(endpoint_t dest, MESSAGE* msg)
     return 0;
 }
 
-void asyncdrv_reply(async_worker_id_t tid, MESSAGE* msg)
+void asyncdrv_reply(async_worker_id_t tid, const MESSAGE* msg)
 {
     struct worker_thread* wp = &threads[tid];
 

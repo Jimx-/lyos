@@ -30,7 +30,7 @@ static bus_type_id_t usb_bus_id;
 void* boot_params;
 #endif
 
-static int usbd_process_on_thread(MESSAGE* msg);
+static int usbd_process_on_thread(const MESSAGE* msg);
 static void usbd_process(MESSAGE* msg);
 
 static const struct asyncdriver asyncdriver = {
@@ -40,7 +40,7 @@ static const struct asyncdriver asyncdriver = {
     .process = usbd_process,
 };
 
-static int usbd_process_on_thread(MESSAGE* msg)
+static int usbd_process_on_thread(const MESSAGE* msg)
 {
     return msg->type != NOTIFY_MSG && msg->type != DM_REPLY &&
            msg->type != DM_DEVICE_ATTR_SHOW;
@@ -72,7 +72,6 @@ int usb_register_device(struct usb_device* udev)
     devinf.parent = udev->parent ? udev->parent->dev_id : NO_DEVICE_ID;
     devinf.type = DT_CHARDEV;
     devinf.devt = devt;
-    /* devinf.devt = NO_DEV; */
 
     retval = dm_async_device_register(&devinf, &device_id);
     if (retval) return retval;
