@@ -29,6 +29,8 @@ long sysconf(int name)
         return NGROUPS_MAX;
     case _SC_LINE_MAX:
         return LINE_MAX;
+    case _SC_MONOTONIC_CLOCK:
+        return 1;
     default:
         printf("sysconf %d not implemented\n", name);
         break;
