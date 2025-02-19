@@ -32,7 +32,7 @@
 #include "const.h"
 
 #ifndef __PAGETABLE_PMD_FOLDED
-#define NUM_INIT_PMDS (((uintptr_t)-KERNEL_VMA >> ARCH_PGD_SHIFT) - 2)
+#define NUM_INIT_PMDS (((uintptr_t) - KERNEL_VMA >> ARCH_PGD_SHIFT) - 2)
 pmd_t initial_pmd[ARCH_VM_PMD_ENTRIES * NUM_INIT_PMDS]
     __attribute__((aligned(ARCH_PG_SIZE)));
 #endif
@@ -103,11 +103,11 @@ void arch_create_kern_mapping(phys_bytes phys_addr, vir_bytes vir_addr,
     pgdir_t* mypgd = &mmprocess->mm->pgd;
     unsigned long page_prot;
 
-    page_prot = ARCH_PG_PRESENT;
+    page_prot = ARCH_PG_PRESENT | _RISCV_PG_ACCESSED;
     if (flags & KMF_USER) page_prot |= ARCH_PG_USER;
 
     if (flags & KMF_WRITE)
-        page_prot |= ARCH_PG_RW;
+        page_prot |= ARCH_PG_RW | _RISCV_PG_DIRTY;
     else
         page_prot |= ARCH_PG_RO;
 
