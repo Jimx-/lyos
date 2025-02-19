@@ -2,12 +2,7 @@
 #define _ARCH_SCONST_H_
 
 #include <lyos/config.h>
-
-#ifdef CONFIG_64BIT
-#define REG_SIZE 8
-#else
-#define REG_SIZE 4
-#endif
+#include <asm/asm.h>
 
 /* register offsets into stackframe */
 #define P_STACKBASE 0

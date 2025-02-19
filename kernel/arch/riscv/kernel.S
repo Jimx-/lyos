@@ -328,6 +328,7 @@ restore_all:
 
     sret
 
+    .align REG_SHIFT
 exc_vector_table:
     RISCV_PTR do_trap_insn_misaligned
     RISCV_PTR do_trap_insn_fault
