@@ -303,4 +303,4 @@ static int fdt_scan_uart(void* blob, unsigned long offset, const char* name,
     return 0;
 }
 
-void arch_init_serial(void) { of_scan_fdt(fdt_scan_uart, NULL, boot_params); }
+void rs232_scan(void) { of_scan_fdt(fdt_scan_uart, NULL, boot_params); }
