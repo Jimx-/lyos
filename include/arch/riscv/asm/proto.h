@@ -62,8 +62,8 @@ static inline phys_bytes read_ptbr()
 
 static inline void write_ptbr(phys_bytes ptbr)
 {
-    flush_tlb();
     csr_write(sptbr, (ptbr >> ARCH_PG_SHIFT) | SATP_MODE);
+    flush_tlb();
 }
 
 int setup_riscv_timer(void);
