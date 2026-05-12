@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <lyos/sysutils.h>
 
 #include "inet.h"
 #include "ifdev.h"
@@ -106,4 +107,26 @@ void ifaddr_hwaddr_get(struct if_device* ifdev, unsigned int num,
     addr_len = sizeof(*addr);
 
     addr_set_link(addr, &addr_len, ifdev->type, hwaddr, hwaddr_len);
+}
+
+const ip_addr_t* ifaddr_select(const ip_addr_t* dst_addr,
+                               struct if_device* ifdev,
+                               struct if_device** ifdevp)
+{
+    if (ifdev == NULL) {
+        return NULL;
+    }
+
+    if (ifdevp != NULL) *ifdevp = ifdev;
+
+    switch (IP_GET_TYPE(dst_addr)) {
+    case IPADDR_TYPE_V4:
+        if (!ifdev->v4_set) return FALSE;
+        return netif_ip_addr4(&ifdev->netif);
+
+    default:
+        panic("unknown IP address type: %u", IP_GET_TYPE(dst_addr));
+    }
+
+    return NULL;
 }

@@ -11,6 +11,7 @@ struct ndev_hwaddr {
 };
 
 /* addr.c */
+int addr_is_unspec(const struct sockaddr* addr, socklen_t addr_len);
 int addr_get_inet(const struct sockaddr* addr, socklen_t addr_len, uint8_t type,
                   ip_addr_t* ipaddr, uint16_t* port);
 void addr_set_inet(struct sockaddr* addr, socklen_t* addr_len,

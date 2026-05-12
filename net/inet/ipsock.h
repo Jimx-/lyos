@@ -35,7 +35,7 @@ int ipsock_get_src_addr(struct ipsock* ip, const struct sockaddr* addr,
                         int allow_mcast, ip_addr_t* src_addr,
                         uint16_t* src_port);
 int ipsock_get_dst_addr(struct ipsock* ip, const struct sockaddr* addr,
-                        socklen_t addr_len, ip_addr_t* local_ip,
+                        socklen_t addr_len, const ip_addr_t* local_ip,
                         ip_addr_t* dst_addr, uint16_t* dst_port);
 void ipsock_set_addr(struct ipsock* ip, struct sockaddr* addr,
                      socklen_t* addr_len, ip_addr_t* ipaddr, uint16_t port);

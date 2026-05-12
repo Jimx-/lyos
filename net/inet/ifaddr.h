@@ -13,4 +13,8 @@ int ifaddr_v4_add(struct if_device* ifdev, const struct sockaddr_in* addr,
 void ifaddr_hwaddr_get(struct if_device* ifdev, unsigned int num,
                        struct sockaddr* addr);
 
+const ip_addr_t* ifaddr_select(const ip_addr_t* dst_addr,
+                               struct if_device* ifdev,
+                               struct if_device** ifdevp);
+
 #endif

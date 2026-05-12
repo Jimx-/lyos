@@ -4,6 +4,13 @@
 
 #include "inet.h"
 
+int addr_is_unspec(const struct sockaddr* addr, socklen_t addr_len)
+{
+
+    return (addr_len >= offsetof(struct sockaddr, sa_data) &&
+            addr->sa_family == AF_UNSPEC);
+}
+
 int addr_get_inet(const struct sockaddr* addr, socklen_t addr_len, uint8_t type,
                   ip_addr_t* ipaddr, uint16_t* port)
 {
