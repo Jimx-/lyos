@@ -32,6 +32,7 @@ int usb_start_wait_urb(struct urb* urb, int* actual_length)
     ctx.wid = asyncdrv_worker_id();
     ctx.done = FALSE;
     urb->context = &ctx;
+    urb->complete = usb_blocking_completion;
     urb->actual_length = 0;
 
     retval = usb_submit_urb(urb);

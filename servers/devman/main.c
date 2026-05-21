@@ -102,6 +102,7 @@ static void devfs_message_hook(MESSAGE* msg)
 {
     int reply = TRUE;
     int ret_type = DM_REPLY;
+    endpoint_t src = msg->source;
 
     switch (msg->type) {
     case DM_DEVICE_ADD:
@@ -141,7 +142,7 @@ static void devfs_message_hook(MESSAGE* msg)
 
     if (reply) {
         msg->type = ret_type;
-        send_recv(SEND_NONBLOCK, msg->source, msg);
+        send_recv(SEND_NONBLOCK, src, msg);
     }
 }
 

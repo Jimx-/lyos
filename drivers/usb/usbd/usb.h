@@ -33,6 +33,7 @@ struct usb_host_interface {
 
 struct usb_interface {
     struct kref kref;
+    struct list_head list;
     device_id_t dev_id;
     struct usb_device* parent;
     void* driver_data;
@@ -134,13 +135,6 @@ int usb_register_driver(struct usb_driver* driver);
 void usb_probe_interface(struct usb_interface* intf);
 
 const char* usb_speed_string(enum usb_device_speed speed);
-
-struct usb_iso_packet_descriptor {
-    unsigned int offset;
-    unsigned int length;
-    unsigned int actual_length;
-    int status;
-};
 
 struct urb;
 
@@ -288,6 +282,8 @@ void usb_enable_interface(struct usb_device* dev, struct usb_interface* intf,
                           int reset_eps);
 void usb_disable_interface(struct usb_device* dev, struct usb_interface* intf,
                            int reset_hardware);
+
+int usb_start_wait_urb(struct urb* urb, int* actual_length);
 
 int usb_control_msg(struct usb_device* dev, unsigned int pipe, u8 request,
                     u8 requesttype, u16 value, u16 index, void* data, u16 size);

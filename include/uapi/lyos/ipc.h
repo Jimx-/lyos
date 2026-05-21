@@ -1028,6 +1028,24 @@ BEGIN_MESS_DECL(mess_ndev_reply)
 }
 END_MESS_DECL(mess_ndev_reply)
 
+BEGIN_MESS_DECL(mess_usb_send_urb)
+{
+    __mgrant_id_t grant;
+    size_t grant_size;
+
+    __u8 _pad[68 - sizeof(size_t)];
+}
+END_MESS_DECL(mess_usb_send_urb)
+
+BEGIN_MESS_DECL(mess_usb_reply)
+{
+    int status;
+    unsigned long urb_id;
+
+    __u8 _pad[68 - sizeof(unsigned long)];
+}
+END_MESS_DECL(mess_usb_reply)
+
 typedef struct {
     int source;
     int type;
@@ -1117,6 +1135,8 @@ typedef struct {
         struct mess_ndev_init_reply m_ndev_init_reply;
         struct mess_ndev_transfer m_ndev_transfer;
         struct mess_ndev_reply m_ndev_reply;
+        struct mess_usb_send_urb m_usb_send_urb;
+        struct mess_usb_reply m_usb_reply;
 
         __u8 m_payload[56];
     } u;

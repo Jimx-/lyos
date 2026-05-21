@@ -404,6 +404,7 @@ int usb_set_configuration(struct usb_device* dev, int configuration)
         if (!alt) alt = &intf->altsetting[0];
 
         kref_init(&intf->kref);
+        INIT_LIST_HEAD(&intf->list);
         intf->parent = dev;
         intf->cur_altsetting = alt;
         usb_enable_interface(dev, intf, TRUE);

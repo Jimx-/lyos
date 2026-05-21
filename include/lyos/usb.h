@@ -36,4 +36,11 @@ struct usb_device_id {
     u8 bInterfaceNumber;
 };
 
+struct usb_iso_packet_descriptor {
+    unsigned int offset;
+    unsigned int length;
+    unsigned int actual_length;
+    int status;
+};
+
 #endif

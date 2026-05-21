@@ -120,6 +120,7 @@
 #define DEVPTS_BASE      2701
 #define NDEV_BASE        3001
 #define CLK_REQ_BASE     3101
+#define USB_REQ_BASE     3201
 
 #ifndef __ASSEMBLY__
 
@@ -258,6 +259,7 @@ enum msgtype {
     DM_BUS_ATTR_REPLY,
     DM_DEVICE_ATTR_REPLY,
     DM_BIND_DEVICE,
+    DM_DEVICE_BIND,
 
     /* message type for fs request */
     FSREQ_RET = VFS_REQ_BASE,
@@ -410,8 +412,16 @@ enum msgtype {
     NDEV_RECV_REPLY,
     NDEV_CALL_MAX,
 
+    /* Clock driver */
     CLK_GET = CLK_REQ_BASE,
     CLK_GET_RATE,
+
+    /* USB requests */
+    USB_RQ_INIT = USB_REQ_BASE,
+    USB_RQ_SEND_URB,
+    USB_RQ_COMPLETE_URB,
+    USB_DEVICE_CONNECT,
+    USB_REPLY,
 };
 
 #endif

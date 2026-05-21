@@ -554,4 +554,18 @@ int do_device_attr_add(MESSAGE* m)
     return 0;
 }
 
-int do_bind_device(MESSAGE* m) { return 0; }
+int do_bind_device(MESSAGE* m)
+{
+    endpoint_t ep = m->PROC_NR;
+    device_id_t dev_id = m->DEVICE;
+    struct device* dev = get_device(dev_id);
+
+    if (dev == NULL) return ENODEV;
+
+    m->type = DM_DEVICE_BIND;
+    send_recv(BOTH, dev->owner, m);
+    if (m->RETVAL) return m->RETVAL;
+
+    dev->state_bound = 1;
+    return 0;
+}
