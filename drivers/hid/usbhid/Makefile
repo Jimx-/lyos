@@ -1,5 +1,5 @@
-SRCS	= main.c
-LIBS	= inputdriver sysfs lyos
+SRCS	= main.c parser.c urb_helper.c
+LIBS	= usb asyncdriver inputdriver coro sysfs lyos
 
 PROG	= usbhid
 

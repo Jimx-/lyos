@@ -1,6 +1,6 @@
 ACTION!="add", GOTO="usbhid_end"
 SUBSYSTEM!="usb", GOTO="usbhid_end"
 
-ATTR{bInterfaceClass}=="03", ENV{devid}="$attr{devid}", RUN+="/bin/service up /sbin/usbhid --devid '$env{devid}'"
+ATTR{bInterfaceClass}=="03", ENV{devid}="$attr{devid}", RUN+="/bin/service up /sbin/usbhid --devid '$env{devid}' --label 'usbhid@$env{devid}'"
 
 LABEL="usbhid_end"

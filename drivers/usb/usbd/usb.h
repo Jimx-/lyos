@@ -77,6 +77,9 @@ struct usb_bus {
     bitchunk_t devmap[BITCHUNKS(128)];
 
     struct usb_device* roothub;
+
+    int num_int_reqs;
+    int num_isoc_reqs;
 };
 
 struct usb_device {

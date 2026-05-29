@@ -291,8 +291,23 @@ restart:
     urb->hc_priv = NULL;
     if (status == EINPROGRESS) status = 0;
 
+    switch (usb_pipetype(urb->pipe)) {
+    case PIPE_ISOCHRONOUS:
+        ohci_to_hcd(ohci)->self.num_isoc_reqs--;
+        break;
+    case PIPE_INTERRUPT:
+        ohci_to_hcd(ohci)->self.num_int_reqs--;
+        break;
+    }
+
     usb_hcd_unlink_urb_from_ep(hcd, urb);
     usb_hcd_giveback_urb(hcd, urb, status);
+
+    if (ohci_to_hcd(ohci)->self.num_isoc_reqs == 0 &&
+        ohci_to_hcd(ohci)->self.num_int_reqs == 0) {
+        ohci->hc_control &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
+        ohci_writel(ohci, &ohci->regs->control, ohci->hc_control);
+    }
 
     if (!list_empty(&ep->urb_list)) {
         urb = list_first_entry(&ep->urb_list, struct urb, urb_list);
@@ -789,6 +804,53 @@ static void urb_free_priv(struct ohci_hcd* ohci, struct ohci_urb_priv* urb_priv)
     free(urb_priv);
 }
 
+static int balance(struct ohci_hcd* ohci, int interval, int load)
+{
+    int i, branch = -ENOSPC;
+
+    if (interval > NUM_INTS) interval = NUM_INTS;
+
+    for (i = 0; i < interval; i++) {
+        if (branch < 0 || ohci->load[branch] > ohci->load[i]) {
+            int j;
+
+            for (j = i; j < NUM_INTS; j += interval) {
+                if ((ohci->load[j] + load) > 900) break;
+            }
+            if (j < NUM_INTS) continue;
+            branch = i;
+        }
+    }
+    return branch;
+}
+
+static void periodic_link(struct ohci_hcd* ohci, struct ed* ed)
+{
+    unsigned i;
+
+    for (i = ed->branch; i < NUM_INTS; i += ed->interval) {
+        struct ed** prev = &ohci->periodic[i];
+        u32* prev_p = &ohci->hcca->int_table[i];
+        struct ed* here = *prev;
+
+        while (here && ed != here) {
+            if (ed->interval > here->interval) break;
+            prev = &here->ed_next;
+            prev_p = &here->hw.next_ed;
+            here = *prev;
+        }
+        if (ed != here) {
+            ed->ed_next = here;
+            if (here) ed->hw.next_ed = *prev_p;
+            wmb();
+            *prev = ed;
+            *prev_p = cpu_to_le32(ed->phys);
+            wmb();
+        }
+        ohci->load[i] += ed->load;
+    }
+}
+
 static int ed_schedule(struct ohci_hcd* ohci, struct ed* ed)
 {
     ed->ed_prev = NULL;
@@ -813,11 +875,40 @@ static int ed_schedule(struct ohci_hcd* ohci, struct ed* ed)
         }
         ohci->ed_controltail = ed;
         break;
+
+    case PIPE_BULK:
+        break;
+
+    default:
+        ed->branch = balance(ohci, ed->interval, ed->load);
+        periodic_link(ohci, ed);
+        break;
     }
 
     ed->state = ED_OPER;
 
     return 0;
+}
+
+static void periodic_unlink(struct ohci_hcd* ohci, struct ed* ed)
+{
+    int i;
+
+    for (i = ed->branch; i < NUM_INTS; i += ed->interval) {
+        struct ed* temp;
+        struct ed** prev = &ohci->periodic[i];
+        u32* prev_p = &ohci->hcca->int_table[i];
+
+        while (*prev && (temp = *prev) != ed) {
+            prev_p = &temp->hw.next_ed;
+            prev = &temp->ed_next;
+        }
+        if (*prev) {
+            *prev_p = ed->hw.next_ed;
+            *prev = ed->ed_next;
+        }
+        ohci->load[i] -= ed->load;
+    }
 }
 
 static void ed_deschedule(struct ohci_hcd* ohci, struct ed* ed)
@@ -846,6 +937,13 @@ static void ed_deschedule(struct ohci_hcd* ohci, struct ed* ed)
         } else if (ed->ed_next) {
             ed->ed_next->ed_prev = ed->ed_prev;
         }
+        break;
+
+    case PIPE_BULK:
+        break;
+
+    default:
+        periodic_unlink(ohci, ed);
         break;
     }
 }
@@ -903,6 +1001,8 @@ static void td_submit_urb(struct ohci_hcd* ohci, struct urb* urb)
     int cnt = 0;
     u32 info = 0;
     int is_out = usb_pipeout(urb->pipe);
+    int periodic = FALSE;
+    int n;
 
     if (!usb_gettoggle(urb->dev, usb_pipeendpoint(urb->pipe), is_out)) {
         usb_settoggle(urb->dev, usb_pipeendpoint(urb->pipe), is_out, 1);
@@ -915,6 +1015,29 @@ static void td_submit_urb(struct ohci_hcd* ohci, struct urb* urb)
         data_phys = 0;
 
     switch (urb_priv->ed->type) {
+    case PIPE_INTERRUPT:
+        periodic = ohci_to_hcd(ohci)->self.num_int_reqs++ == 0 &&
+                   ohci_to_hcd(ohci)->self.num_isoc_reqs == 0;
+
+    case PIPE_BULK:
+        info = is_out ? TD_T_TOGGLE | TD_CC | TD_DP_OUT
+                      : TD_T_TOGGLE | TD_CC | TD_DP_IN;
+
+        while (data_len > 0) {
+            n = min(data_len, 4096);
+
+            if (n >= data_len) info |= TD_R;
+            td_fill(ohci, info, data_phys, n, urb, cnt++);
+            data_len -= n;
+            data_phys += n;
+        }
+
+        if (urb_priv->ed->type == PIPE_BULK) {
+            wmb();
+            ohci_writel(ohci, &ohci->regs->cmdstatus, OHCI_BLF);
+        }
+        break;
+
     case PIPE_CONTROL:
         info = TD_CC | TD_DP_SETUP | TD_T_DATA0;
         td_fill(ohci, info, urb->setup_phys, 8, urb, cnt++);
@@ -932,6 +1055,12 @@ static void td_submit_urb(struct ohci_hcd* ohci, struct urb* urb)
 
         ohci_writel(ohci, &ohci->regs->cmdstatus, OHCI_CLF);
         break;
+    }
+
+    if (periodic) {
+        wmb();
+        ohci->hc_control |= OHCI_CTRL_PLE | OHCI_CTRL_IE;
+        ohci_writel(ohci, &ohci->regs->control, ohci->hc_control);
     }
 }
 

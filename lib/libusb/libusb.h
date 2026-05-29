@@ -37,7 +37,7 @@ struct usb_urb {
 
     device_id_t dev_id;
     int type;
-    endpoint_t endpoint;
+    int endpoint;
     int direction;
     int status;
     int error_count;

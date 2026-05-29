@@ -213,6 +213,8 @@ static struct urb* libusb_urb_to_urb(struct usb_urb* usb_urb)
     urb = usb_alloc_urb(usb_urb->number_of_packets);
     if (urb == NULL) return urb;
 
+    urb->interval = usb_urb->interval;
+
     if (usb_urb->type == USB_TRANSFER_CTL) {
         urb->setup_packet = usb_urb->setup_packet;
     }
@@ -250,7 +252,6 @@ static void do_send_urb(MESSAGE* msg)
     struct usbd_driver* drv;
     struct usb_interface* intf;
     struct usb_device* dev = NULL;
-    unsigned int urb_id;
     int length;
     int retval = 0;
 
@@ -281,8 +282,8 @@ static void do_send_urb(MESSAGE* msg)
         goto err;
     }
 
-    urb_id = drv->urb_id++;
-    send_urb_reply(src, retval, urb_id);
+    usb_urb->urb_id = drv->urb_id++;
+    send_urb_reply(src, retval, usb_urb->urb_id);
 
     urb->dev = dev;
     urb->pipe = (usb_urb->type << 30) | __create_pipe(dev, usb_urb->endpoint) |
@@ -298,7 +299,7 @@ static void do_send_urb(MESSAGE* msg)
 
     msg->type = USB_RQ_COMPLETE_URB;
     msg->u.m_usb_reply.status = retval;
-    msg->u.m_usb_reply.urb_id = urb_id;
+    msg->u.m_usb_reply.urb_id = usb_urb->urb_id;
     send_recv(SEND, src, msg);
 
     goto free;

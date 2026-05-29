@@ -36,7 +36,9 @@ struct ed {
 #define ED_OPER   0x02
 
     u8 type;
+    u8 branch;
     u16 interval;
+    u16 load;
 
     u16 tick;
 } __attribute__((aligned(16)));
@@ -242,6 +244,7 @@ struct ohci_hcd {
     int num_ports;
     u32 hc_control;
     u32 fminterval;
+    int load[NUM_INTS];
 };
 
 static inline struct ohci_hcd* hcd_to_ohci(struct usb_hcd* hcd)

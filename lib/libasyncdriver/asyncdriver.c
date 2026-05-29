@@ -424,7 +424,7 @@ void asyncdrv_task(const struct asyncdriver* asd, size_t num_workers,
 
     wp = &threads[ASYNC_WORK_THREAD];
     create_worker(wp, ASYNC_WORK_THREAD, init_func);
-    if (init_func) yield_all();
+    yield_all();
 
     while (running) {
         send_recv(RECEIVE_ASYNC, ANY, &msg);
