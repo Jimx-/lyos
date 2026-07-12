@@ -153,3 +153,29 @@ int pci_find_next_capability(int devind, int pos, int cap)
 
     return msg.RETVAL;
 }
+
+int pci_alloc_irq(int devind, int flags, int* irq)
+{
+    int retval = pci_alloc_irq_vectors(devind, flags, 1, 1, irq);
+
+    return retval < 0 ? -retval : 0;
+}
+
+int pci_alloc_irq_vectors(int devind, int flags, int min_vecs, int max_vecs,
+                          int* irqs)
+{
+    MESSAGE msg;
+
+    msg.type = PCI_ALLOC_IRQ_VECTORS;
+    msg.u.m3.m3i2 = devind;
+    msg.u.m3.m3i3 = flags;
+    msg.u.m3.m3i4 = min_vecs;
+    msg.u.m3.m3l1 = max_vecs;
+    msg.u.m3.m3p1 = irqs;
+
+    pci_sendrec(BOTH, &msg);
+
+    if (msg.RETVAL) return -msg.RETVAL;
+
+    return msg.u.m3.m3i2;
+}

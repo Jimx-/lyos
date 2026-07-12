@@ -26,12 +26,27 @@
 #include <errno.h>
 #include <lyos/service.h>
 #include <lyos/sysutils.h>
+#include <lyos/irqctl.h>
+#include <lyos/pci_utils.h>
+#include <lyos/vm.h>
+#include <sys/mman.h>
 #include <libsysfs/libsysfs.h>
 #include <uapi/linux/pci.h>
 
 #include <asm/pci.h>
+#if defined(__i386__) || defined(__x86_64__)
+#include <asm/const.h>
+#include <asm/protect.h>
+#endif
 #include "pci.h"
 #include "pci_dev_attr.h"
+
+#define PCI_MSIX_FLAGS          2
+#define PCI_MSIX_FLAGS_ENABLE   0x8000
+#define PCI_MSIX_FLAGS_MASKALL  0x4000
+#define PCI_MSIX_TABLE          4
+#define PCI_MSIX_TABLE_BIR      0x00000007
+#define PCI_MSIX_TABLE_OFFSET   0xfffffff8
 
 #define PCI_DEBUG
 
@@ -552,6 +567,159 @@ int _pci_get_bar(int devind, int port, unsigned long* base, size_t* size,
     }
 
     return EINVAL;
+}
+
+static void pci_disable_intx(int devind)
+{
+#ifdef PCI_CR_INT_DIS
+    u16 cmd = pci_read_attr_u16(devind, PCI_CR);
+
+    pci_write_attr_u16(devind, PCI_CR, cmd | PCI_CR_INT_DIS);
+#endif
+}
+
+static int pci_alloc_msi_irqs(int nr_irqs)
+{
+#if defined(__i386__) || defined(__x86_64__)
+    return irqctl_alloc_msi(NR_IRQS_LEGACY, nr_irqs);
+#else
+    return -ENOSYS;
+#endif
+}
+
+static int pci_setup_msi(int devind, int pos, int* irqs)
+{
+#if defined(__i386__) || defined(__x86_64__)
+    int allocated_irq;
+    u16 ctrl;
+    u16 data;
+
+    allocated_irq = pci_alloc_msi_irqs(1);
+    if (allocated_irq < 0) return allocated_irq;
+
+    ctrl = pci_read_attr_u16(devind, pos + PCI_MSI_FLAGS);
+    pci_write_attr_u32(devind, pos + PCI_MSI_ADDRESS_LO, MSI_ADDR_BASE_LO);
+    if (ctrl & PCI_MSI_FLAGS_64BIT) {
+        pci_write_attr_u32(devind, pos + PCI_MSI_ADDRESS_HI, 0);
+    }
+
+    data = INT_VECTOR_IRQ0 + allocated_irq;
+    if (ctrl & PCI_MSI_FLAGS_64BIT) {
+        pci_write_attr_u16(devind, pos + PCI_MSI_DATA_64, data);
+    } else {
+        pci_write_attr_u16(devind, pos + PCI_MSI_DATA_32, data);
+    }
+
+    ctrl |= PCI_MSI_FLAGS_ENABLE;
+    pci_write_attr_u16(devind, pos + PCI_MSI_FLAGS, ctrl);
+    pci_disable_intx(devind);
+
+    irqs[0] = allocated_irq;
+    return 1;
+#else
+    return -ENOSYS;
+#endif
+}
+
+static int pci_setup_msix(int devind, int pos, int min_vecs, int max_vecs,
+                          int* irqs)
+{
+#if defined(__i386__) || defined(__x86_64__)
+    unsigned long bar_base;
+    size_t bar_size;
+    int ioflag;
+    u32 table;
+    u32 table_off;
+    int bir;
+    volatile u32* msix_tbl;
+    void* table_map;
+    int first_irq;
+    int nvec;
+    u16 ctrl;
+    int retval;
+    int i;
+
+    ctrl = pci_read_attr_u16(devind, pos + PCI_MSIX_FLAGS);
+    nvec = (ctrl & 0x07ff) + 1;
+    if (nvec > max_vecs) nvec = max_vecs;
+    if (nvec < min_vecs) return -ENOSPC;
+
+    table = pci_read_attr_u32(devind, pos + PCI_MSIX_TABLE);
+    bir = table & PCI_MSIX_TABLE_BIR;
+    table_off = table & PCI_MSIX_TABLE_OFFSET;
+
+    retval = _pci_get_bar(devind, PCI_BAR + bir * 4, &bar_base, &bar_size,
+                          &ioflag);
+    if (retval) return -retval;
+    if (ioflag || table_off + 16 * nvec > bar_size) return -EINVAL;
+
+    first_irq = pci_alloc_msi_irqs(nvec);
+    if (first_irq < 0) return first_irq;
+
+    table_map = mm_map_phys(SELF, bar_base, bar_size, MMP_IO);
+    if (!table_map) return -ENOMEM;
+
+    msix_tbl = (volatile u32*)((char*)table_map + table_off);
+    for (i = 0; i < nvec; i++) {
+        volatile u32* entry = msix_tbl + i * 4;
+        int irq = first_irq + i;
+
+        entry[0] = MSI_ADDR_BASE_LO;
+        entry[1] = 0;
+        entry[2] = INT_VECTOR_IRQ0 + irq;
+        entry[3] = 0;
+        irqs[i] = irq;
+    }
+
+    ctrl |= PCI_MSIX_FLAGS_ENABLE;
+    ctrl &= ~PCI_MSIX_FLAGS_MASKALL;
+    pci_write_attr_u16(devind, pos + PCI_MSIX_FLAGS, ctrl);
+    pci_disable_intx(devind);
+
+    munmap(table_map, bar_size);
+
+    return nvec;
+#else
+    return -ENOSYS;
+#endif
+}
+
+int _pci_alloc_irq(int devind, int flags, int* irq)
+{
+    int retval;
+
+    retval = _pci_alloc_irq_vectors(devind, flags, 1, 1, irq);
+    return retval < 0 ? -retval : 0;
+}
+
+int _pci_alloc_irq_vectors(int devind, int flags, int min_vecs, int max_vecs,
+                           int* irqs)
+{
+    int retval;
+    int pos;
+
+    if (devind < 0 || devind >= nr_pcidev || !irqs) return -EINVAL;
+    if (min_vecs <= 0 || max_vecs < min_vecs) return -EINVAL;
+
+    if (!flags) flags = PCI_IRQ_MSIX | PCI_IRQ_MSI;
+
+    if (flags & PCI_IRQ_MSIX) {
+        pos = _pci_find_capability(devind, PCI_CAP_ID_MSIX);
+        if (pos > 0) {
+            retval = pci_setup_msix(devind, pos, min_vecs, max_vecs, irqs);
+            if (retval >= 0) return retval;
+        }
+    }
+
+    if ((flags & PCI_IRQ_MSI) && min_vecs <= 1) {
+        pos = _pci_find_capability(devind, PCI_CAP_ID_MSI);
+        if (pos > 0) {
+            retval = pci_setup_msi(devind, pos, irqs);
+            if (retval >= 0) return retval;
+        }
+    }
+
+    return -ENOSYS;
 }
 
 static int pci_find_cap_start(int devind)

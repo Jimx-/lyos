@@ -118,6 +118,9 @@ int _pci_get_bar(int devind, int port, unsigned long* base, size_t* size,
                  int* ioflag);
 int _pci_find_capability(int devind, int cap);
 int _pci_find_next_capability(int devind, u8 pos, int cap);
+int _pci_alloc_irq(int devind, int flags, int* irq);
+int _pci_alloc_irq_vectors(int devind, int flags, int min_vecs, int max_vecs,
+                           int* irqs);
 
 u8 pci_read_attr_u8(int devind, int port);
 u16 pci_read_attr_u16(int devind, int port);

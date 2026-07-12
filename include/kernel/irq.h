@@ -150,5 +150,7 @@ int irq_domain_translate_onetwocell(struct irq_domain* d,
 
 void generic_handle_domain_irq(struct irq_domain* domain, unsigned int hwirq);
 void generic_handle_irq(unsigned int irq);
+int irq_alloc_from(unsigned int from, unsigned int nr_irqs);
+int arch_setup_msi_irq(unsigned int irq);
 
 #endif

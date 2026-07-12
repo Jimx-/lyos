@@ -91,6 +91,29 @@ int sys_irqctl(MESSAGE* m, struct proc* p_proc)
         req->irq = irq;
         break;
 
+    case IRQ_ALLOC:
+        if (req->policy <= 0) return EINVAL;
+
+        irq = irq_alloc_from(req->irq, req->policy);
+        if (irq < 0) return -irq;
+
+        req->irq = irq;
+        break;
+    case IRQ_ALLOC_MSI:
+        if (req->policy <= 0) return EINVAL;
+
+        irq = irq_alloc_from(req->irq, req->policy);
+        if (irq < 0) return -irq;
+
+        for (i = 0; i < req->policy; i++) {
+            retval = arch_setup_msi_irq(irq + i);
+            if (retval) return -retval;
+        }
+
+        req->irq = irq;
+        retval = 0;
+        break;
+
     default:
         retval = EINVAL;
         break;

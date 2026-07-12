@@ -22,6 +22,8 @@
 #define IRQ_DISABLE    3
 #define IRQ_RMPOLICY   4
 #define IRQ_MAP_FWSPEC 5
+#define IRQ_ALLOC      6
+#define IRQ_ALLOC_MSI  7
 
 /* irq policy */
 #define IRQ_REENABLE 0x1
@@ -55,5 +57,7 @@ int irqctl(int request, int irq, int policy, int* hook_id);
 #define irq_rmpolicy(id)               irqctl(IRQ_RMPOLICY, 0, 0, id)
 
 int irqctl_map_fwspec(struct irqctl_fwspec* fwspec);
+int irqctl_alloc(int from, int nr_irqs);
+int irqctl_alloc_msi(int from, int nr_irqs);
 
 #endif

@@ -454,6 +454,18 @@ int irq_domain_alloc_descs(int virq, unsigned int cnt, unsigned int hwirq)
     return virq;
 }
 
+int irq_alloc_from(unsigned int from, unsigned int nr_irqs)
+{
+    if (from >= NR_IRQ) return -EINVAL;
+
+    return irq_alloc_descs(-1, from, nr_irqs);
+}
+
+__attribute__((weak)) int arch_setup_msi_irq(unsigned int irq)
+{
+    return -ENOSYS;
+}
+
 static void irq_free_descs(unsigned int virq, unsigned int cnt) {}
 
 static int irq_domain_alloc_irq_data(struct irq_domain* domain,

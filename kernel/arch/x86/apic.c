@@ -1022,6 +1022,25 @@ static struct irq_chip ioapic_chip = {
     .irq_not_used = ioapic_not_used,
 };
 
+static void msi_eoi(struct irq_data* data)
+{
+    apic_eoi();
+}
+
+static struct irq_chip msi_chip = {
+    .irq_eoi = msi_eoi,
+};
+
+int arch_setup_msi_irq(unsigned int irq)
+{
+    if (irq >= NR_IRQ_VECTORS) return -EINVAL;
+
+    irq_set_chip(irq, &msi_chip);
+    irq_set_handler(irq, handle_simple_irq, FALSE);
+
+    return 0;
+}
+
 static int irqdomain_ioapic_idx(struct irq_domain* domain)
 {
     return (int)(unsigned long)domain->host_data;

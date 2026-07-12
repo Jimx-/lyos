@@ -56,6 +56,8 @@ static int do_attr_w32(MESSAGE* m);
 static int do_get_bar(MESSAGE* m);
 static int do_find_capability(MESSAGE* m);
 static int do_find_next_capability(MESSAGE* m);
+static int do_alloc_irq(MESSAGE* m);
+static int do_alloc_irq_vectors(MESSAGE* m);
 
 int main()
 {
@@ -107,6 +109,12 @@ int main()
             break;
         case PCI_FIND_NEXT_CAPABILITY:
             msg.RETVAL = do_find_next_capability(&msg);
+            break;
+        case PCI_ALLOC_IRQ:
+            msg.RETVAL = do_alloc_irq(&msg);
+            break;
+        case PCI_ALLOC_IRQ_VECTORS:
+            msg.RETVAL = do_alloc_irq_vectors(&msg);
             break;
         case DM_BUS_ATTR_SHOW:
         case DM_BUS_ATTR_STORE:
@@ -239,6 +247,44 @@ static int do_find_next_capability(MESSAGE* m)
     int pos = m->u.m3.m3i4;
 
     return _pci_find_next_capability(devind, pos, cap);
+}
+
+static int do_alloc_irq(MESSAGE* m)
+{
+    int devind = m->u.m3.m3i2;
+    int flags = m->u.m3.m3i3;
+    int irq;
+    int retval;
+
+    retval = _pci_alloc_irq(devind, flags, &irq);
+    if (retval) return retval;
+
+    m->u.m3.m3i2 = irq;
+    return 0;
+}
+
+static int do_alloc_irq_vectors(MESSAGE* m)
+{
+    int devind = m->u.m3.m3i2;
+    int flags = m->u.m3.m3i3;
+    int min_vecs = m->u.m3.m3i4;
+    int max_vecs = (int)m->u.m3.m3l1;
+    int irqs[32];
+    int retval;
+
+    if (max_vecs < 0 || max_vecs > (int)(sizeof(irqs) / sizeof(irqs[0])))
+        return EINVAL;
+    if (!m->u.m3.m3p1) return EINVAL;
+
+    retval = _pci_alloc_irq_vectors(devind, flags, min_vecs, max_vecs, irqs);
+    if (retval < 0) return -retval;
+
+    if (data_copy(m->source, m->u.m3.m3p1, SELF, irqs,
+                  sizeof(irqs[0]) * retval))
+        return EFAULT;
+
+    m->u.m3.m3i2 = retval;
+    return 0;
 }
 
 static int do_attr_r8(MESSAGE* m)

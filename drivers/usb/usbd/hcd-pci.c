@@ -8,7 +8,6 @@
 #include <asm/pci.h>
 #include <lyos/vm.h>
 #include <asm/io.h>
-#include <asm/protect.h>
 
 #include "hcd.h"
 
@@ -36,16 +35,15 @@ static const struct pci_id id_table[] = {
         0x003f,
         0,
         ohci_pci_probe,
-    }
+    },
 #endif
 #if CONFIG_USB_XHCI_HCD_PCI
-    ,
     {
         0xFFFF,
         0xFFFF,
         PCI_CLASS_USB_XHCI,
         xhci_pci_probe,
-    }
+    },
 #endif
 };
 
@@ -103,17 +101,14 @@ int usb_hcd_pci_probe(int devind, const struct hc_driver* driver)
     u16 cmd;
     int retval = 0;
 
-    /* Enable bus mastering and memory space */
+    /* Enable bus mastering and memory space. */
     cmd = pci_attr_r16(devind, PCI_CR);
     cmd |= PCI_CR_MAST_EN | PCI_CR_MEM_EN;
     pci_attr_w16(devind, PCI_CR, cmd);
 
     hcd = usb_create_hcd(driver);
-    if (!hcd) {
-        return ENOMEM;
-    }
+    if (!hcd) return ENOMEM;
 
-    /* Map MMIO BAR */
     if (driver->flags & HCD_MEMORY) {
         unsigned long bar_base;
         size_t bar_size;
@@ -128,64 +123,8 @@ int usb_hcd_pci_probe(int devind, const struct hc_driver* driver)
             goto put_hcd;
         }
 
-        /* Try MSI/MSI-X for USB3 controllers using the mapped BAR */
         if ((driver->flags & HCD_MASK) >= HCD_USB3) {
-            int msi_pos = 0, msix_pos = 0;
-            u8 cap_ptr = pci_attr_r8(devind, PCI_CAPPTR);
-
-            while (cap_ptr >= 0x40) {
-                u8 cap_id = pci_attr_r8(devind, cap_ptr);
-                u8 next = pci_attr_r8(devind, cap_ptr + 1) & 0xfc;
-                if (cap_id == PCI_CAP_ID_MSI) msi_pos = cap_ptr;
-                if (cap_id == PCI_CAP_ID_MSIX) msix_pos = cap_ptr;
-                if (cap_id == 0xff || next == 0) break;
-                cap_ptr = next;
-            }
-
-            if (msix_pos > 0) {
-                u16 msix_ctrl = pci_attr_r16(devind, msix_pos + 2);
-                u32 table_off = pci_attr_r32(devind, msix_pos + 4) & ~0x7u;
-                volatile u32* msix_tbl;
-
-                /* MSI-X table is within the already-mapped BAR */
-                msix_tbl = (volatile u32*)((char*)hcd->regs + table_off);
-
-                hcd_irq = 16;
-                msix_tbl[0] = MSI_ADDR_BASE_LO;
-                msix_tbl[1] = 0;
-                msix_tbl[2] = INT_VECTOR_IRQ0 + hcd_irq;
-                msix_tbl[3] = 0;
-
-                msix_ctrl |= 1 << 15;
-                msix_ctrl &= ~(1 << 14);
-                pci_attr_w16(devind, msix_pos + 2, msix_ctrl);
-
-                cmd = pci_attr_r16(devind, PCI_CR);
-                cmd |= PCI_CR_INT_DIS;
-                pci_attr_w16(devind, PCI_CR, cmd);
-            } else if (msi_pos > 0) {
-                u16 msi_ctrl = pci_attr_r16(devind, msi_pos + PCI_MSI_FLAGS);
-                int is_64bit = (msi_ctrl & PCI_MSI_FLAGS_64BIT) != 0;
-
-                hcd_irq = 16;
-                pci_attr_w32(devind, msi_pos + PCI_MSI_ADDRESS_LO,
-                             MSI_ADDR_BASE_LO);
-                if (is_64bit)
-                    pci_attr_w32(devind, msi_pos + PCI_MSI_ADDRESS_HI, 0);
-
-                u16 msi_data = INT_VECTOR_IRQ0 + hcd_irq;
-                if (is_64bit)
-                    pci_attr_w16(devind, msi_pos + PCI_MSI_DATA_64, msi_data);
-                else
-                    pci_attr_w16(devind, msi_pos + PCI_MSI_DATA_32, msi_data);
-
-                msi_ctrl |= PCI_MSI_FLAGS_ENABLE;
-                pci_attr_w16(devind, msi_pos + PCI_MSI_FLAGS, msi_ctrl);
-
-                cmd = pci_attr_r16(devind, PCI_CR);
-                cmd |= PCI_CR_INT_DIS;
-                pci_attr_w16(devind, PCI_CR, cmd);
-            }
+            pci_alloc_irq(devind, PCI_IRQ_MSIX | PCI_IRQ_MSI, &hcd_irq);
         }
     }
 
@@ -197,7 +136,7 @@ int usb_hcd_pci_probe(int devind, const struct hc_driver* driver)
         goto put_hcd;
     }
 
-    return retval;
+    return 0;
 
 put_hcd:
     usb_put_hcd(hcd);

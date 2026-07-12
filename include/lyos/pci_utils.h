@@ -18,4 +18,11 @@ int pci_get_bar(int devind, u16 port, unsigned long* base, size_t* size,
 int pci_find_capability(int devind, int cap);
 int pci_find_next_capability(int devind, int pos, int cap);
 
+#define PCI_IRQ_MSI  0x1
+#define PCI_IRQ_MSIX 0x2
+
+int pci_alloc_irq(int devind, int flags, int* irq);
+int pci_alloc_irq_vectors(int devind, int flags, int min_vecs, int max_vecs,
+                          int* irqs);
+
 #endif

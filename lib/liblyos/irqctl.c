@@ -53,3 +53,37 @@ int irqctl_map_fwspec(struct irqctl_fwspec* fwspec)
 
     return req->irq;
 }
+
+int irqctl_alloc(int from, int nr_irqs)
+{
+    MESSAGE m;
+    struct irqctl_request* req = (struct irqctl_request*)m.MSG_PAYLOAD;
+    int retval;
+
+    memset(&m, 0, sizeof(m));
+    req->request = IRQ_ALLOC;
+    req->irq = from;
+    req->policy = nr_irqs;
+
+    retval = syscall_entry(NR_IRQCTL, &m);
+    if (retval) return -retval;
+
+    return req->irq;
+}
+
+int irqctl_alloc_msi(int from, int nr_irqs)
+{
+    MESSAGE m;
+    struct irqctl_request* req = (struct irqctl_request*)m.MSG_PAYLOAD;
+    int retval;
+
+    memset(&m, 0, sizeof(m));
+    req->request = IRQ_ALLOC_MSI;
+    req->irq = from;
+    req->policy = nr_irqs;
+
+    retval = syscall_entry(NR_IRQCTL, &m);
+    if (retval) return -retval;
+
+    return req->irq;
+}
