@@ -58,13 +58,13 @@ static u32 pcii_read_u32(u32 bus, u32 devfn, u16 offset)
 static void pcii_write_u8(u32 bus, u32 devfn, u16 offset, u8 value)
 {
     portio_outl(PCII_CTRL, PCII_SELREG(bus, devfn, offset));
-    portio_outb(PCI_DATA, value);
+    portio_outb(PCI_DATA + (offset & 3), value);
 }
 
 static void pcii_write_u16(u32 bus, u32 devfn, u16 offset, u16 value)
 {
     portio_outl(PCII_CTRL, PCII_SELREG(bus, devfn, offset));
-    portio_outw(PCI_DATA, value);
+    portio_outw(PCI_DATA + (offset & 2), value);
 }
 
 static void pcii_write_u32(u32 bus, u32 devfn, u16 offset, u32 value)

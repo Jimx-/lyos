@@ -27,6 +27,7 @@
 #define PCI_CR_MAST_EN   0x0004 /* Enable Busmaster Access */
 #define PCI_CR_MEM_EN    0x0002 /* Enable Mem Cycles */
 #define PCI_CR_IO_EN     0x0001 /* Enable I/O Cycles */
+#define PCI_CR_INT_DIS   0x0400 /* Disable legacy INTx interrupts */
 #define PCI_SR           0x06   /* PCI status, 16-bit */
 #define PSR_SSE          0x4000 /* Signaled System Error */
 #define PSR_RMAS         0x2000 /* Received Master Abort Status */
@@ -109,5 +110,17 @@
 #define PCI_CAP_LIST_NEXT 1 /* Next capability in the list */
 #define PCI_CAP_FLAGS     2 /* Capability defined flags (16 bits) */
 #define PCI_CAP_SIZEOF    4
+
+/* MSI capability register layout */
+#define PCI_MSI_FLAGS        2      /* Message Control (16-bit) */
+#define PCI_MSI_FLAGS_ENABLE 0x0001 /* MSI enable */
+#define PCI_MSI_FLAGS_64BIT  0x0080 /* 64-bit address capable */
+#define PCI_MSI_ADDRESS_LO   4      /* Message Address (low 32 bits) */
+#define PCI_MSI_ADDRESS_HI   8      /* Message Address (high 32 bits) */
+#define PCI_MSI_DATA_32      8      /* Message Data (16-bit, 32-bit mode) */
+#define PCI_MSI_DATA_64      12     /* Message Data (16-bit, 64-bit mode) */
+
+/* x86 Local APIC MSI address/data */
+#define MSI_ADDR_BASE_LO 0xFEE00000U
 
 #endif

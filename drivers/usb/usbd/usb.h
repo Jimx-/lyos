@@ -93,6 +93,8 @@ struct usb_device {
 
     unsigned int toggle[2];
 
+    void* hcpriv;
+
     struct usb_device_descriptor descriptor;
     struct usb_host_config* config;
 

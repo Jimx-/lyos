@@ -21,6 +21,25 @@ config USB_OHCI_HCD_PCI
 
 endif
 
+config USB_XHCI_HCD
+    tristate "xHCI HCD (USB 3.0) support"
+    help
+      The eXtensible Host Controller Interface (xHCI) is the standard for
+      accessing USB 3.0 (SuperSpeed) host controller hardware. It also
+      supports USB 2.0 and USB 1.1 devices.
+
+if USB_XHCI_HCD
+
+config USB_XHCI_HCD_PCI
+    tristate "xHCI support for PCI-bus USB controllers"
+    depends on USB_PCI
+    default y
+    help
+      Enables support for PCI-bus plug-in USB 3.0 controller cards.
+      If unsure, say Y.
+
+endif
+
 config USB_DWC2
     bool "DesignWare USB2 DRD Core Support"
     depends on USB

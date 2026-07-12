@@ -35,6 +35,26 @@ static const u8 usb11_rh_dev_descriptor[18] = {
     0x01  /*  __u8  bNumConfigurations; */
 };
 
+static const u8 usb3_rh_dev_descriptor[18] = {
+    0x12,                /*  __u8  bLength; */
+    USB_DT_DEVICE,       /* __u8 bDescriptorType; Device */
+    0x00,          0x03, /*  __le16 bcdUSB; v3.0 */
+
+    0x09, /*  __u8  bDeviceClass; HUB_CLASSCODE */
+    0x00, /*  __u8  bDeviceSubClass; */
+    0x03, /*  __u8  bDeviceProtocol; SuperSpeed */
+    0x09, /*  __u8  bMaxPacketSize0; 2^9 = 512 Bytes */
+
+    0x6b,          0x1d, /*  __le16 idVendor; Linux Foundation 0x1d6b */
+    0x03,          0x00, /*  __le16 idProduct; device 0x0003 */
+    0x01,          0x00, /*  __le16 bcdDevice */
+
+    0x03, /*  __u8  iManufacturer; */
+    0x02, /*  __u8  iProduct; */
+    0x01, /*  __u8  iSerialNumber; */
+    0x01  /*  __u8  bNumConfigurations; */
+};
+
 static const u8 fs_rh_config_descriptor[] = {
     /* one configuration */
     0x09,          /*  __u8  bLength; */
@@ -55,6 +75,37 @@ static const u8 fs_rh_config_descriptor[] = {
     0x09,             /*  __u8  if_bInterfaceClass; HUB_CLASSCODE */
     0x00,             /*  __u8  if_bInterfaceSubClass; */
     0x00,             /*  __u8  if_bInterfaceProtocol; [usb1.1 or single tt] */
+    0x00,             /*  __u8  if_iInterface; */
+
+    /* one endpoint (status change endpoint) */
+    0x07,            /*  __u8  ep_bLength; */
+    USB_DT_ENDPOINT, /* __u8 ep_bDescriptorType; Endpoint */
+    0x81,            /*  __u8  ep_bEndpointAddress; IN Endpoint 1 */
+    0x03,            /*  __u8  ep_bmAttributes; Interrupt */
+    0x02, 0x00,      /*  __le16 ep_wMaxPacketSize; 1 + (MAX_ROOT_PORTS / 8) */
+    0xff             /*  __u8  ep_bInterval; (255ms -- usb 2.0 spec) */
+};
+
+static const u8 ss_rh_config_descriptor[] = {
+    /* one configuration */
+    0x09,          /*  __u8  bLength; */
+    USB_DT_CONFIG, /* __u8 bDescriptorType; Configuration */
+    0x19, 0x00,    /*  __le16 wTotalLength; */
+    0x01,          /*  __u8  bNumInterfaces; (1) */
+    0x01,          /*  __u8  bConfigurationValue; */
+    0x00,          /*  __u8  iConfiguration; */
+    0xc0,          /*  __u8  bmAttributes; */
+    0x00,          /*  __u8  MaxPower; */
+
+    /* one interface */
+    0x09,             /*  __u8  if_bLength; */
+    USB_DT_INTERFACE, /* __u8 if_bDescriptorType; Interface */
+    0x00,             /*  __u8  if_bInterfaceNumber; */
+    0x00,             /*  __u8  if_bAlternateSetting; */
+    0x01,             /*  __u8  if_bNumEndpoints; */
+    0x09,             /*  __u8  if_bInterfaceClass; HUB_CLASSCODE */
+    0x00,             /*  __u8  if_bInterfaceSubClass; */
+    0x00,             /*  __u8  if_bInterfaceProtocol; SuperSpeed */
     0x00,             /*  __u8  if_iInterface; */
 
     /* one endpoint (status change endpoint) */
@@ -149,7 +200,8 @@ static int register_roothub(struct usb_hcd* hcd)
     hcd->self.devnum_next = devnum + 1;
     SET_BIT(hcd->self.devmap, devnum);
 
-    hdev->ep0.desc.wMaxPacketSize = cpu_to_le16(64);
+    hdev->ep0.desc.wMaxPacketSize =
+        cpu_to_le16((hcd->speed == HCD_USB3) ? 512 : 64);
     descr = usb_get_device_descriptor(hdev);
     if (!descr) return EIO;
 
@@ -243,6 +295,18 @@ void usb_hcd_intr(unsigned int mask)
     {
         if (hcd->driver->irq && (mask & (1UL << hcd->irq)))
             hcd->driver->irq(hcd);
+    }
+}
+
+/* Poll all HCDs that don't have a hardware IRQ (irq == 0).
+ * Called periodically by the polling work item in main.c. */
+void usb_hcd_poll(void)
+{
+    struct usb_hcd* hcd;
+
+    list_for_each_entry(hcd, &hcd_list, list)
+    {
+        if (hcd->irq == 0 && hcd->driver->irq) hcd->driver->irq(hcd);
     }
 }
 
@@ -373,6 +437,9 @@ static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
             case HCD_USB11:
                 bufp = usb11_rh_dev_descriptor;
                 break;
+            case HCD_USB3:
+                bufp = usb3_rh_dev_descriptor;
+                break;
             default:
                 goto error;
             }
@@ -385,6 +452,10 @@ static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
             case HCD_USB11:
                 bufp = fs_rh_config_descriptor;
                 len = sizeof(fs_rh_config_descriptor);
+                break;
+            case HCD_USB3:
+                bufp = ss_rh_config_descriptor;
+                len = sizeof(ss_rh_config_descriptor);
                 break;
             default:
                 goto error;
@@ -469,7 +540,7 @@ void usb_hcd_reset_endpoint(struct usb_device* udev,
     struct usb_hcd* hcd = bus_to_hcd(udev->bus);
 
     if (hcd->driver->reset_endpoint)
-        hcd->driver->reset_endpoint(hcd, ep);
+        hcd->driver->reset_endpoint(hcd, udev, ep);
     else {
         int epnum = usb_endpoint_num(&ep->desc);
         int is_out = usb_endpoint_dir_out(&ep->desc);

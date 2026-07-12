@@ -256,7 +256,9 @@ static void do_send_urb(MESSAGE* msg)
     int retval = 0;
 
     drv = find_driver(src);
-    if (drv == NULL) return;
+    if (drv == NULL) {
+        return;
+    }
 
     usb_urb = (struct usb_urb*)malloc(grant_size + sizeof(void*));
     if (usb_urb == NULL) {
@@ -265,7 +267,9 @@ static void do_send_urb(MESSAGE* msg)
     }
 
     retval = safecopy_from(src, grant, 0, &usb_urb->dev_id, grant_size);
-    if (retval) goto err;
+    if (retval) {
+        goto err;
+    }
 
     intf = find_interface(usb_urb->dev_id);
     if (intf == NULL) {

@@ -164,6 +164,8 @@ static int hub_port_wait_reset(struct usb_hub* hub, int port1,
 
     if (portstatus & USB_PORT_STAT_LOW_SPEED)
         udev->speed = USB_SPEED_LOW;
+    else if (portstatus & USB_PORT_STAT_HIGH_SPEED)
+        udev->speed = USB_SPEED_HIGH;
     else
         udev->speed = USB_SPEED_FULL;
 
@@ -299,6 +301,12 @@ static int hub_port_init(struct usb_hub* hub, struct usb_device* udev,
             break;
         case USB_SPEED_LOW:
             udev->ep0.desc.wMaxPacketSize = 8;
+            break;
+        case USB_SPEED_HIGH:
+            udev->ep0.desc.wMaxPacketSize = 64;
+            break;
+        case USB_SPEED_SUPER:
+            udev->ep0.desc.wMaxPacketSize = 512;
             break;
         default:
             goto out;

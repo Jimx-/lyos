@@ -49,7 +49,7 @@ u16 pci_attr_r16(int devind, u16 port)
 
     pci_sendrec(BOTH, &msg);
 
-    return (u8)msg.u.m3.m3i2;
+    return (u16)msg.u.m3.m3i2;
 }
 
 u32 pci_attr_r32(int devind, u16 port)
@@ -97,7 +97,7 @@ int pci_attr_w32(int devind, u16 port, u32 value)
 {
     MESSAGE msg;
 
-    msg.type = PCI_ATTR_W8;
+    msg.type = PCI_ATTR_W32;
     msg.u.m3.m3i2 = devind;
     msg.u.m3.m3i3 = port;
     msg.u.m3.m3i4 = value;

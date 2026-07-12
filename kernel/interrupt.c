@@ -61,7 +61,7 @@ static inline struct irq_desc* irq_data_to_desc(struct irq_data* irq_data)
 
 static void desc_set_defaults(unsigned int irq, struct irq_desc* desc)
 {
-    desc->handle_irq = handle_bad_irq;
+    desc->handle_irq = handle_simple_irq;
     desc->irq_data.irq = irq;
     desc->irq_data.chip = &no_irq_chip;
     desc->irq_data.chip_data = NULL;
