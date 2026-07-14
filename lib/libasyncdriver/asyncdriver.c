@@ -185,6 +185,8 @@ static void* worker_main(void* arg)
         }
     }
 
+    if (self->state == WS_DEAD) self->state = WS_RUNNING;
+
     if (self->id == ASYNC_WORK_THREAD) {
         async_work_thread();
     } else {
@@ -450,6 +452,8 @@ int asyncdrv_sendrec(endpoint_t dest, MESSAGE* msg)
 
     retval = sendmsg(dest, self);
     if (retval) {
+        self->msg_recv = NULL;
+        self->recv_from = NO_TASK;
         return retval;
     }
 

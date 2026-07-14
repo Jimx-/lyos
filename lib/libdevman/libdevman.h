@@ -111,6 +111,6 @@ int dm_async_cdev_add(dev_t dev);
 int dm_async_device_register(struct device_info* devinf, device_id_t* id);
 int dm_async_device_attr_add(struct device_attribute* attr);
 
-void dm_async_reply(MESSAGE* msg);
+void dm_async_reply(const MESSAGE* msg);
 
 #endif

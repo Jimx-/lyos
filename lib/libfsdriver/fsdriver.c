@@ -101,7 +101,7 @@ void fsdriver_process(const struct fsdriver* fsd, MESSAGE* msg)
     /* reply */
     if (reply) {
         msg->type = VFS_TXN_TYPE_ID(FSREQ_RET, txn_id);
-        send_recv(SEND, src, msg);
+        asyncsend3(src, msg, 0);
     }
 
     /* if (fsd->fs_sync) fsd->fs_sync(); */

@@ -38,7 +38,7 @@ struct priv {
 
     void* async_table;
     size_t async_len;
-    priv_map_t async_pending;
+    bitchunk_t async_pending[BITCHUNKS(NR_PRIV_PROCS)];
 
     vir_bytes grant_table;
     size_t grant_entries;

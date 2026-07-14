@@ -179,5 +179,5 @@ reply:
     msg->CNT = retval;
 
     msg->type = SYSFS_DYN_REPLY;
-    send_recv(SEND, msg->source, msg);
+    asyncsend3(msg->source, msg, 0);
 }

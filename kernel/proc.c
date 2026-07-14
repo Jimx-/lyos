@@ -123,7 +123,6 @@ void init_proc()
 
         sigemptyset(&priv->sig_pending);
         priv->notify_pending = 0;
-        priv->async_pending = 0;
     }
 
     /* prepare idle process struct */
@@ -621,7 +620,7 @@ static int receive_async_from(struct proc* p, struct proc* sender)
     }
 
     lock_proc(sender);
-    p->priv->async_pending &= ~(1 << priv->id);
+    UNSET_BIT(p->priv->async_pending, priv->id);
 
     int i, retval = ESRCH, flags, done = TRUE;
     endpoint_t dest;
@@ -671,7 +670,7 @@ static int receive_async_from(struct proc* p, struct proc* sender)
         priv->async_len = 0;
     } else { /* make kernel rescan the table next time the receiver try to
                 receive and set priv->async_table properly */
-        p->priv->async_pending |= (1 << priv->id);
+        SET_BIT(p->priv->async_pending, priv->id);
     }
 
 async_error:
@@ -682,15 +681,17 @@ async_error:
 static int receive_async(struct proc* p)
 {
     int retval;
-    priv_map_t async_pending = p->priv->async_pending;
-    struct priv* priv;
+    unsigned long priv_id;
 
-    for (priv = &FIRST_PRIV; priv < &LAST_PRIV; priv++) {
+    for (priv_id =
+             bitmap_find_next_bit(p->priv->async_pending, NR_PRIV_PROCS, 0);
+         priv_id < NR_PRIV_PROCS;
+         priv_id = bitmap_find_next_bit(p->priv->async_pending, NR_PRIV_PROCS,
+                                        priv_id + 1)) {
+        struct priv* priv = priv_addr(priv_id);
         if (priv->proc_nr == NO_TASK) continue;
-        if (!(async_pending & (1 << priv->id))) continue;
 
         struct proc* src = proc_addr(priv->proc_nr);
-
         if ((retval = receive_async_from(p, src)) == 0) return 0;
     }
 
@@ -699,26 +700,22 @@ static int receive_async(struct proc* p)
 
 static int has_pending_async(struct proc* p, endpoint_t src)
 {
-    priv_map_t async_pending = p->priv->async_pending;
-    int i;
+    unsigned long priv_id;
 
-    if (async_pending == 0) return PRIV_ID_NULL;
+    priv_id = bitmap_find_next_bit(p->priv->async_pending, NR_PRIV_PROCS, 0);
+    if (priv_id >= NR_PRIV_PROCS) return PRIV_ID_NULL;
 
     if (src != ANY) {
         struct proc* sender = endpt_proc(src);
         if (!sender) return PRIV_ID_NULL;
 
-        if (async_pending & (1 << sender->priv->id))
+        if (GET_BIT(p->priv->async_pending, sender->priv->id))
             return sender->priv->id;
         else
             return PRIV_ID_NULL;
     }
 
-    for (i = 0; i < NR_PRIV_PROCS; i++) {
-        if (async_pending & (1 << i)) return i;
-    }
-
-    return PRIV_ID_NULL;
+    return priv_id;
 }
 
 static int has_pending_notify(struct proc* p, endpoint_t src)
@@ -799,7 +796,6 @@ int msg_notify(struct proc* p_to_send, endpoint_t dest)
 
         p_dest->flags &= ~PF_RECV_ASYNC;
         PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
-
         unlock_proc(p_dest);
         return retval;
     }
@@ -896,13 +892,16 @@ static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         return EPERM;
     }
 
+    lock_proc(p_to_send);
+
     /* clear async message table */
     priv->async_table = 0;
     priv->async_len = 0;
 
-    if (len == 0) return 0;
-
-    lock_proc(p_to_send);
+    if (len == 0) {
+        unlock_proc(p_to_send);
+        return 0;
+    }
 
     int i, retval, flags, done = TRUE;
     endpoint_t dest;
@@ -917,7 +916,6 @@ static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         flags = amsg.flags;
         dest = amsg.dest;
         amsg.msg.source = p_to_send->endpoint;
-
         if (dest == p_to_send->endpoint) {
             retval = EINVAL;
             goto async_error;
@@ -947,7 +945,7 @@ static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
             p_dest->flags &= ~PF_RECV_ASYNC;
             PST_UNSET_LOCKED(p_dest, PST_RECEIVING);
         } else { /* tell dest that it has a pending async message */
-            p_dest->priv->async_pending |= (1 << priv->id);
+            SET_BIT(p_dest->priv->async_pending, priv->id);
             done = FALSE;
             unlock_proc(p_dest);
             continue;

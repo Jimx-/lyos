@@ -14,6 +14,30 @@ int bitmap_equal(const unsigned long* bitmap1, const unsigned long* bitmap2,
     return 1;
 }
 
+unsigned long bitmap_find_next_bit(bitchunk_t* map, unsigned long size,
+                                   unsigned long start)
+{
+    unsigned long index;
+    bitchunk_t chunk;
+
+    if (start >= size) return size;
+
+    index = start / BITCHUNK_BITS;
+    chunk = map[index] & BITMAP_FIRST_WORD_MASK(start);
+
+    while (index < BITCHUNKS(size)) {
+        if (chunk) {
+            unsigned long bit = index * BITCHUNK_BITS + __builtin_ctzl(chunk);
+            return bit < size ? bit : size;
+        }
+
+        if (++index >= BITCHUNKS(size)) break;
+        chunk = map[index];
+    }
+
+    return size;
+}
+
 unsigned long bitmap_find_next_zero_area(bitchunk_t* map, unsigned long size,
                                          unsigned long start, unsigned int nr)
 {

@@ -36,5 +36,7 @@ int bitmap_equal(const unsigned long* bitmap1, const unsigned long* bitmap2,
 
 unsigned long bitmap_find_next_zero_area(bitchunk_t* map, unsigned long size,
                                          unsigned long start, unsigned int nr);
+unsigned long bitmap_find_next_bit(bitchunk_t* map, unsigned long size,
+                                   unsigned long start);
 
 #endif
