@@ -35,6 +35,12 @@ struct pci_config_window* pci_ecam_create(unsigned long base, size_t size)
     return cfg;
 }
 
+void pci_ecam_set_bus_range(struct pci_config_window* cfg,
+                            unsigned int bus_start)
+{
+    cfg->bus_start = bus_start;
+}
+
 void pci_ecam_free(struct pci_config_window* cfg) { free(cfg); }
 
 int pci_generic_config_read(struct pcibus* bus, unsigned int devfn, int where,
@@ -42,7 +48,8 @@ int pci_generic_config_read(struct pcibus* bus, unsigned int devfn, int where,
 {
     int busnr = bus->busnr;
     struct pci_config_window* cfg = bus->private;
-    void* addr = cfg->win + PCIE_ECAM_OFFSET(busnr, devfn, where);
+    void* addr =
+        cfg->win + PCIE_ECAM_OFFSET(busnr - cfg->bus_start, devfn, where);
 
     if (size == 1)
         *val = (u32)readb(addr);
@@ -59,7 +66,8 @@ int pci_generic_config_write(struct pcibus* bus, unsigned int devfn, int where,
 {
     int busnr = bus->busnr;
     struct pci_config_window* cfg = bus->private;
-    void* addr = cfg->win + PCIE_ECAM_OFFSET(busnr, devfn, where);
+    void* addr =
+        cfg->win + PCIE_ECAM_OFFSET(busnr - cfg->bus_start, devfn, where);
 
     if (size == 1)
         writeb(addr, val);

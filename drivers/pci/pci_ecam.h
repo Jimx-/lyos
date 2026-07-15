@@ -17,11 +17,14 @@
 
 struct pci_config_window {
     void* win;
+    unsigned int bus_start;
 };
 
 extern const struct pci_ops pci_generic_ecam_ops;
 
 struct pci_config_window* pci_ecam_create(unsigned long base, size_t size);
+void pci_ecam_set_bus_range(struct pci_config_window* cfg,
+                            unsigned int bus_start);
 void pci_ecam_free(struct pci_config_window* cfg);
 
 #endif

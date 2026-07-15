@@ -26,6 +26,10 @@ ifeq ($(CONFIG_COMMON_CLK),y)
 	SUBDIRS += libclk
 endif
 
+ifeq ($(CONFIG_ACPI),y)
+	SUBDIRS += libacpiutil
+endif
+
 ifeq ($(CONFIG_USB),y)
 	SUBDIRS += libusb
 endif

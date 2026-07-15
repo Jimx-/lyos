@@ -15,6 +15,10 @@ ifeq ($(CONFIG_PCI_DEV),y)
 	SUBDIRS += pci
 endif
 
+ifeq ($(CONFIG_ACPI),y)
+	SUBDIRS += acpi
+endif
+
 ifeq ($(CONFIG_DRM),y)
 	SUBDIRS += gpu/drm
 endif

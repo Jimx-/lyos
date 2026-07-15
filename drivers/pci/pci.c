@@ -146,7 +146,10 @@ int pci_init()
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
-    pci_intel_init();
+#if CONFIG_ACPI
+    if (!pci_acpi_init())
+#endif
+        pci_intel_init();
 #endif
 
     int i;
@@ -218,7 +221,7 @@ struct pcibus* pci_create_bus(int busnr, const struct pci_ops* ops,
     busind = nr_pcibus++;
     bus = &pcibus[busind];
 
-    bus->busnr = 0;
+    bus->busnr = busnr;
 
     retval = pci_register_bus(busind);
     if (retval != 0) {
