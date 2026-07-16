@@ -118,6 +118,8 @@ struct mm_map_phys_request {
 #define MMP_IO 0x01
 };
 
+#define VMC_NO_INODE 0
+
 int vmctl(int request, endpoint_t who);
 int procctl(endpoint_t who, int param);
 int vmctl_get_kern_mapping(int index, caddr_t* addr, int* len, int* flags);
@@ -127,6 +129,10 @@ int vmctl_set_address_space(endpoint_t who, unsigned long pgd_phys);
 int umap(endpoint_t ep, int type, vir_bytes vir_addr, vir_bytes size,
          phys_bytes* phys_addr);
 void* mm_map_phys(endpoint_t who, phys_bytes phys_addr, size_t len, int flags);
+int vm_set_cacheblock(void* vaddr, dev_t dev, off_t dev_offset, ino_t ino,
+                      off_t ino_offset, size_t len);
+void* vm_map_cacheblock(endpoint_t who, dev_t dev, off_t dev_offset, ino_t ino,
+                        off_t ino_offset, size_t len);
 int vmctl_get_mmrequest(endpoint_t* target, void** start, size_t* len,
                         int* flags, endpoint_t* caller);
 int vmctl_reply_mmreq(endpoint_t who, int result);

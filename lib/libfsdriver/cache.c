@@ -6,13 +6,15 @@
 #include <errno.h>
 #include <lyos/const.h>
 #include <lyos/sysutils.h>
+#include <lyos/vm.h>
 #include <sys/mman.h>
 #include <asm/page.h>
 
 #include <libbdev/libbdev.h>
 #include <libfsdriver/libfsdriver.h>
 
-#define BF_DIRTY 0x1
+#define BF_DIRTY   0x1
+#define BF_INCACHE 0x2
 
 #define BUFFER_HASH_LOG2 7
 #define BUFFER_HASH_SIZE ((unsigned long)1 << BUFFER_HASH_LOG2)
@@ -23,6 +25,8 @@ static struct list_head buf_hash[BUFFER_HASH_SIZE];
 static struct list_head lru_head;
 static size_t cache_size = 0;
 static size_t fs_block_size = ARCH_PG_SIZE;
+static int may_use_vmcache = 0;
+static int vmcache = 0;
 
 void fsdriver_mark_dirty(struct fsdriver_buffer* bp) { bp->flags |= BF_DIRTY; }
 
@@ -39,7 +43,7 @@ static inline void remove_lru(struct fsdriver_buffer* bp)
 }
 
 static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
-                     size_t block_size);
+                     ino_t ino, off_t ino_offset, size_t block_size);
 static void put_block(struct fsdriver_buffer* bp);
 static int read_block(struct fsdriver_buffer* bp, size_t block_size);
 
@@ -85,11 +89,12 @@ static int alloc_block(struct fsdriver_buffer* bp, size_t block_size)
 }
 
 static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
-                     size_t block_size)
+                     ino_t ino, off_t ino_offset, size_t block_size)
 {
     struct fsdriver_buffer* bp;
     size_t hash;
     int retval;
+    void* data;
 
     /* search for the block in the cache */
     bp = find_block(dev, block);
@@ -103,6 +108,12 @@ static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
         }
 
         bp->refcnt++;
+        if (ino != VMC_NO_INODE &&
+            (bp->ino == VMC_NO_INODE || bp->ino != ino ||
+             bp->ino_offset != ino_offset)) {
+            bp->ino = ino;
+            bp->ino_offset = ino_offset;
+        }
         assert(bp->refcnt > 0);
 
         *bpp = bp;
@@ -124,24 +135,43 @@ static int get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block,
         }
     }
 
+    if (bp->flags & BF_INCACHE) {
+        munmap(bp->data, bp->size);
+        bp->data = NULL;
+        bp->size = 0;
+    }
+
     bp->flags = 0;
     bp->dev = dev;
     bp->block = block;
+    bp->ino = ino;
+    bp->ino_offset = ino_offset;
     assert(bp->refcnt == 0);
     bp->refcnt++;
 
-    retval = alloc_block(bp, block_size);
-    if (retval) {
-        bp->dev = NO_DEV;
-        put_block(bp);
+    data = vmcache ? vm_map_cacheblock(SELF, dev, (off_t)block * fs_block_size,
+                                       ino, ino_offset, block_size)
+                   : MAP_FAILED;
+    if (data != MAP_FAILED) {
+        if (bp->data) munmap(bp->data, bp->size);
+        bp->data = data;
+        bp->size = block_size;
+        bp->flags |= BF_INCACHE;
+    } else {
+        retval = alloc_block(bp, block_size);
+        if (retval) {
+            bp->dev = NO_DEV;
+            put_block(bp);
 
-        return retval;
-    }
+            return retval;
+        }
 
-    retval = read_block(bp, block_size);
-    if (retval) {
-        bp->dev = NO_DEV;
-        put_block(bp);
+        retval = read_block(bp, block_size);
+        if (retval) {
+            bp->dev = NO_DEV;
+            put_block(bp);
+            return retval;
+        }
     }
 
     hash = block & BUFFER_HASH_MASK;
@@ -160,6 +190,17 @@ static void put_block(struct fsdriver_buffer* bp)
 
     if (bp->refcnt > 0) {
         return;
+    }
+
+    if (vmcache && bp->dev != NO_DEV && !(bp->flags & BF_INCACHE)) {
+        int retval = vm_set_cacheblock(bp->data, bp->dev,
+                                       (off_t)bp->block * fs_block_size,
+                                       bp->ino, bp->ino_offset, bp->size);
+        if (retval == 0) {
+            bp->flags |= BF_INCACHE;
+        } else if (retval == ENOSYS) {
+            vmcache = 0;
+        }
     }
 
     if (bp->dev == NO_DEV) {
@@ -294,6 +335,8 @@ void fsdriver_init_buffer_cache(size_t new_size)
 
     for (bp = bufs; bp < &bufs[cache_size]; bp++) {
         bp->dev = NO_DEV;
+        bp->ino = VMC_NO_INODE;
+        bp->ino_offset = 0;
         bp->data = NULL;
         bp->size = 0;
         bp->flags = 0;
@@ -307,11 +350,25 @@ void fsdriver_init_buffer_cache(size_t new_size)
     for (i = 0; i < BUFFER_HASH_SIZE; i++) {
         INIT_LIST_HEAD(&buf_hash[i]);
     }
+
+    vmcache = may_use_vmcache && !(fs_block_size % ARCH_PG_SIZE);
+}
+
+void fsdriver_may_use_vmcache(int ok)
+{
+    may_use_vmcache = ok;
+    vmcache = may_use_vmcache && !(fs_block_size % ARCH_PG_SIZE);
 }
 
 int fsdriver_get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block)
 {
-    return get_block(bpp, dev, block, fs_block_size);
+    return get_block(bpp, dev, block, VMC_NO_INODE, 0, fs_block_size);
+}
+
+int fsdriver_get_block_ino(struct fsdriver_buffer** bpp, dev_t dev,
+                           block_t block, ino_t ino, off_t ino_offset)
+{
+    return get_block(bpp, dev, block, ino, ino_offset, fs_block_size);
 }
 
 void fsdriver_put_block(struct fsdriver_buffer* bp)

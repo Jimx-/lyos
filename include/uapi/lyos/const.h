@@ -300,6 +300,8 @@ enum msgtype {
     MM_VFS_REPLY,
     MM_GETINFO,
     MM_REMAP,
+    MM_SET_CACHEBLOCK,
+    MM_MAP_CACHEBLOCK,
 
     /* message type for pm calls */
     PM_VFS_INIT = PM_REQ_BASE, /* 1501 */

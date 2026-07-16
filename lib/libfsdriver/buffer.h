@@ -12,6 +12,8 @@ struct fsdriver_buffer {
     char* data;
     dev_t dev;
     block_t block;
+    ino_t ino;
+    off_t ino_offset;
 
     unsigned int refcnt;
     size_t size;
@@ -23,7 +25,10 @@ void fsdriver_mark_clean(struct fsdriver_buffer* bp);
 int fsdriver_is_clean(struct fsdriver_buffer* bp);
 
 void fsdriver_init_buffer_cache(size_t new_size);
+void fsdriver_may_use_vmcache(int ok);
 int fsdriver_get_block(struct fsdriver_buffer** bpp, dev_t dev, block_t block);
+int fsdriver_get_block_ino(struct fsdriver_buffer** bpp, dev_t dev,
+                           block_t block, ino_t ino, off_t ino_offset);
 void fsdriver_put_block(struct fsdriver_buffer* bp);
 void fsdriver_flush_dev(dev_t dev);
 void fsdriver_flush_all(void);

@@ -115,6 +115,20 @@ struct mess_mm_mmap {
 } __attribute__((packed));
 VERIFY_MESS_SIZE(mess_mm_mmap);
 
+BEGIN_MESS_DECL(mess_mm_cacheblock)
+{
+    __endpoint_t who;
+    void* vaddr;
+    dev_t dev;
+    off_t dev_offset;
+    ino_t ino;
+    off_t ino_offset;
+    size_t len;
+    __u8 _pad[72 - sizeof(__endpoint_t) - sizeof(void*) - sizeof(dev_t) -
+              sizeof(off_t) * 2 - sizeof(ino_t) - sizeof(size_t)];
+}
+END_MESS_DECL(mess_mm_cacheblock)
+
 struct mess_mm_mremap {
     void* old_addr;
     size_t old_size;
@@ -1058,6 +1072,7 @@ typedef struct {
         struct mess_safecopy m_safecopy;
         struct mess_stime m_stime;
         struct mess_mm_mmap m_mm_mmap;
+        struct mess_mm_cacheblock m_mm_cacheblock;
         struct mess_mm_mremap m_mm_mremap;
         struct mess_mm_mmap_reply m_mm_mmap_reply;
         struct mess_mm_remap m_mm_remap;

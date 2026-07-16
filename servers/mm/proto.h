@@ -172,6 +172,9 @@ int page_cow(struct vir_region* vr, struct phys_region* pr,
 int file_map_set_file(struct mmproc* mmp, struct vir_region* vr, int fd,
                       loff_t offset, dev_t dev, ino_t ino, size_t clearend,
                       int prefill, int may_close);
+/* mm/cache.c */
+int do_set_cacheblock(void);
+int do_map_cacheblock(void);
 
 /* mm/direct_phys_map.c */
 void direct_phys_set_phys(struct vir_region* vr, phys_bytes paddr);

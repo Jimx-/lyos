@@ -78,7 +78,7 @@ static void file_map_page_fault_callback(struct mmproc* mmp, MESSAGE* msg,
                 goto out;
             }
 
-            page_cache_add(vr->param.file.filp->dev, 0,
+            page_cache_add(vr->param.file.filp->dev, -1,
                            vr->param.file.filp->ino, file_offset, page);
         } else {
             free_mem(state->buf_phys, ARCH_PG_SIZE);

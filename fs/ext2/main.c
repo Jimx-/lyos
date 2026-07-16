@@ -87,6 +87,7 @@ int init_ext2fs()
 
     ext2_init_inode();
     fsdriver_init_buffer_cache(1024);
+    fsdriver_may_use_vmcache(1);
 
     err_code = 0;
 

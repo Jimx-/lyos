@@ -91,6 +91,12 @@ int main()
         case MM_MAP_PHYS:
             mm_msg.RETVAL = do_map_phys();
             break;
+        case MM_SET_CACHEBLOCK:
+            mm_msg.RETVAL = do_set_cacheblock();
+            break;
+        case MM_MAP_CACHEBLOCK:
+            mm_msg.RETVAL = do_map_cacheblock();
+            break;
         case MM_VFS_REPLY:
             mm_msg.RETVAL = do_vfs_reply();
             break;

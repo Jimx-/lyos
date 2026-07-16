@@ -17,6 +17,7 @@
 #include <lyos/ipc.h>
 #include "errno.h"
 #include "lyos/const.h"
+#include <lyos/fs.h>
 #include "string.h"
 #include <sys/dirent.h>
 #include <asm/page.h>
@@ -59,7 +60,12 @@ static ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
         block_off = block_pos % ARCH_PG_SIZE;
         bytes_rdwt = min(ARCH_PG_SIZE - block_off, count);
 
-        if ((retval = fsdriver_get_block(&bp, dev, block)) != 0) return -retval;
+        if (rw_flag == READ)
+            retval = fsdriver_get_block_ino(&bp, dev, block, num,
+                                            rwpos + cum_io);
+        else
+            retval = fsdriver_get_block(&bp, dev, block);
+        if (retval != 0) return -retval;
 
         if (rw_flag == READ) {
             if ((retval = fsdriver_copyout(data, cum_io, bp->data + block_off,

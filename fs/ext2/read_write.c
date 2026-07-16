@@ -20,6 +20,7 @@
 #include "string.h"
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <lyos/fs.h>
 #include <lyos/sysutils.h>
 #include "ext2_fs.h"
 #include "global.h"
@@ -147,7 +148,7 @@ static int ext2_rw_chunk(ext2_inode_t* pin, loff_t position, size_t chunk,
         }
     } else if (rw_flag == READ) {
         /* Read that block */
-        retval = fsdriver_get_block(&bp, dev, b);
+        retval = fsdriver_get_block_ino(&bp, dev, b, pin->i_num, position);
     } else if (rw_flag == WRITE) {
         /* TODO: Don't read in full block */
         retval = fsdriver_get_block(&bp, dev, b);
