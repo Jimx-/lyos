@@ -83,7 +83,6 @@ struct usb_hcd* usb_get_hcd(struct usb_hcd* hcd);
 void usb_put_hcd(struct usb_hcd* hcd);
 int usb_hcd_add(struct usb_hcd* hcd, int irq);
 void usb_hcd_intr(unsigned int mask);
-void usb_hcd_poll(void);
 void usb_hcd_poll_rh_status(struct usb_hcd* hcd);
 
 int usb_hcd_submit_urb(struct urb* urb);

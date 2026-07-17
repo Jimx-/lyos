@@ -35,6 +35,23 @@ static const u8 usb11_rh_dev_descriptor[18] = {
     0x01  /*  __u8  bNumConfigurations; */
 };
 
+static const u8 usb2_rh_dev_descriptor[18] = {
+    0x12,                /* bLength */
+    USB_DT_DEVICE,       /* bDescriptorType */
+    0x00,          0x02, /* bcdUSB 2.0 */
+    0x09,                /* hub class */
+    0x00,                /* subclass */
+    0x00,                /* protocol */
+    0x40,                /* bMaxPacketSize0 */
+    0x6b,          0x1d, /* Linux Foundation */
+    0x02,          0x00, /* USB 2.0 root hub */
+    0x01,          0x00, /* bcdDevice */
+    0x03,                /* iManufacturer */
+    0x02,                /* iProduct */
+    0x01,                /* iSerialNumber */
+    0x01                 /* bNumConfigurations */
+};
+
 static const u8 usb3_rh_dev_descriptor[18] = {
     0x12,                /*  __u8  bLength; */
     USB_DT_DEVICE,       /* __u8 bDescriptorType; Device */
@@ -298,18 +315,6 @@ void usb_hcd_intr(unsigned int mask)
     }
 }
 
-/* Poll all HCDs that don't have a hardware IRQ (irq == 0).
- * Called periodically by the polling work item in main.c. */
-void usb_hcd_poll(void)
-{
-    struct usb_hcd* hcd;
-
-    list_for_each_entry(hcd, &hcd_list, list)
-    {
-        if (hcd->irq == 0 && hcd->driver->irq) hcd->driver->irq(hcd);
-    }
-}
-
 void usb_hcd_poll_rh_status(struct usb_hcd* hcd)
 {
     struct urb* urb;
@@ -437,6 +442,9 @@ static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
             case HCD_USB11:
                 bufp = usb11_rh_dev_descriptor;
                 break;
+            case HCD_USB2:
+                bufp = usb2_rh_dev_descriptor;
+                break;
             case HCD_USB3:
                 bufp = usb3_rh_dev_descriptor;
                 break;
@@ -450,6 +458,7 @@ static int rh_call_control(struct usb_hcd* hcd, struct urb* urb)
         case USB_DT_CONFIG << 8:
             switch (hcd->speed) {
             case HCD_USB11:
+            case HCD_USB2:
                 bufp = fs_rh_config_descriptor;
                 len = sizeof(fs_rh_config_descriptor);
                 break;

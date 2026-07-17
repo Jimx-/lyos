@@ -111,7 +111,7 @@ int usb_register_interface(struct usb_interface* intf, int configuration,
 
     memset(&devinf, 0, sizeof(devinf));
 
-    snprintf(devinf.name, sizeof(devinf.name), "%d-%s:%d:%d", udev->bus->busnum,
+    snprintf(devinf.name, sizeof(devinf.name), "%d-%s:%d.%d", udev->bus->busnum,
              udev->devpath, configuration, ifnum);
 
     devinf.bus = usb_bus_id;
@@ -384,6 +384,9 @@ static void usbd_process(MESSAGE* msg)
         switch (src) {
         case INTERRUPT:
             usb_hcd_intr(msg->INTERRUPTS);
+            break;
+        case CLOCK:
+            expire_timer(msg->TIMESTAMP);
             break;
         }
 

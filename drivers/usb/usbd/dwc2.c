@@ -12,12 +12,20 @@
 #include <libof/libof.h>
 
 #include "dwc2.h"
+#include "hcd.h"
+#include "usb.h"
 
 #define NAME "dwc2-usb"
 
 extern void* boot_params;
 
-static const char* const dwc2_compat[] = {"brcm,bcm2708-usb", NULL};
+static const char* const dwc2_compat[] = {
+    "brcm,bcm2708-usb", "brcm,bcm2835-usb", "snps,dwc2", NULL};
+
+static inline struct dwc2_hsotg* hcd_to_dwc2(struct usb_hcd* hcd)
+{
+    return (struct dwc2_hsotg*)hcd->hcd_priv[0];
+}
 
 unsigned int dwc2_op_mode(struct dwc2_hsotg* hsotg)
 {
@@ -133,7 +141,6 @@ int dwc2_core_reset(struct dwc2_hsotg* hsotg)
     if (dwc2_hsotg_wait_bit_set(hsotg, GRSTCTL, GRSTCTL_AHBIDLE, 10000)) {
         return EBUSY;
     }
-    printl("Reset done\n");
     return 0;
 }
 
@@ -225,6 +232,483 @@ static int dwc2_init_params(struct dwc2_hsotg* hsotg)
     return 0;
 }
 
+static u32 dwc2_hprt0_read(struct dwc2_hsotg* hsotg)
+{
+    u32 hprt0 = dwc2_readl(hsotg, HPRT0);
+
+    /* Change bits are W1C, and writing one to PRTENA disables the port. */
+    return hprt0 &
+           ~(HPRT0_ENA | HPRT0_ENACHG | HPRT0_CONNDET | HPRT0_OVRCURRCHG);
+}
+
+static void dwc2_latch_port_changes(struct dwc2_hsotg* hsotg)
+{
+    u32 hprt0 = dwc2_readl(hsotg, HPRT0);
+    u32 ack = hprt0 & (HPRT0_CONNDET | HPRT0_ENACHG | HPRT0_OVRCURRCHG);
+
+    if (hprt0 & HPRT0_CONNDET) hsotg->port_change |= USB_PORT_STAT_C_CONNECTION;
+    if (hprt0 & HPRT0_ENACHG) hsotg->port_change |= USB_PORT_STAT_C_ENABLE;
+    if (hprt0 & HPRT0_OVRCURRCHG)
+        hsotg->port_change |= USB_PORT_STAT_C_OVERCURRENT;
+
+    if (ack) dwc2_writel(hsotg, dwc2_hprt0_read(hsotg) | ack, HPRT0);
+}
+
+static void dwc2_flush_fifos(struct dwc2_hsotg* hsotg)
+{
+    dwc2_writel(hsotg, GRSTCTL_RXFFLSH, GRSTCTL);
+    dwc2_hsotg_wait_bit_clear(hsotg, GRSTCTL, GRSTCTL_RXFFLSH, 10000);
+    dwc2_writel(hsotg, GRSTCTL_TXFFLSH | GRSTCTL_TXFNUM(0x10), GRSTCTL);
+    dwc2_hsotg_wait_bit_clear(hsotg, GRSTCTL, GRSTCTL_TXFFLSH, 10000);
+}
+
+static void dwc2_halt_channels(struct dwc2_hsotg* hsotg)
+{
+    unsigned int channel;
+
+    for (channel = 0; channel < hsotg->hw_params.host_channels; channel++) {
+        u32 hcchar = dwc2_readl(hsotg, HCCHAR(channel));
+
+        hcchar &= ~HCCHAR_CHENA;
+        hcchar |= HCCHAR_CHDIS;
+        dwc2_writel(hsotg, hcchar, HCCHAR(channel));
+        dwc2_writel(hsotg, ~0U, HCINT(channel));
+        dwc2_writel(hsotg, 0, HCINTMSK(channel));
+    }
+}
+
+static int dwc2_host_init(struct dwc2_hsotg* hsotg)
+{
+    u32 val;
+
+    if (dwc2_hw_is_device(hsotg)) return ENODEV;
+
+    val = dwc2_readl(hsotg, GUSBCFG);
+    val &= ~GUSBCFG_FORCEDEVMODE;
+    val |= GUSBCFG_FORCEHOSTMODE;
+    dwc2_writel(hsotg, val, GUSBCFG);
+    usleep(25000);
+
+    if (!(dwc2_readl(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST)) return ENODEV;
+
+    dwc2_flush_fifos(hsotg);
+    dwc2_halt_channels(hsotg);
+
+    val = dwc2_readl(hsotg, HCFG);
+    val &= ~HCFG_FSLSPCLKSEL_MASK;
+    val |= HCFG_FSLSPCLKSEL_30_60_MHZ;
+    dwc2_writel(hsotg, val, HCFG);
+
+    dwc2_writel(hsotg, ~0U, GINTSTS);
+    dwc2_writel(hsotg, GINTSTS_PRTINT | GINTSTS_DISCONNINT | GINTSTS_HCHINT,
+                GINTMSK);
+    val = hsotg->params.ahbcfg | GAHBCFG_DMA_EN | GAHBCFG_GLBL_INTR_EN;
+    dwc2_writel(hsotg, val, GAHBCFG);
+
+    val = dwc2_hprt0_read(hsotg) | HPRT0_PWR;
+    dwc2_writel(hsotg, val, HPRT0);
+    return 0;
+}
+
+static int dwc2_setup(struct usb_hcd* hcd)
+{
+    return dwc2_host_init(hcd_to_dwc2(hcd));
+}
+
+static int dwc2_start(struct usb_hcd* hcd)
+{
+    (void)hcd;
+    return 0;
+}
+
+static int dwc2_channel_xfer(struct dwc2_hsotg* hsotg, struct urb* urb,
+                             phys_bytes dma, unsigned int length, int dir_in,
+                             unsigned int pid)
+{
+    const unsigned int channel = 0;
+    unsigned int epnum = usb_pipeendpoint(urb->pipe);
+    unsigned int maxp = usb_maxpacket(urb->dev, urb->pipe);
+    unsigned int packets, eptype, retries = 0;
+    u32 hcchar, hcint, hctsiz;
+
+    if (!maxp) return EINVAL;
+    packets = length ? (length + maxp - 1) / maxp : 1;
+    if (packets > hsotg->params.max_packet_count ||
+        length > hsotg->params.max_transfer_size)
+        return E2BIG;
+
+    switch (usb_pipetype(urb->pipe)) {
+    case PIPE_CONTROL:
+        eptype = 0;
+        break;
+    case PIPE_ISOCHRONOUS:
+        eptype = 1;
+        break;
+    case PIPE_BULK:
+        eptype = 2;
+        break;
+    case PIPE_INTERRUPT:
+        eptype = 3;
+        break;
+    default:
+        return EINVAL;
+    }
+
+retry:
+    dwc2_writel(hsotg, ~0U, HCINT(channel));
+    hctsiz = (length & TSIZ_XFERSIZE_MASK) | (packets << TSIZ_PKTCNT_SHIFT) |
+             (pid << TSIZ_SC_MC_PID_SHIFT);
+    dwc2_writel(hsotg, hctsiz, HCTSIZ(channel));
+    dwc2_writel(hsotg, (u32)dma, HCDMA(channel));
+    dwc2_writel(hsotg, 0, HCSPLT(channel));
+
+    hcchar = maxp | (epnum << HCCHAR_EPNUM_SHIFT) |
+             (eptype << HCCHAR_EPTYPE_SHIFT) |
+             (urb->dev->devnum << HCCHAR_DEVADDR_SHIFT);
+    if (dir_in) hcchar |= HCCHAR_EPDIR;
+    if (urb->dev->speed == USB_SPEED_LOW) hcchar |= HCCHAR_LSPDDEV;
+    if (dwc2_readl(hsotg, HFNUM) & 1) hcchar |= HCCHAR_ODDFRM;
+    dwc2_writel(hsotg, hcchar | HCCHAR_CHENA, HCCHAR(channel));
+
+    for (unsigned int timeout = 0; timeout < 500000; timeout++) {
+        hcint = dwc2_readl(hsotg, HCINT(channel));
+        if (hcint & (HCINTMSK_CHHLTD | HCINTMSK_XFERCOMPL | HCINTMSK_STALL |
+                     HCINTMSK_XACTERR | HCINTMSK_BBLERR | HCINTMSK_AHBERR |
+                     HCINTMSK_DATATGLERR | HCINTMSK_NAK))
+            break;
+        usleep(1);
+    }
+    hcint = dwc2_readl(hsotg, HCINT(channel));
+    dwc2_writel(hsotg, hcint, HCINT(channel));
+
+    if (hcint & HCINTMSK_XFERCOMPL) {
+        hctsiz = dwc2_readl(hsotg, HCTSIZ(channel));
+        return length - (hctsiz & TSIZ_XFERSIZE_MASK);
+    }
+    if ((hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) && usb_pipeint(urb->pipe))
+        return -EAGAIN;
+    if ((hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) && retries++ < 1000) {
+        usleep(100);
+        goto retry;
+    }
+    if (hcint & HCINTMSK_STALL) return -EPIPE;
+    if (hcint & HCINTMSK_BBLERR) return -EOVERFLOW;
+    if (hcint & HCINTMSK_DATATGLERR) return -EILSEQ;
+    if (hcint & (HCINTMSK_XACTERR | HCINTMSK_AHBERR)) return -EIO;
+    return -ETIMEDOUT;
+}
+
+static void dwc2_start_intr_channel(struct dwc2_hsotg* hsotg,
+                                    unsigned int channel)
+{
+    struct urb* urb = hsotg->pending_intr_urbs[channel];
+    unsigned int epnum = usb_pipeendpoint(urb->pipe);
+    unsigned int maxp = usb_maxpacket(urb->dev, urb->pipe);
+    unsigned int length = urb->transfer_buffer_length;
+    unsigned int packets = length ? (length + maxp - 1) / maxp : 1;
+    unsigned int pid = usb_gettoggle(urb->dev, epnum, !usb_pipein(urb->pipe))
+                           ? TSIZ_SC_MC_PID_DATA1
+                           : TSIZ_SC_MC_PID_DATA0;
+    u32 hcchar, hctsiz;
+
+    dwc2_writel(hsotg, ~0U, HCINT(channel));
+    hctsiz = (length & TSIZ_XFERSIZE_MASK) | (packets << TSIZ_PKTCNT_SHIFT) |
+             (pid << TSIZ_SC_MC_PID_SHIFT);
+    dwc2_writel(hsotg, hctsiz, HCTSIZ(channel));
+    dwc2_writel(hsotg, (u32)urb->transfer_phys, HCDMA(channel));
+    dwc2_writel(hsotg, 0, HCSPLT(channel));
+    dwc2_writel(hsotg,
+                HCINTMSK_XFERCOMPL | HCINTMSK_CHHLTD | HCINTMSK_NAK |
+                    HCINTMSK_NYET | HCINTMSK_STALL | HCINTMSK_XACTERR |
+                    HCINTMSK_BBLERR | HCINTMSK_AHBERR | HCINTMSK_DATATGLERR,
+                HCINTMSK(channel));
+    dwc2_writel(hsotg, dwc2_readl(hsotg, HAINTMSK) | BIT(channel), HAINTMSK);
+
+    hcchar = maxp | (epnum << HCCHAR_EPNUM_SHIFT) | (3 << HCCHAR_EPTYPE_SHIFT) |
+             (urb->dev->devnum << HCCHAR_DEVADDR_SHIFT);
+    if (usb_pipein(urb->pipe)) hcchar |= HCCHAR_EPDIR;
+    if (urb->dev->speed == USB_SPEED_LOW) hcchar |= HCCHAR_LSPDDEV;
+    if (dwc2_readl(hsotg, HFNUM) & 1) hcchar |= HCCHAR_ODDFRM;
+    dwc2_writel(hsotg, hcchar | HCCHAR_CHENA, HCCHAR(channel));
+}
+
+static void dwc2_intr_schedule(struct timer_list* timer)
+{
+    struct dwc2_hsotg* hsotg = timer->arg;
+    unsigned int channel, schedule_map = hsotg->intr_schedule_map;
+
+    hsotg->intr_schedule_map = 0;
+    for (channel = 1; channel < hsotg->hw_params.host_channels; channel++) {
+        if ((schedule_map & BIT(channel)) && hsotg->pending_intr_urbs[channel])
+            dwc2_start_intr_channel(hsotg, channel);
+    }
+}
+
+static int dwc2_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
+{
+    struct dwc2_hsotg* hsotg = hcd_to_dwc2(hcd);
+    unsigned int epnum = usb_pipeendpoint(urb->pipe), i;
+    int dir_in = usb_pipein(urb->pipe);
+    int pid, ret, status = 0;
+
+    if (usb_pipeisoc(urb->pipe)) return ENOTSUP;
+
+    ret = usb_hcd_link_urb_to_ep(hcd, urb);
+    if (ret) return ret;
+    urb->hc_priv = hsotg;
+    urb->actual_length = 0;
+
+    /* A completion callback may resubmit an interrupt URB immediately. */
+    if (usb_pipeint(urb->pipe)) {
+        for (i = 1; i < hsotg->hw_params.host_channels; i++) {
+            if (!hsotg->pending_intr_urbs[i]) break;
+        }
+        if (i == hsotg->hw_params.host_channels) {
+            usb_hcd_unlink_urb_from_ep(hcd, urb);
+            return EBUSY;
+        }
+        hsotg->pending_intr_urbs[i] = urb;
+        hsotg->intr_schedule_map |= BIT(i);
+        if (hsotg->intr_schedule_timer.expire_time == TIMER_UNSET)
+            set_timer(&hsotg->intr_schedule_timer, 1, dwc2_intr_schedule,
+                      hsotg);
+        return 0;
+    }
+
+    if (usb_pipecontrol(urb->pipe)) {
+        ret = dwc2_channel_xfer(hsotg, urb, urb->setup_phys,
+                                sizeof(struct usb_ctrlrequest), FALSE,
+                                TSIZ_SC_MC_PID_SETUP);
+        if (ret < 0) goto done;
+        if (urb->transfer_buffer_length) {
+            ret = dwc2_channel_xfer(hsotg, urb, urb->transfer_phys,
+                                    urb->transfer_buffer_length, dir_in,
+                                    TSIZ_SC_MC_PID_DATA1);
+            if (ret < 0) goto done;
+            urb->actual_length = ret;
+        }
+        ret =
+            dwc2_channel_xfer(hsotg, urb, 0, 0, !dir_in, TSIZ_SC_MC_PID_DATA1);
+    } else {
+        pid = usb_gettoggle(urb->dev, epnum, !dir_in) ? TSIZ_SC_MC_PID_DATA1
+                                                      : TSIZ_SC_MC_PID_DATA0;
+        ret = dwc2_channel_xfer(hsotg, urb, urb->transfer_phys,
+                                urb->transfer_buffer_length, dir_in, pid);
+        if (ret >= 0) {
+            urb->actual_length = ret;
+            if (((ret + usb_maxpacket(urb->dev, urb->pipe) - 1) /
+                 usb_maxpacket(urb->dev, urb->pipe)) &
+                1)
+                usb_dotoggle(urb->dev, epnum, !dir_in);
+        }
+    }
+
+done:
+    if (ret < 0) status = -ret;
+    usb_hcd_unlink_urb_from_ep(hcd, urb);
+    usb_hcd_giveback_urb(hcd, urb, status);
+    return 0;
+}
+
+static void dwc2_complete_intr_channel(struct dwc2_hsotg* hsotg,
+                                       unsigned int channel)
+{
+    struct usb_hcd* hcd = hsotg->hcd;
+    struct urb* urb = hsotg->pending_intr_urbs[channel];
+    unsigned int epnum, maxp;
+    int status = 0;
+    u32 hcint, hctsiz;
+
+    if (!urb) return;
+
+    hcint = dwc2_readl(hsotg, HCINT(channel));
+    dwc2_writel(hsotg, hcint, HCINT(channel));
+
+    if (hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) {
+        dwc2_writel(hsotg, 0, HCINTMSK(channel));
+        hsotg->intr_schedule_map |= BIT(channel);
+        if (hsotg->intr_schedule_timer.expire_time == TIMER_UNSET)
+            set_timer(&hsotg->intr_schedule_timer, 1, dwc2_intr_schedule,
+                      hsotg);
+        return;
+    }
+
+    hsotg->pending_intr_urbs[channel] = NULL;
+    dwc2_writel(hsotg, 0, HCINTMSK(channel));
+    dwc2_writel(hsotg, dwc2_readl(hsotg, HAINTMSK) & ~BIT(channel), HAINTMSK);
+
+    if (hcint & HCINTMSK_XFERCOMPL) {
+        hctsiz = dwc2_readl(hsotg, HCTSIZ(channel));
+        urb->actual_length =
+            urb->transfer_buffer_length - (hctsiz & TSIZ_XFERSIZE_MASK);
+        epnum = usb_pipeendpoint(urb->pipe);
+        maxp = usb_maxpacket(urb->dev, urb->pipe);
+        if (((urb->actual_length + maxp - 1) / maxp) & 1)
+            usb_dotoggle(urb->dev, epnum, !usb_pipein(urb->pipe));
+    } else if (hcint & HCINTMSK_STALL)
+        status = EPIPE;
+    else if (hcint & HCINTMSK_BBLERR)
+        status = EOVERFLOW;
+    else if (hcint & HCINTMSK_DATATGLERR)
+        status = EILSEQ;
+    else
+        status = EIO;
+
+    usb_hcd_unlink_urb_from_ep(hcd, urb);
+    usb_hcd_giveback_urb(hcd, urb, status);
+}
+
+static void dwc2_irq(struct usb_hcd* hcd)
+{
+    struct dwc2_hsotg* hsotg = hcd_to_dwc2(hcd);
+    unsigned int channel;
+    u32 status = dwc2_readl(hsotg, GINTSTS) & dwc2_readl(hsotg, GINTMSK);
+
+    if (status & GINTSTS_HCHINT) {
+        u32 haint = dwc2_readl(hsotg, HAINT) & dwc2_readl(hsotg, HAINTMSK);
+
+        for (channel = 1; channel < hsotg->hw_params.host_channels; channel++) {
+            if (haint & BIT(channel))
+                dwc2_complete_intr_channel(hsotg, channel);
+        }
+    }
+    if (status & GINTSTS_PRTINT) dwc2_latch_port_changes(hsotg);
+    if (status & (GINTSTS_PRTINT | GINTSTS_DISCONNINT))
+        usb_hcd_poll_rh_status(hcd);
+    dwc2_writel(hsotg, status & ~GINTSTS_PRTINT, GINTSTS);
+    irq_enable(&hcd->irq_hook);
+}
+
+static int dwc2_hub_status_data(struct usb_hcd* hcd, char* buf)
+{
+    struct dwc2_hsotg* hsotg = hcd_to_dwc2(hcd);
+
+    dwc2_latch_port_changes(hsotg);
+
+    buf[0] = 0;
+    if (hsotg->port_change) buf[0] = BIT(1);
+    return buf[0] ? 1 : 0;
+}
+
+static int dwc2_hub_control(struct usb_hcd* hcd, u16 typeReq, u16 wValue,
+                            u16 wIndex, char* buf, u16 wLength)
+{
+    struct dwc2_hsotg* hsotg = hcd_to_dwc2(hcd);
+    u32 hprt0, val;
+    u16 status = 0, change = hsotg->port_change;
+
+    (void)wLength;
+    switch (typeReq) {
+    case GetHubDescriptor: {
+        struct usb_hub_descriptor* desc = (void*)buf;
+        memset(desc, 0, sizeof(*desc));
+        desc->bDescLength = 9;
+        desc->bDescriptorType = USB_DT_HUB;
+        desc->bNbrPorts = 1;
+        desc->wHubCharacteristics = cpu_to_le16(0x0009);
+        desc->bPwrOn2PwrGood = 1;
+        desc->u.hs.DeviceRemovable[0] = 0;
+        desc->u.hs.DeviceRemovable[1] = 0xff;
+        return 9;
+    }
+    case GetHubStatus:
+        memset(buf, 0, 4);
+        return 0;
+    case GetPortStatus:
+        if (wIndex != 1) goto error;
+        dwc2_latch_port_changes(hsotg);
+        hprt0 = dwc2_readl(hsotg, HPRT0);
+        if (hprt0 & HPRT0_CONNSTS) status |= USB_PORT_STAT_CONNECTION;
+        if (hprt0 & HPRT0_ENA) status |= USB_PORT_STAT_ENABLE;
+        if (hprt0 & HPRT0_SUSP) status |= USB_PORT_STAT_SUSPEND;
+        if (hprt0 & HPRT0_OVRCURRACT) status |= USB_PORT_STAT_OVERCURRENT;
+        if (hprt0 & HPRT0_RST) status |= USB_PORT_STAT_RESET;
+        if (hprt0 & HPRT0_PWR) status |= USB_PORT_STAT_POWER;
+        if ((hprt0 & HPRT0_SPD_MASK) ==
+            (HPRT0_SPD_LOW_SPEED << HPRT0_SPD_SHIFT))
+            status |= USB_PORT_STAT_LOW_SPEED;
+        else if ((hprt0 & HPRT0_SPD_MASK) ==
+                 (HPRT0_SPD_HIGH_SPEED << HPRT0_SPD_SHIFT))
+            status |= USB_PORT_STAT_HIGH_SPEED;
+        change = hsotg->port_change;
+        ((u16*)buf)[0] = cpu_to_le16(status);
+        ((u16*)buf)[1] = cpu_to_le16(change);
+        return 0;
+    case SetPortFeature:
+        if (wIndex != 1) goto error;
+        val = dwc2_hprt0_read(hsotg);
+        if (wValue == USB_PORT_FEAT_POWER)
+            val |= HPRT0_PWR;
+        else if (wValue == USB_PORT_FEAT_RESET) {
+            val |= HPRT0_RST;
+            dwc2_writel(hsotg, val, HPRT0);
+            usleep(50000);
+            val = dwc2_hprt0_read(hsotg) & ~HPRT0_RST;
+            hsotg->port_change |= USB_PORT_STAT_C_RESET;
+        } else if (wValue == USB_PORT_FEAT_SUSPEND)
+            val |= HPRT0_SUSP;
+        else
+            goto error;
+        dwc2_writel(hsotg, val, HPRT0);
+        return 0;
+    case ClearPortFeature:
+        if (wIndex != 1) goto error;
+        val = dwc2_hprt0_read(hsotg);
+        switch (wValue) {
+        case USB_PORT_FEAT_ENABLE:
+            val &= ~HPRT0_ENA;
+            break;
+        case USB_PORT_FEAT_POWER:
+            val &= ~HPRT0_PWR;
+            break;
+        case USB_PORT_FEAT_SUSPEND:
+            val &= ~HPRT0_SUSP;
+            val |= HPRT0_RES;
+            dwc2_writel(hsotg, val, HPRT0);
+            usleep(20000);
+            val &= ~HPRT0_RES;
+            hsotg->port_change |= USB_PORT_STAT_C_SUSPEND;
+            break;
+        case USB_PORT_FEAT_C_CONNECTION:
+            hsotg->port_change &= ~USB_PORT_STAT_C_CONNECTION;
+            break;
+        case USB_PORT_FEAT_C_ENABLE:
+            hsotg->port_change &= ~USB_PORT_STAT_C_ENABLE;
+            break;
+        case USB_PORT_FEAT_C_OVER_CURRENT:
+            hsotg->port_change &= ~USB_PORT_STAT_C_OVERCURRENT;
+            break;
+        case USB_PORT_FEAT_C_RESET:
+            hsotg->port_change &= ~USB_PORT_STAT_C_RESET;
+            break;
+        case USB_PORT_FEAT_C_SUSPEND:
+            hsotg->port_change &= ~USB_PORT_STAT_C_SUSPEND;
+            break;
+        default:
+            goto error;
+        }
+        dwc2_writel(hsotg, val, HPRT0);
+        return 0;
+    default:
+        goto error;
+    }
+error:
+    return -EPIPE;
+}
+
+static const struct hc_driver dwc2_hc_driver = {
+    .description = NAME,
+    .product_desc = "DWC2 Host Controller",
+    .hcd_priv_size = sizeof(unsigned long),
+    .flags = HCD_USB2 | HCD_MEMORY,
+    .irq = dwc2_irq,
+    .setup = dwc2_setup,
+    .start = dwc2_start,
+    .urb_enqueue = dwc2_urb_enqueue,
+    .hub_status_data = dwc2_hub_status_data,
+    .hub_control = dwc2_hub_control,
+};
+
 static int fdt_scan_dwc2(void* blob, unsigned long offset, const char* name,
                          int depth, void* arg)
 {
@@ -236,6 +720,7 @@ static int fdt_scan_dwc2(void* blob, unsigned long offset, const char* name,
     if (!hsotg) return 0;
 
     memset(hsotg, 0, sizeof(*hsotg));
+    init_timer(&hsotg->intr_schedule_timer);
 
     if (!of_flat_dt_match(blob, offset, dwc2_compat)) return 0;
 
@@ -258,6 +743,29 @@ static int fdt_scan_dwc2(void* blob, unsigned long offset, const char* name,
 
     ret = dwc2_init_params(hsotg);
     if (ret) goto error_free;
+
+    ret = dwc2_get_hwparams(hsotg);
+    if (ret) goto error_free;
+
+    hsotg->params.host_channels = hsotg->hw_params.host_channels;
+    hsotg->params.max_transfer_size = min(hsotg->params.max_transfer_size,
+                                          hsotg->hw_params.max_transfer_size);
+    hsotg->params.max_packet_count =
+        min(hsotg->params.max_packet_count, hsotg->hw_params.max_packet_count);
+
+    hsotg->hcd = usb_create_hcd(&dwc2_hc_driver);
+    if (!hsotg->hcd) goto error_free;
+    hsotg->hcd->hcd_priv[0] = (unsigned long)hsotg;
+    hsotg->hcd->regs = hsotg->regs;
+
+    ret = usb_hcd_add(hsotg->hcd, hsotg->irq);
+    if (ret) {
+        usb_put_hcd(hsotg->hcd);
+        goto error_free;
+    }
+
+    printl(NAME ": registered host controller, irq %d, %u channels\n",
+           hsotg->irq, hsotg->hw_params.host_channels);
 
     return 1;
 error_free:

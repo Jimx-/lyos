@@ -399,6 +399,7 @@ static void hub_port_connect(struct usb_hub* hub, int port1, u16 portstatus,
     int retval, i;
 
     if (udev) {
+        if (portstatus & USB_PORT_STAT_CONNECTION) return;
         /* TODO: disconnect */
     }
 
@@ -419,7 +420,7 @@ static void hub_port_connect(struct usb_hub* hub, int port1, u16 portstatus,
         hub->ports[port1 - 1] = udev;
 
         retval = usb_new_device(udev);
-        if (retval) goto again;
+        if (retval) return;
 
         return;
 
@@ -558,7 +559,10 @@ int usb_new_device(struct usb_device* udev)
     if (retval) return retval;
 
     cfg = usb_choose_configuration(udev);
-    if (cfg >= 0) usb_set_configuration(udev, cfg);
+    if (cfg >= 0) {
+        retval = usb_set_configuration(udev, cfg);
+        if (retval) return retval;
+    }
 
     return 0;
 }

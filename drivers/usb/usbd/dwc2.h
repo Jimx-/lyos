@@ -2,6 +2,7 @@
 #define _USBD_DWC2_H_
 
 #include <lyos/types.h>
+#include <lyos/timer.h>
 #include <lyos/const.h>
 #include <lyos/swab.h>
 
@@ -402,7 +403,7 @@
 #define HPTXFSIZ HSOTG_REG(0x100)
 /* Use FIFOSIZE_* constants to access this register */
 
-#define DPTXFSIZN(_a) HSOTG_REG(0x104 + (((_a)-1) * 4))
+#define DPTXFSIZN(_a) HSOTG_REG(0x104 + (((_a) - 1) * 4))
 /* Use FIFOSIZE_* constants to access this register */
 
 /* These apply to the GNPTXFSIZ, HPTXFSIZ and DPTXFSIZN registers */
@@ -504,10 +505,10 @@
 #define DVBUSPULSE HSOTG_REG(0x82C)
 
 #define DIEPCTL0    HSOTG_REG(0x900)
-#define DIEPCTL(_a) HSOTG_REG(0x900 + ((_a)*0x20))
+#define DIEPCTL(_a) HSOTG_REG(0x900 + ((_a) * 0x20))
 
 #define DOEPCTL0    HSOTG_REG(0xB00)
-#define DOEPCTL(_a) HSOTG_REG(0xB00 + ((_a)*0x20))
+#define DOEPCTL(_a) HSOTG_REG(0xB00 + ((_a) * 0x20))
 
 /* EP0 specialness:
  * bits[29..28] - reserved (no SetD0PID, SetD1PID)
@@ -554,8 +555,8 @@
 #define DXEPCTL_MPS_LIMIT    0x7ff
 #define DXEPCTL_MPS(_x)      ((_x) << 0)
 
-#define DIEPINT(_a)            HSOTG_REG(0x908 + ((_a)*0x20))
-#define DOEPINT(_a)            HSOTG_REG(0xB08 + ((_a)*0x20))
+#define DIEPINT(_a)            HSOTG_REG(0x908 + ((_a) * 0x20))
+#define DOEPINT(_a)            HSOTG_REG(0xB08 + ((_a) * 0x20))
 #define DXEPINT_SETUP_RCVD     BIT(15)
 #define DXEPINT_NYETINTRPT     BIT(14)
 #define DXEPINT_NAKINTRPT      BIT(13)
@@ -596,8 +597,8 @@
 #define DOEPTSIZ0_XFERSIZE_MASK  (0x7f << 0)
 #define DOEPTSIZ0_XFERSIZE_SHIFT 0
 
-#define DIEPTSIZ(_a)              HSOTG_REG(0x910 + ((_a)*0x20))
-#define DOEPTSIZ(_a)              HSOTG_REG(0xB10 + ((_a)*0x20))
+#define DIEPTSIZ(_a)              HSOTG_REG(0x910 + ((_a) * 0x20))
+#define DOEPTSIZ(_a)              HSOTG_REG(0xB10 + ((_a) * 0x20))
 #define DXEPTSIZ_MC_MASK          (0x3 << 29)
 #define DXEPTSIZ_MC_SHIFT         29
 #define DXEPTSIZ_MC_LIMIT         0x3
@@ -613,10 +614,10 @@
 #define DXEPTSIZ_XFERSIZE_GET(_v) (((_v) >> 0) & 0x7ffff)
 #define DXEPTSIZ_XFERSIZE(_x)     ((_x) << 0)
 
-#define DIEPDMA(_a) HSOTG_REG(0x914 + ((_a)*0x20))
-#define DOEPDMA(_a) HSOTG_REG(0xB14 + ((_a)*0x20))
+#define DIEPDMA(_a) HSOTG_REG(0x914 + ((_a) * 0x20))
+#define DOEPDMA(_a) HSOTG_REG(0xB14 + ((_a) * 0x20))
 
-#define DTXFSTS(_a) HSOTG_REG(0x918 + ((_a)*0x20))
+#define DTXFSTS(_a) HSOTG_REG(0x918 + ((_a) * 0x20))
 
 #define PCGCTL                         HSOTG_REG(0x0e00)
 #define PCGCTL_IF_DEV_MODE             BIT(31)
@@ -650,7 +651,7 @@
 #define PCGCCTL1_TIMER  (0x3 << 1)
 #define PCGCCTL1_GATEEN BIT(0)
 
-#define EPFIFO(_a) HSOTG_REG(0x1000 + ((_a)*0x1000))
+#define EPFIFO(_a) HSOTG_REG(0x1000 + ((_a) * 0x1000))
 
 /* Host Mode Registers */
 
@@ -918,6 +919,12 @@ struct dwc2_hsotg {
     int irq;
 
     int needs_byte_swap;
+
+    struct usb_hcd* hcd;
+    struct urb* pending_intr_urbs[MAX_EPS_CHANNELS];
+    unsigned int intr_schedule_map;
+    struct timer_list intr_schedule_timer;
+    u16 port_change;
 
     /* DWC OTG HW Release versions */
 #define DWC2_CORE_REV_2_71a   0x4f54271a
