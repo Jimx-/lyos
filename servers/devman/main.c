@@ -142,7 +142,8 @@ static void devfs_message_hook(MESSAGE* msg)
 
     if (reply) {
         msg->type = ret_type;
-        send_recv(SEND_NONBLOCK, src, msg);
+        if (send_recv(SEND_NONBLOCK, src, msg) == EBUSY)
+            asyncsend3(src, msg, 0);
     }
 }
 

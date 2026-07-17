@@ -117,24 +117,36 @@ static struct device* alloc_device()
     return dev;
 }
 
-static void device_domain_label(struct device* dev, char* buf)
+static void append_label_component(char* buf, size_t size, const char* name)
 {
-    char name[DEVICE_NAME_MAX];
+    char escaped[DEVICE_NAME_MAX * 2];
+    char* out = escaped;
 
-    snprintf(name, DEVICE_NAME_MAX, "%s", dev->name);
-    dev = dev->parent;
+    while (*name && out < escaped + sizeof(escaped) - 1) {
+        if ((*name == '.' || *name == '\\') &&
+            out < escaped + sizeof(escaped) - 2)
+            *out++ = '\\';
+        *out++ = *name++;
+    }
+    *out = '\0';
+    strlcat(buf, escaped, size);
+}
 
-    int len = strlen(name) + 1;
-    while (dev) {
-        size_t name_len = strlen(dev->name);
-        memmove(name + name_len + 1, name, len);
-        len += name_len + 1;
-        strcpy(name, dev->name);
-        name[name_len] = '.';
+static void device_domain_label(struct device* dev, char* buf, size_t size)
+{
+    struct device* chain[NR_DEVICES];
+    int count = 0;
+
+    while (dev && count < NR_DEVICES) {
+        chain[count++] = dev;
         dev = dev->parent;
     }
 
-    snprintf(buf, PATH_MAX, "devices.%s", name);
+    strlcpy(buf, "devices", size);
+    while (count--) {
+        strlcat(buf, ".", size);
+        append_label_component(buf, size, chain[count]->name);
+    }
 }
 
 static int publish_device(struct device* dev)
@@ -145,12 +157,10 @@ static int publish_device(struct device* dev)
     sysfs_dyn_attr_t dev_uevent_attr;
     int retval;
 
-    device_domain_label(dev, device_root);
+    device_domain_label(dev, device_root, sizeof(device_root));
 
     retval = sysfs_publish_domain(device_root, SF_PRIV_OVERWRITE);
-    if (retval) {
-        return retval;
-    }
+    if (retval) return retval;
 
     snprintf(label, PATH_MAX, "%s.devid", device_root);
     retval = sysfs_publish_u32(label, (u32)dev->id, SF_PRIV_OVERWRITE);
@@ -200,14 +210,15 @@ static int add_class_symlinks(struct device* dev)
     char label[PATH_MAX];
     int retval;
 
-    device_domain_label(dev, device_root);
+    device_domain_label(dev, device_root, sizeof(device_root));
 
     if (!dev->class) return 0;
 
     class_domain_label(dev->class, class_root);
 
     /* class -> device */
-    snprintf(label, PATH_MAX, "%s.%s", class_root, dev->name);
+    snprintf(label, PATH_MAX, "%s.", class_root);
+    append_label_component(label, sizeof(label), dev->name);
     retval = sysfs_publish_link(device_root, label);
     if (retval) return retval;
 
@@ -219,7 +230,7 @@ static int add_class_symlinks(struct device* dev)
     /* device -> parent */
     if (dev->parent) {
         snprintf(label, PATH_MAX, "%s.device", device_root);
-        device_domain_label(dev->parent, device_root);
+        device_domain_label(dev->parent, device_root, sizeof(device_root));
         retval = sysfs_publish_link(device_root, label);
         if (retval) return retval;
     }
@@ -234,13 +245,14 @@ static int bus_add_device(struct device* dev)
     char label[PATH_MAX];
     int retval;
 
-    device_domain_label(dev, device_root);
+    device_domain_label(dev, device_root, sizeof(device_root));
 
     if (dev->bus) {
         bus_domain_label(dev->bus, bus_root);
 
         /* bus -> device */
-        snprintf(label, PATH_MAX, "%s.devices.%s", bus_root, dev->name);
+        snprintf(label, PATH_MAX, "%s.devices.", bus_root);
+        append_label_component(label, sizeof(label), dev->name);
         retval = sysfs_publish_link(device_root, label);
         if (retval) return retval;
 
@@ -259,7 +271,7 @@ static int create_sys_dev_entry(struct device* dev)
     char label[PATH_MAX];
     int retval;
 
-    device_domain_label(dev, device_root);
+    device_domain_label(dev, device_root, sizeof(device_root));
 
     snprintf(label, PATH_MAX, "dev.%s.%lu:%lu",
              (dev->type == DT_BLOCKDEV ? "block" : "char"), MAJOR(dev->devt),
@@ -507,7 +519,7 @@ int do_device_attr_add(MESSAGE* m)
     out = label;
     outlim = label + sizeof(label);
 
-    device_domain_label(dev, out);
+    device_domain_label(dev, out, outlim - out);
     out += strlen(out);
 
     if (out + strlen(info.name) + 1 >= outlim) return ENAMETOOLONG;

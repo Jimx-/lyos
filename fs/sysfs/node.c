@@ -93,6 +93,20 @@ sysfs_node_t* find_node(sysfs_node_t* parent, const char* name)
     return NULL;
 }
 
+static const char* parse_component(const char* name, char* component)
+{
+    char* out = component;
+
+    while (*name && *name != '.') {
+        if (*name == '\\' && name[1]) name++;
+        if (out < component + NAME_MAX - 1) *out++ = *name;
+        name++;
+    }
+    *out = '\0';
+
+    return name;
+}
+
 sysfs_node_t* lookup_node_by_name(const char* name)
 {
     sysfs_node_t* dir_pn = &root_node;
@@ -101,18 +115,11 @@ sysfs_node_t* lookup_node_by_name(const char* name)
     const char* end;
 
     while (*name != '\0') {
-        end = name;
-        while (*end != '\0' && *end != '.')
-            end++;
-
-        int len = end - name;
-        if (len == 0) {
+        end = parse_component(name, component);
+        if (!component[0]) {
             name++;
             continue;
         }
-
-        memcpy(component, name, len);
-        component[len] = '\0';
 
         sysfs_node_t* pn = find_node(dir_pn, component);
         if (!pn) {
@@ -131,21 +138,28 @@ sysfs_node_t* lookup_node_by_name(const char* name)
 sysfs_node_t* create_node(const char* name, int flags)
 {
     char path[PATH_MAX + 1];
-    char* end;
+    char component[NAME_MAX];
+    char *end, *separator = NULL;
     sysfs_node_t* dir_pn;
 
     if (!name) return NULL;
 
     strlcpy(path, name, sizeof(path));
-    end = path + strlen(path);
+    for (end = path; *end; end++) {
+        if (*end == '\\' && end[1]) {
+            end++;
+            continue;
+        }
+        if (*end == '.') separator = end;
+    }
 
-    while (*end != '.' && end > path)
-        end--;
-    if (end != path) {
-        *end++ = '\0';
+    if (separator) {
+        *separator = '\0';
         dir_pn = lookup_node_by_name(path);
+        end = separator + 1;
     } else {
         dir_pn = &root_node;
+        end = path;
     }
 
     if (!dir_pn) {
@@ -153,12 +167,18 @@ sysfs_node_t* create_node(const char* name, int flags)
         return NULL;
     }
 
-    if (find_node(dir_pn, end) != NULL) {
+    parse_component(end, component);
+    if (!component[0]) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if (find_node(dir_pn, component) != NULL) {
         errno = EEXIST;
         return NULL;
     }
 
-    sysfs_node_t* new_pn = new_node(end, flags);
+    sysfs_node_t* new_pn = new_node(component, flags);
     if (!new_pn) {
         errno = ENOMEM;
         return NULL;
@@ -236,13 +256,24 @@ traverse_node_iter(sysfs_node_t* root, char path[PATH_MAX + 1], int type_mask,
 
         list_for_each_entry(node, &root->children, list)
         {
-            if (path_len + 1 + strlen(node->name) > PATH_MAX) continue;
+            size_t name_len = strlen(node->name);
+            const char* p;
+
+            for (p = node->name; *p; p++) {
+                if (*p == '.' || *p == '\\') name_len++;
+            }
+            if (path_len + 1 + name_len > PATH_MAX) continue;
 
             if (path_len) {
-                path[path_len] = '.';
-                path[path_len + 1] = '\0';
+                char* out;
 
-                strlcat(path, node->name, PATH_MAX + 1);
+                path[path_len] = '.';
+                out = &path[path_len + 1];
+                for (p = node->name; *p; p++) {
+                    if (*p == '.' || *p == '\\') *out++ = '\\';
+                    *out++ = *p;
+                }
+                *out = '\0';
 
                 retval = traverse_node_iter(node, path, type_mask, callback,
                                             cb_data);
