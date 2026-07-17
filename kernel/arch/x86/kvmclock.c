@@ -112,6 +112,9 @@ static struct clocksource kvmclock_clocksource = {
     .name = "kvm-clock",
     .rating = 400,
     .read = kvm_clock_read,
+    /* kvm_clock_read() returns nanoseconds, so conversion is identity. */
+    .mul = 1,
+    .shift = 0,
     .mask = 0xffffffffffffffff,
 };
 
