@@ -1,106 +1,31 @@
-/*  This file is part of Lyos.
-
-    Lyos is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Lyos is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-
+#include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "errno.h"
-#include "assert.h"
-#include "lyos/const.h"
-#include "string.h"
-#include <fcntl.h>
+#include <lyos/const.h>
+#include <errno.h>
+#include <string.h>
 #include <asm/page.h>
 
-#include "proto.h"
-#include "global.h"
-#include "tar.h"
+#include <libfsdriver/libfsdriver.h>
 
+#include "archive.h"
 
-unsigned int initfs_getsize(const char* in)
+int initfs_read_bytes(dev_t dev, off_t offset, void* buf, size_t len)
 {
+    char* dst = buf;
 
-    unsigned int size = 0;
-    unsigned int j;
-    unsigned int count = 1;
+    while (len) {
+        struct fsdriver_buffer* bp;
+        size_t block = offset / ARCH_PG_SIZE;
+        size_t block_off = offset % ARCH_PG_SIZE;
+        size_t chunk = min(ARCH_PG_SIZE - block_off, len);
+        int retval = fsdriver_get_block(&bp, dev, block);
 
-    for (j = 11; j > 0; j--, count *= 8)
-        size += ((in[j - 1] - '0') * count);
-
-    return size;
-}
-
-unsigned int initfs_get8(const char* in)
-{
-
-    unsigned int size = 0;
-    unsigned int j;
-    unsigned int count = 1;
-
-    for (j = 7; j > 0; j--, count *= 8)
-        size += ((in[j - 1] - '0') * count);
-
-    return size;
-}
-
-unsigned int initfs_getmode(const struct posix_tar_header* phdr)
-{
-    unsigned int mode = 0;
-
-    switch (phdr->typeflag) {
-    case REGTYPE:
-    case AREGTYPE:
-        mode = S_IFREG;
-        break;
-    case SYMTYPE:
-        mode = S_IFLNK;
-        break;
-    case CHRTYPE:
-        mode = S_IFCHR;
-        break;
-    case BLKTYPE:
-        mode = S_IFBLK;
-        break;
-    case DIRTYPE:
-        mode = S_IFDIR;
-        break;
-    case FIFOTYPE:
-        mode = S_IFIFO;
-        break;
+        if (retval != 0) return retval;
+        memcpy(dst, bp->data + block_off, chunk);
+        fsdriver_put_block(bp);
+        dst += chunk;
+        offset += chunk;
+        len -= chunk;
     }
-
-    mode |= initfs_get8(phdr->mode);
-
-    return mode;
-}
-
-int initfs_read_header(dev_t dev, ino_t num, char* header, size_t header_size)
-{
-    struct fsdriver_buffer* bp;
-    size_t header_block;
-    off_t block_off;
-    size_t bytes_rdwt;
-    int retval;
-
-    header_block = initfs_headers[num] / ARCH_PG_SIZE;
-    block_off = initfs_headers[num] % ARCH_PG_SIZE;
-    bytes_rdwt = min(ARCH_PG_SIZE - block_off, header_size);
-
-    if ((retval = fsdriver_get_block(&bp, dev, header_block)) != 0)
-        return retval;
-    memcpy(header, bp->data + block_off, bytes_rdwt);
-    fsdriver_put_block(bp);
-
-    assert(bytes_rdwt == header_size);
-
     return 0;
 }

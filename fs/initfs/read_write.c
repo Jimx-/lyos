@@ -20,11 +20,12 @@
 #include <lyos/fs.h>
 #include "string.h"
 #include <sys/dirent.h>
+#include <sys/stat.h>
 #include <asm/page.h>
 
 #include "proto.h"
 #include "global.h"
-#include "tar.h"
+#include "archive.h"
 
 #include <libfsdriver/libfsdriver.h>
 
@@ -32,8 +33,7 @@ static ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
                            struct fsdriver_data* data, loff_t rwpos,
                            size_t count)
 {
-    char header[512];
-    struct posix_tar_header* phdr = (struct posix_tar_header*)header;
+    const struct initfs_entry* entry;
     size_t block;
     loff_t block_pos;
     off_t block_off;
@@ -41,18 +41,13 @@ static ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
     struct fsdriver_buffer* bp;
     int retval;
 
-    if (num >= initfs_headers_count) return -EINVAL;
+    if (num >= initfs_entries_count) return -EINVAL;
+    entry = &initfs_entries[num];
 
-    if ((retval = initfs_read_header(dev, num, header, sizeof(header))) != 0)
-        return -retval;
+    if (rwpos < 0 || rwpos >= entry->size) return 0;
+    if (count > entry->size - rwpos) count = entry->size - rwpos;
 
-    off_t filesize = initfs_getsize(phdr->size);
-
-    if (filesize < rwpos + count) {
-        count = filesize - rwpos;
-    }
-
-    block_pos = initfs_headers[num] + 512 + rwpos;
+    block_pos = entry->data_offset + rwpos;
     cum_io = 0;
 
     while (count > 0) {
@@ -61,8 +56,8 @@ static ssize_t initfs_rdwt(dev_t dev, ino_t num, int rw_flag,
         bytes_rdwt = min(ARCH_PG_SIZE - block_off, count);
 
         if (rw_flag == READ)
-            retval = fsdriver_get_block_ino(&bp, dev, block, num,
-                                            rwpos + cum_io);
+            retval =
+                fsdriver_get_block_ino(&bp, dev, block, num, rwpos + cum_io);
         else
             retval = fsdriver_get_block(&bp, dev, block);
         if (retval != 0) return -retval;
@@ -100,103 +95,88 @@ ssize_t initfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
     return -EROFS;
 }
 
-static int match_dirname(const char* dirname, const char* pathname)
+static const char* archive_name(const char* name)
 {
-    size_t dir_len, path_len;
-    const char* path_lim;
-
-    dir_len = strlen(dirname);
-    path_len = strlen(pathname);
-    path_lim = pathname + path_len;
-
-    if (path_len < dir_len) {
-        return FALSE;
-    }
-
-    if (memcmp(dirname, pathname, dir_len)) return FALSE;
-
-    pathname += dir_len;
-
-    while (path_lim > pathname && *(path_lim - 1) == '/')
-        path_lim--;
-
-    while (pathname < path_lim)
-        if (*pathname++ == '/') return FALSE;
-
-    return TRUE;
+    while (*name == '/')
+        name++;
+    if (name[0] == '.' && name[1] == '/') name += 2;
+    return name;
 }
 
-static int header_type(const struct posix_tar_header* phdr)
+static int entry_type(const struct initfs_entry* entry)
 {
-    switch (phdr->typeflag) {
-    case REGTYPE:
-    case AREGTYPE:
-        return DT_REG;
-    case SYMTYPE:
-        return DT_LNK;
-    case CHRTYPE:
-        return DT_CHR;
-    case BLKTYPE:
-        return DT_BLK;
-    case DIRTYPE:
-        return DT_DIR;
-    case FIFOTYPE:
-        return DT_FIFO;
-    }
-
+    if (S_ISREG(entry->mode)) return DT_REG;
+    if (S_ISLNK(entry->mode)) return DT_LNK;
+    if (S_ISCHR(entry->mode)) return DT_CHR;
+    if (S_ISBLK(entry->mode)) return DT_BLK;
+    if (S_ISDIR(entry->mode)) return DT_DIR;
+    if (S_ISFIFO(entry->mode)) return DT_FIFO;
     return DT_UNKNOWN;
 }
 
 ssize_t initfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
                         loff_t* ppos, size_t count)
 {
-#define GETDENTS_BUFSIZE (sizeof(struct dirent) + TAR_MAX_PATH)
+#define GETDENTS_BUFSIZE (sizeof(struct dirent) + INITFS_NAME_MAX)
 #define GETDENTS_ENTRIES 8
     static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
     struct fsdriver_dentry_list list;
-    char header[512];
-    struct posix_tar_header* phdr = (struct posix_tar_header*)header;
-    char dirname[TAR_MAX_PATH];
+    char dirname[INITFS_NAME_MAX];
     size_t name_len;
-    char* p;
+    const char* p;
     const char dot = '.';
     loff_t pos = *ppos, new_pos = *ppos;
     int i, retval;
 
-    if (num >= initfs_headers_count) return -EINVAL;
-
-    if ((retval = initfs_read_header(dev, num, header, sizeof(header))) != 0)
-        return -retval;
-    strlcpy(dirname, phdr->name, TAR_MAX_PATH);
+    if (num >= initfs_entries_count) return -EINVAL;
+    strlcpy(dirname, num ? archive_name(initfs_entries[num].name) : "",
+            sizeof(dirname));
+    name_len = strlen(dirname);
+    while (name_len && dirname[name_len - 1] == '/')
+        dirname[--name_len] = '\0';
 
     fsdriver_dentry_list_init(&list, data, count, getdents_buf,
                               sizeof(getdents_buf));
 
-    for (i = 0; i < initfs_headers_count; i++) {
-        if ((retval = initfs_read_header(dev, i, header, sizeof(header))) != 0)
-            return -retval;
+    for (i = 0; i < initfs_entries_count; i++) {
+        const struct initfs_entry* entry = &initfs_entries[i];
+        const char* entry_name = archive_name(entry->name);
+        size_t dir_len = strlen(dirname);
 
-        if (!match_dirname(dirname, phdr->name)) continue;
+        if (dir_len) {
+            if (strncmp(dirname, entry_name, dir_len)) continue;
+            if (entry_name[dir_len] == '\0' || entry_name[dir_len] == '/')
+                p = entry_name + dir_len;
+            else
+                continue;
+            if (*p == '/') p++;
+        } else {
+            p = entry_name;
+        }
 
         if (pos > 0) {
             pos--;
             continue;
         }
 
-        p = phdr->name;
-        p += strlen(dirname);
-
         name_len = 0;
         while (p[name_len] && p[name_len] != '/')
             name_len++;
 
-        if (!name_len) {
+        if (p[name_len] == '/') {
+            const char* rest = p + name_len;
+            while (*rest == '/')
+                rest++;
+            if (*rest) continue;
+        }
+
+        if (i == num || !name_len) {
             /* parent directory itself */
             retval =
-                fsdriver_dentry_list_add(&list, i, &dot, 1, header_type(phdr));
+                fsdriver_dentry_list_add(&list, i, &dot, 1, entry_type(entry));
         } else {
-            retval = fsdriver_dentry_list_add(&list, i, p, name_len - 1,
-                                              header_type(phdr));
+            retval = fsdriver_dentry_list_add(&list, i, p, name_len,
+                                              entry_type(entry));
         }
 
         if (retval < 0) return retval;
@@ -210,4 +190,18 @@ ssize_t initfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
     }
 
     return retval;
+}
+
+ssize_t initfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
+                      size_t bytes, endpoint_t user_endpt)
+{
+    const struct initfs_entry* entry;
+    int retval;
+
+    if (num >= initfs_entries_count) return -EINVAL;
+    entry = &initfs_entries[num];
+    if (!S_ISLNK(entry->mode)) return -EINVAL;
+    if (bytes > strlen(entry->link)) bytes = strlen(entry->link);
+    retval = fsdriver_copyout(data, 0, (void*)entry->link, bytes);
+    return retval == 0 ? (ssize_t)bytes : -retval;
 }

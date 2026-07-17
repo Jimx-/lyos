@@ -1,103 +1,66 @@
-/*  This file is part of Lyos.
-
-    Lyos is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Lyos is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
-
-#include <lyos/ipc.h>
-#include "errno.h"
-#include "lyos/const.h"
-#include "string.h"
+#include <lyos/types.h>
+#include <lyos/const.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/stat.h>
 
-#include "proto.h"
+#include "archive.h"
 #include "global.h"
-#include "tar.h"
+#include "proto.h"
 
-static void fill_node(ino_t num, struct fsdriver_node* fn,
-                      const struct posix_tar_header* phdr)
+static void fill_node(ino_t num, struct fsdriver_node* fn)
 {
-    dev_t major, minor;
+    const struct initfs_entry* entry = &initfs_entries[num];
 
     fn->fn_num = num;
-    fn->fn_uid = initfs_get8(phdr->uid);
-    fn->fn_gid = initfs_get8(phdr->gid);
-    fn->fn_size = initfs_getsize(phdr->size);
+    fn->fn_uid = entry->uid;
+    fn->fn_gid = entry->gid;
+    fn->fn_size = entry->size;
+    fn->fn_mode = num ? entry->mode : S_IFDIR | S_IRWXU;
+    fn->fn_device = entry->rdev;
+}
 
-    if (!num) {
-        /* special hack for root inode */
-        fn->fn_mode = S_IFDIR | S_IRWXU;
-    } else {
-        fn->fn_mode = initfs_getmode(phdr);
-    }
-
-    major = initfs_get8(phdr->devmajor);
-    minor = initfs_get8(phdr->devminor);
-    fn->fn_device = MAKE_DEV(major, minor);
+static const char* normalized_name(const char* name)
+{
+    while (*name == '/')
+        name++;
+    if (name[0] == '.' && name[1] == '/') name += 2;
+    return name;
 }
 
 int initfs_lookup(dev_t dev, ino_t start, const char* name,
                   struct fsdriver_node* fn, int* is_mountpoint)
 {
-    char header[512];
-    struct posix_tar_header* phdr = (struct posix_tar_header*)header;
-    char string[TAR_MAX_PATH], *p, filename[TAR_MAX_PATH];
-    size_t base_len, name_len;
-    int i, retval;
+    char path[INITFS_NAME_MAX];
+    const char* parent;
+    size_t len;
+    int i;
 
     *is_mountpoint = FALSE;
-
-    if ((retval = initfs_read_header(dev, start, header, sizeof(header))) != 0)
-        return retval;
-
+    if (start >= initfs_entries_count) return EINVAL;
     if (!strcmp(name, ".")) {
-        fill_node(start, fn, phdr);
+        fill_node(start, fn);
         return 0;
     }
 
-    if (!start) {
-        /* do not include the file name for root inode */
-        base_len = 0;
-    } else {
-        /* include the parent name */
-        base_len = strlen(phdr->name);
-        strlcpy(string, phdr->name, TAR_MAX_PATH);
-    }
+    parent = start ? normalized_name(initfs_entries[start].name) : "";
+    len = strlen(parent);
+    if (len && parent[len - 1] == '/') len--;
+    if (len + (len != 0) + strlen(name) >= sizeof(path)) return ENAMETOOLONG;
+    memcpy(path, parent, len);
+    if (len) path[len++] = '/';
+    strcpy(path + len, name);
 
-    strlcpy(string + base_len, name, TAR_MAX_PATH - base_len);
-
-    /* skip leading slashes */
-    p = string;
-    while (*p && *p == '/')
-        p++;
-
-    for (i = 0; i < initfs_headers_count; i++) {
-        if ((retval = initfs_read_header(dev, i, header, sizeof(header))) != 0)
-            return retval;
-
-        strlcpy(filename, phdr->name, TAR_MAX_PATH);
-        name_len = strlen(filename);
-
-        /* remove trailing slashes */
-        while (name_len && filename[name_len - 1] == '/') {
-            filename[name_len - 1] = '\0';
-            name_len--;
-        }
-
-        if (!strcmp(p, filename)) {
-            fill_node(i, fn, phdr);
+    for (i = 0; i < initfs_entries_count; i++) {
+        const char* candidate = normalized_name(initfs_entries[i].name);
+        size_t candidate_len = strlen(candidate);
+        while (candidate_len && candidate[candidate_len - 1] == '/')
+            candidate_len--;
+        if (strlen(path) == candidate_len &&
+            !memcmp(path, candidate, candidate_len)) {
+            fill_node(i, fn);
             return 0;
         }
     }
-
     return ENOENT;
 }

@@ -17,6 +17,7 @@
 #define _INITFS_GLOBAL_H_
 
 #include "const.h"
+#include "archive.h"
 
 /* EXTERN is extern except for global.c */
 #ifdef _INITFS_GLOBAL_VARIABLE_HERE_
@@ -24,7 +25,8 @@
 #define EXTERN
 #endif
 
-EXTERN int initfs_headers_count;
-EXTERN unsigned initfs_headers[MAX_HEADERS];
+EXTERN int initfs_entries_count;
+EXTERN struct initfs_entry initfs_entries[MAX_HEADERS];
+EXTERN const struct initfs_format* initfs_format;
 
 #endif

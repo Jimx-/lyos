@@ -22,8 +22,6 @@
 
 #include <libfsdriver/libfsdriver.h>
 
-#include "tar.h"
-
 int initfs_readsuper(dev_t dev, struct fsdriver_context* fc, void* data,
                      struct fsdriver_node* node);
 int initfs_lookup(dev_t dev, ino_t start, const char* name,
@@ -35,10 +33,7 @@ ssize_t initfs_write(dev_t dev, ino_t num, struct fsdriver_data* data,
 ssize_t initfs_getdents(dev_t dev, ino_t num, struct fsdriver_data* data,
                         loff_t* ppos, size_t count);
 int initfs_stat(dev_t dev, ino_t num, struct fsdriver_data* data);
-
-unsigned int initfs_getsize(const char* in);
-unsigned int initfs_get8(const char* in);
-unsigned int initfs_getmode(const struct posix_tar_header* phdr);
-int initfs_read_header(dev_t dev, ino_t num, char* header, size_t header_size);
+ssize_t initfs_rdlink(dev_t dev, ino_t num, struct fsdriver_data* data,
+                      size_t bytes, endpoint_t user_endpt);
 
 #endif

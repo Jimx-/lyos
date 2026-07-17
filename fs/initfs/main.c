@@ -33,6 +33,7 @@ static const struct fsdriver initfs_fsd = {
     .fs_read = initfs_read,
     .fs_write = initfs_write,
     .fs_getdents = initfs_getdents,
+    .fs_rdlink = initfs_rdlink,
     .fs_stat = initfs_stat,
     .fs_driver = fsdriver_driver,
     .fs_sync = initfs_sync,

@@ -55,6 +55,7 @@ endif
 	@cp -rf ../sysroot/etc/* etc/
 	@cp -f ../sysroot/etc/rc.$(SUBARCH) etc/rc
 	@touch .root
-	@tar -cvf $(INITRD) .root bin lib sbin etc usr > /dev/null
+	@find .root bin lib sbin etc usr -print0 | \
+		cpio --null --create --format=newc --quiet > $(INITRD)
 	@rm .root
 	@cp -f $(INITRD) $(DESTDIR)/boot/
