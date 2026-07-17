@@ -757,10 +757,16 @@ int region_free_mm(struct mm_struct* mm)
     list_for_each_entry_safe(vr, tmp, &mm->mem_regions, list)
     {
         list_del(&vr->list);
-        pgd_free_range(&mm->pgd, vr->vir_addr, vr->vir_addr + vr->length, 0UL,
-                       0UL);
         region_free(vr);
     }
+
+    /*
+     * Page-table pages are shared by adjacent virtual regions.  Freeing the
+     * hierarchy once per region can therefore release a PTE table while a
+     * later region still uses it.  At process teardown all user mappings are
+     * going away, so walk and release the complete user hierarchy once.
+     */
+    pgd_free_range(&mm->pgd, 0, VM_STACK_TOP, 0, VM_STACK_TOP);
 
     INIT_LIST_HEAD(&mm->mem_regions);
     region_init_avl(mm);

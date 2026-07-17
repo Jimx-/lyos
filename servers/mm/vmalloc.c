@@ -161,7 +161,7 @@ void* alloc_vmpages(size_t nr_pages)
             /* We found a hole that is big enough.  Use it. */
             old_base = hp->h_base + alignment;
             hp->h_base += memsize + alignment;
-            hp->h_len -= memsize - alignment;
+            hp->h_len -= memsize + alignment;
             if (prev_ptr && prev_ptr->h_base + prev_ptr->h_len == old_base)
                 prev_ptr->h_len += alignment;
 
@@ -188,6 +188,19 @@ void free_vmpages(void* base, size_t nr_pages)
 
     size_t len = nr_pages << ARCH_PG_SHIFT;
     struct hole *hp, *new_ptr, *prev_ptr;
+
+    /*
+     * Recursive page-table allocation uses static bootstrap mappings.  They
+     * do not belong to the vmalloc arena and must never enter its hole list.
+     */
+    if ((vir_bytes)base < VMALLOC_START || (vir_bytes)base + len > VMALLOC_END)
+        return;
+
+    /* A free virtual range must not retain aliases to recycled pages. */
+    if (pt_init_done) {
+        unmap_memory(&mmproc_table[TASK_MM].mm->pgd, (vir_bytes)base, len);
+        vmctl_flushtlb(SELF);
+    }
 
     if ((new_ptr = free_slots) == NULL) panic("hole table full");
     new_ptr->h_base = (vir_bytes)base;

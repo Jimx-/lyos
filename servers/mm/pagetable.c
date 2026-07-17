@@ -453,7 +453,7 @@ void pud_free_range(pde_t* pud, vir_bytes addr, vir_bytes end, vir_bytes floor,
             addr = next;
             continue;
         }
-        pmd_free_range(pude, addr, end, floor, ceiling);
+        pmd_free_range(pude, addr, next, floor, ceiling);
 
         pude++;
         addr = next;
@@ -487,7 +487,7 @@ void pgd_free_range(pgdir_t* pgd, vir_bytes addr, vir_bytes end,
             addr = next;
             continue;
         }
-        pud_free_range(pde, addr, end, floor, ceiling);
+        pud_free_range(pde, addr, next, floor, ceiling);
 
         pde++;
         addr = next;
