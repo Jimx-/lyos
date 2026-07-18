@@ -1,10 +1,12 @@
 PROG	= usbd
 
+SERVERCFLAGS += -I$(CURDIR)
+
 SRCS-$(CONFIG_USB_PCI) += hcd-pci.c
-SRCS-$(CONFIG_USB_OHCI_HCD) += ohci-hcd.c
-SRCS-$(CONFIG_USB_OHCI_HCD_PCI) += ohci-pci.c
-SRCS-$(CONFIG_USB_XHCI_HCD) += xhci-hcd.c xhci-mem.c xhci-ring.c xhci-hub.c
-SRCS-$(CONFIG_USB_XHCI_HCD_PCI) += xhci-pci.c
+SRCS-$(CONFIG_USB_OHCI_HCD) += ohci/ohci-hcd.c
+SRCS-$(CONFIG_USB_OHCI_HCD_PCI) += ohci/ohci-pci.c
+SRCS-$(CONFIG_USB_XHCI_HCD) += xhci/xhci-hcd.c xhci/xhci-mem.c xhci/xhci-ring.c xhci/xhci-hub.c
+SRCS-$(CONFIG_USB_XHCI_HCD_PCI) += xhci/xhci-pci.c
 SRCS-$(CONFIG_USB_DWC2) += dwc2.c
 
 SRCS	= main.c usb.c message.c hcd.c hub.c config.c driver.c sysfs.c $(SRCS-y)

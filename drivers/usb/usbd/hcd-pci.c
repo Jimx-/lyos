@@ -12,11 +12,11 @@
 #include "hcd.h"
 
 #if CONFIG_USB_OHCI_HCD
-#include "ohci.h"
+#include "ohci/ohci.h"
 #endif
 
 #if CONFIG_USB_XHCI_HCD
-#include "xhci.h"
+#include "xhci/xhci.h"
 #endif
 
 struct pci_id {

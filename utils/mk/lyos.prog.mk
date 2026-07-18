@@ -2,6 +2,7 @@
 SRC_PATH = .
 BUILD_PATH = ./obj.$(SUBARCH)
 OBJS = $(patsubst %.c, $(BUILD_PATH)/%.o, $(patsubst %.S, $(BUILD_PATH)/%.o, $(patsubst %.asm, $(BUILD_PATH)/%.o, $(SRCS))))
+OBJDIRS = $(sort $(patsubst %/,%,$(dir $(OBJS) $(BIN))))
 LINKLIBS = $(LIBS:%=$(LIBOUTDIR)/lib%.a)
 DEPS = $(OBJS:.o=.d)
 
@@ -9,18 +10,12 @@ INSTALL_PREFIX ?= /bin
 
 BIN = $(BUILD_PATH)/$(PROG)
 
-ifeq ($(wildcard arch),) 
-	ARCH_BUILD_PATH = 
-else
-	ARCH_BUILD_PATH = $(BUILD_PATH)/arch/$(ARCH)
-endif
-
 .PHONY : everything all clean realclean install
 
-all : $(BUILD_PATH) $(ARCH_BUILD_PATH) $(BIN)
+all : $(BIN)
 	@true
 
-everything : $(BUILD_PATH) $(ARCH_BUILD_PATH) $(BIN)
+everything : $(BIN)
 	@true
 
 clean :
@@ -36,11 +31,10 @@ $(BIN): $(OBJS) $(LINKLIBS) $(EXTRAOBJS)
 	@echo -e '\tLD\t$(PROG)/$@'
 	$(Q)$(CC) $(CFLAGS) $(EXTRACFLAGS) -o $@ $(OBJS) $(EXTRAOBJS) $(EXTRALIBS) $(patsubst %,-l%,$(LIBS))
 
-$(BUILD_PATH):
-	$(Q)mkdir $(BUILD_PATH)
+$(OBJDIRS):
+	$(Q)mkdir -p $@
 
-$(BUILD_PATH)/arch/$(ARCH):
-	$(Q)mkdir -p $(BUILD_PATH)/arch/$(ARCH)
+$(OBJS) $(BIN): | $(OBJDIRS)
 
 -include $(DEPS)
 
