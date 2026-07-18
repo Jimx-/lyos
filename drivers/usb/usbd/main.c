@@ -145,7 +145,7 @@ static struct usbd_driver* find_driver(endpoint_t endpoint)
     int i;
     for (i = 0; i < MAX_DRIVERS; i++) {
         if (usbd_drivers[i].status != DRIVER_UNUSED &&
-            usbd_drivers->endpoint == endpoint) {
+            usbd_drivers[i].endpoint == endpoint) {
             return &usbd_drivers[i];
         }
     }

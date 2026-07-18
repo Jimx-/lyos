@@ -91,7 +91,14 @@ struct hid_item {
 
 #define HID_USAGE_PAGE 0xffff0000
 
+#define HID_UP_GENDESK  0x00010000
 #define HID_UP_KEYBOARD 0x00070000
+#define HID_UP_BUTTON   0x00090000
+
+#define HID_GD_MOUSE 0x00010002
+#define HID_GD_X     0x00010030
+#define HID_GD_Y     0x00010031
+#define HID_GD_WHEEL 0x00010038
 
 #define HID_USAGE 0x0000ffff
 

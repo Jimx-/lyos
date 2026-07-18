@@ -567,6 +567,7 @@ static inline void usbhid_map_usage(struct usbhid_device* dev,
 }
 
 #define map_key(c) usbhid_map_usage(dev, usage, &bit, &max, EV_KEY, (c))
+#define map_rel(c) usbhid_map_usage(dev, usage, &bit, &max, EV_REL, (c))
 
 static void hid_configure_usage(struct usbhid_device* dev,
                                 struct hid_field* field,
@@ -580,6 +581,26 @@ static void hid_configure_usage(struct usbhid_device* dev,
     if (field->report_count < 1) goto ignore;
 
     switch (usage->hid & HID_USAGE_PAGE) {
+    case HID_UP_GENDESK:
+        if (field->application != HID_GD_MOUSE ||
+            !(field->flags & HID_MAIN_ITEM_RELATIVE))
+            goto ignore;
+
+        switch (usage->hid) {
+        case HID_GD_X:
+            map_rel(REL_X);
+            break;
+        case HID_GD_Y:
+            map_rel(REL_Y);
+            break;
+        case HID_GD_WHEEL:
+            map_rel(REL_WHEEL);
+            break;
+        default:
+            goto ignore;
+        }
+        break;
+
     case HID_UP_KEYBOARD:
         if ((usage->hid & HID_USAGE) < 256) {
             if (!hid_keyboard[usage->hid & HID_USAGE]) goto ignore;
@@ -587,6 +608,15 @@ static void hid_configure_usage(struct usbhid_device* dev,
         } else
             map_key(KEY_UNKNOWN);
 
+        break;
+
+    case HID_UP_BUTTON:
+        if (field->application != HID_GD_MOUSE ||
+            (usage->hid & HID_USAGE) < 1 ||
+            (usage->hid & HID_USAGE) > BTN_TASK - BTN_MOUSE + 1)
+            goto ignore;
+
+        map_key(BTN_MOUSE + (usage->hid & HID_USAGE) - 1);
         break;
     }
 
