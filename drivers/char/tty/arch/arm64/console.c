@@ -27,10 +27,26 @@
 #include <lyos/portio.h>
 #include <lyos/vm.h>
 #include <sys/mman.h>
+#include <libchardriver/libchardriver.h>
 #include "proto.h"
 #include "global.h"
 
-void init_screen(TTY* tty) {}
+static void dummy_write(TTY* tty)
+{
+    if (tty->tty_outleft == 0) return;
+
+    tty->tty_outcnt += tty->tty_outleft;
+    tty->tty_outleft = 0;
+
+    if (tty->tty_outcaller != TASK_TTY)
+        chardriver_reply_io(tty->tty_outcaller, tty->tty_outid,
+                            tty->tty_outcnt);
+
+    tty->tty_outcaller = NO_TASK;
+    tty->tty_outcnt = 0;
+}
+
+void init_screen(TTY* tty) { tty->tty_devwrite = dummy_write; }
 
 int is_current_console(CONSOLE* con) { return FALSE; }
 
