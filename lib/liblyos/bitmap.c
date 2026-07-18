@@ -27,7 +27,13 @@ unsigned long bitmap_find_next_bit(bitchunk_t* map, unsigned long size,
 
     while (index < BITCHUNKS(size)) {
         if (chunk) {
-            unsigned long bit = index * BITCHUNK_BITS + __builtin_ctzl(chunk);
+            unsigned long bit = index * BITCHUNK_BITS;
+
+            while (!(chunk & 1)) {
+                chunk >>= 1;
+                bit++;
+            }
+
             return bit < size ? bit : size;
         }
 
