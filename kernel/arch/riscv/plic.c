@@ -108,7 +108,16 @@ static void plic_unmask(struct irq_data* data)
 static void plic_ack(struct irq_data* data)
 {
     struct plic_context* ctx = get_cpulocal_var_ptr(plic_contexts);
-    writel(ctx->hart_base + CONTEXT_CLAIM, data->hwirq);
+    u32* reg = ctx->enable_base + (data->hwirq / 32) * sizeof(u32);
+    u32 hwirq_mask = 1 << (data->hwirq % 32);
+
+    if ((readl(reg) & hwirq_mask) == 0) {
+        plic_toggle(ctx, data->hwirq, 1);
+        writel(ctx->hart_base + CONTEXT_CLAIM, data->hwirq);
+        plic_toggle(ctx, data->hwirq, 0);
+    } else {
+        writel(ctx->hart_base + CONTEXT_CLAIM, data->hwirq);
+    }
 }
 
 static struct irq_chip plic_chip = {
