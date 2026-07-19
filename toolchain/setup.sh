@@ -37,6 +37,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_MTDEV:=false}
 : ${BUILD_GETTEXT:=false}
 : ${BUILD_GUILE:=false}
+: ${BUILD_ACPICA:=false}
 : ${BUILD_LWIP:=false}
 
 if $BUILD_EVERYTHING; then
@@ -66,6 +67,7 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBXML2=true
     BUILD_EUDEV=true
     BUILD_MTDEV=true
+    BUILD_ACPICA=true
     BUILD_LWIP=true
 fi
 
@@ -642,6 +644,35 @@ if $BUILD_GUILE; then
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
+fi
+
+# Build ACPICA
+if $BUILD_ACPICA; then
+    if [ ! -d "acpica-$SUBARCH" ]; then
+        mkdir acpica-$SUBARCH
+    fi
+
+    ACPICA_SRC=$DIR/sources/acpica-20260408/source
+    ACPICA_OBJ=$DIR/build/acpica-$SUBARCH
+    [ -d $ACPICA_SRC/components ] || cmd_error
+    rm -rf $ACPICA_OBJ
+    mkdir -p $ACPICA_OBJ $SYSROOT/usr/include/acpica $SYSROOT/usr/lib
+
+    find $ACPICA_SRC/components \
+        \( -path "$ACPICA_SRC/components/debugger" -o \
+           -path "$ACPICA_SRC/components/disassembler" \) -prune -o \
+        -name '*dump*.c' -prune -o \
+        -name '*.c' -print | while read -r src; do
+        obj=$ACPICA_OBJ/${src#$ACPICA_SRC/}
+        obj=${obj%.c}.o
+        mkdir -p "$(dirname "$obj")"
+        $TARGET-gcc -std=c99 -O2 -fPIC -D_LINUX \
+            -I$ACPICA_SRC/include -c "$src" -o "$obj" || exit 1
+    done || cmd_error
+
+    find $ACPICA_OBJ -name '*.o' -print0 | xargs -0 $TARGET-ar rcs $SYSROOT/usr/lib/libacpica.a || cmd_error
+    cp -rf $ACPICA_SRC/include/*.h $SYSROOT/usr/include/acpica/ || cmd_error
+    cp -rf $ACPICA_SRC/include/platform $SYSROOT/usr/include/acpica/ || cmd_error
 fi
 
 # Build lwip

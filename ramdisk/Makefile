@@ -22,6 +22,9 @@ $(INITRD):
 	@cp -f $(DESTDIR)/sbin/virtio-net sbin/
 	@cp -f $(DESTDIR)/sbin/procfs sbin/
 	@cp -f $(DESTDIR)/sbin/input sbin/
+ifneq ("$(wildcard $(DESTDIR)/sbin/acpi)","")
+	@cp -f $(DESTDIR)/sbin/acpi sbin/
+endif
 ifneq ("$(wildcard $(DESTDIR)/sbin/atkbd)","")
 	@cp -f $(DESTDIR)/sbin/atkbd sbin/
 endif
