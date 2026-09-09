@@ -480,8 +480,10 @@ struct xhci_virt_ep {
     unsigned int ep_state;        /* EP_STATE_* */
     struct usb_host_endpoint* ep; /* back-pointer for URB lookup */
     int skip;                     /* skip processing (error recovery) */
-    int has_short_event;
-    u32 short_actual_length;
+    int recovery_state;           /* nonzero blocks publication/doorbells */
+    phys_bytes recovery_cmd;
+    struct urb* recovery_urb;     /* retains DMA mappings until Set Dequeue */
+    int recovery_status;
 };
 
 struct xhci_virt_device {

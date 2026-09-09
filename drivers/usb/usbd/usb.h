@@ -6,6 +6,7 @@
 #include <lyos/list.h>
 #include <lyos/ipc.h>
 #include <lyos/usb.h>
+#include <lyos/scatterlist.h>
 #include <libdevman/libdevman.h>
 
 #define USB_MAJOR        180
@@ -166,12 +167,21 @@ struct urb {
 #define URB_DIR_MASK     URB_DIR_IN
 
     void* transfer_buffer;
-    phys_bytes transfer_phys;
+    phys_bytes transfer_dma; /* verified scalar path when applicable */
     u32 transfer_buffer_length;
     u32 actual_length;
 
     unsigned char* setup_packet;
-    phys_bytes setup_phys;
+    phys_bytes setup_dma; /* one contiguous eight-byte SETUP packet */
+    void* setup_bounce_buffer; /* page owned by the core, if DMA32 needs it */
+
+    struct scatterlist* sg; /* per-submission mapping, owned by the core */
+    int num_sgs;
+    int num_mapped_sgs;
+
+    /* Contiguous copy used when control data fragments across physical
+     * runs; the core copies back on unmap. */
+    void* bounce_buffer;
 
     int start_frame;
     int num_packets;

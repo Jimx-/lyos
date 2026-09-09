@@ -267,6 +267,10 @@ static int td_update_urb(struct ohci_hcd* ohci, struct urb* urb, struct td* td)
 
         cc = TD_CC_GET(info);
 
+        /* a short read is normally not an error */
+        if (cc == TD_DATAUNDERRUN &&
+            !(urb->transfer_flags & URB_SHORT_NOT_OK))
+            cc = TD_CC_NOERROR;
         if (cc != TD_CC_NOERROR && cc < 0x0E) status = cc_to_error[cc];
 
         if ((type != PIPE_CONTROL || td->index != 0) && be != 0) {
@@ -732,7 +736,17 @@ static struct td* td_alloc(struct ohci_hcd* ohci)
     return td;
 }
 
-static void td_free(struct ohci_hcd* ohci, struct td* td) { free(td); }
+static void td_free(struct ohci_hcd* ohci, struct td* td)
+{
+    struct td** entry = &ohci->td_hash[TD_HASH_FUNC(td->td_phys)];
+
+    /* Dummy and unsubmitted TDs may not be in the hash table. */
+    while (*entry && *entry != td)
+        entry = &(*entry)->td_hash_next;
+    if (*entry) *entry = td->td_hash_next;
+
+    free(td);
+}
 
 static struct ed* ed_get(struct ohci_hcd* ohci, struct usb_host_endpoint* ep,
                          struct usb_device* udev, unsigned int pipe,
@@ -1002,15 +1016,16 @@ static void td_submit_urb(struct ohci_hcd* ohci, struct urb* urb)
     u32 info = 0;
     int is_out = usb_pipeout(urb->pipe);
     int periodic = FALSE;
-    int n;
 
     if (!usb_gettoggle(urb->dev, usb_pipeendpoint(urb->pipe), is_out)) {
         usb_settoggle(urb->dev, usb_pipeendpoint(urb->pipe), is_out, 1);
         urb_priv->ed->hw.head_p &= ~cpu_to_le32(ED_C);
     }
 
-    if (data_len)
-        data_phys = urb->transfer_phys;
+    if (data_len && urb->num_mapped_sgs)
+        data_phys = sg_dma_address(urb->sg);
+    else if (data_len)
+        data_phys = urb->transfer_dma;
     else
         data_phys = 0;
 
@@ -1023,13 +1038,41 @@ static void td_submit_urb(struct ohci_hcd* ohci, struct urb* urb)
         info = is_out ? TD_T_TOGGLE | TD_CC | TD_DP_OUT
                       : TD_T_TOGGLE | TD_CC | TD_DP_IN;
 
-        while (data_len > 0) {
-            n = min(data_len, 4096);
+        if (!data_len) td_fill(ohci, info | TD_R, 0, 0, urb, cnt++);
 
-            if (n >= data_len) info |= TD_R;
-            td_fill(ohci, info, data_phys, n, urb, cnt++);
-            data_len -= n;
-            data_phys += n;
+        if (urb->num_mapped_sgs) {
+            struct scatterlist* sg;
+            int i;
+
+            /* One or more TDs per physically contiguous run, split at
+             * 4096 bytes; a TD may span at most two (contiguous) pages,
+             * which is what OHCI hardware can describe. */
+            for_each_sg(urb->sg, sg, urb->num_mapped_sgs, i)
+            {
+                phys_bytes run_phys = sg_dma_address(sg);
+                int run_len = sg_dma_len(sg);
+
+                while (run_len > 0) {
+                    u32 td_info = info;
+                    int n = run_len < 4096 ? run_len : 4096;
+
+                    if (n >= data_len) td_info |= TD_R;
+                    td_fill(ohci, td_info, run_phys, n, urb, cnt++);
+                    run_phys += n;
+                    run_len -= n;
+                    data_len -= n;
+                }
+            }
+        } else {
+            while (data_len > 0) {
+                int n = data_len < 4096 ? data_len : 4096;
+                u32 td_info = info;
+
+                if (n >= data_len) td_info |= TD_R;
+                td_fill(ohci, td_info, data_phys, n, urb, cnt++);
+                data_len -= n;
+                data_phys += n;
+            }
         }
 
         if (urb_priv->ed->type == PIPE_BULK) {
@@ -1040,7 +1083,7 @@ static void td_submit_urb(struct ohci_hcd* ohci, struct urb* urb)
 
     case PIPE_CONTROL:
         info = TD_CC | TD_DP_SETUP | TD_T_DATA0;
-        td_fill(ohci, info, urb->setup_phys, 8, urb, cnt++);
+        td_fill(ohci, info, urb->setup_dma, 8, urb, cnt++);
 
         if (data_len > 0) {
             info = TD_CC | TD_R | TD_T_DATA1;
@@ -1074,8 +1117,26 @@ static int ohci_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
     struct ed* ed;
     int i, retval;
 
+    retval = usb_hcd_setup_dma32(urb, 1);
+    if (retval) return retval;
+
     ed = ed_get(ohci, urb->ep, urb->dev, pipe, urb->interval);
     if (!ed) return ENOMEM;
+
+    /* OHCI DMA addresses are 32-bit */
+    if (urb->num_mapped_sgs) {
+        struct scatterlist* sg;
+
+        for_each_sg(urb->sg, sg, urb->num_mapped_sgs, i)
+        {
+            if (sg_dma_address(sg) + sg_dma_len(sg) - 1 > 0xffffffffUL)
+                return ERANGE;
+        }
+    }
+
+    /* The core bounces fragmented control data into one contiguous run,
+     * keeping the single-data-TD structure of the control path. */
+    if (usb_pipecontrol(urb->pipe) && urb->num_mapped_sgs > 1) return EINVAL;
 
     switch (ed->type) {
     case PIPE_ISOCHRONOUS:
@@ -1087,7 +1148,18 @@ static int ohci_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
         td_count = 2;
 
     default:
-        td_count += (urb->transfer_buffer_length + 4096 - 1) / 4096;
+        /* Count TDs from the actual physical segments using exactly the
+         * submission splitting rules (one TD per 4096-byte chunk of each
+         * physically contiguous run). */
+        if (urb->transfer_buffer_length && urb->num_mapped_sgs) {
+            struct scatterlist* sg;
+
+            for_each_sg(urb->sg, sg, urb->num_mapped_sgs, i)
+                td_count += (sg_dma_len(sg) + 4096 - 1) / 4096;
+        } else if (urb->transfer_buffer_length) {
+            td_count +=
+                (urb->transfer_buffer_length + 4096 - 1) / 4096;
+        }
 
         if (!td_count) td_count++;
         break;

@@ -479,6 +479,9 @@ static void xhci_reset_endpoint(struct usb_hcd* hcd, struct usb_device* udev,
 
     vd = xhci->devs[slot_id - 1];
     if (!vd) return;
+    /* The recovery command chain owns this endpoint until Set Dequeue
+     * completes.  Do not issue a competing reset or restart it early. */
+    if (vd->eps[dci].recovery_state) return;
 
     if (!vd->eps[dci].ring) {
         xhci_configure_endpoint(xhci, udev, ep);

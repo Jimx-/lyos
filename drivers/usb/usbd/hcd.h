@@ -45,6 +45,7 @@ struct hc_driver {
     const char* description;
     const char* product_desc;
     size_t hcd_priv_size;
+    unsigned int dma_alignment; /* payload/SETUP alignment, zero if unrestricted */
 
     int flags;
 #define HCD_MEMORY 0x0001
@@ -88,6 +89,7 @@ void usb_hcd_poll_rh_status(struct usb_hcd* hcd);
 int usb_hcd_submit_urb(struct urb* urb);
 int usb_hcd_map_urb_for_dma(struct usb_hcd* hcd, struct urb* urb);
 void usb_hcd_unmap_urb_for_dma(struct usb_hcd* hcd, struct urb* urb);
+int usb_hcd_setup_dma32(struct urb* urb, unsigned int alignment);
 
 int usb_hcd_link_urb_to_ep(struct usb_hcd* hcd, struct urb* urb);
 void usb_hcd_unlink_urb_from_ep(struct usb_hcd* hcd, struct urb* urb);

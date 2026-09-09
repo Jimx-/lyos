@@ -310,10 +310,7 @@ static int dwc2_host_init(struct dwc2_hsotg* hsotg)
     return 0;
 }
 
-static int dwc2_setup(struct usb_hcd* hcd)
-{
-    return dwc2_host_init(hcd_to_dwc2(hcd));
-}
+static int dwc2_setup(struct usb_hcd* hcd) { return dwc2_host_init(hcd_to_dwc2(hcd)); }
 
 static int dwc2_start(struct usb_hcd* hcd)
 {
@@ -321,40 +318,140 @@ static int dwc2_start(struct usb_hcd* hcd)
     return 0;
 }
 
+/* Per-submission transfer state, advancing through the mapped physical
+ * runs in maxp-aligned chunks. */
+struct dwc2_urb_priv {
+    struct scatterlist* sg; /* current run */
+    unsigned int run_pos;   /* bytes consumed within the current run */
+    unsigned int remaining; /* URB bytes not yet programmed */
+    unsigned int chunk_len; /* length currently programmed in the channel */
+    unsigned int pid;       /* PID of the next chunk */
+    unsigned int chunk_packets;
+    int chunk_dir_in;
+    int data_stage;
+    int halt_pending;
+    int status;
+};
+
+/* Largest chunk the channel can take for the current run.  Intermediate
+ * chunks must be multiples of the endpoint max packet size: a partial
+ * packet would signal end-of-transfer on the wire.  The final chunk may
+ * be unaligned. */
+static unsigned int dwc2_max_chunk(struct dwc2_hsotg* hsotg, struct urb* urb,
+                                   unsigned int run_remaining)
+{
+    unsigned int maxp = usb_maxpacket(urb->dev, urb->pipe);
+    unsigned int limit = hsotg->params.max_transfer_size;
+    unsigned int by_packets = hsotg->params.max_packet_count * maxp;
+
+    if (limit > by_packets) limit = by_packets;
+    if (run_remaining <= limit) return run_remaining;
+
+    limit -= limit % maxp;
+    return limit ? limit : maxp;
+}
+
+/* Compute the next chunk of an URB, following the mapped runs.  Returns
+ * the chunk length, or 0 if nothing remains. */
+static unsigned int dwc2_next_chunk(struct dwc2_hsotg* hsotg, struct urb* urb,
+                                    struct dwc2_urb_priv* urb_priv,
+                                    phys_bytes* dma)
+{
+    unsigned int run_left, chunk;
+
+    while (urb_priv->remaining > 0 && urb_priv->sg &&
+           sg_dma_len(urb_priv->sg) == 0) {
+        urb_priv->sg = sg_next(urb_priv->sg);
+        urb_priv->run_pos = 0;
+    }
+
+    if (urb_priv->remaining == 0 || !urb_priv->sg) return 0;
+
+    run_left = sg_dma_len(urb_priv->sg) - urb_priv->run_pos;
+    chunk = dwc2_max_chunk(hsotg, urb, run_left);
+    if (chunk > urb_priv->remaining) chunk = urb_priv->remaining;
+
+    *dma = sg_dma_address(urb_priv->sg) + urb_priv->run_pos;
+    return chunk;
+}
+
+/* Never release or reprogram a DMA buffer while its channel is enabled. */
+static int dwc2_halt_channel(struct dwc2_hsotg* hsotg, unsigned int channel)
+{
+    u32 hcchar = dwc2_readl(hsotg, HCCHAR(channel));
+
+    if (!(hcchar & HCCHAR_CHENA)) return 0;
+    dwc2_writel(hsotg, hcchar | HCCHAR_CHDIS | HCCHAR_CHENA, HCCHAR(channel));
+    return dwc2_hsotg_wait_bit_clear(hsotg, HCCHAR(channel), HCCHAR_CHENA,
+                                     10000);
+}
+
+/* HCTSIZ counts packets, including ZLPs, independently of byte count.
+ * Call only after the channel has halted, before acknowledging its status. */
+static int dwc2_account_channel(struct dwc2_hsotg* hsotg, struct urb* urb,
+                                 unsigned int channel)
+{
+    struct dwc2_urb_priv* priv = urb->hc_priv;
+    u32 hctsiz = dwc2_readl(hsotg, HCTSIZ(channel));
+    u32 hcint = dwc2_readl(hsotg, HCINT(channel));
+    unsigned int left = hctsiz & TSIZ_XFERSIZE_MASK;
+    unsigned int packets_left = (hctsiz & TSIZ_PKTCNT_MASK) >> TSIZ_PKTCNT_SHIFT;
+    unsigned int done, parity;
+
+    if (packets_left > priv->chunk_packets) return -EIO;
+    if ((hcint & HCINTMSK_XFERCOMPL) && priv->chunk_dir_in) {
+        if (left > priv->chunk_len) return -EIO;
+        done = priv->chunk_len - left;
+    } else if (hcint & HCINTMSK_XFERCOMPL) {
+        done = priv->chunk_len;
+    } else {
+        /* On an abnormal halt XFERSIZE measures AHB traffic, which may
+         * include unacknowledged OUT data.  Count only USB packets. */
+        done = (priv->chunk_packets - packets_left) *
+               usb_maxpacket(urb->dev, urb->pipe);
+        if (done > priv->chunk_len) done = priv->chunk_len;
+    }
+    parity = (priv->chunk_packets - packets_left) & 1;
+    if (priv->data_stage) {
+        if (done > priv->remaining) return -EOVERFLOW;
+        priv->remaining -= done;
+        priv->run_pos += done;
+        urb->actual_length += done;
+        priv->pid ^= parity << 1;
+        if (parity && !usb_pipecontrol(urb->pipe))
+            usb_dotoggle(urb->dev, usb_pipeendpoint(urb->pipe),
+                          !usb_pipein(urb->pipe));
+    }
+    return done;
+}
+
 static int dwc2_channel_xfer(struct dwc2_hsotg* hsotg, struct urb* urb,
                              phys_bytes dma, unsigned int length, int dir_in,
                              unsigned int pid)
 {
     const unsigned int channel = 0;
+    struct dwc2_urb_priv* priv = urb->hc_priv;
     unsigned int epnum = usb_pipeendpoint(urb->pipe);
     unsigned int maxp = usb_maxpacket(urb->dev, urb->pipe);
-    unsigned int packets, eptype, retries = 0;
+    unsigned int packets, eptype, retries = 0, total = 0;
     u32 hcchar, hcint, hctsiz;
+    int done;
 
-    if (!maxp) return EINVAL;
-    packets = length ? (length + maxp - 1) / maxp : 1;
-    if (packets > hsotg->params.max_packet_count ||
-        length > hsotg->params.max_transfer_size)
-        return E2BIG;
-
+    if (!maxp) return -EINVAL;
     switch (usb_pipetype(urb->pipe)) {
-    case PIPE_CONTROL:
-        eptype = 0;
-        break;
-    case PIPE_ISOCHRONOUS:
-        eptype = 1;
-        break;
-    case PIPE_BULK:
-        eptype = 2;
-        break;
-    case PIPE_INTERRUPT:
-        eptype = 3;
-        break;
-    default:
-        return EINVAL;
+    case PIPE_CONTROL: eptype = 0; break;
+    case PIPE_BULK: eptype = 2; break;
+    default: return -EINVAL;
     }
 
 retry:
+    packets = length ? (length + maxp - 1) / maxp : 1;
+    if (packets > hsotg->params.max_packet_count ||
+        length > hsotg->params.max_transfer_size)
+        return -E2BIG;
+    priv->chunk_len = length;
+    priv->chunk_packets = packets;
+    priv->chunk_dir_in = dir_in;
     dwc2_writel(hsotg, ~0U, HCINT(channel));
     hctsiz = (length & TSIZ_XFERSIZE_MASK) | (packets << TSIZ_PKTCNT_SHIFT) |
              (pid << TSIZ_SC_MC_PID_SHIFT);
@@ -374,27 +471,35 @@ retry:
         hcint = dwc2_readl(hsotg, HCINT(channel));
         if (hcint & (HCINTMSK_CHHLTD | HCINTMSK_XFERCOMPL | HCINTMSK_STALL |
                      HCINTMSK_XACTERR | HCINTMSK_BBLERR | HCINTMSK_AHBERR |
-                     HCINTMSK_DATATGLERR | HCINTMSK_NAK))
+                     HCINTMSK_DATATGLERR | HCINTMSK_NAK | HCINTMSK_NYET))
             break;
         usleep(1);
     }
+    if (dwc2_halt_channel(hsotg, channel)) {
+        /* Keep the URB and its mappings until a later halt interrupt. */
+        priv->halt_pending = 1;
+        return -ETIMEDOUT;
+    }
     hcint = dwc2_readl(hsotg, HCINT(channel));
+    done = dwc2_account_channel(hsotg, urb, channel);
     dwc2_writel(hsotg, hcint, HCINT(channel));
+    if (done < 0) return done;
+    total += done;
 
-    if (hcint & HCINTMSK_XFERCOMPL) {
-        hctsiz = dwc2_readl(hsotg, HCTSIZ(channel));
-        return length - (hctsiz & TSIZ_XFERSIZE_MASK);
-    }
-    if ((hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) && usb_pipeint(urb->pipe))
-        return -EAGAIN;
-    if ((hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) && retries++ < 1000) {
-        usleep(100);
-        goto retry;
-    }
     if (hcint & HCINTMSK_STALL) return -EPIPE;
     if (hcint & HCINTMSK_BBLERR) return -EOVERFLOW;
     if (hcint & HCINTMSK_DATATGLERR) return -EILSEQ;
     if (hcint & (HCINTMSK_XACTERR | HCINTMSK_AHBERR)) return -EIO;
+    if (hcint & HCINTMSK_XFERCOMPL) return total;
+    if ((hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) && retries++ < 1000) {
+        /* Preserve accepted packets instead of replaying the whole chunk. */
+        if (length && done == length) return total;
+        dma += done;
+        length -= done;
+        if (priv->data_stage) pid = priv->pid;
+        usleep(100);
+        goto retry;
+    }
     return -ETIMEDOUT;
 }
 
@@ -402,20 +507,25 @@ static void dwc2_start_intr_channel(struct dwc2_hsotg* hsotg,
                                     unsigned int channel)
 {
     struct urb* urb = hsotg->pending_intr_urbs[channel];
+    struct dwc2_urb_priv* urb_priv = urb->hc_priv;
     unsigned int epnum = usb_pipeendpoint(urb->pipe);
     unsigned int maxp = usb_maxpacket(urb->dev, urb->pipe);
-    unsigned int length = urb->transfer_buffer_length;
-    unsigned int packets = length ? (length + maxp - 1) / maxp : 1;
-    unsigned int pid = usb_gettoggle(urb->dev, epnum, !usb_pipein(urb->pipe))
-                           ? TSIZ_SC_MC_PID_DATA1
-                           : TSIZ_SC_MC_PID_DATA0;
+    phys_bytes dma = 0;
+    unsigned int length, packets;
     u32 hcchar, hctsiz;
+
+    length = dwc2_next_chunk(hsotg, urb, urb_priv, &dma);
+    urb_priv->chunk_len = length;
+    packets = length ? (length + maxp - 1) / maxp : 1;
+    urb_priv->chunk_packets = packets;
+    urb_priv->chunk_dir_in = usb_pipein(urb->pipe);
+    urb_priv->data_stage = 1;
 
     dwc2_writel(hsotg, ~0U, HCINT(channel));
     hctsiz = (length & TSIZ_XFERSIZE_MASK) | (packets << TSIZ_PKTCNT_SHIFT) |
-             (pid << TSIZ_SC_MC_PID_SHIFT);
+             (urb_priv->pid << TSIZ_SC_MC_PID_SHIFT);
     dwc2_writel(hsotg, hctsiz, HCTSIZ(channel));
-    dwc2_writel(hsotg, (u32)urb->transfer_phys, HCDMA(channel));
+    dwc2_writel(hsotg, (u32)dma, HCDMA(channel));
     dwc2_writel(hsotg, 0, HCSPLT(channel));
     dwc2_writel(hsotg,
                 HCINTMSK_XFERCOMPL | HCINTMSK_CHHLTD | HCINTMSK_NAK |
@@ -444,18 +554,73 @@ static void dwc2_intr_schedule(struct timer_list* timer)
     }
 }
 
+static void dwc2_giveback_channel(struct dwc2_hsotg* hsotg, struct urb* urb,
+                                   unsigned int channel, int status)
+{
+    hsotg->pending_intr_urbs[channel] = NULL;
+    hsotg->intr_schedule_map &= ~BIT(channel);
+    dwc2_writel(hsotg, 0, HCINTMSK(channel));
+    dwc2_writel(hsotg, dwc2_readl(hsotg, HAINTMSK) & ~BIT(channel), HAINTMSK);
+    free(urb->hc_priv);
+    urb->hc_priv = NULL;
+    usb_hcd_unlink_urb_from_ep(hsotg->hcd, urb);
+    usb_hcd_giveback_urb(hsotg->hcd, urb, status);
+}
+
+static void dwc2_complete_sync_channel(struct dwc2_hsotg* hsotg)
+{
+    struct urb* urb = hsotg->pending_intr_urbs[0];
+    struct dwc2_urb_priv* priv;
+
+    if (!urb) return;
+    priv = urb->hc_priv;
+    if (!priv->halt_pending ||
+        (dwc2_readl(hsotg, HCCHAR(0)) & HCCHAR_CHENA))
+        return;
+    dwc2_account_channel(hsotg, urb, 0);
+    dwc2_writel(hsotg, ~0U, HCINT(0));
+    dwc2_giveback_channel(hsotg, urb, 0, priv->status);
+}
+
 static int dwc2_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
 {
     struct dwc2_hsotg* hsotg = hcd_to_dwc2(hcd);
     unsigned int epnum = usb_pipeendpoint(urb->pipe), i;
+    struct dwc2_urb_priv* urb_priv;
     int dir_in = usb_pipein(urb->pipe);
-    int pid, ret, status = 0;
+    int ret, status = 0;
+    phys_bytes dma;
 
     if (usb_pipeisoc(urb->pipe)) return ENOTSUP;
+    if (!usb_pipeint(urb->pipe) && hsotg->pending_intr_urbs[0]) return EBUSY;
+    if (!usb_maxpacket(urb->dev, urb->pipe)) return EINVAL;
+
+    ret = usb_hcd_setup_dma32(urb, 4);
+    if (ret) return ret;
+
+    /* The core bounces fragmented payloads into one contiguous run; HCDMA
+     * is 32-bit wide, so reject anything above 4 GiB. */
+    if (urb->num_mapped_sgs > 1) return EINVAL;
+    if (urb->num_mapped_sgs &&
+        sg_dma_address(urb->sg) + sg_dma_len(urb->sg) - 1 > 0xffffffffUL)
+        return ERANGE;
 
     ret = usb_hcd_link_urb_to_ep(hcd, urb);
     if (ret) return ret;
-    urb->hc_priv = hsotg;
+
+    urb_priv = malloc(sizeof(*urb_priv));
+    if (!urb_priv) {
+        usb_hcd_unlink_urb_from_ep(hcd, urb);
+        return ENOMEM;
+    }
+
+    memset(urb_priv, 0, sizeof(*urb_priv));
+    urb_priv->sg = urb->sg;
+    urb_priv->remaining = urb->transfer_buffer_length;
+    urb_priv->pid = usb_gettoggle(urb->dev, epnum, !dir_in)
+                        ? TSIZ_SC_MC_PID_DATA1
+                        : TSIZ_SC_MC_PID_DATA0;
+    urb->hc_priv = urb_priv;
     urb->actual_length = 0;
 
     /* A completion callback may resubmit an interrupt URB immediately. */
@@ -464,6 +629,8 @@ static int dwc2_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
             if (!hsotg->pending_intr_urbs[i]) break;
         }
         if (i == hsotg->hw_params.host_channels) {
+            urb->hc_priv = NULL;
+            free(urb_priv);
             usb_hcd_unlink_urb_from_ep(hcd, urb);
             return EBUSY;
         }
@@ -475,87 +642,99 @@ static int dwc2_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
         return 0;
     }
 
+    hsotg->pending_intr_urbs[0] = urb;
     if (usb_pipecontrol(urb->pipe)) {
-        ret = dwc2_channel_xfer(hsotg, urb, urb->setup_phys,
+        ret = dwc2_channel_xfer(hsotg, urb, urb->setup_dma,
                                 sizeof(struct usb_ctrlrequest), FALSE,
                                 TSIZ_SC_MC_PID_SETUP);
         if (ret < 0) goto done;
-        if (urb->transfer_buffer_length) {
-            ret = dwc2_channel_xfer(hsotg, urb, urb->transfer_phys,
-                                    urb->transfer_buffer_length, dir_in,
-                                    TSIZ_SC_MC_PID_DATA1);
-            if (ret < 0) goto done;
-            urb->actual_length = ret;
+        urb_priv->pid = TSIZ_SC_MC_PID_DATA1;
+    }
+
+    urb_priv->data_stage = 1;
+    if (!usb_pipecontrol(urb->pipe) && !urb_priv->remaining) {
+        ret = dwc2_channel_xfer(hsotg, urb, 0, 0, dir_in, urb_priv->pid);
+        goto done;
+    }
+    while (urb_priv->remaining > 0) {
+        unsigned int chunk = dwc2_next_chunk(hsotg, urb, urb_priv, &dma);
+
+        if (!chunk) {
+            ret = -EIO;
+            goto done;
         }
-        ret =
-            dwc2_channel_xfer(hsotg, urb, 0, 0, !dir_in, TSIZ_SC_MC_PID_DATA1);
-    } else {
-        pid = usb_gettoggle(urb->dev, epnum, !dir_in) ? TSIZ_SC_MC_PID_DATA1
-                                                      : TSIZ_SC_MC_PID_DATA0;
-        ret = dwc2_channel_xfer(hsotg, urb, urb->transfer_phys,
-                                urb->transfer_buffer_length, dir_in, pid);
-        if (ret >= 0) {
-            urb->actual_length = ret;
-            if (((ret + usb_maxpacket(urb->dev, urb->pipe) - 1) /
-                 usb_maxpacket(urb->dev, urb->pipe)) &
-                1)
-                usb_dotoggle(urb->dev, epnum, !dir_in);
-        }
+        ret = dwc2_channel_xfer(hsotg, urb, dma, chunk, dir_in, urb_priv->pid);
+        if (ret < 0) goto done;
+        if (ret < chunk) break;
+    }
+    ret = 0;
+    if (usb_pipecontrol(urb->pipe)) {
+        urb_priv->data_stage = 0;
+        ret = dwc2_channel_xfer(hsotg, urb, 0, 0,
+                                !urb->transfer_buffer_length || !dir_in,
+                                TSIZ_SC_MC_PID_DATA1);
     }
 
 done:
     if (ret < 0) status = -ret;
-    usb_hcd_unlink_urb_from_ep(hcd, urb);
-    usb_hcd_giveback_urb(hcd, urb, status);
+    if (urb_priv->halt_pending) {
+        urb_priv->status = status;
+        dwc2_writel(hsotg, HCINTMSK_CHHLTD, HCINTMSK(0));
+        dwc2_writel(hsotg, dwc2_readl(hsotg, HAINTMSK) | BIT(0), HAINTMSK);
+        /* The halt may have arrived before its interrupt was enabled. */
+        dwc2_complete_sync_channel(hsotg);
+        return 0;
+    }
+    dwc2_giveback_channel(hsotg, urb, 0, status);
     return 0;
 }
 
 static void dwc2_complete_intr_channel(struct dwc2_hsotg* hsotg,
                                        unsigned int channel)
 {
-    struct usb_hcd* hcd = hsotg->hcd;
     struct urb* urb = hsotg->pending_intr_urbs[channel];
-    unsigned int epnum, maxp;
-    int status = 0;
-    u32 hcint, hctsiz;
+    struct dwc2_urb_priv* priv;
+    int done, status;
+    u32 hcint;
 
     if (!urb) return;
-
-    hcint = dwc2_readl(hsotg, HCINT(channel));
-    dwc2_writel(hsotg, hcint, HCINT(channel));
-
-    if (hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) {
-        dwc2_writel(hsotg, 0, HCINTMSK(channel));
-        hsotg->intr_schedule_map |= BIT(channel);
-        if (hsotg->intr_schedule_timer.expire_time == TIMER_UNSET)
-            set_timer(&hsotg->intr_schedule_timer, 1, dwc2_intr_schedule,
-                      hsotg);
+    priv = urb->hc_priv;
+    if (dwc2_halt_channel(hsotg, channel)) {
+        /* Keep status bits and mappings for the eventual halt interrupt. */
+        dwc2_writel(hsotg, HCINTMSK_CHHLTD, HCINTMSK(channel));
         return;
     }
-
-    hsotg->pending_intr_urbs[channel] = NULL;
+    hcint = dwc2_readl(hsotg, HCINT(channel));
+    done = dwc2_account_channel(hsotg, urb, channel);
+    dwc2_writel(hsotg, hcint, HCINT(channel));
     dwc2_writel(hsotg, 0, HCINTMSK(channel));
-    dwc2_writel(hsotg, dwc2_readl(hsotg, HAINTMSK) & ~BIT(channel), HAINTMSK);
 
-    if (hcint & HCINTMSK_XFERCOMPL) {
-        hctsiz = dwc2_readl(hsotg, HCTSIZ(channel));
-        urb->actual_length =
-            urb->transfer_buffer_length - (hctsiz & TSIZ_XFERSIZE_MASK);
-        epnum = usb_pipeendpoint(urb->pipe);
-        maxp = usb_maxpacket(urb->dev, urb->pipe);
-        if (((urb->actual_length + maxp - 1) / maxp) & 1)
-            usb_dotoggle(urb->dev, epnum, !usb_pipein(urb->pipe));
-    } else if (hcint & HCINTMSK_STALL)
+    if (done < 0)
+        status = -done;
+    else if (hcint & HCINTMSK_STALL)
         status = EPIPE;
     else if (hcint & HCINTMSK_BBLERR)
         status = EOVERFLOW;
     else if (hcint & HCINTMSK_DATATGLERR)
         status = EILSEQ;
-    else
+    else if (hcint & (HCINTMSK_XACTERR | HCINTMSK_AHBERR))
+        status = EIO;
+    else if (hcint & HCINTMSK_XFERCOMPL) {
+        if (done < priv->chunk_len || !priv->remaining) {
+            dwc2_giveback_channel(hsotg, urb, channel, 0);
+            return;
+        }
+        dwc2_start_intr_channel(hsotg, channel);
+        return;
+    } else if (hcint & (HCINTMSK_NAK | HCINTMSK_NYET)) {
+        hsotg->intr_schedule_map |= BIT(channel);
+        if (hsotg->intr_schedule_timer.expire_time == TIMER_UNSET)
+            set_timer(&hsotg->intr_schedule_timer, 1, dwc2_intr_schedule, hsotg);
+        return;
+    } else
         status = EIO;
 
-    usb_hcd_unlink_urb_from_ep(hcd, urb);
-    usb_hcd_giveback_urb(hcd, urb, status);
+    dwc2_giveback_channel(hsotg, urb, channel, status);
 }
 
 static void dwc2_irq(struct usb_hcd* hcd)
@@ -567,6 +746,7 @@ static void dwc2_irq(struct usb_hcd* hcd)
     if (status & GINTSTS_HCHINT) {
         u32 haint = dwc2_readl(hsotg, HAINT) & dwc2_readl(hsotg, HAINTMSK);
 
+        if (haint & BIT(0)) dwc2_complete_sync_channel(hsotg);
         for (channel = 1; channel < hsotg->hw_params.host_channels; channel++) {
             if (haint & BIT(channel))
                 dwc2_complete_intr_channel(hsotg, channel);
@@ -697,6 +877,7 @@ error:
 }
 
 static const struct hc_driver dwc2_hc_driver = {
+    .dma_alignment = 4,
     .description = NAME,
     .product_desc = "DWC2 Host Controller",
     .hcd_priv_size = sizeof(unsigned long),

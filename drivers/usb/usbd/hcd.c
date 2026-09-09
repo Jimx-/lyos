@@ -4,12 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <lyos/vm.h>
 #include <lyos/sysutils.h>
 #include <lyos/irqctl.h>
 #include <errno.h>
 #include <lyos/usb.h>
 #include <lyos/idr.h>
+#include <asm/page.h>
 
 #include "usb.h"
 #include "hcd.h"
@@ -583,6 +585,60 @@ static int rh_urb_enqueue(struct usb_hcd* hcd, struct urb* urb)
     return EINVAL;
 }
 
+/* The kernel stores the va2pa failure sentinel in the output even when the
+ * syscall reports success; userspace must reject it itself. */
+#define UMAP_BAD_PA ((phys_bytes)-1)
+
+/* Touch every page of [buf, buf + len) so that lazily-mapped anonymous
+ * pages exist before address translation; va2pa fails on untouched pages. */
+static void touch_buffer_pages(void* buf, size_t len)
+{
+    unsigned long addr = (unsigned long)buf & ~(unsigned long)(ARCH_PG_SIZE - 1);
+    unsigned long end = (unsigned long)buf + len;
+    volatile char sink = 0;
+
+    for (; addr < end; addr += ARCH_PG_SIZE) sink = *(volatile char*)addr;
+    (void)sink;
+}
+
+/* Discover the physical runs of [buf, buf + len) and fill the caller's
+ * table (allocated with capacity for every page spanned).  Merges page
+ * steps whose physical addresses continue the previous run.  Returns the
+ * number of populated entries, or a negative Lyos error code. */
+static int build_sg_for_buffer(struct scatterlist* sgl, void* buf,
+                               unsigned int len)
+{
+    vir_bytes cur = (vir_bytes)buf;
+    unsigned int remaining = len;
+    int nents = 0;
+
+    while (remaining > 0) {
+        vir_bytes page_span = ARCH_PG_SIZE - (cur & (ARCH_PG_SIZE - 1));
+        unsigned int run = page_span < remaining ? page_span : remaining;
+        phys_bytes pa;
+        int retval;
+
+        /* size is unused by the kernel for UMT_VADDR */
+        retval = umap(SELF, UMT_VADDR, cur, run, &pa);
+        if (retval) return -retval;
+        if (pa == UMAP_BAD_PA) return -EFAULT;
+
+        if (nents > 0 && pa == sg_dma_address(&sgl[nents - 1]) +
+                                        sg_dma_len(&sgl[nents - 1])) {
+            sgl[nents - 1].length += run;
+        } else {
+            sg_set_buf(&sgl[nents], (void*)cur, run);
+            sg_dma_address(&sgl[nents]) = pa;
+            nents++;
+        }
+
+        cur += run;
+        remaining -= run;
+    }
+
+    return nents;
+}
+
 static int map_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
 {
     if (hcd->driver->map_urb_for_dma)
@@ -593,23 +649,139 @@ static int map_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
 
 int usb_hcd_map_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
 {
-    int retval = 0;
+    unsigned long buf = (unsigned long)urb->transfer_buffer;
+    unsigned int len = urb->transfer_buffer_length;
+    unsigned int pages;
+    struct scatterlist* sgl;
+    int is_control = usb_endpoint_xfer_control(&urb->ep->desc);
+    int nents;
+    int retval;
 
-    if (usb_endpoint_xfer_control(&urb->ep->desc)) {
+    if (is_control) {
+        phys_bytes setup_dma;
+        size_t setup_len = sizeof(struct usb_ctrlrequest);
+
+        touch_buffer_pages(urb->setup_packet, setup_len);
+
         retval = umap(SELF, UMT_VADDR, (vir_bytes)urb->setup_packet,
-                      sizeof(struct usb_ctrlrequest), &urb->setup_phys);
-
+                      setup_len, &setup_dma);
         if (retval) return retval;
+        if (setup_dma == UMAP_BAD_PA) return EFAULT;
+
+        /* The SETUP packet must not cross a page; within one page the
+         * physical translation is contiguous. */
+        if (((unsigned long)urb->setup_packet & ~(unsigned long)(ARCH_PG_SIZE - 1)) !=
+            (((unsigned long)urb->setup_packet + setup_len - 1) &
+             ~(unsigned long)(ARCH_PG_SIZE - 1)))
+            return EFAULT;
+
+        urb->setup_dma = setup_dma;
     }
 
-    if (urb->transfer_buffer_length != 0) {
-        retval = umap(SELF, UMT_VADDR, (vir_bytes)urb->transfer_buffer,
-                      urb->transfer_buffer_length, &urb->transfer_phys);
+    if (len == 0) return 0;
 
-        if (retval) return retval;
+    if (len > (unsigned long)-1 - buf) return EOVERFLOW;
+
+    touch_buffer_pages(urb->transfer_buffer, len);
+
+    pages = ((buf & (ARCH_PG_SIZE - 1)) + len + ARCH_PG_SIZE - 1) / ARCH_PG_SIZE;
+    if (pages > ((size_t)-1) / sizeof(struct scatterlist)) return ENOMEM;
+
+    sgl = malloc(pages * sizeof(struct scatterlist));
+    if (!sgl) return ENOMEM;
+
+    sg_init_table(sgl, pages);
+
+    nents = build_sg_for_buffer(sgl, urb->transfer_buffer, len);
+    if (nents < 0) {
+        free(sgl);
+        return -nents;
     }
 
-    return retval;
+    if (nents > 1 || (hcd->driver->dma_alignment &&
+                      (sg_dma_address(sgl) & (hcd->driver->dma_alignment - 1)))) {
+        /* A discovered physical run can end midway through a USB packet.
+         * Lyos transfer buffers are plain byte buffers, so their runs are
+         * not guaranteed to be multiples of the endpoint maximum packet
+         * size (unlike Linux, where the block layer supplies aligned SG
+         * entries).  Splitting a transfer at an unaligned run boundary
+         * would emit a short packet mid-stream and corrupt the transfer
+         * on the wire.  Bounce fragmented payloads through one
+         * physically contiguous mapping instead; HCDs then always see a
+         * single run, and mid-transfer splits they perform themselves are
+         * maxp-aligned (e.g. OHCI's 4096-byte TD chunks).  A controller
+         * alignment requirement can also force bouncing a single run. */
+        void* bounce;
+        size_t map_len = (size_t)pages * ARCH_PG_SIZE;
+
+        bounce = mmap(NULL, map_len, PROT_READ | PROT_WRITE,
+                      MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE,
+                      -1, 0);
+        if (bounce == MAP_FAILED) {
+            free(sgl);
+            return ENOMEM;
+        }
+
+        if (usb_pipeout(urb->pipe))
+            memcpy(bounce, urb->transfer_buffer, len);
+
+        sg_init_table(sgl, pages);
+        nents = build_sg_for_buffer(sgl, bounce, len);
+        if (nents != 1) {
+            /* MAP_CONTIG must give one physical run */
+            munmap(bounce, map_len);
+            free(sgl);
+            return EFAULT;
+        }
+
+        urb->bounce_buffer = bounce;
+    }
+
+    /* Capacity is separate from the populated count: move the end marker
+     * from the final allocated slot to the final populated entry. */
+    if (nents < pages) {
+        sg_unmark_end(&sgl[pages - 1]);
+        sg_mark_end(&sgl[nents - 1]);
+    }
+
+    urb->sg = sgl;
+    urb->num_sgs = urb->num_mapped_sgs = nents;
+    urb->transfer_dma = sg_dma_address(&sgl[0]);
+
+    return 0;
+}
+
+/* Called by 32-bit HCDs before publishing any descriptors.  The mmap API
+ * has no DMA mask argument, so verify the replacement as well as the
+ * original allocation; never truncate an unaddressable SETUP pointer. */
+int usb_hcd_setup_dma32(struct urb* urb, unsigned int alignment)
+{
+    void* bounce;
+    phys_bytes dma;
+    int retval;
+    size_t len = sizeof(struct usb_ctrlrequest);
+
+    if (!usb_pipecontrol(urb->pipe)) return 0;
+    if (urb->setup_dma <= (phys_bytes)0xffffffffUL - (len - 1) &&
+        !(urb->setup_dma & (alignment - 1)))
+        return 0;
+
+    bounce = mmap(NULL, ARCH_PG_SIZE, PROT_READ | PROT_WRITE,
+                  MAP_POPULATE | MAP_ANONYMOUS | MAP_CONTIG | MAP_PRIVATE,
+                  -1, 0);
+    if (bounce == MAP_FAILED) return ENOMEM;
+    memcpy(bounce, urb->setup_packet, len);
+    retval = umap(SELF, UMT_VADDR, (vir_bytes)bounce, len, &dma);
+    if (!retval && dma == UMAP_BAD_PA) retval = EFAULT;
+    if (!retval && dma > (phys_bytes)0xffffffffUL - (len - 1)) retval = ERANGE;
+    if (retval) {
+        munmap(bounce, ARCH_PG_SIZE);
+        return retval;
+    }
+
+    urb->setup_bounce_buffer = bounce;
+    urb->setup_dma = dma;
+    return 0;
 }
 
 static void unmap_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
@@ -620,7 +792,42 @@ static void unmap_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
         usb_hcd_unmap_urb_for_dma(hcd, urb);
 }
 
-void usb_hcd_unmap_urb_for_dma(struct usb_hcd* hcd, struct urb* urb) {}
+void usb_hcd_unmap_urb_for_dma(struct usb_hcd* hcd, struct urb* urb)
+{
+    if (urb->setup_bounce_buffer) {
+        munmap(urb->setup_bounce_buffer, ARCH_PG_SIZE);
+        urb->setup_bounce_buffer = NULL;
+    }
+
+    if (urb->bounce_buffer) {
+        unsigned long buf = (unsigned long)urb->transfer_buffer;
+        unsigned int len = urb->transfer_buffer_length;
+        size_t map_len =
+            (size_t)(((buf & (ARCH_PG_SIZE - 1)) + len + ARCH_PG_SIZE - 1) /
+                     ARCH_PG_SIZE) *
+            ARCH_PG_SIZE;
+
+        if (usb_pipein(urb->pipe) && urb->actual_length) {
+            size_t n = urb->actual_length;
+
+            if (n > urb->transfer_buffer_length)
+                n = urb->transfer_buffer_length;
+            memcpy(urb->transfer_buffer, urb->bounce_buffer, n);
+        }
+
+        munmap(urb->bounce_buffer, map_len);
+        urb->bounce_buffer = NULL;
+    }
+
+    if (urb->sg) {
+        free(urb->sg);
+        urb->sg = NULL;
+    }
+
+    urb->num_sgs = urb->num_mapped_sgs = 0;
+    urb->transfer_dma = 0;
+    urb->setup_dma = 0;
+}
 
 int usb_hcd_submit_urb(struct urb* urb)
 {

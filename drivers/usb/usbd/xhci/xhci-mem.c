@@ -91,6 +91,7 @@ static void xhci_link_segments(struct xhci_segment* first,
             link->parameter = next->dma;
             link->status = 0;
             link->control = cpu_to_le32(TRB_TYPE(TRB_LINK) | TRB_CHAIN);
+            if (cur == last) link->control |= cpu_to_le32(TRB_TC);
             /* The cycle bit (bit 0) of the Link TRB will be set by
              * the ring initialization code. */
         }

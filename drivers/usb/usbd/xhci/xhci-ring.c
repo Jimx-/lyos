@@ -33,14 +33,12 @@ static int xhci_ring_advance_enqueue(struct xhci_ring* ring)
 
     /* Check if we've reached the Link TRB at the end of this segment */
     if (TRB_TYPE_GET(le32_to_cpu(trb->control)) == TRB_LINK) {
-        /* Follow the link to the next segment */
-        seg = seg->next;
-        trb = seg->trbs;
-
         /* Toggle the cycle state if the Link TRB has TC bit set */
-        if (le32_to_cpu(ring->enqueue->control) & TRB_TC) {
+        if (le32_to_cpu(trb->control) & TRB_TC) {
             ring->cycle_state ^= 1;
         }
+        seg = seg->next;
+        trb = seg->trbs;
     }
 
     /* Check if the ring is full (enqueue catches up to dequeue) */
@@ -62,7 +60,11 @@ static int xhci_ring_advance_enqueue(struct xhci_ring* ring)
  * Returns 0 on success, ENOSPC if the ring is full. */
 int xhci_ring_enqueue(struct xhci_ring* ring, struct xhci_trb* trb_template)
 {
+    struct xhci_ring next = *ring;
     struct xhci_trb* trb = ring->enqueue;
+
+    /* Check space before making even one TRB visible. */
+    if (xhci_ring_advance_enqueue(&next) < 0) return ENOSPC;
 
     /* Copy the TRB template but set the cycle bit to match ring state */
     trb->parameter = trb_template->parameter;
@@ -73,11 +75,77 @@ int xhci_ring_enqueue(struct xhci_ring* ring, struct xhci_trb* trb_template)
     /* Memory barrier: ensure TRB is fully written before we advance */
     wmb();
 
-    /* Advance the enqueue pointer */
-    if (xhci_ring_advance_enqueue(ring) < 0) {
-        return ENOSPC;
+    if (trb + 1 == &ring->enqueue_seg->trbs[TRBS_PER_SEGMENT - 1]) {
+        struct xhci_trb* link = trb + 1;
+        u32 control = le32_to_cpu(link->control) & ~(TRB_CYCLE | TRB_CHAIN);
+
+        control |= ring->cycle_state | (le32_to_cpu(trb->control) & TRB_CHAIN);
+        link->control = cpu_to_le32(control);
+    }
+    *ring = next;
+
+    return 0;
+}
+
+struct xhci_urb_priv {
+    struct xhci_segment* first_seg;
+    struct xhci_trb* first;
+    struct xhci_segment* end_seg;
+    struct xhci_trb* end;
+    unsigned int end_cycle;
+    unsigned int num_trbs;
+    int has_short_event;
+    u32 short_actual_length;
+};
+
+/* Reserve the entire batch without modifying DMA memory.  With no sleeps
+ * between reservation and publication, another worker cannot enqueue here.
+ * Hold the first cycle bit invalid until every TRB and Link is ready. */
+static int xhci_queue_trbs(struct xhci_ring* ring, struct xhci_trb* trbs,
+                           unsigned int count, struct xhci_urb_priv* priv)
+{
+    struct xhci_ring cursor = *ring;
+    struct xhci_trb* first = ring->enqueue;
+    unsigned int first_cycle = ring->cycle_state;
+    unsigned int i;
+
+    for (i = 0; i < count; i++) {
+        if (xhci_ring_advance_enqueue(&cursor) < 0) return ENOSPC;
     }
 
+    priv->first_seg = ring->enqueue_seg;
+    priv->first = first;
+    priv->end_seg = cursor.enqueue_seg;
+    priv->end = cursor.enqueue;
+    priv->end_cycle = cursor.cycle_state;
+    priv->num_trbs = count;
+
+    cursor = *ring;
+    for (i = 0; i < count; i++) {
+        struct xhci_trb* trb = cursor.enqueue;
+        u32 control = le32_to_cpu(trbs[i].control) & ~TRB_CYCLE;
+
+        control |= cursor.cycle_state ^ (i == 0 ? TRB_CYCLE : 0);
+        trb->parameter = trbs[i].parameter;
+        trb->status = trbs[i].status;
+        trb->control = cpu_to_le32(control);
+
+        if (trb + 1 == &cursor.enqueue_seg->trbs[TRBS_PER_SEGMENT - 1]) {
+            struct xhci_trb* link = trb + 1;
+            u32 link_control = le32_to_cpu(link->control);
+
+            link_control &= ~(TRB_CYCLE | TRB_CHAIN);
+            link_control |= cursor.cycle_state | (control & TRB_CHAIN);
+            link->control = cpu_to_le32(link_control);
+        }
+        xhci_ring_advance_enqueue(&cursor); /* reservation guarantees space */
+    }
+
+    *ring = cursor;
+    wmb();
+    first->control = cpu_to_le32((le32_to_cpu(first->control) & ~TRB_CYCLE) |
+                                first_cycle);
+    wmb();
     return 0;
 }
 
@@ -96,6 +164,8 @@ void xhci_ring_ep_db(struct xhci_hcd* xhci, unsigned int slot_id,
                      unsigned int dci)
 {
     volatile u32* db = xhci_db_addr(xhci, slot_id);
+
+    if (xhci->devs[slot_id - 1]->eps[dci].recovery_state) return;
 
     /* Doorbell target is the DCI */
     wmb();
@@ -225,122 +295,128 @@ int xhci_cmd_set_tr_dequeue(struct xhci_hcd* xhci, unsigned int slot_id,
  * For isochronous transfers: one Isoch TRB per packet (TODO)
  * ========================================================================= */
 
+/* Count exactly the same 64-KiB chunks used by the emission loop. */
+static unsigned int xhci_data_trbs(phys_bytes dma, u32 len)
+{
+    return len ? ((u64)(dma & 0xffff) + len + 0xffff) >> 16 : 0;
+}
+
 int xhci_queue_urb(struct xhci_hcd* xhci, struct urb* urb, unsigned int slot_id,
                    unsigned int ep_index)
 {
     struct xhci_virt_device* virt_dev;
     struct xhci_ring* ring;
-    struct xhci_trb trb;
+    struct xhci_trb* trbs;
+    struct xhci_urb_priv* priv;
+    struct scatterlist* sg;
     int type = usb_pipetype(urb->pipe);
+    int is_control = type == PIPE_CONTROL;
     int is_in = usb_pipein(urb->pipe);
-    phys_bytes data_phys = urb->transfer_phys;
+    unsigned int maxp = usb_maxpacket(urb->dev, urb->pipe);
     u32 data_len = urb->transfer_buffer_length;
-    int retval;
+    u32 transferred = 0;
+    u64 count = 0, mapped_len = 0;
+    unsigned int index = 0;
+    int i, retval;
 
-    if (slot_id == 0 || slot_id > xhci->num_slots) return ENODEV;
+    if (slot_id == 0 || slot_id > xhci->num_slots ||
+        ep_index >= XHCI_MAX_ENDPOINTS)
+        return ENODEV;
     virt_dev = xhci->devs[slot_id - 1];
     if (!virt_dev) return ENODEV;
-
     ring = virt_dev->eps[ep_index].ring;
     if (!ring) return ENODEV;
+    if (virt_dev->eps[ep_index].recovery_state) return EBUSY;
+    if (type == PIPE_ISOCHRONOUS) return ENOSYS;
+    if (!maxp) return EINVAL;
 
-    virt_dev->eps[ep_index].has_short_event = 0;
-    urb->hc_priv =
-        (void*)(unsigned long)ep_index; /* remember ep for completion */
-
-    switch (type) {
-    case PIPE_CONTROL: {
-        u32 trt;
-
-        /* TRT (Transfer Type, bits [17:16]):
-         *   0 = No Data, 2 = IN Data, 3 = OUT Data */
-        if (data_len == 0)
-            trt = 0;
-        else if (is_in)
-            trt = 2;
-        else
-            trt = 3;
-
-        /* Stage 1: SETUP — IDT carries the 8-byte SETUP packet inline */
-        memset(&trb, 0, sizeof(trb));
-        memcpy(&trb.parameter, urb->setup_packet, 8);
-        trb.status = 8;
-        trb.control =
-            cpu_to_le32(TRB_TYPE(TRB_SETUP_STAGE) | TRB_IDT | (trt << 16));
-        retval = xhci_ring_enqueue(ring, &trb);
-        if (retval) return retval;
-
-        /* Stage 2: DATA (optional) */
-        if (data_len > 0) {
-            memset(&trb, 0, sizeof(trb));
-            trb.parameter = data_phys;
-            trb.status = data_len;
-            trb.control = cpu_to_le32(TRB_TYPE(TRB_DATA_STAGE) | TRB_ISP);
-            if (is_in) trb.control |= cpu_to_le32(TRB_DATA_DIR_IN);
-            retval = xhci_ring_enqueue(ring, &trb);
-            if (retval) return retval;
+    if (urb->num_mapped_sgs) {
+        for_each_sg(urb->sg, sg, urb->num_mapped_sgs, i)
+        {
+            count += xhci_data_trbs(sg_dma_address(sg), sg_dma_len(sg));
+            mapped_len += sg_dma_len(sg);
         }
+        if (mapped_len != data_len) return EINVAL;
+    } else {
+        count = xhci_data_trbs(urb->transfer_dma, data_len);
+    }
+    count += is_control ? 2 : (data_len == 0);
+    /* Leave one unused slot to distinguish full and empty rings. */
+    if (count >= (u64)ring->num_segs * (TRBS_PER_SEGMENT - 1)) return ENOSPC;
+    if (count > (size_t)-1 / sizeof(*trbs)) return ENOMEM;
 
-        /* Stage 3: STATUS — IOC generates the completion event */
-        memset(&trb, 0, sizeof(trb));
-        trb.control = cpu_to_le32(TRB_TYPE(TRB_STATUS_STAGE) | TRB_IOC);
-        if (data_len == 0 || is_in)
-            ; /* STATUS direction is OUT */
-        else
-            trb.control |=
-                cpu_to_le32(TRB_DATA_DIR_IN); /* STATUS IN after OUT data */
-        retval = xhci_ring_enqueue(ring, &trb);
-        if (retval) return retval;
-        break;
+    trbs = calloc((size_t)count, sizeof(*trbs));
+    if (!trbs) return ENOMEM;
+    priv = calloc(1, sizeof(*priv));
+    if (!priv) {
+        free(trbs);
+        return ENOMEM;
     }
 
-    case PIPE_BULK:
-    case PIPE_INTERRUPT: {
-        /* Queue as one or more chained Normal TRBs.
-         * xHC supports up to 64KB per TRB (TD size field is 17 bits
-         * for the remainder, but the Transfer Buffer Pointer can span
-         * a full 64KB segment). We split into 16KB chunks for safety. */
-        u32 remaining = data_len;
-        phys_bytes cur_phys = data_phys;
+    if (is_control) {
+        struct xhci_trb* trb = &trbs[index++];
+        u32 trt = data_len == 0 ? 0 : (is_in ? 3 : 2);
 
-        if (data_len == 0) {
-            /* Zero-length transfer - queue a single No-Op style TRB */
-            memset(&trb, 0, sizeof(trb));
-            trb.control = cpu_to_le32(TRB_TYPE(TRB_NORMAL) | TRB_IOC);
-            retval = xhci_ring_enqueue(ring, &trb);
-            if (retval) return retval;
-            break;
-        }
+        memcpy(&trb->parameter, urb->setup_packet, 8);
+        trb->status = cpu_to_le32(8);
+        trb->control = cpu_to_le32(TRB_TYPE(TRB_SETUP_STAGE) | TRB_IDT |
+                                   (trt << 16));
+    }
 
-        while (remaining > 0) {
-            u32 chunk = remaining > 0x4000 ? 0x4000 : remaining;
-            int is_last = (chunk == remaining);
+    sg = urb->num_mapped_sgs ? urb->sg : NULL;
+    for (i = 0; i < (urb->num_mapped_sgs ? urb->num_mapped_sgs : 1); i++) {
+        phys_bytes dma = sg ? sg_dma_address(sg) : urb->transfer_dma;
+        u32 remaining = sg ? sg_dma_len(sg) : data_len;
 
-            memset(&trb, 0, sizeof(trb));
-            trb.parameter = cur_phys;
-            trb.status = chunk;
-            trb.control = cpu_to_le32(TRB_TYPE(TRB_NORMAL) | TRB_ISP);
-            if (!is_last)
-                trb.control |= cpu_to_le32(TRB_CHAIN);
-            else
-                trb.control |= cpu_to_le32(TRB_IOC);
+        while (remaining) {
+            struct xhci_trb* trb = &trbs[index++];
+            u32 boundary = 0x10000 - (u32)(dma & 0xffff);
+            u32 chunk = remaining < boundary ? remaining : boundary;
+            u32 packets_left = 0;
+            u32 control = TRB_ISP;
 
-            retval = xhci_ring_enqueue(ring, &trb);
-            if (retval) return retval;
-
-            cur_phys += chunk;
+            if (is_control && transferred == 0) {
+                control |= TRB_TYPE(TRB_DATA_STAGE);
+                if (is_in) control |= TRB_DATA_DIR_IN;
+            } else {
+                control |= TRB_TYPE(TRB_NORMAL);
+            }
+            transferred += chunk;
+            if (transferred < data_len) {
+                control |= TRB_CHAIN;
+                packets_left = ((u64)data_len + maxp - 1) / maxp -
+                               transferred / maxp;
+                if (packets_left > 31) packets_left = 31;
+            } else if (!is_control) {
+                control |= TRB_IOC;
+            }
+            trb->parameter = cpu_to_le64(dma);
+            trb->status = cpu_to_le32(chunk | (packets_left << 17));
+            trb->control = cpu_to_le32(control);
+            dma += chunk;
             remaining -= chunk;
         }
-        break;
+        if (sg) sg = sg_next(sg);
     }
 
-    case PIPE_ISOCHRONOUS:
-        /* TODO: queue Isoch TRBs with proper frame scheduling.
-         * Each ISO packet needs its own TRB with the Start Frame,
-         * TD size, and interrupt flags. */
-        return ENOSYS;
+    if (is_control) {
+        u32 control = TRB_TYPE(TRB_STATUS_STAGE) | TRB_IOC;
+
+        /* No-data control requests have an IN status stage. */
+        if (!data_len || !is_in) control |= TRB_DATA_DIR_IN;
+        trbs[index++].control = cpu_to_le32(control);
+    } else if (!data_len) {
+        trbs[index++].control = cpu_to_le32(TRB_TYPE(TRB_NORMAL) | TRB_IOC);
     }
 
+    urb->hc_priv = priv;
+    retval = xhci_queue_trbs(ring, trbs, index, priv);
+    if (retval) urb->hc_priv = NULL;
+    free(trbs);
+    if (retval) {
+        free(priv);
+        return retval;
+    }
     return 0;
 }
 
@@ -351,7 +427,117 @@ int xhci_queue_urb(struct xhci_hcd* xhci, struct urb* urb, unsigned int slot_id,
  * advancing the ERDP (Event Ring Dequeue Pointer).
  * ========================================================================= */
 
+#define XHCI_RECOVERY_STOP 1
+#define XHCI_RECOVERY_RESET 2
+#define XHCI_RECOVERY_DEQUEUE 3
+#define XHCI_RECOVERY_FAILED 4
+
+static void xhci_finish_transfer(struct xhci_hcd* xhci,
+                                  struct xhci_virt_ep* ep, struct urb* urb,
+                                  int status)
+{
+    struct xhci_urb_priv* priv = urb->hc_priv;
+
+    ep->ring->dequeue_seg = priv->end_seg;
+    ep->ring->dequeue = priv->end;
+    urb->hc_priv = NULL;
+    free(priv);
+    usb_hcd_unlink_urb_from_ep(xhci_to_hcd(xhci), urb);
+    usb_hcd_giveback_urb(xhci_to_hcd(xhci), urb, status);
+}
+
+/* Recovery runs through command events, never sleeping in the IRQ handler.
+ * The failed URB stays mapped until hardware acknowledges Set Dequeue. */
+static void xhci_queue_recovery(struct xhci_hcd* xhci, unsigned int slot,
+                                 unsigned int dci, int state)
+{
+    struct xhci_virt_ep* ep = &xhci->devs[slot - 1]->eps[dci];
+    struct xhci_ring* cmd = xhci->cmd_ring;
+    struct xhci_urb_priv* priv = ep->recovery_urb->hc_priv;
+    int retval;
+
+    ep->recovery_state = state;
+    ep->recovery_cmd = cmd->enqueue_seg->dma +
+                      (cmd->enqueue - cmd->enqueue_seg->trbs) *
+                          sizeof(struct xhci_trb);
+    if (state == XHCI_RECOVERY_RESET)
+        retval = xhci_cmd_reset_ep(xhci, slot, dci);
+    else if (state == XHCI_RECOVERY_STOP)
+        retval = xhci_cmd_stop_ep(xhci, slot, dci);
+    else {
+        phys_bytes dma = priv->end_seg->dma +
+                         (priv->end - priv->end_seg->trbs) * sizeof(*priv->end);
+        retval = xhci_cmd_set_tr_dequeue(xhci, slot, dci, dma, priv->end_cycle);
+    }
+    if (retval) {
+        ep->recovery_state = XHCI_RECOVERY_FAILED;
+        printl("xhci: recovery enqueue failed slot=%u ep=%u error=%d; retaining DMA mappings\n",
+               slot, dci, retval);
+    }
+}
+
+static void xhci_recovery_done(struct xhci_hcd* xhci, unsigned int slot,
+                                unsigned int dci, u32 code)
+{
+    struct xhci_virt_ep* ep = &xhci->devs[slot - 1]->eps[dci];
+    struct urb* urb = ep->recovery_urb;
+    int status = ep->recovery_status;
+
+    /* Stop can race a hardware halt; reset that halted endpoint instead. */
+    if (code == COMP_CONTEXT_STATE_ERROR &&
+        ep->recovery_state == XHCI_RECOVERY_STOP) {
+        xhci_queue_recovery(xhci, slot, dci, XHCI_RECOVERY_RESET);
+        return;
+    }
+    if (code != COMP_SUCCESS) {
+        ep->recovery_state = XHCI_RECOVERY_FAILED;
+        printl("xhci: recovery failed slot=%u ep=%u code=%u; retaining DMA mappings\n",
+               slot, dci, code);
+        return;
+    }
+    if (ep->recovery_state != XHCI_RECOVERY_DEQUEUE) {
+        xhci_queue_recovery(xhci, slot, dci, XHCI_RECOVERY_DEQUEUE);
+        return;
+    }
+
+    ep->recovery_state = 0;
+    ep->recovery_urb = NULL;
+    xhci_finish_transfer(xhci, ep, urb, status);
+    if (!list_empty(&ep->ep->urb_list)) xhci_ring_ep_db(xhci, slot, dci);
+}
+
 /* Process a Transfer Event TRB */
+static int xhci_event_offset(struct xhci_urb_priv* priv, phys_bytes event_dma,
+                              u32 residual, u32* actual, unsigned int* type)
+{
+    struct xhci_segment* seg = priv->first_seg;
+    struct xhci_trb* trb = priv->first;
+    u32 offset = 0;
+    unsigned int i;
+
+    for (i = 0; i < priv->num_trbs; i++) {
+        unsigned int trb_type = TRB_TYPE_GET(le32_to_cpu(trb->control));
+        u32 len = (trb_type == TRB_NORMAL || trb_type == TRB_DATA_STAGE)
+                      ? le32_to_cpu(trb->status) & 0x1ffff
+                      : 0;
+        phys_bytes dma = seg->dma + (trb - seg->trbs) * sizeof(*trb);
+
+        if (dma == event_dma) {
+            if (residual > len) return EINVAL;
+            *actual = offset + len - residual;
+            *type = trb_type;
+            return 0;
+        }
+        offset += len;
+        trb++;
+        if (trb == &seg->trbs[TRBS_PER_SEGMENT - 1]) {
+            seg = seg->next;
+            trb = seg->trbs;
+        }
+    }
+    return ENOENT;
+}
+
 static void xhci_handle_transfer_event(struct xhci_hcd* xhci,
                                        struct xhci_trb* event)
 {
@@ -363,12 +549,15 @@ static void xhci_handle_transfer_event(struct xhci_hcd* xhci,
     u32 transfer_len = status & 0xffffff;
 
     struct xhci_virt_device* virt_dev;
-    struct usb_hcd* hcd = xhci_to_hcd(xhci);
     struct usb_host_endpoint* ep;
     struct urb* urb;
+    struct xhci_urb_priv* priv;
+    unsigned int trb_type;
+    u32 actual;
     int urb_status = 0;
 
-    if (slot_id == 0 || slot_id > xhci->num_slots) {
+    if (slot_id == 0 || slot_id > xhci->num_slots ||
+        ep_index >= XHCI_MAX_ENDPOINTS) {
         printl("xhci: bad transfer event slot=%d ep=%d code=%d\n", slot_id,
                ep_index, comp_code);
         return;
@@ -379,6 +568,7 @@ static void xhci_handle_transfer_event(struct xhci_hcd* xhci,
                slot_id, ep_index, comp_code);
         return;
     }
+    if (virt_dev->eps[ep_index].recovery_state) return;
 
     ep = virt_dev->eps[ep_index].ep;
     if (!ep || list_empty(&ep->urb_list)) {
@@ -389,29 +579,42 @@ static void xhci_handle_transfer_event(struct xhci_hcd* xhci,
     }
 
     urb = list_first_entry(&ep->urb_list, struct urb, urb_list);
+    priv = urb->hc_priv;
+    if (!priv) return;
+    /* A short event's residue belongs to the referenced TRB, not the
+     * entire URB.  Also reject stale events for an already completed TD. */
+    if (xhci_event_offset(priv, le64_to_cpu(event->parameter),
+                          comp_code == COMP_SHORT_PACKET ? transfer_len : 0,
+                          &actual, &trb_type))
+        return;
 
-    if (ep_index == 1 && comp_code == COMP_SHORT_PACKET) {
-        virt_dev->eps[ep_index].has_short_event = 1;
-        virt_dev->eps[ep_index].short_actual_length =
-            urb->transfer_buffer_length - transfer_len;
+    if (usb_pipecontrol(urb->pipe) && comp_code == COMP_SHORT_PACKET) {
+        priv->has_short_event = 1;
+        priv->short_actual_length = actual;
+        return;
+    }
+    if (usb_pipecontrol(urb->pipe) && comp_code == COMP_SUCCESS &&
+        trb_type != TRB_STATUS_STAGE)
+        return;
+
+    /* Calculate actual transfer length */
+    if (comp_code == COMP_SUCCESS || comp_code == COMP_SHORT_PACKET) {
+        urb->actual_length = priv->has_short_event ? priv->short_actual_length
+                                                  : actual;
+    } else {
+        urb->actual_length = priv->has_short_event ? priv->short_actual_length : 0;
+        urb_status = xhci_comp_to_errno(comp_code);
+        virt_dev->eps[ep_index].recovery_urb = urb;
+        virt_dev->eps[ep_index].recovery_status = urb_status;
+        xhci_queue_recovery(xhci, slot_id, ep_index,
+                            comp_code == COMP_STALL_ERROR ||
+                                    comp_code == COMP_BABBLE_DETECTED ||
+                                    comp_code == COMP_TRANSACTION_ERROR
+                                ? XHCI_RECOVERY_RESET : XHCI_RECOVERY_STOP);
         return;
     }
 
-    /* Calculate actual transfer length */
-    if (virt_dev->eps[ep_index].has_short_event) {
-        urb->actual_length = virt_dev->eps[ep_index].short_actual_length;
-        virt_dev->eps[ep_index].has_short_event = 0;
-    } else if (comp_code == COMP_SUCCESS) {
-        urb->actual_length = urb->transfer_buffer_length;
-    } else if (comp_code == COMP_SHORT_PACKET) {
-        urb->actual_length = urb->transfer_buffer_length - transfer_len;
-    } else {
-        urb->actual_length = 0;
-        urb_status = xhci_comp_to_errno(comp_code);
-    }
-
-    usb_hcd_unlink_urb_from_ep(hcd, urb);
-    usb_hcd_giveback_urb(hcd, urb, urb_status);
+    xhci_finish_transfer(xhci, &virt_dev->eps[ep_index], urb, urb_status);
 }
 
 /* Process a Command Completion Event TRB */
@@ -422,6 +625,41 @@ static void xhci_handle_cmd_completion(struct xhci_hcd* xhci,
     u32 control = le32_to_cpu(event->control);
     unsigned int slot_id = control >> 24;
     u32 comp_code = GET_COMP_CODE(status);
+    phys_bytes dma = le64_to_cpu(event->parameter);
+    struct xhci_ring* ring = xhci->cmd_ring;
+    struct xhci_segment* seg = ring->first_seg;
+    unsigned int i;
+
+    /* Reclaim command space, including recovery commands, before queuing
+     * the next step.  Command completions arrive in ring order. */
+    for (i = 0; i < ring->num_segs; i++, seg = seg->next) {
+        if (dma >= seg->dma &&
+            dma - seg->dma < (TRBS_PER_SEGMENT - 1) * sizeof(struct xhci_trb)) {
+            struct xhci_trb* trb = &seg->trbs[(dma - seg->dma) / sizeof(*trb)];
+            u32 cmd_control = le32_to_cpu(trb->control);
+            unsigned int cmd_slot = cmd_control >> 24;
+            unsigned int dci = (cmd_control >> 16) & 0x1f;
+
+            trb++;
+            if (trb == &seg->trbs[TRBS_PER_SEGMENT - 1]) {
+                seg = seg->next;
+                trb = seg->trbs;
+            }
+            ring->dequeue_seg = seg;
+            ring->dequeue = trb;
+            if (cmd_slot && cmd_slot <= xhci->num_slots &&
+                xhci->devs[cmd_slot - 1]) {
+                struct xhci_virt_ep* ep = &xhci->devs[cmd_slot - 1]->eps[dci];
+
+                if (ep->recovery_urb && ep->recovery_state != XHCI_RECOVERY_FAILED &&
+                    ep->recovery_cmd == dma) {
+                    xhci_recovery_done(xhci, cmd_slot, dci, comp_code);
+                    return; /* do not wake an unrelated command waiter */
+                }
+            }
+            break;
+        }
+    }
 
     /* Store completion info for the waiting thread */
     xhci->cmd_status = comp_code;
