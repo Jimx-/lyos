@@ -135,7 +135,7 @@ static int worker_get_work(void)
             if (fp->flags & FPF_PENDING) {
                 self->fproc = fp;
                 fproc->worker = self;
-                fp->flags &= FPF_PENDING;
+                fp->flags &= ~FPF_PENDING;
                 pending--;
 
                 return TRUE;
@@ -236,7 +236,7 @@ void worker_allow(int allow)
 
     for (fp = fproc_table; fp < fproc_table + NR_PROCS; fp++) {
         if (fp->flags & FPF_PENDING) {
-            fp->flags &= FPF_PENDING;
+            fp->flags &= ~FPF_PENDING;
             pending--;
             worker_assign(fp);
 

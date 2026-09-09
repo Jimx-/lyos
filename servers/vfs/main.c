@@ -92,7 +92,6 @@ int main()
                        msg.source);
                 continue;
             }
-
             msg.type = VFS_TXN_GET_TYPE(msg.type);
             do_reply(wp, &msg);
             continue;

@@ -63,6 +63,7 @@ int main()
         switch (msgtype) {
         case NOTIFY_MSG:
             if (src == SYSTEM) process_system_notify();
+            reply = 0;
             break;
         case PM_MM_FORK:
             mm_msg.RETVAL = do_fork();
