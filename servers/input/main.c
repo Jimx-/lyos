@@ -441,7 +441,7 @@ static void input_event(MESSAGE* msg)
         msg2tty.u.m_input_tty_event.code = code;
         msg2tty.u.m_input_tty_event.value = value;
 
-        send_recv(SEND, TASK_TTY, &msg2tty);
+        asyncsend3(TASK_TTY, &msg2tty, 0);
     }
 }
 

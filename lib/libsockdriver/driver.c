@@ -254,7 +254,8 @@ static void send_poll_notify(endpoint_t src, sockid_t id, __poll_t ops)
     msg.u.m_sockdriver_poll_notify.sock_id = id;
     msg.u.m_sockdriver_poll_notify.ops = ops;
 
-    send_recv(SEND, src, &msg);
+    /* VFS may be waiting for a service that triggered this notification. */
+    asyncsend3(src, &msg, 0);
 }
 
 static void do_socket(const struct sockdriver* sd, MESSAGE* msg)

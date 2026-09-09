@@ -171,7 +171,7 @@ static void do_register_driver(MESSAGE* msg)
     msg->type = USB_DEVICE_CONNECT;
     msg->DEVICE = drv->intf->dev_id;
     msg->MASK = 1 << drv->intf->cur_altsetting->desc.bInterfaceNumber;
-    send_recv(SEND, ep, msg);
+    asyncsend3(ep, msg, 0);
 }
 
 static int do_bind_device(MESSAGE* msg)
@@ -306,7 +306,7 @@ static void do_send_urb(MESSAGE* msg)
     msg->type = USB_RQ_COMPLETE_URB;
     msg->u.m_usb_reply.status = retval;
     msg->u.m_usb_reply.urb_id = usb_urb->urb_id;
-    send_recv(SEND, src, msg);
+    asyncsend3(src, msg, 0);
 
     goto free;
 
