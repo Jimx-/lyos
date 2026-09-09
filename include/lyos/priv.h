@@ -28,7 +28,7 @@ struct priv {
 
     bitchunk_t syscall_mask[BITCHUNKS(NR_SYS_CALLS)];
 
-    priv_map_t notify_pending;
+    bitchunk_t notify_pending[BITCHUNKS(NR_PRIV_PROCS)];
     irq_id_t int_pending;
     sigset_t sig_pending;
 

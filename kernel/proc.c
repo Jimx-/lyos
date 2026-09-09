@@ -122,7 +122,6 @@ void init_proc()
         INIT_LIST_HEAD(&priv->timer.list);
 
         sigemptyset(&priv->sig_pending);
-        priv->notify_pending = 0;
     }
 
     /* prepare idle process struct */
@@ -720,31 +719,26 @@ static int has_pending_async(struct proc* p, endpoint_t src)
 
 static int has_pending_notify(struct proc* p, endpoint_t src)
 {
-    priv_map_t notify_pending = p->priv->notify_pending;
-    int i;
-
-    if (notify_pending == 0) return PRIV_ID_NULL;
-
     if (src != ANY) {
         struct proc* sender = endpt_proc(src);
         if (!sender) return PRIV_ID_NULL;
 
-        if (notify_pending & (1 << sender->priv->id))
+        if (GET_BIT(p->priv->notify_pending, sender->priv->id))
             return sender->priv->id;
         else
             return PRIV_ID_NULL;
     }
 
-    for (i = 0; i < NR_PRIV_PROCS; i++) {
-        if (notify_pending & (1 << i)) return i;
-    }
+    unsigned long priv_id;
+    priv_id = bitmap_find_next_bit(p->priv->notify_pending, NR_PRIV_PROCS, 0);
+    if (priv_id >= NR_PRIV_PROCS) return PRIV_ID_NULL;
 
-    return PRIV_ID_NULL;
+    return priv_id;
 }
 
 static void unset_notify_pending(struct proc* p, int id)
 {
-    p->priv->notify_pending &= ~(1 << id);
+    UNSET_BIT(p->priv->notify_pending, id);
 }
 
 static void set_notify_msg(struct proc* dest, MESSAGE* m, endpoint_t src)
@@ -801,7 +795,7 @@ int msg_notify(struct proc* p_to_send, endpoint_t dest)
     }
 
     /* p_dest is not waiting for this notification, set pending bit */
-    p_dest->priv->notify_pending |= (1 << p_to_send->priv->id);
+    SET_BIT(p_dest->priv->notify_pending, p_to_send->priv->id);
     unlock_proc(p_dest);
     return 0;
 }
