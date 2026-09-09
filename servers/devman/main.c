@@ -120,6 +120,9 @@ static void devfs_message_hook(MESSAGE* msg)
     case DM_DEVICE_REGISTER:
         msg->u.m_devman_register_reply.status = do_device_register(msg);
         break;
+    case DM_DEVICE_PUBLISH:
+        msg->RETVAL = do_device_publish(msg);
+        break;
     case DM_BUS_ATTR_ADD:
         msg->RETVAL = do_bus_attr_add(msg);
         break;

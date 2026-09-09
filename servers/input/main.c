@@ -308,6 +308,8 @@ static int input_register_device(MESSAGE* msg)
                         SF_PRIV_OVERWRITE, dev, input_dev_show_cap_abs, NULL);
     dm_device_attr_add(&attr);
 
+    retval = dm_device_publish(dev->input_dev_id);
+
 reply_free_dev:
     if (retval) free(dev);
 

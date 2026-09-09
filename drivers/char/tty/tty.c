@@ -214,6 +214,9 @@ static void init_tty()
     retval = dm_device_register(&devinf, &device_id);
     if (retval) panic("tty: cannot register console device");
 
+    retval = dm_device_publish(device_id);
+    if (retval) panic("tty: cannot publish console device");
+
     for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
         tty->ibuf_cnt = tty->tty_eotcnt = 0;
         tty->ibuf_head = tty->ibuf_tail = tty->ibuf;
@@ -244,6 +247,9 @@ static void init_tty()
 
             retval = dm_device_register(&devinf, &tty->tty_device_id);
             if (retval) panic("tty: cannot register tty device");
+
+            retval = dm_device_publish(tty->tty_device_id);
+            if (retval) panic("tty: cannot publish tty device");
         } else { /* serial ports */
             retval = init_uart(tty);
             if (retval < 0) continue;
@@ -257,6 +263,9 @@ static void init_tty()
 
             retval = dm_device_register(&devinf, &tty->tty_device_id);
             if (retval) panic("tty: cannot register tty device");
+
+            retval = dm_device_publish(tty->tty_device_id);
+            if (retval) panic("tty: cannot publish tty device");
         }
 
         tty->tty_select_ops = 0;

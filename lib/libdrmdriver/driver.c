@@ -181,8 +181,9 @@ int drmdriver_register_device(struct drm_device* dev)
     devinf.type = DT_CHARDEV;
 
     retval = dm_device_register(&devinf, &dev->primary.device_id);
+    if (retval) return retval;
 
-    return retval;
+    return dm_device_publish(dev->primary.device_id);
 }
 
 void drmdriver_process(struct drm_device* drm_dev, MESSAGE* msg)

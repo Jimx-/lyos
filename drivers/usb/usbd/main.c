@@ -98,7 +98,7 @@ int usb_register_device(struct usb_device* udev)
     retval = usb_create_sysfs_dev_files(udev);
     if (retval) return retval;
 
-    return 0;
+    return dm_async_device_publish(device_id);
 }
 
 int usb_register_interface(struct usb_interface* intf, int configuration,
@@ -127,7 +127,9 @@ int usb_register_interface(struct usb_interface* intf, int configuration,
     retval = usb_create_sysfs_intf_files(intf);
     if (retval) return retval;
 
-    return 0;
+    /* Make the interface bindable before udev can start its driver. */
+    usb_probe_interface(intf);
+    return dm_async_device_publish(device_id);
 }
 
 static struct usb_interface* find_interface(device_id_t dev_id)

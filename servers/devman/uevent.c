@@ -95,6 +95,9 @@ static int device_uevent_broadcast(struct device* dev,
 
     retval = netlink_broadcast(uevent_sock, 0, 1, buf, len);
 
+    /* Devices can appear before udev subscribes; coldplug discovers them. */
+    if (retval == -ESRCH) retval = 0;
+
     free(buf);
     return retval;
 }

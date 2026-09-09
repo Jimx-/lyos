@@ -257,6 +257,9 @@ static int init_hd()
         retval = dm_device_register(&devinf, &port_dev_id);
         if (retval) panic("cannot register ata port");
 
+        retval = dm_device_publish(port_dev_id);
+        if (retval) panic("cannot publish ata port");
+
         u32 base_cmd, base_ctl, base_dma;
         base_dma = pci_attr_r32(devind, PCI_BAR_5) & PCI_BAR_IO_MASK;
         if (!ide || interface & PCI_IDE_PRI_NATIVE) {
@@ -766,6 +769,7 @@ static void hd_register(struct ata_info* hdi)
                  'a' + (char)i);
         devinf.devt = devt;
         dm_device_register(&devinf, &dev_id);
+        dm_device_publish(dev_id);
     }
 
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
@@ -779,6 +783,7 @@ static void hd_register(struct ata_info* hdi)
                  'a' + (char)(NR_PRIM_PER_DRIVE + i));
         devinf.devt = devt;
         dm_device_register(&devinf, &dev_id);
+        dm_device_publish(dev_id);
     }
 }
 

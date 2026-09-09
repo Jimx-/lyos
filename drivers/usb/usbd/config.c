@@ -430,9 +430,9 @@ int usb_set_configuration(struct usb_device* dev, int configuration)
     for (i = 0; i < nintf; i++) {
         struct usb_interface* intf = cp->interface[i];
 
-        usb_register_interface(intf, configuration,
-                               intf->cur_altsetting->desc.bInterfaceNumber);
-        usb_probe_interface(intf);
+        retval = usb_register_interface(
+            intf, configuration, intf->cur_altsetting->desc.bInterfaceNumber);
+        if (retval) return retval;
     }
 
     return 0;

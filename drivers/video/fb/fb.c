@@ -89,7 +89,7 @@ int register_framebuffer(struct fb_info* fb)
 
     fb->dev_id = device_id;
 
-    return 0;
+    return dm_device_publish(device_id);
 }
 
 static int register_kernel_fb(void)

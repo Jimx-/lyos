@@ -163,6 +163,7 @@ int pci_init()
 static int pci_register_bus(int busind)
 {
     struct device_info devinf;
+    int retval;
 
     memset(&devinf, 0, sizeof(devinf));
     snprintf(devinf.name, sizeof(devinf.name), "pci%02x", pcibus[busind].busnr);
@@ -170,7 +171,10 @@ static int pci_register_bus(int busind)
     devinf.class = NO_CLASS_ID;
     devinf.parent = NO_DEVICE_ID;
 
-    return dm_device_register(&devinf, &pcibus[busind].dev_id);
+    retval = dm_device_register(&devinf, &pcibus[busind].dev_id);
+    if (retval) return retval;
+
+    return dm_device_publish(pcibus[busind].dev_id);
 }
 
 static int pci_register_device(int devind)
@@ -206,7 +210,7 @@ static int pci_register_device(int devind)
                         (void*)&pcidev[devind], pci_class_show, NULL);
     dm_device_attr_add(&attr);
 
-    return 0;
+    return dm_device_publish(device_id);
 }
 
 struct pcibus* pci_create_bus(int busnr, const struct pci_ops* ops,

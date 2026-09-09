@@ -49,6 +49,7 @@ struct device* get_device(device_id_t id);
 char* device_get_path(struct device* dev);
 int do_device_attr_add(MESSAGE* m);
 int do_bind_device(MESSAGE* m);
+int do_device_publish(MESSAGE* m);
 
 /* uevent.c */
 void uevent_init(void);

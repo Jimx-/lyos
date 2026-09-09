@@ -363,12 +363,28 @@ device_id_t do_device_register(MESSAGE* m)
     dev->parent = get_device(devinf.parent);
     dev->devt = devinf.devt;
     dev->type = devinf.type;
+    dev->uevent_suppress = 1;
 
     retval = publish_device(dev);
     if (retval) return retval;
 
     m->u.m_devman_register_reply.id = dev->id;
     return 0;
+}
+
+int do_device_publish(MESSAGE* m)
+{
+    device_id_t id = m->DEVICE;
+    struct device* dev;
+
+    if (id <= 0 || id > NR_DEVICES) return ENODEV;
+    dev = get_device(id);
+    if (dev->id != id) return ENODEV;
+    if (dev->owner != m->source) return EPERM;
+    if (!dev->uevent_suppress) return EALREADY;
+
+    dev->uevent_suppress = 0;
+    return device_uevent(dev, KOBJ_ADD);
 }
 
 struct device* get_device(device_id_t id)

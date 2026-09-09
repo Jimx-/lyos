@@ -152,91 +152,92 @@ static ssize_t version_show(struct device_attribute* attr, char* buf,
 int usb_create_sysfs_dev_files(struct usb_device* udev)
 {
     struct device_attribute attr;
+    int retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "configuration", SF_PRIV_OVERWRITE,
                         udev, configuration_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bNumInterfaces",
                         SF_PRIV_OVERWRITE, udev, bNumInterfaces_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bConfigurationValue",
                         SF_PRIV_OVERWRITE, udev, bConfigurationValue_show,
                         bConfigurationValue_store);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bmAttributes", SF_PRIV_OVERWRITE,
                         udev, bmAttributes_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "idVendor", SF_PRIV_OVERWRITE,
                         udev, idVendor_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "idProduct", SF_PRIV_OVERWRITE,
                         udev, idProduct_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bcdDevice", SF_PRIV_OVERWRITE,
                         udev, bcdDevice_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bDeviceClass", SF_PRIV_OVERWRITE,
                         udev, bDeviceClass_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bDeviceSubClass",
                         SF_PRIV_OVERWRITE, udev, bDeviceSubClass_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bDeviceProtocol",
                         SF_PRIV_OVERWRITE, udev, bDeviceProtocol_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bNumConfigurations",
                         SF_PRIV_OVERWRITE, udev, bNumConfigurations_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "bMaxPacketSize0",
                         SF_PRIV_OVERWRITE, udev, bMaxPacketSize0_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "speed", SF_PRIV_OVERWRITE, udev,
                         speed_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "busnum", SF_PRIV_OVERWRITE, udev,
                         busnum_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "devnum", SF_PRIV_OVERWRITE, udev,
                         devnum_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "devpath", SF_PRIV_OVERWRITE, udev,
                         devpath_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, udev->dev_id, "version", SF_PRIV_OVERWRITE, udev,
                         version_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
     if (udev->product) {
         dm_init_device_attr(&attr, udev->dev_id, "product", SF_PRIV_OVERWRITE,
                             udev, product_show, NULL);
-        dm_async_device_attr_add(&attr);
+        if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
     }
 
     if (udev->manufacturer) {
         dm_init_device_attr(&attr, udev->dev_id, "manufacturer",
                             SF_PRIV_OVERWRITE, udev, manufacturer_show, NULL);
-        dm_async_device_attr_add(&attr);
+        if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
     }
 
     if (udev->serial) {
         dm_init_device_attr(&attr, udev->dev_id, "serial", SF_PRIV_OVERWRITE,
                             udev, serial_show, NULL);
-        dm_async_device_attr_add(&attr);
+        if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
     }
 
     return 0;
@@ -275,30 +276,31 @@ int usb_create_sysfs_intf_files(struct usb_interface* intf)
     struct usb_device* udev = intf->parent;
     struct usb_host_interface* alt = intf->cur_altsetting;
     struct device_attribute attr;
+    int retval;
 
     dm_init_device_attr(&attr, intf->dev_id, "bInterfaceNumber",
                         SF_PRIV_OVERWRITE, intf, bInterfaceNumber_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, intf->dev_id, "bAlternateSetting",
                         SF_PRIV_OVERWRITE, intf, bAlternateSetting_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, intf->dev_id, "bNumEndpoints", SF_PRIV_OVERWRITE,
                         intf, bNumEndpoints_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, intf->dev_id, "bInterfaceClass",
                         SF_PRIV_OVERWRITE, intf, bInterfaceClass_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, intf->dev_id, "bInterfaceSubClass",
                         SF_PRIV_OVERWRITE, intf, bInterfaceSubClass_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     dm_init_device_attr(&attr, intf->dev_id, "bInterfaceProtocol",
                         SF_PRIV_OVERWRITE, intf, bInterfaceProtocol_show, NULL);
-    dm_async_device_attr_add(&attr);
+    if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
 
     if (!alt->string)
         alt->string = usb_cache_string(udev, alt->desc.iInterface);
@@ -306,7 +308,7 @@ int usb_create_sysfs_intf_files(struct usb_interface* intf)
     if (alt->string) {
         dm_init_device_attr(&attr, intf->dev_id, "interface", SF_PRIV_OVERWRITE,
                             intf, interface_show, NULL);
-        dm_async_device_attr_add(&attr);
+        if ((retval = dm_async_device_attr_add(&attr)) != 0) return retval;
     }
 
     return 0;

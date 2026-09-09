@@ -1201,6 +1201,9 @@ static int nvme_pci_probe(int instance)
     retval = dm_device_register(&devinf, &nvme_dev_id);
     if (retval) goto free;
 
+    retval = dm_device_publish(nvme_dev_id);
+    if (retval) goto free;
+
     return 0;
 
 free:
@@ -1281,6 +1284,7 @@ static void nvme_register_ns(struct nvme_ns* ns)
                  nsid, i);
         devinf.devt = devt;
         dm_device_register(&devinf, &dev_id);
+        dm_device_publish(dev_id);
     }
 
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
@@ -1294,6 +1298,7 @@ static void nvme_register_ns(struct nvme_ns* ns)
                  nsid, NR_PRIM_PER_DRIVE + i);
         devinf.devt = devt;
         dm_device_register(&devinf, &dev_id);
+        dm_device_publish(dev_id);
     }
 }
 

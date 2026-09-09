@@ -677,6 +677,9 @@ static int init_tty(void)
     retval = dm_device_register(&devinf, &device_id);
     if (retval) return retval;
 
+    retval = dm_device_publish(device_id);
+    if (retval) return retval;
+
     for (tty = TTY_FIRST, i = 0; tty < TTY_END; tty++, i++) {
         memset(tty, 0, sizeof(*tty));
 

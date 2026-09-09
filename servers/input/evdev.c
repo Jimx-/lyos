@@ -503,6 +503,11 @@ static int evdev_connect(struct input_handler* handler, struct input_dev* dev)
         goto err_free_evdev;
     }
 
+    retval = dm_device_publish(evdev->dev_id);
+    if (retval) {
+        goto err_free_evdev;
+    }
+
     retval = input_register_handle(&evdev->handle);
     if (retval) {
         goto err_free_evdev;

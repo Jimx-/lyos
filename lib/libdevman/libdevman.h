@@ -93,7 +93,10 @@ int dm_bus_register(const char* name, bus_type_id_t* id);
 int dm_bus_get_or_create(const char* name, bus_type_id_t* idp);
 int dm_class_register(const char* name, class_id_t* id);
 int dm_class_get_or_create(const char* name, class_id_t* idp);
+/* Registration is deferred: the device stays invisible to uevent listeners
+ * until it is published. */
 int dm_device_register(struct device_info* devinf, device_id_t* id);
+int dm_device_publish(device_id_t id);
 
 int dm_init_bus_attr(struct bus_attribute* attr, bus_type_id_t bus, char* name,
                      mode_t mode, void* cb_data, bus_attr_show_t show,
@@ -109,6 +112,7 @@ void dm_device_attr_handle(MESSAGE* msg);
 
 int dm_async_cdev_add(dev_t dev);
 int dm_async_device_register(struct device_info* devinf, device_id_t* id);
+int dm_async_device_publish(device_id_t id);
 int dm_async_device_attr_add(struct device_attribute* attr);
 
 void dm_async_reply(const MESSAGE* msg);

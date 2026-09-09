@@ -16,6 +16,7 @@
 #include <lyos/ipc.h>
 #include <lyos/sysutils.h>
 #include <errno.h>
+#include <string.h>
 #include <lyos/const.h>
 
 #include <libasyncdriver/libasyncdriver.h>
@@ -38,6 +39,19 @@ int dm_device_register(struct device_info* devinf, device_id_t* id)
     return msg.u.m_devman_register_reply.status;
 }
 
+int dm_device_publish(device_id_t id)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = DM_DEVICE_PUBLISH;
+    msg.DEVICE = id;
+
+    send_recv(BOTH, TASK_DEVMAN, &msg);
+
+    return msg.RETVAL;
+}
+
 int dm_async_device_register(struct device_info* devinf, device_id_t* id)
 {
     MESSAGE msg;
@@ -54,4 +68,17 @@ int dm_async_device_register(struct device_info* devinf, device_id_t* id)
     }
 
     return msg.u.m_devman_register_reply.status;
+}
+
+int dm_async_device_publish(device_id_t id)
+{
+    MESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.type = DM_DEVICE_PUBLISH;
+    msg.DEVICE = id;
+    msg.u.m3.m3l1 = asyncdrv_worker_id();
+    asyncdrv_sendrec(TASK_DEVMAN, &msg);
+
+    return msg.RETVAL;
 }

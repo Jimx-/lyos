@@ -279,19 +279,23 @@ static void init_rd(int argc, char* argv[])
     strlcpy(devinf.name, "mem", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
     dm_device_register(&devinf, &dev_id);
+    dm_device_publish(dev_id);
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_KMEM);
     strlcpy(devinf.name, "kmem", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
     dm_device_register(&devinf, &dev_id);
+    dm_device_publish(dev_id);
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_NULL);
     strlcpy(devinf.name, "null", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
     dm_device_register(&devinf, &dev_id);
+    dm_device_publish(dev_id);
 
     devinf.devt = MAKE_DEV(DEV_RD, DEV_ZERO);
     strlcpy(devinf.name, "zero", sizeof(devinf.name));
     dm_cdev_add(devinf.devt);
     dm_device_register(&devinf, &dev_id);
+    dm_device_publish(dev_id);
 }

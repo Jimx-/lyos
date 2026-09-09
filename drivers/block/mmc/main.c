@@ -431,6 +431,9 @@ int mmc_add_host(struct mmc_host* host)
     ret = dm_device_register(&devinf, &host->dev_id);
     if (ret) return -ret;
 
+    ret = dm_device_publish(host->dev_id);
+    if (ret) return -ret;
+
     list_add(&host->list, &mmc_hosts);
     mmc_rescan(host);
 
@@ -460,6 +463,7 @@ static void mmc_blk_register(struct mmc_blk_data* md)
         snprintf(devinf.name, sizeof(devinf.name), "mmclk%dp%d", md->devidx, i);
         devinf.devt = devt;
         dm_device_register(&devinf, &dev_id);
+        dm_device_publish(dev_id);
     }
 
     for (i = 0; i < NR_SUB_PER_DRIVE; i++) {
@@ -473,6 +477,7 @@ static void mmc_blk_register(struct mmc_blk_data* md)
                  NR_PRIM_PER_DRIVE + i);
         devinf.devt = devt;
         dm_device_register(&devinf, &dev_id);
+        dm_device_publish(dev_id);
     }
 }
 
@@ -558,6 +563,9 @@ int mmc_add_card(struct mmc_card* card)
     devinf.devt = NO_DEV;
 
     ret = dm_device_register(&devinf, &card->dev_id);
+    if (ret) return -ret;
+
+    ret = dm_device_publish(card->dev_id);
     if (ret) return -ret;
 
     mmc_blk_probe(card);

@@ -512,6 +512,8 @@ static void virtio_blk_register(void)
             dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,
                                 NULL, virtio_blk_serial_show, NULL);
             dm_device_attr_add(&attr);
+
+            dm_device_publish(dev_id);
         }
     }
 
@@ -530,6 +532,8 @@ static void virtio_blk_register(void)
             dm_init_device_attr(&attr, dev_id, "serial", SF_PRIV_OVERWRITE,
                                 NULL, virtio_blk_serial_show, NULL);
             dm_device_attr_add(&attr);
+
+            dm_device_publish(dev_id);
         }
     }
 }
