@@ -372,7 +372,7 @@ static int xhci_configure_endpoint(struct xhci_hcd* xhci,
         return 0;
     }
 
-    vd->eps[dci].ring = xhci_ring_alloc(1, 0);
+    vd->eps[dci].ring = xhci_ring_alloc(xhci, 1, 0);
     if (!vd->eps[dci].ring) return ENOMEM;
     vd->eps[dci].ep = ep;
 
@@ -408,7 +408,7 @@ static int xhci_configure_endpoint(struct xhci_hcd* xhci,
     retval = xhci_cmd_configure_ep(xhci, vd->in_ctx_dma, slot_id, 0);
     if (!retval) retval = xhci_wait_cmd_completion(xhci);
     if (retval) {
-        xhci_ring_free(vd->eps[dci].ring);
+        xhci_ring_free(xhci, vd->eps[dci].ring);
         vd->eps[dci].ring = NULL;
         vd->eps[dci].ep = NULL;
         printl("xhci: Configure Endpoint failed (%d)\n", retval);

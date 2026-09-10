@@ -6,6 +6,7 @@
 #include <lyos/const.h>
 #include <lyos/vm.h>
 #include <lyos/sysutils.h>
+#include <lyos/sysutils.h>
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,7 +51,7 @@ static void xhci_dma_free(void* vaddr, size_t size)
 }
 
 /* Allocate a single ring segment (array of TRBs) with proper alignment */
-static struct xhci_segment* xhci_segment_alloc(void)
+static struct xhci_segment* xhci_segment_alloc(struct xhci_hcd* xhci)
 {
     struct xhci_segment* seg;
 
@@ -58,7 +59,7 @@ static struct xhci_segment* xhci_segment_alloc(void)
     if (!seg) return NULL;
     memset(seg, 0, sizeof(*seg));
 
-    seg->trbs = xhci_dma_alloc(TRB_SEGMENT_SIZE, &seg->dma);
+    seg->trbs = dma_pool_zalloc(xhci->segment_pool, 0, &seg->dma);
     if (!seg->trbs) {
         free(seg);
         return NULL;
@@ -67,10 +68,10 @@ static struct xhci_segment* xhci_segment_alloc(void)
     return seg;
 }
 
-static void xhci_segment_free(struct xhci_segment* seg)
+static void xhci_segment_free(struct xhci_hcd* xhci, struct xhci_segment* seg)
 {
     if (!seg) return;
-    xhci_dma_free(seg->trbs, TRB_SEGMENT_SIZE);
+    dma_pool_free(xhci->segment_pool, seg->trbs, seg->dma);
     free(seg);
 }
 
@@ -104,7 +105,8 @@ static void xhci_link_segments(struct xhci_segment* first,
 }
 
 /* Allocate a ring with the given number of segments */
-struct xhci_ring* xhci_ring_alloc(unsigned int num_segs, int is_event)
+struct xhci_ring* xhci_ring_alloc(struct xhci_hcd* xhci, unsigned int num_segs,
+                                  int is_event)
 {
     struct xhci_ring* ring;
     struct xhci_segment* prev = NULL;
@@ -119,7 +121,7 @@ struct xhci_ring* xhci_ring_alloc(unsigned int num_segs, int is_event)
 
     /* Allocate segments */
     for (i = 0; i < num_segs; i++) {
-        struct xhci_segment* seg = xhci_segment_alloc();
+        struct xhci_segment* seg = xhci_segment_alloc(xhci);
         if (!seg) goto fail;
 
         if (prev) {
@@ -157,7 +159,7 @@ fail: {
     struct xhci_segment* seg = ring->first_seg;
     while (seg) {
         struct xhci_segment* next = seg->next;
-        xhci_segment_free(seg);
+        xhci_segment_free(xhci, seg);
         seg = (next != ring->first_seg) ? next : NULL;
     }
 }
@@ -165,7 +167,7 @@ fail: {
     return NULL;
 }
 
-void xhci_ring_free(struct xhci_ring* ring)
+void xhci_ring_free(struct xhci_hcd* xhci, struct xhci_ring* ring)
 {
     struct xhci_segment* seg;
     struct xhci_segment* first;
@@ -181,20 +183,11 @@ void xhci_ring_free(struct xhci_ring* ring)
     seg = first;
     do {
         struct xhci_segment* next = seg->next;
-        xhci_segment_free(seg);
+        xhci_segment_free(xhci, seg);
         seg = next;
     } while (seg && seg != first);
 
     free(ring);
-}
-
-/* Allocate a buffer with the given alignment and return its physical address.
- * Use page alignment to ensure physical contiguity within the allocation. */
-static void* xhci_alloc_dma(size_t size, size_t align, phys_bytes* dma)
-{
-    (void)align;
-
-    return xhci_dma_alloc(size, dma);
 }
 
 /* =========================================================================
@@ -204,7 +197,7 @@ static int xhci_alloc_dcbaa(struct xhci_hcd* xhci)
 {
     size_t size = sizeof(u64) * (xhci->num_slots + 1); /* slot 0 is reserved */
 
-    xhci->dcbaa = xhci_alloc_dma(size, 64, &xhci->dcbaa_dma);
+    xhci->dcbaa = xhci_dma_alloc(size, &xhci->dcbaa_dma);
     if (!xhci->dcbaa) return ENOMEM;
 
     /* Slot 0 is reserved (NULL) - already zeroed by memset */
@@ -222,8 +215,8 @@ static int xhci_alloc_scratchpad(struct xhci_hcd* xhci)
     if (num_bufs == 0) return 0;
 
     /* Allocate the array of buffer pointers (must be 64-byte aligned) */
-    xhci->scratchpad =
-        xhci_alloc_dma(sizeof(u64) * num_bufs, 64, &xhci->scratchpad_dma);
+    xhci->scratchpad = xhci_dma_alloc(sizeof(u64) * num_bufs,
+                                      &xhci->scratchpad_dma);
     if (!xhci->scratchpad) return ENOMEM;
 
     /* Allocate the actual scratchpad buffers */
@@ -232,7 +225,7 @@ static int xhci_alloc_scratchpad(struct xhci_hcd* xhci)
 
     for (i = 0; i < num_bufs; i++) {
         phys_bytes buf_dma;
-        void* buf = xhci_alloc_dma(xhci->page_size, xhci->page_size, &buf_dma);
+        void* buf = xhci_dma_alloc(xhci->page_size, &buf_dma);
         if (!buf) return ENOMEM;
 
         xhci->scratchpad_bufs[i] = buf;
@@ -252,12 +245,16 @@ static int xhci_alloc_erst(struct xhci_hcd* xhci)
     /* Use one segment for the event ring */
     unsigned int num_entries = 1;
 
-    xhci->event_ring = xhci_ring_alloc(num_entries, 1);
+    xhci->event_ring = xhci_ring_alloc(xhci, num_entries, 1);
     if (!xhci->event_ring) return ENOMEM;
 
-    xhci->erst.entries = xhci_alloc_dma(
-        sizeof(struct xhci_erst_entry) * num_entries, 64, &xhci->erst.dma);
-    if (!xhci->erst.entries) return ENOMEM;
+    xhci->erst.entries = xhci_dma_alloc(
+        sizeof(struct xhci_erst_entry) * num_entries, &xhci->erst.dma);
+    if (!xhci->erst.entries) {
+        xhci_ring_free(xhci, xhci->event_ring);
+        xhci->event_ring = NULL;
+        return ENOMEM;
+    }
 
     xhci->erst.num_entries = num_entries;
     xhci->erst.ring = xhci->event_ring;
@@ -272,20 +269,67 @@ static int xhci_alloc_erst(struct xhci_hcd* xhci)
 /* =========================================================================
  * Top-level memory init/cleanup
  * ========================================================================= */
+static size_t xhci_device_ctx_size(struct xhci_hcd* xhci)
+{
+    /* Slot context + 31 endpoint contexts, each of context_size */
+    return (1 + XHCI_MAX_ENDPOINTS) * xhci->context_size;
+}
+
+static void xhci_destroy_pool(struct dma_pool** poolp, const char* name)
+{
+    int retval = dma_pool_destroy(*poolp);
+
+    if (retval) {
+        printl("xhci: cannot destroy %s DMA pool (%d); retaining pool\n",
+               name, retval);
+        return;
+    }
+    *poolp = NULL;
+}
+
 int xhci_mem_init(struct xhci_hcd* xhci)
 {
+    const phys_bytes dma_mask = HCC_64BIT_ADDR(xhci->hcc_params)
+                                    ? ~(phys_bytes)0
+                                    : (phys_bytes)0xffffffffULL;
+    const struct dma_pool_config segment_pool_config = {
+        .size = TRB_SEGMENT_SIZE,
+        .align = 64,
+        .boundary = 0,
+        .dma_mask = dma_mask,
+    };
+    struct dma_pool_config ctx_pool_config = {
+        .align = 64,
+        .boundary = 0,
+        .dma_mask = dma_mask,
+    };
     int retval;
+
+    retval =
+        dma_pool_create("xhci_segment", &segment_pool_config,
+                        &xhci->segment_pool);
+    if (retval) return retval;
+
+    ctx_pool_config.size = xhci_input_ctx_size(xhci);
+    retval = dma_pool_create("xhci_in_ctx", &ctx_pool_config,
+                             &xhci->in_ctx_pool);
+    if (retval) goto fail_segment_pool;
+
+    ctx_pool_config.size = xhci_device_ctx_size(xhci);
+    retval = dma_pool_create("xhci_out_ctx", &ctx_pool_config,
+                             &xhci->out_ctx_pool);
+    if (retval) goto fail_in_ctx_pool;
 
     /* Allocate DCBAA */
     retval = xhci_alloc_dcbaa(xhci);
-    if (retval) return retval;
+    if (retval) goto fail_out_ctx_pool;
 
     /* Allocate scratchpad buffers */
     retval = xhci_alloc_scratchpad(xhci);
     if (retval) goto fail_dcbaa;
 
     /* Allocate command ring */
-    xhci->cmd_ring = xhci_ring_alloc(1, 0);
+    xhci->cmd_ring = xhci_ring_alloc(xhci, 1, 0);
     if (!xhci->cmd_ring) {
         retval = ENOMEM;
         goto fail_scratchpad;
@@ -298,7 +342,7 @@ int xhci_mem_init(struct xhci_hcd* xhci)
     return 0;
 
 fail_cmd_ring:
-    xhci_ring_free(xhci->cmd_ring);
+    xhci_ring_free(xhci, xhci->cmd_ring);
     xhci->cmd_ring = NULL;
 
 fail_scratchpad: {
@@ -316,6 +360,15 @@ fail_scratchpad: {
 fail_dcbaa:
     xhci_dma_free(xhci->dcbaa, sizeof(u64) * (xhci->num_slots + 1));
     xhci->dcbaa = NULL;
+
+fail_out_ctx_pool:
+    xhci_destroy_pool(&xhci->out_ctx_pool, "output context");
+
+fail_in_ctx_pool:
+    xhci_destroy_pool(&xhci->in_ctx_pool, "input context");
+
+fail_segment_pool:
+    xhci_destroy_pool(&xhci->segment_pool, "segment");
 
     return retval;
 }
@@ -335,11 +388,14 @@ void xhci_mem_cleanup(struct xhci_hcd* xhci)
     if (xhci->erst.entries)
         xhci_dma_free(xhci->erst.entries,
                       sizeof(struct xhci_erst_entry) * xhci->erst.num_entries);
-    xhci_ring_free(xhci->event_ring);
+    xhci->erst.entries = NULL;
+    xhci->erst.ring = NULL;
+    xhci->erst.num_entries = 0;
+    xhci_ring_free(xhci, xhci->event_ring);
     xhci->event_ring = NULL;
 
     /* Free command ring */
-    xhci_ring_free(xhci->cmd_ring);
+    xhci_ring_free(xhci, xhci->cmd_ring);
     xhci->cmd_ring = NULL;
 
     /* Free scratchpad buffers */
@@ -358,6 +414,11 @@ void xhci_mem_cleanup(struct xhci_hcd* xhci)
     xhci_dma_free(xhci->dcbaa, sizeof(u64) * (xhci->num_slots + 1));
     xhci->dcbaa = NULL;
 
+    /* Free DMA pools */
+    xhci_destroy_pool(&xhci->in_ctx_pool, "input context");
+    xhci_destroy_pool(&xhci->out_ctx_pool, "output context");
+    xhci_destroy_pool(&xhci->segment_pool, "segment");
+
     /* Free port array */
     free(xhci->ports);
     xhci->ports = NULL;
@@ -366,12 +427,6 @@ void xhci_mem_cleanup(struct xhci_hcd* xhci)
 /* =========================================================================
  * Per-device allocation
  * ========================================================================= */
-static size_t xhci_device_ctx_size(struct xhci_hcd* xhci)
-{
-    /* Slot context + 31 endpoint contexts, each of context_size */
-    return (1 + XHCI_MAX_ENDPOINTS) * xhci->context_size;
-}
-
 size_t xhci_input_ctx_size(struct xhci_hcd* xhci)
 {
     /* Input control context + device context */
@@ -396,7 +451,7 @@ int xhci_alloc_dev(struct xhci_hcd* xhci, struct usb_device* udev,
 
     /* Allocate output device context */
     virt_dev->out_ctx =
-        xhci_alloc_dma(xhci_device_ctx_size(xhci), 64, &virt_dev->out_ctx_dma);
+        dma_pool_zalloc(xhci->out_ctx_pool, 0, &virt_dev->out_ctx_dma);
     if (!virt_dev->out_ctx) {
         retval = ENOMEM;
         goto fail_free;
@@ -404,14 +459,14 @@ int xhci_alloc_dev(struct xhci_hcd* xhci, struct usb_device* udev,
 
     /* Allocate input context */
     virt_dev->in_ctx =
-        xhci_alloc_dma(xhci_input_ctx_size(xhci), 64, &virt_dev->in_ctx_dma);
+        dma_pool_zalloc(xhci->in_ctx_pool, 0, &virt_dev->in_ctx_dma);
     if (!virt_dev->in_ctx) {
         retval = ENOMEM;
         goto fail_out_ctx;
     }
 
     /* Allocate ep0 transfer ring (DCI 1) */
-    virt_dev->eps[1].ring = xhci_ring_alloc(1, 0);
+    virt_dev->eps[1].ring = xhci_ring_alloc(xhci, 1, 0);
     if (!virt_dev->eps[1].ring) {
         retval = ENOMEM;
         goto fail_in_ctx;
@@ -433,10 +488,11 @@ int xhci_alloc_dev(struct xhci_hcd* xhci, struct usb_device* udev,
     return 0;
 
 fail_in_ctx:
-    xhci_dma_free(virt_dev->in_ctx, xhci_input_ctx_size(xhci));
+    dma_pool_free(xhci->in_ctx_pool, virt_dev->in_ctx, virt_dev->in_ctx_dma);
 
 fail_out_ctx:
-    xhci_dma_free(virt_dev->out_ctx, xhci_device_ctx_size(xhci));
+    dma_pool_free(xhci->out_ctx_pool, virt_dev->out_ctx,
+                  virt_dev->out_ctx_dma);
 
 fail_free:
     free(virt_dev);
@@ -462,7 +518,7 @@ void xhci_free_dev(struct xhci_hcd* xhci, struct usb_device* udev)
     /* Free all endpoint rings */
     for (i = 0; i < XHCI_MAX_ENDPOINTS; i++) {
         if (virt_dev->eps[i].ring) {
-            xhci_ring_free(virt_dev->eps[i].ring);
+            xhci_ring_free(xhci, virt_dev->eps[i].ring);
         }
     }
 
@@ -470,8 +526,9 @@ void xhci_free_dev(struct xhci_hcd* xhci, struct usb_device* udev)
     xhci->dcbaa[slot_id] = 0;
 
     /* Free contexts */
-    xhci_dma_free(virt_dev->in_ctx, xhci_input_ctx_size(xhci));
-    xhci_dma_free(virt_dev->out_ctx, xhci_device_ctx_size(xhci));
+    dma_pool_free(xhci->in_ctx_pool, virt_dev->in_ctx, virt_dev->in_ctx_dma);
+    dma_pool_free(xhci->out_ctx_pool, virt_dev->out_ctx,
+                  virt_dev->out_ctx_dma);
 
     xhci->devs[slot_id - 1] = NULL;
     udev->hcpriv = NULL;

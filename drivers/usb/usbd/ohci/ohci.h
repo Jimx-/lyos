@@ -229,6 +229,9 @@ struct ohci_hcd {
     struct ohci_hcca* hcca;
     phys_bytes hcca_phys;
 
+    struct dma_pool* td_pool;
+    struct dma_pool* ed_pool;
+
     struct ed* ed_rm_list;
 
     struct ed* ed_bulktail;

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <lyos/irqctl.h>
 #include <lyos/usb.h>
+#include <lyos/dmapool.h>
 #include <asm/barrier.h>
 
 #include "hcd.h"
@@ -147,11 +148,37 @@ static int ohci_run(struct ohci_hcd* ohci)
 static int ohci_setup(struct usb_hcd* hcd)
 {
     struct ohci_hcd* ohci = hcd_to_ohci(hcd);
+    const struct dma_pool_config td_pool_config = {
+        .size = sizeof(struct td),
+        .align = 32,
+        .boundary = 0,
+        .dma_mask = (phys_bytes)0xffffffffULL,
+    };
+    const struct dma_pool_config ed_pool_config = {
+        .size = sizeof(struct ed),
+        .align = 16,
+        .boundary = 0,
+        .dma_mask = (phys_bytes)0xffffffffULL,
+    };
+    int retval;
 
     INIT_LIST_HEAD(&ohci->pending);
     INIT_LIST_HEAD(&ohci->eds_in_use);
 
-    return ohci_init(ohci);
+    retval = ohci_init(ohci);
+    if (retval) return retval;
+
+    retval = dma_pool_create("ohci_td", &td_pool_config, &ohci->td_pool);
+    if (retval) return retval;
+
+    retval = dma_pool_create("ohci_ed", &ed_pool_config, &ohci->ed_pool);
+    if (retval) {
+        dma_pool_destroy(ohci->td_pool);
+        ohci->td_pool = NULL;
+        return retval;
+    }
+
+    return 0;
 }
 
 static int ohci_start(struct usb_hcd* hcd)
@@ -697,41 +724,31 @@ int ohci_hub_control(struct usb_hcd* hcd, u16 typeReq, u16 wValue, u16 wIndex,
 static struct ed* ed_alloc(struct ohci_hcd* ohci)
 {
     struct ed* ed;
-    int retval;
+    phys_bytes dma;
 
-    retval = posix_memalign((void**)&ed, 16, sizeof(*ed));
-    if (retval) return NULL;
+    ed = dma_pool_zalloc(ohci->ed_pool, 0, &dma);
+    if (!ed) return NULL;
 
-    memset(ed, 0, sizeof(*ed));
-
-    retval = umap(SELF, UMT_VADDR, (vir_bytes)ed, sizeof(*ed), &ed->phys);
-    if (retval) {
-        free(ed);
-        return NULL;
-    }
+    ed->phys = dma;
 
     INIT_LIST_HEAD(&ed->td_list);
     return ed;
 }
 
-static void ed_free(struct ohci_hcd* ohci, struct ed* ed) { free(ed); }
+static void ed_free(struct ohci_hcd* ohci, struct ed* ed)
+{
+    dma_pool_free(ohci->ed_pool, ed, ed->phys);
+}
 
 static struct td* td_alloc(struct ohci_hcd* ohci)
 {
     struct td* td;
-    int retval;
+    phys_bytes dma;
 
-    retval = posix_memalign((void**)&td, 32, sizeof(*td));
-    if (retval) return NULL;
+    td = dma_pool_zalloc(ohci->td_pool, 0, &dma);
+    if (!td) return NULL;
 
-    memset(td, 0, sizeof(*td));
-
-    retval = umap(SELF, UMT_VADDR, (vir_bytes)td, sizeof(*td), &td->td_phys);
-    if (retval) {
-        free(td);
-        return NULL;
-    }
-
+    td->td_phys = dma;
     td->hw.next_td = cpu_to_le32(td->td_phys);
     return td;
 }
@@ -745,7 +762,7 @@ static void td_free(struct ohci_hcd* ohci, struct td* td)
         entry = &(*entry)->td_hash_next;
     if (*entry) *entry = td->td_hash_next;
 
-    free(td);
+    dma_pool_free(ohci->td_pool, td, td->td_phys);
 }
 
 static struct ed* ed_get(struct ohci_hcd* ohci, struct usb_host_endpoint* ep,

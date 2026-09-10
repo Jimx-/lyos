@@ -4,6 +4,7 @@
 #include <lyos/types.h>
 #include <lyos/const.h>
 #include <lyos/list.h>
+#include <lyos/dmapool.h>
 #include <asm/io.h>
 #include <libasyncdriver/libasyncdriver.h>
 
@@ -521,6 +522,11 @@ struct xhci_hcd {
     struct xhci_ring* cmd_ring;
     u32 cmd_ring_reserved; /* reserved TRBs in flight */
 
+    /* DMA pools */
+    struct dma_pool* segment_pool;
+    struct dma_pool* in_ctx_pool;
+    struct dma_pool* out_ctx_pool;
+
     /* Event ring (interrupter 0) */
     struct xhci_erst erst;
     struct xhci_ring* event_ring;
@@ -609,8 +615,9 @@ int xhci_comp_to_errno(u32 comp_code);
 /* xhci-mem.c */
 int xhci_mem_init(struct xhci_hcd* xhci);
 void xhci_mem_cleanup(struct xhci_hcd* xhci);
-struct xhci_ring* xhci_ring_alloc(unsigned int num_segs, int is_event);
-void xhci_ring_free(struct xhci_ring* ring);
+struct xhci_ring* xhci_ring_alloc(struct xhci_hcd* xhci, unsigned int num_segs,
+                                  int is_event);
+void xhci_ring_free(struct xhci_hcd* xhci, struct xhci_ring* ring);
 int xhci_alloc_dev(struct xhci_hcd* xhci, struct usb_device* udev,
                    unsigned int slot_id);
 void xhci_free_dev(struct xhci_hcd* xhci, struct usb_device* udev);
