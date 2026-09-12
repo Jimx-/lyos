@@ -1,1 +1,9 @@
 source "servers/mm/config.in"
+
+config VMM
+    bool "Userspace virtual machine monitor"
+    depends on INTEL_VMX
+    default y
+    help
+      Build and include the VMM service. The current architecture backend
+      runs 32-bit x86 guests using the Intel VT-x kernel backend.

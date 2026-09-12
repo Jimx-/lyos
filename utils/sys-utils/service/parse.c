@@ -138,6 +138,7 @@ static struct {
     {"safecopyfrom", NR_SAFECOPYFROM},
     {"safecopyto", NR_SAFECOPYTO},
     {"stime", NR_STIME},
+    {"hvctl", NR_HVCTL},
     {NULL, 0},
 };
 

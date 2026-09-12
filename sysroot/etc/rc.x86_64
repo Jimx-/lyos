@@ -16,6 +16,9 @@ service up /sbin/devpts
 service up /sbin/inet
 service up /sbin/virtio-net
 service up /sbin/usbd
+if [ -x /sbin/vmm ]; then
+    service up /sbin/vmm
+fi
 
 mount -a
 

@@ -74,6 +74,9 @@ void init_system()
 #if defined(__i386__) || defined(__x86_64__)
     sys_call_table[NR_ARCH_PRCTL] = sys_arch_prctl;
 #endif
+#ifdef CONFIG_HYPERVISOR
+    sys_call_table[NR_HVCTL] = sys_hvctl;
+#endif
 }
 
 int set_priv(struct proc* p, int id)

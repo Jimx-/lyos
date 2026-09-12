@@ -1,4 +1,7 @@
-/*  This file is part of Lyos.
+/*
+    (c)Copyright 2026 Jimx
+
+    This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,28 +16,21 @@
     You should have received a copy of the GNU General Public License
     along with Lyos.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef _VMM_TYPE_H_
+#define _VMM_TYPE_H_
+
 #include <lyos/types.h>
-#include <lyos/ipc.h>
-#include "lyos/const.h"
-#include <kernel/proc.h>
-#include <kernel/proto.h>
-#include <asm/page.h>
-#include <errno.h>
+#include <lyos/endpoint.h>
 
-int sys_clear(MESSAGE* m, struct proc* p_proc)
-{
-    endpoint_t ep = m->ENDPOINT;
-    int slot;
-    if (!verify_endpt(ep, &slot)) return EINVAL;
+struct vmm_vm {
+    int in_use;
+    u32 id; /* server-side id, never reused */
+    endpoint_t owner;
+    u64 mem_size;
+    void* ram;       /* shared VMM mapping of the guest RAM object */
+    u32 mm_handle;   /* MM guest RAM handle (stale after teardown) */
+    u32 vm_handle;   /* kernel HVCTL VM handle */
+    u32 vcpu_handle; /* kernel HVCTL vCPU handle */
+};
 
-    struct proc* p = proc_addr(slot);
-    PST_SETFLAGS(p, PST_FREE_SLOT);
-
-    /* release any VMs and vCPUs owned by the dying process */
-    hv_proc_cleanup(p);
-
-    release_fpu(p);
-    p->flags &= ~PF_FPU_INITIALIZED;
-
-    return 0;
-}
+#endif /* _VMM_TYPE_H_ */

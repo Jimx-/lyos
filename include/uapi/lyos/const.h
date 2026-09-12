@@ -25,7 +25,7 @@
 #define SELF           (-0x8ace)
 
 /* System call numbers. */
-#define NR_SYS_CALLS       29
+#define NR_SYS_CALLS       30
 #define NR_PRINTX          0
 #define NR_SENDREC         1
 #define NR_DATACOPY        2
@@ -55,6 +55,7 @@
 #define NR_SET_THREAD_AREA 26
 #define NR_STIME           27
 #define NR_ARCH_PRCTL      28
+#define NR_HVCTL           29
 
 /* For send_recv(). */
 #define SEND          1
@@ -122,6 +123,7 @@
 #define CLK_REQ_BASE     3101
 #define USB_REQ_BASE     3201
 #define ACPI_REQ_BASE    3301
+#define VMM_REQ_BASE     3401
 
 #ifndef __ASSEMBLY__
 
@@ -303,6 +305,8 @@ enum msgtype {
     MM_REMAP,
     MM_SET_CACHEBLOCK,
     MM_MAP_CACHEBLOCK,
+    MM_GUEST_RAM_ALLOC,
+    MM_GUEST_RAM_FREE,
 
     /* message type for pm calls */
     PM_VFS_INIT = PM_REQ_BASE, /* 1501 */
@@ -433,6 +437,14 @@ enum msgtype {
     USB_RQ_COMPLETE_URB,
     USB_DEVICE_CONNECT,
     USB_REPLY,
+
+    /* VMM server requests */
+    VMM_QUERY = VMM_REQ_BASE,
+    VMM_VM_CREATE,
+    VMM_VM_DESTROY,
+    VMM_VM_WRITE,
+    VMM_VM_READ,
+    VMM_VM_RUN,
 };
 
 #endif

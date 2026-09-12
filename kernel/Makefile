@@ -13,6 +13,10 @@ KERNELOBJS	= arch/$(ARCH)/arch-kernel.o main.o clock.o global.o proc.o klib.o \
 
 KLIBC		= lib/klibc.o
 
+ifeq ($(CONFIG_HYPERVISOR),y)
+	KERNELOBJS += hypervisor.o
+endif
+
 ifeq ($(CONFIG_OF),y)
 	LIB := $(LIBOUTDIR)/libof.a $(LIBOUTDIR)/libfdt.a $(LIB)
 endif

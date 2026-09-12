@@ -98,6 +98,20 @@ int main()
         case MM_MAP_CACHEBLOCK:
             mm_msg.RETVAL = do_map_cacheblock();
             break;
+        case MM_GUEST_RAM_ALLOC:
+#ifdef CONFIG_HYPERVISOR
+            mm_msg.u.m_mm_guestram.retval = do_guest_ram_alloc();
+#else
+            mm_msg.u.m_mm_guestram.retval = EOPNOTSUPP;
+#endif
+            break;
+        case MM_GUEST_RAM_FREE:
+#ifdef CONFIG_HYPERVISOR
+            mm_msg.u.m_mm_guestram.retval = do_guest_ram_free();
+#else
+            mm_msg.u.m_mm_guestram.retval = EOPNOTSUPP;
+#endif
+            break;
         case MM_VFS_REPLY:
             mm_msg.RETVAL = do_vfs_reply();
             break;
@@ -372,6 +386,9 @@ static void process_system_notify()
 
     if (sigismember(&sigset, SIGKMEM)) {
         do_mmrequest();
+#ifdef CONFIG_HYPERVISOR
+        guest_ram_release_drain();
+#endif
     }
 
     vmctl(VMCTL_CLEAR_MEMCACHE, SELF);

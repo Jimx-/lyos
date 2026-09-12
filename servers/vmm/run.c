@@ -1,4 +1,7 @@
-/*  This file is part of Lyos.
+/*
+    (c)Copyright 2026 Jimx
+
+    This file is part of Lyos.
 
     Lyos is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,26 +18,23 @@
 
 #include <lyos/types.h>
 #include <lyos/ipc.h>
-#include "lyos/const.h"
-#include <kernel/proc.h>
-#include <kernel/proto.h>
-#include <asm/page.h>
+#include <lyos/const.h>
+#include <lyos/vmm.h>
+#include <lyos/sysutils.h>
 #include <errno.h>
+#include "proto.h"
+#include "type.h"
+#include "arch.h"
 
-int sys_clear(MESSAGE* m, struct proc* p_proc)
+int do_vmm_vm_run(MESSAGE* m)
 {
-    endpoint_t ep = m->ENDPOINT;
-    int slot;
-    if (!verify_endpt(ep, &slot)) return EINVAL;
+    struct mess_vmm* req = &m->u.m_vmm;
+    struct vmm_vm* vm = vm_lookup(req->vm_id, m->source);
+    struct vmm_run_status status;
+    int retval;
 
-    struct proc* p = proc_addr(slot);
-    PST_SETFLAGS(p, PST_FREE_SLOT);
-
-    /* release any VMs and vCPUs owned by the dying process */
-    hv_proc_cleanup(p);
-
-    release_fpu(p);
-    p->flags &= ~PF_FPU_INITIALIZED;
-
-    return 0;
+    /* Reject old ABI layouts instead of returning a partially filled record. */
+    if (!vm || !req->buf || req->buf_len != sizeof(status)) return EINVAL;
+    if ((retval = vmm_arch_ops.run(vm, &status)) != 0) return retval;
+    return data_copy(m->source, req->buf, SELF, &status, sizeof(status));
 }

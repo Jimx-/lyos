@@ -107,6 +107,11 @@ struct vir_region {
             int seq;
         } shared;
 
+        struct {
+            u32 handle; /* guest RAM object handle (guest_ram.c) */
+            u32 reserved;
+        } guestram;
+
         phys_bytes phys;
     } param;
 };

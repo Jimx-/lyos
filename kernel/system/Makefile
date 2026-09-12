@@ -8,6 +8,10 @@ SYSOBJS	= sys_printx.o sys_datacopy.o sys_getinfo.o sys_privctl.o sys_vmctl.o sy
 			sys_times.o sys_trace.o sys_alarm.o sys_kprofile.o sys_setgrant.o \
 			sys_safecopy.o sys_stime.o
 
+ifeq ($(CONFIG_HYPERVISOR),y)
+	SYSOBJS += sys_hvctl.o
+endif
+
 SYSTEM		= system.o
 
 everything : realclean $(SYSTEM)
