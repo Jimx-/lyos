@@ -18,6 +18,7 @@
 
 #include <lyos/types.h>
 #include <lyos/param.h>
+#include <kernel/hypervisor.h>
 
 /* kliba.asm */
 void disable_int();
@@ -116,6 +117,7 @@ void init_system();
 int resume_sys_call(struct proc* p);
 int set_priv(struct proc* p, int id);
 void ksig_proc(endpoint_t ep, int signo);
+int send_sig(endpoint_t ep, int signo);
 
 /* lib/misc.c */
 u32 now();
@@ -168,6 +170,7 @@ int sys_setgrant(MESSAGE* m, struct proc* p_proc);
 int sys_safecopyfrom(MESSAGE* msg, struct proc* p_proc);
 int sys_safecopyto(MESSAGE* msg, struct proc* p_proc);
 int sys_stime(MESSAGE* m, struct proc* p_proc);
+int sys_hvctl(MESSAGE* m, struct proc* p_proc);
 
 /* syscall.asm */
 void sys_call(); /* int_handler */

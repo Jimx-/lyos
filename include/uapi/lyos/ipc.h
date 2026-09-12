@@ -1060,6 +1060,55 @@ BEGIN_MESS_DECL(mess_usb_reply)
 }
 END_MESS_DECL(mess_usb_reply)
 
+BEGIN_MESS_DECL(mess_hvctl)
+{
+    int request; /* HVCTL_* sub-operation */
+    int flags;
+    __u32 vm_handle;   /* opaque VM handle */
+    __u32 vcpu_handle; /* opaque vCPU handle */
+    __u64 gpa;         /* sub-op specific: memslot GPA, released mm handle */
+    __u64 value;       /* sub-op specific: caps bitmask, page count */
+    void* buf;         /* record buffer (state, exit, caps or backing list) */
+    size_t buf_len;
+    int retval;
+
+    __u8 _pad[72 - sizeof(void*) - sizeof(size_t) - 2 * sizeof(__u64) -
+              5 * sizeof(int)];
+}
+END_MESS_DECL(mess_hvctl)
+
+BEGIN_MESS_DECL(mess_mm_guestram)
+{
+    __endpoint_t who;
+    size_t length; /* MM_GUEST_RAM_ALLOC: length in bytes */
+    __u32 handle;  /* MM_GUEST_RAM_FREE: handle to release */
+    __u32 reserved;
+    int retval;       /* reply */
+    void* vaddr;      /* reply: mapping in the caller's address space */
+    __u32 ret_handle; /* reply: opaque guest RAM handle */
+
+    __u8 _pad[72 - sizeof(__endpoint_t) - sizeof(size_t) - sizeof(void*) -
+              3 * sizeof(__u32) - sizeof(int)];
+}
+END_MESS_DECL(mess_mm_guestram)
+
+BEGIN_MESS_DECL(mess_vmm)
+{
+    int request; /* VMM_* sub-operation */
+    int vm_id;   /* VM id issued by the vmm server */
+    int retval;  /* reply */
+    int reserved;
+    __u64 mem_size; /* VMM_VM_CREATE: guest RAM size in bytes */
+    __u64 gpa;      /* guest memory access GPA */
+    __u64 value;    /* VMM_VM_CREATE: guest entry rip */
+    void* buf;      /* client buffer (image in, caps/status out) */
+    size_t buf_len;
+
+    __u8 _pad[72 - sizeof(void*) - sizeof(size_t) - 3 * sizeof(__u64) -
+              4 * sizeof(int)];
+}
+END_MESS_DECL(mess_vmm)
+
 typedef struct {
     int source;
     int type;
@@ -1152,6 +1201,9 @@ typedef struct {
         struct mess_ndev_reply m_ndev_reply;
         struct mess_usb_send_urb m_usb_send_urb;
         struct mess_usb_reply m_usb_reply;
+        struct mess_hvctl m_hvctl;
+        struct mess_mm_guestram m_mm_guestram;
+        struct mess_vmm m_vmm;
 
         __u8 m_payload[56];
     } u;

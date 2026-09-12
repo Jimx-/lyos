@@ -21,6 +21,14 @@ ifeq ($(CONFIG_KVM_GUEST), y)
 	KERNELOBJS += kvm.o kvmclock.o
 endif
 
+ifeq ($(CONFIG_HYPERVISOR),y)
+	KERNELOBJS += hypervisor.o
+endif
+
+ifeq ($(CONFIG_INTEL_VMX),y)
+	KERNELOBJS += vmx/vmx.o vmx/vmcs.o vmx/ept.o vmx/vmenter.o
+endif
+
 ARCHKERNEL		= arch-kernel.o
 LINKERSCRIPT	= lyos.lds
 

@@ -7,6 +7,10 @@ SRCS	+= main.c fork.c pagetable.c alloc.c region.c vmalloc.c brk.c pagefault.c m
 			mmap.c global.c utils.c slab.c vfs.c file.c cache.c region_avl.c page.c \
 			file_map.c anon_map.c anon_contig_map.c direct_phys_map.c shared_map.c
 
+ifeq ($(CONFIG_HYPERVISOR),y)
+	SRCS += guest_ram.c
+endif
+
 LIBS	= exec lyos
 
 CFLAGS	+= -I$(CURDIR) -I$(CURDIR)/arch/$(ARCH)

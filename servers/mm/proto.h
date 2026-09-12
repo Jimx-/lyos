@@ -176,6 +176,11 @@ int file_map_set_file(struct mmproc* mmp, struct vir_region* vr, int fd,
 int do_set_cacheblock(void);
 int do_map_cacheblock(void);
 
+/* mm/guest_ram.c */
+int do_guest_ram_alloc(void);
+int do_guest_ram_free(void);
+void guest_ram_release_drain(void);
+
 /* mm/direct_phys_map.c */
 void direct_phys_set_phys(struct vir_region* vr, phys_bytes paddr);
 

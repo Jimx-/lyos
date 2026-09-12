@@ -37,6 +37,11 @@ endif
 ifneq ("$(wildcard $(DESTDIR)/sbin/usbd)","")
 	@cp -f $(DESTDIR)/sbin/usbd sbin/
 endif
+ifeq ($(CONFIG_VMM),y)
+	@cp -f $(DESTDIR)/sbin/vmm sbin/
+else
+	@rm -f sbin/vmm
+endif
 	@cp -f $(DESTDIR)/sbin/uds sbin/
 	@cp -f $(DESTDIR)/sbin/tmpfs sbin/
 	@cp -f $(DESTDIR)/sbin/pty sbin/
@@ -57,6 +62,9 @@ endif
 	@cp -f $(DESTDIR)/usr/lib/libcjson.so* usr/lib
 	@cp -rf ../sysroot/etc/* etc/
 	@cp -f ../sysroot/etc/rc.$(SUBARCH) etc/rc
+ifneq ($(CONFIG_VMM),y)
+	@rm -f etc/system/vmm.conf
+endif
 	@touch .root
 	@find .root bin lib sbin etc usr -print0 | \
 		cpio --null --create --format=newc --quiet > $(INITRD)

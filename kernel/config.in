@@ -57,6 +57,16 @@ config PROFILING
     help
       Enable kernel profiling.
 
+config HAVE_HYPERVISOR
+    bool
+
+config HYPERVISOR
+    bool "Kernel hypervisor support"
+    depends on HAVE_HYPERVISOR
+    help
+      Build the generic VM control interface and guest RAM backing store.
+      A processor-specific backend must also be selected to run guests.
+
 endmenu
 
 menu "Kernel hacking"
