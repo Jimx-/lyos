@@ -26,6 +26,7 @@
 
 #define HV_BACKEND_NONE 0
 #define HV_BACKEND_VMX  1
+#define HV_BACKEND_SVM  2
 
 struct hv_caps {
     __u32 abi_version;

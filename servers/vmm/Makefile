@@ -3,7 +3,7 @@
 #
 
 SRCS	= main.c vm.c run.c
-ifeq ($(CONFIG_INTEL_VMX),y)
+ifneq ($(filter y,$(CONFIG_INTEL_VMX) $(CONFIG_AMD_SVM)),)
 SRCS += arch/x86/vmx.c
 endif
 SERVERCFLAGS += -I$(CURDIR)

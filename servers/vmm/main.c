@@ -65,8 +65,8 @@ static int vmm_init()
     memset(&vmm_hw_caps, 0, sizeof(vmm_hw_caps));
     retval = hv_query_caps(&vmm_hw_caps);
     if (retval == 0 && (vmm_hw_caps.caps & HV_CAP_ACTIVE) &&
-        (vmm_hw_caps.caps & HV_CAP_STAGE2) &&
-        vmm_hw_caps.backend == vmm_arch_ops.backend) {
+        (vmm_hw_caps.caps & HV_CAP_STAGE2) && vmm_hw_caps.backend < 32 &&
+        (vmm_arch_ops.backend_mask & (1U << vmm_hw_caps.backend))) {
         reap_interval = get_system_hz();
         if (reap_interval <= 0) panic(NAME ": invalid system clock frequency");
         vmm_available = 1;

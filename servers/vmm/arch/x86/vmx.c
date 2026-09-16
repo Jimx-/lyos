@@ -368,7 +368,7 @@ static int init_guest(struct vmm_vm* vm, u64 entry)
 }
 
 const struct vmm_arch_ops vmm_arch_ops = {
-    .backend = HV_BACKEND_VMX,
+    .backend_mask = (1U << HV_BACKEND_VMX) | (1U << HV_BACKEND_SVM),
     .init_guest = init_guest,
     .run = run_guest,
 };

@@ -77,4 +77,13 @@ config INTEL_VMX
       VT-x, EPT and unrestricted guest support, enabled by the firmware.
       This is independent of KVM_GUEST, which optimizes Lyos as a guest.
 
+config AMD_SVM
+    bool "AMD SVM virtualization backend"
+    depends on X86_64 && HYPERVISOR
+    help
+      Enable the AMD Secure Virtual Machine backend for running guests under
+      Lyos. Requires SVM, nested paging and NRIP save support, enabled by the
+      firmware. This can be built together with the Intel VMX backend; the
+      kernel selects the backend matching the boot processor.
+
 endmenu

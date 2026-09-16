@@ -10,7 +10,7 @@ struct vmm_vm;
  * client authorization, VM/RAM lifetime, and copying requests and replies.
  */
 struct vmm_arch_ops {
-    u32 backend;
+    u32 backend_mask;
     int (*init_guest)(struct vmm_vm* vm, u64 entry);
     int (*run)(struct vmm_vm* vm, struct vmm_run_status* status);
 };

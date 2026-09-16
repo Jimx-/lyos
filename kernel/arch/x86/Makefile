@@ -29,6 +29,10 @@ ifeq ($(CONFIG_INTEL_VMX),y)
 	KERNELOBJS += vmx/vmx.o vmx/vmcs.o vmx/ept.o vmx/vmenter.o
 endif
 
+ifeq ($(CONFIG_AMD_SVM),y)
+	KERNELOBJS += svm/svm.o svm/npt.o svm/vmenter.o
+endif
+
 ARCHKERNEL		= arch-kernel.o
 LINKERSCRIPT	= lyos.lds
 
