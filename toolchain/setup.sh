@@ -20,6 +20,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_CJSON:=false}
 : ${BUILD_READLINE:=false}
 : ${BUILD_BASH:=false}
+: ${BUILD_MAKE:=false}
 : ${BUILD_COREUTILS:=false}
 : ${BUILD_NCURSES:=false}
 : ${BUILD_VIM:=false}
@@ -54,6 +55,7 @@ if $BUILD_EVERYTHING; then
     BUILD_CJSON=true
     BUILD_READLINE=true
     BUILD_BASH=true
+    BUILD_MAKE=true
     BUILD_COREUTILS=true
     BUILD_NCURSES=true
     BUILD_VIM=true
@@ -67,7 +69,6 @@ if $BUILD_EVERYTHING; then
     BUILD_LIBXML2=true
     BUILD_EUDEV=true
     BUILD_MTDEV=true
-    BUILD_ACPICA=true
     BUILD_LWIP=true
 fi
 
@@ -422,6 +423,20 @@ if $BUILD_BASH; then
     make DESTDIR=$SYSROOT install || cmd_error
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/sh
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/bash
+    popd > /dev/null
+fi
+
+# Build GNU Make
+if $BUILD_MAKE; then
+    if [ ! -d "make-$SUBARCH" ]; then
+        mkdir make-$SUBARCH
+    fi
+
+    pushd make-$SUBARCH > /dev/null
+    $DIR/sources/make-4.4.1/configure --host=$TARGET --prefix=$CROSSPREFIX \
+        --disable-nls --without-guile --disable-posix-spawn || cmd_error
+    make -j$PARALLELISM || cmd_error
+    make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
 fi
 

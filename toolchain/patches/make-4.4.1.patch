@@ -1,0 +1,23 @@
+diff --color -rupN old/build-aux/config.sub new/build-aux/config.sub
+--- old/build-aux/config.sub	2023-02-20 17:13:48.000000000 +0800
++++ new/build-aux/config.sub	2026-09-16 22:00:00.000000000 +0800
+@@ -1754,6 +1754,6 @@ case $os in
+ 	     | scout* | superux* | sysv* | rtmk* | tpf* | windiss* \
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+-	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
++	     | skyos* | haiku* | rdos* | toppers* | drops* | es* | lyos* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+diff --color -rupN old/src/makeint.h new/src/makeint.h
+--- old/src/makeint.h	2023-02-20 17:13:48.000000000 +0800
++++ new/src/makeint.h	2026-09-16 22:00:00.000000000 +0800
+@@ -106,7 +106,7 @@
+ # include <unistd.h>
+ /* Ultrix's unistd.h always defines _POSIX_VERSION, but you only get
+    POSIX.1 behavior with 'cc -YPOSIX', which predefines POSIX itself!  */
+-# if defined (_POSIX_VERSION) && !defined (ultrix) && !defined (VMS)
++# if (defined (_POSIX_VERSION) || defined (__lyos__)) && !defined (ultrix) && !defined (VMS)
+ #  define POSIX 1
+ # endif
+ #endif
