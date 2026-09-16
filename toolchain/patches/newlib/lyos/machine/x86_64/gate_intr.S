@@ -12,3 +12,5 @@ syscall_gate_intr:
 
     pop     %rbx
     ret
+
+.section .note.GNU-stack,"",@progbits

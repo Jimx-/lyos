@@ -1,6 +1,6 @@
 diff -rupN old/config.sub new/config.sub
---- old/config.sub	2020-11-20 15:27:13.771256150 +0800
-+++ new/config.sub	2020-11-20 15:29:23.494431332 +0800
+--- old/config.sub	2020-02-25 05:36:25.000000000 +0800
++++ new/config.sub	2026-09-15 23:37:15.487150322 +0800
 @@ -1372,7 +1372,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
@@ -11,8 +11,8 @@ diff -rupN old/config.sub new/config.sub
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -knetbsd* | -mirbsd* | -netbsd* \
 diff -rupN old/configure.ac new/configure.ac
---- old/configure.ac	2020-11-20 15:27:13.767922820 +0800
-+++ new/configure.ac	2020-11-20 15:26:59.341271795 +0800
+--- old/configure.ac	2020-02-25 05:36:25.000000000 +0800
++++ new/configure.ac	2026-09-15 23:37:15.487500666 +0800
 @@ -382,6 +382,9 @@ then
  	*-*-vxworks*)
  	    ac_sys_system=VxWorks
@@ -62,3 +62,16 @@ diff -rupN old/configure.ac new/configure.ac
  	# -u libsys_s pulls in all symbols in libsys
  	Darwin/*)
  		LINKFORSHARED="$extra_undefs -framework CoreFoundation"
+diff -rupN old/setup.py new/setup.py
+--- old/setup.py	2020-02-25 05:36:25.000000000 +0800
++++ new/setup.py	2026-09-15 23:37:15.487891299 +0800
+@@ -1673,7 +1673,8 @@ class PyBuildExt(build_ext):
+ 
+     def detect_uuid(self):
+         # Build the _uuid module if possible
+-        uuid_incs = find_file("uuid.h", self.inc_dirs, ["/usr/include/uuid"])
++        uuid_fallback = [] if CROSS_COMPILING else ["/usr/include/uuid"]
++        uuid_incs = find_file("uuid.h", self.inc_dirs, uuid_fallback)
+         if uuid_incs is not None:
+             if self.compiler.find_library_file(self.lib_dirs, 'uuid'):
+                 uuid_libs = ['uuid']

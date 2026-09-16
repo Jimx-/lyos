@@ -1,6 +1,10 @@
 #include <arpa/inet.h>
 #include <machine/endian.h>
 
+const struct in6_addr in6addr_any = {{{0}}};
+const struct in6_addr in6addr_loopback = {
+    {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}}};
+
 uint16_t htons(uint16_t x)
 {
 #if _BYTE_ORDER == _LITTLE_ENDIAN

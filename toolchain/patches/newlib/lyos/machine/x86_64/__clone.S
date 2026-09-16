@@ -33,3 +33,5 @@ __clone_parent:
     pop %rbx
     pop %rbp
     ret
+
+.section .note.GNU-stack,"",@progbits

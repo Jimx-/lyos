@@ -47,3 +47,5 @@ _start:
     call	_exit
 
     hlt
+
+.section .note.GNU-stack,"",@progbits

@@ -1492,7 +1492,7 @@ int cfsetospeed(struct termios* tio, speed_t speed)
 
 int tcgetattr(int fd, struct termios* tio) { return ioctl(fd, TCGETS, tio); }
 
-int tcsetattr(int fd, int actions, struct termios* tio)
+int tcsetattr(int fd, int actions, const struct termios* tio)
 {
     switch (actions) {
     case TCSANOW:
@@ -1537,6 +1537,27 @@ int tcflush(int fd, int which)
 {
     int selector = which;
     return ioctl(fd, TCFLSH, &selector);
+}
+
+int tcdrain(int fd)
+{
+    (void)fd;
+    return 0;
+}
+
+int tcsendbreak(int fd, int duration)
+{
+    (void)fd;
+    (void)duration;
+    return 0;
+}
+
+int msync(void* addr, size_t len, int flags)
+{
+    (void)addr;
+    (void)len;
+    (void)flags;
+    return 0;
 }
 
 int pipe2(int pipefd[2], int flags)

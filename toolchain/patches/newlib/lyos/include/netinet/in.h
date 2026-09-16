@@ -37,6 +37,33 @@ struct in6_addr {
 #define s6_addr32 __in6_u.__u6_addr32
 };
 
+extern const struct in6_addr in6addr_any;
+extern const struct in6_addr in6addr_loopback;
+
+struct ip_mreq {
+    struct in_addr imr_multiaddr;
+    struct in_addr imr_interface;
+};
+
+struct ipv6_mreq {
+    struct in6_addr ipv6mr_multiaddr;
+    unsigned int ipv6mr_interface;
+};
+
+#define IP_TTL             2
+#define IP_ADD_MEMBERSHIP  3
+#define IP_DROP_MEMBERSHIP 4
+#define IP_MULTICAST_TTL   5
+#define IP_MULTICAST_IF    6
+#define IP_MULTICAST_LOOP  7
+
+#define IPV6_JOIN_GROUP     12
+#define IPV6_LEAVE_GROUP    13
+#define IPV6_UNICAST_HOPS   16
+#define IPV6_MULTICAST_IF   17
+#define IPV6_MULTICAST_HOPS 18
+#define IPV6_MULTICAST_LOOP 19
+
 /* Standard well-defined IP protocols.  */
 enum {
     IPPROTO_IP = 0, /* Dummy protocol for TCP.  */

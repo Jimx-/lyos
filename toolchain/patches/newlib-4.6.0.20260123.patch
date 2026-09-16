@@ -1,0 +1,161 @@
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2026-01-24 06:12:49.000000000 +0800
++++ new/config.sub	2026-09-15 23:37:13.873855715 +0800
+@@ -1745,7 +1745,7 @@ case $os in
+ 	     | os2* | vos* | palmos* | uclinux* | nucleus* | morphos* \
+ 	     | scout* | superux* | sysv* | rtmk* | tpf* | windiss* \
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+-	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
++	     | skyos* | haiku* | rdos* | toppers* | drops* | es* | lyos* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+diff -rupN old/newlib/Makefile.am new/newlib/Makefile.am
+--- old/newlib/Makefile.am	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/Makefile.am	2026-09-15 23:37:13.874241518 +0800
+@@ -113,19 +113,19 @@ rwildcard=$(foreach d,$(wildcard $1*),$(
+ # both libc.a and libm.a.  We build them in libm.a and copy them over,
+ # along with some required supporting routines.
+ MATHOBJS_IN_LIBC = \
+-	libm_a-s_fpclassify.o libm_a-sf_fpclassify.o \
+-	libm_a-s_isinf.o libm_a-sf_isinf.o \
+-	libm_a-s_isnan.o libm_a-sf_isnan.o \
+-	libm_a-s_isinfd.o libm_a-sf_isinff.o \
+-	libm_a-s_isnand.o libm_a-sf_isnanf.o \
+-	libm_a-s_nan.o libm_a-sf_nan.o \
+-	libm_a-s_ldexp.o libm_a-sf_ldexp.o \
+-	libm_a-s_frexp.o libm_a-sf_frexp.o libm_a-frexpl.o \
+-	libm_a-s_modf.o \
+-	libm_a-sf_modf.o libm_a-s_scalbn.o \
+-	libm_a-sf_scalbn.o \
+-	libm_a-s_finite.o libm_a-sf_finite.o \
+-	libm_a-s_copysign.o libm_a-sf_copysign.o
++	a-s_fpclassify.o a-sf_fpclassify.o \
++	a-s_isinf.o a-sf_isinf.o \
++	a-s_isnan.o a-sf_isnan.o \
++	a-s_isinfd.o a-sf_isinff.o \
++	a-s_isnand.o a-sf_isnanf.o \
++	a-s_nan.o a-sf_nan.o \
++	a-s_ldexp.o a-sf_ldexp.o \
++	a-s_frexp.o a-sf_frexp.o a-frexpl.o \
++	a-s_modf.o \
++	a-sf_modf.o a-s_scalbn.o \
++	a-sf_scalbn.o \
++	a-s_finite.o a-sf_finite.o \
++	a-s_copysign.o a-sf_copysign.o
+ 
+ ## Place the libm_a objects in libc/ to keep the top dir tidy.
+ stamp-libc-math-objects: libm.a
+diff -rupN old/newlib/configure.host new/newlib/configure.host
+--- old/newlib/configure.host	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/configure.host	2026-09-15 23:37:13.874002302 +0800
+@@ -430,6 +430,26 @@ fi
+ # THIS TABLE IS ALPHA SORTED.  KEEP IT THAT WAY.
+ 
+ case "${host}" in
++  aarch64*-*-lyos* | arm*-*-lyos*)
++	sys_dir=lyos
++	have_crt0="no"
++	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES -DSIGNAL_PROVIDED"
++	;;
++  i[34567]86-*-lyos*)
++	sys_dir=lyos
++	have_crt0="no"
++	newlib_cflags="${newlib_cflags} -D_NO_GETPWENT -D_I386MACH_NEED_SOTYPE_FUNCTION -DHAVE_MKDIR -DMISSING_SYSCALL_NAMES -DSIGNAL_PROVIDED"
++	;;
++  riscv*-*-lyos*)
++	sys_dir=lyos
++	have_crt0="no"
++	newlib_cflags="${newlib_cflags} -mcmodel=medany -DMISSING_SYSCALL_NAMES -DSIGNAL_PROVIDED"
++	;;
++  x86_64-*-lyos*)
++	sys_dir=lyos
++	have_crt0="no"
++	newlib_cflags="${newlib_cflags} -D_NO_GETPWENT -D_I386MACH_NEED_SOTYPE_FUNCTION -DHAVE_MKDIR -DMISSING_SYSCALL_NAMES -DSIGNAL_PROVIDED"
++	;;
+   *-*-cygwin*)
+ 	posix_dir=posix
+ 	xdr_dir=xdr
+@@ -897,6 +917,11 @@ newlib_cflags="${newlib_cflags} -DCLOCK_
+ 	;;
+ esac
+ 
++# Lyos supplies its own syscall wrappers in newlib/libc/sys/lyos.
++case "${host}" in
++  *-*-lyos*) syscall_dir= ;;
++esac
++
+ # Use defaults for certain settings if not specified by user
+ 
+ # Enable C99 format support in I/O routines if requested.
+diff -rupN old/newlib/libc/acinclude.m4 new/newlib/libc/acinclude.m4
+--- old/newlib/libc/acinclude.m4	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/libc/acinclude.m4	2026-09-15 23:37:13.874101930 +0800
+@@ -17,7 +17,7 @@ m4_foreach_w([SYS_DIR], [
+   epiphany
+   h8300hms h8500hms
+   m88kbug mmixware
+-  netware
++  netware lyos
+   or1k
+   rdos rtems
+   sh sysmec sysnec810 sysnecv850 sysvi386 sysvnecv70
+diff -rupN old/newlib/libc/machine/i386/setjmp.S new/newlib/libc/machine/i386/setjmp.S
+--- old/newlib/libc/machine/i386/setjmp.S	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/libc/machine/i386/setjmp.S	2026-09-15 23:37:13.874322317 +0800
+@@ -115,7 +115,6 @@ SYM (longjmp):
+ 
+ 	movl	24(edi),ebp
+ 
+-       __CLI
+ 	movl	28(edi),esp
+ 	
+ 	pushl	32(edi)	
+@@ -126,7 +125,6 @@ SYM (longjmp):
+ 	movl	12(edi),edx
+ 	movl	16(edi),esi
+ 	movl	20(edi),edi
+-       __STI
+ #endif
+ 
+ 	ret
+diff -rupN old/newlib/libc/machine/x86_64/memcpy.S new/newlib/libc/machine/x86_64/memcpy.S
+--- old/newlib/libc/machine/x86_64/memcpy.S	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/libc/machine/x86_64/memcpy.S	2026-09-15 23:37:13.874380855 +0800
+@@ -111,3 +111,5 @@ quadword_copy:
+   andq    $7, rcx
+   rep     movsb                   /* Copy the remaining bytes */
+   ret
++
++.section .note.GNU-stack,"",@progbits
+diff -rupN old/newlib/libc/machine/x86_64/memset.S new/newlib/libc/machine/x86_64/memset.S
+--- old/newlib/libc/machine/x86_64/memset.S	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/libc/machine/x86_64/memset.S	2026-09-15 23:37:13.874436224 +0800
+@@ -86,3 +86,5 @@ quadword_set:
+   movq    r9, rax
+   ret
+ 
++
++.section .note.GNU-stack,"",@progbits
+diff -rupN old/newlib/libc/machine/x86_64/setjmp.S new/newlib/libc/machine/x86_64/setjmp.S
+--- old/newlib/libc/machine/x86_64/setjmp.S	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/libc/machine/x86_64/setjmp.S	2026-09-15 23:37:13.874492143 +0800
+@@ -51,3 +51,5 @@ SYM (longjmp):
+   __STI
+ 
+   ret
++
++.section .note.GNU-stack,"",@progbits
+diff -rupN old/newlib/libc/sys/Makefile.inc new/newlib/libc/sys/Makefile.inc
+--- old/newlib/libc/sys/Makefile.inc	2026-01-24 06:12:49.000000000 +0800
++++ new/newlib/libc/sys/Makefile.inc	2026-09-15 23:37:13.874158239 +0800
+@@ -25,6 +25,9 @@ endif
+ if HAVE_LIBC_SYS_MMIXWARE_DIR
+ include %D%/mmixware/Makefile.inc
+ endif
++if HAVE_LIBC_SYS_LYOS_DIR
++include %D%/lyos/Makefile.inc
++endif
+ if HAVE_LIBC_SYS_NETWARE_DIR
+ include %D%/netware/Makefile.inc
+ endif

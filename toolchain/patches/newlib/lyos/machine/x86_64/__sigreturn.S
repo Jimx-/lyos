@@ -6,3 +6,5 @@
 __sigreturn:
 	addl	$12, %esp
 	jmp		sigreturn
+
+.section .note.GNU-stack,"",@progbits

@@ -1,0 +1,68 @@
+diff -rupN old/config.sub new/config.sub
+--- old/config.sub	2015-09-27 22:07:23.000000000 +0800
++++ new/config.sub	2026-09-15 23:37:14.790342759 +0800
+@@ -1393,7 +1393,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
++	      | -skyos* | -haiku* | -lyos* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN old/glib/config.sub new/glib/config.sub
+--- old/glib/config.sub	2015-09-27 22:07:17.000000000 +0800
++++ new/glib/config.sub	2026-09-15 23:37:14.790457957 +0800
+@@ -1393,7 +1393,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
++	      | -skyos* | -haiku* | -lyos* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN old/glib/configure new/glib/configure
+--- old/glib/configure	2017-03-19 22:57:03.000000000 +0800
++++ new/glib/configure	2026-09-15 23:37:14.792307316 +0800
+@@ -23132,7 +23132,8 @@ if ac_fn_c_try_compile "$LINENO"; then :
+ $as_echo "yes" >&6; }
+                                           NAMESER_COMPAT_INCLUDE="#include <arpa/nameser_compat.h>"
+ else
+-  as_fn_error $? "could not compile test program either way" "$LINENO" 5
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
+ fi
+ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ fi
+@@ -23206,7 +23207,8 @@ if ac_fn_c_try_link "$LINENO"; then :
+ $as_echo "in -lbind" >&6; }
+                                          NETWORK_LIBS="-lbind $NETWORK_LIBS"
+ else
+-  as_fn_error $? "not found" "$LINENO" 5
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
+ fi
+ rm -f core conftest.err conftest.$ac_objext \
+     conftest$ac_exeext conftest.$ac_ext
+diff -rupN old/glib/glib/goption.c new/glib/glib/goption.c
+--- old/glib/glib/goption.c	2016-04-12 05:39:26.000000000 +0800
++++ new/glib/glib/goption.c	2026-09-15 23:37:14.790136942 +0800
+@@ -166,7 +166,7 @@ typedef struct
+   gpointer arg_data;
+   union
+   {
+-    gboolean bool;
++    gboolean boolean;
+     gint integer;
+     gchar *str;
+     gchar **array;
+@@ -1600,7 +1600,7 @@ free_changes_list (GOptionContext *conte
+           switch (change->arg_type)
+             {
+             case G_OPTION_ARG_NONE:
+-              *(gboolean *)change->arg_data = change->prev.bool;
++              *(gboolean *)change->arg_data = change->prev.boolean;
+               break;
+             case G_OPTION_ARG_INT:
+               *(gint *)change->arg_data = change->prev.integer;

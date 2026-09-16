@@ -23,7 +23,7 @@ _start:
     move	a1, s3
     call	ldso_relocate_nonplt_self
 
-    mv a0, a2
+    mv a0, s2
     call __lyos_init
 
     mv a0, s0

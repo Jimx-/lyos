@@ -65,3 +65,5 @@ ctx_wrapper:
     pop %rdi
     call resumecontext
     ret
+
+.section .note.GNU-stack,"",@progbits

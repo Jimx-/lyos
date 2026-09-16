@@ -1,0 +1,118 @@
+diff -rupN old/gio/gthreadedresolver.c new/gio/gthreadedresolver.c
+--- old/gio/gthreadedresolver.c	2019-02-04 21:57:04.000000000 +0800
++++ new/gio/gthreadedresolver.c	2026-09-15 23:37:14.552268078 +0800
+@@ -32,6 +32,7 @@
+ #include "gcancellable.h"
+ #include "ginetaddress.h"
+ #include "ginetsocketaddress.h"
++#include "gioerror.h"
+ #include "gtask.h"
+ #include "gsocketaddress.h"
+ #include "gsrvtarget.h"
+@@ -369,7 +370,7 @@ lookup_by_address_finish (GResolver
+ }
+ 
+ 
+-#if defined(G_OS_UNIX)
++#if defined(G_OS_UNIX) && defined(HAVE_RES_QUERY)
+ 
+ #if defined __BIONIC__ && !defined BIND_4_COMPAT
+ /* Copy from bionic/libc/private/arpa_nameser_compat.h
+@@ -905,7 +906,7 @@ free_records (GList *records)
+   g_list_free_full (records, (GDestroyNotify) g_variant_unref);
+ }
+ 
+-#if defined(G_OS_UNIX)
++#if defined(G_OS_UNIX) && defined(HAVE_RES_QUERY)
+ #ifdef __BIONIC__
+ #ifndef C_IN
+ #define C_IN 1
+@@ -924,7 +925,7 @@ do_lookup_records (GTask         *task,
+   GList *records;
+   GError *error = NULL;
+ 
+-#if defined(G_OS_UNIX)
++#if defined(G_OS_UNIX) && defined(HAVE_RES_QUERY)
+   gint len = 512;
+   gint herr;
+   GByteArray *answer;
+@@ -987,7 +988,7 @@ do_lookup_records (GTask         *task,
+ 
+ #endif  /* HAVE_RES_NQUERY */
+ 
+-#else
++#elif defined(G_OS_WIN32)
+ 
+   DNS_STATUS status;
+   DNS_RECORD *results = NULL;
+@@ -999,6 +1000,13 @@ do_lookup_records (GTask         *task,
+   if (results != NULL)
+     DnsRecordListFree (results, DnsFreeRecordList);
+ 
++#else
++
++  g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
++                           _("DNS record lookups are not supported on this platform: “%s”"),
++                           lrd->rrname);
++  return;
++
+ #endif
+ 
+   if (records)
+diff -rupN old/gio/meson.build new/gio/meson.build
+--- old/gio/meson.build	2019-02-04 21:57:04.000000000 +0800
++++ new/gio/meson.build	2026-09-15 23:37:14.552157680 +0800
+@@ -32,7 +32,7 @@ elif not host_system.contains('android')
+                    name : 'arpa/nameser_compat.h needed for C_IN')
+       gnetworking_h_nameser_compat_include = '#include <arpa/nameser_compat.h>'
+     else
+-      error('Could not find required includes for ARPA C_IN')
++      warning('Could not find required includes for ARPA C_IN')
+     endif
+   endif
+ endif
+@@ -41,6 +41,7 @@ network_libs = [ ]
+ network_args = [ ]
+ if host_system != 'windows'
+   # res_query()
++  have_res_query = false
+   res_query_test = '''#include <resolv.h>
+                       int main (int argc, char ** argv) {
+                         return res_query("test", 0, 0, (void *)0, 0);
+@@ -49,17 +50,22 @@ if host_system != 'windows'
+                            #include <netinet/in.h>
+                            #include <arpa/nameser.h>
+                         ''' + res_query_test
+-  if not cc.links(res_query_test_full, name : 'res_query()')
++  if cc.links(res_query_test_full, name : 'res_query()')
++    have_res_query = true
++  else
+     if cc.links(res_query_test_full, args : '-lresolv', name : 'res_query() in -lresolv')
+       network_libs += [ cc.find_library('resolv') ]
+       network_args += [ '-lresolv' ]
++      have_res_query = true
+     elif cc.links(res_query_test, args : '-lbind', name : 'res_query() in -lbind')
+       network_libs += [ cc.find_library('bind') ]
+       network_args += [ '-lbind' ]
++      have_res_query = true
+     else
+-      error('Could not find res_query()')
++      warning('Could not find res_query()')
+     endif
+   endif
++  glib_conf.set('HAVE_RES_QUERY', have_res_query)
+ 
+   # socket()
+   socket_test = '''#include <sys/types.h>
+diff -rupN old/meson.build new/meson.build
+--- old/meson.build	2019-02-04 21:57:04.000000000 +0800
++++ new/meson.build	2026-09-15 23:37:14.551984543 +0800
+@@ -278,7 +278,7 @@ if cc.compiles('#include <malloc.h>', na
+   glib_conf_prefix = glib_conf_prefix + '#define HAVE_MALLOC_H 1\n'
+ endif
+ 
+-if cc.has_header('linux/netlink.h')
++if cc.has_header('linux/netlink.h') and cc.has_header('linux/rtnetlink.h')
+   glib_conf.set('HAVE_NETLINK', 1)
+ endif
+ 

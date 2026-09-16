@@ -85,6 +85,7 @@ if $BUILD_LIBRESSL; then
 
     pushd libressl-$SUBARCH > /dev/null
     cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$TARGET_CMAKE_TOOLCHAIN_FILE -DCMAKE_INSTALL_PREFIX=/usr \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
           -DLIBRESSL_APPS=OFF -DBUILD_SHARED_LIBS=ON $DIR/sources/libressl-3.0.2/
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
@@ -106,11 +107,12 @@ if $BUILD_PYTHON; then
     echo "ac_cv_file__dev_ptmx=yes
           ac_cv_file__dev_ptc=no" > python-config-site
 
-    CONFIG_SITE=python-config-site PATH=$DIR/tools/python-3.8/bin:$PATH \
+    CONFIG_SITE=python-config-site PATH=$DIR/tools/python-3.8/bin:$PATH LIBS=-lintl \
       $DIR/sources/Python-3.8.2/configure --host=$TARGET --build=x86_64-linux-gnu \
         --prefix=$CROSSPREFIX \
         --with-sysroot=$SYSROOT --enable-shared --with-system-ffi --with-system-expat \
         --disable-ipv6 --without-ensurepip
+    PATH=$DIR/tools/python-3.8/bin:$PATH make clean || cmd_error
     PATH=$DIR/tools/python-3.8/bin:$PATH make -j$PARALLELISM || cmd_error
     PATH=$DIR/tools/python-3.8/bin:$PATH make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

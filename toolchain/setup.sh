@@ -268,31 +268,68 @@ if $BUILD_NEWLIB; then
         mkdir newlib-$SUBARCH
     fi
 
-    pushd $DIR/sources/newlib-3.0.0 > /dev/null
-    # find -type f -exec sed 's|--cygnus||g;s|cygnus||g' -i {} + || cmd_error
-    popd > /dev/null
-
-    pushd $DIR/sources/newlib-3.0.0/newlib/libc/sys > /dev/null
-    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoconf || cmd_error
-    pushd lyos > /dev/null
-    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf
-    popd > /dev/null
-    popd > /dev/null
-
-    pushd $DIR/sources/newlib-3.0.0/libgloss/aarch64 > /dev/null
-    PATH=$DIR/tools/autoconf-2.65/bin:$DIR/tools/automake-1.11/bin:$PATH autoreconf || cmd_error
+    pushd $DIR/sources/newlib-4.6.0.20260123/newlib > /dev/null
+    PATH=$DIR/tools/autoconf-2.69/bin:$DIR/tools/automake-1.16.4/bin:$PATH autoreconf -fi || cmd_error
     popd > /dev/null
 
     pushd newlib-$SUBARCH > /dev/null
-    $DIR/sources/newlib-3.0.0/configure --target=$TARGET --prefix=$CROSSPREFIX --disable-multilib || cmd_error
+    $DIR/sources/newlib-4.6.0.20260123/configure --target=$TARGET --prefix=$CROSSPREFIX --disable-multilib --enable-newlib-mb || cmd_error
     sed -s "s/prefix}\/$TARGET/prefix}/" Makefile > Makefile.bak
     mv Makefile.bak Makefile
 
-    TARGET_CFLAGS=-fPIC make -j$PARALLELISM || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
-    cp $TARGET/newlib/libc/sys/lyos/crt*.o $SYSROOT/$CROSSPREFIX/lib/
+    # Lyos supplies its own startup objects and syscall layer, so libgloss is
+    # neither needed nor valid for the *-elf-lyos targets.
+    TARGET_CFLAGS=-fPIC make -j$PARALLELISM all-target-newlib || cmd_error
+    make DESTDIR=$SYSROOT install-target-newlib || cmd_error
+
+    case "$SUBARCH" in
+        i686) NEWLIB_LYOS_MACHINE=i386 ;;
+        x86_64) NEWLIB_LYOS_MACHINE=x86_64 ;;
+        aarch64) NEWLIB_LYOS_MACHINE=aarch64 ;;
+        arm*) NEWLIB_LYOS_MACHINE=arm ;;
+        riscv*) NEWLIB_LYOS_MACHINE=riscv ;;
+        *) echo "Unsupported Newlib Lyos machine: $SUBARCH"; cmd_error ;;
+    esac
+
+    NEWLIB_LYOS_CRT_FLAGS=-fPIC
+    if [ "$NEWLIB_LYOS_MACHINE" = "riscv" ]; then
+        NEWLIB_LYOS_CRT_FLAGS="$NEWLIB_LYOS_CRT_FLAGS -mcmodel=medany"
+    fi
+    for crt in crt0 crti crtn; do
+        $TARGET-gcc $NEWLIB_LYOS_CRT_FLAGS -c \
+            $DIR/sources/newlib-4.6.0.20260123/newlib/libc/sys/lyos/machine/$NEWLIB_LYOS_MACHINE/$crt.S \
+            -o $crt.o || cmd_error
+    done
+    cp crt0.o crti.o crtn.o $SYSROOT/$CROSSPREFIX/lib/
+
     $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libc.so -Wl,--whole-archive $SYSROOT/usr/lib/libc.a -Wl,--no-whole-archive || cmd_error
-    $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libm.so -Wl,--whole-archive $SYSROOT/usr/lib/libm.a -Wl,--no-whole-archive || cmd_error
+
+    # Newlib 4.6 includes both its generic and machine long-double frexpl
+    # implementations in libm.a.  Static links select one archive member,
+    # while --whole-archive selects both.  Remove only the generic fallback
+    # from a temporary archive used to construct the shared library.
+    cp $SYSROOT/usr/lib/libm.a libm-shared.a
+    for prefix in a- libm_a-; do
+        if $TARGET-ar t libm-shared.a | grep -qx "${prefix}s_frexpl.o"; then
+            $TARGET-ar d libm-shared.a "${prefix}frexpl.o" || cmd_error
+        fi
+    done
+
+    # On targets where long double differs from double, Newlib 4.6 leaves
+    # the long-double complex stubs in the archive even though their core
+    # implementations are disabled.  Static linking ignores these unused
+    # members; whole-archive must omit the complete long-double complex set.
+    if ! $TARGET-nm --defined-only libm-shared.a | grep -q ' catanl$'; then
+        for object in cabsl creall cimagl ccoshl cacoshl clogl csqrtl cargl \
+            cprojl cexpl cephes_subrl cacosl ccosl casinl catanhl conjl \
+            cpowl ctanhl ctanl casinhl csinhl csinl catanl; do
+            for prefix in a- libm_a-; do
+                $TARGET-ar d libm-shared.a "${prefix}${object}.o" || cmd_error
+            done
+        done
+    fi
+    $TARGET-gcc -nolibc -shared -o $SYSROOT/usr/lib/libm.so -Wl,--whole-archive libm-shared.a -Wl,--no-whole-archive || cmd_error
+    rm -f libm-shared.a
 
     popd > /dev/null
 fi
@@ -353,6 +390,7 @@ if $BUILD_CJSON; then
 
     pushd cJSON-$SUBARCH > /dev/null
     cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$TARGET_CMAKE_TOOLCHAIN_FILE \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
           -DCMAKE_INSTALL_PREFIX=$CROSSPREFIX $DIR/sources/cJSON-1.7.14/
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
@@ -378,7 +416,8 @@ if $BUILD_BASH; then
     fi
 
     pushd bash-$SUBARCH > /dev/null
-    $DIR/sources/bash-5.1.8/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX  --without-bash-malloc --disable-nls || cmd_error
+    CFLAGS_FOR_BUILD="-g -O2 -std=gnu17" \
+        $DIR/sources/bash-5.1.8/configure --host=$TARGET --target=$TARGET --prefix=$CROSSPREFIX --without-bash-malloc --disable-nls || cmd_error
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     cp $SYSROOT/usr/bin/bash $SYSROOT/bin/sh
@@ -408,7 +447,8 @@ if $BUILD_NCURSES; then
     fi
 
     pushd ncurses-$SUBARCH > /dev/null
-    STRIP=$TARGET-strip $DIR/sources/ncurses-6.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests
+    CFLAGS=-fPIC STRIP=$TARGET-strip $DIR/sources/ncurses-6.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --without-tests
+    make clean || cmd_error
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null
@@ -507,9 +547,14 @@ if $BUILD_GLIB; then
     fi
 
     pushd glib-$SUBARCH > /dev/null
-    PKG_CONFIG_SYSROOT_DIR=$SYSROOT PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig meson --cross-file ../../meson.cross-file --prefix=$CROSSPREFIX --libdir=lib --buildtype=debugoptimized -Dxattr=false $DIR/sources/glib-2.59.2
+    MESON_SETUP_ARGS=(--cross-file $MESON_CROSS_FILE --prefix=$CROSSPREFIX --libdir=lib --buildtype=debugoptimized -Dxattr=false)
+    if [ -f build.ninja ]; then
+        MESON_SETUP_ARGS=(--reconfigure --clearcache "${MESON_SETUP_ARGS[@]}")
+    fi
+    PKG_CONFIG_SYSROOT_DIR=$SYSROOT PKG_CONFIG_LIBDIR=$SYSROOT/usr/lib/pkgconfig \
+        meson setup "${MESON_SETUP_ARGS[@]}" . $DIR/sources/glib-2.59.2 || cmd_error
     ninja || cmd_error
-    DESTDIR=$SYSROOT ninja intstall || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 
@@ -520,7 +565,9 @@ if $BUILD_PKGCONFIG; then
     fi
 
     pushd pkg-config-$SUBARCH > /dev/null
-    $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-internal-glib --disable-static
+    glib_cv_stack_grows=no glib_cv_uscore=no \
+        ac_cv_func_posix_getpwuid_r=yes ac_cv_func_posix_getgrgid_r=yes \
+        $DIR/sources/pkg-config-0.29.2/configure --host=$TARGET --prefix=$CROSSPREFIX --with-internal-glib --disable-static
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
     popd > /dev/null

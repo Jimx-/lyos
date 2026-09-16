@@ -26,6 +26,11 @@
 #define MAP_POPULATE 0x0010
 #define MAP_CONTIG   0x0020
 
+/* msync flags */
+#define MS_ASYNC      0x0001
+#define MS_INVALIDATE 0x0002
+#define MS_SYNC       0x0004
+
 /*
  * Error indicator returned by mmap(2)
  */
@@ -41,6 +46,7 @@ __BEGIN_DECLS
 
 void* mmap(void* addr, size_t len, int prot, int flags, int fd, off_t offset);
 int munmap(void* addr, size_t len);
+int msync(void* addr, size_t len, int flags);
 
 void* mremap(void*, size_t, size_t, int, ...);
 

@@ -1,6 +1,8 @@
 #ifndef _TERMIOS_H
 #define _TERMIOS_H
 
+#include <sys/types.h>
+
 struct winsize {
     unsigned short ws_row;
     unsigned short ws_col;
@@ -197,6 +199,17 @@ struct termios {
 #define TLNEXT_DEF   _CTRL('v') /* ^V */
 #define TDISCARD_DEF _CTRL('o') /* ^O */
 
+speed_t cfgetispeed(const struct termios* tio);
+speed_t cfgetospeed(const struct termios* tio);
+int cfsetispeed(struct termios* tio, speed_t speed);
+int cfsetospeed(struct termios* tio, speed_t speed);
 int tcgetattr(int fd, struct termios* tio);
+int tcsetattr(int fd, int actions, const struct termios* tio);
+pid_t tcgetpgrp(int fd);
+int tcsetpgrp(int fd, pid_t pgrp);
+int tcflow(int fd, int action);
+int tcflush(int fd, int which);
+int tcdrain(int fd);
+int tcsendbreak(int fd, int duration);
 
 #endif

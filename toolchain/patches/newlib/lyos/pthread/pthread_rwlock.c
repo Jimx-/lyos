@@ -13,7 +13,7 @@
 #define RWS_WRLOCKED   (1 << 31)
 
 #define RW_RDLOCKED(l) ((l) >= RCNT_INC_STEP)
-#define RW_WRLOCKED(l) ((l)&RWS_WRLOCKED)
+#define RW_WRLOCKED(l) ((l) & RWS_WRLOCKED)
 
 int pthread_rwlock_init(pthread_rwlock_t* lock,
                         const pthread_rwlockattr_t* attr)
@@ -38,7 +38,7 @@ int pthread_rwlock_destroy(pthread_rwlock_t* lock)
 
 static int __can_rdlock(int state) { return !RW_WRLOCKED(state); }
 
-static int __pthread_rwlock_tryrdlock(pthread_rwlock_t* lock)
+int pthread_rwlock_tryrdlock(pthread_rwlock_t* lock)
 {
     int old_state = __atomic_load_n(&lock->state, __ATOMIC_RELAXED);
 
@@ -62,7 +62,7 @@ static int __pthread_rwlock_timedrdlock(pthread_rwlock_t* lock,
     }*/
 
     while (1) {
-        int ret = __pthread_rwlock_tryrdlock(lock);
+        int ret = pthread_rwlock_tryrdlock(lock);
         if (ret == 0 || ret == EAGAIN) return ret;
 
         int old_state = __atomic_load_n(&lock->state, __ATOMIC_RELAXED);
@@ -94,7 +94,7 @@ static int __pthread_rwlock_timedrdlock(pthread_rwlock_t* lock,
 
 int pthread_rwlock_rdlock(pthread_rwlock_t* lock)
 {
-    if (__pthread_rwlock_tryrdlock(lock) == 0) {
+    if (pthread_rwlock_tryrdlock(lock) == 0) {
         return 0;
     }
 
@@ -106,7 +106,7 @@ static int __can_wrlock(int state)
     return !(RW_WRLOCKED(state) && RW_RDLOCKED(state));
 }
 
-static int __pthread_rwlock_trywrlock(pthread_rwlock_t* lock)
+int pthread_rwlock_trywrlock(pthread_rwlock_t* lock)
 {
     int old_state = __atomic_load_n(&lock->state, __ATOMIC_RELAXED);
 
@@ -130,7 +130,7 @@ static int __pthread_rwlock_timedwrlock(pthread_rwlock_t* lock,
     }*/
 
     while (1) {
-        int ret = __pthread_rwlock_trywrlock(lock);
+        int ret = pthread_rwlock_trywrlock(lock);
         if (ret == 0) return ret;
 
         int old_state = __atomic_load_n(&lock->state, __ATOMIC_RELAXED);
@@ -162,7 +162,7 @@ static int __pthread_rwlock_timedwrlock(pthread_rwlock_t* lock,
 
 int pthread_rwlock_wrlock(pthread_rwlock_t* lock)
 {
-    if (__pthread_rwlock_trywrlock(lock) == 0) return 0;
+    if (pthread_rwlock_trywrlock(lock) == 0) return 0;
 
     return __pthread_rwlock_timedwrlock(lock, NULL);
 }

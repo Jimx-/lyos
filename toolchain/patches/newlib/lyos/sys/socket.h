@@ -21,6 +21,7 @@
 
 #include <sys/features.h>
 #include <sys/cdefs.h>
+#include <sys/uio.h>
 
 __BEGIN_DECLS
 

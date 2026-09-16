@@ -13,3 +13,5 @@ _fini:
     push %rbp
     mov  %rsp, %rbp
     /* gcc will nicely put the contents of crtbegin.o's .fini section here. */
+
+.section .note.GNU-stack,"",@progbits

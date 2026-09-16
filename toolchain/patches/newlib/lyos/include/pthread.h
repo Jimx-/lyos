@@ -10,20 +10,11 @@
 #define PTHREAD_MUTEX_RECURSIVE  1
 #define PTHREAD_MUTEX_ERRORCHECK 2
 
-#define PTHREAD_MUTEX_INITIALIZER          \
-    {                                      \
-        ((PTHREAD_MUTEX_NORMAL & 3) << 14) \
-    }
+#define PTHREAD_MUTEX_INITIALIZER {((PTHREAD_MUTEX_NORMAL & 3) << 14)}
 
-#define PTHREAD_COND_INITIALIZER \
-    {                            \
-        0                        \
-    }
+#define PTHREAD_COND_INITIALIZER {0}
 
-#define PTHREAD_RWLOCK_INITIALIZER \
-    {                              \
-        0                          \
-    }
+#define PTHREAD_RWLOCK_INITIALIZER {0}
 
 #define PTHREAD_ONCE_INIT 0
 
@@ -87,7 +78,9 @@ int pthread_mutex_destroy(pthread_mutex_t* mutex);
 int pthread_rwlock_init(pthread_rwlock_t* rwlock,
                         const pthread_rwlockattr_t* attr);
 int pthread_rwlock_rdlock(pthread_rwlock_t* rwlock);
+int pthread_rwlock_tryrdlock(pthread_rwlock_t* rwlock);
 int pthread_rwlock_wrlock(pthread_rwlock_t* rwlock);
+int pthread_rwlock_trywrlock(pthread_rwlock_t* rwlock);
 int pthread_rwlock_unlock(pthread_rwlock_t* rwlock);
 int pthread_rwlock_destroy(pthread_rwlock_t* rwlock);
 
@@ -98,8 +91,8 @@ void* pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void* value);
 int pthread_key_delete(pthread_key_t key);
 
-int pthread_barrier_init(pthread_barrier_t* restrict barrier,
-                         const pthread_barrierattr_t* restrict attr,
+int pthread_barrier_init(pthread_barrier_t* __restrict barrier,
+                         const pthread_barrierattr_t* __restrict attr,
                          unsigned count);
 int pthread_barrier_wait(pthread_barrier_t* barrier);
 int pthread_barrier_destroy(pthread_barrier_t* barrier);
