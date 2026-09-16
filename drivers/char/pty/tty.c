@@ -197,9 +197,14 @@ void tty_sigproc(struct tty* tty, int signo)
     endpoint_t ep;
     int retval;
 
+    /* A newly opened master may not have a foreground process group yet. */
+    if (tty->tty_pgrp <= 0 || tty->tty_pgrp == NO_TASK) return;
+
     if (get_procep(tty->tty_pgrp, &ep) != 0) return;
 
-    if ((retval = kernel_kill(ep, signo)) != 0)
+    /* The process may exit between the lookup and signal delivery. */
+    retval = kernel_kill(ep, signo);
+    if (retval != 0 && retval != EINVAL && retval != ESRCH)
         panic("unable to send signal(%d)", retval);
 }
 
@@ -260,7 +265,7 @@ int tty_ioctl(dev_t minor, int request, endpoint_t endpoint, mgrant_id_t grant,
     case TIOCSWINSZ:
         retval = safecopy_from(endpoint, grant, 0, &tty->tty_winsize,
                                sizeof(struct winsize));
-        tty_sigproc(tty, SIGWINCH);
+        if (retval == 0) tty_sigproc(tty, SIGWINCH);
         break;
     case TIOCSCTTY:
         retval = get_epinfo(user_endpoint, NULL, NULL);

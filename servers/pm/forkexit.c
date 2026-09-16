@@ -201,6 +201,15 @@ void exit_proc(struct pmproc* pmp, int status)
     endpoint_t ep = pmp->endpoint;
     pid_t clear_tid = 0;
 
+    /* Clear the TID while the endpoint is still valid for data_copy(). */
+    if (pmp->clear_child_tid) {
+        if (data_copy(ep, pmp->clear_child_tid, SELF, &clear_tid,
+                      sizeof(clear_tid)) == 0) {
+            futex_wake(pmp, pmp->clear_child_tid, 0, 1, FUTEX_BITSET_MATCH_ANY);
+        }
+        pmp->clear_child_tid = NULL;
+    }
+
     kernel_clear(ep);
 
     /* tell FS, see fs_exit() */
@@ -208,14 +217,6 @@ void exit_proc(struct pmproc* pmp, int status)
     msg2fs.type = EXIT;
     msg2fs.ENDPOINT = ep;
     send_recv(BOTH, TASK_FS, &msg2fs);
-
-    /* signal userspace if CLONE_CHILD_CLEARTID is set */
-    if (pmp->clear_child_tid) {
-        data_copy(pmp->endpoint, pmp->clear_child_tid, SELF, &clear_tid,
-                  sizeof(clear_tid));
-        futex_wake(pmp, pmp->clear_child_tid, 0, 1, FUTEX_BITSET_MATCH_ANY);
-        pmp->clear_child_tid = NULL;
-    }
 
     /* tell MM, see proc_free() */
     procctl(ep, PCTL_CLEARPROC);

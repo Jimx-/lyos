@@ -910,18 +910,19 @@ static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
         flags = amsg.flags;
         dest = amsg.dest;
         amsg.msg.source = p_to_send->endpoint;
-        if (dest == p_to_send->endpoint) {
-            retval = EINVAL;
-            goto async_error;
-        }
 
         if (!flags) continue;
         if (flags & ASMF_DONE) continue;
 
+        if (dest == p_to_send->endpoint) {
+            retval = EINVAL;
+            goto async_done;
+        }
+
         p_dest = endpt_proc(dest);
         if (!p_dest) {
             retval = EINVAL;
-            goto async_error;
+            goto async_done;
         }
 
         lock_proc(p_dest);
@@ -945,6 +946,10 @@ static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
             continue;
         }
 
+        unlock_proc(p_dest);
+
+    async_done:
+        /* Failed destinations must not remain pending forever. */
         amsg.result = retval;
         amsg.flags |= ASMF_DONE;
 
@@ -952,7 +957,6 @@ static int msg_senda(struct proc* p_to_send, async_message_t* table, size_t len)
                                sizeof(amsg));
         if (retval) goto async_error;
 
-        unlock_proc(p_dest);
         continue;
     async_error:
         printk("kernel: msg_senda failed(%d)\n", retval);

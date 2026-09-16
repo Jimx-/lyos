@@ -188,9 +188,12 @@ int do_getprocep(MESSAGE* p)
     pid_t pid = p->PID;
     int i;
 
+    if (pid <= 0) return ESRCH;
+
     struct pmproc* pmp = pmproc_table;
     for (i = 0; i < NR_PROCS; i++, pmp++) {
-        if (pmp->pid == pid) {
+        if ((pmp->flags & (PMPF_INUSE | PMPF_HANGING)) == PMPF_INUSE &&
+            pmp->pid == pid) {
             p->ENDPOINT = pmp->endpoint;
             return 0;
         }
