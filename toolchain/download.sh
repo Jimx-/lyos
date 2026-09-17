@@ -38,14 +38,14 @@ download "libdrm" "https://dri.freedesktop.org/libdrm/" "libdrm-2.4.109.tar.xz" 
 download "libexpat" "https://github.com/libexpat/libexpat/releases/download/R_2_2_9/" "expat-2.2.9.tar.bz2" || cmd_error
 download "libffi" "https://github.com/libffi/libffi/releases/download/v3.4.2/" "libffi-3.4.2.tar.gz" || cmd_error
 download "wayland" "https://wayland.freedesktop.org/releases" "wayland-1.18.0.tar.xz" || cmd_error
-download "wayland-protocols" "https://wayland.freedesktop.org/releases/" "wayland-protocols-1.20.tar.xz" || cmd_error
+download "wayland-protocols" "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/1.32/downloads" "wayland-protocols-1.32.tar.xz" || cmd_error
 download "pcre" "https://ftp.exim.org/pub/pcre" "pcre-8.44.tar.gz" || cmd_error
 download "grep" "https://mirrors.ustc.edu.cn/gnu/grep" "grep-3.4.tar.xz" || cmd_error
 download "less" "http://www.greenwoodsoftware.com/less" "less-551.tar.gz" || cmd_error
 download "zlib" "https://zlib.net/fossils/" "zlib-1.2.11.tar.gz" || cmd_error
 download "glib" "https://ftp.gnome.org/pub/gnome/sources/glib/2.59/" "glib-2.59.2.tar.xz" || cmd_error
 download "pkg-config" "https://pkgconfig.freedesktop.org/releases/" "pkg-config-0.29.2.tar.gz" || cmd_error
-download "mesa" "https://mesa.freedesktop.org/archive" "mesa-21.1.4.tar.xz" || cmd_error
+download "mesa" "https://archive.mesa3d.org" "mesa-23.3.6.tar.xz" || cmd_error
 download "libpng" "https://download.sourceforge.net/libpng" "libpng-1.6.37.tar.gz" || cmd_error
 download "bzip2" "https://www.sourceware.org/pub/bzip2/" "bzip2-1.0.8.tar.gz" || cmd_error
 download "freetype" "https://download.savannah.gnu.org/releases/freetype/" "freetype-2.10.2.tar.xz" || cmd_error
@@ -117,14 +117,14 @@ unzip "libdrm-2.4.109.tar.xz" "libdrm-2.4.109"
 unzip "expat-2.2.9.tar.bz2" "expat-2.2.9"
 unzip "libffi-3.4.2.tar.gz" "libffi-3.4.2"
 unzip "wayland-1.18.0.tar.xz" "wayland-1.18.0"
-unzip "wayland-protocols-1.20.tar.xz" "wayland-protocols-1.20"
+unzip "wayland-protocols-1.32.tar.xz" "wayland-protocols-1.32"
 unzip "pcre-8.44.tar.gz" "pcre-8.44"
 unzip "grep-3.4.tar.xz" "grep-3.4"
 unzip "less-551.tar.gz" "less-551"
 unzip "zlib-1.2.11.tar.gz" "zlib-1.2.11"
 unzip "glib-2.59.2.tar.xz" "glib-2.59.2"
 unzip "pkg-config-0.29.2.tar.gz" "pkg-config-0.29.2"
-unzip "mesa-21.1.4.tar.xz" "mesa-21.1.4"
+unzip "mesa-23.3.6.tar.xz" "mesa-23.3.6"
 unzip "libpng-1.6.37.tar.gz" "libpng-1.6.37"
 unzip "bzip2-1.0.8.tar.gz" "bzip2-1.0.8"
 unzip "freetype-2.10.2.tar.xz" "freetype-2.10.2"
@@ -195,7 +195,7 @@ patc "pcre-8.44"
 patc "zlib-1.2.11"
 patc "glib-2.59.2"
 patc "pkg-config-0.29.2"
-patc "mesa-21.1.4"
+patc "mesa-23.3.6"
 patc "libpng-1.6.37"
 patc "freetype-2.10.2"
 patc "pixman-0.40.0"

@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+
+
+LLVM_VERSION = "16.0.0"
+LLVM_MAJOR = LLVM_VERSION.split(".", 1)[0]
+
+
+def sysroot_path(path):
+    return os.path.join(os.environ["SYSROOT"], path.lstrip("/"))
+
+
+def components():
+    return " ".join([
+        "all", "all-targets", "analysis", "asmparser", "asmprinter",
+        "binaryformat", "bitreader", "bitwriter", "codegen", "core",
+        "coroutines", "coverage", "debuginfocodeview", "debuginfodwarf",
+        "debuginfomsf", "debuginfopdb", "demangle", "dlltooldriver",
+        "engine", "executionengine", "frontendhlsl", "fuzzmutate",
+        "globalisel", "gtest", "gtest_main", "instcombine",
+        "instrumentation", "interpreter", "ipo", "irreader", "libdriver",
+        "lineeditor", "linker", "lto", "mc", "mcdisassembler", "mcjit",
+        "mcparser", "mirparser", "native", "nativecodegen", "objcarcopts",
+        "object", "objectyaml", "option", "orcjit", "passes", "profiledata",
+        "runtimedyld", "scalaropts", "selectiondag", "support", "symbolize",
+        "tablegen", "target", "transformutils", "vectorize",
+        "windowsdriver", "windowsmanifest", "x86", "x86asmparser",
+        "x86asmprinter", "x86codegen", "x86desc", "x86disassembler",
+        "x86info", "x86utils",
+    ])
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--version", action="append_const", dest="commands", const=lambda: LLVM_VERSION)
+parser.add_argument("--targets-built", action="append_const", dest="commands", const=lambda: "X86 ARM AArch64 RISCV")
+parser.add_argument("--components", action="append_const", dest="commands", const=components)
+parser.add_argument("--includedir", action="append_const", dest="commands", const=lambda: sysroot_path("/usr/include"))
+parser.add_argument("--libdir", action="append_const", dest="commands", const=lambda: sysroot_path("/usr/lib"))
+parser.add_argument("--has-rtti", action="append_const", dest="commands", const=lambda: "YES")
+parser.add_argument("--shared-mode", action="append_const", dest="commands", const=lambda: "shared")
+parser.add_argument("--link-shared", action="store_true")
+parser.add_argument("--cppflags", action="append_const", dest="commands", const=lambda: "")
+parser.add_argument("--cxxflags", action="append_const", dest="commands", const=lambda: "")
+parser.add_argument("--ldflags", action="append_const", dest="commands", const=lambda: "-L" + sysroot_path("/usr/lib"))
+parser.add_argument("--libs", action="append_const", dest="commands", const=lambda: "-lLLVM-" + LLVM_MAJOR)
+parser.add_argument("--system-libs", action="append_const", dest="commands", const=lambda: "")
+parser.add_argument("components", nargs="*")
+
+args = parser.parse_args()
+for command in args.commands or []:
+    print(command())

@@ -171,28 +171,37 @@ fi
 
 # Build wayland-protocols
 if $BUILD_WAYLAND_PROTOCOLS; then
-    if [ ! -d "wayland-protocols-$SUBARCH" ]; then
-        mkdir wayland-protocols-$SUBARCH
+    if [ ! -d "wayland-protocols-1.32-$SUBARCH" ]; then
+        mkdir wayland-protocols-1.32-$SUBARCH
     fi
 
-    pushd $DIR/sources/wayland-protocols-1.20 > /dev/null
-    # ./autogen.sh
-    popd > /dev/null
-
-    pushd wayland-protocols-$SUBARCH > /dev/null
-    $DIR/sources/wayland-protocols-1.20/configure --host=$TARGET --prefix=/usr
-    make -j$PARALLELISM || cmd_error
-    make DESTDIR=$SYSROOT install || cmd_error
+    pushd wayland-protocols-1.32-$SUBARCH > /dev/null
+    MESON_SETUP_ARGS=(--cross-file $MESON_CROSS_FILE --prefix=/usr -Dtests=false)
+    if [ -f build.ninja ]; then
+        MESON_SETUP_ARGS=(--reconfigure --clearcache "${MESON_SETUP_ARGS[@]}")
+    fi
+    meson setup "${MESON_SETUP_ARGS[@]}" . \
+        $DIR/sources/wayland-protocols-1.32 || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 
 if $BUILD_MESA; then
-    if [ ! -d "mesa-$SUBARCH" ]; then
-        mkdir mesa-$SUBARCH
+    if [ ! -d "mesa-23.3.6-$SUBARCH" ]; then
+        mkdir mesa-23.3.6-$SUBARCH
     fi
 
-    pushd mesa-$SUBARCH > /dev/null
-    meson --cross-file $MESON_CROSS_FILE --prefix=/usr --libdir=lib --buildtype=debugoptimized -Dglx=disabled -Dplatforms=wayland -Ddri-drivers= -Dgallium-drivers=swrast -Dvulkan-drivers= $DIR/sources/mesa-21.1.4
+    pushd mesa-23.3.6-$SUBARCH > /dev/null
+    MESON_SETUP_ARGS=(--cross-file $MESON_CROSS_FILE \
+        --prefix=/usr --libdir=lib --buildtype=debugoptimized \
+        -Dglx=disabled -Dplatforms=wayland -Dgallium-drivers=swrast \
+        -Dvulkan-drivers= -Dllvm=enabled -Dshared-llvm=enabled \
+        -Dgallium-va=disabled -Dgallium-vdpau=disabled -Dvideo-codecs=)
+    if [ -f build.ninja ]; then
+        MESON_SETUP_ARGS=(--reconfigure --clearcache "${MESON_SETUP_ARGS[@]}")
+    fi
+    meson setup "${MESON_SETUP_ARGS[@]}" . \
+        $DIR/sources/mesa-23.3.6 || cmd_error
     ninja || cmd_error
     DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
