@@ -5,6 +5,9 @@
     .hidden _start
     .type _start,@function
 _start:
+    // Keep the stack 16-byte aligned before calls into C.
+    andq $~0xf, %rsp
+    subq $8, %rsp
     push %rcx // environ
     push %rdx // argv
     push %rax // argc
@@ -50,7 +53,9 @@ ldso_bind_entry:
     push %r9
     push %r10
 
+    subq $8, %rsp
     call ldso_bind
+    addq $8, %rsp
     mov %rax, %r11
 
     pop %r10

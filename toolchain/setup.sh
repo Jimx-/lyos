@@ -10,6 +10,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 : ${BUILD_LIBTOOL:=false}
 : ${BUILD_BINUTILS:=false}
 : ${BUILD_GCC:=false}
+: ${BUILD_LLVM:=false}
 : ${BUILD_WAYLAND_SCANNER:=false}
 : ${BUILD_HOST_CMAKE:=false}
 : ${BUILD_HOST_PYTHON:=false}
@@ -45,6 +46,7 @@ if $BUILD_EVERYTHING; then
     BUILD_AUTOTOOLS=true
     BUILD_BINUTILS=true
     BUILD_GCC=true
+    BUILD_LLVM=true
     BUILD_WAYLAND_SCANNER=true
     BUILD_HOST_CMAKE=true
     BUILD_HOST_PYTHON=true
@@ -552,6 +554,43 @@ if $BUILD_ZLIB; then
     CHOST=$TARGET prefix=$CROSSPREFIX $DIR/sources/zlib-1.2.11/configure
     make -j$PARALLELISM || cmd_error
     make DESTDIR=$SYSROOT install || cmd_error
+    popd > /dev/null
+fi
+
+# Build native LLVM
+if $BUILD_LLVM; then
+    if [ -d "llvm-$SUBARCH" ]; then
+        rm -rf llvm-$SUBARCH
+    fi
+    mkdir llvm-$SUBARCH
+
+    case "$SUBARCH" in
+        i686|x86_64) LLVM_TARGET_ARCH=X86 ;;
+        aarch64|arm64) LLVM_TARGET_ARCH=AArch64 ;;
+        arm*) LLVM_TARGET_ARCH=ARM ;;
+        riscv*) LLVM_TARGET_ARCH=RISCV ;;
+        *) echo "Unsupported LLVM target architecture: $SUBARCH"; cmd_error ;;
+    esac
+
+    pushd llvm-$SUBARCH > /dev/null
+    $DIR/tools/cmake-3.22.1/bin/cmake -GNinja \
+        -DCMAKE_TOOLCHAIN_FILE=$TARGET_CMAKE_TOOLCHAIN_FILE \
+        -DCMAKE_INSTALL_PREFIX=$CROSSPREFIX \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_LINK_LLVM_DYLIB=ON \
+        -DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;RISCV" \
+        -DLLVM_TARGET_ARCH=$LLVM_TARGET_ARCH \
+        -DLLVM_DEFAULT_TARGET_TRIPLE=$TARGET \
+        -DLLVM_HOST_TRIPLE=$TARGET \
+        -DLLVM_ENABLE_TERMINFO=OFF \
+        -DLLVM_ENABLE_LIBXML2=OFF \
+        -DLLVM_INCLUDE_TESTS=OFF \
+        -DLLVM_INCLUDE_EXAMPLES=OFF \
+        -DLLVM_INCLUDE_BENCHMARKS=OFF \
+        $DIR/sources/llvm-project-llvmorg-16.0.0/llvm || cmd_error
+    ninja ${PARALLELISM:+-j$PARALLELISM} || cmd_error
+    DESTDIR=$SYSROOT ninja install || cmd_error
     popd > /dev/null
 fi
 

@@ -79,6 +79,7 @@ diff -rupN old/gcc/config.gcc new/gcc/config.gcc
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
++  thread_file=posix
 +  ;;  
  *-*-elf|arc*-*-elf*)
    # Assume that newlib is being used and so __cxa_atexit is provided.

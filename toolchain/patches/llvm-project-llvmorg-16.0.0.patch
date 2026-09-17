@@ -1,0 +1,355 @@
+diff -rupN old/llvm/include/llvm/TargetParser/Triple.h new/llvm/include/llvm/TargetParser/Triple.h
+--- old/llvm/include/llvm/TargetParser/Triple.h	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/include/llvm/TargetParser/Triple.h	2026-09-16 00:00:00.000000000 +0800
+@@ -194,6 +194,7 @@ public:
+     IOS,
+     KFreeBSD,
+     Linux,
++    Lyos,
+     Lv2,        // PS3
+     MacOSX,
+     NetBSD,
+diff -rupN old/llvm/lib/TargetParser/Triple.cpp new/llvm/lib/TargetParser/Triple.cpp
+--- old/llvm/lib/TargetParser/Triple.cpp	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/TargetParser/Triple.cpp	2026-09-16 00:00:00.000000000 +0800
+@@ -227,6 +227,7 @@ StringRef Triple::getOSTypeName(OSType K
+   case IOS: return "ios";
+   case KFreeBSD: return "kfreebsd";
+   case Linux: return "linux";
++  case Lyos: return "lyos";
+   case Lv2: return "lv2";
+   case MacOSX: return "macosx";
+   case Mesa3D: return "mesa3d";
+@@ -568,6 +569,7 @@ static Triple::OSType parseOS(StringRef
+     .StartsWith("ios", Triple::IOS)
+     .StartsWith("kfreebsd", Triple::KFreeBSD)
+     .StartsWith("linux", Triple::Linux)
++    .StartsWith("lyos", Triple::Lyos)
+     .StartsWith("lv2", Triple::Lv2)
+     .StartsWith("macos", Triple::MacOSX)
+     .StartsWith("netbsd", Triple::NetBSD)
+diff -rupN old/llvm/include/llvm/Support/ExitCodes.h new/llvm/include/llvm/Support/ExitCodes.h
+--- old/llvm/include/llvm/Support/ExitCodes.h	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/include/llvm/Support/ExitCodes.h	2026-09-16 00:00:00.000000000 +0800
+@@ -22,7 +22,7 @@
+ 
+ #if HAVE_SYSEXITS_H
+ #include <sysexits.h>
+-#elif __MVS__ || defined(_WIN32)
++#elif __MVS__ || defined(_WIN32) || defined(__lyos__)
+-// <sysexits.h> does not exist on z/OS and Windows. The only value used in LLVM
++// <sysexits.h> does not exist on Lyos, z/OS and Windows. The only value used in LLVM
+ // is EX_IOERR, which is used to signal a special error condition (broken pipe).
+ // Define the macro with its usual value from BSD systems, which is chosen to
+diff -rupN old/llvm/unittests/TargetParser/TripleTest.cpp new/llvm/unittests/TargetParser/TripleTest.cpp
+--- old/llvm/unittests/TargetParser/TripleTest.cpp	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/unittests/TargetParser/TripleTest.cpp	2026-09-16 00:00:00.000000000 +0800
+@@ -100,6 +100,12 @@ TEST(TripleTest, ParsedIDs) {
+   EXPECT_EQ(Triple::Hurd, T.getOS());
+   EXPECT_EQ(Triple::GNU, T.getEnvironment());
+ 
++  T = Triple("x86_64-elf-lyos");
++  EXPECT_EQ(Triple::x86_64, T.getArch());
++  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
++  EXPECT_EQ(Triple::Lyos, T.getOS());
++  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
++
+   T = Triple("x86_64-pc-linux-gnu");
+   EXPECT_EQ(Triple::x86_64, T.getArch());
+   EXPECT_EQ(Triple::PC, T.getVendor());
+
+diff -rupN old/llvm/include/llvm/ADT/SmallVector.h new/llvm/include/llvm/ADT/SmallVector.h
+--- old/llvm/include/llvm/ADT/SmallVector.h	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/include/llvm/ADT/SmallVector.h	2026-09-16 00:00:00.000000000 +0800
+@@ -19,6 +19,7 @@
+ #include <algorithm>
+ #include <cassert>
+ #include <cstddef>
++#include <cstdint>
+ #include <cstdlib>
+ #include <cstring>
+ #include <functional>
+diff -rupN old/llvm/lib/ExecutionEngine/Orc/MemoryMapper.cpp new/llvm/lib/ExecutionEngine/Orc/MemoryMapper.cpp
+--- old/llvm/lib/ExecutionEngine/Orc/MemoryMapper.cpp	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/ExecutionEngine/Orc/MemoryMapper.cpp	2026-09-16 00:00:00.000000000 +0800
+@@ -13,7 +13,7 @@
+ 
+ #include <algorithm>
+ 
+-#if defined(LLVM_ON_UNIX) && !defined(__ANDROID__)
++#if defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)
+ #include <fcntl.h>
+ #include <sys/mman.h>
+ #include <unistd.h>
+@@ -193,14 +193,16 @@ SharedMemoryMapper::SharedMemoryMapper(E
+                                        SymbolAddrs SAs, size_t PageSize)
+     : EPC(EPC), SAs(SAs), PageSize(PageSize) {
+-#if (!defined(LLVM_ON_UNIX) || defined(__ANDROID__)) && !defined(_WIN32)
++#if (!defined(LLVM_ON_UNIX) || defined(__ANDROID__) || defined(__lyos__)) &&    \
++    !defined(_WIN32)
+   llvm_unreachable("SharedMemoryMapper is not supported on this platform yet");
+ #endif
+ }
+ 
+ Expected<std::unique_ptr<SharedMemoryMapper>>
+ SharedMemoryMapper::Create(ExecutorProcessControl &EPC, SymbolAddrs SAs) {
+-#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__)) || defined(_WIN32)
++#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)) ||   \
++    defined(_WIN32)
+   auto PageSize = sys::Process::getPageSize();
+   if (!PageSize)
+     return PageSize.takeError();
+@@ -215,7 +217,8 @@ SharedMemoryMapper::Create(ExecutorProce
+ 
+ void SharedMemoryMapper::reserve(size_t NumBytes,
+                                  OnReservedFunction OnReserved) {
+-#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__)) || defined(_WIN32)
++#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)) ||   \
++    defined(_WIN32)
+ 
+   EPC.callSPSWrapperAsync<
+       rt::SPSExecutorSharedMemoryMapperServiceReserveSignature>(
+@@ -364,7 +367,8 @@ void SharedMemoryMapper::initialize(Exec
+ 
+ void SharedMemoryMapper::release(ArrayRef<ExecutorAddr> Bases,
+                                  OnReleasedFunction OnReleased) {
+-#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__)) || defined(_WIN32)
++#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)) ||   \
++    defined(_WIN32)
+   Error Err = Error::success();
+ 
+   {
+@@ -415,7 +419,7 @@ SharedMemoryMapper::~SharedMemoryMapper(
+   std::lock_guard<std::mutex> Lock(Mutex);
+   for (const auto &R : Reservations) {
+ 
+-#if defined(LLVM_ON_UNIX) && !defined(__ANDROID__)
++#if defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)
+ 
+     munmap(R.second.LocalAddr, R.second.Size);
+ 
+diff -rupN old/llvm/lib/ExecutionEngine/Orc/TargetProcess/ExecutorSharedMemoryMapperService.cpp new/llvm/lib/ExecutionEngine/Orc/TargetProcess/ExecutorSharedMemoryMapperService.cpp
+--- old/llvm/lib/ExecutionEngine/Orc/TargetProcess/ExecutorSharedMemoryMapperService.cpp	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/ExecutionEngine/Orc/TargetProcess/ExecutorSharedMemoryMapperService.cpp	2026-09-16 00:00:00.000000000 +0800
+@@ -47,7 +47,8 @@ namespace rt_bootstrap {
+ 
+ Expected<std::pair<ExecutorAddr, std::string>>
+ ExecutorSharedMemoryMapperService::reserve(uint64_t Size) {
+-#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__)) || defined(_WIN32)
++#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)) ||   \
++    defined(_WIN32)
+ 
+ #if defined(LLVM_ON_UNIX)
+ 
+@@ -120,7 +121,8 @@ ExecutorSharedMemoryMapperService::reser
+ 
+ Expected<ExecutorAddr> ExecutorSharedMemoryMapperService::initialize(
+     ExecutorAddr Reservation, tpctypes::SharedMemoryFinalizeRequest &FR) {
+-#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__)) || defined(_WIN32)
++#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)) ||   \
++    defined(_WIN32)
+ 
+   ExecutorAddr MinAddr(~0ULL);
+ 
+@@ -213,7 +215,8 @@ ExecutorSharedMemoryMapperService::deini
+ 
+ Error ExecutorSharedMemoryMapperService::release(
+     const std::vector<ExecutorAddr> &Bases) {
+-#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__)) || defined(_WIN32)
++#if (defined(LLVM_ON_UNIX) && !defined(__ANDROID__) && !defined(__lyos__)) ||   \
++    defined(_WIN32)
+   Error Err = Error::success();
+ 
+   for (auto Base : Bases) {
+diff -rupN old/llvm/lib/Support/LockFileManager.cpp new/llvm/lib/Support/LockFileManager.cpp
+--- old/llvm/lib/Support/LockFileManager.cpp	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/Support/LockFileManager.cpp	2026-09-16 00:00:00.000000000 +0800
+@@ -111,7 +111,7 @@ std::error_code LockFileManager::getHost
+ }
+ 
+ bool LockFileManager::processStillExecuting(StringRef HostID, int PID) {
+-#if LLVM_ON_UNIX && !defined(__ANDROID__)
++#if LLVM_ON_UNIX && !defined(__ANDROID__) && !defined(__lyos__)
+   SmallString<256> StoredHostID;
+   if (getHostID(StoredHostID))
+     return true; // Conservatively assume it's executing on error.
+diff -rupN old/llvm/lib/Support/Unix/Memory.inc new/llvm/lib/Support/Unix/Memory.inc
+--- old/llvm/lib/Support/Unix/Memory.inc	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/Support/Unix/Memory.inc	2026-09-16 00:00:00.000000000 +0800
+@@ -97,6 +97,12 @@ MemoryBlock Memory::allocateMappedMemory
+ #endif
+   int Protect = getPosixProtectionFlags(PFlags);
+ 
++#if defined(__lyos__)
++  // Lyos does not have mprotect() yet. Request all permissions up front so
++  // that a later transition from writable to executable can be a no-op.
++  Protect |= PROT_READ | PROT_WRITE | PROT_EXEC;
++#endif
++
+ #if defined(__NetBSD__) && defined(PROT_MPROTECT)
+   Protect |= PROT_MPROTECT(PROT_READ | PROT_WRITE | PROT_EXEC);
+ #endif
+@@ -163,13 +169,20 @@ std::error_code Memory::releaseMappedMem
+ 
+ std::error_code Memory::protectMappedMemory(const MemoryBlock &M,
+                                             unsigned Flags) {
+-  static const Align PageSize = Align(Process::getPageSizeEstimate());
+   if (M.Address == nullptr || M.AllocatedSize == 0)
+     return std::error_code();
+ 
+   if (!Flags)
+     return std::error_code(EINVAL, std::generic_category());
+ 
++#if defined(__lyos__)
++  // Mappings are created RWX above because Lyos cannot change protections.
++  if (Flags & MF_EXEC)
++    Memory::InvalidateInstructionCache(M.Address, M.AllocatedSize);
++  return std::error_code();
++#else
++  static const Align PageSize = Align(Process::getPageSizeEstimate());
++
+   int Protect = getPosixProtectionFlags(Flags);
+   uintptr_t Start =
+       alignAddr((const uint8_t *)M.Address - PageSize.value() + 1, PageSize);
+@@ -202,6 +215,7 @@ std::error_code Memory::protectMappedMem
+     Memory::InvalidateInstructionCache(M.Address, M.AllocatedSize);
+ 
+   return std::error_code();
++#endif
+ }
+ 
+ /// InvalidateInstructionCache - Before the JIT can run a block of code
+diff -rupN old/llvm/lib/Support/Unix/Path.inc new/llvm/lib/Support/Unix/Path.inc
+--- old/llvm/lib/Support/Unix/Path.inc	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/Support/Unix/Path.inc	2026-09-16 00:00:00.000000000 +0800
+@@ -112,7 +112,7 @@ typedef uint_t uint;
+ #endif
+ 
+ #if defined(__NetBSD__) || defined(__DragonFly__) || defined(__GNU__) ||       \
+-    defined(__MVS__)
++    defined(__MVS__) || defined(__lyos__)
+ #define STATVFS_F_FLAG(vfs) (vfs).f_flag
+ #else
+ #define STATVFS_F_FLAG(vfs) (vfs).f_flags
+@@ -129,7 +129,8 @@ const file_t kInvalidFile = -1;
+ #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||     \
+     defined(__minix) || defined(__FreeBSD_kernel__) || defined(__linux__) ||   \
+     defined(__CYGWIN__) || defined(__DragonFly__) || defined(_AIX) ||          \
+-    defined(__GNU__) || (defined(__sun__) && defined(__svr4__))
++    defined(__GNU__) || defined(__lyos__) ||                                   \
++    (defined(__sun__) && defined(__svr4__))
+ static int test_dir(char ret[PATH_MAX], const char *dir, const char *bin) {
+   struct stat sb;
+   char fullpath[PATH_MAX];
+@@ -234,7 +235,8 @@ std::string getMainExecutable(const char
+   if (getprogpath(exe_path, argv0) != NULL)
+     return exe_path;
+ #elif defined(__NetBSD__) || defined(__OpenBSD__) || defined(__minix) ||       \
+-    defined(__DragonFly__) || defined(__FreeBSD_kernel__) || defined(_AIX)
++    defined(__DragonFly__) || defined(__FreeBSD_kernel__) || defined(_AIX) ||  \
++    defined(__lyos__)
+   const char *curproc = "/proc/curproc/file";
+   char exe_path[PATH_MAX];
+   if (sys::fs::exists(curproc)) {
+@@ -350,6 +352,9 @@ uint32_t file_status::getLinkCount() con
+ uint32_t file_status::getLinkCount() const { return fs_st_nlinks; }
+ 
+ ErrorOr<space_info> disk_space(const Twine &Path) {
++#if defined(__lyos__)
++  return std::make_error_code(std::errc::function_not_supported);
++#else
+   struct STATVFS Vfs;
+   if (::STATVFS(const_cast<char *>(Path.str().c_str()), &Vfs))
+     return std::error_code(errno, std::generic_category());
+@@ -359,6 +364,7 @@ ErrorOr<space_info> disk_space(const Twi
+   SpaceInfo.free = static_cast<uint64_t>(Vfs.f_bfree) * FrSize;
+   SpaceInfo.available = static_cast<uint64_t>(Vfs.f_bavail) * FrSize;
+   return SpaceInfo;
++#endif
+ }
+ 
+ std::error_code current_path(SmallVectorImpl<char> &result) {
+@@ -546,7 +552,7 @@ static bool is_local_impl(struct STATVFS
+ 
+   // vmount entry not found; "remote" is the conservative answer.
+   return false;
+-#elif defined(__MVS__)
++#elif defined(__MVS__) || defined(__lyos__)
+   // The file system can have an arbitrary structure on z/OS; must go with the
+   // conservative answer.
+   return false;
+@@ -556,21 +562,31 @@ static bool is_local_impl(struct STATVFS
+ }
+ 
+ std::error_code is_local(const Twine &Path, bool &Result) {
++#if defined(__lyos__)
++  Result = false;
++  return std::error_code();
++#else
+   struct STATVFS Vfs;
+   if (::STATVFS(const_cast<char *>(Path.str().c_str()), &Vfs))
+     return std::error_code(errno, std::generic_category());
+ 
+   Result = is_local_impl(Vfs);
+   return std::error_code();
++#endif
+ }
+ 
+ std::error_code is_local(int FD, bool &Result) {
++#if defined(__lyos__)
++  Result = false;
++  return std::error_code();
++#else
+   struct STATVFS Vfs;
+   if (::FSTATVFS(FD, &Vfs))
+     return std::error_code(errno, std::generic_category());
+ 
+   Result = is_local_impl(Vfs);
+   return std::error_code();
++#endif
+ }
+ 
+ std::error_code rename(const Twine &from, const Twine &to) {
+@@ -875,7 +891,7 @@ void mapped_file_region::dontNeedImpl()
+   assert(Mode == mapped_file_region::readonly);
+   if (!Mapping)
+     return;
+-#if defined(__MVS__) || defined(_AIX)
++#if defined(__MVS__) || defined(_AIX) || defined(__lyos__)
+     // If we don't have madvise, or it isn't beneficial, treat this as a no-op.
+ #elif defined(POSIX_MADV_DONTNEED)
+   ::posix_madvise(Mapping, Size, POSIX_MADV_DONTNEED);
+diff -rupN old/llvm/lib/Support/Unix/Signals.inc new/llvm/lib/Support/Unix/Signals.inc
+--- old/llvm/lib/Support/Unix/Signals.inc	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/lib/Support/Unix/Signals.inc	2026-09-16 00:00:00.000000000 +0800
+@@ -311,11 +311,18 @@ void RegisterHandlers() {
+     switch (Kind) {
+     case SignalKind::IsKill:
+       NewHandler.sa_handler = SignalHandler;
+-      NewHandler.sa_flags = SA_NODEFER | SA_RESETHAND | SA_ONSTACK;
++      NewHandler.sa_flags = SA_NODEFER | SA_RESETHAND;
++#if !defined(__lyos__)
++      NewHandler.sa_flags |= SA_ONSTACK;
++#endif
+       break;
+     case SignalKind::IsInfo:
+       NewHandler.sa_handler = InfoSignalHandler;
++#if defined(__lyos__)
++      NewHandler.sa_flags = 0;
++#else
+       NewHandler.sa_flags = SA_ONSTACK;
++#endif
+       break;
+     }
+     sigemptyset(&NewHandler.sa_mask);
+diff -rupN old/llvm/tools/llvm-shlib/CMakeLists.txt new/llvm/tools/llvm-shlib/CMakeLists.txt
+--- old/llvm/tools/llvm-shlib/CMakeLists.txt	2023-03-17 20:19:51.000000000 +0800
++++ new/llvm/tools/llvm-shlib/CMakeLists.txt	2026-09-16 00:00:00.000000000 +0800
+@@ -34,6 +34,7 @@ if(LLVM_BUILD_LLVM_DYLIB)
+ 
+   list(REMOVE_DUPLICATES LIB_NAMES)
+   if(("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR (MINGW) OR (HAIKU)
++     OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "lyos")
+      OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+      OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "GNU")
+      OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")

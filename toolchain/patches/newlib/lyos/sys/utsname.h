@@ -16,27 +16,30 @@
 #ifndef _UNAME_H_
 #define _UNAME_H_
 
-/* uname */
-#define _UTSNAME_SYSNAME_LENGTH 65
-#define _UTSNAME_NODENAME_LENGTH 65
-#define _UTSNAME_RELEASE_LENGTH 65
-#define _UTSNAME_VERSION_LENGTH 65
-#define _UTSNAME_MACHINE_LENGTH 65
+#include <sys/cdefs.h>
 
-#define SIZE_UTSNAME	(_UTSNAME_SYSNAME_LENGTH + \
-                        _UTSNAME_NODENAME_LENGTH + \
-                        _UTSNAME_RELEASE_LENGTH + \
-                        _UTSNAME_VERSION_LENGTH + \
-                        _UTSNAME_MACHINE_LENGTH)
+/* uname */
+#define _UTSNAME_SYSNAME_LENGTH  65
+#define _UTSNAME_NODENAME_LENGTH 65
+#define _UTSNAME_RELEASE_LENGTH  65
+#define _UTSNAME_VERSION_LENGTH  65
+#define _UTSNAME_MACHINE_LENGTH  65
+
+#define SIZE_UTSNAME                                      \
+    (_UTSNAME_SYSNAME_LENGTH + _UTSNAME_NODENAME_LENGTH + \
+     _UTSNAME_RELEASE_LENGTH + _UTSNAME_VERSION_LENGTH +  \
+     _UTSNAME_MACHINE_LENGTH)
 
 struct utsname {
-	char sysname[_UTSNAME_SYSNAME_LENGTH];
-	char nodename[_UTSNAME_NODENAME_LENGTH];
-	char release[_UTSNAME_RELEASE_LENGTH];
-	char version[_UTSNAME_VERSION_LENGTH];
-	char machine[_UTSNAME_MACHINE_LENGTH];
+    char sysname[_UTSNAME_SYSNAME_LENGTH];
+    char nodename[_UTSNAME_NODENAME_LENGTH];
+    char release[_UTSNAME_RELEASE_LENGTH];
+    char version[_UTSNAME_VERSION_LENGTH];
+    char machine[_UTSNAME_MACHINE_LENGTH];
 };
 
-int uname(struct utsname * name);
+__BEGIN_DECLS
+int uname(struct utsname* name);
+__END_DECLS
 
 #endif

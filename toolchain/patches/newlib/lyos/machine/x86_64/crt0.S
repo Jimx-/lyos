@@ -22,6 +22,9 @@
 .section .text
 
 _start:
+    # Three saved arguments plus padding preserve alignment at C calls.
+    andq    $~0xf, %rsp
+    subq    $8, %rsp
     push	%rcx	# environ
     push    %rdx	# argv
     push	%rax	# argc
@@ -41,6 +44,7 @@ _start:
     pop     %rdi
     pop     %rsi
     pop     %rdx
+    addq    $8, %rsp
     call	main
 
     mov     %rax, %rdi

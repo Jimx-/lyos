@@ -25,6 +25,7 @@ download "mpc"  "http://www.multiprecision.org/downloads" "mpc-1.2.1.tar.gz"
 download "mpfr" "https://ftp.gnu.org/gnu/mpfr" "mpfr-4.1.0.tar.gz"
 download "gmp"  "ftp://gcc.gnu.org/pub/gcc/infrastructure" "gmp-6.1.0.tar.bz2"
 download "gcc" "https://mirrors.ustc.edu.cn/gnu/gcc/gcc-9.2.0" "gcc-9.2.0.tar.gz" || cmd_error
+download "llvm" "https://github.com/llvm/llvm-project/archive/refs/tags" "llvmorg-16.0.0.tar.gz" || cmd_error
 download "newlib" "ftp://sourceware.org/pub/newlib" "newlib-4.6.0.20260123.tar.gz" || cmd_error
 download "coreutils" "https://mirrors.ustc.edu.cn/gnu/coreutils" "coreutils-8.32.tar.xz" || cmd_error
 download "bash" "https://ftp.gnu.org/gnu/bash/" "bash-5.1.8.tar.gz" || cmd_error
@@ -103,6 +104,7 @@ unzip "gmp-6.1.0.tar.bz2" "gmp-6.1.0"
 unzip "mpfr-4.1.0.tar.gz" "mpfr-4.1.0"
 unzip "mpc-1.2.1.tar.gz" "mpc-1.2.1"
 unzip "gcc-9.2.0.tar.gz" "gcc-9.2.0"
+unzip "llvmorg-16.0.0.tar.gz" "llvm-project-llvmorg-16.0.0"
 unzip "newlib-4.6.0.20260123.tar.gz" "newlib-4.6.0.20260123"
 unzip "coreutils-8.32.tar.xz" "coreutils-8.32"
 unzip "bash-5.1.8.tar.gz" "bash-5.1.8"
@@ -178,6 +180,7 @@ patc "gmp-6.1.0"
 patc "mpfr-4.1.0"
 patc "mpc-1.2.1"
 patc "gcc-9.2.0"
+patc "llvm-project-llvmorg-16.0.0"
 patc "newlib-4.6.0.20260123"
 patc "coreutils-8.32"
 patc "bash-5.1.8"

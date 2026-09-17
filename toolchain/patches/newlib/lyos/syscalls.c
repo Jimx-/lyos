@@ -470,6 +470,12 @@ pid_t wait3(int* status, int options, struct rusage* rusage)
     return waitpid(-1, status, options);
 }
 
+pid_t wait4(pid_t pid, int* status, int options, struct rusage* rusage)
+{
+    if (rusage) memset(rusage, 0, sizeof(*rusage));
+    return waitpid(pid, status, options);
+}
+
 int wait(int* status)
 {
     MESSAGE msg;

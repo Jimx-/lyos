@@ -92,6 +92,12 @@ static int __pthread_rwlock_timedrdlock(pthread_rwlock_t* lock,
     return 0;
 }
 
+int pthread_rwlock_timedrdlock(pthread_rwlock_t* lock,
+                               const struct timespec* abs_timeout)
+{
+    return __pthread_rwlock_timedrdlock(lock, abs_timeout);
+}
+
 int pthread_rwlock_rdlock(pthread_rwlock_t* lock)
 {
     if (pthread_rwlock_tryrdlock(lock) == 0) {
@@ -158,6 +164,12 @@ static int __pthread_rwlock_timedwrlock(pthread_rwlock_t* lock,
         if (ret) return ret;
     }
     return 0;
+}
+
+int pthread_rwlock_timedwrlock(pthread_rwlock_t* lock,
+                               const struct timespec* abs_timeout)
+{
+    return __pthread_rwlock_timedwrlock(lock, abs_timeout);
 }
 
 int pthread_rwlock_wrlock(pthread_rwlock_t* lock)
